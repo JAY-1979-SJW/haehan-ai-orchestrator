@@ -65,7 +65,7 @@ def _build_steps(req, risk, allowed, requires_approval) -> list:
         steps.append("[4] 실행 중단")
     elif requires_approval:
         steps.append("[3] 정책 검사: 통과 (승인 필요)")
-        steps.append("[4] 실행 보류 — 승인 대기")
+        steps.append("[4] 실행 보류 (승인 대기)")
     else:
         steps.append("[3] 정책 검사: 자동 허용")
         steps.append("[4] 드라이런 실행 (실제 변경 없음)")

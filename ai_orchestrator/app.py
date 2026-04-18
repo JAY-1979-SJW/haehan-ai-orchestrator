@@ -1,3 +1,7 @@
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
 from ai_orchestrator.models import TaskRequest
 from ai_orchestrator.planner import plan
 from ai_orchestrator.executor import execute
@@ -51,7 +55,7 @@ SAMPLE_REQUESTS = [
 
 def main():
     print("=" * 60)
-    print("  승인형 AI 오케스트레이터 — 드라이런 결과")
+    print("  승인형 AI 오케스트레이터 [드라이런 결과]")
     print("=" * 60)
 
     for req in SAMPLE_REQUESTS:
