@@ -11,8 +11,10 @@ AI가 직접 파일을 삭제하거나 서버를 재시작하거나 외부에 �
 
 | 역할 | 담당 |
 |------|------|
-| 작업 의도 해석 / 계획 생성 / 요약 | AI (OpenAI GPT) |
+| 작업 의도 해석 / 계획 생성 / 요약 / 승인 사유 문안 | AI (OpenAI GPT) |
 | 위험도 분류 / 승인 여부 판정 | 프로그램 (risk_classifier, policy) |
+| 승인 토큰 발급/검증 | 프로그램 (approval) |
+| 감사 로그 기록 | 프로그램 (audit_logger) |
 | 실제 실행 (파일/명령/서비스) | 프로그램 (executor) — 승인 후에만 |
 | 최종 승인 | 사람 |
 
@@ -31,9 +33,12 @@ AI는 절대 직접 시스템을 건드리지 않는다.
       ↓
   ExecutionPlan 생성
       ↓
-  [low]  → DRY_RUN_ONLY (자동 허용, 현재 단계는 드라이런만)
-  [medium/high] → PENDING_APPROVAL (사람 승인 대기)
-  [critical]    → BLOCKED (기본 차단)
+  [low]      → AI summary 생성 → DRY_RUN_ONLY
+  [medium]   → approval token 발급 → AI 승인 사유 생성 → 사람 승인 → APPROVED_DRY_RUN
+  [high]     → approval token 발급 → 사람 승인 → APPROVED_DRY_RUN
+  [critical] → BLOCKED (토큰 발급 안 함)
+      ↓
+  audit_logger (모든 단계 JSONL 기록)
 ```
 
 ---
@@ -49,11 +54,84 @@ AI는 절대 직접 시스템을 건드리지 않는다.
 
 ---
 
-## 현재 단계 (1단계 — 드라이런)
+## 2단계 목표 (현재 단계)
 
-- 실제 AI 연결 없음
-- 실제 파일 수정/삭제/명령 실행 없음
-- 모든 executor 결과는 `DRY_RUN_ONLY` / `PENDING_APPROVAL` / `BLOCKED`
+1. **OpenAI 연동** — 계획 요약/승인 사유 문안 생성
+2. **승인 토큰** — medium/high 작업의 발급/검증/만료 흐름
+3. **감사 로그** — 모든 이벤트를 JSONL로 append-only 기록
+
+---
+
+## OpenAI 연동 방식
+
+- `openai_client.py`가 단일 진입점
+- `OPENAI_API_KEY` 환경변수가 있으면 실제 API 호출
+- 없으면 **mock 모드** 자동 전환 (결정론적 문자열 반환)
+- 예외 발생 시에도 fallback mock 반환 (서비스 중단 없음)
+- 모델: `gpt-4o-mini` (빠르고 저비용)
+- AI 역할: 요약 / 승인 사유 / 계획 설명만. 실행 명령 생성 금지
+
+```bash
+# 실제 OpenAI 연결
+export OPENAI_API_KEY=sk-...
+python -m ai_orchestrator.app
+
+# mock 모드 (키 없이)
+python -m ai_orchestrator.app
+```
+
+---
+
+## mock 모드 설명
+
+- `OPENAI_API_KEY`가 없거나 빈 문자열이면 mock 모드 자동 활성화
+- 반환값 앞에 `[MOCK]` 표시
+- 테스트/개발 환경에서 API 키 없이도 전체 흐름 검증 가능
+
+---
+
+## 승인 토큰 수명주기
+
+```
+issue_token()  →  status: "issued"
+     ↓
+approve_token() →  status: "approved"
+     ↓
+validate_token() → True (만료 전, task_id 일치)
+     ↓
+(만료 시) status: "expired", validate → False
+(취소 시) revoke_token() → status: "revoked"
+```
+
+- 기본 TTL: 30분
+- 저장: `storage/approval_tokens.json` (인메모리 + 파일 동기화)
+- critical 작업은 토큰 발급 자체 안 함
+
+---
+
+## 감사 로그 구조
+
+파일: `storage/audit_logs.jsonl` (append-only, 삭제 기능 없음)
+
+```json
+{
+  "timestamp": "2026-04-18T10:00:00+00:00",
+  "event_type": "APPROVAL_GRANTED",
+  "task_id": "S-B-001",
+  "risk_level": "medium",
+  "action_type": "edit_config",
+  "target": "/var/www/haehan/config.yaml",
+  "allowed": true,
+  "requires_approval": true,
+  "decision": "approved",
+  "actor": "대표님",
+  "note": "token_id=abc123..."
+}
+```
+
+event_type 목록: TASK_RECEIVED, RISK_ASSESSED, PLAN_CREATED,
+APPROVAL_ISSUED, APPROVAL_GRANTED, APPROVAL_REJECTED,
+EXECUTION_BLOCKED, EXECUTION_PENDING, DRY_RUN_RETURNED
 
 ---
 
@@ -62,21 +140,33 @@ AI는 절대 직접 시스템을 건드리지 않는다.
 ```bash
 pip install -r requirements.txt
 
-# 드라이런 실행
+# 2단계 드라이런 (시나리오 A~D)
 python -m ai_orchestrator.app
 
-# 테스트
+# 테스트 전체
 python ai_orchestrator/tests/test_risk_classifier.py
 python ai_orchestrator/tests/test_policy_gate.py
+python ai_orchestrator/tests/test_approval.py
+python ai_orchestrator/tests/test_audit_logger.py
+python ai_orchestrator/tests/test_openai_client.py
 ```
 
 ---
 
-## 다음 단계에서 추가할 항목
+## 아직 실제 작업 실행은 안 함
 
-- [ ] 승인 토큰 (HMAC 서명 기반 일회성 토큰)
-- [ ] 감사 로그 (모든 요청/승인/거부 기록)
-- [ ] 실제 OpenAI 연동 (계획 생성 어댑터)
-- [ ] 화이트리스트 명령 실행기
-- [ ] PC / 서버 분리 실행기
-- [ ] 웹 승인 UI (Slack 또는 간단한 웹훅)
+현재 executor는 항상 아래만 반환:
+- `DRY_RUN_ONLY` — low 자동 허용
+- `PENDING_APPROVAL` — 승인 대기
+- `APPROVED_DRY_RUN` — 승인 완료 후에도 실제 실행 없음
+- `BLOCKED` — critical / 정책 차단
+
+---
+
+## 다음 단계 예정
+
+- [ ] 화이트리스트 명령 실행기 (allowed_commands만 실행)
+- [ ] 파일/명령 어댑터 (read_file 실제 구현)
+- [ ] 서버/PC 분리 실행기 (source 기반 라우팅)
+- [ ] 다중 승인 (2인 이상 승인 필요)
+- [ ] 텔레그램 승인 연동 (승인 요청 메시지 발송)
