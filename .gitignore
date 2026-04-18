@@ -1,0 +1,32 @@
+# 환경변수 및 민감 정보
+.env
+.env.local
+*.pem
+*.key
+secrets/
+.secrets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+
+# 테스트/커버리지
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

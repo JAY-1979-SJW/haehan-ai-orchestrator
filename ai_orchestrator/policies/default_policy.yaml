@@ -1,0 +1,83 @@
+# 승인형 AI 오케스트레이터 기본 정책
+# 사람이 읽고 수정할 수 있도록 작성됨
+
+risk_levels:
+  low:
+    description: "읽기/조회 전용. 시스템 변경 없음. 자동 허용."
+    actions:
+      - read_file
+      - list_dir
+      - inspect_logs
+      - summarize_text
+      - status_check
+    requires_approval: false
+    auto_allow: true
+
+  medium:
+    description: "파일/설정 수정. 되돌릴 수 있으나 영향 있음. 승인 필요."
+    actions:
+      - write_file
+      - edit_config
+      - create_patch
+      - generate_reply
+    requires_approval: true
+    auto_allow: false
+
+  high:
+    description: "시스템 명령/서비스/배포/외부 전송. 반드시 승인 후 실행."
+    actions:
+      - run_shell
+      - restart_service
+      - deploy_app
+      - push_git
+      - send_external_message
+      - db_write
+    requires_approval: true
+    auto_allow: false
+
+  critical:
+    description: "삭제/파괴적 작업. 기본 차단. 화이트리스트 없으면 절대 불가."
+    actions:
+      - delete_file
+      - rm_recursive
+      - drop_table
+      - revoke_access
+      - bulk_external_send
+    requires_approval: true
+    auto_allow: false
+    default_blocked: true
+
+allowed_paths:
+  - "/home/deploy/app/"
+  - "/var/www/haehan/"
+  - "/tmp/"
+  - "C:/Users/skyjw/projects/"
+
+blocked_paths:
+  - "/etc/"
+  - "/var/lib/"
+  - "~/.ssh/"
+  - "~/.secrets/"
+  - "C:/Windows/"
+  - "C:/Users/skyjw/.ssh/"
+
+allowed_commands:
+  - "ls"
+  - "pwd"
+  - "cat"
+  - "grep"
+  - "tail"
+  - "systemctl status"
+  - "pm2 list"
+  - "df -h"
+
+blocked_commands:
+  - "rm -rf"
+  - "dd if="
+  - "mkfs"
+  - "shutdown"
+  - "reboot"
+  - "DROP TABLE"
+  - "DELETE FROM"
+  - "format"
+  - "fdisk"
