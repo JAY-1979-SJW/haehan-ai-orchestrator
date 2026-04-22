@@ -16,6 +16,9 @@ from flask import Flask, render_template, request, jsonify, Response
 
 import approval_manager
 import audit_logger
+from inbox_router import inbox_bp
+from tasks_router import tasks_bp
+from webhooks_router import webhooks_bp
 from log_analyzer import (
     _read_jsonl,
     summarize_recent_activity,
@@ -101,6 +104,9 @@ def create_app() -> Flask:
     )
 
     app.before_request(_require_auth)
+    app.register_blueprint(inbox_bp)
+    app.register_blueprint(tasks_bp)
+    app.register_blueprint(webhooks_bp)
 
     @app.route("/dashboard")
     def dashboard():

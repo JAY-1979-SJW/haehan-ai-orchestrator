@@ -1,0 +1,171 @@
+"""
+파일 기반 inbox 저장소 (JSONL)
+경로: storage/inbox.jsonl
+중복 방지: external_id + source_account 조합
+"""
+import json
+import os
+import time
+from datetime import datetime, timezone
+from typing import Optional
+
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_INBOX_PATH = os.path.join(_BASE_DIR, "storage", "inbox.jsonl")
+
+
+def _inbox_path() -> str:
+    return _INBOX_PATH
+
+
+def _load_all(path: str) -> list[dict]:
+    if not os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    items.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return items
+
+
+def _is_duplicate(external_id: str, source_account: str, path: str) -> bool:
+    for item in _load_all(path):
+        if (item.get("external_id") == external_id
+                and item.get("source_account") == source_account):
+            return True
+    return False
+
+
+def save_mail(
+    *,
+    external_id: str,
+    sender: str,
+    title: str,
+    body_raw: str,
+    received_at: str,
+    source_account: str,
+    body_summary: Optional[str] = None,
+    path: Optional[str] = None,
+) -> dict:
+    """
+    메일 1건을 inbox에 저장.
+    중복이면 {"status": "skipped", ...} 반환.
+    필수 필드 누락 시 ValueError 발생.
+    """
+    if not external_id:
+        raise ValueError("external_id는 필수입니다")
+    if not source_account:
+        raise ValueError("source_account는 필수입니다")
+    if not sender:
+        raise ValueError("sender는 필수입니다")
+    if not title:
+        raise ValueError("title은 필수입니다")
+
+    inbox_path = path or _inbox_path()
+    os.makedirs(os.path.dirname(inbox_path), exist_ok=True)
+
+    if _is_duplicate(external_id, source_account, inbox_path):
+        return {
+            "status": "skipped",
+            "reason": "duplicate",
+            "external_id": external_id,
+            "source_account": source_account,
+        }
+
+    entry = {
+        "source_type": "email",
+        "source_account": source_account,
+        "external_id": external_id,
+        "sender": sender,
+        "title": title,
+        "body_raw": body_raw,
+        "body_summary": body_summary,
+        "received_at": received_at,
+        "saved_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        "status": "new",
+        "linked_task_id": None,
+    }
+
+    with open(inbox_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    return {"status": "saved", "external_id": external_id, "source_account": source_account}
+
+
+def save_message(
+    *,
+    source_type: str,
+    external_id: str,
+    source_account: str,
+    sender: str,
+    title: str,
+    body_raw: str,
+    received_at: str,
+    metadata: Optional[dict] = None,
+    path: Optional[str] = None,
+) -> dict:
+    """
+    메시지 1건을 inbox에 저장 (source_type 파라미터로 다양한 소스 지원).
+    save_mail()의 범용 버전 — 카카오워크/카카오톡채널 등에서 사용.
+    중복이면 {"status": "skipped", ...} 반환.
+    필수 필드 누락 시 ValueError 발생.
+    """
+    if not source_type:
+        raise ValueError("source_type은 필수입니다")
+    if not external_id:
+        raise ValueError("external_id는 필수입니다")
+    if not source_account:
+        raise ValueError("source_account는 필수입니다")
+    if not sender:
+        raise ValueError("sender는 필수입니다")
+    if not title:
+        raise ValueError("title은 필수입니다")
+
+    inbox_path = path or _inbox_path()
+    os.makedirs(os.path.dirname(inbox_path), exist_ok=True)
+
+    if _is_duplicate(external_id, source_account, inbox_path):
+        return {
+            "status": "skipped",
+            "reason": "duplicate",
+            "external_id": external_id,
+            "source_account": source_account,
+        }
+
+    entry = {
+        "source_type": source_type,
+        "source_account": source_account,
+        "external_id": external_id,
+        "sender": sender,
+        "title": title,
+        "body_raw": body_raw,
+        "body_summary": None,
+        "received_at": received_at,
+        "saved_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        "status": "new",
+        "linked_task_id": None,
+    }
+    if metadata:
+        entry["metadata"] = metadata
+
+    with open(inbox_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    return {"status": "saved", "external_id": external_id, "source_account": source_account}
+
+
+def list_inbox(
+    source_type: Optional[str] = None,
+    limit: int = 50,
+    path: Optional[str] = None,
+) -> list[dict]:
+    """inbox 목록 반환. source_type으로 필터링 가능."""
+    inbox_path = path or _inbox_path()
+    items = _load_all(inbox_path)
+    if source_type:
+        items = [i for i in items if i.get("source_type") == source_type]
+    return items[-limit:]
