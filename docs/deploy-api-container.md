@@ -1,5 +1,15 @@
 # FastAPI 인증/RBAC API — A안 컨테이너 분리 배포
 
+## 상태 (2026-04-22)
+- **상시 운영 전환 완료 (PASS).** 실운영 salted SHA-256 해시 반영 → 컨테이너 상시 기동.
+- 운영 디렉터리: `/home/ubuntu/apps/haehan-ai-orchestrator-api/`
+- 컨테이너명: `haehan-ai-orchestrator-api`
+- 이미지: `haehan-ai-orchestrator-api:local`
+- 포트: `127.0.0.1:8400` (외부 직접 노출 없음)
+- restart 정책: `unless-stopped`
+- 자격증명 파일: `secrets/api/http_users.json` (chmod 600, git 추적 외부)
+- 기존 `ai-orchestrator-dashboard.service` / `ai-orchestrator-monitor.service` 는 그대로 systemd 유지.
+
 ## 왜 A안인가
 
 서버(`haehan-app`)에는 이미 systemd 로 다음 두 서비스가 돌고 있다.
@@ -105,6 +115,19 @@ docker compose down -v
 - `ss -lntp | grep :5050` → dashboard 여전히 listen
 - `docker ps` 에 `haehan-ai-orchestrator-api` 만 신규 등장
 - `ls /home/ubuntu/apps/haehan-ai-orchestrator/` (기존 경로) 변화 없음
+
+## 롤백 (API 만 내리기 — dashboard/monitor 무영향)
+
+```bash
+cd /home/ubuntu/apps/haehan-ai-orchestrator-api
+docker compose stop        # 정지만 (볼륨·설정 유지)
+# 또는
+docker compose down        # 컨테이너·네트워크 제거, 볼륨 유지
+# 또는
+docker compose down -v     # 볼륨까지 제거 (로그 소실 주의)
+```
+
+`dashboard.service` / `monitor.service` 는 이 명령들로 절대 영향받지 않는다. 5050 포트 점유도 변하지 않는다.
 
 ## 다음 단계 (이번 범위 밖)
 
