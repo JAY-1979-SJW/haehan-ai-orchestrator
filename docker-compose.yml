@@ -42,8 +42,20 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      # default: 본 compose 전용 네트워크 (기존 동작 유지)
+      - default
+      # app_web: 기존 nginx(컨테이너) 가 속한 외부 네트워크. nginx → API DNS 접근용.
+      - app_web
 
 volumes:
   api_storage:
     # 기존 haehan-orchestrator-logs (구 compose) 와 겹치지 않게 명시 이름 지정.
     name: haehan-ai-orchestrator-api-storage
+
+networks:
+  # app 프로젝트(/home/ubuntu/app/docker-compose.yml) 에서 정의한 bridge.
+  # external: true 로 참조만 하며, 이 compose 가 생성/삭제하지 않는다.
+  app_web:
+    external: true
+    name: app_web

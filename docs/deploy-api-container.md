@@ -1,14 +1,18 @@
 # FastAPI 인증/RBAC API — A안 컨테이너 분리 배포
 
 ## 상태 (2026-04-22)
-- **상시 운영 전환 완료 (PASS).** 실운영 salted SHA-256 해시 반영 → 컨테이너 상시 기동.
+- **상시 운영 전환 + nginx reverse proxy 연결 완료 (PASS).**
 - 운영 디렉터리: `/home/ubuntu/apps/haehan-ai-orchestrator-api/`
-- 컨테이너명: `haehan-ai-orchestrator-api`
-- 이미지: `haehan-ai-orchestrator-api:local`
-- 포트: `127.0.0.1:8400` (외부 직접 노출 없음)
+- 컨테이너명: `haehan-ai-orchestrator-api` (`image: haehan-ai-orchestrator-api:local`)
+- 내부 upstream: `http://haehan-ai-orchestrator-api:8400` (컨테이너 DNS) — 호스트 포트는 `127.0.0.1:8400` 유지
+- 외부 접근 경로: **`https://haehan-ai.kr/orchestrator/api/v1/...`**
+  - 예: `GET https://haehan-ai.kr/orchestrator/api/v1/health`
+  - access 정책은 기존 `/orchestrator/` (dashboard) 와 동일한 IP allowlist 를 복제 (220.79.246.190, 127.0.0.1, 172.18.0.1)
+  - AUTH_ENABLED=true 유지 → Basic 인증 필수 (nginx 에서 인증 추가/우회 없음)
 - restart 정책: `unless-stopped`
 - 자격증명 파일: `secrets/api/http_users.json` (chmod 600, git 추적 외부)
 - 기존 `ai-orchestrator-dashboard.service` / `ai-orchestrator-monitor.service` 는 그대로 systemd 유지.
+- 네트워크 토폴로지: API 컨테이너는 자체 `haehan-ai-orchestrator-api_default` 네트워크에 더해 **외부 `app_web` 네트워크** 에 연결되어 있다. 이는 nginx 컨테이너(`app` 프로젝트) 가 동일 network bridge 로 API 에 DNS 접근하기 위한 조치이며, compose 는 `external: true` 로만 참조한다.
 
 ## 왜 A안인가
 
@@ -115,6 +119,57 @@ docker compose down -v
 - `ss -lntp | grep :5050` → dashboard 여전히 listen
 - `docker ps` 에 `haehan-ai-orchestrator-api` 만 신규 등장
 - `ls /home/ubuntu/apps/haehan-ai-orchestrator/` (기존 경로) 변화 없음
+
+## nginx reverse proxy 설정
+
+- 적용 파일: `/home/ubuntu/app/nginx/conf.d/default.conf` (nginx 는 `app` 프로젝트 컨테이너로 운영)
+- 추가된 location (haehan-ai.kr 443 server 블록 내, 기존 `/orchestrator/` 다음에 배치):
+
+```nginx
+location /orchestrator/api/ {
+    allow 220.79.246.190;
+    allow 127.0.0.1;
+    allow 172.18.0.1;
+    deny  all;
+
+    proxy_pass         http://haehan-ai-orchestrator-api:8400/api/;
+    proxy_http_version 1.1;
+    proxy_set_header   Host              $host;
+    proxy_set_header   X-Real-IP         $remote_addr;
+    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header   X-Forwarded-Proto $scheme;
+    proxy_set_header   X-Forwarded-Prefix /orchestrator/api;
+    proxy_hide_header  X-Powered-By;
+    proxy_hide_header  Server;
+    proxy_connect_timeout 10s;
+    proxy_read_timeout    60s;
+    proxy_send_timeout    30s;
+}
+```
+
+- 백업 네이밍: `default.conf.bak.<YYYYMMDD_HHMMSS>` (같은 디렉터리)
+- 검증/반영 명령:
+  ```bash
+  docker exec nginx nginx -t        # 문법 검증
+  docker exec nginx nginx -s reload # reload (실패 시 원복 후 재검증)
+  ```
+- 외부 health 확인:
+  ```bash
+  curl -sk --resolve haehan-ai.kr:443:127.0.0.1 https://haehan-ai.kr/orchestrator/api/v1/health
+  ```
+- 내부 health 는 종전 그대로 `curl -s http://127.0.0.1:8400/api/v1/health`.
+
+## nginx 설정 롤백 (proxy 경로만 원복)
+
+```bash
+cd /home/ubuntu/app/nginx/conf.d
+# 가장 최근 백업으로 복구 (예시)
+LATEST=$(ls -1t default.conf.bak.* | head -1)
+cp -v "$LATEST" default.conf
+docker exec nginx nginx -t && docker exec nginx nginx -s reload
+```
+
+이 롤백은 nginx 설정만 되돌리며, API 컨테이너·dashboard·monitor 에 영향을 주지 않는다.
 
 ## 롤백 (API 만 내리기 — dashboard/monitor 무영향)
 
