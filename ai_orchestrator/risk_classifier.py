@@ -1,4 +1,7 @@
+import logging
 from .models import TaskRequest, RiskAssessment
+
+logger = logging.getLogger(__name__)
 
 SENSITIVE_PATHS = ["/etc/", "/var/lib/", "~/.ssh/", "~/.secrets/", "C:/Windows/", "C:/Users/skyjw/.ssh/"]
 DESTRUCTIVE_COMMANDS = ["rm -rf", "dd if=", "mkfs", "shutdown", "reboot", "DROP TABLE", "DELETE FROM", "fdisk"]

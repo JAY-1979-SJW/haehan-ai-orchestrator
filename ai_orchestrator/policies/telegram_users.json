@@ -1,0 +1,26 @@
+[
+  {
+    "telegram_user_id": "111111111",
+    "actor": "admin",
+    "role": "admin",
+    "enabled": true
+  },
+  {
+    "telegram_user_id": "222222222",
+    "actor": "approver-01",
+    "role": "approver",
+    "enabled": true
+  },
+  {
+    "telegram_user_id": "333333333",
+    "actor": "viewer-01",
+    "role": "viewer",
+    "enabled": true
+  },
+  {
+    "telegram_user_id": "999999999",
+    "actor": "disabled-user",
+    "role": "approver",
+    "enabled": false
+  }
+]

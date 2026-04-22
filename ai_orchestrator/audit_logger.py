@@ -1,9 +1,11 @@
 import json
+import logging
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
-_LOG_PATH = Path(__file__).parent / "storage" / "audit_logs.jsonl"
+from .config import AUDIT_LOG_PATH as _LOG_PATH
+
+logger = logging.getLogger(__name__)
 
 EVENT_TYPES = {
     "TASK_RECEIVED",
@@ -11,9 +13,18 @@ EVENT_TYPES = {
     "PLAN_CREATED",
     "APPROVAL_ISSUED",
     "APPROVAL_GRANTED",
+    "APPROVAL_DENIED",
     "APPROVAL_REJECTED",
+    "APPROVAL_INVALID_TOKEN",
+    "APPROVAL_EXPIRED",
+    "APPROVAL_ALREADY_USED",
+    "APPROVAL_RATE_LIMITED",
+    "APPROVAL_REJECT_FORBIDDEN",
+    "APPROVAL_REJECT_INVALID_TOKEN",
     "EXECUTION_BLOCKED",
     "EXECUTION_PENDING",
+    "EXECUTION_RATE_LIMITED",
+    "EXECUTION_TIMEOUT",
     "DRY_RUN_RETURNED",
 }
 
@@ -28,9 +39,10 @@ def log_event(
     requires_approval: Optional[bool] = None,
     decision: str = "",
     actor: str = "system",
+    role: str = "",
+    token_id: str = "",
     note: str = "",
 ) -> None:
-    _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "event_type": event_type,
@@ -42,21 +54,36 @@ def log_event(
         "requires_approval": requires_approval,
         "decision": decision,
         "actor": actor,
+        "role": role,
+        "token_id": token_id,
         "note": note,
     }
-    with open(_LOG_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    logger.info("[AUDIT] %s | task=%s | actor=%s | role=%s | decision=%s%s",
+                event_type, task_id, actor, role or "-", decision,
+                f" | {note}" if note else "")
+
+    try:
+        _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError as e:
+        logger.error("감사 로그 파일 기록 실패: %s | entry=%s", e, entry)
 
 
 def read_recent_logs(limit: int = 20) -> list[dict]:
     if not _LOG_PATH.exists():
         return []
-    lines = _LOG_PATH.read_text(encoding="utf-8").strip().splitlines()
+    try:
+        lines = _LOG_PATH.read_text(encoding="utf-8").strip().splitlines()
+    except OSError as e:
+        logger.error("감사 로그 읽기 실패: %s", e)
+        return []
     recent = lines[-limit:] if len(lines) > limit else lines
     result = []
     for line in recent:
         try:
             result.append(json.loads(line))
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            logger.warning("감사 로그 파싱 실패: %s | line=%r", e, line)
     return result

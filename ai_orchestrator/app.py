@@ -1,13 +1,20 @@
+# 운영 진입점 아님 — CLI 전용 (컨테이너 실행: ai_orchestrator.server:app)
 import sys
 import io
+import logging
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
+from ai_orchestrator.logging_setup import setup_logging
 from ai_orchestrator.models import TaskRequest
 from ai_orchestrator.planner import plan
 from ai_orchestrator.executor import execute
 from ai_orchestrator.openai_client import generate_task_summary, generate_approval_reason, is_mock_mode
 from ai_orchestrator.approval import issue_token, approve_token, validate_token
 from ai_orchestrator.audit_logger import log_event, read_recent_logs
+
+setup_logging()
+logger = logging.getLogger(__name__)
 
 
 def _header(title: str):
@@ -69,14 +76,12 @@ def run_scenario_b():
     log_event("RISK_ASSESSED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
               allowed=ep.allowed, requires_approval=ep.requires_approval)
 
-    # 승인 토큰 발급
     token = issue_token(req, risk, ttl_minutes=30)
     log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
               decision="issued", actor=req.requested_by, note=f"token_id={token.token_id}")
 
     approval_reason = generate_approval_reason(req, ep)
 
-    # 승인 전 상태
     pre_result = execute(ep)
     print(f"  task_id              : {req.task_id}")
     print(f"  risk_level           : {risk.risk_level.upper()}")
@@ -86,10 +91,9 @@ def run_scenario_b():
     print(f"  ai_approval_reason   : {approval_reason}")
     print(f"  [승인 전] status     : {pre_result}")
 
-    # 승인 처리
-    approved = approve_token(token.token_id, approved_by="대표님")
+    approved, _status = approve_token(token.token_id, req.task_id, approved_by="대표님", role="admin")
     log_event("APPROVAL_GRANTED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision="approved", actor="대표님", note=f"token_id={token.token_id}")
+              decision=_status, actor="대표님", role="admin", token_id=token.token_id)
 
     valid = validate_token(token.token_id, req.task_id)
     final_status = "APPROVED_DRY_RUN" if valid else pre_result
@@ -123,9 +127,9 @@ def run_scenario_c():
     log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
               decision="issued", actor=req.requested_by, note=f"token_id={token.token_id}")
 
-    approved = approve_token(token.token_id, approved_by="대표님")
+    approved, _status = approve_token(token.token_id, req.task_id, approved_by="대표님", role="admin")
     log_event("APPROVAL_GRANTED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision="approved", actor="대표님", note=f"token_id={token.token_id}")
+              decision=_status, actor="대표님", role="admin", token_id=token.token_id)
 
     valid = validate_token(token.token_id, req.task_id)
     final_status = "APPROVED_DRY_RUN" if valid else "PENDING_APPROVAL"
@@ -174,6 +178,7 @@ def run_scenario_d():
 
 def main():
     mode = "[MOCK 모드]" if is_mock_mode() else "[실제 OpenAI 연결]"
+    logger.info("CLI 실행 시작 | mode=%s", mode)
     print(f"\n{'=' * 60}")
     print(f"  승인형 AI 오케스트레이터 2단계 드라이런  {mode}")
     print(f"{'=' * 60}")
@@ -186,6 +191,8 @@ def main():
     print("\n[최근 감사 로그 (최대 5건)]")
     for entry in read_recent_logs(limit=5):
         print(f"  {entry['timestamp'][:19]} | {entry['event_type']:<22} | {entry['task_id']} | {entry.get('decision', '')}")
+
+    logger.info("CLI 실행 완료")
 
 
 if __name__ == "__main__":

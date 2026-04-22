@@ -1,13 +1,35 @@
 import uuid
 import json
-from dataclasses import dataclass, field, asdict
+import logging
+import threading
+from collections import defaultdict
+from dataclasses import dataclass, asdict
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 from typing import Literal, Optional
 
 from .models import TaskRequest, RiskAssessment
+from .config import APPROVAL_STORE_PATH as _STORE_PATH
 
-_STORE_PATH = Path(__file__).parent / "storage" / "approval_tokens.json"
+logger = logging.getLogger(__name__)
+
+# ── Role 정책 ──────────────────────────────────────────────────────
+# 승인/거절을 수행할 수 있는 내부 권한
+_APPROVER_ROLES = {"admin", "owner"}
+
+# 레거시 별칭: 외부에서 들어온 role 문자열을 내부 표준 role로 정규화
+_ROLE_ALIASES = {"approver": "admin"}
+
+
+def _normalize_role(role: str) -> str:
+    return _ROLE_ALIASES.get(role, role)
+
+# ── Rate limit (인메모리, 재시작 시 초기화) ─────────────────────────
+_rate_store: dict[str, list[float]] = defaultdict(list)
+_rate_lock = threading.Lock()
+RATE_LIMIT_MAX = 5
+RATE_LIMIT_WINDOW_SEC = 60
+
+# ── 토큰 저장소 ────────────────────────────────────────────────────
 _store: dict[str, dict] = {}
 
 
@@ -20,25 +42,97 @@ class ApprovalToken:
     issued_by: str
     approved_by: Optional[str]
     risk_level: str
-    status: Literal["issued", "approved", "expired", "revoked"]
+    status: Literal["issued", "approved", "expired", "revoked", "rejected"]
+    used_at: Optional[str] = None
+    result: str = ""
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _load_store():
+# JSONL 이벤트 필드 중 토큰 엔트리로 복원할 키 목록
+_TOKEN_FIELDS = (
+    "token_id", "task_id", "issued_at", "expires_at", "issued_by",
+    "approved_by", "risk_level", "status", "used_at", "result",
+)
+
+# 만료된 지 이 시간 이상 지난 토큰은 로딩 시 메모리에서 제외
+_STALE_AFTER = timedelta(hours=24)
+
+
+def _load_store() -> None:
+    """append-only JSONL 이벤트를 재생하여 _store 를 복구한다.
+
+    각 라인은 이벤트 메타데이터 + 토큰 스냅샷. token_id 별 last-wins 로 머지.
+    만료 후 24시간 이상 경과한 토큰은 로딩 시 필터링.
+    """
     global _store
-    if _STORE_PATH.exists():
+    _store = {}
+    if not _STORE_PATH.exists():
+        return
+    try:
+        with open(_STORE_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.warning("승인 토큰 이벤트 파싱 실패: %s | line=%r", e, line)
+                    continue
+                token_id = event.get("token_id")
+                if not token_id:
+                    continue
+                entry = {k: event.get(k) for k in _TOKEN_FIELDS}
+                entry.setdefault("used_at", None)
+                entry["result"] = entry.get("result") or ""
+                _store[token_id] = entry
+    except OSError as e:
+        logger.error("승인 토큰 저장소 로드 실패: %s", e)
+        _store = {}
+        return
+
+    # 만료된 지 오래된 토큰 필터
+    threshold = _now() - _STALE_AFTER
+    stale = []
+    for tid, entry in _store.items():
         try:
-            _store = json.loads(_STORE_PATH.read_text(encoding="utf-8"))
-        except Exception:
-            _store = {}
+            exp = datetime.fromisoformat(entry["expires_at"])
+        except (TypeError, ValueError):
+            continue
+        if exp < threshold:
+            stale.append(tid)
+    for tid in stale:
+        del _store[tid]
 
 
-def _save_store():
-    _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _STORE_PATH.write_text(json.dumps(_store, indent=2, ensure_ascii=False), encoding="utf-8")
+def _append_event(event_type: str, entry: dict) -> None:
+    """토큰 상태 변경 이벤트 1줄을 JSONL 에 append."""
+    try:
+        _STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        event = {
+            "event_timestamp": _now().isoformat(),
+            "event_type": event_type,
+            **{k: entry.get(k) for k in _TOKEN_FIELDS},
+        }
+        with open(_STORE_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+    except OSError as e:
+        logger.error("승인 토큰 이벤트 기록 실패: %s", e)
+
+
+def _check_rate_limit(actor: str) -> tuple[bool, str]:
+    now_ts = _now().timestamp()
+    with _rate_lock:
+        attempts = [t for t in _rate_store[actor] if now_ts - t < RATE_LIMIT_WINDOW_SEC]
+        if len(attempts) >= RATE_LIMIT_MAX:
+            _rate_store[actor] = attempts
+            return False, f"{RATE_LIMIT_MAX}회/{RATE_LIMIT_WINDOW_SEC}초 초과"
+        attempts.append(now_ts)
+        _rate_store[actor] = attempts
+        return True, ""
 
 
 def issue_token(req: TaskRequest, risk: RiskAssessment, ttl_minutes: int = 30) -> ApprovalToken:
@@ -53,26 +147,158 @@ def issue_token(req: TaskRequest, risk: RiskAssessment, ttl_minutes: int = 30) -
         approved_by=None,
         risk_level=risk.risk_level,
         status="issued",
+        used_at=None,
+        result="",
     )
-    _store[token.token_id] = asdict(token)
-    _save_store()
+    entry = asdict(token)
+    _store[token.token_id] = entry
+    _append_event("token_created", entry)
     return token
 
 
-def approve_token(token_id: str, approved_by: str) -> ApprovalToken:
+def approve_token(
+    token_id: str,
+    task_id: str,
+    approved_by: str,
+    role: str,
+) -> tuple[ApprovalToken, str]:
+    """
+    Returns (token, status).
+    status: approved | not_found | task_mismatch | already_used | expired | forbidden | rate_limited
+    """
     _load_store()
-    if token_id not in _store:
-        raise KeyError(f"토큰 없음: {token_id}")
-    entry = _store[token_id]
-    expires = datetime.fromisoformat(entry["expires_at"])
+
+    # 1. 토큰 존재 여부
+    entry = _store.get(token_id)
+    if not entry:
+        logger.warning("승인 시도: 토큰 없음 | token_id=%.8s | actor=%s", token_id, approved_by)
+        return _stub_token(token_id, task_id, approved_by), "not_found"
+
+    token_obj = ApprovalToken(**entry)
+
+    # 2. task_id 일치
+    if token_obj.task_id != task_id:
+        logger.warning("승인 시도: task_id 불일치 | token_id=%.8s | expected=%s | got=%s",
+                       token_id, token_obj.task_id, task_id)
+        return token_obj, "task_mismatch"
+
+    # 3. 이미 사용된 토큰
+    if token_obj.status != "issued":
+        logger.warning("승인 시도: 이미 사용됨 | token_id=%.8s | status=%s", token_id, token_obj.status)
+        return token_obj, "already_used"
+
+    # 4. 만료 검사
+    expires = datetime.fromisoformat(token_obj.expires_at)
     if _now() > expires:
         entry["status"] = "expired"
-        _save_store()
-        raise ValueError(f"토큰 만료: {token_id}")
+        entry["result"] = "expired"
+        _append_event("token_expired", entry)
+        token_obj.status = "expired"
+        token_obj.result = "expired"
+        logger.warning("승인 시도: 만료 | token_id=%.8s", token_id)
+        return token_obj, "expired"
+
+    # 5. role 권한 검사
+    if _normalize_role(role) not in _APPROVER_ROLES:
+        logger.warning("승인 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s",
+                       token_id, approved_by, role)
+        return token_obj, "forbidden"
+
+    # 6. rate limit
+    allowed, reason = _check_rate_limit(approved_by)
+    if not allowed:
+        logger.warning("승인 시도: rate_limited | actor=%s | %s", approved_by, reason)
+        return token_obj, "rate_limited"
+
+    # 7. 승인 완료
+    now = _now()
     entry["approved_by"] = approved_by
     entry["status"] = "approved"
-    _save_store()
-    return ApprovalToken(**entry)
+    entry["used_at"] = now.isoformat()
+    entry["result"] = "approved"
+    _append_event("token_approved", entry)
+
+    token_obj.approved_by = approved_by
+    token_obj.status = "approved"
+    token_obj.used_at = now.isoformat()
+    token_obj.result = "approved"
+
+    logger.info("승인 완료 | token_id=%.8s | task=%s | actor=%s | role=%s",
+                token_id, task_id, approved_by, role)
+    return token_obj, "approved"
+
+
+def reject_token(
+    token_id: str,
+    task_id: str,
+    rejected_by: str,
+    role: str,
+    reason: str = "",
+) -> tuple["ApprovalToken", str]:
+    """
+    Returns (token, status).
+    status: rejected | not_found | task_mismatch | already_used | expired | forbidden | rate_limited
+    """
+    _load_store()
+
+    entry = _store.get(token_id)
+    if not entry:
+        logger.warning("거절 시도: 토큰 없음 | token_id=%.8s | actor=%s", token_id, rejected_by)
+        return _stub_token(token_id, task_id, rejected_by), "not_found"
+
+    token_obj = ApprovalToken(**entry)
+
+    if token_obj.task_id != task_id:
+        logger.warning("거절 시도: task_id 불일치 | token_id=%.8s", token_id)
+        return token_obj, "task_mismatch"
+
+    if token_obj.status != "issued":
+        logger.warning("거절 시도: 이미 사용됨 | token_id=%.8s | status=%s", token_id, token_obj.status)
+        return token_obj, "already_used"
+
+    expires = datetime.fromisoformat(token_obj.expires_at)
+    if _now() > expires:
+        entry["status"] = "expired"
+        entry["result"] = "expired"
+        _append_event("token_expired", entry)
+        token_obj.status = "expired"
+        token_obj.result = "expired"
+        logger.warning("거절 시도: 만료 | token_id=%.8s", token_id)
+        return token_obj, "expired"
+
+    if _normalize_role(role) not in _APPROVER_ROLES:
+        logger.warning("거절 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s",
+                       token_id, rejected_by, role)
+        return token_obj, "forbidden"
+
+    allowed, rate_reason = _check_rate_limit(rejected_by)
+    if not allowed:
+        logger.warning("거절 시도: rate_limited | actor=%s | %s", rejected_by, rate_reason)
+        return token_obj, "rate_limited"
+
+    now = _now()
+    entry["approved_by"] = rejected_by
+    entry["status"] = "rejected"
+    entry["used_at"] = now.isoformat()
+    entry["result"] = f"rejected:{reason}" if reason else "rejected"
+    _append_event("token_rejected", entry)
+
+    token_obj.approved_by = rejected_by
+    token_obj.status = "rejected"
+    token_obj.used_at = now.isoformat()
+    token_obj.result = entry["result"]
+
+    logger.info("거절 완료 | token_id=%.8s | task=%s | actor=%s | role=%s | reason=%s",
+                token_id, task_id, rejected_by, role, reason or "-")
+    return token_obj, "rejected"
+
+
+def _stub_token(token_id: str, task_id: str, approved_by: str) -> ApprovalToken:
+    return ApprovalToken(
+        token_id=token_id, task_id=task_id, issued_at="", expires_at="",
+        issued_by="", approved_by=approved_by, risk_level="",
+        status="revoked", result="not_found",
+    )
 
 
 def validate_token(token_id: str, task_id: str) -> bool:
@@ -87,7 +313,8 @@ def validate_token(token_id: str, task_id: str) -> bool:
     expires = datetime.fromisoformat(entry["expires_at"])
     if _now() > expires:
         entry["status"] = "expired"
-        _save_store()
+        entry["result"] = "expired"
+        _append_event("token_expired", entry)
         return False
     return True
 
@@ -95,8 +322,9 @@ def validate_token(token_id: str, task_id: str) -> bool:
 def revoke_token(token_id: str) -> None:
     _load_store()
     if token_id in _store:
-        _store[token_id]["status"] = "revoked"
-        _save_store()
+        entry = _store[token_id]
+        entry["status"] = "revoked"
+        _append_event("token_revoked", entry)
 
 
 def get_token(token_id: str) -> Optional[ApprovalToken]:

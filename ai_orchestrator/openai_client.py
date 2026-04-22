@@ -1,12 +1,19 @@
-import os
-from .models import TaskRequest, RiskAssessment, ExecutionPlan
+import logging
 
-_MOCK_MODE = not bool(os.environ.get("OPENAI_API_KEY", "").strip())
+from .models import TaskRequest, RiskAssessment, ExecutionPlan
+from .config import OPENAI_API_KEY
+
+logger = logging.getLogger(__name__)
+
+_MOCK_MODE = not bool(OPENAI_API_KEY.strip())
+
+if _MOCK_MODE:
+    logger.warning("OPENAI_API_KEY 미설정 — MOCK 모드로 실행됩니다")
 
 
 def _get_client():
     from openai import OpenAI
-    return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    return OpenAI(api_key=OPENAI_API_KEY)
 
 
 def _call(system: str, user: str, fallback: str) -> str:
@@ -23,8 +30,11 @@ def _call(system: str, user: str, fallback: str) -> str:
             max_tokens=200,
             timeout=10,
         )
-        return resp.choices[0].message.content.strip()
-    except Exception:
+        result = resp.choices[0].message.content.strip()
+        logger.debug("OpenAI 호출 성공 | tokens=%s", resp.usage.total_tokens if resp.usage else "?")
+        return result
+    except Exception as e:
+        logger.error("OpenAI 호출 실패: %s — fallback 반환", e)
         return fallback
 
 

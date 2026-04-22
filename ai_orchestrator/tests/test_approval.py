@@ -29,7 +29,8 @@ def test_approve_and_validate():
     req = make_req("T-APR-V2")
     risk = make_risk()
     token = issue_token(req, risk)
-    approved = approve_token(token.token_id, "대표님")
+    approved, status = approve_token(token.token_id, req.task_id, "대표님", "admin")
+    assert status == "approved"
     assert approved.status == "approved"
     assert validate_token(token.token_id, req.task_id)
     print("PASS: approve_token 후 status=approved, validate=True")
@@ -39,7 +40,8 @@ def test_wrong_task_id_fails():
     req = make_req("T-APR-V3")
     risk = make_risk()
     token = issue_token(req, risk)
-    approve_token(token.token_id, "대표님")
+    _, status = approve_token(token.token_id, req.task_id, "대표님", "admin")
+    assert status == "approved"
     assert not validate_token(token.token_id, "WRONG-TASK-ID")
     print("PASS: task_id 불일치 시 validate=False")
 
@@ -47,16 +49,11 @@ def test_wrong_task_id_fails():
 def test_expired_token_fails():
     req = make_req("T-APR-V4")
     risk = make_risk()
-    token = issue_token(req, risk, ttl_minutes=0)  # ttl=0 -> 즉시 만료
-    # ttl=0이므로 approve_token 자체가 ValueError 발생 (정상 동작)
-    try:
-        approve_token(token.token_id, "대표님")
-        # approve 통과했다면 validate는 False여야 함
-        assert not validate_token(token.token_id, req.task_id)
-    except ValueError:
-        # 만료로 approve 거부 -> validate도 False
-        assert not validate_token(token.token_id, req.task_id)
-    print("PASS: 만료 토큰 validate=False")
+    token = issue_token(req, risk, ttl_minutes=0)
+    _, status = approve_token(token.token_id, req.task_id, "대표님", "admin")
+    assert status == "expired"
+    assert not validate_token(token.token_id, req.task_id)
+    print("PASS: 만료 토큰 status=expired, validate=False")
 
 
 if __name__ == "__main__":

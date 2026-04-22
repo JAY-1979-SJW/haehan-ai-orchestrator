@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  ai-orchestrator:
+    build: .
+    container_name: haehan-ai-orchestrator
+    ports:
+      - "127.0.0.1:8400:8400"
+    env_file: .env
+    volumes:
+      - orchestrator_logs:/app/ai_orchestrator/storage
+    networks:
+      - orchestrator_net
+    restart: unless-stopped
+
+volumes:
+  orchestrator_logs:
+    name: haehan-orchestrator-logs
+
+networks:
+  orchestrator_net:
+    name: haehan-orchestrator-net
+    driver: bridge

@@ -3,24 +3,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def test_mock_mode_when_no_key():
-    # OPENAI_API_KEY 없으면 mock 반환 확인
-    os.environ.pop("OPENAI_API_KEY", None)
-
-    # 모듈 재로드로 _MOCK_MODE 재평가
-    import importlib
+    # config.py가 캐싱하므로 reload 대신 patch로 _MOCK_MODE 직접 제어
+    from unittest.mock import patch
     import ai_orchestrator.openai_client as oc
-    importlib.reload(oc)
-
     from ai_orchestrator.models import TaskRequest, RiskAssessment
+
     req = TaskRequest(
         task_id="T-OAI-001", source="manual", action_type="read_file",
         target="/tmp/x.txt", description="테스트", requested_by="test"
     )
     risk = RiskAssessment(risk_level="low", reasons=[], requires_approval=False)
 
-    summary = oc.generate_task_summary(req, risk)
-    assert "[MOCK]" in summary
-    assert oc.is_mock_mode()
+    with patch.object(oc, "OPENAI_API_KEY", ""), patch.object(oc, "_MOCK_MODE", True):
+        summary = oc.generate_task_summary(req, risk)
+        assert "[MOCK]" in summary
+        assert oc.is_mock_mode()
     print(f"PASS: API 키 없을 때 mock 반환: '{summary[:50]}...'")
 
 

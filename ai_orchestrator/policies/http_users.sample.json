@@ -1,0 +1,26 @@
+[
+  {
+    "username": "owner",
+    "password_hash": "sha256$REPLACE_WITH_16B_SALT_HEX$REPLACE_WITH_32B_SHA256_HEX",
+    "role": "owner",
+    "enabled": true
+  },
+  {
+    "username": "admin",
+    "password_hash": "sha256$REPLACE_WITH_16B_SALT_HEX$REPLACE_WITH_32B_SHA256_HEX",
+    "role": "admin",
+    "enabled": true
+  },
+  {
+    "username": "operator",
+    "password_hash": "sha256$REPLACE_WITH_16B_SALT_HEX$REPLACE_WITH_32B_SHA256_HEX",
+    "role": "operator",
+    "enabled": true
+  },
+  {
+    "username": "viewer",
+    "password_hash": "sha256$REPLACE_WITH_16B_SALT_HEX$REPLACE_WITH_32B_SHA256_HEX",
+    "role": "viewer",
+    "enabled": false
+  }
+]

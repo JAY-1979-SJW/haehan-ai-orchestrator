@@ -6,6 +6,9 @@
 secrets/
 .secrets/
 
+# 운영 자격증명 — 실제 계정/해시 파일은 절대 커밋 금지 (샘플만 추적)
+ai_orchestrator/policies/http_users.json
+
 # Python
 __pycache__/
 *.pyc
@@ -30,3 +33,9 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# 런타임 산출물 (로그, 토큰 스토어, 실행 이력, 인박스 등)
+ai_orchestrator/storage/*.log
+ai_orchestrator/storage/*.jsonl
+ai_orchestrator/storage/*.json
+!ai_orchestrator/storage/.gitkeep
