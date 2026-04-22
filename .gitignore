@@ -39,3 +39,9 @@ ai_orchestrator/storage/*.log
 ai_orchestrator/storage/*.jsonl
 ai_orchestrator/storage/*.json
 !ai_orchestrator/storage/.gitkeep
+
+# 사이트 자동화: 브라우저 세션 파일 및 스크린샷은 민감정보 (절대 커밋 금지)
+# secrets/ 는 위에서 이미 ignore 되어 있지만, 명시적으로 재확인.
+secrets/sites/
+secrets/browser_state/
+ai_orchestrator/storage/site_screenshots/

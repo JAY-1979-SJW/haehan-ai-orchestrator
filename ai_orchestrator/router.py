@@ -15,8 +15,10 @@ from .telegram_webhook import handle_telegram_webhook, handle_telegram_update
 from .inbox import read_recent_inbox, get_inbox_item as _get_inbox_item
 from .gmail_reader import collect_to_inbox as _collect_gmail
 from dataclasses import asdict as _asdict
+from .sites.router import sites_router
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
+router.include_router(sites_router)
 
 
 class TaskSubmit(BaseModel):
