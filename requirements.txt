@@ -7,6 +7,13 @@ httpx>=0.27.0
 google-auth>=2.0.0
 google-auth-oauthlib>=1.0.0
 google-api-python-client>=2.0.0
+psutil>=5.9.0
+playwright>=1.40.0
+cryptography>=42.0.0
+openpyxl>=3.1.0
+# Windows 로컬 Excel COM 제어 (B안 1단계 POC) — Windows 에서만 설치.
+# Linux/서버 환경에는 영향 없도록 환경 마커 분리.
+pywin32>=306; sys_platform == "win32"
 pytest>=7.0
 flask>=3.0.0
 requests>=2.31.0

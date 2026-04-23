@@ -29,27 +29,10 @@ EVENT_TYPES = {
     "SITE_CONNECTORS_LISTED",
     "SITE_HEALTH_CHECK",
     "SITE_TASK_DRY_RUN",
-    "TASK_STATE_PENDING",
-    "TASK_STATE_APPROVED",
-    "TASK_STATE_REJECTED",
-    "TASK_STATE_EXECUTED",
-    "EXECUTION_DONE",
     # CAD 프록시 — /api/v1/cad/* 호출 감사
     "CAD_PROXY_CALL",
     "CAD_PROXY_DENIED",
     "CAD_PROXY_UPSTREAM_ERROR",
-    # MCP 레벨 write 차단 (orchestrator 에 도달하기 전 1차 게이트)
-    # cad-mcp 가 orchestrator 에 전달 시 자체 로그로 기록하지만,
-    # orchestrator 가 수신한 요청 중 denial 사유 추적에도 활용 가능.
-    "MCP_WRITE_DENIED",
-    # 개발자 등록 신청 승인 게이트 (hiworks/naver/google)
-    "DEV_REG_TASK_CREATED",
-    "DEV_REG_TELEGRAM_SENT",
-    "DEV_REG_APPROVED",
-    "DEV_REG_REJECTED",
-    "DEV_REG_EXPIRED",
-    "DEV_REG_EXECUTED",
-    "DEV_REG_FAILED",
     # 웹 작업 레지스트리 + 표준 실행 API
     "WEB_TASK_RUN_REQUESTED",
     "WEB_TASK_DRY_RUN_COMPLETED",
@@ -57,6 +40,14 @@ EVENT_TYPES = {
     "WEB_TASK_REJECTED_UNKNOWN_TASK",
     "WEB_TASK_VALIDATION_FAILED",
     "WEB_TASK_REGISTRY_LISTED",
+    # 개발자 등록 승인 게이트 (web_task_router 가 dev_reg_approval 재사용)
+    "DEV_REG_TASK_CREATED",
+    "DEV_REG_TELEGRAM_SENT",
+    "DEV_REG_APPROVED",
+    "DEV_REG_REJECTED",
+    "DEV_REG_EXPIRED",
+    "DEV_REG_EXECUTED",
+    "DEV_REG_FAILED",
 }
 
 
