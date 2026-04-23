@@ -45,6 +45,22 @@ AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").strip().lower() in {"1", 
 _http_users_env = os.environ.get("HTTP_USERS_PATH", "").strip()
 HTTP_USERS_PATH = Path(_http_users_env) if _http_users_env else Path(__file__).parent / "policies" / "http_users.json"
 
+# ── CAD 프록시 ────────────────────────────────────────────────────
+# cad-backend(cad-quantity FastAPI) 의 내부 주소. 도커 네트워크 연결 시
+# compose 의 cad-quantity_default 외부 네트워크로부터 ``cad-backend`` DNS
+# 로 해석된다. 테스트/로컬에서는 env 로 덮어쓴다.
+CAD_BACKEND_URL = (
+    os.environ.get("CAD_BACKEND_URL", "http://cad-backend:8000").strip()
+    or "http://cad-backend:8000"
+).rstrip("/")
+# 프록시 타임아웃(초). 파서/업로드처럼 긴 호출은 env 로 상향 가능.
+try:
+    CAD_PROXY_TIMEOUT_SEC = float(os.environ.get("CAD_PROXY_TIMEOUT_SEC", "60"))
+    if CAD_PROXY_TIMEOUT_SEC <= 0 or CAD_PROXY_TIMEOUT_SEC > 600:
+        raise ValueError()
+except (TypeError, ValueError):
+    CAD_PROXY_TIMEOUT_SEC = 60.0
+
 # APP_HOST
 APP_HOST = os.environ.get("APP_HOST", "127.0.0.1").strip() or "127.0.0.1"
 

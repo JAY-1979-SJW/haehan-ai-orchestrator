@@ -29,6 +29,10 @@ EVENT_TYPES = {
     "SITE_CONNECTORS_LISTED",
     "SITE_HEALTH_CHECK",
     "SITE_TASK_DRY_RUN",
+    # CAD 프록시 — /api/v1/cad/* 호출 감사
+    "CAD_PROXY_CALL",
+    "CAD_PROXY_DENIED",
+    "CAD_PROXY_UPSTREAM_ERROR",
 }
 
 
