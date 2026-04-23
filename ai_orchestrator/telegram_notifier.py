@@ -1,7 +1,7 @@
 """텔레그램 송신 포맷 모듈 (전송 자체는 수행하지 않음).
 
 버튼 callback_data 포맷 정의와 파싱/메시지 빌더만 담당.
-실제 Bot API HTTP 호출은 추후 별도 레이어에서 수행.
+실제 Bot API HTTP 호출은 telegram_sender.py 에서 수행.
 """
 
 from typing import Optional
@@ -10,6 +10,12 @@ from typing import Optional
 # Telegram 제한(64바이트) 내 유지하려면 task_id 는 짧게 유지 권장.
 CALLBACK_SEP = "|"
 _VALID_ACTIONS = ("approve", "reject")
+
+# 개발자 등록 신청 전용 callback_data 포맷: "dr_a|{token_id}" / "dr_r|{token_id}"
+# UUID(36) + prefix 4 + sep 1 = 41 bytes — 64 바이트 제한 충족.
+_DR_APPROVE = "dr_a"
+_DR_REJECT = "dr_r"
+_DR_ACTIONS = {_DR_APPROVE, _DR_REJECT}
 
 
 def build_callback_data(action: str, task_id: str, token_id: str) -> str:
@@ -49,6 +55,66 @@ def build_approval_message(task_id: str, risk_level: str, token_id: str,
             "inline_keyboard": [[
                 {"text": "승인", "callback_data": build_callback_data("approve", task_id, token_id)},
                 {"text": "거절", "callback_data": build_callback_data("reject", task_id, token_id)},
+            ]],
+        },
+    }
+
+
+def build_dev_reg_callback_data(action: str, token_id: str) -> str:
+    """개발자 등록 승인용 callback_data. "dr_a|{token_id}" 또는 "dr_r|{token_id}" 형식."""
+    prefix = _DR_APPROVE if action == "approve" else _DR_REJECT
+    data = f"{prefix}{CALLBACK_SEP}{token_id}"
+    if len(data.encode("utf-8")) > 64:
+        raise ValueError(f"callback_data too long ({len(data)} bytes > 64): {data}")
+    return data
+
+
+def parse_dev_reg_callback_data(data: str) -> Optional[dict]:
+    """개발자 등록 callback_data 파싱 → {"action": "approve"/"reject", "token_id": str}. 실패 시 None."""
+    if not data:
+        return None
+    parts = data.split(CALLBACK_SEP)
+    if len(parts) != 2:
+        return None
+    raw_action, token_id = parts
+    if raw_action not in _DR_ACTIONS or not token_id:
+        return None
+    return {"action": "approve" if raw_action == _DR_APPROVE else "reject", "token_id": token_id}
+
+
+def build_dev_reg_message(
+    task_id: str,
+    provider: str,
+    action_type: str,
+    summary: str,
+    risk_level: str,
+    target_url: str,
+    expires_at: str,
+    token_id: str,
+) -> dict:
+    """개발자 등록 승인 요청 메시지 구조 (전송 전 포맷).
+
+    스크린샷은 telegram_sender.send_photo() 의 caption 으로 포함.
+    Returns: {"text": str, "reply_markup": dict}
+    """
+    lines = [
+        "<b>[개발자 등록 승인 요청]</b>",
+        f"서비스: {provider}",
+        f"신청 유형: {action_type}",
+        f"위험도: {risk_level}",
+        f"대상 URL: {target_url}",
+        f"만료: {expires_at}",
+        f"task: {task_id}",
+        "",
+        "<b>입력 요약:</b>",
+        summary,
+    ]
+    return {
+        "text": "\n".join(lines),
+        "reply_markup": {
+            "inline_keyboard": [[
+                {"text": "✅ 승인", "callback_data": build_dev_reg_callback_data("approve", token_id)},
+                {"text": "❌ 거절", "callback_data": build_dev_reg_callback_data("reject", token_id)},
             ]],
         },
     }

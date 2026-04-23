@@ -331,3 +331,40 @@ def get_token(token_id: str) -> Optional[ApprovalToken]:
     _load_store()
     entry = _store.get(token_id)
     return ApprovalToken(**entry) if entry else None
+
+
+def issue_token_for_dev_reg(
+    task_id: str,
+    requested_by: str,
+    risk_level: str,
+    ttl_minutes: int = 30,
+) -> ApprovalToken:
+    """개발자 등록 신청 전용 승인 토큰 발행.
+
+    issue_token() 은 TaskRequest / RiskAssessment 객체를 요구하지만,
+    dev_reg 경로는 이를 생성하지 않으므로 최소 파라미터로 직접 발행한다.
+    """
+    _load_store()
+    now = _now()
+    token = ApprovalToken(
+        token_id=str(uuid.uuid4()),
+        task_id=task_id,
+        issued_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=ttl_minutes)).isoformat(),
+        issued_by=requested_by,
+        approved_by=None,
+        risk_level=risk_level,
+        status="issued",
+        used_at=None,
+        result="",
+    )
+    entry = asdict(token)
+    _store[token.token_id] = entry
+    _append_event("token_created", entry)
+    return token
+
+
+def clear_rate_store() -> None:
+    """테스트 전용: 승인/거절 rate limit 의 인메모리 카운터 초기화."""
+    with _rate_lock:
+        _rate_store.clear()

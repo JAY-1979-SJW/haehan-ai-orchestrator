@@ -6,7 +6,7 @@ from typing import Optional
 from .approval import approve_token, reject_token
 from .audit_logger import log_event
 from .inbox import create_inbox_item
-from .telegram_notifier import parse_callback_data, build_result_text
+from .telegram_notifier import parse_callback_data, parse_dev_reg_callback_data, build_result_text
 
 logger = logging.getLogger(__name__)
 
@@ -123,19 +123,14 @@ def handle_telegram_webhook(payload: dict) -> dict:
 def handle_telegram_update(update: dict) -> dict:
     """실제 Telegram Update(JSON) 수신 어댑터.
 
-    callback_query.data 에 인코딩된 "action|task_id|token_id" 를 파싱하여
-    기존 handle_telegram_webhook 로 위임한다.
+    두 가지 callback_data 형식을 순서대로 시도한다:
+      1. "action|task_id|token_id" — 기존 범용 승인 흐름
+      2. "dr_a|token_id" / "dr_r|token_id" — 개발자 등록 신청 전용
     """
     cq = update.get("callback_query")
     if not isinstance(cq, dict):
         return {"success": False, "status": "invalid_payload",
                 "message": "callback_query 없음"}
-
-    data = cq.get("data")
-    parsed = parse_callback_data(data) if isinstance(data, str) else None
-    if parsed is None:
-        return {"success": False, "status": "invalid_payload",
-                "message": f"잘못된 callback_data: {data!r}"}
 
     frm = cq.get("from") or {}
     tg_user_id = frm.get("id")
@@ -144,23 +139,68 @@ def handle_telegram_update(update: dict) -> dict:
         return {"success": False, "status": "invalid_payload",
                 "message": "callback_query.from.id 없음"}
 
-    reason = str(cq.get("reason", "")) if "reason" in cq else ""
+    data = cq.get("data")
+    cq_id = cq.get("id", "")
 
-    flat = {
-        "telegram_user_id": str(tg_user_id),
-        "action": parsed["action"],
-        "task_id": parsed["task_id"],
-        "token_id": parsed["token_id"],
-        "reason": reason,
-    }
-    result = handle_telegram_webhook(flat)
+    # ── 형식 1: 기존 "approve|task_id|token_id" ─────────────────────
+    parsed = parse_callback_data(data) if isinstance(data, str) else None
+    if parsed is not None:
+        reason = str(cq.get("reason", "")) if "reason" in cq else ""
+        flat = {
+            "telegram_user_id": str(tg_user_id),
+            "action": parsed["action"],
+            "task_id": parsed["task_id"],
+            "token_id": parsed["token_id"],
+            "reason": reason,
+        }
+        result = handle_telegram_webhook(flat)
+        result["message"] = build_result_text(
+            parsed["action"], result.get("status", ""),
+            actor=result.get("actor", ""), reason=reason,
+        )
+        if tg_username:
+            result["telegram_username"] = tg_username
+        result["callback_query_id"] = cq_id
+        return result
 
-    # Telegram 회신용 메시지 및 username 보강
-    result["message"] = build_result_text(
-        parsed["action"], result.get("status", ""),
-        actor=result.get("actor", ""), reason=reason,
+    # ── 형식 2: 개발자 등록 "dr_a|token_id" / "dr_r|token_id" ───────
+    dr_parsed = parse_dev_reg_callback_data(data) if isinstance(data, str) else None
+    if dr_parsed is not None:
+        return _handle_dev_reg_callback(
+            tg_user_id=str(tg_user_id),
+            action=dr_parsed["action"],
+            token_id=dr_parsed["token_id"],
+            cq_id=cq_id,
+            username=tg_username or "",
+        )
+
+    return {"success": False, "status": "invalid_payload",
+            "message": f"잘못된 callback_data: {data!r}"}
+
+
+def _handle_dev_reg_callback(
+    tg_user_id: str,
+    action: str,
+    token_id: str,
+    cq_id: str,
+    username: str,
+) -> dict:
+    """개발자 등록 신청 승인/거절 처리."""
+    user = get_mapped_user(tg_user_id)
+    if not user:
+        logger.warning("개발자 등록 webhook: 미등록/비활성 사용자 | tg_user_id=%s", tg_user_id)
+        return {"success": False, "status": "user_not_found",
+                "message": "등록되지 않은 텔레그램 사용자",
+                "callback_query_id": cq_id}
+
+    actor = user["actor"]
+    role = user["role"]
+
+    from .dev_reg_approval import handle_telegram_decision
+    result = handle_telegram_decision(
+        token_id=token_id, action=action, actor=actor, role=role,
     )
-    if tg_username:
-        result["telegram_username"] = tg_username
-    result["callback_query_id"] = cq.get("id", "")
+    result["callback_query_id"] = cq_id
+    if username:
+        result["telegram_username"] = username
     return result
