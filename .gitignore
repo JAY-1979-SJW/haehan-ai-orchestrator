@@ -34,7 +34,7 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# 런타임 산출물 (로그, 토큰 스토어, 실행 이력, 인박스 등)
+# 런타임 산출물 (로그, 토큰 스토어, 실행 이력, 인박스 등) — ai_orchestrator 패키지
 ai_orchestrator/storage/*.log
 ai_orchestrator/storage/*.jsonl
 ai_orchestrator/storage/*.json
@@ -45,3 +45,8 @@ ai_orchestrator/storage/*.json
 secrets/sites/
 secrets/browser_state/
 ai_orchestrator/storage/site_screenshots/
+
+# 런타임 생성 파일 (root-level flat layout — dashboard/monitor 계통)
+logs/
+storage/
+devlog/

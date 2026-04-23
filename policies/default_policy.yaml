@@ -1,0 +1,97 @@
+# 승인형 AI 오케스트레이터 기본 정책
+# 사람이 읽고 수정할 수 있도록 작성됨
+
+risk_levels:
+  low:
+    description: "읽기/조회 전용. 시스템 변경 없음. 자동 허용."
+    actions:
+      - read_file
+      - list_dir
+      - inspect_logs
+      - summarize_text
+      - status_check
+    requires_approval: false
+    auto_allow: true
+
+  medium:
+    description: "파일/설정 수정. 되돌릴 수 있으나 영향 있음. 승인 필요."
+    actions:
+      - write_file
+      - edit_config
+      - create_patch
+      - generate_reply
+    requires_approval: true
+    auto_allow: false
+
+  high:
+    description: "시스템 명령/서비스/배포/외부 전송. 반드시 승인 후 실행."
+    actions:
+      - run_shell
+      - restart_service
+      - deploy_app
+      - push_git
+      - send_external_message
+      - db_write
+    requires_approval: true
+    auto_allow: false
+
+  critical:
+    description: "삭제/파괴적 작업. 기본 차단. 화이트리스트 없으면 절대 불가."
+    actions:
+      - delete_file
+      - rm_recursive
+      - drop_table
+      - revoke_access
+      - bulk_external_send
+    requires_approval: true
+    auto_allow: false
+    default_blocked: true
+
+# 허용 경로 (이 경로만 파일 읽기/쓰기/수정 허용)
+allowed_paths:
+  # 레거시/개발 경로
+  - "/home/deploy/app/"
+  - "/var/www/haehan/"
+  - "/tmp/"
+  - "C:/Users/skyjw/projects/"
+  # 실서버 (1.201.176.236, 1.201.177.67) 운영 경로 — 최소 범위
+  - "/home/ubuntu/app/"          # 앱 배포 디렉터리
+  - "/home/ubuntu/logs/"         # 운영 로그 (읽기/조회 목적)
+  - "/home/ubuntu/scripts/"      # 운영 스크립트 (읽기 전용 의도)
+  - "/home/ubuntu/g2b-repo/"     # g2b 저장소 (읽기 조회)
+
+# 차단 경로 — 접근 시 즉시 blocked / critical 상향
+blocked_paths:
+  - "/etc/"
+  - "/var/lib/"
+  - "/var/lib/postgresql/"       # DB 데이터 직접 접근 금지 (명시)
+  - "~/.ssh/"
+  - "~/.secrets/"
+  - "/home/ubuntu/.ssh/"         # 실서버 SSH 키 (tilde 미전개 보완)
+  - "/home/ubuntu/backups/"      # DB 백업 — 삭제/변경 금지
+  - "/home/ubuntu/kosha_scraper/" # 안전 데이터 수집 파일 — 서비스 운영 중
+  - "C:/Windows/"
+  - "C:/Users/skyjw/.ssh/"
+
+# 허용 명령어 (run_shell 승인 후 이 목록만 실행 가능)
+allowed_commands:
+  - "ls"
+  - "pwd"
+  - "cat"
+  - "grep"
+  - "tail"
+  - "systemctl status"
+  - "pm2 list"
+  - "df -h"
+
+# 차단 명령어 (포함 시 즉시 critical로 상향)
+blocked_commands:
+  - "rm -rf"
+  - "dd if="
+  - "mkfs"
+  - "shutdown"
+  - "reboot"
+  - "DROP TABLE"
+  - "DELETE FROM"
+  - "format"
+  - "fdisk"

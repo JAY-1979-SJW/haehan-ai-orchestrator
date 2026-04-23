@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task {{ task_id }} — haehan-ai-orchestrator</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🤖 haehan-ai-orchestrator</h1>
+    <div class="subtitle">Task 상세 — {{ task_id }}</div>
+  </div>
+  <nav>
+    <a href="/dashboard">← 대시보드</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="warn-banner">
+    ⚠️ 현재 인증 없음 — 운영 배포 전 로그인/세션 인증 추가가 필요합니다.
+  </div>
+
+  <!-- Task Basic Info -->
+  <div class="section">
+    <h2>📌 Task 기본 정보</h2>
+    <table>
+      <tbody>
+        <tr><th style="width:160px">Task ID</th><td><code>{{ task_info.task_id }}</code></td></tr>
+        <tr><th>Action Type</th><td>{{ task_info.action_type or '-' }}</td></tr>
+        <tr><th>Target</th><td><code>{{ task_info.target or '-' }}</code></td></tr>
+        <tr>
+          <th>Risk Level</th>
+          <td>
+            {% set rl = task_info.risk_level or 'unknown' %}
+            <span class="badge badge-{{ rl }}">{{ rl | upper }}</span>
+          </td>
+        </tr>
+        <tr>
+          <th>최종 상태</th>
+          <td>
+            {% set st = (task_info.status or '') | upper %}
+            {% if st == 'EXECUTED' %}<span class="badge badge-executed">EXECUTED</span>
+            {% elif st == 'PREVIEW_ONLY' %}<span class="badge badge-preview">PREVIEW</span>
+            {% elif st == 'BLOCKED' %}<span class="badge badge-blocked">BLOCKED</span>
+            {% elif st == 'NOT_FOUND' %}<span class="badge badge-unknown">NOT FOUND</span>
+            {% else %}<span class="badge badge-unknown">{{ task_info.status or '-' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Approval Token Status -->
+  <div class="section">
+    <h2>🔐 승인 토큰 상태</h2>
+    {% if token_info %}
+    <table>
+      <tbody>
+        <tr><th style="width:160px">Token</th><td><code>{{ token_info.token_id_display }}</code></td></tr>
+        <tr><th>Risk Level</th><td><span class="badge badge-{{ token_info.risk_level or 'unknown' }}">{{ token_info.risk_level or '-' }}</span></td></tr>
+        <tr>
+          <th>상태</th>
+          <td>
+            {% if token_info.approved %}<span class="badge badge-approved">APPROVED</span>
+            {% elif token_info.rejected %}<span class="badge badge-rejected">REJECTED</span>
+            {% elif token_info.expired %}<span class="badge badge-expired">EXPIRED</span>
+            {% else %}<span class="badge badge-pending">PENDING</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr><th>남은 TTL</th><td>{{ token_info.ttl_remaining }}초</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Approve/Reject Form -->
+    {% if not token_info.approved and not token_info.rejected and not token_info.expired %}
+    <div class="approval-form">
+      <h3>승인 / 거절 처리</h3>
+      <p style="font-size:12px;color:#64748b;margin-bottom:12px;">
+        operator: low/medium만 승인 가능 &nbsp;|&nbsp;
+        admin: high까지 승인 가능 (단, high 실제 실행은 여전히 차단됨) &nbsp;|&nbsp;
+        critical: 승인 불가
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>User ID</label>
+          <input type="text" id="user_id" placeholder="예: admin-1, operator-1">
+        </div>
+        <div class="form-group">
+          <label>사유 (선택)</label>
+          <input type="text" id="reason" placeholder="승인/거절 사유">
+        </div>
+        <button class="btn btn-approve" onclick="submitDecision('approve')">✅ 승인</button>
+        <button class="btn btn-reject"  onclick="submitDecision('reject')">❌ 거절</button>
+      </div>
+      <div id="decision-result" style="margin-top:12px;font-size:13px;"></div>
+    </div>
+
+    <script>
+    function submitDecision(action) {
+      const userId = document.getElementById('user_id').value.trim();
+      const reason = document.getElementById('reason').value.trim();
+      if (!userId) { alert('User ID를 입력하세요.'); return; }
+
+      fetch('/dashboard/' + action, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          token_id: '{{ token_info.token_full }}',
+          task_id: '{{ task_id }}',
+          user_id: userId,
+          reason: reason
+        })
+      })
+      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        const el = document.getElementById('decision-result');
+        if (ok) {
+          el.innerHTML = '<span style="color:#16a34a">✅ ' + data.decision + ' 처리 완료. ' + (data.note || '') + '</span>';
+        } else {
+          el.innerHTML = '<span style="color:#dc2626">❌ 오류: ' + (data.error || JSON.stringify(data)) + '</span>';
+        }
+      })
+      .catch(e => {
+        document.getElementById('decision-result').innerHTML = '<span style="color:#dc2626">❌ 요청 실패: ' + e + '</span>';
+      });
+    }
+    </script>
+    {% else %}
+    <p style="margin-top:12px;font-size:13px;color:#64748b;">이미 처리된 토큰입니다 — 추가 승인/거절 불가.</p>
+    {% endif %}
+
+    {% else %}
+    <div class="empty">이 Task에 대한 활성 승인 토큰이 없습니다.</div>
+    {% endif %}
+  </div>
+
+  <!-- Audit Timeline -->
+  <div class="section">
+    <h2>📜 감사 이벤트 타임라인</h2>
+    {% if audit_events %}
+    <ul class="timeline">
+      {% for e in audit_events %}
+      <li>
+        <div class="ts">{{ e.timestamp or '-' }}</div>
+        <div class="ev">
+          <span class="badge badge-{{ 'blocked' if 'BLOCK' in (e.event_type or '') else ('executed' if 'COMPLET' in (e.event_type or '') or 'ALLOW' in (e.event_type or '') else 'pending') }}">
+            {{ e.event_type or '-' }}
+          </span>
+          &nbsp; actor: <strong>{{ e.actor or '-' }}</strong>
+          {% if e.risk_level %}&nbsp; risk: <span class="badge badge-{{ e.risk_level }}">{{ e.risk_level }}</span>{% endif %}
+        </div>
+        {% if e.note %}<div class="note">{{ (e.note or '')[:120] }}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">이 Task에 대한 감사 이벤트가 없습니다.</div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>
