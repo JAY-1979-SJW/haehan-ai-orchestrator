@@ -7,7 +7,7 @@ from .models import TaskRequest
 
 logger = logging.getLogger(__name__)
 from .planner import plan
-from .executor import execute
+from .executor import execute, execute_task
 from .approval import issue_token, approve_token, validate_token, reject_token
 from .audit_logger import log_event, read_recent_logs
 from .auth import require_role
@@ -15,12 +15,18 @@ from .telegram_webhook import handle_telegram_webhook, handle_telegram_update
 from .inbox import read_recent_inbox, get_inbox_item as _get_inbox_item
 from .gmail_reader import collect_to_inbox as _collect_gmail
 from dataclasses import asdict as _asdict
+from . import task_state
 from .sites.router import sites_router
 from .cad.router import cad_router
+from .connectors.naver_search_router import naver_search_router
+from . import dev_reg_approval as _dra
+from .web_task_router import web_task_router
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(sites_router)
 router.include_router(cad_router)
+router.include_router(naver_search_router)
+router.include_router(web_task_router)
 
 
 class TaskSubmit(BaseModel):
@@ -129,6 +135,20 @@ def submit_task(
         log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level,
                   action_type=req.action_type, decision="issued",
                   actor=actor, role=role, note=f"token_id={token_id}")
+        # task-level 상태: pending 등록 + 실행 스냅샷 보존
+        task_state.set_pending(
+            task_id=req.task_id,
+            risk_level=risk.risk_level,
+            token_id=token_id,
+            requested_by=actor,
+            actor_role=role,
+            action_type=req.action_type,
+            target=req.target,
+            task_snapshot=data,
+        )
+        log_event("TASK_STATE_PENDING", req.task_id, risk_level=risk.risk_level,
+                  action_type=req.action_type, actor=actor, role=role,
+                  token_id=token_id)
 
     result = execute(ep, req=req, risk_level=risk.risk_level)
     _exec_event = "DRY_RUN_RETURNED"
@@ -170,7 +190,53 @@ def approve_task(
     http_status = _STATUS_HTTP.get(status, 400)
     if http_status != 200:
         raise HTTPException(status_code=http_status, detail={"status": status})
-    return {"token_id": token_id, "status": status, "approved_by": actor}
+
+    # ── task-level 상태 전이 + 실제 실행 트리거 ──────────────────────────
+    rec, ts_status = task_state.mark_approved(task_id, actor, role)
+    log_event("TASK_STATE_APPROVED", task_id,
+              token_id=token_id, actor=actor, role=role,
+              decision=ts_status,
+              risk_level=(rec.risk_level if rec else token.risk_level))
+
+    exec_result = ""
+    executed = False
+    if rec and ts_status == "approved":
+        snap = rec.task_snapshot or {}
+        # TaskRequest 로 복원해서 execute_task 호출
+        exec_req = TaskRequest(
+            task_id=rec.task_id,
+            source=snap.get("source", "manual"),
+            action_type=snap.get("action_type", rec.action_type),
+            target=snap.get("target", rec.target),
+            description=snap.get("description", ""),
+            payload=snap.get("payload", {}) or {},
+            requested_by=rec.requested_by or actor,
+        )
+        exec_result = execute_task(exec_req, rec.risk_level)
+        _ev = "EXECUTION_DONE"
+        if exec_result.startswith("BLOCKED:"):
+            _ev = "EXECUTION_BLOCKED"
+        log_event(_ev, task_id,
+                  risk_level=rec.risk_level, action_type=exec_req.action_type,
+                  target=exec_req.target,
+                  decision=exec_result, actor="executor", role=role,
+                  token_id=token_id,
+                  note=f"execution_type=REAL approver={actor}")
+        if not exec_result.startswith("BLOCKED:"):
+            new_rec, _ = task_state.mark_executed(task_id, exec_result)
+            rec = new_rec or rec  # 반환 JSON 에 최신 state 반영
+            log_event("TASK_STATE_EXECUTED", task_id,
+                      risk_level=rec.risk_level, action_type=exec_req.action_type,
+                      target=exec_req.target,
+                      decision=exec_result, actor="executor", token_id=token_id)
+            executed = True
+
+    return {
+        "token_id": token_id, "status": status, "approved_by": actor,
+        "task_state": (rec.state if rec else None),
+        "execution": exec_result,
+        "executed": executed,
+    }
 
 
 @router.post("/tasks/{task_id}/reject")
@@ -191,7 +257,17 @@ def reject_task(
     http_status = _REJECT_STATUS_HTTP.get(status, 400)
     if http_status != 200:
         raise HTTPException(status_code=http_status, detail={"status": status})
-    return {"token_id": token_id, "status": status, "rejected_by": actor}
+
+    rec, ts_status = task_state.mark_rejected(task_id, actor, role, body.reason)
+    log_event("TASK_STATE_REJECTED", task_id,
+              token_id=token_id, actor=actor, role=role,
+              decision=ts_status, risk_level=token.risk_level,
+              note=body.reason)
+
+    return {
+        "token_id": token_id, "status": status, "rejected_by": actor,
+        "task_state": (rec.state if rec else None),
+    }
 
 
 _TG_WEBHOOK_HTTP = {
@@ -202,8 +278,12 @@ _TG_WEBHOOK_HTTP = {
 
 
 @router.post("/webhooks/telegram")
+@router.post("/telegram/webhook")
 def telegram_webhook(body: dict):
-    """flat payload 와 Telegram Update(callback_query) 둘 다 수용."""
+    """flat payload 와 Telegram Update(callback_query) 둘 다 수용.
+
+    경로 2개 모두 동일 핸들러 (신규 /telegram/webhook 은 요구사항의 정규 경로).
+    """
     if isinstance(body, dict) and "callback_query" in body:
         result = handle_telegram_update(body)
     else:
@@ -245,3 +325,37 @@ def fetch_email_inbox(
 def get_logs(limit: int = 20):
     limit = max(1, min(limit, 500))
     return read_recent_logs(limit=limit)
+
+
+# ── 승인 게이트 3단계: 조회 API (read-only, admin/owner 전용) ─────────────
+
+
+@router.get("/dev-reg/approvals/pending")
+def get_pending_approvals(
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    return _dra.list_pending()
+
+
+@router.get("/dev-reg/approvals/history")
+def get_approval_history(
+    status: Optional[str] = None,
+    provider: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    limit = max(1, min(limit, 500))
+    offset = max(0, offset)
+    return _dra.list_history(status=status, provider=provider, limit=limit, offset=offset)
+
+
+@router.get("/dev-reg/approvals/{task_id}")
+def get_approval_detail(
+    task_id: str,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    rec = _dra.get_detail(task_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"task 없음: {task_id}")
+    return rec
