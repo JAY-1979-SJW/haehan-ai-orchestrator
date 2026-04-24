@@ -13,7 +13,7 @@
     confirm 취소 시 API 호출 없이 "요청이 취소되었습니다." 상태로 종료.
   - 승인 전 실행 없음 — 요청은 항상 waiting_approval 로 시작한다 (서버 구조 유지).
   - 이미지 표시/다운로드/업로드 UI 없음. 전체 경로/파일명/approval token 원문/
-    device_token 은 절대 읽거나 표시하지 않는다.
+    디바이스 토큰 값은 절대 읽거나 표시하지 않는다.
   - 에이전트 필드는 모두 textContent 로만 DOM 에 삽입해 XSS 를 차단한다.
 """
 from __future__ import annotations
