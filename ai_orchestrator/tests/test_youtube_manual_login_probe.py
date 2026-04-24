@@ -710,3 +710,266 @@ def test_no_credentials_hardcoded():
             f"forbidden interaction API {tok!r} in "
             "smoke_youtube_manual_login_probe.py"
         )
+
+
+# ─── 24. YT: success_url_match:youtube.com 단독으로 완료 단정 금지 ─────
+
+class _RecordingInput:
+    def __init__(self, responses=None, raise_on=None):
+        self.prompts: list[str] = []
+        self._responses = list(responses or [])
+        self._raise_on = set(raise_on or [])
+        self._call_idx = 0
+
+    def __call__(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        idx = self._call_idx
+        self._call_idx += 1
+        if idx in self._raise_on:
+            raise KeyboardInterrupt
+        if self._responses:
+            return self._responses.pop(0)
+        return ""
+
+
+def test_yt_success_url_match_alone_does_not_mark_completed():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    # 초기부터 youtube.com 에 있고 password 없음 → 완료 단정 금지.
+    script = [
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": "<html><body><h1>홈</h1></body></html>"},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://www.youtube.com/",
+        wait_seconds=3, poll_interval_seconds=1,
+        success_url_contains=["youtube.com", "studio.youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+    )
+    assert r["login_completed_hint"] is False
+    assert r["ok"] is False
+    assert r["login_state_hint"] == "already_logged_in_or_public_page"
+
+
+# ─── 25. YT: accounts.google.com → youtube.com 이동은 완료 후보 ─────────
+
+def test_yt_google_to_youtube_transition_is_completion_candidate():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    script = [
+        {"title": "Sign in - Google Accounts",
+         "url": "https://accounts.google.com/v3/signin/identifier",
+         "html": _GOOGLE_LOGIN_HTML},
+        {"title": "YouTube",
+         "url": "https://www.youtube.com/",
+         "html": _YT_HOME_HTML},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://accounts.google.com/v3/signin/identifier",
+        wait_seconds=30, poll_interval_seconds=1,
+        success_url_contains=["youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+    )
+    assert r["ok"] is True
+    assert r["login_completed_hint"] is True
+    assert r["login_state_hint"] == "manual_login_completed"
+    reasons = r.get("login_completion_reason") or []
+    # url_changed 또는 password_input_disappeared 중 최소 하나 (강한 근거).
+    assert any(
+        rx in reasons for rx in (
+            "url_changed", "password_input_disappeared",
+            "login_required_hint_cleared",
+        )
+    ), reasons
+
+
+# ─── 26. YT: require_user_login_confirm → user_confirmed_login reason ──
+
+def test_yt_user_confirmed_login_adds_reason():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    fake_input = _RecordingInput(responses=[""])
+    script = [
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": _YT_HOME_HTML},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://www.youtube.com/",
+        wait_seconds=3, poll_interval_seconds=1,
+        success_url_contains=["youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        require_user_login_confirm=True,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+        _input_reader=fake_input,
+    )
+    assert r["login_confirmed_by_user"] is True
+    assert r["login_completed_hint"] is True
+    assert r["login_state_hint"] == "manual_login_completed"
+    reasons = r.get("login_completion_reason") or []
+    assert "user_confirmed_login" in reasons
+
+
+# ─── 27. YT: already_logged_in_or_public_page 상태 구분 ─────────────────
+
+def test_yt_already_logged_in_state():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    script = [
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": "<html><body><h1>홈</h1></body></html>"},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://www.youtube.com/",
+        wait_seconds=3, poll_interval_seconds=1,
+        success_url_contains=["youtube.com", "studio.youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+    )
+    assert r["login_state_hint"] == "already_logged_in_or_public_page"
+    assert r["login_completed_hint"] is False
+    assert r["error_code"] == "LOGIN_NOT_CONFIRMED"
+
+
+# ─── 28. YT: password input 있었다가 사라지면 완료 후보 ────────────────
+
+def test_yt_password_disappeared_is_completion_candidate():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    script = [
+        {"title": "Sign in - Google Accounts",
+         "url": "https://accounts.google.com/v3/signin/challenge/pwd",
+         "html": _GOOGLE_LOGIN_HTML},
+        {"title": "Google",
+         "url": "https://accounts.google.com/v3/signin/challenge/pwd",
+         "html": "<html><body><h1>환영합니다</h1></body></html>"},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://accounts.google.com/v3/signin/challenge/pwd",
+        wait_seconds=30, poll_interval_seconds=1,
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+    )
+    assert r["ok"] is True
+    reasons = r.get("login_completion_reason") or []
+    assert "password_input_disappeared" in reasons
+    assert r["login_state_hint"] == "manual_login_completed"
+
+
+# ─── 29. YT: require_visible_confirm → 사용자 확인 전에 polling 금지 ──
+
+def test_yt_require_visible_confirm_blocks_polling():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    fake_input = _RecordingInput(raise_on=[0])
+    clock = _FakeTime()
+    script = [
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": _YT_HOME_HTML},
+    ]
+    factory, _log, _ = _make_probe_factory(script)
+    r = probe_manual_login_flow(
+        url="https://www.youtube.com/",
+        wait_seconds=30, poll_interval_seconds=1,
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        require_visible_confirm=True,
+        _browser_factory=factory,
+        _clock=clock,
+        _input_reader=fake_input,
+    )
+    assert r["error_code"] == "VISIBILITY_NOT_CONFIRMED"
+    assert r["visible_confirmed_by_user"] is False
+    assert clock.sleeps == []
+
+
+# ─── 30. YT: keep_open → 종료 전 Enter 기다림 ──────────────────────────
+
+def test_yt_keep_open_prompts_before_close():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    fake_input = _RecordingInput(responses=[""])
+    script = [
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": _YT_HOME_HTML},
+    ]
+    factory, log, _ = _make_probe_factory(script)
+    probe_manual_login_flow(
+        url="https://www.youtube.com/",
+        wait_seconds=3, poll_interval_seconds=1,
+        success_url_contains=["youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        keep_open=True,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+        _input_reader=fake_input,
+    )
+    # keep_open 프롬프트가 호출되었고, browser.close 도 이후에 호출되었다.
+    assert any("닫" in p for p in fake_input.prompts), fake_input.prompts
+    tags = [e[0] for e in log if isinstance(e, tuple) and e]
+    assert "browser.close" in tags
+
+
+# ─── 31. YT: 새 옵션이 있어도 자동 클릭/입력/쿠키 수집 없음 유지 ───────
+
+def test_yt_no_auto_login_or_cookies_with_new_options():
+    from local_agent.browser_login_probe import probe_manual_login_flow
+
+    fake_input = _RecordingInput(responses=["", "", ""])
+    script = [
+        {"title": "Sign in", "url": "https://accounts.google.com/signin",
+         "html": _GOOGLE_LOGIN_HTML},
+        {"title": "YouTube", "url": "https://www.youtube.com/",
+         "html": _YT_HOME_HTML},
+    ]
+    factory, log, _ = _make_probe_factory(script)
+    probe_manual_login_flow(
+        url="https://accounts.google.com/signin",
+        wait_seconds=30, poll_interval_seconds=1,
+        success_url_contains=["youtube.com"],
+        allowed_hosts=_YT_ALLOWED_HOSTS,
+        require_visible_confirm=True,
+        require_user_login_confirm=True,
+        keep_open=True,
+        browser_channel="chrome",
+        viewport={"width": 1280, "height": 800},
+        slow_mo_ms=100,
+        _browser_factory=factory,
+        _clock=_FakeTime(),
+        _input_reader=fake_input,
+    )
+    forbidden = (
+        "click", "fill", "type", "press", "select_option",
+        "set_input_files", "evaluate", "screenshot", "dblclick",
+        "storage_state", "cookies", "add_cookies",
+        "localstorage", "sessionstorage",
+    )
+    for entry in log:
+        if isinstance(entry, tuple) and entry:
+            tag = str(entry[0]).lower()
+            for bad in forbidden:
+                assert bad not in tag, f"forbidden op in log: {entry}"
+
+
+# ─── 32. smoke 스크립트에 새 옵션이 노출돼 있음 ─────────────────────────
+
+def test_smoke_script_exposes_new_options():
+    smoke_path = (
+        Path(__file__).resolve().parent.parent.parent
+        / "scripts" / "smoke_youtube_manual_login_probe.py"
+    )
+    src = smoke_path.read_text(encoding="utf-8")
+    assert "--require-visible-confirm" in src
+    assert "--require-user-login-confirm" in src
+    assert "--keep-open" in src
+    assert "--browser-channel" in src

@@ -14,9 +14,18 @@
   - password / hidden input value 수집
   - screenshot 저장
 
-테스트 편의를 위해 ``_browser_factory`` 와 ``_clock`` 을 주입할 수 있다.
-None 이면 실제 ``playwright.sync_api.sync_playwright`` 와 ``time`` 표준
-모듈이 사용된다.
+가시성/수동 확인 옵션:
+  - ``require_visible_confirm``: 초기 관찰 뒤, 사용자가 실제 브라우저 창을
+    봤다고 Enter 를 누르기 전까지 polling 루프로 넘어가지 않는다.
+  - ``require_user_login_confirm``: 구조적 근거만으로 login_completed_hint=
+    True 를 단정하지 않는다. 사용자가 Enter 로 확인해야 한다.
+  - ``keep_open``: 종료 직전 사용자가 Enter 를 누를 때까지 브라우저를
+    닫지 않는다.
+  - ``browser_channel``: ``chromium`` / ``chrome`` / ``msedge`` 중 선택.
+
+테스트 편의를 위해 ``_browser_factory``, ``_clock``, ``_input_reader`` 를
+주입할 수 있다. None 이면 실제 ``playwright.sync_api.sync_playwright`` /
+``time`` / ``builtins.input`` 이 사용된다.
 """
 from __future__ import annotations
 
@@ -38,12 +47,32 @@ _ALLOWED_WAIT_UNTIL: frozenset[str] = frozenset({
     "domcontentloaded", "load", "networkidle", "commit",
 })
 
+_ALLOWED_BROWSER_CHANNELS: frozenset[str] = frozenset({
+    "chromium", "chrome", "msedge",
+})
+
 _MIN_WAIT_SECONDS = 1
 _MAX_WAIT_SECONDS = 600
 _MIN_POLL_SECONDS = 1
 _MAX_POLL_SECONDS = 30
 _DEFAULT_MAX_HTML = 500_000
 _MAX_HTML_CAP = 2_000_000
+_MIN_SLOW_MO_MS = 0
+_MAX_SLOW_MO_MS = 2000
+_MIN_VIEWPORT = 200
+_MAX_VIEWPORT = 4096
+
+_VISIBLE_CONFIRM_PROMPT = (
+    "\n[manual-login-probe] 브라우저 창이 실제 화면에 보이면 Enter를 누르세요.\n"
+    "보이지 않으면 Ctrl+C로 중단하세요.\n> "
+)
+_USER_LOGIN_CONFIRM_PROMPT = (
+    "\n[manual-login-probe] 로그인이 완료된 화면이 실제로 보이면 Enter 를,\n"
+    "아직 아니면 n + Enter 를 누르세요.\n> "
+)
+_KEEP_OPEN_PROMPT = (
+    "\n[manual-login-probe] 브라우저를 닫으려면 Enter 를 누르세요.\n> "
+)
 
 
 def probe_manual_login_flow(
@@ -58,15 +87,27 @@ def probe_manual_login_flow(
     max_html_chars: int = _DEFAULT_MAX_HTML,
     wait_until: str = "domcontentloaded",
     goto_timeout_ms: int = 15000,
+    browser_channel: str | None = None,
+    require_visible_confirm: bool = False,
+    require_user_login_confirm: bool = False,
+    keep_open: bool = False,
+    viewport: dict[str, int] | None = None,
+    slow_mo_ms: int = 0,
     _browser_factory: Callable[[], Any] | None = None,
     _clock: Any | None = None,
+    _input_reader: Callable[[str], str] | None = None,
 ) -> dict[str, Any]:
     """수동 로그인 확인 모드. 사용자가 직접 로그인하는 동안 read-only 관찰.
 
     어떤 경우에도 ID/PW 자동 입력, 클릭, 쿠키/스토리지 수집을 수행하지
-    않는다. wait_seconds 타임아웃 내에 로그인 완료로 추정되는 화면 변화가
-    감지되면 ``ok=True`` 로, 그렇지 않으면 ``ok=False`` /
-    ``error_code="LOGIN_TIMEOUT"`` 로 반환한다.
+    않는다. 구조적 근거 (password input 사라짐 / URL 이동 /
+    login_required_hint 해소 / success_text_hints 관찰) 또는 사용자의
+    명시적 Enter (require_user_login_confirm=True) 가 있을 때만
+    ``login_completed_hint=True`` 로 판정한다.
+
+    success_url_match 단독으로는 ``login_completed_hint=True`` 로 판정하지
+    않으며, 초기 URL 이 이미 success 토큰을 포함하고 있고 password input 이
+    없으면 ``login_state_hint="already_logged_in_or_public_page"`` 로 보고한다.
     """
     # 1) URL 안전성 (http/https + 공개 호스트).
     validation = validate_url_for_readonly_open(
@@ -104,11 +145,26 @@ def probe_manual_login_flow(
         max_html_chars, 1000, _MAX_HTML_CAP, _DEFAULT_MAX_HTML,
     )
     goto_timeout_ms = _clip_int(goto_timeout_ms, 1000, 60000, 15000)
+    slow_mo_ms = _clip_int(slow_mo_ms, _MIN_SLOW_MO_MS, _MAX_SLOW_MO_MS, 0)
+
+    channel = _normalize_browser_channel(browser_channel)
+    if browser_channel is not None and channel is None:
+        return _err(
+            url=url,
+            error_code="BROWSER_CHANNEL_INVALID",
+            reason=(
+                f"unknown browser_channel: {browser_channel!r} — "
+                "allowed: chromium / chrome / msedge"
+            ),
+        )
+
+    viewport_norm = _normalize_viewport(viewport)
 
     success_urls = _normalize_str_list(success_url_contains)
     success_texts = _normalize_str_list(success_text_hints)
 
     time_mod = _clock or _time_default
+    input_reader = _input_reader if _input_reader is not None else input
 
     factory = _browser_factory
     if factory is None:
@@ -128,6 +184,7 @@ def probe_manual_login_flow(
         return _run_probe(
             factory=factory,
             time_mod=time_mod,
+            input_reader=input_reader,
             url=url,
             wait_until=wait_until,
             goto_timeout_ms=goto_timeout_ms,
@@ -136,6 +193,12 @@ def probe_manual_login_flow(
             max_html_chars=max_html_chars,
             success_urls=success_urls,
             success_texts=success_texts,
+            browser_channel=channel,
+            slow_mo_ms=slow_mo_ms,
+            viewport=viewport_norm,
+            require_visible_confirm=bool(require_visible_confirm),
+            require_user_login_confirm=bool(require_user_login_confirm),
+            keep_open=bool(keep_open),
             warnings=warnings,
         )
     except BrowserDependencyMissing as e:
@@ -156,6 +219,7 @@ def _run_probe(
     *,
     factory: Callable[[], Any],
     time_mod: Any,
+    input_reader: Callable[[str], str],
     url: str,
     wait_until: str,
     goto_timeout_ms: int,
@@ -164,12 +228,37 @@ def _run_probe(
     max_html_chars: int,
     success_urls: list[str],
     success_texts: list[str],
+    browser_channel: str | None,
+    slow_mo_ms: int,
+    viewport: dict[str, int] | None,
+    require_visible_confirm: bool,
+    require_user_login_confirm: bool,
+    keep_open: bool,
     warnings: list[str],
 ) -> dict[str, Any]:
+    launch_kwargs: dict[str, Any] = {"headless": False}
+    if slow_mo_ms > 0:
+        launch_kwargs["slow_mo"] = slow_mo_ms
+    if browser_channel and browser_channel != "chromium":
+        launch_kwargs["channel"] = browser_channel
+
+    context_kwargs: dict[str, Any] = {}
+    if viewport:
+        context_kwargs["viewport"] = dict(viewport)
+
     with factory() as pw:
-        browser = pw.chromium.launch(headless=False)
         try:
-            context = browser.new_context()
+            browser = pw.chromium.launch(**launch_kwargs)
+        except Exception as e:  # pragma: no cover - 실제 채널 미설치 환경 오류
+            logger.exception("browser launch failed")
+            code = (
+                "BROWSER_CHANNEL_NOT_AVAILABLE"
+                if browser_channel and browser_channel != "chromium"
+                else "BROWSER_OPEN_FAILED"
+            )
+            return _err(url=url, error_code=code, reason=str(e)[:200])
+        try:
+            context = browser.new_context(**context_kwargs)
             try:
                 page = context.new_page()
                 try:
@@ -177,12 +266,29 @@ def _run_probe(
                         url, wait_until=wait_until, timeout=goto_timeout_ms,
                     )
 
-                    initial = _observe(page, max_html_chars=max_html_chars)
-                    deadline_ts = time_mod.monotonic() + wait_seconds
+                    # 사용자 화면에 실제로 노출되도록 bring_to_front 시도
+                    # (best-effort — 미지원 브라우저/버전에서는 조용히 skip).
+                    _safe_bring_to_front(page)
 
+                    initial = _observe(page, max_html_chars=max_html_chars)
+
+                    visible_confirmed_by_user = False
+                    if require_visible_confirm:
+                        try:
+                            input_reader(_VISIBLE_CONFIRM_PROMPT)
+                            visible_confirmed_by_user = True
+                        except (KeyboardInterrupt, EOFError):
+                            return _build_canceled_result(
+                                url=url,
+                                initial=initial,
+                                warnings=warnings,
+                                success_urls=success_urls,
+                            )
+
+                    # 4) 관찰 루프.
+                    deadline_ts = time_mod.monotonic() + wait_seconds
                     last_obs = initial
                     completed_reasons: list[str] = []
-                    completed = False
 
                     while True:
                         now = time_mod.monotonic()
@@ -202,55 +308,170 @@ def _run_probe(
                             success_urls=success_urls,
                             success_texts=success_texts,
                         )
-                        if completed_reasons:
-                            completed = True
+                        if _has_strong_reason(completed_reasons):
                             break
 
-                    if completed:
-                        return {
-                            "ok": True,
-                            "mode": "manual_login_probe",
-                            "url": url,
-                            "initial": _redact_observation(
-                                initial, include_structure=False,
-                            ),
-                            "after": _redact_observation(
-                                last_obs,
-                                include_structure=True,
-                                login_completed_hint=True,
-                                login_completion_reason=completed_reasons,
-                            ),
-                            "summary": (
-                                "manual login completed hint=true reasons="
-                                + ",".join(completed_reasons)
-                            )[:300],
-                            "warnings": warnings,
-                        }
+                    # 5) require_user_login_confirm 이면 사용자 Enter 수신.
+                    login_confirmed_by_user = False
+                    if require_user_login_confirm:
+                        try:
+                            answer = input_reader(
+                                _USER_LOGIN_CONFIRM_PROMPT,
+                            )
+                        except (KeyboardInterrupt, EOFError):
+                            answer = None
+                        if answer is not None:
+                            stripped = (answer or "").strip().lower()
+                            if stripped not in {"n", "no", "아니오"}:
+                                login_confirmed_by_user = True
+                                if "user_confirmed_login" not in completed_reasons:
+                                    completed_reasons.append(
+                                        "user_confirmed_login",
+                                    )
 
-                    return {
-                        "ok": False,
-                        "mode": "manual_login_probe",
-                        "url": url,
-                        "error_code": "LOGIN_TIMEOUT",
-                        "summary": (
-                            "Manual login was not detected before timeout"
+                    # 6) 상태 분류.
+                    initial_is_already_logged_in = (
+                        _initial_is_already_logged_in(
+                            initial=initial, success_urls=success_urls,
+                        )
+                    )
+                    login_state_hint, login_completed_hint = _classify_login(
+                        initial=initial,
+                        completion_reasons=completed_reasons,
+                        initial_is_already_logged_in=(
+                            initial_is_already_logged_in
                         ),
-                        "initial": _redact_observation(
-                            initial, include_structure=False,
-                        ),
-                        "last_observation": _redact_observation(
-                            last_obs,
-                            include_structure=False,
-                            login_completed_hint=False,
-                        ),
-                        "warnings": warnings,
-                    }
+                        require_user_login_confirm=require_user_login_confirm,
+                        login_confirmed_by_user=login_confirmed_by_user,
+                    )
+
+                    # 7) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
+                    if keep_open:
+                        try:
+                            input_reader(_KEEP_OPEN_PROMPT)
+                        except (KeyboardInterrupt, EOFError):
+                            pass
+
+                    return _build_result(
+                        url=url,
+                        initial=initial,
+                        last_obs=last_obs,
+                        completed_reasons=completed_reasons,
+                        login_state_hint=login_state_hint,
+                        login_completed_hint=login_completed_hint,
+                        visible_confirmed_by_user=visible_confirmed_by_user,
+                        login_confirmed_by_user=login_confirmed_by_user,
+                        warnings=warnings,
+                    )
                 finally:
                     _safe_close(page)
             finally:
                 _safe_close(context)
         finally:
             _safe_close(browser)
+
+
+def _build_result(
+    *,
+    url: str,
+    initial: dict[str, Any],
+    last_obs: dict[str, Any],
+    completed_reasons: list[str],
+    login_state_hint: str,
+    login_completed_hint: bool,
+    visible_confirmed_by_user: bool,
+    login_confirmed_by_user: bool,
+    warnings: list[str],
+) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "mode": "manual_login_probe",
+        "url": url,
+        "visible_confirmed_by_user": bool(visible_confirmed_by_user),
+        "login_confirmed_by_user": bool(login_confirmed_by_user),
+        "login_state_hint": login_state_hint,
+        "login_completed_hint": bool(login_completed_hint),
+        "login_completion_reason": list(completed_reasons),
+        "initial": _redact_observation(initial, include_structure=False),
+        "warnings": list(warnings),
+    }
+
+    if login_completed_hint:
+        base["ok"] = True
+        base["after"] = _redact_observation(
+            last_obs,
+            include_structure=True,
+            login_completed_hint=True,
+            login_completion_reason=completed_reasons,
+        )
+        base["summary"] = (
+            "manual login completed hint=true state="
+            + login_state_hint
+            + " reasons=" + ",".join(completed_reasons)
+        )[:300]
+        return base
+
+    base["ok"] = False
+    base["last_observation"] = _redact_observation(
+        last_obs,
+        include_structure=False,
+        login_completed_hint=False,
+        login_completion_reason=completed_reasons,
+    )
+    if login_state_hint == "already_logged_in_or_public_page":
+        base["error_code"] = "LOGIN_NOT_CONFIRMED"
+        base["summary"] = (
+            "initial page already looked logged in or was a public page — "
+            "manual login completion not confirmed"
+        )[:300]
+    else:
+        base["error_code"] = "LOGIN_TIMEOUT"
+        base["summary"] = (
+            "Manual login was not detected before timeout"
+        )[:300]
+    return base
+
+
+def _build_canceled_result(
+    *,
+    url: str,
+    initial: dict[str, Any],
+    warnings: list[str],
+    success_urls: list[str],
+) -> dict[str, Any]:
+    initial_is_already_logged_in = _initial_is_already_logged_in(
+        initial=initial, success_urls=success_urls,
+    )
+    login_state_hint, _ = _classify_login(
+        initial=initial,
+        completion_reasons=[],
+        initial_is_already_logged_in=initial_is_already_logged_in,
+        require_user_login_confirm=False,
+        login_confirmed_by_user=False,
+    )
+    return {
+        "ok": False,
+        "mode": "manual_login_probe",
+        "url": url,
+        "error_code": "VISIBILITY_NOT_CONFIRMED",
+        "summary": "user did not confirm browser visibility",
+        "initial": _redact_observation(initial, include_structure=False),
+        "warnings": list(warnings),
+        "visible_confirmed_by_user": False,
+        "login_confirmed_by_user": False,
+        "login_state_hint": login_state_hint,
+        "login_completed_hint": False,
+        "login_completion_reason": [],
+    }
+
+
+def _safe_bring_to_front(page: Any) -> None:
+    """best-effort: 브라우저 창을 앞으로 끌어올려 사용자에게 보이게 시도."""
+    try:
+        fn = getattr(page, "bring_to_front", None)
+        if callable(fn):
+            fn()
+    except Exception:
+        logger.debug("bring_to_front failed", exc_info=True)
 
 
 def _observe(page: Any, *, max_html_chars: int) -> dict[str, Any]:
@@ -283,7 +504,12 @@ def _detect_completion(
     success_urls: list[str],
     success_texts: list[str],
 ) -> list[str]:
-    """로그인 완료로 보이는 구조 변화 감지."""
+    """로그인 완료로 보이는 구조 변화 감지.
+
+    success_url_match 는 initial URL 에 이미 해당 토큰이 포함되어 있었으면
+    추가하지 않는다. (이미 target 페이지에서 출발한 경우를 완료로 잘못
+    판정하지 않도록.)
+    """
     reasons: list[str] = []
 
     initial_pw = "password_input_detected" in (
@@ -295,24 +521,38 @@ def _detect_completion(
     if initial_pw and not current_pw:
         reasons.append("password_input_disappeared")
 
-    if initial.get("current_url") and current.get("current_url"):
-        if initial["current_url"] != current["current_url"]:
-            reasons.append("url_changed")
+    init_url = initial.get("current_url") or ""
+    cur_url = current.get("current_url") or ""
+    if init_url and cur_url and init_url != cur_url:
+        reasons.append("url_changed")
 
     if initial.get("login_required_hint") and not current.get(
         "login_required_hint"
     ):
         reasons.append("login_required_hint_cleared")
 
-    cur_url = current.get("current_url") or ""
+    init_url_lc = init_url.lower()
+    cur_url_lc = cur_url.lower()
     for tok in success_urls:
-        if tok and tok in cur_url:
+        tok_lc = (tok or "").lower()
+        if not tok_lc:
+            continue
+        # 초기에 이미 토큰이 포함돼 있었다면 success_url_match 는 약한
+        # 신호가 아니라 "처음부터 그 상태" 이므로 reason 에 추가하지 않는다.
+        if tok_lc in cur_url_lc and tok_lc not in init_url_lc:
             reasons.append(f"success_url_match:{tok[:60]}")
             break
 
-    text_blob = _visible_text_blob(current.get("page_structure") or {})
+    text_blob_current = _visible_text_blob(
+        current.get("page_structure") or {}
+    )
+    text_blob_initial = _visible_text_blob(
+        initial.get("page_structure") or {}
+    )
     for tok in success_texts:
-        if tok and tok in text_blob:
+        if not tok:
+            continue
+        if tok in text_blob_current and tok not in text_blob_initial:
             reasons.append(f"success_text_match:{tok[:60]}")
             break
 
@@ -325,6 +565,81 @@ def _detect_completion(
         seen.add(r)
         unique.append(r)
     return unique
+
+
+def _has_strong_reason(reasons: list[str]) -> bool:
+    """success_url_match 이외의 근거가 하나라도 있으면 True."""
+    for r in reasons:
+        if r.startswith("success_url_match:"):
+            continue
+        return True
+    return False
+
+
+def _initial_is_already_logged_in(
+    *, initial: dict[str, Any], success_urls: list[str],
+) -> bool:
+    """초기 페이지가 이미 target 상태 (로그인됨 또는 공개 페이지) 로 보이는지.
+
+    조건 (모두 만족):
+      - password input 감지되지 않음
+      - login_required_hint 가 False (Sign in 버튼 등 로그인 CTA 없음)
+      - URL 이 accounts.google.com 이 아님
+      - URL 이 success_url_contains 토큰 중 하나를 포함함
+    """
+    init_url = (initial.get("current_url") or "").lower()
+    init_reasons = initial.get("login_reason") or []
+    if "password_input_detected" in init_reasons:
+        return False
+    if initial.get("login_required_hint"):
+        return False
+    if "accounts.google.com" in init_url:
+        return False
+    for tok in success_urls:
+        tok_lc = (tok or "").lower()
+        if tok_lc and tok_lc in init_url:
+            return True
+    return False
+
+
+def _classify_login(
+    *,
+    initial: dict[str, Any],
+    completion_reasons: list[str],
+    initial_is_already_logged_in: bool,
+    require_user_login_confirm: bool,
+    login_confirmed_by_user: bool,
+) -> tuple[str, bool]:
+    """(login_state_hint, login_completed_hint) 결정.
+
+    판정 규칙
+      1) 사용자 Enter 로 확인된 경우 → manual_login_completed, hint=True
+      2) 초기 페이지가 already_logged_in_or_public_page 면 → hint=False
+         (사용자 확인 없이는 자동 True 로 올리지 않는다)
+      3) strong 근거 (success_url_match 외) 있으면 → manual_login_completed
+         (require_user_login_confirm=True 이면 hint=False 로 유지)
+      4) 초기에 password input / login_required_hint 있었고 완료 근거 없으면
+         → login_required, hint=False
+      5) 나머지 → unknown, hint=False
+    """
+    if login_confirmed_by_user:
+        return "manual_login_completed", True
+
+    if initial_is_already_logged_in:
+        return "already_logged_in_or_public_page", False
+
+    if _has_strong_reason(completion_reasons):
+        hint = not require_user_login_confirm
+        return "manual_login_completed", hint
+
+    init_reasons = initial.get("login_reason") or []
+    if (
+        "password_input_detected" in init_reasons
+        or initial.get("login_required_hint")
+    ):
+        return "login_required", False
+
+    return "unknown", False
 
 
 def _visible_text_blob(structure: dict[str, Any]) -> str:
@@ -405,6 +720,36 @@ def _normalize_allowed_hosts(value: Any) -> list[str] | None:
         if isinstance(item, str) and item.strip():
             out.append(item.strip().lower()[:253])
     return out
+
+
+def _normalize_browser_channel(value: Any) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return None
+    v = value.strip().lower()
+    if not v:
+        return None
+    if v not in _ALLOWED_BROWSER_CHANNELS:
+        return None
+    return v
+
+
+def _normalize_viewport(value: Any) -> dict[str, int] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return None
+    try:
+        w = int(value.get("width", 0))
+        h = int(value.get("height", 0))
+    except (TypeError, ValueError):
+        return None
+    if not (_MIN_VIEWPORT <= w <= _MAX_VIEWPORT):
+        return None
+    if not (_MIN_VIEWPORT <= h <= _MAX_VIEWPORT):
+        return None
+    return {"width": w, "height": h}
 
 
 def _host_allowed(host: str, allowed: list[str]) -> bool:
