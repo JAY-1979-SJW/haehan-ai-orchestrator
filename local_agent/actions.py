@@ -390,6 +390,92 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     )
 
 
+def action_web_open_url_readonly(params: dict) -> ActionResult:
+    """실제 브라우저를 read-only 로 열어 현재 페이지 구조를 요약 (Stage 2).
+
+    browser_reader.open_url_readonly 를 호출한다. 클릭/입력/제출/다운로드/
+    업로드/쿠키 수집은 일절 수행하지 않으며, 반환 data 에는 HTML 원문
+    전체가 포함되지 않는다 (page_structure 요약만 포함).
+    """
+    from . import browser_reader
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False, "web_open_url_readonly 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+
+    wait_until = params.get("wait_until", "domcontentloaded")
+    if not isinstance(wait_until, str):
+        wait_until = "domcontentloaded"
+
+    try:
+        timeout_ms = int(params.get("timeout_ms", 15000))
+    except (TypeError, ValueError):
+        timeout_ms = 15000
+    timeout_ms = max(1000, min(timeout_ms, 60000))
+
+    try:
+        max_html_chars = int(params.get("max_html_chars", 500000))
+    except (TypeError, ValueError):
+        max_html_chars = 500000
+    max_html_chars = max(1000, min(max_html_chars, 2_000_000))
+
+    hints = params.get("keyword_hints") or []
+    if not isinstance(hints, list):
+        hints = []
+
+    allow_private_network = bool(params.get("allow_private_network", False))
+
+    try:
+        result = browser_reader.open_url_readonly(
+            url=url,
+            wait_until=wait_until,
+            timeout_ms=timeout_ms,
+            max_html_chars=max_html_chars,
+            keyword_hints=hints,
+            allow_private_network=allow_private_network,
+        )
+    except Exception as e:
+        logger.exception("web_open_url_readonly 실행 실패")
+        return ActionResult(
+            False, "web_open_url_readonly 예외", {},
+            str(e)[:200], error_code="BROWSER_OPEN_FAILED",
+        )
+
+    if not isinstance(result, dict) or not result.get("ok"):
+        code = "BROWSER_OPEN_FAILED"
+        reason = "browser open failed"
+        if isinstance(result, dict):
+            code = str(result.get("error_code", code))
+            reason = str(result.get("reason", reason))
+        return ActionResult(
+            False, "web_open_url_readonly 거절", {},
+            reason[:200], error_code=code,
+        )
+
+    # HTML 원문은 반환 data 에 포함하지 않는다.
+    data = {
+        "url": result.get("url"),
+        "current_url": result.get("current_url", ""),
+        "title": result.get("title", ""),
+        "html_truncated": bool(result.get("html_truncated", False)),
+        "login_required_hint": bool(result.get("login_required_hint", False)),
+        "login_reason": list(result.get("login_reason") or []),
+        "modal_candidates": list(result.get("modal_candidates") or []),
+        "page_structure": result.get("page_structure") or {},
+    }
+    return ActionResult(
+        success=True,
+        summary=str(result.get("summary", "web_open_url_readonly ok"))[:300],
+        data=data,
+    )
+
+
 def action_scan_file_tree(params: dict) -> ActionResult:
     """PC 파일 트리 read-only 스캔 (Stage 1).
 
@@ -506,6 +592,7 @@ _ACTIONS = {
     "list_files_readonly": action_list_files_readonly,
     "scan_file_tree": action_scan_file_tree,
     "web_analyze_html": action_web_analyze_html,
+    "web_open_url_readonly": action_web_open_url_readonly,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -573,4 +660,5 @@ __all__ = [
     "action_list_files_readonly",
     "action_scan_file_tree",
     "action_web_analyze_html",
+    "action_web_open_url_readonly",
 ]
