@@ -476,6 +476,99 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     )
 
 
+def action_web_probe_manual_login(params: dict) -> ActionResult:
+    """수동 로그인 확인 모드 — 사용자가 직접 로그인하는 동안 read-only 관찰.
+
+    browser_login_probe.probe_manual_login_flow 를 호출한다. ID/PW 자동 입력,
+    클릭, 제출, 쿠키/스토리지 수집을 일절 수행하지 않는다. 반환 data 에는
+    HTML 원문 / 쿠키 / 세션 / password / hidden value 가 포함되지 않는다.
+    """
+    from . import browser_login_probe
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False, "web_probe_manual_login 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+
+    kwargs: dict = {"url": url}
+    for key in ("wait_seconds", "poll_interval_seconds", "max_html_chars"):
+        if key in params and params[key] is not None:
+            try:
+                kwargs[key] = int(params[key])
+            except (TypeError, ValueError):
+                return ActionResult(
+                    False, "web_probe_manual_login 실패", {},
+                    f"{key} 값이 정수가 아님", error_code="INVALID_PARAM",
+                )
+
+    for key in ("success_url_contains", "success_text_hints", "allowed_hosts"):
+        if key in params and params[key] is not None:
+            if not isinstance(params[key], list):
+                return ActionResult(
+                    False, "web_probe_manual_login 실패", {},
+                    f"{key} 는 list 여야 함", error_code="INVALID_PARAM",
+                )
+            kwargs[key] = list(params[key])
+
+    kwargs["allow_private_network"] = bool(
+        params.get("allow_private_network", False)
+    )
+
+    # 테스트 전용 주입 (프로덕션 호출에는 주어지지 않음).
+    if "_browser_factory" in params:
+        kwargs["_browser_factory"] = params["_browser_factory"]
+    if "_clock" in params:
+        kwargs["_clock"] = params["_clock"]
+
+    try:
+        result = browser_login_probe.probe_manual_login_flow(**kwargs)
+    except Exception as e:
+        logger.exception("web_probe_manual_login 실행 실패")
+        return ActionResult(
+            False, "web_probe_manual_login 예외", {},
+            str(e)[:200], error_code="BROWSER_OPEN_FAILED",
+        )
+
+    if not isinstance(result, dict) or not result.get("ok"):
+        code = "LOGIN_PROBE_FAILED"
+        reason = "probe failed"
+        data: dict = {}
+        if isinstance(result, dict):
+            code = str(result.get("error_code", code))
+            reason = str(
+                result.get("summary") or result.get("reason") or reason
+            )
+            data = {
+                "mode": result.get("mode"),
+                "initial": result.get("initial"),
+                "last_observation": result.get("last_observation"),
+            }
+        return ActionResult(
+            False, "web_probe_manual_login 거절", data,
+            reason[:200], error_code=code,
+        )
+
+    after = result.get("after") or {}
+    data = {
+        "url": result.get("url"),
+        "mode": result.get("mode"),
+        "initial": result.get("initial"),
+        "after": after,
+        "login_completed_hint": bool(after.get("login_completed_hint", False)),
+        "warnings": list(result.get("warnings") or []),
+    }
+    return ActionResult(
+        success=True,
+        summary=str(result.get("summary", "manual login probe ok"))[:300],
+        data=data,
+    )
+
+
 def _action_browser_guarded(
     action_name: str, params: dict,
 ) -> ActionResult:
@@ -819,6 +912,7 @@ _ACTIONS = {
     "web_type_guarded": action_web_type_guarded,
     "web_select_guarded": action_web_select_guarded,
     "web_scroll_guarded": action_web_scroll_guarded,
+    "web_probe_manual_login": action_web_probe_manual_login,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -892,4 +986,5 @@ __all__ = [
     "action_web_type_guarded",
     "action_web_select_guarded",
     "action_web_scroll_guarded",
+    "action_web_probe_manual_login",
 ]
