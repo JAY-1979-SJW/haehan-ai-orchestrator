@@ -476,6 +476,147 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     )
 
 
+def _action_browser_guarded(
+    action_name: str, params: dict,
+) -> ActionResult:
+    """web_*_guarded 액션 공통 디스패처.
+
+    high/critical 로 분류된 호출은 실제 브라우저 API 를 호출하지 않고
+    success=True, approval_required=True, action_executed=False 로 반환한다.
+    blocked 액션도 동일하게 즉시 거절된다 (차이: summary 에 blocked 표기).
+    """
+    from . import browser_actions
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False, f"{action_name} 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+
+    selector = params.get("selector")
+    if selector is not None and not isinstance(selector, str):
+        return ActionResult(
+            False, f"{action_name} 실패", {},
+            "selector 는 문자열이어야 함", error_code="INVALID_SELECTOR",
+        )
+
+    text = params.get("text")
+    if text is not None and not isinstance(text, str):
+        return ActionResult(
+            False, f"{action_name} 실패", {},
+            "text 는 문자열이어야 함", error_code="INVALID_TEXT",
+        )
+
+    value = params.get("value")
+    if value is not None and not isinstance(value, (str, int, float)):
+        return ActionResult(
+            False, f"{action_name} 실패", {},
+            "value 는 문자열/숫자여야 함", error_code="INVALID_VALUE",
+        )
+    value_norm: str | None = None
+    if value is not None:
+        value_norm = str(value)
+
+    try:
+        timeout_ms = int(params.get("timeout_ms", 15000))
+    except (TypeError, ValueError):
+        timeout_ms = 15000
+    timeout_ms = max(1000, min(timeout_ms, 60000))
+
+    approved = bool(params.get("approved", False))
+    allow_private_network = bool(params.get("allow_private_network", False))
+
+    # 상위 레벨 action 이름 → browser_actions 내부 action 이름.
+    internal_action_map = {
+        "web_click_guarded": "click",
+        "web_type_guarded": "type_text",
+        "web_select_guarded": "select_option",
+        "web_scroll_guarded": "scroll",
+    }
+    internal_action = internal_action_map.get(action_name)
+    if internal_action is None:
+        return ActionResult(
+            False, f"{action_name} 미등록", {},
+            "지원되지 않는 guarded 액션",
+            error_code="UNKNOWN_ACTION",
+        )
+
+    try:
+        result = browser_actions.perform_browser_action_readwrite_guarded(
+            url=url,
+            action=internal_action,
+            selector=selector,
+            text=text,
+            value=value_norm,
+            timeout_ms=timeout_ms,
+            allow_private_network=allow_private_network,
+            approved=approved,
+        )
+    except Exception as e:
+        logger.exception("%s 실행 실패", action_name)
+        return ActionResult(
+            False, f"{action_name} 예외", {},
+            str(e)[:200], error_code="BROWSER_ACTION_FAILED",
+        )
+
+    if not isinstance(result, dict):
+        return ActionResult(
+            False, f"{action_name} 비정상 응답", {},
+            "result is not dict", error_code="BROWSER_ACTION_FAILED",
+        )
+
+    # URL 검증 실패 / 의존성 없음 등은 ok=False.
+    if not result.get("ok"):
+        return ActionResult(
+            False, f"{action_name} 거절",
+            {
+                "risk": result.get("risk", "critical"),
+                "approval_required": bool(result.get("approval_required", True)),
+                "action_executed": False,
+            },
+            str(result.get("reason", "blocked"))[:200],
+            error_code=str(result.get("error_code", "BROWSER_ACTION_FAILED")),
+        )
+
+    data = {
+        "risk": result.get("risk", "critical"),
+        "category": result.get("category", "blocked"),
+        "approval_required": bool(result.get("approval_required", True)),
+        "action_executed": bool(result.get("action_executed", False)),
+        "classification": result.get("classification") or {},
+    }
+
+    return ActionResult(
+        success=True,
+        summary=str(result.get("summary", f"{action_name} ok"))[:300],
+        data=data,
+    )
+
+
+def action_web_click_guarded(params: dict) -> ActionResult:
+    """안전 click 만 실제 수행. 위험 버튼은 approval_required 로 거절."""
+    return _action_browser_guarded("web_click_guarded", params)
+
+
+def action_web_type_guarded(params: dict) -> ActionResult:
+    """일반 입력 필드에만 fill. password 셀렉터/type 은 blocked."""
+    return _action_browser_guarded("web_type_guarded", params)
+
+
+def action_web_select_guarded(params: dict) -> ActionResult:
+    """드롭다운 선택 — medium safe_input 으로만 실행."""
+    return _action_browser_guarded("web_select_guarded", params)
+
+
+def action_web_scroll_guarded(params: dict) -> ActionResult:
+    """read-only 스크롤 — 키보드/마우스 조작 없이 page.mouse.wheel 1회."""
+    return _action_browser_guarded("web_scroll_guarded", params)
+
+
 def action_scan_file_tree(params: dict) -> ActionResult:
     """PC 파일 트리 read-only 스캔 (Stage 1).
 
@@ -593,6 +734,10 @@ _ACTIONS = {
     "scan_file_tree": action_scan_file_tree,
     "web_analyze_html": action_web_analyze_html,
     "web_open_url_readonly": action_web_open_url_readonly,
+    "web_click_guarded": action_web_click_guarded,
+    "web_type_guarded": action_web_type_guarded,
+    "web_select_guarded": action_web_select_guarded,
+    "web_scroll_guarded": action_web_scroll_guarded,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -661,4 +806,8 @@ __all__ = [
     "action_scan_file_tree",
     "action_web_analyze_html",
     "action_web_open_url_readonly",
+    "action_web_click_guarded",
+    "action_web_type_guarded",
+    "action_web_select_guarded",
+    "action_web_scroll_guarded",
 ]
