@@ -3,15 +3,31 @@
 
 실행 예:
   python scripts/smoke_youtube_manual_login_probe.py \
-    --url https://www.youtube.com --wait-seconds 180
+    --url https://www.youtube.com --wait-seconds 180 \
+    --require-visible-confirm --require-user-login-confirm \
+    --keep-open --browser-channel chrome
 
 동작:
   - 접속 허용 호스트는 기본으로 youtube.com / www.youtube.com /
     studio.youtube.com / accounts.google.com / myaccount.google.com.
-  - 브라우저를 headless=False 로 띄우고 사용자가 직접 로그인.
+  - 브라우저를 headless=False 로 띄우고 bring_to_front 로 앞으로 끌어
+    올린다. 사용자가 직접 로그인한다.
   - 프로그램은 ID/PW 를 입력하지 않고, 쿠키/세션/token 을 수집하지 않는다.
   - 로그인 전/후 구조 요약만 표준 출력으로 보낸다 (HTML 원문 출력 금지).
   - 댓글/구독/좋아요/업로드/설정 변경은 절대 수행하지 않는다.
+
+가시성 / 수동 확인 옵션:
+  --require-visible-confirm
+      브라우저가 열린 뒤, 사용자가 "실제 창을 봤다" 고 Enter 를 누르기
+      전까지 polling 으로 넘어가지 않는다.
+  --require-user-login-confirm
+      구조 변화가 감지되더라도 프로그램이 login_completed_hint=True 를
+      단정하지 않는다. 사용자가 Enter 로 "로그인 완료 화면" 을 확인해야
+      True 로 올라간다. 이 경우 reason 에 user_confirmed_login 이 추가된다.
+  --keep-open
+      판정이 끝난 뒤 브라우저를 바로 닫지 않고 Enter 입력을 기다린다.
+  --browser-channel chromium|chrome|msedge
+      실제 사용자 브라우저 창을 쓰고 싶을 때 지정 (기본 chromium).
 
 주의:
   - 이 스크립트는 pytest 로 자동 실행하지 않는다. 사용자가 수동 실행용.
@@ -42,6 +58,8 @@ DEFAULT_SUCCESS_URL_CONTAINS = (
     "studio.youtube.com",
 )
 
+_VALID_BROWSER_CHANNELS = ("chromium", "chrome", "msedge")
+
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -53,19 +71,70 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--success-url-contains", action="append", default=None,
         help=(
-            "current_url 에 포함되면 로그인 완료로 간주할 토큰 "
-            "(지정하지 않으면 youtube.com / studio.youtube.com 기본 사용)"
+            "current_url 에 포함되면 로그인 완료 후보로 간주할 토큰. "
+            "success_url_match 단독으로는 login_completed_hint=True 가 "
+            "되지 않는다 — 반드시 url_changed / password_input_disappeared / "
+            "login_required_hint_cleared / success_text_match / "
+            "user_confirmed_login 중 하나가 함께 있어야 한다."
         ),
     )
     parser.add_argument(
         "--success-text-hints", action="append", default=None,
-        help="visible text 에 포함되면 로그인 완료로 간주할 토큰 (여러 개 가능)",
+        help="visible text 에 포함되면 로그인 완료 후보로 간주할 토큰 (여러 개).",
     )
     parser.add_argument(
         "--allow-additional-host", action="append", default=None,
         help="추가 허용 호스트 (기본 목록 외). 확신한 경우에만 사용.",
     )
+    parser.add_argument(
+        "--browser-channel", choices=_VALID_BROWSER_CHANNELS,
+        default="chromium",
+        help=(
+            "사용할 Chromium 채널. 실제 사용자 브라우저 창을 쓰고 싶으면 "
+            "chrome 또는 msedge 를 지정. 미설치면 명확한 에러를 반환."
+        ),
+    )
+    parser.add_argument(
+        "--require-visible-confirm", action="store_true",
+        help=(
+            "브라우저 창이 실제 화면에 보인다고 사용자가 Enter 로 확인하기 "
+            "전까지 polling 루프로 넘어가지 않음."
+        ),
+    )
+    parser.add_argument(
+        "--require-user-login-confirm", action="store_true",
+        help=(
+            "구조적 근거만으로 login_completed_hint=True 를 단정하지 않음. "
+            "사용자가 Enter 를 눌러 확인해야만 True 로 승격된다."
+        ),
+    )
+    parser.add_argument(
+        "--keep-open", action="store_true",
+        help="판정 종료 뒤 브라우저를 바로 닫지 않고 Enter 입력을 기다림.",
+    )
+    parser.add_argument(
+        "--slow-mo-ms", type=int, default=0,
+        help="각 브라우저 조작 사이에 지연을 추가 (최대 2000ms).",
+    )
+    parser.add_argument(
+        "--viewport", default=None,
+        help="viewport 크기 (예: 1280x800). 미지정이면 기본값.",
+    )
     return parser
+
+
+def _parse_viewport(value: str | None) -> dict | None:
+    if not value:
+        return None
+    try:
+        w_s, h_s = value.lower().split("x", 1)
+        w = int(w_s)
+        h = int(h_s)
+    except Exception:
+        return None
+    if w <= 0 or h <= 0:
+        return None
+    return {"width": w, "height": h}
 
 
 def _redact_for_print(result: dict) -> dict:
@@ -79,6 +148,19 @@ def _redact_for_print(result: dict) -> dict:
         "url": result.get("url"),
         "summary": result.get("summary"),
         "warnings": list(result.get("warnings") or []),
+        "visible_confirmed_by_user": bool(
+            result.get("visible_confirmed_by_user", False)
+        ),
+        "login_confirmed_by_user": bool(
+            result.get("login_confirmed_by_user", False)
+        ),
+        "login_state_hint": result.get("login_state_hint"),
+        "login_completed_hint": bool(
+            result.get("login_completed_hint", False)
+        ),
+        "login_completion_reason": list(
+            result.get("login_completion_reason") or []
+        ),
     }
     if "error_code" in result:
         out["error_code"] = result["error_code"]
@@ -134,12 +216,18 @@ def main(argv: list[str] | None = None) -> int:
     if success_urls is None:
         success_urls = list(DEFAULT_SUCCESS_URL_CONTAINS)
 
+    viewport = _parse_viewport(args.viewport)
+
     print(
         "[manual-login-probe] 사용자가 직접 구글/유튜브에 로그인해야 합니다.\n"
         "  - 프로그램은 ID/PW 를 입력하지 않습니다.\n"
         "  - 프로그램은 쿠키/세션/token 을 수집하지 않습니다.\n"
         "  - 프로그램은 로그인 전/후 화면 구조만 읽습니다.\n"
-        "  - 댓글/구독/좋아요/업로드/설정 변경은 수행하지 않습니다.",
+        "  - 댓글/구독/좋아요/업로드/설정 변경은 수행하지 않습니다.\n"
+        f"  - browser_channel={args.browser_channel}, "
+        f"require_visible_confirm={args.require_visible_confirm}, "
+        f"require_user_login_confirm={args.require_user_login_confirm}, "
+        f"keep_open={args.keep_open}",
         flush=True,
     )
 
@@ -150,6 +238,12 @@ def main(argv: list[str] | None = None) -> int:
         success_url_contains=success_urls,
         success_text_hints=args.success_text_hints,
         allowed_hosts=allowed_hosts,
+        browser_channel=args.browser_channel,
+        require_visible_confirm=args.require_visible_confirm,
+        require_user_login_confirm=args.require_user_login_confirm,
+        keep_open=args.keep_open,
+        slow_mo_ms=max(0, int(args.slow_mo_ms or 0)),
+        viewport=viewport,
     )
 
     safe = _redact_for_print(result)
