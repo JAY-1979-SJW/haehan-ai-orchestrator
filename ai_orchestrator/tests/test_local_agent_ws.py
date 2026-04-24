@@ -1,0 +1,467 @@
+"""로컬 에이전트 Stage 2 WebSocket 엔드포인트 검증.
+
+필수 테스트:
+  1. device_token 유효 시 WebSocket 연결 성공 (auth_ok)
+  2. 잘못된 token 은 연결 거절 (close code=4401)
+  3. agent_id 불일치 연결 거절
+  4. queued task 가 에이전트로 전달 (delivered → task message)
+  5. 에이전트 결과 수신 후 status=completed, timestamps 세팅
+  6. 실패 보고 시 status=failed + error_summary
+  7. open_url process_task 가 http/https 만 허용 (client 측 검증)
+  8. forbidden action 은 process_task 단계에서 ACTION_FORBIDDEN
+  9. high risk 작업은 waiting_approval 로 남고 WS 로 전달되지 않음
+ 10. device_token / 승인 token 원문이 감사 로그에 노출되지 않음
+"""
+from __future__ import annotations
+
+import os
+import sys
+
+import pytest
+from starlette.websockets import WebSocketDisconnect
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+@pytest.fixture(autouse=True)
+def _isolated_storage(tmp_path, monkeypatch):
+    import importlib
+    import ai_orchestrator.auth as _auth; importlib.reload(_auth)
+    import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
+
+    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.approval as _ap
+    import ai_orchestrator.local_agent_registry as _reg
+
+    monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
+    monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
+
+    _reg.clear()
+    _ap._store.clear()
+    _ap.clear_rate_store()
+
+    yield
+
+    _reg.clear()
+    _ap._store.clear()
+    _ap.clear_rate_store()
+
+
+@pytest.fixture
+def admin_user():
+    return {"actor": "admin_test", "role": "admin"}
+
+
+def _make_test_client(user_override: dict):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.auth import get_current_user
+
+    app = FastAPI()
+    app.include_router(local_agent_router, prefix="/api/v1")
+    app.dependency_overrides[get_current_user] = lambda: user_override
+    return TestClient(app, raise_server_exceptions=True)
+
+
+def _register(client) -> tuple[str, str]:
+    reg = client.post("/api/v1/local-agents/register", json={
+        "host": "ws-test", "os_name": "Windows 11", "version": "0.1.0",
+    }).json()
+    return reg["agent_id"], reg["device_token"]
+
+
+def _enqueue(client, agent_id: str, action: str, params: dict | None = None) -> dict:
+    return client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks",
+        json={"action": action, "params": params or {}},
+    ).json()
+
+
+# ── 1. auth 성공 ────────────────────────────────────────────────────────
+
+def test_ws_auth_success(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({
+            "type": "auth", "agent_id": agent_id, "device_token": token,
+        })
+        first = ws.receive_json()
+        assert first["type"] == "auth_ok"
+        assert first["agent_id"] == agent_id
+
+
+# ── 2. auth 실패: 잘못된 token ─────────────────────────────────────────
+
+def test_ws_auth_bad_token(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id, _ = _register(client)
+
+    with pytest.raises(WebSocketDisconnect) as exc_info:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({
+                "type": "auth", "agent_id": agent_id,
+                "device_token": "not_the_real_token_at_all",
+            })
+            ws.receive_json()  # 서버가 즉시 close
+    assert exc_info.value.code == 4401
+
+
+# ── 3. auth 실패: agent_id 불일치 ──────────────────────────────────────
+
+def test_ws_auth_unknown_agent_id(admin_user):
+    client = _make_test_client(admin_user)
+    # 등록된 에이전트 없이 임의 agent_id 로 접속 시도
+    with pytest.raises(WebSocketDisconnect) as exc_info:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({
+                "type": "auth",
+                "agent_id": "la-ghost000000",
+                "device_token": "any",
+            })
+            ws.receive_json()
+    assert exc_info.value.code == 4401
+
+
+def test_ws_auth_agent_id_mismatch(admin_user):
+    """agent A 의 토큰으로 agent B 를 가장할 수 없다."""
+    client = _make_test_client(admin_user)
+    agent_a, token_a = _register(client)
+    agent_b, _ = _register(client)
+    assert agent_a != agent_b
+
+    with pytest.raises(WebSocketDisconnect) as exc_info:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({
+                "type": "auth",
+                "agent_id": agent_b,          # 다른 agent 의 id
+                "device_token": token_a,      # A 의 토큰
+            })
+            ws.receive_json()
+    assert exc_info.value.code == 4401
+
+
+def test_ws_first_message_must_be_auth(admin_user):
+    client = _make_test_client(admin_user)
+    _register(client)
+
+    with pytest.raises(WebSocketDisconnect) as exc_info:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            # auth 가 아닌 heartbeat 로 시작
+            ws.send_json({"type": "heartbeat"})
+            ws.receive_json()
+    assert exc_info.value.code == 4401
+
+
+# ── 4. queued task 전달 ─────────────────────────────────────────────────
+
+def test_ws_initial_queued_task_pushed_on_auth(admin_user):
+    """auth 직후 미리 queued 상태인 작업이 모두 push 되어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    # 먼저 open_url task 등록 → status=queued
+    created = _enqueue(client, agent_id, "open_url",
+                       {"url": "https://example.com/a"})
+    assert created["status"] == "queued"
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        msg = ws.receive_json()
+        assert msg["type"] == "task"
+        assert msg["task"]["task_id"] == task_id
+        assert msg["task"]["action"] == "open_url"
+        assert msg["task"]["params"]["url"] == "https://example.com/a"
+        # 민감 필드는 dispatch 에 포함되지 않는다
+        assert "requested_by" not in msg["task"]
+
+    # HTTP 조회로 상태 확인 → delivered 여야 함
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "delivered"
+    assert fetched["delivered_at"]
+
+
+def test_ws_pull_delivers_newly_enqueued(admin_user):
+    """연결 중 enqueue 된 task 도 pull 메시지로 수령 가능."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+        created = _enqueue(client, agent_id, "open_url",
+                           {"url": "https://example.org/b"})
+        task_id = created["task_id"]
+
+        ws.send_json({"type": "pull"})
+        msg = ws.receive_json()
+        assert msg["type"] == "task"
+        assert msg["task"]["task_id"] == task_id
+
+
+# ── 5. result 수신 후 completed ────────────────────────────────────────
+
+def test_ws_result_marks_completed(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url",
+                       {"url": "https://example.com/ok"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({
+            "type": "running", "task_id": task_id,
+        })
+        assert ws.receive_json()["type"] == "running_ack"
+
+        ws.send_json({
+            "type": "result",
+            "task_id": task_id,
+            "success": True,
+            "summary": "opened: https://example.com/ok",
+        })
+        ack = ws.receive_json()
+        assert ack["type"] == "result_ack"
+        assert ack["status"] == "completed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "completed"
+    assert fetched["started_at"]
+    assert fetched["completed_at"]
+    assert fetched["result_summary"].startswith("opened:")
+
+
+# ── 6. 실패 보고 → failed + error_summary ──────────────────────────────
+
+def test_ws_result_failure_marks_failed(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url",
+                       {"url": "https://example.com/x"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({
+            "type": "result",
+            "task_id": task_id,
+            "success": False,
+            "summary": "browser open failed",
+            "error": "webbrowser module error",
+            "error_code": "BROWSER_OPEN_FAILED",
+        })
+        ack = ws.receive_json()
+        assert ack["type"] == "result_ack"
+        assert ack["status"] == "failed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "failed"
+    assert "BROWSER_OPEN_FAILED" in fetched["error_summary"]
+
+
+# ── 7. open_url 은 http/https 만 (client process_task) ─────────────────
+
+def test_client_process_task_open_url_scheme_guard(monkeypatch):
+    """open_url 테스트는 실제 OS 브라우저를 절대 열지 않는다.
+
+    action_open_url 은 내부에서 webbrowser.open() 을 호출하므로, 테스트 단위에서는
+    monkeypatch 로 webbrowser.open 을 스텁해 호출만 기록한다. 스킴 가드(file/javascript/
+    data)는 action_open_url 내부에서 webbrowser 호출 전에 차단되므로, 혹시라도
+    분기 실수로 도달하더라도 실제 브라우저가 열리지 않도록 mock 을 함께 건다.
+    """
+    import webbrowser
+
+    opened: list[str] = []
+
+    def fake_open(url, new=0, autoraise=True):
+        opened.append(url)
+        return True
+
+    monkeypatch.setattr(webbrowser, "open", fake_open)
+
+    from local_agent.websocket_client import process_task
+
+    allowed = process_task({
+        "task_id": "t-1", "action": "open_url", "risk_level": "low",
+        "params": {"url": "https://example.com/a"},
+    })
+    assert allowed["type"] == "result"
+    assert allowed["task_id"] == "t-1"
+    # 허용 URL 은 action_open_url 경로까지 도달해 webbrowser.open 을 1회 호출
+    assert opened == ["https://example.com/a"]
+
+    for bad_url in ("file:///C:/Windows/System32/cmd.exe",
+                    "javascript:alert(1)",
+                    "data:text/html,<script>x</script>"):
+        r = process_task({
+            "task_id": "t-bad", "action": "open_url", "risk_level": "low",
+            "params": {"url": bad_url},
+        })
+        assert r["success"] is False
+        assert r["error_code"] in {"URL_SCHEME_NOT_ALLOWED", "INVALID_URL"}
+
+    # 스킴 가드 차단 URL 은 webbrowser.open 까지 도달하면 안 된다.
+    assert opened == ["https://example.com/a"]
+
+
+# ── 8. forbidden action 은 본 클라이언트에서 실행 불가 ──────────────────
+
+@pytest.mark.parametrize("action", [
+    "delete_file", "upload_file", "modify_file", "execute_shell",
+])
+def test_client_process_task_forbidden_action(action):
+    from local_agent.websocket_client import process_task
+    r = process_task({
+        "task_id": "t-forbid", "action": action, "risk_level": "low",
+        "params": {},
+    })
+    assert r["success"] is False
+    assert r["error_code"] == "ACTION_FORBIDDEN"
+
+
+def test_client_process_task_unknown_auto_exec_action():
+    from local_agent.websocket_client import process_task
+    r = process_task({
+        "task_id": "t-unk", "action": "mystery", "risk_level": "low",
+        "params": {},
+    })
+    assert r["success"] is False
+    assert r["error_code"] in {
+        "ACTION_NOT_AUTO_EXECUTABLE", "UNKNOWN_ACTION",
+    }
+
+
+# ── 9. high risk 는 WS 전달 금지 + 클라이언트도 거절 ───────────────────
+
+def test_ws_high_risk_task_not_delivered(admin_user):
+    """waiting_approval 상태의 high risk 작업은 WS 로 전달되지 않는다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "capture_screenshot")
+    assert created["status"] == "waiting_approval"
+    assert created["token_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+        # pull 후에도 task 가 없어야 한다 (heartbeat_ack 만)
+        ws.send_json({"type": "heartbeat"})
+        msg = ws.receive_json()
+        assert msg["type"] == "heartbeat_ack"
+        # 추가 push 시도 — 아무 task 도 오지 않아야 한다
+        ws.send_json({"type": "pull"})
+        # pull 은 별도 ack 가 없으므로 다음 heartbeat 로 확인
+        ws.send_json({"type": "heartbeat"})
+        next_msg = ws.receive_json()
+        assert next_msg["type"] == "heartbeat_ack"
+
+    # 상태는 그대로 waiting_approval
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{created['task_id']}",
+    ).json()
+    assert fetched["status"] == "waiting_approval"
+
+
+def test_client_process_task_high_risk_returns_not_implemented_stage2():
+    from local_agent.websocket_client import process_task
+    r = process_task({
+        "task_id": "t-hr",
+        "action": "capture_screenshot",
+        "risk_level": "high",
+        "params": {},
+    })
+    assert r["success"] is False
+    assert r["error_code"] == "NOT_IMPLEMENTED_STAGE2"
+
+
+# ── 10. 감사 로그에 토큰 원문 / 민감값 노출 금지 ───────────────────────
+
+def test_ws_device_token_never_in_audit_log(admin_user):
+    import ai_orchestrator.audit_logger as _al
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    # 유효 / 무효 시도 모두
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        ws.receive_json()
+
+    try:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws2:
+            ws2.send_json({"type": "auth", "agent_id": agent_id,
+                           "device_token": "raw_guess_value_zzz"})
+            ws2.receive_json()
+    except WebSocketDisconnect:
+        pass
+
+    raw = _al._LOG_PATH.read_text(encoding="utf-8")
+    assert token not in raw, "device_token 원문이 감사 로그에 노출됨"
+    assert "raw_guess_value_zzz" not in raw, "무효 token 시도 원문이 기록됨"
+
+
+def test_ws_connected_and_disconnected_audit_events(admin_user):
+    import ai_orchestrator.audit_logger as _al
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": token})
+        ws.receive_json()
+
+    events = {e["event_type"] for e in _al.read_recent_logs(limit=100)}
+    assert "LOCAL_AGENT_WS_CONNECTED" in events
+    assert "LOCAL_AGENT_WS_DISCONNECTED" in events
+
+
+def test_ws_auth_failure_audit_event(admin_user):
+    import ai_orchestrator.audit_logger as _al
+    client = _make_test_client(admin_user)
+    agent_id, _ = _register(client)
+
+    try:
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({"type": "auth", "agent_id": agent_id,
+                          "device_token": "wrong"})
+            ws.receive_json()
+    except WebSocketDisconnect:
+        pass
+
+    events = {e["event_type"] for e in _al.read_recent_logs(limit=100)}
+    assert "LOCAL_AGENT_WS_AUTH_FAILED" in events
+
+
+# ── sanity: auto-execute 매핑 일관성 ───────────────────────────────────
+
+def test_server_and_client_auto_exec_sets_match():
+    """서버와 클라이언트의 AUTO_EXECUTE_VIA_AGENT 집합은 동일해야 한다."""
+    from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT as _S
+    from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
+    assert set(_S) == set(_C)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

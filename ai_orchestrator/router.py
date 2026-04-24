@@ -18,11 +18,13 @@ from dataclasses import asdict as _asdict
 from .sites.router import sites_router
 from .cad.router import cad_router
 from .web_task_router import web_task_router
+from .local_agent_router import local_agent_router
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(sites_router)
 router.include_router(cad_router)
 router.include_router(web_task_router)
+router.include_router(local_agent_router)
 
 
 class TaskSubmit(BaseModel):
