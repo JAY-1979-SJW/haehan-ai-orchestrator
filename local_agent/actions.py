@@ -326,6 +326,70 @@ def _grab_screen():
         return shot, int(raw.width), int(raw.height)
 
 
+def action_web_analyze_html(params: dict) -> ActionResult:
+    """HTML 문자열 read-only 분석 (Stage 1).
+
+    실제 브라우저 조작이나 HTTP 요청을 수행하지 않고, 넘겨받은 HTML 문자열을
+    static 분석한다. 결과에는 password/hidden input value, cookie, token 류,
+    HTML 원문 전체가 포함되지 않는다.
+    """
+    from . import web_reader
+
+    if not isinstance(params, dict):
+        params = {}
+
+    html = params.get("html")
+    if not isinstance(html, str):
+        return ActionResult(
+            False, "web_analyze_html 실패", {},
+            "html 누락 또는 문자열이 아님",
+            error_code="MISSING_HTML",
+        )
+
+    base_url = params.get("base_url")
+    if base_url is not None and not isinstance(base_url, str):
+        return ActionResult(
+            False, "web_analyze_html 실패", {},
+            "base_url 은 문자열이어야 함",
+            error_code="INVALID_BASE_URL",
+        )
+
+    hints = params.get("keyword_hints") or []
+    if not isinstance(hints, list):
+        return ActionResult(
+            False, "web_analyze_html 실패", {},
+            "keyword_hints 는 list 여야 함",
+            error_code="INVALID_HINTS",
+        )
+
+    try:
+        page = web_reader.analyze_html_structure(
+            html=html, base_url=base_url, keyword_hints=hints,
+        )
+    except Exception as e:
+        logger.exception("web_analyze_html 실행 실패")
+        return ActionResult(
+            False, "web_analyze_html 예외", {},
+            str(e)[:200],
+            error_code="ANALYZE_FAILED",
+        )
+
+    counts = page.get("counts", {}) or {}
+    risky = page.get("risky_elements", []) or []
+    summary = (
+        f"headings={counts.get('headings', 0)} "
+        f"links={counts.get('links', 0)} "
+        f"buttons={counts.get('buttons', 0)} "
+        f"forms={counts.get('forms', 0)} "
+        f"tables={counts.get('tables', 0)} "
+        f"risky={len(risky)}"
+    )
+    return ActionResult(
+        success=True, summary=summary,
+        data={"page_structure": page},
+    )
+
+
 def action_scan_file_tree(params: dict) -> ActionResult:
     """PC 파일 트리 read-only 스캔 (Stage 1).
 
@@ -441,6 +505,7 @@ _ACTIONS = {
     "capture_screenshot": action_capture_screenshot,
     "list_files_readonly": action_list_files_readonly,
     "scan_file_tree": action_scan_file_tree,
+    "web_analyze_html": action_web_analyze_html,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -507,4 +572,5 @@ __all__ = [
     "action_open_url", "action_capture_screenshot",
     "action_list_files_readonly",
     "action_scan_file_tree",
+    "action_web_analyze_html",
 ]
