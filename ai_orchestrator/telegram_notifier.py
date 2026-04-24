@@ -120,6 +120,95 @@ def build_dev_reg_message(
     }
 
 
+# ── capture_screenshot 전용 승인 메시지 ────────────────────────────
+#
+# 핵심 원칙:
+#   - callback_data 는 기존 "approve|task_id|token_id" / "reject|..." 포맷 그대로 사용.
+#     → 하위호환 유지. handle_telegram_update 의 기존 파서가 그대로 처리한다.
+#   - 버튼 text 와 본문 텍스트만 dry-run 여부로 분기한다.
+#   - 텍스트에는 token 원문/파일명/로컬 경로/민감값 절대 포함하지 않는다 (아래 빌더 내부에서
+#     reason/note 는 축약만 수행 — 민감 키 제거 로직을 거친 값이 입력된다는 전제).
+
+_CAP_RISK_LABEL = "HIGH"
+_CAP_DRY_GUIDANCE = "이미지 파일을 생성하지 않고 환경만 점검합니다."
+_CAP_REAL_GUIDANCE = (
+    "승인 시 로컬 PC에서 1회 화면 캡처가 실행되며, "
+    "서버에는 이미지가 업로드되지 않습니다."
+)
+
+
+def _truncate_memo(text: str, limit: int = 80) -> str:
+    """reason/note 축약. 개행 제거 + 길이 제한. None/비문자열은 빈 문자열."""
+    if not text:
+        return ""
+    s = str(text).replace("\r", " ").replace("\n", " ").strip()
+    if len(s) > limit:
+        s = s[: limit - 1] + "…"
+    return s
+
+
+def build_capture_screenshot_approval_message(
+    task_id: str,
+    agent_id: str,
+    token_id: str,
+    *,
+    dry_run: bool,
+    risk_level: str = "high",
+    requested_by: str = "",
+    role: str = "",
+    reason: str = "",
+    note: str = "",
+) -> dict:
+    """capture_screenshot 승인 요청 메시지 (전송 전 포맷).
+
+    - dry_run=True  → "사전 점검" 라벨, 버튼: "사전 점검 승인" / "거절"
+    - dry_run=False → "실제 화면 캡처" 라벨, 버튼: "1회 캡처 승인" / "거절"
+    - 본문과 버튼 모두 token 원문 / 파일명 / 로컬 경로를 포함하지 않는다.
+    - callback_data 는 기존 "approve|task_id|token_id" 포맷 재사용 → 기존 승인 webhook
+      (`handle_telegram_update` 형식 1) 경로로 그대로 처리 가능.
+    """
+    exec_type = "사전 점검" if dry_run else "실제 화면 캡처"
+    guidance = _CAP_DRY_GUIDANCE if dry_run else _CAP_REAL_GUIDANCE
+
+    lines = [
+        "[승인 요청] 작업: capture_screenshot",
+        f"실행 유형: {exec_type}",
+        f"위험도: {(risk_level or 'high').upper()}",
+        f"agent: {agent_id}",
+        f"task: {task_id}",
+    ]
+    if requested_by or role:
+        who_parts = []
+        if requested_by:
+            who_parts.append(str(requested_by)[:40])
+        if role:
+            who_parts.append(f"role={str(role)[:20]}")
+        lines.append("요청자: " + " / ".join(who_parts))
+
+    reason_short = _truncate_memo(reason)
+    if reason_short:
+        lines.append(f"사유: {reason_short}")
+    note_short = _truncate_memo(note)
+    if note_short:
+        lines.append(f"메모: {note_short}")
+
+    lines.append("")
+    lines.append(guidance)
+
+    approve_label = "사전 점검 승인" if dry_run else "1회 캡처 승인"
+    return {
+        "text": "\n".join(lines),
+        "reply_markup": {
+            "inline_keyboard": [[
+                {"text": approve_label,
+                 "callback_data": build_callback_data("approve", task_id, token_id)},
+                {"text": "거절",
+                 "callback_data": build_callback_data("reject", task_id, token_id)},
+            ]],
+        },
+    }
+
+
 def build_result_text(action: str, status: str, actor: str = "", reason: str = "") -> str:
     """처리 결과를 텔레그램에 회신할 한 줄 메시지로 포맷."""
     if action == "approve" and status == "approved":
