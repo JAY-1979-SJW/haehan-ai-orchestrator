@@ -326,6 +326,74 @@ def _grab_screen():
         return shot, int(raw.width), int(raw.height)
 
 
+def action_scan_file_tree(params: dict) -> ActionResult:
+    """PC 파일 트리 read-only 스캔 (Stage 1).
+
+    file_scanner.scan_file_tree 를 호출하여 정리 후보/보존 필수/중복 후보를
+    요약한다. 반환 data 에는 absolute_path 가 포함되지 않으므로 서버 전송이
+    가능하다. 본 액션은 어떤 경우에도 파일 삭제/이동/이름변경을 하지 않는다.
+    """
+    from . import file_scanner
+
+    if not isinstance(params, dict):
+        params = {}
+
+    root_path = str(params.get("root_path", "")).strip()
+    if not root_path:
+        return ActionResult(
+            False, "scan_file_tree 실패", {},
+            "root_path 누락",
+            error_code="MISSING_ROOT_PATH",
+        )
+
+    kwargs: dict = {"root_path": root_path}
+    for key, default in (
+        ("max_depth", 5),
+        ("max_files", 10000),
+        ("max_hash_size_mb", 100),
+    ):
+        if key in params and params[key] is not None:
+            try:
+                kwargs[key] = int(params[key])
+            except (TypeError, ValueError):
+                return ActionResult(
+                    False, "scan_file_tree 실패", {},
+                    f"{key} 값이 정수가 아님",
+                    error_code="INVALID_PARAM",
+                )
+        else:
+            kwargs[key] = default
+    for key in ("include_hidden", "compute_hash"):
+        kwargs[key] = bool(params.get(key, False))
+
+    try:
+        report = file_scanner.scan_file_tree(**kwargs)
+    except Exception as e:
+        logger.exception("scan_file_tree 실행 실패")
+        return ActionResult(
+            False, "scan_file_tree 예외", {},
+            str(e)[:200],
+            error_code="SCAN_FAILED",
+        )
+
+    if not isinstance(report, dict) or not report.get("ok"):
+        code = str(report.get("error_code", "SCAN_FAILED")) if isinstance(report, dict) else "SCAN_FAILED"
+        summary = str(report.get("summary", "scan failed")) if isinstance(report, dict) else "scan failed"
+        return ActionResult(
+            False, "scan_file_tree 거절", {}, summary,
+            error_code=code,
+        )
+
+    summary = (
+        f"scanned_files={report['scanned_files']} "
+        f"preserve={report['preserve_count']} "
+        f"candidate_delete={report['delete_candidate_count']} "
+        f"review={report['review_count']} "
+        f"duplicates={report['duplicate_candidate_count']}"
+    )
+    return ActionResult(success=True, summary=summary, data=report)
+
+
 def action_list_files_readonly(params: dict) -> ActionResult:
     """사전 화이트리스트(config.READ_ONLY_DIRS) 디렉터리만 나열."""
     target = str(params.get("dir", "")).strip()
@@ -372,6 +440,7 @@ _ACTIONS = {
     "open_url": action_open_url,
     "capture_screenshot": action_capture_screenshot,
     "list_files_readonly": action_list_files_readonly,
+    "scan_file_tree": action_scan_file_tree,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -437,4 +506,5 @@ __all__ = [
     "action_ping", "action_system_info", "action_list_allowed_apps",
     "action_open_url", "action_capture_screenshot",
     "action_list_files_readonly",
+    "action_scan_file_tree",
 ]
