@@ -597,6 +597,86 @@ def _action_browser_guarded(
     )
 
 
+def action_web_build_site_map_prompt(params: dict) -> ActionResult:
+    """site_mapper.build_site_map_prompt_payload 래퍼 (Stage 4 preparation).
+
+    실제 GPT/OpenAI API 를 호출하지 않으며, 외부 네트워크 요청도 하지 않는다.
+    page_observation (web_reader 또는 browser_reader 결과) 만 받아 GPT 에게
+    넘길 수 있는 범용 관찰 payload 를 만든다. HTML 원문 전체, password/hidden
+    value, cookie, token 류 원문은 payload 에 포함되지 않는다.
+    """
+    from . import site_mapper
+
+    if not isinstance(params, dict):
+        params = {}
+
+    page_observation = params.get("page_observation")
+    if not isinstance(page_observation, dict):
+        return ActionResult(
+            False, "web_build_site_map_prompt 실패", {},
+            "page_observation dict 누락",
+            error_code="MISSING_PAGE_OBSERVATION",
+        )
+
+    user_goal = params.get("user_goal")
+    if user_goal is not None and not isinstance(user_goal, str):
+        return ActionResult(
+            False, "web_build_site_map_prompt 실패", {},
+            "user_goal 은 문자열이어야 함",
+            error_code="INVALID_USER_GOAL",
+        )
+
+    domain_profile = params.get("domain_profile")
+    if domain_profile is not None and not isinstance(domain_profile, dict):
+        return ActionResult(
+            False, "web_build_site_map_prompt 실패", {},
+            "domain_profile 은 dict 이어야 함",
+            error_code="INVALID_DOMAIN_PROFILE",
+        )
+
+    hints = params.get("keyword_hints")
+    if hints is not None and not isinstance(hints, list):
+        return ActionResult(
+            False, "web_build_site_map_prompt 실패", {},
+            "keyword_hints 는 list 여야 함",
+            error_code="INVALID_HINTS",
+        )
+
+    max_items = params.get("max_items", 80)
+
+    try:
+        payload = site_mapper.build_site_map_prompt_payload(
+            page_observation=page_observation,
+            user_goal=user_goal,
+            domain_profile=domain_profile,
+            keyword_hints=hints,
+            max_items=max_items,
+        )
+    except Exception as e:
+        logger.exception("web_build_site_map_prompt 실행 실패")
+        return ActionResult(
+            False, "web_build_site_map_prompt 예외", {},
+            str(e)[:200], error_code="SITE_MAP_BUILD_FAILED",
+        )
+
+    counts = (payload.get("page_summary") or {}).get("counts", {}) or {}
+    heur = payload.get("heuristic_candidates") or {}
+    summary = (
+        f"links={counts.get('links', 0)} "
+        f"buttons={counts.get('buttons', 0)} "
+        f"forms={counts.get('forms', 0)} "
+        f"tables={counts.get('tables', 0)} "
+        f"roles={len(heur.get('page_role_candidates') or [])} "
+        f"tasks={len(heur.get('task_candidates') or [])} "
+        f"danger={len(heur.get('danger_elements') or [])} "
+        f"safe={len(heur.get('safe_navigation_candidates') or [])}"
+    )
+    return ActionResult(
+        success=True, summary=summary,
+        data={"site_map_prompt_payload": payload},
+    )
+
+
 def action_web_click_guarded(params: dict) -> ActionResult:
     """안전 click 만 실제 수행. 위험 버튼은 approval_required 로 거절."""
     return _action_browser_guarded("web_click_guarded", params)
@@ -734,6 +814,7 @@ _ACTIONS = {
     "scan_file_tree": action_scan_file_tree,
     "web_analyze_html": action_web_analyze_html,
     "web_open_url_readonly": action_web_open_url_readonly,
+    "web_build_site_map_prompt": action_web_build_site_map_prompt,
     "web_click_guarded": action_web_click_guarded,
     "web_type_guarded": action_web_type_guarded,
     "web_select_guarded": action_web_select_guarded,
@@ -806,6 +887,7 @@ __all__ = [
     "action_scan_file_tree",
     "action_web_analyze_html",
     "action_web_open_url_readonly",
+    "action_web_build_site_map_prompt",
     "action_web_click_guarded",
     "action_web_type_guarded",
     "action_web_select_guarded",
