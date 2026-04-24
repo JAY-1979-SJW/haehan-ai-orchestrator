@@ -27,6 +27,8 @@ from ai_orchestrator.gpt_planner import (  # noqa: E402
     DEFAULT_TENANT_POLICY,
     build_deterministic_fallback_plan,
     build_planner_prompt_payload,
+    default_available_actions,
+    default_tenant_policy,
     sanitize_planner_payload,
 )
 
@@ -568,6 +570,69 @@ def test_user_request_truncation():
         site_map_payload=_site_map_payload_rich(),
     )
     assert len(payload["user_request"]) <= 2000
+
+
+# ─── getter helpers: default_available_actions / default_tenant_policy ──
+
+
+def test_default_available_actions_getter_returns_nonempty_list():
+    actions = default_available_actions()
+    assert isinstance(actions, list)
+    assert len(actions) > 0
+    for item in actions:
+        assert isinstance(item, dict)
+        assert "name" in item
+
+
+def test_default_available_actions_getter_does_not_mutate_source():
+    snapshot = tuple(dict(a) for a in DEFAULT_AVAILABLE_ACTIONS)
+    actions = default_available_actions()
+    actions.append({"name": "mutated_action"})
+    actions[0]["name"] = "MUTATED"
+    # 원본 상수 (tuple 자체) 와 내부 dict 내용 모두 그대로여야 한다.
+    assert len(DEFAULT_AVAILABLE_ACTIONS) == len(snapshot)
+    for original, saved in zip(DEFAULT_AVAILABLE_ACTIONS, snapshot):
+        assert original == saved
+
+
+def test_default_tenant_policy_getter_forbids_auto_execute():
+    policy = default_tenant_policy()
+    assert isinstance(policy, dict)
+    assert policy.get("allow_auto_execute") is False
+
+
+def test_default_tenant_policy_getter_does_not_mutate_source():
+    snapshot = dict(DEFAULT_TENANT_POLICY)
+    policy = default_tenant_policy()
+    policy["allow_auto_execute"] = True
+    policy["new_key"] = "mutated"
+    # 원본 상수의 top-level 키/값은 변하지 않아야 한다.
+    assert DEFAULT_TENANT_POLICY.get("allow_auto_execute") is False
+    assert "new_key" not in DEFAULT_TENANT_POLICY
+    assert DEFAULT_TENANT_POLICY == snapshot
+
+
+def test_build_planner_prompt_payload_unchanged_after_getter_addition():
+    # getter 추가가 기존 build_planner_prompt_payload 동작을 바꾸지 않는지.
+    payload = build_planner_prompt_payload(
+        user_request="검사",
+        site_map_payload=_site_map_payload_rich(),
+    )
+    assert payload["ok"] is True
+    assert payload["planning_mode"] == "plan_only"
+    assert payload["tenant_policy"]["allow_auto_execute"] is False
+    names = {a["name"] for a in payload["available_actions"]}
+    for must in (
+        "web_open_url_readonly",
+        "web_analyze_html",
+        "web_build_site_map_prompt",
+        "web_click_guarded",
+        "web_type_guarded",
+        "web_select_guarded",
+        "web_scroll_guarded",
+        "scan_file_tree",
+    ):
+        assert must in names
 
 
 def test_danger_keyword_in_user_request_does_not_escape_into_steps():

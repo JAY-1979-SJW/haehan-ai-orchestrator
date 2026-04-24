@@ -102,6 +102,14 @@ DEFAULT_TENANT_POLICY: dict[str, Any] = {
 }
 
 
+def default_available_actions() -> list[dict]:
+    return [dict(item) for item in DEFAULT_AVAILABLE_ACTIONS]
+
+
+def default_tenant_policy() -> dict:
+    return dict(DEFAULT_TENANT_POLICY)
+
+
 # ─── 민감 key/value 토큰 테이블 ──────────────────────────────────────────
 
 _SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset({
@@ -737,4 +745,6 @@ __all__ = [
     "sanitize_planner_payload",
     "DEFAULT_AVAILABLE_ACTIONS",
     "DEFAULT_TENANT_POLICY",
+    "default_available_actions",
+    "default_tenant_policy",
 ]
