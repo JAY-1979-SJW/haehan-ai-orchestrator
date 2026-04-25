@@ -106,6 +106,105 @@ def _is_capture_screenshot(task) -> bool:
     return bool(task is not None and task.action == "capture_screenshot")
 
 
+# F-3: Google / YouTube open-only 정책 — 서버 측 사전 차단.
+#
+# F-2 에서 ``local_agent.browser_probe.probe_visible_browser`` 가 Google
+# 계열 URL 을 Playwright launch 전에 거절한다. F-3 은 같은 정책을 서버
+# (요청 생성 단계) 에도 적용해, ``open_local_browser_probe`` 작업이
+# 큐잉되기 전에 사용자/관리자 UI 쪽으로 ``GOOGLE_OPEN_ONLY`` 안내가
+# 즉시 돌아가도록 한다.
+#
+# 본 모듈은 ``local_agent.browser_launcher`` 를 import 하지 않는다 —
+# 서버↔로컬 에이전트 의존성 경계를 깨지 않기 위해 정책 상수 / host 분류
+# 헬퍼를 동일 형태로 server 측에 mirror 한다. F-2 의 도메인 집합과 일치
+# 여부는 별도 테스트 (``test_local_agent_probe_google_open_only.
+# test_policy_domains_match_f2_helper``) 가 회귀 검증한다.
+# F-4B: observe_public_browser_page 도 동일하게 차단 대상에 포함된다.
+# open_local_browser (subprocess) 는 차단 대상이 아님 (계속 허용).
+_PROBE_GATED_ACTION_NAMES: frozenset[str] = frozenset({
+    "open_local_browser_probe",
+    "observe_public_browser_page",
+})
+_PROBE_ACTION_NAME = "open_local_browser_probe"  # 후방호환 (테스트/외부 참조용)
+_GOOGLE_OPEN_ONLY_ERROR = "GOOGLE_OPEN_ONLY"
+_GOOGLE_OPEN_ONLY_WARNING = "google_open_only_use_open_local_browser"
+_GOOGLE_OPEN_ONLY_MESSAGE = (
+    "Google/YouTube 계열은 보안 정책상 화면 캡처 probe 가 차단됩니다. "
+    "open_local_browser 로만 열 수 있습니다."
+)
+
+# F-2 ``local_agent.browser_launcher.GOOGLE_OPEN_ONLY_DOMAINS`` 의 서버측
+# mirror. 두 집합이 갈라지지 않도록 회귀 테스트가 동치성을 검증한다.
+_GOOGLE_OPEN_ONLY_DOMAINS: tuple[str, ...] = (
+    "accounts.google.com",
+    "google.com",
+    "studio.youtube.com",
+    "youtube.com",
+    "gmail.com",
+    "drive.google.com",
+)
+
+
+def _extract_probe_target_url(params) -> str:
+    """probe 요청 params 에서 검사할 target URL 만 안전하게 꺼낸다.
+
+    - ``params`` 가 dict 가 아니면 빈 문자열 반환.
+    - ``url`` 또는 ``target_url`` 둘 중 먼저 발견되는 값을 사용.
+    - 문자열이 아니거나 비어있으면 빈 문자열 반환.
+    """
+    if not isinstance(params, dict):
+        return ""
+    for key in ("url", "target_url"):
+        v = params.get(key)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return ""
+
+
+def _server_is_google_open_only_url(url: str) -> bool:
+    """URL host 가 ``_GOOGLE_OPEN_ONLY_DOMAINS`` 정책 대상인지 판정.
+
+    http/https 만 검사. host 의 lowercase 정확 일치 / 서브도메인 매칭.
+    query/fragment 는 보지 않는다 (정책 표시도 host 단위까지만).
+    F-2 ``local_agent.browser_launcher.is_google_open_only_url`` 의 server
+    측 mirror — 서버↔local_agent 의존성을 만들지 않는다.
+    """
+    if not isinstance(url, str) or not url:
+        return False
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+    except Exception:  # noqa: BLE001
+        return False
+    scheme = (parsed.scheme or "").strip().lower()
+    if scheme not in ("http", "https"):
+        return False
+    host = (parsed.hostname or "").strip().strip(".").lower()
+    if not host:
+        return False
+    for domain in _GOOGLE_OPEN_ONLY_DOMAINS:
+        if host == domain or host.endswith("." + domain):
+            return True
+    return False
+
+
+def _is_google_open_only_probe_request(action: str, params) -> bool:
+    """F-3/F-4B 차단 대상 여부.
+
+    조건:
+      - action 이 ``_PROBE_GATED_ACTION_NAMES`` 중 하나
+        (``open_local_browser_probe`` / ``observe_public_browser_page``)
+      - params.url 또는 params.target_url 이 Google open-only 도메인
+    """
+    name = (action or "").strip().lower()
+    if name not in _PROBE_GATED_ACTION_NAMES:
+        return False
+    target = _extract_probe_target_url(params)
+    if not target:
+        return False
+    return _server_is_google_open_only_url(target)
+
+
 def _task_is_dry_run(task) -> bool:
     """params.options.dry_run 이 True 인 경우 dry-run 작업으로 본다.
 
@@ -207,6 +306,28 @@ def submit_local_agent_task(
             status_code=404,
             detail={"error": "AGENT_NOT_FOUND",
                     "message": f"미등록 에이전트: {agent_id}"},
+        )
+
+    # F-3: Google/YouTube open-only 정책 — open_local_browser_probe 가
+    # Google 계열 URL 을 받으면 enqueue 하지 않고 즉시 거절한다.
+    # raw target URL 의 query/fragment 는 응답/감사 로그 어디에도 포함하지
+    # 않는다 (host 단위 정책 표시만).
+    if _is_google_open_only_probe_request(body.action, body.params):
+        log_event(
+            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
+            action_type=str(body.action), actor=actor, role=role,
+            note=(
+                f"agent_id={agent_id} reason={_GOOGLE_OPEN_ONLY_ERROR}"
+            ),
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": _GOOGLE_OPEN_ONLY_ERROR,
+                "error_code": _GOOGLE_OPEN_ONLY_ERROR,
+                "warnings": [_GOOGLE_OPEN_ONLY_WARNING],
+                "message": _GOOGLE_OPEN_ONLY_MESSAGE,
+            },
         )
 
     try:

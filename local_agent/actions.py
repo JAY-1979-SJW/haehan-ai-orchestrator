@@ -569,6 +569,352 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     )
 
 
+def action_open_local_browser(params: dict) -> ActionResult:
+    """사용자 로컬 PC 의 visible 브라우저를 새 전용 프로필로 띄운다.
+
+    browser_launcher.open_local_browser 를 호출한다. 자동 ID/PW 입력, 클릭,
+    제출, 쿠키/세션/storage 수집, headless, remote-debugging-port 사용은
+    일절 수행하지 않는다. 반환 data 에는 chrome.exe 절대경로 / 전용 프로필
+    절대경로가 포함되지 않는다 (browser_launcher 가 이미 카테고리 토큰만 노출).
+    """
+    from . import browser_launcher
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False, "open_local_browser 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        return ActionResult(
+            False, "open_local_browser 차단", {},
+            f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
+            error_code="URL_SCHEME_NOT_ALLOWED",
+        )
+
+    site_policy = params.get("site_policy", browser_launcher.SITE_POLICY_AUTO)
+    if not isinstance(site_policy, str) or not site_policy:
+        site_policy = browser_launcher.SITE_POLICY_AUTO
+
+    profile_name = params.get("profile_name", "default")
+    if not isinstance(profile_name, str) or not profile_name:
+        profile_name = "default"
+
+    provider_override = params.get("provider_override")
+    if provider_override is not None:
+        if not isinstance(provider_override, str) or \
+                provider_override not in browser_launcher.SUPPORTED_PROVIDERS:
+            return ActionResult(
+                False, "open_local_browser 차단", {},
+                f"허용되지 않은 provider_override: {provider_override!r} "
+                f"(msedge/chrome/chromium 만 허용)",
+                error_code="UNSUPPORTED_PROVIDER",
+            )
+
+    try:
+        result = browser_launcher.open_local_browser(
+            url=url,
+            site_policy=site_policy,
+            profile_name=profile_name,
+            provider_override=provider_override,
+        )
+    except Exception as e:
+        logger.exception("open_local_browser 실행 실패")
+        return ActionResult(
+            False, "open_local_browser 예외", {},
+            str(e)[:200], error_code="BROWSER_LAUNCH_FAILED",
+        )
+
+    if not isinstance(result, dict):
+        return ActionResult(
+            False, "open_local_browser 비정상 응답", {},
+            "result is not dict", error_code="BROWSER_LAUNCH_FAILED",
+        )
+
+    # browser_launcher 가 이미 화이트리스트만 노출하지만, action 단에서도
+    # 명시적으로 화이트리스트 한 번 더 적용해 미래 회귀를 방지한다.
+    pid_value = result.get("pid")
+    data = {
+        "launched": bool(result.get("launched", False)),
+        "target_url": str(result.get("target_url", "")),
+        "browser_provider": str(result.get("browser_provider", "") or ""),
+        "browser_channel": result.get("browser_channel"),
+        "browser_path_category": str(result.get("browser_path_category", "") or ""),
+        "profile_dir_category": str(result.get("profile_dir_category", "") or ""),
+        "pid": int(pid_value) if isinstance(pid_value, int) else None,
+        "pid_present": pid_value is not None,
+        "warnings": list(result.get("warnings") or []),
+    }
+
+    if not data["launched"]:
+        reason = ",".join(data["warnings"]) or "launch_failed"
+        return ActionResult(
+            False, "open_local_browser 거절", data,
+            reason[:200], error_code="BROWSER_LAUNCH_FAILED",
+        )
+
+    summary = (
+        f"opened provider={data['browser_provider']} "
+        f"path={data['browser_path_category']} "
+        f"profile={data['profile_dir_category']} pid_present={data['pid_present']}"
+    )
+    return ActionResult(success=True, summary=summary[:300], data=data)
+
+
+def action_open_local_browser_probe(params: dict) -> ActionResult:
+    """Playwright 기반 visible 브라우저 probe (E-2 단계).
+
+    browser_probe.probe_visible_browser 를 호출한다. dedicated HaehanAI
+    프로필 / headless=False / read-only 관찰만 수행한다. 자동 입력, 클릭,
+    page.content, 쿠키/스토리지 수집은 일절 수행하지 않는다. 반환 data
+    에는 raw URL / raw title / 절대경로 / 쿠키·세션·token 이 포함되지
+    않는다 (host+path / category 토큰만).
+    """
+    from . import browser_probe
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url", "")).strip()
+    if not url:
+        return ActionResult(
+            False, "open_local_browser_probe 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        return ActionResult(
+            False, "open_local_browser_probe 차단", {},
+            f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
+            error_code="URL_SCHEME_NOT_ALLOWED",
+        )
+
+    # browser_launcher 와 동일한 site_policy / provider_override / profile_name
+    # 정책을 사용한다. 잘못된 값은 browser_probe 가 warnings 로 거절한다.
+    site_policy = params.get(
+        "site_policy", browser_probe.browser_launcher.SITE_POLICY_AUTO,
+    )
+    if not isinstance(site_policy, str) or not site_policy:
+        site_policy = browser_probe.browser_launcher.SITE_POLICY_AUTO
+
+    profile_name = params.get("profile_name", "default")
+    if not isinstance(profile_name, str) or not profile_name:
+        profile_name = "default"
+
+    provider_override = params.get("provider_override")
+    if provider_override is not None:
+        if not isinstance(provider_override, str) or \
+                provider_override not in \
+                browser_probe.browser_launcher.SUPPORTED_PROVIDERS:
+            return ActionResult(
+                False, "open_local_browser_probe 차단", {},
+                f"허용되지 않은 provider_override: {provider_override!r} "
+                f"(msedge/chrome/chromium 만 허용)",
+                error_code="UNSUPPORTED_PROVIDER",
+            )
+
+    wait_seconds = params.get("wait_seconds", 30)
+    try:
+        wait_seconds_int = int(wait_seconds)
+    except (TypeError, ValueError):
+        return ActionResult(
+            False, "open_local_browser_probe 실패", {},
+            "wait_seconds 정수 아님", error_code="INVALID_PARAM",
+        )
+
+    kwargs: dict = {
+        "url": url,
+        "site_policy": site_policy,
+        "profile_name": profile_name,
+        "provider_override": provider_override,
+        "wait_seconds": wait_seconds_int,
+    }
+    # 테스트 전용 주입 (운영 호출에는 주어지지 않음).
+    for key in ("_browser_factory", "_clock", "_env"):
+        if key in params:
+            kwargs[key] = params[key]
+
+    try:
+        result = browser_probe.probe_visible_browser(**kwargs)
+    except Exception as e:
+        logger.exception("open_local_browser_probe 실행 실패")
+        return ActionResult(
+            False, "open_local_browser_probe 예외", {},
+            str(e)[:200], error_code="BROWSER_PROBE_FAILED",
+        )
+
+    if not isinstance(result, dict):
+        return ActionResult(
+            False, "open_local_browser_probe 비정상 응답", {},
+            "result is not dict", error_code="BROWSER_PROBE_FAILED",
+        )
+
+    # action 단에서도 화이트리스트 한 번 더 적용해 미래 회귀를 차단한다.
+    data = {
+        "success": bool(result.get("success", False)),
+        "target_url": str(result.get("target_url", "")),
+        "browser_provider": str(result.get("browser_provider", "") or ""),
+        "title_category": str(result.get("title_category", "") or "empty"),
+        "final_url_host_path": str(result.get("final_url_host_path", "") or ""),
+        "pages_observed_count": int(result.get("pages_observed_count", 0) or 0),
+        "success_url_observed_across_pages": bool(
+            result.get("success_url_observed_across_pages", False),
+        ),
+        "observed_login_page": bool(result.get("observed_login_page", False)),
+        "warnings": list(result.get("warnings") or []),
+    }
+
+    # F-2: probe 가 명시적 error_code (예: GOOGLE_OPEN_ONLY) 를 돌려주면
+    # 그대로 전파한다. 없으면 기존대로 BROWSER_PROBE_FAILED 로 폴백.
+    inner_error_code = str(result.get("error_code", "") or "").strip()
+    if inner_error_code:
+        data["error_code"] = inner_error_code
+
+    if not data["success"]:
+        reason = ",".join(data["warnings"]) or "probe_failed"
+        action_error_code = inner_error_code or "BROWSER_PROBE_FAILED"
+        return ActionResult(
+            False, "open_local_browser_probe 거절", data,
+            reason[:200], error_code=action_error_code,
+        )
+
+    summary = (
+        f"probed provider={data['browser_provider']} "
+        f"title={data['title_category']} "
+        f"pages={data['pages_observed_count']} "
+        f"login_page={data['observed_login_page']}"
+    )
+    return ActionResult(success=True, summary=summary[:300], data=data)
+
+
+def action_observe_public_browser_page(params: dict) -> ActionResult:
+    """공개 웹페이지를 fresh BrowserContext 로 read-only 관찰 (F-4B).
+
+    ``browser_observer.observe_public_browser_page`` 를 호출한다. 사용자
+    세션/프로필/쿠키/스토리지를 절대 건드리지 않으며, page.goto →
+    title / url / content / status 만 수집해 page_state 를 1차 분류한다.
+
+    F-2/F-3 정책 유지:
+      - Google open-only 도메인은 Playwright launch 전에 거절.
+      - error_code="GOOGLE_OPEN_ONLY",
+        warnings=["google_open_only_use_open_local_browser"] 를 그대로 전파.
+    """
+    from . import browser_observer
+
+    if not isinstance(params, dict):
+        params = {}
+
+    url = str(params.get("url") or params.get("target_url") or "").strip()
+    if not url:
+        return ActionResult(
+            False, "observe_public_browser_page 실패", {},
+            "url 누락", error_code="MISSING_URL",
+        )
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        return ActionResult(
+            False, "observe_public_browser_page 차단", {},
+            f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
+            error_code="URL_SCHEME_NOT_ALLOWED",
+        )
+
+    site_policy = params.get("site_policy", "auto")
+    if not isinstance(site_policy, str) or not site_policy:
+        site_policy = "auto"
+
+    # int 강제 검증 — 잘못된 값은 INVALID_PARAM 으로 즉시 거절.
+    timeout_ms_raw = params.get("timeout_ms", 15000)
+    try:
+        timeout_ms_v = int(timeout_ms_raw)
+    except (TypeError, ValueError):
+        return ActionResult(
+            False, "observe_public_browser_page 실패", {},
+            "timeout_ms 정수 아님", error_code="INVALID_PARAM",
+        )
+
+    max_text_chars_raw = params.get("max_text_chars", 5000)
+    try:
+        max_text_chars_v = int(max_text_chars_raw)
+    except (TypeError, ValueError):
+        return ActionResult(
+            False, "observe_public_browser_page 실패", {},
+            "max_text_chars 정수 아님", error_code="INVALID_PARAM",
+        )
+
+    capture_screenshot_v = bool(params.get("capture_screenshot", False))
+
+    kwargs: dict = {
+        "url": url,
+        "site_policy": site_policy,
+        "timeout_ms": timeout_ms_v,
+        "max_text_chars": max_text_chars_v,
+        "capture_screenshot": capture_screenshot_v,
+    }
+    # 테스트 전용 주입 (운영 호출에는 주어지지 않음).
+    for key in ("_browser_factory", "_env"):
+        if key in params:
+            kwargs[key] = params[key]
+
+    try:
+        result = browser_observer.observe_public_browser_page(**kwargs)
+    except Exception as e:
+        logger.exception("observe_public_browser_page 실행 실패")
+        return ActionResult(
+            False, "observe_public_browser_page 예외", {},
+            str(e)[:200], error_code="BROWSER_OBSERVATION_FAILED",
+        )
+
+    if not isinstance(result, dict):
+        return ActionResult(
+            False, "observe_public_browser_page 비정상 응답", {},
+            "result is not dict",
+            error_code="BROWSER_OBSERVATION_FAILED",
+        )
+
+    # action 단에서도 화이트리스트 한 번 더 적용 (회귀 방지).
+    data = {
+        "success": bool(result.get("success", False)),
+        "error_code": str(result.get("error_code") or ""),
+        "warnings": list(result.get("warnings") or []),
+        "target_url": str(result.get("target_url") or ""),
+        "final_url_host_path": str(result.get("final_url_host_path") or ""),
+        "title": str(result.get("title") or ""),
+        "status_code": int(result.get("status_code") or 0),
+        "page_state": str(result.get("page_state") or "unknown"),
+        "text_excerpt": str(result.get("text_excerpt") or ""),
+        "text_length": int(result.get("text_length") or 0),
+        "links_count": int(result.get("links_count") or 0),
+        "buttons_count": int(result.get("buttons_count") or 0),
+        "forms_count": int(result.get("forms_count") or 0),
+        "inputs_count": int(result.get("inputs_count") or 0),
+        "links": list(result.get("links") or []),
+        "buttons": list(result.get("buttons") or []),
+        "forms": list(result.get("forms") or []),
+        "input_types": list(result.get("input_types") or []),
+        "screenshot_path": result.get("screenshot_path") or None,
+    }
+
+    if not data["success"]:
+        # observer 의 error_code (예: GOOGLE_OPEN_ONLY / GOTO_FAILED) 그대로 전파.
+        action_err = data["error_code"] or "BROWSER_OBSERVATION_FAILED"
+        reason = ",".join(data["warnings"]) or "observation_failed"
+        return ActionResult(
+            False, "observe_public_browser_page 거절", data,
+            reason[:200], error_code=action_err,
+        )
+
+    summary = (
+        f"observed page_state={data['page_state']} "
+        f"status={data['status_code']} "
+        f"links={data['links_count']} forms={data['forms_count']}"
+    )
+    return ActionResult(success=True, summary=summary[:300], data=data)
+
+
 def _action_browser_guarded(
     action_name: str, params: dict,
 ) -> ActionResult:
@@ -913,6 +1259,9 @@ _ACTIONS = {
     "web_select_guarded": action_web_select_guarded,
     "web_scroll_guarded": action_web_scroll_guarded,
     "web_probe_manual_login": action_web_probe_manual_login,
+    "open_local_browser": action_open_local_browser,
+    "open_local_browser_probe": action_open_local_browser_probe,
+    "observe_public_browser_page": action_observe_public_browser_page,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -987,4 +1336,7 @@ __all__ = [
     "action_web_select_guarded",
     "action_web_scroll_guarded",
     "action_web_probe_manual_login",
+    "action_open_local_browser",
+    "action_open_local_browser_probe",
+    "action_observe_public_browser_page",
 ]
