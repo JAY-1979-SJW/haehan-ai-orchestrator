@@ -18,6 +18,7 @@ Trusted automation 정책 (``trusted_browser_policy``) 과 함께:
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import urlparse
 
@@ -303,6 +304,298 @@ def _err(code: str, **fields: Any) -> dict[str, Any]:
     return out
 
 
+# ─── F-4F-1 — 로그인 후보 추출 ────────────────────────────────────────────
+
+# observer_result 의 link/button 텍스트와 form action 에서 매칭할 후보 토큰.
+# auth_signals 와 별개로 "후보 자체로 잡을지" 를 결정하는 토큰셋이다. 단독
+# "아이디" 같은 광범위 단어는 false positive 를 막기 위해 후보 토큰에서
+# 제외하고 auth_signals.id_login 신호용으로만 사용한다.
+_LOGIN_CANDIDATE_TOKENS: tuple[str, ...] = (
+    "로그인", "log in", "log-in", "login",
+    "sign in", "sign-in", "signin",
+    "공동인증서", "공인인증서", "금융인증서", "인증서",
+    "간편인증", "민간인증",
+    "아이디 로그인", "id 로그인", "id login",
+    "인증센터",
+    "회원가입",
+)
+
+# auth_signals 키별 토큰. blob (title + text_excerpt + 링크/버튼/폼 텍스트)
+# 안에서 토큰이 발견되면 해당 신호를 True 로 세운다.
+_AUTH_SIGNAL_TOKENS: dict[str, tuple[str, ...]] = {
+    "certificate_auth": ("공동인증서", "공인인증서", "인증서"),
+    "financial_certificate": ("금융인증서",),
+    "simple_auth": ("간편인증", "민간인증"),
+    "id_login": ("아이디", "id 로그인", "id login"),
+    "security_program": ("보안프로그램", "보안키패드", "설치"),
+    "captcha_or_bot_check": (
+        "보안문자", "자동입력방지", "자동 입력 방지", "captcha", "robot",
+    ),
+}
+
+_QUERY_FRAG_RE = re.compile(r"[?#].*$")
+
+# observer 가 이미 sanitize 한 필드만 사용한다. 출력 길이 상한은 observer 와
+# 동일 수준 (text 200 / href 300 / risk 40) — raw HTML/value 는 절대 노출
+# 되지 않는다.
+_OUT_TEXT_CAP = 200
+_OUT_HREF_CAP = 300
+_OUT_RISK_CAP = 40
+
+
+def extract_hometax_login_candidates(observer_result: Any) -> dict[str, Any]:
+    """observer 결과의 links/buttons/forms 에서 로그인 후보를 추출.
+
+    pure dict-in/dict-out — 브라우저/네트워크/쿠키/스토리지 접촉 없음.
+    input value, raw HTML, 절대경로, raw query/fragment 는 출력에 포함하지
+    않는다. observer 가 이미 sanitize 한 필드(text, href, action 등) 만 받아
+    한 번 더 query/fragment 제거 후 길이 상한을 적용한다.
+
+    반환:
+      {
+        "login_links": [{text, href, matched_tokens, risk_hint}, ...],
+        "login_buttons": [{text, type, matched_tokens, risk_level}, ...],
+        "login_forms": [
+            {action, method, has_password, input_count,
+             matched_tokens, risk_level}, ...
+        ],
+        "auth_signals": {certificate_auth, financial_certificate,
+                         simple_auth, id_login, security_program,
+                         captcha_or_bot_check},
+        "candidate_count": int,
+        "warnings": [str, ...],
+      }
+
+    정렬 (deterministic):
+      - matched_tokens 수 많은 순 (descending)
+      - text/action 길이 짧은 순 (ascending)
+      - 그 외에는 입력 순서 보존 (sorted 의 stable 성질).
+    """
+    if not isinstance(observer_result, dict):
+        return _empty_candidate_result(["observer_result_not_dict"])
+
+    warnings: list[str] = []
+
+    links = observer_result.get("links")
+    if not isinstance(links, list):
+        if links is not None:
+            warnings.append("links_not_list")
+        links = []
+
+    buttons = observer_result.get("buttons")
+    if not isinstance(buttons, list):
+        if buttons is not None:
+            warnings.append("buttons_not_list")
+        buttons = []
+
+    forms = observer_result.get("forms")
+    if not isinstance(forms, list):
+        if forms is not None:
+            warnings.append("forms_not_list")
+        forms = []
+
+    title = observer_result.get("title") or ""
+    if not isinstance(title, str):
+        title = ""
+    text_excerpt = observer_result.get("text_excerpt") or ""
+    if not isinstance(text_excerpt, str):
+        text_excerpt = ""
+
+    login_links = _extract_login_links(links)
+    login_buttons = _extract_login_buttons(buttons)
+    login_forms = _extract_login_forms(forms)
+
+    blob = _build_signal_blob(
+        title=title,
+        text_excerpt=text_excerpt,
+        links=links,
+        buttons=buttons,
+        forms=forms,
+    )
+    auth_signals = _detect_auth_signals(blob)
+
+    candidate_count = (
+        len(login_links) + len(login_buttons) + len(login_forms)
+    )
+
+    return {
+        "login_links": login_links,
+        "login_buttons": login_buttons,
+        "login_forms": login_forms,
+        "auth_signals": auth_signals,
+        "candidate_count": candidate_count,
+        "warnings": warnings,
+    }
+
+
+def _extract_login_links(links: list[Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for link in links:
+        if not isinstance(link, dict):
+            continue
+        text = link.get("text") or ""
+        if not isinstance(text, str):
+            text = ""
+        href = link.get("href") or ""
+        if not isinstance(href, str):
+            href = ""
+        # observer 가 이미 query/fragment 제거하지만 한 번 더 방어.
+        href = _strip_query_fragment(href)
+        matched = _matched_login_tokens(text + " " + href)
+        if not matched:
+            continue
+        risk_hint = link.get("risk_hint") or ""
+        if not isinstance(risk_hint, str):
+            risk_hint = ""
+        out.append({
+            "text": text[:_OUT_TEXT_CAP],
+            "href": href[:_OUT_HREF_CAP],
+            "matched_tokens": matched,
+            "risk_hint": risk_hint[:_OUT_RISK_CAP],
+        })
+    return _sort_candidates(out, length_field="text")
+
+
+def _extract_login_buttons(buttons: list[Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for btn in buttons:
+        if not isinstance(btn, dict):
+            continue
+        text = btn.get("text") or ""
+        if not isinstance(text, str):
+            text = ""
+        matched = _matched_login_tokens(text)
+        if not matched:
+            continue
+        btn_type = btn.get("type") or ""
+        if not isinstance(btn_type, str):
+            btn_type = ""
+        risk_level = btn.get("risk_level") or ""
+        if not isinstance(risk_level, str):
+            risk_level = ""
+        out.append({
+            "text": text[:_OUT_TEXT_CAP],
+            "type": btn_type[:_OUT_RISK_CAP],
+            "matched_tokens": matched,
+            "risk_level": risk_level[:_OUT_RISK_CAP],
+        })
+    return _sort_candidates(out, length_field="text")
+
+
+def _extract_login_forms(forms: list[Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for form in forms:
+        if not isinstance(form, dict):
+            continue
+        action = form.get("action") or ""
+        if not isinstance(action, str):
+            action = ""
+        action = _strip_query_fragment(action)
+        has_password = bool(form.get("has_password"))
+        matched = _matched_login_tokens(action)
+        # password 입력이 있으면 토큰 미매칭이라도 후보 (로그인 폼 가능성).
+        if not matched and not has_password:
+            continue
+        method = form.get("method") or ""
+        if not isinstance(method, str):
+            method = ""
+        try:
+            input_count = int(form.get("input_count") or 0)
+        except (TypeError, ValueError):
+            input_count = 0
+        risk_level = form.get("risk_level") or ""
+        if not isinstance(risk_level, str):
+            risk_level = ""
+        out.append({
+            "action": action[:_OUT_HREF_CAP],
+            "method": method[:10],
+            "has_password": has_password,
+            "input_count": input_count,
+            "matched_tokens": matched,
+            "risk_level": risk_level[:_OUT_RISK_CAP],
+        })
+    return _sort_candidates(out, length_field="action")
+
+
+def _matched_login_tokens(text: str) -> list[str]:
+    if not text:
+        return []
+    lower = text.lower()
+    out: list[str] = []
+    for token in _LOGIN_CANDIDATE_TOKENS:
+        if token.lower() in lower:
+            out.append(token)
+    return out
+
+
+def _sort_candidates(
+    items: list[dict[str, Any]], *, length_field: str,
+) -> list[dict[str, Any]]:
+    """matched_tokens 수 많은 순 → text/action 길이 짧은 순. stable sort."""
+    def _key(item: dict[str, Any]) -> tuple[int, int]:
+        text_field = item.get(length_field) or ""
+        if not isinstance(text_field, str):
+            text_field = ""
+        return (-len(item.get("matched_tokens") or []), len(text_field))
+    return sorted(items, key=_key)
+
+
+def _build_signal_blob(
+    *,
+    title: str,
+    text_excerpt: str,
+    links: list[Any],
+    buttons: list[Any],
+    forms: list[Any],
+) -> str:
+    parts: list[str] = [title, text_excerpt]
+    for link in links:
+        if isinstance(link, dict):
+            t = link.get("text") or ""
+            if isinstance(t, str) and t:
+                parts.append(t)
+    for btn in buttons:
+        if isinstance(btn, dict):
+            t = btn.get("text") or ""
+            if isinstance(t, str) and t:
+                parts.append(t)
+    for form in forms:
+        if isinstance(form, dict):
+            a = form.get("action") or ""
+            if isinstance(a, str) and a:
+                parts.append(a)
+    return " ".join(parts).lower()
+
+
+def _detect_auth_signals(blob: str) -> dict[str, bool]:
+    out: dict[str, bool] = {}
+    for key, tokens in _AUTH_SIGNAL_TOKENS.items():
+        hit = False
+        for tok in tokens:
+            if tok and tok.lower() in blob:
+                hit = True
+                break
+        out[key] = hit
+    return out
+
+
+def _strip_query_fragment(href: str) -> str:
+    if not isinstance(href, str):
+        return ""
+    return _QUERY_FRAG_RE.sub("", href.strip())[:_OUT_HREF_CAP]
+
+
+def _empty_candidate_result(warnings: list[str]) -> dict[str, Any]:
+    return {
+        "login_links": [],
+        "login_buttons": [],
+        "login_forms": [],
+        "auth_signals": {k: False for k in _AUTH_SIGNAL_TOKENS},
+        "candidate_count": 0,
+        "warnings": list(warnings),
+    }
+
+
 __all__ = [
     "DOWNLOAD_TYPES",
     "is_hometax_host",
@@ -312,4 +605,5 @@ __all__ = [
     "is_hometax_download_page",
     "is_hometax_sensitive_submission",
     "build_hometax_download_plan",
+    "extract_hometax_login_candidates",
 ]

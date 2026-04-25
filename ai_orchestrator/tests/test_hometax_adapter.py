@@ -348,3 +348,326 @@ def test_regression_download_page_classification():
         text="발급내역 조회 - 엑셀 다운로드 - .xlsx 내려받기",
     )
     assert state == "download_page"
+
+
+# ─── F) F-4F-1 — extract_hometax_login_candidates ───────────────────────
+
+def _make_observer_result(**overrides):
+    """observe_public_browser_page 결과 모사 (필요 필드만 채움)."""
+    base = {
+        "success": True,
+        "error_code": "",
+        "warnings": [],
+        "target_url": "https://www.hometax.go.kr/",
+        "final_url_host_path": "www.hometax.go.kr/",
+        "title": "국세청 홈택스 - 메인",
+        "status_code": 200,
+        "page_state": "public_page",
+        "text_excerpt": "",
+        "text_length": 0,
+        "links_count": 0,
+        "buttons_count": 0,
+        "forms_count": 0,
+        "inputs_count": 0,
+        "links": [],
+        "buttons": [],
+        "forms": [],
+        "input_types": [],
+        "screenshot_path": None,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_extract_login_candidates_finds_login_link():
+    result = _make_observer_result(
+        links=[
+            {"text": "로그인", "href": "https://hometax.go.kr/login", "risk_hint": ""},
+            {"text": "공지사항", "href": "https://hometax.go.kr/notice", "risk_hint": ""},
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["candidate_count"] == 1
+    assert len(out["login_links"]) == 1
+    cand = out["login_links"][0]
+    assert cand["text"] == "로그인"
+    assert "로그인" in cand["matched_tokens"]
+    assert cand["href"] == "https://hometax.go.kr/login"
+
+
+def test_extract_login_candidates_finds_certificate_link():
+    result = _make_observer_result(
+        links=[
+            {"text": "공동인증서 로그인", "href": "https://hometax.go.kr/cert", "risk_hint": ""},
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert len(out["login_links"]) == 1
+    matched = out["login_links"][0]["matched_tokens"]
+    assert "공동인증서" in matched
+    assert "로그인" in matched
+
+
+def test_extract_login_candidates_finds_simple_auth_button():
+    result = _make_observer_result(
+        buttons=[
+            {"text": "간편인증으로 로그인", "type": "button", "risk_level": "medium"},
+            {"text": "조회", "type": "button", "risk_level": "low"},
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert len(out["login_buttons"]) == 1
+    btn = out["login_buttons"][0]
+    assert "간편인증" in btn["matched_tokens"]
+    assert "로그인" in btn["matched_tokens"]
+    assert btn["type"] == "button"
+
+
+def test_extract_login_candidates_finds_id_login_button():
+    result = _make_observer_result(
+        buttons=[
+            {"text": "아이디 로그인", "type": "submit", "risk_level": "high"},
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert len(out["login_buttons"]) == 1
+    btn = out["login_buttons"][0]
+    assert "아이디 로그인" in btn["matched_tokens"]
+
+
+def test_extract_login_candidates_finds_password_form_without_text_token():
+    """has_password=True 만으로도 후보 폼."""
+    result = _make_observer_result(
+        forms=[
+            {
+                "action": "/auth/submit",
+                "method": "POST",
+                "has_password": True,
+                "input_count": 3,
+                "risk_level": "high",
+            },
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert len(out["login_forms"]) == 1
+    f = out["login_forms"][0]
+    assert f["has_password"] is True
+    assert f["method"] == "POST"
+    assert f["input_count"] == 3
+
+
+def test_extract_login_candidates_finds_form_by_action_token():
+    """action URL 의 login 토큰으로도 후보."""
+    result = _make_observer_result(
+        forms=[
+            {
+                "action": "https://hometax.go.kr/login",
+                "method": "POST",
+                "has_password": False,
+                "input_count": 2,
+                "risk_level": "medium",
+            },
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert len(out["login_forms"]) == 1
+    assert "login" in out["login_forms"][0]["matched_tokens"]
+
+
+def test_extract_login_candidates_strips_query_fragment_in_href():
+    """observer 가 빠뜨려도 추출기에서 query/fragment 한 번 더 제거."""
+    result = _make_observer_result(
+        links=[
+            {
+                "text": "로그인",
+                "href": "https://hometax.go.kr/login?token=SECRET&user=me#frag",
+                "risk_hint": "",
+            },
+        ],
+        forms=[
+            {
+                "action": "/auth/submit?session=ABCDEF",
+                "method": "POST",
+                "has_password": True,
+                "input_count": 2,
+                "risk_level": "high",
+            },
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    link_href = out["login_links"][0]["href"]
+    form_action = out["login_forms"][0]["action"]
+    # query/fragment 자체와 그 안의 키/값 토큰이 출력에 새면 안 된다.
+    # 단순 2글자 부분문자열(host 와 우연히 겹치는 것) 은 제외.
+    for sensitive in ("?", "#", "token=", "SECRET", "session=", "ABCDEF", "user=", "#frag"):
+        assert sensitive not in link_href, link_href
+        assert sensitive not in form_action, form_action
+
+
+def test_extract_login_candidates_certificate_auth_signal():
+    result = _make_observer_result(
+        title="홈택스 로그인",
+        text_excerpt="공동인증서로 로그인하세요",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["certificate_auth"] is True
+
+
+def test_extract_login_candidates_financial_certificate_signal():
+    result = _make_observer_result(
+        text_excerpt="금융인증서를 사용한 로그인 지원",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["financial_certificate"] is True
+
+
+def test_extract_login_candidates_simple_auth_signal():
+    result = _make_observer_result(
+        text_excerpt="간편인증 / 민간인증 사용 가능",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["simple_auth"] is True
+
+
+def test_extract_login_candidates_id_login_signal():
+    result = _make_observer_result(
+        text_excerpt="아이디로 로그인하기",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["id_login"] is True
+
+
+def test_extract_login_candidates_security_program_signal():
+    result = _make_observer_result(
+        text_excerpt="보안프로그램 설치가 필요합니다 (보안키패드)",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["security_program"] is True
+
+
+def test_extract_login_candidates_captcha_signal():
+    result = _make_observer_result(
+        text_excerpt="자동입력방지 보안문자를 입력하세요 (captcha)",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["auth_signals"]["captcha_or_bot_check"] is True
+
+
+def test_extract_login_candidates_empty_when_no_login():
+    """후보가 없으면 candidate_count=0, 모든 신호 False."""
+    result = _make_observer_result(
+        links=[{"text": "공지사항", "href": "https://hometax.go.kr/notice", "risk_hint": ""}],
+        buttons=[{"text": "조회", "type": "button", "risk_level": "low"}],
+        text_excerpt="환영합니다",
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["candidate_count"] == 0
+    assert out["login_links"] == []
+    assert out["login_buttons"] == []
+    assert out["login_forms"] == []
+    for key in (
+        "certificate_auth", "financial_certificate", "simple_auth",
+        "id_login", "security_program", "captcha_or_bot_check",
+    ):
+        assert out["auth_signals"][key] is False
+
+
+def test_extract_login_candidates_handles_non_dict_observer():
+    """비정상 입력 — 예외 없이 warnings 에 기록."""
+    out = hometax.extract_hometax_login_candidates("not a dict")
+    assert out["candidate_count"] == 0
+    assert out["login_links"] == []
+    assert "observer_result_not_dict" in out["warnings"]
+
+
+def test_extract_login_candidates_handles_non_list_fields():
+    """links/buttons/forms 가 list 가 아니면 warnings 에 기록."""
+    result = _make_observer_result()
+    result["links"] = "not_a_list"
+    result["buttons"] = 123
+    result["forms"] = {"oops": True}
+    out = hometax.extract_hometax_login_candidates(result)
+    assert "links_not_list" in out["warnings"]
+    assert "buttons_not_list" in out["warnings"]
+    assert "forms_not_list" in out["warnings"]
+    assert out["candidate_count"] == 0
+
+
+def test_extract_login_candidates_does_not_emit_input_values():
+    """입력 value 류 필드가 있어도 출력 dict 에 새지 않는다."""
+    result = _make_observer_result(
+        links=[
+            {
+                "text": "로그인",
+                "href": "https://hometax.go.kr/login",
+                "risk_hint": "",
+                # observer 스키마 외 필드를 일부러 끼워서 무시되는지 확인.
+                "value": "should_not_leak",
+                "password": "PW123",
+            },
+        ],
+        forms=[
+            {
+                "action": "/auth",
+                "method": "POST",
+                "has_password": True,
+                "input_count": 2,
+                "risk_level": "high",
+                "value": "form_value",
+                "password": "form_pw",
+            },
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    for cand in out["login_links"] + out["login_forms"]:
+        assert "value" not in cand
+        assert "password" not in cand
+        for v in cand.values():
+            if isinstance(v, str):
+                assert "PW123" not in v
+                assert "form_pw" not in v
+                assert "should_not_leak" not in v
+                assert "form_value" not in v
+
+
+def test_extract_login_candidates_sort_by_matched_tokens_then_length():
+    """matched_tokens 수 많은 순 → 길이 짧은 순."""
+    result = _make_observer_result(
+        links=[
+            {"text": "로그인 안내 페이지로 이동하기", "href": "https://hometax.go.kr/help", "risk_hint": ""},
+            {"text": "로그인", "href": "https://hometax.go.kr/login", "risk_hint": ""},
+            {"text": "공동인증서 간편인증 로그인", "href": "https://hometax.go.kr/cert", "risk_hint": ""},
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    texts = [c["text"] for c in out["login_links"]]
+    # 첫 항목은 매칭 토큰이 가장 많은 "공동인증서 간편인증 로그인" (3개).
+    assert texts[0] == "공동인증서 간편인증 로그인"
+    # 동일 매칭 수면 짧은 text 가 먼저.
+    assert texts[1] == "로그인"
+    assert texts[2] == "로그인 안내 페이지로 이동하기"
+
+
+def test_extract_login_candidates_count_matches_lists():
+    result = _make_observer_result(
+        links=[
+            {"text": "로그인", "href": "https://hometax.go.kr/login", "risk_hint": ""},
+        ],
+        buttons=[
+            {"text": "간편인증", "type": "button", "risk_level": "medium"},
+        ],
+        forms=[
+            {
+                "action": "/auth",
+                "method": "POST",
+                "has_password": True,
+                "input_count": 2,
+                "risk_level": "high",
+            },
+        ],
+    )
+    out = hometax.extract_hometax_login_candidates(result)
+    assert out["candidate_count"] == 3
+    assert len(out["login_links"]) == 1
+    assert len(out["login_buttons"]) == 1
+    assert len(out["login_forms"]) == 1
