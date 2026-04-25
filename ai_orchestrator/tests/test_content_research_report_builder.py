@@ -520,3 +520,331 @@ def test_module_does_not_use_requests_dependency():
     code_only = _strip_string_literals(src)
     assert "import requests" not in code_only
     assert "from requests" not in code_only
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: pattern detection
+# ---------------------------------------------------------------------------
+
+
+def _mk(item: Dict[str, Any]) -> Dict[str, Any]:
+    base: Dict[str, Any] = {
+        "platform": item.get("platform", "naver"),
+        "source_type": item.get("source_type", "blog"),
+        "keyword": item.get("keyword", "소방공사"),
+        "title": item.get("title", ""),
+        "url": item.get("url", "https://example.com/x"),
+        "summary": item.get("summary", ""),
+        "published_at": item.get("published_at"),
+        "channel_or_author": item.get("channel_or_author"),
+        "metrics": item.get("metrics") or {"view_count": None, "like_count": None, "comment_count": None},
+        "raw_rank": item.get("raw_rank", 1),
+        "risk_flags": item.get("risk_flags") or [],
+    }
+    return base
+
+
+def test_detect_item_patterns_question_and_numbered():
+    item = _mk({"title": "소방공사 어떻게 하나요? 5가지 핵심"})
+    labels = rb.detect_item_patterns(item)
+    assert rb.PATTERN_QUESTION in labels
+    assert rb.PATTERN_NUMBERED in labels
+
+
+def test_detect_item_patterns_comparison_and_review():
+    item = _mk({"title": "소방공사 vs 전기공사 후기 정리"})
+    labels = rb.detect_item_patterns(item)
+    assert rb.PATTERN_COMPARISON in labels
+    assert rb.PATTERN_REVIEW_CASE in labels
+
+
+def test_detect_item_patterns_law_cost_checklist():
+    items = [
+        _mk({"title": "소방시설 기준 개정안 시행"}),
+        _mk({"title": "소방공사 비용 견적 가이드"}),
+        _mk({"title": "소방공사 체크리스트 7선"}),
+        _mk({"title": "소방공사 문제 해결 매뉴얼"}),
+    ]
+    labels = [rb.detect_item_patterns(it) for it in items]
+    assert rb.PATTERN_LAW_STANDARD in labels[0]
+    assert rb.PATTERN_COST_ESTIMATE in labels[1]
+    assert rb.PATTERN_CHECKLIST in labels[2]
+    assert rb.PATTERN_PROBLEM_SOLUTION in labels[3]
+
+
+def test_detect_content_patterns_distribution_shape():
+    items = [
+        _mk({"title": "소방공사 어떻게 하나요?"}),
+        _mk({"title": "소방공사 5가지 견적"}),
+        _mk({"title": "소방공사 후기"}),
+    ]
+    res = rb.detect_content_patterns(items)
+    assert res["total_items"] == 3
+    assert "counts" in res and "distribution" in res
+    for label in rb.ALL_PATTERNS:
+        d = res["distribution"][label]
+        assert "count" in d and "ratio" in d and "examples" in d
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: scoring & ranking
+# ---------------------------------------------------------------------------
+
+
+def test_score_content_items_youtube_view_log_increases_score():
+    a = _mk(
+        {
+            "platform": "youtube",
+            "source_type": "youtube_video",
+            "title": "소방공사 가이드",
+            "metrics": {"view_count": 100, "like_count": 5, "comment_count": 1},
+        }
+    )
+    b = _mk(
+        {
+            "platform": "youtube",
+            "source_type": "youtube_video",
+            "title": "소방공사 가이드",
+            "metrics": {"view_count": 1_000_000, "like_count": 5, "comment_count": 1},
+        }
+    )
+    scored = rb.score_content_items([a, b], ["소방공사"])
+    assert scored[1]["score"] > scored[0]["score"]
+
+
+def test_rank_youtube_candidates_orders_by_score():
+    items = [
+        _mk(
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "title": "소방공사 영상 1",
+                "metrics": {"view_count": 100, "like_count": 1, "comment_count": 0},
+                "raw_rank": 1,
+            }
+        ),
+        _mk(
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "title": "소방공사 영상 2",
+                "metrics": {"view_count": 1_000_000, "like_count": 5000, "comment_count": 200},
+                "raw_rank": 2,
+            }
+        ),
+        _mk({"platform": "naver", "source_type": "blog", "title": "노이즈"}),
+    ]
+    ranked = rb.rank_youtube_candidates(items, ["소방공사"], top_n=5)
+    assert all(entry["item"]["platform"] == "youtube" for entry in ranked)
+    assert ranked[0]["item"]["title"] == "소방공사 영상 2"
+
+
+def test_rank_naver_candidates_groups_by_source_type():
+    items = [
+        _mk({"platform": "naver", "source_type": "blog", "title": "소방공사 가이드 A"}),
+        _mk({"platform": "naver", "source_type": "blog", "title": "소방공사 가이드 B"}),
+        _mk({"platform": "naver", "source_type": "news", "title": "소방공사 뉴스"}),
+        _mk({"platform": "youtube", "source_type": "youtube_video", "title": "노이즈"}),
+    ]
+    grouped = rb.rank_naver_candidates(items, ["소방공사"], top_n=5, by_source_type=True)
+    assert "blog" in grouped and "news" in grouped
+    assert "youtube_video" not in grouped
+    assert len(grouped["blog"]) == 2
+
+
+def test_score_recency_score_recent_higher_than_old():
+    recent = rb._recency_score("20260301")
+    old = rb._recency_score("20210301")
+    assert recent > old
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: platform strategy & LTX briefs
+# ---------------------------------------------------------------------------
+
+
+def test_build_platform_strategy_includes_recommendations():
+    items = [
+        _mk({"platform": "naver", "source_type": "blog", "title": "소방공사 비용 5가지"}),
+        _mk({"platform": "naver", "source_type": "cafearticle", "title": "소방공사 후기"}),
+        _mk(
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "title": "소방공사 어떻게 하나요?",
+                "metrics": {"view_count": 1000, "like_count": 10, "comment_count": 1},
+            }
+        ),
+    ]
+    summary = rb.summarize_unified_items(
+        [
+            rb.UnifiedItem(
+                platform=it["platform"],
+                source_type=it["source_type"],
+                keyword=it["keyword"],
+                title=it["title"],
+                url=it["url"],
+                summary=it["summary"],
+                published_at=it["published_at"],
+                channel_or_author=it["channel_or_author"],
+                metrics=dict(it["metrics"]),
+                raw_rank=it["raw_rank"],
+                risk_flags=list(it["risk_flags"]),
+            )
+            for it in items
+        ]
+    )
+    patterns = rb.detect_content_patterns(items)
+    strategy = rb.build_platform_strategy(summary, ranked_items=None, patterns=patterns)
+    assert "youtube" in strategy and "naver" in strategy and "cross_platform" in strategy
+    assert strategy["youtube"]["focus_recommendations"]
+    assert strategy["naver"]["focus_recommendations"]
+
+
+def test_build_ltx_video_briefs_returns_structured_briefs():
+    items = [
+        _mk(
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "title": "소방공사 견적 비교 7가지",
+                "url": "https://www.youtube.com/watch?v=fixA",
+                "metrics": {"view_count": 500_000, "like_count": 5000, "comment_count": 200},
+                "published_at": "2026-02-10T10:00:00Z",
+            }
+        ),
+        _mk(
+            {
+                "platform": "naver",
+                "source_type": "blog",
+                "title": "소방공사 체크리스트 5가지",
+                "url": "https://example.com/x",
+                "published_at": "20260120",
+            }
+        ),
+    ]
+    briefs = rb.build_ltx_video_briefs(items, ["소방공사"], max_count=5)
+    assert 1 <= len(briefs) <= 5
+    first = briefs[0]
+    for key in ("title", "hook", "scene_ideas", "subtitle_points", "source_basis", "target_platform", "risk_notes"):
+        assert key in first
+    assert first["target_platform"] in {"youtube_short", "youtube_long", "naver_blog", "cafe_post"}
+    assert first["source_basis"][0]["url"]
+
+
+def test_ltx_brief_target_platform_short_for_shorts_marker():
+    item = _mk(
+        {
+            "platform": "youtube",
+            "source_type": "youtube_video",
+            "title": "스마트팩토리 #shorts 30초 핵심",
+            "url": "https://www.youtube.com/watch?v=fixS",
+            "metrics": {"view_count": 1000, "like_count": 10, "comment_count": 1},
+        }
+    )
+    briefs = rb.build_ltx_video_briefs([item], ["스마트팩토리"], max_count=1)
+    assert briefs[0]["target_platform"] == "youtube_short"
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: report integration
+# ---------------------------------------------------------------------------
+
+
+def test_build_report_includes_analysis_and_briefs():
+    report = _build_full_report()
+    assert "analysis" in report
+    assert "ranked_youtube" in report["analysis"]
+    assert "ranked_naver" in report["analysis"]
+    assert "patterns" in report["analysis"]
+    assert "platform_strategy" in report["analysis"]
+    assert "ltx_video_briefs" in report
+
+
+def test_render_markdown_includes_new_sections():
+    report = _build_full_report()
+    md = rb.render_markdown_report(report)
+    for section in (
+        "## YouTube 후보 랭킹",
+        "## Naver 후보 랭킹",
+        "## 콘텐츠 패턴 분포",
+        "## 플랫폼별 권장 전략",
+        "## LTX 영상 brief",
+    ):
+        assert section in md, f"missing section: {section}"
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: fixture loader & analysis-only build
+# ---------------------------------------------------------------------------
+
+
+def _write_min_fixture(tmp_path: Path) -> Path:
+    payload = {
+        "keywords": ["소방공사"],
+        "items": [
+            {
+                "platform": "naver",
+                "source_type": "blog",
+                "keyword": "소방공사",
+                "title": "소방공사 비용 5가지 체크리스트",
+                "url": "https://example.com/blog/1",
+                "summary": "비용 정리",
+                "published_at": "20260120",
+                "channel_or_author": "fixture-blog-1",
+                "metrics": {"view_count": None, "like_count": None, "comment_count": None},
+                "raw_rank": 1,
+                "risk_flags": [],
+            },
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "keyword": "소방공사",
+                "title": "소방공사 어떻게 하나요?",
+                "url": "https://www.youtube.com/watch?v=fixq",
+                "summary": "초보 가이드",
+                "published_at": "2026-02-01T10:00:00Z",
+                "channel_or_author": "fixture-channel",
+                "metrics": {"view_count": 12345, "like_count": 100, "comment_count": 9},
+                "raw_rank": 1,
+                "risk_flags": [],
+            },
+        ],
+    }
+    p = tmp_path / "fix.json"
+    p.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def test_load_fixture_items_normalizes(tmp_path: Path):
+    p = _write_min_fixture(tmp_path)
+    items, kws, warns = rb.load_fixture_items(p)
+    assert kws == ["소방공사"]
+    assert len(items) == 2
+    assert items[1]["metrics"]["view_count"] == 12345
+
+
+def test_build_report_from_items_smoke(tmp_path: Path):
+    p = _write_min_fixture(tmp_path)
+    items, kws, _ = rb.load_fixture_items(p)
+    report = rb.build_report_from_items(items=items, keywords=kws, mode="fixture")
+    assert report["mode"] == "fixture"
+    assert report["summary"]["total_items"] == 2
+    assert report["analysis"]["ranked_youtube"]
+    assert report["ltx_video_briefs"]
+    md = rb.render_markdown_report(report)
+    assert "## LTX 영상 brief" in md
+
+
+def test_repo_fixture_file_loads_when_present():
+    repo_root = Path(__file__).resolve().parents[2]
+    fixture = repo_root / "samples" / "content_research_fixture.json"
+    if not fixture.exists():
+        pytest.skip("samples/content_research_fixture.json not present")
+    items, kws, _ = rb.load_fixture_items(fixture)
+    assert len(items) >= 10
+    assert kws  # at least one keyword
+    report = rb.build_report_from_items(items=items, keywords=kws, mode="fixture")
+    assert report["summary"]["total_items"] >= 10
+    assert report["analysis"]["ranked_youtube"]
+    assert report["ltx_video_briefs"]

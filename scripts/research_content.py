@@ -68,6 +68,18 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--live", action="store_true", default=False)
     parser.add_argument("--json", action="store_true", default=False, help="요약을 stdout JSON 으로 출력")
     parser.add_argument("--out-dir", type=str, default=DEFAULT_OUT_DIR)
+    parser.add_argument(
+        "--fixture",
+        type=str,
+        default=None,
+        help="API 호출 없이 fixture json 으로 분석 (예: samples/content_research_fixture.json)",
+    )
+    parser.add_argument(
+        "--analysis-only",
+        action="store_true",
+        default=False,
+        help="수집 호출 없이 fixture/기존 items 만으로 분석 리포트를 생성",
+    )
     return parser.parse_args(argv)
 
 
@@ -82,7 +94,60 @@ def _gather_keywords(args: argparse.Namespace) -> List[str]:
     return rb.normalize_keywords(raw)
 
 
+def _run_fixture(args: argparse.Namespace) -> Dict[str, Any]:
+    fixture_path = args.fixture
+    if not fixture_path:
+        raise SystemExit("--analysis-only requires --fixture <path>")
+    path = Path(fixture_path)
+    if not path.exists():
+        raise SystemExit(f"fixture not found: {path}")
+
+    items, fixture_keywords, fixture_warnings = rb.load_fixture_items(path)
+    cli_keywords = _gather_keywords(args) if (args.keyword or args.keywords_file) else []
+    keywords = cli_keywords or fixture_keywords
+    if not keywords:
+        item_kws = [str(it.get("keyword") or "") for it in items if it.get("keyword")]
+        keywords = rb.normalize_keywords(item_kws)
+
+    extra_warnings: List[str] = list(fixture_warnings)
+    extra_warnings.append(f"fixture:loaded:{path.name}")
+    extra_warnings.append("global:live=False — fixture mode, no API calls performed")
+
+    report = rb.build_report_from_items(
+        items=items,
+        keywords=keywords,
+        mode="fixture",
+        platforms_attempted=["naver", "youtube"],
+        platforms_live=[],
+        extra_warnings=extra_warnings,
+    )
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    out_paths = rb.write_report_files(report, Path(args.out_dir), timestamp=timestamp)
+
+    summary_payload = {
+        "summary": report["summary"],
+        "warnings_count": len(report.get("warnings") or []),
+        "files": {k: str(v) for k, v in out_paths.items()},
+        "mode": "fixture",
+        "ranked_youtube_count": len((report.get("analysis") or {}).get("ranked_youtube") or []),
+        "ranked_naver_count": sum(
+            len(v) for v in ((report.get("analysis") or {}).get("ranked_naver") or {}).values()
+        ),
+        "patterns": ((report.get("analysis") or {}).get("patterns") or {}).get("counts") or {},
+        "ltx_video_briefs_count": len(report.get("ltx_video_briefs") or []),
+    }
+    return {
+        "report": report,
+        "files": out_paths,
+        "summary_payload": summary_payload,
+    }
+
+
 def run(args: argparse.Namespace) -> Dict[str, Any]:
+    if args.fixture or args.analysis_only:
+        return _run_fixture(args)
+
     keywords = _gather_keywords(args)
     if not keywords:
         raise SystemExit("at least one keyword is required (--keyword or --keywords-file)")
@@ -173,6 +238,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"naver_items: {summary.get('naver_items')}")
         print(f"youtube_items: {summary.get('youtube_items')}")
         print(f"warnings_count: {summary_payload['warnings_count']}")
+        if "ranked_youtube_count" in summary_payload:
+            print(f"ranked_youtube_count: {summary_payload['ranked_youtube_count']}")
+            print(f"ranked_naver_count:   {summary_payload['ranked_naver_count']}")
+            print(f"ltx_video_briefs:     {summary_payload['ltx_video_briefs_count']}")
         print(f"json: {files.get('json')}")
         print(f"csv:  {files.get('csv')}")
         print(f"md:   {files.get('md')}")

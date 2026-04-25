@@ -216,3 +216,175 @@ def test_cli_module_has_no_browser_or_oauth_imports():
     ]
     for call in forbidden_calls:
         assert call not in src, f"forbidden write call in CLI: {call}"
+
+
+# ---------------------------------------------------------------------------
+# F-4S-5: fixture / analysis-only CLI
+# ---------------------------------------------------------------------------
+
+
+def _write_cli_fixture(tmp_path: Path) -> Path:
+    payload = {
+        "keywords": ["소방공사"],
+        "items": [
+            {
+                "platform": "naver",
+                "source_type": "blog",
+                "keyword": "소방공사",
+                "title": "소방공사 비용 5가지 체크리스트",
+                "url": "https://example.com/blog/1",
+                "summary": "비용 정리",
+                "published_at": "20260120",
+                "metrics": {"view_count": None, "like_count": None, "comment_count": None},
+                "raw_rank": 1,
+                "risk_flags": [],
+            },
+            {
+                "platform": "youtube",
+                "source_type": "youtube_video",
+                "keyword": "소방공사",
+                "title": "소방공사 어떻게 하나요? 5가지 핵심",
+                "url": "https://www.youtube.com/watch?v=fixq",
+                "summary": "초보 가이드",
+                "published_at": "2026-02-01T10:00:00Z",
+                "metrics": {"view_count": 50000, "like_count": 1000, "comment_count": 80},
+                "raw_rank": 1,
+                "risk_flags": [],
+            },
+        ],
+    }
+    fp = tmp_path / "fix.json"
+    fp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return fp
+
+
+def test_cli_fixture_mode_runs_without_api(cli, tmp_path: Path):
+    fp = _write_cli_fixture(tmp_path)
+    out_dir = tmp_path / "content"
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = cli.main(
+            [
+                "--fixture",
+                str(fp),
+                "--analysis-only",
+                "--out-dir",
+                str(out_dir),
+                "--json",
+            ]
+        )
+    assert rc == 0
+    payload = json.loads(buf.getvalue())
+    assert payload["mode"] == "fixture"
+    assert payload["summary"]["total_items"] == 2
+    assert payload["ranked_youtube_count"] >= 1
+    assert payload["ltx_video_briefs_count"] >= 1
+
+
+def test_cli_fixture_mode_writes_three_files_with_analysis_md(cli, tmp_path: Path):
+    fp = _write_cli_fixture(tmp_path)
+    out_dir = tmp_path / "content"
+    rc = cli.main(
+        [
+            "--fixture",
+            str(fp),
+            "--analysis-only",
+            "--out-dir",
+            str(out_dir),
+        ]
+    )
+    assert rc == 0
+    files = list(out_dir.iterdir())
+    suffixes = {p.suffix for p in files}
+    assert {".json", ".csv", ".md"} <= suffixes
+    md_text = next(p for p in files if p.suffix == ".md").read_text(encoding="utf-8")
+    for section in (
+        "## YouTube 후보 랭킹",
+        "## Naver 후보 랭킹",
+        "## 콘텐츠 패턴 분포",
+        "## 플랫폼별 권장 전략",
+        "## LTX 영상 brief",
+    ):
+        assert section in md_text
+
+
+def test_cli_fixture_json_contains_analysis_block(cli, tmp_path: Path):
+    fp = _write_cli_fixture(tmp_path)
+    out_dir = tmp_path / "content"
+    rc = cli.main(
+        [
+            "--fixture",
+            str(fp),
+            "--analysis-only",
+            "--out-dir",
+            str(out_dir),
+        ]
+    )
+    assert rc == 0
+    json_path = next(p for p in out_dir.iterdir() if p.suffix == ".json")
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert "analysis" in payload
+    assert "ranked_youtube" in payload["analysis"]
+    assert "ranked_naver" in payload["analysis"]
+    assert "patterns" in payload["analysis"]
+    assert "platform_strategy" in payload["analysis"]
+    assert "ltx_video_briefs" in payload
+
+
+def test_cli_fixture_does_not_leak_secret_env(cli, tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("NAVER_CLIENT_ID", "should-not-leak-naver-id")
+    monkeypatch.setenv("NAVER_CLIENT_SECRET", "should-not-leak-naver-secret")
+    monkeypatch.setenv("YOUTUBE_DATA_API_KEY", "should-not-leak-yt-key")
+
+    fp = _write_cli_fixture(tmp_path)
+    out_dir = tmp_path / "content"
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = cli.main(
+            [
+                "--fixture",
+                str(fp),
+                "--analysis-only",
+                "--out-dir",
+                str(out_dir),
+                "--json",
+            ]
+        )
+    assert rc == 0
+    forbidden = ["should-not-leak-naver-id", "should-not-leak-naver-secret", "should-not-leak-yt-key"]
+    for s in forbidden:
+        assert s not in buf.getvalue()
+    for p in out_dir.iterdir():
+        text = p.read_text(encoding="utf-8")
+        for s in forbidden:
+            assert s not in text
+
+
+def test_cli_existing_dry_run_still_works(cli, tmp_path: Path):
+    """기존 CLI dry-run 동작이 fixture 옵션 추가로 깨지지 않아야 함."""
+    out_dir = tmp_path / "content"
+    rc = cli.main(
+        [
+            "--keyword",
+            "소방공사",
+            "--out-dir",
+            str(out_dir),
+        ]
+    )
+    assert rc == 0
+    files = list(out_dir.iterdir())
+    suffixes = {p.suffix for p in files}
+    assert {".json", ".csv", ".md"} <= suffixes
+
+
+def test_cli_fixture_path_missing_raises(cli, tmp_path: Path):
+    with pytest.raises(SystemExit):
+        cli.main(
+            [
+                "--fixture",
+                str(tmp_path / "nope.json"),
+                "--analysis-only",
+                "--out-dir",
+                str(tmp_path / "content"),
+            ]
+        )
