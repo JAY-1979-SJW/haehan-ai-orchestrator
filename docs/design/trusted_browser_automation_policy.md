@@ -108,10 +108,51 @@ www.hometax.go.kr
 ## 로컬 보안 저장소 원칙
 
 - 비밀값은 **대표님 PC 의 OS 키 저장소** (Windows Credential Manager)
-  에만 보관한다. 본 단계에서는 인터페이스만 정의하고 실제 연동은
-  **NotImplemented** 로 둔다.
+  에만 보관한다.
 - 비밀값을 평문 파일로 디스크에 두지 않는다 (`.env`, JSON 등 금지).
 - 비밀값을 git 저장소/오케스트레이터/원격 서버로 전송하지 않는다.
+
+
+## F-4D — Secret Backend 구조
+
+`local_agent.trusted_secrets` 는 본 단계에서 backend 추상화를 갖는다.
+
+### Backend 종류
+
+| backend                          | 위치     | 용도                                         |
+|--------------------------------- |--------- |--------------------------------------------- |
+| `MockSecretBackend`              | 테스트   | dict 주입형. 실제 OS 저장소 미접근.            |
+| `WindowsKeyringSecretBackend`    | 운영자 PC | `keyring` 패키지 위임. service=`haehan_local_agent` |
+
+### 인터페이스
+
+- `resolve_secret(secret_id, *, backend=...)` — backend 미지정 시
+  의도적으로 `NotImplementedError`. 자동 resolve 금지.
+- `get_secret_backend(name=None)` — `"mock"` 또는 keyring backend.
+- 예외 (메시지에 평문 미포함):
+  - `SecretResolutionError` — base.
+  - `SecretNotFoundError` — secret_id 미존재.
+  - `SecretBackendUnavailableError` — keyring 미설치 등.
+
+### 보안 계약
+
+- backend 의 `resolve()` 반환값은 **호출자 지역 변수만** 보유한다.
+- 반환값은 ActionResult / audit / exception / log 어디에도 들어가지
+  않는다. backend 자체의 `__repr__` / `__str__` 도 평문 비밀값을 절대
+  드러내지 않는다.
+- raw 비밀값을 파라미터로 받는 경로는 기존대로 차단 (`password`,
+  `cookie`, `session`, `storage_state` 등).
+- `keyring` 미설치 환경에서도 본 모듈 import 자체는 깨지지 않는다 —
+  `WindowsKeyringSecretBackend` 인스턴스화 시점에 한해서만
+  `SecretBackendUnavailableError` 로 전환된다.
+
+### 본 단계에 **포함되지 않는** 것
+
+- 실제 secret 등록 CLI (F-4E 후속).
+- DPAPI / pywin32 직접 호출.
+- 새 의존성 자동 설치 (`keyring` 은 운영자 PC 에 수동 설치).
+- 실제 홈택스 자동 로그인 클릭/입력 (F-4F 이후).
+- `runner.py` 의 pre-existing `login_with_secret` 코드 변경.
 
 
 ## 다운로드 폴더 원칙
@@ -153,6 +194,7 @@ www.hometax.go.kr
 | `local_agent/site_adapters/hometax.py`                              | 홈택스 page classifier + download plan        |
 | `ai_orchestrator/tests/test_trusted_browser_policy.py`              | trusted_browser_policy 단위 테스트            |
 | `ai_orchestrator/tests/test_trusted_secrets.py`                     | trusted_secrets 단위 테스트                   |
+| `ai_orchestrator/tests/test_trusted_secret_backend.py`              | F-4D backend (Mock + 선택적 keyring) 단위 테스트 |
 | `ai_orchestrator/tests/test_hometax_adapter.py`                     | 홈택스 page classifier 단위 테스트            |
 
 
