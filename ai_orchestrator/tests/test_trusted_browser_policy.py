@@ -294,3 +294,48 @@ def test_sanitize_result_recurses():
     raw = {"nested": {"cookie": "leak-cookie"}}
     out = tbp.sanitize_trusted_result(raw)
     assert "leak-cookie" not in repr(out)
+
+
+# ─── E) REQUIRES_USER_PRESENCE — 보안프로그램 군 ────────────────────────
+#
+# 보안프로그램 / 인증서 플러그인 / 키보드보안 / 브라우저 비호환 / 수동 설치
+# 페이지 상태는 자동 진행하지 않고 사용자가 직접 설치/승인 후 재시도한다.
+# 자동 클릭, 다운로드, silent install, 관리자 권한 실행, 보안모듈 우회 등은
+# 일체 수행하지 않는다 — 본 정책 enum 만 보장하며, 실제 자동 설치 코드는
+# 코드베이스에 추가하지 않는다.
+
+@pytest.mark.parametrize("state", [
+    "security_program_required",
+    "keyboard_security_required",
+    "certificate_plugin_required",
+    "browser_not_supported",
+    "manual_install_required",
+])
+def test_requires_user_presence_includes_security_program_states(state):
+    assert state in tbp.REQUIRES_USER_PRESENCE
+
+
+def test_requires_user_presence_keeps_existing_states():
+    """기존 상태 (captcha 등) 가 신규 추가로 인해 사라지지 않았는지 회귀."""
+    for s in (
+        "first_login_setup",
+        "ambiguous_certificate_selection",
+        "mobile_2fa_push",
+        "captcha_or_bot_check",
+        "payment_or_submission_confirmation",
+    ):
+        assert s in tbp.REQUIRES_USER_PRESENCE
+
+
+def test_requires_user_presence_in_sync_with_observer_helper_set():
+    """observer 의 manual_action_page_states 와 trusted policy 의
+    REQUIRES_USER_PRESENCE 가 보안프로그램 군에 대해 동일 source-of-truth
+    를 공유한다 (분류기/helper/policy 셋이 어긋나지 않도록).
+    """
+    from local_agent import browser_observer as bo
+    sec_states = set(bo.manual_action_page_states())
+    presence = set(tbp.REQUIRES_USER_PRESENCE)
+    assert sec_states.issubset(presence), (
+        f"manual_action_page_states not subset of REQUIRES_USER_PRESENCE: "
+        f"missing={sec_states - presence}"
+    )

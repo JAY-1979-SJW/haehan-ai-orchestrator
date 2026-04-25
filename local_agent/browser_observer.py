@@ -133,6 +133,36 @@ _SEARCH_PORTAL_TEXT_TOKENS: tuple[str, ...] = (
     "search", "news", "webmail",
 )
 
+# 은행/공공기관/세무 사이트가 요구하는 보안프로그램 / 인증서 플러그인 /
+# 키보드보안 / 브라우저 비호환 / 수동설치 신호. 자동 클릭/다운로드/설치는
+# 절대 수행하지 않으며, 본 토큰은 page_state 분류 (manual_action_required)
+# 와 ``extract_security_program_signals`` helper 에서 공동 사용한다.
+_SECURITY_PROGRAM_TEXT_TOKENS: tuple[str, ...] = (
+    "보안프로그램", "통합설치", "보안모듈", "보안 솔루션",
+    "프로그램 설치가 필요", "설치 완료 후 새로고침",
+    "필수 프로그램 설치",
+)
+_KEYBOARD_SECURITY_TEXT_TOKENS: tuple[str, ...] = (
+    "키보드보안", "보안키패드", "키보드 보안 프로그램",
+)
+_CERTIFICATE_PLUGIN_TEXT_TOKENS: tuple[str, ...] = (
+    "공동인증서 프로그램", "인증서 프로그램", "인증서 보안 프로그램",
+    "개인방화벽",
+)
+_BROWSER_NOT_SUPPORTED_TEXT_TOKENS: tuple[str, ...] = (
+    "지원하지 않는 브라우저", "브라우저 확장 프로그램",
+    "ActiveX", "Internet Explorer 전용",
+    # ".exe" 는 확장자 표기로만 매칭한다. 단순 "EXE" 는 "execute" 등에
+    # false-positive 를 일으키므로 사용하지 않는다.
+    ".exe",
+)
+# 단독 "설치" 한 단어로는 분류하지 않는다 — 다른 보안프로그램 신호 토큰이
+# 매칭되지 않을 때만, 명시적 "설치하기/수동 설치/설치파일/다운로드 후 설치"
+# 같은 동사·문맥 결합 토큰만 manual_install_required 로 분류한다.
+_MANUAL_INSTALL_TEXT_TOKENS: tuple[str, ...] = (
+    "설치하기", "다운로드 후 설치", "수동 설치", "설치파일",
+)
+
 
 # ─── 결과 빌더 ───────────────────────────────────────────────────────────
 
@@ -679,15 +709,26 @@ def _classify_page_state(
 ) -> str:
     """규칙 기반 1차 분류. 우선순위 (높음→낮음):
 
-      1) status_code 404                     → not_found
-      2) status_code >= 500                  → server_error
-      3) captcha 토큰                        → captcha_or_bot_check
-      4) access denied 토큰                  → access_denied
-      5) login 토큰 + password input         → login_required
-      6) developer docs 토큰 (host or text)  → developer_docs
-      7) search portal 토큰                  → search_portal
-      8) visible text 거의 없음              → blank_or_empty
-      9) 그 외                                → public_page
+      1) status_code 404                       → not_found
+      2) status_code >= 500                    → server_error
+      3) captcha 토큰                          → captcha_or_bot_check
+      4a) 보안프로그램 토큰                    → security_program_required
+      4b) 키보드보안 토큰                      → keyboard_security_required
+      4c) 인증서 플러그인 토큰                 → certificate_plugin_required
+      4d) 브라우저 비호환 토큰                 → browser_not_supported
+      4e) 수동 설치 토큰 (다른 4a~4d 미매칭)   → manual_install_required
+      5) access denied 토큰                    → access_denied
+      6) login 토큰 + password input           → login_required
+      7) developer docs 토큰 (host or text)    → developer_docs
+      8) search portal 토큰                    → search_portal
+      9) visible text 거의 없음                → blank_or_empty
+     10) 그 외                                  → public_page
+
+    4a~4e (manual_action_required 군) 정책:
+      captcha 다음, access_denied 앞에서 검사한다. 사용자가 직접 보안프로그램/
+      인증서 플러그인을 설치한 뒤 재시도하는 흐름이며, 자동 클릭/다운로드/
+      설치/silent install/관리자 권한 실행/보안모듈 우회는 일체 수행하지
+      않는다. 본 분류기는 read-only 신호 매칭만 한다.
     """
     text_lower = (text_blob or "").lower()
     title_lower = (title or "").lower()
@@ -703,7 +744,15 @@ def _classify_page_state(
     if _has_any_token(text_lower, _CAPTCHA_TEXT_TOKENS) or \
             _has_any_token(title_lower, _CAPTCHA_TEXT_TOKENS):
         return "captcha_or_bot_check"
-    # 4) access denied — captcha 다음.
+    # 4) 보안프로그램/인증서 플러그인/키보드보안/브라우저 비호환/수동 설치.
+    #    captcha 다음, access_denied 앞에서 검사한다.
+    #    a~d 의 강한 신호가 있으면 manual_install_required 보다 우선한다.
+    sec_state = _classify_security_program_state(
+        text_lower=text_lower, title_lower=title_lower,
+    )
+    if sec_state:
+        return sec_state
+    # 5) access denied — captcha / 보안프로그램 다음.
     if _has_any_token(text_lower, _ACCESS_DENIED_TEXT_TOKENS) or \
             _has_any_token(title_lower, _ACCESS_DENIED_TEXT_TOKENS):
         return "access_denied"
@@ -757,6 +806,57 @@ def _has_any_token(haystack: str, tokens: tuple[str, ...]) -> bool:
     return False
 
 
+def _has_any_token_ci(haystack: str, tokens: tuple[str, ...]) -> bool:
+    """case-insensitive 매칭. browser_not_supported 토큰처럼 영문 대소문자
+    혼합 (ActiveX/activex/EXE) 이 섞일 때 사용. 한글 토큰에는 영향 없음."""
+    if not haystack:
+        return False
+    h = haystack.lower()
+    for t in tokens:
+        if not t:
+            continue
+        if t.lower() in h:
+            return True
+    return False
+
+
+def _classify_security_program_state(
+    *, text_lower: str, title_lower: str,
+) -> str:
+    """보안프로그램/인증서 플러그인/키보드보안/브라우저 비호환/수동 설치 분류.
+
+    매칭 시 page_state 문자열을 반환, 어디에도 매칭 안 되면 빈 문자열.
+
+    내부 우선순위 (a → e):
+      a) security_program_required        — 강한 신호 (보안프로그램, 통합설치 등)
+      b) keyboard_security_required       — 키보드보안 / 보안키패드
+      c) certificate_plugin_required      — 인증서 프로그램 / 개인방화벽
+      d) browser_not_supported            — 지원하지 않는 브라우저 / ActiveX
+      e) manual_install_required          — a~d 미매칭 시에만, 명시적 설치 토큰
+
+    "설치" 단독 단어로는 분류하지 않는다 — manual_install_required 토큰은
+    "설치하기/수동 설치/설치파일/다운로드 후 설치" 처럼 동사·문맥 결합형만
+    포함되어 있다. 일반 페이지에서 "설치" 가 단순 언급될 때 과분류되지
+    않게 하기 위함이다.
+    """
+    if _has_any_token(text_lower, _SECURITY_PROGRAM_TEXT_TOKENS) or \
+            _has_any_token(title_lower, _SECURITY_PROGRAM_TEXT_TOKENS):
+        return "security_program_required"
+    if _has_any_token(text_lower, _KEYBOARD_SECURITY_TEXT_TOKENS) or \
+            _has_any_token(title_lower, _KEYBOARD_SECURITY_TEXT_TOKENS):
+        return "keyboard_security_required"
+    if _has_any_token(text_lower, _CERTIFICATE_PLUGIN_TEXT_TOKENS) or \
+            _has_any_token(title_lower, _CERTIFICATE_PLUGIN_TEXT_TOKENS):
+        return "certificate_plugin_required"
+    if _has_any_token_ci(text_lower, _BROWSER_NOT_SUPPORTED_TEXT_TOKENS) or \
+            _has_any_token_ci(title_lower, _BROWSER_NOT_SUPPORTED_TEXT_TOKENS):
+        return "browser_not_supported"
+    if _has_any_token(text_lower, _MANUAL_INSTALL_TEXT_TOKENS) or \
+            _has_any_token(title_lower, _MANUAL_INSTALL_TEXT_TOKENS):
+        return "manual_install_required"
+    return ""
+
+
 # ─── helpers ─────────────────────────────────────────────────────────────
 
 def _clip_int(value: Any, lo: int, hi: int, default: int) -> int:
@@ -771,6 +871,200 @@ def _clip_int(value: Any, lo: int, hi: int, default: int) -> int:
     return v
 
 
+# ─── 보안프로그램 신호 추출 helper ───────────────────────────────────────
+
+# helper 출력 길이 상한 (홈택스 어댑터와 동일 수준).
+_SP_OUT_TEXT_CAP = 200
+_SP_OUT_HREF_CAP = 300
+
+# detected_programs 에서 short token 한 단어로는 잡지 않을 키워드. 단순
+# "설치하기" 만 본 페이지에 있어도 "감지된 프로그램명" 으로 보고하는 건
+# 의미가 약하므로 detected_programs 에는 강한 신호 토큰만 포함한다.
+_DETECTED_PROGRAM_TOKENS: tuple[str, ...] = (
+    *_SECURITY_PROGRAM_TEXT_TOKENS,
+    *_KEYBOARD_SECURITY_TEXT_TOKENS,
+    *_CERTIFICATE_PLUGIN_TEXT_TOKENS,
+    "ActiveX", "Internet Explorer 전용", ".exe",
+)
+
+# install_links 추출 시 link text 가 "설치/다운로드" 류 토큰을 포함해야
+# 한다 — 일반 페이지의 모든 a 태그를 "install_link" 로 보고하지 않기 위함.
+_INSTALL_LINK_TEXT_TOKENS: tuple[str, ...] = (
+    "설치", "다운로드", "통합설치", "보안프로그램", "키보드보안",
+    "보안키패드", "공동인증서", "인증서 프로그램", "개인방화벽",
+    "install", "download",
+)
+
+
+def extract_security_program_signals(observer_result: Any) -> dict[str, Any]:
+    """observer 결과에서 보안프로그램 / 인증서 / 키보드보안 / 브라우저 비호환
+    / 수동 설치 신호를 read-only 로 추출.
+
+    pure dict-in / dict-out — 본 helper 는 브라우저를 새로 열지 않고, 클릭/
+    다운로드/설치/JS 실행을 일체 수행하지 않는다. 입력은 ``observer_result``
+    dict 의 ``page_state`` / ``title`` / ``text_excerpt`` / ``links`` /
+    ``buttons`` 만 사용한다.
+
+    출력 스키마 (사용자 정책 §보고 스키마와 일치):
+      {
+        "page_state":             "...",                  # observer 가 분류한 값
+        "manual_action_required": True / False,
+        "detected_programs":      ["키보드보안", "공동인증서 프로그램", ...],
+        "install_links":          [{"text": "...", "href": "..."}, ...],
+        "warnings":               ["manual_security_program_install_required",
+                                   ...],
+      }
+
+    원칙:
+      - href 는 query/fragment 가 제거된 값만 사용한다 (observer 가 이미
+        한 번 제거하지만 helper 도 한 번 더 방어).
+      - input value / cookie / storage_state / 비밀값은 절대 출력하지
+        않는다.
+      - 보안프로그램 자동 설치는 본 helper 의 책임이 아니며, 어떤 경우에도
+        만들지 않는다. install_links 는 "사용자가 직접 클릭해서 설치할
+        수 있는 후보 링크" 만 보고 목적으로 노출한다.
+    """
+    if not isinstance(observer_result, dict):
+        return _empty_security_signal_result(["observer_result_not_dict"])
+
+    warnings: list[str] = []
+
+    page_state = observer_result.get("page_state")
+    if not isinstance(page_state, str):
+        page_state = ""
+
+    title = observer_result.get("title") or ""
+    if not isinstance(title, str):
+        title = ""
+    text_excerpt = observer_result.get("text_excerpt") or ""
+    if not isinstance(text_excerpt, str):
+        text_excerpt = ""
+
+    links = observer_result.get("links")
+    if not isinstance(links, list):
+        if links is not None:
+            warnings.append("links_not_list")
+        links = []
+
+    buttons = observer_result.get("buttons")
+    if not isinstance(buttons, list):
+        if buttons is not None:
+            warnings.append("buttons_not_list")
+        buttons = []
+
+    blob_parts = [title, text_excerpt]
+    for link in links:
+        if isinstance(link, dict):
+            t = link.get("text") or ""
+            if isinstance(t, str) and t:
+                blob_parts.append(t)
+    for btn in buttons:
+        if isinstance(btn, dict):
+            t = btn.get("text") or ""
+            if isinstance(t, str) and t:
+                blob_parts.append(t)
+    blob_lower = " ".join(blob_parts).lower()
+
+    detected_programs = _detect_program_names(blob_lower)
+    install_links = _extract_install_links(links)
+
+    is_security_state = page_state in _MANUAL_ACTION_PAGE_STATES
+    has_signal = bool(detected_programs) or bool(install_links)
+    manual_action_required = is_security_state or has_signal
+
+    if manual_action_required:
+        warnings.append("manual_security_program_install_required")
+
+    return {
+        "page_state": page_state,
+        "manual_action_required": bool(manual_action_required),
+        "detected_programs": detected_programs,
+        "install_links": install_links,
+        "warnings": warnings,
+    }
+
+
+# 보안프로그램 군 page_state 셋. 분류기 / helper / trusted policy 가 공유.
+_MANUAL_ACTION_PAGE_STATES: frozenset[str] = frozenset({
+    "security_program_required",
+    "keyboard_security_required",
+    "certificate_plugin_required",
+    "browser_not_supported",
+    "manual_install_required",
+})
+
+
+def manual_action_page_states() -> frozenset[str]:
+    """다른 모듈 (trusted_browser_policy 등) 이 본 set 을 import 해
+    REQUIRES_USER_PRESENCE 등에 통합할 수 있도록 한 진입점 노출."""
+    return _MANUAL_ACTION_PAGE_STATES
+
+
+def _detect_program_names(blob_lower: str) -> list[str]:
+    """blob 안에서 발견된 강한 토큰만 detected_programs 로 반환.
+
+    ".exe" / "ActiveX" 처럼 영문 대소문자 혼합 토큰은 case-insensitive
+    매칭하지만, 출력은 원래 토큰 문자열을 그대로 보존해 "사용자가 본
+    화면에서 본 표기" 와 가까운 형태로 보고한다.
+    """
+    if not blob_lower:
+        return []
+    seen: set[str] = set()
+    out: list[str] = []
+    for tok in _DETECTED_PROGRAM_TOKENS:
+        if not tok:
+            continue
+        if tok.lower() in blob_lower and tok not in seen:
+            seen.add(tok)
+            out.append(tok)
+    return out
+
+
+def _extract_install_links(links: list[Any]) -> list[dict[str, str]]:
+    """observer 가 sanitize 한 links 중 "설치/다운로드" 토큰이 텍스트에
+    포함된 후보만 추출. href 는 query/fragment 한 번 더 제거하고 길이 상한.
+
+    raw URL / cookie / storage / value 는 절대 출력하지 않는다.
+    """
+    out: list[dict[str, str]] = []
+    seen_keys: set[tuple[str, str]] = set()
+    for link in links:
+        if not isinstance(link, dict):
+            continue
+        text = link.get("text") or ""
+        if not isinstance(text, str):
+            text = ""
+        href_raw = link.get("href") or ""
+        if not isinstance(href_raw, str):
+            href_raw = ""
+        # observer 가 이미 query/fragment 를 제거하지만 한 번 더 방어.
+        href = _QUERY_FRAG_RE.sub("", href_raw.strip())[:_SP_OUT_HREF_CAP]
+        text_l = text.lower()
+        if not _has_any_token(text_l, _INSTALL_LINK_TEXT_TOKENS):
+            continue
+        key = (text[:_SP_OUT_TEXT_CAP], href)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        out.append({
+            "text": text[:_SP_OUT_TEXT_CAP],
+            "href": href,
+        })
+    return out
+
+
+def _empty_security_signal_result(warnings: list[str]) -> dict[str, Any]:
+    return {
+        "page_state": "",
+        "manual_action_required": False,
+        "detected_programs": [],
+        "install_links": [],
+        "warnings": list(warnings),
+    }
+
+
 __all__ = [
     "observe_public_browser_page",
+    "extract_security_program_signals",
+    "manual_action_page_states",
 ]

@@ -980,3 +980,344 @@ def test_google_open_only_blocks_before_dwell(monkeypatch) -> None:
     assert sleeps == []
     # query/fragment 미노출.
     assert "secret" not in str(r)
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# G) 보안프로그램 page_state 분류 + helper
+#
+# 은행/공공기관/세무 사이트가 요구하는 보안프로그램 / 인증서 플러그인 /
+# 키보드보안 / 브라우저 비호환 / 수동 설치 신호를 captcha 다음, access_denied
+# 앞에서 잡는다. 자동 클릭/다운로드/설치/우회는 어떤 경우에도 수행하지 않는
+# 다 (본 모듈은 read-only — A) 섹션의 AST 회귀 테스트가 별도 보장).
+# ═════════════════════════════════════════════════════════════════════════
+
+
+def test_page_state_security_program_required_by_text() -> None:
+    """text_blob 은 page_title + headings + links + buttons + table headers
+    만 합산하므로, 보안 키워드는 title/heading 에 배치해야 한다 (실제 운영
+    페이지는 자연히 그렇게 표기된다).
+    """
+    html = """<html><head><title>보안프로그램 설치가 필요합니다</title></head>
+    <body>
+      <h1>보안프로그램 설치 안내</h1>
+    </body></html>"""
+    r = _observe_with_html(
+        html=html, title="보안프로그램 설치가 필요합니다",
+    )
+    assert r["page_state"] == "security_program_required"
+
+
+def test_page_state_security_program_integrated_install() -> None:
+    html = """<html><head><title>통합설치 안내</title></head>
+    <body>
+      <h1>통합설치프로그램</h1>
+      <h2>설치 완료 후 새로고침</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="통합설치 안내")
+    assert r["page_state"] == "security_program_required"
+
+
+def test_page_state_keyboard_security_required() -> None:
+    html = """<html><head><title>키보드보안</title></head>
+    <body>
+      <h1>키보드보안 프로그램 안내</h1>
+      <h2>보안키패드 설치 안내</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="키보드보안")
+    assert r["page_state"] == "keyboard_security_required"
+
+
+def test_page_state_certificate_plugin_required() -> None:
+    html = """<html><head><title>인증서 안내</title></head>
+    <body>
+      <h1>공동인증서 프로그램 안내</h1>
+      <h2>인증서 보안 프로그램</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="인증서 안내")
+    assert r["page_state"] == "certificate_plugin_required"
+
+
+def test_page_state_browser_not_supported_by_activex() -> None:
+    html = """<html><head><title>호환 안내</title></head>
+    <body>
+      <h1>지원하지 않는 브라우저</h1>
+      <h2>ActiveX 환경 안내</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="호환 안내")
+    assert r["page_state"] == "browser_not_supported"
+
+
+def test_page_state_browser_not_supported_by_exe_extension() -> None:
+    html = """<html><head><title>브라우저 확장</title></head>
+    <body>
+      <h1>브라우저 확장 프로그램</h1>
+      <a href='/install/secplugin.exe'>SecPlugin.exe 다운로드</a>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="브라우저 확장")
+    assert r["page_state"] == "browser_not_supported"
+
+
+def test_page_state_manual_install_required_by_install_file() -> None:
+    """4a~4d 강한 신호가 없을 때만 manual_install_required 로 분류."""
+    html = """<html><head><title>다운로드 안내</title></head>
+    <body>
+      <h1>도움말 안내</h1>
+      <a href='/help/install-file'>설치파일 다운로드 후 설치</a>
+      <a href='/help/manual'>수동 설치 가이드</a>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="다운로드 안내")
+    assert r["page_state"] == "manual_install_required"
+
+
+def test_page_state_captcha_overrides_security_program() -> None:
+    """captcha 신호와 보안프로그램 신호가 같이 있으면 captcha 우선."""
+    html = """<html><head><title>보안문자 확인</title></head>
+    <body>
+      <h1>자동입력방지 보안문자</h1>
+      <h2>보안프로그램 설치 안내</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, title="보안문자 확인")
+    assert r["page_state"] == "captcha_or_bot_check"
+
+
+def test_page_state_security_program_overrides_access_denied_text() -> None:
+    """본문에 access denied 문구와 보안프로그램 문구가 같이 있으면
+    보안프로그램 상태가 access_denied 보다 우선이다 (HTTP 200 일 때).
+    """
+    html = """<html><head><title>접근 안내</title></head>
+    <body>
+      <h1>access denied</h1>
+      <h2>보안프로그램 설치가 필요합니다</h2>
+    </body></html>"""
+    r = _observe_with_html(html=html, status=200, title="접근 안내")
+    assert r["page_state"] == "security_program_required"
+
+
+def test_page_state_install_word_alone_does_not_misclassify() -> None:
+    """단순 "설치" 한 단어로는 manual_install_required 로 잡지 않는다.
+
+    문맥 결합 토큰 (설치하기/수동 설치/설치파일/다운로드 후 설치) 이 없으면
+    public_page 또는 다른 적절한 분류로 떨어져야 한다.
+    """
+    html = """<html><head><title>About Plumbing Tools and Repair Manuals</title></head>
+    <body>
+      <h1>About Plumbing Tools and Repair Manuals</h1>
+      <h2>Pipe and Faucet Installation Guide for Beginners</h2>
+      <h2>Replacement Parts Catalog by Manufacturer</h2>
+      <h3>Service Coverage and Maintenance Schedule</h3>
+      <p>여기서 도구 설치 위치를 안내합니다 — 자세한 안내는 매뉴얼 참조.</p>
+      <a href='/products/wrench'>Wrench Selection Guide</a>
+      <a href='/products/pipes'>Pipe Diameter Reference</a>
+      <a href='/services/repair'>Service Repair Catalog</a>
+    </body></html>"""
+    r = _observe_with_html(
+        html=html, title="About Plumbing Tools and Repair Manuals",
+        final_url="https://plumbing-x.example/",
+        target_url="https://plumbing-x.example/",
+    )
+    assert r["page_state"] != "manual_install_required"
+    assert r["page_state"] != "security_program_required"
+
+
+# ─── extract_security_program_signals helper ────────────────────────────
+
+
+def _build_observer_result(
+    *,
+    page_state: str = "security_program_required",
+    title: str = "보안프로그램 설치 안내",
+    text_excerpt: str = "보안프로그램 설치가 필요합니다.",
+    links: list[dict] | None = None,
+    buttons: list[dict] | None = None,
+) -> dict:
+    return {
+        "success": True,
+        "error_code": "",
+        "warnings": [],
+        "target_url": "https://bank.example.kr/login",
+        "final_url_host_path": "bank.example.kr/login",
+        "title": title,
+        "status_code": 200,
+        "page_state": page_state,
+        "text_excerpt": text_excerpt,
+        "text_length": len(text_excerpt),
+        "links_count": len(links or []),
+        "buttons_count": len(buttons or []),
+        "forms_count": 0,
+        "inputs_count": 0,
+        "links": list(links or []),
+        "buttons": list(buttons or []),
+        "forms": [],
+        "input_types": [],
+        "screenshot_path": None,
+    }
+
+
+def test_extract_security_signals_basic_security_program() -> None:
+    obs = _build_observer_result(
+        text_excerpt=(
+            "보안프로그램 설치가 필요합니다. "
+            "키보드보안 및 공동인증서 프로그램을 설치하세요."
+        ),
+        links=[
+            {
+                "text": "통합설치프로그램 다운로드",
+                "href": "https://bank.example.kr/install/integrated",
+                "risk_hint": "",
+            },
+        ],
+    )
+    out = bo.extract_security_program_signals(obs)
+    assert out["page_state"] == "security_program_required"
+    assert out["manual_action_required"] is True
+    assert "보안프로그램" in out["detected_programs"]
+    assert "키보드보안" in out["detected_programs"]
+    assert "공동인증서 프로그램" in out["detected_programs"]
+    assert len(out["install_links"]) == 1
+    assert out["install_links"][0]["text"] == "통합설치프로그램 다운로드"
+    assert out["install_links"][0]["href"] == \
+        "https://bank.example.kr/install/integrated"
+    assert "manual_security_program_install_required" in out["warnings"]
+
+
+def test_extract_security_signals_strips_query_fragment_in_install_links() -> None:
+    """observer 가 이미 strip 하지만 helper 도 한 번 더 방어한다.
+
+    observer.sanitize_links 미적용 (raw href) 으로 들어와도 query/fragment
+    가 출력에 노출되지 않아야 한다.
+    """
+    obs = _build_observer_result(
+        text_excerpt="보안프로그램 설치가 필요합니다",
+        links=[
+            {
+                "text": "키보드보안 설치",
+                "href": "https://bank.example.kr/install?token=SECRET#frag",
+                "risk_hint": "",
+            },
+        ],
+    )
+    out = bo.extract_security_program_signals(obs)
+    assert out["install_links"][0]["href"] == \
+        "https://bank.example.kr/install"
+    blob = str(out)
+    assert "SECRET" not in blob
+    assert "?token=" not in blob
+    assert "#frag" not in blob
+
+
+def test_extract_security_signals_filters_non_install_links() -> None:
+    """install/다운로드 토큰이 텍스트에 없는 링크는 install_links 에 들어가지
+    않는다."""
+    obs = _build_observer_result(
+        links=[
+            {
+                "text": "회사 소개",
+                "href": "https://bank.example.kr/about",
+                "risk_hint": "",
+            },
+            {
+                "text": "보안프로그램 설치",
+                "href": "https://bank.example.kr/setup",
+                "risk_hint": "",
+            },
+        ],
+    )
+    out = bo.extract_security_program_signals(obs)
+    hrefs = [link["href"] for link in out["install_links"]]
+    assert "https://bank.example.kr/setup" in hrefs
+    assert "https://bank.example.kr/about" not in hrefs
+
+
+def test_extract_security_signals_no_signals_on_normal_page() -> None:
+    obs = _build_observer_result(
+        page_state="public_page",
+        title="회사 소개",
+        text_excerpt="저희 회사는 1972년에 설립되었습니다.",
+        links=[{"text": "더 알아보기",
+                "href": "https://example.com/about", "risk_hint": ""}],
+    )
+    out = bo.extract_security_program_signals(obs)
+    assert out["page_state"] == "public_page"
+    assert out["manual_action_required"] is False
+    assert out["detected_programs"] == []
+    assert out["install_links"] == []
+    assert "manual_security_program_install_required" not in out["warnings"]
+
+
+def test_extract_security_signals_handles_non_dict_input() -> None:
+    out = bo.extract_security_program_signals(None)
+    assert out["manual_action_required"] is False
+    assert out["page_state"] == ""
+    assert out["detected_programs"] == []
+    assert out["install_links"] == []
+    assert "observer_result_not_dict" in out["warnings"]
+
+
+def test_extract_security_signals_handles_non_list_links() -> None:
+    obs = _build_observer_result()
+    obs["links"] = "not-a-list"
+    out = bo.extract_security_program_signals(obs)
+    assert "links_not_list" in out["warnings"]
+
+
+def test_extract_security_signals_does_not_call_browser_apis() -> None:
+    """helper 는 dict-in/dict-out — Playwright 객체를 받아도 호출하지 않아야
+    한다. dict 가 아니면 즉시 warning 으로 빠진다.
+    """
+
+    class _ExplodingPage:
+        def __getattr__(self, name: str) -> Any:
+            raise AssertionError(
+                f"helper attempted browser API call: {name}"
+            )
+
+    out = bo.extract_security_program_signals(_ExplodingPage())
+    assert out["manual_action_required"] is False
+    assert "observer_result_not_dict" in out["warnings"]
+
+
+def test_extract_security_signals_helper_function_has_no_forbidden_apis() -> None:
+    """helper 함수 본문 자체가 브라우저/쿠키/스토리지/JS API 를 호출하지
+    않음을 AST 로 검증한다.
+    """
+    src = Path(bo.__file__).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    target = None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and \
+                node.name == "extract_security_program_signals":
+            target = node
+            break
+    assert target is not None, \
+        "extract_security_program_signals not found"
+
+    offenders: list[tuple[str, int]] = []
+    for node in ast.walk(target):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr in _FORBIDDEN_CALL_ATTRS_OBSERVER:
+                offenders.append((f"call:.{node.func.attr}(", node.lineno))
+        if isinstance(node, ast.Attribute) and \
+                node.attr in _FORBIDDEN_ATTR_USAGE_OBSERVER:
+            offenders.append((f"attr:.{node.attr}", node.lineno))
+        if isinstance(node, ast.Name) and \
+                node.id in _FORBIDDEN_NAMES_OBSERVER:
+            offenders.append((f"name:{node.id}", node.lineno))
+    assert offenders == [], (
+        f"forbidden API in extract_security_program_signals: {offenders}"
+    )
+
+
+def test_manual_action_page_states_set_matches_helper_classification() -> None:
+    """observer.manual_action_page_states 가 분류기/helper/policy 가 공유
+    하는 단일 source-of-truth 로 노출된다.
+    """
+    states = bo.manual_action_page_states()
+    assert isinstance(states, frozenset)
+    assert "security_program_required" in states
+    assert "keyboard_security_required" in states
+    assert "certificate_plugin_required" in states
+    assert "browser_not_supported" in states
+    assert "manual_install_required" in states
+    # 기존 분류 (login_required / captcha 등) 는 본 set 에 들어가지 않는다.
+    assert "login_required" not in states
+    assert "captcha_or_bot_check" not in states

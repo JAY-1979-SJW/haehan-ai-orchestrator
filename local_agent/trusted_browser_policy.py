@@ -57,12 +57,23 @@ BLOCKED_TRUSTED_ACTIONS: Tuple[str, ...] = (
 )
 
 # 사용자가 직접 화면을 봐야 하는 상황.
+#
+# 보안프로그램 군 (security_program_required / keyboard_security_required /
+# certificate_plugin_required / browser_not_supported /
+# manual_install_required) 은 자동 설치/silent install/관리자 권한 실행/
+# 보안모듈 우회 어떤 것도 수행하지 않는다. 사용자가 직접 설치/승인 후
+# 재시도하는 흐름이며, 본 정책은 trusted automation 자동 진입을 차단한다.
 REQUIRES_USER_PRESENCE: Tuple[str, ...] = (
     "first_login_setup",
     "ambiguous_certificate_selection",
     "mobile_2fa_push",
     "captcha_or_bot_check",
     "payment_or_submission_confirmation",
+    "security_program_required",
+    "keyboard_security_required",
+    "certificate_plugin_required",
+    "browser_not_supported",
+    "manual_install_required",
 )
 
 # 다운로드 대상 폴더 prefix 의 시스템 영역 차단 리스트 (lowercase).
