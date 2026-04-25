@@ -1,20 +1,24 @@
-"""CLI: Naver / YouTube API secret 안전 등록 도구 (F-4S-4K).
+"""CLI: Naver / YouTube API secret 안전 등록 도구 (F-4S-4K, F-4S-4K-b).
 
 원칙:
-- secret value 는 stdin 으로만 받는다. argv / 환경변수 / 파일 경로로 받지 않는다.
+- secret value 는 stdin 또는 getpass no-echo 프롬프트로만 받는다. argv / 환경변수 / 파일 경로 금지.
 - stdout / stderr 에 secret 원문 출력 금지. .env 전체 내용 출력 금지.
 - 변경된 key 이름만 표시. 길이는 --verify 의 redacted 출력에서만.
 - 지원 키: NAVER_CLIENT_ID / NAVER_CLIENT_SECRET / YOUTUBE_DATA_API_KEY
 - write 동작: .env upsert 만. OAuth / 브라우저 자동화 / 외부 push 없음.
 
-사용 예:
+권장 사용법 (no-echo 프롬프트):
+    python scripts/set_api_env_secret.py --set NAVER_CLIENT_ID --prompt --verify
+    python scripts/set_api_env_secret.py --set NAVER_CLIENT_SECRET --prompt --verify
+    python scripts/set_api_env_secret.py --set YOUTUBE_DATA_API_KEY --prompt --verify --run-smoke
+
+호환 사용법 (stdin pipe):
     python scripts/set_api_env_secret.py --set NAVER_CLIENT_ID --value-stdin --verify
-    python scripts/set_api_env_secret.py --set NAVER_CLIENT_SECRET --value-stdin --verify
-    python scripts/set_api_env_secret.py --set YOUTUBE_DATA_API_KEY --value-stdin --verify --run-smoke
 """
 from __future__ import annotations
 
 import argparse
+import getpass
 import os
 import subprocess
 import sys
@@ -54,12 +58,18 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="set_key",
         choices=list(ALLOWED_KEYS),
         default=None,
-        help="등록할 key (값은 --value-stdin 으로만 받는다)",
+        help="등록할 key (값은 --prompt 또는 --value-stdin 으로만 받는다)",
     )
-    p.add_argument(
+    input_group = p.add_mutually_exclusive_group()
+    input_group.add_argument(
+        "--prompt",
+        action="store_true",
+        help="getpass no-echo 프롬프트로 값을 입력 (권장).",
+    )
+    input_group.add_argument(
         "--value-stdin",
         action="store_true",
-        help="값을 stdin 으로 입력. argv 에 절대 값을 넣지 않는다.",
+        help="값을 stdin 으로 입력 (pipe 호환). argv 에 절대 값을 넣지 않는다.",
     )
     p.add_argument(
         "--env-path",
@@ -257,12 +267,16 @@ def main(
     stdout: Optional[TextIO] = None,
     stderr: Optional[TextIO] = None,
     runner: Optional[Callable[..., subprocess.CompletedProcess]] = None,
+    prompt_reader: Optional[Callable[[str], str]] = None,
 ) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     stdin = stdin if stdin is not None else sys.stdin
     stdout = stdout if stdout is not None else sys.stdout
     stderr = stderr if stderr is not None else sys.stderr
     runner = runner if runner is not None else subprocess.run
+    prompt_reader_fn: Callable[[str], str] = (
+        prompt_reader if prompt_reader is not None else getpass.getpass
+    )
 
     args = _build_parser().parse_args(argv)
 
@@ -276,14 +290,25 @@ def main(
     env_path = Path(args.env_path)
 
     if args.set_key:
-        if not args.value_stdin:
+        if not (args.prompt or args.value_stdin):
             print(
-                "[set_api_env_secret] ERROR: --set 사용 시 --value-stdin 이 필수입니다 (값은 stdin 으로만 받는다)",
+                "[set_api_env_secret] ERROR: --set 사용 시 --prompt 또는 --value-stdin 중 하나가 필수입니다",
                 file=stderr,
             )
             return 2
 
-        value = _read_value_from_stdin(stdin)
+        if args.prompt:
+            try:
+                value = prompt_reader_fn(f"Enter {args.set_key} (no echo): ")
+            except (EOFError, KeyboardInterrupt):
+                print(
+                    "[set_api_env_secret] ERROR: 입력이 취소되었습니다",
+                    file=stderr,
+                )
+                return 2
+            value = (value or "").strip()
+        else:
+            value = _read_value_from_stdin(stdin)
         if not value:
             print(
                 "[set_api_env_secret] ERROR: stdin 에서 빈 값이 입력되었습니다 (등록 거절)",
