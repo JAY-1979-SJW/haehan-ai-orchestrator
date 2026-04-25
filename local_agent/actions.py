@@ -943,6 +943,340 @@ def action_observe_public_browser_page(params: dict) -> ActionResult:
     return ActionResult(success=True, summary=summary[:300], data=data)
 
 
+# ── F-4G-3Y-b — hometax post-login observe handler ─────────────────────
+
+# 결과 dict 에 절대 들어가서는 안 되는 키 (방어용 화이트리스트 검사 대상).
+_HOMETAX_FORBIDDEN_RESULT_KEYS: frozenset[str] = frozenset({
+    "cookies", "cookie", "session", "session_token",
+    "storage_state", "localstorage", "sessionstorage",
+    "raw_html", "html", "page_html", "page_content",
+    "device_token", "token", "password",
+})
+
+# params 에 들어와서는 안 되는 민감 키 (registry _strip_sensitive 와 이중 방어).
+_HOMETAX_FORBIDDEN_PARAM_KEYS: frozenset[str] = frozenset({
+    "cookie", "cookies", "session", "session_token",
+    "storage_state", "localstorage", "sessionstorage",
+    "password", "passwd", "pwd",
+    "token", "device_token", "access_token", "refresh_token",
+    "secret", "api_key", "api_secret",
+    "auth", "authorization",
+})
+
+_HOMETAX_DEFAULT_URL = "https://www.hometax.go.kr/"
+_HOMETAX_DEFAULT_WARMUP_URL = "https://example.com/"
+_HOMETAX_DEFAULT_USER_READY_SECONDS = 180
+_HOMETAX_DEFAULT_DWELL_AFTER_CAPTURE_SECONDS = 10
+_HOMETAX_DEFAULT_MAX_TEXT_CHARS = 10000
+_HOMETAX_MAX_TEXT_CHARS_CAP = 10000
+_HOMETAX_DEFAULT_GOTO_RETRIES = 2
+_HOMETAX_DEFAULT_GOTO_RETRY_DELAY_SECONDS = 1.5
+_HOMETAX_DEFAULT_GOTO_TIMEOUT_MS = 90000
+_HOMETAX_DEFAULT_WAIT_UNTIL = "networkidle"
+
+
+def _coerce_int(value: Any, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_float(value: Any, default: float) -> float:
+    if isinstance(value, bool):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _resolve_warmup_url(params: dict) -> Any:
+    """warmup_url 정규화. None 이면 disable, 키 자체 미존재면 default."""
+    if "warmup_url" not in params:
+        return _HOMETAX_DEFAULT_WARMUP_URL
+    raw = params.get("warmup_url")
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        s = raw.strip()
+        return s if s else None
+    return _HOMETAX_DEFAULT_WARMUP_URL
+
+
+def _sanitize_hometax_observer_view(result: dict) -> dict:
+    """observer 결과를 화이트리스트 키로만 추출. raw HTML / cookies / storage
+    같은 키는 본 함수의 출력 dict 에 절대 들어가지 않는다."""
+    if not isinstance(result, dict):
+        return {"warnings": ["observer_not_dict"]}
+    return {
+        "success": bool(result.get("success", False)),
+        "error_code": str(result.get("error_code") or ""),
+        "warnings": list(result.get("warnings") or []),
+        "target_url": str(result.get("target_url") or ""),
+        "final_url_host_path": str(result.get("final_url_host_path") or ""),
+        "title": str(result.get("title") or "")[:300],
+        "status_code": int(result.get("status_code") or 0),
+        "page_state": str(result.get("page_state") or "unknown"),
+        "text_excerpt": str(result.get("text_excerpt") or ""),
+        "text_length": int(result.get("text_length") or 0),
+        "links_count": int(result.get("links_count") or 0),
+        "buttons_count": int(result.get("buttons_count") or 0),
+        "forms_count": int(result.get("forms_count") or 0),
+        "inputs_count": int(result.get("inputs_count") or 0),
+        "links": list(result.get("links") or []),
+        "buttons": list(result.get("buttons") or []),
+        "forms": list(result.get("forms") or []),
+        "input_types": list(result.get("input_types") or []),
+        "warmup_attempted": bool(result.get("warmup_attempted")),
+        "warmup_success": bool(result.get("warmup_success")),
+        "warmup_url": str(result.get("warmup_url") or ""),
+        "goto_attempts_used": int(result.get("goto_attempts_used") or 0),
+        "handoff": dict(result.get("handoff") or {}),
+    }
+
+
+def _sanitize_hometax_plan_view(plan: dict) -> dict:
+    if not isinstance(plan, dict):
+        return {"warnings": ["plan_not_dict"]}
+    return {
+        "site_key": str(plan.get("site_key") or ""),
+        "page_state": str(plan.get("page_state") or ""),
+        "manual_action_required": bool(plan.get("manual_action_required")),
+        "unrecoverable": bool(plan.get("unrecoverable")),
+        "safe_read_candidates": list(plan.get("safe_read_candidates") or []),
+        "download_candidates": list(plan.get("download_candidates") or []),
+        "blocked_candidates": list(plan.get("blocked_candidates") or []),
+        "dangerous_candidates": list(plan.get("dangerous_candidates") or []),
+        "security_program_signals": plan.get("security_program_signals"),
+        "login_candidates": plan.get("login_candidates"),
+        "warnings": list(plan.get("warnings") or []),
+    }
+
+
+def _build_hometax_handler_summary(observer: dict, plan: dict) -> dict:
+    return {
+        "success": bool(observer.get("success", False)),
+        "title": str(observer.get("title") or "")[:300],
+        "final_url_host_path": str(observer.get("final_url_host_path") or ""),
+        "page_state": str(
+            observer.get("page_state") or plan.get("page_state") or ""
+        ),
+        "text_length": int(observer.get("text_length") or 0),
+        "links_count": int(observer.get("links_count") or 0),
+        "buttons_count": int(observer.get("buttons_count") or 0),
+        "forms_count": int(observer.get("forms_count") or 0),
+        "inputs_count": int(observer.get("inputs_count") or 0),
+        "manual_action_required": bool(plan.get("manual_action_required")),
+        "safe_read_candidates_count": len(
+            plan.get("safe_read_candidates") or []
+        ),
+        "download_candidates_count": len(
+            plan.get("download_candidates") or []
+        ),
+        "blocked_candidates_count": len(plan.get("blocked_candidates") or []),
+        "warmup_attempted": bool(observer.get("warmup_attempted")),
+        "warmup_success": bool(observer.get("warmup_success")),
+        "goto_attempts_used": int(observer.get("goto_attempts_used") or 0),
+        "warnings_count": (
+            len(observer.get("warnings") or []) + len(plan.get("warnings") or [])
+        ),
+    }
+
+
+def action_hometax_post_login_observe(params: dict) -> ActionResult:
+    """홈택스 post-login 화면 read-only 관찰 + controlled action plan 빌드.
+
+    F-4G-3Y-b — 사용자가 직접 홈택스 로그인 + 인증서 + 보안프로그램 + 메뉴
+    이동을 모두 끝낸 *후* 화면을 한 번 read-only 로 캡처하고, controlled
+    action plan 을 만들어 반환한다.
+
+    본 핸들러가 어떤 경우에도 수행하지 않는 것:
+      - page.click / fill / type / press / select_option / set_input_files
+      - keyboard.* / mouse.*
+      - submit / download / 보안프로그램 자동 설치
+      - cookie / storage_state / localStorage / sessionStorage 접근
+      - input value / textarea value 수집
+      - HTML 원문 결과 포함
+      - ID/PW/인증서 비밀번호/OTP/간편인증 값 입력
+
+    실제 read-only observe 와 클릭 금지 정책은
+    ``browser_manual_handoff.observe_after_user_ready`` 가 강제한다. 본
+    핸들러는 그 함수를 호출하고 결과 dict 를 화이트리스트 키로만 평탄화해
+    돌려준다.
+    """
+    if not isinstance(params, dict):
+        params = {}
+
+    # 1) forbidden params 가드 — registry _strip_sensitive 와 이중 방어.
+    forbidden_hits = sorted({
+        str(k).lower()
+        for k in params.keys()
+        if isinstance(k, str) and k.lower() in _HOMETAX_FORBIDDEN_PARAM_KEYS
+    })
+    if forbidden_hits:
+        return ActionResult(
+            False, "hometax_post_login_observe 거절",
+            {
+                "action": "hometax_post_login_observe",
+                "warnings": [f"forbidden_param:{k}" for k in forbidden_hits],
+            },
+            f"forbidden params: {forbidden_hits}",
+            error_code="FORBIDDEN_PARAMS",
+        )
+
+    # 2) URL 정규화 (default = 홈택스 메인).
+    url = str(
+        params.get("url") or params.get("target_url")
+        or _HOMETAX_DEFAULT_URL
+    ).strip()
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        return ActionResult(
+            False, "hometax_post_login_observe 거절",
+            {
+                "action": "hometax_post_login_observe",
+                "warnings": [f"url_scheme_not_allowed:{parsed.scheme!r}"],
+            },
+            f"허용되지 않은 스킴: {parsed.scheme!r}",
+            error_code="URL_SCHEME_NOT_ALLOWED",
+        )
+
+    # 3) 정수/실수 정규화.
+    user_ready_seconds = _coerce_int(
+        params.get("user_ready_seconds"),
+        _HOMETAX_DEFAULT_USER_READY_SECONDS,
+    )
+    dwell_after_capture_seconds = _coerce_int(
+        params.get("dwell_after_capture_seconds"),
+        _HOMETAX_DEFAULT_DWELL_AFTER_CAPTURE_SECONDS,
+    )
+    max_text_chars = _coerce_int(
+        params.get("max_text_chars"), _HOMETAX_DEFAULT_MAX_TEXT_CHARS,
+    )
+    if max_text_chars > _HOMETAX_MAX_TEXT_CHARS_CAP:
+        max_text_chars = _HOMETAX_MAX_TEXT_CHARS_CAP
+    goto_retries = _coerce_int(
+        params.get("goto_retries"), _HOMETAX_DEFAULT_GOTO_RETRIES,
+    )
+    goto_retry_delay_seconds = _coerce_float(
+        params.get("goto_retry_delay_seconds"),
+        _HOMETAX_DEFAULT_GOTO_RETRY_DELAY_SECONDS,
+    )
+    goto_timeout_ms = _coerce_int(
+        params.get("goto_timeout_ms"), _HOMETAX_DEFAULT_GOTO_TIMEOUT_MS,
+    )
+
+    wait_until_raw = params.get("wait_until")
+    if isinstance(wait_until_raw, str) and wait_until_raw.strip():
+        wait_until = wait_until_raw.strip()
+    else:
+        wait_until = _HOMETAX_DEFAULT_WAIT_UNTIL
+
+    warmup_url = _resolve_warmup_url(params)
+
+    # 4) 테스트 전용 주입 (운영 호출에서는 들어오지 않음).
+    inj: dict = {}
+    for key in ("_browser_factory", "_env", "_sleep"):
+        if key in params:
+            inj[key] = params[key]
+
+    # 5) read-only observe.
+    from .browser_manual_handoff import observe_after_user_ready
+    from .site_adapters.hometax import build_hometax_controlled_action_plan
+
+    try:
+        observer_result = observe_after_user_ready(
+            url=url,
+            wait_until=wait_until,
+            user_ready_seconds=user_ready_seconds,
+            dwell_after_capture_seconds=dwell_after_capture_seconds,
+            max_text_chars=max_text_chars,
+            warmup_url=warmup_url,
+            goto_retries=goto_retries,
+            goto_retry_delay_seconds=goto_retry_delay_seconds,
+            goto_timeout_ms=goto_timeout_ms,
+            **inj,
+        )
+    except Exception as e:
+        logger.exception("hometax_post_login_observe observe 실패")
+        return ActionResult(
+            False, "hometax_post_login_observe 예외",
+            {
+                "action": "hometax_post_login_observe",
+                "warnings": [f"observe_failed:{type(e).__name__}"],
+            },
+            str(e)[:200],
+            error_code="BROWSER_OBSERVATION_FAILED",
+        )
+
+    if not isinstance(observer_result, dict):
+        return ActionResult(
+            False, "hometax_post_login_observe 비정상 응답",
+            {
+                "action": "hometax_post_login_observe",
+                "warnings": ["observer_not_dict"],
+            },
+            "observer result is not dict",
+            error_code="BROWSER_OBSERVATION_FAILED",
+        )
+
+    # 6) controlled plan 빌드 (실패해도 observer 결과는 살린다).
+    try:
+        plan_result = build_hometax_controlled_action_plan(observer_result)
+    except Exception as e:  # pragma: no cover - 안전망
+        logger.exception("hometax_post_login_observe plan 빌드 실패")
+        plan_result = {"warnings": [f"plan_failed:{type(e).__name__}"]}
+
+    # 7) 화이트리스트 평탄화 + 회귀 방어용 forbidden-key 제거.
+    observer_view = _sanitize_hometax_observer_view(observer_result)
+    plan_view = _sanitize_hometax_plan_view(plan_result)
+    summary = _build_hometax_handler_summary(observer_view, plan_view)
+
+    payload: dict = {
+        "action": "hometax_post_login_observe",
+        "success": bool(observer_view.get("success")),
+        "observer": observer_view,
+        "plan": plan_view,
+        "summary": summary,
+        "warnings": (
+            list(observer_view.get("warnings") or [])
+            + list(plan_view.get("warnings") or [])
+        ),
+    }
+    # 회귀 방어: 화이트리스트가 아닌 forbidden 키가 어떤 경로로 흘러들어왔다면
+    # 즉시 제거. (정상 경로에서는 발생하지 않는다.)
+    for forbidden in list(_HOMETAX_FORBIDDEN_RESULT_KEYS):
+        payload.pop(forbidden, None)
+        if isinstance(payload.get("observer"), dict):
+            payload["observer"].pop(forbidden, None)
+        if isinstance(payload.get("plan"), dict):
+            payload["plan"].pop(forbidden, None)
+
+    if not payload["success"]:
+        err = (
+            observer_view.get("error_code")
+            or "BROWSER_OBSERVATION_FAILED"
+        )
+        reason = ",".join(payload["warnings"])[:200] or "observe_failed"
+        return ActionResult(
+            False, "hometax_post_login_observe 실패", payload,
+            reason, error_code=err,
+        )
+
+    summary_text = (
+        f"observed hometax page_state={summary.get('page_state')} "
+        f"safe={summary.get('safe_read_candidates_count')} "
+        f"download={summary.get('download_candidates_count')} "
+        f"blocked={summary.get('blocked_candidates_count')}"
+    )
+    return ActionResult(
+        success=True, summary=summary_text[:300], data=payload,
+    )
+
+
 def _action_browser_guarded(
     action_name: str, params: dict,
 ) -> ActionResult:
@@ -1290,6 +1624,7 @@ _ACTIONS = {
     "open_local_browser": action_open_local_browser,
     "open_local_browser_probe": action_open_local_browser_probe,
     "observe_public_browser_page": action_observe_public_browser_page,
+    "hometax_post_login_observe": action_hometax_post_login_observe,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)

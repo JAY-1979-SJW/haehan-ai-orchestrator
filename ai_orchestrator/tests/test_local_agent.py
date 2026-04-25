@@ -352,14 +352,12 @@ def test_hometax_post_login_observe_registered_for_auto_execute():
     assert "hometax_post_login_observe" not in _SERVER_AUTO_COMPLETE
 
 
-def test_hometax_post_login_observe_handler_not_yet_implemented():
-    """F-4G-3Y-a: 서버측 등록만 끝난 본 단계에서는 로컬 에이전트 핸들러가
-    미구현이어서 execute_action 이 UNKNOWN_ACTION 으로 거절해야 한다.
-    핸들러는 F-4G-3Y-b 에서 추가된다."""
-    from local_agent.actions import execute_action
-    r = execute_action("hometax_post_login_observe", {})
-    assert not r.success
-    assert r.error_code == "UNKNOWN_ACTION"
+def test_hometax_post_login_observe_handler_registered():
+    """F-4G-3Y-b: 로컬 에이전트의 _ACTIONS 에 핸들러가 등록되어 있어야 한다.
+    UNKNOWN_ACTION 으로 폴백되지 않아야 한다."""
+    from local_agent.actions import _ACTIONS, action_hometax_post_login_observe
+    assert "hometax_post_login_observe" in _ACTIONS
+    assert _ACTIONS["hometax_post_login_observe"] is action_hometax_post_login_observe
 
 
 def test_hometax_post_login_observe_existing_action_risk_unchanged():
