@@ -650,3 +650,207 @@ def test_hometax_candidates_none_for_non_hometax_host() -> None:
         _sleep=_SleepRecorder(),
     )
     assert r["hometax_login_candidates"] is None
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# G) F-4G-3 — observe_after_user_ready (post-login wrapper)
+# ═════════════════════════════════════════════════════════════════════════
+
+def test_user_ready_wrapper_signature_defaults() -> None:
+    """user_ready_seconds default 60 / max_text_chars default 10000."""
+    import inspect
+    sig = inspect.signature(bmh.observe_after_user_ready)
+    assert sig.parameters["user_ready_seconds"].default == 60
+    assert sig.parameters["max_text_chars"].default == 10_000
+    assert sig.parameters["wait_until"].default == "networkidle"
+    assert sig.parameters["dwell_after_capture_seconds"].default == 0
+
+
+def test_user_ready_wrapper_exposed_in_all() -> None:
+    assert "observe_after_user_ready" in bmh.__all__
+
+
+def test_user_ready_seconds_negative_rejected() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://example.com/",
+        user_ready_seconds=-1,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "USER_READY_SECONDS_INVALID"
+    assert factory.chromium.launch_calls == []
+    assert sleep.calls == []
+
+
+def test_user_ready_seconds_over_max_rejected() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bmh.observe_after_user_ready(
+        "https://example.com/",
+        user_ready_seconds=181,  # max=180
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "USER_READY_SECONDS_INVALID"
+    assert factory.chromium.launch_calls == []
+
+
+def test_user_ready_seconds_at_max_180_accepted() -> None:
+    """경계값 180 은 정상 통과 (manual_handoff 의 60 보다 길다)."""
+    page = _FakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        user_ready_seconds=180,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is True
+    assert r["handoff"]["handoff_seconds"] == 180
+    assert sleep.calls == [180]
+
+
+def test_user_ready_seconds_bool_rejected() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bmh.observe_after_user_ready(
+        "https://example.com/",
+        user_ready_seconds=True,  # type: ignore[arg-type]
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "USER_READY_SECONDS_INVALID"
+
+
+def test_user_ready_normal_flow_uses_dedicated_instruction() -> None:
+    """handoff.instruction 이 user_completes_login_and_navigation_no_credentials.
+    기존 manual_handoff 의 click_login_only_no_credentials 와 다른 값."""
+    page = _FakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        user_ready_seconds=60,
+        dwell_after_capture_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+
+    assert r["success"] is True
+    assert r["handoff"]["mode"] == "manual"
+    assert r["handoff"]["handoff_seconds"] == 60
+    assert (
+        r["handoff"]["instruction"]
+        == "user_completes_login_and_navigation_no_credentials"
+    )
+    assert r["handoff"]["captured_after_handoff"] is True
+    assert sleep.calls == [60]
+
+
+def test_user_ready_propagates_instruction_on_validation_failure() -> None:
+    """validation 실패 (잘못된 wait_until) 에서도 instruction 이 user_ready 값."""
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bmh.observe_after_user_ready(
+        "https://example.com/",
+        wait_until="bogus",
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "WAIT_UNTIL_INVALID"
+    assert (
+        r["handoff"]["instruction"]
+        == "user_completes_login_and_navigation_no_credentials"
+    )
+
+
+def test_user_ready_url_invalid_rejected() -> None:
+    r = bmh.observe_after_user_ready(
+        "ftp://nope/",
+        _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] != ""
+    assert (
+        r["handoff"]["instruction"]
+        == "user_completes_login_and_navigation_no_credentials"
+    )
+
+
+def test_user_ready_google_open_only_blocked() -> None:
+    r = bmh.observe_after_user_ready(
+        "https://drive.google.com/drive/folders/X",
+        _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "GOOGLE_OPEN_ONLY"
+
+
+def test_user_ready_forbidden_env_blocked() -> None:
+    env = _empty_env()
+    env["GOOGLE_PASSWORD"] = "x"
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        _env=env,
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "FORBIDDEN_ENV_PRESENT"
+
+
+def test_user_ready_dwell_after_capture_invalid_rejected() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bmh.observe_after_user_ready(
+        "https://example.com/",
+        dwell_after_capture_seconds=31,
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "DWELL_AFTER_CAPTURE_INVALID"
+
+
+def test_user_ready_attaches_security_signals_and_login_candidates() -> None:
+    """홈택스 호스트일 때 helper 결과가 부착되는지."""
+    page = _FakePage(
+        url="https://www.hometax.go.kr/",
+        title="국세청 홈택스",
+        html=_BASIC_HTML,
+        status=200,
+    )
+    factory = _make_factory(page)
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["success"] is True
+    # helper 부착 — 홈택스 host 이므로 None 아님.
+    assert r["security_program_signals"] is not None
+    assert r["hometax_login_candidates"] is not None
+
+
+def test_existing_manual_handoff_still_uses_original_instruction() -> None:
+    """regression — observe_after_manual_handoff 의 instruction 은 변경되지 않음."""
+    page = _FakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    r = bmh.observe_after_manual_handoff(
+        "https://www.hometax.go.kr/",
+        handoff_seconds=0,
+        _browser_factory=factory, _env=_empty_env(),
+        _sleep=_SleepRecorder(),
+    )
+    assert r["handoff"]["instruction"] == "click_login_only_no_credentials"
