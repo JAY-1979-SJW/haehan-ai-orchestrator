@@ -438,3 +438,295 @@ def test_handler_imports_only_allowed_modules():
                 assert "browser_login_probe" not in imp.lower()
             return
     raise AssertionError("handler not found")
+
+
+# ─── 8. F-4G-3Y-c — 사용자 알림 ──────────────────────────────────────────
+
+class _FakeWinsound:
+    def __init__(self, *, raise_exc: Exception | None = None) -> None:
+        self.raise_exc = raise_exc
+        self.beep_calls = 0
+
+    def MessageBeep(self, *args, **kwargs) -> None:
+        self.beep_calls += 1
+        if self.raise_exc is not None:
+            raise self.raise_exc
+
+
+class _PrintCapture:
+    def __init__(self, *, raise_exc: Exception | None = None) -> None:
+        self.lines: list[str] = []
+        self.raise_exc = raise_exc
+
+    def __call__(self, *args, **kwargs) -> None:
+        if self.raise_exc is not None:
+            raise self.raise_exc
+        self.lines.append(" ".join(str(a) for a in args))
+
+
+# ── helper 자체 단위 테스트 ─────────────────────────────────────────────
+
+def test_notify_disabled_returns_disabled_no_side_effects():
+    pc = _PrintCapture()
+    ws = _FakeWinsound()
+    out = _act._notify_hometax_user_attention(
+        "anything",
+        enabled=False,
+        _winsound_module=ws,
+        _print_fn=pc,
+    )
+    assert out == {
+        "attempted": False,
+        "success": False,
+        "method": "disabled",
+        "warnings": [],
+    }
+    assert pc.lines == []
+    assert ws.beep_calls == 0
+
+
+def test_notify_enabled_winsound_and_print_succeed():
+    pc = _PrintCapture()
+    ws = _FakeWinsound()
+    out = _act._notify_hometax_user_attention(
+        "Hello user",
+        enabled=True,
+        _winsound_module=ws,
+        _print_fn=pc,
+    )
+    assert out["attempted"] is True
+    assert out["success"] is True
+    assert out["method"] == "winsound+print"
+    assert out["warnings"] == []
+    assert ws.beep_calls == 1
+    assert any("Hello user" in line for line in pc.lines)
+
+
+def test_notify_winsound_failure_falls_back_to_print():
+    pc = _PrintCapture()
+    ws = _FakeWinsound(raise_exc=RuntimeError("device busy"))
+    out = _act._notify_hometax_user_attention(
+        "msg",
+        enabled=True,
+        _winsound_module=ws,
+        _print_fn=pc,
+    )
+    assert out["attempted"] is True
+    assert out["success"] is True  # print 성공만으로도 success.
+    assert out["method"] == "print"
+    assert any(
+        w.startswith("notification_failed:MessageBeep:RuntimeError")
+        for w in out["warnings"]
+    )
+    assert ws.beep_calls == 1
+    assert pc.lines  # print 은 호출되었다.
+
+
+def test_notify_no_winsound_module_falls_back_to_print(monkeypatch):
+    """_winsound_module 미주입 + 비-Windows 환경 시 winsound_unavailable warn."""
+    pc = _PrintCapture()
+    monkeypatch.setattr(_act.platform, "system", lambda: "Linux")
+    out = _act._notify_hometax_user_attention(
+        "msg",
+        enabled=True,
+        _print_fn=pc,
+    )
+    assert out["attempted"] is True
+    assert out["method"] == "print"
+    assert "notification_failed:winsound_unavailable" in out["warnings"]
+    assert pc.lines
+
+
+def test_notify_print_failure_does_not_raise():
+    pc = _PrintCapture(raise_exc=OSError("stdout closed"))
+    ws = _FakeWinsound()
+    out = _act._notify_hometax_user_attention(
+        "msg",
+        enabled=True,
+        _winsound_module=ws,
+        _print_fn=pc,
+    )
+    # winsound 만 성공한 경우.
+    assert out["attempted"] is True
+    assert out["success"] is True
+    assert out["method"] == "winsound"
+    assert any(
+        w.startswith("notification_failed:print:OSError")
+        for w in out["warnings"]
+    )
+
+
+def test_notify_message_capped_in_print():
+    pc = _PrintCapture()
+    long_msg = "X" * 10_000
+    _act._notify_hometax_user_attention(
+        long_msg,
+        enabled=True,
+        _winsound_module=_FakeWinsound(),
+        _print_fn=pc,
+    )
+    # 전체 출력 길이는 prefix + capped message + 약간 → 10_000 미만이어야 한다.
+    assert all(len(line) < 1500 for line in pc.lines)
+
+
+def test_notify_default_message_used_when_blank():
+    pc = _PrintCapture()
+    _act._notify_hometax_user_attention(
+        "",
+        enabled=True,
+        _winsound_module=_FakeWinsound(),
+        _print_fn=pc,
+    )
+    # 기본 메시지 핵심 문구가 들어가 있어야 한다.
+    line = " ".join(pc.lines)
+    assert "홈택스 인증" in line
+    assert "직접 로그인" in line
+
+
+# ── handler 통합 — 알림 호출 / summary 반영 ─────────────────────────────
+
+def test_handler_default_calls_notification_helper(monkeypatch):
+    _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=_success_observer_result(),
+        plan_result=_success_plan_result(),
+    )
+    pc = _PrintCapture()
+    ws = _FakeWinsound()
+    r = _act.action_hometax_post_login_observe({
+        "_notify_winsound": ws,
+        "_notify_print": pc,
+    })
+    assert r.success is True
+    s = r.data["summary"]
+    assert s["notification_attempted"] is True
+    assert s["notification_success"] is True
+    assert s["notification_method"] == "winsound+print"
+    # 기본 안내 문구가 출력되었는지.
+    blob = " ".join(pc.lines)
+    assert "홈택스 인증" in blob
+
+
+def test_handler_notify_user_false_disables_notification(monkeypatch):
+    _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=_success_observer_result(),
+        plan_result=_success_plan_result(),
+    )
+    pc = _PrintCapture()
+    ws = _FakeWinsound()
+    r = _act.action_hometax_post_login_observe({
+        "notify_user": False,
+        "_notify_winsound": ws,
+        "_notify_print": pc,
+    })
+    assert r.success is True
+    s = r.data["summary"]
+    assert s["notification_attempted"] is False
+    assert s["notification_success"] is False
+    assert s["notification_method"] == "disabled"
+    assert pc.lines == []
+    assert ws.beep_calls == 0
+
+
+def test_handler_notification_failure_does_not_fail_action(monkeypatch):
+    """알림 helper 가 실패해도 observe 는 계속 진행하고 action 은 성공이다."""
+    calls = _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=_success_observer_result(),
+        plan_result=_success_plan_result(),
+    )
+    ws = _FakeWinsound(raise_exc=RuntimeError("dev busy"))
+    pc = _PrintCapture(raise_exc=OSError("stdout closed"))
+    r = _act.action_hometax_post_login_observe({
+        "_notify_winsound": ws,
+        "_notify_print": pc,
+    })
+    assert r.success is True  # action 자체는 성공.
+    # observe 는 호출되었다.
+    assert calls.observe_kwargs
+    s = r.data["summary"]
+    assert s["notification_attempted"] is True
+    assert s["notification_success"] is False  # 둘 다 실패.
+    assert s["notification_method"] == "none"
+    # warnings 에 알림 실패 흔적이 있어야 한다.
+    assert any(
+        w.startswith("notification_failed:") for w in r.data["warnings"]
+    )
+
+
+def test_handler_custom_notification_message_passed_through(monkeypatch):
+    _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=_success_observer_result(),
+        plan_result=_success_plan_result(),
+    )
+    pc = _PrintCapture()
+    custom = "사용자 정의 안내문 12345"
+    r = _act.action_hometax_post_login_observe({
+        "notification_message": custom,
+        "_notify_winsound": _FakeWinsound(),
+        "_notify_print": pc,
+    })
+    assert r.success is True
+    blob = " ".join(pc.lines)
+    assert custom in blob
+    # 페이로드(JSON 직렬화) 안에 비밀번호 같은 문자열이 들어가지 않았는지.
+    payload_blob = json.dumps(r.data, ensure_ascii=False).lower()
+    for forbidden in ("password", "비밀번호 입력", "otp 입력"):
+        assert forbidden.lower() not in payload_blob
+
+
+def test_handler_notification_summary_keys_present(monkeypatch):
+    _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=_success_observer_result(),
+        plan_result=_success_plan_result(),
+    )
+    r = _act.action_hometax_post_login_observe({
+        "notify_user": False,  # disabled 경로도 summary 키는 존재해야 한다.
+    })
+    s = r.data["summary"]
+    for k in (
+        "notification_attempted",
+        "notification_success",
+        "notification_method",
+    ):
+        assert k in s
+
+
+def test_handler_notification_failure_observer_failure_still_returns_failure(
+    monkeypatch,
+):
+    bad = dict(_success_observer_result())
+    bad["success"] = False
+    bad["error_code"] = "GOTO_FAILED"
+    bad["warnings"] = ["x"]
+    _patch_observe_and_plan(
+        monkeypatch,
+        observer_result=bad,
+        plan_result=_success_plan_result(),
+    )
+    ws = _FakeWinsound(raise_exc=RuntimeError("x"))
+    pc = _PrintCapture(raise_exc=OSError("y"))
+    r = _act.action_hometax_post_login_observe({
+        "_notify_winsound": ws,
+        "_notify_print": pc,
+    })
+    assert not r.success
+    assert r.error_code == "GOTO_FAILED"
+    s = r.data["summary"]
+    # 알림 메타는 그대로 채워져야 한다.
+    assert s["notification_attempted"] is True
+    assert s["notification_method"] == "none"
+
+
+# ── 보안 회귀 — 알림 도입 후에도 핸들러 본문에 금지 API 미사용 ───────────
+
+def test_handler_body_still_uses_no_forbidden_apis_after_notification():
+    """F-4G-3Y-c 추가 이후에도 AST 스캔 결과 금지 속성/메서드 미사용."""
+    attrs = _collect_handler_attr_names()
+    overlap = _FORBIDDEN_ATTR_NAMES & attrs
+    assert not overlap, (
+        f"handler 본문에 금지 속성/메서드 사용 감지: {sorted(overlap)}"
+    )

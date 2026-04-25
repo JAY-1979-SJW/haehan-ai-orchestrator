@@ -974,6 +974,16 @@ _HOMETAX_DEFAULT_GOTO_RETRY_DELAY_SECONDS = 1.5
 _HOMETAX_DEFAULT_GOTO_TIMEOUT_MS = 90000
 _HOMETAX_DEFAULT_WAIT_UNTIL = "networkidle"
 
+# F-4G-3Y-c — 사용자 알림. 인증값/비밀번호/OTP 입력을 요구하는 문구는 절대
+# 포함하지 않는다 (정책 위반). 본 메시지가 노출되는 경로는 stdout 1회 + 가능
+# 시 winsound.MessageBeep 한 번뿐이며, 외부 알림 라이브러리/네트워크 사용 없음.
+_HOMETAX_DEFAULT_NOTIFY_USER = True
+_HOMETAX_DEFAULT_NOTIFICATION_MESSAGE = (
+    "홈택스 인증이 필요합니다. 열린 브라우저에서 대표님이 직접 로그인/인증을 "
+    "완료해 주세요. AI는 비밀번호나 인증값을 입력하지 않습니다."
+)
+_NOTIFICATION_MESSAGE_CAP = 500
+
 
 def _coerce_int(value: Any, default: int) -> int:
     if isinstance(value, bool):
@@ -1086,6 +1096,91 @@ def _build_hometax_handler_summary(observer: dict, plan: dict) -> dict:
     }
 
 
+def _notify_hometax_user_attention(
+    message: str,
+    *,
+    enabled: bool = True,
+    _winsound_module: Any = None,
+    _print_fn: Any = None,
+) -> dict:
+    """홈택스 인증을 요구하는 가벼운 사용자 알림.
+
+    동작:
+      - ``enabled=False`` 이면 아무 외부 부수효과 없이 disabled 결과만 반환.
+      - ``enabled=True`` 이면 (1) stdout 에 1회 print, (2) Windows 환경이면
+        winsound.MessageBeep 한 번 시도. 둘 모두 실패해도 action 자체는
+        실패로 처리하지 않고 warning 만 기록한다.
+
+    외부 알림 라이브러리 / 네트워크 / 파일 IO 를 사용하지 않는다. 알림
+    메시지에 인증값/비밀번호/OTP 입력 요구 문구를 넣어서는 안 된다 (정책).
+
+    ``_winsound_module`` / ``_print_fn`` 은 테스트 전용 주입.
+    """
+    if not enabled:
+        return {
+            "attempted": False,
+            "success": False,
+            "method": "disabled",
+            "warnings": [],
+        }
+
+    msg = (message or _HOMETAX_DEFAULT_NOTIFICATION_MESSAGE)
+    if not isinstance(msg, str):
+        msg = _HOMETAX_DEFAULT_NOTIFICATION_MESSAGE
+    msg = msg[:_NOTIFICATION_MESSAGE_CAP]
+
+    warnings: list[str] = []
+
+    # 1) stdout 안내. 실패해도 무시.
+    print_ok = False
+    print_fn = _print_fn if _print_fn is not None else print
+    try:
+        print_fn(f"[hometax-observe] {msg}", flush=True)
+        print_ok = True
+    except Exception as e:  # pragma: no cover - print 자체 실패는 드물다.
+        warnings.append(f"notification_failed:print:{type(e).__name__}")
+
+    # 2) winsound.MessageBeep 한 번. Windows 외 OS / import 실패는 warning.
+    beep_ok = False
+    if _winsound_module is not None:
+        ws = _winsound_module
+    else:
+        ws = None
+        if platform.system() == "Windows":
+            try:
+                import winsound as ws  # type: ignore[no-redef]
+            except Exception as e:
+                warnings.append(
+                    f"notification_failed:winsound_import:{type(e).__name__}"
+                )
+                ws = None
+        else:
+            warnings.append("notification_failed:winsound_unavailable")
+
+    if ws is not None:
+        try:
+            ws.MessageBeep()
+            beep_ok = True
+        except Exception as e:
+            warnings.append(
+                f"notification_failed:MessageBeep:{type(e).__name__}"
+            )
+
+    if beep_ok:
+        method = "winsound+print" if print_ok else "winsound"
+    elif print_ok:
+        method = "print"
+    else:
+        method = "none"
+
+    return {
+        "attempted": True,
+        "success": bool(print_ok or beep_ok),
+        "method": method,
+        "warnings": warnings,
+    }
+
+
 def action_hometax_post_login_observe(params: dict) -> ActionResult:
     """홈택스 post-login 화면 read-only 관찰 + controlled action plan 빌드.
 
@@ -1177,13 +1272,41 @@ def action_hometax_post_login_observe(params: dict) -> ActionResult:
 
     warmup_url = _resolve_warmup_url(params)
 
+    # 3-1) 사용자 알림 옵션 정규화.
+    notify_user_raw = params.get("notify_user")
+    if notify_user_raw is None:
+        notify_user = _HOMETAX_DEFAULT_NOTIFY_USER
+    else:
+        notify_user = bool(notify_user_raw)
+    notification_message_raw = params.get("notification_message")
+    if isinstance(notification_message_raw, str) and \
+            notification_message_raw.strip():
+        notification_message = notification_message_raw.strip()
+    else:
+        notification_message = _HOMETAX_DEFAULT_NOTIFICATION_MESSAGE
+
     # 4) 테스트 전용 주입 (운영 호출에서는 들어오지 않음).
     inj: dict = {}
     for key in ("_browser_factory", "_env", "_sleep"):
         if key in params:
             inj[key] = params[key]
 
-    # 5) read-only observe.
+    # 4-1) 알림 helper 의 테스트 주입 (winsound mock / print mock).
+    notify_inj: dict = {}
+    if "_notify_winsound" in params:
+        notify_inj["_winsound_module"] = params["_notify_winsound"]
+    if "_notify_print" in params:
+        notify_inj["_print_fn"] = params["_notify_print"]
+
+    # 5) F-4G-3Y-c — 사용자 알림 (브라우저 띄우기 직전). 실패해도 observe 는
+    # 계속 진행한다 (알림은 부수효과).
+    notify_result = _notify_hometax_user_attention(
+        notification_message,
+        enabled=notify_user,
+        **notify_inj,
+    )
+
+    # 6) read-only observe.
     from .browser_manual_handoff import observe_after_user_ready
     from .site_adapters.hometax import build_hometax_controlled_action_plan
 
@@ -1235,6 +1358,12 @@ def action_hometax_post_login_observe(params: dict) -> ActionResult:
     plan_view = _sanitize_hometax_plan_view(plan_result)
     summary = _build_hometax_handler_summary(observer_view, plan_view)
 
+    # F-4G-3Y-c — 알림 결과는 summary 와 warnings 에 반영. 알림 실패는 전체
+    # action 실패로 보지 않는다 (부수효과).
+    summary["notification_attempted"] = bool(notify_result.get("attempted"))
+    summary["notification_success"] = bool(notify_result.get("success"))
+    summary["notification_method"] = str(notify_result.get("method") or "")
+
     payload: dict = {
         "action": "hometax_post_login_observe",
         "success": bool(observer_view.get("success")),
@@ -1244,6 +1373,7 @@ def action_hometax_post_login_observe(params: dict) -> ActionResult:
         "warnings": (
             list(observer_view.get("warnings") or [])
             + list(plan_view.get("warnings") or [])
+            + list(notify_result.get("warnings") or [])
         ),
     }
     # 회귀 방어: 화이트리스트가 아닌 forbidden 키가 어떤 경로로 흘러들어왔다면
