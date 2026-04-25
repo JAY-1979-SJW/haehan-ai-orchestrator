@@ -66,6 +66,10 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
   클릭 시 브라우저 확인창(confirm)을 통과해야 합니다.
   서버에는 이미지가 업로드되지 않습니다.
 </p>
+<p class="warn">
+  ※ Google/YouTube 계열은 보안 정책상 화면 캡처 probe 가 차단됩니다.
+  브라우저 열기(open_local_browser)만 사용하세요.
+</p>
 
 <div id="root">
   <p class="empty">에이전트 목록을 불러오는 중…</p>

@@ -44,9 +44,25 @@ ai_orchestrator/storage/*.json
 # secrets/ 는 위에서 이미 ignore 되어 있지만, 명시적으로 재확인.
 secrets/sites/
 secrets/browser_state/
+secrets/browser_profiles/
 ai_orchestrator/storage/site_screenshots/
 
 # 런타임 생성 파일 (root-level flat layout — dashboard/monitor 계통)
 logs/
 storage/
 devlog/
+
+# 로컬 시크릿 저장소 (agent/secrets). 평문/암호화/키/감사로그 모두 커밋 금지.
+agent_data/
+
+# 민감 파일 추가 차단 (F-4B baseline 보정).
+# 서버 접속정보 / 추가 인증서 형식 / .env 파생 / 쿠키 / 세션 / Playwright
+# storage_state 파일은 어떤 경로에 있든 절대 커밋되지 않도록 패턴 차단.
+서버_접속정보.md
+*접속정보*.md
+*.p12
+*.pfx
+.env.*
+cookies*
+session*
+storage_state*

@@ -245,14 +245,160 @@ YouTube 홈 smoke 가 PASS 판정된 뒤에만 다음 단계로 진행한다.
 | 운영 반영 | Studio smoke 결과가 PASS 로 반복 확인될 때까지 운영 파이프라인의 Studio 경로 자동화는 보류한다. |
 | Google 자동화 차단 | §3.3 과 동일하게 취급. 우회 args 는 실험 세션에만 한정. |
 
-Studio smoke 는 본 문서가 업데이트되기 전까지는 "아직 수행되지 않은
-단계" 로 기록된다.
+Studio smoke 1회차 (2026-04-25) 는 **사용자 확인 기준 PASS** 로 종결되었으며,
+측정 보완 정책은 §8 참조. 2회차 이후 반복 실행 대상.
 
 ---
 
-## 8. 개정 이력
+## 8. 다중 탭 관찰 정책 및 HITL 우선 판정 (measurement gap 보완)
+
+### 8.1 관찰된 현상 (2026-04-25 Studio smoke)
+
+`https://studio.youtube.com/` 에 대한 수동 smoke 에서 다음 불일치가 관측되었다.
+
+| 항목 | 값 |
+|------|----|
+| `browser_visible_confirmed_by_user` | `True` |
+| `studio_confirmed_by_user` (user "접속되었어") | `True` |
+| 스크립트가 관측한 `final_url_host_path` | `accounts.google.com/v3/signin/identifier` |
+| `final_title_category` | `youtube-studio` |
+| `observed_studio_youtube` (단일 page 기준) | `False` |
+
+사용자 확인과 스크립트 관측이 불일치. 사용자 ground truth 는 "Studio 진입 성공".
+
+### 8.2 원인
+
+- Google sign-in flow 는 `window.open` / `target="_blank"` / post-auth redirect 로
+  **Studio 를 별도 탭/팝업에서 열 수 있다.**
+- 기존 `probe_manual_login_flow` 는 `context.new_page()` 로 만든 **단일 `page`
+  객체** 만 추적하므로, 새 탭에서 Studio 가 열리면 관측하지 못한다.
+- 30 초 polling 간격 안에 redirect chain 이 통과하면 중간 상태만 기록될 수 있다.
+
+### 8.3 측정 보완 정책 (신규)
+
+운영 probe 에서 다음을 적용한다.
+
+1. **다중 탭 추적 (ideal)**: Playwright 컨텍스트 생성 직후 `context.on("page",
+   handler)` 를 등록해 신규 탭/팝업을 실시간으로 리스트에 append. 현재 운영
+   코드에서는 test fake 호환을 위해 이 경로를 아직 도입하지 않고, 아래
+   context.pages 전수 스캔 방식으로 **동등한 최종 판정 결과** 를 얻는다.
+2. **context.pages 전수 스캔 (운영 적용)**: 관찰 종료 시점에 `context.pages`
+   를 전수 순회해 **모든 탭/팝업의 URL / title** 을 read-only 로 수집.
+3. **집계 기준**: 아래 중 하나라도 만족하면 `success_url_observed_across_pages
+   =True` 로 기록.
+   - 어떤 page 의 URL 이 `success_url_contains` 토큰 포함
+   - 어떤 page 의 title 카테고리가 `youtube-studio` 등 대상 서비스와 일치
+4. **polling 간격 정책**: 기본 30 초. Studio / Google 로그인 flow 처럼
+   redirect chain 이 빠른 서비스에선 10 초까지 허용 (`--poll-interval-seconds
+   10`). 1 초 미만은 과도한 관찰로 보고 금지.
+5. **page 당 허용 API**: `page.url` / `page.title()` / `bring_to_front()`
+   (필요 시). **금지**: `click / fill / type / press / keyboard / cookies() /
+   storage_state / localStorage / sessionStorage / page.content()`.
+
+### 8.4 HITL (human-in-the-loop) 우선 판정
+
+- `login_confirmed_by_user` (= `user_confirmed_by_user`) 가 **최종 판정의
+  primary evidence** 이다. 스크립트 관측은 secondary evidence.
+- 조합별 판정:
+
+  | `user_confirmed_by_user` | `success_url_observed_across_pages` (script) | 판정 |
+  |---|---|---|
+  | `True` | `True` | **PASS** (양쪽 합치) |
+  | `True` | `False` | **PASS with measurement caveat** (사용자 근거 우선, caveat 기록; FAIL 아님) |
+  | `False` | `True` | **WARN** — 구조 근거만으로 자동 단정 금지 (§4.2, §5.3 과 정합) |
+  | `False` | `False` | **WARN / FAIL** — 실제 실패 혹은 사용자 미확인 |
+
+- "PASS with measurement caveat" 케이스는 결과에 `login_completion_reason`
+  에 `user_confirmed_login` 을 포함하고, `warnings` 에 `"script_observed_
+  without_target_url"` 같은 문자열을 남겨 후속 분석이 가능하게 한다.
+
+### 8.5 금지 재확인 (본 보완에서도 유지)
+
+다음 API 는 운영 probe 코드 / smoke 스크립트 / test fake 의 `_FORBIDDEN
+_METHODS` 에 동일하게 차단된다.
+
+- `click`, `fill`, `type`, `press`, `select_option`, `set_input_files`
+- `keyboard`, `mouse`, `touchscreen`
+- `evaluate`, `evaluate_handle`, `screenshot`, `pdf`
+- `cookies`, `storage_state`, `add_cookies`, `localStorage`, `sessionStorage`
+- `page.content()` 를 통한 HTML 원문 전체 저장 (구조 요약은 `web_reader` 가
+  이미 민감 토큰 drop 후 반환)
+
+다중 탭 관찰은 **read-only** — 각 탭에서 오직 URL / title / (필요 시
+bring_to_front) 만 호출한다.
+
+---
+
+## 9. F-2 — Google / YouTube open-only 정책
+
+### 9.1 정책 (요약)
+
+- 다음 도메인 (및 그 서브도메인) 은 **Playwright visible probe 대상에서
+  제외** 된다.
+
+  ```
+  accounts.google.com
+  google.com
+  studio.youtube.com
+  youtube.com
+  gmail.com
+  drive.google.com
+  ```
+
+- 위 도메인의 visible 세션 확보는 **`open_local_browser` (subprocess
+  Popen) 만 사용** 한다. `probe_visible_browser` /
+  `probe_manual_login_flow` 등 Playwright 기반 경로로는 띄우지 않는다.
+- Google API 작업은 본 probe / launcher 와 무관하게 **별도 OAuth /
+  API connector** 로 처리한다 (예정).
+
+### 9.2 사이트 정책 분류 토큰
+
+호출자 / 감사 로그 / 문서에서 일관된 라벨로 쓰기 위해
+`local_agent.browser_launcher` 가 다음 토큰을 노출한다.
+
+| 토큰 | 의미 |
+|------|------|
+| `generic` | 분류 미정 / 기본값 |
+| `public_fetch` | 로그인 없이 fetch 가능한 공개 페이지 |
+| `google_open_only` | Google 계열, open_local_browser 만 허용 |
+| `youtube_open_only` | YouTube 계열, open_local_browser 만 허용 |
+| `local_probe_allowed` | 사용자 PC visible probe 허용 |
+
+본 단계 (F-2) 에서는 분류만 도입하며, provider 우선순위 분기에는
+직접 사용하지 않는다.
+
+### 9.3 probe 차단 동작
+
+- `probe_visible_browser(url)` 가 위 도메인을 받으면 Playwright launch
+  **이전** 단계에서 거절한다.
+- 결과 dict:
+  - `success=False`
+  - `error_code="GOOGLE_OPEN_ONLY"`
+  - `warnings=["google_open_only_use_open_local_browser"]`
+  - `target_url=""` (raw 입력 토큰 미노출)
+  - `final_url_host_path=` host+path 까지만 (query/fragment 제거)
+- 결과에는 raw URL 의 query/fragment, raw title, 쿠키/세션/스토리지가
+  어떤 형태로도 들어가지 않는다.
+- `action_open_local_browser_probe` 는 이 `error_code` 를 그대로 전파
+  하여 ActionResult 에 `GOOGLE_OPEN_ONLY` 로 노출한다.
+
+### 9.4 보안 고정 사항
+
+- Google ID/PW 자동 입력 금지.
+- Google 비밀번호 / 쿠키 / OTP / 세션값을 `.env` 에 저장 금지
+  (`_FORBIDDEN_ENV_VARS` 가 존재만으로 차단).
+- 쿠키 / `storage_state` / localStorage / sessionStorage 수집 금지.
+- `--remote-debugging-port` 사용 금지.
+- Google 로그인 우회 시도 금지.
+- Playwright 로 Google 로그인 페이지 접근 금지 (본 정책으로 차단).
+
+---
+
+## 10. 개정 이력
 
 | 일자 | 내용 |
 |------|------|
 | 2026-04-24 | `probe_manual_login_flow` 에 `require_visible_confirm / require_user_login_confirm / keep_open / browser_channel / viewport / slow_mo_ms` 도입, `already_logged_in_or_public_page` 상태 구분, `success_url_match` 단독 판정 제거 (cherry-pick `58e3001`) |
-| 2026-04-25 | 관리자 로컬 PC 에서 실제 Chrome 창 가시성 확인 + 수동 Google 로그인 성공 (§3). 본 정책 문서 초판 작성. |
+| 2026-04-25 | 관리자 로컬 PC 에서 실제 Chrome 창 가시성 확인 + 수동 Google 로그인 성공 (§3). 본 정책 문서 초판 작성 (cherry-pick `c4e045d`). |
+| 2026-04-25 | YouTube Studio smoke 1회차 실시 — 사용자 확인 PASS, 스크립트 final_url 관측은 accounts.google.com 에 머물러 measurement gap 관측. §8 다중 탭 + HITL 우선 판정 정책 추가. `probe_manual_login_flow` 에 `context.pages` 전수 스캔 최소 보강. |
+| 2026-04-25 | F-2: Google / YouTube open-only 정책 도입. `probe_visible_browser` 가 `accounts.google.com / google.com / studio.youtube.com / youtube.com / gmail.com / drive.google.com` 을 Playwright launch 전 차단 (`error_code=GOOGLE_OPEN_ONLY`). 해당 도메인은 `open_local_browser` (subprocess) 로만 띄움. |
