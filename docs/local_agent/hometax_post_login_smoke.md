@@ -24,6 +24,10 @@ python scripts/run_hometax_post_login_smoke.py
 - `--dwell-after-capture-seconds 10`
 - `--max-text-chars 10000`
 - `--out-dir runs/local_agent`
+- `--warmup-url https://example.com/`     (F-4G-3E)
+- `--goto-retries 2`                       (F-4G-3E)
+- `--goto-retry-delay-seconds 1.5`         (F-4G-3E)
+- `--goto-timeout-ms 90000`                (F-4G-3E)
 
 옵션 예시:
 
@@ -38,7 +42,46 @@ python scripts/run_hometax_post_login_smoke.py --print-json
 
 # 결과를 별도 폴더에 저장
 python scripts/run_hometax_post_login_smoke.py --out-dir runs/smoke_2026_04_25
+
+# warmup 비활성화 (drift 진단용)
+python scripts/run_hometax_post_login_smoke.py --no-warmup
+
+# goto 재시도 횟수를 더 늘려야 할 때
+python scripts/run_hometax_post_login_smoke.py \
+    --goto-retries 3 --user-ready-seconds 120 --print-json
 ```
+
+## F-4G-3E — fresh hometax goto reset 대응
+
+진단 (`runs/local_agent/diagnostics/goto_diagnostic_*.json`) 결과 요약:
+
+- `example.com` / `google.com` 은 `domcontentloaded` / `load` / `networkidle`
+  모두 정상 → **Chromium 미설치 / 일반 네트워크 문제 아님**.
+- `https://www.hometax.go.kr/` 는 fresh Chromium 첫 접속에서
+  `net::ERR_CONNECTION_RESET` 가 발생할 수 있음.
+- 그러나 `wait_until="networkidle"` 자체는 2.94 초 만에 성공 → `wait_until`
+  변경은 불필요.
+
+따라서 본 runner 의 기본 대응은 **warmup + retry** 입니다.
+
+- `--warmup-url https://example.com/` : target URL 로 navigate 하기 전에
+  무관한 URL 1회 navigate 로 Chromium 의 첫-접속 reset 확률을 낮춤.
+- `--goto-retries 2` : target URL goto 를 최대 2회 시도. 1회 실패 시
+  `--goto-retry-delay-seconds` 만큼 대기 후 재시도.
+- 결과 JSON / MD `summary` 에 다음이 항상 기록됨:
+  - `warmup_attempted`, `warmup_success`, `warmup_url`
+  - `goto_attempts_used`, `goto_retries`,
+    `goto_retry_delay_seconds`, `goto_timeout_ms`
+
+문제가 지속되면 다음 명령으로 재시도 횟수를 늘려보십시오:
+
+```bash
+python scripts/run_hometax_post_login_smoke.py \
+    --goto-retries 3 --user-ready-seconds 120 --print-json
+```
+
+> ⚠️ 경고: warmup / retry 로직은 자동 클릭/입력/쿠키 접근을 *추가하지 않습니다*.
+> 여전히 `observe_after_user_ready` 와 동일하게 read-only 만 수행합니다.
 
 ## 대표님이 직접 로그인해야 하는 이유
 
@@ -96,7 +139,14 @@ JSON 구조:
     "safe_read_candidates_count": 12,
     "download_candidates_count": 3,
     "blocked_candidates_count": 5,
-    "warnings_count": 0
+    "warnings_count": 0,
+    "warmup_attempted": true,
+    "warmup_success": true,
+    "warmup_url": "https://example.com/",
+    "goto_attempts_used": 1,
+    "goto_retries": 2,
+    "goto_retry_delay_seconds": 1.5,
+    "goto_timeout_ms": 90000
   }
 }
 ```

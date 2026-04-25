@@ -854,3 +854,283 @@ def test_existing_manual_handoff_still_uses_original_instruction() -> None:
         _sleep=_SleepRecorder(),
     )
     assert r["handoff"]["instruction"] == "click_login_only_no_credentials"
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# H) F-4G-3E — fresh hometax goto reset 대응 (warmup + retry)
+# ═════════════════════════════════════════════════════════════════════════
+
+class _SequencedFakePage(_FakePage):
+    """goto 호출 순서별로 각각 다른 동작을 시뮬레이션.
+
+    ``goto_outcomes`` : 각 항목이 None(=성공) 또는 raise 할 Exception.
+    리스트가 소진되면 마지막 동작을 반복한다.
+    """
+
+    def __init__(
+        self,
+        *,
+        url: str = "about:blank",
+        title: str = "",
+        html: str = "",
+        status: int = 200,
+        goto_outcomes: list[Any] | None = None,
+    ) -> None:
+        super().__init__(
+            url=url, title=title, html=html, status=status,
+        )
+        self._goto_outcomes = list(goto_outcomes or [])
+
+    def goto(
+        self, target: str, *, timeout: int | None = None,
+        wait_until: str | None = None,
+    ) -> _FakeResponse | None:
+        self.goto_calls.append(
+            (target, {"timeout": timeout, "wait_until": wait_until}),
+        )
+        if self._goto_outcomes:
+            outcome = self._goto_outcomes.pop(0)
+        else:
+            outcome = None
+        if isinstance(outcome, BaseException):
+            raise outcome
+        if self.url == "about:blank":
+            self.url = target
+        return _FakeResponse(self._status)
+
+
+def test_user_ready_default_signature_has_warmup_retry_params() -> None:
+    """observe_after_user_ready 에 신규 옵션 기본값이 보장된다 — backward compat."""
+    import inspect
+    sig = inspect.signature(bmh.observe_after_user_ready)
+    assert sig.parameters["warmup_url"].default is None
+    assert sig.parameters["warmup_wait_until"].default == "load"
+    assert sig.parameters["goto_retries"].default == 1
+    assert sig.parameters["goto_retry_delay_seconds"].default == 1.0
+    assert sig.parameters["goto_timeout_ms"].default is None
+
+
+def test_user_ready_default_no_warmup_no_retry() -> None:
+    """default 호출은 warmup 도, 재시도도 하지 않는다."""
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is True
+    # goto 1회만 (warmup 없음, retry 없음).
+    assert len(page.goto_calls) == 1
+    assert page.goto_calls[0][0] == "https://www.hometax.go.kr/"
+    assert r["warmup_attempted"] is False
+    assert r["warmup_success"] is False
+    assert r["warmup_url"] == ""
+    assert r["goto_attempts_used"] == 1
+
+
+def test_user_ready_warmup_called_before_target() -> None:
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        warmup_url="https://example.com/",
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is True
+    assert len(page.goto_calls) == 2
+    # warmup goto 가 target goto 보다 먼저 호출.
+    assert page.goto_calls[0][0] == "https://example.com/"
+    assert page.goto_calls[0][1]["wait_until"] == "load"
+    assert page.goto_calls[1][0] == "https://www.hometax.go.kr/"
+    assert page.goto_calls[1][1]["wait_until"] == "networkidle"
+    assert r["warmup_attempted"] is True
+    assert r["warmup_success"] is True
+    assert r["warmup_url"] == "https://example.com/"
+    assert r["goto_attempts_used"] == 1
+
+
+def test_user_ready_warmup_failure_does_not_block_target() -> None:
+    """warmup goto 실패는 치명 오류 아님 — target goto 계속 시도."""
+    warmup_err = RuntimeError("warmup boom")
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+        goto_outcomes=[warmup_err, None],
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        warmup_url="https://example.com/",
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    # target goto 는 성공.
+    assert r["success"] is True
+    assert len(page.goto_calls) == 2
+    assert any(w.startswith("warmup_failed:") for w in r["warnings"])
+    assert r["warmup_attempted"] is True
+    assert r["warmup_success"] is False
+    assert r["goto_attempts_used"] == 1
+
+
+def test_user_ready_target_goto_retry_succeeds_on_second_attempt() -> None:
+    """첫 goto 가 ERR_CONNECTION_RESET 류 실패, 두 번째 goto 가 성공."""
+    err = RuntimeError("net::ERR_CONNECTION_RESET")
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+        goto_outcomes=[err, None],
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        goto_retries=2,
+        goto_retry_delay_seconds=0.5,
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is True
+    # target goto 만 두 번 호출 (warmup 없음).
+    assert len(page.goto_calls) == 2
+    assert page.goto_calls[0][0] == "https://www.hometax.go.kr/"
+    assert page.goto_calls[1][0] == "https://www.hometax.go.kr/"
+    assert any(
+        w.startswith("goto_attempt_failed:1:") for w in r["warnings"]
+    )
+    assert r["goto_attempts_used"] == 2
+    # retry delay sleep 1회 + user_ready_seconds=0 이라 sleep 추가 없음.
+    assert 0.5 in sleep.calls
+
+
+def test_user_ready_target_goto_all_attempts_fail() -> None:
+    err = RuntimeError("net::ERR_CONNECTION_RESET")
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+        goto_outcomes=[err, err, err],
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        goto_retries=3,
+        goto_retry_delay_seconds=0.0,
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "GOTO_FAILED"
+    assert len(page.goto_calls) == 3
+    # 모든 attempt 실패가 warnings 에 남는다.
+    failed_warnings = [
+        w for w in r["warnings"]
+        if w.startswith("goto_attempt_failed:")
+    ]
+    assert len(failed_warnings) == 3
+    assert r["goto_attempts_used"] == 3
+
+
+def test_user_ready_warmup_meta_included_in_failed_goto_result() -> None:
+    """target goto 가 모두 실패해도 warmup_attempted/warmup_success 가 포함."""
+    err = RuntimeError("boom")
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+        goto_outcomes=[None, err],  # warmup ok, target fail
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        warmup_url="https://example.com/",
+        goto_retries=1,
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "GOTO_FAILED"
+    assert r["warmup_attempted"] is True
+    assert r["warmup_success"] is True
+    assert r["warmup_url"] == "https://example.com/"
+    assert r["goto_attempts_used"] == 1
+
+
+def test_user_ready_invalid_warmup_url_falls_back_with_warning() -> None:
+    """잘못된 warmup_url 은 치명 오류가 아니라 warning + skip."""
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        warmup_url="ftp://nope/",  # invalid scheme
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    # warmup 은 skip 되고 target goto 만 1회.
+    assert r["success"] is True
+    assert len(page.goto_calls) == 1
+    assert page.goto_calls[0][0] == "https://www.hometax.go.kr/"
+    assert "warmup_url_invalid" in r["warnings"]
+    assert r["warmup_attempted"] is False
+    assert r["warmup_success"] is False
+
+
+def test_user_ready_goto_timeout_ms_overrides_timeout_ms() -> None:
+    """goto_timeout_ms 는 page.goto(timeout=...) 에 그대로 전달된다."""
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        goto_timeout_ms=90_000,
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is True
+    assert page.goto_calls[0][1]["timeout"] == 90_000
+
+
+def test_user_ready_warmup_meta_default_in_validation_error() -> None:
+    """validation 실패 결과에도 warmup_attempted=False / goto_attempts_used=0
+    가 포함되어야 한다 — 호출자가 안전하게 dict.get 으로 접근 가능."""
+    r = bmh.observe_after_user_ready(
+        "ftp://nope/",
+        _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["warmup_attempted"] is False
+    assert r["warmup_success"] is False
+    assert r["warmup_url"] == ""
+    assert r["goto_attempts_used"] == 0
+
+
+def test_user_ready_goto_retries_clipped_to_max() -> None:
+    """goto_retries 가 cap 을 초과하면 _MAX 로 클립."""
+    err = RuntimeError("boom")
+    page = _SequencedFakePage(
+        url="about:blank", title="홈택스", html=_BASIC_HTML, status=200,
+        goto_outcomes=[err] * 10,
+    )
+    factory = _make_factory(page)
+    sleep = _SleepRecorder()
+    r = bmh.observe_after_user_ready(
+        "https://www.hometax.go.kr/",
+        goto_retries=999,  # clip to _MAX_GOTO_RETRIES
+        goto_retry_delay_seconds=0.0,
+        user_ready_seconds=0,
+        _browser_factory=factory, _env=_empty_env(), _sleep=sleep,
+    )
+    assert r["success"] is False
+    # max attempts == _MAX_GOTO_RETRIES (5)
+    assert r["goto_attempts_used"] == bmh._MAX_GOTO_RETRIES
+    assert len(page.goto_calls) == bmh._MAX_GOTO_RETRIES

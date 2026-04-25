@@ -424,3 +424,255 @@ def test_runner_imports_observe_after_user_ready(runner_module: Any) -> None:
     src = _SCRIPT_PATH.read_text(encoding="utf-8")
     assert "observe_after_user_ready" in src
     assert "build_hometax_controlled_action_plan" in src
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# F) F-4G-3E — warmup / retry CLI 기본값 + summary 메타
+# ═════════════════════════════════════════════════════════════════════════
+
+def test_warmup_retry_defaults(runner_module: Any) -> None:
+    parser = runner_module.build_arg_parser()
+    args = parser.parse_args([])
+    assert args.warmup_url == "https://example.com/"
+    assert args.no_warmup is False
+    assert args.goto_retries == 2
+    assert args.goto_retry_delay_seconds == 1.5
+    assert args.goto_timeout_ms == 90_000
+
+
+def test_warmup_retry_overrides(runner_module: Any) -> None:
+    parser = runner_module.build_arg_parser()
+    args = parser.parse_args([
+        "--warmup-url", "https://other.example.com/",
+        "--goto-retries", "3",
+        "--goto-retry-delay-seconds", "2.5",
+        "--goto-timeout-ms", "60000",
+    ])
+    assert args.warmup_url == "https://other.example.com/"
+    assert args.goto_retries == 3
+    assert args.goto_retry_delay_seconds == 2.5
+    assert args.goto_timeout_ms == 60_000
+
+
+def test_no_warmup_flag(runner_module: Any) -> None:
+    parser = runner_module.build_arg_parser()
+    args = parser.parse_args(["--no-warmup"])
+    assert args.no_warmup is True
+
+
+def test_default_wait_until_remains_networkidle(runner_module: Any) -> None:
+    """기본 wait_until 유지 — F-4G-3E 는 wait_until 변경이 아니라 warmup+retry."""
+    assert runner_module.DEFAULT_WAIT_UNTIL == "networkidle"
+
+
+def test_summary_includes_warmup_and_goto_retry_meta(
+    runner_module: Any,
+) -> None:
+    obs = _make_observer()
+    obs["warmup_attempted"] = True
+    obs["warmup_success"] = True
+    obs["warmup_url"] = "https://example.com/"
+    obs["goto_attempts_used"] = 2
+    plan = _make_plan(safe_read=1, download=0)
+    cli = {
+        "warmup_url": "https://example.com/",
+        "goto_retries": 2,
+        "goto_retry_delay_seconds": 1.5,
+        "goto_timeout_ms": 90_000,
+    }
+    summary = runner_module.build_summary(
+        target_url="https://www.hometax.go.kr/",
+        observer=obs,
+        plan=plan,
+        cli_options=cli,
+    )
+    assert summary["warmup_attempted"] is True
+    assert summary["warmup_success"] is True
+    assert summary["warmup_url"] == "https://example.com/"
+    assert summary["goto_attempts_used"] == 2
+    assert summary["goto_retries"] == 2
+    assert summary["goto_retry_delay_seconds"] == 1.5
+    assert summary["goto_timeout_ms"] == 90_000
+
+
+def test_summary_warmup_meta_defaults_when_observer_missing_keys(
+    runner_module: Any,
+) -> None:
+    summary = runner_module.build_summary(
+        target_url="https://www.hometax.go.kr/", observer={}, plan={},
+    )
+    assert summary["warmup_attempted"] is False
+    assert summary["warmup_success"] is False
+    assert summary["warmup_url"] == ""
+    assert summary["goto_attempts_used"] == 0
+    # cli 미주입이면 0/0.0.
+    assert summary["goto_retries"] == 0
+    assert summary["goto_retry_delay_seconds"] == 0.0
+    assert summary["goto_timeout_ms"] == 0
+
+
+def test_write_results_md_contains_warmup_section(
+    runner_module: Any, tmp_path: Path,
+) -> None:
+    out_dir = tmp_path / "out"
+    obs = _make_observer()
+    obs["warmup_attempted"] = True
+    obs["warmup_success"] = True
+    obs["warmup_url"] = "https://example.com/"
+    obs["goto_attempts_used"] = 1
+    plan = _make_plan(safe_read=1)
+    cli = {
+        "warmup_url": "https://example.com/",
+        "goto_retries": 2,
+        "goto_retry_delay_seconds": 1.5,
+        "goto_timeout_ms": 90_000,
+    }
+    paths = runner_module.write_results(
+        out_dir=str(out_dir),
+        target_url="https://www.hometax.go.kr/",
+        observer=obs,
+        plan=plan,
+        timestamp="20260425_140000",
+        cli_options=cli,
+    )
+    md_text = Path(paths["md_path"]).read_text(encoding="utf-8")
+    assert "warmup / goto retry" in md_text
+    assert "warmup_attempted: True" in md_text
+    assert "goto_attempts_used: 1" in md_text
+    assert "goto_retries: 2" in md_text
+    assert "goto_timeout_ms: 90000" in md_text
+
+
+def test_runner_main_passes_warmup_args_to_observe(
+    runner_module: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """main() 이 CLI 옵션을 observe_after_user_ready 의 warmup/retry 인자로
+    그대로 전달하는지 monkey-patch 로 검증."""
+    captured: dict[str, Any] = {}
+
+    def _fake_observe(**kwargs: Any) -> dict[str, Any]:
+        captured.update(kwargs)
+        return {
+            "success": True,
+            "title": "ok",
+            "final_url_host_path": "www.hometax.go.kr",
+            "page_state": "authenticated",
+            "warnings": [],
+            "warmup_attempted": True,
+            "warmup_success": True,
+            "warmup_url": kwargs.get("warmup_url") or "",
+            "goto_attempts_used": 1,
+            "handoff": {
+                "mode": "manual",
+                "handoff_seconds": 0,
+                "instruction": (
+                    "user_completes_login_and_navigation_no_credentials"
+                ),
+                "captured_after_handoff": True,
+            },
+        }
+
+    def _fake_plan(_obs: Any) -> dict[str, Any]:
+        return {
+            "site_key": "hometax",
+            "page_state": "authenticated",
+            "manual_action_required": False,
+            "unrecoverable": False,
+            "safe_read_candidates": [{"kind": "link", "text": "조회"}],
+            "download_candidates": [],
+            "blocked_candidates": [],
+            "dangerous_candidates": [],
+            "warnings": [],
+            "security_program_signals": {"detected": False},
+            "login_candidates": {"candidate_count": 0, "auth_signals": {}},
+        }
+
+    # monkeypatch 의 대상은 main() 내부에서 import 되는 심볼 — 모듈 레벨
+    # import 가 아니라 main() 안에서 import 되므로, 원본 모듈 자체를 패치.
+    import local_agent.browser_manual_handoff as _bmh
+    import local_agent.site_adapters.hometax as _hxa
+    monkeypatch.setattr(
+        _bmh, "observe_after_user_ready", _fake_observe,
+    )
+    monkeypatch.setattr(
+        _hxa, "build_hometax_controlled_action_plan", _fake_plan,
+    )
+
+    out_dir = tmp_path / "out"
+    rc = runner_module.main([
+        "--out-dir", str(out_dir),
+        "--user-ready-seconds", "0",
+        "--dwell-after-capture-seconds", "0",
+        "--warmup-url", "https://example.com/",
+        "--goto-retries", "2",
+        "--goto-retry-delay-seconds", "1.5",
+        "--goto-timeout-ms", "90000",
+    ])
+    assert rc == 0
+    assert captured.get("warmup_url") == "https://example.com/"
+    assert captured.get("goto_retries") == 2
+    assert captured.get("goto_retry_delay_seconds") == 1.5
+    assert captured.get("goto_timeout_ms") == 90_000
+    assert captured.get("wait_until") == "networkidle"
+
+
+def test_runner_main_no_warmup_passes_none_warmup_url(
+    runner_module: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def _fake_observe(**kwargs: Any) -> dict[str, Any]:
+        captured.update(kwargs)
+        return {
+            "success": True,
+            "title": "ok",
+            "final_url_host_path": "www.hometax.go.kr",
+            "page_state": "authenticated",
+            "warnings": [],
+            "warmup_attempted": False,
+            "warmup_success": False,
+            "warmup_url": "",
+            "goto_attempts_used": 1,
+            "handoff": {
+                "mode": "manual",
+                "handoff_seconds": 0,
+                "instruction": (
+                    "user_completes_login_and_navigation_no_credentials"
+                ),
+                "captured_after_handoff": True,
+            },
+        }
+
+    def _fake_plan(_obs: Any) -> dict[str, Any]:
+        return {
+            "site_key": "hometax",
+            "page_state": "authenticated",
+            "manual_action_required": False,
+            "unrecoverable": False,
+            "safe_read_candidates": [{"kind": "link", "text": "x"}],
+            "download_candidates": [],
+            "blocked_candidates": [],
+            "dangerous_candidates": [],
+            "warnings": [],
+            "security_program_signals": {"detected": False},
+            "login_candidates": {"candidate_count": 0, "auth_signals": {}},
+        }
+
+    import local_agent.browser_manual_handoff as _bmh
+    import local_agent.site_adapters.hometax as _hxa
+    monkeypatch.setattr(
+        _bmh, "observe_after_user_ready", _fake_observe,
+    )
+    monkeypatch.setattr(
+        _hxa, "build_hometax_controlled_action_plan", _fake_plan,
+    )
+
+    out_dir = tmp_path / "out"
+    rc = runner_module.main([
+        "--out-dir", str(out_dir),
+        "--user-ready-seconds", "0",
+        "--dwell-after-capture-seconds", "0",
+        "--no-warmup",
+    ])
+    assert rc == 0
+    assert captured.get("warmup_url") is None

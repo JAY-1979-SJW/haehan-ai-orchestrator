@@ -51,6 +51,13 @@ DEFAULT_DWELL_AFTER_CAPTURE_SECONDS = 10
 DEFAULT_MAX_TEXT_CHARS = 10_000
 DEFAULT_OUT_DIR = os.path.join("runs", "local_agent")
 
+# F-4G-3E — fresh hometax 첫 접속 시 발생 가능한 ERR_CONNECTION_RESET
+# 대응. wait_until 변경이 아니라 warmup + retry 로 흡수한다.
+DEFAULT_WARMUP_URL = "https://example.com/"
+DEFAULT_GOTO_RETRIES = 2
+DEFAULT_GOTO_RETRY_DELAY_SECONDS = 1.5
+DEFAULT_GOTO_TIMEOUT_MS = 90_000
+
 _TOP_CANDIDATE_LIMIT = 10
 
 
@@ -92,6 +99,38 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="결과 JSON 을 콘솔로도 출력",
     )
+    # F-4G-3E warmup / retry 옵션.
+    parser.add_argument(
+        "--warmup-url",
+        default=DEFAULT_WARMUP_URL,
+        help=(
+            "본 target URL 접속 전에 1회 navigate 할 warmup URL "
+            "(기본 https://example.com/). 비활성화는 --no-warmup."
+        ),
+    )
+    parser.add_argument(
+        "--no-warmup",
+        action="store_true",
+        help="warmup URL navigate 를 하지 않는다.",
+    )
+    parser.add_argument(
+        "--goto-retries",
+        type=int,
+        default=DEFAULT_GOTO_RETRIES,
+        help="target URL goto 최대 시도 횟수 (1~5).",
+    )
+    parser.add_argument(
+        "--goto-retry-delay-seconds",
+        type=float,
+        default=DEFAULT_GOTO_RETRY_DELAY_SECONDS,
+        help="goto 재시도 사이 대기 (0~10 초).",
+    )
+    parser.add_argument(
+        "--goto-timeout-ms",
+        type=int,
+        default=DEFAULT_GOTO_TIMEOUT_MS,
+        help="page.goto timeout (1000~60000, 90000은 자동 클립 가능).",
+    )
     return parser
 
 
@@ -110,10 +149,14 @@ def build_summary(
     target_url: str,
     observer: dict[str, Any],
     plan: dict[str, Any],
+    cli_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """observer/plan 결과로부터 PASS/WARN/FAIL 판정에 쓰일 요약 카운트."""
+    """observer/plan 결과로부터 PASS/WARN/FAIL 판정에 쓰일 요약 카운트.
+
+    F-4G-3E: warmup/retry 메타도 함께 기록한다."""
     obs = observer if isinstance(observer, dict) else {}
     pln = plan if isinstance(plan, dict) else {}
+    cli = cli_options if isinstance(cli_options, dict) else {}
     warnings = list(obs.get("warnings") or []) + list(pln.get("warnings") or [])
     return {
         "success": bool(obs.get("success")),
@@ -136,7 +179,25 @@ def build_summary(
             pln.get("blocked_candidates"),
         ),
         "warnings_count": len(warnings),
+        "warmup_attempted": bool(obs.get("warmup_attempted")),
+        "warmup_success": bool(obs.get("warmup_success")),
+        "warmup_url": str(obs.get("warmup_url") or ""),
+        "goto_attempts_used": _safe_int_count(obs.get("goto_attempts_used")),
+        "goto_retries": _safe_int_count(cli.get("goto_retries")),
+        "goto_retry_delay_seconds": _safe_float(
+            cli.get("goto_retry_delay_seconds"),
+        ),
+        "goto_timeout_ms": _safe_int_count(cli.get("goto_timeout_ms")),
     }
+
+
+def _safe_float(value: Any) -> float:
+    if isinstance(value, bool):
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def classify_verdict(summary: dict[str, Any]) -> str:
@@ -157,9 +218,13 @@ def build_result_payload(
     target_url: str,
     observer: dict[str, Any],
     plan: dict[str, Any],
+    cli_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     summary = build_summary(
-        target_url=target_url, observer=observer, plan=plan,
+        target_url=target_url,
+        observer=observer,
+        plan=plan,
+        cli_options=cli_options,
     )
     return {
         "target_url": target_url,
@@ -228,6 +293,19 @@ def render_markdown(
     lines.append(f"- buttons_count: {summary.get('buttons_count')}")
     lines.append(f"- forms_count: {summary.get('forms_count')}")
     lines.append(f"- inputs_count: {summary.get('inputs_count')}")
+    lines.append("")
+
+    lines.append("## warmup / goto retry (F-4G-3E)")
+    lines.append(f"- warmup_attempted: {summary.get('warmup_attempted')}")
+    lines.append(f"- warmup_success: {summary.get('warmup_success')}")
+    lines.append(f"- warmup_url: {summary.get('warmup_url')!r}")
+    lines.append(f"- goto_attempts_used: {summary.get('goto_attempts_used')}")
+    lines.append(f"- goto_retries: {summary.get('goto_retries')}")
+    lines.append(
+        f"- goto_retry_delay_seconds: "
+        f"{summary.get('goto_retry_delay_seconds')}",
+    )
+    lines.append(f"- goto_timeout_ms: {summary.get('goto_timeout_ms')}")
     lines.append("")
 
     lines.append("## controlled plan 요약")
@@ -313,13 +391,17 @@ def write_results(
     observer: dict[str, Any],
     plan: dict[str, Any],
     timestamp: str | None = None,
+    cli_options: dict[str, Any] | None = None,
 ) -> dict[str, str]:
     """JSON / MD 결과 파일을 저장하고 두 경로를 반환."""
     ts = timestamp or datetime.now().strftime("%Y%m%d_%H%M%S")
     _ensure_out_dir(out_dir)
 
     payload = build_result_payload(
-        target_url=target_url, observer=observer, plan=plan,
+        target_url=target_url,
+        observer=observer,
+        plan=plan,
+        cli_options=cli_options,
     )
     summary = payload["summary"]
     verdict = classify_verdict(summary)
@@ -378,12 +460,24 @@ def main(argv: list[str] | None = None) -> int:
 
     _print_notice()
 
+    warmup_url = None if args.no_warmup else (args.warmup_url or None)
+    cli_options = {
+        "warmup_url": warmup_url or "",
+        "goto_retries": args.goto_retries,
+        "goto_retry_delay_seconds": args.goto_retry_delay_seconds,
+        "goto_timeout_ms": args.goto_timeout_ms,
+    }
+
     observer = observe_after_user_ready(
         url=args.url,
         wait_until=DEFAULT_WAIT_UNTIL,
         user_ready_seconds=args.user_ready_seconds,
         max_text_chars=args.max_text_chars,
         dwell_after_capture_seconds=args.dwell_after_capture_seconds,
+        warmup_url=warmup_url,
+        goto_retries=args.goto_retries,
+        goto_retry_delay_seconds=args.goto_retry_delay_seconds,
+        goto_timeout_ms=args.goto_timeout_ms,
     )
     plan = build_hometax_controlled_action_plan(observer)
 
@@ -392,6 +486,7 @@ def main(argv: list[str] | None = None) -> int:
         target_url=args.url,
         observer=observer,
         plan=plan,
+        cli_options=cli_options,
     )
 
     print(f"[hometax-post-login-smoke] verdict: {paths['verdict']}", flush=True)
@@ -400,7 +495,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.print_json:
         payload = build_result_payload(
-            target_url=args.url, observer=observer, plan=plan,
+            target_url=args.url,
+            observer=observer,
+            plan=plan,
+            cli_options=cli_options,
         )
         print(json.dumps(payload, ensure_ascii=False, indent=2))
 

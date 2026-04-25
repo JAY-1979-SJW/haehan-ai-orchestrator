@@ -93,6 +93,23 @@ _ALLOWED_WAIT_UNTIL: tuple[str, ...] = (
     "commit", "domcontentloaded", "load", "networkidle",
 )
 
+# F-4G-3E — fresh Chromium 첫 hometax 접속에서 발생 가능한
+# net::ERR_CONNECTION_RESET 대응. wait_until 변경이 아니라 warmup +
+# retry 로 흡수한다. 진단 결과 (runs/local_agent/diagnostics/
+# goto_diagnostic_*.json) 상 example/google 은 정상이고 hometax 만
+# 첫 접속 reset 가능 → Chromium 미설치/일반 네트워크 문제 아님.
+_DEFAULT_WARMUP_WAIT_UNTIL = "load"
+_DEFAULT_GOTO_RETRIES = 1
+_MIN_GOTO_RETRIES = 1
+_MAX_GOTO_RETRIES = 5
+_DEFAULT_GOTO_RETRY_DELAY_SECONDS = 1.0
+_MIN_GOTO_RETRY_DELAY_SECONDS = 0.0
+_MAX_GOTO_RETRY_DELAY_SECONDS = 10.0
+# goto_timeout_ms 는 regular timeout_ms 와 별도로 더 큰 cap 을 허용.
+# fresh hometax 첫 접속이 느릴 수 있어 90~180초까지 허용.
+_MIN_GOTO_TIMEOUT_MS = _MIN_TIMEOUT_MS
+_MAX_GOTO_TIMEOUT_MS = 180_000
+
 # handoff_seconds — 사용자가 로그인 버튼을 클릭하기까지의 대기 시간.
 # 무한 대기는 만들지 않는다. 사용자 정책상 60초 이내로 권장.
 _DEFAULT_HANDOFF_SECONDS = 20
@@ -149,9 +166,14 @@ def _empty_result(
     handoff_seconds: int = _DEFAULT_HANDOFF_SECONDS,
     page_state: str = "unknown",
     instruction: str = _HANDOFF_INSTRUCTION,
+    warmup_attempted: bool = False,
+    warmup_success: bool = False,
+    warmup_url: str = "",
+    goto_attempts_used: int = 0,
 ) -> dict[str, Any]:
     """Playwright launch 이전/실패 시 반환. observer 와 동일한 키 셋에
-    handoff / security_program_signals / hometax_login_candidates 를 추가."""
+    handoff / security_program_signals / hometax_login_candidates 와
+    F-4G-3E warmup/retry 메타를 추가."""
     return {
         "success": False,
         "error_code": error_code,
@@ -176,6 +198,10 @@ def _empty_result(
         "input_types": [],
         "security_program_signals": None,
         "hometax_login_candidates": None,
+        "warmup_attempted": bool(warmup_attempted),
+        "warmup_success": bool(warmup_success),
+        "warmup_url": warmup_url or "",
+        "goto_attempts_used": int(goto_attempts_used),
     }
 
 
@@ -364,9 +390,17 @@ def _run_handoff_observation(
     dwell_after_capture: int,
     sleep_fn: Callable[[float], None],
     instruction: str = _HANDOFF_INSTRUCTION,
+    warmup_url: Optional[str] = None,
+    warmup_wait_until: str = _DEFAULT_WARMUP_WAIT_UNTIL,
+    goto_retries: int = _DEFAULT_GOTO_RETRIES,
+    goto_retry_delay_seconds: float = _DEFAULT_GOTO_RETRY_DELAY_SECONDS,
+    extra_warnings: Optional[list[str]] = None,
 ) -> dict[str, Any]:
-    warnings: list[str] = []
+    warnings: list[str] = list(extra_warnings or [])
     launch_kwargs: dict[str, Any] = {"headless": False}
+    warmup_attempted = False
+    warmup_success = False
+    goto_attempts_used = 0
 
     with factory() as pw:
         try:
@@ -376,30 +410,74 @@ def _run_handoff_observation(
             return _empty_result(
                 target_url=target_url,
                 error_code="BROWSER_OPEN_FAILED",
-                warnings=[f"launch_failed:{type(e).__name__}"],
+                warnings=warnings + [f"launch_failed:{type(e).__name__}"],
                 handoff_seconds=handoff_seconds,
                 instruction=instruction,
+                warmup_attempted=warmup_attempted,
+                warmup_success=warmup_success,
+                warmup_url=warmup_url or "",
+                goto_attempts_used=goto_attempts_used,
             )
         try:
             context = browser.new_context()
             try:
                 page = context.new_page()
                 try:
+                    # ── F-4G-3E warmup goto (옵션) ─────────────────────
+                    # 본 target_url 접속 전에 warmup_url 로 1회 navigate.
+                    # 실패는 치명 오류로 처리하지 않는다.
+                    if warmup_url:
+                        warmup_attempted = True
+                        try:
+                            page.goto(
+                                warmup_url,
+                                timeout=timeout_ms,
+                                wait_until=warmup_wait_until,
+                            )
+                            warmup_success = True
+                        except Exception as e:
+                            warnings.append(
+                                f"warmup_failed:{type(e).__name__}",
+                            )
+
+                    # ── target_url goto with retry ────────────────────
                     response = None
-                    try:
-                        response = page.goto(
-                            target_url,
-                            timeout=timeout_ms,
-                            wait_until=wait_until,
-                        )
-                    except Exception as e:
-                        warnings.append(f"goto_failed:{type(e).__name__}")
+                    last_error: Optional[Exception] = None
+                    max_attempts = max(1, int(goto_retries))
+                    for attempt in range(1, max_attempts + 1):
+                        goto_attempts_used = attempt
+                        try:
+                            response = page.goto(
+                                target_url,
+                                timeout=timeout_ms,
+                                wait_until=wait_until,
+                            )
+                            last_error = None
+                            break
+                        except Exception as e:
+                            last_error = e
+                            warnings.append(
+                                f"goto_attempt_failed:{attempt}:"
+                                f"{type(e).__name__}",
+                            )
+                            if attempt < max_attempts and \
+                                    goto_retry_delay_seconds > 0:
+                                try:
+                                    sleep_fn(float(goto_retry_delay_seconds))
+                                except Exception:  # pragma: no cover
+                                    pass
+
+                    if last_error is not None:
                         return _empty_result(
                             target_url=target_url,
                             error_code="GOTO_FAILED",
                             warnings=warnings,
                             handoff_seconds=handoff_seconds,
                             instruction=instruction,
+                            warmup_attempted=warmup_attempted,
+                            warmup_success=warmup_success,
+                            warmup_url=warmup_url or "",
+                            goto_attempts_used=goto_attempts_used,
                         )
 
                     # ── 사용자 수동 조작 대기 구간 ─────────────────────
@@ -448,6 +526,10 @@ def _run_handoff_observation(
                         handoff_seconds=handoff_seconds,
                         warnings=warnings,
                         instruction=instruction,
+                        warmup_attempted=warmup_attempted,
+                        warmup_success=warmup_success,
+                        warmup_url=warmup_url or "",
+                        goto_attempts_used=goto_attempts_used,
                     )
 
                     # 결과 dict 만으로 helper 호출 — 브라우저 미접촉.
@@ -481,6 +563,10 @@ def _build_handoff_result(
     handoff_seconds: int,
     warnings: list[str],
     instruction: str = _HANDOFF_INSTRUCTION,
+    warmup_attempted: bool = False,
+    warmup_success: bool = False,
+    warmup_url: str = "",
+    goto_attempts_used: int = 0,
 ) -> dict[str, Any]:
     title_safe = (title or "")[:300]
     final_host_path = (
@@ -541,6 +627,10 @@ def _build_handoff_result(
         "input_types": input_types,
         "security_program_signals": None,
         "hometax_login_candidates": None,
+        "warmup_attempted": bool(warmup_attempted),
+        "warmup_success": bool(warmup_success),
+        "warmup_url": warmup_url or "",
+        "goto_attempts_used": int(goto_attempts_used),
     }
 
 
@@ -595,6 +685,20 @@ def _clip_int(value: Any, lo: int, hi: int, default: int) -> int:
     return v
 
 
+def _clip_float(value: Any, lo: float, hi: float, default: float) -> float:
+    if isinstance(value, bool):
+        return float(default)
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return float(default)
+    if v < lo:
+        return float(lo)
+    if v > hi:
+        return float(hi)
+    return float(v)
+
+
 def _clip_handoff_seconds_for_empty(handoff_seconds: Any) -> int:
     """_empty_result 에 표기할 handoff_seconds 정규화. 잘못된 입력은 기본값."""
     if isinstance(handoff_seconds, bool):
@@ -618,6 +722,11 @@ def observe_after_user_ready(
     user_ready_seconds: int = _DEFAULT_USER_READY_SECONDS,
     max_text_chars: int = _DEFAULT_USER_READY_MAX_TEXT_CHARS,
     dwell_after_capture_seconds: int = _DEFAULT_DWELL_AFTER_CAPTURE,
+    warmup_url: Optional[str] = None,
+    warmup_wait_until: str = _DEFAULT_WARMUP_WAIT_UNTIL,
+    goto_retries: int = _DEFAULT_GOTO_RETRIES,
+    goto_retry_delay_seconds: float = _DEFAULT_GOTO_RETRY_DELAY_SECONDS,
+    goto_timeout_ms: Optional[int] = None,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _env: Optional[dict] = None,
     _sleep: Optional[Callable[[float], None]] = None,
@@ -747,6 +856,57 @@ def observe_after_user_ready(
         )
     dwell_after_capture_v = dwell_after_capture_seconds
 
+    # 4-1) F-4G-3E warmup / retry 옵션 정규화. 잘못된 값은 default 로
+    # 클립하고 warning 을 남긴다 (치명 오류 아님 — backward compat 유지).
+    pre_warnings: list[str] = []
+
+    if warmup_url is None:
+        warmup_url_v: Optional[str] = None
+    elif isinstance(warmup_url, str) and warmup_url.strip():
+        warmup_validation = validate_url_for_readonly_open(
+            warmup_url.strip(), allow_private_network=False,
+        )
+        if warmup_validation.get("ok"):
+            warmup_url_v = warmup_url.strip()
+        else:
+            warmup_url_v = None
+            pre_warnings.append("warmup_url_invalid")
+    else:
+        warmup_url_v = None
+        pre_warnings.append("warmup_url_invalid")
+
+    if not isinstance(warmup_wait_until, str) or \
+            warmup_wait_until not in _ALLOWED_WAIT_UNTIL:
+        warmup_wait_until_v = _DEFAULT_WARMUP_WAIT_UNTIL
+        pre_warnings.append("warmup_wait_until_invalid")
+    else:
+        warmup_wait_until_v = warmup_wait_until
+
+    goto_retries_v = _clip_int(
+        goto_retries, _MIN_GOTO_RETRIES, _MAX_GOTO_RETRIES,
+        _DEFAULT_GOTO_RETRIES,
+    )
+    if isinstance(goto_retries, bool) or not isinstance(goto_retries, int):
+        # _clip_int returned default, but bool/non-int is suspicious — record.
+        pre_warnings.append("goto_retries_invalid")
+
+    goto_retry_delay_v = _clip_float(
+        goto_retry_delay_seconds,
+        _MIN_GOTO_RETRY_DELAY_SECONDS,
+        _MAX_GOTO_RETRY_DELAY_SECONDS,
+        _DEFAULT_GOTO_RETRY_DELAY_SECONDS,
+    )
+
+    if goto_timeout_ms is None:
+        goto_timeout_ms_v = timeout_ms_v
+    else:
+        goto_timeout_ms_v = _clip_int(
+            goto_timeout_ms,
+            _MIN_GOTO_TIMEOUT_MS,
+            _MAX_GOTO_TIMEOUT_MS,
+            timeout_ms_v,
+        )
+
     sleep_fn = _sleep if _sleep is not None else time.sleep
 
     # 5) Playwright factory.
@@ -758,7 +918,7 @@ def observe_after_user_ready(
             return _empty_result(
                 target_url=target_url,
                 error_code="BROWSER_DEPENDENCY_MISSING",
-                warnings=["browser_dependency_missing"],
+                warnings=["browser_dependency_missing"] + pre_warnings,
                 handoff_seconds=user_ready_seconds_v,
                 instruction=_USER_READY_INSTRUCTION,
             )
@@ -768,19 +928,27 @@ def observe_after_user_ready(
         return _run_handoff_observation(
             factory=factory,
             target_url=target_url,
-            timeout_ms=timeout_ms_v,
+            timeout_ms=goto_timeout_ms_v,
             wait_until=wait_until_v,
             handoff_seconds=user_ready_seconds_v,
             max_text_chars=max_text_chars_v,
             dwell_after_capture=dwell_after_capture_v,
             sleep_fn=sleep_fn,
             instruction=_USER_READY_INSTRUCTION,
+            warmup_url=warmup_url_v,
+            warmup_wait_until=warmup_wait_until_v,
+            goto_retries=goto_retries_v,
+            goto_retry_delay_seconds=goto_retry_delay_v,
+            extra_warnings=pre_warnings,
         )
     except BrowserDependencyMissing as e:
         return _empty_result(
             target_url=target_url,
             error_code="BROWSER_DEPENDENCY_MISSING",
-            warnings=[f"browser_dependency_missing:{type(e).__name__}"],
+            warnings=(
+                [f"browser_dependency_missing:{type(e).__name__}"]
+                + pre_warnings
+            ),
             handoff_seconds=user_ready_seconds_v,
             instruction=_USER_READY_INSTRUCTION,
         )
@@ -789,7 +957,9 @@ def observe_after_user_ready(
         return _empty_result(
             target_url=target_url,
             error_code="BROWSER_OBSERVATION_FAILED",
-            warnings=[f"observation_failed:{type(e).__name__}"],
+            warnings=(
+                [f"observation_failed:{type(e).__name__}"] + pre_warnings
+            ),
             handoff_seconds=user_ready_seconds_v,
             instruction=_USER_READY_INSTRUCTION,
         )
