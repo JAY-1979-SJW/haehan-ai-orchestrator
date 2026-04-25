@@ -209,15 +209,100 @@ def test_main_stdout_json(tmp_path: Path, cli, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# No execute option
+# --execute option (F-4S-8b)
 # ---------------------------------------------------------------------------
 
 
-def test_no_execute_option_in_cli(cli):
-    parser = cli.parse_args.__wrapped__ if hasattr(cli.parse_args, "__wrapped__") else None
-    # --execute 옵션이 존재하지 않아야 함
-    with pytest.raises(SystemExit):
-        cli.parse_args(["--recording-queue", "dummy.json", "--execute"])
+def test_execute_option_exists_in_cli(cli):
+    """--execute 옵션이 F-4S-8b에서 추가되었음."""
+    args = cli.parse_args(["--recording-queue", "dummy.json", "--execute"])
+    assert args.execute is True
+
+
+def test_no_execute_defaults_to_dry_run(cli):
+    args = cli.parse_args(["--recording-queue", "dummy.json"])
+    assert args.execute is False
+    assert args.dry_run is True
+
+
+def test_allow_host_option(cli):
+    args = cli.parse_args([
+        "--recording-queue", "dummy.json",
+        "--allow-host", "localhost",
+        "--allow-host", "192.168.1.10",
+    ])
+    assert "localhost" in args.allow_hosts
+    assert "192.168.1.10" in args.allow_hosts
+
+
+def test_max_record_seconds_option(cli):
+    args = cli.parse_args([
+        "--recording-queue", "dummy.json",
+        "--max-record-seconds", "45",
+    ])
+    assert args.max_record_seconds == 45
+
+
+def test_screenshot_option(cli):
+    args = cli.parse_args([
+        "--recording-queue", "dummy.json",
+        "--screenshot",
+    ])
+    assert args.screenshot is True
+
+
+def test_headless_option(cli):
+    args = cli.parse_args([
+        "--recording-queue", "dummy.json",
+        "--headless",
+    ])
+    assert args.headless is True
+
+
+def test_execute_blocked_on_external_url(tmp_path: Path, cli):
+    """external URL이 포함된 queue에 --execute 하면 blocked 반환."""
+    items = [{
+        "recording_id": "recording_001",
+        "source_queue_id": "video_001",
+        "status": "draft",
+        "title": "외부 URL 테스트",
+        "target_url": "https://www.youtube.com/watch?v=abc",
+        "viewport": {"name": "desktop", "width": 1440, "height": 900},
+        "duration_seconds": 30,
+        "duration_type": "short",
+        "recording_steps": [
+            {"step_no": 1, "type": "open_url", "url": "https://www.youtube.com/watch?v=abc"},
+        ],
+    }]
+    payload = {
+        "generated_at": "2026-04-26T00:00:00Z",
+        "recording_count": 1,
+        "allowed_step_types": [],
+        "forbidden_step_types": [],
+        "queue": items,
+    }
+    queue_file = tmp_path / "queue_external.json"
+    queue_file.write_text(json.dumps(payload), encoding="utf-8")
+
+    args = cli.parse_args([
+        "--recording-queue", str(queue_file),
+        "--execute",
+        "--out-dir", str(tmp_path / "worker"),
+    ])
+    result = cli.run(args)
+    sp = result["summary_payload"]
+    assert sp.get("status") == "blocked" or sp.get("blocked_count", 0) > 0
+
+
+def test_execute_dry_run_without_execute_flag(tmp_path: Path, cli):
+    """--execute 없으면 external URL 포함 queue도 dry-run으로 처리됨."""
+    queue_file = _make_queue_file(tmp_path, n_items=1)
+    args = cli.parse_args([
+        "--recording-queue", str(queue_file),
+        "--out-dir", str(tmp_path / "worker"),
+    ])
+    result = cli.run(args)
+    assert result["summary_payload"]["dry_run"] is True
 
 
 # ---------------------------------------------------------------------------

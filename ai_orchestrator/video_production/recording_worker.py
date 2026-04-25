@@ -1,17 +1,26 @@
-"""웹 자동녹화 worker dry-run (F-4S-8a).
+"""웹 자동녹화 worker (F-4S-8a dry-run + F-4S-8b local execute).
 
 설계 원칙:
 - 입력: F-4S-7 web_recording_queue JSON.
-- 출력: dry-run 실행계획 JSON + Markdown 리포트.
-- 실제 브라우저 실행 / 페이지 이동 / 화면 녹화 / 업로드 일체 금지.
-- 허용 step type: open_url / wait / capture_scene / scroll_plan / overlay_caption.
-- 금지 step type: click / fill / type / press / submit / upload / download /
-  login / purchase / comment / post / hover / drag / select_option /
-  set_storage / set_cookie.
-- target_url 누락 → status="blocked", warning=target_url_missing.
-- target_url 이 외부 플랫폼이면 warning=external_target_review_required.
-- API key / client_secret / cookie / session / storage 일체 접근/기록 금지.
-- Playwright/Selenium import 금지. page.goto / browser.launch / new_context 금지.
+- 기본 동작: dry-run (실행계획 JSON + Markdown 리포트만 생성).
+- execute 모드: --execute 명시 시에만 실제 브라우저 실행 허용.
+
+[execute 허용 범위]
+- 허용 URL: localhost / 127.0.0.1 / ::1 / allow_hosts 로 지정한 내부 host 만.
+- 외부 사이트(naver.com, youtube.com, google.com, hometax.go.kr 등) 녹화 금지.
+- 로그인/인증 필요 URL 금지.
+- 허용 브라우저 호출: chromium.launch / browser.new_context(record_video_dir) /
+  context.new_page / page.goto / page.wait_for_timeout / page.screenshot /
+  context.close / browser.close.
+- 금지 브라우저 호출: page.click / page.fill / page.type / page.press /
+  page.keyboard / page.mouse / page.evaluate / page.route /
+  storage_state / cookies / input_value / download / upload.
+
+[공통 금지]
+- click/fill/type/press/submit/upload/download/login/purchase/comment/post step.
+- API key / client_secret / cookie / session / storage 접근/기록 금지.
+- OAuth / 네이버·유튜브 업로드 / LTX API 호출 금지.
+- .env 커밋 금지.
 """
 from __future__ import annotations
 
@@ -67,6 +76,30 @@ _EXTERNAL_PLATFORM_DOMAINS = (
     "facebook.com",
     "tiktok.com",
 )
+
+# execute 모드: 허용 host 기본값 (localhost 계열만)
+DEFAULT_ALLOWED_HOSTS: tuple[str, ...] = ("localhost", "127.0.0.1", "::1")
+
+# execute 모드에서 기본 차단되는 외부 host
+_FORBIDDEN_EXECUTE_HOSTS: tuple[str, ...] = (
+    "naver.com",
+    "youtube.com",
+    "youtu.be",
+    "google.com",
+    "hometax.go.kr",
+    "instagram.com",
+    "facebook.com",
+    "tiktok.com",
+    "kakao.com",
+    "daum.net",
+)
+
+_LOGIN_URL_HINTS = (
+    "login", "signin", "sign-in", "/auth/", "/oauth",
+    "회원", "로그인", "mypage", "마이페이지",
+)
+
+DEFAULT_MAX_RECORD_SECONDS = 60
 
 
 # ---------------------------------------------------------------------------
@@ -308,13 +341,12 @@ def build_execution_plan(
 ) -> Dict[str, Any]:
     """recording queue 전체 → dry-run execution plan.
 
-    이번 단계에서 dry_run=False 는 허용되지 않는다 (NotImplementedError).
-    실제 브라우저 실행은 후속 단계 F-4S-8b 에서 분리해 구현한다.
+    dry_run=False 는 NotImplementedError — execute_recording_plan 을 사용할 것.
     """
     if not dry_run:
         raise NotImplementedError(
-            "actual browser recording is not implemented in F-4S-8a — "
-            "use F-4S-8b worker after explicit approval"
+            "use execute_recording_plan() for actual recording — "
+            "requires --execute flag and internal URLs only"
         )
 
     out_dir = Path(output_dir)
@@ -430,10 +462,7 @@ def write_worker_result_files(
     *,
     timestamp: Optional[str] = None,
 ) -> Dict[str, Path]:
-    """dry-run 결과 JSON + Markdown 을 파일로 저장.
-
-    실제 mp4/메타데이터 파일은 만들지 않는다 — 파일 경로 문자열은 계획일 뿐이다.
-    """
+    """dry-run 결과 JSON + Markdown 을 파일로 저장."""
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     ts = timestamp or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -446,3 +475,396 @@ def write_worker_result_files(
     )
     md_path.write_text(render_worker_markdown_report(result), encoding="utf-8")
     return {"json": json_path, "md": md_path}
+
+
+# ---------------------------------------------------------------------------
+# Execute mode — internal URL only (F-4S-8b)
+# ---------------------------------------------------------------------------
+
+
+def _coerce_allow_hosts(allow_hosts: Any) -> tuple[str, ...]:
+    if allow_hosts is None:
+        return DEFAULT_ALLOWED_HOSTS
+    if isinstance(allow_hosts, (list, tuple)):
+        merged = set(DEFAULT_ALLOWED_HOSTS)
+        for h in allow_hosts:
+            if isinstance(h, str) and h.strip():
+                merged.add(h.strip().lower())
+        return tuple(merged)
+    return DEFAULT_ALLOWED_HOSTS
+
+
+def is_allowed_recording_url(
+    url: str,
+    allow_hosts: Any = None,
+) -> bool:
+    """URL 이 실제 녹화 허용 대상인지 확인.
+
+    허용 조건:
+    - scheme 이 http 또는 https
+    - host 가 allow_hosts (기본: localhost / 127.0.0.1 / ::1) 중 하나
+    - _FORBIDDEN_EXECUTE_HOSTS 에 포함되지 않을 것
+    - 로그인 힌트 없을 것
+    """
+    if not url:
+        return False
+    try:
+        parsed = urlparse(url)
+    except (ValueError, TypeError):
+        return False
+    if parsed.scheme not in ("http", "https"):
+        return False
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False
+
+    # 기본 차단 외부 host
+    for forbidden in _FORBIDDEN_EXECUTE_HOSTS:
+        if host == forbidden or host.endswith("." + forbidden):
+            return False
+
+    # 로그인 힌트
+    full_lower = url.lower()
+    for hint in _LOGIN_URL_HINTS:
+        if hint in full_lower:
+            return False
+
+    # allow_hosts 확인
+    allowed = _coerce_allow_hosts(allow_hosts)
+    return host in allowed
+
+
+def validate_execute_allowed(
+    queue: Any,
+    allow_hosts: Any = None,
+) -> Dict[str, Any]:
+    """execute 모드 전 queue 전체 검증.
+
+    반환:
+      {
+        "allowed_items": [...],   # 실행 가능한 item
+        "blocked_items": [...],   # 실행 불가 item (이유 포함)
+        "errors": [...],
+        "can_execute": bool,
+      }
+    blocked_item 이 하나라도 있으면 can_execute=False — 전체 중단.
+    """
+    errors: List[str] = []
+    allowed_items: List[Dict[str, Any]] = []
+    blocked_items: List[Dict[str, Any]] = []
+
+    queue_result = validate_recording_queue(queue)
+    errors.extend(queue_result["errors"])
+    items = queue_result["items"]
+
+    for item in items:
+        rec_id = _ensure_str(item.get("recording_id")) or "unknown"
+        item_errors: List[str] = []
+        target_url = _ensure_str(item.get("target_url")).strip() or None
+
+        if not target_url:
+            item_errors.append("target_url_missing")
+        elif not is_allowed_recording_url(target_url, allow_hosts=allow_hosts):
+            item_errors.append(f"url_not_allowed_for_execute:{target_url}")
+
+        # forbidden step check
+        val = validate_recording_item(item)
+        if val["blocked_steps"]:
+            for bs in val["blocked_steps"]:
+                item_errors.append(f"forbidden_step:{bs.get('type')}")
+
+        if item_errors:
+            blocked_items.append({
+                "recording_id": rec_id,
+                "title": _ensure_str(item.get("title")),
+                "reasons": item_errors,
+            })
+        else:
+            allowed_items.append(item)
+
+    can_execute = len(blocked_items) == 0 and len(errors) == 0 and len(allowed_items) > 0
+    return {
+        "allowed_items": allowed_items,
+        "blocked_items": blocked_items,
+        "errors": errors,
+        "can_execute": can_execute,
+    }
+
+
+def _get_sync_playwright():
+    """Playwright sync_api 를 lazy import.
+
+    playwright 가 설치되지 않은 환경에서도 모듈 로드가 가능하도록 지연 임포트.
+    execute 모드에서만 호출된다.
+    """
+    try:
+        from playwright.sync_api import sync_playwright  # noqa: PLC0415
+        return sync_playwright
+    except ImportError as exc:
+        raise ImportError(
+            "playwright is required for execute mode: "
+            "pip install playwright && playwright install chromium"
+        ) from exc
+
+
+def execute_recording_item(
+    item: Dict[str, Any],
+    *,
+    output_dir: Path,
+    allow_hosts: Any = None,
+    headless: bool = True,
+    max_record_seconds: int = DEFAULT_MAX_RECORD_SECONDS,
+    take_screenshot: bool = False,
+) -> Dict[str, Any]:
+    """단일 item 을 실제 브라우저로 녹화 (내부 URL 전용).
+
+    허용 브라우저 호출만 사용:
+    - chromium.launch / new_context(record_video_dir) / new_page
+    - page.goto / page.wait_for_timeout / page.screenshot
+    - context.close / browser.close
+
+    금지: page.click / page.fill / page.type / page.press / page.keyboard /
+          page.mouse / page.evaluate / storage_state / cookies / route 등.
+    """
+    rec_id = _ensure_str(item.get("recording_id")) or "recording_unknown"
+    started_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    target_url = _ensure_str(item.get("target_url")).strip() or None
+    viewport = _normalize_viewport(item.get("viewport"))
+    out_dir = Path(output_dir)
+    video_dir = out_dir / DEFAULT_RECORDINGS_SUBDIR / rec_id
+    video_dir.mkdir(parents=True, exist_ok=True)
+
+    warnings: List[str] = []
+    screenshot_paths: List[str] = []
+
+    # URL guard
+    if not target_url:
+        return {
+            "recording_id": rec_id,
+            "status": "blocked",
+            "reason": "target_url_missing",
+            "started_at": started_at,
+            "finished_at": started_at,
+            "success": False,
+            "dry_run": False,
+        }
+    if not is_allowed_recording_url(target_url, allow_hosts=allow_hosts):
+        return {
+            "recording_id": rec_id,
+            "status": "blocked",
+            "reason": f"url_not_allowed:{target_url}",
+            "started_at": started_at,
+            "finished_at": started_at,
+            "success": False,
+            "dry_run": False,
+        }
+
+    # step guard
+    val = validate_recording_item(item)
+    if val["blocked_steps"]:
+        blocked_types = [bs.get("type") for bs in val["blocked_steps"]]
+        return {
+            "recording_id": rec_id,
+            "status": "blocked",
+            "reason": f"forbidden_steps:{blocked_types}",
+            "started_at": started_at,
+            "finished_at": started_at,
+            "success": False,
+            "dry_run": False,
+        }
+
+    steps = item.get("recording_steps") or []
+    steps_executed: List[str] = []
+    video_path: Optional[str] = None
+    browser = None
+    context = None
+
+    sync_playwright = _get_sync_playwright()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=headless)
+            context = browser.new_context(
+                viewport={"width": viewport["width"], "height": viewport["height"]},
+                record_video_dir=str(video_dir),
+                record_video_size={"width": viewport["width"], "height": viewport["height"]},
+            )
+            page = context.new_page()
+
+            page.goto(target_url, wait_until="networkidle", timeout=30000)
+            steps_executed.append("open_url")
+
+            for step in steps:
+                if not isinstance(step, dict):
+                    continue
+                step_type = _ensure_str(step.get("type")).strip().lower()
+                if step_type in FORBIDDEN_STEP_TYPES:
+                    warnings.append(f"forbidden_step_skipped:{step_type}")
+                    continue
+                if step_type == "wait":
+                    wait_ms = int(step.get("wait_seconds") or 2) * 1000
+                    page.wait_for_timeout(wait_ms)
+                    steps_executed.append("wait")
+                elif step_type == "capture_scene":
+                    dur = min(int(step.get("duration_seconds") or 5), max_record_seconds)
+                    page.wait_for_timeout(dur * 1000)
+                    if take_screenshot:
+                        sc_path = video_dir / f"scene_{len(screenshot_paths)+1:03d}.png"
+                        page.screenshot(path=str(sc_path))
+                        screenshot_paths.append(str(sc_path))
+                    steps_executed.append("capture_scene")
+                elif step_type == "scroll_plan":
+                    # scroll 은 page.evaluate 없이는 수행 불가 — wait 로 대체
+                    wait_ms = int(step.get("wait_seconds") or 1) * 1000
+                    page.wait_for_timeout(wait_ms)
+                    steps_executed.append("scroll_plan(wait_only)")
+                    warnings.append("scroll_plan:actual_scroll_skipped_use_wait_only")
+                elif step_type == "overlay_caption":
+                    steps_executed.append("overlay_caption(skipped_post_process)")
+                elif step_type == "open_url":
+                    # 이미 goto 했으므로 skip
+                    steps_executed.append("open_url(already_done)")
+
+            # video path 수집 (context.close 전)
+            if page.video:
+                video_path = str(page.video.path())
+
+            context.close()
+            browser.close()
+
+    except Exception as exc:  # noqa: BLE001
+        finished_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if context:
+            try:
+                context.close()
+            except Exception:  # noqa: BLE001
+                pass
+        if browser:
+            try:
+                browser.close()
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "recording_id": rec_id,
+            "status": "failed",
+            "error": str(exc),
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "success": False,
+            "dry_run": False,
+        }
+
+    finished_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # metadata JSON 저장
+    metadata: Dict[str, Any] = {
+        "recording_id": rec_id,
+        "source_queue_id": _ensure_str(item.get("source_queue_id")) or None,
+        "target_url": target_url,
+        "viewport": viewport,
+        "steps_executed": steps_executed,
+        "video_dir": str(video_dir),
+        "video_path": video_path,
+        "screenshot_paths": screenshot_paths,
+        "warnings": warnings,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "success": True,
+    }
+    meta_path = video_dir / f"{rec_id}_metadata.json"
+    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {
+        "recording_id": rec_id,
+        "source_queue_id": _ensure_str(item.get("source_queue_id")) or None,
+        "title": _ensure_str(item.get("title")),
+        "status": "executed",
+        "target_url": target_url,
+        "viewport": viewport,
+        "steps_executed": steps_executed,
+        "video_dir": str(video_dir),
+        "video_path": video_path,
+        "screenshot_paths": screenshot_paths,
+        "output_metadata_path": str(meta_path),
+        "warnings": warnings,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "success": True,
+        "dry_run": False,
+    }
+
+
+def execute_recording_plan(
+    queue: Any,
+    *,
+    output_dir: Path,
+    allow_hosts: Any = None,
+    headless: bool = True,
+    max_record_seconds: int = DEFAULT_MAX_RECORD_SECONDS,
+    take_screenshot: bool = False,
+    max_items: Optional[int] = None,
+) -> Dict[str, Any]:
+    """execute 모드 — 내부 URL 에 한해 실제 브라우저 녹화.
+
+    validate_execute_allowed 통과 시에만 녹화를 시작한다.
+    blocked item 이 하나라도 있으면 전체 실행을 중단한다.
+    """
+    out_dir = Path(output_dir)
+    validation = validate_execute_allowed(queue, allow_hosts=allow_hosts)
+
+    if not validation["can_execute"]:
+        blocked_reasons = [
+            f"{b['recording_id']}: {b['reasons']}"
+            for b in validation["blocked_items"]
+        ]
+        return {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "dry_run": False,
+            "status": "blocked",
+            "reason": "validate_execute_allowed failed",
+            "blocked_items": validation["blocked_items"],
+            "errors": validation["errors"],
+            "blocked_reasons": blocked_reasons,
+            "executed_count": 0,
+            "blocked_count": len(validation["blocked_items"]),
+            "items": [],
+            "notes": ["execute 차단 — blocked item 해결 후 재시도"],
+        }
+
+    items = validation["allowed_items"]
+    if isinstance(max_items, int) and max_items > 0:
+        items = items[:max_items]
+
+    results: List[Dict[str, Any]] = []
+    for item in items:
+        result = execute_recording_item(
+            item,
+            output_dir=out_dir,
+            allow_hosts=allow_hosts,
+            headless=headless,
+            max_record_seconds=max_record_seconds,
+            take_screenshot=take_screenshot,
+        )
+        results.append(result)
+
+    executed_count = sum(1 for r in results if r.get("status") == "executed")
+    failed_count = sum(1 for r in results if r.get("status") == "failed")
+    blocked_count = sum(1 for r in results if r.get("status") == "blocked")
+
+    return {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "dry_run": False,
+        "output_dir": str(out_dir),
+        "total_items": len(results),
+        "executed_count": executed_count,
+        "failed_count": failed_count,
+        "blocked_count": blocked_count,
+        "allowed_step_types": list(ALLOWED_STEP_TYPES),
+        "forbidden_step_types": list(FORBIDDEN_STEP_TYPES),
+        "items": results,
+        "notes": [
+            "F-4S-8b 웹 자동녹화 worker — 내부 URL 전용 실행",
+            "click/fill/type/press/keyboard/mouse/evaluate 사용 금지",
+            "cookie/storage_state/OAuth 접근 금지",
+            "외부 사이트 / 로그인 화면 녹화 금지",
+        ],
+    }

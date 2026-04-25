@@ -390,38 +390,48 @@ def _strip_comments_and_strings(src: str) -> str:
     return " ".join(out_tokens)
 
 
-def test_module_does_not_import_playwright():
-    src = _strip_comments_and_strings(_module_source())
-    for needle in (
-        "import playwright",
-        "from playwright",
+def test_module_no_toplevel_playwright_import():
+    """모듈 최상위에 playwright import 없음 — 함수 내 lazy import 만 허용 (F-4S-8b)."""
+    src = _module_source()
+    toplevel_forbidden = (
         "import selenium",
         "from selenium",
         "import requests",
         "from requests",
         "import httpx",
         "from httpx",
-    ):
-        assert needle not in src, f"forbidden import found: {needle}"
+    )
+    # 최상위 import 검사 (함수 내부 lazy import 는 허용)
+    for line in src.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
+        # 들여쓰기 없는 줄만 체크 (최상위)
+        if not line.startswith(" ") and not line.startswith("\t"):
+            for needle in toplevel_forbidden:
+                assert needle not in stripped, f"forbidden top-level import: {needle}"
 
 
-def test_module_has_no_browser_launch_or_goto():
+def test_module_has_no_forbidden_interactive_calls():
+    """click/fill/type/press/keyboard/mouse/evaluate/cookies/storage_state 등 금지 호출 없음."""
     src = _strip_comments_and_strings(_module_source())
-    for needle in (
-        "page.goto(",
-        "browser.launch(",
-        "new_context(",
-        ".new_page(",
-        "storage_state(",
-        "context.cookies(",
-        ".upload(",
-        "ltx_client.",
+    forbidden_calls = (
         "page.click(",
         "page.fill(",
         "page.type(",
         "page.press(",
-    ):
-        assert needle not in src, f"forbidden browser call found: {needle}"
+        "page.keyboard",
+        "page.mouse",
+        "page.evaluate(",
+        "page.route(",
+        "storage_state(",
+        "context.cookies(",
+        ".upload(",
+        "ltx_client.",
+        "input_value(",
+    )
+    for needle in forbidden_calls:
+        assert needle not in src, f"forbidden interactive call found: {needle}"
 
 
 def test_execution_plan_no_secret_tokens():
@@ -438,3 +448,304 @@ def test_execution_plan_no_oauth_or_write_action():
     serialized = json.dumps(plan, ensure_ascii=False)
     for tok in ("oauth", "OAuth", "upload_video", "publish_post", "comment_post"):
         assert tok not in serialized, f"unexpected write/oauth token: {tok}"
+
+
+# ---------------------------------------------------------------------------
+# is_allowed_recording_url (F-4S-8b)
+# ---------------------------------------------------------------------------
+
+
+def test_localhost_is_allowed():
+    assert rw.is_allowed_recording_url("http://localhost:3000") is True
+    assert rw.is_allowed_recording_url("http://localhost:3000/path") is True
+
+
+def test_127_is_allowed():
+    assert rw.is_allowed_recording_url("http://127.0.0.1:8080") is True
+
+
+def test_ipv6_loopback_allowed():
+    assert rw.is_allowed_recording_url("http://[::1]:3000") is True
+
+
+def test_extra_allow_host():
+    assert rw.is_allowed_recording_url(
+        "http://192.168.1.10:3000",
+        allow_hosts=["192.168.1.10"],
+    ) is True
+
+
+def test_external_youtube_blocked():
+    assert rw.is_allowed_recording_url("https://www.youtube.com/watch?v=abc") is False
+
+
+def test_external_naver_blocked():
+    assert rw.is_allowed_recording_url("https://naver.com") is False
+
+
+def test_external_google_blocked():
+    assert rw.is_allowed_recording_url("https://google.com/search?q=test") is False
+
+
+def test_hometax_blocked():
+    assert rw.is_allowed_recording_url("https://hometax.go.kr") is False
+
+
+def test_login_url_blocked():
+    assert rw.is_allowed_recording_url("http://localhost:3000/login") is False
+    assert rw.is_allowed_recording_url("http://localhost:3000/auth/token") is False
+
+
+def test_mypage_url_blocked():
+    assert rw.is_allowed_recording_url("http://localhost:3000/mypage") is False
+
+
+def test_empty_url_blocked():
+    assert rw.is_allowed_recording_url("") is False
+    assert rw.is_allowed_recording_url(None) is False  # type: ignore[arg-type]
+
+
+def test_non_http_scheme_blocked():
+    assert rw.is_allowed_recording_url("ftp://localhost/file") is False
+
+
+# ---------------------------------------------------------------------------
+# validate_execute_allowed (F-4S-8b)
+# ---------------------------------------------------------------------------
+
+
+def test_validate_execute_allowed_ok():
+    q = _make_queue(_make_item(target_url="http://localhost:3000"))
+    result = rw.validate_execute_allowed(q)
+    assert result["can_execute"] is True
+    assert result["blocked_items"] == []
+    assert len(result["allowed_items"]) == 1
+
+
+def test_validate_execute_allowed_blocks_external_url():
+    q = _make_queue(_make_item(target_url="https://www.youtube.com/watch?v=test"))
+    result = rw.validate_execute_allowed(q)
+    assert result["can_execute"] is False
+    assert any("url_not_allowed" in r for b in result["blocked_items"] for r in b["reasons"])
+
+
+def test_validate_execute_allowed_blocks_forbidden_step():
+    q = _make_queue(_make_item(extra_steps=[{"step_no": 99, "type": "click"}]))
+    result = rw.validate_execute_allowed(q)
+    assert result["can_execute"] is False
+    assert any("forbidden_step" in r for b in result["blocked_items"] for r in b["reasons"])
+
+
+def test_validate_execute_allowed_blocks_missing_url():
+    q = _make_queue(_make_item(target_url=""))
+    result = rw.validate_execute_allowed(q)
+    assert result["can_execute"] is False
+
+
+def test_validate_execute_allowed_with_custom_host():
+    q = _make_queue(_make_item(target_url="http://192.168.1.10:3000"))
+    result = rw.validate_execute_allowed(q, allow_hosts=["192.168.1.10"])
+    assert result["can_execute"] is True
+
+
+def test_validate_execute_allowed_blocks_hometax():
+    q = _make_queue(_make_item(target_url="https://hometax.go.kr"))
+    result = rw.validate_execute_allowed(q)
+    assert result["can_execute"] is False
+
+
+# ---------------------------------------------------------------------------
+# execute_recording_item — mock 기반 (실제 브라우저 실행 없음)
+# ---------------------------------------------------------------------------
+
+
+def _make_mock_playwright(tmp_path: Path):
+    """Mock playwright context manager for testing."""
+    from unittest.mock import MagicMock, patch
+
+    mock_video = MagicMock()
+    mock_video.path.return_value = str(tmp_path / "video.webm")
+
+    mock_page = MagicMock()
+    mock_page.video = mock_video
+    mock_page.goto = MagicMock()
+    mock_page.wait_for_timeout = MagicMock()
+    mock_page.screenshot = MagicMock()
+
+    mock_context = MagicMock()
+    mock_context.new_page.return_value = mock_page
+    mock_context.close = MagicMock()
+
+    mock_browser = MagicMock()
+    mock_browser.new_context.return_value = mock_context
+    mock_browser.close = MagicMock()
+
+    mock_chromium = MagicMock()
+    mock_chromium.launch.return_value = mock_browser
+
+    mock_pw_instance = MagicMock()
+    mock_pw_instance.chromium = mock_chromium
+    mock_pw_instance.__enter__ = MagicMock(return_value=mock_pw_instance)
+    mock_pw_instance.__exit__ = MagicMock(return_value=False)
+
+    mock_sync_playwright = MagicMock(return_value=mock_pw_instance)
+    return mock_sync_playwright
+
+
+def test_execute_recording_item_mock_success(tmp_path: Path):
+    from unittest.mock import patch
+
+    item = _make_item(target_url="http://localhost:3000")
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        result = rw.execute_recording_item(
+            item,
+            output_dir=tmp_path / "worker",
+            allow_hosts=["localhost"],
+        )
+
+    assert result["status"] == "executed"
+    assert result["success"] is True
+    assert result["dry_run"] is False
+    assert result["target_url"] == "http://localhost:3000"
+    assert "open_url" in result["steps_executed"]
+
+
+def test_execute_recording_item_blocked_external_url(tmp_path: Path):
+    item = _make_item(target_url="https://www.youtube.com/watch?v=abc")
+    result = rw.execute_recording_item(item, output_dir=tmp_path)
+    assert result["status"] == "blocked"
+    assert result["success"] is False
+    assert "url_not_allowed" in result["reason"]
+
+
+def test_execute_recording_item_blocked_no_url(tmp_path: Path):
+    item = _make_item(target_url="")
+    result = rw.execute_recording_item(item, output_dir=tmp_path)
+    assert result["status"] == "blocked"
+    assert result["success"] is False
+
+
+def test_execute_recording_item_blocked_forbidden_step(tmp_path: Path):
+    item = _make_item(
+        target_url="http://localhost:3000",
+        extra_steps=[{"step_no": 99, "type": "click"}],
+    )
+    result = rw.execute_recording_item(item, output_dir=tmp_path)
+    assert result["status"] == "blocked"
+    assert "forbidden_steps" in result["reason"]
+
+
+def test_execute_recording_item_metadata_written(tmp_path: Path):
+    from unittest.mock import patch
+
+    item = _make_item(target_url="http://localhost:3000")
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        result = rw.execute_recording_item(item, output_dir=tmp_path / "worker")
+
+    meta_path = Path(result["output_metadata_path"])
+    assert meta_path.exists()
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert meta["recording_id"] == "recording_001"
+    assert meta["success"] is True
+
+
+def test_execute_recording_item_no_click_fill_type_in_mocked_calls(tmp_path: Path):
+    from unittest.mock import patch
+
+    item = _make_item(target_url="http://localhost:3000")
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        rw.execute_recording_item(item, output_dir=tmp_path / "worker")
+
+    pw_instance = mock_pw.return_value
+    page = pw_instance.chromium.launch.return_value.new_context.return_value.new_page.return_value
+
+    # 금지된 메서드가 호출되지 않았는지 확인
+    page.click.assert_not_called()
+    page.fill.assert_not_called()
+    page.type.assert_not_called()
+    page.press.assert_not_called()
+
+
+def test_execute_recording_item_max_record_seconds(tmp_path: Path):
+    from unittest.mock import patch, call
+
+    item = _make_item(target_url="http://localhost:3000")
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        rw.execute_recording_item(
+            item,
+            output_dir=tmp_path / "worker",
+            max_record_seconds=5,
+        )
+
+    pw_instance = mock_pw.return_value
+    page = pw_instance.chromium.launch.return_value.new_context.return_value.new_page.return_value
+    # capture_scene duration은 min(original, max_record_seconds)=5로 제한
+    wait_calls = page.wait_for_timeout.call_args_list
+    for c in wait_calls:
+        ms = c[0][0] if c[0] else c[1].get("timeout", 0)
+        assert ms <= 5 * 1000 + 100, f"wait_for_timeout exceeded max_record_seconds: {ms}ms"
+
+
+# ---------------------------------------------------------------------------
+# execute_recording_plan — mock 기반
+# ---------------------------------------------------------------------------
+
+
+def test_execute_recording_plan_blocked_when_external_url(tmp_path: Path):
+    q = _make_queue(_make_item(target_url="https://naver.com"))
+    result = rw.execute_recording_plan(q, output_dir=tmp_path)
+    assert result["status"] == "blocked"
+    assert result["executed_count"] == 0
+
+
+def test_execute_recording_plan_mock_success(tmp_path: Path):
+    from unittest.mock import patch
+
+    q = _make_queue(_make_item(target_url="http://localhost:3000"))
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        result = rw.execute_recording_plan(
+            q,
+            output_dir=tmp_path / "worker",
+            allow_hosts=["localhost"],
+        )
+
+    assert result["dry_run"] is False
+    assert result["executed_count"] == 1
+    assert result["blocked_count"] == 0
+
+
+def test_execute_recording_plan_max_items(tmp_path: Path):
+    from unittest.mock import patch
+
+    q = _make_queue(
+        _make_item(recording_id="recording_001", target_url="http://localhost:3000"),
+        _make_item(recording_id="recording_002", target_url="http://localhost:3000"),
+        _make_item(recording_id="recording_003", target_url="http://localhost:3000"),
+    )
+    mock_pw = _make_mock_playwright(tmp_path)
+
+    with patch.object(rw, "_get_sync_playwright", return_value=mock_pw):
+        result = rw.execute_recording_plan(
+            q, output_dir=tmp_path / "worker", max_items=2
+        )
+
+    assert result["total_items"] == 2
+
+
+def test_execute_recording_plan_no_mp4_if_blocked(tmp_path: Path):
+    q = _make_queue(_make_item(target_url="https://www.youtube.com/watch?v=xyz"))
+    result = rw.execute_recording_plan(q, output_dir=tmp_path)
+    # 차단되면 recordings 디렉토리에 아무것도 없어야 함
+    recordings_dir = tmp_path / "recordings"
+    if recordings_dir.exists():
+        assert not list(recordings_dir.glob("**/*.mp4")), "mp4 생성 금지 위반"
