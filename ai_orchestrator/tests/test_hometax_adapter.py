@@ -671,3 +671,91 @@ def test_extract_login_candidates_count_matches_lists():
     assert len(out["login_links"]) == 1
     assert len(out["login_buttons"]) == 1
     assert len(out["login_forms"]) == 1
+
+
+# ─── G) F-4G-1 — build_hometax_controlled_action_plan ───────────────────
+
+def test_controlled_plan_classifies_links_into_categories():
+    """홈택스 메인 observer fixture 에서 조회/다운로드/차단 후보 분류."""
+    result = _make_observer_result(
+        page_state="public_page",
+        links=[
+            {"text": "전자세금계산서 조회", "href": "https://hometax.go.kr/issued", "risk_hint": ""},
+            {"text": "엑셀 다운로드", "href": "https://hometax.go.kr/excel", "risk_hint": ""},
+            {"text": "신고서 제출", "href": "https://hometax.go.kr/submit", "risk_hint": ""},
+            {"text": "공지사항", "href": "https://hometax.go.kr/notice", "risk_hint": ""},
+        ],
+    )
+    plan = hometax.build_hometax_controlled_action_plan(result)
+    assert plan["site_key"] == "hometax"
+    read_texts = [c["text"] for c in plan["safe_read_candidates"]]
+    download_texts = [c["text"] for c in plan["download_candidates"]]
+    blocked_texts = [c["text"] for c in plan["blocked_candidates"]]
+    assert "전자세금계산서 조회" in read_texts
+    assert "엑셀 다운로드" in download_texts
+    assert "신고서 제출" in blocked_texts
+
+
+def test_controlled_plan_attaches_login_candidates_and_security_signals():
+    """plan 결과에 login_candidates / security_program_signals dict 가 부착."""
+    result = _make_observer_result(
+        page_state="login_required",
+        links=[
+            {"text": "공동인증서 로그인", "href": "https://hometax.go.kr/cert", "risk_hint": ""},
+        ],
+        text_excerpt="보안프로그램 설치가 필요합니다",
+    )
+    plan = hometax.build_hometax_controlled_action_plan(result)
+    assert plan["login_candidates"] is not None
+    assert plan["login_candidates"]["candidate_count"] >= 1
+    assert plan["security_program_signals"] is not None
+    assert plan["security_program_signals"]["manual_action_required"] is True
+
+
+def test_controlled_plan_login_required_sets_manual_action_required():
+    plan = hometax.build_hometax_controlled_action_plan(
+        _make_observer_result(page_state="login_required"),
+    )
+    assert plan["manual_action_required"] is True
+
+
+def test_controlled_plan_security_program_required_sets_manual_action():
+    plan = hometax.build_hometax_controlled_action_plan(
+        _make_observer_result(page_state="security_program_required"),
+    )
+    assert plan["manual_action_required"] is True
+
+
+def test_controlled_plan_unrecoverable_states_clear_candidates():
+    plan = hometax.build_hometax_controlled_action_plan(
+        _make_observer_result(
+            page_state="not_found",
+            links=[{"text": "조회", "href": "/x", "risk_hint": ""}],
+        ),
+    )
+    assert plan["unrecoverable"] is True
+    assert plan["safe_read_candidates"] == []
+
+
+def test_controlled_plan_handles_non_dict_result():
+    plan = hometax.build_hometax_controlled_action_plan("not a dict")
+    assert plan["site_key"] == "hometax"
+    assert plan["safe_read_candidates"] == []
+    assert plan["download_candidates"] == []
+    assert plan["blocked_candidates"] == []
+    assert "observer_result_not_dict" in plan["warnings"]
+
+
+def test_controlled_plan_strips_query_fragment_in_href():
+    result = _make_observer_result(
+        page_state="public_page",
+        links=[{
+            "text": "엑셀 다운로드",
+            "href": "https://hometax.go.kr/excel?token=SECRET#frag",
+            "risk_hint": "",
+        }],
+    )
+    plan = hometax.build_hometax_controlled_action_plan(result)
+    href = plan["download_candidates"][0]["href"]
+    for sensitive in ("?", "#", "token=", "SECRET", "#frag"):
+        assert sensitive not in href, href

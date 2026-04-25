@@ -596,6 +596,65 @@ def _empty_candidate_result(warnings: list[str]) -> dict[str, Any]:
     }
 
 
+# ─── F-4G-1 — controlled action plan (dry-run) ───────────────────────────
+
+def build_hometax_controlled_action_plan(
+    observer_result: Any,
+) -> dict[str, Any]:
+    """홈택스 observer 결과로부터 controlled action plan 을 만든다.
+
+    내부 흐름 (모두 dict-in/dict-out, 브라우저 미접촉):
+      1) observer_result 의 page_state 를 신뢰해 manual_action_required /
+         unrecoverable 가드 적용 (controlled_site_executor 가 처리).
+      2) extract_security_program_signals 결과 부착.
+      3) extract_hometax_login_candidates 결과 부착.
+      4) controlled_site_executor.build_controlled_action_plan(...) 실행
+         (site_key="hometax").
+
+    출력:
+      {
+        "site_key":              "hometax",
+        "page_state":            str,
+        "manual_action_required": bool,
+        "unrecoverable":         bool,
+        "safe_read_candidates":  [...],
+        "download_candidates":   [...],
+        "blocked_candidates":    [...],
+        "dangerous_candidates":  [...],
+        "security_program_signals": dict | None,
+        "login_candidates":      dict | None,
+        "warnings":              [str, ...],
+      }
+
+    본 함수는 어떤 경우에도 page.click / fill / type / submit / download /
+    cookies / storage_state / secret 접근을 수행하지 않는다.
+    """
+    # local import — 순환 import 방지 (controlled_site_executor 는
+    # local_agent 패키지 안의 sibling 모듈).
+    from local_agent import controlled_site_executor as _executor
+    from local_agent import browser_observer as _bo
+
+    plan = _executor.build_controlled_action_plan(
+        observer_result, site_key="hometax",
+    )
+
+    sec_signals = None
+    login_cands = None
+    if isinstance(observer_result, dict):
+        try:
+            sec_signals = _bo.extract_security_program_signals(observer_result)
+        except Exception:  # pragma: no cover - helper 자체 실패는 무시
+            sec_signals = None
+        try:
+            login_cands = extract_hometax_login_candidates(observer_result)
+        except Exception:  # pragma: no cover
+            login_cands = None
+
+    plan["security_program_signals"] = sec_signals
+    plan["login_candidates"] = login_cands
+    return plan
+
+
 __all__ = [
     "DOWNLOAD_TYPES",
     "is_hometax_host",
@@ -606,4 +665,5 @@ __all__ = [
     "is_hometax_sensitive_submission",
     "build_hometax_download_plan",
     "extract_hometax_login_candidates",
+    "build_hometax_controlled_action_plan",
 ]
