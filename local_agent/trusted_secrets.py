@@ -26,10 +26,16 @@ F-4D 단계에서 **추가** (본 모듈):
   - ``SecretResolutionError`` / ``SecretNotFoundError`` /
     ``SecretBackendUnavailableError``                — 비밀값 미노출 예외
 
+F-4E 단계에서 **추가** (본 모듈):
+  - backend 의 ``store`` / ``delete`` / ``exists`` 메서드
+  - ``store_secret(secret_id, value, *, backend=...)``    — backend 위임
+  - ``delete_secret(secret_id, *, backend=...)``          — backend 위임
+  - ``secret_exists(secret_id, *, backend=...)``          — backend 위임
+
 본 단계에서도 **구현하지 않는** 것:
-  - secret 등록/저장 CLI (F-4E 후속)
   - 실제 홈택스 자동 로그인 클릭/입력 (F-4F 이후)
   - DPAPI / pywin32 직접 연동
+  - 운영자 secret_id 목록의 enumeration (keyring 미지원).
 """
 from __future__ import annotations
 
@@ -276,15 +282,30 @@ class SecretBackend(Protocol):
 
     구현체 계약:
       - ``resolve(secret_id)`` 는 평문 str 반환 또는 예외.
+      - ``store(secret_id, value)`` 는 None 반환 또는 예외.
+      - ``delete(secret_id)`` 는 None 반환 또는 예외.
+      - ``exists(secret_id)`` 는 bool 반환.
       - ``__repr__`` 결과에 평문 비밀값을 절대 포함하지 않는다.
       - ``__str__`` 도 동일.
       - 미존재 시 ``SecretNotFoundError``.
       - backend 자체 사용 불가 시 ``SecretBackendUnavailableError``.
+      - 모든 예외 메시지에 평문 비밀값을 포함하지 않는다.
     """
 
     name: str
 
     def resolve(self, secret_id: str) -> str:  # pragma: no cover - protocol
+        ...
+
+    def store(  # pragma: no cover - protocol
+        self, secret_id: str, value: str
+    ) -> None:
+        ...
+
+    def delete(self, secret_id: str) -> None:  # pragma: no cover - protocol
+        ...
+
+    def exists(self, secret_id: str) -> bool:  # pragma: no cover - protocol
         ...
 
 
@@ -323,6 +344,34 @@ class MockSecretBackend:
             raise SecretNotFoundError(
                 f"secret_id not found in mock backend: {secret_id!r}"
             ) from None
+
+    def store(self, secret_id: str, value: str) -> None:
+        # register_secret 가 secret_id 형식/value 형식을 모두 검증한다.
+        # 기존 값이 있어도 덮어쓴다 (rotation 시나리오).
+        self.register_secret(secret_id, value)
+
+    def delete(self, secret_id: str) -> None:
+        if not is_valid_secret_id(secret_id):
+            raise ValueError("invalid secret_id format")
+        try:
+            del self._store[secret_id]
+        except KeyError:
+            raise SecretNotFoundError(
+                f"secret_id not found in mock backend: {secret_id!r}"
+            ) from None
+
+    def exists(self, secret_id: str) -> bool:
+        if not is_valid_secret_id(secret_id):
+            raise ValueError("invalid secret_id format")
+        return secret_id in self._store
+
+    def list_secret_ids(self) -> list[str]:
+        """테스트 전용 — 등록된 secret_id 목록.
+
+        WindowsKeyring backend 는 enumeration 을 지원하지 않으므로
+        본 메서드는 Mock 에서만 의미가 있다.
+        """
+        return sorted(self._store.keys())
 
     def __repr__(self) -> str:
         # entry 개수만 노출. 키/값 둘 다 가린다.
@@ -383,6 +432,66 @@ class WindowsKeyringSecretBackend:
                 f"keyring returned non-string value type: {type(value).__name__}"
             )
         return value
+
+    def store(self, secret_id: str, value: str) -> None:
+        if not is_valid_secret_id(secret_id):
+            raise ValueError("invalid secret_id format")
+        if not isinstance(value, str):
+            raise TypeError("secret value must be str")
+        if value == "":
+            raise ValueError("secret value must not be empty")
+        try:
+            self._keyring.set_password(self._service, secret_id, value)
+        except Exception as exc:
+            # 비밀값 자체는 메시지에 절대 노출하지 않는다.
+            raise SecretResolutionError(
+                f"keyring backend store error: {type(exc).__name__} "
+                f"(service={self._service!r}, secret_id={secret_id!r})"
+            ) from None
+
+    def delete(self, secret_id: str) -> None:
+        if not is_valid_secret_id(secret_id):
+            raise ValueError("invalid secret_id format")
+        # 우선 존재 여부를 확인 — 없으면 SecretNotFoundError 로 통일.
+        try:
+            existing = self._keyring.get_password(self._service, secret_id)
+        except Exception as exc:
+            raise SecretResolutionError(
+                f"keyring backend lookup error: {type(exc).__name__} "
+                f"(service={self._service!r}, secret_id={secret_id!r})"
+            ) from None
+        if existing is None:
+            raise SecretNotFoundError(
+                "secret_id not found in Windows Credential Manager: "
+                f"service={self._service!r}, secret_id={secret_id!r}"
+            )
+        try:
+            self._keyring.delete_password(self._service, secret_id)
+        except Exception as exc:
+            raise SecretResolutionError(
+                f"keyring backend delete error: {type(exc).__name__} "
+                f"(service={self._service!r}, secret_id={secret_id!r})"
+            ) from None
+
+    def exists(self, secret_id: str) -> bool:
+        if not is_valid_secret_id(secret_id):
+            raise ValueError("invalid secret_id format")
+        try:
+            value = self._keyring.get_password(self._service, secret_id)
+        except Exception as exc:
+            raise SecretResolutionError(
+                f"keyring backend lookup error: {type(exc).__name__} "
+                f"(service={self._service!r}, secret_id={secret_id!r})"
+            ) from None
+        return value is not None
+
+    def list_secret_ids(self) -> list[str]:
+        # keyring 은 backend 별로 enumeration 지원이 일관되지 않다.
+        # CLI 는 본 메서드의 NotImplementedError 를 보고 "not supported"
+        # 메시지를 출력해야 한다.
+        raise NotImplementedError(
+            "Windows Credential Manager backend does not support listing"
+        )
 
     def __repr__(self) -> str:
         return f"WindowsKeyringSecretBackend(service={self._service!r})"
@@ -457,6 +566,86 @@ def resolve_secret(
     return backend.resolve(secret_id)
 
 
+# ─── store_secret / delete_secret / secret_exists ───────────────────────
+
+def store_secret(
+    secret_id: str,
+    value: str,
+    *,
+    backend: Optional[SecretBackend] = None,
+) -> None:
+    """secret_id 에 평문 비밀값을 보안 저장소에 저장한다.
+
+    원칙:
+      - ``backend`` 미지정 시 ``NotImplementedError`` (자동 저장 금지).
+      - ``secret_id`` 형식 위반 시 ``ValueError``.
+      - ``value`` 가 str 가 아니면 ``TypeError``.
+      - ``value`` 가 빈 문자열이면 ``ValueError``.
+      - 저장 실패 시 발생하는 ``SecretResolutionError`` 메시지에는
+        평문 비밀값이 절대 들어가지 않는다.
+
+    호출 측 보안 의무:
+      - 이 함수에 넘기는 ``value`` 변수는 호출 종료 직후 폐기한다.
+      - 호출 결과/예외를 그대로 ActionResult / audit log 에 넣지 않는다.
+    """
+    if not is_valid_secret_id(secret_id):
+        raise ValueError("invalid secret_id format")
+    if not isinstance(value, str):
+        raise TypeError("secret value must be str")
+    if value == "":
+        raise ValueError("secret value must not be empty")
+    if backend is None:
+        raise NotImplementedError(
+            "trusted_secrets.store_secret requires an explicit backend; "
+            "pass backend=get_secret_backend() on the operator PC, or "
+            "MockSecretBackend(...) in tests",
+        )
+    backend.store(secret_id, value)
+
+
+def delete_secret(
+    secret_id: str,
+    *,
+    backend: Optional[SecretBackend] = None,
+) -> None:
+    """secret_id 를 보안 저장소에서 삭제한다.
+
+    - ``backend`` 미지정 시 ``NotImplementedError``.
+    - ``secret_id`` 형식 위반 시 ``ValueError``.
+    - 미존재 시 backend 가 ``SecretNotFoundError`` 를 그대로 전파.
+    """
+    if not is_valid_secret_id(secret_id):
+        raise ValueError("invalid secret_id format")
+    if backend is None:
+        raise NotImplementedError(
+            "trusted_secrets.delete_secret requires an explicit backend; "
+            "pass backend=get_secret_backend() on the operator PC, or "
+            "MockSecretBackend(...) in tests",
+        )
+    backend.delete(secret_id)
+
+
+def secret_exists(
+    secret_id: str,
+    *,
+    backend: Optional[SecretBackend] = None,
+) -> bool:
+    """secret_id 가 보안 저장소에 존재하는지 여부 (값은 반환하지 않는다).
+
+    - ``backend`` 미지정 시 ``NotImplementedError``.
+    - ``secret_id`` 형식 위반 시 ``ValueError``.
+    """
+    if not is_valid_secret_id(secret_id):
+        raise ValueError("invalid secret_id format")
+    if backend is None:
+        raise NotImplementedError(
+            "trusted_secrets.secret_exists requires an explicit backend; "
+            "pass backend=get_secret_backend() on the operator PC, or "
+            "MockSecretBackend(...) in tests",
+        )
+    return backend.exists(secret_id)
+
+
 # ─── helpers ─────────────────────────────────────────────────────────────
 
 def _err(code: str, *warnings: str) -> dict[str, Any]:
@@ -485,6 +674,9 @@ __all__ = [
     "reject_raw_secret_params",
     "redact_for_log",
     "resolve_secret",
+    "store_secret",
+    "delete_secret",
+    "secret_exists",
     "get_secret_backend",
     "raw_secret_param_keys",
 ]

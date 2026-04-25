@@ -155,6 +155,86 @@ www.hometax.go.kr
 - `runner.py` 의 pre-existing `login_with_secret` 코드 변경.
 
 
+## F-4E — 로컬 Secret 등록 CLI
+
+대표님 PC 에서 `secret_id` 를 OS 보안 저장소에 직접 등록/확인/삭제하는
+운영자 전용 CLI 가 본 단계의 산출물이다. 본 CLI 는 **로컬 PC 에서만**
+실행되며, 서버/오케스트레이터/원격 호출 경로에 노출되지 않는다.
+
+### 사용법
+
+```
+python scripts/local_secret_store.py add hometax_cert_password
+python scripts/local_secret_store.py check hometax_cert_password
+python scripts/local_secret_store.py delete hometax_cert_password
+python scripts/local_secret_store.py list
+```
+
+- 기본 backend = OS keyring (`WindowsKeyringSecretBackend`).
+  Windows Credential Manager 에 service=`haehan_local_agent`,
+  username=`secret_id` 로 저장된다.
+- `--backend mock` 은 **테스트 전용** — 실제 OS 저장소를 건드리지 않는다.
+- 입력은 `getpass.getpass` 로 받고 echo 하지 않는다. `add` 는 두 번
+  입력받아 일치 여부를 확인하고, 불일치 시 저장하지 않는다.
+- `list` 는 mock backend 에서만 의미가 있다. keyring backend 는
+  enumeration 을 지원하지 않으므로 `not supported by this backend` 를
+  stderr 로 출력한다.
+
+### 종료 코드
+
+| 코드 | 의미                                                            |
+|------|----------------------------------------------------------------|
+| 0    | 정상 (`add` 저장 성공, `check`/`list` 결과 정상, `delete` 성공) |
+| 1    | secret_id 미존재 (`check absent`, `delete` 미존재 등)            |
+| 2    | usage 오류 (잘못된 secret_id, 빈 값, 확인 입력 불일치)            |
+| 3    | backend 사용 불가 (`keyring` 미설치 등)                          |
+| 4    | backend 내부 오류 (메시지에 비밀값은 절대 들어가지 않는다)         |
+
+### secret_id naming rule
+
+- 허용 문자: 영문 / 숫자 / `_` / `-` / `.` (ASCII 한정).
+- 길이: 3..128 글자.
+- 양옆 공백 금지.
+- raw-secret keyword (`password`, `passwd`, `cert_password`,
+  `certificate_password`, `otp`, `token`, `access_token`,
+  `refresh_token`, `cookie`, `session`, `storage_state`,
+  `localStorage`, `sessionStorage`) 와 **동일한** 이름은 거절. 이름이
+  의미 없이 모호해지므로 `hometax_cert_password` 처럼 사이트/용도가
+  명시된 식별자를 쓴다.
+
+### 홈택스용 권장 secret_id (예시)
+
+| secret_id                   | 용도                                          |
+|---------------------------- |---------------------------------------------- |
+| `hometax_user_id`           | 사용자 ID                                      |
+| `hometax_cert_password`     | 공동인증서 비밀번호                            |
+| `hometax_simple_auth_hint`  | 간편인증 사용 시 본인이 알아볼 메모 (실제 OTP 아님) |
+
+> 실제 비밀번호/인증서 비밀번호 자체는 본 문서/리포지토리/주석/예시
+> 어디에도 절대 적지 않는다. `add` 명령으로 직접 입력만 한다.
+
+### 보안 계약
+
+- CLI 가 받은 비밀값은 `prompt → store_secret(backend=...) → 즉시 폐기`
+  경로만 거친다. stdout / stderr / 로그 / 예외 메시지 / backend repr
+  어디에도 평문이 들어가지 않는다.
+- `delete` 명령은 secret_id 만 표시하고, 저장돼 있던 비밀값은 어차피
+  CLI 가 본 적이 없다. 미존재 시 종료 코드 1.
+- backend 내부 오류 (예: keyring 호출 예외) 의 경우, CLI 는
+  `backend error while ...` 처럼 일반 메시지만 stderr 로 출력하고
+  종료 코드 4 로 끝낸다. 원인 예외 메시지 / 비밀값 / `__cause__` 를
+  사용자에게 노출하지 않는다.
+
+### 본 단계에 **포함되지 않는** 것
+
+- 실제 홈택스 로그인 화면 smoke (F-4F 이후).
+- `page.fill` / `page.type` / `page.click` / `page.goto` 등 브라우저
+  자동화 코드 — 본 CLI 와 `trusted_secrets.py` 어디에도 추가하지 않는다.
+- `runner.py` 의 pre-existing `login_with_secret` 코드 변경.
+- 운영자가 등록한 secret 의 enumeration (keyring 미지원).
+- 다중 사용자 / 다중 service_name 지원 (단일 운영자 PC 가정).
+
+
 ## 다운로드 폴더 원칙
 
 - 다운로드 대상 폴더는 **사용자가 명시적으로 지정한 allowlist 폴더** 이
@@ -195,6 +275,8 @@ www.hometax.go.kr
 | `ai_orchestrator/tests/test_trusted_browser_policy.py`              | trusted_browser_policy 단위 테스트            |
 | `ai_orchestrator/tests/test_trusted_secrets.py`                     | trusted_secrets 단위 테스트                   |
 | `ai_orchestrator/tests/test_trusted_secret_backend.py`              | F-4D backend (Mock + 선택적 keyring) 단위 테스트 |
+| `scripts/local_secret_store.py`                                     | F-4E 운영자 PC secret_id 등록/확인/삭제 CLI    |
+| `ai_orchestrator/tests/test_local_secret_store_cli.py`              | F-4E CLI + store/delete/exists interface 단위 테스트 |
 | `ai_orchestrator/tests/test_hometax_adapter.py`                     | 홈택스 page classifier 단위 테스트            |
 
 
