@@ -36,6 +36,11 @@ ACTION_RISK: dict[str, str] = {
     "open_url":           "low",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
+    # F-4G-3Y-a — 홈택스 post-login observe (서버측 등록만).
+    # 실제 핸들러는 F-4G-3Y-b 에서 local_agent.actions 에 추가된다.
+    # medium: visible browser 를 띄우지만 자동 클릭/입력/쿠키/스토리지 접근
+    # 없음. 작업 생성 권한은 admin/owner (라우터 정책 그대로).
+    "hometax_post_login_observe": "medium",
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
@@ -56,6 +61,10 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ping", "system_info", "list_allowed_apps",
     "open_url", "list_files_readonly",
     "capture_screenshot",
+    # F-4G-3Y-a — 홈택스 post-login observe (medium). 실제 핸들러는
+    # F-4G-3Y-b 에서 추가될 때까지 로컬 에이전트가 UNKNOWN_ACTION 으로
+    # 거절한다 (의도된 상태).
+    "hometax_post_login_observe",
 })
 
 

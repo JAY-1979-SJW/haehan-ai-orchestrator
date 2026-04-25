@@ -46,6 +46,9 @@ _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ping", "system_info", "list_allowed_apps",
     "open_url", "list_files_readonly",
     "capture_screenshot",
+    # F-4G-3Y-a — 서버 registry 와 동등 유지. 핸들러 미구현 동안에는
+    # execute_action 이 UNKNOWN_ACTION 으로 거절한다 (의도된 상태).
+    "hometax_post_login_observe",
 })
 
 # 승인 없이도 high risk 경로로 실행 가능한 액션 — 현재 없음.

@@ -333,8 +333,48 @@ def test_action_risk_mapping_sanity():
     assert ACTION_RISK["open_url"] == "low"
     assert ACTION_RISK["list_files_readonly"] == "medium"
     assert ACTION_RISK["capture_screenshot"] == "high"
+    # F-4G-3Y-a — 신규 등록.
+    assert ACTION_RISK["hometax_post_login_observe"] == "medium"
     assert "delete_file" not in ACTION_RISK
     assert "execute_shell" not in ACTION_RISK
+
+
+def test_hometax_post_login_observe_registered_for_auto_execute():
+    """F-4G-3Y-a: 새 액션이 서버측 큐 화이트리스트에 들어가 있어야 한다."""
+    from ai_orchestrator.local_agent_registry import (
+        ACTION_RISK,
+        AUTO_EXECUTE_VIA_AGENT,
+        _SERVER_AUTO_COMPLETE,
+    )
+    assert "hometax_post_login_observe" in ACTION_RISK
+    assert "hometax_post_login_observe" in AUTO_EXECUTE_VIA_AGENT
+    # 서버 자동완료 대상은 아니다 (PC 의존 액션).
+    assert "hometax_post_login_observe" not in _SERVER_AUTO_COMPLETE
+
+
+def test_hometax_post_login_observe_handler_not_yet_implemented():
+    """F-4G-3Y-a: 서버측 등록만 끝난 본 단계에서는 로컬 에이전트 핸들러가
+    미구현이어서 execute_action 이 UNKNOWN_ACTION 으로 거절해야 한다.
+    핸들러는 F-4G-3Y-b 에서 추가된다."""
+    from local_agent.actions import execute_action
+    r = execute_action("hometax_post_login_observe", {})
+    assert not r.success
+    assert r.error_code == "UNKNOWN_ACTION"
+
+
+def test_hometax_post_login_observe_existing_action_risk_unchanged():
+    """기존 액션의 risk 매핑이 본 단계에서 변경되지 않았는지 확인."""
+    from ai_orchestrator.local_agent_registry import ACTION_RISK
+    expected_baseline = {
+        "ping": "low",
+        "system_info": "low",
+        "list_allowed_apps": "low",
+        "open_url": "low",
+        "list_files_readonly": "medium",
+        "capture_screenshot": "high",
+    }
+    for action, risk in expected_baseline.items():
+        assert ACTION_RISK[action] == risk
 
 
 def test_local_actions_module_forbidden_set():
