@@ -717,3 +717,266 @@ def test_open_local_browser_action_still_allows_google_url(monkeypatch) -> None:
     assert r.success is True
     assert r.data["launched"] is True
     assert seen[0]["url"] == "https://studio.youtube.com/"
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# H) wait_until / dwell_seconds (F-4F-0)
+# ═════════════════════════════════════════════════════════════════════════
+
+def test_observe_default_wait_until_passed_to_goto() -> None:
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    bo.observe_public_browser_page(
+        "https://example.com/",
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert page.goto_calls
+    assert page.goto_calls[0][1]["wait_until"] == "domcontentloaded"
+
+
+@pytest.mark.parametrize(
+    "w", ["commit", "domcontentloaded", "load", "networkidle"],
+)
+def test_observe_wait_until_allowed_values(w: str) -> None:
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", wait_until=w,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is True
+    assert page.goto_calls[0][1]["wait_until"] == w
+
+
+@pytest.mark.parametrize(
+    "w",
+    [
+        "",                # 빈 문자열
+        "wrong",           # 미허용 토큰
+        "DOMCONTENTLOADED",  # 대소문자 불일치
+        "fully_loaded",    # 미허용 토큰
+        None,              # str 아님
+        0,                 # str 아님
+    ],
+)
+def test_observe_wait_until_rejected_for_invalid(w: Any) -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", wait_until=w,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "WAIT_UNTIL_INVALID"
+    assert "wait_until_invalid" in r["warnings"]
+    # Playwright 호출 0회 — launch 전 reject.
+    assert factory.chromium.launch_calls == []
+
+
+def test_observe_default_dwell_seconds_no_sleep(monkeypatch) -> None:
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/",
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is True
+    # dwell_seconds 미지정 → time.sleep 호출 0회.
+    assert sleeps == []
+
+
+def test_observe_dwell_seconds_one_calls_sleep_once(monkeypatch) -> None:
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", dwell_seconds=1,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is True
+    assert sleeps == [1]
+
+
+def test_observe_dwell_seconds_30_boundary_allowed(monkeypatch) -> None:
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", dwell_seconds=30,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is True
+    assert sleeps == [30]
+
+
+@pytest.mark.parametrize("d", [-1, -10, 31, 100, 9999])
+def test_observe_dwell_seconds_out_of_range_rejected(d: int) -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", dwell_seconds=d,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "DWELL_SECONDS_INVALID"
+    assert "dwell_seconds_invalid" in r["warnings"]
+    # Playwright 호출 0회 — launch 전 reject.
+    assert factory.chromium.launch_calls == []
+
+
+@pytest.mark.parametrize(
+    "d",
+    [
+        "10",     # 문자열은 observer 단에선 reject (action 단에서만 변환)
+        1.5,      # float
+        None,
+        True,     # bool 명시 차단
+        False,
+        [1],
+    ],
+)
+def test_observe_dwell_seconds_non_int_rejected(d: Any) -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://example.com/", dwell_seconds=d,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "DWELL_SECONDS_INVALID"
+    assert factory.chromium.launch_calls == []
+
+
+def test_action_passes_wait_until_to_observer() -> None:
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "wait_until": "networkidle",
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is True
+    assert page.goto_calls[0][1]["wait_until"] == "networkidle"
+
+
+def test_action_passes_dwell_seconds_to_observer(monkeypatch) -> None:
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "dwell_seconds": 2,
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is True
+    assert sleeps == [2]
+
+
+def test_action_dwell_seconds_string_int_converted(monkeypatch) -> None:
+    """문자열 숫자 "3" 은 action 단에서 안전하게 int 로 변환된다."""
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage(
+        url="about:blank", title="Example", html=_basic_html(), status=200,
+    )
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "dwell_seconds": "3",
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is True
+    assert sleeps == [3]
+
+
+def test_action_dwell_seconds_non_numeric_string_rejected() -> None:
+    r = actions.action_observe_public_browser_page({
+        "url": "https://example.com/",
+        "dwell_seconds": "abc",
+    })
+    assert r.success is False
+    assert r.error_code == "INVALID_PARAM"
+
+
+def test_action_dwell_seconds_negative_propagates_observer_reject() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "dwell_seconds": -5,
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is False
+    assert r.data["error_code"] == "DWELL_SECONDS_INVALID"
+    assert factory.chromium.launch_calls == []
+
+
+def test_action_dwell_seconds_over_30_propagates_observer_reject() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "dwell_seconds": 31,
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is False
+    assert r.data["error_code"] == "DWELL_SECONDS_INVALID"
+    assert factory.chromium.launch_calls == []
+
+
+def test_action_wait_until_invalid_propagates_observer_reject() -> None:
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = actions.execute_action("observe_public_browser_page", {
+        "url": "https://example.com/",
+        "wait_until": "fully_loaded",
+        "_browser_factory": factory,
+        "_env": _empty_env(),
+    })
+    assert r.success is False
+    assert r.data["error_code"] == "WAIT_UNTIL_INVALID"
+    assert factory.chromium.launch_calls == []
+
+
+def test_google_open_only_blocks_before_dwell(monkeypatch) -> None:
+    """dwell_seconds/wait_until 이 있어도 Google open-only 는 launch 전 차단."""
+    sleeps: list[Any] = []
+    monkeypatch.setattr(bo.time, "sleep", lambda s: sleeps.append(s))
+    page = _FakePage()
+    factory = _make_factory(page)
+    r = bo.observe_public_browser_page(
+        "https://accounts.google.com/signin?continue=secret",
+        wait_until="networkidle",
+        dwell_seconds=10,
+        _browser_factory=factory, _env=_empty_env(),
+    )
+    assert r["success"] is False
+    assert r["error_code"] == "GOOGLE_OPEN_ONLY"
+    assert factory.chromium.launch_calls == []
+    assert sleeps == []
+    # query/fragment 미노출.
+    assert "secret" not in str(r)

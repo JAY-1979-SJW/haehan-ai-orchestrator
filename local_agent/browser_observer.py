@@ -55,6 +55,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from typing import Any, Callable, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -74,6 +75,20 @@ _MAX_TIMEOUT_MS = 60_000
 _DEFAULT_MAX_TEXT_CHARS = 5_000
 _MIN_MAX_TEXT_CHARS = 200
 _MAX_MAX_TEXT_CHARS = 50_000
+
+# Playwright page.goto 의 valid wait_until 값. SPA (홈택스 등) 는 본문이
+# domcontentloaded 이후 XHR 로 렌더링되므로 호출자가 "networkidle" 을
+# 선택할 수 있어야 한다. 기본값은 backward compat 을 위해 보존.
+_DEFAULT_WAIT_UNTIL = "domcontentloaded"
+_ALLOWED_WAIT_UNTIL: tuple[str, ...] = (
+    "commit", "domcontentloaded", "load", "networkidle",
+)
+
+# dwell_seconds 는 결과 추출 직후 close 전에 화면을 일시적으로 유지하기 위한
+# smoke/debug 전용 옵션이다. 0 이면 즉시 close (기존 동작). 음수/30 초과는
+# reject — 무한 keep-open 은 만들지 않는다.
+_DEFAULT_DWELL_SECONDS = 0
+_MAX_DWELL_SECONDS = 30
 
 _LINKS_SAMPLE_CAP = 20
 _BUTTONS_SAMPLE_CAP = 20
@@ -195,6 +210,8 @@ def observe_public_browser_page(
     timeout_ms: int = _DEFAULT_TIMEOUT_MS,
     max_text_chars: int = _DEFAULT_MAX_TEXT_CHARS,
     capture_screenshot: bool = False,
+    wait_until: str = _DEFAULT_WAIT_UNTIL,
+    dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _env: Optional[dict] = None,
 ) -> dict[str, Any]:
@@ -257,6 +274,34 @@ def observe_public_browser_page(
     )
     capture_screenshot_v = bool(capture_screenshot)
 
+    # 4.5) wait_until 화이트리스트. SPA 사이트는 "networkidle" 권장.
+    # 허용외 값은 silent fallback 하지 않고 reject — 잘못된 값을 호출자가
+    # 빠르게 알 수 있어야 한다. _safe_target_url 이 이미 query/fragment 를
+    # 제거하므로 reject 결과에 민감정보가 새지 않는다.
+    if not isinstance(wait_until, str) or wait_until not in _ALLOWED_WAIT_UNTIL:
+        return _empty_result(
+            target_url=target_url,
+            error_code="WAIT_UNTIL_INVALID",
+            warnings=["wait_until_invalid"],
+        )
+    wait_until_v = wait_until
+
+    # 4.6) dwell_seconds — smoke/debug 전용. 0 이면 기존처럼 즉시 close.
+    # bool 은 int 의 subclass 라 isinstance(True, int) == True 이므로 명시 차단.
+    if isinstance(dwell_seconds, bool) or not isinstance(dwell_seconds, int):
+        return _empty_result(
+            target_url=target_url,
+            error_code="DWELL_SECONDS_INVALID",
+            warnings=["dwell_seconds_invalid"],
+        )
+    if dwell_seconds < 0 or dwell_seconds > _MAX_DWELL_SECONDS:
+        return _empty_result(
+            target_url=target_url,
+            error_code="DWELL_SECONDS_INVALID",
+            warnings=["dwell_seconds_invalid"],
+        )
+    dwell_seconds_v = dwell_seconds
+
     # 5) Playwright factory 결정.
     factory = _browser_factory
     if factory is None:
@@ -277,6 +322,8 @@ def observe_public_browser_page(
             timeout_ms=timeout_ms_v,
             max_text_chars=max_text_chars_v,
             capture_screenshot=capture_screenshot_v,
+            wait_until=wait_until_v,
+            dwell_seconds=dwell_seconds_v,
         )
     except BrowserDependencyMissing as e:
         return _empty_result(
@@ -302,6 +349,8 @@ def _run_observation(
     timeout_ms: int,
     max_text_chars: int,
     capture_screenshot: bool,
+    wait_until: str = _DEFAULT_WAIT_UNTIL,
+    dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     launch_kwargs: dict[str, Any] = {"headless": False}
@@ -327,7 +376,7 @@ def _run_observation(
                         response = page.goto(
                             target_url,
                             timeout=timeout_ms,
-                            wait_until="domcontentloaded",
+                            wait_until=wait_until,
                         )
                     except Exception as e:
                         warnings.append(f"goto_failed:{type(e).__name__}")
@@ -374,7 +423,7 @@ def _run_observation(
                                 f"screenshot_failed:{type(e).__name__}",
                             )
 
-                    return _build_result(
+                    result = _build_result(
                         target_url=target_url,
                         title=raw_title,
                         final_url=final_url_raw,
@@ -384,6 +433,14 @@ def _run_observation(
                         screenshot_path=screenshot_path,
                         warnings=warnings,
                     )
+                    # smoke/debug 용 화면 유지. 클릭/입력/스크롤/다운로드 없이
+                    # 단순 sleep — page 객체는 외부에 노출되지 않는다.
+                    if dwell_seconds > 0:
+                        try:
+                            time.sleep(dwell_seconds)
+                        except Exception:  # pragma: no cover - sleep 자체 실패
+                            pass
+                    return result
                 finally:
                     _safe_close(page)
             finally:

@@ -47,19 +47,40 @@ _DOWNLOAD_TOKENS: tuple[str, ...] = (
 )
 
 # 신고/납부/발행 등 차단 대상 토큰 — 매우 보수적으로 잡는다.
+# 메인 페이지 메뉴 카탈로그에 흔한 단독 단어("납부", "결제", "전송",
+# "위임", "수임", "발급", "발행", "신고") 만으로는 sensitive_submission 으로
+# 잡지 않는다. 실제 위험한 동작 맥락(동사 결합/제출/이체/발행하기 등) 일
+# 때만 sensitive_submission 판정.
 _SENSITIVE_TOKENS: tuple[str, ...] = (
-    "신고서 제출", "신고 제출", "최종 제출",
-    "납부", "납부하기", "전자납부", "계좌이체",
+    # 제출 계열 — 신고서 최종 제출 단계.
+    "신고서 제출", "신고 제출", "최종 제출", "제출하기",
+    "확인 후 제출", "최종 확인",
+    # 납부/결제/이체 계열 — 자금 이동 동사 결합형.
+    "납부하기", "전자납부", "계좌이체", "결제하기", "이체",
+    # 발행/발급 계열 — 동사 결합형 (단독 "발행"/"발급" 은 제외).
+    "발행하기",
     "세금계산서 발행", "세금계산서 발급", "전자세금계산서 발급",
-    "현금영수증 발행",
-    "사업자정보 변경", "사업자등록정보 변경",
-    "위임", "수임", "위임/수임", "권한 변경",
-    "전송", "최종전송",
-    "결제", "이체",
+    "전자세금계산서 발행", "현금영수증 발행",
+    # 권한/정보 변경 — 사업자/위임 변경 같은 명시적 변경 액션.
+    "사업자정보 변경", "사업자등록정보 변경", "권한 변경",
+    "위임/수임 변경", "위임 변경", "수임 변경",
+    # 전송 — 단독 "전송" 은 제외하고 동사 결합형/최종전송만.
+    "최종전송", "전송하기",
 )
 
 _HOMETAX_HOST_SUFFIXES: tuple[str, ...] = (
     "hometax.go.kr",
+)
+
+# 홈택스 메인(랜딩) 페이지 식별. title 또는 URL path 가 메인 성격이면
+# sensitive_submission 검사를 건너뛴다 — 메인은 신고/납부/발급/발행 단어가
+# 메뉴 카탈로그로 다수 노출되지만 사용자가 어떤 동작도 시작하지 않은 상태.
+_HOMETAX_MAIN_TITLE_TOKENS: tuple[str, ...] = (
+    "홈택스 - 메인", "홈택스-메인", "홈택스 메인",
+    "국세청 홈택스 - 메인",
+)
+_HOMETAX_MAIN_PATH_TOKENS: tuple[str, ...] = (
+    "/index", "/websquare/websquare.html", "/main",
 )
 
 
@@ -84,18 +105,26 @@ def classify_hometax_page(
     """홈택스 페이지 분류 (정책 우선순위).
 
     우선순위:
-      1) sensitive_submission — 신고/납부/발행/위임/제출 토큰 (가장 위험)
-      2) download_page        — 명시적 다운로드 토큰 (페이지 목적이 분명)
-      3) login_required       — 인증서/간편인증/sign in 토큰
-      4) authenticated        — 마이홈택스/로그아웃 토큰
-      5) unknown              — 그 외
+      0) 메인(랜딩) 페이지         — sensitive_submission 으로 잡지 않는다
+      1) sensitive_submission     — 강한 신호 토큰 (제출/이체/발행하기 등)
+      2) download_page            — 명시적 다운로드 토큰 (페이지 목적이 분명)
+      3) login_required           — 인증서/간편인증/sign in 토큰
+      4) authenticated            — 마이홈택스/로그아웃 토큰
+      5) unknown                  — 그 외
+
+    메인 페이지 가드: title 이 "홈택스 - 메인" 류이거나 URL path 가 메인
+    형식이면 sensitive_submission 검사를 건너뛴다. 메인은 신고/납부/발급/
+    발행 단어가 메뉴 카탈로그로 다수 노출되지만 사용자가 어떤 위험 동작도
+    시작하지 않은 상태이기 때문이다.
     """
     title_l = (title or "").lower()
     url_l = (url or "").lower()
     text_l = (text or "").lower()
     blob = " ".join([title_l, url_l, text_l])
 
-    if _has_any_token(blob, _SENSITIVE_TOKENS):
+    is_main = _looks_like_hometax_main(title_l, url_l)
+
+    if not is_main and _has_any_token(blob, _SENSITIVE_TOKENS):
         return "sensitive_submission"
     if _has_any_token(blob, _DOWNLOAD_TOKENS):
         return "download_page"
@@ -104,6 +133,29 @@ def classify_hometax_page(
     if _has_any_token(blob, _AUTH_TOKENS):
         return "authenticated"
     return "unknown"
+
+
+def _looks_like_hometax_main(title_l: str, url_l: str) -> bool:
+    """홈택스 메인(랜딩) 페이지 신호. title 또는 URL path 둘 중 하나면 True."""
+    for t in _HOMETAX_MAIN_TITLE_TOKENS:
+        if t and t.lower() in title_l:
+            return True
+    if url_l:
+        try:
+            parsed = urlparse(url_l)
+        except Exception:  # noqa: BLE001
+            parsed = None
+        host = (parsed.hostname or "").lower() if parsed else ""
+        path = (parsed.path or "").lower() if parsed else ""
+        if host and any(host == s or host.endswith("." + s)
+                        for s in _HOMETAX_HOST_SUFFIXES):
+            # 정확히 루트(/) 이거나 메인 path 토큰을 포함.
+            if path in ("", "/"):
+                return True
+            for p in _HOMETAX_MAIN_PATH_TOKENS:
+                if p and p in path:
+                    return True
+    return False
 
 
 def is_hometax_login_required(

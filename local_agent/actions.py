@@ -847,12 +847,40 @@ def action_observe_public_browser_page(params: dict) -> ActionResult:
 
     capture_screenshot_v = bool(params.get("capture_screenshot", False))
 
+    # SPA 사이트 (홈택스 등) 는 "networkidle" 권장. 미지정/빈 값이면 default
+    # ("domcontentloaded"). 값이 주어지면 그대로 observer 로 전달 — observer
+    # 가 화이트리스트 검증해 허용외는 WAIT_UNTIL_INVALID 로 reject.
+    wait_until_raw = params.get("wait_until")
+    if wait_until_raw is None or (isinstance(wait_until_raw, str) and not wait_until_raw):
+        wait_until_v = "domcontentloaded"
+    else:
+        wait_until_v = wait_until_raw
+
+    # smoke/debug 용 dwell_seconds. 미지정이면 0 (즉시 close). 문자열 숫자
+    # "10" 은 int 변환, 비-숫자 문자열은 INVALID_PARAM. 음수/30 초과는
+    # observer 단에서 DWELL_SECONDS_INVALID 로 reject.
+    dwell_seconds_raw = params.get("dwell_seconds", 0)
+    if isinstance(dwell_seconds_raw, bool):
+        return ActionResult(
+            False, "observe_public_browser_page 실패", {},
+            "dwell_seconds 정수 아님", error_code="INVALID_PARAM",
+        )
+    try:
+        dwell_seconds_v = int(dwell_seconds_raw)
+    except (TypeError, ValueError):
+        return ActionResult(
+            False, "observe_public_browser_page 실패", {},
+            "dwell_seconds 정수 아님", error_code="INVALID_PARAM",
+        )
+
     kwargs: dict = {
         "url": url,
         "site_policy": site_policy,
         "timeout_ms": timeout_ms_v,
         "max_text_chars": max_text_chars_v,
         "capture_screenshot": capture_screenshot_v,
+        "wait_until": wait_until_v,
+        "dwell_seconds": dwell_seconds_v,
     }
     # 테스트 전용 주입 (운영 호출에는 주어지지 않음).
     for key in ("_browser_factory", "_env"):
