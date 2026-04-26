@@ -184,3 +184,81 @@ python scripts/search_local_files.py --include-runs --json
 - `--preview` 사용하면 내용까지 포함 (느림, 인사이트 높음)
 - `--include-runs` 사용하면 이전 실행 결과 JSON/MD도 검색 가능
 - 민감정보(password/key/token)는 자동 마스킹됨 — 안전하게 공유 가능
+
+---
+
+## LOCAL-FS-3 — 최근 runs 결과 자동 요약
+
+Claude Code가 작업 시작 전 runs/ 하위 최신 결과를 작업군별로 자동 요약한다.
+PASS/WARN/FAIL 상태 및 next_actions를 한눈에 파악할 수 있다.
+
+### 사용법
+
+```bash
+# 전체 작업군 요약
+python scripts/summarize_recent_runs.py --json
+
+# 특정 그룹만
+python scripts/summarize_recent_runs.py --group developer_console --json
+
+# 여러 그룹
+python scripts/summarize_recent_runs.py --group render,video --json
+```
+
+### 옵션
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--root` | `.` | 프로젝트 루트 |
+| `--group` | 전체 | 요약할 작업군 (쉼표 구분) |
+| `--json` | false | JSON 요약 stdout 출력 |
+| `--out-dir` | `runs/local_files` | 결과 저장 디렉터리 |
+| `--max-files` | 3 | 그룹당 최대 파일 수 |
+
+### 작업군 목록
+
+| 작업군 | runs/ 경로 |
+|--------|------------|
+| `developer_console` | `runs/developer_console/**` |
+| `video` | `runs/video/*.json`, `runs/video/**` |
+| `render` | `runs/video/render/**` |
+| `local_files` | `runs/local_files/*.json` |
+| `local_agent` | `runs/local_agent/**` |
+| `naver` | `runs/naver/**` |
+| `youtube` | `runs/youtube/**` |
+| `content` | `runs/content/**` |
+
+### 상태 분류 규칙
+
+| 상태 | 조건 |
+|------|------|
+| `FAIL` | status=BLOCKED/failed, security.* 위반 |
+| `WARN` | status=NEEDS_REAUTH/UNKNOWN, warnings[] 있음, ffmpeg_available=false, mode=dry_run |
+| `PASS` | 위 조건 없음 |
+
+- `NEEDS_REAUTH`는 FAIL이 아니라 WARN — 장애가 아닌 다음 조치 필요 상태
+- `action_required=true`이면 next_actions 목록 확인 필요
+
+### 결과 파일
+
+- `runs/local_files/recent_runs_summary_YYYYMMDD_HHMMSS.json`
+- `runs/local_files/recent_runs_summary_YYYYMMDD_HHMMSS.md`
+
+### 보안
+
+- `.env`, `secrets/`, `browser_state` 경로는 절대 읽지 않음
+- `next_actions` 등 모든 문자열에 `redact_sensitive_text()` 적용
+- API key / token / password 원문 출력 없음
+
+### 작업 전 사용 루틴 (LOCAL-FS-3)
+
+```bash
+# 작업 시작 전 전체 상태 파악
+python scripts/summarize_recent_runs.py --json
+
+# 개발자 콘솔 관련 작업 전
+python scripts/summarize_recent_runs.py --group developer_console --json
+
+# 영상/렌더링 관련 작업 전
+python scripts/summarize_recent_runs.py --group render,video --json
+```
