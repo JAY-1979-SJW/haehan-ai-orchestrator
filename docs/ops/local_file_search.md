@@ -83,3 +83,104 @@ preview 및 matched_lines에서 다음 패턴을 자동 마스킹한다:
 - `-----BEGIN ... KEY-----` 블록 → `[PRIVATE KEY REDACTED]`
 
 `--allow-sensitive-paths` 사용 시에도 redaction은 항상 적용된다.
+
+## 작업 전 사용 루틴 (LOCAL-FS-2)
+
+**새 작업 시작 전 관련 파일을 자동 검색한다.**
+대표님에게 파일 경로/내용을 요청하지 않는다.
+
+### 공통 지시 문구
+
+모든 작업 시작 전:
+```
+작업 시작 전 scripts/search_local_files.py로 관련 파일과 최신 runs 결과를 먼저 검색한다.
+대표님에게 파일 경로/내용을 요청하지 않는다.
+```
+
+### 주요 키워드별 검색 패턴
+
+#### 개발자 콘솔 작업 (Kakao/Naver/Google)
+```bash
+python scripts/search_local_files.py --query "kakao" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "naver" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "console" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "storage_state" --file-type py,md --json
+```
+
+#### 영상 작업 (ffmpeg, 렌더링, 녹화)
+```bash
+python scripts/search_local_files.py --query "ffmpeg" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "render" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "recording" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "subtitle" --preview --include-runs --json
+```
+
+#### 세션·로그인 작업
+```bash
+python scripts/search_local_files.py --query "session" --file-type py,md --json
+
+python scripts/search_local_files.py --query "login" --file-type py,md --json
+
+python scripts/search_local_files.py --query "browser_state" --preview --json
+```
+
+#### 자동화·스케줄링 작업
+```bash
+python scripts/search_local_files.py --query "automation" --preview --include-runs --json
+
+python scripts/search_local_files.py --query "cron" --preview --json
+
+python scripts/search_local_files.py --query "schedule" --preview --json
+```
+
+#### 파일 타입별 검색
+```bash
+# Python 코드만 검색
+python scripts/search_local_files.py --query "kakao" --file-type py --preview --json
+
+# 문서만 검색
+python scripts/search_local_files.py --query "kakao" --file-type md --preview --json
+
+# 설정/데이터 파일만
+python scripts/search_local_files.py --query "kakao" --file-type json,yaml,yml --json
+```
+
+#### 최신 실행 결과 조회
+```bash
+# 최근 실행 결과 검색 (runs/ 포함)
+python scripts/search_local_files.py --include-runs --query "kakao_app_details" --json
+
+python scripts/search_local_files.py --include-runs --query "session_health" --json
+
+python scripts/search_local_files.py --include-runs --query "error\|failed\|warn" --json
+```
+
+#### 파일 인덱스만 조회 (전체 구조 파악)
+```bash
+# query 없음 = 파일 인덱스 요약
+python scripts/search_local_files.py --json
+
+python scripts/search_local_files.py --include-runs --json
+```
+
+### 검색 결과 해석
+
+| 결과 | 의미 |
+|------|------|
+| `total_matches: 0` | 관련 파일 없음 — 신규 작업 또는 이전 결과 없음 |
+| `total_matches: 1-10` | 매우 구체적 — 직접 관련 파일 소수 |
+| `total_matches: 11-50` | 적당함 — 관련 도메인 파일 중간 규모 |
+| `total_matches: 50+` | 포괄적 — 광범위한 관련성 |
+
+### 주의사항
+
+- `--preview` 없으면 파일명/경로만 반환 (빠름)
+- `--preview` 사용하면 내용까지 포함 (느림, 인사이트 높음)
+- `--include-runs` 사용하면 이전 실행 결과 JSON/MD도 검색 가능
+- 민감정보(password/key/token)는 자동 마스킹됨 — 안전하게 공유 가능
