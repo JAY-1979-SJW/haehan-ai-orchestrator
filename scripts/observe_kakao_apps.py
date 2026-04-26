@@ -206,17 +206,46 @@ def _build_next_actions(session_status: str, signals: dict) -> list[dict]:
 
 # ── interactive login wait ─────────────────────────────────────────────────
 
+def _is_strong_login_signal(reasons: list[str]) -> bool:
+    """url_changed 단독, success_url_match 단독은 strong reason이 아니다.
+
+    url_changed + 다른 신호가 있어야 완료 처리한다.
+    로그인 페이지 → 앱 목록 리다이렉트만으로는 완료로 오판정하지 않도록 한다.
+    """
+    non_url_and_non_success = [
+        r for r in reasons
+        if r != "url_changed" and not r.startswith("success_url_match:")
+    ]
+    # url_changed 단독이면 False
+    if not non_url_and_non_success:
+        return False
+    # user_confirmed_login은 항상 strong
+    if "user_confirmed_login" in reasons:
+        return True
+    # 명확한 로그인 완료 신호
+    strong_signals = {"password_input_disappeared", "login_required_hint_cleared"}
+    for r in reasons:
+        if r in strong_signals or r.startswith("success_text_match:"):
+            return True
+    return False
+
+
 def _has_post_login_signal(current: dict, initial: dict) -> bool:
     """URL 변경만으로는 완료 처리하지 않는다. post-login signal이 있어야 한다."""
-    from local_agent.browser_login_probe import _detect_completion, _has_strong_reason
+    from local_agent.browser_login_probe import _detect_completion
     reasons = _detect_completion(
         initial=initial, current=current,
         success_urls=_SUCCESS_URL_TOKENS,
         success_texts=_SUCCESS_TEXT_TOKENS,
     )
-    # url_changed 단독은 strong reason이 아니다
-    non_url = [r for r in reasons if r != "url_changed" and not r.startswith("success_url_match:")]
-    return bool(non_url) or _has_strong_reason(reasons)
+    return _is_strong_login_signal(reasons)
+
+
+def _is_interactive_stdin() -> bool:
+    try:
+        return sys.stdin.isatty()
+    except Exception:
+        return False
 
 
 def _interactive_wait(
@@ -237,10 +266,13 @@ def _interactive_wait(
     - timeout 시 NEEDS_REAUTH_TIMEOUT을 반환한다.
     - ID/PW 자동 입력, password value 읽기, cookie/session export 금지.
     """
-    from local_agent.browser_login_probe import _observe, _detect_completion, _has_strong_reason
+    from local_agent.browser_login_probe import _observe, _detect_completion
     from local_agent.browser_reader import _safe_close
 
     time_mod = _clock or _time_default
+    # _input_reader 주입 시 대화형으로 간주 (테스트 포함)
+    # 미주입 시 실제 stdin isatty()로 판정
+    interactive_mode = (_input_reader is not None) or _is_interactive_stdin()
     input_fn = _input_reader if _input_reader is not None else input
 
     factory = _browser_factory
@@ -340,33 +372,41 @@ def _interactive_wait(
                             last_url = last_obs.get("current_url", last_url)
                             last_login_hint = last_obs.get("login_required_hint", last_login_hint)
 
-                            if _has_strong_reason(completion_reasons):
+                            if _is_strong_login_signal(completion_reasons):
                                 break
 
-                        # ── 사용자 확인 (Enter 전 browser 유지) ──────────────
-                        login_confirmed = False
-                        try:
-                            ans = input_fn(_LOGIN_COMPLETE_PROMPT)
-                            if (ans or "").strip().lower() not in {"n", "no", "아니오"}:
-                                login_confirmed = True
-                                if "user_confirmed_login" not in completion_reasons:
-                                    completion_reasons.append("user_confirmed_login")
-                        except (EOFError, KeyboardInterrupt):
-                            pass
-
-                        # URL 변경만으로는 완료 처리하지 않는다
+                        # ── 로그인 완료 판정 ──────────────────────────────────
                         has_signal = _has_post_login_signal(last_obs, initial)
-                        timed_out = (not login_confirmed and not has_signal)
+                        login_confirmed = False
 
-                        if not timed_out:
+                        if interactive_mode:
+                            # 대화형: 사용자 Enter 확인 (브라우저는 유지)
+                            try:
+                                ans = input_fn(_LOGIN_COMPLETE_PROMPT)
+                                if (ans or "").strip().lower() not in {"n", "no", "아니오"}:
+                                    login_confirmed = True
+                                    if "user_confirmed_login" not in completion_reasons:
+                                        completion_reasons.append("user_confirmed_login")
+                            except (EOFError, KeyboardInterrupt):
+                                pass
+                        else:
+                            # 비대화형(Claude Code): signal 기반으로만 판정
+                            # input() 호출하지 않음 — 브라우저를 즉시 닫지 않는다
+                            login_confirmed = has_signal
+
+                        success = login_confirmed or has_signal
+
+                        if success:
                             # 로그인 성공: 현재 페이지에서 앱 목록 관찰
                             final_obs = _observe(page, max_html_chars=500_000)
 
-                        # 브라우저 닫기 전 사용자 확인
-                        try:
-                            input_fn(_BROWSER_CLOSE_PROMPT)
-                        except (EOFError, KeyboardInterrupt):
-                            pass
+                        # 대화형 모드에서만 닫기 전 확인 프롬프트
+                        if interactive_mode:
+                            try:
+                                input_fn(_BROWSER_CLOSE_PROMPT)
+                            except (EOFError, KeyboardInterrupt):
+                                pass
+                        # 비대화형: finally에서 자동으로 _safe_close 호출됨
 
                     finally:
                         _safe_close(page)
@@ -383,7 +423,7 @@ def _interactive_wait(
             "error": str(exc)[:200],
         }
 
-    if not login_confirmed and not has_signal:  # type: ignore[possibly-undefined]
+    if not success:  # type: ignore[possibly-undefined]
         return {
             "session_status": "NEEDS_REAUTH_TIMEOUT",
             "completion_reasons": completion_reasons,

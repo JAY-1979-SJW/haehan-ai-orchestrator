@@ -358,6 +358,7 @@ def observe_public_browser_page(
             capture_screenshot=capture_screenshot_v,
             wait_until=wait_until_v,
             dwell_seconds=dwell_seconds_v,
+            headless=bool(headless),
         )
     except BrowserDependencyMissing as e:
         return _empty_result(
@@ -385,6 +386,7 @@ def _run_observation(
     capture_screenshot: bool,
     wait_until: str = _DEFAULT_WAIT_UNTIL,
     dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
+    headless: bool = False,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     launch_kwargs: dict[str, Any] = {"headless": bool(headless)}
