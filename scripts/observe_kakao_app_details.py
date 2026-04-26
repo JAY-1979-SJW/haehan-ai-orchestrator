@@ -32,7 +32,7 @@ _APP_URLS = {
     "overview":   "/console/app/{id}",
     "login":      "/console/app/{id}/product/login",
     "scope":      "/console/app/{id}/product/login/scope",
-    "platform":   "/console/app/{id}/config/platform",
+    "platform":   "/console/app/{id}/config/platform-key",
     "biz":        "/console/app/{id}/product/biz",
     "permission": "/console/app/{id}/product/permission",
 }
@@ -163,12 +163,17 @@ def _parse_scope_page(html: str) -> dict[str, Any]:
 
 
 def _parse_platform_page(html: str) -> dict[str, Any]:
+    # 플랫폼 키 페이지(/config/platform-key) 기준으로 파싱
+    # Web 플랫폼(JS SDK 도메인)과 Redirect URI 등록 여부를 input value 속성으로 확인
     html_lower = html.lower()
+    # input value="http..." 패턴 → 등록된 URL 존재 여부
+    has_http_value = bool(re.search(r'value="https?://', html, re.IGNORECASE))
     return {
-        "web_registered": "web" in html_lower and "사이트 도메인" in html_lower,
+        "web_registered": ("javascript sdk 도메인" in html_lower or "js sdk 도메인" in html_lower) and has_http_value,
+        "redirect_uri_registered": ("카카오 로그인 리다이렉트" in html_lower or "redirect uri" in html_lower) and has_http_value,
         "android_registered": "android" in html_lower and "패키지" in html_lower,
         "ios_registered": "ios" in html_lower and "번들" in html_lower,
-        "no_platform": "등록된 플랫폼" not in html_lower and "platform" not in html_lower,
+        "no_platform": "플랫폼 키" not in html_lower,
         "raw_hint": _safe_text(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)), 800),
     }
 
@@ -177,7 +182,6 @@ def _parse_login_page(html: str) -> dict[str, Any]:
     html_lower = html.lower()
     return {
         "login_activated": "활성화" in html_lower or "activated" in html_lower or "on" in html_lower,
-        "redirect_uri_registered": "redirect" in html_lower and ("http" in html_lower or "등록" in html_lower),
         "logout_uri_registered": "logout" in html_lower,
         "raw_hint": _safe_text(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)), 800),
     }
@@ -205,6 +209,72 @@ def _navigate_and_observe(page: Any, url: str, wait_ms: int = 8000) -> dict[str,
     return _observe_page(page)
 
 
+def _observe_platform_key_inputs(page: Any, list_url: str, wait_ms: int = 10000) -> dict[str, Any]:
+    """플랫폼 키(/config/platform-key) 관찰: 편집 페이지 이동 후 input 값으로 등록 여부 확인.
+    read-only — 저장/수정 버튼 클릭 없음."""
+    try:
+        page.goto(list_url, wait_until="networkidle", timeout=wait_ms)
+    except Exception:
+        pass
+
+    result: dict[str, Any] = {
+        "web_registered": False,
+        "redirect_uri_registered": False,
+        "android_registered": False,
+        "ios_registered": False,
+        "no_platform": True,
+        "raw_hint": "",
+    }
+
+    # 공통 도우미: input 값에 http URL 포함 여부 (el.input_value() 사용)
+    def _any_http_input(pg: Any) -> bool:
+        try:
+            pg.wait_for_timeout(800)  # React state 반영 대기
+            els = pg.query_selector_all("input")
+            for el in els:
+                try:
+                    val = el.input_value() or ""
+                    if val.startswith("http"):
+                        return True
+                except Exception:
+                    pass
+            return False
+        except Exception:
+            return False
+
+    # 1) JS SDK 도메인 편집 페이지 → web_registered
+    try:
+        sdk_span = page.get_by_text("JS SDK 도메인")
+        if sdk_span.count() > 0:
+            result["no_platform"] = False
+            sdk_span.first.click()
+            page.wait_for_load_state("domcontentloaded", timeout=8000)
+            result["web_registered"] = _any_http_input(page)
+            page.go_back()
+            page.wait_for_load_state("domcontentloaded", timeout=8000)
+    except Exception:
+        pass
+
+    # 2) REST API 키 로그인 리다이렉트 URI 편집 페이지 → redirect_uri_registered
+    try:
+        uri_spans = page.get_by_text("로그인 리다이렉트 URI")
+        if uri_spans.count() > 0:
+            uri_spans.first.click()
+            page.wait_for_load_state("domcontentloaded", timeout=8000)
+            result["redirect_uri_registered"] = _any_http_input(page)
+            page.go_back()
+            page.wait_for_load_state("domcontentloaded", timeout=8000)
+    except Exception:
+        pass
+
+    try:
+        result["raw_hint"] = _safe_text(page.inner_text("body"), 600)
+    except Exception:
+        pass
+
+    return result
+
+
 def _diagnose_reasons(app_detail: dict) -> list[str]:
     """승인 미완료 이유 분석."""
     reasons: list[str] = []
@@ -225,8 +295,8 @@ def _diagnose_reasons(app_detail: dict) -> list[str]:
         reasons.append("플랫폼(Web/Android/iOS) 미등록 — 플랫폼 등록 필요")
     if not login.get("login_activated"):
         reasons.append("카카오 로그인 비활성화 상태")
-    if not login.get("redirect_uri_registered"):
-        reasons.append("Redirect URI 미등록")
+    if not platform.get("redirect_uri_registered"):
+        reasons.append("Redirect URI 미등록 (플랫폼 키 > REST API 키 > 카카오 로그인 리다이렉트 URI)")
     if biz.get("biz_required"):
         reasons.append("비즈앱 전환 필요 — 일부 기능은 비즈앱 전용")
     if biz.get("biz_pending"):
@@ -420,7 +490,8 @@ def observe_details(
                                 if page_key == "scope":
                                     app_data["scope"] = _parse_scope_page(html)
                                 elif page_key == "platform":
-                                    app_data["platform"] = _parse_platform_page(html)
+                                    # 플랫폼 키 편집 페이지 이동 후 input 값으로 정확히 감지
+                                    app_data["platform"] = _observe_platform_key_inputs(page, _BASE + url_tmpl.format(id=app_id))
                                 elif page_key == "login":
                                     app_data["login"] = _parse_login_page(html)
                                 elif page_key == "biz":
@@ -510,7 +581,7 @@ def _build_md(output: dict) -> str:
             f"|------|------|",
             f"| 비즈앱 | {'✓' if biz.get('biz_app') else ('심사중' if biz.get('biz_pending') else '미전환')} |",
             f"| 카카오 로그인 활성화 | {'✓' if login.get('login_activated') else '✗'} |",
-            f"| Redirect URI | {'✓' if login.get('redirect_uri_registered') else '✗'} |",
+            f"| Redirect URI | {'✓' if platform.get('redirect_uri_registered') else '✗'} |",
             f"| 플랫폼 Web | {'✓' if platform.get('web_registered') else '✗'} |",
             f"| 동의항목 심사중 | {'있음' if scope.get('has_pending') else '없음'} |",
             f"| 동의항목 거절 | {'있음' if scope.get('has_rejected') else '없음'} |",
@@ -561,7 +632,7 @@ def _build_permission_draft(apps: list[dict], out_dir: Path, ts: str) -> dict[st
         if not login.get("login_activated"):
             requested_features.append("카카오 로그인 활성화")
             missing_inputs.append("카카오 로그인 활성화 여부 확인 필요")
-        if not login.get("redirect_uri_registered"):
+        if not platform.get("redirect_uri_registered"):
             requested_features.append("Redirect URI 등록")
             missing_inputs.append("서비스 Redirect URI 값 필요")
         if not platform.get("web_registered"):
@@ -722,7 +793,7 @@ def main() -> int:
                     "diagnosis": a.get("diagnosis", []),
                     "biz_app": (a.get("biz") or {}).get("biz_app"),
                     "login_activated": (a.get("login") or {}).get("login_activated"),
-                    "redirect_uri": (a.get("login") or {}).get("redirect_uri_registered"),
+                    "redirect_uri": (a.get("platform") or {}).get("redirect_uri_registered"),
                     "web_platform": (a.get("platform") or {}).get("web_registered"),
                     "scope_pending": (a.get("scope") or {}).get("has_pending"),
                     "scope_rejected": (a.get("scope") or {}).get("has_rejected"),

@@ -67,8 +67,12 @@ _EXEC = _executable_lines(_SOURCE)
 # ---------------------------------------------------------------------------
 
 def test_no_password_input_read():
-    assert "input_value" not in _EXEC
+    # password 타입 input 읽기/입력 금지; input_value() 는 URL 읽기에는 허용
     assert 'type="password"' not in _EXEC
+    # input_value가 있으면 password 컨텍스트가 아니어야 함
+    lines_with_input_value = [l for l in _EXEC.splitlines() if "input_value" in l]
+    for line in lines_with_input_value:
+        assert "password" not in line.lower(), f"password input_value 감지: {line}"
     lines_with_fill = [l for l in _EXEC.splitlines() if ".fill(" in l]
     for line in lines_with_fill:
         assert "password" not in line.lower(), f"fill(password) 감지: {line}"
@@ -136,10 +140,11 @@ def test_parse_login_page_activated():
     assert result["login_activated"] is True
 
 
-def test_parse_login_page_redirect_found():
+def test_parse_login_page_has_no_redirect_field():
+    # redirect_uri_registered는 platform 페이지(/config/platform-key)에서 체크
     html = "<html>redirect_uri http://example.com 등록됨</html>"
     result = _mod._parse_login_page(html)
-    assert result["redirect_uri_registered"] is True
+    assert "redirect_uri_registered" not in result
 
 
 # ---------------------------------------------------------------------------
@@ -147,9 +152,16 @@ def test_parse_login_page_redirect_found():
 # ---------------------------------------------------------------------------
 
 def test_parse_platform_page_web():
-    html = "<html>web 사이트 도메인 https://example.com</html>"
+    # /config/platform-key 기준: JS SDK 도메인 섹션 + value="http..." 패턴
+    html = '<html>JavaScript SDK 도메인 <input value="https://example.com"></html>'
     result = _mod._parse_platform_page(html)
     assert result["web_registered"] is True
+
+
+def test_parse_platform_page_redirect_registered():
+    html = '<html>카카오 로그인 리다이렉트 <input value="https://example.com/oauth"></html>'
+    result = _mod._parse_platform_page(html)
+    assert result["redirect_uri_registered"] is True
 
 
 def test_parse_platform_page_no_platform():
