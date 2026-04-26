@@ -397,7 +397,16 @@ def _interactive_wait(
                         success = login_confirmed or has_signal
 
                         if success:
-                            # 로그인 성공: 현재 페이지에서 앱 목록 관찰
+                            # 로그인 성공: 세션 저장 (다음 실행 시 재사용)
+                            try:
+                                from ai_orchestrator.sites import secrets_policy
+                                state_path = secrets_policy.session_state_path("kakao_developers")
+                                state_path.parent.mkdir(parents=True, exist_ok=True)
+                                context.storage_state(path=str(state_path))
+                                warnings.append(f"session_saved:{state_path.name}")
+                            except Exception as _se:
+                                warnings.append(f"session_save_warn:{str(_se)[:80]}")
+                            # 현재 페이지에서 앱 목록 관찰
                             final_obs = _observe(page, max_html_chars=500_000)
 
                         # 대화형 모드에서만 닫기 전 확인 프롬프트
@@ -515,12 +524,16 @@ def observe(
     elif session_status == "READY_LOGGED_IN":
         try:
             from local_agent.browser_observer import observe_public_browser_page
+            from ai_orchestrator.sites import secrets_policy as _sp
+            _state_path = _sp.session_state_path("kakao_developers")
+            _storage_state = str(_state_path) if _state_path.is_file() else None
             raw = observe_public_browser_page(
                 _TARGET_URL,
                 timeout_ms=timeout_ms,
                 max_text_chars=8_000,
                 capture_screenshot=capture_screenshot,
                 wait_until="networkidle",
+                storage_state=_storage_state,
             )
         except Exception as exc:
             raw = {"success": False, "error_code": str(exc), "warnings": [str(exc)]}

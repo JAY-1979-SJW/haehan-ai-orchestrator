@@ -243,6 +243,7 @@ def observe_public_browser_page(
     wait_until: str = _DEFAULT_WAIT_UNTIL,
     dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
     headless: bool = False,
+    storage_state: Optional[str] = None,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _env: Optional[dict] = None,
 ) -> dict[str, Any]:
@@ -359,6 +360,7 @@ def observe_public_browser_page(
             wait_until=wait_until_v,
             dwell_seconds=dwell_seconds_v,
             headless=bool(headless),
+            storage_state=storage_state or None,
         )
     except BrowserDependencyMissing as e:
         return _empty_result(
@@ -387,6 +389,7 @@ def _run_observation(
     wait_until: str = _DEFAULT_WAIT_UNTIL,
     dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
     headless: bool = False,
+    storage_state: Optional[str] = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     launch_kwargs: dict[str, Any] = {"headless": bool(headless)}
@@ -402,8 +405,10 @@ def _run_observation(
                 warnings=[f"launch_failed:{type(e).__name__}"],
             )
         try:
-            # storage_state 미주입 / cookies 미주입 / persistent profile 미사용.
-            context = browser.new_context()
+            context_kwargs: dict[str, Any] = {}
+            if storage_state:
+                context_kwargs["storage_state"] = storage_state
+            context = browser.new_context(**context_kwargs)
             try:
                 page = context.new_page()
                 try:

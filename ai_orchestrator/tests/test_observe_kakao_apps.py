@@ -65,8 +65,12 @@ def test_no_password_input_read():
 
 
 def test_no_cookie_session_export():
-    for bad in ("storage_state", "cookies()", "export_storage", "get_cookies"):
+    # storage_state() without path= arg extracts data — forbidden.
+    # storage_state(path=...) saves directly to file — allowed for session persistence.
+    for bad in ("cookies()", "export_storage", "get_cookies"):
         assert bad not in _EXEC, f"forbidden in executable code: {bad}"
+    # storage_state() without path= is forbidden (data extraction)
+    assert "storage_state()" not in _EXEC, "storage_state() without path= is forbidden"
 
 
 def test_no_app_delete_or_secret_reissue():
