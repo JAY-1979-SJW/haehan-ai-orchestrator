@@ -129,6 +129,7 @@ def check_one(console: dict, out_base: Path, ts: str, timeout_ms: int) -> dict[s
         max_text_chars=4_000,
         capture_screenshot=False,
         wait_until="networkidle",
+        headless=True,
     )
     status = _classify_session(console["name"], raw)
     pending_task_path: str | None = None

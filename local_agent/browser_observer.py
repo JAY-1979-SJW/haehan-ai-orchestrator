@@ -242,6 +242,7 @@ def observe_public_browser_page(
     capture_screenshot: bool = False,
     wait_until: str = _DEFAULT_WAIT_UNTIL,
     dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
+    headless: bool = False,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _env: Optional[dict] = None,
 ) -> dict[str, Any]:
@@ -253,6 +254,9 @@ def observe_public_browser_page(
     수행하지 않는다.
 
     site_policy 는 추후 확장 자리. 현재는 일반 공개 페이지 흐름만 사용.
+
+    headless=True: 자동화 health check 등 UI가 불필요한 경우 사용.
+    headless=False(기본): 사용자에게 브라우저 창이 보이는 가시적 모드.
 
     테스트 편의:
       - ``_browser_factory``: ``sync_playwright`` 대체 (context manager).
@@ -383,7 +387,7 @@ def _run_observation(
     dwell_seconds: int = _DEFAULT_DWELL_SECONDS,
 ) -> dict[str, Any]:
     warnings: list[str] = []
-    launch_kwargs: dict[str, Any] = {"headless": False}
+    launch_kwargs: dict[str, Any] = {"headless": bool(headless)}
 
     with factory() as pw:
         try:
