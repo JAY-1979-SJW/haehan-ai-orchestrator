@@ -65,4 +65,6 @@ agent_data/
 .env.*
 cookies*
 session*
+!session_manager.py
+!test_session_manager.py
 storage_state*
