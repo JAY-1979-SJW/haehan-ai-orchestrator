@@ -1,5 +1,9 @@
 # Credential Handling Policy
 
+## 기본 방향
+
+Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, developer console role)를 사용해 자율 실행한다. 비밀번호/OTP/쿠키/session 추출은 절대 금지. 인증서 비밀번호 저장 금지.
+
 ## 1. 결론
 
 비밀번호 수집/추출/별도 저장 금지.

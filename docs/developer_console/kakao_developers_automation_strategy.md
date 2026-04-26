@@ -104,11 +104,13 @@ Claude Code가 자동으로 진행할 수 있는 구조를 설계한다.
 
 ## 10. 단계별 구현 계획
 
+Claude Code 자율 실행 기준: READY 항목은 Claude Code가 직접 실행. NEEDS_AUTH_PRINCIPAL 항목은 인증 주체 준비 후 Claude Code가 자율 진행.
+
 | 단계 | 작업 키 | 내용 | 상태 |
 |------|---------|------|------|
 | 1 | `KAKAO-DEV-1` | 전략 문서 작성 (본 문서) | DONE |
-| 2 | `KAKAO-DEV-2` | Kakao Developers 콘솔 접속/로그인 상태 관찰 | READY |
-| 3 | `KAKAO-DEV-3` | 앱 설정 상태 관찰 (platform, redirect URI, login 활성화) | READY |
-| 4 | `KAKAO-DEV-4` | 권한 신청서 draft builder | READY |
-| 5 | `KAKAO-DEV-5` | 권한 신청서 제출 자동화 | NEEDS_AUTH_PRINCIPAL |
-| 6 | `KAKAO-DEV-6` | 심사 상태 모니터링 | NEEDS_AUTH_PRINCIPAL |
+| 2 | `KAKAO-DEV-2` | Kakao Developers 콘솔 접속/로그인 상태 관찰 | READY — Claude Code 자율 실행 |
+| 3 | `KAKAO-DEV-3` | 앱 설정 상태 관찰 (platform, redirect URI, login 활성화) | READY — Claude Code 자율 실행 |
+| 4 | `KAKAO-DEV-4` | 권한 신청서 draft builder | READY — Claude Code 자율 실행 |
+| 5 | `KAKAO-DEV-5` | 권한 신청서 제출 자동화 | NEEDS_AUTH_PRINCIPAL (developer_console_operator 준비 후 자율 진행) |
+| 6 | `KAKAO-DEV-6` | 심사 상태 모니터링 | NEEDS_AUTH_PRINCIPAL (developer_console_operator 준비 후 자율 진행) |
