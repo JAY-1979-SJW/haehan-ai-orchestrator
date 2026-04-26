@@ -1,0 +1,78 @@
+# Automation Authority Policy
+
+## 1. 목적
+
+대표님 수동 실행을 줄이고 Claude Code가 가능한 작업을 직접 수행하는 운영 원칙 정의.
+
+## 2. 자동 실행 원칙
+
+- 터미널 명령은 Claude Code가 직접 실행
+- 결과 파일은 Claude Code가 직접 확인
+- WARN/FAIL 원인 분리는 Claude Code가 직접 수행
+- 대표님에게 파일 경로/명령어 복사 실행을 요구하지 않음
+- 로그인/인증이 필요한 작업은 "대표님 대기"가 아니라 "인증 주체 필요(NEEDS_AUTH_PRINCIPAL)"로 분류
+
+## 3. 자동 허용 범위
+
+| 구분 | 항목 |
+|------|------|
+| 개발 | 로컬 명령 실행, 테스트 실행, smoke 테스트 |
+| 파일 | 코드/문서 수정, 결과 파일 직접 확인 |
+| Git | git add, git commit |
+| 패키지 | allowlist 패키지 설치 (winget/pip/npm allowlist 기준) |
+| Secret | safe env setter로 secret 등록 |
+| 내부망 | localhost/internal URL 녹화, 내부 API 호출 |
+| 콘솔 업무 | 개발자 콘솔 접속/설정/신청서 작성/제출/상태 확인 |
+| 콘솔 업무 | API 활성화, Redirect URI 등록, 플랫폼 도메인 등록 |
+| 콘솔 업무 | 권한 신청서 작성, 심사 자료 작성/업로드 |
+| 콘솔 업무 | 반려 사유 확인, 보완 자료 작성, 재신청 |
+
+## 4. 승인 필요 범위 (APPROVAL_REQUIRED)
+
+- git push (원격 반영)
+- 운영 서버 재시작/배포
+- DB DDL/update/delete
+- 외부 사용자 대상 게시/댓글/업로드
+- 송금/결제 최종 실행
+- 광고비 집행
+- 앱 삭제, Client Secret 재발급/폐기
+- 운영 데이터 삭제
+
+## 5. 금지 범위 (BLOCKED)
+
+- Chrome/Google Password Manager 저장 비밀번호 추출
+- 사이트별 ID/PW 목록 수집
+- Windows Credential Manager 비밀번호 추출
+- 비밀번호/OTP/인증서 비밀번호/TOTP seed 저장
+- 쿠키/session/storage_state 추출
+- captcha/보안 우회
+- 타인 계정 접근
+- 무승인 송금/결제/삭제/광고비 집행
+- 외부 사용자 대상 댓글/DM/게시/가입/업로드 무승인 실행
+- API key/client secret 원문 출력
+- `.env` cat/git add
+- git push 무승인 실행
+- 운영 서버 재시작 무승인 실행
+- DB DDL/update/delete 무승인 실행
+
+## 6. 작업 상태 분류
+
+| 상태 | 설명 |
+|------|------|
+| `READY_AUTOMATED` | 키/토큰/서비스계정/권한이 준비되어 Claude Code가 즉시 자동 실행 가능 |
+| `NEEDS_AUTH_PRINCIPAL` | 지정 인증 주체 필요 (developer_console_operator, finance_approver 등) |
+| `NEEDS_CONTRACT_OR_ADMIN_SETUP` | 법인 API, 펌뱅킹, Workspace domain-wide delegation, 비즈니스 권한 등 |
+| `APPROVAL_REQUIRED` | 송금, 결제, 삭제, 광고 집행, 외부 게시, 운영 DB/서버 변경 등 |
+| `BLOCKED` | 공식 권한/위임 없이 진행 불가, 우회 시도 금지 |
+
+## 7. 보고 형식
+
+```
+[작업 내용]
+[자동 실행한 작업]
+[변경 사항]
+[보안 확인]
+[커밋]
+[다음 승인 필요 작업]
+[최종 판정]
+```
