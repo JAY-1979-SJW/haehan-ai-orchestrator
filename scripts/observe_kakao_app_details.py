@@ -243,6 +243,7 @@ def observe_details(
     out_dir: str = "runs/developer_console",
     login_timeout_seconds: int = 300,
     poll_interval_seconds: int = 5,
+    dwell_seconds: int = 0,
     *,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _clock: Any = None,
@@ -439,6 +440,15 @@ def observe_details(
 
                             app_data["diagnosis"] = _diagnose_reasons(app_data)
                             apps_result.append(app_data)
+
+                        # dwell: 관찰 완료 후 read-only 화면 유지 (기본값 0 = 즉시 종료)
+                        _dwell = max(0, dwell_seconds)
+                        if _dwell > 0:
+                            print(
+                                f"[observe_kakao_app_details] 관찰 완료. {_dwell}초 후 브라우저를 닫습니다.",
+                                file=sys.stderr,
+                            )
+                            time_mod.sleep(_dwell)
 
                     finally:
                         _safe_close(page)
@@ -671,11 +681,14 @@ def main() -> int:
                         help="앱 이름 힌트로 필터링 (부분 일치)")
     parser.add_argument("--from-latest-apps", action="store_true",
                         help="최신 kakao_apps 결과에서 앱 목록 참조 (현재는 기본 동작과 동일)")
+    parser.add_argument("--dwell-seconds", type=int, default=0, dest="dwell_seconds",
+                        help="관찰 완료 후 브라우저 유지 시간(초). 기본값 0=즉시 종료. 화면 확인용.")
     args = parser.parse_args()
 
     output = observe_details(
         out_dir=args.out_dir,
         login_timeout_seconds=args.login_timeout_seconds,
+        dwell_seconds=max(0, args.dwell_seconds),
         _filter_app_id=args.app_id,
         _filter_app_name=args.app_name,
     )

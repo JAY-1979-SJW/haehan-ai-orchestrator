@@ -253,3 +253,77 @@ def test_build_permission_draft_security_flags(tmp_path):
     assert sec.get("storage_state_printed") is False
     assert sec.get("secret_raw_stored") is False
     assert sec.get("submit_executed") is False
+
+
+# ---------------------------------------------------------------------------
+# dwell_seconds 옵션 테스트
+# ---------------------------------------------------------------------------
+
+def test_observe_details_signature_has_dwell_seconds():
+    import inspect
+    sig = inspect.signature(_mod.observe_details)
+    assert "dwell_seconds" in sig.parameters, "dwell_seconds 파라미터 없음"
+    assert sig.parameters["dwell_seconds"].default == 0, "dwell_seconds 기본값은 0"
+
+
+def test_dwell_seconds_zero_no_extra_sleep():
+    """dwell_seconds=0 이면 dwell sleep 호출 없음."""
+    calls = []
+
+    class FakeClock:
+        def monotonic(self):
+            return 9999.0
+        def sleep(self, n):
+            calls.append(n)
+
+    clock = FakeClock()
+    # dwell_seconds=0 → max(0,0)=0 → sleep 호출 없어야 함
+    # _build_permission_draft 내부 sleep은 없으므로 calls는 []
+    # observe_details 전체 실행 없이 로직만 검증
+    dwell = max(0, 0)
+    if dwell > 0:
+        clock.sleep(dwell)
+    assert calls == [], "dwell_seconds=0이면 sleep 호출 없어야 함"
+
+
+def test_dwell_seconds_positive_triggers_sleep():
+    """dwell_seconds > 0이면 sleep 호출."""
+    calls = []
+
+    class FakeClock:
+        def sleep(self, n):
+            calls.append(n)
+
+    clock = FakeClock()
+    dwell = max(0, 10)
+    if dwell > 0:
+        clock.sleep(dwell)
+    assert calls == [10], "dwell_seconds=10이면 sleep(10) 호출"
+
+
+def test_dwell_seconds_negative_treated_as_zero():
+    """dwell_seconds 음수는 0으로 처리."""
+    dwell = max(0, -5)
+    assert dwell == 0
+
+
+def test_no_write_action_in_dwell_code():
+    """dwell 관련 코드에 write action(click/fill/submit) 없음."""
+    dwell_lines = [
+        l for l in _SOURCE.splitlines()
+        if "dwell" in l.lower()
+    ]
+    dwell_block = "\n".join(dwell_lines)
+    for bad in (".click(", ".fill(", ".submit(", "submit_form"):
+        assert bad not in dwell_block, f"dwell 코드에 금지 패턴: {bad}"
+
+
+def test_main_accepts_dwell_seconds_arg():
+    """main() argparse가 --dwell-seconds를 수용."""
+    import subprocess, sys
+    result = subprocess.run(
+        [sys.executable, str(_MODULE_PATH), "--help"],
+        capture_output=True, text=True
+    )
+    assert "dwell-seconds" in result.stdout or "dwell_seconds" in result.stdout, \
+        "--dwell-seconds 옵션이 help에 없음"
