@@ -147,10 +147,15 @@ def classify_status(data: dict[str, Any]) -> tuple[str, list[str]]:
             if summary_block.get(key, 0) > 0:
                 _upgrade("WARN", f"summary.{key}={summary_block[key]}")
 
-    # warnings[]
+    # warnings[] — session_saved / goto_warn 등 정상 동작 신호는 제외
+    _INFO_WARNING_PREFIXES = ("session_saved:", "goto_warn:", "session_save_warn:")
     warnings = data.get("warnings") or []
-    if isinstance(warnings, list) and warnings:
-        _upgrade("WARN", f"warnings: {len(warnings)}개")
+    real_warns = [
+        w for w in warnings
+        if isinstance(w, str) and not any(w.startswith(p) for p in _INFO_WARNING_PREFIXES)
+    ]
+    if real_warns:
+        _upgrade("WARN", f"warnings: {len(real_warns)}개")
 
     # ffmpeg_available
     if data.get("ffmpeg_available") is False:
@@ -186,7 +191,18 @@ def extract_next_actions(data: dict[str, Any]) -> list[str]:
             if isinstance(item, str):
                 actions.append(redact_sensitive_text(item))
             elif isinstance(item, dict):
-                label = item.get("action") or item.get("label") or item.get("description") or str(item)
+                # task_key + title 형식 (observe_kakao_apps 등)
+                task_key = item.get("task_key", "")
+                title = (
+                    item.get("title") or item.get("action")
+                    or item.get("label") or item.get("description") or ""
+                )
+                if task_key and title:
+                    label = f"{task_key}: {title}"
+                elif title:
+                    label = title
+                else:
+                    label = str(item)
                 actions.append(redact_sensitive_text(str(label)))
 
     # console별 pending_task_path가 있으면 액션 추가
