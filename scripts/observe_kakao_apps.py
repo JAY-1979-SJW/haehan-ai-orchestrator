@@ -111,14 +111,41 @@ def _create_pending_task(run_dir: Path, session_status: str) -> Path:
         "target_url": _TARGET_URL,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "resume_script": "scripts/observe_kakao_apps.py",
-        "resume_command": "python scripts/observe_kakao_apps.py --interactive-login --json",
+        "resume_command": "python scripts/observe_kakao_apps.py --resume-pending --json",
+        "auto_resume": True,
+        "next_action_after_login": "observe_apps",
         "auto_executable": False,
         "auth_principal_required": "developer_console_operator",
-        "notes": "세션 갱신(로그인) 후 --interactive-login 옵션으로 재실행",
+        "notes": "NEEDS_REAUTH 상태 기록. 로그인 후 Claude Code가 앱 목록 관찰을 자동 재개합니다.",
     }
     path = run_dir / "pending_task.json"
     path.write_text(json.dumps(task, ensure_ascii=False, indent=2), encoding="utf-8")
     return path
+
+
+def _find_latest_pending_task(out_dir: str | Path) -> dict[str, Any] | None:
+    """최신 PENDING auto_resume=true task를 검색한다."""
+    base = Path(out_dir)
+    candidates = sorted(base.glob("kakao_apps_*/pending_task.json"), reverse=True)
+    for p in candidates:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            if data.get("status") == "PENDING" and data.get("auto_resume") is True:
+                return {"path": p, "data": data}
+        except Exception:
+            continue
+    return None
+
+
+def _mark_pending_task_resumed(task_path: Path, new_status: str = "RESUMED") -> None:
+    """pending task 상태를 RESUMED/DONE으로 갱신한다."""
+    try:
+        data = json.loads(task_path.read_text(encoding="utf-8"))
+        data["status"] = new_status
+        data["resumed_at"] = datetime.now(timezone.utc).isoformat()
+        task_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def _sanitize(raw: dict) -> dict:
@@ -178,8 +205,10 @@ def _build_next_actions(session_status: str, signals: dict) -> list[dict]:
     if session_status in ("NEEDS_REAUTH", "NEEDS_REAUTH_TIMEOUT", "UNKNOWN"):
         actions.append({
             "task_key": "KAKAO-DEV-3R-REAUTH",
-            "title": "developer_console_operator 세션 갱신 후 재관찰",
+            "title": "NEEDS_REAUTH 상태 — 로그인 후 Claude Code가 앱 목록 관찰을 자동 재개합니다",
             "auto_executable": False,
+            "auto_resume": True,
+            "next_action_after_login": "observe_apps",
             "auth_principal_required": "developer_console_operator",
             "risk_level": "LOW",
             "approval_required": False,
@@ -457,6 +486,7 @@ def observe(
     interactive_login: bool = False,
     login_timeout_seconds: int = 300,
     extend_on_activity: bool = True,
+    resume_pending: bool = False,
     *,
     _browser_factory: Optional[Callable[[], Any]] = None,
     _clock: Any = None,
@@ -466,6 +496,14 @@ def observe(
     run_dir = Path(out_dir) / f"kakao_apps_{ts}"
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "screenshots").mkdir(exist_ok=True)
+
+    # pending task 자동 재개: resume_pending=True 또는 interactive_login=True 시 확인
+    _resumed_pending_path: Path | None = None
+    if resume_pending or interactive_login:
+        pending = _find_latest_pending_task(out_dir)
+        if pending and pending["data"].get("auto_resume") is True:
+            interactive_login = True
+            _resumed_pending_path = pending["path"]
 
     session_status = _check_session_health()
     pending_task_path: str | None = None
@@ -558,6 +596,9 @@ def observe(
     if session_status in ("NEEDS_REAUTH", "NEEDS_REAUTH_TIMEOUT", "UNKNOWN"):
         pt = _create_pending_task(run_dir, session_status)
         pending_task_path = str(pt)
+    elif session_status == "READY_LOGGED_IN" and _resumed_pending_path is not None:
+        # 재개 성공: 이전 pending task를 RESUMED로 갱신
+        _mark_pending_task_resumed(_resumed_pending_path, "RESUMED")
 
     next_actions = _build_next_actions(session_status, signals)
 
@@ -660,6 +701,8 @@ def main() -> int:
     parser.add_argument("--keep-open-on-auth-required", action="store_true",
                         dest="keep_open_on_auth_required",
                         help="--interactive-login의 별칭")
+    parser.add_argument("--resume-pending", action="store_true", dest="resume_pending",
+                        help="최신 pending task를 확인해 자동 재개한다")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
 
@@ -673,6 +716,7 @@ def main() -> int:
         interactive_login=interactive,
         login_timeout_seconds=args.login_timeout_seconds,
         extend_on_activity=args.extend_on_activity,
+        resume_pending=args.resume_pending,
     )
 
     run_dirs = sorted(Path(args.out_dir).glob("kakao_apps_*"), reverse=True)

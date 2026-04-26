@@ -490,3 +490,135 @@ def test_next_actions_generated_for_reauth(tmp_path):
 
     keys = [a["task_key"] for a in result["next_actions"]]
     assert "KAKAO-DEV-3R-REAUTH" in keys
+
+
+# ---------------------------------------------------------------------------
+# REAUTH-FIX2: auto_resume 및 사용자 재실행 요구 제거 검증
+# ---------------------------------------------------------------------------
+
+def test_pending_task_has_auto_resume(tmp_path):
+    with patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"):
+        result = _mod.observe(out_dir=str(tmp_path), capture_screenshot=False)
+
+    pt = Path(result["pending_task_path"])
+    task = json.loads(pt.read_text(encoding="utf-8"))
+    assert task.get("auto_resume") is True
+
+
+def test_pending_task_has_next_action_after_login(tmp_path):
+    with patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"):
+        result = _mod.observe(out_dir=str(tmp_path), capture_screenshot=False)
+
+    pt = Path(result["pending_task_path"])
+    task = json.loads(pt.read_text(encoding="utf-8"))
+    assert task.get("next_action_after_login") == "observe_apps"
+
+
+def test_pending_task_notes_no_manual_rerun(tmp_path):
+    """pending task notes에 사용자에게 직접 실행을 요구하는 문구가 없어야 한다."""
+    with patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"):
+        result = _mod.observe(out_dir=str(tmp_path), capture_screenshot=False)
+
+    pt = Path(result["pending_task_path"])
+    task = json.loads(pt.read_text(encoding="utf-8"))
+    notes = task.get("notes", "")
+    forbidden = ["재실행하면 됩니다", "직접 실행", "대표님이"]
+    for phrase in forbidden:
+        assert phrase not in notes, f"forbidden phrase in notes: {phrase!r}"
+
+
+def test_next_actions_md_no_user_rerun_phrase(tmp_path):
+    """생성된 next_actions.md에 사용자 재실행 요구 문구가 없어야 한다."""
+    with patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"):
+        result = _mod.observe(out_dir=str(tmp_path), capture_screenshot=False)
+
+    rd = sorted(tmp_path.glob("kakao_apps_*"))[-1]
+    md_text = (rd / "next_actions.md").read_text(encoding="utf-8")
+    forbidden = ["재실행하면 됩니다", "직접 실행", "대표님이", "python scripts"]
+    for phrase in forbidden:
+        assert phrase not in md_text, f"forbidden phrase in next_actions.md: {phrase!r}"
+
+
+def test_find_latest_pending_task_returns_pending(tmp_path):
+    """PENDING auto_resume=true task를 올바르게 탐색한다."""
+    task_dir = tmp_path / "kakao_apps_20260426_120000"
+    task_dir.mkdir()
+    task = {
+        "status": "PENDING",
+        "auto_resume": True,
+        "task_key": "KAKAO-DEV-3R-REAUTH",
+    }
+    (task_dir / "pending_task.json").write_text(
+        json.dumps(task), encoding="utf-8"
+    )
+    found = _mod._find_latest_pending_task(tmp_path)
+    assert found is not None
+    assert found["data"]["auto_resume"] is True
+
+
+def test_find_latest_pending_task_skips_non_auto_resume(tmp_path):
+    """auto_resume=false인 task는 재개 대상에서 제외한다."""
+    task_dir = tmp_path / "kakao_apps_20260426_120000"
+    task_dir.mkdir()
+    task = {"status": "PENDING", "auto_resume": False}
+    (task_dir / "pending_task.json").write_text(json.dumps(task), encoding="utf-8")
+    found = _mod._find_latest_pending_task(tmp_path)
+    assert found is None
+
+
+def test_find_latest_pending_task_empty(tmp_path):
+    found = _mod._find_latest_pending_task(tmp_path)
+    assert found is None
+
+
+def test_resume_pending_sets_interactive_login(tmp_path):
+    """resume_pending=True이면 pending task를 감지해 interactive_login으로 동작한다."""
+    task_dir = tmp_path / "kakao_apps_20260426_120000"
+    task_dir.mkdir()
+    task = {"status": "PENDING", "auto_resume": True, "task_key": "KAKAO-DEV-3R-REAUTH"}
+    (task_dir / "pending_task.json").write_text(json.dumps(task), encoding="utf-8")
+
+    # NEEDS_REAUTH + resume_pending → interactive_wait 호출됨
+    mock_wait_result = {
+        "session_status": "NEEDS_REAUTH_TIMEOUT",
+        "completion_reasons": [],
+        "warnings": [],
+    }
+    with (
+        patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"),
+        patch.object(_mod, "_interactive_wait", return_value=mock_wait_result) as mock_wait,
+    ):
+        result = _mod.observe(
+            out_dir=str(tmp_path),
+            capture_screenshot=False,
+            resume_pending=True,
+            _clock=FakeClock(),
+        )
+
+    mock_wait.assert_called_once()
+    assert result["session_status"] == "NEEDS_REAUTH_TIMEOUT"
+
+
+def test_timeout_pending_task_has_auto_resume(tmp_path):
+    """NEEDS_REAUTH_TIMEOUT 시에도 pending task에 auto_resume=true가 포함된다."""
+    mock_wait_result = {
+        "session_status": "NEEDS_REAUTH_TIMEOUT",
+        "completion_reasons": [],
+        "warnings": [],
+    }
+    with (
+        patch.object(_mod, "_check_session_health", return_value="NEEDS_REAUTH"),
+        patch.object(_mod, "_interactive_wait", return_value=mock_wait_result),
+    ):
+        result = _mod.observe(
+            out_dir=str(tmp_path),
+            capture_screenshot=False,
+            interactive_login=True,
+            _clock=FakeClock(),
+        )
+
+    assert result["pending_task_created"] is True
+    pt = Path(result["pending_task_path"])
+    task = json.loads(pt.read_text(encoding="utf-8"))
+    assert task.get("auto_resume") is True
+    assert task.get("next_action_after_login") == "observe_apps"
