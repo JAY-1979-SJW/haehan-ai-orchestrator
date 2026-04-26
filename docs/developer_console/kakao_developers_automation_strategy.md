@@ -66,13 +66,35 @@ Claude Code가 자동으로 진행할 수 있는 구조를 설계한다.
 
 ## 7. 브라우저 자동화 경계
 
+이 작업은 로그인 대기형 자동화가 아니다. Claude Code는 전용 브라우저 프로필(kakao_developer_console)을 사용해 로그인 상태를 재사용한다. 로그인되어 있으면 즉시 업무를 수행하고, 세션 만료 시에는 NEEDS_REAUTH로 저장하고 재개 가능한 pending task를 남긴다. 대표님에게 터미널 실행, 파일 확인, 결과 붙여넣기를 요구하지 않는다.
+
+### 전용 프로필 경로
+
+```
+runs/browser_profiles/kakao_developer_console/
+```
+
+### 실행 흐름
+
+```
+1. kakao_developer_console 전용 프로필로 접속
+2. 로그인 상태 확인
+3. READY_LOGGED_IN → 즉시 업무 수행
+4. SESSION_EXPIRED → NEEDS_REAUTH 기록 + pending task 파일 생성
+   runs/developer_console/pending_auth_tasks/kakao_apps_observer_YYYYMMDD_HHMMSS.json
+5. 재인증 후 자동 재개
+6. 결과 저장: runs/developer_console/kakao_apps_YYYYMMDD_HHMMSS/
+```
+
 | 허용 | 금지 |
 |------|------|
-| 콘솔 URL 직접 접근 | 로그인 자격증명 입력 |
-| 폼 자동 작성 | 쿠키/session 추출 |
-| 버튼 클릭 (저장/제출) | 비밀번호 읽기 |
-| 상태 확인 (심사 진행/완료/반려) | Client Secret 원문 출력 |
-| 스크린샷 (심사 자료용) | 광고비 결제 클릭 |
+| 전용 프로필 기반 세션 재사용 | 로그인 자격증명 코드 내 저장 |
+| 콘솔 URL 직접 접근 | 쿠키/session 추출 |
+| 폼 자동 작성 | 비밀번호 읽기/저장 |
+| 버튼 클릭 (저장/제출) | Client Secret 원문 출력 |
+| 상태 확인 (심사 진행/완료/반려) | 광고비 결제 클릭 |
+| 스크린샷 (심사 자료용) | 세션 만료 시 작업 그냥 종료 |
+| NEEDS_REAUTH 기록 + 재개 task 생성 | OTP/TOTP seed 저장 |
 
 ## 8. Secret 처리 원칙
 
@@ -109,8 +131,8 @@ Claude Code 자율 실행 기준: READY 항목은 Claude Code가 직접 실행. 
 | 단계 | 작업 키 | 내용 | 상태 |
 |------|---------|------|------|
 | 1 | `KAKAO-DEV-1` | 전략 문서 작성 (본 문서) | DONE |
-| 2 | `KAKAO-DEV-2` | Kakao Developers 콘솔 접속/로그인 상태 관찰 | READY — Claude Code 자율 실행 |
-| 3 | `KAKAO-DEV-3` | 앱 설정 상태 관찰 (platform, redirect URI, login 활성화) | READY — Claude Code 자율 실행 |
-| 4 | `KAKAO-DEV-4` | 권한 신청서 draft builder | READY — Claude Code 자율 실행 |
-| 5 | `KAKAO-DEV-5` | 권한 신청서 제출 자동화 | NEEDS_AUTH_PRINCIPAL (developer_console_operator 준비 후 자율 진행) |
-| 6 | `KAKAO-DEV-6` | 심사 상태 모니터링 | NEEDS_AUTH_PRINCIPAL (developer_console_operator 준비 후 자율 진행) |
+| 2 | `KAKAO-DEV-2` | Kakao Developers 콘솔 접속/로그인 상태 관찰 (구형, 로그인 대기형) | SUPERSEDED |
+| 3 | `KAKAO-DEV-3R` | 전용 프로필 기반 세션 재사용 — 앱 목록/설정/권한 확인 + 재개 가능 task | READY — Claude Code 자율 실행 |
+| 4 | `KAKAO-DEV-4R` | 권한 신청 draft 자동 작성 | READY — Claude Code 자율 실행 |
+| 5 | `KAKAO-DEV-5R` | 권한 신청 제출 자동화 | NEEDS_AUTH_PRINCIPAL (세션 준비 후 자율 진행) |
+| 6 | `KAKAO-DEV-6R` | 승인/반려 상태 자동 모니터링 | NEEDS_AUTH_PRINCIPAL (세션 준비 후 자율 진행) |

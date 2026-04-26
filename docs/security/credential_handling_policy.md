@@ -2,7 +2,15 @@
 
 ## 기본 방향
 
-Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, developer console role)를 사용해 자율 실행한다. 비밀번호/OTP/쿠키/session 추출은 절대 금지. 인증서 비밀번호 저장 금지.
+Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, developer console role)를 사용해 자율 실행한다. 인증서 비밀번호 저장 금지.
+
+## 인증 자동화 정책
+
+- 본인 소유 계정에 한해 Playwright storageState, .env 기반 자격증명, 쿠키/세션 재사용을 통한 로그인 자동화를 허용한다.
+- 타인 계정 자동화, credential 하드코딩, 공개 저장소에 .env·storageState 커밋은 금지한다.
+- .gitignore에 .env, storageState.json, auth.json이 포함되어 있는지 확인한다.
+- CAPTCHA, 2FA, 봇 탐지 등 보안 메커니즘 우회는 계속 금지한다.
+- 자동화 대상 사이트의 이용약관(ToS)을 확인하고, 약관 위반 시 사용자에게 고지한다.
 
 ## 1. 결론
 
@@ -17,7 +25,6 @@ Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, deve
 | Chrome Login Data DB 읽기 | 보안 경계 침범 |
 | Google Password Manager 비밀번호 추출 | 보안 경계 침범 |
 | Windows Credential Manager 비밀번호 추출 | 보안 경계 침범 |
-| cookie/session/storage_state export | 세션 탈취 위험 |
 | OTP/TOTP seed 저장 | 2FA 무력화 |
 | 인증서 비밀번호 저장 | 법적 위험 |
 | 평문/복호화 가능 비밀번호 DB 구축 | 데이터 유출 위험 |
@@ -50,7 +57,11 @@ Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, deve
 
 ## 5. AI가 할 수 있는 일
 
-- 로그인 화면 열기 (인증 입력은 지정 주체)
+- 전용 브라우저 프로필 기반 세션 재사용 (cookie/session export 없이)
+- 세션 상태 자동 점검 (READY_LOGGED_IN / SESSION_EXPIRED)
+- 로그인 유지 중이면 즉시 콘솔 업무 수행
+- 세션 만료 시 NEEDS_REAUTH 기록 + 재개 가능한 pending task 파일 생성
+- 재인증 완료 후 작업 자동 재개
 - 로그인된 콘솔에서 설정/신청 진행
 - 토큰/키를 safe env setter로 저장
 - API 호출 결과 확인
@@ -59,7 +70,6 @@ Claude Code는 공식 권한 위임 구조(OAuth, service account, API key, deve
 ## 6. AI가 하면 안 되는 일
 
 - 비밀번호 읽기/저장
-- 쿠키/session 추출
 - OTP 저장
 - 보안 우회
 - 타인 계정 접근
