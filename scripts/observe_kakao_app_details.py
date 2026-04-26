@@ -113,19 +113,17 @@ def _extract_app_ids(html: str) -> list[str]:
 
 
 def _extract_app_names(html: str, app_ids: list[str]) -> dict[str, str]:
-    """앱 카드에서 이름 힌트 추출."""
+    """앱 카드에서 이름 힌트 추출. 앱 이름 텍스트만 추출하고 HTML 태그는 제거."""
+    # 전체 HTML을 텍스트로 변환 후 앱 ID 주변에서 이름 추출
+    plain = re.sub(r"<[^>]+>", " ", html)
+    plain = re.sub(r"\s+", " ", plain)
     names: dict[str, str] = {}
     for aid in app_ids:
-        # URL 앞뒤 30자 텍스트에서 이름 힌트 추출
-        pattern = re.compile(
-            rf'/console/app/{re.escape(aid)}[^"\']*["\'][\s\S]{{0,200}}',
-            re.IGNORECASE,
-        )
-        m = pattern.search(html)
+        # "ID {aid} <앱이름>" 패턴 탐색
+        m = re.search(rf"ID\s+{re.escape(aid)}\s+([\w\s가-힣·\-]+?)(?=\s+역할|\s+Owner|\s+ID\s+\d|\Z)", plain)
         if m:
-            snippet = re.sub(r"<[^>]+>", " ", m.group())
-            snippet = re.sub(r"\s+", " ", snippet).strip()[:80]
-            names[aid] = _mask(snippet)
+            name = m.group(1).strip()[:60]
+            names[aid] = _mask(name) if name else ""
         else:
             names[aid] = ""
     return names
@@ -150,8 +148,11 @@ def _parse_scope_page(html: str) -> dict[str, Any]:
                 result[f"has_{status}"] = True
                 break
 
+    # "권한 없음" = 비즈앱 전환 후 신청 가능한 항목
+    result["has_no_permission_items"] = "권한 없음" in html_lower
+
     # 심사가 필요한 항목 감지
-    review_tokens = ("심사", "검토", "비즈니스", "제한", "권한 신청", "추가 기능 신청")
+    review_tokens = ("심사", "검토", "비즈니스", "제한", "권한 신청", "추가 기능 신청", "권한 없음")
     result["review_needed"] = any(t in html_lower for t in review_tokens)
 
     # 텍스트 힌트 (secret 마스킹)
@@ -216,7 +217,9 @@ def _diagnose_reasons(app_detail: dict) -> list[str]:
         reasons.append("동의항목 거절됨 — 거절 사유 확인 후 재신청 필요")
     if scope.get("has_pending"):
         reasons.append("동의항목 심사 진행 중 — 승인 대기")
-    if scope.get("biz_required_items") or scope.get("review_needed"):
+    if scope.get("has_no_permission_items"):
+        reasons.append("동의항목 중 '권한 없음' 항목 존재 — 비즈앱 전환 또는 추가 기능 신청 필요 (이름·성별·연령대·전화번호·CI 등)")
+    elif scope.get("biz_required_items") or scope.get("review_needed"):
         reasons.append("일부 동의항목이 비즈앱 전환 또는 권한 신청 필요")
     if not platform.get("web_registered") and not platform.get("android_registered") and not platform.get("ios_registered"):
         reasons.append("플랫폼(Web/Android/iOS) 미등록 — 플랫폼 등록 필요")
@@ -515,10 +518,133 @@ def _build_md(output: dict) -> str:
     return "\n".join(lines)
 
 
+def _build_permission_draft(apps: list[dict], out_dir: Path, ts: str) -> dict[str, Any]:
+    """관찰 결과를 바탕으로 권한 신청 draft를 생성한다. 실제 신청 제출은 하지 않는다."""
+    draft_dir = out_dir / f"kakao_permission_draft_{ts}"
+    draft_dir.mkdir(parents=True, exist_ok=True)
+
+    drafts: list[dict] = []
+    for app in apps:
+        app_id = app.get("app_id", "")
+        app_name = app.get("app_name_hint", "") or f"app_{app_id}"
+        scope = app.get("scope") or {}
+        platform = app.get("platform") or {}
+        login = app.get("login") or {}
+        biz = app.get("biz") or {}
+        diagnosis = app.get("diagnosis") or []
+
+        requested_features: list[str] = []
+        required_permissions: list[str] = []
+        missing_inputs: list[str] = []
+
+        if not login.get("login_activated"):
+            requested_features.append("카카오 로그인 활성화")
+            missing_inputs.append("카카오 로그인 활성화 여부 확인 필요")
+        if not login.get("redirect_uri_registered"):
+            requested_features.append("Redirect URI 등록")
+            missing_inputs.append("서비스 Redirect URI 값 필요")
+        if not platform.get("web_registered"):
+            requested_features.append("Web 플랫폼 등록")
+            missing_inputs.append("서비스 도메인 주소 필요")
+        if scope.get("has_rejected"):
+            requested_features.append("거절된 동의항목 재신청")
+            required_permissions.append("거절 사유 확인 후 재신청")
+            missing_inputs.append("거절 사유 확인 필요")
+        if scope.get("biz_required_items") or scope.get("review_needed"):
+            requested_features.append("비즈앱 전환 또는 권한 신청")
+            required_permissions.append("사업자등록증 / 서비스 URL / 개인정보처리방침")
+            missing_inputs.append("비즈앱 전환 여부 결정 필요")
+        if biz.get("biz_required"):
+            requested_features.append("비즈앱 전환")
+            required_permissions.append("사업자등록번호, 대표자명, 서비스 정보")
+            missing_inputs.append("비즈앱 전환 신청서 작성 필요")
+
+        submit_ready = bool(requested_features) and not missing_inputs
+
+        draft = {
+            "app_id": app_id,
+            "app_name": _mask(app_name),
+            "requested_features": requested_features,
+            "required_permissions": required_permissions,
+            "purpose_text": "서비스 사용자 인증 및 프로필 정보 활용",
+            "consent_item_purpose": "로그인 사용자 식별 및 서비스 연동",
+            "required_documents": list(set(required_permissions)),
+            "missing_inputs": missing_inputs,
+            "diagnosis": diagnosis,
+            "submit_ready": submit_ready,
+            "warning": "실제 신청 제출은 이 draft를 검토 후 수동으로 진행한다.",
+        }
+        drafts.append(draft)
+
+    result = {
+        "created_at": ts,
+        "app_count": len(drafts),
+        "drafts": drafts,
+        "security": {
+            "password_stored": False,
+            "storage_state_printed": False,
+            "secret_raw_stored": False,
+            "submit_executed": False,
+        },
+    }
+
+    (draft_dir / "draft.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    md_lines = ["# Kakao 권한 신청 Draft", "", f"generated_at: {ts}", ""]
+    for d in drafts:
+        md_lines += [
+            f"## 앱: {d['app_name']} (ID: {d['app_id']})",
+            "",
+            "### 신청 항목",
+        ]
+        for f in d["requested_features"]:
+            md_lines.append(f"- {f}")
+        md_lines += ["", "### 필요 서류"]
+        for doc in d["required_documents"]:
+            md_lines.append(f"- {doc}")
+        md_lines += ["", "### 미확인 입력값"]
+        for m in d["missing_inputs"]:
+            md_lines.append(f"- [ ] {m}")
+        md_lines += [
+            "",
+            f"**제출 준비 완료**: {'Yes' if d['submit_ready'] else 'No (missing_inputs 해소 필요)'}",
+            "",
+            "> 실제 신청 제출은 이 draft 검토 후 수동으로 진행한다.",
+            "",
+        ]
+
+    (draft_dir / "draft.md").write_text("\n".join(md_lines), encoding="utf-8")
+
+    req_lines = ["# 필요 서류 목록", ""]
+    all_docs: set[str] = set()
+    for d in drafts:
+        all_docs.update(d["required_documents"])
+    for doc in sorted(all_docs):
+        req_lines.append(f"- {doc}")
+    (draft_dir / "required_documents.md").write_text("\n".join(req_lines), encoding="utf-8")
+
+    next_lines = [
+        "# 다음 행동 (Next Actions)",
+        "",
+        "1. missing_inputs 항목을 확인하고 값을 준비한다.",
+        "2. 비즈앱 전환이 필요한 경우 사업자등록증을 준비한다.",
+        "3. Redirect URI는 실제 서비스 URL로 등록한다.",
+        "4. draft.json을 검토한 후 Kakao Developers에서 수동으로 신청한다.",
+        "5. 실제 신청 제출은 AI가 자동으로 수행하지 않는다.",
+    ]
+    (draft_dir / "next_actions.md").write_text("\n".join(next_lines), encoding="utf-8")
+
+    result["draft_dir"] = str(draft_dir)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="KAKAO-DEV-4 app details observer")
     parser.add_argument("--out-dir", default="runs/developer_console")
     parser.add_argument("--login-timeout-seconds", type=int, default=300)
+    parser.add_argument("--interactive-login", action="store_true")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
 
@@ -533,12 +659,22 @@ def main() -> int:
         print(f"  app_details.json: {Path(rd) / 'app_details.json'}", file=sys.stderr)
         print(f"  app_details.md  : {Path(rd) / 'app_details.md'}", file=sys.stderr)
 
+    # permission draft 생성 (앱이 1개 이상인 경우)
+    draft_result: dict[str, Any] = {}
+    apps = output.get("apps") or []
+    if apps:
+        ts = output.get("observed_at") or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        draft_result = _build_permission_draft(apps, Path(args.out_dir), ts)
+        ddir = draft_result.get("draft_dir", "")
+        if ddir:
+            print(f"[draft] {ddir}", file=sys.stderr)
+
     if args.json_output:
-        # apps 내 raw_hint 제외하고 진단 요약만 출력
         summary = {
             "session_status": output.get("session_status"),
             "app_count": output.get("app_count"),
             "result_dir": rd,
+            "draft_dir": draft_result.get("draft_dir"),
             "apps": [
                 {
                     "app_id": a["app_id"],
@@ -551,8 +687,12 @@ def main() -> int:
                     "scope_pending": (a.get("scope") or {}).get("has_pending"),
                     "scope_rejected": (a.get("scope") or {}).get("has_rejected"),
                     "scope_biz_required": (a.get("scope") or {}).get("biz_required_items"),
+                    "submit_ready": next(
+                        (d["submit_ready"] for d in (draft_result.get("drafts") or [])
+                         if d["app_id"] == a["app_id"]), False
+                    ),
                 }
-                for a in (output.get("apps") or [])
+                for a in apps
             ],
         }
         print(json.dumps(summary, ensure_ascii=False, indent=2))
