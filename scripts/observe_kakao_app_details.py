@@ -247,6 +247,8 @@ def observe_details(
     _browser_factory: Optional[Callable[[], Any]] = None,
     _clock: Any = None,
     _input_reader: Optional[Callable[[str], str]] = None,
+    _filter_app_id: Optional[str] = None,
+    _filter_app_name: Optional[str] = None,
 ) -> dict[str, Any]:
     from local_agent.browser_login_probe import _observe as _lp_observe
     from local_agent.browser_reader import _safe_close
@@ -384,6 +386,15 @@ def observe_details(
                         app_ids = _extract_app_ids(list_obs["html"])
                         app_names = _extract_app_names(list_obs["html"], app_ids)
                         print(f"[observe_kakao_app_details] 앱 {len(app_ids)}개 감지: {app_ids}", file=sys.stderr)
+
+                        # --app-id / --app-name 필터 적용
+                        if _filter_app_id:
+                            app_ids = [i for i in app_ids if i == _filter_app_id]
+                            print(f"[observe_kakao_app_details] --app-id 필터 적용: {app_ids}", file=sys.stderr)
+                        if _filter_app_name:
+                            kw = _filter_app_name.lower()
+                            app_ids = [i for i in app_ids if kw in app_names.get(i, "").lower()]
+                            print(f"[observe_kakao_app_details] --app-name 필터 적용: {app_ids}", file=sys.stderr)
 
                         # ── 3) 각 앱 상세 페이지 순회 ────────────────────────
                         for app_id in app_ids:
@@ -559,7 +570,13 @@ def _build_permission_draft(apps: list[dict], out_dir: Path, ts: str) -> dict[st
             required_permissions.append("사업자등록번호, 대표자명, 서비스 정보")
             missing_inputs.append("비즈앱 전환 신청서 작성 필요")
 
-        submit_ready = bool(requested_features) and not missing_inputs
+        # account_email은 자동으로 필수 처리하지 않고 필요성 검토 경고로 남긴다.
+        account_email_warning = (
+            "account_email 권한은 실제 필요성을 검토한 후 별도 신청하세요 (자동 포함 안 됨)"
+        )
+
+        submit_ready = False  # 항상 수동 검토 후 제출
+        review_required = True
 
         draft = {
             "app_id": app_id,
@@ -572,6 +589,8 @@ def _build_permission_draft(apps: list[dict], out_dir: Path, ts: str) -> dict[st
             "missing_inputs": missing_inputs,
             "diagnosis": diagnosis,
             "submit_ready": submit_ready,
+            "review_required": review_required,
+            "account_email_warning": account_email_warning,
             "warning": "실제 신청 제출은 이 draft를 검토 후 수동으로 진행한다.",
         }
         drafts.append(draft)
@@ -646,11 +665,19 @@ def main() -> int:
     parser.add_argument("--login-timeout-seconds", type=int, default=300)
     parser.add_argument("--interactive-login", action="store_true")
     parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--app-id", dest="app_id", default=None,
+                        help="관찰할 앱 ID (없으면 전체 앱 관찰)")
+    parser.add_argument("--app-name", dest="app_name", default=None,
+                        help="앱 이름 힌트로 필터링 (부분 일치)")
+    parser.add_argument("--from-latest-apps", action="store_true",
+                        help="최신 kakao_apps 결과에서 앱 목록 참조 (현재는 기본 동작과 동일)")
     args = parser.parse_args()
 
     output = observe_details(
         out_dir=args.out_dir,
         login_timeout_seconds=args.login_timeout_seconds,
+        _filter_app_id=args.app_id,
+        _filter_app_name=args.app_name,
     )
 
     rd = output.get("result_dir", "")
