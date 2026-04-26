@@ -73,6 +73,22 @@ def test_no_cookie_session_export():
     assert "storage_state()" not in _EXEC, "storage_state() without path= is forbidden"
 
 
+def test_no_session_value_printed():
+    """storageState 원문(value/token/cookie 내용)을 print/log로 출력하지 않는다.
+
+    보안 등급: storageState는 비밀번호급 민감정보.
+    print/logger 호출에서 storage_state 파일 경로 이외의 원문을 출력해서는 안 된다.
+    """
+    # 허용: path/name만 노출 (session_saved:..., state_path.name 등)
+    # 금지: storage_state 파일 내용(value, cookies dict) 직접 출력
+    for bad in ("storage_state_value", "cookies_raw", "token_raw", "session_raw"):
+        assert bad not in _EXEC, f"forbidden raw session output: {bad}"
+    # storage_state(path=...) 저장만 허용, 반환값을 변수에 받아 출력하는 패턴 금지
+    # context.storage_state(path=...) 는 None 반환이므로 결과 캡처 후 출력 불가
+    assert "storage_state_dict" not in _EXEC
+    assert "print(state" not in _EXEC
+
+
 def test_no_app_delete_or_secret_reissue():
     for bad in ("delete_app", "reissue_secret", "revoke_secret", "discard_secret"):
         assert bad not in _EXEC, f"forbidden: {bad}"

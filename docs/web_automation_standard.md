@@ -176,10 +176,32 @@ btn_sel = next((s for s in _SUBMIT_BTN_SELECTORS if _has_element(page, s)), None
 
 ## 10. 로그인 / CAPTCHA / 2FA 정책
 
-- **로그인 자동화 금지**: 세션은 사전에 사람이 완료
+- **로그인 자동화**: 본인 소유 계정에 한해 storageState·`.env` 기반 자동 로그인 허용
 - **CAPTCHA 우회 금지**: `CAPTCHA_REQUIRED` 에러 반환 후 중단
 - **2FA / OTP 우회 금지**: `LOGIN_REQUIRED` 에러 반환 후 중단
 - **재인증**: `SiteAdapter.wait_for_human_reauth()` 로 사람이 직접 처리
+
+## 인증 자동화 정책
+
+- 본인 소유 계정에 한해 Playwright storageState, .env 기반 자격증명, 쿠키/세션 재사용을 통한 로그인 자동화를 허용한다.
+- 타인 계정 자동화, credential 하드코딩, 공개 저장소에 .env·storageState 커밋은 금지한다.
+- .gitignore에 .env, storageState.json, auth.json이 포함되어 있는지 확인한다.
+- CAPTCHA, 2FA, 봇 탐지 등 보안 메커니즘 우회는 계속 금지한다.
+- 자동화 대상 사이트의 이용약관(ToS)을 확인하고, 약관 위반 시 사용자에게 고지한다.
+
+### storageState 보안 등급
+
+아이디/비밀번호는 저장하지 않는다. 다만 로그인 후 발급된 storageState는 로그인된 세션을
+재사용할 수 있는 민감정보이므로 **비밀번호급으로 보호**한다.
+
+| 항목 | 기준 |
+|------|------|
+| 저장 위치 | `secrets/browser_state/<site>.json` — `.gitignore` 대상 |
+| git 추적 | `git ls-files secrets/browser_state/` 결과 반드시 비어 있어야 함 |
+| 파일 권한 | `chmod 600` (본인만 읽기), 부모 디렉터리 `700` |
+| 원문 출력 | 로그·보고·화면 출력 절대 금지 (value/cookie/token 포함) |
+| 공유 | 타인 전달·클라우드 업로드 금지 |
+| 세션 만료·유출 | `clear_session("<site>")` 즉시 실행 후 재로그인 |
 
 ---
 
@@ -221,12 +243,20 @@ WebTaskEntry
 
 ## 12. 표준 실행 API
 
-### 엔드포인트
+### Base URL
+
+- **External (공식)**: `https://haehan-ai.kr/orchestrator/api/v1/` — edge nginx `/orchestrator/api/` location 경유. IP allowlist + Basic 인증 필수.
+- **Internal (호스트 루프백)**: `http://127.0.0.1:8400/api/v1/` — 운영 서버 내부 점검 전용.
+- `https://api.haehan-ai.kr/api/v1/*` / `https://haehan-ai.kr/api/v1/*` 는 **orchestrator 용도 아님** (정상 404). 자세한 내용은 `docs/deploy-api-container.md` "공식 경로" 섹션 참조.
+
+### 엔드포인트 (경로는 위 base URL 에 상대)
 
 | 메서드 | 경로 | 권한 | 설명 |
 |--------|------|------|------|
-| GET | `/api/v1/web-tasks/registry` | admin / owner | 등록된 작업 목록 조회 |
-| POST | `/api/v1/web-tasks/run` | admin / owner | 작업 실행 요청 |
+| GET | `/web-tasks/registry` | admin / owner | 등록된 작업 목록 조회. 미인증 시 `401 Unauthorized` 가 정상. |
+| POST | `/web-tasks/run` | admin / owner | 작업 실행 요청 |
+| GET | `/web-tasks/templates` | admin / owner | 템플릿 목록 조회 (default_param_keys 만 노출) |
+| POST | `/web-tasks/run-from-template` | admin / owner | 템플릿 기반 실행 요청 (override 병합 후 /run 과 동일 흐름) |
 
 ### POST /run 요청 모델
 
@@ -330,5 +360,129 @@ POST /run (dry_run=false)
 | `WEB_TASK_REJECTED_UNKNOWN_TASK` | 미등록 provider/action_type 요청 |
 | `WEB_TASK_VALIDATION_FAILED` | validate_params() 실패 |
 | `WEB_TASK_REGISTRY_LISTED` | GET /registry 호출 |
+| `WEB_TASK_TEMPLATE_USED` | run-from-template 호출 시 (template_id, provider, dry_run 만 기록) |
+| `WEB_TASK_TEMPLATE_NOT_FOUND` | 미등록 template_id 요청 |
 
-> 민감정보 포함 금지: `note` 필드에 params 원문 기록 금지. provider / action_type / success 여부만 기록.
+> 민감정보 포함 금지: `note` 필드에 params 원문 / override_params 원문 기록 금지.
+> provider / action_type / template_id / success 여부만 기록.
+
+---
+
+## 17. 웹 작업 템플릿 (web_task_templates.py — Stage 3)
+
+### 개념
+
+자주 쓰이는 `provider/action_type` + 기본 입력값을 묶어 둔 프리셋.
+사용자는 `template_id` 만 지정하고 일부 `override_params` 만 넘기면
+기존 `/run` 흐름(레지스트리 조회 → validate → dry_run / pending_approval) 을
+그대로 재사용한다.
+
+### 등록된 템플릿
+
+| template_id | provider | action_type | 설명 |
+|-------------|----------|-------------|------|
+| `hiworks_default` | hiworks | developer_apply | 하이웍스 개발자 센터 앱 등록 신청 기본값 |
+| `naver_default` | naver | app_register | 네이버 개발자 센터 앱 등록 기본값 |
+| `google_default` | google | oauth_submit | Google Cloud Console OAuth 등록 기본값 |
+
+### 템플릿 필드
+
+```
+WebTaskTemplate
+├── template_id      : 식별자 (예: "hiworks_default")
+├── provider         : 레지스트리 provider 와 일치
+├── action_type      : 레지스트리 action_type 과 일치
+├── description      : 한글 설명
+├── default_params   : 기본 입력값 (민감값 저장 금지)
+└── required_fields  : 호출 시 반드시 채워야 하는 키 (예: ["app_name"])
+```
+
+### default_params 보안 원칙
+
+- **민감 키 저장 금지**: `password`, `passwd`, `pwd`, `token`, `access_token`,
+  `refresh_token`, `session_token`, `cookie`, `cookies`, `session`,
+  `client_secret`, `secret`, `api_secret`, `api_key`, `auth`, `authorization`.
+  모듈 로드 시점에 `_assert_no_secrets()` 가 검사하여 위반 시 즉시 ValueError.
+- **API 응답에 원문 노출 금지**: 템플릿 조회 API 는 `default_param_keys`
+  (정렬된 키 목록) 만 반환한다. 값(value) 은 응답·감사 로그 어디에도
+  포함하지 않는다.
+
+### GET /web-tasks/templates 응답 모델
+
+```json
+{
+  "templates": [
+    {
+      "template_id": "hiworks_default",
+      "provider": "hiworks",
+      "action_type": "developer_apply",
+      "description": "하이웍스 개발자 센터 앱 등록 신청 기본 템플릿",
+      "required_fields": ["app_name"],
+      "default_param_keys": ["company_name", "purpose"]
+    }
+  ]
+}
+```
+
+### POST /web-tasks/run-from-template 요청 모델
+
+```json
+{
+  "template_id": "hiworks_default",
+  "override_params": {
+    "app_name": "MyApp"
+  },
+  "dry_run": true
+}
+```
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| template_id | ✓ | 등록된 템플릿 ID. 미등록 시 `404 TEMPLATE_NOT_FOUND` |
+| override_params | - | default_params 와 병합. 같은 키는 override 가 우선 |
+| dry_run | - | 기본값 false. true 면 approval 생성 없이 summary 반환 |
+
+### 실행 흐름
+
+```
+POST /run-from-template
+  │
+  ├─ get_template(template_id)  (None → 404 TEMPLATE_NOT_FOUND)
+  ├─ log_event("WEB_TASK_TEMPLATE_USED")
+  ├─ merge_params(template, override_params)   # override 우선
+  └─ _execute_web_task(provider, action_type, merged, dry_run, ...)
+        │
+        ├─ get_entry(provider, action_type)     # 미등록 → 404
+        ├─ validate_params() (실패 → 422)
+        ├─ dry_run=true   → adapter.fill_form(None, {dry_run:True}) → summary 반환
+        └─ dry_run=false  → pending approval + 텔레그램 발송
+```
+
+> `/run` 과 `/run-from-template` 는 모두 `_execute_web_task()` 한 함수를 공유한다.
+> 실행 경로 분기 / 검증 / 승인 게이트 로직은 단일 진실의 원천 (single source of truth) 이다.
+
+### 422 응답 모델 (validate_params 실패)
+
+```json
+{
+  "detail": {
+    "error": "FORM_FIELD_MISSING",
+    "error_code": "FORM_FIELD_MISSING",
+    "message": "app_name 은 필수입니다",
+    "missing_fields": ["app_name"],
+    "invalid_fields": []
+  }
+}
+```
+
+`missing_fields` / `invalid_fields` / `error_code` 가 명시적으로 제공되어
+호출자가 어떤 필드를 보강해야 하는지 즉시 식별할 수 있다.
+`error` 키는 기존 호환을 위해 유지된다.
+
+### 승인 흐름
+
+`run-from-template` 의 dry_run / approval 흐름은 `/run` 과 완전히 동일하다.
+- `dry_run=true`  → approval 생성 없음, submit 없음, summary 만 반환
+- `dry_run=false` → pending approval 생성 + 텔레그램 [승인]/[거절] 버튼 발송 → 즉시 반환
+
+> 무인 제출 금지·승인 전 submit 금지·로컬 PC 제어 금지 정책은 변경되지 않는다.

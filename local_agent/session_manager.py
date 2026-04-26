@@ -4,13 +4,18 @@
   1. ensure_session(site_name, login_url) 호출
   2. secrets/browser_state/<site_name>.json 이 있으면 → 즉시 경로 반환 (재사용)
   3. 없으면 → headless=False 브라우저 열기 → 사용자 로그인 대기
-             → 로그인 완료 감지 → context.storage_state() 저장 → 경로 반환
+             → 로그인 완료 감지 → context.storage_state(path=...) 파일 저장 → 경로 반환
 
 보안 원칙:
   - 본인 소유 계정에 한해 허용
   - CAPTCHA / 2FA / 봇 탐지 우회 금지
-  - storageState 파일은 secrets/ 하위 (.gitignore 대상), 커밋 금지
   - 비밀번호 자동 입력 없음 — 사용자가 직접 입력
+  - storageState 파일 보안 등급: 비밀번호급
+    · 아이디/비밀번호는 저장하지 않으나, storageState는 로그인 세션을 재사용할 수
+      있는 민감정보이므로 비밀번호와 동일하게 취급한다.
+    · secrets/browser_state/ 하위 저장, .gitignore 대상, 절대 커밋 금지
+    · 원문(value/cookie/token) 로그·출력·공유 금지
+    · 유출 우려 시 clear_session(site_name) 즉시 실행 후 재로그인
 """
 from __future__ import annotations
 
