@@ -91,9 +91,12 @@ def validate_render_item_for_execute(
     if not all(isinstance(a, str) for a in args):
         reasons.append("args_contain_non_str")
 
-    # shell metachar check
+    # shell metachar check — output path (last arg) is not yet created; skip existence check for it
+    output_arg = args[-1] if args else ""
     for arg in args:
         if _SHELL_METACHARS.search(arg) and not Path(arg).exists():
+            if arg == output_arg:
+                continue  # output file legitimately doesn't exist before render
             reasons.append(f"shell_metachar_in_arg:{arg[:40]}")
 
     # external URL check in args
