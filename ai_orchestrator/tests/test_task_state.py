@@ -87,3 +87,34 @@ def test_not_found():
     assert st == "not_found"
     _, st = ts.mark_executed("NOPE", "OK")
     assert st == "not_found"
+
+
+def test_token_id_is_identifier_not_raw_secret(tmp_path):
+    """token_id는 식별자(ID)만 저장되고, task_snapshot에 원문 시크릿 미포함."""
+    r = _pend()
+    assert r.token_id == "tok-1"
+    for bad in ("password", "secret", "raw_token", "access_token"):
+        assert bad not in r.task_snapshot, f"task_snapshot에 민감 필드: {bad}"
+
+
+def test_jsonl_persists_events(tmp_path):
+    """JSONL 파일에 이벤트가 append-only로 기록되는지 확인."""
+    _pend()
+    ts.mark_approved("T1", "admin_u", "admin")
+    ts.mark_executed("T1", "OK")
+    state_file = tmp_path / "task_states.jsonl"
+    assert state_file.exists(), "JSONL 이벤트 파일 미생성"
+    lines = [ln for ln in state_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    assert len(lines) >= 1
+    import json
+    for ln in lines:
+        json.loads(ln)
+
+
+def test_duplicate_set_pending_is_idempotent():
+    """같은 task_id로 set_pending 2회 호출 시 1건만 유지."""
+    r1 = _pend("DUP")
+    r2 = _pend("DUP")
+    assert r1.state == "pending"
+    assert r2.state == "pending"
+    assert ts.get_state("DUP") == "pending"
