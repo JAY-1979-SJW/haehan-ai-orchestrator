@@ -62,6 +62,20 @@ def session_state_path(site_name: str) -> Path:
     return browser_state_root() / f"{site_name}.json"
 
 
+def session_meta_path(site_name: str) -> Path:
+    """세션 상태 메타데이터 파일 경로 (쿠키/토큰 원문 미포함)."""
+    if not is_safe_site_name(site_name):
+        raise ValueError(f"invalid site_name: {site_name!r}")
+    return _env_path("SESSION_META_ROOT", secrets_root() / "session_meta") / f"{site_name}.json"
+
+
+def browser_profile_dir(site_name: str) -> Path:
+    """사이트별 Chromium persistent profile 디렉터리 경로."""
+    if not is_safe_site_name(site_name):
+        raise ValueError(f"invalid site_name: {site_name!r}")
+    return _env_path("BROWSER_PROFILE_ROOT", secrets_root() / "browser_profiles") / site_name
+
+
 def credentials_present(site_name: str) -> bool:
     try:
         return credentials_path(site_name).is_file()
@@ -83,6 +97,8 @@ __all__ = [
     "is_safe_site_name",
     "credentials_path",
     "session_state_path",
+    "session_meta_path",
+    "browser_profile_dir",
     "credentials_present",
     "session_state_present",
 ]
