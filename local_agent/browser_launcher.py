@@ -97,9 +97,6 @@ _PROVIDER_PRIORITY_GOOGLE: Tuple[str, ...] = ("chrome", "msedge", "chromium")
 _FORBIDDEN_ENV_VARS: Tuple[str, ...] = (
     "GOOGLE_PASSWORD",
     "GOOGLE_LOGIN_PASSWORD",
-    "GOOGLE_COOKIE",
-    "GOOGLE_SESSION",
-    "GOOGLE_STORAGE_STATE",
     "GOOGLE_OTP_SECRET",
 )
 
