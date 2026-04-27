@@ -80,17 +80,12 @@ echo "  → volume rename/recreate는 데이터 손실 위험 — 별도 승인 
 # 6) secret 값 출력 자체검사
 echo "---"
 echo -n "SECRET_VALUE_NOT_PRINTED: "
-SELF_LOG=$(mktemp)
-# 이 스크립트의 stdout 재확인용 — 실제 실행 시 호출자가 로그 저장
-# 여기서는 금지 패턴이 값 형태(KEY=value)로 나타나지 않음을 선언
 FORBIDDEN_PATTERN='(PASSWORD|PASS|TOKEN|SECRET|DATABASE_URL|API_KEY|PRIVATE_KEY|ACCESS_KEY|REFRESH_TOKEN)=[^=]'
 # self-check: 이 스크립트 파일 자체에 값 출력 코드가 없는지 확인
 if grep -qP "$FORBIDDEN_PATTERN" "${BASH_SOURCE[0]}" 2>/dev/null; then
     echo "FAIL — 스크립트 내 금지 패턴 값 출력 코드 발견"
-    rm -f "$SELF_LOG"
     exit 1
 fi
-rm -f "$SELF_LOG"
 echo "PASS"
 
 echo "---"
