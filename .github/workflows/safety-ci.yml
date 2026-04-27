@@ -51,6 +51,8 @@ jobs:
               "ai_orchestrator.executor",
               "ai_orchestrator.web_task_router",
               "ai_orchestrator.execution_limits",
+              "ai_orchestrator.dev_reg_audit_log",
+              "ai_orchestrator.task_state",
               "mcp_server.write_guard",
               "ai_orchestrator.sites.site_adapter",
               "ai_orchestrator.sites.job_state",
@@ -92,6 +94,8 @@ jobs:
             ai_orchestrator/tests/test_example_portal_adapter.py \
             ai_orchestrator/tests/test_naver_cafe_adapter_no_write.py \
             ai_orchestrator/tests/test_naver_cafe_collection_parse_only.py \
+            ai_orchestrator/tests/test_dev_reg_audit_log_unit.py \
+            ai_orchestrator/tests/test_task_state.py \
             -q
 
       - name: Excluded artifact scan
