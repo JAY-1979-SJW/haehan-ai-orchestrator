@@ -173,6 +173,38 @@ class LocalAgentTask:
         }
 
 
+# ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
+
+# 허용된 상태 전이만 등록. 미등록 전이는 _ensure_task_transition 이 차단한다.
+# waiting_approval/rejected 는 별도 함수(mark_approved/mark_rejected/mark_expired)
+# 에서만 처리하므로 여기서는 정규 실행 흐름만 포함한다.
+VALID_TASK_TRANSITIONS: dict[str, set[str]] = {
+    "queued":    {"delivered", "failed"},
+    "delivered": {"running", "failed"},
+    "running":   {"completed", "failed"},
+    "completed": set(),
+    "failed":    set(),
+}
+
+
+class InvalidTaskTransitionError(ValueError):
+    """허용되지 않은 상태 전이 시도."""
+
+
+def _ensure_task_transition(task: "LocalAgentTask", next_status: str) -> None:
+    """task 의 현재 status → next_status 전이가 허용되는지 검증.
+
+    허용되지 않으면 InvalidTaskTransitionError 를 발생시킨다.
+    task 상태를 바꾸지 않는다 — 호출자가 변경 직전에 호출해야 한다.
+    """
+    allowed = VALID_TASK_TRANSITIONS.get(task.status, set())
+    if next_status not in allowed:
+        raise InvalidTaskTransitionError(
+            f"invalid transition: {task.status!r} -> {next_status!r} "
+            f"(task_id={task.task_id})"
+        )
+
+
 # ── 인메모리 저장소 ──────────────────────────────────────────────────────
 
 _lock = threading.Lock()
@@ -416,13 +448,14 @@ def list_pending_for_agent(agent_id: str) -> list[LocalAgentTask]:
 
 
 def mark_delivered(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
-    """queued → delivered. 다른 상태 (completed / waiting_approval 등) 에서는 변경 없음."""
+    """queued → delivered. 다른 상태에서는 변경 없음."""
     with _lock:
         t = _tasks.get(task_id)
         if t is None or t.agent_id != agent_id:
             return None
         if t.status != "queued":
             return t
+        _ensure_task_transition(t, "delivered")
         now = _now_iso()
         t.status = "delivered"
         t.delivered_at = now
@@ -436,8 +469,9 @@ def mark_running(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
         t = _tasks.get(task_id)
         if t is None or t.agent_id != agent_id:
             return None
-        if t.status not in ("delivered", "queued"):
+        if t.status != "delivered":
             return t
+        _ensure_task_transition(t, "running")
         now = _now_iso()
         t.status = "running"
         if not t.started_at:
@@ -455,18 +489,21 @@ def apply_result(
     error: str = "",
     error_code: str = "",
 ) -> Optional[LocalAgentTask]:
-    """에이전트가 보고한 결과 반영. running/delivered/queued 에서만 동작.
+    """에이전트가 보고한 결과 반영. running/delivered 에서 동작.
 
-    - success=True  → status=completed
-    - success=False → status=failed + error_summary
+    - success=True  → running → completed (delivered 에서는 guard 에 의해 차단)
+    - success=False → failed
     """
     with _lock:
         t = _tasks.get(task_id)
         if t is None or t.agent_id != agent_id:
             return None
-        if t.status in ("completed", "failed", "rejected", "waiting_approval"):
-            # 이미 종결된 작업은 결과를 재적용하지 않는다 (idempotent).
+        # running/delivered 에서만 결과 적용 가능.
+        # delivered → completed 는 허용되지 않으므로 실패 보고만 허용.
+        if t.status not in ("running", "delivered"):
             return t
+        next_status = "completed" if success else "failed"
+        _ensure_task_transition(t, next_status)
         now = _now_iso()
         if success:
             t.status = "completed"
@@ -504,6 +541,7 @@ def _initial_result_summary(action: str, safe_params: dict) -> str:
 
 __all__ = [
     "ACTION_RISK", "ALLOWED_APPS", "AUTO_EXECUTE_VIA_AGENT",
+    "VALID_TASK_TRANSITIONS", "InvalidTaskTransitionError",
     "LocalAgent", "LocalAgentTask", "RegisterResult",
     "UnknownActionError",
     "register_agent", "get_agent", "list_agents", "authenticate_agent",
