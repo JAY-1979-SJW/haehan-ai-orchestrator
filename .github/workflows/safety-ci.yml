@@ -111,7 +111,7 @@ jobs:
           HITS=$(git grep -lE \
             "BEGIN PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}" \
             -- . \
-            ':!docs/**' ':!**/test_*.py' ':!**/*test*.py' \
+            ':!.github/**' ':!docs/**' ':!**/test_*.py' ':!**/*test*.py' \
             ':!.env.example' ':!README.md' ':!**/*.md' \
             || true)
           if [ -n "$HITS" ]; then
