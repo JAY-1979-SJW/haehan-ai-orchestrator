@@ -33,7 +33,7 @@ docker inspect <container> --format '{{range .Config.Env}}{{println .}}{{end}}' 
 **금지 (값 포함):**
 ```bash
 docker inspect <container> --format '{{.Config.Env}}'
-# 출력 예: [DATABASE_URL=postgres://user:pass@host/db ...]  ← secret 노출
+# 출력 예: [DATABASE_URL=<실제값노출> API_KEY=<실제값노출> ...]  ← secret 노출
 ```
 
 ## 3. secret-safe 자동 점검 스크립트
@@ -116,7 +116,7 @@ REFRESH_TOKEN=
 키 이름 목록만 출력하는 경우(값 없음)는 허용:
 ```
 ENV_KEYS: DATABASE_URL API_KEY AUTH_ENABLED   ← 허용
-DATABASE_URL=postgres://...                   ← 금지
+DATABASE_URL=<실제값>                         ← 금지
 ```
 
 ---
