@@ -40,7 +40,13 @@ def evaluate_request(req: TaskRequest, risk: RiskAssessment, policy: dict) -> Ex
     # allowed_paths 밖 쓰기 요청 차단
     if risk.risk_level in ("medium", "high"):
         in_allowed = any(ap.lower() in req.target.lower() for ap in allowed_paths)
-        if not in_allowed and req.action_type not in ("run_shell", "restart_service", "deploy_app", "push_git"):
+        # URL 기반 read-only action 은 filesystem allowed_paths 검사에서 제외.
+        # 대신 executor 단계의 whitelist + playwright_connector.validate_url 로 차단한다.
+        _path_exempt_actions = (
+            "run_shell", "restart_service", "deploy_app", "push_git",
+            "fetch_web_page",
+        )
+        if not in_allowed and req.action_type not in _path_exempt_actions:
             allowed = False
             blocked_reasons.append(f"허용 경로 밖 수정 요청: {req.target}")
 
