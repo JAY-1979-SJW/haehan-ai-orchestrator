@@ -1,0 +1,429 @@
+"""Windows COM 기반 실제 Microsoft Excel 제어 (B안 1단계 POC).
+
+목적
+-----
+로컬 Windows PC 에 설치된 Excel 데스크톱 앱을 ``win32com.client`` 로 실행시켜
+- 파일 열기 / 셀 읽기 / 셀 쓰기 / 저장
+가 실제로 동작하는지 증명한다. 서버 연동이나 action_registry 편입은 아직
+없으며, openpyxl 기반 기존 파이프라인과는 완전히 분리되어 있다.
+
+설계 원칙
+---------
+- ``win32com.client`` / ``pythoncom`` 은 **지연 import**. 비 Windows 환경에서
+  모듈 import 자체가 실패하지 않도록 한다.
+- 플랫폼/Dispatch 실패는 ``agent.errors`` 의 표준 코드로 반환.
+- 모든 실패 경로에서 Excel 프로세스/Workbook 핸들을 ``finally`` 로 정리.
+- 허용 경로 정책은 1·2단계 file_policy 와 독립적으로, 최소한 **절대경로만**
+  받도록 가드.
+"""
+from __future__ import annotations
+
+import logging
+import sys
+from pathlib import Path
+from typing import Any, Optional, Tuple
+
+from .. import errors as _err
+
+logger = logging.getLogger(__name__)
+
+# .xlsx 저장용 FileFormat 코드 (Excel 내장 상수 xlOpenXMLWorkbook).
+_XL_OPEN_XML_WORKBOOK = 51
+
+
+# ── 보안: 승인/dry-run 게이트 ───────────────────────────────────────────
+def _require_approval_for_write(
+    action: str,
+    approval_token: Optional[str],
+    allow_write: bool,
+) -> Optional[str]:
+    """write 액션 승인 검증. 차단 시 에러 코드 반환, 통과 시 None."""
+    if not allow_write:
+        logger.warning("[EXCEL-WRITE-BLOCKED] action=%s allow_write=False", action)
+        return _err.WRITE_NOT_ALLOWED
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        logger.warning("[EXCEL-WRITE-BLOCKED] action=%s approval_token missing", action)
+        return _err.WRITE_APPROVAL_REQUIRED
+    return None
+
+
+# ── 플랫폼 / 지연 import ────────────────────────────────────────────
+def _is_windows() -> bool:
+    return sys.platform.startswith("win")
+
+
+def _try_import_win32com() -> Tuple[Optional[Any], Optional[str]]:
+    """``win32com.client`` 지연 import.
+
+    반환: (module_or_None, error_or_None).
+    테스트에서 monkeypatch 로 상태를 시뮬레이션하기 위해 분리.
+    """
+    if not _is_windows():
+        return None, _err.EXCEL_COM_NOT_SUPPORTED
+    try:
+        import win32com.client as _win32com  # type: ignore
+        return _win32com, None
+    except ImportError:
+        return None, _err.EXCEL_COM_DISPATCH_FAILED
+
+
+# ── 가용성 점검 ─────────────────────────────────────────────────────
+def is_excel_available() -> dict:
+    """플랫폼 / pywin32 / Excel 설치 세 층위를 순차적으로 진단.
+
+    반환 예 (성공):
+      {"ok": True, "platform": "win32", "excel_available": True, "version": "16.0"}
+
+    반환 예 (실패):
+      {"ok": False, "platform": "...", "excel_available": False,
+       "error": "excel_com_not_supported" | ...}
+    """
+    platform_name = sys.platform
+    if not _is_windows():
+        return {
+            "ok": False,
+            "platform": platform_name,
+            "excel_available": False,
+            "error": _err.EXCEL_COM_NOT_SUPPORTED,
+        }
+
+    win32com_mod, err = _try_import_win32com()
+    if err or win32com_mod is None:
+        return {
+            "ok": False,
+            "platform": platform_name,
+            "excel_available": False,
+            "error": err or _err.EXCEL_COM_DISPATCH_FAILED,
+        }
+
+    try:
+        app = win32com_mod.Dispatch("Excel.Application")
+    except Exception as e:  # noqa: BLE001 - COM 예외 유형 다양
+        logger.info("Excel.Application Dispatch 실패: %s", type(e).__name__)
+        return {
+            "ok": False,
+            "platform": platform_name,
+            "excel_available": False,
+            "error": _err.EXCEL_APP_NOT_FOUND,
+            "detail": type(e).__name__,
+        }
+
+    version = ""
+    try:
+        version = str(getattr(app, "Version", ""))
+    except Exception:  # noqa: BLE001
+        version = ""
+    try:
+        app.Quit()
+    except Exception:  # noqa: BLE001
+        pass
+
+    return {
+        "ok": True,
+        "platform": platform_name,
+        "excel_available": True,
+        "version": version,
+    }
+
+
+# ── 핸들 관리 ──────────────────────────────────────────────────────
+def open_excel_app(visible: bool = True) -> Tuple[Optional[Any], Optional[str]]:
+    """Excel Application COM 객체를 반환.
+
+    - DisplayAlerts=False (대화상자 억제).
+    - Visible 은 POC 기본 True.
+    """
+    win32com_mod, err = _try_import_win32com()
+    if err or win32com_mod is None:
+        return None, err or _err.EXCEL_COM_DISPATCH_FAILED
+    try:
+        app = win32com_mod.Dispatch("Excel.Application")
+    except Exception as e:  # noqa: BLE001
+        logger.info("open_excel_app Dispatch 실패: %s", type(e).__name__)
+        return None, _err.EXCEL_APP_NOT_FOUND
+
+    try:
+        app.DisplayAlerts = False
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        app.Visible = bool(visible)
+    except Exception:  # noqa: BLE001
+        pass
+    return app, None
+
+
+def open_workbook(
+    app: Any, file_path: str, read_only: bool = False,
+) -> Tuple[Optional[Any], Optional[str]]:
+    """workbook 핸들 반환. 절대경로만 허용한다."""
+    if not isinstance(file_path, str) or not file_path.strip():
+        return None, _err.FILE_PATH_REQUIRED
+    try:
+        p = Path(file_path).expanduser()
+    except (OSError, ValueError):
+        return None, _err.FILE_NOT_ALLOWED
+    if not p.is_absolute():
+        return None, _err.FILE_NOT_ALLOWED
+    if not p.exists() or not p.is_file():
+        return None, _err.FILE_NOT_FOUND
+    try:
+        wb = app.Workbooks.Open(str(p), ReadOnly=bool(read_only))
+    except Exception as e:  # noqa: BLE001
+        logger.info("Workbooks.Open 실패: %s", type(e).__name__)
+        return None, _err.WORKBOOK_OPEN_FAILED
+    return wb, None
+
+
+# ── 시트/셀 I/O ────────────────────────────────────────────────────
+def _get_sheet(workbook: Any, sheet_name: str) -> Tuple[Optional[Any], Optional[str]]:
+    if not isinstance(sheet_name, str) or not sheet_name:
+        return None, _err.SHEET_NOT_FOUND
+    try:
+        sheet = workbook.Worksheets(sheet_name)
+    except Exception:  # noqa: BLE001
+        return None, _err.SHEET_NOT_FOUND
+    if sheet is None:
+        return None, _err.SHEET_NOT_FOUND
+    return sheet, None
+
+
+def read_cell(
+    workbook: Any, sheet_name: str, cell_ref: str,
+) -> Tuple[Any, Optional[str]]:
+    sheet, err = _get_sheet(workbook, sheet_name)
+    if err:
+        return None, err
+    try:
+        value = sheet.Range(cell_ref).Value
+    except Exception as e:  # noqa: BLE001
+        logger.info("read_cell 실패 (%s!%s): %s", sheet_name, cell_ref, type(e).__name__)
+        return None, _err.CELL_READ_FAILED
+    return value, None
+
+
+def write_cell(
+    workbook: Any,
+    sheet_name: str,
+    cell_ref: str,
+    value: Any,
+    *,
+    approval_token: Optional[str] = None,
+    dry_run: bool = True,
+    allow_write: bool = False,
+) -> Optional[str]:
+    """셀에 값을 씀. 승인/dry-run 게이트 포함."""
+    if dry_run:
+        logger.info("[EXCEL-DRY-RUN] write_cell %s!%s would_write=True", sheet_name, cell_ref)
+        return None
+    approval_err = _require_approval_for_write("excel.write_cell", approval_token, allow_write)
+    if approval_err:
+        return approval_err
+    sheet, err = _get_sheet(workbook, sheet_name)
+    if err:
+        return err
+    try:
+        sheet.Range(cell_ref).Value = value
+    except Exception as e:  # noqa: BLE001
+        logger.info("write_cell 실패 (%s!%s): %s", sheet_name, cell_ref, type(e).__name__)
+        return _err.CELL_WRITE_FAILED
+    return None
+
+
+# ── 저장 / 종료 ────────────────────────────────────────────────────
+def save_workbook(
+    workbook: Any,
+    *,
+    approval_token: Optional[str] = None,
+    dry_run: bool = True,
+    allow_write: bool = False,
+) -> Optional[str]:
+    """현재 경로로 저장. 승인/dry-run 게이트 포함."""
+    if dry_run:
+        logger.info("[EXCEL-DRY-RUN] save_workbook would_write=True")
+        return None
+    approval_err = _require_approval_for_write("excel.save_workbook", approval_token, allow_write)
+    if approval_err:
+        return approval_err
+    try:
+        workbook.Save()
+    except Exception as e:  # noqa: BLE001
+        logger.info("Save 실패: %s", type(e).__name__)
+        return _err.WORKBOOK_SAVE_FAILED
+    return None
+
+
+def save_workbook_as(
+    workbook: Any,
+    output_path: str,
+    *,
+    approval_token: Optional[str] = None,
+    dry_run: bool = True,
+    allow_write: bool = False,
+) -> Optional[str]:
+    """별도 경로로 저장 (권장 경로). 절대경로만 허용, 승인/dry-run 게이트 포함."""
+    if not isinstance(output_path, str) or not output_path.strip():
+        return _err.OUTPUT_PATH_REQUIRED
+    try:
+        p = Path(output_path).expanduser()
+    except (OSError, ValueError):
+        return _err.OUTPUT_PATH_NOT_ALLOWED
+    if not p.is_absolute():
+        return _err.OUTPUT_PATH_NOT_ALLOWED
+    if dry_run:
+        logger.info("[EXCEL-DRY-RUN] save_workbook_as path=%s would_write=True", output_path)
+        return None
+    approval_err = _require_approval_for_write("excel.save_workbook_as", approval_token, allow_write)
+    if approval_err:
+        return approval_err
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return _err.OUTPUT_PATH_NOT_ALLOWED
+    try:
+        workbook.SaveAs(str(p), FileFormat=_XL_OPEN_XML_WORKBOOK)
+    except Exception as e:  # noqa: BLE001
+        logger.info("SaveAs 실패: %s", type(e).__name__)
+        return _err.WORKBOOK_SAVE_FAILED
+    return None
+
+
+def close_workbook(workbook: Any, save_changes: bool = False) -> None:
+    try:
+        workbook.Close(SaveChanges=bool(save_changes))
+    except Exception as e:  # noqa: BLE001
+        logger.info("Close 실패 (정리 단계): %s", type(e).__name__)
+
+
+def quit_excel(app: Any) -> None:
+    try:
+        app.Quit()
+    except Exception as e:  # noqa: BLE001
+        logger.info("Quit 실패 (정리 단계): %s", type(e).__name__)
+
+
+# ── 통합 POC ───────────────────────────────────────────────────────
+def run_basic_poc(
+    file_path: str,
+    sheet_name: str = "Sheet1",
+    *,
+    visible: bool = True,
+    save_as: Optional[str] = None,
+    read_cell_ref: str = "A1",
+    write_cell_ref: str = "B2",
+    write_value: str = "POC_OK",
+    dry_run: bool = True,
+    approval_token: Optional[str] = None,
+    allow_write: bool = False,
+) -> dict:
+    """Excel 실행 → 열기 → 읽기 → 쓰기 → 저장 → 종료 를 한 번에 수행.
+
+    - dry_run=True (기본): COM 객체 미생성, planned_actions만 반환
+    - approval_token 필수 (쓰기용)
+    - allow_write=True만 실제 쓰기 허용
+
+    모든 단계의 진행 상황을 ``result`` dict 에 순차 기록해 실패 지점을
+    분리 가능한 진단 로그로 반환한다.
+    """
+    result: dict = {
+        "ok": False,
+        "file_path": file_path,
+        "sheet_name": sheet_name,
+        "excel_visible": bool(visible),
+        "save_as": save_as,
+        "dry_run": bool(dry_run),
+        "allow_write": bool(allow_write),
+        "planned_actions": [],
+        "dispatched": False,
+        "workbook_opened": False,
+        "read_cell": read_cell_ref,
+        "read_value": None,
+        "written_cell": write_cell_ref,
+        "written_value": None,
+        "saved": False,
+        "closed": False,
+        "quit": False,
+        "error": None,
+    }
+
+    if dry_run:
+        result["planned_actions"] = [
+            {"action": "excel.open", "file_path": file_path},
+            {"action": "excel.read_cell", "ref": read_cell_ref, "requires_approval": False},
+            {"action": "excel.write_cell", "ref": write_cell_ref, "requires_approval": True},
+            {"action": "excel.save_as" if save_as else "excel.save", "requires_approval": True},
+        ]
+        logger.info("[EXCEL-DRY-RUN] planned_actions=%d", len(result["planned_actions"]))
+        result["ok"] = True
+        return result
+
+    avail = is_excel_available()
+    if not avail.get("ok"):
+        result["error"] = avail.get("error") or _err.EXCEL_COM_NOT_SUPPORTED
+        return result
+
+    app, err = open_excel_app(visible=visible)
+    if err or app is None:
+        result["error"] = err or _err.EXCEL_APP_NOT_FOUND
+        return result
+    result["dispatched"] = True
+
+    wb = None
+    try:
+        wb, err = open_workbook(app, file_path, read_only=False)
+        if err or wb is None:
+            result["error"] = err or _err.WORKBOOK_OPEN_FAILED
+            return result
+        result["workbook_opened"] = True
+
+        value, err = read_cell(wb, sheet_name, read_cell_ref)
+        if err:
+            result["error"] = err
+            return result
+        result["read_value"] = value
+
+        err = write_cell(
+            wb, sheet_name, write_cell_ref, write_value,
+            approval_token=approval_token, dry_run=False, allow_write=allow_write,
+        )
+        if err:
+            result["error"] = err
+            return result
+        result["written_value"] = write_value
+
+        if save_as:
+            err = save_workbook_as(
+                wb, save_as,
+                approval_token=approval_token, dry_run=False, allow_write=allow_write,
+            )
+        else:
+            err = save_workbook(
+                wb,
+                approval_token=approval_token, dry_run=False, allow_write=allow_write,
+            )
+        if err:
+            result["error"] = err
+            return result
+        result["saved"] = True
+        result["ok"] = True
+        return result
+    finally:
+        if wb is not None:
+            close_workbook(wb, save_changes=False)
+            result["closed"] = True
+        quit_excel(app)
+        result["quit"] = True
+
+
+__all__ = [
+    "is_excel_available",
+    "open_excel_app",
+    "open_workbook",
+    "read_cell",
+    "write_cell",
+    "save_workbook",
+    "save_workbook_as",
+    "close_workbook",
+    "quit_excel",
+    "run_basic_poc",
+]
