@@ -4,6 +4,8 @@ Excel/CAD/HWP 커넥터로의 approval_token/allow_write/dry_run 정책 전파�
 mock 기반으로 검증한다.
 실제 COM 객체 생성은 발생하지 않는다.
 """
+import sys
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from agent import task_executor
@@ -316,6 +318,7 @@ class TestTaskExecutorAllowWritePropagation:
 class TestTaskExecutorNoActualCOMExecution:
     """G. 실제 COM 객체 생성 금지"""
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="win32com COM dispatch test is Windows-only")
     def test_no_win32com_client_dispatch_on_dry_run(self):
         """dry_run=True 시 win32com.client.Dispatch 호출 금지"""
         task = {
