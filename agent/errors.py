@@ -90,6 +90,11 @@ CAD_PROXY_AUTH_MISSING = "cad_proxy_auth_missing"
 CAD_PROXY_UPSTREAM_ERROR = "cad_proxy_upstream_error"
 CAD_MISSING_PARAM = "cad_missing_param"
 
+# COM 연동 보안: 승인/쓰기 제어
+WRITE_APPROVAL_REQUIRED = "write_approval_required"
+WRITE_NOT_ALLOWED = "write_not_allowed"
+DRY_RUN_PLANNED = "dry_run_planned"
+
 # ── prefix 코드 (상세 사유 suffix 가 붙음) ──────────────────────────────
 URL_NOT_ALLOWED = "url_not_allowed"
 LOGIN_URL_NOT_ALLOWED = "login_url_not_allowed"
