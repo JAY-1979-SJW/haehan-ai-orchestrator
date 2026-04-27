@@ -1,0 +1,122 @@
+name: Safety CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  safety-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: py_compile
+        run: |
+          python -m py_compile \
+            agent/*.py \
+            agent/connectors/*.py \
+            ai_orchestrator/executor.py \
+            ai_orchestrator/web_task_router.py \
+            ai_orchestrator/execution_limits.py \
+            mcp_server/*.py \
+            ai_orchestrator/sites/*.py \
+            ai_orchestrator/sites/adapters/*.py
+
+      - name: Import smoke
+        run: |
+          python - <<'PY'
+          mods = [
+              "agent.action_registry",
+              "agent.policy",
+              "agent.approval_policy",
+              "agent.app",
+              "agent.task_executor",
+              "ai_orchestrator.executor",
+              "ai_orchestrator.web_task_router",
+              "ai_orchestrator.execution_limits",
+              "mcp_server.write_guard",
+              "ai_orchestrator.sites.site_adapter",
+              "ai_orchestrator.sites.job_state",
+              "ai_orchestrator.sites.runner",
+              "ai_orchestrator.sites.session_manager",
+              "ai_orchestrator.sites.adapters.example_portal_adapter",
+              "ai_orchestrator.sites.adapters.naver_cafe_adapter",
+              "ai_orchestrator.sites.adapters.naver_cafe_collection",
+          ]
+          failed = []
+          for m in mods:
+              try:
+                  __import__(m)
+                  print("OK", m)
+              except Exception as e:
+                  print("FAIL", m, type(e).__name__, str(e))
+                  failed.append(m)
+          if failed:
+              raise SystemExit(f"Import smoke failed: {failed}")
+          PY
+
+      - name: Unit tests
+        run: |
+          python -m pytest \
+            agent/tests/test_import_smoke.py \
+            agent/tests/test_action_registry_unit.py \
+            agent/tests/test_excel_com_connector_unit.py \
+            agent/tests/test_cad_com_connector_unit.py \
+            agent/tests/test_hwp_com_connector_unit.py \
+            agent/tests/test_task_executor_com_policy_flow.py \
+            agent/tests/test_file_policy_edges.py \
+            ai_orchestrator/tests/test_executor_policy_flow.py \
+            ai_orchestrator/tests/test_web_task_router_policy_flow.py \
+            mcp_server/tests/test_write_guard.py \
+            ai_orchestrator/tests/test_sites_import_smoke.py \
+            ai_orchestrator/tests/test_site_adapter_interface_unit.py \
+            ai_orchestrator/tests/test_job_state_unit.py \
+            ai_orchestrator/tests/test_session_manager_unit.py \
+            ai_orchestrator/tests/test_example_portal_adapter.py \
+            ai_orchestrator/tests/test_naver_cafe_adapter_no_write.py \
+            ai_orchestrator/tests/test_naver_cafe_collection_parse_only.py \
+            -q
+
+      - name: Excluded artifact scan
+        run: |
+          FOUND=$(git ls-files | grep -E \
+            "^(runs/|cad_openapi_tmp\.json|scripts/(cad_com_poc|excel_com_poc|hwp_com_poc|_run_kakao_login_smoke|_run_google_login_smoke)\.py|data/naver_(blog|shopping)_search\.json|local_agent/browser_launcher\.py)$" \
+            || true)
+          if [ -n "$FOUND" ]; then
+            echo "FAIL: excluded artifacts found:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "OK: no excluded artifacts"
+
+      - name: Secret keyword scan
+        run: |
+          HITS=$(git grep -lE \
+            "BEGIN PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}" \
+            -- . \
+            ':!.github/**' ':!docs/**' ':!**/test_*.py' ':!**/*test*.py' \
+            ':!.env.example' ':!README.md' ':!**/*.md' \
+            || true)
+          if [ -n "$HITS" ]; then
+            echo "FAIL: possible secret found in:"
+            echo "$HITS"
+            exit 1
+          fi
+          echo "OK: no secret patterns detected"
