@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from .. import config
 from . import secrets_policy
@@ -63,11 +63,32 @@ def storage_state_option(site_name: str) -> Optional[str]:
     return str(p) if p.is_file() else None
 
 
+def save_storage_state(site_name: str, context: Any) -> Path:
+    """Playwright context 의 storageState 를 secrets 경로에 저장.
+
+    Args:
+        site_name: secrets_policy 기준 사이트 식별자
+        context:   Playwright BrowserContext 객체
+
+    Returns:
+        저장된 파일의 Path
+
+    Raises:
+        ValueError: site_name 이 유효하지 않을 때
+    """
+    p = secrets_policy.session_state_path(site_name)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    context.storage_state(path=str(p))
+    logger.info("storageState saved: %s -> %s", site_name, p.name)
+    return p
+
+
 __all__ = [
     "BrowserLaunchProbe",
     "probe_launch",
     "screenshot_dir",
     "storage_state_option",
+    "save_storage_state",
     "DEFAULT_TIMEOUT_MS",
     "DEFAULT_HEADLESS",
     "SCREENSHOT_ROOT",

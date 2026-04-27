@@ -40,6 +40,9 @@ def app_client(tmp_path_factory):
     importlib.reload(_config)
     from ai_orchestrator import auth as _auth
     importlib.reload(_auth)
+    from ai_orchestrator import approval as _approval
+    importlib.reload(_approval)
+    _approval.clear_rate_store()  # module 간 rate counter 누적 차단
     from ai_orchestrator import router as _router
     importlib.reload(_router)
     from ai_orchestrator import server as _server
