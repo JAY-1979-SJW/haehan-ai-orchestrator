@@ -374,5 +374,135 @@ def test_local_actions_list_allowed_apps():
     assert by_name["excel"]["executable_stage1"] is False
 
 
+# ── 상태 전이 guard 테스트 ──────────────────────────────────────────────
+
+def _make_queued_task(agent_id: str):
+    """open_url queued 작업 하나 생성 후 반환 (helper)."""
+    import ai_orchestrator.local_agent_registry as reg
+    return reg.enqueue_task(
+        agent_id=agent_id,
+        action="open_url",
+        params={"url": "https://example.com"},
+        requested_by="test",
+    )
+
+
+def test_state_transition_queued_to_delivered(admin_user):
+    """queued → delivered 정상."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    result = reg.mark_delivered(agent_id, task.task_id)
+    assert result is not None
+    assert result.status == "delivered"
+
+
+def test_state_transition_delivered_to_running(admin_user):
+    """delivered → running 정상."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    result = reg.mark_running(agent_id, task.task_id)
+    assert result is not None
+    assert result.status == "running"
+
+
+def test_state_transition_running_to_completed(admin_user):
+    """running → completed 정상."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=True, summary="ok")
+    assert result is not None
+    assert result.status == "completed"
+
+
+def test_state_transition_running_to_failed(admin_user):
+    """running → failed 정상."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=False, error="err")
+    assert result is not None
+    assert result.status == "failed"
+
+
+def test_state_guard_completed_cannot_transition_to_running(admin_user):
+    """completed 이후 running 전이 차단 — 상태 보존."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=True)
+    # completed 상태에서 mark_running 재시도 → 상태 변경 없음
+    result = reg.mark_running(agent_id, task.task_id)
+    assert result is not None
+    assert result.status == "completed"
+
+
+def test_state_guard_failed_cannot_transition_to_running(admin_user):
+    """failed 이후 running 전이 차단 — 상태 보존."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=False, error="err")
+    result = reg.mark_running(agent_id, task.task_id)
+    assert result is not None
+    assert result.status == "failed"
+
+
+def test_state_guard_queued_cannot_directly_run(admin_user):
+    """queued → running 직접 전이 차단."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    # mark_delivered 없이 바로 mark_running 시도
+    result = reg.mark_running(agent_id, task.task_id)
+    assert result is not None
+    assert result.status == "queued"
+
+
+def test_state_guard_delivered_cannot_complete_directly(admin_user):
+    """delivered 상태에서 success=True result를 바로 적용해 completed 전이 시도 → 차단."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    # delivered 상태에서 success=True는 delivered → completed 전이 시도 → guard가 차단
+    with pytest.raises(reg.InvalidTaskTransitionError):
+        reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=True)
+    # 상태가 변경되지 않아야 한다
+    t = reg.find_task_by_id(task.task_id)
+    assert t is not None
+    assert t.status == "delivered"
+
+
+def test_state_guard_unknown_task_id_safe(admin_user):
+    """존재하지 않는 task_id 에 대해 mark_delivered/mark_running/apply_result 가 안전하게 None 반환."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    fake_id = "lat-000000000000"
+    assert reg.mark_delivered(agent_id, fake_id) is None
+    assert reg.mark_running(agent_id, fake_id) is None
+    assert reg.apply_result(agent_id=agent_id, task_id=fake_id, success=True) is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
