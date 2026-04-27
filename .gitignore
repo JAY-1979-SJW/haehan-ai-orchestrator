@@ -50,3 +50,41 @@ ai_orchestrator/storage/site_screenshots/
 logs/
 storage/
 devlog/
+
+# 로컬 시크릿 저장소 (agent/secrets). 평문/암호화/키/감사로그 모두 커밋 금지.
+agent_data/
+
+# 민감 파일 추가 차단 (F-4B baseline 보정).
+# 서버 접속정보 / 추가 인증서 형식 / .env 파생 / 쿠키 / 세션 / Playwright
+# storage_state 파일은 어떤 경로에 있든 절대 커밋되지 않도록 패턴 차단.
+서버_접속정보.md
+*접속정보*.md
+*.p12
+*.pfx
+.env.*
+cookies*
+session*
+!session_manager.py
+!test_session_manager.py
+storage_state*
+
+# Runtime execution artifacts (Stage 3~5)
+runs/
+
+# Temporary files
+cad_openapi_tmp.json
+*.tmp
+*_tmp.json
+
+# Local POC scripts
+scripts/cad_com_poc.py
+scripts/excel_com_poc.py
+scripts/hwp_com_poc.py
+
+# Local smoke/login test scripts
+scripts/_run_kakao_login_smoke.py
+scripts/_run_google_login_smoke.py
+
+# Sample collected data (local only)
+data/naver_blog_search.json
+data/naver_shopping_search.json

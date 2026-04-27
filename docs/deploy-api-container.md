@@ -14,6 +14,42 @@
 - 기존 `ai-orchestrator-dashboard.service` / `ai-orchestrator-monitor.service` 는 그대로 systemd 유지.
 - 네트워크 토폴로지: API 컨테이너는 자체 `haehan-ai-orchestrator-api_default` 네트워크에 더해 **외부 `app_web` 네트워크** 에 연결되어 있다. 이는 nginx 컨테이너(`app` 프로젝트) 가 동일 network bridge 로 API 에 DNS 접근하기 위한 조치이며, compose 는 `external: true` 로만 참조한다.
 
+## 공식 경로 — Orchestrator API base URL (2026-04-24 확정, 옵션 ①)
+
+| 구분 | URL | 비고 |
+|------|-----|------|
+| **External (공식)** | `https://haehan-ai.kr/orchestrator/api/v1/` | edge nginx → `/orchestrator/api/` location → `haehan-ai-orchestrator-api:8400/api/` 로 prefix swap. IP allowlist 적용 (220.79.246.190, 127.0.0.1, 172.18.0.1). Basic 인증 필수 (`AUTH_ENABLED=true`). |
+| **Internal (컨테이너 DNS)** | `http://haehan-ai-orchestrator-api:8400/api/v1/` | `app_web` bridge 네트워크 내부에서만 접근 가능 (nginx / 같은 프로젝트 컨테이너). |
+| **Internal (호스트 루프백)** | `http://127.0.0.1:8400/api/v1/` | 운영 서버에서 `curl`로 직접 점검할 때만 사용. 외부 공개 금지. |
+
+### 의도적 404 (orchestrator 용도 아님 — 사용 금지)
+
+| URL 패턴 | 실제 라우팅 | 상태 |
+|----------|------------|------|
+| `https://api.haehan-ai.kr/api/v1/*` | `g2b.conf` → `g2b-api:8001` (**G2B 전용 도메인**) | orchestrator 용도 **아님**. 호출 시 404. |
+| `https://haehan-ai.kr/api/v1/*` | top-level `/api/` location 없음 (haehan-web 라우트만 존재) | orchestrator 용도 **아님**. 호출 시 404. |
+
+- 위 두 경로는 **정상 404** 이며, 운영 혼동 방지를 위해 nginx 추가/수정은 하지 않는다.
+- `api.haehan-ai.kr` 의 conf (`g2b.conf`) 파일 헤더에 **"담당: g2b 전용 (총괄 승인 없이 수정 금지)"** 명시되어 있음.
+
+### 검증 명령 (운영 서버 / 허용 IP 기준)
+
+```bash
+# 기대: 200 {"status":"ok",...}
+curl -sk --resolve haehan-ai.kr:443:127.0.0.1 \
+  https://haehan-ai.kr/orchestrator/api/v1/health
+
+# 기대: 401 Unauthorized + WWW-Authenticate: Basic  (인증 없는 상태가 정상)
+curl -sk --resolve haehan-ai.kr:443:127.0.0.1 \
+  https://haehan-ai.kr/orchestrator/api/v1/web-tasks/registry
+```
+
+### Edge nginx 실체 (혼동 방지)
+
+- **호스트 nginx (`systemd`) 는 사용하지 않는다.** 2026-04-20 부터 `Active: failed`, `disabled` 상태이며 80/443 포트는 Docker 컨테이너가 점유하고 있어 다시 띄울 수도 없다.
+- 실제 edge 프록시는 **Docker 컨테이너 `nginx` (`image: nginx:alpine`)**. 설정 파일은 호스트 `/home/ubuntu/app/nginx/conf.d/*.conf` 를 read-only bind-mount.
+- 설정 검증/반영은 호스트 `nginx -t` / `systemctl reload nginx` 가 아닌 `docker exec nginx nginx -t` / `docker exec nginx nginx -s reload` 를 사용한다.
+
 ## 왜 A안인가
 
 서버(`haehan-app`)에는 이미 systemd 로 다음 두 서비스가 돌고 있다.

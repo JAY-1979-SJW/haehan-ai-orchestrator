@@ -26,6 +26,18 @@ logger = logging.getLogger(__name__)
 BLOCK_RATE_ACTION = "rate_limited_action"
 BLOCK_RATE_USER = "rate_limited_user"
 BLOCK_TIMEOUT = "execution_timeout"
+# 신규 승인형 실행 정책 차단 사유
+BLOCK_TASK_COOLDOWN = "task_cooldown"
+BLOCK_USER_5MIN = "rate_limited_user_5min"
+BLOCK_NIGHT = "night_blocked"
+
+# 신규 제한 파라미터 (기본값 고정. 필요 시 후속 단계에서 config.py 로 이관)
+TASK_COOLDOWN_SEC = 60      # 동일 task 1분 내 1회
+USER_5MIN_WINDOW_SEC = 300  # 5분 창
+USER_5MIN_MAX = 5           # 5분 내 5회
+NIGHT_START_HOUR = 0        # KST 00시
+NIGHT_END_HOUR = 6          # KST 06시 (end exclusive)
+KST_OFFSET_HOURS = 9        # 서버 UTC → KST
 
 
 def _now() -> datetime:
@@ -135,4 +147,76 @@ def current_limits() -> dict:
         "action_max": EXEC_RATE_LIMIT_ACTION_MAX,
         "user_max": EXEC_RATE_LIMIT_USER_MAX,
         "timeout_sec": EXEC_TIMEOUT_SEC,
+        "task_cooldown_sec": TASK_COOLDOWN_SEC,
+        "user_5min_window_sec": USER_5MIN_WINDOW_SEC,
+        "user_5min_max": USER_5MIN_MAX,
+        "night_start_hour_kst": NIGHT_START_HOUR,
+        "night_end_hour_kst": NIGHT_END_HOUR,
     }
+
+
+# ── 신규 승인형 실행 제한 ─────────────────────────────────────────────
+def check_task_cooldown(task_id: str, window_sec: int = TASK_COOLDOWN_SEC) -> tuple[bool, str]:
+    """동일 task_id 가 window_sec 내에 이미 실행된 적 있으면 차단."""
+    recent = _read_recent(window_sec)
+    for e in recent:
+        if not _is_countable(e):
+            continue
+        if e.get("task_id") == task_id:
+            return False, BLOCK_TASK_COOLDOWN
+    return True, ""
+
+
+def check_user_5min_window(
+    requested_by: str,
+    window_sec: int = USER_5MIN_WINDOW_SEC,
+    max_count: int = USER_5MIN_MAX,
+) -> tuple[bool, str]:
+    """동일 사용자가 5분 내 max_count 회 초과 실행 시 차단."""
+    recent = _read_recent(window_sec)
+    count = 0
+    for e in recent:
+        if not _is_countable(e):
+            continue
+        if e.get("requested_by") == requested_by:
+            count += 1
+    if count >= max_count:
+        return False, BLOCK_USER_5MIN
+    return True, ""
+
+
+def _is_night_kst(dt_utc: Optional[datetime] = None,
+                  start_hour: int = NIGHT_START_HOUR,
+                  end_hour: int = NIGHT_END_HOUR) -> bool:
+    """KST 기준 야간 시간대 여부. end_hour 는 exclusive."""
+    base = dt_utc or _now()
+    # UTC → KST 오프셋
+    kst_hour = (base.hour + KST_OFFSET_HOURS) % 24
+    if start_hour <= end_hour:
+        return start_hour <= kst_hour < end_hour
+    # wrap (예: 22~6) 처리
+    return kst_hour >= start_hour or kst_hour < end_hour
+
+
+def check_night_block(now_utc: Optional[datetime] = None) -> tuple[bool, str]:
+    """KST 00:00~06:00 사이면 실행 차단."""
+    if _is_night_kst(now_utc):
+        return False, BLOCK_NIGHT
+    return True, ""
+
+
+def check_execution_policy(req: "TaskRequest") -> tuple[bool, str]:
+    """승인형 실제 실행 전 3종 정책(task cooldown / user 5min / night) 검사.
+
+    기존 check_rate_limits 와 결합해 쓰며, 어느 하나라도 막히면 차단.
+    """
+    ok, reason = check_night_block()
+    if not ok:
+        return ok, reason
+    ok, reason = check_task_cooldown(req.task_id)
+    if not ok:
+        return ok, reason
+    ok, reason = check_user_5min_window(req.requested_by)
+    if not ok:
+        return ok, reason
+    return True, ""
