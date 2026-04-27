@@ -1,9 +1,11 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from .logging_setup import setup_logging
 from .router import router
 from .config import APP_HOST, APP_PORT
+from .connectors.naver_search_runner import schedule_loop
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +14,16 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("haehan-ai-orchestrator 시작 | host=%s port=%s", APP_HOST, APP_PORT)
-    yield
-    logger.info("haehan-ai-orchestrator 종료")
+    task = asyncio.create_task(schedule_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        logger.info("haehan-ai-orchestrator 종료")
 
 
 app = FastAPI(title="haehan-ai-orchestrator", version="1.0.0", lifespan=lifespan)

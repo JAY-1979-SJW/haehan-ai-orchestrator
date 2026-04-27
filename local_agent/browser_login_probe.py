@@ -345,7 +345,42 @@ def _run_probe(
                         login_confirmed_by_user=login_confirmed_by_user,
                     )
 
-                    # 7) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
+                    # 7) 다중 탭 스캔 (measurement gap 보완).
+                    #    Studio/OAuth flow 가 window.open/팝업으로 target 페이지를
+                    #    별도 탭에 열었을 경우, 단일 `page` 기준으로는 놓친다.
+                    #    context.pages 전수 스캔으로 각 탭의 url/title 을
+                    #    read-only 로만 수집해 집계한다. fake context 에서는
+                    #    `pages` 속성이 없으므로 getattr default=None 로 안전
+                    #    fallback 된다.
+                    pages_observed_count, success_url_across_pages = (
+                        _scan_context_pages_aggregate(
+                            context=context,
+                            success_urls=success_urls,
+                        )
+                    )
+                    if success_url_across_pages and not login_confirmed_by_user:
+                        # 사용자 확인이 없는데 다른 탭에 target 이 열려 있는
+                        # 상태는 자동 단정하지 않는다 (§5.3, §8.4 WARN).
+                        if (
+                            "success_url_observed_across_pages"
+                            not in (warnings or [])
+                        ):
+                            warnings.append(
+                                "success_url_observed_across_pages"
+                            )
+                    if login_confirmed_by_user and not success_url_across_pages:
+                        # 사용자 확인은 있는데 스크립트가 target URL 을 어느
+                        # 탭에서도 관측하지 못한 경우 — §8.4 "PASS with
+                        # measurement caveat" 케이스.
+                        if (
+                            "script_observed_without_target_url"
+                            not in (warnings or [])
+                        ):
+                            warnings.append(
+                                "script_observed_without_target_url"
+                            )
+
+                    # 8) keep_open 시 닫기 전에 사용자 Enter 를 기다림.
                     if keep_open:
                         try:
                             input_reader(_KEEP_OPEN_PROMPT)
@@ -361,6 +396,10 @@ def _run_probe(
                         login_completed_hint=login_completed_hint,
                         visible_confirmed_by_user=visible_confirmed_by_user,
                         login_confirmed_by_user=login_confirmed_by_user,
+                        pages_observed_count=pages_observed_count,
+                        success_url_observed_across_pages=(
+                            success_url_across_pages
+                        ),
                         warnings=warnings,
                     )
                 finally:
@@ -382,6 +421,8 @@ def _build_result(
     visible_confirmed_by_user: bool,
     login_confirmed_by_user: bool,
     warnings: list[str],
+    pages_observed_count: int = 1,
+    success_url_observed_across_pages: bool = False,
 ) -> dict[str, Any]:
     base: dict[str, Any] = {
         "mode": "manual_login_probe",
@@ -391,6 +432,10 @@ def _build_result(
         "login_state_hint": login_state_hint,
         "login_completed_hint": bool(login_completed_hint),
         "login_completion_reason": list(completed_reasons),
+        "pages_observed_count": int(pages_observed_count),
+        "success_url_observed_across_pages": bool(
+            success_url_observed_across_pages
+        ),
         "initial": _redact_observation(initial, include_structure=False),
         "warnings": list(warnings),
     }
@@ -472,6 +517,59 @@ def _safe_bring_to_front(page: Any) -> None:
             fn()
     except Exception:
         logger.debug("bring_to_front failed", exc_info=True)
+
+
+def _scan_context_pages_aggregate(
+    *,
+    context: Any,
+    success_urls: list[str],
+) -> tuple[int, bool]:
+    """read-only 로 context 의 모든 page 를 훑어 target url 관측 여부만 집계.
+
+    Studio / OAuth flow 처럼 target 페이지가 window.open / popup 으로 별도
+    탭에 열리는 경우, 단일 `page` 객체만 추적하는 기존 관찰 루프는 이를
+    놓친다. 관찰 종료 시점에 context.pages 를 전수 순회해 url 만 모아
+    success_url_contains 토큰이 어떤 탭에서든 발견됐는지 집계한다.
+
+    Playwright API 가 없거나 fake context (테스트) 에서 `pages` 속성이
+    없으면 ``getattr(..., None)`` 으로 안전 fallback 되어 ``(0, False)``
+    를 반환한다.
+
+    허용 호출: ``page.url`` property 뿐. title / content / click / fill /
+    cookies / storage_state 등은 절대 호출하지 않는다.
+
+    Returns:
+        (pages_observed_count, success_url_observed_across_pages)
+    """
+    ctx_pages = getattr(context, "pages", None)
+    if ctx_pages is None:
+        return 0, False
+    try:
+        iterable = ctx_pages() if callable(ctx_pages) else ctx_pages
+    except Exception:
+        return 0, False
+    if not iterable:
+        return 0, False
+
+    count = 0
+    hit = False
+    success_lower = [t.lower() for t in success_urls if t]
+    for pg in iterable:
+        try:
+            u = getattr(pg, "url", "") or ""
+        except Exception:
+            u = ""
+        if not isinstance(u, str):
+            u = ""
+        count += 1
+        if hit:
+            continue
+        u_lc = u.lower()
+        for tok in success_lower:
+            if tok and tok in u_lc:
+                hit = True
+                break
+    return count, hit
 
 
 def _observe(page: Any, *, max_html_chars: int) -> dict[str, Any]:
