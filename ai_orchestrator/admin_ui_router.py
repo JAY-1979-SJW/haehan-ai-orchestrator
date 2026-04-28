@@ -34,16 +34,68 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <title>로컬 에이전트 관리 (사전 점검 / 실제 1회)</title>
 <style>
+  /* ── 기본 레이아웃 ── */
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-         sans-serif; margin: 24px; color: #222; }
-  h1 { font-size: 20px; margin-bottom: 8px; }
-  .note { color: #666; margin-bottom: 16px; font-size: 13px; }
-  .warn { color: #b00020; font-weight: 600; margin-top: 4px;
-          font-size: 12px; }
-  table { border-collapse: collapse; width: 100%; max-width: 960px; }
-  th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left;
-           font-size: 14px; vertical-align: top; }
-  th { background: #f7f7f7; }
+         sans-serif; margin: 0; background: #F0F2F5; color: #111827; }
+  .page-wrap { max-width: 1080px; margin: 0 auto; padding: 28px 24px; }
+  h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px; color: #111827; }
+  h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: #111827; }
+  .note { color: #6B7280; margin-bottom: 20px; font-size: 13px; }
+  .warn { color: #b00020; font-weight: 600; margin-top: 4px; font-size: 12px; }
+
+  /* ── 카드 ── */
+  .card { background: #FFFFFF; border-radius: 8px;
+          border: 1px solid #E5E7EB;
+          box-shadow: 0 1px 4px rgba(0,0,0,.06);
+          margin-bottom: 20px; overflow: hidden; }
+  .card-header { padding: 14px 16px; border-bottom: 1px solid #E5E7EB;
+                 display: flex; align-items: center; gap: 12px;
+                 flex-wrap: wrap; }
+  .card-body { padding: 0; }
+
+  /* ── agent 목록 테이블 ── */
+  .agent-table { border-collapse: collapse; width: 100%; }
+  .agent-table th { background: #F3F4F6; padding: 8px 12px;
+                    text-align: left; font-size: 11px; font-weight: 700;
+                    color: #374151; border-bottom: 2px solid #E5E7EB; }
+  .agent-table td { padding: 10px 12px; font-size: 13px; color: #374151;
+                    border-bottom: 1px solid #F3F4F6; vertical-align: top; }
+  .agent-table tr:last-child td { border-bottom: none; }
+  .agent-table tr:hover td { background: #F9FAFB; }
+
+  /* ── 작업 목록 테이블 ── */
+  .task-table { border-collapse: collapse; width: 100%; }
+  .task-table th { background: #F3F4F6; padding: 7px 10px;
+                   text-align: left; font-size: 11px; font-weight: 700;
+                   color: #374151; border-bottom: 2px solid #E5E7EB;
+                   white-space: nowrap; }
+  .task-table td { padding: 9px 10px; font-size: 12px; color: #374151;
+                   border-bottom: 1px solid #F3F4F6; vertical-align: top; }
+  .task-table tr:last-child td { border-bottom: none; }
+  .task-table tr:hover td { background: #F9FAFB; }
+  .task-id-cell { font-family: monospace; font-size: 11px; color: #6B7280; }
+  .failure-cell { font-size: 11px; color: #B91C1C; }
+
+  /* ── 배지 공통 ── */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600;
+           padding: 2px 8px; border-radius: 10px; border: 1px solid; }
+
+  /* status 배지 */
+  .badge-queued         { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
+  .badge-waiting_approval { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
+  .badge-delivered      { background:#D1FAE5; color:#065F46; border-color:#6EE7B7; }
+  .badge-running        { background:#ECFDF5; color:#16A34A; border-color:#A7F3D0; }
+  .badge-completed      { background:#F3F4F6; color:#6B7280; border-color:#D1D5DB; }
+  .badge-failed         { background:#FEE2E2; color:#B91C1C; border-color:#F87171; }
+  .badge-rejected       { background:#FEE2E2; color:#991B1B; border-color:#F87171; }
+  .badge-status-default { background:#F3F4F6; color:#6B7280; border-color:#D1D5DB; }
+
+  /* risk 배지 */
+  .badge-low    { background:#F0FDF4; color:#15803D; border-color:#BBF7D0; }
+  .badge-medium { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
+  .badge-high   { background:#FFF7ED; color:#C2410C; border-color:#FED7AA; }
+
+  /* ── 버튼 ── */
   button.dry-run-btn { padding: 6px 10px; border: 1px solid #2a5db0;
                        background: #eaf1ff; color: #2a5db0; cursor: pointer;
                        border-radius: 4px; font-size: 13px; margin-right: 6px; }
@@ -51,14 +103,34 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
                             background: #fde7ea; color: #a00020;
                             cursor: pointer; border-radius: 4px;
                             font-size: 13px; font-weight: 600; }
+  button.task-view-btn { padding: 5px 10px; border: 1px solid #E5E7EB;
+                         background: #F5F7FA; color: #374151; cursor: pointer;
+                         border-radius: 4px; font-size: 12px; font-weight: 600;
+                         margin-right: 4px; }
+  button.task-view-btn:hover { background: #E5E7EB; }
   button[disabled] { opacity: 0.55; cursor: progress; }
-  .status { margin-top: 6px; font-size: 12px; color: #333; white-space: pre-wrap; }
-  .status.ok { color: #1a6d1a; }
+
+  /* ── 필터 select ── */
+  select.status-filter { height: 30px; padding: 0 8px;
+                         border: 1px solid #E5E7EB; border-radius: 6px;
+                         font-size: 12px; color: #374151; background: #fff;
+                         cursor: pointer; }
+
+  /* ── 상태/빈 메시지 ── */
+  .status { margin-top: 6px; font-size: 12px; color: #333;
+            white-space: pre-wrap; }
+  .status.ok  { color: #1a6d1a; }
   .status.err { color: #b00020; }
-  .empty { color: #888; }
+  .empty-row td { text-align: center; padding: 40px 12px;
+                  color: #6B7280; font-size: 13px; }
+  .task-loading { text-align: center; padding: 20px; color: #6B7280;
+                  font-size: 13px; }
+  .task-err { color: #B91C1C; font-size: 13px; padding: 12px; }
+  .task-count { font-size: 12px; color: #6B7280; font-weight: 400; }
 </style>
 </head>
 <body>
+<div class="page-wrap">
 <h1>로컬 에이전트 — 화면 캡처 요청</h1>
 <p class="note">
   사전 점검 버튼은 <b>dry_run=true</b> 요청만 생성합니다.
@@ -68,7 +140,8 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
 </p>
 
 <div id="root">
-  <p class="empty">에이전트 목록을 불러오는 중…</p>
+  <p style="color:#6B7280;font-size:13px;">에이전트 목록을 불러오는 중…</p>
+</div>
 </div>
 
 <script>
@@ -82,13 +155,28 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
   var DRY_RUN_BODY = { dry_run: true, reason: "ui_dry_run_check" };
 
   // 실제 1회 캡처용 body — dry_run 은 반드시 false 로 명시해서 보낸다.
-  // 이 상수는 window.confirm 게이트를 통과한 코드 경로에서만 사용된다.
   var REAL_CAPTURE_BODY = { dry_run: false, reason: "ui_capture_once_request" };
 
   // window.confirm 에 띄울 경고 문구
   var CONFIRM_REAL_CAPTURE =
     "승인 후 로컬 PC에서 1회 화면 캡처가 실행됩니다." +
     " 서버에는 이미지가 업로드되지 않습니다. 계속하시겠습니까?";
+
+  var STATUS_OPTIONS = [
+    "all", "queued", "delivered", "running",
+    "completed", "failed", "waiting_approval", "rejected"
+  ];
+
+  // ── XSS 방어 ────────────────────────────────────────────────────
+  function escapeHtml(v) {
+    if (v === null || v === undefined) return "";
+    return String(v)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
   // ── DOM 유틸 ─────────────────────────────────────────────────────
   function el(tag, attrs, text) {
@@ -117,69 +205,289 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
     box.className = "status " + (kind || "");
   }
 
-  // ── 에이전트 목록 렌더링 ─────────────────────────────────────────
-  function renderAgents(root, agents) {
-    root.innerHTML = "";
-    if (!agents || agents.length === 0) {
-      root.appendChild(el("p", { "class": "empty" },
-        "등록된 로컬 에이전트가 없습니다."));
+  // ── 배지 헬퍼 ───────────────────────────────────────────────────
+  function taskStatusBadge(status) {
+    var s = status || "";
+    var cls = "badge badge-status-default";
+    var knownStatuses = [
+      "queued", "waiting_approval", "delivered",
+      "running", "completed", "failed", "rejected"
+    ];
+    if (knownStatuses.indexOf(s) !== -1) {
+      cls = "badge badge-" + s;
+    }
+    return '<span class="' + cls + '">' + escapeHtml(s || "unknown") + "</span>";
+  }
+
+  function riskBadge(risk) {
+    var r = risk || "";
+    var cls = "badge badge-status-default";
+    if (r === "low" || r === "medium" || r === "high") {
+      cls = "badge badge-" + r;
+    }
+    return '<span class="' + cls + '">' + escapeHtml(r || "-") + "</span>";
+  }
+
+  // ── 작업 목록 렌더링 ──────────────────────────────────────────
+  function renderTaskTable(container, tasks) {
+    container.innerHTML = "";
+
+    if (!tasks || tasks.length === 0) {
+      var table = document.createElement("table");
+      table.className = "task-table";
+      var tbody = document.createElement("tbody");
+      var tr = document.createElement("tr");
+      tr.className = "empty-row";
+      var td = document.createElement("td");
+      td.colSpan = 8;
+      td.textContent = "최근 작업이 없습니다.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      table.appendChild(tbody);
+      container.appendChild(table);
       return;
     }
 
-    var table = el("table");
-    var thead = el("thead");
-    var trh = el("tr");
-    ["agent_id", "host", "os", "version", "요청"].forEach(function (h) {
-      trh.appendChild(el("th", null, h));
+    var table = document.createElement("table");
+    table.className = "task-table";
+
+    var thead = document.createElement("thead");
+    var trh = document.createElement("tr");
+    ["Task ID", "Action", "Status", "Risk", "Requested By",
+     "Created", "Updated", "Failure Reason"].forEach(function (h) {
+      var th = document.createElement("th");
+      th.textContent = h;
+      trh.appendChild(th);
     });
     thead.appendChild(trh);
     table.appendChild(thead);
 
-    var tbody = el("tbody");
-    agents.forEach(function (agent) {
-      var tr = el("tr");
-      tr.appendChild(el("td", null, agent.agent_id || ""));
-      tr.appendChild(el("td", null, agent.host || ""));
-      tr.appendChild(el("td", null, agent.os_name || ""));
-      tr.appendChild(el("td", null, agent.version || ""));
+    var tbody = document.createElement("tbody");
+    tasks.forEach(function (t) {
+      var tr = document.createElement("tr");
 
-      var tdAction = el("td");
+      // Task ID (monospace, muted)
+      var tdId = document.createElement("td");
+      tdId.className = "task-id-cell";
+      tdId.textContent = t.task_id || "-";
+      tr.appendChild(tdId);
 
-      // 1) 기존 사전 점검 버튼
-      var dryBtn = el("button",
-        { "class": "dry-run-btn",
-          "data-agent-id": agent.agent_id || "" },
-        "화면 캡처 사전 점검");
-
-      // 2) 신규 실제 1회 캡처 버튼 (위험 스타일)
-      var realBtn = el("button",
-        { "class": "real-capture-btn",
-          "data-agent-id": agent.agent_id || "" },
-        "실제 1회 화면 캡처 요청");
-
-      var warnLine = el("div", { "class": "warn" },
-        "※ 실제 1회 캡처는 승인 후 로컬 PC에서 1회만 실행됩니다." +
-        " 서버에는 이미지가 업로드되지 않습니다.");
-
-      var statusBox = el("div", { "class": "status" });
-
-      dryBtn.addEventListener("click", function () {
-        requestDryRun(dryBtn, statusBox);
-      });
-      realBtn.addEventListener("click", function () {
-        requestRealCapture(realBtn, statusBox);
-      });
-
-      tdAction.appendChild(dryBtn);
-      tdAction.appendChild(realBtn);
-      tdAction.appendChild(warnLine);
-      tdAction.appendChild(statusBox);
+      // Action
+      var tdAction = document.createElement("td");
+      tdAction.textContent = t.action || "-";
       tr.appendChild(tdAction);
+
+      // Status badge (innerHTML 사용 — badge 마크업만, 값은 escapeHtml 처리됨)
+      var tdStatus = document.createElement("td");
+      tdStatus.innerHTML = taskStatusBadge(t.status);
+      tr.appendChild(tdStatus);
+
+      // Risk badge
+      var tdRisk = document.createElement("td");
+      tdRisk.innerHTML = riskBadge(t.risk_level);
+      tr.appendChild(tdRisk);
+
+      // Requested By
+      var tdReq = document.createElement("td");
+      tdReq.textContent = t.requested_by || "-";
+      tr.appendChild(tdReq);
+
+      // Created At
+      var tdCreated = document.createElement("td");
+      tdCreated.textContent = t.created_at ? t.created_at.slice(0, 19).replace("T", " ") : "-";
+      tr.appendChild(tdCreated);
+
+      // Updated At
+      var tdUpdated = document.createElement("td");
+      tdUpdated.textContent = t.updated_at ? t.updated_at.slice(0, 19).replace("T", " ") : "-";
+      tr.appendChild(tdUpdated);
+
+      // Failure Reason
+      var tdFail = document.createElement("td");
+      tdFail.className = "failure-cell";
+      var fr = t.failure_reason || "";
+      tdFail.textContent = fr || "-";
+      // timed_out_at을 title 보조 텍스트로만 표시
+      if (fr && t.timed_out_at) {
+        tdFail.title = "timed_out_at: " + t.timed_out_at;
+      }
+      tr.appendChild(tdFail);
 
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
-    root.appendChild(table);
+    container.appendChild(table);
+  }
+
+  // ── 작업 목록 fetch ──────────────────────────────────────────────
+  function loadAgentTasks(agentId, container, status) {
+    container.innerHTML = '<p class="task-loading">불러오는 중…</p>';
+
+    var url = "/api/v1/local-agents/" +
+              encodeURIComponent(agentId) + "/tasks?limit=50";
+    if (status && status !== "all") {
+      url += "&status=" + encodeURIComponent(status);
+    }
+
+    fetch(url, { credentials: "same-origin" })
+      .then(function (resp) {
+        if (!resp.ok) {
+          throw new Error("HTTP " + resp.status);
+        }
+        return resp.json();
+      })
+      .then(function (data) {
+        var tasks = (data && data.tasks) || [];
+        var total = (data && data.total) || 0;
+
+        // 헤더 카운트 업데이트
+        var countEl = container.parentNode
+          && container.parentNode.querySelector(".task-count");
+        if (countEl) {
+          countEl.textContent = "최근 작업 " + total + "건";
+        }
+
+        renderTaskTable(container, tasks);
+      })
+      .catch(function (e) {
+        container.innerHTML =
+          '<p class="task-err">작업 목록을 불러오지 못했습니다: ' +
+          escapeHtml(e.message) + "</p>";
+      });
+  }
+
+  // ── 에이전트 목록 렌더링 ─────────────────────────────────────────
+  function renderAgents(root, agents) {
+    root.innerHTML = "";
+    if (!agents || agents.length === 0) {
+      root.appendChild(el("p", { style: "color:#6B7280;font-size:13px;" },
+        "등록된 로컬 에이전트가 없습니다."));
+      return;
+    }
+
+    agents.forEach(function (agent) {
+      var agentId = agent.agent_id || "";
+
+      var card = document.createElement("div");
+      card.className = "card";
+
+      // 카드 헤더: agent 정보 + 캡처 버튼 + 작업 보기 버튼
+      var header = document.createElement("div");
+      header.className = "card-header";
+
+      var agentInfo = document.createElement("div");
+      agentInfo.style.flex = "1";
+      var infoText = document.createElement("span");
+      infoText.style.fontWeight = "600";
+      infoText.style.fontSize = "14px";
+      infoText.textContent = agent.host || agentId;
+      var infoSub = document.createElement("span");
+      infoSub.style.cssText = "color:#6B7280;font-size:12px;margin-left:8px;";
+      infoSub.textContent =
+        agentId + " · " + (agent.os_name || "") +
+        " · v" + (agent.version || "");
+      agentInfo.appendChild(infoText);
+      agentInfo.appendChild(infoSub);
+      header.appendChild(agentInfo);
+
+      var statusBox = el("div", { "class": "status" });
+
+      // 기존 사전 점검 버튼
+      var dryBtn = el("button",
+        { "class": "dry-run-btn", "data-agent-id": agentId },
+        "화면 캡처 사전 점검");
+      dryBtn.addEventListener("click", function () {
+        requestDryRun(dryBtn, statusBox);
+      });
+
+      // 기존 실제 1회 캡처 버튼
+      var realBtn = el("button",
+        { "class": "real-capture-btn", "data-agent-id": agentId },
+        "실제 1회 화면 캡처 요청");
+      realBtn.addEventListener("click", function () {
+        requestRealCapture(realBtn, statusBox);
+      });
+
+      // 작업 보기 버튼
+      var taskBtn = el("button", { "class": "task-view-btn" }, "작업 목록 보기");
+
+      header.appendChild(dryBtn);
+      header.appendChild(realBtn);
+      header.appendChild(taskBtn);
+
+      var warnLine = el("small", { "class": "warn" },
+        "※ 실제 1회 캡처는 승인 후 로컬 PC에서 1회만 실행됩니다." +
+        " 서버에는 이미지가 업로드되지 않습니다.");
+      header.appendChild(warnLine);
+      header.appendChild(statusBox);
+
+      card.appendChild(header);
+
+      // 작업 목록 영역 (초기 숨김)
+      var taskSection = document.createElement("div");
+      taskSection.style.display = "none";
+      taskSection.style.borderTop = "1px solid #E5E7EB";
+      taskSection.style.padding = "12px 16px 16px";
+
+      // 작업 목록 서브 헤더 (필터 select + 카운트)
+      var taskHeader = document.createElement("div");
+      taskHeader.style.cssText =
+        "display:flex;align-items:center;gap:10px;margin-bottom:10px;";
+
+      var taskTitle = document.createElement("span");
+      taskTitle.style.cssText = "font-size:13px;font-weight:700;color:#111827;";
+      taskTitle.textContent = "최근 작업";
+
+      var countSpan = document.createElement("span");
+      countSpan.className = "task-count";
+      countSpan.textContent = "";
+
+      var filterSel = document.createElement("select");
+      filterSel.className = "status-filter";
+      STATUS_OPTIONS.forEach(function (opt) {
+        var o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt === "all" ? "전체 상태" : opt;
+        filterSel.appendChild(o);
+      });
+
+      taskHeader.appendChild(taskTitle);
+      taskHeader.appendChild(countSpan);
+
+      var spacer = document.createElement("span");
+      spacer.style.flex = "1";
+      taskHeader.appendChild(spacer);
+      taskHeader.appendChild(filterSel);
+
+      var taskBody = document.createElement("div");
+
+      taskSection.appendChild(taskHeader);
+      taskSection.appendChild(taskBody);
+      card.appendChild(taskSection);
+
+      // 작업 보기 버튼 토글
+      var taskVisible = false;
+      taskBtn.addEventListener("click", function () {
+        taskVisible = !taskVisible;
+        if (taskVisible) {
+          taskSection.style.display = "";
+          taskBtn.textContent = "작업 목록 닫기";
+          loadAgentTasks(agentId, taskBody, filterSel.value);
+        } else {
+          taskSection.style.display = "none";
+          taskBtn.textContent = "작업 목록 보기";
+        }
+      });
+
+      // 필터 변경 시 재조회
+      filterSel.addEventListener("change", function () {
+        if (taskVisible) {
+          loadAgentTasks(agentId, taskBody, filterSel.value);
+        }
+      });
+
+      root.appendChild(card);
+    });
   }
 
   // ── 공통 POST 헬퍼 ────────────────────────────────────────────────
