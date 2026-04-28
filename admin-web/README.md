@@ -185,6 +185,34 @@ LocalAgentsClient (use client)
 
 - 화면 캡처 실제 동작 없음 (버튼 disabled placeholder 유지)
 
+## Stage 11-UI-3B 내용
+
+### 추가된 파일
+
+- `Dockerfile` — Next.js standalone 기준 multi-stage Dockerfile
+- `.dockerignore` — Docker build 제외 목록
+
+### Dockerfile 구성
+
+- **node:20-alpine** 기반 3-stage 빌드
+- Stage 1 `deps`: `npm ci`로 의존성 설치
+- Stage 2 `builder`: `npm run build` (standalone output)
+- Stage 3 `runner`: `.next/standalone` + `.next/static` 복사, non-root(nextjs) 실행
+- `FASTAPI_BASE_URL` 등 환경변수는 Dockerfile에 포함하지 않음 (compose 단계에서 주입)
+
+### 빌드 방법
+
+```bash
+# 로컬 검증용
+docker build -t haehan-ai-orchestrator-admin-web:test ./admin-web
+```
+
+### 미구현 (다음 단계)
+
+- docker-compose.yml 연동: Stage 11-UI-3C 예정
+- nginx reverse proxy 설정: Stage 11-UI-3D 예정
+- 서버 배포 반영: Stage 11-UI-3C/3D 이후 처리
+
 ## 참고
 
 - FastAPI API 서버(`ai_orchestrator/`)는 기존 그대로 유지
