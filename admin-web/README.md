@@ -11,6 +11,9 @@ Next.js 기반 관리자 UI (admin-web).
 - **Stage 11-UI-2A**: Local Agent API 타입/클라이언트 레이어 추가 완료
 - **Stage 11-UI-2B**: `/local-agents` 페이지 실제 API 연동 완료
 - **Stage 11-UI-2C**: cancel modal 구현 및 POST /cancel API 연동 완료
+- **Stage 11-UI-5B**: `/api/v1/auth/me` endpoint 신설 및 `getCurrentUser()` API client 추가 완료
+- **Stage 11-UI-5C**: `LocalAgentsClient.tsx` role-aware UI 적용 완료 (getCurrentUser 연동, viewer/unknown → cancel/capture disabled)
+- **Stage 11-UI-5D**: 401/403 오류 메시지 role-aware 개선 완료 (viewer/unknown 안내 문구 포함)
 - Next.js 14 + TypeScript + Tailwind v4 기준
 
 ## Stage 11-UI-1D 내용
@@ -387,3 +390,86 @@ captureReason: string                  — 실제 캡처 요청 사유
 - FastAPI API 서버(`ai_orchestrator/`)는 기존 그대로 유지
 - 기존 FastAPI admin 화면은 legacy fallback으로 보존
 - 운영 nginx route: `/orchestrator/admin-web/` → admin-web, `/orchestrator/api/` → FastAPI
+
+## Stage 11-UI-5B: auth/me endpoint 및 getCurrentUser() 추가
+
+### FastAPI 변경
+
+- `ai_orchestrator/auth_router.py` 신설
+- `GET /api/v1/auth/me` endpoint 추가
+- 반환 필드: `actor` (string), `role` (string)
+- 반환하지 않는 필드: password, password_hash, token, session, cookie, secret, hash
+- `Depends(get_current_user)` 사용 — `require_role` 미사용이므로 viewer도 접근 가능
+- AUTH_ENABLED=False: `{actor: "system", role: "owner"}` 반환
+- AUTH_ENABLED=True 인증 없음: 401 반환
+
+### admin-web 변경
+
+- `src/types/auth.ts` 신설 — `UserRole`, `CurrentUser` 타입
+- `src/lib/api.ts` — `getCurrentUser(): Promise<CurrentUser>` 추가 (GET /auth/me)
+- `LocalAgentsClient.tsx` 미수정 (버튼 visibility 제어는 Stage 11-UI-5C 예정)
+
+### 보안 기준
+
+- UI role 표시는 UX 보조이며 최종 권한은 FastAPI `require_role`이 강제
+- auth/me는 자기 role 조회 전용 read-only endpoint
+
+## Stage 11-UI-5C: role-aware UI 적용 (LocalAgentsClient)
+
+### 구현 완료
+
+- `getCurrentUser()` mount 시 호출 (fetchAgents와 병렬)
+- `currentUser` / `userLoading` / `userError` state 추가
+- `canMutate = !userLoading && (role === "admin" || role === "owner")`
+- 권한 안내 배지 (`RoleBadge`) — 필터 상단 표시
+  - owner: 소유자 권한 (amber 배지)
+  - admin: 관리자 권한 (blue 배지)
+  - viewer: 조회 전용 권한 (gray 배지)
+  - unknown/error: 권한 확인 실패 (red 배지)
+- cancel 버튼: `canMutate=false`이면 disabled + `title="admin/owner 권한 필요"`
+- 사전 점검 / 화면 캡처 버튼: `canMutate=false`이면 disabled + title 안내
+- `userLoading` 중에는 canMutate=false → 위험 버튼 disabled
+- 조회 기능(에이전트 목록, 작업 목록)은 role 무관하게 유지
+
+### UI 권한 정책
+
+| 역할 | cancel | capture |
+|------|--------|---------|
+| owner / admin | 상태 조건 충족 시 enabled | agent idle/busy 시 enabled |
+| viewer | disabled (title 안내) | disabled (title 안내) |
+| unknown / error / loading | disabled | disabled |
+
+### 보안 기준
+
+- **서버 `require_role`이 최종 보안 기준**이다. UI disabled는 UX 보조일 뿐이며 서버 403 응답은 기존대로 처리된다.
+- `currentUser` raw dump / console.log 없음
+- token/hash/session/cookie 표시 없음
+- actor는 짧게 표시하되 민감한 값 없음
+
+### 미구현 (다음 단계)
+
+- 403/401 UX 개선: Stage 11-UI-5D 예정
+
+## Stage 11-UI-5D: 401/403 오류 메시지 role-aware 개선
+
+### 구현 완료
+
+- `roleAwareAuthMessage(status, role)` helper 추가
+  - 401: "로그인이 필요합니다. 브라우저 인증 상태를 확인하세요."
+  - 403 + viewer: "조회 전용 권한입니다. admin/owner 권한이 필요합니다."
+  - 403 + unknown: "권한 확인이 필요합니다. admin/owner 권한이 필요합니다."
+  - 403 + admin/owner: "권한이 없습니다. 서버 권한 정책을 확인하세요."
+- `fetchErrorMessage(err, fallback, role)` helper — 조회 API 오류용
+- cancel 오류: 401/403 → roleAwareAuthMessage 적용 (400/404/409 기존 유지)
+- capture 오류: 401/403 → roleAwareAuthMessage 적용 (404 기존 유지)
+- agents/tasks 조회 오류: 401/403 → roleAwareAuthMessage 적용
+- `RoleBadge` 안내 문구 보강
+  - viewer: "조회 전용입니다. 취소·캡처는 admin/owner 권한이 필요합니다."
+  - unknown/error: "권한 확인 실패 시 위험 작업은 비활성화됩니다."
+
+### 보안 기준
+
+- **서버 `require_role`이 최종 보안 기준**. 버튼 disabled는 UX 보조.
+- Authorization/Cookie/session/token 표시 없음
+- console.log 없음
+- secret/env 값 표시 없음

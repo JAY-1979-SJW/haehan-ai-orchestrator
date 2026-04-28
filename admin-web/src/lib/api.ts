@@ -4,6 +4,7 @@ import type {
   LocalAgentsResponse,
   LocalAgentTasksResponse,
 } from "@/types/local-agent";
+import type { CurrentUser } from "@/types/auth";
 
 const DEFAULT_API_BASE_PATH = "/orchestrator/api/v1";
 
@@ -80,6 +81,10 @@ export function cancelTask(
       body: JSON.stringify({ reason }),
     }
   );
+}
+
+export function getCurrentUser(): Promise<CurrentUser> {
+  return apiFetch<CurrentUser>("/auth/me");
 }
 
 export function requestCaptureScreenshot(
