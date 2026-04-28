@@ -22,7 +22,10 @@ import { Modal } from "@/components/ui/Modal";
 import {
   getLocalAgents,
   getAgentTasks,
+  getLocalAgentTask,
   cancelTask,
+  approveLocalAgentTask,
+  rejectLocalAgentTask,
   requestCaptureScreenshot,
   getCurrentUser,
   ApiError,
@@ -136,25 +139,42 @@ interface TaskActionCellProps {
   task: LocalAgentTask;
   canMutate: boolean;
   onCancel: (task: LocalAgentTask) => void;
+  onApprovalAction: (task: LocalAgentTask) => void;
 }
 
-function TaskActionCell({ task, canMutate, onCancel }: TaskActionCellProps) {
+function TaskActionCell({ task, canMutate, onCancel, onApprovalAction }: TaskActionCellProps) {
   const btn = cancelButtonProps(task.status);
-  if (!btn) return <span className="text-[12px] text-[#9CA3AF]">—</span>;
+  const isWaitingApproval = task.status === "waiting_approval";
 
-  const disabled = !btn.enabled || !canMutate;
-  const title = !canMutate ? "admin/owner 권한 필요" : undefined;
+  if (!btn && !isWaitingApproval) {
+    return <span className="text-[12px] text-[#9CA3AF]">—</span>;
+  }
 
   return (
-    <Btn
-      variant={btn.variant}
-      size="xs"
-      disabled={disabled}
-      title={title}
-      onClick={!disabled ? () => onCancel(task) : undefined}
-    >
-      {btn.label}
-    </Btn>
+    <div className="flex items-center gap-1 flex-wrap">
+      {isWaitingApproval && (
+        <Btn
+          variant="secondary"
+          size="xs"
+          disabled={!canMutate}
+          title={!canMutate ? "admin/owner 권한 필요" : "작업 승인/거절 처리"}
+          onClick={canMutate ? () => onApprovalAction(task) : undefined}
+        >
+          승인·거절
+        </Btn>
+      )}
+      {btn && (
+        <Btn
+          variant={btn.variant}
+          size="xs"
+          disabled={!btn.enabled || !canMutate}
+          title={!canMutate ? "admin/owner 권한 필요" : undefined}
+          onClick={btn.enabled && canMutate ? () => onCancel(task) : undefined}
+        >
+          {btn.label}
+        </Btn>
+      )}
+    </div>
   );
 }
 
@@ -193,6 +213,24 @@ function cancelErrorMessage(err: unknown, role?: string): string {
     }
   }
   return "취소 요청에 실패했습니다.";
+}
+
+// ─── Approval Error 메시지 ───────────────────────────────────────────────────
+
+function approvalErrorMessage(err: unknown, role?: string): string {
+  if (err instanceof ApiError) {
+    switch (err.status) {
+      case 400: return "요청이 유효하지 않습니다. (작업 상태 또는 token_id 확인 필요)";
+      case 401:
+      case 403: return roleAwareAuthMessage(err.status, role);
+      case 404: return "작업 또는 승인 토큰을 찾을 수 없습니다.";
+      case 409: return "이미 처리된 승인 요청입니다.";
+      case 410: return "승인 토큰이 만료되었습니다. 새로운 요청을 생성하세요.";
+      case 429: return "승인 요청이 너무 많습니다. 잠시 후 재시도하세요.";
+      default: return `승인 처리에 실패했습니다. (HTTP ${err.status})`;
+    }
+  }
+  return "승인 처리에 실패했습니다.";
 }
 
 // ─── Capture Error 메시지 ─────────────────────────────────────────────────────
@@ -285,6 +323,14 @@ export default function LocalAgentsClient() {
   const [captureSuccess, setCaptureSuccess] = useState<CaptureSuccessInfo | null>(null);
   const [captureReason, setCaptureReason] = useState<string>("");
 
+  // ── approval state ────────────────────────────────────────────────────────
+  const [approvalTargetTask, setApprovalTargetTask] = useState<LocalAgentTask | null>(null);
+  const [approvalAction, setApprovalAction] = useState<"approve" | "reject" | null>(null);
+  const [approvalReason, setApprovalReason] = useState<string>("");
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const approvalModalOpenRef = useRef(false);
+
   // ── polling state ─────────────────────────────────────────────────────────
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [pollingError, setPollingError] = useState<string | null>(null);
@@ -310,6 +356,9 @@ export default function LocalAgentsClient() {
   useEffect(() => {
     captureModalOpenRef.current = captureMode === "real" && captureTargetAgent !== null;
   }, [captureMode, captureTargetAgent]);
+  useEffect(() => {
+    approvalModalOpenRef.current = approvalTargetTask !== null;
+  }, [approvalTargetTask]);
   useEffect(() => { pollingEnabledRef.current = pollingEnabled; }, [pollingEnabled]);
 
   // ── agent 목록 fetch (최초 로딩 / 수동 새로고침) ──────────────────────────
@@ -505,6 +554,60 @@ export default function LocalAgentsClient() {
     setCancelReason("");
     setCancelError(null);
   }, [cancelLoading]);
+
+  // ── approval: modal open ──────────────────────────────────────────────────
+  const handleOpenApprovalModal = useCallback((task: LocalAgentTask) => {
+    setApprovalTargetTask(task);
+    setApprovalAction(null);
+    setApprovalReason("");
+    setApprovalError(null);
+  }, []);
+
+  const handleCloseApprovalModal = useCallback(() => {
+    if (approvalLoading) return;
+    setApprovalTargetTask(null);
+    setApprovalAction(null);
+    setApprovalReason("");
+    setApprovalError(null);
+  }, [approvalLoading]);
+
+  // ── approval: submit ──────────────────────────────────────────────────────
+  const handleApprovalSubmit = useCallback(async () => {
+    if (!approvalTargetTask || !approvalAction || !selectedAgentId) return;
+    setApprovalLoading(true);
+    setApprovalError(null);
+    try {
+      // 개별 조회로 token_id 취득 (to_list_safe에는 없음)
+      const detail = await getLocalAgentTask(selectedAgentId, approvalTargetTask.task_id);
+      if (!detail.token_id) {
+        setApprovalError("승인 토큰을 찾을 수 없습니다. 작업 상태를 확인하세요.");
+        return;
+      }
+      const body = {
+        token_id: detail.token_id,
+        reason: approvalReason.trim() || undefined,
+      };
+      if (approvalAction === "approve") {
+        await approveLocalAgentTask(selectedAgentId, approvalTargetTask.task_id, body);
+      } else {
+        await rejectLocalAgentTask(selectedAgentId, approvalTargetTask.task_id, body);
+      }
+      setApprovalTargetTask(null);
+      setApprovalAction(null);
+      setApprovalReason("");
+      await Promise.all([
+        fetchTasks(selectedAgentId, taskStatusFilter),
+        fetchAgents(),
+      ]);
+    } catch (err) {
+      setApprovalError(approvalErrorMessage(err, currentUser?.role));
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [
+    approvalTargetTask, approvalAction, approvalReason, selectedAgentId,
+    taskStatusFilter, fetchTasks, fetchAgents, currentUser?.role,
+  ]);
 
   // ── capture: 사전 점검 ────────────────────────────────────────────────────
   const handleDryRun = useCallback(async (agent: LocalAgent) => {
@@ -918,7 +1021,12 @@ export default function LocalAgentsClient() {
                       {task.failure_reason ?? "—"}
                     </AdminTd>
                     <AdminTd>
-                      <TaskActionCell task={task} canMutate={canMutate} onCancel={setCancelTargetTask} />
+                      <TaskActionCell
+                        task={task}
+                        canMutate={canMutate}
+                        onCancel={setCancelTargetTask}
+                        onApprovalAction={handleOpenApprovalModal}
+                      />
                     </AdminTd>
                   </AdminTr>
                 ))
@@ -985,6 +1093,89 @@ export default function LocalAgentsClient() {
 
         {cancelError && (
           <p className="mt-2 text-[12px] text-[#B91C1C]">{cancelError}</p>
+        )}
+      </Modal>
+
+      {/* ── Approval Modal ───────────────────────────────────────────────────── */}
+      <Modal
+        open={approvalTargetTask !== null}
+        title="작업 승인 / 거절"
+        onClose={handleCloseApprovalModal}
+        footer={
+          <>
+            <Btn variant="ghost" size="sm" onClick={handleCloseApprovalModal} disabled={approvalLoading}>
+              닫기
+            </Btn>
+            <Btn
+              variant="danger"
+              size="sm"
+              disabled={approvalLoading || approvalAction !== "reject"}
+              onClick={approvalAction === "reject" ? handleApprovalSubmit : undefined}
+            >
+              {approvalLoading && approvalAction === "reject" ? "처리 중…" : "거절 확인"}
+            </Btn>
+            <Btn
+              variant="orange"
+              size="sm"
+              disabled={approvalLoading || approvalAction !== "approve"}
+              onClick={approvalAction === "approve" ? handleApprovalSubmit : undefined}
+            >
+              {approvalLoading && approvalAction === "approve" ? "처리 중…" : "승인 확인"}
+            </Btn>
+          </>
+        }
+      >
+        <p className="text-[12px] text-[#6B7280] mb-2">
+          이 버튼은 작업 실행 버튼이 아닙니다. 승인 시 작업이 에이전트에 전달되어 실행됩니다.
+        </p>
+
+        {approvalTargetTask && (
+          <div className="mb-3 text-[12px] text-[#6B7280] font-mono bg-[#F3F4F6] rounded px-3 py-2">
+            {approvalTargetTask.task_id} — {approvalTargetTask.action} &nbsp;
+            <StatusBadge status={approvalTargetTask.risk_level} />
+          </div>
+        )}
+
+        <div className="flex gap-2 mb-3">
+          <Btn
+            variant={approvalAction === "approve" ? "orange" : "ghost"}
+            size="sm"
+            disabled={approvalLoading}
+            onClick={() => { setApprovalAction("approve"); setApprovalError(null); }}
+          >
+            승인
+          </Btn>
+          <Btn
+            variant={approvalAction === "reject" ? "danger" : "ghost"}
+            size="sm"
+            disabled={approvalLoading}
+            onClick={() => { setApprovalAction("reject"); setApprovalError(null); }}
+          >
+            거절
+          </Btn>
+        </div>
+
+        {approvalAction === "reject" && (
+          <>
+            <textarea
+              className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-[13px] text-[#374151] resize-none focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+              rows={2}
+              maxLength={200}
+              placeholder="선택 사항 — 거절 사유 (최대 200자)"
+              value={approvalReason}
+              onChange={(e) => { setApprovalReason(e.target.value); setApprovalError(null); }}
+            />
+            <div className="flex justify-between mt-1 mb-2">
+              <span className="text-[11px] text-[#9CA3AF]">비밀번호·토큰 등 민감한 정보는 입력하지 마세요.</span>
+              <span className={`text-[11px] ${approvalReason.length > 200 ? "text-[#B91C1C] font-semibold" : "text-[#9CA3AF]"}`}>
+                {approvalReason.length}/200
+              </span>
+            </div>
+          </>
+        )}
+
+        {approvalError && (
+          <p className="mt-2 text-[12px] text-[#B91C1C]">{approvalError}</p>
         )}
       </Modal>
 

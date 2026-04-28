@@ -1,6 +1,9 @@
 import type {
+  ApprovalRequest,
+  ApprovalResponse,
   CancelTaskResponse,
   CaptureScreenshotResponse,
+  LocalAgentTaskDetail,
   LocalAgentsResponse,
   LocalAgentTasksResponse,
 } from "@/types/local-agent";
@@ -85,6 +88,45 @@ export function cancelTask(
 
 export function getCurrentUser(): Promise<CurrentUser> {
   return apiFetch<CurrentUser>("/auth/me");
+}
+
+export function getLocalAgentTask(
+  agentId: string,
+  taskId: string
+): Promise<LocalAgentTaskDetail> {
+  return apiFetch<LocalAgentTaskDetail>(
+    `/local-agents/${encodeURIComponent(agentId)}/tasks/${encodeURIComponent(taskId)}`
+  );
+}
+
+export function approveLocalAgentTask(
+  agentId: string,
+  taskId: string,
+  body: ApprovalRequest
+): Promise<ApprovalResponse> {
+  return apiFetch<ApprovalResponse>(
+    `/local-agents/${encodeURIComponent(agentId)}/tasks/${encodeURIComponent(taskId)}/approve`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+export function rejectLocalAgentTask(
+  agentId: string,
+  taskId: string,
+  body: ApprovalRequest
+): Promise<ApprovalResponse> {
+  return apiFetch<ApprovalResponse>(
+    `/local-agents/${encodeURIComponent(agentId)}/tasks/${encodeURIComponent(taskId)}/reject`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
 }
 
 export function requestCaptureScreenshot(
