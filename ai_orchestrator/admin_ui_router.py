@@ -141,6 +141,20 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
 </head>
 <body>
 <div class="page-wrap">
+<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;
+            padding:12px 16px;margin-bottom:20px;font-size:13px;color:#92400E;">
+  <strong>이 화면은 legacy 관리 화면입니다.</strong><br>
+  표준 관리자 UI는
+  <a href="/orchestrator/admin-web/local-agents"
+     style="color:#1D4ED8;text-decoration:underline;">
+    /orchestrator/admin-web/local-agents
+  </a>
+  를 사용하세요.<br>
+  <small style="color:#78350F;">
+    이 화면은 admin-web 장애 시 fallback 용도로 유지됩니다.
+    신규 기능은 admin-web에서만 추가됩니다.
+  </small>
+</div>
 <h1>로컬 에이전트 — 화면 캡처 요청</h1>
 <p class="note">
   사전 점검 버튼은 <b>dry_run=true</b> 요청만 생성합니다.
