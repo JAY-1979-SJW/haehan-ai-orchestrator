@@ -814,5 +814,57 @@ def test_disconnect_audit_task_failed_event(admin_user):
     assert len(disconnect_failed) >= 1
 
 
+# ── Stage 11-6B: WS 상태 갱신 테스트 ──────────────────────────────────
+
+def test_ws_auth_success_sets_last_seen_at(admin_user):
+    """WS auth 성공 시 last_seen_at 갱신."""
+    import ai_orchestrator.local_agent_registry as _reg
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    a_before = _reg.get_agent(agent_id)
+    assert a_before.last_seen_at == ""
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        a_after = _reg.get_agent(agent_id)
+        assert a_after.last_seen_at != ""
+        assert a_after.connected_at != ""
+        assert a_after.disconnected_at == ""
+
+
+def test_ws_heartbeat_updates_last_seen_at(admin_user):
+    """heartbeat 수신 시 last_seen_at 갱신."""
+    import ai_orchestrator.local_agent_registry as _reg
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        first_seen = _reg.get_agent(agent_id).last_seen_at
+
+        ws.send_json({"type": "heartbeat"})
+        assert ws.receive_json()["type"] == "heartbeat_ack"
+        second_seen = _reg.get_agent(agent_id).last_seen_at
+        # 갱신됐거나 같은 시각 (동일 ms 내)
+        assert second_seen >= first_seen
+
+
+def test_ws_disconnect_sets_disconnected_at(admin_user):
+    """WS disconnect 시 disconnected_at 설정."""
+    import ai_orchestrator.local_agent_registry as _reg
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+    a = _reg.get_agent(agent_id)
+    assert a.disconnected_at != ""
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

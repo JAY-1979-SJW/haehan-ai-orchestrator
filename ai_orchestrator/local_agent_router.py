@@ -806,6 +806,8 @@ async def agent_websocket(websocket: WebSocket):
             return
 
         agent_id = authed.agent_id
+        now_connected = _reg._now_iso()
+        _reg.set_agent_connected(agent_id, now_connected)
         log_event(
             "LOCAL_AGENT_WS_CONNECTED", agent_id,
             actor="ws-dispatch",
@@ -827,6 +829,7 @@ async def agent_websocket(websocket: WebSocket):
                 )
             except asyncio.TimeoutError:
                 # 유휴 — 신규 큐 작업 push + keepalive
+                _reg.set_agent_last_seen(agent_id)
                 await _push_queued(websocket, agent_id)
                 expired = _reg.expire_stale_tasks()
                 for t in expired:
@@ -862,13 +865,16 @@ async def agent_websocket(websocket: WebSocket):
 
             mtype = _safe_str(msg.get("type"))
             if mtype == "heartbeat":
+                _reg.set_agent_last_seen(agent_id)
                 await websocket.send_json({"type": "heartbeat_ack"})
                 await _push_queued(websocket, agent_id)
             elif mtype == "pull":
                 await _push_queued(websocket, agent_id)
             elif mtype == "running":
+                _reg.set_agent_last_seen(agent_id)
                 await _handle_running(websocket, agent_id, msg)
             elif mtype == "result":
+                _reg.set_agent_last_seen(agent_id)
                 await _handle_result(websocket, agent_id, msg)
                 await _push_queued(websocket, agent_id)
             elif mtype == "auth":
@@ -891,6 +897,7 @@ async def agent_websocket(websocket: WebSocket):
             pass
     finally:
         if agent_id:
+            _reg.set_agent_disconnected(agent_id)
             failed_on_disconnect = _reg.fail_active_tasks_for_agent(agent_id)
             for t in failed_on_disconnect:
                 log_event(
