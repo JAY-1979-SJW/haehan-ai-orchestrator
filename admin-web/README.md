@@ -275,10 +275,13 @@ curl -fsS -H 'Host: haehan-ai.kr' \
   https://127.0.0.1/orchestrator/api/v1/health -k  # → {"status":"ok"}
 ```
 
-### legacy route
+### legacy route (deprecated fallback)
 
-기존 FastAPI admin 화면은 `/orchestrator/api/v1/admin/local-agents` 경로로 유지된다.
-nginx rollback 시 이 경로를 fallback으로 사용한다.
+운영 기준 화면은 admin-web `/orchestrator/admin-web/local-agents`이다.
+기존 FastAPI admin 화면 `/orchestrator/api/v1/admin/local-agents`는
+운영자 주 진입점이 아니며, admin-web 장애 시 비상 확인용 deprecated fallback으로만 유지된다.
+신규 기능은 legacy route가 아니라 admin-web에만 추가한다.
+즉시 삭제 대상은 아니며, 제거 여부는 별도 Stage에서 판단한다.
 
 ## Stage 11-UI-4B 내용
 
