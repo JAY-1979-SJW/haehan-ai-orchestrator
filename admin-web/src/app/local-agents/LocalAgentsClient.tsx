@@ -19,8 +19,19 @@ import {
   Btn,
 } from "@/components/ui";
 import { Modal } from "@/components/ui/Modal";
-import { getLocalAgents, getAgentTasks, cancelTask, ApiError } from "@/lib/api";
-import type { LocalAgent, LocalAgentTask, AgentStatus } from "@/types/local-agent";
+import {
+  getLocalAgents,
+  getAgentTasks,
+  cancelTask,
+  requestCaptureScreenshot,
+  ApiError,
+} from "@/lib/api";
+import type {
+  LocalAgent,
+  LocalAgentTask,
+  AgentStatus,
+  CaptureScreenshotResponse,
+} from "@/types/local-agent";
 
 // ─── 취소 버튼 활성화 정책 ────────────────────────────────────────────────────
 
@@ -43,6 +54,12 @@ function cancelButtonProps(status: string): {
     default:
       return null;
   }
+}
+
+// ─── capture 버튼 활성화 정책 ─────────────────────────────────────────────────
+
+function isCaptureEnabled(status: AgentStatus | string): boolean {
+  return status === "idle" || status === "busy";
 }
 
 // ─── Task Action Cell ─────────────────────────────────────────────────────────
@@ -94,6 +111,37 @@ function cancelErrorMessage(err: unknown): string {
   return "취소 요청에 실패했습니다.";
 }
 
+// ─── Capture Error 메시지 ─────────────────────────────────────────────────────
+
+function captureErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    switch (err.status) {
+      case 403: return "권한이 없습니다.";
+      case 404: return "에이전트를 찾을 수 없습니다.";
+      default: return `캡처 요청에 실패했습니다. (HTTP ${err.status})`;
+    }
+  }
+  return "캡처 요청에 실패했습니다.";
+}
+
+// ─── Capture Success 표시 ─────────────────────────────────────────────────────
+
+interface CaptureSuccessInfo {
+  task_id: string;
+  status: string;
+  dry_run: boolean;
+  approval_required: boolean;
+}
+
+function extractCaptureSuccessInfo(res: CaptureScreenshotResponse): CaptureSuccessInfo {
+  return {
+    task_id: res.task_id,
+    status: res.status,
+    dry_run: res.dry_run,
+    approval_required: res.approval_required,
+  };
+}
+
 // ─── Main Client Component ────────────────────────────────────────────────────
 
 export default function LocalAgentsClient() {
@@ -117,6 +165,14 @@ export default function LocalAgentsClient() {
   const [cancelReason, setCancelReason] = useState<string>("");
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+
+  // ── capture state ─────────────────────────────────────────────────────────
+  const [captureTargetAgent, setCaptureTargetAgent] = useState<LocalAgent | null>(null);
+  const [captureMode, setCaptureMode] = useState<"dry_run" | "real" | null>(null);
+  const [captureLoading, setCaptureLoading] = useState(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
+  const [captureSuccess, setCaptureSuccess] = useState<CaptureSuccessInfo | null>(null);
+  const [captureReason, setCaptureReason] = useState<string>("");
 
   // ── agent 목록 fetch ──────────────────────────────────────────────────────
   const fetchAgents = useCallback(async () => {
@@ -196,6 +252,70 @@ export default function LocalAgentsClient() {
     setCancelError(null);
   }, [cancelLoading]);
 
+  // ── capture: 사전 점검 ────────────────────────────────────────────────────
+  const handleDryRun = useCallback(async (agent: LocalAgent) => {
+    setCaptureSuccess(null);
+    setCaptureError(null);
+    setCaptureLoading(true);
+    try {
+      const res = await requestCaptureScreenshot(agent.agent_id, {
+        dryRun: true,
+        reason: "admin_web_dry_run_check",
+      });
+      setCaptureSuccess(extractCaptureSuccessInfo(res));
+    } catch (err) {
+      setCaptureError(captureErrorMessage(err));
+    } finally {
+      setCaptureLoading(false);
+    }
+  }, []);
+
+  // ── capture: 실제 캡처 Modal open ─────────────────────────────────────────
+  const handleOpenCaptureModal = useCallback((agent: LocalAgent) => {
+    setCaptureTargetAgent(agent);
+    setCaptureMode("real");
+    setCaptureError(null);
+    setCaptureSuccess(null);
+    setCaptureReason("");
+  }, []);
+
+  // ── capture: Modal close ──────────────────────────────────────────────────
+  const handleCloseCaptureModal = useCallback(() => {
+    if (captureLoading) return;
+    setCaptureTargetAgent(null);
+    setCaptureMode(null);
+    setCaptureError(null);
+    setCaptureReason("");
+  }, [captureLoading]);
+
+  // ── capture: 실제 캡처 submit ─────────────────────────────────────────────
+  const handleCaptureSubmit = useCallback(async () => {
+    if (!captureTargetAgent) return;
+    setCaptureLoading(true);
+    setCaptureError(null);
+    try {
+      const res = await requestCaptureScreenshot(captureTargetAgent.agent_id, {
+        dryRun: false,
+        reason: captureReason.trim() || undefined,
+      });
+      const info = extractCaptureSuccessInfo(res);
+      setCaptureTargetAgent(null);
+      setCaptureMode(null);
+      setCaptureReason("");
+      setCaptureSuccess(info);
+      await Promise.all([
+        fetchAgents(),
+        ...(selectedAgentId === captureTargetAgent.agent_id
+          ? [fetchTasks(captureTargetAgent.agent_id, taskStatusFilter)]
+          : []),
+      ]);
+    } catch (err) {
+      setCaptureError(captureErrorMessage(err));
+    } finally {
+      setCaptureLoading(false);
+    }
+  }, [captureTargetAgent, captureReason, selectedAgentId, taskStatusFilter, fetchAgents, fetchTasks]);
+
   // ── KPI (실제 agents 기준) ────────────────────────────────────────────────
   const kpiTotal = agents.length;
   const kpiIdle = agents.filter((a) => a.agent_status === "idle").length;
@@ -233,6 +353,44 @@ export default function LocalAgentsClient() {
           description="offline / stale"
         />
       </div>
+
+      {/* ── capture 결과 배너 ─────────────────────────────────────────────────── */}
+      {captureSuccess && (
+        <div className="mb-4 px-4 py-3 rounded-[8px] border border-[#D1FAE5] bg-[#ECFDF5] text-[13px] text-[#065F46] flex items-start justify-between gap-3">
+          <div>
+            <p className="font-semibold mb-1">
+              {captureSuccess.dry_run
+                ? "사전 점검 요청이 생성되었습니다."
+                : "화면 캡처 요청이 생성되었습니다. 텔레그램 승인 후 실행됩니다."}
+            </p>
+            <p className="font-mono text-[12px] text-[#047857]">
+              task_id: {captureSuccess.task_id} &nbsp;|&nbsp; status: {captureSuccess.status}
+              &nbsp;|&nbsp; dry_run: {String(captureSuccess.dry_run)} &nbsp;|&nbsp;
+              approval_required: {String(captureSuccess.approval_required)}
+            </p>
+          </div>
+          <button
+            onClick={() => setCaptureSuccess(null)}
+            className="text-[#6B7280] hover:text-[#374151] text-[16px] leading-none mt-0.5 flex-shrink-0"
+            aria-label="닫기"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {captureError && captureMode === null && (
+        <div className="mb-4 px-4 py-3 rounded-[8px] border border-[#FEE2E2] bg-[#FEF2F2] text-[13px] text-[#B91C1C] flex items-start justify-between gap-3">
+          <span>{captureError}</span>
+          <button
+            onClick={() => setCaptureError(null)}
+            className="text-[#6B7280] hover:text-[#374151] text-[16px] leading-none mt-0.5 flex-shrink-0"
+            aria-label="닫기"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* ── Agent 상태 필터 ───────────────────────────────────────────────────── */}
       <FilterBar>
@@ -285,46 +443,62 @@ export default function LocalAgentsClient() {
               ) : filteredAgents.length === 0 ? (
                 <EmptyRow colSpan={9} message="등록된 에이전트가 없습니다." />
               ) : (
-                filteredAgents.map((agent) => (
-                  <AdminTr
-                    key={agent.agent_id}
-                    className={agent.agent_id === selectedAgentId ? "bg-orange-50" : undefined}
-                  >
-                    <AdminTd className="font-mono text-[12px] text-[#6B7280]">
-                      {agent.agent_id}
-                    </AdminTd>
-                    <AdminTd className="font-semibold">{agent.host}</AdminTd>
-                    <AdminTd className="text-[#6B7280]">{agent.os_name}</AdminTd>
-                    <AdminTd className="font-mono text-[12px]">{agent.version}</AdminTd>
-                    <AdminTd>
-                      <StatusBadge status={agent.agent_status} />
-                    </AdminTd>
-                    <AdminTd className="text-center">{agent.active_task_count}</AdminTd>
-                    <AdminTd className="font-mono text-[12px] text-[#6B7280]">
-                      {agent.current_task_id ?? "—"}
-                    </AdminTd>
-                    <AdminTd className="text-[12px] text-[#9CA3AF] whitespace-nowrap">
-                      {agent.last_seen_at ?? "—"}
-                    </AdminTd>
-                    <AdminTd>
-                      <div className="flex items-center gap-1">
-                        <Btn
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => {
-                            setSelectedAgentId(agent.agent_id);
-                            setTaskStatusFilter("");
-                          }}
-                        >
-                          작업 보기
-                        </Btn>
-                        <Btn variant="ghost" size="xs" disabled>
-                          화면 캡처
-                        </Btn>
-                      </div>
-                    </AdminTd>
-                  </AdminTr>
-                ))
+                filteredAgents.map((agent) => {
+                  const captureEnabled = isCaptureEnabled(agent.agent_status) && !captureLoading;
+                  return (
+                    <AdminTr
+                      key={agent.agent_id}
+                      className={agent.agent_id === selectedAgentId ? "bg-orange-50" : undefined}
+                    >
+                      <AdminTd className="font-mono text-[12px] text-[#6B7280]">
+                        {agent.agent_id}
+                      </AdminTd>
+                      <AdminTd className="font-semibold">{agent.host}</AdminTd>
+                      <AdminTd className="text-[#6B7280]">{agent.os_name}</AdminTd>
+                      <AdminTd className="font-mono text-[12px]">{agent.version}</AdminTd>
+                      <AdminTd>
+                        <StatusBadge status={agent.agent_status} />
+                      </AdminTd>
+                      <AdminTd className="text-center">{agent.active_task_count}</AdminTd>
+                      <AdminTd className="font-mono text-[12px] text-[#6B7280]">
+                        {agent.current_task_id ?? "—"}
+                      </AdminTd>
+                      <AdminTd className="text-[12px] text-[#9CA3AF] whitespace-nowrap">
+                        {agent.last_seen_at ?? "—"}
+                      </AdminTd>
+                      <AdminTd>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Btn
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => {
+                              setSelectedAgentId(agent.agent_id);
+                              setTaskStatusFilter("");
+                            }}
+                          >
+                            작업 보기
+                          </Btn>
+                          <Btn
+                            variant="ghost"
+                            size="xs"
+                            disabled={!captureEnabled}
+                            onClick={captureEnabled ? () => handleDryRun(agent) : undefined}
+                          >
+                            사전 점검
+                          </Btn>
+                          <Btn
+                            variant="ghost"
+                            size="xs"
+                            disabled={!captureEnabled}
+                            onClick={captureEnabled ? () => handleOpenCaptureModal(agent) : undefined}
+                          >
+                            화면 캡처
+                          </Btn>
+                        </div>
+                      </AdminTd>
+                    </AdminTr>
+                  );
+                })
               )}
             </AdminTbody>
           </AdminTable>
@@ -487,6 +661,71 @@ export default function LocalAgentsClient() {
 
         {cancelError && (
           <p className="mt-2 text-[12px] text-[#B91C1C]">{cancelError}</p>
+        )}
+      </Modal>
+
+      {/* ── Capture Confirm Modal ─────────────────────────────────────────────── */}
+      <Modal
+        open={captureMode === "real" && captureTargetAgent !== null}
+        title="화면 캡처 요청"
+        onClose={handleCloseCaptureModal}
+        footer={
+          <>
+            <Btn
+              variant="ghost"
+              size="sm"
+              onClick={handleCloseCaptureModal}
+              disabled={captureLoading}
+            >
+              닫기
+            </Btn>
+            <Btn
+              variant="orange"
+              size="sm"
+              onClick={handleCaptureSubmit}
+              disabled={captureLoading || captureReason.length > 200}
+            >
+              {captureLoading ? "요청 중…" : "캡처 요청"}
+            </Btn>
+          </>
+        }
+      >
+        {captureTargetAgent && (
+          <div className="mb-3 text-[12px] text-[#6B7280] font-mono bg-[#F3F4F6] rounded px-3 py-2">
+            {captureTargetAgent.host} &nbsp;/&nbsp; {captureTargetAgent.agent_id}
+          </div>
+        )}
+
+        <p className="text-[13px] text-[#374151] mb-2">
+          승인 후 로컬 PC에서 1회 화면 캡처가 실행됩니다. 서버에는 이미지가 업로드되지 않습니다.
+        </p>
+        <p className="text-[13px] font-semibold text-[#B91C1C] mb-4">
+          비밀번호, OTP, 인증서, 카드정보 화면에서는 캡처하지 마세요.
+        </p>
+
+        <textarea
+          className="w-full border border-[#E5E7EB] rounded px-3 py-2 text-[13px] text-[#374151] resize-none focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+          rows={3}
+          maxLength={200}
+          placeholder="선택 사항 — 요청 사유"
+          value={captureReason}
+          onChange={(e) => {
+            setCaptureReason(e.target.value);
+            setCaptureError(null);
+          }}
+        />
+
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[11px] text-[#9CA3AF]" />
+          <span
+            className={`text-[11px] ${captureReason.length > 200 ? "text-[#B91C1C] font-semibold" : "text-[#9CA3AF]"}`}
+          >
+            {captureReason.length}/200
+          </span>
+        </div>
+
+        {captureError && (
+          <p className="mt-2 text-[12px] text-[#B91C1C]">{captureError}</p>
         )}
       </Modal>
     </PageShell>

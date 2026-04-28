@@ -72,3 +72,18 @@ export interface CancelTaskResponse {
 export interface ApiErrorResponse {
   detail: string | Record<string, unknown>;
 }
+
+export interface CaptureScreenshotRequest {
+  dry_run: boolean;
+  reason?: string;
+  note?: string;
+}
+
+export interface CaptureScreenshotResponse {
+  task_id: string;
+  agent_id: string;
+  action: "capture_screenshot" | string;
+  status: "waiting_approval" | string;
+  dry_run: boolean;
+  approval_required: boolean;
+}

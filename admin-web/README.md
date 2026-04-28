@@ -269,6 +269,118 @@ curl -fsS -H 'Host: haehan-ai.kr' \
 기존 FastAPI admin 화면은 `/orchestrator/api/v1/admin/local-agents` 경로로 유지된다.
 nginx rollback 시 이 경로를 fallback으로 사용한다.
 
+## Stage 11-UI-4B 내용
+
+### 추가된 타입 (src/types/local-agent.ts)
+
+| 타입 | 설명 |
+|------|------|
+| `CaptureScreenshotRequest` | capture-screenshot POST body (`dry_run`, `reason?`, `note?`) |
+| `CaptureScreenshotResponse` | capture-screenshot 응답 (`task_id`, `agent_id`, `action`, `status`, `dry_run`, `approval_required`) |
+
+### 추가된 API client 함수 (src/lib/api.ts)
+
+| 함수 | 설명 |
+|------|------|
+| `requestCaptureScreenshot(agentId, options?)` | POST /local-agents/{agent_id}/capture-screenshot |
+
+### capture API 동작
+
+- 단일 endpoint 사용: `POST /local-agents/{agent_id}/capture-screenshot`
+- `dry_run=true`: 사전 점검 (실제 캡처 없음)
+- `dry_run=false`: 실제 캡처 요청
+- 실제 캡처(`dry_run=false`)도 `approval_required=true` 흐름으로 진행됨
+- `agentId`는 `encodeURIComponent` 처리
+
+### 보안 처리
+
+- 이미지 raw payload 타입 미포함 (이미지 데이터 필드 타입 정의 제외)
+- 민감값(`token_id`, `device_token`, `token_hash`) 타입 미포함
+- reason/note 원문 `console.log` 없음
+- raw response `console.log` 없음
+
+### 미구현 (다음 단계)
+
+- UI 버튼 활성화 및 Modal 연동은 Stage 11-UI-4C 예정
+- `LocalAgentsClient.tsx` 이번 단계에서 미수정
+
+## Stage 11-UI-4C 내용
+
+### 구현 완료
+
+- **사전 점검 버튼**: agent Actions 컬럼에 추가. `dry_run=true`로 즉시 `requestCaptureScreenshot` 호출. Confirm Modal 없이 실행.
+- **화면 캡처 버튼**: Confirm Modal 필수. `dry_run=false`로 `requestCaptureScreenshot` 호출.
+- **기존 작업 보기 버튼**: 그대로 유지.
+
+### agent 상태별 버튼 정책
+
+| agent_status | 사전 점검 | 화면 캡처 |
+|---|---|---|
+| idle | enabled | enabled |
+| busy | enabled | enabled |
+| offline | disabled | disabled |
+| stale | disabled | disabled |
+| unknown / 기타 | disabled | disabled |
+
+### 사전 점검 동작
+
+1. 사전 점검 버튼 클릭 → `requestCaptureScreenshot(agent_id, { dryRun: true, reason: "admin_web_dry_run_check" })`
+2. 성공 시 `captureSuccess` 배너 표시: `task_id` / `status` / `dry_run` / `approval_required` 4개 필드만 표시
+3. 실패 시 `captureError` 배너 표시
+
+### 화면 캡처 Confirm Modal
+
+- 대상 agent `host` / `agent_id` 표시
+- 안내 문구: "승인 후 로컬 PC에서 1회 화면 캡처가 실행됩니다. 서버에는 이미지가 업로드되지 않습니다."
+- 경고 문구(빨간): "비밀번호, OTP, 인증서, 카드정보 화면에서는 캡처하지 마세요."
+- reason optional textarea (최대 200자, 글자수 표시)
+- 버튼: 닫기 / 캡처 요청
+
+### 실제 캡처 API 호출 흐름
+
+1. 캡처 요청 클릭 → `requestCaptureScreenshot(agent_id, { dryRun: false, reason })`
+2. 성공: modal 닫기 → captureSuccess 배너 표시 → agents/tasks 재조회
+3. 실패: captureError 표시, modal 유지
+
+### approval_required 흐름
+
+- `dry_run=false` 요청도 `approval_required=true`로 응답됨
+- 성공 메시지: "화면 캡처 요청이 생성되었습니다. 텔레그램 승인 후 실행됩니다."
+
+### 오류 메시지 (HTTP status별)
+
+| status | 메시지 |
+|---|---|
+| 403 | 권한이 없습니다. |
+| 404 | 에이전트를 찾을 수 없습니다. |
+| 기타 | 캡처 요청에 실패했습니다. (HTTP N) |
+
+### 성공 메시지 표시 필드
+
+`task_id` / `status` / `dry_run` / `approval_required` — 이 4개 필드만 표시.
+
+raw payload (이미지 데이터, token_id, device_token, token_hash 등) 미표시.
+
+### 보안 처리
+
+- 비밀번호/OTP/인증서/카드정보 화면 캡처 금지 안내를 Confirm Modal에 명시
+- capture result raw payload UI 미노출
+- `token_id` / `device_token` / `token_hash` / 이미지 raw payload 표시 없음
+- `console.log(result)` 없음
+- 자동/주기 캡처 없음 — 사용자 명시 클릭으로만 실행
+- 쿠키/세션/토큰 추출 없음
+
+### capture 상태 관리 (LocalAgentsClient)
+
+```
+captureTargetAgent: LocalAgent | null  — 캡처 대상 agent
+captureMode: "dry_run" | "real" | null — 현재 capture 모드
+captureLoading: boolean                — API 호출 중
+captureError: string | null            — 오류 메시지
+captureSuccess: CaptureSuccessInfo | null — 성공 결과 (4개 필드)
+captureReason: string                  — 실제 캡처 요청 사유
+```
+
 ## 참고
 
 - 운영 기준선 문서: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
