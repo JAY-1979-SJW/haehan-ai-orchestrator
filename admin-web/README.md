@@ -8,6 +8,9 @@ Next.js 기반 관리자 UI (admin-web).
 - **Stage 11-UI-1B**: 디자인 기반 이식 완료 (Tailwind v4 / Pretendard / 브랜드 토큰)
 - **Stage 11-UI-1C**: 표준 UI 컴포넌트 세트 생성 완료
 - **Stage 11-UI-1D**: `/local-agents` 정적 관리자 레이아웃 구성 완료
+- **Stage 11-UI-2A**: Local Agent API 타입/클라이언트 레이어 추가 완료
+- **Stage 11-UI-2B**: `/local-agents` 페이지 실제 API 연동 완료
+- **Stage 11-UI-2C**: cancel modal 구현 및 POST /cancel API 연동 완료
 - Next.js 14 + TypeScript + Tailwind v4 기준
 
 ## Stage 11-UI-1D 내용
@@ -69,7 +72,8 @@ construction-attendance 표준 템플릿 기준:
 - `src/app/page.tsx` — 홈 (KPI 카드 + 메뉴 + Stage 진행 현황)
 - `src/app/local-agents/page.tsx` — 로컬 에이전트 정적 관리 화면
 - `src/components/ui/` — 공통 UI 컴포넌트 (Stage 11-UI-1C 구현 완료)
-- `src/lib/api.ts` — API helper (Stage 11-UI-1E/2에서 구현)
+- `src/lib/api.ts` — API client (apiFetch / getLocalAgents / getAgentTasks / cancelTask)
+- `src/types/local-agent.ts` — Local Agent API 타입 정의
 
 ## UI 컴포넌트 (Stage 11-UI-1C)
 
@@ -86,6 +90,100 @@ construction-attendance 표준 템플릿 기준:
 | `KpiCard.tsx` | KPI 카드 (title/value/description/accentColor) |
 | `EmptyState.tsx` | 빈 상태 컴포넌트 (title/description) |
 | `index.ts` | 전체 re-export |
+
+## Stage 11-UI-2A 내용
+
+### 추가된 파일
+
+- `src/types/local-agent.ts` — Local Agent API TypeScript 타입 정의
+- `src/lib/api.ts` — API client 함수 추가 (기존 buildApiUrl 유지)
+
+### 추가된 타입
+
+`AgentStatus` / `TaskStatus` / `RiskLevel` / `LocalAgent` / `LocalAgentTask` /
+`LocalAgentsResponse` / `LocalAgentTasksResponse` / `CancelTaskRequest` /
+`CancelTaskResponse` / `ApiErrorResponse`
+
+### 추가된 API client 함수
+
+| 함수 | 설명 |
+|------|------|
+| `apiFetch<T>` | 공통 fetch 래퍼 (ApiError throw) |
+| `getLocalAgents()` | GET /api/v1/local-agents |
+| `getAgentTasks(agentId, options?)` | GET /api/v1/local-agents/{id}/tasks |
+| `cancelTask(agentId, taskId, reason?)` | POST /api/v1/local-agents/{id}/tasks/{id}/cancel |
+
+### 보안 제외 필드
+
+`token_hash` / `device_token` / `params` / raw result payload — 타입에 미포함
+
+### 미구현 (다음 단계)
+
+- 실제 화면 fetch 연동은 Stage 11-UI-2B 예정
+- `/local-agents` 페이지는 아직 정적 mock 데이터 사용
+
+## Stage 11-UI-2B 내용
+
+### 구현 완료
+
+- `page.tsx` → Server Component wrapper (단순 `<LocalAgentsClient />` 렌더)
+- `LocalAgentsClient.tsx` 신규 생성 (`"use client"`)
+- mount 시 `getLocalAgents()`로 실제 agent 목록 fetch
+- 첫 번째 agent 자동 선택 (초기 selectedAgentId)
+- agent 선택 변경 시 `getAgentTasks(agentId, { limit: 50, status })` 재조회
+- `agentStatusFilter`: 프론트 배열 필터링 (API 재호출 없음)
+- `taskStatusFilter` 변경 시 task API 재조회
+- KPI 카드: 실제 `agents` 배열 기준 계산 (total / idle / busy / offline+stale)
+- loading 상태: `LoadingRow` (colSpan spanning 셀)
+- error 상태: `EmptyState` 컴포넌트 (ApiError 메시지 표시)
+- empty 상태: `EmptyRow` 컴포넌트
+- cancel/capture 버튼: disabled placeholder 유지
+- 새로고침 버튼: `fetchAgents()` 재호출 (loading 중 disabled)
+
+### Client Component 구조
+
+```
+LocalAgentsClient (use client)
+├── agents state (LocalAgent[])
+├── agentsLoading / agentsError
+├── selectedAgentId (string | null)
+├── agentStatusFilter → filteredAgents (프론트 필터)
+├── tasks state (LocalAgentTask[])
+├── tasksLoading / tasksError / tasksTotal
+├── taskStatusFilter → getAgentTasks 재조회
+└── KPI: kpiTotal / kpiIdle / kpiBusy / kpiOffline
+```
+
+### 보안상 표시 제외 필드
+
+`token_hash` / `device_token` / `params` / raw result payload — 타입에 미포함, 화면 미출력
+
+## Stage 11-UI-2C 내용
+
+### 구현 완료
+
+- Cancel modal 추가 (`Modal` 컴포넌트 활용)
+- 상태별 취소 버튼 활성화 정책:
+  - `queued` / `waiting_approval` → 취소 (enabled, danger)
+  - `delivered` / `running` → 취소 요청 (enabled, secondary)
+  - `cancel_requested` → 취소 요청됨 (disabled, ghost)
+  - `cancelled` → 취소됨 (disabled, ghost)
+  - `completed` / `failed` / `rejected` → —
+- `cancelTask(agentId, taskId, cancelReason)` 실제 호출
+- 성공 시: modal 닫기 → cancelReason 초기화 → tasks + agents 재조회
+- 실패 시: 상태코드별 메시지 표시 (400/403/404/409/기타)
+- reason 200자 초과 시 확인 버튼 disabled + 글자수 빨간 표시
+- modal 안에 민감정보 입력 경고 문구 표시
+
+### 보안 처리
+
+- `cancel_reason` 필드는 테이블에 표시하지 않음
+- reason 원문 `console.log` 없음
+- `token_hash` / `device_token` / `params` / raw payload 화면 미출력
+
+### 미구현 (다음 단계)
+
+- 화면 캡처 실제 동작 없음 (버튼 disabled placeholder 유지)
 
 ## 참고
 
