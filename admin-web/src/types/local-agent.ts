@@ -87,3 +87,25 @@ export interface CaptureScreenshotResponse {
   dry_run: boolean;
   approval_required: boolean;
 }
+
+/** GET /local-agents/{agent_id}/tasks/{task_id} — to_safe() 응답 (token_id 포함) */
+export interface LocalAgentTaskDetail extends LocalAgentTask {
+  token_id: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_at: string | null;
+  reject_reason: string | null;
+}
+
+export interface ApprovalRequest {
+  token_id: string;
+  reason?: string;
+}
+
+export interface ApprovalResponse extends LocalAgentTask {
+  token_id: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_at: string | null;
+  reject_reason: string | null;
+}
