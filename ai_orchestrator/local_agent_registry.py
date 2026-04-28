@@ -522,6 +522,41 @@ def expire_stale_tasks(
     return expired
 
 
+def fail_active_tasks_for_agent(
+    agent_id: str,
+    reason: str = "websocket_disconnected",
+    now: Optional[datetime] = None,
+) -> list[LocalAgentTask]:
+    """agent WebSocket 연결 종료 시 delivered/running 작업을 failed 처리.
+
+    - queued / completed / failed / waiting_approval 등은 변경하지 않는다.
+    - timed_out_at은 설정하지 않는다 (timeout 아님).
+    - 처리된 task 목록을 반환한다.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+
+    affected: list[LocalAgentTask] = []
+    with _lock:
+        for task in list(_tasks.values()):
+            if task.agent_id != agent_id:
+                continue
+            if task.status not in ("delivered", "running"):
+                continue
+            try:
+                _mark_task_failed(
+                    task,
+                    failure_reason=reason,
+                    now=now_iso,
+                    timed_out=False,
+                )
+                affected.append(task)
+            except InvalidTaskTransitionError:
+                continue
+    return affected
+
+
 # ── Stage 2 전달/결과 ───────────────────────────────────────────────────
 
 def list_pending_for_agent(agent_id: str) -> list[LocalAgentTask]:
@@ -639,4 +674,5 @@ __all__ = [
     "find_task_by_id", "find_task_by_token_id",
     "mark_approved", "mark_rejected", "mark_expired",
     "expire_stale_tasks",
+    "fail_active_tasks_for_agent",
 ]

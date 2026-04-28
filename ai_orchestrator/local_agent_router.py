@@ -806,6 +806,18 @@ async def agent_websocket(websocket: WebSocket):
             except asyncio.TimeoutError:
                 # 유휴 — 신규 큐 작업 push + keepalive
                 await _push_queued(websocket, agent_id)
+                expired = _reg.expire_stale_tasks()
+                for t in expired:
+                    log_event(
+                        "LOCAL_AGENT_TASK_TIMEOUT", t.task_id,
+                        actor="ws-timeout",
+                        note=(
+                            f"agent_id={t.agent_id}"
+                            f" failure_reason={t.failure_reason}"
+                            f" status=failed"
+                            f" timed_out_at={t.timed_out_at}"
+                        ),
+                    )
                 try:
                     await websocket.send_json({"type": "idle"})
                 except Exception:
@@ -857,6 +869,20 @@ async def agent_websocket(websocket: WebSocket):
             pass
     finally:
         if agent_id:
+            failed_on_disconnect = _reg.fail_active_tasks_for_agent(agent_id)
+            for t in failed_on_disconnect:
+                log_event(
+                    "LOCAL_AGENT_TASK_FAILED", t.task_id,
+                    risk_level=t.risk_level,
+                    action_type=t.action,
+                    actor="ws-disconnect",
+                    decision="failed",
+                    note=(
+                        f"agent_id={agent_id}"
+                        f" failure_reason={t.failure_reason}"
+                        f" status=failed"
+                    ),
+                )
             log_event(
                 "LOCAL_AGENT_WS_DISCONNECTED", agent_id,
                 actor="ws-dispatch",
