@@ -52,6 +52,29 @@ services:
       # 로 호출하기 위함. 이 compose 가 네트워크를 생성/삭제하지 않는다.
       - cad_quantity_default
 
+  admin-web:
+    build:
+      context: ./admin-web
+      dockerfile: Dockerfile
+    image: haehan-ai-orchestrator-admin-web:local
+    container_name: haehan-ai-orchestrator-admin-web
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      ai-orchestrator-api:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - default
+      - app_web
+
 volumes:
   api_storage:
     # 기존 haehan-orchestrator-logs (구 compose) 와 겹치지 않게 명시 이름 지정.
