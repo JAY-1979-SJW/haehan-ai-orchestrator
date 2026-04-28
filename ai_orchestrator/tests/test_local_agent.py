@@ -504,5 +504,147 @@ def test_state_guard_unknown_task_id_safe(admin_user):
     assert reg.apply_result(agent_id=agent_id, task_id=fake_id, success=True) is None
 
 
+# ── Stage 11-3B: failure_reason / timed_out_at / expire_stale_tasks ────
+
+def test_new_task_failure_reason_default(admin_user):
+    """새 task 의 failure_reason 기본값은 빈 문자열."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    assert task.failure_reason == ""
+
+
+def test_new_task_timed_out_at_default(admin_user):
+    """새 task 의 timed_out_at 기본값은 빈 문자열."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    assert task.timed_out_at == ""
+
+
+def test_to_safe_contains_failure_reason_and_timed_out_at(admin_user):
+    """to_safe() 응답에 failure_reason / timed_out_at 이 포함돼야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks", json={
+        "action": "open_url",
+        "params": {"url": "https://example.com"},
+    })
+    body = resp.json()
+    assert "failure_reason" in body
+    assert "timed_out_at" in body
+    assert body["failure_reason"] == ""
+    assert body["timed_out_at"] == ""
+
+
+def test_expire_stale_tasks_delivered_timeout(admin_user):
+    """delivered 상태에서 120초 초과 → failed / failure_reason=delivered_timeout."""
+    import ai_orchestrator.local_agent_registry as reg
+    from datetime import datetime, timezone, timedelta
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+
+    future_now = datetime.now(timezone.utc) + timedelta(seconds=121)
+    expired = reg.expire_stale_tasks(now=future_now)
+
+    assert any(t.task_id == task.task_id for t in expired)
+    t = reg.find_task_by_id(task.task_id)
+    assert t.status == "failed"
+    assert t.failure_reason == "delivered_timeout"
+    assert t.timed_out_at != ""
+
+
+def test_expire_stale_tasks_delivered_not_yet_expired(admin_user):
+    """delivered 상태에서 120초 이내 → 그대로 유지."""
+    import ai_orchestrator.local_agent_registry as reg
+    from datetime import datetime, timezone, timedelta
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+
+    future_now = datetime.now(timezone.utc) + timedelta(seconds=60)
+    expired = reg.expire_stale_tasks(now=future_now)
+
+    assert not any(t.task_id == task.task_id for t in expired)
+    assert reg.find_task_by_id(task.task_id).status == "delivered"
+
+
+def test_expire_stale_tasks_running_timeout(admin_user):
+    """running 상태에서 300초 초과 → failed / failure_reason=running_timeout."""
+    import ai_orchestrator.local_agent_registry as reg
+    from datetime import datetime, timezone, timedelta
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+
+    future_now = datetime.now(timezone.utc) + timedelta(seconds=301)
+    expired = reg.expire_stale_tasks(now=future_now)
+
+    assert any(t.task_id == task.task_id for t in expired)
+    t = reg.find_task_by_id(task.task_id)
+    assert t.status == "failed"
+    assert t.failure_reason == "running_timeout"
+    assert t.timed_out_at != ""
+
+
+def test_expire_stale_tasks_completed_not_touched(admin_user):
+    """completed 상태는 expire_stale_tasks 가 건드리지 않는다."""
+    import ai_orchestrator.local_agent_registry as reg
+    from datetime import datetime, timezone, timedelta
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=True)
+
+    future_now = datetime.now(timezone.utc) + timedelta(seconds=9999)
+    expired = reg.expire_stale_tasks(now=future_now)
+
+    assert not any(t.task_id == task.task_id for t in expired)
+    assert reg.find_task_by_id(task.task_id).status == "completed"
+
+
+def test_expire_stale_tasks_failed_not_touched(admin_user):
+    """failed 상태는 expire_stale_tasks 가 건드리지 않는다."""
+    import ai_orchestrator.local_agent_registry as reg
+    from datetime import datetime, timezone, timedelta
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=False, error="err")
+
+    future_now = datetime.now(timezone.utc) + timedelta(seconds=9999)
+    expired = reg.expire_stale_tasks(now=future_now)
+
+    assert not any(t.task_id == task.task_id for t in expired)
+    assert reg.find_task_by_id(task.task_id).status == "failed"
+
+
+def test_apply_result_failure_sets_agent_error(admin_user):
+    """apply_result(success=False) 시 failure_reason = agent_error."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=False, error="something broke", error_code="ERR_X",
+    )
+    assert result.status == "failed"
+    assert result.failure_reason == "agent_error"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
