@@ -75,16 +75,34 @@ def validate_url_for_readonly_open(
     url: str,
     *,
     allow_private_network: bool = False,
+    allow_about_blank: bool = False,
 ) -> dict[str, Any]:
     """http/https 공개 호스트만 허용. 내부망/loopback/서비스 스킴은 차단.
 
     Stage 1 에서는 `allow_private_network` 를 사용하지 않는 것이 기본이며,
     향후 허용 필요 시 명시적으로 True 를 지정한 호출만 통과한다.
+
+    `allow_about_blank=True` 일 때만 정확히 ``about:blank`` (대소문자 무시,
+    뒤에 다른 토큰 없음) 문자열을 read-only 관찰 후보로 허용한다. 이 게이트는
+    Stage 12I controlled browser open 의 첫 후보용이며, ``about:srcdoc`` /
+    ``about:config`` 등 다른 ``about:*`` 는 절대 통과시키지 않는다. 호출자가
+    명시적으로 True 를 전달하지 않으면 기본 동작(URL_SCHEME_BLOCKED)이 유지된다.
     """
     if not isinstance(url, str) or not url.strip():
         return {"ok": False, "error_code": "URL_EMPTY", "reason": "url 누락"}
 
     raw = url.strip()
+
+    if allow_about_blank and raw.lower() == "about:blank":
+        return {
+            "ok": True,
+            "scheme": "about",
+            "host": "",
+            "port": None,
+            "path": "blank",
+            "about_blank": True,
+        }
+
     try:
         parsed = urlparse(raw)
     except ValueError:

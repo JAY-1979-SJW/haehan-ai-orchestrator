@@ -69,6 +69,7 @@ def open_url_readonly(
     max_html_chars: int = 500000,
     keyword_hints: list[str] | None = None,
     allow_private_network: bool = False,
+    allow_about_blank: bool = False,
     _playwright_factory: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """URL 을 read-only 로 열고 페이지 구조 요약 dict 를 반환.
@@ -77,9 +78,15 @@ def open_url_readonly(
     결과 dict 에 HTML 원문 전체는 포함되지 않으며,
     ``page_structure`` 에는 ``web_reader.analyze_html_structure`` 가 이미
     민감 토큰을 드롭한 요약만 담긴다.
+
+    ``allow_about_blank=True`` 일 때만 정확히 ``about:blank`` 문자열이
+    URL 검증을 통과한다. Stage 12I controlled observe 첫 후보용 게이트이며,
+    호출자가 명시하지 않으면 기본 동작(URL_SCHEME_BLOCKED)이 유지된다.
     """
     validation = validate_url_for_readonly_open(
-        url, allow_private_network=allow_private_network,
+        url,
+        allow_private_network=allow_private_network,
+        allow_about_blank=allow_about_blank,
     )
     if not validation.get("ok"):
         return _err(
