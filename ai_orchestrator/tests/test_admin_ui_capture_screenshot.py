@@ -468,5 +468,61 @@ def test_step2_no_forbidden_strings_in_ui(admin_user):
         assert s not in html, f"UI 에 금지된 문자열이 존재: {s}"
 
 
+# ══════════════════════════════════════════════════════════════════════
+# deprecated banner 검증 (Stage 11-UI-7B)
+# ══════════════════════════════════════════════════════════════════════
+
+def test_legacy_page_contains_deprecated_banner_text(admin_user):
+    """legacy 관리 화면임을 알리는 banner 문구가 HTML에 포함된다."""
+    html = _ui_html(admin_user)
+    assert "legacy 관리 화면" in html
+
+
+def test_legacy_page_contains_admin_web_link(admin_user):
+    """banner에 admin-web 표준 UI 링크가 포함된다."""
+    html = _ui_html(admin_user)
+    assert "/orchestrator/admin-web/local-agents" in html
+
+
+def test_legacy_page_banner_contains_fallback_notice(admin_user):
+    """banner에 fallback 용도 안내 문구가 포함된다."""
+    html = _ui_html(admin_user)
+    assert "fallback 용도" in html
+
+
+def test_legacy_page_banner_contains_new_feature_notice(admin_user):
+    """banner에 신규 기능은 admin-web에서만 추가됨을 안내한다."""
+    html = _ui_html(admin_user)
+    assert "신규 기능은 admin-web" in html
+
+
+def test_legacy_banner_does_not_contain_capture_screenshot_string(admin_user):
+    """banner에 /capture-screenshot 문자열이 포함되지 않는다.
+
+    기존 test_ui_uses_single_capture_endpoint 가 endpoint URL 1회 등장을
+    검증하므로 banner에 해당 문자열이 추가되면 해당 테스트가 깨진다.
+    """
+    html = _ui_html(admin_user)
+    # 기존 테스트(test_ui_uses_single_capture_endpoint)와 일관성 유지
+    assert html.count("/capture-screenshot") == 1, (
+        "capture-screenshot URL은 공통 헬퍼에서 1회만 등장해야 합니다."
+    )
+
+
+def test_legacy_page_existing_functions_preserved(admin_user):
+    """deprecated banner 추가 후에도 기존 기능 문자열이 모두 유지된다."""
+    html = _ui_html(admin_user)
+    preserved = [
+        "화면 캡처 사전 점검",
+        "실제 1회 화면 캡처 요청",
+        "작업 목록 보기",
+        "/api/v1/local-agents",
+        "limit=50",
+        "dry_run",
+    ]
+    for text in preserved:
+        assert text in html, f"기존 기능 문자열 누락: {text}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

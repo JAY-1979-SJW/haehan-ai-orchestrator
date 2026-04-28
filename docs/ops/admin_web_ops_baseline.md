@@ -306,15 +306,86 @@ docker compose logs --tail=20 admin-web | grep -iE 'password|token|secret|key' |
 
 ---
 
-## 13. 남은 후속 작업
+## 13. legacy FastAPI admin — deprecated fallback 상태
+
+### 경로 및 권한
+
+| 항목 | 값 |
+|---|---|
+| legacy route | `/orchestrator/api/v1/admin/local-agents` |
+| 상태 | **deprecated fallback** |
+| 표준 관리자 UI | `/orchestrator/admin-web/local-agents` |
+| 권한 | `require_role("admin", "owner")` — viewer 403 차단 |
+| 구현 방식 | FastAPI `HTMLResponse` (Jinja2 미사용, 순수 HTML 문자열) |
+
+### 운영 원칙
+
+- 운영자는 **admin-web 우선 사용**
+- legacy route는 admin-web 장애 시 fallback 용도로 유지
+- 신규 기능은 admin-web에서만 추가 — legacy에 기능 추가 금지
+- legacy route 즉시 삭제 금지 — 제거 여부는 별도 Stage에서 판단
+- legacy 화면 상단에 deprecated banner 표시 (Stage 11-UI-7B 적용)
+
+### legacy / admin-web 기능 비교
+
+| 기능 | legacy admin | admin-web |
+|---|---|---|
+| agent 목록 조회 | ✓ | ✓ |
+| agent 상태 배지 | ✓ | ✓ |
+| task 목록 조회 | ✓ (토글) | ✓ |
+| task status filter | ✓ | ✓ |
+| capture dry_run | ✓ | ✓ |
+| capture real request | ✓ (window.confirm) | ✓ (Modal) |
+| cancel | ✗ | ✓ |
+| role-aware UI | ✗ | ✓ |
+| polling 15초 자동 갱신 | ✗ | ✓ |
+| 마지막 갱신 표시 | ✗ | ✓ |
+| auth/me 연동 | ✗ | ✓ |
+| 401/403 UX | 최소 | ✓ role-aware |
+
+### deprecated banner smoke 기준
+
+배포/재기동 후 아래를 추가로 확인한다:
+
+```bash
+# legacy route 200 확인
+curl -fsS -o /dev/null -w '%{http_code}' -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/api/v1/admin/local-agents -k
+# → 200 (viewer는 403)
+
+# deprecated banner 문자열 확인
+curl -sk -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/api/v1/admin/local-agents -k \
+  | grep -o "legacy 관리 화면\|fallback 용도\|신규 기능은 admin-web\|/orchestrator/admin-web/local-agents"
+# → 4개 문자열 모두 존재해야 함
+
+# 기존 capture 버튼 문자열 유지 확인
+curl -sk -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/api/v1/admin/local-agents -k \
+  | grep -o "화면 캡처 사전 점검\|실제 1회 화면 캡처 요청"
+# → 두 문자열 모두 존재해야 함
+```
+
+**확인 항목**
+- legacy route → 200 ✓
+- "legacy 관리 화면" 포함 ✓
+- "/orchestrator/admin-web/local-agents" 링크 포함 ✓
+- "fallback 용도" 포함 ✓
+- "신규 기능은 admin-web" 포함 ✓
+- 기존 capture 버튼 문자열 유지 ✓
+
+---
+
+## 14. 남은 후속 작업
 
 | 단계 | 내용 |
 |---|---|
-| Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
+| Stage 11-UI-7D | legacy deprecated banner 커밋/PR/서버 반영/smoke |
 | Stage 12-GABIA-1 | 가비아 자동화 설계 |
 | 보안 | Next.js 14.2.29 보안 경고 후속 업데이트 검토 |
 
 ### 선택 고도화 (우선순위 낮음)
+
 
 | 항목 | 내용 |
 |---|---|
@@ -324,7 +395,7 @@ docker compose logs --tail=20 admin-web | grep -iE 'password|token|secret|key' |
 
 ---
 
-## 14. Stage 11-UI-6E 검증 결과
+## 15. Stage 11-UI-6E 검증 결과
 
 | 항목 | 결과 |
 |---|---|
@@ -351,7 +422,7 @@ docker compose logs --tail=20 admin-web | grep -iE 'password|token|secret|key' |
 
 ---
 
-## 15. Stage 11-UI-5F 검증 결과
+## 16. Stage 11-UI-5F 검증 결과
 
 | 항목 | 결과 |
 |---|---|
@@ -377,7 +448,7 @@ docker compose logs --tail=20 admin-web | grep -iE 'password|token|secret|key' |
 
 ---
 
-## 15. Stage 11-UI-3F 검증 결과 (이전 기준선)
+## 17. Stage 11-UI-3F 검증 결과 (이전 기준선)
 
 | 항목 | 결과 |
 |---|---|

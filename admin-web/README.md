@@ -643,9 +643,40 @@ JS 번들(`page-*.js`)에서 아래 문자열 모두 존재해야 함:
 
 자세한 기준: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
 
+## legacy FastAPI admin — deprecated fallback
+
+### 경로 및 상태
+
+| 항목 | 값 |
+|---|---|
+| legacy route | `/orchestrator/api/v1/admin/local-agents` |
+| 상태 | **deprecated fallback** (Stage 11-UI-7B 적용) |
+| 표준 관리자 UI | `/orchestrator/admin-web/local-agents` (이 프로젝트) |
+| 권한 | admin / owner 전용 |
+
+### admin-web 전용 기능
+
+아래 기능은 legacy admin 화면에 없으며 admin-web에서만 제공한다:
+
+- cancel (작업 취소)
+- polling 15초 자동 갱신
+- 자동 새로고침 ON/OFF 토글
+- role-aware UI (viewer disabled 등)
+- auth/me 연동
+- 개선된 401/403 UX
+
+### 운영 원칙
+
+- **운영자는 admin-web 우선 사용**
+- legacy route는 admin-web 장애 시 비상 확인용 fallback
+- 신규 기능은 admin-web에서만 진행 — legacy에 기능 추가 금지
+- legacy route 즉시 삭제 금지 — 제거 여부는 별도 Stage에서 판단
+
+자세한 기준: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md) §13
+
 ## 후속 작업
 
 | 단계 | 내용 |
 |---|---|
-| Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
+| Stage 11-UI-7D | legacy deprecated banner 커밋/PR/서버 반영/smoke |
 | Stage 12-GABIA-1 | 가비아 자동화 설계 |
