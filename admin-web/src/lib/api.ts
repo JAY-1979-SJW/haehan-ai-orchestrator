@@ -4,12 +4,18 @@ import type {
   LocalAgentTasksResponse,
 } from "@/types/local-agent";
 
-export const API_BASE_PATH = "/api/v1";
+const DEFAULT_API_BASE_PATH = "/orchestrator/api/v1";
+
+export const API_BASE_PATH =
+  process.env.NEXT_PUBLIC_API_BASE_PATH ?? DEFAULT_API_BASE_PATH;
 
 export function buildApiUrl(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  if (normalized.startsWith("/api/v1")) return normalized;
-  return `${API_BASE_PATH}${normalized}`;
+  if (normalized.startsWith(API_BASE_PATH)) return normalized;
+  if (normalized.startsWith("/api/v1"))
+    return API_BASE_PATH + normalized.slice("/api/v1".length);
+  return API_BASE_PATH + normalized;
 }
 
 export class ApiError extends Error {
