@@ -957,5 +957,516 @@ def test_list_agents_no_token_hash_or_device_token(admin_user):
         assert "device_token" not in a
 
 
+# ── Stage 11-7B: cancel_task registry 단위 테스트 ──────────────────────
+
+def _make_agent_and_task(action: str = "open_url", params: dict | None = None):
+    """테스트용 agent + task 생성 헬퍼. registry 직접 사용."""
+    import ai_orchestrator.local_agent_registry as reg
+    result = reg.register_agent(
+        host="cancel-test-pc", os_name="Windows 11",
+        version="0.1.0", requested_by="tester",
+    )
+    agent_id = result.agent.agent_id
+    task = reg.enqueue_task(
+        agent_id=agent_id,
+        action=action,
+        params=params or {},
+        requested_by="tester",
+    )
+    return agent_id, task
+
+
+def test_cancel_queued_task_becomes_cancelled():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    assert task.status == "queued"
+    t, action = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="test")
+    assert t.status == "cancelled"
+    assert action == "cancelled"
+
+
+def test_cancel_waiting_approval_task_becomes_cancelled():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("capture_screenshot")
+    assert task.status == "waiting_approval"
+    t, action = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="rejected by admin")
+    assert t.status == "cancelled"
+    assert action == "cancelled"
+
+
+def test_cancel_delivered_task_becomes_cancel_requested():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    t, action = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="stop it")
+    assert t.status == "cancel_requested"
+    assert action == "cancel_requested"
+
+
+def test_cancel_running_task_becomes_cancel_requested():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    t, action = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="user request")
+    assert t.status == "cancel_requested"
+    assert action == "cancel_requested"
+
+
+def test_cancel_completed_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=True, summary="done")
+    with pytest.raises(reg.CancelNotAllowedError):
+        reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+
+def test_cancel_failed_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task.task_id, success=False, error="oops")
+    with pytest.raises(reg.CancelNotAllowedError):
+        reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+
+def test_cancel_rejected_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("capture_screenshot")
+    reg.mark_rejected(task.task_id, actor="admin", reason="denied")
+    with pytest.raises(reg.CancelNotAllowedError):
+        reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+
+def test_cancel_cancelled_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+    with pytest.raises(reg.CancelNotAllowedError):
+        reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+
+def test_cancel_cancel_requested_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+    with pytest.raises(reg.CancelNotAllowedError):
+        reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+
+def test_cancel_saves_cancel_reason():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="user request")
+    assert t.cancel_reason == "user request"
+
+
+def test_cancel_saves_cancel_requested_by():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="tester_actor")
+    assert t.cancel_requested_by == "tester_actor"
+
+
+def test_cancel_queued_saves_cancelled_at():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin")
+    assert t.cancelled_at != ""
+    assert t.completed_at != ""
+
+
+def test_cancel_delivered_saves_cancel_requested_at():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin")
+    assert t.cancel_requested_at != ""
+    assert t.cancelled_at == ""  # cancel_requested 단계에서는 미설정
+
+
+def test_cancel_reason_max_len_enforced():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    with pytest.raises(ValueError, match="최대 길이"):
+        reg.cancel_task(agent_id, task.task_id, actor="admin", reason="x" * 201)
+
+
+def test_cancel_unknown_task_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, _ = _make_agent_and_task("open_url")
+    with pytest.raises(ValueError):
+        reg.cancel_task(agent_id, "lat-nonexistent", actor="admin")
+
+
+def test_cancel_agent_id_mismatch_raises():
+    import ai_orchestrator.local_agent_registry as reg
+    _, task = _make_agent_and_task("open_url")
+    with pytest.raises(ValueError):
+        reg.cancel_task("la-wrongagent", task.task_id, actor="admin")
+
+
+def test_to_safe_includes_cancel_fields():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="ui cancel")
+    safe = t.to_safe()
+    assert "cancel_reason" in safe
+    assert "cancel_requested_at" in safe
+    assert "cancel_requested_by" in safe
+    assert "cancelled_at" in safe
+    assert safe["cancel_reason"] == "ui cancel"
+    assert safe["cancel_requested_by"] == "admin"
+
+
+def test_to_list_safe_includes_cancel_fields():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    t, _ = reg.cancel_task(agent_id, task.task_id, actor="admin", reason="list test")
+    ls = t.to_list_safe()
+    assert "cancel_reason" in ls
+    assert "cancel_requested_at" in ls
+    assert "cancel_requested_by" in ls
+    assert "cancelled_at" in ls
+
+
+def test_apply_result_cancel_requested_success_becomes_completed():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+    assert reg.find_task_by_id(task.task_id).status == "cancel_requested"
+    # agent가 취소 전에 이미 완료 result 송신
+    updated = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="already done",
+    )
+    assert updated.status == "completed"
+
+
+def test_apply_result_cancel_requested_failure_becomes_failed():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+    updated = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=False, error="agent error", error_code="ERR",
+    )
+    assert updated.status == "failed"
+
+
+def test_apply_result_cancel_requested_preserves_cancel_fields():
+    import ai_orchestrator.local_agent_registry as reg
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin", reason="preserve check")
+    updated = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="done",
+    )
+    assert updated.cancel_reason == "preserve check"
+    assert updated.cancel_requested_by == "admin"
+
+
+def test_expire_stale_tasks_cancel_requested_timeout():
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as reg
+
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+
+    future = datetime.now(timezone.utc) + timedelta(seconds=reg.RUNNING_TIMEOUT_SECONDS + 1)
+    expired = reg.expire_stale_tasks(now=future)
+
+    assert any(t.task_id == task.task_id for t in expired)
+    t = reg.find_task_by_id(task.task_id)
+    assert t.status == "failed"
+    assert t.failure_reason == "cancel_timeout"
+
+
+def test_fail_active_tasks_for_agent_includes_cancel_requested():
+    from datetime import datetime, timezone
+    import ai_orchestrator.local_agent_registry as reg
+
+    agent_id, task = _make_agent_and_task("open_url")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.cancel_task(agent_id, task.task_id, actor="admin")
+    assert reg.find_task_by_id(task.task_id).status == "cancel_requested"
+
+    failed = reg.fail_active_tasks_for_agent(agent_id)
+    assert any(t.task_id == task.task_id for t in failed)
+    assert reg.find_task_by_id(task.task_id).status == "failed"
+
+
+def test_known_task_statuses_includes_cancel_statuses():
+    import ai_orchestrator.local_agent_registry as reg
+    assert "cancel_requested" in reg.KNOWN_TASK_STATUSES
+    assert "cancelled" in reg.KNOWN_TASK_STATUSES
+
+
+def test_active_task_statuses_includes_cancel_requested():
+    import ai_orchestrator.local_agent_registry as reg
+    assert "cancel_requested" in reg.ACTIVE_TASK_STATUSES
+
+
+# ── Stage 11-7B-2: cancel API 테스트 ────────────────────────────────────
+
+def _enqueue_via_api(client, agent_id: str, action: str = "open_url") -> dict:
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks",
+                       json={"action": action, "params": {}})
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
+def _advance_to_delivered(agent_id: str, task_id: str) -> None:
+    import ai_orchestrator.local_agent_registry as reg
+    reg.mark_delivered(agent_id, task_id)
+
+
+def _advance_to_running(agent_id: str, task_id: str) -> None:
+    import ai_orchestrator.local_agent_registry as reg
+    reg.mark_delivered(agent_id, task_id)
+    reg.mark_running(agent_id, task_id)
+
+
+def test_cancel_api_queued_returns_200_cancelled(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={"reason": "user request"})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["cancel_action"] == "cancelled"
+    assert body["task"]["status"] == "cancelled"
+
+
+def test_cancel_api_delivered_returns_200_cancel_requested(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+    _advance_to_delivered(agent_id, task_id)
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={"reason": "stop"})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["cancel_action"] == "cancel_requested"
+    assert body["task"]["status"] == "cancel_requested"
+
+
+def test_cancel_api_unknown_task_returns_404(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/lat-notexist/cancel",
+                       json={})
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["error"] == "TASK_NOT_FOUND"
+
+
+def test_cancel_api_agent_id_mismatch_returns_404(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    resp = client.post(f"/api/v1/local-agents/la-wrongagent/tasks/{task_id}/cancel",
+                       json={})
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["error"] == "TASK_NOT_FOUND"
+
+
+def test_cancel_api_completed_returns_409(admin_user):
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+    _advance_to_running(agent_id, task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task_id, success=True, summary="done")
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={})
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["error"] == "CANCEL_NOT_ALLOWED"
+
+
+def test_cancel_api_failed_returns_409(admin_user):
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+    _advance_to_running(agent_id, task_id)
+    reg.apply_result(agent_id=agent_id, task_id=task_id, success=False, error="err")
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={})
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["error"] == "CANCEL_NOT_ALLOWED"
+
+
+def test_cancel_api_cancelled_returns_409(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+    # 첫 번째 취소
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel", json={})
+    # 두 번째 취소 → 409
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={})
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["error"] == "CANCEL_NOT_ALLOWED"
+
+
+def test_cancel_api_reason_too_long_returns_400(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={"reason": "x" * 201})
+    assert resp.status_code == 400
+    assert resp.json()["detail"]["error"] == "REASON_TOO_LONG"
+
+
+def test_cancel_api_viewer_forbidden(viewer_user):
+    client = _make_test_client(viewer_user)
+    # viewer는 register 권한이 없으므로 별도 admin으로 준비
+    import ai_orchestrator.local_agent_registry as reg
+    result = reg.register_agent(host="pc", os_name="Win", version="0.1", requested_by="admin")
+    agent_id = result.agent.agent_id
+    task = reg.enqueue_task(agent_id=agent_id, action="open_url",
+                            params={}, requested_by="admin")
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task.task_id}/cancel",
+                       json={})
+    assert resp.status_code == 403
+
+
+def test_cancel_api_response_includes_cancel_fields(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={"reason": "check fields"})
+    assert resp.status_code == 200
+    t = resp.json()["task"]
+    assert "cancel_reason" in t
+    assert "cancel_requested_by" in t
+    assert "cancelled_at" in t
+    assert "cancel_requested_at" in t
+    assert t["cancel_reason"] == "check fields"
+    assert t["cancel_requested_by"] == admin_user["actor"]
+
+
+def test_cancel_api_response_no_token_hash_or_device_token(admin_user):
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    resp = client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                       json={})
+    assert resp.status_code == 200
+    t = resp.json()["task"]
+    assert "token_hash" not in t
+    assert "device_token" not in t
+
+
+def test_cancel_api_audit_cancelled_event(admin_user, tmp_path, monkeypatch):
+    import json
+    import ai_orchestrator.audit_logger as al
+    monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
+
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                json={"reason": "audit test"})
+
+    logs = [json.loads(l) for l in (tmp_path / "audit.jsonl").read_text().splitlines()]
+    events = [e["event_type"] for e in logs]
+    assert "LOCAL_AGENT_TASK_CANCELLED" in events
+
+
+def test_cancel_api_audit_cancel_requested_event(admin_user, tmp_path, monkeypatch):
+    import json
+    import ai_orchestrator.audit_logger as al
+    monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
+
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+    _advance_to_delivered(agent_id, task_id)
+
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                json={"reason": "cancel req test"})
+
+    logs = [json.loads(l) for l in (tmp_path / "audit.jsonl").read_text().splitlines()]
+    events = [e["event_type"] for e in logs]
+    assert "LOCAL_AGENT_TASK_CANCEL_REQUESTED" in events
+
+
+def test_cancel_api_audit_no_reason_raw(admin_user, tmp_path, monkeypatch):
+    """audit note에 reason 원문 전체가 남지 않는다 (reason_len만 기록)."""
+    import json
+    import ai_orchestrator.audit_logger as al
+    monkeypatch.setattr(al, "_LOG_PATH", tmp_path / "audit.jsonl")
+
+    client = _make_test_client(admin_user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+    task = _enqueue_via_api(client, agent_id, "open_url")
+    task_id = task["task_id"]
+
+    long_reason = "sensitive_reason_" + "x" * 100
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+                json={"reason": long_reason})
+
+    logs = [json.loads(l) for l in (tmp_path / "audit.jsonl").read_text().splitlines()]
+    cancel_events = [e for e in logs if e["event_type"] == "LOCAL_AGENT_TASK_CANCELLED"]
+    assert cancel_events, "LOCAL_AGENT_TASK_CANCELLED 이벤트가 없음"
+    for ev in cancel_events:
+        note = ev.get("note", "")
+        assert long_reason not in note, "audit note에 reason 원문이 포함됨"
+        assert "reason_len=" in note
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

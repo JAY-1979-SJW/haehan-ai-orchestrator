@@ -122,6 +122,7 @@ class LocalAgentTask:
     params: dict          # 민감 키 제거된 상태로만 저장
     risk_level: str
     # queued / delivered / running / waiting_approval / completed / failed / rejected
+    # cancel_requested / cancelled
     status: str
     requested_by: str
     created_at: str
@@ -139,8 +140,13 @@ class LocalAgentTask:
     rejected_at: str = ""
     reject_reason: str = ""
     # Stage 11-3B 추가 필드 — timeout / 실패 분류
-    failure_reason: str = ""   # agent_error | delivered_timeout | running_timeout | websocket_disconnected | invalid_transition | unknown_error
+    failure_reason: str = ""   # agent_error | delivered_timeout | running_timeout | cancel_timeout | websocket_disconnected | invalid_transition | unknown_error
     timed_out_at: str = ""     # timeout 종결 시각 (timeout 케이스만)
+    # Stage 11-7B 추가 필드 — 취소 흔적
+    cancel_reason: str = ""           # 취소 사유 (최대 200자)
+    cancel_requested_at: str = ""     # cancel_requested 전환 시각
+    cancel_requested_by: str = ""     # 취소 요청자
+    cancelled_at: str = ""            # 최종 cancelled 전환 시각
 
     def to_safe(self) -> dict:
         return {
@@ -165,6 +171,10 @@ class LocalAgentTask:
             "reject_reason": self.reject_reason,
             "failure_reason": self.failure_reason,
             "timed_out_at": self.timed_out_at,
+            "cancel_reason": self.cancel_reason,
+            "cancel_requested_at": self.cancel_requested_at,
+            "cancel_requested_by": self.cancel_requested_by,
+            "cancelled_at": self.cancelled_at,
         }
 
     def to_list_safe(self) -> dict:
@@ -185,6 +195,10 @@ class LocalAgentTask:
             "timed_out_at": self.timed_out_at,
             "error_summary": self.error_summary,
             "result_summary": self.result_summary,
+            "cancel_reason": self.cancel_reason,
+            "cancel_requested_at": self.cancel_requested_at,
+            "cancel_requested_by": self.cancel_requested_by,
+            "cancelled_at": self.cancelled_at,
         }
 
     def to_dispatch(self) -> dict:
@@ -219,8 +233,8 @@ RUNNING_TIMEOUT_SECONDS: int = 300
 
 # last_seen_at 이 이 초 이상 오래되면 stale 로 분류
 HEARTBEAT_STALE_SECONDS: int = 90
-# active task 로 간주하는 상태 집합
-ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running"})
+# active task 로 간주하는 상태 집합 (cancel_requested 포함 — 아직 agent가 처리 중)
+ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running", "cancel_requested"})
 
 
 # ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
@@ -228,12 +242,15 @@ ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running"})
 # 허용된 상태 전이만 등록. 미등록 전이는 _ensure_task_transition 이 차단한다.
 # waiting_approval/rejected 는 별도 함수(mark_approved/mark_rejected/mark_expired)
 # 에서만 처리하므로 여기서는 정규 실행 흐름만 포함한다.
+# waiting_approval → cancelled 는 cancel_task() 전용 함수에서만 처리한다.
 VALID_TASK_TRANSITIONS: dict[str, set[str]] = {
-    "queued":    {"delivered", "failed"},
-    "delivered": {"running", "failed"},
-    "running":   {"completed", "failed"},
-    "completed": set(),
-    "failed":    set(),
+    "queued":           {"delivered", "failed", "cancelled"},
+    "delivered":        {"running", "failed", "cancel_requested"},
+    "running":          {"completed", "failed", "cancel_requested"},
+    "cancel_requested": {"cancelled", "failed", "completed"},
+    "completed":        set(),
+    "failed":           set(),
+    "cancelled":        set(),
 }
 
 
@@ -589,10 +606,12 @@ def _mark_task_failed(
 def expire_stale_tasks(
     now: Optional[datetime] = None,
 ) -> list[LocalAgentTask]:
-    """delivered/running 상태 중 timeout 초과 task 를 failed 로 전환.
+    """delivered/running/cancel_requested 상태 중 timeout 초과 task 를 failed 로 전환.
 
     - delivered 상태: delivered_at 기준 DELIVERED_TIMEOUT_SECONDS 초과
     - running 상태: started_at 기준 RUNNING_TIMEOUT_SECONDS 초과
+    - cancel_requested 상태: cancel_requested_at 기준 RUNNING_TIMEOUT_SECONDS 초과
+      (failure_reason="cancel_timeout")
     - queued / completed / failed 등 다른 상태는 건드리지 않는다.
     - 만료 처리된 task 목록을 반환한다 (감사 로그는 호출자가 기록).
     - now 를 주입하면 테스트에서 시간 조작이 가능하다.
@@ -627,6 +646,17 @@ def expire_stale_tasks(
                             timed_out=True,
                         )
                         expired.append(task)
+                elif task.status == "cancel_requested" and task.cancel_requested_at:
+                    requested_at = datetime.fromisoformat(task.cancel_requested_at)
+                    if (now - requested_at).total_seconds() > RUNNING_TIMEOUT_SECONDS:
+                        _mark_task_failed(
+                            task,
+                            failure_reason="cancel_timeout",
+                            error_summary="cancel_timeout: agent did not acknowledge cancel within time limit",
+                            now=now_iso,
+                            timed_out=True,
+                        )
+                        expired.append(task)
             except (ValueError, TypeError):
                 # 타임스탬프 파싱 실패 — 해당 task 는 건너뜀
                 continue
@@ -638,8 +668,9 @@ def fail_active_tasks_for_agent(
     reason: str = "websocket_disconnected",
     now: Optional[datetime] = None,
 ) -> list[LocalAgentTask]:
-    """agent WebSocket 연결 종료 시 delivered/running 작업을 failed 처리.
+    """agent WebSocket 연결 종료 시 ACTIVE_TASK_STATUSES 작업을 failed 처리.
 
+    - ACTIVE_TASK_STATUSES = delivered / running / cancel_requested
     - queued / completed / failed / waiting_approval 등은 변경하지 않는다.
     - timed_out_at은 설정하지 않는다 (timeout 아님).
     - 처리된 task 목록을 반환한다.
@@ -653,7 +684,7 @@ def fail_active_tasks_for_agent(
         for task in list(_tasks.values()):
             if task.agent_id != agent_id:
                 continue
-            if task.status not in ("delivered", "running"):
+            if task.status not in ACTIVE_TASK_STATUSES:
                 continue
             try:
                 _mark_task_failed(
@@ -673,6 +704,7 @@ def fail_active_tasks_for_agent(
 KNOWN_TASK_STATUSES: frozenset[str] = frozenset({
     "queued", "delivered", "running",
     "waiting_approval", "completed", "failed", "rejected",
+    "cancel_requested", "cancelled",
 })
 
 
@@ -749,18 +781,19 @@ def apply_result(
     error: str = "",
     error_code: str = "",
 ) -> Optional[LocalAgentTask]:
-    """에이전트가 보고한 결과 반영. running/delivered 에서 동작.
+    """에이전트가 보고한 결과 반영. running/delivered/cancel_requested 에서 동작.
 
-    - success=True  → running → completed (delivered 에서는 guard 에 의해 차단)
+    - success=True  → running/cancel_requested → completed
+      (delivered → completed 는 허용되지 않으므로 실패 보고만 허용)
     - success=False → failed
+    - cancel_requested 상태에서 result 수신 시 cancel 필드는 보존한다 (agent result 우선).
     """
     with _lock:
         t = _tasks.get(task_id)
         if t is None or t.agent_id != agent_id:
             return None
-        # running/delivered 에서만 결과 적용 가능.
-        # delivered → completed 는 허용되지 않으므로 실패 보고만 허용.
-        if t.status not in ("running", "delivered"):
+        # running/delivered/cancel_requested 에서만 결과 적용 가능.
+        if t.status not in ("running", "delivered", "cancel_requested"):
             return t
         next_status = "completed" if success else "failed"
         _ensure_task_transition(t, next_status)
@@ -801,6 +834,90 @@ def _initial_result_summary(action: str, safe_params: dict) -> str:
     return ""
 
 
+# ── 취소 엔진 ────────────────────────────────────────────────────────────
+
+class CancelNotAllowedError(ValueError):
+    """이미 종결된 또는 재취소 불가 상태에서 취소를 시도할 때."""
+
+
+_CANCEL_TERMINAL_STATUSES: frozenset[str] = frozenset({
+    "completed", "failed", "rejected", "cancelled",
+})
+
+_CANCEL_REASON_MAX_LEN = 200
+
+
+def cancel_task(
+    agent_id: str,
+    task_id: str,
+    *,
+    actor: str = "",
+    reason: str = "",
+    now: Optional[datetime] = None,
+) -> tuple["LocalAgentTask", str]:
+    """task 취소 엔진. 상태에 따라 즉시 cancelled 또는 cancel_requested 로 전환.
+
+    반환: (task, action_str)
+      - action_str = "cancelled"        (queued / waiting_approval)
+      - action_str = "cancel_requested" (delivered / running)
+
+    예외:
+      - ValueError: task 없음, agent_id 불일치, reason 초과
+      - CancelNotAllowedError: terminal 상태 또는 cancel_requested 재취소
+    """
+    if reason and len(reason) > _CANCEL_REASON_MAX_LEN:
+        raise ValueError(
+            f"reason 이 최대 길이({_CANCEL_REASON_MAX_LEN}자)를 초과합니다"
+        )
+
+    now_dt = now if now is not None else datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    safe_reason = (reason or "")[:_CANCEL_REASON_MAX_LEN]
+    safe_actor = (actor or "")[:80]
+
+    with _lock:
+        t = _tasks.get(task_id)
+        if t is None or t.agent_id != agent_id:
+            raise ValueError(f"task 없음 또는 agent_id 불일치: {agent_id}/{task_id}")
+
+        if t.status in _CANCEL_TERMINAL_STATUSES:
+            raise CancelNotAllowedError(
+                f"취소 불가 — 이미 종결된 상태: {t.status!r} (task_id={task_id})"
+            )
+
+        if t.status == "cancel_requested":
+            raise CancelNotAllowedError(
+                f"취소 불가 — 이미 cancel_requested 상태 (task_id={task_id})"
+            )
+
+        if t.status in ("queued", "waiting_approval"):
+            # agent에 아직 전달되지 않음 → 즉시 cancelled
+            _ensure_task_transition(t, "cancelled") if t.status == "queued" else None
+            # waiting_approval → cancelled 는 VALID_TASK_TRANSITIONS 미등록 (전용 처리)
+            t.status = "cancelled"
+            t.cancel_reason = safe_reason
+            t.cancel_requested_by = safe_actor
+            t.cancelled_at = now_iso
+            t.completed_at = now_iso
+            t.updated_at = now_iso
+            return t, "cancelled"
+
+        if t.status in ("delivered", "running"):
+            # agent에 전달됐거나 실행 중 → cancel_requested
+            _ensure_task_transition(t, "cancel_requested")
+            t.status = "cancel_requested"
+            t.cancel_reason = safe_reason
+            t.cancel_requested_by = safe_actor
+            t.cancel_requested_at = now_iso
+            t.updated_at = now_iso
+            return t, "cancel_requested"
+
+        # 예상치 못한 상태 방어
+        raise CancelNotAllowedError(
+            f"취소 불가 — 처리되지 않은 상태: {t.status!r} (task_id={task_id})"
+        )
+
+
 __all__ = [
     "ACTION_RISK", "ALLOWED_APPS", "AUTO_EXECUTE_VIA_AGENT",
     "VALID_TASK_TRANSITIONS", "InvalidTaskTransitionError",
@@ -819,4 +936,5 @@ __all__ = [
     "list_tasks_for_agent",
     "set_agent_connected", "set_agent_last_seen", "set_agent_disconnected",
     "get_active_task_count", "get_current_task_id", "get_agent_status",
+    "cancel_task", "CancelNotAllowedError",
 ]
