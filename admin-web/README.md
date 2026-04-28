@@ -238,9 +238,40 @@ NEXT_PUBLIC_API_BASE_PATH=/api/v1
 | `/orchestrator/api/v1/local-agents` | `/orchestrator/api/v1/local-agents` (중복 방지) |
 | `https://...` | 그대로 반환 |
 
+## 운영 접속 경로
+
+| 용도 | 경로 |
+|---|---|
+| admin-web root | `/orchestrator/admin-web/` |
+| 로컬 에이전트 관리 | `/orchestrator/admin-web/local-agents` |
+| FastAPI API | `/orchestrator/api/v1/` |
+| health check | `/orchestrator/api/v1/health` |
+| legacy FastAPI admin | `/orchestrator/api/v1/admin/local-agents` |
+
+### 배포 후 smoke 요약
+
+```bash
+# admin-web root
+curl -fsS -o /dev/null -w '%{http_code}' -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/admin-web/ -k  # → 200
+
+# local-agents page
+curl -fsS -o /dev/null -w '%{http_code}' -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/admin-web/local-agents -k  # → 200
+
+# FastAPI health
+curl -fsS -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/api/v1/health -k  # → {"status":"ok"}
+```
+
+### legacy route
+
+기존 FastAPI admin 화면은 `/orchestrator/api/v1/admin/local-agents` 경로로 유지된다.
+nginx rollback 시 이 경로를 fallback으로 사용한다.
+
 ## 참고
 
+- 운영 기준선 문서: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
 - FastAPI API 서버(`ai_orchestrator/`)는 기존 그대로 유지
-- 기존 FastAPI admin 화면은 legacy로 보존
+- 기존 FastAPI admin 화면은 legacy fallback으로 보존
 - 운영 nginx route: `/orchestrator/admin-web/` → admin-web, `/orchestrator/api/` → FastAPI
-- npm install은 아직 수행하지 않음 (Stage 11-UI-2 이후 처리)
