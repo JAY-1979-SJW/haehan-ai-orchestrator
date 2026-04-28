@@ -91,9 +91,13 @@ class LocalAgent:
     registered_at: str
     requested_by: str    # 등록을 요청한 actor
     token_hash: str      # SHA-256(device_token) — 원문은 저장 금지
+    # Stage 11-6B: 연결 상태 타임스탬프 (저장 필드, agent_status는 계산값)
+    connected_at: str = ""
+    last_seen_at: str = ""
+    disconnected_at: str = ""
 
     def to_safe(self) -> dict:
-        """API 응답용 (token_hash 제외)."""
+        """API 응답용 (token_hash 제외, 연결 상태 계산값 포함)."""
         return {
             "agent_id": self.agent_id,
             "host": self.host,
@@ -101,6 +105,12 @@ class LocalAgent:
             "version": self.version,
             "registered_at": self.registered_at,
             "requested_by": self.requested_by,
+            "agent_status": get_agent_status(self.agent_id),
+            "connected_at": self.connected_at,
+            "last_seen_at": self.last_seen_at,
+            "disconnected_at": self.disconnected_at,
+            "active_task_count": get_active_task_count(self.agent_id),
+            "current_task_id": get_current_task_id(self.agent_id),
         }
 
 
@@ -205,6 +215,13 @@ DELIVERED_TIMEOUT_SECONDS: int = 120
 # running 상태에서 result 미수신 허용 시간 (초)
 RUNNING_TIMEOUT_SECONDS: int = 300
 
+# ── heartbeat / 상태 계산 상수 ──────────────────────────────────────────
+
+# last_seen_at 이 이 초 이상 오래되면 stale 로 분류
+HEARTBEAT_STALE_SECONDS: int = 90
+# active task 로 간주하는 상태 집합
+ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running"})
+
 
 # ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
 
@@ -250,6 +267,80 @@ def clear() -> None:
     with _lock:
         _agents.clear()
         _tasks.clear()
+
+
+# ── 연결 상태 helper ─────────────────────────────────────────────────────
+
+def set_agent_connected(agent_id: str, now: Optional[str] = None) -> None:
+    with _lock:
+        a = _agents.get(agent_id)
+        if a is None:
+            return
+        ts = now if now is not None else _now_iso()
+        a.connected_at = ts
+        a.last_seen_at = ts
+        a.disconnected_at = ""
+
+
+def set_agent_last_seen(agent_id: str, now: Optional[str] = None) -> None:
+    with _lock:
+        a = _agents.get(agent_id)
+        if a is None:
+            return
+        a.last_seen_at = now if now is not None else _now_iso()
+
+
+def set_agent_disconnected(agent_id: str, now: Optional[str] = None) -> None:
+    # last_seen_at은 기존 값 유지 (disconnect 시각은 별도 필드로만 기록)
+    with _lock:
+        a = _agents.get(agent_id)
+        if a is None:
+            return
+        a.disconnected_at = now if now is not None else _now_iso()
+
+
+def get_active_task_count(agent_id: str) -> int:
+    with _lock:
+        return sum(
+            1 for t in _tasks.values()
+            if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES
+        )
+
+
+def get_current_task_id(agent_id: str) -> str:
+    """running task 중 started_at 또는 updated_at 기준 최신 1개의 task_id."""
+    with _lock:
+        running = [
+            t for t in _tasks.values()
+            if t.agent_id == agent_id and t.status == "running"
+        ]
+    if not running:
+        return ""
+    best = max(running, key=lambda t: t.started_at or t.updated_at)
+    return best.task_id
+
+
+def get_agent_status(agent_id: str, now: Optional[str] = None) -> str:
+    """agent_id 기준 상태 계산 (저장 필드 아님)."""
+    a = _agents.get(agent_id)
+    if a is None:
+        return "offline"
+    if not a.connected_at:
+        return "offline"
+    if a.disconnected_at:
+        return "offline"
+    if a.last_seen_at:
+        ts_now = now if now is not None else _now_iso()
+        try:
+            last = datetime.fromisoformat(a.last_seen_at)
+            cur = datetime.fromisoformat(ts_now)
+            if (cur - last).total_seconds() > HEARTBEAT_STALE_SECONDS:
+                return "stale"
+        except (ValueError, TypeError):
+            pass
+    if get_active_task_count(agent_id) > 0:
+        return "busy"
+    return "idle"
 
 
 # ── 등록 / 조회 ──────────────────────────────────────────────────────────
@@ -714,6 +805,7 @@ __all__ = [
     "ACTION_RISK", "ALLOWED_APPS", "AUTO_EXECUTE_VIA_AGENT",
     "VALID_TASK_TRANSITIONS", "InvalidTaskTransitionError",
     "DELIVERED_TIMEOUT_SECONDS", "RUNNING_TIMEOUT_SECONDS",
+    "HEARTBEAT_STALE_SECONDS", "ACTIVE_TASK_STATUSES",
     "LocalAgent", "LocalAgentTask", "RegisterResult",
     "UnknownActionError",
     "register_agent", "get_agent", "list_agents", "authenticate_agent",
@@ -725,4 +817,6 @@ __all__ = [
     "fail_active_tasks_for_agent",
     "KNOWN_TASK_STATUSES",
     "list_tasks_for_agent",
+    "set_agent_connected", "set_agent_last_seen", "set_agent_disconnected",
+    "get_active_task_count", "get_current_task_id", "get_agent_status",
 ]

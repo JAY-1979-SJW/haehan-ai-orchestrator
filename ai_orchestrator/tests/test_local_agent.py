@@ -830,5 +830,132 @@ def test_api_list_tasks_empty_for_unknown_agent(admin_user):
     assert body["total"] == 0
 
 
+# ── Stage 11-6B: connected_at / last_seen_at / disconnected_at / agent_status ──
+
+def test_new_agent_default_status_offline():
+    """새로 등록된 agent의 기본 상태는 offline."""
+    import ai_orchestrator.local_agent_registry as reg
+    result = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    assert reg.get_agent_status(result.agent.agent_id) == "offline"
+
+
+def test_set_agent_connected_sets_timestamps():
+    """set_agent_connected 후 connected_at / last_seen_at 설정, disconnected_at 초기화."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    reg.set_agent_connected(agent_id, now="2026-01-01T00:00:00+00:00")
+    a = reg.get_agent(agent_id)
+    assert a.connected_at == "2026-01-01T00:00:00+00:00"
+    assert a.last_seen_at == "2026-01-01T00:00:00+00:00"
+    assert a.disconnected_at == ""
+
+
+def test_set_agent_disconnected_sets_disconnected_at():
+    """set_agent_disconnected 후 disconnected_at 설정."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    reg.set_agent_connected(agent_id, now="2026-01-01T00:00:00+00:00")
+    reg.set_agent_disconnected(agent_id, now="2026-01-01T00:01:00+00:00")
+    a = reg.get_agent(agent_id)
+    assert a.disconnected_at == "2026-01-01T00:01:00+00:00"
+    assert a.last_seen_at == "2026-01-01T00:00:00+00:00"  # 기존 값 유지
+
+
+def test_agent_status_idle_when_connected_no_task():
+    """연결 중이고 active task 없으면 idle."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    now = "2026-01-01T00:00:00+00:00"
+    reg.set_agent_connected(agent_id, now=now)
+    status = reg.get_agent_status(agent_id, now=now)
+    assert status == "idle"
+
+
+def test_agent_status_busy_with_delivered_task():
+    """delivered task 있으면 busy."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    now = "2026-01-01T00:00:00+00:00"
+    reg.set_agent_connected(agent_id, now=now)
+    task = reg.enqueue_task(agent_id=agent_id, action="open_url",
+                            params={"url": "https://x.com"}, requested_by="t")
+    reg.mark_delivered(agent_id, task.task_id)
+    assert reg.get_agent_status(agent_id, now=now) == "busy"
+
+
+def test_agent_status_busy_with_running_task():
+    """running task 있으면 busy."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    now = "2026-01-01T00:00:00+00:00"
+    reg.set_agent_connected(agent_id, now=now)
+    task = reg.enqueue_task(agent_id=agent_id, action="open_url",
+                            params={"url": "https://x.com"}, requested_by="t")
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    assert reg.get_agent_status(agent_id, now=now) == "busy"
+
+
+def test_agent_status_stale_after_91s():
+    """last_seen_at이 91초 이상 과거면 stale."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    past = (datetime.now(timezone.utc) - timedelta(seconds=91)).isoformat()
+    reg.set_agent_connected(agent_id, now=past)
+    assert reg.get_agent_status(agent_id) == "stale"
+
+
+def test_agent_status_offline_after_disconnect():
+    """disconnected_at 설정 후 offline."""
+    import ai_orchestrator.local_agent_registry as reg
+    r = reg.register_agent(host="h", os_name="W", version="0.1", requested_by="t")
+    agent_id = r.agent.agent_id
+    now = "2026-01-01T00:00:00+00:00"
+    reg.set_agent_connected(agent_id, now=now)
+    reg.set_agent_disconnected(agent_id, now="2026-01-01T00:01:00+00:00")
+    assert reg.get_agent_status(agent_id, now=now) == "offline"
+
+
+def test_list_agents_contains_agent_status(admin_user):
+    """list_agents 응답에 agent_status 포함."""
+    client = _make_test_client(admin_user)
+    _register_agent(client)
+    listed = client.get("/api/v1/local-agents").json()["agents"]
+    assert all("agent_status" in a for a in listed)
+
+
+def test_list_agents_contains_active_task_count(admin_user):
+    """list_agents 응답에 active_task_count 포함."""
+    client = _make_test_client(admin_user)
+    _register_agent(client)
+    listed = client.get("/api/v1/local-agents").json()["agents"]
+    assert all("active_task_count" in a for a in listed)
+
+
+def test_list_agents_contains_current_task_id(admin_user):
+    """list_agents 응답에 current_task_id 포함."""
+    client = _make_test_client(admin_user)
+    _register_agent(client)
+    listed = client.get("/api/v1/local-agents").json()["agents"]
+    assert all("current_task_id" in a for a in listed)
+
+
+def test_list_agents_no_token_hash_or_device_token(admin_user):
+    """list_agents 응답에 token_hash / device_token 없음."""
+    client = _make_test_client(admin_user)
+    _register_agent(client)
+    listed = client.get("/api/v1/local-agents").json()["agents"]
+    for a in listed:
+        assert "token_hash" not in a
+        assert "device_token" not in a
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
