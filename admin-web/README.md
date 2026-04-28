@@ -501,10 +501,95 @@ captureReason: string                  — 실제 캡처 요청 사유
 
 **서버 `require_role`이 최종 보안 기준이다. UI 버튼 disabled는 UX 보조.**
 
+## Stage 11-UI-6B: background polling 구현
+
+### 구현 완료
+
+- `POLLING_INTERVAL_MS = 15_000` (15초 주기)
+- `backgroundFetchAgents()` / `backgroundFetchTasks()` — polling 전용 background fetch
+  - `agentsLoading` / `tasksLoading` 변경 없음 → loading skeleton 깜빡임 없음
+  - 최초 로딩 / 수동 새로고침의 loading UX 기존 그대로 유지
+- `isPollingAgentsRef` / `isPollingTasksRef` — in-flight guard (중복 요청 방지)
+- `pollingIntervalRef` — `setInterval` 관리, unmount 시 `clearInterval`
+- `lastRefreshedAt` — 마지막 갱신 시각 (`HH:mm:ss`) 헤더 우측 표시
+- `pollingError` — 자동 새로고침 실패 시 작은 경고 텍스트 표시
+
+### polling 대상
+
+| 대상 | 주기 |
+|---|---|
+| GET /local-agents | 15초 |
+| GET /local-agents/{id}/tasks | 15초 |
+| GET /auth/me | 최초 1회만 (polling 제외) |
+| POST /cancel | polling 절대 불가 (사용자 명시 클릭만) |
+| POST /capture-screenshot | polling 절대 불가 (사용자 명시 클릭만) |
+
+### 중지/보호 조건
+
+- `document.hidden === true` → polling skip (탭 최소화/전환 시)
+- capture modal open (`captureMode === "real" && captureTargetAgent !== null`) → agents/tasks polling skip
+- cancel modal open (`cancelTargetTask !== null`) → tasks polling skip
+- in-flight guard → 이전 요청 완료 전 중복 요청 방지
+- visibilitychange → 탭 복귀 시 즉시 background refresh 1회 수행
+- component unmount → `clearInterval` + event listener 제거
+
+### 미구현 (다음 단계)
+
+- ON/OFF 토글: Stage 11-UI-6C 예정
+- polling 상태 배지 / 연속 실패 카운트: Stage 11-UI-6C 예정
+- polling timer reset (수동 새로고침 후): Stage 11-UI-6C 예정
+
+## Stage 11-UI-6C: 자동 새로고침 ON/OFF 토글 및 polling 상태 배지
+
+### 구현 완료
+
+- **자동 새로고침 토글**: 헤더 우측에 `Btn variant="ghost" size="xs"` 버튼 추가
+  - ON 상태: "자동 새로고침 ON" 표시
+  - OFF 상태: "자동 새로고침 OFF" 표시
+- **polling 상태 배지**: 토글 버튼 좌측에 인라인 배지 표시
+
+| 상태 | 문구 | 색상 |
+|---|---|---|
+| active | 자동 갱신 중 | 초록 (D1FAE5 / 065F46) |
+| paused | 일시중지 | 앰버 (FEF3C7 / 92400E) |
+| off | 자동 갱신 꺼짐 | 회색 (F3F4F6 / 6B7280) |
+| error | 자동 갱신 오류 | 빨강 (FEE2E2 / B91C1C) |
+
+### 상태 판정 기준
+
+- `pollingEnabled=false` → off
+- `pollingError` 존재 → error
+- `document.hidden` 또는 capture modal open → paused
+- 그 외 → active
+
+### polling ON/OFF 동작
+
+- OFF 시: `setInterval` 미생성 (interval 자체 없음)
+- ON 복귀 시: 즉시 background refresh 1회 수행 후 15초 주기 재개
+- 수동 새로고침 버튼은 OFF 상태에서도 동작
+- polling timer reset (수동 새로고침 후): 미구현 (6D에서 재검토 예정)
+
+### GET polling 전용 보장
+
+- polling interval은 GET /local-agents, GET /local-agents/{id}/tasks만 호출
+- POST /cancel, POST /capture-screenshot 자동 호출 없음
+- 사용자 명시 클릭으로만 POST 작업 실행
+
+### 보안
+
+- `pollingEnabled` state 자체는 UI 제어 전용, 서버 권한 미변경
+- console.log, secret, token 표시 없음
+- Authorization/Cookie 출력 없음
+
+### 미구현 (다음 단계)
+
+- 수동 새로고침 후 polling timer reset: 6D에서 재검토
+- 커밋/PR/서버 반영/smoke: Stage 11-UI-6D 예정
+
 ## 후속 작업
 
 | 단계 | 내용 |
 |---|---|
-| Stage 11-UI-6 | 자동 새로고침 / polling |
+| Stage 11-UI-6D | 커밋/PR/서버 반영/smoke |
 | Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
 | Stage 12-GABIA-1 | 가비아 자동화 설계 |
