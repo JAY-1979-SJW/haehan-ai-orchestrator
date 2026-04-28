@@ -128,6 +128,9 @@ class LocalAgentTask:
     approved_by: str = ""
     rejected_at: str = ""
     reject_reason: str = ""
+    # Stage 11-3B 추가 필드 — timeout / 실패 분류
+    failure_reason: str = ""   # agent_error | delivered_timeout | running_timeout | websocket_disconnected | invalid_transition | unknown_error
+    timed_out_at: str = ""     # timeout 종결 시각 (timeout 케이스만)
 
     def to_safe(self) -> dict:
         return {
@@ -150,6 +153,8 @@ class LocalAgentTask:
             "approved_by": self.approved_by,
             "rejected_at": self.rejected_at,
             "reject_reason": self.reject_reason,
+            "failure_reason": self.failure_reason,
+            "timed_out_at": self.timed_out_at,
         }
 
     def to_dispatch(self) -> dict:
@@ -171,6 +176,14 @@ class LocalAgentTask:
             "risk_level": self.risk_level,
             "approved": approved_flag,
         }
+
+
+# ── timeout 상수 ────────────────────────────────────────────────────────
+
+# delivered 상태에서 running 미전환 허용 시간 (초)
+DELIVERED_TIMEOUT_SECONDS: int = 120
+# running 상태에서 result 미수신 허용 시간 (초)
+RUNNING_TIMEOUT_SECONDS: int = 300
 
 
 # ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
@@ -436,6 +449,79 @@ def mark_expired(task_id: str) -> Optional[LocalAgentTask]:
         return t
 
 
+# ── 실패 처리 helper / timeout 만료 ────────────────────────────────────
+
+def _mark_task_failed(
+    task: LocalAgentTask,
+    *,
+    failure_reason: str,
+    error_summary: str = "",
+    now: str,
+    timed_out: bool = False,
+) -> None:
+    """task 를 failed 로 전환하는 내부 helper.
+
+    _ensure_task_transition 으로 허용 여부를 검증한 후 필드를 일괄 세팅한다.
+    호출자는 이미 _lock 을 보유한 상태여야 한다.
+    """
+    _ensure_task_transition(task, "failed")
+    task.status = "failed"
+    task.failure_reason = failure_reason
+    if error_summary:
+        task.error_summary = error_summary[:500]
+    task.completed_at = now
+    task.updated_at = now
+    if timed_out:
+        task.timed_out_at = now
+
+
+def expire_stale_tasks(
+    now: Optional[datetime] = None,
+) -> list[LocalAgentTask]:
+    """delivered/running 상태 중 timeout 초과 task 를 failed 로 전환.
+
+    - delivered 상태: delivered_at 기준 DELIVERED_TIMEOUT_SECONDS 초과
+    - running 상태: started_at 기준 RUNNING_TIMEOUT_SECONDS 초과
+    - queued / completed / failed 등 다른 상태는 건드리지 않는다.
+    - 만료 처리된 task 목록을 반환한다 (감사 로그는 호출자가 기록).
+    - now 를 주입하면 테스트에서 시간 조작이 가능하다.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+
+    expired: list[LocalAgentTask] = []
+    with _lock:
+        for task in list(_tasks.values()):
+            try:
+                if task.status == "delivered" and task.delivered_at:
+                    delivered_at = datetime.fromisoformat(task.delivered_at)
+                    if (now - delivered_at).total_seconds() > DELIVERED_TIMEOUT_SECONDS:
+                        _mark_task_failed(
+                            task,
+                            failure_reason="delivered_timeout",
+                            error_summary="delivered_timeout: agent did not start within time limit",
+                            now=now_iso,
+                            timed_out=True,
+                        )
+                        expired.append(task)
+                elif task.status == "running" and task.started_at:
+                    started_at = datetime.fromisoformat(task.started_at)
+                    if (now - started_at).total_seconds() > RUNNING_TIMEOUT_SECONDS:
+                        _mark_task_failed(
+                            task,
+                            failure_reason="running_timeout",
+                            error_summary="running_timeout: agent did not report result within time limit",
+                            now=now_iso,
+                            timed_out=True,
+                        )
+                        expired.append(task)
+            except (ValueError, TypeError):
+                # 타임스탬프 파싱 실패 — 해당 task 는 건너뜀
+                continue
+    return expired
+
+
 # ── Stage 2 전달/결과 ───────────────────────────────────────────────────
 
 def list_pending_for_agent(agent_id: str) -> list[LocalAgentTask]:
@@ -515,6 +601,8 @@ def apply_result(
             msg = (error_code + ": " + (error or summary or "")).strip(": ")
             t.error_summary = msg[:500]
             t.result_summary = (summary or "")[:500]
+            if not t.failure_reason:
+                t.failure_reason = "agent_error"
         t.completed_at = now
         t.updated_at = now
         return t
@@ -542,6 +630,7 @@ def _initial_result_summary(action: str, safe_params: dict) -> str:
 __all__ = [
     "ACTION_RISK", "ALLOWED_APPS", "AUTO_EXECUTE_VIA_AGENT",
     "VALID_TASK_TRANSITIONS", "InvalidTaskTransitionError",
+    "DELIVERED_TIMEOUT_SECONDS", "RUNNING_TIMEOUT_SECONDS",
     "LocalAgent", "LocalAgentTask", "RegisterResult",
     "UnknownActionError",
     "register_agent", "get_agent", "list_agents", "authenticate_agent",
@@ -549,4 +638,5 @@ __all__ = [
     "list_pending_for_agent", "mark_delivered", "mark_running", "apply_result",
     "find_task_by_id", "find_task_by_token_id",
     "mark_approved", "mark_rejected", "mark_expired",
+    "expire_stale_tasks",
 ]
