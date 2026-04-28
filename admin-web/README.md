@@ -4,7 +4,7 @@ Next.js 기반 관리자 UI (admin-web).
 
 ## 현재 운영 기준
 
-- **master / server HEAD**: `7e21318`
+- **master / server HEAD**: `40aaba1`
 - **기준일**: 2026-04-28
 - **운영 기준선 문서**: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
 
@@ -20,6 +20,8 @@ Next.js 기반 관리자 UI (admin-web).
 - **Stage 11-UI-5B**: `/api/v1/auth/me` endpoint 신설 및 `getCurrentUser()` API client 추가 완료
 - **Stage 11-UI-5C**: `LocalAgentsClient.tsx` role-aware UI 적용 완료 (getCurrentUser 연동, viewer/unknown → cancel/capture disabled)
 - **Stage 11-UI-5D**: 401/403 오류 메시지 role-aware 개선 완료 (viewer/unknown 안내 문구 포함)
+- **Stage 11-UI-6B**: agents/tasks 15초 background polling 구현 완료
+- **Stage 11-UI-6C**: 자동 새로고침 ON/OFF 토글 및 polling 상태 배지 구현 완료
 - Next.js 14 + TypeScript + Tailwind v4 기준
 
 ## Stage 11-UI-1D 내용
@@ -586,10 +588,64 @@ captureReason: string                  — 실제 캡처 요청 사유
 - 수동 새로고침 후 polling timer reset: 6D에서 재검토
 - 커밋/PR/서버 반영/smoke: Stage 11-UI-6D 예정
 
+## Stage 11-UI-6: polling 기능 요약
+
+### 자동 새로고침 동작
+
+- **기본 주기**: 15초 (`POLLING_INTERVAL_MS = 15_000`)
+- **polling 대상**: GET /local-agents, GET /local-agents/{id}/tasks
+- **polling 제외**: GET /auth/me (최초 1회만), POST /cancel, POST /capture-screenshot
+- **background fetch**: `agentsLoading`/`tasksLoading` 미변경 → loading skeleton 깜빡임 없음
+- **in-flight guard**: 이전 요청 미완료 시 중복 요청 방지
+
+### ON/OFF 토글
+
+| 상태 | 동작 |
+|---|---|
+| ON | 15초마다 background refresh |
+| OFF | `setInterval` 미생성, 수동 새로고침은 계속 가능 |
+| ON 복귀 | 즉시 background refresh 1회 수행 후 주기 재개 |
+
+### 중지/보호 조건
+
+- `document.hidden === true` → polling skip (탭 비활성)
+- 탭 복귀 시 즉시 background refresh 1회
+- cancel modal open → tasks polling skip
+- capture modal open → agents/tasks polling skip 모두
+
+### polling 상태 배지
+
+| 배지 | 조건 |
+|---|---|
+| 자동 갱신 중 (초록) | pollingEnabled=true, 정상 동작 중 |
+| 일시중지 (앰버) | document.hidden 또는 capture modal open |
+| 자동 갱신 오류 (빨강) | API 오류 발생 |
+| 자동 갱신 꺼짐 (회색) | pollingEnabled=false |
+
+### POST 자동 실행 금지
+
+- `POST /cancel`: 사용자 명시 클릭으로만 실행
+- `POST /capture-screenshot`: 사용자 명시 클릭으로만 실행
+- polling interval 내에서 POST 자동 호출 없음
+
+### smoke 문자열 확인 기준
+
+JS 번들(`page-*.js`)에서 아래 문자열 모두 존재해야 함:
+
+- `자동 새로고침 ON`
+- `자동 새로고침 OFF`
+- `자동 갱신 중`
+- `자동 갱신 꺼짐`
+- `자동 갱신 오류`
+- `마지막 갱신`
+- `일시중지`
+- `visibilitychange`
+
+자세한 기준: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
+
 ## 후속 작업
 
 | 단계 | 내용 |
 |---|---|
-| Stage 11-UI-6D | 커밋/PR/서버 반영/smoke |
 | Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
 | Stage 12-GABIA-1 | 가비아 자동화 설계 |

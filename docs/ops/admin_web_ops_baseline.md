@@ -1,4 +1,4 @@
-# admin-web 운영 기준선 (Stage 11-UI-5)
+# admin-web 운영 기준선 (Stage 11-UI-6)
 
 ## 1. 목적
 
@@ -11,20 +11,21 @@ Next.js 기반 admin-web 관리자 UI의 운영 기준선 문서.
 
 | 항목 | 값 |
 |---|---|
-| master / server HEAD | `7e21318` |
+| master / server HEAD | `40aaba1` |
 | 기준일 | 2026-04-28 |
 
 | PR | 내용 |
 |---|---|
-| PR #21 | admin-web standalone Dockerfile |
-| PR #22 | docker-compose.yml admin-web 서비스 추가 |
-| PR #23 | API base path 보정 (`/orchestrator/api/v1`) |
-| PR #24 | capture screenshot 타입/API client 추가 |
-| PR #25 | capture screenshot actions 연동 (사전 점검 + Confirm Modal) |
+| PR #28 | local agent polling controls (Stage 11-UI-6B~6C) |
 | PR #26 | role-aware local agent controls (auth/me + viewer/admin/owner UI) |
-| (이전) PR #18 | admin-web scaffold |
-| (이전) PR #19 | next-env.d.ts 추가 |
+| PR #25 | capture screenshot actions 연동 (사전 점검 + Confirm Modal) |
+| PR #24 | capture screenshot 타입/API client 추가 |
+| PR #23 | API base path 보정 (`/orchestrator/api/v1`) |
+| PR #22 | docker-compose.yml admin-web 서비스 추가 |
+| PR #21 | admin-web standalone Dockerfile |
 | (이전) PR #20 | Local Agent API 연동 |
+| (이전) PR #19 | next-env.d.ts 추가 |
+| (이전) PR #18 | admin-web scaffold |
 
 ---
 
@@ -71,6 +72,14 @@ Next.js 기반 admin-web 관리자 UI의 운영 기준선 문서.
 | GET /auth/me 연동 (getCurrentUser) | 구현 완료 |
 | viewer/admin/owner role-aware UI | 구현 완료 |
 | 401/403 role-aware 오류 UX | 구현 완료 |
+| agents/tasks 15초 background polling | 구현 완료 |
+| 자동 새로고침 ON/OFF 토글 | 구현 완료 |
+| polling 상태 배지 (active/paused/error/off) | 구현 완료 |
+| 마지막 갱신 시각 표시 | 구현 완료 |
+| document.hidden pause | 구현 완료 |
+| modal open 중 polling 보호 | 구현 완료 |
+| in-flight guard | 구현 완료 |
+| POST cancel/capture 자동 실행 금지 | 구현 완료 |
 
 ---
 
@@ -108,6 +117,55 @@ Next.js 기반 admin-web 관리자 UI의 운영 기준선 문서.
 | 403 + viewer | "조회 전용 권한입니다. admin/owner 권한이 필요합니다." |
 | 403 + unknown | "권한 확인이 필요합니다. admin/owner 권한이 필요합니다." |
 | 403 + admin·owner | "권한이 없습니다. 서버 권한 정책을 확인하세요." |
+
+---
+
+## 7-1. polling 운영 기준
+
+### polling 대상
+
+| 대상 | 주기 |
+|---|---|
+| GET `/orchestrator/api/v1/local-agents` | 15초 |
+| GET `/orchestrator/api/v1/local-agents/{agent_id}/tasks` | 15초 |
+
+### polling 제외
+
+| 대상 | 사유 |
+|---|---|
+| GET `/auth/me` | 최초 1회만 (role 확인 전용) |
+| POST `/cancel` | 사용자 명시 클릭으로만 실행 |
+| POST `/capture-screenshot` | 사용자 명시 클릭으로만 실행 |
+
+### OFF 상태
+
+- `pollingEnabled=false` → `setInterval` 미생성 (interval 자체 없음)
+- 수동 새로고침 버튼은 OFF 상태에서도 동작
+
+### ON 복귀
+
+- 즉시 background refresh 1회 수행 후 15초 주기 재개
+
+### document.hidden 처리
+
+- `document.hidden === true` → polling skip
+- 탭 복귀 시 즉시 background refresh 1회 수행
+
+### modal open 보호
+
+| 상황 | 보호 범위 |
+|---|---|
+| cancel modal open (`cancelTargetTask !== null`) | tasks polling skip |
+| capture modal open (`captureMode === "real" && captureTargetAgent !== null`) | agents + tasks polling skip 모두 |
+
+### 배지 상태 판정
+
+| 상태 | 조건 | 색상 |
+|---|---|---|
+| off | `pollingEnabled=false` | 회색 |
+| error | `pollingError` 존재 | 빨강 |
+| paused | `document.hidden` 또는 capture modal open | 앰버 |
+| active | 그 외 | 초록 |
 
 ---
 
@@ -170,10 +228,22 @@ curl -fsS -o /dev/null -w '%{http_code}' -H 'Host: haehan-ai.kr' \
   https://127.0.0.1/orchestrator/api/v1/local-agents -k
 # → 200 (404이면 경로 문제)
 
+# polling UI 문자열 확인 (JS 번들)
+# page chunk 경로 확인 후 해당 JS에서 아래 문자열 모두 존재 확인:
+#   자동 새로고침 ON
+#   자동 새로고침 OFF
+#   자동 갱신 중
+#   자동 갱신 꺼짐
+#   자동 갱신 오류
+#   마지막 갱신
+#   일시중지
+#   visibilitychange
+PAGE_CHUNK=$(curl -sk -H 'Host: haehan-ai.kr' \
+  https://127.0.0.1/orchestrator/admin-web/local-agents -k \
+  | grep -oP '/_next/static/chunks/app/local-agents/[^"]+')
+curl -sk "https://127.0.0.1${PAGE_CHUNK}" -k | grep -o '자동 새로고침 ON\|자동 갱신 중\|마지막 갱신\|visibilitychange'
+
 # role-aware UI 문자열 확인 (JS 번들)
-curl -sk -H 'Host: haehan-ai.kr' https://127.0.0.1/orchestrator/admin-web/local-agents -k \
-  | grep -o 'script src="/_next/static/chunks/app/local-agents/[^"]*"'
-# → page chunk 경로 확인 후 해당 JS에서:
 #   조회 전용, admin/owner 권한 필요, 권한 확인 실패 문자열 확인
 
 # legacy route 유지 확인
@@ -240,14 +310,48 @@ docker compose logs --tail=20 admin-web | grep -iE 'password|token|secret|key' |
 
 | 단계 | 내용 |
 |---|---|
-| Stage 11-UI-6 | 자동 새로고침 / polling |
 | Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
 | Stage 12-GABIA-1 | 가비아 자동화 설계 |
 | 보안 | Next.js 14.2.29 보안 경고 후속 업데이트 검토 |
 
+### 선택 고도화 (우선순위 낮음)
+
+| 항목 | 내용 |
+|---|---|
+| 작업 상세 모달 | task 행 클릭 → 상세 정보 모달 표시 |
+| capture 결과 조회 | 캡처 task 결과 확인 UI |
+| polling interval env override | `NEXT_PUBLIC_POLLING_INTERVAL_MS` 환경변수로 주기 조정 |
+
 ---
 
-## 14. Stage 11-UI-5F 검증 결과
+## 14. Stage 11-UI-6E 검증 결과
+
+| 항목 | 결과 |
+|---|---|
+| PR #28 fast-forward merge | PASS |
+| origin/master = 40aaba1 | PASS |
+| 서버 HEAD = 40aaba1 | PASS |
+| admin-web typecheck | PASS |
+| admin-web lint | PASS |
+| admin-web build | PASS |
+| ai-orchestrator-api Up (healthy) | PASS |
+| admin-web Up | PASS |
+| GET http://172.18.0.12:3000/local-agents | 200 PASS |
+| GET /orchestrator/api/v1/health | 200 `{"status":"ok"}` PASS |
+| GET /orchestrator/api/v1/local-agents | 200 PASS |
+| JS 번들 문자열: 자동 새로고침 ON/OFF | PASS |
+| JS 번들 문자열: 자동 갱신 중/꺼짐/오류 | PASS |
+| JS 번들 문자열: 마지막 갱신 | PASS |
+| JS 번들 문자열: 일시중지 | PASS |
+| JS 번들 문자열: visibilitychange | PASS |
+| POST /cancel 미수행 | PASS |
+| POST /capture-screenshot 미수행 | PASS |
+| nginx/compose 미수정 | PASS |
+| secret/env 노출 | 없음 |
+
+---
+
+## 15. Stage 11-UI-5F 검증 결과
 
 | 항목 | 결과 |
 |---|---|
