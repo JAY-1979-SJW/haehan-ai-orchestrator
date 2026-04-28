@@ -95,6 +95,16 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
   .badge-medium { background:#FFFBEB; color:#92400E; border-color:#FDE68A; }
   .badge-high   { background:#FFF7ED; color:#C2410C; border-color:#FED7AA; }
 
+  /* agent 상태 배지 */
+  .badge-agent-idle    { background:#D1FAE5; color:#065F46; border-color:#6EE7B7; }
+  .badge-agent-busy    { background:#FFF7ED; color:#C2410C; border-color:#FED7AA; }
+  .badge-agent-stale   { background:#F3F4F6; color:#6B7280; border-color:#D1D5DB; }
+  .badge-agent-offline { background:#FEE2E2; color:#B91C1C; border-color:#F87171; }
+  .badge-agent-unknown { background:#F3F4F6; color:#6B7280; border-color:#D1D5DB; }
+
+  /* agent 상태 보조 텍스트 */
+  .agent-info-sub2 { color:#6B7280; font-size:12px; margin-top:3px; }
+
   /* ── 버튼 ── */
   button.dry-run-btn { padding: 6px 10px; border: 1px solid #2a5db0;
                        background: #eaf1ff; color: #2a5db0; cursor: pointer;
@@ -226,6 +236,29 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
       cls = "badge badge-" + r;
     }
     return '<span class="' + cls + '">' + escapeHtml(r || "-") + "</span>";
+  }
+
+  // ── agent 상태 배지 헬퍼 ─────────────────────────────────────────
+  function formatAgentStatusLabel(status) {
+    var labels = {
+      idle: "대기", busy: "작업중", stale: "응답지연", offline: "오프라인"
+    };
+    return labels[status] || "알 수 없음";
+  }
+
+  function agentStatusBadge(status) {
+    var s = status || "unknown";
+    var known = ["idle", "busy", "stale", "offline"];
+    var cls = known.indexOf(s) !== -1
+      ? "badge badge-agent-" + s
+      : "badge badge-agent-unknown";
+    return '<span class="' + cls + '">'
+      + escapeHtml(formatAgentStatusLabel(s)) + "</span>";
+  }
+
+  function formatTimestamp(value) {
+    if (!value) return "-";
+    return String(value).slice(0, 19).replace("T", " ");
   }
 
   // ── 작업 목록 렌더링 ──────────────────────────────────────────
@@ -377,17 +410,60 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
 
       var agentInfo = document.createElement("div");
       agentInfo.style.flex = "1";
+
+      // 첫 번째 줄: host + agent_status 배지
+      var infoLine1 = document.createElement("div");
+      infoLine1.style.cssText = "display:flex;align-items:center;gap:8px;";
       var infoText = document.createElement("span");
       infoText.style.fontWeight = "600";
       infoText.style.fontSize = "14px";
       infoText.textContent = agent.host || agentId;
-      var infoSub = document.createElement("span");
-      infoSub.style.cssText = "color:#6B7280;font-size:12px;margin-left:8px;";
+      var badgeSpan = document.createElement("span");
+      badgeSpan.innerHTML = agentStatusBadge(agent.agent_status);
+      infoLine1.appendChild(infoText);
+      infoLine1.appendChild(badgeSpan);
+
+      // 두 번째 줄: agent_id · os · version
+      var infoSub = document.createElement("div");
+      infoSub.style.cssText = "color:#6B7280;font-size:12px;margin-top:2px;";
       infoSub.textContent =
         agentId + " · " + (agent.os_name || "") +
         " · v" + (agent.version || "");
-      agentInfo.appendChild(infoText);
-      agentInfo.appendChild(infoSub);
+
+      // 세 번째 줄: 최근확인 · 활성작업
+      var infoSub2 = document.createElement("div");
+      infoSub2.className = "agent-info-sub2";
+      var lastSeen = formatTimestamp(agent.last_seen_at);
+      var taskCount = (agent.active_task_count !== undefined)
+        ? String(agent.active_task_count) : "0";
+      infoSub2.textContent =
+        "최근확인: " + lastSeen + " · 활성작업: " + taskCount;
+
+      // 네 번째 줄(조건): busy이고 current_task_id가 있을 때
+      var currentTaskId = agent.current_task_id || "";
+      if (currentTaskId) {
+        var infoSub3 = document.createElement("div");
+        infoSub3.className = "agent-info-sub2";
+        infoSub3.textContent = "현재 작업: " + currentTaskId;
+        agentInfo.appendChild(infoLine1);
+        agentInfo.appendChild(infoSub);
+        agentInfo.appendChild(infoSub2);
+        agentInfo.appendChild(infoSub3);
+      } else {
+        agentInfo.appendChild(infoLine1);
+        agentInfo.appendChild(infoSub);
+        agentInfo.appendChild(infoSub2);
+      }
+
+      // disconnected_at 보조 텍스트 (있을 때만)
+      var disconnectedAt = agent.disconnected_at || "";
+      if (disconnectedAt) {
+        var infoDisc = document.createElement("div");
+        infoDisc.className = "agent-info-sub2";
+        infoDisc.textContent = "연결종료: " + formatTimestamp(disconnectedAt);
+        agentInfo.appendChild(infoDisc);
+      }
+
       header.appendChild(agentInfo);
 
       var statusBox = el("div", { "class": "status" });
