@@ -213,9 +213,34 @@ docker build -t haehan-ai-orchestrator-admin-web:test ./admin-web
 - nginx reverse proxy 설정: Stage 11-UI-3D 예정
 - 서버 배포 반영: Stage 11-UI-3C/3D 이후 처리
 
+## Stage 11-UI-3F 내용
+
+### API base path 보정
+
+- 운영 기본 API 경로: `/orchestrator/api/v1`
+- `src/lib/api.ts`의 `API_BASE_PATH` 기본값을 `/orchestrator/api/v1`으로 변경
+- 로컬 개발에서 다른 경로를 사용하려면 `NEXT_PUBLIC_API_BASE_PATH` 환경변수 설정
+
+```bash
+# 로컬 개발 예시 (.env.local — 커밋하지 않음)
+NEXT_PUBLIC_API_BASE_PATH=/api/v1
+```
+
+- `.env` / `.env.local` 파일은 커밋하지 않음 (`.gitignore` 적용)
+- `.env.example`은 이번 단계에서 생성하지 않음
+
+### buildApiUrl 동작
+
+| 입력 경로 | 결과 |
+|---|---|
+| `/local-agents` | `/orchestrator/api/v1/local-agents` |
+| `/api/v1/local-agents` | `/orchestrator/api/v1/local-agents` |
+| `/orchestrator/api/v1/local-agents` | `/orchestrator/api/v1/local-agents` (중복 방지) |
+| `https://...` | 그대로 반환 |
+
 ## 참고
 
 - FastAPI API 서버(`ai_orchestrator/`)는 기존 그대로 유지
 - 기존 FastAPI admin 화면은 legacy로 보존
-- Docker/compose/nginx 연동은 미구현 (이후 단계에서 처리)
+- 운영 nginx route: `/orchestrator/admin-web/` → admin-web, `/orchestrator/api/` → FastAPI
 - npm install은 아직 수행하지 않음 (Stage 11-UI-2 이후 처리)
