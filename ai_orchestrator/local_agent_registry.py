@@ -157,6 +157,26 @@ class LocalAgentTask:
             "timed_out_at": self.timed_out_at,
         }
 
+    def to_list_safe(self) -> dict:
+        """목록 조회용 응답 — params/token_id/승인 필드 제외."""
+        return {
+            "task_id": self.task_id,
+            "agent_id": self.agent_id,
+            "action": self.action,
+            "risk_level": self.risk_level,
+            "status": self.status,
+            "requested_by": self.requested_by,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "delivered_at": self.delivered_at,
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "failure_reason": self.failure_reason,
+            "timed_out_at": self.timed_out_at,
+            "error_summary": self.error_summary,
+            "result_summary": self.result_summary,
+        }
+
     def to_dispatch(self) -> dict:
         """WebSocket 전달용 페이로드 (민감 필드 제거 후).
 
@@ -557,6 +577,34 @@ def fail_active_tasks_for_agent(
     return affected
 
 
+# ── task 목록 조회 ──────────────────────────────────────────────────────
+
+KNOWN_TASK_STATUSES: frozenset[str] = frozenset({
+    "queued", "delivered", "running",
+    "waiting_approval", "completed", "failed", "rejected",
+})
+
+
+def list_tasks_for_agent(
+    agent_id: str,
+    status: Optional[str] = None,
+    limit: int = 50,
+) -> list[LocalAgentTask]:
+    """agent_id 기준 task 목록 반환.
+
+    - 없는 agent_id → 빈 list
+    - status 지정 시 KNOWN_TASK_STATUSES 검증; 미지정 시 전체
+    - created_at 내림차순 (최신 우선)
+    - limit 개수만 반환
+    """
+    with _lock:
+        tasks = [t for t in _tasks.values() if t.agent_id == agent_id]
+    if status is not None:
+        tasks = [t for t in tasks if t.status == status]
+    tasks.sort(key=lambda t: t.created_at, reverse=True)
+    return tasks[:limit]
+
+
 # ── Stage 2 전달/결과 ───────────────────────────────────────────────────
 
 def list_pending_for_agent(agent_id: str) -> list[LocalAgentTask]:
@@ -675,4 +723,6 @@ __all__ = [
     "mark_approved", "mark_rejected", "mark_expired",
     "expire_stale_tasks",
     "fail_active_tasks_for_agent",
+    "KNOWN_TASK_STATUSES",
+    "list_tasks_for_agent",
 ]
