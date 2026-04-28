@@ -127,20 +127,66 @@ def make_factory(page: FakePage):
 # ── 1. about:blank 현재 정책 ─────────────────────────────────────────────────
 
 class TestAboutBlankPolicy:
-    def test_about_blank_currently_blocked_by_url_scheme(self):
-        """about:blank 는 http/https 가 아니므로 현재 보수적으로 차단됨.
-        12I 단계에서 별도 정책 게이트 신설 후 허용 예정."""
+    def test_about_blank_blocked_without_optin(self):
+        """기본(opt-in 미사용) 시 about:blank 는 여전히 보수 차단."""
         result = _wr.validate_url_for_readonly_open("about:blank")
         assert result["ok"] is False
         assert result["error_code"] == "URL_SCHEME_BLOCKED"
 
-    def test_about_blank_open_url_readonly_blocked(self):
+    def test_about_blank_allowed_with_explicit_optin(self):
+        """allow_about_blank=True 명시 시 정확히 'about:blank' 만 통과."""
+        result = _wr.validate_url_for_readonly_open(
+            "about:blank", allow_about_blank=True,
+        )
+        assert result["ok"] is True
+        assert result.get("about_blank") is True
+        assert result["scheme"] == "about"
+
+    def test_about_blank_case_insensitive_with_optin(self):
+        """대소문자 무시 + 양쪽 공백 허용은 strip 후 정확 일치."""
+        for v in ("About:Blank", "ABOUT:BLANK", "  about:blank  "):
+            result = _wr.validate_url_for_readonly_open(
+                v, allow_about_blank=True,
+            )
+            assert result["ok"] is True, f"failed for: {v!r}"
+
+    @pytest.mark.parametrize("variant", [
+        "about:srcdoc",
+        "about:config",
+        "about:newtab",
+        "about:blank?x=1",
+        "about:blank#frag",
+        "about:blank/extra",
+        "about:blanket",
+        "about: blank",
+    ])
+    def test_other_about_variants_blocked_even_with_optin(self, variant):
+        """about:blank 외 다른 about:* 는 opt-in 이어도 모두 차단."""
+        result = _wr.validate_url_for_readonly_open(
+            variant, allow_about_blank=True,
+        )
+        assert result["ok"] is False
+        assert result["error_code"] == "URL_SCHEME_BLOCKED"
+
+    def test_about_blank_open_url_readonly_blocked_without_optin(self):
         result = _br.open_url_readonly(
             "about:blank",
             _playwright_factory=make_factory(FakePage(title="x", url="x", html="")),
         )
         assert result["ok"] is False
         assert result["error_code"] == "URL_SCHEME_BLOCKED"
+
+    def test_about_blank_open_url_readonly_allowed_with_optin(self):
+        """opt-in + fake factory 로 read-only observe 경로 동작 확인 (실제 브라우저 미기동)."""
+        fake = FakePage(title="", url="about:blank", html="<html><head></head><body></body></html>")
+        result = _br.open_url_readonly(
+            "about:blank",
+            allow_about_blank=True,
+            _playwright_factory=make_factory(fake),
+        )
+        assert result["ok"] is True
+        assert result["title"] == ""
+        assert result["current_url"] == "about:blank"
 
 
 # ── 2. 외부 사이트 URL validation 허용 vs 정책 분리 ─────────────────────────
