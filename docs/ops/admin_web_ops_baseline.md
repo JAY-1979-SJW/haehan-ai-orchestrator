@@ -246,7 +246,10 @@ curl -sk "https://127.0.0.1${PAGE_CHUNK}" -k | grep -o '자동 새로고침 ON\|
 # role-aware UI 문자열 확인 (JS 번들)
 #   조회 전용, admin/owner 권한 필요, 권한 확인 실패 문자열 확인
 
-# legacy route 유지 확인
+# legacy route 유지 확인 (deprecated fallback smoke 전용)
+#   - 운영 주 화면 검증이 아니라 deprecated fallback route 가용성 확인용 GET smoke이다.
+#   - 운영 주 검증은 위쪽 admin-web /local-agents smoke가 담당한다.
+#   - capture-screenshot/cancel POST는 이 절차에 포함되지 않는다.
 curl -fsS -o /dev/null -w '%{http_code}' -H 'Host: haehan-ai.kr' \
   https://127.0.0.1/orchestrator/api/v1/admin/local-agents -k
 # → 200 또는 기존 인증 정책 응답
