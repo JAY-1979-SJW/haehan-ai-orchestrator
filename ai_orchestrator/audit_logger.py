@@ -55,6 +55,7 @@ EVENT_TYPES = {
     "LOCAL_AGENT_WS_AUTH_FAILED",
     "LOCAL_AGENT_TASK_DELIVERED",
     "LOCAL_AGENT_TASK_RUNNING",
+    "LOCAL_AGENT_TASK_TIMEOUT",
     # 개발자 등록 승인 게이트 (web_task_router 가 dev_reg_approval 재사용)
     "DEV_REG_TASK_CREATED",
     "DEV_REG_TELEGRAM_SENT",

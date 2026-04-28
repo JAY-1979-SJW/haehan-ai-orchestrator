@@ -179,12 +179,12 @@ def test_ws_initial_queued_task_pushed_on_auth(admin_user):
         # 민감 필드는 dispatch 에 포함되지 않는다
         assert "requested_by" not in msg["task"]
 
-    # HTTP 조회로 상태 확인 → delivered 여야 함
-    fetched = client.get(
-        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
-    ).json()
-    assert fetched["status"] == "delivered"
-    assert fetched["delivered_at"]
+        # HTTP 조회는 연결 유지 중에 수행 — disconnect 처리 전이므로 delivered 상태
+        fetched = client.get(
+            f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+        ).json()
+        assert fetched["status"] == "delivered"
+        assert fetched["delivered_at"]
 
 
 def test_ws_pull_delivers_newly_enqueued(admin_user):
@@ -461,6 +461,357 @@ def test_server_and_client_auto_exec_sets_match():
     from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT as _S
     from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
     assert set(_S) == set(_C)
+
+
+# ── 11. expire_stale_tasks — registry 단위 (now 주입) ───────────────────
+
+def test_delivered_timeout_via_registry(admin_user):
+    """delivered 상태 task가 DELIVERED_TIMEOUT_SECONDS 초과 시 failed로 전환된다."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/to"})
+    task_id = created["task_id"]
+
+    # WS 연결 유지 중에 expire 호출 — disconnect 처리 전이므로 still delivered
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        task = _reg.find_task_by_id(task_id)
+        assert task.status == "delivered"
+
+        future = datetime.now(timezone.utc) + timedelta(
+            seconds=_reg.DELIVERED_TIMEOUT_SECONDS + 1
+        )
+        expired = _reg.expire_stale_tasks(now=future)
+
+    assert len(expired) == 1
+    assert expired[0].task_id == task_id
+    assert expired[0].status == "failed"
+
+
+def test_delivered_timeout_failure_reason(admin_user):
+    """delivered timeout 후 failure_reason = delivered_timeout."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/fr"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        future = datetime.now(timezone.utc) + timedelta(
+            seconds=_reg.DELIVERED_TIMEOUT_SECONDS + 1
+        )
+        expired = _reg.expire_stale_tasks(now=future)
+
+    assert expired[0].failure_reason == "delivered_timeout"
+    assert expired[0].timed_out_at != ""
+
+
+def test_running_timeout_via_registry(admin_user):
+    """running 상태 task가 RUNNING_TIMEOUT_SECONDS 초과 시 failed로 전환된다."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/rt"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        task = _reg.find_task_by_id(task_id)
+        assert task.status == "running"
+
+        future = datetime.now(timezone.utc) + timedelta(
+            seconds=_reg.RUNNING_TIMEOUT_SECONDS + 1
+        )
+        expired = _reg.expire_stale_tasks(now=future)
+
+    assert len(expired) == 1
+    assert expired[0].task_id == task_id
+    assert expired[0].status == "failed"
+
+
+def test_running_timeout_failure_reason(admin_user):
+    """running timeout 후 failure_reason = running_timeout."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/rfr"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        future = datetime.now(timezone.utc) + timedelta(
+            seconds=_reg.RUNNING_TIMEOUT_SECONDS + 1
+        )
+        expired = _reg.expire_stale_tasks(now=future)
+
+    assert expired[0].failure_reason == "running_timeout"
+    assert expired[0].timed_out_at != ""
+
+
+def test_completed_failed_not_expired(admin_user):
+    """completed / failed task는 expire_stale_tasks로 변경되지 않는다."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    c1 = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/c1"})
+    c2 = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/c2"})
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        # 두 task 모두 delivered로 전환
+        assert ws.receive_json()["type"] == "task"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({"type": "running", "task_id": c1["task_id"]})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        # c1 완료
+        ws.send_json({
+            "type": "result", "task_id": c1["task_id"],
+            "success": True, "summary": "done",
+        })
+        assert ws.receive_json()["type"] == "result_ack"
+
+        # c2 실패
+        ws.send_json({
+            "type": "result", "task_id": c2["task_id"],
+            "success": False, "error_code": "ERR", "error": "fail",
+        })
+        assert ws.receive_json()["type"] == "result_ack"
+
+    assert _reg.find_task_by_id(c1["task_id"]).status == "completed"
+    assert _reg.find_task_by_id(c2["task_id"]).status == "failed"
+
+    far_future = datetime.now(timezone.utc) + timedelta(hours=24)
+    expired = _reg.expire_stale_tasks(now=far_future)
+    assert len(expired) == 0
+
+
+def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
+    """WS idle 처리 시 expire_stale_tasks가 호출되고 timeout audit이 기록된다."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.local_agent_router as _lar
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/audit"})
+    task_id = created["task_id"]
+
+    # WS idle을 즉시 트리거하기 위해 timeout을 최소화
+    monkeypatch.setattr(_lar, "_WS_RECV_TIMEOUT_SEC", 0.01)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"  # delivered 전환
+
+        # task delivered_at을 timeout 초과 과거로 조작
+        task = _reg.find_task_by_id(task_id)
+        task.delivered_at = (
+            datetime.now(timezone.utc) - timedelta(
+                seconds=_reg.DELIVERED_TIMEOUT_SECONDS + 10
+            )
+        ).isoformat()
+
+        # 아무 메시지도 보내지 않으면 서버가 timeout → idle 처리
+        msg = ws.receive_json()
+        assert msg["type"] == "idle"
+
+    events = [e["event_type"] for e in _al.read_recent_logs(limit=200)]
+    assert "LOCAL_AGENT_TASK_TIMEOUT" in events
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "failed"
+    assert task.failure_reason == "delivered_timeout"
+
+
+# ── 12. disconnect 처리 — delivered/running → failed ────────────────────
+
+def test_delivered_task_failed_on_disconnect(admin_user):
+    """delivered 상태 task는 WS disconnect 후 failed가 된다."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d1"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        # disconnect — delivered 상태로 종료
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "failed"
+
+
+def test_running_task_failed_on_disconnect(admin_user):
+    """running 상태 task는 WS disconnect 후 failed가 된다."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d2"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+        # disconnect — running 상태로 종료
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "failed"
+
+
+def test_disconnect_failure_reason_websocket_disconnected(admin_user):
+    """disconnect 처리 후 failure_reason = websocket_disconnected."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d3"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.failure_reason == "websocket_disconnected"
+    assert task.timed_out_at == ""  # timeout 아님
+
+
+def test_queued_task_unchanged_on_disconnect(admin_user):
+    """queued 상태 task는 disconnect 후 그대로 queued이다."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    # agent A로 auth 후 disconnect → queued task가 남아야 함
+    # 두 번째 WS 세션 없이 진행: 직접 registry 함수 호출
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d4"})
+    task_id = created["task_id"]
+    assert created["status"] == "queued"
+
+    # auth 없이 disconnect 처리만 직접 호출
+    _reg.fail_active_tasks_for_agent(agent_id)
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "queued"
+
+
+def test_completed_task_unchanged_on_disconnect(admin_user):
+    """completed 상태 task는 disconnect 후 그대로 completed이다."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d5"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+        ws.send_json({
+            "type": "result", "task_id": task_id,
+            "success": True, "summary": "done",
+        })
+        ack = ws.receive_json()
+        assert ack["status"] == "completed"
+        # disconnect
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "completed"
+
+
+def test_failed_task_unchanged_on_disconnect(admin_user):
+    """already-failed task는 disconnect 후 그대로 failed이다 (failure_reason 불변)."""
+    import ai_orchestrator.local_agent_registry as _reg
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d6"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({
+            "type": "result", "task_id": task_id,
+            "success": False, "error_code": "SOME_ERR",
+        })
+        ack = ws.receive_json()
+        assert ack["status"] == "failed"
+
+    task = _reg.find_task_by_id(task_id)
+    assert task.status == "failed"
+    assert task.failure_reason == "agent_error"  # disconnect로 덮어쓰면 안 됨
+
+
+def test_disconnect_audit_task_failed_event(admin_user):
+    """disconnect 처리 시 LOCAL_AGENT_TASK_FAILED audit 이벤트가 기록된다."""
+    import ai_orchestrator.audit_logger as _al
+
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "open_url", {"url": "https://example.com/d7"})
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        # disconnect
+
+    logs = _al.read_recent_logs(limit=200)
+    disconnect_failed = [
+        e for e in logs
+        if e["event_type"] == "LOCAL_AGENT_TASK_FAILED"
+        and e.get("task_id") == task_id
+        and "websocket_disconnected" in e.get("note", "")
+    ]
+    assert len(disconnect_failed) >= 1
 
 
 if __name__ == "__main__":
