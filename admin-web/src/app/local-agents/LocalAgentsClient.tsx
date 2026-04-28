@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   PageShell,
   FilterBar,
@@ -34,6 +34,10 @@ import type {
   CaptureScreenshotResponse,
 } from "@/types/local-agent";
 import type { CurrentUser } from "@/types/auth";
+
+// ─── polling 상수 ─────────────────────────────────────────────────────────────
+
+const POLLING_INTERVAL_MS = 15_000;
 
 // ─── 취소 버튼 활성화 정책 ────────────────────────────────────────────────────
 
@@ -234,6 +238,16 @@ function extractCaptureSuccessInfo(res: CaptureScreenshotResponse): CaptureSucce
   };
 }
 
+// ─── 시각 포맷 ────────────────────────────────────────────────────────────────
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 // ─── Main Client Component ────────────────────────────────────────────────────
 
 export default function LocalAgentsClient() {
@@ -271,7 +285,34 @@ export default function LocalAgentsClient() {
   const [captureSuccess, setCaptureSuccess] = useState<CaptureSuccessInfo | null>(null);
   const [captureReason, setCaptureReason] = useState<string>("");
 
-  // ── agent 목록 fetch ──────────────────────────────────────────────────────
+  // ── polling state ─────────────────────────────────────────────────────────
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  const [pollingError, setPollingError] = useState<string | null>(null);
+  const [pollingEnabled, setPollingEnabled] = useState(true);
+  const [isDocumentHidden, setIsDocumentHidden] = useState(false);
+
+  // ── polling refs ──────────────────────────────────────────────────────────
+  const isPollingAgentsRef = useRef(false);
+  const isPollingTasksRef = useRef(false);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingEnabledRef = useRef(true);
+  const prevPollingEnabledRef = useRef(true);
+
+  // stale-closure 방지: interval 내에서 최신 state 참조용 ref
+  const selectedAgentIdRef = useRef<string | null>(null);
+  const taskStatusFilterRef = useRef<string>("");
+  const cancelModalOpenRef = useRef(false);
+  const captureModalOpenRef = useRef(false);
+
+  useEffect(() => { selectedAgentIdRef.current = selectedAgentId; }, [selectedAgentId]);
+  useEffect(() => { taskStatusFilterRef.current = taskStatusFilter; }, [taskStatusFilter]);
+  useEffect(() => { cancelModalOpenRef.current = cancelTargetTask !== null; }, [cancelTargetTask]);
+  useEffect(() => {
+    captureModalOpenRef.current = captureMode === "real" && captureTargetAgent !== null;
+  }, [captureMode, captureTargetAgent]);
+  useEffect(() => { pollingEnabledRef.current = pollingEnabled; }, [pollingEnabled]);
+
+  // ── agent 목록 fetch (최초 로딩 / 수동 새로고침) ──────────────────────────
   const fetchAgents = useCallback(async () => {
     setAgentsLoading(true);
     setAgentsError(null);
@@ -281,6 +322,7 @@ export default function LocalAgentsClient() {
       if (data.agents.length > 0) {
         setSelectedAgentId((prev) => prev ?? data.agents[0].agent_id);
       }
+      setLastRefreshedAt(new Date());
     } catch (err) {
       setAgentsError(fetchErrorMessage(err, "에이전트 목록 조회 실패", currentUser?.role));
     } finally {
@@ -302,7 +344,7 @@ export default function LocalAgentsClient() {
     fetchAgents();
   }, [fetchAgents]);
 
-  // ── task 목록 fetch ───────────────────────────────────────────────────────
+  // ── task 목록 fetch (최초 로딩 / 수동 새로고침) ───────────────────────────
   const fetchTasks = useCallback(async (agentId: string, status: string) => {
     setTasksLoading(true);
     setTasksError(null);
@@ -313,6 +355,7 @@ export default function LocalAgentsClient() {
       });
       setTasks(data.tasks);
       setTasksTotal(data.total);
+      setLastRefreshedAt(new Date());
     } catch (err) {
       setTasksError(fetchErrorMessage(err, "작업 목록 조회 실패", currentUser?.role));
       setTasks([]);
@@ -327,6 +370,114 @@ export default function LocalAgentsClient() {
       fetchTasks(selectedAgentId, taskStatusFilter);
     }
   }, [selectedAgentId, taskStatusFilter, fetchTasks]);
+
+  // ── background fetch (polling 전용) ───────────────────────────────────────
+  // agentsLoading/tasksLoading을 변경하지 않음 — loading skeleton 깜빡임 없음
+
+  const backgroundFetchAgents = useCallback(async () => {
+    if (isPollingAgentsRef.current) return;
+    isPollingAgentsRef.current = true;
+    try {
+      const data = await getLocalAgents();
+      setAgents(data.agents);
+      setLastRefreshedAt(new Date());
+      setPollingError(null);
+    } catch (err) {
+      const msg = err instanceof ApiError ? `API ${err.status}` : "네트워크 오류";
+      setPollingError(`자동 새로고침 실패: ${msg}`);
+    } finally {
+      isPollingAgentsRef.current = false;
+    }
+  }, []);
+
+  const backgroundFetchTasks = useCallback(async (agentId: string, status: string) => {
+    if (isPollingTasksRef.current) return;
+    isPollingTasksRef.current = true;
+    try {
+      const data = await getAgentTasks(agentId, {
+        limit: 50,
+        status: status || undefined,
+      });
+      setTasks(data.tasks);
+      setTasksTotal(data.total);
+      setLastRefreshedAt(new Date());
+      setPollingError(null);
+    } catch (err) {
+      const msg = err instanceof ApiError ? `API ${err.status}` : "네트워크 오류";
+      setPollingError(`자동 새로고침 실패: ${msg}`);
+    } finally {
+      isPollingTasksRef.current = false;
+    }
+  }, []);
+
+  // ── polling interval ──────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!pollingEnabled) return;
+
+    const tick = () => {
+      if (document.hidden) return;
+      if (!pollingEnabledRef.current) return;
+
+      const captureOpen = captureModalOpenRef.current;
+      const cancelOpen = cancelModalOpenRef.current;
+      const agentId = selectedAgentIdRef.current;
+      const statusFilter = taskStatusFilterRef.current;
+
+      if (!captureOpen) {
+        backgroundFetchAgents();
+      }
+      if (!captureOpen && !cancelOpen && agentId) {
+        backgroundFetchTasks(agentId, statusFilter);
+      }
+    };
+
+    pollingIntervalRef.current = setInterval(tick, POLLING_INTERVAL_MS);
+
+    return () => {
+      if (pollingIntervalRef.current !== null) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [pollingEnabled, backgroundFetchAgents, backgroundFetchTasks]);
+
+  // ── ON 복귀 시 즉시 background refresh 1회 ───────────────────────────────
+
+  useEffect(() => {
+    if (pollingEnabled && !prevPollingEnabledRef.current) {
+      backgroundFetchAgents();
+      const agentId = selectedAgentIdRef.current;
+      const statusFilter = taskStatusFilterRef.current;
+      if (agentId) backgroundFetchTasks(agentId, statusFilter);
+    }
+    prevPollingEnabledRef.current = pollingEnabled;
+  }, [pollingEnabled, backgroundFetchAgents, backgroundFetchTasks]);
+
+  // ── visibilitychange: 탭 복귀 시 즉시 background refresh ──────────────────
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsDocumentHidden(document.hidden);
+      if (document.hidden) return;
+      if (!pollingEnabledRef.current) return;
+
+      const captureOpen = captureModalOpenRef.current;
+      const cancelOpen = cancelModalOpenRef.current;
+      const agentId = selectedAgentIdRef.current;
+      const statusFilter = taskStatusFilterRef.current;
+
+      if (!captureOpen) {
+        backgroundFetchAgents();
+      }
+      if (!captureOpen && !cancelOpen && agentId) {
+        backgroundFetchTasks(agentId, statusFilter);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [backgroundFetchAgents, backgroundFetchTasks]);
 
   // ── cancel submit ─────────────────────────────────────────────────────────
   const handleCancelSubmit = useCallback(async () => {
@@ -438,14 +589,63 @@ export default function LocalAgentsClient() {
 
   const selectedAgent = agents.find((a) => a.agent_id === selectedAgentId) ?? null;
 
+  // ── 마지막 갱신 표시 ─────────────────────────────────────────────────────
+  const lastRefreshedStr = lastRefreshedAt ? formatTime(lastRefreshedAt) : null;
+
+  // ── polling 상태 배지 ────────────────────────────────────────────────────
+  const captureModalOpen = captureMode === "real" && captureTargetAgent !== null;
+  const pollingStatus: "active" | "paused" | "error" | "off" =
+    !pollingEnabled ? "off" :
+    pollingError ? "error" :
+    (isDocumentHidden || captureModalOpen) ? "paused" :
+    "active";
+
+  const pollingStatusLabel: Record<typeof pollingStatus, string> = {
+    active: "자동 갱신 중",
+    paused: "일시중지",
+    off: "자동 갱신 꺼짐",
+    error: "자동 갱신 오류",
+  };
+
+  const pollingStatusColor: Record<typeof pollingStatus, string> = {
+    active: "text-[#065F46] bg-[#D1FAE5]",
+    paused: "text-[#92400E] bg-[#FEF3C7]",
+    off: "text-[#6B7280] bg-[#F3F4F6]",
+    error: "text-[#B91C1C] bg-[#FEE2E2]",
+  };
+
   return (
     <PageShell
       title="로컬 에이전트"
       description="등록된 로컬 에이전트의 연결 상태와 작업 현황을 관리합니다."
       headerRight={
-        <Btn variant="orange" size="sm" onClick={fetchAgents} disabled={agentsLoading}>
-          새로고침
-        </Btn>
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${pollingStatusColor[pollingStatus]}`}
+          >
+            {pollingStatusLabel[pollingStatus]}
+          </span>
+          {lastRefreshedStr && (
+            <span className="text-[11px] text-[#9CA3AF]">
+              마지막 갱신: {lastRefreshedStr}
+            </span>
+          )}
+          {pollingError && (
+            <span className="text-[11px] text-[#B91C1C]" title={pollingError}>
+              {pollingError}
+            </span>
+          )}
+          <Btn
+            variant="ghost"
+            size="xs"
+            onClick={() => setPollingEnabled((v) => !v)}
+          >
+            {pollingEnabled ? "자동 새로고침 ON" : "자동 새로고침 OFF"}
+          </Btn>
+          <Btn variant="orange" size="sm" onClick={fetchAgents} disabled={agentsLoading}>
+            새로고침
+          </Btn>
+        </div>
       }
     >
       {/* ── KPI 카드 ──────────────────────────────────────────────────────────── */}
