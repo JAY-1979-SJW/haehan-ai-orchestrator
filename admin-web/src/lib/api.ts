@@ -1,5 +1,6 @@
 import type {
   CancelTaskResponse,
+  CaptureScreenshotResponse,
   LocalAgentsResponse,
   LocalAgentTasksResponse,
 } from "@/types/local-agent";
@@ -77,6 +78,28 @@ export function cancelTask(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason }),
+    }
+  );
+}
+
+export function requestCaptureScreenshot(
+  agentId: string,
+  options?: {
+    dryRun?: boolean;
+    reason?: string;
+    note?: string;
+  }
+): Promise<CaptureScreenshotResponse> {
+  return apiFetch<CaptureScreenshotResponse>(
+    `/local-agents/${encodeURIComponent(agentId)}/capture-screenshot`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dry_run: options?.dryRun ?? true,
+        reason: options?.reason ?? "",
+        note: options?.note ?? "",
+      }),
     }
   );
 }
