@@ -61,6 +61,10 @@ class AgentTaskApprovalRequest(BaseModel):
     reason: str = ""
 
 
+class CancelTaskRequest(BaseModel):
+    reason: str = ""
+
+
 class CaptureScreenshotRequest(BaseModel):
     """운영자 capture_screenshot 요청 body.
 
@@ -369,6 +373,91 @@ def create_capture_screenshot_request(
         "status": "waiting_approval",
         "dry_run": dry_run,
         "approval_required": True,
+    }
+
+
+_CANCEL_REASON_MAX_LEN = 200
+
+
+@local_agent_router.post("/{agent_id}/tasks/{task_id}/cancel")
+def cancel_local_agent_task(
+    agent_id: str,
+    task_id: str,
+    body: CancelTaskRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """task 취소.
+
+    - queued / waiting_approval → 즉시 cancelled
+    - delivered / running → cancel_requested (agent에 취소 신호 필요)
+    - completed / failed / rejected / cancelled / cancel_requested → 409
+    - reason > 200자 → 400
+    """
+    actor = user["actor"]
+    role = user["role"]
+    reason = body.reason or ""
+
+    if len(reason) > _CANCEL_REASON_MAX_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "REASON_TOO_LONG",
+                    "message": f"reason 은 최대 {_CANCEL_REASON_MAX_LEN}자입니다"},
+        )
+
+    # 취소 전 현재 상태 보존 (audit용)
+    existing = _reg.get_task(agent_id, task_id)
+    if existing is None:
+        log_event(
+            "LOCAL_AGENT_TASK_CANCEL_REQUESTED", task_id,
+            actor=actor, role=role,
+            note=f"agent_id={agent_id} reason=TASK_NOT_FOUND",
+        )
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "TASK_NOT_FOUND",
+                    "message": f"미등록 작업: {agent_id}/{task_id}"},
+        )
+    previous_status = existing.status
+
+    try:
+        task, cancel_action = _reg.cancel_task(
+            agent_id, task_id,
+            actor=actor,
+            reason=reason,
+        )
+    except _reg.CancelNotAllowedError as e:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "CANCEL_NOT_ALLOWED", "message": str(e)},
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "TASK_NOT_FOUND", "message": str(e)},
+        )
+
+    audit_event = (
+        "LOCAL_AGENT_TASK_CANCELLED"
+        if cancel_action == "cancelled"
+        else "LOCAL_AGENT_TASK_CANCEL_REQUESTED"
+    )
+    log_event(
+        audit_event, task_id,
+        risk_level=task.risk_level,
+        action_type=task.action,
+        actor=actor, role=role,
+        note=(
+            f"agent_id={agent_id}"
+            f" previous_status={previous_status}"
+            f" next_status={task.status}"
+            f" requested_by={actor}"
+            f" reason_len={len(reason)}"
+        ),
+    )
+
+    return {
+        "task": task.to_safe(),
+        "cancel_action": cancel_action,
     }
 
 

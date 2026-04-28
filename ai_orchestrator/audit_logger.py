@@ -56,6 +56,9 @@ EVENT_TYPES = {
     "LOCAL_AGENT_TASK_DELIVERED",
     "LOCAL_AGENT_TASK_RUNNING",
     "LOCAL_AGENT_TASK_TIMEOUT",
+    # 로컬 에이전트 (Stage 11-7B — 취소)
+    "LOCAL_AGENT_TASK_CANCEL_REQUESTED",
+    "LOCAL_AGENT_TASK_CANCELLED",
     # 개발자 등록 승인 게이트 (web_task_router 가 dev_reg_approval 재사용)
     "DEV_REG_TASK_CREATED",
     "DEV_REG_TELEGRAM_SENT",
