@@ -646,5 +646,189 @@ def test_apply_result_failure_sets_agent_error(admin_user):
     assert result.failure_reason == "agent_error"
 
 
+# ── Stage 11-4B: list_tasks_for_agent registry 단위 테스트 ──────────────
+
+def test_list_tasks_empty_for_unknown_agent():
+    """없는 agent_id → 빈 목록."""
+    import ai_orchestrator.local_agent_registry as reg
+    result = reg.list_tasks_for_agent("la-nonexistent")
+    assert result == []
+
+
+def test_list_tasks_returns_all_tasks_for_agent(admin_user):
+    """task 3개 생성 → 전체 반환, agent_id 일치 확인."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    for _ in range(3):
+        _make_queued_task(agent_id)
+    tasks = reg.list_tasks_for_agent(agent_id)
+    assert len(tasks) == 3
+    assert all(t.agent_id == agent_id for t in tasks)
+
+
+def test_list_tasks_status_filter(admin_user):
+    """status 필터: queued 2개 + completed 1개 → status=queued → 2개."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    t1 = _make_queued_task(agent_id)
+    t2 = _make_queued_task(agent_id)
+    t3 = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, t3.task_id)
+    reg.mark_running(agent_id, t3.task_id)
+    reg.apply_result(agent_id=agent_id, task_id=t3.task_id, success=True, summary="ok")
+    queued = reg.list_tasks_for_agent(agent_id, status="queued")
+    assert len(queued) == 2
+    assert all(t.status == "queued" for t in queued)
+
+
+def test_list_tasks_limit(admin_user):
+    """limit=2 → 2개만 반환."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    for _ in range(5):
+        _make_queued_task(agent_id)
+    tasks = reg.list_tasks_for_agent(agent_id, limit=2)
+    assert len(tasks) == 2
+
+
+def test_list_tasks_sorted_newest_first(admin_user):
+    """created_at 최신순 정렬 확인."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    for _ in range(3):
+        _make_queued_task(agent_id)
+    tasks = reg.list_tasks_for_agent(agent_id)
+    created_ats = [t.created_at for t in tasks]
+    assert created_ats == sorted(created_ats, reverse=True)
+
+
+def test_list_tasks_contains_failure_reason_and_timed_out_at(admin_user):
+    """failed task → failure_reason / timed_out_at 포함."""
+    from datetime import datetime, timezone, timedelta
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    future = datetime.now(timezone.utc) + timedelta(seconds=9999)
+    reg.expire_stale_tasks(now=future)
+    tasks = reg.list_tasks_for_agent(agent_id, status="failed")
+    assert len(tasks) == 1
+    t = tasks[0]
+    assert t.failure_reason == "delivered_timeout"
+    assert t.timed_out_at != ""
+
+
+def test_list_tasks_agent_isolation(admin_user):
+    """agent A/B task 혼합 → 각 agent는 자신의 task만 반환."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_a = _register_agent(client)["agent_id"]
+    agent_b = _register_agent(client)["agent_id"]
+    for _ in range(2):
+        reg.enqueue_task(agent_id=agent_a, action="open_url",
+                         params={"url": "https://a.com"}, requested_by="test")
+    reg.enqueue_task(agent_id=agent_b, action="open_url",
+                     params={"url": "https://b.com"}, requested_by="test")
+    tasks_a = reg.list_tasks_for_agent(agent_a)
+    tasks_b = reg.list_tasks_for_agent(agent_b)
+    assert len(tasks_a) == 2
+    assert len(tasks_b) == 1
+    assert all(t.agent_id == agent_a for t in tasks_a)
+    assert all(t.agent_id == agent_b for t in tasks_b)
+
+
+def test_to_list_safe_excludes_params(admin_user):
+    """to_list_safe() 응답에 params 없음."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    safe = task.to_list_safe()
+    assert "params" not in safe
+
+
+def test_to_list_safe_excludes_token_id(admin_user):
+    """to_list_safe() 응답에 token_id 없음."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    safe = task.to_list_safe()
+    assert "token_id" not in safe
+
+
+# ── Stage 11-4B: GET /{agent_id}/tasks API 테스트 ────────────────────────
+
+def test_api_list_tasks_returns_200(admin_user):
+    """GET /{agent_id}/tasks → 200 + tasks 배열."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks",
+                json={"action": "open_url", "params": {"url": "https://example.com"}})
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["agent_id"] == agent_id
+    assert "tasks" in body
+    assert isinstance(body["tasks"], list)
+    assert body["total"] == len(body["tasks"])
+
+
+def test_api_list_tasks_status_filter(admin_user):
+    """status=queued 필터 동작."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks",
+                json={"action": "open_url", "params": {"url": "https://example.com"}})
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks?status=queued")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert all(t["status"] == "queued" for t in body["tasks"])
+
+
+def test_api_list_tasks_unknown_status_400(admin_user):
+    """unknown status → 400."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks?status=invalid_xyz")
+    assert resp.status_code == 400
+
+
+def test_api_list_tasks_limit_over_max_422(admin_user):
+    """limit=201 → FastAPI validation → 422."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks?limit=201")
+    assert resp.status_code == 422
+
+
+def test_api_list_tasks_no_params_in_response(admin_user):
+    """응답 task 항목에 params 없음."""
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    client.post(f"/api/v1/local-agents/{agent_id}/tasks",
+                json={"action": "open_url", "params": {"url": "https://example.com"}})
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks")
+    assert resp.status_code == 200
+    for task in resp.json()["tasks"]:
+        assert "params" not in task
+        assert "token_id" not in task
+
+
+def test_api_list_tasks_empty_for_unknown_agent(admin_user):
+    """없는 agent_id → 빈 목록 (404 아님)."""
+    client = _make_test_client(admin_user)
+    resp = client.get("/api/v1/local-agents/la-nonexistent/tasks")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["tasks"] == []
+    assert body["total"] == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

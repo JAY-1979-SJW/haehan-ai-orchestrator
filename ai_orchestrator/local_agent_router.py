@@ -4,6 +4,7 @@
   POST /api/v1/local-agents/register                    (admin/owner)
   GET  /api/v1/local-agents                             (admin/owner/viewer)
   POST /api/v1/local-agents/{agent_id}/tasks            (admin/owner)
+  GET  /api/v1/local-agents/{agent_id}/tasks            (admin/owner/viewer)
   GET  /api/v1/local-agents/{agent_id}/tasks/{task_id}  (admin/owner/viewer)
   WS   /api/v1/local-agents/ws                          (device_token 인증)
 
@@ -27,7 +28,7 @@ import logging
 from typing import Optional
 
 from fastapi import (
-    APIRouter, Body, Depends, HTTPException,
+    APIRouter, Body, Depends, HTTPException, Query,
     WebSocket, WebSocketDisconnect,
 )
 from pydantic import BaseModel
@@ -543,6 +544,27 @@ def reject_local_agent_task(
     http_code = _REJECT_STATUS_HTTP.get(status, 400)
     raise HTTPException(status_code=http_code,
                         detail={"error": status.upper(), "status": status})
+
+
+@local_agent_router.get("/{agent_id}/tasks")
+def list_local_agent_tasks(
+    agent_id: str,
+    status: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    user: dict = Depends(require_role("admin", "owner", "viewer")),
+):
+    if status is not None and status not in _reg.KNOWN_TASK_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "UNKNOWN_STATUS",
+                    "message": f"알 수 없는 status: {status}"},
+        )
+    tasks = _reg.list_tasks_for_agent(agent_id, status=status, limit=limit)
+    return {
+        "agent_id": agent_id,
+        "total": len(tasks),
+        "tasks": [t.to_list_safe() for t in tasks],
+    }
 
 
 @local_agent_router.get("/{agent_id}/tasks/{task_id}")
