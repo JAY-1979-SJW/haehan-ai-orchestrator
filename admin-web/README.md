@@ -2,7 +2,13 @@
 
 Next.js 기반 관리자 UI (admin-web).
 
-## 현재 단계
+## 현재 운영 기준
+
+- **master / server HEAD**: `7e21318`
+- **기준일**: 2026-04-28
+- **운영 기준선 문서**: [`docs/ops/admin_web_ops_baseline.md`](../docs/ops/admin_web_ops_baseline.md)
+
+## 구현 단계 이력
 
 - **Stage 11-UI-1A**: 골격(scaffold) 생성 완료
 - **Stage 11-UI-1B**: 디자인 기반 이식 완료 (Tailwind v4 / Pretendard / 브랜드 토큰)
@@ -473,3 +479,32 @@ captureReason: string                  — 실제 캡처 요청 사유
 - Authorization/Cookie/session/token 표시 없음
 - console.log 없음
 - secret/env 값 표시 없음
+
+## 운영 접속 경로
+
+| 용도 | 경로 |
+|---|---|
+| admin-web root | `/orchestrator/admin-web/` |
+| 로컬 에이전트 관리 | `/orchestrator/admin-web/local-agents` |
+| FastAPI API | `/orchestrator/api/v1/` |
+| auth/me | `/orchestrator/api/v1/auth/me` |
+| health check | `/orchestrator/api/v1/health` |
+| legacy FastAPI admin | `/orchestrator/api/v1/admin/local-agents` |
+
+## 권한 정책 요약
+
+| 역할 | 조회 | cancel | capture |
+|---|---|---|---|
+| owner / admin | 가능 | 상태 조건 충족 시 활성 | agent idle/busy 시 활성 |
+| viewer | 가능 | disabled | disabled |
+| unknown / error / loading | 가능 | disabled | disabled |
+
+**서버 `require_role`이 최종 보안 기준이다. UI 버튼 disabled는 UX 보조.**
+
+## 후속 작업
+
+| 단계 | 내용 |
+|---|---|
+| Stage 11-UI-6 | 자동 새로고침 / polling |
+| Stage 11-UI-7 | legacy FastAPI admin deprecated 계획 |
+| Stage 12-GABIA-1 | 가비아 자동화 설계 |
