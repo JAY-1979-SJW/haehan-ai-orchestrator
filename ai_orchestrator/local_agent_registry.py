@@ -279,7 +279,7 @@ class LocalAgentTask:
         approved_flag = bool(
             self.risk_level == "high" and self.approved_at
         )
-        return {
+        payload = {
             "task_id": self.task_id,
             "agent_id": self.agent_id,
             "action": self.action,
@@ -287,6 +287,13 @@ class LocalAgentTask:
             "risk_level": self.risk_level,
             "approved": approved_flag,
         }
+        # high-risk 승인된 task 는 token_id 를 dispatch 에 포함해
+        # client 가 result_data 의 approval_id audit trail 을 채울 수 있게 한다.
+        # token_id 는 approval 참조 식별자(UUID)이며 secret 이 아니다 — auth/seed 에
+        # 쓰이지 않고, validate 시 서버 DB 와 task_id 결합 검증을 통과해야만 효력을 갖는다.
+        if approved_flag and self.token_id:
+            payload["token_id"] = self.token_id
+        return payload
 
 
 # ── timeout 상수 ────────────────────────────────────────────────────────

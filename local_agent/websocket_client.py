@@ -78,11 +78,13 @@ def _server_ws_url() -> str:
 def _build_result_message(task: dict, result) -> dict:
     """actions.ActionResult → 서버 result 메시지 페이로드.
 
-    주의: data 원문(예: 전체 경로)을 그대로 서버에 보내지 않는다.
-    capture_screenshot 의 경우 summary 에 basename 만 포함되어 이미 안전하므로
-    추가 data 필드 전송은 생략.
+    ActionResult.data 가 dict 인 경우 그대로 "data" 필드로 포함한다.
+    서버는 _strip_result_data() allowlist 로 다시 필터링하므로 client 가
+    완전한 보안 필터를 부담하지 않는다 — 단, raw payload/params 는 절대
+    포함하지 않고 ActionResult.data 만 전달한다 (action handler 가 이미
+    safe key 만 채워 둔 dict).
     """
-    return {
+    msg: dict = {
         "type": "result",
         "task_id": task.get("task_id", ""),
         "success": bool(getattr(result, "success", False)),
@@ -90,6 +92,10 @@ def _build_result_message(task: dict, result) -> dict:
         "error": str(getattr(result, "error", ""))[:500],
         "error_code": str(getattr(result, "error_code", ""))[:80],
     }
+    data = getattr(result, "data", None)
+    if isinstance(data, dict) and data:
+        msg["data"] = data
+    return msg
 
 
 def process_task(task: dict) -> dict:

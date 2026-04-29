@@ -556,5 +556,183 @@ def test_open_url_execute_ws_result_without_running_fails(tmp_path):
             ws.receive_json()  # 여기서 WebSocketDisconnect(1011) 발생해야 함
 
 
+def test_build_result_message_includes_action_data():
+    """Stage 13G-8: _build_result_message 가 ActionResult.data 를 data 필드로 포함."""
+    from local_agent.websocket_client import _build_result_message
+    from local_agent.actions import ActionResult
+
+    result = ActionResult(
+        success=True, summary="open_url_execute_ok",
+        data={
+            "action": "open_url_execute", "dry_run": False,
+            "would_open_browser": True,
+            "external_network_call": "browser_possible",
+            "policy_decision": "approved_execution",
+            "url_scheme": "https", "url_host": "example.com",
+            "normalized_url": "https://example.com/x",
+            "approval_id": "tok-abc", "execution_task_id": "lat-x",
+        },
+    )
+    msg = _build_result_message({"task_id": "lat-x"}, result)
+    assert msg["task_id"] == "lat-x"
+    assert msg["success"] is True
+    assert msg["summary"] == "open_url_execute_ok"
+    assert isinstance(msg["data"], dict)
+    assert msg["data"]["action"] == "open_url_execute"
+    assert msg["data"]["would_open_browser"] is True
+    assert msg["data"]["approval_id"] == "tok-abc"
+    assert msg["data"]["execution_task_id"] == "lat-x"
+
+
+def test_build_result_message_omits_data_when_empty():
+    """data 가 없거나 빈 dict 이면 result message 에 'data' 키 미포함."""
+    from local_agent.websocket_client import _build_result_message
+    from local_agent.actions import ActionResult
+
+    msg_none = _build_result_message(
+        {"task_id": "t1"},
+        ActionResult(success=True, summary="ok", data=None),
+    )
+    assert "data" not in msg_none
+
+    msg_empty = _build_result_message(
+        {"task_id": "t2"},
+        ActionResult(success=True, summary="ok", data={}),
+    )
+    assert "data" not in msg_empty
+
+
+def test_open_url_execute_ws_persists_result_data(tmp_path):
+    """Stage 13G-8: WS process_task 흐름으로 result_data 가 서버에 저장되는지 검증.
+
+    클라이언트의 _build_result_message 가 ActionResult.data 를 포함하고,
+    서버 _handle_result 가 msg['data'] 를 apply_result(data=...) 로 전달하며,
+    _strip_result_data allowlist 통과 키만 result_data 에 저장됨을 확인한다.
+    """
+    import ai_orchestrator.local_agent_registry as reg
+    from local_agent.websocket_client import process_task
+
+    user = _make_admin_user()
+    client = _make_test_client(user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/open-url-execution-request",
+        json={"url": "https://example.com/path?token=SHOULD_BE_DROPPED",
+              "reason": "13g8 test"},
+    )
+    task_id = resp.json()["task_id"]
+
+    task_obj = reg.get_task(agent_id, task_id)
+    token_id = task_obj.token_id
+    client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/approve",
+        json={"token_id": token_id},
+    )
+
+    with mock.patch("local_agent.actions.webbrowser.open"):
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({"type": "auth", "agent_id": agent_id,
+                          "device_token": reg_resp["device_token"]})
+            assert ws.receive_json()["type"] == "auth_ok"
+
+            task_msg = ws.receive_json()
+            assert task_msg["type"] == "task"
+
+            ws.send_json({"type": "running", "task_id": task_id})
+            assert ws.receive_json()["type"] == "running_ack"
+
+            # process_task 가 만드는 result_msg 를 그대로 서버에 보낸다
+            # — 이게 production 클라이언트의 실제 흐름.
+            result_msg = process_task(task_msg["task"])
+            result_msg["agent_id"] = agent_id
+            assert "data" in result_msg
+            assert result_msg["data"]["action"] == "open_url_execute"
+            ws.send_json(result_msg)
+            ack = ws.receive_json()
+            assert ack["type"] == "result_ack"
+            assert ack["status"] == "completed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "completed"
+    rd = fetched["result_data"]
+    assert isinstance(rd, dict) and rd, "result_data must be persisted"
+    assert rd["action"] == "open_url_execute"
+    assert rd["dry_run"] is False
+    assert rd["would_open_browser"] is True
+    assert rd["external_network_call"] == "browser_possible"
+    assert rd["policy_decision"] == "approved_execution"
+    assert rd.get("approval_id"), "approval_id must be persisted"
+    assert rd.get("execution_task_id") == task_id
+    # query string 제거 확인 (?token=... 떨어져야 함)
+    assert "token" not in (rd.get("normalized_url") or "").lower()
+    assert "?" not in (rd.get("normalized_url") or "")
+    # 민감 키 미저장
+    SENSITIVE = {"token", "password", "passwd", "pwd", "access_token",
+                 "cookie", "session", "authorization", "secret",
+                 "device_token", "hash"}
+    for k in rd:
+        assert k.lower() not in SENSITIVE, f"sensitive key leaked: {k}"
+
+
+def test_ws_result_handler_drops_unknown_data_keys(tmp_path):
+    """클라이언트가 unknown/sensitive key 를 보내도 서버가 _strip_result_data 로 drop."""
+    import ai_orchestrator.local_agent_registry as reg
+
+    user = _make_admin_user()
+    client = _make_test_client(user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/open-url-execution-request",
+        json={"url": "https://example.com/x"},
+    )
+    task_id = resp.json()["task_id"]
+    token_id = reg.get_task(agent_id, task_id).token_id
+    client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/approve",
+        json={"token_id": token_id},
+    )
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": reg_resp["device_token"]})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        # 의도적으로 sensitive/unknown key 포함
+        ws.send_json({
+            "type": "result", "task_id": task_id,
+            "success": True, "summary": "open_url_execute_ok",
+            "data": {
+                "action": "open_url_execute",
+                "would_open_browser": True,
+                "device_token": "LEAK_ME",     # sensitive — drop
+                "password": "LEAK_ME",         # sensitive — drop
+                "raw_payload": {"x": 1},       # unknown — drop
+                "internal_state": "secret",    # unknown — drop
+            },
+        })
+        assert ws.receive_json()["type"] == "result_ack"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    rd = fetched["result_data"] or {}
+    assert "device_token" not in rd
+    assert "password" not in rd
+    assert "raw_payload" not in rd
+    assert "internal_state" not in rd
+    assert rd.get("action") == "open_url_execute"
+    assert rd.get("would_open_browser") is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
