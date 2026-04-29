@@ -46,6 +46,7 @@ _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ping", "system_info", "list_allowed_apps",
     "open_url", "list_files_readonly",
     "capture_screenshot",
+    "ws_noop",
 })
 
 # 승인 없이도 high risk 경로로 실행 가능한 액션 — 현재 없음.

@@ -42,6 +42,11 @@ def action_ping(_params: dict) -> ActionResult:
     )
 
 
+def action_ws_noop(_params: dict) -> ActionResult:
+    """WS delivery path 검증 전용 no-op. 외부 부작용 없음."""
+    return ActionResult(success=True, summary="ws_noop_ok", data={})
+
+
 def action_system_info(_params: dict) -> ActionResult:
     """OS / Python 버전 등 비민감 정보만 반환."""
     info = {
@@ -928,6 +933,7 @@ def action_list_files_readonly(params: dict) -> ActionResult:
 # UNKNOWN_ACTION 으로 거절된다. 파일 수정/삭제/전송은 의도적으로 미등록.
 _ACTIONS = {
     "ping": action_ping,
+    "ws_noop": action_ws_noop,
     "system_info": action_system_info,
     "list_allowed_apps": action_list_allowed_apps,
     "open_url": action_open_url,
