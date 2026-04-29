@@ -32,7 +32,7 @@ import platform
 import socket
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -325,6 +325,42 @@ def handle_task(task: dict, *, dry_run: bool = True) -> dict:
     )
 
 
+# ── URL 안전 검증 ─────────────────────────────────────────────────────────────
+
+class ExternalUrlBlocked(Exception):
+    """localhost/127.0.0.1 외 WebSocket URL 연결 시도 차단."""
+
+
+def assert_local_ws_url(url: str) -> None:
+    """ws:// URL이 localhost 또는 127.0.0.1을 가리키는지 검증.
+
+    그 외 모든 host(운영 서버, 외부 URL 등)는 ExternalUrlBlocked를 발생시킨다.
+    """
+    import urllib.parse
+    parsed = urllib.parse.urlparse(url)
+    scheme = parsed.scheme.lower()
+    host = parsed.hostname or ""
+    if scheme not in ("ws", "http"):
+        raise ExternalUrlBlocked(
+            f"url scheme {scheme!r} is not allowed for local smoke; "
+            f"only ws:// or http:// on localhost/127.0.0.1 are permitted"
+        )
+    if host not in ("localhost", "127.0.0.1"):
+        raise ExternalUrlBlocked(
+            f"host {host!r} is not localhost/127.0.0.1 — "
+            "external WebSocket connections are blocked"
+        )
+
+
+# ── WS 연결 Protocol (structural subtyping) ───────────────────────────────────
+
+class WsConnection(Protocol):
+    """테스트용 WebSocket 연결 객체 인터페이스."""
+
+    def send_json(self, data: dict) -> None: ...
+    def receive_json(self) -> dict: ...
+
+
 # ── WebSocket 연결 골격 ───────────────────────────────────────────────────────
 
 class LocalAgentClient:
@@ -497,14 +533,67 @@ class LocalAgentClient:
 
         return sent
 
+    def run_ws_protocol(self, ws: "WsConnection", num_tasks: int = 0) -> dict:
+        """실제 WebSocket 연결 객체를 통해 프로토콜 실행 (smoke 전용).
+
+        흐름: auth → auth_ok → heartbeat → heartbeat_ack
+              → (recv task → send running → send result → recv result_ack) * num_tasks
+
+        ws: Starlette TestClient WebSocketTestSession 또는 동일 인터페이스 객체.
+        num_tasks: 서버로부터 수신할 task 수 (서버 설계에 맞게 전달).
+        반환값: {sent: [...], received: [...]} — 검증용 기록.
+
+        URL 안전 검증은 호출 전 assert_local_ws_url()로 수행해야 한다.
+        device_token은 auth payload에만 포함; 이후 메시지에는 포함하지 않는다.
+        """
+        sent: list[dict] = []
+        received: list[dict] = []
+
+        # 1. auth — device_token은 여기서만 포함
+        auth = build_auth(self.config.agent_id, self.config.device_token)
+        ws.send_json(auth)
+        sent.append({"type": "auth"})  # 기록에는 token 제외
+
+        # 2. auth_ok
+        msg = ws.receive_json()
+        received.append(msg)
+        if msg.get("type") != "auth_ok":
+            logger.warning("expected auth_ok, got %r", msg.get("type"))
+
+        # 3. heartbeat
+        hb = build_heartbeat(self.config.agent_id)
+        ws.send_json(hb)
+        sent.append(hb)
+
+        # 4. heartbeat_ack
+        msg = ws.receive_json()
+        received.append(msg)
+
+        # 5. task 목록 처리 — 서버에서 task를 수신하고 처리
+        for _ in range(num_tasks):
+            task_msg = ws.receive_json()  # 서버가 보내는 task 수신
+            received.append(task_msg)
+            payloads = self.process_server_message_with_running(task_msg)
+            for payload in payloads:
+                ws.send_json(payload)
+                sent.append(strip_sensitive(payload))  # 기록 시 민감정보 제거
+            if payloads:
+                ack = ws.receive_json()
+                received.append(ack)
+
+        return {"sent": sent, "received": received}
+
 
 __all__ = [
     "AgentConfig",
     "BlockedAction",
     "DRY_RUN_ACTIONS",
+    "ExternalUrlBlocked",
     "LocalAgentClient",
     "LOW_RISK_ACTIONS",
     "NotImplementedInThisStage",
+    "WsConnection",
+    "assert_local_ws_url",
     "build_auth",
     "build_heartbeat",
     "build_result",
