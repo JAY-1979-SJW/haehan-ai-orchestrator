@@ -757,10 +757,13 @@ async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
     summary = _safe_str(msg.get("summary"))[:500]
     error = _safe_str(msg.get("error"))[:500]
     error_code = _safe_str(msg.get("error_code"))[:80]
+    raw_observe = msg.get("observe_summary")
+    observe_summary = raw_observe if isinstance(raw_observe, dict) else None
 
     updated = _reg.apply_result(
         agent_id=agent_id, task_id=task_id,
         success=success, summary=summary, error=error, error_code=error_code,
+        observe_summary=observe_summary,
     )
     if updated is None:
         await ws.send_json({
