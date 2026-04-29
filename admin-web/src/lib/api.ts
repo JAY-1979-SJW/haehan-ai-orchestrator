@@ -6,6 +6,7 @@ import type {
   LocalAgentTaskDetail,
   LocalAgentsResponse,
   LocalAgentTasksResponse,
+  LocalAgentDiagnosticsResponse,
 } from "@/types/local-agent";
 import type { CurrentUser } from "@/types/auth";
 
@@ -149,4 +150,8 @@ export function requestCaptureScreenshot(
       }),
     }
   );
+}
+
+export function getLocalAgentsDiagnostics(): Promise<LocalAgentDiagnosticsResponse> {
+  return apiFetch<LocalAgentDiagnosticsResponse>("/local-agents/diagnostics");
 }
