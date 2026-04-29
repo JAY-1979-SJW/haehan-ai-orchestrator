@@ -495,6 +495,8 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             },
             "observed_at": _now_iso(),
         },
+        # audit_summary: safe audit counts (raw audit JSONL 읽기 없음)
+        "audit_summary": _build_audit_summary(_url_cat, "ok"),
     }
     return ActionResult(
         success=True,
@@ -988,6 +990,57 @@ def _safe_final_url(current_url: str, url_category: str) -> "str | None":
     except Exception:
         pass
     return None
+
+
+def _build_audit_summary(
+    url_category: str,
+    status: str,
+    error_code: str = "",
+) -> dict:
+    """안전한 audit summary 생성 (raw audit JSONL 읽기 없음, safe counts만).
+
+    Args:
+        url_category: URL 분류 (about_blank, internal_test, public_http 등)
+        status: 액션 상태 (ok, blocked, error)
+        error_code: 에러 발생 시 에러 코드 (선택)
+
+    Returns:
+        audit_summary dict (schema_version, event counts, categories)
+    """
+    # 기본값
+    audit_summary: dict[str, Any] = {
+        "audit_schema_version": 1,
+        "local_audit_source": "agent_v1",
+        "audit_summary_generated_at": _now_iso(),
+        "audit_event_count": 1,  # 단일 action 결과
+        "allowed_event_count": 0,
+        "blocked_event_count": 0,
+        "denied_event_count": 0,
+        "error_event_count": 0,
+        "last_event_category": "web_open_url_readonly",
+        "last_event_status": status,
+        "audit_event_categories": ["web_open_url_readonly"],
+        "target_kind_counts": {url_category: 1},
+        "action_kind_counts": {"web_open": 1},
+        "policy_decision_counts": {},
+    }
+
+    # Status 반영
+    if status == "ok":
+        audit_summary["allowed_event_count"] = 1
+        audit_summary["policy_decision_counts"]["allowed"] = 1
+    elif status == "blocked":
+        audit_summary["blocked_event_count"] = 1
+        audit_summary["policy_decision_counts"]["blocked"] = 1
+    elif status == "denied":
+        audit_summary["denied_event_count"] = 1
+        audit_summary["policy_decision_counts"]["denied"] = 1
+    elif status == "error":
+        audit_summary["error_event_count"] = 1
+        if error_code:
+            audit_summary["last_event_status"] = f"error:{error_code[:40]}"
+
+    return audit_summary
 
 
 def _now_iso() -> str:
