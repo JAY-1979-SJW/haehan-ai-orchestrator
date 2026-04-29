@@ -114,6 +114,38 @@ export interface ObserveSummary {
   observed_at?: string | null;
 }
 
+/** Stage 13C-2: audit summary (PC local audit safe 요약, raw audit 원문 금지). */
+export interface AuditSummary {
+  // STORE_AND_DISPLAY
+  audit_event_count?: number | null;
+  audit_window_started_at?: string | null;
+  audit_window_ended_at?: string | null;
+  audit_event_categories?: string[] | null;
+  blocked_event_count?: number | null;
+  allowed_event_count?: number | null;
+  denied_event_count?: number | null;
+  error_event_count?: number | null;
+  last_event_category?: string | null;
+  last_event_status?: string | null;
+  policy_decision_counts?: {
+    [key: string]: number;
+  } | null;
+  target_kind_counts?: {
+    [key: string]: number;
+  } | null;
+  action_kind_counts?: {
+    [key: string]: number;
+  } | null;
+  // STORE_ONLY (DO NOT DISPLAY)
+  audit_schema_version?: number | null;
+  local_audit_source?: string | null;
+  agent_reported_event_count?: number | null;
+  audit_summary_generated_at?: string | null;
+  audit_summary_hash?: string | null;
+  dropped_event_count?: number | null;
+  redacted_field_count?: number | null;
+}
+
 /** GET /local-agents/{agent_id}/tasks/{task_id} — to_safe() 응답 (token_id 포함) */
 export interface LocalAgentTaskDetail extends LocalAgentTask {
   token_id: string;
@@ -122,6 +154,7 @@ export interface LocalAgentTaskDetail extends LocalAgentTask {
   rejected_at: string | null;
   reject_reason: string | null;
   observe_summary?: ObserveSummary | null;
+  audit_summary?: AuditSummary | null;
 }
 
 export interface ApprovalRequest {

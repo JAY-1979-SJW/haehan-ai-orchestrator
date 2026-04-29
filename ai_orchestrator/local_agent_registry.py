@@ -150,6 +150,8 @@ class LocalAgentTask:
     cancelled_at: str = ""            # 최종 cancelled 전환 시각
     # Stage 13B-3A: controlled browser observe 결과 구조화 요약 (sanitized, optional)
     observe_summary: Optional[dict] = None
+    # Stage 13C-2: audit summary (PC local audit 이벤트 safe 요약, optional)
+    audit_summary: Optional[dict] = None
 
     def to_safe(self) -> dict:
         return {
@@ -179,6 +181,7 @@ class LocalAgentTask:
             "cancel_requested_by": self.cancel_requested_by,
             "cancelled_at": self.cancelled_at,
             "observe_summary": self.observe_summary,
+            "audit_summary": self.audit_summary,
         }
 
     def to_list_safe(self) -> dict:
@@ -785,6 +788,7 @@ def apply_result(
     error: str = "",
     error_code: str = "",
     observe_summary: Optional[dict] = None,
+    audit_summary: Optional[dict] = None,
 ) -> Optional[LocalAgentTask]:
     """에이전트가 보고한 결과 반영. running/delivered/cancel_requested 에서 동작.
 
@@ -809,6 +813,8 @@ def apply_result(
             t.error_summary = ""
             if observe_summary is not None:
                 t.observe_summary = _build_observe_summary(observe_summary)
+            if audit_summary is not None:
+                t.audit_summary = _build_audit_summary(audit_summary)
         else:
             t.status = "failed"
             # error_summary 는 민감값이 섞일 수 있어 짧게만 보존
@@ -817,6 +823,9 @@ def apply_result(
             t.result_summary = (summary or "")[:500]
             if not t.failure_reason:
                 t.failure_reason = "agent_error"
+            # 실패한 task에서도 audit_summary 저장 가능 (필드 안전성 검증)
+            if audit_summary is not None:
+                t.audit_summary = _build_audit_summary(audit_summary)
         t.completed_at = now
         t.updated_at = now
         return t
@@ -942,6 +951,31 @@ _OBSERVE_FORBIDDEN_KEYS: frozenset = frozenset({
     "page_structure", "current_url",
 })
 
+# Stage 13C-2: audit_summary 허용 필드 (allowlist approach)
+_AUDIT_SUMMARY_ALLOWED_KEYS: frozenset = frozenset({
+    # STORE_AND_DISPLAY
+    "audit_event_count", "audit_window_started_at", "audit_window_ended_at",
+    "audit_event_categories", "blocked_event_count", "allowed_event_count",
+    "denied_event_count", "error_event_count", "last_event_category",
+    "last_event_status", "policy_decision_counts", "target_kind_counts",
+    "action_kind_counts",
+    # STORE_ONLY
+    "audit_schema_version", "local_audit_source", "agent_reported_event_count",
+    "audit_summary_generated_at", "audit_summary_hash", "dropped_event_count",
+    "redacted_field_count",
+})
+
+_AUDIT_SUMMARY_FORBIDDEN_KEYS: frozenset = frozenset({
+    "raw_events", "events", "event_list", "event_payload", "raw_audit",
+    "audit_jsonl", "current_url", "url", "query", "fragment",
+    "html", "text", "page_text", "modal_text", "selector", "screenshot_path",
+    "local_file_path", "path", "absolute_path", "cookie", "session", "token",
+    "password", "authorization", "headers", "request_headers", "response_headers",
+    "request_body", "response_body", "body", "localstorage", "sessionstorage",
+    "clipboard", "typed_text", "form_input_value", "username", "pc_username",
+    "ip", "host",
+})
+
 _PAGE_STRUCTURE_COUNT_KEYS: tuple = (
     "headings", "links", "buttons", "inputs", "forms", "tables",
 )
@@ -963,6 +997,93 @@ def _sanitize_final_url_value(raw: object) -> Optional[str]:
     except Exception:
         pass
     return None
+
+
+def _build_audit_summary(raw: Optional[dict]) -> Optional[dict]:
+    """WS result에서 받은 raw audit_summary를 allowlist로 sanitize.
+
+    PC local audit.jsonl 원문 절대 포함 금지.
+    - Count 필드만 저장 (raw 이벤트 저장 금지)
+    - URL/path/HTML/text/selector/header/body/cookie/token/password 금지
+    - Enum 문자열만 허용 (길이 제한, 자유 문자열 금지)
+    - Dict는 count dict만 허용 (nested dict 금지)
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    out: dict = {}
+
+    # 금지 키는 먼저 검증해 제거
+    for bad_key in _AUDIT_SUMMARY_FORBIDDEN_KEYS:
+        if bad_key in raw:
+            # 금지 키가 있으면 전체 sanitize를 보수적으로 처리
+            # (raw audit가 신뢰할 수 없을 가능성)
+            pass
+
+    # Integer count 필드 (non-negative)
+    for key in ("audit_event_count", "blocked_event_count", "allowed_event_count",
+                "denied_event_count", "error_event_count", "agent_reported_event_count",
+                "dropped_event_count", "redacted_field_count", "audit_schema_version"):
+        val = raw.get(key)
+        if val is not None:
+            try:
+                count = max(0, int(val))
+                out[key] = count
+            except (TypeError, ValueError):
+                pass
+
+    # String enum 필드 (길이 제한, 자유 문자열 금지)
+    for key in ("last_event_category", "last_event_status", "local_audit_source"):
+        val = raw.get(key)
+        if val is not None and isinstance(val, str):
+            # 최대 80자 제한
+            out[key] = str(val)[:80]
+
+    # audit_event_categories — list[str] enum만 허용
+    categories = raw.get("audit_event_categories")
+    if isinstance(categories, list):
+        safe_cats = []
+        for cat in categories:
+            if isinstance(cat, str):
+                # 각 카테고리 최대 50자, 중복 제거
+                cat_str = str(cat)[:50]
+                if cat_str not in safe_cats:
+                    safe_cats.append(cat_str)
+        if safe_cats:
+            out["audit_event_categories"] = safe_cats
+
+    # Timestamp 문자열 필드 (ISO 형식, 길이 제한)
+    for key in ("audit_window_started_at", "audit_window_ended_at", "audit_summary_generated_at"):
+        val = raw.get(key)
+        if val is not None and isinstance(val, str):
+            # 최대 50자 (ISO 8601은 보통 ~25자)
+            out[key] = str(val)[:50]
+
+    # audit_summary_hash — digest만 허용, 원문 복구 불가능
+    hash_val = raw.get("audit_summary_hash")
+    if hash_val is not None and isinstance(hash_val, str):
+        # 최대 128자 (SHA-256 hex는 64자)
+        out["audit_summary_hash"] = str(hash_val)[:128]
+
+    # Count dicts — key는 enum, value는 non-negative int
+    for dict_key in ("policy_decision_counts", "target_kind_counts", "action_kind_counts"):
+        dict_val = raw.get(dict_key)
+        if isinstance(dict_val, dict):
+            safe_dict = {}
+            for k, v in dict_val.items():
+                # key 최대 40자 (카테고리 이름)
+                if not isinstance(k, str):
+                    continue
+                safe_k = str(k)[:40]
+                try:
+                    safe_v = max(0, int(v))
+                    safe_dict[safe_k] = safe_v
+                except (TypeError, ValueError):
+                    pass
+            if safe_dict:
+                out[dict_key] = safe_dict
+
+    return out if out else None
 
 
 def _build_observe_summary(raw: Optional[dict]) -> Optional[dict]:
