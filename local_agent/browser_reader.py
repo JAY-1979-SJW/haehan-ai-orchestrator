@@ -27,7 +27,9 @@ from __future__ import annotations
 import logging
 import re
 from typing import Any, Callable
+from urllib.parse import urlparse
 
+from . import audit as _audit
 from .web_reader import (
     analyze_html_structure,
     validate_url_for_readonly_open,
@@ -83,15 +85,38 @@ def open_url_readonly(
     URL 검증을 통과한다. Stage 12I controlled observe 첫 후보용 게이트이며,
     호출자가 명시하지 않으면 기본 동작(URL_SCHEME_BLOCKED)이 유지된다.
     """
+    url_category = _categorize_url(url)
+    audit_base = {
+        "action": "controlled_browser_open",
+        "url_category": url_category,
+        "allow_about_blank": bool(allow_about_blank),
+        "allow_private_network": bool(allow_private_network),
+        "dry_run": False,
+    }
+    # url 원문은 about:blank 인 경우에만 audit 에 포함
+    if url_category == "about_blank":
+        audit_base["url"] = "about:blank"
+
+    _audit.log_local_event("browser_open_requested", **audit_base)
+
     validation = validate_url_for_readonly_open(
         url,
         allow_private_network=allow_private_network,
         allow_about_blank=allow_about_blank,
     )
+    _audit.log_local_event(
+        "browser_open_dry_run_checked",
+        validation_ok=bool(validation.get("ok")),
+        **audit_base,
+    )
     if not validation.get("ok"):
+        ec = validation.get("error_code", "URL_INVALID")
+        _audit.log_local_event(
+            "browser_open_blocked", error_code=ec, **audit_base,
+        )
         return _err(
             url=url,
-            error_code=validation.get("error_code", "URL_INVALID"),
+            error_code=ec,
             reason=validation.get("reason", "url validation failed"),
         )
 
@@ -107,6 +132,11 @@ def open_url_readonly(
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:
+            _audit.log_local_event(
+                "browser_open_failed",
+                error_code="BROWSER_DEPENDENCY_MISSING",
+                **audit_base,
+            )
             return _err(
                 url=url,
                 error_code="BROWSER_DEPENDENCY_MISSING",
@@ -114,12 +144,19 @@ def open_url_readonly(
             )
         factory = _sync_playwright
 
+    _audit.log_local_event("browser_open_started", **audit_base)
+
     try:
         page_title, current_url, html = _open_and_read(
             factory, url,
             wait_until=wait_until, timeout_ms=timeout_ms,
         )
     except BrowserDependencyMissing as e:
+        _audit.log_local_event(
+            "browser_open_failed",
+            error_code="BROWSER_DEPENDENCY_MISSING",
+            **audit_base,
+        )
         return _err(
             url=url,
             error_code="BROWSER_DEPENDENCY_MISSING",
@@ -127,6 +164,11 @@ def open_url_readonly(
         )
     except Exception as e:  # pragma: no cover - 실제 환경 오류
         logger.exception("browser open failed")
+        _audit.log_local_event(
+            "browser_open_failed",
+            error_code="BROWSER_OPEN_FAILED",
+            **audit_base,
+        )
         return _err(
             url=url,
             error_code="BROWSER_OPEN_FAILED",
@@ -156,6 +198,22 @@ def open_url_readonly(
         f"tables={counts.get('tables', 0)}"
     )
 
+    # 관찰 결과 audit — title/url 본문은 기록하지 않고 카운트와 힌트만 남긴다
+    _audit.log_local_event(
+        "browser_open_observed",
+        pages_observed_count=1,
+        title_len=len((page_title or "")),
+        login_required_hint=bool(login_hint),
+        modal_candidates_count=len(modal_candidates or []),
+        html_truncated=bool(html_truncated),
+        **audit_base,
+    )
+    _audit.log_local_event(
+        "browser_open_completed",
+        status_category="ok",
+        **audit_base,
+    )
+
     return {
         "ok": True,
         "url": url,
@@ -168,6 +226,28 @@ def open_url_readonly(
         "page_structure": page_structure,
         "summary": summary,
     }
+
+
+def _categorize_url(url: Any) -> str:
+    """audit 용 URL 카테고리 분류. 외부 호스트명을 audit 에 노출하지 않기 위함."""
+    if not isinstance(url, str):
+        return "invalid"
+    raw = url.strip().lower()
+    if not raw:
+        return "empty"
+    if raw == "about:blank":
+        return "about_blank"
+    if raw.startswith("about:"):
+        return "about_other"
+    try:
+        scheme = (urlparse(raw).scheme or "").lower()
+    except ValueError:
+        return "parse_failed"
+    if scheme in ("http", "https"):
+        return f"public_{scheme}"
+    if not scheme:
+        return "no_scheme"
+    return f"blocked_scheme:{scheme}"
 
 
 # ── 내부 ────────────────────────────────────────────────────────────────

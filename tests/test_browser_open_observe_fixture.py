@@ -28,6 +28,28 @@ import pytest
 from local_agent import web_reader as _wr
 from local_agent import browser_reader as _br
 from local_agent import actions as _actions
+from local_agent import audit as _audit_mod
+
+
+# ── Audit capture (모든 테스트에 자동 적용) ─────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def captured_audit(monkeypatch):
+    """audit.log_local_event 를 in-memory list 로 캡처하여 디스크 IO 미발생."""
+    events: list[dict] = []
+
+    def _capture(event_type, **fields):
+        from datetime import datetime, timezone
+        events.append({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "event_type": event_type,
+            **fields,
+        })
+
+    # browser_reader 가 import 한 audit 모듈 객체에도 패치
+    monkeypatch.setattr(_audit_mod, "log_local_event", _capture)
+    monkeypatch.setattr(_br._audit, "log_local_event", _capture)
+    yield events
 
 
 # ── Fake Playwright page / browser / context ─────────────────────────────────
@@ -433,3 +455,122 @@ class TestNoMutationApiInPath:
                           ".evaluate(", ".storage_state(",
                           ".accept_downloads"):
             assert forbidden not in src, f"mutation API found in browser_reader: {forbidden}"
+
+
+# ── 11. browser_open_* audit event wiring (Stage 12J) ───────────────────────
+
+class TestAuditWiring:
+    def _types(self, events: list[dict]) -> list[str]:
+        return [e["event_type"] for e in events]
+
+    def test_about_blank_success_emits_full_sequence(self, captured_audit):
+        fake = FakePage(title="", url="about:blank", html="<html><body/></html>")
+        result = _br.open_url_readonly(
+            "about:blank",
+            allow_about_blank=True,
+            _playwright_factory=make_factory(fake),
+        )
+        assert result["ok"] is True
+
+        types = self._types(captured_audit)
+        # 정상 경로 5종이 순서대로 기록
+        for ev in ("browser_open_requested", "browser_open_dry_run_checked",
+                   "browser_open_started", "browser_open_observed",
+                   "browser_open_completed"):
+            assert ev in types, f"missing event: {ev} (got {types})"
+        # 실패/차단 이벤트는 발생하지 않음
+        assert "browser_open_blocked" not in types
+        assert "browser_open_failed" not in types
+
+    def test_url_scheme_blocked_emits_blocked(self, captured_audit):
+        result = _br.open_url_readonly("javascript:alert(1)")
+        assert result["ok"] is False
+
+        types = self._types(captured_audit)
+        assert "browser_open_requested" in types
+        assert "browser_open_dry_run_checked" in types
+        assert "browser_open_blocked" in types
+        # 실 브라우저 기동 단계까지 가지 않음
+        assert "browser_open_started" not in types
+        assert "browser_open_observed" not in types
+        assert "browser_open_completed" not in types
+
+    def test_about_blank_without_optin_emits_blocked(self, captured_audit):
+        result = _br.open_url_readonly("about:blank")
+        assert result["ok"] is False
+
+        types = self._types(captured_audit)
+        assert "browser_open_blocked" in types
+        # url_category 가 about_blank 이지만, opt-in 없이 차단됨을 audit 에서 확인
+        blocked_events = [e for e in captured_audit if e["event_type"] == "browser_open_blocked"]
+        assert blocked_events
+        assert blocked_events[0]["url_category"] == "about_blank"
+        assert blocked_events[0]["allow_about_blank"] is False
+
+    def test_factory_exception_emits_failed(self, captured_audit):
+        class BoomCM:
+            def __enter__(self):
+                raise RuntimeError("factory boom")
+            def __exit__(self, *a):
+                return False
+
+        result = _br.open_url_readonly(
+            "about:blank",
+            allow_about_blank=True,
+            _playwright_factory=lambda: BoomCM(),
+        )
+        assert result["ok"] is False
+        assert result["error_code"] == "BROWSER_OPEN_FAILED"
+
+        types = self._types(captured_audit)
+        assert "browser_open_started" in types
+        assert "browser_open_failed" in types
+        assert "browser_open_completed" not in types
+
+    def test_external_url_audit_does_not_log_full_url(self, captured_audit):
+        """외부 URL 호출 시 url 원문이 audit payload 에 포함되면 안 됨."""
+        fake = FakePage(title="t", url="https://example.com/secret-path?key=abc",
+                        html="<html/>")
+        _br.open_url_readonly(
+            "https://example.com/secret-path?key=abc",
+            _playwright_factory=make_factory(fake),
+        )
+        for e in captured_audit:
+            # url_category 는 허용. 단, 풀 URL/host/path/query 는 미기록
+            assert "secret-path" not in str(e)
+            assert "example.com" not in str(e)
+            assert "key=abc" not in str(e)
+            # url 키가 있다면 정확히 about:blank 만 허용
+            if "url" in e:
+                assert e["url"] == "about:blank"
+
+    def test_audit_payload_strips_sensitive_keys(self, captured_audit):
+        """browser_reader 가 audit 에 cookie/session/token/password/Authorization 류 키를
+        직접 추가하지 않음. (audit 모듈의 _strip_sensitive 와 별도로 송출 자체에서 부재)"""
+        fake = FakePage(title="", url="about:blank", html="<html/>")
+        _br.open_url_readonly(
+            "about:blank", allow_about_blank=True,
+            _playwright_factory=make_factory(fake),
+        )
+        forbidden_keys = {"cookie", "cookies", "session", "session_token",
+                          "token", "access_token", "refresh_token",
+                          "password", "passwd", "pwd",
+                          "authorization", "auth",
+                          "localstorage", "sessionstorage",
+                          "html", "page_content", "content"}
+        for e in captured_audit:
+            for k in e.keys():
+                assert k.lower() not in forbidden_keys, (
+                    f"forbidden key {k!r} in audit event {e['event_type']}"
+                )
+
+    def test_url_categorize_helper(self):
+        assert _br._categorize_url("about:blank") == "about_blank"
+        assert _br._categorize_url("about:srcdoc") == "about_other"
+        assert _br._categorize_url("about:config") == "about_other"
+        assert _br._categorize_url("https://example.com/x") == "public_https"
+        assert _br._categorize_url("http://x/") == "public_http"
+        assert _br._categorize_url("file:///etc/passwd") == "blocked_scheme:file"
+        assert _br._categorize_url("javascript:1") == "blocked_scheme:javascript"
+        assert _br._categorize_url("") == "empty"
+        assert _br._categorize_url(None) == "invalid"
