@@ -228,7 +228,11 @@ def build_result(
 # ── task handler 골격 ────────────────────────────────────────────────────────
 
 class NotImplementedInThisStage(Exception):
-    """이번 단계(13F-2A)에서 구현되지 않은 액션."""
+    """이번 단계(13F-2A/2B)에서 구현되지 않은 액션."""
+
+
+class BlockedAction(Exception):
+    """이번 단계에서 실행이 차단된 액션 (high-risk 등)."""
 
 
 def handle_task(task: dict, *, dry_run: bool = True) -> dict:
@@ -250,9 +254,16 @@ def handle_task(task: dict, *, dry_run: bool = True) -> dict:
             summary=out.get("summary", ""),
         )
 
+    # high-risk 액션은 명시적으로 차단
+    _HIGH_RISK = {"capture_screenshot"}
+    if action in _HIGH_RISK:
+        raise BlockedAction(
+            f"action={action!r} is high-risk and blocked in Stage 13F-2B"
+        )
+
     # 이번 단계에서 구현하지 않는 액션
     raise NotImplementedInThisStage(
-        f"action={action!r} is not implemented in Stage 13F-2A"
+        f"action={action!r} is not implemented in Stage 13F-2B"
     )
 
 
@@ -314,8 +325,86 @@ class LocalAgentClient:
         }
 
 
+    def process_server_message(self, msg: dict) -> Optional[dict]:
+        """서버에서 수신한 단일 메시지를 처리하고 응답 페이로드를 반환.
+
+        - auth_ok: 인증 성공 수신 → None (응답 없음)
+        - heartbeat_ack: heartbeat 확인 수신 → None
+        - idle: keepalive → None
+        - task: 작업 처리 → result 페이로드 또는 blocked result
+        - error: 서버 오류 → None (로그만)
+        - 알 수 없는 type: None
+
+        실제 WS 전송은 하지 않고 페이로드만 반환한다.
+        """
+        mtype = (msg.get("type") or "").strip()
+
+        if mtype == "auth_ok":
+            logger.info("auth_ok received for agent_id=%s", msg.get("agent_id"))
+            return None
+
+        if mtype in ("heartbeat_ack", "idle", "running_ack", "result_ack"):
+            return None
+
+        if mtype == "task":
+            task = msg.get("task")
+            if not isinstance(task, dict):
+                logger.warning("task message missing task field")
+                return None
+            task_id = (task.get("task_id") or task.get("id") or "").strip()
+            try:
+                return handle_task(task, dry_run=self.config.dry_run)
+            except BlockedAction as e:
+                logger.warning("blocked action: %s", e)
+                return build_result(
+                    task_id=task_id,
+                    success=False,
+                    error_code="BLOCKED",
+                    error=str(e),
+                )
+            except NotImplementedInThisStage as e:
+                logger.warning("not implemented: %s", e)
+                return build_result(
+                    task_id=task_id,
+                    success=False,
+                    error_code="NOT_IMPLEMENTED",
+                    error=str(e),
+                )
+
+        if mtype == "error":
+            logger.warning("server error: %s", msg.get("error"))
+            return None
+
+        if mtype:
+            logger.debug("unknown server message type=%r", mtype)
+        return None
+
+    def run_mock_loop(self, server_messages: list[dict]) -> list[dict]:
+        """in-memory mock WebSocket 루프 (테스트 전용).
+
+        server_messages: 서버가 순서대로 보내는 메시지 목록.
+        반환값: client가 생성한 응답 페이로드 목록 (None 제외).
+
+        실제 네트워크 연결 없음. dry_run 여부와 무관하게 동작.
+        """
+        sent: list[dict] = []
+
+        # 1) auth 페이로드 생성 (token은 build_auth 내부에서만 사용)
+        auth = build_auth(self.config.agent_id, self.config.device_token)
+        sent.append(auth)
+
+        # 2) 서버 메시지 순서대로 처리
+        for msg in server_messages:
+            response = self.process_server_message(msg)
+            if response is not None:
+                sent.append(response)
+
+        return sent
+
+
 __all__ = [
     "AgentConfig",
+    "BlockedAction",
     "LocalAgentClient",
     "LOW_RISK_ACTIONS",
     "NotImplementedInThisStage",
