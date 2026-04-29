@@ -34,6 +34,7 @@ import type {
   LocalAgent,
   LocalAgentTask,
   LocalAgentTaskDetail,
+  ObserveSummary,
   AgentStatus,
   CaptureScreenshotResponse,
 } from "@/types/local-agent";
@@ -207,6 +208,122 @@ function DetailRow({ label, value, mono, danger }: DetailRowProps) {
         ].join(" ")}
       >
         {value}
+      </div>
+    </div>
+  );
+}
+
+// ─── Observe Summary Section (Stage 13B-3B) ──────────────────────────────────
+
+const _STATUS_BADGE_COLOR: Record<string, string> = {
+  ok: "bg-[#D1FAE5] text-[#065F46]",
+  blocked: "bg-[#FEE2E2] text-[#B91C1C]",
+  failed: "bg-[#FEE2E2] text-[#B91C1C]",
+};
+
+// page_structure_counts에서 표시 허용 키 (텍스트 원본 제외, count 정수만)
+const _PSC_KEYS = [
+  "headings", "links", "buttons", "inputs", "forms", "tables",
+] as const;
+
+function ObserveSummarySection({ obs }: { obs: ObserveSummary }) {
+  const statusColor =
+    _STATUS_BADGE_COLOR[obs.status_category ?? ""] ??
+    "bg-[#F3F4F6] text-[#6B7280]";
+
+  // page_structure_counts: 허용된 키만, 정수 값만 표시
+  const psc = obs.page_structure_counts;
+  const pscItems =
+    psc && typeof psc === "object"
+      ? _PSC_KEYS.flatMap((k) => {
+          const v = psc[k];
+          return typeof v === "number" ? [{ k, v }] : [];
+        })
+      : [];
+
+  return (
+    <div className="mt-3 pt-3 border-t border-[#E5E7EB]">
+      <div className="mb-2 text-[12px] font-semibold text-[#374151]">관찰 요약</div>
+      <div className="space-y-1.5">
+        {/* 상태 badge */}
+        {obs.status_category && (
+          <div className="flex items-start gap-2">
+            <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">상태</div>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${statusColor}`}
+            >
+              {obs.status_category}
+            </span>
+          </div>
+        )}
+        {/* 페이지 제목 — text only, 링크화 금지 */}
+        {obs.title && (
+          <DetailRow label="페이지 제목" value={obs.title} />
+        )}
+        {/* URL 분류 */}
+        {obs.url_category && (
+          <DetailRow label="URL 분류" value={obs.url_category} mono />
+        )}
+        {/* final_url_sanitized — text only, anchor 금지 */}
+        {obs.final_url_sanitized && (
+          <DetailRow label="최종 URL" value={obs.final_url_sanitized} mono />
+        )}
+        {/* 로그인 필요 가능성 — true 일 때만 */}
+        {obs.login_required_hint === true && (
+          <DetailRow label="로그인 감지" value="로그인 필요 가능성 있음" />
+        )}
+        {/* 관찰 페이지 수 */}
+        {obs.pages_observed_count !== null &&
+          obs.pages_observed_count !== undefined && (
+          <DetailRow
+            label="관찰 페이지"
+            value={String(obs.pages_observed_count)}
+          />
+        )}
+        {/* 모달 후보 수 — 목록 원문 표시 금지, count만 */}
+        {obs.modal_candidates_count !== null &&
+          obs.modal_candidates_count !== undefined && (
+          <DetailRow
+            label="모달 후보"
+            value={String(obs.modal_candidates_count)}
+          />
+        )}
+        {/* HTML 축약 여부 — boolean만 */}
+        {typeof obs.html_truncated === "boolean" && (
+          <DetailRow
+            label="HTML 축약"
+            value={obs.html_truncated ? "예" : "아니오"}
+          />
+        )}
+        {/* 페이지 구조 카운트 — 원본 구조 금지, count 요약만 */}
+        {pscItems.length > 0 && (
+          <div className="flex items-start gap-2">
+            <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">
+              페이지 구조
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {pscItems.map(({ k, v }) => (
+                <span
+                  key={k}
+                  className="font-mono text-[11px] bg-[#F3F4F6] text-[#374151] px-1.5 py-0.5 rounded"
+                >
+                  {k}={v}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* 오류/차단 — enum 코드만, danger 색 */}
+        {obs.error_category && (
+          <DetailRow label="오류 분류" value={obs.error_category} danger />
+        )}
+        {obs.blocked_reason && (
+          <DetailRow label="차단 사유" value={obs.blocked_reason} danger />
+        )}
+        {/* 관찰 시각 */}
+        {obs.observed_at && (
+          <DetailRow label="관찰 시각" value={obs.observed_at} />
+        )}
       </div>
     </div>
   );
@@ -1175,6 +1292,10 @@ export default function LocalAgentsClient() {
             )}
             {detailData.cancel_reason && (
               <DetailRow label="취소 사유" value={detailData.cancel_reason} />
+            )}
+            {/* 관찰 요약 섹션 — observe_summary가 있을 때만 표시 */}
+            {detailData.observe_summary && (
+              <ObserveSummarySection obs={detailData.observe_summary} />
             )}
             <div className="mt-3 pt-3 border-t border-[#E5E7EB] text-[11px] text-[#6B7280] leading-relaxed">
               민감정보(쿠키·세션·토큰·Authorization·password·HTML 본문·query 원문)는
