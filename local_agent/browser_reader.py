@@ -217,6 +217,7 @@ def open_url_readonly(
     return {
         "ok": True,
         "url": url,
+        "url_category": url_category,
         "current_url": (current_url or "")[:500],
         "title": (page_title or "")[:300],
         "html_truncated": html_truncated,

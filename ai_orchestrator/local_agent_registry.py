@@ -23,6 +23,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
+from urllib.parse import urlparse
 
 
 # ── 액션 정의 ────────────────────────────────────────────────────────────
@@ -147,6 +148,8 @@ class LocalAgentTask:
     cancel_requested_at: str = ""     # cancel_requested 전환 시각
     cancel_requested_by: str = ""     # 취소 요청자
     cancelled_at: str = ""            # 최종 cancelled 전환 시각
+    # Stage 13B-3A: controlled browser observe 결과 구조화 요약 (sanitized, optional)
+    observe_summary: Optional[dict] = None
 
     def to_safe(self) -> dict:
         return {
@@ -175,6 +178,7 @@ class LocalAgentTask:
             "cancel_requested_at": self.cancel_requested_at,
             "cancel_requested_by": self.cancel_requested_by,
             "cancelled_at": self.cancelled_at,
+            "observe_summary": self.observe_summary,
         }
 
     def to_list_safe(self) -> dict:
@@ -780,6 +784,7 @@ def apply_result(
     summary: str = "",
     error: str = "",
     error_code: str = "",
+    observe_summary: Optional[dict] = None,
 ) -> Optional[LocalAgentTask]:
     """에이전트가 보고한 결과 반영. running/delivered/cancel_requested 에서 동작.
 
@@ -802,6 +807,8 @@ def apply_result(
             t.status = "completed"
             t.result_summary = (summary or "")[:500]
             t.error_summary = ""
+            if observe_summary is not None:
+                t.observe_summary = _build_observe_summary(observe_summary)
         else:
             t.status = "failed"
             # error_summary 는 민감값이 섞일 수 있어 짧게만 보존
@@ -916,6 +923,114 @@ def cancel_task(
         raise CancelNotAllowedError(
             f"취소 불가 — 처리되지 않은 상태: {t.status!r} (task_id={task_id})"
         )
+
+
+# ── observe_summary sanitize ─────────────────────────────────────────────
+
+_OBSERVE_SUMMARY_ALLOWED_KEYS: frozenset = frozenset({
+    "target_kind", "url_category", "final_url_sanitized",
+    "title", "title_len", "status_category", "pages_observed_count",
+    "error_category", "blocked_reason", "login_required_hint",
+    "modal_candidates_count", "html_truncated", "page_structure_counts",
+    "observed_at",
+})
+
+_OBSERVE_FORBIDDEN_KEYS: frozenset = frozenset({
+    "cookie", "session", "token", "authorization", "password",
+    "localstorage", "sessionstorage", "html", "content", "body",
+    "query", "fragment", "headers", "login_reason", "modal_candidates",
+    "page_structure", "current_url",
+})
+
+_PAGE_STRUCTURE_COUNT_KEYS: tuple = (
+    "headings", "links", "buttons", "inputs", "forms", "tables",
+)
+
+
+def _sanitize_final_url_value(raw: object) -> Optional[str]:
+    """final_url_sanitized 검증: query/fragment 제거, 허용 대상만 반환."""
+    if not isinstance(raw, str):
+        return None
+    raw = raw.strip()
+    if raw.lower() == "about:blank":
+        return "about:blank"
+    try:
+        parsed = urlparse(raw)
+        host = (parsed.hostname or "").lower()
+        if host in ("127.0.0.1", "localhost"):
+            port_str = f":{parsed.port}" if parsed.port else ""
+            return f"{parsed.scheme}://{host}{port_str}{parsed.path}"
+    except Exception:
+        pass
+    return None
+
+
+def _build_observe_summary(raw: Optional[dict]) -> Optional[dict]:
+    """WS result에서 받은 raw observe_summary를 허용 필드만 추출/sanitize.
+
+    금지 키(cookie/session/token/authorization/password/html 등)는 포함하지 않는다.
+    final_url_sanitized는 반드시 재검증한다.
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    out: dict = {}
+
+    # String enum 필드 — 길이 제한
+    for key in ("target_kind", "url_category", "status_category",
+                "error_category", "blocked_reason"):
+        val = raw.get(key)
+        if val is not None:
+            out[key] = str(val)[:80]
+
+    # final_url_sanitized — 반드시 재검증 (orchestrator 방어)
+    out["final_url_sanitized"] = _sanitize_final_url_value(
+        raw.get("final_url_sanitized")
+    )
+
+    # title — 길이 제한
+    title = str(raw.get("title") or "")[:300]
+    out["title"] = title
+    try:
+        out["title_len"] = int(raw.get("title_len") or len(title))
+    except (TypeError, ValueError):
+        out["title_len"] = len(title)
+
+    # Bool 필드
+    for key in ("login_required_hint", "html_truncated"):
+        if key in raw:
+            out[key] = bool(raw[key])
+
+    # Integer 필드
+    for key in ("pages_observed_count", "modal_candidates_count"):
+        val = raw.get(key)
+        if val is not None:
+            try:
+                out[key] = max(0, int(val))
+            except (TypeError, ValueError):
+                out[key] = 0
+
+    # page_structure_counts — 카운트 요약만, 텍스트 내용 금지
+    psc = raw.get("page_structure_counts")
+    if isinstance(psc, dict):
+        safe_counts: dict = {}
+        for k in _PAGE_STRUCTURE_COUNT_KEYS:
+            try:
+                safe_counts[k] = max(0, int(psc.get(k) or 0))
+            except (TypeError, ValueError):
+                safe_counts[k] = 0
+        out["page_structure_counts"] = safe_counts
+
+    # observed_at — ISO 타임스탬프 문자열
+    ts = raw.get("observed_at")
+    if isinstance(ts, str) and ts:
+        out["observed_at"] = ts[:40]
+
+    # 금지 키 방어 삭제
+    for bad_key in _OBSERVE_FORBIDDEN_KEYS:
+        out.pop(bad_key, None)
+
+    return out if out else None
 
 
 __all__ = [

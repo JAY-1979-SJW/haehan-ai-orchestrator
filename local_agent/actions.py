@@ -459,15 +459,42 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         )
 
     # HTML 원문은 반환 data 에 포함하지 않는다.
+    _title_raw = str(result.get("title") or "")
+    _url_cat = str(result.get("url_category") or browser_reader._categorize_url(url))
+    _modal_list = list(result.get("modal_candidates") or [])
+    _ps = result.get("page_structure") or {}
+    _counts = _ps.get("counts") or {}
     data = {
         "url": result.get("url"),
         "current_url": result.get("current_url", ""),
-        "title": result.get("title", ""),
+        "title": _title_raw[:300],
         "html_truncated": bool(result.get("html_truncated", False)),
         "login_required_hint": bool(result.get("login_required_hint", False)),
         "login_reason": list(result.get("login_reason") or []),
-        "modal_candidates": list(result.get("modal_candidates") or []),
-        "page_structure": result.get("page_structure") or {},
+        "modal_candidates": _modal_list,
+        "page_structure": _ps,
+        # observe_summary: sanitized 구조화 필드 (orchestrator 전달용)
+        "observe_summary": {
+            "target_kind": _url_cat,
+            "url_category": _url_cat,
+            "final_url_sanitized": _safe_final_url(
+                str(result.get("current_url") or ""), _url_cat,
+            ),
+            "title": _title_raw[:300],
+            "title_len": len(_title_raw),
+            "status_category": "ok",
+            "pages_observed_count": 1,
+            "error_category": None,
+            "blocked_reason": None,
+            "login_required_hint": bool(result.get("login_required_hint", False)),
+            "modal_candidates_count": len(_modal_list),
+            "html_truncated": bool(result.get("html_truncated", False)),
+            "page_structure_counts": {
+                k: max(0, int(_counts.get(k) or 0))
+                for k in ("headings", "links", "buttons", "inputs", "forms", "tables")
+            },
+            "observed_at": _now_iso(),
+        },
     }
     return ActionResult(
         success=True,
@@ -945,6 +972,23 @@ def execute_action(action: str, params: dict) -> ActionResult:
 
 
 # ── 헬퍼 ──────────────────────────────────────────────────────────────────
+
+def _safe_final_url(current_url: str, url_category: str) -> "str | None":
+    """final_url_sanitized 용 sanitize: query/fragment 제거, 허용 대상만 반환."""
+    if url_category == "about_blank":
+        return "about:blank"
+    if not current_url:
+        return None
+    try:
+        parsed = urlparse(current_url)
+        host = (parsed.hostname or "").lower()
+        if host in ("127.0.0.1", "localhost"):
+            port_str = f":{parsed.port}" if parsed.port else ""
+            return f"{parsed.scheme}://{host}{port_str}{parsed.path}"
+    except Exception:
+        pass
+    return None
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
