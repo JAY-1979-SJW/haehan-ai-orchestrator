@@ -391,6 +391,115 @@ def create_capture_screenshot_request(
     }
 
 
+class OpenUrlExecuteRequest(BaseModel):
+    """승인형 actual open_url 실행 요청 body.
+
+    - url: 열 URL (http/https 만 허용, query string 은 저장 시 제거)
+    - reason: 감사 메모용 텍스트
+    dry_run=false 직접 open_url 요청은 별도 endpoint 로 거부된다.
+    이 endpoint 를 통해서만 open_url_execute task 가 생성된다.
+    """
+    url: str
+    reason: str = ""
+
+
+@local_agent_router.post("/{agent_id}/open-url-execution-request")
+def create_open_url_execute_request(
+    agent_id: str,
+    body: OpenUrlExecuteRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """운영자가 승인형 actual open_url 실행을 요청하는 진입점.
+
+    동작:
+      - open_url_execute task 를 waiting_approval 상태로 생성.
+      - approval token 발행 + task 에 attach.
+      - 승인 전에는 agent 에 deliver 되지 않음.
+      - URL query string 은 저장/응답 시 제거.
+      - token 원문은 응답에 포함하지 않음.
+    """
+    from urllib.parse import urlparse, urlunparse
+
+    actor = user["actor"]
+    role = user["role"]
+
+    url = (body.url or "").strip()
+    if not url:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "MISSING_URL", "message": "url 은 필수입니다"},
+        )
+
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "URL_SCHEME_NOT_ALLOWED",
+                "message": f"http/https 만 허용됩니다: {parsed.scheme!r}",
+            },
+        )
+    if not parsed.netloc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_URL", "message": "유효하지 않은 URL"},
+        )
+
+    # query string 제거 후 normalized URL 만 저장
+    normalized_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+
+    agent = _reg.get_agent(agent_id)
+    if agent is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "AGENT_NOT_FOUND", "message": f"agent_id={agent_id}"},
+        )
+
+    task = _reg.enqueue_task(
+        agent_id=agent_id,
+        action="open_url_execute",
+        params={"url": normalized_url},
+        requested_by=actor,
+    )
+
+    token = issue_token_for_dev_reg(
+        task_id=task.task_id,
+        requested_by=actor,
+        risk_level=task.risk_level,
+        ttl_minutes=30,
+    )
+    _reg.attach_token(task.task_id, token.token_id)
+
+    log_event(
+        "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
+        risk_level=task.risk_level,
+        action_type=task.action,
+        actor=actor, role=role,
+        token_id=token.token_id,
+        note=(
+            f"agent_id={agent_id} url_host={parsed.netloc}"
+            + (f" reason={body.reason[:100]}" if body.reason else "")
+        ),
+    )
+    log_event(
+        "OPEN_URL_EXECUTE_APPROVAL_REQUESTED", task.task_id,
+        risk_level=task.risk_level,
+        action_type=task.action,
+        actor=actor, role=role,
+        token_id=token.token_id,
+        note=f"agent_id={agent_id} url_host={parsed.netloc} normalized_url={normalized_url}",
+    )
+
+    return {
+        "task_id": task.task_id,
+        "agent_id": agent_id,
+        "action": "open_url_execute",
+        "status": "waiting_approval",
+        "url_host": parsed.netloc,
+        "approval_required": True,
+    }
+
+
 _CANCEL_REASON_MAX_LEN = 200
 
 
