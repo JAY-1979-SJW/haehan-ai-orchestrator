@@ -207,7 +207,9 @@ def test_approved_capture_dispatched_via_ws_with_approved_flag(admin_user):
         json={"token_id": token_id},
     )
 
-    # WS 연결 → task push 수신
+    # WS 연결 → task push 수신 → WS context 안에서 status 확인
+    # (disconnect 시 delivered/running active task 는 failed 로 전환되므로
+    #  status 는 반드시 WS 연결 중에 확인해야 한다.)
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
         ws.send_json({"type": "auth", "agent_id": agent_id,
                       "device_token": token})
@@ -219,10 +221,11 @@ def test_approved_capture_dispatched_via_ws_with_approved_flag(admin_user):
         assert msg["task"]["risk_level"] == "high"
         assert msg["task"]["approved"] is True
 
-    fetched = client.get(
-        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
-    ).json()
-    assert fetched["status"] == "delivered"
+        # delivered 상태 확인은 WS 연결 유지 중에 수행
+        fetched = client.get(
+            f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+        ).json()
+        assert fetched["status"] == "delivered"
 
 
 def test_approved_capture_not_redelivered_on_reconnect(admin_user):
@@ -278,6 +281,11 @@ def test_result_summary_contains_basename_only(admin_user):
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
 
+        # delivered → running 전환 (running 없이 result 전송 시
+        # InvalidTaskTransitionError: delivered → completed 발생)
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
         # 에이전트가 basename 만 포함한 summary 로 결과 보고
         ws.send_json({
             "type": "result",
@@ -320,11 +328,14 @@ def test_audit_log_does_not_leak_fullpath_or_token(admin_user):
                       "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
+        # delivered → running 전환 필수 (상태 기계: delivered → running → completed)
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
         ws.send_json({
             "type": "result", "task_id": task_id, "success": True,
             "summary": f"screenshot_saved basename={basename} size=1920x1080",
         })
-        ws.receive_json()
+        ws.receive_json()  # result_ack
 
     raw = _al._LOG_PATH.read_text(encoding="utf-8")
     # device_token 원문은 등장 불가

@@ -242,16 +242,48 @@ async def _run_session(agent_id: str, device_token: str) -> None:
             mtype = str(msg.get("type", ""))
             if mtype == "task":
                 task = msg.get("task") or {}
-                # running 전송 (best effort)
+                task_id_inner = task.get("task_id", "")
+
+                # 1) running 전송 후 running_ack 대기
+                # 서버 상태 기계 요구사항: delivered → running → completed
+                # running_ack 없이 result 를 보내면 delivered → completed 가
+                # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
+                run_ok = False
                 try:
                     await ws.send(json.dumps({
                         "type": "running",
                         "agent_id": agent_id,
-                        "task_id": task.get("task_id", ""),
+                        "task_id": task_id_inner,
                     }))
+                    try:
+                        ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
+                        ack = json.loads(ack_raw)
+                        run_ok = ack.get("type") == "running_ack"
+                        if not run_ok:
+                            logger.warning(
+                                "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
+                                ack.get("type"), task_id_inner,
+                            )
+                    except asyncio.TimeoutError:
+                        logger.warning(
+                            "running_ack timeout — 실행 포기 (task_id=%s)",
+                            task_id_inner,
+                        )
+                    except (TypeError, json.JSONDecodeError):
+                        logger.warning(
+                            "running_ack 파싱 실패 — 실행 포기 (task_id=%s)",
+                            task_id_inner,
+                        )
                 except Exception:
-                    logger.warning("running 메시지 전송 실패")
-                # 로컬 실행 후 result 회신
+                    logger.warning(
+                        "running 전송 실패 — 실행 포기 (task_id=%s)", task_id_inner,
+                    )
+
+                if not run_ok:
+                    # running 상태로 전환됐을 수 있으므로 서버 timeout 에 맡긴다.
+                    continue
+
+                # 2) 로컬 실행 후 result 회신 (서버 상태: running → completed/failed)
                 result_msg = process_task(task)
                 result_msg["agent_id"] = agent_id
                 await ws.send(json.dumps(result_msg))
