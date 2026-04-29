@@ -439,5 +439,122 @@ def test_process_task_open_url_execute_approved_calls_action():
     mock_open.assert_called_once_with("https://example.com")
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# 18. WS integration — open_url_execute full delivery path
+#     (delivered → running → completed 상태 전이 검증)
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_open_url_execute_ws_running_then_result_ack_completed(tmp_path):
+    """open_url_execute WS full path: running → running_ack → result → result_ack(completed).
+
+    서버 상태 기계: waiting_approval → queued → delivered → running → completed.
+    running 없이 result 전송 시 InvalidTaskTransitionError 발생 확인도 포함한다.
+    """
+    import ai_orchestrator.local_agent_registry as reg
+    from ai_orchestrator.approval import issue_token_for_dev_reg, approve_token
+
+    user = _make_admin_user()
+    client = _make_test_client(user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+
+    # open_url_execute task 생성 (waiting_approval)
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/open-url-execution-request",
+        json={"url": "https://example.com/ws-test", "reason": "ws integration test"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    task_id = body["task_id"]
+    assert body["status"] == "waiting_approval"
+
+    # approval token 조회 후 승인
+    task_obj = reg.get_task(agent_id, task_id)
+    token_id = task_obj.token_id
+    assert token_id, "approval token_id 가 task 에 없음"
+
+    approve_resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/approve",
+        json={"token_id": token_id},
+    )
+    assert approve_resp.status_code == 200
+
+    # WS: running → running_ack → result → result_ack(completed)
+    with mock.patch("local_agent.actions.webbrowser.open"):
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            device_token = reg_resp["device_token"]
+            ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": device_token})
+            assert ws.receive_json()["type"] == "auth_ok"
+
+            msg = ws.receive_json()
+            assert msg["type"] == "task"
+            assert msg["task"]["task_id"] == task_id
+            assert msg["task"]["action"] == "open_url_execute"
+            assert msg["task"]["approved"] is True
+
+            # delivered → running (필수)
+            ws.send_json({"type": "running", "task_id": task_id})
+            ack = ws.receive_json()
+            assert ack["type"] == "running_ack"
+            assert ack["status"] == "running"
+
+            # result 전송 (running → completed)
+            ws.send_json({
+                "type": "result",
+                "task_id": task_id,
+                "success": True,
+                "summary": "open_url_execute_ok",
+            })
+            result_ack = ws.receive_json()
+            assert result_ack["type"] == "result_ack"
+            assert result_ack["status"] == "completed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "completed"
+
+
+def test_open_url_execute_ws_result_without_running_fails(tmp_path):
+    """open_url_execute: running 없이 result 전송 시 WS 가 1011 로 종료되어야 한다.
+
+    서버가 delivered → completed 전환을 허용하지 않음을 검증한다.
+    """
+    import ai_orchestrator.local_agent_registry as reg
+    from starlette.websockets import WebSocketDisconnect
+
+    user = _make_admin_user()
+    client = _make_test_client(user)
+    reg_resp = _register_agent(client)
+    agent_id = reg_resp["agent_id"]
+
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/open-url-execution-request",
+        json={"url": "https://example.com/no-running"},
+    )
+    task_id = resp.json()["task_id"]
+    task_obj = reg.get_task(agent_id, task_id)
+    token_id = task_obj.token_id
+
+    client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/approve",
+        json={"token_id": token_id},
+    )
+
+    with pytest.raises(WebSocketDisconnect):
+        with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+            ws.send_json({"type": "auth", "agent_id": agent_id,
+                          "device_token": reg_resp["device_token"]})
+            assert ws.receive_json()["type"] == "auth_ok"
+            assert ws.receive_json()["type"] == "task"
+
+            # running 없이 바로 result(success=True) 전송 → delivered → completed 시도
+            ws.send_json({
+                "type": "result", "task_id": task_id,
+                "success": True, "summary": "open_url_execute_ok",
+            })
+            ws.receive_json()  # 여기서 WebSocketDisconnect(1011) 발생해야 함
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
