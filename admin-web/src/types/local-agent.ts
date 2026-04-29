@@ -88,6 +88,32 @@ export interface CaptureScreenshotResponse {
   approval_required: boolean;
 }
 
+/** Stage 13B-3A: controlled browser observe 결과 구조화 요약 (sanitized). */
+export interface ObserveSummary {
+  target_kind?: string | null;
+  url_category?: string | null;
+  /** query/fragment 제거된 안전 URL — about:blank 또는 loopback 만 허용, 외부 URL은 null */
+  final_url_sanitized?: string | null;
+  title?: string | null;
+  title_len?: number | null;
+  status_category?: string | null;
+  pages_observed_count?: number | null;
+  error_category?: string | null;
+  blocked_reason?: string | null;
+  login_required_hint?: boolean | null;
+  modal_candidates_count?: number | null;
+  html_truncated?: boolean | null;
+  page_structure_counts?: {
+    headings?: number;
+    links?: number;
+    buttons?: number;
+    inputs?: number;
+    forms?: number;
+    tables?: number;
+  } | null;
+  observed_at?: string | null;
+}
+
 /** GET /local-agents/{agent_id}/tasks/{task_id} — to_safe() 응답 (token_id 포함) */
 export interface LocalAgentTaskDetail extends LocalAgentTask {
   token_id: string;
@@ -95,6 +121,7 @@ export interface LocalAgentTaskDetail extends LocalAgentTask {
   approved_by: string | null;
   rejected_at: string | null;
   reject_reason: string | null;
+  observe_summary?: ObserveSummary | null;
 }
 
 export interface ApprovalRequest {
