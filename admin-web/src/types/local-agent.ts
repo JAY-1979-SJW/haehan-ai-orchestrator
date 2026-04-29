@@ -169,3 +169,45 @@ export interface ApprovalResponse extends LocalAgentTask {
   rejected_at: string | null;
   reject_reason: string | null;
 }
+
+/** Stage 13E-2: Local Agent 운영 진단 정보 (read-only, allowlist 필드만). */
+export interface LocalAgentDiagnostics {
+  status: "ok" | "warn" | "error" | string;
+  schema_version: number;
+  diagnostics_generated_at: string;
+  repo_boundary_status: "pass" | "fail" | "not_checked" | string;
+  agents: {
+    total: number;
+    online: number;
+    offline: number;
+    stale: number;
+  };
+  tasks: {
+    total: number;
+    queued: number;
+    pending: number;
+    running: number;
+    waiting_approval: number;
+    completed: number;
+    failed: number;
+    rejected: number;
+    cancelled: number;
+  };
+  summaries: {
+    with_result_summary: number;
+    with_observe_summary: number;
+    with_audit_summary: number;
+  };
+  latest: {
+    task_created_at: string | null;
+    task_updated_at: string | null;
+    task_status: string | null;
+    has_observe_summary: boolean;
+    has_audit_summary: boolean;
+  };
+  warnings: string[];
+}
+
+export interface LocalAgentDiagnosticsResponse {
+  diagnostics: LocalAgentDiagnostics;
+}
