@@ -223,15 +223,17 @@ class TestHighRiskBlock:
         with pytest.raises(BlockedAction):
             handle_task(task)
 
-    def test_open_url_not_implemented(self):
-        task = {"task_id": "t-url", "action": "open_url", "params": {"url": "https://example.com"}}
-        with pytest.raises(NotImplementedInThisStage):
-            handle_task(task)
+    def test_open_url_dry_run_only(self):
+        task = {"task_id": "t-url", "action": "open_url", "params": {}}
+        result = handle_task(task)
+        assert result["error_code"] == "DRY_RUN_ONLY"
+        assert result["success"] is False
 
-    def test_list_files_not_implemented(self):
+    def test_list_files_dry_run_only(self):
         task = {"task_id": "t-files", "action": "list_files_readonly", "params": {}}
-        with pytest.raises(NotImplementedInThisStage):
-            handle_task(task)
+        result = handle_task(task)
+        assert result["error_code"] == "DRY_RUN_ONLY"
+        assert result["success"] is False
 
     def test_delete_file_not_implemented(self):
         task = {"task_id": "t-del", "action": "delete_file", "params": {}}

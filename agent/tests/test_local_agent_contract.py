@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from agent.local_agent_client import (
     BlockedAction,
+    DRY_RUN_ACTIONS,
     LocalAgentClient,
     LOW_RISK_ACTIONS,
     NotImplementedInThisStage,
@@ -304,9 +305,16 @@ class TestBlockedResultContract:
 
     def test_not_implemented_result_no_stack_trace(self, client):
         """미구현 action result에 stack trace 미포함."""
-        msg = _server_task_msg("open_url", "t-ou", risk="low")
+        msg = _server_task_msg("delete_file", "t-df", risk="low")
         result = client.process_server_message(msg)
         assert result["error_code"] == "NOT_IMPLEMENTED"
+        assert "Traceback" not in str(result)
+
+    def test_dry_run_result_no_stack_trace(self, client):
+        """dry-run action result에 stack trace 미포함."""
+        msg = _server_task_msg("open_url", "t-ou", risk="low")
+        result = client.process_server_message(msg)
+        assert result["error_code"] == "DRY_RUN_ONLY"
         assert "Traceback" not in str(result)
 
 
@@ -335,16 +343,18 @@ class TestActionEnumContract:
             handle_task({"task_id": "t", "action": "capture_screenshot"})
 
     def test_open_url_not_in_client_low_risk(self):
-        """open_url은 클라이언트에서 이번 단계 미구현."""
+        """open_url은 LOW_RISK_ACTIONS 아니고 DRY_RUN_ONLY result 반환."""
         assert "open_url" not in LOW_RISK_ACTIONS
-        with pytest.raises(NotImplementedInThisStage):
-            handle_task({"task_id": "t", "action": "open_url"})
+        assert "open_url" in DRY_RUN_ACTIONS
+        result = handle_task({"task_id": "t", "action": "open_url"})
+        assert result["error_code"] == "DRY_RUN_ONLY"
 
     def test_list_files_not_in_client_low_risk(self):
-        """list_files_readonly는 클라이언트에서 이번 단계 미구현."""
+        """list_files_readonly는 LOW_RISK_ACTIONS 아니고 DRY_RUN_ONLY result 반환."""
         assert "list_files_readonly" not in LOW_RISK_ACTIONS
-        with pytest.raises(NotImplementedInThisStage):
-            handle_task({"task_id": "t", "action": "list_files_readonly"})
+        assert "list_files_readonly" in DRY_RUN_ACTIONS
+        result = handle_task({"task_id": "t", "action": "list_files_readonly"})
+        assert result["error_code"] == "DRY_RUN_ONLY"
 
     def test_unknown_action_not_implemented(self):
         with pytest.raises((NotImplementedInThisStage, BlockedAction)):
