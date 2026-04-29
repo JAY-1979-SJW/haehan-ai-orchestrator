@@ -37,6 +37,7 @@ from .auth import require_role
 from .audit_logger import log_event
 from .approval import issue_token_for_dev_reg, approve_token, reject_token
 from . import local_agent_registry as _reg
+from . import local_agent_diagnostics
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,20 @@ def list_local_agents(
     user: dict = Depends(require_role("admin", "owner", "viewer")),
 ):
     return {"agents": _reg.list_agents()}
+
+
+@local_agent_router.get("/diagnostics")
+def get_local_agents_diagnostics(
+    user: dict = Depends(require_role("admin", "owner", "viewer")),
+):
+    """Local agent 운영 진단 정보 (read-only).
+
+    agent/task 상태 집계, 민감정보 제외 (token_id, raw params, raw audit, raw html/url/secret 등).
+    allowlist field만 반환 (counts, status, timestamps).
+    """
+    with _reg._lock:
+        diagnostics = local_agent_diagnostics.build_local_agent_diagnostics()
+    return diagnostics
 
 
 @local_agent_router.post("/{agent_id}/tasks")
