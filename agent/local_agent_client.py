@@ -1,10 +1,12 @@
-"""WebSocket 기반 로컬 에이전트 클라이언트 (Stage 13F-2A).
+"""WebSocket 기반 로컬 에이전트 클라이언트 (Stage 13F-2D).
 
 이번 단계 범위:
   - 설정 로딩 (환경변수)
   - heartbeat payload 생성
+  - running payload 생성
   - task 메시지 handler 골격
   - low-risk dry-run 처리 (ping / system_info / list_allowed_apps)
+  - open_url / list_files_readonly dry-run skeleton (DRY_RUN_ONLY)
   - result payload 생성
   - 민감정보 제거
 
@@ -157,6 +159,20 @@ def build_auth(agent_id: str, device_token: str) -> dict:
     }
 
 
+# ── running payload ───────────────────────────────────────────────────────────
+
+def build_running(task_id: str) -> dict:
+    """WS running 메시지 페이로드.
+
+    token/device_token/params/raw_params는 포함하지 않는다.
+    서버 수신 형식: {type: "running", task_id: "..."}
+    """
+    return {
+        "type": "running",
+        "task_id": task_id,
+    }
+
+
 # ── low-risk dry-run handlers ────────────────────────────────────────────────
 
 def _handle_ping(task: dict) -> dict:
@@ -191,6 +207,44 @@ _LOW_RISK_HANDLERS = {
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
+
+
+# ── dry-run blocked handlers ──────────────────────────────────────────────────
+
+def _handle_open_url(task: dict) -> dict:
+    """open_url dry-run skeleton.
+
+    실제 브라우저 실행 금지, 외부 URL 접속 금지.
+    raw URL/query/fragment는 result에 포함하지 않는다.
+    """
+    return build_result(
+        task_id=(task.get("task_id") or task.get("id") or "").strip(),
+        success=False,
+        summary="open_url is in dry-run mode; browser not launched",
+        error_code="DRY_RUN_ONLY",
+    )
+
+
+def _handle_list_files_readonly(task: dict) -> dict:
+    """list_files_readonly dry-run skeleton.
+
+    실제 파일 시스템 접근 금지.
+    path/raw_path/absolute_path는 result에 포함하지 않는다.
+    """
+    return build_result(
+        task_id=(task.get("task_id") or task.get("id") or "").strip(),
+        success=False,
+        summary="list_files_readonly is in dry-run mode; filesystem not accessed",
+        error_code="DRY_RUN_ONLY",
+    )
+
+
+_DRY_RUN_HANDLERS = {
+    "open_url": _handle_open_url,
+    "list_files_readonly": _handle_list_files_readonly,
+}
+
+DRY_RUN_ACTIONS: frozenset[str] = frozenset(_DRY_RUN_HANDLERS)
 
 
 # ── result payload ────────────────────────────────────────────────────────────
@@ -238,10 +292,12 @@ class BlockedAction(Exception):
 def handle_task(task: dict, *, dry_run: bool = True) -> dict:
     """WS 수신 task 처리 골격.
 
-    - low-risk 3종: dry_run 무관하게 서버 자동완료용 응답 반환
-    - 그 외: NotImplementedInThisStage 발생 (이번 단계 미구현)
+    - low-risk 3종: dry_run 무관하게 completed result 반환
+    - dry-run 2종(open_url/list_files_readonly): DRY_RUN_ONLY result 반환
+    - high-risk(capture_screenshot): BlockedAction 발생
+    - 그 외: NotImplementedInThisStage 발생
 
-    반환값: build_result() 에 전달할 kwargs dict.
+    반환값: build_result() 페이로드 dict.
     """
     action = (task.get("action") or "").strip()
     task_id = (task.get("task_id") or task.get("id") or "").strip()
@@ -254,16 +310,18 @@ def handle_task(task: dict, *, dry_run: bool = True) -> dict:
             summary=out.get("summary", ""),
         )
 
+    if action in _DRY_RUN_HANDLERS:
+        return _DRY_RUN_HANDLERS[action](task)
+
     # high-risk 액션은 명시적으로 차단
     _HIGH_RISK = {"capture_screenshot"}
     if action in _HIGH_RISK:
         raise BlockedAction(
-            f"action={action!r} is high-risk and blocked in Stage 13F-2B"
+            f"action={action!r} is high-risk and blocked"
         )
 
-    # 이번 단계에서 구현하지 않는 액션
     raise NotImplementedInThisStage(
-        f"action={action!r} is not implemented in Stage 13F-2B"
+        f"action={action!r} is not implemented in this stage"
     )
 
 
@@ -379,6 +437,44 @@ class LocalAgentClient:
             logger.debug("unknown server message type=%r", mtype)
         return None
 
+    def process_server_message_with_running(self, msg: dict) -> list[dict]:
+        """task 메시지 처리 시 running payload를 먼저 생성하고, result payload를 이어서 반환.
+
+        task 이외의 메시지는 빈 리스트 반환.
+        실제 WS 전송은 하지 않고 페이로드 목록만 반환한다.
+        """
+        mtype = (msg.get("type") or "").strip()
+        if mtype != "task":
+            return []
+
+        task = msg.get("task")
+        if not isinstance(task, dict):
+            return []
+
+        task_id = (task.get("task_id") or task.get("id") or "").strip()
+        running = build_running(task_id)
+
+        try:
+            result = handle_task(task, dry_run=self.config.dry_run)
+        except BlockedAction as e:
+            logger.warning("blocked action: %s", e)
+            result = build_result(
+                task_id=task_id,
+                success=False,
+                error_code="BLOCKED",
+                error=str(e),
+            )
+        except NotImplementedInThisStage as e:
+            logger.warning("not implemented: %s", e)
+            result = build_result(
+                task_id=task_id,
+                success=False,
+                error_code="NOT_IMPLEMENTED",
+                error=str(e),
+            )
+
+        return [running, result]
+
     def run_mock_loop(self, server_messages: list[dict]) -> list[dict]:
         """in-memory mock WebSocket 루프 (테스트 전용).
 
@@ -405,12 +501,14 @@ class LocalAgentClient:
 __all__ = [
     "AgentConfig",
     "BlockedAction",
+    "DRY_RUN_ACTIONS",
     "LocalAgentClient",
     "LOW_RISK_ACTIONS",
     "NotImplementedInThisStage",
     "build_auth",
     "build_heartbeat",
     "build_result",
+    "build_running",
     "handle_task",
     "load_config",
     "strip_sensitive",
