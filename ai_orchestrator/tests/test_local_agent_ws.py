@@ -866,5 +866,120 @@ def test_ws_disconnect_sets_disconnected_at(admin_user):
     assert a.disconnected_at != ""
 
 
+# ── ws_noop: WS delivery path 검증 전용 no-op ─────────────────────────
+
+def test_ws_noop_in_action_risk():
+    """ws_noop 이 ACTION_RISK 에 low 로 등록되어 있어야 한다."""
+    from ai_orchestrator.local_agent_registry import ACTION_RISK
+    assert ACTION_RISK.get("ws_noop") == "low"
+
+
+def test_ws_noop_not_in_server_auto_complete():
+    """ws_noop 은 _SERVER_AUTO_COMPLETE 에 절대 포함되면 안 된다."""
+    import ai_orchestrator.local_agent_registry as _reg
+    assert "ws_noop" not in _reg._SERVER_AUTO_COMPLETE
+
+
+def test_ws_noop_in_auto_execute_via_agent():
+    """ws_noop 은 서버 측 AUTO_EXECUTE_VIA_AGENT 에 포함되어야 한다."""
+    from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT
+    assert "ws_noop" in AUTO_EXECUTE_VIA_AGENT
+
+
+def test_ws_noop_in_client_auto_execute():
+    """ws_noop 은 클라이언트 _AUTO_EXECUTE_VIA_AGENT 에 포함되어야 한다."""
+    from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT
+    assert "ws_noop" in _AUTO_EXECUTE_VIA_AGENT
+
+
+def test_ws_noop_action_handler_no_side_effect():
+    """ws_noop handler 는 외부 동작 없이 success=True, summary='ws_noop_ok' 반환."""
+    from local_agent.actions import execute_action
+    result = execute_action("ws_noop", {})
+    assert result.success is True
+    assert result.summary == "ws_noop_ok"
+    assert result.error == ""
+    assert result.error_code == ""
+
+
+def test_ws_noop_action_handler_ignores_payload():
+    """ws_noop handler 는 임의 payload 가 있어도 동일한 결과를 반환한다."""
+    from local_agent.actions import execute_action
+    result = execute_action("ws_noop", {"arbitrary_key": "arbitrary_value"})
+    assert result.success is True
+    assert result.summary == "ws_noop_ok"
+
+
+def test_client_process_task_ws_noop_returns_success():
+    """process_task 에서 ws_noop 이 success=True result 메시지를 반환한다."""
+    from local_agent.websocket_client import process_task
+    r = process_task({
+        "task_id": "t-noop-1",
+        "action": "ws_noop",
+        "risk_level": "low",
+        "params": {},
+    })
+    assert r["type"] == "result"
+    assert r["task_id"] == "t-noop-1"
+    assert r["success"] is True
+    assert r["error_code"] == ""
+
+
+def test_ws_noop_full_delivery_path(admin_user):
+    """ws_noop 이 queued → delivered → running → completed WS 경로를 완주한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "ws_noop")
+    assert created["status"] == "queued", f"expected queued, got {created['status']}"
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+        msg = ws.receive_json()
+        assert msg["type"] == "task"
+        assert msg["task"]["task_id"] == task_id
+        assert msg["task"]["action"] == "ws_noop"
+
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        ws.send_json({
+            "type": "result",
+            "task_id": task_id,
+            "success": True,
+            "summary": "ws_noop_ok",
+        })
+        ack = ws.receive_json()
+        assert ack["type"] == "result_ack"
+        assert ack["status"] == "completed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    assert fetched["status"] == "completed"
+    assert fetched["started_at"]
+    assert fetched["completed_at"]
+
+
+def test_ws_noop_enqueue_does_not_auto_complete(admin_user):
+    """ws_noop enqueue 결과는 completed 가 아니라 queued 여야 한다.
+    (_SERVER_AUTO_COMPLETE 에 포함됐다면 즉시 completed 로 반환된다.)
+    """
+    client = _make_test_client(admin_user)
+    agent_id, _ = _register(client)
+    created = _enqueue(client, agent_id, "ws_noop")
+    assert created["status"] == "queued"
+
+
+def test_existing_actions_unchanged():
+    """ping/system_info/list_allowed_apps 동작이 ws_noop 추가 후에도 불변이다."""
+    from local_agent.actions import execute_action
+    assert execute_action("ping", {}).summary == "pong"
+    assert execute_action("system_info", {}).success is True
+    assert execute_action("list_allowed_apps", {}).success is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

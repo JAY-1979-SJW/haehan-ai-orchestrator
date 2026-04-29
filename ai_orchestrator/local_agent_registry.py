@@ -37,6 +37,7 @@ ACTION_RISK: dict[str, str] = {
     "open_url":           "low",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
+    "ws_noop":            "low",
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
@@ -57,6 +58,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ping", "system_info", "list_allowed_apps",
     "open_url", "list_files_readonly",
     "capture_screenshot",
+    "ws_noop",
 })
 
 
