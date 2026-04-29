@@ -255,7 +255,7 @@ def submit_local_agent_task(
             risk_level=task.risk_level,
             ttl_minutes=30,
         )
-        _reg.attach_token(task.task_id, token.token_id)
+        _reg.attach_token(task.task_id, token.token_id, token.public_id)
         log_event(
             "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
             risk_level=task.risk_level,
@@ -363,7 +363,7 @@ def create_capture_screenshot_request(
         risk_level=task.risk_level,
         ttl_minutes=30,
     )
-    _reg.attach_token(task.task_id, token.token_id)
+    _reg.attach_token(task.task_id, token.token_id, token.public_id)
     log_event(
         "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
         risk_level=task.risk_level,
@@ -468,7 +468,7 @@ def create_open_url_execute_request(
         risk_level=task.risk_level,
         ttl_minutes=30,
     )
-    _reg.attach_token(task.task_id, token.token_id)
+    _reg.attach_token(task.task_id, token.token_id, token.public_id)
 
     log_event(
         "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
