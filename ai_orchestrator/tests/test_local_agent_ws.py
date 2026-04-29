@@ -283,12 +283,10 @@ def test_ws_result_failure_marks_failed(admin_user):
 # ── 7. open_url 은 http/https 만 (client process_task) ─────────────────
 
 def test_client_process_task_open_url_scheme_guard(monkeypatch):
-    """open_url 테스트는 실제 OS 브라우저를 절대 열지 않는다.
+    """open_url dry-run 기본 동작과 스킴 가드 검증.
 
-    action_open_url 은 내부에서 webbrowser.open() 을 호출하므로, 테스트 단위에서는
-    monkeypatch 로 webbrowser.open 을 스텁해 호출만 기록한다. 스킴 가드(file/javascript/
-    data)는 action_open_url 내부에서 webbrowser 호출 전에 차단되므로, 혹시라도
-    분기 실수로 도달하더라도 실제 브라우저가 열리지 않도록 mock 을 함께 건다.
+    open_url 은 기본적으로 dry_run=true 로 동작하며, 이 경우 실제 브라우저를 열지 않는다.
+    스킴 가드(file/javascript/data)는 dry_run 여부와 무관하게 URL 검증 단계에서 차단된다.
     """
     import webbrowser
 
@@ -302,15 +300,18 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
 
     from local_agent.websocket_client import process_task
 
-    allowed = process_task({
+    # 기본값: dry_run=true (명시적으로 지정하지 않음)
+    result = process_task({
         "task_id": "t-1", "action": "open_url", "risk_level": "low",
         "params": {"url": "https://example.com/a"},
     })
-    assert allowed["type"] == "result"
-    assert allowed["task_id"] == "t-1"
-    # 허용 URL 은 action_open_url 경로까지 도달해 webbrowser.open 을 1회 호출
-    assert opened == ["https://example.com/a"]
+    assert result["type"] == "result"
+    assert result["task_id"] == "t-1"
+    assert result["success"] is True
+    # dry_run=true 기본값이므로 webbrowser.open 호출 안 됨
+    assert opened == []
 
+    # 스킴 가드: 위험한 스킴은 dry_run 여부와 무관하게 차단
     for bad_url in ("file:///C:/Windows/System32/cmd.exe",
                     "javascript:alert(1)",
                     "data:text/html,<script>x</script>"):
@@ -321,8 +322,8 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
         assert r["success"] is False
         assert r["error_code"] in {"URL_SCHEME_NOT_ALLOWED", "INVALID_URL"}
 
-    # 스킴 가드 차단 URL 은 webbrowser.open 까지 도달하면 안 된다.
-    assert opened == ["https://example.com/a"]
+    # 여전히 webbrowser.open 호출 없음
+    assert opened == []
 
 
 # ── 8. forbidden action 은 본 클라이언트에서 실행 불가 ──────────────────

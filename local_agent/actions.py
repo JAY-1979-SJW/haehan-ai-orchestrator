@@ -79,26 +79,54 @@ def action_open_url(params: dict) -> ActionResult:
     if not url:
         return ActionResult(False, "open_url 실패", {}, "url 누락",
                             error_code="MISSING_URL")
+
+    # Check for sensitive info in params
+    sensitive_keys = {"password", "passwd", "pwd", "token", "access_token",
+                      "refresh_token", "session_token", "device_token",
+                      "cookie", "cookies", "session", "client_secret",
+                      "secret", "api_secret", "api_key", "auth", "authorization"}
+    for key in params:
+        if key.lower() in sensitive_keys:
+            return ActionResult(
+                False, "open_url 차단", {},
+                f"민감정보 포함: {key!r}",
+                error_code="SENSITIVE_DATA_DETECTED",
+            )
+
+    dry_run = params.get("dry_run", True)
+    if not isinstance(dry_run, bool):
+        dry_run = str(dry_run).lower() in ("true", "1", "yes")
+
     parsed = urlparse(url)
     if parsed.scheme.lower() not in config.URL_ALLOWED_SCHEMES:
         return ActionResult(
-            False, "open_url 차단", {"url": url},
+            False, "open_url 차단", {},
             f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
             error_code="URL_SCHEME_NOT_ALLOWED",
         )
     if not parsed.netloc:
-        return ActionResult(False, "open_url 차단", {"url": url},
+        return ActionResult(False, "open_url 차단", {},
                             "잘못된 URL", error_code="INVALID_URL")
 
-    try:
-        webbrowser.open(url, new=2)
-    except Exception as e:
-        return ActionResult(False, "open_url 실패", {"url": url},
-                            f"브라우저 호출 실패: {e}",
-                            error_code="BROWSER_OPEN_FAILED")
+    if not dry_run:
+        return ActionResult(
+            False, "open_url 실패", {"dry_run": False},
+            "actual open_url requires approval and is not enabled in this stage",
+            error_code="ACTUAL_EXECUTION_NOT_ENABLED",
+        )
+
     return ActionResult(
-        success=True, summary=f"opened: {url[:120]}",
-        data={"url": url},
+        success=True,
+        summary="open_url_dry_run_ok",
+        data={
+            "action": "open_url",
+            "dry_run": True,
+            "url": url,
+            "would_open_browser": False,
+            "external_network_call": False,
+            "requires_approval": False,
+            "policy_decision": "dry_run_allowed",
+        },
     )
 
 

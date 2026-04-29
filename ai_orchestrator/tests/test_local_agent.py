@@ -362,6 +362,110 @@ def test_local_actions_open_url_blocks_dangerous_schemes():
         assert r.error_code in {"URL_SCHEME_NOT_ALLOWED", "INVALID_URL"}
 
 
+def test_open_url_dry_run_default_true():
+    """dry_run 기본값은 true."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com"})
+    assert r.success
+    assert r.data["dry_run"] is True
+
+
+def test_open_url_dry_run_true_success():
+    """dry_run=true이면 success 반환."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "dry_run": True})
+    assert r.success
+    assert r.summary == "open_url_dry_run_ok"
+
+
+def test_open_url_dry_run_true_no_browser_execution():
+    """dry_run=true일 때 webbrowser.open() 호출 안 됨."""
+    from local_agent.actions import action_open_url
+    import unittest.mock as mock
+    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+        r = action_open_url({"url": "https://example.com", "dry_run": True})
+        assert r.success
+        mock_open.assert_not_called()
+
+
+def test_open_url_dry_run_result_fields():
+    """dry_run 성공 결과에 필수 필드 포함."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "dry_run": True})
+    assert r.success
+    assert r.data["action"] == "open_url"
+    assert r.data["dry_run"] is True
+    assert r.data["url"] == "https://example.com"
+    assert r.data["would_open_browser"] is False
+    assert r.data["external_network_call"] is False
+    assert r.data["requires_approval"] is False
+    assert r.data["policy_decision"] == "dry_run_allowed"
+
+
+def test_open_url_dry_run_false_rejected():
+    """dry_run=false는 명시적으로 거부."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "dry_run": False})
+    assert not r.success
+    assert r.error_code == "ACTUAL_EXECUTION_NOT_ENABLED"
+
+
+def test_open_url_blocks_sensitive_password():
+    """password 포함 params는 거부."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "password": "secret123"})
+    assert not r.success
+    assert r.error_code == "SENSITIVE_DATA_DETECTED"
+
+
+def test_open_url_blocks_sensitive_token():
+    """token 포함 params는 거부."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "token": "secret_token"})
+    assert not r.success
+    assert r.error_code == "SENSITIVE_DATA_DETECTED"
+
+
+def test_open_url_blocks_sensitive_cookie():
+    """cookie 포함 params는 거부."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "cookie": "session_id=xyz"})
+    assert not r.success
+    assert r.error_code == "SENSITIVE_DATA_DETECTED"
+
+
+def test_open_url_blocks_sensitive_authorization():
+    """authorization 포함 params는 거부."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "authorization": "Bearer xyz"})
+    assert not r.success
+    assert r.error_code == "SENSITIVE_DATA_DETECTED"
+
+
+def test_open_url_case_insensitive_sensitive_check():
+    """민감정보 검사는 대소문자 무관."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "Password": "secret"})
+    assert not r.success
+    assert r.error_code == "SENSITIVE_DATA_DETECTED"
+
+
+def test_open_url_dry_run_string_true():
+    """dry_run 문자열 'true' 도 true로 인식."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "dry_run": "true"})
+    assert r.success
+    assert r.data["dry_run"] is True
+
+
+def test_open_url_dry_run_string_false():
+    """dry_run 문자열 'false' 도 false로 인식."""
+    from local_agent.actions import action_open_url
+    r = action_open_url({"url": "https://example.com", "dry_run": "false"})
+    assert not r.success
+    assert r.error_code == "ACTUAL_EXECUTION_NOT_ENABLED"
+
+
 def test_local_actions_list_allowed_apps():
     from local_agent.actions import action_list_allowed_apps
     r = action_list_allowed_apps({})
