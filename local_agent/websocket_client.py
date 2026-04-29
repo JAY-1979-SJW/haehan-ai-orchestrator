@@ -161,6 +161,11 @@ def process_task(task: dict) -> dict:
     approval_id = str(task.get("token_id") or params.get("_approval_id") or "")
     if approval_id:
         enriched_params["_approval_id"] = approval_id
+    # capture_screenshot 의 storage_ref 생성을 위해 agent_id 도 노출.
+    # 서버가 dispatch 시 task.agent_id 로 전달하므로 사용자 spoofing 불가.
+    agent_id_inner = str(task.get("agent_id") or "")
+    if agent_id_inner:
+        enriched_params["_agent_id"] = agent_id_inner
 
     log_local_event("ws_task_execute", task_id=task_id, action=action,
                     approved=approved)

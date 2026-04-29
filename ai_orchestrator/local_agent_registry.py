@@ -87,6 +87,12 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "would_open_browser", "external_network_call", "requires_approval",
     "policy_decision", "message", "reason", "error_code",
     "approval_id", "approved_by", "execution_task_id",
+    # capture_screenshot safe metadata (Stage 13H-2)
+    "screenshot_taken", "file_basename", "file_ext", "file_size_bytes",
+    "image_width", "image_height", "storage_ref",
+    "redaction_applied", "sensitive_screen_warning",
+    # dry_run capture_screenshot self-check
+    "screenshot_dir_ready", "backend_available", "upload",
 })
 
 
