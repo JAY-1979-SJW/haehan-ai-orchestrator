@@ -463,6 +463,194 @@ def test_server_and_client_auto_exec_sets_match():
     assert set(_S) == set(_C)
 
 
+# ── agent 모니터링 필드 ───────────────────────────────────────────────────
+
+def test_agent_registered_at_set_on_registration():
+    """agent 등록 시 registered_at이 설정되어야 한다."""
+    from ai_orchestrator.local_agent_registry import register_agent, list_agents
+    agents_before = list_agents()
+    result = register_agent(host="mon-test", os_name="Windows", version="0.1", requested_by="test")
+    agent = result.agent
+    assert agent.registered_at
+    assert "2026-04" in agent.registered_at or "T" in agent.registered_at
+
+
+def test_agent_monitoring_fields_in_list_response(admin_user):
+    """agent 목록 응답에 monitoring 필드가 포함되어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, _ = _register(client)
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent is not None
+
+    # 등록 직후 필드
+    assert "registered_at" in agent
+    assert agent["registered_at"]
+    assert "agent_status" in agent
+    assert agent["agent_status"] in ["offline", "online", "idle", "busy", "stale"]
+    assert "connected_at" in agent
+    assert "last_seen_at" in agent
+    assert "disconnected_at" in agent
+    assert "active_task_count" in agent
+    assert agent["active_task_count"] == 0
+    assert "current_task_id" in agent
+    assert agent["current_task_id"] in ("", None) or isinstance(agent["current_task_id"], str)
+
+
+def test_agent_status_online_after_ws_auth(admin_user):
+    """WS auth 후 agent status가 online 또는 idle이어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+        agents = client.get("/api/v1/local-agents").json()["agents"]
+        agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+        assert agent["agent_status"] in ["online", "idle"]
+        assert agent["connected_at"]
+        assert agent["last_seen_at"]
+
+
+def test_agent_active_task_count_during_ws_delivery(admin_user):
+    """task delivery 중 active_task_count가 1이어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "ws_noop")
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        agents = client.get("/api/v1/local-agents").json()["agents"]
+        agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+        # delivered 상태에서 active_task_count는 1
+        assert agent["active_task_count"] == 1
+        assert agent["current_task_id"] in ("", None) or agent["current_task_id"] == task_id
+
+
+def test_agent_current_task_id_during_running(admin_user):
+    """running 상태에서 current_task_id가 task_id여야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "ws_noop")
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({"type": "running", "agent_id": agent_id, "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        agents = client.get("/api/v1/local-agents").json()["agents"]
+        agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+        assert agent["current_task_id"] == task_id
+        assert agent["active_task_count"] == 1
+
+
+def test_agent_active_task_count_zero_after_completion(admin_user):
+    """task 완료 후 active_task_count가 0이어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+    created = _enqueue(client, agent_id, "ws_noop")
+    task_id = created["task_id"]
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+
+        ws.send_json({"type": "running", "agent_id": agent_id, "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        ws.send_json({
+            "type": "result", "agent_id": agent_id, "task_id": task_id,
+            "success": True, "summary": "ws_noop_ok"
+        })
+        assert ws.receive_json()["type"] == "result_ack"
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent["active_task_count"] == 0
+    assert agent["current_task_id"] in ("", None)
+
+
+def test_agent_status_offline_after_disconnect(admin_user):
+    """WS disconnect 후 agent status가 offline이어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent["agent_status"] == "offline"
+    assert agent["disconnected_at"]
+
+
+def test_agent_device_token_not_in_response(admin_user):
+    """agent 응답에 device_token이나 token_hash가 없어야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent is not None
+    assert "device_token" not in agent
+    assert "token_hash" not in agent
+    assert token not in str(agent)
+
+
+def test_agent_task_counts_accurate(admin_user):
+    """agent task count 필드들이 정확해야 한다."""
+    client = _make_test_client(admin_user)
+    agent_id, token = _register(client)
+
+    # 초기: 모든 count 0
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent["task_count"] == 0
+    assert agent["completed_task_count"] == 0
+    assert agent["failed_task_count"] == 0
+
+    # 1개 task 생성
+    created = _enqueue(client, agent_id, "ws_noop")
+    task_id = created["task_id"]
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent["task_count"] == 1
+    assert agent["completed_task_count"] == 0
+    assert agent["failed_task_count"] == 0
+
+    # task 완료
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        assert ws.receive_json()["type"] == "task"
+        ws.send_json({"type": "running", "agent_id": agent_id, "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+        ws.send_json({
+            "type": "result", "agent_id": agent_id, "task_id": task_id,
+            "success": True, "summary": "ws_noop_ok"
+        })
+        assert ws.receive_json()["type"] == "result_ack"
+
+    agents = client.get("/api/v1/local-agents").json()["agents"]
+    agent = next((a for a in agents if a["agent_id"] == agent_id), None)
+    assert agent["task_count"] == 1
+    assert agent["completed_task_count"] == 1
+    assert agent["failed_task_count"] == 0
+
+
 # ── 11. expire_stale_tasks — registry 단위 (now 주입) ───────────────────
 
 def test_delivered_timeout_via_registry(admin_user):
