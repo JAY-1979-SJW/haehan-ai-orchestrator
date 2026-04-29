@@ -114,6 +114,9 @@ class LocalAgent:
             "disconnected_at": self.disconnected_at,
             "active_task_count": get_active_task_count(self.agent_id),
             "current_task_id": get_current_task_id(self.agent_id),
+            "task_count": get_task_count(self.agent_id),
+            "completed_task_count": get_completed_task_count(self.agent_id),
+            "failed_task_count": get_failed_task_count(self.agent_id),
         }
 
 
@@ -344,6 +347,26 @@ def get_current_task_id(agent_id: str) -> str:
         return ""
     best = max(running, key=lambda t: t.started_at or t.updated_at)
     return best.task_id
+
+
+def get_task_count(agent_id: str) -> int:
+    """agent의 전체 task 수."""
+    with _lock:
+        return sum(1 for t in _tasks.values() if t.agent_id == agent_id)
+
+
+def get_completed_task_count(agent_id: str) -> int:
+    """agent의 completed task 수."""
+    with _lock:
+        return sum(1 for t in _tasks.values()
+                   if t.agent_id == agent_id and t.status == "completed")
+
+
+def get_failed_task_count(agent_id: str) -> int:
+    """agent의 failed/error/cancelled task 수."""
+    with _lock:
+        return sum(1 for t in _tasks.values()
+                   if t.agent_id == agent_id and t.status in ("failed", "error", "cancelled"))
 
 
 def get_agent_status(agent_id: str, now: Optional[str] = None) -> str:
