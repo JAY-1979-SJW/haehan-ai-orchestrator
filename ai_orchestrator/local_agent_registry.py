@@ -191,7 +191,11 @@ class LocalAgentTask:
     requested_by: str
     created_at: str
     updated_at: str
-    token_id: str = ""    # high risk 일 때만 채워짐
+    token_id: str = ""    # high risk 일 때만 채워짐 (서버 내부 검증용 secret-like)
+    # Stage 13H-2E: 외부 노출용 public approval id (UI/result_data/audit).
+    # token_id 는 result_data/WS dispatch 에 절대 노출되지 않으며, 본 필드만
+    # public 식별자로 사용된다.
+    approval_public_id: str = ""
     result_summary: str = ""
     # Stage 2 추가 필드
     delivered_at: str = ""
@@ -230,6 +234,8 @@ class LocalAgentTask:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "token_id": self.token_id,
+            "approval_id": self.approval_public_id,
+            "approval_public_id": self.approval_public_id,
             "result_summary": self.result_summary,
             "delivered_at": self.delivered_at,
             "started_at": self.started_at,
@@ -297,8 +303,14 @@ class LocalAgentTask:
         # client 가 result_data 의 approval_id audit trail 을 채울 수 있게 한다.
         # token_id 는 approval 참조 식별자(UUID)이며 secret 이 아니다 — auth/seed 에
         # 쓰이지 않고, validate 시 서버 DB 와 task_id 결합 검증을 통과해야만 효력을 갖는다.
-        if approved_flag and self.token_id:
-            payload["token_id"] = self.token_id
+        # Stage 13H-2E: dispatch 에는 public approval_id 만 노출한다.
+        # token_id 는 서버 내부 승인 검증용 secret-like 값이므로 WS payload 와
+        # result_data 에 포함되지 않는다. legacy fallback 으로 public_id 가
+        # 비어있을 때만 token_id 를 approval_id 로 보낸다 (1릴리즈 호환).
+        if approved_flag:
+            public_id = self.approval_public_id or self.token_id
+            if public_id:
+                payload["approval_id"] = public_id
         return payload
 
 
@@ -583,13 +595,19 @@ def enqueue_task(
     return task
 
 
-def attach_token(task_id: str, token_id: str) -> None:
-    """high risk 작업에 승인 토큰 ID 연결 (라우터에서 호출)."""
+def attach_token(task_id: str, token_id: str, public_id: str = "") -> None:
+    """high risk 작업에 승인 토큰 ID + public id 연결 (라우터에서 호출).
+
+    token_id 는 서버 승인 검증용 secret-like 값으로만 보관하며, public_id 는
+    UI/result_data/audit 표시용 외부 식별자로 분리 저장한다.
+    """
     with _lock:
         t = _tasks.get(task_id)
         if t is None:
             return
         t.token_id = token_id
+        if public_id:
+            t.approval_public_id = public_id
         t.updated_at = _now_iso()
 
 

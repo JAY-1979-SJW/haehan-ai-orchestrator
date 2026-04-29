@@ -45,6 +45,14 @@ class ApprovalToken:
     status: Literal["issued", "approved", "expired", "revoked", "rejected"]
     used_at: Optional[str] = None
     result: str = ""
+    # Stage 13H-2E: public_id — UI/audit/result_data 표시용 식별자.
+    # token_id 는 승인 검증용 secret-like 값이므로 외부 노출 경로에는
+    # public_id 만 사용한다. ("appr_" prefix + uuid hex)
+    public_id: str = ""
+
+
+def _new_public_id() -> str:
+    return "appr_" + uuid.uuid4().hex
 
 
 def _now() -> datetime:
@@ -55,6 +63,7 @@ def _now() -> datetime:
 _TOKEN_FIELDS = (
     "token_id", "task_id", "issued_at", "expires_at", "issued_by",
     "approved_by", "risk_level", "status", "used_at", "result",
+    "public_id",
 )
 
 # 만료된 지 이 시간 이상 지난 토큰은 로딩 시 메모리에서 제외
@@ -88,6 +97,7 @@ def _load_store() -> None:
                 entry = {k: event.get(k) for k in _TOKEN_FIELDS}
                 entry.setdefault("used_at", None)
                 entry["result"] = entry.get("result") or ""
+                entry["public_id"] = entry.get("public_id") or ""
                 _store[token_id] = entry
     except OSError as e:
         logger.error("승인 토큰 저장소 로드 실패: %s", e)
@@ -140,6 +150,7 @@ def issue_token(req: TaskRequest, risk: RiskAssessment, ttl_minutes: int = 30) -
     now = _now()
     token = ApprovalToken(
         token_id=str(uuid.uuid4()),
+        public_id=_new_public_id(),
         task_id=req.task_id,
         issued_at=now.isoformat(),
         expires_at=(now + timedelta(minutes=ttl_minutes)).isoformat(),
@@ -348,6 +359,7 @@ def issue_token_for_dev_reg(
     now = _now()
     token = ApprovalToken(
         token_id=str(uuid.uuid4()),
+        public_id=_new_public_id(),
         task_id=task_id,
         issued_at=now.isoformat(),
         expires_at=(now + timedelta(minutes=ttl_minutes)).isoformat(),

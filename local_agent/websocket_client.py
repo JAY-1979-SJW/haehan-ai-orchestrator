@@ -158,7 +158,16 @@ def process_task(task: dict) -> dict:
     # approval_id 는 서버가 task params 에 포함해 전달한다. 사용자 조작 불가
     # (_task_id / _approved 와 동일하게 여기서 덮어쓰지 않고 params 에서 읽음).
     # open_url_execute 의 audit trail 을 위해 _approval_id 로 노출.
-    approval_id = str(task.get("token_id") or params.get("_approval_id") or "")
+    # Stage 13H-2E: 서버는 dispatch payload 에 public approval_id 만 포함한다.
+    # token_id 는 서버 내부 검증용이라 더 이상 dispatch 에 들어오지 않으나,
+    # 1릴리즈 backward compat 을 위해 legacy "token_id" 키 fallback 을 유지한다.
+    approval_id = str(
+        task.get("approval_id")
+        or task.get("approval_public_id")
+        or params.get("_approval_id")
+        or task.get("token_id")
+        or ""
+    )
     if approval_id:
         enriched_params["_approval_id"] = approval_id
     # capture_screenshot 의 storage_ref 생성을 위해 agent_id 도 노출.
