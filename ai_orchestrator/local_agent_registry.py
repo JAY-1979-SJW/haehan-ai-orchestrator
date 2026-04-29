@@ -79,6 +79,55 @@ def _strip_sensitive(params: dict) -> dict:
     return {k: v for k, v in params.items() if k.lower() not in _SENSITIVE_KEYS}
 
 
+# result_data 에 저장 허용된 key 목록 (명시적 허용 목록 방식)
+_RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "action", "dry_run", "normalized_url", "url_scheme", "url_host",
+    "would_open_browser", "external_network_call", "requires_approval",
+    "policy_decision", "message", "reason", "error_code",
+})
+
+
+def _sanitize_url_for_storage(url: str) -> str:
+    """URL에서 query string을 제거하고 scheme+host+path만 반환."""
+    from urllib.parse import urlparse, urlunparse
+    try:
+        p = urlparse(url)
+        return urlunparse((p.scheme, p.netloc, p.path, "", "", ""))
+    except Exception:
+        return ""
+
+
+def _strip_result_data(data: object) -> "dict | None":
+    """agent result data를 안전 필터 후 반환.
+
+    - 허용 key(_RESULT_DATA_ALLOWED_KEYS)만 저장
+    - url 계열 값은 query string 제거
+    - 민감 key(_SENSITIVE_KEYS)는 이중 방어로 항상 drop
+    - 값이 dict/list 인 경우 재귀 없이 str 변환 후 저장
+    - None 또는 빈 dict이면 None 반환
+    """
+    if not isinstance(data, dict) or not data:
+        return None
+    out: dict = {}
+    for k, v in data.items():
+        k_low = k.lower()
+        if k_low in _SENSITIVE_KEYS:
+            continue
+        if k_low not in _RESULT_DATA_ALLOWED_KEYS:
+            continue
+        # url 계열 값 sanitize
+        if k_low in ("normalized_url",) and isinstance(v, str):
+            v = _sanitize_url_for_storage(v)
+        # bool/int/None 은 그대로 저장, 나머지는 str로 제한
+        if isinstance(v, (bool, int, float, type(None))):
+            out[k] = v
+        elif isinstance(v, str):
+            out[k] = v[:500]
+        else:
+            out[k] = str(v)[:500]
+    return out or None
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -157,6 +206,8 @@ class LocalAgentTask:
     observe_summary: Optional[dict] = None
     # Stage 13C-2: audit summary (PC local audit 이벤트 safe 요약, optional)
     audit_summary: Optional[dict] = None
+    # Stage 13G-3A: agent result data 안전 저장 (허용 key만, 민감정보 제거)
+    result_data: Optional[dict] = None
 
     def to_safe(self) -> dict:
         return {
@@ -187,6 +238,7 @@ class LocalAgentTask:
             "cancelled_at": self.cancelled_at,
             "observe_summary": self.observe_summary,
             "audit_summary": self.audit_summary,
+            "result_data": self.result_data,
         }
 
     def to_list_safe(self) -> dict:
@@ -814,6 +866,7 @@ def apply_result(
     error_code: str = "",
     observe_summary: Optional[dict] = None,
     audit_summary: Optional[dict] = None,
+    data: Optional[dict] = None,
 ) -> Optional[LocalAgentTask]:
     """에이전트가 보고한 결과 반영. running/delivered/cancel_requested 에서 동작.
 
@@ -836,6 +889,8 @@ def apply_result(
             t.status = "completed"
             t.result_summary = (summary or "")[:500]
             t.error_summary = ""
+            if data is not None:
+                t.result_data = _strip_result_data(data)
             if observe_summary is not None:
                 t.observe_summary = _build_observe_summary(observe_summary)
             if audit_summary is not None:

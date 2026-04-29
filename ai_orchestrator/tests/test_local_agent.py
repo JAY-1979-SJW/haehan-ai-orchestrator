@@ -750,6 +750,164 @@ def test_apply_result_failure_sets_agent_error(admin_user):
     assert result.failure_reason == "agent_error"
 
 
+# ── Stage 13G-3A: result_data 안전 저장 테스트 ──────────────────────────
+
+def test_apply_result_stores_result_data(admin_user):
+    """apply_result(data=...) 시 허용 key만 저장된다."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="open_url_dry_run_ok",
+        data={
+            "action": "open_url",
+            "dry_run": True,
+            "would_open_browser": False,
+            "external_network_call": False,
+            "requires_approval": False,
+            "policy_decision": "dry_run_allowed",
+        },
+    )
+    assert result.status == "completed"
+    assert result.result_summary == "open_url_dry_run_ok"
+    assert result.result_data is not None
+    assert result.result_data["dry_run"] is True
+    assert result.result_data["would_open_browser"] is False
+    assert result.result_data["external_network_call"] is False
+    assert result.result_data["policy_decision"] == "dry_run_allowed"
+    assert result.result_data["requires_approval"] is False
+    assert result.result_data["action"] == "open_url"
+
+
+def test_apply_result_result_data_in_to_safe(admin_user):
+    """result_data가 to_safe() 응답에 포함된다."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="open_url_dry_run_ok",
+        data={"action": "open_url", "dry_run": True, "would_open_browser": False},
+    )
+    t = reg.get_task(agent_id, task.task_id)
+    safe = t.to_safe()
+    assert "result_data" in safe
+    assert safe["result_data"]["dry_run"] is True
+    assert safe["result_data"]["would_open_browser"] is False
+
+
+def test_apply_result_result_data_via_api(admin_user):
+    """API task 조회 응답에 result_data가 포함된다."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="open_url_dry_run_ok",
+        data={"dry_run": True, "policy_decision": "dry_run_allowed"},
+    )
+    resp = client.get(f"/api/v1/local-agents/{agent_id}/tasks/{task.task_id}")
+    assert resp.status_code == 200
+    d = resp.json()
+    assert "result_data" in d
+    assert d["result_data"]["dry_run"] is True
+    assert d["result_data"]["policy_decision"] == "dry_run_allowed"
+
+
+def test_apply_result_strips_sensitive_key(admin_user):
+    """민감 key(token, password, cookie 등)는 result_data에 저장되지 않는다."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="ok",
+        data={
+            "action": "open_url",
+            "token": "secret_token_value",
+            "password": "hunter2",
+            "cookie": "session=abc",
+            "authorization": "Bearer xyz",
+            "dry_run": True,
+        },
+    )
+    rd = result.result_data
+    assert rd is not None
+    assert "token" not in rd
+    assert "password" not in rd
+    assert "cookie" not in rd
+    assert "authorization" not in rd
+    assert rd.get("dry_run") is True
+
+
+def test_apply_result_strips_unknown_key(admin_user):
+    """허용 key 목록에 없는 key는 result_data에 저장되지 않는다."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="ok",
+        data={"action": "open_url", "dry_run": True, "unknown_custom_field": "value"},
+    )
+    rd = result.result_data
+    assert rd is not None
+    assert "unknown_custom_field" not in rd
+    assert rd.get("dry_run") is True
+
+
+def test_apply_result_no_data_result_data_none(admin_user):
+    """data 없이 apply_result 호출 시 result_data=None."""
+    import ai_orchestrator.local_agent_registry as reg
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    task = _make_queued_task(agent_id)
+    reg.mark_delivered(agent_id, task.task_id)
+    reg.mark_running(agent_id, task.task_id)
+    result = reg.apply_result(
+        agent_id=agent_id, task_id=task.task_id,
+        success=True, summary="ws_noop_ok",
+    )
+    assert result.result_data is None
+
+
+def test_strip_result_data_url_query_removed():
+    """normalized_url에서 query string이 제거된다."""
+    from ai_orchestrator.local_agent_registry import _strip_result_data
+    rd = _strip_result_data({"normalized_url": "https://example.com/path?token=abc&foo=bar"})
+    assert rd is not None
+    assert rd["normalized_url"] == "https://example.com/path"
+
+
+def test_strip_result_data_empty_returns_none():
+    """빈 dict는 None 반환."""
+    from ai_orchestrator.local_agent_registry import _strip_result_data
+    assert _strip_result_data({}) is None
+    assert _strip_result_data(None) is None
+
+
+def test_strip_result_data_sensitive_key_dropped():
+    """민감 key만 있는 data는 None 반환."""
+    from ai_orchestrator.local_agent_registry import _strip_result_data
+    assert _strip_result_data({"token": "abc", "password": "pw"}) is None
+
+
 # ── Stage 11-4B: list_tasks_for_agent registry 단위 테스트 ──────────────
 
 def test_list_tasks_empty_for_unknown_agent():

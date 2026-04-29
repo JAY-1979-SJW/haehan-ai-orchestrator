@@ -776,12 +776,15 @@ async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
     observe_summary = raw_observe if isinstance(raw_observe, dict) else None
     raw_audit = msg.get("audit_summary")
     audit_summary = raw_audit if isinstance(raw_audit, dict) else None
+    raw_data = msg.get("data")
+    result_data = raw_data if isinstance(raw_data, dict) else None
 
     updated = _reg.apply_result(
         agent_id=agent_id, task_id=task_id,
         success=success, summary=summary, error=error, error_code=error_code,
         observe_summary=observe_summary,
         audit_summary=audit_summary,
+        data=result_data,
     )
     if updated is None:
         await ws.send_json({
