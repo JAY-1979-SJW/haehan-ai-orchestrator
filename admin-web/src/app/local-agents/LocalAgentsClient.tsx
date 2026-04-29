@@ -35,6 +35,7 @@ import type {
   LocalAgentTask,
   LocalAgentTaskDetail,
   ObserveSummary,
+  AuditSummary,
   AgentStatus,
   CaptureScreenshotResponse,
 } from "@/types/local-agent";
@@ -323,6 +324,129 @@ function ObserveSummarySection({ obs }: { obs: ObserveSummary }) {
         {/* 관찰 시각 */}
         {obs.observed_at && (
           <DetailRow label="관찰 시각" value={obs.observed_at} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Audit Summary Section (Stage 13C-3B) ───────────────────────────────────
+
+const _AUDIT_STATUS_BADGE_COLOR: Record<string, string> = {
+  blocked: "bg-[#FEE2E2] text-[#B91C1C]",
+  allowed: "bg-[#D1FAE5] text-[#065F46]",
+  denied: "bg-[#FEE2E2] text-[#B91C1C]",
+  error: "bg-[#FEE2E2] text-[#B91C1C]",
+};
+
+// STORE_AND_DISPLAY fields only — do NOT render STORE_ONLY fields
+const _AUDIT_DICT_KEYS = ["policy_decision_counts", "target_kind_counts", "action_kind_counts"] as const;
+
+function AuditSummarySection({ audit }: { audit: AuditSummary }) {
+  // count 필드: audit_event_count, allowed/blocked/denied/error_event_count
+  const countFields = [
+    { label: "감사 이벤트", key: "audit_event_count" as const },
+    { label: "허용됨", key: "allowed_event_count" as const },
+    { label: "차단됨", key: "blocked_event_count" as const },
+    { label: "거절됨", key: "denied_event_count" as const },
+    { label: "오류", key: "error_event_count" as const },
+  ];
+
+  const countItems = countFields.flatMap(({ label, key }) => {
+    const v = audit[key];
+    return typeof v === "number" ? [{ label, value: v }] : [];
+  });
+
+  // 카테고리 필드: audit_event_categories
+  const categories = Array.isArray(audit.audit_event_categories)
+    ? audit.audit_event_categories.filter((c) => typeof c === "string")
+    : [];
+
+  // 정책 결정 카운트 — policy/target/action_kind_counts
+  const dictItems = _AUDIT_DICT_KEYS.flatMap((key) => {
+    const dict = audit[key];
+    if (!dict || typeof dict !== "object") return [];
+    const pairs = Object.entries(dict)
+      .filter(([_, v]) => typeof v === "number")
+      .map(([k, v]) => `${k}=${v}`)
+      .join(", ");
+    return pairs.length > 0 ? [{ label: key.replace(/_/g, " "), pairs }] : [];
+  });
+
+  return (
+    <div className="mt-3 pt-3 border-t border-[#E5E7EB]">
+      <div className="mb-2 text-[12px] font-semibold text-[#374151]">감사 요약</div>
+      <div className="space-y-1.5">
+        {/* 감사 윈도우 — 시작/종료 시각 */}
+        {(audit.audit_window_started_at || audit.audit_window_ended_at) && (
+          <>
+            {audit.audit_window_started_at && (
+              <DetailRow label="감사 시작" value={audit.audit_window_started_at} />
+            )}
+            {audit.audit_window_ended_at && (
+              <DetailRow label="감사 종료" value={audit.audit_window_ended_at} />
+            )}
+          </>
+        )}
+
+        {/* 카운트 필드 — count만 표시 */}
+        {countItems.length > 0 && (
+          <div className="flex items-start gap-2">
+            <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">
+              이벤트 수
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {countItems.map(({ label, value }) => (
+                <span
+                  key={label}
+                  className="font-mono text-[11px] bg-[#F3F4F6] text-[#374151] px-1.5 py-0.5 rounded"
+                >
+                  {label}: {value}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 마지막 이벤트 — category 및 status enum만 */}
+        {audit.last_event_category && (
+          <DetailRow label="마지막 분류" value={audit.last_event_category} mono />
+        )}
+        {audit.last_event_status && (
+          <DetailRow label="마지막 상태" value={audit.last_event_status} mono />
+        )}
+
+        {/* 카테고리 목록 — enum text only, 목록 원문 금지 */}
+        {categories.length > 0 && (
+          <div className="flex items-start gap-2">
+            <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">
+              분류 목록
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((cat) => (
+                <span
+                  key={cat}
+                  className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#374151]"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 정책 결정, 대상, 액션 카운트 — dict key=value pairs only */}
+        {dictItems.length > 0 && (
+          dictItems.map(({ label, pairs }) => (
+            <div key={label} className="flex items-start gap-2">
+              <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">
+                {label}
+              </div>
+              <div className="font-mono text-[11px] bg-[#F3F4F6] text-[#374151] px-2 py-1 rounded break-all">
+                {pairs}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>
@@ -1296,6 +1420,10 @@ export default function LocalAgentsClient() {
             {/* 관찰 요약 섹션 — observe_summary가 있을 때만 표시 */}
             {detailData.observe_summary && (
               <ObserveSummarySection obs={detailData.observe_summary} />
+            )}
+            {/* 감사 요약 섹션 — audit_summary가 있을 때만 표시 */}
+            {detailData.audit_summary && (
+              <AuditSummarySection audit={detailData.audit_summary} />
             )}
             <div className="mt-3 pt-3 border-t border-[#E5E7EB] text-[11px] text-[#6B7280] leading-relaxed">
               민감정보(쿠키·세션·토큰·Authorization·password·HTML 본문·query 원문)는
