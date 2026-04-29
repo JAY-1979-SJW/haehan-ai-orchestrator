@@ -76,37 +76,15 @@ def action_list_allowed_apps(_params: dict) -> ActionResult:
 
 def action_open_url(params: dict) -> ActionResult:
     url = str(params.get("url", "")).strip()
-    if not url:
-        return ActionResult(False, "open_url 실패", {}, "url 누락",
-                            error_code="MISSING_URL")
-
-    # Check for sensitive info in params
-    sensitive_keys = {"password", "passwd", "pwd", "token", "access_token",
-                      "refresh_token", "session_token", "device_token",
-                      "cookie", "cookies", "session", "client_secret",
-                      "secret", "api_secret", "api_key", "auth", "authorization"}
-    for key in params:
-        if key.lower() in sensitive_keys:
-            return ActionResult(
-                False, "open_url 차단", {},
-                f"민감정보 포함: {key!r}",
-                error_code="SENSITIVE_DATA_DETECTED",
-            )
+    err = _validate_open_url_params(url, params)
+    if err is not None:
+        return err
 
     dry_run = params.get("dry_run", True)
     if not isinstance(dry_run, bool):
         dry_run = str(dry_run).lower() in ("true", "1", "yes")
 
     parsed = urlparse(url)
-    if parsed.scheme.lower() not in config.URL_ALLOWED_SCHEMES:
-        return ActionResult(
-            False, "open_url 차단", {},
-            f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
-            error_code="URL_SCHEME_NOT_ALLOWED",
-        )
-    if not parsed.netloc:
-        return ActionResult(False, "open_url 차단", {},
-                            "잘못된 URL", error_code="INVALID_URL")
 
     if not dry_run:
         return ActionResult(
@@ -127,6 +105,97 @@ def action_open_url(params: dict) -> ActionResult:
             "requires_approval": False,
             "policy_decision": "dry_run_allowed",
         },
+    )
+
+
+_OPEN_URL_SENSITIVE_KEYS: frozenset[str] = frozenset({
+    "password", "passwd", "pwd", "token", "access_token",
+    "refresh_token", "session_token", "device_token",
+    "cookie", "cookies", "session", "client_secret",
+    "secret", "api_secret", "api_key", "auth", "authorization",
+})
+
+
+def _validate_open_url_params(url: str, params: dict) -> "ActionResult | None":
+    """URL + 민감정보 공통 검증. 문제 있으면 ActionResult 반환, 없으면 None."""
+    if not url:
+        return ActionResult(False, "open_url 실패", {}, "url 누락",
+                            error_code="MISSING_URL")
+    for key in params:
+        if key.lower() in _OPEN_URL_SENSITIVE_KEYS:
+            return ActionResult(
+                False, "open_url 차단", {},
+                f"민감정보 포함: {key!r}",
+                error_code="SENSITIVE_DATA_DETECTED",
+            )
+    parsed = urlparse(url)
+    if parsed.scheme.lower() not in config.URL_ALLOWED_SCHEMES:
+        return ActionResult(
+            False, "open_url 차단", {},
+            f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
+            error_code="URL_SCHEME_NOT_ALLOWED",
+        )
+    if not parsed.netloc:
+        return ActionResult(False, "open_url 차단", {},
+                            "잘못된 URL", error_code="INVALID_URL")
+    return None
+
+
+def action_open_url_execute(params: dict) -> ActionResult:
+    """승인된 actual open_url 실행. _approved=True 없이는 webbrowser.open 호출 금지.
+
+    이 함수는 반드시 서버가 _approved=True 를 주입한 경우에만 브라우저를 연다.
+    사용자가 payload 에 approved=True 를 직접 넣어도 이 함수는 _approved 키만 신뢰한다.
+    _approved 는 websocket_client.py 가 서버 task.approved 필드를 기반으로 주입한다.
+    """
+    approved = bool(params.get("_approved", False))
+    if not approved:
+        return ActionResult(
+            False, "open_url_execute 차단", {},
+            "승인 플래그 없이 actual 실행 불가 (_approved=True 필요)",
+            error_code="OPEN_URL_NOT_APPROVED",
+        )
+
+    url = str(params.get("url", "")).strip()
+    err = _validate_open_url_params(url, params)
+    if err is not None:
+        return err
+
+    parsed = urlparse(url)
+    normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+
+    approval_id = str(params.get("_approval_id", "") or "").strip()
+    task_id = str(params.get("_task_id", "") or "").strip()
+
+    try:
+        webbrowser.open(url)
+    except Exception as e:
+        logger.exception("open_url_execute webbrowser.open 실패")
+        return ActionResult(
+            False, "open_url_execute 실패", {},
+            str(e)[:200],
+            error_code="BROWSER_OPEN_FAILED",
+        )
+
+    data: dict = {
+        "action": "open_url_execute",
+        "dry_run": False,
+        "would_open_browser": True,
+        "external_network_call": "browser_possible",
+        "policy_decision": "approved_execution",
+        "url_scheme": parsed.scheme,
+        "url_host": parsed.netloc,
+        "normalized_url": normalized,
+    }
+    if approval_id:
+        data["approval_id"] = approval_id
+    if task_id:
+        data["execution_task_id"] = task_id
+
+    return ActionResult(
+        success=True,
+        summary="open_url_execute_ok",
+        data=data,
     )
 
 
@@ -965,6 +1034,7 @@ _ACTIONS = {
     "system_info": action_system_info,
     "list_allowed_apps": action_list_allowed_apps,
     "open_url": action_open_url,
+    "open_url_execute": action_open_url_execute,
     "capture_screenshot": action_capture_screenshot,
     "list_files_readonly": action_list_files_readonly,
     "scan_file_tree": action_scan_file_tree,
@@ -1107,7 +1177,7 @@ __all__ = [
     "ActionResult", "execute_action",
     "FORBIDDEN_ACTIONS",
     "action_ping", "action_system_info", "action_list_allowed_apps",
-    "action_open_url", "action_capture_screenshot",
+    "action_open_url", "action_open_url_execute", "action_capture_screenshot",
     "action_list_files_readonly",
     "action_scan_file_tree",
     "action_web_analyze_html",

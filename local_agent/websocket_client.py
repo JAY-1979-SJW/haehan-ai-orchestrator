@@ -47,12 +47,14 @@ _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "open_url", "list_files_readonly",
     "capture_screenshot",
     "ws_noop",
+    "open_url_execute",
 })
 
 # 승인 없이도 high risk 경로로 실행 가능한 액션 — 현재 없음.
 # 승인 후(approved=True) 에만 허용되는 액션 목록.
 _APPROVAL_REQUIRED_ACTIONS: frozenset[str] = frozenset({
     "capture_screenshot",
+    "open_url_execute",
 })
 
 
@@ -147,6 +149,12 @@ def process_task(task: dict) -> dict:
     if task_id:
         enriched_params["_task_id"] = task_id
     enriched_params["_approved"] = approved
+    # approval_id 는 서버가 task params 에 포함해 전달한다. 사용자 조작 불가
+    # (_task_id / _approved 와 동일하게 여기서 덮어쓰지 않고 params 에서 읽음).
+    # open_url_execute 의 audit trail 을 위해 _approval_id 로 노출.
+    approval_id = str(task.get("token_id") or params.get("_approval_id") or "")
+    if approval_id:
+        enriched_params["_approval_id"] = approval_id
 
     log_local_event("ws_task_execute", task_id=task_id, action=action,
                     approved=approved)

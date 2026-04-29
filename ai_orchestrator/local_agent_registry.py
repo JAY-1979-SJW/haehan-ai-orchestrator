@@ -35,6 +35,7 @@ ACTION_RISK: dict[str, str] = {
     "system_info":        "low",
     "list_allowed_apps":  "low",
     "open_url":           "low",
+    "open_url_execute":   "high",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
     "ws_noop":            "low",
@@ -59,6 +60,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "open_url", "list_files_readonly",
     "capture_screenshot",
     "ws_noop",
+    "open_url_execute",
 })
 
 
@@ -84,6 +86,7 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "action", "dry_run", "normalized_url", "url_scheme", "url_host",
     "would_open_browser", "external_network_call", "requires_approval",
     "policy_decision", "message", "reason", "error_code",
+    "approval_id", "approved_by", "execution_task_id",
 })
 
 
@@ -927,6 +930,8 @@ def _initial_result_summary(action: str, safe_params: dict) -> str:
         return "queued: list_files_readonly"
     if action == "capture_screenshot":
         return "waiting approval: capture_screenshot"
+    if action == "open_url_execute":
+        return "waiting approval: open_url_execute"
     return ""
 
 
