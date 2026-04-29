@@ -313,15 +313,51 @@ def action_capture_screenshot(params: dict) -> ActionResult:
             error_code="SCREENSHOT_WRITE_FAILED",
         )
 
+    try:
+        file_size = int(out_path.stat().st_size)
+    except OSError:
+        file_size = 0
+
+    # storage_ref: 디스크 경로가 아닌 참조 키. agent_id 가 주입돼 있으면 3-tier,
+    # 없으면 2-tier 형식 ("{task_id}/{basename}"). 절대경로/드라이브 경로 금지.
+    agent_id_safe = "".join(
+        c for c in str(params.get("_agent_id", "")).strip()
+        if c.isalnum() or c in ("-", "_")
+    )[:64]
+    if agent_id_safe:
+        storage_ref = f"{agent_id_safe}/{safe_task_id}/{basename}"
+    else:
+        storage_ref = f"{safe_task_id}/{basename}"
+
+    approval_id = str(params.get("_approval_id", "") or "").strip()
+
+    data: dict = {
+        "action": "capture_screenshot",
+        "dry_run": False,
+        "screenshot_taken": True,
+        "file_basename": basename,
+        "file_ext": ".png",
+        "file_size_bytes": file_size,
+        "image_width": int(width),
+        "image_height": int(height),
+        "storage_ref": storage_ref,
+        "policy_decision": "approved_execution",
+        "redaction_applied": False,
+        "execution_task_id": task_id,
+    }
+    if approval_id:
+        data["approval_id"] = approval_id
+    sensitive_warning = str(
+        params.get("_sensitive_screen_warning", "") or ""
+    ).strip()[:80]
+    if sensitive_warning:
+        data["sensitive_screen_warning"] = sensitive_warning
+
     # 서버에는 basename + 크기만 보고 (전체 경로 금지).
     return ActionResult(
         success=True,
         summary=f"screenshot_saved basename={basename} size={width}x{height}",
-        data={
-            "screenshot_file": basename,
-            "width": int(width),
-            "height": int(height),
-        },
+        data=data,
     )
 
 
@@ -344,7 +380,9 @@ def _capture_screenshot_dry_run(target_dir: Path) -> ActionResult:
         success=True,
         summary=summary,
         data={
+            "action": "capture_screenshot",
             "dry_run": True,
+            "screenshot_taken": False,
             "screenshot_dir_ready": dir_ready,
             "backend_available": backend,
             "upload": False,

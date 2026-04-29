@@ -425,7 +425,8 @@ def test_client_process_task_approved_capture_runs_action(monkeypatch, tmp_path)
         called["task_id"] = params.get("_task_id")
         return _actions.ActionResult(
             True, "screenshot_saved basename=fake.png size=10x10",
-            {"screenshot_file": "fake.png", "width": 10, "height": 10},
+            {"file_basename": "fake.png", "image_width": 10,
+             "image_height": 10, "action": "capture_screenshot"},
         )
 
     monkeypatch.setattr(_wsc, "execute_action", fake_execute_action)
@@ -464,10 +465,11 @@ def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
         {"_task_id": "lat-abc123", "_approved": True},
     )
     assert result.success
-    assert result.data["screenshot_file"].startswith("screenshot_lat-abc123_")
-    assert result.data["screenshot_file"].endswith(".png")
-    assert result.data["width"] == 640
-    assert result.data["height"] == 480
+    assert result.data["file_basename"].startswith("screenshot_lat-abc123_")
+    assert result.data["file_basename"].endswith(".png")
+    assert result.data["file_ext"] == ".png"
+    assert result.data["image_width"] == 640
+    assert result.data["image_height"] == 480
 
     # summary 에 basename + size 만 포함, 전체 경로 없음
     assert "basename=" in result.summary
@@ -476,7 +478,7 @@ def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
     # 실제 파일이 지정 디렉터리에 저장됐고, 바깥으로 새지 않았다.
     files = list(tmp_path.iterdir())
     assert len(files) == 1
-    assert files[0].name == result.data["screenshot_file"]
+    assert files[0].name == result.data["file_basename"]
 
 
 def test_action_capture_screenshot_dependency_missing(tmp_path, monkeypatch):
@@ -550,6 +552,253 @@ def test_reject_then_approve_not_allowed(admin_user):
         f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
     ).json()
     assert fetched["status"] == "rejected"
+
+
+# ── Stage 13H-2 — result_data allowlist + safe metadata ──────────────────
+
+
+def test_h2_allowlist_includes_screenshot_keys():
+    from ai_orchestrator.local_agent_registry import _RESULT_DATA_ALLOWED_KEYS
+    expected = {
+        "screenshot_taken", "file_basename", "file_ext", "file_size_bytes",
+        "image_width", "image_height", "storage_ref",
+        "redaction_applied", "sensitive_screen_warning",
+    }
+    assert expected.issubset(_RESULT_DATA_ALLOWED_KEYS)
+
+
+def test_h2_action_returns_safe_metadata_keys(tmp_path, monkeypatch):
+    import local_agent.actions as _actions
+    import local_agent.config as _cfg
+
+    monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
+
+    class _FakeImg:
+        size = (1280, 720)
+        def save(self, path, format="PNG"):
+            Path(path).write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 64)
+
+    monkeypatch.setattr(_actions, "_grab_screen",
+                        lambda: (_FakeImg(), 1280, 720))
+
+    result = _actions.action_capture_screenshot({
+        "_task_id": "lat-h2",
+        "_approved": True,
+        "_approval_id": "tok-abc-123",
+        "_agent_id": "la-test01",
+    })
+    assert result.success
+    d = result.data
+    assert d["action"] == "capture_screenshot"
+    assert d["dry_run"] is False
+    assert d["screenshot_taken"] is True
+    assert d["file_basename"].startswith("screenshot_lat-h2_")
+    assert d["file_basename"].endswith(".png")
+    assert d["file_ext"] == ".png"
+    assert d["file_size_bytes"] > 0
+    assert d["image_width"] == 1280
+    assert d["image_height"] == 720
+    assert d["storage_ref"] == f"la-test01/lat-h2/{d['file_basename']}"
+    assert d["policy_decision"] == "approved_execution"
+    assert d["redaction_applied"] is False
+    assert d["execution_task_id"] == "lat-h2"
+    assert d["approval_id"] == "tok-abc-123"
+
+
+def test_h2_action_data_no_full_path_or_raw_image(tmp_path, monkeypatch):
+    import local_agent.actions as _actions
+    import local_agent.config as _cfg
+
+    monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
+
+    class _FakeImg:
+        size = (10, 10)
+        def save(self, path, format="PNG"):
+            Path(path).write_bytes(b"PNGDATA")
+
+    monkeypatch.setattr(_actions, "_grab_screen", lambda: (_FakeImg(), 10, 10))
+    result = _actions.action_capture_screenshot(
+        {"_task_id": "lat-x", "_approved": True},
+    )
+    forbidden = {"full_path", "absolute_path", "raw_image",
+                 "raw_image_base64", "ocr_text", "clipboard_content",
+                 "token", "password", "cookie", "session", "secret",
+                 "authorization", "device_token"}
+    assert not (set(result.data) & forbidden)
+    # storage_ref 는 절대경로/드라이브 경로 금지
+    s = result.data["storage_ref"]
+    assert not s.startswith("/"), s
+    assert ":" not in s, s
+    assert "\\" not in s, s
+    assert str(tmp_path) not in s
+
+
+def test_h2_storage_ref_two_tier_when_no_agent_id(tmp_path, monkeypatch):
+    import local_agent.actions as _actions
+    import local_agent.config as _cfg
+
+    monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
+
+    class _FakeImg:
+        size = (1, 1)
+        def save(self, path, format="PNG"):
+            Path(path).write_bytes(b"P")
+
+    monkeypatch.setattr(_actions, "_grab_screen", lambda: (_FakeImg(), 1, 1))
+    result = _actions.action_capture_screenshot(
+        {"_task_id": "lat-no-agent", "_approved": True},
+    )
+    assert result.data["storage_ref"].startswith("lat-no-agent/")
+    assert result.data["storage_ref"].count("/") == 1
+
+
+def test_h2_strip_result_data_drops_full_path_and_raw_image():
+    from ai_orchestrator.local_agent_registry import _strip_result_data
+    out = _strip_result_data({
+        "action": "capture_screenshot",
+        "file_basename": "ok.png",
+        "full_path": "C:\\Users\\victim\\Desktop\\ok.png",
+        "absolute_path": "/home/victim/ok.png",
+        "raw_image_base64": "iVBORw0KGgo...",
+        "ocr_text": "PASSWORD: hunter2",
+        "clipboard_content": "secret",
+        "token": "leak",
+        "password": "leak",
+        "cookie": "leak",
+    })
+    assert out is not None
+    assert "full_path" not in out
+    assert "absolute_path" not in out
+    assert "raw_image_base64" not in out
+    assert "ocr_text" not in out
+    assert "clipboard_content" not in out
+    assert "token" not in out
+    assert "password" not in out
+    assert "cookie" not in out
+    assert out["action"] == "capture_screenshot"
+    assert out["file_basename"] == "ok.png"
+
+
+def test_h2_dry_run_data_preserved_through_strip():
+    from ai_orchestrator.local_agent_registry import _strip_result_data
+    out = _strip_result_data({
+        "action": "capture_screenshot",
+        "dry_run": True,
+        "screenshot_taken": False,
+        "screenshot_dir_ready": True,
+        "backend_available": "ImageGrab",
+        "upload": False,
+    })
+    assert out["dry_run"] is True
+    assert out["screenshot_taken"] is False
+    assert out["screenshot_dir_ready"] is True
+    assert out["backend_available"] == "ImageGrab"
+    assert out["upload"] is False
+
+
+def test_h2_ws_client_injects_agent_id_and_approval_id():
+    """process_task 가 capture_screenshot 에 _agent_id 와 _approval_id 를 주입."""
+    import local_agent.websocket_client as _wsc
+    import local_agent.actions as _actions
+
+    captured = {}
+    def fake_execute(action, params):
+        captured["params"] = params
+        return _actions.ActionResult(
+            True, "screenshot_saved basename=x.png size=1x1",
+            {"file_basename": "x.png", "image_width": 1, "image_height": 1,
+             "action": "capture_screenshot"},
+        )
+    _orig = _wsc.execute_action
+    _wsc.execute_action = fake_execute
+    try:
+        _wsc.process_task({
+            "task_id": "lat-inject",
+            "agent_id": "la-inject01",
+            "action": "capture_screenshot",
+            "risk_level": "high",
+            "params": {},
+            "approved": True,
+            "token_id": "tok-zzz",
+        })
+    finally:
+        _wsc.execute_action = _orig
+
+    p = captured["params"]
+    assert p["_task_id"] == "lat-inject"
+    assert p["_approved"] is True
+    assert p["_approval_id"] == "tok-zzz"
+    assert p["_agent_id"] == "la-inject01"
+
+
+def test_h2_ws_roundtrip_persists_screenshot_result_data(tmp_path, monkeypatch):
+    """승인 → WS dispatch → process_task → result_data 저장 전체 경로."""
+    import ai_orchestrator.local_agent_registry as reg
+    import local_agent.actions as _actions
+    import local_agent.config as _cfg
+    from local_agent.websocket_client import process_task
+
+    monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
+
+    class _FakeImg:
+        size = (320, 240)
+        def save(self, path, format="PNG"):
+            Path(path).write_bytes(b"\x89PNG" + b"y" * 32)
+
+    monkeypatch.setattr(_actions, "_grab_screen",
+                        lambda: (_FakeImg(), 320, 240))
+
+    client = _make_test_client({"actor": "admin", "role": "admin"})
+    agent_id, device_token = _register(client)
+
+    task = _enqueue_capture(client, agent_id)
+    task_id = task["task_id"]
+    token_id = task["token_id"]
+    client.post(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}/approve",
+        json={"token_id": token_id},
+    )
+
+    with client.websocket_connect("/api/v1/local-agents/ws") as ws:
+        ws.send_json({"type": "auth", "agent_id": agent_id,
+                      "device_token": device_token})
+        assert ws.receive_json()["type"] == "auth_ok"
+        msg = ws.receive_json()
+        assert msg["type"] == "task"
+
+        ws.send_json({"type": "running", "task_id": task_id})
+        assert ws.receive_json()["type"] == "running_ack"
+
+        result_msg = process_task(msg["task"])
+        result_msg["agent_id"] = agent_id
+        assert result_msg["data"]["action"] == "capture_screenshot"
+        ws.send_json(result_msg)
+        ack = ws.receive_json()
+        assert ack["type"] == "result_ack"
+        assert ack["status"] == "completed"
+
+    fetched = client.get(
+        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}",
+    ).json()
+    rd = fetched["result_data"]
+    assert isinstance(rd, dict) and rd
+    assert rd["action"] == "capture_screenshot"
+    assert rd["screenshot_taken"] is True
+    assert rd["file_basename"].endswith(".png")
+    assert rd["file_ext"] == ".png"
+    assert rd["file_size_bytes"] > 0
+    assert rd["image_width"] == 320
+    assert rd["image_height"] == 240
+    assert rd["storage_ref"].startswith(f"{agent_id}/{task_id}/")
+    assert rd["policy_decision"] == "approved_execution"
+    assert rd["redaction_applied"] is False
+    assert rd["execution_task_id"] == task_id
+    assert rd.get("approval_id")
+    SENSITIVE = {"full_path", "absolute_path", "raw_image", "raw_image_base64",
+                 "ocr_text", "clipboard_content", "token", "password",
+                 "cookie", "session", "secret", "authorization",
+                 "device_token"}
+    assert not (set(rd) & SENSITIVE)
 
 
 if __name__ == "__main__":
