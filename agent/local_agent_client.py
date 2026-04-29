@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # ── 민감 키 목록 ─────────────────────────────────────────────────────────────
 
 _SENSITIVE_KEY_PARTS: frozenset[str] = frozenset({
-    "token", "password", "secret", "cookie",
+    "token", "password", "passwd", "pwd", "secret", "cookie",
     "authorization", "raw_params", "params",
     "session", "api_key", "apikey", "access_token",
     "refresh_token", "device_token", "client_secret",
