@@ -33,6 +33,7 @@ import {
 import type {
   LocalAgent,
   LocalAgentTask,
+  LocalAgentTaskDetail,
   AgentStatus,
   CaptureScreenshotResponse,
 } from "@/types/local-agent";
@@ -140,18 +141,25 @@ interface TaskActionCellProps {
   canMutate: boolean;
   onCancel: (task: LocalAgentTask) => void;
   onApprovalAction: (task: LocalAgentTask) => void;
+  onShowDetail: (task: LocalAgentTask) => void;
 }
 
-function TaskActionCell({ task, canMutate, onCancel, onApprovalAction }: TaskActionCellProps) {
+function TaskActionCell({
+  task, canMutate, onCancel, onApprovalAction, onShowDetail,
+}: TaskActionCellProps) {
   const btn = cancelButtonProps(task.status);
   const isWaitingApproval = task.status === "waiting_approval";
 
-  if (!btn && !isWaitingApproval) {
-    return <span className="text-[12px] text-[#9CA3AF]">—</span>;
-  }
-
   return (
     <div className="flex items-center gap-1 flex-wrap">
+      <Btn
+        variant="ghost"
+        size="xs"
+        title="작업 상세 보기 (read-only)"
+        onClick={() => onShowDetail(task)}
+      >
+        상세
+      </Btn>
       {isWaitingApproval && (
         <Btn
           variant="secondary"
@@ -174,6 +182,32 @@ function TaskActionCell({ task, canMutate, onCancel, onApprovalAction }: TaskAct
           {btn.label}
         </Btn>
       )}
+    </div>
+  );
+}
+
+// ─── Detail Row (read-only, Stage 13B-1) ─────────────────────────────────────
+
+interface DetailRowProps {
+  label: string;
+  value: string;
+  mono?: boolean;
+  danger?: boolean;
+}
+
+function DetailRow({ label, value, mono, danger }: DetailRowProps) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="w-24 shrink-0 text-[12px] text-[#6B7280]">{label}</div>
+      <div
+        className={[
+          "flex-1 break-all",
+          mono ? "font-mono text-[12px]" : "text-[13px]",
+          danger ? "text-[#B91C1C]" : "text-[#111827]",
+        ].join(" ")}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -314,6 +348,12 @@ export default function LocalAgentsClient() {
   const [cancelReason, setCancelReason] = useState<string>("");
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+
+  // ── task detail (read-only) modal — Stage 13B-1 ───────────────────────────
+  const [detailTargetTask, setDetailTargetTask] = useState<LocalAgentTask | null>(null);
+  const [detailData, setDetailData] = useState<LocalAgentTaskDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   // ── capture state ─────────────────────────────────────────────────────────
   const [captureTargetAgent, setCaptureTargetAgent] = useState<LocalAgent | null>(null);
@@ -561,6 +601,40 @@ export default function LocalAgentsClient() {
     setApprovalAction(null);
     setApprovalReason("");
     setApprovalError(null);
+  }, []);
+
+  // ── task detail (read-only) — Stage 13B-1 ─────────────────────────────────
+  const handleOpenDetail = useCallback(async (task: LocalAgentTask) => {
+    if (!selectedAgentId) return;
+    setDetailTargetTask(task);
+    setDetailData(null);
+    setDetailError(null);
+    setDetailLoading(true);
+    try {
+      const detail = await getLocalAgentTask(selectedAgentId, task.task_id);
+      setDetailData(detail);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401 || err.status === 403) {
+          setDetailError(roleAwareAuthMessage(err.status as 401 | 403, currentUser?.role));
+        } else if (err.status === 404) {
+          setDetailError("작업을 찾을 수 없습니다.");
+        } else {
+          setDetailError("작업 상세 조회에 실패했습니다.");
+        }
+      } else {
+        setDetailError("작업 상세 조회에 실패했습니다.");
+      }
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [selectedAgentId, currentUser?.role]);
+
+  const handleCloseDetail = useCallback(() => {
+    setDetailTargetTask(null);
+    setDetailData(null);
+    setDetailError(null);
+    setDetailLoading(false);
   }, []);
 
   const handleCloseApprovalModal = useCallback(() => {
@@ -1026,6 +1100,7 @@ export default function LocalAgentsClient() {
                         canMutate={canMutate}
                         onCancel={setCancelTargetTask}
                         onApprovalAction={handleOpenApprovalModal}
+                        onShowDetail={handleOpenDetail}
                       />
                     </AdminTd>
                   </AdminTr>
@@ -1035,6 +1110,80 @@ export default function LocalAgentsClient() {
           </AdminTable>
         )}
       </div>
+
+      {/* ── Task Detail (read-only) Modal — Stage 13B-1 ───────────────────── */}
+      <Modal
+        open={detailTargetTask !== null}
+        title="작업 상세 (read-only)"
+        onClose={handleCloseDetail}
+        footer={
+          <Btn variant="ghost" size="sm" onClick={handleCloseDetail}>
+            닫기
+          </Btn>
+        }
+      >
+        {detailLoading && (
+          <p className="text-[13px] text-[#6B7280]">불러오는 중…</p>
+        )}
+        {detailError && (
+          <p className="text-[13px] text-[#B91C1C]">{detailError}</p>
+        )}
+        {!detailLoading && !detailError && detailData && (
+          <div className="space-y-2 text-[13px] text-[#374151]">
+            <DetailRow label="작업 ID" value={detailData.task_id} mono />
+            <DetailRow label="에이전트 ID" value={detailData.agent_id} mono />
+            <DetailRow label="액션" value={detailData.action} />
+            <DetailRow label="위험도" value={detailData.risk_level} />
+            <DetailRow label="상태" value={detailData.status} />
+            <DetailRow label="요청자" value={detailData.requested_by} />
+            <DetailRow label="생성" value={detailData.created_at} />
+            <DetailRow label="갱신" value={detailData.updated_at} />
+            <DetailRow label="전달" value={detailData.delivered_at ?? "—"} />
+            <DetailRow label="시작" value={detailData.started_at ?? "—"} />
+            <DetailRow label="완료" value={detailData.completed_at ?? "—"} />
+            <DetailRow label="결과 요약" value={detailData.result_summary ?? "—"} />
+            {detailData.error_summary && (
+              <DetailRow label="오류 요약" value={detailData.error_summary} danger />
+            )}
+            {detailData.failure_reason && (
+              <DetailRow label="실패 사유" value={detailData.failure_reason} danger />
+            )}
+            {detailData.timed_out_at && (
+              <DetailRow label="타임아웃" value={detailData.timed_out_at} danger />
+            )}
+            {detailData.approved_at && (
+              <DetailRow
+                label="승인"
+                value={`${detailData.approved_at}${detailData.approved_by ? " · " + detailData.approved_by : ""}`}
+              />
+            )}
+            {detailData.rejected_at && (
+              <DetailRow
+                label="거절"
+                value={`${detailData.rejected_at}${detailData.reject_reason ? " · " + detailData.reject_reason : ""}`}
+                danger
+              />
+            )}
+            {detailData.cancel_requested_at && (
+              <DetailRow
+                label="취소 요청"
+                value={`${detailData.cancel_requested_at}${detailData.cancel_requested_by ? " · " + detailData.cancel_requested_by : ""}`}
+              />
+            )}
+            {detailData.cancelled_at && (
+              <DetailRow label="취소 완료" value={detailData.cancelled_at} />
+            )}
+            {detailData.cancel_reason && (
+              <DetailRow label="취소 사유" value={detailData.cancel_reason} />
+            )}
+            <div className="mt-3 pt-3 border-t border-[#E5E7EB] text-[11px] text-[#6B7280] leading-relaxed">
+              민감정보(쿠키·세션·토큰·Authorization·password·HTML 본문·query 원문)는
+              표시하지 않습니다. 로컬 에이전트 감사 로그 원문은 PC에 보관되며
+              admin-web 에 노출하지 않습니다.
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* ── Cancel Modal ──────────────────────────────────────────────────────── */}
       <Modal
