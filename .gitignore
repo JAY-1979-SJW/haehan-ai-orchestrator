@@ -88,3 +88,4 @@ scripts/_run_google_login_smoke.py
 # Sample collected data (local only)
 data/naver_blog_search.json
 data/naver_shopping_search.json
+.claude/

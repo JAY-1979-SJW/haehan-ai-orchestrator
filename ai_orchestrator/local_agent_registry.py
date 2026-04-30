@@ -39,6 +39,13 @@ ACTION_RISK: dict[str, str] = {
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
     "ws_noop":            "low",
+    # browser automation actions (BROWSER-4E)
+    "browser.inspect":    "low",
+    "browser.plan_click": "low",
+    "browser.plan_type":  "low",
+    "browser.plan_submit": "low",
+    "browser.execute_click": "medium",
+    "browser.execute_type": "medium",
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
@@ -55,12 +62,21 @@ ALLOWED_APPS: list[str] = ["browser", "excel", "hwp", "cad"]
 # Stage 3: capture_screenshot 포함 — 단, high risk 이므로 반드시 승인 후(mark_approved)
 # 에만 waiting_approval → queued 로 전환되어 이 경로로 전달된다. 미승인 상태는
 # list_pending_for_agent() 에서 제외되어 WS 에 push 되지 않는다.
+#
+# BROWSER-4E: browser.* actions 추가 — 승인 후 배포됨.
 AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ping", "system_info", "list_allowed_apps",
     "open_url", "list_files_readonly",
     "capture_screenshot",
     "ws_noop",
     "open_url_execute",
+    # browser automation actions (BROWSER-4E)
+    "browser.inspect",
+    "browser.plan_click",
+    "browser.plan_type",
+    "browser.plan_submit",
+    "browser.execute_click",
+    "browser.execute_type",
 })
 
 
@@ -68,7 +84,8 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
 _SENSITIVE_KEYS: frozenset[str] = frozenset({
     "password", "passwd", "pwd",
     "token", "access_token", "refresh_token", "session_token",
-    "device_token", "cookie", "cookies", "session",
+    "device_token", "approval_token", "final_approval_token", "token_hash",
+    "cookie", "cookies", "session",
     "client_secret", "secret", "api_secret", "api_key",
     "auth", "authorization",
 })
@@ -93,6 +110,10 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "redaction_applied", "sensitive_screen_warning",
     # dry_run capture_screenshot self-check
     "screenshot_dir_ready", "backend_available", "upload",
+    # browser action safe result metadata (BROWSER-4E)
+    "status", "selector", "executed", "element_found", "risk_level",
+    "final_approval_required", "result", "target_url_domain", "text_length",
+    "text_preview", "error_message", "screenshot_ref",
 })
 
 
