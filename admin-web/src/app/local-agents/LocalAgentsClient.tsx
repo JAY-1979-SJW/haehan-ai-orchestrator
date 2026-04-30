@@ -19,6 +19,7 @@ import {
   Btn,
 } from "@/components/ui";
 import { Modal } from "@/components/ui/Modal";
+import RegistrationCodesPanel from "./RegistrationCodesPanel";
 import {
   getLocalAgents,
   getAgentTasks,
@@ -1563,6 +1564,13 @@ export default function LocalAgentsClient() {
           </AdminTable>
         )}
       </div>
+
+      {/* ── 등록코드 관리 (UI-AUTH-2) ──────────────────────────────────────── */}
+      <RegistrationCodesPanel
+        currentUser={currentUser}
+        userLoading={userLoading}
+        userError={userError}
+      />
 
       {/* ── Task Detail (read-only) Modal — Stage 13B-1 ───────────────────── */}
       <Modal
