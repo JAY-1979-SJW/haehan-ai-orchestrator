@@ -18,6 +18,7 @@ from .browser_action_contract import (
     validate_execution_result,
 )
 from .browser_controller import BrowserController
+from .browser_approval_verifier import BrowserApprovalVerifier
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,19 @@ class ServerActionAdapterError(Exception):
 class ServerActionAdapter:
     """Adapter for server approval actions → BrowserController execution."""
 
-    def __init__(self, browser_controller: BrowserController):
+    def __init__(
+        self,
+        browser_controller: BrowserController,
+        approval_verifier: Optional[BrowserApprovalVerifier] = None,
+    ):
         """Initialize adapter with a BrowserController instance.
 
         Args:
             browser_controller: Initialized BrowserController with page loaded
+            approval_verifier: BrowserApprovalVerifier for token validation
         """
         self.controller = browser_controller
+        self.verifier = approval_verifier
 
     async def execute_action(
         self,
@@ -58,13 +65,41 @@ class ServerActionAdapter:
         if not is_valid:
             raise ServerActionAdapterError(f"Invalid action: {error_msg}")
 
+        # Verify approval token if verifier is configured
+        if self.verifier:
+            verification = self.verifier.verify(
+                approval_id=action.approval_id,
+                approval_token=action.approval_token,
+                action_type=action.action_type,
+                selector=action.selector,
+            )
+            if not verification.valid:
+                # Return blocked result without executing
+                return ExecutionResult(
+                    task_id=action.task_id,
+                    action=action.action_type,
+                    selector=action.selector,
+                    executed=False,
+                    element_found=False,
+                    risk_level="high",
+                    final_approval_required=False,
+                    result=verification.error_code or "approval_invalid",
+                    target_url_domain=self.controller._extract_domain(self.controller.page.url) if self.controller.page else "",
+                )
+
         # Route to appropriate handler
         if action.action_type == "browser.execute_click":
-            return await self._execute_click(action)
+            result = await self._execute_click(action)
         elif action.action_type == "browser.execute_type":
-            return await self._execute_type(action)
+            result = await self._execute_type(action)
         else:
             raise ServerActionAdapterError(f"Unsupported action type: {action.action_type}")
+
+        # Mark approval as used if verification succeeded and execution was successful
+        if self.verifier and result.executed and action.approval_id:
+            self.verifier.store.mark_used(action.approval_id)
+
+        return result
 
     async def _execute_click(self, action: ServerApprovalAction) -> ExecutionResult:
         """Execute a click action.
