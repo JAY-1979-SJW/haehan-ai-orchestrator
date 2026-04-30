@@ -19,12 +19,14 @@ MOCK_HTML_COUNTER = """<!DOCTYPE html>
     <button id="increment-btn">Increment</button>
     <button id="submit-btn" onclick="window.dangerExecuted=true;">Submit</button>
     <button id="delete-btn" onclick="window.dangerExecuted=true;">Delete</button>
-    <button id="comment-btn" onclick="window.dangerExecuted=true;">Comment</button>
+    <button id="comment-btn" onclick="window.dangerExecuted=true;">댓글 등록</button>
+    <button id="register-btn" onclick="window.dangerExecuted=true;">가입</button>
+    <button id="payment-btn" onclick="window.dangerExecuted=true;">결제</button>
     <input type="text" id="search-input" />
     <input type="email" id="email-input" />
     <input type="password" id="password-input" />
     <input type="hidden" id="hidden-input" />
-    <input type="text" id="otp-input" name="otp_code" />
+    <input type="text" id="otp-input" name="otp_code" placeholder="인증번호" />
     <script>
         window.dangerExecuted = false;
         document.getElementById('increment-btn').addEventListener('click', function() {
@@ -149,5 +151,166 @@ class TestExecuteTypeIntegration:
                     s = str(result)
                     assert "secret" not in s
                     assert "token" not in s
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_type_email_input_writes_value(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_type("#email-input", "test@example.com", approval_token="t")
+                    assert result.executed is True
+                    value = await page.input_value("#email-input")
+                    assert value == "test@example.com"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_type_otp_rejected(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_type("#otp-input", "123456", approval_token="t")
+                    assert result.executed is False
+                    assert result.result == "sensitive_field"
+                    value = await page.input_value("#otp-input")
+                    assert value == ""
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_type_hidden_rejected(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_type("#hidden-input", "secret", approval_token="t")
+                    assert result.executed is False
+                    assert result.result == "sensitive_field"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_click_delete_requires_final_approval_and_not_executed(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_click("#delete-btn", approval_token="t", final_approval_token=None)
+                    assert result.final_approval_required is True
+                    assert result.executed is False
+                    danger = await page.text_content("#danger-executed")
+                    assert danger == "false"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_click_comment_requires_final_approval_and_not_executed(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_click("#comment-btn", approval_token="t", final_approval_token=None)
+                    assert result.final_approval_required is True
+                    assert result.executed is False
+                    danger = await page.text_content("#danger-executed")
+                    assert danger == "false"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_click_register_requires_final_approval_and_not_executed(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_click("#register-btn", approval_token="t", final_approval_token=None)
+                    assert result.final_approval_required is True
+                    assert result.executed is False
+                    danger = await page.text_content("#danger-executed")
+                    assert danger == "false"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_execute_click_payment_requires_final_approval_and_not_executed(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_click("#payment-btn", approval_token="t", final_approval_token=None)
+                    assert result.final_approval_required is True
+                    assert result.executed is False
+                    danger = await page.text_content("#danger-executed")
+                    assert danger == "false"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_all_risky_buttons_keep_danger_executed_false(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    risky_buttons = ["#submit-btn", "#delete-btn", "#comment-btn", "#register-btn", "#payment-btn"]
+                    for btn_selector in risky_buttons:
+                        result = await controller.execute_click(btn_selector, approval_token="t", final_approval_token=None)
+                        assert result.final_approval_required is True
+                        assert result.executed is False
+                        danger = await page.text_content("#danger-executed")
+                        assert danger == "false"
+                await browser.close()
+        asyncio.run(run_test())
+
+    def test_result_does_not_include_cookie_session_storage_or_base64_keywords(self):
+        from local_agent.browser_controller import BrowserController
+        async def run_test():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                await page.set_content(MOCK_HTML_COUNTER)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    controller = BrowserController("test-agent", Path(tmpdir))
+                    controller.page = page
+                    result = await controller.execute_click("#increment-btn", approval_token="t")
+                    s = str(result)
+                    forbidden_keywords = ["cookie", "session", "storage", "base64"]
+                    for keyword in forbidden_keywords:
+                        assert keyword.lower() not in s.lower()
                 await browser.close()
         asyncio.run(run_test())
