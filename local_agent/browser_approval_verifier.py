@@ -19,6 +19,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class DuplicateApprovalError(ValueError):
+    """Raised when create_approval() is called with an existing approval_id.
+
+    Prevents silent overwrite of token_hash, status, or any record fields.
+    Applies uniformly across in-memory, JSONL, and DB stores.
+    """
+
+
 @dataclass
 class BrowserApprovalRecord:
     """Server-side approval record (in-memory).
@@ -104,6 +112,12 @@ class BrowserApprovalStore:
         Returns:
             BrowserApprovalRecord
         """
+        # Reject duplicate approval_id — never overwrite existing record
+        if approval_id in self._records:
+            raise DuplicateApprovalError(
+                f"approval_id already exists: {approval_id}"
+            )
+
         # Compute hash and discard raw token
         token_hash = _hash_token(approval_token)
 

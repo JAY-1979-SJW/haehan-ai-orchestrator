@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from .browser_approval_persistent_store import BrowserApprovalRecord
+from .browser_approval_verifier import DuplicateApprovalError
 
 logger = logging.getLogger(__name__)
 
@@ -164,25 +165,32 @@ class SQLiteBrowserApprovalStore:
         )
 
         with self._lock:
-            self._conn.execute(
-                """
-                INSERT INTO browser_approvals
-                    (approval_id, action_type, selector, token_hash, status,
-                     risk_level, final_approval_required, created_at, expires_at)
-                VALUES (?, ?, ?, ?, 'approved', ?, ?, ?, ?)
-                """,
-                (
-                    approval_id,
-                    action_type,
-                    selector,
-                    token_hash,
-                    risk_level,
-                    1 if final_approval_required else 0,
-                    now.isoformat(),
-                    expires_at.isoformat() if expires_at else None,
-                ),
-            )
-            self._conn.commit()
+            try:
+                self._conn.execute(
+                    """
+                    INSERT INTO browser_approvals
+                        (approval_id, action_type, selector, token_hash, status,
+                         risk_level, final_approval_required, created_at, expires_at)
+                    VALUES (?, ?, ?, ?, 'approved', ?, ?, ?, ?)
+                    """,
+                    (
+                        approval_id,
+                        action_type,
+                        selector,
+                        token_hash,
+                        risk_level,
+                        1 if final_approval_required else 0,
+                        now.isoformat(),
+                        expires_at.isoformat() if expires_at else None,
+                    ),
+                )
+                self._conn.commit()
+            except sqlite3.IntegrityError as exc:
+                # UNIQUE constraint on approval_id — translate to common policy
+                self._conn.rollback()
+                raise DuplicateApprovalError(
+                    f"approval_id already exists: {approval_id}"
+                ) from exc
 
         logger.info("db approval created: %s", approval_id)
         return BrowserApprovalRecord(

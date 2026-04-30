@@ -165,7 +165,15 @@ class PersistentBrowserApprovalStore:
         final_approval_required: bool = False,
         expires_in_seconds: Optional[int] = None,
     ) -> BrowserApprovalRecord:
-        """Create approval record (token_hash stored, not raw token)."""
+        """Create approval record (token_hash stored, not raw token).
+
+        Raises:
+            DuplicateApprovalError: If approval_id already exists.
+                Existing record is never overwritten — token_hash and status preserved.
+        """
+        # Import here to avoid circular import at module load
+        from .browser_approval_verifier import DuplicateApprovalError
+
         token_hash = _hash_token(approval_token)
 
         expires_at = None
@@ -185,6 +193,10 @@ class PersistentBrowserApprovalStore:
         )
 
         with self._lock:
+            if approval_id in self._records:
+                raise DuplicateApprovalError(
+                    f"approval_id already exists: {approval_id}"
+                )
             self._records[approval_id] = record
             self._append_event("APPROVAL_CREATED", approval_id, record)
 
