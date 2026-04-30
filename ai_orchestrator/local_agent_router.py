@@ -38,6 +38,7 @@ from .audit_logger import log_event
 from .approval import issue_token_for_dev_reg, approve_token, reject_token
 from . import local_agent_registry as _reg
 from . import local_agent_diagnostics
+from . import registration_codes as _regcodes
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,20 @@ class AgentTaskApprovalRequest(BaseModel):
 
 class CancelTaskRequest(BaseModel):
     reason: str = ""
+
+
+class IssueRegistrationCodeRequest(BaseModel):
+    label: str
+    expires_in_minutes: int = _regcodes.DEFAULT_TTL_MINUTES
+    allowed_actions: list[str] = []
+    note: str = ""
+
+
+class RegisterWithCodeRequest(BaseModel):
+    registration_code: str
+    host: str = ""
+    os_name: str = ""
+    version: str = "0.1.0"
 
 
 class CaptureScreenshotRequest(BaseModel):
@@ -178,6 +193,154 @@ def register_local_agent(
         "os_name": result.agent.os_name,
         "version": result.agent.version,
         "registered_at": result.agent.registered_at,
+    }
+
+
+# ── registration-code (REGCODE-1) ───────────────────────────────────────
+
+# allowed_actions 검증: ACTION_RISK 키 중 high-risk 직접 실행계열은 제외.
+# (open_url_execute 는 별도 승인 흐름 — 등록코드 scope 에 직접 부여 금지)
+_REGCODE_ALLOWED_ACTIONS: frozenset[str] = frozenset(
+    set(_reg.ACTION_RISK.keys()) - {"open_url_execute"}
+)
+
+
+@local_agent_router.post("/registration-codes")
+def issue_registration_code(
+    body: IssueRegistrationCodeRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """admin/owner 가 1회용 등록코드 발급.
+
+    응답에 registration_code 평문은 1회만 노출되며, 이후 어떤 조회 endpoint
+    에서도 평문을 반환하지 않는다. 서버는 SHA-256(salt+code) 만 영속화한다.
+    """
+    actor = user["actor"]
+    role = user["role"]
+
+    # allowed_actions 검증 — 미등록 액션은 400.
+    invalid = [a for a in (body.allowed_actions or [])
+               if str(a).strip().lower() not in _REGCODE_ALLOWED_ACTIONS]
+    if invalid:
+        raise HTTPException(status_code=400, detail={
+            "code": "INVALID_ALLOWED_ACTIONS",
+            "message": f"unsupported actions: {invalid}",
+        })
+
+    try:
+        result = _regcodes.issue_code(
+            label=body.label,
+            expires_in_minutes=body.expires_in_minutes,
+            allowed_actions=body.allowed_actions,
+            note=body.note,
+            issued_by=actor,
+            issuer_role=role,
+        )
+    except _regcodes.InvalidTTLError as e:
+        raise HTTPException(status_code=400, detail={
+            "code": "INVALID_TTL", "message": str(e),
+        })
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail={
+            "code": "INVALID_REQUEST", "message": str(e),
+        })
+
+    # 감사 로그 — code 원문/hash/salt 절대 기록 금지. code_id 만.
+    log_event(
+        "REGISTRATION_CODE_ISSUED", result.code.code_id,
+        actor=actor, role=role,
+        note=f"label={result.code.label} expires_at={result.code.expires_at} "
+             f"actions={','.join(result.code.allowed_actions) or '-'}",
+    )
+
+    return {
+        "code_id": result.code.code_id,
+        "registration_code": result.registration_code,  # 1회 노출
+        "label": result.code.label,
+        "allowed_actions": list(result.code.allowed_actions),
+        "expires_at": result.code.expires_at,
+        "created_at": result.code.created_at,
+    }
+
+
+@local_agent_router.get("/registration-codes")
+def list_registration_codes(
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """등록코드 목록. 평문/hash/salt 노출 금지."""
+    return {"codes": _regcodes.list_codes()}
+
+
+@local_agent_router.post("/registration-codes/{code_id}/revoke")
+def revoke_registration_code(
+    code_id: str,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    actor = user["actor"]
+    role = user["role"]
+    rec = _regcodes.revoke_code(code_id, actor=actor)
+    if rec is None:
+        raise HTTPException(status_code=404, detail={
+            "code": "NOT_FOUND", "message": "registration_code not found",
+        })
+    log_event(
+        "REGISTRATION_CODE_REVOKED", code_id,
+        actor=actor, role=role,
+        note=f"label={rec.label}",
+    )
+    return rec.to_safe()
+
+
+@local_agent_router.post("/register-with-code")
+def register_with_code(body: RegisterWithCodeRequest):
+    """Basic Auth 없이 1회용 등록코드로 agent 등록.
+
+    실패는 모두 400 + generic message — 외부에서 만료/사용/폐기/오타를
+    구분할 수 없게 한다. audit 에는 reason 분류만 별도 기록.
+    """
+    try:
+        rec = _regcodes.consume_code(body.registration_code)
+    except _regcodes.CodeExchangeError as e:
+        # audit 에는 reason 만, code 원문은 절대 기록 금지.
+        log_event(
+            "REGISTRATION_CODE_EXCHANGE_FAILED", "-",
+            actor="agent", role="-",
+            decision=e.reason,
+            note="register-with-code rejected",
+        )
+        raise HTTPException(status_code=400, detail={
+            "code": "INVALID_REGISTRATION_CODE",
+            "message": _regcodes.INVALID_CODE_MESSAGE,
+        })
+
+    result = _reg.register_agent(
+        host=body.host, os_name=body.os_name, version=body.version,
+        requested_by=f"registration_code:{rec.code_id}",
+    )
+    _regcodes.attach_used_agent(rec.code_id, result.agent.agent_id)
+
+    log_event(
+        "REGISTRATION_CODE_USED", rec.code_id,
+        actor="agent", role="-",
+        note=f"agent_id={result.agent.agent_id} label={rec.label}",
+    )
+    log_event(
+        "LOCAL_AGENT_REGISTERED", result.agent.agent_id,
+        actor=f"registration_code:{rec.code_id}", role="-",
+        note=f"host={result.agent.host} os={result.agent.os_name} "
+             f"ver={result.agent.version}",
+    )
+
+    return {
+        "agent_id": result.agent.agent_id,
+        "device_token": result.device_token,  # 1회 노출
+        "host": result.agent.host,
+        "os_name": result.agent.os_name,
+        "version": result.agent.version,
+        "registered_at": result.agent.registered_at,
+        "code_id": rec.code_id,
+        "label": rec.label,
+        "allowed_actions": list(rec.allowed_actions),
     }
 
 
