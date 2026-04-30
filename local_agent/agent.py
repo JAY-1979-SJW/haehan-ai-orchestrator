@@ -26,6 +26,13 @@ from urllib import error as _urlerr
 from . import __version__, config
 from .actions import execute_action
 from .audit import log_local_event
+from . import desktop_config as _desk_cfg
+from . import token_store as _token_store
+from .registration_client import (
+    RegistrationError,
+    register_with_code as _register_with_code,
+)
+from .redaction import safe_summary as _safe_summary
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +124,108 @@ def execute_local(action: str, params: dict) -> dict:
     }
 
 
+def cmd_register_with_code(*, server_url: str, registration_code: str,
+                           allow_plaintext: bool = False) -> int:
+    """--register-with-code 흐름. 성공 시 0.
+
+    출력 정책:
+      - registration_code 원문 미출력
+      - device_token 원문 미출력
+      - agent_id / code_id / backend 이름만 출력
+    """
+    if not server_url:
+        print("--server <URL> 이 필요합니다.", file=sys.stderr)
+        return 2
+    host = platform.node()
+    os_name = f"{platform.system()} {platform.release()}"
+    try:
+        meta, device_token = _register_with_code(
+            server_url, registration_code,
+            host=host, os_name=os_name, version=__version__,
+        )
+    except RegistrationError as e:
+        # generic_message 외 원문 노출 금지.
+        print(f"등록 실패: {e.generic_message}", file=sys.stderr)
+        return 1
+
+    try:
+        backend = _token_store.save_device_token(
+            server_url, meta.agent_id, device_token,
+            allow_plaintext_fallback=allow_plaintext,
+        )
+    except _token_store.TokenStoreError as e:
+        # device_token이 keyring에 저장되지 않았다면 즉시 실패. 평문 미저장.
+        print(f"token 저장 실패: {e}", file=sys.stderr)
+        return 1
+    finally:
+        # 호출자 메모리에서 device_token 참조 해제.
+        del device_token
+
+    cfg = _desk_cfg.DesktopConfig(
+        server_url=server_url.rstrip("/"),
+        agent_id=meta.agent_id,
+        label=meta.label,
+        created_at=meta.registered_at,
+        version=__version__,
+    )
+    _desk_cfg.save_config(cfg)
+
+    log_local_event(
+        "agent_registered_with_code",
+        agent_id=meta.agent_id,
+        code_id=meta.code_id,
+        host=meta.host,
+        backend=backend,
+    )
+    summary = _safe_summary({
+        "agent_id": meta.agent_id,
+        "code_id": meta.code_id,
+        "label": meta.label,
+        "host": meta.host,
+        "os_name": meta.os_name,
+        "registered_at": meta.registered_at,
+        "allowed_actions": meta.allowed_actions,
+    })
+    summary["token_saved"] = True
+    summary["token_backend"] = backend
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_status(*, server_url: Optional[str] = None,
+               allow_plaintext: bool = False) -> int:
+    """--status — token 원문은 절대 출력하지 않는다."""
+    cfg = _desk_cfg.load_config()
+    effective_server = server_url or cfg.server_url
+    usable, backend = _token_store.describe_backend()
+    token_saved = False
+    if effective_server and cfg.agent_id:
+        token_saved = _token_store.has_device_token(
+            effective_server, cfg.agent_id,
+            allow_plaintext_fallback=allow_plaintext,
+        )
+    out = {
+        "server_url": effective_server,
+        "agent_id": cfg.agent_id,
+        "label": cfg.label,
+        "version": cfg.version,
+        "token_saved": token_saved,
+        "keyring_usable": usable,
+        "keyring_backend": backend,
+        "config_path": str(_desk_cfg.DEFAULT_CONFIG_PATH),
+    }
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _load_token_for_run(server_url: str, agent_id: str, *,
+                       allow_plaintext: bool = False) -> Optional[str]:
+    """websocket 실행 직전에만 호출. 호출 후 즉시 변수 참조 해제 권장."""
+    return _token_store.load_device_token(
+        server_url, agent_id, allow_plaintext_fallback=allow_plaintext
+    )
+
+
 def _load_persisted_token() -> Optional[tuple[str, str]]:
     """TOKEN_STORE_PATH 에서 agent_id + device_token 을 읽어 반환."""
     path = config.TOKEN_STORE_PATH
@@ -135,20 +244,45 @@ def _load_persisted_token() -> Optional[tuple[str, str]]:
     return agent_id, device_token
 
 
-def run_websocket() -> int:
-    """Stage 2 — WebSocket 세션 실행 (사용자 명시적 기동)."""
+def run_websocket(*, server_url: Optional[str] = None,
+                  allow_plaintext: bool = False) -> int:
+    """Stage 2 — WebSocket 세션 실행 (사용자 명시적 기동).
+
+    토큰 로드 우선순위:
+      1) keyring (config.json의 agent_id + server_url 기준)
+      2) 평문 fallback (allow_plaintext=True 인 경우만)
+      3) 레거시 ``TOKEN_STORE_PATH`` 평문 파일 (backward compat)
+    """
     from . import websocket_client
 
     if not config.WEBSOCKET_ENABLED:
         print("WebSocket 비활성 상태. 환경변수 HAEHAN_AGENT_WS_ENABLED=true 후 실행",
               file=sys.stderr)
         return 2
-    token_pair = _load_persisted_token()
-    if token_pair is None:
-        print("device_token 파일이 없다. 먼저 --register 를 실행하라.",
+
+    cfg = _desk_cfg.load_config()
+    effective_server = server_url or cfg.server_url or config.SERVER_BASE_URL
+    if effective_server:
+        config.SERVER_BASE_URL = effective_server
+
+    agent_id = ""
+    device_token = ""
+    if cfg.agent_id and effective_server:
+        loaded = _load_token_for_run(effective_server, cfg.agent_id,
+                                     allow_plaintext=allow_plaintext)
+        if loaded:
+            agent_id = cfg.agent_id
+            device_token = loaded
+
+    if not (agent_id and device_token):
+        legacy = _load_persisted_token()
+        if legacy is not None:
+            agent_id, device_token = legacy
+
+    if not (agent_id and device_token):
+        print("device_token이 없다. --register-with-code 또는 --register 후 다시 실행하라.",
               file=sys.stderr)
         return 2
-    agent_id, device_token = token_pair
     try:
         websocket_client.connect(agent_id, device_token)
     except websocket_client.WebSocketDisabled as e:
@@ -164,15 +298,26 @@ def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="local_agent",
                                 description="haehan-ai 로컬 에이전트 (Stage 1/2)")
     p.add_argument("--register", action="store_true",
-                   help="서버에 신규 에이전트 등록")
+                   help="서버에 신규 에이전트 등록 (legacy Basic Auth)")
+    p.add_argument("--register-with-code", dest="register_with_code", default="",
+                   help="registration_code로 서버 등록 (Basic Auth 미사용)")
+    p.add_argument("--server", default=os.getenv("HAEHAN_AGENT_SERVER", ""),
+                   help="서버 base URL. 미지정 시 config.json 또는 환경변수 사용")
+    p.add_argument("--status", action="store_true",
+                   help="현재 config/keyring 상태 표시 (token 원문 미표시)")
     p.add_argument("--ping", action="store_true",
                    help="local ping 액션 실행 후 종료 (서버 호출 없음)")
     p.add_argument("--run", action="store_true",
-                   help="Stage 2 — WebSocket 세션 기동 (HAEHAN_AGENT_WS_ENABLED=true 필요)")
+                   help="WebSocket 세션 기동 (HAEHAN_AGENT_WS_ENABLED=true 필요)")
+    p.add_argument("--once", action="store_true",
+                   help="WebSocket 1회 처리 후 종료 (--run의 단발 변형)")
+    p.add_argument("--allow-plaintext-token-store", dest="allow_plaintext",
+                   action="store_true",
+                   help="keyring 사용 불가 시 평문 fallback 허용 (운영 비권장)")
     p.add_argument("--user", default=os.getenv("HAEHAN_AGENT_USER", ""),
-                   help="서버 Basic auth 사용자")
+                   help="서버 Basic auth 사용자 (--register 전용)")
     p.add_argument("--password", default=os.getenv("HAEHAN_AGENT_PASSWORD", ""),
-                   help="서버 Basic auth 비밀번호")
+                   help="서버 Basic auth 비밀번호 (--register 전용)")
     return p.parse_args()
 
 
@@ -181,6 +326,19 @@ def main() -> int:
                         format="%(asctime)s %(levelname)s %(name)s | %(message)s")
     args = _parse_args()
     auth = (args.user, args.password) if args.user else None
+
+    server_arg = (args.server or "").strip()
+
+    if args.status:
+        return cmd_status(server_url=server_arg or None,
+                          allow_plaintext=args.allow_plaintext)
+
+    if args.register_with_code:
+        return cmd_register_with_code(
+            server_url=server_arg,
+            registration_code=args.register_with_code,
+            allow_plaintext=args.allow_plaintext,
+        )
 
     if args.ping:
         result = execute_local("ping", {})
@@ -200,10 +358,16 @@ def main() -> int:
         print(f"[저장 위치] {config.TOKEN_STORE_PATH}")
         return 0
 
-    if args.run:
-        return run_websocket()
+    if args.run or args.once:
+        # --once는 첫 세션 종료 시 자연 종료. run_forever 자체는 루프이지만,
+        # ws_client는 정상 종료 시 함수가 반환되므로 --once는 해당 동작에 의존.
+        if args.once:
+            os.environ.setdefault("HAEHAN_AGENT_WS_ONCE", "true")
+        return run_websocket(server_url=server_arg or None,
+                             allow_plaintext=args.allow_plaintext)
 
-    print("사용법: python -m local_agent.agent --register | --ping | --run",
+    print("사용법: python -m local_agent.agent "
+          "--register-with-code <CODE> --server <URL> | --status | --run | --once",
           file=sys.stderr)
     return 2
 

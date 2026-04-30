@@ -14,6 +14,8 @@ openpyxl>=3.1.0
 # Windows 로컬 Excel COM 제어 (B안 1단계 POC) — Windows 에서만 설치.
 # Linux/서버 환경에는 영향 없도록 환경 마커 분리.
 pywin32>=306; sys_platform == "win32"
+# Desktop agent device_token 저장 (Windows Credential Manager 등 OS 자격증명 저장소).
+keyring>=24.0; sys_platform == "win32"
 pytest>=7.0
 flask>=3.0.0
 requests>=2.31.0
