@@ -9,6 +9,12 @@ import type {
   LocalAgentDiagnosticsResponse,
 } from "@/types/local-agent";
 import type { CurrentUser } from "@/types/auth";
+import type {
+  IssueRegistrationCodeRequest,
+  IssueRegistrationCodeResponse,
+  RegistrationCodeListResponse,
+  RevokeRegistrationCodeResponse,
+} from "@/types/registration-code";
 
 const DEFAULT_API_BASE_PATH = "/orchestrator/api/v1";
 
@@ -148,6 +154,36 @@ export function requestCaptureScreenshot(
         reason: options?.reason ?? "",
         note: options?.note ?? "",
       }),
+    }
+  );
+}
+
+export function listRegistrationCodes(): Promise<RegistrationCodeListResponse> {
+  return apiFetch<RegistrationCodeListResponse>("/local-agents/registration-codes");
+}
+
+export function issueRegistrationCode(
+  body: IssueRegistrationCodeRequest
+): Promise<IssueRegistrationCodeResponse> {
+  return apiFetch<IssueRegistrationCodeResponse>(
+    "/local-agents/registration-codes",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+export function revokeRegistrationCode(
+  codeId: string
+): Promise<RevokeRegistrationCodeResponse> {
+  return apiFetch<RevokeRegistrationCodeResponse>(
+    `/local-agents/registration-codes/${encodeURIComponent(codeId)}/revoke`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
     }
   );
 }
