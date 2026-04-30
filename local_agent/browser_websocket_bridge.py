@@ -1,0 +1,270 @@
+"""Local WebSocket bridge for approved browser tasks (BROWSER-6).
+
+Bridges inbound mock WebSocket messages to BrowserTaskHandler and
+emits safe outbound result callbacks via BrowserWebSocketTaskResultSchema.
+
+Flow:
+    inbound dict
+    → BrowserWebSocketTaskPayloadSchema.from_dict()  (raises on invalid)
+    → BrowserTaskPayload (via to_browser_task_payload)
+    → BrowserTaskHandler.handle_task()  (async)
+    → BrowserTaskResult (safe fields only)
+    → BrowserWebSocketTaskResultSchema.from_task_result()
+    → result_schema.safe_dict()
+    → MockResultCallbackCollector.append()
+
+Security invariants:
+- approval_token / final_approval_token / token_hash NEVER reach callback
+- typed_text / password / OTP / cookie / session NEVER reach callback
+- Bridge does NOT open ws:// or wss:// connections — mock only
+- Bridge does NOT call BrowserController directly — handler dispatch only
+- Schema validation MUST run BEFORE handler dispatch
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+from dataclasses import asdict
+from typing import Any, Callable, Dict, List, Optional
+
+from .browser_approval_verifier import BrowserApprovalVerifier
+from .browser_task_handler import (
+    BrowserTaskHandler,
+    BrowserTaskPayload,
+    BrowserTaskResult,
+)
+from .browser_websocket_schema import (
+    BrowserWebSocketTaskPayloadSchema,
+    BrowserWebSocketTaskResultSchema,
+    RESULT_DATA_FORBIDDEN_KEYS,
+    VALID_TASK_STATUS,
+)
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Mock callback collector
+# ---------------------------------------------------------------------------
+
+class MockResultCallbackCollector:
+    """Collects safe result dicts emitted by the bridge.
+
+    Used in tests and local mock flows. Provides assertions to verify
+    secret non-disclosure and message routing.
+    """
+
+    def __init__(self) -> None:
+        self.messages: List[Dict[str, Any]] = []
+
+    def append(self, message: Dict[str, Any]) -> None:
+        self.messages.append(message)
+
+    def last_message(self) -> Optional[Dict[str, Any]]:
+        return self.messages[-1] if self.messages else None
+
+    def clear(self) -> None:
+        self.messages.clear()
+
+    def assert_no_secrets(self) -> None:
+        """Raise AssertionError if any forbidden key appears in any message."""
+        for msg in self.messages:
+            self._assert_no_secrets_in_value(msg)
+
+    @classmethod
+    def _assert_no_secrets_in_value(cls, value: Any) -> None:
+        if isinstance(value, dict):
+            for k, v in value.items():
+                if k.lower() in {fk.lower() for fk in RESULT_DATA_FORBIDDEN_KEYS}:
+                    raise AssertionError(f"Forbidden key in callback: {k}")
+                cls._assert_no_secrets_in_value(v)
+        elif isinstance(value, list):
+            for item in value:
+                cls._assert_no_secrets_in_value(item)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _payload_to_task(schema: BrowserWebSocketTaskPayloadSchema) -> BrowserTaskPayload:
+    """Convert validated WebSocket payload schema to BrowserTaskPayload."""
+    return BrowserTaskPayload(
+        task_id=schema.task_id,
+        task_type=schema.task_type,
+        action_type=schema.action_type,
+        selector=schema.selector,
+        value=schema.value,
+        approval_id=schema.approval_id,
+        approval_token=schema.approval_token,
+        final_approval_token=schema.final_approval_token,
+    )
+
+
+def _task_result_to_schema(result: BrowserTaskResult) -> BrowserWebSocketTaskResultSchema:
+    """Convert BrowserTaskResult → BrowserWebSocketTaskResultSchema (safe fields only)."""
+    status = result.status if result.status in VALID_TASK_STATUS else "received"
+    return BrowserWebSocketTaskResultSchema.from_task_result(
+        task_id=result.task_id,
+        status=status,
+        action=result.action,
+        selector=result.selector,
+        executed=result.executed,
+        element_found=result.element_found,
+        risk_level=result.risk_level,
+        final_approval_required=result.final_approval_required,
+        result=result.result,
+        error_code=result.error_code,
+        error_message=result.error_message,
+        target_url_domain=result.target_url_domain,
+        text_length=result.text_length,
+        text_preview="[REDACTED]",
+    )
+
+
+def _safe_failure_dict(
+    task_id: str,
+    action: str,
+    selector: str,
+    status: str,
+    error_code: str,
+    error_message: str,
+) -> Dict[str, Any]:
+    """Build a safe failure callback dict via the result schema (no secrets)."""
+    schema = BrowserWebSocketTaskResultSchema.from_task_result(
+        task_id=task_id or "unknown",
+        status=status if status in VALID_TASK_STATUS else "validation_failed",
+        action=action,
+        selector=selector,
+        executed=False,
+        element_found=False,
+        result=error_code,
+        error_code=error_code,
+        error_message=error_message,
+        text_preview="[REDACTED]",
+    )
+    return schema.safe_dict()
+
+
+# ---------------------------------------------------------------------------
+# Bridge
+# ---------------------------------------------------------------------------
+
+class BrowserLocalWebSocketBridge:
+    """Local mock WebSocket → BrowserTaskHandler bridge.
+
+    Does NOT open real WebSocket connections. Accepts inbound dict messages
+    via handle_inbound_message() and forwards safe results via callback.
+
+    Flow guarantees:
+    - Schema validation runs BEFORE handler dispatch (validation_failed otherwise)
+    - All callbacks pass through BrowserWebSocketTaskResultSchema.safe_dict()
+    - Tokens never appear in callbacks or logs
+    """
+
+    def __init__(
+        self,
+        task_handler: BrowserTaskHandler,
+        callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    ) -> None:
+        self._handler = task_handler
+        self._callback = callback or (lambda _msg: None)
+
+    # ------------------------------------------------------------------
+    # Inbound message entrypoint
+
+    async def handle_inbound_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Process one inbound mock message. Returns the safe callback dict."""
+        # Step 1: schema validation — handler is NOT invoked on failure
+        try:
+            schema = BrowserWebSocketTaskPayloadSchema.from_dict(message or {})
+        except (ValueError, TypeError) as exc:
+            logger.info("inbound payload validation failed: %s", exc)
+            failure = _safe_failure_dict(
+                task_id=str((message or {}).get("task_id") or "unknown"),
+                action=str((message or {}).get("action_type") or ""),
+                selector=str((message or {}).get("selector") or ""),
+                status="validation_failed",
+                error_code="schema_invalid",
+                error_message=str(exc),
+            )
+            self._emit(failure)
+            return failure
+
+        is_valid, err = schema.validate()
+        if not is_valid:
+            failure = _safe_failure_dict(
+                task_id=schema.task_id or "unknown",
+                action=schema.action_type,
+                selector=schema.selector,
+                status="validation_failed",
+                error_code="schema_invalid",
+                error_message=err or "validation failed",
+            )
+            self._emit(failure)
+            return failure
+
+        # Step 2: convert to handler payload
+        payload = _payload_to_task(schema)
+
+        # Step 3: dispatch to handler — never call adapter/controller directly
+        try:
+            task_result = await self._handler.handle_task(payload)
+        except Exception as exc:
+            logger.exception("task handler raised — returning safe failed result")
+            failure = _safe_failure_dict(
+                task_id=schema.task_id,
+                action=schema.action_type,
+                selector=schema.selector,
+                status="failed",
+                error_code="handler_exception",
+                error_message=type(exc).__name__,  # class name only — no stack
+            )
+            self._emit(failure)
+            return failure
+
+        # Step 4: result → result schema → safe_dict
+        result_schema = _task_result_to_schema(task_result)
+        is_safe, err = result_schema.validate_safe_result()
+        if not is_safe:
+            # Defensive: drop the unsafe result, emit a sanitized failure
+            logger.error("unsafe result detected — sanitizing: %s", err)
+            failure = _safe_failure_dict(
+                task_id=task_result.task_id,
+                action=task_result.action,
+                selector=task_result.selector,
+                status="failed",
+                error_code="unsafe_result",
+                error_message="result schema validation failed",
+            )
+            self._emit(failure)
+            return failure
+
+        safe = result_schema.safe_dict()
+        self._emit(safe)
+        return safe
+
+    # ------------------------------------------------------------------
+    # Synchronous helper (for tests)
+
+    def handle_inbound_message_sync(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        return asyncio.run(self.handle_inbound_message(message))
+
+    # ------------------------------------------------------------------
+    # Internal
+
+    def _emit(self, message: Dict[str, Any]) -> None:
+        """Emit safe message via callback. Strips any forbidden keys defensively."""
+        # Defense in depth — never trust upstream to be clean
+        forbidden = {fk.lower() for fk in RESULT_DATA_FORBIDDEN_KEYS}
+        clean = {k: v for k, v in message.items() if k.lower() not in forbidden}
+        try:
+            self._callback(clean)
+        except Exception as exc:
+            logger.error("callback raised — dropping: %s", exc)
+
+
+__all__ = [
+    "BrowserLocalWebSocketBridge",
+    "MockResultCallbackCollector",
+]

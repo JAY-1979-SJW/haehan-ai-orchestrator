@@ -47,7 +47,9 @@ VALID_TASK_STATUS = frozenset({
     "failed",
 })
 
-# Result data allowed fields (explicit whitelist, must match registry)
+# Result data allowed fields (explicit whitelist, must match registry).
+# NOTE: task_id is a top-level message field, NOT a result_data inner field.
+# safe_dict() includes task_id at top-level alongside result_data contents.
 RESULT_DATA_ALLOWED_KEYS = frozenset({
     "status",
     "action",
@@ -418,7 +420,7 @@ class BrowserWebSocketTaskResultSchema:
         """Convert to safe dict for storage/transmission.
 
         Returns:
-            Dictionary with only safe fields
+            Dictionary with task_id (top-level) plus only allowed result_data fields.
         """
         data = asdict(self)
 
@@ -429,11 +431,14 @@ class BrowserWebSocketTaskResultSchema:
         # Ensure text_preview is redacted
         data["text_preview"] = "[REDACTED]"
 
-        # Return only allowed keys
-        return {
+        # Allowed result_data fields + task_id (top-level routing field, not in result_data)
+        out: Dict[str, Any] = {
             k: v for k, v in data.items()
             if k in RESULT_DATA_ALLOWED_KEYS and v is not None
         }
+        if self.task_id:
+            out["task_id"] = self.task_id
+        return out
 
 
 def validate_payload_schema(data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
