@@ -66,8 +66,49 @@ class PlanSubmitResult:
     executed: bool = False
 
 
+@dataclass
+class ExecuteClickResult:
+    """Result of click execution (approval-gated)."""
+    action: str = "browser_execute_click"
+    selector: str = ""
+    element_found: bool = False
+    executed: bool = False
+    risk_level: str = "low"
+    final_approval_required: bool = False
+    result: str = "success"  # success, element_not_found, approval_denied, risky_element
+    target_url_domain: str = ""
+    screenshot_taken: bool = False
+    screenshot_ref: Optional[str] = None
+
+
+@dataclass
+class ExecuteTypeResult:
+    """Result of type execution (approval-gated)."""
+    action: str = "browser_execute_type"
+    selector: str = ""
+    element_found: bool = False
+    executed: bool = False
+    field_type: str = ""
+    text_length: int = 0
+    text_preview: str = "[REDACTED]"
+    result: str = "success"  # success, element_not_found, approval_denied, sensitive_field
+    target_url_domain: str = ""
+    screenshot_taken: bool = False
+    screenshot_ref: Optional[str] = None
+
+
 class BrowserControllerError(Exception):
     """Base exception for browser controller."""
+    pass
+
+
+class BrowserApprovalError(BrowserControllerError):
+    """Approval-related error."""
+    pass
+
+
+class BrowserSensitiveFieldError(BrowserControllerError):
+    """Sensitive field access error."""
     pass
 
 
@@ -302,6 +343,172 @@ class BrowserController:
             final_approval_required=True
         )
 
+    async def execute_click(
+        self,
+        selector: str,
+        approval_token: Optional[str] = None,
+        final_approval_token: Optional[str] = None
+    ) -> ExecuteClickResult:
+        """Execute click with approval validation and risk detection.
+
+        Args:
+            selector: CSS selector of element to click
+            approval_token: Approval token (required for execution)
+            final_approval_token: Final approval for risky actions (submit/delete/etc)
+
+        Returns:
+            ExecuteClickResult with execution status and safe metadata
+        """
+        if not self.page:
+            raise BrowserControllerError("Browser not launched")
+
+        domain = self._extract_domain(self.page.url)
+
+        try:
+            element = await self.page.query_selector(selector)
+
+            if not element:
+                return ExecuteClickResult(
+                    selector=selector,
+                    element_found=False,
+                    executed=False,
+                    result="element_not_found",
+                    target_url_domain=domain
+                )
+
+            if approval_token is None:
+                return ExecuteClickResult(
+                    selector=selector,
+                    element_found=True,
+                    executed=False,
+                    result="approval_denied",
+                    target_url_domain=domain
+                )
+
+            text = await element.text_content()
+            text = (text or "").strip().lower()
+
+            risk_level, is_risky = self._assess_click_risk(text, selector)
+
+            if is_risky and final_approval_token is None:
+                return ExecuteClickResult(
+                    selector=selector,
+                    element_found=True,
+                    executed=False,
+                    risk_level=risk_level,
+                    final_approval_required=True,
+                    result="risky_element",
+                    target_url_domain=domain
+                )
+
+            await element.click()
+            logger.info(f"Clicked on {selector}")
+
+            return ExecuteClickResult(
+                selector=selector,
+                element_found=True,
+                executed=True,
+                risk_level=risk_level,
+                result="success",
+                target_url_domain=domain
+            )
+        except Exception as e:
+            logger.error(f"Execute click failed: {e}")
+            return ExecuteClickResult(
+                selector=selector,
+                element_found=False,
+                executed=False,
+                result="error",
+                target_url_domain=domain
+            )
+
+    async def execute_type(
+        self,
+        selector: str,
+        text: str,
+        approval_token: Optional[str] = None
+    ) -> ExecuteTypeResult:
+        """Execute text input with approval validation and sensitive field protection.
+
+        Args:
+            selector: CSS selector of input field
+            text: Text to type (will not be stored in results)
+            approval_token: Approval token (required for execution)
+
+        Returns:
+            ExecuteTypeResult with execution status and safe metadata (no text content)
+        """
+        if not self.page:
+            raise BrowserControllerError("Browser not launched")
+
+        domain = self._extract_domain(self.page.url)
+
+        try:
+            element = await self.page.query_selector(selector)
+
+            if not element:
+                return ExecuteTypeResult(
+                    selector=selector,
+                    element_found=False,
+                    executed=False,
+                    result="element_not_found",
+                    target_url_domain=domain
+                )
+
+            if approval_token is None:
+                return ExecuteTypeResult(
+                    selector=selector,
+                    element_found=True,
+                    executed=False,
+                    result="approval_denied",
+                    target_url_domain=domain
+                )
+
+            field_type = await element.get_attribute("type") or "text"
+            field_name = await element.get_attribute("name") or ""
+            field_placeholder = await element.get_attribute("placeholder") or ""
+            field_aria_label = await element.get_attribute("aria-label") or ""
+
+            is_sensitive = self._is_sensitive_field(
+                field_type, field_name, field_placeholder, field_aria_label
+            )
+
+            if is_sensitive:
+                return ExecuteTypeResult(
+                    selector=selector,
+                    element_found=True,
+                    executed=False,
+                    field_type=field_type,
+                    text_length=len(text),
+                    text_preview="[REDACTED]",
+                    result="sensitive_field",
+                    target_url_domain=domain
+                )
+
+            await element.fill("")
+            await element.type(text, delay=10)
+            logger.info(f"Typed into {selector} ({len(text)} chars)")
+
+            return ExecuteTypeResult(
+                selector=selector,
+                element_found=True,
+                executed=True,
+                field_type=field_type,
+                text_length=len(text),
+                text_preview="[REDACTED]",
+                result="success",
+                target_url_domain=domain
+            )
+        except Exception as e:
+            logger.error(f"Execute type failed: {e}")
+            return ExecuteTypeResult(
+                selector=selector,
+                element_found=False,
+                executed=False,
+                result="error",
+                target_url_domain=domain
+            )
+
     # Private methods
 
     async def _list_input_fields(self) -> List[Dict[str, Any]]:
@@ -403,6 +610,70 @@ class BrowserController:
                 return True
 
         return False
+
+    def _assess_click_risk(self, element_text: str, selector: str) -> tuple[str, bool]:
+        """Assess risk level of a click action.
+
+        Returns:
+            (risk_level, is_risky): risk_level in [low, medium, high], is_risky=True if final approval needed
+        """
+        risk_keywords = {
+            "critical": ["submit", "delete", "remove", "결제", "삭제", "등록", "가입", "제출"],
+            "high": ["payment", "checkout", "댓글", "저장", "송금", "register", "comment"],
+        }
+
+        text_lower = element_text.lower()
+        selector_lower = selector.lower()
+        combined = f"{text_lower} {selector_lower}"
+
+        for keywords_list in risk_keywords.values():
+            for keyword in keywords_list:
+                if keyword in combined:
+                    return "high", True
+
+        return "low", False
+
+    def _is_sensitive_field(
+        self,
+        field_type: str,
+        field_name: str,
+        field_placeholder: str,
+        field_aria_label: str
+    ) -> bool:
+        """Check if field is sensitive (password/OTP/2FA).
+
+        Args:
+            field_type: input type attribute
+            field_name: input name attribute
+            field_placeholder: input placeholder attribute
+            field_aria_label: input aria-label attribute
+
+        Returns:
+            True if field is sensitive (should not accept text input)
+        """
+        if field_type in ["password", "hidden"]:
+            return True
+
+        sensitive_keywords = [
+            "password", "passwd", "pw", "otp", "2fa", "인증번호", "보안코드",
+            "비밀번호", "verification", "code", "secret"
+        ]
+
+        text = f"{field_name} {field_placeholder} {field_aria_label}".lower()
+        for keyword in sensitive_keywords:
+            if keyword in text:
+                return True
+
+        return False
+
+    def _extract_domain(self, url: str) -> str:
+        """Extract domain from URL."""
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            return parsed.netloc or ""
+        except Exception:
+            return ""
 
 
 # Convenience functions for common operations
