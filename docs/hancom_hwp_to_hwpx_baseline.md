@@ -1,8 +1,8 @@
 # 한컴 HWP → HWPX 변환 Worker - 기준선 사양
 
 **Date:** 2026-05-02  
-**Status:** 기준선 확정  
-**Testing:** 18개 테스트 모두 통과 (경로 11 + HWPX 검증 7)
+**Status:** 기준선 확정 + 최종 검증 완료  
+**Testing:** 36개 테스트 모두 통과 (경로 11 + HWPX 검증 7 + Workflow 4 + Handler 5 + COM Smoke 9)
 
 ---
 
@@ -137,6 +137,26 @@ Orchestration 레이어.
 }
 ```
 
+### 7. 액션 레지스트리 및 Task Executor 통합
+Task 디스패치 시스템에 완전 통합됨.
+
+**agent/action_registry.py:**
+- `CATEGORY_HANCOM` 상수 정의
+- `"hancom.convert_hwp_to_hwpx_copy"` 등록:
+  - category: `CATEGORY_HANCOM`
+  - risk_level: `RISK_MEDIUM`
+  - requires_file_path: `True`
+  - requires_save_as: `True`
+  - read_only: `False` (변환 출력을 위해)
+
+**agent/task_executor.py:**
+- `_run_hancom_convert_hwp_to_hwpx_copy(task)` 핸들러
+  - 입력: `input_path` 또는 `file_path` (별칭)
+  - 입력: `output_path` 또는 `save_as` (별칭)
+  - 선택: `visible` (기본값: False)
+  - 에러: `INPUT_OUTPUT_PATH_REQUIRED` (경로 누락)
+  - 반환: 표준 result dict (ok, error, data)
+
 ---
 
 ## 에러 코드
@@ -221,9 +241,9 @@ else:
 
 ## 테스트 기준선
 
-**총 18개 테스트 통과:**
+**총 36개 테스트 통과:**
 
-### 경로 검증 (11개)
+### 경로 검증 (11개) — test_hancom_hwp_path_policy.py
 - 유효한 HWP 경로 검증 ✅
 - 존재하지 않는 파일 ✅
 - 잘못된 확장자 ✅
@@ -236,7 +256,7 @@ else:
 - 종합 경로 검증 실패 (입력 없음) ✅
 - 경로 정보 조회 ✅
 
-### HWPX 패키지 검증 (7개)
+### HWPX 패키지 검증 (7개) — test_hancom_hwpx_package_validator.py
 - 유효한 HWPX 검증 ✅
 - 파일 없음 ✅
 - ZIP 아님 ✅
@@ -245,11 +265,35 @@ else:
 - 구조 분석 ✅
 - 메타데이터 추출 ✅
 
-### Workflow (4개)
+### Workflow 통합 (4개) — test_hancom_hwp_workflows.py
 - 변환 성공 (mock) ✅
 - 변환 실패 ✅
 - HWPX 검증 실패 ✅
 - 필수 파라미터 누락 ✅
+
+### Task Executor 핸들러 (5개) — test_task_executor_unit.py
+- 입력 경로 누락 시 오류 ✅
+- 출력 경로 누락 시 오류 ✅
+- 워크플로우로 위임 ✅
+- file_path/save_as 별칭 지원 ✅
+- 에러 전파 ✅
+
+### 실제 COM Smoke 테스트 (9개) — test_hancom_hwp_com_smoke.py
+- 한컴 COM 가용성 확인 ✅
+- HwpObject 생성 ✅
+- 보안모듈 상태 조회 ✅
+- HWP 파일 읽기 전용 열기 ✅
+- HWP → HWPX 변환 (읽기 전용) ✅
+- HWPX ZIP 구조 검증 ✅
+- 원본 HWP 파일 무수정 확인 ✅
+- Workflow 모듈을 통한 변환 ✅
+- 실제 COM 객체 생성/삭제 ✅
+
+**Smoke 테스트 실행:**
+```bash
+# 한컴 설치 필수, 보안모듈 등록 권장
+pytest agent/tests/test_hancom_hwp_com_smoke.py -v
+```
 
 ---
 

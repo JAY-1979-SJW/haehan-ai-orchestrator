@@ -777,6 +777,44 @@ def _run_excel_pack_check_material_prices_copy(task: dict) -> dict:
 
 
 # ──────────────────────────────────────────────────────────────────
+# Hancom HWP → HWPX 변환 핸들러
+# ──────────────────────────────────────────────────────────────────
+def _run_hancom_convert_hwp_to_hwpx_copy(task: dict) -> dict:
+    """한컴 HWP 파일을 HWPX로 변환한다 (copy-based, 원본 보호).
+
+    Required params:
+        input_path: 입력 HWP 파일 경로 (절대, .hwp)
+        output_path: 출력 HWPX 파일 경로 (절대, .hwpx)
+
+    Optional params:
+        visible: UI 표시 여부 (기본값: False)
+    """
+    from .hancom.hwp import workflows as hancom_workflows
+
+    input_path = task.get("input_path") or task.get("file_path")
+    output_path = task.get("output_path") or task.get("save_as")
+    visible = task.get("visible", False)
+
+    if not input_path or not output_path:
+        return _result(False, error="INPUT_OUTPUT_PATH_REQUIRED")
+
+    try:
+        out = hancom_workflows.convert_hwp_to_hwpx_copy({
+            "input_path": input_path,
+            "output_path": output_path,
+            "visible": visible,
+        })
+
+        ok = bool(out.get("success"))
+        data = {k: v for k, v in out.items() if k not in ("success", "error")}
+        return _result(ok, data=data, error=out.get("error"))
+
+    except Exception as e:
+        logger.error(f"Hancom conversion failed: {type(e).__name__}")
+        return _result(False, error=f"HANCOM_CONVERSION_FAILED:{type(e).__name__}")
+
+
+# ──────────────────────────────────────────────────────────────────
 # CAD COM 핸들러
 #
 # 공통 설계 원칙 (POC 에서 검증된 것을 그대로 답습):
@@ -1128,6 +1166,8 @@ _DISPATCH = {
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
+    # Hancom 작업
+    "hancom.convert_hwp_to_hwpx_copy": _run_hancom_convert_hwp_to_hwpx_copy,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,
