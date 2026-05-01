@@ -595,6 +595,330 @@ def _col_letter(col_num: int) -> str:
     return result
 
 
+# ── 헤더 자동 인식 ───────────────────────────────────────────────────
+def detect_header_row_from_active_sheet(
+    sheet: Any,
+    max_scan_rows: int = 20,
+    max_columns: int = 50,
+) -> Tuple[Optional[int], Optional[str]]:
+    """시트의 상위 max_scan_rows 행을 스캔해 헤더 행 자동 인식.
+
+    헤더 판정 기준:
+    - 문자열 셀 비율 (높을수록 헤더일 가능성 높음)
+    - 일반적 헤더명 포함도
+    - 간격 있는 헤더도 인식 (B4, D4, F4 등)
+
+    반환: (header_row, error_or_None)
+      header_row는 1-based (Excel 행 번호)
+    """
+    if sheet is None:
+        return None, _err.SHEET_NOT_FOUND
+
+    try:
+        # 각 행의 점수 계산
+        scores: list[tuple[int, float]] = []
+        common_headers = {
+            "품명", "명칭", "자재명", "규격", "수량", "단위", "단가", "금액",
+            "비고", "설명", "이름", "코드", "번호", "날짜", "금액", "가격",
+            "기관코드", "사업분야코드", "사업종류코드", "준공구분", "노선코드",
+            "수행주기구분", "승인상태", "안전관리비", "수행단계",
+        }
+
+        for row_idx in range(1, max_scan_rows + 1):
+            non_empty_count = 0
+            string_count = 0
+            header_match_count = 0
+            numeric_count = 0
+
+            for col_idx in range(1, max_columns + 1):
+                try:
+                    cell = sheet.Cells(row_idx, col_idx)
+                    value = cell.Value
+
+                    if value is not None:
+                        non_empty_count += 1
+                        if isinstance(value, str):
+                            string_count += 1
+                            if value.strip() in common_headers:
+                                header_match_count += 1
+                        elif isinstance(value, (int, float)):
+                            numeric_count += 1
+                except Exception:  # noqa: BLE001
+                    pass
+
+            if non_empty_count == 0:
+                continue
+
+            # 점수 계산:
+            # - 문자열 비율 높음 (헤더 특성): (string_count / non_empty_count) * 50
+            # - 헤더명 매칭: header_match_count * 10
+            # - 숫자 비율 낮음 (데이터 행이 아님): -numeric_count * 2
+            string_ratio = (string_count / non_empty_count) if non_empty_count > 0 else 0
+            score = (string_ratio * 50) + (header_match_count * 10) - (numeric_count * 2)
+            scores.append((row_idx, score))
+
+        if not scores:
+            return None, "NO_HEADER_ROW_FOUND"
+
+        # 가장 높은 점수의 행
+        header_row = max(scores, key=lambda x: x[1])[0]
+        return header_row, None
+
+    except Exception as e:  # noqa: BLE001
+        logger.debug("detect_header_row_from_active_sheet 실패: %s", type(e).__name__)
+        return None, "HEADER_DETECTION_FAILED"
+
+
+def map_headers_from_row(
+    sheet: Any,
+    header_row: int,
+    max_columns: int = 50,
+) -> Tuple[Optional[dict], Optional[str]]:
+    """헤더 행의 셀값을 header_name → column_number로 매핑.
+
+    반환: ({"header_name": column_number, ...}, error_or_None)
+      column_number는 1-based (Excel 열 번호)
+    """
+    if sheet is None:
+        return None, _err.SHEET_NOT_FOUND
+    if header_row < 1:
+        return None, "INVALID_HEADER_ROW"
+
+    try:
+        headers: dict = {}
+        for col_idx in range(1, max_columns + 1):
+            try:
+                cell = sheet.Cells(header_row, col_idx)
+                value = cell.Value
+                if value is not None:
+                    header_name = str(value).strip()
+                    if header_name:
+                        headers[header_name] = col_idx
+            except Exception:  # noqa: BLE001
+                pass
+
+        if not headers:
+            return None, "NO_HEADERS_IN_ROW"
+
+        return headers, None
+
+    except Exception as e:  # noqa: BLE001
+        logger.debug("map_headers_from_row 실패: %s", type(e).__name__)
+        return None, "HEADER_MAPPING_FAILED"
+
+
+def update_cell_by_header_and_row_copy(
+    row_match_header: str,
+    row_match_value: Any,
+    target_header: str,
+    new_value: Any,
+    output_path: Optional[str] = None,
+    *,
+    approval_token: Optional[str] = None,
+    allow_write: bool = False,
+) -> dict:
+    """헤더명 기준 셀을 찾아 값을 수정하고 복사본으로 저장.
+
+    정책:
+    - 원본 wb.Save() 호출 금지
+    - 복사본만 저장
+    - output_path 미지정 시 임시 폴더에 저장
+
+    Args:
+        row_match_header: 행 식별용 헤더명 (예: "품명")
+        row_match_value: 행 식별용 셀값 (예: "소화전함")
+        target_header: 수정 대상 헤더명 (예: "수량")
+        new_value: 새 값
+        output_path: 복사본 저장 경로 (선택)
+        approval_token: 승인 토큰
+        allow_write: write 허용 여부
+
+    Returns:
+        {
+            "success": bool,
+            "read_only": False,
+            "write_mode": "copy_only",
+            "original_saved": False,
+            "output_file": str (경로 마스킹),
+            "sheet": str,
+            "header_row": int,
+            "matched_row": int,
+            "target_cell": str,
+            "old_value": Any,
+            "new_value": Any,
+            "error": str | None,
+        }
+    """
+    result: dict = {
+        "success": False,
+        "read_only": False,
+        "write_mode": "copy_only",
+        "original_saved": False,
+        "output_file": None,
+        "sheet": None,
+        "header_row": None,
+        "matched_row": None,
+        "target_cell": None,
+        "old_value": None,
+        "new_value": None,
+        "error": None,
+    }
+
+    # 승인 검증
+    approval_err = _require_approval_for_write(
+        "excel.update_cell_by_header_copy", approval_token, allow_write,
+    )
+    if approval_err:
+        result["error"] = approval_err
+        return result
+
+    # GetActiveObject로 Excel 연결
+    app, err = get_active_excel_app()
+    if err or app is None:
+        result["error"] = _err.EXCEL_APP_NOT_FOUND
+        return result
+
+    try:
+        # ActiveWorkbook 확인
+        try:
+            wb = app.ActiveWorkbook
+            if wb is None:
+                result["error"] = "NO_ACTIVE_WORKBOOK"
+                return result
+        except Exception:  # noqa: BLE001
+            result["error"] = "NO_ACTIVE_WORKBOOK"
+            return result
+
+        # ActiveSheet 확인
+        try:
+            sheet = wb.ActiveSheet
+            if sheet is None:
+                result["error"] = _err.SHEET_NOT_FOUND
+                return result
+            result["sheet"] = str(sheet.Name)
+        except Exception:  # noqa: BLE001
+            result["error"] = _err.SHEET_NOT_FOUND
+            return result
+
+        # 헤더 행 자동 인식
+        header_row, err = detect_header_row_from_active_sheet(sheet)
+        if err or header_row is None:
+            result["error"] = err or "HEADER_DETECTION_FAILED"
+            return result
+        result["header_row"] = header_row
+
+        # 헤더 매핑
+        headers, err = map_headers_from_row(sheet, header_row)
+        if err or headers is None:
+            result["error"] = err or "HEADER_MAPPING_FAILED"
+            return result
+
+        # row_match_header 열 번호 확인
+        if row_match_header not in headers:
+            result["error"] = f"HEADER_NOT_FOUND: {row_match_header}"
+            return result
+        match_col = headers[row_match_header]
+
+        # target_header 열 번호 확인
+        if target_header not in headers:
+            result["error"] = f"HEADER_NOT_FOUND: {target_header}"
+            return result
+        target_col = headers[target_header]
+
+        # row_match_value가 포함된 행 찾기
+        matched_row = None
+        try:
+            used_range = sheet.UsedRange
+            max_row = used_range.Rows.Count + (header_row - 1)
+        except Exception:  # noqa: BLE001
+            max_row = header_row + 100  # fallback
+
+        try:
+            for row_idx in range(header_row + 1, max_row + 1):
+                try:
+                    cell = sheet.Cells(row_idx, match_col)
+                    value = cell.Value
+                    if value is not None and str(value).strip() == str(row_match_value).strip():
+                        matched_row = row_idx
+                        break
+                except Exception:  # noqa: BLE001
+                    pass
+        except Exception:  # noqa: BLE001
+            pass
+
+        if matched_row is None:
+            result["error"] = f"ROW_NOT_FOUND: {row_match_value}"
+            return result
+        result["matched_row"] = matched_row
+
+        # 대상 셀 주소
+        target_cell_addr = f"{_col_letter(target_col)}{matched_row}"
+        result["target_cell"] = target_cell_addr
+
+        # 변경 전 값 읽기
+        try:
+            old_cell = sheet.Cells(matched_row, target_col)
+            old_value = old_cell.Value
+            result["old_value"] = old_value
+        except Exception:  # noqa: BLE001
+            result["old_value"] = None
+
+        # 대상 셀에 new_value 입력
+        try:
+            target_cell = sheet.Cells(matched_row, target_col)
+            target_cell.Value = new_value
+            result["new_value"] = new_value
+        except Exception as e:  # noqa: BLE001
+            logger.error("셀 수정 실패: %s", type(e).__name__)
+            result["error"] = _err.CELL_WRITE_FAILED
+            return result
+
+        # 복사본 저장 (원본 저장 금지)
+        # output_path 미지정 시 임시 폴더에 생성
+        if output_path is None:
+            import tempfile
+            import os
+            temp_dir = tempfile.gettempdir()
+            wb_name = str(wb.Name)
+            # 파일명 수정 (날짜 추가)
+            from datetime import datetime
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_name, ext = os.path.splitext(wb_name)
+            output_path = os.path.join(temp_dir, f"{base_name}_copy_{ts}{ext}")
+
+        try:
+            p = Path(output_path).expanduser()
+        except (OSError, ValueError):
+            result["error"] = _err.OUTPUT_PATH_NOT_ALLOWED
+            return result
+
+        if not p.is_absolute():
+            result["error"] = _err.OUTPUT_PATH_NOT_ALLOWED
+            return result
+
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            result["error"] = _err.OUTPUT_PATH_NOT_ALLOWED
+            return result
+
+        try:
+            wb.SaveAs(str(p), FileFormat=_XL_OPEN_XML_WORKBOOK)
+            result["output_file"] = f"...{str(p)[-30:]}"  # 경로 마스킹
+            result["success"] = True
+        except Exception as e:  # noqa: BLE001
+            logger.error("복사본 저장 실패: %s", type(e).__name__)
+            result["error"] = _err.WORKBOOK_SAVE_FAILED
+            return result
+
+        return result
+
+    except Exception as e:  # noqa: BLE001
+        logger.error("update_cell_by_header_and_row_copy 실패: %s", type(e).__name__)
+        result["error"] = "UPDATE_FAILED"
+        return result
+
+
 __all__ = [
     "is_excel_available",
     "open_excel_app",
@@ -608,4 +932,7 @@ __all__ = [
     "run_basic_poc",
     "get_active_excel_app",
     "probe_active_workbook_readonly",
+    "detect_header_row_from_active_sheet",
+    "map_headers_from_row",
+    "update_cell_by_header_and_row_copy",
 ]
