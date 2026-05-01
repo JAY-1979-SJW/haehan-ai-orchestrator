@@ -161,16 +161,62 @@ else:
     print("한컴 설치 필요")
 ```
 
-### CLI
-```bash
-# 진단 스크립트 실행
-python scripts/diagnose_hancom_installation.py
+### CLI - 진단 모드
 
-# Exit code:
-# 0: 완전히 설치됨 (한컴 + 보안모듈)
-# 1: 설치됨 (한컴만, 보안모듈 미등록)
-# 2: 미설치
+```bash
+# 1. 진단만 수행 (registry write 없음)
+python scripts/setup_hancom_security_module.py --diagnose-only
+# → 현재 보안모듈 상태를 확인하고 DLL 경로 후보 표시
+# → Exit code: 0 (진단 완료) 또는 2 (DLL 찾기 실패)
+
+# 2. 진단 + DLL 경로 명시 지정
+python scripts/setup_hancom_security_module.py --diagnose-only --dll-path "C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll"
+# → 지정된 DLL 경로를 검증하고 상태 표시
 ```
+
+### CLI - 등록 모드
+
+```bash
+# 1. 자동 탐색으로 등록 (사용자 승인 필요)
+python scripts/setup_hancom_security_module.py --register
+# → DLL 자동 탐색 → 사용자 승인 프롬프트 표시 → registry 쓰기
+# → Exit code: 0 (성공) 또는 1 (취소/실패) 또는 2 (DLL 못 찾음)
+
+# 2. DLL 경로 명시 지정 (사용자 승인 필요)
+python scripts/setup_hancom_security_module.py --register --dll-path "C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll"
+# → 지정된 DLL 검증 → 사용자 승인 프롬프트 표시 → registry 쓰기
+
+# 3. CLI 자동 승인으로 등록 (로그 기록됨)
+python scripts/setup_hancom_security_module.py --register --dll-path "C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll" --yes
+# → 지정된 DLL 검증 → 사용자 승인 생략 (로그: "[CLI 자동 승인 모드]") → registry 쓰기
+# → CLI 환경에서만 권장 (GUI 승인 불가)
+
+# 4. 커스텀 모듈명으로 등록
+python scripts/setup_hancom_security_module.py --register --dll-path "[경로]" --module-name "HaehanFilePathChecker"
+# → 커스텀 모듈명으로 registry에 등록
+```
+
+### CLI Exit Codes
+```
+0: 성공 (진단 또는 등록 완료)
+1: 취소 또는 설정 오류 (권한, registry 쓰기 실패 등)
+2: 설치 오류 (한컴 미설치, DLL 못 찾음)
+```
+
+### 신규 CLI 옵션
+
+| 옵션 | 설명 | 기본값 |
+|------|------|--------|
+| `--dll-path` | 한컴 DLL 파일 경로 (명시 지정) | 자동 탐색 |
+| `--module-name` | 보안모듈 이름 | `FilePathCheckerModuleExample` |
+| `--diagnose-only` | 진단만 수행, registry write 없음 | 미설정 |
+| `--register` | 보안모듈 등록 (사용자 승인 필요) | 미설정 |
+| `--yes` | 사용자 승인 생략 (CLI 모드, 로그 기록) | 미설정 |
+
+**정책:**
+- `--diagnose-only`: Registry 읽기만 수행, 쓰기 없음
+- `--register`: 반드시 사용자 승인 필요 (`--yes` 또는 대화형 프롬프트)
+- `--yes`: CLI 자동 승인 모드, 명시적 로그 기록, GUI 환경에서는 금지
 
 ---
 

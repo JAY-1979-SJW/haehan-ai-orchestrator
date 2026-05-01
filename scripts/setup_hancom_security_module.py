@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -39,20 +40,26 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 예제:
-  # 자동 탐색으로 등록
-  python setup_hancom_security_module.py
+  # 진단만 수행 (등록 안 함)
+  python setup_hancom_security_module.py --diagnose-only
+
+  # 자동 탐색으로 등록 (사용자 확인)
+  python setup_hancom_security_module.py --register
 
   # 명시적 DLL 경로로 등록
-  python setup_hancom_security_module.py --dll-path "C:\\Program Files\\HNC\\한글2014\\Bin\\HwpAutomation.dll"
+  python setup_hancom_security_module.py --register --dll-path "C:\\Program Files\\HNC\\한글2014\\Bin\\HwpAutomation.dll"
 
-  # 모듈명 지정 (기본값: FilePathCheckerModuleExample)
-  python setup_hancom_security_module.py --module-name "MySecurityModule"
+  # 자동 승인으로 등록 (CLI 모드에서만)
+  python setup_hancom_security_module.py --register --yes
+
+  # 커스텀 모듈명으로 등록
+  python setup_hancom_security_module.py --register --module-name "HaehanFilePathChecker" --dll-path "[경로]"
         """,
     )
 
     parser.add_argument(
         "--dll-path",
-        help="한컴 DLL 파일 경로 (기본값: 자동 탐색)",
+        help="한컴 DLL 파일 경로 (확장자 .dll, 읽기 가능)",
         default=None,
     )
 
@@ -63,17 +70,46 @@ def main():
     )
 
     parser.add_argument(
-        "--verify",
+        "--diagnose-only",
         action="store_true",
-        help="등록 후 확인만 하고 등록하지 않음",
+        help="진단만 수행, registry write 하지 않음",
+    )
+
+    parser.add_argument(
+        "--register",
+        action="store_true",
+        help="보안모듈 등록 (사용자 확인 필요)",
+    )
+
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="사용자 확인 생략 (CLI 모드에서만, 로그 기록됨)",
     )
 
     args = parser.parse_args()
 
+    # 옵션 검증
+    if args.diagnose_only and args.register:
+        print("❌ 오류: --diagnose-only와 --register를 동시에 사용할 수 없습니다")
+        return 1
+
+    if args.yes and not args.register:
+        print("❌ 오류: --yes는 --register와 함께 사용해야 합니다")
+        return 1
+
+    mode = "diagnose" if args.diagnose_only else ("register" if args.register else "interactive")
+
     print("=" * 70)
-    print("한컴 보안모듈 자동 등록")
+    print(f"한컴 보안모듈 {'진단' if mode == 'diagnose' else '등록' if mode == 'register' else '대화형 등록'}")
     print("=" * 70)
     print()
+
+    # CLI 모드 검증 (--yes는 CLI에서만)
+    if args.yes:
+        logger.info("[CLI 자동 승인 모드] --yes 옵션으로 사용자 확인 생략됨")
+        print("[알림] CLI 자동 승인 모드 (사용자 확인 생략, 로그 기록됨)")
+        print()
 
     # 1단계: 현재 등록 상태 확인
     print("[1단계] 현재 보안모듈 상태 확인...")
@@ -136,24 +172,69 @@ def main():
 
     print()
 
-    # 2단계: 사용자 승인 확인
-    if not args.verify:
+    # 진단 전용 모드: 여기서 반환 (registry write 없음)
+    if mode == "diagnose":
+        print("=" * 70)
+        print("✅ 진단 완료")
+        print("=" * 70)
+        print()
+        print("보안모듈 상태:")
+        print(f"  등록 여부: {'✅ 등록됨' if current_status['registered'] else '❌ 미등록'}")
+        print(f"  DLL 경로: {resolved_dll}")
+        print(f"  DLL 존재: {'✅' if os.path.exists(resolved_dll) else '❌'}")
+        print()
+        print("💡 등록하려면 --register 옵션을 사용하세요:")
+        print(f'   python scripts/setup_hancom_security_module.py --register --dll-path "{resolved_dll}"')
+        print()
+        return 0
+
+    # 등록 모드: 사용자 승인 확인 (--yes 옵션이 없으면 프롬프트)
+    if not args.yes:
         print("[2단계] 사용자 승인 확인...")
         print()
-        print(f"다음 DLL을 등록하시겠습니까?")
-        print(f"  {resolved_dll}")
-        print()
-        print("보안모듈을 Registry에 등록합니다.")
-        print("(이 작업은 관리자 권한이 필요할 수 있습니다.)")
+        print("=" * 70)
+        print("📋 등록 정보 검토")
+        print("=" * 70)
         print()
 
-        response = input("계속 진행하시겠습니까? (y/n): ").strip().lower()
+        # 현재 진단 출력
+        print("현재 상태:")
+        print(f"  등록 여부: {'✅ 등록됨' if current_status['registered'] else '❌ 미등록'}")
+        if current_status['registered']:
+            print(f"  기존 모듈: {current_status['module_name']}")
+            print(f"  기존 경로: {current_status['dll_path']}")
+        print()
+
+        # 등록할 정보 출력
+        print("등록할 정보:")
+        module_name_to_register = args.module_name or security_module.DEFAULT_SECURITY_MODULE_NAME
+        registry_path = security_module.SECURITY_MODULE_REGISTRY_PATHS[0][0]
+        print(f"  모듈명: {module_name_to_register}")
+        print(f"  DLL 경로: {resolved_dll}")
+        print(f"  DLL 존재: {'✅' if os.path.exists(resolved_dll) else '❌'}")
+        print(f"  Registry 경로: HKEY_CURRENT_USER\\{registry_path}")
+        print()
+
+        print("작업 설명:")
+        print("  - Windows Registry에 보안모듈을 등록합니다")
+        print("  - 관리자 권한이 필요할 수 있습니다")
+        print("  - 작업 후 Registry 경로에서 설정 확인이 가능합니다")
+        print()
+        print("=" * 70)
+        print()
+
+        response = input("이 정보로 등록하시겠습니까? (y/n): ").strip().lower()
         if response != "y":
             print("\n❌ 취소되었습니다.")
             return 1
+        print()
 
-    print()
-    print("[3단계] 보안모듈 자동 등록 중...")
+    # 승인 후: Registry write 실행
+    print("[3단계] 보안모듈 Registry 등록...")
+    if not args.yes:
+        print("(사용자 승인으로 진행)")
+    else:
+        print("(CLI 자동 승인으로 진행)")
     print()
 
     # 등록 실행 (DLL 경로는 dll_resolver에서 확인한 경로 사용)
@@ -162,7 +243,10 @@ def main():
         dll_path=resolved_dll,
     )
 
-    print(result["message"])
+    if result["success"]:
+        print(f"✅ Registry에 등록: {args.module_name or security_module.DEFAULT_SECURITY_MODULE_NAME}")
+    else:
+        print(f"❌ 등록 실패: {result.get('error_code', 'UNKNOWN_ERROR')}")
     print()
 
     if result["success"]:
