@@ -101,6 +101,20 @@ from .report_table_builder import (
     build_validation_table,
     build_summary_table,
 )
+from .pdf_exporter import (
+    export_active_sheet_to_pdf,
+    export_workbook_to_pdf,
+    export_sheets_to_pdf,
+    validate_pdf_output_path,
+)
+from .print_area_manager import (
+    set_print_area,
+    get_print_area,
+    clear_print_area,
+    set_page_setup,
+    set_margins,
+)
+from .pdf_workflows import export_pdf_copy as export_pdf_copy_workflow
 
 __all__ = [
     # 기본 모듈
@@ -198,4 +212,14 @@ __all__ = [
     "build_change_table",
     "build_validation_table",
     "build_summary_table",
+    # PDF 및 인쇄 (EXCEL-PC-6B 고도화)
+    "export_active_sheet_to_pdf",
+    "export_workbook_to_pdf",
+    "export_sheets_to_pdf",
+    "validate_pdf_output_path",
+    "set_print_area",
+    "get_print_area",
+    "clear_print_area",
+    "set_page_setup",
+    "set_margins",
 ]

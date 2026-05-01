@@ -367,6 +367,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
     ),
+    # Excel COM PDF 내보내기 액션: Workbook/Sheet를 PDF로 저장 (EXCEL-PC-6B 고도화).
+    # 복사본 기반 PDF 내보내기, 인쇄 영역 설정은 복사본에서만 허용 (requires approval).
+    "excel.export_pdf_copy": ActionMeta(
+        action="excel.export_pdf_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # PDF 파일 생성 = write 작업
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # 원본 보호 (PDF는 복사본 기반)
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
