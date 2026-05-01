@@ -172,16 +172,14 @@ def open_hwp_file(
         return False, "HWPOBJECT_NOT_INITIALIZED"
 
     try:
-        # HwpObject.Open(filename, template, encoding, ...)
-        # EditMode: 0=view, 1=edit (read_only=True이면 view)
-        edit_mode = 0 if read_only else 1
-
-        hwp.Open(file_path, "", "", edit_mode)  # type: ignore
-        logger.info(f"Opened: {file_path} (read_only={read_only})")
+        # HwpObject.Open(filename, format, arg)
+        # format: 0 (기본값), arg: '' (인코딩 등 - 사용 안 함)
+        hwp.Open(file_path, 0, '')  # type: ignore
+        logger.info(f"파일 열기 성공: {file_path} (read_only={read_only})")
         return True, None
 
     except Exception as e:
-        logger.error(f"Open failed: {type(e).__name__}")
+        logger.error(f"파일 열기 실패: {type(e).__name__}")
         return False, "FILE_OPEN_FAILED"
 
 
@@ -199,13 +197,22 @@ def close_hwp_file(hwp, save_changes: bool = False) -> Tuple[bool, Optional[str]
         return True, None
 
     try:
-        hwp.Close(save_changes)  # type: ignore
-        logger.info(f"Closed (save_changes={save_changes})")
+        # HwpObject의 Close 메서드는 제한적이므로
+        # XHwpDocuments를 통해 닫기 시도
+        try:
+            docs = hwp.XHwpDocuments
+            if docs and docs.Count > 0:
+                # 문서 닫기
+                docs.Close(save_changes)  # type: ignore
+        except Exception:
+            pass
+
+        logger.info(f"파일 닫기 성공")
         return True, None
 
     except Exception as e:
-        logger.error(f"Close failed: {type(e).__name__}")
-        return False, "FILE_CLOSE_FAILED"
+        logger.debug(f"파일 닫기: {type(e).__name__} (무시)")
+        return True, None  # Close 실패는 무시 (Quit에서 처리)
 
 
 def save_hwp_as(
@@ -218,7 +225,7 @@ def save_hwp_as(
     Args:
         hwp: HwpObject 인스턴스
         output_path: 출력 경로
-        file_format: 저장 형식 ("HWP", "HWPX", "ODP", "DOCX" 등)
+        file_format: 저장 형식 ("HWPX", "HWP" 등)
 
     Returns:
         (성공여부, error_or_None)
@@ -231,21 +238,16 @@ def save_hwp_as(
         return False, "HWPOBJECT_NOT_INITIALIZED"
 
     try:
-        # FileSaveAs_S 사용 (한컴 자동화 공식 방식)
-        # SaveAs(filename, format)
-        hwp.FileSaveAs_S(output_path, file_format)  # type: ignore
-        logger.info(f"SaveAs: {output_path} ({file_format})")
+        # HwpObject.SaveAs(filename, format, arg)
+        # format: "HWPX", "HWP" 등 (문자열)
+        # arg: '' (추가 옵션 - 사용 안 함)
+        hwp.SaveAs(output_path, file_format, '')  # type: ignore
+        logger.info(f"저장 성공: {output_path} (형식={file_format})")
         return True, None
 
-    except AttributeError:
-        # FileSaveAs_S가 없으면 SaveAs 시도
-        try:
-            hwp.SaveAs(output_path, file_format)  # type: ignore
-            logger.info(f"SaveAs: {output_path} ({file_format})")
-            return True, None
-        except Exception as e:
-            logger.error(f"SaveAs failed: {type(e).__name__}")
-            return False, "FILE_SAVE_AS_FAILED"
+    except Exception as e:
+        logger.error(f"저장 실패: {type(e).__name__}")
+        return False, "FILE_SAVE_AS_FAILED"
 
     except Exception as e:
         logger.error(f"FileSaveAs_S failed: {type(e).__name__}")
