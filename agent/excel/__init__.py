@@ -49,6 +49,12 @@ from .reporter import (
     format_report_as_text,
     summarize_changes,
 )
+from .analysis_workflows import (
+    analyze_active_workbook,
+    generate_analysis_report,
+    validate_data_quality,
+    validate_formulas,
+)
 
 __all__ = [
     # 기본 모듈
@@ -99,4 +105,9 @@ __all__ = [
     "build_analysis_report",
     "format_report_as_text",
     "summarize_changes",
+    # 분석 워크플로우 (고도화)
+    "analyze_active_workbook",
+    "validate_data_quality",
+    "validate_formulas",
+    "generate_analysis_report",
 ]

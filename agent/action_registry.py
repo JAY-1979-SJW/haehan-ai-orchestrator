@@ -251,6 +251,50 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=True,
     ),
+    # Excel COM 분석 액션: 실행 중인 Excel의 표 구조 분석 (read-only, safe).
+    "excel.analyze_workbook": ActionMeta(
+        action="excel.analyze_workbook",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=False,  # read-only 작업
+    ),
+    # Excel COM 분석 액션: 데이터 품질 검증 (read-only, safe).
+    "excel.validate_data_quality": ActionMeta(
+        action="excel.validate_data_quality",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
+    # Excel COM 분석 액션: 수식 검증 (read-only, safe).
+    "excel.validate_formulas": ActionMeta(
+        action="excel.validate_formulas",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
+    # Excel COM 보고 액션: 종합 분석 보고서 생성 (read-only, safe).
+    "excel.generate_analysis_report": ActionMeta(
+        action="excel.generate_analysis_report",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
