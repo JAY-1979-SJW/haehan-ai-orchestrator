@@ -27,6 +27,28 @@ from .workflows import (
     insert_row_by_header_copy,
     write_formula_by_header_copy,
 )
+from .table_analyzer import (
+    analyze_column_type,
+    analyze_table_structure,
+    detect_data_range,
+)
+from .formula_validator import (
+    check_formula_consistency_in_range,
+    extract_cell_references,
+    scan_formula_errors,
+    validate_formula_in_cell,
+)
+from .data_validator import (
+    check_empty_cells_in_range,
+    check_numeric_consistency,
+    detect_duplicates_in_column,
+    validate_data_range,
+)
+from .reporter import (
+    build_analysis_report,
+    format_report_as_text,
+    summarize_changes,
+)
 
 __all__ = [
     # 기본 모듈
@@ -59,4 +81,22 @@ __all__ = [
     "insert_row_by_header_copy",
     "insert_column_by_header_copy",
     "write_formula_by_header_copy",
+    # 표 분석 (고도화)
+    "analyze_column_type",
+    "analyze_table_structure",
+    "detect_data_range",
+    # 수식 검증 (고도화)
+    "extract_cell_references",
+    "validate_formula_in_cell",
+    "check_formula_consistency_in_range",
+    "scan_formula_errors",
+    # 데이터 검증 (고도화)
+    "check_empty_cells_in_range",
+    "detect_duplicates_in_column",
+    "check_numeric_consistency",
+    "validate_data_range",
+    # 보고서 (고도화)
+    "build_analysis_report",
+    "format_report_as_text",
+    "summarize_changes",
 ]
