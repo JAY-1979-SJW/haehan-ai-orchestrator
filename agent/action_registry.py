@@ -193,6 +193,20 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_browser=False,
         read_only=False,
     ),
+    # Excel COM read-only probe (B안 1-2단계): 실행 중인 Excel 감지 + workbook 정보 조회.
+    # - GetActiveObject 사용하여 이미 열려 있는 Excel만 대상
+    # - 파일 경로/변경사항 감지
+    # - UsedRange, Sheet 정보 조회
+    # - 저장/종료 없음
+    "excel.probe_active_workbook": ActionMeta(
+        action="excel.probe_active_workbook",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,  # 실행 중인 Excel 대상이므로 파일 경로 불필요
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).

@@ -553,5 +553,154 @@ def test_run_basic_poc_planned_actions(monkeypatch, tmp_path):
                 assert "password" not in val.lower()
 
 
+# ──────────────────────────────────────────────────────────────────
+# 14) read-only probe: get_active_excel_app (GetActiveObject)
+# ──────────────────────────────────────────────────────────────────
+def test_get_active_excel_app_non_windows(monkeypatch):
+    """비 Windows에서는 not-supported 반환."""
+    from agent.connectors import excel_com_connector as com
+    monkeypatch.setattr(com, "_is_windows", lambda: False)
+    app, err = com.get_active_excel_app()
+    assert app is None
+    assert err == com._err.EXCEL_COM_NOT_SUPPORTED
+
+
+def test_get_active_excel_app_no_active_excel(monkeypatch):
+    """Excel이 실행 중이지 않으면 app_not_found."""
+    from agent.connectors import excel_com_connector as com
+
+    fake_mod = MagicMock()
+    fake_mod.GetObject.side_effect = RuntimeError("No active Excel")
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    app, err = com.get_active_excel_app()
+    assert app is None
+    assert err == com._err.EXCEL_APP_NOT_FOUND
+
+
+def test_get_active_excel_app_success(monkeypatch):
+    """실행 중인 Excel을 성공적으로 연결."""
+    from agent.connectors import excel_com_connector as com
+
+    fake_app = MagicMock()
+    fake_mod = MagicMock()
+    fake_mod.GetObject.return_value = fake_app
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    app, err = com.get_active_excel_app()
+    assert app is fake_app
+    assert err is None
+    fake_mod.GetObject.assert_called_once()
+
+
+# ──────────────────────────────────────────────────────────────────
+# 15) read-only probe: probe_active_workbook_readonly
+# ──────────────────────────────────────────────────────────────────
+def test_probe_active_workbook_readonly_no_excel(monkeypatch):
+    """Excel이 실행 중이지 않으면 NO_ACTIVE_EXCEL."""
+    from agent.connectors import excel_com_connector as com
+
+    fake_mod = MagicMock()
+    fake_mod.GetObject.side_effect = RuntimeError("No Excel")
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    result = com.probe_active_workbook_readonly()
+
+    assert result["success"] is False
+    assert result["excel_running"] is False
+    assert result["error_code"] == com._err.EXCEL_APP_NOT_FOUND
+    assert result["read_only"] is True
+
+
+def test_probe_active_workbook_readonly_success(monkeypatch):
+    """실행 중인 Workbook 정보를 성공적으로 조회."""
+    from agent.connectors import excel_com_connector as com
+
+    # Mock 구성
+    fake_app = MagicMock()
+    fake_wb = MagicMock()
+    fake_sheet = MagicMock()
+    fake_used_range = MagicMock()
+    fake_rows = MagicMock()
+    fake_columns = MagicMock()
+
+    fake_app.Workbooks.Count = 1
+    fake_app.ActiveWorkbook = fake_wb
+    fake_wb.Name = "TestWorkbook.xlsx"
+    fake_wb.Sheets.Count = 3
+    fake_wb.ActiveSheet = fake_sheet
+    fake_sheet.Name = "Sheet1"
+    fake_wb.UsedRange = fake_used_range
+    fake_used_range.Address.return_value = "A1:K52"
+    fake_rows.Count = 52
+    fake_columns.Count = 11
+    fake_used_range.Rows = fake_rows
+    fake_used_range.Columns = fake_columns
+
+    # 샘플 셀 mock
+    fake_cell_a1 = MagicMock()
+    fake_cell_a1.Value = "Header"
+    fake_sheet.Cells.return_value = fake_cell_a1
+
+    fake_mod = MagicMock()
+    fake_mod.GetObject.return_value = fake_app
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    result = com.probe_active_workbook_readonly(max_sample_rows=10, max_sample_columns=10)
+
+    assert result["success"] is True
+    assert result["excel_running"] is True
+    assert result["read_only"] is True
+    assert result["workbook_count"] == 1
+    assert result["active_workbook"]["name"] == "TestWorkbook.xlsx"
+    assert result["active_workbook"]["sheet_count"] == 3
+    assert result["active_workbook"]["active_sheet"] == "Sheet1"
+    assert result["active_workbook"]["used_range"] == "A1:K52"
+    assert result["active_workbook"]["rows"] == 52
+    assert result["active_workbook"]["columns"] == 11
+
+
+def test_probe_active_workbook_readonly_no_save_quit_close(monkeypatch):
+    """probe는 Save/SaveAs/Close/Quit를 호출하지 않음."""
+    from agent.connectors import excel_com_connector as com
+
+    fake_app = MagicMock()
+    fake_wb = MagicMock()
+    fake_sheet = MagicMock()
+
+    fake_app.Workbooks.Count = 1
+    fake_app.ActiveWorkbook = fake_wb
+    fake_wb.Name = "Test.xlsx"
+    fake_wb.Sheets.Count = 1
+    fake_wb.ActiveSheet = fake_sheet
+    fake_sheet.Name = "Sheet1"
+    fake_wb.UsedRange = MagicMock()
+    fake_wb.UsedRange.Address.return_value = "A1:A1"
+    fake_wb.UsedRange.Rows.Count = 1
+    fake_wb.UsedRange.Columns.Count = 1
+
+    fake_mod = MagicMock()
+    fake_mod.GetObject.return_value = fake_app
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    result = com.probe_active_workbook_readonly()
+
+    assert result["success"] is True
+    # Save/SaveAs/Close/Quit를 호출하지 않음
+    fake_wb.Save.assert_not_called()
+    fake_wb.SaveAs.assert_not_called()
+    fake_wb.Close.assert_not_called()
+    fake_app.Quit.assert_not_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
