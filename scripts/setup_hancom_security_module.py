@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agent.hancom.hwp import security_module
+from agent.hancom.discovery import diagnostics, dll_resolver
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,7 +75,7 @@ def main():
     print("=" * 70)
     print()
 
-    # 현재 등록 상태 확인
+    # 1단계: 현재 등록 상태 확인
     print("[1단계] 현재 보안모듈 상태 확인...")
     current_status = security_module.get_security_module_details(args.module_name)
     print(f"  등록 여부: {'✅ 등록됨' if current_status['registered'] else '❌ 미등록'}")
@@ -88,11 +89,61 @@ def main():
 
     print()
 
-    # 사용자 승인 확인
+    # 1-2단계: 한컴 설치 상태 진단 (discovery)
+    print("[1-2단계] 한컴 설치 상태 진단...")
+    diag = diagnostics.diagnose_hancom_installation()
+    print(f"  설치 상태: {diag['summary']}")
+    if not diag["installed"]:
+        print()
+        print("❌ 한컴이 설치되지 않았습니다.")
+        print("   https://developers.hancom.com/ 에서 한컴을 설치하세요.")
+        return 2
+
+    print()
+
+    # 1-3단계: DLL 경로 해석
+    print("[1-3단계] DLL 경로 해석...")
+    resolved_dll, status_msg = dll_resolver.resolve_dll_path(args.dll_path)
+    candidates = dll_resolver.get_dll_candidates()
+
+    print(f"  {status_msg}")
+    if resolved_dll:
+        print(f"  ✓ 선택된 경로: {resolved_dll}")
+    else:
+        print(f"  ✗ 유효한 DLL을 찾을 수 없습니다")
+        if candidates:
+            print()
+            print("  [DLL 후보]")
+            for dll_path, status in candidates.items():
+                status_icon = "✓" if "valid" in status else "✗"
+                print(f"    {status_icon} {dll_path}")
+
+    print()
+
+    # DLL이 없으면 중단
+    if not resolved_dll:
+        print()
+        print("❌ DLL을 찾을 수 없습니다.")
+        print()
+        print("💡 해결책:")
+        print("   1. 한컴 설치를 확인하세요")
+        print("   2. 또는 --dll-path로 경로를 명시 지정하세요")
+        print()
+        print("예:")
+        print('   python scripts/setup_hancom_security_module.py --dll-path "C:\\Program Files\\HNC\\한글2014\\Bin\\HwpAutomation.dll"')
+        print()
+        return 2
+
+    print()
+
+    # 2단계: 사용자 승인 확인
     if not args.verify:
         print("[2단계] 사용자 승인 확인...")
         print()
-        print("보안모듈을 Registry에 등록하시겠습니까?")
+        print(f"다음 DLL을 등록하시겠습니까?")
+        print(f"  {resolved_dll}")
+        print()
+        print("보안모듈을 Registry에 등록합니다.")
         print("(이 작업은 관리자 권한이 필요할 수 있습니다.)")
         print()
 
@@ -105,10 +156,10 @@ def main():
     print("[3단계] 보안모듈 자동 등록 중...")
     print()
 
-    # 등록 실행
+    # 등록 실행 (DLL 경로는 dll_resolver에서 확인한 경로 사용)
     result = security_module.setup_security_module_registry(
         module_name=args.module_name,
-        dll_path=args.dll_path,
+        dll_path=resolved_dll,
     )
 
     print(result["message"])
