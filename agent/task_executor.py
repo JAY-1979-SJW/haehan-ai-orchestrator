@@ -218,6 +218,51 @@ def _run_excel_probe_active_workbook(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error_code"))
 
 
+def _run_excel_update_cell_by_header_copy(task: dict) -> dict:
+    """헤더명 기준 셀을 찾아 값을 수정하고 복사본으로 저장.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel 만 대상.
+    file_path 불필요. 원본 Save 호출 없음, 복사본만 저장.
+
+    Required params:
+    - row_match_header: 행 식별용 헤더명
+    - row_match_value: 행 식별용 셀값
+    - target_header: 수정 대상 헤더명
+    - new_value: 새 값
+    - approval_token: 승인 토큰
+
+    Optional params:
+    - output_path: 복사본 저장 경로
+    """
+    # approval_token 검증
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    row_match_header = task.get("row_match_header", "")
+    row_match_value = task.get("row_match_value")
+    target_header = task.get("target_header", "")
+    new_value = task.get("new_value")
+    output_path = task.get("output_path")
+
+    if not row_match_header or not target_header or row_match_value is None:
+        return _result(False, error="INVALID_PARAMS")
+
+    out = com.update_cell_by_header_and_row_copy(
+        row_match_header=row_match_header,
+        row_match_value=row_match_value,
+        target_header=target_header,
+        new_value=new_value,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=True,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 # ──────────────────────────────────────────────────────────────────
 # CAD COM 핸들러
 #
@@ -552,6 +597,7 @@ _DISPATCH = {
     "excel.write_cell": _run_write_cell,
     "excel.save_as": _run_save_as,
     "excel.probe_active_workbook": _run_excel_probe_active_workbook,
+    "excel.update_cell_by_header_copy": _run_excel_update_cell_by_header_copy,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

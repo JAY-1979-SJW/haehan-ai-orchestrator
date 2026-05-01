@@ -47,3 +47,15 @@ def test_list_actions_returns_known_entries():
     actions = reg.list_actions()
     assert "ping" in actions
     assert "excel.write_cell" in actions
+
+
+def test_excel_update_cell_by_header_copy_registered():
+    assert reg.is_known_action("excel.update_cell_by_header_copy") is True
+    meta = reg.get_meta("excel.update_cell_by_header_copy")
+    assert meta is not None
+    assert meta.action == "excel.update_cell_by_header_copy"
+    assert meta.category == reg.CATEGORY_EXCEL_COM
+    assert meta.risk_level == reg.RISK_MEDIUM
+    assert meta.read_only is False
+    assert meta.requires_file_path is False  # 실행 중인 Excel 대상
+    assert meta.requires_save_as is True  # 복사본 저장 강제

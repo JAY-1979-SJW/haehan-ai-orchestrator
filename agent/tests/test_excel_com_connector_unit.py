@@ -704,5 +704,190 @@ def test_probe_active_workbook_readonly_no_save_quit_close(monkeypatch):
     fake_app.Quit.assert_not_called()
 
 
+# ──────────────────────────────────────────────────────────────────
+# 헤더 인식 테스트
+# ──────────────────────────────────────────────────────────────────
+def test_detect_header_row_from_active_sheet_success():
+    from agent.connectors import excel_com_connector as com
+
+    fake_sheet = MagicMock()
+
+    def mock_cells(row, col):
+        cell = MagicMock()
+        # 행 1: 비어있음
+        # 행 2 (헤더): 품명, 규격, 수량, 단가
+        if row == 1:
+            cell.Value = None
+        elif row == 2:
+            if col == 1:
+                cell.Value = "품명"
+            elif col == 2:
+                cell.Value = "규격"
+            elif col == 3:
+                cell.Value = "수량"
+            elif col == 4:
+                cell.Value = "단가"
+            else:
+                cell.Value = None
+        else:
+            cell.Value = None
+        return cell
+
+    fake_sheet.Cells = mock_cells
+    header_row, err = com.detect_header_row_from_active_sheet(fake_sheet)
+
+    assert err is None
+    assert header_row == 2  # 헤더는 2행
+
+
+def test_map_headers_from_row_success():
+    from agent.connectors import excel_com_connector as com
+
+    fake_sheet = MagicMock()
+
+    def mock_cells(row, col):
+        cell = MagicMock()
+        if col == 1:
+            cell.Value = "품명"
+        elif col == 2:
+            cell.Value = "규격"
+        elif col == 3:
+            cell.Value = "수량"
+        elif col == 4:
+            cell.Value = "단가"
+        else:
+            cell.Value = None
+        return cell
+
+    fake_sheet.Cells = mock_cells
+    headers, err = com.map_headers_from_row(fake_sheet, header_row=2)
+
+    assert err is None
+    assert headers is not None
+    assert headers["품명"] == 1
+    assert headers["규격"] == 2
+    assert headers["수량"] == 3
+    assert headers["단가"] == 4
+
+
+# ──────────────────────────────────────────────────────────────────
+# 셀 수정 + 복사본 저장 테스트
+# ──────────────────────────────────────────────────────────────────
+def test_update_cell_by_header_and_row_copy_no_approval(monkeypatch):
+    from agent.connectors import excel_com_connector as com
+
+    result = com.update_cell_by_header_and_row_copy(
+        row_match_header="품명",
+        row_match_value="소화전함",
+        target_header="수량",
+        new_value=3,
+        approval_token=None,
+        allow_write=True,  # allow_write=True but approval_token=None
+    )
+
+    assert result["success"] is False
+    assert com._err.WRITE_APPROVAL_REQUIRED in str(result["error"])
+
+
+def test_update_cell_by_header_and_row_copy_no_excel(monkeypatch):
+    from agent.connectors import excel_com_connector as com
+
+    fake_mod = MagicMock()
+    fake_mod.GetObject.side_effect = RuntimeError("No active Excel")
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    result = com.update_cell_by_header_and_row_copy(
+        row_match_header="품명",
+        row_match_value="소화전함",
+        target_header="수량",
+        new_value=3,
+        approval_token="test_token",
+        allow_write=True,
+    )
+
+    assert result["success"] is False
+    assert result["error"] == com._err.EXCEL_APP_NOT_FOUND
+
+
+def test_update_cell_by_header_and_row_copy_success(monkeypatch):
+    from agent.connectors import excel_com_connector as com
+
+    # Mock 객체 생성
+    fake_sheet = MagicMock()
+    fake_wb = MagicMock()
+    fake_app = MagicMock()
+
+    # sheet.UsedRange 모킹
+    fake_used_range = MagicMock()
+    fake_used_range.Rows.Count = 10
+    fake_sheet.UsedRange = fake_used_range
+    fake_sheet.Name = "공사"
+
+    fake_wb.ActiveSheet = fake_sheet
+    fake_wb.Name = "test.xlsx"
+    fake_app.ActiveWorkbook = fake_wb
+
+    def mock_cells(row, col):
+        cell = MagicMock()
+        if row == 2:  # 헤더 행
+            if col == 1:
+                cell.Value = "품명"
+            elif col == 2:
+                cell.Value = "규격"
+            elif col == 3:
+                cell.Value = "수량"
+            elif col == 4:
+                cell.Value = "단가"
+            else:
+                cell.Value = None
+        elif row == 5:  # 데이터 행
+            if col == 1:
+                cell.Value = "소화전함"
+            elif col == 2:
+                cell.Value = "A형"
+            elif col == 3:
+                cell.Value = 1  # old value
+            elif col == 4:
+                cell.Value = 1000
+            else:
+                cell.Value = None
+        else:
+            cell.Value = None
+        return cell
+
+    fake_sheet.Cells = mock_cells
+
+    # GetActiveObject 모킹
+    fake_mod = MagicMock()
+    fake_mod.GetObject.return_value = fake_app
+
+    monkeypatch.setattr(com, "_is_windows", lambda: True)
+    monkeypatch.setattr(com, "_try_import_win32com", lambda: (fake_mod, None))
+
+    result = com.update_cell_by_header_and_row_copy(
+        row_match_header="품명",
+        row_match_value="소화전함",
+        target_header="수량",
+        new_value=3,
+        output_path=None,  # 임시 폴더에 저장
+        approval_token="test_token",
+        allow_write=True,
+    )
+
+    assert result["success"] is True
+    assert result["sheet"] == "공사"
+    assert result["header_row"] == 2
+    assert result["matched_row"] == 5
+    assert result["target_cell"] == "C5"
+    assert result["old_value"] == 1
+    assert result["new_value"] == 3
+    # SaveAs 호출 확인
+    fake_wb.SaveAs.assert_called_once()
+    # Save() 호출되지 않음
+    fake_wb.Save.assert_not_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
