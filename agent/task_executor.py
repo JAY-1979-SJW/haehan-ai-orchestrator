@@ -363,6 +363,22 @@ def _run_excel_analyze_workbook(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_analyze_active_sheet_structure(task: dict) -> dict:
+    """활성 시트의 상세 구조를 분석한다 (read-only, EXCEL-PC-4A 고도화).
+
+    병합셀, 숨김행/열, AutoFilter, 표 영역, 헤더/합계 행, 수식, 숫자텍스트 감지.
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params: 없음
+    """
+    out = com.analyze_active_sheet_structure()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_validate_data_quality(task: dict) -> dict:
     """활성 Excel의 데이터 품질을 검증한다 (read-only).
 
@@ -791,6 +807,7 @@ _DISPATCH = {
     "excel.insert_column_by_header_copy": _run_excel_insert_column_by_header_copy,
     "excel.write_formula_by_header_copy": _run_excel_write_formula_by_header_copy,
     "excel.analyze_workbook": _run_excel_analyze_workbook,
+    "excel.analyze_active_sheet_structure": _run_excel_analyze_active_sheet_structure,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
