@@ -28,6 +28,12 @@ from dataclasses import asdict
 from typing import Any, Callable, Dict, List, Optional
 
 from .browser_approval_verifier import BrowserApprovalVerifier
+from .browser_audit_contract import (
+    BrowserAuditEvent,
+    BrowserAuditEventType,
+    build_browser_result_audit_event,
+    build_browser_task_audit_event,
+)
 from .browser_task_handler import (
     BrowserTaskHandler,
     BrowserTaskPayload,
@@ -166,9 +172,89 @@ class BrowserLocalWebSocketBridge:
         self,
         task_handler: BrowserTaskHandler,
         callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+        audit_writer: Optional[Any] = None,
+        audit_context: Optional[Dict[str, Any]] = None,
     ) -> None:
         self._handler = task_handler
         self._callback = callback or (lambda _msg: None)
+        self._audit_writer = audit_writer
+        self._audit_context = dict(audit_context or {})
+
+    # ------------------------------------------------------------------
+    # Audit emission
+
+    def _audit_actor(self) -> Dict[str, Any]:
+        ctx = self._audit_context
+        return {
+            "actor_user_id": ctx.get("actor_user_id"),
+            "actor_role": ctx.get("actor_role") or "system",
+            "organization_id": ctx.get("organization_id"),
+        }
+
+    def _emit_audit_event(self, event: BrowserAuditEvent) -> None:
+        """Write audit event safely. Failures never break the bridge callback."""
+        if self._audit_writer is None:
+            return
+        try:
+            self._audit_writer.write(event)
+        except Exception as exc:
+            # Safe summary only — never surface raw stack to caller or log.
+            logger.error("audit writer failed: %s", type(exc).__name__)
+
+    def _build_audit_event_from_validation_failure(
+        self,
+        *,
+        task_id: str,
+        action_type: str,
+        selector: str,
+        error_message: str,
+    ) -> BrowserAuditEvent:
+        actor = self._audit_actor()
+        safe_task_id = task_id or "unknown"
+        return build_browser_task_audit_event(
+            event_type=BrowserAuditEventType.TASK_VALIDATION_FAILED,
+            task_id=safe_task_id,
+            action_type=action_type or "",
+            selector=selector or "",
+            error_code="schema_invalid",
+            error_message=error_message,
+            request_id=safe_task_id,
+            **actor,
+        )
+
+    def _build_audit_event_from_handler_exception(
+        self,
+        *,
+        task_id: str,
+        action_type: str,
+        selector: str,
+        exc: BaseException,
+    ) -> BrowserAuditEvent:
+        actor = self._audit_actor()
+        return build_browser_task_audit_event(
+            event_type=BrowserAuditEventType.TASK_FAILED,
+            task_id=task_id or "unknown",
+            action_type=action_type or "",
+            selector=selector or "",
+            error_code="handler_exception",
+            error_message=type(exc).__name__,  # class name only — no stack
+            request_id=task_id or None,
+            **actor,
+        )
+
+    def _build_audit_event_from_result(
+        self,
+        task_result: BrowserTaskResult,
+        *,
+        bridge_status: str = "callback_built",
+    ) -> BrowserAuditEvent:
+        actor = self._audit_actor()
+        return build_browser_result_audit_event(
+            task_result=task_result,
+            bridge_status=bridge_status,
+            request_id=getattr(task_result, "task_id", None),
+            **actor,
+        )
 
     # ------------------------------------------------------------------
     # Inbound message entrypoint
@@ -180,14 +266,23 @@ class BrowserLocalWebSocketBridge:
             schema = BrowserWebSocketTaskPayloadSchema.from_dict(message or {})
         except (ValueError, TypeError) as exc:
             logger.info("inbound payload validation failed: %s", exc)
+            task_id_str = str((message or {}).get("task_id") or "unknown")
+            action_str = str((message or {}).get("action_type") or "")
+            selector_str = str((message or {}).get("selector") or "")
             failure = _safe_failure_dict(
-                task_id=str((message or {}).get("task_id") or "unknown"),
-                action=str((message or {}).get("action_type") or ""),
-                selector=str((message or {}).get("selector") or ""),
+                task_id=task_id_str,
+                action=action_str,
+                selector=selector_str,
                 status="validation_failed",
                 error_code="schema_invalid",
                 error_message=str(exc),
             )
+            self._emit_audit_event(self._build_audit_event_from_validation_failure(
+                task_id=task_id_str,
+                action_type=action_str,
+                selector=selector_str,
+                error_message=str(exc),
+            ))
             self._emit(failure)
             return failure
 
@@ -201,6 +296,12 @@ class BrowserLocalWebSocketBridge:
                 error_code="schema_invalid",
                 error_message=err or "validation failed",
             )
+            self._emit_audit_event(self._build_audit_event_from_validation_failure(
+                task_id=schema.task_id or "unknown",
+                action_type=schema.action_type,
+                selector=schema.selector,
+                error_message=err or "validation failed",
+            ))
             self._emit(failure)
             return failure
 
@@ -220,6 +321,12 @@ class BrowserLocalWebSocketBridge:
                 error_code="handler_exception",
                 error_message=type(exc).__name__,  # class name only — no stack
             )
+            self._emit_audit_event(self._build_audit_event_from_handler_exception(
+                task_id=schema.task_id,
+                action_type=schema.action_type,
+                selector=schema.selector,
+                exc=exc,
+            ))
             self._emit(failure)
             return failure
 
@@ -237,10 +344,22 @@ class BrowserLocalWebSocketBridge:
                 error_code="unsafe_result",
                 error_message="result schema validation failed",
             )
+            actor = self._audit_actor()
+            self._emit_audit_event(build_browser_task_audit_event(
+                event_type=BrowserAuditEventType.TASK_FAILED,
+                task_id=task_result.task_id or "unknown",
+                action_type=task_result.action or "",
+                selector=task_result.selector or "",
+                error_code="unsafe_result",
+                error_message="result schema validation failed",
+                request_id=task_result.task_id or None,
+                **actor,
+            ))
             self._emit(failure)
             return failure
 
         safe = result_schema.safe_dict()
+        self._emit_audit_event(self._build_audit_event_from_result(task_result))
         self._emit(safe)
         return safe
 
