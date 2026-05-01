@@ -21,6 +21,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from . import config
+from . import browser_actions
 
 logger = logging.getLogger(__name__)
 
@@ -1062,6 +1063,56 @@ def action_list_files_readonly(params: dict) -> ActionResult:
     )
 
 
+
+def action_browser_inspect(params: dict) -> ActionResult:
+    """browser.inspect action (dry_run mode only).
+    
+    Args:
+        params: dict with optional keys:
+          - dry_run: bool (default False)  
+          - url: str (optional)
+    
+    Returns:
+        ActionResult with dry_run mock or blocked response.
+    """
+    dry_run = params.get("dry_run", False)
+    if not isinstance(dry_run, bool):
+        dry_run = str(dry_run).lower() in ("true", "1", "yes")
+
+    url = params.get("url")
+    if url is not None:
+        url = str(url).strip() or None
+
+    if dry_run:
+        return ActionResult(
+            success=True,
+            summary="browser_inspect_dry_run_ok",
+            data={
+                "action": "browser.inspect",
+                "dry_run": True,
+                "browser_started": False,
+                "url": url,
+                "title": "DRY_RUN_BROWSER_INSPECT",
+                "status": "ok",
+                "timestamp": _now_iso(),
+            },
+        )
+    else:
+        return ActionResult(
+            success=False,
+            summary="browser_inspect_blocked",
+            data={
+                "action": "browser.inspect",
+                "dry_run": False,
+                "browser_started": False,
+                "reason": "actual_browser_execution_not_enabled",
+                "timestamp": _now_iso(),
+            },
+            error="actual browser execution not supported in this stage",
+            error_code="ACTUAL_BROWSER_EXECUTION_NOT_ENABLED",
+        )
+
+
 # ── 디스패치 ──────────────────────────────────────────────────────────────
 
 # 1단계에서 본 모듈에 노출되는 액션. 명시적으로 등록되지 않은 액션은
@@ -1084,6 +1135,7 @@ _ACTIONS = {
     "web_select_guarded": action_web_select_guarded,
     "web_scroll_guarded": action_web_scroll_guarded,
     "web_probe_manual_login": action_web_probe_manual_login,
+    "browser.inspect": action_browser_inspect,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -1226,4 +1278,5 @@ __all__ = [
     "action_web_select_guarded",
     "action_web_scroll_guarded",
     "action_web_probe_manual_login",
+    "action_browser_inspect",
 ]

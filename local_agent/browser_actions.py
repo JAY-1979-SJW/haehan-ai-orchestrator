@@ -483,7 +483,53 @@ def _error_result(
     return out
 
 
+def action_browser_inspect(params: dict) -> "BrowserActionRequest | dict[str, Any]":
+    """browser.inspect stub (dry_run only).
+    
+    Args:
+        params: dict with optional keys:
+          - dry_run: bool (default False)
+          - url: str (optional)
+    
+    Returns:
+        dict with dry_run mock response or blocked response.
+    """
+    from datetime import datetime, timezone
+    
+    dry_run = params.get("dry_run", False)
+    if not isinstance(dry_run, bool):
+        dry_run = str(dry_run).lower() in ("true", "1", "yes")
+
+    url = params.get("url")
+    if url is not None:
+        url = str(url).strip() or None
+
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if dry_run:
+        return {
+            "ok": True,
+            "action": "browser.inspect",
+            "dry_run": True,
+            "browser_started": False,
+            "url": url,
+            "title": "DRY_RUN_BROWSER_INSPECT",
+            "status": "ok",
+            "timestamp": now,
+        }
+    else:
+        return {
+            "ok": False,
+            "action": "browser.inspect",
+            "dry_run": False,
+            "browser_started": False,
+            "reason": "actual_browser_execution_not_enabled",
+            "timestamp": now,
+        }
+
+
 __all__ = [
+    "action_browser_inspect",
     "BrowserActionBlocked",
     "ApprovalRequired",
     "BrowserActionDependencyMissing",
