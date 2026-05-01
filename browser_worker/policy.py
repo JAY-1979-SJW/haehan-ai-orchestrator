@@ -1,8 +1,19 @@
 """Browser Worker execution policy."""
+import os
 
 # Allowed actions in dry_run mode only
 ALLOWED_ACTIONS_DRY_RUN = frozenset({
     "browser.inspect",
+})
+
+# Allowed actions in actual execution mode (gated by BROWSER_EXECUTION_ENABLED)
+ALLOWED_ACTIONS_ACTUAL_EXECUTION = frozenset({
+    "browser.inspect",
+})
+
+# Allowed URLs in actual execution mode
+ALLOWED_URLS_ACTUAL_EXECUTION = frozenset({
+    "about:blank",
 })
 
 # Actions disabled in actual execution mode
@@ -42,14 +53,25 @@ class WorkerSecurityPolicy:
         return True, "ok"
 
     @staticmethod
-    def validate_actual_execution(action: str) -> tuple[bool, str]:
+    def validate_actual_execution(action: str, url: str = "") -> tuple[bool, str]:
         """Validate actual execution request.
 
         Returns:
             (allowed, reason)
         """
-        # All browser actions are disabled for actual execution in MVP
-        return False, "Actual browser execution disabled in this environment"
+        # Check if execution is enabled via environment variable
+        if os.environ.get("BROWSER_EXECUTION_ENABLED", "").lower() != "true":
+            return False, "BROWSER_EXECUTION_ENABLED not set"
+
+        # Check if action is allowed
+        if action not in ALLOWED_ACTIONS_ACTUAL_EXECUTION:
+            return False, f"Action '{action}' not allowed in actual execution"
+
+        # Check if URL is allowed (if provided)
+        if url and url not in ALLOWED_URLS_ACTUAL_EXECUTION:
+            return False, f"URL '{url}' not allowed in actual execution"
+
+        return True, "ok"
 
     @staticmethod
     def get_security_notes() -> list[str]:

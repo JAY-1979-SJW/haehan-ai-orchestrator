@@ -46,7 +46,7 @@ class TestRealPlaywrightBackendFeatureGate:
                 mock_page = MagicMock()
 
                 mock_page.title.return_value = "about:blank"
-                mock_page.url.return_value = "about:blank"
+                mock_page.url = "about:blank"
 
                 mock_context.new_page.return_value = mock_page
                 mock_browser.new_context.return_value = mock_context
@@ -130,7 +130,7 @@ class TestRealPlaywrightBackendCleanup:
                 mock_page = MagicMock()
 
                 mock_page.title.return_value = "about:blank"
-                mock_page.url.return_value = "about:blank"
+                mock_page.url = "about:blank"
 
                 mock_context.new_page.return_value = mock_page
                 mock_browser.new_context.return_value = mock_context
