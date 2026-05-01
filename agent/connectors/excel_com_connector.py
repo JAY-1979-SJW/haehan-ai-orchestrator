@@ -843,6 +843,26 @@ def apply_change_plan_copy(
     )
 
 
+def validate_active_workbook() -> dict:
+    """Thin wrapper for agent.excel.validation_workflows.validate_active_workbook."""
+    from agent import excel as excel_mod
+
+    return excel_mod.validation_workflows.validate_active_workbook()
+
+
+def validate_change_result(
+    before_state: dict,
+    change_log: dict,
+) -> dict:
+    """Thin wrapper for agent.excel.validation_workflows.validate_change_result."""
+    from agent import excel as excel_mod
+
+    return excel_mod.validation_workflows.validate_change_result(
+        before_state=before_state,
+        change_log=change_log,
+    )
+
+
 def validate_data_quality() -> dict:
     """Thin wrapper for agent.excel.analysis_workflows.validate_data_quality."""
     from agent import excel as excel_mod
@@ -888,6 +908,8 @@ __all__ = [
     "analyze_active_sheet_structure",
     "plan_changes",
     "apply_change_plan_copy",
+    "validate_active_workbook",
+    "validate_change_result",
     "validate_data_quality",
     "validate_formulas",
     "generate_analysis_report",

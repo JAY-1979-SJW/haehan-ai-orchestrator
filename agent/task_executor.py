@@ -441,6 +441,50 @@ def _run_excel_apply_change_plan_copy(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_validate_active_workbook(task: dict) -> dict:
+    """활성 workbook을 자동 검증한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params:
+        required_columns: [str, ...] 필수 열 목록
+        total_row_indices: [int, ...] 합계 행 인덱스
+
+    Optional params: 없음
+    """
+    out = com.validate_active_workbook()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_validate_change_result(task: dict) -> dict:
+    """변경 결과를 검증한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params:
+        before_state: 변경 전 상태 dict
+        change_log: 변경 로그 dict
+
+    Optional params: 없음
+    """
+    before_state = task.get("before_state")
+    change_log = task.get("change_log")
+
+    out = com.validate_change_result(
+        before_state=before_state,
+        change_log=change_log,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_validate_data_quality(task: dict) -> dict:
     """활성 Excel의 데이터 품질을 검증한다 (read-only).
 
@@ -872,6 +916,8 @@ _DISPATCH = {
     "excel.analyze_active_sheet_structure": _run_excel_analyze_active_sheet_structure,
     "excel.plan_changes": _run_excel_plan_changes,
     "excel.apply_change_plan_copy": _run_excel_apply_change_plan_copy,
+    "excel.validate_active_workbook": _run_excel_validate_active_workbook,
+    "excel.validate_change_result": _run_excel_validate_change_result,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
