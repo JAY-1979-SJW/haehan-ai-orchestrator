@@ -95,6 +95,12 @@ from .batch_executor import apply_change_plan
 from .total_validator import validate_total_rows
 from .type_validator import validate_column_types, validate_required_columns
 from .diff_reporter import ValidationReport, build_change_diff, compare_formulas
+from .summary_sheet_writer import create_summary_sheet
+from .report_table_builder import (
+    build_change_table,
+    build_validation_table,
+    build_summary_table,
+)
 
 __all__ = [
     # 기본 모듈
@@ -187,4 +193,9 @@ __all__ = [
     "ValidationReport",
     "build_change_diff",
     "compare_formulas",
+    # 보고서 (EXCEL-PC-6A 고도화)
+    "create_summary_sheet",
+    "build_change_table",
+    "build_validation_table",
+    "build_summary_table",
 ]

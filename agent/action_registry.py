@@ -355,6 +355,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=False,
     ),
+    # Excel COM 보고서 액션: AI 검토 요약 시트 생성 (EXCEL-PC-6A 고도화).
+    # 변경/검증 결과를 새 시트로 요약, SaveCopyAs만 허용 (requires approval).
+    "excel.create_review_summary_sheet_copy": ActionMeta(
+        action="excel.create_review_summary_sheet_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # 시트 추가 = write 작업
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).

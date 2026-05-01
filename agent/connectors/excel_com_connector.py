@@ -863,6 +863,23 @@ def validate_change_result(
     )
 
 
+def create_review_summary_sheet_copy(
+    output_path: str,
+    approval_token: str,
+    change_log: dict = None,
+    validation_report: dict = None,
+) -> dict:
+    """Thin wrapper for agent.excel.report_workflows.create_review_summary_sheet_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.report_workflows.create_review_summary_sheet_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        change_log=change_log,
+        validation_report=validation_report,
+    )
+
+
 def validate_data_quality() -> dict:
     """Thin wrapper for agent.excel.analysis_workflows.validate_data_quality."""
     from agent import excel as excel_mod
@@ -910,6 +927,7 @@ __all__ = [
     "apply_change_plan_copy",
     "validate_active_workbook",
     "validate_change_result",
+    "create_review_summary_sheet_copy",
     "validate_data_quality",
     "validate_formulas",
     "generate_analysis_report",
