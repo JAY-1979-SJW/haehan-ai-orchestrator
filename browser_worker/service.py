@@ -27,9 +27,24 @@ def handle_browser_request(request: WorkerBrowserRequest) -> WorkerBrowserRespon
         return MockPlaywrightBackend.handle_browser_action(request)
     else:
         # Real backend for actual execution (with policy validation)
-        allowed, reason = WorkerSecurityPolicy.validate_actual_execution(request.action, request.url)
+        allowed, error_code = WorkerSecurityPolicy.validate_actual_execution(request.action, request.url)
         if not allowed:
-            return WorkerBrowserResponse.actual_execution_disabled(request.action, request.task_id)
+            # Return precise error code based on policy violation
+            error_messages = {
+                "ACTION_NOT_ALLOWED_ACTUAL_EXECUTION": f"Action '{request.action}' is not allowed for actual execution",
+                "URL_NOT_ALLOWED_ACTUAL_EXECUTION": f"URL '{request.url}' is not allowed for actual execution",
+                "ACTUAL_BROWSER_EXECUTION_NOT_ENABLED": "Browser worker actual execution is not enabled in this environment",
+            }
+            return WorkerBrowserResponse(
+                success=False,
+                action=request.action,
+                task_id=request.task_id,
+                browser_started=False,
+                backend="mock_playwright_worker",
+                status="error",
+                error_code=error_code,
+                error_message=error_messages.get(error_code, error_code),
+            )
         return RealPlaywrightBackend().handle_browser_action(request)
 
 

@@ -154,7 +154,7 @@ class TestBrowserWorkerBackend:
         task = BrowserTask(action="inspect")
         result = backend.execute(
             task=task,
-            url="https://example.com",
+            url="about:blank",
             task_id="task-001",
             dry_run=False,
         )
