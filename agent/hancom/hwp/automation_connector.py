@@ -14,9 +14,63 @@ from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# 지원하는 HwpObject COM 클래스들 (우선순위 순서)
+_HWPOBJECT_CLASSES = [
+    "HWPFrame.HwpObject",        # 최신 한컴
+    "HWPFrame.HwpObject.1",      # 버전명시
+    "HWPFrame.HwpObject.2",
+    "HwpObject.HwpObject",       # 호환성
+    "HwpAutomationApp2.HwpAutomation",  # 자동화
+    "HwpAutomationApp2.HwpAutomation.1",
+]
+
+
+def _check_registry_installed() -> bool:
+    """Windows 레지스트리에서 한컴 설치 여부 확인."""
+    try:
+        import winreg
+
+        # HKLM\SOFTWARE\Classes\HWPFrame.HwpObject 확인
+        for cls in _HWPOBJECT_CLASSES:
+            try:
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, f"SOFTWARE\\Classes\\{cls}"):
+                    logger.debug(f"한컴 레지스트리 발견: {cls}")
+                    return True
+            except FileNotFoundError:
+                continue
+
+        return False
+    except Exception as e:
+        logger.debug(f"레지스트리 확인 실패: {type(e).__name__}")
+        return False
+
+
+def _get_working_hwpobject_class() -> Optional[str]:
+    """작동하는 HwpObject COM 클래스를 찾는다."""
+    try:
+        import win32com.client as win32
+
+        for cls in _HWPOBJECT_CLASSES:
+            try:
+                hwp = win32.Dispatch(cls)
+                try:
+                    hwp.Quit()
+                except Exception:
+                    pass
+                logger.info(f"작동하는 HwpObject 클래스: {cls}")
+                return cls
+            except Exception:
+                continue
+
+        return None
+    except ImportError:
+        return None
+
 
 def check_hancom_available() -> Tuple[bool, Optional[str]]:
     """한컴 COM 객체가 사용 가능한지 확인.
+
+    레지스트리 + COM 직접 생성 시도로 설치 여부 확인.
 
     Returns:
         (가용성, error_or_None)
@@ -24,15 +78,27 @@ def check_hancom_available() -> Tuple[bool, Optional[str]]:
     try:
         import win32com.client as win32
 
-        hwp = win32.Dispatch("HwpObject.HwpObject")
+        # 1단계: 레지스트리 확인 (빠른 설치 여부 판단)
+        if not _check_registry_installed():
+            logger.error("한컴이 Windows 레지스트리에 등록되지 않음")
+            return False, "HANCOM_NOT_INSTALLED"
+
+        # 2단계: 작동하는 COM 클래스 찾기
+        working_class = _get_working_hwpobject_class()
+        if not working_class:
+            logger.error("작동하는 HwpObject COM 클래스를 찾을 수 없음")
+            return False, "HANCOM_NOT_INSTALLED"
+
+        # 3단계: 실제 COM 객체 생성 시도
+        hwp = win32.Dispatch(working_class)
         try:
             # 기본 속성 확인
             if hasattr(hwp, "Version"):
                 version = hwp.Version
-                logger.info(f"HwpObject available: {version}")
+                logger.info(f"한컴 COM 사용 가능: {working_class}, version={version}")
                 return True, None
             elif hasattr(hwp, "Visible"):
-                logger.info("HwpObject available (no version info)")
+                logger.info(f"한컴 COM 사용 가능: {working_class}")
                 return True, None
             else:
                 return False, "HANCOM_OBJECT_INCOMPLETE"
@@ -46,7 +112,7 @@ def check_hancom_available() -> Tuple[bool, Optional[str]]:
         logger.error("win32com not available")
         return False, "WIN32COM_NOT_AVAILABLE"
     except Exception as e:
-        logger.error("HwpObject creation failed: %s", type(e).__name__)
+        logger.error(f"한컴 COM 확인 실패: {type(e).__name__}")
         return False, "HANCOM_NOT_INSTALLED"
 
 
@@ -62,22 +128,28 @@ def create_hwp_object(visible: bool = False) -> Tuple[Optional[object], Optional
     try:
         import win32com.client as win32
 
-        hwp = win32.Dispatch("HwpObject.HwpObject")
+        # 작동하는 클래스 찾기
+        working_class = _get_working_hwpobject_class()
+        if not working_class:
+            logger.error("작동하는 HwpObject COM 클래스를 찾을 수 없음")
+            return None, "HANCOM_NOT_INSTALLED"
+
+        hwp = win32.Dispatch(working_class)
 
         # Visible 제어 (보안 팝업 최소화)
         try:
             hwp.Visible = visible
         except Exception as e:
-            logger.warning(f"Cannot set Visible: {type(e).__name__}")
+            logger.warning(f"Visible 제어 실패: {type(e).__name__}")
 
-        logger.info(f"HwpObject created (visible={visible})")
+        logger.info(f"HwpObject 생성됨: {working_class} (visible={visible})")
         return hwp, None
 
     except ImportError:
         logger.error("win32com not available")
         return None, "WIN32COM_NOT_AVAILABLE"
     except Exception as e:
-        logger.error("HwpObject creation failed: %s", type(e).__name__)
+        logger.error(f"HwpObject 생성 실패: {type(e).__name__}")
         return None, "HANCOM_NOT_INSTALLED"
 
 

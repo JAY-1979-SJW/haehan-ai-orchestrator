@@ -27,26 +27,38 @@ def check_security_module_registered() -> Tuple[bool, Optional[str]]:
     try:
         import win32com.client as win32
 
-        # HwpObject 생성 (임시)
-        hwp = win32.Dispatch("HwpObject.HwpObject")
+        # 지원하는 HwpObject COM 클래스들 (우선순위 순서)
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                logger.debug(f"HwpObject 생성됨: {cls}")
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            logger.error("작동하는 HwpObject를 찾을 수 없음")
+            return check_module_registry()
 
         try:
             # 보안모듈 등록 확인
-            # HwpObject는 RegisterModule 메서드 또는 프로퍼티 제공
-            # 실제 구현은 한컴 버전에 따라 다를 수 있음
             if hasattr(hwp, "RegisterModule"):
-                # 메서드 형태
                 return True, None
             elif hasattr(hwp, "SecurityModule"):
-                # 프로퍼티 형태
                 module_info = hwp.SecurityModule
                 if module_info:
                     return True, None
             else:
-                # 레지스트리 확인 (fallback)
                 return check_module_registry()
         finally:
-            # HwpObject 정리
             try:
                 hwp.Quit()
             except Exception:
@@ -56,7 +68,7 @@ def check_security_module_registered() -> Tuple[bool, Optional[str]]:
         logger.warning("win32com not available")
         return False, "WIN32COM_NOT_AVAILABLE"
     except Exception as e:
-        logger.error("Security module check failed: %s", type(e).__name__)
+        logger.error(f"보안모듈 체크 실패: {type(e).__name__}")
         return False, "MODULE_CHECK_FAILED"
 
 
