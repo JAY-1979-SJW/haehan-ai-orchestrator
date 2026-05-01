@@ -22,6 +22,7 @@ from urllib.parse import urlparse
 
 from . import config
 from . import browser_actions
+from ai_orchestrator.browser_tool import route_browser_task_with_params
 
 logger = logging.getLogger(__name__)
 
@@ -1066,51 +1067,35 @@ def action_list_files_readonly(params: dict) -> ActionResult:
 
 def action_browser_inspect(params: dict) -> ActionResult:
     """browser.inspect action (dry_run mode only).
-    
+
+    This is a thin adapter that delegates to Browser Tool Router for policy
+    enforcement and backend selection. Maintains backward compatibility with
+    existing ActionResult format.
+
     Args:
         params: dict with optional keys:
-          - dry_run: bool (default False)  
+          - dry_run: bool (default False)
           - url: str (optional)
-    
+
     Returns:
         ActionResult with dry_run mock or blocked response.
     """
-    dry_run = params.get("dry_run", False)
-    if not isinstance(dry_run, bool):
-        dry_run = str(dry_run).lower() in ("true", "1", "yes")
+    # Delegate to Browser Tool Router
+    router_result = route_browser_task_with_params("inspect", params)
 
-    url = params.get("url")
-    if url is not None:
-        url = str(url).strip() or None
-
-    if dry_run:
-        return ActionResult(
-            success=True,
-            summary="browser_inspect_dry_run_ok",
-            data={
-                "action": "browser.inspect",
-                "dry_run": True,
-                "browser_started": False,
-                "url": url,
-                "title": "DRY_RUN_BROWSER_INSPECT",
-                "status": "ok",
-                "timestamp": _now_iso(),
-            },
-        )
+    # Convert BrowserResult to ActionResult (thin adapter pattern)
+    if router_result.success:
+        summary = "browser_inspect_dry_run_ok"
     else:
-        return ActionResult(
-            success=False,
-            summary="browser_inspect_blocked",
-            data={
-                "action": "browser.inspect",
-                "dry_run": False,
-                "browser_started": False,
-                "reason": "actual_browser_execution_not_enabled",
-                "timestamp": _now_iso(),
-            },
-            error="actual browser execution not supported in this stage",
-            error_code="ACTUAL_BROWSER_EXECUTION_NOT_ENABLED",
-        )
+        summary = "browser_inspect_blocked"
+
+    return ActionResult(
+        success=router_result.success,
+        summary=summary,
+        data=router_result.data,
+        error=router_result.error,
+        error_code=router_result.error_code,
+    )
 
 
 # ── 디스패치 ──────────────────────────────────────────────────────────────
