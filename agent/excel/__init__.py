@@ -89,6 +89,9 @@ from .operation_schema import (
 )
 from .operation_normalizer import normalize_operation
 from .change_planner import plan_changes
+from .change_log import ChangeLog, OperationLog, ChangeLogBuilder
+from .operation_executor import execute_operation
+from .batch_executor import apply_change_plan
 
 __all__ = [
     # 기본 모듈
@@ -168,4 +171,10 @@ __all__ = [
     "OP_WRITE_FORMULA",
     "normalize_operation",
     "plan_changes",
+    # 일괄 실행 (EXCEL-PC-5A 고도화)
+    "ChangeLog",
+    "OperationLog",
+    "ChangeLogBuilder",
+    "execute_operation",
+    "apply_change_plan",
 ]

@@ -402,6 +402,45 @@ def _run_excel_plan_changes(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_apply_change_plan_copy(task: dict) -> dict:
+    """승인된 계획을 복사본으로 실행한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 필수 (write action).
+    SaveCopyAs로만 저장 (원본 저장 금지).
+
+    Required params:
+        plan: ChangePlan dict
+        output_path: 복사본 저장 경로
+        approval_token: 승인 토큰
+
+    Optional params: 없음
+    """
+    plan_dict = task.get("plan")
+    output_path = task.get("output_path")
+    approval_token = task.get("approval_token")
+
+    # 승인 확인
+    if not approval_token:
+        return _result(False, error="APPROVAL_REQUIRED")
+
+    if not isinstance(plan_dict, dict):
+        return _result(False, error="INVALID_PLAN_FORMAT")
+
+    if not output_path:
+        return _result(False, error="OUTPUT_PATH_REQUIRED")
+
+    out = com.apply_change_plan_copy(
+        plan=plan_dict,
+        output_path=output_path,
+        approval_token=approval_token,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_validate_data_quality(task: dict) -> dict:
     """활성 Excel의 데이터 품질을 검증한다 (read-only).
 
@@ -832,6 +871,7 @@ _DISPATCH = {
     "excel.analyze_workbook": _run_excel_analyze_workbook,
     "excel.analyze_active_sheet_structure": _run_excel_analyze_active_sheet_structure,
     "excel.plan_changes": _run_excel_plan_changes,
+    "excel.apply_change_plan_copy": _run_excel_apply_change_plan_copy,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
