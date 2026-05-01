@@ -60,6 +60,22 @@ from .change_tracker import (
     generate_change_summary,
     track_cell_changes,
 )
+from .structure_analyzer import analyze_active_sheet_structure
+from .merged_cell_detector import detect_merged_cells
+from .table_region_detector import (
+    detect_table_regions,
+    detect_header_row_candidates,
+    detect_total_row_candidates,
+)
+from .hidden_filter_detector import (
+    detect_hidden_rows,
+    detect_hidden_columns,
+    detect_autofilter,
+)
+from .formula_scanner import (
+    scan_formula_cells,
+    detect_numeric_as_text_candidates,
+)
 
 __all__ = [
     # 기본 모듈
@@ -119,4 +135,15 @@ __all__ = [
     "compare_analyses",
     "track_cell_changes",
     "generate_change_summary",
+    # 구조 분석 (EXCEL-PC-4A 고도화)
+    "analyze_active_sheet_structure",
+    "detect_merged_cells",
+    "detect_table_regions",
+    "detect_header_row_candidates",
+    "detect_total_row_candidates",
+    "detect_hidden_rows",
+    "detect_hidden_columns",
+    "detect_autofilter",
+    "scan_formula_cells",
+    "detect_numeric_as_text_candidates",
 ]

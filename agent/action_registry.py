@@ -295,6 +295,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=False,
     ),
+    # Excel COM 구조 분석 액션: 활성 시트 상세 구조 분석 (EXCEL-PC-4A 고도화).
+    # 병합셀, 숨김행/열, AutoFilter, 표 영역, 헤더/합계 행, 수식, 숫자텍스트 감지 (read-only, safe).
+    "excel.analyze_active_sheet_structure": ActionMeta(
+        action="excel.analyze_active_sheet_structure",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).

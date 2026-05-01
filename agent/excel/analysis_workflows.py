@@ -13,6 +13,7 @@ from . import (
     formula_validator,
     header_detector,
     reporter,
+    structure_analyzer,
     table_analyzer,
     validator,
 )
@@ -323,4 +324,64 @@ def generate_analysis_report() -> dict:
     except Exception as e:  # noqa: BLE001
         logger.error("generate_analysis_report 실패: %s", type(e).__name__)
         result["error"] = "REPORT_GENERATION_FAILED"
+        return result
+
+
+def analyze_active_sheet_structure() -> dict:
+    """활성 시트의 상세 구조를 분석한다 (EXCEL-PC-4A 고도화).
+
+    병합셀, 숨김행/열, AutoFilter, 표 영역, 헤더/합계 행, 수식, 숫자텍스트 감지.
+
+    Returns:
+        {
+            "success": bool,
+            "sheet_name": str | None,
+            "structure": {...},
+            "error": str | None,
+        }
+    """
+    result = validator.build_update_result()
+
+    try:
+        from .connectors.excel_com_connector import get_active_excel_app
+        from . import errors as _err
+
+        # GetActiveObject로 Excel 연결
+        app, err = get_active_excel_app()
+        if err or app is None:
+            result["error"] = _err.EXCEL_APP_NOT_FOUND
+            return result
+
+        try:
+            wb = app.ActiveWorkbook
+            if wb is None:
+                result["error"] = "NO_ACTIVE_WORKBOOK"
+                return result
+        except Exception:  # noqa: BLE001
+            result["error"] = "NO_ACTIVE_WORKBOOK"
+            return result
+
+        try:
+            sheet = wb.ActiveSheet
+            if sheet is None:
+                result["error"] = _err.SHEET_NOT_FOUND
+                return result
+            result["sheet"] = str(sheet.Name)
+        except Exception:  # noqa: BLE001
+            result["error"] = _err.SHEET_NOT_FOUND
+            return result
+
+        # 상세 구조 분석
+        structure_info, err = structure_analyzer.analyze_active_sheet_structure(sheet)
+        if err or structure_info is None:
+            result["error"] = err or "STRUCTURE_ANALYSIS_FAILED"
+            return result
+
+        result["success"] = True
+        result["structure"] = structure_info
+        return result
+
+    except Exception as e:  # noqa: BLE001
+        logger.error("analyze_active_sheet_structure 실패: %s", type(e).__name__)
+        result["error"] = "STRUCTURE_ANALYSIS_FAILED"
         return result
