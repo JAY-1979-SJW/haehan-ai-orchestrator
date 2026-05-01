@@ -75,6 +75,38 @@ services:
       - default
       - app_web
 
+  browser-worker:
+    build:
+      context: .
+      dockerfile: docker/browser-worker.Dockerfile
+    image: haehan-ai-orchestrator-browser-worker:local
+    container_name: haehan-ai-orchestrator-browser-worker
+    working_dir: /app
+    command: ["uvicorn", "browser_worker.app:app", "--host", "0.0.0.0", "--port", "8500"]
+    expose:
+      - "8500"
+    environment:
+      BROWSER_WORKER_MODE: server
+      BROWSER_WORKER_ALLOW_EXTERNAL_URLS: "false"
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    volumes:
+      # Temporary directory for browser cache (not persistent)
+      - /dev/shm:/dev/shm:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8500/health',timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - default
+
 volumes:
   api_storage:
     # 기존 haehan-orchestrator-logs (구 compose) 와 겹치지 않게 명시 이름 지정.
