@@ -92,6 +92,9 @@ from .change_planner import plan_changes
 from .change_log import ChangeLog, OperationLog, ChangeLogBuilder
 from .operation_executor import execute_operation
 from .batch_executor import apply_change_plan
+from .total_validator import validate_total_rows
+from .type_validator import validate_column_types, validate_required_columns
+from .diff_reporter import ValidationReport, build_change_diff, compare_formulas
 
 __all__ = [
     # 기본 모듈
@@ -177,4 +180,11 @@ __all__ = [
     "ChangeLogBuilder",
     "execute_operation",
     "apply_change_plan",
+    # 검증 (EXCEL-PC-5B 고도화)
+    "validate_total_rows",
+    "validate_column_types",
+    "validate_required_columns",
+    "ValidationReport",
+    "build_change_diff",
+    "compare_formulas",
 ]

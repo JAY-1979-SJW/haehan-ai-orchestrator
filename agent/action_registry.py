@@ -331,6 +331,30 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
     ),
+    # Excel COM 검증 액션: 활성 workbook 자동 검증 (EXCEL-PC-5B 고도화).
+    # 수식 패턴, 합계, 타입, 필수 열 등 검증 (read-only, safe).
+    "excel.validate_active_workbook": ActionMeta(
+        action="excel.validate_active_workbook",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
+    # Excel COM 검증 액션: 변경 결과 검증 (EXCEL-PC-5B 고도화).
+    # 변경 전후 비교, diff 생성, 영향도 분석 (read-only, safe).
+    "excel.validate_change_result": ActionMeta(
+        action="excel.validate_change_result",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
