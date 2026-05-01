@@ -348,6 +348,66 @@ def _run_excel_insert_column_by_header_copy(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_analyze_workbook(task: dict) -> dict:
+    """활성 Excel의 표 구조를 분석한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params: 없음
+    """
+    out = com.analyze_active_workbook()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_validate_data_quality(task: dict) -> dict:
+    """활성 Excel의 데이터 품질을 검증한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params: 없음
+    """
+    out = com.validate_data_quality()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_validate_formulas(task: dict) -> dict:
+    """활성 Excel의 수식을 검증한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params: 없음
+    """
+    out = com.validate_formulas()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_generate_analysis_report(task: dict) -> dict:
+    """활성 Excel의 종합 분석 보고서를 생성한다 (read-only).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only).
+
+    Optional params: 없음
+    """
+    out = com.generate_analysis_report()
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_write_formula_by_header_copy(task: dict) -> dict:
     """헤더 기준으로 셀/열에 수식을 입력한다.
 
@@ -730,6 +790,10 @@ _DISPATCH = {
     "excel.insert_row_by_header_copy": _run_excel_insert_row_by_header_copy,
     "excel.insert_column_by_header_copy": _run_excel_insert_column_by_header_copy,
     "excel.write_formula_by_header_copy": _run_excel_write_formula_by_header_copy,
+    "excel.analyze_workbook": _run_excel_analyze_workbook,
+    "excel.validate_data_quality": _run_excel_validate_data_quality,
+    "excel.validate_formulas": _run_excel_validate_formulas,
+    "excel.generate_analysis_report": _run_excel_generate_analysis_report,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

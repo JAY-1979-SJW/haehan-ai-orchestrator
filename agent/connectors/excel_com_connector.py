@@ -807,6 +807,34 @@ def write_formula_by_header_copy(
     )
 
 
+def analyze_active_workbook() -> dict:
+    """Thin wrapper for agent.excel.analysis_workflows.analyze_active_workbook."""
+    from agent import excel as excel_mod
+
+    return excel_mod.analysis_workflows.analyze_active_workbook()
+
+
+def validate_data_quality() -> dict:
+    """Thin wrapper for agent.excel.analysis_workflows.validate_data_quality."""
+    from agent import excel as excel_mod
+
+    return excel_mod.analysis_workflows.validate_data_quality()
+
+
+def validate_formulas() -> dict:
+    """Thin wrapper for agent.excel.analysis_workflows.validate_formulas."""
+    from agent import excel as excel_mod
+
+    return excel_mod.analysis_workflows.validate_formulas()
+
+
+def generate_analysis_report() -> dict:
+    """Thin wrapper for agent.excel.analysis_workflows.generate_analysis_report."""
+    from agent import excel as excel_mod
+
+    return excel_mod.analysis_workflows.generate_analysis_report()
+
+
 __all__ = [
     "is_excel_available",
     "open_excel_app",
@@ -827,4 +855,8 @@ __all__ = [
     "insert_row_by_header_copy",
     "insert_column_by_header_copy",
     "write_formula_by_header_copy",
+    "analyze_active_workbook",
+    "validate_data_quality",
+    "validate_formulas",
+    "generate_analysis_report",
 ]
