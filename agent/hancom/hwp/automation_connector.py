@@ -157,22 +157,39 @@ def open_hwp_file(
     hwp,
     file_path: str,
     read_only: bool = True,
+    module_name: Optional[str] = None,
 ) -> Tuple[bool, Optional[str]]:
-    """HWP 파일을 연다.
+    """HWP 파일을 연다 (RegisterModule 호출 후).
 
     Args:
         hwp: HwpObject 인스턴스
         file_path: 열 파일 경로
         read_only: 읽기 전용 여부 (기본값: True)
+        module_name: 보안모듈 이름 (선택사항)
 
     Returns:
         (성공여부, error_or_None)
+
+    순서:
+    1. RegisterModule 호출 (Open 직전)
+    2. Open 호출
     """
     if hwp is None:
         return False, "HWPOBJECT_NOT_INITIALIZED"
 
     try:
-        # HwpObject.Open(filename, format, arg)
+        # 1. RegisterModule 호출 (보안팝업 제거)
+        from . import security_module
+
+        success, error = security_module.register_module_before_open(
+            hwp,
+            module_name=module_name,
+        )
+        if not success:
+            logger.error(f"RegisterModule 실패: {error}")
+            return False, error
+
+        # 2. HwpObject.Open(filename, format, arg)
         # format: 0 (기본값), arg: '' (인코딩 등 - 사용 안 함)
         hwp.Open(file_path, 0, '')  # type: ignore
         logger.info(f"파일 열기 성공: {file_path} (read_only={read_only})")

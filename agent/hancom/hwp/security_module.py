@@ -6,13 +6,24 @@
 - 공식 보안모듈만 사용 (팝업 자동 클릭 금지)
 - 보안모듈 미등록 시 명확한 error_code 반환
 - 우회 금지 (사용자 명시적 등록 필수)
+- RegisterModule은 Open 직전에 호출
 """
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+# 기본 보안모듈 이름 (registry에 등록되어야 함)
+DEFAULT_SECURITY_MODULE_NAME = "FilePathCheckerModuleExample"
+
+# registry 경로 (대소문자 변형 모두 확인)
+SECURITY_MODULE_REGISTRY_PATHS = [
+    (r"Software\HNC\HwpAutomation\Modules", "HNC 경로"),
+    (r"Software\Hnc\HwpAutomation\Modules", "Hnc 경로 (대소문자)"),
+]
 
 
 def check_security_module_registered() -> Tuple[bool, Optional[str]]:
@@ -105,6 +116,177 @@ def check_module_registry() -> Tuple[bool, Optional[str]]:
     except Exception as e:
         logger.error("Registry check failed: %s", type(e).__name__)
         return False, "MODULE_CHECK_FAILED"
+
+
+def get_security_module_details(
+    module_name: Optional[str] = None,
+) -> dict:
+    """보안모듈 레지스트리 정보를 read-only로 조회한다.
+
+    Args:
+        module_name: 보안모듈 이름 (기본값: DEFAULT_SECURITY_MODULE_NAME)
+
+    Returns:
+        {
+            "registered": bool,
+            "module_name": str,
+            "dll_path": str | None,
+            "dll_exists": bool,
+            "registry_path": str | None,
+            "error_code": str | None,
+        }
+    """
+    if module_name is None:
+        module_name = DEFAULT_SECURITY_MODULE_NAME
+
+    try:
+        import winreg
+
+        result = {
+            "registered": False,
+            "module_name": module_name,
+            "dll_path": None,
+            "dll_exists": False,
+            "registry_path": None,
+            "error_code": None,
+        }
+
+        # 각 registry 경로 시도
+        for registry_path, path_desc in SECURITY_MODULE_REGISTRY_PATHS:
+            try:
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    registry_path,
+                )
+
+                # module_name 하위 값 조회
+                try:
+                    dll_path, _ = winreg.QueryValueEx(key, module_name)
+                    result["registered"] = True
+                    result["dll_path"] = dll_path
+                    result["registry_path"] = registry_path
+
+                    # DLL 파일 존재 여부 확인
+                    if dll_path and os.path.exists(dll_path):
+                        result["dll_exists"] = True
+                        logger.info(
+                            f"보안모듈 발견: {module_name}, "
+                            f"경로: {registry_path}, "
+                            f"DLL: {dll_path}"
+                        )
+                        winreg.CloseKey(key)
+                        return result
+                    else:
+                        logger.warning(
+                            f"보안모듈 DLL 없음: {dll_path}"
+                        )
+                        result["error_code"] = "DLL_PATH_NOT_EXISTS"
+
+                except FileNotFoundError:
+                    # module_name이 존재하지 않음
+                    pass
+
+                winreg.CloseKey(key)
+
+            except FileNotFoundError:
+                # registry_path가 존재하지 않음
+                logger.debug(f"registry 경로 없음: {path_desc}")
+                continue
+
+        # 모든 경로에서 찾지 못함
+        if not result["registered"]:
+            result["error_code"] = "HANCOM_SECURITY_MODULE_NOT_REGISTERED"
+            logger.error(
+                f"보안모듈 미등록: {module_name}"
+            )
+
+        return result
+
+    except ImportError:
+        logger.error("winreg not available")
+        return {
+            "registered": False,
+            "module_name": module_name,
+            "dll_path": None,
+            "dll_exists": False,
+            "registry_path": None,
+            "error_code": "REGISTRY_NOT_AVAILABLE",
+        }
+    except Exception as e:
+        logger.error(f"보안모듈 정보 조회 실패: {type(e).__name__}")
+        return {
+            "registered": False,
+            "module_name": module_name,
+            "dll_path": None,
+            "dll_exists": False,
+            "registry_path": None,
+            "error_code": "MODULE_DETAILS_FAILED",
+        }
+
+
+def register_module_before_open(
+    hwp,
+    module_name: Optional[str] = None,
+) -> Tuple[bool, Optional[str]]:
+    """Open 직전에 RegisterModule을 호출한다.
+
+    Args:
+        hwp: HwpObject 인스턴스
+        module_name: 보안모듈 이름
+
+    Returns:
+        (성공여부, error_or_None)
+        - (True, None): 등록 성공
+        - (False, "HANCOM_SECURITY_MODULE_NOT_REGISTERED"): 미등록
+        - (False, "HANCOM_REGISTER_MODULE_FAILED"): 호출 실패
+    """
+    if hwp is None:
+        return False, "HWPOBJECT_NOT_INITIALIZED"
+
+    if module_name is None:
+        module_name = DEFAULT_SECURITY_MODULE_NAME
+
+    try:
+        # 1. registry 확인
+        module_info = get_security_module_details(module_name)
+        if not module_info.get("registered"):
+            logger.error(
+                f"보안모듈 미등록: {module_name}, "
+                f"error: {module_info.get('error_code')}"
+            )
+            return False, "HANCOM_SECURITY_MODULE_NOT_REGISTERED"
+
+        if not module_info.get("dll_exists"):
+            logger.error(
+                f"보안모듈 DLL 없음: {module_info.get('dll_path')}"
+            )
+            return False, "HANCOM_SECURITY_MODULE_NOT_REGISTERED"
+
+        # 2. RegisterModule 호출 (Open 직전)
+        # HwpObject.RegisterModule(module_name)
+        # 또는 RegisterModule("FilePathCheckDLL", module_name)
+        try:
+            if hasattr(hwp, "RegisterModule"):
+                # 공식 API: RegisterModule(모듈이름)
+                result = hwp.RegisterModule(module_name)  # type: ignore
+                logger.info(
+                    f"RegisterModule 호출 성공: {module_name}, "
+                    f"결과: {result}"
+                )
+                return True, None
+            else:
+                logger.error("RegisterModule 메서드 없음")
+                return False, "HANCOM_REGISTER_MODULE_FAILED"
+
+        except Exception as e:
+            logger.error(
+                f"RegisterModule 호출 실패: {type(e).__name__}: {e}"
+            )
+            return False, "HANCOM_REGISTER_MODULE_FAILED"
+
+    except Exception as e:
+        logger.error(f"RegisterModule 전 처리 실패: {type(e).__name__}")
+        return False, "HANCOM_REGISTER_MODULE_FAILED"
 
 
 def register_security_module_if_available() -> Tuple[bool, Optional[str]]:

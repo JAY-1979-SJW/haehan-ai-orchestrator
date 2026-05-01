@@ -28,6 +28,7 @@ def convert_hwp_to_hwpx(
     input_path: str,
     output_path: str,
     visible: bool = False,
+    module_name: Optional[str] = None,
 ) -> dict:
     """HWP 파일을 HWPX로 변환한다 (read-only).
 
@@ -35,6 +36,7 @@ def convert_hwp_to_hwpx(
         input_path: 입력 HWP 파일 경로
         output_path: 출력 HWPX 파일 경로
         visible: HwpObject UI 표시 여부 (기본값: False)
+        module_name: 보안모듈 이름 (선택사항)
 
     Returns:
         {
@@ -76,9 +78,9 @@ def convert_hwp_to_hwpx(
             result["error"] = error
             return result
 
-        # 4. HWP 파일 읽기 전용으로 열기
+        # 4. HWP 파일 읽기 전용으로 열기 (RegisterModule 자동 호출)
         success, error = automation_connector.open_hwp_file(
-            hwp, input_path, read_only=True
+            hwp, input_path, read_only=True, module_name=module_name
         )
         if not success:
             result["error"] = error

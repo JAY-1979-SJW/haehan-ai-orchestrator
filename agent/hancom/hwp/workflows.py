@@ -27,6 +27,7 @@ def convert_hwp_to_hwpx_copy(params: dict) -> dict:
             "input_path": str,          # 입력 HWP 파일 경로
             "output_path": str,         # 출력 HWPX 파일 경로
             "visible": bool,            # UI 표시 여부 (선택사항, 기본값: False)
+            "module_name": str,         # 보안모듈 이름 (선택사항)
         }
 
     Returns:
@@ -57,17 +58,19 @@ def convert_hwp_to_hwpx_copy(params: dict) -> dict:
         input_path = params.get("input_path")
         output_path = params.get("output_path")
         visible = params.get("visible", False)
+        module_name = params.get("module_name")  # 보안모듈 이름 (선택사항)
 
         if not input_path or not output_path:
             result["error"] = "INPUT_OUTPUT_PATH_REQUIRED"
             return result
 
-        # 1단계: HWP → HWPX 변환
+        # 1단계: HWP → HWPX 변환 (RegisterModule 자동 호출)
         logger.info(f"Starting conversion: {input_path} → {output_path}")
         conversion_result = converter.convert_hwp_to_hwpx(
             input_path=input_path,
             output_path=output_path,
             visible=visible,
+            module_name=module_name,
         )
 
         if not conversion_result.get("success"):
