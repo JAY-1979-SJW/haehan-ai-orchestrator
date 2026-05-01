@@ -38,11 +38,24 @@ def hancom_available():
     """한컴 COM 가용성 확인."""
     try:
         import win32com.client as win32
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
-        hwp.Quit()
-        return True
+        # 지원하는 클래스들 시도 (우선순위 순서)
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                hwp.Quit()
+                logger.info(f"한컴 가용성 확인: {cls}")
+                return True
+            except Exception:
+                continue
+        return False
     except Exception as e:
-        logger.warning(f"Hancom not available: {type(e).__name__}: {e}")
+        logger.warning(f"한컴 가용성 확인 실패: {type(e).__name__}: {e}")
         return False
 
 
@@ -102,11 +115,27 @@ def test_hancom_hwp_object_creation(hancom_available):
 
     try:
         import win32com.client as win32
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                logger.info(f"HwpObject 생성 성공: {cls}")
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            pytest.skip("Cannot create HwpObject with any class")
+
         assert hwp is not None
-        # HwpObject 속성 확인
         hwp.Quit()
-        logger.info("HwpObject created and destroyed successfully")
+        logger.info("HwpObject 생성 및 종료 성공")
     except Exception as e:
         pytest.skip(f"Cannot create HwpObject: {type(e).__name__}: {e}")
 
@@ -133,19 +162,30 @@ def test_hwp_file_open_read_only(hancom_available, sample_hwp_file):
 
     try:
         import win32com.client as win32
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            pytest.skip("Cannot create HwpObject")
+
         hwp.Visible = False
 
         try:
-            # HWP 파일 열기 (읽기 전용)
-            # HwpObject API: Open(filename, format, arg3, arg4)
-            # format: 파일 형식 (기본값 사용)
+            # HWP 파일 열기
             hwp.Open(sample_hwp_file)
-
-            # 파일이 열렸는지 확인
-            # 실제로는 hwp.ActiveDocument 등으로 확인
             assert hwp is not None
-            logger.info(f"HWP file opened: {sample_hwp_file}")
+            logger.info(f"HWP 파일 열기 성공: {sample_hwp_file}")
 
         finally:
             try:
@@ -182,16 +222,30 @@ def test_hwp_to_hwpx_conversion_read_only(
     try:
         import win32com.client as win32
 
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            pytest.skip("Cannot create HwpObject")
+
         hwp.Visible = False
 
         try:
             # HWP 파일 열기
             hwp.Open(sample_hwp_file)
 
-            # SaveAs로 HWPX 형식으로 저장
-            # HwpObject API: SaveAs(filename, format)
-            # format 7 = HWPX
+            # SaveAs로 HWPX 형식으로 저장 (format 7 = HWPX)
             hwp.SaveAs(output_path, 7)
 
             # HWPX 파일 생성 확인
@@ -199,7 +253,7 @@ def test_hwp_to_hwpx_conversion_read_only(
             file_size = os.path.getsize(output_path)
             assert file_size > 100, f"HWPX file too small: {file_size} bytes"
 
-            logger.info(f"HWP → HWPX conversion successful: {output_path} ({file_size} bytes)")
+            logger.info(f"HWP → HWPX 변환 성공: {output_path} ({file_size} bytes)")
 
         finally:
             try:
@@ -235,7 +289,23 @@ def test_hwpx_zip_structure(
     try:
         import win32com.client as win32
 
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            pytest.skip("Cannot create HwpObject")
+
         hwp.Visible = False
 
         try:
@@ -248,15 +318,12 @@ def test_hwpx_zip_structure(
             # ZIP 구조 검증
             try:
                 with zipfile.ZipFile(output_path, "r") as zf:
-                    # ZIP 파일 내용 확인
                     namelist = zf.namelist()
                     assert len(namelist) > 0, "HWPX ZIP is empty"
 
-                    # Contents 디렉토리 확인
                     has_contents = any(name.startswith("Contents/") for name in namelist)
                     assert has_contents, "HWPX missing Contents directory"
 
-                    # content.hpf 또는 섹션 XML 확인
                     has_content_file = any(
                         name in ["Contents/content.hpf"] or
                         (name.startswith("Contents/") and name.endswith((".hml", ".xml")))
@@ -265,8 +332,8 @@ def test_hwpx_zip_structure(
                     assert has_content_file, "HWPX missing content file or sections"
 
                     logger.info(
-                        f"HWPX ZIP structure valid: {len(namelist)} files, "
-                        f"Contents exists: {has_contents}"
+                        f"HWPX ZIP 구조 검증 성공: {len(namelist)} 파일, "
+                        f"Contents 존재: {has_contents}"
                     )
 
             except zipfile.BadZipFile:
@@ -311,11 +378,26 @@ def test_original_hwp_not_modified(
     try:
         import win32com.client as win32
 
-        hwp = win32.Dispatch("HwpObject.HwpCtrl.1")
+        classes = [
+            "HWPFrame.HwpObject",
+            "HWPFrame.HwpObject.1",
+            "HWPFrame.HwpObject.2",
+            "HwpObject.HwpObject",
+        ]
+        hwp = None
+        for cls in classes:
+            try:
+                hwp = win32.Dispatch(cls)
+                break
+            except Exception:
+                continue
+
+        if hwp is None:
+            pytest.skip("Cannot create HwpObject")
+
         hwp.Visible = False
 
         try:
-            # HWP 파일 열기 (읽기 전용이 아님, 하지만 SaveAs만 사용)
             hwp.Open(sample_hwp_file)
             hwp.SaveAs(output_path, 7)  # HWPX format
 
@@ -342,7 +424,7 @@ def test_original_hwp_not_modified(
         ), f"Original HWP modified time changed by {mtime_diff}s"
 
         logger.info(
-            f"Original HWP file protected: "
+            f"원본 HWP 파일 보호 확인: "
             f"size={after_size}, mtime_diff={mtime_diff}s"
         )
 
