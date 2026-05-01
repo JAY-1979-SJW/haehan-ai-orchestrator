@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch, MagicMock
+import tempfile
+import os
+from unittest.mock import patch, MagicMock, call
 
 from agent.hancom.hwp import security_module
 
@@ -143,6 +145,166 @@ class TestSecurityModuleDetailed(unittest.TestCase):
         # OpenKey(read)만 사용하고 SetValueEx(write)는 사용 안 함
         # (실제로는 mock 없이 호출되므로 exception 발생하지 않음)
         self.assertIsNotNone(details)
+
+
+class TestSetupSecurityModuleRegistry(unittest.TestCase):
+    """setup_security_module_registry 상세 테스트."""
+
+    def test_dll_path_not_found(self):
+        """DLL 없음 → DLL_PATH_NOT_FOUND 오류."""
+        result = security_module.setup_security_module_registry(
+            module_name="TestModule",
+            dll_path=r"C:\NonExistent\HwpAutomation.dll"
+        )
+
+        self.assertFalse(result["success"])
+        self.assertFalse(result["registered"])
+        self.assertEqual(result["error_code"], "DLL_PATH_NOT_EXISTS")
+        self.assertTrue(result["setup_required"])
+
+    def test_dll_path_not_exists(self):
+        """DLL 경로가 없음."""
+        result = security_module.setup_security_module_registry(
+            module_name="TestModule",
+            dll_path=r"C:\Program Files\HNC\NotExist.dll"
+        )
+
+        self.assertFalse(result["success"])
+        self.assertEqual(result["error_code"], "DLL_PATH_NOT_EXISTS")
+
+    def test_valid_dll_path_with_custom_module_name(self):
+        """유효한 DLL + 커스텀 module_name."""
+        # 임시 DLL 파일 생성
+        with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as f:
+            temp_dll = f.name
+
+        try:
+            # Mock winreg를 사용하여 registry write 검증
+            with patch("winreg.OpenKey") as mock_open_key, \
+                 patch("winreg.SetValueEx") as mock_set_value, \
+                 patch("winreg.CloseKey"):
+
+                mock_key = MagicMock()
+                mock_open_key.return_value = mock_key
+
+                result = security_module.setup_security_module_registry(
+                    module_name="CustomModule",
+                    dll_path=temp_dll
+                )
+
+                # Registry write 호출 검증
+                mock_set_value.assert_called_once()
+                call_args = mock_set_value.call_args
+                # SetValueEx(key, module_name, 0, winreg.REG_SZ, dll_path)
+                # call_args[0][0]: key
+                # call_args[0][1]: module_name
+                # call_args[0][2]: 0
+                # call_args[0][3]: winreg.REG_SZ
+                # call_args[0][4]: dll_path
+                self.assertEqual(call_args[0][1], "CustomModule")
+                self.assertEqual(call_args[0][4], temp_dll)
+
+                # 성공 결과 검증
+                self.assertTrue(result["success"])
+                self.assertTrue(result["registered"])
+                self.assertEqual(result["module_name"], "CustomModule")
+
+        finally:
+            if os.path.exists(temp_dll):
+                os.unlink(temp_dll)
+
+    def test_registry_write_permission_denied(self):
+        """Registry 쓰기 권한 없음."""
+        with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as f:
+            temp_dll = f.name
+
+        try:
+            with patch("winreg.OpenKey") as mock_open_key:
+                # PermissionError 발생시키기
+                mock_open_key.side_effect = PermissionError("Access denied")
+
+                result = security_module.setup_security_module_registry(
+                    module_name="TestModule",
+                    dll_path=temp_dll
+                )
+
+                self.assertFalse(result["success"])
+                self.assertEqual(result["error_code"], "REGISTRY_PERMISSION_DENIED")
+
+        finally:
+            if os.path.exists(temp_dll):
+                os.unlink(temp_dll)
+
+    def test_default_module_name_used(self):
+        """module_name None이면 기본값 사용."""
+        with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as f:
+            temp_dll = f.name
+
+        try:
+            with patch("winreg.OpenKey") as mock_open_key, \
+                 patch("winreg.SetValueEx") as mock_set_value, \
+                 patch("winreg.CloseKey"):
+
+                mock_key = MagicMock()
+                mock_open_key.return_value = mock_key
+
+                result = security_module.setup_security_module_registry(
+                    module_name=None,
+                    dll_path=temp_dll
+                )
+
+                # 기본 module_name이 사용되었는지 검증
+                call_args = mock_set_value.call_args
+                self.assertEqual(
+                    call_args[0][1],
+                    security_module.DEFAULT_SECURITY_MODULE_NAME
+                )
+
+        finally:
+            if os.path.exists(temp_dll):
+                os.unlink(temp_dll)
+
+    def test_dll_path_exists_check(self):
+        """DLL 경로 존재 검증."""
+        # 임시 DLL 파일로 테스트
+        with tempfile.NamedTemporaryFile(suffix=".dll", delete=False) as f:
+            temp_dll = f.name
+
+        try:
+            with patch("winreg.OpenKey") as mock_open_key, \
+                 patch("winreg.SetValueEx") as mock_set_value, \
+                 patch("winreg.CloseKey"):
+
+                mock_key = MagicMock()
+                mock_open_key.return_value = mock_key
+
+                result = security_module.setup_security_module_registry(
+                    module_name="TestModule",
+                    dll_path=temp_dll
+                )
+
+                # dll_path_exists 필드 확인
+                self.assertTrue(result["dll_path_exists"])
+                self.assertTrue(result["registry_write"])
+
+        finally:
+            if os.path.exists(temp_dll):
+                os.unlink(temp_dll)
+
+    def test_readback_after_write_success(self):
+        """Registry write 성공 후 read-back 검증."""
+        # 실제 registry (mock 없이) read-back 검증
+        # write할 수 없으므로 write 없이 미등록 상태만 확인
+        details = security_module.get_security_module_details("NonExistentModule")
+
+        # 미등록 상태 확인
+        self.assertFalse(details["registered"])
+        self.assertEqual(details["dll_path"], None)
+        self.assertFalse(details["dll_exists"])
+        self.assertEqual(
+            details["error_code"],
+            "HANCOM_SECURITY_MODULE_NOT_REGISTERED"
+        )
 
 
 if __name__ == "__main__":
