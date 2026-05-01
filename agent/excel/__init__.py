@@ -55,6 +55,9 @@ from .analysis_workflows import (
     validate_data_quality,
     validate_formulas,
 )
+from .planning_workflows import (
+    plan_changes as plan_changes_workflow,
+)
 from .change_tracker import (
     compare_analyses,
     generate_change_summary,
@@ -76,6 +79,16 @@ from .formula_scanner import (
     scan_formula_cells,
     detect_numeric_as_text_candidates,
 )
+from .operation_schema import (
+    Operation,
+    ChangePlan,
+    OP_UPDATE_CELL,
+    OP_INSERT_ROW,
+    OP_INSERT_COLUMN,
+    OP_WRITE_FORMULA,
+)
+from .operation_normalizer import normalize_operation
+from .change_planner import plan_changes
 
 __all__ = [
     # 기본 모듈
@@ -146,4 +159,13 @@ __all__ = [
     "detect_autofilter",
     "scan_formula_cells",
     "detect_numeric_as_text_candidates",
+    # 변경 계획 (EXCEL-PC-4B 고도화)
+    "Operation",
+    "ChangePlan",
+    "OP_UPDATE_CELL",
+    "OP_INSERT_ROW",
+    "OP_INSERT_COLUMN",
+    "OP_WRITE_FORMULA",
+    "normalize_operation",
+    "plan_changes",
 ]

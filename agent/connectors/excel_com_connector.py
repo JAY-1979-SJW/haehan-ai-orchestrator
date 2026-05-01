@@ -821,6 +821,13 @@ def analyze_active_sheet_structure() -> dict:
     return excel_mod.analysis_workflows.analyze_active_sheet_structure()
 
 
+def plan_changes(operations: list) -> dict:
+    """Thin wrapper for agent.excel.planning_workflows.plan_changes."""
+    from agent import excel as excel_mod
+
+    return excel_mod.planning_workflows.plan_changes(operations=operations)
+
+
 def validate_data_quality() -> dict:
     """Thin wrapper for agent.excel.analysis_workflows.validate_data_quality."""
     from agent import excel as excel_mod
@@ -864,6 +871,7 @@ __all__ = [
     "write_formula_by_header_copy",
     "analyze_active_workbook",
     "analyze_active_sheet_structure",
+    "plan_changes",
     "validate_data_quality",
     "validate_formulas",
     "generate_analysis_report",
