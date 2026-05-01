@@ -391,6 +391,39 @@ result = workflows.convert_hwp_to_hwpx_copy(params)
 | `HANCOM_REGISTER_MODULE_FAILED` | RegisterModule 호출 실패 | 모듈 호환성 확인 |
 | `REGISTRY_PERMISSION_DENIED` | registry 쓰기 권한 없음 | 관리자 권한으로 setup script 재실행 |
 
+### 보안모듈 등록 반환값 Schema
+
+**성공 (exit code: 0)**
+```python
+{
+    "success": true,
+    "registered": true,
+    "module_name": "FilePathCheckerModuleExample",
+    "dll_path_exists": true,
+    "registry_write": true,
+    "setup_required": false,
+}
+```
+
+**실패 (exit code: 1 or 2)**
+```python
+{
+    "success": false,
+    "registered": false,
+    "error_code": "DLL_PATH_NOT_FOUND",  # 또는 DLL_PATH_NOT_EXISTS, REGISTRY_PERMISSION_DENIED 등
+    "setup_required": true,
+}
+```
+
+**필드 설명:**
+- `success`: 등록 성공 여부
+- `registered`: 현재 registry에 등록된 상태
+- `module_name`: 등록된 보안모듈 이름 (성공 시만)
+- `dll_path_exists`: DLL 파일 존재 여부 (성공 시만)
+- `registry_write`: registry write 성공 여부 (성공 시만)
+- `setup_required`: 추가 설정 필요 여부 (실패 시만)
+- `error_code`: 오류 코드 (실패 시만)
+
 ### 단위 테스트
 
 ```bash
