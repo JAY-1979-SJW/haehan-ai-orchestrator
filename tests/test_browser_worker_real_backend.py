@@ -40,7 +40,7 @@ class TestRealPlaywrightBackendFeatureGate:
             )
 
             # Mock the sync_playwright to avoid actual launch
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -124,7 +124,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -155,7 +155,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
+            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
