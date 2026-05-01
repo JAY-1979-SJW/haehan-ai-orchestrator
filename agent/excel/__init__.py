@@ -55,6 +55,11 @@ from .analysis_workflows import (
     validate_data_quality,
     validate_formulas,
 )
+from .change_tracker import (
+    compare_analyses,
+    generate_change_summary,
+    track_cell_changes,
+)
 
 __all__ = [
     # 기본 모듈
@@ -110,4 +115,8 @@ __all__ = [
     "validate_data_quality",
     "validate_formulas",
     "generate_analysis_report",
+    # 변경 추적 (고도화)
+    "compare_analyses",
+    "track_cell_changes",
+    "generate_change_summary",
 ]
