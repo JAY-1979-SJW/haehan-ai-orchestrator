@@ -319,6 +319,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=False,
     ),
+    # Excel COM 실행 액션: 승인된 계획을 복사본으로 실행 (EXCEL-PC-5A 고도화).
+    # Operation 순차 실행, 원본 저장 금지, SaveCopyAs만 허용 (requires approval).
+    "excel.apply_change_plan_copy": ActionMeta(
+        action="excel.apply_change_plan_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # 실제 쓰기 작업 수행
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
