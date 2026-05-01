@@ -54,22 +54,27 @@ class WorkerSecurityPolicy:
 
     @staticmethod
     def validate_actual_execution(action: str, url: str = "") -> tuple[bool, str]:
-        """Validate actual execution request.
+        """Validate actual execution request with precise error codes.
 
         Returns:
-            (allowed, reason)
+            (allowed, error_code or "ok")
+
+        Error code precedence (checked in order):
+            1. ACTION_NOT_ALLOWED_ACTUAL_EXECUTION
+            2. URL_NOT_ALLOWED_ACTUAL_EXECUTION
+            3. ACTUAL_BROWSER_EXECUTION_NOT_ENABLED
         """
-        # Check if execution is enabled via environment variable
-        if os.environ.get("BROWSER_EXECUTION_ENABLED", "").lower() != "true":
-            return False, "BROWSER_EXECUTION_ENABLED not set"
-
-        # Check if action is allowed
+        # Check 1: action allowlist (highest priority)
         if action not in ALLOWED_ACTIONS_ACTUAL_EXECUTION:
-            return False, f"Action '{action}' not allowed in actual execution"
+            return False, "ACTION_NOT_ALLOWED_ACTUAL_EXECUTION"
 
-        # Check if URL is allowed (if provided)
+        # Check 2: URL allowlist (second priority)
         if url and url not in ALLOWED_URLS_ACTUAL_EXECUTION:
-            return False, f"URL '{url}' not allowed in actual execution"
+            return False, "URL_NOT_ALLOWED_ACTUAL_EXECUTION"
+
+        # Check 3: env flag (lowest priority)
+        if os.environ.get("BROWSER_EXECUTION_ENABLED", "").lower() != "true":
+            return False, "ACTUAL_BROWSER_EXECUTION_NOT_ENABLED"
 
         return True, "ok"
 
