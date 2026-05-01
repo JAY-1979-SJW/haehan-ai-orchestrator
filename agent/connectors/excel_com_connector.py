@@ -415,6 +415,179 @@ def run_basic_poc(
         result["quit"] = True
 
 
+# ── read-only probe (실행 중인 Excel 감지) ──────────────────────────────
+def get_active_excel_app() -> Tuple[Optional[Any], Optional[str]]:
+    """실행 중인 Excel Application을 GetActiveObject로 반환.
+
+    새로 실행하지 않고, 이미 열려 있는 Excel만 연결한다.
+    Excel이 실행 중이지 않으면 NO_ACTIVE_EXCEL 반환.
+    """
+    win32com_mod, err = _try_import_win32com()
+    if err or win32com_mod is None:
+        return None, err or _err.EXCEL_COM_DISPATCH_FAILED
+
+    try:
+        app = win32com_mod.GetObject(None, "Excel.Application")
+        return app, None
+    except Exception as e:  # noqa: BLE001 - COM 예외 다양
+        logger.debug("GetActiveObject(Excel.Application) 실패: %s", type(e).__name__)
+        return None, _err.EXCEL_APP_NOT_FOUND
+
+
+def probe_active_workbook_readonly(
+    max_sample_rows: int = 10,
+    max_sample_columns: int = 10,
+    include_formulas: bool = False,
+) -> dict:
+    """실행 중인 Excel의 Workbook 정보를 read-only로 조회.
+
+    Args:
+        max_sample_rows: 샘플 셀 읽기 최대 행 수
+        max_sample_columns: 샘플 셀 읽기 최대 열 수
+        include_formulas: 수식 포함 여부 (False 기본, 값만 읽음)
+
+    Returns:
+        {
+            "success": bool,
+            "excel_running": bool,
+            "error_code": str | None,
+            "workbook_count": int | None,
+            "active_workbook": {
+                "name": str,
+                "sheet_count": int,
+                "active_sheet": str,
+                "used_range": str,  # e.g., "A1:K52"
+                "rows": int,
+                "columns": int,
+            } | None,
+            "sample_cells": [{"row": int, "column": int, "address": str, "value": Any}],
+            "read_only": True,
+        }
+    """
+    result: dict = {
+        "success": False,
+        "excel_running": False,
+        "error_code": None,
+        "workbook_count": None,
+        "active_workbook": None,
+        "sample_cells": [],
+        "read_only": True,
+    }
+
+    app, err = get_active_excel_app()
+    if err or app is None:
+        result["error_code"] = _err.EXCEL_APP_NOT_FOUND
+        result["excel_running"] = False
+        return result
+
+    try:
+        result["excel_running"] = True
+
+        # Workbook 정보
+        try:
+            workbooks = app.Workbooks
+            wb_count = workbooks.Count
+            result["workbook_count"] = wb_count
+        except Exception:  # noqa: BLE001
+            result["error_code"] = _err.EXCEL_APP_NOT_FOUND
+            return result
+
+        # 활성 Workbook
+        try:
+            wb = app.ActiveWorkbook
+            if wb is None:
+                result["error_code"] = "NO_ACTIVE_WORKBOOK"
+                return result
+        except Exception:  # noqa: BLE001
+            result["error_code"] = "NO_ACTIVE_WORKBOOK"
+            return result
+
+        wb_info: dict = {}
+        try:
+            wb_info["name"] = str(wb.Name)
+        except Exception:  # noqa: BLE001
+            wb_info["name"] = "(unknown)"
+
+        # 시트 정보
+        try:
+            sheets = wb.Sheets
+            sheet_count = sheets.Count
+            wb_info["sheet_count"] = sheet_count
+        except Exception:  # noqa: BLE001
+            wb_info["sheet_count"] = 0
+
+        try:
+            active_sheet = wb.ActiveSheet
+            wb_info["active_sheet"] = str(active_sheet.Name) if active_sheet else "(unknown)"
+        except Exception:  # noqa: BLE001
+            wb_info["active_sheet"] = "(unknown)"
+
+        # UsedRange
+        try:
+            used_range = wb.UsedRange
+            wb_info["used_range"] = str(used_range.Address(external=False))
+            wb_info["rows"] = used_range.Rows.Count
+            wb_info["columns"] = used_range.Columns.Count
+        except Exception:  # noqa: BLE001
+            wb_info["used_range"] = "(unknown)"
+            wb_info["rows"] = 0
+            wb_info["columns"] = 0
+
+        # 샘플 셀 읽기 (상위 max_sample_rows x max_sample_columns)
+        sample_cells: list = []
+        try:
+            if wb_info.get("rows", 0) > 0 and wb_info.get("columns", 0) > 0:
+                ws = wb.ActiveSheet
+                max_r = min(max_sample_rows, wb_info.get("rows", 0))
+                max_c = min(max_sample_columns, wb_info.get("columns", 0))
+
+                for row in range(1, max_r + 1):
+                    for col in range(1, max_c + 1):
+                        try:
+                            cell = ws.Cells(row, col)
+                            value = cell.Value
+                            if include_formulas and value is not None:
+                                try:
+                                    formula = cell.Formula
+                                    if formula and str(formula).startswith("="):
+                                        value = {"value": value, "formula": str(formula)}
+                                except Exception:  # noqa: BLE001
+                                    pass
+
+                            # 빈 셀은 제외
+                            if value is not None:
+                                sample_cells.append({
+                                    "row": row,
+                                    "column": col,
+                                    "address": f"{_col_letter(col)}{row}",
+                                    "value": value,
+                                })
+                        except Exception:  # noqa: BLE001
+                            pass
+        except Exception:  # noqa: BLE001
+            pass
+
+        result["active_workbook"] = wb_info
+        result["sample_cells"] = sample_cells
+        result["success"] = True
+        return result
+
+    except Exception as e:  # noqa: BLE001
+        logger.error("probe_active_workbook_readonly 실패: %s", type(e).__name__)
+        result["error_code"] = "PROBE_FAILED"
+        return result
+
+
+def _col_letter(col_num: int) -> str:
+    """열 번호를 알파벳으로 변환 (1 → A, 27 → AA)."""
+    result = ""
+    while col_num > 0:
+        col_num -= 1
+        result = chr(65 + (col_num % 26)) + result
+        col_num //= 26
+    return result
+
+
 __all__ = [
     "is_excel_available",
     "open_excel_app",
@@ -426,4 +599,6 @@ __all__ = [
     "close_workbook",
     "quit_excel",
     "run_basic_poc",
+    "get_active_excel_app",
+    "probe_active_workbook_readonly",
 ]
