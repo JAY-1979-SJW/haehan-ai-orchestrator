@@ -297,6 +297,112 @@ pytest agent/tests/test_hancom_hwp_com_smoke.py -v
 
 ---
 
+## 보안팝업 제거 (RegisterModule)
+
+### 문제
+HWP 파일을 Open할 때 한컴 보안 승인 팝업이 표시됨:
+```
+"한글을 이용하여 위 파일에 접근하려는 시도가 감지되었습니다.
+[접근 허용] [모두 허용] [허용 안 함] [모두 안 함]"
+```
+
+### 원인
+한컴 자동화 API의 보안 정책으로, HwpObject.Open() 호출 시 사용자 승인 필요.
+
+### 해결: RegisterModule 방식 (공식)
+
+**금지되는 방식:**
+- ❌ 팝업 자동 클릭 (UIAutomation, 키 입력)
+- ❌ 보안 우회 (registry 우회, 환경변수 조작)
+
+**허용되는 방식:**
+- ✅ 공식 보안모듈 + RegisterModule API
+
+### 구현 순서
+
+```python
+# 1단계: 보안모듈 registry 확인
+module_info = security_module.get_security_module_details("FilePathCheckerModuleExample")
+if not module_info["registered"]:
+    return "HANCOM_SECURITY_MODULE_NOT_REGISTERED"  # SETUP_REQUIRED
+
+# 2단계: RegisterModule 호출 (Open 직전)
+success, error = security_module.register_module_before_open(
+    hwp,
+    module_name="FilePathCheckerModuleExample"
+)
+if not success:
+    return error  # HANCOM_REGISTER_MODULE_FAILED
+
+# 3단계: 안전하게 Open 호출
+hwp.Open(file_path, 0, '')  # 팝업 없음
+```
+
+### Registry 경로
+
+```
+HKEY_CURRENT_USER\Software\HNC\HwpAutomation\Modules
+  ├─ FilePathCheckerModuleExample: "C:\Program Files\...\module.dll"
+  └─ (다른 모듈들...)
+
+또는
+
+HKEY_CURRENT_USER\Software\Hnc\HwpAutomation\Modules  # 대소문자 변형
+```
+
+### 필수 조건
+
+1. **보안모듈 등록 필수**
+   - Windows registry의 HwpAutomation\Modules에 등록되어야 함
+   - DLL 파일이 실제로 존재해야 함
+   - 미등록이면 `SETUP_REQUIRED` 반환
+
+2. **module_name 일치**
+   - RegisterModule의 매개변수는 registry 이름과 정확히 일치해야 함
+   - 일반적으로: `FilePathCheckerModuleExample`
+
+3. **호출 순서 준수**
+   - RegisterModule → Open (반드시 이 순서)
+   - Open 전에 RegisterModule 호출하지 않으면 팝업 발생
+
+### 설정값
+
+```python
+# 우선순위:
+# 1. task params.module_name
+# 2. 환경변수 HANCOM_SECURITY_MODULE_NAME
+# 3. 기본값 FilePathCheckerModuleExample
+
+params = {
+    "input_path": "input.hwp",
+    "output_path": "output.hwpx",
+    "module_name": "FilePathCheckerModuleExample",  # 선택사항
+}
+result = workflows.convert_hwp_to_hwpx_copy(params)
+```
+
+### 에러 코드
+
+| 코드 | 의미 | 해결 |
+|------|------|------|
+| `HANCOM_SECURITY_MODULE_NOT_REGISTERED` | 보안모듈 미등록 | registry에 모듈 등록 필요 |
+| `DLL_PATH_NOT_EXISTS` | registry에 있지만 DLL 파일 없음 | 한컴 재설치 또는 경로 확인 |
+| `HANCOM_REGISTER_MODULE_FAILED` | RegisterModule 호출 실패 | 모듈 호환성 확인 |
+
+### 단위 테스트
+
+```bash
+pytest agent/tests/test_hancom_hwp_security_module_detailed.py -v
+```
+
+- ✅ 보안모듈 미등록 시 SETUP_REQUIRED
+- ✅ registry에 module이 없으면 접근 금지
+- ✅ RegisterModule 호출 여부 검증
+- ✅ Open 호출 차단 조건 확인
+- ✅ registry write 함수 호출 없음 (read-only)
+
+---
+
 ## 향후 개선사항
 
 1. **UI 통합**: 변환 진행률 표시
