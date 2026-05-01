@@ -18,6 +18,7 @@ CATEGORY_UNKNOWN = "unknown"
 # 향후 확장 지점 (이번 단계에서는 값으로만 존재):
 CATEGORY_EXCEL = "excel"
 CATEGORY_EXCEL_COM = "excel_com"
+CATEGORY_HANCOM = "hancom"
 CATEGORY_CAD = "cad"
 CATEGORY_MCP = "mcp"
 # local_agent.browser_launcher.open_local_browser 전용. 서버측 Playwright
@@ -26,7 +27,7 @@ CATEGORY_LOCAL_BROWSER = "local_browser"
 
 KNOWN_CATEGORIES: frozenset[str] = frozenset({
     CATEGORY_SYSTEM, CATEGORY_WEB, CATEGORY_SECRET,
-    CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_CAD, CATEGORY_MCP,
+    CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_HANCOM, CATEGORY_CAD, CATEGORY_MCP,
     CATEGORY_LOCAL_BROWSER,
 })
 
@@ -487,6 +488,21 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=False,
     ),
+    # Hancom HWP → HWPX 변환 (1B): 한컴 HwpObject 자동화 기반.
+    # - 공식 보안모듈 RegisterModule 사용
+    # - 읽기 전용으로 열기 (원본 보호)
+    # - SaveAs 기반 복사본 저장
+    # - 보안모듈 미등록 시 SETUP_REQUIRED 반환
+    "hancom.convert_hwp_to_hwpx_copy": ActionMeta(
+        action="hancom.convert_hwp_to_hwpx_copy",
+        category=CATEGORY_HANCOM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,
+        requires_file_path=True,
+        requires_save_as=True,
+    ),
 }
 
 
@@ -559,6 +575,7 @@ __all__ = [
     "CATEGORY_UNKNOWN",
     "CATEGORY_EXCEL",
     "CATEGORY_EXCEL_COM",
+    "CATEGORY_HANCOM",
     "CATEGORY_CAD",
     "CATEGORY_MCP",
     "CATEGORY_LOCAL_BROWSER",

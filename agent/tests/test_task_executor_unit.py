@@ -139,7 +139,12 @@ def test_supported_actions_list():
         "excel.generate_analysis_report",
     }
 
-    expected = excel_actions | {"cad.health", "cad.open_info", "cad.add_text_save_as"} | set(_cad_api_names())
+    # Hancom 작업
+    hancom_actions = {
+        "hancom.convert_hwp_to_hwpx_copy",
+    }
+
+    expected = excel_actions | hancom_actions | {"cad.health", "cad.open_info", "cad.add_text_save_as"} | set(_cad_api_names())
     assert set(te.supported_actions()) == expected
 
 
@@ -427,6 +432,132 @@ def test_handler_crash_converted(monkeypatch):
     assert out["ok"] is False
     assert out["error"].startswith("handler_crashed:")
     assert "RuntimeError" in out["error"]
+
+
+# ──────────────────────────────────────────────────────────────────
+# hancom.convert_hwp_to_hwpx_copy
+# ──────────────────────────────────────────────────────────────────
+def test_hancom_convert_requires_input_path(monkeypatch):
+    from agent import task_executor as te
+
+    out = te.execute_task({
+        "action": "hancom.convert_hwp_to_hwpx_copy",
+        "output_path": r"C:\tmp\o.hwpx",
+    })
+    assert out["ok"] is False
+    assert out["error"] == "INPUT_OUTPUT_PATH_REQUIRED"
+
+
+def test_hancom_convert_requires_output_path(monkeypatch):
+    from agent import task_executor as te
+
+    out = te.execute_task({
+        "action": "hancom.convert_hwp_to_hwpx_copy",
+        "input_path": r"C:\tmp\i.hwp",
+    })
+    assert out["ok"] is False
+    assert out["error"] == "INPUT_OUTPUT_PATH_REQUIRED"
+
+
+def test_hancom_convert_delegates_to_workflows(monkeypatch):
+    from agent import task_executor as te
+
+    calls = []
+
+    def mock_convert(params):
+        calls.append(params)
+        return {
+            "success": True,
+            "input_path": params.get("input_path"),
+            "output_path": params.get("output_path"),
+            "output_size": 1024,
+            "hwpx_valid": True,
+            "hwpx_file_count": 5,
+            "hwpx_sections": 1,
+            "error": None,
+        }
+
+    import agent.hancom.hwp.workflows as workflows_mod
+    monkeypatch.setattr(workflows_mod, "convert_hwp_to_hwpx_copy", mock_convert)
+
+    out = te.execute_task({
+        "action": "hancom.convert_hwp_to_hwpx_copy",
+        "input_path": r"C:\tmp\i.hwp",
+        "output_path": r"C:\tmp\o.hwpx",
+        "visible": False,
+    })
+
+    assert out["ok"] is True
+    assert out["error"] is None
+    assert out["data"]["hwpx_valid"] is True
+    assert out["data"]["hwpx_file_count"] == 5
+    assert out["data"]["hwpx_sections"] == 1
+    assert len(calls) == 1
+    assert calls[0]["input_path"] == r"C:\tmp\i.hwp"
+    assert calls[0]["output_path"] == r"C:\tmp\o.hwpx"
+
+
+def test_hancom_convert_file_path_alias(monkeypatch):
+    """file_path와 input_path 모두 지원."""
+    from agent import task_executor as te
+
+    calls = []
+
+    def mock_convert(params):
+        calls.append(params)
+        return {
+            "success": True,
+            "input_path": params.get("input_path"),
+            "output_path": params.get("output_path"),
+            "output_size": 512,
+            "hwpx_valid": True,
+            "hwpx_file_count": 3,
+            "hwpx_sections": 1,
+            "error": None,
+        }
+
+    import agent.hancom.hwp.workflows as workflows_mod
+    monkeypatch.setattr(workflows_mod, "convert_hwp_to_hwpx_copy", mock_convert)
+
+    # file_path 사용 (input_path 대신)
+    out = te.execute_task({
+        "action": "hancom.convert_hwp_to_hwpx_copy",
+        "file_path": r"C:\tmp\test.hwp",
+        "save_as": r"C:\tmp\out.hwpx",
+    })
+
+    assert out["ok"] is True
+    assert calls[0]["input_path"] == r"C:\tmp\test.hwp"
+    assert calls[0]["output_path"] == r"C:\tmp\out.hwpx"
+
+
+def test_hancom_convert_error_propagated(monkeypatch):
+    """워크플로우 에러가 올바르게 전파됨."""
+    from agent import task_executor as te
+
+    def mock_convert(params):
+        return {
+            "success": False,
+            "input_path": params.get("input_path"),
+            "output_path": None,
+            "output_size": None,
+            "hwpx_valid": False,
+            "hwpx_file_count": 0,
+            "hwpx_sections": 0,
+            "error": "INPUT_FILE_NOT_FOUND",
+        }
+
+    import agent.hancom.hwp.workflows as workflows_mod
+    monkeypatch.setattr(workflows_mod, "convert_hwp_to_hwpx_copy", mock_convert)
+
+    out = te.execute_task({
+        "action": "hancom.convert_hwp_to_hwpx_copy",
+        "input_path": r"C:\nonexistent\file.hwp",
+        "output_path": r"C:\tmp\out.hwpx",
+    })
+
+    assert out["ok"] is False
+    assert out["error"] == "INPUT_FILE_NOT_FOUND"
 
 
 if __name__ == "__main__":
