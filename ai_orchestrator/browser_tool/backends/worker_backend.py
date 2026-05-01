@@ -5,20 +5,176 @@ In the MVP stage (BROWSER-WORKER-1), it uses the worker service directly without
 network calls. In future stages (BROWSER-WORKER-3+), it will make HTTP requests
 to a separate browser-worker service.
 """
-from typing import Optional, Any
+import os
+import json
+from typing import Optional, Any, Callable
+
+import httpx
 
 from ai_orchestrator.browser_tool.schemas import BrowserResult, BrowserTask
 from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 from browser_worker.service import handle_browser_request
 
 
+class BrowserWorkerClient:
+    """HTTP client for Browser Worker service.
+
+    Handles communication with the separate browser-worker service via HTTP.
+    """
+
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        timeout: int = 30,
+        transport_fn: Optional[Callable[[str, dict, int], WorkerBrowserResponse]] = None,
+    ):
+        """Initialize HTTP client for browser worker.
+
+        Args:
+            base_url: Browser worker service URL (default: http://browser-worker:8500)
+            timeout: Request timeout in seconds
+            transport_fn: Optional custom transport function (for testing)
+        """
+        self.base_url = base_url or os.getenv(
+            "BROWSER_WORKER_URL",
+            "http://browser-worker:8500",
+        )
+        self.timeout = timeout
+        self.transport_fn = transport_fn
+
+    def call_inspect(
+        self,
+        request: WorkerBrowserRequest,
+    ) -> WorkerBrowserResponse:
+        """Call browser.inspect endpoint on worker service.
+
+        Args:
+            request: Worker browser request
+
+        Returns:
+            Worker browser response
+
+        Raises:
+            WorkerUnavailableError: Worker service not available
+            WorkerTimeoutError: Request timeout
+            WorkerBadResponseError: Invalid response format
+        """
+        if self.transport_fn:
+            # Test mode: use custom transport
+            return self.transport_fn(
+                f"{self.base_url}/v1/browser/inspect",
+                request.to_dict(),
+                self.timeout,
+            )
+
+        # Production mode: use httpx
+        return self._http_post_inspect(request)
+
+    def _http_post_inspect(
+        self,
+        request: WorkerBrowserRequest,
+    ) -> WorkerBrowserResponse:
+        """Make HTTP POST request to worker service.
+
+        Args:
+            request: Worker browser request
+
+        Returns:
+            Worker browser response
+        """
+        endpoint = f"{self.base_url}/v1/browser/inspect"
+
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.post(
+                    endpoint,
+                    json=request.to_dict(),
+                )
+
+                # Handle HTTP errors
+                if response.status_code != 200:
+                    return WorkerBrowserResponse.actual_execution_disabled(
+                        request.action,
+                        request.task_id,
+                    )
+
+                # Parse response
+                data = response.json()
+                return WorkerBrowserResponse(
+                    success=data.get("success", False),
+                    action=data.get("action", request.action),
+                    task_id=data.get("task_id", request.task_id),
+                    browser_started=data.get("browser_started", False),
+                    backend=data.get("backend", "worker"),
+                    title=data.get("title"),
+                    url=data.get("url"),
+                    status=data.get("status", "ok"),
+                    error_code=data.get("error_code"),
+                    error_message=data.get("error_message"),
+                    metadata=data.get("metadata"),
+                )
+        except httpx.TimeoutException:
+            return self._timeout_response(request)
+        except (httpx.ConnectError, httpx.RequestError):
+            return self._unavailable_response(request)
+        except (json.JSONDecodeError, ValueError):
+            return self._bad_response_error(request)
+
+    @staticmethod
+    def _timeout_response(request: WorkerBrowserRequest) -> WorkerBrowserResponse:
+        """Create timeout error response."""
+        return WorkerBrowserResponse(
+            success=False,
+            action=request.action,
+            task_id=request.task_id,
+            browser_started=False,
+            backend="worker",
+            status="error",
+            error_code="BROWSER_WORKER_TIMEOUT",
+            error_message="Browser worker service request timeout",
+        )
+
+    @staticmethod
+    def _unavailable_response(request: WorkerBrowserRequest) -> WorkerBrowserResponse:
+        """Create unavailable error response."""
+        return WorkerBrowserResponse(
+            success=False,
+            action=request.action,
+            task_id=request.task_id,
+            browser_started=False,
+            backend="worker",
+            status="error",
+            error_code="BROWSER_WORKER_UNAVAILABLE",
+            error_message="Browser worker service unavailable",
+        )
+
+    @staticmethod
+    def _bad_response_error(request: WorkerBrowserRequest) -> WorkerBrowserResponse:
+        """Create bad response error."""
+        return WorkerBrowserResponse(
+            success=False,
+            action=request.action,
+            task_id=request.task_id,
+            browser_started=False,
+            backend="worker",
+            status="error",
+            error_code="BROWSER_WORKER_BAD_RESPONSE",
+            error_message="Browser worker returned invalid response format",
+        )
+
+
 class BrowserWorkerBackend:
     """Backend that interfaces with Browser Worker."""
 
-    def __init__(self):
-        """Initialize worker backend."""
-        self.worker_url: Optional[str] = None  # Will be set when worker is deployed
+    def __init__(self, worker_client: Optional[BrowserWorkerClient] = None):
+        """Initialize worker backend.
+
+        Args:
+            worker_client: Optional custom worker client (for testing)
+        """
+        self.worker_url: Optional[str] = None  # Deprecated, use worker_client
         self.use_local_service = True  # MVP: use local service, no network
+        self.worker_client = worker_client or BrowserWorkerClient()
 
     def execute(
         self,
@@ -58,21 +214,15 @@ class BrowserWorkerBackend:
         return self._convert_to_browser_result(worker_response, task)
 
     def _call_worker_http(self, request: WorkerBrowserRequest) -> WorkerBrowserResponse:
-        """Call Browser Worker via HTTP (future stage).
-
-        This is a placeholder for BROWSER-WORKER-3+ when actual worker deployment
-        is implemented.
+        """Call Browser Worker via HTTP.
 
         Args:
             request: Worker browser request
 
-        Raises:
-            NotImplementedError: This is not yet implemented
+        Returns:
+            Worker browser response
         """
-        raise NotImplementedError(
-            "Worker HTTP client will be implemented in BROWSER-WORKER-3. "
-            "For now, use local service via use_local_service=True."
-        )
+        return self.worker_client.call_inspect(request)
 
     @staticmethod
     def _convert_to_browser_result(
