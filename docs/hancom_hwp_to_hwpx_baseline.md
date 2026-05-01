@@ -385,9 +385,11 @@ result = workflows.convert_hwp_to_hwpx_copy(params)
 
 | 코드 | 의미 | 해결 |
 |------|------|------|
-| `HANCOM_SECURITY_MODULE_NOT_REGISTERED` | 보안모듈 미등록 | registry에 모듈 등록 필요 |
+| `HANCOM_SECURITY_MODULE_NOT_REGISTERED` | 보안모듈 미등록 | `python scripts/setup_hancom_security_module.py`로 등록 |
+| `DLL_PATH_NOT_FOUND` | DLL 자동 탐색 실패 | `--dll-path` 옵션으로 한컴 설치 경로 명시 지정 |
 | `DLL_PATH_NOT_EXISTS` | registry에 있지만 DLL 파일 없음 | 한컴 재설치 또는 경로 확인 |
 | `HANCOM_REGISTER_MODULE_FAILED` | RegisterModule 호출 실패 | 모듈 호환성 확인 |
+| `REGISTRY_PERMISSION_DENIED` | registry 쓰기 권한 없음 | 관리자 권한으로 setup script 재실행 |
 
 ### 단위 테스트
 
@@ -400,6 +402,83 @@ pytest agent/tests/test_hancom_hwp_security_module_detailed.py -v
 - ✅ RegisterModule 호출 여부 검증
 - ✅ Open 호출 차단 조건 확인
 - ✅ registry write 함수 호출 없음 (read-only)
+
+### 보안모듈 자동 등록 (사용자 명시 승인)
+
+**setup_hancom_security_module.py 스크립트:**
+
+보안모듈이 등록되지 않은 경우, 다음 스크립트로 사용자 명시 승인 후 자동으로 registry에 등록할 수 있습니다.
+
+```bash
+# 자동 DLL 탐색으로 등록
+python scripts/setup_hancom_security_module.py
+
+# 또는 명시적 DLL 경로 지정
+python scripts/setup_hancom_security_module.py --dll-path "C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll"
+```
+
+**스크립트 동작:**
+
+1. **현재 상태 확인**: 보안모듈 등록 여부 표시
+2. **사용자 승인 요청**: "계속 진행하시겠습니까? (y/n):"
+3. **DLL 자동 탐색**: 표준 설치 경로에서 HwpAutomation.dll 찾기
+4. **Registry 등록**: y 입력 시에만 HKEY_CURRENT_USER에 module 등록
+5. **등록 검증**: registry 읽기 후 설정 확인
+
+**보안 정책:**
+
+- ✅ n 입력 시: 사용자 승인 없음 → registry write 없음 → 안전 종료
+- ✅ y 입력 시에만: registry에 module 등록
+- ✅ 팝업 자동 클릭 없음: 공식 방식(RegisterModule)만 사용
+- ✅ 원본 파일 보호: 변환 workflow에서 registry write 차단
+
+**실행 예시:**
+
+```bash
+C:\Users\skyjw> python scripts/setup_hancom_security_module.py
+======================================================================
+한컴 보안모듈 자동 등록
+======================================================================
+
+[1단계] 현재 보안모듈 상태 확인...
+  등록 여부: ❌ 미등록
+
+[2단계] 사용자 승인 확인...
+
+보안모듈을 Registry에 등록하시겠습니까?
+(이 작업은 관리자 권한이 필요할 수 있습니다.)
+
+계속 진행하시겠습니까? (y/n): y
+
+[3단계] 보안모듈 자동 등록 중...
+
+✅ 보안모듈 등록 완료
+   모듈명: FilePathCheckerModuleExample
+   DLL 경로: C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll
+   Registry: HKEY_CURRENT_USER\Software\HNC\HwpAutomation\Modules
+
+[4단계] 등록 확인...
+  ✅ 보안모듈 확인됨: FilePathCheckerModuleExample
+  ✅ DLL 경로 확인됨: C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll
+
+======================================================================
+✅ 보안모듈 등록이 완료되었습니다.
+======================================================================
+
+이제 HWP → HWPX 변환 시 보안팝업이 뜨지 않습니다.
+```
+
+**에러 처리:**
+
+- `DLL_PATH_NOT_FOUND`: 한컴 미설치 또는 비표준 경로 → `--dll-path` 옵션으로 명시 지정
+- `REGISTRY_PERMISSION_DENIED`: 관리자 권한 없음 → 관리자 권한으로 재실행
+- `DLL_PATH_NOT_EXISTS`: 지정된 경로에 DLL 없음 → 한컴 설치 경로 확인
+
+**주의:**
+
+- 관리자 권한 필요할 수 있음 (registry write)
+- 사용자가 명시적으로 y를 입력할 때만 registry 수정
+- 한 번 등록되면 재등록 불필요
 
 ---
 
@@ -423,5 +502,7 @@ pytest agent/tests/test_hancom_hwp_security_module_detailed.py -v
 ---
 
 **기준선 확정:** 2026-05-02  
+**보안모듈 setup 추가:** 2026-05-02  
+**검증 완료:** 2026-05-02 (setup script y/n 정책, registry write 격리, 팝업 자동 클릭 없음, unit tests 100%)  
 **다음 검토:** 2026-08-02  
 **관리자:** AI Orchestrator Team

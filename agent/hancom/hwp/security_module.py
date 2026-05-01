@@ -328,6 +328,138 @@ def register_security_module_if_available() -> Tuple[bool, Optional[str]]:
         return False, "REGISTER_FAILED"
 
 
+def setup_security_module_registry(
+    module_name: Optional[str] = None,
+    dll_path: Optional[str] = None,
+) -> dict:
+    """보안모듈을 registry에 등록한다 (사용자 명시적 승인하에).
+
+    Args:
+        module_name: 보안모듈 이름 (기본값: DEFAULT_SECURITY_MODULE_NAME)
+        dll_path: DLL 파일 경로 (자동 탐색 시도)
+
+    Returns:
+        {
+            "success": bool,
+            "module_name": str,
+            "dll_path": str | None,
+            "registry_path": str | None,
+            "error_code": str | None,
+            "message": str,
+        }
+
+    주의:
+    - 관리자 권한이 필요할 수 있음
+    - registry에 write함
+    - 사용자가 명시적으로 호출해야 함
+    """
+    if module_name is None:
+        module_name = DEFAULT_SECURITY_MODULE_NAME
+
+    result = {
+        "success": False,
+        "module_name": module_name,
+        "dll_path": None,
+        "registry_path": None,
+        "error_code": None,
+        "message": None,
+    }
+
+    try:
+        import winreg
+
+        # 1단계: DLL 경로 결정
+        if dll_path is None:
+            # 자동 탐색: 일반적인 한컴 설치 경로들
+            possible_paths = [
+                r"C:\Program Files\HNC\HOffice 2014\Bin\HwpAutomation.dll",
+                r"C:\Program Files\HNC\한글2014\Bin\HwpAutomation.dll",
+                r"C:\Program Files (x86)\HNC\HOffice 2014\Bin\HwpAutomation.dll",
+                r"C:\Program Files\HNC\한글과컴퓨터\Bin\HwpAutomation.dll",
+            ]
+
+            found_dll = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    found_dll = path
+                    logger.info(f"한컴 DLL 자동 발견: {path}")
+                    break
+
+            if not found_dll:
+                result["error_code"] = "DLL_PATH_NOT_FOUND"
+                result["message"] = (
+                    "한컴 DLL을 자동으로 찾을 수 없습니다. "
+                    "dll_path 매개변수로 경로를 직접 지정하세요."
+                )
+                logger.error(result["message"])
+                return result
+
+            dll_path = found_dll
+        else:
+            # 사용자가 지정한 경로 확인
+            if not os.path.exists(dll_path):
+                result["error_code"] = "DLL_PATH_NOT_EXISTS"
+                result["message"] = f"DLL 파일을 찾을 수 없습니다: {dll_path}"
+                logger.error(result["message"])
+                return result
+
+        result["dll_path"] = dll_path
+
+        # 2단계: Registry에 등록
+        registry_path = SECURITY_MODULE_REGISTRY_PATHS[0][0]  # 첫 번째 경로 사용
+
+        try:
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                registry_path,
+                0,
+                winreg.KEY_WRITE,  # write 권한 필요
+            )
+
+            # module_name과 DLL 경로 등록
+            winreg.SetValueEx(key, module_name, 0, winreg.REG_SZ, dll_path)
+            winreg.CloseKey(key)
+
+            result["success"] = True
+            result["registry_path"] = registry_path
+            result["message"] = (
+                f"✅ 보안모듈 등록 완료\n"
+                f"   모듈명: {module_name}\n"
+                f"   DLL 경로: {dll_path}\n"
+                f"   Registry: HKEY_CURRENT_USER\\{registry_path}"
+            )
+            logger.info(result["message"])
+
+            return result
+
+        except PermissionError:
+            result["error_code"] = "REGISTRY_PERMISSION_DENIED"
+            result["message"] = (
+                "Registry 쓰기 권한이 없습니다. "
+                "관리자 권한으로 실행하거나, "
+                "dll_path를 직접 지정해주세요."
+            )
+            logger.error(result["message"])
+            return result
+
+        except Exception as e:
+            result["error_code"] = "REGISTRY_WRITE_FAILED"
+            result["message"] = f"Registry 등록 실패: {type(e).__name__}: {e}"
+            logger.error(result["message"])
+            return result
+
+    except ImportError:
+        result["error_code"] = "WINREG_NOT_AVAILABLE"
+        result["message"] = "winreg 모듈을 사용할 수 없습니다."
+        logger.error(result["message"])
+        return result
+    except Exception as e:
+        result["error_code"] = "SETUP_FAILED"
+        result["message"] = f"설정 실패: {type(e).__name__}: {e}"
+        logger.error(result["message"])
+        return result
+
+
 def get_security_module_status() -> dict:
     """보안모듈 상태를 조회한다.
 
