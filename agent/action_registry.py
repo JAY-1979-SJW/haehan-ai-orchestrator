@@ -218,6 +218,39 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,  # 실행 중인 Excel 대상이므로 파일 경로 불필요
         requires_save_as=True,  # 복사본 저장만 허용, 원본 overwrite 금지
     ),
+    # Excel COM write 액션: 헤더명 기반 행 추가 + 복사본 저장 (원본 보호).
+    "excel.insert_row_by_header_copy": ActionMeta(
+        action="excel.insert_row_by_header_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,
+        requires_file_path=False,
+        requires_save_as=True,
+    ),
+    # Excel COM write 액션: 헤더명 기반 열 추가 + 복사본 저장 (원본 보호).
+    "excel.insert_column_by_header_copy": ActionMeta(
+        action="excel.insert_column_by_header_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,
+        requires_file_path=False,
+        requires_save_as=True,
+    ),
+    # Excel COM write 액션: 헤더명 기반 수식 입력 + 복사본 저장 (원본 보호).
+    "excel.write_formula_by_header_copy": ActionMeta(
+        action="excel.write_formula_by_header_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,
+        requires_file_path=False,
+        requires_save_as=True,
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
