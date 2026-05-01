@@ -526,6 +526,45 @@ def _run_excel_create_review_summary_sheet_copy(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_export_pdf_copy(task: dict) -> dict:
+    """Workbook 또는 Sheet를 PDF로 내보낸다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 필수 (write action, PDF 파일 생성).
+    원본 보호 (복사본 기반으로만 동작).
+
+    Required params:
+        output_path: PDF 저장 경로 (.pdf 확장자 필수)
+        approval_token: 승인 토큰
+
+    Optional params:
+        export_type: "active_sheet" (기본값), "workbook", "sheets"
+        sheet_names: export_type="sheets"일 때 내보낼 시트 이름 목록
+    """
+    output_path = task.get("output_path")
+    approval_token = task.get("approval_token")
+    export_type = task.get("export_type", "active_sheet")
+    sheet_names = task.get("sheet_names", [])
+
+    # 승인 확인
+    if not approval_token:
+        return _result(False, error="APPROVAL_REQUIRED")
+
+    if not output_path:
+        return _result(False, error="OUTPUT_PATH_REQUIRED")
+
+    out = com.export_pdf_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        export_type=export_type,
+        sheet_names=sheet_names,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_validate_data_quality(task: dict) -> dict:
     """활성 Excel의 데이터 품질을 검증한다 (read-only).
 
@@ -960,6 +999,7 @@ _DISPATCH = {
     "excel.validate_active_workbook": _run_excel_validate_active_workbook,
     "excel.validate_change_result": _run_excel_validate_change_result,
     "excel.create_review_summary_sheet_copy": _run_excel_create_review_summary_sheet_copy,
+    "excel.export_pdf_copy": _run_excel_export_pdf_copy,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
