@@ -635,8 +635,10 @@ def test_probe_active_workbook_readonly_success(monkeypatch):
     fake_wb.Sheets.Count = 3
     fake_wb.ActiveSheet = fake_sheet
     fake_sheet.Name = "Sheet1"
-    fake_wb.UsedRange = fake_used_range
-    fake_used_range.Address.return_value = "A1:K52"
+    # Note: Sheet.UsedRange (not Workbook.UsedRange)
+    fake_sheet.UsedRange = fake_used_range
+    # Note: Address is a property, not a method
+    fake_used_range.Address = "A1:K52"
     fake_rows.Count = 52
     fake_columns.Count = 11
     fake_used_range.Rows = fake_rows

@@ -521,13 +521,20 @@ def probe_active_workbook_readonly(
             wb_info["active_sheet"] = str(active_sheet.Name) if active_sheet else "(unknown)"
         except Exception:  # noqa: BLE001
             wb_info["active_sheet"] = "(unknown)"
+            active_sheet = None
 
-        # UsedRange
+        # UsedRange (Sheet.UsedRange 사용, Workbook.UsedRange는 없음)
         try:
-            used_range = wb.UsedRange
-            wb_info["used_range"] = str(used_range.Address(external=False))
-            wb_info["rows"] = used_range.Rows.Count
-            wb_info["columns"] = used_range.Columns.Count
+            if active_sheet is not None:
+                used_range = active_sheet.UsedRange
+                # Note: Address는 프로퍼티이지 메서드가 아님 (Address(external=False) 사용 불가)
+                wb_info["used_range"] = str(used_range.Address)
+                wb_info["rows"] = used_range.Rows.Count
+                wb_info["columns"] = used_range.Columns.Count
+            else:
+                wb_info["used_range"] = "(unknown)"
+                wb_info["rows"] = 0
+                wb_info["columns"] = 0
         except Exception:  # noqa: BLE001
             wb_info["used_range"] = "(unknown)"
             wb_info["rows"] = 0
