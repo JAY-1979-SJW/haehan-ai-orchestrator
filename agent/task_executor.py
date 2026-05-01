@@ -379,6 +379,29 @@ def _run_excel_analyze_active_sheet_structure(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_plan_changes(task: dict) -> dict:
+    """변경 계획을 수립한다 (dry-run, 절대 실제 수정 없음).
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 불필요 (read-only planning).
+
+    Required params:
+        operations: [{"type": str, "sheet": str, "params": dict}, ...]
+
+    Optional params: 없음
+    """
+    operations = task.get("operations")
+
+    if not isinstance(operations, list):
+        return _result(False, error="INVALID_OPERATIONS_FORMAT")
+
+    out = com.plan_changes(operations=operations)
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 def _run_excel_validate_data_quality(task: dict) -> dict:
     """활성 Excel의 데이터 품질을 검증한다 (read-only).
 
@@ -808,6 +831,7 @@ _DISPATCH = {
     "excel.write_formula_by_header_copy": _run_excel_write_formula_by_header_copy,
     "excel.analyze_workbook": _run_excel_analyze_workbook,
     "excel.analyze_active_sheet_structure": _run_excel_analyze_active_sheet_structure,
+    "excel.plan_changes": _run_excel_plan_changes,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,

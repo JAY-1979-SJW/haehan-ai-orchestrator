@@ -307,6 +307,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,
         requires_save_as=False,
     ),
+    # Excel COM 계획 액션: 변경 계획 수립 (EXCEL-PC-4B 고도화).
+    # 복합 작업 계획 dry-run, 승인 필요도 분석, 저장 모드 결정 (read-only, safe).
+    "excel.plan_changes": ActionMeta(
+        action="excel.plan_changes",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
