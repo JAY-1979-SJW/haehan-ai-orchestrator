@@ -25,6 +25,8 @@ from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
 
+from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+
 
 # ── 액션 정의 ────────────────────────────────────────────────────────────
 
@@ -55,29 +57,6 @@ _SERVER_AUTO_COMPLETE: frozenset[str] = frozenset({
 
 # 허용된 PC 측 앱 (실제 실행은 browser/open_url 만 가능)
 ALLOWED_APPS: list[str] = ["browser", "excel", "hwp", "cad"]
-
-# Stage 2: WebSocket 으로 PC 에이전트에 위임해 자동 실행 허용되는 액션.
-# 이 집합에 포함된 액션만 delivered → running → completed 흐름을 탄다.
-#
-# Stage 3: capture_screenshot 포함 — 단, high risk 이므로 반드시 승인 후(mark_approved)
-# 에만 waiting_approval → queued 로 전환되어 이 경로로 전달된다. 미승인 상태는
-# list_pending_for_agent() 에서 제외되어 WS 에 push 되지 않는다.
-#
-# BROWSER-4E: browser.* actions 추가 — 승인 후 배포됨.
-AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
-    "ping", "system_info", "list_allowed_apps",
-    "open_url", "list_files_readonly",
-    "capture_screenshot",
-    "ws_noop",
-    "open_url_execute",
-    # browser automation actions (BROWSER-4E)
-    "browser.inspect",
-    "browser.plan_click",
-    "browser.plan_type",
-    "browser.plan_submit",
-    "browser.execute_click",
-    "browser.execute_type",
-})
 
 
 # params / result 에서 절대 저장·노출 금지인 키

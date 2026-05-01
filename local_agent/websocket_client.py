@@ -28,27 +28,27 @@ from . import __version__, config
 from .actions import execute_action, FORBIDDEN_ACTIONS
 from .audit import log_local_event
 
+try:
+    from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT as _AUTO_EXECUTE_VIA_AGENT
+except ImportError:
+    # Fallback for environments where ai_orchestrator cannot be imported.
+    # This maintains consistency with ai_orchestrator.local_agent_actions.
+    _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
+        "ping", "system_info", "list_allowed_apps",
+        "open_url", "list_files_readonly",
+        "capture_screenshot",
+        "ws_noop",
+        "open_url_execute",
+        # browser automation actions (BROWSER-4E)
+        "browser.inspect",
+        "browser.plan_click",
+        "browser.plan_type",
+        "browser.plan_submit",
+        "browser.execute_click",
+        "browser.execute_type",
+    })
+
 logger = logging.getLogger(__name__)
-
-
-class WebSocketDisabled(RuntimeError):
-    """config.WEBSOCKET_ENABLED=False 일 때 호출 방지."""
-
-
-class WebSocketDependencyMissing(RuntimeError):
-    """`websockets` 패키지가 설치되지 않음. `pip install websockets` 안내."""
-
-
-# PC 로 위임되어 자동 실행 가능한 액션 — 서버 registry 와 동일 목록.
-# Stage 3: capture_screenshot 포함. 단, high risk 이므로 task.approved=True 일
-# 때만 실제 실행되고, 미승인 상태는 NOT_IMPLEMENTED_STAGE2 로 거절된다.
-_AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
-    "ping", "system_info", "list_allowed_apps",
-    "open_url", "list_files_readonly",
-    "capture_screenshot",
-    "ws_noop",
-    "open_url_execute",
-})
 
 # 승인 없이도 high risk 경로로 실행 가능한 액션 — 현재 없음.
 # 승인 후(approved=True) 에만 허용되는 액션 목록.
