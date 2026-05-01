@@ -379,6 +379,39 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # 원본 보호 (PDF는 복사본 기반)
     ),
+    # 업무팩: 건설/소방 Excel 자동화 (EXCEL-PC-7A 고도화).
+    # 내역서/견적서/정산서 등의 자동 검토 및 검증.
+    # DB 연결 없이 파일 내부 검토 먼저 구현 (추후 DB 연결 예정).
+    "excel.pack.review_estimate_copy": ActionMeta(
+        action="excel.pack.review_estimate_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # 검토 시트 추가 = write 작업
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+    ),
+    "excel.pack.review_settlement_copy": ActionMeta(
+        action="excel.pack.review_settlement_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # 검토 시트 추가 = write 작업
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+    ),
+    "excel.pack.check_material_prices_copy": ActionMeta(
+        action="excel.pack.check_material_prices_copy",
+        category=CATEGORY_EXCEL_COM,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,  # 검증 정보 시트 추가 = write 작업
+        requires_file_path=False,  # GetActiveObject 기반
+        requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+    ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
     # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).

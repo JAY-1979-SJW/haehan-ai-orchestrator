@@ -654,6 +654,120 @@ def _run_excel_write_formula_by_header_copy(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_pack_review_estimate_copy(task: dict) -> dict:
+    """건설 내역서를 자동 검토하고 검토결과 시트를 생성한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 필수 (write action, 시트 추가).
+    SaveCopyAs로만 저장 (원본 저장 금지).
+
+    Required params:
+        output_path: 복사본 저장 경로
+        approval_token: 승인 토큰
+
+    Optional params:
+        header_row: 헤더 행 번호 (기본값: 자동 감지)
+    """
+    output_path = task.get("output_path")
+    approval_token = task.get("approval_token")
+    header_row = task.get("header_row")
+
+    if not approval_token:
+        return _result(False, error="APPROVAL_REQUIRED")
+
+    if not output_path:
+        return _result(False, error="OUTPUT_PATH_REQUIRED")
+
+    out = com.review_estimate_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        header_row=header_row,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_pack_review_settlement_copy(task: dict) -> dict:
+    """건설 정산서를 자동 검토하고 검토결과 시트를 생성한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 필수 (write action, 시트 추가).
+    SaveCopyAs로만 저장 (원본 저장 금지).
+
+    Required params:
+        output_path: 복사본 저장 경로
+        approval_token: 승인 토큰
+
+    Optional params:
+        header_row: 헤더 행 번호 (기본값: 자동 감지)
+        difference_threshold: 차이 임계값 (기본값: 0.05 = 5%)
+    """
+    output_path = task.get("output_path")
+    approval_token = task.get("approval_token")
+    header_row = task.get("header_row")
+    difference_threshold = task.get("difference_threshold", 0.05)
+
+    if not approval_token:
+        return _result(False, error="APPROVAL_REQUIRED")
+
+    if not output_path:
+        return _result(False, error="OUTPUT_PATH_REQUIRED")
+
+    out = com.review_settlement_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        header_row=header_row,
+        difference_threshold=difference_threshold,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_pack_check_material_prices_copy(task: dict) -> dict:
+    """자재 단가를 검증하고 단가 분석 시트를 생성한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel만 대상.
+    file_path 불필요, 승인 필수 (write action, 시트 추가).
+    SaveCopyAs로만 저장 (원본 저장 금지).
+
+    Required params:
+        output_path: 복사본 저장 경로
+        approval_token: 승인 토큰
+
+    Optional params:
+        material_col: 자재명 열 번호 (기본값: 자동 감지)
+        unit_price_col: 단가 열 번호 (기본값: 자동 감지)
+        outlier_threshold: 이상치 판정 표준편차 (기본값: 2.0)
+    """
+    output_path = task.get("output_path")
+    approval_token = task.get("approval_token")
+    material_col = task.get("material_col")
+    unit_price_col = task.get("unit_price_col")
+    outlier_threshold = task.get("outlier_threshold", 2.0)
+
+    if not approval_token:
+        return _result(False, error="APPROVAL_REQUIRED")
+
+    if not output_path:
+        return _result(False, error="OUTPUT_PATH_REQUIRED")
+
+    out = com.check_material_prices_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        material_col=material_col,
+        unit_price_col=unit_price_col,
+        outlier_threshold=outlier_threshold,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 # ──────────────────────────────────────────────────────────────────
 # CAD COM 핸들러
 #
@@ -1000,6 +1114,9 @@ _DISPATCH = {
     "excel.validate_change_result": _run_excel_validate_change_result,
     "excel.create_review_summary_sheet_copy": _run_excel_create_review_summary_sheet_copy,
     "excel.export_pdf_copy": _run_excel_export_pdf_copy,
+    "excel.pack.review_estimate_copy": _run_excel_pack_review_estimate_copy,
+    "excel.pack.review_settlement_copy": _run_excel_pack_review_settlement_copy,
+    "excel.pack.check_material_prices_copy": _run_excel_pack_check_material_prices_copy,
     "excel.validate_data_quality": _run_excel_validate_data_quality,
     "excel.validate_formulas": _run_excel_validate_formulas,
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,

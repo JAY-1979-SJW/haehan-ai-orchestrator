@@ -898,6 +898,57 @@ def export_pdf_copy(
     )
 
 
+def review_estimate_copy(
+    output_path: str,
+    approval_token: str,
+    header_row: int = None,
+) -> dict:
+    """Thin wrapper for agent.excel.packs.estimate_workflows.review_estimate_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.packs.estimate_workflows.review_estimate_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        header_row=header_row,
+    )
+
+
+def review_settlement_copy(
+    output_path: str,
+    approval_token: str,
+    header_row: int = None,
+    difference_threshold: float = 0.05,
+) -> dict:
+    """Thin wrapper for agent.excel.packs.settlement_workflows.review_settlement_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.packs.settlement_workflows.review_settlement_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        header_row=header_row,
+        difference_threshold=difference_threshold,
+    )
+
+
+def check_material_prices_copy(
+    output_path: str,
+    approval_token: str,
+    material_col: int = None,
+    unit_price_col: int = None,
+    outlier_threshold: float = 2.0,
+) -> dict:
+    """Thin wrapper for agent.excel.packs.price_check_workflows.check_material_prices_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.packs.price_check_workflows.check_material_prices_copy(
+        output_path=output_path,
+        approval_token=approval_token,
+        material_col=material_col,
+        unit_price_col=unit_price_col,
+        outlier_threshold=outlier_threshold,
+    )
+
+
 def validate_data_quality() -> dict:
     """Thin wrapper for agent.excel.analysis_workflows.validate_data_quality."""
     from agent import excel as excel_mod
@@ -947,6 +998,9 @@ __all__ = [
     "validate_change_result",
     "create_review_summary_sheet_copy",
     "export_pdf_copy",
+    "review_estimate_copy",
+    "review_settlement_copy",
+    "check_material_prices_copy",
     "validate_data_quality",
     "validate_formulas",
     "generate_analysis_report",
