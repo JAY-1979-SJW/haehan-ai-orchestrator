@@ -173,7 +173,9 @@ class BrowserWorkerBackend:
             worker_client: Optional custom worker client (for testing)
         """
         self.worker_url: Optional[str] = None  # Deprecated, use worker_client
-        self.use_local_service = True  # MVP: use local service, no network
+        # MVP: default to local service, allow HTTP mode via env var BROWSER_WORKER_USE_HTTP
+        use_http = os.getenv("BROWSER_WORKER_USE_HTTP", "false").lower() == "true"
+        self.use_local_service = not use_http
         self.worker_client = worker_client or BrowserWorkerClient()
 
     def execute(
