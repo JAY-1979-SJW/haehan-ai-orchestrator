@@ -115,7 +115,7 @@ from .print_area_manager import (
     set_margins,
 )
 from .pdf_workflows import export_pdf_copy as export_pdf_copy_workflow
-from . import packs
+from . import packs, integrations
 
 __all__ = [
     # 기본 모듈
