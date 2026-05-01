@@ -61,6 +61,25 @@ def stub_com(monkeypatch):
         def quit_excel(self, app):
             calls.append(("quit_excel", (), {}))
 
+        def probe_active_workbook_readonly(self):
+            calls.append(("probe_active_workbook_readonly", (), {}))
+            return {
+                "success": True,
+                "excel_running": True,
+                "error_code": None,
+                "workbook_count": 1,
+                "active_workbook": {
+                    "name": "test.xlsx",
+                    "sheet_count": 1,
+                    "active_sheet": "Sheet1",
+                    "used_range": "A1:B2",
+                    "rows": 2,
+                    "columns": 2,
+                },
+                "sample_cells": [],
+                "read_only": True,
+            }
+
     stub = _Stub()
     monkeypatch.setattr(te, "com", stub)
     return stub, calls
@@ -97,6 +116,7 @@ def test_supported_actions_list():
     expected = {
         "excel.run_poc", "excel.read_cell",
         "excel.write_cell", "excel.save_as",
+        "excel.probe_active_workbook",
         "cad.health", "cad.open_info", "cad.add_text_save_as",
     } | set(_cad_api_names())
     assert set(te.supported_actions()) == expected
@@ -288,6 +308,60 @@ def test_save_as_success(stub_com):
         "open_excel_app", "open_workbook", "save_workbook_as",
         "close_workbook", "quit_excel",
     ]
+
+
+# ──────────────────────────────────────────────────────────────────
+# excel.probe_active_workbook (read-only, no file_path required)
+# ──────────────────────────────────────────────────────────────────
+def test_probe_active_workbook_success(stub_com):
+    from agent import task_executor as te
+    stub, calls = stub_com
+    out = te.execute_task({"action": "excel.probe_active_workbook"})
+    assert out["ok"] is True
+    assert out["data"]["excel_running"] is True
+    assert out["data"]["active_workbook"]["name"] == "test.xlsx"
+    assert out["error"] is None
+    # Verify handler called probe_active_workbook_readonly
+    names = [c[0] for c in calls]
+    assert "probe_active_workbook_readonly" in names
+
+
+def test_probe_active_workbook_no_excel_running(monkeypatch):
+    from agent import task_executor as te
+    from agent import errors as _err
+
+    calls = []
+
+    class _Stub:
+        def probe_active_workbook_readonly(self):
+            calls.append("probe_active_workbook_readonly")
+            return {
+                "success": False,
+                "excel_running": False,
+                "error_code": _err.EXCEL_APP_NOT_FOUND,
+                "workbook_count": None,
+                "active_workbook": None,
+                "sample_cells": [],
+                "read_only": True,
+            }
+
+    monkeypatch.setattr(te, "com", _Stub())
+    out = te.execute_task({"action": "excel.probe_active_workbook"})
+    assert out["ok"] is False
+    assert out["error"] == _err.EXCEL_APP_NOT_FOUND
+    assert out["data"]["excel_running"] is False
+
+
+def test_probe_active_workbook_no_file_path_required(stub_com):
+    """excel.probe_active_workbook does not require file_path field."""
+    from agent import task_executor as te
+    stub, calls = stub_com
+    # Should work without file_path
+    out = te.execute_task({
+        "action": "excel.probe_active_workbook",
+        # no file_path
+    })
+    assert out["ok"] is True
 
 
 # ──────────────────────────────────────────────────────────────────

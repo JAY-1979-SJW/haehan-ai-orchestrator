@@ -205,6 +205,19 @@ def _run_save_as(task: dict) -> dict:
         _close_session(app, wb)
 
 
+def _run_excel_probe_active_workbook(task: dict) -> dict:
+    """실행 중인 Excel 의 활성 워크북 정보를 read-only 로 조회.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel 만 대상.
+    file_path 불필요. Save/Close/Quit 호출 없음.
+    """
+    out = com.probe_active_workbook_readonly()
+    # connector 반환 dict 에서 success/error 를 분리하고 나머지는 data 로 노출.
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error_code")}
+    return _result(ok, data=data, error=out.get("error_code"))
+
+
 # ──────────────────────────────────────────────────────────────────
 # CAD COM 핸들러
 #
@@ -538,6 +551,7 @@ _DISPATCH = {
     "excel.read_cell": _run_read_cell,
     "excel.write_cell": _run_write_cell,
     "excel.save_as": _run_save_as,
+    "excel.probe_active_workbook": _run_excel_probe_active_workbook,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,
