@@ -113,12 +113,33 @@ def test_missing_action():
 def test_supported_actions_list():
     from agent import task_executor as te
     from agent.cad_api_spec import action_names as _cad_api_names
-    expected = {
-        "excel.run_poc", "excel.read_cell",
-        "excel.write_cell", "excel.save_as",
+
+    # Excel 고도화 기준선 (EXCEL-PC stages 1-8B)
+    excel_actions = {
+        "excel.run_poc", "excel.read_cell", "excel.write_cell", "excel.save_as",
         "excel.probe_active_workbook",
-        "cad.health", "cad.open_info", "cad.add_text_save_as",
-    } | set(_cad_api_names())
+        # Stage 1-2: 기본 작업
+        "excel.analyze_workbook", "excel.analyze_active_sheet_structure",
+        # Stage 3: 변경 계획
+        "excel.plan_changes", "excel.apply_change_plan_copy",
+        # Stage 2-4: 기본 워크플로우
+        "excel.update_cell_by_header_copy", "excel.insert_row_by_header_copy",
+        "excel.insert_column_by_header_copy", "excel.write_formula_by_header_copy",
+        # Stage 4: 검증
+        "excel.validate_active_workbook", "excel.validate_change_result",
+        "excel.validate_data_quality", "excel.validate_formulas",
+        # Stage 5: 보고서
+        "excel.create_review_summary_sheet_copy",
+        # Stage 6: PDF
+        "excel.export_pdf_copy",
+        # Stage 7: 팩
+        "excel.pack.review_estimate_copy", "excel.pack.review_settlement_copy",
+        "excel.pack.check_material_prices_copy",
+        # Stage 8: 분석
+        "excel.generate_analysis_report",
+    }
+
+    expected = excel_actions | {"cad.health", "cad.open_info", "cad.add_text_save_as"} | set(_cad_api_names())
     assert set(te.supported_actions()) == expected
 
 
@@ -243,12 +264,39 @@ def test_read_cell_open_workbook_failure(monkeypatch):
 # ──────────────────────────────────────────────────────────────────
 # excel.write_cell
 # ──────────────────────────────────────────────────────────────────
-def test_write_cell_with_save_as(stub_com):
+def test_write_cell_requires_approval(stub_com):
+    from agent import task_executor as te
+    out = te.execute_task({
+        "action": "excel.write_cell",
+        "file_path": r"C:\tmp\s.xlsx",
+        "save_as": r"C:\tmp\o.xlsx",
+        "cell_ref": "B2",
+        "value": "SRV_OK",
+    })
+    assert out["ok"] is False
+    assert "approval" in out["error"].lower()
+
+
+def test_write_cell_requires_save_as(stub_com):
+    from agent import task_executor as te
+    out = te.execute_task({
+        "action": "excel.write_cell",
+        "file_path": r"C:\tmp\s.xlsx",
+        "approval_token": "test_token",
+        "cell_ref": "B2",
+        "value": 1,
+    })
+    assert out["ok"] is False
+    assert out["error"] == "save_as_required"
+
+
+def test_write_cell_with_approval_and_save_as(stub_com):
     from agent import task_executor as te
     stub, calls = stub_com
     out = te.execute_task({
         "action": "excel.write_cell",
         "file_path": r"C:\tmp\s.xlsx",
+        "approval_token": "test_token",
         "save_as": r"C:\tmp\o.xlsx",
         "cell_ref": "B2",
         "value": "SRV_OK",
@@ -261,33 +309,29 @@ def test_write_cell_with_save_as(stub_com):
         "open_excel_app", "open_workbook", "write_cell",
         "save_workbook_as", "close_workbook", "quit_excel",
     ]
-    # read_only=False 로 열어야 수정 가능
     assert calls[1][2]["read_only"] is False
-
-
-def test_write_cell_without_save_as_uses_plain_save(stub_com):
-    from agent import task_executor as te
-    stub, calls = stub_com
-    out = te.execute_task({
-        "action": "excel.write_cell",
-        "file_path": r"C:\tmp\s.xlsx",
-        "cell_ref": "B2",
-        "value": 1,
-    })
-    assert out["ok"] is True
-    names = [c[0] for c in calls]
-    assert "save_workbook" in names
-    assert "save_workbook_as" not in names
 
 
 # ──────────────────────────────────────────────────────────────────
 # excel.save_as
 # ──────────────────────────────────────────────────────────────────
+def test_save_as_requires_approval(stub_com):
+    from agent import task_executor as te
+    out = te.execute_task({
+        "action": "excel.save_as",
+        "file_path": r"C:\tmp\s.xlsx",
+        "save_as": r"C:\tmp\o.xlsx",
+    })
+    assert out["ok"] is False
+    assert "approval" in out["error"].lower()
+
+
 def test_save_as_requires_output(stub_com):
     from agent import task_executor as te
     out = te.execute_task({
         "action": "excel.save_as",
         "file_path": r"C:\tmp\s.xlsx",
+        "approval_token": "test_token",
     })
     assert out["ok"] is False
     assert out["error"] == "save_as_required"
@@ -299,6 +343,7 @@ def test_save_as_success(stub_com):
     out = te.execute_task({
         "action": "excel.save_as",
         "file_path": r"C:\tmp\s.xlsx",
+        "approval_token": "test_token",
         "save_as": r"C:\tmp\o.xlsx",
     })
     assert out["ok"] is True

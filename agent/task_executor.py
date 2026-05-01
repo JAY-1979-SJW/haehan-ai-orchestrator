@@ -148,13 +148,21 @@ def _run_read_cell(task: dict) -> dict:
 
 
 def _run_write_cell(task: dict) -> dict:
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
     file_path = task.get("file_path", "")
     if not file_path:
         return _result(False, error=FILE_PATH_REQUIRED)
+
+    save_as = task.get("save_as") or None
+    if not save_as:
+        return _result(False, error="save_as_required")
+
     sheet = task.get("sheet_name", "Sheet1") or "Sheet1"
     cell_ref = task.get("cell_ref", "A1") or "A1"
     value = task.get("value")
-    save_as = task.get("save_as") or None
     visible = _bool(task.get("visible"))
 
     app, wb, err = _open_session(file_path, visible=visible, read_only=False)
@@ -165,11 +173,7 @@ def _run_write_cell(task: dict) -> dict:
         err = com.write_cell(wb, sheet, cell_ref, value)
         if err:
             return _result(False, data={"cell_ref": cell_ref}, error=err)
-        # 기본 정책: save_as 가 있으면 다른 이름 저장, 없으면 원본 Save.
-        if save_as:
-            err = com.save_workbook_as(wb, save_as)
-        else:
-            err = com.save_workbook(wb)
+        err = com.save_workbook_as(wb, save_as)
         if err:
             return _result(False, data={
                 "cell_ref": cell_ref, "written_value": value,
@@ -184,6 +188,10 @@ def _run_write_cell(task: dict) -> dict:
 
 
 def _run_save_as(task: dict) -> dict:
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
     file_path = task.get("file_path", "")
     save_as = task.get("save_as") or None
     if not file_path:
