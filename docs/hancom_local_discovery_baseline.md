@@ -2,7 +2,13 @@
 
 **Date:** 2026-05-02  
 **Status:** Read-only 진단 구현 완료  
-**Testing:** 23개 테스트 모두 통과
+**Current PC Status:** `HANCOM_SECURITY_SETUP_REQUIRED` (Exit Code: 1)  
+**Current PC Details:**
+- Hancom COM: ✓ Detected (HWPFrame.HwpObject)
+- HwpAutomation.dll: ✗ Not Found
+- Security Module: ✗ Not Registered
+- Action Required: `python scripts/setup_hancom_security_module.py --dll-path "[경로]"`
+**Testing:** 23개 discovery + 12개 DLL resolver = 35개 테스트 모두 통과
 
 ---
 
@@ -181,14 +187,43 @@ python scripts/diagnose_hancom_installation.py
 installed = registry_ok AND (com_ok OR install_ok)
 ```
 
-- **Fully Installed**: installed=True + security_module.registered=True
-  - 권장: 바로 HWP 변환 가능
-  
-- **Partially Installed**: installed=True + security_module.registered=False
-  - 권장: `python scripts/setup_hancom_security_module.py` 실행
-  
-- **Not Installed**: installed=False
-  - 권장: https://developers.hancom.com/ 에서 한컴 설치
+| 상태 | 판정식 | 설명 | Exit Code | 권장사항 |
+|------|--------|------|-----------|----------|
+| **HANCOM_FULLY_INSTALLED** | installed=True + security_module.registered=True | 한컴 자동화 완전 설치 + 보안모듈 등록 | 0 | HWP→HWPX 변환 가능 |
+| **HANCOM_SECURITY_SETUP_REQUIRED** | installed=True + security_module.registered=False | 한컴 자동화 COM 감지 + 보안모듈 미등록 | 1 | `python scripts/setup_hancom_security_module.py` 실행 |
+| **HANCOM_INSTALLATION_REQUIRED** | installed=False | 한컴 자동화 미설치 | 2 | https://developers.hancom.com/ 에서 한컴 설치 |
+
+**현재 PC 상태 (2026-05-02):**
+```
+Status:              HANCOM_SECURITY_SETUP_REQUIRED
+Registry Status:     ✓ HWPFrame.HwpObject 클래스 등록
+COM Status:          ✓ win32com 가용, HWPFrame.HwpObject v1/v2 감지
+DLL Status:          ✗ HwpAutomation.dll 미발견
+Security Module:     ✗ 보안모듈 미등록
+Summary:             Registry ✓ | COM ✓
+Diagnostics Result:  한컴 자동화 COM은 감지되었으나 보안모듈 등록이 필요
+Exit Code:           1
+Next Action:         python scripts/setup_hancom_security_module.py --dll-path "[경로]"
+```
+
+**상태별 설명:**
+
+- **HANCOM_FULLY_INSTALLED** (Exit Code: 0)
+  - ✓ Registry, COM, DLL, 보안모듈 모두 준비됨
+  - ✓ HWP 파일을 HWPX로 변환 가능
+  - ✓ RegisterModule을 통한 보안 팝업 제거 됨
+
+- **HANCOM_SECURITY_SETUP_REQUIRED** (Exit Code: 1) ← 현재 상태
+  - ✓ 한컴 자동화 COM 클래스 등록됨 (HWPFrame.HwpObject)
+  - ✓ win32com 모듈 가용
+  - ✗ HwpAutomation.dll 미발견 또는 보안모듈 미등록
+  - 📌 행동 필요: `python scripts/setup_hancom_security_module.py` 실행
+  - 옵션: `--dll-path "경로"` 로 DLL 경로 명시 지정
+
+- **HANCOM_INSTALLATION_REQUIRED** (Exit Code: 2)
+  - ✗ 한컴 자동화 COM 클래스 미등록
+  - ✗ 한컴 미설치 또는 COM 등록 실패
+  - 📌 행동 필요: https://developers.hancom.com/ 에서 한컴 설치
 
 ---
 
@@ -264,6 +299,25 @@ installed = registry_ok AND (com_ok OR install_ok)
 
 ---
 
+## 현재 PC 기준 상태 기록
+
 **기준선 확정:** 2026-05-02  
+**현재 상태 기록:** 2026-05-02
+
+| 항목 | 상태 | 설명 |
+|------|------|------|
+| **진단 상태** | HANCOM_SECURITY_SETUP_REQUIRED | 한컴 자동화 COM은 감지됨, 보안모듈 등록 필요 |
+| **Registry** | ✓ Detected | HWPFrame.HwpObject 클래스 등록 |
+| **COM** | ✓ Detected | win32com 가용, HWPFrame.HwpObject v1/v2 감지 |
+| **DLL** | ✗ Not Found | HwpAutomation.dll 미발견 |
+| **Security Module** | ✗ Not Registered | 보안모듈 미등록 |
+| **Exit Code** | 1 | 한컴 설정 필요 |
+| **다음 단계** | `python scripts/setup_hancom_security_module.py --dll-path "[경로]"` | DLL 경로 명시 지정 후 실행 |
+
+**참고:**
+- "한컴 미설치" ❌ → "한컴 자동화 COM은 감지되었으나 보안모듈 등록이 필요" ✅
+- "팝업 없는 변환 완료" ❌ → "보안모듈 등록 후 RegisterModule을 통해 팝업 제거 가능" ✅
+- "완전 변환 가능" ❌ → "보안모듈 등록 시 HWP→HWPX 변환 가능" ✅
+
 **다음 검토:** 2026-08-02  
 **관리자:** AI Orchestrator Team
