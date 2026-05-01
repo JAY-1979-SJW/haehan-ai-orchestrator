@@ -2,6 +2,11 @@
 
 지금 단계에서는 구조만 추가하고, 라우터에는 적용하지 않는다.
 AUTH_ENABLED=False 일 때는 무조건 dummy owner 를 반환한다.
+
+TENANT-3: Minimal organization scope context support.
+- get_current_user 반환값에 organization_ids/active_organization_id optional 추가
+- build_tenant_context() helper 추가 (contract 기반)
+- Backward compatible: 기존 actor/role 형식 유지
 """
 from __future__ import annotations
 
@@ -18,7 +23,7 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
-_DUMMY_USER = {"actor": "system", "role": "owner"}
+_DUMMY_USER = {"actor": "system", "role": "owner", "organization_ids": ["default-org"], "active_organization_id": "default-org"}
 
 _security = HTTPBasic(auto_error=False)
 
@@ -120,3 +125,95 @@ def require_role(*roles: str):
         return user
 
     return _dep
+
+
+# ============================================================================
+# TENANT-3: Minimal Organization Scope Context
+# ============================================================================
+
+def build_tenant_context(user: dict) -> dict:
+    """Build tenant context from auth user dict.
+
+    TENANT-3: Minimal organization scope context.
+    Backward compatible: returns original user dict + org fields.
+
+    Migration bridge:
+    - If organization_ids missing, use ["default-org"] temporary fallback
+    - If active_organization_id missing, use first organization_id
+    - This fallback is temporary until full tenant DB schema
+
+    Args:
+        user: dict from get_current_user() with keys: actor, role
+
+    Returns:
+        dict with tenant context fields added:
+        - actor_user_id: same as actor (temp mapping)
+        - organization_ids: ["default-org"] or from user record
+        - active_organization_id: first org or from user record
+    """
+    if not user:
+        user = dict(_DUMMY_USER)
+
+    # Ensure tenant fields exist (temporary migration bridge)
+    if "organization_ids" not in user:
+        user["organization_ids"] = ["default-org"]
+    if "active_organization_id" not in user:
+        user["active_organization_id"] = user.get("organization_ids", ["default-org"])[0]
+
+    # Map actor → actor_user_id for contract compatibility
+    if "actor_user_id" not in user:
+        user["actor_user_id"] = user.get("actor", "unknown")
+
+    return user
+
+
+def get_tenant_context(user: dict) -> dict:
+    """Get tenant context (alias for build_tenant_context)."""
+    return build_tenant_context(user)
+
+
+def require_active_organization(user: dict) -> str:
+    """Require active organization in context.
+
+    Args:
+        user: auth context dict
+
+    Returns:
+        active_organization_id
+
+    Raises:
+        ValueError: if active_organization_id missing or invalid
+    """
+    user = build_tenant_context(user)
+
+    active_org = user.get("active_organization_id")
+    if not active_org:
+        raise ValueError("active_organization_id required in auth context")
+
+    org_ids = user.get("organization_ids", [])
+    if active_org not in org_ids:
+        raise ValueError(
+            f"active_organization_id {active_org} not in organization_ids {org_ids}"
+        )
+
+    return active_org
+
+
+def require_membership(user: dict, organization_id: str) -> None:
+    """Require user membership in organization.
+
+    Args:
+        user: auth context dict
+        organization_id: target organization
+
+    Raises:
+        HTTPException: 403 if user not member of organization
+    """
+    user = build_tenant_context(user)
+
+    org_ids = user.get("organization_ids", [])
+    if organization_id not in org_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"No access to organization {organization_id}",
+        )

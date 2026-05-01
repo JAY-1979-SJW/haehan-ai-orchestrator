@@ -115,6 +115,8 @@ class AgentHelloMessage:
       - mode: operational mode (read_only only)
       - audit_enabled: whether audit logging is enabled
       - approval_required: whether approval is required for high-risk tasks
+      - organization_id: (TENANT-3) agent organization scope
+      - registration_user_id: (TENANT-3) optional, agent registration user
       - timestamp: UTC ISO 8601 timestamp
     """
     message_type: str = HandshakeMessageType.AGENT_HELLO.value
@@ -129,6 +131,8 @@ class AgentHelloMessage:
     mode: str = HandshakeMode.READ_ONLY.value
     audit_enabled: bool = True
     approval_required: bool = True
+    organization_id: str = ""  # TENANT-3: organization scope
+    registration_user_id: Optional[str] = None  # TENANT-3: optional registration user
     timestamp: str = field(default_factory=_iso8601_now)
 
     def to_dict(self) -> dict:
@@ -158,6 +162,8 @@ class ServerPolicyMessage:
       - allow_otp_input: whether to allow OTP input (always False)
       - require_approval: whether approval is required (always True)
       - heartbeat_interval_sec: recommended heartbeat interval in seconds
+      - organization_id: (TENANT-3) agent organization scope (echo from agent.hello)
+      - agent_id: (TENANT-3) agent identifier (echo from agent.hello)
       - timestamp: UTC ISO 8601 timestamp
     """
     message_type: str = HandshakeMessageType.SERVER_POLICY.value
@@ -168,6 +174,8 @@ class ServerPolicyMessage:
     allow_otp_input: bool = False
     require_approval: bool = True
     heartbeat_interval_sec: int = 30
+    organization_id: str = ""  # TENANT-3: echo from agent.hello
+    agent_id: str = ""  # TENANT-3: echo from agent.hello
     timestamp: str = field(default_factory=_iso8601_now)
 
     def to_dict(self) -> dict:
@@ -220,6 +228,8 @@ class AgentHeartbeatMessage:
 def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
     """Validate agent.hello message.
 
+    TENANT-3: Validate organization_id and registration_user_id fields.
+
     Returns:
       (is_valid, error_message)
     """
@@ -252,6 +262,16 @@ def validate_agent_hello_message(msg: dict) -> tuple[bool, Optional[str]]:
     capabilities = msg.get("capabilities") or []
     if not isinstance(capabilities, list):
         return False, "capabilities must be list"
+
+    # TENANT-3: Check organization_id (recommended but optional for backward compatibility)
+    org_id = msg.get("organization_id", "")
+    if org_id and not isinstance(org_id, str):
+        return False, "organization_id must be string"
+
+    # TENANT-3: Check registration_user_id (optional)
+    reg_user_id = msg.get("registration_user_id")
+    if reg_user_id and not isinstance(reg_user_id, str):
+        return False, "registration_user_id must be string"
 
     # Check that no raw hostname/user/IP is present
     msg_str = json.dumps(msg).lower()
