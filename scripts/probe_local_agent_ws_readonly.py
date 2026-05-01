@@ -87,24 +87,26 @@ async def run_probe(
             await ws.send(json.dumps(auth_msg))
 
             # Wait for auth response or task (with timeout)
+            async def recv_loop():
+                while True:
+                    msg_text = await ws.recv()
+                    msg = json.loads(msg_text)
+                    msg_type = msg.get("type", "")
+
+                    if msg_type == "auth_ok":
+                        state.auth_accepted = True
+                    elif msg_type in ("heartbeat_ack", "idle"):
+                        state.heartbeat_seen = True
+                    elif msg_type == "task":
+                        # Task received: exit immediately (no execution)
+                        state.task_received = True
+                        state.closed = True
+                        return 4
+                    # Ignore other message types
+
             try:
-                async with asyncio.timeout(timeout_sec):
-                    while True:
-                        msg_text = await ws.recv()
-                        msg = json.loads(msg_text)
-                        msg_type = msg.get("type", "")
-
-                        if msg_type == "auth_ok":
-                            state.auth_accepted = True
-                        elif msg_type in ("heartbeat_ack", "idle"):
-                            state.heartbeat_seen = True
-                        elif msg_type == "task":
-                            # Task received: exit immediately (no execution)
-                            state.task_received = True
-                            state.closed = True
-                            return 4
-                        # Ignore other message types
-
+                result = await asyncio.wait_for(recv_loop(), timeout=timeout_sec)
+                return result
             except asyncio.TimeoutError:
                 # Normal timeout — probe completed successfully
                 state.closed = True
