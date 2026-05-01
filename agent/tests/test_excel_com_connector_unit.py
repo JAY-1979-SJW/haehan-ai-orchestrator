@@ -883,8 +883,9 @@ def test_update_cell_by_header_and_row_copy_success(monkeypatch):
     assert result["target_cell"] == "C5"
     assert result["old_value"] == 1
     assert result["new_value"] == 3
-    # SaveAs 호출 확인
-    fake_wb.SaveAs.assert_called_once()
+    # SaveCopyAs 호출 (SaveCopyAs가 지원되면) 또는 SaveAs (fallback)
+    # 현재 구현은 SaveCopyAs를 시도하고, 없으면 SaveAs로 fallback
+    assert fake_wb.SaveCopyAs.called or fake_wb.SaveAs.called
     # Save() 호출되지 않음
     fake_wb.Save.assert_not_called()
 
