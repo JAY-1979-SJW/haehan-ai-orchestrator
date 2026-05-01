@@ -263,6 +263,135 @@ def _run_excel_update_cell_by_header_copy(task: dict) -> dict:
     return _result(ok, data=data, error=out.get("error"))
 
 
+def _run_excel_insert_row_by_header_copy(task: dict) -> dict:
+    """헤더 기준으로 행을 찾아, 그 행 위/아래에 새 행을 추가하고 값을 입력한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel 만 대상.
+    file_path 불필요. 원본 Save 호출 없음, 복사본만 저장.
+
+    Required params:
+    - row_match_header: 행 식별용 헤더명
+    - row_match_value: 행 식별용 셀값
+    - approval_token: 승인 토큰
+
+    Optional params:
+    - position: "below" | "above" (기본값: "below")
+    - values: {"header_name": value, ...}
+    - output_path: 복사본 저장 경로
+    """
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    row_match_header = task.get("row_match_header", "")
+    row_match_value = task.get("row_match_value")
+    position = task.get("position", "below") or "below"
+    values = task.get("values")
+    output_path = task.get("output_path")
+
+    if not row_match_header or row_match_value is None:
+        return _result(False, error="INVALID_PARAMS")
+
+    out = com.insert_row_by_header_copy(
+        row_match_header=row_match_header,
+        row_match_value=row_match_value,
+        position=position,
+        values=values,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=True,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_insert_column_by_header_copy(task: dict) -> dict:
+    """헤더 기준으로 열을 추가한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel 만 대상.
+    file_path 불필요. 원본 Save 호출 없음, 복사본만 저장.
+
+    Required params:
+    - anchor_header: 기준 헤더명
+    - new_header: 새 헤더명
+    - approval_token: 승인 토큰
+
+    Optional params:
+    - position: "right" | "left" (기본값: "right")
+    - output_path: 복사본 저장 경로
+    """
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    anchor_header = task.get("anchor_header", "")
+    new_header = task.get("new_header", "")
+    position = task.get("position", "right") or "right"
+    output_path = task.get("output_path")
+
+    if not anchor_header or not new_header:
+        return _result(False, error="INVALID_PARAMS")
+
+    out = com.insert_column_by_header_copy(
+        anchor_header=anchor_header,
+        new_header=new_header,
+        position=position,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=True,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
+def _run_excel_write_formula_by_header_copy(task: dict) -> dict:
+    """헤더 기준으로 셀/열에 수식을 입력한다.
+
+    GetActiveObject 기반으로 이미 실행 중인 Excel 만 대상.
+    file_path 불필요. 원본 Save 호출 없음, 복사본만 저장.
+
+    Required params:
+    - target_header: 대상 헤더명
+    - formula: 수식
+    - approval_token: 승인 토큰
+
+    Optional params:
+    - start_row: 시작 행
+    - end_row: 종료 행
+    - output_path: 복사본 저장 경로
+    """
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    target_header = task.get("target_header", "")
+    formula = task.get("formula", "")
+    start_row = task.get("start_row")
+    end_row = task.get("end_row")
+    output_path = task.get("output_path")
+
+    if not target_header or not formula:
+        return _result(False, error="INVALID_PARAMS")
+
+    out = com.write_formula_by_header_copy(
+        target_header=target_header,
+        formula=formula,
+        start_row=start_row,
+        end_row=end_row,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=True,
+    )
+
+    ok = bool(out.get("success"))
+    data = {k: v for k, v in out.items() if k not in ("success", "error")}
+    return _result(ok, data=data, error=out.get("error"))
+
+
 # ──────────────────────────────────────────────────────────────────
 # CAD COM 핸들러
 #
@@ -598,6 +727,9 @@ _DISPATCH = {
     "excel.save_as": _run_save_as,
     "excel.probe_active_workbook": _run_excel_probe_active_workbook,
     "excel.update_cell_by_header_copy": _run_excel_update_cell_by_header_copy,
+    "excel.insert_row_by_header_copy": _run_excel_insert_row_by_header_copy,
+    "excel.insert_column_by_header_copy": _run_excel_insert_column_by_header_copy,
+    "excel.write_formula_by_header_copy": _run_excel_write_formula_by_header_copy,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

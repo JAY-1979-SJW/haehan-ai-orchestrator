@@ -737,6 +737,76 @@ def update_cell_by_header_and_row_copy(
         return result
 
 
+def insert_row_by_header_copy(
+    row_match_header: str,
+    row_match_value: Any,
+    position: str = "below",
+    values: Optional[dict] = None,
+    output_path: Optional[str] = None,
+    *,
+    approval_token: Optional[str] = None,
+    allow_write: bool = False,
+) -> dict:
+    """Thin wrapper for agent.excel.workflows.insert_row_by_header_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.workflows.insert_row_by_header_copy(
+        row_match_header=row_match_header,
+        row_match_value=row_match_value,
+        position=position,
+        values=values,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=allow_write,
+    )
+
+
+def insert_column_by_header_copy(
+    anchor_header: str,
+    new_header: str,
+    position: str = "right",
+    output_path: Optional[str] = None,
+    *,
+    approval_token: Optional[str] = None,
+    allow_write: bool = False,
+) -> dict:
+    """Thin wrapper for agent.excel.workflows.insert_column_by_header_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.workflows.insert_column_by_header_copy(
+        anchor_header=anchor_header,
+        new_header=new_header,
+        position=position,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=allow_write,
+    )
+
+
+def write_formula_by_header_copy(
+    target_header: str,
+    formula: str,
+    start_row: Optional[int] = None,
+    end_row: Optional[int] = None,
+    output_path: Optional[str] = None,
+    *,
+    approval_token: Optional[str] = None,
+    allow_write: bool = False,
+) -> dict:
+    """Thin wrapper for agent.excel.workflows.write_formula_by_header_copy."""
+    from agent import excel as excel_mod
+
+    return excel_mod.workflows.write_formula_by_header_copy(
+        target_header=target_header,
+        formula=formula,
+        start_row=start_row,
+        end_row=end_row,
+        output_path=output_path,
+        approval_token=approval_token,
+        allow_write=allow_write,
+    )
+
+
 __all__ = [
     "is_excel_available",
     "open_excel_app",
@@ -754,4 +824,7 @@ __all__ = [
     "detect_header_row_from_active_sheet",
     "map_headers_from_row",
     "update_cell_by_header_and_row_copy",
+    "insert_row_by_header_copy",
+    "insert_column_by_header_copy",
+    "write_formula_by_header_copy",
 ]
