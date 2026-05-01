@@ -8,6 +8,7 @@ from typing import Any
 
 from . import policy
 from .backends import mock_backend
+from .backends.worker_backend import BrowserWorkerBackend
 from .schemas import BrowserResult, BrowserTask
 
 
@@ -53,9 +54,30 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
             backend="mock",
         )
 
-    # Dispatch to backend
-    # Currently only mock backend is implemented
-    return mock_backend.handle_task(task)
+    # Dispatch to backend based on BrowserTask.backend field
+    selected_backend = task.backend or "mock"  # Default to mock if not specified
+
+    if selected_backend == "worker":
+        # Route to Browser Worker backend (HTTP)
+        worker_backend = BrowserWorkerBackend()
+        url = params.get("url", "about:blank")
+        task_id = params.get("task_id", f"task-{id(task)}")
+        dry_run = params.get("dry_run", True)
+        try:
+            return worker_backend.execute(task, url, task_id, dry_run)
+        except Exception as e:
+            # Handle any unexpected errors
+            return BrowserResult(
+                success=False,
+                action=action,
+                data={},
+                error=f"worker backend error: {str(e)}",
+                error_code="BROWSER_WORKER_ERROR",
+                backend="worker",
+            )
+    else:
+        # Default to mock backend
+        return mock_backend.handle_task(task)
 
 
 def route_browser_task_with_params(
