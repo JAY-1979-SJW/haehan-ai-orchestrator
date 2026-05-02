@@ -800,13 +800,178 @@ grep -r "unlink\|remove" agent/local_inventory/
 
 ---
 
-## 16. 참고 문서
+## 16. Action Registry 연결
+
+### 16.1 등록된 액션
+
+3개 action이 action_registry.py에 등록되어 있습니다.
+
+| Action | 카테고리 | 리스크 | 동의 | 설명 |
+|--------|---------|------|------|------|
+| local_inventory.scan | inventory | MEDIUM | ✓ | 메타데이터 스캔 |
+| local_inventory.status | inventory | LOW | ✗ | 저장된 inventory 조회 |
+| local_inventory.compare | inventory | LOW | ✗ | inventory 변경 감지 |
+
+**특징:**
+- scan: privacy 영향으로 approval 필수
+- status/compare: 저장된 데이터만 사용하므로 approval 불필요
+
+### 16.2 Task Executor 핸들러
+
+3개 handler가 task_executor.py의 _DISPATCH에 연결되어 있습니다.
+
+- _run_local_inventory_scan() → run_local_inventory_scan()
+- _run_local_inventory_status() → InventoryStore.load()
+- _run_local_inventory_compare() → compare_inventory_snapshots()
+
+### 16.3 사용 예시
+
+```python
+from agent.task_executor import execute_task
+
+# Scan 실행 (approval_token 필수)
+task = {
+    "action": "local_inventory.scan",
+    "approval_token": "approval_12345...",
+    "scan_level": 1,
+}
+result = execute_task(task)
+
+# Status 조회 (approval 불필요)
+task = {
+    "action": "local_inventory.status",
+}
+result = execute_task(task)
+
+# Compare 실행 (approval 불필요)
+task = {
+    "action": "local_inventory.compare",
+}
+result = execute_task(task)
+```
+
+---
+
+## 17. Hancom Discovery 통합
+
+### 17.1 local_inventory 우선 사용
+
+hancom/discovery/diagnostics.py의 diagnose_hancom_installation()이 local_inventory를 우선 확인합니다.
+
+**흐름:**
+1. local_inventory 로드 시도
+2. 있으면 hancom 정보 추출 후 반환 (source: "inventory")
+3. 없으면 기존 discovery 방식 사용 (source: "discovery")
+
+### 17.2 Inventory → Discovery 변환
+
+```python
+# Inventory에서 추출
+hancom = programs.get("hancom", {})
+
+# Discovery 형식으로 변환
+result = {
+    "installed": True,
+    "source": "inventory",
+    "registry_status": {...},
+    "com_status": {...},
+    "installation_status": {...},
+    "security_module": {...},
+    "summary": f"한컴 {version} (Inventory)",
+}
+```
+
+### 17.3 비표준 경로 해결
+
+inventory 기반 discovery는 이미 저장된 경로를 사용하므로:
+- 비표준 설치 경로 문제 자동 해결
+- Program Files 외 위치 자동 감지
+- 경로 재스캔 불필요
+
+---
+
+## 18. Change Watcher (변경 감지)
+
+### 18.1 구현
+
+change_watcher.py:
+- InventoryDiff: 변경 요약 dataclass
+- compare_inventory(): 두 inventory 비교
+- format_diff_report(): 사람이 읽을 수 있는 보고서 생성
+
+### 18.2 감지 대상
+
+```python
+InventoryDiff(
+    added_programs: list[str],      # 신규 설치
+    removed_programs: list[str],    # 삭제됨
+    changed_programs: dict,          # 경로/버전 변경
+    added_dlls: list[str],          # 신규 DLL
+    removed_dlls: list[str],        # 삭제된 DLL
+    has_changes: bool,              # 변경 여부
+)
+```
+
+### 18.3 사용
+
+```python
+result = compare_inventory_snapshots()
+# {
+#   "ok": bool,
+#   "diff": InventoryDiff dict,
+#   "report": str,
+#   "error": Optional[str],
+# }
+```
+
+---
+
+## 19. 테스트 결과
+
+### 19.1 Unit Tests (40개, 모두 PASS)
+
+- test_local_inventory_smoke.py: 8개 ✓
+- test_action_registry_unit.py: 8개 ✓
+- test_task_executor_unit.py: 24개 ✓
+
+### 19.2 Smoke Test (Level 1)
+
+```
+✓ 결과: True
+  스캔 레벨: 1
+  스캔된 스코프: 5개
+  탐지 프로그램: 3개+
+  탐지 DLL 유형: 3개+
+  ✓ 모든 안전 검증 PASS
+```
+
+### 19.3 안전 검증
+
+- ✓ 파일 내용 read() 호출 없음
+- ✓ Registry write 호출 없음
+- ✓ 파일 삭제 호출 없음
+- ✓ 서버 전송 없음
+- ✓ Approval token 검증 (scan)
+
+---
+
+## 20. 참고 문서
 
 - [Action Registry](../agent/action_registry.py) - 등록된 액션
 - [Task Executor](../agent/task_executor.py) - 핸들러 구현
+- [Diagnostics](../agent/local_inventory/diagnostics.py) - 스캔 오케스트레이션
+- [Change Watcher](../agent/local_inventory/change_watcher.py) - 변경 감지
+- [Hancom Discovery](../agent/hancom/discovery/diagnostics.py) - Hancom 통합
 - [Test Cases](../agent/tests/test_local_inventory_smoke.py) - 테스트 사례
 
 ---
 
 **최종 수정:** 2026-05-02  
 **담당자:** AI Orchestrator Team
+
+## 21. 버전 히스토리 (업데이트)
+
+| 버전 | 날짜 | 변경사항 |
+|------|------|---------|
+| 1.1 | 2026-05-02 | Action registry/executor 연결, Hancom discovery 통합, change_watcher 구현 |
+| 1.0 | 2026-05-02 | 초기 릴리스 |
