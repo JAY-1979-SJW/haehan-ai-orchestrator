@@ -1,6 +1,9 @@
 /**파일 정리 롤백 매니페스트 조회 API.*/
 
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 interface RollbackEntry {
   operation_id: string;
@@ -25,6 +28,28 @@ interface RollbackResponse {
   error?: string;
 }
 
+function getRollbackDirPath(): string {
+  const home = os.homedir();
+  return path.join(home, 'AppData', 'Local', 'HaehanAI', 'inventory');
+}
+
+function loadManifest(runId: string): RollbackManifest | null {
+  const rollbackDir = getRollbackDirPath();
+  const manifestFile = path.join(rollbackDir, `rollback_${runId}.json`);
+
+  if (!fs.existsSync(manifestFile)) {
+    return null;
+  }
+
+  try {
+    const content = fs.readFileSync(manifestFile, 'utf-8');
+    return JSON.parse(content) as RollbackManifest;
+  } catch (error) {
+    console.error('Failed to load manifest:', error);
+    return null;
+  }
+}
+
 /**
  * GET /api/file-map/cleanup-rollback?run_id=<run_id>
  *
@@ -41,18 +66,14 @@ export async function GET(req: NextRequest): Promise<NextResponse<RollbackRespon
       );
     }
 
-    // TODO: Python cleanup_rollback 모듈에서 매니페스트 로드
-    // load_manifest(run_id) 호출
+    const manifest = loadManifest(runId);
 
-    // 모의 응답
-    const manifest: RollbackManifest = {
-      run_id: runId,
-      package_id: '',
-      generated_at: new Date().toISOString(),
-      total_moved: 0,
-      entries: [],
-      notes: '롤백은 수동으로만 수행 가능합니다.',
-    };
+    if (!manifest) {
+      return NextResponse.json(
+        { ok: false, error: '롤백 매니페스트를 찾을 수 없습니다' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       ok: true,
