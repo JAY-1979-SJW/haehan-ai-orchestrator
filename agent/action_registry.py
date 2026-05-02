@@ -24,11 +24,12 @@ CATEGORY_MCP = "mcp"
 # local_agent.browser_launcher.open_local_browser 전용. 서버측 Playwright
 # 경로와 분리해 visible 로컬 브라우저 기동만 다룬다.
 CATEGORY_LOCAL_BROWSER = "local_browser"
+CATEGORY_INVENTORY = "inventory"
 
 KNOWN_CATEGORIES: frozenset[str] = frozenset({
     CATEGORY_SYSTEM, CATEGORY_WEB, CATEGORY_SECRET,
     CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_HANCOM, CATEGORY_CAD, CATEGORY_MCP,
-    CATEGORY_LOCAL_BROWSER,
+    CATEGORY_LOCAL_BROWSER, CATEGORY_INVENTORY,
 })
 
 RISK_LOW = "low"
@@ -59,6 +60,10 @@ class ActionMeta:
     # 위해 save_as 필수 — 기본 True 유지. 서버 리소스에 대한 HTTP 조작류
     # CAD API write 액션(cad.create_project, cad.update_project, …) 만 False.
     requires_save_as: bool = True
+    # 액션 실행 시 사용자 승인 필수 여부. 기본값은 read_only=False 시 True,
+    # read_only=True 시 False. 하지만 read_only이면서도 privacy 영향이 있는
+    # local_inventory.scan 처럼 명시적으로 True로 설정 가능.
+    requires_approval: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.action, str) or not self.action:
@@ -503,6 +508,40 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_file_path=True,
         requires_save_as=True,
     ),
+    # ── Local Inventory 액션 ────
+    "local_inventory.scan": ActionMeta(
+        action="local_inventory.scan",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=True,  # read_only이면서도 privacy 영향이 있어 동의 필수
+    ),
+    "local_inventory.status": ActionMeta(
+        action="local_inventory.status",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
+    "local_inventory.compare": ActionMeta(
+        action="local_inventory.compare",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
 }
 
 
@@ -579,6 +618,7 @@ __all__ = [
     "CATEGORY_CAD",
     "CATEGORY_MCP",
     "CATEGORY_LOCAL_BROWSER",
+    "CATEGORY_INVENTORY",
     "KNOWN_CATEGORIES",
     "RISK_LOW",
     "RISK_MEDIUM",
