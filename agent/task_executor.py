@@ -36,6 +36,13 @@ from . import errors as _err
 from .cad_api_spec import CAD_API_ACTIONS, CadApiAction
 from .connectors import cad_com_connector as cad_com
 from .connectors import excel_com_connector as com
+from .local_inventory.diagnostics import (
+    InventoryScanParams,
+    run_local_inventory_scan,
+    compare_inventory_snapshots,
+)
+from .local_inventory.inventory_store import InventoryStore
+from .local_inventory.scan_level import ScanLevel
 
 logger = logging.getLogger(__name__)
 
@@ -1114,6 +1121,91 @@ def _make_cad_api_handler(spec: CadApiAction):
     return _handler
 
 
+def _run_local_inventory_scan(task: dict) -> dict:
+    """local_inventory.scan — 로컬 자산 인벤토리 스캔.
+
+    선택적 task 필드:
+      - scan_level: int (기본값: 1 = SAFE_INVENTORY)
+      - user_selected_paths: list[str] (Level 2/3용)
+    """
+    try:
+        from agent.local_inventory.scan_level import get_level_config
+
+        scan_level = task.get("scan_level", ScanLevel.SAFE_INVENTORY)
+        if isinstance(scan_level, int):
+            scan_level = ScanLevel(scan_level)
+
+        user_selected_paths = task.get("user_selected_paths", [])
+        if not isinstance(user_selected_paths, list):
+            user_selected_paths = []
+
+        # 레벨에 맞는 스코프 사용
+        level_config = get_level_config(scan_level)
+        scopes = list(level_config.allowed_scopes)
+
+        params = InventoryScanParams(
+            scan_level=scan_level,
+            scopes=scopes,
+            user_selected_paths=user_selected_paths,
+            force_consent=False,
+            apply_privacy_filter_flag=True,
+            store_result=True,
+        )
+
+        result = run_local_inventory_scan(params)
+        return _result(bool(result.get("ok")), data=result, error=result.get("error"))
+    except Exception as e:
+        logger.exception("local_inventory.scan handler crashed: %s", e)
+        return _result(False, error=f"scan_failed:{type(e).__name__}")
+
+
+def _run_local_inventory_status(task: dict) -> dict:
+    """local_inventory.status — 저장된 인벤토리 상태 조회.
+
+    선택적 task 필드:
+      - inventory_path: str (기본값: %LOCALAPPDATA%\\HaehanAI\\inventory\\local_inventory.json)
+    """
+    try:
+        inventory_path = task.get("inventory_path")
+        store = InventoryStore(inventory_path)
+
+        inventory = store.load()
+        if not inventory:
+            return _result(False, data={}, error="no_inventory_found")
+
+        metadata = inventory.get("metadata", {})
+        programs = inventory.get("programs", {})
+        dlls = inventory.get("dlls", {})
+
+        return _result(True, data={
+            "metadata": metadata,
+            "program_count": len(programs),
+            "dll_types_count": len(dlls),
+            "scan_date": metadata.get("scan_date"),
+            "scan_level": metadata.get("scan_level"),
+        })
+    except Exception as e:
+        logger.exception("local_inventory.status handler crashed: %s", e)
+        return _result(False, error=f"status_failed:{type(e).__name__}")
+
+
+def _run_local_inventory_compare(task: dict) -> dict:
+    """local_inventory.compare — 인벤토리 스냅샷 비교.
+
+    선택적 task 필드:
+      - inventory_path: str (기본값: %LOCALAPPDATA%\\HaehanAI\\inventory\\local_inventory.json)
+    """
+    try:
+        inventory_path = task.get("inventory_path")
+        params = {"inventory_path": inventory_path} if inventory_path else {}
+
+        result = compare_inventory_snapshots(params)
+        return _result(bool(result.get("ok")), data=result, error=result.get("error"))
+    except Exception as e:
+        logger.exception("local_inventory.compare handler crashed: %s", e)
+        return _result(False, error=f"compare_failed:{type(e).__name__}")
+
+
 def _run_cad_upload_drawing(task: dict) -> dict:
     """cad.upload_drawing — multipart 업로드 (로컬 파일 필요).
 
@@ -1168,6 +1260,10 @@ _DISPATCH = {
     "excel.generate_analysis_report": _run_excel_generate_analysis_report,
     # Hancom 작업
     "hancom.convert_hwp_to_hwpx_copy": _run_hancom_convert_hwp_to_hwpx_copy,
+    # 로컬 인벤토리 작업
+    "local_inventory.scan": _run_local_inventory_scan,
+    "local_inventory.status": _run_local_inventory_status,
+    "local_inventory.compare": _run_local_inventory_compare,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,
