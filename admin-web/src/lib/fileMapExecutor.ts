@@ -17,6 +17,7 @@ export interface ExecuteMoveResult {
   failedCount?: number;
   skippedCount?: number;
   conflictCount?: number;
+  dryRun?: boolean;
   succeeded?: Array<{
     operationId: string;
     sourcePath: string;
@@ -70,7 +71,7 @@ export async function executeMoves(request: ExecuteMoveRequest): Promise<Execute
       body: JSON.stringify(payload),
     });
 
-    const result = await response.json();
+    const result = await response.json() as Record<string, any>;
 
     if (!response.ok) {
       return {
@@ -79,7 +80,47 @@ export async function executeMoves(request: ExecuteMoveRequest): Promise<Execute
       };
     }
 
-    return result;
+    // API 응답 변환: snake_case → camelCase
+    const transformed: ExecuteMoveResult = {
+      ok: result.ok,
+      runId: result.run_id,
+      packageId: result.package_id,
+      timestamp: result.timestamp,
+      successCount: result.success_count,
+      failedCount: result.failed_count,
+      skippedCount: result.skipped_count,
+      conflictCount: result.conflict_count,
+      dryRun: payload.dry_run,
+      succeeded: result.succeeded?.map((item: any) => ({
+        operationId: item.operation_id,
+        sourcePath: item.source_path,
+        targetPath: item.target_path,
+        category: item.category,
+        fileSizeBytes: item.file_size_bytes,
+        dryRun: item.dry_run,
+      })),
+      failed: result.failed?.map((item: any) => ({
+        operationId: item.operation_id,
+        sourcePath: item.source_path,
+        targetPath: item.target_path,
+        error: item.error,
+      })),
+      skipped: result.skipped?.map((item: any) => ({
+        operationId: item.operation_id,
+        sourcePath: item.source_path,
+        targetPath: item.target_path,
+        reason: item.reason,
+      })),
+      conflicts: result.conflicts?.map((item: any) => ({
+        operationId: item.operation_id,
+        sourcePath: item.source_path,
+        targetPath: item.target_path,
+        reason: item.reason,
+      })),
+      error: result.error,
+    };
+
+    return transformed;
   } catch (err) {
     return {
       ok: false,
