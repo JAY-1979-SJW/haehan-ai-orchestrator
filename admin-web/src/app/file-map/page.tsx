@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview, FileMapApprovalRequest, FileMapExecutionPackage } from '@/components/file-map';
+import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview, FileMapApprovalRequest, FileMapExecutionPackage, FileMapExecuteFlow } from '@/components/file-map';
 import { PageShell } from '@/components/ui';
 
 interface ApiResponse {
@@ -12,7 +12,7 @@ interface ApiResponse {
 }
 
 export default function FileMapPage() {
-  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview' | 'approval-request' | 'execution-package'>('report');
+  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview' | 'approval-request' | 'execution-package' | 'execute-flow'>('report');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +134,16 @@ export default function FileMapPage() {
             >
               실행 패키지
             </button>
+            <button
+              onClick={() => setActiveTab('execute-flow')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'execute-flow'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              사전검사 · 실행
+            </button>
           </div>
         </div>
 
@@ -187,6 +197,11 @@ export default function FileMapPage() {
         {/* 실행 패키지 탭 */}
         {activeTab === 'execution-package' && (
           <FileMapExecutionPackage />
+        )}
+
+        {/* 사전검사 · 실행 탭 */}
+        {activeTab === 'execute-flow' && (
+          <FileMapExecuteFlow />
         )}
       </div>
     </PageShell>

@@ -4,3 +4,8 @@ export { FileMapCleanupPlanViewer } from './FileMapCleanupPlanViewer';
 export { FileMapCleanupPreview } from './FileMapCleanupPreview';
 export { FileMapApprovalRequest } from './FileMapApprovalRequest';
 export { FileMapExecutionPackage } from './FileMapExecutionPackage';
+export { FileMapPreflight } from './FileMapPreflight';
+export { FileMapExecute } from './FileMapExecute';
+export { FileMapExecuteResult } from './FileMapExecuteResult';
+export { FileMapAuditLog } from './FileMapAuditLog';
+export { FileMapExecuteFlow } from './FileMapExecuteFlow';
