@@ -188,20 +188,35 @@ def scan_program_registry(program: str) -> dict:
         if program not in REGISTRY_PATHS:
             return {"path": None, "values": {}, "subkeys": []}
 
-        registry_path = REGISTRY_PATHS[program]
+        registry_paths = REGISTRY_PATHS[program]
 
+        # 리스트의 각 경로를 시도
         values = {}
-        subkeys = list_registry_subkeys(winreg.HKEY_LOCAL_MACHINE, registry_path)
+        subkeys = []
+        for registry_path in registry_paths:
+            try:
+                subkeys = list_registry_subkeys(winreg.HKEY_LOCAL_MACHINE, registry_path)
+                if subkeys:
+                    break
+            except Exception:
+                continue
 
         # 주요 값 조회
-        for value_name in ["InstallPath", "Path", "DisplayVersion", "Version"]:
-            val = get_registry_value(
-                winreg.HKEY_LOCAL_MACHINE,
-                registry_path,
-                value_name,
-            )
-            if val:
-                values[value_name] = val
+        for registry_path in registry_paths:
+            for value_name in ["InstallPath", "Path", "DisplayVersion", "Version"]:
+                try:
+                    val = get_registry_value(
+                        winreg.HKEY_LOCAL_MACHINE,
+                        registry_path,
+                        value_name,
+                    )
+                    if val:
+                        values[value_name] = val
+                        break
+                except Exception:
+                    continue
+            if values:
+                break
 
         return {
             "path": registry_path,
