@@ -11,6 +11,14 @@ const OP_ITEMS = [
     cta: "바로 가기",
   },
   {
+    label: "파일 지도 리포트",
+    description: "로컬 파일 스캔 결과 · 민감정보 마스킹 관리",
+    href: "/file-map",
+    badge: "신기능",
+    badgeCls: "bg-[#ECFDF5] text-[#059669] border-[#6EE7B7]",
+    cta: "바로 가기",
+  },
+  {
     label: "승인 / 감사 로그",
     description: "운영 통제 기능 — 구현 예정",
     href: null,
@@ -38,7 +46,7 @@ export default function Home() {
   return (
     <PageShell title="운영 대시보드" description="Haehan AI Orchestrator 관리자 UI">
       {/* Quick action cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
         {OP_ITEMS.map((item) => (
           <div
             key={item.label}
