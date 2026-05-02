@@ -8,19 +8,32 @@ interface RevealSessionState {
   expires_at: number | null;
 }
 
+interface FileObject {
+  name: string;
+  path: string;
+  size: number;
+  [key: string]: any;
+}
+
 export interface FileMapReportViewerProps {
   reportData?: {
     title: string;
     content: string;
-    files: Array<{
-      name: string;
-      path: string;
-      size: number;
-    }>;
+    files: FileObject[];
+    [key: string]: any;
+  };
+  revealData?: {
+    title?: string;
+    content?: string;
+    files?: FileObject[];
+    [key: string]: any;
   };
 }
 
-export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
+export function FileMapReportViewer({
+  reportData,
+  revealData
+}: FileMapReportViewerProps) {
   const [session, setSession] = useState<RevealSessionState>({
     auth_verified: false,
     reveal_sensitive_names: false,
@@ -28,6 +41,8 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
   });
 
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [revealReportData, setRevealReportData] = useState<any>(null);
 
   // 자동 재마스킹 타이머 (15분)
   const REVEAL_DURATION_MS = 15 * 60 * 1000;
@@ -46,12 +61,7 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
 
       if (remaining === 0) {
         // 시간 만료 시 자동 재마스킹
-        setSession((prev) => ({
-          ...prev,
-          reveal_sensitive_names: false,
-          auth_verified: false,
-          expires_at: null,
-        }));
+        handleRemask();
       }
     };
 
@@ -60,33 +70,75 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
     return () => clearInterval(interval);
   }, [session.auth_verified, session.expires_at]);
 
-  const handleMockAuth = () => {
-    const now = Date.now();
-    setSession({
-      auth_verified: true,
-      reveal_sensitive_names: true,
-      expires_at: now + REVEAL_DURATION_MS,
-    });
+  const handleMockAuth = async () => {
+    try {
+      setIsAuthLoading(true);
+      const response = await fetch('/api/file-map/auth/mock-verify', {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (data.ok) {
+        setSession({
+          auth_verified: true,
+          reveal_sensitive_names: true,
+          expires_at: new Date(data.expires_at).getTime(),
+        });
+      }
+    } catch (error) {
+      console.error('Auth failed:', error);
+    } finally {
+      setIsAuthLoading(false);
+    }
   };
 
-  const handleRevealToggle = () => {
+  const handleRevealToggle = async () => {
     if (!session.auth_verified) {
       return; // 인증 없으면 원본보기 비활성화
     }
 
-    setSession((prev) => ({
-      ...prev,
-      reveal_sensitive_names: !prev.reveal_sensitive_names,
-    }));
+    // 이미 reveal 상태이면 마스킹으로 돌아감
+    if (session.reveal_sensitive_names) {
+      setSession((prev) => ({
+        ...prev,
+        reveal_sensitive_names: false,
+      }));
+      return;
+    }
+
+    // reveal 요청
+    try {
+      const response = await fetch('/api/file-map/report?reveal=true');
+      const data = await response.json();
+
+      if (data.ok && data.report) {
+        setRevealReportData(data.report);
+        setSession((prev) => ({
+          ...prev,
+          reveal_sensitive_names: true,
+        }));
+      } else {
+        console.error('Reveal failed:', data.error);
+      }
+    } catch (error) {
+      console.error('Reveal error:', error);
+    }
   };
 
-  const handleRemask = () => {
-    setSession((prev) => ({
-      ...prev,
-      reveal_sensitive_names: false,
+  const handleRemask = async () => {
+    try {
+      await fetch('/api/file-map/auth/clear', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Clear failed:', error);
+    }
+
+    setSession({
       auth_verified: false,
+      reveal_sensitive_names: false,
       expires_at: null,
-    }));
+    });
   };
 
   const formatTimeRemaining = (ms: number | null): string => {
@@ -182,7 +234,7 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
           </div>
 
           {/* 파일 목록 샘플 */}
-          {reportData.files && reportData.files.length > 0 && (
+          {(revealReportData?.large_files || reportData.files)?.length > 0 && (
             <div className="mt-4">
               <h4 className="font-semibold mb-2">스캔된 파일 샘플</h4>
               <div className="overflow-x-auto">
@@ -195,7 +247,19 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {reportData.files.map((file, idx) => (
+                    {(() => {
+                      let files: FileObject[] = [];
+                      if (session.reveal_sensitive_names && revealReportData?.large_files) {
+                        files = [
+                          ...(revealReportData.large_files || []),
+                          ...(revealReportData.old_files || []),
+                          ...(revealReportData.suspicious_duplicates || []),
+                          ...(revealReportData.suspicious_temp || []),
+                        ].slice(0, 10);
+                      } else {
+                        files = reportData.files || [];
+                      }
+                      return files.map((file, idx) => (
                       <tr
                         key={idx}
                         className="border-b hover:bg-gray-50"
@@ -210,7 +274,8 @@ export function FileMapReportViewer({ reportData }: FileMapReportViewerProps) {
                           {(file.size / 1024).toFixed(1)} KB
                         </td>
                       </tr>
-                    ))}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
