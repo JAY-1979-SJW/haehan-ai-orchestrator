@@ -20,7 +20,7 @@ export default function FileMapPage() {
     const fetchReport = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/file-map/report');
+        const response = await fetch('/api/file-map/report?mode=reveal_after_auth');
         const json: ApiResponse = await response.json();
 
         if (json.ok && json.report) {

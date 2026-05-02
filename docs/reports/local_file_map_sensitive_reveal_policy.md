@@ -166,13 +166,67 @@ renderer = MarkdownRenderer(
 
 ---
 
+## 프론트엔드 Mode 기반 정책 (v1.1)
+
+**2026-05-02 추가**: UI와 API 연동을 위해 fileMapMaskingMode 도입
+
+### 네 가지 모드
+
+#### 1. `mask_always` (항상 마스킹)
+- API 응답: `masked=true`, 원본 파일명 전달 안 함
+- UI 동작: 원본보기 버튼 비활성화
+- 사용: 가장 안전한 모드
+
+#### 2. `reveal_after_auth` (인증 후 원본 표시, 기본)
+- API 응답: `auth_verified=true`일 때만 `masked=false`
+- UI 동작: 인증 후 "원본보기" 버튼 활성화, 15분 타이머
+- 사용: 권장 모드 (기본값)
+- 요청: `GET /api/file-map/report?mode=reveal_after_auth`
+
+#### 3. `reveal_on_trusted_device` (로컬 화면 원본 표시)
+- API 응답: 항상 `masked=false`, 원본 제공
+- UI 동작: 인증 없이 원본 표시 토글 가능
+- 범위: **로컬 화면만** (export/share는 별도 정책)
+- 사용: 개인 기기에서 빠른 확인 필요 시
+- 요청: `GET /api/file-map/report?mode=reveal_on_trusted_device`
+
+#### 4. `reveal_for_export_with_warning` (외부전송 경고, 미구현)
+- API 응답: `export_warning=true`, `masked=true` (원본 차단)
+- UI 동작: 경고 메시지만 표시, export 버튼 비활성화
+- 사용: 향후 단계 (현재는 구현 보류)
+- 정책: 외부로 나가는 데이터는 항상 마스킹
+
+### API 응답 구조
+
+```json
+{
+  "ok": true,
+  "generated_at": "2026-05-02T10:30:00Z",
+  "source": "local_file_map",
+  "masked": false,
+  "mode": "reveal_after_auth",
+  "auth_verified": true,
+  "report": { ... }
+}
+```
+
+### 화면 표시 vs Export/Share 정책 분리
+
+**화면 표시** (local UI):
+- mode에 따라 원본/마스킹 결정
+- reveal_on_trusted_device 모드에서는 원본 가능
+
+**Export/Share** (외부 전송):
+- 항상 기본값 `masked=true`
+- mode와 무관하게 마스킹 유지
+- 향후 reveal_for_export_with_warning이 활성화되기 전까지는 원본 금지
+
 ## 향후 단계
 
-### Phase 2: UI 구현
-- 로컬 UI에 "원본보기" 버튼 추가
-- 본인 인증 다이얼로그 구현 (비밀번호/생체인증)
-- 일시적 원본보기 세션 (15분 제한)
-- 자동 재마스킹
+### Phase 2: Export/Share 정책 마감
+- reveal_for_export_with_warning 모드 활성화
+- export 시 경고 메시지 구현
+- download 시 원본/마스킹 선택
 
 ### Phase 3: 고급 정책
 - 원본보기 감사 리포트
@@ -230,11 +284,20 @@ response_data = {
 
 ## 참고 자료
 
+**백엔드 (Python)**:
 - 파일 마스킹: `agent/local_inventory/file_map/privacy.py`
 - 렌더링: `agent/local_inventory/file_map/markdown_renderer.py`
 - 테스트: `agent/tests/test_local_file_map_report_privacy.py`
 
+**프론트엔드 (TypeScript/Next.js)**:
+- 마스킹 모드 정의: `admin-web/src/lib/fileMapSettings.ts`
+- 프라이버시 유틸: `admin-web/src/lib/privacy.ts`
+- API 엔드포인트: `admin-web/src/app/api/file-map/report/route.ts`
+- UI 컴포넌트: `admin-web/src/components/file-map/FileMapReportViewer.tsx`
+- 페이지: `admin-web/src/app/file-map/page.tsx`
+
 ---
 
 **정책 담당자**: AI Orchestrator Team  
-**최종 수정**: 2026-05-02
+**최종 수정**: 2026-05-02  
+**버전**: 1.1 (프론트엔드 mode 기반 정책 추가)

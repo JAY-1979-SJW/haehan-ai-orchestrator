@@ -130,9 +130,9 @@ export function FileMapReportViewer({
           }));
           return;
         }
-        // reveal API 호출
+        // mode별 API 호출
         try {
-          const response = await fetch('/api/file-map/report?reveal=true&mode=reveal_after_auth');
+          const response = await fetch('/api/file-map/report?mode=reveal_after_auth');
           const data = await response.json();
           if (data.ok && data.report) {
             setRevealReportData(data.report);
