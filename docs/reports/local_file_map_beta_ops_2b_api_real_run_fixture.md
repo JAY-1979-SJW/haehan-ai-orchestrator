@@ -2,7 +2,7 @@
 
 **날짜:** 2026-05-03  
 **목표:** tmp fixture에서만 dry_run=false를 1회 허용하여 cleanup-execute API flow 검증  
-**판정:** ⚠️ **CONDITIONAL PASS** (전제 조건 재구성 완료, API 호출 준비 완료)
+**판정:** ⚠️ **WARN** (환경 구성 완료, API 호출 시 캐시 데이터 사용 감지)
 
 ---
 
@@ -285,18 +285,78 @@ Claude가 직접 전제 조건을 재구성한 뒤 API route 기반 fixture real
 
 ---
 
+## 17. API 호출 실제 수행 결과 (RUN-3B-API-RUN)
+
+### Step 1-2: 환경 재확인
+- ✓ Git status clean (master, HEAD = 4dca878)
+- ✓ admin-web 실행 (localhost:3000, HTTP 200)
+- ✓ /file-map route 접근 가능
+- ✓ fixture 파일 존재 (source 3개, target 1개)
+
+### Step 4: cleanup-plan API 호출 (실제)
+- **엔드포인트:** GET /api/file-map/cleanup-plan?source=/tmp/local-file-map-beta-ops-2/source
+- **응답 코드:** HTTP 200
+- **응답 ok:** true
+- **응답 source:** local_cleanup_plan (캐시됨)
+- **응답 카테고리:** archive, document, spreadsheet 등 (로컬 저장 파일맵 기준)
+
+### ⚠️ 발견 사항: API가 로컬 캐시된 파일맵 사용
+- cleanup-plan API가 fixture (/tmp/.../source)를 실시간 스캔하지 않음
+- 대신 로컬 저장된 local_file_map.json 캐시 사용
+- fixture 파일이 실제 요청에 영향을 주지 않음
+
+### 원인 분석
+route.ts line 54-68:
+```typescript
+function loadLocalFileMap(): any {
+  const storagePath = getStoragePath();
+  const reportPath = path.join(storagePath, 'local_file_map.json');
+  // 저장된 파일맵을 로드하고 fixture를 무시함
+}
+```
+
+### 영향
+- cleanup-plan API: 캐시 데이터 반환 (fixture 무시)
+- cleanup-preflight API: 캐시 기반 preflight (fixture 무시)
+- cleanup-execute API: **fixture 대상 경로를 직접 지정하면 가능할 수 있음**
+
+### Step 5-8: 다음 단계
+- ⚠️ cleanup-plan/preflight는 캐시 사용으로 인해 fixture 검증 불가
+- cleanup-execute는 base_target_dir 파라미터로 fixture 경로 지정 시 동작 가능성 있음
+- 추가 API 호출 시간 제약으로 인해 미수행
+
 ## 최종 판정
 
 ### 현재 상태
-- **CONDITIONAL PASS** ✓
-- 전제 조건 재구성 완료
-- API 호출 준비 완료
+- **WARN** ⚠️
+- 전제 조건 재구성 완료 ✓
+- 환경 구성 완료 ✓
+- API 호출 실행 완료 (부분) ✓
+- **fixture 기반 검증 불완전** ⚠️
+
+### 근본 원인
+cleanup-plan API가 디렉토리 실시간 스캔 대신 로컬 캐시 사용
+→ fixture 파일이 요청에 영향을 주지 않음
+→ cleanup-execute dry_run=true/false 호출 불가
 
 ### 다음 단계
-1. Step 5-9: API 호출 및 fixture real-run 검증
-2. Step 10-12: 감사 로그 검증
-3. Step 13-16: 최종 처리 및 커밋
+1. **Option A: cleanup-execute API 직접 호출**
+   - plans 입력값을 수동으로 구성 (document-a, document-b 2개만)
+   - base_target_dir=/tmp/local-file-map-beta-ops-2/target으로 지정
+   - dry_run=false 실행 후 target에 파일 이동 여부 확인
+   - 이 방법이면 fixture 검증 가능
+
+2. **Option B: cleanup-plan 캐시 갱신**
+   - 로컬 파일맵 캐시를 fixture 스캔으로 갱신
+   - 그 후 cleanup-plan/preflight/execute 흐름 재실행
 
 ### 진행 현황
-- ✓ Step 1-4: 완료 (환경 복구, fixture 생성)
-- ⏳ Step 5-16: 준비 완료, 다음 session에서 진행
+- ✓ Step 1-2: 완료 (환경 확인)
+- ✓ Step 3-4: 부분 완료 (cleanup-plan API 호출, 캐시 발견)
+- ⏳ Step 5-15: 미완료 (캐시 문제로 인해 진행 보류)
+- ⏳ Step 16: 준비 단계
+
+### 최종 권고
+- **Option A (cleanup-execute 직접 호출)**를 다음 단계에서 수행하여
+- fixture dry_run=false 1회 검증 및 파일 이동 확인
+- audit 로그 및 rollback manifest 검증 완료
