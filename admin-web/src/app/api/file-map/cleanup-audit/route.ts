@@ -1,6 +1,9 @@
 /**파일 정리 감사로그 조회 API.*/
 
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 interface AuditRecord {
   run_id: string;
@@ -22,6 +25,40 @@ interface AuditResponse {
   error?: string;
 }
 
+function getAuditFilePath(): string {
+  const home = os.homedir();
+  return path.join(home, 'AppData', 'Local', 'HaehanAI', 'inventory', 'cleanup_audit.jsonl');
+}
+
+function loadAuditRecords(runId?: string | null): AuditRecord[] {
+  const auditFilePath = getAuditFilePath();
+
+  if (!fs.existsSync(auditFilePath)) {
+    return [];
+  }
+
+  const records: AuditRecord[] = [];
+  try {
+    const content = fs.readFileSync(auditFilePath, 'utf-8');
+    const lines = content.split('\n').filter((line) => line.trim());
+
+    for (const line of lines) {
+      try {
+        const record = JSON.parse(line) as AuditRecord;
+        if (runId === null || runId === undefined || record.run_id === runId) {
+          records.push(record);
+        }
+      } catch {
+        // 잘못된 라인 무시
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load audit records:', error);
+  }
+
+  return records;
+}
+
 /**
  * GET /api/file-map/cleanup-audit?run_id=<run_id>
  *
@@ -30,21 +67,7 @@ interface AuditResponse {
 export async function GET(req: NextRequest): Promise<NextResponse<AuditResponse>> {
   try {
     const runId = req.nextUrl.searchParams.get('run_id');
-
-    // TODO: Python cleanup_audit 모듈에서 감사로그 로드
-    // load_records(run_id) 호출
-    // 마스킹 정책 적용
-
-    // 모의 응답
-    const records: AuditRecord[] = [];
-
-    if (runId) {
-      // run_id로 필터링된 감사로그
-      // records = await loadAuditRecords(runId);
-    } else {
-      // 모든 감사로그 (최근 100개)
-      // records = await loadAllAuditRecords(100);
-    }
+    const records = loadAuditRecords(runId);
 
     return NextResponse.json({
       ok: true,
