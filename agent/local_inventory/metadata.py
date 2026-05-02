@@ -92,7 +92,7 @@ def get_folder_metadata(path: str, max_depth: int = 2, current_depth: int = 0) -
             "last_scanned": str,
         }
     """
-    from agent.local_inventory.policy import is_excluded_folder, is_allowed_extension
+    from .policy import is_excluded_folder, is_allowed_extension
 
     try:
         p = Path(path)

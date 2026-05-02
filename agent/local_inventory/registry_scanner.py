@@ -9,11 +9,11 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from agent.local_inventory.metadata import (
+from .metadata import (
     get_registry_value,
     list_registry_subkeys,
 )
-from agent.local_inventory.policy import REGISTRY_PATHS
+from .policy import REGISTRY_PATHS
 
 logger = logging.getLogger(__name__)
 

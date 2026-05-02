@@ -969,9 +969,130 @@ result = compare_inventory_snapshots()
 **최종 수정:** 2026-05-02  
 **담당자:** AI Orchestrator Team
 
+---
+
+## 20. 앱 지도 (App Map) 통합
+
+### 20.1 목적
+
+저장된 inventory로부터 사용자 PC의 업무 프로그램을 분류하고
+**AI 자동화 가능성을 판단**하여 사용자용 지도를 생성합니다.
+
+### 20.2 동의 정책 개선
+
+#### 기존 저장 inventory 조회 (재동의 불필요)
+
+Level 1 스캔으로 생성된 inventory가 이미 저장되어 있으면:
+- `local_inventory.status` — 승인 불필요
+- `local_inventory.compare` — 승인 불필요
+- `local_inventory.build_app_map` — **승인 필수** (메타데이터 분석)
+
+#### 새 Level 2/3 스캔 (항상 명시 동의)
+
+저장된 inventory가 없거나 새로 스캔하려면:
+- `local_inventory.scan` (Level 2+) — **매번 명시 동의 필수**
+- 사용자 폴더 스캔 시 범위 확인
+- 깊이 스캔 시 소요 시간 안내
+
+### 20.3 새로운 액션
+
+#### local_inventory.build_app_map
+
+```python
+{
+  "action": "local_inventory.build_app_map",
+  "approval_token": "...",  # 필수
+  "inventory_path": "...",  # 선택
+}
+```
+
+결과:
+```python
+{
+  "summary": {
+    "total_apps": 12,
+    "automation_ready": 3,
+    "setup_required": 2,
+  },
+  "detected_apps": {...},
+  "capabilities": {...},
+  "recommendations": [...],
+}
+```
+
+**특징:**
+- risk_level: MEDIUM (메타데이터 분석이지만 PC 정보)
+- requires_approval: True
+- 저장 경로: `%LOCALAPPDATA%\HaehanAI\inventory\local_app_map.json`
+
+#### local_inventory.app_map_status
+
+```python
+{
+  "action": "local_inventory.app_map_status",
+  "app_map_path": "...",  # 선택
+}
+```
+
+**특징:**
+- risk_level: LOW (저장된 데이터만 조회)
+- requires_approval: False (재사용 가능)
+
+### 20.4 자동화 가능성 판단
+
+| 프로그램 | 설치 | COM | 보안 | 준비 |
+|---------|------|-----|------|------|
+| Excel | ✓ | ✓ | - | ✓ |
+| 한컴 | ✓ | ✓ | ✗ | ✗ |
+| AutoCAD | ✓ | ? | - | ? |
+
+**판단 기준:**
+1. 프로그램 설치 확인
+2. COM 클래스 등록 확인
+3. 보안모듈/라이선스 확인
+4. AI 제어 능력 계산
+
+### 20.5 권장사항 생성
+
+**자동 감지:**
+```
+- 보안모듈 미등록 → "한컴: 보안모듈 등록이 필요합니다"
+- COM 미확인 → "AutoCAD: COM 확인이 필요합니다"
+- 자동화 불가 → "전문가 검토가 필요합니다"
+```
+
+### 20.6 사용 흐름
+
+```python
+# 1. 기존 inventory 확인
+store = InventoryStore()
+inventory = store.load()
+
+# 2. App Map 생성
+from agent.local_inventory.app_map import build_app_map
+app_map = build_app_map(inventory)
+
+# 3. 사용자에게 표시
+summary = app_map["summary"]
+recommendations = app_map["recommendations"]
+
+# UI에서:
+print(f"자동화 가능: {summary['automation_ready']}개")
+print(f"설정 필요: {summary['setup_required']}개")
+for rec in recommendations:
+    print(f"⚠ {rec}")
+```
+
+### 20.7 자세한 설명
+
+[로컬 앱 지도 기준 문서](./local_app_map_baseline.md) 참조.
+
+---
+
 ## 21. 버전 히스토리 (업데이트)
 
 | 버전 | 날짜 | 변경사항 |
 |------|------|---------|
+| 1.2 | 2026-05-02 | App Map 통합, build_app_map/app_map_status 액션 추가 |
 | 1.1 | 2026-05-02 | Action registry/executor 연결, Hancom discovery 통합, change_watcher 구현 |
 | 1.0 | 2026-05-02 | 초기 릴리스 |

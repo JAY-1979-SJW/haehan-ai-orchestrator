@@ -1206,6 +1206,84 @@ def _run_local_inventory_compare(task: dict) -> dict:
         return _result(False, error=f"compare_failed:{type(e).__name__}")
 
 
+def _run_local_inventory_build_app_map(task: dict) -> dict:
+    """local_inventory.build_app_map — 사용자 PC 업무 프로그램 지도 생성.
+
+    저장된 inventory 데이터를 기반으로 프로그램 분류 및
+    AI 자동화 가능성을 판단하여 사용자용 지도 생성.
+
+    필수 task 필드:
+      - approval_token: str (승인 토큰)
+
+    선택 task 필드:
+      - inventory_path: str (기본값: %LOCALAPPDATA%\\HaehanAI\\inventory\\local_inventory.json)
+    """
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    try:
+        inventory_path = task.get("inventory_path", "")
+        params = {}
+        if inventory_path:
+            params["inventory_path"] = inventory_path
+
+        # inventory 로드
+        store = InventoryStore()
+        inventory = store.load(inventory_path) if inventory_path else store.load()
+
+        if not inventory:
+            return _result(False, error="inventory_not_found")
+
+        # app_map 생성
+        from .local_inventory.app_map import build_app_map
+        app_map = build_app_map(inventory)
+
+        # 결과 저장
+        app_map_path = (
+            Path(inventory_path).parent / "local_app_map.json"
+            if inventory_path
+            else Path.home() / "AppData" / "Local" / "HaehanAI" / "inventory" / "local_app_map.json"
+        )
+        app_map_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(app_map_path, "w", encoding="utf-8") as f:
+            import json
+            json.dump(app_map, f, indent=2, ensure_ascii=False)
+
+        return _result(
+            True,
+            data={
+                "app_map": app_map,
+                "saved_to": str(app_map_path),
+            }
+        )
+    except Exception as e:
+        logger.exception("local_inventory.build_app_map handler crashed: %s", e)
+        return _result(False, error=f"build_app_map_failed:{type(e).__name__}")
+
+
+def _run_local_inventory_app_map_status(task: dict) -> dict:
+    """local_inventory.app_map_status — 저장된 앱 지도 상태 조회.
+
+    선택 task 필드:
+      - app_map_path: str (기본값: %LOCALAPPDATA%\\HaehanAI\\inventory\\local_app_map.json)
+    """
+    try:
+        app_map_path = task.get("app_map_path", "")
+
+        from .local_inventory.app_map import get_app_map_status
+        result = get_app_map_status(app_map_path)
+
+        return _result(
+            bool(result.get("ok")),
+            data=result,
+            error=result.get("error")
+        )
+    except Exception as e:
+        logger.exception("local_inventory.app_map_status handler crashed: %s", e)
+        return _result(False, error=f"app_map_status_failed:{type(e).__name__}")
+
+
 def _run_cad_upload_drawing(task: dict) -> dict:
     """cad.upload_drawing — multipart 업로드 (로컬 파일 필요).
 
@@ -1264,6 +1342,8 @@ _DISPATCH = {
     "local_inventory.scan": _run_local_inventory_scan,
     "local_inventory.status": _run_local_inventory_status,
     "local_inventory.compare": _run_local_inventory_compare,
+    "local_inventory.build_app_map": _run_local_inventory_build_app_map,
+    "local_inventory.app_map_status": _run_local_inventory_app_map_status,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

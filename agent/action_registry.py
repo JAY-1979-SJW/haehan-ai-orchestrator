@@ -542,6 +542,30 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_save_as=False,
         requires_approval=False,
     ),
+    # 업무 프로그램 지도 생성 (inventory 기반)
+    "local_inventory.build_app_map": ActionMeta(
+        action="local_inventory.build_app_map",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=True,  # 메타데이터 분석이지만 사용자 PC 정보 활용이므로 승인 필수
+    ),
+    # 저장된 앱 지도 조회 (approval 불필요)
+    "local_inventory.app_map_status": ActionMeta(
+        action="local_inventory.app_map_status",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
 }
 
 

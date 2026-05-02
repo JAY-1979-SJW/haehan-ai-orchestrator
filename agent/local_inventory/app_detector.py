@@ -10,17 +10,17 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
-from agent.local_inventory.com_scanner import (
+from .com_scanner import (
     scan_autocad_com,
     scan_excel_com,
     scan_hwp_com,
 )
-from agent.local_inventory.filesystem_scanner import (
+from .filesystem_scanner import (
     FileScanConfig,
     scan_file,
 )
-from agent.local_inventory.policy import SCAN_PATHS
-from agent.local_inventory.registry_scanner import (
+from .policy import SCAN_PATHS
+from .registry_scanner import (
     scan_com_registry,
     scan_hwp_modules_registry,
     scan_program_registry,

@@ -12,11 +12,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from agent.local_inventory.policy import (
+from .policy import (
     ALLOWED_EXTENSIONS,
     EXCLUDED_FOLDER_NAMES,
 )
-from agent.local_inventory.scan_scope import (
+from .scan_scope import (
     is_excluded_folder,
     is_excluded_path,
 )
