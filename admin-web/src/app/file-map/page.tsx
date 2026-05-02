@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview } from '@/components/file-map';
+import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview, FileMapApprovalRequest } from '@/components/file-map';
 import { PageShell } from '@/components/ui';
 
 interface ApiResponse {
@@ -12,7 +12,7 @@ interface ApiResponse {
 }
 
 export default function FileMapPage() {
-  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview'>('report');
+  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview' | 'approval-request'>('report');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +114,16 @@ export default function FileMapPage() {
             >
               정리 미리보기
             </button>
+            <button
+              onClick={() => setActiveTab('approval-request')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'approval-request'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              실행 승인 요청서
+            </button>
           </div>
         </div>
 
@@ -157,6 +167,11 @@ export default function FileMapPage() {
         {/* 정리 미리보기 탭 */}
         {activeTab === 'cleanup-preview' && (
           <FileMapCleanupPreview />
+        )}
+
+        {/* 실행 승인 요청서 탭 */}
+        {activeTab === 'approval-request' && (
+          <FileMapApprovalRequest />
         )}
       </div>
     </PageShell>
