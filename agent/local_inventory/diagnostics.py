@@ -1,0 +1,242 @@
+"""로컬 인벤토리 진단 및 비교.
+
+- 전체 스캔 오케스트레이션
+- 스캔 결과 비교
+"""
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
+
+from agent.local_inventory.app_detector import detect_all
+from agent.local_inventory.change_watcher import (
+    InventoryDiff,
+    compare_inventory,
+    format_diff_report,
+)
+from agent.local_inventory.consent_policy import (
+    inventory_scan_consent,
+)
+from agent.local_inventory.dll_mapper import map_all_dlls
+from agent.local_inventory.inventory_store import InventoryStore
+from agent.local_inventory.privacy_filter import apply_privacy_filter
+from agent.local_inventory.scan_scope import ALL_SCOPES, ScanScope
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class InventoryScanParams:
+    """스캔 매개변수."""
+    scopes: list[ScanScope] = field(default_factory=lambda: list(ALL_SCOPES))
+    force_consent: bool = False
+    apply_privacy_filter_flag: bool = True
+    store_result: bool = True
+    consent_state_path: Optional[str] = None
+    inventory_path: Optional[str] = None
+
+
+def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> dict:
+    """로컬 인벤토리 스캔 실행.
+
+    Args:
+        params: 스캔 매개변수
+
+    Returns:
+        {
+            "ok": bool,
+            "scopes_requested": [str],
+            "scopes_scanned": [str],
+            "programs": {...},
+            "dlls": {...},
+            "scan_date": str,
+            "error": Optional[str],
+        }
+    """
+    if params is None:
+        params = InventoryScanParams()
+
+    try:
+        # 1. 동의 확인
+        logger.info(f"Requesting consent for {len(params.scopes)} scopes")
+
+        consent_path = None
+        if params.consent_state_path:
+            from pathlib import Path
+            consent_path = Path(params.consent_state_path)
+
+        if not inventory_scan_consent(params.scopes, params.force_consent, consent_path):
+            logger.info("User declined consent")
+            return {
+                "ok": False,
+                "scopes_requested": [s.value for s in params.scopes],
+                "scopes_scanned": [],
+                "error": "user_declined_consent",
+            }
+
+        # 2. 스캔 실행
+        logger.info("Starting local inventory scan")
+        scan_data = {
+            "metadata": {
+                "scan_date": datetime.utcnow().isoformat() + "Z",
+                "scan_version": "1.0",
+                "scopes": [s.value for s in params.scopes],
+            },
+            "programs": {},
+            "dlls": {},
+        }
+
+        # 애플리케이션 감지
+        apps = detect_all()
+        for app_name, app_result in apps.items():
+            scan_data["programs"][app_name] = {
+                "name": app_result.name,
+                "installed": app_result.installed,
+                "install_paths": app_result.install_paths,
+                "version": app_result.version,
+                "com_classes": app_result.com_classes,
+                "registry_info": app_result.registry_info,
+                "detection_method": app_result.detection_method,
+            }
+
+        # DLL 매핑
+        dlls = map_all_dlls()
+        for dll_type, dll_list in dlls.items():
+            scan_data["dlls"][dll_type] = [
+                {
+                    "path": dll.path,
+                    "exists": dll.exists,
+                    "size_bytes": dll.size_bytes,
+                    "dll_type": dll.dll_type,
+                }
+                for dll in dll_list
+            ]
+
+        # 3. 개인정보 필터링
+        if params.apply_privacy_filter_flag:
+            logger.info("Applying privacy filter")
+            scan_data = apply_privacy_filter(scan_data)
+
+        # 4. 저장
+        if params.store_result:
+            from pathlib import Path
+
+            store_path = None
+            if params.inventory_path:
+                store_path = Path(params.inventory_path)
+
+            store = InventoryStore(store_path)
+            if store.save(scan_data):
+                logger.info(f"Inventory saved to {store.get_path()}")
+            else:
+                logger.warning("Failed to save inventory")
+
+        return {
+            "ok": True,
+            "scopes_requested": [s.value for s in params.scopes],
+            "scopes_scanned": [s.value for s in params.scopes],
+            "programs": scan_data.get("programs", {}),
+            "dlls": scan_data.get("dlls", {}),
+            "scan_date": scan_data.get("metadata", {}).get("scan_date"),
+        }
+
+    except Exception as e:
+        logger.error(f"Scan failed: {e}")
+        return {
+            "ok": False,
+            "scopes_requested": [s.value for s in params.scopes] if params else [],
+            "scopes_scanned": [],
+            "error": str(e),
+        }
+
+
+def compare_inventory_snapshots(params: Optional[dict] = None) -> dict:
+    """두 인벤토리 스냅샷 비교.
+
+    Args:
+        params: {
+            "inventory_path": Optional[str],  # 저장된 인벤토리 경로
+        }
+
+    Returns:
+        {
+            "ok": bool,
+            "diff": InventoryDiff (dict 형태),
+            "report": str,  # 사람이 읽을 수 있는 보고서
+            "error": Optional[str],
+        }
+    """
+    if params is None:
+        params = {}
+
+    try:
+        from pathlib import Path
+
+        # 저장된 인벤토리 로드
+        store_path = None
+        if params.get("inventory_path"):
+            store_path = Path(params["inventory_path"])
+
+        store = InventoryStore(store_path)
+        old_inventory = store.load()
+
+        if not old_inventory:
+            logger.warning("No previous inventory found")
+            return {
+                "ok": False,
+                "diff": None,
+                "report": "No previous inventory found",
+                "error": "no_previous_inventory",
+            }
+
+        # 현재 스캔 실행
+        scan_params = InventoryScanParams(
+            inventory_path=params.get("inventory_path"),
+        )
+        scan_result = run_local_inventory_scan(scan_params)
+
+        if not scan_result.get("ok"):
+            return {
+                "ok": False,
+                "diff": None,
+                "report": "",
+                "error": scan_result.get("error"),
+            }
+
+        # 비교
+        new_inventory = {
+            "metadata": {
+                "scan_date": scan_result.get("scan_date"),
+            },
+            "programs": scan_result.get("programs", {}),
+            "dlls": scan_result.get("dlls", {}),
+        }
+
+        diff = compare_inventory(old_inventory, new_inventory)
+
+        report = format_diff_report(diff)
+        logger.info(report)
+
+        return {
+            "ok": True,
+            "diff": {
+                "added_programs": diff.added_programs,
+                "removed_programs": diff.removed_programs,
+                "changed_programs": diff.changed_programs,
+                "added_dlls": diff.added_dlls,
+                "removed_dlls": diff.removed_dlls,
+                "has_changes": diff.has_changes,
+            },
+            "report": report,
+        }
+
+    except Exception as e:
+        logger.error(f"Comparison failed: {e}")
+        return {
+            "ok": False,
+            "diff": None,
+            "report": "",
+            "error": str(e),
+        }

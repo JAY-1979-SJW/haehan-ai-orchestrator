@@ -1,0 +1,184 @@
+"""로컬 인벤토리 스캔 동의 정책.
+
+- 사용자 동의 상태 관리
+- scope별 동의 추적
+- 동의 없으면 스캔 차단
+"""
+from __future__ import annotations
+
+import json
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+from agent.local_inventory.scan_scope import ScanScope, ALL_SCOPES
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_CONSENT_PATH = Path.home() / "AppData" / "Local" / "HaehanAI" / "inventory" / "consent.json"
+CONSENT_POLICY_VERSION = "1.0"
+
+
+class ConsentPolicy:
+    """사용자 동의 상태 관리."""
+
+    def __init__(self, state_path: Optional[Path] = None):
+        """초기화.
+
+        Args:
+            state_path: 동의 상태 저장 경로 (기본값: DEFAULT_CONSENT_PATH)
+        """
+        self.state_path = state_path or DEFAULT_CONSENT_PATH
+        self._scopes: set[ScanScope] = set()
+        self._granted_at: Optional[str] = None
+        self._load()
+
+    def has_consent(self, scope: ScanScope) -> bool:
+        """특정 scope에 대한 동의 여부.
+
+        Args:
+            scope: 확인할 scope
+
+        Returns:
+            동의 여부
+        """
+        return scope in self._scopes
+
+    def has_all_consent(self, scopes: list[ScanScope]) -> bool:
+        """모든 scope에 대한 동의 여부."""
+        return all(scope in self._scopes for scope in scopes)
+
+    def granted_scopes(self) -> list[ScanScope]:
+        """동의된 scope 목록."""
+        return sorted(list(self._scopes), key=lambda s: s.value)
+
+    def grant(self, scopes: list[ScanScope]) -> None:
+        """scope에 동의.
+
+        Args:
+            scopes: 동의할 scope 목록
+        """
+        self._scopes.update(scopes)
+        self._granted_at = datetime.utcnow().isoformat() + "Z"
+
+    def revoke(self, scope: ScanScope) -> None:
+        """scope 동의 철회."""
+        self._scopes.discard(scope)
+
+    def save(self) -> bool:
+        """동의 상태를 파일에 저장.
+
+        Returns:
+            성공 여부
+        """
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+
+            data = {
+                "version": CONSENT_POLICY_VERSION,
+                "scopes": [s.value for s in self.granted_scopes()],
+                "granted_at": self._granted_at,
+                "saved_at": datetime.utcnow().isoformat() + "Z",
+            }
+
+            with open(self.state_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"Saved consent state to {self.state_path}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to save consent state: {e}")
+            return False
+
+    def _load(self) -> None:
+        """파일에서 동의 상태 로드."""
+        try:
+            if not self.state_path.exists():
+                logger.info(f"Consent state file not found: {self.state_path}")
+                return
+
+            with open(self.state_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            scopes = data.get("scopes", [])
+            self._scopes = {
+                ScanScope(s) for s in scopes
+                if s in {scope.value for scope in ALL_SCOPES}
+            }
+            self._granted_at = data.get("granted_at")
+
+            logger.info(f"Loaded consent state: {len(self._scopes)} scope(s)")
+
+        except Exception as e:
+            logger.warning(f"Failed to load consent state: {e}")
+            self._scopes = set()
+
+
+def inventory_scan_consent(
+    scopes: list[ScanScope],
+    force_dialog: bool = False,
+    state_path: Optional[Path] = None,
+) -> bool:
+    """사용자 동의 획득 및 확인.
+
+    Args:
+        scopes: 요청할 scope 목록
+        force_dialog: True면 저장된 동의 무시하고 재확인
+        state_path: 동의 상태 파일 경로
+
+    Returns:
+        모든 scope에 대한 동의 여부
+    """
+    policy = ConsentPolicy(state_path)
+
+    # 모든 scope에 동의 있으면 패스
+    if not force_dialog and policy.has_all_consent(scopes):
+        logger.info("Using existing consent")
+        return True
+
+    # 동의 대화
+    print()
+    print("=" * 70)
+    print("📋 로컬 자산 인벤토리 스캔")
+    print("=" * 70)
+    print()
+
+    print("다음 정보를 수집합니다 (로컬만 저장, 서버 전송 없음):")
+    for scope in scopes:
+        if scope == ScanScope.PROGRAMS:
+            print("  ✓ 설치된 프로그램 목록")
+        elif scope == ScanScope.COM_REGISTRY:
+            print("  ✓ COM 클래스 등록 상태")
+        elif scope == ScanScope.HANCOM:
+            print("  ✓ 한컴 설치 상태 및 버전")
+        elif scope == ScanScope.OFFICE:
+            print("  ✓ Office 설치 상태 및 버전")
+        elif scope == ScanScope.CAD:
+            print("  ✓ AutoCAD 설치 상태")
+        elif scope == ScanScope.USER_SELECTED_FOLDERS:
+            print("  ✓ 사용자 선택 폴더 메타데이터")
+    print()
+
+    print("수집되지 않는 정보:")
+    print("  ✗ 파일 내용")
+    print("  ✗ 비밀번호, 인증서, 쿠키")
+    print("  ✗ 브라우저 히스토리")
+    print("  ✗ 개인 정보")
+    print()
+
+    print("저장 위치: 로컬 PC (%LOCALAPPDATA%\\HaehanAI\\inventory)")
+    print("전송: 없음 (오프라인 사용)")
+    print("삭제: 사용자가 언제든 삭제 가능")
+    print()
+
+    response = input("계속 진행하시겠습니까? (y/n): ").strip().lower()
+    if response != "y":
+        logger.info("User declined consent")
+        return False
+
+    policy.grant(scopes)
+    policy.save()
+    logger.info(f"User granted consent for {len(scopes)} scope(s)")
+    return True
