@@ -43,6 +43,7 @@ class TestTaskExecutorExcelPolicyFlow:
             "cell_ref": "A1",
             "value": "test",
             "approval_token": "valid_token",
+            "save_as": "/work/test_modified.xlsx",
             "dry_run": False,
             "allow_write": True,
         }
@@ -50,7 +51,7 @@ class TestTaskExecutorExcelPolicyFlow:
         with patch("agent.task_executor.com.open_excel_app") as mock_open_app, \
              patch("agent.task_executor.com.open_workbook") as mock_open_wb, \
              patch("agent.task_executor.com.write_cell") as mock_write, \
-             patch("agent.task_executor.com.save_workbook") as mock_save, \
+             patch("agent.task_executor.com.save_workbook_as") as mock_save_as, \
              patch("agent.task_executor.com.quit_excel"), \
              patch("agent.task_executor.com.close_workbook"):
             mock_app = MagicMock()
@@ -58,7 +59,7 @@ class TestTaskExecutorExcelPolicyFlow:
             mock_open_app.return_value = (mock_app, None)
             mock_open_wb.return_value = (mock_wb, None)
             mock_write.return_value = None
-            mock_save.return_value = None
+            mock_save_as.return_value = None
 
             result = task_executor.execute_task(task)
 
