@@ -55,6 +55,25 @@ interface ExecuteResponse {
 }
 
 /**
+ * cleanup_executor_api.py 경로 해석.
+ * 고정 후보 경로에서 첫 번째 존재하는 파일 반환.
+ */
+function resolveCleanupExecutorPath(): string {
+  const candidates = [
+    path.resolve(process.cwd(), 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
+    path.resolve(process.cwd(), '..', 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
+  ];
+
+  const found = candidates.find((candidate) => fs.existsSync(candidate));
+
+  if (!found) {
+    throw new Error('cleanup_executor_api.py를 찾을 수 없습니다');
+  }
+
+  return found;
+}
+
+/**
  * 승인 토큰 검증 (UUID suffix 포함).
  */
 function validateApprovalToken(token: string): boolean {
@@ -77,15 +96,7 @@ function callPythonExecutor(inputData: Record<string, unknown>): Promise<Record<
   return new Promise((resolve, reject) => {
     try {
       // Python 스크립트 경로
-      const pythonScriptPath = path.resolve(
-        'agent/local_inventory/file_map/cleanup_executor_api.py'
-      );
-
-      if (!fs.existsSync(pythonScriptPath)) {
-        throw new Error(
-          `cleanup_executor_api.py를 찾을 수 없습니다: ${pythonScriptPath}`
-        );
-      }
+      const pythonScriptPath = resolveCleanupExecutorPath();
 
       const child = spawn('python', [pythonScriptPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
