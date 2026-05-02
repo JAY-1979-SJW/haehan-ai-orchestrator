@@ -1,7 +1,9 @@
-"""프로그램 설치 실행 엔진 (dry_run 제어, 실행 전 검증)."""
+"""프로그램 설치 실행 엔진 (dry_run 제어, 실행 전 검증, 1D: 카탈로그 기반)."""
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass, asdict
+from pathlib import Path
 from typing import Optional, List
 
 from .. import errors as _err
@@ -11,6 +13,10 @@ from .install_plan import InstallPlanBuilder
 from .install_sources import INSTALL_SOURCES
 from .detector import ProgramDetector
 from .install_validator import InstallRequestValidator
+from .download_provider import SoftwareDownloader
+from .installer_verifier import InstallerFileVerifier
+from .post_install_verifier import PostInstallVerifier
+from .catalog import get_program
 
 
 @dataclass(frozen=True)
@@ -21,6 +27,8 @@ class InstallExecutionRequest:
     dry_run: bool = True
     user_confirmed_install: bool = False
     local_installer_path: Optional[str] = None
+    download_if_missing: bool = False
+    user_confirmed_download: bool = False
 
 
 @dataclass(frozen=True)
@@ -152,11 +160,12 @@ class InstallExecutor:
                 next_step='dry_run 계획 검토 후 실제 실행 단계에서 진행',
             )
 
-        # dry_run=false: Docker 전용 실행 (1D)
-        if request.program_id == 'docker' and request.user_confirmed_install:
-            return self._execute_docker(request, target_plan)
+        # dry_run=false: 카탈로그 기반 통합 실행 (1D)
+        program = get_program(request.program_id)
+        if program and program.supports_auto_install and request.user_confirmed_install:
+            return self._execute_install(request, target_plan, program)
 
-        # dry_run=false: 1C에서는 execution_not_enabled_yet 차단
+        # dry_run=false: supports_auto_install=false는 차단
         return InstallExecutionResult(
             ok=False,
             dry_run=False,
@@ -170,7 +179,7 @@ class InstallExecutor:
             blocked_actions=['download', 'install_execute', 'admin_elevation'],
             current_status='missing',
             install_required=True,
-            next_step='설치 실행은 1D 단계에서 프로그램별로 개별 활성화',
+            next_step=f'{target_plan.name}은 자동 설치를 지원하지 않습니다.',
             error=_err.EXECUTION_NOT_ENABLED_YET,
         )
 
@@ -218,8 +227,17 @@ class InstallExecutor:
         Returns:
             검증 결과 dict
         """
+        program = get_program(program_id)
+        if not program:
+            return {
+                'program_id': program_id,
+                'installed': False,
+                'version': 'unknown',
+                'path': 'unknown',
+            }
+
         detector = ProgramDetector()
-        installed, version, path = detector.check_program(program_id)
+        installed, version, path = detector.check_program(program, check_version=False)
 
         return {
             'program_id': program_id,
@@ -228,38 +246,34 @@ class InstallExecutor:
             'path': path or 'unknown',
         }
 
-    def _execute_docker(
+    def _execute_install(
         self,
         request: InstallExecutionRequest,
         target_plan,
+        program,
     ) -> InstallExecutionResult:
-        """Docker Desktop 실제 설치 실행 (1D).
+        """통합 설치 실행 (1D: 카탈로그 기반).
 
         Args:
             request: 설치 요청
             target_plan: 설치 계획
+            program: 프로그램 정의
 
         Returns:
             설치 결과
         """
-        from .docker_installer import DockerInstaller
+        installer_path = request.local_installer_path
 
-        installer = DockerInstaller()
+        # 현재 상태 확인
+        detector = ProgramDetector()
+        installed_before, _, _ = detector.check_program(program, check_version=False)
 
-        # Docker 설치 실행
-        docker_result = installer.run_install(
-            installer_path=request.local_installer_path,
-            approval_token=request.approval_token,
-            user_confirmed_install=request.user_confirmed_install,
-        )
-
-        # 결과 매핑
-        if docker_result.status == 'already_installed':
+        if installed_before:
             return InstallExecutionResult(
                 ok=True,
                 dry_run=False,
-                program_id='docker',
-                program_name='Docker Desktop',
+                program_id=request.program_id,
+                program_name=target_plan.name,
                 execution_enabled=False,
                 requires_approval=False,
                 requires_admin=False,
@@ -268,58 +282,139 @@ class InstallExecutor:
                 blocked_actions=[],
                 current_status='installed',
                 install_required=False,
-                next_step=docker_result.next_step,
+                next_step=f'{target_plan.name}은 이미 설치되어 있습니다.',
             )
 
-        if docker_result.status == 'download_required':
+        # 설치파일 경로 검증
+        if not installer_path:
             return InstallExecutionResult(
                 ok=False,
                 dry_run=False,
-                program_id='docker',
-                program_name='Docker Desktop',
+                program_id=request.program_id,
+                program_name=target_plan.name,
                 execution_enabled=False,
                 requires_approval=True,
-                requires_admin=True,
+                requires_admin=program.admin_required_for_install,
                 requires_reboot=False,
                 planned_steps=[],
                 blocked_actions=['download'],
                 current_status='missing',
                 install_required=True,
-                next_step=docker_result.next_step,
-                error=docker_result.error,
+                next_step=f'{target_plan.name} 설치파일이 필요합니다.',
+                error='installer_path_required',
             )
 
-        if docker_result.status in ('install_completed', 'install_started'):
+        verifier = InstallerFileVerifier()
+        valid, error_code = verifier.validate_installer_path(request.program_id, installer_path)
+        if not valid:
+            return InstallExecutionResult(
+                ok=False,
+                dry_run=False,
+                program_id=request.program_id,
+                program_name=target_plan.name,
+                execution_enabled=False,
+                requires_approval=True,
+                requires_admin=program.admin_required_for_install,
+                requires_reboot=False,
+                planned_steps=[],
+                blocked_actions=['install_execute'],
+                current_status='missing',
+                install_required=True,
+                next_step='설치파일 검증 실패',
+                error=error_code or 'installer_validation_failed',
+            )
+
+        # 설치 실행 (Start-Process -Verb RunAs)
+        success, error = self._execute_installer_file(installer_path)
+
+        # 설치 후 상태 확인
+        detector = ProgramDetector()
+        installed_after, version, _ = detector.check_program(program, check_version=False)
+
+        # 설치 후 검증
+        post_verifier = PostInstallVerifier()
+        verification = post_verifier.verify(request.program_id)
+
+        # 설치 성공
+        if installed_after:
             return InstallExecutionResult(
                 ok=True,
                 dry_run=False,
-                program_id='docker',
-                program_name='Docker Desktop',
+                program_id=request.program_id,
+                program_name=target_plan.name,
                 execution_enabled=False,
                 requires_approval=False,
                 requires_admin=False,
-                requires_reboot=docker_result.reboot_may_be_required,
+                requires_reboot=verification.reboot_may_be_required,
                 planned_steps=[],
                 blocked_actions=[],
-                current_status='installed' if docker_result.docker_cli_installed else 'missing',
-                install_required=not docker_result.docker_cli_installed,
-                next_step=docker_result.next_step,
+                current_status='installed',
+                install_required=False,
+                next_step=verification.message,
             )
 
-        # install_failed
+        # 설치 실패 (success=true이지만 설치 미확인 → 재부팅 필요 가능)
+        if success:
+            return InstallExecutionResult(
+                ok=False,
+                dry_run=False,
+                program_id=request.program_id,
+                program_name=target_plan.name,
+                execution_enabled=False,
+                requires_approval=False,
+                requires_admin=False,
+                requires_reboot=True,
+                planned_steps=[],
+                blocked_actions=[],
+                current_status='missing',
+                install_required=True,
+                next_step=f'{target_plan.name} 설치 후 시스템 재부팅이 필요할 수 있습니다.',
+                error='install_requires_reboot',
+            )
+
+        # 설치 실패 (error)
         return InstallExecutionResult(
             ok=False,
             dry_run=False,
-            program_id='docker',
-            program_name='Docker Desktop',
+            program_id=request.program_id,
+            program_name=target_plan.name,
             execution_enabled=False,
             requires_approval=True,
-            requires_admin=True,
-            requires_reboot=docker_result.reboot_may_be_required,
+            requires_admin=program.admin_required_for_install,
+            requires_reboot=False,
             planned_steps=[],
             blocked_actions=[],
             current_status='missing',
             install_required=True,
-            next_step=docker_result.next_step,
-            error=docker_result.error,
+            next_step=f'{target_plan.name} 설치 실패. 수동 설치를 권장합니다.',
+            error=error or 'install_unknown_error',
         )
+
+    def _execute_installer_file(self, installer_path: str) -> tuple[bool, Optional[str]]:
+        """설치파일 실행 (Windows Start-Process -Verb RunAs).
+
+        Args:
+            installer_path: 설치파일 경로
+
+        Returns:
+            (success, error_message)
+
+        Note:
+            UAC 팝업은 사용자가 직접 승인합니다.
+            관리자 비밀번호 저장/전달 없음.
+        """
+        try:
+            result = subprocess.run(
+                [
+                    'powershell',
+                    '-Command',
+                    f'Start-Process -FilePath "{installer_path}" -Verb RunAs -Wait',
+                ],
+                timeout=600,
+                capture_output=True,
+            )
+            return result.returncode == 0, None
+        except subprocess.TimeoutExpired:
+            return False, 'install_timeout'
+        except Exception as e:
+            return False, f'install_error:{type(e).__name__}'
