@@ -131,8 +131,8 @@ class TestDockerSafety:
         for word in forbidden:
             assert word not in source
 
-    def test_runAs_only_in_docker_installer(self):
-        """Start-Process.*RunAs는 docker_installer에만 존재."""
+    def test_runAs_in_install_executor(self):
+        """Start-Process -Verb RunAs는 공통 install_executor에 있음 (1D: 통합 설치)."""
         import inspect
         from agent.local_software_manager.docker_installer import DockerInstaller
         from agent.local_software_manager.install_executor import InstallExecutor
@@ -144,8 +144,9 @@ class TestDockerSafety:
         assert 'Start-Process' in docker_source
         assert 'Verb RunAs' in docker_source
 
-        # install_executor에는 Start-Process가 없음
-        assert 'Start-Process' not in executor_source
+        # 1D: install_executor도 공통 설치 엔진이므로 Start-Process -Verb RunAs가 있음
+        assert 'Start-Process' in executor_source
+        assert 'Verb RunAs' in executor_source
 
     def test_docker_download_no_runAs(self):
         """docker_download.py에는 RunAs가 없음."""
