@@ -15,6 +15,11 @@ from .install_executor import (
     InstallExecutionRequest,
     InstallExecutionResult,
 )
+from .docker_installer import (
+    DockerInstaller,
+    DockerInstallResult,
+    DockerInstallerValidator,
+)
 
 __all__ = [
     'SoftwareProgram',
@@ -37,4 +42,7 @@ __all__ = [
     'InstallExecutor',
     'InstallExecutionRequest',
     'InstallExecutionResult',
+    'DockerInstaller',
+    'DockerInstallResult',
+    'DockerInstallerValidator',
 ]
