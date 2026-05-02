@@ -11,20 +11,20 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from agent.local_inventory.app_detector import detect_all
-from agent.local_inventory.change_watcher import (
+from .app_detector import detect_all
+from .change_watcher import (
     InventoryDiff,
     compare_inventory,
     format_diff_report,
 )
-from agent.local_inventory.consent_policy import (
+from .consent_policy import (
     inventory_scan_consent,
 )
-from agent.local_inventory.dll_mapper import map_all_dlls
-from agent.local_inventory.inventory_store import InventoryStore
-from agent.local_inventory.privacy_filter import apply_privacy_filter
-from agent.local_inventory.scan_scope import ALL_SCOPES, ScanScope
-from agent.local_inventory.scan_level import (
+from .dll_mapper import map_all_dlls
+from .inventory_store import InventoryStore
+from .privacy_filter import apply_privacy_filter
+from .scan_scope import ALL_SCOPES, ScanScope
+from .scan_level import (
     ScanLevel,
     DEFAULT_SCAN_LEVEL,
     get_level_config,

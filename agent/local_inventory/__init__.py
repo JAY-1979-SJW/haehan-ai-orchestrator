@@ -7,15 +7,15 @@
 - 서버 전송 안 함
 - 로컬만 저장
 """
-from agent.local_inventory.scanner import scan_local_inventory
-from agent.local_inventory.inventory import LocalInventory
-from agent.local_inventory.diagnostics import (
+from .scanner import scan_local_inventory
+from .inventory import LocalInventory
+from .diagnostics import (
     run_local_inventory_scan,
     compare_inventory_snapshots,
     InventoryScanParams,
 )
-from agent.local_inventory.scan_scope import ScanScope
-from agent.local_inventory.inventory_store import InventoryStore
+from .scan_scope import ScanScope
+from .inventory_store import InventoryStore
 
 __all__ = [
     # 기존 (호환성 유지)

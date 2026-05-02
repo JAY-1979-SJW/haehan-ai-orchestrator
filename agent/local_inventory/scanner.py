@@ -10,15 +10,15 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from agent.local_inventory.inventory import LocalInventory
-from agent.local_inventory.metadata import (
+from .inventory import LocalInventory
+from .metadata import (
     get_file_metadata,
     get_folder_metadata,
     check_com_class_installed,
     get_registry_value,
     list_registry_subkeys,
 )
-from agent.local_inventory.policy import (
+from .policy import (
     SCAN_PATHS,
     USER_DOCUMENT_PATHS,
     REGISTRY_PATHS,

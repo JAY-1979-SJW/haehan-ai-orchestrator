@@ -13,8 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from agent.local_inventory.scan_scope import ScanScope, ALL_SCOPES
-from agent.local_inventory.scan_level import ScanLevel
+from .scan_scope import ScanScope, ALL_SCOPES
+from .scan_level import ScanLevel
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ def inventory_scan_consent(
 
     # 레벨 동의 검증 (requires_explicit_consent=True면 force_dialog 강제)
     if level:
-        from agent.local_inventory.scan_level import get_level_config
+        from .scan_level import get_level_config
 
         level_config = get_level_config(level)
         if level_config.requires_explicit_consent:
@@ -199,14 +199,14 @@ def inventory_scan_consent(
     print("=" * 70)
     print("📋 로컬 자산 인벤토리 스캔")
     if level:
-        from agent.local_inventory.scan_level import get_level_config
+        from .scan_level import get_level_config
         level_config = get_level_config(level)
         print(f"   [레벨 {level.value}: {level_config.description}]")
     print("=" * 70)
     print()
 
     if level:
-        from agent.local_inventory.scan_level import get_level_config
+        from .scan_level import get_level_config
         level_config = get_level_config(level)
         print(f"스캔 레벨: {level.name}")
         print(f"설명: {level_config.description}")

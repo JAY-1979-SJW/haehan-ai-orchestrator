@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 
-from agent.local_inventory.metadata import check_com_class_installed
+from .metadata import check_com_class_installed
 
 logger = logging.getLogger(__name__)
 

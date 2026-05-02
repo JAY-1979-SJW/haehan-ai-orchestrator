@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum
 
-from agent.local_inventory.scan_scope import ScanScope
+from .scan_scope import ScanScope
 
 
 class ScanLevel(IntEnum):

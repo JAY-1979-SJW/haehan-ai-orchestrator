@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from agent.local_inventory.filesystem_scanner import scan_file
-from agent.local_inventory.policy import SCAN_PATHS
+from .filesystem_scanner import scan_file
+from .policy import SCAN_PATHS
 
 logger = logging.getLogger(__name__)
 
