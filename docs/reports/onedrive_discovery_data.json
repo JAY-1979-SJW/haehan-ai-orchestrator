@@ -1,0 +1,376 @@
+[
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive",
+    "folder_name": "OneDrive",
+    "direct_file_count": 13,
+    "direct_folder_count": 29,
+    "total_size_mb": 1.8,
+    "extension_distribution": {
+      ".docx": 4,
+      ".xlsx": 2,
+      ".ini": 1,
+      ".txt": 1,
+      ".md": 1,
+      ".pptx": 1,
+      ".lnk": 2,
+      ".hwp": 1
+    },
+    "last_modified": "2026-04-29T12:01:10.079456",
+    "business_score": 4.5,
+    "business_categories": [
+      "document",
+      "spreadsheet"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\00. PROJECT_MANAGEMENT",
+    "folder_name": "00. PROJECT_MANAGEMENT",
+    "direct_file_count": 3,
+    "direct_folder_count": 2,
+    "total_size_mb": 0.02,
+    "extension_distribution": {
+      ".bat": 1,
+      ".md": 1,
+      ".docx": 1
+    },
+    "last_modified": "2026-04-06T18:30:30",
+    "business_score": 1.0,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\01. PROJECT_FILE",
+    "folder_name": "01. PROJECT_FILE",
+    "direct_file_count": 19,
+    "direct_folder_count": 17,
+    "total_size_mb": 12.83,
+    "extension_distribution": {
+      ".xlsm": 1,
+      ".docx": 9,
+      ".txt": 1,
+      ".xlsx": 4,
+      ".bak": 1,
+      ".pdf": 3
+    },
+    "last_modified": "2026-04-21T15:30:50.742327",
+    "business_score": 9.0,
+    "business_categories": [
+      "document",
+      "spreadsheet"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\01. 작업일보 신설",
+    "folder_name": "01. 작업일보 신설",
+    "direct_file_count": 10,
+    "direct_folder_count": 11,
+    "total_size_mb": 22.59,
+    "extension_distribution": {
+      ".pdf": 8,
+      ".db": 1,
+      "[no_ext]": 1
+    },
+    "last_modified": "2026-02-26T09:52:19",
+    "business_score": 4.0,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\02. PHOTO_MOVIE",
+    "folder_name": "02. PHOTO_MOVIE",
+    "direct_file_count": 0,
+    "direct_folder_count": 2,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.575343",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\03. PYTHON",
+    "folder_name": "03. PYTHON",
+    "direct_file_count": 8,
+    "direct_folder_count": 74,
+    "total_size_mb": 64.89,
+    "extension_distribution": {
+      ".txt": 2,
+      ".zip": 2,
+      "[no_ext]": 2,
+      ".md": 1,
+      ".docx": 1
+    },
+    "last_modified": "2026-04-04T08:50:46.458917",
+    "business_score": 2.0,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\08. 녹취록 및 창고대용",
+    "folder_name": "08. 녹취록 및 창고대용",
+    "direct_file_count": 0,
+    "direct_folder_count": 3,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.597438",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\AppData",
+    "folder_name": "AppData",
+    "direct_file_count": 0,
+    "direct_folder_count": 1,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.598163",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\Apps",
+    "folder_name": "Apps",
+    "direct_file_count": 0,
+    "direct_folder_count": 1,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.598641",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\help",
+    "folder_name": "help",
+    "direct_file_count": 17,
+    "direct_folder_count": 2,
+    "total_size_mb": 0.94,
+    "extension_distribution": {
+      ".js": 9,
+      ".css": 3,
+      ".html": 2,
+      ".xsl": 3
+    },
+    "last_modified": "2025-08-13T00:54:00",
+    "business_score": 2.7,
+    "business_categories": [
+      "code"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\material-inspection-system",
+    "folder_name": "material-inspection-system",
+    "direct_file_count": 2,
+    "direct_folder_count": 7,
+    "total_size_mb": 0.01,
+    "extension_distribution": {
+      ".md": 2
+    },
+    "last_modified": "2025-08-23T11:58:49",
+    "business_score": 1.0,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\PC이전백업",
+    "folder_name": "PC이전백업",
+    "direct_file_count": 0,
+    "direct_folder_count": 3,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.607964",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\presets",
+    "folder_name": "presets",
+    "direct_file_count": 0,
+    "direct_folder_count": 5,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.609929",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\program",
+    "folder_name": "program",
+    "direct_file_count": 197,
+    "direct_folder_count": 11,
+    "total_size_mb": 383.87,
+    "extension_distribution": {
+      ".dll": 137,
+      ".py": 9,
+      ".ini": 11,
+      ".txt": 1,
+      ".exe": 27,
+      ".png": 2,
+      ".xml": 1,
+      ".class": 1,
+      ".pyd": 1,
+      ".pyi": 1,
+      ".rdb": 2,
+      ".bin": 2,
+      ".com": 2
+    },
+    "last_modified": "2025-08-13T11:57:44",
+    "business_score": 3.6,
+    "business_categories": [
+      "document",
+      "code"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\readmes",
+    "folder_name": "readmes",
+    "direct_file_count": 4,
+    "direct_folder_count": 0,
+    "total_size_mb": 0.06,
+    "extension_distribution": {
+      ".txt": 4
+    },
+    "last_modified": "2025-08-13T11:57:44",
+    "business_score": 2.0,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\share",
+    "folder_name": "share",
+    "direct_file_count": 0,
+    "direct_folder_count": 31,
+    "total_size_mb": 0.0,
+    "extension_distribution": {},
+    "last_modified": "2026-05-02T10:35:03.639108",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\_ARCHIVE",
+    "folder_name": "_ARCHIVE",
+    "direct_file_count": 4,
+    "direct_folder_count": 5,
+    "total_size_mb": 0.01,
+    "extension_distribution": {
+      ".bat": 3,
+      ".ini": 1
+    },
+    "last_modified": "2025-09-14T22:42:13",
+    "business_score": 0.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\견적프로그램_마스터",
+    "folder_name": "견적프로그램_마스터",
+    "direct_file_count": 3,
+    "direct_folder_count": 5,
+    "total_size_mb": 0.04,
+    "extension_distribution": {
+      ".md": 3
+    },
+    "last_modified": "2025-10-07T22:00:19",
+    "business_score": 1.5,
+    "business_categories": [
+      "document"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\문서",
+    "folder_name": "문서",
+    "direct_file_count": 25,
+    "direct_folder_count": 25,
+    "total_size_mb": 1.64,
+    "extension_distribution": {
+      ".txt": 1,
+      ".docx": 7,
+      ".ini": 1,
+      ".dwl": 1,
+      ".dwl2": 1,
+      ".zip": 1,
+      ".pdf": 2,
+      ".log": 2,
+      ".cell": 1,
+      ".hwpx": 1,
+      ".show": 1,
+      ".hwdt": 1,
+      ".pptx": 1,
+      ".md": 1,
+      ".xlsx": 3
+    },
+    "last_modified": "2026-04-30T10:32:45.775782",
+    "business_score": 7.5,
+    "business_categories": [
+      "document",
+      "spreadsheet"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\바탕 화면",
+    "folder_name": "바탕 화면",
+    "direct_file_count": 11,
+    "direct_folder_count": 6,
+    "total_size_mb": 10.29,
+    "extension_distribution": {
+      ".xlsx": 8,
+      ".cuix": 1,
+      ".ini": 1,
+      ".lnk": 1
+    },
+    "last_modified": "2026-04-30T10:32:46.332192",
+    "business_score": 4.0,
+    "business_categories": [
+      "spreadsheet"
+    ]
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\사진",
+    "folder_name": "사진",
+    "direct_file_count": 15,
+    "direct_folder_count": 12,
+    "total_size_mb": 14.67,
+    "extension_distribution": {
+      ".jpg": 11,
+      ".png": 2,
+      ".ini": 1,
+      ".zip": 1
+    },
+    "last_modified": "2026-04-30T10:32:45.797135",
+    "business_score": 2.6,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\송탄고 작업 사진",
+    "folder_name": "송탄고 작업 사진",
+    "direct_file_count": 93,
+    "direct_folder_count": 0,
+    "total_size_mb": 24.45,
+    "extension_distribution": {
+      ".png": 93
+    },
+    "last_modified": "2026-04-14T14:39:57.202739",
+    "business_score": 10.0,
+    "business_categories": []
+  },
+  {
+    "folder_path": "C:\\Users\\skyjw\\OneDrive\\해한AI-엔지니어링-시스템",
+    "folder_name": "해한AI-엔지니어링-시스템",
+    "direct_file_count": 6,
+    "direct_folder_count": 3,
+    "total_size_mb": 0.71,
+    "extension_distribution": {
+      ".py": 3,
+      ".json": 2,
+      ".md": 1
+    },
+    "last_modified": "2025-08-12T16:36:59",
+    "business_score": 1.4,
+    "business_categories": [
+      "document",
+      "code"
+    ]
+  }
+]
