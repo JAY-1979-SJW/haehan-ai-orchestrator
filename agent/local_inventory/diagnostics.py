@@ -69,6 +69,18 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
         params = InventoryScanParams()
 
     try:
+        # 0. 레벨에 맞는 스코프 필터링
+        level_config = get_level_config(params.scan_level)
+        allowed = level_config.allowed_scopes
+        filtered_scopes = [s for s in params.scopes if s in allowed]
+        if filtered_scopes:
+            params.scopes = filtered_scopes
+            logger.info(f"Filtered scopes for {params.scan_level.name}: {[s.value for s in params.scopes]}")
+        else:
+            # 허용된 스코프가 없으면 레벨의 기본 스코프 사용
+            params.scopes = list(allowed)
+            logger.info(f"Auto-set scopes for {params.scan_level.name}: {[s.value for s in params.scopes]}")
+
         # 1. 레벨 검증
         logger.info(f"Validating scan level: {params.scan_level.name}")
 

@@ -1,24 +1,106 @@
 """한컴 로컬 설치 종합 진단 (orchestration).
 
 Registry, COM, 설치 경로 정보를 통합하여 한컴 설치/COM/보안모듈 상태 진단.
+local_inventory가 있으면 우선 사용하여 비표준 경로 문제 해결.
 모든 작업은 read-only 진단.
 """
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from . import registry, com, installation
 
 logger = logging.getLogger(__name__)
 
 
-def diagnose_hancom_installation() -> Dict[str, Any]:
+def _extract_hancom_from_inventory() -> Optional[Dict[str, Any]]:
+    """Local Inventory에서 한컴 정보 추출.
+
+    Returns:
+        한컴 진단 결과 dict 또는 None (없을 시)
+    """
+    try:
+        from agent.local_inventory.inventory_store import InventoryStore
+
+        store = InventoryStore()
+        inventory = store.load()
+        if not inventory:
+            logger.info("Local inventory not found")
+            return None
+
+        programs = inventory.get("programs", {})
+        hancom = programs.get("hancom", {})
+        if not hancom or not hancom.get("installed"):
+            logger.info("한컴 정보 없음 in inventory")
+            return None
+
+        logger.info("한컴 정보 inventory에서 발견")
+
+        # Inventory 기반 결과 구성
+        installed_paths = hancom.get("install_paths", [])
+        com_classes = hancom.get("com_classes", {})
+        registry_info = hancom.get("registry_info", {})
+
+        # COM 상태
+        available_com = [k for k, v in com_classes.items() if v]
+        com_status = {
+            "win32com_available": True,
+            "available_classes": available_com,
+        }
+
+        # 설치 경로 및 DLL
+        dlls = inventory.get("dlls", {})
+        hwp_dlls = dlls.get("hwp_automation", [])
+        primary_dll = hwp_dlls[0].get("path") if hwp_dlls else None
+        dll_candidates = {d.get("path"): True for d in hwp_dlls if isinstance(d, dict)}
+
+        installation_status = {
+            "installation_paths": installed_paths,
+            "primary_dll": primary_dll,
+            "dll_candidates": dll_candidates,
+        }
+
+        # 보안모듈 (inventory에는 없지만, COM 등록되면 설정된 것으로 판정)
+        security_module = {
+            "registered": len(available_com) > 0,  # COM이 있으면 보안모듈 등록된 것으로 판정
+            "registry_path_used": "HKEY_LOCAL_MACHINE\\SOFTWARE\\HNC\\Hwp" if available_com else "",
+            "module_names": available_com,
+            "details": {},
+        }
+
+        registry_status = {
+            f"{k}": v for k, v in registry_info.items()
+            if k in ("DisplayName", "Version", "Path")
+        }
+        registry_status = registry_status or {"hancom_registered": len(installed_paths) > 0}
+
+        return {
+            "installed": True,
+            "source": "inventory",
+            "registry_status": registry_status,
+            "com_status": com_status,
+            "installation_status": installation_status,
+            "security_module": security_module,
+            "summary": f"한컴 {hancom.get('version', '?')} (Inventory)",
+            "recommendations": [],
+        }
+
+    except Exception as e:
+        logger.exception(f"Failed to extract hancom from inventory: {e}")
+        return None
+
+
+def diagnose_hancom_installation(use_inventory: bool = True) -> Dict[str, Any]:
     """한컴 설치 상태 종합 진단.
+
+    Args:
+        use_inventory: local_inventory 사용 여부 (기본값: True)
 
     Returns:
         {
             "installed": bool,
+            "source": str,  # "inventory" | "discovery"
             "registry_status": {...},
             "com_status": {...},
             "installation_status": {...},
@@ -29,6 +111,7 @@ def diagnose_hancom_installation() -> Dict[str, Any]:
     """
     result = {
         "installed": False,
+        "source": "discovery",
         "registry_status": {},
         "com_status": {},
         "installation_status": {},
@@ -38,6 +121,16 @@ def diagnose_hancom_installation() -> Dict[str, Any]:
     }
 
     logger.info("=== 한컴 로컬 설치 종합 진단 시작 ===")
+
+    # 0. Local Inventory 시도 (우선)
+    if use_inventory:
+        hancom_from_inv = _extract_hancom_from_inventory()
+        if hancom_from_inv:
+            logger.info("[0] Local Inventory에서 한컴 정보 발견")
+            result["source"] = "inventory"
+            result.update(hancom_from_inv)
+            logger.info("=== 종합 진단 완료 (Inventory) ===")
+            return result
 
     # 1. Registry 상태 확인
     logger.info("[1] Registry 상태 확인...")
@@ -85,7 +178,7 @@ def diagnose_hancom_installation() -> Dict[str, Any]:
     result["recommendations"] = _generate_recommendations(result)
     logger.info(f"Recommendations: {result['recommendations']}")
 
-    logger.info("=== 종합 진단 완료 ===")
+    logger.info("=== 종합 진단 완료 (Discovery) ===")
     return result
 
 
