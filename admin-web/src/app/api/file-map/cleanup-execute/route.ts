@@ -58,7 +58,7 @@ interface ExecuteResponse {
  * 승인 토큰 검증.
  */
 function validateApprovalToken(token: string): boolean {
-  return token && token.startsWith('user-approved-cleanup-');
+  return !!(token && token.startsWith('user-approved-cleanup-'));
 }
 
 /**
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
     }
 
     // Python 실행
-    const pythonResult = await callPythonExecutor({
+    const pythonResult = (await callPythonExecutor({
       preflight_id,
       package_id,
       approval_token,
@@ -179,30 +179,33 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
       plans,
       base_target_dir,
       include_sensitive,
-    });
+    })) as Record<string, any>;
 
     if (!pythonResult.ok) {
+      const errorMsg = typeof pythonResult.error === 'string'
+        ? pythonResult.error
+        : '알 수 없는 오류';
       return NextResponse.json(
-        { ok: false, error: pythonResult.error || '알 수 없는 오류' },
+        { ok: false, error: errorMsg },
         { status: 400 }
       );
     }
 
-    const result = pythonResult.result;
+    const result = pythonResult.result as Record<string, any>;
 
     return NextResponse.json({
       ok: true,
-      run_id: result.run_id,
-      package_id: result.package_id,
-      timestamp: result.timestamp,
-      success_count: result.success_count,
-      failed_count: result.failed_count,
-      skipped_count: result.skipped_count,
-      conflict_count: result.conflict_count,
-      succeeded: result.succeeded,
-      failed: result.failed,
-      skipped: result.skipped,
-      conflicts: result.conflicts,
+      run_id: result.run_id as string,
+      package_id: result.package_id as string,
+      timestamp: result.timestamp as string,
+      success_count: result.success_count as number,
+      failed_count: result.failed_count as number,
+      skipped_count: result.skipped_count as number,
+      conflict_count: result.conflict_count as number,
+      succeeded: result.succeeded as Array<any>,
+      failed: result.failed as Array<any>,
+      skipped: result.skipped as Array<any>,
+      conflicts: result.conflicts as Array<any>,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
