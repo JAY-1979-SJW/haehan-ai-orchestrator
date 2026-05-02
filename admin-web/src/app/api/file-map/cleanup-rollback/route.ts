@@ -51,6 +51,14 @@ function loadManifest(runId: string): RollbackManifest | null {
 }
 
 /**
+ * UUID 형식 검증.
+ */
+function isValidUuid(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
+/**
  * GET /api/file-map/cleanup-rollback?run_id=<run_id>
  *
  * 롤백 매니페스트 조회 (자동 롤백 실행 금지).
@@ -62,6 +70,13 @@ export async function GET(req: NextRequest): Promise<NextResponse<RollbackRespon
     if (!runId) {
       return NextResponse.json(
         { ok: false, error: '실행 ID가 필요합니다' },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidUuid(runId)) {
+      return NextResponse.json(
+        { ok: false, error: '유효하지 않은 실행 ID 형식입니다' },
         { status: 400 }
       );
     }
