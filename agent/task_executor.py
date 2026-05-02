@@ -1406,6 +1406,50 @@ def _run_local_file_map_suggest(task: dict) -> dict:
         return _result(False, error=f"suggest_failed:{type(e).__name__}")
 
 
+def _run_local_software_install(task: dict) -> dict:
+    """local_software.install — 로컬 프로그램 설치 실행 (dry_run 제어).
+
+    필수 task 필드:
+      - program_id: str (allowlist에 있는 프로그램)
+      - approval_token: str (사용자 승인 토큰)
+
+    선택 task 필드:
+      - dry_run: bool (기본값: True, 계획만 반환)
+    """
+    try:
+        from agent.local_software_manager.install_executor import (
+            InstallExecutor,
+            InstallExecutionRequest,
+        )
+
+        # 요청 구성
+        program_id = task.get("program_id", "")
+        approval_token = task.get("approval_token", "")
+        dry_run = task.get("dry_run", True)
+
+        if not isinstance(dry_run, bool):
+            dry_run = True
+
+        request = InstallExecutionRequest(
+            program_id=program_id,
+            approval_token=approval_token,
+            dry_run=dry_run,
+        )
+
+        executor = InstallExecutor()
+        result = executor.execute(request)
+
+        # 결과 반환
+        if not result.ok and result.error:
+            return _result(False, data=result.to_dict(), error=result.error)
+
+        return _result(result.ok, data=result.to_dict())
+
+    except Exception as e:
+        logger.exception("local_software.install handler crashed: %s", e)
+        return _result(False, error=f"handler_crashed:{type(e).__name__}")
+
+
 def _run_cad_upload_drawing(task: dict) -> dict:
     """cad.upload_drawing — multipart 업로드 (로컬 파일 필요).
 
@@ -1470,6 +1514,8 @@ _DISPATCH = {
     "local_file_map.scan": _run_local_file_map_scan,
     "local_file_map.status": _run_local_file_map_status,
     "local_file_map.suggest": _run_local_file_map_suggest,
+    # 로컬 소프트웨어 설치
+    "local_software.install": _run_local_software_install,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

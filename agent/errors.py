@@ -95,6 +95,14 @@ WRITE_APPROVAL_REQUIRED = "write_approval_required"
 WRITE_NOT_ALLOWED = "write_not_allowed"
 DRY_RUN_PLANNED = "dry_run_planned"
 
+# Local Software Manager (1C) ─ 설치 실행 승인/검증
+INSTALL_APPROVAL_REQUIRED = "install_approval_required"
+INSTALL_PROGRAM_ID_REQUIRED = "install_program_id_required"
+INSTALL_NOT_IN_ALLOWLIST = "install_not_in_allowlist"
+INSTALL_ALREADY_INSTALLED = "install_already_installed"
+INSTALL_NOT_REQUIRED = "install_not_required"
+EXECUTION_NOT_ENABLED_YET = "execution_not_enabled_yet"
+
 # ── prefix 코드 (상세 사유 suffix 가 붙음) ──────────────────────────────
 URL_NOT_ALLOWED = "url_not_allowed"
 LOGIN_URL_NOT_ALLOWED = "login_url_not_allowed"
@@ -265,6 +273,15 @@ __all__ = [
     "CAD_PROXY_AUTH_MISSING",
     "CAD_PROXY_UPSTREAM_ERROR",
     "CAD_MISSING_PARAM",
+    "WRITE_APPROVAL_REQUIRED",
+    "WRITE_NOT_ALLOWED",
+    "DRY_RUN_PLANNED",
+    "INSTALL_APPROVAL_REQUIRED",
+    "INSTALL_PROGRAM_ID_REQUIRED",
+    "INSTALL_NOT_IN_ALLOWLIST",
+    "INSTALL_ALREADY_INSTALLED",
+    "INSTALL_NOT_REQUIRED",
+    "EXECUTION_NOT_ENABLED_YET",
     "URL_NOT_ALLOWED",
     "LOGIN_URL_NOT_ALLOWED",
     "TARGET_URL_NOT_ALLOWED",

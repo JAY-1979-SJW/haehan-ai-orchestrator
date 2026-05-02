@@ -25,11 +25,13 @@ CATEGORY_MCP = "mcp"
 # 경로와 분리해 visible 로컬 브라우저 기동만 다룬다.
 CATEGORY_LOCAL_BROWSER = "local_browser"
 CATEGORY_INVENTORY = "inventory"
+# 로컬 환경 관리: 프로그램 설치, 파일 정리 등
+CATEGORY_LOCAL_ENVIRONMENT = "local_environment"
 
 KNOWN_CATEGORIES: frozenset[str] = frozenset({
     CATEGORY_SYSTEM, CATEGORY_WEB, CATEGORY_SECRET,
     CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_HANCOM, CATEGORY_CAD, CATEGORY_MCP,
-    CATEGORY_LOCAL_BROWSER, CATEGORY_INVENTORY,
+    CATEGORY_LOCAL_BROWSER, CATEGORY_INVENTORY, CATEGORY_LOCAL_ENVIRONMENT,
 })
 
 RISK_LOW = "low"
@@ -602,6 +604,18 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_save_as=False,
         requires_approval=False,
     ),
+    # 로컬 프로그램 설치 실행 (1C: dry_run 프레임워크)
+    "local_software.install": ActionMeta(
+        action="local_software.install",
+        category=CATEGORY_LOCAL_ENVIRONMENT,
+        risk_level=RISK_HIGH,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=False,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=True,
+    ),
 }
 
 
@@ -679,6 +693,7 @@ __all__ = [
     "CATEGORY_MCP",
     "CATEGORY_LOCAL_BROWSER",
     "CATEGORY_INVENTORY",
+    "CATEGORY_LOCAL_ENVIRONMENT",
     "KNOWN_CATEGORIES",
     "RISK_LOW",
     "RISK_MEDIUM",
