@@ -9,8 +9,22 @@
 """
 from agent.local_inventory.scanner import scan_local_inventory
 from agent.local_inventory.inventory import LocalInventory
+from agent.local_inventory.diagnostics import (
+    run_local_inventory_scan,
+    compare_inventory_snapshots,
+    InventoryScanParams,
+)
+from agent.local_inventory.scan_scope import ScanScope
+from agent.local_inventory.inventory_store import InventoryStore
 
 __all__ = [
+    # 기존 (호환성 유지)
     "scan_local_inventory",
     "LocalInventory",
+    # 신규
+    "run_local_inventory_scan",
+    "compare_inventory_snapshots",
+    "InventoryScanParams",
+    "ScanScope",
+    "InventoryStore",
 ]
