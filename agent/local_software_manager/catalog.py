@@ -23,6 +23,8 @@ class ProgramDefinition:
     installer_type: str = 'exe'  # 'exe', 'msi', 'zip' 등
     expected_filename_patterns: frozenset = frozenset()  # 파일명 패턴 (lowercase)
     license_notice_required: bool = False
+    license_acceptance_supported: bool = False  # 약관 자동 동의 플래그 지원 여부
+    license_acceptance_flag: str = ''  # 약관 동의 플래그 (예: "--accept-license")
     supports_auto_download: bool = False  # 자동 다운로드 지원 여부
     supports_auto_install: bool = False  # 자동 설치 실행 지원 여부
     verify_commands: List[str] = None  # 설치 후 검증 명령어
@@ -46,6 +48,8 @@ PROGRAMS_CATALOG = {
         installer_type='exe',
         expected_filename_patterns=frozenset({'docker desktop installer.exe', 'dockerdesktopinstaller.exe'}),
         license_notice_required=True,
+        license_acceptance_supported=True,
+        license_acceptance_flag='--accept-license',
         supports_auto_download=True,
         supports_auto_install=True,
         verify_commands=['docker --version', 'docker compose version'],
