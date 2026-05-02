@@ -1,17 +1,31 @@
 /**파일 정리 승인 토큰 관리.*/
 
-import { v4 as uuidv4 } from 'uuid';
-
 const APPROVAL_TOKEN_PREFIX = 'user-approved-cleanup';
 const APPROVAL_TOKEN_STORAGE_KEY = 'fileMapApprovalToken';
 const APPROVAL_TIMESTAMP_KEY = 'fileMapApprovalTimestamp';
 const APPROVAL_TOKEN_VALIDITY_MS = 15 * 60 * 1000; // 15분
 
 /**
+ * UUID v4 생성 (crypto.randomUUID 또는 fallback).
+ */
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // fallback: timestamp + random (acceptable for session ID)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
  * 새로운 승인 토큰 생성.
  */
 export function generateApprovalToken(): string {
-  const id = uuidv4();
+  const id = generateUUID();
   const token = `${APPROVAL_TOKEN_PREFIX}-${id}`;
 
   // localStorage에 저장 (세션용)
