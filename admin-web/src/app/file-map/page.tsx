@@ -1,113 +1,111 @@
-import { FileMapReportViewer } from "@/components/file-map";
-import { PageShell } from "@/components/ui";
+'use client';
 
-// 샘플 리포트 데이터 (개발/테스트용)
-const SAMPLE_REPORT_DATA = {
-  title: "LOCAL-FILE-MAP-1E: 프로젝트 파일 정밀 스캔 리포트",
-  content: `# LOCAL-FILE-MAP-1E: 프로젝트 파일 정밀 스캔 리포트
+import { useEffect, useState } from 'react';
+import { FileMapReportViewer } from '@/components/file-map';
+import { PageShell } from '@/components/ui';
 
-**스캔 날짜**: 2026-05-02
-**스캔 상태**: ✅ 완료 (읽기 전용, 파일 변경 없음)
+interface ApiResponse {
+  ok: boolean;
+  report?: any;
+  error?: string;
+  storage_info?: any;
+}
 
----
+export default function FileMapPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/file-map/report');
+        const json: ApiResponse = await response.json();
+
+        if (json.ok && json.report) {
+          // API에서 받은 마스킹된 데이터를 UI용 형식으로 변환
+          const report = json.report;
+          const files = [
+            ...(report.large_files || []),
+            ...(report.old_files || []),
+            ...(report.suspicious_duplicates || []),
+            ...(report.suspicious_temp || []),
+          ].slice(0, 10);
+
+          const reportData = {
+            title: 'LOCAL-FILE-MAP: 파일 지도 리포트',
+            content: `# LOCAL-FILE-MAP: 파일 지도 리포트
+
+**생성 시간**: ${new Date().toLocaleString('ko-KR')}
+**마스킹 상태**: ✓ 기본 마스킹 적용
 
 ## 스캔 대상
 
-| 항목 | 내용 |
-|-----|------|
-| **스캔 루트** | C:\\Users\\skyjw\\OneDrive |
-| **스캔 모드** | 읽기 전용 |
-| **총 파일 수** | 3,842 개 |
-| **스캔 시간** | 약 45초 |
-
----
-
-## 스캔 결과 요약
-
-| 항목 | 수량 |
-|-----|------|
-| **전체 파일** | 3,842 |
-| **카테고리** | 12 개 |
-| **대용량 파일** | 127 개 (>100MB) |
-| **오래된 파일** | 234 개 (>3년) |
-| **중복 의심** | 45 개 |
-| **임시 의심** | 89 개 |
-
----
-
-## 카테고리별 분포
-
-- **문서** (1,243개): 71% — Word, Excel, PDF 등
-- **이미지** (856개): 22% — JPG, PNG, GIF 등
-- **코드** (234개): 6% — Python, TypeScript, JSON 등
-- **기타** (509개): 1% — 아카이브, 영상, 음성 등
-
----
+| 항목 | 값 |
+|-----|-----|
+| **스캔 루트** | ${report.scan_root || '(정보 없음)'} |
+| **총 파일 수** | ${report.total_files || 0} 개 |
+| **스캔 시간** | ${report.scan_timestamp ? new Date(report.scan_timestamp).toLocaleString('ko-KR') : '(정보 없음)'} |
 
 ## 주요 발견사항
 
-### 1. 대용량 파일 (127개)
-- 최대: 4.2GB (backup_archive.zip)
-- 평균: 312MB
-- 권장: 클라우드 백업 정책 검토
-
-### 2. 오래된 파일 (234개)
-- 최고령: 2021년 5월
-- 평균 나이: 2.3년
-- 권장: 정기적 아카이브/삭제 정책 수립
-
-### 3. 중복 의심 (45개)
-- 이름 기준 중복: 23개
-- 내용 기준 중복: 22개
-- 권장: 정기적 중복 제거 작업
+- **대용량 파일**: ${report.large_files?.length || 0} 개
+- **오래된 파일**: ${report.old_files?.length || 0} 개
+- **중복 의심**: ${report.suspicious_duplicates?.length || 0} 개
+- **임시 의심**: ${report.suspicious_temp?.length || 0} 개
 
 ---
 
-## 추천사항
-
-1. **보관 정책**: 3년 이상 오래된 파일에 대한 보관/삭제 정책 수립
-2. **중복 제거**: 정기적인 중복 파일 정리
-3. **클라우드 최적화**: 대용량 파일의 클라우드 백업 전략 수립
-4. **정기 감시**: 월 1회 파일 지도 스캔 및 리포트 생성
-
----
-
-**정책 담당**: AI Orchestrator Team
+**정책**: 기본 화면은 민감 파일명을 마스킹합니다. 인증 후 일시적으로 원본을 볼 수 있습니다.
 **최종 수정**: 2026-05-02`,
-  files: [
-    {
-      name: "****_[신분증].jpg",
-      path: "C:\\Users\\skyjw\\OneDrive\\개인\\증명서",
-      size: 2048576,
-    },
-    {
-      name: "프로젝트_제안서.docx",
-      path: "C:\\Users\\skyjw\\OneDrive\\업무\\문서",
-      size: 512000,
-    },
-    {
-      name: "2024_연말_****_[급여].xlsx",
-      path: "C:\\Users\\skyjw\\OneDrive\\재정\\월급",
-      size: 256000,
-    },
-    {
-      name: "한컴오피스 2018.zip",
-      path: "C:\\Users\\skyjw\\OneDrive\\소프트웨어",
-      size: 1048576000,
-    },
-    {
-      name: "backup_2023.zip",
-      path: "C:\\Users\\skyjw\\OneDrive\\백업",
-      size: 4398046511104,
-    },
-  ],
-};
+            files,
+          };
 
-export default function FileMapPage() {
+          setData(reportData);
+        } else {
+          setError(json.error || 'Unknown error');
+        }
+      } catch (err) {
+        console.error('Failed to fetch report:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load report');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReport();
+  }, []);
+
   return (
     <PageShell title="파일 지도 리포트" description="로컬 파일 지도 스캔 결과 뷰어">
       <div className="max-w-4xl">
-        <FileMapReportViewer reportData={SAMPLE_REPORT_DATA} />
+        {loading && (
+          <div className="p-6 text-center text-gray-600">
+            <div className="animate-spin inline-block w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" />
+            데이터를 로드 중입니다...
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+            <p className="font-semibold mb-1">⚠️ 데이터 로드 실패</p>
+            <p>{error}</p>
+            <p className="text-xs mt-2 text-gray-600">
+              파일 지도 스캔 데이터가 없습니다. 로컬 에이전트에서 파일 지도 스캔을 실행해주세요.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && data && (
+          <FileMapReportViewer reportData={data} />
+        )}
+
+        {!loading && !error && !data && (
+          <div className="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+            <p>데이터가 없습니다.</p>
+          </div>
+        )}
       </div>
     </PageShell>
   );
