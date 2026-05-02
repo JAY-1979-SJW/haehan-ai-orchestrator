@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview, FileMapApprovalRequest } from '@/components/file-map';
+import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview, FileMapApprovalRequest, FileMapExecutionPackage } from '@/components/file-map';
 import { PageShell } from '@/components/ui';
 
 interface ApiResponse {
@@ -12,7 +12,7 @@ interface ApiResponse {
 }
 
 export default function FileMapPage() {
-  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview' | 'approval-request'>('report');
+  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview' | 'approval-request' | 'execution-package'>('report');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +124,16 @@ export default function FileMapPage() {
             >
               실행 승인 요청서
             </button>
+            <button
+              onClick={() => setActiveTab('execution-package')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'execution-package'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              실행 패키지
+            </button>
           </div>
         </div>
 
@@ -172,6 +182,11 @@ export default function FileMapPage() {
         {/* 실행 승인 요청서 탭 */}
         {activeTab === 'approval-request' && (
           <FileMapApprovalRequest />
+        )}
+
+        {/* 실행 패키지 탭 */}
+        {activeTab === 'execution-package' && (
+          <FileMapExecutionPackage />
         )}
       </div>
     </PageShell>
