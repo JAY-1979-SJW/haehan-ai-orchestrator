@@ -81,6 +81,80 @@ def test_privacy_masker_should_mask() -> None:
     assert PrivacyMasker.should_mask("normal_file.txt") is False
 
 
+def test_privacy_masker_exclude_hancom() -> None:
+    """한컴오피스 설치파일은 마스킹하지 않음."""
+    filename = "01. 한컴오피스 2018.zip"
+    result = PrivacyMasker.mask_filename(filename)
+    assert result == filename  # 원본 유지
+
+
+def test_privacy_masker_exclude_microsoft() -> None:
+    """Microsoft Office 설치파일은 마스킹하지 않음."""
+    filenames = [
+        "02. 마이크로소프트 오피스 2016.zip",
+        "Microsoft_Office_2019.exe",
+        "Office_Setup.msi",
+    ]
+    for filename in filenames:
+        result = PrivacyMasker.mask_filename(filename)
+        assert result == filename
+
+
+def test_privacy_masker_exclude_iso() -> None:
+    """ISO 파일은 마스킹하지 않음."""
+    filename = "SW_DVD5_Office_Professional_Plus_2016_64Bit_Korean.iso"
+    result = PrivacyMasker.mask_filename(filename)
+    assert result == filename
+
+
+def test_privacy_masker_exclude_autocad() -> None:
+    """AutoCAD 설치파일은 마스킹하지 않음."""
+    filenames = [
+        "AutoCAD_2023_Korean_Win_64bit_dlm_001_002.sfx.exe",
+        "AutoCAD_2023_Korean_Win_64bit_dlm_002_002.sfx.exe",
+    ]
+    for filename in filenames:
+        result = PrivacyMasker.mask_filename(filename)
+        assert result == filename
+
+
+def test_privacy_masker_exclude_cab() -> None:
+    """CAB 파일은 마스킹하지 않음."""
+    filenames = ["cab1.cab", "propsww.cab", "propsww2.cab"]
+    for filename in filenames:
+        result = PrivacyMasker.mask_filename(filename)
+        assert result == filename
+
+
+def test_privacy_masker_contract_alone() -> None:
+    """계약서 단독은 마스킹하지 않음."""
+    filename = "계약서_2026_최종.docx"
+    result = PrivacyMasker.mask_filename(filename)
+    assert result == filename  # 마스킹하지 않음
+
+
+def test_privacy_masker_contract_with_account() -> None:
+    """계약서+계좌는 마스킹."""
+    filename = "계약서_계좌_이체.docx"
+    result = PrivacyMasker.mask_filename(filename)
+    assert "[계약서]" in result  # 마스킹됨
+    assert "[계좌]" in result
+
+
+def test_privacy_masker_sensitive_masking() -> None:
+    """강한 민감 패턴은 항상 마스킹."""
+    filenames = [
+        ("신분증_사본.jpg", "[신분증]"),
+        ("통장사본_2026.pdf", "[통장사본]"),
+        ("형사사건_무죄_증명서.docx", "[형사사건]"),
+        ("고소장_최종.docx", "[고소]"),
+        ("변호인의견서_v2.docx", "[법률문서]"),
+    ]
+    for filename, expected_mask in filenames:
+        result = PrivacyMasker.mask_filename(filename)
+        assert expected_mask in result
+
+
 def test_privacy_masker_case_insensitive() -> None:
     """대소문자 구분 없이 마스킹."""
     filename = "test_SIGNATURE.jpg"
