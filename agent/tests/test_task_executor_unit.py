@@ -144,7 +144,14 @@ def test_supported_actions_list():
         "hancom.convert_hwp_to_hwpx_copy",
     }
 
-    expected = excel_actions | hancom_actions | {"cad.health", "cad.open_info", "cad.add_text_save_as"} | set(_cad_api_names())
+    # 로컬 인벤토리 작업
+    local_inventory_actions = {
+        "local_inventory.scan",
+        "local_inventory.status",
+        "local_inventory.compare",
+    }
+
+    expected = excel_actions | hancom_actions | local_inventory_actions | {"cad.health", "cad.open_info", "cad.add_text_save_as"} | set(_cad_api_names())
     assert set(te.supported_actions()) == expected
 
 
