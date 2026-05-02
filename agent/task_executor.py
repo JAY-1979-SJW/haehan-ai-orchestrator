@@ -1284,6 +1284,128 @@ def _run_local_inventory_app_map_status(task: dict) -> dict:
         return _result(False, error=f"app_map_status_failed:{type(e).__name__}")
 
 
+def _run_local_file_map_scan(task: dict) -> dict:
+    """local_file_map.scan — 파일 지도 스캔.
+
+    사용자가 지정한 폴더의 파일 메타데이터를 수집하고
+    분류, 중복 탐지, 정리 추천을 수행.
+
+    필수 task 필드:
+      - target_directory: str
+      - approval_token: str (승인 토큰)
+
+    선택 task 필드:
+      - scan_depth: int (기본값: 3)
+      - max_files: int (기본값: 10000)
+      - allowed_extensions: list[str] (기본값: None = 모두)
+      - excluded_dirs: list[str]
+    """
+    approval_token = task.get("approval_token")
+    if not approval_token or not isinstance(approval_token, str) or not approval_token.strip():
+        return _result(False, error=_err.WRITE_APPROVAL_REQUIRED)
+
+    target_dir = task.get("target_directory", "")
+    if not target_dir:
+        return _result(False, error="target_directory_required")
+
+    try:
+        from .local_inventory.file_map import (
+            FileMapScanner,
+            FileMapReportBuilder,
+            FileMapStorage,
+        )
+        from .local_inventory.file_map.models import ScanOptions
+
+        # 스캔 옵션 구성
+        options = ScanOptions(
+            target_directory=target_dir,
+            scan_depth=task.get("scan_depth", 3),
+            max_files=task.get("max_files", 10000),
+            allowed_extensions=task.get("allowed_extensions"),
+            excluded_dirs=task.get("excluded_dirs"),
+        )
+
+        # 스캔 실행
+        scanner = FileMapScanner()
+        files, scan_info = scanner.scan(options)
+
+        if not scan_info.get("ok"):
+            return _result(False, error=scan_info.get("error", "scan_failed"))
+
+        # 보고서 생성
+        builder = FileMapReportBuilder()
+        report = builder.build_report(
+            files, options, scan_info.get("scan_duration_seconds", 0)
+        )
+
+        # 저장
+        storage = FileMapStorage()
+        saved_path = storage.save_report(report)
+
+        # 결과 반환
+        from dataclasses import asdict
+        return _result(
+            True,
+            data={
+                "report": asdict(report),
+                "saved_to": str(saved_path),
+                "total_files": len(files),
+                "scan_info": scan_info,
+            }
+        )
+    except Exception as e:
+        logger.exception("local_file_map.scan handler crashed: %s", e)
+        return _result(False, error=f"scan_failed:{type(e).__name__}")
+
+
+def _run_local_file_map_status(task: dict) -> dict:
+    """local_file_map.status — 저장된 파일 지도 조회."""
+    try:
+        from .local_inventory.file_map import FileMapStorage
+
+        storage = FileMapStorage()
+        report = storage.load_report()
+
+        if not report:
+            return _result(False, error="file_map_not_found")
+
+        return _result(True, data={"report": report})
+    except Exception as e:
+        logger.exception("local_file_map.status handler crashed: %s", e)
+        return _result(False, error=f"status_failed:{type(e).__name__}")
+
+
+def _run_local_file_map_suggest(task: dict) -> dict:
+    """local_file_map.suggest — 파일 정리 추천안 조회."""
+    try:
+        from .local_inventory.file_map import FileMapStorage
+
+        storage = FileMapStorage()
+        report = storage.load_report()
+
+        if not report:
+            return _result(False, error="file_map_not_found")
+
+        return _result(
+            True,
+            data={
+                "recommendations": report.get("recommendations", []),
+                "summary": {
+                    "total_files": report.get("total_files", 0),
+                    "large_files_count": len(report.get("large_files", [])),
+                    "old_files_count": len(report.get("old_files", [])),
+                    "suspicious_duplicates_count": len(
+                        report.get("suspicious_duplicates", [])
+                    ),
+                    "suspicious_temp_count": len(report.get("suspicious_temp", [])),
+                },
+            }
+        )
+    except Exception as e:
+        logger.exception("local_file_map.suggest handler crashed: %s", e)
+        return _result(False, error=f"suggest_failed:{type(e).__name__}")
+
+
 def _run_cad_upload_drawing(task: dict) -> dict:
     """cad.upload_drawing — multipart 업로드 (로컬 파일 필요).
 
@@ -1344,6 +1466,10 @@ _DISPATCH = {
     "local_inventory.compare": _run_local_inventory_compare,
     "local_inventory.build_app_map": _run_local_inventory_build_app_map,
     "local_inventory.app_map_status": _run_local_inventory_app_map_status,
+    # 파일 지도
+    "local_file_map.scan": _run_local_file_map_scan,
+    "local_file_map.status": _run_local_file_map_status,
+    "local_file_map.suggest": _run_local_file_map_suggest,
     "cad.health": _run_cad_health,
     "cad.open_info": _run_cad_open_info,
     "cad.add_text_save_as": _run_cad_add_text_save_as,

@@ -566,6 +566,42 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_save_as=False,
         requires_approval=False,
     ),
+    # 파일 지도 스캔
+    "local_file_map.scan": ActionMeta(
+        action="local_file_map.scan",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_MEDIUM,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=True,  # 메타데이터 분석이지만 사용자 PC 폴더 정보
+    ),
+    # 저장된 파일 지도 조회
+    "local_file_map.status": ActionMeta(
+        action="local_file_map.status",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
+    # 파일 정리 추천안 조회
+    "local_file_map.suggest": ActionMeta(
+        action="local_file_map.suggest",
+        category=CATEGORY_INVENTORY,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=False,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
 }
 
 
