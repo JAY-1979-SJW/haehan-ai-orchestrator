@@ -19,6 +19,8 @@ class InstallExecutionRequest:
     program_id: str
     approval_token: str
     dry_run: bool = True
+    user_confirmed_install: bool = False
+    local_installer_path: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -150,6 +152,10 @@ class InstallExecutor:
                 next_step='dry_run 계획 검토 후 실제 실행 단계에서 진행',
             )
 
+        # dry_run=false: Docker 전용 실행 (1D)
+        if request.program_id == 'docker' and request.user_confirmed_install:
+            return self._execute_docker(request, target_plan)
+
         # dry_run=false: 1C에서는 execution_not_enabled_yet 차단
         return InstallExecutionResult(
             ok=False,
@@ -221,3 +227,99 @@ class InstallExecutor:
             'version': version or 'unknown',
             'path': path or 'unknown',
         }
+
+    def _execute_docker(
+        self,
+        request: InstallExecutionRequest,
+        target_plan,
+    ) -> InstallExecutionResult:
+        """Docker Desktop 실제 설치 실행 (1D).
+
+        Args:
+            request: 설치 요청
+            target_plan: 설치 계획
+
+        Returns:
+            설치 결과
+        """
+        from .docker_installer import DockerInstaller
+
+        installer = DockerInstaller()
+
+        # Docker 설치 실행
+        docker_result = installer.run_install(
+            installer_path=request.local_installer_path,
+            approval_token=request.approval_token,
+            user_confirmed_install=request.user_confirmed_install,
+        )
+
+        # 결과 매핑
+        if docker_result.status == 'already_installed':
+            return InstallExecutionResult(
+                ok=True,
+                dry_run=False,
+                program_id='docker',
+                program_name='Docker Desktop',
+                execution_enabled=False,
+                requires_approval=False,
+                requires_admin=False,
+                requires_reboot=False,
+                planned_steps=[],
+                blocked_actions=[],
+                current_status='installed',
+                install_required=False,
+                next_step=docker_result.next_step,
+            )
+
+        if docker_result.status == 'download_required':
+            return InstallExecutionResult(
+                ok=False,
+                dry_run=False,
+                program_id='docker',
+                program_name='Docker Desktop',
+                execution_enabled=False,
+                requires_approval=True,
+                requires_admin=True,
+                requires_reboot=False,
+                planned_steps=[],
+                blocked_actions=['download'],
+                current_status='missing',
+                install_required=True,
+                next_step=docker_result.next_step,
+                error=docker_result.error,
+            )
+
+        if docker_result.status in ('install_completed', 'install_started'):
+            return InstallExecutionResult(
+                ok=True,
+                dry_run=False,
+                program_id='docker',
+                program_name='Docker Desktop',
+                execution_enabled=False,
+                requires_approval=False,
+                requires_admin=False,
+                requires_reboot=docker_result.reboot_may_be_required,
+                planned_steps=[],
+                blocked_actions=[],
+                current_status='installed' if docker_result.docker_cli_installed else 'missing',
+                install_required=not docker_result.docker_cli_installed,
+                next_step=docker_result.next_step,
+            )
+
+        # install_failed
+        return InstallExecutionResult(
+            ok=False,
+            dry_run=False,
+            program_id='docker',
+            program_name='Docker Desktop',
+            execution_enabled=False,
+            requires_approval=True,
+            requires_admin=True,
+            requires_reboot=docker_result.reboot_may_be_required,
+            planned_steps=[],
+            blocked_actions=[],
+            current_status='missing',
+            install_required=True,
+            next_step=docker_result.next_step,
+            error=docker_result.error,
+        )
