@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileMapReportViewer, FileMapCleanupPlanViewer } from '@/components/file-map';
+import { FileMapReportViewer, FileMapCleanupPlanViewer, FileMapCleanupPreview } from '@/components/file-map';
 import { PageShell } from '@/components/ui';
 
 interface ApiResponse {
@@ -12,7 +12,7 @@ interface ApiResponse {
 }
 
 export default function FileMapPage() {
-  const [activeTab, setActiveTab] = useState<'report' | 'cleanup'>('report');
+  const [activeTab, setActiveTab] = useState<'report' | 'cleanup' | 'cleanup-preview'>('report');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +104,16 @@ export default function FileMapPage() {
             >
               정리 계획표
             </button>
+            <button
+              onClick={() => setActiveTab('cleanup-preview')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'cleanup-preview'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              정리 미리보기
+            </button>
           </div>
         </div>
 
@@ -142,6 +152,11 @@ export default function FileMapPage() {
         {/* 정리 계획표 탭 */}
         {activeTab === 'cleanup' && (
           <FileMapCleanupPlanViewer />
+        )}
+
+        {/* 정리 미리보기 탭 */}
+        {activeTab === 'cleanup-preview' && (
+          <FileMapCleanupPreview />
         )}
       </div>
     </PageShell>
