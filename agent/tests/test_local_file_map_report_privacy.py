@@ -12,17 +12,41 @@ from agent.local_inventory.file_map.markdown_renderer import MarkdownRenderer
 
 # ── Privacy Masker 테스트 ────────────────────────────────────────────
 
-def test_privacy_masker_no_masking() -> None:
-    """reveal_sensitive=True일 때 원본 유지."""
+def test_privacy_masker_render_both_false() -> None:
+    """reveal_sensitive_names=False, auth_verified=False → 마스킹."""
     filename = "곽영규_신분증.jpg"
-    result = PrivacyMasker.mask_filename(filename, reveal_sensitive=True)
-    assert result == filename
+    result = PrivacyMasker.render_filename(filename, False, False)
+    assert "[신분증]" in result
+    assert "곽영규" not in result
+
+
+def test_privacy_masker_render_reveal_true_auth_false() -> None:
+    """reveal_sensitive_names=True, auth_verified=False → 마스킹 (부분 활성화 안 됨)."""
+    filename = "곽영규_신분증.jpg"
+    result = PrivacyMasker.render_filename(filename, True, False)
+    assert "[신분증]" in result  # 마스킹 유지
+    assert "곽영규" not in result
+
+
+def test_privacy_masker_render_reveal_false_auth_true() -> None:
+    """reveal_sensitive_names=False, auth_verified=True → 마스킹 (미인증 취급)."""
+    filename = "곽영규_신분증.jpg"
+    result = PrivacyMasker.render_filename(filename, False, True)
+    assert "[신분증]" in result  # 마스킹 유지
+    assert "곽영규" not in result
+
+
+def test_privacy_masker_render_both_true() -> None:
+    """reveal_sensitive_names=True, auth_verified=True → 원본 표시."""
+    filename = "곽영규_신분증.jpg"
+    result = PrivacyMasker.render_filename(filename, True, True)
+    assert result == filename  # 원본 표시
 
 
 def test_privacy_masker_신분증() -> None:
     """신분증 패턴 마스킹."""
     filename = "곽영규_신분증.jpg"
-    result = PrivacyMasker.mask_filename(filename, reveal_sensitive=False)
+    result = PrivacyMasker.mask_filename(filename)
     assert "[신분증]" in result
     assert "****_" in result  # 개인명 완전 마스킹
     assert "곽영규" not in result  # 개인명 제거
@@ -31,21 +55,21 @@ def test_privacy_masker_신분증() -> None:
 def test_privacy_masker_통장사본() -> None:
     """통장사본 패턴 마스킹."""
     filename = "권명수_통장사본.pdf"
-    result = PrivacyMasker.mask_filename(filename, reveal_sensitive=False)
+    result = PrivacyMasker.mask_filename(filename)
     assert "[통장사본]" in result
 
 
 def test_privacy_masker_형사사건() -> None:
     """형사사건 패턴 마스킹."""
     filename = "공갈죄_무죄_변호인의견서_v2.docx"
-    result = PrivacyMasker.mask_filename(filename, reveal_sensitive=False)
+    result = PrivacyMasker.mask_filename(filename)
     assert "[법률문서]" in result or "[변호인" in result
 
 
 def test_privacy_masker_mask_path() -> None:
     """경로에서 파일명만 마스킹."""
     path = "C:\\Users\\test\\곽영규_신분증.jpg"
-    result = PrivacyMasker.mask_path(path, reveal_sensitive=False)
+    result = PrivacyMasker.mask_path(path, False, False)
     assert "C:\\Users\\test\\" in result
     assert "[신분증]" in result
 
@@ -60,7 +84,7 @@ def test_privacy_masker_should_mask() -> None:
 def test_privacy_masker_case_insensitive() -> None:
     """대소문자 구분 없이 마스킹."""
     filename = "test_SIGNATURE.jpg"
-    result = PrivacyMasker.mask_filename(filename, reveal_sensitive=False)
+    result = PrivacyMasker.mask_filename(filename)
     # 현재는 영문 민감 패턴이 없으므로 원본 유지 (향후 추가 가능)
     assert filename == result or result != filename
 
@@ -83,7 +107,7 @@ def test_markdown_renderer_basic() -> None:
         recommendations=["추천1", "추천2"],
     )
 
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     assert "# LOCAL-FILE-MAP-1E:" in result
@@ -127,7 +151,7 @@ def test_markdown_renderer_large_files_formatting() -> None:
         recommendations=[],
     )
 
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     # 크기가 실제 값으로 표시되어야 함 (표에서)
@@ -164,7 +188,7 @@ def test_markdown_renderer_duplicates_not_unnamed() -> None:
         recommendations=[],
     )
 
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     # unnamed이 나타나면 안 됨
@@ -200,14 +224,14 @@ def test_markdown_renderer_sensitive_masking() -> None:
     )
 
     # reveal_sensitive=False (마스킹)
-    renderer_masked = MarkdownRenderer(reveal_sensitive=False)
+    renderer_masked = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result_masked = renderer_masked.render(report)
     assert "[신분증]" in result_masked
     assert "****_[신분증]" in result_masked  # 개인명 완전 마스킹
     assert "곽영규" not in result_masked
 
     # reveal_sensitive=True (원본)
-    renderer_original = MarkdownRenderer(reveal_sensitive=True)
+    renderer_original = MarkdownRenderer(reveal_sensitive_names=True, auth_verified=True)
     result_original = renderer_original.render(report)
     assert "곽영규_신분증" in result_original
 
@@ -228,7 +252,7 @@ def test_markdown_renderer_max_files_warning() -> None:
         recommendations=[],
     )
 
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     # 경고 문구가 포함되어야 함
@@ -275,7 +299,7 @@ def test_markdown_renderer_sorting_by_size() -> None:
         recommendations=[],
     )
 
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     # 순서 확인: large.iso가 medium.iso보다 앞에 나와야 함
@@ -321,7 +345,7 @@ def test_integration_privacy_renderer() -> None:
     )
 
     # 마스킹 렌더링
-    renderer = MarkdownRenderer(reveal_sensitive=False)
+    renderer = MarkdownRenderer(reveal_sensitive_names=False, auth_verified=False)
     result = renderer.render(report)
 
     # 민감 파일이 마스킹됨
