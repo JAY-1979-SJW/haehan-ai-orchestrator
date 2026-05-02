@@ -157,3 +157,43 @@ class TestDockerSafety:
 
         assert 'Start-Process' not in source
         assert 'Verb RunAs' not in source
+
+    def test_docker_license_acceptance_supported(self):
+        """Docker는 license_acceptance_supported=true."""
+        from agent.local_software_manager.catalog import get_program
+
+        program = get_program('docker')
+        assert program is not None
+        assert program.license_acceptance_supported is True
+        assert program.license_acceptance_flag == '--accept-license'
+
+    def test_no_quiet_or_silent_flags(self):
+        """--quiet, /silent 플래그 금지."""
+        import inspect
+        from agent.local_software_manager.install_executor import InstallExecutor
+
+        source = inspect.getsource(InstallExecutor)
+
+        # --quiet, /silent 플래그 금지 (ArgumentList에 추가되면 안 됨)
+        # 확인: 특정 조건부 블록에서만 플래그 추가 (user_accepted_license)
+        assert '--quiet' not in source
+        assert '/silent' not in source
+
+    def test_user_accepted_license_field_exists(self):
+        """InstallExecutionRequest에 user_accepted_license 필드 존재."""
+        from agent.local_software_manager.install_executor import InstallExecutionRequest
+
+        request = InstallExecutionRequest(
+            program_id='docker',
+            approval_token='test-token',
+            user_confirmed_install=True,
+            user_accepted_license=True,
+        )
+        assert request.user_accepted_license is True
+
+        request2 = InstallExecutionRequest(
+            program_id='docker',
+            approval_token='test-token',
+            user_confirmed_install=True,
+        )
+        assert request2.user_accepted_license is False

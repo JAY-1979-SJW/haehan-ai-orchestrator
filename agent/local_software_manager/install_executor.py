@@ -26,6 +26,7 @@ class InstallExecutionRequest:
     approval_token: str
     dry_run: bool = True
     user_confirmed_install: bool = False
+    user_accepted_license: bool = False  # 사용자가 명시적으로 약관 동의함
     local_installer_path: Optional[str] = None
     download_if_missing: bool = False
     user_confirmed_download: bool = False
@@ -325,7 +326,11 @@ class InstallExecutor:
             )
 
         # 설치 실행 (Start-Process -Verb RunAs)
-        success, error = self._execute_installer_file(installer_path)
+        success, error = self._execute_installer_file(
+            installer_path,
+            program=program,
+            user_accepted_license=request.user_accepted_license,
+        )
 
         # 설치 후 상태 확인
         detector = ProgramDetector()
@@ -390,11 +395,18 @@ class InstallExecutor:
             error=error or 'install_unknown_error',
         )
 
-    def _execute_installer_file(self, installer_path: str) -> tuple[bool, Optional[str]]:
+    def _execute_installer_file(
+        self,
+        installer_path: str,
+        program=None,
+        user_accepted_license: bool = False,
+    ) -> tuple[bool, Optional[str]]:
         """설치파일 실행 (Windows Start-Process -Verb RunAs).
 
         Args:
             installer_path: 설치파일 경로
+            program: 프로그램 정의 (license_acceptance 플래그 확인용)
+            user_accepted_license: 사용자가 약관에 동의했는지 여부
 
         Returns:
             (success, error_message)
@@ -402,13 +414,27 @@ class InstallExecutor:
         Note:
             UAC 팝업은 사용자가 직접 승인합니다.
             관리자 비밀번호 저장/전달 없음.
+            --accept-license는 user_accepted_license=true일 때만 포함.
         """
         try:
+            # ArgumentList 구성 (Docker: "install" + 조건부 "--accept-license")
+            args = ['install']
+            if (
+                program
+                and program.license_acceptance_supported
+                and program.license_acceptance_flag
+                and user_accepted_license
+            ):
+                args.append(program.license_acceptance_flag)
+
+            args_str = ' '.join(args)
+            cmd = f'Start-Process -FilePath "{installer_path}" -Verb RunAs -Wait -ArgumentList "{args_str}"'
+
             result = subprocess.run(
                 [
                     'powershell',
                     '-Command',
-                    f'Start-Process -FilePath "{installer_path}" -Verb RunAs -Wait',
+                    cmd,
                 ],
                 timeout=600,
                 capture_output=True,
