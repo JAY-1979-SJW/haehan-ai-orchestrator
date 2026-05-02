@@ -55,10 +55,19 @@ interface ExecuteResponse {
 }
 
 /**
- * 승인 토큰 검증.
+ * 승인 토큰 검증 (UUID suffix 포함).
  */
 function validateApprovalToken(token: string): boolean {
-  return !!(token && token.startsWith('user-approved-cleanup-'));
+  const prefix = 'user-approved-cleanup-';
+  if (!token || !token.startsWith(prefix)) {
+    return false;
+  }
+
+  const suffix = token.slice(prefix.length);
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  return uuidRegex.test(suffix);
 }
 
 /**
