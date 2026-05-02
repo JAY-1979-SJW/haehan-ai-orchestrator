@@ -58,7 +58,11 @@ def main():
 
     # 마크다운 렌더링
     print("📝 마크다운 렌더링 중...")
-    renderer = MarkdownRenderer(reveal_sensitive=False)  # 민감 파일명 마스킹
+    # 기본 리포트: 민감 파일명 마스킹, 인증 미완료
+    renderer = MarkdownRenderer(
+        reveal_sensitive_names=False,
+        auth_verified=False
+    )
     markdown = renderer.render(report, "01. PROJECT_FILE")
     print("✓ 마크다운 렌더링 완료\n")
 

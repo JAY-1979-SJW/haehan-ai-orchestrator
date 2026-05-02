@@ -1,7 +1,16 @@
-"""민감 파일명 마스킹.
+"""민감 파일명 마스킹 및 인증 기반 표시 정책.
 
 상용 리포트용 민감한 파일명을 마스킹하는 기능.
-원본 JSON에는 원본 파일명을 유지하고, 마크다운 리포트에만 마스킹 적용.
+- 기본: 민감 파일명 마스킹
+- 인증 후: 사용자가 본인 확인 완료 시 원본 파일명 표시 가능
+- 조건: reveal_sensitive_names=True AND auth_verified=True 모두 만족해야 원본 표시
+- 조건 미충족: 마스킹 유지
+
+정책:
+- 원본 JSON에는 원본 파일명 유지
+- 마크다운 리포트: 기본 마스킹
+- 로컬 UI: 사용자 인증 후 원본 표시 가능
+- 서버/AI 전송: 기본 마스킹 유지
 """
 from __future__ import annotations
 
@@ -38,20 +47,43 @@ class PrivacyMasker:
     }
 
     @staticmethod
-    def mask_filename(
+    def render_filename(
         filename: str,
-        reveal_sensitive: bool = False
+        reveal_sensitive_names: bool = False,
+        auth_verified: bool = False,
     ) -> str:
+        """파일명을 표시 정책에 따라 렌더링한다.
+
+        Args:
+            filename: 원본 파일명
+            reveal_sensitive_names: 민감 파일명 표시 활성화 여부
+            auth_verified: 사용자 본인 인증 완료 여부
+
+        Returns:
+            렌더링된 파일명
+
+        정책 (AND 로직):
+            - reveal_sensitive_names=False OR auth_verified=False → 마스킹
+            - reveal_sensitive_names=True AND auth_verified=True → 원본 표시
+        """
+        # AND 로직: 둘 다 True여야 원본 표시
+        if reveal_sensitive_names and auth_verified:
+            return filename
+
+        # 그 외의 경우: 마스킹
+        return PrivacyMasker.mask_filename(filename)
+
+    @staticmethod
+    def mask_filename(filename: str) -> str:
         """민감 파일명을 마스킹한다.
 
         Args:
             filename: 원본 파일명
-            reveal_sensitive: True면 원본 유지, False면 마스킹
 
         Returns:
-            마스킹된 파일명 또는 원본 파일명
+            마스킹된 파일명
         """
-        if reveal_sensitive or not filename:
+        if not filename:
             return filename
 
         masked = filename
@@ -66,9 +98,8 @@ class PrivacyMasker:
                 flags=re.IGNORECASE
             )
 
-        # 개인명 마스킹: 2-4글자 한글을 **로 치환
+        # 개인명 마스킹: 2-4글자 한글을 ****로 치환
         # 예: 곽영규_통장사본.jpg → ****_통장사본.jpg
-        # 또는: 권명수_통장사본.pdf → ****_통장사본.pdf
         masked = re.sub(
             r"[가-힣]{2,4}(?=[\s_])",  # 2-4글자 한글 + 언더스코어/공백 미리보기
             "****",
@@ -80,34 +111,38 @@ class PrivacyMasker:
     @staticmethod
     def mask_path(
         path: str,
-        reveal_sensitive: bool = False
+        reveal_sensitive_names: bool = False,
+        auth_verified: bool = False,
     ) -> str:
         """경로에서 파일명만 마스킹한다.
 
         Args:
             path: 전체 파일 경로
-            reveal_sensitive: True면 원본 유지
+            reveal_sensitive_names: 민감 파일명 표시 활성화 여부
+            auth_verified: 사용자 본인 인증 완료 여부
 
         Returns:
-            마스킹된 경로
+            마스킹된 경로 또는 원본 경로
         """
-        if reveal_sensitive or not path:
+        if not path:
             return path
 
-        # 마지막 경로 구분자 찾기
-        for sep in ["\\", "/"]:
-            if sep in path:
-                parts = path.rsplit(sep, 1)
-                if len(parts) == 2:
-                    dir_part, filename = parts
-                    masked_filename = PrivacyMasker.mask_filename(
-                        filename,
-                        reveal_sensitive
-                    )
-                    return f"{dir_part}{sep}{masked_filename}"
+        # AND 로직: 둘 다 True여야 원본 표시
+        if not (reveal_sensitive_names and auth_verified):
+            # 마스킹 모드
+            for sep in ["\\", "/"]:
+                if sep in path:
+                    parts = path.rsplit(sep, 1)
+                    if len(parts) == 2:
+                        dir_part, filename = parts
+                        masked_filename = PrivacyMasker.mask_filename(filename)
+                        return f"{dir_part}{sep}{masked_filename}"
 
-        # 경로 구분자 없음 (파일명만)
-        return PrivacyMasker.mask_filename(path, reveal_sensitive)
+            # 경로 구분자 없음 (파일명만)
+            return PrivacyMasker.mask_filename(path)
+
+        # 원본 모드
+        return path
 
     @staticmethod
     def should_mask(filename: str) -> bool:

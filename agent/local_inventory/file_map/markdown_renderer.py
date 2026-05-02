@@ -13,13 +13,23 @@ from .privacy import PrivacyMasker
 class MarkdownRenderer:
     """마크다운 렌더러."""
 
-    def __init__(self, reveal_sensitive: bool = False) -> None:
+    def __init__(
+        self,
+        reveal_sensitive_names: bool = False,
+        auth_verified: bool = False,
+    ) -> None:
         """초기화.
 
         Args:
-            reveal_sensitive: True면 민감 파일명 원본 유지, False면 마스킹
+            reveal_sensitive_names: 민감 파일명 표시 활성화 여부 (기본값: False)
+            auth_verified: 사용자 본인 인증 완료 여부 (기본값: False)
+
+        정책:
+            - reveal_sensitive_names=False OR auth_verified=False → 마스킹
+            - reveal_sensitive_names=True AND auth_verified=True → 원본 표시
         """
-        self.reveal_sensitive = reveal_sensitive
+        self.reveal_sensitive_names = reveal_sensitive_names
+        self.auth_verified = auth_verified
         self.masker = PrivacyMasker()
 
     def render(self, report: FileMapReport, report_name: str = "01. PROJECT_FILE") -> str:
@@ -175,9 +185,10 @@ class MarkdownRenderer:
         lines.append("|------|--------|----------|")
 
         for idx, file_info in enumerate(report.large_files[:20], 1):
-            filename = self.masker.mask_filename(
+            filename = self.masker.render_filename(
                 file_info.get("name", ""),
-                self.reveal_sensitive
+                self.reveal_sensitive_names,
+                self.auth_verified
             )
             # size_mb가 없으면 size_bytes에서 계산
             size_mb = file_info.get("size_mb")
@@ -205,9 +216,10 @@ class MarkdownRenderer:
         lines.append("|------|--------|----------|----------|")
 
         for idx, file_info in enumerate(report.old_files[:20], 1):
-            filename = self.masker.mask_filename(
+            filename = self.masker.render_filename(
                 file_info.get("name", ""),
-                self.reveal_sensitive
+                self.reveal_sensitive_names,
+                self.auth_verified
             )
             modified = file_info.get("modified_time", "")
             age_days = file_info.get("age_days", 0)
@@ -232,9 +244,10 @@ class MarkdownRenderer:
         lines.append("|------|-------------|------|--------|")
 
         for dup_info in report.suspicious_duplicates[:20]:
-            primary_name = self.masker.mask_filename(
+            primary_name = self.masker.render_filename(
                 dup_info.get("primary", "").split("\\")[-1].split("/")[-1],
-                self.reveal_sensitive
+                self.reveal_sensitive_names,
+                self.auth_verified
             )
             similar_count = len(dup_info.get("similar", []))
             reason = dup_info.get("reason", "unknown")
@@ -277,9 +290,10 @@ class MarkdownRenderer:
         lines.append("|------|--------|----------|")
 
         for idx, file_info in enumerate(report.suspicious_temp[:20], 1):
-            filename = self.masker.mask_filename(
+            filename = self.masker.render_filename(
                 file_info.get("name", ""),
-                self.reveal_sensitive
+                self.reveal_sensitive_names,
+                self.auth_verified
             )
             size_kb = file_info.get("size_kb", 0)
             lines.append(f"| {idx} | {filename} | {size_kb:.1f} |")
