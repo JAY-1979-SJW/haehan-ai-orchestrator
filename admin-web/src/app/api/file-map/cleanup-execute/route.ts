@@ -55,6 +55,28 @@ interface ExecuteResponse {
 }
 
 /**
+ * repo root 디렉터리 해석.
+ * agent 모듈과 admin-web이 모두 존재하는 경로 반환.
+ */
+function resolveRepoRoot(): string {
+  const candidates = [
+    process.cwd(),
+    path.resolve(process.cwd(), '..'),
+  ];
+
+  const found = candidates.find((candidate) =>
+    fs.existsSync(path.join(candidate, 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py')) &&
+    fs.existsSync(path.join(candidate, 'admin-web'))
+  );
+
+  if (!found) {
+    throw new Error('repo root not found in expected paths');
+  }
+
+  return found;
+}
+
+/**
  * cleanup_executor_api.py 경로 해석.
  * 고정 후보 경로에서 첫 번째 존재하는 파일 반환.
  */
@@ -95,10 +117,19 @@ function validateApprovalToken(token: string): boolean {
 function callPythonExecutor(inputData: Record<string, unknown>): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     try {
-      // Python 스크립트 경로
+      // Python 스크립트 경로 및 repo root
       const pythonScriptPath = resolveCleanupExecutorPath();
+      const repoRoot = resolveRepoRoot();
 
       const child = spawn('python', [pythonScriptPath], {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          PYTHONPATH: [
+            repoRoot,
+            process.env.PYTHONPATH || '',
+          ].filter(Boolean).join(path.delimiter),
+        },
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
