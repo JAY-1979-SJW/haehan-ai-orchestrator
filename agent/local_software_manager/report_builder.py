@@ -17,7 +17,7 @@ class SoftwareReportBuilder:
         needs_setup_count = 0
 
         for program_id, program_def in catalog.items():
-            installed, version, path = ProgramDetector.check_program(program_def)
+            installed, version, path = ProgramDetector.check_program(program_def, check_version=False)
 
             notes = []
             if not installed:

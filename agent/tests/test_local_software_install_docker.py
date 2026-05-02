@@ -146,3 +146,13 @@ class TestDockerSafety:
 
         # install_executor에는 Start-Process가 없음
         assert 'Start-Process' not in executor_source
+
+    def test_docker_download_no_runAs(self):
+        """docker_download.py에는 RunAs가 없음."""
+        import inspect
+        from agent.local_software_manager.docker_download import DockerDownloader
+
+        source = inspect.getsource(DockerDownloader)
+
+        assert 'Start-Process' not in source
+        assert 'Verb RunAs' not in source

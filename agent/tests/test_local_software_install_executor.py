@@ -52,6 +52,15 @@ class TestInstallExecutor:
         )
         assert request.dry_run is True
 
+    def test_download_fields_default_false(self):
+        """download_if_missing, user_confirmed_download 기본값은 False."""
+        request = InstallExecutionRequest(
+            program_id='docker',
+            approval_token='valid-token',
+        )
+        assert request.download_if_missing is False
+        assert request.user_confirmed_download is False
+
     def test_dry_run_true_returns_planned_steps(self):
         """dry_run=True면 planned_steps 반환."""
         executor = InstallExecutor()
