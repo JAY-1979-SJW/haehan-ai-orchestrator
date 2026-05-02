@@ -29,6 +29,7 @@ class FileScanConfig:
     """파일 스캔 설정."""
     max_depth: int = 2
     max_files: int = 1000
+    scan_level: int | None = None
     allowed_extensions: frozenset[str] = field(
         default_factory=lambda: frozenset(ALLOWED_EXTENSIONS)
     )
@@ -111,8 +112,19 @@ def _scan_directory_recursive(
     path: str,
     config: FileScanConfig,
     current_depth: int = 0,
+    accumulated_count: int = 0,
 ) -> DirectoryScanResult:
-    """재귀적 폴더 스캔."""
+    """재귀적 폴더 스캔.
+
+    Args:
+        path: 스캔할 폴더 경로
+        config: 스캔 설정
+        current_depth: 현재 깊이
+        accumulated_count: 누적 파일 개수
+
+    Returns:
+        스캔 결과
+    """
     try:
         p = Path(path)
 
@@ -139,8 +151,9 @@ def _scan_directory_recursive(
 
         try:
             for item in p.iterdir():
-                # 깊이 초과
-                if current_depth >= config.max_depth:
+                # max_files 초과
+                if accumulated_count + file_count >= config.max_files:
+                    truncated = True
                     break
 
                 # 제외 폴더 건너뛰기
@@ -150,12 +163,6 @@ def _scan_directory_recursive(
                 try:
                     if item.is_file():
                         file_count += 1
-
-                        # max_files 초과 시 truncate
-                        if file_count > config.max_files:
-                            truncated = True
-                            break
-
                         stat = item.stat()
                         total_size += stat.st_size
 
@@ -171,6 +178,34 @@ def _scan_directory_recursive(
 
                     elif item.is_dir():
                         folder_count += 1
+
+                        # 깊이 제한 내에서 재귀
+                        if current_depth < config.max_depth - 1:
+                            subdir_result = _scan_directory_recursive(
+                                str(item),
+                                config,
+                                current_depth + 1,
+                                accumulated_count + file_count,
+                            )
+
+                            if subdir_result.exists:
+                                file_count += subdir_result.file_count
+                                folder_count += subdir_result.folder_count
+                                total_size += subdir_result.total_size_bytes
+
+                                # 파일 타입 병합
+                                for ext, count in subdir_result.file_types.items():
+                                    file_types[ext] = file_types.get(ext, 0) + count
+
+                                # 최신 수정시간 갱신
+                                if subdir_result.last_modified:
+                                    if last_modified is None or subdir_result.last_modified > last_modified:
+                                        last_modified = subdir_result.last_modified
+
+                                # truncated 플래그 전파
+                                if subdir_result.truncated:
+                                    truncated = True
+                                    break
 
                 except (OSError, PermissionError):
                     continue
