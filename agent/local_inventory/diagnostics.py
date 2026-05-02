@@ -2,6 +2,7 @@
 
 - 전체 스캔 오케스트레이션
 - 스캔 결과 비교
+- 스캔 레벨 기반 실행
 """
 from __future__ import annotations
 
@@ -23,6 +24,12 @@ from agent.local_inventory.dll_mapper import map_all_dlls
 from agent.local_inventory.inventory_store import InventoryStore
 from agent.local_inventory.privacy_filter import apply_privacy_filter
 from agent.local_inventory.scan_scope import ALL_SCOPES, ScanScope
+from agent.local_inventory.scan_level import (
+    ScanLevel,
+    DEFAULT_SCAN_LEVEL,
+    get_level_config,
+    validate_scan_level,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +37,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InventoryScanParams:
     """스캔 매개변수."""
+    scan_level: ScanLevel = DEFAULT_SCAN_LEVEL
     scopes: list[ScanScope] = field(default_factory=lambda: list(ALL_SCOPES))
+    user_selected_paths: list[str] = field(default_factory=list)  # Level 2/3용
     force_consent: bool = False
     apply_privacy_filter_flag: bool = True
     store_result: bool = True
@@ -47,6 +56,7 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
     Returns:
         {
             "ok": bool,
+            "scan_level": int,
             "scopes_requested": [str],
             "scopes_scanned": [str],
             "programs": {...},
@@ -59,30 +69,80 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
         params = InventoryScanParams()
 
     try:
-        # 1. 동의 확인
-        logger.info(f"Requesting consent for {len(params.scopes)} scopes")
+        # 1. 레벨 검증
+        logger.info(f"Validating scan level: {params.scan_level.name}")
+
+        ok, reason = validate_scan_level(params.scan_level, params.scopes)
+        if not ok:
+            logger.info(f"Scan level validation failed: {reason}")
+            return {
+                "ok": False,
+                "scan_level": params.scan_level.value,
+                "scopes_requested": [s.value for s in params.scopes],
+                "scopes_scanned": [],
+                "error": reason,
+            }
+
+        # Level 0은 스캔 안 함
+        if params.scan_level == ScanLevel.NO_SCAN:
+            logger.info("Scan level is NO_SCAN, no scanning performed")
+            return {
+                "ok": False,
+                "scan_level": params.scan_level.value,
+                "scopes_requested": [],
+                "scopes_scanned": [],
+                "error": "no_scan",
+            }
+
+        # Level 3은 user_selected_paths 필수
+        if params.scan_level == ScanLevel.DEEP_METADATA and not params.user_selected_paths:
+            logger.error("Level 3 requires user_selected_paths")
+            return {
+                "ok": False,
+                "scan_level": params.scan_level.value,
+                "scopes_requested": [s.value for s in params.scopes],
+                "scopes_scanned": [],
+                "error": "level_3_requires_selected_paths",
+            }
+
+        # 레벨 설정으로 scopes 제한
+        level_config = get_level_config(params.scan_level)
+        actual_scopes = [
+            s for s in params.scopes
+            if s in level_config.allowed_scopes
+        ]
+
+        # 2. 동의 확인
+        logger.info(f"Requesting consent for level {params.scan_level.name}")
 
         consent_path = None
         if params.consent_state_path:
             from pathlib import Path
             consent_path = Path(params.consent_state_path)
 
-        if not inventory_scan_consent(params.scopes, params.force_consent, consent_path):
+        if not inventory_scan_consent(
+            actual_scopes,
+            params.force_consent,
+            consent_path,
+            params.scan_level,
+        ):
             logger.info("User declined consent")
             return {
                 "ok": False,
-                "scopes_requested": [s.value for s in params.scopes],
+                "scan_level": params.scan_level.value,
+                "scopes_requested": [s.value for s in actual_scopes],
                 "scopes_scanned": [],
                 "error": "user_declined_consent",
             }
 
-        # 2. 스캔 실행
-        logger.info("Starting local inventory scan")
+        # 3. 스캔 실행
+        logger.info(f"Starting inventory scan at level {params.scan_level.name}")
         scan_data = {
             "metadata": {
                 "scan_date": datetime.utcnow().isoformat() + "Z",
                 "scan_version": "1.0",
-                "scopes": [s.value for s in params.scopes],
+                "scan_level": params.scan_level.value,
+                "scopes": [s.value for s in actual_scopes],
             },
             "programs": {},
             "dlls": {},
@@ -114,12 +174,12 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
                 for dll in dll_list
             ]
 
-        # 3. 개인정보 필터링
+        # 4. 개인정보 필터링
         if params.apply_privacy_filter_flag:
             logger.info("Applying privacy filter")
             scan_data = apply_privacy_filter(scan_data)
 
-        # 4. 저장
+        # 5. 저장
         if params.store_result:
             from pathlib import Path
 
@@ -135,8 +195,9 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
 
         return {
             "ok": True,
-            "scopes_requested": [s.value for s in params.scopes],
-            "scopes_scanned": [s.value for s in params.scopes],
+            "scan_level": params.scan_level.value,
+            "scopes_requested": [s.value for s in actual_scopes],
+            "scopes_scanned": [s.value for s in actual_scopes],
             "programs": scan_data.get("programs", {}),
             "dlls": scan_data.get("dlls", {}),
             "scan_date": scan_data.get("metadata", {}).get("scan_date"),
@@ -146,6 +207,7 @@ def run_local_inventory_scan(params: Optional[InventoryScanParams] = None) -> di
         logger.error(f"Scan failed: {e}")
         return {
             "ok": False,
+            "scan_level": params.scan_level.value if params else DEFAULT_SCAN_LEVEL.value,
             "scopes_requested": [s.value for s in params.scopes] if params else [],
             "scopes_scanned": [],
             "error": str(e),

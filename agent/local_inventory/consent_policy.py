@@ -2,6 +2,7 @@
 
 - 사용자 동의 상태 관리
 - scope별 동의 추적
+- 레벨별 동의 추적
 - 동의 없으면 스캔 차단
 """
 from __future__ import annotations
@@ -13,11 +14,12 @@ from pathlib import Path
 from typing import Optional
 
 from agent.local_inventory.scan_scope import ScanScope, ALL_SCOPES
+from agent.local_inventory.scan_level import ScanLevel
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONSENT_PATH = Path.home() / "AppData" / "Local" / "HaehanAI" / "inventory" / "consent.json"
-CONSENT_POLICY_VERSION = "1.0"
+CONSENT_POLICY_VERSION = "1.1"
 
 
 class ConsentPolicy:
@@ -31,6 +33,7 @@ class ConsentPolicy:
         """
         self.state_path = state_path or DEFAULT_CONSENT_PATH
         self._scopes: set[ScanScope] = set()
+        self._level: Optional[ScanLevel] = None
         self._granted_at: Optional[str] = None
         self._load()
 
@@ -66,6 +69,32 @@ class ConsentPolicy:
         """scope 동의 철회."""
         self._scopes.discard(scope)
 
+    def has_level_consent(self, level: ScanLevel) -> bool:
+        """특정 레벨에 대한 동의 여부.
+
+        Args:
+            level: 확인할 레벨
+
+        Returns:
+            동의 여부 (None이면 False)
+        """
+        if self._level is None:
+            return False
+        return self._level >= level
+
+    def grant_level(self, level: ScanLevel) -> None:
+        """레벨에 동의.
+
+        Args:
+            level: 동의할 레벨
+        """
+        self._level = level
+        self._granted_at = datetime.utcnow().isoformat() + "Z"
+
+    def granted_level(self) -> Optional[ScanLevel]:
+        """동의된 레벨."""
+        return self._level
+
     def save(self) -> bool:
         """동의 상태를 파일에 저장.
 
@@ -78,6 +107,7 @@ class ConsentPolicy:
             data = {
                 "version": CONSENT_POLICY_VERSION,
                 "scopes": [s.value for s in self.granted_scopes()],
+                "level": self._level.value if self._level else None,
                 "granted_at": self._granted_at,
                 "saved_at": datetime.utcnow().isoformat() + "Z",
             }
@@ -107,19 +137,31 @@ class ConsentPolicy:
                 ScanScope(s) for s in scopes
                 if s in {scope.value for scope in ALL_SCOPES}
             }
+
+            # 레벨 로드 (하위 호환성: level 필드 없으면 None)
+            level_val = data.get("level")
+            if level_val is not None:
+                try:
+                    self._level = ScanLevel(level_val)
+                except (ValueError, KeyError):
+                    logger.warning(f"Invalid level in consent: {level_val}")
+                    self._level = None
+
             self._granted_at = data.get("granted_at")
 
-            logger.info(f"Loaded consent state: {len(self._scopes)} scope(s)")
+            logger.info(f"Loaded consent state: {len(self._scopes)} scope(s), level={self._level}")
 
         except Exception as e:
             logger.warning(f"Failed to load consent state: {e}")
             self._scopes = set()
+            self._level = None
 
 
 def inventory_scan_consent(
     scopes: list[ScanScope],
     force_dialog: bool = False,
     state_path: Optional[Path] = None,
+    level: Optional[ScanLevel] = None,
 ) -> bool:
     """사용자 동의 획득 및 확인.
 
@@ -127,23 +169,50 @@ def inventory_scan_consent(
         scopes: 요청할 scope 목록
         force_dialog: True면 저장된 동의 무시하고 재확인
         state_path: 동의 상태 파일 경로
+        level: 요청할 스캔 레벨
 
     Returns:
-        모든 scope에 대한 동의 여부
+        모든 scope 및 레벨에 대한 동의 여부
     """
     policy = ConsentPolicy(state_path)
 
-    # 모든 scope에 동의 있으면 패스
-    if not force_dialog and policy.has_all_consent(scopes):
-        logger.info("Using existing consent")
-        return True
+    # 레벨 동의 검증 (requires_explicit_consent=True면 force_dialog 강제)
+    if level:
+        from agent.local_inventory.scan_level import get_level_config
+
+        level_config = get_level_config(level)
+        if level_config.requires_explicit_consent:
+            force_dialog = True
+
+        # 이미 더 높은 레벨로 동의했으면 패스
+        if not force_dialog and policy.has_level_consent(level):
+            logger.info(f"Using existing level consent: {level.name}")
+            return True
+    else:
+        # 모든 scope에 동의 있으면 패스
+        if not force_dialog and policy.has_all_consent(scopes):
+            logger.info("Using existing consent")
+            return True
 
     # 동의 대화
     print()
     print("=" * 70)
     print("📋 로컬 자산 인벤토리 스캔")
+    if level:
+        from agent.local_inventory.scan_level import get_level_config
+        level_config = get_level_config(level)
+        print(f"   [레벨 {level.value}: {level_config.description}]")
     print("=" * 70)
     print()
+
+    if level:
+        from agent.local_inventory.scan_level import get_level_config
+        level_config = get_level_config(level)
+        print(f"스캔 레벨: {level.name}")
+        print(f"설명: {level_config.description}")
+        print(f"파일 개수 제한: {level_config.max_files}")
+        print(f"폴더 깊이 제한: {level_config.max_depth}")
+        print()
 
     print("다음 정보를 수집합니다 (로컬만 저장, 서버 전송 없음):")
     for scope in scopes:
@@ -158,7 +227,7 @@ def inventory_scan_consent(
         elif scope == ScanScope.CAD:
             print("  ✓ AutoCAD 설치 상태")
         elif scope == ScanScope.USER_SELECTED_FOLDERS:
-            print("  ✓ 사용자 선택 폴더 메타데이터")
+            print("  ✓ 사용자 선택 폴더 메타데이터 (문서 내용 미조회)")
     print()
 
     print("수집되지 않는 정보:")
@@ -179,6 +248,9 @@ def inventory_scan_consent(
         return False
 
     policy.grant(scopes)
+    if level:
+        policy.grant_level(level)
+        logger.info(f"User granted level consent: {level.name}")
     policy.save()
     logger.info(f"User granted consent for {len(scopes)} scope(s)")
     return True
