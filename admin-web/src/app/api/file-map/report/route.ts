@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { maskFileObject, maskPath } from '@/lib/privacy';
+import { isSessionValid } from '@/lib/auth-session';
+
+export const dynamic = 'force-dynamic';
 
 interface FileMapReport {
   title?: string;
@@ -100,6 +103,22 @@ function maskReport(report: FileMapReport): FileMapReport {
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
     const storagePath = getStoragePath();
+    const { searchParams } = new URL(request.url);
+    const reveal = searchParams.get('reveal') === 'true';
+
+    // reveal 요청은 인증 필요
+    if (reveal && !isSessionValid()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          generated_at: new Date().toISOString(),
+          source: 'local_file_map',
+          masked: true,
+          error: 'auth_required',
+        },
+        { status: 401 }
+      );
+    }
 
     // 저장소 정보
     const storageInfo = {
@@ -124,19 +143,27 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       );
     }
 
-    // 마스킹 적용 (기본값: 항상 마스킹)
-    const maskedReport = maskReport(report);
+    // 마스킹 결정
+    const shouldMask = !reveal; // reveal=true일 때만 원본, 아니면 항상 마스킹
+    const responseReport = shouldMask ? maskReport(report) : report;
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
         generated_at: new Date().toISOString(),
         source: 'local_file_map',
-        masked: true, // 기본값: 항상 마스킹
-        report: maskedReport,
+        masked: shouldMask,
+        report: responseReport,
       },
       { status: 200 }
     );
+
+    // reveal 응답에는 캐시 금지
+    if (reveal) {
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
+    return response;
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
