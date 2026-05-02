@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  loadSettings,
+  saveSettings,
+  getModeDescription,
+  getModeIcon,
+  shouldRevealSensitiveNames,
+  type FileMapMaskingMode,
+} from '@/lib/fileMapSettings';
 
 interface RevealSessionState {
   auth_verified: boolean;
@@ -43,9 +51,17 @@ export function FileMapReportViewer({
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [revealReportData, setRevealReportData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // 자동 재마스킹 타이머 (15분)
   const REVEAL_DURATION_MS = 15 * 60 * 1000;
+
+  // 설정 로드
+  useEffect(() => {
+    const loaded = loadSettings();
+    setSettings(loaded);
+  }, []);
 
   // 시간 남은 것 업데이트
   useEffect(() => {
@@ -93,36 +109,63 @@ export function FileMapReportViewer({
   };
 
   const handleRevealToggle = async () => {
-    if (!session.auth_verified) {
-      return; // 인증 없으면 원본보기 비활성화
-    }
+    if (!settings) return;
 
-    // 이미 reveal 상태이면 마스킹으로 돌아감
-    if (session.reveal_sensitive_names) {
-      setSession((prev) => ({
-        ...prev,
-        reveal_sensitive_names: false,
-      }));
-      return;
-    }
+    // 설정에 따라 처리
+    switch (settings.maskingMode) {
+      case 'mask_always':
+        // 항상 마스킹 모드: 불가능
+        return;
 
-    // reveal 요청
-    try {
-      const response = await fetch('/api/file-map/report?reveal=true');
-      const data = await response.json();
+      case 'reveal_after_auth': {
+        // 인증 필요
+        if (!session.auth_verified) {
+          return;
+        }
+        // 이미 reveal 중이면 마스킹으로
+        if (session.reveal_sensitive_names) {
+          setSession((prev) => ({
+            ...prev,
+            reveal_sensitive_names: false,
+          }));
+          return;
+        }
+        // reveal API 호출
+        try {
+          const response = await fetch('/api/file-map/report?reveal=true&mode=reveal_after_auth');
+          const data = await response.json();
+          if (data.ok && data.report) {
+            setRevealReportData(data.report);
+            setSession((prev) => ({
+              ...prev,
+              reveal_sensitive_names: true,
+            }));
+          }
+        } catch (error) {
+          console.error('Reveal error:', error);
+        }
+        break;
+      }
 
-      if (data.ok && data.report) {
-        setRevealReportData(data.report);
+      case 'reveal_on_trusted_device': {
+        // 기기 신뢰 모드: 토글만 함
         setSession((prev) => ({
           ...prev,
-          reveal_sensitive_names: true,
+          reveal_sensitive_names: !prev.reveal_sensitive_names,
         }));
-      } else {
-        console.error('Reveal failed:', data.error);
+        break;
       }
-    } catch (error) {
-      console.error('Reveal error:', error);
+
+      case 'reveal_for_export_with_warning':
+        // 외부 전송 원본 모드 (현재 단계에서는 구현 보류)
+        break;
     }
+  };
+
+  const handleSaveSetting = (mode: FileMapMaskingMode) => {
+    const newSettings = { ...settings, maskingMode: mode };
+    setSettings(newSettings);
+    saveSettings(newSettings);
   };
 
   const handleRemask = async () => {
@@ -149,8 +192,10 @@ export function FileMapReportViewer({
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isMasked =
-    !session.auth_verified || !session.reveal_sensitive_names;
+  // 설정과 인증 상태를 바탕으로 마스킹 여부 결정
+  const isMasked = settings
+    ? !shouldRevealSensitiveNames(settings.maskingMode, session.auth_verified)
+    : true;
 
   return (
     <div className="file-map-report-viewer p-4 border rounded-lg bg-white">
@@ -298,6 +343,68 @@ export function FileMapReportViewer({
           <li>비밀번호나 인증 정보는 저장되지 않습니다</li>
         </ul>
       </div>
+
+      {/* 마스킹 설정 */}
+      {settings && (
+        <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm">⚙️ 민감 파일명 표시 설정</h3>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              {showSettings ? '닫기' : '설정 변경'}
+            </button>
+          </div>
+
+          {/* 현재 설정 */}
+          <div className="mb-3 text-xs text-gray-600">
+            <span className="inline-block px-2 py-1 bg-white rounded border border-gray-300">
+              {getModeIcon(settings.maskingMode)} {
+                settings.maskingMode === 'mask_always'
+                  ? '항상 마스킹'
+                  : settings.maskingMode === 'reveal_after_auth'
+                  ? '인증 후 원본 표시'
+                  : settings.maskingMode === 'reveal_on_trusted_device'
+                  ? '이 PC에서는 원본 표시'
+                  : '공유/외부전송도 원본 허용'
+              }
+            </span>
+          </div>
+
+          {/* 설정 옵션 */}
+          {showSettings && (
+            <div className="space-y-2 text-xs">
+              {(
+                [
+                  'mask_always',
+                  'reveal_after_auth',
+                  'reveal_on_trusted_device',
+                ] as const
+              ).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => handleSaveSetting(mode)}
+                  className={`w-full text-left px-3 py-2 rounded transition-colors ${
+                    settings.maskingMode === mode
+                      ? 'bg-blue-100 border border-blue-300'
+                      : 'bg-white border border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="font-medium">{getModeIcon(mode)} {
+                    mode === 'mask_always'
+                      ? '항상 마스킹'
+                      : mode === 'reveal_after_auth'
+                      ? '인증 후 원본 표시 (추천)'
+                      : '이 PC에서는 원본 표시'
+                  }</span>
+                  <p className="text-gray-600 mt-1">{getModeDescription(mode)}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
