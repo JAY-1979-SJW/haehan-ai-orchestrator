@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileMapReportViewer } from '@/components/file-map';
+import { FileMapReportViewer, FileMapCleanupPlanViewer } from '@/components/file-map';
 import { PageShell } from '@/components/ui';
 
 interface ApiResponse {
@@ -12,6 +12,7 @@ interface ApiResponse {
 }
 
 export default function FileMapPage() {
+  const [activeTab, setActiveTab] = useState<'report' | 'cleanup'>('report');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,33 +79,69 @@ export default function FileMapPage() {
   }, []);
 
   return (
-    <PageShell title="파일 지도 리포트" description="로컬 파일 지도 스캔 결과 뷰어">
+    <PageShell title="파일 지도" description="로컬 파일 지도 스캔 및 정리 계획">
       <div className="max-w-4xl">
-        {loading && (
-          <div className="p-6 text-center text-gray-600">
-            <div className="animate-spin inline-block w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" />
-            데이터를 로드 중입니다...
+        {/* 탭 네비게이션 */}
+        <div className="mb-4 border-b border-gray-200">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'report'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              파일 지도 리포트
+            </button>
+            <button
+              onClick={() => setActiveTab('cleanup')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'cleanup'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              정리 계획표
+            </button>
           </div>
+        </div>
+
+        {/* 파일 지도 리포트 탭 */}
+        {activeTab === 'report' && (
+          <>
+            {loading && (
+              <div className="p-6 text-center text-gray-600">
+                <div className="animate-spin inline-block w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" />
+                데이터를 로드 중입니다...
+              </div>
+            )}
+
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <p className="font-semibold mb-1">⚠️ 데이터 로드 실패</p>
+                <p>{error}</p>
+                <p className="text-xs mt-2 text-gray-600">
+                  파일 지도 스캔 데이터가 없습니다. 로컬 에이전트에서 파일 지도 스캔을 실행해주세요.
+                </p>
+              </div>
+            )}
+
+            {!loading && !error && data && (
+              <FileMapReportViewer reportData={data} />
+            )}
+
+            {!loading && !error && !data && (
+              <div className="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                <p>데이터가 없습니다.</p>
+              </div>
+            )}
+          </>
         )}
 
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-            <p className="font-semibold mb-1">⚠️ 데이터 로드 실패</p>
-            <p>{error}</p>
-            <p className="text-xs mt-2 text-gray-600">
-              파일 지도 스캔 데이터가 없습니다. 로컬 에이전트에서 파일 지도 스캔을 실행해주세요.
-            </p>
-          </div>
-        )}
-
-        {!loading && !error && data && (
-          <FileMapReportViewer reportData={data} />
-        )}
-
-        {!loading && !error && !data && (
-          <div className="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-            <p>데이터가 없습니다.</p>
-          </div>
+        {/* 정리 계획표 탭 */}
+        {activeTab === 'cleanup' && (
+          <FileMapCleanupPlanViewer />
         )}
       </div>
     </PageShell>
