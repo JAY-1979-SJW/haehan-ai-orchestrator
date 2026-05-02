@@ -1,0 +1,5 @@
+시각: 2026-05-02 13:18:09.437488
+성공: False
+상태: missing
+설치 필요: True
+오류: install_requires_reboot
