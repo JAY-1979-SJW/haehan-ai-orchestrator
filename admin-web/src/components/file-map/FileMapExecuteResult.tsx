@@ -43,26 +43,26 @@ export function FileMapExecuteResult({ result }: FileMapExecuteResultProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <div className={`text-2xl font-bold ${getResultColor(result.success_count || 0)}`}>
-            {result.success_count || 0}
+          <div className={`text-2xl font-bold ${getResultColor(result.successCount || 0)}`}>
+            {result.successCount || 0}
           </div>
           <div className="text-sm text-green-800">성공</div>
         </div>
         <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-          <div className={`text-2xl font-bold ${getResultColor(result.failed_count || 0)}`}>
-            {result.failed_count || 0}
+          <div className={`text-2xl font-bold ${getResultColor(result.failedCount || 0)}`}>
+            {result.failedCount || 0}
           </div>
           <div className="text-sm text-red-800">실패</div>
         </div>
         <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-          <div className={`text-2xl font-bold ${getResultColor(result.conflict_count || 0)}`}>
-            {result.conflict_count || 0}
+          <div className={`text-2xl font-bold ${getResultColor(result.conflictCount || 0)}`}>
+            {result.conflictCount || 0}
           </div>
           <div className="text-sm text-yellow-800">충돌</div>
         </div>
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className={`text-2xl font-bold ${getResultColor(result.skipped_count || 0)}`}>
-            {result.skipped_count || 0}
+          <div className={`text-2xl font-bold ${getResultColor(result.skippedCount || 0)}`}>
+            {result.skippedCount || 0}
           </div>
           <div className="text-sm text-gray-800">스킵</div>
         </div>
@@ -74,12 +74,12 @@ export function FileMapExecuteResult({ result }: FileMapExecuteResultProps) {
           <div className="max-h-48 overflow-y-auto border border-green-200 rounded-lg bg-green-50">
             <div className="divide-y">
               {result.succeeded.slice(0, 10).map((item) => (
-                <div key={item.operation_id} className="p-3 text-sm text-green-800">
+                <div key={item.operationId} className="p-3 text-sm text-green-800">
                   <div className="font-mono text-xs truncate">
-                    {item.source_path.split('\\').pop()}
+                    {item.sourcePath.split('\\').pop()}
                   </div>
                   <div className="text-xs opacity-75 mt-1">
-                    {(item.file_size_bytes / 1024 / 1024).toFixed(2)} MB
+                    {(item.fileSizeBytes / 1024 / 1024).toFixed(2)} MB
                   </div>
                 </div>
               ))}
@@ -99,9 +99,9 @@ export function FileMapExecuteResult({ result }: FileMapExecuteResultProps) {
           <div className="max-h-48 overflow-y-auto border border-red-200 rounded-lg bg-red-50">
             <div className="divide-y">
               {result.failed.map((item) => (
-                <div key={item.operation_id} className="p-3 text-sm text-red-800">
+                <div key={item.operationId} className="p-3 text-sm text-red-800">
                   <div className="font-mono text-xs truncate">
-                    {item.source_path.split('\\').pop()}
+                    {item.sourcePath.split('\\').pop()}
                   </div>
                   <div className="text-xs opacity-75 mt-1">{item.error}</div>
                 </div>

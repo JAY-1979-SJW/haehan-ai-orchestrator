@@ -137,7 +137,7 @@ export function FileMapExecuteFlow({ plans = [] }: FileMapExecuteFlowProps) {
       {step === 'audit' && result && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">4️⃣ 감사로그</h3>
-          <FileMapAuditLog runId={result.run_id} />
+          <FileMapAuditLog runId={result.runId} />
           <button
             onClick={() => setStep('preflight')}
             className="w-full px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg text-sm"
