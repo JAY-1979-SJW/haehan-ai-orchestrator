@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# 명시적 UTF-8 인코딩으로 .env 파일 로드 (인코딩 오류 방지)
+load_dotenv(encoding='utf-8')
 
 # LOG_LEVEL — 유효하지 않은 값은 INFO로 대체
 _log_level_env = os.environ.get("LOG_LEVEL", "INFO").upper().strip()
