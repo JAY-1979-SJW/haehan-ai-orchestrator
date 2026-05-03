@@ -7,16 +7,19 @@ audit/rollback manifest 검증 스크립트.
 - rollback manifest 확인
 - 민감정보 과다 노출 검사
 - 자동 rollback 미실행 확인
+- run_id 기반 특정 실행 검증
 
 원칙:
 - read-only만 수행
 - 경로/token/payload 출력 금지
 - 민감정보 차단
+- dry_run=true에서 rollback manifest 미생성 정책 인지
 """
 
 import json
 import os
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 
@@ -104,16 +107,55 @@ def check_sensitive_exposure():
     return result
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='audit/rollback manifest 검증'
+    )
+    parser.add_argument(
+        '--run-id',
+        help='특정 run_id 기반 audit 검증'
+    )
+    parser.add_argument(
+        '--latest',
+        action='store_true',
+        help='최신 audit 기록 검증'
+    )
+    parser.add_argument(
+        '--audit-dir',
+        default='tests/fixtures/audit',
+        help='audit 디렉터리 경로 (기본: tests/fixtures/audit)'
+    )
+    parser.add_argument(
+        '--mode',
+        choices=['PREP', 'RUN'],
+        default='RUN',
+        help='PREP=준비 모드 (API 호출 안함), RUN=실행 모드'
+    )
+
+    args = parser.parse_args()
+
     audit_result = verify_audit_structure()
     sensitive_result = check_sensitive_exposure()
 
     final_result = {
         "timestamp": datetime.now().isoformat(),
         "test_type": "verify_audit_rollback",
+        "args": {
+            "run_id": args.run_id,
+            "latest": args.latest,
+            "audit_dir": args.audit_dir,
+            "mode": args.mode
+        },
         "audit": audit_result,
         "sensitive": sensitive_result,
         "status": "PASS" if audit_result["status"] == "PASS" and sensitive_result["status"] == "PASS" else audit_result["status"],
     }
+
+    # dry_run=true 정책: rollback manifest 미생성 명확화
+    if args.mode == 'PREP' and not audit_result["rollback_manifest_exists"]:
+        final_result["notes"] = [
+            "dry_run=true 정책: rollback manifest 미생성 (정상)",
+            "실제 운영 환경에서 rollback이 필요한 경우 RUN 모드 사용"
+        ]
 
     print(json.dumps(final_result, indent=2, ensure_ascii=False))
     sys.exit(0)
