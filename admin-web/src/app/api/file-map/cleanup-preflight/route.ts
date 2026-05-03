@@ -1,8 +1,7 @@
 /**파일 정리 사전검사 API.*/
 
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { callPythonExecutorPreflight } from '@/lib/file-map/pythonExecutor';
 
 interface PreflightRequest {
   plans: Array<{
@@ -14,6 +13,12 @@ interface PreflightRequest {
   }>;
   base_target_dir: string;
   include_sensitive?: boolean;
+}
+
+interface ExecutorPlan {
+  source: string;
+  target: string;
+  confirmed: boolean;
 }
 
 interface PreflightItem {
@@ -62,59 +67,58 @@ export async function POST(req: NextRequest): Promise<NextResponse<PreflightResp
       );
     }
 
-    // 대상 디렉토리 존재 확인
-    try {
-      await fs.access(base_target_dir);
-    } catch {
+    // file-map-executor preflight 호출
+    const executorPlans: ExecutorPlan[] = plans.map((plan) => ({
+      source: plan.path,
+      target: `${base_target_dir}/${plan.file_name}`,
+      confirmed: true,
+    }));
+
+    const executorResult = (await callPythonExecutorPreflight({
+      base_target_dir,
+      plans: executorPlans,
+      include_sensitive,
+    })) as Record<string, any>;
+
+    if (!executorResult.ok) {
+      const errorMsg =
+        typeof executorResult.error === 'string'
+          ? executorResult.error
+          : '알 수 없는 오류';
       return NextResponse.json(
-        { ok: false, error: '대상 디렉토리가 존재하지 않습니다' },
+        { ok: false, error: errorMsg },
         { status: 400 }
       );
     }
 
-    // 모의 사전검사 실행 (실제 구현은 Python 모듈 호출)
-    // TODO: Python cleanup_preflight 모듈 호출
-    const preflightId = `preflight-${Date.now()}`;
-    const items: PreflightItem[] = [];
-    let okCount = 0;
-    let conflictCount = 0;
-    let skippedCount = 0;
-    let blockedCount = 0;
+    // executor 응답을 admin-web 형식으로 변환
+    const executorItems = (executorResult.items || []) as Array<{
+      source: string;
+      target: string;
+      status: string;
+      reason: string;
+    }>;
 
-    for (const plan of plans) {
-      // 단순 검증: 파일 존재 확인
-      try {
-        await fs.access(plan.path);
-        items.push({
-          operation_id: plan.operation_id,
-          source_path: plan.path,
-          target_path: path.join(base_target_dir, path.basename(plan.path)),
-          category: plan.category,
-          status: 'ok',
-          reason: '',
-        });
-        okCount++;
-      } catch {
-        items.push({
-          operation_id: plan.operation_id,
-          source_path: plan.path,
-          target_path: '',
-          category: plan.category,
-          status: 'source_missing',
-          reason: '소스 파일이 존재하지 않습니다',
-        });
-        skippedCount++;
-      }
-    }
+    const items: PreflightItem[] = executorItems.map((item, idx) => {
+      const originalPlan = plans[idx];
+      return {
+        operation_id: originalPlan?.operation_id || `op-${idx}`,
+        source_path: item.source,
+        target_path: item.target,
+        category: originalPlan?.category || 'unknown',
+        status: (item.status === 'source_missing' ? 'source_missing' : 'ok') as any,
+        reason: item.reason,
+      };
+    });
 
     return NextResponse.json({
       ok: true,
-      preflight_id: preflightId,
-      total: plans.length,
-      ok_count: okCount,
-      conflict_count: conflictCount,
-      skipped_count: skippedCount,
-      blocked_count: blockedCount,
+      preflight_id: executorResult.preflight_id,
+      total: executorResult.total,
+      ok_count: executorResult.ok_count,
+      conflict_count: executorResult.conflict_count,
+      skipped_count: executorResult.skipped_count,
+      blocked_count: executorResult.blocked_count || 0,
       items,
     });
   } catch (err) {
