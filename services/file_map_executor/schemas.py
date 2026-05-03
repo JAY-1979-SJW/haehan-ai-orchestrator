@@ -58,6 +58,34 @@ class RollbackResponse(BaseModel):
     error: Optional[str] = None
 
 
+class PreflightItem(BaseModel):
+    """Single item in preflight validation result."""
+    source: str
+    target: str
+    status: str  # 'ok', 'conflict', 'source_missing', 'target_exists', 'invalid_path'
+    reason: str = ""
+
+
+class PreflightRequest(BaseModel):
+    """cleanup-preflight API request (read-only validation)."""
+    base_target_dir: str
+    plans: List[ExecutePlan] = []
+    include_sensitive: bool = False
+
+
+class PreflightResponse(BaseModel):
+    """cleanup-preflight API response (read-only)."""
+    ok: bool
+    preflight_id: str
+    dry_run: bool = True  # Always true (read-only)
+    total: int = 0
+    ok_count: int = 0
+    conflict_count: int = 0
+    skipped_count: int = 0
+    items: List[PreflightItem] = []
+    error: Optional[str] = None
+
+
 class ErrorResponse(BaseModel):
     """Error response."""
     ok: bool = False

@@ -71,3 +71,68 @@ class FileMapExecutorService:
             'rollback_status': 'pending',
             'error': None
         }
+
+    def preflight(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate cleanup operation without execution (read-only).
+
+        Checks if files exist and validates target paths.
+        No actual file operations are performed.
+
+        Args:
+            request_data: Preflight request payload
+
+        Returns:
+            Preflight response with validation results
+        """
+        preflight_id = f"preflight-{uuid.uuid4()}"
+        plans = request_data.get('plans', [])
+
+        items = []
+        ok_count = 0
+        conflict_count = 0
+        skipped_count = 0
+
+        for plan in plans:
+            source = plan.get('source', '')
+            target = plan.get('target', '')
+
+            # Simple validation: check source exists
+            source_exists = Path(source).exists() if source else False
+
+            if not source:
+                items.append({
+                    'source': source,
+                    'target': target,
+                    'status': 'invalid_path',
+                    'reason': 'Source path is empty'
+                })
+                skipped_count += 1
+            elif not source_exists:
+                items.append({
+                    'source': source,
+                    'target': target,
+                    'status': 'source_missing',
+                    'reason': 'Source file does not exist'
+                })
+                skipped_count += 1
+            else:
+                # File exists, preflight OK
+                items.append({
+                    'source': source,
+                    'target': target,
+                    'status': 'ok',
+                    'reason': ''
+                })
+                ok_count += 1
+
+        return {
+            'ok': True,
+            'preflight_id': preflight_id,
+            'dry_run': True,
+            'total': len(plans),
+            'ok_count': ok_count,
+            'conflict_count': conflict_count,
+            'skipped_count': skipped_count,
+            'items': items,
+            'error': None
+        }

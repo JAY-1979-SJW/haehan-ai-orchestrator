@@ -7,6 +7,8 @@ import logging
 from .schemas import (
     ExecuteRequest,
     ExecuteResponse,
+    PreflightRequest,
+    PreflightResponse,
     HealthResponse,
     AuditResponse,
     RollbackResponse,
@@ -37,6 +39,33 @@ async def health():
     )
 
 
+@app.post("/cleanup/preflight", response_model=PreflightResponse)
+async def preflight_cleanup(request: PreflightRequest):
+    """Preflight validation for cleanup operation (read-only).
+
+    Validates plans without executing any cleanup.
+    Enforces /tmp target directory constraint.
+    """
+
+    # Validate target path (must be in /tmp)
+    is_valid, error_msg = validate_target_path(request.base_target_dir)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg
+        )
+
+    try:
+        result = executor_service.preflight(request.model_dump())
+        return PreflightResponse(**result)
+    except Exception as e:
+        logger.error(f"Preflight error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Preflight validation failed: {str(e)}"
+        )
+
+
 @app.post("/cleanup/execute", response_model=ExecuteResponse)
 async def execute_cleanup(request: ExecuteRequest):
     """Execute cleanup operation (dry_run=true only).
@@ -62,7 +91,7 @@ async def execute_cleanup(request: ExecuteRequest):
         )
 
     try:
-        result = executor_service.execute(request.dict())
+        result = executor_service.execute(request.model_dump())
         return ExecuteResponse(**result)
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")

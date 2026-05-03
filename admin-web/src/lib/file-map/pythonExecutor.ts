@@ -63,6 +63,63 @@ export async function callPythonExecutor(
 }
 
 /**
+ * file-map-executor preflight 호출 (read-only validation).
+ *
+ * @param inputData preflight 요청 payload
+ * @returns executor 응답을 admin-web 형식으로 변환한 결과
+ * @throws HTTP 호출 실패 또는 응답 파싱 실패 시 오류 발생
+ */
+export async function callPythonExecutorPreflight(
+  inputData: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  // file-map-executor 서비스 URL
+  const executorUrl =
+    process.env.FILE_MAP_EXECUTOR_URL || 'http://file-map-executor:8510';
+
+  const endpoint = `${executorUrl}/cleanup/preflight`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(inputData),
+      // 30초 timeout
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg =
+        typeof errorData.error === 'string'
+          ? errorData.error
+          : errorData.detail || `HTTP ${response.status}`;
+      return {
+        ok: false,
+        error: `Preflight error: ${errorMsg}`,
+      };
+    }
+
+    const executorResponse = (await response.json()) as Record<
+      string,
+      unknown
+    >;
+
+    // file-map-executor preflight 응답을 admin-web route.ts가 기대하는 형식으로 변환
+    const adaptedResponse = adaptPreflightResponse(executorResponse);
+    return adaptedResponse;
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : 'Unknown error';
+    return {
+      ok: false,
+      error: `Preflight service error: ${errorMsg}`,
+    };
+  }
+}
+
+/**
  * file-map-executor 응답을 admin-web route.ts 기대 형식으로 변환.
  *
  * @param executorResponse executor 서비스 응답
@@ -100,5 +157,38 @@ function adaptExecutorResponse(
       skipped: [], // executor에서 제공하지 않음
       conflicts: [], // executor에서 제공하지 않음
     },
+  };
+}
+
+/**
+ * file-map-executor preflight 응답을 admin-web route.ts 기대 형식으로 변환.
+ *
+ * @param executorResponse executor 서비스 응답
+ * @returns admin-web route가 기대하는 형식으로 변환된 응답
+ */
+function adaptPreflightResponse(
+  executorResponse: Record<string, unknown>
+): Record<string, unknown> {
+  // executor가 오류를 반환한 경우
+  if (!executorResponse.ok) {
+    return {
+      ok: false,
+      error: executorResponse.error || 'Preflight validation failed',
+    };
+  }
+
+  // admin-web route가 기대하는 구조로 변환
+  // executor 응답: { ok, preflight_id, dry_run, total, ok_count, conflict_count, skipped_count, items, error }
+  // admin-web 기대: { ok, preflight_id, total, ok_count, conflict_count, skipped_count, blocked_count, items }
+
+  return {
+    ok: true,
+    preflight_id: executorResponse.preflight_id || '',
+    total: executorResponse.total || 0,
+    ok_count: executorResponse.ok_count || 0,
+    conflict_count: executorResponse.conflict_count || 0,
+    skipped_count: executorResponse.skipped_count || 0,
+    blocked_count: 0, // executor에서 제공하지 않음
+    items: (executorResponse.items as Array<any>) || [],
   };
 }

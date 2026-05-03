@@ -111,6 +111,108 @@ class TestCleanupExecuteEndpoint:
         assert data["failed_count"] == 0
 
 
+class TestCleanupPreflightEndpoint:
+    """Test cleanup preflight endpoint."""
+
+    def test_preflight_valid_path_empty_plans(self):
+        """POST /cleanup/preflight with valid /tmp path and empty plans should succeed."""
+        payload = {
+            "base_target_dir": "/tmp/test_preflight_empty",
+            "plans": []
+        }
+
+        response = client.post("/cleanup/preflight", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ok"] is True
+        assert "preflight_id" in data
+        assert data["dry_run"] is True
+        assert data["total"] == 0
+        assert data["ok_count"] == 0
+        assert data["conflict_count"] == 0
+        assert data["skipped_count"] == 0
+        assert isinstance(data["items"], list)
+        assert len(data["items"]) == 0
+
+    def test_preflight_valid_path_with_plans(self):
+        """POST /cleanup/preflight with plans should validate and return status per item."""
+        payload = {
+            "base_target_dir": "/tmp/test_preflight_plans",
+            "plans": [
+                {
+                    "source": "/tmp/test_preflight_plans/file1.txt",
+                    "target": "/tmp/test_preflight_plans/target/file1.txt",
+                    "confirmed": True
+                },
+                {
+                    "source": "/tmp/test_preflight_plans/file2.txt",
+                    "target": "/tmp/test_preflight_plans/target/file2.txt",
+                    "confirmed": True
+                }
+            ]
+        }
+
+        response = client.post("/cleanup/preflight", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ok"] is True
+        assert "preflight_id" in data
+        assert data["dry_run"] is True
+        assert data["total"] == 2
+        assert isinstance(data["items"], list)
+        assert len(data["items"]) == 2
+        # Each item should have source, target, status, reason
+        for item in data["items"]:
+            assert "source" in item
+            assert "target" in item
+            assert "status" in item
+            assert "reason" in item
+
+    def test_preflight_non_tmp_path_rejected(self):
+        """POST /cleanup/preflight with non-/tmp path should return 400."""
+        payload = {
+            "base_target_dir": "/home/user/test_preflight",
+            "plans": []
+        }
+
+        response = client.post("/cleanup/preflight", json=payload)
+        assert response.status_code == 400
+        data = response.json()
+        assert data["ok"] is False
+        assert "/tmp" in data["error"]
+
+    def test_preflight_missing_base_target_dir(self):
+        """POST /cleanup/preflight without base_target_dir should return 422 (validation error)."""
+        payload = {
+            "plans": []
+        }
+
+        response = client.post("/cleanup/preflight", json=payload)
+        assert response.status_code == 422  # Pydantic validation error
+        data = response.json()
+        assert "detail" in data  # Pydantic validation error format
+
+    def test_preflight_is_read_only_no_file_ops(self):
+        """Preflight should be read-only, no actual file operations."""
+        payload = {
+            "base_target_dir": "/tmp/test_preflight_readonly",
+            "plans": [
+                {
+                    "source": "/tmp/test_preflight_readonly/file.txt",
+                    "target": "/tmp/test_preflight_readonly/target/file.txt",
+                    "confirmed": True
+                }
+            ]
+        }
+
+        response = client.post("/cleanup/preflight", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        # Preflight should report status without actually moving files
+        assert data["ok"] is True
+        assert data["dry_run"] is True  # Always dry_run semantics
+
+
 class TestCleanupAuditEndpoint:
     """Test cleanup audit endpoint."""
 
