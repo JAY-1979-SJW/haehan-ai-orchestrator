@@ -1,230 +1,10 @@
 /**파일 정리 실행 API.*/
 
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+import { validateApprovalToken } from '@/lib/file-map/approvalToken';
+import { ExecuteRequest, ExecuteResponse, normalizePlans } from '@/lib/file-map/executePayload';
+import { callPythonExecutor } from '@/lib/file-map/pythonExecutor';
 
-interface ExecuteRequest {
-  preflight_id: string;
-  package_id: string;
-  approval_token: string;
-  user_confirmed_execution: boolean;
-  dry_run?: boolean;
-  plans?: Array<any>;
-  base_target_dir?: string;
-  include_sensitive?: boolean;
-}
-
-interface ExecuteResponse {
-  ok: boolean;
-  run_id?: string;
-  package_id?: string;
-  timestamp?: string;
-  success_count?: number;
-  failed_count?: number;
-  skipped_count?: number;
-  conflict_count?: number;
-  succeeded?: Array<{
-    operation_id: string;
-    source_path: string;
-    target_path: string;
-    category: string;
-    file_size_bytes: number;
-    dry_run: boolean;
-  }>;
-  failed?: Array<{
-    operation_id: string;
-    source_path: string;
-    target_path: string;
-    error: string;
-  }>;
-  skipped?: Array<{
-    operation_id: string;
-    source_path: string;
-    target_path: string;
-    reason: string;
-  }>;
-  conflicts?: Array<{
-    operation_id: string;
-    source_path: string;
-    target_path: string;
-    reason: string;
-  }>;
-  error?: string;
-}
-
-/**
- * repo root 디렉터리 해석.
- * agent 모듈과 admin-web이 모두 존재하는 경로 반환.
- */
-function resolveRepoRoot(): string {
-  const candidates = [
-    process.cwd(),
-    path.resolve(process.cwd(), '..'),
-  ];
-
-  const found = candidates.find((candidate) =>
-    fs.existsSync(path.join(candidate, 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py')) &&
-    fs.existsSync(path.join(candidate, 'admin-web'))
-  );
-
-  if (!found) {
-    throw new Error('repo root not found in expected paths');
-  }
-
-  return found;
-}
-
-/**
- * cleanup_executor_api.py 경로 해석.
- * 고정 후보 경로에서 첫 번째 존재하는 파일 반환.
- */
-function resolveCleanupExecutorPath(): string {
-  const candidates = [
-    path.resolve(process.cwd(), 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
-    path.resolve(process.cwd(), '..', 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
-  ];
-
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
-
-  if (!found) {
-    throw new Error('cleanup_executor_api.py를 찾을 수 없습니다');
-  }
-
-  return found;
-}
-
-/**
- * 승인 토큰 검증 (UUID suffix 포함).
- */
-function validateApprovalToken(token: string): boolean {
-  const prefix = 'user-approved-cleanup-';
-  if (!token || !token.startsWith(prefix)) {
-    return false;
-  }
-
-  const suffix = token.slice(prefix.length);
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-  return uuidRegex.test(suffix);
-}
-
-/**
- * plans 배열 정규화: 각 항목이 필수 필드를 갖도록 보정.
- *
- * Python run_preflight()가 기대하는 구조:
- * {operation_id, path, category, file_size_bytes, file_name}
- */
-function normalizePlans(plans: unknown[]): Record<string, unknown>[] {
-  if (!Array.isArray(plans)) {
-    return [];
-  }
-
-  return plans.map((plan, index) => {
-    // 문자열인 경우: {path: <string>, operation_id: uuid, category: "unknown"}로 변환
-    if (typeof plan === 'string') {
-      return {
-        operation_id: `plan-${index}-${Date.now()}`,
-        path: plan,
-        category: 'unknown',
-        file_size_bytes: 0,
-        file_name: plan.split(/[\\\/]/).pop() || 'unknown',
-      };
-    }
-
-    // 객체인 경우: 필수 필드 보정
-    if (typeof plan === 'object' && plan !== null) {
-      const obj = plan as Record<string, unknown>;
-      return {
-        operation_id: obj.operation_id || `plan-${index}-${Date.now()}`,
-        path: obj.path || '',
-        category: obj.category || 'unknown',
-        file_size_bytes: obj.file_size_bytes || 0,
-        file_name: obj.file_name || '',
-      };
-    }
-
-    // 기타: 기본값으로 변환
-    return {
-      operation_id: `plan-${index}-${Date.now()}`,
-      path: '',
-      category: 'unknown',
-      file_size_bytes: 0,
-      file_name: '',
-    };
-  });
-}
-
-/**
- * Python cleanup_executor_api.py 호출.
- */
-function callPythonExecutor(inputData: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    try {
-      // Python 스크립트 경로 및 repo root
-      const pythonScriptPath = resolveCleanupExecutorPath();
-      const repoRoot = resolveRepoRoot();
-
-      const child = spawn('python', [pythonScriptPath], {
-        cwd: repoRoot,
-        env: {
-          ...process.env,
-          PYTHONPATH: [
-            repoRoot,
-            process.env.PYTHONPATH || '',
-          ].filter(Boolean).join(path.delimiter),
-        },
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      child.on('close', (code) => {
-        if (stderr) {
-          console.error('Python stderr:', stderr);
-        }
-
-        if (code !== 0) {
-          reject(new Error(`Python 실행 실패 (exit code ${code}): ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout);
-          resolve(result);
-        } catch (e) {
-          reject(new Error(`Python 응답 파싱 실패: ${stdout}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        reject(new Error(`Python 실행 오류: ${err.message}`));
-      });
-
-      child.stdin?.write(JSON.stringify(inputData));
-      child.stdin?.end();
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-/**
- * POST /api/file-map/cleanup-execute
- *
- * 파일 이동 실행 (승인 토큰 필수).
- */
 export async function POST(req: NextRequest): Promise<NextResponse<ExecuteResponse>> {
   try {
     const body = (await req.json()) as ExecuteRequest;
@@ -239,8 +19,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
       base_target_dir,
       include_sensitive = false,
     } = body;
-
-    const dryRunValue: boolean = dry_run === false ? false : true;
 
     // 승인 토큰 검증
     if (!validateApprovalToken(approval_token)) {
@@ -275,7 +53,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
       package_id,
       approval_token,
       user_confirmed_execution,
-      dry_run: dryRunValue,
+      dry_run: dry_run === false ? false : true,
       plans: normalizedPlans,
       base_target_dir,
       include_sensitive,
