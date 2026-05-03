@@ -65,9 +65,18 @@ def main():
             return
 
         # 사전검사 실행
+        import sys as sys_debug
+        sys_debug.stderr.write(f"[DEBUG] plans: {plans}\n")
+        sys_debug.stderr.write(f"[DEBUG] base_target_dir: {base_target_dir}\n")
+        sys_debug.stderr.flush()
         preflight_report = run_preflight(plans, base_target_dir, include_sensitive)
+        sys_debug.stderr.write(f"[DEBUG] preflight_report.ok_count: {preflight_report.ok_count}\n")
+        sys_debug.stderr.write(f"[DEBUG] preflight_report.items: {[{'id': item.operation_id, 'status': item.status, 'reason': item.reason} for item in preflight_report.items]}\n")
+        sys_debug.stderr.flush()
 
         # 파일 이동 실행
+        sys_debug.stderr.write(f"[DEBUG] Before execute_moves: approval_token={approval_token}, user_confirmed={user_confirmed}\n")
+        sys_debug.stderr.flush()
         execution_result = execute_moves(
             preflight_report,
             package_id,
@@ -75,6 +84,8 @@ def main():
             user_confirmed,
             dry_run=dry_run,
         )
+        sys_debug.stderr.write(f"[DEBUG] After execute_moves: success_count={execution_result.success_count}\n")
+        sys_debug.stderr.flush()
 
         # 감사로그 저장 (dry_run도 기록)
         execution_result_dict = asdict(execution_result)
