@@ -1,8 +1,8 @@
 # LOCAL-FILE-MAP-AUTO-CONTROL-1 자동 제어 상태 보고서
 
-**생성 일시**: 2026-05-03 14:57:36
+**생성 일시**: 2026-05-03 15:13:48
 **기준선**: f269b0d
-**종합 판정**: WARN
+**종합 판정**: PASS
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 감사 항목 | 상태 | 세부 |
 |---------|------|------|
-| 모듈화 | WARN | 5개 파일 초과 |
+| 모듈화 | PASS | 0개 파일 초과 |
 | 보안 | PASS | 0개 이슈 발견 |
 | Component | PASS | 350줄 초과 0개 |
 
@@ -18,12 +18,12 @@
 
 ## 모듈화 감사
 
-### 상태: WARN
+### 상태: PASS
 
 **집계**:
-- 총 파일 수: 69
-- 총 라인 수: 9046
-- 기준 초과: 5개
+- 총 파일 수: 73
+- 총 라인 수: 8742
+- 기준 초과: 0개
 
 **기준**:
 - API route: 150줄 이하
@@ -32,12 +32,7 @@
 - React component: 350줄 이하
 - Python module: 350줄 이하
 
-**기준 초과 파일**:
-- API Routes: admin-web\src\app\api\file-map\cleanup-approval-request\route.ts (406 / 150 줄, +256)
-- API Routes: admin-web\src\app\api\file-map\cleanup-execution-package\route.ts (522 / 150 줄, +372)
-- API Routes: admin-web\src\app\api\file-map\cleanup-preview\route.ts (250 / 150 줄, +100)
-- API Routes: admin-web\src\app\api\file-map\report\route.ts (228 / 150 줄, +78)
-- Python Modules: agent\local_inventory\file_map\cleanup_planner.py (364 / 350 줄, +14)
+**기준 초과 파일**: 없음 ✓
 
 ---
 
@@ -46,7 +41,7 @@
 ### 상태: PASS
 
 **집계**:
-- 스캔 파일: 63개
+- 스캔 파일: 67개
 - 발견 이슈: 0개
 
 **검사 항목**:
@@ -97,5 +92,5 @@
 
 ---
 
-**최종 판정**: WARN
-**검증 시점**: 2026-05-03T14:57:36.326922
+**최종 판정**: PASS
+**검증 시점**: 2026-05-03T15:13:48.733763
