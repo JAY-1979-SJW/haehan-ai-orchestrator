@@ -1,0 +1,84 @@
+# Docker Compose for EXECUTOR-SERVICE-2C local smoke test
+# 로컬 개발/테스트용: admin-web + file-map-executor
+# 실행: docker compose -f docker/docker-compose.dev.yml up
+# 종료: docker compose -f docker/docker-compose.dev.yml down
+
+version: "3.9"
+
+services:
+  admin-web:
+    build:
+      context: ..
+      dockerfile: admin-web/Dockerfile
+    image: haehan-ai-orchestrator-admin-web:local
+    container_name: haehan-ai-orchestrator-admin-web-dev
+    working_dir: /app
+
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      # file-map-executor URL pointing to service in same network
+      FILE_MAP_EXECUTOR_URL: "http://file-map-executor:8510"
+
+    expose:
+      - "3000"
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    restart: unless-stopped
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - app_web
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  file-map-executor:
+    build:
+      context: ..
+      dockerfile: docker/file-map-executor.Dockerfile
+    image: haehan-ai-orchestrator-file-map-executor:local
+    container_name: haehan-ai-orchestrator-file-map-executor-dev
+    working_dir: /app
+
+    expose:
+      - "8510"
+
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PORT: "8510"
+      EXECUTOR_MODE: "service"
+
+    restart: unless-stopped
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - app_web
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8510/health', timeout=3)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  app_web:
+    driver: bridge
