@@ -3,7 +3,7 @@
 **조사 일시**: 2026-05-03  
 **조사 대상**: haehan-app 서버  
 **조사 방식**: read-only (실행/build/수정 금지)  
-**기준선**: 7f43206 (로컬/서버 완전 동기화)
+**기준선**: 894e101 (로컬/서버 완전 동기화)
 
 ## 작업 내용
 
@@ -16,16 +16,16 @@ smoke 실행 가능 판정.
 **로컬**:
 ```
 branch: master
-HEAD: 7f43206
-origin/master: 7f43206
+HEAD: 894e101
+origin/master: 894e101
 status: clean ✓
 ```
 
 **서버**:
 ```
 branch: master
-HEAD: 7f43206
-origin/master: 7f43206
+HEAD: 894e101
+origin/master: 894e101
 status: clean ✓
 ```
 
@@ -242,7 +242,7 @@ admin-web:
 
 ### 현황 요약
 ```
-서버 repo 기준선: 7f43206 (clean) ✓
+서버 repo 기준선: 894e101 (clean) ✓
 Docker daemon: 정상 ✓
 docker compose: v5.1.0 ✓
 Dockerfile: 완성 ✓
