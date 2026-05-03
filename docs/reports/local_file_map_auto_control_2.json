@@ -1,0 +1,737 @@
+{
+  "timestamp": "2026-05-03T15:28:27.781680",
+  "baseline": "HEAD",
+  "overall_status": "WARN",
+  "audits": {
+    "static": {
+      "modularization": {
+        "timestamp": "2026-05-03T15:28:20.860163",
+        "baseline": "f269b0d",
+        "categories": {
+          "API Routes": {
+            "files": [
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\auth\\clear\\route.ts",
+                "lines": 24,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\auth\\mock-verify\\route.ts",
+                "lines": 26,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\auth\\status\\route.ts",
+                "lines": 40,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-approval-request\\route.ts",
+                "lines": 125,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-audit\\route.ts",
+                "lines": 28,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-execute\\route.ts",
+                "lines": 95,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-execution-package\\route.ts",
+                "lines": 81,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-plan\\route.ts",
+                "lines": 118,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-preflight\\route.ts",
+                "lines": 127,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-preview\\route.ts",
+                "lines": 93,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\cleanup-rollback\\route.ts",
+                "lines": 50,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\app\\api\\file-map\\report\\route.ts",
+                "lines": 134,
+                "exceeds": false
+              }
+            ],
+            "total_files": 12,
+            "total_lines": 941,
+            "exceeds_max": 0,
+            "max_per_file": 150
+          },
+          "Server Lib": {
+            "files": [
+              {
+                "file": "admin-web\\src\\server\\file-map\\approvalRequestBuilder.ts",
+                "lines": 202,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\auditStore.ts",
+                "lines": 64,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\cleanupPreviewBuilder.ts",
+                "lines": 161,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\executionPackageBuilder.ts",
+                "lines": 222,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\planCache.ts",
+                "lines": 199,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\reportBuilder.ts",
+                "lines": 99,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\server\\file-map\\rollbackStore.ts",
+                "lines": 66,
+                "exceeds": false
+              }
+            ],
+            "total_files": 7,
+            "total_lines": 1013,
+            "exceeds_max": 0,
+            "max_per_file": 250
+          },
+          "Client Lib": {
+            "files": [
+              {
+                "file": "admin-web\\src\\lib\\fileMapApproval.ts",
+                "lines": 99,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\lib\\fileMapAudit.ts",
+                "lines": 94,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\lib\\fileMapCleanupPlan.ts",
+                "lines": 185,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\lib\\fileMapExecutor.ts",
+                "lines": 153,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\lib\\fileMapRollback.ts",
+                "lines": 75,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\lib\\fileMapSettings.ts",
+                "lines": 140,
+                "exceeds": false
+              }
+            ],
+            "total_files": 6,
+            "total_lines": 746,
+            "exceeds_max": 0,
+            "max_per_file": 200
+          },
+          "React Components": {
+            "files": [
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapApprovalRequest.tsx",
+                "lines": 176,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapAuditLog.tsx",
+                "lines": 153,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPlanViewer.tsx",
+                "lines": 250,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPreview.tsx",
+                "lines": 302,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapExecute.tsx",
+                "lines": 179,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapExecuteFlow.tsx",
+                "lines": 151,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapExecuteResult.tsx",
+                "lines": 129,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapExecutionPackage.tsx",
+                "lines": 199,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapPreflight.tsx",
+                "lines": 184,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\FileMapReportViewer.tsx",
+                "lines": 209,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalChecklist.tsx",
+                "lines": 21,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalGroupsList.tsx",
+                "lines": 144,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalHeader.tsx",
+                "lines": 38,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalPolicyNotice.tsx",
+                "lines": 15,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalSummaryCards.tsx",
+                "lines": 50,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\approval\\ExcludedGroupsList.tsx",
+                "lines": 102,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionBlockedOperations.tsx",
+                "lines": 25,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionGroupSelector.tsx",
+                "lines": 68,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionHeader.tsx",
+                "lines": 40,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionOperationsList.tsx",
+                "lines": 66,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionPreflight.tsx",
+                "lines": 23,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionRollbackInfo.tsx",
+                "lines": 15,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionSecurityPolicy.tsx",
+                "lines": 15,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionSummaryCards.tsx",
+                "lines": 48,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\index.ts",
+                "lines": 11,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\report\\ReportContent.tsx",
+                "lines": 99,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\report\\ReportHeader.tsx",
+                "lines": 100,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\report\\ReportMaskingSettings.tsx",
+                "lines": 88,
+                "exceeds": false
+              },
+              {
+                "file": "admin-web\\src\\components\\file-map\\report\\ReportPolicyNotice.tsx",
+                "lines": 15,
+                "exceeds": false
+              }
+            ],
+            "total_files": 29,
+            "total_lines": 2915,
+            "exceeds_max": 0,
+            "max_per_file": 350
+          },
+          "Python Modules": {
+            "files": [
+              {
+                "file": "agent\\local_inventory\\file_map\\__init__.py",
+                "lines": 22,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\classifier.py",
+                "lines": 50,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_audit.py",
+                "lines": 188,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_executor.py",
+                "lines": 191,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_executor_api.py",
+                "lines": 130,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_paths.py",
+                "lines": 94,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_planner.py",
+                "lines": 349,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_policy.py",
+                "lines": 101,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_preflight.py",
+                "lines": 213,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_report_generator.py",
+                "lines": 174,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\cleanup_rollback.py",
+                "lines": 123,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\duplicate_detector.py",
+                "lines": 130,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\folder_summarizer.py",
+                "lines": 265,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\markdown_renderer.py",
+                "lines": 319,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\models.py",
+                "lines": 131,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\privacy.py",
+                "lines": 236,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\report_builder.py",
+                "lines": 203,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\scanner.py",
+                "lines": 148,
+                "exceeds": false
+              },
+              {
+                "file": "agent\\local_inventory\\file_map\\storage.py",
+                "lines": 60,
+                "exceeds": false
+              }
+            ],
+            "total_files": 19,
+            "total_lines": 3127,
+            "exceeds_max": 0,
+            "max_per_file": 350
+          }
+        },
+        "summary": {
+          "total_files": 73,
+          "total_lines": 8742,
+          "exceeds_max": 0
+        },
+        "exceeding_files": [],
+        "status": "PASS"
+      },
+      "security": {
+        "timestamp": "2026-05-03T15:28:24.274993",
+        "baseline": "f269b0d",
+        "scanned_files": 67,
+        "issues_found": 0,
+        "issues": [],
+        "status": "PASS"
+      },
+      "component": {
+        "timestamp": "2026-05-03T15:28:25.077569",
+        "baseline": "f269b0d",
+        "summary": {
+          "total_components": 28,
+          "total_lines": 2904,
+          "avg_lines": 103,
+          "exceeds_400": 0,
+          "exceeds_350": 0
+        },
+        "top_10_largest": [
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPreview.tsx",
+            "lines": 302,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPlanViewer.tsx",
+            "lines": 250,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapReportViewer.tsx",
+            "lines": 209,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecutionPackage.tsx",
+            "lines": 199,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapPreflight.tsx",
+            "lines": 184,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecute.tsx",
+            "lines": 179,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapApprovalRequest.tsx",
+            "lines": 176,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapAuditLog.tsx",
+            "lines": 153,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecuteFlow.tsx",
+            "lines": 151,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalGroupsList.tsx",
+            "lines": 144,
+            "exceeds_350": false,
+            "exceeds_400": false
+          }
+        ],
+        "all_components": [
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPreview.tsx",
+            "lines": 302,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapCleanupPlanViewer.tsx",
+            "lines": 250,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapReportViewer.tsx",
+            "lines": 209,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecutionPackage.tsx",
+            "lines": 199,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapPreflight.tsx",
+            "lines": 184,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecute.tsx",
+            "lines": 179,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapApprovalRequest.tsx",
+            "lines": 176,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapAuditLog.tsx",
+            "lines": 153,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecuteFlow.tsx",
+            "lines": 151,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalGroupsList.tsx",
+            "lines": 144,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\FileMapExecuteResult.tsx",
+            "lines": 129,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ExcludedGroupsList.tsx",
+            "lines": 102,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\report\\ReportHeader.tsx",
+            "lines": 100,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\report\\ReportContent.tsx",
+            "lines": 99,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\report\\ReportMaskingSettings.tsx",
+            "lines": 88,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionGroupSelector.tsx",
+            "lines": 68,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionOperationsList.tsx",
+            "lines": 66,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalSummaryCards.tsx",
+            "lines": 50,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionSummaryCards.tsx",
+            "lines": 48,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionHeader.tsx",
+            "lines": 40,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalHeader.tsx",
+            "lines": 38,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionBlockedOperations.tsx",
+            "lines": 25,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionPreflight.tsx",
+            "lines": 23,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalChecklist.tsx",
+            "lines": 21,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\approval\\ApprovalPolicyNotice.tsx",
+            "lines": 15,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionRollbackInfo.tsx",
+            "lines": 15,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\execution\\ExecutionSecurityPolicy.tsx",
+            "lines": 15,
+            "exceeds_350": false,
+            "exceeds_400": false
+          },
+          {
+            "file": "admin-web\\src\\components\\file-map\\report\\ReportPolicyNotice.tsx",
+            "lines": 15,
+            "exceeds_350": false,
+            "exceeds_400": false
+          }
+        ],
+        "status": "PASS"
+      }
+    },
+    "smoke": {
+      "timestamp": "2026-05-03T15:28:25.980790",
+      "test_type": "smoke_cleanup_execute_dry_run",
+      "status": "PASS",
+      "details": {
+        "fixtures_created": true,
+        "fixtures_preserved": true,
+        "dry_run_enforced": true,
+        "file_moves": 0,
+        "deletions": 0,
+        "api_calls": {
+          "dry_run_true": 1,
+          "dry_run_false": 0
+        },
+        "checks": {
+          "no_actual_moves": true,
+          "no_deletions": true,
+          "dry_run_only": true,
+          "fixtures_safe": true
+        }
+      }
+    },
+    "audit_verification": {
+      "timestamp": "2026-05-03T15:28:26.750055",
+      "test_type": "verify_audit_rollback",
+      "audit": {
+        "audit_jsonl_exists": false,
+        "audit_records": 0,
+        "rollback_manifest_exists": false,
+        "manifest_entries": 0,
+        "status": "WARN",
+        "message": "audit 디렉터리 미존재 (초기 상태)"
+      },
+      "sensitive": {
+        "sensitive_patterns_found": 0,
+        "status": "PASS"
+      },
+      "status": "WARN"
+    },
+    "ops_monitoring": {
+      "timestamp": "2026-05-03T15:28:27.717656",
+      "test_type": "ops_monitoring_snapshot",
+      "monitoring": {
+        "period": "last_24h",
+        "total_executions": 0,
+        "dry_run_true": 0,
+        "dry_run_false": 0,
+        "success_count_total": 0,
+        "failed_count_total": 0,
+        "conflict_count_total": 0,
+        "token_reject_count": 0,
+        "spawn_error_count": 0,
+        "http_500_count": 0,
+        "consecutive_zero_success": false,
+        "health_status": "PASS"
+      },
+      "status": "PASS"
+    }
+  }
+}
