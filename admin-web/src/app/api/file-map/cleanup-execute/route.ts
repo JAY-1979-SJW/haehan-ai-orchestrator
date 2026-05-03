@@ -112,6 +112,52 @@ function validateApprovalToken(token: string): boolean {
 }
 
 /**
+ * plans 배열 정규화: 각 항목이 필수 필드를 갖도록 보정.
+ *
+ * Python run_preflight()가 기대하는 구조:
+ * {operation_id, path, category, file_size_bytes, file_name}
+ */
+function normalizePlans(plans: unknown[]): Record<string, unknown>[] {
+  if (!Array.isArray(plans)) {
+    return [];
+  }
+
+  return plans.map((plan, index) => {
+    // 문자열인 경우: {path: <string>, operation_id: uuid, category: "unknown"}로 변환
+    if (typeof plan === 'string') {
+      return {
+        operation_id: `plan-${index}-${Date.now()}`,
+        path: plan,
+        category: 'unknown',
+        file_size_bytes: 0,
+        file_name: plan.split(/[\\\/]/).pop() || 'unknown',
+      };
+    }
+
+    // 객체인 경우: 필수 필드 보정
+    if (typeof plan === 'object' && plan !== null) {
+      const obj = plan as Record<string, unknown>;
+      return {
+        operation_id: obj.operation_id || `plan-${index}-${Date.now()}`,
+        path: obj.path || '',
+        category: obj.category || 'unknown',
+        file_size_bytes: obj.file_size_bytes || 0,
+        file_name: obj.file_name || '',
+      };
+    }
+
+    // 기타: 기본값으로 변환
+    return {
+      operation_id: `plan-${index}-${Date.now()}`,
+      path: '',
+      category: 'unknown',
+      file_size_bytes: 0,
+      file_name: '',
+    };
+  });
+}
+
+/**
  * Python cleanup_executor_api.py 호출.
  */
 function callPythonExecutor(inputData: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -220,6 +266,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
       );
     }
 
+    // plans 정규화
+    const normalizedPlans = normalizePlans(plans as unknown[]);
+
     // Python 실행
     const pythonResult = (await callPythonExecutor({
       preflight_id,
@@ -227,7 +276,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ExecuteRespon
       approval_token,
       user_confirmed_execution,
       dry_run: dryRunValue,
-      plans,
+      plans: normalizedPlans,
       base_target_dir,
       include_sensitive,
     })) as Record<string, any>;
