@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-05-03T14:57:36.326827",
+  "timestamp": "2026-05-03T15:13:48.733597",
   "baseline": "f269b0d",
-  "overall_status": "WARN",
+  "overall_status": "PASS",
   "audits": {
     "modularization": {
-      "timestamp": "2026-05-03T14:57:34.208783",
+      "timestamp": "2026-05-03T15:13:42.845670",
       "baseline": "f269b0d",
       "categories": {
         "API Routes": {
@@ -26,8 +26,8 @@
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-approval-request\\route.ts",
-              "lines": 406,
-              "exceeds": true
+              "lines": 125,
+              "exceeds": false
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-audit\\route.ts",
@@ -41,8 +41,8 @@
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-execution-package\\route.ts",
-              "lines": 522,
-              "exceeds": true
+              "lines": 81,
+              "exceeds": false
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-plan\\route.ts",
@@ -56,8 +56,8 @@
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-preview\\route.ts",
-              "lines": 250,
-              "exceeds": true
+              "lines": 93,
+              "exceeds": false
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\cleanup-rollback\\route.ts",
@@ -66,20 +66,35 @@
             },
             {
               "file": "admin-web\\src\\app\\api\\file-map\\report\\route.ts",
-              "lines": 228,
-              "exceeds": true
+              "lines": 134,
+              "exceeds": false
             }
           ],
           "total_files": 12,
-          "total_lines": 1914,
-          "exceeds_max": 4,
+          "total_lines": 941,
+          "exceeds_max": 0,
           "max_per_file": 150
         },
         "Server Lib": {
           "files": [
             {
+              "file": "admin-web\\src\\server\\file-map\\approvalRequestBuilder.ts",
+              "lines": 202,
+              "exceeds": false
+            },
+            {
               "file": "admin-web\\src\\server\\file-map\\auditStore.ts",
               "lines": 64,
+              "exceeds": false
+            },
+            {
+              "file": "admin-web\\src\\server\\file-map\\cleanupPreviewBuilder.ts",
+              "lines": 161,
+              "exceeds": false
+            },
+            {
+              "file": "admin-web\\src\\server\\file-map\\executionPackageBuilder.ts",
+              "lines": 222,
               "exceeds": false
             },
             {
@@ -88,13 +103,18 @@
               "exceeds": false
             },
             {
+              "file": "admin-web\\src\\server\\file-map\\reportBuilder.ts",
+              "lines": 99,
+              "exceeds": false
+            },
+            {
               "file": "admin-web\\src\\server\\file-map\\rollbackStore.ts",
               "lines": 66,
               "exceeds": false
             }
           ],
-          "total_files": 3,
-          "total_lines": 329,
+          "total_files": 7,
+          "total_lines": 1013,
           "exceeds_max": 0,
           "max_per_file": 250
         },
@@ -323,8 +343,8 @@
             },
             {
               "file": "agent\\local_inventory\\file_map\\cleanup_planner.py",
-              "lines": 364,
-              "exceeds": true
+              "lines": 349,
+              "exceeds": false
             },
             {
               "file": "agent\\local_inventory\\file_map\\cleanup_policy.py",
@@ -388,65 +408,29 @@
             }
           ],
           "total_files": 19,
-          "total_lines": 3142,
-          "exceeds_max": 1,
+          "total_lines": 3127,
+          "exceeds_max": 0,
           "max_per_file": 350
         }
       },
       "summary": {
-        "total_files": 69,
-        "total_lines": 9046,
-        "exceeds_max": 5
+        "total_files": 73,
+        "total_lines": 8742,
+        "exceeds_max": 0
       },
-      "exceeding_files": [
-        {
-          "category": "API Routes",
-          "file": "admin-web\\src\\app\\api\\file-map\\cleanup-approval-request\\route.ts",
-          "lines": 406,
-          "max": 150,
-          "excess": 256
-        },
-        {
-          "category": "API Routes",
-          "file": "admin-web\\src\\app\\api\\file-map\\cleanup-execution-package\\route.ts",
-          "lines": 522,
-          "max": 150,
-          "excess": 372
-        },
-        {
-          "category": "API Routes",
-          "file": "admin-web\\src\\app\\api\\file-map\\cleanup-preview\\route.ts",
-          "lines": 250,
-          "max": 150,
-          "excess": 100
-        },
-        {
-          "category": "API Routes",
-          "file": "admin-web\\src\\app\\api\\file-map\\report\\route.ts",
-          "lines": 228,
-          "max": 150,
-          "excess": 78
-        },
-        {
-          "category": "Python Modules",
-          "file": "agent\\local_inventory\\file_map\\cleanup_planner.py",
-          "lines": 364,
-          "max": 350,
-          "excess": 14
-        }
-      ],
-      "status": "WARN"
+      "exceeding_files": [],
+      "status": "PASS"
     },
     "security": {
-      "timestamp": "2026-05-03T14:57:35.736669",
+      "timestamp": "2026-05-03T15:13:47.782505",
       "baseline": "f269b0d",
-      "scanned_files": 63,
+      "scanned_files": 67,
       "issues_found": 0,
       "issues": [],
       "status": "PASS"
     },
     "component_lines": {
-      "timestamp": "2026-05-03T14:57:36.300294",
+      "timestamp": "2026-05-03T15:13:48.700967",
       "baseline": "f269b0d",
       "summary": {
         "total_components": 28,
