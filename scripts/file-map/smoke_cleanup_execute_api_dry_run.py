@@ -94,7 +94,9 @@ def prepare_request_payload(source_dir, target_dir):
 
     payload = {
         'dry_run': True,
-        'approval_token': str(uuid.uuid4()),
+        'preflight_id': str(uuid.uuid4()),
+        'package_id': str(uuid.uuid4()),
+        'approval_token': f'user-approved-cleanup-{uuid.uuid4()}',
         'user_confirmed_execution': True,
         'base_target_dir': target_dir,
         'plans': plans
