@@ -23,8 +23,8 @@ from pathlib import Path
 from datetime import datetime
 
 def create_fixtures():
-    """테스트 fixture 디렉터리 생성."""
-    fixture_dir = Path.cwd() / "tests" / "fixtures" / "file-map-smoke"
+    """테스트 fixture 디렉터리 생성 (임시 경로)."""
+    fixture_dir = Path(tempfile.mkdtemp(prefix="smoke_cleanup_"))
     fixture_dir.mkdir(parents=True, exist_ok=True)
 
     # 문서 파일
