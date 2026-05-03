@@ -1,119 +1,104 @@
-/**파일 정리 Python executor 호출.*/
-
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+/**파일 정리 executor 호출 (HTTP client).*/
 
 /**
- * repo root 디렉터리 해석.
- * agent 모듈과 admin-web이 모두 존재하는 경로 반환.
- *
- * @returns repo root 경로
- * @throws repo root를 찾을 수 없으면 오류 발생
+ * file-map-executor HTTP API를 호출하는 클라이언트.
+ * 기존 spawn 기반 구조에서 HTTP 기반으로 전환.
  */
-export function resolveRepoRoot(): string {
-  const candidates = [
-    process.cwd(),
-    path.resolve(process.cwd(), '..'),
-  ];
-
-  const found = candidates.find((candidate) =>
-    fs.existsSync(path.join(candidate, 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py')) &&
-    fs.existsSync(path.join(candidate, 'admin-web'))
-  );
-
-  if (!found) {
-    throw new Error('repo root not found in expected paths');
-  }
-
-  return found;
-}
 
 /**
- * cleanup_executor_api.py 경로 해석.
- * 고정 후보 경로에서 첫 번째 존재하는 파일 반환.
+ * file-map-executor 서비스 호출.
  *
- * @returns cleanup_executor_api.py 경로
- * @throws 파일을 찾을 수 없으면 오류 발생
+ * @param inputData cleanup 실행 요청 payload
+ * @returns executor 응답을 admin-web 형식으로 변환한 결과
+ * @throws HTTP 호출 실패 또는 응답 파싱 실패 시 오류 발생
  */
-export function resolveCleanupExecutorPath(): string {
-  const candidates = [
-    path.resolve(process.cwd(), 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
-    path.resolve(process.cwd(), '..', 'agent', 'local_inventory', 'file_map', 'cleanup_executor_api.py'),
-  ];
+export async function callPythonExecutor(
+  inputData: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  // file-map-executor 서비스 URL
+  const executorUrl =
+    process.env.FILE_MAP_EXECUTOR_URL || 'http://file-map-executor:8510';
 
-  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  const endpoint = `${executorUrl}/cleanup/execute`;
 
-  if (!found) {
-    throw new Error('cleanup_executor_api.py를 찾을 수 없습니다');
-  }
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(inputData),
+      // 30초 timeout
+      signal: AbortSignal.timeout(30000),
+    });
 
-  return found;
-}
-
-/**
- * Python cleanup_executor_api.py 호출.
- *
- * @param inputData Python으로 전달할 데이터
- * @returns Python의 응답 JSON
- * @throws 실행 실패 시 오류 발생
- */
-export function callPythonExecutor(inputData: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    try {
-      // Python 스크립트 경로 및 repo root
-      const pythonScriptPath = resolveCleanupExecutorPath();
-      const repoRoot = resolveRepoRoot();
-
-      const child = spawn('python', [pythonScriptPath], {
-        cwd: repoRoot,
-        env: {
-          ...process.env,
-          PYTHONPATH: [
-            repoRoot,
-            process.env.PYTHONPATH || '',
-          ].filter(Boolean).join(path.delimiter),
-        },
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      child.on('close', (code) => {
-        if (stderr) {
-          console.error('Python stderr:', stderr);
-        }
-
-        if (code !== 0) {
-          reject(new Error(`Python 실행 실패 (exit code ${code}): ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout);
-          resolve(result);
-        } catch (e) {
-          reject(new Error(`Python 응답 파싱 실패: ${stdout}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        reject(new Error(`Python 실행 오류: ${err.message}`));
-      });
-
-      child.stdin?.write(JSON.stringify(inputData));
-      child.stdin?.end();
-    } catch (error) {
-      reject(error);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg =
+        typeof errorData.error === 'string'
+          ? errorData.error
+          : `HTTP ${response.status}`;
+      return {
+        ok: false,
+        error: `Executor error: ${errorMsg}`,
+      };
     }
-  });
+
+    const executorResponse = (await response.json()) as Record<
+      string,
+      unknown
+    >;
+
+    // file-map-executor 응답을 admin-web route.ts가 기대하는 형식으로 변환
+    const adaptedResponse = adaptExecutorResponse(executorResponse, inputData);
+    return adaptedResponse;
+  } catch (error) {
+    const errorMsg =
+      error instanceof Error ? error.message : 'Unknown error';
+    return {
+      ok: false,
+      error: `Executor service error: ${errorMsg}`,
+    };
+  }
+}
+
+/**
+ * file-map-executor 응답을 admin-web route.ts 기대 형식으로 변환.
+ *
+ * @param executorResponse executor 서비스 응답
+ * @param inputData 원본 요청 payload
+ * @returns admin-web route가 기대하는 형식으로 변환된 응답
+ */
+function adaptExecutorResponse(
+  executorResponse: Record<string, unknown>,
+  inputData: Record<string, unknown>
+): Record<string, unknown> {
+  // executor가 오류를 반환한 경우
+  if (!executorResponse.ok) {
+    return {
+      ok: false,
+      error: executorResponse.error || 'Executor returned error',
+    };
+  }
+
+  // admin-web route가 기대하는 구조로 변환
+  // executor 응답: { ok, run_id, dry_run, success_count, succeeded, failed_count, failed, error }
+  // admin-web 기대: { ok, result: { run_id, package_id, timestamp, success_count, failed_count, skipped_count, conflict_count, succeeded, failed, skipped, conflicts } }
+
+  return {
+    ok: true,
+    result: {
+      run_id: executorResponse.run_id || '',
+      package_id: inputData.package_id || '',
+      timestamp: new Date().toISOString(),
+      success_count: executorResponse.success_count || 0,
+      failed_count: executorResponse.failed_count || 0,
+      skipped_count: 0, // executor에서 제공하지 않음
+      conflict_count: 0, // executor에서 제공하지 않음
+      succeeded: (executorResponse.succeeded as Array<any>) || [],
+      failed: (executorResponse.failed as Array<any>) || [],
+      skipped: [], // executor에서 제공하지 않음
+      conflicts: [], // executor에서 제공하지 않음
+    },
+  };
 }
