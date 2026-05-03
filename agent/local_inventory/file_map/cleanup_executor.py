@@ -46,11 +46,6 @@ def validate_approval(
     Raises:
         ValueError: 검증 실패
     """
-    import sys as _debug_sys
-    _debug_sys.stderr.write(f"[VALIDATE] approval_token={bool(approval_token)}, user_confirmed={user_confirmed}, preflight_report={bool(preflight_report)}\n")
-    if preflight_report:
-        _debug_sys.stderr.write(f"[VALIDATE] preflight_report.ok_count={preflight_report.ok_count}\n")
-    _debug_sys.stderr.flush()
 
     if not approval_token:
         raise ValueError("승인 토큰이 없습니다")
