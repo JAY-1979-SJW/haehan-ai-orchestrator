@@ -9,6 +9,7 @@ from typing import Literal, Optional
 
 from .models import TaskRequest, RiskAssessment
 from .config import APPROVAL_STORE_PATH as _STORE_PATH
+from .audit_logger import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +165,21 @@ def issue_token(req: TaskRequest, risk: RiskAssessment, ttl_minutes: int = 30) -
     entry = asdict(token)
     _store[token.token_id] = entry
     _append_event("token_created", entry)
+
+    # Audit log: APPROVAL_ISSUED
+    try:
+        log_event(
+            event_type="APPROVAL_ISSUED",
+            task_id=token.task_id,
+            risk_level=token.risk_level,
+            actor=token.issued_by,
+            action_type="",
+            target="",
+            note=f"public_id={token.public_id}",
+        )
+    except Exception as e:
+        logger.warning("승인 발행 감사 기록 실패: %s", e)
+
     return token
 
 
@@ -204,6 +220,20 @@ def approve_token(
         entry["status"] = "expired"
         entry["result"] = "expired"
         _append_event("token_expired", entry)
+
+        # Audit log: APPROVAL_EXPIRED
+        try:
+            log_event(
+                event_type="APPROVAL_EXPIRED",
+                task_id=token_obj.task_id,
+                risk_level=token_obj.risk_level,
+                actor="system",
+                decision="expired",
+                note=f"public_id={token_obj.public_id}",
+            )
+        except Exception as e:
+            logger.warning("승인 만료 감사 기록 실패: %s", e)
+
         token_obj.status = "expired"
         token_obj.result = "expired"
         logger.warning("승인 시도: 만료 | token_id=%.8s", token_id)
@@ -228,6 +258,19 @@ def approve_token(
     entry["used_at"] = now.isoformat()
     entry["result"] = "approved"
     _append_event("token_approved", entry)
+
+    # Audit log: APPROVAL_GRANTED
+    try:
+        log_event(
+            event_type="APPROVAL_GRANTED",
+            task_id=task_id,
+            risk_level=token_obj.risk_level,
+            actor=approved_by,
+            decision="approved",
+            note=f"public_id={token_obj.public_id}",
+        )
+    except Exception as e:
+        logger.warning("승인 허가 감사 기록 실패: %s", e)
 
     token_obj.approved_by = approved_by
     token_obj.status = "approved"
@@ -272,6 +315,20 @@ def reject_token(
         entry["status"] = "expired"
         entry["result"] = "expired"
         _append_event("token_expired", entry)
+
+        # Audit log: APPROVAL_EXPIRED
+        try:
+            log_event(
+                event_type="APPROVAL_EXPIRED",
+                task_id=token_obj.task_id,
+                risk_level=token_obj.risk_level,
+                actor="system",
+                decision="expired",
+                note=f"public_id={token_obj.public_id}",
+            )
+        except Exception as e:
+            logger.warning("거절 만료 감사 기록 실패: %s", e)
+
         token_obj.status = "expired"
         token_obj.result = "expired"
         logger.warning("거절 시도: 만료 | token_id=%.8s", token_id)
@@ -293,6 +350,19 @@ def reject_token(
     entry["used_at"] = now.isoformat()
     entry["result"] = f"rejected:{reason}" if reason else "rejected"
     _append_event("token_rejected", entry)
+
+    # Audit log: APPROVAL_REJECTED
+    try:
+        log_event(
+            event_type="APPROVAL_REJECTED",
+            task_id=task_id,
+            risk_level=token_obj.risk_level,
+            actor=rejected_by,
+            decision="rejected",
+            note=f"public_id={token_obj.public_id}, reason={reason}" if reason else f"public_id={token_obj.public_id}",
+        )
+    except Exception as e:
+        logger.warning("거절 거부 감사 기록 실패: %s", e)
 
     token_obj.approved_by = rejected_by
     token_obj.status = "rejected"
@@ -373,6 +443,21 @@ def issue_token_for_dev_reg(
     entry = asdict(token)
     _store[token.token_id] = entry
     _append_event("token_created", entry)
+
+    # Audit log: APPROVAL_ISSUED
+    try:
+        log_event(
+            event_type="APPROVAL_ISSUED",
+            task_id=token.task_id,
+            risk_level=token.risk_level,
+            actor=token.issued_by,
+            action_type="",
+            target="",
+            note=f"public_id={token.public_id}",
+        )
+    except Exception as e:
+        logger.warning("개발자 등록 승인 발행 감사 기록 실패: %s", e)
+
     return token
 
 
