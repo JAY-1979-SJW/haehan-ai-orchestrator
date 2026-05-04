@@ -54,6 +54,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "plan", "target",
     # browser.inspect result metadata
     "inspection_mode",
+    # browser.plan_click result metadata
+    "click_target",
     # browser.open_url_controlled result metadata
     "execution_mode", "approval_required", "browser",
 })
@@ -80,9 +82,10 @@ _NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset({
 
 # browser.plan_open_url plan 내부 허용 key
 # browser.inspect plan 내부 허용 key 포함
+# browser.plan_click plan 내부 허용 key 포함
 _PLAN_ALLOWED_KEYS: frozenset[str] = frozenset({
     "action_id", "will_open_browser", "will_navigate", "requires_approval",
-    "will_access_dom", "will_capture_screenshot",
+    "will_access_dom", "will_capture_screenshot", "will_click",
 })
 
 # browser.plan_open_url target 내부 허용 key
@@ -108,6 +111,21 @@ _INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset({
 # browser.open_url_controlled browser 내부 허용 key
 _BROWSER_ALLOWED_KEYS: frozenset[str] = frozenset({
     "isolated_context", "used_existing_profile", "opened", "closed",
+})
+
+# browser.plan_click click_target 내부 허용 key
+_CLICK_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "target_id", "target_role", "selector_redacted",
+})
+
+# browser.plan_click target_id 허용값
+_CLICK_TARGET_ID_ALLOWED: frozenset[str] = frozenset({
+    "sample_primary_action", "sample_secondary_action",
+})
+
+# browser.plan_click target_role 허용값
+_CLICK_TARGET_ROLE_ALLOWED: frozenset[str] = frozenset({
+    "primary_action", "secondary_action", "navigation_link",
 })
 
 
@@ -251,6 +269,35 @@ def _strip_browser(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_click_target(value: object) -> "dict | None":
+    """browser.plan_click click_target nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(target_id/target_role/selector_redacted)만 유지
+    - target_id는 str이고 _CLICK_TARGET_ID_ALLOWED에만 포함
+    - target_role은 str이고 _CLICK_TARGET_ROLE_ALLOWED에만 포함
+    - selector_redacted는 bool만 저장
+    - 제한된 값만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _CLICK_TARGET_ALLOWED_KEYS:
+            continue
+        if k_low == "target_id" and isinstance(v, str):
+            if v in _CLICK_TARGET_ID_ALLOWED:
+                out[k] = v
+        elif k_low == "target_role" and isinstance(v, str):
+            if v in _CLICK_TARGET_ROLE_ALLOWED:
+                out[k] = v
+        elif k_low == "selector_redacted" and isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -305,6 +352,12 @@ def _strip_result_data(data: object) -> "dict | None":
             browser = _strip_browser(v)
             if browser is not None:
                 out[k] = browser
+            continue
+        # click_target 특별 처리: nested enum allowlist
+        if k_low == "click_target":
+            click_target = _strip_click_target(v)
+            if click_target is not None:
+                out[k] = click_target
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
