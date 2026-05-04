@@ -125,6 +125,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=True,
         requires_browser=True,
         read_only=False,
+        requires_approval=True,
     ),
     "inspect_after_login": ActionMeta(
         action="inspect_after_login",
@@ -133,6 +134,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=True,
         requires_browser=True,
         read_only=False,
+        requires_approval=True,
     ),
     # Excel 1단계: 읽기 + 결과 복사본 저장 (원본 overwrite 금지).
     "excel_read_sheet": ActionMeta(
@@ -150,6 +152,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=False,
         requires_browser=False,
         read_only=False,
+        requires_approval=True,
     ),
     # Excel 2단계: 구조 요약 / 헤더 기반 표 읽기 (둘 다 read-only).
     "excel_describe_workbook": ActionMeta(
@@ -192,6 +195,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=False,
         requires_browser=False,
         read_only=False,
+        requires_approval=True,
     ),
     "excel.save_as": ActionMeta(
         action="excel.save_as",
@@ -200,6 +204,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=False,
         requires_browser=False,
         read_only=False,
+        requires_approval=True,
     ),
     # Excel COM read-only probe (B안 1-2단계): 실행 중인 Excel 감지 + workbook 정보 조회.
     # - GetActiveObject 사용하여 이미 열려 있는 Excel만 대상
@@ -225,6 +230,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,
         requires_file_path=False,  # 실행 중인 Excel 대상이므로 파일 경로 불필요
         requires_save_as=True,  # 복사본 저장만 허용, 원본 overwrite 금지
+        requires_approval=True,
     ),
     # Excel COM write 액션: 헤더명 기반 행 추가 + 복사본 저장 (원본 보호).
     "excel.insert_row_by_header_copy": ActionMeta(
@@ -236,6 +242,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,
         requires_file_path=False,
         requires_save_as=True,
+        requires_approval=True,
     ),
     # Excel COM write 액션: 헤더명 기반 열 추가 + 복사본 저장 (원본 보호).
     "excel.insert_column_by_header_copy": ActionMeta(
@@ -247,6 +254,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,
         requires_file_path=False,
         requires_save_as=True,
+        requires_approval=True,
     ),
     # Excel COM write 액션: 헤더명 기반 수식 입력 + 복사본 저장 (원본 보호).
     "excel.write_formula_by_header_copy": ActionMeta(
@@ -258,6 +266,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,
         requires_file_path=False,
         requires_save_as=True,
+        requires_approval=True,
     ),
     # Excel COM 분석 액션: 실행 중인 Excel의 표 구조 분석 (read-only, safe).
     "excel.analyze_workbook": ActionMeta(
@@ -338,6 +347,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # 실제 쓰기 작업 수행
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+        requires_approval=True,
     ),
     # Excel COM 검증 액션: 활성 workbook 자동 검증 (EXCEL-PC-5B 고도화).
     # 수식 패턴, 합계, 타입, 필수 열 등 검증 (read-only, safe).
@@ -374,6 +384,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # 시트 추가 = write 작업
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+        requires_approval=True,
     ),
     # Excel COM PDF 내보내기 액션: Workbook/Sheet를 PDF로 저장 (EXCEL-PC-6B 고도화).
     # 복사본 기반 PDF 내보내기, 인쇄 영역 설정은 복사본에서만 허용 (requires approval).
@@ -386,6 +397,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # PDF 파일 생성 = write 작업
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # 원본 보호 (PDF는 복사본 기반)
+        requires_approval=True,
     ),
     # 업무팩: 건설/소방 Excel 자동화 (EXCEL-PC-7A 고도화).
     # 내역서/견적서/정산서 등의 자동 검토 및 검증.
@@ -399,6 +411,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # 검토 시트 추가 = write 작업
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+        requires_approval=True,
     ),
     "excel.pack.review_settlement_copy": ActionMeta(
         action="excel.pack.review_settlement_copy",
@@ -409,6 +422,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # 검토 시트 추가 = write 작업
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+        requires_approval=True,
     ),
     "excel.pack.check_material_prices_copy": ActionMeta(
         action="excel.pack.check_material_prices_copy",
@@ -419,6 +433,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,  # 검증 정보 시트 추가 = write 작업
         requires_file_path=False,  # GetActiveObject 기반
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
+        requires_approval=True,
     ),
     # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
     # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
@@ -449,6 +464,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_secret=False,
         requires_browser=False,
         read_only=False,
+        requires_approval=True,
     ),
     # local_agent 전용. 사용자 PC 의 visible 브라우저(msedge/chrome/chromium)를
     # 전용 HaehanAI 프로필로 띄운다. 자동 입력/쿠키 수집/headless/디버깅 포트는
@@ -509,6 +525,7 @@ _REGISTRY: dict[str, ActionMeta] = {
         read_only=False,
         requires_file_path=True,
         requires_save_as=True,
+        requires_approval=True,
     ),
     # ── Local Inventory 액션 ────
     "local_inventory.scan": ActionMeta(
@@ -640,6 +657,8 @@ def _register_cad_api_actions() -> None:
             raise ValueError(
                 f"{spec.action}: 알 수 없는 risk_level {spec.risk_level!r}"
             )
+        # RISK_MEDIUM + write 액션은 requires_approval=True
+        requires_approval = risk == RISK_MEDIUM and not spec.read_only
         _REGISTRY[spec.action] = ActionMeta(
             action=spec.action,
             category=CATEGORY_CAD,
@@ -649,6 +668,7 @@ def _register_cad_api_actions() -> None:
             read_only=spec.read_only,
             requires_file_path=spec.requires_file_path,
             requires_save_as=spec.requires_save_as,
+            requires_approval=requires_approval,
         )
 
 
