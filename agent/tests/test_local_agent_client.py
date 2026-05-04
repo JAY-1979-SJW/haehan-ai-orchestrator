@@ -22,6 +22,7 @@ from agent.local_agent_client import (
     handle_task,
     load_config,
     strip_sensitive,
+    _path_exists,
 )
 
 
@@ -495,6 +496,160 @@ class TestHandleSafeDesktopCapability:
         assert result_msgs[0].get("success") is True
         assert result_msgs[0].get("summary") == "safe_desktop_capability_ok"
         assert "capabilities" in result_msgs[0].get("data", {})
+
+
+# ── 8.7. safe_app_presence_known_paths handler ──────────────────────────────────
+
+class TestHandleSafeAppPresenceKnownPaths:
+    def test_safe_app_presence_known_paths_success(self, monkeypatch):
+        """safe_app_presence_known_paths basic success test."""
+        task = {
+            "task_id": "t-app-001",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        # Mock _path_exists to return False for all paths
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        result = handle_task(task, dry_run=True)
+        assert result["type"] == "result"
+        assert result["success"] is True
+        assert result["summary"] == "safe_app_presence_ok"
+        assert result["task_id"] == "t-app-001"
+
+    def test_safe_app_presence_known_paths_has_data(self, monkeypatch):
+        """safe_app_presence_known_paths returns proper data structure."""
+        task = {
+            "task_id": "t-app-002",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        result = handle_task(task, dry_run=True)
+        assert "data" in result
+        data = result["data"]
+        assert data["action"] == "safe_app_presence_known_paths"
+        assert data["status"] == "ok"
+        assert data["detection_mode"] == "known_path_boolean"
+
+    def test_safe_app_presence_known_paths_apps_structure(self, monkeypatch):
+        """safe_app_presence_known_paths returns apps as list of dicts."""
+        task = {
+            "task_id": "t-app-003",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        result = handle_task(task, dry_run=True)
+        apps = result["data"]["apps"]
+        assert isinstance(apps, list)
+        assert len(apps) > 0
+        for app in apps:
+            assert isinstance(app, dict)
+            assert "app_id" in app
+            assert "supported" in app
+            assert isinstance(app["app_id"], str)
+            assert isinstance(app["supported"], bool)
+
+    def test_safe_app_presence_known_paths_all_apps_present(self, monkeypatch):
+        """safe_app_presence_known_paths detects when all apps are present."""
+        task = {
+            "task_id": "t-app-004",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        # Mock _path_exists to return True (all paths exist)
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: True)
+        result = handle_task(task, dry_run=True)
+        apps = result["data"]["apps"]
+        app_ids = [app["app_id"] for app in apps]
+        assert "browser" in app_ids
+        assert "office" in app_ids
+        assert "cad" in app_ids
+        for app in apps:
+            assert app["supported"] is True
+
+    def test_safe_app_presence_known_paths_mixed_presence(self, monkeypatch):
+        """safe_app_presence_known_paths handles mixed presence (some installed, some not)."""
+        task = {
+            "task_id": "t-app-005",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        # Mock _path_exists to return True only for browser paths
+        def mock_path_exists(p):
+            return "chrome.exe" in p.lower() or "firefox.exe" in p.lower() or "msedge.exe" in p.lower()
+        monkeypatch.setattr("agent.local_agent_client._path_exists", mock_path_exists)
+        result = handle_task(task, dry_run=True)
+        apps = result["data"]["apps"]
+        # Find the browser, office, cad entries
+        browser_app = next(app for app in apps if app["app_id"] == "browser")
+        office_app = next(app for app in apps if app["app_id"] == "office")
+        cad_app = next(app for app in apps if app["app_id"] == "cad")
+        assert browser_app["supported"] is True
+        assert office_app["supported"] is False
+        assert cad_app["supported"] is False
+
+    def test_safe_app_presence_known_paths_no_params_echo(self, monkeypatch):
+        """safe_app_presence_known_paths doesn't echo params."""
+        task = {
+            "task_id": "t-app-006",
+            "action": "safe_app_presence_known_paths",
+            "params": {"test_param": "should_not_echo", "secret": "hidden"},
+        }
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        result = handle_task(task, dry_run=True)
+        assert "params" not in result["data"]
+        assert "test_param" not in str(result)
+
+    def test_safe_app_presence_known_paths_no_paths_in_result(self, monkeypatch):
+        """safe_app_presence_known_paths never includes actual paths in result."""
+        task = {
+            "task_id": "t-app-007",
+            "action": "safe_app_presence_known_paths",
+            "params": {},
+        }
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: True)
+        result = handle_task(task, dry_run=True)
+        result_str = str(result).lower()
+        # Known paths should not appear in result
+        assert "program files" not in result_str
+        assert "autodesk" not in result_str
+        assert "acad.exe" not in result_str
+        assert "chrome.exe" not in result_str
+
+    def test_safe_app_presence_known_paths_in_low_risk_actions(self):
+        """safe_app_presence_known_paths is registered as low-risk."""
+        assert "safe_app_presence_known_paths" in LOW_RISK_ACTIONS
+
+    def test_safe_app_presence_known_paths_task_in_listen_mode_mock(self, monkeypatch):
+        """mock에서 safe_app_presence_known_paths task를 수신하고 처리할 수 있는지 확인."""
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-app-001",
+            device_token="tok-app1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-app-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-app-listen-001",
+                    "action": "safe_app_presence_known_paths",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "safe_app_presence_ok"
+        assert "apps" in result_msgs[0].get("data", {})
 
 
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────

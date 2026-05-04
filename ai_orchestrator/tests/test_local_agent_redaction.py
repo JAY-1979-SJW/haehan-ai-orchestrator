@@ -431,3 +431,198 @@ def test_strip_capabilities_case_insensitive():
     assert result.get("browser_supported") is True
     assert result.get("OFFICE_SUPPORTED") is False
     assert result.get("CAD_SUPPORTED") is True
+
+
+def test_strip_apps_allows_valid_items():
+    """_strip_apps가 valid app items를 유지한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        {"app_id": "browser", "supported": True},
+        {"app_id": "office", "supported": False},
+        {"app_id": "cad", "supported": True},
+    ]
+    result = _strip_apps(apps)
+
+    assert result is not None
+    assert len(result) == 3
+    assert result[0]["app_id"] == "browser"
+    assert result[0]["supported"] is True
+    assert result[1]["app_id"] == "office"
+    assert result[1]["supported"] is False
+    assert result[2]["app_id"] == "cad"
+    assert result[2]["supported"] is True
+
+
+def test_strip_apps_removes_non_bool_supported():
+    """_strip_apps가 bool이 아닌 supported 값을 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        {"app_id": "browser", "supported": True},
+        {"app_id": "office", "supported": "false"},  # string, not bool
+        {"app_id": "cad", "supported": 1},  # int, not bool
+    ]
+    result = _strip_apps(apps)
+
+    assert result is not None
+    assert len(result) == 1
+    assert result[0]["app_id"] == "browser"
+
+
+def test_strip_apps_removes_non_string_app_id():
+    """_strip_apps가 string이 아닌 app_id를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        {"app_id": "browser", "supported": True},
+        {"app_id": 123, "supported": False},  # int, not string
+        {"app_id": None, "supported": True},  # None, not string
+    ]
+    result = _strip_apps(apps)
+
+    assert result is not None
+    assert len(result) == 1
+    assert result[0]["app_id"] == "browser"
+
+
+def test_strip_apps_removes_unknown_keys():
+    """_strip_apps가 app_id/supported 외의 key를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        {
+            "app_id": "browser",
+            "supported": True,
+            "path": "/Program Files/...",  # not allowed
+            "version": "120.0",  # not allowed
+        }
+    ]
+    result = _strip_apps(apps)
+
+    assert result is not None
+    assert len(result) == 1
+    assert result[0] == {"app_id": "browser", "supported": True}
+    assert "path" not in result[0]
+    assert "version" not in result[0]
+
+
+def test_strip_apps_skips_non_dict_items():
+    """_strip_apps가 dict가 아닌 항목을 skip한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        {"app_id": "browser", "supported": True},
+        "not_a_dict",
+        None,
+        123,
+        {"app_id": "office", "supported": False},
+    ]
+    result = _strip_apps(apps)
+
+    assert result is not None
+    assert len(result) == 2
+    assert result[0]["app_id"] == "browser"
+    assert result[1]["app_id"] == "office"
+
+
+def test_strip_apps_non_list_returns_none():
+    """_strip_apps가 list가 아니면 None을 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    assert _strip_apps(None) is None
+    assert _strip_apps("not_a_list") is None
+    assert _strip_apps(123) is None
+    assert _strip_apps({"key": "value"}) is None
+
+
+def test_strip_apps_empty_list_returns_none():
+    """_strip_apps가 빈 list를 None으로 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    result = _strip_apps([])
+    assert result is None
+
+
+def test_strip_apps_all_invalid_items_returns_none():
+    """_strip_apps가 모든 항목이 invalid이면 None을 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_apps
+
+    apps = [
+        "not_dict",
+        123,
+        None,
+    ]
+    result = _strip_apps(apps)
+    assert result is None
+
+
+def test_strip_result_data_preserves_apps():
+    """_strip_result_data가 apps를 nested allowlist로 저장한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "safe_app_presence_known_paths",
+        "status": "ok",
+        "detection_mode": "known_path_boolean",
+        "apps": [
+            {"app_id": "browser", "supported": True},
+            {"app_id": "office", "supported": False},
+            {"app_id": "cad", "supported": False},
+        ],
+    }
+    result = _strip_result_data(data)
+
+    assert result is not None
+    assert result["action"] == "safe_app_presence_known_paths"
+    assert result["status"] == "ok"
+    assert result["detection_mode"] == "known_path_boolean"
+    assert "apps" in result
+    assert len(result["apps"]) == 3
+    assert result["apps"][0]["app_id"] == "browser"
+    assert result["apps"][0]["supported"] is True
+    assert result["apps"][1]["app_id"] == "office"
+    assert result["apps"][1]["supported"] is False
+
+
+def test_strip_result_data_filters_unsafe_apps():
+    """_strip_result_data가 apps의 민감값/미승인값을 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "safe_app_presence_known_paths",
+        "apps": [
+            {
+                "app_id": "browser",
+                "supported": True,
+                "path": "/Program Files/Chrome",  # not allowed
+                "version": "120.0",  # not allowed
+                "password": "secret",  # sensitive
+            }
+        ],
+    }
+    result = _strip_result_data(data)
+
+    assert result is not None
+    assert "apps" in result
+    assert len(result["apps"]) == 1
+    assert result["apps"][0] == {"app_id": "browser", "supported": True}
+    assert "path" not in result["apps"][0]
+    assert "version" not in result["apps"][0]
+    assert "password" not in result["apps"][0]
+
+
+def test_strip_result_data_removes_empty_apps():
+    """_strip_result_data가 빈 apps를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "test",
+        "apps": [],
+    }
+    result = _strip_result_data(data)
+
+    # action은 있지만 empty apps는 없어야 함
+    assert result is not None
+    assert "action" in result
+    assert "apps" not in result
