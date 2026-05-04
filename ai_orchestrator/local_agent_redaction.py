@@ -52,11 +52,15 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "detection_mode", "apps",
     # browser.plan_open_url result metadata
     "plan", "target",
+    # browser.inspect result metadata
+    "inspection_mode",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
+# browser.inspect capabilities 내부 허용 key 포함
 _CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset({
     "browser_supported", "office_supported", "cad_supported",
+    "can_plan_inspection", "actual_inspection_enabled",
 })
 
 # safe_app_presence_known_paths 및 safe_app_capability_matrix apps 항목 내부 허용 key
@@ -73,8 +77,10 @@ _NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset({
 })
 
 # browser.plan_open_url plan 내부 허용 key
+# browser.inspect plan 내부 허용 key 포함
 _PLAN_ALLOWED_KEYS: frozenset[str] = frozenset({
     "action_id", "will_open_browser", "will_navigate", "requires_approval",
+    "will_access_dom", "will_capture_screenshot",
 })
 
 # browser.plan_open_url target 내부 허용 key
@@ -90,6 +96,11 @@ _TARGET_SCHEME_ALLOWED: frozenset[str] = frozenset({
 # browser.plan_open_url target host_class 허용값
 _TARGET_HOST_CLASS_ALLOWED: frozenset[str] = frozenset({
     "public", "private_or_local", "blocked", "invalid", "sample",
+})
+
+# browser.inspect inspection_mode 허용값
+_INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset({
+    "page_layout", "accessibility_tree",
 })
 
 
@@ -159,10 +170,10 @@ def _sanitize_url_for_storage(url: str) -> str:
 
 
 def _strip_plan(value: object) -> "dict | None":
-    """browser.plan_open_url plan nested allowlist.
+    """browser.plan_open_url/browser.inspect plan nested allowlist.
 
     - dict가 아니면 None 반환
-    - 허용 key(action_id/will_open_browser/will_navigate/requires_approval)만 유지
+    - 허용 key만 유지 (action_id, will_* 계열, requires_approval)
     - action_id는 str (길이 200 제한)
     - will_* 및 requires_approval은 bool만 저장
     - bool이 아닌 값은 제거
@@ -177,7 +188,7 @@ def _strip_plan(value: object) -> "dict | None":
             continue
         if k_low == "action_id" and isinstance(v, str):
             out[k] = v[:200]
-        elif k_low in ("will_open_browser", "will_navigate", "requires_approval"):
+        elif k_low in ("will_open_browser", "will_navigate", "will_access_dom", "will_capture_screenshot", "requires_approval"):
             if isinstance(v, bool):
                 out[k] = v
     return out if out else None
@@ -255,6 +266,11 @@ def _strip_result_data(data: object) -> "dict | None":
             target = _strip_target(v)
             if target is not None:
                 out[k] = target
+            continue
+        # inspection_mode 특별 처리: enum 검증
+        if k_low == "inspection_mode":
+            if isinstance(v, str) and v in _INSPECTION_MODE_ALLOWED:
+                out[k] = v
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):

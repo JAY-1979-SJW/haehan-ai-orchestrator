@@ -483,6 +483,61 @@ def _handle_browser_plan_open_url(task: dict) -> dict:
         }
 
 
+def _handle_browser_inspect(task: dict) -> dict:
+    """browser.inspect: plan page inspection (plan-only, no actual browser/DOM access).
+
+    - params는 {}만 허용 (사용자 입력 거부)
+    - 실제 브라우저 실행/DOM 접근/screenshot 금지
+    - inspection_mode는 고정 enum값 (page_layout 권장)
+    - plan/capabilities boolean만 반환
+    - will_access_dom=false, will_capture_screenshot=false, actual_inspection_enabled=false 필수
+    """
+    params = task.get("params", {})
+
+    # params는 {}만 허용, 키가 있으면 invalid_params
+    if params and not isinstance(params, dict):
+        return {
+            "success": False,
+            "summary": "browser_inspect_invalid_params",
+            "data": {
+                "action": "browser.inspect",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # params에 키가 있으면 거부
+    if params:
+        return {
+            "success": False,
+            "summary": "browser_inspect_invalid_params",
+            "data": {
+                "action": "browser.inspect",
+                "status": "error_invalid_params",
+            },
+        }
+
+    return {
+        "success": True,
+        "summary": "browser_inspect_ok",
+        "data": {
+            "action": "browser.inspect",
+            "status": "ok",
+            "inspection_mode": "page_layout",
+            "plan": {
+                "action_id": "browser.inspect",
+                "will_open_browser": False,
+                "will_access_dom": False,
+                "will_capture_screenshot": False,
+                "requires_approval": True,
+            },
+            "capabilities": {
+                "can_plan_inspection": True,
+                "actual_inspection_enabled": False,
+            },
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -493,6 +548,7 @@ _LOW_RISK_HANDLERS = {
     "safe_app_presence_known_paths": _handle_safe_app_presence_known_paths,
     "safe_app_capability_matrix": _handle_safe_app_capability_matrix,
     "browser.plan_open_url": _handle_browser_plan_open_url,
+    "browser.inspect": _handle_browser_inspect,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
