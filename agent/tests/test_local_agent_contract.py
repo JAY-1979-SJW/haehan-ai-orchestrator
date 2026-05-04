@@ -37,8 +37,18 @@ SERVER_ACTION_RISK = {
     "system_info": "low",
     "list_allowed_apps": "low",
     "open_url": "low",
+    "open_url_execute": "high",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
+    "ws_noop": "low",
+    "safe_echo": "low",
+    # browser automation actions (BROWSER-4E)
+    "browser.inspect": "low",
+    "browser.plan_click": "low",
+    "browser.plan_type": "low",
+    "browser.plan_submit": "low",
+    "browser.execute_click": "medium",
+    "browser.execute_type": "medium",
 }
 
 # KNOWN_TASK_STATUSES

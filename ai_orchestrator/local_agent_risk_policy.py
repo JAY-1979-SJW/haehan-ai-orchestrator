@@ -26,6 +26,7 @@ ACTION_RISK: dict[str, str] = {
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
     "ws_noop":            "low",
+    "safe_echo":          "low",
     # browser automation actions (BROWSER-4E)
     "browser.inspect":    "low",
     "browser.plan_click": "low",

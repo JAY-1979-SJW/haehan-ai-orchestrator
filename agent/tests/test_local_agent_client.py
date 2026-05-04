@@ -325,6 +325,75 @@ class TestHandleWsNoop:
             handle_task(task, dry_run=True)
 
 
+# ── 8.5. safe_echo handler ────────────────────────────────────────────────────
+
+class TestHandleSafeEcho:
+    def test_safe_echo_success(self):
+        task = {
+            "task_id": "t-echo-001",
+            "action": "safe_echo",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert result["type"] == "result"
+        assert result["success"] is True
+        assert result["summary"] == "safe_echo_ok"
+        assert result["task_id"] == "t-echo-001"
+
+    def test_safe_echo_has_data_field(self):
+        task = {
+            "task_id": "t-echo-002",
+            "action": "safe_echo",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert "data" in result
+        assert result["data"]["action"] == "safe_echo"
+        assert result["data"]["status"] == "ok"
+
+    def test_safe_echo_no_params_echo(self):
+        task = {
+            "task_id": "t-echo-003",
+            "action": "safe_echo",
+            "params": {"test_param": "should_not_echo", "secret": "hidden"},
+        }
+        result = handle_task(task, dry_run=True)
+        assert "params" not in result["data"]
+        assert "test_param" not in str(result)
+        assert "should_not_echo" not in str(result)
+
+    def test_safe_echo_in_low_risk_actions(self):
+        assert "safe_echo" in LOW_RISK_ACTIONS
+
+    def test_safe_echo_task_in_listen_mode_mock(self):
+        """mock에서 safe_echo task를 수신하고 처리할 수 있는지 확인."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-echo-001",
+            device_token="tok-echo1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-echo-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-safe-echo-001",
+                    "action": "safe_echo",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "safe_echo_ok"
+
+
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
 
 class TestListenMode:
