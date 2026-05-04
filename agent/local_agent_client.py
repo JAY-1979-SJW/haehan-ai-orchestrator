@@ -213,11 +213,28 @@ def _handle_ws_noop(task: dict) -> dict:
     }
 
 
+def _handle_safe_echo(task: dict) -> dict:
+    """safe_echo: safe echo action for agent capability validation.
+
+    params 원문 echo 금지. PC/env/file/network 접근 금지.
+    고정된 응답만 반환한다.
+    """
+    return {
+        "success": True,
+        "summary": "safe_echo_ok",
+        "data": {
+            "action": "safe_echo",
+            "status": "ok",
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
     "list_allowed_apps": _handle_list_allowed_apps,
     "ws_noop": _handle_ws_noop,
+    "safe_echo": _handle_safe_echo,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
@@ -318,11 +335,14 @@ def handle_task(task: dict, *, dry_run: bool = True) -> dict:
 
     if action in _LOW_RISK_HANDLERS:
         out = _LOW_RISK_HANDLERS[action](task)
-        return build_result(
+        result = build_result(
             task_id=task_id,
             success=out.get("success", True),
             summary=out.get("summary", ""),
         )
+        if "data" in out:
+            result["data"] = out["data"]
+        return result
 
     if action in _DRY_RUN_HANDLERS:
         return _DRY_RUN_HANDLERS[action](task)

@@ -151,9 +151,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         logger.error("--max-tasks must be 0 or 1 (max 1 task)")
         return 2
 
-    if args.allow_task_action and args.allow_task_action != "ws_noop":
+    if args.allow_task_action and args.allow_task_action not in ("ws_noop", "safe_echo"):
         logger.error(
-            "--allow-task-action must be 'ws_noop' or empty (got %r)",
+            "--allow-task-action must be 'ws_noop', 'safe_echo', or empty (got %r)",
             args.allow_task_action
         )
         return 2
@@ -168,12 +168,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.listen_seconds > 0:
         if not args.allow_task_action:
             logger.error(
-                "--listen-seconds requires --allow-task-action ws_noop"
+                "--listen-seconds requires --allow-task-action (ws_noop or safe_echo)"
             )
             return 2
-        if args.allow_task_action != "ws_noop":
+        if args.allow_task_action not in ("ws_noop", "safe_echo"):
             logger.error(
-                "--listen-seconds only works with --allow-task-action ws_noop"
+                "--listen-seconds only works with --allow-task-action ws_noop or safe_echo"
             )
             return 2
 
