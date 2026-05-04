@@ -28,6 +28,7 @@ ACTION_RISK: dict[str, str] = {
     "ws_noop":            "low",
     "safe_echo":          "low",
     "safe_desktop_capability": "low",
+    "safe_app_presence_known_paths": "low",
     # browser automation actions (BROWSER-4E)
     "browser.inspect":    "low",
     "browser.plan_click": "low",

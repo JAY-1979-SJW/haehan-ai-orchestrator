@@ -25,6 +25,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "ws_noop",
     "safe_echo",
     "safe_desktop_capability",
+    "safe_app_presence_known_paths",
     "open_url_execute",
     # browser automation actions (BROWSER-4E)
     "browser.inspect",

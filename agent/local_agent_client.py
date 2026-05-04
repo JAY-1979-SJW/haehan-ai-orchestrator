@@ -68,6 +68,29 @@ def strip_sensitive(payload: Any) -> Any:
     return payload
 
 
+# ── known path 상수 (safe_app_presence_known_paths 용) ───────────────────────
+
+_KNOWN_PATHS: dict[str, list[str]] = {
+    "browser": [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+        "C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe",
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    ],
+    "office": [
+        "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+        "C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+        "C:\\Program Files\\Microsoft Office\\Office16\\WINWORD.EXE",
+    ],
+    "cad": [
+        "C:\\Program Files\\Autodesk\\AutoCAD 2024\\acad.exe",
+        "C:\\Program Files\\Autodesk\\AutoCAD 2023\\acad.exe",
+        "C:\\Program Files\\Autodesk\\AutoCAD 2022\\acad.exe",
+    ],
+}
+
+
 # ── 설정 ─────────────────────────────────────────────────────────────────────
 
 def _parse_bool_env(key: str, default: bool = True) -> bool:
@@ -250,6 +273,48 @@ def _handle_safe_desktop_capability(task: dict) -> dict:
     }
 
 
+def _path_exists(path: str) -> bool:
+    """경로 존재 여부 확인 (테스트 mock 가능)."""
+    try:
+        import os as os_module
+        return os_module.path.exists(path)
+    except Exception:
+        return False
+
+
+def _detect_app_presence() -> list[dict]:
+    """known paths를 확인하여 app presence boolean 계산.
+
+    - _KNOWN_PATHS에 정의된 경로만 확인
+    - 경로 자체는 result에 절대 포함하지 않음
+    - 각 app_id별로 하나 이상의 경로가 존재하면 supported=True
+    """
+    apps_list: list[dict] = []
+    for app_id, paths in _KNOWN_PATHS.items():
+        supported = any(_path_exists(p) for p in paths)
+        apps_list.append({"app_id": app_id, "supported": supported})
+    return apps_list
+
+
+def _handle_safe_app_presence_known_paths(task: dict) -> dict:
+    """safe_app_presence_known_paths: app presence via known path detection.
+
+    실제 경로는 내부에서만 사용, 결과에는 절대 포함 금지.
+    각 app_id별 supported boolean만 반환한다.
+    """
+    apps = _detect_app_presence()
+    return {
+        "success": True,
+        "summary": "safe_app_presence_ok",
+        "data": {
+            "action": "safe_app_presence_known_paths",
+            "status": "ok",
+            "detection_mode": "known_path_boolean",
+            "apps": apps,
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -257,6 +322,7 @@ _LOW_RISK_HANDLERS = {
     "ws_noop": _handle_ws_noop,
     "safe_echo": _handle_safe_echo,
     "safe_desktop_capability": _handle_safe_desktop_capability,
+    "safe_app_presence_known_paths": _handle_safe_app_presence_known_paths,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)

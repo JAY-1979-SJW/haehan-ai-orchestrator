@@ -48,11 +48,18 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "text_preview", "error_message", "screenshot_ref",
     # safe_desktop_capability result metadata
     "capabilities",
+    # safe_app_presence_known_paths result metadata
+    "detection_mode", "apps",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
 _CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset({
     "browser_supported", "office_supported", "cad_supported",
+})
+
+# safe_app_presence_known_paths apps 항목 내부 허용 key
+_APPS_ITEM_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "app_id", "supported",
 })
 
 
@@ -77,6 +84,35 @@ def _strip_capabilities(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_apps(value: object) -> "list | None":
+    """apps nested allowlist: app_id와 supported boolean만 저장.
+
+    - list가 아니면 None 반환
+    - 각 항목이 dict여야 함
+    - 허용 key(app_id/supported)만 유지
+    - app_id는 str, supported는 bool만 저장
+    - 빈 list면 None 반환
+    """
+    if not isinstance(value, list):
+        return None
+    out: list = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        entry: dict = {}
+        for k, v in item.items():
+            k_low = k.lower()
+            if k_low not in _APPS_ITEM_ALLOWED_KEYS:
+                continue
+            if k_low == "supported" and isinstance(v, bool):
+                entry[k] = v
+            elif k_low == "app_id" and isinstance(v, str):
+                entry[k] = v[:200]
+        if entry and "app_id" in entry and "supported" in entry:
+            out.append(entry)
+    return out if out else None
+
+
 def _sanitize_url_for_storage(url: str) -> str:
     """URL에서 query string을 제거하고 scheme+host+path만 반환."""
     from urllib.parse import urlparse, urlunparse
@@ -93,8 +129,9 @@ def _strip_result_data(data: object) -> "dict | None":
     - 허용 key(_RESULT_DATA_ALLOWED_KEYS)만 저장
     - url 계열 값은 query string 제거
     - capabilities는 nested allowlist(_strip_capabilities) 적용
+    - apps는 nested allowlist(_strip_apps) 적용
     - 민감 key(_SENSITIVE_KEYS)는 이중 방어로 항상 drop
-    - 값이 dict/list 인 경우 재귀 없이 str 변환 후 저장 (capabilities 제외)
+    - 값이 dict/list 인 경우 재귀 없이 str 변환 후 저장 (capabilities, apps 제외)
     - None 또는 빈 dict이면 None 반환
     """
     if not isinstance(data, dict) or not data:
@@ -111,6 +148,12 @@ def _strip_result_data(data: object) -> "dict | None":
             capabilities = _strip_capabilities(v)
             if capabilities is not None:
                 out[k] = capabilities
+            continue
+        # apps 특별 처리: nested list allowlist
+        if k_low == "apps":
+            apps = _strip_apps(v)
+            if apps is not None:
+                out[k] = apps
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
