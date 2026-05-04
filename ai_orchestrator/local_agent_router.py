@@ -39,6 +39,7 @@ from .approval import issue_token_for_dev_reg, approve_token, reject_token
 from . import local_agent_registry as _reg
 from . import local_agent_diagnostics
 from . import registration_codes as _regcodes
+from . import local_agent_audit_builders as _audit
 
 logger = logging.getLogger(__name__)
 
@@ -803,7 +804,7 @@ def approve_local_agent_task(
         task_id, actor=actor, role=role,
         decision=status, risk_level=token.risk_level,
         action_type=task.action,
-        note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
+        note=_audit.build_approval_note(agent_id, token.public_id),
     )
 
     if status == "approved":
@@ -818,7 +819,10 @@ def approve_local_agent_task(
                 risk_level=updated.risk_level,
                 action_type=updated.action,
                 actor=actor, role=role,
-                note=f"agent_id={agent_id} dry_run={_task_is_dry_run(updated)} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id} dry_run={_task_is_dry_run(updated)}",
+                note=_audit.build_screenshot_approval_note(
+                    agent_id, _task_is_dry_run(updated),
+                    approval_public_id=token.public_id,
+                ),
             )
         return updated.to_safe()
 
