@@ -151,9 +151,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         logger.error("--max-tasks must be 0 or 1 (max 1 task)")
         return 2
 
-    if args.allow_task_action and args.allow_task_action not in ("ws_noop", "safe_echo", "safe_desktop_capability", "safe_app_presence_known_paths"):
+    if args.allow_task_action and args.allow_task_action not in ("ws_noop", "safe_echo", "safe_desktop_capability", "safe_app_presence_known_paths", "safe_app_capability_matrix"):
         logger.error(
-            "--allow-task-action must be 'ws_noop', 'safe_echo', 'safe_desktop_capability', 'safe_app_presence_known_paths', or empty (got %r)",
+            "--allow-task-action must be 'ws_noop', 'safe_echo', 'safe_desktop_capability', 'safe_app_presence_known_paths', 'safe_app_capability_matrix', or empty (got %r)",
             args.allow_task_action
         )
         return 2
@@ -168,12 +168,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.listen_seconds > 0:
         if not args.allow_task_action:
             logger.error(
-                "--listen-seconds requires --allow-task-action (ws_noop, safe_echo, safe_desktop_capability, or safe_app_presence_known_paths)"
+                "--listen-seconds requires --allow-task-action (ws_noop, safe_echo, safe_desktop_capability, safe_app_presence_known_paths, or safe_app_capability_matrix)"
             )
             return 2
-        if args.allow_task_action not in ("ws_noop", "safe_echo", "safe_desktop_capability", "safe_app_presence_known_paths"):
+        if args.allow_task_action not in ("ws_noop", "safe_echo", "safe_desktop_capability", "safe_app_presence_known_paths", "safe_app_capability_matrix"):
             logger.error(
-                "--listen-seconds only works with --allow-task-action ws_noop, safe_echo, safe_desktop_capability, or safe_app_presence_known_paths"
+                "--listen-seconds only works with --allow-task-action ws_noop, safe_echo, safe_desktop_capability, safe_app_presence_known_paths, or safe_app_capability_matrix"
             )
             return 2
 

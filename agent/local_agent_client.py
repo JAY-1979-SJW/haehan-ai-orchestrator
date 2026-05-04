@@ -315,6 +315,42 @@ def _handle_safe_app_presence_known_paths(task: dict) -> dict:
     }
 
 
+def _handle_safe_app_capability_matrix(task: dict) -> dict:
+    """safe_app_capability_matrix: capability matrix with next safe actions.
+
+    현재 browser/office/cad 지원 여부를 바탕으로 다음 가능한 safe action을 안내한다.
+    실제 앱 실행/URL 열기/파일 접근 없음.
+    """
+    apps = _detect_app_presence()
+
+    # next_actions mapping (고정 allowlist)
+    next_actions_map = {
+        "browser": ["browser_plan_open_url", "browser_inspect"],
+        "office": ["excel_plan_open_workbook"],
+        "cad": ["cad_plan_open_file"],
+    }
+
+    # apps에 next_actions 추가
+    for app in apps:
+        app_id = app.get("app_id")
+        supported = app.get("supported", False)
+        if supported and app_id in next_actions_map:
+            app["next_actions"] = next_actions_map[app_id]
+        else:
+            app["next_actions"] = []
+
+    return {
+        "success": True,
+        "summary": "safe_app_capability_matrix_ok",
+        "data": {
+            "action": "safe_app_capability_matrix",
+            "status": "ok",
+            "detection_mode": "known_path_boolean",
+            "apps": apps,
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -323,6 +359,7 @@ _LOW_RISK_HANDLERS = {
     "safe_echo": _handle_safe_echo,
     "safe_desktop_capability": _handle_safe_desktop_capability,
     "safe_app_presence_known_paths": _handle_safe_app_presence_known_paths,
+    "safe_app_capability_matrix": _handle_safe_app_capability_matrix,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)

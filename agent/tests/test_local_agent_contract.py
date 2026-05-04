@@ -44,6 +44,7 @@ SERVER_ACTION_RISK = {
     "safe_echo": "low",
     "safe_desktop_capability": "low",
     "safe_app_presence_known_paths": "low",
+    "safe_app_capability_matrix": "low",
     # browser automation actions (BROWSER-4E)
     "browser.inspect": "low",
     "browser.plan_click": "low",

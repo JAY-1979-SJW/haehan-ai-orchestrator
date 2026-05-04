@@ -57,9 +57,17 @@ _CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset({
     "browser_supported", "office_supported", "cad_supported",
 })
 
-# safe_app_presence_known_paths apps 항목 내부 허용 key
+# safe_app_presence_known_paths 및 safe_app_capability_matrix apps 항목 내부 허용 key
 _APPS_ITEM_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "app_id", "supported",
+    "app_id", "supported", "next_actions",
+})
+
+# safe_app_capability_matrix next_actions 허용 목록 (고정 allowlist)
+_NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset({
+    "browser_plan_open_url",
+    "browser_inspect",
+    "excel_plan_open_workbook",
+    "cad_plan_open_file",
 })
 
 
@@ -85,12 +93,13 @@ def _strip_capabilities(value: object) -> "dict | None":
 
 
 def _strip_apps(value: object) -> "list | None":
-    """apps nested allowlist: app_id와 supported boolean만 저장.
+    """apps nested allowlist: app_id/supported/next_actions만 저장.
 
     - list가 아니면 None 반환
     - 각 항목이 dict여야 함
-    - 허용 key(app_id/supported)만 유지
+    - 허용 key(app_id/supported/next_actions)만 유지
     - app_id는 str, supported는 bool만 저장
+    - next_actions는 list이고, 각 항목은 _NEXT_ACTIONS_ALLOWED만 포함
     - 빈 list면 None 반환
     """
     if not isinstance(value, list):
@@ -108,6 +117,10 @@ def _strip_apps(value: object) -> "list | None":
                 entry[k] = v
             elif k_low == "app_id" and isinstance(v, str):
                 entry[k] = v[:200]
+            elif k_low == "next_actions" and isinstance(v, list):
+                # next_actions allowlist: 허용된 action만 유지
+                actions = [a for a in v if isinstance(a, str) and a in _NEXT_ACTIONS_ALLOWED]
+                entry[k] = actions
         if entry and "app_id" in entry and "supported" in entry:
             out.append(entry)
     return out if out else None
