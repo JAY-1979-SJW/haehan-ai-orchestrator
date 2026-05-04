@@ -351,6 +351,138 @@ def _handle_safe_app_capability_matrix(task: dict) -> dict:
     }
 
 
+def _classify_host(hostname: str) -> str:
+    """URL hostname을 보안 분류 (raw hostname 미반환).
+
+    - public: public domain (일반적인 인터넷 도메인)
+    - private_or_local: localhost, 127.0.0.1, 192.168.*, 10.*, 172.16-31.*, 또는 .local
+    - sample: example.com, example.org, example.net, test.com, localhost
+    - blocked: 내부 서버 또는 차단 목록
+    - invalid: 파싱 실패 또는 unknown
+    """
+    if not hostname:
+        return "invalid"
+
+    hostname_lower = hostname.lower()
+
+    # sample domains (테스트 목적)
+    if hostname_lower in ("example.com", "example.org", "example.net", "test.com", "localhost"):
+        return "sample"
+
+    # private/local addresses
+    if hostname_lower == "localhost" or hostname_lower.startswith("127."):
+        return "private_or_local"
+    if hostname_lower.startswith("192.168.") or hostname_lower.startswith("10.") or hostname_lower.startswith("172."):
+        return "private_or_local"
+    if hostname_lower.endswith(".local"):
+        return "private_or_local"
+
+    # 보안: 내부 서버/차단 목록 (아직 비어있음)
+    # blocked_hosts = {"internal.server", "blocked.host"}
+    # if hostname_lower in blocked_hosts:
+    #     return "blocked"
+
+    # default: public
+    return "public"
+
+
+def _handle_browser_plan_open_url(task: dict) -> dict:
+    """browser.plan_open_url: plan to open URL in browser (plan-only, no execution).
+
+    - URL을 파싱/검증하되 실제 실행 금지
+    - scheme은 http/https만 허용
+    - username/password가 URL에 있으면 거부
+    - result에는 plan/target 메타데이터만 반환
+    - raw URL/normalized_url/host 원문 반환 금지
+    """
+    params = task.get("params", {})
+    target_url = (params.get("target_url") or params.get("url") or "").strip()
+
+    if not target_url:
+        return {
+            "success": False,
+            "summary": "browser_plan_open_url_invalid_url",
+            "data": {
+                "action": "browser.plan_open_url",
+                "status": "error_invalid_url",
+            },
+        }
+
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(target_url)
+        scheme = (parsed.scheme or "").lower()
+        hostname = (parsed.hostname or "").lower() if parsed.hostname else ""
+
+        # scheme 검증 (http/https만 허용)
+        if scheme not in ("http", "https"):
+            return {
+                "success": False,
+                "summary": "browser_plan_open_url_invalid_scheme",
+                "data": {
+                    "action": "browser.plan_open_url",
+                    "status": "error_invalid_scheme",
+                },
+            }
+
+        # username/password 검증
+        if parsed.username or parsed.password:
+            return {
+                "success": False,
+                "summary": "browser_plan_open_url_credentials_in_url",
+                "data": {
+                    "action": "browser.plan_open_url",
+                    "status": "error_credentials_in_url",
+                },
+            }
+
+        # host_class 분류
+        host_class = _classify_host(hostname)
+        if host_class == "blocked":
+            return {
+                "success": False,
+                "summary": "browser_plan_open_url_blocked_target",
+                "data": {
+                    "action": "browser.plan_open_url",
+                    "status": "error_blocked_target",
+                    "target": {
+                        "scheme": scheme,
+                        "host_class": host_class,
+                        "url_redacted": True,
+                    },
+                },
+            }
+
+        return {
+            "success": True,
+            "summary": "browser_plan_open_url_ok",
+            "data": {
+                "action": "browser.plan_open_url",
+                "status": "ok",
+                "plan": {
+                    "action_id": "browser.plan_open_url",
+                    "will_open_browser": False,
+                    "will_navigate": False,
+                    "requires_approval": True,
+                },
+                "target": {
+                    "scheme": scheme,
+                    "host_class": host_class,
+                    "url_redacted": True,
+                },
+            },
+        }
+    except Exception:
+        return {
+            "success": False,
+            "summary": "browser_plan_open_url_parse_error",
+            "data": {
+                "action": "browser.plan_open_url",
+                "status": "error_parse_error",
+            },
+        }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -360,6 +492,7 @@ _LOW_RISK_HANDLERS = {
     "safe_desktop_capability": _handle_safe_desktop_capability,
     "safe_app_presence_known_paths": _handle_safe_app_presence_known_paths,
     "safe_app_capability_matrix": _handle_safe_app_capability_matrix,
+    "browser.plan_open_url": _handle_browser_plan_open_url,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)

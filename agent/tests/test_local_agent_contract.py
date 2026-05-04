@@ -50,6 +50,7 @@ SERVER_ACTION_RISK = {
     "browser.plan_click": "low",
     "browser.plan_type": "low",
     "browser.plan_submit": "low",
+    "browser.plan_open_url": "low",
     "browser.execute_click": "medium",
     "browser.execute_type": "medium",
 }

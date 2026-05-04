@@ -33,6 +33,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "browser.plan_click",
     "browser.plan_type",
     "browser.plan_submit",
+    "browser.plan_open_url",
     "browser.execute_click",
     "browser.execute_type",
 })

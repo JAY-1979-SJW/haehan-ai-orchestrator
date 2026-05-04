@@ -50,6 +50,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "capabilities",
     # safe_app_presence_known_paths result metadata
     "detection_mode", "apps",
+    # browser.plan_open_url result metadata
+    "plan", "target",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
@@ -68,6 +70,26 @@ _NEXT_ACTIONS_ALLOWED: frozenset[str] = frozenset({
     "browser_inspect",
     "excel_plan_open_workbook",
     "cad_plan_open_file",
+})
+
+# browser.plan_open_url plan 내부 허용 key
+_PLAN_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "action_id", "will_open_browser", "will_navigate", "requires_approval",
+})
+
+# browser.plan_open_url target 내부 허용 key
+_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "scheme", "host_class", "url_redacted",
+})
+
+# browser.plan_open_url target scheme 허용값
+_TARGET_SCHEME_ALLOWED: frozenset[str] = frozenset({
+    "http", "https",
+})
+
+# browser.plan_open_url target host_class 허용값
+_TARGET_HOST_CLASS_ALLOWED: frozenset[str] = frozenset({
+    "public", "private_or_local", "blocked", "invalid", "sample",
 })
 
 
@@ -136,6 +158,60 @@ def _sanitize_url_for_storage(url: str) -> str:
         return ""
 
 
+def _strip_plan(value: object) -> "dict | None":
+    """browser.plan_open_url plan nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(action_id/will_open_browser/will_navigate/requires_approval)만 유지
+    - action_id는 str (길이 200 제한)
+    - will_* 및 requires_approval은 bool만 저장
+    - bool이 아닌 값은 제거
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _PLAN_ALLOWED_KEYS:
+            continue
+        if k_low == "action_id" and isinstance(v, str):
+            out[k] = v[:200]
+        elif k_low in ("will_open_browser", "will_navigate", "requires_approval"):
+            if isinstance(v, bool):
+                out[k] = v
+    return out if out else None
+
+
+def _strip_target(value: object) -> "dict | None":
+    """browser.plan_open_url target nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(scheme/host_class/url_redacted)만 유지
+    - scheme은 str이고 _TARGET_SCHEME_ALLOWED에만 포함 (http/https)
+    - host_class는 str이고 _TARGET_HOST_CLASS_ALLOWED에만 포함
+    - url_redacted는 bool만 저장
+    - 제한된 값만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _TARGET_ALLOWED_KEYS:
+            continue
+        if k_low == "scheme" and isinstance(v, str):
+            if v.lower() in _TARGET_SCHEME_ALLOWED:
+                out[k] = v.lower()
+        elif k_low == "host_class" and isinstance(v, str):
+            if v.lower() in _TARGET_HOST_CLASS_ALLOWED:
+                out[k] = v.lower()
+        elif k_low == "url_redacted" and isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -167,6 +243,18 @@ def _strip_result_data(data: object) -> "dict | None":
             apps = _strip_apps(v)
             if apps is not None:
                 out[k] = apps
+            continue
+        # plan 특별 처리: nested allowlist
+        if k_low == "plan":
+            plan = _strip_plan(v)
+            if plan is not None:
+                out[k] = plan
+            continue
+        # target 특별 처리: nested allowlist
+        if k_low == "target":
+            target = _strip_target(v)
+            if target is not None:
+                out[k] = target
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):

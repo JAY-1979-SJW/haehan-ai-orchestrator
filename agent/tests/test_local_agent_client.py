@@ -708,6 +708,134 @@ class TestHandleSafeAppPresenceKnownPaths:
             assert "path" not in app
             assert "url" not in app
 
+    def test_browser_plan_open_url_in_low_risk_actions(self):
+        """browser.plan_open_url is registered as low-risk."""
+        assert "browser.plan_open_url" in LOW_RISK_ACTIONS
+
+    def test_browser_plan_open_url_valid_https(self):
+        """browser.plan_open_url with valid HTTPS URL returns plan info."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bpou-001",
+            "action": "browser.plan_open_url",
+            "params": {
+                "target_url": "https://example.com/path",
+            },
+        }
+        result = handle_task(task)
+        assert result.get("success") is True
+        assert result.get("summary") == "browser_plan_open_url_ok"
+        data = result.get("data", {})
+        assert data.get("action") == "browser.plan_open_url"
+        assert data.get("status") == "ok"
+        # plan 메타데이터
+        assert "plan" in data
+        plan = data["plan"]
+        assert plan.get("action_id") == "browser.plan_open_url"
+        assert plan.get("will_open_browser") is False
+        assert plan.get("will_navigate") is False
+        assert plan.get("requires_approval") is True
+        # target 메타데이터
+        assert "target" in data
+        target = data["target"]
+        assert target.get("scheme") in ("http", "https")
+        assert target.get("host_class") in ("public", "private_or_local", "blocked", "invalid", "sample")
+        assert target.get("url_redacted") is True
+        # raw URL 미반환
+        assert "normalized_url" not in data
+        assert "url_host" not in data
+        assert "target_url" not in data
+
+    def test_browser_plan_open_url_invalid_url(self):
+        """browser.plan_open_url with empty URL returns error."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bpou-002",
+            "action": "browser.plan_open_url",
+            "params": {
+                "target_url": "",
+            },
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_plan_open_url_invalid_url"
+
+    def test_browser_plan_open_url_invalid_scheme(self):
+        """browser.plan_open_url rejects non-http(s) schemes."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bpou-003",
+            "action": "browser.plan_open_url",
+            "params": {
+                "target_url": "file:///etc/passwd",
+            },
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_plan_open_url_invalid_scheme"
+
+    def test_browser_plan_open_url_credentials_in_url(self):
+        """browser.plan_open_url rejects URLs with username/password."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bpou-004",
+            "action": "browser.plan_open_url",
+            "params": {
+                "target_url": "https://user:pass@example.com/",
+            },
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_plan_open_url_credentials_in_url"
+
+    def test_browser_plan_open_url_task_in_listen_mode(self, monkeypatch):
+        """browser.plan_open_url task handling in listen mode."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-bpou-001",
+            device_token="tok-bpou1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-bpou-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-bpou-listen-001",
+                    "action": "browser.plan_open_url",
+                    "params": {
+                        "target_url": "https://google.com/search",
+                    },
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "browser_plan_open_url_ok"
+        data = result_msgs[0].get("data", {})
+        assert data.get("action") == "browser.plan_open_url"
+        assert data.get("status") == "ok"
+        # plan 검증
+        plan = data.get("plan", {})
+        assert plan.get("action_id") == "browser.plan_open_url"
+        assert plan.get("will_open_browser") is False
+        assert plan.get("will_navigate") is False
+        assert plan.get("requires_approval") is True
+        # target 검증
+        target = data.get("target", {})
+        assert target.get("scheme") == "https"
+        assert target.get("url_redacted") is True
+        # raw URL 미포함
+        assert "url" not in data
+        assert "target_url" not in data
+        assert "normalized_url" not in data
+        assert "url_host" not in data
+
 
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
 
