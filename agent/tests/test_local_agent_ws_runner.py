@@ -304,6 +304,100 @@ class TestSensitiveValueProtection:
         # 하지만 logger 출력 시 strip_sensitive()를 거쳐야 함
 
 
+class TestWsNoopTaskHandler:
+    """ws_noop safe task handler 테스트."""
+
+    def test_allow_task_action_option_added(self):
+        """runner에 --allow-task-action 옵션이 있음"""
+        from agent.local_agent_ws_runner import main
+        import sys
+
+        with patch("agent.local_agent_ws_runner._register_with_code") as mock_reg, \
+             patch("agent.local_agent_client.LocalAgentClient.connect") as mock_connect, \
+             patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+
+            mock_reg.return_value = ("agent-123", "device-token-123")
+            mock_connect.return_value = {
+                "status": "ok",
+                "agent_id": "agent-123",
+                "heartbeat_count": 1,
+                "sent": 2,
+                "received": 2,
+            }
+
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--heartbeat-count", "1",
+                "--allow-task-action", "ws_noop",
+                "--max-tasks", "1",
+            ])
+
+            assert result == 0
+            # connect()가 올바른 옵션으로 호출되었는지 확인
+            call_kwargs = mock_connect.call_args[1]
+            assert call_kwargs.get("allow_task_action") == "ws_noop"
+            assert call_kwargs.get("max_tasks") == 1
+
+    def test_max_tasks_validation_rejects_over_1(self):
+        """--max-tasks > 1은 거부"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--max-tasks", "2",
+            ])
+
+            assert result == 2
+
+    def test_allow_task_action_validation_only_ws_noop(self):
+        """--allow-task-action은 ws_noop만 허용"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--allow-task-action", "open_url",
+                "--max-tasks", "1",
+            ])
+
+            assert result == 2
+
+    def test_allow_task_action_requires_max_tasks(self):
+        """--allow-task-action은 --max-tasks 없으면 거부"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--allow-task-action", "ws_noop",
+            ])
+
+            assert result == 2
+
+    def test_ws_noop_result_format(self):
+        """ws_noop 처리 결과 형식"""
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "t-noop-smoke-001",
+            "action": "ws_noop",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        assert result["success"] is True
+        assert result["summary"] == "ws_noop_ok"
+        assert result["task_id"] == "t-noop-smoke-001"
+        # 민감값이 없어야 함
+        assert "token" not in str(result).lower()
+        assert "password" not in str(result).lower()
+
+
 __all__ = [
     "TestHttpToWsUrlConversion",
     "TestAssertLocalWsUrl",
@@ -314,4 +408,5 @@ __all__ = [
     "TestNoTaskExecution",
     "TestRunnerArguments",
     "TestSensitiveValueProtection",
+    "TestWsNoopTaskHandler",
 ]

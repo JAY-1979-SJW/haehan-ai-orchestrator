@@ -202,10 +202,22 @@ def _handle_list_allowed_apps(task: dict) -> dict:
     }
 
 
+def _handle_ws_noop(task: dict) -> dict:
+    """ws_noop: no-op task for WS dispatch smoke testing.
+
+    실제 시스템 접근 없이 안전한 응답만 반환한다.
+    """
+    return {
+        "success": True,
+        "summary": "ws_noop_ok",
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
     "list_allowed_apps": _handle_list_allowed_apps,
+    "ws_noop": _handle_ws_noop,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
@@ -412,11 +424,18 @@ class LocalAgentClient:
             and self.config.device_token
         )
 
-    def connect(self, heartbeat_count: int = 1) -> dict:
+    def connect(
+        self,
+        heartbeat_count: int = 1,
+        allow_task_action: str = "",
+        max_tasks: int = 0,
+    ) -> dict:
         """WebSocket 연결 진입점 (dry_run=False에서 실제 연결).
 
         dry_run=True 이면 연결하지 않는다 (운영 서버 접속 차단).
         heartbeat_count: 송수신할 heartbeat 횟수 (기본 1).
+        allow_task_action: 허용할 task action (기본 "", 즉 task 처리 안 함).
+        max_tasks: 처리할 최대 task 수 (기본 0, 최대 1).
         반환값: {status, agent_id, heartbeat_count, ...} (dry_run 또는 실제 연결 결과).
         """
         if not self._should_connect():
@@ -439,7 +458,14 @@ class LocalAgentClient:
             return {"status": "error", "error": str(e)}
 
         try:
-            result = asyncio.run(self._connect_async(ws_url, heartbeat_count))
+            result = asyncio.run(
+                self._connect_async(
+                    ws_url,
+                    heartbeat_count,
+                    allow_task_action=allow_task_action,
+                    max_tasks=max_tasks,
+                )
+            )
             return result
         except Exception as e:
             logger.error("WebSocket connection failed: %s", e)
@@ -449,7 +475,13 @@ class LocalAgentClient:
                 "agent_id": self.config.agent_id,
             }
 
-    async def _connect_async(self, ws_url: str, heartbeat_count: int) -> dict:
+    async def _connect_async(
+        self,
+        ws_url: str,
+        heartbeat_count: int,
+        allow_task_action: str = "",
+        max_tasks: int = 0,
+    ) -> dict:
         """실제 WebSocket 비동기 연결."""
         try:
             import websockets
@@ -467,7 +499,12 @@ class LocalAgentClient:
                 ping_timeout=20,
                 close_timeout=5,
             ) as ws:
-                result = await self._run_ws_protocol_async(ws, heartbeat_count)
+                result = await self._run_ws_protocol_async(
+                    ws,
+                    heartbeat_count,
+                    allow_task_action=allow_task_action,
+                    max_tasks=max_tasks,
+                )
                 return result
         except Exception as e:
             logger.error("WebSocket async connection error: %s", e)
@@ -478,14 +515,21 @@ class LocalAgentClient:
             }
 
     async def _run_ws_protocol_async(
-        self, ws: Any, heartbeat_count: int
+        self,
+        ws: Any,
+        heartbeat_count: int,
+        allow_task_action: str = "",
+        max_tasks: int = 0,
     ) -> dict:
         """WebSocket 프로토콜 실행 (auth → heartbeat 반복 → close).
 
-        task 메시지 수신 시 blocked_task_dispatch 처리 (실행 안 함).
+        allow_task_action: 허용할 task action (기본 "").
+        max_tasks: 처리할 최대 task 수 (기본 0).
+        task 메시지 수신 시 blocked_task_dispatch 또는 safe dispatch 처리.
         """
         sent: list[dict] = []
         received: list[dict] = []
+        tasks_processed: int = 0
 
         try:
             # 1. auth 메시지 송신
@@ -512,12 +556,52 @@ class LocalAgentClient:
                 received.append(msg)
 
                 if msg.get("type") == "task":
-                    # task는 실행하지 않고 blocked 처리
-                    logger.warning(
-                        "task dispatch received but not executed "
-                        "(dry_run controlled mode)"
-                    )
-                    # 실행하지 않으므로 result_ack 대기 제외
+                    # task 처리 결정
+                    task = msg.get("task", {})
+                    action = (task.get("action") or "").strip()
+
+                    # allow_task_action이 설정되어 있고 max_tasks 미도달 시만 처리
+                    if (
+                        allow_task_action
+                        and action == allow_task_action
+                        and tasks_processed < max_tasks
+                    ):
+                        logger.info(
+                            "Processing task: action=%r (task_id=%s)",
+                            action, task.get("task_id")
+                        )
+                        try:
+                            result = handle_task(task, dry_run=self.config.dry_run)
+                            await ws.send(json.dumps(result))
+                            sent.append(result)
+                            tasks_processed += 1
+                            logger.info("Task result sent (tasks_processed=%d)", tasks_processed)
+                        except (BlockedAction, NotImplementedInThisStage) as e:
+                            logger.warning("Task processing failed: %s", e)
+                            result = build_result(
+                                task_id=task.get("task_id", ""),
+                                success=False,
+                                error_code="TASK_ERROR",
+                                error=str(e),
+                            )
+                            await ws.send(json.dumps(result))
+                            sent.append(result)
+                    else:
+                        # blocked 처리
+                        if not allow_task_action:
+                            logger.warning(
+                                "task received but no action allowed (no-task mode)"
+                            )
+                        elif action != allow_task_action:
+                            logger.warning(
+                                "task action %r not allowed (expected %r)",
+                                action, allow_task_action
+                            )
+                        else:
+                            logger.warning(
+                                "max_tasks (%d) reached", max_tasks
+                            )
+                    # task 처리 후 break (1개만 처리)
                     break
 
             return {

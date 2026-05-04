@@ -102,6 +102,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Do not execute tasks (always true, ignored)",
     )
     parser.add_argument(
+        "--allow-task-action",
+        default="",
+        help="Allow execution of specific task action (e.g., ws_noop)",
+    )
+    parser.add_argument(
+        "--max-tasks",
+        type=int,
+        default=0,
+        help="Maximum number of tasks to execute (0=disabled, max=1)",
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose logging",
@@ -121,6 +132,24 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if not args.registration_code_env:
         logger.error("--registration-code-env is required")
+        return 2
+
+    # Validate task execution options
+    if args.max_tasks > 1:
+        logger.error("--max-tasks must be 0 or 1 (max 1 task)")
+        return 2
+
+    if args.allow_task_action and args.allow_task_action != "ws_noop":
+        logger.error(
+            "--allow-task-action must be 'ws_noop' or empty (got %r)",
+            args.allow_task_action
+        )
+        return 2
+
+    if args.allow_task_action and args.max_tasks == 0:
+        logger.error(
+            "--allow-task-action requires --max-tasks > 0"
+        )
         return 2
 
     # Load registration code from environment variable
@@ -166,12 +195,23 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
 
     # Step 3: Connect and run
-    logger.info(
-        "Connecting to WebSocket (heartbeat_count=%d)...",
-        args.heartbeat_count
-    )
+    if args.allow_task_action:
+        logger.info(
+            "Connecting to WebSocket (heartbeat_count=%d, "
+            "allow_task_action=%s, max_tasks=%d)...",
+            args.heartbeat_count, args.allow_task_action, args.max_tasks
+        )
+    else:
+        logger.info(
+            "Connecting to WebSocket (heartbeat_count=%d, no-task mode)...",
+            args.heartbeat_count
+        )
     client = LocalAgentClient(config)
-    result = client.connect(heartbeat_count=args.heartbeat_count)
+    result = client.connect(
+        heartbeat_count=args.heartbeat_count,
+        allow_task_action=args.allow_task_action,
+        max_tasks=args.max_tasks,
+    )
 
     # Log result (without sensitive values)
     status = result.get("status", "unknown")
