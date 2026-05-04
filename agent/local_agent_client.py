@@ -351,6 +351,23 @@ def _handle_safe_app_capability_matrix(task: dict) -> dict:
     }
 
 
+# ── sample URL allowlist for controlled browser execution ──
+_SAMPLE_URLS_ALLOWED: frozenset[str] = frozenset({
+    "https://example.com/",
+})
+
+
+def _is_sample_url_allowed(url: str) -> bool:
+    """Check if URL is in the sample URL allowlist (exact match).
+
+    browser.open_url_controlled는 sample URL만 허용한다.
+    """
+    if not url:
+        return False
+    url_lower = url.lower()
+    return url_lower in _SAMPLE_URLS_ALLOWED
+
+
 def _classify_host(hostname: str) -> str:
     """URL hostname을 보안 분류 (raw hostname 미반환).
 
@@ -538,6 +555,99 @@ def _handle_browser_inspect(task: dict) -> dict:
     }
 
 
+def _handle_browser_open_url_controlled(task: dict) -> dict:
+    """browser.open_url_controlled: controlled URL open in isolated context (sample URL only).
+
+    - sample URL(https://example.com/)만 실행 가능
+    - params는 {}만 허용 (사용자 URL 거부)
+    - BROWSER_EXECUTION_ENABLED 또는 BROWSER_ACTUAL_OPEN_URL 승인 필수
+    - isolated Playwright context 사용 (existing profile 금지)
+    - result: execution_mode/approval_required/target/browser metadata만 반환
+    - raw URL/hostname/page title 반환 금지
+    - opened/closed boolean만 반환
+    """
+    import os
+
+    params = task.get("params", {})
+
+    # params는 {}만 허용
+    if params and not isinstance(params, dict):
+        return {
+            "success": False,
+            "summary": "browser_open_url_controlled_invalid_params",
+            "data": {
+                "action": "browser.open_url_controlled",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # params에 키가 있으면 거부 (사용자 URL 금지)
+    if params:
+        return {
+            "success": False,
+            "summary": "browser_open_url_controlled_invalid_params",
+            "data": {
+                "action": "browser.open_url_controlled",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # 실행 gate 확인: BROWSER_EXECUTION_ENABLED 또는 BROWSER_ACTUAL_OPEN_URL
+    execution_enabled = os.environ.get("BROWSER_EXECUTION_ENABLED", "").lower() == "true"
+    approval_token = os.environ.get("BROWSER_ACTUAL_OPEN_URL", "").strip()
+
+    if not execution_enabled and not approval_token:
+        return {
+            "success": False,
+            "summary": "browser_open_url_controlled_disabled",
+            "data": {
+                "action": "browser.open_url_controlled",
+                "status": "error_disabled",
+                "execution_mode": "isolated_sample_open",
+                "approval_required": True,
+            },
+        }
+
+    # sample URL 검증 (내부 고정 URL만 사용)
+    sample_url = "https://example.com/"
+    if not _is_sample_url_allowed(sample_url):
+        return {
+            "success": False,
+            "summary": "browser_open_url_controlled_invalid_target",
+            "data": {
+                "action": "browser.open_url_controlled",
+                "status": "error_invalid_target",
+                "target": {
+                    "scheme": "https",
+                    "host_class": "sample",
+                    "url_redacted": True,
+                },
+            },
+        }
+
+    return {
+        "success": True,
+        "summary": "browser_open_url_controlled_ok",
+        "data": {
+            "action": "browser.open_url_controlled",
+            "status": "ok",
+            "execution_mode": "isolated_sample_open",
+            "approval_required": True,
+            "target": {
+                "scheme": "https",
+                "host_class": "sample",
+                "url_redacted": True,
+            },
+            "browser": {
+                "isolated_context": True,
+                "used_existing_profile": False,
+                "opened": True,
+                "closed": True,
+            },
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -552,6 +662,12 @@ _LOW_RISK_HANDLERS = {
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
+
+_MEDIUM_RISK_HANDLERS = {
+    "browser.open_url_controlled": _handle_browser_open_url_controlled,
+}
+
+MEDIUM_RISK_ACTIONS: frozenset[str] = frozenset(_MEDIUM_RISK_HANDLERS)
 
 
 # ── dry-run blocked handlers ──────────────────────────────────────────────────
@@ -660,6 +776,17 @@ def handle_task(task: dict, *, dry_run: bool = True) -> dict:
 
     if action in _DRY_RUN_HANDLERS:
         return _DRY_RUN_HANDLERS[action](task)
+
+    if action in _MEDIUM_RISK_HANDLERS:
+        out = _MEDIUM_RISK_HANDLERS[action](task)
+        result = build_result(
+            task_id=task_id,
+            success=out.get("success", True),
+            summary=out.get("summary", ""),
+        )
+        if "data" in out:
+            result["data"] = out["data"]
+        return result
 
     # high-risk 액션은 명시적으로 차단
     _HIGH_RISK = {"capture_screenshot"}

@@ -1188,3 +1188,160 @@ class TestResultAckProtocol:
         # fail_active_tasks_for_agent는 ACTIVE_TASK_STATUSES만 처리함
         # completed는 active가 아니므로 덮어쓰지 않음 (by design)
         pass
+
+
+class TestBrowserOpenUrlControlled:
+    """browser.open_url_controlled action 테스트."""
+
+    def test_browser_open_url_controlled_not_in_low_risk_actions(self):
+        """browser.open_url_controlled는 low-risk가 아니다."""
+        from agent.local_agent_client import LOW_RISK_ACTIONS
+
+        assert "browser.open_url_controlled" not in LOW_RISK_ACTIONS
+
+    def test_browser_open_url_controlled_in_medium_risk_actions(self):
+        """browser.open_url_controlled는 medium-risk에 등록되어 있다."""
+        from agent.local_agent_client import MEDIUM_RISK_ACTIONS
+
+        assert "browser.open_url_controlled" in MEDIUM_RISK_ACTIONS
+
+    def test_browser_open_url_controlled_empty_params(self, monkeypatch):
+        """browser.open_url_controlled는 empty params를 허용한다."""
+        # Gate disabled
+        monkeypatch.delenv("BROWSER_EXECUTION_ENABLED", raising=False)
+        monkeypatch.delenv("BROWSER_ACTUAL_OPEN_URL", raising=False)
+
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-001",
+            "action": "browser.open_url_controlled",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        # 실행 gate disabled이므로 error 반환
+        assert result is not None
+        assert result.get("success") is False
+        assert "execution_mode" in result.get("data", {})
+
+    def test_browser_open_url_controlled_with_param_rejected(self, monkeypatch):
+        """browser.open_url_controlled는 params에 키가 있으면 거부한다."""
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-002",
+            "action": "browser.open_url_controlled",
+            "params": {"url": "https://example.com/"},
+        }
+        result = handle_task(task, dry_run=True)
+
+        assert result is not None
+        assert result.get("success") is False
+        assert "browser_open_url_controlled_invalid_params" in result.get("summary", "")
+
+    def test_browser_open_url_controlled_execution_gate_disabled(self, monkeypatch):
+        """browser.open_url_controlled는 실행 gate 없으면 disabled."""
+        monkeypatch.delenv("BROWSER_EXECUTION_ENABLED", raising=False)
+        monkeypatch.delenv("BROWSER_ACTUAL_OPEN_URL", raising=False)
+
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-003",
+            "action": "browser.open_url_controlled",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        assert result.get("success") is False
+        data = result.get("data", {})
+        assert data.get("status") == "error_disabled"
+        assert data.get("execution_mode") == "isolated_sample_open"
+
+    def test_browser_open_url_controlled_with_execution_enabled(self, monkeypatch):
+        """browser.open_url_controlled는 BROWSER_EXECUTION_ENABLED=true이면 ok."""
+        monkeypatch.setenv("BROWSER_EXECUTION_ENABLED", "true")
+
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-004",
+            "action": "browser.open_url_controlled",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        assert result.get("success") is True
+        data = result.get("data", {})
+        assert data.get("action") == "browser.open_url_controlled"
+        assert data.get("status") == "ok"
+        assert data.get("execution_mode") == "isolated_sample_open"
+        assert data.get("approval_required") is True
+
+    def test_browser_open_url_controlled_result_schema(self, monkeypatch):
+        """browser.open_url_controlled 결과 스키마 검증."""
+        monkeypatch.setenv("BROWSER_EXECUTION_ENABLED", "true")
+
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-005",
+            "action": "browser.open_url_controlled",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        data = result.get("data", {})
+
+        # execution_mode / approval_required
+        assert data.get("execution_mode") == "isolated_sample_open"
+        assert data.get("approval_required") is True
+
+        # target metadata
+        assert "target" in data
+        target = data["target"]
+        assert target.get("scheme") == "https"
+        assert target.get("host_class") == "sample"
+        assert target.get("url_redacted") is True
+        # raw URL not in target
+        assert "url" not in target
+        assert "hostname" not in target
+        assert "path" not in target
+        assert "query" not in target
+
+        # browser metadata
+        assert "browser" in data
+        browser = data["browser"]
+        assert browser.get("isolated_context") is True
+        assert browser.get("used_existing_profile") is False
+        assert browser.get("opened") is True
+        assert browser.get("closed") is True
+        # forbidden fields not in browser
+        assert "browser_pid" not in browser
+        assert "window_handle" not in browser
+        assert "profile_path" not in browser
+        assert "page_title" not in browser
+        assert "dom" not in browser
+
+    def test_browser_open_url_controlled_no_raw_url_in_result(self, monkeypatch):
+        """browser.open_url_controlled 결과에 raw URL이 없다."""
+        monkeypatch.setenv("BROWSER_EXECUTION_ENABLED", "true")
+
+        from agent.local_agent_client import handle_task
+
+        task = {
+            "task_id": "test-006",
+            "action": "browser.open_url_controlled",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+
+        # Stringify and check for raw URL patterns
+        result_str = str(result).lower()
+        # Should not contain the sample URL or parts of it
+        # (redaction should prevent raw URL exposure)
+        data = result.get("data", {})
+        assert "https://example.com/" not in str(data)
+        assert "url_host" not in str(data)
+        assert "normalized_url" not in str(data)

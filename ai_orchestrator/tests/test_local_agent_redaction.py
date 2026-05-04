@@ -741,3 +741,139 @@ def test_strip_result_data_blocks_sensitive_fields_not_in_allowlist():
     assert result.get("action") == "browser.inspect"
     assert "plan" in result
     assert "capabilities" in result
+
+
+def test_strip_browser_nested_allowlist():
+    """_strip_browser가 browser nested allowlist를 올바르게 처리한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_browser
+
+    # valid browser dict
+    browser_data = {
+        "isolated_context": True,
+        "used_existing_profile": False,
+        "opened": True,
+        "closed": True,
+    }
+    result = _strip_browser(browser_data)
+
+    assert result is not None
+    assert result.get("isolated_context") is True
+    assert result.get("used_existing_profile") is False
+    assert result.get("opened") is True
+    assert result.get("closed") is True
+
+
+def test_strip_browser_filters_non_bool():
+    """_strip_browser가 non-boolean 값을 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_browser
+
+    browser_data = {
+        "isolated_context": True,
+        "used_existing_profile": False,
+        "browser_pid": 12345,  # int, should be removed
+        "profile_path": "/home/user/.config",  # str, should be removed
+        "opened": True,
+    }
+    result = _strip_browser(browser_data)
+
+    assert result is not None
+    assert "isolated_context" in result
+    assert "opened" in result
+    assert "browser_pid" not in result
+    assert "profile_path" not in result
+
+
+def test_strip_browser_rejects_non_dict():
+    """_strip_browser는 dict가 아니면 None을 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_browser
+
+    assert _strip_browser("not a dict") is None
+    assert _strip_browser([1, 2, 3]) is None
+    assert _strip_browser(None) is None
+
+
+def test_strip_result_data_preserves_browser_open_url_controlled():
+    """_strip_result_data는 browser.open_url_controlled 데이터를 올바르게 처리한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "browser.open_url_controlled",
+        "status": "ok",
+        "execution_mode": "isolated_sample_open",
+        "approval_required": True,
+        "target": {
+            "scheme": "https",
+            "host_class": "sample",
+            "url_redacted": True,
+        },
+        "browser": {
+            "isolated_context": True,
+            "used_existing_profile": False,
+            "opened": True,
+            "closed": True,
+        },
+    }
+    result = _strip_result_data(data)
+
+    # 모든 허용 필드 보존
+    assert result is not None
+    assert result.get("action") == "browser.open_url_controlled"
+    assert result.get("status") == "ok"
+    assert result.get("execution_mode") == "isolated_sample_open"
+    assert result.get("approval_required") is True
+    # target 보존
+    assert "target" in result
+    target = result["target"]
+    assert target.get("scheme") == "https"
+    assert target.get("host_class") == "sample"
+    assert target.get("url_redacted") is True
+    # browser 보존
+    assert "browser" in result
+    browser = result["browser"]
+    assert browser.get("isolated_context") is True
+    assert browser.get("used_existing_profile") is False
+    assert browser.get("opened") is True
+    assert browser.get("closed") is True
+
+
+def test_strip_result_data_removes_raw_url_from_browser_open_url_controlled():
+    """_strip_result_data는 browser.open_url_controlled에서 금지된 필드를 제거한다.
+
+    allowlist에 없는 필드만 제거된다.
+    allowlist에 있지만 handler가 반환하지 않는 필드도 있음 (policy는 allowlist, handler 책임).
+    """
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "browser.open_url_controlled",
+        "status": "ok",
+        "execution_mode": "isolated_sample_open",
+        "approval_required": True,
+        "target": {
+            "scheme": "https",
+            "host_class": "sample",
+            "url_redacted": True,
+        },
+        "browser": {
+            "isolated_context": True,
+            "used_existing_profile": False,
+            "opened": True,
+            "closed": True,
+        },
+        # forbidden fields not in allowlist → will be removed
+        "raw_url": "https://example.com/",
+        "browser_pid": 12345,
+        "profile_path": "/home/user/.config",
+        "window_handle": "CDwindow-abc123",
+    }
+    result = _strip_result_data(data)
+
+    # forbidden fields removed (not in allowlist)
+    assert "raw_url" not in result
+    assert "browser_pid" not in result
+    assert "profile_path" not in result
+    assert "window_handle" not in result
+    # allowed fields preserved
+    assert result.get("action") == "browser.open_url_controlled"
+    assert "target" in result
+    assert "browser" in result

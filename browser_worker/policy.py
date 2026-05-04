@@ -9,11 +9,13 @@ ALLOWED_ACTIONS_DRY_RUN = frozenset({
 # Allowed actions in actual execution mode (gated by BROWSER_EXECUTION_ENABLED)
 ALLOWED_ACTIONS_ACTUAL_EXECUTION = frozenset({
     "browser.inspect",
+    "browser.open_url_controlled",
 })
 
 # Allowed URLs in actual execution mode
 ALLOWED_URLS_ACTUAL_EXECUTION = frozenset({
     "about:blank",
+    "https://example.com/",
 })
 
 # Actions disabled in actual execution mode

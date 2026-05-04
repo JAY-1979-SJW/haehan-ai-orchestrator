@@ -13,8 +13,8 @@ from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 class RealPlaywrightBackend:
     """Real Playwright backend for browser operations."""
 
-    ALLOWED_ACTIONS = frozenset({"browser.inspect"})
-    ALLOWED_URLS = frozenset({"about:blank"})
+    ALLOWED_ACTIONS = frozenset({"browser.inspect", "browser.open_url_controlled"})
+    ALLOWED_URLS = frozenset({"about:blank", "https://example.com/"})
     EXECUTION_ENABLED_ENV_VAR = "BROWSER_EXECUTION_ENABLED"
 
     def __init__(self):
@@ -107,6 +107,7 @@ class RealPlaywrightBackend:
         browser = None
         context = None
         page = None
+        cleanup_failed = False
 
         try:
             from playwright.sync_api import sync_playwright
@@ -116,17 +117,41 @@ class RealPlaywrightBackend:
                 context = browser.new_context()
                 page = context.new_page()
 
-                # Navigate to URL and get page info
+                # Navigate to URL (isolated context, no existing profile)
                 page.goto(request.url)
-                title = page.title()
-                url = page.url
+                opened = True
 
+                # Action-specific response
+                if request.action == "browser.open_url_controlled":
+                    return WorkerBrowserResponse(
+                        success=True,
+                        task_id=request.task_id,
+                        action=request.action,
+                        browser_started=True,
+                        backend="real_playwright_worker",
+                        status="ok",
+                        data={
+                            "execution_mode": "isolated_sample_open",
+                            "approval_required": True,
+                            "target": {
+                                "scheme": "https",
+                                "host_class": "sample",
+                                "url_redacted": True,
+                            },
+                            "browser": {
+                                "isolated_context": True,
+                                "used_existing_profile": False,
+                                "opened": opened,
+                                "closed": False,
+                            },
+                        },
+                    )
+
+                # Default response for browser.inspect
                 return WorkerBrowserResponse(
                     success=True,
                     task_id=request.task_id,
                     action=request.action,
-                    title=title,
-                    url=url,
                     browser_started=True,
                     backend="real_playwright_worker",
                     status="ok",
@@ -146,18 +171,12 @@ class RealPlaywrightBackend:
 
         finally:
             # Cleanup: close page, context, browser in reverse order
-            if page is not None:
-                try:
+            try:
+                if page is not None:
                     page.close()
-                except Exception:
-                    pass
-            if context is not None:
-                try:
+                if context is not None:
                     context.close()
-                except Exception:
-                    pass
-            if browser is not None:
-                try:
+                if browser is not None:
                     browser.close()
-                except Exception:
-                    pass
+            except Exception:
+                cleanup_failed = True

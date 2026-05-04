@@ -54,6 +54,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "plan", "target",
     # browser.inspect result metadata
     "inspection_mode",
+    # browser.open_url_controlled result metadata
+    "execution_mode", "approval_required", "browser",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
@@ -101,6 +103,11 @@ _TARGET_HOST_CLASS_ALLOWED: frozenset[str] = frozenset({
 # browser.inspect inspection_mode 허용값
 _INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset({
     "page_layout", "accessibility_tree",
+})
+
+# browser.open_url_controlled browser 내부 허용 key
+_BROWSER_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "isolated_context", "used_existing_profile", "opened", "closed",
 })
 
 
@@ -223,6 +230,27 @@ def _strip_target(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_browser(value: object) -> "dict | None":
+    """browser.open_url_controlled browser nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(isolated_context/used_existing_profile/opened/closed)만 유지
+    - 각 값은 bool만 저장
+    - bool이 아닌 값은 제거
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _BROWSER_ALLOWED_KEYS:
+            continue
+        if isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -271,6 +299,12 @@ def _strip_result_data(data: object) -> "dict | None":
         if k_low == "inspection_mode":
             if isinstance(v, str) and v in _INSPECTION_MODE_ALLOWED:
                 out[k] = v
+            continue
+        # browser 특별 처리: nested boolean allowlist
+        if k_low == "browser":
+            browser = _strip_browser(v)
+            if browser is not None:
+                out[k] = browser
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
