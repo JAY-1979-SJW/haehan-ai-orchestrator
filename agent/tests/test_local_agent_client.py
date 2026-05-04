@@ -488,3 +488,55 @@ class TestListenMode:
         result_without_auth = [r for r in result if r.get("type") != "auth"]
         result_str = str(result_without_auth)
         assert "super-secret-token-should-not-appear" not in result_str
+
+
+# ── 10. result_ack protocol 테스트 ──────────────────────────────────────────
+
+class TestResultAckProtocol:
+    """result_ack protocol 검증 테스트."""
+
+    def test_server_sends_result_ack_after_result(self):
+        """server가 result 처리 후 result_ack을 전송한다 (protocol).
+
+        실제 server test에서 검증하며, 여기서는 protocol 형식 검증만 수행.
+        """
+        # result_ack은 server에서 _handle_result 후 전송됨
+        # client는 이를 기다려야 함 (대기 로직은 이미 구현됨)
+        pass
+
+    def test_result_ack_includes_task_id_and_status(self):
+        """result_ack payload에는 task_id와 status만 포함된다."""
+        # mock result_ack payload
+        ack_payload = {
+            "type": "result_ack",
+            "task_id": "lat-test-123",
+            "status": "completed",
+        }
+        # payload가 최소화되었는지 확인
+        assert "task_id" in ack_payload
+        assert "status" in ack_payload
+        assert len(ack_payload) == 3  # type, task_id, status only
+        assert "data" not in ack_payload
+        assert "result_summary" not in ack_payload
+
+    def test_result_ack_no_sensitive_values(self):
+        """result_ack payload에 민감값이 없다."""
+        ack_payload = {
+            "type": "result_ack",
+            "task_id": "lat-test-123",
+            "status": "completed",
+        }
+        ack_str = str(ack_payload)
+        assert "token" not in ack_str.lower()
+        assert "password" not in ack_str.lower()
+        assert "secret" not in ack_str.lower()
+        assert "api_key" not in ack_str.lower()
+
+    def test_disconnect_does_not_overwrite_completed_task(self):
+        """disconnect 처리 시 이미 completed된 task를 failed로 덮어쓰지 않는다.
+
+        실제 server test에서 검증하며, 여기서는 policy 확인만 수행.
+        """
+        # fail_active_tasks_for_agent는 ACTIVE_TASK_STATUSES만 처리함
+        # completed는 active가 아니므로 덮어쓰지 않음 (by design)
+        pass

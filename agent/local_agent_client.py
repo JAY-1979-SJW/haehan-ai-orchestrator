@@ -586,10 +586,24 @@ class LocalAgentClient:
                         )
                         try:
                             result = handle_task(task, dry_run=self.config.dry_run)
+                            current_task_id = task.get("task_id", "")
                             await ws.send(json.dumps(result))
                             sent.append(result)
                             tasks_processed += 1
                             logger.info("Task result sent (tasks_processed=%d)", tasks_processed)
+
+                            # Wait for result_ack before proceeding
+                            logger.info("Waiting for result_ack...")
+                            ack_timeout = 3.0
+                            try:
+                                ack_msg_text = await asyncio.wait_for(ws.recv(), timeout=ack_timeout)
+                                ack_msg = json.loads(ack_msg_text)
+                                if ack_msg.get("type") == "result_ack":
+                                    logger.info("result_ack received: status=%s", ack_msg.get("status"))
+                                else:
+                                    logger.warning("unexpected message instead of result_ack: %s", ack_msg.get("type"))
+                            except asyncio.TimeoutError:
+                                logger.warning("result_ack timeout")
                         except (BlockedAction, NotImplementedInThisStage) as e:
                             logger.warning("Task processing failed: %s", e)
                             result = build_result(
@@ -598,8 +612,20 @@ class LocalAgentClient:
                                 error_code="TASK_ERROR",
                                 error=str(e),
                             )
+                            current_task_id = task.get("task_id", "")
                             await ws.send(json.dumps(result))
                             sent.append(result)
+
+                            # Wait for result_ack after error
+                            logger.info("Waiting for result_ack after error...")
+                            ack_timeout = 3.0
+                            try:
+                                ack_msg_text = await asyncio.wait_for(ws.recv(), timeout=ack_timeout)
+                                ack_msg = json.loads(ack_msg_text)
+                                if ack_msg.get("type") == "result_ack":
+                                    logger.info("result_ack received: status=%s", ack_msg.get("status"))
+                            except asyncio.TimeoutError:
+                                logger.warning("result_ack timeout after error")
                     else:
                         # blocked 처리
                         if not allow_task_action:
@@ -655,10 +681,29 @@ class LocalAgentClient:
                                 )
                                 try:
                                     result = handle_task(task, dry_run=self.config.dry_run)
+                                    current_task_id = task.get("task_id", "")
                                     await ws.send(json.dumps(result))
                                     sent.append(result)
                                     tasks_processed += 1
                                     logger.info("Task result sent in listen mode (tasks_processed=%d)", tasks_processed)
+
+                                    # Wait for result_ack before closing
+                                    logger.info("Waiting for result_ack...")
+                                    ack_timeout = 3.0
+                                    try:
+                                        ack_msg_text = await asyncio.wait_for(ws.recv(), timeout=ack_timeout)
+                                        ack_msg = json.loads(ack_msg_text)
+                                        if ack_msg.get("type") == "result_ack":
+                                            ack_task_id = ack_msg.get("task_id")
+                                            if ack_task_id == current_task_id:
+                                                logger.info("result_ack received: status=%s", ack_msg.get("status"))
+                                            else:
+                                                logger.warning("result_ack task_id mismatch: expected=%s, got=%s", current_task_id, ack_task_id)
+                                        else:
+                                            logger.warning("unexpected message type instead of result_ack: %s", ack_msg.get("type"))
+                                    except asyncio.TimeoutError:
+                                        logger.warning("result_ack timeout after %fs", ack_timeout)
+
                                     break  # listen mode 종료
                                 except (BlockedAction, NotImplementedInThisStage) as e:
                                     logger.warning("Task processing failed in listen mode: %s", e)
@@ -668,8 +713,21 @@ class LocalAgentClient:
                                         error_code="TASK_ERROR",
                                         error=str(e),
                                     )
+                                    current_task_id = task.get("task_id", "")
                                     await ws.send(json.dumps(result))
                                     sent.append(result)
+
+                                    # Wait for result_ack after error result too
+                                    logger.info("Waiting for result_ack after error...")
+                                    ack_timeout = 3.0
+                                    try:
+                                        ack_msg_text = await asyncio.wait_for(ws.recv(), timeout=ack_timeout)
+                                        ack_msg = json.loads(ack_msg_text)
+                                        if ack_msg.get("type") == "result_ack":
+                                            logger.info("result_ack received for error: status=%s", ack_msg.get("status"))
+                                    except asyncio.TimeoutError:
+                                        logger.warning("result_ack timeout after error")
+
                                     break  # listen mode 종료
                             else:
                                 logger.warning("task in listen mode not allowed or max_tasks reached")
