@@ -41,6 +41,7 @@ from . import local_agent_diagnostics
 from . import registration_codes as _regcodes
 from . import local_agent_audit_builders as _audit
 from . import local_agent_router_guards as _guards
+from . import local_agent_audit_event_policy as _policy
 
 logger = logging.getLogger(__name__)
 
@@ -93,38 +94,6 @@ class CaptureScreenshotRequest(BaseModel):
     dry_run: bool = True
     reason: str = ""
     note: str = ""
-
-
-_APPROVE_STATUS_HTTP = {
-    "approved": 200, "not_found": 404, "task_mismatch": 400,
-    "already_used": 409, "expired": 410, "forbidden": 403,
-    "rate_limited": 429,
-}
-_REJECT_STATUS_HTTP = {
-    "rejected": 200, "not_found": 404, "task_mismatch": 400,
-    "already_used": 409, "expired": 410, "forbidden": 403,
-    "rate_limited": 429,
-}
-_APPROVE_AUDIT_EVENT = {
-    "approved": "LOCAL_AGENT_TASK_APPROVED",
-    "not_found": "APPROVAL_INVALID_TOKEN",
-    "task_mismatch": "APPROVAL_INVALID_TOKEN",
-    "already_used": "APPROVAL_ALREADY_USED",
-    "expired": "LOCAL_AGENT_TASK_APPROVAL_EXPIRED",
-    "forbidden": "APPROVAL_DENIED",
-    "rate_limited": "APPROVAL_RATE_LIMITED",
-}
-_REJECT_AUDIT_EVENT = {
-    "rejected": "LOCAL_AGENT_TASK_REJECTED_BY_APPROVER",
-    "not_found": "APPROVAL_REJECT_INVALID_TOKEN",
-    "task_mismatch": "APPROVAL_REJECT_INVALID_TOKEN",
-    "already_used": "APPROVAL_ALREADY_USED",
-    "expired": "LOCAL_AGENT_TASK_APPROVAL_EXPIRED",
-    "forbidden": "APPROVAL_REJECT_FORBIDDEN",
-    "rate_limited": "APPROVAL_RATE_LIMITED",
-}
-
-
 
 
 def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
@@ -787,7 +756,7 @@ def approve_local_agent_task(
 
     token, status = approve_token(token_id, task_id, actor, role)
     log_event(
-        _APPROVE_AUDIT_EVENT.get(status, "APPROVAL_DENIED"),
+        _policy.APPROVE_AUDIT_EVENT.get(status, "APPROVAL_DENIED"),
         task_id, actor=actor, role=role,
         decision=status, risk_level=token.risk_level,
         action_type=task.action,
@@ -826,7 +795,7 @@ def approve_local_agent_task(
                 note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
             )
 
-    http_code = _APPROVE_STATUS_HTTP.get(status, 400)
+    http_code = _policy.APPROVE_STATUS_HTTP.get(status, 400)
     raise HTTPException(status_code=http_code,
                         detail={"error": status.upper(), "status": status})
 
@@ -874,7 +843,7 @@ def reject_local_agent_task(
 
     token, status = reject_token(token_id, task_id, actor, role, reason=reason)
     log_event(
-        _REJECT_AUDIT_EVENT.get(status, "APPROVAL_REJECTED"),
+        _policy.REJECT_AUDIT_EVENT.get(status, "APPROVAL_REJECTED"),
         task_id, actor=actor, role=role,
         decision=status, risk_level=token.risk_level,
         action_type=task.action,
@@ -908,7 +877,7 @@ def reject_local_agent_task(
                 note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
             )
 
-    http_code = _REJECT_STATUS_HTTP.get(status, 400)
+    http_code = _policy.REJECT_STATUS_HTTP.get(status, 400)
     raise HTTPException(status_code=http_code,
                         detail={"error": status.upper(), "status": status})
 
