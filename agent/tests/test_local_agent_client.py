@@ -836,6 +836,142 @@ class TestHandleSafeAppPresenceKnownPaths:
         assert "normalized_url" not in data
         assert "url_host" not in data
 
+    def test_browser_inspect_in_low_risk_actions(self):
+        """browser.inspect is registered as low-risk."""
+        assert "browser.inspect" in LOW_RISK_ACTIONS
+
+    def test_browser_inspect_valid_empty_params(self):
+        """browser.inspect with empty params returns inspection plan."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bi-001",
+            "action": "browser.inspect",
+            "params": {},
+        }
+        result = handle_task(task)
+        assert result.get("success") is True
+        assert result.get("summary") == "browser_inspect_ok"
+        data = result.get("data", {})
+        assert data.get("action") == "browser.inspect"
+        assert data.get("status") == "ok"
+        # inspection_mode 검증
+        assert data.get("inspection_mode") in ("page_layout", "accessibility_tree")
+        # plan 메타데이터
+        assert "plan" in data
+        plan = data["plan"]
+        assert plan.get("action_id") == "browser.inspect"
+        assert plan.get("will_open_browser") is False
+        assert plan.get("will_access_dom") is False
+        assert plan.get("will_capture_screenshot") is False
+        assert plan.get("requires_approval") is True
+        # capabilities 메타데이터
+        assert "capabilities" in data
+        caps = data["capabilities"]
+        assert caps.get("can_plan_inspection") is True
+        assert caps.get("actual_inspection_enabled") is False
+        # DOM/screenshot/URL 미반환
+        assert "selector" not in data
+        assert "html" not in data
+        assert "inner_html" not in data
+        assert "page_title" not in data
+        assert "dom" not in data
+        assert "screenshot" not in data
+        assert "screenshot_ref" not in data
+        assert "url" not in data
+        assert "target_url" not in data
+        assert "normalized_url" not in data
+
+    def test_browser_inspect_no_params(self):
+        """browser.inspect with missing params (None) works same as empty."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bi-002",
+            "action": "browser.inspect",
+        }
+        result = handle_task(task)
+        assert result.get("success") is True
+        assert result.get("summary") == "browser_inspect_ok"
+
+    def test_browser_inspect_invalid_params_with_url(self):
+        """browser.inspect rejects params with 'url'."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bi-003",
+            "action": "browser.inspect",
+            "params": {"url": "https://example.com"},
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_inspect_invalid_params"
+
+    def test_browser_inspect_invalid_params_with_selector(self):
+        """browser.inspect rejects params with 'selector'."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bi-004",
+            "action": "browser.inspect",
+            "params": {"selector": "div.content"},
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_inspect_invalid_params"
+
+    def test_browser_inspect_invalid_params_with_dom(self):
+        """browser.inspect rejects params with 'dom' or other restricted keys."""
+        from agent.local_agent_client import handle_task
+        task = {
+            "task_id": "t-bi-005",
+            "action": "browser.inspect",
+            "params": {"dom": True},
+        }
+        result = handle_task(task)
+        assert result.get("success") is False
+        assert result.get("summary") == "browser_inspect_invalid_params"
+
+    def test_browser_inspect_task_in_listen_mode(self, monkeypatch):
+        """browser.inspect task handling in listen mode."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-bi-001",
+            device_token="tok-bi1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-bi-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-bi-listen-001",
+                    "action": "browser.inspect",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "browser_inspect_ok"
+        data = result_msgs[0].get("data", {})
+        assert data.get("action") == "browser.inspect"
+        assert data.get("status") == "ok"
+        # inspection_mode 검증
+        assert data.get("inspection_mode") in ("page_layout", "accessibility_tree")
+        # plan 검증
+        plan = data.get("plan", {})
+        assert plan.get("action_id") == "browser.inspect"
+        assert plan.get("will_open_browser") is False
+        assert plan.get("will_access_dom") is False
+        assert plan.get("will_capture_screenshot") is False
+        assert plan.get("requires_approval") is True
+        # capabilities 검증
+        caps = data.get("capabilities", {})
+        assert caps.get("can_plan_inspection") is True
+        assert caps.get("actual_inspection_enabled") is False
+
 
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
 

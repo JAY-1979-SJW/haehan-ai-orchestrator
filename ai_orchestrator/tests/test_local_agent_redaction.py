@@ -626,3 +626,118 @@ def test_strip_result_data_removes_empty_apps():
     assert result is not None
     assert "action" in result
     assert "apps" not in result
+
+
+# ── browser.inspect redaction tests ───────────────────────────────────────────
+
+def test_strip_result_data_preserves_browser_inspect():
+    """_strip_result_data가 browser.inspect 결과를 보존한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "browser.inspect",
+        "status": "ok",
+        "inspection_mode": "page_layout",
+        "plan": {
+            "action_id": "browser.inspect",
+            "will_open_browser": False,
+            "will_access_dom": False,
+            "will_capture_screenshot": False,
+            "requires_approval": True,
+        },
+        "capabilities": {
+            "can_plan_inspection": True,
+            "actual_inspection_enabled": False,
+        },
+    }
+    result = _strip_result_data(data)
+
+    # 모든 허용 필드 보존
+    assert result is not None
+    assert result.get("action") == "browser.inspect"
+    assert result.get("status") == "ok"
+    assert result.get("inspection_mode") == "page_layout"
+    # plan 보존
+    assert "plan" in result
+    plan = result["plan"]
+    assert plan.get("action_id") == "browser.inspect"
+    assert plan.get("will_open_browser") is False
+    assert plan.get("will_access_dom") is False
+    assert plan.get("will_capture_screenshot") is False
+    assert plan.get("requires_approval") is True
+    # capabilities 보존
+    assert "capabilities" in result
+    caps = result["capabilities"]
+    assert caps.get("can_plan_inspection") is True
+    assert caps.get("actual_inspection_enabled") is False
+
+
+def test_strip_result_data_filters_invalid_inspection_mode():
+    """_strip_result_data가 잘못된 inspection_mode를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "browser.inspect",
+        "inspection_mode": "invalid_mode",  # 허용되지 않는 값
+        "plan": {"action_id": "browser.inspect"},
+    }
+    result = _strip_result_data(data)
+
+    # invalid_mode는 제거되어야 함
+    assert result is not None
+    assert "inspection_mode" not in result
+
+
+def test_strip_result_data_allows_safe_fields_for_browser_inspect():
+    """_strip_result_data는 browser.inspect의 안전 필드를 허용한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    # selector는 allowlist에 있으므로 허용되지만, browser.inspect 핸들러는 반환하지 않음
+    data = {
+        "action": "browser.inspect",
+        "status": "ok",
+        "inspection_mode": "page_layout",
+        "plan": {"action_id": "browser.inspect"},
+        "capabilities": {"can_plan_inspection": True, "actual_inspection_enabled": False},
+        # selector는 allowlist에 있으므로 통과하지만, 핸들러는 생성하지 않음
+        "selector": "div.content",
+    }
+    result = _strip_result_data(data)
+
+    # selector는 allowlist에 있으므로 보존됨 (하지만 핸들러가 생성하지 않으므로 실제로는 나타나지 않음)
+    assert result is not None
+    assert result.get("action") == "browser.inspect"
+    assert result.get("inspection_mode") == "page_layout"
+    assert "plan" in result
+    assert "capabilities" in result
+
+
+def test_strip_result_data_blocks_sensitive_fields_not_in_allowlist():
+    """_strip_result_data는 allowlist에 없는 민감 필드를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "browser.inspect",
+        "status": "ok",
+        "inspection_mode": "page_layout",
+        "plan": {"action_id": "browser.inspect"},
+        "capabilities": {"can_plan_inspection": True, "actual_inspection_enabled": False},
+        # 금지된 필드들 (allowlist에 없음)
+        "raw_dom": "<html>...</html>",
+        "raw_html": "<body>...</body>",
+        "raw_params": {"url": "https://example.com"},
+        "private_cookie": "secret=value",
+        "browser_profile": "/home/user/.config/browser",
+    }
+    result = _strip_result_data(data)
+
+    # allowlist에 없는 필드 제거
+    assert "raw_dom" not in result
+    assert "raw_html" not in result
+    assert "raw_params" not in result
+    assert "private_cookie" not in result
+    assert "browser_profile" not in result
+    # 허용 필드는 보존
+    assert result.get("action") == "browser.inspect"
+    assert "plan" in result
+    assert "capabilities" in result
