@@ -40,6 +40,7 @@ from . import local_agent_registry as _reg
 from . import local_agent_diagnostics
 from . import registration_codes as _regcodes
 from . import local_agent_audit_builders as _audit
+from . import local_agent_router_guards as _guards
 
 logger = logging.getLogger(__name__)
 
@@ -124,20 +125,6 @@ _REJECT_AUDIT_EVENT = {
 }
 
 
-def _is_capture_screenshot(task) -> bool:
-    return bool(task is not None and task.action == "capture_screenshot")
-
-
-def _task_is_dry_run(task) -> bool:
-    """params.options.dry_run 이 True 인 경우 dry-run 작업으로 본다.
-
-    server 는 task.params 를 민감값 제거한 뒤 저장하므로 options.dry_run 은 보존된다.
-    """
-    try:
-        options = task.params.get("options") if task is not None else None
-        return bool(isinstance(options, dict) and options.get("dry_run"))
-    except Exception:
-        return False
 
 
 def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
@@ -428,7 +415,7 @@ def submit_local_agent_task(
             token_id=token.token_id,
             note=f"agent_id={agent_id}",
         )
-        if _is_capture_screenshot(task):
+        if _guards.is_capture_screenshot_task(task):
             log_event(
                 "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED", task.task_id,
                 risk_level=task.risk_level,
@@ -436,7 +423,7 @@ def submit_local_agent_task(
                 actor=actor, role=role,
                 token_id=token.token_id,
                 note=_capture_approval_note(
-                    task, agent_id, _task_is_dry_run(task),
+                    task, agent_id, _guards.task_is_dry_run(task),
                 ),
             )
     else:
@@ -813,14 +800,14 @@ def approve_local_agent_task(
             # mark_approved 가 task 를 못 찾은 비정상 케이스
             raise HTTPException(status_code=404,
                                 detail={"error": "TASK_NOT_FOUND"})
-        if _is_capture_screenshot(updated):
+        if _guards.is_capture_screenshot_task(updated):
             log_event(
                 "CAPTURE_SCREENSHOT_APPROVED", task_id,
                 risk_level=updated.risk_level,
                 action_type=updated.action,
                 actor=actor, role=role,
                 note=_audit.build_screenshot_approval_note(
-                    agent_id, _task_is_dry_run(updated),
+                    agent_id, _guards.task_is_dry_run(updated),
                     approval_public_id=token.public_id,
                 ),
             )
@@ -829,7 +816,7 @@ def approve_local_agent_task(
     if status == "expired":
         # 토큰 만료 → 작업도 rejected 로 종결
         _reg.mark_expired(task_id)
-        if _is_capture_screenshot(task):
+        if _guards.is_capture_screenshot_task(task):
             log_event(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=task.risk_level,
@@ -898,7 +885,7 @@ def reject_local_agent_task(
         if updated is None:
             raise HTTPException(status_code=404,
                                 detail={"error": "TASK_NOT_FOUND"})
-        if _is_capture_screenshot(updated):
+        if _guards.is_capture_screenshot_task(updated):
             log_event(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=updated.risk_level,
@@ -911,7 +898,7 @@ def reject_local_agent_task(
 
     if status == "expired":
         _reg.mark_expired(task_id)
-        if _is_capture_screenshot(task):
+        if _guards.is_capture_screenshot_task(task):
             log_event(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=task.risk_level,
@@ -1076,8 +1063,8 @@ async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
             actor="ws-agent",
             note=f"agent_id={agent_id}",
         )
-        if _is_capture_screenshot(updated):
-            dry = _task_is_dry_run(updated)
+        if _guards.is_capture_screenshot_task(updated):
+            dry = _guards.task_is_dry_run(updated)
             # summary 도 fallback 으로 검사 — task.params 가 어떤 이유로 손실돼도
             # client 가 보낸 summary 접두("dry_run:true") 로 분기할 수 있다.
             if not dry and updated.result_summary.startswith("dry_run:true"):
@@ -1100,7 +1087,7 @@ async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
             decision=error_code or "failed",
             note=f"agent_id={agent_id}",
         )
-        if _is_capture_screenshot(updated):
+        if _guards.is_capture_screenshot_task(updated):
             log_event(
                 "CAPTURE_SCREENSHOT_FAILED", task_id,
                 risk_level=updated.risk_level,

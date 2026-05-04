@@ -1,0 +1,103 @@
+"""로컬 에이전트 router guard/helper 함수 및 상수.
+
+순수 helper 함수 (side-effect 없음):
+  - is_capture_screenshot_task(task) -> bool
+  - task_is_dry_run(task) -> bool
+  - can_approve_task(task) -> bool
+  - can_reject_task(task) -> bool
+  - can_cancel_task(status: str) -> bool
+  - is_terminal_status(status: str) -> bool
+
+상태 상수:
+  - CANCELLABLE_TASK_STATUSES: 취소 가능한 상태 집합
+  - TERMINAL_TASK_STATUSES: 종료 상태 집합
+"""
+from __future__ import annotations
+
+from typing import Optional
+from .local_agent_models import LocalAgentTask
+
+
+# ── 상태 상수 ────────────────────────────────────────────────────────────
+
+CANCELLABLE_TASK_STATUSES: frozenset[str] = frozenset({
+    "queued", "waiting_approval", "delivered", "running"
+})
+
+TERMINAL_TASK_STATUSES: frozenset[str] = frozenset({
+    "completed", "failed", "rejected", "cancelled"
+})
+
+
+# ── 순수 Helper 함수 ────────────────────────────────────────────────────────
+
+def is_capture_screenshot_task(task: Optional[LocalAgentTask]) -> bool:
+    """작업이 capture_screenshot 인지 판별."""
+    return bool(task is not None and task.action == "capture_screenshot")
+
+
+def task_is_dry_run(task: Optional[LocalAgentTask]) -> bool:
+    """작업이 dry-run 모드 인지 판별.
+
+    server 는 task.params 를 민감값 제거한 뒤 저장하므로
+    options.dry_run 은 보존된다.
+    """
+    try:
+        if task is None:
+            return False
+        options = task.params.get("options") if isinstance(task.params, dict) else None
+        return bool(isinstance(options, dict) and options.get("dry_run"))
+    except Exception:
+        return False
+
+
+def can_approve_task(task: Optional[LocalAgentTask]) -> bool:
+    """작업을 승인할 수 있는지 판별.
+
+    승인 가능 조건:
+      - status == "waiting_approval"
+      - risk_level == "high"
+    """
+    if task is None:
+        return False
+    return task.status == "waiting_approval" and task.risk_level == "high"
+
+
+def can_reject_task(task: Optional[LocalAgentTask]) -> bool:
+    """작업을 거절할 수 있는지 판별.
+
+    거절 가능 조건:
+      - status == "waiting_approval"
+      - risk_level == "high"
+    """
+    if task is None:
+        return False
+    return task.status == "waiting_approval" and task.risk_level == "high"
+
+
+def can_cancel_task(status: str) -> bool:
+    """작업을 취소할 수 있는지 판별.
+
+    취소 가능 상태:
+      - queued
+      - waiting_approval
+      - delivered
+      - running
+
+    취소 불가능 상태:
+      - completed / failed / rejected / cancelled (종료됨)
+      - cancel_requested (이미 취소 요청됨)
+    """
+    return status in CANCELLABLE_TASK_STATUSES
+
+
+def is_terminal_status(status: str) -> bool:
+    """상태가 종료 상태인지 판별.
+
+    종료 상태:
+      - completed
+      - failed
+      - rejected
+      - cancelled
+    """
+    return status in TERMINAL_TASK_STATUSES
