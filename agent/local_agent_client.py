@@ -585,8 +585,25 @@ class LocalAgentClient:
                             action, task.get("task_id")
                         )
                         try:
+                            task_id = task.get("task_id", "")
+                            # Send "running" message to mark task as running (delivered → running)
+                            await ws.send(json.dumps({
+                                "type": "running",
+                                "task_id": task_id,
+                            }))
+                            logger.info("Sent running message for task_id=%s", task_id)
+
+                            # Wait for running_ack
+                            try:
+                                running_ack_text = await asyncio.wait_for(ws.recv(), timeout=3.0)
+                                running_ack = json.loads(running_ack_text)
+                                if running_ack.get("type") != "running_ack":
+                                    logger.warning("unexpected message instead of running_ack: %s", running_ack.get("type"))
+                            except asyncio.TimeoutError:
+                                logger.warning("running_ack timeout")
+
                             result = handle_task(task, dry_run=self.config.dry_run)
-                            current_task_id = task.get("task_id", "")
+                            current_task_id = task_id
                             await ws.send(json.dumps(result))
                             sent.append(result)
                             tasks_processed += 1
@@ -680,8 +697,25 @@ class LocalAgentClient:
                                     action, task.get("task_id")
                                 )
                                 try:
+                                    task_id = task.get("task_id", "")
+                                    # Send "running" message to mark task as running (delivered → running)
+                                    await ws.send(json.dumps({
+                                        "type": "running",
+                                        "task_id": task_id,
+                                    }))
+                                    logger.info("Sent running message for task_id=%s in listen mode", task_id)
+
+                                    # Wait for running_ack
+                                    try:
+                                        running_ack_text = await asyncio.wait_for(ws.recv(), timeout=3.0)
+                                        running_ack = json.loads(running_ack_text)
+                                        if running_ack.get("type") != "running_ack":
+                                            logger.warning("unexpected message instead of running_ack in listen mode: %s", running_ack.get("type"))
+                                    except asyncio.TimeoutError:
+                                        logger.warning("running_ack timeout in listen mode")
+
                                     result = handle_task(task, dry_run=self.config.dry_run)
-                                    current_task_id = task.get("task_id", "")
+                                    current_task_id = task_id
                                     await ws.send(json.dumps(result))
                                     sent.append(result)
                                     tasks_processed += 1
