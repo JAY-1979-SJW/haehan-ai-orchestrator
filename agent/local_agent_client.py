@@ -26,6 +26,8 @@
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
 import platform
@@ -331,6 +333,30 @@ class ExternalUrlBlocked(Exception):
     """localhost/127.0.0.1 외 WebSocket URL 연결 시도 차단."""
 
 
+def _http_to_ws_url(http_url: str) -> str:
+    """http://example.com → ws://example.com, https://example.com → wss://example.com"""
+    import urllib.parse
+    parsed = urllib.parse.urlparse(http_url)
+    scheme = parsed.scheme.lower()
+
+    if scheme == "http":
+        new_scheme = "ws"
+    elif scheme == "https":
+        new_scheme = "wss"
+    else:
+        new_scheme = scheme
+
+    # Reconstruct URL with new scheme
+    return urllib.parse.urlunparse((
+        new_scheme,
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        parsed.query,
+        parsed.fragment,
+    ))
+
+
 def assert_local_ws_url(url: str) -> None:
     """ws:// URL이 localhost 또는 127.0.0.1을 가리키는지 검증.
 
@@ -340,10 +366,10 @@ def assert_local_ws_url(url: str) -> None:
     parsed = urllib.parse.urlparse(url)
     scheme = parsed.scheme.lower()
     host = parsed.hostname or ""
-    if scheme not in ("ws", "http"):
+    if scheme not in ("ws", "wss"):
         raise ExternalUrlBlocked(
             f"url scheme {scheme!r} is not allowed for local smoke; "
-            f"only ws:// or http:// on localhost/127.0.0.1 are permitted"
+            f"only ws:// or wss:// on localhost/127.0.0.1 are permitted"
         )
     if host not in ("localhost", "127.0.0.1"):
         raise ExternalUrlBlocked(
@@ -386,22 +412,138 @@ class LocalAgentClient:
             and self.config.device_token
         )
 
-    def connect(self) -> None:
-        """WebSocket 연결 진입점.
+    def connect(self, heartbeat_count: int = 1) -> dict:
+        """WebSocket 연결 진입점 (dry_run=False에서 실제 연결).
 
         dry_run=True 이면 연결하지 않는다 (운영 서버 접속 차단).
+        heartbeat_count: 송수신할 heartbeat 횟수 (기본 1).
+        반환값: {status, agent_id, heartbeat_count, ...} (dry_run 또는 실제 연결 결과).
         """
         if not self._should_connect():
             logger.info(
                 "dry_run=True or config incomplete — skipping WS connect "
                 "(agent_id=%s)", self.config.agent_id
             )
-            return
-        # dry_run=False 실제 연결: Stage 13F-2B에서 구현
-        raise NotImplementedError(
-            "Real WS connection is not implemented in Stage 13F-2A. "
-            "Set dry_run=True for testing."
-        )
+            return {
+                "status": "skipped",
+                "dry_run": self.config.dry_run,
+                "agent_id": self.config.agent_id,
+            }
+
+        # 실제 WebSocket 연결 (localhost only)
+        ws_url = _http_to_ws_url(self.ws_url)
+        try:
+            assert_local_ws_url(ws_url)
+        except ExternalUrlBlocked as e:
+            logger.error("WebSocket URL validation failed: %s", e)
+            return {"status": "error", "error": str(e)}
+
+        try:
+            result = asyncio.run(self._connect_async(ws_url, heartbeat_count))
+            return result
+        except Exception as e:
+            logger.error("WebSocket connection failed: %s", e)
+            return {
+                "status": "error",
+                "error": str(e),
+                "agent_id": self.config.agent_id,
+            }
+
+    async def _connect_async(self, ws_url: str, heartbeat_count: int) -> dict:
+        """실제 WebSocket 비동기 연결."""
+        try:
+            import websockets
+        except ImportError:
+            return {
+                "status": "error",
+                "error": "websockets library not installed",
+                "agent_id": self.config.agent_id,
+            }
+
+        try:
+            async with websockets.connect(
+                ws_url,
+                ping_interval=20,
+                ping_timeout=20,
+                close_timeout=5,
+            ) as ws:
+                result = await self._run_ws_protocol_async(ws, heartbeat_count)
+                return result
+        except Exception as e:
+            logger.error("WebSocket async connection error: %s", e)
+            return {
+                "status": "error",
+                "error": str(e),
+                "agent_id": self.config.agent_id,
+            }
+
+    async def _run_ws_protocol_async(
+        self, ws: Any, heartbeat_count: int
+    ) -> dict:
+        """WebSocket 프로토콜 실행 (auth → heartbeat 반복 → close).
+
+        task 메시지 수신 시 blocked_task_dispatch 처리 (실행 안 함).
+        """
+        sent: list[dict] = []
+        received: list[dict] = []
+
+        try:
+            # 1. auth 메시지 송신
+            auth = build_auth(self.config.agent_id, self.config.device_token)
+            await ws.send(json.dumps(auth))
+            sent.append({"type": "auth"})  # 기록에는 token 제외
+
+            # 2. auth_ok 수신
+            msg_text = await asyncio.wait_for(ws.recv(), timeout=10)
+            msg = json.loads(msg_text)
+            received.append(msg)
+            if msg.get("type") != "auth_ok":
+                logger.warning("expected auth_ok, got %r", msg.get("type"))
+
+            # 3-4. heartbeat 반복
+            for i in range(heartbeat_count):
+                hb = build_heartbeat(self.config.agent_id)
+                await ws.send(json.dumps(hb))
+                sent.append(hb)
+
+                # heartbeat_ack 또는 task 수신
+                msg_text = await asyncio.wait_for(ws.recv(), timeout=10)
+                msg = json.loads(msg_text)
+                received.append(msg)
+
+                if msg.get("type") == "task":
+                    # task는 실행하지 않고 blocked 처리
+                    logger.warning(
+                        "task dispatch received but not executed "
+                        "(dry_run controlled mode)"
+                    )
+                    # 실행하지 않으므로 result_ack 대기 제외
+                    break
+
+            return {
+                "status": "ok",
+                "agent_id": self.config.agent_id,
+                "heartbeat_count": heartbeat_count,
+                "sent": len(sent),
+                "received": len(received),
+            }
+
+        except asyncio.TimeoutError:
+            logger.error("WebSocket timeout")
+            return {
+                "status": "timeout",
+                "agent_id": self.config.agent_id,
+                "heartbeat_count": heartbeat_count,
+                "sent": len(sent),
+                "received": len(received),
+            }
+        except Exception as e:
+            logger.error("WebSocket protocol error: %s", e)
+            return {
+                "status": "error",
+                "error": str(e),
+                "agent_id": self.config.agent_id,
+            }
 
     def run_once_dry(self) -> dict:
         """dry_run 모드에서 1회 heartbeat + 상태 반환 (테스트용).
