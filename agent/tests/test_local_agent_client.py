@@ -651,6 +651,63 @@ class TestHandleSafeAppPresenceKnownPaths:
         assert result_msgs[0].get("summary") == "safe_app_presence_ok"
         assert "apps" in result_msgs[0].get("data", {})
 
+    def test_safe_app_capability_matrix_in_low_risk_actions(self):
+        """safe_app_capability_matrix is registered as low-risk."""
+        assert "safe_app_capability_matrix" in LOW_RISK_ACTIONS
+
+    def test_safe_app_capability_matrix_task_in_listen_mode_mock(self, monkeypatch):
+        """mock에서 safe_app_capability_matrix task를 수신하고 처리할 수 있는지 확인."""
+        monkeypatch.setattr("agent.local_agent_client._path_exists", lambda p: False)
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-cap-001",
+            device_token="tok-cap1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-cap-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-cap-listen-001",
+                    "action": "safe_app_capability_matrix",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "safe_app_capability_matrix_ok"
+        data = result_msgs[0].get("data", {})
+        assert data.get("action") == "safe_app_capability_matrix"
+        assert data.get("status") == "ok"
+        assert data.get("detection_mode") == "known_path_boolean"
+        assert "apps" in data
+        # 각 app에는 app_id, supported, next_actions만 포함
+        apps = data.get("apps", [])
+        for app in apps:
+            assert "app_id" in app
+            assert "supported" in app
+            assert "next_actions" in app
+            assert isinstance(app["supported"], bool)
+            assert isinstance(app["next_actions"], list)
+            # next_actions는 allowlist action만
+            for action in app["next_actions"]:
+                assert action in (
+                    "browser_plan_open_url",
+                    "browser_inspect",
+                    "excel_plan_open_workbook",
+                    "cad_plan_open_file",
+                )
+            # path/URL/민감정보 없음
+            assert "path" not in app
+            assert "url" not in app
+
 
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
 
