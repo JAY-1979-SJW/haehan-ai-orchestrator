@@ -92,6 +92,7 @@ services:
       BROWSER_WORKER_MODE: server
       BROWSER_WORKER_ALLOW_EXTERNAL_URLS: "false"
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      BROWSER_EXECUTION_ENABLED: ${BROWSER_EXECUTION_ENABLED:-false}
     volumes:
       # Temporary directory for browser cache (not persistent)
       - /dev/shm:/dev/shm:rw
