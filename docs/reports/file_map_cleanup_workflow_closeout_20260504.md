@@ -193,8 +193,8 @@ Client Response
 **E2E Smoke (plans=[])**:
 - preflight 호출 성공: HTTP 200 ✅
 - execute dry_run 호출 성공: HTTP 200 ✅
-- preflight_id 전달: 성공 ✅
-- approval_token 검증: UUID v4 format ✅
+- preflight_id 생성 및 전달: 성공 ✅ (empty plans 기준)
+- approval_token UUID v4 형식 검증: 성공 ✅ (형식만, 값 검증 아님)
 - 실제 파일 작업: 없음 ✅
 
 ### 안전성 검증
@@ -296,15 +296,18 @@ base_target_dir: 반드시 /tmp 하위
 
 ## 남은 주의점 (Important Notes)
 
-### 1. Plans=[] 기준 E2E
+### 1. Plans=[] 기준 E2E (⚠️ 중요)
+
+**명확한 한계 선언**:
+이번 E2E smoke는 **plans=[] (빈 리스트)** 기준의 순차 호출 검증이며, 실제 plan이 포함된 preflight_id/approval_token 연계 검증은 수행하지 않았다.
 
 현재까지의 모든 smoke/E2E 테스트는 **plans=[] (빈 리스트)** 기준으로 수행됨.
 
-**의미**:
-- preflight_id 생성: ✅ 검증됨
-- approval_token 형식 검증: ✅ 검증됨
+**검증 범위**:
+- preflight_id 생성: ✅ 검증됨 (empty plans 기준)
+- approval_token 형식 검증: ✅ 검증됨 (UUID v4 형식만)
 - HTTP 라우팅: ✅ 검증됨
-- 실제 plan 검증: ❌ 미검증 (empty plans 사용)
+- 실제 plan 포함 검증: ❌ 미검증 (empty plans 사용)
 - 실제 cleanup 실행: ❌ 미검증 (dry_run=true)
 
 **다음 단계에서 필요한 작업**:
@@ -312,16 +315,20 @@ base_target_dir: 반드시 /tmp 하위
 - 백업/rollback 메커니즘 구현
 - 운영 승인 기준 정의
 
-### 2. Approval Token 연계
+### 2. Approval Token 연계 (검증 범위 제한)
 
-현재 approval_token 검증:
+**현재 검증된 항목**:
 - UUID v4 형식 검증: ✅ (코드에서 regex 확인)
-- 값 검증: ❌ (클라이언트가 생성하는 값, 서버에서 중복 체크 없음)
+- HTTP 요청 성공: ✅ (HTTP 200 응답)
+
+**검증되지 않은 항목**:
+- 토큰 값 검증: ❌ (클라이언트가 생성하는 값, 서버에서 중복 체크 없음)
+- preflight_id와 approval_token 연계: ❌ (plans=[] 기준이므로 실제 검증 불필요)
 - 토큰 만료: ❌ (현재 미구현)
 
 **향후 보완 필요**:
 - Token 만료 기간 설정
-- Preflight ID와 approval token 연계 검증
+- Preflight ID와 approval token 연계 검증 (실제 plans 포함 테스트 시)
 - 토큰 중복 사용 방지
 
 ### 3. Preflight ID 생명주기
@@ -393,7 +400,7 @@ FILE-MAP-CLEANUP-WORKFLOW-CLOSEOUT-1 완료.
 **요약**:
 - cleanup-preflight endpoint 구현 완료 (16 tests PASS)
 - 서버 배포 완료 (smoke PASS)
-- E2E 통합 검증 완료 (preflight → execute dry_run)
+- E2E 순차 호출 검증 완료 (preflight → execute dry_run, plans=[] 기준)
 - 운영 기준선 정의 완료
 - 실제 파일 작업 없음 확인 (read-only/dry_run)
 - 모든 금지사항 준수 확인
