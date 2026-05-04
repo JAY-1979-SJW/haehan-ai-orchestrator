@@ -26,38 +26,12 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+from .local_agent_risk_policy import (
+    ACTION_RISK, _SERVER_AUTO_COMPLETE, ALLOWED_APPS
+)
 
 
-# ── 액션 정의 ────────────────────────────────────────────────────────────
-
-# 액션 → risk_level 매핑.
-# 미등록 액션은 UNKNOWN_ACTION 으로 거절된다.
-ACTION_RISK: dict[str, str] = {
-    "ping":               "low",
-    "system_info":        "low",
-    "list_allowed_apps":  "low",
-    "open_url":           "low",
-    "open_url_execute":   "high",
-    "list_files_readonly": "medium",
-    "capture_screenshot": "high",
-    "ws_noop":            "low",
-    # browser automation actions (BROWSER-4E)
-    "browser.inspect":    "low",
-    "browser.plan_click": "low",
-    "browser.plan_type":  "low",
-    "browser.plan_submit": "low",
-    "browser.execute_click": "medium",
-    "browser.execute_type": "medium",
-}
-
-# 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
-_SERVER_AUTO_COMPLETE: frozenset[str] = frozenset({
-    "ping", "system_info", "list_allowed_apps",
-})
-
-# 허용된 PC 측 앱 (실제 실행은 browser/open_url 만 가능)
-ALLOWED_APPS: list[str] = ["browser", "excel", "hwp", "cad"]
-
+# ── 민감 정보 정책 ────────────────────────────────────────────────────────────
 
 # params / result 에서 절대 저장·노출 금지인 키
 _SENSITIVE_KEYS: frozenset[str] = frozenset({
