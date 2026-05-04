@@ -254,3 +254,180 @@ def test_registry_uses_strip_result_data():
     assert "screenshot_taken" in updated_task.result_data
     assert "password" not in updated_task.result_data
     assert "message" in updated_task.result_data
+
+
+def test_strip_capabilities_allows_bool_values():
+    """_strip_capabilities가 bool 값을 유지한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    capabilities = {
+        "browser_supported": True,
+        "office_supported": False,
+        "cad_supported": True,
+    }
+    result = _strip_capabilities(capabilities)
+
+    assert result is not None
+    assert result["browser_supported"] is True
+    assert result["office_supported"] is False
+    assert result["cad_supported"] is True
+
+
+def test_strip_capabilities_removes_non_bool():
+    """_strip_capabilities가 bool이 아닌 값을 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    capabilities = {
+        "browser_supported": True,
+        "office_supported": "true",  # string, not bool
+        "cad_supported": 1,  # int, not bool
+        "unknown_key": False,
+    }
+    result = _strip_capabilities(capabilities)
+
+    assert result is not None
+    assert "browser_supported" in result
+    assert "office_supported" not in result
+    assert "cad_supported" not in result
+    assert "unknown_key" not in result
+
+
+def test_strip_capabilities_removes_unknown_keys():
+    """_strip_capabilities가 미승인 key를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    capabilities = {
+        "browser_supported": True,
+        "path": "/home/user",  # not allowed
+        "hostname": "pc-001",  # not allowed
+        "office_supported": False,
+    }
+    result = _strip_capabilities(capabilities)
+
+    assert result is not None
+    assert "browser_supported" in result
+    assert "office_supported" in result
+    assert "path" not in result
+    assert "hostname" not in result
+
+
+def test_strip_capabilities_empty_dict_returns_none():
+    """_strip_capabilities가 빈 dict를 None으로 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    result = _strip_capabilities({})
+    assert result is None
+
+    result = _strip_capabilities({"unknown": True})
+    assert result is None
+
+
+def test_strip_capabilities_non_dict_returns_none():
+    """_strip_capabilities가 dict가 아니면 None을 반환한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    assert _strip_capabilities(None) is None
+    assert _strip_capabilities("string") is None
+    assert _strip_capabilities([True, False]) is None
+    assert _strip_capabilities(True) is None
+
+
+def test_strip_result_data_preserves_capabilities():
+    """_strip_result_data가 capabilities를 nested allowlist로 저장한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "safe_desktop_capability",
+        "status": "ok",
+        "capabilities": {
+            "browser_supported": True,
+            "office_supported": False,
+            "cad_supported": False,
+        },
+    }
+    result = _strip_result_data(data)
+
+    assert result is not None
+    assert result["action"] == "safe_desktop_capability"
+    assert result["status"] == "ok"
+    assert "capabilities" in result
+    assert result["capabilities"]["browser_supported"] is True
+    assert result["capabilities"]["office_supported"] is False
+    assert result["capabilities"]["cad_supported"] is False
+
+
+def test_strip_result_data_filters_unsafe_capabilities():
+    """_strip_result_data가 capabilities의 민감값/미승인값을 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "safe_desktop_capability",
+        "capabilities": {
+            "browser_supported": True,
+            "password": "secret",  # sensitive
+            "username": "admin",  # not allowed
+            "office_supported": "yes",  # non-bool
+            "cad_supported": True,
+        },
+    }
+    result = _strip_result_data(data)
+
+    assert result is not None
+    assert "capabilities" in result
+    # 허용된 bool values만 유지
+    assert result["capabilities"]["browser_supported"] is True
+    assert result["capabilities"]["cad_supported"] is True
+    # non-bool / sensitive / unknown 제거
+    assert "office_supported" not in result["capabilities"]
+    assert "password" not in result["capabilities"]
+    assert "username" not in result["capabilities"]
+
+
+def test_strip_result_data_removes_empty_capabilities():
+    """_strip_result_data가 빈 capabilities를 제거한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "test",
+        "capabilities": {},
+    }
+    result = _strip_result_data(data)
+
+    # action은 있지만 empty capabilities는 없어야 함
+    assert result is not None
+    assert "action" in result
+    assert "capabilities" not in result
+
+
+def test_strip_result_data_preserves_safe_echo():
+    """_strip_result_data가 safe_echo result를 정상 처리한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_result_data
+
+    data = {
+        "action": "safe_echo",
+        "status": "ok",
+    }
+    result = _strip_result_data(data)
+
+    assert result is not None
+    assert result["action"] == "safe_echo"
+    assert result["status"] == "ok"
+
+
+def test_strip_capabilities_case_insensitive():
+    """_strip_capabilities가 대소문자 구분 없이 allowed keys를 인식한다."""
+    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+
+    # mixed case input
+    capabilities = {
+        "browser_supported": True,
+        "OFFICE_SUPPORTED": False,  # uppercase key - lowercase 비교로 인식
+        "CAD_SUPPORTED": True,  # all uppercase - lowercase 비교로 인식
+    }
+    result = _strip_capabilities(capabilities)
+
+    assert result is not None
+    # 실제로는 lowercase 비교(k_low)로 인식하므로 모두 유지됨
+    assert result.get("browser_supported") is True
+    assert result.get("OFFICE_SUPPORTED") is False
+    assert result.get("CAD_SUPPORTED") is True

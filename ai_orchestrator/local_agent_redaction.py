@@ -46,7 +46,35 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "status", "selector", "executed", "element_found", "risk_level",
     "final_approval_required", "result", "target_url_domain", "text_length",
     "text_preview", "error_message", "screenshot_ref",
+    # safe_desktop_capability result metadata
+    "capabilities",
 })
+
+# safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
+_CAPABILITIES_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "browser_supported", "office_supported", "cad_supported",
+})
+
+
+def _strip_capabilities(value: object) -> "dict | None":
+    """capabilities nested allowlist: boolean 값만 저장.
+
+    - dict가 아니면 None 반환
+    - 허용 key(browser_supported/office_supported/cad_supported)만 유지
+    - 각 값이 bool일 때만 저장
+    - bool이 아닌 값은 제거
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _CAPABILITIES_ALLOWED_KEYS:
+            continue
+        if isinstance(v, bool):
+            out[k] = v
+    return out if out else None
 
 
 def _sanitize_url_for_storage(url: str) -> str:
@@ -64,8 +92,9 @@ def _strip_result_data(data: object) -> "dict | None":
 
     - 허용 key(_RESULT_DATA_ALLOWED_KEYS)만 저장
     - url 계열 값은 query string 제거
+    - capabilities는 nested allowlist(_strip_capabilities) 적용
     - 민감 key(_SENSITIVE_KEYS)는 이중 방어로 항상 drop
-    - 값이 dict/list 인 경우 재귀 없이 str 변환 후 저장
+    - 값이 dict/list 인 경우 재귀 없이 str 변환 후 저장 (capabilities 제외)
     - None 또는 빈 dict이면 None 반환
     """
     if not isinstance(data, dict) or not data:
@@ -76,6 +105,12 @@ def _strip_result_data(data: object) -> "dict | None":
         if k_low in _SENSITIVE_KEYS:
             continue
         if k_low not in _RESULT_DATA_ALLOWED_KEYS:
+            continue
+        # capabilities 특별 처리: nested boolean allowlist
+        if k_low == "capabilities":
+            capabilities = _strip_capabilities(v)
+            if capabilities is not None:
+                out[k] = capabilities
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
