@@ -285,3 +285,41 @@ class TestBuildAuth:
         with caplog.at_level(logging.DEBUG, logger="agent.local_agent_client"):
             _ = build_auth("a-001", "actual-secret-token")
         assert "actual-secret-token" not in caplog.text
+
+
+# ── 8. ws_noop handler ──────────────────────────────────────────────────────
+
+class TestHandleWsNoop:
+    def test_ws_noop_success(self):
+        task = {
+            "task_id": "t-noop-001",
+            "action": "ws_noop",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert result["type"] == "result"
+        assert result["success"] is True
+        assert result["summary"] == "ws_noop_ok"
+        assert result["task_id"] == "t-noop-001"
+
+    def test_ws_noop_in_low_risk_actions(self):
+        assert "ws_noop" in LOW_RISK_ACTIONS
+
+    def test_unknown_action_raises_not_implemented(self):
+        task = {
+            "task_id": "t-unknown",
+            "action": "unknown_action_xyz",
+            "params": {},
+        }
+        with pytest.raises(NotImplementedInThisStage):
+            handle_task(task, dry_run=True)
+
+    def test_high_risk_capture_screenshot_blocked(self):
+        from agent.local_agent_client import BlockedAction
+        task = {
+            "task_id": "t-cap",
+            "action": "capture_screenshot",
+            "params": {},
+        }
+        with pytest.raises(BlockedAction):
+            handle_task(task, dry_run=True)
