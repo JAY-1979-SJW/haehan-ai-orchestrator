@@ -42,6 +42,7 @@ SERVER_ACTION_RISK = {
     "capture_screenshot": "high",
     "ws_noop": "low",
     "safe_echo": "low",
+    "safe_desktop_capability": "low",
     # browser automation actions (BROWSER-4E)
     "browser.inspect": "low",
     "browser.plan_click": "low",

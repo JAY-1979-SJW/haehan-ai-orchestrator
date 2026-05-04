@@ -24,6 +24,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "capture_screenshot",
     "ws_noop",
     "safe_echo",
+    "safe_desktop_capability",
     "open_url_execute",
     # browser automation actions (BROWSER-4E)
     "browser.inspect",

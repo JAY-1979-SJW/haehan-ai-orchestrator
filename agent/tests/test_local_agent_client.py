@@ -394,6 +394,109 @@ class TestHandleSafeEcho:
         assert result_msgs[0].get("summary") == "safe_echo_ok"
 
 
+# ── 8.5. safe_desktop_capability handler ──────────────────────────────────────
+
+class TestHandleSafeDesktopCapability:
+    def test_safe_desktop_capability_success(self):
+        task = {
+            "task_id": "t-cap-001",
+            "action": "safe_desktop_capability",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert result["type"] == "result"
+        assert result["success"] is True
+        assert result["summary"] == "safe_desktop_capability_ok"
+        assert result["task_id"] == "t-cap-001"
+
+    def test_safe_desktop_capability_has_data_field(self):
+        task = {
+            "task_id": "t-cap-002",
+            "action": "safe_desktop_capability",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert "data" in result
+        assert result["data"]["action"] == "safe_desktop_capability"
+        assert result["data"]["status"] == "ok"
+
+    def test_safe_desktop_capability_capabilities_fields(self):
+        task = {
+            "task_id": "t-cap-003",
+            "action": "safe_desktop_capability",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        assert "capabilities" in result["data"]
+        caps = result["data"]["capabilities"]
+        assert "browser_supported" in caps
+        assert "office_supported" in caps
+        assert "cad_supported" in caps
+        assert isinstance(caps["browser_supported"], bool)
+        assert isinstance(caps["office_supported"], bool)
+        assert isinstance(caps["cad_supported"], bool)
+
+    def test_safe_desktop_capability_no_params_echo(self):
+        task = {
+            "task_id": "t-cap-004",
+            "action": "safe_desktop_capability",
+            "params": {"test_param": "should_not_echo", "secret": "hidden"},
+        }
+        result = handle_task(task, dry_run=True)
+        assert "params" not in result["data"]
+        assert "test_param" not in str(result)
+        assert "should_not_echo" not in str(result)
+
+    def test_safe_desktop_capability_no_pc_identifiers(self):
+        task = {
+            "task_id": "t-cap-005",
+            "action": "safe_desktop_capability",
+            "params": {},
+        }
+        result = handle_task(task, dry_run=True)
+        result_str = str(result).lower()
+        # Check result doesn't contain PC identifiers
+        assert "username" not in result_str
+        assert "hostname" not in result_str
+        assert "computername" not in result_str
+        assert "\\users\\" not in result_str
+        assert "registry" not in result_str
+        assert "process" not in result_str
+        assert "environment" not in result_str
+
+    def test_safe_desktop_capability_in_low_risk_actions(self):
+        assert "safe_desktop_capability" in LOW_RISK_ACTIONS
+
+    def test_safe_desktop_capability_task_in_listen_mode_mock(self):
+        """mock에서 safe_desktop_capability task를 수신하고 처리할 수 있는지 확인."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-cap-001",
+            device_token="tok-cap1",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-cap-001"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-safe-cap-001",
+                    "action": "safe_desktop_capability",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 2
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "safe_desktop_capability_ok"
+        assert "capabilities" in result_msgs[0].get("data", {})
+
+
 # ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
 
 class TestListenMode:
