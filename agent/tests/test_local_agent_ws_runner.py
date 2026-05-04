@@ -398,6 +398,71 @@ class TestWsNoopTaskHandler:
         assert "password" not in str(result).lower()
 
 
+class TestListenModeValidation:
+    """listen mode 옵션 검증 테스트."""
+
+    def test_listen_seconds_requires_allow_task_action(self):
+        """--listen-seconds > 0은 --allow-task-action 필요"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--listen-seconds", "5",
+            ])
+
+            assert result == 2  # validation error
+
+    def test_listen_seconds_with_ws_noop_option_valid(self):
+        """--listen-seconds + --allow-task-action ws_noop + --max-tasks 조합은 유효"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            # registration 실패는 나지만, validation error는 아님 (exit code 4)
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--listen-seconds", "5",
+                "--allow-task-action", "ws_noop",
+                "--max-tasks", "1",
+            ])
+
+            # validation은 통과하고 registration 시도 (실패 → exit 4)
+            assert result == 4  # registration failed, not validation error
+
+    def test_heartbeat_interval_must_be_positive(self):
+        """--heartbeat-interval-seconds > 0이어야 함"""
+        from agent.local_agent_ws_runner import main
+
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--heartbeat-interval-seconds", "0",
+            ])
+
+            assert result == 2  # validation error
+
+    def test_listen_seconds_accepted_in_argv(self):
+        """--listen-seconds 옵션이 argparse에서 수용되는지 확인"""
+        import argparse
+        from agent.local_agent_ws_runner import main
+
+        # main 함수 내부의 argparse는 --listen-seconds를 알아야 함
+        # 이를 간접적으로 테스트: validation error가 아닌 registration error면 옵션이 수용됨
+        with patch.dict(os.environ, {"LOCAL_AGENT_REGISTRATION_CODE": "test-code"}):
+            result = main([
+                "--server-url", "http://127.0.0.1:8400",
+                "--registration-code-env", "LOCAL_AGENT_REGISTRATION_CODE",
+                "--listen-seconds", "5",
+                "--allow-task-action", "ws_noop",
+                "--max-tasks", "1",
+            ])
+            # exit 4 = registration failed (validation passed)
+            assert result == 4
+
+
 __all__ = [
     "TestHttpToWsUrlConversion",
     "TestAssertLocalWsUrl",
@@ -409,4 +474,5 @@ __all__ = [
     "TestRunnerArguments",
     "TestSensitiveValueProtection",
     "TestWsNoopTaskHandler",
+    "TestListenModeValidation",
 ]

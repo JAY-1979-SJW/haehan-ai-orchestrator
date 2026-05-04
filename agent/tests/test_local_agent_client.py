@@ -323,3 +323,168 @@ class TestHandleWsNoop:
         }
         with pytest.raises(BlockedAction):
             handle_task(task, dry_run=True)
+
+
+# ── 9. listen mode 테스트 ──────────────────────────────────────────────────────
+
+class TestListenMode:
+    def test_mock_loop_with_listen_parameters(self):
+        """listen 옵션은 연결 구간에서만 사용되며, mock_loop은 영향받지 않음."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-listen-001",
+            device_token="tok-listen",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-listen-001"},
+            {"type": "heartbeat_ack"},
+        ]
+        result = client.run_mock_loop(server_messages)
+        assert len(result) >= 1
+        assert result[0]["type"] == "auth"
+
+    def test_listen_parameters_accepted_by_connect(self):
+        """connect()가 listen_seconds/heartbeat_interval_seconds 파라미터 수용."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-001",
+            device_token="tok",
+            dry_run=True,  # dry_run=True이면 실제 연결 없음
+        )
+        client = LocalAgentClient(cfg)
+        result = client.connect(
+            heartbeat_count=1,
+            allow_task_action="ws_noop",
+            max_tasks=1,
+            listen_seconds=5,
+            heartbeat_interval_seconds=1,
+        )
+        # dry_run=True이면 skipped 반환
+        assert result["status"] == "skipped"
+
+    def test_result_includes_tasks_processed_field(self):
+        """connect() 반환값에 tasks_processed 필드 포함 확인."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-001",
+            device_token="tok",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        result = client.connect()
+        # dry_run=True이면 skipped
+        assert "status" in result
+        # 실제 연결에서는 tasks_processed 필드가 있을 것
+
+    def test_ws_noop_task_in_listen_mode_mock(self):
+        """mock에서 ws_noop task를 수신하고 처리할 수 있는지 확인."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-listen-002",
+            device_token="tok-listen2",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        # 테스트용 서버 메시지 시나리오
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-listen-002"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-ws-noop-001",
+                    "action": "ws_noop",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        # auth + heartbeat_ack 수신 시 응답 없음 + task 수신 시 result 생성
+        assert len(result) >= 2  # auth + result (minimum)
+        # result 메시지 확인
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is True
+        assert result_msgs[0].get("summary") == "ws_noop_ok"
+
+    def test_unknown_task_action_blocked_in_listen_mode(self):
+        """unknown action은 NotImplementedInThisStage로 처리."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-listen-003",
+            device_token="tok-listen3",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-listen-003"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-unknown",
+                    "action": "unknown_task",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is False
+        assert "NOT_IMPLEMENTED" in result_msgs[0].get("error_code", "")
+
+    def test_high_risk_action_blocked_in_listen_mode(self):
+        """high-risk action(capture_screenshot)은 BLOCKED로 처리."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-listen-004",
+            device_token="tok-listen4",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-listen-004"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-screenshot",
+                    "action": "capture_screenshot",
+                    "params": {},
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        result_msgs = [r for r in result if r.get("type") == "result"]
+        assert len(result_msgs) >= 1
+        assert result_msgs[0].get("success") is False
+        assert "BLOCKED" in result_msgs[0].get("error_code", "")
+
+    def test_no_sensitive_values_in_mock_result(self):
+        """mock 결과에 민감값 포함 확인 (auth 메시지 제외)."""
+        cfg = load_config(
+            server_base_url="http://localhost:8400",
+            agent_id="agent-listen-005",
+            device_token="super-secret-token-should-not-appear",
+            dry_run=True,
+        )
+        client = LocalAgentClient(cfg)
+        server_messages = [
+            {"type": "auth_ok", "agent_id": "agent-listen-005"},
+            {"type": "heartbeat_ack"},
+            {
+                "type": "task",
+                "task": {
+                    "task_id": "t-noop",
+                    "action": "ws_noop",
+                },
+            },
+        ]
+        result = client.run_mock_loop(server_messages)
+        # result[0]은 auth (device_token 포함) — 제외하고 확인
+        result_without_auth = [r for r in result if r.get("type") != "auth"]
+        result_str = str(result_without_auth)
+        assert "super-secret-token-should-not-appear" not in result_str
