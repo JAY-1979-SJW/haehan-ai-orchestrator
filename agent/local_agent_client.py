@@ -229,12 +229,34 @@ def _handle_safe_echo(task: dict) -> dict:
     }
 
 
+def _handle_safe_desktop_capability(task: dict) -> dict:
+    """safe_desktop_capability: desktop capability probe (boolean only).
+
+    파일/경로/사용자명/호스트명/환경변수 접근 금지.
+    고정된 capability boolean만 반환한다.
+    """
+    return {
+        "success": True,
+        "summary": "safe_desktop_capability_ok",
+        "data": {
+            "action": "safe_desktop_capability",
+            "status": "ok",
+            "capabilities": {
+                "browser_supported": True,
+                "office_supported": False,
+                "cad_supported": False,
+            },
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
     "list_allowed_apps": _handle_list_allowed_apps,
     "ws_noop": _handle_ws_noop,
     "safe_echo": _handle_safe_echo,
+    "safe_desktop_capability": _handle_safe_desktop_capability,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
