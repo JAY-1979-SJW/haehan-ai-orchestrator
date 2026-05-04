@@ -800,10 +800,10 @@ def approve_local_agent_task(
     token, status = approve_token(token_id, task_id, actor, role)
     log_event(
         _APPROVE_AUDIT_EVENT.get(status, "APPROVAL_DENIED"),
-        task_id, token_id=token_id, actor=actor, role=role,
+        task_id, actor=actor, role=role,
         decision=status, risk_level=token.risk_level,
         action_type=task.action,
-        note=f"agent_id={agent_id}",
+        note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
     )
 
     if status == "approved":
@@ -817,8 +817,8 @@ def approve_local_agent_task(
                 "CAPTURE_SCREENSHOT_APPROVED", task_id,
                 risk_level=updated.risk_level,
                 action_type=updated.action,
-                actor=actor, role=role, token_id=token_id,
-                note=f"agent_id={agent_id} dry_run={_task_is_dry_run(updated)}",
+                actor=actor, role=role,
+                note=f"agent_id={agent_id} dry_run={_task_is_dry_run(updated)} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id} dry_run={_task_is_dry_run(updated)}",
             )
         return updated.to_safe()
 
@@ -830,9 +830,9 @@ def approve_local_agent_task(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
-                actor=actor, role=role, token_id=token_id,
+                actor=actor, role=role,
                 decision="expired",
-                note=f"agent_id={agent_id}",
+                note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
             )
 
     http_code = _APPROVE_STATUS_HTTP.get(status, 400)
@@ -884,10 +884,10 @@ def reject_local_agent_task(
     token, status = reject_token(token_id, task_id, actor, role, reason=reason)
     log_event(
         _REJECT_AUDIT_EVENT.get(status, "APPROVAL_REJECTED"),
-        task_id, token_id=token_id, actor=actor, role=role,
+        task_id, actor=actor, role=role,
         decision=status, risk_level=token.risk_level,
         action_type=task.action,
-        note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else ""),
+        note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else "") + (f" approval_public_id={token.public_id}" if token.public_id else ""),
     )
     if status == "rejected":
         updated = _reg.mark_rejected(task_id, actor, reason=reason)
@@ -899,9 +899,9 @@ def reject_local_agent_task(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=updated.risk_level,
                 action_type=updated.action,
-                actor=actor, role=role, token_id=token_id,
+                actor=actor, role=role,
                 decision="rejected",
-                note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else ""),
+                note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else "") + (f" approval_public_id={token.public_id}" if token.public_id else ""),
             )
         return updated.to_safe()
 
@@ -912,9 +912,9 @@ def reject_local_agent_task(
                 "CAPTURE_SCREENSHOT_REJECTED", task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
-                actor=actor, role=role, token_id=token_id,
+                actor=actor, role=role,
                 decision="expired",
-                note=f"agent_id={agent_id}",
+                note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
             )
 
     http_code = _REJECT_STATUS_HTTP.get(status, 400)
