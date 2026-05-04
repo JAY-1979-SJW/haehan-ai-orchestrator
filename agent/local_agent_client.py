@@ -555,6 +555,88 @@ def _handle_browser_inspect(task: dict) -> dict:
     }
 
 
+def _handle_browser_plan_click(task: dict) -> dict:
+    """browser.plan_click: plan click action (plan-only, no actual click).
+
+    - params는 {} 또는 target_id enum만 허용
+    - 실제 click 금지, 브라우저 실행 금지
+    - click_target은 target_id/target_role enum + selector_redacted=true만 반환
+    - will_click=false, will_navigate=false 필수
+    """
+    params = task.get("params", {})
+
+    # params 검증: {} 또는 target_id enum만 허용
+    if params and not isinstance(params, dict):
+        return {
+            "success": False,
+            "summary": "browser_plan_click_invalid_params",
+            "data": {
+                "action": "browser.plan_click",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # 금지 keys 확인: selector/css_selector/xpath/text/label/coordinates 등
+    forbidden_keys = {
+        "selector", "css_selector", "xpath", "text", "label", "button_text",
+        "element_text", "coordinates", "x", "y", "dom_path", "url", "raw_url",
+        "page_title", "screenshot", "html", "dom", "cookie", "session",
+        "localStorage", "profile_path", "browser_pid", "window_handle",
+    }
+    if any(k.lower() in forbidden_keys for k in params.keys()):
+        return {
+            "success": False,
+            "summary": "browser_plan_click_invalid_params",
+            "data": {
+                "action": "browser.plan_click",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # target_id enum 허용값
+    allowed_target_ids = {"sample_primary_action", "sample_secondary_action"}
+
+    # target_id 추출 (기본값: sample_primary_action)
+    target_id = params.get("target_id", "sample_primary_action")
+    if isinstance(target_id, str) and target_id not in allowed_target_ids:
+        return {
+            "success": False,
+            "summary": "browser_plan_click_invalid_params",
+            "data": {
+                "action": "browser.plan_click",
+                "status": "error_invalid_target_id",
+            },
+        }
+
+    # target_role mapping
+    target_role_map = {
+        "sample_primary_action": "primary_action",
+        "sample_secondary_action": "secondary_action",
+    }
+    target_role = target_role_map.get(target_id, "primary_action")
+
+    return {
+        "success": True,
+        "summary": "browser_plan_click_ok",
+        "data": {
+            "action": "browser.plan_click",
+            "status": "ok",
+            "plan": {
+                "action_id": "browser.plan_click",
+                "will_open_browser": False,
+                "will_navigate": False,
+                "will_click": False,
+                "requires_approval": True,
+            },
+            "click_target": {
+                "target_id": target_id,
+                "target_role": target_role,
+                "selector_redacted": True,
+            },
+        },
+    }
+
+
 def _handle_browser_open_url_controlled(task: dict) -> dict:
     """browser.open_url_controlled: controlled URL open in isolated context (sample URL only).
 
@@ -659,6 +741,7 @@ _LOW_RISK_HANDLERS = {
     "safe_app_capability_matrix": _handle_safe_app_capability_matrix,
     "browser.plan_open_url": _handle_browser_plan_open_url,
     "browser.inspect": _handle_browser_inspect,
+    "browser.plan_click": _handle_browser_plan_click,
 }
 
 LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
