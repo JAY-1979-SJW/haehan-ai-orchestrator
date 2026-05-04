@@ -995,6 +995,151 @@ def _build_observe_summary(raw: Optional[dict]) -> Optional[dict]:
     return out if out else None
 
 
+# ── Cleanup (smoke-test residual 정리) ──────────────────────────────────
+
+def get_agent_cleanup_preview(agent_id: str) -> dict:
+    """cleanup 판정을 위한 preview 정보 반환.
+
+    Response:
+    {
+        "agent_id": str,
+        "eligible": bool,
+        "reason": str,
+        "task_count": int,
+        "task_status_counts": {...}
+    }
+    """
+    from .local_agent_cleanup_policy import validate_cleanup_request
+
+    with _lock:
+        agent = _agents.get(agent_id)
+        if agent is None:
+            return {
+                "agent_id": agent_id,
+                "eligible": False,
+                "reason": "agent_not_found",
+                "task_count": 0,
+            }
+
+        # agent의 모든 task 상태 수집
+        agent_tasks = [t for t in _tasks.values() if t.agent_id == agent_id]
+        task_statuses = [t.status for t in agent_tasks]
+
+        # cleanup 정책 검증 (dry_run=true로 preview 수행)
+        policy = validate_cleanup_request(
+            agent_id=agent_id,
+            host=agent.host,
+            label="",  # registration code label은 registry에 없으므로 빈값
+            agent_status=get_agent_status(agent_id),
+            task_statuses=task_statuses,
+            dry_run=True,
+            force=False,
+            confirm=None,
+        )
+
+        return {
+            "agent_id": agent_id,
+            "eligible": policy.eligible,
+            "reason": policy.reason,
+            "task_count": policy.task_count,
+            "task_status_counts": policy.task_status_counts or {},
+        }
+
+
+def cleanup_agent_and_tasks(
+    agent_id: str,
+    *,
+    dry_run: bool = True,
+    force: bool = False,
+    confirm: str | None = None,
+    actor: str = "",
+) -> dict:
+    """cleanup agent와 task 정리.
+
+    Policy:
+    - smoke-test agent만 cleanup 대상
+    - offline agent만 cleanup 대상
+    - pending/running task 있으면 거부
+    - dry_run=true: preview만 반환, 실제 삭제 안 함
+    - dry_run=false: force=true + confirm 정확 일치 필수
+
+    Response:
+    {
+        "agent_id": str,
+        "dry_run": bool,
+        "eligible": bool,
+        "reason": str,
+        "status": "preview" | "cleaned" | "error",
+        "deleted": bool,
+        "task_count": int,
+        "tasks_deleted": int (실제 cleanup일 때만)
+    }
+    """
+    from .local_agent_cleanup_policy import validate_cleanup_request
+
+    with _lock:
+        agent = _agents.get(agent_id)
+        if agent is None:
+            return {
+                "agent_id": agent_id,
+                "dry_run": dry_run,
+                "eligible": False,
+                "reason": "agent_not_found",
+                "status": "error",
+                "deleted": False,
+                "task_count": 0,
+            }
+
+        # agent의 모든 task 상태 수집
+        agent_tasks = [t for t in _tasks.values() if t.agent_id == agent_id]
+        task_statuses = [t.status for t in agent_tasks]
+
+        # cleanup 정책 검증
+        policy = validate_cleanup_request(
+            agent_id=agent_id,
+            host=agent.host,
+            label="",
+            agent_status=get_agent_status(agent_id),
+            task_statuses=task_statuses,
+            dry_run=dry_run,
+            force=force,
+            confirm=confirm,
+        )
+
+        # dry_run이거나 ineligible이면 preview 반환
+        if dry_run or not policy.eligible:
+            return {
+                "agent_id": agent_id,
+                "dry_run": dry_run,
+                "eligible": policy.eligible,
+                "reason": policy.reason,
+                "status": "preview" if policy.eligible else "error",
+                "deleted": False,
+                "task_count": policy.task_count,
+                "task_status_counts": policy.task_status_counts or {},
+            }
+
+        # 실제 cleanup 수행 (dry_run=false + eligible)
+        # agent와 task 제거
+        del _agents[agent_id]
+        tasks_deleted = 0
+        for task_id in list(_tasks.keys()):
+            if _tasks[task_id].agent_id == agent_id:
+                del _tasks[task_id]
+                tasks_deleted += 1
+
+        return {
+            "agent_id": agent_id,
+            "dry_run": dry_run,
+            "eligible": policy.eligible,
+            "reason": policy.reason,
+            "status": "cleaned",
+            "deleted": True,
+            "task_count": policy.task_count,
+            "tasks_deleted": tasks_deleted,
+        }
+
+
 __all__ = [
     "ACTION_RISK", "ALLOWED_APPS", "AUTO_EXECUTE_VIA_AGENT",
     "VALID_TASK_TRANSITIONS", "InvalidTaskTransitionError",
@@ -1014,4 +1159,5 @@ __all__ = [
     "set_agent_connected", "set_agent_last_seen", "set_agent_disconnected",
     "get_active_task_count", "get_current_task_id", "get_agent_status",
     "cancel_task", "CancelNotAllowedError",
+    "get_agent_cleanup_preview", "cleanup_agent_and_tasks",
 ]
