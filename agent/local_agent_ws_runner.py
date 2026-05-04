@@ -113,6 +113,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Maximum number of tasks to execute (0=disabled, max=1)",
     )
     parser.add_argument(
+        "--listen-seconds",
+        type=float,
+        default=0,
+        help="Task wait time after heartbeat (seconds, default 0=disabled)",
+    )
+    parser.add_argument(
+        "--heartbeat-interval-seconds",
+        type=float,
+        default=1.0,
+        help="Heartbeat send interval during listen mode (seconds, default 1.0)",
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose logging",
@@ -150,6 +162,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         logger.error(
             "--allow-task-action requires --max-tasks > 0"
         )
+        return 2
+
+    # Validate listen mode options
+    if args.listen_seconds > 0:
+        if not args.allow_task_action:
+            logger.error(
+                "--listen-seconds requires --allow-task-action ws_noop"
+            )
+            return 2
+        if args.allow_task_action != "ws_noop":
+            logger.error(
+                "--listen-seconds only works with --allow-task-action ws_noop"
+            )
+            return 2
+
+    if args.heartbeat_interval_seconds <= 0:
+        logger.error("--heartbeat-interval-seconds must be > 0")
         return 2
 
     # Load registration code from environment variable
@@ -196,11 +225,20 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Step 3: Connect and run
     if args.allow_task_action:
-        logger.info(
-            "Connecting to WebSocket (heartbeat_count=%d, "
-            "allow_task_action=%s, max_tasks=%d)...",
-            args.heartbeat_count, args.allow_task_action, args.max_tasks
-        )
+        if args.listen_seconds > 0:
+            logger.info(
+                "Connecting to WebSocket (heartbeat_count=%d, "
+                "allow_task_action=%s, max_tasks=%d, "
+                "listen_seconds=%.1f, heartbeat_interval=%.1f)...",
+                args.heartbeat_count, args.allow_task_action, args.max_tasks,
+                args.listen_seconds, args.heartbeat_interval_seconds
+            )
+        else:
+            logger.info(
+                "Connecting to WebSocket (heartbeat_count=%d, "
+                "allow_task_action=%s, max_tasks=%d)...",
+                args.heartbeat_count, args.allow_task_action, args.max_tasks
+            )
     else:
         logger.info(
             "Connecting to WebSocket (heartbeat_count=%d, no-task mode)...",
@@ -211,6 +249,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         heartbeat_count=args.heartbeat_count,
         allow_task_action=args.allow_task_action,
         max_tasks=args.max_tasks,
+        listen_seconds=args.listen_seconds,
+        heartbeat_interval_seconds=args.heartbeat_interval_seconds,
     )
 
     # Log result (without sensitive values)
@@ -218,14 +258,18 @@ def main(argv: Optional[list[str]] = None) -> int:
     logger.info("Connection result: status=%s", status)
 
     if status == "ok":
+        tasks_processed = result.get("tasks_processed", 0)
+        no_task_received = result.get("no_task_received", False)
         logger.info(
             "WebSocket connection successful: "
             "agent_id=%s, heartbeat_count=%d, "
-            "sent=%d, received=%d",
+            "sent=%d, received=%d, tasks_processed=%d, no_task_received=%s",
             result.get("agent_id"),
             result.get("heartbeat_count"),
             result.get("sent"),
             result.get("received"),
+            tasks_processed,
+            no_task_received,
         )
         return 0
     else:

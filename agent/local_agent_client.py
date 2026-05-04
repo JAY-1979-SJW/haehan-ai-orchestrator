@@ -429,6 +429,8 @@ class LocalAgentClient:
         heartbeat_count: int = 1,
         allow_task_action: str = "",
         max_tasks: int = 0,
+        listen_seconds: float = 0,
+        heartbeat_interval_seconds: float = 1.0,
     ) -> dict:
         """WebSocket 연결 진입점 (dry_run=False에서 실제 연결).
 
@@ -436,6 +438,8 @@ class LocalAgentClient:
         heartbeat_count: 송수신할 heartbeat 횟수 (기본 1).
         allow_task_action: 허용할 task action (기본 "", 즉 task 처리 안 함).
         max_tasks: 처리할 최대 task 수 (기본 0, 최대 1).
+        listen_seconds: heartbeat 완료 후 추가 task 대기 시간 (기본 0 = 비활성).
+        heartbeat_interval_seconds: listen 중 heartbeat 송신 간격 (기본 1.0초).
         반환값: {status, agent_id, heartbeat_count, ...} (dry_run 또는 실제 연결 결과).
         """
         if not self._should_connect():
@@ -464,6 +468,8 @@ class LocalAgentClient:
                     heartbeat_count,
                     allow_task_action=allow_task_action,
                     max_tasks=max_tasks,
+                    listen_seconds=listen_seconds,
+                    heartbeat_interval_seconds=heartbeat_interval_seconds,
                 )
             )
             return result
@@ -481,6 +487,8 @@ class LocalAgentClient:
         heartbeat_count: int,
         allow_task_action: str = "",
         max_tasks: int = 0,
+        listen_seconds: float = 0,
+        heartbeat_interval_seconds: float = 1.0,
     ) -> dict:
         """실제 WebSocket 비동기 연결."""
         try:
@@ -504,6 +512,8 @@ class LocalAgentClient:
                     heartbeat_count,
                     allow_task_action=allow_task_action,
                     max_tasks=max_tasks,
+                    listen_seconds=listen_seconds,
+                    heartbeat_interval_seconds=heartbeat_interval_seconds,
                 )
                 return result
         except Exception as e:
@@ -520,11 +530,15 @@ class LocalAgentClient:
         heartbeat_count: int,
         allow_task_action: str = "",
         max_tasks: int = 0,
+        listen_seconds: float = 0,
+        heartbeat_interval_seconds: float = 1.0,
     ) -> dict:
-        """WebSocket 프로토콜 실행 (auth → heartbeat 반복 → close).
+        """WebSocket 프로토콜 실행 (auth → heartbeat 반복 → [listen mode] → close).
 
         allow_task_action: 허용할 task action (기본 "").
         max_tasks: 처리할 최대 task 수 (기본 0).
+        listen_seconds: heartbeat 완료 후 추가 task 대기 시간 (기본 0 = 비활성).
+        heartbeat_interval_seconds: listen 중 heartbeat 송신 간격 (기본 1.0초).
         task 메시지 수신 시 blocked_task_dispatch 또는 safe dispatch 처리.
         """
         sent: list[dict] = []
@@ -604,12 +618,77 @@ class LocalAgentClient:
                     # task 처리 후 break (1개만 처리)
                     break
 
+            # 5. listen mode: heartbeat 완료 후 추가 대기
+            if listen_seconds > 0 and allow_task_action and tasks_processed == 0:
+                logger.info("Entering listen mode for %gs (heartbeat interval=%gs)",
+                           listen_seconds, heartbeat_interval_seconds)
+                start_time = asyncio.get_event_loop().time()
+                hb_timer = asyncio.get_event_loop().time()
+
+                while asyncio.get_event_loop().time() - start_time < listen_seconds:
+                    # 주기적 heartbeat 송신
+                    now = asyncio.get_event_loop().time()
+                    if now - hb_timer >= heartbeat_interval_seconds:
+                        hb = build_heartbeat(self.config.agent_id)
+                        await ws.send(json.dumps(hb))
+                        sent.append(hb)
+                        hb_timer = now
+
+                    # recv 대기 (남은 시간 만큼)
+                    remaining = listen_seconds - (now - start_time)
+                    try:
+                        msg_text = await asyncio.wait_for(ws.recv(), timeout=min(remaining, heartbeat_interval_seconds))
+                        msg = json.loads(msg_text)
+                        received.append(msg)
+
+                        if msg.get("type") == "task":
+                            task = msg.get("task", {})
+                            action = (task.get("action") or "").strip()
+
+                            if (
+                                action == allow_task_action
+                                and tasks_processed < max_tasks
+                            ):
+                                logger.info(
+                                    "Processing task in listen mode: action=%r (task_id=%s)",
+                                    action, task.get("task_id")
+                                )
+                                try:
+                                    result = handle_task(task, dry_run=self.config.dry_run)
+                                    await ws.send(json.dumps(result))
+                                    sent.append(result)
+                                    tasks_processed += 1
+                                    logger.info("Task result sent in listen mode (tasks_processed=%d)", tasks_processed)
+                                    break  # listen mode 종료
+                                except (BlockedAction, NotImplementedInThisStage) as e:
+                                    logger.warning("Task processing failed in listen mode: %s", e)
+                                    result = build_result(
+                                        task_id=task.get("task_id", ""),
+                                        success=False,
+                                        error_code="TASK_ERROR",
+                                        error=str(e),
+                                    )
+                                    await ws.send(json.dumps(result))
+                                    sent.append(result)
+                                    break  # listen mode 종료
+                            else:
+                                logger.warning("task in listen mode not allowed or max_tasks reached")
+                    except asyncio.TimeoutError:
+                        # recv timeout — heartbeat interval으로 재시도
+                        continue
+
+                if tasks_processed == 0:
+                    logger.info("No task received during listen mode")
+
             return {
                 "status": "ok",
                 "agent_id": self.config.agent_id,
                 "heartbeat_count": heartbeat_count,
                 "sent": len(sent),
                 "received": len(received),
+                "tasks_processed": tasks_processed,
+                "task_action": allow_task_action if allow_task_action else None,
+                "no_task_received": tasks_processed == 0 and listen_seconds > 0,
             }
 
         except asyncio.TimeoutError:
@@ -620,6 +699,7 @@ class LocalAgentClient:
                 "heartbeat_count": heartbeat_count,
                 "sent": len(sent),
                 "received": len(received),
+                "tasks_processed": tasks_processed,
             }
         except Exception as e:
             logger.error("WebSocket protocol error: %s", e)
