@@ -730,6 +730,142 @@ def _handle_browser_open_url_controlled(task: dict) -> dict:
     }
 
 
+def _handle_browser_open_click_close_controlled(task: dict) -> dict:
+    """browser.open_click_close_controlled: controlled click in isolated context.
+
+    - sample URL(https://example.com/)만 사용
+    - params는 {} 또는 target_id enum만 허용
+    - BROWSER_EXECUTION_ENABLED 또는 BROWSER_ACTUAL_CLICK 승인 필수
+    - 실제 click 실행 금지 (mock 테스트 단계)
+    - isolated Playwright context 사용 (existing profile 금지)
+    - one-shot lifecycle: open → click → close
+    - result: clicked_target/url_info/navigation/cleanup만 반환
+    - raw URL/selector/coordinates/DOM/screenshot 반환 금지
+    """
+    import os
+
+    params = task.get("params", {})
+
+    # params 검증: {} 또는 target_id enum만 허용
+    if params and not isinstance(params, dict):
+        return {
+            "success": False,
+            "summary": "browser_open_click_close_controlled_invalid_params",
+            "data": {
+                "action": "browser.open_click_close_controlled",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # 금지 keys 확인
+    forbidden_keys = {
+        "selector", "css_selector", "xpath", "text", "label", "button_text",
+        "element_text", "coordinates", "x", "y", "dom_path", "url", "raw_url",
+        "page_title", "screenshot", "html", "dom", "cookie", "session",
+        "localStorage", "profile_path", "browser_pid", "window_handle",
+    }
+    if any(k.lower() in forbidden_keys for k in params.keys()):
+        return {
+            "success": False,
+            "summary": "browser_open_click_close_controlled_invalid_params",
+            "data": {
+                "action": "browser.open_click_close_controlled",
+                "status": "error_invalid_params",
+            },
+        }
+
+    # target_id enum 허용값
+    allowed_target_ids = {"sample_primary_action", "sample_secondary_action"}
+
+    # target_id 추출 (기본값: sample_primary_action)
+    target_id = params.get("target_id", "sample_primary_action")
+    if isinstance(target_id, str) and target_id not in allowed_target_ids:
+        return {
+            "success": False,
+            "summary": "browser_open_click_close_controlled_invalid_params",
+            "data": {
+                "action": "browser.open_click_close_controlled",
+                "status": "error_invalid_target_id",
+            },
+        }
+
+    # target_role mapping
+    target_role_map = {
+        "sample_primary_action": "primary_action",
+        "sample_secondary_action": "secondary_action",
+    }
+    target_role = target_role_map.get(target_id, "primary_action")
+
+    # 실행 gate 확인: BROWSER_EXECUTION_ENABLED 또는 BROWSER_ACTUAL_CLICK
+    execution_enabled = os.environ.get("BROWSER_EXECUTION_ENABLED", "").lower() == "true"
+    approval_token = os.environ.get("BROWSER_ACTUAL_CLICK", "").strip()
+
+    if not execution_enabled and not approval_token:
+        return {
+            "success": False,
+            "summary": "browser_open_click_close_controlled_disabled",
+            "data": {
+                "action": "browser.open_click_close_controlled",
+                "status": "error_disabled",
+                "execution_mode": "isolated_sample_click",
+                "approval_required": True,
+            },
+        }
+
+    # sample URL 검증 (내부 고정 URL만 사용)
+    sample_url = "https://example.com/"
+    if not _is_sample_url_allowed(sample_url):
+        return {
+            "success": False,
+            "summary": "browser_open_click_close_controlled_invalid_target",
+            "data": {
+                "action": "browser.open_click_close_controlled",
+                "status": "error_invalid_target",
+                "target": {
+                    "scheme": "https",
+                    "host_class": "sample",
+                    "url_redacted": True,
+                },
+            },
+        }
+
+    return {
+        "success": True,
+        "summary": "browser_open_click_close_controlled_ok",
+        "data": {
+            "action": "browser.open_click_close_controlled",
+            "status": "ok",
+            "execution_mode": "isolated_sample_click",
+            "approval_required": True,
+            "clicked_target": {
+                "target_id": target_id,
+                "target_role": target_role,
+                "selector_redacted": True,
+            },
+            "url_info": {
+                "scheme": "https",
+                "host_class": "sample",
+                "url_redacted": True,
+            },
+            "navigation": {
+                "will_navigate": False,
+            },
+            "browser": {
+                "isolated_context": True,
+                "used_existing_profile": False,
+                "opened": True,
+                "clicked": True,
+                "closed": True,
+            },
+            "cleanup": {
+                "context_closed": True,
+                "browser_closed": True,
+                "temp_files_deleted": True,
+            },
+        },
+    }
+
+
 _LOW_RISK_HANDLERS = {
     "ping": _handle_ping,
     "system_info": _handle_system_info,
@@ -748,6 +884,7 @@ LOW_RISK_ACTIONS: frozenset[str] = frozenset(_LOW_RISK_HANDLERS)
 
 _MEDIUM_RISK_HANDLERS = {
     "browser.open_url_controlled": _handle_browser_open_url_controlled,
+    "browser.open_click_close_controlled": _handle_browser_open_click_close_controlled,
 }
 
 MEDIUM_RISK_ACTIONS: frozenset[str] = frozenset(_MEDIUM_RISK_HANDLERS)
