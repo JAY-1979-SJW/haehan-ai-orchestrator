@@ -302,6 +302,7 @@ def register_with_code(body: RegisterWithCodeRequest):
         "code_id": rec.code_id,
         "label": rec.label,
         "allowed_actions": list(rec.allowed_actions),
+        "smoke_test": result.agent.smoke_test,
     }
 
 
