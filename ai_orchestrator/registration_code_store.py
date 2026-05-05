@@ -526,20 +526,28 @@ class _PostgresDbExecutor:
             allowed_actions = allowed_actions_raw
         else:
             allowed_actions = []
+
+        # psycopg2 RealDictCursor returns datetime objects for timestamp columns,
+        # but RegistrationCode expects ISO format strings
+        def dt_to_iso(val):
+            if isinstance(val, datetime):
+                return val.isoformat()
+            return val or ""
+
         return RegistrationCode(
             code_id=row["code_id"],
             label=row.get("label", ""),
             code_hash=row["code_hash"],
             code_salt=row["code_salt"],
             allowed_actions=list(allowed_actions) if allowed_actions else [],
-            expires_at=row["expires_at"],
-            created_at=row["created_at"],
+            expires_at=dt_to_iso(row.get("expires_at")),
+            created_at=dt_to_iso(row.get("created_at")),
             issued_by=row.get("issued_by", ""),
             issuer_role=row.get("issuer_role", ""),
             note=row.get("note", ""),
-            used_at=row.get("used_at", ""),
+            used_at=dt_to_iso(row.get("used_at")),
             used_by_agent_id=row.get("used_by_agent_id", ""),
-            revoked_at=row.get("revoked_at", ""),
+            revoked_at=dt_to_iso(row.get("revoked_at")),
             revoked_by=row.get("revoked_by", ""),
         )
 
