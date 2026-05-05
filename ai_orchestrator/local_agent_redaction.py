@@ -128,6 +128,27 @@ _CLICK_TARGET_ROLE_ALLOWED: frozenset[str] = frozenset({
     "primary_action", "secondary_action", "navigation_link",
 })
 
+# browser.open_click_close_controlled url_info 내부 허용 key
+_URL_INFO_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "scheme", "host_class", "url_redacted",
+})
+
+# browser.open_click_close_controlled navigation 내부 허용 key
+_NAVIGATION_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "will_navigate",
+})
+
+# browser.open_click_close_controlled cleanup 내부 허용 key
+_CLEANUP_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "context_closed", "browser_closed", "temp_files_deleted",
+})
+
+# browser.open_click_close_controlled clicked_target 내부 허용 key
+# browser.plan_click click_target과 동일
+_CLICKED_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "target_id", "target_role", "selector_redacted",
+})
+
 
 def _strip_capabilities(value: object) -> "dict | None":
     """capabilities nested allowlist: boolean 값만 저장.
@@ -298,6 +319,74 @@ def _strip_click_target(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_url_info(value: object) -> "dict | None":
+    """browser.open_click_close_controlled url_info nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(scheme/host_class/url_redacted)만 유지
+    - scheme은 _TARGET_SCHEME_ALLOWED에만 포함
+    - host_class는 _TARGET_HOST_CLASS_ALLOWED에만 포함
+    - url_redacted는 bool만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _URL_INFO_ALLOWED_KEYS:
+            continue
+        if k_low == "scheme" and isinstance(v, str):
+            if v in _TARGET_SCHEME_ALLOWED:
+                out[k] = v
+        elif k_low == "host_class" and isinstance(v, str):
+            if v in _TARGET_HOST_CLASS_ALLOWED:
+                out[k] = v
+        elif k_low == "url_redacted" and isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
+def _strip_navigation(value: object) -> "dict | None":
+    """browser.open_click_close_controlled navigation nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(will_navigate)만 유지
+    - will_navigate는 bool만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _NAVIGATION_ALLOWED_KEYS:
+            continue
+        if k_low == "will_navigate" and isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
+def _strip_cleanup(value: object) -> "dict | None":
+    """browser.open_click_close_controlled cleanup nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(context_closed/browser_closed/temp_files_deleted)만 유지
+    - 모든 value는 bool만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _CLEANUP_ALLOWED_KEYS:
+            continue
+        if isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -358,6 +447,30 @@ def _strip_result_data(data: object) -> "dict | None":
             click_target = _strip_click_target(v)
             if click_target is not None:
                 out[k] = click_target
+            continue
+        # clicked_target 특별 처리: click_target과 동일
+        if k_low == "clicked_target":
+            clicked_target = _strip_click_target(v)
+            if clicked_target is not None:
+                out[k] = clicked_target
+            continue
+        # url_info 특별 처리: nested allowlist
+        if k_low == "url_info":
+            url_info = _strip_url_info(v)
+            if url_info is not None:
+                out[k] = url_info
+            continue
+        # navigation 특별 처리: nested allowlist
+        if k_low == "navigation":
+            navigation = _strip_navigation(v)
+            if navigation is not None:
+                out[k] = navigation
+            continue
+        # cleanup 특별 처리: nested allowlist
+        if k_low == "cleanup":
+            cleanup = _strip_cleanup(v)
+            if cleanup is not None:
+                out[k] = cleanup
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
