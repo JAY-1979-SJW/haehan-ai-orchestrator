@@ -382,12 +382,12 @@ class _PostgresDbExecutor:
             conn = self._psycopg2.connect(self.conn_str)
             conn.autocommit = False
             return conn
-        except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError) as e:
+        except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError):
             logger.error("PostgreSQL connection failed")
-            raise RuntimeError("Cannot connect to PostgreSQL") from e
-        except Exception as e:
+            raise RuntimeError("Cannot connect to PostgreSQL")
+        except Exception:
             logger.error("Unexpected error connecting to PostgreSQL")
-            raise RuntimeError("Unexpected error connecting to PostgreSQL") from e
+            raise RuntimeError("Unexpected error connecting to PostgreSQL")
 
     def insert(self, rec: RegistrationCode) -> None:
         """INSERT registration_codes."""
