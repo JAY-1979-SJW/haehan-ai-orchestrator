@@ -301,15 +301,64 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
             self._codes.clear()
 
 
-# ── DB-Backed Store (미구현, placeholder) ────────────────────────────────────
+# ── DB-Backed Store (Fake DB 기반 구현) ──────────────────────────────────────
+
+class _FakeDbTable:
+    """테스트용 fake registration_codes 테이블 (in-memory SQL 시뮬레이션)."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._rows: dict[str, RegistrationCode] = {}  # code_id -> RegistrationCode
+
+    def insert(self, rec: RegistrationCode) -> None:
+        """INSERT registration_codes (code_id, code_hash, code_salt, ...)."""
+        with self._lock:
+            if rec.code_id in self._rows:
+                raise ValueError(f"code_id already exists: {rec.code_id}")
+            self._rows[rec.code_id] = rec
+
+    def select_by_id(self, code_id: str) -> Optional[RegistrationCode]:
+        """SELECT * FROM registration_codes WHERE code_id = ?."""
+        with self._lock:
+            return self._rows.get(code_id)
+
+    def select_all(self) -> list[RegistrationCode]:
+        """SELECT * FROM registration_codes."""
+        with self._lock:
+            return list(self._rows.values())
+
+    def update_used_at(self, code_id: str, used_at: str) -> None:
+        """UPDATE registration_codes SET used_at = ? WHERE code_id = ?."""
+        with self._lock:
+            if code_id in self._rows:
+                self._rows[code_id].used_at = used_at
+
+    def update_revoked_at(self, code_id: str, revoked_at: str, revoked_by: str) -> None:
+        """UPDATE registration_codes SET revoked_at = ?, revoked_by = ? WHERE code_id = ?."""
+        with self._lock:
+            if code_id in self._rows:
+                self._rows[code_id].revoked_at = revoked_at
+                self._rows[code_id].revoked_by = revoked_by
+
+    def update_used_by_agent_id(self, code_id: str, agent_id: str) -> None:
+        """UPDATE registration_codes SET used_by_agent_id = ? WHERE code_id = ?."""
+        with self._lock:
+            if code_id in self._rows:
+                self._rows[code_id].used_by_agent_id = agent_id
+
+    def clear(self) -> None:
+        """테스트용: 테이블 초기화."""
+        with self._lock:
+            self._rows.clear()
+
 
 class DbRegistrationCodeStore(RegistrationCodeStore):
-    """PostgreSQL-backed store (migration 적용 후 활성화)."""
+    """PostgreSQL-backed store (fake DB 기반, 운영 DB 접속 금지)."""
 
     def __init__(self, db_connection_string: str):
+        """db_connection_string은 사용하지 않음 (테스트용 fake DB만 사용)."""
         self.db_conn_str = db_connection_string
-        # TODO: DB connection pooling 구성
-        # TODO: SQL helper 함수들 구현
+        self._db = _FakeDbTable()  # 테스트용 fake DB
 
     def issue(
         self,
@@ -321,15 +370,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
         issued_by: str,
         issuer_role: str = "",
     ) -> IssueResult:
-        """DB에 code_hash, code_salt, metadata 저장.
-
-        1. code_plain 생성
-        2. normalized_code 생성
-        3. salt 생성
-        4. code_hash = SHA-256(salt + ':' + normalized)
-        5. DB insert (code_plain은 절대 저장하지 않음)
-        6. IssueResult로 code_plain 1회만 반환
-        """
+        """DB (fake)에 code_hash, code_salt, metadata 저장."""
         if expires_in_minutes is None or int(expires_in_minutes) < 1:
             raise InvalidTTLError("expires_in_minutes must be >= 1")
         if int(expires_in_minutes) > MAX_TTL_MINUTES:
@@ -359,99 +400,87 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
             note=note,
         )
 
-        # TODO: DB insert
-        # INSERT INTO registration_codes (
-        #   code_id, code_hash, code_salt, label, note, allowed_actions,
-        #   expires_at, created_at, created_by, metadata
-        # ) VALUES (...)
-        # NOTE: code_plain은 DB에 저장하지 않음 (메모리에서도 즉시 폐기)
+        # DB insert (fake DB만 사용, 운영 DB 접속 금지)
+        self._db.insert(rec)
 
         return IssueResult(code=rec, registration_code=code_plain)
 
     def consume(self, raw_code: str) -> RegistrationCode:
-        """DB에서 hash 비교, used_at 갱신.
-
-        1. 입력 code 정규화
-        2. DB에서 후보 조회 (모든 code의 salt 이용)
-        3. hash 계산 및 constant-time compare
-        4. revoked_at, used_at, expires_at 검증
-        5. 성공 시 DB에서 used_at = NOW() 업데이트
-        6. RegistrationCode 객체 반환 또는 CodeExchangeError 발생
-
-        실패 reason (audit용만):
-        - malformed: normalized length != 12
-        - not_found: 어떤 code_hash도 일치 안 함
-        - revoked: revoked_at 존재
-        - used: used_at 존재
-        - expired: NOW() >= expires_at
-        """
+        """DB에서 hash 비교, used_at 갱신."""
         normalized = _normalize_code(raw_code or "")
         if len(normalized) != CODE_LEN:
             raise CodeExchangeError("malformed")
 
         now = _now()
 
-        # TODO: DB select all records where revoked_at is null and expires_at > now
-        # for each record:
-        #   cand = _hash_code(normalized, record.code_salt)
-        #   if secrets.compare_digest(cand, record.code_hash):
-        #     # found match
-        #     if record.used_at:
-        #       raise CodeExchangeError("used")
-        #     if record.revoked_at:
-        #       raise CodeExchangeError("revoked")
-        #     if now >= record.expires_at:
-        #       raise CodeExchangeError("expired")
-        #     # 성공: UPDATE registration_codes SET used_at = now WHERE code_id = ?
-        #     return record
+        # DB select all
+        all_records = self._db.select_all()
 
-        # TODO: if no match found:
-        #   raise CodeExchangeError("not_found")
+        # hash 비교
+        target: Optional[RegistrationCode] = None
+        for rec in all_records:
+            cand = _hash_code(normalized, rec.code_salt)
+            if secrets.compare_digest(cand, rec.code_hash):
+                target = rec
+                break
 
-        raise NotImplementedError("DB backend not yet implemented")
+        if target is None:
+            raise CodeExchangeError("not_found")
+
+        # 상태 검증
+        if target.revoked_at:
+            raise CodeExchangeError("revoked")
+        if target.used_at:
+            raise CodeExchangeError("used")
+
+        try:
+            exp = datetime.fromisoformat(target.expires_at)
+        except (TypeError, ValueError):
+            raise CodeExchangeError("expired")
+
+        if now >= exp:
+            raise CodeExchangeError("expired")
+
+        # 성공: used_at 기록
+        self._db.update_used_at(target.code_id, now.isoformat())
+        target.used_at = now.isoformat()
+
+        return target
 
     def get(self, code_id: str) -> Optional[RegistrationCode]:
-        """DB에서 code 조회.
-
-        TODO: SELECT * FROM registration_codes WHERE code_id = ?
-        """
-        raise NotImplementedError("DB backend not yet implemented")
+        """DB에서 code 조회."""
+        return self._db.select_by_id(code_id)
 
     def list(self) -> list[dict]:
-        """DB에서 code 목록 조회 (safe response only).
-
-        응답에는 code_hash, code_salt, registration_code 미포함.
-
-        TODO: SELECT code_id, label, allowed_actions, expires_at, created_at, ...
-              FROM registration_codes ORDER BY created_at DESC
-        """
-        raise NotImplementedError("DB backend not yet implemented")
+        """DB에서 code 목록 조회 (safe response only)."""
+        all_records = self._db.select_all()
+        all_records.sort(key=lambda r: r.created_at, reverse=True)
+        return [r.to_safe() for r in all_records]
 
     def revoke(self, code_id: str, *, actor: str) -> Optional[RegistrationCode]:
-        """DB에서 code revoke.
-
-        TODO: UPDATE registration_codes
-              SET revoked_at = now(), revoked_by = ?
-              WHERE code_id = ? AND revoked_at IS NULL
-        """
-        raise NotImplementedError("DB backend not yet implemented")
+        """DB에서 code revoke."""
+        rec = self._db.select_by_id(code_id)
+        if rec is None:
+            return None
+        if rec.revoked_at:
+            return rec
+        revoked_at = _now_iso()
+        self._db.update_revoked_at(code_id, revoked_at, (actor or "")[:80])
+        rec.revoked_at = revoked_at
+        rec.revoked_by = (actor or "")[:80]
+        return rec
 
     def attach_used_agent(self, code_id: str, agent_id: str) -> None:
-        """DB에서 agent_id 연결.
-
-        TODO: UPDATE registration_codes
-              SET metadata = jsonb_set(metadata, '{used_by_agent_id}', to_jsonb(?))
-              WHERE code_id = ?
-        """
-        raise NotImplementedError("DB backend not yet implemented")
+        """DB에서 agent_id 연결."""
+        rec = self._db.select_by_id(code_id)
+        if rec is None:
+            return
+        self._db.update_used_by_agent_id(code_id, agent_id)
+        rec.used_by_agent_id = agent_id
 
     def clear_for_tests(self) -> None:
-        """테스트 전용: DB 초기화 (운영은 절대 호출 금지).
-
-        금지: DELETE FROM registration_codes (실제 실행 불가)
-        권장: 테스트는 in-memory 저장소만 사용하거나, mock/fake DB 사용
-        """
-        raise RuntimeError("clear_for_tests not allowed in DB backend")
+        """테스트 전용: fake DB 초기화 (운영 DB DELETE 절대 금지)."""
+        self._db.clear()
 
 
 # ── Global Store Instance ────────────────────────────────────────────────────

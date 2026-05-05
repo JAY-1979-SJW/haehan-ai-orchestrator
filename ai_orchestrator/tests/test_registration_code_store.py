@@ -218,6 +218,81 @@ class TestInMemoryStore:
             )
 
 
+class TestDbStore:
+    """DbRegistrationCodeStore 테스트 (fake DB 기반)."""
+
+    @pytest.fixture
+    def store(self):
+        """테스트용 db-backed store (fake DB)."""
+        from ai_orchestrator.registration_code_store import DbRegistrationCodeStore
+
+        return DbRegistrationCodeStore("fake://not-used")
+
+    def test_issue_code_fake_db(self, store):
+        """발급 결과가 fake DB에 저장됨."""
+        result = store.issue(
+            label="test-db",
+            expires_in_minutes=30,
+            allowed_actions=["browser.inspect"],
+            issued_by="admin",
+        )
+        assert result.registration_code is not None
+        # fake DB에서 조회 가능
+        rec = store.get(result.code.code_id)
+        assert rec is not None
+        assert rec.code_hash != result.registration_code  # hash만 저장
+        assert rec.code_salt is not None
+
+    def test_consume_code_fake_db(self, store):
+        """consume이 fake DB와 동작."""
+        result = store.issue(label="test-db", issued_by="admin")
+        code_plain = result.registration_code
+        rec = store.consume(code_plain)
+        assert rec.used_at is not None
+
+    def test_db_reuse_rejected(self, store):
+        """DB에서도 재사용 거부."""
+        result = store.issue(label="test-db", issued_by="admin")
+        code_plain = result.registration_code
+        store.consume(code_plain)
+        with pytest.raises(CodeExchangeError) as exc_info:
+            store.consume(code_plain)
+        assert exc_info.value.reason == "used"
+
+    def test_db_list_response_safe(self, store):
+        """DB list도 safe response."""
+        store.issue(label="test-db-1", issued_by="admin")
+        store.issue(label="test-db-2", issued_by="admin")
+        items = store.list()
+        assert len(items) >= 2
+        for item in items:
+            assert "code_hash" not in item
+            assert "code_salt" not in item
+            assert "registration_code" not in item
+
+    def test_db_revoke(self, store):
+        """DB revoke."""
+        result = store.issue(label="test-db", issued_by="admin")
+        store.revoke(result.code.code_id, actor="admin")
+        rec = store.get(result.code.code_id)
+        assert rec.revoked_at is not None
+
+    def test_db_attach_used_agent(self, store):
+        """DB attach_used_agent."""
+        result = store.issue(label="test-db", issued_by="admin")
+        store.consume(result.registration_code)
+        store.attach_used_agent(result.code.code_id, "la-db-agent")
+        rec = store.get(result.code.code_id)
+        assert rec.used_by_agent_id == "la-db-agent"
+
+    def test_db_clear_for_tests(self, store):
+        """DB clear_for_tests (테스트 전용)."""
+        store.issue(label="test-db", issued_by="admin")
+        assert len(store.list()) > 0
+        store.clear_for_tests()
+        assert len(store.list()) == 0
+
+
 class TestBackendSelection:
     """Backend 선택 로직 테스트."""
 
