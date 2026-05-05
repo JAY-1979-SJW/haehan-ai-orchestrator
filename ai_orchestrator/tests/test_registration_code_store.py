@@ -59,6 +59,17 @@ class TestInMemoryStore:
         assert isinstance(result.code, RegistrationCode)
         assert result.code.code_id.startswith("rc-")
 
+    def test_issue_code_stores_issued_by_and_issuer_role(self, store):
+        """issued_by와 issuer_role이 저장됨."""
+        result = store.issue(
+            label="test",
+            issued_by="admin_user",
+            issuer_role="system_admin",
+        )
+        rec = store.get(result.code.code_id)
+        assert rec.issued_by == "admin_user"
+        assert rec.issuer_role == "system_admin"
+
     def test_issue_code_does_not_store_plaintext(self, store):
         """code_plain은 저장되지 않음 (in-memory 또는 DB)."""
         result = store.issue(
@@ -187,9 +198,10 @@ class TestInMemoryStore:
     def test_revoke_code(self, store):
         """Code 폐기."""
         result = store.issue(label="test", issued_by="admin")
-        store.revoke(result.code.code_id, actor="admin")
+        store.revoke(result.code.code_id, actor="admin_revoke")
         rec = store.get(result.code.code_id)
         assert rec.revoked_at is not None
+        assert rec.revoked_by == "admin_revoke"
 
     def test_attach_used_agent(self, store):
         """사용된 code에 agent_id 연결."""
@@ -243,6 +255,17 @@ class TestDbStore:
         assert rec.code_hash != result.registration_code  # hash만 저장
         assert rec.code_salt is not None
 
+    def test_db_issue_code_stores_issued_by_and_issuer_role(self, store):
+        """DB에 issued_by와 issuer_role이 저장됨."""
+        result = store.issue(
+            label="test-db",
+            issued_by="admin_user",
+            issuer_role="system_admin",
+        )
+        rec = store.get(result.code.code_id)
+        assert rec.issued_by == "admin_user"
+        assert rec.issuer_role == "system_admin"
+
     def test_consume_code_fake_db(self, store):
         """consume이 fake DB와 동작."""
         result = store.issue(label="test-db", issued_by="admin")
@@ -273,9 +296,10 @@ class TestDbStore:
     def test_db_revoke(self, store):
         """DB revoke."""
         result = store.issue(label="test-db", issued_by="admin")
-        store.revoke(result.code.code_id, actor="admin")
+        store.revoke(result.code.code_id, actor="admin_revoke")
         rec = store.get(result.code.code_id)
         assert rec.revoked_at is not None
+        assert rec.revoked_by == "admin_revoke"
 
     def test_db_attach_used_agent(self, store):
         """DB attach_used_agent."""
