@@ -81,6 +81,7 @@ class RegistrationCode:
     created_at: str
     issued_by: str
     issuer_role: str
+    # Fields with defaults must come after required fields
     smoke_test: bool = False  # smoke test marker for cleanup eligibility
     note: str = ""
     used_at: str = ""
@@ -418,7 +419,7 @@ class _PostgresDbExecutor:
                         rec.created_at,
                         rec.issued_by,
                         rec.issuer_role,
-                        json.dumps({}),  # metadata
+                        json.dumps({"smoke_test": rec.smoke_test}),  # metadata (smoke_test 포함)
                     ),
                 )
                 conn.commit()
@@ -540,6 +541,16 @@ class _PostgresDbExecutor:
         else:
             allowed_actions = []
 
+        # metadata에서 smoke_test 추출
+        metadata_raw = row.get("metadata", "{}")
+        if isinstance(metadata_raw, str):
+            metadata = json.loads(metadata_raw) if metadata_raw else {}
+        elif isinstance(metadata_raw, dict):
+            metadata = metadata_raw
+        else:
+            metadata = {}
+        smoke_test = bool(metadata.get("smoke_test", False))
+
         # psycopg2 RealDictCursor returns datetime objects for timestamp columns,
         # but RegistrationCode expects ISO format strings
         def dt_to_iso(val):
@@ -557,6 +568,7 @@ class _PostgresDbExecutor:
             created_at=dt_to_iso(row.get("created_at")),
             issued_by=row.get("issued_by", ""),
             issuer_role=row.get("issuer_role", ""),
+            smoke_test=smoke_test,
             note=row.get("note", ""),
             used_at=dt_to_iso(row.get("used_at")),
             used_by_agent_id=row.get("used_by_agent_id", ""),
