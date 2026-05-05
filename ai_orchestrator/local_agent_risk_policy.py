@@ -39,6 +39,7 @@ ACTION_RISK: dict[str, str] = {
     "browser.execute_click": "medium",
     "browser.execute_type": "medium",
     "browser.open_url_controlled": "medium",
+    "browser.open_click_close_controlled": "medium",
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
