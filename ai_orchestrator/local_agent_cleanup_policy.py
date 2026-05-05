@@ -28,11 +28,13 @@ class CleanupPolicy:
     candidate_task_ids: list[str] | None = None
 
 
-def is_smoke_test_agent(host: str, label: str = "") -> bool:
+def is_smoke_test_agent(host: str, label: str = "", smoke_test: bool = False) -> bool:
     """smoke-test 패턴 확인.
 
-    host 또는 label이 'smoke-test-'로 시작하면 smoke-test agent로 판정.
+    host 또는 label이 'smoke-test-'로 시작하거나, smoke_test=true이면 smoke-test agent로 판정.
     """
+    if smoke_test:
+        return True
     host_is_smoke = host and host.lower().startswith("smoke-test-")
     label_is_smoke = label and label.lower().startswith("smoke-test-")
     return bool(host_is_smoke or label_is_smoke)
@@ -69,6 +71,7 @@ def validate_cleanup_request(
     dry_run: bool,
     force: bool,
     confirm: Optional[str],
+    smoke_test: bool = False,
 ) -> CleanupPolicy:
     """cleanup 요청 검증.
 
@@ -83,7 +86,7 @@ def validate_cleanup_request(
     5. dry_run=false: force=true + confirm 정확 일치 필수
     """
     # Rule 1: smoke-test 확인
-    if not is_smoke_test_agent(host, label):
+    if not is_smoke_test_agent(host, label, smoke_test):
         return CleanupPolicy(
             eligible=False,
             reason="non_smoke_agent",

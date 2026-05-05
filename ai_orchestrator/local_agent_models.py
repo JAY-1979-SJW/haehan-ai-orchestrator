@@ -23,6 +23,7 @@ class LocalAgent:
     registered_at: str
     requested_by: str    # 등록을 요청한 actor
     token_hash: str      # SHA-256(device_token) — 원문은 저장 금지
+    smoke_test: bool = False  # smoke test marker for cleanup eligibility
     # Stage 11-6B: 연결 상태 타임스탬프 (저장 필드, agent_status는 계산값)
     connected_at: str = ""
     last_seen_at: str = ""
@@ -44,6 +45,7 @@ class LocalAgent:
             "registered_at": self.registered_at,
             "requested_by": self.requested_by,
             "agent_status": get_agent_status(self.agent_id),
+            "smoke_test": self.smoke_test,
             "connected_at": self.connected_at,
             "last_seen_at": self.last_seen_at,
             "disconnected_at": self.disconnected_at,

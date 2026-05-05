@@ -210,10 +210,12 @@ def get_agent_status(agent_id: str, now: Optional[str] = None) -> str:
 
 def register_agent(
     *, host: str, os_name: str, version: str, requested_by: str,
+    smoke_test: bool = False,
 ) -> RegisterResult:
     """새 에이전트 등록. agent_id + device_token 발급, 서버는 토큰 해시만 저장.
 
     device_token 원문은 호출자(라우터) 가 응답에 1회만 노출하고 폐기한다.
+    smoke_test: smoke test marker for cleanup eligibility.
     """
     host = (host or "").strip() or "unknown-host"
     os_name = (os_name or "").strip() or "unknown-os"
@@ -231,6 +233,7 @@ def register_agent(
         registered_at=_now_iso(),
         requested_by=requested_by,
         token_hash=token_hash,
+        smoke_test=smoke_test,
     )
     with _lock:
         _agents[agent_id] = agent
@@ -1035,6 +1038,7 @@ def get_agent_cleanup_preview(agent_id: str) -> dict:
             dry_run=True,
             force=False,
             confirm=None,
+            smoke_test=agent.smoke_test,
         )
 
         return {
@@ -1104,6 +1108,7 @@ def cleanup_agent_and_tasks(
             dry_run=dry_run,
             force=force,
             confirm=confirm,
+            smoke_test=agent.smoke_test,
         )
 
         # dry_run이거나 ineligible이면 preview 반환

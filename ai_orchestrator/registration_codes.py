@@ -46,6 +46,7 @@ def issue_code(
     note: str = "",
     issued_by: str,
     issuer_role: str = "",
+    smoke_test: bool = False,
 ) -> IssueResult:
     """새 등록코드 발급."""
     store = get_registration_code_store()
@@ -56,6 +57,7 @@ def issue_code(
         note=note,
         issued_by=issued_by,
         issuer_role=issuer_role,
+        smoke_test=smoke_test,
     )
 
 
