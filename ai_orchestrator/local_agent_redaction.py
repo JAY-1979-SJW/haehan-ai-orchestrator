@@ -58,6 +58,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "click_target",
     # browser.open_url_controlled result metadata
     "execution_mode", "approval_required", "browser",
+    # browser.open_click_close_controlled result metadata
+    "clicked_target", "url_info", "navigation", "cleanup",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
@@ -110,7 +112,7 @@ _INSPECTION_MODE_ALLOWED: frozenset[str] = frozenset({
 
 # browser.open_url_controlled browser 내부 허용 key
 _BROWSER_ALLOWED_KEYS: frozenset[str] = frozenset({
-    "isolated_context", "used_existing_profile", "opened", "closed",
+    "isolated_context", "used_existing_profile", "opened", "closed", "clicked",
 })
 
 # browser.plan_click click_target 내부 허용 key
