@@ -16,6 +16,8 @@ Backend selection:
 from __future__ import annotations
 
 import hashlib
+import json
+import logging
 import os
 import secrets
 import threading
@@ -24,6 +26,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -352,13 +356,218 @@ class _FakeDbTable:
             self._rows.clear()
 
 
+# ── PostgreSQL Executor ──────────────────────────────────────────────────────
+
+class _PostgresDbExecutor:
+    """PostgreSQL 연결 및 쿼리 실행 (실제 DB 연결용)."""
+
+    def __init__(self, connection_string: str):
+        """connection_string: postgresql://user:pass@host:port/dbname"""
+        try:
+            import psycopg2
+            import psycopg2.extras
+        except ImportError:
+            raise RuntimeError(
+                "psycopg2 not installed. Install via: pip install psycopg2-binary>=2.9.0"
+            )
+
+        self.conn_str = connection_string
+        self._lock = threading.Lock()
+        self._conn = None
+        self._psycopg2 = psycopg2
+        self._extras = psycopg2.extras
+
+    def _get_connection(self):
+        """Lazy connection 획득."""
+        if self._conn is None or self._conn.closed:
+            try:
+                self._conn = self._psycopg2.connect(self.conn_str)
+                self._conn.autocommit = False
+            except Exception as e:
+                logger.error(f"Failed to connect to PostgreSQL: {e}")
+                raise RuntimeError(f"Cannot connect to PostgreSQL: {e}") from e
+        return self._conn
+
+    def insert(self, rec: RegistrationCode) -> None:
+        """INSERT registration_codes."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO registration_codes
+                        (code_id, code_hash, code_salt, label, note, allowed_actions,
+                         expires_at, created_at, issued_by, issuer_role, metadata)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        rec.code_id,
+                        rec.code_hash,
+                        rec.code_salt,
+                        rec.label,
+                        rec.note,
+                        json.dumps(rec.allowed_actions),  # JSONB
+                        rec.expires_at,
+                        rec.created_at,
+                        rec.issued_by,
+                        rec.issuer_role,
+                        json.dumps({}),  # metadata
+                    ),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"INSERT failed: {e}")
+                raise ValueError(f"code_id already exists: {rec.code_id}") from e
+            finally:
+                cur.close()
+
+    def select_by_id(self, code_id: str) -> Optional[RegistrationCode]:
+        """SELECT * FROM registration_codes WHERE code_id = ?."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=self._extras.RealDictCursor)
+            try:
+                cur.execute(
+                    "SELECT * FROM registration_codes WHERE code_id = %s",
+                    (code_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    return None
+                return self._row_to_record(dict(row))
+            finally:
+                cur.close()
+
+    def select_all(self) -> list[RegistrationCode]:
+        """SELECT * FROM registration_codes."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor(cursor_factory=self._extras.RealDictCursor)
+            try:
+                cur.execute("SELECT * FROM registration_codes ORDER BY created_at DESC")
+                rows = cur.fetchall()
+                return [self._row_to_record(dict(row)) for row in rows]
+            finally:
+                cur.close()
+
+    def update_used_at(self, code_id: str, used_at: str) -> None:
+        """UPDATE registration_codes SET used_at = ? WHERE code_id = ?."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "UPDATE registration_codes SET used_at = %s WHERE code_id = %s",
+                    (used_at, code_id),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"UPDATE used_at failed: {e}")
+            finally:
+                cur.close()
+
+    def update_revoked_at(self, code_id: str, revoked_at: str, revoked_by: str) -> None:
+        """UPDATE registration_codes SET revoked_at = ?, revoked_by = ? WHERE code_id = ?."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "UPDATE registration_codes SET revoked_at = %s, revoked_by = %s WHERE code_id = %s",
+                    (revoked_at, revoked_by, code_id),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"UPDATE revoked_at failed: {e}")
+            finally:
+                cur.close()
+
+    def update_used_by_agent_id(self, code_id: str, agent_id: str) -> None:
+        """UPDATE registration_codes SET used_by_agent_id = ? WHERE code_id = ?."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "UPDATE registration_codes SET used_by_agent_id = %s WHERE code_id = %s",
+                    (agent_id, code_id),
+                )
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"UPDATE used_by_agent_id failed: {e}")
+            finally:
+                cur.close()
+
+    def clear(self) -> None:
+        """테스트 전용: 모든 code 삭제 (운영 금지)."""
+        with self._lock:
+            conn = self._get_connection()
+            cur = conn.cursor()
+            try:
+                cur.execute("DELETE FROM registration_codes")
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"CLEAR failed: {e}")
+            finally:
+                cur.close()
+
+    def _row_to_record(self, row: dict) -> RegistrationCode:
+        """DB row를 RegistrationCode로 변환."""
+        allowed_actions = json.loads(row.get("allowed_actions", "[]"))
+        if isinstance(allowed_actions, str):
+            allowed_actions = json.loads(allowed_actions)
+        return RegistrationCode(
+            code_id=row["code_id"],
+            label=row.get("label", ""),
+            code_hash=row["code_hash"],
+            code_salt=row["code_salt"],
+            allowed_actions=list(allowed_actions) if allowed_actions else [],
+            expires_at=row["expires_at"],
+            created_at=row["created_at"],
+            issued_by=row.get("issued_by", ""),
+            issuer_role=row.get("issuer_role", ""),
+            note=row.get("note", ""),
+            used_at=row.get("used_at", ""),
+            used_by_agent_id=row.get("used_by_agent_id", ""),
+            revoked_at=row.get("revoked_at", ""),
+            revoked_by=row.get("revoked_by", ""),
+        )
+
+    def close(self) -> None:
+        """DB 연결 종료."""
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+
+
 class DbRegistrationCodeStore(RegistrationCodeStore):
-    """PostgreSQL-backed store (fake DB 기반, 운영 DB 접속 금지)."""
+    """PostgreSQL-backed store (fake DB 또는 실제 PostgreSQL)."""
 
     def __init__(self, db_connection_string: str):
-        """db_connection_string은 사용하지 않음 (테스트용 fake DB만 사용)."""
+        """db_connection_string: fake:// 또는 postgresql://user:pass@host/db"""
         self.db_conn_str = db_connection_string
-        self._db = _FakeDbTable()  # 테스트용 fake DB
+
+        if db_connection_string.startswith("fake://"):
+            # 테스트용 fake DB
+            self._db = _FakeDbTable()
+            self._is_fake = True
+        else:
+            # 실제 PostgreSQL
+            try:
+                self._db = _PostgresDbExecutor(db_connection_string)
+                self._is_fake = False
+            except RuntimeError as e:
+                logger.error(f"PostgreSQL init failed: {e}")
+                raise
 
     def issue(
         self,
