@@ -81,6 +81,7 @@ class RegistrationCode:
     created_at: str
     issued_by: str
     issuer_role: str
+    smoke_test: bool = False  # smoke test marker for cleanup eligibility
     note: str = ""
     used_at: str = ""
     used_by_agent_id: str = ""
@@ -157,6 +158,7 @@ class RegistrationCodeStore(ABC):
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
+        smoke_test: bool = False,
     ) -> IssueResult:
         """새 등록코드 발급."""
         pass
@@ -210,6 +212,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
+        smoke_test: bool = False,
     ) -> IssueResult:
         if expires_in_minutes is None or int(expires_in_minutes) < 1:
             raise InvalidTTLError("expires_in_minutes must be >= 1")
@@ -237,6 +240,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
             created_at=now.isoformat(),
             issued_by=(issued_by or "")[:80],
             issuer_role=(issuer_role or "")[:40],
+            smoke_test=smoke_test,
             note=note,
         )
         with self._lock:
@@ -598,6 +602,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
+        smoke_test: bool = False,
     ) -> IssueResult:
         """DB (fake)에 code_hash, code_salt, metadata 저장."""
         if expires_in_minutes is None or int(expires_in_minutes) < 1:
@@ -626,6 +631,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
             created_at=now.isoformat(),
             issued_by=(issued_by or "")[:80],
             issuer_role=(issuer_role or "")[:40],
+            smoke_test=smoke_test,
             note=note,
         )
 

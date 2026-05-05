@@ -75,6 +75,7 @@ class IssueRegistrationCodeRequest(BaseModel):
     expires_in_minutes: int = _regcodes.DEFAULT_TTL_MINUTES
     allowed_actions: list[str] = []
     note: str = ""
+    smoke_test: bool = False  # smoke test marker for cleanup eligibility
 
 
 class RegisterWithCodeRequest(BaseModel):
@@ -192,6 +193,7 @@ def issue_registration_code(
             note=body.note,
             issued_by=actor,
             issuer_role=role,
+            smoke_test=body.smoke_test,
         )
     except _regcodes.InvalidTTLError as e:
         raise HTTPException(status_code=400, detail={
@@ -273,6 +275,7 @@ def register_with_code(body: RegisterWithCodeRequest):
     result = _reg.register_agent(
         host=body.host, os_name=body.os_name, version=body.version,
         requested_by=f"registration_code:{rec.code_id}",
+        smoke_test=rec.smoke_test,
     )
     _regcodes.attach_used_agent(rec.code_id, result.agent.agent_id)
 
