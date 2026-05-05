@@ -114,8 +114,8 @@ def test_code_consumption_is_idempotent_failure():
 
 def test_expired_code_fails(monkeypatch):
     """Expired codes are rejected."""
-    from unittest.mock import MagicMock
     from datetime import datetime, timezone
+    from ai_orchestrator import registration_code_store as store_module
 
     # Issue code that expires in 1 minute
     code_result = regcodes.issue_code(
@@ -127,7 +127,7 @@ def test_expired_code_fails(monkeypatch):
 
     # Mock time to be 2 minutes in the future
     future = datetime.now(timezone.utc) + timedelta(minutes=2)
-    monkeypatch.setattr(regcodes, "_now", lambda: future)
+    monkeypatch.setattr(store_module, "_now", lambda: future)
 
     # Try to consume - should be expired
     try:

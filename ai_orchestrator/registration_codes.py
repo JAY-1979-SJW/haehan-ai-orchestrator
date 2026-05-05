@@ -32,6 +32,7 @@ from .registration_code_store import (
     INVALID_CODE_MESSAGE,
     get_registration_code_store,
     reset_store_for_tests,
+    _now,
 )
 
 # Public API 래퍼 (기존 호출처 호환성 유지)
@@ -110,4 +111,5 @@ __all__ = [
     "revoke_code",
     "attach_used_agent",
     "clear",
+    "_now",
 ]

@@ -41,7 +41,10 @@ CREATE TABLE IF NOT EXISTS registration_codes (
   used_at TIMESTAMPTZ NULL,
   revoked_at TIMESTAMPTZ NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_by TEXT NULL,
+  issued_by TEXT NULL,
+  issuer_role TEXT NULL,
+  used_by_agent_id TEXT NULL,
+  revoked_by TEXT NULL,
   last_error TEXT NULL,
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb
 );
@@ -54,7 +57,11 @@ COMMENT ON COLUMN registration_codes.allowed_actions IS 'JSON array of allowed a
 COMMENT ON COLUMN registration_codes.expires_at IS 'Code expiration timestamp';
 COMMENT ON COLUMN registration_codes.used_at IS 'When code was successfully consumed (NULL if unused)';
 COMMENT ON COLUMN registration_codes.revoked_at IS 'When code was revoked (NULL if not revoked)';
-COMMENT ON COLUMN registration_codes.created_by IS 'Admin user who issued this code';
+COMMENT ON COLUMN registration_codes.created_at IS 'When this code was created';
+COMMENT ON COLUMN registration_codes.issued_by IS 'Admin user who issued this code';
+COMMENT ON COLUMN registration_codes.issuer_role IS 'Role/privilege level of the issuer';
+COMMENT ON COLUMN registration_codes.used_by_agent_id IS 'Agent ID that consumed this code (NULL if unused)';
+COMMENT ON COLUMN registration_codes.revoked_by IS 'Admin user who revoked this code (NULL if not revoked)';
 COMMENT ON COLUMN registration_codes.last_error IS 'Last exchange error reason (audit only)';
 
 -- Indexes for common queries
