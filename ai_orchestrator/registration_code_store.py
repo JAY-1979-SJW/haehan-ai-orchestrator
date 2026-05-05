@@ -113,6 +113,7 @@ class RegistrationCode:
             "created_at": self.created_at,
             "issued_by": self.issued_by,
             "issuer_role": self.issuer_role,
+            "smoke_test": self.smoke_test,
             "note": self.note,
             "status": self.status(),
             "used_at": self.used_at,
