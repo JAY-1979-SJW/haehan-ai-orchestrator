@@ -359,7 +359,7 @@ class _FakeDbTable:
 # ── PostgreSQL Executor ──────────────────────────────────────────────────────
 
 class _PostgresDbExecutor:
-    """PostgreSQL 연결 및 쿼리 실행 (실제 DB 연결용)."""
+    """PostgreSQL 연결 및 쿼리 실행 (connection-per-operation)."""
 
     def __init__(self, connection_string: str):
         """connection_string: postgresql://user:pass@host:port/dbname"""
@@ -373,20 +373,21 @@ class _PostgresDbExecutor:
 
         self.conn_str = connection_string
         self._lock = threading.Lock()
-        self._conn = None
         self._psycopg2 = psycopg2
         self._extras = psycopg2.extras
 
     def _get_connection(self):
-        """Lazy connection 획득."""
-        if self._conn is None or self._conn.closed:
-            try:
-                self._conn = self._psycopg2.connect(self.conn_str)
-                self._conn.autocommit = False
-            except Exception as e:
-                logger.error(f"Failed to connect to PostgreSQL: {e}")
-                raise RuntimeError(f"Cannot connect to PostgreSQL: {e}") from e
-        return self._conn
+        """새 connection 생성 (connection-per-operation으로 stale connection 방지)."""
+        try:
+            conn = self._psycopg2.connect(self.conn_str)
+            conn.autocommit = False
+            return conn
+        except (self._psycopg2.OperationalError, self._psycopg2.InterfaceError) as e:
+            logger.error("PostgreSQL connection failed")
+            raise RuntimeError("Cannot connect to PostgreSQL") from e
+        except Exception as e:
+            logger.error("Unexpected error connecting to PostgreSQL")
+            raise RuntimeError("Unexpected error connecting to PostgreSQL") from e
 
     def insert(self, rec: RegistrationCode) -> None:
         """INSERT registration_codes."""
@@ -418,10 +419,11 @@ class _PostgresDbExecutor:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"INSERT failed: {e}")
+                logger.error("INSERT failed")
                 raise ValueError(f"code_id already exists: {rec.code_id}") from e
             finally:
                 cur.close()
+                conn.close()
 
     def select_by_id(self, code_id: str) -> Optional[RegistrationCode]:
         """SELECT * FROM registration_codes WHERE code_id = ?."""
@@ -439,6 +441,7 @@ class _PostgresDbExecutor:
                 return self._row_to_record(dict(row))
             finally:
                 cur.close()
+                conn.close()
 
     def select_all(self) -> list[RegistrationCode]:
         """SELECT * FROM registration_codes."""
@@ -451,6 +454,7 @@ class _PostgresDbExecutor:
                 return [self._row_to_record(dict(row)) for row in rows]
             finally:
                 cur.close()
+                conn.close()
 
     def update_used_at(self, code_id: str, used_at: str) -> None:
         """UPDATE registration_codes SET used_at = ? WHERE code_id = ?."""
@@ -465,9 +469,10 @@ class _PostgresDbExecutor:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"UPDATE used_at failed: {e}")
+                logger.error("UPDATE used_at failed")
             finally:
                 cur.close()
+                conn.close()
 
     def update_revoked_at(self, code_id: str, revoked_at: str, revoked_by: str) -> None:
         """UPDATE registration_codes SET revoked_at = ?, revoked_by = ? WHERE code_id = ?."""
@@ -482,9 +487,10 @@ class _PostgresDbExecutor:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"UPDATE revoked_at failed: {e}")
+                logger.error("UPDATE revoked_at failed")
             finally:
                 cur.close()
+                conn.close()
 
     def update_used_by_agent_id(self, code_id: str, agent_id: str) -> None:
         """UPDATE registration_codes SET used_by_agent_id = ? WHERE code_id = ?."""
@@ -499,9 +505,10 @@ class _PostgresDbExecutor:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"UPDATE used_by_agent_id failed: {e}")
+                logger.error("UPDATE used_by_agent_id failed")
             finally:
                 cur.close()
+                conn.close()
 
     def clear(self) -> None:
         """테스트 전용: 모든 code 삭제 (운영 금지)."""
@@ -513,9 +520,10 @@ class _PostgresDbExecutor:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"CLEAR failed: {e}")
+                logger.error("CLEAR failed")
             finally:
                 cur.close()
+                conn.close()
 
     def _row_to_record(self, row: dict) -> RegistrationCode:
         """DB row를 RegistrationCode로 변환."""
