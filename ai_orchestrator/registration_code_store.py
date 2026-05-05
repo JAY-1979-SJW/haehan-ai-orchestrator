@@ -519,9 +519,13 @@ class _PostgresDbExecutor:
 
     def _row_to_record(self, row: dict) -> RegistrationCode:
         """DB row를 RegistrationCode로 변환."""
-        allowed_actions = json.loads(row.get("allowed_actions", "[]"))
-        if isinstance(allowed_actions, str):
-            allowed_actions = json.loads(allowed_actions)
+        allowed_actions_raw = row.get("allowed_actions", "[]")
+        if isinstance(allowed_actions_raw, str):
+            allowed_actions = json.loads(allowed_actions_raw)
+        elif isinstance(allowed_actions_raw, list):
+            allowed_actions = allowed_actions_raw
+        else:
+            allowed_actions = []
         return RegistrationCode(
             code_id=row["code_id"],
             label=row.get("label", ""),
