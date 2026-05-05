@@ -219,6 +219,7 @@ def issue_registration_code(
         "allowed_actions": list(result.code.allowed_actions),
         "expires_at": result.code.expires_at,
         "created_at": result.code.created_at,
+        "smoke_test": result.code.smoke_test,
     }
 
 
