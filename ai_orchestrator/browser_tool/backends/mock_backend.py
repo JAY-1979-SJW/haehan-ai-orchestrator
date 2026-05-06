@@ -23,6 +23,8 @@ def handle_task(task: BrowserTask) -> BrowserResult:
 
     if action == "inspect":
         return _handle_inspect(params)
+    elif action == "plan_type":
+        return _handle_plan_type(params)
     else:
         # Unknown action
         return BrowserResult(
@@ -77,3 +79,63 @@ def _handle_inspect(params: dict[str, Any]) -> BrowserResult:
             error_code="ACTUAL_BROWSER_EXECUTION_NOT_ENABLED",
             backend="mock",
         )
+
+
+def _handle_plan_type(params: dict[str, Any]) -> BrowserResult:
+    """Handle browser.plan_type action (plan-only, no actual input)."""
+    # browser.plan_type은 항상 plan-only (typed=false, 실제 입력 없음)
+    field_id = params.get("field_id", "sample_text_field")
+    sample_value_id = params.get("sample_value_id", "sample_text_short")
+
+    # Sample value allowlist (고정값만)
+    sample_values = {
+        "sample_text_short": "sample input",
+        "sample_text_medium": "sample input with more content",
+        "sample_number": "1234",
+        "sample_date": "2026-05-06",
+    }
+
+    # Field role mapping (고정 enum)
+    field_roles = {
+        "sample_text_field": "text_input",
+        "sample_search_field": "search_input",
+    }
+
+    # Validate field_id
+    if field_id not in field_roles:
+        return BrowserResult(
+            success=False,
+            action="plan_type",
+            data={},
+            error=f"invalid field_id: {field_id}",
+            error_code="INVALID_FIELD_ID",
+            backend="mock",
+        )
+
+    # Validate sample_value_id
+    if sample_value_id not in sample_values:
+        return BrowserResult(
+            success=False,
+            action="plan_type",
+            data={},
+            error=f"invalid sample_value_id: {sample_value_id}",
+            error_code="INVALID_SAMPLE_VALUE_ID",
+            backend="mock",
+        )
+
+    # Mock successful plan_type response (plan-only)
+    return BrowserResult(
+        success=True,
+        action="plan_type",
+        data={
+            "action": "browser.plan_type",
+            "typed": False,
+            "field_id": field_id,
+            "field_role": field_roles[field_id],
+            "sample_value_id": sample_value_id,
+            "input_redacted": True,
+            "requires_approval": False,
+            "timestamp": _now_iso(),
+        },
+        backend="mock",
+    )
