@@ -169,11 +169,39 @@ def build_submit_audit_event(
     )
 
 
+def _is_sensitive_field_name(field_name: str) -> bool:
+    """Check if a field name is sensitive."""
+    return field_name in SENSITIVE_FIELD_NAMES or any(
+        sensitive in field_name
+        for sensitive in ["password", "token", "secret", "key", "cookie"]
+    )
+
+
+def _redact_list_item(item: object) -> object:
+    """Redact a list item, with name-based masking for form field dicts.
+
+    Handles {"name": "password", "value": "..."} style form field dicts
+    where the `name` attribute identifies a sensitive field.
+    """
+    if not isinstance(item, dict):
+        return item
+    name_val = item.get("name", "")
+    if isinstance(name_val, str) and _is_sensitive_field_name(name_val.lower()):
+        # name key identifies a sensitive field — mask the value
+        result = {k: v for k, v in item.items()}
+        if "value" in result:
+            result["value"] = {"masked": True}
+        return result
+    return redact_audit_payload(item)
+
+
 def redact_audit_payload(payload: dict) -> dict:
     """Remove/mask sensitive data from payload.
 
     Sensitive field names are masked as {"masked": true}.
     Safe hidden fields preserve their values.
+    List items with a "name" attribute matching a sensitive field have their
+    "value" masked.
 
     Args:
         payload: Original form data dict
@@ -186,15 +214,12 @@ def redact_audit_payload(payload: dict) -> dict:
     for key, value in payload.items():
         field_name = key.lower()
 
-        # Check if field name is sensitive
-        if field_name in SENSITIVE_FIELD_NAMES or any(
-            sensitive in field_name for sensitive in ["password", "token", "secret", "key", "cookie"]
-        ):
-            # Mask sensitive field
-            result[key] = {"masked": True}
-        elif field_name in SAFE_HIDDEN_FIELD_NAMES:
-            # Preserve safe hidden field value
+        # Safe hidden fields are checked first so that fields like csrf_token
+        # (which contain "token") are preserved rather than masked.
+        if field_name in SAFE_HIDDEN_FIELD_NAMES:
             result[key] = value
+        elif _is_sensitive_field_name(field_name):
+            result[key] = {"masked": True}
         else:
             # Safe field - check if value looks sensitive
             if isinstance(value, str):
@@ -209,11 +234,8 @@ def redact_audit_payload(payload: dict) -> dict:
                 # Recursively redact nested dict
                 result[key] = redact_audit_payload(value)
             elif isinstance(value, list):
-                # Recursively redact list items
-                result[key] = [
-                    redact_audit_payload(item) if isinstance(item, dict) else item
-                    for item in value
-                ]
+                # Redact list items with name-based masking support
+                result[key] = [_redact_list_item(item) for item in value]
             else:
                 result[key] = value
 
