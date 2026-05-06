@@ -1,0 +1,392 @@
+{
+  "fixture_id": "BROWSER_AUDIT_MODULE_DESIGN_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "description": "Audit module design fixture. Schema/metadata only. No real execution.",
+  "production_mode": false,
+  "safe_to_execute": false,
+  "dispatcher_connected": false,
+  "task_executor_connected": false,
+
+  "audit_event_stages": [
+    "REQUEST_RECEIVED",
+    "GATE_EVALUATED",
+    "APPROVAL_CHECKED",
+    "AUDIT_REQUIRED",
+    "AUDIT_READY",
+    "DISPATCH_BLOCKED",
+    "DISPATCH_ALLOWED_DRY_RUN"
+  ],
+
+  "operation_audit_requirements": {
+    "read":     {"audit_required": false, "approval_required": false},
+    "navigate": {"audit_required": false, "approval_required": false},
+    "open_url": {"audit_required": false, "approval_required": true},
+    "click":    {"audit_required": true,  "approval_required": true},
+    "type":     {"audit_required": true,  "approval_required": true},
+    "submit":   {"audit_required": true,  "approval_required": true}
+  },
+
+  "sensitive_field_block_patterns": [
+    "password", "secret", "token", "credential", "otp", "session", "cookie"
+  ],
+
+  "safe_to_execute_policy": {
+    "current_stage": "BROWSER_AUDIT_MODULE_DESIGN_1",
+    "safe_to_execute_allowed": false,
+    "reason": "dispatcher 미연결 상태. 이번 단계에서 safe_to_execute=true 허용 금지.",
+    "next_stage_for_true": "BROWSER_EXECUTOR_DISPATCHER_CONNECT_PREFLIGHT_1"
+  },
+
+  "cases": [
+    {
+      "case_id": "audit_ready_click_full_pass",
+      "description": "click action — 모든 감사 조건 통과 → AUDIT_READY, DISPATCH_ALLOWED_DRY_RUN",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "click_board_detail_btn",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_001",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "audit_pass": true,
+        "dispatch_blocked": false,
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_ready_type_full_pass",
+      "description": "type action — 모든 감사 조건 통과 → AUDIT_READY, DISPATCH_ALLOWED_DRY_RUN",
+      "input": {
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "gate_decision": "ALLOW",
+        "audit_context": "type_search_keyword",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_002",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "audit_pass": true,
+        "dispatch_blocked": false,
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_submit_deny_by_default",
+      "description": "submit action — gate_decision=DENY_BY_DEFAULT → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.open_type_close_controlled",
+        "operation_type": "submit",
+        "gate_decision": "DENY_BY_DEFAULT",
+        "audit_context": "submit_form_controlled",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_003",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "GATE_DECISION_NOT_ALLOW",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_audit_context_missing",
+      "description": "audit_required=true + audit_context 비어 있음 → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_004",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "AUDIT_CONTEXT_MISSING",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_sensitive_not_redacted",
+      "description": "sensitive_input_present=true + raw_input_redacted=false → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "gate_decision": "ALLOW",
+        "audit_context": "type_field",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_005",
+        "approval_status": "approved",
+        "sensitive_input_present": true,
+        "raw_input_redacted": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "SENSITIVE_INPUT_NOT_REDACTED",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_production_mode_true",
+      "description": "production_mode=true → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "click_prod_site",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_006",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": true,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "PRODUCTION_MODE_BLOCKED",
+        "production_mode": true
+      }
+    },
+    {
+      "case_id": "audit_block_tenant_scope_missing",
+      "description": "tenant_scope 비어 있음 → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "click_detail",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_007",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "TENANT_SCOPE_MISSING",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_approval_not_approved",
+      "description": "approval_required=true + approval_status != approved → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "click_action",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_008",
+        "approval_status": "pending",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "APPROVAL_NOT_APPROVED",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_read_no_audit_required",
+      "description": "operation_type=read — audit 불필요, 감사 event 없이 통과",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "gate_decision": "ALLOW",
+        "audit_context": "",
+        "audit_required": false,
+        "approval_required": false,
+        "approval_id": "",
+        "approval_status": "",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "audit_pass": true,
+        "dispatch_blocked": false,
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_block_gate_decision_block",
+      "description": "gate_decision=BLOCK → DISPATCH_BLOCKED",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "BLOCK",
+        "audit_context": "click_action",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_010",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_BLOCKED",
+        "audit_pass": false,
+        "dispatch_blocked": true,
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "block_reason": "GATE_DECISION_NOT_ALLOW",
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_sensitive_redacted_pass",
+      "description": "sensitive_input_present=true + raw_input_redacted=true → 통과",
+      "input": {
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "gate_decision": "ALLOW",
+        "audit_context": "type_redacted_field",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_011",
+        "approval_status": "approved",
+        "sensitive_input_present": true,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "audit_pass": true,
+        "dispatch_blocked": false,
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false
+      }
+    },
+    {
+      "case_id": "audit_event_stages_complete",
+      "description": "click action full pass — 4단계 이상 event_stage 순서 검증",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "gate_decision": "ALLOW",
+        "audit_context": "click_list_item",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_012",
+        "approval_status": "approved",
+        "sensitive_input_present": false,
+        "raw_input_redacted": true,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "event_stages_order": [
+          "REQUEST_RECEIVED",
+          "GATE_EVALUATED",
+          "APPROVAL_CHECKED",
+          "AUDIT_READY",
+          "DISPATCH_ALLOWED_DRY_RUN"
+        ],
+        "audit_pass": true,
+        "dispatch_blocked": false,
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false
+      }
+    }
+  ]
+}
