@@ -115,35 +115,43 @@ describe("SubmitApprovalPanel", () => {
       expect(screen.getByTestId("cancelled-message")).toBeInTheDocument();
     });
 
-    it("should call onApprove callback when approved", () => {
-      const onApprove = jest.fn();
+    it("should call onApprovalDecision callback when approved", () => {
+      const onApprovalDecision = jest.fn();
       render(
         <SubmitApprovalPanel
           preview={mockSubmitApprovalPreview}
-          onApprove={onApprove}
+          onApprovalDecision={onApprovalDecision}
         />
       );
 
       fireEvent.click(screen.getByTestId("approve-button"));
 
-      expect(onApprove).toHaveBeenCalledWith(
-        mockSubmitApprovalPreview.validation_id
+      expect(onApprovalDecision).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approval_status: "approved",
+          validation_id: mockSubmitApprovalPreview.validation_id,
+          preview_hash: mockSubmitApprovalPreview.preview_hash,
+        })
       );
     });
 
-    it("should call onCancel callback when cancelled", () => {
-      const onCancel = jest.fn();
+    it("should call onApprovalDecision callback when cancelled", () => {
+      const onApprovalDecision = jest.fn();
       render(
         <SubmitApprovalPanel
           preview={mockSubmitApprovalPreview}
-          onCancel={onCancel}
+          onApprovalDecision={onApprovalDecision}
         />
       );
 
       fireEvent.click(screen.getByTestId("cancel-button"));
 
-      expect(onCancel).toHaveBeenCalledWith(
-        mockSubmitApprovalPreview.validation_id
+      expect(onApprovalDecision).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approval_status: "cancelled",
+          validation_id: mockSubmitApprovalPreview.validation_id,
+          preview_hash: mockSubmitApprovalPreview.preview_hash,
+        })
       );
     });
   });
