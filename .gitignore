@@ -33,6 +33,8 @@ tests/fixtures/*
 !tests/fixtures/browser_action_risk_tier_policy_20260506.json
 # Exception: action registry risk mapping fixture (tracked for reproducibility)
 !tests/fixtures/browser_action_registry_risk_mapping_20260506.json
+# Exception: allowlist policy design fixture (tracked for reproducibility)
+!tests/fixtures/browser_allowlist_policy_20260506.json
 
 # IDE
 .vscode/
