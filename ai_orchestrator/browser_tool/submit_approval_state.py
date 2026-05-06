@@ -9,7 +9,7 @@ Manages approval decision history as append-only JSONL event log.
 """
 
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import json
 
@@ -63,7 +63,7 @@ def create_approval_requested_event(
         "form_id": form_id,
         "user_id": user_id,
         "tenant_id": tenant_id,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -104,7 +104,7 @@ def create_approval_decision_event(
         "preview_hash": preview_hash,
         "approval_status": approval_status,
         "decided_by": decided_by,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
