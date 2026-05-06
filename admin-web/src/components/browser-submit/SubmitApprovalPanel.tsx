@@ -5,33 +5,45 @@ import { SubmitApprovalPreviewFixture } from "./__fixtures__/submitApprovalPrevi
 import SubmitPreviewSummary from "./SubmitPreviewSummary";
 import SubmitPreviewDetails from "./SubmitPreviewDetails";
 import SubmitAuditRecordPanel from "./SubmitAuditRecordPanel";
+import {
+  createApprovalPayload,
+  ApprovalDecisionPayload,
+} from "./approvalStatePayload";
 
 type ApprovalState = "pending" | "approved" | "cancelled";
 
 interface SubmitApprovalPanelProps {
   preview: SubmitApprovalPreviewFixture;
-  onApprove?: (validationId: string) => void;
-  onCancel?: (validationId: string) => void;
+  onApprovalDecision?: (payload: ApprovalDecisionPayload) => void;
   showAuditRecord?: boolean;
 }
 
 export default function SubmitApprovalPanel({
   preview,
-  onApprove,
-  onCancel,
+  onApprovalDecision,
   showAuditRecord = false,
 }: SubmitApprovalPanelProps) {
   const [state, setState] = useState<ApprovalState>("pending");
   const [showDetails, setShowDetails] = useState(false);
 
   const handleApprove = () => {
+    const payload = createApprovalPayload(
+      preview.validation_id,
+      preview.preview_hash,
+      "approved",
+    );
     setState("approved");
-    onApprove?.(preview.validation_id);
+    onApprovalDecision?.(payload);
   };
 
   const handleCancel = () => {
+    const payload = createApprovalPayload(
+      preview.validation_id,
+      preview.preview_hash,
+      "cancelled",
+    );
     setState("cancelled");
-    onCancel?.(preview.validation_id);
+    onApprovalDecision?.(payload);
   };
 
   const getStatusBadgeStyles = () => {
