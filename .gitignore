@@ -24,9 +24,11 @@ build/
 .pytest_cache/
 .coverage
 htmlcov/
-tests/fixtures/
+tests/fixtures/*
 # Exception: policy design fixture (tracked for reproducibility)
 !tests/fixtures/browser_submit_policy_allowlist_20260506.json
+# Exception: HTML fixture for real browser controlled click smoke test
+!tests/fixtures/browser_controlled_submit_form_20260506.html
 
 # IDE
 .vscode/
