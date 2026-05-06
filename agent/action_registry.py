@@ -27,11 +27,14 @@ CATEGORY_LOCAL_BROWSER = "local_browser"
 CATEGORY_INVENTORY = "inventory"
 # 로컬 환경 관리: 프로그램 설치, 파일 정리 등
 CATEGORY_LOCAL_ENVIRONMENT = "local_environment"
+# server-side Playwright browser automation (read/navigate 계열)
+CATEGORY_BROWSER = "browser"
 
 KNOWN_CATEGORIES: frozenset[str] = frozenset({
     CATEGORY_SYSTEM, CATEGORY_WEB, CATEGORY_SECRET,
     CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_HANCOM, CATEGORY_CAD, CATEGORY_MCP,
     CATEGORY_LOCAL_BROWSER, CATEGORY_INVENTORY, CATEGORY_LOCAL_ENVIRONMENT,
+    CATEGORY_BROWSER,
 })
 
 RISK_LOW = "low"
@@ -633,6 +636,42 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_save_as=False,
         requires_approval=True,
     ),
+    # ── browser read/navigate 계열 (BROWSER_READ_NAVIGATE_ACTION_REGISTRY_1) ──
+    # dispatcher 미연결 상태. production submit 불가. allowlist 정책 TODO 참조.
+    # TODO: browser.plan_open_url allowlist_required 정책 별도 설계 필요
+    "browser.inspect": ActionMeta(
+        action="browser.inspect",
+        category=CATEGORY_BROWSER,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=True,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
+    "browser.plan_click": ActionMeta(
+        action="browser.plan_click",
+        category=CATEGORY_BROWSER,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=True,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
+    "browser.plan_open_url": ActionMeta(
+        action="browser.plan_open_url",
+        category=CATEGORY_BROWSER,
+        risk_level=RISK_LOW,
+        requires_secret=False,
+        requires_browser=True,
+        read_only=True,
+        requires_file_path=False,
+        requires_save_as=False,
+        requires_approval=False,
+    ),
 }
 
 
@@ -714,6 +753,7 @@ __all__ = [
     "CATEGORY_LOCAL_BROWSER",
     "CATEGORY_INVENTORY",
     "CATEGORY_LOCAL_ENVIRONMENT",
+    "CATEGORY_BROWSER",
     "KNOWN_CATEGORIES",
     "RISK_LOW",
     "RISK_MEDIUM",
