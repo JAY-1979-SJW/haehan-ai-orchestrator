@@ -56,6 +56,13 @@ _ACTION_POLICIES: dict[BrowserActionName, BrowserTaskPolicy] = {
         blocked=True,
         blocked_reason="actual_browser_execution_not_enabled",
     ),
+    "open_type_close_controlled": BrowserTaskPolicy(
+        action="open_type_close_controlled",
+        risk_level="medium",
+        requires_approval=True,
+        requires_dry_run=False,
+        blocked=False,
+    ),
 }
 
 

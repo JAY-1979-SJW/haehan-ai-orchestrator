@@ -58,7 +58,7 @@ def test_local_agent_to_safe_shape():
         "agent_id", "host", "os_name", "version", "registered_at",
         "requested_by", "agent_status", "connected_at", "last_seen_at",
         "disconnected_at", "active_task_count", "current_task_id",
-        "task_count", "completed_task_count", "failed_task_count",
+        "task_count", "completed_task_count", "failed_task_count", "smoke_test",
     }
     assert set(safe.keys()) == expected_keys
 

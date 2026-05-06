@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 
 BrowserBackendName = Literal["mock", "server_playwright", "local_agent", "hwp", "excel", "cad"]
-BrowserActionName = Literal["inspect", "plan_click", "plan_type", "plan_submit", "execute_click", "execute_type"]
+BrowserActionName = Literal["inspect", "plan_click", "plan_type", "plan_submit", "execute_click", "execute_type", "open_type_close_controlled"]
 BrowserRiskLevel = Literal["low", "medium", "high"]
 
 
