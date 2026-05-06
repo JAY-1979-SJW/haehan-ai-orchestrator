@@ -5,16 +5,19 @@ from pathlib import Path
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_risk_mapping_20260506.json"
 
-GATE_REQUIRED = {"browser.plan_submit", "browser.open_type_close_controlled"}
+GATE_REQUIRED = {
+    "browser.plan_submit",
+    "browser.execute_click",
+    "browser.execute_type",
+    "browser.open_click_close_controlled",
+    "browser.open_type_close_controlled",
+}
 GATE_NOT_REQUIRED = {
     "browser.inspect",
     "browser.plan_click",
     "browser.plan_type",
     "browser.plan_open_url",
-    "browser.execute_click",
-    "browser.execute_type",
     "browser.open_url_controlled",
-    "browser.open_click_close_controlled",
 }
 ALL_ACTIONS = GATE_REQUIRED | GATE_NOT_REQUIRED
 BLOCKED = {"browser.submit.production", "browser.submit.real"}
@@ -104,12 +107,18 @@ def test_browser_plan_open_url_low_navigate():
     assert a["requires_gate"] is False
 
 
-def test_browser_execute_click_low_navigate():
+def test_browser_execute_click_high_state_change():
+    """browser.execute_click: RECLASSIFICATION_1 이후 HIGH_STATE_CHANGE로 재분류."""
     data = load_fixture()
     a = _action(data, "browser.execute_click")
-    assert a["risk_tier"] == "LOW_NAVIGATE"
-    assert a["requires_gate"] is False
+    assert a["risk_tier"] == "HIGH_STATE_CHANGE"
+    assert a["requires_gate"] is True
     assert a["requires_approval"] is True
+    assert a["recommended_risk"] == "high"
+    assert a["side_effect"] is True
+    assert a["allowlist_required"] is True
+    assert a["dispatcher_connected"] is False
+    assert a["production_submit_possible"] is False
 
 
 # MEDIUM_TYPE
@@ -121,13 +130,19 @@ def test_browser_plan_type_medium_type():
     assert a["sensitive_field_block"] is True
 
 
-def test_browser_execute_type_medium_type():
+def test_browser_execute_type_high_state_change():
+    """browser.execute_type: RECLASSIFICATION_1 이후 HIGH_STATE_CHANGE로 재분류."""
     data = load_fixture()
     a = _action(data, "browser.execute_type")
-    assert a["risk_tier"] == "MEDIUM_TYPE"
-    assert a["requires_gate"] is False
+    assert a["risk_tier"] == "HIGH_STATE_CHANGE"
+    assert a["requires_gate"] is True
     assert a["sensitive_field_block"] is True
     assert a["requires_approval"] is True
+    assert a["recommended_risk"] == "high"
+    assert a["side_effect"] is True
+    assert a["allowlist_required"] is True
+    assert a["dispatcher_connected"] is False
+    assert a["production_submit_possible"] is False
 
 
 # HIGH_STATE_CHANGE
