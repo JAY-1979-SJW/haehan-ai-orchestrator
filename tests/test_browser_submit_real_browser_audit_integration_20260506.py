@@ -147,13 +147,10 @@ class TestRealBrowserAuditIntegration:
 
             # Step 6: Create controlled submit result
             submit_result = build_controlled_submit_result(
-                site_id=policy_request.site_id,
-                url="https://internal.mock/form",
-                form_id=policy_request.form_id,
                 preview_bundle=preview_bundle,
                 user_confirmed=True,
             )
-            assert submit_result.allowed is True
+            assert submit_result.submit_result == "success"
 
             # Step 7: Click submit button in real browser
             page.click('#submit_button_id')
@@ -217,7 +214,7 @@ class TestRealBrowserAuditIntegration:
             assert email_value in audit_json  # Email preserved
 
             # Step 13: Verify page URL unchanged (no external navigation)
-            assert page.url() == fixture_data_url
+            assert page.url == fixture_data_url
 
             context.close()
             browser.close()
