@@ -1,0 +1,234 @@
+{
+  "version": "1.0",
+  "description": "Execution Gate fixture for BROWSER_SUBMIT_EXECUTION_GATE_DESIGN_1",
+  "created_at": "2026-05-06T00:00:00Z",
+  "note": "Design-phase fixture only. production_submit_enabled is always false.",
+
+  "gate_pass_case": {
+    "description": "GATE_PASS: 모든 조건 충족 + production_submit_enabled=true (미래 테스트용)",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_001",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_PASS",
+      "block_reasons": [],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_production_disabled": {
+    "description": "GATE_BLOCK: production_submit_enabled=false (현재 기본값)",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_002",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": false,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["PRODUCTION_DISABLED"],
+      "production_submit_enabled": false
+    }
+  },
+
+  "gate_block_policy_not_allow": {
+    "description": "GATE_BLOCK: policy_verdict != ALLOW",
+    "input": {
+      "policy_verdict": "DENY",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_003",
+      "risk_level": "high",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["POLICY_NOT_ALLOW"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_preview_hash_missing": {
+    "description": "GATE_BLOCK: preview_hash 없음",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "",
+      "validation_id": "val_fixture_004",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["PREVIEW_HASH_MISSING"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_validation_id_missing": {
+    "description": "GATE_BLOCK: validation_id 없음",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["VALIDATION_ID_MISSING"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_approval_pending": {
+    "description": "GATE_BLOCK: approval_status=pending (미승인)",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_005",
+      "risk_level": "low",
+      "approval_status": "pending",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["APPROVAL_NOT_APPROVED"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_approval_cancelled": {
+    "description": "GATE_BLOCK: approval_status=cancelled (취소됨)",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_006",
+      "risk_level": "low",
+      "approval_status": "cancelled",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["APPROVAL_NOT_APPROVED"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_controlled_submit_not_success": {
+    "description": "GATE_BLOCK: controlled_submit_result=blocked",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_007",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "blocked",
+      "audit_logged": true,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["CONTROLLED_SUBMIT_NOT_SUCCESS"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_audit_not_logged": {
+    "description": "GATE_BLOCK: audit_logged=false",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "abc123preview",
+      "validation_id": "val_fixture_008",
+      "risk_level": "low",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": false,
+      "production_submit_enabled": true,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": ["AUDIT_NOT_LOGGED"],
+      "production_submit_enabled": true
+    }
+  },
+
+  "gate_block_multiple": {
+    "description": "GATE_BLOCK: 복합 차단 (policy DENY + approval pending + audit false + prod disabled)",
+    "input": {
+      "policy_verdict": "DENY",
+      "preview_hash": "",
+      "validation_id": "",
+      "risk_level": "high",
+      "approval_status": "pending",
+      "controlled_submit_result": "blocked",
+      "audit_logged": false,
+      "production_submit_enabled": false,
+      "submitted_by": "",
+      "site_id": "",
+      "form_id": ""
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_BLOCK",
+      "block_reasons": [
+        "PRODUCTION_DISABLED",
+        "POLICY_NOT_ALLOW",
+        "PREVIEW_HASH_MISSING",
+        "VALIDATION_ID_MISSING",
+        "APPROVAL_NOT_APPROVED",
+        "CONTROLLED_SUBMIT_NOT_SUCCESS",
+        "AUDIT_NOT_LOGGED"
+      ],
+      "production_submit_enabled": false
+    }
+  }
+}
