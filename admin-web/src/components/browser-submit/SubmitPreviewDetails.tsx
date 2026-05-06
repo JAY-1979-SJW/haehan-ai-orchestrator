@@ -7,71 +7,73 @@ interface SubmitPreviewDetailsProps {
   details: UserPreviewDetails;
 }
 
-/**
- * SubmitPreviewDetails
- *
- * Layer 2: Detailed policy information ("자세히 보기" section)
- * Shows technical details for informed decision:
- * - Form/button IDs
- * - Policy validation details
- * - Preview hash for traceability
- * - Validation reasons
- */
 export default function SubmitPreviewDetails({
   details,
 }: SubmitPreviewDetailsProps) {
   return (
     <div
-      className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
+      className="bg-white rounded-[12px] border border-slate-200 p-5 space-y-4"
       data-testid="submit-preview-details"
     >
-      <h3 className="font-semibold text-gray-900">자세한 정보</h3>
+      <h3 className="text-[15px] font-bold text-slate-900">자세한 정보</h3>
 
       {/* Site & Origin */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 py-[9px] border-b border-slate-100">
         <div>
-          <p className="text-xs font-medium text-gray-600 uppercase">Site ID</p>
-          <p className="text-sm text-gray-900" data-testid="detail-site-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Site ID
+          </p>
+          <p className="text-[13px] text-slate-900 font-medium mt-1" data-testid="detail-site-id">
             {details.site_id}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-gray-600 uppercase">Origin</p>
-          <p className="text-sm text-gray-900" data-testid="detail-origin">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Origin
+          </p>
+          <p className="text-[13px] text-slate-900 font-medium mt-1" data-testid="detail-origin">
             {details.origin}
           </p>
         </div>
       </div>
 
       {/* Form & Button IDs */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 py-[9px] border-b border-slate-100">
         <div>
-          <p className="text-xs font-medium text-gray-600 uppercase">Form ID</p>
-          <p className="text-sm text-gray-900" data-testid="detail-form-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Form ID
+          </p>
+          <p className="text-[13px] text-slate-900 font-medium mt-1" data-testid="detail-form-id">
             {details.form_id}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-gray-600 uppercase">Submit Button</p>
-          <p className="text-sm text-gray-900" data-testid="detail-submit-button">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Submit Button
+          </p>
+          <p className="text-[13px] text-slate-900 font-medium mt-1" data-testid="detail-submit-button">
             {details.submit_button_id}
           </p>
         </div>
       </div>
 
       {/* Intent */}
-      <div>
-        <p className="text-xs font-medium text-gray-600 uppercase">Intent</p>
-        <p className="text-sm text-gray-900" data-testid="detail-intent">
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          Intent
+        </p>
+        <p className="text-[13px] text-slate-900 font-medium mt-1" data-testid="detail-intent">
           {details.intent}
         </p>
       </div>
 
       {/* Policy Verdict */}
-      <div>
-        <p className="text-xs font-medium text-gray-600 uppercase">정책 판정</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          정책 판정
+        </p>
         <p
-          className={`text-sm font-semibold ${
+          className={`text-[13px] font-semibold mt-1 ${
             details.policy_verdict === "ALLOW"
               ? "text-green-700"
               : "text-red-700"
@@ -83,9 +85,11 @@ export default function SubmitPreviewDetails({
       </div>
 
       {/* Security Verdicts */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-600 uppercase">보안 검증</p>
-        <div className="space-y-1 text-sm">
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide mb-2">
+          보안 검증
+        </p>
+        <div className="space-y-1 text-[13px]">
           <p data-testid="detail-prompt-injection">
             프롬프트 인젝션:
             <span className="ml-2 text-green-700 font-medium">
@@ -108,11 +112,13 @@ export default function SubmitPreviewDetails({
       </div>
 
       {/* Validation Reasons */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-600 uppercase">검증 사유</p>
-        <ul className="space-y-1 text-sm">
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide mb-2">
+          검증 사유
+        </p>
+        <ul className="space-y-1 text-[13px]">
           {details.validator_reasons.map((reason, idx) => (
-            <li key={idx} className="text-gray-700 flex items-start gap-2">
+            <li key={idx} className="text-slate-700 flex items-start gap-2">
               <span className="text-green-600 mt-0.5">✓</span>
               <span>{reason}</span>
             </li>
@@ -121,10 +127,12 @@ export default function SubmitPreviewDetails({
       </div>
 
       {/* Preview Hash - for traceability */}
-      <div className="space-y-1 p-2 bg-white rounded border border-gray-300">
-        <p className="text-xs font-medium text-gray-600 uppercase">Preview Hash</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          Preview Hash
+        </p>
         <p
-          className="text-xs text-gray-900 font-mono break-all"
+          className="text-[11px] text-slate-900 font-mono break-all mt-1"
           data-testid="detail-preview-hash"
         >
           {details.preview_hash}
@@ -132,9 +140,11 @@ export default function SubmitPreviewDetails({
       </div>
 
       {/* Validation ID */}
-      <div>
-        <p className="text-xs font-medium text-gray-600 uppercase">Validation ID</p>
-        <p className="text-sm text-gray-900 font-mono" data-testid="detail-validation-id">
+      <div className="py-[9px]">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          Validation ID
+        </p>
+        <p className="text-[13px] text-slate-900 font-mono mt-1" data-testid="detail-validation-id">
           {details.validation_id}
         </p>
       </div>

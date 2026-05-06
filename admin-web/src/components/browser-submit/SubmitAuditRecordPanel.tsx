@@ -7,34 +7,29 @@ interface SubmitAuditRecordPanelProps {
   record: AuditPreviewRecord;
 }
 
-/**
- * SubmitAuditRecordPanel
- *
- * Layer 3: Admin/Auditor audit record
- * For compliance and audit trail purposes
- * Shows: event ID, redacted payload, timestamps, policy verdict
- * NEVER shows raw secrets/passwords/tokens
- */
 export default function SubmitAuditRecordPanel({
   record,
 }: SubmitAuditRecordPanelProps) {
   return (
     <div
-      className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-400"
+      className="bg-white rounded-[12px] border border-slate-200 p-5 space-y-4"
       data-testid="submit-audit-record-panel"
     >
-      <div className="flex items-center gap-2 pb-2 border-b border-slate-300">
-        <span className="text-sm font-semibold text-slate-900">감사 레코드</span>
-        <span className="text-xs bg-slate-200 text-slate-700 px-2 py-1 rounded">
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-3 border-b border-slate-200">
+        <span className="text-[13px] font-bold text-slate-900">감사 레코드</span>
+        <span className="text-[10px] bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-semibold">
           관리자용
         </span>
       </div>
 
       {/* Event ID */}
-      <div>
-        <p className="text-xs font-medium text-slate-600 uppercase">Event ID</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          Event ID
+        </p>
         <p
-          className="text-xs text-slate-900 font-mono break-all"
+          className="text-[11px] text-slate-900 font-mono break-all mt-1"
           data-testid="audit-event-id"
         >
           {record.event_id}
@@ -42,16 +37,20 @@ export default function SubmitAuditRecordPanel({
       </div>
 
       {/* Timestamps */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 py-[9px] border-b border-slate-100">
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">생성일시</p>
-          <p className="text-xs text-slate-900" data-testid="audit-created-at">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            생성일시
+          </p>
+          <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-created-at">
             {new Date(record.created_at).toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">Validation ID</p>
-          <p className="text-xs text-slate-900 font-mono" data-testid="audit-validation-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Validation ID
+          </p>
+          <p className="text-[11px] text-slate-900 font-mono mt-1" data-testid="audit-validation-id">
             {record.validation_id}
           </p>
         </div>
@@ -59,19 +58,23 @@ export default function SubmitAuditRecordPanel({
 
       {/* User & Tenant (if available) */}
       {(record.user_id || record.tenant_id) && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 py-[9px] border-b border-slate-100">
           {record.user_id && (
             <div>
-              <p className="text-xs font-medium text-slate-600 uppercase">User ID</p>
-              <p className="text-xs text-slate-900" data-testid="audit-user-id">
+              <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+                User ID
+              </p>
+              <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-user-id">
                 {record.user_id}
               </p>
             </div>
           )}
           {record.tenant_id && (
             <div>
-              <p className="text-xs font-medium text-slate-600 uppercase">Tenant ID</p>
-              <p className="text-xs text-slate-900" data-testid="audit-tenant-id">
+              <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+                Tenant ID
+              </p>
+              <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-tenant-id">
                 {record.tenant_id}
               </p>
             </div>
@@ -80,33 +83,41 @@ export default function SubmitAuditRecordPanel({
       )}
 
       {/* Site & Form Details */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 py-[9px] border-b border-slate-100">
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">Site</p>
-          <p className="text-xs text-slate-900" data-testid="audit-site-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Site
+          </p>
+          <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-site-id">
             {record.site_id}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">Form</p>
-          <p className="text-xs text-slate-900" data-testid="audit-form-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Form
+          </p>
+          <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-form-id">
             {record.form_id}
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">Button</p>
-          <p className="text-xs text-slate-900" data-testid="audit-submit-button-id">
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            Button
+          </p>
+          <p className="text-[12px] text-slate-900 mt-1" data-testid="audit-submit-button-id">
             {record.submit_button_id}
           </p>
         </div>
       </div>
 
       {/* Policy & User Confirmation */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 py-[9px] border-b border-slate-100">
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">정책</p>
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            정책
+          </p>
           <p
-            className={`text-xs font-semibold ${
+            className={`text-[12px] font-semibold mt-1 ${
               record.policy_verdict === "ALLOW"
                 ? "text-green-700"
                 : "text-red-700"
@@ -117,10 +128,12 @@ export default function SubmitAuditRecordPanel({
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">사용자 승인</p>
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            사용자 승인
+          </p>
           <p
-            className={`text-xs font-semibold ${
-              record.user_confirmed ? "text-green-700" : "text-gray-700"
+            className={`text-[12px] font-semibold mt-1 ${
+              record.user_confirmed ? "text-green-700" : "text-slate-600"
             }`}
             data-testid="audit-user-confirmed"
           >
@@ -128,10 +141,12 @@ export default function SubmitAuditRecordPanel({
           </p>
         </div>
         <div>
-          <p className="text-xs font-medium text-slate-600 uppercase">제출됨</p>
+          <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            제출됨
+          </p>
           <p
-            className={`text-xs font-semibold ${
-              record.submitted ? "text-green-700" : "text-gray-700"
+            className={`text-[12px] font-semibold mt-1 ${
+              record.submitted ? "text-green-700" : "text-slate-600"
             }`}
             data-testid="audit-submitted"
           >
@@ -141,10 +156,12 @@ export default function SubmitAuditRecordPanel({
       </div>
 
       {/* Submit Result */}
-      <div>
-        <p className="text-xs font-medium text-slate-600 uppercase">제출 결과</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          제출 결과
+        </p>
         <p
-          className={`text-xs font-semibold ${
+          className={`text-[12px] font-semibold mt-1 ${
             record.submit_result === "success"
               ? "text-green-700"
               : record.submit_result === "pending"
@@ -158,10 +175,12 @@ export default function SubmitAuditRecordPanel({
       </div>
 
       {/* Preview Hash */}
-      <div>
-        <p className="text-xs font-medium text-slate-600 uppercase">Preview Hash</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+          Preview Hash
+        </p>
         <p
-          className="text-xs text-slate-900 font-mono break-all"
+          className="text-[11px] text-slate-900 font-mono break-all mt-1"
           data-testid="audit-preview-hash"
         >
           {record.preview_hash}
@@ -169,10 +188,12 @@ export default function SubmitAuditRecordPanel({
       </div>
 
       {/* Redacted Payload Summary */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-slate-600 uppercase">제출 데이터 (Redacted)</p>
+      <div className="py-[9px] border-b border-slate-100">
+        <p className="text-[11px] font-medium text-slate-600 uppercase tracking-wide mb-2">
+          제출 데이터 (Redacted)
+        </p>
         <div
-          className="p-2 bg-white rounded border border-slate-300 text-xs space-y-1"
+          className="p-3 bg-slate-50 rounded-[8px] border border-slate-200 text-[12px] space-y-1"
           data-testid="audit-redacted-payload"
         >
           {Object.entries(record.redacted_payload).map(([key, value]) => (
@@ -190,7 +211,7 @@ export default function SubmitAuditRecordPanel({
 
       {/* Redaction Warning */}
       <div
-        className="p-2 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900"
+        className="p-3 bg-amber-50 border border-amber-200 rounded-[8px] text-[12px] text-amber-900"
         data-testid="redaction-notice"
       >
         <strong>ℹ️ Redaction 주의:</strong> 민감한 정보(비밀번호, 토큰, API 키, 세션)는
