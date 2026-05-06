@@ -25,6 +25,8 @@ build/
 .coverage
 htmlcov/
 tests/fixtures/
+# Exception: policy design fixture (tracked for reproducibility)
+!tests/fixtures/browser_submit_policy_allowlist_20260506.json
 
 # IDE
 .vscode/
