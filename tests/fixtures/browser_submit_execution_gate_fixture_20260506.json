@@ -1,11 +1,11 @@
 {
-  "version": "1.0",
-  "description": "Execution Gate fixture for BROWSER_SUBMIT_EXECUTION_GATE_DESIGN_1",
+  "version": "1.1",
+  "description": "Execution Gate fixture for BROWSER_SUBMIT_EXECUTION_GATE_DESIGN_1 (정정: ALIGNMENT_1)",
   "created_at": "2026-05-06T00:00:00Z",
-  "note": "Design-phase fixture only. production_submit_enabled is always false.",
+  "note": "production_submit_enabled=false는 production submit만 차단. controlled submit은 독립 판정.",
 
   "gate_pass_case": {
-    "description": "GATE_PASS: 모든 조건 충족 + production_submit_enabled=true (미래 테스트용)",
+    "description": "GATE_PASS: 핵심 6개 조건 + production_submit_enabled=true",
     "input": {
       "policy_verdict": "ALLOW",
       "preview_hash": "abc123preview",
@@ -21,13 +21,15 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_PASS",
+      "controlled_submit_allowed": true,
+      "production_submit_allowed": true,
       "block_reasons": [],
       "production_submit_enabled": true
     }
   },
 
-  "gate_block_production_disabled": {
-    "description": "GATE_BLOCK: production_submit_enabled=false (현재 기본값)",
+  "gate_allow_controlled_case": {
+    "description": "GATE_ALLOW_CONTROLLED: 핵심 6개 조건 통과 + production_submit_enabled=false (현재 기본값)",
     "input": {
       "policy_verdict": "ALLOW",
       "preview_hash": "abc123preview",
@@ -42,14 +44,40 @@
       "form_id": "contact_form"
     },
     "expected_output": {
-      "gate_verdict": "GATE_BLOCK",
-      "block_reasons": ["PRODUCTION_DISABLED"],
+      "gate_verdict": "GATE_ALLOW_CONTROLLED",
+      "controlled_submit_allowed": true,
+      "production_submit_allowed": false,
+      "block_reasons": [],
+      "production_submit_enabled": false
+    }
+  },
+
+  "gate_allow_controlled_high_risk": {
+    "description": "GATE_ALLOW_CONTROLLED: risk_level=high도 핵심 조건만 통과하면 controlled 허용",
+    "input": {
+      "policy_verdict": "ALLOW",
+      "preview_hash": "highrisk_preview",
+      "validation_id": "val_fixture_002b",
+      "risk_level": "high",
+      "approval_status": "approved",
+      "controlled_submit_result": "success",
+      "audit_logged": true,
+      "production_submit_enabled": false,
+      "submitted_by": "test_user",
+      "site_id": "allowed_internal_mock_form",
+      "form_id": "contact_form"
+    },
+    "expected_output": {
+      "gate_verdict": "GATE_ALLOW_CONTROLLED",
+      "controlled_submit_allowed": true,
+      "production_submit_allowed": false,
+      "block_reasons": [],
       "production_submit_enabled": false
     }
   },
 
   "gate_block_policy_not_allow": {
-    "description": "GATE_BLOCK: policy_verdict != ALLOW",
+    "description": "GATE_BLOCK: policy_verdict != ALLOW (controlled submit도 차단)",
     "input": {
       "policy_verdict": "DENY",
       "preview_hash": "abc123preview",
@@ -65,6 +93,8 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["POLICY_NOT_ALLOW"],
       "production_submit_enabled": true
     }
@@ -87,6 +117,8 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["PREVIEW_HASH_MISSING"],
       "production_submit_enabled": true
     }
@@ -109,13 +141,15 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["VALIDATION_ID_MISSING"],
       "production_submit_enabled": true
     }
   },
 
   "gate_block_approval_pending": {
-    "description": "GATE_BLOCK: approval_status=pending (미승인)",
+    "description": "GATE_BLOCK: approval_status=pending",
     "input": {
       "policy_verdict": "ALLOW",
       "preview_hash": "abc123preview",
@@ -131,13 +165,15 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["APPROVAL_NOT_APPROVED"],
       "production_submit_enabled": true
     }
   },
 
   "gate_block_approval_cancelled": {
-    "description": "GATE_BLOCK: approval_status=cancelled (취소됨)",
+    "description": "GATE_BLOCK: approval_status=cancelled",
     "input": {
       "policy_verdict": "ALLOW",
       "preview_hash": "abc123preview",
@@ -153,6 +189,8 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["APPROVAL_NOT_APPROVED"],
       "production_submit_enabled": true
     }
@@ -175,6 +213,8 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["CONTROLLED_SUBMIT_NOT_SUCCESS"],
       "production_submit_enabled": true
     }
@@ -197,13 +237,15 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": ["AUDIT_NOT_LOGGED"],
       "production_submit_enabled": true
     }
   },
 
   "gate_block_multiple": {
-    "description": "GATE_BLOCK: 복합 차단 (policy DENY + approval pending + audit false + prod disabled)",
+    "description": "GATE_BLOCK: 복합 차단 (핵심 6개 조건 모두 실패)",
     "input": {
       "policy_verdict": "DENY",
       "preview_hash": "",
@@ -219,8 +261,9 @@
     },
     "expected_output": {
       "gate_verdict": "GATE_BLOCK",
+      "controlled_submit_allowed": false,
+      "production_submit_allowed": false,
       "block_reasons": [
-        "PRODUCTION_DISABLED",
         "POLICY_NOT_ALLOW",
         "PREVIEW_HASH_MISSING",
         "VALIDATION_ID_MISSING",
