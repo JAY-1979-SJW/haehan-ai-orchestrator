@@ -1,0 +1,124 @@
+{
+  "policy_id": "BROWSER_ACTION_RISK_TIER_POLICY_1",
+  "version": "1.0",
+  "created_at": "2026-05-06",
+  "tiers": {
+    "LOW_READ": {
+      "actions": [
+        "page_open",
+        "read_text",
+        "extract_table",
+        "screenshot",
+        "inspect_dom",
+        "get_current_url",
+        "check_status"
+      ],
+      "requires_approval": false,
+      "gate_required": false,
+      "audit_required": false,
+      "audit_recommended": true,
+      "sensitive_field_block": false,
+      "production_submit_allowed": false
+    },
+    "LOW_NAVIGATE": {
+      "actions": [
+        "click_tab",
+        "click_detail",
+        "pagination",
+        "breadcrumb",
+        "open_link_same_origin"
+      ],
+      "requires_approval": false,
+      "gate_required": false,
+      "audit_required": false,
+      "audit_on_external_domain": true,
+      "sensitive_field_block": false,
+      "production_submit_allowed": false
+    },
+    "MEDIUM_TYPE": {
+      "actions": [
+        "type_text",
+        "fill_search_keyword",
+        "fill_filter",
+        "fill_date_range",
+        "select_option"
+      ],
+      "requires_approval": false,
+      "approval_required_for_business_form": true,
+      "gate_required": false,
+      "audit_required": false,
+      "audit_recommended": true,
+      "sensitive_field_block": true,
+      "blocked_field_patterns": [
+        "password",
+        "otp",
+        "cert",
+        "token",
+        "session",
+        "cookie"
+      ],
+      "submit_auto_link_forbidden": true,
+      "production_submit_allowed": false
+    },
+    "MEDIUM_DOWNLOAD": {
+      "actions": [
+        "download_file",
+        "save_attachment",
+        "export_csv",
+        "export_pdf"
+      ],
+      "requires_approval": false,
+      "gate_required": false,
+      "audit_required": true,
+      "path_allowlist_required": true,
+      "blocked_extensions": [".exe", ".bat", ".sh", ".ps1", ".cmd", ".msi"],
+      "production_submit_allowed": false
+    },
+    "HIGH_STATE_CHANGE": {
+      "actions": [
+        "save_form",
+        "form_commit",
+        "approve_request",
+        "mark_complete",
+        "delete_record",
+        "update_status"
+      ],
+      "requires_approval": true,
+      "gate_required": true,
+      "audit_required": true,
+      "preview_recommended": true,
+      "hash_verification_required": true,
+      "production_submit_allowed": false
+    },
+    "CRITICAL_SUBMIT": {
+      "actions": [
+        "submit_form",
+        "final_submit",
+        "confirm_action",
+        "execute_transaction",
+        "open_type_close_controlled"
+      ],
+      "requires_approval": true,
+      "gate_required": true,
+      "gate_module": "submit_execution_gate",
+      "audit_required": true,
+      "audit_module": "submit_audit_log",
+      "preview_required": true,
+      "preview_hash_required": true,
+      "user_confirmed_required": true,
+      "policy_verdict_required": "ALLOW",
+      "production_submit_allowed": false,
+      "controlled_internal_only": true
+    }
+  },
+  "existing_action_mapping": {
+    "inspect": "LOW_READ",
+    "plan_click": "LOW_NAVIGATE",
+    "plan_type": "MEDIUM_TYPE",
+    "plan_submit": "HIGH_STATE_CHANGE",
+    "execute_click": "LOW_NAVIGATE",
+    "execute_type": "MEDIUM_TYPE",
+    "open_type_close_controlled": "CRITICAL_SUBMIT"
+  },
+  "conflict_verdict": "PASS_BROWSER_ACTION_RISK_TIER_POLICY"
+}
