@@ -30,8 +30,7 @@ _ACTION_POLICIES: dict[BrowserActionName, BrowserTaskPolicy] = {
         risk_level="low",
         requires_approval=False,
         requires_dry_run=False,
-        blocked=True,
-        blocked_reason="not_implemented",
+        blocked=False,
     ),
     "plan_submit": BrowserTaskPolicy(
         action="plan_submit",

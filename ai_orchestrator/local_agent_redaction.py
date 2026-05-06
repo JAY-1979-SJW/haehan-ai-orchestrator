@@ -56,6 +56,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "inspection_mode",
     # browser.plan_click result metadata
     "click_target",
+    # browser.plan_type result metadata
+    "typed", "field_id", "field_role", "sample_value_id", "input_redacted", "timestamp",
     # browser.open_url_controlled result metadata
     "execution_mode", "approval_required", "browser",
     # browser.open_click_close_controlled result metadata
