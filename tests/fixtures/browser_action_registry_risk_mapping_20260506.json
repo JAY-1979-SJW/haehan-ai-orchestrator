@@ -1,0 +1,174 @@
+{
+  "mapping_id": "BROWSER_ACTION_REGISTRY_RISK_MAPPING_1",
+  "version": "1.0",
+  "created_at": "2026-05-06",
+  "base_head": "aae7bfe",
+  "actions": [
+    {
+      "action_name": "browser.inspect",
+      "current_risk": "low",
+      "risk_tier": "LOW_READ",
+      "read_only": true,
+      "requires_approval": false,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": true,
+      "production_allowed": false,
+      "next_dispatcher": "executor.ALLOWED_ACTIONS"
+    },
+    {
+      "action_name": "browser.plan_click",
+      "current_risk": "low",
+      "risk_tier": "LOW_NAVIGATE",
+      "read_only": true,
+      "requires_approval": false,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": false,
+      "production_allowed": false,
+      "next_dispatcher": "executor.ALLOWED_ACTIONS"
+    },
+    {
+      "action_name": "browser.plan_type",
+      "current_risk": "low",
+      "risk_tier": "MEDIUM_TYPE",
+      "read_only": true,
+      "requires_approval": false,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": true,
+      "sensitive_field_block": true,
+      "production_allowed": false,
+      "next_dispatcher": "executor.ALLOWED_ACTIONS"
+    },
+    {
+      "action_name": "browser.plan_open_url",
+      "current_risk": "low",
+      "risk_tier": "LOW_NAVIGATE",
+      "read_only": true,
+      "requires_approval": false,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": false,
+      "production_allowed": false,
+      "next_dispatcher": "executor.ALLOWED_ACTIONS"
+    },
+    {
+      "action_name": "browser.plan_submit",
+      "current_risk": "low",
+      "risk_tier": "HIGH_STATE_CHANGE",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": true,
+      "requires_preview": false,
+      "requires_audit": true,
+      "audit_recommended": true,
+      "production_allowed": false,
+      "risk_level_needs_review": true,
+      "recommended_risk": "high",
+      "next_dispatcher": "medium_high_dispatcher"
+    },
+    {
+      "action_name": "browser.execute_click",
+      "current_risk": "medium",
+      "risk_tier": "LOW_NAVIGATE",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": true,
+      "production_allowed": false,
+      "next_dispatcher": "medium_dispatcher"
+    },
+    {
+      "action_name": "browser.execute_type",
+      "current_risk": "medium",
+      "risk_tier": "MEDIUM_TYPE",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": true,
+      "sensitive_field_block": true,
+      "production_allowed": false,
+      "next_dispatcher": "medium_dispatcher"
+    },
+    {
+      "action_name": "browser.open_url_controlled",
+      "current_risk": "medium",
+      "risk_tier": "LOW_NAVIGATE",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": false,
+      "audit_recommended": true,
+      "production_allowed": false,
+      "next_dispatcher": "medium_dispatcher"
+    },
+    {
+      "action_name": "browser.open_click_close_controlled",
+      "current_risk": "medium",
+      "risk_tier": "LOW_NAVIGATE",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": false,
+      "requires_preview": false,
+      "requires_audit": true,
+      "production_allowed": false,
+      "next_dispatcher": "medium_dispatcher"
+    },
+    {
+      "action_name": "browser.open_type_close_controlled",
+      "current_risk": "medium",
+      "risk_tier": "CRITICAL_SUBMIT",
+      "read_only": false,
+      "requires_approval": true,
+      "requires_gate": true,
+      "requires_preview": true,
+      "requires_preview_hash": true,
+      "requires_audit": true,
+      "requires_user_confirmed": true,
+      "production_allowed": false,
+      "risk_level_needs_review": true,
+      "recommended_risk": "high",
+      "gate_module": "submit_execution_gate",
+      "audit_module": "submit_audit_log",
+      "controlled_internal_only": true,
+      "next_dispatcher": "critical_submit_dispatcher"
+    }
+  ],
+  "blocked_actions": [
+    {
+      "action_name": "browser.submit.production",
+      "reason": "production submit 금지"
+    },
+    {
+      "action_name": "browser.submit.real",
+      "reason": "production submit 금지"
+    }
+  ],
+  "gate_required_actions": [
+    "browser.plan_submit",
+    "browser.open_type_close_controlled"
+  ],
+  "gate_not_required_actions": [
+    "browser.inspect",
+    "browser.plan_click",
+    "browser.plan_type",
+    "browser.plan_open_url",
+    "browser.execute_click",
+    "browser.execute_type",
+    "browser.open_url_controlled",
+    "browser.open_click_close_controlled"
+  ],
+  "production_submit_allowed": false,
+  "registry_modified": false,
+  "task_executor_modified": false
+}
