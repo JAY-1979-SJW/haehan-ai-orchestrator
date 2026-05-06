@@ -25,6 +25,8 @@ def handle_task(task: BrowserTask) -> BrowserResult:
         return _handle_inspect(params)
     elif action == "plan_type":
         return _handle_plan_type(params)
+    elif action == "open_type_close_controlled":
+        return _handle_open_type_close_controlled(params)
     else:
         # Unknown action
         return BrowserResult(
@@ -135,6 +137,82 @@ def _handle_plan_type(params: dict[str, Any]) -> BrowserResult:
             "sample_value_id": sample_value_id,
             "input_redacted": True,
             "requires_approval": False,
+            "timestamp": _now_iso(),
+        },
+        backend="mock",
+    )
+
+
+def _handle_open_type_close_controlled(params: dict[str, Any]) -> BrowserResult:
+    """Handle browser.open_type_close_controlled action (controlled type input with approval)."""
+    # Sample value allowlist (고정값만)
+    sample_values = {
+        "sample_text_short": "sample input",
+        "sample_text_medium": "sample input with more content",
+        "sample_number": "1234",
+        "sample_date": "2026-05-06",
+    }
+
+    # Field role mapping (고정 enum)
+    field_roles = {
+        "sample_text_field": "text_input",
+        "sample_search_field": "search_input",
+    }
+
+    field_id = params.get("field_id")
+    sample_value_id = params.get("sample_value_id")
+    url = params.get("url")
+
+    # Validate field_id
+    if field_id is None or field_id not in field_roles:
+        return BrowserResult(
+            success=False,
+            action="open_type_close_controlled",
+            data={},
+            error=f"invalid or missing field_id: {field_id}",
+            error_code="INVALID_FIELD_ID",
+            backend="mock",
+        )
+
+    # Validate sample_value_id
+    if sample_value_id is None or sample_value_id not in sample_values:
+        return BrowserResult(
+            success=False,
+            action="open_type_close_controlled",
+            data={},
+            error=f"invalid or missing sample_value_id: {sample_value_id}",
+            error_code="INVALID_SAMPLE_VALUE_ID",
+            backend="mock",
+        )
+
+    # Validate URL (must be present and sample-like)
+    if url is None or not isinstance(url, str):
+        return BrowserResult(
+            success=False,
+            action="open_type_close_controlled",
+            data={},
+            error="url is required",
+            error_code="MISSING_URL",
+            backend="mock",
+        )
+
+    # Mock successful open_type_close_controlled response
+    return BrowserResult(
+        success=True,
+        action="open_type_close_controlled",
+        data={
+            "action": "browser.open_type_close_controlled",
+            "typed": True,
+            "field_id": field_id,
+            "field_role": field_roles[field_id],
+            "sample_value_id": sample_value_id,
+            "executed": True,
+            "requires_approval": True,
+            "lifecycle": {
+                "opened": True,
+                "typed": True,
+                "closed": True,
+            },
             "timestamp": _now_iso(),
         },
         backend="mock",

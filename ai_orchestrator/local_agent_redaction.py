@@ -62,6 +62,8 @@ _RESULT_DATA_ALLOWED_KEYS: frozenset[str] = frozenset({
     "execution_mode", "approval_required", "browser",
     # browser.open_click_close_controlled result metadata
     "clicked_target", "url_info", "navigation", "cleanup",
+    # browser.open_type_close_controlled result metadata
+    "typed", "field_id", "field_role", "sample_value_id", "executed", "requires_approval", "lifecycle",
 })
 
 # safe_desktop_capability capabilities 내부 허용 key (nested boolean allowlist)
@@ -145,6 +147,11 @@ _NAVIGATION_ALLOWED_KEYS: frozenset[str] = frozenset({
 # browser.open_click_close_controlled cleanup 내부 허용 key
 _CLEANUP_ALLOWED_KEYS: frozenset[str] = frozenset({
     "context_closed", "browser_closed", "temp_files_deleted",
+})
+
+# browser.open_type_close_controlled lifecycle 내부 허용 key
+_LIFECYCLE_ALLOWED_KEYS: frozenset[str] = frozenset({
+    "opened", "typed", "closed",
 })
 
 # browser.open_click_close_controlled clicked_target 내부 허용 key
@@ -391,6 +398,26 @@ def _strip_cleanup(value: object) -> "dict | None":
     return out if out else None
 
 
+def _strip_lifecycle(value: object) -> "dict | None":
+    """browser.open_type_close_controlled lifecycle nested allowlist.
+
+    - dict가 아니면 None 반환
+    - 허용 key(opened/typed/closed)만 유지
+    - 모든 value는 bool만 저장
+    - 빈 dict면 None 반환
+    """
+    if not isinstance(value, dict):
+        return None
+    out: dict = {}
+    for k, v in value.items():
+        k_low = k.lower()
+        if k_low not in _LIFECYCLE_ALLOWED_KEYS:
+            continue
+        if isinstance(v, bool):
+            out[k] = v
+    return out if out else None
+
+
 def _strip_result_data(data: object) -> "dict | None":
     """agent result data를 안전 필터 후 반환.
 
@@ -475,6 +502,12 @@ def _strip_result_data(data: object) -> "dict | None":
             cleanup = _strip_cleanup(v)
             if cleanup is not None:
                 out[k] = cleanup
+            continue
+        # lifecycle 특별 처리: nested allowlist
+        if k_low == "lifecycle":
+            lifecycle = _strip_lifecycle(v)
+            if lifecycle is not None:
+                out[k] = lifecycle
             continue
         # url 계열 값 sanitize
         if k_low in ("normalized_url",) and isinstance(v, str):
