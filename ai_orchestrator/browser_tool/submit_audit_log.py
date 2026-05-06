@@ -1,0 +1,396 @@
+"""Browser Submit Audit Log Persistence Module.
+
+Append-only JSONL audit log for submit policy, preview, and result tracking.
+No DB write, no production paths, test-only file operations.
+Redacts sensitive data before storage.
+"""
+from __future__ import annotations
+
+import json
+import uuid
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional, Any
+
+
+# Sensitive field names that must be redacted
+SENSITIVE_FIELD_NAMES = {
+    "password", "passwd", "pwd",
+    "token", "access_token", "refresh_token", "api_key", "apikey", "api-key",
+    "secret", "secrets",
+    "credential", "credentials",
+    "session", "sessionid", "session_id",
+    "cookie", "cookies",
+    "private_key", "private-key", "pkey",
+    "auth", "authorization",
+    "bearer",
+    "jwt",
+    "signature",
+    "otp", "totp", "mfa", "2fa",
+    "card", "cc_number", "cvv", "cvc",
+    "ssn", "social_security",
+    "license_key", "license-key",
+    "encryption_key", "enc_key",
+}
+
+# Safe hidden fields that can preserve values (non-sensitive)
+SAFE_HIDDEN_FIELD_NAMES = {
+    "csrf_token", "csrf-token",
+    "timestamp",
+    "form_version", "form-version",
+    "nonce",
+    "request_id", "request-id",
+}
+
+
+@dataclass
+class SubmitAuditEvent:
+    """Audit event for submit lifecycle."""
+
+    # Required: Schema & IDs
+    schema_version: str
+    event_id: str
+    created_at: str  # ISO8601
+    validation_id: str
+
+    # Required: Request Context
+    action_id: str
+    site_id: str
+    form_id: str
+    submit_button_id: str
+    intent: str
+
+    # Required: Policy & Preview
+    preview_hash: str
+    policy_verdict: str
+    risk_level: str
+
+    # Required: User & Submit Status
+    user_confirmed: bool
+    submitted: bool
+    submit_result: str  # "success" / "blocked" / "error" / "pending"
+
+    # Required: Payload & Summary
+    redacted_payload: dict
+    result_summary: str
+
+    # Optional: Approval & Error
+    approved_by: Optional[str] = None
+    approved_at: Optional[str] = None
+    submit_timestamp: Optional[str] = None
+    error_reason: Optional[str] = None
+
+    # Optional: Metadata
+    metadata: dict = field(default_factory=dict)
+
+
+@dataclass
+class SubmitAuditWriteResult:
+    """Result of audit event write operation."""
+
+    success: bool
+    path: str
+    event_count: int
+    error_message: Optional[str] = None
+
+
+def build_submit_audit_event(
+    validation_id: str,
+    action_id: str,
+    site_id: str,
+    form_id: str,
+    submit_button_id: str,
+    intent: str,
+    policy_verdict: str,
+    risk_level: str,
+    preview_hash: str,
+    user_confirmed: bool,
+    submitted: bool,
+    submit_result: str,
+    redacted_payload: dict,
+    result_summary: str,
+    approved_by: Optional[str] = None,
+    submit_timestamp: Optional[str] = None,
+    error_reason: Optional[str] = None,
+    metadata: Optional[dict] = None,
+) -> SubmitAuditEvent:
+    """Build audit event from components.
+
+    Args:
+        validation_id: Link to validation request
+        action_id: Action identifier (e.g., browser.submit.policy_check)
+        site_id: Internal site ID
+        form_id: Form identifier
+        submit_button_id: Button element ID
+        intent: User intent
+        policy_verdict: "ALLOW" or "DENY"
+        risk_level: "low", "medium", or "high"
+        preview_hash: SHA256 hash of preview (64 chars)
+        user_confirmed: User clicked OK
+        submitted: Was form actually submitted
+        submit_result: "success", "blocked", "error", or "pending"
+        redacted_payload: Form data with sensitive values masked
+        result_summary: Human-readable result
+        approved_by: User ID if confirmed (optional)
+        submit_timestamp: When submit happened (optional)
+        error_reason: Error message if failed (optional)
+        metadata: Additional context (optional)
+
+    Returns:
+        SubmitAuditEvent
+    """
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    event_id = f"evt_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+
+    return SubmitAuditEvent(
+        schema_version="1.0",
+        event_id=event_id,
+        created_at=now,
+        validation_id=validation_id,
+        action_id=action_id,
+        site_id=site_id,
+        form_id=form_id,
+        submit_button_id=submit_button_id,
+        intent=intent,
+        preview_hash=preview_hash,
+        policy_verdict=policy_verdict,
+        risk_level=risk_level,
+        user_confirmed=user_confirmed,
+        submitted=submitted,
+        submit_result=submit_result,
+        redacted_payload=redacted_payload,
+        result_summary=result_summary,
+        approved_by=approved_by,
+        approved_at=now if approved_by else None,
+        submit_timestamp=submit_timestamp,
+        error_reason=error_reason,
+        metadata=metadata or {},
+    )
+
+
+def redact_audit_payload(payload: dict) -> dict:
+    """Remove/mask sensitive data from payload.
+
+    Sensitive field names are masked as {"masked": true}.
+    Safe hidden fields preserve their values.
+
+    Args:
+        payload: Original form data dict
+
+    Returns:
+        Redacted payload dict
+    """
+    result = {}
+
+    for key, value in payload.items():
+        field_name = key.lower()
+
+        # Check if field name is sensitive
+        if field_name in SENSITIVE_FIELD_NAMES or any(
+            sensitive in field_name for sensitive in ["password", "token", "secret", "key", "cookie"]
+        ):
+            # Mask sensitive field
+            result[key] = {"masked": True}
+        elif field_name in SAFE_HIDDEN_FIELD_NAMES:
+            # Preserve safe hidden field value
+            result[key] = value
+        else:
+            # Safe field - check if value looks sensitive
+            if isinstance(value, str):
+                if len(value) > 100 or any(
+                    pattern in value.lower() for pattern in ["-----BEGIN", "-----END", "0x", "0X"]
+                ):
+                    # Looks like a key/secret - mask it
+                    result[key] = {"masked": True}
+                else:
+                    result[key] = value
+            elif isinstance(value, dict):
+                # Recursively redact nested dict
+                result[key] = redact_audit_payload(value)
+            elif isinstance(value, list):
+                # Recursively redact list items
+                result[key] = [
+                    redact_audit_payload(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            else:
+                result[key] = value
+
+    return result
+
+
+def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
+    """Validate event has all required fields.
+
+    Args:
+        event: Audit event to validate
+
+    Returns:
+        List of error messages (empty list = valid)
+    """
+    errors = []
+
+    # Required fields
+    if not event.schema_version:
+        errors.append("schema_version is required")
+    if not event.event_id:
+        errors.append("event_id is required")
+    if not event.created_at:
+        errors.append("created_at is required")
+    if not event.validation_id:
+        errors.append("validation_id is required")
+    if not event.action_id:
+        errors.append("action_id is required")
+    if not event.site_id:
+        errors.append("site_id is required")
+    if not event.form_id:
+        errors.append("form_id is required")
+    if not event.submit_button_id:
+        errors.append("submit_button_id is required")
+    if not event.intent:
+        errors.append("intent is required")
+    if not event.preview_hash:
+        errors.append("preview_hash is required")
+    if event.preview_hash and len(event.preview_hash) != 64:
+        errors.append(f"preview_hash must be 64 chars (got {len(event.preview_hash)})")
+    if not event.policy_verdict:
+        errors.append("policy_verdict is required")
+    if event.policy_verdict not in ["ALLOW", "DENY"]:
+        errors.append(f"policy_verdict must be ALLOW or DENY (got {event.policy_verdict})")
+    if not event.risk_level:
+        errors.append("risk_level is required")
+    if event.risk_level not in ["low", "medium", "high"]:
+        errors.append(f"risk_level must be low/medium/high (got {event.risk_level})")
+    if event.user_confirmed is None:
+        errors.append("user_confirmed is required")
+    if event.submitted is None:
+        errors.append("submitted is required")
+    if not event.submit_result:
+        errors.append("submit_result is required")
+    if event.submit_result not in ["success", "blocked", "error", "pending"]:
+        errors.append(
+            f"submit_result must be success/blocked/error/pending (got {event.submit_result})"
+        )
+    if event.redacted_payload is None:
+        errors.append("redacted_payload is required")
+    if not event.result_summary:
+        errors.append("result_summary is required")
+
+    return errors
+
+
+def serialize_audit_event(event: SubmitAuditEvent) -> str:
+    """Convert event to JSON string (one line).
+
+    Uses: sort_keys=True, ensure_ascii=False
+
+    Args:
+        event: Audit event to serialize
+
+    Returns:
+        JSON string (one line, no newline)
+
+    Raises:
+        ValueError if event contains non-serializable objects
+    """
+    event_dict = asdict(event)
+    return json.dumps(event_dict, sort_keys=True, ensure_ascii=False)
+
+
+def append_submit_audit_event(
+    path: Path,
+    event: SubmitAuditEvent,
+) -> SubmitAuditWriteResult:
+    """Append event to JSONL file (append-only, no overwrite).
+
+    Behavior:
+        - If file doesn't exist, create it
+        - If file exists, append to end
+        - Never overwrite existing content
+        - Parent directory must exist
+
+    Args:
+        path: Path to JSONL file (Path or str)
+        event: Audit event to append
+
+    Returns:
+        SubmitAuditWriteResult with success status and event count
+
+    Raises:
+        ValueError: If event validation fails
+        IOError: If write fails
+    """
+    path = Path(path)
+
+    # Validate event
+    errors = validate_submit_audit_event(event)
+    if errors:
+        return SubmitAuditWriteResult(
+            success=False,
+            path=str(path),
+            event_count=0,
+            error_message=f"Event validation failed: {'; '.join(errors)}"
+        )
+
+    try:
+        # Serialize event
+        json_line = serialize_audit_event(event)
+
+        # Append to file
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json_line + "\n")
+
+        # Count events in file
+        event_count = 0
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                event_count = sum(1 for line in f if line.strip())
+
+        return SubmitAuditWriteResult(
+            success=True,
+            path=str(path),
+            event_count=event_count,
+            error_message=None,
+        )
+
+    except IOError as e:
+        return SubmitAuditWriteResult(
+            success=False,
+            path=str(path),
+            event_count=0,
+            error_message=f"Write failed: {str(e)}"
+        )
+
+
+def read_submit_audit_events(path: Path) -> list[dict]:
+    """Read all events from JSONL file (test only).
+
+    Args:
+        path: Path to JSONL file
+
+    Returns:
+        List of event dicts (parsed from JSON)
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If any line is not valid JSON
+    """
+    path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Audit log file not found: {path}")
+
+    events = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                event = json.loads(line)
+                events.append(event)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON at line {line_num}: {str(e)}")
+
+    return events
