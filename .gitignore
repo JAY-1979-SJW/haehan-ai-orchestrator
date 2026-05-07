@@ -69,6 +69,8 @@ tests/fixtures/*
 !tests/fixtures/g2b_existing_openapi_bridge_sample_20260508.json
 # Exception: G2B public notice existing source candidates fixture (tracked for reproducibility)
 !tests/fixtures/g2b_public_notice_existing_source_candidates_20260508.json
+# Exception: local agent safe smoke page fixture (tracked for playwright smoke tests)
+!tests/fixtures/local_agent_safe_smoke_page.html
 
 # IDE
 .vscode/

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로컬 에이전트 smoke 테스트 페이지</title>
+</head>
+<body>
+  <h1 id="main-title">smoke 테스트 페이지</h1>
+
+  <p id="description">이 페이지는 로컬 Playwright 에이전트의 안전한 smoke 테스트용입니다.</p>
+
+  <!-- 테이블 추출 테스트 -->
+  <table id="sample-table" border="1">
+    <thead>
+      <tr><th>번호</th><th>항목</th><th>값</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>항목A</td><td>100</td></tr>
+      <tr><td>2</td><td>항목B</td><td>200</td></tr>
+      <tr><td>3</td><td>항목C</td><td>300</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 다운로드 링크 mock -->
+  <a id="download-link" href="data:text/plain,smoke-download-content" download="smoke_test.txt">
+    파일 다운로드 (mock)
+  </a>
+
+  <!-- 인증 신호 mock: login_required -->
+  <div id="login-required-section" style="display:none;">
+    <p>로그인이 필요합니다. login required</p>
+    <input type="text" id="username" placeholder="아이디">
+    <input type="password" id="password" placeholder="비밀번호">
+  </div>
+
+  <!-- 인증 신호 mock: cert_auth_required -->
+  <div id="cert-auth-section" style="display:none;">
+    <p>공인인증서 인증이 필요합니다. 인증서를 선택하세요.</p>
+  </div>
+
+  <!-- 인증 신호 mock: otp_required -->
+  <div id="otp-section" style="display:none;">
+    <p>OTP 번호를 입력하세요. otp required</p>
+    <input type="text" id="otp-input" placeholder="OTP 6자리">
+  </div>
+
+  <!-- 최종 제출 버튼 mock (blocked) -->
+  <div id="final-submit-section">
+    <button id="final-submit-btn" type="button">최종 제출</button>
+  </div>
+
+  <!-- smoke 전용 확인 요소 -->
+  <div id="smoke-marker" data-smoke="true">SMOKE_OK</div>
+</body>
+</html>
