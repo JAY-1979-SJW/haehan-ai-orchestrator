@@ -1,0 +1,507 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Local Agent WebSocket User-Present Integration fixture",
+  "cases": [
+    {
+      "id": "bank_user_present_task_message",
+      "description": "은행 user-present task message 생성",
+      "input": {
+        "workflow_run_id": "wr_bank_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/login",
+        "auth_methods": ["certificate"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "card_user_present_task_message",
+      "description": "카드사 user-present task message 생성",
+      "input": {
+        "workflow_run_id": "wr_card_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_card",
+        "site_category": "card",
+        "target_domain": "shinhancard.com",
+        "target_url": "https://www.shinhancard.com/login",
+        "auth_methods": ["certificate", "otp"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "otp_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "hometax_user_present_task_message",
+      "description": "홈택스 user-present task message 생성",
+      "input": {
+        "workflow_run_id": "wr_hometax_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_hometax",
+        "site_category": "hometax",
+        "target_domain": "hometax.go.kr",
+        "target_url": "https://www.hometax.go.kr/",
+        "auth_methods": ["certificate", "financial_certificate"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "certificate_password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "gov24_user_present_task_message",
+      "description": "정부24 user-present task message 생성",
+      "input": {
+        "workflow_run_id": "wr_gov24_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_gov24",
+        "site_category": "gov24",
+        "target_domain": "gov.kr",
+        "target_url": "https://www.gov.kr/",
+        "auth_methods": ["certificate", "simple_auth"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "certificate_user_present_task_message",
+      "description": "인증서 포털 user-present task message 생성",
+      "input": {
+        "workflow_run_id": "wr_cert_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_cert",
+        "site_category": "certificate_portal",
+        "target_domain": "yessign.or.kr",
+        "target_url": "https://www.yessign.or.kr/",
+        "auth_methods": ["certificate"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "certificate_password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "otp_user_present_task_message",
+      "description": "OTP 인증 필요 task message 생성",
+      "input": {
+        "workflow_run_id": "wr_otp_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_otp",
+        "site_category": "four_insurance",
+        "target_domain": "nhis.or.kr",
+        "target_url": "https://www.nhis.or.kr/",
+        "auth_methods": ["otp", "certificate"]
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "otp_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "user_confirms_task_status_event",
+      "description": "사용자 인증 완료 → USER_CONFIRMED status event 생성",
+      "input": {
+        "workflow_run_id": "wr_confirm_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url_redacted": "https://kbstar.com/***",
+        "target_url_hash": "abc12345",
+        "auth_method_label": "공동인증서/공인인증서",
+        "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+        "required_user_actions": [],
+        "blocked_ai_actions": [],
+        "safe_to_execute": false,
+        "message_type": "USER_PRESENT_TASK"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "user_cancels_task_status_event",
+      "description": "사용자 취소 → CANCELLED status event 생성",
+      "input": {
+        "workflow_run_id": "wr_cancel_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url_redacted": "https://kbstar.com/***",
+        "target_url_hash": "abc12345",
+        "auth_method_label": "공동인증서/공인인증서",
+        "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+        "required_user_actions": [],
+        "blocked_ai_actions": [],
+        "safe_to_execute": false,
+        "message_type": "USER_PRESENT_TASK"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "blocked_task_status_event",
+      "description": "차단된 task → confirm 불가, BLOCKED 유지",
+      "input": {
+        "workflow_run_id": "wr_blocked_001",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url_redacted": "https://kbstar.com/***",
+        "target_url_hash": "abc12345"
+      },
+      "expected_task_message": null,
+      "expected_local_task": null,
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "BLOCKED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "invalid_message_missing_workflow_run_id",
+      "description": "workflow_run_id 누락 시 task 생성 실패",
+      "input": {
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url_redacted": "https://kbstar.com/***",
+        "target_url_hash": "abc12345",
+        "auth_method_label": "공동인증서",
+        "user_message_ko": "test",
+        "required_user_actions": [],
+        "blocked_ai_actions": [],
+        "safe_to_execute": false,
+        "message_type": "USER_PRESENT_TASK"
+      },
+      "expected_task_message": null,
+      "expected_local_task": null,
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "validation_fails": true
+      }
+    },
+    {
+      "id": "payload_hides_password",
+      "description": "password 필드 전송 차단",
+      "input": {
+        "workflow_run_id": "wr_pwd_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/login",
+        "password": "secret_password_must_be_removed"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "password_absent": true
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "payload_hides_otp",
+      "description": "otp 필드 전송 차단",
+      "input": {
+        "workflow_run_id": "wr_otp_check_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "four_insurance",
+        "target_domain": "nhis.or.kr",
+        "target_url": "https://nhis.or.kr/login",
+        "otp": "123456"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "otp_absent": true
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "otp_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "payload_hides_certificate_password",
+      "description": "certificate_password 필드 전송 차단",
+      "input": {
+        "workflow_run_id": "wr_certpwd_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "hometax",
+        "target_domain": "hometax.go.kr",
+        "target_url": "https://hometax.go.kr/",
+        "certificate_password": "cert_secret_must_be_removed"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "certificate_password_absent": true
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "certificate_password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "payload_hides_token_cookie_session",
+      "description": "token/cookie/session 전송 차단",
+      "input": {
+        "workflow_run_id": "wr_tcs_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/",
+        "token": "bearer_token_must_be_removed",
+        "cookie": "session_cookie_must_be_removed",
+        "session": "session_data_must_be_removed"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "token_absent": true,
+        "cookie_absent": true,
+        "session_absent": true
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "token_absent": true,
+        "cookie_absent": true,
+        "session_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "cross_tenant_payload_rejected",
+      "description": "다른 tenant payload는 message 생성 시 cross-tenant 필드 차단",
+      "input": {
+        "workflow_run_id": "wr_cross_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/",
+        "cross_tenant_data": {"other_tenant_id": "t2", "other_data": "must_be_removed"},
+        "other_tenant_data": "should_not_appear"
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "cross_tenant_data_absent": true
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": null,
+      "expected_security_policy": {
+        "cross_tenant_data_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "safe_to_execute_always_false",
+      "description": "safe_to_execute는 모든 message/event에서 항상 false",
+      "input": {
+        "workflow_run_id": "wr_safe_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/",
+        "safe_to_execute": true
+      },
+      "expected_task_message": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      },
+      "expected_local_task": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    }
+  ]
+}
