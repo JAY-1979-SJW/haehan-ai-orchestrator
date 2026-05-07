@@ -49,6 +49,10 @@ tests/fixtures/*
 !tests/fixtures/local_agent_user_present_ui_runtime_20260507.json
 # Exception: server browser boundary policy fixture (tracked for reproducibility)
 !tests/fixtures/local_agent_server_boundary_policy_20260507.json
+# Exception: browser engine capability classification fixture (tracked for reproducibility)
+!tests/fixtures/browser_engine_capability_classification_20260507.json
+# Exception: browser engine routing policy fixture (tracked for reproducibility)
+!tests/fixtures/browser_engine_routing_policy_20260507.json
 
 # IDE
 .vscode/
