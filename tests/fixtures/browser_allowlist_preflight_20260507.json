@@ -1,0 +1,151 @@
+{
+  "fixture_id": "BROWSER_ALLOWLIST_PREFLIGHT_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "allowed_domains": ["example.com", "g2b.go.kr"],
+  "blocked_domains": ["localhost", "127.0.0.1"],
+  "cases": [
+    {
+      "case_id": "read_no_allowlist_required",
+      "description": "read operation does not require allowlist",
+      "input": {
+        "workflow_run_id": "run_1",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "any.example.com",
+        "allowlist_required": false,
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "ALLOW_DRY_RUN",
+        "allowlist_required": false,
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "navigate_allowed_domain",
+      "description": "navigate with allowed domain",
+      "input": {
+        "workflow_run_id": "run_2",
+        "action_name": "browser.plan_open_url",
+        "operation_type": "navigate",
+        "target_domain": "example.com",
+        "target_url": "https://example.com/page",
+        "allowlist_required": true,
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "ALLOW_DRY_RUN",
+        "domain_allowed": true,
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "domain_missing_blocked",
+      "description": "missing domain is blocked",
+      "input": {
+        "workflow_run_id": "run_3",
+        "action_name": "browser.open_url_controlled",
+        "operation_type": "open_url",
+        "target_domain": "",
+        "allowlist_required": true,
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "BLOCK",
+        "block_reason": "TARGET_DOMAIN_MISSING",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "blocked_domain",
+      "description": "blocked domain is denied",
+      "input": {
+        "workflow_run_id": "run_4",
+        "action_name": "browser.open_url_controlled",
+        "operation_type": "open_url",
+        "target_domain": "localhost",
+        "allowlist_required": true,
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "BLOCK",
+        "block_reason": "DOMAIN_BLOCKED",
+        "blocked_by_domain": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "unknown_domain_requires_verification",
+      "description": "unknown domain requires verification",
+      "input": {
+        "workflow_run_id": "run_5",
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "target_domain": "unknown-site-example.invalid",
+        "allowlist_required": true,
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "REQUIRE_DOMAIN_VERIFICATION",
+        "needs_domain_verification": true,
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "type_operation_blocked",
+      "description": "type operation is blocked",
+      "input": {
+        "workflow_run_id": "run_6",
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "target_domain": "example.com",
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "BLOCK",
+        "operation_allowed": false,
+        "blocked_by_operation": true,
+        "block_reason": "TYPE_BLOCKED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "submit_operation_deny_by_default",
+      "description": "submit operation DENY_BY_DEFAULT",
+      "input": {
+        "workflow_run_id": "run_7",
+        "action_name": "browser.open_type_close_controlled",
+        "operation_type": "submit",
+        "target_domain": "example.com",
+        "production_mode": false
+      },
+      "expected": {
+        "allowlist_decision": "BLOCK",
+        "operation_allowed": false,
+        "block_reason": "SUBMIT_DENY_BY_DEFAULT",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "production_mode_blocked",
+      "description": "production mode blocks action",
+      "input": {
+        "workflow_run_id": "run_8",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "example.com",
+        "production_mode": true
+      },
+      "expected": {
+        "allowlist_decision": "BLOCK",
+        "block_reason": "PRODUCTION_MODE_BLOCKED",
+        "safe_to_execute": false
+      }
+    }
+  ]
+}
