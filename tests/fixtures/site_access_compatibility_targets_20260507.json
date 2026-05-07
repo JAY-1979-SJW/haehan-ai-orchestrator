@@ -1,0 +1,202 @@
+{
+  "fixture_id": "SITE_ACCESS_COMPATIBILITY_AUDIT_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "description": "Initial target sites for access compatibility audit: 1차 감사 대상 사이트 목록",
+  "audit_scope": "1차 Generic 분류 (개별 사이트 URL 확정 전)",
+  "targets": [
+    {
+      "site_id": "google_accounts",
+      "site_name": "Google 로그인",
+      "base_domain": "accounts.google.com",
+      "category": "google_authentication",
+      "priority": 1,
+      "expected_auth_methods": ["OAuth", "2FA", "CAPTCHA"],
+      "expected_constraints": ["CAPTCHA", "2FA"],
+      "expected_verdict": "OAUTH_API_ONLY",
+      "notes": "구글 계열 모두 OAuth consent (사용자 직접) 또는 API 필요"
+    },
+    {
+      "site_id": "google_gmail",
+      "site_name": "Gmail",
+      "base_domain": "mail.google.com",
+      "category": "google_service",
+      "priority": 1,
+      "expected_auth_methods": ["OAuth"],
+      "expected_api": "Gmail API",
+      "expected_verdict": "OAUTH_API_ONLY",
+      "notes": "공식 Gmail API 필요"
+    },
+    {
+      "site_id": "google_drive",
+      "site_name": "Google Drive",
+      "base_domain": "drive.google.com",
+      "category": "google_service",
+      "priority": 1,
+      "expected_api": "Drive API",
+      "expected_verdict": "OAUTH_API_ONLY",
+      "notes": "공식 Drive API 필요"
+    },
+    {
+      "site_id": "google_calendar",
+      "site_name": "Google Calendar",
+      "base_domain": "calendar.google.com",
+      "category": "google_service",
+      "priority": 1,
+      "expected_api": "Calendar API",
+      "expected_verdict": "OAUTH_API_ONLY"
+    },
+    {
+      "site_id": "bank_generic_cert_login",
+      "site_name": "은행 공동인증서 로그인",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "bank_login",
+      "priority": 2,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "간편인증"],
+      "expected_constraints": ["보안프로그램", "원격접속차단", "인증서비밀번호"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "은행별 로그인 URL 확인 필요, 공동인증서 필수"
+    },
+    {
+      "site_id": "bank_generic_financial_cert",
+      "site_name": "은행 금융인증서 로그인",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "bank_login",
+      "priority": 2,
+      "expected_auth_methods": ["금융인증서", "생체인증"],
+      "expected_constraints": ["보안프로그램", "인증서비밀번호"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "금융인증서 사용 은행 확인 필요"
+    },
+    {
+      "site_id": "card_generic_login",
+      "site_name": "신용카드 로그인 (Generic)",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "card_login",
+      "priority": 3,
+      "expected_auth_methods": ["아이디비밀번호", "인증서", "간편인증"],
+      "expected_verdict": "NEEDS_MANUAL_SITE_TEST",
+      "notes": "카드사별 인증 방식 상이, 개별 확인 필요"
+    },
+    {
+      "site_id": "gov_mainpage",
+      "site_name": "정부24 메인 페이지",
+      "base_domain": "gov.kr",
+      "category": "government",
+      "priority": 4,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "간편인증"],
+      "expected_constraints": ["공동인증서", "보안프로그램"],
+      "expected_verdict": "LOCAL_AGENT_REQUIRED",
+      "notes": "대부분의 민원은 공동인증서 필요"
+    },
+    {
+      "site_id": "hometax_login",
+      "site_name": "홈택스 로그인",
+      "base_domain": "hometax.go.kr",
+      "category": "tax",
+      "priority": 5,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "간편인증"],
+      "expected_constraints": ["공동인증서", "보안프로그램", "원격접속차단"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "세무신고는 공동인증서 + 보안프로그램 필수"
+    },
+    {
+      "site_id": "health_insurance_login",
+      "site_name": "국민건강보험 로그인",
+      "base_domain": "www.nhis.or.kr",
+      "category": "insurance",
+      "priority": 6,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "간편인증"],
+      "expected_constraints": ["공동인증서", "보안프로그램"],
+      "expected_verdict": "LOCAL_AGENT_REQUIRED",
+      "notes": "4대보험 중 건강보험"
+    },
+    {
+      "site_id": "national_pension_login",
+      "site_name": "국민연금 로그인",
+      "base_domain": "www.nps.or.kr",
+      "category": "insurance",
+      "priority": 6,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "간편인증"],
+      "expected_constraints": ["공동인증서"],
+      "expected_verdict": "LOCAL_AGENT_REQUIRED",
+      "notes": "4대보험 중 국민연금"
+    },
+    {
+      "site_id": "employment_insurance_login",
+      "site_name": "고용보험 로그인",
+      "base_domain": "www.ei.go.kr",
+      "category": "insurance",
+      "priority": 6,
+      "expected_auth_methods": ["공동인증서", "금융인증서"],
+      "expected_constraints": ["공동인증서"],
+      "expected_verdict": "LOCAL_AGENT_REQUIRED",
+      "notes": "4대보험 중 고용보험"
+    },
+    {
+      "site_id": "workers_compensation_login",
+      "site_name": "산재보험 로그인",
+      "base_domain": "www.kcomwel.or.kr",
+      "category": "insurance",
+      "priority": 6,
+      "expected_auth_methods": ["공동인증서", "금융인증서"],
+      "expected_constraints": ["공동인증서"],
+      "expected_verdict": "LOCAL_AGENT_REQUIRED",
+      "notes": "4대보험 중 산재보험"
+    },
+    {
+      "site_id": "g2b_mainpage",
+      "site_name": "G2B 공개 페이지",
+      "base_domain": "g2b.go.kr",
+      "category": "procurement",
+      "priority": 7,
+      "expected_auth_methods": ["비회원접근", "회원로그인"],
+      "expected_api": "G2B OpenAPI",
+      "expected_verdict": "SERVER_READONLY_OK",
+      "notes": "공개 공고는 read-only 가능, API 지원"
+    },
+    {
+      "site_id": "nara_marketplace_mainpage",
+      "site_name": "나라장터 공개 페이지",
+      "base_domain": "www.g2b.go.kr",
+      "category": "procurement",
+      "priority": 7,
+      "expected_api": "나라장터 API",
+      "expected_verdict": "SERVER_READONLY_OK",
+      "notes": "공개 공고는 read-only 가능"
+    },
+    {
+      "site_id": "public_certificate_portal",
+      "site_name": "공인인증서 포탈 (Generic)",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "certificate",
+      "priority": 8,
+      "expected_auth_methods": ["공동인증서", "금융인증서", "아이디비밀번호"],
+      "expected_constraints": ["보안프로그램", "인증서비밀번호"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "인증서 조회/갱신에 비밀번호 필요"
+    },
+    {
+      "site_id": "electronic_invoice_generic",
+      "site_name": "전자세금계산서 시스템 (Generic)",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "electronic_document",
+      "priority": 8,
+      "expected_auth_methods": ["공동인증서", "금융인증서"],
+      "expected_constraints": ["전자서명", "인증서비밀번호"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "발행/서명에 인증서 비밀번호 필수"
+    },
+    {
+      "site_id": "internal_admin_site",
+      "site_name": "회사 내부 관리자 사이트 (Generic)",
+      "base_domain": "NEEDS_URL_VERIFICATION",
+      "category": "internal",
+      "priority": 9,
+      "expected_auth_methods": ["아이디비밀번호", "LDAP", "싱글사인온"],
+      "expected_constraints": ["VPN", "IP화이트리스트", "MFA"],
+      "expected_verdict": "USER_PRESENT_REQUIRED",
+      "notes": "사용자 승인된 사이트만 감사"
+    }
+  ]
+}
