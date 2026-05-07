@@ -41,6 +41,8 @@ tests/fixtures/*
 !tests/fixtures/browser_audit_module_design_20260506.json
 # Exception: real workflow policy pack fixture (tracked for reproducibility)
 !tests/fixtures/browser_real_workflow_policy_pack_20260507.json
+# Exception: local agent user-present web flow fixture (tracked for reproducibility)
+!tests/fixtures/local_agent_user_present_web_flow_20260507.json
 
 # IDE
 .vscode/
