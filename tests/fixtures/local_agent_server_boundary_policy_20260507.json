@@ -1,0 +1,287 @@
+{
+  "description": "서버 브라우저 경계 정책 fixture (2026-05-07)",
+  "cases": [
+    {
+      "id": "g2b_public_readonly_server_allowed",
+      "description": "G2B 공개 공고 read-only — 서버 브라우저 허용",
+      "input": {
+        "site_category": "g2b_public_readonly",
+        "target_domain": "www.g2b.go.kr",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "SERVER_BROWSER_ALLOWED_READONLY",
+        "server_browser_allowed": true,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "SERVER_BROWSER",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "google_accounts_server_browser_blocked",
+      "description": "accounts.google.com — 서버 브라우저 BLOCK",
+      "input": {
+        "site_category": "google",
+        "target_domain": "accounts.google.com",
+        "target_url": "https://accounts.google.com/signin",
+        "operation_type": "navigate"
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "BLOCK",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "BLOCKED",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "gmail_requires_api_connector",
+      "description": "Gmail — API connector 필요",
+      "input": {
+        "site_category": "gmail",
+        "target_domain": "mail.google.com",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_API_CONNECTOR",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "API_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "google_drive_requires_api_connector",
+      "description": "Google Drive — API connector 필요",
+      "input": {
+        "site_category": "google_drive",
+        "target_domain": "drive.google.com",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_API_CONNECTOR",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "API_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "bank_server_browser_blocked_requires_local_agent",
+      "description": "은행 사이트 — 서버 브라우저 금지, 로컬 Agent 필요",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.kbstar.com",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "bank_certificate_requires_user_present",
+      "description": "은행 공동인증서 — user-present 필요",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.kbstar.com",
+        "operation_type": "login",
+        "requires_certificate": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_USER_PRESENT",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "USER_PRESENT_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "card_server_browser_blocked_requires_local_agent",
+      "description": "카드사 사이트 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "card",
+        "target_domain": "card.kbstar.com",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "hometax_server_browser_blocked",
+      "description": "홈택스 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "tax",
+        "target_domain": "www.hometax.go.kr",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "gov24_server_browser_blocked",
+      "description": "정부24 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "government",
+        "target_domain": "www.gov.kr",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "four_insurance_server_browser_blocked",
+      "description": "4대보험 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "insurance",
+        "target_domain": "www.4insure.or.kr",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "certificate_portal_server_browser_blocked",
+      "description": "공동인증서 포털 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "certificate",
+        "target_domain": "www.yessign.or.kr",
+        "requires_certificate": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_USER_PRESENT",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "USER_PRESENT_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "otp_required_server_browser_blocked",
+      "description": "OTP 필요 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.shinhan.com",
+        "requires_otp": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_USER_PRESENT",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "USER_PRESENT_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "captcha_required_server_browser_blocked",
+      "description": "CAPTCHA 필요 — 서버 브라우저 BLOCK",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.woori.com",
+        "requires_captcha": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "BLOCK",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "BLOCKED",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "security_plugin_required_server_browser_blocked",
+      "description": "보안프로그램 필요 — 서버 브라우저 금지",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.hanabank.com",
+        "requires_security_plugin": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "unknown_restricted_site_requires_manual_review",
+      "description": "분류 불명 사이트 — 로컬 Agent 기본",
+      "input": {
+        "site_category": "unknown_new_site",
+        "target_domain": "unknown.example.com"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "local_agent_execution_allowed_for_restricted_readonly",
+      "description": "은행 사이트 로컬 Agent read-only — 허용 후보",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "banking.kbstar.com",
+        "operation_type": "read",
+        "execution_location": "local_agent"
+      },
+      "expected_boundary_policy": {
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "LOCAL_AGENT",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "user_present_required_never_server_browser",
+      "description": "user_present_required=true → 서버 브라우저 절대 금지",
+      "input": {
+        "site_category": "hometax",
+        "target_domain": "www.hometax.go.kr",
+        "user_present_required": true
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_USER_PRESENT",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "USER_PRESENT_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    },
+    {
+      "id": "api_required_never_server_browser",
+      "description": "cloud_service — API 필요, 서버 브라우저 금지",
+      "input": {
+        "site_category": "cloud_service",
+        "target_domain": "api.google.com",
+        "operation_type": "read"
+      },
+      "expected_boundary_policy": {
+        "server_browser_decision": "REQUIRE_API_CONNECTOR",
+        "server_browser_allowed": false,
+        "safe_to_execute": false
+      },
+      "expected_execution_location": "API_ONLY",
+      "expected_security_policy": {"safe_to_execute": false}
+    }
+  ]
+}
