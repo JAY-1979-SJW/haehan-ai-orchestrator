@@ -150,3 +150,60 @@ def validate_handoff_payload(payload: dict[str, Any]) -> list[str]:
         violations.append("readonly=False: handoff는 read-only만 허용")
 
     return violations
+
+
+# ── task protocol 연결 ────────────────────────────────────────────────────────
+
+_HANDOFF_ACTION_TO_PROTOCOL: dict[str, str] = {
+    "open": "open_url",
+    "open_url": "open_url",
+    "navigate": "open_url",
+    "read": "read_page",
+    "public_read": "read_page",
+    "search": "search",
+    "login_wait": "wait_for_user_auth",
+    "download": "download_file",
+}
+
+
+def handoff_to_task_protocol(
+    handoff: dict[str, Any],
+    task_id: str | None = None,
+) -> dict[str, Any]:
+    """
+    local_agent_handoff payload를 task_protocol.build_task 형태로 변환한다.
+    서버 task queue로 전달하기 위한 bridge 함수.
+    민감 데이터 없음이 보장된다.
+    """
+    from ai_orchestrator.local_agent.task_protocol import build_task, ALLOWED_TASK_ACTIONS
+
+    raw_action = (handoff.get("action") or "open").lower()
+    protocol_action = _HANDOFF_ACTION_TO_PROTOCOL.get(raw_action, "open_url")
+
+    # 허용 action이 아니면 open_url로 downgrade
+    if protocol_action not in ALLOWED_TASK_ACTIONS:
+        protocol_action = "open_url"
+
+    target_url = handoff.get("target_url") or ""
+
+    return build_task(
+        action=protocol_action,
+        target_url=target_url,
+        domain=_extract_domain(target_url),
+        readonly=True,
+        requires_user_presence=False,
+        timeout_seconds=300,
+        task_id=task_id or handoff.get("task_id"),
+        metadata={
+            "handoff_type": handoff.get("handoff_type", ""),
+            "fallback_reason": handoff.get("fallback_reason", ""),
+            "local_browser_default": True,
+        },
+    )
+
+
+def _extract_domain(url: str) -> str:
+    try:
+        return urlparse(url).netloc.lower()
+    except Exception:
+        return ""

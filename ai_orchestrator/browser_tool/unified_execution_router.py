@@ -54,6 +54,7 @@ from ai_orchestrator.browser_tool.fallback_decision_engine import (
 from ai_orchestrator.browser_tool.local_agent_handoff import (
     build_local_agent_handoff,
     validate_handoff_payload,
+    handoff_to_task_protocol,
 )
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     EXEC_BLOCKED,
@@ -146,6 +147,8 @@ def route_browser_task(
                 final_status=STATUS_BLOCKED,
                 message_ko=f"handoff 안전성 위반: {violations}",
             )
+        # task_protocol 형태로 변환하여 server task queue 전달 준비
+        task_proto = handoff_to_task_protocol(handoff, task_id=task_id)
         return build_safe_result(
             task_id=task_id,
             ok=True,
@@ -154,6 +157,7 @@ def route_browser_task(
             message_ko=handoff["user_message_ko"],
             extra={
                 "local_agent_handoff": handoff,
+                "local_playwright_task": task_proto,
                 "execution_location": LOCAL_BROWSER_DEFAULT,
                 "domain_profile_category": profile.get("category"),
             },
