@@ -1,0 +1,556 @@
+{
+  "fixture_id": "BROWSER_REAL_WORKFLOW_POLICY_PACK_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "description": "Real workflow policy pack fixture. Schema/metadata only. No real execution.",
+  "production_allowed": false,
+  "safe_to_execute": false,
+  "dispatcher_connected": false,
+  "task_executor_connected": false,
+  "dry_run_only": true,
+
+  "workflows": [
+    {
+      "workflow_id": "g2b_notice_search_readonly",
+      "description": "G2B/나라장터 공고 검색 결과 조회",
+      "allowed_operation_types": ["read", "navigate"],
+      "blocked_operation_types": ["click", "type", "submit"],
+      "approval_required": false,
+      "audit_required": false,
+      "production_allowed": false,
+      "safe_to_execute": false
+    },
+    {
+      "workflow_id": "g2b_notice_detail_readonly",
+      "description": "G2B 공고 상세 열람 (read-only)",
+      "allowed_operation_types": ["read", "navigate", "open_url"],
+      "blocked_operation_types": ["click", "type", "submit"],
+      "approval_required": false,
+      "audit_required": false,
+      "production_allowed": false,
+      "safe_to_execute": false
+    },
+    {
+      "workflow_id": "g2b_attachment_download_plan",
+      "description": "공고 첨부파일 다운로드 계획 수립 (실제 다운로드 차단)",
+      "allowed_operation_types": ["read"],
+      "blocked_operation_types": ["click", "type", "submit", "navigate"],
+      "approval_required": true,
+      "audit_required": true,
+      "actual_download_blocked": true,
+      "production_allowed": false,
+      "safe_to_execute": false
+    },
+    {
+      "workflow_id": "internal_admin_status_readonly",
+      "description": "내부 관리자 시스템 상태 조회 (read-only)",
+      "allowed_operation_types": ["read", "navigate"],
+      "blocked_operation_types": ["click", "type", "submit"],
+      "approval_required": false,
+      "audit_required": false,
+      "requires_internal_domain": true,
+      "production_allowed": false,
+      "safe_to_execute": false
+    },
+    {
+      "workflow_id": "future_login_blocked",
+      "description": "향후 로그인 입력 workflow — 현 단계 전면 차단",
+      "allowed_operation_types": [],
+      "blocked_operation_types": ["type", "submit"],
+      "sensitive_input_blocked": true,
+      "blocked_input_patterns": ["password", "otp", "certificate", "session", "credential", "cookie", "token"],
+      "approval_required": true,
+      "audit_required": true,
+      "production_allowed": false,
+      "safe_to_execute": false
+    },
+    {
+      "workflow_id": "future_submit_blocked",
+      "description": "향후 제출 workflow — 현 단계 전면 DENY_BY_DEFAULT",
+      "allowed_operation_types": [],
+      "blocked_operation_types": ["submit"],
+      "gate_decision": "DENY_BY_DEFAULT",
+      "blocked_business_actions": [
+        "입찰 제출", "신청 제출", "민원 제출", "결제", "등록", "삭제", "변경"
+      ],
+      "approval_required": true,
+      "audit_required": true,
+      "production_allowed": false,
+      "safe_to_execute": false
+    }
+  ],
+
+  "site_policies": [
+    {
+      "site_policy_id": "G2B_READONLY_POLICY_1",
+      "site_type": "government",
+      "business_domain": "나라장터(G2B) 공고 조회",
+      "allowed_domains": ["PLACEHOLDER_G2B_DOMAIN"],
+      "blocked_domains": [],
+      "allowed_paths": ["/search/*", "/notice/*", "/detail/*"],
+      "blocked_paths": [
+        "/login*", "/bid*", "/submit*", "/apply*",
+        "/pay*", "/delete*", "/update*", "/register*", "/cert*", "/otp*"
+      ],
+      "allowed_operation_types": ["read", "navigate"],
+      "blocked_operation_types": ["click", "type", "submit", "open_url"],
+      "requires_tenant_context": true,
+      "requires_user_context": true,
+      "requires_site_context": true,
+      "approval_required_operations": [],
+      "audit_required_operations": [],
+      "production_allowed": false,
+      "dry_run_only": true,
+      "notes": "실제 도메인은 운영 검증 후 확정. PLACEHOLDER 상태. read/navigate 한정."
+    },
+    {
+      "site_policy_id": "INTERNAL_ADMIN_READONLY_POLICY_1",
+      "site_type": "internal",
+      "business_domain": "내부 관리자 시스템 상태 조회",
+      "allowed_domains": ["PLACEHOLDER_INTERNAL_ADMIN_DOMAIN"],
+      "blocked_domains": [],
+      "allowed_paths": ["/dashboard/*", "/status/*", "/monitor/*"],
+      "blocked_paths": ["/admin/write*", "/admin/delete*", "/admin/update*", "/settings*"],
+      "allowed_operation_types": ["read", "navigate"],
+      "blocked_operation_types": ["click", "type", "submit"],
+      "requires_tenant_context": true,
+      "requires_user_context": true,
+      "requires_site_context": true,
+      "approval_required_operations": [],
+      "audit_required_operations": [],
+      "production_allowed": false,
+      "dry_run_only": true,
+      "notes": "내부 도메인 한정. 외부 공개 URL 접근 금지."
+    },
+    {
+      "site_policy_id": "BLOCKED_HIGH_RISK_POLICY_1",
+      "site_type": "blocked",
+      "business_domain": "고위험 업무 전면 차단 (입찰/결제/제출/삭제)",
+      "allowed_domains": [],
+      "blocked_domains": ["*"],
+      "allowed_paths": [],
+      "blocked_paths": ["*"],
+      "allowed_operation_types": [],
+      "blocked_operation_types": ["click", "type", "submit"],
+      "requires_tenant_context": true,
+      "requires_user_context": true,
+      "requires_site_context": true,
+      "approval_required_operations": ["click", "type", "submit"],
+      "audit_required_operations": ["click", "type", "submit"],
+      "production_allowed": false,
+      "dry_run_only": true,
+      "notes": "입찰/신청/결제/삭제/변경/등록은 현 단계 전면 차단. gate_module 완성 + 별도 승인 후 검토."
+    }
+  ],
+
+  "approval_policy": {
+    "policy_id": "APPROVAL_POLICY_DESIGN_1",
+    "approval_required_by_operation": {
+      "read": false,
+      "navigate": false,
+      "open_url": true,
+      "click": true,
+      "type": true,
+      "submit": true
+    },
+    "approval_stages": [
+      "REQUESTER_APPROVAL",
+      "ADMIN_APPROVAL",
+      "AUDIT_LOGGED",
+      "GATE_PASS"
+    ],
+    "current_stage_status": {
+      "approval_ui_implemented": false,
+      "approval_id_issuance": false,
+      "approval_record_storage": false,
+      "note": "현 단계 approval UI 미구현. click/type/submit 실행 불가."
+    }
+  },
+
+  "e2e_cases": [
+    {
+      "case_id": "g2b_search_read_allow",
+      "description": "G2B 공고 검색 — read operation → 통과",
+      "workflow_id": "g2b_notice_search_readonly",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/search/notice",
+        "gate_decision": "ALLOW",
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "ALLOW",
+        "gate_decision": "ALLOW",
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false,
+        "should_write_audit": false
+      }
+    },
+    {
+      "case_id": "g2b_detail_navigate_allow",
+      "description": "G2B 공고 상세 navigate — open_url → ALLOW",
+      "workflow_id": "g2b_notice_detail_readonly",
+      "input": {
+        "action_name": "browser.plan_open_url",
+        "operation_type": "navigate",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/notice/detail/12345",
+        "gate_decision": "ALLOW",
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "ALLOW",
+        "gate_decision": "ALLOW",
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false,
+        "should_write_audit": false
+      }
+    },
+    {
+      "case_id": "g2b_click_blocked",
+      "description": "G2B 공고 click — blocked_operation_type → BLOCK",
+      "workflow_id": "g2b_notice_search_readonly",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/notice/search",
+        "gate_decision": "BLOCK",
+        "audit_required": true,
+        "approval_required": true,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "OPERATION_TYPE_NOT_ALLOWED",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "g2b_submit_deny_by_default",
+      "description": "G2B 입찰 제출 — submit → DENY_BY_DEFAULT",
+      "workflow_id": "future_submit_blocked",
+      "input": {
+        "action_name": "browser.open_type_close_controlled",
+        "operation_type": "submit",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/bid/submit",
+        "gate_decision": "DENY_BY_DEFAULT",
+        "audit_required": true,
+        "approval_required": true,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "DENY_BY_DEFAULT",
+        "gate_decision": "DENY_BY_DEFAULT",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "SUBMIT_DENY_BY_DEFAULT",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "login_type_blocked",
+      "description": "로그인 비밀번호 입력 — type + password hint → BLOCK",
+      "workflow_id": "future_login_blocked",
+      "input": {
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/login",
+        "gate_decision": "BLOCK",
+        "audit_required": true,
+        "approval_required": true,
+        "contains_sensitive_input": true,
+        "raw_input_redacted": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "SENSITIVE_INPUT_NOT_REDACTED",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "production_mode_blocked",
+      "description": "production_mode=true → 전면 차단",
+      "workflow_id": "g2b_notice_search_readonly",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/search/notice",
+        "gate_decision": "BLOCK",
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": true,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": true,
+        "block_reason": "PRODUCTION_MODE_BLOCKED",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "actual_download_blocked",
+      "description": "실제 다운로드 실행 — click + download URL → BLOCK",
+      "workflow_id": "g2b_attachment_download_plan",
+      "input": {
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/notice/download/file123",
+        "gate_decision": "BLOCK",
+        "actual_download": true,
+        "audit_required": true,
+        "approval_required": true,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "ACTUAL_DOWNLOAD_BLOCKED",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "tenant_scope_missing_blocked",
+      "description": "required_context 누락 — tenant_scope 없음 → BLOCK",
+      "workflow_id": "g2b_notice_search_readonly",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/search/notice",
+        "gate_decision": "BLOCK",
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "TENANT_SCOPE_MISSING",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "cross_tenant_blocked",
+      "description": "cross_tenant 접근 시도 → BLOCK",
+      "workflow_id": "internal_admin_status_readonly",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_INTERNAL_ADMIN_DOMAIN",
+        "target_path": "/dashboard/other_tenant",
+        "gate_decision": "BLOCK",
+        "cross_tenant": true,
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "CROSS_TENANT_BLOCKED",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "domain_outside_allowlist_blocked",
+      "description": "target_domain이 allowed_domains 밖 → BLOCK",
+      "workflow_id": "g2b_notice_search_readonly",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "unknown.invalid",
+        "target_path": "/search",
+        "gate_decision": "BLOCK",
+        "audit_required": false,
+        "approval_required": false,
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "DOMAIN_NOT_IN_ALLOWLIST",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "audit_required_write_audit",
+      "description": "audit_required=true → should_write_audit=true",
+      "workflow_id": "g2b_attachment_download_plan",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/notice/detail/12345",
+        "gate_decision": "ALLOW",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "appr_001",
+        "approval_status": "approved",
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": true,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "ALLOW",
+        "gate_decision": "ALLOW",
+        "event_stage": "DISPATCH_ALLOWED_DRY_RUN",
+        "safe_to_execute": false,
+        "safe_to_dispatch": true,
+        "production_mode": false,
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "approval_missing_dispatch_blocked",
+      "description": "approval_required=true + approval_id 없음 → safe_to_dispatch=false",
+      "workflow_id": "g2b_attachment_download_plan",
+      "input": {
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/notice/detail/12345",
+        "gate_decision": "BLOCK",
+        "audit_required": true,
+        "approval_required": true,
+        "approval_id": "",
+        "approval_status": "pending",
+        "contains_sensitive_input": false,
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "block_reason": "APPROVAL_ID_MISSING",
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "raw_password_storage_forbidden",
+      "description": "raw password/token/cookie 저장 금지 — sensitive 필드 REDACTED 처리",
+      "workflow_id": "future_login_blocked",
+      "input": {
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "target_domain": "PLACEHOLDER_G2B_DOMAIN",
+        "target_path": "/login",
+        "gate_decision": "BLOCK",
+        "audit_required": true,
+        "approval_required": true,
+        "contains_sensitive_input": true,
+        "raw_input_redacted": true,
+        "stored_raw_input": "[REDACTED]",
+        "production_mode": false,
+        "safe_to_dispatch": false,
+        "tenant_scope": "internal_test",
+        "submitted_by": "test_user"
+      },
+      "expected": {
+        "policy_verdict": "BLOCK",
+        "gate_decision": "BLOCK",
+        "event_stage": "DISPATCH_BLOCKED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "production_mode": false,
+        "raw_input_in_log": "[REDACTED]",
+        "block_reason": "OPERATION_TYPE_NOT_ALLOWED",
+        "should_write_audit": true
+      }
+    }
+  ]
+}

@@ -39,6 +39,8 @@ tests/fixtures/*
 !tests/fixtures/browser_gate_module_design_20260506.json
 # Exception: audit module design fixture (tracked for reproducibility)
 !tests/fixtures/browser_audit_module_design_20260506.json
+# Exception: real workflow policy pack fixture (tracked for reproducibility)
+!tests/fixtures/browser_real_workflow_policy_pack_20260507.json
 
 # IDE
 .vscode/
