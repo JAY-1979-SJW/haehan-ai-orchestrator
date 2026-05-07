@@ -55,6 +55,8 @@ tests/fixtures/*
 !tests/fixtures/browser_engine_routing_policy_20260507.json
 # Exception: browser engine routing preflight chain fixture (tracked for reproducibility)
 !tests/fixtures/browser_engine_routing_preflight_chain_20260507.json
+# Exception: browser engine routing dispatch dryrun fixture (tracked for reproducibility)
+!tests/fixtures/browser_engine_routing_dispatch_dryrun_20260507.json
 
 # IDE
 .vscode/

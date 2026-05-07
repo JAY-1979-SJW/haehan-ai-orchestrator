@@ -1,0 +1,206 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Browser Engine Routing Dispatch Dryrun fixture",
+  "cases": [
+    {
+      "id": "about_blank_server_readonly_ready",
+      "description": "about:blank → DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "input": {"target_url": "about:blank", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "example_com_server_readonly_ready",
+      "description": "example.com → DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "input": {"site_category": "example", "target_domain": "example.com", "target_url": "https://example.com/", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "g2b_server_readonly_ready",
+      "description": "G2B 공개 공고 → DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "input": {"site_category": "g2b_public_readonly", "target_domain": "g2b.go.kr", "target_url": "https://www.g2b.go.kr/notice", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "bank_local_system_browser_required",
+      "description": "은행 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "bank", "target_domain": "kbstar.com", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "card_local_system_browser_required",
+      "description": "카드사 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "card", "target_domain": "shinhancard.com", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "hometax_local_system_browser_required",
+      "description": "홈택스 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "hometax", "target_domain": "hometax.go.kr", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "gov24_local_system_browser_required",
+      "description": "정부24 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "gov24", "target_domain": "gov.kr", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "four_insurance_local_system_browser_required",
+      "description": "4대보험 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "four_insurance", "target_domain": "nhis.or.kr", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "certificate_portal_local_system_browser_required",
+      "description": "인증서 포털 → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "input": {"site_category": "certificate_portal", "target_domain": "yessign.or.kr", "operation_type": "read", "requires_certificate": true, "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "google_accounts_blocked",
+      "description": "Google accounts → DRYRUN_BLOCKED",
+      "input": {"site_category": "google_auth", "target_domain": "accounts.google.com", "target_url": "https://accounts.google.com/signin", "operation_type": "navigate", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_BLOCKED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "gmail_api_connector_required",
+      "description": "Gmail → DRYRUN_API_CONNECTOR_REQUIRED",
+      "input": {"site_category": "gmail", "target_domain": "mail.google.com", "target_url": "https://mail.google.com/", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_API_CONNECTOR_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "drive_api_connector_required",
+      "description": "Google Drive → DRYRUN_API_CONNECTOR_REQUIRED",
+      "input": {"site_category": "google_drive", "target_domain": "drive.google.com", "target_url": "https://drive.google.com/", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_API_CONNECTOR_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "captcha_blocked",
+      "description": "CAPTCHA 필요 사이트 → DRYRUN_BLOCKED",
+      "input": {"requires_captcha": true, "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_BLOCKED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "unknown_site_manual_review",
+      "description": "알 수 없는 사이트 → DRYRUN_MANUAL_REVIEW_REQUIRED",
+      "input": {"site_category": "", "target_domain": "unknown-xyz-site.com", "target_url": "https://unknown-xyz-site.com/", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_MANUAL_REVIEW_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "production_mode_blocked",
+      "description": "production_mode=true → DRYRUN_BLOCKED",
+      "input": {"target_url": "about:blank", "operation_type": "read", "production_mode": true},
+      "expected_dispatch_decision": "DRYRUN_BLOCKED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "type_operation_blocked",
+      "description": "type operation → DRYRUN_BLOCKED",
+      "input": {"target_url": "about:blank", "operation_type": "type", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_BLOCKED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "submit_operation_blocked",
+      "description": "submit operation → DRYRUN_BLOCKED",
+      "input": {"target_url": "about:blank", "operation_type": "submit", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_BLOCKED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "approval_required_stops_dispatch",
+      "description": "approval_required=true → DRYRUN_APPROVAL_REQUIRED",
+      "input": {"target_url": "about:blank", "operation_type": "read", "action_name": "browser.open_url_controlled", "approval_required": true, "approval_id": "", "tenant_id": "t1", "user_id": "u1", "site_id": "s1", "workflow_run_id": "wr1", "workflow_id": "w1", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_APPROVAL_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "policy_blocked_no_fallback_dispatch",
+      "description": "policy_blocked failure → DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED (fallback 불가)",
+      "input": {"site_category": "hometax", "target_domain": "hometax.go.kr", "operation_type": "read", "requires_certificate": true, "production_mode": false, "failure_reason": "policy_blocked"},
+      "expected_dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_ok": false,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "runtime_failure_local_agent_fallback",
+      "description": "허용 사이트 runtime failure → DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY (재시도 전 preflight는 통과)",
+      "input": {"site_category": "example", "target_domain": "example.com", "target_url": "https://example.com/", "operation_type": "read", "production_mode": false, "failure_reason": "runtime_error"},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "server_allowed_runtime_failure_fallback_available",
+      "description": "G2B runtime failure → DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY (fallback 가능 사이트)",
+      "input": {"site_category": "g2b_public_readonly", "target_domain": "g2b.go.kr", "target_url": "https://www.g2b.go.kr/notice", "operation_type": "read", "production_mode": false, "failure_reason": "runtime_error"},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false
+    },
+    {
+      "id": "all_fields_present_in_result",
+      "description": "결과에 모든 필수 필드 포함 여부 확인",
+      "input": {"target_url": "about:blank", "operation_type": "read", "production_mode": false},
+      "expected_dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY",
+      "expected_ok": true,
+      "expected_dry_run": true,
+      "expected_safe_to_execute": false,
+      "expected_fields": ["ok", "dry_run", "dispatch_decision", "chain_decision", "engine_capability", "routing_decision", "selected_engine", "next_step", "next_step_instruction", "safe_to_dispatch", "safe_to_execute", "should_write_audit", "block_reason", "user_message_ko", "admin_message_ko", "result"]
+    }
+  ]
+}
