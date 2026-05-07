@@ -1,0 +1,430 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Local Agent WebSocket User-Present Runtime fixture",
+  "cases": [
+    {
+      "id": "websocket_receives_user_present_task",
+      "description": "websocket_client이 USER_PRESENT_TASK 메시지를 인식하고 처리",
+      "input": {
+        "type": "user_present_task",
+        "task": {
+          "message_type": "USER_PRESENT_TASK",
+          "workflow_run_id": "wr_rt_001",
+          "workflow_id": "w1",
+          "tenant_id": "t1",
+          "user_id": "u1",
+          "site_id": "s_bank",
+          "site_category": "bank",
+          "target_domain": "kbstar.com",
+          "target_url_redacted": "https://kbstar.com/***",
+          "target_url_hash": "abc123",
+          "auth_method_label": "공동인증서/공인인증서",
+          "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+          "required_user_actions": ["직접 인증 후 완료 클릭"],
+          "blocked_ai_actions": ["자동 입력 금지"],
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T00:00:00+00:00"
+        }
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ws_event": {
+        "type": "user_present_ack",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "websocket_rejects_invalid_user_present_task",
+      "description": "workflow_run_id 누락 시 reject",
+      "input": {
+        "type": "user_present_task",
+        "task": {
+          "message_type": "USER_PRESENT_TASK",
+          "tenant_id": "t1",
+          "user_id": "u1",
+          "site_id": "s1",
+          "site_category": "bank",
+          "target_domain": "kbstar.com",
+          "target_url_redacted": "https://kbstar.com/***",
+          "target_url_hash": "abc123",
+          "auth_method_label": "공동인증서",
+          "user_message_ko": "test",
+          "required_user_actions": [],
+          "blocked_ai_actions": [],
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T00:00:00+00:00"
+        }
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "type": "user_present_ack",
+        "status": "FAILED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "validation_fails": true
+      }
+    },
+    {
+      "id": "websocket_task_creates_waiting_state",
+      "description": "유효한 USER_PRESENT_TASK → WAITING_FOR_USER state 생성",
+      "input": {
+        "message_type": "USER_PRESENT_TASK",
+        "workflow_run_id": "wr_rt_waiting_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url_redacted": "https://kbstar.com/***",
+        "target_url_hash": "abc123",
+        "auth_method_label": "공동인증서",
+        "user_message_ko": "test",
+        "required_user_actions": [],
+        "blocked_ai_actions": [],
+        "safe_to_execute": false,
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ws_event": {
+        "type": "user_present_ack",
+        "status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "websocket_task_hides_raw_url",
+      "description": "raw target_url이 저장/전송되지 않음",
+      "input": {
+        "message_type": "USER_PRESENT_TASK",
+        "workflow_run_id": "wr_rt_url_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://kbstar.com/login",
+        "auth_method_label": "공동인증서",
+        "user_message_ko": "test",
+        "required_user_actions": [],
+        "blocked_ai_actions": [],
+        "safe_to_execute": false,
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "safe_to_execute": false,
+        "target_url_absent": true
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "target_url_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "websocket_task_hides_password",
+      "description": "password 필드 저장/전송 차단",
+      "input": {
+        "workflow_run_id": "wr_rt_pwd_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "password": "secret_must_be_removed"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "safe_to_execute": false,
+        "password_absent": true
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "websocket_task_hides_otp",
+      "description": "otp 필드 저장/전송 차단",
+      "input": {
+        "workflow_run_id": "wr_rt_otp_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "four_insurance",
+        "target_domain": "nhis.or.kr",
+        "otp": "123456"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "safe_to_execute": false,
+        "otp_absent": true
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "otp_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "websocket_task_hides_certificate_password",
+      "description": "certificate_password 저장/전송 차단",
+      "input": {
+        "workflow_run_id": "wr_rt_certpwd_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "site_category": "hometax",
+        "target_domain": "hometax.go.kr",
+        "certificate_password": "cert_secret"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "safe_to_execute": false,
+        "certificate_password_absent": true
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "certificate_password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "user_confirmed_builds_status_event",
+      "description": "사용자 인증 완료 → USER_CONFIRMED status event 생성",
+      "input": {
+        "workflow_run_id": "wr_rt_confirm_001",
+        "action": "confirm"
+      },
+      "expected_local_state": {
+        "state": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_ws_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "user_cancelled_builds_status_event",
+      "description": "사용자 취소 → CANCELLED status event 생성",
+      "input": {
+        "workflow_run_id": "wr_rt_cancel_001",
+        "action": "cancel"
+      },
+      "expected_local_state": {
+        "state": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_ws_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "user_failed_builds_status_event",
+      "description": "처리 실패 → FAILED status event 생성",
+      "input": {
+        "workflow_run_id": "wr_rt_failed_001",
+        "action": "failed",
+        "reason": "네트워크 오류"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "FAILED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "FAILED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "server_accepts_user_confirmed_status",
+      "description": "서버 handler가 USER_CONFIRMED event 수락",
+      "input": {
+        "message_type": "USER_PRESENT_STATUS",
+        "workflow_run_id": "wr_rt_srv_confirm_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "status": "USER_CONFIRMED",
+        "status_reason": "사용자 인증 완료",
+        "safe_to_execute": false,
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": null,
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "server_accepts_cancelled_status",
+      "description": "서버 handler가 CANCELLED event 수락",
+      "input": {
+        "message_type": "USER_PRESENT_STATUS",
+        "workflow_run_id": "wr_rt_srv_cancel_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "status": "CANCELLED",
+        "status_reason": "사용자 취소",
+        "safe_to_execute": false,
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": null,
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "server_rejects_safe_to_execute_true",
+      "description": "서버 handler가 safe_to_execute=true event reject",
+      "input": {
+        "message_type": "USER_PRESENT_STATUS",
+        "workflow_run_id": "wr_rt_srv_reject_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "status": "USER_CONFIRMED",
+        "status_reason": "",
+        "safe_to_execute": true,
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": null,
+      "expected_server_response": {
+        "ok": false,
+        "accepted_status": null,
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "rejected": true
+      }
+    },
+    {
+      "id": "server_rejects_token_cookie_session",
+      "description": "서버 handler가 token/cookie/session 포함 event reject",
+      "input": {
+        "message_type": "USER_PRESENT_STATUS",
+        "workflow_run_id": "wr_rt_srv_tcs_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "status": "USER_CONFIRMED",
+        "status_reason": "",
+        "safe_to_execute": false,
+        "token": "bearer_token_must_reject",
+        "created_at": "2026-05-07T00:00:00+00:00"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": null,
+      "expected_server_response": {
+        "ok": false,
+        "accepted_status": null,
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "rejected": true
+      }
+    },
+    {
+      "id": "existing_heartbeat_message_still_works",
+      "description": "기존 heartbeat 처리와 충돌 없음",
+      "input": {
+        "type": "heartbeat",
+        "agent_id": "agent_001"
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "type": "heartbeat_ack"
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "existing_non_user_present_task_still_works",
+      "description": "기존 일반 task 처리와 충돌 없음 (process_task 경로 유지)",
+      "input": {
+        "type": "task",
+        "task": {
+          "task_id": "tid_001",
+          "action": "ping",
+          "params": {},
+          "risk_level": "low"
+        }
+      },
+      "expected_local_state": null,
+      "expected_ws_event": {
+        "type": "result",
+        "success": true
+      },
+      "expected_server_response": null,
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    }
+  ]
+}

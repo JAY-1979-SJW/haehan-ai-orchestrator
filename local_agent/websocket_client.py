@@ -29,6 +29,16 @@ from .actions import execute_action, FORBIDDEN_ACTIONS
 from .audit import log_local_event
 
 try:
+    from .user_present_ws_adapter import (
+        create_local_user_present_task_from_ws,
+        mark_local_user_confirmed_and_build_event,
+        mark_local_user_cancelled_and_build_event,
+    )
+    _USER_PRESENT_ADAPTER_AVAILABLE = True
+except ImportError:
+    _USER_PRESENT_ADAPTER_AVAILABLE = False
+
+try:
     from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT as _AUTO_EXECUTE_VIA_AGENT
 except ImportError:
     # Fallback for environments where ai_orchestrator cannot be imported.
@@ -186,6 +196,51 @@ def process_task(task: dict) -> dict:
     return _build_result_message(task, result)
 
 
+def process_user_present_task(task_msg: dict) -> dict:
+    """USER_PRESENT_TASK 메시지를 수신하여 local state_store에 등록한다.
+
+    실제 브라우저 실행 없음. 상태 store 등록만 수행.
+    safe_to_execute는 항상 False.
+    """
+    if not _USER_PRESENT_ADAPTER_AVAILABLE:
+        log_local_event("ws_user_present_adapter_unavailable")
+        return {
+            "type": "user_present_ack",
+            "workflow_run_id": task_msg.get("workflow_run_id", ""),
+            "status": "FAILED",
+            "error": "USER_PRESENT_ADAPTER_UNAVAILABLE",
+            "safe_to_execute": False,
+        }
+
+    result = create_local_user_present_task_from_ws(task_msg)
+    workflow_run_id = task_msg.get("workflow_run_id", "")
+
+    if result["ok"]:
+        log_local_event(
+            "ws_user_present_task_registered",
+            workflow_run_id=workflow_run_id,
+        )
+        return {
+            "type": "user_present_ack",
+            "workflow_run_id": workflow_run_id,
+            "status": "WAITING_FOR_USER",
+            "safe_to_execute": False,
+        }
+    else:
+        log_local_event(
+            "ws_user_present_task_rejected",
+            workflow_run_id=workflow_run_id,
+            errors=result.get("errors", []),
+        )
+        return {
+            "type": "user_present_ack",
+            "workflow_run_id": workflow_run_id,
+            "status": "FAILED",
+            "error": "VALIDATION_FAILED",
+            "safe_to_execute": False,
+        }
+
+
 # ── 연결 루프 ────────────────────────────────────────────────────────────
 
 def _load_websockets_module():
@@ -307,8 +362,14 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                 result_msg = process_task(task)
                 result_msg["agent_id"] = agent_id
                 await ws.send(json.dumps(result_msg))
+            elif mtype == "user_present_task":
+                # USER_PRESENT_TASK: 브라우저 실행 없이 state_store 등록만 수행
+                task_msg = msg.get("task") or msg
+                ack = process_user_present_task(task_msg)
+                ack["agent_id"] = agent_id
+                await ws.send(json.dumps(ack))
             elif mtype in ("idle", "heartbeat_ack", "result_ack",
-                           "running_ack", "auth_ok"):
+                           "running_ack", "auth_ok", "user_present_ack"):
                 # 제어 응답 — 별도 처리 없음
                 continue
             elif mtype == "error":
@@ -365,6 +426,6 @@ def connect(agent_id: str, device_token: str) -> None:
 
 
 __all__ = [
-    "connect", "run_forever", "process_task",
+    "connect", "run_forever", "process_task", "process_user_present_task",
     "WebSocketDisabled", "WebSocketDependencyMissing",
 ]

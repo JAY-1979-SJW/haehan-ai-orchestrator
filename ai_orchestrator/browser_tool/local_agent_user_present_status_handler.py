@@ -1,0 +1,171 @@
+"""
+서버 측 User-Present Status Event Handler
+
+로컬 Agent로부터 수신한 USER_PRESENT_STATUS event를 검증하고
+workflow 상태를 in-memory로 업데이트한다.
+
+운영 DB write 없음.
+task_executor/dispatcher 호출 없음.
+실제 브라우저 실행 코드 없음.
+safe_to_execute=true 포함 event는 reject.
+민감정보(token/cookie/session) 포함 event는 reject.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+
+try:
+    from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        MSG_USER_PRESENT_STATUS,
+        STATUS_WAITING_FOR_USER,
+        STATUS_USER_CONFIRMED,
+        STATUS_CANCELLED,
+        STATUS_BLOCKED,
+        STATUS_FAILED,
+        validate_user_present_ws_status_event,
+    )
+except ImportError:
+    MSG_USER_PRESENT_STATUS = "USER_PRESENT_STATUS"
+    STATUS_WAITING_FOR_USER = "WAITING_FOR_USER"
+    STATUS_USER_CONFIRMED = "USER_CONFIRMED"
+    STATUS_CANCELLED = "CANCELLED"
+    STATUS_BLOCKED = "BLOCKED"
+    STATUS_FAILED = "FAILED"
+
+    def validate_user_present_ws_status_event(event: dict) -> list:
+        errors = []
+        for f in ["message_type", "workflow_run_id", "status", "safe_to_execute"]:
+            if f not in event:
+                errors.append(f"필수 필드 누락: {f}")
+        return errors
+
+# ── 허용 status 값 ────────────────────────────────────────────────────────────
+
+_ACCEPTED_STATUSES: frozenset[str] = frozenset({
+    STATUS_WAITING_FOR_USER,
+    STATUS_USER_CONFIRMED,
+    STATUS_CANCELLED,
+    STATUS_BLOCKED,
+    STATUS_FAILED,
+})
+
+# ── 민감정보 reject 필드 ─────────────────────────────────────────────────────
+
+_REJECT_FIELDS: frozenset[str] = frozenset({
+    "password", "otp", "certificate_password", "financial_certificate_password",
+    "token", "access_token", "refresh_token", "api_key", "device_token",
+    "cookie", "session", "localStorage", "sessionStorage",
+})
+
+# ── in-memory 상태 레지스트리 (운영 DB 미사용) ────────────────────────────────
+# workflow_run_id → {status, accepted_at, ...}
+_status_registry: dict[str, dict[str, Any]] = {}
+
+
+def _now_iso() -> str:
+    return datetime.now(tz=timezone.utc).isoformat()
+
+
+def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
+    """
+    USER_PRESENT_STATUS event를 수신하여 검증하고 in-memory 상태를 업데이트한다.
+
+    safe_to_execute=true → reject
+    민감 필드 포함 → reject
+    알 수 없는 status → reject
+    """
+    # safe_to_execute=true 강제 reject
+    if event.get("safe_to_execute") is True:
+        return {
+            "ok": False,
+            "workflow_run_id": event.get("workflow_run_id", ""),
+            "accepted_status": None,
+            "safe_to_execute": False,
+            "error": "SAFE_TO_EXECUTE_MUST_BE_FALSE",
+            "message_ko": "safe_to_execute=true는 허용되지 않습니다.",
+        }
+
+    # 민감 필드 포함 reject
+    for field in _REJECT_FIELDS:
+        if field in event:
+            return {
+                "ok": False,
+                "workflow_run_id": event.get("workflow_run_id", ""),
+                "accepted_status": None,
+                "safe_to_execute": False,
+                "error": f"FORBIDDEN_FIELD_PRESENT: {field}",
+                "message_ko": f"금지 필드 포함: {field}",
+            }
+
+    # contract validation
+    errors = validate_user_present_ws_status_event(event)
+    if errors:
+        return {
+            "ok": False,
+            "workflow_run_id": event.get("workflow_run_id", ""),
+            "accepted_status": None,
+            "safe_to_execute": False,
+            "error": "VALIDATION_FAILED",
+            "validation_errors": errors,
+            "message_ko": "event 검증 실패.",
+        }
+
+    status = event.get("status", "")
+    if status not in _ACCEPTED_STATUSES:
+        return {
+            "ok": False,
+            "workflow_run_id": event.get("workflow_run_id", ""),
+            "accepted_status": None,
+            "safe_to_execute": False,
+            "error": f"UNKNOWN_STATUS: {status}",
+            "message_ko": f"알 수 없는 status: {status}",
+        }
+
+    workflow_run_id = event.get("workflow_run_id", "")
+
+    # in-memory 상태 업데이트 (운영 DB write 없음)
+    _status_registry[workflow_run_id] = {
+        "workflow_run_id": workflow_run_id,
+        "tenant_id": event.get("tenant_id", ""),
+        "user_id": event.get("user_id", ""),
+        "site_id": event.get("site_id", ""),
+        "status": status,
+        "status_reason": event.get("status_reason", ""),
+        "safe_to_execute": False,
+        "accepted_at": _now_iso(),
+    }
+
+    return {
+        "ok": True,
+        "workflow_run_id": workflow_run_id,
+        "accepted_status": status,
+        "safe_to_execute": False,
+        "message_ko": f"USER_PRESENT_STATUS '{status}' 수신 완료.",
+    }
+
+
+def get_user_present_status(workflow_run_id: str) -> dict[str, Any] | None:
+    """workflow_run_id 기준 최근 수신된 status를 반환한다."""
+    entry = _status_registry.get(workflow_run_id)
+    return dict(entry) if entry else None
+
+
+def validate_user_present_status_event(event: dict[str, Any]) -> list[str]:
+    """handle_user_present_status_event 전 사전 검증. 오류 목록 반환."""
+    errors = validate_user_present_ws_status_event(event)
+
+    if event.get("safe_to_execute") is True:
+        errors.append("safe_to_execute는 항상 False여야 한다")
+
+    for field in _REJECT_FIELDS:
+        if field in event:
+            errors.append(f"금지 필드 포함: {field}")
+
+    return errors
+
+
+def clear_status_registry() -> None:
+    """테스트 전용: in-memory 레지스트리 초기화."""
+    _status_registry.clear()

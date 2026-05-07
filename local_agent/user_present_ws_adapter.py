@@ -242,3 +242,74 @@ def mark_local_user_cancelled_and_build_event(
         "event": event,
         "safe_to_execute": False,
     }
+
+
+# ── status event builder helpers ─────────────────────────────────────────────
+
+def _get_task_context(
+    workflow_run_id: str,
+    store: UserPresentStateStore | None = None,
+) -> dict[str, Any]:
+    _store = store or default_store
+    task = _store.get_user_present_task(workflow_run_id)
+    if task is None:
+        return {"workflow_run_id": workflow_run_id}
+    return {
+        "workflow_run_id": workflow_run_id,
+        "tenant_id": task.get("tenant_id", ""),
+        "user_id": task.get("user_id", ""),
+        "site_id": task.get("site_id", ""),
+    }
+
+
+def build_waiting_status_event(
+    workflow_run_id: str,
+    store: UserPresentStateStore | None = None,
+) -> dict[str, Any]:
+    """WAITING_FOR_USER status event를 생성한다."""
+    ctx = _get_task_context(workflow_run_id, store)
+    return build_user_present_ws_status_event({
+        **ctx,
+        "status": STATUS_WAITING_FOR_USER,
+        "status_reason": "사용자 직접 인증 대기 중",
+    })
+
+
+def build_confirmed_status_event(
+    workflow_run_id: str,
+    store: UserPresentStateStore | None = None,
+) -> dict[str, Any]:
+    """USER_CONFIRMED status event를 생성한다. 상태 전이는 수행하지 않는다."""
+    ctx = _get_task_context(workflow_run_id, store)
+    return build_user_present_ws_status_event({
+        **ctx,
+        "status": STATUS_USER_CONFIRMED,
+        "status_reason": "사용자 인증 완료",
+    })
+
+
+def build_cancelled_status_event(
+    workflow_run_id: str,
+    store: UserPresentStateStore | None = None,
+) -> dict[str, Any]:
+    """CANCELLED status event를 생성한다. 상태 전이는 수행하지 않는다."""
+    ctx = _get_task_context(workflow_run_id, store)
+    return build_user_present_ws_status_event({
+        **ctx,
+        "status": STATUS_CANCELLED,
+        "status_reason": "사용자 취소",
+    })
+
+
+def build_failed_status_event(
+    workflow_run_id: str,
+    reason: str = "",
+    store: UserPresentStateStore | None = None,
+) -> dict[str, Any]:
+    """FAILED status event를 생성한다. 상태 전이는 수행하지 않는다."""
+    ctx = _get_task_context(workflow_run_id, store)
+    return build_user_present_ws_status_event({
+        **ctx,
+        "status": STATUS_FAILED,
+        "status_reason": reason or "처리 실패",
+    })
