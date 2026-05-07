@@ -14,6 +14,8 @@ _log_dir_env = os.environ.get("LOG_DIR", "").strip()
 LOG_DIR = Path(_log_dir_env) if _log_dir_env else Path(__file__).parent / "storage"
 AUDIT_LOG_PATH = LOG_DIR / "audit_logs.jsonl"
 APPROVAL_STORE_PATH = LOG_DIR / "approval_tokens.jsonl"
+APPROVAL_RECORD_STORE_PATH = LOG_DIR / "approval_records.jsonl"
+AUDIT_RECORD_STORE_PATH = LOG_DIR / "audit_records.jsonl"
 INBOX_PATH = LOG_DIR / "inbox.jsonl"
 EXECUTION_HISTORY_PATH = LOG_DIR / "execution_history.jsonl"
 

@@ -4,6 +4,7 @@
  * Components for displaying and managing browser action approvals.
  */
 
+export { BrowserApprovalPanel } from "./BrowserApprovalPanel";
 export { BrowserApprovalMockPanel } from "./BrowserApprovalMockPanel";
 export { BrowserApprovalRequestCard } from "./BrowserApprovalRequestCard";
 export { BrowserApprovalActionBar } from "./BrowserApprovalActionBar";
