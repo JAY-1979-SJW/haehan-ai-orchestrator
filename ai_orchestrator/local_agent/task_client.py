@@ -1,0 +1,145 @@
+"""
+로컬 에이전트 task client
+
+서버에서 pending task를 가져와 Playwright로 실행하는 polling client.
+LOCAL_PLAYWRIGHT task만 실행 대상으로 인정한다.
+USER_DIRECT_REQUIRED / BLOCKED는 실행하지 않고 상태만 보고한다.
+
+금지:
+- 서버 인증정보 하드코딩
+- secret 출력
+- cookie/session 전송
+- 민감 필드 포함 결과 전송
+"""
+from __future__ import annotations
+
+import time
+from typing import Any
+
+from ai_orchestrator.local_agent.task_protocol import (
+    EXEC_MODE_LOCAL_PLAYWRIGHT,
+    TASK_TYPE_BROWSER,
+    STATUS_BLOCKED,
+    STATUS_FAILED,
+    build_result,
+    validate_task,
+)
+from ai_orchestrator.local_agent.security_guard import (
+    validate_task_before_run,
+    block_forbidden_action,
+)
+from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
+from ai_orchestrator.server.local_agent_task_api import (
+    get_pending_local_agent_task,
+    mark_task_assigned,
+    receive_local_agent_result,
+)
+
+# ── polling 설정 ───────────────────────────────────────────────────────────────
+
+DEFAULT_POLL_INTERVAL_SEC = 5
+DEFAULT_MAX_POLLS = 0  # 0 = 무한
+
+
+def poll_and_run_once(runner_fn: Any) -> dict[str, Any] | None:
+    """
+    pending task를 하나 가져와 실행하고 결과를 반환한다.
+    실행할 task가 없으면 None을 반환한다.
+
+    runner_fn: playwright_runner.run_task와 같은 callable.
+               signature: runner_fn(task) -> raw_result dict
+    """
+    tasks = get_pending_local_agent_task(limit=1)
+    if not tasks:
+        return None
+
+    record = tasks[0]
+    task = record.get("payload", {})
+    task_id = task.get("task_id", record.get("task_id", ""))
+
+    # task schema 검증
+    violations = validate_task(task)
+    if violations:
+        result = build_result(
+            task_id=task_id,
+            ok=False,
+            status=STATUS_BLOCKED,
+            message_ko=f"task schema 위반: {'; '.join(violations)}",
+        )
+        receive_local_agent_result(task_id, result)
+        return result
+
+    # LOCAL_PLAYWRIGHT 전용
+    if task.get("execution_mode") != EXEC_MODE_LOCAL_PLAYWRIGHT:
+        result = build_result(
+            task_id=task_id,
+            ok=False,
+            status=STATUS_BLOCKED,
+            message_ko=f"지원하지 않는 execution_mode: {task.get('execution_mode')!r}",
+        )
+        receive_local_agent_result(task_id, result)
+        return result
+
+    # 보안 guard
+    guard = validate_task_before_run(task)
+    if not guard["allowed"]:
+        result = build_result(
+            task_id=task_id,
+            ok=False,
+            status=STATUS_BLOCKED,
+            message_ko=guard["reason"],
+        )
+        receive_local_agent_result(task_id, result)
+        return result
+
+    if guard.get("user_direct_required"):
+        from ai_orchestrator.local_agent.task_protocol import STATUS_USER_ACTION_REQUIRED
+        result = build_result(
+            task_id=task_id,
+            ok=False,
+            status=STATUS_USER_ACTION_REQUIRED,
+            message_ko=guard["reason"],
+        )
+        receive_local_agent_result(task_id, result)
+        return result
+
+    # ASSIGNED 마킹
+    mark_task_assigned(task_id)
+
+    # 실행
+    try:
+        raw_result = runner_fn(task)
+    except Exception as exc:
+        result = build_result(
+            task_id=task_id,
+            ok=False,
+            status=STATUS_FAILED,
+            message_ko=f"실행 오류: {type(exc).__name__}",
+        )
+        receive_local_agent_result(task_id, result)
+        return result
+
+    # 결과 sanitize
+    safe_result = sanitize_result(raw_result)
+
+    # 서버 보고
+    receive_local_agent_result(task_id, safe_result)
+    return safe_result
+
+
+def poll_loop(
+    runner_fn: Any,
+    poll_interval: float = DEFAULT_POLL_INTERVAL_SEC,
+    max_polls: int = DEFAULT_MAX_POLLS,
+) -> None:
+    """
+    polling 루프. max_polls=0이면 무한 반복.
+    테스트에서는 max_polls=1로 사용한다.
+    """
+    count = 0
+    while True:
+        poll_and_run_once(runner_fn)
+        count += 1
+        if max_polls > 0 and count >= max_polls:
+            break
+        time.sleep(poll_interval)
