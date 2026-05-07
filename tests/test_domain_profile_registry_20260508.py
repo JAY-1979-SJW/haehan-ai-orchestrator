@@ -1,4 +1,4 @@
-"""도메인 프로필 레지스트리 테스트"""
+"""도메인 프로필 레지스트리 테스트 (LOCAL_BROWSER_DEFAULT 아키텍처 반영)"""
 from __future__ import annotations
 import pytest
 from ai_orchestrator.browser_tool.domain_profile_registry import (
@@ -22,30 +22,30 @@ def test_g2b_category():
     p = get_domain_profile("g2b.go.kr")
     assert p["category"] == "government_procurement"
 
-# B-3: g2b default_execution
-def test_g2b_default_execution_server_first():
+# B-3: g2b default_execution → LOCAL_BROWSER_DEFAULT
+def test_g2b_default_execution_local_browser_default():
     p = get_domain_profile("g2b.go.kr")
-    assert p["default_execution"] == "SERVER_FIRST"
+    assert p["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
-# B-4: g2b login_execution
-def test_g2b_login_local_required():
-    assert get_login_execution("g2b.go.kr") == "LOCAL_REQUIRED"
+# B-4: g2b login_execution → LOCAL_BROWSER_DEFAULT
+def test_g2b_login_local_browser_default():
+    assert get_login_execution("g2b.go.kr") == "LOCAL_BROWSER_DEFAULT"
 
-# B-5: hometax default_execution
+# B-5: hometax default_execution → LOCAL_BROWSER_DEFAULT
 def test_hometax_default_execution_local():
     p = get_domain_profile("hometax.go.kr")
-    assert p["default_execution"] == "LOCAL_REQUIRED"
+    assert p["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
 # B-6: hometax server_to_local_fallback=False
 def test_hometax_no_fallback():
     p = get_domain_profile("hometax.go.kr")
     assert p["server_to_local_fallback"] is False
 
-# B-7: 미등록 도메인 → 기본값
+# B-7: 미등록 도메인 → 기본값 LOCAL_BROWSER_DEFAULT
 def test_unknown_domain_default():
     p = get_domain_profile("unknown-site.com")
     assert p["category"] == "unknown"
-    assert p["default_execution"] == "SERVER_FIRST"
+    assert p["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
 # B-8: 빈 도메인 → 기본값
 def test_empty_domain_default():
@@ -81,8 +81,8 @@ def test_dynamic_register():
     register_domain_profile({
         "domain": "test-dynamic.example.com",
         "category": "test",
-        "default_execution": "SERVER_FIRST",
-        "login_execution": "LOCAL_REQUIRED",
+        "default_execution": "LOCAL_BROWSER_DEFAULT",
+        "login_execution": "LOCAL_BROWSER_DEFAULT",
         "security_auth_required": False,
         "server_to_local_fallback": True,
         "blocked_actions": [],
