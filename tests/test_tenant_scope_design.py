@@ -140,7 +140,7 @@ class TestWebSocketHandshakeScopeRule:
     """G9: WebSocket handshake organization_id 검증"""
 
     def test_agent_hello_message_lacks_organization_id(self):
-        """AgentHelloMessage에 organization_id 없음"""
+        """AgentHelloMessage에 organization_id가 구현되어 있음 (Gap G9 해소)"""
         from local_agent.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
@@ -149,13 +149,13 @@ class TestWebSocketHandshakeScopeRule:
             host_name_hash="abc123",
         )
 
-        # Gap: organization_id 필드 없음
         msg_dict = msg.to_dict()
-        assert "organization_id" not in msg_dict, \
-            "Gap G9: AgentHelloMessage lacks organization_id field"
+        # G9 구현 완료: organization_id가 필드에 포함됨
+        assert "organization_id" in msg_dict, \
+            "G9 구현: AgentHelloMessage에 organization_id 필드가 있어야 합니다"
 
     def test_agent_hello_message_lacks_registration_user_id(self):
-        """AgentHelloMessage에 registration_user_id 없음"""
+        """AgentHelloMessage에 registration_user_id가 구현되어 있음 (Gap G9 해소)"""
         from local_agent.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
@@ -164,21 +164,21 @@ class TestWebSocketHandshakeScopeRule:
             host_name_hash="abc123",
         )
 
-        # Gap: registration_user_id 필드 없음
         msg_dict = msg.to_dict()
-        assert "registration_user_id" not in msg_dict, \
-            "Gap G9: AgentHelloMessage lacks registration_user_id field"
+        # G9 구현 완료: registration_user_id가 필드에 포함됨
+        assert "registration_user_id" in msg_dict, \
+            "G9 구현: AgentHelloMessage에 registration_user_id 필드가 있어야 합니다"
 
     def test_server_policy_message_lacks_organization_id(self):
-        """ServerPolicyMessage에 organization_id 없음"""
+        """ServerPolicyMessage에 organization_id가 구현되어 있음 (Gap G9 해소)"""
         from local_agent.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage()
         msg_dict = msg.to_dict()
 
-        # Gap: organization_id 필드 없음
-        assert "organization_id" not in msg_dict, \
-            "Gap G9: ServerPolicyMessage should include organization_id"
+        # G9 구현 완료: organization_id가 필드에 포함됨
+        assert "organization_id" in msg_dict, \
+            "G9 구현: ServerPolicyMessage에 organization_id 필드가 있어야 합니다"
 
 
 class TestWebSocketSafeDict:
@@ -348,14 +348,14 @@ class TestAdminWebBrowserApprovalTypes:
     """G12: Admin web browser-approval.ts type 검증"""
 
     def test_browser_approval_types_do_not_exist(self):
-        """admin-web/src/types/browser-approval.ts 부재"""
+        """admin-web/src/types/browser-approval.ts 구현됨 (Gap G12 해소)"""
         types_file = Path(
             "admin-web/src/types/browser-approval.ts"
         )
 
-        # Gap: TypeScript type file 없음
-        assert not types_file.exists(), \
-            "Gap G12: admin-web/src/types/browser-approval.ts needs to be created"
+        # G12 구현 완료: 파일이 생성되어 있음
+        assert types_file.exists(), \
+            "G12 구현: admin-web/src/types/browser-approval.ts 파일이 있어야 합니다"
 
 
 class TestAuditLogMigration:
