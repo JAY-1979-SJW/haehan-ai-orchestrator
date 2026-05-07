@@ -1,0 +1,212 @@
+{
+  "meta": {
+    "task": "G2B_DOMAIN_NORMALIZATION_POLICY_1",
+    "created_at": "2026-05-07",
+    "description": "G2B 도메인 정규화 정책 픽스처"
+  },
+  "cases": [
+    {
+      "id": "g2b_norm_01",
+      "label": "g2b_apex_public_readonly_allowed",
+      "url": "https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "domain_decision": "G2B_PUBLIC_READONLY",
+        "normalized_domain": "g2b.go.kr",
+        "is_g2b_public_readonly": true,
+        "needs_url_verification": false,
+        "readonly_allowed": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_02",
+      "label": "g2b_www_public_readonly_allowed",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "domain_decision": "G2B_PUBLIC_READONLY",
+        "normalized_domain": "g2b.go.kr",
+        "is_g2b_public_readonly": true,
+        "needs_url_verification": false,
+        "readonly_allowed": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_03",
+      "label": "g2b_www_normalizes_to_g2b_public",
+      "url": "https://www.g2b.go.kr/",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "domain_decision": "G2B_PUBLIC_READONLY",
+        "normalized_domain": "g2b.go.kr",
+        "is_g2b_public_readonly": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_04",
+      "label": "g2b_shop_needs_verification",
+      "url": "https://shop.g2b.go.kr/",
+      "domain": "shop.g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "domain_decision": "READONLY_CANDIDATE",
+        "needs_url_verification": true,
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_05",
+      "label": "g2b_unknown_subdomain_needs_verification",
+      "url": "https://api.g2b.go.kr/",
+      "domain": "api.g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "domain_decision": "NEEDS_URL_VERIFICATION",
+        "needs_url_verification": true,
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_06",
+      "label": "g2b_login_path_blocked",
+      "url": "https://www.g2b.go.kr/co/menu/EgovUserReqstLogin.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "path_decision": "PATH_BLOCKED_LOGIN",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_07",
+      "label": "g2b_cert_path_blocked",
+      "url": "https://www.g2b.go.kr/cert/userCert.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "path_decision": "PATH_BLOCKED_CERT",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_08",
+      "label": "g2b_bid_submit_path_blocked",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb05001p.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "path_decision": "PATH_BLOCKED_BID_SUBMIT",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_09",
+      "label": "g2b_contract_path_blocked",
+      "url": "https://www.g2b.go.kr/ct/menu/ntn02/cta01/ctb01001l.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "path_decision": "PATH_BLOCKED_CONTRACT",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_10",
+      "label": "g2b_payment_path_blocked",
+      "url": "https://www.g2b.go.kr/pay/checkout.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "path_decision": "PATH_BLOCKED_PAYMENT",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_11",
+      "label": "g2b_attachment_list_manual_only",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001m.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "path_decision": "PATH_READONLY_ALLOWED",
+        "readonly_allowed": true,
+        "download_auto_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_12",
+      "label": "g2b_attachment_auto_download_blocked",
+      "url": "https://www.g2b.go.kr/pt/file/download.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "download",
+      "expected": {
+        "path_decision": "PATH_DOWNLOAD_MANUAL_ONLY",
+        "readonly_allowed": false,
+        "download_auto_allowed": false,
+        "operation_decision": "BLOCKED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_13",
+      "label": "g2b_type_operation_blocked",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "type",
+      "expected": {
+        "operation_decision": "BLOCKED",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_14",
+      "label": "g2b_submit_operation_blocked",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "submit",
+      "expected": {
+        "operation_decision": "BLOCKED",
+        "readonly_allowed": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_15",
+      "label": "g2b_click_operation_requires_separate_approval",
+      "url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "www.g2b.go.kr",
+      "operation_type": "click",
+      "expected": {
+        "operation_decision": "REQUIRES_APPROVAL",
+        "requires_approval": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_norm_16",
+      "label": "g2b_safe_to_execute_false",
+      "url": "https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "safe_to_execute": false,
+        "download_auto_allowed": false
+      }
+    }
+  ]
+}
