@@ -1,0 +1,444 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Local Agent User-Present E2E Dry-Run fixture — synthetic payload only, no real site access",
+  "cases": [
+    {
+      "id": "bank_certificate_user_present_e2e",
+      "description": "은행 공동인증서 user-present E2E (synthetic)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "bank",
+            "target_domain": "synthetic.bank.test.invalid",
+            "target_url_redacted": "https://synthetic.bank.test.invalid/***",
+            "target_url_hash": "synth_bank_hash_001",
+            "auth_method_label": "공동인증서/공인인증서",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 입력 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_bank_001",
+        "workflow_id": "w1",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_bank",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+        "safe_to_execute": false,
+        "task_message_type": "USER_PRESENT_TASK"
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_password_field": true,
+        "no_otp_field": true,
+        "no_raw_url": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true,
+        "no_raw_url": true
+      }
+    },
+    {
+      "id": "card_user_present_e2e",
+      "description": "카드사 user-present E2E (synthetic)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "카드사 사이트 접속에 사용자 직접 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "card",
+            "target_domain": "synthetic.card.test.invalid",
+            "target_url_redacted": "https://synthetic.card.test.invalid/***",
+            "target_url_hash": "synth_card_hash_001",
+            "auth_method_label": "공동인증서/공인인증서",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 입력 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_card_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_card",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_password_field": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "hometax_user_present_e2e",
+      "description": "홈택스 user-present E2E (synthetic)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "홈택스 접속에 공동인증서/금융인증서 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "hometax",
+            "target_domain": "synthetic.hometax.test.invalid",
+            "target_url_redacted": "https://synthetic.hometax.test.invalid/***",
+            "target_url_hash": "synth_htx_hash_001",
+            "auth_method_label": "공동인증서/금융인증서",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 로그인 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_hometax_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_hometax",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_password_field": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "gov24_user_present_e2e",
+      "description": "정부24 user-present E2E (synthetic)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "정부24 접속에 사용자 직접 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "gov24",
+            "target_domain": "synthetic.gov24.test.invalid",
+            "target_url_redacted": "https://synthetic.gov24.test.invalid/***",
+            "target_url_hash": "synth_gov24_hash_001",
+            "auth_method_label": "공동인증서/간편인증",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 입력 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_gov24_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_gov24",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_password_field": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "certificate_portal_user_present_e2e",
+      "description": "인증서 포털 user-present E2E (synthetic)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "인증서 발급 포털 접속에 사용자 직접 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "certificate_portal",
+            "target_domain": "synthetic.cert.test.invalid",
+            "target_url_redacted": "https://synthetic.cert.test.invalid/***",
+            "target_url_hash": "synth_cert_hash_001",
+            "auth_method_label": "공동인증서",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 입력 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_cert_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_cert",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_password_field": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "otp_user_present_e2e",
+      "description": "OTP 인증 user-present E2E (synthetic) — OTP 값 저장 금지 확인",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "OTP 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "four_insurance",
+            "target_domain": "synthetic.ins.test.invalid",
+            "target_url_redacted": "https://synthetic.ins.test.invalid/***",
+            "target_url_hash": "synth_ins_hash_001",
+            "auth_method_label": "OTP (일회용 비밀번호)",
+            "required_user_actions": ["OTP 직접 입력 후 완료 클릭"],
+            "blocked_ai_actions": ["OTP 자동 입력 금지"]
+          }
+        },
+        "workflow_run_id": "wr_e2e_otp_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_ins",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false
+      },
+      "expected_local_state": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      },
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "no_otp_field": true,
+        "otp_absent": true
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "safe_to_execute": false,
+        "otp_absent": true
+      },
+      "expected_server_response": {
+        "ok": true,
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "otp_absent": true,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "confirm_status_e2e",
+      "description": "사용자 인증 완료 → USER_CONFIRMED E2E",
+      "input": {
+        "workflow_run_id": "wr_e2e_confirm_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_bank",
+        "action": "confirm"
+      },
+      "expected_local_state": {
+        "state": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "USER_CONFIRMED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_browser_action": true
+      }
+    },
+    {
+      "id": "cancel_status_e2e",
+      "description": "사용자 중단 → CANCELLED E2E",
+      "input": {
+        "workflow_run_id": "wr_e2e_cancel_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s_synthetic_bank",
+        "action": "cancel"
+      },
+      "expected_local_state": {
+        "state": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_status_event": {
+        "message_type": "USER_PRESENT_STATUS",
+        "status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_server_response": {
+        "ok": true,
+        "accepted_status": "CANCELLED",
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "sensitive_payload_rejected_e2e",
+      "description": "password 포함 payload → dispatch 거부 (sanitize 우선)",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "next_step_instruction": {
+            "password": "must_be_removed",
+            "target_url_redacted": "https://synthetic.bank.test.invalid/***",
+            "target_url_hash": "abc123"
+          }
+        },
+        "workflow_run_id": "wr_e2e_sens_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s1",
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "safe_to_execute": false,
+        "password_absent_in_task_message": true
+      },
+      "expected_local_state": null,
+      "expected_ui_payload": {
+        "safe_to_execute": false,
+        "password_absent": true
+      },
+      "expected_status_event": null,
+      "expected_server_response": {
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "password_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "safe_to_execute_true_rejected_e2e",
+      "description": "safe_to_execute=true 포함 payload → 전 구간 거부",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        },
+        "workflow_run_id": "wr_e2e_ste_001",
+        "tenant_id": "e2e_tenant",
+        "user_id": "e2e_user",
+        "site_id": "s1",
+        "safe_to_execute": true,
+        "selected_agent_id": "agent_e2e_001"
+      },
+      "expected_dispatch": {
+        "ok": false,
+        "safe_to_execute": false,
+        "rejected": true
+      },
+      "expected_local_state": null,
+      "expected_ui_payload": null,
+      "expected_status_event": null,
+      "expected_server_response": {
+        "ok": false,
+        "safe_to_execute": false
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "rejected": true
+      }
+    }
+  ]
+}

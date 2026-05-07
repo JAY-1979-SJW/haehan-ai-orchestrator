@@ -63,6 +63,8 @@ tests/fixtures/*
 !tests/fixtures/local_agent_websocket_user_present_runtime_20260507.json
 # Exception: local agent websocket user-present dispatch runtime fixture (tracked for reproducibility)
 !tests/fixtures/local_agent_websocket_user_present_dispatch_runtime_20260507.json
+# Exception: local agent user-present e2e dryrun fixture (tracked for reproducibility)
+!tests/fixtures/local_agent_user_present_e2e_dryrun_20260507.json
 
 # IDE
 .vscode/
