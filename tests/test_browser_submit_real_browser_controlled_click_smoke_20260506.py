@@ -86,7 +86,7 @@ class TestRealBrowserControlledClickSmoke:
 
             # Verify page loaded
             assert page.title() == "Internal Controlled Submit Form"
-            assert page.url() == fixture_data_url
+            assert page.url == fixture_data_url
 
             # Verify form elements exist
             assert page.query_selector('form#contact_form') is not None
@@ -304,15 +304,12 @@ class TestRealBrowserControlledClickSmoke:
         preview_bundle = build_submit_preview(preview_input, policy_dict, now)
 
         submit_result = build_controlled_submit_result(
-            site_id=request.site_id,
-            url="https://internal.mock/form",
-            form_id=request.form_id,
             preview_bundle=preview_bundle,
             user_confirmed=True,
         )
 
         assert submit_result is not None
-        assert submit_result.allowed is True
+        assert submit_result.submitted is True
 
     def test_12_real_browser_click_submit_button(self, fixture_data_url):
         """Test 12: Real browser can click submit button."""
@@ -361,7 +358,7 @@ class TestRealBrowserControlledClickSmoke:
             page.wait_for_timeout(500)
 
             # Verify URL unchanged
-            assert page.url() == initial_url
+            assert page.url == initial_url
 
             context.close()
             browser.close()
@@ -476,6 +473,7 @@ class TestRealBrowserControlledClickSmoke:
 
             page.goto(fixture_data_url)
             page.fill('#sample_text_field', "REAL_BROWSER_CONTROLLED_CLICK_202605064")
+            page.fill('#email_field', "smoke@internal.mock")
             page.click('#submit_button_id')
             page.wait_for_timeout(500)
 
@@ -551,7 +549,7 @@ class TestRealBrowserControlledClickSmoke:
             assert submit_state['currentUrl'] == fixture_data_url
 
             # Step 9: Verify no external navigation
-            assert page.url() == fixture_data_url
+            assert page.url == fixture_data_url
 
             # Cleanup
             context.close()

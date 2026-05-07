@@ -40,7 +40,7 @@ class TestRealPlaywrightBackendFeatureGate:
             )
 
             # Mock the sync_playwright to avoid actual launch
-            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
+            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -78,12 +78,12 @@ class TestRealPlaywrightBackendFeatureGate:
             assert response.browser_started is False
 
     def test_url_not_allowed_external_site(self):
-        """Test that external URLs are blocked."""
+        """Test that unclassified external URLs are blocked."""
         with patch.dict(os.environ, {"BROWSER_EXECUTION_ENABLED": "true"}):
             backend = RealPlaywrightBackend()
             request = WorkerBrowserRequest(
                 action="browser.inspect",
-                url="https://example.com",
+                url="https://external-unclassified.test",
                 task_id="task-001",
                 dry_run=False,
             )
@@ -124,7 +124,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
+            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
@@ -155,7 +155,7 @@ class TestRealPlaywrightBackendCleanup:
                 dry_run=False,
             )
 
-            with patch("playwright.sync_api.sync_playwright") as mock_playwright:
+            with patch("browser_worker.backends.real_playwright_backend.sync_playwright") as mock_playwright:
                 mock_browser = MagicMock()
                 mock_context = MagicMock()
                 mock_page = MagicMock()
