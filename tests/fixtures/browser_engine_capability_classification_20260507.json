@@ -1,0 +1,454 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Browser Engine Capability Classification fixture",
+  "cases": [
+    {
+      "id": "about_blank_server_playwright_allowed",
+      "description": "about:blank는 서버 Playwright read-only 허용",
+      "input": {
+        "site_category": "test_page",
+        "target_domain": "",
+        "target_url": "about:blank",
+        "operation_type": "read",
+        "action_name": "browser.inspect",
+        "production_mode": false
+      },
+      "expected_classification": "SERVER_PLAYWRIGHT_READONLY_ALLOWED",
+      "expected_route": "SERVER_PLAYWRIGHT_READONLY",
+      "expected_fallback_policy": {
+        "fallback_allowed": true,
+        "fallback_route": "LOCAL_AGENT_PLAYWRIGHT_READONLY"
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": true
+      }
+    },
+    {
+      "id": "data_url_server_playwright_allowed",
+      "description": "data: URL은 서버 Playwright read-only 허용",
+      "input": {
+        "site_category": "test_page",
+        "target_domain": "",
+        "target_url": "data:text/html,<h1>test</h1>",
+        "operation_type": "read",
+        "action_name": "browser.inspect",
+        "production_mode": false
+      },
+      "expected_classification": "SERVER_PLAYWRIGHT_READONLY_ALLOWED",
+      "expected_route": "SERVER_PLAYWRIGHT_READONLY",
+      "expected_fallback_policy": {
+        "fallback_allowed": true,
+        "fallback_route": "LOCAL_AGENT_PLAYWRIGHT_READONLY"
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": true
+      }
+    },
+    {
+      "id": "example_com_server_playwright_allowed",
+      "description": "example.com은 서버 Playwright read-only 허용",
+      "input": {
+        "site_category": "example",
+        "target_domain": "example.com",
+        "target_url": "https://example.com/",
+        "operation_type": "read",
+        "action_name": "browser.inspect",
+        "production_mode": false
+      },
+      "expected_classification": "SERVER_PLAYWRIGHT_READONLY_ALLOWED",
+      "expected_route": "SERVER_PLAYWRIGHT_READONLY",
+      "expected_fallback_policy": {
+        "fallback_allowed": true,
+        "fallback_route": "LOCAL_AGENT_PLAYWRIGHT_READONLY"
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": true
+      }
+    },
+    {
+      "id": "g2b_public_notice_server_playwright_or_api_allowed",
+      "description": "G2B 공개 공고는 서버 Playwright 또는 API 후보",
+      "input": {
+        "site_category": "g2b_public_readonly",
+        "target_domain": "g2b.go.kr",
+        "target_url": "https://www.g2b.go.kr/notice",
+        "operation_type": "read",
+        "official_api_available": true,
+        "production_mode": false
+      },
+      "expected_classification": "SERVER_PLAYWRIGHT_READONLY_ALLOWED",
+      "expected_route": "SERVER_PLAYWRIGHT_READONLY",
+      "expected_fallback_policy": {
+        "fallback_allowed": true,
+        "fallback_route": "LOCAL_AGENT_PLAYWRIGHT_READONLY"
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": true
+      }
+    },
+    {
+      "id": "google_accounts_api_or_block_no_playwright",
+      "description": "Google accounts 로그인은 서버/로컬 Playwright 금지, BLOCK",
+      "input": {
+        "site_category": "google_auth",
+        "target_domain": "accounts.google.com",
+        "target_url": "https://accounts.google.com/signin",
+        "operation_type": "navigate",
+        "production_mode": false
+      },
+      "expected_classification": "AUTOMATION_BLOCKED",
+      "expected_route": "BLOCK",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": false,
+        "local_agent_playwright_allowed": false
+      }
+    },
+    {
+      "id": "gmail_api_connector_required",
+      "description": "Gmail은 API_CONNECTOR 필요",
+      "input": {
+        "site_category": "gmail",
+        "target_domain": "mail.google.com",
+        "target_url": "https://mail.google.com/mail",
+        "operation_type": "read",
+        "official_api_available": true,
+        "oauth_available": true,
+        "production_mode": false
+      },
+      "expected_classification": "API_CONNECTOR_REQUIRED",
+      "expected_route": "API_CONNECTOR",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "api_connector_required": true
+      }
+    },
+    {
+      "id": "google_drive_api_connector_required",
+      "description": "Google Drive는 API_CONNECTOR 필요",
+      "input": {
+        "site_category": "google_drive",
+        "target_domain": "drive.google.com",
+        "target_url": "https://drive.google.com/",
+        "operation_type": "read",
+        "official_api_available": true,
+        "oauth_available": true,
+        "production_mode": false
+      },
+      "expected_classification": "API_CONNECTOR_REQUIRED",
+      "expected_route": "API_CONNECTOR",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "api_connector_required": true
+      }
+    },
+    {
+      "id": "bank_requires_local_system_browser_user_present",
+      "description": "은행은 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "kbstar.com",
+        "target_url": "https://www.kbstar.com/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "requires_security_plugin": true,
+        "blocks_remote_access": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true,
+        "local_system_browser_required": true
+      }
+    },
+    {
+      "id": "card_requires_local_system_browser_user_present",
+      "description": "카드사는 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "card",
+        "target_domain": "shinhancard.com",
+        "target_url": "https://www.shinhancard.com/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "hometax_requires_local_system_browser_user_present",
+      "description": "홈택스는 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "hometax",
+        "target_domain": "hometax.go.kr",
+        "target_url": "https://www.hometax.go.kr/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "gov24_requires_local_system_browser_user_present",
+      "description": "정부24는 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "gov24",
+        "target_domain": "gov.kr",
+        "target_url": "https://www.gov.kr/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "four_insurance_requires_local_system_browser_user_present",
+      "description": "4대보험은 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "four_insurance",
+        "target_domain": "nhis.or.kr",
+        "target_url": "https://www.nhis.or.kr/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "certificate_portal_requires_user_present",
+      "description": "공동인증서 포털은 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "certificate_portal",
+        "target_domain": "yessign.or.kr",
+        "target_url": "https://www.yessign.or.kr/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "requires_financial_certificate": false,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "otp_required_user_present",
+      "description": "OTP 필요 사이트는 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "unknown",
+        "target_domain": "some-otp-site.com",
+        "target_url": "https://some-otp-site.com/",
+        "operation_type": "read",
+        "requires_otp": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "password_required_user_present",
+      "description": "비밀번호 필요 사이트는 사용자 직접 브라우저 필요",
+      "input": {
+        "site_category": "unknown",
+        "target_domain": "some-password-site.com",
+        "target_url": "https://some-password-site.com/",
+        "operation_type": "read",
+        "requires_password": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "captcha_automation_blocked",
+      "description": "CAPTCHA 필요 사이트는 자동화 차단",
+      "input": {
+        "site_category": "unknown",
+        "target_domain": "some-captcha-site.com",
+        "target_url": "https://some-captcha-site.com/",
+        "operation_type": "read",
+        "requires_captcha": true,
+        "production_mode": false
+      },
+      "expected_classification": "AUTOMATION_BLOCKED",
+      "expected_route": "BLOCK",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "automation_blocked": true
+      }
+    },
+    {
+      "id": "security_plugin_local_agent_required",
+      "description": "보안프로그램 필요 사이트는 카테고리에 따라 라우팅",
+      "input": {
+        "site_category": "bank",
+        "target_domain": "ibk.co.kr",
+        "target_url": "https://www.ibk.co.kr/",
+        "operation_type": "read",
+        "requires_security_plugin": true,
+        "blocks_remote_access": true,
+        "production_mode": false
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "user_present_required": true
+      }
+    },
+    {
+      "id": "unknown_site_needs_manual_review",
+      "description": "알 수 없는 사이트는 수동 실사 필요",
+      "input": {
+        "site_category": "",
+        "target_domain": "unknown-site-xyz.com",
+        "target_url": "https://unknown-site-xyz.com/",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected_classification": "NEEDS_MANUAL_REVIEW",
+      "expected_route": "MANUAL_REVIEW",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "server_playwright_runtime_failure_can_fallback_for_allowed_site",
+      "description": "허용 사이트에서 서버 Playwright runtime failure 시 LOCAL_AGENT fallback 가능",
+      "input": {
+        "site_category": "g2b_public_readonly",
+        "target_domain": "g2b.go.kr",
+        "target_url": "https://www.g2b.go.kr/notice",
+        "operation_type": "read",
+        "production_mode": false,
+        "_runtime_scenario": "server_playwright_allowed_site_fallback"
+      },
+      "expected_classification": "SERVER_PLAYWRIGHT_READONLY_ALLOWED",
+      "expected_route": "SERVER_PLAYWRIGHT_READONLY",
+      "expected_fallback_policy": {
+        "fallback_allowed": true,
+        "fallback_route": "LOCAL_AGENT_PLAYWRIGHT_READONLY"
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": true
+      }
+    },
+    {
+      "id": "policy_blocked_site_cannot_try_server_playwright_first",
+      "description": "정책 차단 사이트는 서버 Playwright first try 금지",
+      "input": {
+        "site_category": "hometax",
+        "target_domain": "hometax.go.kr",
+        "target_url": "https://www.hometax.go.kr/",
+        "operation_type": "read",
+        "requires_certificate": true,
+        "production_mode": false,
+        "_runtime_scenario": "blocked_site_no_server_playwright"
+      },
+      "expected_classification": "LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+      "expected_route": "LOCAL_SYSTEM_BROWSER_USER_PRESENT",
+      "expected_fallback_policy": {
+        "fallback_allowed": false,
+        "fallback_route": ""
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "server_playwright_allowed": false,
+        "user_present_required": true
+      }
+    }
+  ]
+}
