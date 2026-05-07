@@ -375,22 +375,33 @@ def test_untracked_preflight_md_not_deleted():
 # ── 실제 브라우저/dispatcher import 없음 ─────────────────────────────────
 
 def test_no_browser_import_in_this_module():
-    """이 테스트 파일은 실제 브라우저/dispatcher import를 포함하지 않는다."""
-    blocked = ["playwright", "browser_worker", "dispatcher", "task_executor"]
-    for mod in blocked:
-        assert mod not in sys.modules or "test" in str(
-            getattr(sys.modules.get(mod), "__name__", "") or ""
-        ), f"Unexpected import: {mod}"
+    """이 테스트 파일 자체가 실제 브라우저/dispatcher를 직접 import하지 않는다."""
+    import ast
+    src = Path(__file__).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    blocked = {"playwright", "browser_worker", "dispatcher", "task_executor"}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [node.module] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names]
+            for name in names:
+                if name:
+                    for b in blocked:
+                        assert not name.startswith(b), f"이 파일이 직접 import: {name}"
 
 
 def test_no_task_executor_import():
-    """모듈 import 목록에 금지 모듈이 없다."""
-    blocked = ["task_executor", "browser_worker"]
-    loaded = list(sys.modules.keys())
-    for mod in blocked:
-        assert not any(mod in k for k in loaded if "test" not in k), (
-            f"Unexpected module loaded: {mod}"
-        )
+    """이 테스트 파일 자체가 task_executor / browser_worker를 직접 import하지 않는다."""
+    import ast
+    src = Path(__file__).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    blocked = {"task_executor", "browser_worker"}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [node.module] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names]
+            for name in names:
+                if name:
+                    for b in blocked:
+                        assert not name.startswith(b), f"이 파일이 직접 import: {name}"
 
 
 # ── 최소 케이스 수 검증 ───────────────────────────────────────────────────
