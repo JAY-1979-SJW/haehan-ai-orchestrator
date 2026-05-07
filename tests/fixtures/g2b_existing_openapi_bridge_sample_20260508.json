@@ -1,0 +1,70 @@
+{
+  "source": "existing_g2b_openapi_app",
+  "source_mode": "exported_json",
+  "synthetic_sample": true,
+  "api_key_used_by_current_app": false,
+  "api_key_value_exposed": false,
+  "db_read_direct": false,
+  "db_write": false,
+  "items": [
+    {
+      "_comment": "정상 케이스: detail_url 있음, safe 도메인",
+      "bid_notice_no": "20260508001",
+      "bid_notice_order": "00",
+      "notice_name": "서울특별시 도로 유지보수 공사",
+      "demand_org": "서울특별시",
+      "notice_org": "서울특별시",
+      "posted_at": "2026-05-08 09:00",
+      "business_type": "공사",
+      "detail_url": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+      "raw_detail_url_candidates": []
+    },
+    {
+      "_comment": "정상 케이스: camelCase 필드명 (기존 앱 응답 형식)",
+      "bidNtceNo": "20260508002",
+      "bidNtceOrd": "00",
+      "bidNtceNm": "경기도 IT 용역 조달",
+      "demandOrgNm": "경기도",
+      "ntceInsttNm": "경기도",
+      "rgstDt": "2026-05-08 10:00",
+      "bsnsDivNm": "용역",
+      "ntceDtlUrl": "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb04001l.do",
+      "raw_detail_url_candidates": []
+    },
+    {
+      "_comment": "detail_url 없는 케이스",
+      "bid_notice_no": "20260508003",
+      "bid_notice_order": "00",
+      "notice_name": "부산광역시 물품 구매",
+      "demand_org": "부산광역시",
+      "notice_org": "부산광역시",
+      "posted_at": "2026-05-08 11:00",
+      "business_type": "물품",
+      "detail_url": null,
+      "raw_detail_url_candidates": []
+    },
+    {
+      "_comment": "blocked URL 케이스: downloadFile 경로",
+      "bid_notice_no": "20260508004",
+      "bid_notice_order": "00",
+      "notice_name": "인천광역시 시설 공사",
+      "demand_org": "인천광역시",
+      "notice_org": "인천광역시",
+      "posted_at": "2026-05-08 12:00",
+      "business_type": "공사",
+      "detail_url": "https://www.g2b.go.kr/pt/file/downloadFile.do?id=999",
+      "raw_detail_url_candidates": []
+    },
+    {
+      "_comment": "필수 필드 누락 케이스: notice_name 없음",
+      "bid_notice_no": "20260508005",
+      "bid_notice_order": "00",
+      "demand_org": "대전광역시",
+      "notice_org": "대전광역시",
+      "posted_at": "2026-05-08 13:00",
+      "business_type": "용역",
+      "detail_url": null,
+      "raw_detail_url_candidates": []
+    }
+  ]
+}

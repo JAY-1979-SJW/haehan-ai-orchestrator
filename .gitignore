@@ -65,6 +65,10 @@ tests/fixtures/*
 !tests/fixtures/local_agent_websocket_user_present_dispatch_runtime_20260507.json
 # Exception: local agent user-present e2e dryrun fixture (tracked for reproducibility)
 !tests/fixtures/local_agent_user_present_e2e_dryrun_20260507.json
+# Exception: G2B existing OpenAPI bridge sample fixture (synthetic, tracked for reproducibility)
+!tests/fixtures/g2b_existing_openapi_bridge_sample_20260508.json
+# Exception: G2B public notice existing source candidates fixture (tracked for reproducibility)
+!tests/fixtures/g2b_public_notice_existing_source_candidates_20260508.json
 
 # IDE
 .vscode/
