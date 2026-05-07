@@ -1,0 +1,161 @@
+{
+  "meta": {
+    "task": "G2B_PUBLIC_NOTICE_READONLY_MATRIX_1",
+    "created_at": "2026-05-07",
+    "description": "G2B 공개 화면 읽기 전용 접근 가능 여부 정책 분류 픽스처"
+  },
+  "cases": [
+    {
+      "id": "g2b_01",
+      "screen_name": "입찰공고 검색",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb02001l.do",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "navigate",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_02",
+      "screen_name": "입찰공고 목록",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb02001l.do (결과)",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_03",
+      "screen_name": "입찰공고 상세",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb02001m.do",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_04",
+      "screen_name": "첨부파일 목록",
+      "url_pattern": "입찰공고 상세 내 첨부파일 영역",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_05",
+      "screen_name": "공고문 파일 다운로드",
+      "url_pattern": "첨부파일 직접 다운로드",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "download",
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "DOWNLOAD_MANUAL_ONLY",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_06",
+      "screen_name": "업체정보 공개조회",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb03001l.do",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_07",
+      "screen_name": "낙찰결과 조회",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb04001l.do",
+      "site_category": "g2b_public_readonly",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "read",
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "server_browser_allowed": true,
+        "execution_location_required": "SERVER_BROWSER",
+        "readonly_verdict": "READ_ONLY_ALLOWED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_08",
+      "screen_name": "로그인 페이지",
+      "url_pattern": "/co/menu/EgovUserReqstLogin.do",
+      "site_category": "g2b_login",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "submit",
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "server_browser_allowed": false,
+        "execution_location_required": "LOCAL_AGENT",
+        "readonly_verdict": "BLOCKED_LOGIN_REQUIRED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_09",
+      "screen_name": "입찰 참가 신청",
+      "url_pattern": "/pt/menu/ntn01/pta02/ptb05001p.do",
+      "site_category": "g2b_login",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "submit",
+      "requires_certificate": true,
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "server_browser_allowed": false,
+        "execution_location_required": "USER_PRESENT_ONLY",
+        "readonly_verdict": "BLOCKED_CERT_REQUIRED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "g2b_10",
+      "screen_name": "계약 체결 관리",
+      "url_pattern": "/ct/menu/ntn02/cta01/ctb01001l.do",
+      "site_category": "g2b_login",
+      "target_domain": "g2b.go.kr",
+      "operation_type": "submit",
+      "requires_certificate": true,
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "server_browser_allowed": false,
+        "execution_location_required": "USER_PRESENT_ONLY",
+        "readonly_verdict": "BLOCKED_AUTH_REQUIRED",
+        "safe_to_execute": false
+      }
+    }
+  ]
+}
