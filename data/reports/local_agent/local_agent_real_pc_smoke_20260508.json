@@ -1,0 +1,69 @@
+{
+  "report_id": "LOCAL_AGENT_REAL_PC_SMOKE_1",
+  "date": "2026-05-08",
+  "head": "d9e5a4e",
+  "playwright": {
+    "version": "1.58.0",
+    "status": "PLAYWRIGHT_READY",
+    "browser_available": true,
+    "about_blank_launch": "PASS",
+    "permission_blocked": false,
+    "network_blocked": false
+  },
+  "smoke_results": [
+    {"action": "open_url", "url": "about:blank", "status": "COMPLETED", "pass": true},
+    {"action": "read_page", "url": "data:text/html", "status": "COMPLETED", "pass": true},
+    {"action": "open_url", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "read_page", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "extract_text", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "extract_table", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "capture_screenshot", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "detect_login_status", "url": "file://fixture", "status": "COMPLETED", "pass": true},
+    {"action": "wait_for_user_auth", "url": "", "status": "WAITING_USER_AUTH", "pass": true}
+  ],
+  "smoke_total": "9/9",
+  "server_task_e2e": {
+    "task_create": "PASS",
+    "task_receive": "PASS",
+    "mark_assigned": "PASS",
+    "local_playwright_run": "PASS",
+    "result_sanitize": "PASS",
+    "result_report": "PASS",
+    "result_accepted": true
+  },
+  "safe_result_fields": {
+    "sensitive_data_collected": false,
+    "cookie_exported": false,
+    "session_exported": false,
+    "password_collected": false,
+    "otp_collected": false,
+    "certificate_password_collected": false
+  },
+  "headed_policy": {
+    "default_headless": true,
+    "auth_required_headed": true,
+    "wait_for_user_auth_status": "WAITING_USER_AUTH",
+    "auto_fill_password": false,
+    "auto_fill_otp": false
+  },
+  "policy_grep": {
+    "server_external_browser": "NONE",
+    "cookie_session_collect": "NONE",
+    "password_otp_collect": "NONE",
+    "npki_cert_access": "NONE",
+    "auto_bid_sign_payment": "NONE"
+  },
+  "test_results": {
+    "targeted_files": {
+      "test_local_playwright_bootstrap_20260508": "31 pass",
+      "test_local_playwright_smoke_20260508": "19 pass",
+      "test_local_playwright_headed_policy_20260508": "17 pass",
+      "test_local_agent_task_client_20260508": "6 pass",
+      "test_unified_local_playwright_bridge_20260508": "18 pass"
+    },
+    "full_suite": "3517 pass, 6 skip, 2 fail",
+    "residual_fail": "test_browser_audit_module_design x2 (isolation order issue, passes when run alone)"
+  },
+  "verdict": "PASS_WARN",
+  "verdict_reason": "Real PC smoke all pass. 2 residual isolation failures unrelated to this work."
+}
