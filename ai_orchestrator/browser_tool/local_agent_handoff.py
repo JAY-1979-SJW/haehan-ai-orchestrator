@@ -87,7 +87,12 @@ def build_local_agent_handoff(
         "action": action,
         "readonly": readonly,
         "fallback_reason": fallback_reason,
-        "user_message_ko": "이 작업은 사용자 PC에서 계속 진행됩니다.",
+        "local_browser_default": True,
+        "user_message_ko": (
+            "이 작업은 사용자 PC에서 실행됩니다.\n"
+            "브라우저가 열리면 필요한 경우 직접 인증해 주세요.\n"
+            "비밀번호, OTP, 인증서 비밀번호는 앱이 저장하지 않습니다."
+        ),
         "forbidden": list(_FORBIDDEN_ALWAYS),
         "sensitive_data_included": False,
         "cookie_included": False,

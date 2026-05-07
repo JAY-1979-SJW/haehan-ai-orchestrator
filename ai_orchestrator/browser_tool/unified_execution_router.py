@@ -1,25 +1,25 @@
 """
 통합 브라우저 실행 라우터 (Unified Browser Execution Router)
 
-사이트별 전용 도구를 만들지 않는다.
-모든 사이트(나라장터/홈택스/은행/카드/보험/일반 웹)는 공통 실행 엔진을 사용한다.
-사이트별 차이는 domain profile과 security signal로만 관리한다.
+외부 웹 작업은 LOCAL_BROWSER_DEFAULT로 기본 처리한다.
+서버에서 외부 사이트 브라우저 원격 접속을 시도하지 않는다.
 
 실행 흐름:
 1. task 입력 검증
 2. domain profile 조회
 3. execution location 1차 분류
-4. SERVER_FIRST면 서버 실행 시도 (dry-run 또는 실제)
-5. 서버 결과 + security signal 분석
-6. 성공이면 safe result 반환
-7. fallback 필요하면 local_agent_handoff 생성
-8. USER_DIRECT_ONLY면 사용자 직접 수행 안내
-9. BLOCKED면 차단 사유 반환
+4. BLOCKED → 차단 사유 반환
+5. USER_DIRECT_ONLY → 사용자 직접 수행 안내
+6. LOCAL_BROWSER_DEFAULT → local_agent_handoff 즉시 생성 (서버 시도 없음)
+7. SERVER_ALLOWED → 서버 실행 (내부/공개 API만)
+8. server_result 있는 경우 → 신호 분석 → fallback 판정
+9. 안전성 검증 후 반환
 
 보안 고정 원칙:
 - 쿠키/session/password/OTP/인증서 수집 없음
 - 투찰/서명/결제/제출 자동화 없음
 - wildcard domain 허용 없음
+- 서버 브라우저로 나라장터/홈택스/은행/카드/보험 접속 금지
 """
 from __future__ import annotations
 
@@ -28,7 +28,9 @@ from urllib.parse import urlparse
 
 from ai_orchestrator.browser_tool.execution_location_policy import (
     BLOCKED,
+    LOCAL_BROWSER_DEFAULT,
     LOCAL_REQUIRED,
+    SERVER_ALLOWED,
     SERVER_FIRST,
     SERVER_ONLY,
     SERVER_TO_LOCAL_FALLBACK,
@@ -79,9 +81,10 @@ def route_browser_task(
     """
     통합 실행 라우터 메인 함수.
 
-    task를 받아 실행 위치를 결정하고, safe result 또는 local_agent_handoff를 반환한다.
+    외부 웹 task는 local_agent_handoff를 즉시 생성한다.
+    서버 실행은 SERVER_ALLOWED(내부/공개 API)만 허용한다.
 
-    server_result가 None이면 dry-run 모드(실행 위치 분류만 수행).
+    server_result가 None이면 dry-run 모드.
     server_result가 있으면 fallback 판정까지 수행.
     """
     task_id = task.get("task_id", "")
@@ -128,22 +131,35 @@ def route_browser_task(
             message_ko=location_result["user_message_ko"],
         )
 
-    # 6. LOCAL_REQUIRED (처음부터 로컬)
-    if location == LOCAL_REQUIRED:
+    # 6. LOCAL_BROWSER_DEFAULT (레거시 LOCAL_REQUIRED 포함) → 서버 시도 없이 즉시 handoff
+    if location in (LOCAL_BROWSER_DEFAULT, LOCAL_REQUIRED):
         handoff = build_local_agent_handoff(
             task=safe_task,
             fallback_reason=location_result["reason"],
         )
+        violations = validate_handoff_payload(handoff)
+        if violations:
+            return build_safe_result(
+                task_id=task_id,
+                ok=False,
+                execution_used=EXEC_BLOCKED,
+                final_status=STATUS_BLOCKED,
+                message_ko=f"handoff 안전성 위반: {violations}",
+            )
         return build_safe_result(
             task_id=task_id,
             ok=True,
             execution_used=EXEC_LOCAL_AGENT,
             final_status=STATUS_LOCAL_HANDOFF_CREATED,
             message_ko=handoff["user_message_ko"],
-            extra={"local_agent_handoff": handoff},
+            extra={
+                "local_agent_handoff": handoff,
+                "execution_location": LOCAL_BROWSER_DEFAULT,
+                "domain_profile_category": profile.get("category"),
+            },
         )
 
-    # 7. SERVER_ONLY (dry-run)
+    # 7. SERVER_ONLY (내부 전용)
     if location == SERVER_ONLY:
         if server_result is None:
             return build_safe_result(
@@ -155,15 +171,14 @@ def route_browser_task(
                 extra={"execution_location": SERVER_ONLY, "dryrun": True},
             )
 
-    # 8. SERVER_FIRST / SERVER_TO_LOCAL_FALLBACK
-    # server_result가 없으면 dry-run 모드
+    # 8. SERVER_ALLOWED / SERVER_FIRST (내부/공개 API)
     if server_result is None:
         return build_safe_result(
             task_id=task_id,
             ok=True,
             execution_used=EXEC_SERVER_BROWSER,
             final_status=STATUS_SUCCESS,
-            message_ko="서버에서 실행합니다.",
+            message_ko="서버에서 처리합니다.",
             extra={
                 "execution_location": location,
                 "dryrun": True,
@@ -172,7 +187,7 @@ def route_browser_task(
             },
         )
 
-    # 9. 서버 결과 분석 (server_result 있는 경우)
+    # 9. 서버 결과 분석
     sig_result = detect_from_result(server_result)
     signals = sig_result.get("signals", [])
     http_status = int(server_result.get("http_status") or server_result.get("status_code") or 200)
