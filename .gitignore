@@ -47,6 +47,8 @@ tests/fixtures/*
 !tests/fixtures/local_agent_browser_readonly_runtime_20260507.json
 # Exception: local agent user-present UI runtime fixture (tracked for reproducibility)
 !tests/fixtures/local_agent_user_present_ui_runtime_20260507.json
+# Exception: server browser boundary policy fixture (tracked for reproducibility)
+!tests/fixtures/local_agent_server_boundary_policy_20260507.json
 
 # IDE
 .vscode/
