@@ -13,8 +13,11 @@ safe_to_execute=true 포함 event는 reject.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 try:
     from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
@@ -40,6 +43,20 @@ except ImportError:
             if f not in event:
                 errors.append(f"필수 필드 누락: {f}")
         return errors
+
+try:
+    from ai_orchestrator.browser_tool.local_agent_user_present_status_store import (
+        record_user_present_status as _record_status,
+    )
+    _STORE_AVAILABLE = True
+except ImportError:
+    _STORE_AVAILABLE = False
+
+try:
+    from ai_orchestrator.audit_logger import log_event as _log_event
+    _AUDIT_AVAILABLE = True
+except ImportError:
+    _AUDIT_AVAILABLE = False
 
 # ── 허용 status 값 ────────────────────────────────────────────────────────────
 
@@ -68,7 +85,10 @@ def _now_iso() -> str:
     return datetime.now(tz=timezone.utc).isoformat()
 
 
-def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
+def handle_user_present_status_event(
+    event: dict[str, Any],
+    agent_id: str = "",
+) -> dict[str, Any]:
     """
     USER_PRESENT_STATUS event를 수신하여 검증하고 in-memory 상태를 업데이트한다.
 
@@ -76,11 +96,19 @@ def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
     민감 필드 포함 → reject
     알 수 없는 status → reject
     """
+    workflow_run_id = event.get("workflow_run_id", "")
+
     # safe_to_execute=true 강제 reject
     if event.get("safe_to_execute") is True:
+        if _AUDIT_AVAILABLE:
+            _log_event(
+                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
+                actor=agent_id or "ws-agent",
+                note="reason=SAFE_TO_EXECUTE_MUST_BE_FALSE",
+            )
         return {
             "ok": False,
-            "workflow_run_id": event.get("workflow_run_id", ""),
+            "workflow_run_id": workflow_run_id,
             "accepted_status": None,
             "safe_to_execute": False,
             "error": "SAFE_TO_EXECUTE_MUST_BE_FALSE",
@@ -90,9 +118,15 @@ def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
     # 민감 필드 포함 reject
     for field in _REJECT_FIELDS:
         if field in event:
+            if _AUDIT_AVAILABLE:
+                _log_event(
+                    "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
+                    actor=agent_id or "ws-agent",
+                    note=f"reason=FORBIDDEN_FIELD field={field}",
+                )
             return {
                 "ok": False,
-                "workflow_run_id": event.get("workflow_run_id", ""),
+                "workflow_run_id": workflow_run_id,
                 "accepted_status": None,
                 "safe_to_execute": False,
                 "error": f"FORBIDDEN_FIELD_PRESENT: {field}",
@@ -102,9 +136,15 @@ def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
     # contract validation
     errors = validate_user_present_ws_status_event(event)
     if errors:
+        if _AUDIT_AVAILABLE:
+            _log_event(
+                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
+                actor=agent_id or "ws-agent",
+                note=f"reason=VALIDATION_FAILED errors={errors}",
+            )
         return {
             "ok": False,
-            "workflow_run_id": event.get("workflow_run_id", ""),
+            "workflow_run_id": workflow_run_id,
             "accepted_status": None,
             "safe_to_execute": False,
             "error": "VALIDATION_FAILED",
@@ -114,34 +154,60 @@ def handle_user_present_status_event(event: dict[str, Any]) -> dict[str, Any]:
 
     status = event.get("status", "")
     if status not in _ACCEPTED_STATUSES:
+        if _AUDIT_AVAILABLE:
+            _log_event(
+                "LOCAL_AGENT_USER_PRESENT_STATUS_REJECTED", workflow_run_id,
+                actor=agent_id or "ws-agent",
+                note=f"reason=UNKNOWN_STATUS status={status}",
+            )
         return {
             "ok": False,
-            "workflow_run_id": event.get("workflow_run_id", ""),
+            "workflow_run_id": workflow_run_id,
             "accepted_status": None,
             "safe_to_execute": False,
             "error": f"UNKNOWN_STATUS: {status}",
             "message_ko": f"알 수 없는 status: {status}",
         }
 
-    workflow_run_id = event.get("workflow_run_id", "")
+    received_at = _now_iso()
 
-    # in-memory 상태 업데이트 (운영 DB write 없음)
+    # in-memory 레지스트리 업데이트 (기존 호환 유지)
     _status_registry[workflow_run_id] = {
         "workflow_run_id": workflow_run_id,
+        "agent_id": agent_id,
         "tenant_id": event.get("tenant_id", ""),
         "user_id": event.get("user_id", ""),
         "site_id": event.get("site_id", ""),
         "status": status,
         "status_reason": event.get("status_reason", ""),
         "safe_to_execute": False,
-        "accepted_at": _now_iso(),
+        "accepted_at": received_at,
+        "received_at": received_at,
     }
+
+    # status store에도 기록 (조회 API용)
+    if _STORE_AVAILABLE:
+        _record_status(event, agent_id=agent_id)
+
+    # audit log
+    if _AUDIT_AVAILABLE:
+        _log_event(
+            "LOCAL_AGENT_USER_PRESENT_STATUS_RECEIVED", workflow_run_id,
+            actor=agent_id or "ws-agent",
+            note=f"status={status} site_id={event.get('site_id', '')}",
+        )
+
+    logger.info(
+        "[status-handler] USER_PRESENT_STATUS 수신 wf=%s status=%s agent=%s",
+        workflow_run_id, status, agent_id,
+    )
 
     return {
         "ok": True,
         "workflow_run_id": workflow_run_id,
         "accepted_status": status,
         "safe_to_execute": False,
+        "received_at": received_at,
         "message_ko": f"USER_PRESENT_STATUS '{status}' 수신 완료.",
     }
 
