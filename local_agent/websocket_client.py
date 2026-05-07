@@ -39,6 +39,12 @@ except ImportError:
     _USER_PRESENT_ADAPTER_AVAILABLE = False
 
 try:
+    from .user_present_status_sender import run_user_present_status_send_once
+    _STATUS_SENDER_AVAILABLE = True
+except ImportError:
+    _STATUS_SENDER_AVAILABLE = False
+
+try:
     from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT as _AUTO_EXECUTE_VIA_AGENT
 except ImportError:
     # Fallback for environments where ai_orchestrator cannot be imported.
@@ -306,6 +312,12 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                     "type": "heartbeat", "agent_id": agent_id,
                 }))
                 last_heartbeat = time.monotonic()
+                # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
+                if _STATUS_SENDER_AVAILABLE:
+                    try:
+                        await run_user_present_status_send_once(ws)
+                    except Exception as _exc:
+                        logger.warning("[ws] status send 실패 (무시): %s", type(_exc).__name__)
                 continue
 
             try:
