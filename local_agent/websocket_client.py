@@ -28,6 +28,14 @@ from . import __version__, config
 from .actions import execute_action, FORBIDDEN_ACTIONS
 from .audit import log_local_event
 
+
+class WebSocketDisabled(RuntimeError):
+    """WebSocket 기능이 비활성화된 경우."""
+
+
+class WebSocketDependencyMissing(RuntimeError):
+    """`websockets` 패키지가 설치되지 않은 경우."""
+
 try:
     from .user_present_ws_adapter import (
         create_local_user_present_task_from_ws,

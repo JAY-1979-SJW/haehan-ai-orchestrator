@@ -52,6 +52,15 @@ except ImportError:
     _UP_STATUS_HANDLER_AVAILABLE = False
 
 try:
+    from .browser_tool.local_agent_user_present_status_store import (
+        get_user_present_status as _get_up_status,
+        list_user_present_statuses as _list_up_statuses,
+    )
+    _UP_STATUS_STORE_AVAILABLE = True
+except ImportError:
+    _UP_STATUS_STORE_AVAILABLE = False
+
+try:
     from .browser_tool.local_agent_user_present_dispatcher import (
         build_user_present_dispatch_response,
         should_dispatch_user_present_task,
@@ -938,6 +947,35 @@ class UserPresentDispatchRequest(BaseModel):
     dryrun_result: dict = {}
 
 
+@local_agent_router.get("/user-present-status/{workflow_run_id}")
+def get_user_present_status_record(
+    workflow_run_id: str,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """workflow_run_id 기준 USER_PRESENT_STATUS 수신 기록 조회."""
+    if not _UP_STATUS_STORE_AVAILABLE:
+        raise HTTPException(status_code=503, detail={"error": "STATUS_STORE_UNAVAILABLE"})
+    record = _get_up_status(workflow_run_id)
+    if record is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "NOT_FOUND", "workflow_run_id": workflow_run_id},
+        )
+    return {"ok": True, "safe_to_execute": False, "record": record}
+
+
+@local_agent_router.get("/{agent_id}/user-present-statuses")
+def list_agent_user_present_statuses(
+    agent_id: str,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """agent_id 기준 USER_PRESENT_STATUS 수신 목록 조회."""
+    if not _UP_STATUS_STORE_AVAILABLE:
+        raise HTTPException(status_code=503, detail={"error": "STATUS_STORE_UNAVAILABLE"})
+    records = _list_up_statuses(agent_id=agent_id)
+    return {"ok": True, "safe_to_execute": False, "agent_id": agent_id, "records": records, "total": len(records)}
+
+
 @local_agent_router.post("/{agent_id}/user-present-dispatch")
 def dispatch_user_present_task(
     agent_id: str,
@@ -1428,13 +1466,14 @@ async def agent_websocket(websocket: WebSocket):
             elif mtype == "user_present_status":
                 _reg.set_agent_last_seen(agent_id)
                 if _UP_STATUS_HANDLER_AVAILABLE:
-                    _result = _handle_up_status_event(msg)
+                    _result = _handle_up_status_event(msg, agent_id=agent_id)
                     await websocket.send_json({
                         "type": "user_present_status_ack",
                         "ok": _result.get("ok", False),
                         "workflow_run_id": _result.get("workflow_run_id", ""),
                         "accepted_status": _result.get("accepted_status"),
                         "safe_to_execute": False,
+                        "received_at": _result.get("received_at", ""),
                         "error": _result.get("error", ""),
                     })
                 else:
