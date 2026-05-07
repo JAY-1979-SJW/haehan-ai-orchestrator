@@ -68,14 +68,14 @@ class TestAuthTenantContext:
         assert org_id == "org-1"
 
     def test_require_active_organization_rejects_missing_field(self):
-        """missing active_organization_id → ValueError"""
+        """active_organization_id 누락 시 migration bridge가 첫 org를 자동 설정한다 (TENANT-3 migration bridge)."""
         from ai_orchestrator.auth import require_active_organization
 
         user = {"actor": "john", "role": "admin", "organization_ids": ["org-1"]}
 
-        with pytest.raises(ValueError) as exc_info:
-            require_active_organization(user)
-        assert "active_organization_id" in str(exc_info.value)
+        # migration bridge: active_organization_id 누락 시 organization_ids[0]을 자동 사용
+        org_id = require_active_organization(user)
+        assert org_id == "org-1"
 
     def test_require_active_organization_rejects_mismatch(self):
         """active_organization_id not in organization_ids → ValueError"""

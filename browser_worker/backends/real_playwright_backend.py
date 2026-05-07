@@ -10,12 +10,17 @@ import os
 from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 from browser_worker.policy import evaluate_server_browser_url_policy
 
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None  # type: ignore
+
 
 class RealPlaywrightBackend:
     """Real Playwright backend for browser operations."""
 
     ALLOWED_ACTIONS = frozenset({"browser.inspect", "browser.open_url_controlled"})
-    ALLOWED_URLS = frozenset({"about:blank", "https://example.com/"})
+    ALLOWED_URLS = frozenset({"about:blank"})
     EXECUTION_ENABLED_ENV_VAR = "BROWSER_EXECUTION_ENABLED"
 
     def __init__(self):
@@ -113,8 +118,6 @@ class RealPlaywrightBackend:
         cleanup_failed = False
 
         try:
-            from playwright.sync_api import sync_playwright
-
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context()
@@ -157,6 +160,8 @@ class RealPlaywrightBackend:
                     action=request.action,
                     browser_started=True,
                     backend="real_playwright_worker",
+                    title=page.title(),
+                    url=page.url,
                     status="ok",
                 )
 
