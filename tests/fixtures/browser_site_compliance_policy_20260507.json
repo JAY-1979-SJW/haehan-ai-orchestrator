@@ -1,0 +1,302 @@
+{
+  "fixture_id": "BROWSER_SITE_COMPLIANCE_POLICY_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "description": "Site compliance policy test cases covering Google services, restricted sites, and capability classifications",
+  "cases": [
+    {
+      "case_id": "google_accounts_login_blocked",
+      "description": "Google 로그인은 자동화 금지, OAuth consent 필요",
+      "input": {
+        "target_domain": "accounts.google.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false,
+        "user_present": false
+      },
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "site_capability": "AUTOMATION_BLOCKED",
+        "browser_automation_allowed": false,
+        "api_connector_required": false,
+        "block_reason": "GOOGLE_LOGIN_AUTOMATION_BLOCKED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "gmail_requires_oauth_api",
+      "description": "Gmail은 OAuth API 필수, 브라우저 자동화 차단",
+      "input": {
+        "target_domain": "mail.google.com",
+        "action_name": "browser.plan_open_url",
+        "operation_type": "navigate",
+        "production_mode": false,
+        "user_present": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_API_CONNECTOR",
+        "site_capability": "OAUTH_API_ONLY",
+        "browser_automation_allowed": false,
+        "api_connector_required": true,
+        "block_reason": "OAUTH_API_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "google_drive_requires_oauth_api",
+      "description": "Google Drive는 OAuth API 필수",
+      "input": {
+        "target_domain": "drive.google.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_API_CONNECTOR",
+        "site_capability": "OAUTH_API_ONLY",
+        "browser_automation_allowed": false,
+        "api_connector_required": true,
+        "block_reason": "OAUTH_API_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "google_calendar_requires_oauth_api",
+      "description": "Google Calendar는 OAuth API 필수",
+      "input": {
+        "target_domain": "calendar.google.com",
+        "action_name": "browser.plan_click",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_API_CONNECTOR",
+        "site_capability": "OAUTH_API_ONLY",
+        "api_connector_required": true,
+        "block_reason": "OAUTH_API_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "google_docs_requires_oauth_api",
+      "description": "Google Docs는 OAuth API 필수",
+      "input": {
+        "target_domain": "docs.google.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_API_CONNECTOR",
+        "site_capability": "OAUTH_API_ONLY",
+        "api_connector_required": true,
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "google_sheets_requires_oauth_api",
+      "description": "Google Sheets는 OAuth API 필수",
+      "input": {
+        "target_domain": "sheets.google.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_API_CONNECTOR",
+        "site_capability": "OAUTH_API_ONLY",
+        "api_connector_required": true,
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "chrome_remote_desktop_official_support_only",
+      "description": "Chrome Remote Desktop는 공식 원격지원 도구만 허용",
+      "input": {
+        "target_domain": "remotedesktop.google.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false,
+        "remote_support_user_approved": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_OFFICIAL_REMOTE_SUPPORT",
+        "site_capability": "OFFICIAL_REMOTE_SUPPORT_ONLY",
+        "browser_automation_allowed": false,
+        "official_remote_support_required": true,
+        "block_reason": "OFFICIAL_REMOTE_SUPPORT_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "unknown_site_requires_approval",
+      "description": "미지의 사이트는 법률검토 또는 사이트 소유자 승인 필요",
+      "input": {
+        "target_domain": "unknown-site-example.invalid",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "site_capability": "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL",
+        "browser_automation_allowed": false,
+        "block_reason": "NEEDS_LEGAL_OR_SITE_OWNER_APPROVAL",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "browser_readonly_allowed_read_operation",
+      "description": "BROWSER_READONLY_ALLOWED 사이트에서 read 작업 허용",
+      "input": {
+        "target_domain": "example.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "site_capability": "BROWSER_READONLY_ALLOWED",
+        "browser_automation_allowed": true,
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      },
+      "note": "example.com은 allowlist에서 정의된 BROWSER_READONLY_ALLOWED 사이트"
+    },
+    {
+      "case_id": "browser_readonly_allowed_click_blocked",
+      "description": "BROWSER_READONLY_ALLOWED 사이트에서 click 작업 차단",
+      "input": {
+        "target_domain": "example.com",
+        "action_name": "browser.execute_click",
+        "operation_type": "click",
+        "production_mode": false
+      },
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "site_capability": "BROWSER_READONLY_ALLOWED",
+        "browser_automation_allowed": true,
+        "safe_to_dispatch": false,
+        "safe_to_execute": false,
+        "block_reason": "OPERATION_NOT_ALLOWED_FOR_READONLY_SITE"
+      }
+    },
+    {
+      "case_id": "contract_allowlist_with_approval",
+      "description": "CONTRACT_ALLOWLIST_REQUIRED 사이트에서 승인이 있으면 허용",
+      "input": {
+        "target_domain": "partner-site.example.com",
+        "action_name": "browser.open_url_controlled",
+        "operation_type": "open_url",
+        "production_mode": false,
+        "site_owner_approval_id": "approval_123"
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_SITE_OWNER_APPROVAL",
+        "site_capability": "CONTRACT_ALLOWLIST_REQUIRED",
+        "browser_automation_allowed": true,
+        "site_owner_approval_required": true,
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      },
+      "note": "사이트 소유자 승인이 있으므로 dispatch 허용"
+    },
+    {
+      "case_id": "contract_allowlist_without_approval",
+      "description": "CONTRACT_ALLOWLIST_REQUIRED 사이트에서 승인이 없으면 차단",
+      "input": {
+        "target_domain": "partner-site-2.example.com",
+        "action_name": "browser.open_url_controlled",
+        "operation_type": "open_url",
+        "production_mode": false,
+        "site_owner_approval_id": null
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_SITE_OWNER_APPROVAL",
+        "site_capability": "CONTRACT_ALLOWLIST_REQUIRED",
+        "browser_automation_allowed": true,
+        "site_owner_approval_required": true,
+        "block_reason": "SITE_OWNER_APPROVAL_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "user_present_local_with_approval",
+      "description": "USER_PRESENT_LOCAL_ONLY 사이트에서 user_present=true이면 허용",
+      "input": {
+        "target_domain": "secure-site.example.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false,
+        "user_present": true
+      },
+      "expected": {
+        "compliance_decision": "ALLOW_BROWSER_READONLY",
+        "site_capability": "USER_PRESENT_LOCAL_ONLY",
+        "browser_automation_allowed": true,
+        "user_present_required": true,
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "user_present_local_without_user",
+      "description": "USER_PRESENT_LOCAL_ONLY 사이트에서 user_present=false이면 차단",
+      "input": {
+        "target_domain": "secure-site-2.example.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false,
+        "user_present": false
+      },
+      "expected": {
+        "compliance_decision": "REQUIRE_USER_PRESENT_LOCAL",
+        "site_capability": "USER_PRESENT_LOCAL_ONLY",
+        "user_present_required": true,
+        "block_reason": "USER_PRESENT_REQUIRED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "production_mode_blocked",
+      "description": "Production mode이면 모든 사이트 자동화 차단",
+      "input": {
+        "target_domain": "example.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": true,
+        "user_present": false
+      },
+      "expected": {
+        "compliance_decision": "BLOCK",
+        "block_reason": "PRODUCTION_MODE_BLOCKED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "safe_to_execute_never_true",
+      "description": "모든 경우에 safe_to_execute는 false",
+      "input": {
+        "target_domain": "example.com",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "safe_to_execute": false
+      },
+      "note": "safe_to_execute가 true인 경우는 절대 불가"
+    }
+  ]
+}
