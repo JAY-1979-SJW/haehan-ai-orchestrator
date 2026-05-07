@@ -54,6 +54,34 @@ _VERDICT_WARN = "LIVE_WARN"
 _VERDICT_BLOCK = "LIVE_BLOCK"
 
 
+def _check_playwright_available() -> dict[str, Any]:
+    """playwright/chromium 설치 여부를 확인한다."""
+    result = {
+        "playwright_available": False,
+        "playwright_version": "",
+        "chromium_available": False,
+        "error": "",
+    }
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("playwright")
+        if spec is None:
+            result["error"] = "playwright not installed"
+            return result
+        result["playwright_available"] = True
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                browser.close()
+            result["chromium_available"] = True
+        except Exception as e:
+            result["error"] = f"chromium launch failed: {e}"
+    except Exception as e:
+        result["error"] = f"playwright check failed: {e}"
+    return result
+
+
 def _is_server_env() -> bool:
     """서버 환경 여부 판별."""
     return os.environ.get("IS_SERVER_ENV", "").lower() in ("1", "true", "yes")
@@ -151,9 +179,14 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
 
 def run_g2b_public_notice_readonly_live(
     candidate: dict[str, Any],
+    forbid_mock: bool = False,
+    actual_live_required: bool = False,
 ) -> dict[str, Any]:
     """
     execution gate를 통과한 candidate에 대해 live open/read를 수행한다.
+
+    forbid_mock=True: playwright 미설치 시 LIVE_WARN 대신 LIVE_FAIL 반환.
+    actual_live_required=True: mock 사용 금지, 실제 playwright/chromium 필수.
 
     필수 출력:
     - input_url, canonical_url, final_url
@@ -163,6 +196,7 @@ def run_g2b_public_notice_readonly_live(
     - server_browser_used, readonly_allowed
     - download_auto_allowed, title, body_text_sample, body_text_length
     - blocked_reason, error, verdict
+    - actual_live_required, mock_used, playwright_available, chromium_available
     """
     url = candidate.get("input_url", "")
     canonical = candidate.get("canonical_url", url)
@@ -188,6 +222,11 @@ def run_g2b_public_notice_readonly_live(
         "blocked_reason": "",
         "error": "",
         "verdict": _VERDICT_BLOCK,
+        # actual-live 모드 필드
+        "actual_live_required": actual_live_required,
+        "mock_used": False,
+        "playwright_available": False,
+        "chromium_available": False,
     }
 
     # 서버 환경 차단
@@ -222,14 +261,25 @@ def run_g2b_public_notice_readonly_live(
 
     pw_result = _try_playwright_open_read(url)
 
-    if not pw_result.get("local_agent_available"):
+    pw_available = pw_result.get("local_agent_available", False)
+    result["playwright_available"] = pw_available
+    result["chromium_available"] = pw_available  # _try_playwright_open_read 성공 = chromium 가용
+
+    if not pw_available:
         result["local_agent_used"] = False
+        result["mock_used"] = False
         result["blocked_reason"] = "LOCAL_AGENT_UNAVAILABLE"
         result["error"] = pw_result.get("error", "")
-        result["verdict"] = _VERDICT_WARN
+        # actual-live 모드 또는 forbid_mock이면 FAIL
+        if actual_live_required or forbid_mock:
+            result["verdict"] = _VERDICT_FAIL
+            result["blocked_reason"] = "ACTUAL_LIVE_REQUIRED_BUT_PLAYWRIGHT_UNAVAILABLE"
+        else:
+            result["verdict"] = _VERDICT_WARN
         return result
 
     result["local_agent_used"] = True
+    result["mock_used"] = False
     result["live_browser_worker_called"] = True
     result["execution_dispatched"] = True
     result["title"] = pw_result.get("title", "")
@@ -311,6 +361,8 @@ def validate_g2b_public_notice_live_result(result: dict[str, Any]) -> list[str]:
 
 def run_g2b_public_notice_fixture_live_suite(
     fixture_path: str,
+    forbid_mock: bool = False,
+    actual_live_required: bool = False,
 ) -> dict[str, Any]:
     """
     fixture 파일의 허용 케이스 전체를 순차 실행하고
@@ -342,7 +394,19 @@ def run_g2b_public_notice_fixture_live_suite(
         "results": [],
         "summary": "",
         "run_at": datetime.now(timezone.utc).isoformat(),
+        # actual-live 모드 메타
+        "actual_live_required": actual_live_required,
+        "forbid_mock": forbid_mock,
+        "mock_used": False,
+        "playwright_available": None,
+        "chromium_available": None,
     }
+
+    # playwright/chromium 가용 여부를 suite 레벨에 기록
+    if actual_live_required or forbid_mock:
+        pw_check = _check_playwright_available()
+        suite_result["playwright_available"] = pw_check.get("playwright_available", False)
+        suite_result["chromium_available"] = pw_check.get("chromium_available", False)
 
     with open(fixture_path, encoding="utf-8") as f:
         fixture = json.load(f)
@@ -370,12 +434,21 @@ def run_g2b_public_notice_fixture_live_suite(
 
         if expected_verdict == "ALLOWED":
             suite_result["allowed_cases"] += 1
-            # live 실행
-            live_result = run_g2b_public_notice_readonly_live(candidate)
+            # live 실행 (actual_live_required/forbid_mock 전달)
+            live_result = run_g2b_public_notice_readonly_live(
+                candidate,
+                forbid_mock=forbid_mock,
+                actual_live_required=actual_live_required,
+            )
             case_result["live_result"] = live_result
             case_result["case_verdict"] = live_result.get("verdict", "")
-            if live_result.get("verdict") in (_VERDICT_PASS, _VERDICT_WARN):
-                suite_result["live_executed"] += 1
+            # actual_live_required 모드에서는 LIVE_PASS만 성공 카운트
+            if actual_live_required or forbid_mock:
+                if live_result.get("verdict") == _VERDICT_PASS:
+                    suite_result["live_executed"] += 1
+            else:
+                if live_result.get("verdict") in (_VERDICT_PASS, _VERDICT_WARN):
+                    suite_result["live_executed"] += 1
 
         elif expected_verdict in ("BLOCKED",):
             suite_result["blocked_cases"] += 1
@@ -420,4 +493,5 @@ __all__ = [
     "validate_g2b_public_notice_live_result",
     "run_g2b_public_notice_fixture_live_suite",
     "BODY_TEXT_MAX_LEN",
+    "_check_playwright_available",
 ]
