@@ -1,0 +1,339 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "LOCAL_AGENT_WS_STATUS_AUTO_SEND_1 fixture",
+  "cases": [
+    {
+      "id": "confirmed_status_pending_send",
+      "description": "USER_CONFIRMED 상태 task가 pending send event로 수집됨",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-confirmed-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "USER_CONFIRMED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_pending_events": 1,
+      "expected_event_status": "USER_CONFIRMED",
+      "expected_sent_marker": false,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "cancelled_status_pending_send",
+      "description": "CANCELLED 상태 task가 pending send event로 수집됨",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-cancelled-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "CANCELLED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_pending_events": 1,
+      "expected_event_status": "CANCELLED",
+      "expected_sent_marker": false,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "blocked_status_pending_send",
+      "description": "BLOCKED 상태 task가 pending send event로 수집됨",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-blocked-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "BLOCKED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_pending_events": 1,
+      "expected_event_status": "BLOCKED",
+      "expected_sent_marker": false,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "failed_status_pending_send",
+      "description": "FAILED 상태 task가 pending send event로 수집됨",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-failed-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "FAILED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_pending_events": 1,
+      "expected_event_status": "FAILED",
+      "expected_sent_marker": false,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "waiting_for_user_not_repeated",
+      "description": "WAITING_FOR_USER는 전송 대상이 아님",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-waiting-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "WAITING_FOR_USER",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_pending_events": 0,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "confirmed_sent_once",
+      "description": "이미 sent marker 있으면 pending에 포함되지 않음",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-sent-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "USER_CONFIRMED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {"wf-sent-001": "USER_CONFIRMED"}
+      },
+      "expected_pending_events": 0,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "cancelled_sent_once",
+      "description": "CANCELLED 이미 전송된 경우 중복 전송 없음",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-sent-002",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "CANCELLED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {"wf-sent-002": "CANCELLED"}
+      },
+      "expected_pending_events": 0,
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "send_failure_keeps_pending",
+      "description": "전송 실패 시 sent marker 미기록 — 다음 시도에 재시도",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-fail-send-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "USER_CONFIRMED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "simulated_send_failure": true,
+      "expected_pending_events": 1,
+      "expected_sent_after_failure": false,
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "safe_to_execute_true_rejected",
+      "description": "safe_to_execute=true event는 전송 거부",
+      "input": {
+        "event": {
+          "message_type": "USER_PRESENT_STATUS",
+          "workflow_run_id": "wf-unsafe-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "status": "USER_CONFIRMED",
+          "status_reason": "",
+          "safe_to_execute": true,
+          "created_at": "2026-05-07T10:00:00+00:00"
+        }
+      },
+      "expected_send_ok": false,
+      "expected_error_contains": "BLOCKED_SAFE_TO_EXECUTE_TRUE",
+      "expected_sent": false
+    },
+    {
+      "id": "token_cookie_session_rejected",
+      "description": "token/cookie/session 포함 event는 전송 거부",
+      "input": {
+        "event": {
+          "message_type": "USER_PRESENT_STATUS",
+          "workflow_run_id": "wf-sensitive-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "status": "USER_CONFIRMED",
+          "status_reason": "",
+          "safe_to_execute": false,
+          "token": "should-be-rejected",
+          "cookie": "should-be-rejected",
+          "session": "should-be-rejected",
+          "created_at": "2026-05-07T10:00:00+00:00"
+        }
+      },
+      "expected_send_ok": false,
+      "expected_error_contains": "BLOCKED_SENSITIVE_FIELD",
+      "expected_sent": false
+    },
+    {
+      "id": "password_otp_certificate_password_rejected",
+      "description": "password/otp/certificate_password 포함 event는 전송 거부",
+      "input": {
+        "event": {
+          "message_type": "USER_PRESENT_STATUS",
+          "workflow_run_id": "wf-sensitive-002",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "status": "USER_CONFIRMED",
+          "status_reason": "",
+          "safe_to_execute": false,
+          "password": "should-be-rejected",
+          "otp": "should-be-rejected",
+          "certificate_password": "should-be-rejected",
+          "created_at": "2026-05-07T10:00:00+00:00"
+        }
+      },
+      "expected_send_ok": false,
+      "expected_error_contains": "BLOCKED_SENSITIVE_FIELD",
+      "expected_sent": false
+    },
+    {
+      "id": "server_ack_marks_sent",
+      "description": "전송 성공 시 sent marker 기록됨",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-ack-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "USER_CONFIRMED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {}
+      },
+      "expected_after_send": {
+        "sent_marker": "USER_CONFIRMED",
+        "pending_events": 0
+      },
+      "expected_security_policy": {
+        "safe_to_execute": false,
+        "no_sensitive_fields": true
+      }
+    },
+    {
+      "id": "duplicate_status_not_resent",
+      "description": "같은 workflow_run_id/status 중복 전송 금지",
+      "input": {
+        "task": {
+          "workflow_run_id": "wf-dup-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "state": "USER_CONFIRMED",
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T10:00:00+00:00",
+          "updated_at": "2026-05-07T10:01:00+00:00"
+        },
+        "sent_statuses": {"wf-dup-001": "USER_CONFIRMED"}
+      },
+      "expected_pending_events": 0,
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "heartbeat_still_works",
+      "description": "status sender 호출 후 heartbeat 기존 경로 유지",
+      "input": {
+        "simulate_heartbeat_timeout": true,
+        "tasks": []
+      },
+      "expected_heartbeat_sent": true,
+      "expected_status_sender_called": true,
+      "expected_agent_alive": true
+    },
+    {
+      "id": "existing_task_receive_still_works",
+      "description": "USER_PRESENT_TASK 수신 기존 경로와 충돌 없음",
+      "input": {
+        "message_type": "user_present_task",
+        "task": {
+          "message_type": "USER_PRESENT_TASK",
+          "workflow_run_id": "wf-coexist-001",
+          "tenant_id": "tenant-test",
+          "user_id": "user-test",
+          "site_id": "smoke.local",
+          "target_url_redacted": "https://smoke.local/test",
+          "target_url_hash": "sha256-test-hash",
+          "auth_method_label": "테스트 인증",
+          "safe_to_execute": false
+        }
+      },
+      "expected_task_registered": true,
+      "expected_state": "WAITING_FOR_USER",
+      "expected_ack_status": "WAITING_FOR_USER",
+      "expected_security_policy": {
+        "safe_to_execute": false
+      }
+    }
+  ]
+}
