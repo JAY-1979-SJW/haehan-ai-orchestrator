@@ -1,0 +1,180 @@
+{
+  "description": "로컬 Agent 사용자 직접 인증 UI 런타임 fixture (2026-05-07)",
+  "cases": [
+    {
+      "id": "store_create_basic",
+      "description": "기본 task 생성 — 필수 필드 포함 확인",
+      "input": {
+        "workflow_run_id": "wf_run_001",
+        "task_title": "은행 공동인증서 로그인",
+        "site_name": "국민은행",
+        "site_category": "bank",
+        "detected_auth_methods": ["certificate"]
+      },
+      "expected": {
+        "workflow_run_id": "wf_run_001",
+        "state": "TASK_RECEIVED",
+        "safe_to_execute": false,
+        "safe_to_dispatch": false,
+        "audit_required": true
+      }
+    },
+    {
+      "id": "store_create_strips_sensitive",
+      "description": "민감 필드는 store 진입 전 제거",
+      "input": {
+        "workflow_run_id": "wf_run_002",
+        "task_title": "카드사 인증",
+        "site_category": "card",
+        "password": "secret123",
+        "otp": "123456",
+        "cookie": "session=abc",
+        "token": "bearer_xyz"
+      },
+      "expected_absent": ["password", "otp", "cookie", "token"]
+    },
+    {
+      "id": "store_mark_waiting",
+      "description": "TASK_RECEIVED → WAITING_FOR_USER 전이",
+      "input": {"workflow_run_id": "wf_run_003", "site_category": "hometax"},
+      "transition": "mark_waiting_for_user",
+      "expected": {
+        "state": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "store_confirm_from_waiting",
+      "description": "WAITING_FOR_USER → USER_CONFIRMED 전이",
+      "setup_state": "WAITING_FOR_USER",
+      "transition": "mark_user_confirmed",
+      "expected": {
+        "state": "USER_CONFIRMED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "store_confirm_from_task_received_blocked",
+      "description": "TASK_RECEIVED 상태에서 USER_CONFIRMED 전이 불가",
+      "setup_state": "TASK_RECEIVED",
+      "transition": "mark_user_confirmed",
+      "expected_error": true
+    },
+    {
+      "id": "store_cancel_from_waiting",
+      "description": "WAITING_FOR_USER → CANCELLED 전이",
+      "setup_state": "WAITING_FOR_USER",
+      "transition": "mark_user_cancelled",
+      "expected": {
+        "state": "CANCELLED",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "store_cancel_from_blocked",
+      "description": "BLOCKED → CANCELLED 전이 가능",
+      "setup_state": "BLOCKED",
+      "transition": "mark_user_cancelled",
+      "expected": {
+        "state": "CANCELLED"
+      }
+    },
+    {
+      "id": "store_cancel_from_confirmed_blocked",
+      "description": "USER_CONFIRMED 상태에서 CANCELLED 전이 불가",
+      "setup_state": "USER_CONFIRMED",
+      "transition": "mark_user_cancelled",
+      "expected_error": true
+    },
+    {
+      "id": "sanitize_user_view_removes_sensitive",
+      "description": "사용자 화면 sanitize — 민감 필드 제거 확인",
+      "input_task": {
+        "workflow_run_id": "wf_run_004",
+        "state": "WAITING_FOR_USER",
+        "task_title": "홈택스 인증",
+        "password": "hunter2",
+        "otp": "999999",
+        "certificate_password": "pass1234",
+        "token": "tok_abc",
+        "cookie": "session=xyz",
+        "internal_policy": "classified",
+        "cross_tenant_data": "other_user"
+      },
+      "expected_absent": [
+        "password", "otp", "certificate_password", "token",
+        "cookie", "internal_policy", "cross_tenant_data"
+      ],
+      "expected_present": ["workflow_run_id", "state", "task_title"]
+    },
+    {
+      "id": "html_no_sensitive_input_fields",
+      "description": "HTML에 비밀번호/OTP/인증서 input 필드 없음",
+      "check": "source_code",
+      "forbidden_patterns": [
+        "type=\"password\"",
+        "type='password'",
+        "name=\"otp\"",
+        "name='otp'",
+        "name=\"certificate_password\"",
+        "placeholder.*비밀번호.*input",
+        "input.*otp"
+      ]
+    },
+    {
+      "id": "html_no_browser_automation",
+      "description": "HTML/서버 코드에 click/type/submit 자동화 없음",
+      "check": "source_code",
+      "forbidden_patterns": [
+        "page.click(",
+        "page.type(",
+        "page.fill(",
+        "page.submit(",
+        ".click(",
+        "driver.find_element"
+      ]
+    },
+    {
+      "id": "server_host_localhost_only",
+      "description": "서버는 127.0.0.1 전용 — 0.0.0.0 bind 불가",
+      "check": "run_server_0000_raises",
+      "expected_error": "0.0.0.0"
+    },
+    {
+      "id": "server_health_endpoint",
+      "description": "GET /health → safe_to_execute false",
+      "route": "GET /health",
+      "expected": {
+        "status": "ok",
+        "safe_to_execute": false,
+        "host": "127.0.0.1"
+      }
+    },
+    {
+      "id": "server_list_tasks_empty",
+      "description": "GET /tasks — 빈 store → 빈 배열 반환",
+      "route": "GET /tasks",
+      "store_state": "empty",
+      "expected": {
+        "tasks": [],
+        "count": 0,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "server_list_tasks_with_task",
+      "description": "GET /tasks — task 1건 → 배열에 포함, 민감 필드 없음",
+      "route": "GET /tasks",
+      "store_has_task": true,
+      "expected_absent_in_task": ["password", "otp", "cookie", "token"]
+    },
+    {
+      "id": "server_confirm_state_transition_only",
+      "description": "POST /confirm — 상태 전이만 수행, 브라우저 action 없음",
+      "route": "POST /tasks/{wfid}/confirm",
+      "setup_state": "WAITING_FOR_USER",
+      "expected_transition": "USER_CONFIRMED",
+      "expected_redirect": "/"
+    }
+  ]
+}
