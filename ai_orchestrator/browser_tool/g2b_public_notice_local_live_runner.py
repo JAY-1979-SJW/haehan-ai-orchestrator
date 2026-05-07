@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import os
 import json
+import platform
+import sys
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -87,6 +89,25 @@ def _is_server_env() -> bool:
     return os.environ.get("IS_SERVER_ENV", "").lower() in ("1", "true", "yes")
 
 
+def _collect_host_proof() -> dict[str, Any]:
+    """실행 호스트 증거를 수집한다. 민감정보(credential/token/password/otp) 제외."""
+    is_server = _is_server_env()
+    is_ssh = bool(os.environ.get("SSH_CLIENT") or os.environ.get("SSH_TTY"))
+    return {
+        "hostname": platform.node(),
+        "platform": platform.system(),
+        "platform_version": platform.version()[:80],
+        "python_executable": sys.executable,
+        "cwd": os.getcwd(),
+        "process_id": os.getpid(),
+        "is_server_environment": is_server,
+        "is_ssh_session": is_ssh,
+        "is_local_agent_environment": not is_server,
+        "execution_host_type": "server" if is_server else "local_agent",
+        "run_collected_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def _is_allowed_final_url(url: str) -> bool:
     """final_url이 허용 도메인 안에 있는지 확인."""
     try:
@@ -129,6 +150,8 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
         "body_text_sample": "",
         "body_text_length": 0,
         "final_url": "",
+        "browser_headless": False,
+        "browser_close_reason": "",
     }
 
     try:
@@ -170,9 +193,11 @@ def _try_playwright_open_read(url: str) -> dict[str, Any]:
 
             context.close()
             browser.close()
+            result["browser_close_reason"] = "read_complete_normal_close"
 
     except Exception as e:
         result["error"] = f"PLAYWRIGHT_ERROR: {e}"
+        result["browser_close_reason"] = f"exception_close: {type(e).__name__}"
 
     return result
 
@@ -227,7 +252,14 @@ def run_g2b_public_notice_readonly_live(
         "mock_used": False,
         "playwright_available": False,
         "chromium_available": False,
+        # host 증거 필드
+        "browser_headless": False,
+        "browser_close_reason": "",
     }
+
+    # host proof 수집 (민감정보 제외)
+    host_proof = _collect_host_proof()
+    result.update(host_proof)
 
     # 서버 환경 차단
     if _is_server_env():
@@ -287,6 +319,8 @@ def run_g2b_public_notice_readonly_live(
     result["body_text_length"] = pw_result.get("body_text_length", 0)
     result["final_url"] = pw_result.get("final_url", "")
     result["error"] = pw_result.get("error", "")
+    result["browser_headless"] = pw_result.get("browser_headless", False)
+    result["browser_close_reason"] = pw_result.get("browser_close_reason", "")
 
     # download 감지 시 FAIL
     if "DOWNLOAD_DETECTED" in result.get("error", ""):
@@ -402,6 +436,10 @@ def run_g2b_public_notice_fixture_live_suite(
         "chromium_available": None,
     }
 
+    # suite 레벨 host proof 수집
+    suite_host_proof = _collect_host_proof()
+    suite_result.update(suite_host_proof)
+
     # playwright/chromium 가용 여부를 suite 레벨에 기록
     if actual_live_required or forbid_mock:
         pw_check = _check_playwright_available()
@@ -494,4 +532,5 @@ __all__ = [
     "run_g2b_public_notice_fixture_live_suite",
     "BODY_TEXT_MAX_LEN",
     "_check_playwright_available",
+    "_collect_host_proof",
 ]
