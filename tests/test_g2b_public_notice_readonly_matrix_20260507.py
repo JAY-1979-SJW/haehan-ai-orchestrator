@@ -192,16 +192,16 @@ class TestG2BServerBrowserBoundary(unittest.TestCase):
 
 class TestG2BSubdomainPolicy(unittest.TestCase):
 
-    # 16. www.g2b.go.kr(subdomain)는 allowlist 불일치 → BLOCK
-    def test_16_www_subdomain_not_in_allowlist(self):
+    # 16. www.g2b.go.kr는 allowlist 추가 후 ALLOW_BROWSER_READONLY (G2B_DOMAIN_NORMALIZATION_POLICY_1 수정)
+    def test_16_www_subdomain_now_in_allowlist(self):
         payload = {
             "site_category": "g2b_public_readonly",
             "target_domain": "www.g2b.go.kr",
             "operation_type": "read",
         }
         result = evaluate_site_compliance(payload)
-        self.assertEqual(result["compliance_decision"], "BLOCK",
-                         "www.g2b.go.kr should BLOCK (not in allowlist as-is)")
+        self.assertEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
+                         "www.g2b.go.kr should ALLOW_BROWSER_READONLY after normalization fix")
 
     # 17. g2b.go.kr(apex domain)는 allowlist 일치 → ALLOW_BROWSER_READONLY
     def test_17_apex_domain_in_allowlist(self):

@@ -121,7 +121,8 @@ GOOGLE_SERVICE_POLICIES = {
 # Allowlist-safe sites (read-only browsing allowed)
 ALLOWLIST_SAFE_SITES = {
     "example.com",
-    "g2b.go.kr",  # G2B 나라장터
+    "g2b.go.kr",      # G2B 나라장터 apex domain
+    "www.g2b.go.kr",  # G2B 나라장터 www prefix (apex와 동일 공개 서비스)
 }
 
 # Default policy for unknown sites
