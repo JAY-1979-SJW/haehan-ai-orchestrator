@@ -31,8 +31,11 @@ _repo_root = Path(__file__).resolve().parent.parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
+import argparse
+
 from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (
     run_g2b_public_notice_fixture_live_suite,
+    _check_playwright_available,
 )
 
 _FIXTURE_DEFAULT = (
@@ -102,25 +105,51 @@ def _build_markdown_report(suite_result: dict, run_ts: str) -> str:
 
 
 def main() -> None:
-    fixture_path = str(_FIXTURE_DEFAULT)
-    if len(sys.argv) > 1:
-        fixture_path = sys.argv[1]
+    parser = argparse.ArgumentParser(description="G2B 공개 공고 Read-Only Live Suite")
+    parser.add_argument("fixture", nargs="?", default=str(_FIXTURE_DEFAULT))
+    parser.add_argument("--mode", choices=["default", "actual-live"], default="default")
+    parser.add_argument("--forbid-mock", action="store_true", default=False)
+    parser.add_argument("--require-local-agent", action="store_true", default=False)
+    parser.add_argument("--fail-on-live-warn", action="store_true", default=False)
+    args = parser.parse_args()
+
+    fixture_path = args.fixture
+    actual_live = args.mode == "actual-live" or args.require_local_agent
+    forbid_mock = args.forbid_mock or args.fail_on_live_warn or actual_live
+
+    # playwright/chromium 상태 확인
+    pw_check = _check_playwright_available()
+    print(f"[G2B Live Suite] playwright: {pw_check['playwright_available']}, "
+          f"chromium: {pw_check['chromium_available']}")
+    if actual_live and not pw_check["playwright_available"]:
+        print("[G2B Live Suite] FAIL: actual-live 모드인데 playwright 미설치")
+        sys.exit(1)
+    if actual_live and not pw_check["chromium_available"]:
+        print("[G2B Live Suite] FAIL: actual-live 모드인데 chromium 미설치")
+        sys.exit(1)
 
     now = datetime.now(timezone.utc)
     ts_file = now.strftime("%Y%m%d_%H%M%S")
     ts_date = now.strftime("%Y%m%d")
     run_ts = now.isoformat()
 
+    mode_label = "actual-live" if actual_live else "default"
+    print(f"[G2B Live Suite] mode={mode_label} forbid_mock={forbid_mock}")
     print(f"[G2B Live Suite] fixture: {fixture_path}")
     print(f"[G2B Live Suite] 실행 시작: {run_ts}")
 
-    suite_result = run_g2b_public_notice_fixture_live_suite(fixture_path)
+    suite_result = run_g2b_public_notice_fixture_live_suite(
+        fixture_path,
+        forbid_mock=forbid_mock,
+        actual_live_required=actual_live,
+    )
 
     print(f"[G2B Live Suite] 완료: {suite_result.get('summary', '')}")
 
     # JSON 저장
     _REPORT_JSON_DIR.mkdir(parents=True, exist_ok=True)
-    json_path = _REPORT_JSON_DIR / f"g2b_public_notice_live_execution_{ts_file}.json"
+    suffix = "actual_live" if actual_live else "live"
+    json_path = _REPORT_JSON_DIR / f"g2b_public_notice_{suffix}_execution_{ts_file}.json"
     safe_result = {k: v for k, v in suite_result.items()}
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(safe_result, f, ensure_ascii=False, indent=2)
@@ -128,7 +157,7 @@ def main() -> None:
 
     # Markdown 저장
     _REPORT_MD_DIR.mkdir(parents=True, exist_ok=True)
-    md_path = _REPORT_MD_DIR / f"g2b_public_notice_live_execution_{ts_date}.md"
+    md_path = _REPORT_MD_DIR / f"g2b_public_notice_{suffix}_execution_{ts_date}.md"
     md_content = _build_markdown_report(suite_result, run_ts)
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_content)
