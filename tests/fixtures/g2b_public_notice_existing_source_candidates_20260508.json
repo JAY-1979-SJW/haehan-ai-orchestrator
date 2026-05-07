@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-05-08T00:00:00+00:00",
+  "source": "existing_g2b_openapi_app",
+  "source_mode": "exported_json",
+  "synthetic_sample": true,
+  "api_key_used_by_current_app": false,
+  "api_key_value_exposed": false,
+  "db_read_direct": false,
+  "db_write": false,
+  "endpoint_confirmed": false,
+  "endpoint_status": "PENDING_CONFIRMATION",
+  "note": "기존 OpenAPI 앱 endpoint 미확정. 실제 endpoint 확정 후 업데이트 필요.",
+  "safe_detail_url_candidates": [
+    "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do",
+    "https://www.g2b.go.kr/pt/menu/ntn01/pta02/ptb04001l.do"
+  ],
+  "blocked_detail_url_candidates": [
+    "https://www.g2b.go.kr/pt/file/downloadFile.do?id=999"
+  ],
+  "needs_verification_candidates": [],
+  "detail_url_missing_count": 2,
+  "missing_required_fields_count": 1,
+  "item_count": 5,
+  "verdict": "WARN_MISSING_FIELDS",
+  "bridge_verdict": "BRIDGE_HAS_SAFE_CANDIDATES"
+}
