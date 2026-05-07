@@ -4,10 +4,11 @@ This backend launches and controls actual browser instances using Playwright.
 Execution is gated by:
 1. BROWSER_EXECUTION_ENABLED environment variable (must be "true")
 2. Action allowlist (only browser.inspect)
-3. URL allowlist (only about:blank)
+3. URL boundary policy (evaluate_server_browser_url_policy) — 제한 사이트 차단
 """
 import os
 from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from browser_worker.policy import evaluate_server_browser_url_policy
 
 
 class RealPlaywrightBackend:
@@ -43,13 +44,15 @@ class RealPlaywrightBackend:
             return False, "ACTION_NOT_ALLOWED_ACTUAL_EXECUTION"
         return True, ""
 
-    def _validate_url(self, url: str) -> tuple[bool, str]:
-        """Check if URL is allowed for actual execution.
+    def _validate_url(self, url: str, metadata: dict | None = None) -> tuple[bool, str]:
+        """Check if URL is allowed for actual execution via boundary policy.
 
+        page.goto 호출 전 실행. 제한 사이트는 BLOCK 반환.
         Returns:
             (allowed, error_code)
         """
-        if url not in self.ALLOWED_URLS:
+        policy = evaluate_server_browser_url_policy(url, metadata)
+        if not policy["allowed"]:
             return False, "URL_NOT_ALLOWED_ACTUAL_EXECUTION"
         return True, ""
 
@@ -90,8 +93,8 @@ class RealPlaywrightBackend:
                 status="error",
             )
 
-        # 3. Check if URL is allowed
-        allowed, error_code = self._validate_url(request.url)
+        # 3. Check if URL is allowed via boundary policy (제한 사이트 차단)
+        allowed, error_code = self._validate_url(request.url, request.payload or {})
         if not allowed:
             return WorkerBrowserResponse(
                 success=False,
