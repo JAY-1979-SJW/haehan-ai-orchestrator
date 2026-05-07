@@ -1,25 +1,25 @@
 /**
- * Browser approvals mock page (BROWSER-4I)
+ * Browser approvals page (BROWSER-4I)
  *
- * Demo page showing browser action approval workflow with mock data.
- * This page demonstrates the UI contract without real API/WebSocket connections.
+ * Real approval workflow page using actual API integration.
+ * Displays and manages browser action approval requests.
  */
 
 import { PageShell } from "@/components/ui/PageShell";
-import { BrowserApprovalMockPanel } from "@/components/browser-approval";
+import { BrowserApprovalPanel } from "@/components/browser-approval/BrowserApprovalPanel";
 
 export const metadata = {
   title: "Browser Approvals - Admin",
-  description: "Browser action approval workflow (mock data)",
+  description: "Browser action approval workflow",
 };
 
 export default function BrowserApprovalsPage() {
   return (
     <PageShell
       title="Browser Approvals"
-      description="Browser action approval workflow (mock data)"
+      description="Browser action approval workflow"
     >
-      <BrowserApprovalMockPanel />
+      <BrowserApprovalPanel />
     </PageShell>
   );
 }
