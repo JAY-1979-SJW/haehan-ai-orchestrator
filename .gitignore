@@ -53,6 +53,8 @@ tests/fixtures/*
 !tests/fixtures/browser_engine_capability_classification_20260507.json
 # Exception: browser engine routing policy fixture (tracked for reproducibility)
 !tests/fixtures/browser_engine_routing_policy_20260507.json
+# Exception: browser engine routing preflight chain fixture (tracked for reproducibility)
+!tests/fixtures/browser_engine_routing_preflight_chain_20260507.json
 
 # IDE
 .vscode/
