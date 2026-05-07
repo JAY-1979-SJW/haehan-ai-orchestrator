@@ -208,21 +208,21 @@ export function BrowserApprovalPanel() {
       approval_id: approval.approval_id,
       task_id: approval.workflow_run_id, // Use workflow_run_id as task_id for UI
       status: (isPending ? "pending" : isApproved ? "approved" : isRejected ? "rejected" : "expired") as any,
-      action_type: "browser.execute_type", // Default action type
+      action_type: "browser.execute_type" as any, // Default action type
       selector: "",
       target_url_domain: approval.target_url_redacted ? new URL(approval.target_url_redacted).hostname : undefined,
       risk_level: "medium",
       final_approval_required: false,
       requested_by: "system",
       created_at: approval.created_at,
-      expires_at: approval.expires_at,
+      expires_at: approval.expires_at || undefined,
       can_approve: isPending,
       can_reject: isPending,
       can_execute: false, // Always false per policy
       requires_final_approval_input: false,
       approval_expired: isExpired,
       approval_used: isApproved,
-    };
+    } as BrowserApprovalRequestDisplay;
   };
 
   return (
@@ -273,7 +273,7 @@ export function BrowserApprovalPanel() {
               className="rounded-lg border border-[#E5E7EB] bg-white p-4"
             >
               {/* Request card */}
-              <BrowserApprovalRequestCard request={requestDisplay} />
+              <BrowserApprovalRequestCard request={requestDisplay as any} />
 
               {/* Approval details */}
               <div className="mt-3 rounded-md bg-[#F9FAFB] p-3 text-[11px] space-y-1 border border-[#F3F4F6]">
@@ -301,7 +301,7 @@ export function BrowserApprovalPanel() {
               {isPending && !item.error && (
                 <div className="mt-4 border-t border-[#F3F4F6] pt-4">
                   <BrowserApprovalActionBar
-                    request={requestDisplay}
+                    request={requestDisplay as any}
                     onApprove={handleApprove}
                     onReject={handleReject}
                   />
