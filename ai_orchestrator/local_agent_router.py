@@ -51,6 +51,33 @@ try:
 except ImportError:
     _UP_STATUS_HANDLER_AVAILABLE = False
 
+try:
+    from .browser_tool.local_agent_user_present_dispatcher import (
+        build_user_present_dispatch_response,
+        should_dispatch_user_present_task,
+    )
+    _UP_DISPATCHER_AVAILABLE = True
+except ImportError:
+    _UP_DISPATCHER_AVAILABLE = False
+
+# ── USER_PRESENT_TASK in-memory 전송 대기 큐 ─────────────────────────────────
+# agent_id → [task_message, ...]
+# WS heartbeat/pull 시 드레인하여 전송.
+import threading as _threading
+_up_task_queue: dict[str, list] = {}
+_up_task_queue_lock = _threading.Lock()
+
+
+def _enqueue_up_task(agent_id: str, task_message: dict) -> None:
+    with _up_task_queue_lock:
+        _up_task_queue.setdefault(agent_id, []).append(task_message)
+
+
+def _drain_up_tasks(agent_id: str) -> list:
+    with _up_task_queue_lock:
+        tasks = _up_task_queue.pop(agent_id, [])
+    return tasks
+
 logger = logging.getLogger(__name__)
 
 local_agent_router = APIRouter(prefix="/local-agents", tags=["local-agents"])
@@ -895,6 +922,101 @@ def reject_local_agent_task(
                         detail={"error": status.upper(), "status": status})
 
 
+class UserPresentDispatchRequest(BaseModel):
+    """USER_PRESENT_TASK dispatch 요청 body."""
+    workflow_run_id: str
+    workflow_id: str = ""
+    tenant_id: str
+    user_id: str
+    site_id: str
+    site_category: str = ""
+    target_domain: str = ""
+    target_url_redacted: str = ""
+    target_url_hash: str = ""
+    auth_method_label: str = ""
+    selected_agent_id: str
+    dryrun_result: dict = {}
+
+
+@local_agent_router.post("/{agent_id}/user-present-dispatch")
+def dispatch_user_present_task(
+    agent_id: str,
+    body: UserPresentDispatchRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """routing dry-run 결과가 USER_PRESENT_REQUIRED일 때 USER_PRESENT_TASK를 agent에 전송 예약.
+
+    실제 WebSocket 송신은 다음 heartbeat/pull 시 수행.
+    safe_to_execute=False 항상.
+    """
+    actor = user["actor"]
+    role = user["role"]
+
+    if _reg.get_agent(agent_id) is None:
+        log_event(
+            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
+            action_type="user_present_dispatch", actor=actor, role=role,
+            note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
+        )
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "AGENT_NOT_FOUND", "message": f"미등록 에이전트: {agent_id}"},
+        )
+
+    if not _UP_DISPATCHER_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "DISPATCHER_UNAVAILABLE", "message": "dispatcher 모듈 없음"},
+        )
+
+    payload = {
+        "workflow_run_id": body.workflow_run_id,
+        "workflow_id": body.workflow_id,
+        "tenant_id": body.tenant_id,
+        "user_id": body.user_id,
+        "site_id": body.site_id,
+        "site_category": body.site_category,
+        "target_domain": body.target_domain,
+        "target_url_redacted": body.target_url_redacted,
+        "target_url_hash": body.target_url_hash,
+        "auth_method_label": body.auth_method_label,
+        "selected_agent_id": body.selected_agent_id,
+        "dryrun_result": body.dryrun_result,
+    }
+
+    result = build_user_present_dispatch_response(payload)
+    if not result.get("ok"):
+        log_event(
+            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
+            action_type="user_present_dispatch", actor=actor, role=role,
+            note=f"agent_id={agent_id} errors={result.get('errors', [])}",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "DISPATCH_VALIDATION_FAILED", "message": result.get("message_ko", "")},
+        )
+
+    task_message = result.get("task_message", {})
+    task_message["safe_to_execute"] = False
+    _enqueue_up_task(agent_id, task_message)
+
+    log_event(
+        "LOCAL_AGENT_USER_PRESENT_TASK_DISPATCHED", body.workflow_run_id,
+        actor=actor, role=role,
+        note=f"agent_id={agent_id} site_id={body.site_id}",
+    )
+
+    return {
+        "ok": True,
+        "dispatched": True,
+        "workflow_run_id": body.workflow_run_id,
+        "agent_id": agent_id,
+        "dispatch_decision": result.get("dispatch_decision", ""),
+        "safe_to_execute": False,
+        "message_ko": result.get("message_ko", ""),
+    }
+
+
 class AgentCleanupRequest(BaseModel):
     """agent cleanup 요청."""
     dry_run: bool = True
@@ -1043,6 +1165,17 @@ async def _push_queued(ws: WebSocket, agent_id: str) -> int:
         )
         sent += 1
     return sent
+
+
+async def _push_user_present_tasks(ws: WebSocket, agent_id: str) -> int:
+    """USER_PRESENT_TASK 전송 대기 큐를 드레인하여 push. 전송 개수 반환."""
+    tasks = _drain_up_tasks(agent_id)
+    for task_msg in tasks:
+        await ws.send_json({
+            "type": "user_present_task",
+            "task": task_msg,
+        })
+    return len(tasks)
 
 
 async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
@@ -1281,8 +1414,10 @@ async def agent_websocket(websocket: WebSocket):
                 _reg.set_agent_last_seen(agent_id)
                 await websocket.send_json({"type": "heartbeat_ack"})
                 await _push_queued(websocket, agent_id)
+                await _push_user_present_tasks(websocket, agent_id)
             elif mtype == "pull":
                 await _push_queued(websocket, agent_id)
+                await _push_user_present_tasks(websocket, agent_id)
             elif mtype == "running":
                 _reg.set_agent_last_seen(agent_id)
                 await _handle_running(websocket, agent_id, msg)

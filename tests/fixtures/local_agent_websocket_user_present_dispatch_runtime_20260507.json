@@ -1,0 +1,374 @@
+{
+  "version": "1.0",
+  "date": "2026-05-07",
+  "description": "Local Agent WebSocket User-Present Dispatch Runtime fixture",
+  "cases": [
+    {
+      "id": "should_dispatch_when_user_present_required",
+      "description": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED → dispatch=True",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "should_dispatch": true
+      }
+    },
+    {
+      "id": "should_not_dispatch_server_playwright",
+      "description": "SERVER_PLAYWRIGHT_READONLY_READY → dispatch=False",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY"
+        }
+      },
+      "expected": {
+        "should_dispatch": false
+      }
+    },
+    {
+      "id": "should_not_dispatch_blocked",
+      "description": "BLOCKED → dispatch=False",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_BLOCKED"
+        }
+      },
+      "expected": {
+        "should_dispatch": false
+      }
+    },
+    {
+      "id": "should_not_dispatch_api_connector",
+      "description": "API_CONNECTOR_REQUIRED → dispatch=False",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_API_CONNECTOR_REQUIRED"
+        }
+      },
+      "expected": {
+        "should_dispatch": false
+      }
+    },
+    {
+      "id": "should_not_dispatch_manual_review",
+      "description": "MANUAL_REVIEW_REQUIRED → dispatch=False",
+      "input": {
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_MANUAL_REVIEW_REQUIRED"
+        }
+      },
+      "expected": {
+        "should_dispatch": false
+      }
+    },
+    {
+      "id": "dispatch_context_eligible",
+      "description": "USER_PRESENT_REQUIRED → dispatch_context.dispatch_eligible=True, safe_to_execute=False",
+      "input": {
+        "workflow_run_id": "wr_dc_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "dispatch_eligible": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "dispatch_context_not_eligible",
+      "description": "BLOCKED → dispatch_context.dispatch_eligible=False",
+      "input": {
+        "workflow_run_id": "wr_dc_002",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_BLOCKED"
+        }
+      },
+      "expected": {
+        "dispatch_eligible": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "build_task_from_dryrun_valid",
+      "description": "dryrun_result → USER_PRESENT_TASK message 생성",
+      "input": {
+        "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+        "workflow_run_id": "wr_bt_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+        "next_step_instruction": {
+          "site_category": "bank",
+          "target_domain": "kbstar.com",
+          "target_url_redacted": "https://kbstar.com/***",
+          "target_url_hash": "abc123def456",
+          "auth_method_label": "공동인증서/공인인증서",
+          "required_user_actions": ["직접 인증 후 완료 클릭"],
+          "blocked_ai_actions": ["자동 입력 금지"]
+        }
+      },
+      "expected": {
+        "message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false,
+        "target_url_absent": true
+      }
+    },
+    {
+      "id": "build_task_from_dryrun_no_raw_url",
+      "description": "raw target_url이 task message에 포함되지 않음",
+      "input": {
+        "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+        "workflow_run_id": "wr_bt_url_001",
+        "next_step_instruction": {
+          "target_url": "https://kbstar.com/login",
+          "target_url_redacted": "https://kbstar.com/***",
+          "target_url_hash": "abc123"
+        }
+      },
+      "expected": {
+        "target_url_absent": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "validate_missing_workflow_run_id",
+      "description": "workflow_run_id 누락 시 검증 오류",
+      "input": {
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "errors_present": true,
+        "error_field": "workflow_run_id"
+      }
+    },
+    {
+      "id": "validate_missing_selected_agent_id",
+      "description": "selected_agent_id 누락 시 AGENT_SELECTION_REQUIRED 오류",
+      "input": {
+        "workflow_run_id": "wr_va_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "errors_present": true,
+        "agent_selection_required": true
+      }
+    },
+    {
+      "id": "validate_wrong_dispatch_decision",
+      "description": "dispatch_decision이 USER_PRESENT_REQUIRED 아닐 때 오류",
+      "input": {
+        "workflow_run_id": "wr_va_002",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_BLOCKED"
+        }
+      },
+      "expected": {
+        "errors_present": true
+      }
+    },
+    {
+      "id": "validate_safe_to_execute_true_rejected",
+      "description": "safe_to_execute=true가 포함된 요청 → 오류",
+      "input": {
+        "workflow_run_id": "wr_va_003",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "safe_to_execute": true,
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "errors_present": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "build_dispatch_response_valid",
+      "description": "유효한 요청 → dispatch response ok=True",
+      "input": {
+        "workflow_run_id": "wr_resp_001",
+        "workflow_id": "w1",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s_bank",
+        "selected_agent_id": "agent_bank_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+          "next_step_instruction": {
+            "site_category": "bank",
+            "target_domain": "kbstar.com",
+            "target_url_redacted": "https://kbstar.com/***",
+            "target_url_hash": "abc123",
+            "auth_method_label": "공동인증서/공인인증서",
+            "required_user_actions": ["직접 인증 후 완료 클릭"],
+            "blocked_ai_actions": ["자동 입력 금지"]
+          }
+        }
+      },
+      "expected": {
+        "ok": true,
+        "dispatched": true,
+        "safe_to_execute": false,
+        "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+      }
+    },
+    {
+      "id": "build_dispatch_response_invalid",
+      "description": "selected_agent_id 없으면 ok=False",
+      "input": {
+        "workflow_run_id": "wr_resp_002",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "ok": false,
+        "dispatched": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "dispatch_response_contains_task_message",
+      "description": "성공 응답에 task_message가 포함되고 message_type=USER_PRESENT_TASK",
+      "input": {
+        "workflow_run_id": "wr_tm_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED",
+          "next_step_instruction": {
+            "target_url_redacted": "https://kbstar.com/***",
+            "target_url_hash": "abc123",
+            "auth_method_label": "공동인증서"
+          }
+        }
+      },
+      "expected": {
+        "ok": true,
+        "task_message_present": true,
+        "task_message_type": "USER_PRESENT_TASK",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "dispatch_response_safe_to_execute_always_false",
+      "description": "dispatch response의 safe_to_execute는 항상 False",
+      "input": {
+        "workflow_run_id": "wr_sec_001",
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "site_id": "s1",
+        "selected_agent_id": "agent_001",
+        "dryrun_result": {
+          "dispatch_decision": "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        }
+      },
+      "expected": {
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "ws_server_pushes_task_on_heartbeat",
+      "description": "heartbeat 수신 시 USER_PRESENT_TASK 큐 드레인하여 push",
+      "input": {
+        "type": "heartbeat",
+        "agent_id": "agent_001",
+        "pending_up_task": {
+          "message_type": "USER_PRESENT_TASK",
+          "workflow_run_id": "wr_hb_001",
+          "safe_to_execute": false
+        }
+      },
+      "expected": {
+        "heartbeat_ack_sent": true,
+        "user_present_task_pushed": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "ws_server_pushes_task_on_pull",
+      "description": "pull 메시지 수신 시 USER_PRESENT_TASK 큐 드레인",
+      "input": {
+        "type": "pull",
+        "agent_id": "agent_001",
+        "pending_up_task": {
+          "message_type": "USER_PRESENT_TASK",
+          "workflow_run_id": "wr_pull_001",
+          "safe_to_execute": false
+        }
+      },
+      "expected": {
+        "user_present_task_pushed": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "id": "ws_client_receives_user_present_task_push",
+      "description": "로컬 Agent가 서버 push USER_PRESENT_TASK를 수신하여 WAITING_FOR_USER 전이",
+      "input": {
+        "type": "user_present_task",
+        "task": {
+          "message_type": "USER_PRESENT_TASK",
+          "workflow_run_id": "wr_ws_recv_001",
+          "workflow_id": "w1",
+          "tenant_id": "t1",
+          "user_id": "u1",
+          "site_id": "s_bank",
+          "site_category": "bank",
+          "target_domain": "kbstar.com",
+          "target_url_redacted": "https://kbstar.com/***",
+          "target_url_hash": "abc123",
+          "auth_method_label": "공동인증서/공인인증서",
+          "user_message_ko": "은행 사이트 접속에 사용자 직접 인증이 필요합니다.",
+          "required_user_actions": ["직접 인증 후 완료 클릭"],
+          "blocked_ai_actions": ["자동 입력 금지"],
+          "safe_to_execute": false,
+          "created_at": "2026-05-07T00:00:00+00:00"
+        }
+      },
+      "expected": {
+        "local_state": "WAITING_FOR_USER",
+        "ack_type": "user_present_ack",
+        "ack_status": "WAITING_FOR_USER",
+        "safe_to_execute": false
+      }
+    }
+  ]
+}
