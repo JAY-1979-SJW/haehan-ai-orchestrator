@@ -1,0 +1,496 @@
+{
+  "version": "20260507",
+  "description": "로컬 Agent read-only 브라우저 런타임 fixture",
+  "cases": [
+    {
+      "case_id": "g2b_public_readonly_allowed",
+      "input": {
+        "workflow_run_id": "run_g2b_001",
+        "site_category": "procurement",
+        "target_url": "https://www.g2b.go.kr/search",
+        "target_domain": "g2b.go.kr",
+        "operation_type": "readonly_search",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "internal_admin_readonly_allowed",
+      "input": {
+        "workflow_run_id": "run_internal_001",
+        "site_category": "internal",
+        "target_url": "http://localhost:3000/status",
+        "target_domain": "localhost",
+        "operation_type": "readonly_status_check",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "google_requires_api_connector",
+      "input": {
+        "workflow_run_id": "run_google_001",
+        "site_category": "cloud_service",
+        "target_url": "https://www.googleapis.com/v1/users",
+        "target_domain": "googleapis.com",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "REQUIRE_API_CONNECTOR",
+        "readonly_execution": false,
+        "user_present_required": false,
+        "local_agent_required": false,
+        "api_required": true,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "bank_certificate_detected_user_present",
+      "input": {
+        "workflow_run_id": "run_bank_cert_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/login",
+        "target_domain": "bank.co.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "공동인증서로 로그인하세요. 인증서를 선택하고 비밀번호를 입력하세요."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "REQUIRE_USER_PRESENT",
+        "readonly_execution": true,
+        "user_present_required": true,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": ["certificate"],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "bank_otp_detected_user_present",
+      "input": {
+        "workflow_run_id": "run_bank_otp_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/otp",
+        "target_domain": "bank.co.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "OTP 번호를 입력하세요. 일회용 비밀번호를 확인하세요."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "REQUIRE_USER_PRESENT",
+        "readonly_execution": true,
+        "user_present_required": true,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": ["otp"],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "hometax_certificate_detected_user_present",
+      "input": {
+        "workflow_run_id": "run_hometax_001",
+        "site_category": "tax",
+        "target_url": "https://www.hometax.go.kr/login",
+        "target_domain": "hometax.go.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "공인인증서 로그인 또는 금융인증서로 로그인하세요."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "REQUIRE_USER_PRESENT",
+        "readonly_execution": true,
+        "user_present_required": true,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": ["certificate", "financial_certificate"],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "four_insurance_security_plugin_detected",
+      "input": {
+        "workflow_run_id": "run_4ins_001",
+        "site_category": "insurance",
+        "target_url": "https://www.4insure.or.kr/login",
+        "target_domain": "4insure.or.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "보안프로그램을 설치하세요. 키보드보안 프로그램이 필요합니다."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": ["security_plugin", "install_required"]
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "captcha_detected_blocked",
+      "input": {
+        "workflow_run_id": "run_captcha_001",
+        "site_category": "government",
+        "target_url": "https://www.gov.kr/login",
+        "target_domain": "gov.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "CAPTCHA 인증을 완료해 주세요. 보안문자를 입력하세요."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "BLOCK",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": "SECURITY_BLOCKED:captcha"
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": ["captcha"]
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "remote_access_warning_detected_user_present",
+      "input": {
+        "workflow_run_id": "run_remote_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/security",
+        "target_domain": "bank.co.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "원격접속 차단 정책이 적용되었습니다. 원격제어 환경에서는 이용할 수 없습니다."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": ["remote_access_warning"]
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "password_field_detected_user_present",
+      "input": {
+        "workflow_run_id": "run_pw_detect_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/login",
+        "target_domain": "bank.co.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_page_text_for_test": "아이디와 비밀번호 입력 후 로그인하세요."
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "REQUIRE_USER_PRESENT",
+        "readonly_execution": true,
+        "user_present_required": true,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": ["password"],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "submit_operation_blocked",
+      "input": {
+        "workflow_run_id": "run_submit_block_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/transfer",
+        "target_domain": "bank.co.kr",
+        "operation_type": "submit",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "BLOCK",
+        "readonly_execution": false,
+        "user_present_required": false,
+        "local_agent_required": false,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": "OPERATION_BLOCKED:submit"
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "type_operation_blocked",
+      "input": {
+        "workflow_run_id": "run_type_block_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/input",
+        "target_domain": "bank.co.kr",
+        "operation_type": "type",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "BLOCK",
+        "readonly_execution": false,
+        "user_present_required": false,
+        "local_agent_required": false,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": "OPERATION_BLOCKED:type"
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "click_operation_blocked",
+      "input": {
+        "workflow_run_id": "run_click_block_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/button",
+        "target_domain": "bank.co.kr",
+        "operation_type": "click",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "BLOCK",
+        "readonly_execution": false,
+        "user_present_required": false,
+        "local_agent_required": false,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": "OPERATION_BLOCKED:click"
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "production_mode_blocked",
+      "input": {
+        "workflow_run_id": "run_prod_block_001",
+        "site_category": "procurement",
+        "target_url": "https://www.g2b.go.kr/search",
+        "target_domain": "g2b.go.kr",
+        "operation_type": "readonly_search",
+        "production_mode": true,
+        "dry_run": false
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "BLOCK",
+        "readonly_execution": false,
+        "user_present_required": false,
+        "local_agent_required": false,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": "PRODUCTION_MODE_BLOCKED"
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "sensitive_text_snippet_redacted",
+      "input": {
+        "workflow_run_id": "run_snippet_redact_001",
+        "site_category": "bank",
+        "target_url": "https://www.bank.co.kr/page",
+        "target_domain": "bank.co.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true,
+        "_raw_text_for_test": "사용자 비밀번호: hunter2 token: abc123 cookie: session=xyz 일반 텍스트"
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "text_snippet_must_not_contain": ["hunter2", "abc123", "session=xyz"],
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    },
+    {
+      "case_id": "cookie_session_token_never_in_result",
+      "input": {
+        "workflow_run_id": "run_no_cookie_001",
+        "site_category": "procurement",
+        "target_url": "https://www.g2b.go.kr/search",
+        "target_domain": "g2b.go.kr",
+        "operation_type": "read",
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected_runtime_policy": {
+        "runtime_decision": "READONLY_ALLOWED",
+        "readonly_execution": true,
+        "user_present_required": false,
+        "local_agent_required": true,
+        "api_required": false,
+        "safe_to_execute": false,
+        "blocked_reason": null
+      },
+      "expected_detection": {
+        "detected_auth_methods": [],
+        "detected_security_requirements": []
+      },
+      "expected_security_policy": {
+        "sensitive_hidden": true,
+        "result_must_not_contain_keys": ["cookie", "session", "token", "target_url", "raw_html"],
+        "cookie_not_extracted": true,
+        "screenshot_not_stored": true
+      }
+    }
+  ]
+}
