@@ -43,6 +43,14 @@ from . import local_agent_audit_builders as _audit
 from . import local_agent_router_guards as _guards
 from . import local_agent_audit_event_policy as _policy
 
+try:
+    from .browser_tool.local_agent_user_present_status_handler import (
+        handle_user_present_status_event as _handle_up_status_event,
+    )
+    _UP_STATUS_HANDLER_AVAILABLE = True
+except ImportError:
+    _UP_STATUS_HANDLER_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 local_agent_router = APIRouter(prefix="/local-agents", tags=["local-agents"])
@@ -1282,6 +1290,25 @@ async def agent_websocket(websocket: WebSocket):
                 _reg.set_agent_last_seen(agent_id)
                 await _handle_result(websocket, agent_id, msg)
                 await _push_queued(websocket, agent_id)
+            elif mtype == "user_present_status":
+                _reg.set_agent_last_seen(agent_id)
+                if _UP_STATUS_HANDLER_AVAILABLE:
+                    _result = _handle_up_status_event(msg)
+                    await websocket.send_json({
+                        "type": "user_present_status_ack",
+                        "ok": _result.get("ok", False),
+                        "workflow_run_id": _result.get("workflow_run_id", ""),
+                        "accepted_status": _result.get("accepted_status"),
+                        "safe_to_execute": False,
+                        "error": _result.get("error", ""),
+                    })
+                else:
+                    await websocket.send_json({
+                        "type": "error", "error": "USER_PRESENT_HANDLER_UNAVAILABLE",
+                    })
+            elif mtype == "user_present_ack":
+                # 로컬 Agent의 USER_PRESENT_TASK 수신 확인 — 로그만
+                _reg.set_agent_last_seen(agent_id)
             elif mtype == "auth":
                 # 재인증 요청은 거절 (이미 인증된 세션)
                 await websocket.send_json({

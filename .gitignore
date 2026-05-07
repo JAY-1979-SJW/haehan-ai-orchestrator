@@ -59,6 +59,8 @@ tests/fixtures/*
 !tests/fixtures/browser_engine_routing_dispatch_dryrun_20260507.json
 # Exception: local agent websocket user-present integration fixture (tracked for reproducibility)
 !tests/fixtures/local_agent_websocket_user_present_integration_20260507.json
+# Exception: local agent websocket user-present runtime fixture (tracked for reproducibility)
+!tests/fixtures/local_agent_websocket_user_present_runtime_20260507.json
 
 # IDE
 .vscode/
