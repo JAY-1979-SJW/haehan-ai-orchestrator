@@ -8,7 +8,6 @@ from typing import Any
 
 from . import policy
 from .backends import mock_backend
-from .backends.worker_backend import BrowserWorkerBackend
 from .schemas import BrowserResult, BrowserTask
 
 
@@ -59,6 +58,7 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
 
     if selected_backend == "worker":
         # Route to Browser Worker backend (HTTP)
+        from .backends.worker_backend import BrowserWorkerBackend  # lazy import
         worker_backend = BrowserWorkerBackend()
         url = params.get("url", "about:blank")
         task_id = params.get("task_id", f"task-{id(task)}")

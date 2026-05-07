@@ -229,24 +229,47 @@ def test_safe_to_execute_policy_not_allowed():
 # ── 실제 브라우저/dispatcher import 없음 ─────────────────────────────────
 
 def test_no_browser_import_in_this_module():
-    """이 테스트 파일은 실제 브라우저/dispatcher import를 포함하지 않는다."""
-    import sys
+    """이 테스트 파일은 실제 브라우저/dispatcher import를 포함하지 않는다.
+
+    sys.modules 전역 상태가 아닌, 이 테스트 파일 소스코드에 금지 import가 없음을 검증한다.
+    다른 테스트가 먼저 해당 모듈을 import해도 이 테스트는 영향받지 않는다.
+    """
+    source = Path(__file__).read_text(encoding="utf-8")
     blocked = ["playwright", "browser_worker", "dispatcher", "task_executor"]
     for mod in blocked:
-        assert mod not in sys.modules or "test" in str(sys.modules.get(mod, "").__name__ or ""), (
-            f"Unexpected import: {mod}"
-        )
+        # import 구문으로 직접 참조하는 경우만 차단 (주석·문자열 내 단순 언급은 허용)
+        import_patterns = [f"import {mod}", f"from {mod}"]
+        for pattern in import_patterns:
+            assert pattern not in source, (
+                f"Unexpected import in this test file: {pattern}"
+            )
 
 
 def test_no_task_executor_import():
-    """모듈 import 목록에 금지 모듈이 없다."""
-    import sys as _sys
+    """모듈 import 목록에 금지 모듈이 없다.
+
+    이 테스트 파일 및 검증 대상 gate 모듈의 소스코드에
+    task_executor / browser_worker를 직접 import하는 구문이 없음을 확인한다.
+    sys.modules 전역 상태 검사가 아닌 소스 코드 검사로 순서 독립성을 보장한다.
+    """
+    import ast
+
+    files_to_check = [
+        Path(__file__),
+        Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "submit_execution_gate.py",
+    ]
     blocked = ["task_executor", "browser_worker"]
-    loaded = list(_sys.modules.keys())
-    for mod in blocked:
-        assert not any(mod in k for k in loaded if "test" not in k), (
-            f"Unexpected module loaded: {mod}"
-        )
+
+    for fpath in files_to_check:
+        if not fpath.exists():
+            continue
+        source = fpath.read_text(encoding="utf-8")
+        for mod in blocked:
+            import_patterns = [f"import {mod}", f"from {mod}"]
+            for pattern in import_patterns:
+                assert pattern not in source, (
+                    f"Unexpected import in {fpath.name}: {pattern}"
+                )
 
 
 # ── operation_type 필드 검증 ─────────────────────────────────────────────

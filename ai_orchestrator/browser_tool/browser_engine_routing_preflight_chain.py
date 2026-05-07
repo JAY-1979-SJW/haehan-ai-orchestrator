@@ -38,7 +38,6 @@ from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_co
 from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
     evaluate_server_browser_allowed,
 )
-from browser_worker.policy import evaluate_server_browser_url_policy
 from ai_orchestrator.browser_tool.action_registry_preflight import (
     evaluate_action_registry_preflight,
 )
@@ -316,6 +315,7 @@ def evaluate_browser_engine_routing_preflight_chain(
     else:
         # SERVER_PLAYWRIGHT_READONLY_ALLOWED인 경우 URL 기반 정책으로 확인
         # (category 기반 classify는 미분류 허용 URL을 차단하므로 URL 정책 우선 사용)
+        from browser_worker.policy import evaluate_server_browser_url_policy  # lazy import
         url_policy = evaluate_server_browser_url_policy(
             target_url,
             metadata={"production_mode": ctx["production_mode"]},
