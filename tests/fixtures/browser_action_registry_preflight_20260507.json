@@ -1,0 +1,280 @@
+{
+  "fixture_id": "BROWSER_ACTION_REGISTRY_PREFLIGHT_1",
+  "version": "1.0",
+  "created_at": "2026-05-07",
+  "description": "Browser action registry preflight test fixtures. No execution, read-only approval store.",
+  "safe_to_execute_policy": {
+    "safe_to_execute_allowed": false,
+    "reason": "Action registry preflight is decision-only, not execution"
+  },
+  "production_mode_policy": {
+    "production_allowed": false,
+    "reason": "Test phase only"
+  },
+  "cases": [
+    {
+      "case_id": "inspect_readonly_allowed_dry_run",
+      "description": "browser.inspect read-only action, no approval required",
+      "action_name": "browser.inspect",
+      "input": {
+        "workflow_run_id": "run_001",
+        "workflow_id": "g2b_search",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "approval_required": false,
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected": {
+        "action_known": true,
+        "action_allowed_by_registry": true,
+        "operation_type": "read",
+        "approval_required": false,
+        "audit_required": false,
+        "preflight_decision": "ALLOW_DRY_RUN_DISPATCH",
+        "safe_to_dispatch": true,
+        "safe_to_execute": false,
+        "block_reason": null
+      }
+    },
+    {
+      "case_id": "plan_click_readonly_allowed_dry_run",
+      "description": "browser.plan_click read-only, no approval required",
+      "action_name": "browser.plan_click",
+      "input": {
+        "workflow_run_id": "run_002",
+        "workflow_id": "g2b_search",
+        "action_name": "browser.plan_click",
+        "operation_type": "read",
+        "approval_required": false,
+        "production_mode": false,
+        "dry_run": true
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "read",
+        "approval_required": false,
+        "preflight_decision": "ALLOW_DRY_RUN_DISPATCH",
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "plan_open_url_requires_allowlist",
+      "description": "browser.plan_open_url requires allowlist",
+      "action_name": "browser.plan_open_url",
+      "input": {
+        "workflow_run_id": "run_003",
+        "workflow_id": "g2b_notice",
+        "action_name": "browser.plan_open_url",
+        "operation_type": "navigate",
+        "approval_required": false,
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "navigate",
+        "approval_required": false,
+        "allowlist_required": true,
+        "preflight_decision": "ALLOW_DRY_RUN_DISPATCH",
+        "safe_to_dispatch": true,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "open_url_requires_approval",
+      "description": "browser.open_url_controlled requires approval",
+      "action_name": "browser.open_url_controlled",
+      "input": {
+        "workflow_run_id": "run_004",
+        "workflow_id": "g2b_notice_detail",
+        "action_name": "browser.open_url_controlled",
+        "operation_type": "open_url",
+        "approval_required": true,
+        "approval_id": "appr_001",
+        "tenant_id": "tenant_1",
+        "user_id": "user_1",
+        "site_id": "site_1",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "open_url",
+        "approval_required": true,
+        "audit_required": true,
+        "allowlist_required": true,
+        "approval_status": "PENDING",
+        "preflight_decision": "REQUIRE_APPROVAL",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false,
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "execute_type_blocked_even_if_approved",
+      "description": "browser.execute_type always blocked, even with approval",
+      "action_name": "browser.execute_type",
+      "input": {
+        "workflow_run_id": "run_005",
+        "workflow_id": "future_login",
+        "action_name": "browser.execute_type",
+        "operation_type": "type",
+        "approval_required": true,
+        "approval_id": "appr_002",
+        "approval_status": "APPROVED",
+        "tenant_id": "tenant_1",
+        "user_id": "user_1",
+        "site_id": "site_1",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "type",
+        "approval_required": true,
+        "blocked_by_default": true,
+        "approval_status": "APPROVED",
+        "preflight_decision": "BLOCK",
+        "block_reason": "TYPE_BLOCKED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false,
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "open_type_close_denied_by_default",
+      "description": "browser.open_type_close_controlled DENY_BY_DEFAULT",
+      "action_name": "browser.open_type_close_controlled",
+      "input": {
+        "workflow_run_id": "run_006",
+        "workflow_id": "future_submit",
+        "action_name": "browser.open_type_close_controlled",
+        "operation_type": "submit",
+        "approval_required": true,
+        "tenant_id": "tenant_1",
+        "user_id": "user_1",
+        "site_id": "site_1",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "type",
+        "approval_required": true,
+        "blocked_by_default": true,
+        "block_reason": "SUBMIT_DENY_BY_DEFAULT",
+        "preflight_decision": "DENY_BY_DEFAULT",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false,
+        "should_write_audit": true
+      }
+    },
+    {
+      "case_id": "unknown_action_blocked",
+      "description": "Unknown action is blocked",
+      "action_name": "browser.unknown_action",
+      "input": {
+        "workflow_run_id": "run_007",
+        "workflow_id": "test",
+        "action_name": "browser.unknown_action",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": false,
+        "action_allowed_by_registry": false,
+        "preflight_decision": "UNKNOWN_ACTION",
+        "block_reason": "ACTION_UNKNOWN",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "production_mode_blocked",
+      "description": "Production mode blocks action",
+      "action_name": "browser.inspect",
+      "input": {
+        "workflow_run_id": "run_008",
+        "workflow_id": "test",
+        "action_name": "browser.inspect",
+        "operation_type": "read",
+        "approval_required": false,
+        "production_mode": true
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "read",
+        "approval_required": false,
+        "production_allowed": false,
+        "preflight_decision": "BLOCK",
+        "block_reason": "PRODUCTION_MODE_BLOCKED",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "submit_operation_denied_by_default",
+      "description": "Submit operation DENY_BY_DEFAULT",
+      "action_name": "browser.open_type_close_controlled",
+      "input": {
+        "workflow_run_id": "run_009",
+        "workflow_id": "future_submit",
+        "action_name": "browser.open_type_close_controlled",
+        "operation_type": "submit",
+        "approval_required": true,
+        "tenant_id": "tenant_1",
+        "user_id": "user_1",
+        "site_id": "site_1",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": true,
+        "operation_type": "type",
+        "approval_required": true,
+        "preflight_decision": "DENY_BY_DEFAULT",
+        "block_reason": "SUBMIT_DENY_BY_DEFAULT",
+        "safe_to_execute": false
+      }
+    },
+    {
+      "case_id": "missing_action_name",
+      "description": "Missing action_name is blocked",
+      "action_name": null,
+      "input": {
+        "workflow_run_id": "run_010",
+        "workflow_id": "test",
+        "operation_type": "read",
+        "production_mode": false
+      },
+      "expected": {
+        "action_known": false,
+        "preflight_decision": "BLOCK",
+        "block_reason": "ACTION_UNKNOWN",
+        "safe_to_dispatch": false,
+        "safe_to_execute": false
+      }
+    }
+  ],
+  "policy_coverage": {
+    "action_types": [
+      "read-only (inspect, plan_click)",
+      "navigate (plan_open_url)",
+      "open_url (open_url_controlled)",
+      "click (execute_click)",
+      "type (execute_type)",
+      "submit (open_type_close_controlled)"
+    ],
+    "decision_types": [
+      "ALLOW_DRY_RUN_DISPATCH",
+      "REQUIRE_APPROVAL",
+      "BLOCK",
+      "DENY_BY_DEFAULT",
+      "UNKNOWN_ACTION"
+    ],
+    "block_reasons": [
+      "ACTION_UNKNOWN",
+      "PRODUCTION_MODE_BLOCKED",
+      "TYPE_BLOCKED",
+      "SUBMIT_DENY_BY_DEFAULT",
+      "APPROVAL_REQUIRED"
+    ]
+  }
+}
