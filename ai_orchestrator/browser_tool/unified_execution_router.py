@@ -87,8 +87,27 @@ def route_browser_task(
 
     server_result가 None이면 dry-run 모드.
     server_result가 있으면 fallback 판정까지 수행.
+
+    runtime_context: "server" | "local_agent" — server에서 외부 URL은 즉시 BLOCKED.
     """
     task_id = task.get("task_id", "")
+    runtime_context = (task.get("runtime_context") or "").lower()
+
+    # runtime_context guard — server에서 외부 URL action은 즉시 차단
+    if runtime_context == "server":
+        from ai_orchestrator.server.execution_location_guard import (
+            classify_execution_location_for_server, LOCAL_AGENT_REQUIRED,
+            BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
+        )
+        cls = classify_execution_location_for_server(task)
+        if cls["execution_location"] == LOCAL_AGENT_REQUIRED:
+            return build_safe_result(
+                task_id=task_id,
+                ok=False,
+                status="BLOCKED",
+                blocked_reason=BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
+                message_ko="외부 웹사이트 작업은 사용자 PC 로컬 에이전트에서 실행해야 합니다.",
+            )
 
     # 1. task 입력 검증
     validation = validate_task_input(task)
