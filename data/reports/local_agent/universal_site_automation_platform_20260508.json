@@ -1,0 +1,81 @@
+{
+  "task_id": "UNIVERSAL_SITE_AUTOMATION_PLATFORM_1",
+  "created_at": "2026-05-08",
+  "status": "COMPLETED",
+  "server_browser_used": false,
+  "sensitive_data_collected": false,
+  "cookie_exported": false,
+  "session_exported": false,
+  "password_collected": false,
+  "otp_collected": false,
+  "certificate_password_collected": false,
+  "storage_state_exported": false,
+  "modules_created": [
+    "ai_orchestrator/local_agent/site_profile_registry.py",
+    "ai_orchestrator/local_agent/site_capability_matrix.py",
+    "ai_orchestrator/local_agent/workflow_template_engine.py",
+    "ai_orchestrator/local_agent/selector_pack_registry.py",
+    "ai_orchestrator/local_agent/universal_safe_result.py",
+    "ai_orchestrator/local_agent/universal_workflow_runner.py",
+    "ai_orchestrator/local_agent/scenarios/__init__.py",
+    "ai_orchestrator/local_agent/scenarios/government_readonly.py",
+    "ai_orchestrator/local_agent/scenarios/cafe_to_blog.py",
+    "ai_orchestrator/local_agent/scenarios/document_download.py",
+    "ai_orchestrator/local_agent/scenarios/content_research_to_blog.py",
+    "ai_orchestrator/local_agent/scenarios/financial_readonly.py",
+    "ai_orchestrator/local_agent/scenarios/message_send_with_permission.py",
+    "ai_orchestrator/local_agent/scenarios/form_submit_with_permission.py",
+    "scripts/local_agent/create_site_profile.py",
+    "scripts/local_agent/validate_site_profile.py"
+  ],
+  "tests_created": [
+    "tests/test_site_profile_registry_20260508.py",
+    "tests/test_site_capability_matrix_20260508.py",
+    "tests/test_workflow_template_engine_20260508.py",
+    "tests/test_selector_pack_registry_20260508.py",
+    "tests/test_universal_safe_result_20260508.py",
+    "tests/test_universal_workflow_runner_20260508.py",
+    "tests/test_site_onboarding_tool_20260508.py",
+    "tests/test_universal_site_automation_platform_20260508.py"
+  ],
+  "test_results": {
+    "new_tests": 95,
+    "new_tests_passed": 95,
+    "new_tests_failed": 0,
+    "total_passed": 4313,
+    "total_skipped": 6,
+    "total_failed": 0
+  },
+  "registered_site_profiles": [
+    "naver", "naver_blog", "naver_cafe", "g2b_public",
+    "hometax_placeholder", "bank_placeholder", "card_placeholder", "insurance_placeholder",
+    "generic_content_site", "generic_government_site", "generic_financial_site",
+    "generic_forum_site", "generic_ecommerce_site"
+  ],
+  "registered_workflow_templates": [
+    "readonly_site_explore", "download_documents", "content_research_summary",
+    "cafe_to_blog_draft", "blog_publish_with_permission", "comment_with_permission",
+    "generic_form_fill_preview", "government_readonly_status_check",
+    "financial_readonly_statement_download", "ecommerce_order_status_readonly"
+  ],
+  "registered_selector_packs": [
+    "naver_blog", "naver_cafe", "g2b_public", "generic_content_site"
+  ],
+  "policy_grep_results": {
+    "server_browser_used_true": 0,
+    "password_input_in_execution_code": 0,
+    "otp_input_in_execution_code": 0,
+    "cookie_export_as_true": 0,
+    "session_export_as_true": 0,
+    "captcha_bypass_as_executable": 0,
+    "npki_access_as_executable": 0
+  },
+  "blocked_actions_common": [
+    "password_save", "otp_save", "cert_password_save",
+    "cookie_export", "session_export", "token_export", "storage_state_export",
+    "cert_file_access", "npki_access", "captcha_bypass", "account_bypass",
+    "stealth_evasion", "bulk_spam_post", "bulk_spam_comment",
+    "unauthorized_publish", "unauthorized_delete",
+    "auto_payment", "auto_transfer", "auto_bid_submit", "auto_esign"
+  ]
+}
