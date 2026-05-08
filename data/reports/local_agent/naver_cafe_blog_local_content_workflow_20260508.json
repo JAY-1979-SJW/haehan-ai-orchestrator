@@ -1,0 +1,49 @@
+{
+  "run_at": "2026-05-08T04:14:03.659333+00:00",
+  "task": "NAVER_CAFE_BLOG_LOCAL_CONTENT_WORKFLOW_1",
+  "start_head": "591f702",
+  "naver_domains_registered": 7,
+  "workflow_grades": {
+    "AUTO_ALLOWED": [
+      "cafe_search",
+      "cafe_read_post",
+      "cafe_extract_summary",
+      "blog_generate_title",
+      "blog_generate_body",
+      "blog_save_draft"
+    ],
+    "USER_DELEGATED": [
+      "cafe_post_write",
+      "cafe_comment_write",
+      "blog_publish",
+      "blog_schedule_publish",
+      "blog_edit",
+      "blog_delete"
+    ],
+    "USER_DIRECT": [
+      "naver_login",
+      "login_password_input",
+      "otp_input"
+    ],
+    "BLOCKED": [
+      "password_save",
+      "otp_save",
+      "cookie_export",
+      "session_export",
+      "bulk_spam_post",
+      "bulk_spam_comment"
+    ]
+  },
+  "test_results": {
+    "new_tests": 149,
+    "full_pytest": "4221 passed, 6 skipped, 0 failed",
+    "result": "PASS"
+  },
+  "policy_grep": {
+    "server_browser_used_true": false,
+    "password_auto_input": false,
+    "cookie_exported": false,
+    "unauthorized_publish": false,
+    "bulk_spam": false
+  }
+}
