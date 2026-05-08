@@ -1,15 +1,14 @@
 """
 사용자 주의 알림 모듈
 
-브라우저를 사용자 화면 앞으로 표시하고 안내 메시지를 생성한다.
-
-이번 구현 범위:
-- notifier contract 및 safe message 정의
-- OS 트레이/토스트 실제 구현은 다음 단계에서 진행
+브라우저를 사용자 화면 앞으로 표시하고 OS 알림을 발송한다.
+알림은 "사용자 직접 입력 필요"를 알려주는 역할만 한다.
 
 금지:
 - 자동 입력 안내 또는 자동입력 실행
 - 민감정보 포함 메시지 출력
+- 알림 클릭으로 submit/sign/payment/bid 실행
+- OS 시작프로그램/서비스 자동 등록
 """
 from __future__ import annotations
 
@@ -78,16 +77,93 @@ def build_cancel_notice() -> dict[str, Any]:
     }
 
 
-def request_browser_foreground() -> dict[str, Any]:
+def request_browser_foreground(
+    is_headed: bool = True,
+    browser_pid: int | None = None,
+) -> dict[str, Any]:
     """
-    브라우저를 사용자 화면 앞으로 표시 요청 contract를 반환한다.
-    실제 OS 레벨 표시는 다음 단계에서 구현한다.
+    브라우저를 사용자 화면 앞으로 표시 요청한다.
+    browser_foreground_adapter를 통해 실제 OS 레벨 전환을 시도한다.
+    실패해도 WARN 처리하며 작업은 계속된다.
     """
+    try:
+        from ai_orchestrator.local_agent.browser_foreground_adapter import (
+            request_foreground,
+        )
+        result = request_foreground(is_headed=is_headed, browser_pid=browser_pid)
+    except Exception as exc:
+        result = {
+            "status": "BROWSER_FOREGROUND_UNAVAILABLE",
+            "message_ko": f"foreground 전환 오류: {type(exc).__name__}",
+            "sensitive_data_read": False,
+            "password_input_read": False,
+            "input_value_read": False,
+            "browser_profile_modified": False,
+        }
+
+    result["action"] = "bring_browser_to_foreground"
+    result["headed_mode_required"] = True
+    result["sensitive_data_read"] = False
+    result["password_input_read"] = False
+    return result
+
+
+def notify_auth_required(
+    auth_signal: str = "",
+    is_headed: bool = True,
+    browser_pid: int | None = None,
+) -> dict[str, Any]:
+    """
+    인증 필요 알림을 발송하고 브라우저를 포그라운드로 표시 요청한다.
+
+    반환:
+      status: WAITING_USER_AUTH
+      notification_status: NOTIFICATION_SENT | FALLBACK_MESSAGE_ONLY | ...
+      foreground_status: BROWSER_FOREGROUND_REQUESTED | ...
+      message_ko: str
+      password_collected: False
+      otp_collected: False
+      certificate_password_collected: False
+      cookie_exported: False
+      session_exported: False
+    """
+    # OS 알림 발송
+    try:
+        from ai_orchestrator.local_agent.user_notification_adapter import (
+            notify_auth_required as _notify,
+        )
+        notification_result = _notify(auth_signal=auth_signal)
+        notification_status = notification_result["status"]
+    except Exception:
+        notification_status = "NOTIFICATION_FAILED"
+
+    # 브라우저 포그라운드 요청
+    foreground_result = request_browser_foreground(
+        is_headed=is_headed,
+        browser_pid=browser_pid,
+    )
+    foreground_status = foreground_result.get("status", "BROWSER_FOREGROUND_UNAVAILABLE")
+
     return {
-        "action": "bring_browser_to_foreground",
-        "headed_mode_required": True,
-        "implemented": False,
-        "note": "OS 트레이/토스트 실제 구현은 다음 단계에서 진행",
+        "status": "WAITING_USER_AUTH",
+        "notification_status": notification_status,
+        "foreground_status": foreground_status,
+        "message_ko": _AUTH_NOTICE_TEMPLATE,
+        "auth_signal": auth_signal,
+        "password_collected": False,
+        "otp_collected": False,
+        "certificate_password_collected": False,
+        "cookie_exported": False,
+        "session_exported": False,
+        "storage_state_exported": False,
+        "sensitive_data_included": False,
+        "password_auto_input": False,
+        "otp_auto_input": False,
+        "cert_password_auto_input": False,
+        "submit_action_triggered": False,
+        "sign_action_triggered": False,
+        "payment_action_triggered": False,
+        "bid_action_triggered": False,
     }
 
 
@@ -96,8 +172,9 @@ def get_notifier_status() -> dict[str, Any]:
     return {
         "contract_defined": True,
         "safe_message_implemented": True,
-        "os_tray_implemented": False,
-        "os_toast_implemented": False,
-        "browser_foreground_implemented": False,
-        "next_step": "OS 트레이/토스트 알림 실제 구현",
+        "os_notification_implemented": True,
+        "browser_foreground_implemented": True,
+        "os_tray_resident_implemented": False,
+        "os_autostart_implemented": False,
+        "next_step": "OS 트레이 상주/자동시작은 별도 승인 후 진행",
     }
