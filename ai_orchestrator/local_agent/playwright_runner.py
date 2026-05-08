@@ -36,6 +36,16 @@ from ai_orchestrator.local_agent.task_protocol import (
     STATUS_BLOCKED,
     build_result,
 )
+from ai_orchestrator.local_agent.auth_wait_controller import (
+    enter_auth_wait,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_OTP,
+)
+from ai_orchestrator.local_agent.user_attention_notifier import (
+    build_auth_attention_notice,
+    request_browser_foreground,
+)
 
 # ── 로그인/인증 감지 패턴 (text 기반, value 수집 없음) ─────────────────────────
 
@@ -141,22 +151,17 @@ def _run_open_url(pw: Any, task: dict[str, Any]) -> dict[str, Any]:
         signal = _detect_auth_signal(title + "\n" + body_sample)
 
         if signal in ("otp",):
-            return build_result(
+            return enter_auth_wait(
                 task_id=task_id,
-                ok=False,
-                status=STATUS_USER_ACTION_REQUIRED,
-                current_url_host=_get_url_host(current_url),
-                title_hint=title[:100],
-                message_ko="OTP 입력이 필요합니다. 사용자가 직접 수행해 주세요.",
+                auth_signal=AUTH_SIGNAL_OTP,
+                url_host=_get_url_host(current_url),
             )
         if signal in ("cert", "login"):
-            return build_result(
+            auth_sig = AUTH_SIGNAL_CERT if signal == "cert" else AUTH_SIGNAL_LOGIN
+            return enter_auth_wait(
                 task_id=task_id,
-                ok=False,
-                status=STATUS_WAITING_USER_AUTH,
-                current_url_host=_get_url_host(current_url),
-                title_hint=title[:100],
-                message_ko="인증이 필요합니다. 브라우저에서 직접 인증해 주세요.",
+                auth_signal=auth_sig,
+                url_host=_get_url_host(current_url),
             )
 
         return build_result(
@@ -187,13 +192,15 @@ def _run_read_page(pw: Any, task: dict[str, Any]) -> dict[str, Any]:
         signal = _detect_auth_signal(title + "\n" + body_sample)
 
         if signal:
-            return build_result(
+            auth_sig = (
+                AUTH_SIGNAL_OTP if signal == "otp"
+                else AUTH_SIGNAL_CERT if signal == "cert"
+                else AUTH_SIGNAL_LOGIN
+            )
+            return enter_auth_wait(
                 task_id=task_id,
-                ok=False,
-                status=STATUS_WAITING_USER_AUTH,
-                current_url_host=_get_url_host(current_url),
-                title_hint=title[:100],
-                message_ko="인증 감지. 사용자 직접 처리가 필요합니다.",
+                auth_signal=auth_sig,
+                url_host=_get_url_host(current_url),
             )
 
         # body_sample은 text만, 민감값 포함 없음
@@ -309,13 +316,15 @@ def _run_extract_text(pw: Any, task: dict[str, Any]) -> dict[str, Any]:
         signal = _detect_auth_signal(title + "\n" + text)
 
         if signal:
-            return build_result(
+            auth_sig = (
+                AUTH_SIGNAL_OTP if signal == "otp"
+                else AUTH_SIGNAL_CERT if signal == "cert"
+                else AUTH_SIGNAL_LOGIN
+            )
+            return enter_auth_wait(
                 task_id=task_id,
-                ok=False,
-                status=STATUS_WAITING_USER_AUTH,
-                current_url_host=_get_url_host(page.url),
-                title_hint=title[:100],
-                message_ko="인증 감지. 사용자 직접 처리가 필요합니다.",
+                auth_signal=auth_sig,
+                url_host=_get_url_host(page.url),
             )
 
         return build_result(
