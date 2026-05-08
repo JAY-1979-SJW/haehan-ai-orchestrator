@@ -1,0 +1,59 @@
+{
+  "task_id": "LOCAL_SECURITY_PROGRAM_AUTO_DISCOVERY_REAL_INSTALL_RUN_1",
+  "date": "2026-05-08",
+  "status": "INSTALL_COMPLETED",
+  "candidates_tried": 3,
+  "candidates": [
+    {"site": "우리은행", "domain": "spot.wooribank.com", "status": "PAGE_ACCESSED", "installer_found": false},
+    {"site": "KB국민은행", "domain": "obank.kbstar.com", "status": "PAGE_ACCESSED", "installer_found": true, "selected": true},
+    {"site": "정부24", "domain": "plus.gov.kr", "status": "PAGE_ACCESSED", "installer_found": false}
+  ],
+  "selected": {
+    "site_name": "KB국민은행",
+    "install_guide_url": "https://obank.kbstar.com/quics?page=C040531",
+    "domain": "obank.kbstar.com"
+  },
+  "signals_detected": [
+    "SECURITY_PROGRAM_REQUIRED",
+    "KEYBOARD_SECURITY_REQUIRED",
+    "CERT_MODULE_REQUIRED",
+    "E_SIGNATURE_MODULE_REQUIRED",
+    "INSTALL_GUIDE_PAGE_DETECTED"
+  ],
+  "installer": {
+    "safe_name": "delfino-g3.exe",
+    "source_host": "download.kbstar.com",
+    "official_source": true,
+    "size_bytes": 31093592,
+    "sha256": "000cf27f21f06997ef22f26b3743425d4a095b1143a17ebb77b7e65822c1cb8f",
+    "signature_status": "Valid",
+    "signer": "WIZVERA Co., Ltd.",
+    "issuer": "DigiCert"
+  },
+  "execution": {
+    "install_status": "INSTALL_COMPLETED",
+    "exit_code": 0,
+    "silent_flags_used": [],
+    "install_path": "C:/Program Files (x86)/Wizvera/Delfino-G3",
+    "install_detected": true,
+    "restart_required": true,
+    "retry_ready": false
+  },
+  "notes": {
+    "ahnlab_headless_error": "headless Playwright가 ASTx JS 브릿지 감지 불가 — 예상된 동작, 설치 파일 무관",
+    "headless_limitation": "headless 브라우저는 로컬 설치 브릿지 기반 설치 감지 불가"
+  },
+  "policy": {
+    "server_browser_used": false,
+    "cookie_exported": false,
+    "session_exported": false,
+    "password_collected": false,
+    "otp_collected": false,
+    "certificate_password_collected": false,
+    "storage_state_exported": false,
+    "silent_install": false,
+    "uac_bypass": false,
+    "security_bypass": false,
+    "safe_field_violations": 0
+  }
+}
