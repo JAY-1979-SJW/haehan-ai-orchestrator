@@ -1,0 +1,43 @@
+{
+  "task_id": "SECURITY_PROGRAM_USER_ASSISTED_INSTALL_MODE_1",
+  "date": "2026-05-08",
+  "status": "COMPLETED",
+  "modules_added": [
+    "ai_orchestrator/local_agent/user_assisted_installer.py",
+    "ai_orchestrator/local_agent/installer_folder_presenter.py",
+    "ai_orchestrator/local_agent/security_program_install_completion_detector.py",
+    "ai_orchestrator/local_agent/security_program_user_install_result_sanitizer.py"
+  ],
+  "tests": {
+    "test_user_assisted_installer_20260508.py": {"count": 12, "passed": 12},
+    "test_installer_folder_presenter_20260508.py": {"count": 10, "passed": 9, "skipped": 1},
+    "test_security_program_install_completion_detector_20260508.py": {"count": 10, "passed": 10},
+    "total_new": 32,
+    "all_new_passed": true
+  },
+  "regression": {
+    "total_passed": 4621,
+    "failed": 0,
+    "skipped": 7
+  },
+  "policy": {
+    "auto_execute": false,
+    "shellexecutew_runas": false,
+    "silent_install": false,
+    "uac_bypass": false,
+    "background_powershell_install": false,
+    "password_collected": false,
+    "otp_collected": false,
+    "cookie_exported": false,
+    "session_exported": false,
+    "storage_state_exported": false,
+    "npki_access": false,
+    "server_browser_used": false,
+    "safe_field_violations": 0
+  },
+  "user_flow": {
+    "ai_actions": ["detect", "download", "verify", "explorer_present"],
+    "user_actions": ["double_click", "uac_approve", "install_wizard", "completion_confirm"],
+    "ai_post_actions": ["headed_reconnect", "signal_compare", "task_resume"]
+  }
+}
