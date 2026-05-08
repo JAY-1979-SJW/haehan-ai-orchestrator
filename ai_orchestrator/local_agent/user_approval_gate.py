@@ -54,6 +54,16 @@ def _params_hash(params: dict[str, Any]) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
+def sanitize_params(params: dict[str, Any]) -> dict[str, Any]:
+    """공개 helper — 민감 파라미터 제거 결과를 반환."""
+    return _sanitize_params(params)
+
+
+def compute_params_hash(params: dict[str, Any]) -> str:
+    """공개 helper — 승인 범위 hash와 동일한 SHA256."""
+    return _params_hash(params)
+
+
 def create_approval_request(
     action_name: str,
     params: dict[str, Any],
