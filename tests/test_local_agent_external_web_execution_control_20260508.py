@@ -20,10 +20,10 @@ from ai_orchestrator.local_agent.action_risk_policy import (
 from ai_orchestrator.local_agent.site_type_classifier import (
     classify_site, SITE_GOVERNMENT, SITE_FINANCIAL,
 )
-from ai_orchestrator.local_agent.security_route_policy import (
-    classify_route, ROUTE_USER_UAC_REQUIRED,
-    ROUTE_FIRST_TIME_USER_APPROVAL_REQUIRED,
-    ROUTE_OFFICIAL_API_OR_MOBILE,
+from ai_orchestrator.local_agent.local_security_installer_runner import (
+    STATUS_WAITING_USER_UAC, STATUS_INSTALL_PERMISSION_REQUIRED,
+    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
+    check_action_allowed,
 )
 from ai_orchestrator.local_agent.universal_safe_result import (
     build_universal_result, sanitize_universal_result, STATUS_COMPLETED,
@@ -211,43 +211,32 @@ def test_transfer_money_blocked():
     assert classify_action("transfer_money") == GRADE_BLOCKED
 
 
-# ── 9. 보안프로그램 / UAC 흐름 ───────────────────────────────────────────────
+# ── 9. 보안프로그램 / UAC 흐름 (local_security_installer_runner 기반) ───────
 
-def test_security_route_uac_user_direct():
-    r = classify_route(
-        has_alternative_route=False,
-        is_already_installed=False,
-        requires_security_program=True,
-        has_trusted_installer=True,
-        user_approved=True,
-        needs_uac=True,
-    )
-    assert r["route"] == ROUTE_USER_UAC_REQUIRED
-    assert r["grade"] == "USER_DIRECT_REQUIRED"
+def test_installer_uac_status_exists():
+    """UAC 사용자 직접 승인 상태 존재."""
+    assert STATUS_WAITING_USER_UAC == "WAITING_USER_UAC"
 
 
-def test_security_route_first_time_approval_required():
-    r = classify_route(
-        has_alternative_route=False,
-        is_already_installed=False,
-        requires_security_program=True,
-        has_trusted_installer=False,
-        user_approved=False,
-        needs_uac=False,
-    )
-    assert r["route"] == ROUTE_FIRST_TIME_USER_APPROVAL_REQUIRED
+def test_installer_permission_required_status_exists():
+    """설치 권한 사용자 승인 필요 상태 존재."""
+    assert STATUS_INSTALL_PERMISSION_REQUIRED == "INSTALL_PERMISSION_REQUIRED"
 
 
-def test_security_route_official_api_preferred():
-    r = classify_route(
-        has_alternative_route=True,
-        is_already_installed=False,
-        requires_security_program=True,
-        has_trusted_installer=False,
-        user_approved=False,
-        needs_uac=True,
-    )
-    assert r["route"] == ROUTE_OFFICIAL_API_OR_MOBILE
+def test_installer_runner_blocks_uac_bypass():
+    r = check_action_allowed("bypass_uac")
+    assert r["allowed"] is False
+    assert r["grade"] == INSTALLER_GRADE_BLOCKED
+
+
+def test_installer_runner_blocks_security_bypass():
+    r = check_action_allowed("bypass_security_program")
+    assert r["allowed"] is False
+
+
+def test_installer_runner_blocks_silent_install_auto():
+    r = check_action_allowed("silent_install_auto")
+    assert r["allowed"] is False
 
 
 # ── 10. 결과 redaction (sanitize_universal_result) ──────────────────────────
