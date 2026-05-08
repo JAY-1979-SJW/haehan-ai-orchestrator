@@ -1,0 +1,156 @@
+{
+  "task_id": "cb1be98f-b843-436b-a3df-8099dcb3f763",
+  "executed_at": "2026-05-08T13:14:03.988730+00:00",
+  "executed_on_local": true,
+  "host": "해한Ai엔지니어링",
+  "allowlist": [
+    "https://example.com",
+    "https://www.wikipedia.org",
+    "https://www.python.org"
+  ],
+  "results": [
+    {
+      "url": "https://example.com",
+      "blocked_sensitive_actions": [],
+      "verdict": "OK_READONLY",
+      "final_url": "https://example.com/",
+      "reachable": true,
+      "title": "Example Domain",
+      "text_excerpt": "Example Domain\n\nThis domain is for use in documentation examples without needing permission. Avoid use in operations.\n\nLearn more",
+      "links_count": 1,
+      "table_count": 0,
+      "download_candidate_count": 0,
+      "duration_ms": 5375,
+      "cookie_exported": false,
+      "session_exported": false,
+      "password_collected": false,
+      "otp_collected": false,
+      "certificate_password_collected": false,
+      "storage_state_exported": false,
+      "server_browser_used": false,
+      "redaction_applied": true
+    },
+    {
+      "url": "https://www.wikipedia.org",
+      "blocked_sensitive_actions": [],
+      "verdict": "OK_READONLY",
+      "final_url": "https://www.wikipedia.org/",
+      "reachable": true,
+      "title": "Wikipedia",
+      "text_excerpt": "Wikipedia\n우리 모두의 백과사전\n한국어\n744,000+ 문서\nEnglish\n7,177,000+ articles\n日本語\n1,500,000+ 記事\nDeutsch\n3.118.000+ Artikel\n中文\n1,533,000+ 条目 / 條目\nРусский\n2 098 000+ статей\nFrançais\n2 755 000+ articles\nEspañol\n2.110.000+ artículos\nItaliano\n1.967.000+ voci\nPortuguês\n1.170.000+ artigos\nSearch Wikipedia\nKO\nAfrikaans\nShqip\nالعربية\nAsturianu\nAzərbaycanca\nБългарски\n閩南語 / Bân-lâm-gú\nবাংলা\nБеларуская\nCatalà\nČeština\nCymraeg\nDansk\nDeutsch\nEesti\nΕλληνικά\nEnglish\nEspañol\nEsperanto\nEuskara\nفارسی\nFrançais\nGalego\n한국어\nՀայերե",
+      "links_count": 373,
+      "table_count": 0,
+      "download_candidate_count": 0,
+      "duration_ms": 3856,
+      "cookie_exported": false,
+      "session_exported": false,
+      "password_collected": false,
+      "otp_collected": false,
+      "certificate_password_collected": false,
+      "storage_state_exported": false,
+      "server_browser_used": false,
+      "redaction_applied": true
+    },
+    {
+      "url": "https://www.python.org",
+      "blocked_sensitive_actions": [],
+      "verdict": "OK_READONLY",
+      "final_url": "https://www.python.org/",
+      "reachable": true,
+      "title": "Welcome to Python.org",
+      "text_excerpt": "Skip to content\nPython\nPSF\nDocs\nPyPI\nJobs\nCommunity\nDonate\n \nSearch This Site\n GO\nSocialize\nAbout\n \nDownloads\n \nDocumentation\n \nCommunity\n \nSuccess Stories\n \nNews\n \nEvents\n# Simple arithmetic\n>>> 1 / 2\n0.5\n>>> 2 ** 3\n8\n>>> 17 / 3  # true division returns a float\n5.666666666666667\n>>> 17 // 3  # floor division\n5\n\nIntuitive Interpretation\n\nCalculations are simple with Python, and expression syntax is straightforward: the operators +, -, * and / work as expected; parentheses () can be used for grou",
+      "links_count": 222,
+      "table_count": 1,
+      "download_candidate_count": 0,
+      "duration_ms": 3269,
+      "cookie_exported": false,
+      "session_exported": false,
+      "password_collected": false,
+      "otp_collected": false,
+      "certificate_password_collected": false,
+      "storage_state_exported": false,
+      "server_browser_used": false,
+      "redaction_applied": true
+    }
+  ],
+  "blocked_action_check": [
+    {
+      "action": "login_password_input",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "otp_input",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "cert_password_input",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "cookie_export",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "session_export",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "storage_state_export",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "token_export",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "confirm_payment",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "auto_payment",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "transfer_money",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "auto_bid_submit",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "bid_final_submit",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "auto_sign",
+      "grade": "BLOCKED",
+      "blocked_or_user_direct": true
+    },
+    {
+      "action": "e_sign",
+      "grade": "USER_DIRECT_REQUIRED",
+      "blocked_or_user_direct": true
+    }
+  ],
+  "all_blocked_or_user_direct": true,
+  "cookie_exported": false,
+  "session_exported": false,
+  "password_collected": false,
+  "otp_collected": false,
+  "certificate_password_collected": false,
+  "storage_state_exported": false,
+  "server_browser_used": false
+}
