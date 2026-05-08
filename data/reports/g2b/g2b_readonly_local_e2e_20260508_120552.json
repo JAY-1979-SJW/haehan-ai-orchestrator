@@ -1,0 +1,126 @@
+{
+  "run_at": "2026-05-08T03:05:41.028651+00:00",
+  "task_id": "g2b-readonly-e2e-20260508-001",
+  "target_url": "https://www.g2b.go.kr/",
+  "target_host": "www.g2b.go.kr",
+  "execution_mode": "LOCAL_PLAYWRIGHT",
+  "server_browser_used": false,
+  "steps": [
+    {
+      "step": "read_page",
+      "status": "COMPLETED",
+      "title_hint": "나라장터",
+      "current_url_host": "www.g2b.go.kr",
+      "body_text_sample": "",
+      "auth_signal": null,
+      "message_ko": "페이지 읽기 완료.",
+      "sensitive_data_collected": false,
+      "cookie_exported": false,
+      "session_exported": false
+    },
+    {
+      "step": "extract_text",
+      "status": "COMPLETED",
+      "text_sample": ""
+    },
+    {
+      "step": "extract_table",
+      "status": "COMPLETED",
+      "table_rows_count": 0
+    },
+    {
+      "step": "detect_login_status",
+      "status": "COMPLETED",
+      "auth_signal": null
+    },
+    {
+      "step": "download_manifest_dry_run",
+      "total_files": 4,
+      "allowed_count": 2,
+      "blocked_count": 2,
+      "certificate_file_detected": true,
+      "sensitive_data_detected": false
+    }
+  ],
+  "final_status": "PASS",
+  "safe_result": {
+    "task_id": "g2b-readonly-e2e-20260508-001",
+    "ok": true,
+    "execution_used": "LOCAL_PLAYWRIGHT",
+    "status": "COMPLETED",
+    "current_url_host": "www.g2b.go.kr",
+    "title_hint": "나라장터",
+    "extracted_data": {
+      "body_text_sample": ""
+    },
+    "downloaded_files": [],
+    "message_ko": "페이지 읽기 완료.",
+    "sensitive_data_collected": false,
+    "cookie_exported": false,
+    "session_exported": false,
+    "password_collected": false,
+    "otp_collected": false,
+    "certificate_password_collected": false,
+    "storage_state_exported": false
+  },
+  "manifest": {
+    "task_id": "g2b-readonly-e2e-20260508-001",
+    "files": [
+      {
+        "file_id": "44460fe4-1201-4492-9db3-9d359684c5c8",
+        "safe_name": "입찰공고문.pdf",
+        "extension": ".pdf",
+        "size_bytes": 51200,
+        "mime_type": "application/pdf",
+        "upload_allowed": true,
+        "blocked_reason": null,
+        "certificate_file_detected": false
+      },
+      {
+        "file_id": "043a7edd-438c-4632-b098-f87cc88c09d3",
+        "safe_name": "첨부서류.hwpx",
+        "extension": ".hwpx",
+        "size_bytes": 20480,
+        "mime_type": "application/x-hwpx",
+        "upload_allowed": true,
+        "blocked_reason": null,
+        "certificate_file_detected": false
+      },
+      {
+        "file_id": "12786405-8c48-4640-b731-64d59177e2e8",
+        "safe_name": "cert.pfx",
+        "extension": ".pfx",
+        "size_bytes": 4096,
+        "mime_type": "application/octet-stream",
+        "upload_allowed": false,
+        "blocked_reason": "차단 확장자: '.pfx'",
+        "certificate_file_detected": true
+      },
+      {
+        "file_id": "cf5e4343-fdfc-4037-ba5b-93faa6069650",
+        "safe_name": "setup.exe",
+        "extension": ".exe",
+        "size_bytes": 1024000,
+        "mime_type": "application/octet-stream",
+        "upload_allowed": false,
+        "blocked_reason": "차단 확장자: '.exe'",
+        "certificate_file_detected": false
+      }
+    ],
+    "sensitive_data_detected": false,
+    "certificate_file_detected": true,
+    "total_files": 4,
+    "allowed_count": 2,
+    "blocked_count": 2,
+    "cookie_exported": false,
+    "session_exported": false,
+    "password_collected": false,
+    "otp_collected": false,
+    "certificate_password_collected": false,
+    "storage_state_exported": false,
+    "file_content_exported": false,
+    "local_path_exported": false
+  },
+  "dangerous_state": null,
+  "policy_violations": []
+}
