@@ -101,13 +101,21 @@ def route_browser_task(
         )
         cls = classify_execution_location_for_server(task)
         if cls["execution_location"] == LOCAL_AGENT_REQUIRED:
-            return build_safe_result(
+            r = build_safe_result(
                 task_id=task_id,
                 ok=False,
-                status="BLOCKED",
-                blocked_reason=BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
+                execution_used="BLOCKED",
+                final_status="BLOCKED",
+                fallback_reason=BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
                 message_ko="외부 웹사이트 작업은 사용자 PC 로컬 에이전트에서 실행해야 합니다.",
             )
+            # status / blocked_reason 키 별칭
+            r["status"] = "BLOCKED"
+            r["blocked_reason"] = BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION
+            # build_safe_result가 누락한 safe fields 보강 — 항상 False 강제
+            r.setdefault("storage_state_exported", False)
+            r.setdefault("server_browser_used", False)
+            return r
 
     # 1. task 입력 검증
     validation = validate_task_input(task)
