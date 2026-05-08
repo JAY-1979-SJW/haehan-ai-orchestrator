@@ -1,0 +1,105 @@
+{
+  "run_at": "2026-05-08T03:50:29.483962+00:00",
+  "task": "USER_DELEGATED_PERMISSION_EXECUTION_MODEL_1",
+  "start_head": "0e42f8a",
+  "execution_grades": {
+    "AUTO_ALLOWED": [
+      "read_page",
+      "extract_text",
+      "extract_table",
+      "search",
+      "download_file",
+      "capture_screenshot",
+      "detect_login_status",
+      "save_draft",
+      "wait_for_user_auth"
+    ],
+    "USER_DELEGATED_PERMISSION_REQUIRED": [
+      "blog_publish",
+      "blog_schedule_publish",
+      "blog_edit",
+      "blog_delete",
+      "cafe_post_write",
+      "cafe_post_edit",
+      "cafe_post_delete",
+      "cafe_comment_write",
+      "cafe_comment_edit",
+      "cafe_comment_delete",
+      "set_visibility",
+      "publish_with_attachment",
+      "form_submit",
+      "file_upload",
+      "send_email",
+      "send_message"
+    ],
+    "USER_DIRECT_REQUIRED": [
+      "otp_input",
+      "cert_password_input",
+      "login_password_input",
+      "e_sign",
+      "sign_document",
+      "bid_final_submit",
+      "confirm_payment",
+      "confirm_transfer",
+      "contract_confirm",
+      "final_submit"
+    ],
+    "BLOCKED": [
+      "password_save",
+      "otp_save",
+      "cert_password_save",
+      "cookie_export",
+      "session_export",
+      "npki_access",
+      "auto_sign",
+      "auto_bid_submit",
+      "auto_payment",
+      "auto_transfer",
+      "bulk_spam_post",
+      "bulk_spam_comment"
+    ]
+  },
+  "permission_model": {
+    "fields": [
+      "permission_id",
+      "action",
+      "domain",
+      "account",
+      "task_scope",
+      "content_preview",
+      "granted_by",
+      "granted_at",
+      "expires_at",
+      "max_executions",
+      "execution_count",
+      "status",
+      "revoked_at"
+    ],
+    "max_executions_limit": 50,
+    "revocable": true,
+    "audit_log": true
+  },
+  "ungrantable": [
+    "password_save",
+    "otp_save",
+    "cert_password_save",
+    "cookie_export",
+    "session_export",
+    "auto_sign",
+    "auto_bid_submit",
+    "auto_payment",
+    "npki_access"
+  ],
+  "test_results": {
+    "new_tests": 211,
+    "regression_pytest": "4072 passed, 6 skipped, 0 failed",
+    "result": "PASS"
+  },
+  "policy_grep": {
+    "server_browser_used_true": false,
+    "password_stored": false,
+    "otp_stored": false,
+    "cookie_exported": false,
+    "npki_accessed_in_runtime": false
+  }
+}
