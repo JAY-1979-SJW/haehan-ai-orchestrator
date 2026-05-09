@@ -180,7 +180,8 @@ def test_input_credential_approved(tmp_path):
 
 def test_input_credential_rejected(tmp_path):
     page = _make_page(url="https://www.gov.kr/")
-    with patch("builtins.input", return_value="n"):
+    with patch("ai_orchestrator.local_agent.browser.secure_login.request_approval",
+               return_value=False):
         result = input_credential(page, "input[name='password']", "s3cret",
                                   field_label="비밀번호",
                                   audit_path=tmp_path / "log.jsonl")
@@ -202,23 +203,16 @@ def test_input_credential_otp(tmp_path):
 # ── minwon_submit 승인 정책 확인 ──────────────────────────────────────────────
 
 def test_minwon_submit_no_early_approval():
-    """minwon_submit.py는 시작 시 승인을 요청하지 않아야 한다."""
-    import ast
+    """minwon_submit.py는 폼 작성 이전이 아닌 제출 직전에만 승인을 요청해야 한다."""
     import pathlib
     src = pathlib.Path("scripts/local_agent/minwon_submit.py").read_text(encoding="utf-8")
-    tree = ast.parse(src)
-
-    # submit_minwon 함수 내에서 _ask_submit_approval 호출 위치 확인
-    # 제출 버튼 클릭(click call) 이전에만 있어야 함
-    # 간단히: "접수하시겠습니까" 텍스트가 _ask_submit_approval에만 있는지 확인
-    assert "제출하시겠습니까" in src
-    # 폼 작성 전에는 승인 요청이 없어야 함 (fill 이전 approve 패턴 없음)
     lines = src.splitlines()
+
     # 함수 정의(def)가 아닌 호출 위치만 찾기
     approval_calls = [i for i, l in enumerate(lines)
-                      if "_ask_submit_approval(" in l and "def " not in l]
+                      if "_ask_submit_approval(" in l and not l.strip().startswith("def ")]
     fill_calls = [i for i, l in enumerate(lines)
-                  if "_fill_epeople_form(" in l and "def " not in l]
+                  if "_fill_epeople_form(" in l and not l.strip().startswith("def ")]
     assert approval_calls, "_ask_submit_approval 호출이 없음"
     assert fill_calls, "_fill_epeople_form 호출이 없음"
     # 제출 승인 호출이 폼 작성 호출보다 뒤에 있어야 함
