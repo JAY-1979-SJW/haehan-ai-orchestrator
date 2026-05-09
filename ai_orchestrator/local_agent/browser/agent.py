@@ -828,6 +828,9 @@ class BrowserAgent:
             if "about:blank" in url:
                 return False
             path = url.split("?")[0]
+            # f-e 프레임(메인)은 제외 — ca-fe/ 프레임(cafe_main)만 우선
+            if "f-e/cafes" in path and f.name != "cafe_main":
+                return False
             return any(kw in path for kw in ("ArticleRead", "articles/", "ca-fe/"))
 
         article_frames = [f for f in frames if _is_article_frame(f)]
