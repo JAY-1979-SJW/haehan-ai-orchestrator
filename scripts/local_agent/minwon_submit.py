@@ -37,6 +37,7 @@ from ai_orchestrator.local_agent.browser.actions import (
     screenshot, wait_ms,
 )
 from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
+from ai_orchestrator.local_agent.browser.approval_server import request_approval
 
 MinwonService = Literal["gov24", "epeople"]
 
@@ -62,16 +63,17 @@ _SERVICE_CONFIG = {
 
 def _ask_submit_approval(title: str, service_name: str,
                           attachments: list[Path]) -> bool:
-    """제출 직전 1회만 사용자 승인 요청."""
-    print(f"\n{'='*60}")
-    print(f"[최종 확인] 민원을 접수합니다.")
-    print(f"  서비스: {service_name}")
-    print(f"  제목: {title}")
-    if attachments:
-        print(f"  첨부: {', '.join(a.name for a in attachments)}")
-    print(f"{'='*60}")
-    ans = input("→ 제출하시겠습니까? (y/n): ").strip().lower()
-    return ans in ("y", "yes", "네", "예")
+    """제출 직전 1회 승인 — 브라우저 팝업 UI."""
+    return request_approval(
+        action="submit",
+        label=f"민원 접수: {title}",
+        category="LEGAL",
+        detail={
+            "서비스": service_name,
+            "제목": title,
+            "첨부파일": ", ".join(a.name for a in attachments) if attachments else "없음",
+        },
+    )
 
 
 def submit_minwon(

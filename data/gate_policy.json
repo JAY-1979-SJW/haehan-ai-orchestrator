@@ -1,0 +1,65 @@
+{
+  "_comment": "브라우저 액션 게이트 정책. 코드 수정 없이 키워드 추가/제거 가능.",
+  "_version": "1.0",
+
+  "credential_keys": [
+    "password", "passwd", "pwd", "비밀번호",
+    "card_number", "cardnumber", "cvv", "cvc", "카드번호",
+    "rrn", "주민번호",
+    "otp", "auth_code", "인증번호", "verification_code",
+    "private_key", "npki",
+    "pin", "secret"
+  ],
+
+  "approve_money": [
+    "결제", "payment", "pay", "checkout",
+    "송금", "transfer", "입금", "출금", "이체",
+    "투찰", "입찰", "낙찰", "bid",
+    "구매", "purchase", "buy",
+    "주문", "order", "cart"
+  ],
+
+  "approve_legal": [
+    "전자서명", "esign", "e-sign", "서명",
+    "계약", "contract", "agreement",
+    "제출", "submit", "신청",
+    "날인", "stamp",
+    "공문", "공시"
+  ],
+
+  "approve_account": [
+    "탈퇴", "withdraw", "delete account", "회원탈퇴",
+    "비밀번호 변경", "password change", "reset password",
+    "권한", "permission", "role",
+    "2fa", "mfa", "인증 설정"
+  ],
+
+  "approve_send": [
+    "이메일 발송", "send email", "메일 보내기",
+    "문자 발송", "sms", "send message",
+    "알림 발송", "send notification",
+    "공유", "share"
+  ],
+
+  "approve_sensitive_submit": [
+    "주민번호", "rrn", "ssn",
+    "카드번호", "card number",
+    "여권번호", "passport",
+    "공인인증", "npki",
+    "otp 입력", "otp submit"
+  ],
+
+  "approve_submit_actions": [
+    "submit", "form_submit", "click_submit",
+    "form_confirm", "confirm_and_submit",
+    "sign", "esign",
+    "bid_submit", "payment_confirm"
+  ],
+
+  "notify_action_types": [
+    "download", "file_download",
+    "file_upload", "upload",
+    "popup", "new_window", "new_tab",
+    "alert_accept", "dialog_confirm"
+  ]
+}

@@ -40,6 +40,7 @@ from ai_orchestrator.local_agent.browser.actions import (
     screenshot, wait_ms, GateApprovalRequired,
 )
 from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
+from ai_orchestrator.local_agent.browser.approval_server import request_approval
 
 
 MailService = Literal["gmail", "naver", "kakao"]
@@ -78,11 +79,19 @@ _SERVICE_CONFIG = {
 }
 
 
-def _ask_approval(prompt: str) -> bool:
-    print(f"\n{'='*60}")
-    print(prompt)
-    ans = input("→ 승인 (y/n): ").strip().lower()
-    return ans in ("y", "yes", "네", "예")
+def _ask_approval(to: str, subject: str, service: str,
+                   attachments: list[Path]) -> bool:
+    return request_approval(
+        action="send_email",
+        label=f"이메일 발송: {subject}",
+        category="SEND",
+        detail={
+            "수신자": to,
+            "제목": subject,
+            "서비스": service,
+            "첨부": ", ".join(a.name for a in attachments) if attachments else "없음",
+        },
+    )
 
 
 def send_email(
@@ -117,15 +126,8 @@ def send_email(
     print(f"  제목: {subject}")
     print(f"  첨부: {[a.name for a in attachments] if attachments else '없음'}")
 
-    # 최종 사용자 확인 (이메일 발송 = APPROVE)
-    confirm = _ask_approval(
-        f"[승인 필요] 이메일 외부 발송\n"
-        f"  수신자: {to}\n"
-        f"  제목: {subject}\n"
-        f"  첨부: {len(attachments or [])}개\n"
-        f"  서비스: {service}\n"
-        f"  발송하시겠습니까?"
-    )
+    # 최종 사용자 확인 — 브라우저 팝업 승인
+    confirm = _ask_approval(to, subject, service, attachments or [])
     if not confirm:
         return {"ok": False, "error": "사용자 거부"}
 

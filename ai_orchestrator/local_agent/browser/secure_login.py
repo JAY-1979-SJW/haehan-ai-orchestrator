@@ -30,6 +30,7 @@ from ai_orchestrator.local_agent.browser.actions import (
 )
 from ai_orchestrator.local_agent.browser.audit_log import log_action
 from ai_orchestrator.local_agent.browser.intent_token import IntentToken
+from ai_orchestrator.local_agent.browser.approval_server import request_approval
 
 
 # ── 로그인 상태 코드 ─────────────────────────────────────────────────────────
@@ -351,12 +352,14 @@ def handle_idpw_login(
                risk_level="AUTO", audit_path=audit_path)
 
     if username and password:
-        # 승인 후 AI 자동 입력
-        print(f"\n[로그인] 아이디/비밀번호 자동 입력 (승인 필요)")
-        print(f"  아이디: {username}")
-        print(f"  비밀번호: {'*' * len(password)}")
-        ans = input("→ AI가 자격증명을 입력합니다. 승인하시겠습니까? (y/n): ").strip().lower()
-        if ans not in ("y", "yes", "네", "예"):
+        # 승인 후 AI 자동 입력 — 브라우저 팝업 승인
+        approved = request_approval(
+            action="login",
+            label=f"아이디/비밀번호 자동 입력",
+            category="CREDENTIAL",
+            detail={"아이디": username, "비밀번호": "*" * min(len(password), 8), "사이트": host},
+        )
+        if not approved:
             print("[로그인] 사용자 거부 → 수동 입력 모드로 전환")
         else:
             try:
@@ -413,7 +416,13 @@ def handle_idpw_login(
         if state == LOGIN_CERT:
             return LoginResult(status=LOGIN_CERT, site=host, method_used="idpw")
 
-    input("→ 로그인 완료 후 엔터: ")
+    # 타임아웃 시 승인 팝업으로 안내
+    request_approval(
+        action="login_wait",
+        label="로그인 완료 후 확인 버튼을 눌러주세요",
+        category="CREDENTIAL",
+        detail={"사이트": host, "안내": "브라우저에서 로그인 완료 후 승인을 클릭하세요"},
+    )
     return LoginResult(
         status=detect_login_state(page, host),
         site=host, method_used="idpw_manual",
@@ -434,11 +443,17 @@ def input_credential(
     승인 거부 시 False 반환. 입력 성공 시 True.
     감사 로그에는 값 길이만 기록 (실제 값 마스킹).
     """
-    print(f"\n[자격증명] {field_label} 입력 승인 요청")
-    print(f"  필드: {selector[:80]}")
-    print(f"  값: {'*' * min(len(value), 8)} ({len(value)}자)")
-    ans = input(f"→ AI가 {field_label}을(를) 입력합니다. 승인하시겠습니까? (y/n): ").strip().lower()
-    if ans not in ("y", "yes", "네", "예"):
+    approved = request_approval(
+        action="credential_input",
+        label=f"{field_label} 입력",
+        category="CREDENTIAL",
+        detail={
+            "필드": selector[:80],
+            "길이": f"{len(value)}자",
+            "값": "*" * min(len(value), 8),
+        },
+    )
+    if not approved:
         log_action("credential_input_rejected", url=page.url,
                    extra={"field_label": field_label},
                    risk_level="APPROVE", audit_path=audit_path)
