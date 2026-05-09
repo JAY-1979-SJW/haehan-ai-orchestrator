@@ -6,37 +6,12 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Any
 from ai_orchestrator.local_agent.action_registry import register_handler
+from ai_orchestrator.local_agent.business_action_profiles import (
+    get_profile, validate_summary_fields, build_approval_scope, build_evidence_policy,
+    COMMON_FORBIDDEN_FIELDS,
+)
 
 ACTION_NAME = "business.prepare_action"
-
-BUSINESS_PROFILES = {
-    "bid_submission": {
-        "label": "투찰 제출",
-        "required_fields": ["target_id", "organization_name", "amount", "due_date", "submit_selector"],
-    },
-    "erp_save": {
-        "label": "ERP 저장",
-        "required_fields": ["erp_module", "record_type", "record_title"],
-    },
-    "erp_submit_approval": {
-        "label": "ERP 상신",
-        "required_fields": ["erp_module", "document_title", "approver_name"],
-    },
-    "document_submission": {
-        "label": "문서 제출",
-        "required_fields": ["document_title", "organization_name"],
-    },
-    "public_agency_upload": {
-        "label": "공공기관 업로드",
-        "required_fields": ["target_id", "organization_name", "document_title"],
-    },
-    "esign_request": {
-        "label": "전자서명 요청",
-        "required_fields": ["document_title", "signer_name"],
-    },
-}
-
-FORBIDDEN_FIELD_KEYWORDS = ("password", "otp", "cert_password", "cookie", "session", "token", "private_key", "npki")
 
 
 def _find_sensitive_keys(params: dict[str, Any]) -> tuple[list[str], list[str]]:
@@ -46,11 +21,11 @@ def _find_sensitive_keys(params: dict[str, Any]) -> tuple[list[str], list[str]]:
 
     for key, val in params.items():
         key_lower = key.lower()
-        if any(keyword in key_lower for keyword in FORBIDDEN_FIELD_KEYWORDS):
+        if any(keyword in key_lower for keyword in COMMON_FORBIDDEN_FIELDS):
             sensitive_keys.append(key)
         elif isinstance(val, str):
             val_lower = val.lower()
-            if any(keyword in val_lower for keyword in FORBIDDEN_FIELD_KEYWORDS):
+            if any(keyword in val_lower for keyword in COMMON_FORBIDDEN_FIELDS):
                 sensitive_values.append(key)
 
     return sensitive_keys, sensitive_values
@@ -102,8 +77,9 @@ def execute(**kwargs) -> dict[str, Any]:
     if not business_profile:
         return {"ok": False, "verdict": "ERROR", "error": "business_profile 필수"}
 
-    if business_profile not in BUSINESS_PROFILES:
-        available = ", ".join(BUSINESS_PROFILES.keys())
+    profile = get_profile(business_profile)
+    if not profile:
+        available = ", ".join(["bid_submission", "erp_save", "erp_submit_approval", "document_submission", "public_agency_upload", "esign_request"])
         return {
             "ok": False,
             "verdict": "ERROR",
@@ -126,13 +102,11 @@ def execute(**kwargs) -> dict[str, Any]:
         }
 
     # 프로필별 필수 필드 검증
-    profile_spec = BUSINESS_PROFILES[business_profile]
-    required_fields = profile_spec["required_fields"]
-    missing_fields = [f for f in required_fields if not kwargs.get(f)]
+    is_complete, missing_fields = validate_summary_fields(profile, kwargs)
 
     verdict = "PREPARE_SUCCESS"
     warnings = []
-    if missing_fields:
+    if not is_complete:
         verdict = "PREPARE_WARN"
         warnings.append(f"필수 필드 누락: {missing_fields}")
 
@@ -141,6 +115,12 @@ def execute(**kwargs) -> dict[str, Any]:
     attached_files = kwargs.get("attached_files")
     attached_files_safe = _attached_files_safe(attached_files) if isinstance(attached_files, list) else []
 
+    # approval scope 생성
+    approval_scope = build_approval_scope(profile, kwargs)
+
+    # evidence policy 생성
+    evidence_policy = build_evidence_policy(profile)
+
     # 응답 구성
     prepared_at = datetime.now(timezone.utc).isoformat()
 
@@ -148,7 +128,7 @@ def execute(**kwargs) -> dict[str, Any]:
         "ok": True,
         "verdict": verdict,
         "business_profile": business_profile,
-        "profile_label": profile_spec["label"],
+        "profile_label": profile.label,
         "page_url_safe": page_url_safe,
         "form_summary": kwargs.get("form_summary", ""),
         "target_id": kwargs.get("target_id", ""),
@@ -163,6 +143,8 @@ def execute(**kwargs) -> dict[str, Any]:
         "signer_name": kwargs.get("signer_name", ""),
         "attached_files_safe": attached_files_safe,
         "prepared_at": prepared_at,
+        "approval_scope": approval_scope,
+        "evidence_policy": evidence_policy,
         "evidence": {
             "business_profile": business_profile,
             "verdict": verdict,

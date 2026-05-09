@@ -256,3 +256,59 @@ def test_response_has_evidence():
     assert "approval_request_id" in res["evidence"]
     assert "execution_location" in res["evidence"]
     assert res["evidence"]["execution_location"] == "LOCAL_AGENT_REQUIRED"
+
+
+def test_response_has_evidence_policy():
+    """응답에 evidence_policy 필드 포함."""
+    params = {
+        "page_url": "https://www.g2b.go.kr",
+        "submit_selector": "button.submit",
+        "business_profile": "bid_submission",
+    }
+
+    req = create_approval_request(
+        "business.execute_with_user_approval",
+        params,
+        {}
+    )
+    token = approve_request(req["request_id"], "test_user")["approval_token"]
+
+    res = business_execute_with_user_approval.execute(
+        **params,
+        approval_token=token,
+    )
+
+    assert "evidence_policy" in res
+    assert res["evidence_policy"]["profile_name"] == "bid_submission"
+    assert "required_fields" in res["evidence_policy"]
+    assert "forbidden_fields" in res["evidence_policy"]
+    assert "execution_location" in res["evidence_policy"]
+    assert res["evidence_policy"]["execution_location"] == "LOCAL_AGENT_REQUIRED"
+
+
+def test_handoff_payload_has_evidence_policy():
+    """handoff_payload에 evidence_policy 필드 포함."""
+    params = {
+        "page_url": "https://www.g2b.go.kr",
+        "submit_selector": "button.submit",
+        "business_profile": "bid_submission",
+    }
+
+    req = create_approval_request(
+        "business.execute_with_user_approval",
+        params,
+        {}
+    )
+    token = approve_request(req["request_id"], "test_user")["approval_token"]
+
+    res = business_execute_with_user_approval.execute(
+        **params,
+        approval_token=token,
+    )
+
+    payload = res["handoff_payload"]
+    assert "evidence_policy" in payload
+    assert payload["evidence_policy"]["profile_name"] == "bid_submission"
+    assert "required_fields" in payload["evidence_policy"]
+    assert "execution_location" in payload["evidence_policy"]
+    assert payload["evidence_policy"]["execution_location"] == "LOCAL_AGENT_REQUIRED"
