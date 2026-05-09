@@ -2,18 +2,18 @@
 
 원칙
 ====
-1. AI는 비밀번호, 공인인증서 PIN, OTP 코드를 직접 입력하지 않는다.
-2. 사용자가 직접 입력하는 동안 AI는 대기 → 완료 감지 후 자동 진행.
-3. 간편인증(카카오/PASS/네이버)은 AI가 선택 버튼만 클릭, 인증은 사용자 모바일 처리.
-4. 모든 로그인 시도는 감사 로그에 기록 (자격증명 제외).
+1. 자격증명(비밀번호·카드번호·주민번호·OTP 등)은 사용자 승인 후 AI가 입력 가능.
+2. 간편인증(카카오/PASS/네이버)은 AI가 선택 버튼 클릭, 인증은 사용자 모바일 처리.
+3. 공인인증서 PIN은 AI가 입력하지 않음 (보안 팝업 환경 제약).
+4. 모든 로그인 시도는 감사 로그에 기록 (자격증명 값은 마스킹).
 
 지원 로그인 방식
 ================
 1. 세션 쿠키 자동 재사용 (Playwright persistent context)
 2. 간편인증: 카카오, PASS, 네이버, 삼성패스
 3. 공인인증서 (공동인증서): 사용자 직접 PIN 입력, AI는 트리거만
-4. OTP / SMS / 이메일 인증: 사용자 직접 코드 입력, AI는 완료 감지
-5. ID/PW 로그인: 사용자 직접 입력, AI는 입력 필드 포커스만
+4. OTP / SMS / 이메일 인증: 사용자 승인 후 AI 자동 입력 또는 사용자 직접 입력
+5. ID/PW 로그인: 사용자 승인 후 AI 자동 입력
 
 사이트별 설정은 SITE_LOGIN_CONFIG 에 추가.
 """
@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.user_browser_actions import (
-    navigate, click, wait_for_selector, screenshot, wait_ms,
+    navigate, click, type_text, wait_for_selector, screenshot, wait_ms,
     GateApprovalRequired,
 )
 from ai_orchestrator.local_agent.user_browser_audit_log import log_action
@@ -330,31 +330,73 @@ def handle_two_factor(
 def handle_idpw_login(
     page,
     id_selector: str = "input[type='text'], input[name='userId'], input[name='id']",
+    pw_selector: str = "input[type='password'], input[name='password'], input[name='pwd']",
     *,
+    username: str = "",
+    password: str = "",
     site_host: str = "",
     intent: IntentToken | None = None,
     audit_path: Path | None = None,
     wait_seconds: int = 120,
 ) -> LoginResult:
-    """ID/PW 로그인 — 사용자가 직접 입력.
+    """ID/PW 로그인.
 
-    AI는 아이디 입력 필드에 포커스만 이동.
-    비밀번호는 절대 입력하지 않는다.
+    username/password 제공 시: 사용자 승인 후 AI가 직접 입력.
+    제공 안 할 시: 사용자가 브라우저에서 직접 입력 후 완료 감지.
     """
     host = site_host or _extract_host(page)
 
-    # 아이디 필드에 포커스 이동 (편의성)
+    log_action("idpw_login_started", url=page.url,
+               extra={"site": host, "has_credentials": bool(username)},
+               risk_level="AUTO", audit_path=audit_path)
+
+    if username and password:
+        # 승인 후 AI 자동 입력
+        print(f"\n[로그인] 아이디/비밀번호 자동 입력 (승인 필요)")
+        print(f"  아이디: {username}")
+        print(f"  비밀번호: {'*' * len(password)}")
+        ans = input("→ AI가 자격증명을 입력합니다. 승인하시겠습니까? (y/n): ").strip().lower()
+        if ans not in ("y", "yes", "네", "예"):
+            print("[로그인] 사용자 거부 → 수동 입력 모드로 전환")
+        else:
+            try:
+                type_text(page, id_selector, username, label="아이디",
+                          intent=intent, audit_path=audit_path, force=True)
+                wait_ms(300)
+                type_text(page, pw_selector, password, label="password",
+                          intent=intent, audit_path=audit_path, force=True)
+                wait_ms(300)
+                # 로그인 버튼 클릭
+                for btn_sel in ("button[type='submit']", "input[type='submit']",
+                                "button:has-text('로그인')", ".btn-login", "#loginBtn"):
+                    try:
+                        page.click(btn_sel, timeout=2000)
+                        break
+                    except Exception:
+                        continue
+                wait_ms(2000)
+                page.wait_for_load_state("networkidle", timeout=15000)
+                state = detect_login_state(page, host)
+                if state == LOGIN_OK:
+                    log_action("idpw_login_success", url=page.url,
+                               extra={"site": host, "method": "ai_input"},
+                               risk_level="APPROVE", audit_path=audit_path)
+                    print(f"[로그인] ✓ 자동 로그인 완료")
+                    return LoginResult(status=LOGIN_OK, site=host, method_used="idpw_auto")
+                if state == LOGIN_TWO_FACTOR:
+                    return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used="idpw_auto")
+                if state == LOGIN_CERT:
+                    return LoginResult(status=LOGIN_CERT, site=host, method_used="idpw_auto")
+            except Exception as e:
+                print(f"[로그인] 자동 입력 실패: {e} → 수동 입력 모드")
+
+    # 수동 입력 모드 (자격증명 없거나 실패 시)
     try:
         page.focus(id_selector)
     except Exception:
         pass
 
-    log_action("idpw_login_started", url=page.url,
-               extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
-
-    print(f"\n[로그인] 아이디/비밀번호 로그인")
-    print(f"  브라우저에서 아이디와 비밀번호를 직접 입력 후 로그인하세요.")
-    print(f"  ※ AI는 비밀번호를 입력하지 않습니다 (보안 원칙)")
+    print(f"\n[로그인] 아이디/비밀번호를 브라우저에서 직접 입력 후 로그인하세요.")
 
     deadline = time.time() + wait_seconds
     while time.time() < deadline:
@@ -362,7 +404,8 @@ def handle_idpw_login(
         state = detect_login_state(page, host)
         if state == LOGIN_OK:
             log_action("idpw_login_success", url=page.url,
-                       extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
+                       extra={"site": host, "method": "manual"},
+                       risk_level="AUTO", audit_path=audit_path)
             print(f"[로그인] ✓ 로그인 완료")
             return LoginResult(status=LOGIN_OK, site=host, method_used="idpw")
         if state == LOGIN_TWO_FACTOR:
@@ -375,6 +418,45 @@ def handle_idpw_login(
         status=detect_login_state(page, host),
         site=host, method_used="idpw_manual",
     )
+
+
+def input_credential(
+    page,
+    selector: str,
+    value: str,
+    *,
+    field_label: str = "자격증명",
+    intent: IntentToken | None = None,
+    audit_path: Path | None = None,
+) -> bool:
+    """자격증명(비밀번호·OTP·카드번호 등) 사용자 승인 후 AI 입력.
+
+    승인 거부 시 False 반환. 입력 성공 시 True.
+    감사 로그에는 값 길이만 기록 (실제 값 마스킹).
+    """
+    print(f"\n[자격증명] {field_label} 입력 승인 요청")
+    print(f"  필드: {selector[:80]}")
+    print(f"  값: {'*' * min(len(value), 8)} ({len(value)}자)")
+    ans = input(f"→ AI가 {field_label}을(를) 입력합니다. 승인하시겠습니까? (y/n): ").strip().lower()
+    if ans not in ("y", "yes", "네", "예"):
+        log_action("credential_input_rejected", url=page.url,
+                   extra={"field_label": field_label},
+                   risk_level="APPROVE", audit_path=audit_path)
+        return False
+
+    try:
+        type_text(page, selector, value, label=field_label,
+                  intent=intent, audit_path=audit_path, force=True)
+        log_action("credential_input_ok", url=page.url,
+                   extra={"field_label": field_label, "length": len(value)},
+                   risk_level="APPROVE", audit_path=audit_path)
+        return True
+    except Exception as e:
+        log_action("credential_input_error", url=page.url,
+                   extra={"field_label": field_label, "error": str(e)[:100]},
+                   risk_level="APPROVE", audit_path=audit_path)
+        print(f"[자격증명] 입력 실패: {e}")
+        return False
 
 
 # ── 통합 로그인 오케스트레이터 ───────────────────────────────────────────────

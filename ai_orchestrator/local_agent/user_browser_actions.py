@@ -1,12 +1,13 @@
 """CDP 기반 브라우저 액션 실행기.
 
 모든 액션은 3단계로 처리된다:
-  1. action_gate → AUTO / NOTIFY / APPROVE / BLOCKED 분류
+  1. action_gate → AUTO / NOTIFY / APPROVE 분류
   2. 실제 Playwright 액션 실행
   3. audit_log 기록
 
 사용자 승인이 필요한 액션(APPROVE)은 GateApprovalRequired 예외를 발생시키고,
 호출자가 사용자 확인 후 force=True로 재호출해야 한다.
+자격증명(비밀번호·카드번호·OTP·주민번호 등)도 사용자 승인 후 입력 가능하다.
 
 지원 액션
 =========
@@ -23,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.user_browser_action_gate import (
-    classify_action, GATE_BLOCKED, GATE_APPROVE, GATE_NOTIFY,
+    classify_action, GATE_APPROVE, GATE_NOTIFY,
     GateResult,
 )
 from ai_orchestrator.local_agent.user_browser_audit_log import log_action
@@ -31,14 +32,6 @@ from ai_orchestrator.local_agent.user_browser_intent_token import IntentToken
 
 
 # ── 예외 ────────────────────────────────────────────────────────────────────
-
-class GateBlockedError(RuntimeError):
-    """BLOCKED 액션 시도 (비밀번호 직접 입력 등)."""
-    def __init__(self, field_name: str, reason: str):
-        super().__init__(f"[BLOCKED] {reason} (field={field_name})")
-        self.field_name = field_name
-        self.reason = reason
-
 
 class GateApprovalRequired(RuntimeError):
     """APPROVE 액션 — 사용자 확인 필요."""
@@ -83,13 +76,11 @@ def _gate_check(
     params: dict,
     force: bool,
 ) -> GateResult:
-    """gate 분류 → BLOCKED 이면 예외, APPROVE면 force 없을 때 예외."""
+    """gate 분류 → APPROVE면 force 없을 때 GateApprovalRequired 예외."""
     gate = classify_action(
         action_type=action_type, label=label, url=url,
         intent=intent, params=params,
     )
-    if gate.verdict == GATE_BLOCKED:
-        raise GateBlockedError(gate.blocked_field, gate.reason)
     if gate.verdict == GATE_APPROVE and not force:
         raise GateApprovalRequired(gate, action_type, label)
     return gate

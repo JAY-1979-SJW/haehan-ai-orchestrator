@@ -2,14 +2,14 @@
 
 분류 기준
 =========
-APPROVE  : 5개 카테고리 (돈 이동, 법적 효력, 계정 변경, 외부 발송, 민감정보 제출)
+APPROVE  : 6개 카테고리 (돈 이동, 법적 효력, 계정 변경, 외부 발송, 민감정보 제출, 자격증명 입력)
 NOTIFY   : Intent 범위 이탈 (외부 origin), 파일 다운로드, 팝업
 AUTO     : 그 외 탐색·읽기·스크린샷·클릭·스크롤·타이핑(비민감)
 
 원칙
 ====
-1. AI는 비밀번호·카드번호 직접 입력 절대 불가 → BLOCKED 반환.
-2. APPROVE 키워드 매칭은 label + url 양쪽에서.
+1. 자격증명(비밀번호·카드번호·주민번호·OTP 등) 입력 → 사용자 승인 후 진행(APPROVE).
+2. APPROVE 키워드 매칭은 label + url + params 양쪽에서.
 3. Intent가 없으면 NOTIFY (승인 없이 범위 불명확).
 4. Intent가 있으면 origin 범위 검사 → 이탈 시 NOTIFY.
 5. 분류 결과는 side-effect 없이 dict 반환.
@@ -78,14 +78,15 @@ _ALL_APPROVE_KEYWORDS = (
     + _APPROVE_SEND + _APPROVE_SENSITIVE_SUBMIT
 )
 
-# 직접 입력 금지 필드 (BLOCKED)
-_BLOCKED_INPUT_KEYS = (
-    "password", "passwd", "pwd",
-    "card_number", "cardnumber", "cvv", "cvc",
-    "비밀번호", "카드번호",
+# APPROVE 카테고리 6: 자격증명 입력 (사용자 승인 후 AI 입력 가능)
+# 과거 BLOCKED였으나 사용자 승인 조건으로 변경 (2026-05-09)
+_CREDENTIAL_INPUT_KEYS = (
+    "password", "passwd", "pwd", "비밀번호",
+    "card_number", "cardnumber", "cvv", "cvc", "카드번호",
     "rrn", "주민번호",
+    "otp", "auth_code", "인증번호", "verification_code",
     "private_key", "npki",
-    "otp", "auth_code",
+    "pin", "secret",
 )
 
 # 자연어 label → 이미 APPROVE인지 판단하는 최종 키워드 체크
@@ -114,12 +115,12 @@ def _text_contains_approve_keyword(text: str) -> tuple[bool, str]:
     return False, ""
 
 
-def _params_contain_blocked_field(params: dict) -> tuple[bool, str]:
-    """params에 직접 입력 금지 필드 포함 여부 → (blocked, field_name)."""
+def _params_contain_credential_field(params: dict) -> tuple[bool, str]:
+    """params에 자격증명 필드 포함 여부 → (found, field_name)."""
     for k in params:
         k_lower = k.lower()
-        for blocked in _BLOCKED_INPUT_KEYS:
-            if blocked in k_lower:
+        for cred in _CREDENTIAL_INPUT_KEYS:
+            if cred in k_lower:
                 return True, k
     return False, ""
 
@@ -172,13 +173,14 @@ def classify_action(
     """
     params = params or {}
 
-    # 1. 직접 입력 금지 필드 → BLOCKED
-    blocked, field = _params_contain_blocked_field(params)
-    if blocked:
+    # 1. 자격증명 필드 → APPROVE (사용자 승인 후 입력)
+    found, field = _params_contain_credential_field(params)
+    if found:
         return GateResult(
-            verdict=GATE_BLOCKED,
-            reason=f"AI 직접 입력 금지 필드: {field}",
-            blocked_field=field,
+            verdict=GATE_APPROVE,
+            reason=f"자격증명 입력: 사용자 승인 필요 ({field})",
+            category="CREDENTIAL",
+            matched_keyword=field,
         )
 
     # 2. APPROVE 키워드 검사 (label + url + action_type 통합)
@@ -243,6 +245,8 @@ def classify_action(
 def _categorize_approve_keyword(keyword: str) -> str:
     """keyword가 어떤 APPROVE 카테고리인지 반환."""
     kw = keyword.lower()
+    if any(k in kw for k in _CREDENTIAL_INPUT_KEYS):
+        return "CREDENTIAL"
     if any(k in kw for k in _APPROVE_MONEY):
         return "MONEY"
     if any(k in kw for k in _APPROVE_LEGAL):

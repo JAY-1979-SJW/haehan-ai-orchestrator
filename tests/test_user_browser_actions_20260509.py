@@ -8,7 +8,7 @@ from pathlib import Path
 from ai_orchestrator.local_agent.user_browser_actions import (
     navigate, click, type_text, upload_file, select_option,
     scroll, get_text, wait_for_selector, fill_form,
-    GateBlockedError, GateApprovalRequired, ActionResult,
+    GateApprovalRequired, ActionResult,
 )
 from ai_orchestrator.local_agent.user_browser_intent_token import create_intent
 
@@ -94,14 +94,23 @@ def test_click_approve_keyword(tmp_path):
 
 # ── type_text ─────────────────────────────────────────────────────────────────
 
-def test_type_text_blocked_password(tmp_path):
+def test_type_text_password_requires_approval(tmp_path):
     page = _make_page()
     intent = _make_intent()
-    with pytest.raises(GateBlockedError) as exc:
+    with pytest.raises(GateApprovalRequired) as exc:
         type_text(page, "input[name='password']", "s3cret",
                   label="password", intent=intent,
                   audit_path=tmp_path / "log.jsonl")
-    assert exc.value.field_name != ""
+    assert exc.value.gate.category == "CREDENTIAL"
+
+
+def test_type_text_password_force_ok(tmp_path):
+    page = _make_page()
+    intent = _make_intent()
+    r = type_text(page, "input[name='password']", "s3cret",
+                  label="password", intent=intent,
+                  audit_path=tmp_path / "log.jsonl", force=True)
+    assert r.ok is True
 
 
 def test_type_text_auto(tmp_path):
@@ -217,14 +226,15 @@ def test_fill_form_multi_fields(tmp_path):
     assert all(r.ok for r in results)
 
 
-def test_fill_form_blocked_stops(tmp_path):
+def test_fill_form_password_requires_approval(tmp_path):
     page = _make_page()
     intent = _make_intent()
-    with pytest.raises(GateBlockedError):
+    with pytest.raises(GateApprovalRequired) as exc:
         fill_form(page, {
             "input#name": "홍길동",
             "input#password": "s3cret",
         }, intent=intent, audit_path=tmp_path / "log.jsonl")
+    assert exc.value.gate.category == "CREDENTIAL"
 
 
 # ── audit log 기록 확인 ───────────────────────────────────────────────────────

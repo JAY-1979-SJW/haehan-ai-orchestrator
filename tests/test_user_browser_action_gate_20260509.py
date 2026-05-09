@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 
 from ai_orchestrator.local_agent.user_browser_action_gate import (
-    classify_action, is_auto, is_blocked, requires_approval, should_notify,
-    GATE_AUTO, GATE_NOTIFY, GATE_APPROVE, GATE_BLOCKED,
+    classify_action, is_auto, requires_approval, should_notify,
+    GATE_AUTO, GATE_NOTIFY, GATE_APPROVE,
 )
 from ai_orchestrator.local_agent.user_browser_intent_token import create_intent
 
@@ -14,32 +14,37 @@ def _make_intent(origins=("developer.hancom.com",)):
     return create_intent(natural_language="한컴 SDK 가격 확인", allowed_origins=origins)
 
 
-# ── BLOCKED ──────────────────────────────────────────────────────────────────
+# ── APPROVE — 자격증명 입력 (사용자 승인 후 AI 입력 가능) ───────────────────
 
-def test_blocked_password_field():
+def test_credential_password_approve():
     r = classify_action(action_type="type", params={"password": "s3cret"})
-    assert r.verdict == GATE_BLOCKED
-    assert is_blocked(r)
+    assert r.verdict == GATE_APPROVE
+    assert r.category == "CREDENTIAL"
+    assert requires_approval(r)
 
 
-def test_blocked_card_number_field():
+def test_credential_card_number_approve():
     r = classify_action(action_type="type", params={"card_number": "1234"})
-    assert r.verdict == GATE_BLOCKED
+    assert r.verdict == GATE_APPROVE
+    assert r.category == "CREDENTIAL"
 
 
-def test_blocked_rrn_field():
+def test_credential_rrn_approve():
     r = classify_action(action_type="type", params={"주민번호": "900101-1234567"})
-    assert r.verdict == GATE_BLOCKED
+    assert r.verdict == GATE_APPROVE
+    assert r.category == "CREDENTIAL"
 
 
-def test_blocked_otp_field():
+def test_credential_otp_approve():
     r = classify_action(action_type="type", params={"otp": "123456"})
-    assert r.verdict == GATE_BLOCKED
+    assert r.verdict == GATE_APPROVE
+    assert r.category == "CREDENTIAL"
 
 
-def test_blocked_npki_field():
+def test_credential_npki_approve():
     r = classify_action(action_type="type", params={"npki": "cert_data"})
-    assert r.verdict == GATE_BLOCKED
+    assert r.verdict == GATE_APPROVE
+    assert r.category == "CREDENTIAL"
 
 
 # ── APPROVE — 돈 이동 ────────────────────────────────────────────────────────
@@ -200,11 +205,11 @@ def test_gate_result_to_dict_approve():
     assert "category" in d
 
 
-def test_gate_result_to_dict_blocked():
+def test_gate_result_to_dict_credential():
     r = classify_action(action_type="type", params={"password": "x"})
     d = r.to_dict()
-    assert d["verdict"] == GATE_BLOCKED
-    assert "blocked_field" in d
+    assert d["verdict"] == GATE_APPROVE
+    assert d["category"] == "CREDENTIAL"
 
 
 def test_gate_result_to_dict_auto_minimal():
