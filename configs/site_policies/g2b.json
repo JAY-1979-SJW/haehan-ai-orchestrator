@@ -1,0 +1,15 @@
+{
+  "site_id": "g2b",
+  "label": "조달청 나라장터",
+  "allowed_hosts": ["www.g2b.go.kr"],
+  "allowed_paths": ["/notice", "/search", "/bid", "/announce"],
+  "blocked_paths": ["/admin", "/mypage/cert", "/login"],
+  "allowed_purposes": ["read_notice", "search_bid", "download_file", "submit_bid"],
+  "execution_location": "LOCAL_AGENT_REQUIRED",
+  "login_mode": "PUBLIC_READONLY",
+  "credential_policy": "NO_CREDENTIAL_CAPTURE",
+  "capture_policy": "NO_SCREENSHOT_NO_HAR",
+  "risk_level": "HIGH",
+  "requires_approval": true,
+  "notes": "조달청 입찰 공고 조회 전용. 실제 투찰은 사용자 직접 승인 후 handoff만 허용."
+}
