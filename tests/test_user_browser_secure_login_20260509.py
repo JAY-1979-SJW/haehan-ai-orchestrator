@@ -8,7 +8,7 @@ from pathlib import Path
 from ai_orchestrator.local_agent.user_browser_secure_login import (
     detect_login_state, is_logged_in, is_two_factor_required, is_cert_required,
     try_easy_auth, handle_cert_login, handle_two_factor, ensure_logged_in,
-    SITE_LOGIN_CONFIG,
+    input_credential, SITE_LOGIN_CONFIG,
     LOGIN_OK, LOGIN_REQUIRED, LOGIN_TWO_FACTOR, LOGIN_CERT,
     EASY_AUTH_KAKAO, EASY_AUTH_PASS,
 )
@@ -161,6 +161,42 @@ def test_login_result_not_ok():
     from ai_orchestrator.local_agent.user_browser_secure_login import LoginResult
     r = LoginResult(status=LOGIN_REQUIRED)
     assert r.ok is False
+
+
+# ── input_credential ─────────────────────────────────────────────────────────
+
+def test_input_credential_approved(tmp_path):
+    page = _make_page(url="https://www.gov.kr/")
+    with patch("builtins.input", return_value="y"), \
+         patch("ai_orchestrator.local_agent.user_browser_secure_login.type_text") as mock_type:
+        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+        mock_type.return_value = ActionResult("type", ok=True)
+        result = input_credential(page, "input[name='password']", "s3cret",
+                                  field_label="비밀번호",
+                                  audit_path=tmp_path / "log.jsonl")
+        assert result is True
+        mock_type.assert_called_once()
+
+
+def test_input_credential_rejected(tmp_path):
+    page = _make_page(url="https://www.gov.kr/")
+    with patch("builtins.input", return_value="n"):
+        result = input_credential(page, "input[name='password']", "s3cret",
+                                  field_label="비밀번호",
+                                  audit_path=tmp_path / "log.jsonl")
+        assert result is False
+
+
+def test_input_credential_otp(tmp_path):
+    page = _make_page(url="https://www.gov.kr/")
+    with patch("builtins.input", return_value="네"), \
+         patch("ai_orchestrator.local_agent.user_browser_secure_login.type_text") as mock_type:
+        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+        mock_type.return_value = ActionResult("type", ok=True)
+        result = input_credential(page, "input#otp", "123456",
+                                  field_label="OTP",
+                                  audit_path=tmp_path / "log.jsonl")
+        assert result is True
 
 
 # ── minwon_submit 승인 정책 확인 ──────────────────────────────────────────────
