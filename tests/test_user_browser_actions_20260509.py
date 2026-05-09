@@ -5,12 +5,12 @@ import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-from ai_orchestrator.local_agent.user_browser_actions import (
+from ai_orchestrator.local_agent.browser.actions import (
     navigate, click, type_text, upload_file, select_option,
     scroll, get_text, wait_for_selector, fill_form,
     GateApprovalRequired, ActionResult,
 )
-from ai_orchestrator.local_agent.user_browser_intent_token import create_intent
+from ai_orchestrator.local_agent.browser.intent_token import create_intent
 
 
 def _make_page(url="https://developer.hancom.com/"):

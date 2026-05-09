@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-from ai_orchestrator.local_agent.user_browser_secure_login import (
+from ai_orchestrator.local_agent.browser.secure_login import (
     detect_login_state, is_logged_in, is_two_factor_required, is_cert_required,
     try_easy_auth, handle_cert_login, handle_two_factor, ensure_logged_in,
     input_credential, SITE_LOGIN_CONFIG,
@@ -111,8 +111,8 @@ def test_try_easy_auth_click_fail_returns_required():
     page = _make_page(url="https://www.gov.kr/")
     page.click.side_effect = Exception("element not found")
 
-    with patch("ai_orchestrator.local_agent.user_browser_secure_login.click") as mock_click:
-        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+    with patch("ai_orchestrator.local_agent.browser.secure_login.click") as mock_click:
+        from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_click.return_value = ActionResult("click", ok=False, error="not found")
 
         result = try_easy_auth(page, EASY_AUTH_KAKAO, site_host="www.gov.kr")
@@ -122,10 +122,10 @@ def test_try_easy_auth_click_fail_returns_required():
 def test_try_easy_auth_success_detected(tmp_path):
     page = _make_page(text="마이페이지 | 로그아웃", url="https://www.gov.kr/")
 
-    with patch("ai_orchestrator.local_agent.user_browser_secure_login.click") as mock_click, \
-         patch("ai_orchestrator.local_agent.user_browser_secure_login.time.sleep"), \
-         patch("ai_orchestrator.local_agent.user_browser_secure_login.time.time") as mock_time:
-        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+    with patch("ai_orchestrator.local_agent.browser.secure_login.click") as mock_click, \
+         patch("ai_orchestrator.local_agent.browser.secure_login.time.sleep"), \
+         patch("ai_orchestrator.local_agent.browser.secure_login.time.time") as mock_time:
+        from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_click.return_value = ActionResult("click", ok=True)
         mock_time.side_effect = [0, 1]  # 첫 호출=시작, 폴링=1초
 
@@ -152,13 +152,13 @@ def test_ensure_logged_in_result_has_site():
 # ── LoginResult ───────────────────────────────────────────────────────────────
 
 def test_login_result_ok_property():
-    from ai_orchestrator.local_agent.user_browser_secure_login import LoginResult
+    from ai_orchestrator.local_agent.browser.secure_login import LoginResult
     r = LoginResult(status=LOGIN_OK)
     assert r.ok is True
 
 
 def test_login_result_not_ok():
-    from ai_orchestrator.local_agent.user_browser_secure_login import LoginResult
+    from ai_orchestrator.local_agent.browser.secure_login import LoginResult
     r = LoginResult(status=LOGIN_REQUIRED)
     assert r.ok is False
 
@@ -168,8 +168,8 @@ def test_login_result_not_ok():
 def test_input_credential_approved(tmp_path):
     page = _make_page(url="https://www.gov.kr/")
     with patch("builtins.input", return_value="y"), \
-         patch("ai_orchestrator.local_agent.user_browser_secure_login.type_text") as mock_type:
-        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+         patch("ai_orchestrator.local_agent.browser.secure_login.type_text") as mock_type:
+        from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_type.return_value = ActionResult("type", ok=True)
         result = input_credential(page, "input[name='password']", "s3cret",
                                   field_label="비밀번호",
@@ -190,8 +190,8 @@ def test_input_credential_rejected(tmp_path):
 def test_input_credential_otp(tmp_path):
     page = _make_page(url="https://www.gov.kr/")
     with patch("builtins.input", return_value="네"), \
-         patch("ai_orchestrator.local_agent.user_browser_secure_login.type_text") as mock_type:
-        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+         patch("ai_orchestrator.local_agent.browser.secure_login.type_text") as mock_type:
+        from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_type.return_value = ActionResult("type", ok=True)
         result = input_credential(page, "input#otp", "123456",
                                   field_label="OTP",

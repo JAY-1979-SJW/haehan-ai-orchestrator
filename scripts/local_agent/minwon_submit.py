@@ -28,15 +28,15 @@ from typing import Literal
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.user_browser_cdp import (
+from ai_orchestrator.local_agent.browser.cdp import (
     open_cdp_session, is_cdp_available, CDPConnectionError,
 )
-from ai_orchestrator.local_agent.user_browser_intent_token import create_intent, SCOPE_INTERACTION
-from ai_orchestrator.local_agent.user_browser_actions import (
+from ai_orchestrator.local_agent.browser.intent_token import create_intent, SCOPE_INTERACTION
+from ai_orchestrator.local_agent.browser.actions import (
     navigate, click, type_text, upload_file,
     screenshot, wait_ms,
 )
-from ai_orchestrator.local_agent.user_browser_audit_log import get_audit_path
+from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
 
 MinwonService = Literal["gov24", "epeople"]
 

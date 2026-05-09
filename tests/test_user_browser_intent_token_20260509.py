@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from datetime import datetime, timedelta, timezone
 
-from ai_orchestrator.local_agent.user_browser_intent_token import (
+from ai_orchestrator.local_agent.browser.intent_token import (
     create_intent, validate_intent, is_origin_allowed,
     increment_action, add_origin, save_intent, load_intent,
     expire_intent, list_active_intents,
