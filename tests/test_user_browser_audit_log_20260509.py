@@ -5,7 +5,7 @@ import json
 import pytest
 from pathlib import Path
 
-from ai_orchestrator.local_agent.user_browser_audit_log import (
+from ai_orchestrator.local_agent.browser.audit_log import (
     log_action, read_log, summarize_log, mask_sensitive_data,
     get_audit_path,
 )

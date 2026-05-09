@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.user_browser_action_gate import (
+from ai_orchestrator.local_agent.browser.action_gate import (
     classify_action, is_auto, requires_approval, should_notify,
     GATE_AUTO, GATE_NOTIFY, GATE_APPROVE,
 )
-from ai_orchestrator.local_agent.user_browser_intent_token import create_intent
+from ai_orchestrator.local_agent.browser.intent_token import create_intent
 
 
 def _make_intent(origins=("developer.hancom.com",)):

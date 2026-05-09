@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.user_browser_cdp import (
+from ai_orchestrator.local_agent.browser.cdp import (
     cdp_endpoint, is_cdp_available, get_chrome_start_command,
     open_cdp_session, CDPConnectionError, CDPSession,
     DEFAULT_CDP_PORT, DEFAULT_CDP_HOST,

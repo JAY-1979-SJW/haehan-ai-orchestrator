@@ -23,7 +23,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.user_browser_cdp import (
+from ai_orchestrator.local_agent.browser.cdp import (
     is_cdp_available, get_chrome_start_command, DEFAULT_CDP_PORT,
 )
 
