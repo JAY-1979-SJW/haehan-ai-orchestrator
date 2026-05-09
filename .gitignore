@@ -140,3 +140,4 @@ data/naver_shopping_search.json
 data/audit/
 .claude/
 tmp/
+data/browser_sessions/
