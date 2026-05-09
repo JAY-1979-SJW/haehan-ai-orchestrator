@@ -36,6 +36,12 @@ from playwright.sync_api import (
     sync_playwright, TimeoutError as PWTimeout,
 )
 
+_JS_DIR = Path(__file__).parent / "_js"
+
+def _js(name: str) -> str:
+    """_js/ 디렉터리의 JS 파일을 읽어 반환."""
+    return (_JS_DIR / name).read_text(encoding="utf-8")
+
 # ── 설정 ─────────────────────────────────────────────────────────────────────
 CDP_URL = "http://localhost:9222"
 DEFAULT_WAIT = 2.5          # 이동 후 기본 대기(초)
@@ -233,24 +239,11 @@ class BrowserAgent:
 
     # ── 데이터 추출 ───────────────────────────────────────────────────────────
     def extract_links(self, filter_href: str = "",
-                      filter_text: str = "") -> list[dict]:
-        """페이지 링크 목록 추출."""
-        js = """
-() => {
-    const seen = new Set();
-    const results = [];
-    for (const a of document.querySelectorAll('a')) {
-        const text = (a.innerText || '').trim().split('\\n')[0].trim();
-        const href = a.href || '';
-        if (!href || href.startsWith('javascript') || seen.has(href)) continue;
-        if (!text || text.length < 2) continue;
-        seen.add(href);
-        results.push({text: text.substring(0, 60), href});
-    }
-    return results;
-}
-"""
-        links = self._page.evaluate(js)
+                      filter_text: str = "",
+                      frame: Frame | None = None) -> list[dict]:
+        """페이지 링크 목록 추출. frame 지정 시 해당 프레임에서 추출."""
+        target = frame or self._page
+        links = target.evaluate(_js("extract_links.js"))
         if filter_href:
             links = [l for l in links if filter_href in l["href"]]
         if filter_text:
@@ -422,27 +415,124 @@ class BrowserAgent:
 
     def naver_cafe_posts(self, cafe_url: str,
                          board: str = "전체글보기",
-                         max_posts: int = 20) -> list[dict]:
-        """네이버 카페 게시판 최신 글 목록 반환."""
+                         max_posts: int = 30) -> list[dict]:
+        """네이버 카페 게시판 최신 글 목록 반환.
+
+        새 카페 UI(f-e)와 구 UI(cafe.naver.com/xxx) 모두 지원.
+        """
         self.go(cafe_url)
+        time.sleep(2)
+
         # 게시판 클릭
         if board != "전체글보기":
             self.click_text(board)
             time.sleep(2)
-        # 게시글 링크 추출
-        posts = self.extract_links(filter_href="cafe.naver.com/")
-        # 게시글만 필터 (articleid 포함)
-        article_links = [p for p in posts if "articleid" in p["href"] or "articles" in p["href"]]
-        return article_links[:max_posts]
+
+        # 모든 프레임에서 게시글 링크 수집
+        all_posts: list[dict] = []
+        seen: set[str] = set()
+
+        for frame in self._page.frames:
+            try:
+                posts = frame.evaluate(_js("extract_posts.js"))
+                for p in posts:
+                    if p["href"] not in seen:
+                        seen.add(p["href"])
+                        all_posts.append(p)
+            except Exception:
+                continue
+
+        # 폴백: 메인 프레임 일반 링크에서 articleid 포함 추출
+        if not all_posts:
+            links = self.extract_links()
+            for l in links:
+                if ("articleid" in l["href"] or "/articles/" in l["href"]) and l["href"] not in seen:
+                    seen.add(l["href"])
+                    all_posts.append({"title": l["text"], "href": l["href"]})
+
+        return all_posts[:max_posts]
 
     def read_article(self, article_url: str) -> dict:
-        """카페 게시글 본문 읽기."""
+        """카페 게시글 본문 읽기. 프레임 URL 패턴으로 아티클 프레임 우선 탐색."""
         self.go(article_url)
-        title = self.read_selector("h3.title, .title_subject, .article-title") or self._page.title()
-        body = self.read_selector(".se-main-container, .content, #tbody, .article_viewer") or ""
+        time.sleep(3)
+
+        title = ""
+        body = ""
+
+        body_selectors = [
+            ".se-main-container",   # 스마트에디터
+            ".article_viewer",      # 구 에디터
+            "#tbody",
+            ".article-viewer",
+            ".se-component-content",
+            ".content_area",
+            ".articleDetailView",
+        ]
+        title_selectors = [
+            "h3.title_text",
+            ".title_subject",
+            ".article-title",
+            "h3.title",
+            ".tit-txt",
+            ".ArticleTitle",
+        ]
+
+        # 아티클 관련 프레임을 먼저, 나머지는 나중에
+        # URL 경로(쿼리 제외)에서만 키워드를 확인해 인코딩된 파라미터 오탐 방지
+        frames = self._page.frames
+        def _is_article_frame(f) -> bool:
+            url = f.url or ""
+            if "about:blank" in url:
+                return False
+            path = url.split("?")[0]  # 쿼리 스트립
+            return any(kw in path for kw in ("ArticleRead", "articles/", "ca-fe/"))
+        article_frames = [f for f in frames if _is_article_frame(f)]
+        other_frames = [f for f in frames if f not in article_frames]
+        ordered = article_frames + other_frames
+
+        for frame in ordered:
+            if body:
+                break
+            try:
+                if not title:
+                    for sel in title_selectors:
+                        try:
+                            t = frame.locator(sel).first.inner_text(timeout=1000)
+                            if t and t.strip():
+                                title = t.strip()
+                                break
+                        except Exception:
+                            continue
+                for sel in body_selectors:
+                    try:
+                        b = frame.locator(sel).first.inner_text(timeout=2000)
+                        if b and len(b.strip()) > 20:
+                            body = b.strip()
+                            break
+                    except Exception:
+                        continue
+                # 셀렉터 미매칭 시 아티클 프레임 전체 텍스트
+                if not body and frame in article_frames:
+                    try:
+                        fb = frame.inner_text("body")
+                        if fb and len(fb.strip()) > 50:
+                            body = fb.strip()[:5000]
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+
+        if not title:
+            title = self._page.title()
         if not body:
             body = self.read()
-        return {"title": title, "url": article_url, "body": body[:3000]}
+
+        return {
+            "title": title,
+            "url": article_url,
+            "body": body[:5000],
+        }
 
 
 # ── CLI (대화형 REPL) ──────────────────────────────────────────────────────────
