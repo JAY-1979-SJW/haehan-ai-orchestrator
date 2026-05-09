@@ -1,0 +1,189 @@
+"""user_browser_secure_login 단위 테스트."""
+from __future__ import annotations
+
+import pytest
+from unittest.mock import MagicMock, patch
+from pathlib import Path
+
+from ai_orchestrator.local_agent.user_browser_secure_login import (
+    detect_login_state, is_logged_in, is_two_factor_required, is_cert_required,
+    try_easy_auth, handle_cert_login, handle_two_factor, ensure_logged_in,
+    SITE_LOGIN_CONFIG,
+    LOGIN_OK, LOGIN_REQUIRED, LOGIN_TWO_FACTOR, LOGIN_CERT,
+    EASY_AUTH_KAKAO, EASY_AUTH_PASS,
+)
+
+
+def _make_page(text: str = "", url: str = "https://www.gov.kr/"):
+    page = MagicMock()
+    page.url = url
+    page.inner_text.return_value = text
+    return page
+
+
+# ── detect_login_state ────────────────────────────────────────────────────────
+
+def test_detect_logged_in_gov24():
+    page = _make_page("마이페이지 | 로그아웃", url="https://www.gov.kr/")
+    assert detect_login_state(page, "www.gov.kr") == LOGIN_OK
+
+
+def test_detect_login_required_gov24():
+    page = _make_page("로그인 | 간편인증", url="https://www.gov.kr/")
+    assert detect_login_state(page, "www.gov.kr") == LOGIN_REQUIRED
+
+
+def test_detect_two_factor_gov24():
+    page = _make_page("OTP 인증 코드를 입력하세요", url="https://www.gov.kr/")
+    assert detect_login_state(page, "www.gov.kr") == LOGIN_TWO_FACTOR
+
+
+def test_detect_cert_required():
+    page = _make_page("공동인증서를 선택하세요", url="https://www.gov.kr/")
+    assert detect_login_state(page, "www.gov.kr") == LOGIN_CERT
+
+
+def test_is_logged_in_true():
+    page = _make_page("로그아웃 | 내 신청내역", url="https://www.gov.kr/")
+    assert is_logged_in(page, "www.gov.kr") is True
+
+
+def test_is_logged_in_false():
+    page = _make_page("로그인이 필요합니다", url="https://www.gov.kr/")
+    assert is_logged_in(page, "www.gov.kr") is False
+
+
+def test_is_two_factor_required():
+    page = _make_page("2차 인증 필요: OTP", url="https://www.gov.kr/")
+    assert is_two_factor_required(page, "www.gov.kr") is True
+
+
+def test_is_cert_required():
+    page = _make_page("공인인증서를 선택", url="https://www.gov.kr/")
+    assert is_cert_required(page, "www.gov.kr") is True
+
+
+def test_detect_epeople_logged_in():
+    page = _make_page("내 민원 | 로그아웃", url="https://www.epeople.go.kr/")
+    assert detect_login_state(page, "www.epeople.go.kr") == LOGIN_OK
+
+
+def test_detect_gmail_two_factor():
+    page = _make_page("2단계 인증 코드 입력", url="https://mail.google.com/")
+    assert detect_login_state(page, "mail.google.com") == LOGIN_TWO_FACTOR
+
+
+# ── SITE_LOGIN_CONFIG ─────────────────────────────────────────────────────────
+
+def test_all_sites_have_required_keys():
+    required = {"name", "login_indicators", "logged_in_indicators", "easy_auth"}
+    for site, cfg in SITE_LOGIN_CONFIG.items():
+        missing = required - set(cfg.keys())
+        assert not missing, f"{site} 설정 누락: {missing}"
+
+
+def test_gov24_has_kakao_easy_auth():
+    cfg = SITE_LOGIN_CONFIG["www.gov.kr"]
+    assert EASY_AUTH_KAKAO in cfg["easy_auth"]
+
+
+def test_gov24_has_cert_btn():
+    cfg = SITE_LOGIN_CONFIG["www.gov.kr"]
+    assert cfg.get("cert_btn") is not None
+
+
+def test_epeople_has_easy_auth():
+    cfg = SITE_LOGIN_CONFIG["www.epeople.go.kr"]
+    assert len(cfg["easy_auth"]) > 0
+
+
+# ── try_easy_auth (mock) ──────────────────────────────────────────────────────
+
+def test_try_easy_auth_no_selector_returns_required():
+    page = _make_page(url="https://www.gov.kr/")
+    # 지원하지 않는 method
+    result = try_easy_auth(page, method="unknown_method", site_host="www.gov.kr")
+    assert result.status == LOGIN_REQUIRED
+    assert result.method_used == "unknown_method"
+
+
+def test_try_easy_auth_click_fail_returns_required():
+    page = _make_page(url="https://www.gov.kr/")
+    page.click.side_effect = Exception("element not found")
+
+    with patch("ai_orchestrator.local_agent.user_browser_secure_login.click") as mock_click:
+        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+        mock_click.return_value = ActionResult("click", ok=False, error="not found")
+
+        result = try_easy_auth(page, EASY_AUTH_KAKAO, site_host="www.gov.kr")
+        assert result.status == LOGIN_REQUIRED
+
+
+def test_try_easy_auth_success_detected(tmp_path):
+    page = _make_page(text="마이페이지 | 로그아웃", url="https://www.gov.kr/")
+
+    with patch("ai_orchestrator.local_agent.user_browser_secure_login.click") as mock_click, \
+         patch("ai_orchestrator.local_agent.user_browser_secure_login.time.sleep"), \
+         patch("ai_orchestrator.local_agent.user_browser_secure_login.time.time") as mock_time:
+        from ai_orchestrator.local_agent.user_browser_actions import ActionResult
+        mock_click.return_value = ActionResult("click", ok=True)
+        mock_time.side_effect = [0, 1]  # 첫 호출=시작, 폴링=1초
+
+        result = try_easy_auth(page, EASY_AUTH_KAKAO, site_host="www.gov.kr",
+                               audit_path=tmp_path / "log.jsonl", wait_seconds=60)
+        assert result.status == LOGIN_OK
+
+
+# ── ensure_logged_in (이미 로그인) ────────────────────────────────────────────
+
+def test_ensure_logged_in_already_logged_in():
+    page = _make_page(text="로그아웃 | 마이페이지", url="https://www.gov.kr/")
+    result = ensure_logged_in(page, site_host="www.gov.kr")
+    assert result.ok is True
+    assert result.method_used == "session"
+
+
+def test_ensure_logged_in_result_has_site():
+    page = _make_page(text="로그아웃", url="https://www.gov.kr/")
+    result = ensure_logged_in(page, site_host="www.gov.kr")
+    assert result.site == "www.gov.kr"
+
+
+# ── LoginResult ───────────────────────────────────────────────────────────────
+
+def test_login_result_ok_property():
+    from ai_orchestrator.local_agent.user_browser_secure_login import LoginResult
+    r = LoginResult(status=LOGIN_OK)
+    assert r.ok is True
+
+
+def test_login_result_not_ok():
+    from ai_orchestrator.local_agent.user_browser_secure_login import LoginResult
+    r = LoginResult(status=LOGIN_REQUIRED)
+    assert r.ok is False
+
+
+# ── minwon_submit 승인 정책 확인 ──────────────────────────────────────────────
+
+def test_minwon_submit_no_early_approval():
+    """minwon_submit.py는 시작 시 승인을 요청하지 않아야 한다."""
+    import ast
+    import pathlib
+    src = pathlib.Path("scripts/local_agent/minwon_submit.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+
+    # submit_minwon 함수 내에서 _ask_submit_approval 호출 위치 확인
+    # 제출 버튼 클릭(click call) 이전에만 있어야 함
+    # 간단히: "접수하시겠습니까" 텍스트가 _ask_submit_approval에만 있는지 확인
+    assert "제출하시겠습니까" in src
+    # 폼 작성 전에는 승인 요청이 없어야 함 (fill 이전 approve 패턴 없음)
+    lines = src.splitlines()
+    # 함수 정의(def)가 아닌 호출 위치만 찾기
+    approval_calls = [i for i, l in enumerate(lines)
+                      if "_ask_submit_approval(" in l and "def " not in l]
+    fill_calls = [i for i, l in enumerate(lines)
+                  if "_fill_epeople_form(" in l and "def " not in l]
+    assert approval_calls, "_ask_submit_approval 호출이 없음"
+    assert fill_calls, "_fill_epeople_form 호출이 없음"
+    # 제출 승인 호출이 폼 작성 호출보다 뒤에 있어야 함
+    assert min(approval_calls) > min(fill_calls), "제출 승인이 폼 작성 이전에 위치함"

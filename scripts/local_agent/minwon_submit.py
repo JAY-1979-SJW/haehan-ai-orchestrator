@@ -1,19 +1,21 @@
 """민원24/정부24 온라인 민원 접수 자동화.
 
+승인 정책
+=========
+- 폼 작성, 첨부파일 업로드, 페이지 탐색: 자동 진행 (승인 없음)
+- 최종 제출 버튼 클릭 직전: 단 1회 사용자 승인
+
 사용법
 ======
   python scripts/local_agent/minwon_submit.py \\
-    --type 인허가 \\
     --title "건축허가 신청" \\
     --content "내용..." \\
     --attach ./도면.pdf ./신청서.hwp
 
 지원 서비스
 ===========
-- 정부24 민원신청 (www.gov.kr)
-- 국민신문고 (www.epeople.go.kr)
-
-민원 접수는 항상 APPROVE (법적 효력 카테고리).
+- 국민신문고 (www.epeople.go.kr) — 기본
+- 정부24 (www.gov.kr)
 """
 from __future__ import annotations
 
@@ -31,11 +33,10 @@ from ai_orchestrator.local_agent.user_browser_cdp import (
 )
 from ai_orchestrator.local_agent.user_browser_intent_token import create_intent, SCOPE_INTERACTION
 from ai_orchestrator.local_agent.user_browser_actions import (
-    navigate, click, type_text, upload_file, select_option,
-    wait_for_selector, screenshot, wait_ms, GateApprovalRequired,
+    navigate, click, type_text, upload_file,
+    screenshot, wait_ms,
 )
 from ai_orchestrator.local_agent.user_browser_audit_log import get_audit_path
-
 
 MinwonService = Literal["gov24", "epeople"]
 
@@ -46,6 +47,7 @@ _SERVICE_CONFIG = {
         "origins": ("www.gov.kr", "minwon.go.kr", "auth.gov.kr"),
         "search_field": "input#searchText",
         "search_btn": "button.btn_search",
+        "submit_btn": "button[type='submit'], .btn-submit",
     },
     "epeople": {
         "name": "국민신문고",
@@ -58,10 +60,17 @@ _SERVICE_CONFIG = {
 }
 
 
-def _ask_approval(prompt: str) -> bool:
+def _ask_submit_approval(title: str, service_name: str,
+                          attachments: list[Path]) -> bool:
+    """제출 직전 1회만 사용자 승인 요청."""
     print(f"\n{'='*60}")
-    print(prompt)
-    ans = input("→ 승인 (y/n): ").strip().lower()
+    print(f"[최종 확인] 민원을 접수합니다.")
+    print(f"  서비스: {service_name}")
+    print(f"  제목: {title}")
+    if attachments:
+        print(f"  첨부: {', '.join(a.name for a in attachments)}")
+    print(f"{'='*60}")
+    ans = input("→ 제출하시겠습니까? (y/n): ").strip().lower()
     return ans in ("y", "yes", "네", "예")
 
 
@@ -74,7 +83,7 @@ def submit_minwon(
     port: int = 9222,
     output_dir: Path | None = None,
 ) -> dict:
-    """민원 접수 실행."""
+    """민원 접수 실행. 제출 직전 1회만 사용자 승인."""
     audit_path = get_audit_path()
     cfg = _SERVICE_CONFIG.get(service)
     if not cfg:
@@ -82,6 +91,7 @@ def submit_minwon(
 
     output_dir = output_dir or Path("data/reports/minwon")
     output_dir.mkdir(parents=True, exist_ok=True)
+    attachments = attachments or []
 
     check = is_cdp_available(port=port)
     if not check["available"]:
@@ -95,72 +105,63 @@ def submit_minwon(
         scope=SCOPE_INTERACTION,
     )
 
-    print(f"[민원] {cfg['name']} 민원 접수 시작")
+    print(f"[민원] {cfg['name']} 민원 접수 준비")
     print(f"  종류: {minwon_type}")
     print(f"  제목: {title}")
-    print(f"  첨부: {[a.name for a in attachments] if attachments else '없음'}")
-
-    # 최종 승인 (민원 접수 = APPROVE)
-    confirm = _ask_approval(
-        f"[승인 필요] 민원 접수 (법적 효력)\n"
-        f"  서비스: {cfg['name']}\n"
-        f"  종류: {minwon_type}\n"
-        f"  제목: {title}\n"
-        f"  첨부: {len(attachments or [])}개\n"
-        f"  접수하시겠습니까?"
-    )
-    if not confirm:
-        return {"ok": False, "error": "사용자 거부"}
 
     try:
         with open_cdp_session(port=port, require_existing_chrome=True) as session:
             page = session.new_tab(cfg["url"])
 
+            # 1. 페이지 이동 (자동)
             navigate(page, cfg["url"], intent=intent, audit_path=audit_path,
                      force=True, wait_until="networkidle")
-            print(f"[민원] {cfg['name']} 접속 완료")
+            print(f"[민원] {cfg['name']} 접속")
 
-            # 로그인 확인
+            # 2. 로그인 필요 시 사용자 직접 처리
+            page.wait_for_load_state("networkidle", timeout=10000)
             page_text = page.inner_text("body")
             if "로그인" in page_text:
-                print("\n[민원] ⚠️  로그인이 필요합니다.")
-                print("          브라우저에서 로그인 후 엔터를 누르세요...")
+                print("\n[민원] 로그인이 필요합니다. 브라우저에서 로그인 후 엔터를 누르세요.")
                 input("→ 로그인 완료 후 엔터: ")
                 navigate(page, cfg["url"], intent=intent, audit_path=audit_path,
                          force=True, wait_until="networkidle")
 
-            # 서비스별 폼 작성
+            # 3. 폼 작성 (자동 — 승인 없음)
             if service == "epeople":
-                _fill_epeople_form(page, title, content, attachments, minwon_type,
-                                   intent, audit_path, cfg)
+                _fill_epeople_form(page, title, content, attachments, intent, audit_path, cfg)
             elif service == "gov24":
-                _fill_gov24_form(page, title, content, attachments,
-                                 intent, audit_path, cfg)
+                _fill_gov24_form(page, title, content, attachments, intent, audit_path, cfg)
 
-            # 스크린샷 (접수 전)
-            ss_path = output_dir / f"minwon_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-            screenshot(page, ss_path, intent=intent, audit_path=audit_path, force=True)
-            print(f"[민원] 접수 전 스크린샷: {ss_path}")
+            # 4. 제출 전 스크린샷
+            ss_before = output_dir / f"minwon_before_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+            screenshot(page, ss_before, intent=intent, audit_path=audit_path, force=True)
+            print(f"[민원] 작성 완료 스크린샷: {ss_before}")
 
-            # 최종 제출
+            # 5. ★ 제출 직전 단 1회 승인 ★
+            if not _ask_submit_approval(title, cfg["name"], attachments):
+                print("[민원] 사용자가 제출을 취소했습니다.")
+                return {"ok": False, "error": "사용자 취소"}
+
+            # 6. 제출 실행 (force=True — 승인 완료)
             submit_sel = cfg.get("submit_btn", "button[type='submit']")
             r = click(page, submit_sel, label="민원 접수 제출",
                       intent=intent, audit_path=audit_path, force=True)
             wait_ms(3000)
             page.wait_for_load_state("networkidle", timeout=30000)
 
-            # 접수 완료 스크린샷
+            # 7. 완료 스크린샷
             ss_done = output_dir / f"minwon_done_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             screenshot(page, ss_done, intent=intent, audit_path=audit_path, force=True)
 
             if r.ok:
                 print(f"[민원] ✓ 접수 완료")
-                print(f"  스크린샷: {ss_done}")
+                print(f"  결과 스크린샷: {ss_done}")
                 return {
                     "ok": True,
                     "title": title,
                     "service": service,
-                    "screenshot": str(ss_done),
+                    "screenshot_done": str(ss_done),
                     "intent_id": intent.intent_id,
                 }
             else:
@@ -172,30 +173,25 @@ def submit_minwon(
         return {"ok": False, "error": str(e)}
 
 
-def _fill_epeople_form(page, title, content, attachments, minwon_type,
-                        intent, audit_path, cfg) -> None:
-    """국민신문고 폼 작성."""
+def _fill_epeople_form(page, title, content, attachments, intent, audit_path, cfg) -> None:
     wait_ms(1000)
     type_text(page, cfg["title_field"], title, label="민원 제목",
               intent=intent, audit_path=audit_path, force=True)
     wait_ms(300)
     type_text(page, cfg["content_field"], content, label="민원 내용",
               intent=intent, audit_path=audit_path, force=True)
-
-    if attachments:
-        for att in attachments:
-            if not att.exists():
-                print(f"[민원] 첨부파일 없음: {att}")
-                continue
-            r = upload_file(page, "input[type='file']", att, label=att.name,
-                            intent=intent, audit_path=audit_path, force=True)
-            if r.ok:
-                print(f"[민원] 첨부: {att.name}")
-            wait_ms(800)
+    for att in attachments:
+        if not att.exists():
+            print(f"[민원] 첨부파일 없음: {att}")
+            continue
+        r = upload_file(page, "input[type='file']", att, label=att.name,
+                        intent=intent, audit_path=audit_path, force=True)
+        if r.ok:
+            print(f"[민원] 첨부: {att.name}")
+        wait_ms(800)
 
 
 def _fill_gov24_form(page, title, content, attachments, intent, audit_path, cfg) -> None:
-    """정부24 민원 검색 후 신청 폼 작성."""
     search_field = cfg.get("search_field")
     if search_field:
         type_text(page, search_field, title[:50], label="민원 검색",
@@ -206,13 +202,13 @@ def _fill_gov24_form(page, title, content, attachments, intent, audit_path, cfg)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="온라인 민원 접수")
+    parser = argparse.ArgumentParser(description="온라인 민원 접수 (제출 직전 1회 승인)")
     parser.add_argument("--title", required=True, help="민원 제목")
     parser.add_argument("--content", default="", help="민원 내용")
     parser.add_argument("--type", default="일반민원", help="민원 종류")
     parser.add_argument("--attach", nargs="*", type=Path, help="첨부파일")
     parser.add_argument("--service", choices=["gov24", "epeople"],
-                        default="epeople", help="민원 서비스")
+                        default="epeople")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--port", type=int, default=9222)
     args = parser.parse_args()
