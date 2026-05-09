@@ -18,21 +18,18 @@ def test_bid_submission_prepare_success():
     res = business_prepare_action.execute(
         page_url="https://www.g2b.go.kr/bid/form?notice=N1",
         business_profile="bid_submission",
-        target_id="공고 12345",
+        notice_id="공고 12345",
+        notice_title="공고 제목",
         organization_name="한국자동차정보센터",
-        amount="1,000,000",
+        bid_amount="1,000,000",
         due_date="2026-05-31",
-        submit_selector="button.submit",
+        target_site="https://www.g2b.go.kr",
         form_summary="투찰금액 1,000,000원",
     )
     assert res["ok"] is True
     assert res["verdict"] == "PREPARE_SUCCESS"
     assert res["business_profile"] == "bid_submission"
     assert res["page_url_safe"] == "https://www.g2b.go.kr/bid/form"
-    assert res["target_id"] == "공고 12345"
-    assert res["organization_name"] == "한국자동차정보센터"
-    assert res["amount"] == "1,000,000"
-    assert res["due_date"] == "2026-05-31"
 
 
 def test_erp_save_prepare_success():
@@ -40,14 +37,15 @@ def test_erp_save_prepare_success():
     res = business_prepare_action.execute(
         page_url="https://erp.company.com/save",
         business_profile="erp_save",
-        erp_module="PURCHASE",
+        erp_name="SAP",
+        menu_path="/MM/PO",
         record_type="PO",
         record_title="발주서 2026-05-09",
+        changed_fields=["qty", "price"],
     )
     assert res["ok"] is True
     assert res["verdict"] == "PREPARE_SUCCESS"
     assert res["business_profile"] == "erp_save"
-    assert res["erp_module"] == "PURCHASE"
     assert res["record_type"] == "PO"
     assert res["record_title"] == "발주서 2026-05-09"
 
@@ -57,8 +55,10 @@ def test_document_submission_prepare_success():
     res = business_prepare_action.execute(
         page_url="https://portal.gov.kr/submit",
         business_profile="document_submission",
+        target_site="https://portal.gov.kr",
         document_title="기술 제안서",
-        organization_name="기술팀",
+        recipient_or_organization="기술팀",
+        submit_button_text="제출",
     )
     assert res["ok"] is True
     assert res["verdict"] == "PREPARE_SUCCESS"
@@ -213,3 +213,40 @@ def test_response_has_evidence():
     assert "business_profile" in res["evidence"]
     assert "verdict" in res["evidence"]
     assert "prepared_at" in res["evidence"]
+
+
+def test_response_has_approval_scope():
+    """응답에 approval_scope 필드 포함."""
+    res = business_prepare_action.execute(
+        page_url="https://www.g2b.go.kr",
+        business_profile="bid_submission",
+        notice_id="N1",
+        notice_title="공고",
+        organization_name="기관",
+        bid_amount="100",
+        due_date="2026-05-31",
+        target_site="https://g2b.go.kr",
+    )
+    assert "approval_scope" in res
+    assert res["approval_scope"]["business_profile"] == "bid_submission"
+    assert "notice_id" in res["approval_scope"]
+    assert "bid_amount" in res["approval_scope"]
+
+
+def test_response_has_evidence_policy():
+    """응답에 evidence_policy 필드 포함."""
+    res = business_prepare_action.execute(
+        page_url="https://www.g2b.go.kr",
+        business_profile="bid_submission",
+        target_id="N1",
+        organization_name="기관",
+        amount="100",
+        due_date="2026-05-31",
+        submit_selector="button",
+    )
+    assert "evidence_policy" in res
+    assert res["evidence_policy"]["profile_name"] == "bid_submission"
+    assert "required_fields" in res["evidence_policy"]
+    assert "forbidden_fields" in res["evidence_policy"]
+    assert "execution_location" in res["evidence_policy"]
+    assert res["evidence_policy"]["execution_location"] == "LOCAL_AGENT_REQUIRED"

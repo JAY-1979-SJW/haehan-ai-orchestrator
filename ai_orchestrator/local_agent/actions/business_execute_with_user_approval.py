@@ -7,18 +7,11 @@ from urllib.parse import urlparse
 from typing import Any
 from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token, sanitize_params
+from ai_orchestrator.local_agent.business_action_profiles import (
+    get_profile, build_evidence_policy, COMMON_FORBIDDEN_FIELDS,
+)
 
 ACTION_NAME = "business.execute_with_user_approval"
-
-BUSINESS_PROFILES = {
-    "bid_submission", "erp_save", "erp_submit_approval",
-    "document_submission", "public_agency_upload", "esign_request",
-}
-
-FORBIDDEN_FIELDS = {
-    "password", "otp", "cert_password", "cookie", "session",
-    "token", "storage_state", "private_key", "npki",
-}
 
 
 def _url_safe(url: str) -> str:
@@ -34,7 +27,7 @@ def _remove_forbidden_fields(data: dict[str, Any]) -> dict[str, Any]:
     result = {}
     for key, val in data.items():
         key_lower = key.lower()
-        if not any(f in key_lower for f in FORBIDDEN_FIELDS):
+        if not any(f in key_lower for f in COMMON_FORBIDDEN_FIELDS):
             result[key] = val
     return result
 
@@ -71,8 +64,9 @@ def execute(**kwargs) -> dict[str, Any]:
     if not business_profile:
         return {"ok": False, "verdict": "ERROR", "error": "business_profile 필수"}
 
-    if business_profile not in BUSINESS_PROFILES:
-        available = ", ".join(sorted(BUSINESS_PROFILES))
+    profile = get_profile(business_profile)
+    if not profile:
+        available = "bid_submission, erp_save, erp_submit_approval, document_submission, public_agency_upload, esign_request"
         return {
             "ok": False,
             "verdict": "ERROR",
@@ -104,6 +98,9 @@ def execute(**kwargs) -> dict[str, Any]:
     # approval_request_id 추출
     approval_request_id = verify_result.get("approval_request_id", "")
 
+    # evidence policy 생성
+    evidence_policy = build_evidence_policy(profile)
+
     # Handoff payload 생성 (safe fields만)
     page_url_safe = _url_safe(page_url)
     safe_payload = _remove_forbidden_fields(kwargs)
@@ -126,6 +123,7 @@ def execute(**kwargs) -> dict[str, Any]:
         "approval_token": approval_token,
         "expected_result_markers": kwargs.get("expected_result_markers", []),
         "evidence_requirements": kwargs.get("evidence_requirements", {}),
+        "evidence_policy": evidence_policy,
         "timeout_seconds": kwargs.get("timeout_seconds", 300),
         "headless": kwargs.get("headless", True),
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -141,6 +139,7 @@ def execute(**kwargs) -> dict[str, Any]:
         "execution_location": "LOCAL_AGENT_REQUIRED",
         "handoff_required": True,
         "handoff_payload": handoff_payload,
+        "evidence_policy": evidence_policy,
         "evidence": {
             "business_profile": business_profile,
             "verdict": "EXECUTE_HANDOFF_READY",
