@@ -11,6 +11,14 @@ const OP_ITEMS = [
     cta: "바로 가기",
   },
   {
+    label: "AI CAD 워크스페이스",
+    description: "연결된 AutoCAD 제어 · 레이어/엔티티 조회 · 물량 산출 태스크 실행",
+    href: "/cad",
+    badge: "운영 중",
+    badgeCls: "bg-[#ECFDF5] text-[#059669] border-[#6EE7B7]",
+    cta: "바로 가기",
+  },
+  {
     label: "파일 지도 리포트",
     description: "로컬 파일 스캔 결과 · 민감정보 마스킹 관리",
     href: "/file-map",

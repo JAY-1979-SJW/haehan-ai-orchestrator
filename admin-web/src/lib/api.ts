@@ -191,3 +191,29 @@ export function revokeRegistrationCode(
 export function getLocalAgentsDiagnostics(): Promise<LocalAgentDiagnosticsResponse> {
   return apiFetch<LocalAgentDiagnosticsResponse>("/local-agents/diagnostics");
 }
+
+export interface SubmitTaskRequest {
+  action: string;
+  params?: Record<string, unknown>;
+}
+
+export interface SubmitTaskResponse {
+  task_id: string;
+  agent_id: string;
+  action: string;
+  status: string;
+}
+
+export function submitTask(
+  agentId: string,
+  body: SubmitTaskRequest
+): Promise<SubmitTaskResponse> {
+  return apiFetch<SubmitTaskResponse>(
+    `/local-agents/${encodeURIComponent(agentId)}/tasks`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+}
