@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import re
 import time
+from typing import Optional
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -453,43 +454,56 @@ class BrowserAgent:
         return all_posts[:max_posts]
 
     def read_article(self, article_url: str) -> dict:
-        """카페 게시글 본문 읽기. 프레임 URL 패턴으로 아티클 프레임 우선 탐색."""
+        """카페 게시글 본문·메타·댓글 읽기.
+
+        반환:
+            title       - 게시글 제목
+            url         - 원본 URL
+            board       - 게시판명
+            author      - 작성자 닉네임
+            written_at  - 작성일시 (예: '2026.05.08. 21:25')
+            view_count  - 조회수 (문자열, 예: '350')
+            like_count  - 좋아요 수 (문자열)
+            comment_count - 댓글 수 (int)
+            tags        - 태그 목록 (list[str])
+            body        - 본문 (최대 5000자)
+            comments    - 댓글 목록 (list[dict]: author/body/written_at)
+        """
         self.go(article_url)
         time.sleep(3)
 
-        title = ""
-        body = ""
-
-        body_selectors = [
-            ".se-main-container",   # 스마트에디터
-            ".article_viewer",      # 구 에디터
-            "#tbody",
-            ".article-viewer",
-            ".se-component-content",
-            ".content_area",
-            ".articleDetailView",
-        ]
-        title_selectors = [
-            "h3.title_text",
-            ".title_subject",
-            ".article-title",
-            "h3.title",
-            ".tit-txt",
-            ".ArticleTitle",
-        ]
-
-        # 아티클 관련 프레임을 먼저, 나머지는 나중에
-        # URL 경로(쿼리 제외)에서만 키워드를 확인해 인코딩된 파라미터 오탐 방지
+        # 아티클 관련 프레임 우선 탐색 (URL 경로 기준, 쿼리 파라미터 오탐 방지)
         frames = self._page.frames
         def _is_article_frame(f) -> bool:
             url = f.url or ""
             if "about:blank" in url:
                 return False
-            path = url.split("?")[0]  # 쿼리 스트립
+            path = url.split("?")[0]
             return any(kw in path for kw in ("ArticleRead", "articles/", "ca-fe/"))
+
         article_frames = [f for f in frames if _is_article_frame(f)]
         other_frames = [f for f in frames if f not in article_frames]
         ordered = article_frames + other_frames
+
+        title = ""
+        body = ""
+        af: Optional[object] = None  # 본문이 있는 아티클 프레임
+
+        body_selectors = [
+            ".se-main-container", ".article_viewer", "#tbody",
+            ".article-viewer", ".se-component-content",
+            ".content_area", ".articleDetailView",
+        ]
+        title_selectors = [
+            "h3.title_text", ".title_area h3", ".article_header h3",
+            ".title_subject", ".article-title", "h3.title", ".tit-txt",
+        ]
+
+        def _safe(frame, sel: str, timeout: int = 1000) -> str:
+            try:
+                return frame.locator(sel).first.inner_text(timeout=timeout).strip()
+            except Exception:
+                return ""
 
         for frame in ordered:
             if body:
@@ -497,29 +511,25 @@ class BrowserAgent:
             try:
                 if not title:
                     for sel in title_selectors:
-                        try:
-                            t = frame.locator(sel).first.inner_text(timeout=1000)
-                            if t and t.strip():
-                                title = t.strip()
-                                break
-                        except Exception:
-                            continue
-                for sel in body_selectors:
-                    try:
-                        b = frame.locator(sel).first.inner_text(timeout=2000)
-                        if b and len(b.strip()) > 20:
-                            body = b.strip()
+                        t = _safe(frame, sel)
+                        if t:
+                            title = t
                             break
-                    except Exception:
-                        continue
-                # 셀렉터 미매칭 시 아티클 프레임 전체 텍스트
+                for sel in body_selectors:
+                    b = _safe(frame, sel, timeout=2000)
+                    if b and len(b) > 20:
+                        body = b
+                        af = frame
+                        break
                 if not body and frame in article_frames:
+                    fb = ""
                     try:
                         fb = frame.inner_text("body")
-                        if fb and len(fb.strip()) > 50:
-                            body = fb.strip()[:5000]
                     except Exception:
                         pass
+                    if fb and len(fb.strip()) > 50:
+                        body = fb.strip()
+                        af = frame
             except Exception:
                 continue
 
@@ -528,10 +538,70 @@ class BrowserAgent:
         if not body:
             body = self.read()
 
+        # ── 메타 정보 추출 (아티클 프레임 우선) ─────────────────────────────
+        meta_frame = af or (article_frames[0] if article_frames else self._page)
+
+        # 작성일 / 조회수
+        info_raw = _safe(meta_frame, ".article_info")
+        view_m = re.search(r"조회\s*([\d,]+)", info_raw)
+        view_count = view_m.group(1) if view_m else ""
+        date_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", info_raw)
+        written_at = date_m.group(1).strip() if date_m else ""
+
+        # 작성자
+        author = _safe(meta_frame, ".nickname")
+
+        # 게시판명
+        board = _safe(meta_frame, ".board_link") or _safe(meta_frame, ".board_name")
+
+        # 좋아요
+        like_raw = _safe(meta_frame, ".like_count") or _safe(meta_frame, "em.u_cnt._count")
+        like_count = re.sub(r"[^\d,]", "", like_raw)
+
+        # 태그
+        tags_raw = (_safe(meta_frame, ".tag_list")
+                    or _safe(meta_frame, ".TagList")
+                    or _safe(meta_frame, ".tag_area"))
+        tags = [t.strip().lstrip("#") for t in tags_raw.split("\n") if t.strip().startswith("#")]
+
+        # ── 댓글 파싱 ────────────────────────────────────────────────────────
+        comments: list[dict] = []
+        try:
+            comment_els = meta_frame.locator(".CommentItem, .comment_item").all()
+            for el in comment_els:
+                raw = el.inner_text(timeout=1000).strip()
+                lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                # 첫 줄 = 닉네임, 마지막 날짜 줄, 나머지 = 본문
+                comment_author = lines[0] if lines else ""
+                cdate_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", raw)
+                comment_date = cdate_m.group(1).strip() if cdate_m else ""
+                # 닉네임·날짜·'답글쓰기' 제외한 본문
+                body_lines = [
+                    l for l in lines[1:]
+                    if l not in {comment_author, comment_date, "답글쓰기"}
+                    and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
+                ]
+                comment_body = " ".join(body_lines).strip()
+                comments.append({
+                    "author": comment_author,
+                    "body": comment_body[:500],
+                    "written_at": comment_date,
+                })
+        except Exception:
+            pass
+
         return {
             "title": title,
             "url": article_url,
+            "board": board,
+            "author": author,
+            "written_at": written_at,
+            "view_count": view_count,
+            "like_count": like_count,
+            "comment_count": len(comments),
+            "tags": tags,
             "body": body[:5000],
+            "comments": comments,
         }
 
 
