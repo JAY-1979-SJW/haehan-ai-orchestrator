@@ -1,9 +1,10 @@
 """향후 액션 stub — 등록(implemented=False)되었으나 핸들러는 미연결.
 
 prepare/execute 짝:
-- browser.prepare_submit / browser.submit_with_user_approval
 - bid.prepare_bid / bid.submit_with_user_approval
 - esign.prepare_signature / esign.execute_with_user_approval
+
+(browser.prepare_submit / browser.submit_with_user_approval는 2차 구현 완료)
 
 핸들러 호출 시 NotImplementedError 발생 — 라우터/오케스트레이터가
 명시적으로 미구현임을 인지할 수 있도록 한다.
@@ -16,8 +17,6 @@ from __future__ import annotations
 from typing import Any
 
 PENDING_ACTIONS = (
-    "browser.prepare_submit",
-    "browser.submit_with_user_approval",
     "bid.prepare_bid",
     "bid.submit_with_user_approval",
     "esign.prepare_signature",

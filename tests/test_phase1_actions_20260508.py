@@ -149,5 +149,5 @@ def test_stub_response_shape():
         assert r[f] is False
 
 
-def test_pending_actions_count_six():
-    assert len(future_action_stubs.PENDING_ACTIONS) == 6
+def test_pending_actions_count_four():
+    assert len(future_action_stubs.PENDING_ACTIONS) == 4

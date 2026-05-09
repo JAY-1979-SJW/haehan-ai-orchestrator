@@ -102,7 +102,6 @@ def test_prepare_unknown_action(client):
 
 # 5. submit/bid/esign 미구현 액션 — requires_approval=False 군 → NOT_IMPLEMENTED
 @pytest.mark.parametrize("action_name", [
-    "browser.prepare_submit",
     "bid.prepare_bid",
     "esign.prepare_signature",
 ])
@@ -119,7 +118,6 @@ def test_prepare_no_approval_unimplemented(client, action_name):
 
 # 6. submit/bid/esign 미구현 액션 — requires_approval=True 군, 토큰 없음 → APPROVAL_REQUIRED
 @pytest.mark.parametrize("action_name", [
-    "browser.submit_with_user_approval",
     "bid.submit_with_user_approval",
     "esign.execute_with_user_approval",
 ])

@@ -97,7 +97,6 @@ def test_attach_file_with_approval_token_handoff_ready():
 
 # 6. requires_approval=False + implemented=False → NOT_IMPLEMENTED (토큰 불필요)
 @pytest.mark.parametrize("action_name", [
-    "browser.prepare_submit",
     "bid.prepare_bid",
     "esign.prepare_signature",
 ])
@@ -109,7 +108,6 @@ def test_no_approval_unimplemented_actions_not_implemented(action_name):
 
 # 7. requires_approval=True + implemented=False → 토큰 없이는 APPROVAL_REQUIRED
 @pytest.mark.parametrize("action_name", [
-    "browser.submit_with_user_approval",
     "bid.submit_with_user_approval",
     "esign.execute_with_user_approval",
 ])
@@ -121,7 +119,6 @@ def test_approval_required_unimplemented_returns_approval_required(action_name):
 
 # 8. requires_approval=True + implemented=False + token → NOT_IMPLEMENTED (실행 차단)
 @pytest.mark.parametrize("action_name", [
-    "browser.submit_with_user_approval",
     "bid.submit_with_user_approval",
     "esign.execute_with_user_approval",
 ])

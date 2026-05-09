@@ -60,7 +60,7 @@ _ACTION_SPECS: dict[str, ActionSpec] = {
         description="폼에 파일 첨부 (제출은 별도 승인)",
         implemented=True,
     ),
-    # ── 향후 (browser.prepare_submit) ───────────────────────────────────
+    # ── 2차 구현 (browser.prepare_submit) ─────────────────────────────────
     "browser.prepare_submit": ActionSpec(
         name="browser.prepare_submit",
         risk_grade=GRADE_AUTO_ALLOWED,
@@ -72,7 +72,7 @@ _ACTION_SPECS: dict[str, ActionSpec] = {
         summary_fields=("site", "form_summary"),
         evidence_fields=("preview_state", "summary_payload"),
         description="제출 직전 form 상태 캡처 + 요약 빌드 (실제 제출 X)",
-        implemented=False,
+        implemented=True,
     ),
     "browser.submit_with_user_approval": ActionSpec(
         name="browser.submit_with_user_approval",
@@ -91,7 +91,7 @@ _ACTION_SPECS: dict[str, ActionSpec] = {
             "result_screen_safe", "screenshot_path_safe",
         ),
         description="사용자 승인 후 제출 1회 실행",
-        implemented=False,
+        implemented=True,
     ),
     # ── 향후 (bid.prepare_bid) ──────────────────────────────────────────
     "bid.prepare_bid": ActionSpec(
@@ -158,6 +158,48 @@ _ACTION_SPECS: dict[str, ActionSpec] = {
         ),
         description="사용자 승인 후 전자서명 1회 실행 (인증서 비밀번호는 사용자 직접 입력)",
         implemented=False,
+    ),
+    # ── 범용 업무 실행 (business.*) ────────────────────────────────────────
+    "business.prepare_action": ActionSpec(
+        name="business.prepare_action",
+        risk_grade=GRADE_AUTO_ALLOWED,
+        requires_user_approval=False,
+        requires_pre_execution_summary=False,
+        requires_evidence=True,
+        is_pair=True,
+        pair_with="business.execute_with_user_approval",
+        summary_fields=(
+            "business_profile", "page_url_safe", "target_id",
+            "organization_name", "amount", "due_date",
+            "erp_module", "record_type", "record_title",
+            "document_title", "approver_name", "signer_name",
+            "attached_files_safe", "form_summary",
+        ),
+        evidence_fields=(
+            "business_profile", "verdict", "prepared_at",
+        ),
+        description="범용 업무 실행 사전 검증 — 업무 프로필 기반 필드 검증 및 요약 생성",
+        implemented=True,
+    ),
+    "business.execute_with_user_approval": ActionSpec(
+        name="business.execute_with_user_approval",
+        risk_grade=GRADE_USER_DIRECT,
+        requires_user_approval=True,
+        requires_pre_execution_summary=True,
+        requires_evidence=True,
+        is_pair=True,
+        pair_with="business.prepare_action",
+        summary_fields=(
+            "business_profile", "page_url_safe", "submit_selector",
+            "target_id", "organization_name", "amount", "due_date",
+            "erp_module", "document_title", "signer_name",
+        ),
+        evidence_fields=(
+            "business_profile", "verdict", "approval_request_id",
+            "execution_location", "executed_at",
+        ),
+        description="범용 업무 실행 — 사용자 승인 후 local agent handoff 생성",
+        implemented=True,
     ),
 }
 

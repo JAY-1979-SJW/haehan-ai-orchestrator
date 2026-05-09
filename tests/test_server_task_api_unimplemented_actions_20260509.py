@@ -16,8 +16,6 @@ from ai_orchestrator.server import action_task_handoff as ath
 
 
 _PENDING_ACTIONS = (
-    "browser.prepare_submit",
-    "browser.submit_with_user_approval",
     "bid.prepare_bid",
     "bid.submit_with_user_approval",
     "esign.prepare_signature",
@@ -45,11 +43,11 @@ def test_register_handler_rejected_for_unimplemented(name):
         action_registry.register_handler(name, lambda **_: {})
 
 
-def test_prepare_submit_returns_not_implemented_no_approval():
-    # browser.prepare_submit: AUTO_ALLOWED, requires_user_approval=False, implemented=False
+def test_bid_prepare_returns_not_implemented_no_approval():
+    # bid.prepare_bid: AUTO_ALLOWED, requires_user_approval=False, implemented=False
     res = ath.prepare_action_task(
-        action_name="browser.prepare_submit",
-        params={"site": "g2b", "form_summary": {"k": "v"}},
+        action_name="bid.prepare_bid",
+        params={"site": "g2b", "notice_no": "N-1"},
     )
     assert res["verdict"] == ath.VERDICT_NOT_IMPLEMENTED
     assert res["handoff_required"] is False
@@ -58,7 +56,6 @@ def test_prepare_submit_returns_not_implemented_no_approval():
 
 
 @pytest.mark.parametrize("name", (
-    "browser.submit_with_user_approval",
     "bid.submit_with_user_approval",
     "esign.execute_with_user_approval",
 ))
