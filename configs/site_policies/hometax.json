@@ -1,0 +1,15 @@
+{
+  "site_id": "hometax",
+  "label": "국세청 홈택스",
+  "allowed_hosts": ["www.hometax.go.kr", "hometax.go.kr"],
+  "allowed_paths": ["/websquare", "/pubcDocument", "/announcement"],
+  "blocked_paths": ["/cert", "/sign", "/mypage"],
+  "allowed_purposes": ["read_notice", "download_file"],
+  "execution_location": "LOCAL_AGENT_REQUIRED",
+  "login_mode": "PUBLIC_READONLY",
+  "credential_policy": "NO_CREDENTIAL_CAPTURE",
+  "capture_policy": "NO_SCREENSHOT_NO_HAR",
+  "risk_level": "MEDIUM",
+  "requires_approval": true,
+  "notes": "홈택스 공개 공지 조회 전용. 로그인/인증서 접근 전면 차단."
+}

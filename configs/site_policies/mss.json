@@ -1,0 +1,15 @@
+{
+  "site_id": "mss",
+  "label": "중소벤처기업부 공고",
+  "allowed_hosts": ["www.mss.go.kr", "m.mss.go.kr"],
+  "allowed_paths": ["/notice", "/policy", "/apply"],
+  "blocked_paths": ["/admin", "/login", "/mypage"],
+  "allowed_purposes": ["read_notice", "download_file", "search_bid"],
+  "execution_location": "LOCAL_AGENT_REQUIRED",
+  "login_mode": "PUBLIC_READONLY",
+  "credential_policy": "NO_CREDENTIAL_CAPTURE",
+  "capture_policy": "NO_SCREENSHOT_NO_HAR",
+  "risk_level": "MEDIUM",
+  "requires_approval": false,
+  "notes": "중소벤처기업부 공개 공고·정책 조회. 신청서 제출은 별도 승인 필요."
+}
