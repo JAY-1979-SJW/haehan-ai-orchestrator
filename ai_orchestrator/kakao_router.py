@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -98,7 +98,8 @@ async def get_status():
     if last:
         try:
             dt = datetime.fromisoformat(last)
-            diff = (datetime.utcnow() - dt).total_seconds()
+            now = datetime.now(timezone.utc) if dt.tzinfo else datetime.utcnow()
+            diff = (now - dt).total_seconds()
             online = diff < 120  # 2분 이내면 온라인
         except Exception:
             pass
