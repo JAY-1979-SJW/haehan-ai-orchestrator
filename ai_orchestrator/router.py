@@ -24,6 +24,7 @@ from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
 from .action_router import action_router
 from .cad_ai_router import cad_ai_router
+from .kakao_router import kakao_router
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
@@ -35,6 +36,7 @@ router.include_router(local_agent_router)
 router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)
+router.include_router(kakao_router)
 
 
 class TaskSubmit(BaseModel):
