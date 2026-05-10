@@ -181,6 +181,7 @@ class DownloadWorker:
     def _on_new_file(self, file_info: dict):
         from ai_orchestrator.local_agent.desktop.download_watcher import map_to_active_room
         from ai_orchestrator.local_agent.desktop.classifier import organize_file
+        from ai_orchestrator.local_agent.desktop.subscriptions import is_subscribed
 
         path = Path(file_info["path"])
         source = file_info.get("source", "general")
@@ -195,7 +196,14 @@ class DownloadWorker:
             except Exception:
                 pass
 
-        # 자동 정리 (_processed 폴더로 복사)
+        # 구독 필터: 구독된 방만 자동 정리/전송
+        subscribed = bool(room_name) and is_subscribed(room_name, app=source)
+        if not subscribed:
+            log.info("미구독 방 — 파일 무시: [%s] %s (room=%s)",
+                     source, file_info["name"], room_name or "?")
+            return
+
+        # 자동 정리 (_processed 폴더로 복사) — 구독 방만
         try:
             org = organize_file(path, room_hint=room_name, copy=True)
         except Exception as e:
@@ -215,8 +223,9 @@ class DownloadWorker:
             "organized_to": org.get("dest", ""),
             "organize_status": org.get("status", ""),
             "tags": org.get("tags", []),
+            "subscribed": True,
         }
-        log.info("새 파일: [%s] %s → %s (%s)", source, file_info["name"],
+        log.info("[구독] 새 파일: [%s] %s → %s (%s)", source, file_info["name"],
                  org.get("status",""), room_name or "-")
         self._sender.send("file_downloaded", source, payload)
 

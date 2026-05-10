@@ -25,7 +25,10 @@ _state: dict[str, Any] = {
     "kakaowork_rooms": [],
     "kakaowork_unread": [],
     "recent_downloads": [],
-    "events": [],          # 최근 100개 이벤트
+    "events": [],
+    # 구독 + 명령 큐 (서버 ↔ 데몬 동기화)
+    "subscriptions": {},     # key=f"{app}:{room}" → entry
+    "pending_commands": [],  # 데몬이 polling 해서 가져감
 }
 _MAX_EVENTS = 100
 
@@ -161,6 +164,84 @@ async def get_downloads_by_room():
         cat = f.get("category", "other")
         by_room[key]["by_category"][cat] = by_room[key]["by_category"].get(cat, 0) + 1
     return {"rooms": list(by_room.values())}
+
+
+# ── 구독 관리 ─────────────────────────
+
+class SubscribeRequest(BaseModel):
+    room: str
+    app: str = "kakaowork"
+    collect_files: bool = True
+    collect_messages: bool = True
+    note: str = ""
+
+
+@kakao_router.get("/subscriptions")
+async def list_subscriptions():
+    """현재 구독 목록 (서버 + 데몬 sync된 상태)."""
+    return {"subscriptions": list(_state["subscriptions"].values())}
+
+
+@kakao_router.post("/subscriptions")
+async def add_subscription(req: SubscribeRequest):
+    """채팅방 구독 추가."""
+    key = f"{req.app}:{req.room}"
+    now = datetime.utcnow().isoformat()
+    entry = {
+        **req.model_dump(),
+        "active": True,
+        "created_at": _state["subscriptions"].get(key, {}).get("created_at", now),
+        "updated_at": now,
+    }
+    _state["subscriptions"][key] = entry
+    # 데몬에게 sync 명령
+    _state["pending_commands"].append({
+        "type": "subscribe", "data": entry, "queued_at": now
+    })
+    logger.info("구독 추가: %s", key)
+    return {"ok": True, "subscription": entry}
+
+
+@kakao_router.delete("/subscriptions/{app}/{room}")
+async def remove_subscription(app: str, room: str):
+    """구독 해제."""
+    key = f"{app}:{room}"
+    removed = _state["subscriptions"].pop(key, None)
+    _state["pending_commands"].append({
+        "type": "unsubscribe",
+        "data": {"app": app, "room": room},
+        "queued_at": datetime.utcnow().isoformat(),
+    })
+    return {"ok": removed is not None, "removed": removed}
+
+
+# ── 명령 큐 (on-demand 수집 등) ────────────
+
+class CollectRequest(BaseModel):
+    room: str
+    app: str = "kakaowork"
+    hours: int = 24
+
+
+@kakao_router.post("/collect")
+async def queue_collect(req: CollectRequest):
+    """비구독 방 1회성 수집 명령. 데몬이 polling 해서 실행."""
+    cmd = {
+        "type": "collect",
+        "data": req.model_dump(),
+        "queued_at": datetime.utcnow().isoformat(),
+    }
+    _state["pending_commands"].append(cmd)
+    logger.info("수집 명령 큐: %s/%s (%dh)", req.app, req.room, req.hours)
+    return {"ok": True, "queued": cmd}
+
+
+@kakao_router.get("/commands")
+async def get_commands():
+    """데몬이 큐에서 명령 가져감 (큐에서 제거)."""
+    cmds = list(_state["pending_commands"])
+    _state["pending_commands"].clear()
+    return {"commands": cmds}
 
 
 @kakao_router.get("/events")
