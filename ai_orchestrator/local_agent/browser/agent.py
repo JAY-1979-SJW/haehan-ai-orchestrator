@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import re
 import time
+import uuid
 from typing import Optional
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -44,7 +45,7 @@ def _js(name: str) -> str:
     return (_JS_DIR / name).read_text(encoding="utf-8")
 
 # ── 설정 ─────────────────────────────────────────────────────────────────────
-CDP_URL = "http://localhost:9222"
+CDP_URL = "http://127.0.0.1:9222"
 DEFAULT_WAIT = 2.5          # 이동 후 기본 대기(초)
 RENDER_POLL  = 0.3          # 렌더링 폴링 간격
 RENDER_MAX   = 8.0          # 렌더링 최대 대기
@@ -78,7 +79,10 @@ class PageInfo:
 
 
 # ── BrowserAgent ──────────────────────────────────────────────────────────────
-class BrowserAgent:
+from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin
+
+
+class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
     """CDP 연결된 Chrome을 제어하는 범용 브라우저 에이전트."""
 
     def __init__(self, cdp_url: str = CDP_URL, headless: bool = False):
@@ -97,17 +101,30 @@ class BrowserAgent:
         self.close()
 
     def connect(self):
+        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp
+        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        self._session_id = str(uuid.uuid4())
+        self._connect_t0 = time.time()
+        ensure_cdp()
         self._pw = sync_playwright().start()
         self._browser = self._pw.chromium.connect_over_cdp(self._cdp_url)
         self._ctx = self._browser.contexts[0]
         self._page = self._ctx.pages[0]
         # 새탭 자동 흡수
         self._ctx.on("page", self._on_new_page)
+        L2("CDP_CONNECT", "browser_agent",
+           session_id=self._session_id,
+           contexts_count=len(self._browser.contexts),
+           pages_count=len(self._ctx.pages))
         return self
 
     def close(self):
+        from ai_orchestrator.local_agent.browser.cdp_audit import L2
         if self._pw:
             self._pw.stop()
+        L2("CDP_DISCONNECT", "browser_agent",
+           session_id=getattr(self, "_session_id", ""),
+           duration_ms=int((time.time() - getattr(self, "_connect_t0", time.time())) * 1000))
 
     def _on_new_page(self, new_page: Page):
         """팝업/새탭이 열리면 현재 페이지로 교체."""
@@ -453,508 +470,99 @@ class BrowserAgent:
 
         return all_posts[:max_posts]
 
-    # ── 카페 전체 탐색 기능 ───────────────────────────────────────────────────
+    def download_attachment(self, file_url: str, save_dir: str = "data/downloads",
+                            filename: str = "") -> dict:
+        """첨부파일 다운로드.
 
-    def cafe_info(self, cafe_url: str) -> dict:
-        """카페 기본 정보 반환.
-
-        반환:
-            name         - 카페명
-            url          - 카페 URL
-            club_id      - 클럽 ID (숫자 문자열)
-            manager      - 운영자 닉네임
-            opened_at    - 개설일 (예: '2004.04.12')
-            grade        - 카페 등급 (예: '나무3단계')
-            member_count - 멤버 수 (문자열, 예: '242,106')
-            description  - 카페 소개
-            boards       - 게시판 목록 (list[dict])
-        """
-        self.go(cafe_url)
-        time.sleep(3)
-
-        def _s(sel: str, timeout: int = 800) -> str:
-            try:
-                return self._page.locator(sel).first.inner_text(timeout=timeout).strip()
-            except Exception:
-                return ""
-
-        raw = self._page.inner_text("body")
-
-        # 메인 프레임 사이드바에서 카페 정보 파싱
-        name_m = re.search(r"^(.+?)\n", raw)
-        name = name_m.group(1).strip() if name_m else ""
-
-        manager_m = re.search(r"\n(.+?)\s*\n\s*매니저", raw)
-        manager = manager_m.group(1).strip() if manager_m else ""
-
-        opened_m = re.search(r"(\d{4}\.\d{2}\.\d{2})\.\s*개설", raw)
-        opened_at = opened_m.group(1) if opened_m else ""
-
-        grade_m = re.search(r"카페등급\s*\n(.+?)\n", raw)
-        grade = grade_m.group(1).strip() if grade_m else ""
-
-        member_m = re.search(r"카페멤버수\s*\n\s*([\d,]+)", raw)
-        member_count = member_m.group(1).strip() if member_m else ""
-
-        # 클럽 ID 추출
-        club_id = ""
-        for link in self.extract_links(filter_href="clubid="):
-            m = re.search(r"clubid=(\d+)", link["href"])
-            if m:
-                club_id = m.group(1)
-                break
-        if not club_id:
-            m = re.search(r"/cafes/(\d+)", cafe_url)
-            if m:
-                club_id = m.group(1)
-
-        # 게시판 목록
-        boards = self.cafe_boards(cafe_url, _skip_goto=True)
-
-        return {
-            "name": name,
-            "url": cafe_url,
-            "club_id": club_id,
-            "manager": manager,
-            "opened_at": opened_at,
-            "grade": grade,
-            "member_count": member_count,
-            "description": "",
-            "boards": boards,
-        }
-
-    def cafe_boards(self, cafe_url: str, _skip_goto: bool = False) -> list[dict]:
-        """카페 게시판 목록 반환.
-
-        반환: list[dict]
-            name  - 게시판명
-            href  - 게시판 URL
-            count - 게시글 수 (문자열)
-        """
-        if not _skip_goto:
-            self.go(cafe_url)
-            time.sleep(3)
-
-        links = self.extract_links()
-        boards = []
-        seen: set[str] = set()
-        for l in links:
-            href = l["href"]
-            name = l["text"]
-            is_board = ("ArticleList" in href or "search.boardtype" in href)
-            if not is_board or href in seen or not name or len(name) < 2:
-                continue
-            seen.add(href)
-            # href에서 menuid 추출
-            mid_m = re.search(r"menuid=(\d+)", href)
-            menu_id = mid_m.group(1) if mid_m else ""
-            # clubid 추출
-            cid_m = re.search(r"clubid=(\d+)", href)
-            club_id = cid_m.group(1) if cid_m else ""
-            boards.append({
-                "name": name,
-                "href": href,
-                "menu_id": menu_id,
-                "club_id": club_id,
-                "count": "",
-            })
-        return boards
-
-    def _get_club_id(self, cafe_url: str) -> str:
-        """카페 URL 또는 사이드바 링크에서 clubid 추출."""
-        # URL 자체에서 추출
-        m = re.search(r"clubid=(\d+)", cafe_url)
-        if m:
-            return m.group(1)
-        m = re.search(r"/cafes/(\d+)", cafe_url)
-        if m:
-            return m.group(1)
-        # 사이드바 링크에서 추출
-        for l in self.extract_links(filter_href="ArticleList"):
-            cm = re.search(r"clubid=(\d+)", l["href"])
-            if cm:
-                return cm.group(1)
-        return ""
-
-    def _board_url(self, cafe_url: str, board: str, page: int = 1) -> str:
-        """게시판명/URL에서 ArticleList URL 생성."""
-        if board.startswith("http"):
-            url = board
-            sep = "&" if "?" in url else "?"
-            if page > 1:
-                url += f"{sep}search.page={page}"
-            return url
-        # 사이드바에서 게시판명 링크 찾기
-        for l in self.extract_links(filter_href="ArticleList"):
-            if board in l["text"]:
-                url = l["href"]
-                sep = "&" if "?" in url else "?"
-                if page > 1:
-                    url += f"{sep}search.page={page}"
-                return url
-        # 전체글보기 기본
-        club_id = self._get_club_id(cafe_url)
-        base = (f"https://cafe.naver.com/ArticleList.nhn"
-                f"?search.clubid={club_id}&search.boardtype=L")
-        if page > 1:
-            base += f"&search.page={page}"
-        return base
-
-    def cafe_posts(self, cafe_url: str,
-                   board: str = "전체글보기",
-                   page: int = 1,
-                   max_posts: int = 30) -> list[dict]:
-        """카페 게시판 게시글 목록 (메타 포함, 페이지 지정 가능).
-
-        Args:
-            cafe_url  - 카페 URL (예: https://cafe.naver.com/0moo)
-            board     - 게시판명 또는 게시판 URL (기본: 전체글보기)
-            page      - 페이지 번호 (기본: 1)
-            max_posts - 최대 수집 수
-
-        반환: list[dict]
-            title    - 게시글 제목
-            href     - 게시글 URL
-            author   - 작성자
-            date     - 작성일
-            views    - 조회수
-            comments - 댓글 수
-        """
-        # 카페 홈으로 이동해 사이드바 링크 확보
-        self.go(cafe_url)
-        time.sleep(2)
-
-        # 목표 게시판 URL 결정
-        target_url = self._board_url(cafe_url, board, page)
-        self.go(target_url)
-        time.sleep(2)
-
-        all_posts: list[dict] = []
-        seen: set[str] = set()
-
-        for frame in self._page.frames:
-            try:
-                posts = frame.evaluate(_js("extract_cafe_posts.js"))
-                for p in posts:
-                    href = p.get("href", "")
-                    if href and href not in seen:
-                        seen.add(href)
-                        all_posts.append(p)
-            except Exception:
-                continue
-
-        return all_posts[:max_posts]
-
-    def cafe_posts_all_pages(self, cafe_url: str,
-                             board: str = "전체글보기",
-                             max_pages: int = 5) -> list[dict]:
-        """여러 페이지에 걸쳐 게시글 목록 수집.
-
-        Args:
-            max_pages - 최대 페이지 수 (기본: 5)
-        """
-        self.go(cafe_url)
-        time.sleep(2)
-        if board != "전체글보기":
-            self.click_text(board)
-            time.sleep(2)
-
-        all_posts: list[dict] = []
-        seen: set[str] = set()
-
-        for page_num in range(1, max_pages + 1):
-            if page_num > 1:
-                clicked = self._page.evaluate(f"""
-() => {{
-    for (const el of document.querySelectorAll('a.page_item, span.page_item, a[class*=page]')) {{
-        if ((el.innerText || '').trim() === '{page_num}') {{
-            el.click(); return true;
-        }}
-    }}
-    return false;
-}}""")
-                if not clicked:
-                    break
-                time.sleep(2.5)
-
-            for frame in self._page.frames:
-                try:
-                    posts = frame.evaluate(_js("extract_cafe_posts.js"))
-                    for p in posts:
-                        href = p.get("href", "")
-                        if href and href not in seen:
-                            seen.add(href)
-                            all_posts.append(p)
-                except Exception:
-                    continue
-
-            if not all_posts and page_num == 1:
-                break
-
-        return all_posts
-
-    def cafe_popular(self, cafe_url: str, max_posts: int = 30) -> list[dict]:
-        """카페 인기글 목록 반환.
-
-        Args:
-            cafe_url - 카페 URL (예: https://cafe.naver.com/0moo)
-        """
-        # clubid 추출
-        club_id = ""
-        m = re.search(r"clubid=(\d+)", cafe_url)
-        if m:
-            club_id = m.group(1)
-        if not club_id:
-            # cafe slug → clubid 추출 (사이드바 링크에서)
-            self.go(cafe_url)
-            time.sleep(2)
-            for l in self.extract_links(filter_href="ArticleList"):
-                cm = re.search(r"clubid=(\d+)", l["href"])
-                if cm:
-                    club_id = cm.group(1)
-                    break
-
-        pop_url = f"https://cafe.naver.com/f-e/cafes/{club_id}/popular" if club_id else ""
-        if not pop_url:
-            return []
-
-        self.go(pop_url)
-        time.sleep(3)
-
-        all_posts: list[dict] = []
-        seen: set[str] = set()
-        for frame in self._page.frames:
-            try:
-                posts = frame.evaluate(_js("extract_cafe_posts.js"))
-                for p in posts:
-                    href = p.get("href", "")
-                    if href and href not in seen:
-                        seen.add(href)
-                        all_posts.append(p)
-            except Exception:
-                continue
-
-        return all_posts[:max_posts]
-
-    def cafe_search(self, cafe_url: str, query: str,
-                    page: int = 1, max_posts: int = 30) -> list[dict]:
-        """카페 내 키워드 검색.
-
-        Args:
-            cafe_url - 카페 URL
-            query    - 검색어
-            page     - 페이지 번호
-        """
-        import urllib.parse
-
-        # clubid 추출
-        club_id = ""
-        m = re.search(r"clubid=(\d+)", cafe_url)
-        if not m:
-            self.go(cafe_url)
-            time.sleep(2)
-            for l in self.extract_links(filter_href="ArticleList"):
-                cm = re.search(r"clubid=(\d+)", l["href"])
-                if cm:
-                    club_id = cm.group(1)
-                    break
-        else:
-            club_id = m.group(1)
-
-        q = urllib.parse.quote(query)
-        search_url = (
-            f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/0"
-            f"?viewType=L&ta=ARTICLE_COMMENT&page={page}&q={q}"
-        )
-        self.go(search_url)
-        time.sleep(3)
-
-        all_posts: list[dict] = []
-        seen: set[str] = set()
-        for frame in self._page.frames:
-            try:
-                posts = frame.evaluate(_js("extract_cafe_posts.js"))
-                for p in posts:
-                    href = p.get("href", "")
-                    if href and href not in seen:
-                        seen.add(href)
-                        all_posts.append(p)
-            except Exception:
-                continue
-
-        # 폴백: 일반 extract_posts.js
-        if not all_posts:
-            for frame in self._page.frames:
-                try:
-                    posts = frame.evaluate(_js("extract_posts.js"))
-                    for p in posts:
-                        href = p.get("href", "")
-                        if href and href not in seen:
-                            seen.add(href)
-                            all_posts.append({"title": p.get("title", ""), "href": href,
-                                              "author": "", "date": "", "views": "", "comments": ""})
-                except Exception:
-                    continue
-
-        return all_posts[:max_posts]
-
-    def cafe_new_posts(self, cafe_url: str, max_posts: int = 30) -> list[dict]:
-        """새 글 (최신 전체글) 목록 반환."""
-        return self.cafe_posts(cafe_url, board="전체글보기", max_posts=max_posts)
-
-    def read_article(self, article_url: str) -> dict:
-        """카페 게시글 본문·메타·댓글 읽기.
+        1차: requests + 브라우저 쿠키 (네이버 카페 파일 호스트)
+        2차: Playwright download 이벤트 폴백
 
         반환:
-            title       - 게시글 제목
-            url         - 원본 URL
-            board       - 게시판명
-            author      - 작성자 닉네임
-            written_at  - 작성일시 (예: '2026.05.08. 21:25')
-            view_count  - 조회수 (문자열, 예: '350')
-            like_count  - 좋아요 수 (문자열)
-            comment_count - 댓글 수 (int)
-            tags        - 태그 목록 (list[str])
-            body        - 본문 (최대 5000자)
-            comments    - 댓글 목록 (list[dict]: author/body/written_at)
+            ok    - 성공 여부
+            path  - 저장된 로컬 경로
+            error - 실패 시 오류 메시지
         """
-        self.go(article_url)
-        time.sleep(3)
+        import requests
+        save_path = Path(save_dir)
+        save_path.mkdir(parents=True, exist_ok=True)
 
-        # 아티클 관련 프레임 우선 탐색 (URL 경로 기준, 쿼리 파라미터 오탐 방지)
-        frames = self._page.frames
-        def _is_article_frame(f) -> bool:
-            url = f.url or ""
-            if "about:blank" in url:
-                return False
-            path = url.split("?")[0]
-            # f-e 프레임(메인)은 제외 — ca-fe/ 프레임(cafe_main)만 우선
-            if "f-e/cafes" in path and f.name != "cafe_main":
-                return False
-            return any(kw in path for kw in ("ArticleRead", "articles/", "ca-fe/"))
-
-        article_frames = [f for f in frames if _is_article_frame(f)]
-        other_frames = [f for f in frames if f not in article_frames]
-        ordered = article_frames + other_frames
-
-        title = ""
-        body = ""
-        af: Optional[object] = None  # 본문이 있는 아티클 프레임
-
-        body_selectors = [
-            ".se-main-container", ".article_viewer", "#tbody",
-            ".article-viewer", ".se-component-content",
-            ".content_area", ".articleDetailView",
-        ]
-        title_selectors = [
-            "h3.title_text", ".title_area h3", ".article_header h3",
-            ".title_subject", ".article-title", "h3.title", ".tit-txt",
-        ]
-
-        def _safe(frame, sel: str, timeout: int = 1000) -> str:
-            try:
-                return frame.locator(sel).first.inner_text(timeout=timeout).strip()
-            except Exception:
-                return ""
-
-        for frame in ordered:
-            if body:
-                break
-            try:
-                if not title:
-                    for sel in title_selectors:
-                        t = _safe(frame, sel)
-                        if t:
-                            title = t
-                            break
-                for sel in body_selectors:
-                    b = _safe(frame, sel, timeout=2000)
-                    if b and len(b) > 20:
-                        body = b
-                        af = frame
-                        break
-                if not body and frame in article_frames:
-                    fb = ""
-                    try:
-                        fb = frame.inner_text("body")
-                    except Exception:
-                        pass
-                    if fb and len(fb.strip()) > 50:
-                        body = fb.strip()
-                        af = frame
-            except Exception:
-                continue
-
-        if not title:
-            title = self._page.title()
-        if not body:
-            body = self.read()
-
-        # ── 메타 정보 추출 (아티클 프레임 우선) ─────────────────────────────
-        meta_frame = af or (article_frames[0] if article_frames else self._page)
-
-        # 작성일 / 조회수
-        info_raw = _safe(meta_frame, ".article_info")
-        view_m = re.search(r"조회\s*([\d,]+)", info_raw)
-        view_count = view_m.group(1) if view_m else ""
-        date_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", info_raw)
-        written_at = date_m.group(1).strip() if date_m else ""
-
-        # 작성자
-        author = _safe(meta_frame, ".nickname")
-
-        # 게시판명
-        board = _safe(meta_frame, ".board_link") or _safe(meta_frame, ".board_name")
-
-        # 좋아요
-        like_raw = _safe(meta_frame, ".like_count") or _safe(meta_frame, "em.u_cnt._count")
-        like_count = re.sub(r"[^\d,]", "", like_raw)
-
-        # 태그
-        tags_raw = (_safe(meta_frame, ".tag_list")
-                    or _safe(meta_frame, ".TagList")
-                    or _safe(meta_frame, ".tag_area"))
-        tags = [t.strip().lstrip("#") for t in tags_raw.split("\n") if t.strip().startswith("#")]
-
-        # ── 댓글 파싱 ────────────────────────────────────────────────────────
-        comments: list[dict] = []
+        # ── 1차: requests + 쿠키 ─────────────────────────────────────────────
         try:
-            comment_els = meta_frame.locator(".CommentItem, .comment_item").all()
-            for el in comment_els:
-                raw = el.inner_text(timeout=1000).strip()
-                lines = [l.strip() for l in raw.splitlines() if l.strip()]
-                # 첫 줄 = 닉네임, 마지막 날짜 줄, 나머지 = 본문
-                comment_author = lines[0] if lines else ""
-                cdate_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", raw)
-                comment_date = cdate_m.group(1).strip() if cdate_m else ""
-                # 닉네임·날짜·'답글쓰기' 제외한 본문
-                body_lines = [
-                    l for l in lines[1:]
-                    if l not in {comment_author, comment_date, "답글쓰기"}
-                    and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
-                ]
-                comment_body = " ".join(body_lines).strip()
-                comments.append({
-                    "author": comment_author,
-                    "body": comment_body[:500],
-                    "written_at": comment_date,
-                })
-        except Exception:
-            pass
+            cookies_raw = self._ctx.cookies()
+            jar = requests.cookies.RequestsCookieJar()
+            for c in cookies_raw:
+                jar.set(c["name"], c["value"],
+                        domain=c.get("domain", ""), path=c.get("path", "/"))
 
-        return {
-            "title": title,
-            "url": article_url,
-            "board": board,
-            "author": author,
-            "written_at": written_at,
-            "view_count": view_count,
-            "like_count": like_count,
-            "comment_count": len(comments),
-            "tags": tags,
-            "body": body[:5000],
-            "comments": comments,
-        }
+            headers = {
+                "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                               "AppleWebKit/537.36 (KHTML, like Gecko) "
+                               "Chrome/124.0.0.0 Safari/537.36"),
+                "Referer": "https://cafe.naver.com/",
+            }
+            resp = requests.get(file_url, cookies=jar, headers=headers,
+                                stream=True, timeout=30, allow_redirects=True)
+            resp.raise_for_status()
+
+            # 파일명 결정: Content-Disposition 우선
+            suggested = filename
+            if not suggested:
+                cd = resp.headers.get("Content-Disposition", "")
+                import urllib.parse
+                fn_m = re.search(r'filename\*?=["\']?(?:UTF-8\'\')?([^"\';\r\n]+)', cd, re.IGNORECASE)
+                if fn_m:
+                    raw_fn = fn_m.group(1).strip()
+                    try:
+                        suggested = urllib.parse.unquote(raw_fn)
+                    except Exception:
+                        suggested = raw_fn
+            if not suggested:
+                suggested = Path(file_url.split("?")[0]).name or "download"
+
+            dest = save_path / suggested
+            with open(dest, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    if chunk:
+                        f.write(chunk)
+
+            if dest.stat().st_size == 0:
+                dest.unlink(missing_ok=True)
+                raise ValueError("다운로드된 파일이 비어있음")
+
+            return {"ok": True, "path": str(dest), "error": ""}
+
+        except Exception as req_err:
+            pass  # 2차 시도로 진행
+
+        # ── 2차: Playwright download 이벤트 ─────────────────────────────────
+        try:
+            with self._page.expect_download(timeout=30000) as dl_info:
+                self._page.evaluate(f"window.location.href = {repr(file_url)}")
+            download = dl_info.value
+            suggested = filename or download.suggested_filename or Path(file_url.split("?")[0]).name or "file"
+            dest = save_path / suggested
+            download.save_as(str(dest))
+            return {"ok": True, "path": str(dest), "error": ""}
+        except Exception as pw_err:
+            # 3차: 새 탭
+            try:
+                with self._ctx.expect_page() as new_page_info:
+                    self._page.evaluate(f"window.open({repr(file_url)}, '_blank')")
+                new_page = new_page_info.value
+                try:
+                    with new_page.expect_download(timeout=30000) as dl_info:
+                        pass
+                    download = dl_info.value
+                    suggested = filename or download.suggested_filename or "file"
+                    dest = save_path / suggested
+                    download.save_as(str(dest))
+                    new_page.close()
+                    return {"ok": True, "path": str(dest), "error": ""}
+                except Exception:
+                    new_page.close()
+            except Exception:
+                pass
+            return {"ok": False, "path": "", "error": str(pw_err)}
 
 
 # ── CLI (대화형 REPL) ──────────────────────────────────────────────────────────
