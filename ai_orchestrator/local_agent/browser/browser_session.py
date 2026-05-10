@@ -59,8 +59,9 @@ def open_user_session(
     start_url: str | None = None,
     maximized: bool = True,
     extra_args: tuple[str, ...] = (),
+    save_storage: bool = True,
 ) -> Iterator[Any]:
-    """사용자 세션 브라우저 열기 (persistent context).
+    """사용자 세션 브라우저 열기 (persistent context + 자동 storage_state 저장).
 
     매개변수
     -------
@@ -70,6 +71,7 @@ def open_user_session(
     start_url    : 열자마자 이동할 URL (None이면 about:blank)
     maximized    : 창 최대화 여부
     extra_args   : 추가 Chromium 인자
+    save_storage : 기본 True — 종료 시 쿠키/세션을 storage_state.json에 저장
 
     반환
     ----
@@ -78,8 +80,9 @@ def open_user_session(
     주의
     ----
     - 첫 호출 시 로그인 필요 → 사용자가 창에서 직접 로그인
-    - 두 번째 호출부터는 자동 로그인 상태
+    - 두 번째 호출부터는 자동 로그인 상태 (저장된 쿠키/세션 복원)
     - 자격증명 자동 입력 금지 (보안 정책)
+    - storage_state는 data/browser_sessions/{profile_name}/state.json에 저장됨
     """
     try:
         from playwright.sync_api import sync_playwright
@@ -89,10 +92,16 @@ def open_user_session(
         ) from e
 
     session_dir = get_session_dir(profile_name)
+    storage_state_path = session_dir / "state.json"
 
     args = list(extra_args)
     if maximized and not any(a.startswith("--start-maximized") for a in args):
         args.append("--start-maximized")
+
+    # 기존 storage_state가 있으면 로드
+    storage_state_kwarg = {}
+    if storage_state_path.is_file():
+        storage_state_kwarg["storage_state"] = str(storage_state_path)
 
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
@@ -101,6 +110,7 @@ def open_user_session(
             channel=channel if channel else None,
             args=args,
             no_viewport=True if maximized else False,
+            **storage_state_kwarg,
         )
         try:
             if start_url:
@@ -108,6 +118,12 @@ def open_user_session(
                 page.goto(start_url, timeout=60000, wait_until="domcontentloaded")
             yield context
         finally:
+            # 브라우저 종료 시 storage_state 저장
+            if save_storage:
+                try:
+                    context.storage_state(path=str(storage_state_path))
+                except Exception as e:
+                    print(f"[경고] storage_state 저장 실패: {e}")
             try:
                 context.close()
             except Exception:
