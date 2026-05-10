@@ -37,4 +37,8 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "browser.execute_click",
     "browser.execute_type",
     "browser.open_url_controlled",
+    "cad.ping",
+    "cad.status",
+    "cad.autocad_ping",
+    "cad.execute",
 })

@@ -1098,6 +1098,65 @@ def action_browser_inspect(params: dict) -> ActionResult:
     )
 
 
+def action_cad_ping(_params: dict) -> ActionResult:
+    """Ping the local CAD adapter without opening or modifying drawings."""
+    from .cad_adapter import cad_ping
+
+    result = cad_ping()
+    return ActionResult(
+        success=bool(result.get("ok")),
+        summary="cad_ping_ok" if result.get("ok") else "cad_ping_failed",
+        data=result,
+        error=str(result.get("error", "")),
+        error_code="" if result.get("ok") else "CAD_ADAPTER_UNAVAILABLE",
+    )
+
+
+def action_cad_status(_params: dict) -> ActionResult:
+    """Return local CAD adapter module status without executing CAD commands."""
+    from .cad_adapter import cad_status
+
+    result = cad_status()
+    return ActionResult(
+        success=bool(result.get("ok")),
+        summary="cad_status_ok" if result.get("ok") else "cad_status_failed",
+        data=result,
+        error="; ".join(result.get("warnings", []))[:200] if not result.get("ok") else "",
+        error_code="" if result.get("ok") else "CAD_STATUS_FAILED",
+    )
+
+
+def action_cad_autocad_ping(params: dict) -> ActionResult:
+    """Ping AutoCAD itself with timeout isolation."""
+    from .cad import autocad_ping
+
+    timeout_seconds = int(params.get("timeout_seconds", 10) or 10)
+    result = autocad_ping(timeout_seconds=timeout_seconds)
+    return ActionResult(
+        success=bool(result.get("ok")),
+        summary="cad_autocad_ping_ok" if result.get("ok") else str(result.get("status", "cad_autocad_ping_failed")),
+        data=result,
+        error=str(result.get("message") or result.get("stderr") or ""),
+        error_code="" if result.get("ok") else str(result.get("error_code", "CAD_AUTOCAD_PING_FAILED")),
+    )
+
+
+def action_cad_execute(params: dict) -> ActionResult:
+    """Execute a read-only CAD tool through the local CAD adapter."""
+    from .cad_adapter import cad_execute
+
+    tool_id = str(params.get("tool_id", "")).strip()
+    args = params.get("args") if isinstance(params.get("args"), dict) else {}
+    result = cad_execute(tool_id, args)
+    return ActionResult(
+        success=bool(result.get("ok")),
+        summary=str(result.get("message") or result.get("status") or "cad_execute")[:300],
+        data=result,
+        error="; ".join(result.get("errors", []))[:200] if result.get("errors") else "",
+        error_code="" if result.get("ok") else str(result.get("error_code", "CAD_EXECUTE_FAILED")),
+    )
+
+
 # ── 디스패치 ──────────────────────────────────────────────────────────────
 
 # 1단계에서 본 모듈에 노출되는 액션. 명시적으로 등록되지 않은 액션은
@@ -1121,6 +1180,10 @@ _ACTIONS = {
     "web_scroll_guarded": action_web_scroll_guarded,
     "web_probe_manual_login": action_web_probe_manual_login,
     "browser.inspect": action_browser_inspect,
+    "cad.ping": action_cad_ping,
+    "cad.status": action_cad_status,
+    "cad.autocad_ping": action_cad_autocad_ping,
+    "cad.execute": action_cad_execute,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
@@ -1264,4 +1327,8 @@ __all__ = [
     "action_web_scroll_guarded",
     "action_web_probe_manual_login",
     "action_browser_inspect",
+    "action_cad_ping",
+    "action_cad_status",
+    "action_cad_autocad_ping",
+    "action_cad_execute",
 ]

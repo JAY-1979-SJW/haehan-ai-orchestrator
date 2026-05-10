@@ -36,6 +36,17 @@ except ImportError:  # 테스트/CI 환경에서 mcp 미설치 시
 
 from .upstream import call_cad_read, call_cad_write_via_orchestrator
 from .write_guard import McpWriteError
+from .local_cad_adapter_tools import (
+    cad_agent_active_document_json,
+    cad_agent_connect_json,
+    cad_agent_health_json,
+    cad_agent_status_json,
+    cad_local_adapter_execute_json,
+    cad_local_adapter_ping_json,
+    cad_local_adapter_status_json,
+    cad_local_autocad_ping_json,
+    cad_local_bridge_health_json,
+)
 
 mcp = FastMCP("cad-mcp") if _MCP_AVAILABLE else None
 
@@ -57,6 +68,51 @@ def _write_error(e: McpWriteError) -> str:
 # ═════════════════════════════════════════════════════════════════════
 
 if _MCP_AVAILABLE:
+    @mcp.tool()
+    async def cad_agent_health() -> str:
+        """Check localhost CAD agent health without touching AutoCAD COM."""
+        return cad_agent_health_json()
+
+    @mcp.tool()
+    async def cad_agent_connect(timeout_seconds: int = 20) -> str:
+        """Start/connect localhost CAD agent to AutoCAD COM and keep it alive."""
+        return cad_agent_connect_json(timeout_seconds)
+
+    @mcp.tool()
+    async def cad_agent_status() -> str:
+        """Return persistent localhost CAD agent connection status."""
+        return cad_agent_status_json()
+
+    @mcp.tool()
+    async def cad_agent_active_document(timeout_seconds: int = 10) -> str:
+        """Return active document info through the persistent localhost CAD agent."""
+        return cad_agent_active_document_json(timeout_seconds)
+
+    @mcp.tool()
+    async def cad_local_adapter_ping() -> str:
+        """로컬 CAD 어댑터 ping. AutoCAD 명령/도면 수정 없음."""
+        return cad_local_adapter_ping_json()
+
+    @mcp.tool()
+    async def cad_local_adapter_status() -> str:
+        """로컬 CAD 어댑터와 모듈 바인딩 상태 조회. AutoCAD 명령/도면 수정 없음."""
+        return cad_local_adapter_status_json()
+
+    @mcp.tool()
+    async def cad_local_autocad_ping(timeout_seconds: int = 10) -> str:
+        """Local AutoCAD backend ping with timeout isolation."""
+        return cad_local_autocad_ping_json(timeout_seconds)
+
+    @mcp.tool()
+    async def cad_local_bridge_health(timeout_seconds: int = 5) -> str:
+        """End-to-end CAD bridge health: MCP -> local agent -> adapter -> AutoCAD ping."""
+        return cad_local_bridge_health_json(timeout_seconds)
+
+    @mcp.tool()
+    async def cad_local_adapter_execute(tool_id: str, args: Optional[dict] = None) -> str:
+        """로컬 CAD 어댑터 read-only tool 실행. 수정/삭제 tool은 로컬에서 차단."""
+        return cad_local_adapter_execute_json(tool_id, args or {})
+
     @mcp.tool()
     async def cad_list_projects(
         status: Optional[str] = None,
@@ -626,6 +682,44 @@ if _MCP_AVAILABLE:
 
 
 # ── 서버 진입점 ──────────────────────────────────────────────────────
+
+if not _MCP_AVAILABLE:
+    async def cad_agent_health() -> str:
+        """Check localhost CAD agent health without touching AutoCAD COM."""
+        return cad_agent_health_json()
+
+    async def cad_agent_connect(timeout_seconds: int = 20) -> str:
+        """Start/connect localhost CAD agent to AutoCAD COM and keep it alive."""
+        return cad_agent_connect_json(timeout_seconds)
+
+    async def cad_agent_status() -> str:
+        """Return persistent localhost CAD agent connection status."""
+        return cad_agent_status_json()
+
+    async def cad_agent_active_document(timeout_seconds: int = 10) -> str:
+        """Return active document info through the persistent localhost CAD agent."""
+        return cad_agent_active_document_json(timeout_seconds)
+
+    async def cad_local_adapter_ping() -> str:
+        """Local CAD adapter ping. Does not execute AutoCAD commands."""
+        return cad_local_adapter_ping_json()
+
+    async def cad_local_adapter_status() -> str:
+        """Local CAD adapter/module status. Does not execute AutoCAD commands."""
+        return cad_local_adapter_status_json()
+
+    async def cad_local_autocad_ping(timeout_seconds: int = 10) -> str:
+        """Local AutoCAD COM backend ping with timeout isolation."""
+        return cad_local_autocad_ping_json(timeout_seconds)
+
+    async def cad_local_bridge_health(timeout_seconds: int = 5) -> str:
+        """End-to-end CAD bridge health without modifying drawings."""
+        return cad_local_bridge_health_json(timeout_seconds)
+
+    async def cad_local_adapter_execute(tool_id: str, args: Optional[dict] = None) -> str:
+        """Execute a local CAD read-only tool; unsafe tools are blocked locally."""
+        return cad_local_adapter_execute_json(tool_id, args or {})
+
 
 if __name__ == "__main__":
     if not _MCP_AVAILABLE:
