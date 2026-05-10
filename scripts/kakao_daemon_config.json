@@ -1,0 +1,7 @@
+{
+  "server_url": "https://haehan-ai.kr/orchestrator",
+  "api_token": "",
+  "poll_interval": 30,
+  "heartbeat_interval": 60,
+  "download_poll": 15
+}
