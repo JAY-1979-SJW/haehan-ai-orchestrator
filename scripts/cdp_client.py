@@ -186,6 +186,24 @@ def main() -> None:
         return
 
     cmd = sys.argv[1]
+
+    # ── Google 서비스 라우팅 ──────────────────────────────────────
+    # python scripts/cdp_client.py google drive list
+    # python scripts/cdp_client.py google calendar create "제목" "2026-05-20" "10:00"
+    if cmd in ("google", "gmail"):
+        try:
+            from google.router import run_google
+            task = sys.argv[2] if len(sys.argv) > 2 else ""
+            sub = sys.argv[3] if len(sys.argv) > 3 else ""
+            args = sys.argv[4:] if len(sys.argv) > 4 else []
+            run_google(cmd, task, sub, args)
+        except Exception as e:
+            print(f"  [오류] {e}")
+            import traceback
+            traceback.print_exc()
+        return
+
+    # ── 기존 명령 ──────────────────────────────────────────────────
     match cmd:
         case "blog":
             cmd_blog_write()
