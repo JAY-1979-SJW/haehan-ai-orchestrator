@@ -78,8 +78,10 @@ async def receive_event(event: KakaoEvent):
         case "file_downloaded":
             dl = event.payload
             _state["recent_downloads"].insert(0, dl)
-            _state["recent_downloads"] = _state["recent_downloads"][:50]
-            logger.info("파일 다운로드 감지: %s (%s)", dl.get("name"), dl.get("type"))
+            _state["recent_downloads"] = _state["recent_downloads"][:100]
+            logger.info("파일 수집: [%s] %s (%s) room=%s",
+                        dl.get("source", "?"), dl.get("name"),
+                        dl.get("category"), dl.get("room") or "-")
 
         case "unread":
             rooms = event.payload.get("rooms", [])
@@ -122,12 +124,42 @@ async def get_rooms():
 
 
 @kakao_router.get("/downloads")
-async def get_downloads(limit: int = 20):
-    """최근 감지된 파일 목록."""
+async def get_downloads(limit: int = 20,
+                        source: str | None = None,
+                        category: str | None = None,
+                        room: str | None = None):
+    """최근 감지된 파일 목록 (필터 지원).
+
+    source: kakaotalk | kakaowork | general
+    category: image | document | video | audio | archive | other
+    room: 채팅방 이름 (부분 일치)
+    """
+    files = _state["recent_downloads"]
+    if source:
+        files = [f for f in files if f.get("source") == source]
+    if category:
+        files = [f for f in files if f.get("category") == category]
+    if room:
+        files = [f for f in files if room.lower() in (f.get("room") or "").lower()]
     return {
-        "files": _state["recent_downloads"][:limit],
-        "total": len(_state["recent_downloads"]),
+        "files": files[:limit],
+        "total": len(files),
+        "filters": {"source": source, "category": category, "room": room},
     }
+
+
+@kakao_router.get("/downloads/by-room")
+async def get_downloads_by_room():
+    """채팅방별 그룹화된 파일 카운트."""
+    by_room: dict[str, dict] = {}
+    for f in _state["recent_downloads"]:
+        key = f.get("room") or "_unknown"
+        if key not in by_room:
+            by_room[key] = {"room": key, "count": 0, "by_category": {}}
+        by_room[key]["count"] += 1
+        cat = f.get("category", "other")
+        by_room[key]["by_category"][cat] = by_room[key]["by_category"].get(cat, 0) + 1
+    return {"rooms": list(by_room.values())}
 
 
 @kakao_router.get("/events")

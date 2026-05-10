@@ -172,25 +172,46 @@ class DownloadWorker:
         )
 
     def _on_new_file(self, file_info: dict):
+        from ai_orchestrator.local_agent.desktop.download_watcher import map_to_active_room
+        from ai_orchestrator.local_agent.desktop.classifier import organize_file
+
         path = Path(file_info["path"])
+        source = file_info.get("source", "general")
+
+        # 카카오워크 출처면 활성 채팅방 매핑 시도
+        room_name = None
+        if source == "kakaowork":
+            try:
+                room = map_to_active_room(file_info["mtime"])
+                if room:
+                    room_name = room.get("name")
+            except Exception:
+                pass
+
+        # 자동 정리 (_processed 폴더로 복사)
         try:
-            cls = classify_file(path)
-        except Exception:
-            cls = {"category": "other", "subcategory": "", "suggested_folder": "others", "tags": []}
+            org = organize_file(path, room_hint=room_name, copy=True)
+        except Exception as e:
+            org = {"status": f"organize_error: {e}", "category": file_info.get("type"),
+                   "subcategory": "", "suggested_folder": "", "tags": [source]}
 
         payload = {
             "name": file_info["name"],
             "path": file_info["path"],
+            "source": source,
+            "room": room_name or "",
             "type": file_info["type"],
             "size": file_info["size"],
-            "category": cls["category"],
-            "subcategory": cls["subcategory"],
-            "suggested_folder": cls["suggested_folder"],
-            "tags": cls["tags"],
+            "mtime_iso": file_info.get("mtime_iso"),
+            "category": org.get("category"),
+            "subcategory": org.get("subcategory", ""),
+            "organized_to": org.get("dest", ""),
+            "organize_status": org.get("status", ""),
+            "tags": org.get("tags", []),
         }
-        log.info("새 파일 감지: %s (%s/%s)", file_info["name"],
-                 cls["category"], cls["subcategory"])
-        self._sender.send("file_downloaded", "kakaowork", payload)
+        log.info("새 파일: [%s] %s → %s (%s)", source, file_info["name"],
+                 org.get("status",""), room_name or "-")
+        self._sender.send("file_downloaded", source, payload)
 
     def start(self):
         log.info("다운로드 폴더 감시 시작")
