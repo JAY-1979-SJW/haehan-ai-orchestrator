@@ -38,13 +38,14 @@ from ai_orchestrator.local_agent.desktop.classifier import classify_file
 CONFIG_FILE = Path(__file__).parent / "kakao_daemon_config.json"
 DAEMON_VERSION = "1.0.0"
 
+_log_file = ROOT / "data" / "reports" / "local_agent" / "kakao_daemon.log"
+_log_file.parent.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(ROOT / "data" / "reports" / "local_agent" / "kakao_daemon.log",
-                            encoding="utf-8"),
+        logging.StreamHandler(open(1, "w", encoding="utf-8", closefd=False)),
+        logging.FileHandler(_log_file, encoding="utf-8"),
     ]
 )
 log = logging.getLogger("kakao_daemon")
@@ -116,7 +117,15 @@ class KakaoworkWorker(KakaoworkMixin):
         self._stop = threading.Event()
 
     def run(self):
+        # uiautomation은 COM 기반 — 스레드마다 CoInitialize 필요
+        try:
+            import ctypes
+            ctypes.windll.ole32.CoInitialize(None)
+        except Exception:
+            pass
         log.info("카카오워크 폴링 시작 (주기: %ds)", self._interval)
+        # 첫 실행은 즉시
+        self._tick()
         while not self._stop.wait(timeout=self._interval):
             self._tick()
 
@@ -242,30 +251,30 @@ def main():
         return
 
     stop_ev = threading.Event()
-
-    # 워커 스레드들
     kw = KakaoworkWorker(sender, cfg["poll_interval"])
     dl = DownloadWorker(sender, cfg["download_poll"])
 
+    # heartbeat·download는 별도 스레드 (COM 불필요)
     threads = [
-        threading.Thread(target=kw.run, name="kakaowork-poll", daemon=True),
         threading.Thread(target=heartbeat_loop,
                          args=(sender, cfg["heartbeat_interval"], stop_ev),
                          name="heartbeat", daemon=True),
     ]
-
     dl.start()
     for t in threads:
         t.start()
 
+    # uiautomation 폴링은 메인 스레드에서 실행 (COM 자동 초기화)
+    log.info("카카오워크 폴링 시작 (주기: %ds) — 메인 스레드", cfg["poll_interval"])
     log.info("데몬 실행 중 — Ctrl+C로 종료")
     try:
-        while True:
-            time.sleep(1)
+        kw._tick()  # 즉시 1회
+        while not stop_ev.wait(timeout=cfg["poll_interval"]):
+            kw._tick()
     except KeyboardInterrupt:
         log.info("종료 중...")
+    finally:
         stop_ev.set()
-        kw.stop()
         dl.stop()
         log.info("데몬 종료")
 
