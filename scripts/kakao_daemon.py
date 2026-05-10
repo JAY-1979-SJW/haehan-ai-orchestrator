@@ -40,13 +40,20 @@ DAEMON_VERSION = "1.0.0"
 
 _log_file = ROOT / "data" / "reports" / "local_agent" / "kakao_daemon.log"
 _log_file.parent.mkdir(parents=True, exist_ok=True)
+
+_handlers = [logging.FileHandler(_log_file, encoding="utf-8")]
+# pythonw.exe 는 stdout=None — StreamHandler 추가하지 않음
+if sys.stdout is not None:
+    try:
+        _handlers.append(logging.StreamHandler(
+            open(1, "w", encoding="utf-8", closefd=False)))
+    except Exception:
+        pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler(open(1, "w", encoding="utf-8", closefd=False)),
-        logging.FileHandler(_log_file, encoding="utf-8"),
-    ]
+    handlers=_handlers,
 )
 log = logging.getLogger("kakao_daemon")
 
@@ -225,6 +232,8 @@ class DownloadWorker:
 
 def heartbeat_loop(sender: EventSender, interval: int, stop: threading.Event):
     log.info("Heartbeat 시작 (주기: %ds)", interval)
+    # 즉시 1회
+    sender.send("heartbeat", "daemon", {"version": DAEMON_VERSION})
     while not stop.wait(timeout=interval):
         sender.send("heartbeat", "daemon", {"version": DAEMON_VERSION})
 
