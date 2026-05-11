@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context
+from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
+from scripts.config import GOOGLE_URLS
 
 
 def run(task: str, args: list[str]) -> None:
@@ -26,23 +27,23 @@ def run(task: str, args: list[str]) -> None:
 
 
 def _task_list(page: Any, args: list[str]) -> None:
-    """메일 목록 조회 (받은편지함 기본)."""
+    """메일 목록 조회."""
     folder = args[0] if args else "inbox"
     print(f"\n[작업] Gmail 메일 목록: {folder}")
 
     url_map = {
-        "inbox": "https://mail.google.com/mail/u/0/#inbox",
-        "sent": "https://mail.google.com/mail/u/0/#sent",
-        "drafts": "https://mail.google.com/mail/u/0/#drafts",
-        "archive": "https://mail.google.com/mail/u/0/#all",
-        "trash": "https://mail.google.com/mail/u/0/#trash",
+        "inbox":   GOOGLE_URLS["gmail_inbox"],
+        "sent":    GOOGLE_URLS["gmail_sent"],
+        "drafts":  GOOGLE_URLS["gmail_drafts"],
+        "archive": GOOGLE_URLS["gmail_archive"],
+        "trash":   GOOGLE_URLS["gmail_trash"],
     }
     url = url_map.get(folder, url_map["inbox"])
 
-    page.goto(url, timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, url)
+    # 메일 목록 렌더 확인
+    page_wait_visible(page, '[role="main"], [role="listitem"], tr[jsmodel]', timeout=20000)
 
-    # 메일 목록 추출
     mails = page.evaluate(r"""() => {
         const rows = [];
         for (const el of document.querySelectorAll('[role="listitem"]')) {
@@ -70,53 +71,45 @@ def _task_compose(page: Any, args: list[str]) -> None:
     to, subject, body = args[0], args[1], " ".join(args[2:])
     print(f"\n[작업] 메일 발송: {to}")
 
-    page.goto("https://mail.google.com/mail/u/0/#compose", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["gmail_home"])
+    # 작성 버튼 대기
+    page_wait_visible(page, '[role="main"]', timeout=20000)
+
+    # 작성 버튼 클릭
+    if not page_wait_click(page, 'div[role="button"]:has-text("편지쓰기"), div[role="button"]:has-text("Compose")'):
+        print("  ⚠  편지쓰기 버튼 못 찾음")
+        return
+
+    # 작성 폼 대기
+    if not page_wait_visible(page, 'input[aria-label*="To"], input[aria-label*="받는사람"]', timeout=10000):
+        print("  ⚠  작성 폼 못 열림")
+        return
 
     # To 입력
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[aria-label*="To"]') ||
-                   document.querySelector('input[placeholder*="To"]');
-        if (inp) {{
-            inp.focus();
-            inp.value = {repr(to)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(500)
+    page_wait_type(page, 'input[aria-label*="To"], input[aria-label*="받는사람"]', to)
+    page.keyboard.press("Tab")
 
     # Subject 입력
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[aria-label*="Subject"]') ||
-                   document.querySelector('input[name*="subject"]');
-        if (inp) {{
-            inp.focus();
-            inp.value = {repr(subject)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(500)
+    page_wait_type(page, 'input[aria-label*="Subject"], input[name*="subject"]', subject)
 
     # Body 입력
-    page.evaluate(f"""() => {{
-        const editor = document.querySelector('div[contenteditable="true"]');
-        if (editor) {{
-            editor.focus();
-            editor.textContent = {repr(body)};
-            editor.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(500)
+    if page_wait_visible(page, 'div[contenteditable="true"]', timeout=5000):
+        page.evaluate(f"""() => {{
+            const editor = document.querySelector('div[contenteditable="true"]');
+            if (editor) {{
+                editor.focus();
+                editor.textContent = {repr(body)};
+                editor.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            }}
+        }}""")
 
     # 발송 버튼 클릭
-    page.evaluate("""() => {
-        const btn = Array.from(document.querySelectorAll('button')).find(b =>
-            b.textContent.includes('Send') || b.getAttribute('aria-label')?.includes('Send')
-        );
-        if (btn) btn.click();
-    }""")
-    page.wait_for_timeout(2000)
-    print("  ✓ 발송 완료")
+    if page_wait_click(page, 'button:has-text("보내기"), button[aria-label*="Send"], button[aria-label*="보내기"]'):
+        # 전송 완료 후 메인 화면 복귀 대기
+        page_wait_visible(page, '[role="main"]', timeout=10000)
+        print("  ✓ 발송 완료")
+    else:
+        print("  ⚠  보내기 버튼 못 찾음")
 
 
 def _task_search(page: Any, args: list[str]) -> None:
@@ -128,21 +121,17 @@ def _task_search(page: Any, args: list[str]) -> None:
     query = " ".join(args)
     print(f"\n[작업] Gmail 검색: {query}")
 
-    page.goto("https://mail.google.com/mail/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["gmail_home"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
     # 검색창 입력
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[placeholder*="Search"]');
-        if (inp) {{
-            inp.focus();
-            inp.value = {repr(query)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            inp.parentElement.querySelector('button')?.click();
-        }}
-    }}""")
-    page.wait_for_timeout(3000)
-    print("  ✓ 검색 완료")
+    if page_wait_type(page, 'input[placeholder*="Search"], input[aria-label*="검색"]', query):
+        page.keyboard.press("Enter")
+        # 검색 결과 대기
+        page_wait_visible(page, '[role="main"]', timeout=10000)
+        print("  ✓ 검색 완료")
+    else:
+        print("  ⚠  검색창 못 찾음")
 
 
 def _task_delete(page: Any, args: list[str]) -> None:
@@ -154,25 +143,21 @@ def _task_delete(page: Any, args: list[str]) -> None:
     num = int(args[0])
     print(f"\n[작업] Gmail 메일 삭제: #{num}")
 
-    page.goto("https://mail.google.com/mail/u/0/#inbox", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["gmail_inbox"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
-    # n번째 메일 선택 후 삭제
+    # n번째 메일 클릭
     page.evaluate(f"""() => {{
         const items = document.querySelectorAll('[role="listitem"]');
-        if (items[{num - 1}]) {{
-            items[{num - 1}].click();
-        }}
+        if (items[{num - 1}]) items[{num - 1}].click();
     }}""")
-    page.wait_for_timeout(1000)
 
-    # 삭제 버튼
-    page.evaluate("""() => {
-        const btn = Array.from(document.querySelectorAll('button')).find(b =>
-            b.getAttribute('aria-label')?.includes('Delete') ||
-            b.title.includes('Delete')
-        );
-        if (btn) btn.click();
-    }""")
-    page.wait_for_timeout(1000)
-    print("  ✓ 삭제 완료")
+    # 메일 열림 대기
+    page_wait_visible(page, '[role="article"], [data-message-id]', timeout=10000)
+
+    # 삭제 버튼 클릭
+    if page_wait_click(page, 'button[aria-label*="Delete"], button[aria-label*="삭제"], button[title*="Delete"]'):
+        page_wait_visible(page, '[role="main"]', timeout=5000)
+        print("  ✓ 삭제 완료")
+    else:
+        print("  ⚠  삭제 버튼 못 찾음")
