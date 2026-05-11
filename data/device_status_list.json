@@ -1,0 +1,94 @@
+{
+  "total": 7,
+  "page_url": "https://eum.cw.or.kr/web/man/WEBMAN380M00",
+  "devices": [
+    {
+      "no": "전체\n \n대표사",
+      "project_name": "",
+      "contract_type": "",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "",
+      "project_name": "",
+      "contract_type": "",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "",
+      "project_name": "선택\n전체\n본회\n서울\n경기\n인천\n대전\n광주\n대구\n부산\n전체",
+      "contract_type": "",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "전체\n신청\n승인\n준공공사\n비대상 공사",
+      "project_name": "전체\n \n등록\n \n미등록\n \n임시등록",
+      "contract_type": "전체\n \nY\n \nN",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "전체\n진행\n준공",
+      "project_name": "선택\nY\nN",
+      "contract_type": "전체\n \n설치\n \n미설치",
+      "project_no": "전체\n \n공유\n \n미공유",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "-\n당일\n \n전일\n \n1주일\n \n당월\n \n전월\n \n당해년도",
+      "project_name": "-\n당일\n \n전일\n \n1주일\n \n당월\n \n전월\n \n당해년도",
+      "contract_type": "",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    },
+    {
+      "no": "-\n당일\n \n전일\n \n1주일\n \n당월\n \n전월\n \n당해년도",
+      "project_name": "-\n당일\n \n전일\n \n1주일\n \n당월\n \n전월\n \n당해년도",
+      "contract_type": "",
+      "project_no": "",
+      "contractor": "",
+      "device_count": "",
+      "installation_status": "",
+      "teardown_date": "",
+      "completion_status": "",
+      "location": ""
+    }
+  ],
+  "summary": {
+    "by_status": {},
+    "by_completion": {}
+  }
+}
