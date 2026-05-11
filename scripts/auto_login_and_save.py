@@ -48,32 +48,28 @@ def main() -> None:
         else:
             print(f"⏳ {site}로 이동 중...")
 
-        # 로그인 대기 (최대 300초)
-        print("⏳ 로그인 대기 중... (최대 300초)")
+        # 자동 탐지 모드: 주기적으로 로그인 감지
+        print("⏳ 자동 로그인 탐지 중... (최대 300초)")
         print("   → 브라우저에서 로그인을 진행하세요")
+        print("   (자동으로 감지되어 세션이 저장됩니다)")
 
-        ok = wait_login(site, timeout_s=300)
+        from scripts.login_detector import monitor_for_login
 
-        if ok:
-            print(f"✓ {site} 로그인 감지됨")
+        result = monitor_for_login(None, check_interval=5, timeout_s=300)
 
-            # DB에 로그인 기록
-            cdp_db.upsert_session(
-                site_name=site,
-                display=site.title(),
-                logged_in=True,
-                login_event=True
-            )
-            log.info("[auto-login] %s 로그인 감지 + 세션 저장", site)
-
-            print(f"✓ 세션 저장 완료")
-            print(f"  - 로그인 사이트: {site}")
+        if result.get("detected"):
+            detected_site = result.get("site") or site
+            elapsed = result.get("elapsed_s", 0)
+            print(f"\n✓ {detected_site} 로그인 자동 감지됨 ({elapsed}초)")
+            print(f"✓ 세션 자동 저장 완료")
+            print(f"  - 로그인 사이트: {detected_site}")
             print(f"  - 저장 위치: data/cdp.db")
             print(f"\n  다음에 이 사이트를 방문할 때 자동으로 복원됩니다.")
+            log.info("[auto-login] %s 로그인 자동 감지 + 저장 (%ds)", detected_site, elapsed)
 
         else:
-            print(f"✗ {site} 로그인 타임아웃 (300초 경과)")
-            log.warning("[auto-login] %s 로그인 타임아웃", site)
+            print(f"\n✗ {site} 로그인 감지 타임아웃 (300초 경과)")
+            log.warning("[auto-login] %s 로그인 감지 타임아웃", site)
             sys.exit(1)
 
     except Exception as e:

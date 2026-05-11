@@ -185,6 +185,33 @@ def main() -> None:
             case "kakao":
                 from scripts.kakao.router import run_kakao
                 run_kakao(task, sub, args)
+            case "auto-login":
+                from scripts.login_detector import monitor_for_login
+                from scripts.web_connector import get_page
+                if not task:
+                    print("사용법: python scripts/cdp_client.py auto-login <사이트> [URL]")
+                    return
+                url = sub if sub else None
+                print(f"\n[작업] {task} 자동 로그인 + 세션 저장")
+                print(f"⏳ 자동 로그인 탐지 중... (최대 300초)")
+                print(f"   → 브라우저에서 로그인을 진행하세요")
+                try:
+                    page = get_page()
+                    if url:
+                        page.goto(url, timeout=30000)
+                    result = monitor_for_login(page, check_interval=5, timeout_s=300)
+                    if result.get("detected"):
+                        site = result.get("site") or task
+                        elapsed = result.get("elapsed_s", 0)
+                        print(f"\n✓ {site} 로그인 자동 감지됨 ({elapsed}초)")
+                        print(f"✓ 세션 자동 저장 완료")
+                    else:
+                        print(f"\n✗ 로그인 감지 타임아웃 (300초 경과)")
+                        sys.exit(1)
+                except Exception as e:
+                    print(f"  [오류] {e}")
+                    import traceback
+                    traceback.print_exc()
             case _:
                 print(f"알 수 없는 명령: {cmd}")
                 print(__doc__)
