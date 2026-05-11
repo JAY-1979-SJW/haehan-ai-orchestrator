@@ -4,16 +4,17 @@
   데몬의 브라우저 세션에 명령 전달
 
 사용법:
-  python scripts/cdp_client.py blog         # 블로그 작성
-  python scripts/cdp_client.py naver-login  # 네이버 로그인
+  python scripts/cdp_client.py naver login           # 네이버 로그인
+  python scripts/cdp_client.py naver session-check   # 세션 확인
+  python scripts/cdp_client.py naver blog write      # 블로그 작성
+  python scripts/cdp_client.py google mail list      # Gmail 목록
+  python scripts/cdp_client.py google calendar today # 오늘 일정
 """
 from __future__ import annotations
 
 import json
 import sys
-import time
 from pathlib import Path
-from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -22,7 +23,6 @@ DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
 
 
 def _load_daemon_state() -> dict:
-    """데몬 상태 로드."""
     if not DAEMON_STATE_FILE.exists():
         raise RuntimeError("데몬이 실행 중이지 않습니다. 먼저 'python scripts/cdp_daemon.py start' 실행하세요")
     try:
@@ -31,187 +31,164 @@ def _load_daemon_state() -> dict:
         raise RuntimeError(f"상태 파일 읽기 실패: {e}")
 
 
-def _ensure_daemon() -> dict:
-    """데몬 실행 확인."""
-    state = _load_daemon_state()
-    if not state.get("running"):
-        raise RuntimeError("데몬이 실행 중이지 않습니다")
-    if state.get("browser_context") != "active":
-        raise RuntimeError("브라우저가 준비되지 않았습니다")
-    return state
-
-
-def cmd_blog_write() -> None:
-    """블로그 글 작성."""
-    state = _ensure_daemon()
-    print("=" * 70)
-    print("📝 블로그 글 작성 (AI CDP 세션)")
-    print("=" * 70)
-    print(f"\n✓ 데몬 연결됨 (PID: {state['pid']})")
-    print("✓ 브라우저 활성")
-    print("✓ 로그인 상태 유지\n")
-
-    try:
-        from playwright.sync_api import sync_playwright
-
-        # 데몬의 세션 디렉터리 접근
-        session_dir = ROOT / "data" / "browser_sessions" / "ai_assistant"
-        storage_state_path = session_dir / "state.json"
-
-        if not storage_state_path.is_file():
-            print("⚠️  저장된 로그인 정보가 없습니다")
-            print("   먼저 네이버에 로그인하세요")
-            return
-
-        print("[1단계] 브라우저 세션 연결...")
-        with sync_playwright() as p:
-            # persistent context는 user_data_dir에서 자동으로 저장된 세션 복원
-            ctx = p.chromium.launch_persistent_context(
-                user_data_dir=str(session_dir),
-                headless=False,  # 사용자가 확인 가능
-                channel="chrome",
-                args=[
-                    "--disable-blink-features=AutomationControlled",  # 자동화 감지 숨김
-                ],
-            )
-
-            page = ctx.new_page()
-            print("✓ 세션 연결 완료")
-
-            # 블로그 이동
-            print("\n[2단계] 블로그 이동...")
-            page.goto("https://blog.naver.com/new", timeout=60000)
-            print("✓ 블로그 글 작성 페이지 도착")
-
-            # 글 작성 안내
-            print("\n[3단계] 글 작성")
-            print("""
-브라우저에서:
-  1. 제목과 본문을 입력하세요
-  2. "임시저장" 또는 "발행"을 클릭하세요
-  3. 작성 후 브라우저 창을 닫으세요
-            """)
-
-            print("\n⏳ 30초 후 자동으로 세션을 저장합니다...")
-            time.sleep(30)
-
-            print("\n[4단계] 세션 저장...")
-            ctx.storage_state(path=str(storage_state_path))
-            ctx.close()
-
-            print("✓ 세션 저장 완료")
-            print("\n" + "=" * 70)
-            print("✅ 블로그 글 작성 완료")
-            print("=" * 70)
-
-    except Exception as e:
-        print(f"✗ 오류: {e}")
-        import traceback
-        traceback.print_exc()
-
-
-def cmd_naver_login() -> None:
-    """네이버 로그인."""
-    state = _ensure_daemon()
-    print("=" * 70)
-    print("🔐 네이버 로그인 (AI CDP 세션)")
-    print("=" * 70)
-    print(f"\n✓ 데몬 연결됨 (PID: {state['pid']})")
-    print("✓ 브라우저 활성\n")
-
-    try:
-        from playwright.sync_api import sync_playwright
-
-        session_dir = ROOT / "data" / "browser_sessions" / "ai_assistant"
-        storage_state_path = session_dir / "state.json"
-
-        print("[1단계] 브라우저 시작...")
-        with sync_playwright() as p:
-            # persistent context는 자동으로 세션 복원
-            ctx = p.chromium.launch_persistent_context(
-                user_data_dir=str(session_dir),
-                headless=False,
-                channel="chrome",
-                args=[
-                    "--disable-blink-features=AutomationControlled",  # 자동화 감지 숨김
-                ],
-            )
-
-            if storage_state_path.is_file():
-                print("✓ 저장된 세션 복원")
-            else:
-                print("🆕 새 세션 생성")
-
-            page = ctx.new_page()
-            page.goto("https://www.naver.com/", timeout=60000)
-
-            print("✓ 네이버 접속")
-
-            # 로그인 상태 확인
-            try:
-                body_text = page.inner_text("body")[:500]
-                if "로그인" in body_text or "아이디" in body_text:
-                    print("\n[2단계] 로그인 진행...")
-                    print("""
-브라우저에서:
-  1. 네이버에 로그인하세요
-  2. 로그인 후 Enter를 누르세요
-                    """)
-                    input("👉 로그인 완료 후 Enter를 누르세요: ")
-                else:
-                    print("✓ 이미 로그인 상태입니다")
-
-            except Exception:
-                pass
-
-            print("\n[3단계] 세션 저장...")
-            ctx.storage_state(path=str(storage_state_path))
-            ctx.close()
-
-            print("✓ 세션 저장 완료")
-            print("\n" + "=" * 70)
-            print("✅ 로그인 완료")
-            print("=" * 70)
-
-    except Exception as e:
-        print(f"✗ 오류: {e}")
-        import traceback
-        traceback.print_exc()
-
-
 def main() -> None:
-    """메인."""
     if len(sys.argv) < 2:
         print(__doc__)
         return
 
     cmd = sys.argv[1]
+    task = sys.argv[2] if len(sys.argv) > 2 else ""
+    sub  = sys.argv[3] if len(sys.argv) > 3 else ""
+    args = sys.argv[4:] if len(sys.argv) > 4 else []
 
-    # ── Google 서비스 라우팅 ──────────────────────────────────────
-    # python scripts/cdp_client.py google drive list
-    # python scripts/cdp_client.py google calendar create "제목" "2026-05-20" "10:00"
-    if cmd in ("google", "gmail"):
-        try:
-            from google.router import run_google
-            task = sys.argv[2] if len(sys.argv) > 2 else ""
-            sub = sys.argv[3] if len(sys.argv) > 3 else ""
-            args = sys.argv[4:] if len(sys.argv) > 4 else []
-            run_google(cmd, task, sub, args)
-        except Exception as e:
-            print(f"  [오류] {e}")
-            import traceback
-            traceback.print_exc()
-        return
-
-    # ── 기존 명령 ──────────────────────────────────────────────────
-    match cmd:
-        case "blog":
-            cmd_blog_write()
-        case "naver-login":
-            cmd_naver_login()
-        case _:
-            print(f"알 수 없는 명령: {cmd}")
-            print(__doc__)
+    try:
+        match cmd:
+            case "goto":
+                from scripts.navigator import goto
+                if not task:
+                    print("사용법: python scripts/cdp_client.py goto <별칭_or_URL>")
+                    return
+                goto(task)
+            case "wait-login":
+                from scripts.navigator import wait_login
+                if not task:
+                    print("사용법: python scripts/cdp_client.py wait-login <사이트> [타임아웃초]")
+                    return
+                t_out = int(sub) if sub.isdigit() else 300
+                ok = wait_login(task, timeout_s=t_out)
+                sys.exit(0 if ok else 1)
+            case "save-session":
+                from scripts.navigator import save_session
+                save_session(task or None)
+            case "write-post":
+                from scripts.navigator import write_blog_post
+                if not task or not sub:
+                    print("사용법: python scripts/cdp_client.py write-post <제목> <본문> [이미지경로]")
+                    return
+                img = args[0] if args else None
+                ok = write_blog_post(task, sub, image_path=img)
+                sys.exit(0 if ok else 1)
+            case "paste-image":
+                from scripts.navigator import paste_image
+                if not task:
+                    print("사용법: python scripts/cdp_client.py paste-image <이미지경로> [target]")
+                    return
+                tgt = sub if sub else "body"
+                ok = paste_image(task, tgt)
+                sys.exit(0 if ok else 1)
+            case "handle-draft-popup":
+                from scripts.navigator import handle_draft_restore_popup
+                r = handle_draft_restore_popup()
+                mark = "✓ 감지+취소" if r["detected"] and r["action"] == "cancel_clicked" else ("- 미감지" if not r["detected"] else "✗ 클릭 실패")
+                print(f"{mark} ({r['elapsed_ms']}ms)")
+                sys.exit(0 if r["action"] != "cancel_failed" else 1)
+            case "is-ready":
+                from scripts.navigator import is_ready
+                check_args = [a for a in [task, sub] + args if a]
+                if not check_args:
+                    print("사용법: python scripts/cdp_client.py is-ready <체크1> [체크2 ...]")
+                    print("  예: is-ready url_contains:naver readystate has_button:발행")
+                    return
+                r = is_ready(check_args, timeout_s=2.0)
+                mark = "✓" if r["ok"] else "✗"
+                print(f"{mark} ok={r['ok']} elapsed={r['elapsed_ms']}ms")
+                for item in r["results"]:
+                    pmk = "✓" if item["passed"] else "✗"
+                    print(f"  {pmk} {item['check']:<40} {item['reason']}")
+                sys.exit(0 if r["ok"] else 1)
+            case "verify-input":
+                from scripts.navigator import verify_input
+                if not task:
+                    print("사용법: python scripts/cdp_client.py verify-input <텍스트>")
+                    return
+                full = " ".join([task, sub] + args).strip()
+                v = verify_input(full)
+                mark = "✓" if v["found"] else "✗"
+                print(f"{mark} found={v['found']} where={v['where']} ({v['elapsed_ms']}ms)")
+                if v["found"]:
+                    print(f"  실제값: '{v['actual']}'")
+                sys.exit(0 if v["found"] else 1)
+            case "verify-text":
+                from scripts.navigator import verify_text
+                if not task:
+                    print("사용법: python scripts/cdp_client.py verify-text <텍스트>")
+                    return
+                full = " ".join([task, sub] + args).strip()
+                results = verify_text(full)
+                # 매칭 결과 있으면 0, 없으면 1
+                found = any(r["data"]["occurrences_in_innerText"] > 0 for r in results)
+                sys.exit(0 if found else 1)
+            case "scan-links":
+                from scripts.navigator import scan_links
+                scan_links()
+            case "scan-page":
+                from scripts.navigator import scan_page
+                scan_page()
+            case "type-into":
+                from scripts.navigator import type_into
+                if not task or not sub:
+                    print("사용법: python scripts/cdp_client.py type-into <대상> <텍스트>")
+                    return
+                # 텍스트는 sub + args 전체를 공백 join
+                full_text = " ".join([sub] + args)
+                ok = type_into(task, full_text)
+                sys.exit(0 if ok else 1)
+            case "click-button":
+                from scripts.navigator import click_button
+                if not task:
+                    print("사용법: python scripts/cdp_client.py click-button <텍스트>")
+                    return
+                ok = click_button(task)
+                sys.exit(0 if ok else 1)
+            case "click-link":
+                from scripts.navigator import click_link
+                if not task:
+                    print("사용법: python scripts/cdp_client.py click-link <텍스트>")
+                    return
+                ok = click_link(task)
+                sys.exit(0 if ok else 1)
+            case "popup-install":
+                from scripts.popup_watcher import install_watcher
+                r = install_watcher()
+                print(f"✓ 팝업 감지 설치 완료 (프레임: {r['frame_count']}개)")
+            case "popup-poll":
+                from scripts.popup_watcher import poll_events
+                import json as _json
+                events = poll_events()
+                if not events:
+                    print("☐ 팝업 이벤트 없음")
+                else:
+                    print(f"✓ 팝업 {len(events)}개 감지:")
+                    for ev in events:
+                        print(f"  - {ev['marker']} ({ev['frame_url']})")
+                        print(f"    스니펫: {ev['snippet'][:100]}")
+                print(_json.dumps(events, ensure_ascii=False, indent=2))
+            case "popup-auto":
+                from scripts.popup_watcher import auto_handle
+                r = auto_handle()
+                print(f"✓ 자동 처리 완료")
+                print(f"  처리됨: {len(r['handled'])}개")
+                print(f"  스킵: {len(r['skipped'])}개")
+                print(f"  미지의: {len(r['unknown'])}개")
+                if r["unknown"]:
+                    for u in r["unknown"]:
+                        print(f"    - {u['marker']}")
+            case "naver":
+                from scripts.naver.router import run_naver
+                run_naver(task, sub, args)
+            case "google" | "gmail":
+                from scripts.google.router import run_google
+                run_google(cmd, task, sub, args)
+            case "kakao":
+                from scripts.kakao.router import run_kakao
+                run_kakao(task, sub, args)
+            case _:
+                print(f"알 수 없는 명령: {cmd}")
+                print(__doc__)
+    except Exception as e:
+        print(f"  [오류] {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
