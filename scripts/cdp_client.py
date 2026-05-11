@@ -193,13 +193,14 @@ def main() -> None:
                     return
                 url = sub if sub else None
                 print(f"\n[작업] {task} 자동 로그인 + 세션 저장")
-                print(f"⏳ 자동 로그인 탐지 중... (최대 300초)")
-                print(f"   → 브라우저에서 로그인을 진행하세요")
+                print(f"⏳ 자동 로그인 탐지 중... (1초 간격, 최대 300초)")
+                print(f"   → 브라우저에서 로그인을 진행하세요 (즉시 감지됨)")
                 try:
                     page = get_page()
                     if url:
                         page.goto(url, timeout=30000)
-                    result = monitor_for_login(page, check_interval=5, timeout_s=300)
+                    # 1초 간격으로 더 빠르게 감지
+                    result = monitor_for_login(page, check_interval=1, timeout_s=300)
                     if result.get("detected"):
                         site = result.get("site") or task
                         elapsed = result.get("elapsed_s", 0)
