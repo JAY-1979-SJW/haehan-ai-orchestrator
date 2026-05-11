@@ -1,0 +1,181 @@
+"""로그인 세션 모듈 — 사이트별 로그인 상태 확인 및 대기.
+
+모든 웹 자동화 스크립트에서 공통으로 사용.
+
+사용법:
+    from scripts.login_session import ensure_login, is_logged_in
+
+    # 로그인 확인 후 미로그인이면 최대 5분 대기
+    ensure_login(page, "google")
+    ensure_login(page, "naver")
+
+    # 상태만 확인 (True/False)
+    if is_logged_in(page, "google"):
+        ...
+"""
+from __future__ import annotations
+
+import time
+from typing import Callable
+
+from playwright.sync_api import Page
+from scripts.config import LOGIN_PROBE_URLS
+from scripts.logger import get_logger
+
+log = get_logger(__name__)
+
+
+# ── 공통 판별 헬퍼 ───────────────────────────────────────────────────
+
+def _probe(page: Page, site: str, logged_in_sels: list[str],
+           logged_out_sels: list[str], url_block: str = "") -> bool:
+    """공통 로그인 판별 — URL 이동 후 셀렉터 다중 매칭."""
+    try:
+        page.goto(LOGIN_PROBE_URLS[site], timeout=15000, wait_until="domcontentloaded")
+        time.sleep(1)
+        # URL 리다이렉트 기반 판별 (url_block이 현재 URL에 있으면 미로그인)
+        if url_block and url_block in page.url:
+            return False
+        import json
+        js_in  = json.dumps(logged_in_sels)
+        js_out = json.dumps(logged_out_sels)
+        result = page.evaluate(f"""() => {{
+            const loggedInSels  = {js_in};
+            const loggedOutSels = {js_out};
+            if (loggedInSels.some(s  => !!document.querySelector(s))) return 'logged_in';
+            if (loggedOutSels.some(s => !!document.querySelector(s))) return 'logged_out';
+            return 'unknown';
+        }}""")
+        return result == "logged_in"
+    except Exception:
+        return False
+
+
+# ── 사이트별 로그인 판별 ─────────────────────────────────────────────
+
+def _check_google(page: Page) -> bool:
+    return _probe(
+        page, "google",
+        logged_in_sels=[
+            'a[href*="SignOutOptions"]', 'img[aria-label*="Google"]',
+            '[data-ogsr-up]', 'a[href*="accounts.google.com/SignOut"]',
+        ],
+        logged_out_sels=[
+            'a[href*="ServiceLogin"]', 'input[type="email"]',
+        ],
+        url_block="accounts.google.com",
+    )
+
+
+def _check_naver(page: Page) -> bool:
+    return _probe(
+        page, "naver",
+        logged_in_sels=[
+            '#gnb_my_name', '.gnb_id', '[class*="gnb_my"]', '[class*="MyView"]',
+            'a[href*="logout"]', 'a[href*="nid.naver.com/user2/help/myInfo"]',
+        ],
+        logged_out_sels=[
+            'a[href*="nid.naver.com/nidlogin"]', 'a.link_login',
+            '#gnb-login-button', 'a[href*="/login.naver"]',
+        ],
+    )
+
+
+def _check_kakao(page: Page) -> bool:
+    return _probe(
+        page, "kakao",
+        logged_in_sels=[
+            'a[href*="logout"]', '.thumb_profile', '[class*="profile"]',
+        ],
+        logged_out_sels=[
+            'input[name="loginKey"]', 'a[href*="/login"]',
+        ],
+        url_block="accounts.kakao.com/login",
+    )
+
+
+def _check_youtube(page: Page) -> bool:
+    return _probe(
+        page, "youtube",
+        logged_in_sels=[
+            '#avatar-btn', 'ytd-topbar-menu-button-renderer',
+        ],
+        logged_out_sels=[
+            'button[aria-label*="Sign in"]', 'a[href*="/signin"]',
+        ],
+    )
+
+
+def _check_github(page: Page) -> bool:
+    return _probe(
+        page, "github",
+        logged_in_sels=[
+            '.avatar-user', 'meta[name="user-login"]',
+            'a[href="/logout"]',
+        ],
+        logged_out_sels=[
+            'a[href="/login"]', 'input[name="login"]',
+        ],
+    )
+
+
+# 사이트 별칭 → 확인 함수 매핑
+_SITE_CHECKERS: dict[str, Callable[[Page], bool]] = {
+    "google":   _check_google,
+    "gmail":    _check_google,
+    "calendar": _check_google,
+    "drive":    _check_google,
+    "docs":     _check_google,
+    "sheets":   _check_google,
+    "naver":    _check_naver,
+    "blog":     _check_naver,
+    "cafe":     _check_naver,
+    "kakao":    _check_kakao,
+    "youtube":  _check_youtube,
+    "github":   _check_github,
+}
+
+
+def is_logged_in(page: Page, site: str) -> bool:
+    """사이트 로그인 상태 확인. True = 로그인됨.
+
+    쿠키 마커 기반(페이지 이동 없음)으로 1차 판별.
+    마커 미등록 사이트만 기존 셀렉터 기반 _SITE_CHECKERS로 폴백.
+    """
+    from scripts.login_check import is_logged_in_by_cookie, _LOGIN_MARKERS, _domain_of
+
+    domain = _domain_of(site)
+    if domain in _LOGIN_MARKERS:
+        result = is_logged_in_by_cookie(page, site)
+        log.debug("is_logged_in[cookie]: %s → %s", site, "로그인됨" if result else "미로그인")
+        return result
+
+    checker = _SITE_CHECKERS.get(site.lower())
+    if checker is None:
+        log.debug("is_logged_in: 미등록 사이트 '%s' — 로그인 상태로 간주", site)
+        return True
+    result = checker(page)
+    log.debug("is_logged_in[probe]: %s → %s", site, "로그인됨" if result else "미로그인")
+    return result
+
+
+def ensure_login(page: Page, site: str, wait_seconds: int = 300) -> None:
+    """로그인 상태 확인, 미로그인 시 사용자 대기.
+
+    Raises:
+        RuntimeError: 대기 시간 초과
+    """
+    if is_logged_in(page, site):
+        log.info("%s 로그인 확인됨", site)
+        return
+
+    log.warn("%s 로그인 필요 — 브라우저에서 로그인하세요 (최대 %ds)", site, wait_seconds)
+
+    deadline = time.time() + wait_seconds
+    while time.time() < deadline:
+        time.sleep(5)
+        if is_logged_in(page, site):
+            log.info("%s 로그인 완료", site)
+            return
+
+    raise RuntimeError(f"{site} 로그인 타임아웃 ({wait_seconds}초 초과)")
