@@ -200,6 +200,20 @@ def main() -> None:
                 if r["unknown"]:
                     for u in r["unknown"]:
                         print(f"    - {u['marker']}")
+            case "analyze":
+                from scripts.page_analyzer import full_page_analysis
+                from scripts.web_connector import get_page
+                import json
+                page = get_page()
+                result = full_page_analysis(page, wait_for_load=True)
+                print("\n[페이지 분석]")
+                print(f"  완성도: {result.get('completeness', {}).get('completeness_score', '?')}%")
+                print(f"  메뉴: {result.get('menu', {}).get('structure', {}).get('links_count', 0)}개")
+                print(f"  테이블: {result.get('tables', {}).get('total_tables', 0)}개")
+                if result.get('recommendations'):
+                    print(f"  권장사항: {', '.join(result['recommendations'])}")
+                print(f"\n✓ 분석 결과:")
+                print(json.dumps(result, ensure_ascii=False, indent=2)[:500])
             case "explore":
                 from scripts.explorer import run as run_explore
                 run_explore(task, [sub] + args if sub else args)
