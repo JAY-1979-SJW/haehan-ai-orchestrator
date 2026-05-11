@@ -55,6 +55,8 @@ CLOSE_BUTTON_SELECTORS = [
     "a.close",
     ".btn_pop_close",
     ".btn_close_pop",
+    "button.btn_l.btn_ty",
+    "button[class*='btn_ty']",
     "[class*='close']",
     "button:contains('닫기')",
     "button:contains('Close')",
@@ -114,22 +116,54 @@ def detect_popup(page) -> dict[str, Any]:
                 }
             });
 
+            // Close 버튼이 있는지 확인 (모달이 없어도 close 버튼이 있으면 팝업으로 간주)
+            const closeSelectors = [
+                "button.close",
+                "button.btn-close",
+                "button[aria-label*='close' i]",
+                "button[aria-label*='닫기' i]",
+                "a.close",
+                ".btn_pop_close",
+                ".btn_close_pop",
+                "button.btn_l.btn_ty",
+                "button[class*='btn_ty']",
+            ];
+
+            let hasCloseButton = false;
+            for (const sel of closeSelectors) {
+                const btn = document.querySelector(sel);
+                if (btn && btn.offsetParent !== null) {
+                    hasCloseButton = true;
+                    break;
+                }
+            }
+
+            detected.hasCloseButton = hasCloseButton;
+
             return detected;
         })();
         """)
 
         popup_count = len(result.get("modals", [])) + len(result.get("overlays", []))
+        # 모달이 없어도 close 버튼이 있으면 팝업 감지로 처리
+        has_popup = popup_count > 0 or result.get("hasCloseButton", False)
+
         types = []
         if result.get("modals"):
             types.append("modal")
         if result.get("overlays"):
             types.append("overlay")
+        if result.get("hasCloseButton") and not types:
+            types.append("close_button")
 
-        _log.debug("[popup-detector] 팝업 감지: %d개, 유형: %s", popup_count, types)
+        _log.debug("[popup-detector] 팝업 감지: 모달=%d, 오버레이=%d, close버튼=%s",
+                  len(result.get("modals", [])),
+                  len(result.get("overlays", [])),
+                  result.get("hasCloseButton", False))
 
         return {
-            "detected": popup_count > 0,
-            "popup_count": popup_count,
+            "detected": has_popup,
+            "popup_count": popup_count if popup_count > 0 else (1 if result.get("hasCloseButton") else 0),
             "types": types,
             "elements": result.get("modals", []),
         }
