@@ -4,6 +4,8 @@
   데몬의 브라우저 세션에 명령 전달
 
 사용법:
+  python scripts/cdp_client.py check-login          # 현재 열려있는 탭 로그인 상태 확인
+  python scripts/cdp_client.py auto-login <사이트>  # 자동 로그인 + 세션 저장
   python scripts/cdp_client.py naver login           # 네이버 로그인
   python scripts/cdp_client.py naver session-check   # 세션 확인
   python scripts/cdp_client.py naver blog write      # 블로그 작성
@@ -43,6 +45,9 @@ def main() -> None:
 
     try:
         match cmd:
+            case "check-login":
+                from scripts.check_login_status import main as check_login_main
+                check_login_main()
             case "goto":
                 from scripts.navigator import goto
                 if not task:
