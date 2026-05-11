@@ -1,0 +1,34 @@
+# 로컬 전용 — 배포 이미지에 포함 불필요
+scripts/
+data/
+local_agent/
+docs/
+*.md
+*.log
+*.txt
+
+# 보안 파일
+credentials.json
+.env*
+secrets/
+
+# 개발 도구
+.git/
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 에디터/OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# 테스트 산출물
+htmlcov/
+.coverage

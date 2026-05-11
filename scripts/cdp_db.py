@@ -79,6 +79,22 @@ def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_task_logs_site
                 ON task_logs(site_name, started_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mail_sends (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                sent_at       TEXT NOT NULL,
+                site_name     TEXT NOT NULL,
+                recipient     TEXT NOT NULL,                  -- TO 필드
+                cc            TEXT,                           -- CC 필드
+                subject       TEXT,
+                body_preview  TEXT,                           -- 처음 100자
+                status        TEXT NOT NULL DEFAULT 'pending', -- pending/success/fail
+                error_msg     TEXT,
+                detail        TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_mail_sends_sent
+                ON mail_sends(site_name, sent_at DESC);
         """)
 
 
@@ -237,6 +253,66 @@ def get_task_logs(
     return [dict(r) for r in rows]
 
 
+# ── 메일 발송 로그 ──────────────────────────────────────────────────
+
+def log_mail_send(
+    site_name: str,
+    recipient: str,
+    subject: str = "",
+    body: str = "",
+    cc: str = "",
+    status: str = "pending",
+    error_msg: str = "",
+    detail: str = "",
+) -> int:
+    """메일 발송 기록. mail_send_id 반환."""
+    now = _now()
+    body_preview = body[:100] if body else ""
+    with _conn() as con:
+        cur = con.execute("""
+            INSERT INTO mail_sends (sent_at, site_name, recipient, cc, subject,
+                                    body_preview, status, error_msg, detail)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (now, site_name, recipient, cc or None, subject or None,
+              body_preview or None, status, error_msg or None, detail or None))
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+def update_mail_send(
+    mail_send_id: int,
+    status: str,
+    error_msg: str = "",
+    detail: str = "",
+) -> None:
+    """메일 발송 상태 업데이트."""
+    with _conn() as con:
+        con.execute("""
+            UPDATE mail_sends
+            SET status = ?, error_msg = ?, detail = ?
+            WHERE id = ?
+        """, (status, error_msg or None, detail or None, mail_send_id))
+
+
+def get_mail_sends(
+    site_name: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
+    """메일 발송 이력 조회."""
+    with _conn() as con:
+        if site_name:
+            rows = con.execute("""
+                SELECT * FROM mail_sends
+                WHERE site_name = ?
+                ORDER BY sent_at DESC LIMIT ?
+            """, (site_name, limit)).fetchall()
+        else:
+            rows = con.execute("""
+                SELECT * FROM mail_sends
+                ORDER BY sent_at DESC LIMIT ?
+            """, (limit,)).fetchall()
+    return [dict(r) for r in rows]
+
+
 # ── CLI (python scripts/cdp_db.py) ───────────────────────────────
 
 def _now() -> str:
@@ -299,6 +375,21 @@ def print_task_logs(site_name: str | None = None, limit: int = 20) -> None:
               f"{r['task_name']:<12} {r['status']:<10} {dur:<8} {err}")
 
 
+def print_mail_sends(site_name: str | None = None, limit: int = 20) -> None:
+    rows = get_mail_sends(site_name, limit)
+    if not rows:
+        print("  발송 기록 없음")
+        return
+    print(f"  {'#':<5} {'발송시각':<22} {'수신인':<25} {'제목':<20} {'상태':<10} 오류")
+    print("  " + "-" * 100)
+    for r in rows:
+        recipient = (r["recipient"] or "")[:25]
+        subject = (r["subject"] or "")[:20]
+        err = (r["error_msg"] or "")[:30]
+        print(f"  {r['id']:<5} {r['sent_at']:<22} {recipient:<25} "
+              f"{subject:<20} {r['status']:<10} {err}")
+
+
 if __name__ == "__main__":
     import sys
     init_db()
@@ -311,6 +402,11 @@ if __name__ == "__main__":
         limit = int(sys.argv[3]) if len(sys.argv) > 3 else 20
         print(f"\n[작업 로그{' — ' + site if site else ''}]")
         print_task_logs(site, limit)
+    elif cmd == "mails":
+        site = sys.argv[2] if len(sys.argv) > 2 else None
+        limit = int(sys.argv[3]) if len(sys.argv) > 3 else 20
+        print(f"\n[메일 발송 기록{' — ' + site if site else ''}]")
+        print_mail_sends(site, limit)
     elif cmd == "requests":
         site = sys.argv[2] if len(sys.argv) > 2 else None
         limit = int(sys.argv[3]) if len(sys.argv) > 3 else 30
@@ -321,5 +417,5 @@ if __name__ == "__main__":
             print(f"\n[사용자 요청 이력{' — ' + site if site else ''}]")
             print_site_requests(site, limit)
     else:
-        print("사용법: python scripts/cdp_db.py [sessions|logs|requests] [site] [limit]")
+        print("사용법: python scripts/cdp_db.py [sessions|logs|mails|requests] [site] [limit]")
         print("        python scripts/cdp_db.py requests summary")

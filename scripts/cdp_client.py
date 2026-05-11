@@ -173,6 +173,9 @@ def main() -> None:
                 if r["unknown"]:
                     for u in r["unknown"]:
                         print(f"    - {u['marker']}")
+            case "explore":
+                from scripts.explorer import run as run_explore
+                run_explore(task, [sub] + args if sub else args)
             case "naver":
                 from scripts.naver.router import run_naver
                 run_naver(task, sub, args)

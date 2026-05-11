@@ -1,19 +1,21 @@
 """네이버 서비스 라우터"""
 from __future__ import annotations
 
-from . import blog
+from . import blog, mail
 from .base import check_session
 
 
 def run_naver(task: str, sub: str, args: list[str]) -> None:
     """네이버 서비스 라우팅.
 
-    task: blog | session-check
-    sub: write 등 하위 명령
+    task: blog | mail | session-check | login
+    sub: write / inbox / compose 등 하위 명령
     """
     match task:
         case "blog":
             blog.run(sub or "write", args)
+        case "mail":
+            mail.run(sub or "inbox", args)
         case "session-check":
             _cmd_session_check()
         case "login":

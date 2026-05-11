@@ -9,6 +9,10 @@ import json
 import time as _t
 from typing import TypedDict
 
+from scripts.logger import get_logger
+
+_log = get_logger(__name__)
+
 POPUP_MARKERS = {
     "작성 중인 글": {"action": "click_button", "target": "취소"},
     "이어서 작성": {"action": "click_button", "target": "취소"},
@@ -67,9 +71,11 @@ def install_watcher(page=None) -> dict:
         try:
             frame.evaluate(js)
             frame_count += 1
-        except Exception:
+        except Exception as e:
+            _log.debug("[popup_watcher] 프레임 주입 실패: %s", e)
             continue
 
+    _log.info("[popup_watcher] 감지기 설치 완료: %d프레임", frame_count)
     return {"installed": True, "frame_count": frame_count}
 
 
@@ -86,8 +92,10 @@ def poll_events(page=None, since_ms: int = 0) -> list[PopupEvent]:
                 since_ms
             )
             if events:
+                _log.debug("[popup_watcher] %d개 팝업 감지", len(events))
                 return events
-        except Exception:
+        except Exception as e:
+            _log.debug("[popup_watcher] 이벤트 조회 실패: %s", e)
             continue
     return []
 
@@ -116,20 +124,31 @@ def auto_handle(page=None) -> dict:
     unknown = []
 
     events = poll_events(page=page)
+    _log.info("[popup_watcher] 자동 처리 시작: %d개 이벤트", len(events))
+
     for ev in events:
         spec = POPUP_MARKERS.get(ev["marker"])
         if spec is None:
             unknown.append(ev)
+            _log.warning("[popup_watcher] 미지의 팝업: %s", ev["marker"])
             continue
         if spec["action"] is None:
             skipped.append(ev)
+            _log.debug("[popup_watcher] 팝업 스킵: %s", ev["marker"])
             continue
         if spec["action"] == "click_button":
             from scripts.navigator import click_button
+            _log.debug("[popup_watcher] 버튼 클릭 시도: %s", spec["target"])
             ok = click_button(spec["target"])
             handled.append({"event": ev, "clicked": ok})
+            if ok:
+                _log.info("[popup_watcher] 팝업 처리 완료: %s", ev["marker"])
+            else:
+                _log.warning("[popup_watcher] 팝업 처리 실패: %s", ev["marker"])
 
     if events:
         clear_events(page=page)
 
+    _log.info("[popup_watcher] 처리 완료: 처리=%d, 스킵=%d, 미지=%d",
+             len(handled), len(skipped), len(unknown))
     return {"handled": handled, "skipped": skipped, "unknown": unknown}

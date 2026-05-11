@@ -721,6 +721,133 @@ if not _MCP_AVAILABLE:
         return cad_local_adapter_execute_json(tool_id, args or {})
 
 
+# ═════════════════════════════════════════════════════════════════════
+# CDP 브라우저 자동화 도구 — Google/Gmail/Naver/G2B 등 전 사이트
+# ═════════════════════════════════════════════════════════════════════
+
+if _MCP_AVAILABLE:
+
+    @mcp.tool()
+    async def cdp_run(
+        site: str,
+        task: str = "",
+        args: Optional[list] = None,
+        timeout: int = 90,
+    ) -> str:
+        """CDP 브라우저 자동화 실행.
+
+        PC의 Chrome 브라우저를 제어하여 웹 서비스 작업을 자동화합니다.
+        로컬 에이전트(PC)가 실행 중이어야 합니다.
+
+        지원 사이트 (site):
+          google  — Google 서비스 (Gmail, Cloud Console, Drive, Calendar 등)
+          gmail   — Gmail 전용
+          naver   — 네이버 (블로그, 카페, 메일, 검색)
+          g2b     — 나라장터 입찰공고 검색
+          gov24   — 정부24 민원서류
+
+        Google 주요 작업 (site=google):
+          cloud               — Cloud Console 홈 (프로젝트 정보, 서비스 목록)
+          cloud info          — 프로젝트 상세 정보
+          cloud goto <서비스>  — 서비스 이동 (compute/storage/run/iam/billing/...)
+          cloud list          — 지원 서비스 목록
+          list [folder]       — Gmail 메일 목록 (inbox/sent/drafts/trash)
+          read <번호|검색어>   — Gmail 메일 읽기
+          compose <수신> <제목> <본문>  — Gmail 메일 발송
+          delete <번호>        — Gmail 메일 삭제
+          reply [번호] <본문>  — Gmail 답장
+          search <query>       — Google 검색
+          click <텍스트>       — 버튼/링크 클릭
+
+        예시:
+          cdp_run(site="google", task="list")
+          cdp_run(site="google", task="compose", args=["to@email.com","제목","본문"])
+          cdp_run(site="google", task="cloud", args=["info"])
+          cdp_run(site="google", task="cloud", args=["goto","compute"])
+          cdp_run(site="naver", task="search", args=["파이썬 강의"])
+        """
+        import asyncio, sys, subprocess
+        from pathlib import Path
+
+        root = Path(__file__).parents[1]
+        script = root / "scripts" / "cdp_client.py"
+
+        cmd = [sys.executable, str(script), site]
+        if task:
+            cmd.append(task)
+        if args:
+            cmd.extend(str(a) for a in args)
+        cmd.append("--no-wait")
+
+        MAX_OUTPUT = 48 * 1024  # 48KB — MCP 응답 보호 (Claude Code CLI 세션 끊김 방지)
+
+        def _truncate(text: str) -> tuple[str, bool]:
+            if len(text) <= MAX_OUTPUT:
+                return text, False
+            head = MAX_OUTPUT // 2
+            tail = MAX_OUTPUT - head
+            return text[:head] + f"\n... [truncated {len(text) - MAX_OUTPUT} bytes] ...\n" + text[-tail:], True
+
+        proc = None
+        dump_path = None
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(root),
+            )
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=float(timeout)
+            )
+            out_text = stdout.decode("utf-8", errors="replace")
+            err_text = stderr.decode("utf-8", errors="replace")
+            raw_size = len(out_text) + len(err_text)
+            combined = (out_text + err_text).strip()
+            output, truncated = _truncate(combined)
+            if truncated:
+                import time
+                dump_dir = root / "ai_orchestrator" / "data" / "cdp_run_dumps"
+                dump_dir.mkdir(parents=True, exist_ok=True)
+                dump_path = dump_dir / f"{site}_{int(time.time())}.log"
+                dump_path.write_text(combined, encoding="utf-8", errors="replace")
+            result = {
+                "site": site, "task": task, "args": args or [],
+                "exit_code": proc.returncode,
+                "output": output,
+                "ok": proc.returncode == 0,
+                "raw_bytes": raw_size,
+                "truncated": truncated,
+                "dump_path": str(dump_path) if dump_path else None,
+            }
+        except asyncio.TimeoutError:
+            if proc is not None and proc.returncode is None:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except Exception:
+                    pass
+            result = {
+                "site": site, "task": task,
+                "exit_code": -1, "output": "",
+                "ok": False, "error": f"timeout {timeout}s (process killed)",
+            }
+        except Exception as e:
+            if proc is not None and proc.returncode is None:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except Exception:
+                    pass
+            result = {
+                "site": site, "task": task,
+                "exit_code": -1, "output": "",
+                "ok": False, "error": str(e),
+            }
+
+        return _json(result)
+
+
 if __name__ == "__main__":
     if not _MCP_AVAILABLE:
         raise SystemExit("mcp 패키지가 설치되지 않았습니다. pip install mcp")

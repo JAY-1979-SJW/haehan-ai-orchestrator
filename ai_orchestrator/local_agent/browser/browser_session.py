@@ -98,19 +98,18 @@ def open_user_session(
     if maximized and not any(a.startswith("--start-maximized") for a in args):
         args.append("--start-maximized")
 
-    # 기존 storage_state가 있으면 로드
-    storage_state_kwarg = {}
-    if storage_state_path.is_file():
-        storage_state_kwarg["storage_state"] = str(storage_state_path)
-
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
             user_data_dir=str(session_dir),
             headless=headless,
             channel=channel if channel else None,
             args=args,
+            ignore_default_args=["--enable-automation"],
             no_viewport=True if maximized else False,
-            **storage_state_kwarg,
+        )
+        # 자동화 감지 우회 — 모든 페이지에 적용
+        context.add_init_script(
+            "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
         )
         try:
             if start_url:
