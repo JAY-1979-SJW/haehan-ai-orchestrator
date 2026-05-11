@@ -141,3 +141,30 @@ data/audit/
 .claude/
 tmp/
 data/browser_sessions/
+
+# CDP 브라우저 런타임 산출물 (로컬 전용)
+screenshot_*.png
+*.log
+*.log.err
+@AutomationLog.txt
+data/cdp.db
+data/cdp_sessions.db
+data/cdp_daemon_state.json
+data/cdp_profile/
+data/downloads/
+data/scrape/
+data/sitemap/
+data/reports/
+data/setup_log.txt
+data/test_image.png
+
+# 브라우저 캐시 디렉토리
+.deep_sitemap_cache/
+.sitemap_cache/
+.structure_cache/
+ai_orchestrator/local_agent/browser/.deep_sitemap_cache/
+ai_orchestrator/local_agent/browser/.sitemap_cache/
+ai_orchestrator/local_agent/browser/.structure_cache/
+
+# ai_orchestrator 로컬 데이터
+ai_orchestrator/data/
