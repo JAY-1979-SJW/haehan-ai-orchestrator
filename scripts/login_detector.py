@@ -139,12 +139,58 @@ def save_detected_login(site: str, page=None) -> bool:
         return False
 
 
-def monitor_for_login(page, check_interval: int = 10, timeout_s: int = 300) -> dict[str, Any]:
+def _inject_login_watcher(page) -> bool:
+    """페이지에 로그인 감지 JavaScript 주입.
+
+    DOM 변화를 감시하여 로그인 패턴 텍스트 출현 시 플래그 설정.
+    """
+    try:
+        page.evaluate("""
+        (() => {
+            if (window.__login_watcher_installed) return;
+            window.__login_watcher_installed = true;
+            window.__login_detected = false;
+            window.__login_keywords = ['로그아웃', 'logout', 'sign out', 'log out', '프로필', 'account'];
+
+            // 페이지 로드 완료 후 초기 체크
+            const checkLogin = () => {
+                const text = (document.body?.innerText || '').toLowerCase();
+                for (const kw of window.__login_keywords) {
+                    if (text.includes(kw.toLowerCase())) {
+                        window.__login_detected = true;
+                        return;
+                    }
+                }
+            };
+
+            checkLogin();
+            setTimeout(checkLogin, 500);
+
+            // DOM 변화 감시
+            const observer = new MutationObserver(() => {
+                checkLogin();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: false
+            });
+        })();
+        """)
+        _log.info("[login-detector] 로그인 감지기 주입 완료")
+        return True
+    except Exception as e:
+        _log.debug("[login-detector] 감지기 주입 실패: %s", e)
+        return False
+
+
+def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300) -> dict[str, Any]:
     """페이지에서 로그인을 모니터링하고 감지 시 자동 저장.
 
     Args:
         page: Playwright Page 객체
-        check_interval: 체크 간격 (초)
+        check_interval: 체크 간각 (초)
         timeout_s: 최대 모니터링 시간 (초)
 
     Returns:
@@ -153,11 +199,24 @@ def monitor_for_login(page, check_interval: int = 10, timeout_s: int = 300) -> d
     start_time = time.time()
     detected_sites = set()
 
+    # JavaScript 감지기 주입
+    _inject_login_watcher(page)
+
     while time.time() - start_time < timeout_s:
         try:
+            # 1. JS 기반 빠른 감지
+            js_detected = False
+            try:
+                js_detected = page.evaluate("() => window.__login_detected || false")
+            except Exception:
+                pass
+
+            # 2. 펄 기반 감지 (JS 미작동 시 폴백)
             is_logged_in, site = detect_login_on_current_tab(page)
 
-            if is_logged_in and site and site not in detected_sites:
+            detected = js_detected or is_logged_in
+
+            if detected and site and site not in detected_sites:
                 detected_sites.add(site)
                 save_detected_login(site, page)
 
