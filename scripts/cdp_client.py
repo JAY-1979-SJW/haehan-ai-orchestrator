@@ -156,6 +156,28 @@ def main() -> None:
                 from scripts.popup_watcher import install_watcher
                 r = install_watcher()
                 print(f"✓ 팝업 감지 설치 완료 (프레임: {r['frame_count']}개)")
+            case "detect-popup":
+                from scripts.popup_detector import detect_popup
+                from scripts.web_connector import get_page
+                page = get_page()
+                result = detect_popup(page)
+                if result["detected"]:
+                    print(f"\n✓ {result['popup_count']}개 팝업 감지됨")
+                    print(f"  유형: {', '.join(result['types'])}")
+                    for i, elem in enumerate(result["elements"]):
+                        print(f"  - [{i+1}] {elem.get('text', '')[:50]}")
+                else:
+                    print("\n✓ 팝업 없음")
+                sys.exit(0 if result["detected"] else 1)
+            case "close-popup":
+                from scripts.popup_detector import close_all_popups
+                from scripts.web_connector import get_page
+                page = get_page()
+                result = close_all_popups(page)
+                print(f"\n✓ 팝업 처리 완료: {result['total_closed']}개 닫음")
+                if result["final_state"]["detected"]:
+                    print(f"⚠️  {result['final_state']['popup_count']}개 팝업 남아있음")
+                sys.exit(0 if not result["final_state"]["detected"] else 1)
             case "popup-poll":
                 from scripts.popup_watcher import poll_events
                 import json as _json

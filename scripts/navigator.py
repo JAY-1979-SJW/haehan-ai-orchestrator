@@ -64,8 +64,15 @@ def resolve(target: str) -> str:
     )
 
 
-def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True) -> None:
-    """대상 페이지로 활성 탭 이동. 탭은 닫지 않고 그대로 둠. 성공 시 자동 scan_page()."""
+def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True, handle_popups: bool = True) -> None:
+    """대상 페이지로 활성 탭 이동. 탭은 닫지 않고 그대로 둠. 성공 시 자동 scan_page().
+
+    Args:
+        target: 별칭 또는 URL
+        timeout_ms: 페이지 로드 타임아웃
+        auto_scan: 이동 후 페이지 스캔 실행 여부
+        handle_popups: 페이지 진입 시 팝업 자동 처리 여부
+    """
     url = resolve(target)
     print("=" * 60)
     print(f"페이지 전환: {target} → {url}")
@@ -73,6 +80,17 @@ def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True) -> None:
     page = get_page()
     page.goto(url, timeout=timeout_ms)
     print(f"✓ 이동 완료: {page.url}")
+
+    # 팝업 자동 처리
+    if handle_popups:
+        try:
+            from scripts.popup_detector import handle_page_popups
+            result = handle_page_popups(page)
+            if result.get("had_popup"):
+                print(f"✓ 팝업 처리 완료 ({result.get('popups_closed')}개)")
+        except Exception as e:
+            print(f"⚠️  팝업 처리 실패: {e}")
+
     print("=" * 60)
     if auto_scan:
         scan_page()
