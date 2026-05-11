@@ -41,4 +41,6 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "cad.status",
     "cad.autocad_ping",
     "cad.execute",
+    # CDP 브라우저 자동화 (google/gmail/naver/g2b 등 전 사이트)
+    "cdp.run",
 })

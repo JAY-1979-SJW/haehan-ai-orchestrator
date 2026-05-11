@@ -1098,6 +1098,63 @@ def action_browser_inspect(params: dict) -> ActionResult:
     )
 
 
+def action_cdp_run(params: dict) -> ActionResult:
+    """CDP 브라우저 자동화 실행 — cdp_client.py 전체 기능 래핑.
+
+    params:
+        site    (str)  : google | gmail | naver | g2b | gov24 | ...
+        task    (str)  : cloud | list | compose | read | search | click | ...
+        args    (list) : 작업별 인수 (선택)
+        timeout (int)  : 최대 실행 시간(초, 기본 90)
+        no_wait (bool) : while-loop 생략 여부 (기본 True)
+
+    반환:
+        ActionResult.data = {"output": "...", "exit_code": 0}
+    """
+    site    = str(params.get("site", "google")).strip()
+    task    = str(params.get("task", "")).strip()
+    args    = params.get("args") or []
+    timeout = int(params.get("timeout", 90))
+    no_wait = bool(params.get("no_wait", True))
+
+    root = Path(__file__).parents[1]
+    script = root / "scripts" / "cdp_client.py"
+
+    cmd = [sys.executable, str(script), site]
+    if task:
+        cmd.append(task)
+    cmd.extend(str(a) for a in args)
+    if no_wait:
+        cmd.append("--no-wait")
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(root),
+        )
+        output = (proc.stdout or "") + (proc.stderr or "")
+        success = proc.returncode == 0
+        return ActionResult(
+            success=success,
+            summary=f"cdp {site}/{task} {'ok' if success else 'fail'}",
+            data={"output": output.strip(), "exit_code": proc.returncode,
+                  "site": site, "task": task, "args": args},
+            error="" if success else output[-400:],
+            error_code="" if success else "CDP_RUN_ERROR",
+        )
+    except subprocess.TimeoutExpired:
+        return ActionResult(
+            success=False,
+            summary=f"cdp {site}/{task} timeout",
+            data={"site": site, "task": task, "timeout": timeout},
+            error=f"{timeout}초 초과",
+            error_code="CDP_TIMEOUT",
+        )
+
+
 def action_cad_ping(_params: dict) -> ActionResult:
     """Ping the local CAD adapter without opening or modifying drawings."""
     from .cad_adapter import cad_ping
@@ -1180,6 +1237,7 @@ _ACTIONS = {
     "web_scroll_guarded": action_web_scroll_guarded,
     "web_probe_manual_login": action_web_probe_manual_login,
     "browser.inspect": action_browser_inspect,
+    "cdp.run": action_cdp_run,
     "cad.ping": action_cad_ping,
     "cad.status": action_cad_status,
     "cad.autocad_ping": action_cad_autocad_ping,
