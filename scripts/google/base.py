@@ -1,98 +1,71 @@
-"""Google 서비스 공통 - CDP, 세션, 로그"""
+"""Google 서비스 공통 - 로그인 확인, 작업 컨텍스트
+
+브라우저 연결 → scripts.web_connector
+페이지 헬퍼   → scripts.page_helper
+"""
 from __future__ import annotations
 
-import json
-import time
+import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator
+from typing import Generator
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 
 ROOT = Path(__file__).resolve().parents[2]
-SESSION_DIR = ROOT / "data" / "browser_sessions" / "google"
+sys.path.insert(0, str(ROOT))
+
+# 브라우저 연결 모듈
+from scripts.web_connector import open_page, get_page as _wc_get_page, close_page  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+
+log = get_logger(__name__)
+
+# 로그인 세션 모듈
+from scripts.login_session import ensure_login, is_logged_in  # noqa: E402
+
+# 공통 페이지 헬퍼 re-export
+from scripts.page_helper import (  # noqa: E402
+    page_goto,
+    page_wait_visible,
+    page_wait_click,
+    page_wait_type,
+    page_wait_nav,
+)
+
+__all__ = [
+    "page_goto", "page_wait_visible", "page_wait_click",
+    "page_wait_type", "page_wait_nav",
+    "get_page", "task_context", "check_session",
+]
 
 
-# ── CDP 연결 ────────────────────────────────────────────────────────
+from scripts.site_base import (  # noqa: E402
+    check_session as _check_session_base,
+    task_context as _task_context_base,
+)
+
+
+def check_session() -> dict:
+    """데몬 Chrome에서 Google 로그인 상태 실시간 확인."""
+    return _check_session_base("google")
+
 
 def get_page(headless: bool = False) -> Page:
-    """CDP 브라우저에 연결해 새 페이지 반환."""
+    """CDP 브라우저의 기존 탭 재사용. (web_connector.get_page 위임)"""
     from scripts.cdp_db import init_db
     init_db()
-
-    # CDPport 읽기
-    daemon_state_file = ROOT / "data" / "cdp_daemon_state.json"
-    if not daemon_state_file.exists():
-        raise RuntimeError("CDP 데몬이 실행 중이지 않습니다. 'python scripts/cdp_daemon.py start' 실행하세요")
-    state = json.loads(daemon_state_file.read_text(encoding="utf-8"))
-    port = state.get("cdp_port", 9222)
-
-    p = sync_playwright().start()
-    browser = p.chromium.connect_over_cdp(f"http://localhost:{port}")
-
-    # 첫 컨텍스트 가져오기 또는 새로 생성
-    ctx = None
-    for _ in range(10):
-        if browser.contexts:
-            ctx = browser.contexts[0]
-            break
-        time.sleep(1)
-
-    if not ctx:
-        raise RuntimeError("CDP 브라우저 컨텍스트 생성 실패")
-
-    return ctx.new_page()
-
-
-def _is_logged_in_google(page: Page) -> bool:
-    """Google 로그인 상태 판별."""
-    try:
-        page.goto("https://www.google.com", timeout=10000, wait_until="domcontentloaded")
-        time.sleep(2)
-        # 로그인 상태 → 프로필 이미지 등으로 판별 가능
-        # 간단히: 현재 URL 기반 판별
-        return not ("accounts.google.com" in page.url or "signin" in page.url.lower())
-    except Exception:
-        return False
-
-
-def _ensure_login(page: Page) -> None:
-    """로그인 확인, 미로그인 시 안내."""
-    if _is_logged_in_google(page):
-        print("  ✓ Google 로그인됨")
-        return
-
-    print("  ✗ Google 로그인이 필요합니다")
-    print("  💡 브라우저에서 Google에 로그인하세요")
-    print("  ⏳ 최대 5분 대기 중...\n")
-
-    start = time.time()
-    while time.time() - start < 300:
-        time.sleep(2)
-        if _is_logged_in_google(page):
-            print("  ✓ 로그인 완료")
-            return
-
-    raise RuntimeError("로그인 타임아웃")
+    return _wc_get_page()
 
 
 @contextmanager
 def task_context(site: str, task: str, args: list[str]) -> Generator[Page, None, None]:
-    """작업 실행 컨텍스트 - 로그 자동 기록."""
-    from scripts.cdp_db import log_start, log_finish
-
-    log_id = log_start(site, task, args)
-
-    try:
-        page = get_page()
-        _ensure_login(page)
+    """작업 실행 컨텍스트 - 로그인 확인 + DB 로그 자동 기록."""
+    from scripts.cdp_db import init_db
+    init_db()
+    with _task_context_base(
+        site, task, args,
+        use_existing_tab=True,
+        with_db_log=True,
+    ) as page:
         yield page
-        log_finish(log_id, "success")
-    except Exception as e:
-        log_finish(log_id, "fail", error_msg=str(e))
-        raise
-    finally:
-        try:
-            page.close()
-        except Exception:
-            pass

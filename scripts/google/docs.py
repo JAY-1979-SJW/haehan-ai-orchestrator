@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context
+from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
+from scripts.config import GOOGLE_URLS
 
 
 def run(task: str, args: list[str]) -> None:
@@ -28,8 +29,8 @@ def _task_recent(page: Any, args: list[str]) -> None:
     """최근 문서."""
     print("\n[작업] Google Docs 최근 문서")
 
-    page.goto("https://docs.google.com/document/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["docs_home"])
+    page_wait_visible(page, '[role="listitem"], [data-item-id]', timeout=20000)
 
     docs = page.evaluate(r"""() => {
         const results = [];
@@ -49,8 +50,9 @@ def _task_new(page: Any, args: list[str]) -> None:
     """새 문서 생성."""
     print("\n[작업] Google Docs 새 문서 생성")
 
-    page.goto("https://docs.google.com/document/create", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["docs_create"])
+    # 에디터 로드 대기
+    page_wait_visible(page, '#docs-editor, .docs-editor-container', timeout=30000)
     print("  ✓ 새 문서 생성 완료")
 
 
@@ -63,20 +65,15 @@ def _task_search(page: Any, args: list[str]) -> None:
     query = " ".join(args)
     print(f"\n[작업] Docs 검색: {query}")
 
-    page.goto("https://docs.google.com/document/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["docs_home"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[placeholder*="Search"]') ||
-                   document.querySelector('input[aria-label*="Search"]');
-        if (inp) {{
-            inp.focus();
-            inp.value = {repr(query)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(3000)
-    print("  ✓ 검색 완료")
+    if page_wait_type(page, 'input[placeholder*="Search"], input[aria-label*="Search"]', query):
+        page.keyboard.press("Enter")
+        page_wait_visible(page, '[role="main"]', timeout=10000)
+        print("  ✓ 검색 완료")
+    else:
+        print("  ⚠  검색창 못 찾음")
 
 
 def _task_open(page: Any, args: list[str]) -> None:
@@ -88,8 +85,8 @@ def _task_open(page: Any, args: list[str]) -> None:
     doc_name = " ".join(args)
     print(f"\n[작업] Docs 문서 열기: {doc_name}")
 
-    page.goto("https://docs.google.com/document/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["docs_home"])
+    page_wait_visible(page, '[role="listitem"]', timeout=20000)
 
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
@@ -99,7 +96,9 @@ def _task_open(page: Any, args: list[str]) -> None:
             }}
         }}
     }}""")
-    page.wait_for_timeout(3000)
+
+    # 문서 에디터 로드 대기
+    page_wait_visible(page, '#docs-editor, .docs-editor-container', timeout=20000)
     print("  ✓ 문서 열기 완료")
 
 
@@ -112,10 +111,9 @@ def _task_delete(page: Any, args: list[str]) -> None:
     doc_name = " ".join(args)
     print(f"\n[작업] Docs 문서 삭제: {doc_name}")
 
-    page.goto("https://docs.google.com/document/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["docs_home"])
+    page_wait_visible(page, '[role="listitem"]', timeout=20000)
 
-    # 문서 찾아 우클릭 → 삭제
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[role="listitem"]')) {{
             if (el.textContent.includes({repr(doc_name)})) {{
@@ -124,14 +122,10 @@ def _task_delete(page: Any, args: list[str]) -> None:
             }}
         }}
     }}""")
-    page.wait_for_timeout(1000)
 
-    # 삭제 버튼 클릭
-    page.evaluate("""() => {
-        const del_btn = Array.from(document.querySelectorAll('div, span')).find(d =>
-            d.textContent.includes('Delete') || d.textContent.includes('삭제')
-        );
-        if (del_btn) del_btn.click();
-    }""")
-    page.wait_for_timeout(1000)
-    print("  ✓ 문서 삭제 완료")
+    if page_wait_visible(page, '[role="menu"]', timeout=5000):
+        page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
+        page_wait_visible(page, '[role="listitem"]', timeout=5000)
+        print("  ✓ 문서 삭제 완료")
+    else:
+        print("  ⚠  컨텍스트 메뉴 못 찾음")

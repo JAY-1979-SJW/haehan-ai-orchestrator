@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .base import task_context
+from .base import task_context, page_goto, page_wait_click, page_wait_type, page_wait_visible
+from scripts.config import GOOGLE_URLS
 
 
 def run(task: str, args: list[str]) -> None:
@@ -33,10 +34,10 @@ def _task_list(page: Any, args: list[str]) -> None:
     folder = args[0] if args else "my-drive"
     print(f"\n[작업] Google Drive 파일 목록: {folder}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    # 파일 목록 렌더 확인
+    page_wait_visible(page, '[role="main"], [data-id]', timeout=20000)
 
-    # 파일 목록 추출
     files = page.evaluate(r"""() => {
         const results = [];
         for (const el of document.querySelectorAll('[data-id][data-name]')) {
@@ -61,21 +62,15 @@ def _task_search(page: Any, args: list[str]) -> None:
     query = " ".join(args)
     print(f"\n[작업] Drive 검색: {query}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
-    # 검색
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[aria-label*="Search"]');
-        if (inp) {{
-            inp.focus();
-            inp.value = {repr(query)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            inp.form?.dispatchEvent(new Event('submit', {{ bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(3000)
-    print("  ✓ 검색 완료")
+    if page_wait_type(page, 'input[aria-label*="Search"], input[placeholder*="Drive 검색"]', query):
+        page.keyboard.press("Enter")
+        page_wait_visible(page, '[role="main"]', timeout=10000)
+        print("  ✓ 검색 완료")
+    else:
+        print("  ⚠  검색창 못 찾음")
 
 
 def _task_rename(page: Any, args: list[str]) -> None:
@@ -87,10 +82,10 @@ def _task_rename(page: Any, args: list[str]) -> None:
     old_name, new_name = args[0], args[1]
     print(f"\n[작업] 파일명 변경: {old_name} → {new_name}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[data-id]', timeout=20000)
 
-    # 파일 찾아 우클릭 → 이름 변경
+    # 파일 우클릭
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
             if (el.getAttribute('data-name') === {repr(old_name)}) {{
@@ -99,28 +94,20 @@ def _task_rename(page: Any, args: list[str]) -> None:
             }}
         }}
     }}""")
-    page.wait_for_timeout(1000)
 
-    # 메뉴에서 "이름 변경" 클릭
-    page.evaluate(f"""() => {{
-        const rename_btn = Array.from(document.querySelectorAll('div')).find(d =>
-            d.textContent.includes('Rename') || d.textContent.includes('이름')
-        );
-        if (rename_btn) rename_btn.click();
-    }}""")
-    page.wait_for_timeout(1000)
-
-    # 이름 입력
-    page.evaluate(f"""() => {{
-        const inp = document.querySelector('input[type="text"]');
-        if (inp) {{
-            inp.value = {repr(new_name)};
-            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            inp.dispatchEvent(new KeyboardEvent('keydown', {{ key: 'Enter', bubbles: true }}));
-        }}
-    }}""")
-    page.wait_for_timeout(1000)
-    print("  ✓ 이름 변경 완료")
+    # 컨텍스트 메뉴 대기 후 이름변경 클릭
+    if page_wait_visible(page, '[role="menu"]', timeout=5000):
+        page_wait_click(page, '[role="menuitem"]:has-text("이름 변경"), [role="menuitem"]:has-text("Rename")')
+        # 이름 입력 다이얼로그 대기
+        if page_wait_visible(page, 'input[type="text"][value]', timeout=5000):
+            page_wait_type(page, 'input[type="text"][value]', new_name)
+            page.keyboard.press("Enter")
+            page_wait_visible(page, '[data-id]', timeout=5000)
+            print("  ✓ 이름 변경 완료")
+        else:
+            print("  ⚠  이름 입력창 못 찾음")
+    else:
+        print("  ⚠  컨텍스트 메뉴 못 찾음")
 
 
 def _task_delete(page: Any, args: list[str]) -> None:
@@ -132,10 +119,9 @@ def _task_delete(page: Any, args: list[str]) -> None:
     file_name = " ".join(args)
     print(f"\n[작업] Drive 파일 삭제: {file_name}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[data-id]', timeout=20000)
 
-    # 파일 찾아 우클릭 → 삭제
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
             if (el.getAttribute('data-name') === {repr(file_name)}) {{
@@ -144,17 +130,13 @@ def _task_delete(page: Any, args: list[str]) -> None:
             }}
         }}
     }}""")
-    page.wait_for_timeout(1000)
 
-    # "Delete" 클릭
-    page.evaluate("""() => {
-        const del_btn = Array.from(document.querySelectorAll('div')).find(d =>
-            d.textContent.includes('Delete') || d.textContent.includes('삭제')
-        );
-        if (del_btn) del_btn.click();
-    }""")
-    page.wait_for_timeout(1000)
-    print("  ✓ 삭제 완료")
+    if page_wait_visible(page, '[role="menu"]', timeout=5000):
+        page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
+        page_wait_visible(page, '[data-id]', timeout=5000)
+        print("  ✓ 삭제 완료")
+    else:
+        print("  ⚠  컨텍스트 메뉴 못 찾음")
 
 
 def _task_upload(page: Any, args: list[str]) -> None:
@@ -166,17 +148,17 @@ def _task_upload(page: Any, args: list[str]) -> None:
     file_path = args[0]
     print(f"\n[작업] Drive 파일 업로드: {file_path}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
-    # 파일 선택 입력 찾기 및 업로드
     try:
         file_input = page.locator('input[type="file"]').first
         file_input.set_input_files(file_path)
-        page.wait_for_timeout(3000)
+        # 업로드 진행 표시 대기
+        page_wait_visible(page, '[aria-label*="업로드"], [aria-label*="Upload"]', timeout=10000)
         print("  ✓ 업로드 완료")
     except Exception as e:
-        print(f"  [경고] 업로드 실패: {e}")
+        print(f"  ⚠  업로드 실패: {e}")
 
 
 def _task_download(page: Any, args: list[str]) -> None:
@@ -188,10 +170,9 @@ def _task_download(page: Any, args: list[str]) -> None:
     file_name = " ".join(args)
     print(f"\n[작업] Drive 파일 다운로드: {file_name}")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[data-id]', timeout=20000)
 
-    # 파일 찾아 클릭 → 다운로드
     page.evaluate(f"""() => {{
         for (const el of document.querySelectorAll('[data-name]')) {{
             if (el.getAttribute('data-name') === {repr(file_name)}) {{
@@ -200,31 +181,24 @@ def _task_download(page: Any, args: list[str]) -> None:
             }}
         }}
     }}""")
-    page.wait_for_timeout(1000)
 
-    # "Download" 클릭
-    page.evaluate("""() => {
-        const dl_btn = Array.from(document.querySelectorAll('div')).find(d =>
-            d.textContent.includes('Download') || d.textContent.includes('다운로드')
-        );
-        if (dl_btn) dl_btn.click();
-    }""")
-    page.wait_for_timeout(2000)
-    print("  ✓ 다운로드 완료")
+    if page_wait_visible(page, '[role="menu"]', timeout=5000):
+        page_wait_click(page, '[role="menuitem"]:has-text("다운로드"), [role="menuitem"]:has-text("Download")')
+        print("  ✓ 다운로드 요청 완료")
+    else:
+        print("  ⚠  컨텍스트 메뉴 못 찾음")
 
 
 def _task_info(page: Any, args: list[str]) -> None:
     """저장용량 정보."""
     print("\n[작업] Drive 저장용량 정보")
 
-    page.goto("https://drive.google.com/drive/u/0/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
+    page_goto(page, GOOGLE_URLS["drive_home"])
+    page_wait_visible(page, '[role="main"]', timeout=20000)
 
     info = page.evaluate(r"""() => {
         const storage_el = document.querySelector('[aria-label*="storage"]');
-        return {
-            total: storage_el?.textContent || 'Unknown'
-        };
+        return { total: storage_el?.textContent || 'Unknown' };
     }""")
 
     print(f"  저장용량: {info['total']}")
