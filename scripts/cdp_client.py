@@ -290,15 +290,9 @@ def main() -> None:
             case "explore":
                 from scripts.explorer import run as run_explore
                 run_explore(task, [sub] + args if sub else args)
-            case "naver":
-                from scripts.naver.router import run_naver
-                run_naver(task, sub, args)
-            case "google" | "gmail":
-                from scripts.google.router import run_google
-                run_google(cmd, task, sub, args)
-            case "kakao":
-                from scripts.kakao.router import run_kakao
-                run_kakao(task, sub, args)
+            case cmd if cmd in ("naver", "google", "gmail", "kakao", "eum", "smartstore"):
+                from scripts.router import dispatch
+                dispatch(cmd, task, sub, args)
             case "auto-login":
                 from scripts.login_detector import monitor_for_login
                 from scripts.web_connector import get_page
@@ -327,6 +321,14 @@ def main() -> None:
                     print(f"  [오류] {e}")
                     import traceback
                     traceback.print_exc()
+            case "services":
+                from scripts.router import list_services
+                rows = list_services()
+                print(f"{'명령':<14} {'라우터 모듈'}")
+                print("-" * 56)
+                for r in rows:
+                    alias = " (alias)" if r.get("alias") else ""
+                    print(f"{r['cmd']:<14} {r['module']}{alias}")
             case "gate":
                 from scripts.gate import check, list_registry, GateBlocked
                 sub_cmd = task or "list"
