@@ -319,6 +319,20 @@ def main() -> None:
                     print(f"  [오류] {e}")
                     import traceback
                     traceback.print_exc()
+            case "cred" | "credentials":
+                from scripts.credentials import _cmd_set, _cmd_get, _cmd_list, _cmd_delete
+                sub_cmd = task or "list"
+                site = sub or ""
+                if sub_cmd == "set":
+                    _cmd_set(site) if site else print("사용법: cred set <사이트>  예) cred set eum")
+                elif sub_cmd == "get":
+                    _cmd_get(site) if site else print("사용법: cred get <사이트>")
+                elif sub_cmd == "list":
+                    _cmd_list()
+                elif sub_cmd == "delete":
+                    _cmd_delete(site) if site else print("사용법: cred delete <사이트>")
+                else:
+                    print("사용법: cred [set|get|list|delete] [사이트]")
             case "status":
                 from scripts.status_reporter import report
                 verbose = task == "-v"
