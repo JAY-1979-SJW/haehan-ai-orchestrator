@@ -321,6 +321,10 @@ def main() -> None:
                     print(f"  [오류] {e}")
                     import traceback
                     traceback.print_exc()
+            case "status":
+                from scripts.status_reporter import report
+                verbose = task == "-v"
+                report(verbose=verbose)
             case "services":
                 from scripts.router import list_services
                 rows = list_services()

@@ -4,6 +4,18 @@ from __future__ import annotations
 from scripts.gate import check as gate_check
 from scripts.logger import get_logger
 
+__status__ = {
+    "tasks": {
+        "gov24 (주민등록등본)": "partial",
+        "minwon (민원24)":      "partial",
+        "blog-explore":         "done",
+        "blog-scrape":          "done",
+        "check (playwright)":   "done",
+        "create-profile":       "partial",
+    },
+    "note": "gov24/minwon = 승인(APPROVE) 필수 고위험. 개인정보 관련 작업",
+}
+
 _log = get_logger(__name__)
 
 

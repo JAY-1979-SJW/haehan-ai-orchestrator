@@ -5,6 +5,21 @@ from . import calendar, docs, drive, gmail, sheets
 from .base import check_session
 from scripts.gate import check as gate_check
 
+__status__ = {
+    "tasks": {
+        "mail list":      "done",
+        "mail compose":   "done",
+        "mail send":      "done",
+        "drive list":     "partial",
+        "calendar today": "partial",
+        "docs recent":    "partial",
+        "sheets recent":  "partial",
+        "login":          "done",
+        "session-check":  "done",
+    },
+    "note": "Gmail 완성, Drive/Calendar/Docs/Sheets는 라우터 연결만 완료(기능 검증 필요)",
+}
+
 
 def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
     """Google 서비스 라우팅.

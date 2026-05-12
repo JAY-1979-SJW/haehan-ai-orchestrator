@@ -5,6 +5,15 @@ from . import dev_console
 from .base import check_session
 from scripts.gate import check as gate_check
 
+__status__ = {
+    "tasks": {
+        "session-check": "done",
+        "login":         "done",
+        "dev console":   "partial",
+    },
+    "note": "로그인·세션 확인 완성, 개발콘솔은 기본 연결만 구현",
+}
+
 
 def run_kakao(task: str, sub: str, args: list[str]) -> None:
     """카카오 서비스 라우팅.

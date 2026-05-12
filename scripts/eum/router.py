@@ -4,6 +4,18 @@ from __future__ import annotations
 from scripts.gate import check as gate_check
 from scripts.logger import get_logger
 
+__status__ = {
+    "tasks": {
+        "extract (WEBMAN390M00)": "done",
+        "dashboard":              "done",
+        "promo-mail preview":     "done",
+        "promo-mail send":        "done",
+        "new-sites (WEBMAN380M00)": "done",
+        "task-run (전체 파이프라인)": "done",
+    },
+    "note": "22대 단말기 전체 추출 검증 완료(2026-05-11). 2행→1단말기 파싱 확정",
+}
+
 _log = get_logger(__name__)
 
 EUM_URL = "https://eum.cw.or.kr/web/man/WEBMAN390M00"

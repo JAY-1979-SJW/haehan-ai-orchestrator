@@ -5,6 +5,19 @@ from . import blog, mail
 from .base import check_session
 from scripts.gate import check as gate_check
 
+__status__ = {
+    "tasks": {
+        "blog write":   "done",
+        "blog publish": "done",
+        "mail inbox":   "done",
+        "mail compose": "done",
+        "mail send":    "done",
+        "login":        "done",
+        "session-check":"done",
+    },
+    "note": "블로그 글쓰기·발행, 메일 수신/발송 자동화 완성",
+}
+
 
 def run_naver(task: str, sub: str, args: list[str]) -> None:
     """네이버 서비스 라우팅.
