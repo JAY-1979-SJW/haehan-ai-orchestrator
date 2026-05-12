@@ -12,8 +12,14 @@ __status__ = {
         "promo-mail send":        "done",
         "new-sites (WEBMAN380M00)": "done",
         "task-run (전체 파이프라인)": "done",
+        # 신규 추가 (2026-05-12)
+        "login (자동 로그인)":         "done",
+        "monitor (통신단절/미사용 감지)": "done",
+        "history (WEBMAN400M00 이력)": "done",
+        "demolition (WEBMAN382M00 철거)": "done",
+        "explore (전체 사이트 탐색)":   "done",
     },
-    "note": "22대 단말기 전체 추출 검증 완료(2026-05-11). 2행→1단말기 파싱 확정",
+    "note": "22대 단말기 전체 추출 검증 완료(2026-05-11). 신규 모듈(auth/monitor/history/demolition/site_explorer) 추가(2026-05-12)",
 }
 
 _log = get_logger(__name__)
@@ -38,6 +44,17 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_new_sites()
         case "task-run":
             _cmd_task_run()
+        # 신규 추가 (2026-05-12)
+        case "login":
+            _cmd_login()
+        case "monitor":
+            _cmd_monitor()
+        case "history":
+            _cmd_history(sub, args)
+        case "demolition":
+            _cmd_demolition(sub, args)
+        case "explore":
+            _cmd_explore()
         case _:
             _print_help()
 
@@ -100,6 +117,63 @@ def _cmd_task_run() -> None:
     main()
 
 
+def _cmd_login() -> None:
+    """EUM 자동 로그인."""
+    gate_check("eum_extract_all_devices")
+    print("=" * 60)
+    print("EUM 자동 로그인")
+    print("=" * 60)
+    from scripts.eum.auth import main
+    main()
+
+
+def _cmd_monitor() -> None:
+    """단말기 운용 모니터링 (통신단절/미사용/준공 임박)."""
+    gate_check("eum_extract_all_devices")
+    print("=" * 60)
+    print("EUM 단말기 운용 모니터링")
+    print("=" * 60)
+    from scripts.eum.monitor import main
+    main()
+
+
+def _cmd_history(sub: str | None, args: list[str]) -> None:
+    """단말기 이력 조회 (WEBMAN400M00)."""
+    gate_check("eum_extract_all_devices")
+    print("=" * 60)
+    print("EUM 단말기 이력 조회")
+    print("=" * 60)
+    # sub를 device_id로 사용 가능 (예: eum history 12345)
+    device_id = sub or (args[0] if args else None)
+    from scripts.eum.history import main
+    main(device_id=device_id)
+
+
+def _cmd_demolition(sub: str | None, args: list[str]) -> None:
+    """철거 현황 조회 및 신청 (WEBMAN382M00)."""
+    apply_mode = sub == "apply" or (args and args[0] == "apply")
+    device_id = args[0] if apply_mode and args else None
+    if apply_mode:
+        gate_check("eum_remove", force=False)
+    else:
+        gate_check("eum_extract_all_devices")
+    print("=" * 60)
+    print("EUM 단말기 철거 관리")
+    print("=" * 60)
+    from scripts.eum.demolition import main
+    main(apply=apply_mode, device_id=device_id)
+
+
+def _cmd_explore() -> None:
+    """전체 사이트 탐색 (메뉴/WEBMAN 구조 추출)."""
+    gate_check("eum_extract_all_devices")
+    print("=" * 60)
+    print("EUM 전체 사이트 탐색")
+    print("=" * 60)
+    from scripts.eum.site_explorer import main
+    main()
+
+
 def _print_help() -> None:
     print("""EUM 사용법:
   python scripts/cdp_client.py eum extract      단말기 전체 추출
@@ -107,4 +181,10 @@ def _print_help() -> None:
   python scripts/cdp_client.py eum mail         홍보메일 초안
   python scripts/cdp_client.py eum mail send    홍보메일 발송 (승인 필요)
   python scripts/cdp_client.py eum new-sites    신규 현장 발굴
-  python scripts/cdp_client.py eum task-run     전체 파이프라인 실행""")
+  python scripts/cdp_client.py eum task-run     전체 파이프라인 실행
+  python scripts/cdp_client.py eum login        자동 로그인
+  python scripts/cdp_client.py eum monitor      운용 모니터링 (통신단절/미사용/준공임박)
+  python scripts/cdp_client.py eum history      단말기 이력 조회 (WEBMAN400M00)
+  python scripts/cdp_client.py eum history 123  특정 단말기 이력
+  python scripts/cdp_client.py eum demolition   철거 현황 조회 (WEBMAN382M00)
+  python scripts/cdp_client.py eum explore      전체 사이트 탐색""")
