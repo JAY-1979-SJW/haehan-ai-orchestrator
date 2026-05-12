@@ -139,6 +139,7 @@ data/naver_shopping_search.json
 # Action approval/evidence audit JSONL (운영·테스트 산출물, git 포함 금지)
 data/audit/
 .claude/
+!.claude/settings.json
 tmp/
 data/browser_sessions/
 
@@ -168,3 +169,7 @@ ai_orchestrator/local_agent/browser/.structure_cache/
 
 # ai_orchestrator 로컬 데이터
 ai_orchestrator/data/
+
+# Naver credentials
+data/.env_naver
+data/.env_*

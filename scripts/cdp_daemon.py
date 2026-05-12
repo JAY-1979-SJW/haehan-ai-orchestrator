@@ -62,6 +62,7 @@ class DaemonState:
     running: bool        = False
     pid: int             = 0
     chrome_pid: int      = 0
+    popup_monitor_pid: int = 0
     cdp_port: int        = CDP_PORT
     browser_context: str = "inactive"   # active / inactive
     started_at: str      = ""
@@ -123,9 +124,32 @@ def _find_browser(browser_type: str = "auto") -> tuple[str, str]:
         raise FileNotFoundError("Chrome 또는 Edge를 찾을 수 없습니다.")
 
 
+def _sanitize_chrome_prefs() -> None:
+    """Chrome Preferences에서 비정상 종료 흔적을 정상으로 패치하여 복구 풍선 차단."""
+    prefs = PROFILE_DIR / "Default" / "Preferences"
+    if not prefs.exists():
+        return
+    try:
+        data = json.loads(prefs.read_text(encoding="utf-8"))
+        profile = data.setdefault("profile", {})
+        changed = False
+        if profile.get("exit_type") != "Normal":
+            profile["exit_type"] = "Normal"
+            changed = True
+        if profile.get("exited_cleanly") is not True:
+            profile["exited_cleanly"] = True
+            changed = True
+        if changed:
+            prefs.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            log.info("[BROWSER] Preferences 정상화 (exit_type=Normal)")
+    except Exception as e:
+        log.warning("[BROWSER] Preferences 패치 실패 (무시): %s", e)
+
+
 def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
     exe, kind = _find_browser(BROWSER_TYPE)
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    _sanitize_chrome_prefs()
     args = [
         exe,
         f"--remote-debugging-port={port}",
@@ -134,6 +158,11 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--no-default-browser-check",
         "--disable-blink-features=AutomationControlled",
         "--disable-infobars",
+        # 세션 복원/충돌 복구 풍선 차단 (Chrome chrome UI는 popup_monitor 범위 밖)
+        "--disable-session-crashed-bubble",
+        "--hide-crash-restore-bubble",
+        "--disable-features=InfoBars,SessionCrashedBubble",
+        "--restore-last-session=false",
         "--start-maximized",
     ]
     log.info("[BROWSER] 종류=%s port=%d profile=%s", kind, port, PROFILE_DIR)
@@ -158,7 +187,56 @@ def _is_cdp_ready(port: int = CDP_PORT, timeout: int = 15) -> bool:
 _stop_event = threading.Event()
 _state = DaemonState()
 _chrome_proc: subprocess.Popen | None = None
+_popup_monitor_proc: subprocess.Popen | None = None
 _restart_lock = threading.Lock()
+
+
+def _launch_background_python(args: list[str]) -> subprocess.Popen:
+    """Launch a repo helper in a detached child process."""
+    python_exe = Path(sys.executable)
+    if sys.platform == "win32":
+        pythonw = python_exe.parent / "pythonw.exe"
+        if pythonw.exists():
+            python_exe = pythonw
+        return subprocess.Popen(
+            [str(python_exe), *args],
+            cwd=str(ROOT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+    return subprocess.Popen(
+        [str(python_exe), *args],
+        cwd=str(ROOT),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def _start_popup_monitor_process() -> None:
+    """Run popup monitor out-of-process to keep Playwright sync API isolated."""
+    global _popup_monitor_proc
+    if _popup_monitor_proc and _popup_monitor_proc.poll() is None:
+        return
+    script = ROOT / "scripts" / "cdp_client.py"
+    _popup_monitor_proc = _launch_background_python(
+        [str(script), "popup-monitor", "start", "2.0"]
+    )
+    _state.popup_monitor_pid = _popup_monitor_proc.pid
+    _save_state(_state)
+    log.info("[popup_monitor] process started PID=%d", _popup_monitor_proc.pid)
+
+
+def _stop_process(proc: subprocess.Popen | None, label: str) -> None:
+    if not proc or proc.poll() is not None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=5)
+        log.info("[%s] stopped PID=%d", label, proc.pid)
+    except Exception as e:
+        log.warning("[%s] graceful stop failed: %s", label, e)
 
 
 def _restart_chrome() -> None:
@@ -214,6 +292,14 @@ def _heartbeat_loop() -> None:
             if _chrome_proc and _chrome_proc.poll() is not None:
                 log.warning("[HEARTBEAT] Chrome 프로세스 종료 감지 → 자동 재시작")
                 threading.Thread(target=_restart_chrome, daemon=True).start()
+
+            if _popup_monitor_proc and _popup_monitor_proc.poll() is not None:
+                log.warning("[HEARTBEAT] popup_monitor 종료 감지 → 자동 재시작")
+                _state.popup_monitor_pid = 0
+                try:
+                    _start_popup_monitor_process()
+                except Exception as e:
+                    log.warning("[HEARTBEAT] popup_monitor 재시작 실패: %s", e)
 
             _save_state(_state)
         except Exception as e:
@@ -276,6 +362,32 @@ def run_daemon() -> None:
 
     threading.Thread(target=_heartbeat_loop, daemon=True).start()
 
+    # popup_monitor uses Playwright's sync API, so keep it in a separate
+    # process. Running it in a daemon thread can collide with asyncio loops
+    # created by other automation code in this process.
+    try:
+        _start_popup_monitor_process()
+        log.info("✓ popup_monitor 자동 시작 완료 (poll=2.0s)")
+    except Exception as e:
+        log.warning("popup_monitor 시작 실패 (데몬은 계속): %s", e)
+
+    # chrome_ui_watcher (Windows UIA 기반, chrome chrome UI 감시)
+    try:
+        from scripts.popup_monitor import ChromeUIWatcher
+        _chrome_ui_mon = ChromeUIWatcher(poll_interval_s=3.0)
+        _chrome_ui_mon.start()
+        log.info("✓ chrome_ui_watcher 자동 시작 완료 (poll=3.0s)")
+    except Exception as e:
+        log.warning("chrome_ui_watcher 시작 실패 (데몬은 계속): %s", e)
+
+    # CDP 이벤트 모니터 (탭 이동/로드/요청 상시 구독)
+    try:
+        from scripts.cdp_event_monitor import start_monitor as _start_event_mon
+        _start_event_mon()
+        log.info("✓ cdp_event_monitor 자동 시작 완료")
+    except Exception as e:
+        log.warning("cdp_event_monitor 시작 실패 (데몬은 계속): %s", e)
+
     log.info("✓ 데몬 상시 대기 중...")
     try:
         while not _stop_event.is_set():
@@ -284,11 +396,13 @@ def run_daemon() -> None:
         pass
     finally:
         log.info("데몬 종료 중...")
+        _stop_process(_popup_monitor_proc, "popup_monitor")
         if _chrome_proc and _chrome_proc.poll() is None:
             _chrome_proc.terminate()
             log.info("[CHROME] 종료 (PID=%d)", _chrome_proc.pid)
         _state.running = False
         _state.chrome_pid = 0
+        _state.popup_monitor_pid = 0
         _state.browser_context = "inactive"
         _save_state(_state)
         log.info("데몬 종료 완료")
@@ -348,6 +462,14 @@ def cmd_stop() -> None:
             print(f"⚠  Chrome 종료 실패: {e}")
 
     # 데몬 프로세스 종료
+    if state.popup_monitor_pid:
+        try:
+            os.kill(state.popup_monitor_pid, signal.SIGTERM)
+            print(f"popup_monitor stopped (PID={state.popup_monitor_pid})")
+            stopped = True
+        except Exception as e:
+            print(f"popup_monitor stop failed: {e}")
+
     if state.pid and state.pid != os.getpid():
         try:
             os.kill(state.pid, signal.SIGTERM)
@@ -358,6 +480,7 @@ def cmd_stop() -> None:
 
     state.running = False
     state.chrome_pid = 0
+    state.popup_monitor_pid = 0
     state.browser_context = "inactive"
     _save_state(state)
 
@@ -392,6 +515,7 @@ def cmd_status() -> None:
 
         print(f"데몬 PID:     {state.pid}")
         print(f"Chrome PID:   {state.chrome_pid}")
+        print(f"Popup PID:    {state.popup_monitor_pid}")
         print(f"CDP 포트:     {state.cdp_port}  ({cdp_ok})")
         print(f"브라우저:     {state.browser_context}")
         print(f"재시작 횟수:  {state.restart_count}")
