@@ -200,6 +200,79 @@ def main() -> None:
                 if r["unknown"]:
                     for u in r["unknown"]:
                         print(f"    - {u['marker']}")
+            case "popup-monitor":
+                import json as _json
+                from scripts import popup_monitor as _pm
+                sub_cmd = task or "status"
+                if sub_cmd == "start":
+                    interval = float(sub) if sub else 2.0
+                    mon = _pm.PopupMonitor(poll_interval_s=interval)
+                    mon.start()
+                    print(f"✓ popup-monitor 시작 (poll={interval}s). Ctrl+C로 종료.")
+                    try:
+                        while True:
+                            import time as _time
+                            _time.sleep(60)
+                    except KeyboardInterrupt:
+                        mon.stop()
+                        print("✓ popup-monitor 종료")
+                elif sub_cmd == "status":
+                    st = _pm.status()
+                    print(_json.dumps(st, ensure_ascii=False, indent=2))
+                elif sub_cmd == "list":
+                    rows = _pm.list_pending(limit=50)
+                    if not rows:
+                        print("☐ pending 이벤트 없음")
+                    for r in rows:
+                        print(f"[{r['id']:>4}] {r['severity']:<8} {r['category']:<22} "
+                              f"action={r['action']:<14} target={r['target']!s:<8} "
+                              f"marker={r['marker'][:40]}")
+                elif sub_cmd == "ack":
+                    if not sub:
+                        print("사용법: popup-monitor ack <id> [메모]")
+                        return
+                    ok = _pm.ack_event(int(sub), note=" ".join(args))
+                    print("✓ ack 완료" if ok else "✗ id 없음")
+                elif sub_cmd == "classify":
+                    from scripts.popup_classifier import classify
+                    if not sub:
+                        print("사용법: popup-monitor classify <marker> [snippet]")
+                        return
+                    d = classify(marker=sub, snippet=" ".join(args))
+                    print(_json.dumps(d, ensure_ascii=False, indent=2))
+                else:
+                    print("사용법: popup-monitor [start|status|list|ack|classify]")
+            case "chrome-ui":
+                import json as _json
+                from scripts import chrome_ui_watcher as _cuw
+                sub_cmd = task or "scan"
+                if sub_cmd == "scan":
+                    pairs = _cuw.scan_all()
+                    if not pairs:
+                        print("☐ 데몬 Chrome 윈도우 없음")
+                    for window, events in pairs:
+                        print(f"\n[Window] {(window.Name or '')[:80]}")
+                        if not events:
+                            print("  ☐ 알려진 chrome UI 알림 없음")
+                        for ev in events:
+                            print(f"  ★ {ev['marker']} → 권장버튼={ev['button_name']!r}")
+                            print(f"    snippet: {ev['snippet'][:100]}")
+                elif sub_cmd == "status":
+                    from scripts.popup_monitor import chrome_ui_status
+                    print(_json.dumps(chrome_ui_status(), ensure_ascii=False, indent=2))
+                elif sub_cmd == "dismiss":
+                    # chrome-ui dismiss <button_name>
+                    if not sub:
+                        print("사용법: chrome-ui dismiss <버튼 이름>")
+                        return
+                    btn = " ".join([sub] + args)
+                    success = 0
+                    for window in _cuw.find_chrome_windows():
+                        if _cuw.click_button_in_window(window, btn):
+                            success += 1
+                    print(f"✓ {success}개 윈도우에서 '{btn}' 클릭됨" if success else f"✗ '{btn}' 못 찾음")
+                else:
+                    print("사용법: chrome-ui [scan|status|dismiss]")
             case "analyze":
                 from scripts.page_analyzer import full_page_analysis
                 from scripts.web_connector import get_page
@@ -254,6 +327,34 @@ def main() -> None:
                     print(f"  [오류] {e}")
                     import traceback
                     traceback.print_exc()
+            case "op-log":
+                import json as _json
+                from scripts.op_log import query_recent, query_stats
+                sub_cmd = task or "list"
+                if sub_cmd == "list":
+                    op_filter = sub or None
+                    rows = query_recent(op_name=op_filter, limit=50)
+                    if not rows:
+                        print("☐ 기록된 작업 없음")
+                    for r in rows:
+                        dur = f"[{r['duration_ms']}ms]" if r.get('duration_ms') else ""
+                        st = "✓" if r["status"] == "ok" else ("…" if r["status"] == "start" else "✗")
+                        print(f"{st} {r['ts'][:19]}  {r['op_name']:<24} {dur:<10} {(r.get('message') or '')[:60]}")
+                elif sub_cmd == "tail":
+                    rows = query_recent(limit=20)
+                    for r in reversed(rows):
+                        dur = f"[{r['duration_ms']}ms]" if r.get('duration_ms') else ""
+                        st = "✓" if r["status"] == "ok" else ("…" if r["status"] == "start" else "✗")
+                        print(f"{st} {r['ts'][:19]}  {r['op_name']:<24} {dur:<10} {(r.get('message') or '')[:60]}")
+                elif sub_cmd == "stats":
+                    hours = int(sub) if sub and sub.isdigit() else 24
+                    rows = query_stats(hours=hours)
+                    print(f"최근 {hours}시간 작업 통계:")
+                    print(f"{'작업명':<28} {'총':<6} {'성공':<6} {'실패':<6} {'평균ms'}")
+                    for r in rows:
+                        print(f"{r['op_name']:<28} {r['total']:<6} {r['ok']:<6} {r['fail']:<6} {r['avg_ms'] or '-'}")
+                else:
+                    print("사용법: op-log [list|tail|stats] [op_name] [hours]")
             case _:
                 print(f"알 수 없는 명령: {cmd}")
                 print(__doc__)
