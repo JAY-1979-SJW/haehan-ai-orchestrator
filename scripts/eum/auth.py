@@ -276,6 +276,29 @@ def login(page) -> dict:
         return {"ok": False, "reason": fail_msg, "user": ""}
 
 
+def ensure_logged_in(page) -> None:
+    """로그인 상태를 보장한다. 세션 없으면 자동 로그인.
+
+    모든 EUM 명령 진입 시 자동 호출됨.
+    로그인 실패 시 RuntimeError 발생 → 작업 중단.
+    """
+    if is_logged_in(page):
+        log.debug("EUM 세션 유효 — 로그인 생략")
+        return
+
+    log.info("EUM 세션 없음 — 자동 로그인 시도")
+    print("  [EUM] 세션 없음 → 자동 로그인 중...", end=" ", flush=True)
+    result = login(page)
+    if result["ok"]:
+        print(f"✔ ({result['user']})")
+    else:
+        print(f"✘ 실패")
+        raise RuntimeError(
+            f"EUM 자동 로그인 실패: {result['reason']}\n"
+            "  자격증명 확인: python scripts/cdp_client.py cred set eum"
+        )
+
+
 def main() -> None:
     """CLI 실행: 로그인 시도 및 결과 출력."""
     from scripts.web_connector import get_page

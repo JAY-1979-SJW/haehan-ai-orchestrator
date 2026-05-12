@@ -1,4 +1,9 @@
-"""EUM 서비스 라우터 — eum.cw.or.kr 자동화 진입점."""
+"""EUM 서비스 라우터 — eum.cw.or.kr 자동화 진입점.
+
+모든 브라우저 접근 명령은 _get_page()를 통해 세션을 얻으며,
+로그인 여부를 자동 확인 후 필요 시 즉시 재로그인한다.
+별도의 'eum login' 명령 없이도 항상 로그인 상태가 보장된다.
+"""
 from __future__ import annotations
 
 from scripts.gate import check as gate_check
@@ -25,6 +30,19 @@ __status__ = {
 _log = get_logger(__name__)
 
 EUM_URL = "https://eum.cw.or.kr/web/man/WEBMAN390M00"
+
+
+def _get_page():
+    """브라우저 페이지를 얻고 EUM 로그인을 보장한다.
+
+    세션이 없거나 만료됐으면 자동으로 재로그인.
+    모든 브라우저 접근 명령에서 get_page() 대신 이 함수를 사용한다.
+    """
+    from scripts.web_connector import get_page
+    from scripts.eum.auth import ensure_logged_in
+    page = get_page()
+    ensure_logged_in(page)
+    return page
 
 
 def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
@@ -64,6 +82,7 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
 def _cmd_extract(sub: str | None, args: list[str]) -> None:
     """단말기설치현황 전체 추출 (WEBMAN390M00)."""
     gate_check("eum_extract_all_devices")
+    page = _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 단말기설치현황 추출")
     print("=" * 60)
@@ -72,7 +91,7 @@ def _cmd_extract(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_dashboard() -> None:
-    """추출 데이터 기반 업무 대시보드 생성."""
+    """추출 데이터 기반 업무 대시보드 생성 (브라우저 불필요)."""
     gate_check("eum_extract_all_devices")
     print("=" * 60)
     print("EUM 업무 대시보드")
@@ -85,11 +104,9 @@ def _cmd_mail(sub: str | None, args: list[str]) -> None:
     """홍보 메일 초안 생성 또는 발송."""
     mode = sub or "preview"
     if mode == "send":
-        gate_check("naver_mail_send", force=False,
-                   context="EUM 홍보메일 발송")
+        gate_check("naver_mail_send", force=False, context="EUM 홍보메일 발송")
     else:
         gate_check("eum_extract_all_devices")
-
     print("=" * 60)
     print(f"EUM 홍보메일 {'발송' if mode == 'send' else '초안 생성'}")
     print("=" * 60)
@@ -100,6 +117,7 @@ def _cmd_mail(sub: str | None, args: list[str]) -> None:
 def _cmd_new_sites() -> None:
     """신규 현장 발굴 (WEBMAN380M00)."""
     gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 신규 현장 발굴")
     print("=" * 60)
@@ -110,6 +128,7 @@ def _cmd_new_sites() -> None:
 def _cmd_task_run() -> None:
     """EUM 전체 파이프라인 자동 실행."""
     gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 전체 작업 자동 실행")
     print("=" * 60)
@@ -118,17 +137,19 @@ def _cmd_task_run() -> None:
 
 
 def _cmd_login() -> None:
-    """EUM 자동 로그인."""
+    """EUM 로그인 상태 확인 (상시 자동 처리되므로 수동 호출 불필요)."""
     gate_check("eum_extract_all_devices")
     print("=" * 60)
-    print("EUM 자동 로그인")
+    print("EUM 로그인 상태 확인")
     print("=" * 60)
-    from scripts.eum.auth import main
-    main()
+    _get_page()  # ensure_logged_in 내부에서 결과 출력
+    from scripts.web_connector import get_page
+    print(f"  현재 URL: {get_page().url}")
+    print("=" * 60)
 
 
 def _cmd_monitor() -> None:
-    """단말기 운용 모니터링 (통신단절/미사용/준공 임박)."""
+    """단말기 운용 모니터링 (통신단절/미사용/준공 임박, 브라우저 불필요)."""
     gate_check("eum_extract_all_devices")
     print("=" * 60)
     print("EUM 단말기 운용 모니터링")
@@ -140,10 +161,10 @@ def _cmd_monitor() -> None:
 def _cmd_history(sub: str | None, args: list[str]) -> None:
     """단말기 이력 조회 (WEBMAN400M00)."""
     gate_check("eum_extract_all_devices")
+    page = _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 단말기 이력 조회")
     print("=" * 60)
-    # sub를 device_id로 사용 가능 (예: eum history 12345)
     device_id = sub or (args[0] if args else None)
     from scripts.eum.history import main
     main(device_id=device_id)
@@ -157,6 +178,7 @@ def _cmd_demolition(sub: str | None, args: list[str]) -> None:
         gate_check("eum_remove", force=False)
     else:
         gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 단말기 철거 관리")
     print("=" * 60)
@@ -165,8 +187,9 @@ def _cmd_demolition(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_explore() -> None:
-    """전체 사이트 세밀 탐색 (full_explorer — WEBMAN 24개 + 메뉴 전체)."""
+    """전체 사이트 세밀 탐색 (WEBMAN 23개 + 메뉴 전체)."""
     gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 전체 사이트 세밀 탐색")
     print("=" * 60)
