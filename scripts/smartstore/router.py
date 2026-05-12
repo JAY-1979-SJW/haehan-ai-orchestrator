@@ -4,6 +4,21 @@ from __future__ import annotations
 from scripts.gate import check as gate_check
 from scripts.logger import get_logger
 
+__status__ = {
+    "tasks": {
+        "product list":    "partial",
+        "product register":"todo",
+        "order new":       "partial",
+        "inventory":       "partial",
+        "seo":             "todo",
+        "ai review-reply": "todo",
+        "competitor":      "todo",
+        "csv import":      "todo",
+        "analytics":       "partial",
+    },
+    "note": "라우터/클래스 구조 완성. 각 기능은 naver/automation/ 하위 모듈 검증 필요",
+}
+
 _log = get_logger(__name__)
 
 

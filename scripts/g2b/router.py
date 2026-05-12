@@ -4,6 +4,15 @@ from __future__ import annotations
 from scripts.gate import check as gate_check
 from scripts.logger import get_logger
 
+__status__ = {
+    "tasks": {
+        "discover (공개공고 URL 탐색)": "partial",
+        "download (첨부파일 다운로드)": "partial",
+        "suite (Read-Only 라이브)":     "partial",
+    },
+    "note": "라우터 연결 완료. 실제 스크립트(discover/download/suite) 검증 필요",
+}
+
 _log = get_logger(__name__)
 
 
