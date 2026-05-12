@@ -45,6 +45,8 @@ from typing import Any, Callable, Generator
 
 import logging
 
+from scripts.schemas import OpStatus  # 상태값 타입 참조
+
 ROOT = Path(__file__).resolve().parents[1]
 LOG_DIR = ROOT / "data" / "logs"
 OPS_LOG_FILE = LOG_DIR / "ops.log"
@@ -133,7 +135,7 @@ def log_op(op_name: str, *, ok: bool = True, duration_ms: int | None = None,
            message: str = "", **metadata: Any) -> None:
     """단발 작업 로그 기록."""
     logger = _init()
-    status = "ok" if ok else "fail"
+    status = OpStatus.OK.value if ok else OpStatus.FAIL.value
     meta_str = " | ".join(f"{k}={v}" for k, v in metadata.items()) if metadata else ""
     full_msg = f"{message}  {meta_str}".strip() if message or meta_str else "(완료)"
     if duration_ms is not None:
@@ -164,7 +166,7 @@ class _OpContext:
         self._t0 = time.perf_counter()
         logger = _init()
         logger.debug("시작", extra={"op_name": self._op_name})
-        _write_db(self._op_name, "start", None,
+        _write_db(self._op_name, OpStatus.START.value, None,
                   "시작 " + " ".join(f"{k}={v}" for k, v in self._meta.items()),
                   self._meta)
         return self

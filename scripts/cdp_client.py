@@ -327,6 +327,26 @@ def main() -> None:
                     print(f"  [오류] {e}")
                     import traceback
                     traceback.print_exc()
+            case "gate":
+                from scripts.gate import check, list_registry, GateBlocked
+                sub_cmd = task or "list"
+                if sub_cmd == "list":
+                    rows = list_registry()
+                    print(f"{'작업명':<32} {'등급'}")
+                    for r in rows:
+                        icon = {"auto": "✓", "notify": "⚠", "approve": "🔒", "block": "✗"}.get(r["risk"], "?")
+                        print(f"{r['op_name']:<32} {icon} {r['risk']}")
+                elif sub_cmd == "check":
+                    if not sub:
+                        print("사용법: gate check <op_name>")
+                        return
+                    try:
+                        result = check(sub, force=True)
+                        print(f"✓ {sub}: {result.risk.value} → {result.verdict.value}")
+                    except GateBlocked as e:
+                        print(f"✗ {e}")
+                else:
+                    print("사용법: gate [list|check <op_name>]")
             case "op-log":
                 import json as _json
                 from scripts.op_log import query_recent, query_stats
