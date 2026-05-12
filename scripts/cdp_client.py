@@ -287,10 +287,8 @@ def main() -> None:
                     print(f"  권장사항: {', '.join(result['recommendations'])}")
                 print(f"\n✓ 분석 결과:")
                 print(json.dumps(result, ensure_ascii=False, indent=2)[:500])
-            case "explore":
-                from scripts.explorer import run as run_explore
-                run_explore(task, [sub] + args if sub else args)
-            case cmd if cmd in ("naver", "google", "gmail", "kakao", "eum", "smartstore"):
+            case cmd if cmd in ("naver", "google", "gmail", "kakao", "eum",
+                                   "smartstore", "g2b", "local", "explore"):
                 from scripts.router import dispatch
                 dispatch(cmd, task, sub, args)
             case "auto-login":

@@ -87,3 +87,14 @@ if __name__ == "__main__":
     print(f"생성 완료: {result['site_id']}")
     print(f"  도메인: {result['domains']}")
     print(f"  위임 action: {result['delegated_actions']}")
+
+
+
+
+def main():
+    """CLI 진입점 — 샘플 사이트 프로파일 생성."""
+    import sys
+    site = sys.argv[1] if len(sys.argv) > 1 else ""
+    print(f"[create-profile] 사이트 URL: {site or "(미지정)"}")
+    print("  사이트 프로파일 생성은 인터랙티브 입력이 필요합니다.")
+    print("  scripts/local_agent/create_site_profile.py 직접 편집 후 실행하세요.")

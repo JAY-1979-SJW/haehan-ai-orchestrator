@@ -139,6 +139,48 @@ class PopupDecision(TypedDict):
     reasoning: str
 
 
+# ── G2B 공고 레코드 ──────────────────────────────────────────────────
+
+class G2bNotice(TypedDict, total=False):
+    """나라장터 공개 공고 1건."""
+    notice_id: str
+    title: str
+    agency: str       # 발주기관
+    category: str     # 공사/용역/물품 등
+    budget: str       # 예산액
+    deadline: str     # 입찰 마감일 (ISO8601)
+    url: str
+    attachments: list[str]
+
+
+# ── 로컬 에이전트 레코드 ─────────────────────────────────────────────
+
+class LocalAgentTask(TypedDict, total=False):
+    """로컬 에이전트 작업 1건."""
+    task_type: str    # gov24 | minwon | blog-explore | blog-scrape
+    site: str
+    status: str       # pending | running | done | error
+    started_at: str
+    finished_at: str
+    result: dict[str, Any]
+    error: str
+
+
+# ── 탐색 결과 레코드 ─────────────────────────────────────────────────
+
+class ExplorePageResult(TypedDict, total=False):
+    """page_snapshot 탐색 결과."""
+    url: str
+    title: str
+    links: list[dict[str, str]]
+    inputs: list[dict[str, str]]
+    buttons: list[dict[str, str]]
+    forms: list[dict[str, Any]]
+    headings: list[dict[str, str]]
+    frames: int
+    saved_to: str
+
+
 # ── EUM 단말기 레코드 ─────────────────────────────────────────────────
 
 class EumDevice(TypedDict, total=False):

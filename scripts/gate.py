@@ -91,6 +91,22 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     "eum_extract_all_devices": RiskLevel.AUTO,
     "eum_register":    RiskLevel.APPROVE,
     "eum_remove":      RiskLevel.APPROVE,
+
+    # G2B
+    "g2b_discover":    RiskLevel.NOTIFY,
+    "g2b_download":    RiskLevel.NOTIFY,
+    "g2b_suite":       RiskLevel.NOTIFY,
+
+    # 로컬 에이전트 (고위험 정부/민원)
+    "gov24":           RiskLevel.APPROVE,
+    "minwon":          RiskLevel.APPROVE,
+    "blog_explore":    RiskLevel.AUTO,
+    "blog_scrape":     RiskLevel.AUTO,
+    "create_profile":  RiskLevel.NOTIFY,
+
+    # 탐색
+    "explore_page":    RiskLevel.AUTO,
+    "explore_tabs":    RiskLevel.AUTO,
 }
 
 # thread-local로 force 플래그 전파 가능
