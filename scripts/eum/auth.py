@@ -1,8 +1,7 @@
 """EUM 자동 로그인 (ID/PW).
 
-환경변수:
-    EUM_ID  — 로그인 아이디
-    EUM_PW  — 로그인 비밀번호
+자격증명 저장:
+    python scripts/credentials.py set eum
 
 사용:
     from scripts.eum.auth import login, is_logged_in
@@ -16,19 +15,11 @@
 """
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-
-# .env 로드
-try:
-    from dotenv import load_dotenv
-    load_dotenv(ROOT / ".env")
-except ImportError:
-    pass
 
 from scripts.logger import get_logger
 from scripts.op_log import op_context
@@ -150,13 +141,15 @@ def login(page) -> dict:
     Returns:
         dict{ok: bool, reason: str, user: str}
     """
-    eum_id = os.environ.get("EUM_ID", "").strip()
-    eum_pw = os.environ.get("EUM_PW", "").strip()
+    from scripts.credentials import get_cred
+    cred = get_cred("eum")
+    eum_id = cred.get("id", "").strip()
+    eum_pw = cred.get("pw", "").strip()
 
     if not eum_id or not eum_pw:
         return {
             "ok": False,
-            "reason": "EUM_ID 또는 EUM_PW 환경변수가 설정되지 않았습니다.",
+            "reason": "EUM 자격증명 없음. 먼저 실행: python scripts/credentials.py set eum",
             "user": "",
         }
 
