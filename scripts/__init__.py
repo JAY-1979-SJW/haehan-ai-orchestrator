@@ -23,11 +23,14 @@
         from scripts.logger import get_logger
 
 하위 패키지:
-    scripts.naver     — 네이버 서비스 자동화
-    scripts.google    — Google 서비스 자동화
-    scripts.kakao     — 카카오 서비스
+    scripts.naver      — 네이버 서비스 자동화
+    scripts.google     — Google 서비스 자동화
+    scripts.kakao      — 카카오 서비스
+    scripts.eum        — 건설공제회 단말기 관리
     scripts.smartstore — 스마트스토어
-    scripts.explorer  — 사이트 탐색
+    scripts.g2b        — 나라장터 G2B
+    scripts.local_agent — 정부/민원 로컬 에이전트
+    scripts.explorer   — 사이트 탐색
 """
 from __future__ import annotations
 
@@ -49,6 +52,9 @@ from scripts.schemas import (          # noqa: F401
     PopupEvent,
     PopupDecision,
     EumDevice,
+    G2bNotice,
+    LocalAgentTask,
+    ExplorePageResult,
 )
 from scripts.gate import (             # noqa: F401
     check as gate_check,
