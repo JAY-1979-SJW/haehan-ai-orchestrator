@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from . import blog, mail
 from .base import check_session
+from scripts.gate import check as gate_check
 
 
 def run_naver(task: str, sub: str, args: list[str]) -> None:
@@ -13,15 +14,34 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
     """
     match task:
         case "blog":
+            _gate_blog(sub)
             blog.run(sub or "write", args)
         case "mail":
+            _gate_mail(sub)
             mail.run(sub or "inbox", args)
         case "session-check":
             _cmd_session_check()
         case "login":
+            gate_check("wait_login", risk="notify")
             _cmd_login()
         case _:
             print(f"  [오류] 알 수 없는 작업: {task}")
+
+
+def _gate_blog(sub: str) -> None:
+    if sub in ("publish", "send"):
+        gate_check("blog_publish")       # APPROVE — 외부 공개
+    elif sub in ("write", "draft", None, ""):
+        gate_check("write_blog_post")    # APPROVE — 비가역 초안 작성
+    else:
+        gate_check("goto")               # AUTO — 읽기
+
+
+def _gate_mail(sub: str) -> None:
+    if sub in ("send", "compose"):
+        gate_check("naver_mail_send")    # APPROVE — 외부 발송
+    else:
+        gate_check("goto")               # AUTO — 수신함 조회
 
 
 def _cmd_session_check() -> None:

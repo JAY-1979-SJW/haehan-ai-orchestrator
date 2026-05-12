@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from . import calendar, docs, drive, gmail, sheets
 from .base import check_session
+from scripts.gate import check as gate_check
 
 
 def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
@@ -19,16 +20,23 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
         case "session-check":
             _cmd_session_check()
         case "login":
+            gate_check("wait_login", risk="notify")
             _cmd_login()
         case "mail":
+            gate_check("gmail_send" if sub in ("send", "compose") else "goto",
+                       risk="approve" if sub in ("send", "compose") else "auto")
             gmail.run(sub or "list", args)
         case "drive":
+            gate_check("goto")
             drive.run(sub or "list", args)
         case "calendar":
+            gate_check("goto")
             calendar.run(sub or "today", args)
         case "docs":
+            gate_check("goto")
             docs.run(sub or "recent", args)
         case "sheets":
+            gate_check("goto")
             sheets.run(sub or "recent", args)
         case _:
             print(f"  [오류] 알 수 없는 작업: {task}")
@@ -50,29 +58,19 @@ def _cmd_session_check() -> None:
 
 
 def _cmd_login() -> None:
-    import sys
-    from scripts.web_connector import browser_session
-    from scripts.login_session import is_logged_in
-    from scripts.config import LOGIN_PROBE_URLS
+    """ID/PW 자동 로그인 (네이버 방식 동일)."""
+    from scripts.web_connector import get_page
+    from scripts.google.auth import login_google
 
     print("=" * 60)
-    print("Google 로그인")
+    print("Google 자동 로그인 (ID/PW)")
     print("=" * 60)
-
-    with browser_session() as page:
-        page.goto(LOGIN_PROBE_URLS["google"], timeout=60000)
-        if is_logged_in(page, "google"):
-            print("✓ 이미 로그인 상태입니다")
-        elif sys.stdin.isatty():
-            print("\n브라우저에서 Google에 로그인하세요")
-            input("👉 로그인 완료 후 Enter를 누르세요: ")
-            if is_logged_in(page, "google"):
-                print("✓ 로그인 완료")
-            else:
-                print("⚠  로그인 확인 실패 — 다시 시도하세요")
-        else:
-            print("\n브라우저에 Google 페이지를 열었습니다")
-            print("브라우저에서 직접 로그인 후, 아래 명령으로 세션 확인:")
-            print("  python scripts/cdp_client.py google session-check")
-
+    page = get_page()
+    result = login_google(page, wait_for_user_s=300)
+    if result["ok"]:
+        print(f"✓ 로그인 성공: {result.get('user')}  ({result.get('reason')})")
+    else:
+        print(f"✗ 로그인 실패: {result.get('reason')}")
+        if result.get("hint"):
+            print(f"  힌트: {result['hint']}")
     print("=" * 60)

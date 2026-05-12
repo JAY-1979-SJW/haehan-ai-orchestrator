@@ -25,12 +25,15 @@ _log = get_logger(__name__)
 # gate_op: None 이면 게이트 생략
 
 _SERVICE_ROUTERS: dict[str, tuple[str, str]] = {
-    "naver":       ("scripts.naver.router",       "run_naver"),
-    "google":      ("scripts.google.router",      "run_google"),
-    "gmail":       ("scripts.google.router",      "run_google"),
-    "kakao":       ("scripts.kakao.router",       "run_kakao"),
+    "naver":       ("scripts.naver.router",        "run_naver"),
+    "google":      ("scripts.google.router",       "run_google"),
+    "gmail":       ("scripts.google.router",       "run_google"),
+    "kakao":       ("scripts.kakao.router",        "run_kakao"),
     "eum":         ("scripts.eum.router",          "run_eum"),
-    "smartstore":  ("scripts.smartstore.router",  "run_smartstore"),
+    "smartstore":  ("scripts.smartstore.router",   "run_smartstore"),
+    "g2b":         ("scripts.g2b.router",          "run_g2b"),
+    "local":       ("scripts.local_agent.router",  "run_local_agent"),
+    "explore":     ("scripts.explorer.router",     "run_explorer"),
 }
 
 # ── 브라우저 명령 목록 ────────────────────────────────────────────────

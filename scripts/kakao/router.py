@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from . import dev_console
 from .base import check_session
+from scripts.gate import check as gate_check
 
 
 def run_kakao(task: str, sub: str, args: list[str]) -> None:
@@ -15,8 +16,10 @@ def run_kakao(task: str, sub: str, args: list[str]) -> None:
         case "session-check":
             _cmd_session_check()
         case "login":
+            gate_check("wait_login", risk="notify")
             _cmd_login()
         case "dev":
+            gate_check("goto")
             dev_console.run(sub or "list", args)
         case _:
             print(f"  [오류] 알 수 없는 작업: {task}")
