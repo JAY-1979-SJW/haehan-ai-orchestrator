@@ -165,12 +165,12 @@ def _cmd_demolition(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_explore() -> None:
-    """전체 사이트 탐색 (메뉴/WEBMAN 구조 추출)."""
+    """전체 사이트 세밀 탐색 (full_explorer — WEBMAN 24개 + 메뉴 전체)."""
     gate_check("eum_extract_all_devices")
     print("=" * 60)
-    print("EUM 전체 사이트 탐색")
+    print("EUM 전체 사이트 세밀 탐색")
     print("=" * 60)
-    from scripts.eum.site_explorer import main
+    from scripts.eum.full_explorer import main
     main()
 
 
