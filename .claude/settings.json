@@ -1,0 +1,16 @@
+{
+  "model": "sonnet",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/log_code_change.py"
+          }
+        ]
+      }
+    ]
+  }
+}
