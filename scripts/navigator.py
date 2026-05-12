@@ -18,6 +18,10 @@ from pathlib import Path
 
 from scripts.web_connector import get_page
 from scripts.login_check import is_logged_in_by_cookie
+from scripts.logger import get_logger
+from scripts.op_log import log_op, op_context
+
+_log = get_logger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 SESSION_BACKUP_DIR = ROOT / "data" / "browser_sessions" / "backups"
@@ -77,9 +81,13 @@ def goto(target: str, timeout_ms: int = 60000, auto_scan: bool = True, handle_po
     print("=" * 60)
     print(f"페이지 전환: {target} → {url}")
     print("=" * 60)
+    _log.info("goto: %s → %s", target, url)
+    t0 = time.perf_counter()
     page = get_page()
     page.goto(url, timeout=timeout_ms)
+    elapsed = int((time.perf_counter() - t0) * 1000)
     print(f"✓ 이동 완료: {page.url}")
+    log_op("goto", ok=True, duration_ms=elapsed, target=target, url=url)
 
     # 팝업 자동 처리
     if handle_popups:
@@ -101,13 +109,16 @@ def wait_login(site: str, timeout_s: int = 300, interval_s: int = 3) -> bool:
     print("=" * 60)
     print(f"로그인 감지 대기: {site} (최대 {timeout_s}초, {interval_s}초 간격)")
     print("=" * 60)
+    _log.info("wait_login: site=%s timeout=%ss", site, timeout_s)
+    t0 = time.time()
     page = get_page()
-    deadline = time.time() + timeout_s
+    deadline = t0 + timeout_s
     elapsed = 0
     while time.time() < deadline:
         if is_logged_in_by_cookie(page, site):
             print(f"✓ 로그인 감지됨 ({elapsed}초 경과)")
             print("=" * 60)
+            log_op("wait_login", ok=True, duration_ms=int(elapsed * 1000), site=site)
             return True
         time.sleep(interval_s)
         elapsed += interval_s
@@ -115,6 +126,8 @@ def wait_login(site: str, timeout_s: int = 300, interval_s: int = 3) -> bool:
             print(f"  대기 중... {elapsed}초 경과")
     print(f"✗ 타임아웃 — {timeout_s}초 내 로그인 감지 안 됨")
     print("=" * 60)
+    log_op("wait_login", ok=False, duration_ms=int(timeout_s * 1000),
+           message="타임아웃", site=site)
     return False
 
 
@@ -590,6 +603,7 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
     if frame is None:
         print(f"✗ 매칭 버튼 없음")
         print("=" * 60)
+        log_op("click_button", ok=False, message="매칭 버튼 없음", text=text, url=page.url)
         return False
 
     btn_text = handle.evaluate("e => (e.innerText || e.textContent || '').trim()")
@@ -602,22 +616,26 @@ def click_button(text: str, timeout_ms: int = 10000) -> bool:
     except Exception as e:
         print(f"⚠ 클릭 실패: {e}")
         print("=" * 60)
+        log_op("click_button", ok=False, message=str(e), text=text, url=page.url)
         return False
 
     # 결과 감지 (URL 변경 / 새 탭)
     time.sleep(1)
     if page.url != url_before:
         print(f"  → URL 변경: {page.url}")
+        log_op("click_button", ok=True, text=text, result="url_change", url=page.url)
         scan_page()
         return True
     new_pages = set(page.context.pages) - pages_before
     if new_pages:
         new = next(iter(new_pages))
         print(f"  → 새 탭: {new.url}")
+        log_op("click_button", ok=True, text=text, result="new_tab", url=new.url)
         scan_page()
         return True
     print("  → 페이지 변화 없음 (모달/AJAX 가능성)")
     print("=" * 60)
+    log_op("click_button", ok=True, text=text, result="no_nav", url=page.url)
     return True
 
 
@@ -1059,6 +1077,8 @@ def write_blog_post(
     print(f"블로그 글 작성 시작")
     print(f"  제목: {title!r}  본문: {body[:40]!r}  이미지: {image_path or '없음'}  임시저장: {save_draft}")
     print("=" * 60)
+    _log.info("write_blog_post: title=%s image=%s", title[:40], image_path)
+    _t_blog = time.perf_counter()
 
     script = str(ROOT / "scripts" / "cdp_client.py")
     py = _sys.executable
@@ -1116,9 +1136,12 @@ def write_blog_post(
         _run(["click-button", "저장"], "임시저장")
         time.sleep(1)
 
+    elapsed_blog = int((time.perf_counter() - _t_blog) * 1000)
     print("\n" + "=" * 60)
     print("✓ 블로그 글 작성 흐름 완료")
     print("=" * 60)
+    log_op("write_blog_post", ok=True, duration_ms=elapsed_blog,
+           title=title[:60], has_image=image_path is not None)
     return True
 
 
