@@ -1,0 +1,72 @@
+{
+  "site_id": "google",
+  "mode": "no_final_submit",
+  "description": "Google live-fill manifest template. Final Send/Publish/Submit/Save/Grant/Release controls must remain unclicked.",
+  "items": [
+    {
+      "action_key": "gmail_send_email",
+      "values": {
+        "to": "reviewer@example.com",
+        "subject": "DRAFT_ONLY_REVIEW",
+        "body": "Approval-before-send draft.",
+        "attachment_path": "tmp/google_live_assets/haehan_google_input_test.png"
+      }
+    },
+    {
+      "action_key": "youtube_studio_upload_video",
+      "values": {
+        "video_path": "tmp/google_live_assets/haehan_google_input_test.mp4",
+        "title": "DRAFT_ONLY_VIDEO",
+        "description": "Approval-before-publish upload draft.",
+        "visibility": "private"
+      }
+    },
+    {
+      "action_key": "search_console_submit_indexing",
+      "values": {
+        "property": "https://example.com/",
+        "url": "https://example.com/"
+      }
+    },
+    {
+      "action_key": "search_console_submit_sitemap",
+      "values": {
+        "property": "https://example.com/",
+        "sitemap_url": "https://example.com/sitemap.xml"
+      }
+    },
+    {
+      "action_key": "cloud_iam_change_role",
+      "values": {
+        "project": "example-project",
+        "principal": "user@example.com",
+        "role": "roles/viewer",
+        "change": "grant"
+      }
+    },
+    {
+      "action_key": "cloud_create_api_credential",
+      "values": {
+        "project": "example-project",
+        "credential_type": "api_key",
+        "name": "draft-only-key"
+      }
+    },
+    {
+      "action_key": "ai_studio_create_api_key",
+      "values": {
+        "project": "example-project",
+        "key_policy": "draft-only"
+      }
+    },
+    {
+      "action_key": "play_console_prepare_release",
+      "values": {
+        "app": "example.app",
+        "track": "internal",
+        "artifact_path": "C:/path/to/app-release.aab",
+        "release_notes": "Draft release notes for review."
+      }
+    }
+  ]
+}
