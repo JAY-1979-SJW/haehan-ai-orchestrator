@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-05-13",
+  "purpose": "Common operating index for all site automation and homepage operations.",
+  "mandatory_before_new_work": [
+    "Run scripts/ops/worktree_change_index.py.",
+    "Check docs/worktree_management_index.md.",
+    "Check this common operations index.",
+    "Record pre-change dry-run evidence for code changes.",
+    "Work in one owner scope at a time."
+  ],
+  "global_gates": [
+    {
+      "gate_id": "worktree_index",
+      "command": "python scripts/ops/worktree_change_index.py",
+      "required_for": ["new_work", "error_triage", "before_commit"]
+    },
+    {
+      "gate_id": "pre_change_dry_run",
+      "command": "python scripts/ops/pre_change_dry_run.py --scope <scope> --reason <reason> -- <command>",
+      "required_for": ["code_change", "deploy_change"]
+    },
+    {
+      "gate_id": "quality_gate",
+      "command": "python scripts/quality_gate.py",
+      "required_for": ["before_commit", "before_deploy"]
+    },
+    {
+      "gate_id": "approval_gate",
+      "command": "site-specific --approved and --confirm token",
+      "required_for": ["send", "submit", "publish", "upload", "delete", "billing", "iam", "deploy"]
+    }
+  ],
+  "risk_tiers": {
+    "read": "May inspect pages, menus, status, public metadata, and generated artifacts.",
+    "prepare": "May fill drafts, build plans, attach local files in dry-run, and save artifacts without final submit.",
+    "approval": "May execute only after explicit user approval tied to a prepared artifact.",
+    "blocked": "Must not execute automatically. Includes CAPTCHA bypass, payment, credential reveal, and policy evasion."
+  },
+  "sites": [
+    {
+      "site_id": "orchestrator",
+      "label": "Haehan AI Orchestrator",
+      "owner": "platform",
+      "status": "active",
+      "local_path": "C:/Users/skyjw/OneDrive/03. PYTHON/35. haehan-ai-orchestrator",
+      "reference_docs": [
+        "docs/worktree_management_index.md",
+        "docs/site_automation_reference_index.md",
+        "docs/site_automation_status_index.md",
+        "docs/realtime_audit_logging.md"
+      ],
+      "primary_artifacts": [
+        "data/worktree_change_index_latest.json",
+        "data/logs/pre_change_dry_run_latest.json"
+      ],
+      "next_actions": [
+        "Keep common indexes current before site-specific work.",
+        "Avoid staging unrelated dirty worktree files.",
+        "Use owner-scoped tests and dry-runs."
+      ]
+    },
+    {
+      "site_id": "homepage",
+      "label": "Haehan AI Homepage",
+      "owner": "homepage",
+      "status": "security_watch_active",
+      "local_path": "C:/Users/skyjw/OneDrive/03. PYTHON/30. 해한 AI 홈페이지/haehan-ai",
+      "reference_docs": [
+        "../30. haehan-ai-homepage/haehan-ai/docs/security-audit.md",
+        "../30. haehan-ai-homepage/haehan-ai/docs/work-log.md"
+      ],
+      "primary_artifacts": [
+        "/home/ubuntu/logs/security-audit/latest.status",
+        "/home/ubuntu/logs/security-audit/security-audit-YYYY-MM-DD.log"
+      ],
+      "next_actions": [
+        "Confirm production notification channel for audit failures.",
+        "Run full security audit before deployment approval.",
+        "Keep runtime files out of Git: data, private_files, .env.local."
+      ]
+    },
+    {
+      "site_id": "eum",
+      "label": "EUM",
+      "owner": "eum",
+      "status": "complete_baseline",
+      "reference_docs": [
+        "docs/eum_logic_reference_20260513.md",
+        "docs/reports/eum_completion_report_20260513.md"
+      ],
+      "primary_artifacts": [
+        "data/eum_work_index.json",
+        "data/eum_full_site_map.json"
+      ],
+      "next_actions": [
+        "Run live submit only with explicit approval and real values.",
+        "Keep registration and deregistration submit paths approval-gated."
+      ]
+    },
+    {
+      "site_id": "hiworks",
+      "label": "Hiworks",
+      "owner": "hiworks",
+      "status": "complete_baseline",
+      "reference_docs": [
+        "docs/hiworks_logic_reference_20260513.md",
+        "docs/reports/hiworks_completion_report_20260513.md",
+        "docs/reports/hiworks_full_exploration_report_20260513.md"
+      ],
+      "primary_artifacts": [
+        "data/hiworks_action_catalog_latest.json",
+        "data/hiworks_service_surfaces_latest.json"
+      ],
+      "next_actions": [
+        "Keep mail send and state-changing section actions approval-gated.",
+        "Add official API path only as a separate track."
+      ]
+    },
+    {
+      "site_id": "naver",
+      "label": "Naver",
+      "owner": "naver",
+      "status": "implemented_partial",
+      "reference_docs": [
+        "docs/NAVER_SERVICES_EXPANSION_PLAN.md",
+        "docs/naver_live_safety_policy_20260513.md"
+      ],
+      "primary_artifacts": [
+        "data/naver_service_action_catalog_latest.json",
+        "data/naver_company_seo_full_latest.json",
+        "data/naver_shopping_competitors_latest.json"
+      ],
+      "next_actions": [
+        "Split Naver into service-level completion reports.",
+        "Keep live browser work slow and page-complete before moving on.",
+        "Stop on robot/security challenge signals."
+      ]
+    },
+    {
+      "site_id": "smartstore",
+      "label": "Naver SmartStore",
+      "owner": "smartstore",
+      "status": "complete_baseline",
+      "reference_docs": [
+        "docs/smartstore_logic_reference_20260513.md",
+        "docs/reports/smartstore_completion_report_20260513.md"
+      ],
+      "primary_artifacts": [
+        "data/smartstore_action_catalog_latest.json",
+        "data/smartstore_prepare_plan_latest.json",
+        "data/smartstore_submit_latest.json"
+      ],
+      "next_actions": [
+        "Keep product save/submit approval-gated.",
+        "Verify SEO, competitor, CSV import, order, inventory, and analytics workflows separately."
+      ]
+    },
+    {
+      "site_id": "google",
+      "label": "Google and YouTube",
+      "owner": "google",
+      "status": "implemented_gated",
+      "reference_docs": [
+        "docs/google_surface_catalog_reference_20260513.md",
+        "docs/google_business_workflow_reference_20260513.md",
+        "docs/youtube_recording_upload_workflow_20260513.md",
+        "docs/reports/google_live_surface_read_report_20260513.md"
+      ],
+      "primary_artifacts": [
+        "data/google_surface_catalog_latest.json",
+        "data/google_work_action_catalog_latest.json",
+        "data/google_execution_adapter_catalog_latest.json",
+        "data/youtube_upload_plan_latest.json"
+      ],
+      "next_actions": [
+        "Complete per-surface live read reports.",
+        "Prefer official APIs for Gmail, Drive, Calendar, Docs, Sheets, and YouTube when available.",
+        "Keep publish, upload, IAM, billing, API key, indexing, release, and comment actions approval-gated."
+      ]
+    }
+  ]
+}

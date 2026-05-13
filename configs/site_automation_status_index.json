@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-05-13",
+  "status_values": [
+    "planned",
+    "discovered",
+    "designed",
+    "implemented",
+    "verified",
+    "complete_baseline",
+    "complete_live",
+    "blocked"
+  ],
+  "sites": [
+    {
+      "site_id": "eum",
+      "label": "건설근로자공제회 EUM",
+      "status": "complete_baseline",
+      "completion_report": "docs/reports/eum_completion_report_20260513.md",
+      "reference_doc": "docs/eum_logic_reference_20260513.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [
+        {"key": "device_inventory", "risk": "read", "status": "complete"},
+        {"key": "new_sites", "risk": "read", "status": "complete"},
+        {"key": "sales_mail", "risk": "prepare", "status": "complete"},
+        {"key": "device_history", "risk": "read", "status": "complete"},
+        {"key": "demolition_lookup", "risk": "read", "status": "complete"},
+        {"key": "monitor", "risk": "read", "status": "complete"},
+        {"key": "device_registration", "risk": "approval", "status": "complete_baseline"},
+        {"key": "device_deregistration", "risk": "approval", "status": "complete_baseline"}
+      ],
+      "pending": [
+        "device_registration live submit E2E requires real values and approval",
+        "device_deregistration live submit E2E requires real values and approval"
+      ]
+    },
+    {
+      "site_id": "hiworks",
+      "label": "하이웍스",
+      "status": "complete_baseline",
+      "completion_report": "docs/reports/hiworks_completion_report_20260513.md",
+      "reference_doc": "docs/hiworks_logic_reference_20260513.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [
+        {"key": "dashboard", "risk": "read", "status": "complete"},
+        {"key": "apps", "risk": "read", "status": "complete"},
+        {"key": "mail", "risk": "read", "status": "complete"},
+        {"key": "compose", "risk": "read", "status": "complete"},
+        {"key": "service_scan", "risk": "read", "status": "complete"},
+        {"key": "action_catalog", "risk": "read", "status": "complete"},
+        {"key": "prepare_section", "risk": "prepare", "status": "complete_baseline"},
+        {"key": "submit_section", "risk": "send", "status": "complete_baseline"},
+        {"key": "prepare_sales_mail", "risk": "prepare", "status": "complete"},
+        {"key": "send_batch_plan", "risk": "prepare", "status": "complete_baseline"}
+      ],
+      "pending": [
+        "actual mail send remains approval-gated and is not implemented for batch send",
+        "state-changing section buttons require --approved and --confirm=HIWORKS_APPROVED_SUBMIT",
+        "live submit E2E should run only after an approved dry-run evidence record",
+        "official Hiworks API integration remains a separate future track"
+      ]
+    },
+    {
+      "site_id": "naver",
+      "label": "네이버 서비스",
+      "status": "implemented",
+      "completion_report": "",
+      "reference_doc": "docs/NAVER_SERVICES_EXPANSION_PLAN.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [],
+      "pending": ["split service-level completion reports"]
+    },
+    {
+      "site_id": "g2b",
+      "label": "나라장터",
+      "status": "verified",
+      "completion_report": "",
+      "reference_doc": "docs/reports/g2b_public_notice_readonly_matrix_20260507.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [],
+      "pending": ["completion report"]
+    },
+      {
+        "site_id": "google",
+        "label": "Google/Gmail",
+        "status": "implemented",
+        "completion_report": "docs/reports/google_live_surface_read_report_20260513.md",
+        "reference_doc": "docs/google_surface_catalog_reference_20260513.md",
+        "index_doc": "docs/site_automation_status_index.md",
+        "workflows": [
+          {"key": "home_scan", "risk": "read", "status": "complete_baseline"},
+          {"key": "surface_catalog", "risk": "read", "status": "complete"},
+          {"key": "work_action_catalog", "risk": "read", "status": "complete"},
+          {"key": "execution_adapter_catalog", "risk": "read", "status": "complete"},
+          {"key": "execution_verify_log", "risk": "read", "status": "complete"},
+          {"key": "work_prepare_execute_gate", "risk": "approval", "status": "complete_baseline"},
+          {"key": "live_surface_read", "risk": "read", "status": "complete_baseline"},
+          {"key": "gmail", "risk": "private_data", "status": "implemented"},
+          {"key": "drive_calendar_docs_sheets", "risk": "private_data", "status": "partial_api_preferred"},
+          {"key": "console_ai_android_youtube_studio", "risk": "write_possible", "status": "cataloged_gated"},
+          {"key": "workspace_youtube_cloud_ai_business_actions", "risk": "approval", "status": "implemented_gated"}
+        ],
+        "pending": ["per-surface live read completion", "surface-specific final adapters can be strengthened under the common approval contract", "OAuth/API completion criteria", "write workflows require dry-run and approval"]
+      },
+    {
+      "site_id": "kakao",
+      "label": "Kakao",
+      "status": "planned",
+      "completion_report": "",
+      "reference_doc": "docs/KAKAO_DESKTOP_DESIGN.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [],
+      "pending": ["desktop automation baseline"]
+    },
+    {
+      "site_id": "smartstore",
+      "label": "네이버 스마트스토어",
+      "status": "complete_baseline",
+      "completion_report": "docs/reports/smartstore_completion_report_20260513.md",
+      "reference_doc": "docs/smartstore_logic_reference_20260513.md",
+      "index_doc": "docs/site_automation_status_index.md",
+      "workflows": [
+        {"key": "action_catalog", "risk": "read", "status": "complete"},
+        {"key": "product_prepare", "risk": "prepare", "status": "complete_baseline"},
+        {"key": "product_submit", "risk": "approval", "status": "complete_baseline"},
+        {"key": "product_list", "risk": "read", "status": "partial"},
+        {"key": "order_inventory_analytics", "risk": "read", "status": "partial"}
+      ],
+      "pending": [
+        "live SmartStore E2E remains paused after Naver robot detection",
+        "non-dry-run save requires dry-run evidence and --approved --confirm=SMARTSTORE_APPROVED_SUBMIT",
+        "SEO, AI review reply, competitor analysis, CSV import, order, inventory, and analytics need separate workflow verification"
+      ]
+    },
+    {
+      "site_id": "homepage",
+      "label": "Haehan AI Homepage",
+      "status": "security_watch_active",
+      "completion_report": "../30. 해한 AI 홈페이지/haehan-ai/docs/work-log.md",
+      "reference_doc": "../30. 해한 AI 홈페이지/haehan-ai/docs/security-audit.md",
+      "index_doc": "docs/common_operations_index.md",
+      "workflows": [
+        {"key": "security_audit_quick_watch", "risk": "read", "status": "active"},
+        {"key": "security_audit_full_daily", "risk": "read", "status": "active"},
+        {"key": "deployment_security_gate", "risk": "approval", "status": "complete_baseline"},
+        {"key": "audit_log_retention", "risk": "read", "status": "active"}
+      ],
+      "pending": [
+        "confirm production notification channel for audit failures",
+        "run full security audit before deployment approval"
+      ]
+    }
+  ]
+}
