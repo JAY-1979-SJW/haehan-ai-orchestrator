@@ -1,0 +1,979 @@
+"""Live no-final-submit input adapters for Google workflows."""
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from . import workflows
+
+ROOT = Path(__file__).resolve().parents[2]
+LIVE_INPUT_DIR = ROOT / "data" / "google_live_inputs"
+LATEST_LIVE_INPUT = ROOT / "data" / "google_live_input_latest.json"
+LIVE_INPUT_MANIFEST_DIR = ROOT / "data" / "google_live_input_manifests"
+LATEST_LIVE_INPUT_MANIFEST = ROOT / "data" / "google_live_input_manifest_latest.json"
+LIVE_INPUT_COVERAGE_DIR = ROOT / "data" / "google_live_input_coverage"
+LATEST_LIVE_INPUT_COVERAGE = ROOT / "data" / "google_live_input_coverage_latest.json"
+LIVE_INPUT_ADAPTERS = {
+    "gmail_send_email": "safe_pre_final_input",
+    "cloud_iam_change_role": "safe_pre_final_input",
+    "search_console_submit_indexing": "safe_pre_final_input",
+    "youtube_studio_upload_video": "safe_pre_final_input",
+    "youtube_studio_edit_video_metadata": "safe_lookup_handoff",
+    "search_console_submit_sitemap": "safe_pre_final_input",
+    "ai_studio_create_api_key": "safe_handoff_no_create",
+    "cloud_create_api_credential": "safe_handoff_no_create",
+    "play_console_prepare_release": "safe_handoff_no_release",
+}
+FINAL_CONTROL_LABELS = (
+    "Send",
+    "보내기",
+    "Publish",
+    "게시",
+    "Next",
+    "다음",
+    "Submit",
+    "제출",
+    "Save",
+    "저장",
+    "Create",
+    "만들기",
+    "Grant",
+    "Add",
+    "Request indexing",
+    "색인 생성 요청",
+    "Release",
+    "출시",
+)
+
+
+def build_live_input_coverage() -> dict:
+    """Build live-fill support coverage against the Google work catalog."""
+    actions = [item for item in workflows.build_action_catalog()["actions"] if item["requires_approval"]]
+    supported: list[dict] = []
+    unsupported: list[dict] = []
+    for action in actions:
+        item = {
+            "action_key": action["key"],
+            "surface_key": action["surface_key"],
+            "operation": action["operation"],
+            "required_inputs": action["required_inputs"],
+            "approval_required": action["requires_approval"],
+        }
+        mode = LIVE_INPUT_ADAPTERS.get(action["key"])
+        if mode:
+            item["live_input_mode"] = mode
+            item["final_state_policy"] = "no_final_submit_only"
+            supported.append(item)
+        else:
+            item["live_input_mode"] = "open_only_or_prepare_only"
+            item["final_state_policy"] = "approval_handoff_required"
+            unsupported.append(item)
+    coverage = {
+        "site_id": "google",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "policy": {
+            "default": "prepare_all_actions_but_live_fill_only_supported_adapters",
+            "final_controls": list(FINAL_CONTROL_LABELS),
+            "manifest_template": "configs/google_live_input_manifest_template.json",
+        },
+        "counts": {
+            "approval_actions": len(actions),
+            "live_input_supported": len(supported),
+            "prepare_or_open_only": len(unsupported),
+        },
+        "supported": supported,
+        "prepare_or_open_only": unsupported,
+    }
+    return coverage
+
+
+def save_live_input_coverage(coverage: dict | None = None, path: Path | None = None) -> Path:
+    coverage = coverage or build_live_input_coverage()
+    LIVE_INPUT_COVERAGE_DIR.mkdir(parents=True, exist_ok=True)
+    LATEST_LIVE_INPUT_COVERAGE.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    target = path or LIVE_INPUT_COVERAGE_DIR / f"google_live_input_coverage_{timestamp}.json"
+    text = json.dumps(coverage, ensure_ascii=False, indent=2)
+    target.write_text(text, encoding="utf-8")
+    LATEST_LIVE_INPUT_COVERAGE.write_text(text, encoding="utf-8")
+    return target
+
+
+def print_live_input_coverage(coverage: dict, path: Path) -> None:
+    print("=" * 60)
+    print("Google live input coverage")
+    print("=" * 60)
+    print(f"saved: {path}")
+    print(f"latest: {LATEST_LIVE_INPUT_COVERAGE}")
+    print(f"approval_actions: {coverage['counts']['approval_actions']}")
+    print(f"live_input_supported: {coverage['counts']['live_input_supported']}")
+    print(f"prepare_or_open_only: {coverage['counts']['prepare_or_open_only']}")
+    print("supported:")
+    for item in coverage["supported"]:
+        print(f"- {item['action_key']}: {item['live_input_mode']}")
+
+
+def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tuple[dict, Path]:
+    """Open the target workflow and fill available inputs without final submit."""
+    path = Path(plan_path)
+    plan = json.loads(path.read_text(encoding="utf-8"))
+    action = plan["action"]
+    values = plan.get("provided_inputs", {})
+    result = {
+        "site_id": "google",
+        "action_key": action["key"],
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "plan_path": str(path),
+        "no_final_submit": no_final_submit,
+        "state_change_final_button_clicked": False,
+        "status": "started",
+        "filled_fields": [],
+        "skipped_fields": [],
+        "warnings": [],
+        "current_url": "",
+        "title": "",
+    }
+    if not no_final_submit:
+        result["status"] = "blocked"
+        result["warnings"].append("live input requires no_final_submit=True")
+        return _save_result(result)
+    if plan.get("missing_inputs"):
+        result["status"] = "blocked_missing_inputs"
+        result["warnings"].append("missing inputs: " + ", ".join(plan["missing_inputs"]))
+        return _save_result(result)
+
+    try:
+        from scripts.web_connector import get_page
+
+        page = get_page()
+        _dispatch_live_input(page, action, values, result)
+        result["final_control_policy"] = {
+            "mode": "no_final_submit",
+            "blocked_labels": list(FINAL_CONTROL_LABELS),
+            "detected_controls": _detect_final_controls(page),
+        }
+        try:
+            result["current_url"] = page.url
+            result["title"] = page.title()
+        except Exception:
+            pass
+        if result["status"] == "started":
+            result["status"] = "filled_no_final_submit"
+    except Exception as exc:
+        result["status"] = "failed"
+        result["warnings"].append(str(exc))
+    return _save_result(result)
+
+
+def run_live_input_manifest(
+    manifest_path: str | Path,
+    *,
+    no_final_submit: bool = True,
+) -> tuple[dict, Path]:
+    """Run a no-final-submit live-fill manifest and save a combined audit."""
+    path = Path(manifest_path)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    entries = manifest.get("items", [])
+    summary = {
+        "site_id": "google",
+        "manifest_path": str(path),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "no_final_submit": no_final_submit,
+        "state_change_final_button_clicked": False,
+        "items": [],
+        "counts": {"total": len(entries), "filled": 0, "blocked": 0, "failed": 0},
+        "warnings": [],
+    }
+    if not no_final_submit:
+        summary["status"] = "blocked"
+        summary["warnings"].append("manifest live-fill requires no_final_submit=True")
+        return _save_manifest_result(summary)
+    for index, entry in enumerate(entries, 1):
+        item = {"index": index, "status": "started", "action_key": entry.get("action_key", "")}
+        try:
+            plan_path = entry.get("plan_path")
+            if not plan_path:
+                action_key = entry["action_key"]
+                values = entry.get("values", {})
+                _, prepared_path = workflows.prepare_action(action_key, values)
+                plan_path = str(prepared_path)
+            result, result_path = run_live_input(plan_path, no_final_submit=True)
+            item.update(
+                {
+                    "status": result["status"],
+                    "action_key": result["action_key"],
+                    "result_path": str(result_path),
+                    "filled_fields": result.get("filled_fields", []),
+                    "skipped_fields": result.get("skipped_fields", []),
+                    "warnings": result.get("warnings", []),
+                    "final_clicked": result.get("state_change_final_button_clicked", False),
+                }
+            )
+            if result["status"] == "filled_no_final_submit":
+                summary["counts"]["filled"] += 1
+            elif result["status"].startswith("blocked"):
+                summary["counts"]["blocked"] += 1
+            else:
+                summary["counts"]["failed"] += 1
+        except Exception as exc:
+            item["status"] = "failed"
+            item["warnings"] = [str(exc)]
+            summary["counts"]["failed"] += 1
+        summary["items"].append(item)
+    summary["status"] = "completed"
+    return _save_manifest_result(summary)
+
+
+def print_live_input_summary(result: dict, path: Path) -> None:
+    print("=" * 60)
+    print("Google live input")
+    print("=" * 60)
+    print(f"action: {result['action_key']}")
+    print(f"status: {result['status']}")
+    print(f"no_final_submit: {result['no_final_submit']}")
+    print(f"final_clicked: {result['state_change_final_button_clicked']}")
+    print(f"filled_fields: {', '.join(result['filled_fields']) if result['filled_fields'] else '-'}")
+    if result["skipped_fields"]:
+        print(f"skipped_fields: {', '.join(result['skipped_fields'])}")
+    if result["warnings"]:
+        print("warnings:")
+        for warning in result["warnings"]:
+            print(f"- {warning}")
+    print(f"url: {result.get('current_url', '')}")
+    print(f"saved: {path}")
+    print(f"latest: {LATEST_LIVE_INPUT}")
+
+
+def print_live_manifest_summary(summary: dict, path: Path) -> None:
+    print("=" * 60)
+    print("Google live input manifest")
+    print("=" * 60)
+    print(f"status: {summary['status']}")
+    print(f"no_final_submit: {summary['no_final_submit']}")
+    print(f"final_clicked: {summary['state_change_final_button_clicked']}")
+    print(
+        "counts: "
+        f"total={summary['counts']['total']} "
+        f"filled={summary['counts']['filled']} "
+        f"blocked={summary['counts']['blocked']} "
+        f"failed={summary['counts']['failed']}"
+    )
+    for item in summary["items"]:
+        print(f"- {item['action_key']}: {item['status']} -> {item.get('result_path', '-')}")
+    print(f"saved: {path}")
+    print(f"latest: {LATEST_LIVE_INPUT_MANIFEST}")
+
+
+def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) -> None:
+    key = action["key"]
+    if key == "gmail_send_email":
+        _fill_gmail_send_v2(page, action, values, result)
+    elif key == "cloud_iam_change_role":
+        _fill_cloud_iam_change(page, action, values, result)
+    elif key == "search_console_submit_indexing":
+        _fill_search_console_url_inspection(page, action, values, result)
+    elif key == "youtube_studio_upload_video":
+        _fill_youtube_studio_upload_v2(page, action, values, result)
+    elif key == "youtube_studio_edit_video_metadata":
+        _fill_youtube_studio_metadata(page, action, values, result)
+    elif key == "search_console_submit_sitemap":
+        _fill_search_console_sitemap(page, action, values, result)
+    elif key == "ai_studio_create_api_key":
+        _fill_ai_studio_api_key(page, action, values, result)
+    elif key == "cloud_create_api_credential":
+        _fill_cloud_api_credential(page, action, values, result)
+    elif key == "play_console_prepare_release":
+        _fill_play_console_release_handoff(page, action, values, result)
+    else:
+        _open_only(page, action, values, result)
+
+
+def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=30000, wait_until="domcontentloaded")
+    page.wait_for_timeout(2500)
+    _click_text(page, ["Compose", "편지쓰기", "작성"], result, optional=True)
+    page.wait_for_timeout(1500)
+    _fill_first(
+        page,
+        [
+            'textarea[name="to"]',
+            'div[name="to"] input[type="text"]',
+            'div[aria-label*="받는사람"] input[type="text"]',
+            'input[aria-label*="To"]',
+            'input[aria-label*="Recipient"]',
+            'input[aria-label*="수신자"]',
+            'input[aria-label*="받는"]',
+            'input.agP.aFw[role="combobox"]',
+            'input[type="text"]:not([name="q"]):not([name="subjectbox"])',
+        ],
+        values.get("to", ""),
+        "to",
+        result,
+    ) or _fill_gmail_recipient_js(page, values.get("to", ""), "to", result)
+    subject_filled = _fill_first(
+        page,
+        ['input[name="subjectbox"]', 'input[aria-label*="Subject"]', 'input[aria-label*="제목"]'],
+        values.get("subject", ""),
+        "subject",
+        result,
+    )
+    if not subject_filled:
+        _fill_visible_input_js(page, 'input[name="subjectbox"]', values.get("subject", ""), "subject", result)
+    _fill_contenteditable(page, values.get("body", ""), "body", result)
+    attachment_path = values.get("attachment_path", "")
+    if attachment_path:
+        _attach_file_input(page, attachment_path, "attachment_path", result)
+    result["warnings"].append("Gmail may autosave a draft; Send was not clicked.")
+
+
+def _fill_gmail_send_v2(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=30000, wait_until="domcontentloaded")
+    page.wait_for_timeout(3500)
+    _ensure_gmail_compose_open(page, result)
+    _fill_first(
+        page,
+        [
+            'textarea[name="to"]',
+            'div[name="to"] input[type="text"]',
+            'div[aria-label*="받는사람"] input[type="text"]',
+            'input[aria-label*="To"]',
+            'input[aria-label*="Recipient"]',
+            'input[aria-label*="수신자"]',
+            'input[aria-label*="받는"]',
+            'input.agP.aFw[role="combobox"]',
+            'input[type="text"]:not([name="q"]):not([name="subjectbox"])',
+        ],
+        values.get("to", ""),
+        "to",
+        result,
+        press_enter=True,
+    ) or _fill_gmail_recipient_js(page, values.get("to", ""), "to", result)
+    page.wait_for_timeout(800)
+    if not _fill_first(
+        page,
+        [
+            'input[name="subjectbox"]',
+            'input[aria-label*="Subject"]',
+            'input[aria-label*="제목"]',
+            'input[placeholder*="제목"]',
+        ],
+        values.get("subject", ""),
+        "subject",
+        result,
+    ):
+        _fill_visible_input_js(page, 'input[name="subjectbox"]', values.get("subject", ""), "subject", result)
+    _fill_contenteditable(page, values.get("body", ""), "body", result)
+    attachment_path = values.get("attachment_path", "")
+    if attachment_path:
+        _attach_file_input(page, attachment_path, "attachment_path", result)
+    result["warnings"].append("Gmail may autosave a draft; Send was not clicked.")
+
+
+def _ensure_gmail_compose_open(page: Any, result: dict) -> None:
+    for _ in range(3):
+        if _gmail_compose_visible(page):
+            return
+        if not _click_text(page, ["Compose", "편지쓰기", "작성"], result, optional=True):
+            _click_first_selector(
+                page,
+                ['div[role="button"][gh="cm"]', 'div[aria-label*="Compose"]', 'div[aria-label*="편지쓰기"]'],
+                "gmail_compose",
+                result,
+            )
+        page.wait_for_timeout(2000)
+    if not _gmail_compose_visible(page):
+        result["warnings"].append("Gmail compose window did not stay open.")
+
+
+def _gmail_compose_visible(page: Any) -> bool:
+    selectors = [
+        'input[name="subjectbox"]',
+        'textarea[name="to"]',
+        'div[contenteditable="true"][aria-label*="메일 본문"]',
+        'div[contenteditable="true"][aria-label*="Message Body"]',
+    ]
+    for frame in page.frames:
+        for selector in selectors:
+            try:
+                matches = frame.locator(selector)
+                for index in range(min(matches.count(), 8)):
+                    if matches.nth(index).bounding_box(timeout=500) is not None:
+                        return True
+            except Exception:
+                continue
+    return False
+
+
+def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) -> None:
+    project = values.get("project", "")
+    target = action["target_url"]
+    if project and "project=" not in target:
+        target = f"{target}?project={project}"
+    page.goto(target, timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(5000)
+    if not _click_first_selector(
+        page,
+        ['button[instrumentationid="iam-add-member"]', 'iam-add-member-action button'],
+        "grant_access_panel",
+        result,
+    ):
+        _click_text(page, ["Grant access", "액세스 권한 부여", "권한 부여"], result, optional=True)
+    page.wait_for_timeout(2500)
+    _fill_first(
+        page,
+        [
+            'input[id*="add-member-bar-input"]',
+            'input[aria-label*="principal"]',
+            'input[aria-label*="Principal"]',
+            'input[aria-label*="주 구성원"]',
+            'input[placeholder*="principal"]',
+            'input[type="email"]',
+        ],
+        values.get("principal", ""),
+        "principal",
+        result,
+        press_enter=True,
+    )
+    page.wait_for_timeout(1200)
+    role = values.get("role", "")
+    if role and _click_first_selector(
+        page,
+        [
+            'cfc-select-dual-column[name="selectedRole"]',
+            'cfc-select-dual-column[aria-label*="역할"]',
+            'cfc-select-dual-column[aria-label*="role"]',
+            '[id*="cfc-select-dual-column"]',
+        ],
+        "role_picker",
+        result,
+    ):
+        page.wait_for_timeout(1500)
+        if _fill_first(
+            page,
+            [
+                'input[aria-label*="필터"]',
+                'input[aria-label*="Filter"]',
+                'input[placeholder*="필터"]',
+                'input[placeholder*="Filter"]',
+                'input[aria-label*="검색"]',
+                'input[type="search"]',
+            ],
+            role,
+            "role",
+            result,
+            press_enter=True,
+        ):
+            page.wait_for_timeout(800)
+        else:
+            try:
+                page.keyboard.type(role, delay=5)
+                page.keyboard.press("Enter")
+                if "role" in result["skipped_fields"]:
+                    result["skipped_fields"].remove("role")
+                result["filled_fields"].append("role")
+                result["warnings"].append("role typed through open role picker; visual selection should be checked.")
+            except Exception:
+                result["skipped_fields"].append("role")
+                result["warnings"].append("field not found: role")
+    else:
+        if role:
+            result["skipped_fields"].append("role")
+            result["warnings"].append("field not found: role")
+        else:
+            result["skipped_fields"].append("role")
+    result["filled_fields"].append("project") if project else result["skipped_fields"].append("project")
+    result["warnings"].append("IAM final Grant/Save/Add button was not clicked.")
+
+
+def _fill_search_console_url_inspection(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(4000)
+    _fill_first(
+        page,
+        [
+            'input[aria-label*="Inspect"]',
+            'input[aria-label*="URL"]',
+            'input[placeholder*="Inspect"]',
+            'input[type="text"]',
+        ],
+        values.get("url", ""),
+        "url",
+        result,
+    )
+    result["warnings"].append("URL inspection input only; Request indexing was not clicked.")
+
+
+def _fill_search_console_sitemap(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(4000)
+    sitemap = values.get("sitemap_url", "") or values.get("sitemap", "")
+    _fill_first(
+        page,
+        [
+            'input[aria-label*="Sitemap"]',
+            'input[placeholder*="sitemap"]',
+            'input[aria-label*="사이트맵"]',
+            'input[type="url"]',
+            'input[type="text"]',
+        ],
+        sitemap,
+        "sitemap_url",
+        result,
+    )
+    if values.get("property"):
+        result["filled_fields"].append("property")
+        result["warnings"].append("Search Console property was recorded in plan; property switch was not submitted.")
+    result["warnings"].append("Sitemap input only; Submit was not clicked.")
+
+
+def _fill_youtube_studio_upload(page: Any, action: dict, values: dict, result: dict) -> None:
+    video_path = values.get("video_path", "")
+    if not video_path or not Path(video_path).exists():
+        result["status"] = "blocked_missing_file"
+        result["skipped_fields"].append("video_path")
+        result["warnings"].append(f"video file not found: {video_path}")
+        return
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(4000)
+    _click_text(page, ["Create", "만들기", "Upload videos", "동영상 업로드"], result, optional=True)
+    page.wait_for_timeout(2000)
+    try:
+        page.set_input_files('input[type="file"]', video_path)
+        result["filled_fields"].append("video_path")
+    except Exception as exc:
+        result["skipped_fields"].append("video_path")
+        result["warnings"].append(f"file input failed: {exc}")
+    _fill_first(page, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result)
+    _fill_first(page, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result)
+    result["warnings"].append("YouTube final Next/Publish buttons were not clicked.")
+
+
+def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result: dict) -> None:
+    video_path = values.get("video_path", "")
+    if not video_path or not Path(video_path).exists():
+        result["status"] = "blocked_missing_file"
+        result["skipped_fields"].append("video_path")
+        result["warnings"].append(f"video file not found: {video_path}")
+        return
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(5000)
+    _click_first_selector(
+        page,
+        [
+            'ytcp-button#create-icon',
+            'button[aria-label*="Create"]',
+            'tp-yt-paper-icon-button[aria-label*="Create"]',
+            'button[aria-label*="만들기"]',
+            'tp-yt-paper-icon-button[aria-label*="만들기"]',
+        ],
+        "youtube_create_menu",
+        result,
+    )
+    _click_text(page, ["Create", "Upload videos", "만들기", "동영상 업로드"], result, optional=True)
+    page.wait_for_timeout(2500)
+    _click_text(page, ["Upload videos", "동영상 업로드"], result, optional=True)
+    page.wait_for_timeout(2500)
+    try:
+        page.set_input_files('input[type="file"]', video_path)
+        result["filled_fields"].append("video_path")
+        result["warnings"].append("video file selected/upload draft may be created; Publish was not clicked.")
+    except Exception as exc:
+        result["skipped_fields"].append("video_path")
+        result["warnings"].append(f"file input failed: {exc}")
+        return
+    page.wait_for_timeout(5000)
+    _fill_first(
+        page,
+        ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]', '#textbox[aria-label*="Title"]'],
+        values.get("title", ""),
+        "title",
+        result,
+    )
+    _fill_first(
+        page,
+        ['textarea[aria-label*="Description"]', '#textbox[aria-label*="Description"]'],
+        values.get("description", ""),
+        "description",
+        result,
+    )
+    result["warnings"].append("YouTube final Next/Publish buttons were not clicked.")
+
+
+def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(5000)
+    query = values.get("video_id", "") or values.get("title", "")
+    _fill_first(
+        page,
+        [
+            'input[aria-label*="Search"]',
+            'input[placeholder*="Search"]',
+            'input[aria-label*="검색"]',
+            'input[type="search"]',
+        ],
+        query,
+        "video_lookup",
+        result,
+        press_enter=True,
+    )
+    page.wait_for_timeout(2000)
+    if values.get("title"):
+        result["skipped_fields"].append("title")
+    if values.get("description"):
+        result["skipped_fields"].append("description")
+    result["warnings"].append(
+        "YouTube metadata target lookup only; edit/save/publish controls were not clicked."
+    )
+
+
+def _fill_ai_studio_api_key(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(4000)
+    project = values.get("project", "")
+    if project:
+        _fill_first(
+            page,
+            [
+                'input[aria-label*="project"]',
+                'input[aria-label*="Project"]',
+                'input[placeholder*="project"]',
+                'input[type="text"]',
+            ],
+            project,
+            "project",
+            result,
+        )
+    else:
+        result["skipped_fields"].append("project")
+    result["warnings"].append("AI Studio API key page opened; Create/Get key was not clicked.")
+
+
+def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: dict) -> None:
+    project = values.get("project", "")
+    target = action["target_url"]
+    if project and "project=" not in target:
+        target = f"{target}?project={project}"
+    page.goto(target, timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(5000)
+    if project:
+        result["filled_fields"].append("project")
+    credential_type = values.get("credential_type", "")
+    if credential_type:
+        result["skipped_fields"].append("credential_type")
+        result["warnings"].append(
+            "Credential type recorded in plan; Create credential menu was not clicked."
+        )
+    result["warnings"].append("Cloud credential page opened; Create/API key/OAuth submit was not clicked.")
+
+
+def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(5000)
+    app = values.get("app", "") or values.get("package", "")
+    _fill_first(
+        page,
+        [
+            'input[aria-label*="Search"]',
+            'input[placeholder*="Search"]',
+            'input[aria-label*="검색"]',
+            'input[type="search"]',
+            'input[type="text"]',
+        ],
+        app,
+        "app_lookup",
+        result,
+        press_enter=True,
+    )
+    for field in ("track", "artifact_path", "release_notes"):
+        if values.get(field):
+            result["skipped_fields"].append(field)
+    result["warnings"].append(
+        "Play Console app lookup only; release upload/review/rollout controls were not clicked."
+    )
+
+
+def _open_only(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(2500)
+    for key, value in values.items():
+        if value:
+            result["skipped_fields"].append(key)
+    result["status"] = "opened_only_no_adapter"
+    result["warnings"].append("No live input adapter for this action yet; target opened only.")
+
+
+def _fill_first(
+    page: Any,
+    selectors: list[str],
+    value: str,
+    field: str,
+    result: dict,
+    *,
+    press_enter: bool = False,
+) -> bool:
+    if not value:
+        result["skipped_fields"].append(field)
+        return False
+    for selector in selectors:
+        for frame in page.frames:
+            try:
+                matches = frame.locator(selector)
+                count = min(matches.count(), 12)
+                for index in range(count):
+                    locator = matches.nth(index)
+                    if locator.bounding_box(timeout=1000) is None:
+                        continue
+                    locator.click(timeout=3000)
+                    try:
+                        locator.fill(value, timeout=5000)
+                    except Exception:
+                        page.keyboard.type(value, delay=5)
+                    if press_enter:
+                        page.keyboard.press("Enter")
+                    result["filled_fields"].append(field)
+                    return True
+            except Exception:
+                continue
+    result["skipped_fields"].append(field)
+    result["warnings"].append(f"field not found: {field}")
+    return False
+
+
+def _fill_contenteditable(page: Any, value: str, field: str, result: dict) -> bool:
+    if not value:
+        result["skipped_fields"].append(field)
+        return False
+    selectors = ['div[contenteditable="true"][role="textbox"]', 'div[contenteditable="true"]']
+    for selector in selectors:
+        for frame in page.frames:
+            try:
+                locator = frame.locator(selector).last
+                if locator.count() > 0:
+                    locator.click(timeout=3000)
+                    page.keyboard.type(value, delay=5)
+                    result["filled_fields"].append(field)
+                    return True
+            except Exception:
+                continue
+    result["skipped_fields"].append(field)
+    result["warnings"].append(f"contenteditable not found: {field}")
+    return False
+
+
+def _click_text(page: Any, labels: list[str], result: dict, *, optional: bool = False) -> bool:
+    for label in labels:
+        for frame in page.frames:
+            try:
+                locator = frame.get_by_text(label, exact=False).first
+                if locator.count() > 0:
+                    locator.click(timeout=4000)
+                    return True
+            except Exception:
+                continue
+    try:
+        for frame in page.frames:
+            clicked = frame.evaluate(
+                """(labels) => {
+                const norm = (v) => (v || '').replace(/\\s+/g, ' ').trim();
+                const candidates = Array.from(document.querySelectorAll(
+                  'button, [role="button"], a, div[aria-label], span[aria-label]'
+                ));
+                for (const label of labels) {
+                  for (const el of candidates) {
+                    const text = norm(el.innerText);
+                    const aria = norm(el.getAttribute('aria-label'));
+                    if (!text.includes(label) && !aria.includes(label)) continue;
+                    const box = el.getBoundingClientRect();
+                    if (box.width <= 0 || box.height <= 0) continue;
+                    el.click();
+                    return {ok: true, label, text, aria};
+                  }
+                }
+                return {ok: false};
+            }""",
+                labels,
+            )
+            if clicked.get("ok"):
+                result.setdefault("clicked_nonfinal_controls", []).append(clicked)
+                return True
+    except Exception:
+        pass
+    if not optional:
+        result["warnings"].append("button not found: " + " / ".join(labels))
+    return False
+
+
+def _click_first_selector(page: Any, selectors: list[str], field: str, result: dict) -> bool:
+    for selector in selectors:
+        for frame in page.frames:
+            try:
+                locator = frame.locator(selector).first
+                if locator.count() > 0:
+                    locator.click(timeout=5000)
+                    result.setdefault("clicked_nonfinal_controls", []).append(
+                        {"field": field, "selector": selector}
+                    )
+                    return True
+            except Exception:
+                continue
+    return False
+
+
+def _save_result(result: dict) -> tuple[dict, Path]:
+    LIVE_INPUT_DIR.mkdir(parents=True, exist_ok=True)
+    LATEST_LIVE_INPUT.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    target = LIVE_INPUT_DIR / f"google_live_input_{result['action_key']}_{timestamp}.json"
+    text = json.dumps(result, ensure_ascii=False, indent=2)
+    target.write_text(text, encoding="utf-8")
+    LATEST_LIVE_INPUT.write_text(text, encoding="utf-8")
+    return result, target
+
+
+def _save_manifest_result(summary: dict) -> tuple[dict, Path]:
+    LIVE_INPUT_MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
+    LATEST_LIVE_INPUT_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    target = LIVE_INPUT_MANIFEST_DIR / f"google_live_input_manifest_{timestamp}.json"
+    text = json.dumps(summary, ensure_ascii=False, indent=2)
+    target.write_text(text, encoding="utf-8")
+    LATEST_LIVE_INPUT_MANIFEST.write_text(text, encoding="utf-8")
+    return summary, target
+
+
+def _detect_final_controls(page: Any) -> list[dict]:
+    detected: list[dict] = []
+    script = """(labels) => {
+        const norm = (value) => (value || '').replace(/\\s+/g, ' ').trim();
+        const controls = Array.from(document.querySelectorAll(
+          'button, [role="button"], input[type="button"], input[type="submit"], a'
+        ));
+        const results = [];
+        for (const el of controls) {
+          const box = el.getBoundingClientRect();
+          if (box.width <= 0 || box.height <= 0) continue;
+          const text = norm(el.innerText || el.value);
+          const aria = norm(el.getAttribute('aria-label'));
+          const title = norm(el.getAttribute('title'));
+          const matched = labels.find((label) => text.includes(label) || aria.includes(label) || title.includes(label));
+          if (matched) {
+            results.push({
+              label: matched,
+              text: text.slice(0, 80),
+              aria: aria.slice(0, 80),
+              title: title.slice(0, 80)
+            });
+          }
+        }
+        return results.slice(0, 25);
+    }"""
+    for frame in page.frames:
+        try:
+            for item in frame.evaluate(script, list(FINAL_CONTROL_LABELS)):
+                if item not in detected:
+                    detected.append(item)
+        except Exception:
+            continue
+    return detected
+
+
+def _fill_visible_input_js(page: Any, selector: str, value: str, field: str, result: dict) -> bool:
+    if not value:
+        return False
+    for frame in page.frames:
+        try:
+            filled = frame.evaluate(
+                """([selector, value]) => {
+                    const shown = (el) => {
+                      const s = getComputedStyle(el);
+                      const r = el.getBoundingClientRect();
+                      return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+                    };
+                    const els = Array.from(document.querySelectorAll(selector)).filter(shown);
+                    const el = els[els.length - 1];
+                    if (!el) return false;
+                    el.focus();
+                    el.value = value;
+                    el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: value}));
+                    el.dispatchEvent(new Event('change', {bubbles: true}));
+                    return true;
+                }""",
+                [selector, value],
+            )
+            if filled:
+                if field in result["skipped_fields"]:
+                    result["skipped_fields"].remove(field)
+                result["filled_fields"].append(field)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _fill_gmail_recipient_js(page: Any, value: str, field: str, result: dict) -> bool:
+    if not value:
+        return False
+    script = """() => {
+        const shown = (el) => {
+          const s = getComputedStyle(el);
+          const r = el.getBoundingClientRect();
+          return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+        };
+        const selectors = [
+          'div[name="to"] input[type="text"]',
+          'div[aria-label*="받는사람"] input[type="text"]',
+          'input[aria-label*="수신자"]',
+          'input[aria-label*="Recipient"]',
+          'input.agP.aFw[role="combobox"]',
+          'textarea[name="to"]'
+        ];
+        const candidates = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)));
+        const el = candidates.filter(shown).pop();
+        if (!el) return false;
+        el.focus();
+        el.click();
+        return true;
+    }"""
+    for frame in page.frames:
+        try:
+            focused = frame.evaluate(script)
+            if not focused:
+                continue
+            page.keyboard.type(value, delay=5)
+            page.keyboard.press("Enter")
+            if field in result["skipped_fields"]:
+                result["skipped_fields"].remove(field)
+            result["filled_fields"].append(field)
+            return True
+        except Exception:
+            continue
+    return False
+
+
+def _attach_file_input(page: Any, file_path: str, field: str, result: dict) -> bool:
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.exists():
+        result["skipped_fields"].append(field)
+        result["warnings"].append(f"attachment file not found: {file_path}")
+        return False
+    for frame in page.frames:
+        try:
+            inputs = frame.locator('input[type="file"]')
+            count = inputs.count()
+            for index in range(count - 1, -1, -1):
+                try:
+                    inputs.nth(index).set_input_files(str(path), timeout=5000)
+                    result["filled_fields"].append(field)
+                    result["warnings"].append(f"local file attached: {path}")
+                    return True
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    result["skipped_fields"].append(field)
+    result["warnings"].append(f"file input not found for attachment: {field}")
+    return False
