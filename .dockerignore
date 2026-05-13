@@ -6,6 +6,7 @@ docs/
 *.md
 *.log
 *.txt
+!requirements.txt
 
 # 보안 파일
 credentials.json
