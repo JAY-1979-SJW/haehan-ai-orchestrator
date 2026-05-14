@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "active_code_prefixes": [
+    "scripts/",
+    "ai_orchestrator/",
+    "agent/",
+    "local_agent/",
+    "browser_api/",
+    "browser_worker/",
+    "services/",
+    "mcp_server/"
+  ],
+  "runtime_prefixes": [
+    "data/",
+    "logs/",
+    "runs/",
+    "tmp/",
+    "storage/"
+  ],
+  "doc_prefixes": [
+    "docs/",
+    "README",
+    "CLAUDE.md"
+  ],
+  "test_prefixes": [
+    "tests/",
+    "ai_orchestrator/tests/",
+    "agent/tests/",
+    "mcp_server/tests/"
+  ],
+  "schema_prefixes": [
+    "migrations/",
+    "ai_orchestrator/server/",
+    "ai_orchestrator/local_agent/",
+    "browser_api/",
+    "browser_worker/",
+    "services/"
+  ],
+  "schema_name_tokens": [
+    "schema",
+    "schemas",
+    "model",
+    "models",
+    "migration"
+  ],
+  "destructive_sql_tokens": [
+    "drop table",
+    "drop column",
+    "truncate",
+    "delete from",
+    "alter table drop"
+  ],
+  "deploy_paths": [
+    ".github/workflows/",
+    "docker/",
+    "packaging/",
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "browser_api/",
+    "browser_worker/",
+    "services/"
+  ],
+  "deploy_name_tokens": [
+    "deploy",
+    "docker",
+    "compose",
+    "Dockerfile"
+  ],
+  "deploy_dry_run_evidence_path": "data/logs/deploy_dry_run_latest.json",
+  "deploy_dry_run_required": true,
+  "existing_code_change_requires_flag": true,
+  "existing_code_change_severity": "error",
+  "code_change_requires_test_or_doc": true,
+  "schema_change_requires_doc_and_test": true
+}
