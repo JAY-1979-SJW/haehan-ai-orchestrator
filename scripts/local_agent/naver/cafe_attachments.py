@@ -138,7 +138,7 @@ def cmd_list(agent: BrowserAgent, article_url: str, as_json: bool):
 def cmd_scan(agent: BrowserAgent, cafe_url: str, board: str, pages: int,
              do_download: bool, out_dir: str, as_json: bool):
     """게시판 게시글을 스캔해 첨부파일이 있는 것만 수집."""
-    from scripts.local_agent.naver_cafe_scraper import scrape_posts_page
+    from scripts.local_agent.naver.cafe_scraper import scrape_posts_page
 
     # 다운로드 모드일 때만 사전에 경로 확인
     save_dir = out_dir

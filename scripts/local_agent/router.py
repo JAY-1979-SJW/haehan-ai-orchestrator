@@ -45,14 +45,14 @@ def _cmd_gov24(sub: str | None, args: list[str]) -> None:
     # 주민등록등본 발급 = 개인정보 관련 고위험
     gate_check("eum_register", force=False)  # APPROVE 등급
     print("[로컬에이전트] 정부24 주민등록등본 발급")
-    from scripts.local_agent.gov24_certificate import main
+    from scripts.local_agent.gov.gov24_certificate import main
     main()
 
 
 def _cmd_minwon(sub: str | None, args: list[str]) -> None:
     gate_check("eum_register", force=False)  # APPROVE 등급
     print("[로컬에이전트] 민원24 온라인 민원 접수")
-    from scripts.local_agent.minwon_submit import main
+    from scripts.local_agent.gov.minwon_submit import main
     main()
 
 
@@ -60,7 +60,7 @@ def _cmd_blog_explore(args: list[str]) -> None:
     gate_check("goto")
     blog_id = args[0] if args else ""
     print(f"[로컬에이전트] 네이버 블로그 탐색: {blog_id or '(ID 미지정)'}")
-    from scripts.local_agent.naver_blog_explorer import main
+    from scripts.local_agent.naver.blog_explorer import main
     main()
 
 
@@ -68,7 +68,7 @@ def _cmd_blog_scrape(args: list[str]) -> None:
     gate_check("goto")
     blog_id = args[0] if args else ""
     print(f"[로컬에이전트] 네이버 블로그 수집: {blog_id or '(ID 미지정)'}")
-    from scripts.local_agent.naver_blog_scraper import main
+    from scripts.local_agent.naver.blog_scraper import main
     main()
 
 
