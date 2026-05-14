@@ -1,34 +1,109 @@
-"""자격증명 파일 관리 — data/credentials.json
+"""자격증명 통합 저장소 — data/credentials.json (암호화)
 
-환경변수 대신 JSON 파일에 사이트별 ID/PW를 저장하고 읽는다.
-파일은 .gitignore에 등록되어 있어 커밋되지 않는다.
+- pw 는 Fernet 대칭 암호화 (cryptography.Fernet)
+- 키 파일: data/.cred.key (자동 생성, 0o600, .gitignore 필수)
+- pw_enc 필드에 토큰 저장; 로드 시 자동 복호화
+- 평문 pw 가 있으면 첫 로드 시 자동으로 암호화하고 재저장 (마이그레이션)
+- .env_naver / .env_google 파일이 있으면 첫 로드 시 흡수 후 archive
 
 사용:
-    # 저장
     from scripts.credentials import set_cred, get_cred
     set_cred("eum", id="아이디", pw="비밀번호")
+    cred = get_cred("eum")   # {"id": ..., "pw": ...}  pw 자동 복호화
 
-    # 읽기
-    cred = get_cred("eum")
-    print(cred["id"], cred["pw"])
-
-    # CLI
-    python scripts/credentials.py set eum
-    python scripts/credentials.py get eum
+CLI:
+    python scripts/credentials.py set <site>
+    python scripts/credentials.py get <site>
     python scripts/credentials.py list
+    python scripts/credentials.py delete <site>
+    python scripts/credentials.py migrate    # .env_* 파일 흡수
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
+from cryptography.fernet import Fernet, InvalidToken
+
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from security_utils import mask_identifier
+
 CRED_FILE = ROOT / "data" / "credentials.json"
+KEY_FILE = ROOT / "data" / ".cred.key"
+
+# 레거시 평문 파일 (마이그레이션 후 archive)
+_LEGACY_ENV_FILES = {
+    "naver": ROOT / "data" / ".env_naver",
+    "google": ROOT / "data" / ".env_google",
+}
+_LEGACY_ENV_KEYS = {
+    "naver": ("NAVER_ID", "NAVER_PW"),
+    "google": ("GOOGLE_ID", "GOOGLE_PW"),
+}
 
 
-def _load() -> dict:
-    """credentials.json 로드. 없으면 빈 dict."""
+def _get_or_create_key() -> bytes:
+    """암호화 키 로드. 없으면 신규 생성."""
+    if KEY_FILE.exists():
+        return KEY_FILE.read_bytes().strip()
+    KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    key = Fernet.generate_key()
+    KEY_FILE.write_bytes(key)
+    try:
+        os.chmod(KEY_FILE, 0o600)
+    except Exception:
+        pass
+    return key
+
+
+def _fernet() -> Fernet:
+    return Fernet(_get_or_create_key())
+
+
+def _encrypt(pw: str) -> str:
+    if not pw:
+        return ""
+    return _fernet().encrypt(pw.encode("utf-8")).decode("ascii")
+
+
+def _decrypt(token: str) -> str:
+    if not token:
+        return ""
+    try:
+        return _fernet().decrypt(token.encode("ascii")).decode("utf-8")
+    except InvalidToken:
+        return ""
+
+
+def _read_legacy_env(site: str) -> dict:
+    """data/.env_<site> 평문 파일에서 ID/PW 추출."""
+    fp = _LEGACY_ENV_FILES.get(site)
+    if not fp or not fp.exists():
+        return {}
+    id_key, pw_key = _LEGACY_ENV_KEYS[site]
+    out = {}
+    try:
+        for line in fp.read_text(encoding="utf-8").splitlines():
+            if "=" not in line or line.strip().startswith("#"):
+                continue
+            k, _, v = line.partition("=")
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            if k == id_key:
+                out["id"] = v
+            elif k == pw_key:
+                out["pw"] = v
+    except Exception:
+        return {}
+    return out
+
+
+def _load_raw() -> dict:
     if not CRED_FILE.exists():
         return {}
     try:
@@ -37,53 +112,111 @@ def _load() -> dict:
         return {}
 
 
-def _save(data: dict) -> None:
-    """credentials.json 저장."""
+def _save_raw(data: dict) -> None:
     CRED_FILE.parent.mkdir(parents=True, exist_ok=True)
     CRED_FILE.write_text(
         json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8"
+        encoding="utf-8",
     )
+    try:
+        os.chmod(CRED_FILE, 0o600)
+    except Exception:
+        pass
+
+
+def _normalize(data: dict) -> tuple[dict, bool]:
+    """평문 pw → pw_enc 마이그레이션. 변경 여부 반환."""
+    changed = False
+    for site, rec in list(data.items()):
+        if not isinstance(rec, dict):
+            continue
+        if "pw" in rec and rec["pw"]:
+            # 평문이 있으면 암호화로 옮김
+            rec["pw_enc"] = _encrypt(rec["pw"])
+            del rec["pw"]
+            changed = True
+        elif "pw" in rec and not rec["pw"]:
+            del rec["pw"]
+            changed = True
+    return data, changed
+
+
+def _absorb_legacy(data: dict) -> bool:
+    """레거시 .env_* 파일에서 자격증명 흡수. 변경 여부 반환."""
+    changed = False
+    for site in _LEGACY_ENV_FILES:
+        if site in data and data[site].get("pw_enc"):
+            continue  # 이미 통합 저장소에 있음
+        legacy = _read_legacy_env(site)
+        if legacy.get("id") and legacy.get("pw"):
+            data[site] = {
+                "id": legacy["id"],
+                "pw_enc": _encrypt(legacy["pw"]),
+            }
+            changed = True
+    return changed
+
+
+def _load() -> dict:
+    """credentials.json 로드 + 자동 마이그레이션."""
+    data = _load_raw()
+    data, c1 = _normalize(data)
+    c2 = _absorb_legacy(data)
+    if c1 or c2:
+        _save_raw(data)
+    return data
 
 
 def set_cred(site: str, *, id: str, pw: str, **extra) -> None:
-    """사이트 자격증명 저장.
-
-    Args:
-        site: 사이트 키 (예: "eum", "naver", "google")
-        id:   로그인 아이디
-        pw:   비밀번호
-        **extra: 추가 필드 (예: otp_secret="...")
-    """
+    """사이트 자격증명 저장 (pw 자동 암호화)."""
     data = _load()
-    data[site] = {"id": id, "pw": pw, **extra}
-    _save(data)
+    rec = {"id": id, "pw_enc": _encrypt(pw)}
+    rec.update(extra)
+    data[site] = rec
+    _save_raw(data)
 
 
 def get_cred(site: str) -> dict:
-    """사이트 자격증명 읽기.
-
-    Returns:
-        dict{"id": ..., "pw": ..., ...}
-        자격증명 없으면 {"id": "", "pw": ""}
-    """
+    """사이트 자격증명 읽기. pw 자동 복호화."""
     data = _load()
-    return data.get(site, {"id": "", "pw": ""})
+    rec = data.get(site, {})
+    if not rec:
+        return {"id": "", "pw": ""}
+    out = {"id": rec.get("id", ""), "pw": _decrypt(rec.get("pw_enc", ""))}
+    for k, v in rec.items():
+        if k not in ("id", "pw_enc"):
+            out[k] = v
+    return out
 
 
 def list_sites() -> list[str]:
-    """저장된 사이트 목록 반환."""
     return list(_load().keys())
 
 
 def delete_cred(site: str) -> bool:
-    """사이트 자격증명 삭제. 존재하면 True."""
     data = _load()
     if site not in data:
         return False
     del data[site]
-    _save(data)
+    _save_raw(data)
     return True
+
+
+def migrate_legacy() -> dict:
+    """레거시 .env_* 파일 흡수 + 아카이브."""
+    data = _load()  # 흡수는 _load 내부에서 자동
+    archived = []
+    for site, fp in _LEGACY_ENV_FILES.items():
+        if fp.exists() and site in data and data[site].get("pw_enc"):
+            archive_dir = ROOT / "data" / "_legacy_creds"
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            target = archive_dir / fp.name
+            try:
+                fp.rename(target)
+                archived.append(str(target))
+            except Exception:
+                pass
+    return {"sites": list(data.keys()), "archived": archived}
 
 
 # ── CLI ─────────────────────────────────────────────────────────────
@@ -97,7 +230,7 @@ def _cmd_set(site: str) -> None:
         print("✘ 아이디 또는 비밀번호가 비어 있습니다.")
         return
     set_cred(site, id=cred_id, pw=cred_pw)
-    print(f"✔ [{site}] 저장 완료 → {CRED_FILE}")
+    print(f"✔ [{site}] 저장 완료 (암호화) → {CRED_FILE}")
 
 
 def _cmd_get(site: str) -> None:
@@ -105,9 +238,10 @@ def _cmd_get(site: str) -> None:
     if not cred.get("id"):
         print(f"✘ [{site}] 저장된 자격증명 없음")
         return
-    # 비밀번호는 마스킹
-    pw_masked = cred["pw"][:2] + "*" * (len(cred["pw"]) - 2) if len(cred["pw"]) > 2 else "**"
-    print(f"✔ [{site}] id={cred['id']}  pw={pw_masked}")
+    pw = cred.get("pw", "")
+    pw_masked = pw[:2] + "*" * max(0, len(pw) - 2) if len(pw) > 2 else "**"
+    cred["id"] = mask_identifier(cred["id"])
+    print(f"✔ [{site}] id={cred['id']}  pw={pw_masked}  (복호화 OK)")
 
 
 def _cmd_list() -> None:
@@ -118,7 +252,9 @@ def _cmd_list() -> None:
     print(f"저장된 사이트 ({len(sites)}개):")
     for s in sites:
         cred = get_cred(s)
-        print(f"  {s:<16} id={cred.get('id', '')}")
+        cred["id"] = mask_identifier(cred.get("id", ""))
+        enc_ok = "✓" if cred.get("pw") else "✘복호화실패"
+        print(f"  {s:<16} id={cred.get('id', ''):<32} [{enc_ok}]")
 
 
 def _cmd_delete(site: str) -> None:
@@ -128,13 +264,25 @@ def _cmd_delete(site: str) -> None:
         print(f"✘ [{site}] 없음")
 
 
+def _cmd_migrate() -> None:
+    result = migrate_legacy()
+    print(f"✔ 통합 저장소 사이트: {result['sites']}")
+    if result["archived"]:
+        print(f"✔ 레거시 파일 아카이브:")
+        for a in result["archived"]:
+            print(f"    {a}")
+    else:
+        print("  (이동된 레거시 파일 없음)")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
-        print("사용법: python scripts/credentials.py <set|get|list|delete> [사이트]")
-        print("  set eum       EUM 자격증명 입력/저장")
-        print("  get eum       EUM 자격증명 확인 (비밀번호 마스킹)")
-        print("  list          저장된 사이트 목록")
-        print("  delete eum    EUM 자격증명 삭제")
+        print("사용법: python scripts/credentials.py <set|get|list|delete|migrate> [사이트]")
+        print("  set <site>     자격증명 입력/저장 (암호화)")
+        print("  get <site>     자격증명 확인 (마스킹)")
+        print("  list           저장된 사이트 목록")
+        print("  delete <site>  삭제")
+        print("  migrate        레거시 .env_* 파일 흡수 후 아카이브")
         return
 
     cmd = sys.argv[1]
@@ -143,21 +291,20 @@ def main() -> None:
     match cmd:
         case "set":
             if not site:
-                print("사용법: python scripts/credentials.py set <사이트>")
-                return
+                print("사용법: set <site>"); return
             _cmd_set(site)
         case "get":
             if not site:
-                print("사용법: python scripts/credentials.py get <사이트>")
-                return
+                print("사용법: get <site>"); return
             _cmd_get(site)
         case "list":
             _cmd_list()
         case "delete":
             if not site:
-                print("사용법: python scripts/credentials.py delete <사이트>")
-                return
+                print("사용법: delete <site>"); return
             _cmd_delete(site)
+        case "migrate":
+            _cmd_migrate()
         case _:
             print(f"알 수 없는 명령: {cmd}")
 

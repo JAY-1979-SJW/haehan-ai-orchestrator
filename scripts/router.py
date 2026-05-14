@@ -28,8 +28,10 @@ _SERVICE_ROUTERS: dict[str, tuple[str, str]] = {
     "naver":       ("scripts.naver.router",        "run_naver"),
     "google":      ("scripts.google.router",       "run_google"),
     "gmail":       ("scripts.google.router",       "run_google"),
+    "youtube":     ("scripts.youtube.router",      "run_youtube"),
     "kakao":       ("scripts.kakao.router",        "run_kakao"),
     "eum":         ("scripts.eum.router",          "run_eum"),
+    "hiworks":     ("scripts.hiworks.router",      "run_hiworks"),
     "smartstore":  ("scripts.smartstore.router",   "run_smartstore"),
     "g2b":         ("scripts.g2b.router",          "run_g2b"),
     "local":       ("scripts.local_agent.router",  "run_local_agent"),
@@ -47,7 +49,7 @@ _BROWSER_CMDS = frozenset({
 
 # ── 시스템 명령 목록 ─────────────────────────────────────────────────
 _SYSTEM_CMDS = frozenset({
-    "popup-monitor", "chrome-ui", "analyze", "explore",
+    "popup-monitor", "chrome-ui", "chrome-ui-monitor", "analyze", "explore",
     "auto-login", "gate", "op-log",
 })
 
