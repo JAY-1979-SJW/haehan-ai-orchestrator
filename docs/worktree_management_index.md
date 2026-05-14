@@ -73,6 +73,40 @@ Reference pack:
 | `local_pc_automation` | Excel/HWP/CAD/local machine automation | Verify path/backup/approval boundaries. |
 | `app_surface` | API server or UI surface | Requires focused tests and, for deploy paths, dry-run evidence. |
 
+## File Placement And Promotion Standard
+
+Use this standard when creating or tidying files in the dirty worktree.
+
+| File kind | Default location | Commit rule |
+| --- | --- | --- |
+| Active site code | `scripts/<site>/` | Stage only with matching tests or logic reference updates. |
+| Shared policy, schemas, security, config | `scripts/`, `configs/`, `security_utils.py`, `logging_utils.py` | Review first; behavior changes need tests/docs. |
+| Generic browser or form helpers | `scripts/explorer/`, `scripts/form/`, `scripts/cdp_*.py`, `scripts/page_helper.py` | Keep reusable; site selectors stay in `scripts/<site>/`. |
+| One-off debug/probe scripts | `scripts/archive/debug/` | Do not keep at repo root unless intentionally active. |
+| Operator handoff notes | `docs/reports/` or root `HANDOVER_*.md` | Convert durable knowledge into reference docs before commit. |
+| Runtime evidence | `data/`, `tmp/`, `logs/`, `runs/`, `storage/` | Local only by default; promote curated evidence to `docs/reports/` or `tests/fixtures/`. |
+| Reproducible test fixtures | `tests/fixtures/` | Add explicit `.gitignore` exception when a fixture is intentionally tracked. |
+
+Promotion means moving information from a runtime artifact into a stable review
+target, not blindly committing generated files. For example, summarize
+`data/<site>_*_latest.json` into `docs/reports/<site>_...md`, or reduce it into
+a deterministic fixture under `tests/fixtures/`.
+
+## Existing Worktree Triage
+
+For the current large worktree, use this order:
+
+1. Keep `runtime_artifact` out of commits unless explicitly promoted.
+2. Review `contract_or_policy` first because it affects gates, schemas,
+   security, and common indexes.
+3. Review one site owner at a time: `eum`, `hiworks`, `naver`, `google`,
+   `smartstore`, then `g2b`.
+4. Archive or relocate root-level one-off scripts such as `debug_*.py`,
+   `check_*.py`, `close_*.py`, and `list_tabs.py` only after confirming they
+   are not active entry points.
+5. Treat deleted files as intentional only after checking whether an equivalent
+   file exists under `scripts/archive/` or a focused site module.
+
 ## Management Rules
 
 1. Do not revert unrelated existing user changes.

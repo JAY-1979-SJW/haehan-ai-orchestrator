@@ -71,7 +71,8 @@ discover -> plan -> prepare -> submit -> verify -> log
 | `hiworks` | 하이웍스 | `docs/hiworks_logic_reference_20260513.md` | 대시보드/앱 탐색, 17개 섹션 입력/버튼 분류, 승인 실행 게이트, 메일 작성 준비, 발송 dry-run 계획 | 완료(`complete_baseline`) |
 | `naver` | 네이버 서비스 | `docs/NAVER_SERVICES_EXPANSION_PLAN.md` | 블로그, 카페, 메일, 개인 서비스 | 부분 구현 |
 | `smartstore` | 네이버 스마트스토어 | `docs/smartstore_logic_reference_20260513.md` | 상품 action catalog, dry-run prepare, 승인 submit, 상품/주문/통계 조회 기준 | 완료(`complete_baseline`) |
-| `g2b` | 나라장터 | `docs/reports/g2b_public_notice_readonly_matrix_20260507.md` | 공고 조회/첨부 확인 | read-only 기준 |
+| `g2b` | 나라장터 | `docs/reports/g2b_public_notice_readonly_matrix_20260507.md`, `docs/reports/g2b_completion_report_20260513.md` | 공고 조회/첨부 확인, 인증/입찰/계약 차단 게이트 | 검증 완료(`verified`) |
+| `google` | Google/Gmail/YouTube | `docs/google_surface_catalog_reference_20260513.md`, `docs/google_business_workflow_reference_20260513.md`, `docs/reports/google_surface_exploration_completion_report_20260513.md` | 50개 surface catalog/read-only 탐색, 96개 work action, approval-gated execution adapter | 구현됨(`implemented`) |
 
 새 사이트 문서를 추가하면 `docs/site_automation_status_index.md`, `configs/site_automation_status_index.json`, 이 참조 인덱스에 반드시 반영한다.
 

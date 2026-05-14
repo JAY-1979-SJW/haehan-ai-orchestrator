@@ -5,6 +5,10 @@
 **작성일**: 2026-05-12  
 **버전**: v1.0
 
+**관련 참조**
+- 공통 사이트 자동화 인덱스: `docs/site_automation_reference_index.md`
+- EUM 로직 참조 설계: `docs/eum_logic_reference_20260513.md`
+
 ---
 
 ## 1. 개요
