@@ -21,7 +21,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen bg-[#F5F7FA]">
+    <div className="flex min-h-dvh bg-[#F5F7FA]">
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-[220px] min-h-screen bg-white shrink-0"
         style={{ borderRight: "1px solid #E5E7EB" }}>
@@ -58,6 +58,16 @@ export function PageShell({ title, description, headerRight, children }: PageShe
                     style={{ width: 3, background: "#F97316" }}
                   />
                 )}
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
+                  style={{
+                    background: active ? "#FED7AA" : "#F3F4F6",
+                    color: active ? "#C2410C" : "#6B7280",
+                  }}
+                  aria-hidden="true"
+                >
+                  {item.shortLabel.slice(0, 1)}
+                </span>
                 <span>{item.label}</span>
               </Link>
             );
@@ -66,14 +76,17 @@ export function PageShell({ title, description, headerRight, children }: PageShe
       </aside>
 
       {/* Main area */}
-      <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
         {/* Orange top accent */}
         <div className="h-1 bg-[#F97316] shrink-0" />
 
         {/* Sticky header */}
-        <header className="shrink-0 bg-white z-10 px-4 md:px-6 h-[52px] flex items-center gap-3"
+        <header className="shrink-0 bg-white z-10 px-4 md:px-6 h-[56px] lg:h-[52px] flex items-center gap-3"
           style={{ borderBottom: "1px solid #F3F4F6" }}>
           <div className="flex-1 flex items-center gap-3 min-w-0">
+            <span className="lg:hidden flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F97316] text-[13px] font-bold text-white">
+              AI
+            </span>
             <span className="text-[14px] font-bold text-[#0F172A] truncate">{title}</span>
             {description && (
               <span className="text-[12px] text-[#6B7280] truncate hidden sm:block">{description}</span>
@@ -85,8 +98,40 @@ export function PageShell({ title, description, headerRight, children }: PageShe
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto px-5 md:px-6 py-5 md:py-6">{children}</main>
+        <main className="flex-1 overflow-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
+          {children}
+        </main>
       </div>
+
+      <nav
+        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
+        aria-label="모바일 하단 메뉴"
+      >
+        {NAV_ITEMS.slice(0, 5).map((item) => {
+          const active = isNavActive(item.href, item.exact, pathname);
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="flex h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-md no-underline"
+              style={{ color: active ? "#F97316" : "#6B7280" }}
+              aria-current={active ? "page" : undefined}
+            >
+              <span
+                className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold"
+                style={{
+                  background: active ? "#FFF7ED" : "transparent",
+                  border: active ? "1px solid #FED7AA" : "1px solid transparent",
+                }}
+                aria-hidden="true"
+              >
+                {item.shortLabel.slice(0, 1)}
+              </span>
+              <span className="max-w-full truncate text-[11px] font-semibold">{item.shortLabel}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
