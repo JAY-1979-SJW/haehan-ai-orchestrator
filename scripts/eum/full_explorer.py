@@ -39,6 +39,9 @@ except ImportError:
 
 from scripts.logger import get_logger
 from scripts.op_log import op_context, log_op
+from scripts.popup_watcher import POPUP_MARKERS, install_watcher, poll_events
+from scripts.popup_classifier import classify
+from scripts.eum.access_handler import detect_and_handle, is_access_blocked
 
 log = get_logger(__name__)
 
@@ -313,6 +316,65 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
         info["accessible"] = False
         info["error"] = "로그인 페이지로 리다이렉트 — 세션 만료 또는 접근 제한"
         return info
+
+    # ⚠️  비정상 접근 감지 (popup_watcher 통합)
+    try:
+        # 1단계: popup_watcher 설치
+        try:
+            install_watcher(page)
+            time.sleep(0.5)  # MutationObserver 초기화 대기
+        except Exception as e:
+            log.debug(f"[EUM] popup_watcher 설치 실패: {e}")
+
+        # 2단계: popup_watcher 이벤트 확인 (비정상 접근)
+        events = poll_events(page)
+        detected_keyword = None
+        detected_snippet = ""
+
+        for event in events:
+            marker = event.get("marker", "")
+            # 비정상 접근 관련 마커 확인
+            if marker in ["비정상적인 접근", "자동화 프로그램", "자동 프로그램",
+                          "봇으로 판단", "접근 차단", "이용이 제한",
+                          "서비스 차단", "Abnormal access", "bot detected"]:
+                detected_keyword = marker
+                detected_snippet = event.get("snippet", "")
+                log.warning(f"[EUM] popup_watcher 감지: '{marker}' @ {url}")
+                break
+
+        # 3단계: 팝업이 감지되지 않으면 fallback으로 page.text_content() 확인
+        if not detected_keyword:
+            page_text = page.text_content().strip()
+            abnormal_keywords = [
+                "비정상적인 접근", "자동 프로그램", "자동화", "봇으로 판단",
+                "접근 차단", "이용이 제한", "서비스 차단", "보안상의 이유",
+                "Abnormal access", "bot detected", "automated access",
+            ]
+            for kw in abnormal_keywords:
+                if kw.lower() in page_text.lower():
+                    detected_keyword = kw
+                    detected_snippet = page_text[:200]
+                    log.warning(f"[EUM] 텍스트 매칭 감지: '{kw}' @ {url}")
+                    break
+
+        # 4단계: 감지된 비정상 접근 처리
+        if detected_keyword:
+            decision = classify(marker=detected_keyword, snippet=detected_snippet)
+
+            if is_access_blocked(decision):
+                log.critical(f"[EUM] 접근 차단됨: {decision['category']}")
+
+                # 자동 복구 시도
+                if detect_and_handle(page, decision):
+                    log.info("[EUM] 접근 복구됨, 재시도")
+                else:
+                    info["accessible"] = False
+                    info["error"] = f"접근 차단: {decision['category']} (자동 복구 실패)"
+                    log.critical(f"[EUM] 접근 불가능: {info['error']}")
+                    return info
+
+    except Exception as e:
+        log.debug(f"[EUM] 비정상 접근 감지 오류 (무시): {e}")
 
     # JS 전체 추출
     try:

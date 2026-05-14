@@ -23,8 +23,11 @@ __status__ = {
         "history (WEBMAN400M00 이력)": "done",
         "demolition (WEBMAN382M00 철거)": "done",
         "explore (전체 사이트 탐색)":   "done",
+        # 신규 추가 (2026-05-12 권한 기능)
+        "registration (WEBMAN381M00 신규등록)": "done",
+        "deregistration (WEBMAN382M00 말소)": "done",
     },
-    "note": "22대 단말기 전체 추출 검증 완료(2026-05-11). 신규 모듈(auth/monitor/history/demolition/site_explorer) 추가(2026-05-12)",
+    "note": "22대 단말기 전체 추출 완료(2026-05-11). 신규등록/말소 자동화 추가(2026-05-12)",
 }
 
 _log = get_logger(__name__)
@@ -56,10 +59,12 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_extract(sub, args)
         case "dashboard":
             _cmd_dashboard()
-        case "mail" | "promo-mail":
+        case "mail" | "promo-mail" | "sales-mail":
             _cmd_mail(sub, args)
         case "new-sites":
             _cmd_new_sites()
+        case "install-targets" | "verify-install-targets":
+            _cmd_install_targets(sub, args)
         case "task-run":
             _cmd_task_run()
         # 신규 추가 (2026-05-12)
@@ -73,6 +78,24 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_demolition(sub, args)
         case "explore":
             _cmd_explore()
+        case "explore-accessible" | "access-map":
+            _cmd_explore_accessible(sub, args)
+        case "capabilities":
+            _cmd_capabilities()
+        case "build-capabilities" | "catalog":
+            _cmd_build_capabilities()
+        case "page-info" | "info":
+            _cmd_page_info(sub, args)
+        case "open-menu" | "page":
+            _cmd_open_menu(sub, args)
+        case "work-index" | "workspace" | "map":
+            _cmd_work_index()
+        case "work":
+            _cmd_work(sub, args)
+        case "registration":
+            _cmd_registration(sub, args)
+        case "deregistration":
+            _cmd_deregistration(sub, args)
         case _:
             _print_help()
 
@@ -102,7 +125,13 @@ def _cmd_dashboard() -> None:
 
 def _cmd_mail(sub: str | None, args: list[str]) -> None:
     """홍보 메일 초안 생성 또는 발송."""
-    mode = sub or "preview"
+    mode = "preview"
+    option_args = list(args)
+    if sub:
+        if str(sub).isdigit() or str(sub).upper() in {"A", "B", "C"}:
+            option_args.insert(0, sub)
+        else:
+            mode = sub
     if mode == "send":
         gate_check("naver_mail_send", force=False, context="EUM 홍보메일 발송")
     else:
@@ -110,19 +139,58 @@ def _cmd_mail(sub: str | None, args: list[str]) -> None:
     print("=" * 60)
     print(f"EUM 홍보메일 {'발송' if mode == 'send' else '초안 생성'}")
     print("=" * 60)
-    from scripts.eum_prioritize_and_mail import main
-    main()
+    if mode == "send":
+        raise SystemExit("EUM sales-mail send is not wired here yet. Prepare a queue first, then use the approved company-mail sender.")
+    from scripts.eum.sales_mail import main
+    limit = 30
+    min_grade = "A"
+    for arg in option_args:
+        if str(arg).isdigit():
+            limit = int(arg)
+        elif str(arg).upper() in {"A", "B", "C"}:
+            min_grade = str(arg).upper()
+    main(limit=limit, min_grade=min_grade)
 
 
 def _cmd_new_sites() -> None:
     """신규 현장 발굴 (WEBMAN380M00)."""
     gate_check("eum_extract_all_devices")
-    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 신규 현장 발굴")
     print("=" * 60)
-    from scripts.eum_extract_new_sites import main
-    main()
+    from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
+    rows = load_new_site_projects(DEFAULT_SOURCE)
+    with_email = sum(1 for row in rows if row.get("이메일"))
+    print(f"source: {DEFAULT_SOURCE}")
+    print(f"projects: {len(rows)}")
+    print(f"with email: {with_email}")
+    print("next: python scripts/cdp_client.py eum sales-mail")
+
+
+def _cmd_install_targets(sub: str | None, args: list[str]) -> None:
+    """Verify WEBMAN370M00 install targets from screen and optional Excel download."""
+    gate_check("eum_extract_all_devices")
+    from scripts.site_access import open_site
+    from scripts.eum.install_targets import (
+        download_install_targets_excel,
+        print_excel_download_summary,
+        print_summary,
+        verify_install_targets,
+    )
+
+    page = open_site("eum")
+    if sub in {"download-excel", "excel"} or "download-excel" in args or "excel" in args:
+        password = None
+        for arg in args:
+            if str(arg).startswith("--password="):
+                password = str(arg).split("=", 1)[1]
+        result = download_install_targets_excel(page, password=password)
+        print_excel_download_summary(result)
+        return
+
+    no_download = sub == "no-download" or "--no-download" in args
+    result = verify_install_targets(page, download=not no_download)
+    print_summary(result)
 
 
 def _cmd_task_run() -> None:
@@ -197,17 +265,277 @@ def _cmd_explore() -> None:
     main()
 
 
+def _cmd_explore_accessible(sub: str | None = None, args: list[str] | None = None) -> None:
+    """Explore pages available in the current account menu."""
+    gate_check("eum_extract_all_devices")
+    from scripts.site_access import open_site
+    from scripts.eum.access_explorer import explore_accessible_pages, print_summary, save_accessible_pages
+
+    page = open_site("eum")
+    max_pages = int(sub) if sub and str(sub).isdigit() else None
+    path = save_accessible_pages({"status": "starting", "pages": []})
+    result = explore_accessible_pages(page, max_pages=max_pages, partial_path=path)
+    path = save_accessible_pages(result, path)
+    print_summary(result, path)
+
+
+def _cmd_work_index() -> None:
+    """Build a read-only EUM business/work index from the live UI."""
+    gate_check("eum_extract_all_devices")
+    from scripts.site_access import open_site
+    from scripts.eum.workspace import build_work_index, print_summary, save_work_index
+
+    page = open_site("eum")
+    index = build_work_index(page)
+    path = save_work_index(index)
+    print_summary(index, path)
+
+
+def _cmd_capabilities() -> None:
+    """Print current-account EUM workflow availability."""
+    gate_check("eum_extract_all_devices")
+    from scripts.site_access import open_site
+    from scripts.eum.workspace import build_work_index
+
+    page = open_site("eum")
+    index = build_work_index(page)
+    print("=" * 60)
+    print("EUM capabilities")
+    print("=" * 60)
+    print("Available WEBMAN codes:", ", ".join(index.get("available_webman_codes", [])))
+    for workflow in index.get("known_workflows", []):
+        status = "available" if workflow.get("available", True) else "not-available"
+        print(f"  - {workflow['key']:<24} {status:<13} {workflow.get('command')}")
+
+
+def _cmd_build_capabilities() -> None:
+    """Build a capability catalog from the last accessible-page exploration."""
+    gate_check("eum_extract_all_devices")
+    from scripts.eum.capabilities import build_capabilities, print_summary, save_capabilities
+
+    result = build_capabilities()
+    path = save_capabilities(result)
+    print_summary(result, path)
+
+
+def _cmd_page_info(sub: str | None, args: list[str]) -> None:
+    """Print compact capability details for one menu page."""
+    query = " ".join([part for part in [sub, *(args or [])] if part]).strip()
+    if not query:
+        print("usage: python scripts/cdp_client.py eum page-info <menu-name-or-WEBMAN-code>")
+        return
+    from scripts.eum.capabilities import find_capability, print_page_info
+
+    ok = print_page_info(find_capability(query), query)
+    if not ok:
+        raise SystemExit(1)
+
+
+def _cmd_open_menu(sub: str | None, args: list[str]) -> None:
+    """Open a current-account menu page by name, menu id, or WEBMAN code."""
+    gate_check("eum_extract_all_devices")
+    query = " ".join([part for part in [sub, *(args or [])] if part]).strip()
+    if not query:
+        print("usage: python scripts/cdp_client.py eum open-menu <menu-name-or-WEBMAN-code>")
+        return
+
+    from scripts.site_access import open_site
+    from scripts.eum.menu_actions import open_menu_page, print_menu_result, save_menu_result
+
+    page = open_site("eum")
+    result = open_menu_page(page, query)
+    path = save_menu_result(result)
+    print_menu_result(result, path)
+    if not result.get("ok"):
+        raise SystemExit(1)
+
+
+def _cmd_work(sub: str | None, args: list[str]) -> None:
+    """Resolve an EUM work alias and execute safe read-only workflows."""
+    from scripts.eum.run_log import work_run
+    from scripts.eum.workspace import print_workflow_help, workflow_for_alias
+
+    alias = sub or (args[0] if args else "")
+    if not alias:
+        print("usage: python scripts/cdp_client.py eum work <alias-or-WEBMAN-code>")
+        print_workflow_help("__missing__")
+        return
+
+    workflow = workflow_for_alias(alias)
+    if not workflow:
+        print_workflow_help(alias)
+        raise SystemExit(1)
+
+    dry_run = "--dry-run" in args
+    prepare = "--prepare" in args
+    submit = "--submit" in args
+    pass_args = [arg for arg in args if arg not in ("--dry-run", "--prepare", "--submit")]
+    print_workflow_help(alias)
+
+    if dry_run:
+        if workflow.get("risk") != "read":
+            from scripts.eum.work_plan import build_action_plan, print_action_plan, save_action_plan
+
+            plan = build_action_plan(workflow, pass_args)
+            path = save_action_plan(plan)
+            print_action_plan(plan, path)
+        return
+
+    if workflow.get("risk") != "read" or not workflow.get("auto_execute"):
+        if prepare:
+            _prepare_approval_workflow(workflow, pass_args)
+        elif submit:
+            _execute_approval_workflow(workflow, pass_args)
+        else:
+            print("approval/action workflow: command was not executed automatically.")
+            print("Use --dry-run to create a plan, --prepare to fill the form without submit, or --submit to execute.")
+        return
+
+    key = workflow["key"]
+    print("=" * 60)
+    print(f"EUM work execute: {key}")
+    print("=" * 60)
+
+    with work_run(workflow, pass_args):
+        if key == "device_inventory":
+            _cmd_extract(None, [])
+        elif key == "new_sites":
+            _cmd_new_sites()
+        elif key == "sales_mail":
+            _cmd_mail(None, pass_args)
+        elif key == "device_history":
+            device_id = pass_args[0] if pass_args else None
+            _cmd_history(device_id, [])
+        elif key == "demolition_lookup":
+            _cmd_demolition(None, [])
+        elif key == "monitor":
+            _cmd_monitor()
+        else:
+            print("No auto executor is registered for this workflow.")
+
+
+def _execute_approval_workflow(workflow: dict, args: list[str]) -> None:
+    """Validate an approval workflow, then execute only through its gate."""
+    from scripts.eum.run_log import work_run
+    from scripts.eum.work_plan import build_action_plan, print_action_plan, save_action_plan
+    from scripts.gate import force_approved
+
+    plan = build_action_plan(workflow, args)
+    path = save_action_plan(plan)
+    print_action_plan(plan, path)
+    if not plan.get("valid"):
+        raise SystemExit(2)
+
+    key = workflow["key"]
+    print("=" * 60)
+    print(f"EUM approval execute: {key}")
+    print("=" * 60)
+
+    with work_run(workflow, args):
+        with force_approved():
+            if key == "device_registration":
+                _cmd_registration(args[0], args[1:], submit=True)
+            elif key == "device_deregistration":
+                _cmd_deregistration(args[0], args[1:], submit=True)
+            else:
+                raise SystemExit(f"No approval executor is registered for {key}.")
+
+
+def _prepare_approval_workflow(workflow: dict, args: list[str]) -> None:
+    """Validate and prepare an approval workflow without final submit."""
+    from scripts.eum.run_log import work_run
+    from scripts.eum.work_plan import build_action_plan, print_action_plan, save_action_plan
+
+    plan = build_action_plan(workflow, args, mode="prepare")
+    path = save_action_plan(plan)
+    print_action_plan(plan, path)
+    if not plan.get("valid"):
+        raise SystemExit(2)
+
+    key = workflow["key"]
+    print("=" * 60)
+    print(f"EUM approval prepare: {key}")
+    print("=" * 60)
+
+    with work_run(workflow, args):
+        if key == "device_registration":
+            result = _cmd_registration(args[0], args[1:], submit=False)
+        elif key == "device_deregistration":
+            result = _cmd_deregistration(args[0], args[1:], submit=False)
+        else:
+            raise SystemExit(f"No approval preparer is registered for {key}.")
+        if isinstance(result, dict) and not result.get("success"):
+            raise RuntimeError(result.get("error") or "approval prepare failed")
+
+
+def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False) -> None:
+    """단말기 신규 등록 (WEBMAN381M00)."""
+    if submit:
+        gate_check("eum_register_device", force=False)
+    else:
+        gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
+    print("=" * 60)
+    print("EUM 단말기 신규 등록")
+    print("=" * 60)
+    from scripts.eum.registration import register_device
+
+    if sub:
+        # 예: python scripts/cdp_client.py eum registration 2024-001 DEV-001 장소
+        project_code = sub
+        device_id = args[0] if args else "TEST-001"
+        location = args[1] if len(args) > 1 else "서울시"
+
+        result = register_device(project_code, project_code, device_id, location, submit=submit)
+        import json
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return result
+    else:
+        print("  사용법: eum registration <공사코드> <단말기번호> [설치장소]")
+
+
+def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = False) -> None:
+    """단말기 철거(말소) (WEBMAN382M00)."""
+    if submit:
+        gate_check("eum_deregister_device", force=False)
+    else:
+        gate_check("eum_extract_all_devices")
+    _get_page()  # 자동 로그인 보장
+    print("=" * 60)
+    print("EUM 단말기 철거")
+    print("=" * 60)
+    from scripts.eum.deregistration import deregister_device
+
+    if sub:
+        device_id = sub
+        date_str = args[0] if args else None
+
+        result = deregister_device(device_id, date_str, submit=submit)
+        import json
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return result
+    else:
+        print("  사용법: eum deregistration <단말기번호> [철거예정일]")
+
+
 def _print_help() -> None:
     print("""EUM 사용법:
+  [조회/분석]
   python scripts/cdp_client.py eum extract      단말기 전체 추출
   python scripts/cdp_client.py eum dashboard    업무 대시보드
-  python scripts/cdp_client.py eum mail         홍보메일 초안
-  python scripts/cdp_client.py eum mail send    홍보메일 발송 (승인 필요)
-  python scripts/cdp_client.py eum new-sites    신규 현장 발굴
-  python scripts/cdp_client.py eum task-run     전체 파이프라인 실행
-  python scripts/cdp_client.py eum login        자동 로그인
   python scripts/cdp_client.py eum monitor      운용 모니터링 (통신단절/미사용/준공임박)
   python scripts/cdp_client.py eum history      단말기 이력 조회 (WEBMAN400M00)
-  python scripts/cdp_client.py eum history 123  특정 단말기 이력
-  python scripts/cdp_client.py eum demolition   철거 현황 조회 (WEBMAN382M00)
-  python scripts/cdp_client.py eum explore      전체 사이트 탐색""")
+  python scripts/cdp_client.py eum explore      전체 사이트 탐색
+
+  [홍보/메일]
+  python scripts/cdp_client.py eum new-sites    신규 현장 발굴
+  python scripts/cdp_client.py eum mail         홍보메일 초안
+  python scripts/cdp_client.py eum mail send    홍보메일 발송 (승인 필요)
+
+  [단말기 관리] ✨ 신규 기능
+  python scripts/cdp_client.py eum registration <공사코드> <단말기ID> [장소]  신규 등록 (WEBMAN381M00)
+  python scripts/cdp_client.py eum deregistration <단말기ID> [철거일]  철거 신청 (WEBMAN382M00)
+
+  [시스템]
+  python scripts/cdp_client.py eum task-run     전체 파이프라인 실행
+  python scripts/cdp_client.py eum login        자동 로그인""")
