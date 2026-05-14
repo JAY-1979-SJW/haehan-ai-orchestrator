@@ -1,0 +1,299 @@
+"""Hiworks CLI router."""
+from __future__ import annotations
+
+import json
+
+from scripts.hiworks import gates
+from scripts.hiworks.actions import (
+    apply_prepare_values,
+    build_action_catalog,
+    build_prepare_plan,
+    build_submit_execution_plan,
+    execute_approved_button,
+    load_action_catalog,
+    load_values,
+    print_action_catalog_summary,
+    print_prepare_plan_summary,
+    save_action_catalog,
+    save_prepare_plan,
+    save_submit_record,
+)
+from scripts.hiworks.explorer import (
+    extract_dashboard_apps,
+    extract_visible_mail_actions,
+    open_hiworks,
+    print_apps,
+    save_apps,
+)
+from scripts.hiworks.mail import open_compose
+from scripts.hiworks.mail_batch import print_send_plan
+from scripts.hiworks.run_log import work_run
+from scripts.hiworks.schemas import DATA_DIR, HIWORKS_DASHBOARD_URL, HIWORKS_MAIL_URL, workflow_for_alias
+from scripts.hiworks.service_explorer import print_service_summary, save_service_report, scan_service, selected_targets
+from scripts.hiworks.workflows import build_and_save_send_plan, load_sales_queue, prepare_sales_mail, record_prepare_success
+
+
+def run_hiworks(task: str | None, sub: str | None, args: list[str]) -> None:
+    match task or "dashboard":
+        case "dashboard" | "home":
+            _cmd_dashboard()
+        case "mail":
+            _cmd_mail(sub)
+        case "compose":
+            _cmd_compose()
+        case "prepare-sales-mail":
+            _cmd_prepare_sales_mail(sub)
+        case "send-batch":
+            _cmd_send_batch(sub, args)
+        case "apps" | "scan":
+            _cmd_apps()
+        case "service" | "services" | "explore-services":
+            _cmd_service_scan(sub, args)
+        case "actions" | "action-catalog":
+            _cmd_action_catalog(sub, args)
+        case "prepare-section" | "section-prepare":
+            _cmd_prepare_section(sub, args)
+        case "submit-section" | "section-submit":
+            _cmd_submit_section(sub, args)
+        case "queue" | "sales-queue":
+            _cmd_queue(sub)
+        case _:
+            _print_help()
+
+
+def _cmd_dashboard() -> None:
+    gates.check_read()
+    workflow = workflow_for_alias("dashboard") or {"key": "dashboard", "risk": "read"}
+    with work_run(workflow, []):
+        page = open_hiworks(HIWORKS_DASHBOARD_URL)
+        print("=" * 60)
+        print("Hiworks dashboard")
+        print("=" * 60)
+        print(f"url: {page.url}")
+        try:
+            print(f"title: {page.title()}")
+        except Exception:
+            pass
+        print_apps(extract_dashboard_apps(page)[:30])
+
+
+def _cmd_apps() -> None:
+    gates.check_read()
+    workflow = workflow_for_alias("apps") or {"key": "apps", "risk": "read"}
+    with work_run(workflow, []):
+        page = open_hiworks(HIWORKS_DASHBOARD_URL)
+        apps = extract_dashboard_apps(page)
+        path = save_apps(apps, page.url)
+        print_apps(apps)
+        print(f"saved: {path}")
+
+
+def _cmd_mail(sub: str | None) -> None:
+    if (sub or "open") == "send":
+        gates.check_send()
+        raise SystemExit("Hiworks send is approval-gated and not implemented for bulk send yet.")
+
+    gates.check_read()
+    workflow = workflow_for_alias("mail") or {"key": "mail", "risk": "read"}
+    with work_run(workflow, []):
+        page = open_hiworks(HIWORKS_MAIL_URL)
+        print("=" * 60)
+        print("Hiworks mail")
+        print("=" * 60)
+        print(f"url: {page.url}")
+        try:
+            print(f"title: {page.title()}")
+        except Exception:
+            pass
+        for item in extract_visible_mail_actions(page)[:40]:
+            print(f"- {item['text']} {item.get('href') or ''}")
+
+
+def _cmd_compose() -> None:
+    gates.check_read()
+    workflow = workflow_for_alias("compose") or {"key": "compose", "risk": "read"}
+    with work_run(workflow, []):
+        page = open_hiworks(HIWORKS_MAIL_URL)
+        result = open_compose(page)
+        path = DATA_DIR / "hiworks_compose_page_latest.json"
+        path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        summary = result["summary"]
+        print("=" * 60)
+        print("Hiworks compose page")
+        print("=" * 60)
+        print(f"url: {summary.get('url')}")
+        print(f"clicked: {result.get('clicked')}")
+        print(f"inputs: {len(summary.get('inputs', []))}")
+        print(f"buttons: {len(summary.get('buttons', []))}")
+        print(f"saved: {path}")
+
+
+def _cmd_prepare_sales_mail(sub: str | None) -> None:
+    gates.check_prepare()
+    index = int(sub) if sub and str(sub).isdigit() else 1
+    workflow = workflow_for_alias("prepare-sales-mail") or {"key": "prepare_sales_mail", "risk": "prepare"}
+    with work_run(workflow, [str(index)]):
+        rows = load_sales_queue(limit=index)
+        page = open_hiworks(HIWORKS_MAIL_URL)
+        result, path = prepare_sales_mail(page, index=index)
+        record_prepare_success(index, rows[index - 1])
+        print("=" * 60)
+        print("Hiworks sales mail prepared")
+        print("=" * 60)
+        print(f"queue index: {index}")
+        print(f"to: {result['to']}")
+        print(f"subject: {result['subject']}")
+        print("sent: False")
+        print(f"saved: {path}")
+
+
+def _cmd_queue(sub: str | None) -> None:
+    gates.check_read()
+    limit = int(sub) if sub and str(sub).isdigit() else 10
+    rows = load_sales_queue(limit=limit)
+    print("=" * 60)
+    print("Hiworks sales-mail queue preview")
+    print("=" * 60)
+    print(f"preview: {len(rows)}")
+    for idx, row in enumerate(rows, start=1):
+        meta = row.get("metadata") or {}
+        print(f"{idx:>2}. {row.get('to')} | {row.get('subject')}")
+        print(f"    {meta.get('project_name', '')}")
+
+
+def _cmd_service_scan(sub: str | None, args: list[str]) -> None:
+    gates.check_read()
+    name = sub or "all"
+    limit = 120
+    for arg in args:
+        if str(arg).startswith("--limit="):
+            limit = int(str(arg).split("=", 1)[1])
+    workflow = workflow_for_alias("service") or {"key": "service_scan", "risk": "read"}
+    with work_run(workflow, [name, f"--limit={limit}"]):
+        results = [scan_service(key, target, limit=limit) for key, target in selected_targets(name).items()]
+        path = save_service_report(results)
+        print_service_summary(results, path)
+
+
+def _option_value(args: list[str], prefix: str) -> str | None:
+    for arg in args:
+        text = str(arg)
+        if text.startswith(prefix):
+            return text.split("=", 1)[1]
+    return None
+
+
+def _cmd_action_catalog(sub: str | None, args: list[str]) -> None:
+    gates.check_read()
+    name = sub or "all"
+    workflow = workflow_for_alias("actions") or {"key": "action_catalog", "risk": "read"}
+    with work_run(workflow, [name]):
+        catalog = build_action_catalog()
+        if name and name != "all":
+            catalog["services"] = [service for service in catalog["services"] if service.get("key") == name]
+            if not catalog["services"]:
+                raise KeyError(f"unknown Hiworks service in action catalog: {name}")
+        path = save_action_catalog(catalog)
+        print_action_catalog_summary(catalog, path)
+
+
+def _cmd_prepare_section(sub: str | None, args: list[str]) -> None:
+    gates.check_prepare()
+    name = sub or "all"
+    values_path = _option_value(args, "--values=")
+    dry_run = "--dry-run" in args or not values_path
+    values = load_values(values_path) if values_path else {}
+    workflow = workflow_for_alias("prepare-section") or {"key": "prepare_section", "risk": "prepare"}
+    with work_run(workflow, [name, *(args or [])]):
+        catalog = build_action_catalog()
+        plan = build_prepare_plan(catalog, service_name=name, values=values)
+        path = save_prepare_plan(plan)
+        print_prepare_plan_summary(plan, path)
+        if not dry_run:
+            if name == "all":
+                raise SystemExit("Live prepare with values requires one Hiworks service name, not all.")
+            target = selected_targets(name)[name]
+            page = open_hiworks(target["url"])
+            page.wait_for_timeout(1200)
+            result = apply_prepare_values(page, values)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            print("submit_executed: False")
+
+
+def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
+    service = sub or ""
+    control_id = args[0] if args else ""
+    if not service or not control_id:
+        raise SystemExit(
+            "usage: python scripts/cdp_client.py hiworks submit-section <service> <control_id> "
+            "[--approved --confirm=HIWORKS_APPROVED_SUBMIT] [--dry-run] [--approved-by=name]"
+        )
+    approved = "--approved" in args
+    dry_run = "--dry-run" in args
+    confirm = _option_value(args, "--confirm=") or ""
+    approved_by = _option_value(args, "--approved-by=") or "operator"
+    if approved and confirm != "HIWORKS_APPROVED_SUBMIT":
+        raise SystemExit("approved submit requires --confirm=HIWORKS_APPROVED_SUBMIT")
+
+    gates.check_send(force=approved, service=service, control_id=control_id, dry_run=dry_run, approved_by=approved_by)
+    workflow = workflow_for_alias("submit-section") or {"key": "submit_section", "risk": "send"}
+    with work_run(workflow, [service, control_id, *(args or [])]):
+        catalog = load_action_catalog()
+        plan = build_submit_execution_plan(
+            catalog,
+            service_name=service,
+            control_id=control_id,
+            approved_by=approved_by,
+            dry_run=dry_run,
+        )
+        target = selected_targets(service)[service]
+        page = open_hiworks(target["url"])
+        page.wait_for_timeout(1200)
+        record = execute_approved_button(page, plan, approved=approved, dry_run=dry_run)
+        path = save_submit_record(record)
+        print(json.dumps(record, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+
+
+def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
+    dry_run = "--dry-run" in args or sub in (None, "dry-run")
+    option_args = [a for a in ([sub] if sub else []) + list(args) if a and a != "--dry-run"]
+    limit = 5
+    delay_min = 15
+    delay_max = 45
+    for arg in option_args:
+        text = str(arg)
+        if text.isdigit():
+            limit = int(text)
+        elif text.startswith("--delay-min="):
+            delay_min = int(text.split("=", 1)[1])
+        elif text.startswith("--delay-max="):
+            delay_max = int(text.split("=", 1)[1])
+
+    if not dry_run:
+        gates.check_send()
+        raise SystemExit("Actual Hiworks batch send is approval-gated. Run with --dry-run first.")
+
+    gates.check_read()
+    workflow = workflow_for_alias("send-batch") or {"key": "send_batch_plan", "risk": "prepare"}
+    with work_run(workflow, [str(limit), f"--delay-min={delay_min}", f"--delay-max={delay_max}"]):
+        plan, path = build_and_save_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
+        print_send_plan(plan, path)
+
+
+def _print_help() -> None:
+    print(
+        """Hiworks usage:
+  python scripts/cdp_client.py hiworks dashboard
+  python scripts/cdp_client.py hiworks apps
+  python scripts/cdp_client.py hiworks mail
+  python scripts/cdp_client.py hiworks compose
+  python scripts/cdp_client.py hiworks service [mail|approval|scheduler|boards|address-book|booking|hr-work|team-mail|files|tasks|admins|bills|sms|notes|groups|ai-chat|plus|all]
+  python scripts/cdp_client.py hiworks actions [mail|approval|scheduler|boards|address-book|booking|hr-work|team-mail|files|tasks|admins|bills|sms|notes|groups|ai-chat|plus|all]
+  python scripts/cdp_client.py hiworks prepare-section [service|all] [--dry-run] [--values=values.json]
+  python scripts/cdp_client.py hiworks submit-section <service> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT [--dry-run] [--approved-by=name]
+  python scripts/cdp_client.py hiworks queue [limit]
+  python scripts/cdp_client.py hiworks prepare-sales-mail [index]
+  python scripts/cdp_client.py hiworks send-batch [limit] --dry-run --delay-min=15 --delay-max=45
+"""
+    )

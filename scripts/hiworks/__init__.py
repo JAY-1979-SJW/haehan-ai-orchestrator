@@ -1,0 +1,1 @@
+"""Hiworks browser integration."""
