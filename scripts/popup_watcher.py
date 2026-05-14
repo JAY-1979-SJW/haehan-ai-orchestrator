@@ -17,6 +17,16 @@ POPUP_MARKERS = {
     "작성 중인 글": {"action": "click_button", "target": "취소"},
     "이어서 작성": {"action": "click_button", "target": "취소"},
     "임시저장": {"action": None},
+    # ── 비정상 접근 감지 마커 ──────────────────────────
+    "비정상적인 접근": {"action": "detect", "severity": "critical"},
+    "자동화 프로그램": {"action": "detect", "severity": "critical"},
+    "자동 프로그램": {"action": "detect", "severity": "critical"},
+    "봇으로 판단": {"action": "detect", "severity": "critical"},
+    "접근 차단": {"action": "detect", "severity": "high"},
+    "이용이 제한": {"action": "detect", "severity": "high"},
+    "서비스 차단": {"action": "detect", "severity": "high"},
+    "Abnormal access": {"action": "detect", "severity": "critical"},
+    "bot detected": {"action": "detect", "severity": "critical"},
 }
 
 
