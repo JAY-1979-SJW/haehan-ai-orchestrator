@@ -14,7 +14,7 @@ OAUTH_CLIENT_NAME = "haehan-cli"
 
 # ── CDP 브라우저 ─────────────────────────────────────────────────────
 CDP_PORT         = 9222
-CDP_HOST         = "localhost"
+CDP_HOST         = "127.0.0.1"
 CDP_ENDPOINT     = f"http://{CDP_HOST}:{CDP_PORT}"
 
 # ── Google 서비스 URL ────────────────────────────────────────────────

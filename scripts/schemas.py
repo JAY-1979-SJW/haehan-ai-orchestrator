@@ -87,6 +87,27 @@ class CdpRequestEvent(TypedDict):
     tab_id: str
 
 
+# ── 팝업 이벤트 (popup_monitor / chrome_ui_monitor) ──────────────────
+
+class PopupEvent(TypedDict, total=False):
+    """popup_events 테이블 1행 — 웹 DOM 및 Chrome UI 팝업 감지 이벤트."""
+    id: int
+    ts_ms: int              # 밀리초 타임스탬프
+    marker: str             # 팝업 마커 (popup_watcher / chrome_ui_watcher 정의)
+    snippet: str            # 팝업 텍스트 일부
+    frame_url: str          # 팝업이 감지된 프레임 URL (Chrome UI는 윈도우명)
+    category: str           # 팝업 카테고리 (notification_request, draft_restore 등)
+    severity: str           # low / medium / high
+    action: str             # auto_dismiss / notify_user / block_workflow
+    target: str | None      # 클릭할 버튼명 (Chrome UI 전용)
+    confidence: float       # 분류 신뢰도 (0.0 ~ 1.0)
+    status: str             # pending / handled / notified / acked
+    handled_at: int | None  # 처리 시각 (ms)
+    note: str | None        # 사용자/시스템 메모
+    source: str             # dom / chrome_ui
+    created_at: str
+
+
 # ── 코드 변경 레코드 (file_write / file_edit) ────────────────────────
 
 class FileChangeRecord(TypedDict):

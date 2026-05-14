@@ -83,6 +83,12 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     "cdp_nav":         RiskLevel.AUTO,
     "cdp_request":     RiskLevel.AUTO,
 
+    # 팝업 감지 (자동 처리)
+    "popup_detect":    RiskLevel.AUTO,
+    "popup_dismiss":   RiskLevel.NOTIFY,
+    "chrome_ui_detect": RiskLevel.AUTO,
+    "chrome_ui_dismiss": RiskLevel.NOTIFY,
+
     # 코드 변경 (write는 내부 작업)
     "file_write":      RiskLevel.AUTO,
     "file_edit":       RiskLevel.AUTO,
@@ -90,7 +96,9 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     # EUM
     "eum_extract_all_devices": RiskLevel.AUTO,
     "eum_register":    RiskLevel.APPROVE,
+    "eum_register_device": RiskLevel.APPROVE,
     "eum_remove":      RiskLevel.APPROVE,
+    "eum_deregister_device": RiskLevel.APPROVE,
 
     # G2B
     "g2b_discover":    RiskLevel.NOTIFY,
