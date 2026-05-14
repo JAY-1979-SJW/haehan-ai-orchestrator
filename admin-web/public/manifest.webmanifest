@@ -1,0 +1,36 @@
+{
+  "name": "Haehan AI Admin",
+  "short_name": "Haehan AI",
+  "description": "Haehan AI Orchestrator desktop and mobile admin app",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5F7FA",
+  "theme_color": "#F97316",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "로컬 에이전트",
+      "short_name": "에이전트",
+      "url": "/local-agents"
+    },
+    {
+      "name": "AI CAD",
+      "short_name": "CAD",
+      "url": "/cad"
+    },
+    {
+      "name": "파일 지도",
+      "short_name": "파일",
+      "url": "/file-map"
+    }
+  ]
+}

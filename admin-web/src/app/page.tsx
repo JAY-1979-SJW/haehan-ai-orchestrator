@@ -1,4 +1,5 @@
 import { PageShell, Btn } from "@/components/ui";
+import { AppInstallButton } from "@/components/app/AppInstallButton";
 import Link from "next/link";
 
 const OP_ITEMS = [
@@ -45,14 +46,53 @@ const OP_ITEMS = [
 ];
 
 const PLATFORM_STATUS = [
-  { label: "로컬 에이전트 운영 화면", where: "admin-web (이 화면)", status: "운영 기준" },
+  { label: "데스크톱 앱", where: "PWA standalone", status: "설치 가능" },
+  { label: "모바일 앱", where: "PWA standalone", status: "하단 탭 적용" },
+  { label: "로컬 에이전트 운영 화면", where: "admin-web", status: "운영 기준" },
   { label: "legacy FastAPI admin",    where: "/admin (FastAPI)",      status: "deprecated fallback" },
   { label: "승인 / 권한 / 감사로그",  where: "admin-web — 예정",      status: "구현 예정" },
 ];
 
 export default function Home() {
   return (
-    <PageShell title="운영 대시보드" description="Haehan AI Orchestrator 관리자 UI">
+    <PageShell
+      title="운영 대시보드"
+      description="Haehan AI Orchestrator 관리자 UI"
+      headerRight={<div className="sm:hidden"><AppInstallButton /></div>}
+    >
+      <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="mb-2 text-[12px] font-semibold text-[#F97316]">Desktop / Mobile App</p>
+              <h1 className="m-0 text-[20px] font-bold text-[#0F172A] sm:text-[24px]">
+                한 화면에서 에이전트, CAD, 파일 정리를 운영합니다.
+              </h1>
+              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-[#6B7280]">
+                데스크톱에서는 좌측 사이드바로 빠르게 이동하고, 모바일에서는 하단 탭으로 주요 기능을 바로 전환합니다.
+                브라우저 설치 기능을 통해 별도 창의 앱처럼 실행할 수 있습니다.
+              </p>
+            </div>
+            <div className="hidden shrink-0 sm:block">
+              <AppInstallButton />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 rounded-[12px] border border-[#E5E7EB] bg-white p-4">
+          {[
+            { label: "Desktop", value: "Sidebar" },
+            { label: "Mobile", value: "Bottom tabs" },
+            { label: "PWA", value: "Installable" },
+          ].map((item) => (
+            <div key={item.label} className="min-w-0 rounded-lg bg-[#F9FAFB] px-3 py-3">
+              <div className="truncate text-[11px] font-semibold text-[#9CA3AF]">{item.label}</div>
+              <div className="mt-1 break-words text-[13px] font-bold text-[#0F172A]">{item.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Quick action cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
         {OP_ITEMS.map((item) => (
