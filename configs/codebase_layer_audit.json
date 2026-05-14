@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "thresholds": {
+    "max_openapi_failed": 0,
+    "max_pydantic_failed": 0,
+    "max_document_failed": 0,
+    "max_circular_imports": 1,
+    "max_unknown_layer_files": 900
+  },
+  "tracked_residuals": [],
+  "resolved_residuals": [
+    {
+      "code": "CIRCULAR_IMPORT",
+      "path": "ai_orchestrator.local_agent_models",
+      "status": "resolved",
+      "owner": "platform",
+      "next_action": "Resolved by replacing direct late imports with importlib module lookup."
+    }
+  ]
+}
