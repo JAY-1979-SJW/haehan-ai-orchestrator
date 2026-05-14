@@ -23,36 +23,113 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.logger import get_logger
 from scripts.op_log import op_context
+from scripts.human_input import safe_human_input, find_selector as _hi_find_selector
 
 log = get_logger(__name__)
 
 EUM_BASE = "https://eum.cw.or.kr"
 
-# 로그인 URL 후보 (순서대로 시도)
+# 로그인 URL — WEBLOG400M00 (단말기 업체 등 기타기관 로그인 진입점) 우선
+EUM_PRIMARY_LOGIN_URL = f"{EUM_BASE}/web/log/WEBLOG400M00"
 _LOGIN_URL_CANDIDATES = [
+    EUM_PRIMARY_LOGIN_URL,  # 단말기 업체 (우리 사용)
     f"{EUM_BASE}/login",
     f"{EUM_BASE}/web/login",
     f"{EUM_BASE}/user/login",
     f"{EUM_BASE}/member/login",
 ]
+_LOGIN_URL_FALLBACKS = _LOGIN_URL_CANDIDATES[1:]
+
+# 우리 회원 분류 — 비전아이(주)는 단말기 업체
+_MEMBER_CATEGORY = "단말기 업체"
+_TERMINAL_COMPANY_SUBTYPE = "유통업체"
+_TERMINAL_COMPANY_SUBTYPE_SELECTOR = "#radio_b2"
+
+
+def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
+    """WEBLOG400M00 페이지에서 회원 분류 선택. 성공 여부 반환."""
+    try:
+        # 클릭 가능한 후보: button/a/label/radio with text
+        # 단말기 업체 텍스트의 button 우선
+        loc = page.locator(f'button:has-text("{category}")').first
+        try:
+            loc.wait_for(state="visible", timeout=2000)
+            loc.click(timeout=3000)
+            log.info("[eum-auth] 회원 분류 선택: %s (button)", category)
+            return True
+        except Exception:
+            pass
+        # 라벨/링크 폴백
+        for sel in [f'label:has-text("{category}")',
+                    f'a:has-text("{category}")',
+                    f'[onclick*="{category}"]']:
+            try:
+                loc = page.locator(sel).first
+                if loc.is_visible(timeout=1000):
+                    loc.click(timeout=3000)
+                    log.info("[eum-auth] 회원 분류 선택: %s (%s)", category, sel)
+                    return True
+            except Exception:
+                continue
+        log.warning("[eum-auth] 회원 분류 '%s' 선택 실패", category)
+        return False
+    except Exception as e:
+        log.warning("[eum-auth] 회원 분류 선택 예외: %s", e)
+        return False
+
+
+def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBTYPE) -> bool:
+    """단말기 업체 탭 안의 세부 유형을 선택한다."""
+    try:
+        loc = page.locator(_TERMINAL_COMPANY_SUBTYPE_SELECTOR).first
+        try:
+            loc.wait_for(state="attached", timeout=2000)
+            loc.check(timeout=3000, force=True)
+            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, _TERMINAL_COMPANY_SUBTYPE_SELECTOR)
+            return True
+        except Exception:
+            pass
+
+        loc = page.locator(f'#tab4 label:has-text("{subtype}")').first
+        try:
+            loc.wait_for(state="visible", timeout=1000)
+            loc.click(timeout=3000)
+            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (label)", subtype)
+            return True
+        except Exception:
+            pass
+
+        log.warning("[eum-auth] 단말기 업체 세부 유형 '%s' 선택 실패", subtype)
+        return False
+    except Exception as e:
+        log.warning("[eum-auth] 단말기 업체 세부 유형 선택 예외: %s", e)
+        return False
 
 # 로그인 성공 판단 URL 패턴
 _SUCCESS_URL_PATTERNS = ["/main", "/mypage", "/web/man", "/dashboard"]
 
 # ID/PW 입력 필드 selector 후보
 _ID_SELECTORS = [
+    "#tab4 input[placeholder*='아이디']",
+    "#tab4 input[type='search'][placeholder*='아이디']",
     "input[name='id']",
     "input[name='userId']",
     "input[name='username']",
     "input[name='loginId']",
+    "input[placeholder*='아이디']:not([type='hidden'])",
+    "input[placeholder*='ID']:not([type='hidden'])",
     "input[type='text'][id*='id']",
     "input[type='text'][id*='Id']",
     "input[type='text'][placeholder*='아이디']",
     "input[type='text'][placeholder*='ID']",
+    "input[type='search'][placeholder*='아이디']",
+    "input[type='search'][placeholder*='ID']",
     "#id", "#userId", "#loginId", "#username",
 ]
 
 _PW_SELECTORS = [
+    "#tab4 input[type='password']",
+    "#tab4 input[placeholder*='비밀번호']",
     "input[name='password']",
     "input[name='pw']",
     "input[name='passwd']",
@@ -62,8 +139,14 @@ _PW_SELECTORS = [
 
 # 로그인 버튼 selector 후보
 _BTN_SELECTORS = [
+    "#tab4 button.btn_l:has-text('로그인')",
+    "#tab4 button.w100p:has-text('로그인')",
+    "#tab4 button:has-text('로그인')",
     "button[type='submit']",
     "input[type='submit']",
+    "button.btn_l:has-text('로그인')",
+    "button.w100p:has-text('로그인')",
+    "button[class*='btn_ty']:has-text('로그인')",
     "button:has-text('로그인')",
     "a:has-text('로그인')",
     ".btn-login",
@@ -88,48 +171,131 @@ def _find_selector(page, candidates: list[str]) -> str | None:
 def is_logged_in(page) -> bool:
     """현재 페이지가 로그인 상태인지 확인.
 
-    Returns:
-        True — 로그인된 상태
-        False — 로그아웃 또는 세션 만료
+    판정 순서 (false positive 방지):
+        1. 로그인 폼(ID/PW 입력)이 visible → 무조건 미로그인 (R1 차단)
+        2. URL이 login 페이지 → 미로그인
+        3. 로그아웃 버튼 또는 사용자명 존재 → 로그인됨
+        4. 성공 URL 패턴 매치 + 폼/로그인 페이지 아님 → 로그인됨
+        5. 그 외 → 미로그인 (보수적)
     """
-    current_url = page.url
-    # URL 기반 판단
-    for pattern in _SUCCESS_URL_PATTERNS:
-        if pattern in current_url and "login" not in current_url:
-            log.debug("is_logged_in: URL 패턴 매치 url=%s", current_url)
-            return True
+    current_url = ""
+    try:
+        current_url = page.url or ""
+    except Exception:
+        return False
 
-    # DOM 기반 판단: 로그아웃 버튼 또는 사용자명 존재
-    logout_selectors = [
-        "a:has-text('로그아웃')",
-        "button:has-text('로그아웃')",
-        "[class*='logout']",
-        "[id*='logout']",
-        ".user-name",
-        ".login-user",
-        "[class*='user'][class*='info']",
+    # 1. 로그인 폼(ID+PW)이 보이면 = 미로그인 (R1 핵심)
+    if "/main" in current_url:
+        try:
+            page.wait_for_selector(".login_dashboard", state="attached", timeout=5000)
+        except Exception:
+            pass
+    id_visible = _find_selector(page, _ID_SELECTORS) is not None
+    pw_visible = _find_selector(page, _PW_SELECTORS) is not None
+    try:
+        if not (id_visible and pw_visible) and page.query_selector(".login_dashboard"):
+            log.debug("is_logged_in: EUM login dashboard detected url=%s", current_url)
+            return True
+    except Exception:
+        pass
+    try:
+        if not (id_visible and pw_visible):
+            body_text = page.locator("body").inner_text(timeout=2000)
+            if any(token in body_text for token in ("로그아웃", "로그인연장", "마이페이지")):
+                log.debug("is_logged_in: EUM session text detected url=%s", current_url)
+                return True
+    except Exception:
+        pass
+    if id_visible and pw_visible:
+        log.debug("is_logged_in: 로그인 폼 visible — 미로그인 확정 url=%s", current_url)
+        return False
+
+    # 2. URL이 로그인 페이지면 미로그인
+    if "login" in current_url.lower() or "WEBLOG" in current_url:
+        log.debug("is_logged_in: login URL — 미로그인 url=%s", current_url)
+        return False
+
+    # 3. visible "로그인" 버튼이 있으면 미로그인 (R2 핵심 — /main 공개 페이지 false positive 차단)
+    login_button_selectors = [
+        "a:has-text('로그인')",
+        "button:has-text('로그인')",
+        "[onclick*='login']:not([onclick*='logout'])",
     ]
-    for sel in logout_selectors:
+    for sel in login_button_selectors:
         try:
             el = page.query_selector(sel)
             if el and el.is_visible():
-                log.debug("is_logged_in: 로그아웃 버튼/사용자명 발견 sel=%s", sel)
+                # "로그아웃"도 "로그인"을 포함하므로 텍스트 한 번 더 확인
+                txt = (el.inner_text() or "").strip()
+                if txt == "로그인" or "로그인" in txt and "로그아웃" not in txt:
+                    log.debug("is_logged_in: '로그인' 버튼 visible — 미로그인 url=%s", current_url)
+                    return False
+        except Exception:
+            pass
+
+    # 4. 명시적 로그아웃 버튼 (강한 신호 — 로그인됨)
+    strong_logged_in_selectors = [
+        "a:has-text('로그아웃')",
+        "button:has-text('로그아웃')",
+        "[onclick*='logout']",
+        "[href*='logout']",
+        "[id='btnLogout']",
+        ".btn-logout",
+    ]
+    for sel in strong_logged_in_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                log.debug("is_logged_in: 로그아웃 버튼 발견 sel=%s", sel)
                 return True
         except Exception:
             pass
 
+    # 5. 보호된 페이지 패턴 (/web/man/ 등) + 폼/로그인버튼 없음 → 로그인된 것으로 추정
+    protected_patterns = ["/web/man/", "/mypage", "/dashboard"]
+    for pattern in protected_patterns:
+        if pattern in current_url:
+            log.debug("is_logged_in: 보호 영역 URL 매치 → 로그인 추정 url=%s", current_url)
+            return True
+
+    # 6. 그 외(예: /main 공개 페이지) → 보수적으로 미로그인
+    log.debug("is_logged_in: 명확한 로그인 신호 없음 — 미로그인 처리 url=%s", current_url)
     return False
 
 
 def _try_goto(page, url: str) -> bool:
     """URL로 이동. 성공 여부 반환."""
     try:
-        page.goto(url, timeout=15000)
-        page.wait_for_load_state("networkidle", timeout=15000)
+        page.goto(url, timeout=15000, wait_until="domcontentloaded")
         return True
     except Exception as e:
         log.debug("goto 실패: url=%s err=%s", url, e)
         return False
+
+
+def _prepare_login_page(page, url: str) -> bool:
+    """Navigate to one EUM login candidate and return True when the form is ready."""
+    ok = _try_goto(page, url)
+    if not ok:
+        return False
+    current = page.url
+
+    if "WEBLOG400M00" in current:
+        if _select_member_category(page, _MEMBER_CATEGORY):
+            _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+            try:
+                page.wait_for_selector(
+                    "input[type='password']:visible",
+                    state="visible", timeout=3000,
+                )
+            except Exception:
+                pass
+
+    id_sel = _find_selector(page, _ID_SELECTORS)
+    if id_sel:
+        log.info("login page found: url=%s id_sel=%s", current, id_sel)
+        return True
+    return False
 
 
 def login(page) -> dict:
@@ -160,28 +326,41 @@ def login(page) -> dict:
             ctx.set_result(msg="기존 세션 재사용", ok=True)
             return {"ok": True, "reason": "기존 세션 재사용", "user": eum_id}
 
-        # 메인 페이지 먼저 이동 (리다이렉트로 로그인 페이지 자동 이동 기대)
-        main_ok = _try_goto(page, f"{EUM_BASE}/main")
-        if main_ok and is_logged_in(page):
-            log.info("메인 이동 후 로그인 확인됨")
-            ctx.set_result(msg="메인 이동 후 세션 확인", ok=True)
-            return {"ok": True, "reason": "메인 이동 후 세션 확인", "user": eum_id}
+        # 메인 페이지 우회 단축경로 제거됨 — EUM /main 은 미로그인도 공개라 false positive.
+        # 바로 로그인 URL 후보부터 시도하여 실제 폼/세션을 확인한다.
 
         # 로그인 URL 후보 순서대로 시도
         login_page_reached = False
-        for login_url in _LOGIN_URL_CANDIDATES:
+        for login_url in [EUM_PRIMARY_LOGIN_URL]:
             ok = _try_goto(page, login_url)
-            if ok:
-                current = page.url
-                # 로그인 폼 존재 여부 확인
-                id_sel = _find_selector(page, _ID_SELECTORS)
-                if id_sel:
-                    log.info("로그인 페이지 발견: url=%s id_sel=%s", current, id_sel)
-                    login_page_reached = True
-                    break
+            if not ok:
+                continue
+            current = page.url
+
+            # WEBLOG400M00 진입 시 회원 분류 (단말기 업체) 선택 필요
+            if "WEBLOG400M00" in current:
+                if _select_member_category(page, _MEMBER_CATEGORY):
+                    _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
+                    # 폼이 visible 로 바뀔 때까지 잠깐 대기
+                    try:
+                        page.wait_for_selector(
+                            "input[type='password']:visible",
+                            state="visible", timeout=3000,
+                        )
+                    except Exception:
+                        pass
+
+            id_sel = _find_selector(page, _ID_SELECTORS)
+            if id_sel:
+                log.info("로그인 페이지 발견: url=%s id_sel=%s", current, id_sel)
+                login_page_reached = True
+                break
 
         if not login_page_reached:
-            # 현재 페이지에서 폼 재시도
+            # 현재 페이지에서 폼 재시도 (혹은 단말기 업체 선택 재시도)
+            if "WEBLOG400M00" in page.url:
+                _select_member_category(page, _MEMBER_CATEGORY)
+                _select_terminal_company_subtype(page, _TERMINAL_COMPANY_SUBTYPE)
             id_sel = _find_selector(page, _ID_SELECTORS)
             if not id_sel:
                 msg = "로그인 페이지/폼을 찾을 수 없습니다."
@@ -204,11 +383,17 @@ def login(page) -> dict:
 
         log.info("로그인 폼 입력 시작: id_sel=%s pw_sel=%s", id_sel, pw_sel)
 
-        # 필드 초기화 후 입력
-        page.fill(id_sel, "")
-        page.fill(id_sel, eum_id)
-        page.fill(pw_sel, "")
-        page.fill(pw_sel, eum_pw)
+        # 휴먼 타이핑 (봇 감지 회피)
+        r_id = safe_human_input(page, id_sel, eum_id, label="ID", delay_ms=80)
+        if not r_id.get("ok"):
+            msg = f"ID 입력 실패: {r_id.get('reason','')}"
+            ctx.set_result(msg=msg, ok=False)
+            return {"ok": False, "reason": msg, "user": ""}
+        r_pw = safe_human_input(page, pw_sel, eum_pw, label="PW", delay_ms=80)
+        if not r_pw.get("ok"):
+            msg = f"PW 입력 실패: {r_pw.get('reason','')}"
+            ctx.set_result(msg=msg, ok=False)
+            return {"ok": False, "reason": msg, "user": ""}
 
         # 로그인 버튼 클릭
         btn_sel = _find_selector(page, _BTN_SELECTORS)
@@ -255,6 +440,9 @@ def login(page) -> dict:
         # 실패 메시지 추출 시도
         fail_msg = "로그인 실패 (이유 불명)"
         fail_selectors = [
+            "#alertMsg0",
+            ".pop_modal_alert .pop_msg",
+            ".pop_modal_alert",
             ".error-msg", ".alert", ".warning",
             "[class*='error']", "[class*='fail']",
             "p:has-text('아이디')", "p:has-text('비밀번호')",
