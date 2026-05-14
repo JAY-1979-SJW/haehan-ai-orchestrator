@@ -10,6 +10,7 @@ LocalAgent, LocalAgentTask, RegisterResult 데이터클래스와
 """
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass
 from typing import Optional
 
@@ -32,10 +33,7 @@ class LocalAgent:
     def to_safe(self) -> dict:
         """API 응답용 (token_hash 제외, 연결 상태 계산값 포함)."""
         # Late binding: circular import 회피
-        from .local_agent_registry import (
-            get_agent_status, get_active_task_count, get_current_task_id,
-            get_task_count, get_completed_task_count, get_failed_task_count
-        )
+        registry = importlib.import_module("ai_orchestrator.local_agent_registry")
 
         return {
             "agent_id": self.agent_id,
@@ -44,16 +42,16 @@ class LocalAgent:
             "version": self.version,
             "registered_at": self.registered_at,
             "requested_by": self.requested_by,
-            "agent_status": get_agent_status(self.agent_id),
+            "agent_status": registry.get_agent_status(self.agent_id),
             "smoke_test": self.smoke_test,
             "connected_at": self.connected_at,
             "last_seen_at": self.last_seen_at,
             "disconnected_at": self.disconnected_at,
-            "active_task_count": get_active_task_count(self.agent_id),
-            "current_task_id": get_current_task_id(self.agent_id),
-            "task_count": get_task_count(self.agent_id),
-            "completed_task_count": get_completed_task_count(self.agent_id),
-            "failed_task_count": get_failed_task_count(self.agent_id),
+            "active_task_count": registry.get_active_task_count(self.agent_id),
+            "current_task_id": registry.get_current_task_id(self.agent_id),
+            "task_count": registry.get_task_count(self.agent_id),
+            "completed_task_count": registry.get_completed_task_count(self.agent_id),
+            "failed_task_count": registry.get_failed_task_count(self.agent_id),
         }
 
 
