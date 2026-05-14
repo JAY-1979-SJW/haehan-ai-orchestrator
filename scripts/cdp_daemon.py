@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -33,7 +34,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.config import CDP_PORT  # noqa: E402
+from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -63,12 +64,16 @@ class DaemonState:
     pid: int             = 0
     chrome_pid: int      = 0
     popup_monitor_pid: int = 0
+    chrome_ui_monitor_pid: int = 0
     cdp_port: int        = CDP_PORT
     browser_context: str = "inactive"   # active / inactive
     started_at: str      = ""
     last_heartbeat: str  = ""
     last_error: str      = ""
     restart_count: int   = 0
+    browser_kind: str    = ""
+    browser_exe: str     = ""
+    profile_dir: str     = ""
 
 
 def _save_state(s: DaemonState) -> None:
@@ -171,16 +176,107 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
     return proc
 
 
+def _record_browser_launch_metadata() -> None:
+    try:
+        exe, kind = _find_browser(BROWSER_TYPE)
+        _state.browser_exe = exe
+        _state.browser_kind = kind
+    except Exception:
+        pass
+    _state.profile_dir = str(PROFILE_DIR)
+
+
 def _is_cdp_ready(port: int = CDP_PORT, timeout: int = 15) -> bool:
     import urllib.request
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            urllib.request.urlopen(f"http://localhost:{port}/json/version", timeout=2)
+            urllib.request.urlopen(f"http://{CDP_HOST}:{port}/json/version", timeout=2)
             return True
         except Exception:
             time.sleep(0.5)
     return False
+
+
+def _cdp_json(path: str, *, port: int = CDP_PORT) -> Any:
+    import urllib.request
+    with urllib.request.urlopen(f"http://{CDP_HOST}:{port}{path}", timeout=3) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _process_info(pid: int) -> dict[str, str]:
+    if not pid:
+        return {}
+    if sys.platform != "win32":
+        return {}
+    try:
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            (
+                f"Get-CimInstance Win32_Process -Filter \"ProcessId={pid}\" | "
+                "Select-Object ProcessId,ExecutablePath,CommandLine | ConvertTo-Json -Compress"
+            ),
+        ]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        if r.returncode != 0 or not r.stdout.strip():
+            return {}
+        data = json.loads(r.stdout)
+        if not isinstance(data, dict):
+            return {}
+        return {
+            "pid": str(data.get("ProcessId") or ""),
+            "exe": str(data.get("ExecutablePath") or ""),
+            "command_line": str(data.get("CommandLine") or ""),
+        }
+    except Exception:
+        return {}
+
+
+def _extract_arg(command_line: str, name: str) -> str:
+    pattern = rf'"?--{re.escape(name)}=([^"]+)"?|--{re.escape(name)}=([^\s]+)'
+    m = re.search(pattern, command_line)
+    if not m:
+        return ""
+    return (m.group(1) or m.group(2) or "").strip()
+
+
+def _profile_session_files(profile_dir: Path) -> list[str]:
+    sessions_dir = profile_dir / "Default" / "Sessions"
+    if not sessions_dir.exists():
+        return []
+    try:
+        return [p.name for p in sorted(sessions_dir.iterdir()) if p.is_file()]
+    except Exception:
+        return []
+
+
+def _clear_session_restore_artifacts() -> list[Path]:
+    """Remove Chrome session files from the daemon-only profile before launch."""
+    default_dir = PROFILE_DIR / "Default"
+    candidates: list[Path] = []
+    sessions_dir = default_dir / "Sessions"
+    if sessions_dir.exists():
+        try:
+            candidates.extend(p for p in sessions_dir.iterdir() if p.is_file())
+        except Exception:
+            pass
+    for name in ("Current Session", "Current Tabs", "Last Session", "Last Tabs"):
+        p = default_dir / name
+        if p.exists():
+            candidates.append(p)
+
+    removed: list[Path] = []
+    for p in candidates:
+        try:
+            p.unlink()
+            removed.append(p)
+        except Exception as e:
+            log.warning("[BROWSER] session restore cleanup failed: %s (%s)", p, e)
+    if removed:
+        log.info("[BROWSER] removed %d session restore file(s)", len(removed))
+    return removed
 
 
 # ── 데몬 본체 ─────────────────────────────────────────────────────────
@@ -188,6 +284,7 @@ _stop_event = threading.Event()
 _state = DaemonState()
 _chrome_proc: subprocess.Popen | None = None
 _popup_monitor_proc: subprocess.Popen | None = None
+_chrome_ui_monitor_proc: subprocess.Popen | None = None
 _restart_lock = threading.Lock()
 
 
@@ -267,6 +364,7 @@ def _restart_chrome() -> None:
         try:
             _chrome_proc = _launch_chrome(CDP_PORT)
             _state.chrome_pid = _chrome_proc.pid
+            _record_browser_launch_metadata()
             _save_state(_state)
 
             if _is_cdp_ready(CDP_PORT):
@@ -284,15 +382,55 @@ def _restart_chrome() -> None:
 
 
 def _heartbeat_loop() -> None:
+    """헬스체크 — CDP 포트가 응답 안 하면 Chrome 자동 재시작.
+
+    poll() 기반 감지는 Chrome이 손자 프로세스로 fork 시 놓침.
+    실제 기능 살아있는지가 중요하므로 CDP 포트 ping 으로 판정.
+    연속 N회 실패 시 재시작.
+    """
+    global _chrome_ui_monitor_proc
+
+    cdp_fail_streak = 0
+    CDP_FAIL_THRESHOLD = 3   # 3회 연속(약 30초) 응답 없으면 재시작
+    healthy_streak = 0
+    HEALTHY_RESET_AFTER = 30  # 30회 연속(약 5분) 정상이면 restart_count 초기화
+
     while not _stop_event.is_set():
         try:
             _state.last_heartbeat = datetime.now(timezone.utc).isoformat()
 
-            # Chrome 프로세스 생존 확인 → 죽었으면 자동 재시작
-            if _chrome_proc and _chrome_proc.poll() is not None:
-                log.warning("[HEARTBEAT] Chrome 프로세스 종료 감지 → 자동 재시작")
+            # CDP 포트 헬스체크 — 사용자가 Chrome 창을 닫아도 여기서 잡힘
+            try:
+                import urllib.request
+                with urllib.request.urlopen(
+                    f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=2
+                ) as resp:
+                    if resp.status == 200:
+                        cdp_fail_streak = 0
+                        healthy_streak += 1
+                        if _state.browser_context != "active":
+                            _state.browser_context = "active"
+                            log.info("[HEARTBEAT] CDP 정상 복귀")
+                        if healthy_streak >= HEALTHY_RESET_AFTER and _state.restart_count > 0:
+                            log.info("[HEARTBEAT] 5분간 정상 — restart_count(%d) 초기화",
+                                     _state.restart_count)
+                            _state.restart_count = 0
+                            healthy_streak = 0
+                    else:
+                        cdp_fail_streak += 1
+                        healthy_streak = 0
+            except Exception:
+                cdp_fail_streak += 1
+                healthy_streak = 0
+
+            if cdp_fail_streak >= CDP_FAIL_THRESHOLD:
+                log.warning("[HEARTBEAT] CDP 포트 %d 무응답 %d회 — Chrome 자동 재시작",
+                            CDP_PORT, cdp_fail_streak)
+                _state.browser_context = "inactive"
+                cdp_fail_streak = 0
                 threading.Thread(target=_restart_chrome, daemon=True).start()
 
+            # popup_monitor 자동 재시작 (팝업 감지 보장)
             if _popup_monitor_proc and _popup_monitor_proc.poll() is not None:
                 log.warning("[HEARTBEAT] popup_monitor 종료 감지 → 자동 재시작")
                 _state.popup_monitor_pid = 0
@@ -300,6 +438,17 @@ def _heartbeat_loop() -> None:
                     _start_popup_monitor_process()
                 except Exception as e:
                     log.warning("[HEARTBEAT] popup_monitor 재시작 실패: %s", e)
+
+            # chrome_ui_monitor 자동 재시작 (독립 프로세스)
+            if _chrome_ui_monitor_proc and _chrome_ui_monitor_proc.poll() is not None:
+                log.warning("[HEARTBEAT] chrome_ui_monitor 종료 감지 → 자동 재시작")
+                _state.chrome_ui_monitor_pid = 0
+                try:
+                    script = ROOT / "scripts" / "chrome_ui_monitor.py"
+                    _chrome_ui_monitor_proc = _launch_background_python([str(script), "3.0"])
+                    _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
+                except Exception as e:
+                    log.warning("[HEARTBEAT] chrome_ui_monitor 재시작 실패: %s", e)
 
             _save_state(_state)
         except Exception as e:
@@ -313,7 +462,7 @@ def _signal_handler(signum: int, frame: Any) -> None:
 
 
 def run_daemon() -> None:
-    global _chrome_proc, _state
+    global _chrome_proc, _chrome_ui_monitor_proc, _state
 
     log.info("=" * 60)
     log.info("  AI CDP 데몬 시작 (상시 실행 모드)")
@@ -331,6 +480,7 @@ def run_daemon() -> None:
         cdp_port=CDP_PORT,
         browser_context="inactive",
         started_at=datetime.now(timezone.utc).isoformat(),
+        profile_dir=str(PROFILE_DIR),
     )
     _save_state(_state)
 
@@ -338,6 +488,7 @@ def run_daemon() -> None:
     try:
         _chrome_proc = _launch_chrome(CDP_PORT)
         _state.chrome_pid = _chrome_proc.pid
+        _record_browser_launch_metadata()
         _save_state(_state)
     except Exception as e:
         log.error("Chrome 실행 실패: %s", e)
@@ -371,14 +522,18 @@ def run_daemon() -> None:
     except Exception as e:
         log.warning("popup_monitor 시작 실패 (데몬은 계속): %s", e)
 
-    # chrome_ui_watcher (Windows UIA 기반, chrome chrome UI 감시)
+    # chrome_ui_monitor (별도 독립 프로세스 — UI Automation 격리)
+    # daemon thread가 아닌 별도 프로세스이므로 IDE 세션 간섭 없음
     try:
-        from scripts.popup_monitor import ChromeUIWatcher
-        _chrome_ui_mon = ChromeUIWatcher(poll_interval_s=3.0)
-        _chrome_ui_mon.start()
-        log.info("✓ chrome_ui_watcher 자동 시작 완료 (poll=3.0s)")
+        script = ROOT / "scripts" / "chrome_ui_monitor.py"
+        _chrome_ui_monitor_proc = _launch_background_python(
+            [str(script), "3.0"]
+        )
+        _state.chrome_ui_monitor_pid = _chrome_ui_monitor_proc.pid
+        _save_state(_state)
+        log.info("[chrome_ui_monitor] process started PID=%d", _chrome_ui_monitor_proc.pid)
     except Exception as e:
-        log.warning("chrome_ui_watcher 시작 실패 (데몬은 계속): %s", e)
+        log.warning("[chrome_ui_monitor] 시작 실패 (데몬은 계속): %s", e)
 
     # CDP 이벤트 모니터 (탭 이동/로드/요청 상시 구독)
     try:
@@ -397,24 +552,50 @@ def run_daemon() -> None:
     finally:
         log.info("데몬 종료 중...")
         _stop_process(_popup_monitor_proc, "popup_monitor")
+        _stop_process(_chrome_ui_monitor_proc, "chrome_ui_monitor")
         if _chrome_proc and _chrome_proc.poll() is None:
             _chrome_proc.terminate()
             log.info("[CHROME] 종료 (PID=%d)", _chrome_proc.pid)
         _state.running = False
         _state.chrome_pid = 0
         _state.popup_monitor_pid = 0
+        _state.chrome_ui_monitor_pid = 0
         _state.browser_context = "inactive"
         _save_state(_state)
         log.info("데몬 종료 완료")
 
 
 # ── CLI 명령 ─────────────────────────────────────────────────────────
+def _probe_live_cdp(port: int = CDP_PORT) -> tuple[bool, str]:
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(
+            f"http://{CDP_HOST}:{port}/json/version", timeout=2
+        ) as resp:
+            if resp.status == 200:
+                return True, "responding"
+            return False, f"status={resp.status}"
+    except Exception as e:
+        return False, f"unavailable ({e})"
+
+
 def cmd_start() -> None:
+    live_cdp, live_detail = _probe_live_cdp(CDP_PORT)
+    if live_cdp:
+        state = _load_state()
+        if state.running:
+            print(f"CDP daemon-managed endpoint is already responding (port={CDP_PORT})")
+        else:
+            print(f"Live CDP endpoint is responding but daemon state is inactive (port={CDP_PORT})")
+            print("Use current browser for read-only work, or run restart after closing the external CDP Chrome.")
+        print(f"detail: {live_detail}")
+        return
     import urllib.request
 
     # 이미 CDP 포트 응답 중이면 스킵
     try:
-        urllib.request.urlopen(f"http://localhost:{CDP_PORT}/json/version", timeout=2)
+        urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=2)
         print(f"✓ CDP 데몬 이미 실행 중 (포트={CDP_PORT})")
         return
     except Exception:
@@ -500,6 +681,34 @@ def cmd_restart() -> None:
 def cmd_status() -> None:
     import urllib.request
     state = _load_state()
+    probe_port = state.cdp_port or CDP_PORT
+    live_cdp = False
+    live_cdp_detail = "no response"
+    try:
+        with urllib.request.urlopen(
+            f"http://{CDP_HOST}:{probe_port}/json/version", timeout=2
+        ) as resp:
+            live_cdp = resp.status == 200
+            live_cdp_detail = "responding" if live_cdp else f"status={resp.status}"
+    except Exception as e:
+        live_cdp_detail = f"unavailable ({e})"
+    print(f"live CDP:      {'yes' if live_cdp else 'no'}")
+    print(f"live endpoint: http://{CDP_HOST}:{probe_port}  ({live_cdp_detail})")
+    print(f"managed daemon:{' yes' if state.running else ' no'}")
+    print(f"browser usable:{' yes' if live_cdp else ' no'}")
+    print(f"daemon pid:    {state.pid or '-'}")
+    print(f"chrome pid:    {state.chrome_pid or '-'}")
+    print(f"popup pid:     {state.popup_monitor_pid or '-'}")
+    print(f"browser state: {state.browser_context or 'unknown'}")
+    print(f"started at:    {state.started_at or '-'}")
+    print(f"heartbeat:     {state.last_heartbeat or '-'}")
+    if state.last_error:
+        print(f"last error:    {state.last_error}")
+    vbs_path = _startup_folder() / f"{TASK_NAME}.vbs"
+    print(f"autostart:     {'yes' if vbs_path.exists() else 'no'}")
+    if live_cdp and not state.running:
+        print("note: live browser is usable, but no daemon process is managing it.")
+    return
 
     print("=" * 60)
     print("CDP 데몬 상태")
@@ -508,7 +717,7 @@ def cmd_status() -> None:
 
     if state.running:
         try:
-            urllib.request.urlopen(f"http://localhost:{state.cdp_port}/json/version", timeout=2)
+            urllib.request.urlopen(f"http://{CDP_HOST}:{state.cdp_port}/json/version", timeout=2)
             cdp_ok = "✓ 응답 중"
         except Exception:
             cdp_ok = "✗ 응답 없음"
@@ -528,6 +737,54 @@ def cmd_status() -> None:
     vbs_path  = _startup_folder() / f"{TASK_NAME}.vbs"
     installed = vbs_path.exists()
     print(f"자동시작 등록: {'✓ 등록됨' if installed else '✗ 미등록'}")
+
+def cmd_inspect() -> None:
+    state = _load_state()
+    proc = _process_info(state.chrome_pid)
+    command_line = proc.get("command_line", "")
+    profile_from_cmd = _extract_arg(command_line, "user-data-dir")
+    port_from_cmd = _extract_arg(command_line, "remote-debugging-port")
+    profile_dir = Path(profile_from_cmd or state.profile_dir or PROFILE_DIR)
+
+    print("=" * 60)
+    print("CDP browser inspect")
+    print("=" * 60)
+    print(f"daemon_pid:        {state.pid}")
+    print(f"chrome_pid:        {state.chrome_pid}")
+    print(f"browser_kind:      {state.browser_kind or '(unknown)'}")
+    print(f"browser_exe:       {proc.get('exe') or state.browser_exe or '(unknown)'}")
+    print(f"cdp_endpoint:      http://{CDP_HOST}:{state.cdp_port}")
+    print(f"port_from_cmd:     {port_from_cmd or '(missing)'}")
+    print(f"profile_dir:       {profile_dir}")
+    print(f"command_line:      {command_line or '(unavailable)'}")
+
+    session_files = _profile_session_files(profile_dir)
+    print(f"profile_sessions:  {len(session_files)} file(s)")
+    for name in session_files[-6:]:
+        print(f"  - {name}")
+
+    try:
+        version = _cdp_json("/json/version", port=state.cdp_port)
+        print(f"cdp_browser:       {version.get('Browser', '')}")
+        print(f"websocket:         {version.get('webSocketDebuggerUrl', '')}")
+    except Exception as e:
+        print(f"cdp_browser:       unavailable ({e})")
+
+    try:
+        tabs = _cdp_json("/json/list", port=state.cdp_port)
+        print(f"tabs:              {len(tabs)}")
+        for idx, tab in enumerate(tabs, start=1):
+            url = tab.get("url", "")
+            title = tab.get("title", "")
+            marker = ""
+            if "naver.com/NOTICE/" in url:
+                marker = " [naver notice]"
+            elif "naver.com" in url:
+                marker = " [naver]"
+            print(f"  {idx}. {title[:60]}{marker}")
+            print(f"     {url}")
+    except Exception as e:
+        print(f"tabs:              unavailable ({e})")
 
 
 def _startup_folder() -> Path:
@@ -597,6 +854,7 @@ def main() -> None:
         case "stop":      cmd_stop()
         case "restart":   cmd_restart()
         case "status":    cmd_status()
+        case "inspect":   cmd_inspect()
         case "install":   cmd_install()
         case "uninstall": cmd_uninstall()
         case "logs":      cmd_logs()

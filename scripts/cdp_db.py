@@ -95,6 +95,58 @@ def init_db() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_mail_sends_sent
                 ON mail_sends(site_name, sent_at DESC);
+
+            CREATE TABLE IF NOT EXISTS automation_runs (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at    TEXT NOT NULL,
+                module        TEXT NOT NULL,
+                workflow      TEXT NOT NULL,
+                command       TEXT,
+                status        TEXT NOT NULL DEFAULT 'running',
+                risk_level    TEXT NOT NULL DEFAULT 'auto',
+                input_ref     TEXT,
+                output_ref    TEXT,
+                detail        TEXT,
+                error_msg     TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_automation_runs_module
+                ON automation_runs(module, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS mail_queue (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at    TEXT NOT NULL,
+                updated_at    TEXT NOT NULL,
+                provider      TEXT NOT NULL,
+                source        TEXT NOT NULL,
+                status        TEXT NOT NULL DEFAULT 'pending',
+                recipient     TEXT NOT NULL,
+                cc            TEXT,
+                subject       TEXT,
+                body_preview  TEXT,
+                body_hash     TEXT,
+                metadata      TEXT,
+                prepared_at   TEXT,
+                sent_at       TEXT,
+                error_msg     TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_mail_queue_status
+                ON mail_queue(provider, status, created_at DESC);
+
+            CREATE TABLE IF NOT EXISTS security_events (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at    TEXT NOT NULL,
+                module        TEXT NOT NULL,
+                event_type    TEXT NOT NULL,
+                severity      TEXT NOT NULL DEFAULT 'info',
+                action        TEXT NOT NULL DEFAULT 'log',
+                safe_detail   TEXT,
+                ref           TEXT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_security_events_module
+                ON security_events(module, created_at DESC);
         """)
 
 
@@ -314,6 +366,117 @@ def get_mail_sends(
 
 
 # ── CLI (python scripts/cdp_db.py) ───────────────────────────────
+
+def log_automation_run(
+    module: str,
+    workflow: str,
+    *,
+    command: str = "",
+    status: str = "running",
+    risk_level: str = "auto",
+    input_ref: str = "",
+    output_ref: str = "",
+    detail: str = "",
+    error_msg: str = "",
+) -> int:
+    now = _now()
+    with _conn() as con:
+        cur = con.execute("""
+            INSERT INTO automation_runs
+                (created_at, module, workflow, command, status, risk_level,
+                 input_ref, output_ref, detail, error_msg)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (now, module, workflow, command, status, risk_level,
+              input_ref or None, output_ref or None, detail or None, error_msg or None))
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+def update_automation_run(run_id: int, *, status: str, output_ref: str = "", detail: str = "", error_msg: str = "") -> None:
+    with _conn() as con:
+        con.execute("""
+            UPDATE automation_runs
+            SET status = ?, output_ref = COALESCE(NULLIF(?, ''), output_ref),
+                detail = COALESCE(NULLIF(?, ''), detail), error_msg = ?
+            WHERE id = ?
+        """, (status, output_ref, detail, error_msg or None, run_id))
+
+
+def upsert_mail_queue_item(
+    *,
+    provider: str,
+    source: str,
+    recipient: str,
+    subject: str,
+    body: str,
+    status: str = "pending",
+    cc: str = "",
+    metadata: str = "",
+) -> int:
+    import hashlib
+
+    now = _now()
+    body_preview = body[:100] if body else ""
+    body_hash = hashlib.sha256(body.encode("utf-8")).hexdigest() if body else ""
+    with _conn() as con:
+        existing = con.execute("""
+            SELECT id FROM mail_queue
+            WHERE provider = ? AND recipient = ? AND subject = ? AND body_hash = ?
+            ORDER BY id DESC LIMIT 1
+        """, (provider, recipient, subject, body_hash)).fetchone()
+        if existing:
+            con.execute("""
+                UPDATE mail_queue
+                SET updated_at = ?, source = ?, status = ?, cc = ?,
+                    body_preview = ?, metadata = COALESCE(NULLIF(?, ''), metadata),
+                    error_msg = NULL
+                WHERE id = ?
+            """, (now, source, status, cc or None, body_preview or None, metadata or "", existing["id"]))
+            return int(existing["id"])
+        cur = con.execute("""
+            INSERT INTO mail_queue
+                (created_at, updated_at, provider, source, status, recipient, cc,
+                 subject, body_preview, body_hash, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (now, now, provider, source, status, recipient, cc or None,
+              subject or None, body_preview or None, body_hash or None, metadata or None))
+        return cur.lastrowid  # type: ignore[return-value]
+
+
+def mark_mail_queue_prepared(queue_id: int | None = None, *, provider: str = "", recipient: str = "", subject: str = "") -> None:
+    now = _now()
+    with _conn() as con:
+        if queue_id:
+            con.execute("""
+                UPDATE mail_queue
+                SET status = 'prepared', updated_at = ?, prepared_at = ?
+                WHERE id = ?
+            """, (now, now, queue_id))
+        else:
+            con.execute("""
+                UPDATE mail_queue
+                SET status = 'prepared', updated_at = ?, prepared_at = ?
+                WHERE provider = ? AND recipient = ? AND subject = ?
+            """, (now, now, provider, recipient, subject))
+
+
+def log_security_event(
+    module: str,
+    event_type: str,
+    *,
+    severity: str = "info",
+    action: str = "log",
+    safe_detail: str = "",
+    ref: str = "",
+) -> int:
+    now = _now()
+    with _conn() as con:
+        cur = con.execute("""
+            INSERT INTO security_events
+                (created_at, module, event_type, severity, action, safe_detail, ref)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (now, module, event_type, severity, action, safe_detail or None, ref or None))
+        return cur.lastrowid  # type: ignore[return-value]
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")

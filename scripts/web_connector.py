@@ -29,10 +29,14 @@ _DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
 
 import sys
 sys.path.insert(0, str(ROOT))
-from scripts.config import CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
+from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST, CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
+
+# ── 브라우저 context 캐싱 ────────────────────────────────────────────
+_BROWSER_CONTEXT_CACHE = None
+_BROWSER_CACHE = None
 
 
 def _get_cdp_port() -> int:
@@ -47,12 +51,20 @@ def _get_cdp_port() -> int:
 
 
 def _connect_browser():
-    """CDP 브라우저에 연결해 (browser, context) 반환."""
+    """CDP 브라우저에 연결해 (browser, context) 반환.
+
+    context를 캐싱해서 여러 번 호출해도 같은 context를 반환합니다.
+    """
+    global _BROWSER_CONTEXT_CACHE, _BROWSER_CACHE
+
+    # 캐시된 context가 있으면 재사용
+    if _BROWSER_CONTEXT_CACHE is not None:
+        return _BROWSER_CACHE, _BROWSER_CONTEXT_CACHE
     port = _get_cdp_port()
     log.debug("CDP 연결 시도: port=%s", port)
 
     p = sync_playwright().start()
-    browser = p.chromium.connect_over_cdp(f"http://localhost:{port}")
+    browser = p.chromium.connect_over_cdp(f"http://{_DEFAULT_CDP_HOST}:{port}")
 
     ctx = None
     for _ in range(10):
@@ -64,6 +76,11 @@ def _connect_browser():
     if not ctx:
         log.error("CDP 브라우저 컨텍스트 생성 실패")
         raise RuntimeError("CDP 브라우저 컨텍스트 생성 실패")
+
+    # 캐싱 (전역 변수 업데이트)
+    globals()['_BROWSER_CACHE'] = browser
+    globals()['_BROWSER_CONTEXT_CACHE'] = ctx
+    log.debug("브라우저 context 캐싱 완료")
 
     return browser, ctx
 
@@ -94,6 +111,26 @@ def get_page() -> Page:
     page = ctx.new_page()
     log.debug("새 페이지 생성 완료")
     return page
+
+
+def get_page_by_url(*patterns: str, create_url: str | None = None) -> Page:
+    """Return an existing CDP page whose URL contains one of the patterns.
+
+    This avoids mixing independent tabs such as EUM and Hiworks when both are
+    open in the same browser context.
+    """
+    _, ctx = _connect_browser()
+    needles = [p for p in patterns if p]
+    for page in reversed(ctx.pages):
+        url = page.url or ""
+        if needles and any(needle in url for needle in needles):
+            log.debug("URL matched page: %s", url)
+            return page
+    if create_url:
+        page = ctx.new_page()
+        page.goto(create_url, timeout=30000)
+        return page
+    return get_page()
 
 
 def close_page(page: Page) -> None:
