@@ -21,7 +21,7 @@ def main() -> None:
 
     try:
         import urllib.request
-        from scripts.config import CDP_PORT
+        from scripts.config import CDP_HOST, CDP_PORT
         from scripts.login_detector import (
             detect_login_on_current_tab,
             _find_site_by_domain,
@@ -35,7 +35,7 @@ def main() -> None:
 
         # CDP 포트 확인
         try:
-            urllib.request.urlopen(f"http://localhost:{CDP_PORT}/json/version", timeout=2)
+            urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=2)
         except Exception:
             print("✗ CDP 데몬이 실행 중이지 않습니다")
             print("  먼저 'python scripts/cdp_daemon.py start' 실행하세요")
@@ -47,7 +47,7 @@ def main() -> None:
 
             with sync_playwright() as p:
                 # CDP 연결
-                browser = p.chromium.connect_over_cdp(f"http://localhost:{CDP_PORT}")
+                browser = p.chromium.connect_over_cdp(f"http://{CDP_HOST}:{CDP_PORT}")
                 contexts = browser.contexts
 
                 if not contexts:
