@@ -25,6 +25,8 @@ services:
       HTTP_USERS_PATH: /run/secrets/api/http_users.json
       APP_HOST: 0.0.0.0
       APP_PORT: "8400"
+    extra_hosts:
+      - host.docker.internal:host-gateway
     volumes:
       # 로그/토큰/인박스 등 런타임 산출물 — dashboard/monitor 호스트 storage 와 섞이지 않도록 전용 named volume.
       - api_storage:/app/ai_orchestrator/storage
@@ -47,10 +49,9 @@ services:
       - default
       # app_web: 기존 nginx(컨테이너) 가 속한 외부 네트워크. nginx → API DNS 접근용.
       - app_web
-      # cad-quantity_default: cad-backend 컨테이너가 속한 외부 네트워크.
+      # cad-quantity-app_default: cad-backend 컨테이너가 속한 외부 네트워크.
       # CAD 프록시 라우터(/api/v1/cad/*) 에서 ``cad-backend:8000`` DNS
       # 로 호출하기 위함. 이 compose 가 네트워크를 생성/삭제하지 않는다.
-      - cad_quantity_default
 
   admin-web:
     build:
@@ -152,6 +153,3 @@ networks:
     external: true
     name: app_web
   # cad-quantity 프로젝트의 기본 네트워크. cad-backend DNS 해석용.
-  cad_quantity_default:
-    external: true
-    name: cad-quantity_default
