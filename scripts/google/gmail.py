@@ -74,39 +74,78 @@ def _task_compose(page: Any, args: list[str]) -> None:
     page_goto(page, GOOGLE_URLS["gmail_home"])
     # 작성 버튼 대기
     page_wait_visible(page, '[role="main"]', timeout=20000)
+    import time as _time
+    _time.sleep(2)
 
-    # 작성 버튼 클릭
-    if not page_wait_click(page, 'div[role="button"]:has-text("편지쓰기"), div[role="button"]:has-text("Compose")'):
+    # 작성 버튼 클릭 — JS로 정확 텍스트 매칭 (Calendar 패턴 동일)
+    compose_clicked = page.evaluate("""
+    () => {
+        for (const el of document.querySelectorAll('div[role="button"], button')) {
+            const txt = (el.innerText || '').trim();
+            if (txt === '편지쓰기' || txt === 'Compose') {
+                const r = el.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                    el.click();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    """)
+    if not compose_clicked:
         print("  ⚠  편지쓰기 버튼 못 찾음")
         return
+    _time.sleep(2)
 
-    # 작성 폼 대기
-    if not page_wait_visible(page, 'input[aria-label*="To"], input[aria-label*="받는사람"]', timeout=10000):
+    # 작성 폼 대기 — 한국어 UI: aria-label="수신자"
+    if not page_wait_visible(page, 'input[aria-label="수신자"], input[aria-label*="To"], input[aria-label*="받는사람"]', timeout=10000):
         print("  ⚠  작성 폼 못 열림")
         return
 
     # To 입력
-    page_wait_type(page, 'input[aria-label*="To"], input[aria-label*="받는사람"]', to)
+    page_wait_type(page, 'input[aria-label="수신자"], input[aria-label*="To"], input[aria-label*="받는사람"]', to)
     page.keyboard.press("Tab")
+    _time.sleep(0.5)
 
-    # Subject 입력
-    page_wait_type(page, 'input[aria-label*="Subject"], input[name*="subject"]', subject)
+    # Subject 입력 — name=subjectbox 가장 안정적
+    page_wait_type(page, 'input[name="subjectbox"], input[aria-label="제목"], input[aria-label*="Subject"]', subject)
+    _time.sleep(0.3)
 
-    # Body 입력
-    if page_wait_visible(page, 'div[contenteditable="true"]', timeout=5000):
-        page.evaluate(f"""() => {{
-            const editor = document.querySelector('div[contenteditable="true"]');
-            if (editor) {{
-                editor.focus();
-                editor.textContent = {repr(body)};
-                editor.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            }}
-        }}""")
+    # Body 입력 — aria-label="메일 본문" (Trusted Types로 innerHTML 차단되므로 키보드 타이핑)
+    focused = page.evaluate("""() => {
+        const ed = document.querySelector('div[contenteditable="true"][aria-label="메일 본문"]')
+               || document.querySelector('div[contenteditable="true"][aria-label*="Message"]')
+               || document.querySelector('div[role="textbox"][contenteditable="true"]');
+        if (!ed) return false;
+        ed.focus();
+        return true;
+    }""")
+    if focused:
+        for line in body.split("\n"):
+            page.keyboard.type(line, delay=10)
+            page.keyboard.press("Enter")
+    _time.sleep(0.5)
 
-    # 발송 버튼 클릭
-    if page_wait_click(page, 'button:has-text("보내기"), button[aria-label*="Send"], button[aria-label*="보내기"]'):
-        # 전송 완료 후 메인 화면 복귀 대기
-        page_wait_visible(page, '[role="main"]', timeout=10000)
+    # 발송 버튼 클릭 — JS 정확 매칭
+    sent = page.evaluate("""
+    () => {
+        for (const el of document.querySelectorAll('div[role="button"], button')) {
+            const aria = el.getAttribute('aria-label') || '';
+            const txt = (el.innerText || '').trim();
+            if (/^보내기/.test(aria) || /^Send/.test(aria) || txt === '보내기' || txt === 'Send') {
+                const r = el.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) {
+                    el.click();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    """)
+    if sent:
+        _time.sleep(2.5)
         print("  ✓ 발송 완료")
     else:
         print("  ⚠  보내기 버튼 못 찾음")
