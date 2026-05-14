@@ -26,8 +26,8 @@
 | `eum` | 건설근로자공제회 EUM | `complete_baseline` | `docs/reports/eum_completion_report_20260513.md` | `docs/eum_logic_reference_20260513.md` | 실제 등록/말소 submit E2E는 승인 후 |
 | `hiworks` | 하이웍스 | `complete_baseline` | `docs/reports/hiworks_completion_report_20260513.md` | `docs/hiworks_logic_reference_20260513.md` | 17개 업무 서비스 표면 탐색 및 입력/버튼 action catalog 완료. 실제 메일 발송/결재/신청은 승인+확인문구 후 |
 | `naver` | 네이버 서비스 | `implemented` | - | `docs/NAVER_SERVICES_EXPANSION_PLAN.md` | 기능 범위가 넓어 서비스별 분리 필요 |
-| `g2b` | 나라장터 | `verified` | - | `docs/reports/g2b_public_notice_readonly_matrix_20260507.md` | read-only 기준 |
-| `google` | Google/Gmail | `implemented` | - | `docs/web_automation_standard.md` | API/브라우저 경로 병행 |
+| `g2b` | 나라장터 | `verified` | `docs/reports/g2b_completion_report_20260513.md` | `docs/reports/g2b_public_notice_readonly_matrix_20260507.md` | 공개 공고/첨부 목록 read-only 검증 완료. 인증/입찰/계약/다운로드는 차단 또는 사용자 직접 처리 |
+| `google` | Google/Gmail | `implemented` | `docs/reports/google_surface_exploration_completion_report_20260513.md` | `docs/google_surface_catalog_reference_20260513.md` | 50개 surface read-only 탐색 완료, API/브라우저 경로 병행 |
 | `kakao` | Kakao | `planned` | - | `docs/KAKAO_DESKTOP_DESIGN.md` | 데스크톱 자동화 별도 |
 | `smartstore` | 네이버 스마트스토어 | `complete_baseline` | `docs/reports/smartstore_completion_report_20260513.md` | `docs/smartstore_logic_reference_20260513.md` | action catalog, dry-run prepare, approval-gated submit baseline complete; live E2E paused after Naver robot detection |
 
@@ -60,6 +60,8 @@ baseline.
 - Adapter artifact: `data/google_execution_adapter_catalog_latest.json`
 - Reference: `docs/google_surface_catalog_reference_20260513.md`
 - Workflow reference: `docs/google_business_workflow_reference_20260513.md`
+- Completion report:
+  `docs/reports/google_surface_exploration_completion_report_20260513.md`
 - Router command: `python scripts\cdp_client.py google surfaces catalog`
 - Workflow command: `python scripts\cdp_client.py google work catalog`
 - Adapter command: `python scripts\cdp_client.py google work adapters`

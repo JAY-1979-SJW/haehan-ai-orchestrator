@@ -2,6 +2,8 @@
 
 적용 범위: `ai_orchestrator/sites/adapters/` 하위 모든 DevReg 어댑터
 
+사이트별 확장 작업을 시작하기 전 `docs/site_automation_reference_index.md`를 먼저 확인한다.
+
 ---
 
 ## 1. 어댑터 생명주기

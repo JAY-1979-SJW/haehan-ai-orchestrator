@@ -1,5 +1,7 @@
 # 사이트 자동화 아키텍처 (1단계 골격)
 
+상세 참조 인덱스: `docs/site_automation_reference_index.md`
+
 ## 앱의 새 역할
 haehan-ai-orchestrator 는 기존의 "승인형 AI 오케스트레이터" 역할을 유지한 채,
 여러 외부 사이트에 대해 브라우저 기반 작업(조회/체크/다운로드/업로드)을
