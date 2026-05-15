@@ -5,9 +5,24 @@
     "max_pydantic_failed": 0,
     "max_document_failed": 0,
     "max_circular_imports": 1,
-    "max_unknown_layer_files": 900
+    "max_unknown_layer_files": 20
   },
-  "tracked_residuals": [],
+  "tracked_residuals": [
+    {
+      "code": "FAT_SITE_ROUTER",
+      "path": "scripts/hiworks/router.py",
+      "status": "tracked",
+      "owner": "platform",
+      "next_action": "Phase 2: split into schemas/gates/explorer/mail/workflows sub-modules."
+    },
+    {
+      "code": "ROOT_PY_SCRIPT",
+      "path": "root_legacy_scripts",
+      "status": "tracked",
+      "owner": "platform",
+      "next_action": "Phase 3: relocate or archive remaining root-level .py files."
+    }
+  ],
   "resolved_residuals": [
     {
       "code": "CIRCULAR_IMPORT",
@@ -15,6 +30,20 @@
       "status": "resolved",
       "owner": "platform",
       "next_action": "Resolved by replacing direct late imports with importlib module lookup."
+    },
+    {
+      "code": "UNKNOWN_LAYER",
+      "path": ".claude/",
+      "status": "resolved",
+      "owner": "platform",
+      "next_action": "Resolved by adding .claude to EXCLUDED_DIRS in codebase_layer_audit.py."
+    },
+    {
+      "code": "UNKNOWN_LAYER",
+      "path": "services/file_map_executor/",
+      "status": "resolved",
+      "owner": "platform",
+      "next_action": "Resolved by adding services/ -> L8 rule in codebase_layer_audit.py."
     }
   ]
 }
