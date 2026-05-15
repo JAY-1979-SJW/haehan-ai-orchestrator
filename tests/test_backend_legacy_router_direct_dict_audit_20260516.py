@@ -65,6 +65,46 @@ def test_naver_search_router_not_registered_in_main_app():
         )
 
 
+def test_naver_search_router_all_endpoints_require_admin_or_owner():
+    """naver_search_router 3개 endpoint 모두 require_role('admin','owner') 의존성 적용 확인.
+
+    HOLD 이유: 외부 Naver API 호출로 별도 승인/격리 판단 필요.
+    이번 공정에서 등록하지 않고 QUARANTINE_OR_HOLD 상태로 유지한다.
+    """
+    import inspect
+    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from fastapi.routing import APIRoute
+
+    routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
+    assert len(routes) == 3, f"endpoint 수 불일치: {len(routes)}"
+
+    for route in routes:
+        source = inspect.getsource(route.endpoint)
+        assert "require_role" in source, (
+            f"{route.path} — require_role 적용 누락"
+        )
+
+
+def test_naver_search_router_quarantine_hold_status():
+    """naver_search_router는 의도적 QUARANTINE_OR_HOLD 상태임을 고정한다.
+
+    이 테스트가 존재하는 한 naver_search_router 등록 전에 명시적 재검토가 필요하다.
+    외부 Naver API 호출 특성상 rate-limit, 키 관리, 격리 전략 확정 후 별도 공정에서 등록한다.
+    """
+    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.server import app
+    from fastapi.routing import APIRoute
+
+    naver_source_paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
+    registered_paths = {r.path for r in app.routes}
+
+    for p in naver_source_paths:
+        full = f"/api/v1{p}"
+        assert full not in registered_paths, (
+            f"HOLD 위반: {full}가 main app에 등록됨 — 별도 승인 후 등록할 것"
+        )
+
+
 # ===========================================================================
 # SECTION 2: LEGACY_DIRECT_DICT 27개 세부 분류 고정
 # ===========================================================================
@@ -167,6 +207,43 @@ def test_legacy_direct_dict_no_duplicate_method_path():
     """LEGACY_DIRECT_DICT 항목에 중복 method+path 조합이 없다."""
     keys = [(item["method"], item["path"]) for item in LEGACY_DIRECT_DICT_INVENTORY]
     assert len(keys) == len(set(keys)), f"중복 method+path 발견: {[k for k in keys if keys.count(k) > 1]}"
+
+
+# NEEDS_ENVELOPE_REVIEW(3)와 NEEDS_MANUAL_DESIGN_REVIEW(2)는 다음 공정 후보.
+# 이번 공정에서 응답 구조 변경 금지 — 아래 테스트가 존재하는 한 변경 금지.
+NEXT_PHASE_ENVELOPE_REVIEW_PATHS = {
+    "/api/v1/site-tasks/dry-run",
+    "/api/v1/web-tasks/run",
+    "/api/v1/web-tasks/run-from-template",
+}
+NEXT_PHASE_MANUAL_REVIEW_PATHS = {
+    "/api/v1/webhooks/telegram",
+    "/api/v1/cad-ai/chat",
+}
+
+
+def test_next_phase_envelope_review_candidates_locked():
+    """NEEDS_ENVELOPE_REVIEW 3개 경로가 다음 공정 후보로 잠겨 있다.
+
+    이번 공정에서 응답 구조 변경 없음 — 봉투 전환은 별도 공정에서 수행.
+    """
+    review_items = [i for i in LEGACY_DIRECT_DICT_INVENTORY if i["sub"] == "NEEDS_ENVELOPE_REVIEW"]
+    paths = {i["path"] for i in review_items}
+    assert paths == NEXT_PHASE_ENVELOPE_REVIEW_PATHS, (
+        f"NEEDS_ENVELOPE_REVIEW 경로 변경 감지: {paths}"
+    )
+
+
+def test_next_phase_manual_review_candidates_locked():
+    """NEEDS_MANUAL_DESIGN_REVIEW 2개 경로가 다음 공정 후보로 잠겨 있다.
+
+    정책적 판단(proxy 응답, 외부 API 중계) 필요 — 이번 공정에서 변경 없음.
+    """
+    review_items = [i for i in LEGACY_DIRECT_DICT_INVENTORY if i["sub"] == "NEEDS_MANUAL_DESIGN_REVIEW"]
+    paths = {i["path"] for i in review_items}
+    assert paths == NEXT_PHASE_MANUAL_REVIEW_PATHS, (
+        f"NEEDS_MANUAL_DESIGN_REVIEW 경로 변경 감지: {paths}"
+    )
 
 
 # ===========================================================================
