@@ -123,6 +123,16 @@
     "mode": "APPEND_ONLY",
     "deletion": "BLOCKED"
   },
+  "physical_skeleton_paths": [
+    "data/drafts/.gitkeep",
+    "data/approvals/.gitkeep",
+    "data/execution_plans/.gitkeep",
+    "data/evidence/.gitkeep",
+    "data/artifacts/.gitkeep",
+    "data/uploads/.gitkeep"
+  ],
+  "physical_skeleton_task_id": "APP_FOUNDATION_SHARED_WAREHOUSE_PHYSICAL_SKELETON_01",
+  "physical_skeleton_created_at": "2026-05-15",
   "warehouse_transition_rules": {
     "draft_to_artifact": "APPROVAL_REQUIRED",
     "draft_to_evidence": "BLOCKED",
