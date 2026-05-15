@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+from . import domain_assist  # noqa: F401
 from .gates import (  # noqa: F401
     gate_gabia_public_read,
     gate_gabia_account_read,
@@ -56,6 +57,8 @@ def run_gabia(task: str, sub: str, args: list[str]) -> None:
             _cmd_login()
         case "domain":
             _cmd_domain(sub or "info", args)
+        case "domain-assist":
+            _cmd_domain_assist(sub or "draft", args)
         case "hosting":
             _cmd_hosting(sub or "info", args)
         case "payment":
@@ -165,3 +168,43 @@ def _cmd_payment() -> None:
     print("action: 가비아 결제/청구/환불은 사용자가 직접 수행해야 합니다.")
     print("  my.gabia.com/payment 에서 직접 처리하세요.")
     print("=" * 60)
+
+
+def _cmd_domain_assist(sub: str, args: list[str]) -> None:
+    """도메인 개설 보조 — 초안 생성 및 gate 안내 (실제 등록 금지)."""
+    if sub in ("draft", "plan", "summary"):
+        raw = args[0] if args else ""
+        if not raw:
+            print("  [error] domain-assist draft requires a domain candidate argument")
+            return
+        validated = domain_assist.normalize_domain_candidate(raw)
+        gate = domain_assist.evaluate_domain_registration_gate("draft")
+        print("=" * 60)
+        print("Gabia domain-assist: 도메인 등록 초안 (DRAFT ONLY)")
+        print("=" * 60)
+        print(f"입력: {raw}")
+        print(f"정규화: {validated['normalized']}")
+        print(f"유효: {validated['ok']}")
+        if validated["errors"]:
+            for e in validated["errors"]:
+                print(f"  오류: {e}")
+        if validated["warnings"]:
+            for w in validated["warnings"]:
+                print(f"  경고: {w}")
+        print(f"gate: {gate['decision']}")
+        print("최종 등록/결제/DNS 변경: USER_DIRECT_REQUIRED (사용자 직접 수행)")
+        print("=" * 60)
+        return
+    if sub in ("gate", "check"):
+        action = args[0] if args else "draft"
+        gate = domain_assist.evaluate_domain_registration_gate(action)
+        print("=" * 60)
+        print(f"Gabia domain-assist gate: {action}")
+        print("=" * 60)
+        print(f"decision: {gate['decision']}")
+        print(f"requires_approval: {gate['requires_approval']}")
+        print(f"blocked: {gate['is_blocked_or_restricted']}")
+        print(f"note: {gate['note']}")
+        print("=" * 60)
+        return
+    print(f"  [error] unknown domain-assist sub: {sub}")
