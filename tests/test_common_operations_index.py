@@ -16,5 +16,6 @@ def test_common_operations_index_includes_core_sites() -> None:
         "hiworks",
         "naver",
         "smartstore",
+        "g2b",
         "google",
     }.issubset(site_ids)
