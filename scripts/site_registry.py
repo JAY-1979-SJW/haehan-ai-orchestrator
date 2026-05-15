@@ -1,0 +1,138 @@
+"""사이트별 메타데이터 + 로그인/세션 함수 레지스트리.
+
+신규 사이트 추가:
+    1. 아래 _REGISTRY 에 항목 추가
+    2. 사이트별 auth 모듈에 login() / is_logged_in() 제공
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Callable
+
+
+@dataclass
+class SiteSpec:
+    key: str
+    base_url: str
+    login_domain_hints: tuple[str, ...]   # 로그인 페이지 URL 포함 키워드
+    is_logged_in: Callable[[object], bool]   # page → bool
+    login: Callable[[object], dict]          # page → {ok, reason, user, needs_manual?}
+    login_strategy: str = "registered_only"  # registered_only | registered_then_universal | manual_only
+
+
+# ── lazy 로더 ─────────────────────────────────────────────────────────────
+
+def _eum_is_logged_in(page):
+    from scripts.eum.auth import is_logged_in
+    return is_logged_in(page)
+
+
+def _eum_login(page):
+    from scripts.eum.auth import login
+    return login(page)
+
+
+def _naver_is_logged_in(page):
+    from scripts.login_detector import detect_login_state
+    s = detect_login_state(page)
+    return bool(s.get("logged_in"))
+
+
+def _naver_login(page, *, force_login: bool = False):
+    from scripts.naver.auth import login_naver
+    # wait_for_user_s 짧게 (B방식 fallback은 site_access에서 제어)
+    r = login_naver(page, wait_for_user_s=10, force_relogin=force_login)
+    # 통일된 스키마로 변환
+    return {
+        "ok": bool(r.get("logged_in") or r.get("ok")),
+        "reason": r.get("reason") or r.get("hint") or "",
+        "user": r.get("user") or "",
+        "needs_manual": bool(r.get("needs_manual") or r.get("captcha") or r.get("captcha_required")),
+    }
+
+
+def _google_is_logged_in(page):
+    from scripts.login_detector import detect_login_state
+    s = detect_login_state(page)
+    return bool(s.get("logged_in"))
+
+
+def _google_login(page):
+    from scripts.google.auth import login_google
+    r = login_google(page, wait_for_user_s=10)
+    return {
+        "ok": bool(r.get("logged_in") or r.get("ok")),
+        "reason": r.get("reason") or r.get("hint") or "",
+        "user": r.get("user") or "",
+        "needs_manual": bool(r.get("needs_manual") or r.get("challenge")),
+    }
+
+
+def _hiworks_is_logged_in(page):
+    try:
+        url = page.url or ""
+        if "login.office.hiworks.com" in url:
+            return False
+        if "office.hiworks.com" not in url:
+            return False
+        text = page.locator("body").inner_text(timeout=2000)
+        return any(token in text for token in ("오피스 홈", "메일", "전자결재", "업무관리", "로그아웃"))
+    except Exception:
+        return False
+
+
+def _hiworks_login(page):
+    from scripts.login_detector import monitor_for_login
+
+    return {
+        "ok": False,
+        "reason": "manual_login_required",
+        "user": "",
+        "needs_manual": True,
+        "monitor": monitor_for_login,
+    }
+
+
+_REGISTRY: dict[str, SiteSpec] = {
+    "eum": SiteSpec(
+        key="eum",
+        base_url="https://eum.cw.or.kr/main",
+        login_domain_hints=("eum.cw.or.kr/web/log/WEBLOG400M00",
+                            "eum.cw.or.kr/login", "eum.cw.or.kr/web/login"),
+        is_logged_in=_eum_is_logged_in,
+        login=_eum_login,
+        login_strategy="registered_only",
+    ),
+    "naver": SiteSpec(
+        key="naver",
+        base_url="https://www.naver.com",
+        login_domain_hints=("nid.naver.com", "/nidlogin"),
+        is_logged_in=_naver_is_logged_in,
+        login=_naver_login,
+        login_strategy="registered_only",
+    ),
+    "google": SiteSpec(
+        key="google",
+        base_url="https://www.google.com",
+        login_domain_hints=("accounts.google.com",),
+        is_logged_in=_google_is_logged_in,
+        login=_google_login,
+        login_strategy="registered_only",
+    ),
+    "hiworks": SiteSpec(
+        key="hiworks",
+        base_url="https://dashboard.office.hiworks.com/",
+        login_domain_hints=("login.office.hiworks.com", "office.hiworks.com"),
+        is_logged_in=_hiworks_is_logged_in,
+        login=_hiworks_login,
+        login_strategy="manual_only",
+    ),
+}
+
+
+def get_site(key: str) -> SiteSpec | None:
+    return _REGISTRY.get(key)
+
+
+def list_sites() -> list[str]:
+    return list(_REGISTRY.keys())
