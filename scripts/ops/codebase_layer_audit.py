@@ -576,6 +576,258 @@ def find_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     return sorted(components, key=lambda c: (len(c), c))
 
 
+# ── P1 Gate: Known Debt Allowlists (이전 코드 기존 위반, 신규 추가 금지) ──────
+
+# ROUTER_THINNESS known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
+_ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
+    "ai_orchestrator/browser_tool/router.py",
+    "ai_orchestrator/router.py",
+}
+
+# STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
+_STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
+    "agent/local_inventory/inventory.py",
+    "ai_orchestrator/connectors/naver_search_db.py",
+    "ai_orchestrator/connectors/naver_search_queries.py",
+    "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
+    "ai_orchestrator/registration_code_store.py",
+    "local_agent/browser_approval_db_store.py",
+    "scripts/cdp_db.py",
+    "scripts/critical_logger.py",
+    "scripts/naver/automation/analytics_dashboard.py",
+    "scripts/naver/automation/competitor_analysis.py",
+    "scripts/naver/automation/error_recovery.py",
+    "scripts/naver/automation/scheduler.py",
+    "scripts/naver/blog/analytics.py",
+    "scripts/naver/blog/schedule.py",
+    "scripts/naver/smartstore/bulk.py",
+    "scripts/op_log.py",
+    "scripts/popup_monitor.py",
+}
+
+# STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)
+_STORAGE_BOUNDARY_TEST_KNOWN_DEBT: set[str] = {
+    "ai_orchestrator/tests/test_naver_search_db.py",
+    "ai_orchestrator/tests/test_naver_search_incremental.py",
+}
+
+
+# ── P1 Gate: ROUTER_THINNESS ─────────────────────────────────────────────────
+
+# router 파일에 있어서는 안 되는 패턴 (기존 known debt 제외, 신규 위반만 차단)
+_ROUTER_FORBIDDEN_PATTERNS = [
+    (r"\bexecute\s*\(", "router에 DB execute() 직접 호출 금지"),
+    (r"\bcursor\s*\.", "router에 DB cursor 직접 사용 금지"),
+    (r"\bpsycopg2\b", "router에 psycopg2 직접 import 금지"),
+    (r"\bsqlite3\b", "router에 sqlite3 직접 import 금지"),
+    (r"\bsqlalchemy\b", "router에 sqlalchemy 직접 import 금지"),
+    (r"data/sessions/.*\.json", "router에 session 파일 경로 직접 참조 금지"),
+    (r"open\s*\(\s*['\"]data/sessions", "router에 session 파일 open 금지"),
+]
+
+_ROUTER_FILE_PATTERNS = [
+    "scripts/*/router.py",
+    "ai_orchestrator/server/*.py",
+    "browser_api/*.py",
+]
+
+# router 파일임을 판별하는 경로 패턴
+def _is_router_file(path: str) -> bool:
+    import fnmatch
+    for pat in _ROUTER_FILE_PATTERNS:
+        if fnmatch.fnmatch(path, pat):
+            return True
+    return (
+        path.endswith("/router.py")
+        or path.endswith("_router.py")
+        or "/server/" in path and path.endswith(".py")
+    )
+
+
+def check_router_thinness(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """ROUTER_THINNESS: router 파일에 DB 직접 접근·session 파일 접근 금지.
+
+    known debt 파일은 INFO로 분류, 신규 위반만 WARN.
+    """
+    import re
+    issues: list[AuditIssue] = []
+    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
+                for pat, msg in _ROUTER_FORBIDDEN_PATTERNS]
+    skip_prefixes = ("tests/", "docs/", "scripts/archive/", "scripts/ops/")
+    for row in rows:
+        if not row.path.endswith(".py"):
+            continue
+        if any(row.path.startswith(p) for p in skip_prefixes):
+            continue
+        if not _is_router_file(row.path):
+            continue
+        is_known_debt = row.path in _ROUTER_THINNESS_KNOWN_DEBT
+        path = root / row.path
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for pattern, msg in compiled:
+            for m in pattern.finditer(source):
+                lineno = source[: m.start()].count("\n") + 1
+                severity = "info" if is_known_debt else "warn"
+                issues.append(AuditIssue(
+                    severity, "ROUTER_THINNESS",
+                    f"{row.path}:{lineno}",
+                    f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
+                    row.layer,
+                ))
+    return issues
+
+
+# ── P1 Gate: STORAGE_BOUNDARY ─────────────────────────────────────────────────
+
+# session/cookie 파일 직접 접근 금지 패턴
+_STORAGE_FORBIDDEN_PATTERNS = [
+    (r"open\s*\(\s*['\"][^'\"]*data/sessions", "data/sessions 파일 직접 open 금지"),
+    (r"json\.load\s*\([^)]*sessions", "sessions json.load 금지"),
+    (r"read_text\s*\(\s*\)[^#]*sessions", "sessions read_text 금지"),
+    (r"Path\s*\(['\"][^'\"]*data/sessions", "data/sessions Path 직접 참조 금지"),
+]
+
+# site module + router 에서 DB 직접 접근 금지
+_DB_DIRECT_ACCESS_PATTERNS = [
+    (r"import\s+psycopg2", "psycopg2 직접 import (storage 계층 외 금지)"),
+    (r"import\s+sqlite3", "sqlite3 직접 import (storage 계층 외 금지)"),
+    (r"from\s+sqlalchemy", "sqlalchemy 직접 import (storage 계층 외 금지)"),
+]
+
+# 이 경로들은 storage 계층이므로 DB 직접 접근 허용
+_STORAGE_ALLOWED_PREFIXES = (
+    "ai_orchestrator/storage/",
+    "storage/",
+    "migrations/",
+    "scripts/ops/",
+    "tests/",
+    "docs/",
+    "scripts/archive/",
+    "data/",
+)
+
+# session 접근 검사에서 제외할 경로 (constants 정의만 있는 파일)
+_SESSION_SCAN_SKIP = {
+    "scripts/ops/codebase_layer_audit.py",
+    "scripts/gabia/domain_assist.py",  # _FORBIDDEN_SESSION_PATHS 상수 정의만
+}
+
+
+def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """STORAGE_BOUNDARY: session 파일 직접 접근 및 비storage 계층의 DB 직접 접근 금지.
+
+    known debt 파일은 INFO로 분류, 신규 위반만 WARN.
+    """
+    import re
+    issues: list[AuditIssue] = []
+    session_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
+                        for pat, msg in _STORAGE_FORBIDDEN_PATTERNS]
+    db_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
+                   for pat, msg in _DB_DIRECT_ACCESS_PATTERNS]
+    all_known_debt = _STORAGE_BOUNDARY_KNOWN_DEBT | _STORAGE_BOUNDARY_TEST_KNOWN_DEBT
+    for row in rows:
+        if not row.path.endswith(".py"):
+            continue
+        if any(row.path.startswith(p) for p in ("docs/", "scripts/archive/")):
+            continue
+        if row.path in _SESSION_SCAN_SKIP:
+            continue
+        # 테스트 파일은 세션 금지 패턴을 assert로 포함하므로 session 패턴 스캔 제외
+        is_test_file = row.path.startswith("tests/") or "/tests/" in row.path
+        is_known_debt = row.path in all_known_debt
+        is_test = row.path.startswith("tests/") or "/tests/" in row.path
+        path = root / row.path
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        # session 파일 직접 접근 (테스트 파일 제외 — 테스트는 금지 검사 코드 포함 가능)
+        if not is_test_file:
+            for pattern, msg in session_compiled:
+                for m in pattern.finditer(source):
+                    lineno = source[: m.start()].count("\n") + 1
+                    severity = "info" if is_known_debt else "warn"
+                    issues.append(AuditIssue(
+                        severity, "STORAGE_BOUNDARY",
+                        f"{row.path}:{lineno}",
+                        f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
+                        row.layer,
+                    ))
+        # DB 직접 접근 (storage 계층 외, test 파일 별도 처리)
+        if not any(row.path.startswith(p) for p in _STORAGE_ALLOWED_PREFIXES):
+            for pattern, msg in db_compiled:
+                for m in pattern.finditer(source):
+                    lineno = source[: m.start()].count("\n") + 1
+                    severity = "info" if (is_known_debt or is_test) else "warn"
+                    issues.append(AuditIssue(
+                        severity, "STORAGE_BOUNDARY",
+                        f"{row.path}:{lineno}",
+                        f"{'[KNOWN_DEBT] ' if (is_known_debt or is_test) else ''}{msg}",
+                        row.layer,
+                    ))
+    return issues
+
+
+# ── P1 Gate: SERVER_BROWSER_GUARD ─────────────────────────────────────────────
+
+# 서버 사이드에서 실행 금지 사이트 목록 (로그인/인증/결제/투찰 필요 사이트)
+_SERVER_FORBIDDEN_SITES = [
+    "gabia.com", "my.gabia.com", "accounts.gabia.com",
+    "g2b.go.kr", "www.g2b.go.kr",
+    "hiworks.co.kr",
+    "hometax.go.kr", "unipass.customs.go.kr",
+    "login.kakao.com", "accounts.kakao.com",
+    "nid.naver.com",
+    "accounts.google.com",
+]
+
+# 위 사이트를 URL로 직접 goto/navigate하는 패턴 (guard 없이)
+_SERVER_BROWSER_FORBIDDEN_PATTERNS = [
+    (r"goto\s*\(\s*['\"]https?://(?:my\.gabia\.com|accounts\.gabia\.com)", "Gabia 로그인 페이지 server-side goto 금지"),
+    (r"goto\s*\(\s*['\"]https?://(?:www\.)?g2b\.go\.kr", "G2B server-side goto 금지"),
+    (r"navigate\s*\(\s*['\"]https?://(?:my\.gabia\.com|g2b\.go\.kr)", "금지 사이트 server-side navigate 금지"),
+    (r"playwright.*login.*gabia", "Gabia playwright 로그인 server-side 금지"),
+    (r"cdp_client.*goto.*gabia.*login", "Gabia CDP login server-side 금지"),
+]
+
+# SERVER_BROWSER_GUARD 검사 제외 경로
+_BROWSER_GUARD_SKIP_PREFIXES = (
+    "tests/", "docs/", "scripts/archive/", "data/",
+    "scripts/ops/codebase_layer_audit.py",
+)
+
+
+def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """SERVER_BROWSER_GUARD: 금지 사이트 server-side 브라우저 직접 실행 패턴 감지."""
+    import re
+    issues: list[AuditIssue] = []
+    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE | re.DOTALL), msg)
+                for pat, msg in _SERVER_BROWSER_FORBIDDEN_PATTERNS]
+    for row in rows:
+        if not row.path.endswith(".py"):
+            continue
+        if any(row.path.startswith(p) for p in _BROWSER_GUARD_SKIP_PREFIXES):
+            continue
+        if row.path == "scripts/ops/codebase_layer_audit.py":
+            continue
+        path = root / row.path
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for pattern, msg in compiled:
+            for m in pattern.finditer(source):
+                lineno = source[: m.start()].count("\n") + 1
+                issues.append(AuditIssue(
+                    "warn", "SERVER_BROWSER_GUARD",
+                    f"{row.path}:{lineno}", msg, row.layer,
+                ))
+    return issues
+
+
 def check_circular_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> dict:
     graph = parse_import_edges(rows, root)
     cycles = find_cycles(graph)
@@ -879,8 +1131,14 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
     schema_validation = validate_schemas(root)
     forbidden_import_issues = check_forbidden_imports(rows, root)
     security_pattern_issues = check_security_patterns(rows, root)
+    router_thinness_issues = check_router_thinness(rows, root)
+    storage_boundary_issues = check_storage_boundary(rows, root)
+    server_browser_guard_issues = check_server_browser_guard(rows, root)
     issues.extend(forbidden_import_issues)
     issues.extend(security_pattern_issues)
+    issues.extend(router_thinness_issues)
+    issues.extend(storage_boundary_issues)
+    issues.extend(server_browser_guard_issues)
     for cycle in circular_imports["cycles"]:
         issues.append(
             AuditIssue(
@@ -922,6 +1180,9 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
         "gate_results": {
             "forbidden_imports": len(forbidden_import_issues),
             "security_patterns": len(security_pattern_issues),
+            "router_thinness": len(router_thinness_issues),
+            "storage_boundary": len(storage_boundary_issues),
+            "server_browser_guard": len(server_browser_guard_issues),
         },
         "summary": {
             "file_count": len(rows),

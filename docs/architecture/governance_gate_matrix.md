@@ -17,12 +17,12 @@
 | BLOCKED_SECRET_SESSION | P0 | ✅ 구현됨 (gates.py) | scripts/*/gates.py + execution_gate.py | session/cookie/token 추출 차단 |
 | APPROVAL_REQUIRED_ACTION | P0 | ✅ 구현됨 (gates.py) | scripts/*/gates.py | 승인 필요 작업 gate 적용 확인 |
 | USER_DIRECT_REQUIRED_ACTION | P0 | ✅ 구현됨 (gates.py) | scripts/*/gates.py | 사용자 직접 작업 gate 적용 확인 |
-| ROUTER_THINNESS | P1 | ⚠️ 문서만 | docs/architecture/ | router에 SQL/업무로직 없음 |
-| STORAGE_BOUNDARY | P1 | ⚠️ 문서만 | docs/architecture/ | repository 직접 접근 차단 |
+| ROUTER_THINNESS | P1 | ✅ 구현됨 | scripts/ops/codebase_layer_audit.py + tests/test_app_foundation_p1_gates.py | router에 SQL/업무로직 없음 (known debt INFO) |
+| STORAGE_BOUNDARY | P1 | ✅ 구현됨 | scripts/ops/codebase_layer_audit.py + tests/test_app_foundation_p1_gates.py | repository 직접 접근 차단 (known debt INFO) |
 | COMMAND_CONTRACT | P1 | ⚠️ 문서만 | docs/architecture/ | command/response key 안정성 |
 | RESPONSE_KEY_STABILITY | P1 | ⚠️ 문서만 | docs/architecture/ | API 응답 key 변경 금지 |
 | LOCAL_AGENT_REQUIRED_ACTION | P1 | ⚠️ 문서만 | docs/architecture/ | 로컬 에이전트 전용 작업 분류 |
-| SERVER_BROWSER_GUARD | P1 | ⚠️ 부분 구현 | execution_gate.py (is_server_forbidden_site) | 서버 사이드 로그인 브라우저 차단 |
+| SERVER_BROWSER_GUARD | P1 | ✅ 구현됨 (보강) | scripts/ops/codebase_layer_audit.py + execution_gate.py + gates.py | 서버 사이드 로그인 브라우저 차단 |
 | DB_WRITE_GUARD | P2 | ⚠️ 문서만 | docs/architecture/ | 운영 DB write 승인 없이 차단 |
 | DESTRUCTIVE_OP_GUARD | P2 | ✅ 구현됨 (quality_gate.py) | scripts/quality_gate.py | 파괴적 SQL/명령 차단 |
 | ARCHITECTURE_DOC_EXISTS | P2 | 신규 추가 | tests/test_app_foundation_governance.py | 필수 문서 존재 여부 |
