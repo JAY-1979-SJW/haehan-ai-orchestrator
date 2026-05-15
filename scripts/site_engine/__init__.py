@@ -51,6 +51,37 @@ from scripts.site_engine.capability_detector import (
     CapabilityDetectionResult,
     detect_capabilities_from_snapshot,
 )
+from scripts.site_engine.action_planner import (
+    ActionPlan,
+    ActionPlanStep,
+    ActionPlanResult,
+    ActionPlanStatus,
+    ActionPlanRisk,
+    build_action_plan,
+    append_gate_decision,
+    require_gate_for_sensitive_action,
+    summarize_action_plan,
+)
+from scripts.site_engine.workflow_runner import (
+    WorkflowDefinition,
+    WorkflowStep,
+    WorkflowRunPlan,
+    WorkflowRunResult,
+    WorkflowStatus,
+    build_workflow_plan,
+    validate_workflow_plan,
+    attach_action_plan,
+    attach_gate_result,
+)
+from scripts.site_engine.validators import (
+    ValidationIssue,
+    ValidationResult,
+    validate_no_plain_secret,
+    validate_no_executable_sensitive_step_without_gate,
+    validate_no_blocked_step_executable,
+    validate_workflow_has_profile,
+    validate_action_plan_steps,
+)
 
 __all__ = [
     "ExecutionLocation",
