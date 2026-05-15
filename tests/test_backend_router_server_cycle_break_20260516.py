@@ -25,15 +25,19 @@ import pytest
 
 def test_router_direct_import_no_cycle():
     """ai_orchestrator.router를 직접 import해도 ImportError가 발생하지 않는다."""
-    # sys.modules에서 제거 후 재import로 cycle 재현 시도
-    mods_to_remove = [k for k in sys.modules if k.startswith("ai_orchestrator")]
-    for m in mods_to_remove:
+    # sys.modules 제거 후 재import — 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
+    _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
+    for m in list(_snapshot):
         sys.modules.pop(m, None)
 
-    # 순환 없이 import 가능해야 한다
-    import ai_orchestrator.router as r
-    assert r.router is not None
-    assert hasattr(r, "router")
+    try:
+        import ai_orchestrator.router as r
+        assert r.router is not None
+        assert hasattr(r, "router")
+    finally:
+        for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
+            sys.modules.pop(k, None)
+        sys.modules.update(_snapshot)
 
 
 def test_router_module_defines_router_object():
@@ -48,16 +52,20 @@ def test_router_module_defines_router_object():
 
 def test_server_package_import_does_not_immediately_load_app():
     """server 패키지만 import할 때 app이 즉시 생성되지 않는다 (lazy)."""
-    # sys.modules 정리
-    for k in list(sys.modules):
-        if k.startswith("ai_orchestrator"):
-            sys.modules.pop(k, None)
+    # sys.modules 제거 후 재import — 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
+    _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
+    for k in list(_snapshot):
+        sys.modules.pop(k, None)
 
-    import ai_orchestrator.server as srv_pkg
-    # lazy load 전: app이 모듈 __dict__에 없어야 한다
-    assert "app" not in vars(srv_pkg), (
-        "server/__init__.py가 즉시 app을 생성하고 있음 — lazy load 위반"
-    )
+    try:
+        import ai_orchestrator.server as srv_pkg
+        assert "app" not in vars(srv_pkg), (
+            "server/__init__.py가 즉시 app을 생성하고 있음 — lazy load 위반"
+        )
+    finally:
+        for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
+            sys.modules.pop(k, None)
+        sys.modules.update(_snapshot)
 
 
 def test_server_app_accessible_via_getattr():

@@ -361,12 +361,18 @@ def test_full_classification_sum_equals_runtime_total():
 def test_router_direct_import_still_no_cycle():
     """순환 import 해소 상태가 유지된다."""
     import sys
-    for k in list(sys.modules):
-        if k.startswith("ai_orchestrator"):
+    # 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
+    _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
+    for k in list(_snapshot):
+        sys.modules.pop(k, None)
+    try:
+        import ai_orchestrator.router as r
+        from fastapi import APIRouter
+        assert isinstance(r.router, APIRouter)
+    finally:
+        for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
             sys.modules.pop(k, None)
-    import ai_orchestrator.router as r
-    from fastapi import APIRouter
-    assert isinstance(r.router, APIRouter)
+        sys.modules.update(_snapshot)
 
 
 def test_health_endpoint_still_unchanged():
