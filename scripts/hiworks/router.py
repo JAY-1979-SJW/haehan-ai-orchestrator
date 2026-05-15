@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from scripts.hiworks import gates
+from scripts.hiworks.utils import HELP_TEXT, option_value
 from scripts.hiworks.actions import (
     apply_prepare_values,
     build_action_catalog,
@@ -175,14 +176,6 @@ def _cmd_service_scan(sub: str | None, args: list[str]) -> None:
         print_service_summary(results, path)
 
 
-def _option_value(args: list[str], prefix: str) -> str | None:
-    for arg in args:
-        text = str(arg)
-        if text.startswith(prefix):
-            return text.split("=", 1)[1]
-    return None
-
-
 def _cmd_action_catalog(sub: str | None, args: list[str]) -> None:
     gates.check_read()
     name = sub or "all"
@@ -200,7 +193,7 @@ def _cmd_action_catalog(sub: str | None, args: list[str]) -> None:
 def _cmd_prepare_section(sub: str | None, args: list[str]) -> None:
     gates.check_prepare()
     name = sub or "all"
-    values_path = _option_value(args, "--values=")
+    values_path = option_value(args, "--values=")
     dry_run = "--dry-run" in args or not values_path
     values = load_values(values_path) if values_path else {}
     workflow = workflow_for_alias("prepare-section") or {"key": "prepare_section", "risk": "prepare"}
@@ -230,8 +223,8 @@ def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
         )
     approved = "--approved" in args
     dry_run = "--dry-run" in args
-    confirm = _option_value(args, "--confirm=") or ""
-    approved_by = _option_value(args, "--approved-by=") or "operator"
+    confirm = option_value(args, "--confirm=") or ""
+    approved_by = option_value(args, "--approved-by=") or "operator"
     if approved and confirm != "HIWORKS_APPROVED_SUBMIT":
         raise SystemExit("approved submit requires --confirm=HIWORKS_APPROVED_SUBMIT")
 
@@ -282,18 +275,4 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
 
 
 def _print_help() -> None:
-    print(
-        """Hiworks usage:
-  python scripts/cdp_client.py hiworks dashboard
-  python scripts/cdp_client.py hiworks apps
-  python scripts/cdp_client.py hiworks mail
-  python scripts/cdp_client.py hiworks compose
-  python scripts/cdp_client.py hiworks service [mail|approval|scheduler|boards|address-book|booking|hr-work|team-mail|files|tasks|admins|bills|sms|notes|groups|ai-chat|plus|all]
-  python scripts/cdp_client.py hiworks actions [mail|approval|scheduler|boards|address-book|booking|hr-work|team-mail|files|tasks|admins|bills|sms|notes|groups|ai-chat|plus|all]
-  python scripts/cdp_client.py hiworks prepare-section [service|all] [--dry-run] [--values=values.json]
-  python scripts/cdp_client.py hiworks submit-section <service> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT [--dry-run] [--approved-by=name]
-  python scripts/cdp_client.py hiworks queue [limit]
-  python scripts/cdp_client.py hiworks prepare-sales-mail [index]
-  python scripts/cdp_client.py hiworks send-batch [limit] --dry-run --delay-min=15 --delay-max=45
-"""
-    )
+    print(HELP_TEXT)
