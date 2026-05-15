@@ -335,6 +335,119 @@ def audit(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     return sorted(issues, key=lambda x: ({"warn": 0, "info": 1}.get(x.severity, 2), x.code, x.path))
 
 
+# ── 역방향 import 게이트 ────────────────────────────────────────────────────────
+
+# 레이어 번호 낮을수록 하위. 상위→하위만 허용.
+_LAYER_ORDER = {
+    "L1": 1, "L2": 2, "L3": 3, "L4": 4, "L5": 5,
+    "L6": 6, "L7": 7, "L8": 8, "L9": 9, "L10": 10,
+    "L11": 11, "L12": 12, "UNKNOWN": 99,
+}
+
+# 절대 금지 import 패턴: (소스 모듈 prefix, 금지 import prefix, 이유)
+_FORBIDDEN_IMPORT_PAIRS: list[tuple[str, str, str]] = [
+    # core/domain은 API, UI, DB, 외부 호출 import 금지
+    ("scripts.site_engine", "fastapi", "core must not import fastapi"),
+    ("scripts.site_engine", "ai_orchestrator.server", "core must not import server layer"),
+    ("scripts.site_engine", "scripts.cdp_", "core must not import browser adapters"),
+    # site router는 DB 직접 접근 금지
+    ("scripts.hiworks.router", "scripts.db", "site router must not access DB directly"),
+    ("scripts.youtube.router", "scripts.db", "site router must not access DB directly"),
+    ("scripts.naver.router", "scripts.db", "site router must not access DB directly"),
+    ("scripts.g2b.router", "scripts.db", "site router must not access DB directly"),
+    # 서로 다른 업무 도메인 간 직접 import
+    ("scripts.hiworks", "scripts.eum", "cross-domain import: hiworks must not import eum"),
+    ("scripts.hiworks", "scripts.youtube", "cross-domain import: hiworks must not import youtube"),
+    ("scripts.eum", "scripts.hiworks", "cross-domain import: eum must not import hiworks"),
+    ("scripts.youtube", "scripts.hiworks", "cross-domain import: youtube must not import hiworks"),
+    ("scripts.g2b", "scripts.hiworks", "cross-domain import: g2b must not import hiworks"),
+]
+
+# 보안 금지 패턴: (정규식 패턴, 이유)
+# 주의: 오탐 최소화를 위해 변수명을 엄격히 한정 (token_id, token_status 등은 제외)
+_SECURITY_FORBIDDEN_PATTERNS: list[tuple[str, str]] = [
+    # print(password) / print(passwd) / print(secret) 등 — 단독 변수명만
+    (r"print\s*\(\s*(password|passwd|pw_\w*|secret\b|api_key\b|apikey\b)\s*\)",
+     "Secret variable printed directly"),
+    # os.environ["PASSWORD"] 등 — 대문자 환경변수 직접 출력
+    (r"print\s*\(\s*os\.environ\s*[\[.]\s*['\"](?:PASSWORD|PASSWD|SECRET|API_KEY|APIKEY)['\"]",
+     "Env secret printed directly"),
+    # f"{password}" / f"{secret}" — 단독 변수명 보간 (token_id, token_status 등 제외)
+    (r"\{(password|passwd|secret\b|api_key\b|apikey\b)\}",
+     "Plain secret variable in f-string or format"),
+]
+
+
+def check_forbidden_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """금지 import 방향 검사."""
+    import re
+    issues: list[AuditIssue] = []
+    for row in rows:
+        if not row.path.endswith(".py"):
+            continue
+        path = root / row.path
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for src_prefix, forbidden_prefix, reason in _FORBIDDEN_IMPORT_PAIRS:
+            src_mod = row.path.replace("/", ".").removesuffix(".py")
+            if not src_mod.startswith(src_prefix.replace("/", ".")):
+                continue
+            # import 문에서 금지 모듈 사용 여부 검사
+            pattern = re.compile(
+                r"^\s*(?:import|from)\s+(" + re.escape(forbidden_prefix) + r"[\w.]*)",
+                re.MULTILINE,
+            )
+            matches = pattern.findall(source)
+            for match in matches:
+                issues.append(
+                    AuditIssue(
+                        "warn",
+                        "FORBIDDEN_IMPORT",
+                        row.path,
+                        f"{reason}: found 'import {match}'",
+                        row.layer,
+                    )
+                )
+    return issues
+
+
+def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
+    """보안 금지 패턴 스캔 (secret/token 출력, env 직접 노출 등)."""
+    import re
+    issues: list[AuditIssue] = []
+    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
+                for pat, msg in _SECURITY_FORBIDDEN_PATTERNS]
+    skip_prefixes = ("tests/", "docs/", "scripts/archive/", "data/")
+    skip_exact = {"scripts/ops/codebase_layer_audit.py"}  # 패턴 정의 자체를 스캔 제외
+    for row in rows:
+        if not row.path.endswith(".py"):
+            continue
+        if any(row.path.startswith(p) for p in skip_prefixes):
+            continue
+        if row.path in skip_exact:
+            continue
+        path = root / row.path
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        for pattern, msg in compiled:
+            for m in pattern.finditer(source):
+                lineno = source[: m.start()].count("\n") + 1
+                issues.append(
+                    AuditIssue(
+                        "warn",
+                        "SECURITY_PATTERN",
+                        f"{row.path}:{lineno}",
+                        msg,
+                        row.layer,
+                    )
+                )
+    return issues
+
+
 def module_name_from_path(path: str) -> str | None:
     if not path.endswith(".py"):
         return None
@@ -741,6 +854,10 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
     issues = audit(rows, root)
     circular_imports = check_circular_imports(rows, root)
     schema_validation = validate_schemas(root)
+    forbidden_import_issues = check_forbidden_imports(rows, root)
+    security_pattern_issues = check_security_patterns(rows, root)
+    issues.extend(forbidden_import_issues)
+    issues.extend(security_pattern_issues)
     for cycle in circular_imports["cycles"]:
         issues.append(
             AuditIssue(
@@ -779,6 +896,10 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
         "issues": [asdict(issue) for issue in issues],
         "circular_imports": circular_imports,
         "schema_validation": schema_validation,
+        "gate_results": {
+            "forbidden_imports": len(forbidden_import_issues),
+            "security_patterns": len(security_pattern_issues),
+        },
         "summary": {
             "file_count": len(rows),
             "issue_count": len(issues),
