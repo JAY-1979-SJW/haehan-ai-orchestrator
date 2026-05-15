@@ -20,7 +20,7 @@
       "path": "root_legacy_scripts",
       "status": "accepted",
       "owner": "platform",
-      "next_action": "Phase 3: relocate or archive remaining root-level .py files. Flask->FastAPI migration required before full removal."
+      "next_action": "Phase 3 CLOSED: probe/test/ops/eum-legacy scripts relocated. Flask active root modules (app.py + 28 files) retained as systemd/gunicorn entrypoints. Relocation deferred to Flask->FastAPI migration phase."
     }
   ],
   "resolved_residuals": [
