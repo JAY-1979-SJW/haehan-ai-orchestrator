@@ -13,6 +13,17 @@ from scripts.site_engine.audit import (
     build_audit_event,
     mask_sensitive,
 )
+from scripts.site_engine.execution_gate import (
+    ActionSensitivity,
+    ExecutionDecision,
+    ExecutionGateInput,
+    ExecutionGateResult,
+    GateReason,
+    evaluate_execution_gate,
+    require_approval_for_action,
+    block_for_sensitive_credential_action,
+    resolve_execution_location,
+)
 
 __all__ = [
     "ExecutionLocation",
@@ -27,4 +38,13 @@ __all__ = [
     "SiteEngineAuditEvent",
     "build_audit_event",
     "mask_sensitive",
+    "ActionSensitivity",
+    "ExecutionDecision",
+    "ExecutionGateInput",
+    "ExecutionGateResult",
+    "GateReason",
+    "evaluate_execution_gate",
+    "require_approval_for_action",
+    "block_for_sensitive_credential_action",
+    "resolve_execution_location",
 ]
