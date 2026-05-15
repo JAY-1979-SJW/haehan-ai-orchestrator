@@ -157,6 +157,26 @@
       ]
     },
     {
+      "site_id": "g2b",
+      "label": "G2B",
+      "owner": "g2b",
+      "status": "verified_readonly",
+      "reference_docs": [
+        "docs/reports/g2b_completion_report_20260513.md",
+        "docs/reports/g2b_public_notice_readonly_matrix_20260507.md",
+        "docs/reports/g2b_public_notice_actual_live_execution_20260507.md"
+      ],
+      "primary_artifacts": [
+        "tests/fixtures/g2b_public_notice_readonly_matrix_20260507.json",
+        "tests/fixtures/g2b_public_notice_workflow_fixture_20260507.json"
+      ],
+      "next_actions": [
+        "Keep public notice and attachment-list work read-only.",
+        "Do not automate login, certificate, bid, contract, payment, or final submit workflows.",
+        "Prepare download manifests only; do not auto-download attachments."
+      ]
+    },
+    {
       "site_id": "google",
       "label": "Google and YouTube",
       "owner": "google",

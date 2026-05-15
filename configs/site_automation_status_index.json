@@ -74,17 +74,26 @@
       "site_id": "g2b",
       "label": "나라장터",
       "status": "verified",
-      "completion_report": "",
+      "completion_report": "docs/reports/g2b_completion_report_20260513.md",
       "reference_doc": "docs/reports/g2b_public_notice_readonly_matrix_20260507.md",
       "index_doc": "docs/site_automation_status_index.md",
-      "workflows": [],
-      "pending": ["completion report"]
+      "workflows": [
+        {"key": "public_notice_search", "risk": "read", "status": "verified"},
+        {"key": "public_notice_list", "risk": "read", "status": "verified"},
+        {"key": "public_notice_detail", "risk": "read", "status": "verified"},
+        {"key": "attachment_list", "risk": "read", "status": "verified"},
+        {"key": "readonly_policy_gate", "risk": "blocked", "status": "verified"}
+      ],
+      "pending": [
+        "login, certificate, bid, contract, payment, and final submit workflows remain user-present or blocked",
+        "automatic attachment download remains blocked; prepare manifests only"
+      ]
     },
       {
         "site_id": "google",
         "label": "Google/Gmail",
         "status": "implemented",
-        "completion_report": "docs/reports/google_live_surface_read_report_20260513.md",
+        "completion_report": "docs/reports/google_surface_exploration_completion_report_20260513.md",
         "reference_doc": "docs/google_surface_catalog_reference_20260513.md",
         "index_doc": "docs/site_automation_status_index.md",
         "workflows": [

@@ -157,6 +157,7 @@ data/downloads/
 data/scrape/
 data/sitemap/
 data/reports/
+data/test_runtime/
 data/setup_log.txt
 data/test_image.png
 
@@ -174,3 +175,23 @@ ai_orchestrator/data/
 # Naver credentials
 data/.env_naver
 data/.env_*
+data/.cred.key
+data/_legacy_creds/
+
+# Generated management indexes
+data/worktree_change_index_latest.json
+
+# Site automation generated artifacts
+# Runtime evidence stays local by default. Promote intentional evidence to
+# docs/reports/ or tests/fixtures/ when it must be reviewed or committed.
+data/**/*.db-shm
+data/**/*.db-wal
+data/**/*.html
+data/**/*.json
+data/**/*.jsonl
+data/**/*.png
+data/**/*.txt
+data/**/*.xlsx
+data/**/*.zip
+data/**/downloads/
+data/**/runs/
