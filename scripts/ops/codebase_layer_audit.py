@@ -39,6 +39,7 @@ EXCLUDED_DIRS = {
     "tmp",
     "node_modules",
     ".next",
+    ".claude",
 }
 
 ACTIVE_EXTENSIONS = {
@@ -247,6 +248,8 @@ def classify_path(path: str) -> tuple[str, str]:
         if any(token in name for token in ("policy", "approval")):
             return "L2", "agent policy"
         return "L10", "agent/local automation"
+    if p.startswith("services/"):
+        return "L8", "standalone service path"
     if suffix in {".md"}:
         return "L12", "markdown documentation"
     if suffix in {".yml", ".yaml", ".json", ".sql"}:
