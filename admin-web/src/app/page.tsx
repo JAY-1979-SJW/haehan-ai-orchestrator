@@ -1,168 +1,288 @@
-import { PageShell, Btn } from "@/components/ui";
-import { AppInstallButton } from "@/components/app/AppInstallButton";
+'use client';
 import Link from "next/link";
+import { AppInstallButton } from "@/components/app/AppInstallButton";
+import {
+  TopAccentLine,
+  StatusBadge,
+  MetricCard,
+  GateStatusCard,
+  WarehouseCard,
+  ConstructionPhaseTable,
+  Button,
+  Input,
+  Select,
+} from "@haehan/design-system";
+import type { ConstructionPhaseRow } from "@haehan/design-system";
 
-const OP_ITEMS = [
+const AGENT_METRICS = [
+  { label: "온라인 에이전트", value: "3", sub: "대 온라인", accentColor: "#059669" as const },
+  { label: "대기 중 태스크", value: "7", sub: "건 대기", accentColor: "#F97316" as const },
+  { label: "오늘 처리 완료", value: "24", sub: "건 완료", accentColor: "#1D4ED8" as const },
+  { label: "승인 대기", value: "2", sub: "건 미처리", accentColor: "#B91C1C" as const },
+];
+
+const GATES = [
   {
-    label: "로컬 에이전트 관리",
-    description: "에이전트 목록 조회 · 태스크 실행 · 스크린샷 확인",
-    href: "/local-agents",
-    badge: "운영 중",
-    badgeCls: "bg-[#ECFDF5] text-[#059669] border-[#6EE7B7]",
-    cta: "바로 가기",
+    gateName: "FORBIDDEN_IMPORT",
+    decision: "PASS" as const,
+    reason: "역방향 import 없음",
   },
   {
-    label: "AI CAD 워크스페이스",
-    description: "연결된 AutoCAD 제어 · 레이어/엔티티 조회 · 물량 산출 태스크 실행",
-    href: "/cad",
-    badge: "운영 중",
-    badgeCls: "bg-[#ECFDF5] text-[#059669] border-[#6EE7B7]",
-    cta: "바로 가기",
+    gateName: "SECURITY_PATTERN",
+    decision: "PASS" as const,
+    reason: "secret 노출 없음",
   },
   {
-    label: "파일 지도 리포트",
-    description: "로컬 파일 스캔 결과 · 민감정보 마스킹 관리",
-    href: "/file-map",
-    badge: "신기능",
-    badgeCls: "bg-[#ECFDF5] text-[#059669] border-[#6EE7B7]",
-    cta: "바로 가기",
+    gateName: "CIRCULAR_IMPORT",
+    decision: "PASS" as const,
+    reason: "순환 의존성 없음",
   },
   {
-    label: "승인 / 감사 로그",
-    description: "운영 통제 기능 — 구현 예정",
-    href: null,
-    badge: "준비 중",
-    badgeCls: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-    cta: null,
-  },
-  {
-    label: "시스템 문서",
-    description: "운영 기준 및 아키텍처 문서 — docs/ 폴더 참조",
-    href: null,
-    badge: "문서 기준",
-    badgeCls: "bg-[#F3F4F6] text-[#374151] border-[#D1D5DB]",
-    cta: null,
+    gateName: "QUALITY_GATE",
+    decision: "WARN" as const,
+    reason: "미완성 모듈 3개",
   },
 ];
 
-const PLATFORM_STATUS = [
-  { label: "데스크톱 앱", where: "PWA standalone", status: "설치 가능" },
-  { label: "모바일 앱", where: "PWA standalone", status: "하단 탭 적용" },
-  { label: "로컬 에이전트 운영 화면", where: "admin-web", status: "운영 기준" },
-  { label: "legacy FastAPI admin",    where: "/admin (FastAPI)",      status: "deprecated fallback" },
-  { label: "승인 / 권한 / 감사로그",  where: "admin-web — 예정",      status: "구현 예정" },
+const WAREHOUSES = [
+  {
+    title: "EUM 단말기",
+    path: "data/eum_all_devices_complete.json",
+    fileCount: 22,
+    status: "PASS" as const,
+    description: "비전아이(주) 임대 현장 22개",
+  },
+  {
+    title: "G2B 입찰",
+    path: "data/g2b",
+    fileCount: 154,
+    status: "PASS" as const,
+    description: "최근 동기화: 2026-05-14",
+  },
+  {
+    title: "히웍스 공지",
+    path: "data/hiworks",
+    fileCount: 8,
+    status: "HOLD" as const,
+    description: "최근 동기화: 2026-05-13",
+  },
+  {
+    title: "YouTube 콘텐츠",
+    path: "data/youtube",
+    fileCount: 5,
+    status: "HOLD" as const,
+    description: "최근 동기화: 2026-05-10",
+  },
+];
+
+const PHASE_ROWS: ConstructionPhaseRow[] = [
+  {
+    phase: "기반 공사",
+    code: "FOUNDATION_01",
+    status: "DONE",
+    completedAt: "2026-04-22",
+    notes: "P1 App Foundation PASS",
+  },
+  {
+    phase: "디자인시스템",
+    code: "DS_ROOT_01",
+    status: "DONE",
+    completedAt: "2026-05-15",
+    notes: "00.디자인시스템 구축",
+  },
+  {
+    phase: "소비 앱 계약",
+    code: "DS_CONSUMER_REF_01",
+    status: "DONE",
+    completedAt: "2026-05-15",
+    notes: "@haehan/design-system 계약 고정",
+  },
+  {
+    phase: "비서앱 웹 기초",
+    code: "ASSISTANT_WEB_01",
+    status: "IN_PROGRESS",
+    completedAt: undefined,
+    notes: "admin-web 첫 화면 구성 중",
+  },
+  {
+    phase: "에이전트 제어 고도화",
+    code: "AGENT_CTRL_01",
+    status: "PENDING",
+    completedAt: undefined,
+    notes: "태스크 생성·취소·상태 폴링",
+  },
+  {
+    phase: "승인/감사 로그",
+    code: "AUDIT_LOG_01",
+    status: "PENDING",
+    completedAt: undefined,
+    notes: "운영 통제 기능",
+  },
+  {
+    phase: "도메인 공개",
+    code: "DOMAIN_PUBLISH_01",
+    status: "PENDING",
+    completedAt: undefined,
+    notes: "design.haehan-ai.kr 연결 예정",
+  },
+];
+
+const APPROVAL_QUEUE = [
+  { id: "APR-001", title: "히웍스 공지 자동 게시 승인", requestedAt: "09:12" },
+  { id: "APR-002", title: "G2B 투찰 참여 여부 확인 요청", requestedAt: "08:44" },
+];
+
+const QUICK_TASK_OPTIONS = [
+  { value: "eum", label: "EUM 단말기 현황 추출" },
+  { value: "g2b", label: "G2B 입찰 조회" },
+  { value: "hiworks", label: "히웍스 공지 수집" },
+  { value: "youtube", label: "YouTube 콘텐츠 분석" },
 ];
 
 export default function Home() {
   return (
-    <PageShell
-      title="운영 대시보드"
-      description="Haehan AI Orchestrator 관리자 UI"
-      headerRight={<div className="sm:hidden"><AppInstallButton /></div>}
-    >
-      <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="mb-2 text-[12px] font-semibold text-[#F97316]">Desktop / Mobile App</p>
-              <h1 className="m-0 text-[20px] font-bold text-[#0F172A] sm:text-[24px]">
-                한 화면에서 에이전트, CAD, 파일 정리를 운영합니다.
-              </h1>
-              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-[#6B7280]">
-                데스크톱에서는 좌측 사이드바로 빠르게 이동하고, 모바일에서는 하단 탭으로 주요 기능을 바로 전환합니다.
-                브라우저 설치 기능을 통해 별도 창의 앱처럼 실행할 수 있습니다.
-              </p>
-            </div>
-            <div className="hidden shrink-0 sm:block">
-              <AppInstallButton />
-            </div>
+    <div className="min-h-screen bg-[#F5F7FA]">
+      {/* 1. 상단 4px 오렌지 Top Accent Line */}
+      <TopAccentLine />
+
+      <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8">
+
+        {/* 2. 비서앱 대시보드 헤더 */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-[22px] font-bold text-[#0F172A]">해한 AI 비서</h1>
+            <p className="mt-1 text-[13px] text-[#6B7280]">
+              AI 오케스트레이터 운영 대시보드 — 에이전트·게이트·창고 통합 관제
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusBadge status="PASS" label="시스템 정상" />
+            <AppInstallButton />
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 rounded-[12px] border border-[#E5E7EB] bg-white p-4">
-          {[
-            { label: "Desktop", value: "Sidebar" },
-            { label: "Mobile", value: "Bottom tabs" },
-            { label: "PWA", value: "Installable" },
-          ].map((item) => (
-            <div key={item.label} className="min-w-0 rounded-lg bg-[#F9FAFB] px-3 py-3">
-              <div className="truncate text-[11px] font-semibold text-[#9CA3AF]">{item.label}</div>
-              <div className="mt-1 break-words text-[13px] font-bold text-[#0F172A]">{item.value}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Quick action cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
-        {OP_ITEMS.map((item) => (
-          <div
-            key={item.label}
-            className="bg-white border border-[#E5E7EB] rounded-[12px] p-5 flex flex-col gap-3"
-            style={{ borderTop: "3px solid #F97316" }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold text-[#0F172A] flex-1">{item.label}</span>
-              <span
-                className={[
-                  "inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full border",
-                  item.badgeCls,
-                ].join(" ")}
-              >
-                {item.badge}
-              </span>
-            </div>
-            <p className="text-[12px] text-[#6B7280] leading-relaxed flex-1">{item.description}</p>
-            {item.href && item.cta && (
-              <Link href={item.href}>
-                <Btn variant="orange">{item.cta}</Btn>
-              </Link>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Platform status */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-5 mb-4">
-        <h2 className="text-[13px] font-bold text-[#0F172A] mb-3">현재 운영 기준</h2>
-        <table className="w-full text-[12px]">
-          <thead>
-            <tr className="text-[#9CA3AF] border-b border-[#F3F4F6]">
-              <th className="text-left font-semibold pb-2 pr-4">기능</th>
-              <th className="text-left font-semibold pb-2 pr-4">위치</th>
-              <th className="text-left font-semibold pb-2">상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PLATFORM_STATUS.map((row) => (
-              <tr key={row.label} className="border-b border-[#F9FAFB] last:border-0">
-                <td className="py-2 pr-4 text-[#374151]">{row.label}</td>
-                <td className="py-2 pr-4 text-[#6B7280]">{row.where}</td>
-                <td className="py-2 text-[#6B7280]">{row.status}</td>
-              </tr>
+        {/* 3. 로컬 에이전트 ON/OFF 상태 카드 */}
+        <section className="mb-6">
+          <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">로컬 에이전트 현황</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {AGENT_METRICS.map((m) => (
+              <MetricCard
+                key={m.label}
+                label={m.label}
+                value={m.value}
+                sub={m.sub}
+                accentColor={m.accentColor}
+              />
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </section>
 
-      {/* Next steps */}
-      <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-5">
-        <h2 className="text-[13px] font-bold text-[#0F172A] mb-3">다음 작업 방향</h2>
-        <ul className="space-y-2 text-[12px] text-[#6B7280]">
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#F97316] shrink-0" />
-            local-agent 실제 제어 안정화 — 태스크 생성·취소·상태 폴링
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#D1D5DB] shrink-0" />
-            승인 / 권한 / 감사 로그 고도화 — 운영 통제 기능 추가
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#D1D5DB] shrink-0" />
-            admin-web 공통 컴포넌트 / 디자인 토큰 정리
-          </li>
-        </ul>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+          <div className="flex flex-col gap-6">
+
+            {/* 4. 승인 대기 큐 요약 */}
+            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[13px] font-semibold text-[#374151]">승인 대기</h2>
+                <StatusBadge status="WARN" label={`${APPROVAL_QUEUE.length}건 대기`} />
+              </div>
+              <ul className="space-y-2">
+                {APPROVAL_QUEUE.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between rounded-lg bg-[#F9FAFB] px-3 py-2"
+                  >
+                    <div>
+                      <span className="text-[11px] font-mono text-[#9CA3AF] mr-2">{item.id}</span>
+                      <span className="text-[13px] text-[#374151]">{item.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] text-[#9CA3AF]">{item.requestedAt}</span>
+                      <Button variant="secondary" size="sm">승인</Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* 5. 작업 실행 게이트 상태 */}
+            <section>
+              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">실행 게이트</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {GATES.map((g) => (
+                  <GateStatusCard
+                    key={g.gateName}
+                    gateName={g.gateName}
+                    decision={g.decision}
+                    reason={g.reason}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* 7. 최근 작업 공정표 */}
+            <section>
+              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">작업 공정표</h2>
+              <ConstructionPhaseTable rows={PHASE_ROWS} />
+            </section>
+          </div>
+
+          <div className="flex flex-col gap-6">
+
+            {/* 8. 빠른 작업 입력 영역 */}
+            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
+              <h2 className="mb-4 text-[13px] font-semibold text-[#374151]">빠른 작업 생성</h2>
+              <div className="flex flex-col gap-3">
+                <Select
+                  label="업무 도메인"
+                  options={QUICK_TASK_OPTIONS}
+                />
+                <Input label="작업 제목" placeholder="예: 5월 EUM 단말기 현황 추출" />
+                <Input label="메모 (선택)" placeholder="추가 지시사항 입력" />
+                <Button variant="primary" size="md">
+                  작업 생성
+                </Button>
+              </div>
+            </section>
+
+            {/* 6. 업무별 창고 카드 */}
+            <section>
+              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">업무 창고</h2>
+              <div className="flex flex-col gap-3">
+                {WAREHOUSES.map((w) => (
+                  <WarehouseCard
+                    key={w.title}
+                    title={w.title}
+                    path={w.path}
+                    fileCount={w.fileCount}
+                    status={w.status}
+                    description={w.description}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* 운영 링크 */}
+            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
+              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">운영 메뉴</h2>
+              <div className="flex flex-col gap-2">
+                {[
+                  { href: "/local-agents", label: "로컬 에이전트 관리", badge: "운영 중" },
+                  { href: "/cad", label: "AI CAD 워크스페이스", badge: "운영 중" },
+                  { href: "/file-map", label: "파일 지도 리포트", badge: "신기능" },
+                ].map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <div className="flex items-center justify-between rounded-lg bg-[#F9FAFB] px-3 py-2 hover:bg-[#F3F4F6] transition-colors">
+                      <span className="text-[13px] text-[#374151]">{item.label}</span>
+                      <StatusBadge status="PASS" label={item.badge} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
-    </PageShell>
+    </div>
   );
 }
