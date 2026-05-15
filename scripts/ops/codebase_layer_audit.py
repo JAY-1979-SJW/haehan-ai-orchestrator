@@ -355,12 +355,22 @@ _FORBIDDEN_IMPORT_PAIRS: list[tuple[str, str, str]] = [
     ("scripts.youtube.router", "scripts.db", "site router must not access DB directly"),
     ("scripts.naver.router", "scripts.db", "site router must not access DB directly"),
     ("scripts.g2b.router", "scripts.db", "site router must not access DB directly"),
+    # site router는 DB 직접 접근 금지
+    ("scripts.google.router", "scripts.db", "site router must not access DB directly"),
     # 서로 다른 업무 도메인 간 직접 import
     ("scripts.hiworks", "scripts.eum", "cross-domain import: hiworks must not import eum"),
     ("scripts.hiworks", "scripts.youtube", "cross-domain import: hiworks must not import youtube"),
+    ("scripts.hiworks", "scripts.google", "cross-domain import: hiworks must not import google"),
     ("scripts.eum", "scripts.hiworks", "cross-domain import: eum must not import hiworks"),
+    ("scripts.eum", "scripts.google", "cross-domain import: eum must not import google"),
     ("scripts.youtube", "scripts.hiworks", "cross-domain import: youtube must not import hiworks"),
+    ("scripts.youtube", "scripts.google", "cross-domain import: youtube must not import google"),
     ("scripts.g2b", "scripts.hiworks", "cross-domain import: g2b must not import hiworks"),
+    ("scripts.g2b", "scripts.google", "cross-domain import: g2b must not import google"),
+    ("scripts.google", "scripts.hiworks", "cross-domain import: google must not import hiworks"),
+    ("scripts.google", "scripts.eum", "cross-domain import: google must not import eum"),
+    ("scripts.google", "scripts.youtube", "cross-domain import: google must not import youtube domain"),
+    ("scripts.google", "scripts.g2b", "cross-domain import: google must not import g2b"),
 ]
 
 # 보안 금지 패턴: (정규식 패턴, 이유)
