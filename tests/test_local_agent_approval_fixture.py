@@ -346,8 +346,9 @@ class TestAuditEvents:
         assert not isolated_approval_store.exists() or isolated_approval_store.stat().st_size == 0
 
     def test_task_state_approve_writes_event(self, tmp_path, monkeypatch):
-        import ai_orchestrator.task_state as ts
-        monkeypatch.setattr(ts, "_STATE_PATH", tmp_path / "task_states.jsonl")
+        # sys.modules 정리 후 로컬 재-import 시 NEW 모듈이 반환되어 패치가 엇갈리는 flaky 원인 방지:
+        # 파일 레벨 _ts (항상 동일 모듈 객체)에 직접 패치한다.
+        monkeypatch.setattr(_ts, "_STATE_PATH", tmp_path / "task_states.jsonl")
         _ts.clear()
 
         task_id = "la-task-audit-010"
