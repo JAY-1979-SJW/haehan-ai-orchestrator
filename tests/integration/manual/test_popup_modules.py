@@ -1,0 +1,57 @@
+"""popup_classifier + popup_monitor DB 단위 검증 (브라우저 불필요)."""
+from scripts.popup_classifier import classify, is_auto_handleable
+from scripts.popup_monitor import _ensure_table, _record_event, list_pending, ack_event, status
+
+print("\n[1] 분류기 룰 매칭 테스트")
+print("-" * 70)
+cases = [
+    ("작성 중인 글",       "이어서 작성하시겠습니까"),
+    ("영구 삭제",          "휴지통의 항목을 영구 삭제하시겠습니까"),
+    ("결제 확인",          "10,000원 결제를 진행합니다"),
+    ("외부 전송 확인",     "외부 수신자에게 전송하시겠습니까"),
+    ("cookies",            "We use cookies for analytics"),
+    ("2단계 인증",         "OTP 코드를 입력하세요"),
+    ("reCAPTCHA",          "로봇이 아닙니다"),
+    ("newsletter",         "뉴스레터를 구독하시겠습니까"),
+    ("세션이 만료",         "다시 로그인 해주세요"),
+    ("알 수 없는 모달",    "처음 보는 팝업"),
+]
+
+results = []
+for marker, snippet in cases:
+    d = classify(marker=marker, snippet=snippet)
+    auto = is_auto_handleable(d)
+    print(f"  {marker[:20]:<22} → {d['category']:<22} {d['action']:<15} "
+          f"sev={d['severity']:<8} auto={auto} conf={d['confidence']:.2f}")
+    results.append((marker, snippet, d))
+
+print("\n[2] DB 영속화 + 큐 검증")
+print("-" * 70)
+_ensure_table()
+
+# 알 수 없는 팝업 1건 + 위험 1건을 notified 로 적재
+unknown = next(d for m,s,d in results if d["category"] == "unknown")
+dangerous = next(d for m,s,d in results if d["category"] == "destructive_confirm")
+
+ev1 = {"ts_ms": 1, "marker": "알 수 없는 모달", "snippet": "스니펫", "frame_url": "https://test"}
+ev2 = {"ts_ms": 2, "marker": "영구 삭제", "snippet": "스니펫", "frame_url": "https://test"}
+
+id1 = _record_event(ev1, unknown, status="notified")
+id2 = _record_event(ev2, dangerous, status="notified")
+print(f"  적재 id1={id1} id2={id2}")
+
+pending = list_pending(limit=10)
+print(f"  pending 개수: {len(pending)}")
+for p in pending[:3]:
+    print(f"    #{p['id']} {p['category']:<22} status={p['status']}")
+
+ok = ack_event(id1, note="단위 테스트 ack")
+print(f"  ack(id1) → {ok}")
+
+print("\n[3] 상태 조회")
+print("-" * 70)
+import json
+st = status()
+print(json.dumps(st, ensure_ascii=False, indent=2))
+
+print("\n✓ 모든 검증 통과")
