@@ -24,6 +24,100 @@
 
 ---
 
+# 앱 구조/보안/레이어 운영규칙
+
+## 레이어 기준
+
+```
+L1 Shared Contracts  — 스키마, DTO, 모델, 리덕션 헬퍼
+L2 Policy/Gate       — 리스크 게이트, 정책, 승인, 허용목록
+L3 Connectors        — 외부 클라이언트, 저수준 IO 래퍼
+L4 Browser Engine    — 브라우저/세션/폼 자동화 (범용)
+L5 Site Modules      — 사이트별 라우터, 셀렉터, 능력
+L6 Business Workflows— 업무 흐름 오케스트레이션, 큐
+L7 Persistence/Audit — DB, 감사, 운영 로그, 마이그레이션
+L8 Server API        — FastAPI/Flask 라우터, 서버 태스크 API
+L9 Admin UI          — 프론트엔드/관리/데스크톱 UI
+L10 Local PC App     — Excel/HWP/CAD/재고/파일맵 자동화
+L11 Tests/Fixtures   — 테스트 및 픽스처
+L12 Docs/Reports     — 설계서, 운영규칙, 감사 결과
+```
+
+## 의존성 방향 (위반 = FORBIDDEN_IMPORT 게이트 FAIL)
+
+허용: 상위 레이어 → 하위 레이어  
+금지:
+- core/domain(L2) → API(L8) / UI(L9) / DB 직접
+- site router(L5) → DB 직접
+- 서로 다른 업무 도메인 간 직접 import (hiworks ↔ eum ↔ youtube ↔ g2b)
+- 하위 레이어 → 상위 레이어 역방향
+
+## 신규 코드 위치 규칙
+
+신규 코드 작성 전 반드시 확인:
+1. 이 기능이 어느 레이어에 속하는가
+2. 기존 모듈이 있는가 (재사용 우선)
+3. 새 파일 생성 위치가 허용된 위치인가
+4. 기존 API 응답 key / DB schema / SQL / 산식 / 정책을 변경하는가
+5. 보안 영향이 있는가
+6. 순환 의존성 또는 역방향 import가 생기는가
+7. 테스트와 audit gate가 있는가
+
+금지:
+- router에 SQL 작성
+- UI에 업무 산식
+- core/domain에 환경변수 직접 접근
+- 외부 API 호출 코드 여러 곳 중복
+- 거대 파일에 기능 누적
+
+## 보안 금지선 (위반 = SECURITY_PATTERN 게이트 FAIL)
+
+```
+secret/token/password 값 출력/로깅 금지
+.env 값 원문 출력 금지
+운영 DB update/delete/drop/truncate 승인 없이 금지
+schema 변경 승인 없이 금지
+chmod/chown 자동 변경 금지
+투찰/전자서명/송금/결제 자동 실행 금지
+쿠키/session 추출 금지
+```
+
+## 게이트 실행 의무
+
+작업 후 반드시 실행:
+```bash
+python scripts/ops/codebase_layer_audit.py
+pytest tests/test_codebase_layer_audit.py -q
+python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+```
+
+FORBIDDEN_IMPORT > 0 → STOP  
+SECURITY_PATTERN > 0 → STOP  
+CIRCULAR_IMPORT > 0 → STOP  
+quality gate errors > 0 → STOP
+
+## 병렬 실행 규칙
+
+병렬 가능: read-only 감사, 문서 조사, 독립 정적 분석  
+병렬 금지: git, DB, 배포, 서버 재시작, 파일 삭제, 권한 변경, secret 작업, 같은 파일 수정  
+병렬 결과는 통합 리포트로 병합 → 전체 게이트 직렬 재실행 → commit은 1회만
+
+## 지시문 공통 블록
+
+모든 지시문에 포함할 원칙:
+1. 신규 코드는 정해진 레이어, 정해진 디렉터리에만 작성
+2. 기존 구현이 있으면 재사용, 중복 구현 금지
+3. router = HTTP 처리만 / service = 업무 흐름만 / core = 순수 정책·산식·판정만 / repository = DB만 / adapter = 외부 연동만
+4. 역방향 import, 순환 import 금지
+5. API 응답 key, DB schema, SQL, 핵심 산식, 보안 정책 임의 변경 금지
+6. secret/token/password/env 값 출력 금지
+7. 운영 DB write, schema 변경, 서버 배포/재시작, 파일 삭제, 권한 변경은 승인 없이 금지
+8. 신규 파일 생성 시 왜 이 위치가 맞는지 보고
+9. 작업 후 layer audit, cycle audit, security audit, test 실행
+10. PASS/WARN/FAIL로 최종 판정, FAIL 즉시 STOP 보고
+
+---
+
 # EUM (건설근로자공제회) 사이트 탐색 결과 (2026-05-11)
 
 ## 사이트 구조
