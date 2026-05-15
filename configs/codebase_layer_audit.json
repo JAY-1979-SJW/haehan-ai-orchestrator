@@ -11,16 +11,16 @@
     {
       "code": "FAT_SITE_ROUTER",
       "path": "scripts/hiworks/router.py",
-      "status": "tracked",
+      "status": "accepted",
       "owner": "platform",
       "next_action": "Phase 2: split into schemas/gates/explorer/mail/workflows sub-modules."
     },
     {
       "code": "ROOT_PY_SCRIPT",
       "path": "root_legacy_scripts",
-      "status": "tracked",
+      "status": "accepted",
       "owner": "platform",
-      "next_action": "Phase 3: relocate or archive remaining root-level .py files."
+      "next_action": "Phase 3: relocate or archive remaining root-level .py files. Flask->FastAPI migration required before full removal."
     }
   ],
   "resolved_residuals": [
