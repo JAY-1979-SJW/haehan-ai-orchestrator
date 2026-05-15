@@ -1,0 +1,135 @@
+{
+  "version": "1.0",
+  "locked_at": "2026-05-15",
+  "task_id": "APP_FOUNDATION_SHARED_WAREHOUSE_LOCK_01",
+  "warehouses": {
+    "draft": {
+      "path_pattern": "data/drafts/{domain}/{task_id}/",
+      "policy": "DRAFT_ALLOWED",
+      "task_id_required": true,
+      "description": "초안, 검토 전 자료, AI 생성 초안"
+    },
+    "approval": {
+      "path_pattern": "data/approvals/{domain}/{task_id}/",
+      "policy": "APPROVAL_REQUIRED",
+      "task_id_required": true,
+      "immutable": true,
+      "description": "승인 요청·기록·범위·만료·거부 사유"
+    },
+    "execution_plan": {
+      "path_pattern": "data/execution_plans/{domain}/{task_id}/",
+      "policy": "ALLOWED_AFTER_APPROVAL",
+      "task_id_required": true,
+      "description": "실행 전 계획서, local-agent handoff plan"
+    },
+    "evidence": {
+      "path_pattern": "data/evidence/{domain}/{task_id}/",
+      "policy": "READ_ONLY_AFTER_CREATION",
+      "task_id_required": true,
+      "immutable": true,
+      "description": "실행 증거, 스냅샷, 첨부파일 해시"
+    },
+    "report_human": {
+      "path_pattern": "docs/reports/",
+      "policy": "ALLOWED",
+      "task_id_required": false,
+      "description": "사람이 읽는 Markdown 보고서 (closeout, 감사)"
+    },
+    "report_machine": {
+      "path_pattern": "data/reports/{domain}/",
+      "policy": "ALLOWED",
+      "task_id_required": false,
+      "description": "machine-readable JSON 보고서"
+    },
+    "artifact": {
+      "path_pattern": "data/artifacts/{domain}/{task_id}/",
+      "policy": "ALLOWED",
+      "task_id_required": true,
+      "description": "생성 문서, 변환 파일, 다운로드 산출물"
+    },
+    "upload": {
+      "path_pattern": "data/uploads/{domain}/{task_id}/",
+      "policy": "IMMUTABLE_ORIGIN",
+      "task_id_required": true,
+      "immutable": true,
+      "description": "사용자 업로드 원본 파일 (수정 금지)"
+    },
+    "audit_log": {
+      "path_pattern": "data/logs/",
+      "policy": "APPEND_ONLY",
+      "task_id_required": false,
+      "description": "상태전이·gate decision·오류 기록"
+    },
+    "manual_visit": {
+      "path_pattern": "data/manual_visits/{host}/",
+      "policy": "READ_ONLY_EVIDENCE",
+      "task_id_required": false,
+      "description": "사용자 직접 방문 화면 read-only 증거"
+    },
+    "session_store": {
+      "path_pattern": "data/sessions/",
+      "policy": "BLOCKED",
+      "task_id_required": false,
+      "description": "봉인된 위험구역 — 읽기/파싱/재사용/신규생성 전면 금지"
+    }
+  },
+  "allowed_domains": [
+    "gabia", "g2b", "hiworks", "google", "youtube", "eum",
+    "cad", "hwpx", "document_automation", "attendance",
+    "safety_docs", "risk_assessment", "naver", "kakao",
+    "smartstore", "common"
+  ],
+  "blocked_paths": [
+    "data/sessions"
+  ],
+  "blocked_file_patterns": [
+    "*cookie*",
+    "*session*",
+    "*token*",
+    "*password*",
+    "*.env",
+    "*.pem",
+    "*.key",
+    "*secret*",
+    "*credential*",
+    "*auth_token*"
+  ],
+  "required_task_scoped_paths": [
+    "data/drafts/{domain}/{task_id}/",
+    "data/approvals/{domain}/{task_id}/",
+    "data/execution_plans/{domain}/{task_id}/",
+    "data/evidence/{domain}/{task_id}/",
+    "data/artifacts/{domain}/{task_id}/",
+    "data/uploads/{domain}/{task_id}/"
+  ],
+  "report_paths": {
+    "human_readable": "docs/reports/",
+    "machine_readable": "data/reports/{domain}/"
+  },
+  "evidence_paths": {
+    "standard": "data/evidence/{domain}/{task_id}/",
+    "audit_log": "data/logs/",
+    "manual_visit_reference": "data/manual_visits/{host}/"
+  },
+  "session_policy": "BLOCKED",
+  "manual_visit_policy": "READ_ONLY_EVIDENCE",
+  "approval_policy": {
+    "required_fields": ["approver", "timestamp", "scope", "expiry", "decision"],
+    "immutable": true,
+    "bypass": "BLOCKED"
+  },
+  "audit_policy": {
+    "required_fields": ["who", "when", "what", "result", "task_id"],
+    "mode": "APPEND_ONLY",
+    "deletion": "BLOCKED"
+  },
+  "warehouse_transition_rules": {
+    "draft_to_artifact": "APPROVAL_REQUIRED",
+    "draft_to_evidence": "BLOCKED",
+    "upload_to_artifact": "LOCAL_AGENT_REQUIRED_OR_USER_DIRECT",
+    "execution_plan_to_execution": "LOCAL_AGENT_REQUIRED_OR_USER_DIRECT",
+    "evidence_to_report": "ALLOWED_REFERENCE_ONLY",
+    "session_to_anywhere": "BLOCKED",
+    "manual_visit_to_anywhere": "READ_ONLY_EVIDENCE_ONLY"
+  }
+}
