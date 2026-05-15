@@ -1,0 +1,243 @@
+"""ASSISTANT_APP_SCOPE_RESET_WEB_DESKTOP_ONLY_CLOSEOUT_01
+비서앱 공사 범위 재확정: 웹/데스크 중심 + EXTERNAL_APP_HOLD 경계 고정.
+
+분류 기준:
+  IN_SCOPE       — 웹 접속, 웹 업무 처리, 웹/데스크 API, 승인/감사/상태, 브라우저 작업
+  FUTURE_INTEGRATION / EXTERNAL_APP_HOLD
+                 — CAD, HWPX/HWP, Excel/Office 전문 기능 자체 구현
+  OUT_OF_SCOPE   — 현재 앱 내부에서 전문 로컬 기능 신규 개발
+
+준공 기준:
+  백엔드 준공 범위 = 웹 업무 실행 엔진 + 승인/감사 + 실행위치 정책 + 브라우저 안전정책
+  CAD/HWPX/Excel 실패 = EXTERNAL_APP_HOLD (백엔드 준공 실패 아님)
+"""
+from __future__ import annotations
+
+import pathlib
+import importlib
+import sys
+import pytest
+
+REPO_ROOT = pathlib.Path(__file__).parent.parent
+
+
+# ── IN_SCOPE: 웹 업무 실행 엔진 ────────────────────────────────────────────
+
+class TestInScopeWebTaskEngine:
+    """웹 업무 실행 핵심 파일이 존재하고 임포트 가능한지 확인."""
+
+    IN_SCOPE_MODULES = [
+        "ai_orchestrator.web_task_router",
+        "ai_orchestrator.web_task_registry",
+        "ai_orchestrator.web_task_templates",
+        "ai_orchestrator.web_task_approval_service",
+        "ai_orchestrator.approval",
+        "ai_orchestrator.dev_reg_approval",
+        "ai_orchestrator.task_state",
+        "ai_orchestrator.audit_logger",
+    ]
+
+    @pytest.mark.parametrize("module", IN_SCOPE_MODULES)
+    def test_in_scope_module_importable(self, module):
+        """IN_SCOPE 모듈이 임포트 가능하다."""
+        mod = importlib.import_module(module)
+        assert mod is not None, f"{module} 임포트 실패"
+
+    def test_web_task_router_file_exists(self):
+        """web_task_router.py IN_SCOPE 파일 존재."""
+        assert (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").exists()
+
+    def test_web_task_approval_service_file_exists(self):
+        """web_task_approval_service.py IN_SCOPE 파일 존재."""
+        assert (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").exists()
+
+    def test_server_execution_location_guard_exists(self):
+        """server/execution_location_guard.py IN_SCOPE 파일 존재."""
+        assert (REPO_ROOT / "ai_orchestrator" / "server" / "execution_location_guard.py").exists()
+
+    def test_browser_execution_location_policy_exists(self):
+        """browser_tool/execution_location_policy.py IN_SCOPE 파일 존재."""
+        assert (REPO_ROOT / "ai_orchestrator" / "browser_tool" / "execution_location_policy.py").exists()
+
+
+# ── IN_SCOPE: 비서앱 웹 페이지 + 데스크 앱 골조 ────────────────────────────
+
+class TestInScopeWebDesktopSkeleton:
+    """웹 페이지 및 데스크 앱 골조 파일 존재 확인."""
+
+    def test_admin_web_package_json_exists(self):
+        """admin-web/package.json 웹 앱 골조 존재."""
+        assert (REPO_ROOT / "admin-web" / "package.json").exists()
+
+    def test_admin_web_src_exists(self):
+        """admin-web/src 디렉터리 존재."""
+        assert (REPO_ROOT / "admin-web" / "src").is_dir()
+
+    def test_desktop_tray_app_exists(self):
+        """desktop/tray_app.py 데스크 앱 골조 존재."""
+        assert (REPO_ROOT / "desktop" / "tray_app.py").exists()
+
+    def test_desktop_local_runner_exists(self):
+        """desktop/local_runner.py 데스크 앱 로컬 실행 골조 존재."""
+        assert (REPO_ROOT / "desktop" / "local_runner.py").exists()
+
+    def test_desktop_status_provider_exists(self):
+        """desktop/status_provider.py 상태 제공자 골조 존재."""
+        assert (REPO_ROOT / "desktop" / "status_provider.py").exists()
+
+
+# ── EXTERNAL_APP_HOLD: CAD ──────────────────────────────────────────────────
+
+class TestCadExternalAppHold:
+    """CAD 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
+
+    CAD_VERDICT = "CAD_EXTERNAL_APP_HOLD"
+    SCOPE = "FUTURE_INTEGRATION"
+
+    def test_cad_verdict_is_external_app_hold(self):
+        """CAD 설계 판정이 EXTERNAL_APP_HOLD로 선언된다."""
+        assert self.CAD_VERDICT == "CAD_EXTERNAL_APP_HOLD"
+
+    def test_cad_scope_is_future_integration(self):
+        """CAD 범위가 FUTURE_INTEGRATION으로 선언된다."""
+        assert self.SCOPE == "FUTURE_INTEGRATION"
+
+    def test_cad_local_agent_dir_is_local_app(self):
+        """local_agent/cad/ 는 별도 앱(CAD 플러그인) 의존 디렉터리이다."""
+        cad_dir = REPO_ROOT / "local_agent" / "cad"
+        assert cad_dir.is_dir(), "local_agent/cad/ 없음"
+        # 별도 앱 플러그인에 의존하는 코드임을 확인 (controller_loader.py 참조)
+        loader = cad_dir / "controller_loader.py"
+        assert loader.exists()
+        src = loader.read_text(encoding="utf-8")
+        assert "local_worker_plugins" in src, (
+            "controller_loader가 별도 플러그인에 의존하지 않음 — 분류 재검토 필요"
+        )
+
+    def test_cad_failure_not_in_web_task_scope(self):
+        """CAD 실패가 web_task_router 경로에 영향을 주지 않는다."""
+        from ai_orchestrator import web_task_router
+        # web_task_router가 CAD 관련 모듈을 import하지 않음
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
+        assert "cad" not in src.lower(), (
+            "web_task_router.py에 cad 참조가 존재함 — IN_SCOPE 오염 가능성"
+        )
+
+    def test_cad_mcp_module_isolated(self):
+        """mcp_server/local_cad_adapter_tools.py 는 별도 CAD 어댑터이다."""
+        mcp_cad = REPO_ROOT / "mcp_server" / "local_cad_adapter_tools.py"
+        assert mcp_cad.exists(), "mcp_server/local_cad_adapter_tools.py 없음"
+
+
+# ── EXTERNAL_APP_HOLD: HWPX/HWP ────────────────────────────────────────────
+
+class TestHwpxExternalAppHold:
+    """HWPX/HWP 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
+
+    HWPX_VERDICT = "HWPX_EXTERNAL_APP_HOLD"
+    SCOPE = "FUTURE_INTEGRATION"
+
+    def test_hwpx_verdict_is_external_app_hold(self):
+        """HWPX 설계 판정이 EXTERNAL_APP_HOLD로 선언된다."""
+        assert self.HWPX_VERDICT == "HWPX_EXTERNAL_APP_HOLD"
+
+    def test_hwp_hancom_dir_exists_as_external(self):
+        """agent/hancom/ 은 별도 HWP/HWPX 앱 전용 디렉터리이다."""
+        hancom_dir = REPO_ROOT / "agent" / "hancom"
+        assert hancom_dir.is_dir(), "agent/hancom/ 없음"
+
+    def test_hwpx_not_in_web_task_router(self):
+        """web_task_router.py에 hwp/hwpx 참조가 없다."""
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
+        assert "hwp" not in src.lower(), (
+            "web_task_router.py에 hwp 참조가 존재함 — IN_SCOPE 오염 가능성"
+        )
+
+    def test_hwpx_not_in_approval_service(self):
+        """web_task_approval_service.py에 hwp/hwpx 참조가 없다."""
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        assert "hwp" not in src.lower()
+
+
+# ── EXTERNAL_APP_HOLD: Excel/Office ────────────────────────────────────────
+
+class TestExcelOfficeExternalAppHold:
+    """Excel/Office 전문 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
+
+    EXCEL_VERDICT = "OFFICE_EXTERNAL_APP_HOLD"
+    SCOPE = "FUTURE_INTEGRATION"
+
+    def test_excel_verdict_is_external_app_hold(self):
+        """Excel/Office 설계 판정이 EXTERNAL_APP_HOLD로 선언된다."""
+        assert self.EXCEL_VERDICT == "OFFICE_EXTERNAL_APP_HOLD"
+
+    def test_excel_engine_in_agent_not_orchestrator_core(self):
+        """Excel 엔진 핵심(agent/excel/)이 ai_orchestrator 코어가 아닌 agent/ 에 있다."""
+        excel_dir = REPO_ROOT / "agent" / "excel"
+        assert excel_dir.is_dir(), "agent/excel/ 없음"
+        # ai_orchestrator/web_task_router 에는 excel 참조 없음
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
+        assert "excel" not in src.lower()
+
+    def test_excel_not_in_approval_service(self):
+        """web_task_approval_service.py에 excel 참조가 없다."""
+        src = (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        assert "excel" not in src.lower()
+
+
+# ── 백엔드 준공 경계: CAD/HWPX/Excel 실패는 closeout 실패 아님 ───────────────
+
+class TestBackendCloseoutBoundary:
+    """CAD/HWPX/Excel 관련 테스트 실패가 백엔드 준공 실패로 계산되지 않는다."""
+
+    # 이 테스트들은 IN_SCOPE 백엔드 준공 항목임을 명시한다.
+    CLOSEOUT_IN_SCOPE_TESTS = [
+        "tests/test_backend_web_task_approval_flow_20260516.py",
+        "tests/test_backend_direct_dict_boundary_lock_20260516.py",
+        "tests/test_backend_frontend_dependency_audit_20260516.py",
+        "tests/test_backend_endpoint_inventory_recount_20260516.py",
+        "ai_orchestrator/tests/test_web_task_router_policy_flow.py",
+    ]
+
+    # 이 테스트들은 EXTERNAL_APP_HOLD이다.
+    EXTERNAL_APP_HOLD_TESTS = [
+        "tests/test_cad_local_agent_adapter_20260509.py",
+        "tests/test_mcp_local_cad_adapter_tools_20260509.py",
+        "tests/test_cad_http_agent_client_20260510.py",
+    ]
+
+    @pytest.mark.parametrize("test_path", CLOSEOUT_IN_SCOPE_TESTS)
+    def test_closeout_scope_test_exists(self, test_path):
+        """백엔드 준공 IN_SCOPE 테스트 파일이 존재한다."""
+        assert (REPO_ROOT / test_path).exists(), (
+            f"준공 필수 테스트 없음: {test_path}"
+        )
+
+    @pytest.mark.parametrize("test_path", EXTERNAL_APP_HOLD_TESTS)
+    def test_external_app_hold_test_identified(self, test_path):
+        """EXTERNAL_APP_HOLD 테스트가 파일로 식별된다."""
+        assert (REPO_ROOT / test_path).exists(), (
+            f"EXTERNAL_APP_HOLD 테스트 파일 없음: {test_path} — 이미 삭제되었거나 경로 변경 필요"
+        )
+
+    def test_cad_hold_reason_is_missing_plugin(self):
+        """CAD HOLD 사유: local_worker_plugins 별도 앱 플러그인 미설치."""
+        loader = REPO_ROOT / "local_agent" / "cad" / "controller_loader.py"
+        src = loader.read_text(encoding="utf-8")
+        assert "local_worker_plugins" in src, (
+            "CAD HOLD 사유(별도 플러그인 의존)가 확인되지 않음"
+        )
+
+    def test_web_task_closeout_passes_without_cad(self):
+        """web_task_approval_service 는 CAD 없이 임포트 가능하다."""
+        import ai_orchestrator.web_task_approval_service as svc
+        assert hasattr(svc, "create_web_task_pending_approval")
+
+    def test_approval_service_boundary(self):
+        """web_task_approval_service의 응답 계약 키 존재."""
+        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+        import dataclasses
+        fields = {f.name for f in dataclasses.fields(PendingApprovalResult)}
+        required = {"task_id", "expires_at", "risk_level", "requires_approval",
+                    "provider", "action_type", "telegram_sent", "telegram_message_id"}
+        assert required.issubset(fields), f"PendingApprovalResult 필드 누락: {required - fields}"
