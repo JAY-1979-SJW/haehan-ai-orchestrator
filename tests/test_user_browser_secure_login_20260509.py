@@ -203,9 +203,13 @@ def test_input_credential_otp(tmp_path):
 # ── minwon_submit 승인 정책 확인 ──────────────────────────────────────────────
 
 def test_minwon_submit_no_early_approval():
-    """minwon_submit.py는 폼 작성 이전이 아닌 제출 직전에만 승인을 요청해야 한다."""
+    """minwon_submit.py는 폼 작성 이전이 아닌 제출 직전에만 승인을 요청해야 한다.
+
+    canonical 경로: scripts/local_agent/gov/minwon_submit.py
+    (구 경로 scripts/local_agent/minwon_submit.py에서 gov/ 하위로 이전됨)
+    """
     import pathlib
-    src = pathlib.Path("scripts/local_agent/minwon_submit.py").read_text(encoding="utf-8")
+    src = pathlib.Path("scripts/local_agent/gov/minwon_submit.py").read_text(encoding="utf-8")
     lines = src.splitlines()
 
     # 함수 정의(def)가 아닌 호출 위치만 찾기
