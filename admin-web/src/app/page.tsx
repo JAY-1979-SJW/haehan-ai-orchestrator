@@ -271,6 +271,7 @@ export default function Home() {
                   { href: "/cad", label: "AI CAD 워크스페이스", badge: "운영 중" },
                   { href: "/file-map", label: "파일 지도 리포트", badge: "신기능" },
                   { href: "/external-tasks", label: "외부 웹 업무 현황", badge: "신기능" },
+                  { href: "/ops", label: "운영센터 (승인/감사/연동)", badge: "신기능" },
                 ].map((item) => (
                   <Link key={item.href} href={item.href}>
                     <div className="flex items-center justify-between rounded-lg bg-[#F9FAFB] px-3 py-2 hover:bg-[#F3F4F6] transition-colors">
