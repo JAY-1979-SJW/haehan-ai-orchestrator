@@ -89,6 +89,7 @@ PYDANTIC_SCHEMA_MODULES = (
 
 SITE_MODULES = {
     "eum",
+    "gabia",
     "hiworks",
     "naver",
     "google",
@@ -371,6 +372,18 @@ _FORBIDDEN_IMPORT_PAIRS: list[tuple[str, str, str]] = [
     ("scripts.google", "scripts.eum", "cross-domain import: google must not import eum"),
     ("scripts.google", "scripts.youtube", "cross-domain import: google must not import youtube domain"),
     ("scripts.google", "scripts.g2b", "cross-domain import: google must not import g2b"),
+    # gabia cross-domain import 금지
+    ("scripts.gabia.router", "scripts.db", "site router must not access DB directly"),
+    ("scripts.gabia", "scripts.hiworks", "cross-domain import: gabia must not import hiworks"),
+    ("scripts.gabia", "scripts.eum", "cross-domain import: gabia must not import eum"),
+    ("scripts.gabia", "scripts.youtube", "cross-domain import: gabia must not import youtube"),
+    ("scripts.gabia", "scripts.g2b", "cross-domain import: gabia must not import g2b"),
+    ("scripts.gabia", "scripts.google", "cross-domain import: gabia must not import google"),
+    ("scripts.hiworks", "scripts.gabia", "cross-domain import: hiworks must not import gabia"),
+    ("scripts.eum", "scripts.gabia", "cross-domain import: eum must not import gabia"),
+    ("scripts.youtube", "scripts.gabia", "cross-domain import: youtube must not import gabia"),
+    ("scripts.g2b", "scripts.gabia", "cross-domain import: g2b must not import gabia"),
+    ("scripts.google", "scripts.gabia", "cross-domain import: google must not import gabia"),
 ]
 
 # 보안 금지 패턴: (정규식 패턴, 이유)
