@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@haehan/design-system": "file:../../00.디자인시스템",
     "next": "14.2.29",
     "react": "^18",
     "react-dom": "^18"
