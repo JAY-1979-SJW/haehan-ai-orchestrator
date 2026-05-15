@@ -33,10 +33,7 @@ from .audit_logger import log_event
 from .web_task_registry import get_entry, list_entries
 from .web_task_templates import get_template, list_templates, merge_params
 from .sites.adapters.dev_reg_base import validate_params, ErrorCode
-from . import dev_reg_approval as _dra
-from .approval import issue_token_for_dev_reg
-from .telegram_notifier import build_dev_reg_message
-from . import telegram_sender as _ts
+from .web_task_approval_service import create_web_task_pending_approval
 
 logger = logging.getLogger(__name__)
 
@@ -186,26 +183,17 @@ def _execute_web_task(
         note=f"provider={provider}",
     )
 
-    # 승인 토큰 발행
-    token = issue_token_for_dev_reg(
+    # 승인 생성 조립 (token 발행 → pending 생성 → Telegram 발송 → mark)
+    approval = create_web_task_pending_approval(
         task_id=task_id,
-        requested_by=actor,
-        risk_level=entry.risk_level,
-        ttl_minutes=30,
-    )
-
-    # pending 레코드 생성
-    _dra.create_pending(
-        task_id=task_id,
-        token_id=token.token_id,
         provider=provider,
         action_type=action_type,
         risk_level=entry.risk_level,
+        requires_approval=entry.requires_approval,
         summary=summary,
         target_url=fill_result.target_url,
-        screenshot_path="",
         requested_by=actor,
-        expires_at=token.expires_at,
+        actor_role=role,
     )
 
     log_event(
@@ -214,24 +202,8 @@ def _execute_web_task(
         action_type=action_type,
         target=fill_result.target_url,
         actor=actor, role=role,
-        token_id=token.token_id,
         note=f"provider={provider}",
     )
-
-    # 텔레그램 승인 요청 발송
-    msg = build_dev_reg_message(
-        task_id=task_id,
-        provider=provider,
-        action_type=action_type,
-        summary=summary,
-        risk_level=entry.risk_level,
-        target_url=fill_result.target_url,
-        expires_at=token.expires_at,
-        token_id=token.token_id,
-    )
-    send_result = _ts.send_message(text=msg["text"], reply_markup=msg["reply_markup"])
-    tg_msg_id = str((send_result.get("result") or {}).get("message_id", ""))
-    _dra.mark_telegram_sent(task_id, message_id=tg_msg_id)
 
     return {
         "dry_run": False,
@@ -241,7 +213,7 @@ def _execute_web_task(
         "action_type": action_type,
         "risk_level": entry.risk_level,
         "requires_approval": entry.requires_approval,
-        "expires_at": token.expires_at,
+        "expires_at": approval.expires_at,
     }
 
 

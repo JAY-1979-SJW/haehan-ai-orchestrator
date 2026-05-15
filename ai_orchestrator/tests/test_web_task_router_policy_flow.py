@@ -51,7 +51,7 @@ class TestWebTaskRouterDryRunPath:
             assert call_args[0][1].get("dry_run") is True
 
     def test_dry_run_no_approval_token_issued(self):
-        """dry_run=True 시 issue_token_for_dev_reg 호출 금지"""
+        """dry_run=True 시 approval service 호출 금지 (token/pending/telegram 모두 없음)"""
         mock_entry = MagicMock()
         mock_adapter = MagicMock()
         mock_result = MagicMock()
@@ -69,7 +69,7 @@ class TestWebTaskRouterDryRunPath:
 
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.issue_token_for_dev_reg") as mock_issue_token, \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
@@ -83,10 +83,10 @@ class TestWebTaskRouterDryRunPath:
                 role="admin",
             )
 
-            mock_issue_token.assert_not_called()
+            mock_svc.assert_not_called()
 
     def test_dry_run_no_pending_record_created(self):
-        """dry_run=True 시 pending 레코드 생성 금지"""
+        """dry_run=True 시 approval service 미호출 → pending 레코드 생성 없음"""
         mock_entry = MagicMock()
         mock_adapter = MagicMock()
         mock_result = MagicMock()
@@ -104,7 +104,7 @@ class TestWebTaskRouterDryRunPath:
 
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router._dra.create_pending") as mock_create, \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
@@ -118,10 +118,10 @@ class TestWebTaskRouterDryRunPath:
                 role="admin",
             )
 
-            mock_create.assert_not_called()
+            mock_svc.assert_not_called()
 
     def test_dry_run_no_telegram_notification(self):
-        """dry_run=True 시 Telegram 알림 발송 금지"""
+        """dry_run=True 시 approval service 미호출 → Telegram 알림 없음"""
         mock_entry = MagicMock()
         mock_adapter = MagicMock()
         mock_result = MagicMock()
@@ -139,7 +139,8 @@ class TestWebTaskRouterDryRunPath:
 
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router._ts.send_message") as mock_send, \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
+             patch("ai_orchestrator.web_task_approval_service._ts.send_message") as mock_send, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
@@ -153,6 +154,7 @@ class TestWebTaskRouterDryRunPath:
                 role="admin",
             )
 
+            mock_svc.assert_not_called()
             mock_send.assert_not_called()
 
     def test_dry_run_response_structure(self):
@@ -197,8 +199,21 @@ class TestWebTaskRouterDryRunPath:
 class TestWebTaskRouterRealRunPath:
     """B. dry_run=False pending approval 경로"""
 
+    def _mock_approval_result(self, expires_at="2026-04-28T10:00:00Z"):
+        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+        return PendingApprovalResult(
+            task_id="wt-placeholder",
+            expires_at=expires_at,
+            risk_level="medium",
+            requires_approval=True,
+            provider="test",
+            action_type="test",
+            telegram_sent=False,
+            telegram_message_id="",
+        )
+
     def test_real_run_issues_token(self):
-        """dry_run=False 시 issue_token_for_dev_reg 호출"""
+        """dry_run=False 시 approval service 호출 (내부적으로 token 발행)"""
         mock_entry = MagicMock()
         mock_adapter = MagicMock()
         mock_result = MagicMock()
@@ -214,22 +229,13 @@ class TestWebTaskRouterRealRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        mock_token = MagicMock()
-        mock_token.token_id = "token-123"
-        mock_token.expires_at = "2026-04-28T10:00:00Z"
-
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.issue_token_for_dev_reg") as mock_issue, \
-             patch("ai_orchestrator.web_task_router._dra.create_pending"), \
-             patch("ai_orchestrator.web_task_router.build_dev_reg_message") as mock_build_msg, \
-             patch("ai_orchestrator.web_task_router._ts.send_message"), \
-             patch("ai_orchestrator.web_task_router._dra.mark_telegram_sent"), \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
-            mock_issue.return_value = mock_token
-            mock_build_msg.return_value = {"text": "msg", "reply_markup": {}}
+            mock_svc.return_value = self._mock_approval_result()
 
             web_task_router._execute_web_task(
                 provider="test",
@@ -240,10 +246,10 @@ class TestWebTaskRouterRealRunPath:
                 role="admin",
             )
 
-            mock_issue.assert_called_once()
+            mock_svc.assert_called_once()
 
     def test_real_run_creates_pending_record(self):
-        """dry_run=False 시 pending 레코드 생성"""
+        """dry_run=False 시 approval service가 호출됨 (내부적으로 pending 생성)"""
         mock_entry = MagicMock()
         mock_adapter = MagicMock()
         mock_result = MagicMock()
@@ -259,22 +265,13 @@ class TestWebTaskRouterRealRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        mock_token = MagicMock()
-        mock_token.token_id = "token-123"
-        mock_token.expires_at = "2026-04-28T10:00:00Z"
-
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.issue_token_for_dev_reg") as mock_issue, \
-             patch("ai_orchestrator.web_task_router._dra.create_pending") as mock_create, \
-             patch("ai_orchestrator.web_task_router.build_dev_reg_message") as mock_build_msg, \
-             patch("ai_orchestrator.web_task_router._ts.send_message"), \
-             patch("ai_orchestrator.web_task_router._dra.mark_telegram_sent"), \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
-            mock_issue.return_value = mock_token
-            mock_build_msg.return_value = {"text": "msg", "reply_markup": {}}
+            mock_svc.return_value = self._mock_approval_result()
 
             web_task_router._execute_web_task(
                 provider="test",
@@ -285,10 +282,11 @@ class TestWebTaskRouterRealRunPath:
                 role="admin",
             )
 
-            mock_create.assert_called_once()
-            call_kwargs = mock_create.call_args[1]
+            mock_svc.assert_called_once()
+            call_kwargs = mock_svc.call_args[1]
             assert "task_id" in call_kwargs
-            assert "token_id" in call_kwargs
+            assert "provider" in call_kwargs
+            assert "action_type" in call_kwargs
 
     def test_real_run_returns_pending_approval(self):
         """dry_run=False 응답에 pending_approval 상태 포함"""
@@ -307,22 +305,15 @@ class TestWebTaskRouterRealRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        mock_token = MagicMock()
-        mock_token.token_id = "token-123"
-        mock_token.expires_at = "2026-04-28T10:00:00Z"
+        approval_result = self._mock_approval_result("2026-04-28T10:00:00Z")
 
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.issue_token_for_dev_reg") as mock_issue, \
-             patch("ai_orchestrator.web_task_router._dra.create_pending"), \
-             patch("ai_orchestrator.web_task_router.build_dev_reg_message") as mock_build_msg, \
-             patch("ai_orchestrator.web_task_router._ts.send_message"), \
-             patch("ai_orchestrator.web_task_router._dra.mark_telegram_sent"), \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval",
+                   return_value=approval_result), \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
-            mock_issue.return_value = mock_token
-            mock_build_msg.return_value = {"text": "msg", "reply_markup": {}}
 
             result = web_task_router._execute_web_task(
                 provider="test",
@@ -336,6 +327,7 @@ class TestWebTaskRouterRealRunPath:
             assert result["dry_run"] is False
             assert result["status"] == "pending_approval"
             assert "task_id" in result
+            assert result["expires_at"] == "2026-04-28T10:00:00Z"
 
 
 class TestWebTaskRouterParamsValidation:
@@ -348,7 +340,7 @@ class TestWebTaskRouterParamsValidation:
 
         with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
              patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.issue_token_for_dev_reg") as mock_issue, \
+             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
              patch("ai_orchestrator.web_task_router.log_event"):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = ["validation_error"]
@@ -363,7 +355,7 @@ class TestWebTaskRouterParamsValidation:
                     role="admin",
                 )
 
-            mock_issue.assert_not_called()
+            mock_svc.assert_not_called()
 
     def test_validation_failure_no_adapter_execution(self):
         """params 검증 실패 시 adapter 실행 금지"""
