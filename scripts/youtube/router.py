@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from . import recording, uploader
+from .gates import gate_youtube_upload_plan, gate_youtube_publish_plan  # noqa: F401
+from .profile import YOUTUBE_PROFILE  # noqa: F401
+from .validators import validate_youtube_no_plain_secret  # noqa: F401
 
 __status__ = {
     "tasks": {
