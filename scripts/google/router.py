@@ -4,6 +4,9 @@ from __future__ import annotations
 from . import calendar, docs, drive, gmail, live_inputs, sheets, surface_explorer, surfaces, workflows
 from .base import check_session
 from scripts.gate import check as gate_check
+from .gates import gate_google_send_plan, gate_google_submit_plan, gate_google_oauth_required  # noqa: F401
+from .profile import GOOGLE_PROFILE  # noqa: F401
+from .validators import validate_google_no_plain_secret  # noqa: F401
 
 __status__ = {
     "tasks": {
