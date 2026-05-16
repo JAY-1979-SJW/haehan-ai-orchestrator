@@ -56,6 +56,49 @@ SEV_HIGH     = "high"
 SEV_MEDIUM   = "medium"
 SEV_LOW      = "low"
 
+# ---------------------------------------------------------------------------
+# 신뢰 세션 / 최종 승인 게이트 — TRUSTED_SESSION_AND_USER_APPROVAL v1.0
+# ---------------------------------------------------------------------------
+
+# AuthMode — 인증 방식 상수
+AUTH_MODE_USER_PRESENT  = "USER_PRESENT_AUTH"     # 최초 1회 사용자 직접 인증
+AUTH_MODE_TRUSTED_REUSE = "TRUSTED_SESSION_REUSE" # 승인된 세션 재사용
+AUTH_MODE_OAUTH_API     = "OAUTH_API"             # OAuth/공식 API
+
+# SessionTrustLevel — 세션 신뢰 등급
+SESSION_TRUST_NONE      = "NONE"         # 세션 없음/만료
+SESSION_TRUST_PRESENT   = "USER_PRESENT" # 사용자 직접 로그인한 세션
+SESSION_TRUST_REUSABLE  = "REUSABLE"     # AI 재사용 허용 세션
+
+# FinalActionType — 사용자 승인 없이 자동 클릭 절대 금지 행위
+FINAL_ACTION_SAVE          = "SAVE"
+FINAL_ACTION_SUBMIT        = "SUBMIT"
+FINAL_ACTION_PAY           = "PAYMENT"
+FINAL_ACTION_SIGN          = "ELECTRONIC_SIGN"
+FINAL_ACTION_DOMAIN_CHANGE = "DOMAIN_DNS_CHANGE"
+FINAL_ACTION_SEND          = "SEND"
+FINAL_ACTION_BID           = "BID_SUBMIT"
+FINAL_ACTION_TRANSFER      = "BANK_TRANSFER"
+
+FINAL_ACTION_TYPES: frozenset[str] = frozenset({
+    FINAL_ACTION_SAVE, FINAL_ACTION_SUBMIT, FINAL_ACTION_PAY,
+    FINAL_ACTION_SIGN, FINAL_ACTION_DOMAIN_CHANGE, FINAL_ACTION_SEND,
+    FINAL_ACTION_BID, FINAL_ACTION_TRANSFER,
+})
+
+# ApprovalGate — 실행 단계 게이트
+GATE_PREPARE_ALLOWED      = "PREPARE_ALLOWED"       # AI 준비/폼 입력 허용
+GATE_FINAL_BLOCKED        = "FINAL_BLOCKED"         # 최종 버튼 자동 클릭 금지
+GATE_USER_APPROVAL_NEEDED = "USER_APPROVAL_NEEDED"  # 사용자 승인 게이트
+GATE_REAUTH_REQUIRED      = "REAUTH_REQUIRED"       # 재인증 필요
+
+# 신뢰 세션/최종행위 분류 scope 상수
+CLS_TRUSTED_SESSION = "TRUSTED_SESSION_SCOPE"
+CLS_FINAL_ACTION    = "FINAL_ACTION_SCOPE"
+CLS_CERT_AUTH       = "CERT_AUTH_SCOPE"
+CLS_DOMAIN_CHANGE   = "DOMAIN_DNS_CHANGE_SCOPE"
+CLS_SECRET_STORAGE  = "SECRET_STORAGE_SCOPE"
+
 
 # ---------------------------------------------------------------------------
 # SafetyPolicyRecord — registry 레코드 (frozen dict 대용)
@@ -279,6 +322,236 @@ _POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
         test_required=True,
         safe_to_execute_on_server=False,
     ),
+
+    # ── 신뢰 세션 / 최종 승인 게이트 정책 (9~18) ──────────────────────────
+
+    # 9. USER_PRESENT_AUTH_REQUIRED
+    "USER_PRESENT_AUTH_REQUIRED": SafetyPolicyRecord(
+        policy_id="USER_PRESENT_AUTH_REQUIRED",
+        name="최초 인증은 사용자 직접 수행 필수",
+        category="auth_session",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            AUTH_MODE_USER_PRESENT,
+            "login_new_session", "otp_input", "cert_login",
+            "password_input", "captcha_solve",
+        ),
+        decision=DECISION_REQUIRE_USER,
+        reason=(
+            "신규 세션 생성 시 최초 로그인/OTP/인증서 비밀번호 입력은 "
+            "반드시 사용자가 직접 수행한다. AI 자동화 금지."
+        ),
+        required_execution_location=LOC_USER,
+        blocked_scopes=("login_new_session", "otp_input", "cert_login"),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 10. TRUSTED_SESSION_REUSE_ALLOWED
+    "TRUSTED_SESSION_REUSE_ALLOWED": SafetyPolicyRecord(
+        policy_id="TRUSTED_SESSION_REUSE_ALLOWED",
+        name="사용자 승인 신뢰 세션 AI 재사용 허용",
+        category="auth_session",
+        severity=SEV_LOW,
+        applies_to=(
+            AUTH_MODE_TRUSTED_REUSE,
+            CLS_TRUSTED_SESSION,
+            "navigate_to_work_screen", "fill_form", "read_page",
+        ),
+        decision=DECISION_ALLOW,
+        reason=(
+            "사용자가 직접 로그인한 이후 승인된 신뢰 세션은 "
+            "AI가 재사용하여 업무 화면까지 자동 진입할 수 있다."
+        ),
+        required_execution_location=LOC_AGENT,
+        blocked_scopes=(),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 11. SECRET_STORAGE_FORBIDDEN
+    "SECRET_STORAGE_FORBIDDEN": SafetyPolicyRecord(
+        policy_id="SECRET_STORAGE_FORBIDDEN",
+        name="인증 비밀값 저장/기록 절대 금지",
+        category="secret_storage",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            CLS_SECRET_STORAGE,
+            "store_password", "store_otp", "store_cert_password",
+            "store_token", "store_cookie", "store_session",
+            "store_credential", "store_private_key",
+            "dump_cookie", "extract_session",
+        ),
+        decision=DECISION_BLOCK,
+        reason=(
+            "password/otp/cert_password/token/cookie/session/credential/private_key는 "
+            "어디에도 저장/기록/출력 불가. 세션 탈취 금지."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(
+            CLS_SECRET_STORAGE,
+            "store_password", "store_otp", "store_cert_password",
+            "dump_cookie", "extract_session",
+        ),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 12. SERVER_SECURITY_LOGIN_BLOCKED
+    "SERVER_SECURITY_LOGIN_BLOCKED": SafetyPolicyRecord(
+        policy_id="SERVER_SECURITY_LOGIN_BLOCKED",
+        name="서버에서 보안 로그인 자동화 절대 금지",
+        category="server_security",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            "server_browser_login", "server_cert_login",
+            "server_otp_automation", "server_password_submit",
+        ),
+        decision=DECISION_BLOCK,
+        reason=(
+            "서버에서 보안 로그인(인증서/OTP/패스워드 제출)을 자동화하는 것은 "
+            "인증서 파일 서버 복사·쿠키 덤프·세션 탈취 위험으로 절대 금지."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(
+            "server_browser_login", "server_cert_login",
+            "server_otp_automation", "server_password_submit",
+        ),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 13. LOCAL_AGENT_SECURE_LOGIN_REQUIRED
+    "LOCAL_AGENT_SECURE_LOGIN_REQUIRED": SafetyPolicyRecord(
+        policy_id="LOCAL_AGENT_SECURE_LOGIN_REQUIRED",
+        name="보안 로그인은 로컬 에이전트에서만 허용",
+        category="auth_session",
+        severity=SEV_HIGH,
+        applies_to=(
+            CLS_CERT_AUTH,
+            "cert_based_login_local", "browser_session_local",
+        ),
+        decision=DECISION_REQUIRE_AGENT,
+        reason=(
+            "인증서 기반 로그인 등 보안 인증은 로컬 PC 에이전트에서만 수행한다. "
+            "인증서 파일을 서버로 복사하거나 서버에서 실행하는 것은 금지."
+        ),
+        required_execution_location=LOC_AGENT,
+        blocked_scopes=(),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 14. FINAL_APPROVAL_GATE_REQUIRED
+    "FINAL_APPROVAL_GATE_REQUIRED": SafetyPolicyRecord(
+        policy_id="FINAL_APPROVAL_GATE_REQUIRED",
+        name="최종 저장/제출/결제/서명/도메인 변경 자동 실행 금지",
+        category="final_approval_gate",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            CLS_FINAL_ACTION,
+            FINAL_ACTION_SAVE, FINAL_ACTION_SUBMIT, FINAL_ACTION_PAY,
+            FINAL_ACTION_SIGN, FINAL_ACTION_DOMAIN_CHANGE, FINAL_ACTION_SEND,
+            FINAL_ACTION_BID, FINAL_ACTION_TRANSFER,
+            "click_save_button", "click_submit_button", "click_pay_button",
+            "click_sign_button", "click_apply_dns", "click_send_button",
+            "click_bid_submit", "click_transfer_confirm",
+        ),
+        decision=DECISION_REQUIRE_APPROVAL,
+        reason=(
+            "저장/제출/결제/전자서명/DNS변경/발송/입찰/송금 등 최종 확정 버튼은 "
+            "사용자 명시적 승인 게이트 통과 전까지 AI가 자동 클릭 절대 금지."
+        ),
+        required_execution_location=LOC_USER,
+        blocked_scopes=(CLS_FINAL_ACTION,),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 15. CERTIFICATE_PASSWORD_NEVER_STORED
+    "CERTIFICATE_PASSWORD_NEVER_STORED": SafetyPolicyRecord(
+        policy_id="CERTIFICATE_PASSWORD_NEVER_STORED",
+        name="인증서 비밀번호 저장/전달 절대 금지",
+        category="secret_storage",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            "cert_password_store", "cert_password_transmit",
+            "cert_password_log", "cert_file_server_copy",
+        ),
+        decision=DECISION_BLOCK,
+        reason=(
+            "전자서명 인증서 비밀번호는 AI/서버/로그 어디에도 저장·전달·출력 불가. "
+            "인증서 파일 서버 복사 금지."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(
+            "cert_password_store", "cert_password_transmit",
+            "cert_password_log", "cert_file_server_copy",
+        ),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 16. OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY
+    "OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY": SafetyPolicyRecord(
+        policy_id="OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY",
+        name="OAuth refresh token 보안 저장소 전용",
+        category="secret_storage",
+        severity=SEV_HIGH,
+        applies_to=("oauth_refresh_token_plain_store", "oauth_token_log"),
+        decision=DECISION_BLOCK,
+        reason=(
+            "OAuth refresh token은 암호화된 보안 저장소 외에 저장 금지. "
+            "로그/응답/파일에 plain text 출력 금지."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=("oauth_refresh_token_plain_store", "oauth_token_log"),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 17. DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED
+    "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED": SafetyPolicyRecord(
+        policy_id="DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED",
+        name="도메인/DNS 변경 사용자 승인 필수",
+        category="final_approval_gate",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            CLS_DOMAIN_CHANGE,
+            "gabia_dns_apply", "gabia_domain_modify",
+            "dns_record_change", "nameserver_change",
+        ),
+        decision=DECISION_REQUIRE_APPROVAL,
+        reason=(
+            "도메인/DNS 변경은 서비스 전체에 영향을 주므로 "
+            "사용자 명시적 승인 없이 AI가 적용 버튼을 클릭할 수 없다."
+        ),
+        required_execution_location=LOC_USER,
+        blocked_scopes=(CLS_DOMAIN_CHANGE,),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 18. TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED
+    "TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED": SafetyPolicyRecord(
+        policy_id="TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED",
+        name="신뢰 세션 만료 시 재인증 필수",
+        category="auth_session",
+        severity=SEV_HIGH,
+        applies_to=(
+            "trusted_session_expired", "session_timeout",
+            "auth_cookie_expired", "login_redirect_detected",
+        ),
+        decision=DECISION_REQUIRE_USER,
+        reason=(
+            "신뢰 세션이 만료되면 AI가 자동으로 재로그인하지 않는다. "
+            "사용자에게 재인증을 요청하고 대기한다."
+        ),
+        required_execution_location=LOC_USER,
+        blocked_scopes=("trusted_session_expired",),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
 }
 
 
@@ -373,4 +646,36 @@ USER_DIRECT_SCOPES: frozenset[str] = frozenset({
 LOCAL_AGENT_SCOPES: frozenset[str] = frozenset({
     CLS_LOCAL_AGENT,
     LOC_AGENT,
+})
+
+# 신뢰 세션 관련 분류 집합
+TRUSTED_SESSION_SCOPES: frozenset[str] = frozenset({
+    AUTH_MODE_TRUSTED_REUSE,
+    CLS_TRUSTED_SESSION,
+    "navigate_to_work_screen", "fill_form",
+})
+
+# 최종 승인 게이트 분류 집합
+FINAL_ACTION_SCOPES: frozenset[str] = frozenset({
+    CLS_FINAL_ACTION,
+    *FINAL_ACTION_TYPES,
+    "click_save_button", "click_submit_button", "click_pay_button",
+    "click_sign_button", "click_apply_dns", "click_send_button",
+    "click_bid_submit", "click_transfer_confirm",
+})
+
+# 시크릿 저장 금지 집합
+SECRET_STORAGE_SCOPES: frozenset[str] = frozenset({
+    CLS_SECRET_STORAGE,
+    "store_password", "store_otp", "store_cert_password",
+    "store_token", "store_cookie", "dump_cookie", "extract_session",
+    "cert_password_store", "cert_password_transmit",
+    "cert_file_server_copy", "oauth_refresh_token_plain_store",
+})
+
+# 도메인/DNS 변경 분류 집합
+DOMAIN_CHANGE_SCOPES: frozenset[str] = frozenset({
+    CLS_DOMAIN_CHANGE,
+    "gabia_dns_apply", "gabia_domain_modify",
+    "dns_record_change", "nameserver_change",
 })
