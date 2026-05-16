@@ -34,12 +34,11 @@ DOMAIN_CORE_MAP = {
     "Task": {
         "impl_files": [
             "ai_orchestrator/task_state.py",
+            "ai_orchestrator/domain/models.py",    # STEP 1: Task baseline model 추가
         ],
-        "domain_file": "ai_orchestrator/domain/enums.py",
-        "status": "PARTIAL",           # TaskState 있음, Task 엔티티 미완
-        "needs": ["task_id", "provider", "action_type", "risk_level",
-                  "execution_location", "approval_required", "created_at",
-                  "status", "summary", "artifacts_ref"],
+        "domain_file": "ai_orchestrator/domain/models.py",
+        "status": "BASELINE_MODEL_READY_WITH_LEGACY_ADAPTER",
+        "needs": ["service_layer_extract", "persistent_store_integration"],
     },
     "TaskQueue": {
         "impl_files": [
@@ -52,10 +51,10 @@ DOMAIN_CORE_MAP = {
     "WorkTrade": {
         "impl_files": [
             "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/domain/models.py",    # STEP 1: WorkTrade baseline model 추가
         ],
-        "status": "REGISTRY_ONLY",     # 분류 registry만, WorkTrade 엔티티 없음
-        "needs": ["work_id", "title", "provider", "classification",
-                  "execution_location", "auth_mode", "current_status"],
+        "status": "BASELINE_MODEL_READY",
+        "needs": ["service_layer_extract"],
     },
     "Approval": {
         "impl_files": [
@@ -88,9 +87,11 @@ DOMAIN_CORE_MAP = {
     "ExternalWork": {
         "impl_files": [
             "ai_orchestrator/external_work_registry.py",
+            "ai_orchestrator/domain/models.py",    # STEP 1: ExternalWork baseline model 추가
+            "ai_orchestrator/domain/model_adapters.py",
         ],
-        "status": "REGISTRY_ONLY",
-        "needs": ["ExternalWork_entity", "handoff_record", "status_tracker"],
+        "status": "BASELINE_MODEL_READY",
+        "needs": ["handoff_record", "status_tracker"],
     },
     "LocalAgent": {
         "impl_files": [
@@ -114,10 +115,10 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/server/action_evidence_store.py",
             "ai_orchestrator/local_agent/action_evidence_collector.py",
+            "ai_orchestrator/domain/models.py",    # STEP 1: Artifact baseline model 추가
         ],
-        "status": "PARTIAL",
-        "needs": ["artifact_id", "task_ref", "storage_path", "content_type",
-                  "safe_ref_only_policy"],
+        "status": "BASELINE_MODEL_READY_WITH_EVIDENCE_GAP",
+        "needs": ["action_evidence_store_migration", "content_type_standard"],
     },
     "SafetyPolicy": {
         "impl_files": [
@@ -125,16 +126,19 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/server/server_egress_policy.py",
             "ai_orchestrator/local_agent/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
+            "ai_orchestrator/domain/models.py",          # STEP 1: SafetyPolicy baseline model 추가
+            "ai_orchestrator/domain/model_adapters.py",  # STEP 1: list_safety_policies adapter 추가
         ],
-        "status": "SCATTERED",         # 분산됨, 통합 없음
+        "status": "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED",
         "needs": ["unified_safety_policy_registry", "policy_coverage_test"],
     },
     "ExternalAppBridge": {
-        "impl_files": [],              # 미구현
-        "status": "NOT_IMPLEMENTED",
-        "needs": ["app_id", "app_type", "capability", "execution_location",
-                  "required_approval", "input_schema_ref", "output_schema_ref",
-                  "status", "health", "handoff_mode", "safety_policy"],
+        "impl_files": [
+            "ai_orchestrator/domain/models.py",          # STEP 1: ExternalAppBridge baseline model 추가
+            "ai_orchestrator/domain/model_adapters.py",  # STEP 1: get_all_bridges / get_bridge 추가
+        ],
+        "status": "BASELINE_MODEL_READY_CONTRACT_ONLY",  # 계약 기준선 완료, 실제 구현 없음
+        "needs": ["actual_bridge_impl", "handoff_executor", "health_check"],
     },
     "UserDirectAction": {
         "impl_files": [
@@ -147,8 +151,16 @@ DOMAIN_CORE_MAP = {
     },
 }
 
-DOMAIN_STATUS_ALLOWED = {"FUNCTIONAL", "PARTIAL", "REGISTRY_ONLY",
-                          "STATIC_LIST", "SCATTERED", "NOT_IMPLEMENTED"}
+DOMAIN_STATUS_ALLOWED = {
+    "FUNCTIONAL", "PARTIAL", "REGISTRY_ONLY",
+    "STATIC_LIST", "SCATTERED", "NOT_IMPLEMENTED",
+    # STEP 1 Domain Core 기준선 완료 후 상태
+    "BASELINE_MODEL_READY",
+    "BASELINE_MODEL_READY_WITH_LEGACY_ADAPTER",
+    "BASELINE_MODEL_READY_WITH_EVIDENCE_GAP",
+    "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED",
+    "BASELINE_MODEL_READY_CONTRACT_ONLY",
+}
 
 
 class TestDomainCoreClassification:
@@ -174,10 +186,15 @@ class TestDomainCoreClassification:
                 f"{domain}.status={info['status']} 허용 범위 초과"
             )
 
-    def test_external_app_bridge_not_yet_implemented(self):
-        """ExternalAppBridge는 아직 구현되지 않았음을 고정한다."""
-        assert DOMAIN_CORE_MAP["ExternalAppBridge"]["status"] == "NOT_IMPLEMENTED"
-        assert len(DOMAIN_CORE_MAP["ExternalAppBridge"]["impl_files"]) == 0
+    def test_external_app_bridge_contract_only_baseline(self):
+        """ExternalAppBridge는 계약 기준선만 완료, 실제 구현 없음을 고정한다."""
+        status = DOMAIN_CORE_MAP["ExternalAppBridge"]["status"]
+        assert status == "BASELINE_MODEL_READY_CONTRACT_ONLY", (
+            f"ExternalAppBridge status={status}"
+        )
+        # 도메인 모델 파일이 추가됨
+        impl_files = DOMAIN_CORE_MAP["ExternalAppBridge"]["impl_files"]
+        assert any("domain/models.py" in f for f in impl_files)
 
     def test_approval_domain_functional(self):
         """Approval 도메인은 FUNCTIONAL 상태다."""
@@ -187,9 +204,12 @@ class TestDomainCoreClassification:
         """ExecutionLocation 도메인은 FUNCTIONAL 상태다."""
         assert DOMAIN_CORE_MAP["ExecutionLocation"]["status"] == "FUNCTIONAL"
 
-    def test_safety_policy_scattered_needs_unification(self):
-        """SafetyPolicy는 분산 상태 — 통합 미완료를 고정한다."""
-        assert DOMAIN_CORE_MAP["SafetyPolicy"]["status"] == "SCATTERED"
+    def test_safety_policy_baseline_model_ready_but_scattered(self):
+        """SafetyPolicy는 기준선 모델 완료, 실제 정책 통합은 미완료임을 고정한다."""
+        status = DOMAIN_CORE_MAP["SafetyPolicy"]["status"]
+        assert status == "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED", (
+            f"SafetyPolicy status={status}"
+        )
         assert "unified_safety_policy_registry" in DOMAIN_CORE_MAP["SafetyPolicy"]["needs"]
 
 
