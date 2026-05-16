@@ -25,6 +25,7 @@ from .browser_tool.approval_record_router import approval_record_router
 from .action_router import action_router
 from .cad_ai_router import cad_ai_router
 from .connectors.naver_search_router import naver_search_router
+from .ops_router import ops_router
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
@@ -37,6 +38,7 @@ router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
+router.include_router(ops_router)           # read-only ops center API
 
 
 class TaskSubmit(BaseModel):
