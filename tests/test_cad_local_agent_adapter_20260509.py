@@ -1,5 +1,9 @@
+import pytest
+
 from local_agent.actions import execute_action
 from local_agent.websocket_client import process_task
+
+pytestmark = pytest.mark.external_cad
 
 
 def test_cad_adapter_is_modular_package_with_compat_wrapper():

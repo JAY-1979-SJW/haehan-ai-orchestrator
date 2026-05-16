@@ -155,25 +155,26 @@ def run_audit() -> dict[str, Any]:
     except Exception as e:
         results.append(item("pl-16", "WARN", str(e)))
 
-    # pl-17: CAD/Tax/Bid 차단
+    # pl-17: CAD/Tax/Bid 차단 — decide_execution_policy(classification) 사용
     try:
         eps = importlib.import_module("ai_orchestrator.services.execution_policy_service")
         svc = eps.ExecutionPolicyService()
-        d_cad = svc.classify_for_server(risk_level="high", classification="EXTERNAL_APP_HOLD")
-        d_bid = svc.classify_for_server(risk_level="critical", classification="USER_DIRECT_REQUIRED")
+        d_cad = svc.decide_execution_policy("EXTERNAL_APP_HOLD")
+        d_bid = svc.decide_execution_policy("USER_DIRECT_REQUIRED")
         both_blocked = not d_cad.server_executable and not d_bid.server_executable
         results.append(item("pl-17", "PASS" if both_blocked else "FAIL",
-                             f"CAD server_executable={d_cad.server_executable}, BID={d_bid.server_executable}"))
+                             f"CAD is_external_app_hold={d_cad.is_external_app_hold} is_blocked={d_cad.is_blocked}, "
+                             f"BID server_executable={d_bid.server_executable}"))
     except Exception as e:
         results.append(item("pl-17", "WARN", f"판정 호출 실패: {e}"))
 
-    # pl-18: OAuth 차단
+    # pl-18: OAuth 차단 — decide_execution_policy(classification) 사용
     try:
         eps = importlib.import_module("ai_orchestrator.services.execution_policy_service")
         svc = eps.ExecutionPolicyService()
-        d = svc.classify_for_server(risk_level="medium", classification="OFFICIAL_API_OR_OAUTH_REQUIRED")
-        results.append(item("pl-18", "PASS" if not d.server_executable else "FAIL",
-                             f"server_executable={d.server_executable}"))
+        d = svc.decide_execution_policy("OFFICIAL_API_OR_OAUTH_REQUIRED")
+        results.append(item("pl-18", "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
+                             f"requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}"))
     except Exception as e:
         results.append(item("pl-18", "WARN", f"판정 호출 실패: {e}"))
 

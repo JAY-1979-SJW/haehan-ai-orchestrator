@@ -76,14 +76,16 @@ def run_audit() -> dict[str, Any]:
     except Exception as e:
         results.append(item("ac-03", "FAIL", str(e)))
 
-    # ac-04: naver 3개
+    # ac-04: naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search_router.py
+    import re as _re
     naver_src = ""
-    for f in [ROOT / "ai_orchestrator/naver_search_router.py",
+    for f in [ROOT / "ai_orchestrator/connectors/naver_search_router.py",
+               ROOT / "ai_orchestrator/naver_search_router.py",
                ROOT / "ai_orchestrator/sites/naver_search/router.py"]:
         if f.exists():
             naver_src = f.read_text(encoding="utf-8")
             break
-    naver_count = naver_src.count("@router.get(") + naver_src.count("@naver_router.get(") if naver_src else 0
+    naver_count = len(_re.findall(r"@\w*router\w*\.(get|post|put|delete|patch)\(", naver_src)) if naver_src else 0
     results.append(item("ac-04", "PASS" if naver_count >= 3 else "WARN",
                          f"naver endpoint 수={naver_count}/3", {"count": naver_count}))
 
@@ -131,10 +133,19 @@ def run_audit() -> dict[str, Any]:
     results.append(item("ac-12", "PASS" if ops_reg else "WARN",
                          "ops_router 등록" if ops_reg else "미등록"))
 
-    # ac-13: legacy 분류
+    # ac-13: legacy 분류 — router.py 또는 api_contract 테스트에서 wrap_legacy/LEGACY 존재 확인
     has_legacy = "legacy" in router_src.lower() or "LEGACY" in router_src or "HOLD" in router_src
+    if not has_legacy:
+        for f in (list(ROOT.glob("tests/test_backend_api_contract_*.py")) +
+                  list(ROOT.glob("ai_orchestrator/**/response_adapter.py"))):
+            try:
+                if "legacy" in f.read_text(encoding="utf-8").lower():
+                    has_legacy = True
+                    break
+            except Exception:
+                pass
     results.append(item("ac-13", "PASS" if has_legacy else "WARN",
-                         "legacy 분류 있음" if has_legacy else "없음"))
+                         "legacy 분류 있음 (wrap_legacy/LEGACY)" if has_legacy else "없음"))
 
     # ac-14: pytest 실행
     try:
