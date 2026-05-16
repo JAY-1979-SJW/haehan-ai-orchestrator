@@ -126,11 +126,12 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/server/server_egress_policy.py",
             "ai_orchestrator/local_agent/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
-            "ai_orchestrator/domain/models.py",          # STEP 1: SafetyPolicy baseline model 추가
-            "ai_orchestrator/domain/model_adapters.py",  # STEP 1: list_safety_policies adapter 추가
+            "ai_orchestrator/domain/models.py",
+            "ai_orchestrator/domain/model_adapters.py",
+            "ai_orchestrator/safety_policy/safety_policy_registry.py",  # STEP 2: 통합 registry 기준선
         ],
-        "status": "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED",
-        "needs": ["unified_safety_policy_registry", "policy_coverage_test"],
+        "status": "POLICY_REGISTRY_BASELINE_READY",
+        "needs": ["full_policy_migration", "policy_coverage_test"],
     },
     "ExternalAppBridge": {
         "impl_files": [
@@ -160,6 +161,8 @@ DOMAIN_STATUS_ALLOWED = {
     "BASELINE_MODEL_READY_WITH_EVIDENCE_GAP",
     "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED",
     "BASELINE_MODEL_READY_CONTRACT_ONLY",
+    # STEP 2 Policy Registry 기준선 완료 후 상태
+    "POLICY_REGISTRY_BASELINE_READY",
 }
 
 
@@ -204,13 +207,13 @@ class TestDomainCoreClassification:
         """ExecutionLocation 도메인은 FUNCTIONAL 상태다."""
         assert DOMAIN_CORE_MAP["ExecutionLocation"]["status"] == "FUNCTIONAL"
 
-    def test_safety_policy_baseline_model_ready_but_scattered(self):
-        """SafetyPolicy는 기준선 모델 완료, 실제 정책 통합은 미완료임을 고정한다."""
+    def test_safety_policy_registry_baseline_ready(self):
+        """SafetyPolicy는 policy registry 기준선 완료 상태다."""
         status = DOMAIN_CORE_MAP["SafetyPolicy"]["status"]
-        assert status == "BASELINE_MODEL_READY_BUT_POLICY_SCATTERED", (
+        assert status == "POLICY_REGISTRY_BASELINE_READY", (
             f"SafetyPolicy status={status}"
         )
-        assert "unified_safety_policy_registry" in DOMAIN_CORE_MAP["SafetyPolicy"]["needs"]
+        assert "full_policy_migration" in DOMAIN_CORE_MAP["SafetyPolicy"]["needs"]
 
 
 # ===========================================================================
@@ -640,22 +643,22 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "secret_redaction_policy": {
-        "impl": "ai_orchestrator/local_agent/result_sanitizer.py + desktop/task_receiver.py",
-        "status": "PARTIAL",
+        "impl": "ai_orchestrator/safety_policy/secret_redaction.py (단일 기준선) + 기존 분산 구현",
+        "status": "POLICY_REGISTRY_BASELINE_READY",
         "test_covered": True,
-        "risk_gap": "통합 single-source-of-truth 미정의",
+        "risk_gap": None,
     },
     "external_app_hold_policy": {
-        "impl": "ai_orchestrator/external_work_registry.py",
-        "status": "REGISTRY_ONLY",
-        "test_covered": False,
-        "risk_gap": "EXTERNAL_APP_HOLD 정책 코드 강제 없음",
+        "impl": "ai_orchestrator/safety_policy/safety_policy_registry.py + services/execution_policy_service.py",
+        "status": "POLICY_REGISTRY_BASELINE_READY",
+        "test_covered": True,
+        "risk_gap": None,
     },
     "oauth_api_required_policy": {
-        "impl": "ai_orchestrator/external_work_registry.py (분류만)",
-        "status": "REGISTRY_ONLY",
-        "test_covered": False,
-        "risk_gap": "OAuth 미설정 시 실행 차단 로직 미구현",
+        "impl": "ai_orchestrator/safety_policy/safety_policy_registry.py + services/execution_policy_service.py",
+        "status": "POLICY_REGISTRY_BASELINE_READY",
+        "test_covered": True,
+        "risk_gap": None,
     },
     "blocked_action_policy": {
         "impl": "ai_orchestrator/server/execution_location_guard.py",
@@ -679,18 +682,18 @@ class TestPolicyLayerMap:
         assert p["status"] == "IMPLEMENTED"
         assert p["test_covered"] is True
 
-    def test_external_app_hold_policy_gap(self):
-        """external_app_hold_policy는 REGISTRY_ONLY — 강제 차단 로직 미구현."""
+    def test_external_app_hold_policy_baseline_ready(self):
+        """external_app_hold_policy는 POLICY_REGISTRY_BASELINE_READY — 강제 차단 구현 완료."""
         p = POLICY_LAYER_MAP["external_app_hold_policy"]
-        assert p["status"] == "REGISTRY_ONLY"
-        assert p["test_covered"] is False
-        assert p["risk_gap"] is not None
+        assert p["status"] == "POLICY_REGISTRY_BASELINE_READY"
+        assert p["test_covered"] is True
+        assert p["risk_gap"] is None
 
-    def test_oauth_policy_gap(self):
-        """oauth_api_required_policy는 REGISTRY_ONLY — 실행 차단 로직 미구현."""
+    def test_oauth_policy_baseline_ready(self):
+        """oauth_api_required_policy는 POLICY_REGISTRY_BASELINE_READY — 차단 로직 구현 완료."""
         p = POLICY_LAYER_MAP["oauth_api_required_policy"]
-        assert p["status"] == "REGISTRY_ONLY"
-        assert p["test_covered"] is False
+        assert p["status"] == "POLICY_REGISTRY_BASELINE_READY"
+        assert p["test_covered"] is True
 
     def test_implemented_policies_are_test_covered(self):
         """IMPLEMENTED 상태 정책은 모두 테스트 커버되어 있다."""

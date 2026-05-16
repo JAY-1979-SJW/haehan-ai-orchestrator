@@ -313,6 +313,108 @@ class ExecutionPolicyService:
             reason=reason,
         )
 
+    # ------------------------------------------------------------------
+    # Safety Policy Registry 연결 (STEP 5 보강)
+
+    def is_external_app_hold_blocked(self, classification: str) -> bool:
+        """classification이 EXTERNAL_APP_HOLD 정책에 의해 차단되는지 확인."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import EXTERNAL_APP_HOLD_SCOPES
+            return classification in EXTERNAL_APP_HOLD_SCOPES
+        except Exception:
+            return classification in (_CLS_EXTERNAL_APP_HOLD, _CLS_FUTURE)
+
+    def is_oauth_required_blocked_without_setup(self, classification: str) -> bool:
+        """classification이 OAUTH_API_REQUIRED이고 설정 미완료 시 실행 차단 여부."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import OAUTH_REQUIRED_SCOPES
+            return classification in OAUTH_REQUIRED_SCOPES
+        except Exception:
+            return classification == _CLS_OAUTH_REQUIRED
+
+    def is_user_direct_auto_execution_blocked(self, classification: str) -> bool:
+        """USER_DIRECT_REQUIRED 분류는 자동 실행이 차단된다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import USER_DIRECT_SCOPES
+            return classification in USER_DIRECT_SCOPES
+        except Exception:
+            return classification == _CLS_USER_DIRECT
+
+    def is_local_agent_server_execution_blocked(self, classification: str) -> bool:
+        """LOCAL_AGENT_REQUIRED 분류는 서버 직접 실행이 차단된다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import LOCAL_AGENT_SCOPES
+            return classification in LOCAL_AGENT_SCOPES
+        except Exception:
+            return classification == _CLS_LOCAL_AGENT
+
+    def is_blocked_action_denied(self, classification: str) -> bool:
+        """BLOCKED/QUARANTINE 분류는 실행이 거부된다."""
+        return classification in (_LOC_BLOCKED, _CLS_QUARANTINE)
+
+    def get_safe_to_execute_on_server(self, classification: str) -> bool:
+        """safety policy registry 기반 서버 실행 안전 여부."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import get_safe_to_execute_on_server
+            return get_safe_to_execute_on_server(classification)
+        except Exception:
+            return self.is_server_executable(classification)
+
+    def decide_execution_policy(self, classification: str) -> PolicyDecision:
+        """classification 기반으로 safety policy registry를 참조한 통합 판정.
+
+        기존 _classification_to_decision()을 유지하면서 policy registry를 추가로 적용한다.
+        """
+        base = self._classification_to_decision(classification)
+
+        # registry 기반 safe_to_execute_on_server 보강
+        safe_on_server = self.get_safe_to_execute_on_server(classification)
+
+        # external_app_hold → hold 강제
+        if self.is_external_app_hold_blocked(classification):
+            return PolicyDecision(
+                execution_location=_LOC_BLOCKED,
+                server_executable=False,
+                requires_local_agent=False,
+                requires_user_direct=False,
+                requires_oauth_setup=False,
+                is_external_app_hold=True,
+                is_blocked=True,
+                requires_secret_redaction=False,
+                reason=f"EXTERNAL_APP_HOLD_BLOCK: {classification} — 계약·bridge 구현 전 실행 불가",
+                classification=classification,
+            )
+
+        # oauth required → blocked until setup
+        if self.is_oauth_required_blocked_without_setup(classification):
+            return PolicyDecision(
+                execution_location=_LOC_BLOCKED,
+                server_executable=False,
+                requires_local_agent=False,
+                requires_user_direct=False,
+                requires_oauth_setup=True,
+                is_external_app_hold=False,
+                is_blocked=True,
+                requires_secret_redaction=False,
+                reason=f"OAUTH_API_REQUIRED_BLOCK: {classification} — OAuth/API 설정 완료 전 실행 불가",
+                classification=classification,
+            )
+
+        # base decision 반환 (safe_to_execute_on_server 반영)
+        return PolicyDecision(
+            execution_location=base.execution_location,
+            server_executable=base.server_executable and safe_on_server,
+            requires_local_agent=base.requires_local_agent,
+            requires_user_direct=base.requires_user_direct,
+            requires_oauth_setup=base.requires_oauth_setup,
+            is_external_app_hold=base.is_external_app_hold,
+            is_blocked=base.is_blocked,
+            requires_secret_redaction=base.requires_secret_redaction,
+            reason=base.reason,
+            classification=classification,
+            risk_level=base.risk_level,
+        )
+
 
 # 싱글턴 인스턴스 (경량 — 상태 없음)
 _service_instance: Optional[ExecutionPolicyService] = None

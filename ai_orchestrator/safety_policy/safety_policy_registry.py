@@ -1,0 +1,376 @@
+"""Safety Policy Registry — Policy Layer 방화구획 단일 기준선.
+
+이 모듈이 프로젝트 내 SafetyPolicy registry의 단일 source of truth다.
+기존 execution_location_guard, action_risk_policy, server_egress_policy는
+원본을 유지하며, 이 registry는 통합 참조 기준선으로만 사용된다.
+
+각 정책의 decision 값:
+- SafetyDecision.block       → 실행 절대 불가
+- SafetyDecision.hold        → 외부 앱 계약/설정 전 대기
+- SafetyDecision.require_approval → 승인 없이 실행 불가
+- SafetyDecision.require_user_direct → 사용자 직접 수행 필요
+- SafetyDecision.require_local_agent → 로컬 에이전트 필요
+- SafetyDecision.allow       → 서버 내부 실행 허용
+
+금지:
+- 기존 guard/policy 대체 금지
+- API 응답 변경 금지
+- DB write 금지
+"""
+from __future__ import annotations
+
+from typing import Any, Optional
+
+# ---------------------------------------------------------------------------
+# 정책 분류 상수
+# ---------------------------------------------------------------------------
+
+# execution_location 값 (execution_location_guard 호환)
+LOC_SERVER   = "SERVER_INTERNAL_ONLY"
+LOC_AGENT    = "LOCAL_AGENT_REQUIRED"
+LOC_USER     = "USER_DIRECT_REQUIRED"
+LOC_BLOCKED  = "BLOCKED"
+
+# external work classification (external_work_registry 호환)
+CLS_SERVER_READONLY   = "SERVER_READONLY_ALLOWED"
+CLS_OAUTH_REQUIRED    = "OFFICIAL_API_OR_OAUTH_REQUIRED"
+CLS_LOCAL_AGENT       = "LOCAL_AGENT_REQUIRED"
+CLS_USER_DIRECT       = "USER_DIRECT_REQUIRED"
+CLS_WEB_TASK          = "WEB_TASK_REGISTRY"
+CLS_QUARANTINE        = "QUARANTINE_OR_HOLD"
+CLS_EXTERNAL_APP_HOLD = "EXTERNAL_APP_HOLD"
+CLS_FUTURE            = "FUTURE_INTEGRATION"
+CLS_IN_SCOPE          = "IN_SCOPE"
+
+# SafetyDecision 값 (domain/models.SafetyDecision 호환)
+DECISION_ALLOW            = "allow"
+DECISION_BLOCK            = "block"
+DECISION_HOLD             = "hold"
+DECISION_REQUIRE_APPROVAL = "require_approval"
+DECISION_REQUIRE_AGENT    = "require_local_agent"
+DECISION_REQUIRE_USER     = "require_user_direct"
+
+# severity
+SEV_CRITICAL = "critical"
+SEV_HIGH     = "high"
+SEV_MEDIUM   = "medium"
+SEV_LOW      = "low"
+
+
+# ---------------------------------------------------------------------------
+# SafetyPolicyRecord — registry 레코드 (frozen dict 대용)
+# ---------------------------------------------------------------------------
+
+class SafetyPolicyRecord:
+    """Registry에 저장되는 정책 레코드."""
+
+    __slots__ = (
+        "policy_id", "name", "category", "severity",
+        "applies_to", "decision", "reason",
+        "required_execution_location",
+        "blocked_scopes", "test_required",
+        "safe_to_execute_on_server",
+    )
+
+    def __init__(
+        self,
+        policy_id: str,
+        name: str,
+        category: str,
+        severity: str,
+        applies_to: tuple[str, ...],
+        decision: str,
+        reason: str,
+        required_execution_location: Optional[str] = None,
+        blocked_scopes: tuple[str, ...] = (),
+        test_required: bool = True,
+        safe_to_execute_on_server: bool = False,
+    ) -> None:
+        object.__setattr__(self, "policy_id", policy_id)
+        object.__setattr__(self, "name", name)
+        object.__setattr__(self, "category", category)
+        object.__setattr__(self, "severity", severity)
+        object.__setattr__(self, "applies_to", applies_to)
+        object.__setattr__(self, "decision", decision)
+        object.__setattr__(self, "reason", reason)
+        object.__setattr__(self, "required_execution_location", required_execution_location)
+        object.__setattr__(self, "blocked_scopes", blocked_scopes)
+        object.__setattr__(self, "test_required", test_required)
+        object.__setattr__(self, "safe_to_execute_on_server", safe_to_execute_on_server)
+
+    def __setattr__(self, *_: Any) -> None:
+        raise AttributeError("SafetyPolicyRecord는 read-only입니다.")
+
+    def blocks_server_execution(self) -> bool:
+        return not self.safe_to_execute_on_server
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "policy_id": self.policy_id,
+            "name": self.name,
+            "category": self.category,
+            "severity": self.severity,
+            "applies_to": list(self.applies_to),
+            "decision": self.decision,
+            "reason": self.reason,
+            "required_execution_location": self.required_execution_location,
+            "blocked_scopes": list(self.blocked_scopes),
+            "test_required": self.test_required,
+            "safe_to_execute_on_server": self.safe_to_execute_on_server,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Policy Registry — 8개 필수 정책
+# ---------------------------------------------------------------------------
+
+_POLICY_REGISTRY: dict[str, SafetyPolicyRecord] = {
+
+    # 1. EXTERNAL_APP_HOLD_BLOCK
+    "EXTERNAL_APP_HOLD_BLOCK": SafetyPolicyRecord(
+        policy_id="EXTERNAL_APP_HOLD_BLOCK",
+        name="외부 전문 앱 연동 대기 항목 실행 차단",
+        category="external_app_hold",
+        severity=SEV_CRITICAL,
+        applies_to=(
+            CLS_EXTERNAL_APP_HOLD,
+            CLS_FUTURE,
+            "CAD_EXTERNAL_APP_BRIDGE",
+            "HWPX_EXTERNAL_APP_BRIDGE",
+            "OFFICE_EXTERNAL_APP_BRIDGE",
+            "TAX_EXTERNAL_APP_BRIDGE",
+            "BID_EXTERNAL_APP_BRIDGE",
+            "DOCUMENT_AUTOMATION_EXTERNAL_APP_BRIDGE",
+        ),
+        decision=DECISION_HOLD,
+        reason=(
+            "CAD/HWPX/Excel/Tax/Bid/문서자동화 등 외부 전문 앱 연동은 "
+            "계약·bridge 구현 전까지 실행 불가."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(CLS_EXTERNAL_APP_HOLD, CLS_FUTURE),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 2. OAUTH_API_REQUIRED_BLOCK
+    "OAUTH_API_REQUIRED_BLOCK": SafetyPolicyRecord(
+        policy_id="OAUTH_API_REQUIRED_BLOCK",
+        name="OAuth/API 설정 전 실행 차단",
+        category="oauth_api_required",
+        severity=SEV_HIGH,
+        applies_to=(CLS_OAUTH_REQUIRED,),
+        decision=DECISION_BLOCK,
+        reason=(
+            "Gmail/Calendar/Drive 등 공식 API OAuth 설정이 완료되지 않으면 "
+            "서버 자동 실행 불가. 브라우저 로그인 자동화도 금지."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(CLS_OAUTH_REQUIRED,),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 3. USER_DIRECT_REQUIRED_BLOCK
+    "USER_DIRECT_REQUIRED_BLOCK": SafetyPolicyRecord(
+        policy_id="USER_DIRECT_REQUIRED_BLOCK",
+        name="사용자 직접 수행 필요 항목 자동 실행 차단",
+        category="user_direct_required",
+        severity=SEV_HIGH,
+        applies_to=(CLS_USER_DIRECT, LOC_USER),
+        decision=DECISION_REQUIRE_USER,
+        reason=(
+            "전자서명/투찰/결제/송금/OTP 입력 등 사용자가 직접 수행해야 하는 작업은 "
+            "서버 및 로컬 에이전트 자동 실행이 금지된다."
+        ),
+        required_execution_location=LOC_USER,
+        blocked_scopes=(CLS_USER_DIRECT,),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 4. LOCAL_AGENT_REQUIRED_SERVER_BLOCK
+    "LOCAL_AGENT_REQUIRED_SERVER_BLOCK": SafetyPolicyRecord(
+        policy_id="LOCAL_AGENT_REQUIRED_SERVER_BLOCK",
+        name="로컬 에이전트 필요 항목 서버 직접 실행 차단",
+        category="local_agent_required",
+        severity=SEV_HIGH,
+        applies_to=(CLS_LOCAL_AGENT, LOC_AGENT),
+        decision=DECISION_REQUIRE_AGENT,
+        reason=(
+            "블로그 작성/카페 게시/외부 브라우저 자동화 등 로컬 에이전트가 필요한 작업은 "
+            "서버에서 직접 실행할 수 없다."
+        ),
+        required_execution_location=LOC_AGENT,
+        blocked_scopes=(CLS_LOCAL_AGENT,),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 5. BLOCKED_ACTION_DENY
+    "BLOCKED_ACTION_DENY": SafetyPolicyRecord(
+        policy_id="BLOCKED_ACTION_DENY",
+        name="BLOCKED 항목 실행 차단",
+        category="blocked_action",
+        severity=SEV_CRITICAL,
+        applies_to=(LOC_BLOCKED, CLS_QUARANTINE),
+        decision=DECISION_BLOCK,
+        reason=(
+            "BLOCKED 또는 QUARANTINE_OR_HOLD 분류 항목은 "
+            "어떤 실행 주체도 실행할 수 없다."
+        ),
+        required_execution_location=LOC_BLOCKED,
+        blocked_scopes=(LOC_BLOCKED, CLS_QUARANTINE),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 6. SECRET_REDACTION_REQUIRED
+    "SECRET_REDACTION_REQUIRED": SafetyPolicyRecord(
+        policy_id="SECRET_REDACTION_REQUIRED",
+        name="비밀 필드 비노출 강제",
+        category="secret_redaction",
+        severity=SEV_CRITICAL,
+        applies_to=("*",),
+        decision=DECISION_BLOCK,
+        reason=(
+            "secret/token/password/session/cookie/authorization/credential/private_key 등 "
+            "민감 필드는 어떤 응답/로그/테스트에서도 원문 출력이 금지된다."
+        ),
+        required_execution_location=None,
+        blocked_scopes=(),
+        test_required=True,
+        safe_to_execute_on_server=True,  # 정책 자체는 서버에서 집행 가능
+    ),
+
+    # 7. SERVER_EXTERNAL_WEB_BLOCK
+    "SERVER_EXTERNAL_WEB_BLOCK": SafetyPolicyRecord(
+        policy_id="SERVER_EXTERNAL_WEB_BLOCK",
+        name="서버 외부 웹 브라우저 실행 차단",
+        category="server_egress",
+        severity=SEV_CRITICAL,
+        applies_to=("open_url", "read_page", "fill_form", "navigate", "login",
+                    "screenshot", "extract_text", "extract_tables"),
+        decision=DECISION_BLOCK,
+        reason=(
+            "서버에서 외부 사이트 브라우저 자동화 실행은 절대 금지. "
+            "반드시 local agent로 handoff해야 한다."
+        ),
+        required_execution_location=LOC_AGENT,
+        blocked_scopes=(),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+
+    # 8. APPROVAL_REQUIRED_GATE
+    "APPROVAL_REQUIRED_GATE": SafetyPolicyRecord(
+        policy_id="APPROVAL_REQUIRED_GATE",
+        name="승인 필요 작업 무단 실행 차단",
+        category="approval_gate",
+        severity=SEV_HIGH,
+        applies_to=("blog_publish", "cafe_post_write", "send_email", "send_message",
+                    "form_submit", "file_upload"),
+        decision=DECISION_REQUIRE_APPROVAL,
+        reason=(
+            "게시/발송/제출 등 외부 가시적 작업은 사용자 명시적 승인 없이 실행할 수 없다."
+        ),
+        required_execution_location=None,
+        blocked_scopes=(),
+        test_required=True,
+        safe_to_execute_on_server=False,
+    ),
+}
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def get_policy(policy_id: str) -> Optional[SafetyPolicyRecord]:
+    """policy_id로 정책을 조회한다."""
+    return _POLICY_REGISTRY.get(policy_id)
+
+
+def list_all_policies() -> list[SafetyPolicyRecord]:
+    """전체 정책 목록을 반환한다."""
+    return list(_POLICY_REGISTRY.values())
+
+
+def list_policy_ids() -> list[str]:
+    """전체 정책 ID 목록을 반환한다."""
+    return list(_POLICY_REGISTRY.keys())
+
+
+def get_policies_by_category(category: str) -> list[SafetyPolicyRecord]:
+    """category별 정책 목록을 반환한다."""
+    return [p for p in _POLICY_REGISTRY.values() if p.category == category]
+
+
+def is_scope_blocked_by_policy(scope: str) -> bool:
+    """classification/scope 값이 어느 정책에서든 blocked_scopes에 포함되면 True."""
+    for policy in _POLICY_REGISTRY.values():
+        if scope in policy.blocked_scopes:
+            return True
+    return False
+
+
+def get_enforcement_decision(classification: str) -> str:
+    """classification 값에 대한 강제 decision을 반환한다.
+
+    여러 정책이 매칭되면 가장 restrictive한 decision을 반환한다.
+    우선순위: block > hold > require_approval > require_user_direct > require_local_agent > allow
+    """
+    priority = {
+        DECISION_BLOCK: 0,
+        DECISION_HOLD: 1,
+        DECISION_REQUIRE_APPROVAL: 2,
+        DECISION_REQUIRE_USER: 3,
+        DECISION_REQUIRE_AGENT: 4,
+        DECISION_ALLOW: 5,
+    }
+    best: Optional[str] = None
+    for policy in _POLICY_REGISTRY.values():
+        if classification in policy.applies_to or classification in policy.blocked_scopes:
+            if best is None or priority.get(policy.decision, 99) < priority.get(best, 99):
+                best = policy.decision
+    return best or DECISION_ALLOW
+
+
+def get_safe_to_execute_on_server(classification: str) -> bool:
+    """classification이 서버 실행 안전한지 모든 관련 정책을 검토하여 반환한다."""
+    for policy in _POLICY_REGISTRY.values():
+        if (classification in policy.applies_to or
+                classification in policy.blocked_scopes):
+            if not policy.safe_to_execute_on_server:
+                return False
+    return True
+
+
+# External app hold 분류 집합 (STEP 6 대상)
+EXTERNAL_APP_HOLD_SCOPES: frozenset[str] = frozenset({
+    CLS_EXTERNAL_APP_HOLD,
+    CLS_FUTURE,
+    "CAD_EXTERNAL_APP_BRIDGE",
+    "HWPX_EXTERNAL_APP_BRIDGE",
+    "OFFICE_EXTERNAL_APP_BRIDGE",
+    "TAX_EXTERNAL_APP_BRIDGE",
+    "BID_EXTERNAL_APP_BRIDGE",
+    "DOCUMENT_AUTOMATION_EXTERNAL_APP_BRIDGE",
+})
+
+# OAuth/API 필요 분류 집합 (STEP 7 대상)
+OAUTH_REQUIRED_SCOPES: frozenset[str] = frozenset({
+    CLS_OAUTH_REQUIRED,
+})
+
+# user direct 분류 집합 (STEP 8 대상)
+USER_DIRECT_SCOPES: frozenset[str] = frozenset({
+    CLS_USER_DIRECT,
+    LOC_USER,
+})
+
+# local agent 분류 집합 (STEP 9 대상)
+LOCAL_AGENT_SCOPES: frozenset[str] = frozenset({
+    CLS_LOCAL_AGENT,
+    LOC_AGENT,
+})
