@@ -471,6 +471,114 @@ class ExecutionPolicyService:
         except Exception:
             return False
 
+    # ------------------------------------------------------------------
+    # Gabia DNS 업무 특화 판정 (GABIA_DNS_USER_APPROVAL_WORKFLOW v1.0)
+
+    def decide_gabia_login(self) -> PolicyDecision:
+        """가비아 로그인 판정 — USER_PRESENT_AUTH 필수."""
+        return PolicyDecision(
+            execution_location=_LOC_AGENT,
+            server_executable=False,
+            requires_local_agent=True,
+            requires_user_direct=False,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason="가비아 최초 로그인은 USER_PRESENT_AUTH — 사용자 직접 수행 필수",
+            classification="GABIA_LOGIN",
+            safe_to_prepare=False,
+            safe_to_click_final_button=False,
+            requires_final_approval=False,
+            allowed_to_reuse_trusted_session=False,
+            requires_user_present_auth=True,
+            requires_reauth=False,
+        )
+
+    def decide_gabia_trusted_session_reuse(self) -> PolicyDecision:
+        """가비아 신뢰 세션 재사용 판정."""
+        return PolicyDecision(
+            execution_location=_LOC_AGENT,
+            server_executable=False,
+            requires_local_agent=True,
+            requires_user_direct=False,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason="가비아 승인 세션 재사용 — 신뢰 세션 재사용 허용",
+            classification="GABIA_TRUSTED_SESSION",
+            safe_to_prepare=True,
+            safe_to_click_final_button=False,
+            requires_final_approval=False,
+            allowed_to_reuse_trusted_session=True,
+            requires_user_present_auth=False,
+            requires_reauth=False,
+        )
+
+    def decide_gabia_dns_prepare(self) -> PolicyDecision:
+        """가비아 DNS 레코드 입력 준비 판정 — safe_to_prepare=True."""
+        return PolicyDecision(
+            execution_location=_LOC_AGENT,
+            server_executable=False,
+            requires_local_agent=True,
+            requires_user_direct=False,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason="DNS 레코드 입력 준비는 AI 허용 — 최종 저장은 사용자 승인 필수",
+            classification="GABIA_DNS_PREPARE",
+            safe_to_prepare=True,
+            safe_to_click_final_button=False,
+            requires_final_approval=True,
+            allowed_to_reuse_trusted_session=True,
+            requires_user_present_auth=False,
+            requires_reauth=False,
+        )
+
+    def decide_gabia_dns_final_save(self) -> PolicyDecision:
+        """가비아 DNS 최종 저장/적용 판정 — 사용자 승인 없이 AI 클릭 절대 금지."""
+        return PolicyDecision(
+            execution_location=_LOC_USER,
+            server_executable=False,
+            requires_local_agent=False,
+            requires_user_direct=True,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason="DNS 최종 저장은 사용자 승인 게이트 통과 후에만 실행 가능",
+            classification="GABIA_DNS_FINAL_SAVE",
+            safe_to_prepare=False,
+            safe_to_click_final_button=False,
+            requires_final_approval=True,
+            allowed_to_reuse_trusted_session=False,
+            requires_user_present_auth=False,
+            requires_reauth=False,
+        )
+
+    def decide_gabia_session_expired(self) -> PolicyDecision:
+        """가비아 세션 만료 판정 — 재인증 필수."""
+        return PolicyDecision(
+            execution_location=_LOC_USER,
+            server_executable=False,
+            requires_local_agent=False,
+            requires_user_direct=True,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason="가비아 세션 만료 — AI 자동 재로그인 금지, 사용자 재인증 요청",
+            classification="GABIA_SESSION_EXPIRED",
+            safe_to_prepare=False,
+            safe_to_click_final_button=False,
+            requires_final_approval=False,
+            allowed_to_reuse_trusted_session=False,
+            requires_user_present_auth=True,
+            requires_reauth=True,
+        )
+
     def decide_for_site_action(self, site: str, action: str) -> PolicyDecision:
         """site + action 기반 신뢰 세션 / 최종 승인 게이트 통합 판정.
 
@@ -586,6 +694,16 @@ AUDIT_CERT_PASSWORD_BLOCKED        = "CERT_PASSWORD_STORE_BLOCKED"
 AUDIT_SERVER_LOGIN_BLOCKED         = "SERVER_SECURITY_LOGIN_BLOCKED"
 AUDIT_DOMAIN_CHANGE_GATE           = "DOMAIN_DNS_CHANGE_APPROVAL_GATE"
 
+# Gabia DNS 업무 전용 AuditEvent 타입
+AUDIT_GABIA_DNS_WORKFLOW_PREPARED     = "GABIA_DNS_WORKFLOW_PREPARED"
+AUDIT_GABIA_DNS_RECORD_DRAFTED        = "GABIA_DNS_RECORD_DRAFTED"
+AUDIT_GABIA_DNS_CHANGE_PREVIEW        = "GABIA_DNS_CHANGE_PREVIEW_CREATED"
+AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ    = "GABIA_DNS_FINAL_APPROVAL_REQUIRED"
+AUDIT_GABIA_DNS_USER_APPROVAL_GRANTED = "GABIA_DNS_USER_APPROVAL_GRANTED"
+AUDIT_GABIA_DNS_USER_APPROVAL_DENIED  = "GABIA_DNS_USER_APPROVAL_DENIED"
+AUDIT_GABIA_DNS_SESSION_REUSED        = "GABIA_DNS_SESSION_REUSED"
+AUDIT_GABIA_DNS_REAUTH_REQUIRED       = "GABIA_DNS_REAUTH_REQUIRED"
+
 AUDIT_EVENT_TYPES: frozenset[str] = frozenset({
     AUDIT_USER_PRESENT_AUTH_REQUIRED,
     AUDIT_TRUSTED_SESSION_REUSED,
@@ -597,4 +715,13 @@ AUDIT_EVENT_TYPES: frozenset[str] = frozenset({
     AUDIT_CERT_PASSWORD_BLOCKED,
     AUDIT_SERVER_LOGIN_BLOCKED,
     AUDIT_DOMAIN_CHANGE_GATE,
+    # Gabia DNS 전용
+    AUDIT_GABIA_DNS_WORKFLOW_PREPARED,
+    AUDIT_GABIA_DNS_RECORD_DRAFTED,
+    AUDIT_GABIA_DNS_CHANGE_PREVIEW,
+    AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ,
+    AUDIT_GABIA_DNS_USER_APPROVAL_GRANTED,
+    AUDIT_GABIA_DNS_USER_APPROVAL_DENIED,
+    AUDIT_GABIA_DNS_SESSION_REUSED,
+    AUDIT_GABIA_DNS_REAUTH_REQUIRED,
 })
