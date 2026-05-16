@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  --c-accent:         #F97316;
+  --c-accent-hover:   #EA580C;
+  --c-accent-subtle:  #FFF7ED;
+  --c-navy:           #1E2D4A;
+  --c-navy-hover:     #253661;
+  --c-navy-soft:      #EEF2F7;
+  --c-surface:        #FFFFFF;
+  --c-bg:             #F5F7FA;
+  --c-bg-hover:       #F0F2F5;
+  --c-border:         #E5E7EB;
+  --c-border-strong:  #D1D5DB;
+  --c-border-soft:    #F3F4F6;
+  --c-text-primary:   #0F172A;
+  --c-text-secondary: #374151;
+  --c-text-muted:     #6B7280;
+  --c-text-ph:        #9CA3AF;
+  --c-success:        #059669;
+  --c-success-bg:     #ECFDF5;
+  --c-warning:        #D97706;
+  --c-warning-bg:     #FFFBEB;
+  --c-error:          #DC2626;
+  --c-error-bg:       #FEF2F2;
+  --c-info:           #2563EB;
+  --c-info-bg:        #EFF6FF;
+  --sidebar-w:        224px;
+  --top-accent-h:     4px;
+  --r-sm:   6px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-full: 9999px;
+  --sh-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --sh-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --sh-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--c-bg);
+  color: var(--c-text-primary);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 공통 유틸리티 ────────────────────────────────────────────── */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary  { background: var(--c-accent);  color: #fff; border-color: var(--c-accent); }
+.btn-primary:hover { background: var(--c-accent-hover); }
+.btn-navy     { background: var(--c-navy);    color: #fff; border-color: var(--c-navy); }
+.btn-secondary { background: var(--c-surface); color: var(--c-text-secondary); border-color: var(--c-border-strong); }
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 99px; }
