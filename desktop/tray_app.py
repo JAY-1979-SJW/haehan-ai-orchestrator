@@ -103,10 +103,36 @@ class TrayApp:
         except Exception:
             return "대기 작업: -"
 
+    def _menu_task_queue_line(self) -> str:
+        """작업 큐 분류 요약 — 실행 없음, 표시만."""
+        try:
+            return self._status.get_task_queue_tray_label(source="local")
+        except Exception:
+            return "수신 작업: -"
+
+    def _menu_agent_notice_line(self) -> str:
+        """LOCAL_AGENT_REQUIRED / USER_DIRECT_REQUIRED 수신 여부 표시."""
+        try:
+            queue = self._status.get_server_task_queue_status(source="local")
+            if queue is None:
+                return "에이전트 분류: -"
+            parts = []
+            if queue.local_agent_count:
+                parts.append(f"에이전트 {queue.local_agent_count}건")
+            if queue.user_direct_count:
+                parts.append(f"직접조작 {queue.user_direct_count}건 ⚠")
+            if queue.blocked_count:
+                parts.append(f"차단 {queue.blocked_count}건 ✗")
+            return "  " + (", ".join(parts) if parts else "대기 없음")
+        except Exception:
+            return "  에이전트 분류: -"
+
     def _build_menu(self) -> pystray.Menu:
         return pystray.Menu(
             pystray.MenuItem(self._menu_status_line(), None, enabled=False),
             pystray.MenuItem(self._menu_pending_line(), None, enabled=False),
+            pystray.MenuItem(self._menu_task_queue_line(), None, enabled=False),
+            pystray.MenuItem(self._menu_agent_notice_line(), None, enabled=False),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("시작 (Start)", self._on_start),
             pystray.MenuItem("중지 (Stop)", self._on_stop),

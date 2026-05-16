@@ -43,6 +43,10 @@ class ServiceStatus:
     websocket_schema_ready: bool = False
     browser_task_handler_ready: bool = False
     scheduler_autostart: bool = False
+    # 작업 수신 분류 요약 (ops_router /ops/agents 와 맞물리는 필드)
+    local_agent_task_count: int = 0
+    user_direct_task_count: int = 0
+    blocked_task_count: int = 0
 
 
 @dataclass
@@ -158,6 +162,12 @@ class LocalStatusProvider:
         else:
             state = "stopped"
 
+        # 작업 수신 분류 (실행 없음)
+        task_queue = self.get_server_task_queue_status(source="local")
+        local_agent_count = task_queue.local_agent_count if task_queue else 0
+        user_direct_count = task_queue.user_direct_count if task_queue else 0
+        blocked_count = task_queue.blocked_count if task_queue else 0
+
         return ServiceStatus(
             state=state,
             pending_task_count=store_status.pending_count,
@@ -165,7 +175,43 @@ class LocalStatusProvider:
             approval_store_ready=store_ready,
             websocket_schema_ready=schema_ready,
             browser_task_handler_ready=handler_ready,
+            local_agent_task_count=local_agent_count,
+            user_direct_task_count=user_direct_count,
+            blocked_task_count=blocked_count,
         )
+
+
+    # ------------------------------------------------------------------
+    # Server task queue status (via task_receiver, no execution)
+
+    def get_server_task_queue_status(self, source: str = "local"):
+        """서버/로컬 작업 큐 상태 조회 — 분류만, 실행 없음.
+
+        source="local"  → in-memory 큐 (서버 미연결 안전)
+        source="server" → localhost ops API (서버 연결 시)
+
+        반환: TaskQueueStatus (민감 필드 없음)
+        """
+        try:
+            from .task_receiver import poll_pending_tasks
+            return poll_pending_tasks(source=source)
+        except Exception as exc:
+            logger.debug("task queue status 조회 실패: %s", exc)
+            try:
+                from .task_receiver import TaskQueueStatus
+                return TaskQueueStatus()
+            except Exception:
+                return None
+
+    # ------------------------------------------------------------------
+    # Tray label for task queue
+
+    def get_task_queue_tray_label(self, source: str = "local") -> str:
+        """tray 메뉴에 표시할 작업 큐 요약 문자열."""
+        status = self.get_server_task_queue_status(source=source)
+        if status is None:
+            return "수신 작업: -"
+        return status.to_tray_label()
 
 
 __all__ = [
