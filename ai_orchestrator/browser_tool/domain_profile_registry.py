@@ -201,6 +201,29 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         allowed_readonly=True,
         notes="홈택스 www. placeholder.",
     ),
+    # ── Gabia DNS 관리 ─────────────────────────────────────────────────────────
+    "gabia.com": _profile(
+        domain="gabia.com",
+        category="domain_dns",
+        default_execution="LOCAL_BROWSER_DEFAULT",
+        login_execution="LOCAL_REQUIRED",
+        security_auth_required=False,
+        server_to_local_fallback=False,
+        blocked_actions=_COMMON_BLOCKED + [
+            "dns_final_save", "dns_apply_button_click",
+            "domain_transfer", "nameserver_change_submit",
+        ],
+        user_direct_actions=_COMMON_USER_DIRECT + [
+            "dns_save", "dns_apply", "domain_modify_confirm",
+        ],
+        allowed_readonly=True,
+        notes=(
+            "가비아 DNS 관리. AI는 DNS 관리 화면까지 진입 및 레코드 입력 준비 가능. "
+            "최초 로그인 USER_PRESENT_AUTH 필수. "
+            "신뢰 세션 TRUSTED_SESSION_REUSE 허용. "
+            "DNS 저장/적용 버튼은 user_direct_actions — 사용자 직접 승인 필수."
+        ),
+    ),
 }
 
 # ── 카테고리별 기본 profile ───────────────────────────────────────────────────
