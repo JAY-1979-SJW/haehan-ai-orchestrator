@@ -1,6 +1,10 @@
 import json
 import asyncio
 
+import pytest
+
+pytestmark = pytest.mark.external_cad
+
 from mcp_server.local_cad_adapter_tools import (
     cad_local_adapter_execute_json,
     cad_local_adapter_ping_json,

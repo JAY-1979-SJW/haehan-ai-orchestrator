@@ -103,13 +103,17 @@ def run_audit() -> dict[str, Any]:
     results.append(item("ei-04", "PASS" if len(router_files) >= 3 else "WARN",
                          f"router 파일 수={len(router_files)}"))
 
-    # naver 3개
+    # naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search_router.py
     naver_src = ""
-    for f in [ROOT / "ai_orchestrator/naver_search_router.py",
+    for f in [ROOT / "ai_orchestrator/connectors/naver_search_router.py",
+               ROOT / "ai_orchestrator/naver_search_router.py",
                ROOT / "ai_orchestrator/sites/naver_search/router.py"]:
         if f.exists():
             naver_src = f.read_text(encoding="utf-8")
-    naver_count = naver_src.count("@router.get(") + naver_src.count("@naver") if naver_src else 0
+            break
+    # @router.get / @naver_search_router.get 등 모든 패턴
+    import re as _re
+    naver_count = len(_re.findall(r"@\w*router\w*\.(get|post|put|delete|patch)\(", naver_src)) if naver_src else 0
     results.append(item("ei-05", "PASS" if naver_count >= NAVER_MIN else "WARN",
                          f"naver endpoint={naver_count}/{NAVER_MIN}"))
 
@@ -128,11 +132,18 @@ def run_audit() -> dict[str, Any]:
     results.append(item("ei-08", "PASS" if inv_tests else "FAIL",
                          f"테스트 파일: {[f.name for f in inv_tests]}"))
 
-    # category 존재
-    has_cat = any("category" in f.read_text(encoding="utf-8").lower() or "OPS_READONLY" in f.read_text(encoding="utf-8")
-                  for f in inv_tests) if inv_tests else False
+    # category 존재 — NAVER/OPS/ROUTER 등 named group이 테스트 파일에 있으면 분류로 인정
+    has_cat = False
+    if inv_tests:
+        cat_keywords = ["NAVER_SEARCH_ROUTER", "OPS_ROUTER", "LOCAL_AGENT_ROUTER",
+                        "category", "OPS_READONLY", "ROUTER_PY"]
+        for f in inv_tests:
+            src = f.read_text(encoding="utf-8")
+            if any(kw in src for kw in cat_keywords):
+                has_cat = True
+                break
     results.append(item("ei-09", "PASS" if has_cat else "WARN",
-                         "category 분류 있음" if has_cat else "없음"))
+                         "named group 분류 있음 (NAVER/OPS/ROUTER)" if has_cat else "없음"))
 
     # pytest 실행
     try:

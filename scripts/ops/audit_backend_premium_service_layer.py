@@ -122,35 +122,35 @@ def run_audit() -> dict[str, Any]:
         pd_cls = getattr(eps_mod, "PolicyDecision", None)
         if eps_cls and pd_cls:
             svc = eps_cls()
-            # LOCAL_AGENT_REQUIRED
+            # LOCAL_AGENT_REQUIRED — decide_execution_policy(classification) 사용
             try:
-                d = svc.classify_for_server(risk_level="high", classification="LOCAL_AGENT_REQUIRED")
+                d = svc.decide_execution_policy("LOCAL_AGENT_REQUIRED")
                 results.append(item("sl-11", "PASS" if not d.server_executable else "FAIL",
-                                     f"server_executable={d.server_executable}"))
+                                     f"execution_location={d.execution_location} server_executable={d.server_executable}"))
             except Exception as e:
-                results.append(item("sl-11", "WARN", f"classify_for_server 호출 실패: {e}"))
+                results.append(item("sl-11", "WARN", f"decide_execution_policy 호출 실패: {e}"))
 
             # USER_DIRECT_REQUIRED
             try:
-                d = svc.classify_for_server(risk_level="high", classification="USER_DIRECT_REQUIRED")
+                d = svc.decide_execution_policy("USER_DIRECT_REQUIRED")
                 results.append(item("sl-12", "PASS" if not d.server_executable else "FAIL",
-                                     f"server_executable={d.server_executable}"))
+                                     f"execution_location={d.execution_location} server_executable={d.server_executable}"))
             except Exception as e:
                 results.append(item("sl-12", "WARN", f"호출 실패: {e}"))
 
-            # BLOCKED
+            # BLOCKED (QUARANTINE_OR_HOLD)
             try:
-                d = svc.classify_for_server(risk_level="critical", classification="BLOCKED")
-                results.append(item("sl-13", "PASS" if not d.server_executable else "FAIL",
-                                     f"is_blocked={d.is_blocked}"))
+                d = svc.decide_execution_policy("QUARANTINE_OR_HOLD")
+                results.append(item("sl-13", "PASS" if d.is_blocked else "FAIL",
+                                     f"execution_location={d.execution_location} is_blocked={d.is_blocked}"))
             except Exception as e:
                 results.append(item("sl-13", "WARN", f"호출 실패: {e}"))
 
             # OAUTH
             try:
-                d = svc.classify_for_server(risk_level="medium", classification="OFFICIAL_API_OR_OAUTH_REQUIRED")
-                results.append(item("sl-14", "PASS" if not d.server_executable else "FAIL",
-                                     f"requires_oauth_setup={d.requires_oauth_setup}"))
+                d = svc.decide_execution_policy("OFFICIAL_API_OR_OAUTH_REQUIRED")
+                results.append(item("sl-14", "PASS" if d.requires_oauth_setup or d.is_blocked else "FAIL",
+                                     f"execution_location={d.execution_location} requires_oauth_setup={d.requires_oauth_setup} is_blocked={d.is_blocked}"))
             except Exception as e:
                 results.append(item("sl-14", "WARN", f"호출 실패: {e}"))
         else:
