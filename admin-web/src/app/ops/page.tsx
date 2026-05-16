@@ -18,6 +18,7 @@ import { AgentStatusPanel } from "./components/AgentStatusPanel";
 import { AuditEventTable } from "./components/AuditEventTable";
 import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
 import { SafetyPolicyBanner } from "./components/SafetyPolicyBanner";
+import { ApiStatusBanner } from "./components/ApiStatusBanner";
 
 function buildExternalSummaries(): ExternalWebTaskSummary[] {
   const providers = ["naver", "google"];
@@ -55,6 +56,9 @@ export default function OpsPage() {
             ← 홈으로
           </a>
         </div>
+
+        {/* API 연결 상태 배너 */}
+        <ApiStatusBanner />
 
         {/* 안전 정책 */}
         <SafetyPolicyBanner policies={SAFETY_POLICIES} />
