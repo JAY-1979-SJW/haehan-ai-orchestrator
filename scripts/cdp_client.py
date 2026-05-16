@@ -13,6 +13,7 @@
   python scripts/cdp_client.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
   python scripts/cdp_client.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
   python scripts/cdp_client.py session load <host>       # 세션 복원
+  python scripts/cdp_client.py user-watch [타임아웃초] [호스트]  # 사용자 수동 조작 실시간 감지 (URL변화/클릭/XHR/DOM)
   python scripts/cdp_client.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
   python scripts/cdp_client.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
   python scripts/cdp_client.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
@@ -523,6 +524,11 @@ def main() -> None:
                     print(f"\n  [오류] {e}")
                     import traceback; traceback.print_exc()
                     sys.exit(1)
+            case "user-watch":
+                from scripts.user_action_monitor import watch_user_actions
+                timeout_s = int(task) if task and task.isdigit() else 0
+                host_filter = sub if sub else None
+                watch_user_actions(timeout_s=timeout_s, host_filter=host_filter)
             case "gabia":
                 match task:
                     case "login-watch":
