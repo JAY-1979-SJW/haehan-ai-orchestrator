@@ -167,7 +167,9 @@ def test_login_result_not_ok():
 
 def test_input_credential_approved(tmp_path):
     page = _make_page(url="https://www.gov.kr/")
-    with patch("builtins.input", return_value="y"), \
+    # request_approval은 Flask 서버를 기동하므로 반드시 mock해야 함
+    with patch("ai_orchestrator.local_agent.browser.secure_login.request_approval",
+               return_value=True), \
          patch("ai_orchestrator.local_agent.browser.secure_login.type_text") as mock_type:
         from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_type.return_value = ActionResult("type", ok=True)
@@ -190,7 +192,9 @@ def test_input_credential_rejected(tmp_path):
 
 def test_input_credential_otp(tmp_path):
     page = _make_page(url="https://www.gov.kr/")
-    with patch("builtins.input", return_value="네"), \
+    # request_approval은 Flask 서버를 기동하므로 반드시 mock해야 함
+    with patch("ai_orchestrator.local_agent.browser.secure_login.request_approval",
+               return_value=True), \
          patch("ai_orchestrator.local_agent.browser.secure_login.type_text") as mock_type:
         from ai_orchestrator.local_agent.browser.actions import ActionResult
         mock_type.return_value = ActionResult("type", ok=True)
