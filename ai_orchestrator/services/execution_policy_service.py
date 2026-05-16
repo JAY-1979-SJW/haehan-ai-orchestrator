@@ -73,6 +73,69 @@ _OAUTH_REQUIRED_CLASSIFICATIONS = frozenset({
     _CLS_OAUTH_REQUIRED,
 })
 
+# ---------------------------------------------------------------------------
+# 사이트별 액션 정책 — STEP 6 분류표
+# ---------------------------------------------------------------------------
+# cert_auth: 인증서 기반 로그인이 필요한 사이트 (최초 1회 사용자 직접 필수)
+# final_approval_required: 해당 사이트의 저장/제출에 사용자 승인 게이트 필요
+_SITE_ACTION_POLICY: dict[str, dict] = {
+    "gabia": {
+        "cert_auth": False,
+        "final_approval_required": True,  # DNS 변경 = 최종 승인
+        "note": "도메인/DNS 관리. AI는 입력까지만, 적용 버튼은 사용자 승인 후.",
+    },
+    "naver": {
+        "cert_auth": False,
+        "final_approval_required": True,  # 블로그 게시/카페 글쓰기
+        "note": "블로그/카페/메일. 발행/전송은 사용자 승인 후.",
+    },
+    "google": {
+        "cert_auth": False,
+        "final_approval_required": True,
+        "note": "Gmail/Calendar/Drive. 전송/삭제는 사용자 승인 후.",
+    },
+    "g2b": {
+        "cert_auth": True,   # 나라장터 인증서 로그인
+        "final_approval_required": True,  # 입찰 제출
+        "note": "나라장터. 인증서 로그인 = 사용자 직접. 투찰/제출 = 사용자 승인.",
+    },
+    "bank": {
+        "cert_auth": True,   # 은행 인증서 로그인
+        "final_approval_required": True,  # 이체/송금
+        "note": "인터넷뱅킹. 인증서 로그인 = 사용자 직접. 이체 = 사용자 승인.",
+    },
+    "tax": {
+        "cert_auth": True,   # 홈택스/지방세
+        "final_approval_required": True,
+        "note": "세금 신고/납부. 인증서 로그인 = 사용자 직접. 신고/납부 = 사용자 승인.",
+    },
+    "bid": {
+        "cert_auth": True,
+        "final_approval_required": True,
+        "note": "전자입찰. 인증서 로그인 = 사용자 직접. 투찰 = 사용자 승인.",
+    },
+    "insurance": {
+        "cert_auth": False,
+        "final_approval_required": True,
+        "note": "보험 포털. 제출/신청은 사용자 승인 후.",
+    },
+    "certificate_portal": {
+        "cert_auth": True,
+        "final_approval_required": True,
+        "note": "전자서명 포털. 인증서 = 사용자 직접. 서명 = 사용자 승인.",
+    },
+    "eum": {
+        "cert_auth": False,
+        "final_approval_required": True,
+        "note": "건설근로자공제회. 데이터 조회 = 신뢰 세션 재사용. 등록/신청 = 사용자 승인.",
+    },
+    "hiworks": {
+        "cert_auth": False,
+        "final_approval_required": True,
+        "note": "메일/그룹웨어. 전송/게시 = 사용자 승인.",
+    },
+}
+
 
 @dataclass
 class PolicyDecision:
@@ -88,6 +151,13 @@ class PolicyDecision:
     reason: str
     classification: str = ""
     risk_level: str = "low"
+    # 신뢰 세션 / 최종 승인 게이트 필드 (v1.0)
+    safe_to_prepare: bool = True                  # AI가 폼 입력/화면 진입 가능
+    safe_to_click_final_button: bool = False       # AI가 최종 버튼 클릭 가능 여부
+    requires_final_approval: bool = False          # 최종 사용자 승인 게이트 필요
+    allowed_to_reuse_trusted_session: bool = False # 신뢰 세션 재사용 허용 여부
+    requires_user_present_auth: bool = False       # 사용자 직접 인증 필요
+    requires_reauth: bool = False                  # 세션 만료로 재인증 필요
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -102,6 +172,12 @@ class PolicyDecision:
             "reason": self.reason,
             "classification": self.classification,
             "risk_level": self.risk_level,
+            "safe_to_prepare": self.safe_to_prepare,
+            "safe_to_click_final_button": self.safe_to_click_final_button,
+            "requires_final_approval": self.requires_final_approval,
+            "allowed_to_reuse_trusted_session": self.allowed_to_reuse_trusted_session,
+            "requires_user_present_auth": self.requires_user_present_auth,
+            "requires_reauth": self.requires_reauth,
         }
 
 
@@ -360,6 +436,74 @@ class ExecutionPolicyService:
         except Exception:
             return self.is_server_executable(classification)
 
+    # ------------------------------------------------------------------
+    # 신뢰 세션 / 최종 승인 게이트 판정 (TRUSTED_SESSION_AND_USER_APPROVAL v1.0)
+
+    def is_final_action(self, action: str) -> bool:
+        """action이 최종 승인 게이트가 필요한 행위인지 판정한다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import FINAL_ACTION_SCOPES
+            return action in FINAL_ACTION_SCOPES
+        except Exception:
+            return False
+
+    def is_secret_storage_forbidden(self, action: str) -> bool:
+        """action이 시크릿 저장 금지 대상인지 판정한다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import SECRET_STORAGE_SCOPES
+            return action in SECRET_STORAGE_SCOPES
+        except Exception:
+            return False
+
+    def is_domain_change_approval_required(self, action: str) -> bool:
+        """action이 도메인/DNS 변경 승인 필수 대상인지 판정한다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import DOMAIN_CHANGE_SCOPES
+            return action in DOMAIN_CHANGE_SCOPES
+        except Exception:
+            return False
+
+    def is_trusted_session_reusable(self, action: str) -> bool:
+        """action이 신뢰 세션 재사용 허용 대상인지 판정한다."""
+        try:
+            from ai_orchestrator.safety_policy.safety_policy_registry import TRUSTED_SESSION_SCOPES
+            return action in TRUSTED_SESSION_SCOPES
+        except Exception:
+            return False
+
+    def decide_for_site_action(self, site: str, action: str) -> PolicyDecision:
+        """site + action 기반 신뢰 세션 / 최종 승인 게이트 통합 판정.
+
+        safe_to_prepare: 폼 입력/화면 이동 등 준비 단계는 허용
+        safe_to_click_final_button: 최종 버튼은 항상 False — 사용자 승인 필요
+        """
+        site_info = _SITE_ACTION_POLICY.get(site, {})
+        requires_cert     = site_info.get("cert_auth", False)
+        requires_approval = site_info.get("final_approval_required", True)
+
+        is_final    = self.is_final_action(action)
+        is_dns      = self.is_domain_change_approval_required(action)
+        is_reusable = self.is_trusted_session_reusable(action)
+
+        return PolicyDecision(
+            execution_location=_LOC_AGENT,
+            server_executable=False,
+            requires_local_agent=True,
+            requires_user_direct=False,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=False,
+            requires_secret_redaction=False,
+            reason=f"사이트={site}, 행위={action}",
+            classification=f"SITE:{site}:{action}",
+            safe_to_prepare=True,
+            safe_to_click_final_button=False,
+            requires_final_approval=is_final or is_dns or requires_approval,
+            allowed_to_reuse_trusted_session=is_reusable and not requires_cert,
+            requires_user_present_auth=requires_cert,
+            requires_reauth=False,
+        )
+
     def decide_execution_policy(self, classification: str) -> PolicyDecision:
         """classification 기반으로 safety policy registry를 참조한 통합 판정.
 
@@ -426,3 +570,31 @@ def get_execution_policy_service() -> ExecutionPolicyService:
     if _service_instance is None:
         _service_instance = ExecutionPolicyService()
     return _service_instance
+
+
+# ---------------------------------------------------------------------------
+# AuditEvent 타입 상수 — TRUSTED_SESSION_AND_USER_APPROVAL v1.0
+# ---------------------------------------------------------------------------
+AUDIT_USER_PRESENT_AUTH_REQUIRED   = "USER_PRESENT_AUTH_REQUIRED"
+AUDIT_TRUSTED_SESSION_REUSED       = "TRUSTED_SESSION_REUSED"
+AUDIT_TRUSTED_SESSION_EXPIRED      = "TRUSTED_SESSION_EXPIRED_REAUTH_NEEDED"
+AUDIT_FINAL_APPROVAL_REQUIRED      = "FINAL_APPROVAL_REQUIRED"
+AUDIT_FINAL_APPROVAL_GRANTED       = "FINAL_APPROVAL_GRANTED"
+AUDIT_FINAL_ACTION_BLOCKED         = "FINAL_ACTION_BLOCKED_NO_APPROVAL"
+AUDIT_SECRET_STORAGE_BLOCKED       = "SECRET_STORAGE_ATTEMPT_BLOCKED"
+AUDIT_CERT_PASSWORD_BLOCKED        = "CERT_PASSWORD_STORE_BLOCKED"
+AUDIT_SERVER_LOGIN_BLOCKED         = "SERVER_SECURITY_LOGIN_BLOCKED"
+AUDIT_DOMAIN_CHANGE_GATE           = "DOMAIN_DNS_CHANGE_APPROVAL_GATE"
+
+AUDIT_EVENT_TYPES: frozenset[str] = frozenset({
+    AUDIT_USER_PRESENT_AUTH_REQUIRED,
+    AUDIT_TRUSTED_SESSION_REUSED,
+    AUDIT_TRUSTED_SESSION_EXPIRED,
+    AUDIT_FINAL_APPROVAL_REQUIRED,
+    AUDIT_FINAL_APPROVAL_GRANTED,
+    AUDIT_FINAL_ACTION_BLOCKED,
+    AUDIT_SECRET_STORAGE_BLOCKED,
+    AUDIT_CERT_PASSWORD_BLOCKED,
+    AUDIT_SERVER_LOGIN_BLOCKED,
+    AUDIT_DOMAIN_CHANGE_GATE,
+})
