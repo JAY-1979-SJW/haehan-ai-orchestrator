@@ -70,9 +70,11 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
             "ai_orchestrator/local_agent/approval_audit_log.py",
+            "ai_orchestrator/audit_evidence/models.py",   # STEP 3: 표준 스키마 기준선
+            "ai_orchestrator/audit_evidence/adapters.py", # STEP 4: read-only adapter
         ],
-        "status": "FUNCTIONAL",
-        "needs": ["standard_event_schema", "evidence_link", "safety_verdict_ref"],
+        "status": "STANDARD_SCHEMA_BASELINE_READY",
+        "needs": ["full_migration_from_legacy", "evidence_link_v2"],
     },
     "ExecutionLocation": {
         "impl_files": [
@@ -87,11 +89,12 @@ DOMAIN_CORE_MAP = {
     "ExternalWork": {
         "impl_files": [
             "ai_orchestrator/external_work_registry.py",
-            "ai_orchestrator/domain/models.py",    # STEP 1: ExternalWork baseline model 추가
+            "ai_orchestrator/domain/models.py",          # STEP 1: ExternalWork baseline model 추가
             "ai_orchestrator/domain/model_adapters.py",
+            "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ExecutionAttempt + ExternalAppHandoff
         ],
-        "status": "BASELINE_MODEL_READY",
-        "needs": ["handoff_record", "status_tracker"],
+        "status": "HANDOFF_CONTRACT_BASELINE_READY",
+        "needs": ["handoff_executor", "status_tracker"],
     },
     "LocalAgent": {
         "impl_files": [
@@ -115,9 +118,10 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/server/action_evidence_store.py",
             "ai_orchestrator/local_agent/action_evidence_collector.py",
-            "ai_orchestrator/domain/models.py",    # STEP 1: Artifact baseline model 추가
+            "ai_orchestrator/domain/models.py",          # STEP 1: Artifact baseline model 추가
+            "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ArtifactEvidenceRef 기준선
         ],
-        "status": "BASELINE_MODEL_READY_WITH_EVIDENCE_GAP",
+        "status": "ARTIFACT_EVIDENCE_REF_BASELINE_READY",
         "needs": ["action_evidence_store_migration", "content_type_standard"],
     },
     "SafetyPolicy": {
@@ -129,8 +133,9 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/domain/models.py",
             "ai_orchestrator/domain/model_adapters.py",
             "ai_orchestrator/safety_policy/safety_policy_registry.py",  # STEP 2: 통합 registry 기준선
+            "ai_orchestrator/audit_evidence/models.py",                 # STEP 3: SafetyVerdict 기준선
         ],
-        "status": "POLICY_REGISTRY_BASELINE_READY",
+        "status": "SAFETY_VERDICT_BASELINE_READY",
         "needs": ["full_policy_migration", "policy_coverage_test"],
     },
     "ExternalAppBridge": {
@@ -163,6 +168,12 @@ DOMAIN_STATUS_ALLOWED = {
     "BASELINE_MODEL_READY_CONTRACT_ONLY",
     # STEP 2 Policy Registry 기준선 완료 후 상태
     "POLICY_REGISTRY_BASELINE_READY",
+    # STEP 3 Audit/Evidence 표준화 기준선 완료 후 상태
+    "STANDARD_SCHEMA_BASELINE_READY",
+    "EXECUTION_ATTEMPT_BASELINE_READY",
+    "HANDOFF_CONTRACT_BASELINE_READY",
+    "ARTIFACT_EVIDENCE_REF_BASELINE_READY",
+    "SAFETY_VERDICT_BASELINE_READY",
 }
 
 
@@ -208,11 +219,10 @@ class TestDomainCoreClassification:
         assert DOMAIN_CORE_MAP["ExecutionLocation"]["status"] == "FUNCTIONAL"
 
     def test_safety_policy_registry_baseline_ready(self):
-        """SafetyPolicy는 policy registry 기준선 완료 상태다."""
+        """SafetyPolicy는 policy registry 기준선 이상 완료 상태다."""
         status = DOMAIN_CORE_MAP["SafetyPolicy"]["status"]
-        assert status == "POLICY_REGISTRY_BASELINE_READY", (
-            f"SafetyPolicy status={status}"
-        )
+        allowed = {"POLICY_REGISTRY_BASELINE_READY", "SAFETY_VERDICT_BASELINE_READY"}
+        assert status in allowed, f"SafetyPolicy status={status}"
         assert "full_policy_migration" in DOMAIN_CORE_MAP["SafetyPolicy"]["needs"]
 
 
