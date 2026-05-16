@@ -579,6 +579,76 @@ class ExecutionPolicyService:
             requires_reauth=True,
         )
 
+    # ------------------------------------------------------------------
+    # Gabia 브라우저 상태 기반 정책 판정 (GABIA_BROWSER_AUTOMATION v1.0)
+
+    def decide_for_gabia_browser_state(self, state: str) -> PolicyDecision:
+        """가비아 브라우저 상태(state machine)에 따른 정책 판정.
+
+        safe_to_prepare: AI가 해당 상태에서 자동 실행 가능
+        safe_to_click_final_button: 최종 버튼 AI 자동 클릭 가능 여부 (항상 False)
+        requires_user_present_auth: 사용자 직접 인증 필요 여부
+        requires_reauth: 재인증 필요 여부
+        """
+        try:
+            from ai_orchestrator.gabia.gabia_browser_task import (
+                is_ai_executable, is_final_button_blocked,
+                USER_REQUIRED_STATES, STATE_REAUTH_REQUIRED, STATE_BLOCKED,
+                STATE_LOGIN_REQUIRED, STATE_USER_PRESENT_AUTH_IN_PROGRESS,
+            )
+            ai_exec = is_ai_executable(state)
+            final_blocked = is_final_button_blocked(state)
+            user_required = state in USER_REQUIRED_STATES
+            needs_reauth = state == STATE_REAUTH_REQUIRED
+            needs_user_present = state in (STATE_LOGIN_REQUIRED, STATE_USER_PRESENT_AUTH_IN_PROGRESS)
+            is_blocked = state == STATE_BLOCKED
+        except Exception:
+            ai_exec = False
+            final_blocked = True
+            user_required = True
+            needs_reauth = False
+            needs_user_present = False
+            is_blocked = False
+
+        return PolicyDecision(
+            execution_location=_LOC_AGENT if not user_required else _LOC_USER,
+            server_executable=False,
+            requires_local_agent=not user_required,
+            requires_user_direct=user_required,
+            requires_oauth_setup=False,
+            is_external_app_hold=False,
+            is_blocked=is_blocked,
+            requires_secret_redaction=False,
+            reason=f"가비아 브라우저 상태={state}",
+            classification=f"GABIA_BROWSER_STATE:{state}",
+            safe_to_prepare=ai_exec,
+            safe_to_click_final_button=False,
+            requires_final_approval=final_blocked,
+            allowed_to_reuse_trusted_session=ai_exec and not needs_user_present,
+            requires_user_present_auth=needs_user_present,
+            requires_reauth=needs_reauth,
+        )
+
+    def is_gabia_browser_action_blocked(self, action: str) -> bool:
+        """가비아 domain profile 기반으로 해당 action이 차단되는지 확인한다."""
+        try:
+            from ai_orchestrator.browser_tool.domain_profile_registry import (
+                is_action_blocked_for_domain,
+            )
+            return is_action_blocked_for_domain("gabia.com", action)
+        except Exception:
+            return action in ("dns_final_save", "dns_apply_button_click")
+
+    def is_gabia_browser_action_user_direct(self, action: str) -> bool:
+        """가비아 domain profile 기반으로 해당 action이 사용자 직접 수행인지 확인한다."""
+        try:
+            from ai_orchestrator.browser_tool.domain_profile_registry import (
+                is_user_direct_action_for_domain,
+            )
+            return is_user_direct_action_for_domain("gabia.com", action)
+        except Exception:
+            return action in ("dns_save", "dns_apply")
+
     def decide_for_site_action(self, site: str, action: str) -> PolicyDecision:
         """site + action 기반 신뢰 세션 / 최종 승인 게이트 통합 판정.
 
@@ -694,6 +764,13 @@ AUDIT_CERT_PASSWORD_BLOCKED        = "CERT_PASSWORD_STORE_BLOCKED"
 AUDIT_SERVER_LOGIN_BLOCKED         = "SERVER_SECURITY_LOGIN_BLOCKED"
 AUDIT_DOMAIN_CHANGE_GATE           = "DOMAIN_DNS_CHANGE_APPROVAL_GATE"
 
+# Gabia 브라우저 자동화 전용 AuditEvent 타입
+AUDIT_GABIA_BROWSER_OPEN_REQUESTED        = "GABIA_BROWSER_OPEN_REQUESTED"
+AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED   = "GABIA_LOGIN_USER_PRESENT_REQUIRED"
+AUDIT_GABIA_TRUSTED_SESSION_REUSED        = "GABIA_TRUSTED_SESSION_REUSED"
+AUDIT_GABIA_DNS_PAGE_NAV_READY            = "GABIA_DNS_PAGE_NAVIGATION_READY"
+AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED   = "GABIA_SECURITY_AUTOMATION_BLOCKED"
+
 # Gabia DNS 업무 전용 AuditEvent 타입
 AUDIT_GABIA_DNS_WORKFLOW_PREPARED     = "GABIA_DNS_WORKFLOW_PREPARED"
 AUDIT_GABIA_DNS_RECORD_DRAFTED        = "GABIA_DNS_RECORD_DRAFTED"
@@ -724,4 +801,10 @@ AUDIT_EVENT_TYPES: frozenset[str] = frozenset({
     AUDIT_GABIA_DNS_USER_APPROVAL_DENIED,
     AUDIT_GABIA_DNS_SESSION_REUSED,
     AUDIT_GABIA_DNS_REAUTH_REQUIRED,
+    # Gabia 브라우저 자동화 전용
+    AUDIT_GABIA_BROWSER_OPEN_REQUESTED,
+    AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED,
+    AUDIT_GABIA_TRUSTED_SESSION_REUSED,
+    AUDIT_GABIA_DNS_PAGE_NAV_READY,
+    AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED,
 })
