@@ -122,10 +122,10 @@ def test_action_task_api_imports_clean():
 # ---------------------------------------------------------------------------
 
 def test_canonical_endpoint_count_registered():
-    """FastAPI app에 등록된 route 수가 정확히 50개이다.
+    """FastAPI app에 등록된 route 수가 정확히 60개이다.
 
-    모듈 파일 기준 canonical 53개 중 naver_search_router(3개)는
-    router.py include_router에 미등록 상태이므로 런타임 등록수는 50개.
+    기존 50 + naver_search_router(3) + ops_router(7) = 60개.
+    naver_search_router/ops_router 는 cf69c5c/202fe85 에서 router.py 에 등록됨.
     """
     from ai_orchestrator.server import app
     from fastapi.routing import APIRoute, APIWebSocketRoute
@@ -133,8 +133,8 @@ def test_canonical_endpoint_count_registered():
         r for r in app.routes
         if isinstance(r, (APIRoute, APIWebSocketRoute))
     ]
-    assert len(routes) == 50, (
-        f"등록된 route 수={len(routes)}, 기준=50"
+    assert len(routes) == 60, (
+        f"등록된 route 수={len(routes)}, 기준=60"
     )
 
 

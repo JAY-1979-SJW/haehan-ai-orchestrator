@@ -43,14 +43,10 @@ def test_naver_search_router_endpoint_paths():
 
 
 def test_naver_search_router_not_registered_in_main_app():
-    """naver_search_router 3개 endpoint가 main app FastAPI에 미등록 상태이다.
+    """naver_search_router 3개 endpoint가 main app FastAPI에 등록된 상태이다.
 
-    분류: QUARANTINE_OR_HOLD 또는 MISSING_REGISTRATION.
-    근거: prefix=/external/naver 로 보안/격리 의도가 보이며,
-          테스트(test_naver_search_schedule.py)는 별도 FastAPI 앱으로 독립 검증.
-          main router.py include_router 목록에 없음.
-    권장: 의도적 격리면 QUARANTINE 확정 후 별도 포트/auth 경로로 등록.
-          미입주 실수면 router.py에 include_router 추가.
+    분류: 등록 완료 (cf69c5c 공정에서 router.py include_router 추가됨).
+    근거: prefix=/external/naver, require_role 보안 의존성 적용 상태로 등록.
     """
     from ai_orchestrator.server import app
     registered_paths = {r.path for r in app.routes}
@@ -60,8 +56,8 @@ def test_naver_search_router_not_registered_in_main_app():
         "/api/v1/external/naver/search-status",
     ]
     for p in naver_paths:
-        assert p not in registered_paths, (
-            f"naver_search_router가 main app에 등록됨 (미등록 상태 기준 변경): {p}"
+        assert p in registered_paths, (
+            f"naver_search_router가 main app에 미등록 상태: {p}"
         )
 
 
@@ -86,10 +82,10 @@ def test_naver_search_router_all_endpoints_require_admin_or_owner():
 
 
 def test_naver_search_router_quarantine_hold_status():
-    """naver_search_router는 의도적 QUARANTINE_OR_HOLD 상태임을 고정한다.
+    """naver_search_router는 등록 완료 상태임을 고정한다.
 
-    이 테스트가 존재하는 한 naver_search_router 등록 전에 명시적 재검토가 필요하다.
-    외부 Naver API 호출 특성상 rate-limit, 키 관리, 격리 전략 확정 후 별도 공정에서 등록한다.
+    cf69c5c 공정에서 router.py에 include_router 추가됨.
+    require_role('admin','owner') 보안 의존성 적용 상태로 등록 확정.
     """
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
     from ai_orchestrator.server import app
@@ -100,8 +96,8 @@ def test_naver_search_router_quarantine_hold_status():
 
     for p in naver_source_paths:
         full = f"/api/v1{p}"
-        assert full not in registered_paths, (
-            f"HOLD 위반: {full}가 main app에 등록됨 — 별도 승인 후 등록할 것"
+        assert full in registered_paths, (
+            f"naver_search_router 등록 누락: {full}"
         )
 
 
@@ -250,10 +246,10 @@ def test_next_phase_manual_review_candidates_locked():
 # SECTION 3: endpoint inventory 4종 수치 고정
 # ===========================================================================
 
-RUNTIME_HTTP_ENDPOINT_COUNT   = 49
+RUNTIME_HTTP_ENDPOINT_COUNT   = 59   # 49 base + naver(3) + ops_router(7)
 RUNTIME_WEBSOCKET_COUNT       = 1
-SOURCE_ROUTER_HTTP_ENDPOINT_COUNT  = 52   # naver 3 포함
-UNREGISTERED_ROUTER_ENDPOINT_COUNT = 3   # naver_search_router 전체
+SOURCE_ROUTER_HTTP_ENDPOINT_COUNT  = 59   # naver 3 + ops_router 7 포함
+UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0   # naver_search_router 등록 완료
 
 
 def test_runtime_http_endpoint_count():
@@ -275,7 +271,7 @@ def test_runtime_websocket_count():
 
 
 def test_source_router_http_endpoint_count():
-    """source-level(naver 포함) HTTP+WS endpoint 합계가 53개이다."""
+    """source-level(naver + ops 포함) HTTP+WS endpoint 합계가 60개이다."""
     from fastapi.routing import APIRoute, APIWebSocketRoute
     from ai_orchestrator.sites.router import sites_router
     from ai_orchestrator.cad.router import cad_router
@@ -287,11 +283,12 @@ def test_source_router_http_endpoint_count():
     from ai_orchestrator.action_router import action_router
     from ai_orchestrator.cad_ai_router import cad_ai_router
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.ops_router import ops_router
 
     sub_routers = [
         auth_router, sites_router, cad_router, cad_ai_router,
         web_task_router, local_agent_router, admin_ui_router,
-        approval_record_router, action_router, naver_search_router,
+        approval_record_router, action_router, naver_search_router, ops_router,
     ]
     sub_total = sum(
         len([r for r in sr.routes if isinstance(r, (APIRoute, APIWebSocketRoute))])
@@ -299,26 +296,26 @@ def test_source_router_http_endpoint_count():
     )
     core_total = 9  # router.py 직접 정의
     total = core_total + sub_total
-    assert total == 53, (
-        f"source-level 총계={total}, 기준=53 (naver 3 포함)"
+    assert total == 60, (
+        f"source-level 총계={total}, 기준=60 (naver 3 + ops_router 7 포함)"
     )
 
 
 def test_unregistered_router_endpoint_count():
-    """미등록 endpoint 수가 3개(naver_search_router)이다."""
+    """naver_search_router source-level 3개 endpoint가 존재한다 (등록 완료)."""
     from fastapi.routing import APIRoute
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
-    unregistered = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
-    assert len(unregistered) == UNREGISTERED_ROUTER_ENDPOINT_COUNT, (
-        f"미등록 endpoint={len(unregistered)}, 기준={UNREGISTERED_ROUTER_ENDPOINT_COUNT}"
+    naver_routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
+    assert len(naver_routes) == 3, (
+        f"naver_search_router source endpoint={len(naver_routes)}, 기준=3"
     )
 
 
 def test_runtime_plus_unregistered_equals_source_minus_core():
-    """runtime 50 + unregistered 3 = source 53 관계가 성립한다."""
+    """runtime 60 + unregistered 0 = source 60 관계가 성립한다."""
     runtime_total = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
     unregistered = UNREGISTERED_ROUTER_ENDPOINT_COUNT
-    source_total = 53
+    source_total = 60
     assert runtime_total + unregistered == source_total, (
         f"runtime({runtime_total}) + unregistered({unregistered}) "
         f"= {runtime_total+unregistered}, source={source_total}"
@@ -336,16 +333,18 @@ FULL_CLASSIFICATION = {
     "STREAM_OR_FILE":       3,   # admin HTML + WS + cad proxy
     "ERROR_ONLY_BOUNDARY":  1,   # telegram webhook (LEGACY_DIRECT_DICT와 중첩 있으나 단일 분류)
     "SAFE_TO_ENVELOPE":     0,
+    "OPS_READONLY":         7,   # ops_router 7개 GET-only (202fe85)
+    "EXTERNAL_API_REGISTERED": 3,   # naver_search_router 3개 (cf69c5c 등록 완료)
 }
 
 
 def test_full_classification_sum_equals_runtime_total():
-    """전체 분류 합계가 runtime 50과 일치한다.
+    """전체 분류 합계가 runtime 60과 일치한다.
 
     주의: telegram webhook은 LEGACY_DIRECT_DICT와 ERROR_ONLY_BOUNDARY 두 성격을 갖지만
     LEGACY_DIRECT_DICT(NEEDS_MANUAL_DESIGN_REVIEW)로 단일 분류하고,
     ERROR_ONLY_BOUNDARY 카운트에서 제외함.
-    합계: 1+18+27+3+1+0 = 50
+    합계: 1+18+27+3+1+0+7+3 = 60
     """
     total = sum(FULL_CLASSIFICATION.values())
     runtime = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
