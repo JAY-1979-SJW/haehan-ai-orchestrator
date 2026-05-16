@@ -97,38 +97,68 @@ class TestFrontendDependencyAudit:
 
     def test_site_tasks_dry_run_no_admin_web_reference(self):
         """admin-web/src에 site-tasks/dry-run 직접 참조가 없다."""
-        import subprocess
-        result = subprocess.run(
-            ["grep", "-r", "site-tasks", "admin-web/src/"],
-            capture_output=True, text=True,
-        )
-        lines = [l for l in result.stdout.splitlines()
-                 if "dry-run" in l or "site_tasks" in l or "siteTasks" in l]
+        import pathlib
+        src_dir = pathlib.Path("admin-web/src")
+        if not src_dir.exists():
+            return  # admin-web 없으면 통과
+        lines = []
+        for f in src_dir.rglob("*"):
+            if not f.is_file():
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                if "dry-run" in line or "site_tasks" in line or "siteTasks" in line:
+                    if "site-tasks" in line or "site_tasks" in line or "siteTasks" in line:
+                        lines.append(f"{f}: {line.strip()}")
         assert len(lines) == 0, (
             f"admin-web/src에 site-tasks 참조 발견: {lines}"
         )
 
     def test_web_tasks_run_no_admin_web_reference(self):
-        """admin-web/src에 web-tasks/run 직접 참조가 없다."""
-        import subprocess
-        result = subprocess.run(
-            ["grep", "-r", "web-tasks", "admin-web/src/"],
-            capture_output=True, text=True,
-        )
-        lines = [l for l in result.stdout.splitlines()
-                 if "web-tasks" in l or "webTasks" in l or "web_tasks" in l]
+        """admin-web/src에 /api/v1/web-tasks/run 직접 참조가 없다.
+
+        /ops/web-tasks (ops 읽기 전용 API) 참조는 허용됨.
+        """
+        import pathlib
+        src_dir = pathlib.Path("admin-web/src")
+        if not src_dir.exists():
+            return
+        lines = []
+        for f in src_dir.rglob("*"):
+            if not f.is_file():
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                # /api/v1/web-tasks/run 직접 참조만 검사 (ops API 제외)
+                if "api/v1/web-tasks" in line:
+                    lines.append(f"{f}: {line.strip()}")
         assert len(lines) == 0, (
-            f"admin-web/src에 web-tasks 참조 발견: {lines}"
+            f"admin-web/src에 /api/v1/web-tasks 직접 참조 발견: {lines}"
         )
 
     def test_run_from_template_no_admin_web_reference(self):
         """admin-web/src에 run-from-template 참조가 없다."""
-        import subprocess
-        result = subprocess.run(
-            ["grep", "-r", "run-from-template", "admin-web/src/"],
-            capture_output=True, text=True,
-        )
-        lines = result.stdout.splitlines()
+        import pathlib
+        src_dir = pathlib.Path("admin-web/src")
+        if not src_dir.exists():
+            return
+        lines = []
+        for f in src_dir.rglob("*"):
+            if not f.is_file():
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                if "run-from-template" in line:
+                    lines.append(f"{f}: {line.strip()}")
         assert len(lines) == 0, (
             f"admin-web/src에 run-from-template 참조 발견: {lines}"
         )
