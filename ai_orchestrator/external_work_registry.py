@@ -224,6 +224,64 @@ _ENTRIES: list[ExternalWorkEntry] = [
         registered_in_web_task=False,
         notes="서버 브라우저 Google 로그인 자동화 금지. execution_location_guard 차단 대상.",
     ),
+
+    # ── Gabia: DNS 관리 (TRUSTED_SESSION_AND_USER_APPROVAL) ──────────────────
+    ExternalWorkEntry(
+        work_key="gabia/dns_record_prepare",
+        provider="gabia",
+        work_type="dns_record_prepare",
+        description="가비아 DNS 레코드 입력 준비 (AI 입력까지, 최종 저장은 사용자 승인 필수)",
+        classification="LOCAL_AGENT_REQUIRED",
+        execution_location="LOCAL_AGENT",
+        risk_level="high",
+        requires_approval=True,
+        requires_auth=True,
+        auth_method="browser_session",
+        registered_in_web_task=False,
+        notes=(
+            "safe_to_prepare=True — AI가 DNS 레코드 화면 진입 및 입력 준비 가능. "
+            "최초 로그인 USER_PRESENT_AUTH — 사용자 직접 수행 필수. "
+            "승인 세션은 TRUSTED_SESSION_REUSE 허용. "
+            "저장/적용은 사용자 승인 게이트(requires_final_approval=True). "
+            "서버 직접 로그인 자동화 절대 금지(SERVER_SECURITY_LOGIN_BLOCKED)."
+        ),
+    ),
+    ExternalWorkEntry(
+        work_key="gabia/dns_final_save",
+        provider="gabia",
+        work_type="dns_final_save",
+        description="가비아 DNS 최종 저장/적용 (사용자 승인 후에만 실행 가능)",
+        classification="USER_DIRECT_REQUIRED",
+        execution_location="USER_DIRECT",
+        risk_level="high",
+        requires_approval=True,
+        requires_auth=True,
+        auth_method="user_direct",
+        registered_in_web_task=False,
+        notes=(
+            "저장/적용 버튼 클릭은 사용자 명시적 승인 이후에만 가능. "
+            "AI 자동 클릭 절대 금지(safe_to_click_final_button=False). "
+            "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED 정책 적용."
+        ),
+    ),
+    ExternalWorkEntry(
+        work_key="gabia/dns_record_read",
+        provider="gabia",
+        work_type="dns_record_read",
+        description="가비아 DNS 레코드 현황 조회 (read-only, 신뢰 세션 재사용 가능)",
+        classification="LOCAL_AGENT_REQUIRED",
+        execution_location="LOCAL_AGENT",
+        risk_level="medium",
+        requires_approval=False,
+        requires_auth=True,
+        auth_method="browser_session",
+        registered_in_web_task=False,
+        notes=(
+            "DNS 현황 조회는 safe_to_prepare=True. "
+            "신뢰 세션 재사용 허용(TRUSTED_SESSION_REUSE). "
+            "조회 결과에 secret/token/cookie 포함 금지."
+        ),
+    ),
 ]
 
 _REGISTRY: dict[str, ExternalWorkEntry] = {e.work_key: e for e in _ENTRIES}
