@@ -77,6 +77,17 @@ LOGIN_PATTERNS = {
             ("text", "메일 쓰기"),
         ],
     },
+    "gabia": {
+        "domains": ["gabia.com", "my.gabia.com", "accounts.gabia.com"],
+        "logged_in_signs": [
+            ("text", "로그아웃"),
+            ("selector", "a[href*='logout']"),
+            ("selector", "button[class*='logout']"),
+            ("selector", ".gnb_my"),
+            ("selector", "[class*='UserInfo']"),
+            ("selector", "[class*='mypage']"),
+        ],
+    },
 }
 
 

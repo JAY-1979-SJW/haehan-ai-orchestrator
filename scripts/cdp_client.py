@@ -13,6 +13,7 @@
   python scripts/cdp_client.py visits [host]             # 저장된 수동 스냅샷 목록 + 타입 통계
   python scripts/cdp_client.py session save <host>       # 인증 세션 저장 (쿠키+storage 암호화)
   python scripts/cdp_client.py session load <host>       # 세션 복원
+  python scripts/cdp_client.py gabia login-watch [초]  # 가비아 로그인 실시간 감지 → 감지 즉시 DNS 관리 화면 이동
   python scripts/cdp_client.py auto-login <사이트>  # 감지기 전용 (사용자 수동 로그인 대기)
   python scripts/cdp_client.py login-watch [interval] [timeout] # 모든 탭 로그인 실시간 감지/저장
   python scripts/cdp_client.py naver login           # 네이버 로그인
@@ -522,6 +523,18 @@ def main() -> None:
                     print(f"\n  [오류] {e}")
                     import traceback; traceback.print_exc()
                     sys.exit(1)
+            case "gabia":
+                match task:
+                    case "login-watch":
+                        from scripts.gabia_login_watch import watch_gabia_login
+                        timeout_s = int(sub) if sub and sub.isdigit() else 300
+                        no_nav = "--no-navigate" in args
+                        result = watch_gabia_login(timeout_s=timeout_s, navigate_after=not no_nav)
+                        sys.exit(0 if result["logged_in"] else 1)
+                    case _:
+                        print("가비아 명령:")
+                        print("  python scripts/cdp_client.py gabia login-watch [타임아웃초]")
+                        print("  python scripts/cdp_client.py gabia login-watch [타임아웃초] --no-navigate")
             case "auto-login":
                 from scripts.login_detector import monitor_for_login
                 from scripts.web_connector import get_page
