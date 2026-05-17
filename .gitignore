@@ -143,6 +143,7 @@ data/audit/
 !.claude/settings.json
 tmp/
 data/browser_sessions/
+data/sessions/
 
 # CDP 브라우저 런타임 산출물 (로컬 전용)
 screenshot_*.png
