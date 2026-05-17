@@ -27,6 +27,24 @@ from .cad_ai_router import cad_ai_router
 from .connectors.naver_search_router import naver_search_router
 from .ops_router import ops_router
 
+# ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
+LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
+LEGACY_5050_ROUTER_TOUCH_ENABLED = False
+LEGACY_5050_INBOX_EMAIL_FETCH_ROUTE_WIRING_ENABLED = False
+LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False
+LEGACY_5050_TASK_REJECT_ROUTE_WIRING_ENABLED = False
+
+
+def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
+    """Phase 1-R guard helper. 기본 OFF — 기존 route 동작 보존."""
+    _flags = {
+        "INBOX_EMAIL_FETCH": LEGACY_5050_INBOX_EMAIL_FETCH_ROUTE_WIRING_ENABLED,
+        "TASK_APPROVE": LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED,
+        "TASK_REJECT": LEGACY_5050_TASK_REJECT_ROUTE_WIRING_ENABLED,
+    }
+    return _flags.get(route_id, False)
+
+
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
 router.include_router(sites_router)
@@ -177,6 +195,8 @@ def approve_task(
     body: ApproveRequest,
     user: dict = Depends(require_role("admin", "owner")),
 ):
+    if _legacy_5050_should_use_route_wiring("TASK_APPROVE"):
+        raise RuntimeError("PHASE_1R route wiring is disabled by default")
     # body.approved_by / body.role 은 신뢰하지 않는다. current_user 로 단일화.
     actor = user["actor"]
     role = user["role"]
@@ -198,6 +218,8 @@ def reject_task(
     body: RejectRequest,
     user: dict = Depends(require_role("admin", "owner")),
 ):
+    if _legacy_5050_should_use_route_wiring("TASK_REJECT"):
+        raise RuntimeError("PHASE_1R route wiring is disabled by default")
     # body.rejected_by / body.role 은 신뢰하지 않는다. current_user 로 단일화.
     actor = user["actor"]
     role = user["role"]
@@ -253,6 +275,8 @@ def fetch_email_inbox(
     hours: int = 24,
     user: dict = Depends(require_role("admin", "owner")),
 ):
+    if _legacy_5050_should_use_route_wiring("INBOX_EMAIL_FETCH"):
+        raise RuntimeError("PHASE_1R route wiring is disabled by default")
     max_results = max(1, min(max_results, 200))
     hours = max(1, min(hours, 168))
     summary = _collect_gmail(max_results=max_results, hours=hours)
