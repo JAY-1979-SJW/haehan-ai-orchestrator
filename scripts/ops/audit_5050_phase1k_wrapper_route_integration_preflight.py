@@ -243,6 +243,7 @@ FORBIDDEN_PATTERNS = [
 
 ALLOWED_PATHS_CONTAINING = [
     "wrappers",
+    "route_integration",  # Phase 1-L designated wrapper consumer layer
     "tests",
     "scripts/ops/audit_",
     "scripts/ops/smoke_",

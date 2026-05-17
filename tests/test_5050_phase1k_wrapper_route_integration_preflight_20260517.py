@@ -283,12 +283,15 @@ def test_36_static_scan_no_violations():
 
 
 def test_37_no_route_router_file_imports_wrapper():
-    """route/router 파일이 wrapper candidate를 import하지 않음"""
+    """route/router 파일이 wrapper candidate를 import하지 않음
+    (route_integration은 Phase 1-L 지정 소비자 레이어로 제외)
+    """
     m = load_audit()
     result = m.run_static_route_import_scan()
     for v in result["violations"]:
         f = v["file"].replace("\\", "/")
-        # route/router 관련 파일이 위반했으면 FAIL
+        if "route_integration" in f:
+            continue  # Phase 1-L 지정 wrapper 소비자 레이어는 허용
         assert not any(x in f for x in ["router", "route", "handler", "service", "usecase"]), \
             f"route/router file imports wrapper: {v}"
 
