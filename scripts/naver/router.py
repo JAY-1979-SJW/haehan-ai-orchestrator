@@ -795,29 +795,38 @@ def _cmd_session_check() -> None:
 
 
 def _cmd_login() -> None:
-    import sys
+    """네이버 로그인 — 브라우저에서 사용자가 로그인하면 자동 감지.
+
+    input() / 터미널 입력 없음. 앱에서 호출 시에도 동일하게 동작.
+    CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
+    """
     from scripts.web_connector import browser_session
     from scripts.login_session import is_logged_in
+    from scripts.login_detector import monitor_for_login
 
     print("=" * 60)
     print("네이버 로그인")
     print("=" * 60)
 
     with browser_session() as page:
-        page.goto("https://www.naver.com/", timeout=60000)
+        page.goto("https://nid.naver.com/nidlogin.login", timeout=60000)
 
         if is_logged_in(page, "naver"):
             print("✓ 이미 로그인 상태입니다")
-        elif sys.stdin.isatty():
-            print("\n브라우저에서 네이버에 로그인하세요")
-            input("👉 로그인 완료 후 Enter를 누르세요: ")
-            if is_logged_in(page, "naver"):
-                print("✓ 로그인 완료")
-            else:
-                print("⚠  로그인 확인 실패 — 다시 시도하세요")
+            print("=" * 60)
+            return
+
+        print("\n브라우저에서 네이버에 로그인하세요 (최대 5분 대기)")
+        print("로그인 완료되면 자동으로 진행됩니다\n")
+
+        # 터미널 input() 없이 로그인 자동 감지
+        result = monitor_for_login(page, check_interval=2, timeout_s=300)
+
+        if result.get("detected"):
+            print(f"✓ 로그인 감지 완료 — {result.get('elapsed_s', 0):.0f}초")
         else:
-            print("\n브라우저에 네이버 페이지를 열었습니다")
-            print("브라우저에서 직접 로그인 후, 아래 명령으로 세션 확인:")
-            print("  python scripts/cdp_client.py naver session-check")
+            reason = result.get("aborted_reason", "timeout")
+            print(f"⚠  로그인 미감지 — {reason}")
+            print("   브라우저에서 로그인 완료 후 다시 시도하세요")
 
     print("=" * 60)
