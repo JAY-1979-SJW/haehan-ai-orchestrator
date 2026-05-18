@@ -47,6 +47,7 @@ IMPLEMENTATION_RECORD = {
     ),
     "router_modification_approved": True,
     "approved_by": "대표 명시 승인 2026-05-18",
+    "approved_verbatim": "POST_TASKS_DRY_RUN_ENABLED 플래그 추가 및 submit_task 분기 승인",
 }
 
 # ── 영향받는 경로 분석 ────────────────────────────────────────────────────────

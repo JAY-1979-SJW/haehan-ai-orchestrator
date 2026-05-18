@@ -285,8 +285,12 @@ def test_33_dry_run_applies_to_both_routes(dry_run_scope):
     assert "submit_task" in scope and "approve_task" in scope
 
 
-def test_34_dry_run_not_in_router_yet(router_content):
-    assert "POST_TASKS_DRY_RUN_ENABLED" not in router_content
+def test_34_dry_run_flag_implemented_as_true_if_present(router_content):
+    # preflight 기준: 미구현이 원칙. DRY_RUN_FLAG_IMPLEMENTATION 공정에서 대표 승인 후 구현.
+    # 구현된 경우 반드시 default=True(차단 방향)여야 함.
+    if "POST_TASKS_DRY_RUN_ENABLED" in router_content:
+        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, \
+            "POST_TASKS_DRY_RUN_ENABLED가 True(차단)가 아닌 값으로 설정됨 — 안전 방향 위반"
 
 
 def test_35_dry_run_implementation_next_phase(dry_run_scope):
@@ -378,10 +382,17 @@ def test_51_execute_connect_requires_approval(router_assessment):
         assert mod["requires_approval"] is True
 
 
-def test_52_router_not_modified_in_codebase(router_content):
-    assert "POST_TASKS_DRY_RUN_ENABLED" not in router_content
-    assert "execute_task" not in router_content.split("from .executor import")[1].split("\n")[0] \
-        if "from .executor import" in router_content else True
+def test_52_router_modification_safety_check(router_content):
+    # preflight 기준: 이번 공정에서 router.py 수정 없음.
+    # DRY_RUN_FLAG_IMPLEMENTATION에서 대표 승인 후 플래그만 추가됨 — 허용된 변경.
+    # 핵심 안전 검증: execute_task import 없음 (승인되지 않은 연결 경로 차단).
+    if "from .executor import" in router_content:
+        import_line = router_content.split("from .executor import")[1].split("\n")[0]
+        assert "execute_task" not in import_line, \
+            "execute_task가 router.py에 import됨 — 미승인 연결 경로 열림"
+    # 플래그가 있으면 반드시 True(차단 방향)여야 함
+    if "POST_TASKS_DRY_RUN_ENABLED" in router_content:
+        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content
 
 
 # ── 53~57. 대표 승인 조건 ────────────────────────────────────────────────────
