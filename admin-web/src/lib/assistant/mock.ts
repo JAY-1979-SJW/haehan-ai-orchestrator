@@ -200,6 +200,8 @@ export const auditLogsMock: AuditLogEntry[] = [
   { id: "log-002", timestamp: "2026-05-18T09:05:00Z", source: "app-logs", level: "INFO", message: "GET /api/v1/health — OK", redacted: true },
   { id: "log-003", timestamp: "2026-05-18T09:10:00Z", source: "storage", level: "WARN", message: "approval_tokens.json legacy 내용 감사 미완 (B-3)", redacted: true },
   { id: "log-004", timestamp: "2026-05-18T09:15:00Z", source: "app-logs", level: "INFO", message: "Server started — POST_TASKS_DRY_RUN_ENABLED=True", redacted: true },
+  { id: "log-005", timestamp: "2026-05-18T09:20:00Z", source: "storage", level: "ERROR", message: "approval_gate BLOCKED — CRITICAL_RISK_GATE 발동", redacted: true },
+  { id: "log-006", timestamp: "2026-05-18T09:25:00Z", source: "app-logs", level: "WARN", message: "GET /api/v1/inbox — mock_fallback (API 미응답)", redacted: true },
 ];
 
 export const storageStatusMock: StorageMount[] = [

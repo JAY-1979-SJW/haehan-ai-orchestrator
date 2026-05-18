@@ -167,3 +167,18 @@ export async function getAppStorageStatus(
 ): Promise<AppStorageStatusResponse> {
   return getJson<AppStorageStatusResponse>("/api/v1/app/storage/status", signal);
 }
+
+// ── APP_LOGS_AUDIT_READONLY_VIEW_01 ───────────────────────────────────────
+
+export type { OpsAuditEventsResponse, OpsSummaryResponse } from "@/types/assistant";
+
+/** GET /api/v1/ops/audit-events — read-only 감사 이벤트 */
+export async function getOpsAuditEvents(signal?: AbortSignal) {
+  const { events } = await getJson<{ events: unknown[] }>("/api/v1/ops/audit-events", signal);
+  return { events } as import("@/types/assistant").OpsAuditEventsResponse;
+}
+
+/** GET /api/v1/ops/summary — read-only 운영 요약 */
+export async function getOpsSummary(signal?: AbortSignal) {
+  return getJson<import("@/types/assistant").OpsSummaryResponse>("/api/v1/ops/summary", signal);
+}
