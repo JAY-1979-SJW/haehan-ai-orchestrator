@@ -1,9 +1,11 @@
 /**
  * 비서앱 MVP read-only API client — APP_UI_SHELL_READONLY_API_WIRING_01
+ * 보강: APP_UI_READONLY_BACKEND_STATUS_CARDS_01
  *
  * GET 전용 — POST/PUT/PATCH/DELETE 함수 없음
  * mutation 연결 금지: tasks 실행/approve/reject/execute 없음
  */
+import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -11,10 +13,23 @@ const API_BASE =
 export type ApiState<T> =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "success"; data: T }
-  | { status: "empty" }
-  | { status: "error"; message: string }
-  | { status: "mock_fallback"; data: T };
+  | { status: "success"; data: T; meta: ApiConnectionMeta }
+  | { status: "empty"; meta: ApiConnectionMeta }
+  | { status: "error"; message: string; meta: ApiConnectionMeta }
+  | { status: "mock_fallback"; data: T; meta: ApiConnectionMeta };
+
+export function makeMeta(
+  source: ApiConnectionMeta["source"],
+  error_kind: ErrorKind = null,
+): ApiConnectionMeta {
+  return {
+    source,
+    last_checked: new Date().toISOString(),
+    error_kind,
+    is_read_only: true,
+    mutation_allowed: false,
+  };
+}
 
 export interface HealthResponse {
   status: string;
