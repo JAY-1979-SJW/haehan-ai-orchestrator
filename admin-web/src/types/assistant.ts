@@ -1,4 +1,4 @@
-/** 비서앱 MVP 상태 모델 — APP_UI_SHELL_SKELETON_01 */
+/** 비서앱 MVP 상태 모델 — APP_UI_SHELL_SKELETON_01 + APP_UI_READONLY_BACKEND_STATUS_CARDS_01 */
 
 export type TaskStatus =
   | "READ_ONLY"
@@ -6,7 +6,8 @@ export type TaskStatus =
   | "BLOCKED"
   | "APPROVAL_DISPLAY_ONLY"
   | "FUTURE"
-  | "ERROR";
+  | "ERROR"
+  | "PENDING";
 
 export type ActionRisk = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -14,7 +15,7 @@ export type ProviderStatus = "CURRENT" | "PLANNED" | "HOLD" | "DISABLED";
 
 export type GateState = "DISPLAY_ONLY" | "DISABLED" | "HIDDEN" | "DRY_RUN_ONLY";
 
-export type BackendHealth = "OK" | "WARN" | "BLOCKED" | "UNKNOWN";
+export type BackendHealth = "OK" | "WARN" | "BLOCKED" | "UNKNOWN" | "DEGRADED" | "MOCK";
 
 export type StoragePersistence = "PERSISTENT" | "EPHEMERAL" | "DISPOSABLE" | "UNKNOWN";
 
@@ -24,6 +25,19 @@ export type DeploymentState =
   | "DEPLOYED"
   | "RESTART_REQUIRED"
   | "BLOCKED";
+
+export type ApiSource = "api" | "mock" | "static" | "mock_fallback";
+
+export type ErrorKind = "network" | "schema" | "timeout" | "unknown" | null;
+
+/** API 연결 상태 확장 필드 — APP_UI_READONLY_BACKEND_STATUS_CARDS_01 */
+export interface ApiConnectionMeta {
+  source: ApiSource;
+  last_checked: string | null;
+  error_kind: ErrorKind;
+  is_read_only: true;
+  mutation_allowed: false;
+}
 
 export interface AssistantTask {
   id: string;
@@ -84,6 +98,8 @@ export interface BackendStatus {
   container_status: string;
   dry_run_gate_enabled: boolean;
   phase1_closeout: string;
+  /** API 연결 메타 — APP_UI_READONLY_BACKEND_STATUS_CARDS_01 */
+  api_meta?: ApiConnectionMeta;
 }
 
 export interface DeploymentStatus {
@@ -92,4 +108,6 @@ export interface DeploymentStatus {
   state: DeploymentState;
   build_required: boolean;
   sop_steps: string[];
+  /** server_apply_allowed 항상 false */
+  server_apply_allowed?: false;
 }
