@@ -89,6 +89,45 @@ export interface AuditLogEntry {
   redacted: true;
 }
 
+/** APP_LOGS_AUDIT_READONLY_VIEW_01 — ops-api + mock 통합 정규화 타입 */
+export interface UnifiedLogEntry {
+  id: string;
+  timestamp: string;
+  level: "INFO" | "WARN" | "ERROR" | "BLOCKED";
+  source: "ops-api" | "app-mock";
+  eventType: string;
+  actor: string | null;
+  taskId: string | null;
+  summary: string;
+  redacted: true;
+}
+
+/** ops/audit-events 응답 행 */
+export interface OpsAuditEventRow {
+  eventId: string;
+  eventType: string;
+  taskId: string | null;
+  status: "ok" | "warn" | "error" | "blocked";
+  timestamp: string;
+  actor: string;
+  summary: string;
+}
+
+export interface OpsAuditEventsResponse {
+  events: OpsAuditEventRow[];
+}
+
+export interface OpsSummaryMetric {
+  label: string;
+  value: string;
+  sub: string;
+  status: string;
+}
+
+export interface OpsSummaryResponse {
+  metrics: OpsSummaryMetric[];
+}
+
 export interface StorageMount {
   label: string;
   path: string;
