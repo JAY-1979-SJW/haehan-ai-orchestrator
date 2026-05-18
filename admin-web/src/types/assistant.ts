@@ -46,10 +46,16 @@ export interface AssistantTask {
   risk: ActionRisk;
   provider: string;
   action_type: string;
-  dry_run: boolean;
+  dry_run: boolean | null;
   approval_token_exists: boolean;
   created_at: string;
   updated_at: string;
+  /** APP_TASK_QUEUE_READONLY_LIST_POLISH_01 확장 필드 */
+  allowed?: boolean;
+  requires_approval?: boolean;
+  blocked_reasons?: string[];
+  summary?: string;
+  approval_token_id?: null | "redacted";
 }
 
 export interface ApprovalGate {

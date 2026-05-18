@@ -1,5 +1,5 @@
 "use client";
-/** /assistant/tasks — Task Queue (inbox status card 보강) */
+/** /assistant/tasks — Task Queue (APP_TASK_QUEUE_READONLY_LIST_POLISH_01) */
 import { useEffect, useState } from "react";
 import { TaskTable } from "@/components/assistant/TaskTable";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
@@ -21,12 +21,17 @@ function inboxToTasks(inbox: InboxResponse): AssistantTask[] {
   return inbox.items.map((item) => ({
     id: item.id,
     title: item.subject ?? "(제목 없음)",
-    status: "PENDING" as const,
+    status: "READ_ONLY" as const,
     risk: "LOW" as const,
-    provider: "EMAIL_GENERIC" as const,
-    action_type: "READ" as const,
+    provider: "EMAIL_GENERIC",
+    action_type: "READ",
     dry_run: true,
     approval_token_exists: false,
+    approval_token_id: null,
+    allowed: true,
+    requires_approval: false,
+    blocked_reasons: [],
+    summary: "inbox 읽기 전용 항목",
     created_at: item.received_at ?? new Date().toISOString(),
     updated_at: item.received_at ?? new Date().toISOString(),
   }));
@@ -71,11 +76,12 @@ export default function TaskQueuePage() {
     : inboxState.status === "error" ? "error"
     : "idle";
 
-  const inboxCount =
-    inboxState.status === "success" ? inboxState.data.items.length : null;
+  const taskCount =
+    inboxState.status === "success" ? inboxState.data.items.length : taskQueueMock.length;
 
   return (
     <div className="space-y-4">
+      {/* 헤더 */}
       <div className="flex items-center gap-2 flex-wrap">
         <h1 className="text-lg font-bold text-[#111827]">작업 큐</h1>
         <ApiConnectionStateBadge
@@ -84,55 +90,62 @@ export default function TaskQueuePage() {
             ? inboxState.meta : undefined}
           label="inbox"
         />
-        {inboxCount !== null && (
-          <span className="text-xs font-mono text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
-            {inboxCount}건
-          </span>
-        )}
-        <span className="text-xs font-mono bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded">
+        <span className="text-xs font-mono text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
+          {taskCount}건
+        </span>
+        <span className="text-xs font-mono bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded border border-[#FDE68A]">
           DRY_RUN_ONLY
         </span>
-        <span className="text-xs font-mono bg-[#FEE2E2] text-[#B91C1C] px-2 py-0.5 rounded">
+        <span className="text-xs font-mono bg-[#FEE2E2] text-[#B91C1C] px-2 py-0.5 rounded border border-[#FECACA]">
           MUTATION_BLOCKED
         </span>
       </div>
+
+      {/* 배너 */}
       <ReadOnlyModeBanner />
       <DryRunNotice enabled />
-      <ForbiddenActionBanner reason="execute / approve→execute 버튼 없음 (B-1, B-2) — NO_EXECUTE_CONNECTED" />
+      <ForbiddenActionBanner reason="execute / approve→execute 버튼 없음 (B-1, B-2) — 이 화면은 실행 기능이 없는 읽기 전용 화면입니다" />
 
+      {/* 로딩 */}
       {inboxState.status === "loading" && (
         <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 text-center text-sm text-[#9CA3AF]">
-          inbox 로딩 중…
+          작업 목록을 불러오는 중…
         </div>
       )}
 
+      {/* 빈 상태 */}
       {inboxState.status === "empty" && (
         <EmptyStatePanel
-          title="inbox 항목 없음"
-          description="현재 읽기 전용 inbox 항목 없음 — DRY_RUN_ONLY"
+          title="현재 표시할 작업이 없습니다"
+          description="읽기 전용 상태입니다 — DRY_RUN_ONLY, 실행 연결 없음"
           badge="READ_ONLY · DRY_RUN_ONLY"
         />
       )}
 
-      {(inboxState.status === "idle" ||
-        inboxState.status === "success" ||
-        inboxState.status === "mock_fallback") && (
-        <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
-          {inboxState.status === "mock_fallback" && (
-            <div className="mb-2 text-xs text-[#F59E0B] font-mono">
-              ⚠ MOCK_FALLBACK — API 연결 실패, mock 데이터 표시
-            </div>
-          )}
-          <TaskTable tasks={displayTasks} />
+      {/* mock fallback 배너 */}
+      {inboxState.status === "mock_fallback" && (
+        <div className="flex items-center gap-2 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">
+          <span className="font-mono font-bold">MOCK_FALLBACK</span>
+          <span>— API 응답 불가, mock 데이터 표시 중</span>
+          <span className="ml-auto font-mono text-[10px]">read_only=true</span>
         </div>
       )}
 
+      {/* 에러 상태 */}
       {inboxState.status === "error" && (
-        <div className="rounded-xl border border-[#FEE2E2] bg-[#FFF5F5] p-4 text-sm text-[#EF4444]">
-          inbox 연결 오류 — mock 데이터로 표시됩니다.
-          <div className="mt-2">
-            <TaskTable tasks={taskQueueMock} />
-          </div>
+        <div className="rounded-xl border border-[#FECACA] bg-[#FFF5F5] p-4 space-y-2">
+          <div className="text-sm text-[#EF4444] font-semibold">inbox 연결 오류 — mock 데이터로 표시</div>
+          <div className="text-xs text-[#9CA3AF]">상세 오류 표시 금지 (보안 정책)</div>
+        </div>
+      )}
+
+      {/* 테이블 */}
+      {(inboxState.status === "idle" ||
+        inboxState.status === "success" ||
+        inboxState.status === "mock_fallback" ||
+        inboxState.status === "error") && (
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
+          <TaskTable tasks={displayTasks} />
         </div>
       )}
     </div>
