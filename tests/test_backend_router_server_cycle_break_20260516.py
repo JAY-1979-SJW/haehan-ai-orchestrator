@@ -133,8 +133,9 @@ def test_canonical_endpoint_count_registered():
         r for r in app.routes
         if isinstance(r, (APIRoute, APIWebSocketRoute))
     ]
-    assert len(routes) == 60, (
-        f"등록된 route 수={len(routes)}, 기준=60"
+    # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
+    assert len(routes) == 63, (
+        f"등록된 route 수={len(routes)}, 기준=63"
     )
 
 

@@ -246,7 +246,7 @@ def test_next_phase_manual_review_candidates_locked():
 # SECTION 3: endpoint inventory 4종 수치 고정
 # ===========================================================================
 
-RUNTIME_HTTP_ENDPOINT_COUNT   = 59   # 49 base + naver(3) + ops_router(7)
+RUNTIME_HTTP_ENDPOINT_COUNT   = 62   # 49 base + naver(3) + ops_router(7) + app_status_router(3) read-only GET
 RUNTIME_WEBSOCKET_COUNT       = 1
 SOURCE_ROUTER_HTTP_ENDPOINT_COUNT  = 59   # naver 3 + ops_router 7 포함
 UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0   # naver_search_router 등록 완료
@@ -312,10 +312,12 @@ def test_unregistered_router_endpoint_count():
 
 
 def test_runtime_plus_unregistered_equals_source_minus_core():
-    """runtime 60 + unregistered 0 = source 60 관계가 성립한다."""
+    """runtime 63 + unregistered 0 = source 63 관계가 성립한다.
+    APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63.
+    """
     runtime_total = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
     unregistered = UNREGISTERED_ROUTER_ENDPOINT_COUNT
-    source_total = 60
+    source_total = 63  # 60 + app_status_router 3 read-only GET
     assert runtime_total + unregistered == source_total, (
         f"runtime({runtime_total}) + unregistered({unregistered}) "
         f"= {runtime_total+unregistered}, source={source_total}"
@@ -335,16 +337,17 @@ FULL_CLASSIFICATION = {
     "SAFE_TO_ENVELOPE":     0,
     "OPS_READONLY":         7,   # ops_router 7개 GET-only (202fe85)
     "EXTERNAL_API_REGISTERED": 3,   # naver_search_router 3개 (cf69c5c 등록 완료)
+    "APP_STATUS_READONLY":  3,   # app_status_router 3개 GET-only (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 }
 
 
 def test_full_classification_sum_equals_runtime_total():
-    """전체 분류 합계가 runtime 60과 일치한다.
+    """전체 분류 합계가 runtime 63과 일치한다.
 
     주의: telegram webhook은 LEGACY_DIRECT_DICT와 ERROR_ONLY_BOUNDARY 두 성격을 갖지만
     LEGACY_DIRECT_DICT(NEEDS_MANUAL_DESIGN_REVIEW)로 단일 분류하고,
     ERROR_ONLY_BOUNDARY 카운트에서 제외함.
-    합계: 1+18+27+3+1+0+7+3 = 60
+    합계: 1+18+27+3+1+0+7+3+3 = 63 (APP_STATUS_READONLY 3개 추가)
     """
     total = sum(FULL_CLASSIFICATION.values())
     runtime = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
