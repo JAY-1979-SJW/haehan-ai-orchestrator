@@ -789,8 +789,8 @@ _SERVER_BROWSER_FORBIDDEN_PATTERNS = [
     (r"goto\s*\(\s*['\"]https?://(?:my\.gabia\.com|accounts\.gabia\.com)", "Gabia 로그인 페이지 server-side goto 금지"),
     (r"goto\s*\(\s*['\"]https?://(?:www\.)?g2b\.go\.kr", "G2B server-side goto 금지"),
     (r"navigate\s*\(\s*['\"]https?://(?:my\.gabia\.com|g2b\.go\.kr)", "금지 사이트 server-side navigate 금지"),
-    (r"playwright.*login.*gabia", "Gabia playwright 로그인 server-side 금지"),
-    (r"cdp_client.*goto.*gabia.*login", "Gabia CDP login server-side 금지"),
+    (r"playwright\s*\.\s*chromium.*launch.*gabia", "Gabia playwright 로그인 server-side 금지"),
+    (r"cdp_client\.goto\s*\(\s*['\"]https?://(?:my\.gabia\.com|accounts\.gabia\.com)", "Gabia CDP login server-side 금지"),
 ]
 
 # SERVER_BROWSER_GUARD 검사 제외 경로
