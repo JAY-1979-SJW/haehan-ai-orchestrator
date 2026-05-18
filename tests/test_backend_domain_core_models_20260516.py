@@ -756,7 +756,8 @@ class TestNoContractBreak:
         from ai_orchestrator.server import app
         from fastapi.routing import APIRoute, APIWebSocketRoute
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 60, f"endpoint 수 변경 감지: {len(routes)}"
+        # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
+        assert len(routes) == 63, f"endpoint 수 변경 감지: {len(routes)}"
 
     def test_health_endpoint_unchanged(self):
         """health endpoint 응답 구조가 변경되지 않았다."""

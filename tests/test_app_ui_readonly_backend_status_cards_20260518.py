@@ -37,8 +37,9 @@ def test_audit_script_importable():
 # ── 2. Dashboard status card 보강 ─────────────────────────────────────────────
 
 def test_dashboard_health_api_connected():
+    # APP_UI_READONLY_STATUS_CARDS_API_BIND_01: getAssistantHealth → getAppHealthSummary 로 갱신
     content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
-    assert "getAssistantHealth" in content
+    assert "getAppHealthSummary" in content
 
 
 def test_dashboard_readonly_mode_banner():
@@ -52,8 +53,13 @@ def test_dashboard_api_connection_state_badge():
 
 
 def test_dashboard_future_endpoint_notice():
-    content = (ASSISTANT_APP / "page.tsx").read_text(encoding="utf-8")
-    assert "FutureEndpointNotice" in content
+    # APP_UI_READONLY_STATUS_CARDS_API_BIND_01: storage/status 구현 후 Dashboard에서 FutureEndpointNotice 제거됨.
+    # FutureEndpointNotice는 DeploymentSopPanel 등 실제 future 항목에서만 유지 — 전체 프론트엔드에 존재 확인.
+    all_content = "\n".join(
+        f.read_text(encoding="utf-8")
+        for f in FRONTEND_ROOT.rglob("*.tsx")
+    )
+    assert "FutureEndpointNotice" in all_content
 
 
 # ── 3. API 연결 meta (source, last_checked, error_kind) ───────────────────────
