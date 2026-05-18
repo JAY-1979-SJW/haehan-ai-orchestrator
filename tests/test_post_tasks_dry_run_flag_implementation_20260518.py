@@ -141,9 +141,29 @@ def test_16_touch_phase_1r_preserved(router_content):
 @pytest.fixture(scope="module")
 def router_mod():
     """router 모듈 import — DB/외부 호출 없이 구조만."""
-    import importlib
     import sys
-    # 의존성 mock 처리
+    mock_names = [
+        "ai_orchestrator.planner",
+        "ai_orchestrator.executor",
+        "ai_orchestrator.approval",
+        "ai_orchestrator.audit_logger",
+        "ai_orchestrator.auth",
+        "ai_orchestrator.telegram_webhook",
+        "ai_orchestrator.inbox",
+        "ai_orchestrator.gmail_reader",
+        "ai_orchestrator.sites.router",
+        "ai_orchestrator.cad.router",
+        "ai_orchestrator.web_task_router",
+        "ai_orchestrator.local_agent_router",
+        "ai_orchestrator.admin_ui_router",
+        "ai_orchestrator.auth_router",
+        "ai_orchestrator.browser_tool.approval_record_router",
+        "ai_orchestrator.action_router",
+        "ai_orchestrator.cad_ai_router",
+        "ai_orchestrator.connectors.naver_search_router",
+        "ai_orchestrator.ops_router",
+    ]
+    originals = {n: sys.modules.get(n) for n in mock_names}
     mocks = {
         "ai_orchestrator.planner": MagicMock(),
         "ai_orchestrator.executor": MagicMock(),
@@ -175,9 +195,17 @@ def router_mod():
         )
         mod = ilu.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        return mod
+        yield mod
     except Exception:
-        return None
+        yield None
+    finally:
+        # sys.modules 오염 방지 — 원래 모듈로 복원
+        for mod_name in mock_names:
+            if originals[mod_name] is None:
+                sys.modules.pop(mod_name, None)
+            else:
+                sys.modules[mod_name] = originals[mod_name]
+        sys.modules.pop("ai_orchestrator.router", None)
 
 
 def test_17_dry_run_flag_value_true(router_mod):
