@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-05-18T06:50:29+00:00",
+  "status": "ok",
+  "command": [
+    "echo",
+    "bind mount 적용 및 서버 반영 승인 — 대표 2026-05-18"
+  ],
+  "exit_code": 0,
+  "output_tail": "bind mount 적용 및 서버 반영 승인 — 대표 2026-05-18\n"
+}

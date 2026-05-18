@@ -30,6 +30,8 @@ services:
     volumes:
       # 로그/토큰/인박스 등 런타임 산출물 — dashboard/monitor 호스트 storage 와 섞이지 않도록 전용 named volume.
       - api_storage:/app/ai_orchestrator/storage
+      # uvicorn 프로세스 로그(/app/logs) — 컨테이너 재생성 시 소실 방지.
+      - ./data/app-logs:/app/logs
       # 운영 계정 해시 파일 + 향후 사이트 secrets. 호스트의 ./secrets/api 하위만 read-only 로 노출.
       - ./secrets/api:/run/secrets/api:ro
     restart: unless-stopped
