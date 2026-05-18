@@ -80,3 +80,90 @@ export async function getAssistantInbox(
 ): Promise<InboxResponse> {
   return getJson<InboxResponse>("/api/v1/inbox", signal);
 }
+
+// ── APP_UI_READONLY_STATUS_CARDS_API_BIND_01 ──────────────────────────────
+
+export interface AppHealthSummaryData {
+  service: string;
+  health_status: string;
+  server_head: string | null;
+  origin_head: string | null;
+  sync_status: string;
+  post_tasks_dry_run_enabled: boolean;
+  phase1_closeout_status: string;
+  container_health_source: string;
+  generated_at: string;
+}
+
+export interface AppHealthSummaryResponse {
+  ok: boolean;
+  data: AppHealthSummaryData;
+  meta: { source: string; read_only: true; mutation_allowed: false };
+}
+
+export interface AppProviderItem {
+  provider_id: string;
+  display_name: string;
+  category: string;
+  current_status: string;
+  risk_level: string;
+  user_present_login_required: boolean;
+  desktop_app_required: boolean;
+  cookie_storage_allowed: false;
+  token_storage_allowed: false;
+  approval_gate_required: boolean;
+  automation_status: string;
+  server_remote_login_allowed: false;
+  certificate_login_required?: boolean;
+}
+
+export interface AppProvidersResponse {
+  ok: boolean;
+  data: { providers: AppProviderItem[] };
+  meta: { provider_count: number; read_only: true; mutation_allowed: false };
+}
+
+export interface AppStoragePath {
+  name: string;
+  path: string;
+  type: string;
+}
+
+export interface AppStorageStatusData {
+  storage_paths: AppStoragePath[];
+  named_volume_status: string;
+  app_logs_bind_mount_status: string;
+  app_logs_path: string;
+  storage_path: string;
+  audit_log_policy: string;
+  execution_history_policy: string;
+  approval_token_policy: string;
+  runtime_cache_policy: string;
+}
+
+export interface AppStorageStatusResponse {
+  ok: boolean;
+  data: AppStorageStatusData;
+  meta: { read_only: true; mutation_allowed: false };
+}
+
+/** GET /api/v1/app/health/summary — APP_UI_READONLY_STATUS_CARDS_API_BIND_01 */
+export async function getAppHealthSummary(
+  signal?: AbortSignal,
+): Promise<AppHealthSummaryResponse> {
+  return getJson<AppHealthSummaryResponse>("/api/v1/app/health/summary", signal);
+}
+
+/** GET /api/v1/app/providers — APP_UI_READONLY_STATUS_CARDS_API_BIND_01 */
+export async function getAppProviders(
+  signal?: AbortSignal,
+): Promise<AppProvidersResponse> {
+  return getJson<AppProvidersResponse>("/api/v1/app/providers", signal);
+}
+
+/** GET /api/v1/app/storage/status — APP_UI_READONLY_STATUS_CARDS_API_BIND_01 */
+export async function getAppStorageStatus(
+  signal?: AbortSignal,
+): Promise<AppStorageStatusResponse> {
+  return getJson<AppStorageStatusResponse>("/api/v1/app/storage/status", signal);
+}

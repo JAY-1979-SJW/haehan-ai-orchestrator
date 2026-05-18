@@ -1,39 +1,51 @@
 "use client";
-/** /assistant — Dashboard (READ_ONLY status cards 보강) */
+/** /assistant — Dashboard (APP_UI_READONLY_STATUS_CARDS_API_BIND_01) */
 import { useEffect, useState } from "react";
 import { BackendStatusCard } from "@/components/assistant/BackendStatusCard";
 import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ApiConnectionStateBadge } from "@/components/assistant/ApiConnectionStateBadge";
-import { FutureEndpointNotice } from "@/components/assistant/FutureEndpointNotice";
 import {
   backendStatusMock, storageStatusMock, knownBacklogMock,
 } from "@/lib/assistant/mock";
 import {
-  getAssistantHealth,
+  getAppHealthSummary,
   makeMeta,
   type ApiState,
-  type HealthResponse,
+  type AppHealthSummaryResponse,
 } from "@/lib/assistant/api";
 import type { BackendStatus } from "@/types/assistant";
 
-function mergeHealth(base: BackendStatus, h: HealthResponse, meta: BackendStatus["api_meta"]): BackendStatus {
+function mergeAppHealth(
+  base: BackendStatus,
+  r: AppHealthSummaryResponse,
+  meta: BackendStatus["api_meta"],
+): BackendStatus {
+  const d = r.data;
+  const health =
+    d.health_status === "ok" || d.health_status === "OK" ? "OK"
+    : d.health_status === "warn" ? "WARN"
+    : "UNKNOWN";
   return {
     ...base,
-    health: h.status === "ok" || h.status === "OK" ? "OK" : "DEGRADED",
-    dry_run_gate_enabled: h.dry_run_gate_enabled ?? base.dry_run_gate_enabled,
+    head: d.server_head ?? "not_checked",
+    origin_head: d.origin_head ?? "not_checked",
+    health,
+    container_status: d.container_health_source,
+    dry_run_gate_enabled: d.post_tasks_dry_run_enabled,
+    phase1_closeout: d.phase1_closeout_status,
     api_meta: meta,
   };
 }
 
 export default function AssistantDashboard() {
-  const [healthState, setHealthState] = useState<ApiState<HealthResponse>>({ status: "idle" });
+  const [healthState, setHealthState] = useState<ApiState<AppHealthSummaryResponse>>({ status: "idle" });
 
   useEffect(() => {
     const ctrl = new AbortController();
     setHealthState({ status: "loading" });
-    getAssistantHealth(ctrl.signal)
+    getAppHealthSummary(ctrl.signal)
       .then((data) => {
         setHealthState({ status: "success", data, meta: makeMeta("api") });
       })
@@ -42,7 +54,7 @@ export default function AssistantDashboard() {
         const isNetwork = (err as Error).message?.includes("fetch");
         setHealthState({
           status: "mock_fallback",
-          data: { status: "MOCK" },
+          data: { ok: false, data: { service: "", health_status: "MOCK", server_head: null, origin_head: null, sync_status: "unknown", post_tasks_dry_run_enabled: true, phase1_closeout_status: "unknown", container_health_source: "mock", generated_at: "" }, meta: { source: "app_status_router", read_only: true, mutation_allowed: false } },
           meta: makeMeta("mock_fallback", isNetwork ? "network" : "unknown"),
         });
       });
@@ -51,7 +63,7 @@ export default function AssistantDashboard() {
 
   const displayStatus: BackendStatus =
     healthState.status === "success"
-      ? mergeHealth(backendStatusMock, healthState.data, healthState.meta)
+      ? mergeAppHealth(backendStatusMock, healthState.data, healthState.meta)
       : healthState.status === "mock_fallback"
       ? { ...backendStatusMock, api_meta: healthState.meta }
       : backendStatusMock;
@@ -71,7 +83,7 @@ export default function AssistantDashboard() {
           state={loadState}
           meta={healthState.status === "success" || healthState.status === "mock_fallback"
             ? healthState.meta : undefined}
-          label="health"
+          label="health/summary"
         />
       </div>
       <ReadOnlyModeBanner />
@@ -80,10 +92,6 @@ export default function AssistantDashboard() {
         <BackendStatusCard status={displayStatus} />
         <StorageStatusCard mounts={storageStatusMock} />
       </div>
-      <FutureEndpointNotice
-        endpoint="GET /api/v1/storage/status"
-        reason="스토리지 실시간 상태는 향후 공정에서 연결될 예정입니다."
-      />
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
         <div className="text-sm font-semibold text-[#111827] mb-3">Known Backlog</div>
         <div className="space-y-1.5">
