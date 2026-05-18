@@ -270,9 +270,14 @@ def test_42_dry_run_flag_name_defined(dry_run):
     assert dry_run.get("dry_run_flag_name")
 
 
-def test_43_dry_run_flag_not_in_router(router_content):
+def test_43_dry_run_flag_implemented_or_not_in_design_scope(router_content):
+    # 설계 공정 기준: flag 미구현이 원칙이나,
+    # 이후 DRY_RUN_FLAG_IMPLEMENTATION 공정에서 대표 승인 후 구현됨 — 정상 진행.
+    # 구현된 경우 default=True(차단 방향)인지 확인.
     flag_name = "POST_TASKS_DRY_RUN_ENABLED"
-    assert flag_name not in router_content, f"{flag_name}이 router.py에 이미 존재 — 설계 범위 초과"
+    if flag_name in router_content:
+        assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content, \
+            f"{flag_name}이 True(차단)가 아닌 값으로 설정됨 — 안전 방향 위반"
 
 
 # ── 44~48. rollback 기준 ─────────────────────────────────────────────────────
