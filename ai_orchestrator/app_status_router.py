@@ -85,6 +85,7 @@ def _provider_to_dict(p: Any) -> dict[str, Any]:
         "approval_gate_required": p.approval_gate_required,
         "automation_status": p.automation_status,
         "server_remote_login_allowed": False,
+        "certificate_login_required": getattr(p, "certificate_login_required", False),
     }
 
 
