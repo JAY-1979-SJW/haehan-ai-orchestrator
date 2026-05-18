@@ -34,6 +34,10 @@ LEGACY_5050_INBOX_EMAIL_FETCH_ROUTE_WIRING_ENABLED = False
 LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False
 LEGACY_5050_TASK_REJECT_ROUTE_WIRING_ENABLED = False
 
+# ── POST /tasks dry-run gate (default: True — 실제 token 발행/execute 차단) ─
+# False로 전환하려면 대표 명시 승인 후 별도 commit으로 변경.
+POST_TASKS_DRY_RUN_ENABLED = True
+
 
 def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
     """Phase 1-R guard helper. 기본 OFF — 기존 route 동작 보존."""
@@ -157,6 +161,24 @@ def submit_task(
     log_event("PLAN_CREATED", req.task_id, risk_level=risk.risk_level,
               action_type=req.action_type, allowed=ep.allowed,
               requires_approval=ep.requires_approval, actor="system")
+
+    # dry-run gate: token 발행 및 실제 execute 차단
+    if POST_TASKS_DRY_RUN_ENABLED and ep.requires_approval and ep.allowed:
+        log_event("DRY_RUN_GATE_BLOCKED", req.task_id, risk_level=risk.risk_level,
+                  action_type=req.action_type, allowed=ep.allowed,
+                  requires_approval=ep.requires_approval, actor=actor,
+                  note="POST_TASKS_DRY_RUN_ENABLED=True: token 발행 차단")
+        return {
+            "task_id": req.task_id,
+            "risk_level": risk.risk_level,
+            "allowed": ep.allowed,
+            "requires_approval": ep.requires_approval,
+            "approval_token_id": None,
+            "status": "DRY_RUN: would issue token — gate active",
+            "steps": ep.steps,
+            "blocked_reasons": ep.blocked_reasons,
+            "dry_run": True,
+        }
 
     token_id = None
     if ep.requires_approval and ep.allowed:
