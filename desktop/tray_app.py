@@ -139,6 +139,7 @@ class TrayApp:
             pystray.MenuItem("재시작 (Restart)", self._on_restart),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Admin Mock UI 열기", self._on_open_admin_ui),
+            pystray.MenuItem("뉴스 조회", self._on_open_news),
             pystray.MenuItem("로그 폴더 열기", self._on_open_logs),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("종료 (Exit)", self._on_exit),
@@ -166,6 +167,11 @@ class TrayApp:
         # Opens localhost only — never a production URL
         url = self._status.get_admin_mock_ui_url()
         logger.info("tray: opening admin mock UI: %s", url)
+        webbrowser.open(url)
+
+    def _on_open_news(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
+        url = "http://localhost:3000/assistant/news"
+        logger.info("tray: opening news page: %s", url)
         webbrowser.open(url)
 
     def _on_open_logs(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
