@@ -209,59 +209,177 @@ class BlogWriter:
             _log.error("[blog-writer] 본문 입력 실패: %s", e)
             return False
 
-    # ── 컴포넌트 삽입 ────────────────────────────────────────────────────
+    # ── 편집 도구 연동 (SE3 data-name 기준, 2026-05-19 툴바 전수 검증) ──────
+
+    def _toolbar_click(self, data_name: str, wait_s: float = 0.5) -> bool:
+        """data-name 기준 툴바 버튼 클릭 공통 헬퍼."""
+        try:
+            self.page.locator(f'button[data-name="{data_name}"]').first.click(timeout=3000)
+            time.sleep(wait_s)
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] toolbar(%s) 클릭 실패: %s", data_name, e)
+            return False
 
     def insert_image(self, path_or_url: str) -> bool:
-        """이미지 삽입 (로컬 파일 또는 URL)."""
+        """사진 삽입 — 로컬 파일 또는 URL."""
         try:
-            self.page.locator('button[data-name="image"], button:has-text("사진")').first.click(timeout=3000)
-            time.sleep(0.8)
+            self._toolbar_click("image", wait_s=0.8)
             if Path(path_or_url).exists():
                 self.page.locator('input[type="file"]').first.set_input_files(path_or_url, timeout=5000)
                 time.sleep(2.5)
-                _log.info("[blog-writer] 이미지 첨부: %s", path_or_url)
-                return True
-            self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(path_or_url, timeout=3000)
-            self.page.keyboard.press("Enter")
-            time.sleep(2)
+                _log.info("[blog-writer] 사진 첨부: %s", path_or_url)
+            else:
+                self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(path_or_url, timeout=3000)
+                self.page.keyboard.press("Enter")
+                time.sleep(2)
             return True
         except Exception as e:
-            _log.error("[blog-writer] 이미지 삽입 실패: %s", e)
+            _log.error("[blog-writer] 사진 삽입 실패: %s", e)
             return False
 
-    def insert_quote(self, text: str) -> bool:
-        """인용구 삽입."""
+    def insert_quote(self, text: str, style: int = 0) -> bool:
+        """인용구 삽입. style=0~2 (기본/스타일2/스타일3)."""
         try:
-            self.page.locator('button[data-name="quotation"]').first.click(timeout=2000)
-            time.sleep(0.5)
+            # 인용구 선택 드롭다운 열기
+            self._toolbar_click("quotation", wait_s=0.5)
+            # 스타일 선택 (0=첫 번째, 기본값)
+            opts = self.page.locator('.se-insert-quotation-option, [class*=quotation-option], [class*=select-option]')
+            count = opts.count()
+            if count > style:
+                opts.nth(style).click(timeout=1500)
+                time.sleep(0.3)
             self.page.keyboard.type(text, delay=15)
+            _log.info("[blog-writer] 인용구 삽입")
             return True
         except Exception as e:
-            _log.debug("[blog-writer] 인용 실패: %s", e)
+            _log.debug("[blog-writer] 인용구 실패: %s", e)
             return False
 
-    def insert_divider(self) -> bool:
-        """구분선 삽입."""
+    def insert_divider(self, style: int = 0) -> bool:
+        """구분선 삽입. style=0~N (종류 선택)."""
         try:
-            self.page.locator('button[data-name="horizontalLine"]').first.click(timeout=2000)
-            time.sleep(0.3)
+            self._toolbar_click("horizontal-line", wait_s=0.5)
+            opts = self.page.locator('[class*=horizontal-line-option], [class*=select-option]')
+            count = opts.count()
+            if count > style:
+                opts.nth(style).click(timeout=1500)
+            _log.info("[blog-writer] 구분선 삽입")
             return True
         except Exception as e:
             _log.debug("[blog-writer] 구분선 실패: %s", e)
             return False
 
-    def insert_link(self, url: str, text: str | None = None) -> bool:
-        """링크 삽입."""
+    def insert_link(self, url: str) -> bool:
+        """OG 링크 카드 삽입 (data-name=oglink).
+
+        클릭 후 나타나는 floating-search 입력창에 URL 입력.
+        """
         try:
-            self.page.locator('button[data-name="oglink"]').first.click(timeout=2000)
-            time.sleep(0.5)
-            self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(url, timeout=3000)
+            self._toolbar_click("oglink", wait_s=1.0)
+            inp = self.page.locator(
+                'input[class*="floating-search"], input[placeholder*="검색"], input[placeholder*="URL"]'
+            ).first
+            inp.fill(url, timeout=3000)
             self.page.keyboard.press("Enter")
-            time.sleep(1.5)
+            time.sleep(2.5)
+            _log.info("[blog-writer] 링크 카드 삽입: %s", url[:60])
             return True
         except Exception as e:
-            _log.debug("[blog-writer] 링크 실패: %s", e)
+            _log.debug("[blog-writer] 링크 카드 실패: %s", e)
             return False
+
+    def insert_text_link(self, url: str, text: str) -> bool:
+        """텍스트에 하이퍼링크 삽입 (data-name=text-link). 선택된 텍스트에 적용."""
+        try:
+            self._toolbar_click("text-link", wait_s=0.5)
+            self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(url, timeout=3000)
+            self.page.keyboard.press("Enter")
+            time.sleep(1)
+            _log.info("[blog-writer] 텍스트 링크 삽입")
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] 텍스트 링크 실패: %s", e)
+            return False
+
+    # ── 텍스트 서식 ──────────────────────────────────────────────────────
+
+    def set_bold(self) -> bool:
+        """굵게 (Bold) 토글."""
+        return self._toolbar_click("bold", wait_s=0.2)
+
+    def set_italic(self) -> bool:
+        """기울이기 (Italic) 토글."""
+        return self._toolbar_click("italic", wait_s=0.2)
+
+    def set_underline(self) -> bool:
+        """밑줄 토글."""
+        return self._toolbar_click("underline", wait_s=0.2)
+
+    def set_strikethrough(self) -> bool:
+        """취소선 토글."""
+        return self._toolbar_click("strikethrough", wait_s=0.2)
+
+    def set_font_size(self, size: int) -> bool:
+        """글자 크기 변경."""
+        try:
+            self._toolbar_click("font-size", wait_s=0.4)
+            inp = self.page.locator('input[class*=font-size], .se-font-size-input').first
+            inp.fill(str(size), timeout=2000)
+            self.page.keyboard.press("Enter")
+            time.sleep(0.3)
+            _log.info("[blog-writer] 글자 크기: %d", size)
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] 글자 크기 실패: %s", e)
+            return False
+
+    def set_text_format(self, format_name: str) -> bool:
+        """문단 서식 변경. format_name: 본문/제목1/제목2/소제목 등."""
+        try:
+            self._toolbar_click("text-format", wait_s=0.4)
+            self.page.get_by_text(format_name, exact=True).first.click(timeout=2000)
+            time.sleep(0.3)
+            _log.info("[blog-writer] 문단 서식: %s", format_name)
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] 문단 서식 실패: %s", e)
+            return False
+
+    def set_align(self, align: str = "left") -> bool:
+        """정렬. align: left/center/right/justify."""
+        label_map = {"left": "왼쪽", "center": "가운데", "right": "오른쪽", "justify": "양쪽"}
+        try:
+            self._toolbar_click("align-drop-down-with-justify", wait_s=0.4)
+            label = label_map.get(align, align)
+            self.page.get_by_text(label, exact=True).first.click(timeout=2000)
+            time.sleep(0.2)
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] 정렬 실패: %s", e)
+            return False
+
+    def insert_code_block(self, code: str, language: str = "") -> bool:
+        """소스코드 블록 삽입 (data-name=code)."""
+        try:
+            self._toolbar_click("code", wait_s=0.8)
+            # 언어 선택 드롭다운
+            if language:
+                try:
+                    self.page.get_by_text(language, exact=True).first.click(timeout=1500)
+                    time.sleep(0.3)
+                except Exception:
+                    pass
+            self.page.keyboard.type(code, delay=10)
+            _log.info("[blog-writer] 코드 블록 삽입")
+            return True
+        except Exception as e:
+            _log.debug("[blog-writer] 코드 블록 실패: %s", e)
+            return False
+
+    def spellcheck(self) -> bool:
+        """맞춤법 검사 실행 (data-name=speller)."""
+        return self._toolbar_click("speller", wait_s=1.0)
 
     # ── 발행 패널 옵션 ────────────────────────────────────────────────────
 
