@@ -25,6 +25,7 @@ from .browser_tool.approval_record_router import approval_record_router
 from .action_router import action_router
 from .cad_ai_router import cad_ai_router
 from .connectors.naver_search_router import naver_search_router
+from .connectors.naver_news_router import naver_news_router
 from .ops_router import ops_router
 from .app_status_router import app_status_router
 
@@ -61,6 +62,7 @@ router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
+router.include_router(naver_news_router)    # read-only naver news scraping endpoints
 router.include_router(ops_router)           # read-only ops center API
 router.include_router(app_status_router)    # read-only app status endpoints (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 

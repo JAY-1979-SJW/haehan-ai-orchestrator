@@ -68,6 +68,26 @@ def _google_login(page):
     }
 
 
+def _gabia_is_logged_in(page):
+    from scripts.gabia.auth import is_logged_in
+    return is_logged_in(page)
+
+
+def _gabia_login(page):
+    from scripts.gabia.auth import login
+    return login(page)
+
+
+def _kakao_is_logged_in(page):
+    from scripts.kakao.auth import is_logged_in
+    return is_logged_in(page)
+
+
+def _kakao_login(page):
+    from scripts.kakao.auth import login
+    return login(page)
+
+
 def _hiworks_is_logged_in(page):
     try:
         url = page.url or ""
@@ -125,6 +145,22 @@ _REGISTRY: dict[str, SiteSpec] = {
         login_domain_hints=("login.office.hiworks.com", "office.hiworks.com"),
         is_logged_in=_hiworks_is_logged_in,
         login=_hiworks_login,
+        login_strategy="manual_only",
+    ),
+    "gabia": SiteSpec(
+        key="gabia",
+        base_url="https://www.gabia.com",
+        login_domain_hints=("account.gabia.com",),
+        is_logged_in=_gabia_is_logged_in,
+        login=_gabia_login,
+        login_strategy="manual_only",
+    ),
+    "kakao": SiteSpec(
+        key="kakao",
+        base_url="https://www.kakao.com",
+        login_domain_hints=("accounts.kakao.com",),
+        is_logged_in=_kakao_is_logged_in,
+        login=_kakao_login,
         login_strategy="manual_only",
     ),
 }

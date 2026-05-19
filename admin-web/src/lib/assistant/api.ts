@@ -182,3 +182,67 @@ export async function getOpsAuditEvents(signal?: AbortSignal) {
 export async function getOpsSummary(signal?: AbortSignal) {
   return getJson<import("@/types/assistant").OpsSummaryResponse>("/api/v1/ops/summary", signal);
 }
+
+// ── 네이버 뉴스 스크래핑 read-only ───────────────────────────────────────
+
+export interface NewsArticleItem {
+  title: string;
+  url: string;
+  press: string;
+  datetime: string;
+  summary: string;
+}
+
+export interface NewsPressBlock {
+  press: string;
+  updated: string;
+  articles: { title: string; url: string }[];
+}
+
+export interface NewsArticleDetail {
+  title: string;
+  press: string;
+  datetime: string;
+  summary: string;
+  body: string;
+  url: string;
+  duration_ms?: number;
+}
+
+export interface NewsMainResponse {
+  blocks: NewsPressBlock[];
+  total: number;
+  duration_ms: number;
+}
+
+export interface NewsSearchResponse {
+  items: NewsArticleItem[];
+  total: number;
+  query: string;
+  page: number;
+  duration_ms: number;
+}
+
+/** GET /api/v1/external/naver/news-main */
+export async function getNewsMain(signal?: AbortSignal): Promise<NewsMainResponse> {
+  return getJson<NewsMainResponse>("/api/v1/external/naver/news-main", signal);
+}
+
+/** GET /api/v1/external/naver/news-search?query=...&page=... */
+export async function getNewsSearch(
+  query: string,
+  page = 1,
+  signal?: AbortSignal,
+): Promise<NewsSearchResponse> {
+  const params = new URLSearchParams({ query, page: String(page) });
+  return getJson<NewsSearchResponse>(`/api/v1/external/naver/news-search?${params}`, signal);
+}
+
+/** GET /api/v1/external/naver/news-article?url=... */
+export async function getNewsArticle(
+  url: string,
+  signal?: AbortSignal,
+): Promise<NewsArticleDetail> {
+  const params = new URLSearchParams({ url });
+  return getJson<NewsArticleDetail>(`/api/v1/external/naver/news-article?${params}`, signal);
+}
