@@ -50,24 +50,24 @@ def _cmd_session_check() -> None:
 
 
 def _cmd_login() -> None:
+    from scripts.kakao.auth import login, is_logged_in as _is_logged_in
     from scripts.web_connector import browser_session
-    from scripts.login_session import is_logged_in
-    from .base import KAKAO_DEV_URL
 
     print("=" * 60)
     print("카카오 로그인")
     print("=" * 60)
 
     with browser_session() as page:
-        page.goto(KAKAO_DEV_URL, timeout=60000)
-        if is_logged_in(page, "kakao"):
+        result = login(page)
+        if result.get("ok"):
             print("✓ 이미 로그인 상태입니다")
         else:
-            print("\n브라우저에서 카카오 계정으로 로그인하세요")
-            input("👉 로그인 완료 후 Enter를 누르세요: ")
-            if is_logged_in(page, "kakao"):
-                print("✓ 로그인 완료")
+            print("\n브라우저에서 카카오 계정으로 로그인하세요 (최대 5분 대기)")
+            from scripts.login_detector import monitor_for_login
+            detected = monitor_for_login(page, check_interval=2, timeout_s=300)
+            if detected.get("detected"):
+                print(f"✓ 로그인 감지 완료 — {detected.get('elapsed_s', 0):.0f}초")
             else:
-                print("⚠  로그인 확인 실패 — 다시 시도하세요")
+                print(f"⚠  로그인 미감지 — {detected.get('aborted_reason', 'timeout')}")
 
     print("=" * 60)

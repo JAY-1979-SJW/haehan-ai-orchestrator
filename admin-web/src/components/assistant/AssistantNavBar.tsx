@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/assistant/tasks",         label: "작업 큐",    exact: false },
   { href: "/assistant/approval",      label: "승인 게이트", exact: false },
   { href: "/assistant/external-sites", label: "외부 사이트", exact: false },
+  { href: "/assistant/news",           label: "뉴스",       exact: false },
   { href: "/assistant/logs",          label: "로그·감사",  exact: false },
   { href: "/assistant/storage",       label: "스토리지",   exact: false },
   { href: "/assistant/deployment",    label: "배포 상태",  exact: false },

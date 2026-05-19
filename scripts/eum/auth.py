@@ -43,7 +43,8 @@ _LOGIN_URL_FALLBACKS = _LOGIN_URL_CANDIDATES[1:]
 # 우리 회원 분류 — 비전아이(주)는 단말기 업체
 _MEMBER_CATEGORY = "단말기 업체"
 _TERMINAL_COMPANY_SUBTYPE = "유통업체"
-_TERMINAL_COMPANY_SUBTYPE_SELECTOR = "#radio_b2"
+# #radio_b2 하드코딩 제거 — _select_terminal_company_subtype에서 동적 탐색
+_TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK = "#radio_b2"
 
 
 def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
@@ -79,22 +80,47 @@ def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
 
 
 def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBTYPE) -> bool:
-    """단말기 업체 탭 안의 세부 유형을 선택한다."""
+    """단말기 업체 탭 안의 세부 유형을 선택한다.
+
+    텍스트 기반 동적 탐색 우선. 하드코딩 ID(#radio_b2)는 최후 폴백.
+    """
     try:
-        loc = page.locator(_TERMINAL_COMPANY_SUBTYPE_SELECTOR).first
+        # 1. #tab4 내 텍스트 라벨 (가장 안전)
+        for sel in [
+            f'#tab4 label:has-text("{subtype}")',
+            f'label:has-text("{subtype}")',
+            f'[id^="tab"] label:has-text("{subtype}")',
+        ]:
+            try:
+                loc = page.locator(sel).first
+                loc.wait_for(state="visible", timeout=1000)
+                loc.click(timeout=3000)
+                log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, sel)
+                return True
+            except Exception:
+                continue
+
+        # 2. radio input value/aria-label 기반
+        for sel in [
+            f'input[type="radio"][value*="{subtype}"]',
+            f'input[type="radio"][aria-label*="{subtype}"]',
+        ]:
+            try:
+                loc = page.locator(sel).first
+                loc.wait_for(state="attached", timeout=1000)
+                loc.check(timeout=3000, force=True)
+                log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, sel)
+                return True
+            except Exception:
+                continue
+
+        # 3. 하드코딩 ID 폴백 (사이트 변경 전 구 셀렉터)
         try:
+            loc = page.locator(_TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK).first
             loc.wait_for(state="attached", timeout=2000)
             loc.check(timeout=3000, force=True)
-            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (%s)", subtype, _TERMINAL_COMPANY_SUBTYPE_SELECTOR)
-            return True
-        except Exception:
-            pass
-
-        loc = page.locator(f'#tab4 label:has-text("{subtype}")').first
-        try:
-            loc.wait_for(state="visible", timeout=1000)
-            loc.click(timeout=3000)
-            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (label)", subtype)
+            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (fallback %s)",
+                     subtype, _TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK)
             return True
         except Exception:
             pass
