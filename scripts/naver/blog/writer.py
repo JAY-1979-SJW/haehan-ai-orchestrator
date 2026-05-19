@@ -51,7 +51,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from playwright.sync_api import Page, Frame
+from playwright.sync_api import Page
 
 from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
@@ -59,22 +59,29 @@ from scripts.critical_logger import log_critical
 _log = get_logger(__name__)
 
 WRITE_URL = "https://blog.naver.com/PostWriteForm.naver"
-EDITOR_FRAME = "mainFrame"
+
+# SE3(SmartEditor One)는 iframe 없이 메인 페이지에 직접 렌더링.
+# 제목: .se-section-documentTitle  본문: .se-section-text
+TITLE_SEL = ".se-section-documentTitle"
+BODY_SEL  = ".se-section-text"
 
 VISIBILITY_MAP = {
-    "public": "0",       # 전체공개
-    "neighbors": "2",    # 이웃공개
+    "public": "2",       # 전체공개 (실제 라디오 value 검증 완료 2026-05-19)
+    "neighbors": "1",    # 이웃공개
     "mutual": "3",       # 서로이웃공개
-    "private": "1",      # 비공개
+    "private": "0",      # 비공개
 }
 
 
 class BlogWriter:
-    """네이버 블로그 SmartEditor 자동화 작성기."""
+    """네이버 블로그 SmartEditor3 자동화 작성기.
+
+    SE3는 iframe 없이 메인 페이지에 직접 렌더링.
+    blogId 파라미터 필수 — 없으면 "유효하지 않은 요청" 오류 발생.
+    """
 
     def __init__(self, page: Page):
         self.page = page
-        self.frame: Frame | None = None
         self._draft_handled = False
 
     # ── 초기화 ──────────────────────────────────────────────────────────
@@ -82,80 +89,78 @@ class BlogWriter:
     def open(self, blog_id: str | None = None, timeout_ms: int = 30000,
              auto_login: bool = True,
              naver_id: str | None = None, naver_pw: str | None = None) -> bool:
-        """편집기 페이지 열기 + 자동 로그인 + iframe 진입 + 다이얼로그 처리.
-
-        Args:
-            blog_id: 본인 블로그 ID (없으면 글쓰기 URL에서 자동 추출 시도)
-            auto_login: 미로그인 시 자동 ID/PW 로그인 시도
-            naver_id, naver_pw: 명시 자격증명 (없으면 환경변수/파일)
-        """
+        """편집기 페이지 열기 + 자동 로그인 + 편집기 준비 대기."""
         _log.info("[blog-writer] 편집기 열기 (blog_id=%s)", blog_id)
-        url = WRITE_URL + (f"?blogId={blog_id}" if blog_id else "")
+
+        # blogId 없으면 로그인 사용자 ID 자동 감지
+        if not blog_id:
+            blog_id = self._detect_blog_id()
+
+        if not blog_id:
+            _log.error("[blog-writer] blog_id 확인 불가 — 로그인 필요")
+            return False
+
+        url = f"{WRITE_URL}?blogId={blog_id}"
         self.page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
-        time.sleep(2.5)
+        time.sleep(3)
 
-        # 로그인 확인
-        if auto_login:
+        # 로그인 확인 — 글쓰기 페이지 접근 실패 시 자동 로그인
+        if auto_login and "유효하지 않은" in (self.page.content() or ""):
             try:
-                from scripts.login_detector import detect_login_state
-                from scripts.naver.auth import login_naver
-                state = detect_login_state(self.page)
-                if not state.get("logged_in"):
-                    _log.info("[blog-writer] 미로그인 감지 → 자동 로그인 시도")
-                    result = login_naver(self.page, naver_id, naver_pw)
-                    if not result["ok"]:
-                        _log.error("[blog-writer] 자동 로그인 실패: %s", result.get("reason"))
-                        return False
-                    # 글쓰기 페이지로 복귀
-                    self.page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
-                    time.sleep(2.5)
+                from scripts.naver.auth import ensure_naver_login
+                result = ensure_naver_login(self.page)
+                if not result.get("ok"):
+                    _log.error("[blog-writer] 자동 로그인 실패: %s", result.get("reason"))
+                    return False
+                self.page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
+                time.sleep(3)
             except Exception as e:
-                _log.warning("[blog-writer] 자동 로그인 처리 실패 (계속 진행): %s", e)
+                _log.warning("[blog-writer] 자동 로그인 처리 실패: %s", e)
 
-        # mainFrame 찾기
-        self.frame = self._find_main_frame(timeout_s=15)
-        if not self.frame:
-            _log.error("[blog-writer] mainFrame 진입 실패")
-            return False
-
-        # 임시저장 복원 다이얼로그 자동 처리 ("취소" 클릭하여 새 글로 시작)
-        self._handle_draft_dialog()
-
-        # 편집기 준비 대기
+        # 편집기 준비 대기 (SE3: .se-section-documentTitle)
         try:
-            self.frame.wait_for_selector(".se-title-input, .se_editArea", timeout=15000, state="visible")
+            self.page.wait_for_selector(TITLE_SEL, timeout=15000, state="visible")
             _log.info("[blog-writer] 편집기 준비 완료")
-            return True
         except Exception as e:
-            _log.warning("[blog-writer] 편집기 셀렉터 대기 실패: %s", e)
+            _log.error("[blog-writer] 편집기 로드 실패: %s", e)
             return False
 
-    def _find_main_frame(self, timeout_s: int = 15) -> Frame | None:
-        """mainFrame iframe 찾기."""
-        deadline = time.time() + timeout_s
-        while time.time() < deadline:
-            for f in self.page.frames:
-                if f.name == EDITOR_FRAME or "PostWriteForm" in f.url:
-                    return f
-            time.sleep(0.5)
+        # 임시저장 복원 다이얼로그 처리
+        self._handle_draft_dialog()
+        return True
+
+    def _detect_blog_id(self) -> str | None:
+        """로그인된 세션에서 내 블로그 ID 추출.
+
+        section.blog 의 내 블로그(admin) 링크를 우선 사용.
+        """
+        try:
+            self.page.goto("https://section.blog.naver.com/BlogHome.naver",
+                           wait_until="domcontentloaded", timeout=10000)
+            time.sleep(1.5)
+            href = self.page.evaluate("""() => {
+                const a = document.querySelector('a[href*=\"admin.blog.naver.com/\"]');
+                return a ? a.href : null;
+            }""")
+            if href:
+                m = re.search(r"admin\.blog\.naver\.com/([a-zA-Z0-9_]+)", href)
+                if m:
+                    _id = m.group(1)
+                    if _id not in ("stat", "category", "manage"):
+                        return _id
+        except Exception as e:
+            _log.debug("[blog-writer] blog_id 자동 감지 실패: %s", e)
         return None
 
     def _handle_draft_dialog(self) -> None:
-        """임시저장 복원 다이얼로그 처리 — 매번 새 글로 시작 ('취소' 클릭)."""
-        if self._draft_handled or not self.frame:
+        """임시저장 복원 다이얼로그 처리 — 새 글로 시작 ('취소' 클릭)."""
+        if self._draft_handled:
             return
         time.sleep(1.0)
         try:
-            # 다양한 다이얼로그 패턴 시도
-            dialog_selectors = [
-                'button:has-text("취소")',
-                '.btn_cancel',
-                '.se-popup-button-cancel',
-                '[class*="cancel"]',
-            ]
-            for sel in dialog_selectors:
+            for sel in ['button:has-text("취소")', '.btn_cancel', '.se-popup-button-cancel']:
                 try:
-                    btn = self.frame.locator(sel).first
+                    btn = self.page.locator(sel).first
                     if btn.is_visible(timeout=500):
                         btn.click(timeout=1500)
                         _log.info("[blog-writer] 임시저장 복원 다이얼로그 취소")
@@ -171,11 +176,8 @@ class BlogWriter:
 
     def set_title(self, text: str) -> bool:
         """제목 입력."""
-        if not self.frame:
-            return False
         try:
-            title = self.frame.locator(".se-title-input, .se-section-documentTitle .se-text-paragraph").first
-            title.click(timeout=3000)
+            self.page.locator(TITLE_SEL).first.click(timeout=3000)
             time.sleep(0.3)
             self.page.keyboard.type(text, delay=20)
             time.sleep(0.5)
@@ -187,11 +189,8 @@ class BlogWriter:
 
     def write_body(self, text: str | list[str], paragraph_delay: float = 0.3) -> bool:
         """본문 입력. text가 list면 단락 단위로 처리."""
-        if not self.frame:
-            return False
         try:
-            body = self.frame.locator(".se-text-paragraph").first
-            body.click(timeout=3000)
+            self.page.locator(BODY_SEL).first.click(timeout=3000)
             time.sleep(0.5)
 
             paragraphs = text if isinstance(text, list) else text.split("\n\n")
@@ -200,9 +199,9 @@ class BlogWriter:
                 for j, line in enumerate(lines):
                     self.page.keyboard.type(line, delay=15)
                     if j < len(lines) - 1:
-                        self.page.keyboard.press("Shift+Enter")  # 줄바꿈
+                        self.page.keyboard.press("Shift+Enter")
                 if i < len(paragraphs) - 1:
-                    self.page.keyboard.press("Enter")  # 단락 분리
+                    self.page.keyboard.press("Enter")
                     time.sleep(paragraph_delay)
             _log.info("[blog-writer] 본문 입력 완료 (%d 단락)", len(paragraphs))
             return True
@@ -214,24 +213,15 @@ class BlogWriter:
 
     def insert_image(self, path_or_url: str) -> bool:
         """이미지 삽입 (로컬 파일 또는 URL)."""
-        if not self.frame:
-            return False
         try:
-            # 사진 버튼 클릭으로 파일 다이얼로그 열기
-            self.frame.locator('button[data-name="image"], button:has-text("사진"), .se-toolbar-button-image').first.click(timeout=3000)
+            self.page.locator('button[data-name="image"], button:has-text("사진")').first.click(timeout=3000)
             time.sleep(0.8)
-
-            # 로컬 파일이면 file input에 직접 set
             if Path(path_or_url).exists():
-                file_input = self.frame.locator('input[type="file"]').first
-                file_input.set_input_files(path_or_url, timeout=5000)
-                time.sleep(2.5)  # 업로드 대기
+                self.page.locator('input[type="file"]').first.set_input_files(path_or_url, timeout=5000)
+                time.sleep(2.5)
                 _log.info("[blog-writer] 이미지 첨부: %s", path_or_url)
                 return True
-
-            # URL이면 url 입력
-            url_input = self.frame.locator('input[placeholder*="URL"], input[type="url"]').first
-            url_input.fill(path_or_url, timeout=3000)
+            self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(path_or_url, timeout=3000)
             self.page.keyboard.press("Enter")
             time.sleep(2)
             return True
@@ -241,10 +231,8 @@ class BlogWriter:
 
     def insert_quote(self, text: str) -> bool:
         """인용구 삽입."""
-        if not self.frame:
-            return False
         try:
-            self.frame.locator('button[data-name="quotation"], .se-toolbar-button-quotation').first.click(timeout=2000)
+            self.page.locator('button[data-name="quotation"]').first.click(timeout=2000)
             time.sleep(0.5)
             self.page.keyboard.type(text, delay=15)
             return True
@@ -254,10 +242,8 @@ class BlogWriter:
 
     def insert_divider(self) -> bool:
         """구분선 삽입."""
-        if not self.frame:
-            return False
         try:
-            self.frame.locator('button[data-name="horizontalLine"], .se-toolbar-button-horizontalLine').first.click(timeout=2000)
+            self.page.locator('button[data-name="horizontalLine"]').first.click(timeout=2000)
             time.sleep(0.3)
             return True
         except Exception as e:
@@ -266,12 +252,10 @@ class BlogWriter:
 
     def insert_link(self, url: str, text: str | None = None) -> bool:
         """링크 삽입."""
-        if not self.frame:
-            return False
         try:
-            self.frame.locator('button[data-name="oglink"], .se-toolbar-button-oglink').first.click(timeout=2000)
+            self.page.locator('button[data-name="oglink"]').first.click(timeout=2000)
             time.sleep(0.5)
-            self.frame.locator('input[placeholder*="URL"], input[type="url"]').first.fill(url, timeout=3000)
+            self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(url, timeout=3000)
             self.page.keyboard.press("Enter")
             time.sleep(1.5)
             return True
@@ -279,34 +263,17 @@ class BlogWriter:
             _log.debug("[blog-writer] 링크 실패: %s", e)
             return False
 
-    # ── 발행 패널 (사이드 옵션) ───────────────────────────────────────────
-
-    def _open_publish_panel(self) -> bool:
-        """발행 패널 열기 ('발행' 버튼 우측 옵션 패널)."""
-        if not self.frame:
-            return False
-        try:
-            self.frame.locator('button:has-text("발행"), .publish_btn, [class*="publish"]').first.click(timeout=3000)
-            time.sleep(1.5)
-            return True
-        except Exception as e:
-            _log.error("[blog-writer] 발행 패널 열기 실패: %s", e)
-            return False
+    # ── 발행 패널 옵션 ────────────────────────────────────────────────────
 
     def set_category(self, name_or_no: str) -> bool:
-        """카테고리 선택 (이름 또는 번호)."""
-        if not self.frame:
-            return False
+        """카테고리 선택."""
         try:
-            # 카테고리 드롭다운 클릭
-            self.frame.locator('.category_select, button:has-text("카테고리"), [class*="category"]').first.click(timeout=2000)
+            self.page.locator('.category_select, button:has-text("카테고리")').first.click(timeout=2000)
             time.sleep(0.5)
-            # 번호 매칭 우선
             try:
-                self.frame.locator(f'[data-category-no="{name_or_no}"]').first.click(timeout=1500)
+                self.page.locator(f'[data-category-no="{name_or_no}"]').first.click(timeout=1500)
             except Exception:
-                # 이름 매칭
-                self.frame.get_by_text(name_or_no, exact=True).first.click(timeout=2000)
+                self.page.get_by_text(name_or_no, exact=True).first.click(timeout=2000)
             time.sleep(0.5)
             _log.info("[blog-writer] 카테고리 선택: %s", name_or_no)
             return True
@@ -315,11 +282,9 @@ class BlogWriter:
             return False
 
     def set_tags(self, tags: list[str]) -> bool:
-        """태그 추가 (여러 개)."""
-        if not self.frame:
-            return False
+        """태그 추가."""
         try:
-            tag_input = self.frame.locator('input.tag_input, input[placeholder*="태그"], [class*="tag-input"]').first
+            tag_input = self.page.locator('input[placeholder*="태그"]').first
             tag_input.click(timeout=2000)
             for t in tags:
                 self.page.keyboard.type(t, delay=20)
@@ -332,20 +297,17 @@ class BlogWriter:
             return False
 
     def set_visibility(self, level: str = "public") -> bool:
-        """공개 설정. level: public/neighbors/mutual/private"""
-        if not self.frame:
-            return False
+        """공개 설정."""
         if level not in VISIBILITY_MAP:
             _log.error("[blog-writer] 잘못된 공개설정: %s", level)
             return False
         try:
-            # 라디오 또는 라벨 클릭
             value = VISIBILITY_MAP[level]
             try:
-                self.frame.locator(f'input[name="visibility"][value="{value}"]').first.click(timeout=1500)
+                self.page.locator(f'input[name="visibility"][value="{value}"]').first.click(timeout=1500)
             except Exception:
                 label_map = {"public": "전체공개", "neighbors": "이웃공개", "mutual": "서로이웃공개", "private": "비공개"}
-                self.frame.get_by_text(label_map[level], exact=True).first.click(timeout=2000)
+                self.page.get_by_text(label_map[level], exact=True).first.click(timeout=2000)
             _log.info("[blog-writer] 공개설정: %s", level)
             return True
         except Exception as e:
@@ -354,13 +316,9 @@ class BlogWriter:
 
     def set_comments_allowed(self, allowed: bool = True) -> bool:
         """댓글 허용 여부."""
-        if not self.frame:
-            return False
         try:
-            target_text = "댓글 허용" if allowed else "댓글 거부"
-            cb = self.frame.locator(f'input[type="checkbox"][name*="comment"]').first
-            is_checked = cb.is_checked(timeout=1500)
-            if is_checked != allowed:
+            cb = self.page.locator('input[type="checkbox"][name*="comment"]').first
+            if cb.is_checked(timeout=1500) != allowed:
                 cb.click(timeout=1500)
             _log.info("[blog-writer] 댓글 %s", "허용" if allowed else "거부")
             return True
@@ -370,12 +328,9 @@ class BlogWriter:
 
     def set_likes_allowed(self, allowed: bool = True) -> bool:
         """공감 허용 여부."""
-        if not self.frame:
-            return False
         try:
-            cb = self.frame.locator('input[type="checkbox"][name*="sympathy"], input[type="checkbox"][name*="like"]').first
-            is_checked = cb.is_checked(timeout=1500)
-            if is_checked != allowed:
+            cb = self.page.locator('input[type="checkbox"][name*="sympathy"], input[type="checkbox"][name*="like"]').first
+            if cb.is_checked(timeout=1500) != allowed:
                 cb.click(timeout=1500)
             return True
         except Exception:
@@ -383,12 +338,9 @@ class BlogWriter:
 
     def set_search_exposure(self, allowed: bool = True) -> bool:
         """검색 노출 허용."""
-        if not self.frame:
-            return False
         try:
-            cb = self.frame.locator('input[type="checkbox"][name*="search"]').first
-            is_checked = cb.is_checked(timeout=1500)
-            if is_checked != allowed:
+            cb = self.page.locator('input[type="checkbox"][name*="search"]').first
+            if cb.is_checked(timeout=1500) != allowed:
                 cb.click(timeout=1500)
             return True
         except Exception:
@@ -398,10 +350,8 @@ class BlogWriter:
 
     def save_draft(self) -> dict:
         """임시저장."""
-        if not self.frame:
-            return {"ok": False, "error": "frame_not_ready"}
         try:
-            self.frame.locator('button:has-text("저장"), .save_btn, .btn_save').first.click(timeout=3000)
+            self.page.locator('button:has-text("저장")').first.click(timeout=3000)
             time.sleep(2)
             _log.info("[blog-writer] 임시저장 완료")
             log_critical("OTHER", "블로그 임시저장", mode="blog_draft")
@@ -411,20 +361,20 @@ class BlogWriter:
             return {"ok": False, "error": str(e)}
 
     def publish(self, wait_verify_s: int = 8) -> dict:
-        """즉시 발행 + 검증."""
-        if not self.frame:
-            return {"ok": False, "error": "frame_not_ready"}
+        """즉시 발행 + 검증. 상단 '발행' 버튼(exact) → 패널 내 confirm_btn 순서."""
         try:
-            # 우측 발행 패널 → 발행 버튼 클릭 (2단계)
-            # 1) 상단 발행 버튼 → 패널 펼침
+            # 1) 상단 발행 버튼 (exact=True: "예약 발행" 버튼과 구분)
             try:
-                self.frame.locator('.publish_btn_area button, button:has-text("발행")').first.click(timeout=3000)
+                self.page.get_by_role("button", name="발행", exact=True).click(timeout=3000)
                 time.sleep(1.5)
             except Exception:
                 pass
 
-            # 2) 패널 내 최종 발행 버튼 클릭
-            self.frame.locator('button.confirm:has-text("발행"), button:has-text("발행하기"), .btn_confirm').first.click(timeout=5000)
+            # 2) 패널 내 최종 발행 버튼 (.confirm_btn__WEaBq 또는 텍스트 fallback)
+            try:
+                self.page.locator('[class*="confirm_btn"]').click(timeout=3000)
+            except Exception:
+                self.page.get_by_role("button", name="발행", exact=True).last.click(timeout=3000)
             time.sleep(wait_verify_s)
 
             return self.verify_published()
@@ -434,28 +384,21 @@ class BlogWriter:
 
     def schedule_publish(self, when: datetime) -> dict:
         """예약 발행."""
-        if not self.frame:
-            return {"ok": False, "error": "frame_not_ready"}
         try:
-            # 발행 패널 → 예약 라디오 클릭
             try:
-                self.frame.locator('.publish_btn_area button, button:has-text("발행")').first.click(timeout=3000)
+                self.page.locator('button:has-text("발행")').first.click(timeout=3000)
                 time.sleep(1.5)
             except Exception:
                 pass
 
-            self.frame.locator('input[type="radio"][value="reserve"], label:has-text("예약")').first.click(timeout=2000)
+            self.page.locator('input[type="radio"][value="reserve"], label:has-text("예약")').first.click(timeout=2000)
             time.sleep(0.5)
 
-            # 날짜/시간 입력
-            date_str = when.strftime("%Y-%m-%d")
-            time_str = when.strftime("%H:%M")
-            self.frame.locator('input[type="date"], input.date_input').first.fill(date_str, timeout=2000)
-            self.frame.locator('input[type="time"], input.time_input').first.fill(time_str, timeout=2000)
+            self.page.locator('input[type="date"], input.date_input').first.fill(when.strftime("%Y-%m-%d"), timeout=2000)
+            self.page.locator('input[type="time"], input.time_input').first.fill(when.strftime("%H:%M"), timeout=2000)
             time.sleep(0.5)
 
-            # 예약 발행 버튼
-            self.frame.locator('button:has-text("예약"), button.confirm:has-text("발행")').first.click(timeout=3000)
+            self.page.locator('button:has-text("예약"), button.confirm:has-text("발행")').first.click(timeout=3000)
             time.sleep(5)
 
             _log.info("[blog-writer] 예약 발행: %s", when)
@@ -472,20 +415,17 @@ class BlogWriter:
         current = self.page.url
         m = re.search(r"blog\.naver\.com/(?:PostView\.naver\?blogId=([^&]+)&logNo=(\d+)|([a-zA-Z0-9_-]+)/(\d{10,}))", current)
 
-        # URL 변화 또는 발행 완료 토스트 감지
         title_text = ""
         try:
             title_text = self.page.title()
         except Exception:
             pass
 
-        # mainFrame 안에서 결과 확인
         result_text = ""
-        if self.frame:
-            try:
-                result_text = self.frame.evaluate("() => (document.body?.innerText || '').substring(0, 500)")
-            except Exception:
-                pass
+        try:
+            result_text = self.page.evaluate("() => (document.body?.innerText || '').substring(0, 500)")
+        except Exception:
+            pass
 
         success = bool(m) or "발행" in result_text or "완료" in result_text
 
@@ -550,7 +490,6 @@ def write_post(page: Page, *,
     if not bw.set_title(title):
         return {"ok": False, "error": "title_failed"}
 
-    # 본문 시작 이미지
     if images:
         for img in images:
             bw.insert_image(img)
@@ -558,7 +497,14 @@ def write_post(page: Page, *,
     if not bw.write_body(body):
         return {"ok": False, "error": "body_failed"}
 
-    # 발행 패널 옵션
+    # 임시저장만 할 경우 패널 열기 전에 저장
+    if save_draft_only:
+        return bw.save_draft()
+
+    # 발행 패널 열기 (태그/공개설정은 패널 안에 있음)
+    page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
+    import time as _t; _t.sleep(1.5)
+
     if category:
         bw.set_category(category)
     if tags:
@@ -567,9 +513,6 @@ def write_post(page: Page, *,
     bw.set_comments_allowed(comments_allowed)
     bw.set_search_exposure(search_exposure)
 
-    # 모드별 분기
-    if save_draft_only:
-        return bw.save_draft()
     if schedule_at:
         return bw.schedule_publish(schedule_at)
     return bw.publish()
