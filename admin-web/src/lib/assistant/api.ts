@@ -39,12 +39,23 @@ export interface HealthResponse {
 }
 
 export interface InboxItem {
-  id: string;
+  id?: string;
+  item_id?: string;
   subject?: string;
+  title?: string;
   from?: string;
+  sender?: string;
+  source_account?: string;
+  source_type?: string;
   received_at?: string;
   category?: string;
   read?: boolean;
+  status?: string;
+  body_raw?: string;
+  body_summary?: string;
+  linked_task_id?: string;
+  external_id?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface InboxResponse {
@@ -74,11 +85,15 @@ export async function getAssistantHealth(
   return getJson<HealthResponse>("/api/v1/health", signal);
 }
 
-/** GET /api/v1/inbox */
+/** GET /api/v1/inbox — 배열 직접 반환, InboxResponse로 정규화 */
 export async function getAssistantInbox(
   signal?: AbortSignal,
 ): Promise<InboxResponse> {
-  return getJson<InboxResponse>("/api/v1/inbox", signal);
+  const raw = await getJson<InboxItem[] | InboxResponse>("/api/v1/inbox", signal);
+  if (Array.isArray(raw)) {
+    return { items: raw, total: raw.length };
+  }
+  return raw as InboxResponse;
 }
 
 // ── APP_UI_READONLY_STATUS_CARDS_API_BIND_01 ──────────────────────────────
