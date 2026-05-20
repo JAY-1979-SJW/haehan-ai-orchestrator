@@ -216,6 +216,17 @@ def _has_port_arg(cmdline: str, port: int) -> bool:
     return flag in cmdline
 
 
+def _is_chrome_child_process(cmdline: str) -> bool:
+    """Chrome 자식 프로세스 식별.
+
+    Chrome 의 renderer/gpu/utility/zygote 등 자식 프로세스는 부모의 cmdline
+    인자(--user-data-dir / --remote-debugging-port)를 상속받는다.
+    `--type=<X>` 플래그가 있으면 자식 프로세스로 분류 — 자동화 인스턴스
+    카운트에서 제외한다. browser 본체에는 `--type` 플래그가 없다.
+    """
+    return "--type=" in cmdline
+
+
 def list_automation_chrome_processes(paths: GuardPaths) -> list[AutomationProcess]:
     """자동화 Chrome 후보 프로세스 목록을 반환한다.
 
@@ -226,6 +237,10 @@ def list_automation_chrome_processes(paths: GuardPaths) -> list[AutomationProces
         has_profile = _has_profile_arg(cmdline, paths.profile_dir)
         has_port = _has_port_arg(cmdline, paths.cdp_port)
         if not (has_profile or has_port):
+            continue
+        # Chrome 자식(renderer/gpu/utility 등) 은 부모 cmdline 을 상속받으므로
+        # `--type=` 플래그를 기준으로 제외한다. browser 본체만 카운트.
+        if _is_chrome_child_process(cmdline):
             continue
         out.append(AutomationProcess(
             pid=pid, cmdline=cmdline,
@@ -440,15 +455,60 @@ def decide_browser_start(paths: GuardPaths) -> BrowserStartDecision:
 
 # ── 종료 ─────────────────────────────────────────────────────────────
 
+def close_all_cdp_targets(cdp_port: int) -> list[str]:
+    """CDP /json/list 의 모든 page 타입 target 을 /json/close 로 닫는다.
+
+    Returns 닫힌 target_id 목록 (best-effort).
+    """
+    import json as _json
+    import urllib.parse
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(
+            f"http://127.0.0.1:{int(cdp_port)}/json/list", timeout=2.0,
+        ) as resp:
+            rows = _json.loads(resp.read().decode("utf-8") or "[]")
+    except Exception:
+        return []
+
+    closed: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict) or row.get("type") != "page":
+            continue
+        tid = str(row.get("id", "") or "")
+        if not tid:
+            continue
+        try:
+            quoted = urllib.parse.quote(tid, safe="")
+            with urllib.request.urlopen(
+                f"http://127.0.0.1:{int(cdp_port)}/json/close/{quoted}", timeout=2.0,
+            ):
+                closed.append(tid)
+        except Exception:
+            continue
+    return closed
+
+
 def quit_automation_browsers(
     paths: GuardPaths,
     *,
     kill_fn: Callable[[int], bool] | None = None,
+    close_targets_first: bool = True,
 ) -> dict[str, Any]:
     """고정 프로필/포트와 일치하는 자동화 Chrome 만 종료한다.
 
     사용자의 일반 Chrome 은 절대 종료 대상이 아니다.
+    종료 전 CDP /json/close 로 모든 page target 을 닫아 다음 시작 시
+    세션 복원으로 이전 탭이 되살아나는 것을 방지한다.
     """
+    closed_targets: list[str] = []
+    if close_targets_first:
+        try:
+            closed_targets = close_all_cdp_targets(paths.cdp_port)
+        except Exception:
+            closed_targets = []
+
     procs = list_automation_chrome_processes(paths)
     targets = [p for p in procs if p.is_automation]
 
@@ -499,4 +559,5 @@ def quit_automation_browsers(
         "failed_pids": failed,
         "count_before": len(targets),
         "count_after_estimate": len(failed),
+        "closed_targets": closed_targets,
     }

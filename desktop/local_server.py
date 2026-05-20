@@ -130,6 +130,9 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
         await _stop_login_watcher()
         await ws.send_json({"type": "login_watcher_stopped", "ok": True})
 
+    elif action == "browser_action":
+        await _handle_browser_action(ws, data)
+
 
 # ── 로그인 watcher (background poller) ───────────────────────────────────────
 
@@ -248,6 +251,96 @@ async def _fetch_cdp_targets(port: int) -> list[dict]:
     return await asyncio.to_thread(_fetch_cdp_targets_sync, port)
 
 
+def _apply_stale_tab_cleanup(targets: list[dict], cdp_port: int) -> dict:
+    """plan_stale_tab_cleanup 결과를 실제 CDP/Playwright 로 실행.
+
+    실패는 무시(best-effort). 사용자의 일반 Chrome 은 자동화 profile 분리
+    덕분에 영향 없음.
+    """
+    plan = plan_stale_tab_cleanup(targets, keep_url="about:blank")
+    closed: list[str] = []
+    detected = len(plan["close_ids"]) + (
+        1 if plan["navigate_keep_to"] else 0
+    ) + (1 if plan["open_new_keep_url"] else 0)
+
+    # 1. 잉여 탭 close
+    if plan["close_ids"]:
+        try:
+            from scripts.browser_tab_monitor import _close_target
+
+            for tid in plan["close_ids"]:
+                try:
+                    if _close_target(tid):
+                        closed.append(tid)
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+    # 2. keep 탭 navigate to about:blank
+    if plan["navigate_keep_to"]:
+        try:
+            from scripts.web_connector import get_page
+
+            get_page().goto(plan["navigate_keep_to"], timeout=10000)
+        except Exception:
+            pass
+
+    # 3. 탭 0개면 새 탭 open
+    if plan["open_new_keep_url"]:
+        try:
+            from scripts.web_connector import open_page
+
+            page = open_page()
+            try:
+                page.goto("about:blank", timeout=10000)
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    return {"closed": closed, "detected": detected, "plan": plan}
+
+
+def plan_stale_tab_cleanup(
+    targets: list[dict],
+    *,
+    keep_url: str = "about:blank",
+) -> dict[str, list[str]]:
+    """자동화 profile 의 stale 탭 정리 계획.
+
+    자동화 Chrome 의 모든 탭은 같은 profile 이므로 모두 정리 대상.
+    계획 규칙:
+      - 탭 0개: open keep_url 1개 (caller 가 새 탭 생성)
+      - 탭 1개 + url == keep_url: 변경 없음
+      - 탭 1개 + url != keep_url: 그 탭을 keep_url 로 navigate
+      - 탭 N개: 첫 탭 1개만 남기고 나머지 close, 남은 탭은 keep_url 로 navigate
+
+    Returns:
+        {
+          "close_ids": [target_id, ...],
+          "keep_id": str,
+          "navigate_keep_to": str ("" 면 변경 불필요),
+          "open_new_keep_url": bool,
+        }
+    """
+    rows = [t for t in (targets or []) if isinstance(t, dict)]
+    pages = [t for t in rows if t.get("type") == "page"]
+    if not pages:
+        return {"close_ids": [], "keep_id": "", "navigate_keep_to": keep_url,
+                "open_new_keep_url": True}
+    keep = pages[0]
+    close_ids = [str(t.get("id", "")) for t in pages[1:] if t.get("id")]
+    keep_url_cur = str(keep.get("url", "") or "")
+    navigate_to = "" if keep_url_cur == keep_url else keep_url
+    return {
+        "close_ids": close_ids,
+        "keep_id": str(keep.get("id", "") or ""),
+        "navigate_keep_to": navigate_to,
+        "open_new_keep_url": False,
+    }
+
+
 def _sync_store_with_targets(targets: list[dict]) -> dict[str, list[str]]:
     """현재 CDP target 목록과 session_store 의 탭을 정합."""
     from local_agent.browser_session_store import default_store as _bs
@@ -340,6 +433,10 @@ async def _handle_browser_start(ws: WebSocket) -> None:
         _bs.start_session() if _bs.snapshot().get("status") != "BROWSER_RUNNING" else None
         targets = await _fetch_cdp_targets(paths.cdp_port)
         _sync_store_with_targets(targets)
+        cleanup = await asyncio.to_thread(_apply_stale_tab_cleanup, targets, paths.cdp_port)
+        # cleanup 후 다시 동기화
+        targets = await _fetch_cdp_targets(paths.cdp_port)
+        _sync_store_with_targets(targets)
         await _start_login_watcher()
         await ws.send_json({
             "type": "browser_start_result",
@@ -348,6 +445,8 @@ async def _handle_browser_start(ws: WebSocket) -> None:
             "count": max(decision.count, 1),
             "message_ko": decision.message_ko,
             "tab_count": len(targets),
+            "stale_tabs_closed": cleanup.get("closed", []),
+            "stale_tabs_detected": cleanup.get("detected", 0),
         })
         return
 
@@ -586,6 +685,7 @@ def _default_resume_executor(cmd) -> bool:
         "blog_confirm": lambda d: _run_blog_confirm(),
         "cafe_write": _run_cafe_write,
         "cafe_confirm": lambda d: _run_cafe_confirm(),
+        "browser_action": _run_browser_action_from_payload,
     }
     runner = dispatch_map.get(action)
     if runner is None:
@@ -602,6 +702,95 @@ def _default_resume_executor(cmd) -> bool:
         # 동일 루프 안에서 호출된 경우
         asyncio.create_task(runner(payload))
     return True
+
+
+async def _run_browser_action_from_payload(payload: dict) -> None:
+    """resume 경로용 — broadcast 만 수행 (UI 응답은 원 ws 닫힌 후라 _broadcast 만 사용)."""
+    await _execute_browser_action(payload, send_to=None)
+
+
+async def _handle_browser_action(ws: WebSocket, data: dict) -> None:
+    await _execute_browser_action(data, send_to=ws)
+
+
+async def _execute_browser_action(payload: dict, *, send_to: WebSocket | None) -> None:
+    """browser action 명령을 실행하고 표준 broadcast/응답을 수행."""
+    from local_agent.browser_action_executor import (
+        ERR_TARGET_CLOSED,
+        ERR_TARGET_NOT_FOUND,
+        build_request_from_payload,
+        execute,
+    )
+
+    req = build_request_from_payload(payload)
+
+    # 로그인 사전 체크 — resume 경로(_from_resume) 가 아니면 차단 시 enqueue
+    if not payload.get("_from_resume"):
+        if await _login_precheck_and_enqueue("browser_action", payload):
+            msg = {
+                "type": "browser_action_status",
+                "status": "waiting_login",
+                "command_id": req.command_id,
+                "action_type": req.action_type,
+            }
+            if send_to is not None:
+                await send_to.send_json(msg)
+            await _broadcast(msg)
+            return
+
+    await _broadcast({
+        "type": "browser_action_started",
+        "command_id": req.command_id,
+        "action_type": req.action_type,
+        "target_id": req.target_id,
+        "ts": time.time(),
+    })
+
+    try:
+        result = await asyncio.to_thread(execute, req)
+    except Exception as exc:
+        result = None
+        await _broadcast({
+            "type": "browser_action_failed",
+            "command_id": req.command_id,
+            "action_type": req.action_type,
+            "target_id": req.target_id,
+            "error_code": "RUNNER_FAILED",
+            "reason": f"{type(exc).__name__}: {exc}",
+            "recoverable": True,
+            "ts": time.time(),
+        })
+        if send_to is not None:
+            await send_to.send_json({
+                "type": "browser_action_result", "ok": False,
+                "command_id": req.command_id, "error_code": "RUNNER_FAILED",
+            })
+        return
+
+    result_dict = result.to_dict()
+    if result.ok:
+        await _broadcast({
+            "type": "browser_action_completed",
+            **result_dict,
+            "ts": time.time(),
+        })
+    else:
+        evt_type = "browser_action_failed"
+        if result.error_code == ERR_TARGET_NOT_FOUND:
+            evt_type = "target_not_found"
+        elif result.error_code == ERR_TARGET_CLOSED:
+            evt_type = "target_closed"
+        await _broadcast({
+            "type": evt_type,
+            **result_dict,
+            "ts": time.time(),
+        })
+
+    if send_to is not None:
+        await send_to.send_json({
+            "type": "browser_action_result",
+            **result_dict,
+        })
 
 
 # ── 블로그 작성 — 스레드에서 blocking I/O 실행 ────────────────────────────────
