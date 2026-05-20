@@ -125,3 +125,36 @@ def test_check_consistency_validates_summary_counts():
     }
     result = check_consistency(report, config)
     assert result["ok"] is True
+
+
+def test_strip_jsonc_line_and_block_comments():
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    import json
+    src = """// header comment
+{
+    /* block comment
+       multi-line */
+    "a": 1,  // trailing line comment
+    "b": 2
+}
+"""
+    data = json.loads(_strip_jsonc(src))
+    assert data == {"a": 1, "b": 2}
+
+
+def test_strip_jsonc_preserves_comment_like_strings():
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    import json
+    src = '{"url": "http://example.com/path", "alias": "@/*", "blk": "/* not a comment */"}'
+    data = json.loads(_strip_jsonc(src))
+    assert data["url"] == "http://example.com/path"
+    assert data["alias"] == "@/*"
+    assert data["blk"] == "/* not a comment */"
+
+
+def test_strip_jsonc_allows_trailing_commas():
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    import json
+    src = '{"arr": [1, 2, 3,], "obj": {"k": "v",},}'
+    data = json.loads(_strip_jsonc(src))
+    assert data == {"arr": [1, 2, 3], "obj": {"k": "v"}}

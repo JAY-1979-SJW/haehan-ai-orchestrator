@@ -12,6 +12,7 @@ import ast
 import importlib
 import inspect
 import json
+import re
 import os
 import sys
 import time
@@ -888,6 +889,45 @@ def validate_pydantic_schema_modules() -> list[dict]:
     return results
 
 
+def _strip_jsonc(text: str) -> str:
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == '"':
+            j = i + 1
+            while j < n:
+                if text[j] == "\\" and j + 1 < n:
+                    j += 2
+                    continue
+                if text[j] == '"':
+                    j += 1
+                    break
+                j += 1
+            out.append(text[i:j])
+            i = j
+            continue
+        if c == "/" and i + 1 < n:
+            nxt = text[i + 1]
+            if nxt == "/":
+                j = text.find("\n", i)
+                if j == -1:
+                    break
+                i = j
+                continue
+            if nxt == "*":
+                j = text.find("*/", i + 2)
+                if j == -1:
+                    break
+                i = j + 2
+                continue
+        out.append(c)
+        i += 1
+    result = "".join(out)
+    return re.sub(r",(\s*[}\]])", r"\1", result)
+
+
 def validate_json_yaml_files(root: Path = ROOT) -> list[dict]:
     candidates = []
     for path in iter_files(root):
@@ -902,7 +942,12 @@ def validate_json_yaml_files(root: Path = ROOT) -> list[dict]:
         try:
             text = path.read_text(encoding="utf-8")
             if path.suffix.lower() == ".json":
-                json.loads(text)
+                name = path.name.lower()
+                is_jsonc = name.startswith("tsconfig") or name.endswith(".jsonc")
+                if is_jsonc:
+                    json.loads(_strip_jsonc(text))
+                else:
+                    json.loads(text)
             else:
                 import yaml
 
