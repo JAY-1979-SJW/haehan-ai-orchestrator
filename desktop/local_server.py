@@ -146,10 +146,7 @@ async def _start_login_watcher() -> None:
     global _login_watcher_task
     if _login_watcher_task is not None and not _login_watcher_task.done():
         return
-    from local_agent.login_auto_flow import LoginAutoFlowEngine
-
-    if _login_watcher_state["engine"] is None:
-        _login_watcher_state["engine"] = LoginAutoFlowEngine()
+    _ensure_engine()
     _login_watcher_task = asyncio.create_task(_login_watcher_loop())
 
 
@@ -494,6 +491,119 @@ async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
     })
 
 
+# ── 로그인 사전 체크 & 자동 재개 ─────────────────────────────────────────────
+
+_LOGIN_BLOCKING_STATES = (
+    "LOGIN_REQUIRED",
+    "LOGIN_IN_PROGRESS",
+    "LOGIN_ACTION_STARTED",
+    "CHALLENGE_REQUIRED",
+    "CONSENT_REQUIRED",
+    "SESSION_EXPIRED",
+)
+
+
+def _ensure_engine():
+    from local_agent.login_auto_flow import LoginAutoFlowEngine
+
+    if _login_watcher_state.get("engine") is None:
+        _login_watcher_state["engine"] = LoginAutoFlowEngine(
+            resume_executor=_default_resume_executor,
+        )
+    elif getattr(
+        _login_watcher_state["engine"], "_resume_executor", None,
+    ) is None:
+        _login_watcher_state["engine"]._resume_executor = _default_resume_executor
+    return _login_watcher_state["engine"]
+
+
+def _current_blocking_login() -> tuple[str, str]:
+    """가장 우선순위 높은 차단 상태 (state, target_id) 또는 ('','')."""
+    states: dict[str, str] = _login_watcher_state.get("prev_login_states") or {}
+    for tid, st in states.items():
+        if st in _LOGIN_BLOCKING_STATES:
+            return st, tid
+    return "", ""
+
+
+async def _login_precheck_and_enqueue(action_name: str, data: dict) -> bool:
+    """현재 차단 상태가 있으면 engine 에 pending command 등록 후 True 반환.
+
+    반환 True → 호출자는 자동화 실제 실행을 건너뛰고 LOGGED_IN 후 자동 재개를 기다림.
+    """
+    if data.get("_from_resume"):
+        return False
+    state, target_id = _current_blocking_login()
+    if not state:
+        return False
+
+    from local_agent.browser_realtime_watcher import choose_login_target
+    from local_agent.login_auto_flow import PendingCommand
+
+    engine = _ensure_engine()
+    snapshots = _login_watcher_state.get("prev_targets") or []
+    selected = choose_login_target(snapshots, work_target_id=target_id) or target_id
+    cmd = PendingCommand(
+        command_id=f"cmd_{action_name}_{int(time.time() * 1000)}",
+        action=action_name,
+        source_action=action_name,
+        target_id_hint=selected,
+        enqueued_at=time.time(),
+        original_payload=dict(data),
+        login_state_at_enqueue=state,
+        resume_status="pending",
+    )
+    engine.enqueue_work_command(cmd)
+    await _broadcast({
+        "type": "login_target_selected",
+        "target_id": selected,
+        "extra": {"reason": "precheck", "blocking_state": state},
+        "ts": time.time(),
+    })
+    await _broadcast({
+        "type": "command_enqueued_pending_login",
+        "command_id": cmd.command_id,
+        "action": action_name,
+        "blocking_state": state,
+        "target_id": selected,
+        "ts": time.time(),
+    })
+    return True
+
+
+def _default_resume_executor(cmd) -> bool:
+    """LOGGED_IN 감지 후 호출됨. 원래 action 을 재실행한다.
+
+    engine 은 다른 스레드/태스크에서 호출될 수 있으므로 main event loop 로 schedule.
+    payload 에 _from_resume=True 를 주입하여 무한 재진입을 방지한다.
+    """
+    payload = dict(cmd.original_payload or {})
+    payload["_from_resume"] = True
+    action = cmd.action
+
+    dispatch_map = {
+        "blog_write": _run_blog_write,
+        "blog_confirm": lambda d: _run_blog_confirm(),
+        "cafe_write": _run_cafe_write,
+        "cafe_confirm": lambda d: _run_cafe_confirm(),
+    }
+    runner = dispatch_map.get(action)
+    if runner is None:
+        return False
+
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        return False
+
+    try:
+        loop.call_soon_threadsafe(lambda: asyncio.create_task(runner(payload)))
+    except RuntimeError:
+        # 동일 루프 안에서 호출된 경우
+        asyncio.create_task(runner(payload))
+    return True
+
+
 # ── 블로그 작성 — 스레드에서 blocking I/O 실행 ────────────────────────────────
 async def _run_blog_write(data: dict) -> None:
     """write_post()를 스레드풀에서 실행하고 상태를 UI에 브로드캐스트."""
@@ -504,6 +614,14 @@ async def _run_blog_write(data: dict) -> None:
 
     if not title or not body:
         await _broadcast({"type": "blog_status", "status": "error", "error": "제목과 본문은 필수입니다."})
+        return
+
+    if await _login_precheck_and_enqueue("blog_write", data):
+        await _broadcast({
+            "type": "blog_status",
+            "status": "waiting_login",
+            "title": title,
+        })
         return
 
     await _broadcast({"type": "blog_status", "status": "writing", "title": title})
@@ -591,6 +709,15 @@ async def _run_cafe_write(data: dict) -> None:
 
     if not title or not body:
         await _broadcast({"type": "cafe_status", "status": "error", "error": "제목과 본문은 필수입니다."})
+        return
+
+    if await _login_precheck_and_enqueue("cafe_write", data):
+        await _broadcast({
+            "type": "cafe_status",
+            "status": "waiting_login",
+            "title": title,
+            "board": board,
+        })
         return
 
     await _broadcast({"type": "cafe_status", "status": "writing", "title": title, "board": board})

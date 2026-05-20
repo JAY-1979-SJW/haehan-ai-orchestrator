@@ -47,6 +47,13 @@ EVT_LOGIN_FAILED = "login_failed"
 EVT_SESSION_EXPIRED = "session_expired"
 EVT_COMMAND_AUTO_RESUMED = "command_auto_resumed"
 EVT_AUTO_RESUME_PLANNED = "auto_resume_planned"
+EVT_COMMAND_RESUME_FAILED = "command_resume_failed"
+
+# resume_status 값
+RESUME_PENDING = "pending"
+RESUME_IN_PROGRESS = "in_progress"
+RESUME_DONE = "done"
+RESUME_FAILED = "failed"
 
 
 # ── 로그인 버튼 후보 (selector + 텍스트) ─────────────────────────────
@@ -84,6 +91,12 @@ class PendingCommand:
     action: str
     target_id_hint: str = ""
     enqueued_at: float = 0.0
+    # 보강 필드 — production wiring 용 (ORCHESTRATOR_LOGIN_AUTO_RESUME_WIRING_01)
+    source_action: str = ""
+    task_id: str = ""
+    original_payload: dict[str, Any] = field(default_factory=dict)
+    login_state_at_enqueue: str = ""
+    resume_status: str = "pending"
 
 
 # ── 엔진 ─────────────────────────────────────────────────────────────
@@ -111,6 +124,13 @@ class LoginAutoFlowEngine:
     # ── 명령 등록 ──────────────────────────────────────────────────
 
     def enqueue_work_command(self, command: PendingCommand) -> None:
+        # 중복 enqueue 방지: 이미 동일 command_id 가 pending/in_progress 면 무시.
+        if self._pending is not None and self._pending.command_id == command.command_id:
+            if self._pending.resume_status in ("pending", "in_progress"):
+                return
+        command.resume_status = command.resume_status or "pending"
+        if not command.source_action:
+            command.source_action = command.action
         self._pending = command
 
     @property
@@ -264,20 +284,51 @@ class LoginAutoFlowEngine:
     # ── 내부: 작업 재개 ──────────────────────────────────────────────
 
     def _resume_or_plan(self, cmd: PendingCommand) -> Event:
+        # 멱등성: 이미 done/failed 처리된 command 는 재실행하지 않음.
+        if cmd.resume_status in (RESUME_DONE, RESUME_FAILED):
+            return Event(
+                type=EVT_COMMAND_RESUME_FAILED,
+                target_id=cmd.target_id_hint,
+                extra={
+                    "command_id": cmd.command_id,
+                    "reason": "ALREADY_RESOLVED",
+                    "prev_status": cmd.resume_status,
+                },
+            )
         if self._resume_executor is None:
+            cmd.resume_status = RESUME_PENDING
             return Event(
                 type=EVT_AUTO_RESUME_PLANNED,
                 target_id=cmd.target_id_hint,
-                extra={"command_id": cmd.command_id, "action": cmd.action},
+                extra={
+                    "command_id": cmd.command_id,
+                    "action": cmd.action,
+                    "reason": "NO_RESUME_EXECUTOR",
+                },
             )
+        cmd.resume_status = RESUME_IN_PROGRESS
+        ok = False
+        err = ""
         try:
             ok = bool(self._resume_executor(cmd))
-        except Exception:
+        except Exception as exc:
             ok = False
-        # 1회 자동 재개 후 pending 해제
+            err = type(exc).__name__
+        cmd.resume_status = RESUME_DONE if ok else RESUME_FAILED
+        # 1회 자동 재개 후 pending 해제 (성공/실패 무관) — 중복 발화 방지
         self._pending = None
+        if ok:
+            return Event(
+                type=EVT_COMMAND_AUTO_RESUMED,
+                target_id=cmd.target_id_hint,
+                extra={"command_id": cmd.command_id, "ok": True},
+            )
         return Event(
-            type=EVT_COMMAND_AUTO_RESUMED,
+            type=EVT_COMMAND_RESUME_FAILED,
             target_id=cmd.target_id_hint,
-            extra={"command_id": cmd.command_id, "ok": ok},
+            extra={
+                "command_id": cmd.command_id,
+                "ok": False,
+                "error": err or "RESUME_EXECUTOR_RETURNED_FALSE",
+            },
         )
