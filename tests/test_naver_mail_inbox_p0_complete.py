@@ -60,7 +60,6 @@ class FakeActions:
         if "page_link" in expr and "querySelectorAll" in expr and ".pagination" in expr and "return btns.map" in expr:
             return list(self.page_buttons)
         if "page_link" in expr and "btns[i].click" in expr:
-            # 페이지 클릭 — expr 안에 페이지 번호 포함
             for pg in self.page_buttons:
                 if f"==='{pg}'" in expr:
                     if pg in self.page_responses:
@@ -68,10 +67,32 @@ class FakeActions:
                         self.click_log.append(f"page:{pg}")
                         return True
             return False
-        if "안읽은 메일" in expr or "filter_unread" in expr:
-            self.click_log.append("unread_filter")
+        if "page_navigation_next" in expr and "nx.click" in expr:
+            # next-arrow click — current_page 다음 번호로 이동 (있으면)
+            try:
+                idx = self.page_buttons.index(self.current_page)
+                if idx + 1 < len(self.page_buttons):
+                    nxt = self.page_buttons[idx + 1]
+                    if nxt in self.page_responses:
+                        self.current_page = nxt
+                        self.click_log.append(f"next:{nxt}")
+                        return True
+            except ValueError:
+                pass
+            return False
+        if "FILTER_EVIDENCE" in expr or "selected_marker" in expr or "mail_toolbar_summary" in expr:
+            return {"has_selected_marker": False, "selected_text": "",
+                    "summary_text": "", "url": self.url, "title": self.title,
+                    "li_count": len(self._list_payload()["items"])}
+        if "UNREAD_DIRECT_LINK" in expr or "unread_mail_link" in expr:
+            self.click_log.append("unread_filter_direct")
+            return "direct_link"
+        if "UNREAD_DROPDOWN_OPEN" in expr or "button_filter" in expr and "btn.click" in expr:
+            self.click_log.append("unread_dropdown_open")
             return True
-        # popup/read 또는 본문 호출 — 금지 동작 탐지용
+        if "UNREAD_DROPDOWN_CLICK" in expr or "button_context_item" in expr:
+            self.click_log.append("unread_dropdown_click")
+            return "dropdown_item"
         return None
 
     def click(self, sel):
@@ -154,10 +175,10 @@ def test_unread_only_mode_clicks_filter_before_collect():
                               _mk_row("101", is_unread=False)]},
     )
     r = ic.collect_inbox(fa, mode=rsg.MODE_UNREAD_ONLY)
-    assert "unread_filter" in fa.click_log
-    # 필터 클릭 후에도 fake는 그대로 반환 — 실제 환경에서는 unread만 남음
-    # 본 테스트는 필터 호출 여부 검증이 핵심
+    # 직접 링크 우선 호출 — click_log 에 unread_filter_direct 가 있어야 함
+    assert any("unread_filter" in c for c in fa.click_log), fa.click_log
     assert r.mode == rsg.MODE_UNREAD_ONLY
+    assert r.filter_applied is True
     assert all(i.collect_mode == rsg.MODE_UNREAD_ONLY for i in r.items)
 
 
@@ -394,6 +415,110 @@ def test_audit_module_judges_pass_on_normal_result():
     r = ic.collect_inbox(fa, mode=rsg.MODE_LIST_ONLY)
     verdict = audit.judge(r, mode=rsg.MODE_LIST_ONLY)
     assert verdict.passed is True, verdict.reasons
+
+
+# ── 11~) 안읽은 필터 보수 (NAVER-MAIL-UNREAD-FILTER-DOM-FIX-01) ─────
+
+
+def test_unread_filter_uses_direct_link_when_available():
+    """직접 링크가 있으면 드롭다운 없이 한 번에 적용."""
+    fa = FakeActions(
+        page_buttons=["1"],
+        page_responses={"1": [_mk_row("100")]},
+    )
+    ok, ev = ic.apply_unread_filter(fa)
+    assert ok is True
+    # 직접 링크 method 가 evidence 에 기록됨
+    assert ev["method"] == "direct_link"
+    # 드롭다운 open 이 호출되지 않았어야 함
+    assert not any("dropdown_open" in c for c in fa.click_log), fa.click_log
+
+
+class _DropdownOnlyActions(FakeActions):
+    """직접 링크는 없고 드롭다운만 가능한 환경 시뮬레이션."""
+
+    def evaluate(self, expr):
+        if "UNREAD_DIRECT_LINK" in expr or "unread_mail_link" in expr:
+            self.call_log.append(f"eval:{expr[:40]}")
+            return False  # 직접 링크 없음
+        return super().evaluate(expr)
+
+
+def test_unread_filter_falls_back_to_dropdown_when_direct_link_missing():
+    fa = _DropdownOnlyActions(
+        page_buttons=["1"],
+        page_responses={"1": [_mk_row("100")]},
+    )
+    ok, ev = ic.apply_unread_filter(fa)
+    assert ok is True
+    assert ev["method"] == "dropdown_item"
+    assert any("dropdown_open" in c for c in fa.click_log)
+    assert any("dropdown_click" in c for c in fa.click_log)
+
+
+def test_unread_filter_evidence_records_pre_post():
+    fa = FakeActions(
+        page_buttons=["1"],
+        page_responses={"1": [_mk_row("100")]},
+    )
+    ok, ev = ic.apply_unread_filter(fa)
+    assert "pre" in ev and "post" in ev
+    assert "url" in ev["pre"]
+    assert "li_count" in ev["pre"]
+
+
+def test_filter_no_op_detection_when_same_result_as_list_only():
+    """LIST_ONLY 와 UNREAD_ONLY 결과가 동일하면 audit 가 WARN_UNREAD_FILTER_NO_OP 판정."""
+    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    rows = [_mk_row("100"), _mk_row("101", is_unread=False)]
+    fa1 = FakeActions(page_buttons=["1"], page_responses={"1": rows})
+    r_list = ic.collect_inbox(fa1, mode=rsg.MODE_LIST_ONLY)
+    fa2 = FakeActions(page_buttons=["1"], page_responses={"1": rows})
+    r_unread = ic.collect_inbox(fa2, mode=rsg.MODE_UNREAD_ONLY)
+    v = audit.judge_filter_effectiveness(r_list, r_unread)
+    assert v.code == "WARN_UNREAD_FILTER_NO_OP"
+
+
+def test_filter_effective_when_unread_only_has_only_unread():
+    """UNREAD_ONLY 의 모든 item.read_state == UNREAD 이고 LIST_ONLY 와 다르며
+    UI unread count 가 수집과 일치하면 PASS."""
+    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    list_rows = [_mk_row("100", is_unread=True), _mk_row("101", is_unread=False)]
+    unread_rows = [_mk_row("100", is_unread=True)]
+    fa1 = FakeActions(title="받은메일함(1) : 네이버 메일",
+                      page_buttons=["1"], page_responses={"1": list_rows})
+    r_list = ic.collect_inbox(fa1, mode=rsg.MODE_LIST_ONLY)
+    fa2 = FakeActions(title="받은메일함(1) : 네이버 메일",
+                      page_buttons=["1"], page_responses={"1": unread_rows})
+    r_unread = ic.collect_inbox(fa2, mode=rsg.MODE_UNREAD_ONLY)
+    v = audit.judge_filter_effectiveness(r_list, r_unread)
+    assert v.code == "PASS_NAVER_MAIL_UNREAD_FILTER_DOM_FIX", v.reasons
+
+
+def test_mismatch_reason_enum():
+    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    assert "UI_COUNT_SCOPE_DIFFERENT" in audit.MISMATCH_REASONS
+    assert "FILTER_DOM_NOT_APPLIED" in audit.MISMATCH_REASONS
+    assert "DYNAMIC_PAGE_MISSED" in audit.MISMATCH_REASONS
+    assert "SESSION_STATE_CHANGED" in audit.MISMATCH_REASONS
+    assert "UNKNOWN_UNREAD_MISMATCH" in audit.MISMATCH_REASONS
+
+
+def test_collect_does_not_invoke_destructive_under_unread_mode():
+    fa = FakeActions(
+        page_buttons=["1", "2"],
+        page_responses={"1": [_mk_row("100")], "2": [_mk_row("101")]},
+    )
+    ic.collect_inbox(fa, mode=rsg.MODE_UNREAD_ONLY)
+    bad = ("send", "delete", "trash", "spam", "download",
+           "submit", "star", "label", "captureScreenshot",
+           "popup/read")
+    for entry in fa.call_log + fa.click_log + fa.nav_log:
+        for b in bad:
+            assert b not in entry, f"forbidden 호출: {entry}"
+
+
+# ── 기존 (preserved) ─────────────────────────────────────────────────
 
 
 def test_audit_module_judges_warn_on_limit_reached():

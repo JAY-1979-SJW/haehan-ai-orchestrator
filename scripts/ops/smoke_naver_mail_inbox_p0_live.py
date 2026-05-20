@@ -59,13 +59,41 @@ def run_mode(target_id: str, mode: str, out_dir: Path,
 
 
 def main():
-    out_dir = Path("data/inspection/naver_mail_p0")
+    out_dir = Path("data/inspection/naver_mail_unread_filter_fix")
     out_dir.mkdir(parents=True, exist_ok=True)
     target_id = cdp.ensure_about_blank_target()
     print(f"[boot] target_id={target_id[:12]}")
 
     list_only = run_mode(target_id, rsg.MODE_LIST_ONLY, out_dir)
     unread_only = run_mode(target_id, rsg.MODE_UNREAD_ONLY, out_dir)
+
+    # 필터 실효성 audit
+    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit_filter
+    # CollectionResult 재구성 (smoke 가 dict 로 저장하므로 ic.CollectionResult 로 변환)
+    def _to_result(d):
+        r = ic.CollectionResult(
+            folder_id=d.get("folder_id", ""),
+            folder_name=d.get("folder_name", ""),
+            mode=d.get("mode", ""),
+        )
+        r.unread_count_ui = d.get("unread_count_ui", -1)
+        r.collected_unread = d.get("collected_unread", 0)
+        r.filter_applied = d.get("filter_applied", False)
+        r.filter_evidence = d.get("filter_evidence", {})
+        r.items = [ic.CollectedItem(**it) for it in d.get("items", [])]
+        return r
+    r1 = _to_result(list_only)
+    r2 = _to_result(unread_only)
+    v = audit_filter.judge_filter_effectiveness(r1, r2)
+    filter_audit = {
+        "verdict": v.code, "passed": v.passed, "reasons": v.reasons,
+        "mismatch_reason_candidates": v.mismatch_reason_candidates,
+        "metrics": v.metrics,
+    }
+    (out_dir / "filter_audit.json").write_text(
+        json.dumps(filter_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("\n=== FILTER AUDIT ===")
+    print(json.dumps(filter_audit, ensure_ascii=False, indent=2))
 
     summary = {
         "list_only": {k: list_only.get(k) for k in
