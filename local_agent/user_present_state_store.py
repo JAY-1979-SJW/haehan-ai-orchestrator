@@ -24,6 +24,10 @@ STATE_USER_CONFIRMED = "USER_CONFIRMED"
 STATE_CANCELLED = "CANCELLED"
 STATE_BLOCKED = "BLOCKED"
 STATE_FAILED = "FAILED"
+# APPROVAL_REQUIRED: 정책상 사람 승인이 추가로 필요한 placeholder 상태.
+# 본 공정에서는 전이 로직 미구현 — store 정의와 검증만 추가하여 기존
+# user_present_task/approval 토큰 흐름과 충돌하지 않도록 한다.
+STATE_APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
 
 # FINAL 상태: 이후 USER_CONFIRMED 전이 불가
 _FINAL_STATES: frozenset[str] = frozenset({
@@ -182,6 +186,7 @@ def validate_user_present_task(task: dict[str, Any]) -> list[str]:
         STATE_IDLE, STATE_TASK_RECEIVED, STATE_OPENING_BROWSER,
         STATE_READONLY_CHECKING, STATE_WAITING_FOR_USER,
         STATE_USER_CONFIRMED, STATE_CANCELLED, STATE_BLOCKED, STATE_FAILED,
+        STATE_APPROVAL_REQUIRED,
     }:
         errors.append(f"유효하지 않은 state: {task.get('state')}")
 
