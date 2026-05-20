@@ -1216,6 +1216,33 @@ async def _push_user_present_tasks(ws: WebSocket, agent_id: str) -> int:
     return len(tasks)
 
 
+async def _send_task_blocked(
+    ws: WebSocket,
+    *,
+    task_id: str = "",
+    workflow_run_id: str = "",
+    reason: str = "",
+    message_ko: str = "",
+) -> None:
+    """정책/dispatcher 차단을 클라이언트에 통지한다.
+
+    task_blocked 는 실행 명령이 아닌 상태/사유 통지 메시지다.
+    UI 측에서 차단 사유를 사용자에게 표시할 수 있도록 한다.
+    민감 필드(token/cookie/authorization 등)는 포함 금지.
+    """
+    try:
+        await ws.send_json({
+            "type": "task_blocked",
+            "task_id": _safe_str(task_id)[:80],
+            "workflow_run_id": _safe_str(workflow_run_id)[:120],
+            "reason": _safe_str(reason)[:80],
+            "message_ko": _safe_str(message_ko)[:200],
+            "safe_to_execute": False,
+        })
+    except Exception:
+        pass
+
+
 async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
     task_id = _safe_str(msg.get("task_id"))
     if not task_id:
@@ -1237,6 +1264,18 @@ async def _handle_result(ws: WebSocket, agent_id: str, msg: dict) -> None:
             actor="ws-dispatch",
             note=f"agent_id={agent_id} reason=UNKNOWN_TASK_IN_RESULT",
         )
+        return
+
+    # 멱등 보강: 이미 최종 상태인 task 에 대한 result 재수신은 상태 재변경/이벤트
+    # 재발행 없이 ack 만 반환한다. result_ack 손실로 인한 재실행을 방지한다.
+    _FINAL_RESULT_STATES = ("completed", "failed", "rejected", "cancelled")
+    if existing.status in _FINAL_RESULT_STATES:
+        await ws.send_json({
+            "type": "result_ack",
+            "task_id": task_id,
+            "status": existing.status,
+            "idempotent": True,
+        })
         return
 
     success = bool(msg.get("success", False))
@@ -1476,6 +1515,14 @@ async def agent_websocket(websocket: WebSocket):
                         "received_at": _result.get("received_at", ""),
                         "error": _result.get("error", ""),
                     })
+                    # 정책상 BLOCKED 로 수렴된 경우 클라이언트에 차단 사유를 추가 통지.
+                    if _result.get("accepted_status") == "BLOCKED":
+                        await _send_task_blocked(
+                            websocket,
+                            workflow_run_id=_safe_str(_result.get("workflow_run_id", "")),
+                            reason=_safe_str(_result.get("block_reason", "POLICY_BLOCKED")),
+                            message_ko=_safe_str(_result.get("message_ko", "")),
+                        )
                 else:
                     await websocket.send_json({
                         "type": "error", "error": "USER_PRESENT_HANDLER_UNAVAILABLE",

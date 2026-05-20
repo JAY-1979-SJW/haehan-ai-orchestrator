@@ -95,6 +95,194 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
         await _send_to_server({"action": "reject", "task_id": task_id})
         await _broadcast({"type": "system", "text": f"❌ 거부 전송: {task_id}"})
 
+    elif action == "blog_write":
+        asyncio.create_task(_run_blog_write(data))
+
+    elif action == "blog_confirm":
+        asyncio.create_task(_run_blog_confirm())
+
+    elif action == "cafe_write":
+        asyncio.create_task(_run_cafe_write(data))
+
+    elif action == "cafe_confirm":
+        asyncio.create_task(_run_cafe_confirm())
+
+
+# ── 블로그 작성 — 스레드에서 blocking I/O 실행 ────────────────────────────────
+async def _run_blog_write(data: dict) -> None:
+    """write_post()를 스레드풀에서 실행하고 상태를 UI에 브로드캐스트."""
+    title      = data.get("title", "").strip()
+    body       = data.get("body", "").strip()
+    visibility = data.get("visibility", "public")
+    brand_tags = data.get("brand_tags") or []
+
+    if not title or not body:
+        await _broadcast({"type": "blog_status", "status": "error", "error": "제목과 본문은 필수입니다."})
+        return
+
+    await _broadcast({"type": "blog_status", "status": "writing", "title": title})
+
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, _blog_write_sync, title, body, visibility, brand_tags)
+    except Exception as exc:
+        logger.error("blog_write error: %s", exc)
+        await _broadcast({"type": "blog_status", "status": "error", "error": str(exc)})
+        return
+
+    if result.get("mode") == "awaiting_approval":
+        s = result.get("summary", {})
+        await _broadcast({
+            "type": "blog_status",
+            "status": "awaiting_approval",
+            "title": s.get("title", title),
+            "tags": s.get("tags", []),
+            "visibility": s.get("visibility", visibility),
+            "body_preview": s.get("body_preview", ""),
+        })
+    else:
+        await _broadcast({
+            "type": "blog_status",
+            "status": "error",
+            "error": result.get("error", "작성 실패"),
+        })
+
+
+def _blog_write_sync(title: str, body: str, visibility: str, brand_tags: list) -> dict:
+    from scripts.web_connector import get_page
+    from scripts.naver.blog.writer import write_post
+    page = get_page()
+    return write_post(
+        page,
+        title=title,
+        body=body,
+        visibility=visibility,
+        brand_tags=brand_tags or None,
+        require_approval=True,
+    )
+
+
+async def _run_blog_confirm() -> None:
+    """발행 패널이 열린 상태에서 confirm_publish()를 스레드풀에서 실행."""
+    await _broadcast({"type": "blog_status", "status": "confirming"})
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, _blog_confirm_sync)
+    except Exception as exc:
+        logger.error("blog_confirm error: %s", exc)
+        await _broadcast({"type": "blog_status", "status": "error", "error": str(exc)})
+        return
+
+    if result.get("ok"):
+        await _broadcast({
+            "type": "blog_status",
+            "status": "done",
+            "result_url": result.get("url", ""),
+        })
+    else:
+        await _broadcast({
+            "type": "blog_status",
+            "status": "error",
+            "error": result.get("error", "발행 실패"),
+        })
+
+
+def _blog_confirm_sync() -> dict:
+    from scripts.web_connector import get_page
+    from scripts.naver.blog.writer import confirm_publish
+    page = get_page()
+    return confirm_publish(page)
+
+
+# ── 카페 글쓰기 ───────────────────────────────────────────────────────────────
+async def _run_cafe_write(data: dict) -> None:
+    cafe_url   = data.get("cafe_url", "https://cafe.naver.com/0moo")
+    board      = data.get("board", "")
+    title      = data.get("title", "").strip()
+    body       = data.get("body", "").strip()
+    tags       = data.get("tags") or []
+    members_only = data.get("members_only", False)
+
+    if not title or not body:
+        await _broadcast({"type": "cafe_status", "status": "error", "error": "제목과 본문은 필수입니다."})
+        return
+
+    await _broadcast({"type": "cafe_status", "status": "writing", "title": title, "board": board})
+
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(
+            None, _cafe_write_sync, cafe_url, board, title, body, tags, members_only
+        )
+    except Exception as exc:
+        logger.error("cafe_write error: %s", exc)
+        await _broadcast({"type": "cafe_status", "status": "error", "error": str(exc)})
+        return
+
+    if result.get("mode") == "awaiting_approval":
+        s = result.get("summary", {})
+        await _broadcast({
+            "type": "cafe_status",
+            "status": "awaiting_approval",
+            "title": s.get("title", title),
+            "board": s.get("board", board),
+            "body_preview": s.get("body_preview", ""),
+        })
+    else:
+        await _broadcast({
+            "type": "cafe_status",
+            "status": "error",
+            "error": result.get("error", "작성 실패"),
+        })
+
+
+def _cafe_write_sync(cafe_url: str, board: str, title: str, body: str,
+                     tags: list, members_only: bool) -> dict:
+    from scripts.web_connector import get_page
+    from scripts.naver.cafe.writer import write_post
+    page = get_page()
+    return write_post(
+        page,
+        cafe_url=cafe_url,
+        board_name=board,
+        title=title,
+        body=body,
+        tags=tags or None,
+        members_only=members_only,
+        require_approval=True,
+    )
+
+
+async def _run_cafe_confirm() -> None:
+    await _broadcast({"type": "cafe_status", "status": "confirming"})
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, _cafe_confirm_sync)
+    except Exception as exc:
+        logger.error("cafe_confirm error: %s", exc)
+        await _broadcast({"type": "cafe_status", "status": "error", "error": str(exc)})
+        return
+
+    if result.get("ok"):
+        await _broadcast({
+            "type": "cafe_status",
+            "status": "done",
+            "result_url": result.get("url", ""),
+        })
+    else:
+        await _broadcast({
+            "type": "cafe_status",
+            "status": "error",
+            "error": result.get("error", "발행 실패"),
+        })
+
+
+def _cafe_confirm_sync() -> dict:
+    from scripts.web_connector import get_page
+    from scripts.naver.cafe.writer import confirm_publish
+    page = get_page()
+    return confirm_publish(page)
+
 
 # ── 서버(8000) WebSocket 연결 및 Push 수신 ────────────────────────────────────
 _server_ws: Any = None
@@ -148,6 +336,33 @@ async def _on_server_message(msg: dict) -> None:
             "needs_approval": msg.get("needs_approval", False),
             "execution_location": msg.get("execution_location", ""),
             "status": msg.get("status", "수신 대기"),
+            "ts": time.time(),
+        })
+    elif msg_type == "user_present_task":
+        # UI 미연결 상태에서는 실행을 보류한다. WAITING_USER_PRESENT 유지.
+        task = msg.get("task") or {}
+        if not _ui_clients:
+            workflow_run_id = task.get("workflow_run_id", "")
+            await _send_to_server({
+                "action": "user_present_ack",
+                "workflow_run_id": workflow_run_id,
+                "status": "WAITING_FOR_USER",
+                "ui_connected": False,
+            })
+            logger.info(
+                "user_present_task held: UI disconnected (workflow_run_id=%s)",
+                workflow_run_id,
+            )
+            return
+        await _broadcast({"type": "user_present_task", "task": task, "ts": time.time()})
+    elif msg_type == "task_blocked":
+        # 서버측 정책 차단 통지 — UI에 사유만 표시. 실행 명령 아님.
+        await _broadcast({
+            "type": "task_blocked",
+            "task_id": msg.get("task_id", ""),
+            "workflow_run_id": msg.get("workflow_run_id", ""),
+            "reason": msg.get("reason", ""),
+            "message_ko": msg.get("message_ko", ""),
             "ts": time.time(),
         })
     elif msg_type == "result":
