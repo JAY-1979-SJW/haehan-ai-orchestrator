@@ -37,6 +37,9 @@ class TabRecord:
     created_at: float = 0.0
     last_seen_at: float = 0.0
     status: str = TAB_OPEN
+    login_state: str = "LOGIN_UNKNOWN"
+    login_state_changed_at: float = 0.0
+    role: str = ""  # "" | "work" | "login_target"
 
 
 @dataclass
@@ -147,6 +150,29 @@ class BrowserSessionStore:
                 rec.last_seen_at = now
             self._session.tabs[tab_id] = rec
             return TabRecord(**rec.__dict__)
+
+    def set_login_state(self, tab_id: str, login_state: str) -> TabRecord | None:
+        with self._lock:
+            if self._session is None:
+                return None
+            rec = self._session.tabs.get(tab_id)
+            if rec is None:
+                return None
+            if rec.login_state != login_state:
+                rec.login_state = login_state
+                rec.login_state_changed_at = time.time()
+            rec.last_seen_at = time.time()
+            return TabRecord(**rec.__dict__)
+
+    def set_tab_role(self, tab_id: str, role: str) -> None:
+        with self._lock:
+            if self._session is None:
+                return
+            rec = self._session.tabs.get(tab_id)
+            if rec is None:
+                return
+            rec.role = role
+            rec.last_seen_at = time.time()
 
     def mark_tab_closed(self, tab_id: str) -> TabRecord | None:
         with self._lock:

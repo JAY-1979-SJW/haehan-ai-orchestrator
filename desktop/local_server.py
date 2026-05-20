@@ -122,6 +122,114 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
     elif action == "tab_close":
         await _handle_tab_close(ws, data.get("tab_id", ""))
 
+    elif action == "login_watcher_start":
+        await _start_login_watcher()
+        await ws.send_json({"type": "login_watcher_started", "ok": True})
+
+    elif action == "login_watcher_stop":
+        await _stop_login_watcher()
+        await ws.send_json({"type": "login_watcher_stopped", "ok": True})
+
+
+# ── 로그인 watcher (background poller) ───────────────────────────────────────
+
+_login_watcher_task: asyncio.Task | None = None
+_login_watcher_state = {
+    "prev_targets": [],         # list[TargetSnapshot]
+    "prev_login_states": {},    # target_id → state
+    "engine": None,             # LoginAutoFlowEngine
+}
+_LOGIN_WATCHER_INTERVAL_SEC = 2.0
+
+
+async def _start_login_watcher() -> None:
+    global _login_watcher_task
+    if _login_watcher_task is not None and not _login_watcher_task.done():
+        return
+    from local_agent.login_auto_flow import LoginAutoFlowEngine
+
+    if _login_watcher_state["engine"] is None:
+        _login_watcher_state["engine"] = LoginAutoFlowEngine()
+    _login_watcher_task = asyncio.create_task(_login_watcher_loop())
+
+
+async def _stop_login_watcher() -> None:
+    global _login_watcher_task
+    if _login_watcher_task is None:
+        return
+    _login_watcher_task.cancel()
+    try:
+        await _login_watcher_task
+    except (asyncio.CancelledError, Exception):
+        pass
+    _login_watcher_task = None
+
+
+async def _login_watcher_loop() -> None:
+    from local_agent.browser_instance_guard import resolve_paths
+    from local_agent.browser_realtime_watcher import (
+        compute_events,
+        detect_login_states,
+        from_cdp_targets,
+        login_state_change_events,
+    )
+    from local_agent.browser_session_store import default_store as _bs
+
+    paths = resolve_paths()
+    while True:
+        try:
+            rows = await _fetch_cdp_targets(paths.cdp_port)
+            curr = from_cdp_targets(rows)
+            prev = _login_watcher_state["prev_targets"]
+            evs = compute_events(prev, curr)
+            for e in evs:
+                await _broadcast({
+                    "type": e.event_type,
+                    "target_id": e.target_id,
+                    "sanitized_url": e.sanitized_url,
+                    "title": e.title,
+                    "extra": e.extra,
+                    "ts": time.time(),
+                })
+            login_states = detect_login_states(
+                curr, prev_states=_login_watcher_state["prev_login_states"],
+            )
+            login_evs = login_state_change_events(
+                _login_watcher_state["prev_login_states"], login_states,
+            )
+            engine = _login_watcher_state["engine"]
+            for ev in login_evs:
+                await _broadcast({
+                    "type": ev.event_type,
+                    "target_id": ev.target_id,
+                    "sanitized_url": ev.sanitized_url,
+                    "title": ev.title,
+                    "extra": ev.extra,
+                    "ts": time.time(),
+                })
+                det = login_states.get(ev.target_id)
+                if det is None:
+                    continue
+                _bs.set_login_state(ev.target_id, det.state)
+                for engine_ev in engine.on_target_state(ev.target_id, det):
+                    await _broadcast({
+                        "type": engine_ev.type,
+                        "target_id": engine_ev.target_id,
+                        "sanitized_url": engine_ev.sanitized_url,
+                        "title": engine_ev.title,
+                        "extra": engine_ev.extra,
+                        "ts": time.time(),
+                    })
+            _login_watcher_state["prev_targets"] = curr
+            _login_watcher_state["prev_login_states"] = {
+                tid: det.state for tid, det in login_states.items()
+            }
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.debug("login_watcher loop exception: %s", exc)
+        await asyncio.sleep(_LOGIN_WATCHER_INTERVAL_SEC)
+
 
 # ── 브라우저 lifecycle 핸들러 ────────────────────────────────────────────────
 
@@ -235,6 +343,7 @@ async def _handle_browser_start(ws: WebSocket) -> None:
         _bs.start_session() if _bs.snapshot().get("status") != "BROWSER_RUNNING" else None
         targets = await _fetch_cdp_targets(paths.cdp_port)
         _sync_store_with_targets(targets)
+        await _start_login_watcher()
         await ws.send_json({
             "type": "browser_start_result",
             "ok": True,
@@ -290,6 +399,7 @@ async def _handle_browser_quit(ws: WebSocket) -> None:
     )
     from local_agent.browser_session_store import default_store as _bs
 
+    await _stop_login_watcher()
     paths = resolve_paths()
     result = await asyncio.to_thread(quit_automation_browsers, paths)
     _bs.mark_browser_closed()
