@@ -19,7 +19,7 @@ import type { AssistantTask } from "@/types/assistant";
 function inboxToTasks(inbox: InboxResponse): AssistantTask[] {
   if (!inbox.items || inbox.items.length === 0) return [];
   return inbox.items.map((item) => ({
-    id: item.id,
+    id: item.id ?? item.item_id ?? "",
     title: item.subject ?? "(제목 없음)",
     status: "READ_ONLY" as const,
     risk: "LOW" as const,

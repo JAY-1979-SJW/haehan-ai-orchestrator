@@ -152,19 +152,19 @@ export default function InboxPage() {
       const res = await getAssistantInbox();
       const sorted = [...(res.items as InboxItem[])].reverse();
       setItems(sorted);
-      if (sorted.length > 0 && !selected) setSelected(sorted[0]);
+      setSelected((prev) => prev ?? (sorted.length > 0 ? sorted[0] : null));
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기 실패");
     } finally {
       setLoading(false);
     }
-  }, [selected]);
+  }, []);
 
   useEffect(() => {
     load();
     const id = setInterval(load, 30000);
     return () => clearInterval(id);
-  }, []);
+  }, [load]);
 
   const filtered =
     filter === "all" ? items : items.filter((i) => i.status === filter);
