@@ -133,12 +133,11 @@ def test_sanitize_and_mask_in_watcher_events():
 
 # ── 8. GAP: enqueue_work_command 호출처 누락 (의도 단절) ──────────────
 
-def test_gap_enqueue_work_command_has_no_production_caller():
-    """현재 코드상 LoginAutoFlowEngine.enqueue_work_command 의 production 호출이 없음.
-    이로 인해 사용자가 blog_write 등을 트리거한 뒤 LOGIN_REQUIRED 가 감지되어도
-    auto_resume 이 발화하지 않는다. 본 테스트는 GAP 을 명시적으로 표시한다.
+def test_g1_enqueue_work_command_has_production_caller():
+    """ORCHESTRATOR_LOGIN_AUTO_RESUME_WIRING_01 로 G1 해소.
 
-    GAP 해소 시 본 테스트를 갱신해야 한다.
+    LoginAutoFlowEngine.enqueue_work_command 의 production 호출이 최소 1건 이상
+    존재해야 한다 (desktop/local_server 의 precheck 경로).
     """
     import pathlib
 
@@ -154,15 +153,13 @@ def test_gap_enqueue_work_command_has_no_production_caller():
         if "enqueue_work_command(" in txt and "def enqueue_work_command" not in txt:
             callers.append(str(p.relative_to(root)))
 
-    # GAP: production 호출 0건이어야 본 감사 시점 상태와 일치.
-    assert callers == [], (
-        f"GAP 해소 후보 호출처 발견: {callers}. 본 감사 케이스를 갱신하라."
-    )
+    assert callers, "G1 보수 후에도 production 호출 0건 — wiring 누락"
 
 
 # ── 9. GAP: choose_login_target 호출처 누락 (의도 단절) ──────────────
 
-def test_gap_choose_login_target_unused_in_production():
+def test_g2_choose_login_target_has_production_caller():
+    """ORCHESTRATOR_LOGIN_AUTO_RESUME_WIRING_01 로 G2 해소."""
     import pathlib
 
     root = pathlib.Path(__file__).resolve().parents[1]
@@ -177,9 +174,7 @@ def test_gap_choose_login_target_unused_in_production():
         if "choose_login_target(" in txt and "def choose_login_target" not in txt:
             callers.append(str(p.relative_to(root)))
 
-    assert callers == [], (
-        f"choose_login_target 호출처 발견: {callers}. 본 감사 케이스를 갱신하라."
-    )
+    assert callers, "G2 보수 후에도 production 호출 0건"
 
 
 # ── 10. POPUP_WAITING 정의는 있으되 미사용 — dead constant 마커 ───────
