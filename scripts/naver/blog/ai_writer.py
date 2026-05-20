@@ -10,7 +10,6 @@
 """
 from __future__ import annotations
 
-import re
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -18,8 +17,15 @@ from playwright.sync_api import Page
 
 from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.naver.blog.tag_suggester import (
+    suggest_tags,
+    _STOPWORDS,
+    _COMPOUND_PAIRS,
+)
 
 _log = get_logger(__name__)
+
+__all__ = ["suggest_tags", "_STOPWORDS", "_COMPOUND_PAIRS", "BlogAIWriter"]
 
 
 class BlogAIWriter:

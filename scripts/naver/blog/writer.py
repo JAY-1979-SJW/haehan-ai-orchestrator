@@ -153,24 +153,32 @@ class BlogWriter:
         return None
 
     def _handle_draft_dialog(self) -> None:
-        """임시저장 복원 다이얼로그 처리 — 새 글로 시작 ('취소' 클릭)."""
+        """임시저장 복원 다이얼로그 처리 — 새 글로 시작 ('취소' 클릭).
+
+        실검증 셀렉터 (2026-05-19):
+          팝업: .se-popup-alert
+          취소: .se-popup-button-cancel
+        팝업 클릭 후 완전히 사라질 때까지 대기.
+        """
         if self._draft_handled:
             return
         time.sleep(1.0)
         try:
-            for sel in ['button:has-text("취소")', '.btn_cancel', '.se-popup-button-cancel']:
+            popup = self.page.locator(".se-popup-alert")
+            if popup.is_visible(timeout=2000):
+                cancel_btn = popup.locator(".se-popup-button-cancel").first
+                cancel_btn.click(timeout=2000)
+                # 팝업이 DOM에서 제거될 때까지 대기 (최대 3초)
                 try:
-                    btn = self.page.locator(sel).first
-                    if btn.is_visible(timeout=500):
-                        btn.click(timeout=1500)
-                        _log.info("[blog-writer] 임시저장 복원 다이얼로그 취소")
-                        time.sleep(1)
-                        break
+                    popup.wait_for(state="hidden", timeout=3000)
                 except Exception:
-                    continue
-            self._draft_handled = True
+                    pass
+                _log.info("[blog-writer] 임시저장 복원 다이얼로그 취소 완료")
+                time.sleep(0.5)
         except Exception as e:
-            _log.debug("[blog-writer] 다이얼로그 처리 무시: %s", e)
+            _log.debug("[blog-writer] 다이얼로그 없음 또는 처리 무시: %s", e)
+        finally:
+            self._draft_handled = True
 
     # ── 제목/본문 ────────────────────────────────────────────────────────
 
@@ -188,22 +196,44 @@ class BlogWriter:
             return False
 
     def write_body(self, text: str | list[str], paragraph_delay: float = 0.3) -> bool:
-        """본문 입력. text가 list면 단락 단위로 처리."""
+        """본문 입력. 클립보드 붙여넣기 방식 (빠르고 서식 오염 없음).
+
+        text가 list면 단락 단위 순서 입력.
+        \n\n = 단락 구분, \n = 줄바꿈 (SE3가 자동 처리).
+        """
         try:
             self.page.locator(BODY_SEL).first.click(timeout=3000)
             time.sleep(0.5)
 
-            paragraphs = text if isinstance(text, list) else text.split("\n\n")
-            for i, p in enumerate(paragraphs):
-                lines = p.split("\n")
-                for j, line in enumerate(lines):
-                    self.page.keyboard.type(line, delay=15)
-                    if j < len(lines) - 1:
-                        self.page.keyboard.press("Shift+Enter")
-                if i < len(paragraphs) - 1:
-                    self.page.keyboard.press("Enter")
-                    time.sleep(paragraph_delay)
-            _log.info("[blog-writer] 본문 입력 완료 (%d 단락)", len(paragraphs))
+            # 서식 초기화 — 취소선·굵게 등 오염 방지
+            self.reset_formatting()
+
+            # 단락 조합
+            if isinstance(text, list):
+                full_text = "\n".join(text)
+            else:
+                full_text = text
+
+            # 클립보드 붙여넣기 (pyperclip 우선, 없으면 keyboard.type fallback)
+            try:
+                import pyperclip
+                pyperclip.copy(full_text)
+                self.page.keyboard.press("Control+v")
+                time.sleep(1.0)
+            except (ImportError, Exception):
+                # fallback: 단락 단위 keyboard.type
+                paragraphs = full_text.split("\n\n")
+                for i, p in enumerate(paragraphs):
+                    lines = p.split("\n")
+                    for j, line in enumerate(lines):
+                        self.page.keyboard.type(line, delay=15)
+                        if j < len(lines) - 1:
+                            self.page.keyboard.press("Shift+Enter")
+                    if i < len(paragraphs) - 1:
+                        self.page.keyboard.press("Enter")
+                        time.sleep(paragraph_delay)
+
+            _log.info("[blog-writer] 본문 입력 완료 (%d 자)", len(full_text))
             return True
         except Exception as e:
             _log.error("[blog-writer] 본문 입력 실패: %s", e)
@@ -221,22 +251,182 @@ class BlogWriter:
             _log.debug("[blog-writer] toolbar(%s) 클릭 실패: %s", data_name, e)
             return False
 
-    def insert_image(self, path_or_url: str) -> bool:
-        """사진 삽입 — 로컬 파일 또는 URL."""
+    def _is_toolbar_active(self, data_name: str) -> bool:
+        """툴바 버튼의 현재 활성 상태 감지.
+
+        SE3는 활성 버튼에 'se-is-selected' 클래스를 부여한다.
+        aria-pressed="true" 속성도 함께 확인.
+        """
         try:
-            self._toolbar_click("image", wait_s=0.8)
+            result = self.page.evaluate(f"""() => {{
+                const btn = document.querySelector('button[data-name="{data_name}"]');
+                if (!btn) return null;
+                const cls = btn.className || '';
+                const ariaPressed = btn.getAttribute('aria-pressed');
+                return {{
+                    selected: cls.includes('se-is-selected'),
+                    ariaPressed: ariaPressed === 'true',
+                    cls: cls,
+                }};
+            }}""")
+            if result is None:
+                return False
+            return result.get("selected", False) or result.get("ariaPressed", False)
+        except Exception as e:
+            _log.debug("[blog-writer] _is_toolbar_active(%s) 실패: %s", data_name, e)
+            return False
+
+    def _toolbar_ensure(self, data_name: str, want_active: bool, wait_s: float = 0.2) -> bool:
+        """툴바 버튼을 원하는 활성 상태로 맞춤.
+
+        현재 상태가 want_active와 다를 때만 클릭한다.
+        이미 원하는 상태면 클릭 없이 True 반환.
+        """
+        current = self._is_toolbar_active(data_name)
+        if current == want_active:
+            _log.debug("[blog-writer] toolbar(%s) 이미 %s — 클릭 생략", data_name, "활성" if want_active else "비활성")
+            return True
+        return self._toolbar_click(data_name, wait_s=wait_s)
+
+    def get_editor_state(self) -> dict:
+        """현재 에디터의 텍스트 서식 활성 상태를 반환.
+
+        Returns:
+            {
+                "bold": bool,
+                "italic": bool,
+                "underline": bool,
+                "strikethrough": bool,
+                "found": dict[str, bool]  # 버튼 존재 여부
+            }
+        """
+        toggle_buttons = ["bold", "italic", "underline", "strikethrough"]
+        try:
+            result = self.page.evaluate("""(names) => {
+                const state = {};
+                for (const name of names) {
+                    const btn = document.querySelector(`button[data-name="${name}"]`);
+                    if (!btn) {
+                        state[name] = {found: false, active: false};
+                        continue;
+                    }
+                    const cls = btn.className || '';
+                    const ariaPressed = btn.getAttribute('aria-pressed') === 'true';
+                    state[name] = {
+                        found: true,
+                        active: cls.includes('se-is-selected') || ariaPressed,
+                        cls: cls,
+                    };
+                }
+                return state;
+            }""", toggle_buttons)
+            return {
+                "bold": result.get("bold", {}).get("active", False),
+                "italic": result.get("italic", {}).get("active", False),
+                "underline": result.get("underline", {}).get("active", False),
+                "strikethrough": result.get("strikethrough", {}).get("active", False),
+                "detail": result,
+            }
+        except Exception as e:
+            _log.debug("[blog-writer] get_editor_state 실패: %s", e)
+            return {"bold": False, "italic": False, "underline": False, "strikethrough": False}
+
+    def insert_image(self, path_or_url: str) -> bool:
+        """사진 삽입 — 로컬 파일 또는 URL.
+
+        로컬 파일: expect_file_chooser로 OS 다이얼로그 가로채기 (화면에 열리지 않음).
+        URL: oglink 방식 fallback.
+        """
+        try:
             if Path(path_or_url).exists():
-                self.page.locator('input[type="file"]').first.set_input_files(path_or_url, timeout=5000)
+                # file_chooser 이벤트 가로채기 → OS 파일 다이얼로그 차단
+                abs_path = str(Path(path_or_url).absolute())
+                with self.page.expect_file_chooser(timeout=5000) as fc_info:
+                    self._toolbar_click("image", wait_s=0.5)
+                fc_info.value.set_files(abs_path)
                 time.sleep(2.5)
-                _log.info("[blog-writer] 사진 첨부: %s", path_or_url)
+                _log.info("[blog-writer] 사진 첨부: %s", abs_path)
             else:
+                self._toolbar_click("image", wait_s=0.8)
                 self.page.locator('input[placeholder*="URL"], input[type="url"]').first.fill(path_or_url, timeout=3000)
                 self.page.keyboard.press("Enter")
                 time.sleep(2)
+                _log.info("[blog-writer] 사진 URL 삽입: %s", path_or_url[:60])
             return True
         except Exception as e:
             _log.error("[blog-writer] 사진 삽입 실패: %s", e)
             return False
+
+    def insert_video(self, path: str, title: str = "", description: str = "") -> bool:
+        """로컬 영상 파일 삽입 (네이버 동영상 업로더 경유).
+
+        실검증 흐름 (2026-05-19):
+          toolbar "video" 클릭 → file_chooser 감지 → 파일 설정 →
+          제목 입력 (필수) → "완료" 버튼 클릭 → se-section-video 삽입 확인
+        """
+        try:
+            abs_path = str(Path(path).absolute())
+            if not Path(abs_path).exists():
+                _log.error("[blog-writer] 영상 파일 없음: %s", abs_path)
+                return False
+
+            # file_chooser 이벤트 가로채기 + 툴바 클릭
+            with self.page.expect_file_chooser(timeout=5000) as fc_info:
+                self._toolbar_click("video", wait_s=1.0)
+                # 업로더 팝업 내 로컬 파일 버튼 클릭
+                self.page.locator("button.nvu_local, button.nvu_btn_append.nvu_local, button.nvu_btn_local").first.click(timeout=3000)
+
+            fc_info.value.set_files(abs_path)
+            _log.info("[blog-writer] 영상 파일 설정: %s", abs_path)
+
+            # 업로드 완료 대기 (최대 30초)
+            for _ in range(30):
+                time.sleep(1.0)
+                state = self.page.evaluate("""() => {
+                    const s = document.querySelector('.nvu_state');
+                    return s ? s.textContent.trim() : '';
+                }""")
+                if "업로드 완료" in state or "처리 완료" in state:
+                    break
+                if "오류" in state or "실패" in state:
+                    _log.error("[blog-writer] 영상 업로드 오류: %s", state)
+                    return False
+
+            # 제목 입력 (필수)
+            video_title = title or Path(path).stem
+            try:
+                self.page.locator("input.nvu_inp").first.fill(video_title, timeout=3000)
+                time.sleep(0.3)
+            except Exception:
+                pass
+
+            if description:
+                try:
+                    self.page.locator("textarea.nvu_inp").first.fill(description, timeout=2000)
+                    time.sleep(0.3)
+                except Exception:
+                    pass
+
+            # 완료 버튼 클릭 → 에디터 삽입
+            self.page.locator("button.nvu_btn_submit").first.click(timeout=3000)
+            time.sleep(3.0)
+
+            _log.info("[blog-writer] 영상 삽입 완료: %s", video_title)
+            return True
+        except Exception as e:
+            _log.error("[blog-writer] 영상 삽입 실패: %s", e)
+            self.page.keyboard.press("Escape")
+            return False
+
+    def reset_formatting(self) -> None:
+        """현재 활성화된 텍스트 서식(bold/italic/underline/strikethrough) 모두 해제.
+
+        write_body() 전에 호출해 취소선·굵게 오염 방지.
+        """
+        for name in ("bold", "italic", "underline", "strikethrough"):
+            if self._is_toolbar_active(name):
+                self._toolbar_click(name, wait_s=0.1)
+        _log.debug("[blog-writer] 서식 초기화 완료")
 
     def insert_quote(self, text: str, style: int = 0) -> bool:
         """인용구 삽입. style=0~2 (기본/스타일2/스타일3)."""
@@ -304,21 +494,43 @@ class BlogWriter:
 
     # ── 텍스트 서식 ──────────────────────────────────────────────────────
 
-    def set_bold(self) -> bool:
-        """굵게 (Bold) 토글."""
-        return self._toolbar_click("bold", wait_s=0.2)
+    def set_bold(self, on: bool = True) -> bool:
+        """굵게 (Bold).
 
-    def set_italic(self) -> bool:
-        """기울이기 (Italic) 토글."""
-        return self._toolbar_click("italic", wait_s=0.2)
+        on=True  → 활성화 (이미 활성이면 클릭 생략)
+        on=False → 비활성화 (이미 비활성이면 클릭 생략)
+        on=None  → 무조건 토글 (이전 동작)
+        """
+        if on is None:
+            return self._toolbar_click("bold", wait_s=0.2)
+        return self._toolbar_ensure("bold", want_active=on, wait_s=0.2)
 
-    def set_underline(self) -> bool:
-        """밑줄 토글."""
-        return self._toolbar_click("underline", wait_s=0.2)
+    def set_italic(self, on: bool = True) -> bool:
+        """기울이기 (Italic).
 
-    def set_strikethrough(self) -> bool:
-        """취소선 토글."""
-        return self._toolbar_click("strikethrough", wait_s=0.2)
+        on=True/False → 상태 보장, on=None → 토글
+        """
+        if on is None:
+            return self._toolbar_click("italic", wait_s=0.2)
+        return self._toolbar_ensure("italic", want_active=on, wait_s=0.2)
+
+    def set_underline(self, on: bool = True) -> bool:
+        """밑줄.
+
+        on=True/False → 상태 보장, on=None → 토글
+        """
+        if on is None:
+            return self._toolbar_click("underline", wait_s=0.2)
+        return self._toolbar_ensure("underline", want_active=on, wait_s=0.2)
+
+    def set_strikethrough(self, on: bool = True) -> bool:
+        """취소선.
+
+        on=True/False → 상태 보장, on=None → 토글
+        """
+        if on is None:
+            return self._toolbar_click("strikethrough", wait_s=0.2)
+        return self._toolbar_ensure("strikethrough", want_active=on, wait_s=0.2)
 
     def set_font_size(self, size: int) -> bool:
         """글자 크기 변경."""
@@ -433,35 +645,31 @@ class BlogWriter:
             return False
 
     def set_comments_allowed(self, allowed: bool = True) -> bool:
-        """댓글 허용 여부."""
-        try:
-            cb = self.page.locator('input[type="checkbox"][name*="comment"]').first
-            if cb.is_checked(timeout=1500) != allowed:
-                cb.click(timeout=1500)
-            _log.info("[blog-writer] 댓글 %s", "허용" if allowed else "거부")
-            return True
-        except Exception as e:
-            _log.debug("[blog-writer] 댓글 설정 무시: %s", e)
-            return False
+        """댓글 허용 여부. 실검증 id: publish-option-comment (2026-05-19)."""
+        return self._set_publish_checkbox("publish-option-comment", allowed, "댓글")
 
     def set_likes_allowed(self, allowed: bool = True) -> bool:
-        """공감 허용 여부."""
-        try:
-            cb = self.page.locator('input[type="checkbox"][name*="sympathy"], input[type="checkbox"][name*="like"]').first
-            if cb.is_checked(timeout=1500) != allowed:
-                cb.click(timeout=1500)
-            return True
-        except Exception:
-            return False
+        """공감 허용 여부. 실검증 id: publish-option-sympathy (2026-05-19)."""
+        return self._set_publish_checkbox("publish-option-sympathy", allowed, "공감")
 
     def set_search_exposure(self, allowed: bool = True) -> bool:
-        """검색 노출 허용."""
+        """검색 노출 허용. 실검증 id: publish-option-search (2026-05-19)."""
+        return self._set_publish_checkbox("publish-option-search", allowed, "검색노출")
+
+    def _set_publish_checkbox(self, cb_id: str, want: bool, label: str) -> bool:
+        """발행 패널 체크박스를 원하는 상태로 설정.
+
+        네이버 SE3 발행 패널 체크박스는 name 없고 id로만 식별 (2026-05-19 확인).
+        """
         try:
-            cb = self.page.locator('input[type="checkbox"][name*="search"]').first
-            if cb.is_checked(timeout=1500) != allowed:
+            cb = self.page.locator(f'#{cb_id}').first
+            if cb.is_checked(timeout=1500) != want:
                 cb.click(timeout=1500)
+                time.sleep(0.2)
+            _log.info("[blog-writer] %s %s", label, "허용" if want else "거부")
             return True
-        except Exception:
+        except Exception as e:
+            _log.debug("[blog-writer] %s 설정 무시: %s", label, e)
             return False
 
     # ── 저장/발행 ────────────────────────────────────────────────────────
@@ -580,11 +788,14 @@ def write_post(page: Page, *,
                body: str | list[str],
                category: str | None = None,
                tags: list[str] | None = None,
+               auto_tags: bool = True,
+               brand_tags: list[str] | None = None,
                images: list[str] | None = None,
                visibility: str = "public",
                comments_allowed: bool = True,
                search_exposure: bool = True,
                save_draft_only: bool = False,
+               require_approval: bool = True,
                schedule_at: datetime | None = None) -> dict:
     """원샷 글 작성 + 발행/저장.
 
@@ -593,14 +804,38 @@ def write_post(page: Page, *,
         title: 제목
         body: 본문 (str 또는 단락 list)
         category: 카테고리 이름 또는 번호
-        tags: 태그 리스트
+        tags: 태그 리스트. None이고 auto_tags=True이면 자동 생성.
+        auto_tags: True면 tags=None 일 때 suggest_tags() 자동 호출
+        brand_tags: 브랜드 고정 태그 (suggest_tags에 전달)
         images: 본문 시작에 삽입할 이미지 경로/URL 리스트
         visibility: public/neighbors/mutual/private
         comments_allowed: 댓글 허용
         search_exposure: 검색 노출
-        save_draft_only: True면 임시저장만
-        schedule_at: 지정 시 예약 발행
+        save_draft_only: True면 임시저장만 (require_approval 무시)
+        require_approval: True(기본)면 발행 직전 패널 열어둔 채로
+                          awaiting_approval 반환 → confirm_publish() 별도 호출 필요.
+                          False면 패널 옵션 설정 후 즉시 발행.
+        schedule_at: 지정 시 예약 발행 (require_approval 무시)
     """
+    import time as _t
+
+    # Step 1: 로그인 확인
+    from scripts.naver.auth import ensure_naver_login
+    login_result = ensure_naver_login(page)
+    if not login_result.get("ok"):
+        return {"ok": False, "error": "login_failed", "reason": login_result.get("reason", "")}
+
+    # Step 2: 태그 자동 생성 (tags 미지정 시)
+    body_str = "\n\n".join(body) if isinstance(body, list) else body
+    if tags is None and auto_tags:
+        try:
+            from scripts.naver.blog.tag_suggester import suggest_tags
+            tags = suggest_tags(title, body_str, brand_tags=brand_tags)
+            _log.info("[write_post] 태그 자동 생성: %s", tags)
+        except Exception as e:
+            _log.warning("[write_post] 태그 자동 생성 실패 (무시): %s", e)
+            tags = []
+
     bw = BlogWriter(page)
     if not bw.open():
         return {"ok": False, "error": "editor_open_failed"}
@@ -615,13 +850,26 @@ def write_post(page: Page, *,
     if not bw.write_body(body):
         return {"ok": False, "error": "body_failed"}
 
-    # 임시저장만 할 경우 패널 열기 전에 저장
+    # 임시저장만
     if save_draft_only:
-        return bw.save_draft()
+        result = bw.save_draft()
+        result["tags_used"] = tags or []
+        return result
 
-    # 발행 패널 열기 (태그/공개설정은 패널 안에 있음)
+    # 예약 발행
+    if schedule_at:
+        page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
+        _t.sleep(1.5)
+        if category:
+            bw.set_category(category)
+        if tags:
+            bw.set_tags(tags)
+        bw.set_visibility(visibility)
+        return bw.schedule_publish(schedule_at)
+
+    # 발행 패널 열기 + 옵션 세팅
     page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
-    import time as _t; _t.sleep(1.5)
+    _t.sleep(1.5)
 
     if category:
         bw.set_category(category)
@@ -631,6 +879,50 @@ def write_post(page: Page, *,
     bw.set_comments_allowed(comments_allowed)
     bw.set_search_exposure(search_exposure)
 
-    if schedule_at:
-        return bw.schedule_publish(schedule_at)
-    return bw.publish()
+    # 승인 게이트 — 패널 열린 상태 유지, 사용자 승인 대기
+    if require_approval:
+        _log.info("[write_post] 발행 승인 대기 — confirm_publish(page) 호출로 발행")
+        log_critical("OTHER", "블로그 발행 승인 요청",
+                     title=title[:40], visibility=visibility,
+                     tags=tags or [], mode="blog_awaiting_approval")
+        return {
+            "ok": True,
+            "mode": "awaiting_approval",
+            "approval_required": True,
+            "summary": {
+                "title": title,
+                "tags": tags or [],
+                "visibility": visibility,
+                "body_preview": body_str[:120].strip(),
+                "images": images or [],
+                "category": category,
+            },
+            "next_step": "confirm_publish(page) 호출 시 발행 완료",
+        }
+
+    # 즉시 발행 (require_approval=False)
+    result = bw.publish()
+    result["tags_used"] = tags or []
+    return result
+
+
+def confirm_publish(page: Page, wait_verify_s: int = 8) -> dict:
+    """발행 패널이 열린 상태에서 최종 발행 버튼을 클릭한다.
+
+    write_post(..., require_approval=True) 호출 후 사용자 승인이 완료되면
+    이 함수를 호출해 발행을 확정한다.
+
+    Args:
+        page: write_post() 에 전달한 동일 Page (발행 패널 열린 상태)
+        wait_verify_s: 발행 후 검증 대기 시간(초)
+
+    Returns:
+        {"ok": True, "url": ..., "blog_id": ..., "log_no": ...}
+    """
+    bw = BlogWriter(page)
+    result = bw.publish(wait_verify_s=wait_verify_s)
+    if result.get("ok"):
+        _log.info("[confirm_publish] 발행 완료: %s", result.get("url"))
+    else:
+        _log.error("[confirm_publish] 발행 실패: %s", result.get("error"))
+    return result
