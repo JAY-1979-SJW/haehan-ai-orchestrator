@@ -13,7 +13,9 @@
   - 발송/답장/삭제/이동/별표/라벨/첨부 다운로드/캡쳐 (정식 파이프라인)
 """
 from . import (time_parser, read_state_guard, inbox_collector,
-               folder_discovery, smart_folder_collector)
+               folder_discovery, smart_folder_collector,
+               folder_policy, folder_profile)
 
 __all__ = ["time_parser", "read_state_guard", "inbox_collector",
-           "folder_discovery", "smart_folder_collector"]
+           "folder_discovery", "smart_folder_collector",
+           "folder_policy", "folder_profile"]
