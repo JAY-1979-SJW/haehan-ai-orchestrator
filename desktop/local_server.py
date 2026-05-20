@@ -107,6 +107,282 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
     elif action == "cafe_confirm":
         asyncio.create_task(_run_cafe_confirm())
 
+    elif action == "browser_status":
+        await _handle_browser_status(ws)
+
+    elif action == "browser_start":
+        await _handle_browser_start(ws)
+
+    elif action == "browser_quit":
+        await _handle_browser_quit(ws)
+
+    elif action == "tab_list":
+        await _handle_tab_list(ws)
+
+    elif action == "tab_close":
+        await _handle_tab_close(ws, data.get("tab_id", ""))
+
+
+# ── 브라우저 lifecycle 핸들러 ────────────────────────────────────────────────
+
+def _fetch_cdp_targets_sync(port: int) -> list[dict]:
+    """CDP /json/list — page 타입만 반환."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(
+            f"http://127.0.0.1:{int(port)}/json/list", timeout=1.5,
+        ) as resp:
+            data = json.loads(resp.read().decode("utf-8") or "[]")
+    except Exception:
+        return []
+    return [t for t in data if isinstance(t, dict) and t.get("type") == "page"]
+
+
+async def _fetch_cdp_targets(port: int) -> list[dict]:
+    return await asyncio.to_thread(_fetch_cdp_targets_sync, port)
+
+
+def _sync_store_with_targets(targets: list[dict]) -> dict[str, list[str]]:
+    """현재 CDP target 목록과 session_store 의 탭을 정합."""
+    from local_agent.browser_session_store import default_store as _bs
+
+    ids = [str(t.get("id", "")) for t in targets if t.get("id")]
+    diff = _bs.diff_targets(ids)
+    for t in targets:
+        tid = str(t.get("id", ""))
+        if not tid:
+            continue
+        _bs.upsert_tab(
+            tid,
+            url=str(t.get("url", "")),
+            title=str(t.get("title", "")),
+            opened_by="cdp",
+        )
+    for closed_id in diff["removed"]:
+        _bs.mark_tab_closed(closed_id)
+    return diff
+
+
+async def _handle_browser_status(ws: WebSocket) -> None:
+    from local_agent.browser_instance_guard import decide_browser_start, resolve_paths
+    from local_agent.browser_session_store import default_store as _bs
+
+    paths = resolve_paths()
+    decision = await asyncio.to_thread(decide_browser_start, paths)
+    targets = await _fetch_cdp_targets(paths.cdp_port) if decision.cdp_alive else []
+    if decision.cdp_alive:
+        _sync_store_with_targets(targets)
+    payload = {
+        "type": "browser_status",
+        "action": decision.action,
+        "count": decision.count,
+        "cdp_alive": decision.cdp_alive,
+        "lock_active": decision.lock_active,
+        "orphan_partials": decision.orphan_partials,
+        "matched_pids": decision.matched_pids,
+        "session": _bs.snapshot(),
+        "tab_count": len(targets),
+        "message_ko": decision.message_ko,
+        "error": decision.error,
+    }
+    await ws.send_json(payload)
+
+
+async def _handle_browser_start(ws: WebSocket) -> None:
+    from local_agent.browser_instance_guard import (
+        ACTION_ATTACH_EXISTING,
+        ACTION_ATTACH_ORPHAN_CDP,
+        ACTION_BLOCKED_BY_LOCK,
+        ACTION_ERROR_MULTIPLE,
+        ACTION_START_NEW,
+        decide_browser_start,
+        resolve_paths,
+    )
+    from local_agent.browser_session_store import default_store as _bs
+
+    paths = resolve_paths()
+    decision = await asyncio.to_thread(decide_browser_start, paths)
+
+    if decision.action == ACTION_ERROR_MULTIPLE:
+        await _broadcast({
+            "type": "browser_status",
+            "action": decision.action,
+            "count": decision.count,
+            "error": decision.error,
+            "matched_pids": decision.matched_pids,
+            "message_ko": decision.message_ko,
+        })
+        await ws.send_json({
+            "type": "browser_start_result",
+            "ok": False,
+            "error": decision.error,
+            "count": decision.count,
+            "message_ko": decision.message_ko,
+        })
+        return
+
+    if decision.action == ACTION_BLOCKED_BY_LOCK:
+        await ws.send_json({
+            "type": "browser_start_result",
+            "ok": False,
+            "error": decision.error or "LOCK_ACTIVE",
+            "message_ko": decision.message_ko,
+        })
+        return
+
+    if decision.action in (ACTION_ATTACH_EXISTING, ACTION_ATTACH_ORPHAN_CDP):
+        _bs.start_session() if _bs.snapshot().get("status") != "BROWSER_RUNNING" else None
+        targets = await _fetch_cdp_targets(paths.cdp_port)
+        _sync_store_with_targets(targets)
+        await ws.send_json({
+            "type": "browser_start_result",
+            "ok": True,
+            "action": decision.action,
+            "count": max(decision.count, 1),
+            "message_ko": decision.message_ko,
+            "tab_count": len(targets),
+        })
+        return
+
+    # ACTION_START_NEW → 실제 시작은 기존 web_connector._ensure_cdp_daemon 경로에 위임.
+    # 이번 공정에서는 데몬을 직접 spawn 하지 않고 안내만 한다.
+    if decision.action == ACTION_START_NEW:
+        from local_agent.browser_instance_guard import write_lock_file
+        import os as _os
+
+        write_lock_file(paths, _os.getpid())
+        try:
+            await asyncio.to_thread(_start_via_web_connector)
+            _bs.start_session()
+            targets = await _fetch_cdp_targets(paths.cdp_port)
+            _sync_store_with_targets(targets)
+            ok = True
+            err = ""
+            msg = "자동화 Chrome 시작 완료"
+        except Exception as exc:
+            ok = False
+            err = "START_FAILED"
+            msg = f"자동화 Chrome 시작 실패: {exc}"
+        finally:
+            from local_agent.browser_instance_guard import clear_lock_file
+            clear_lock_file(paths)
+        await ws.send_json({
+            "type": "browser_start_result",
+            "ok": ok,
+            "action": decision.action,
+            "error": err,
+            "message_ko": msg,
+        })
+
+
+def _start_via_web_connector() -> None:
+    """기존 web_connector 경로를 통해 데몬 자동 기동."""
+    from scripts.web_connector import _ensure_cdp_daemon  # noqa: WPS437 — 의도된 내부 사용
+
+    _ensure_cdp_daemon()
+
+
+async def _handle_browser_quit(ws: WebSocket) -> None:
+    from local_agent.browser_instance_guard import (
+        quit_automation_browsers,
+        resolve_paths,
+    )
+    from local_agent.browser_session_store import default_store as _bs
+
+    paths = resolve_paths()
+    result = await asyncio.to_thread(quit_automation_browsers, paths)
+    _bs.mark_browser_closed()
+    await _broadcast({
+        "type": "browser_status",
+        "action": "browser_quit",
+        "count": 0,
+        "killed_pids": result.get("killed_pids", []),
+        "failed_pids": result.get("failed_pids", []),
+        "ok": result.get("ok", False),
+    })
+    await ws.send_json({
+        "type": "browser_quit_result",
+        **result,
+    })
+
+
+async def _handle_tab_list(ws: WebSocket) -> None:
+    from local_agent.browser_instance_guard import resolve_paths
+    from local_agent.browser_session_store import default_store as _bs
+
+    paths = resolve_paths()
+    targets = await _fetch_cdp_targets(paths.cdp_port)
+    diff = _sync_store_with_targets(targets)
+    await ws.send_json({
+        "type": "tab_list",
+        "tabs": [
+            {
+                "tab_id": str(t.get("id", "")),
+                "url": t.get("url", ""),
+                "title": t.get("title", ""),
+            }
+            for t in targets
+        ],
+        "diff": diff,
+        "session": _bs.snapshot(),
+    })
+    if diff["added"]:
+        await _broadcast({
+            "type": "popup_detected",
+            "added": diff["added"],
+            "ts": time.time(),
+        })
+
+
+async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
+    from local_agent.browser_instance_guard import resolve_paths
+    from local_agent.browser_session_store import (
+        TAB_CLOSED,
+        default_store as _bs,
+    )
+    import urllib.request
+
+    tab_id = str(tab_id or "").strip()
+    if not tab_id:
+        await ws.send_json({
+            "type": "tab_close_result", "ok": False, "error": "MISSING_TAB_ID",
+        })
+        return
+
+    known = _bs.get_tab(tab_id)
+    if known is not None and known.status == TAB_CLOSED:
+        await ws.send_json({
+            "type": "tab_close_result",
+            "ok": False,
+            "tab_id": tab_id,
+            "status": TAB_CLOSED,
+            "error": "TAB_CLOSED",
+            "message_ko": "이미 닫힌 탭입니다 — 새 탭을 만들지 않습니다.",
+        })
+        return
+
+    paths = resolve_paths()
+
+    def _close() -> bool:
+        try:
+            with urllib.request.urlopen(
+                f"http://127.0.0.1:{int(paths.cdp_port)}/json/close/{tab_id}",
+                timeout=1.5,
+            ) as resp:
+                return 200 <= resp.status < 300
+        except Exception:
+            return False
+
+    ok = await asyncio.to_thread(_close)
+    _bs.mark_tab_closed(tab_id)
+    await ws.send_json({
+        "type": "tab_close_result",
+        "ok": ok,
+        "tab_id": tab_id,
+        "status": TAB_CLOSED,
+    })
+
 
 # ── 블로그 작성 — 스레드에서 blocking I/O 실행 ────────────────────────────────
 async def _run_blog_write(data: dict) -> None:
