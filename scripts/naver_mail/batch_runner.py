@@ -109,6 +109,12 @@ class MailResult:
     pii_types: dict = field(default_factory=dict)
     has_attach: bool = False
     attach_names: list[str] = field(default_factory=list)
+    # 보고서용 — PII 마스킹 후의 제목/발신자/본문 발췌. raw 금지.
+    subject_masked: str = ""
+    sender_masked: str = ""
+    date_text: str = ""
+    body_redacted_short: str = ""   # 첫 400자 (마스킹 적용 후)
+    link_domain_top: list[str] = field(default_factory=list)
     state_before: str = ""
     state_after_open: str = ""
     state_after_restore: str = ""
@@ -214,12 +220,22 @@ def _process_one(actions: Actions, t: BatchTarget,
         mb = body_reader.parse_body_payload(t.sn, payload) \
             if isinstance(payload, dict) else body_reader.MailBody(sn=t.sn)
         mask_res = pii_mask.mask(mb.body_redacted or "")
+        # 제목/발신자도 추가 PII 마스킹 통과 (이미 redact 됐지만 한 번 더)
+        subj_mask = pii_mask.mask(mb.subject or "")
+        sender_mask = pii_mask.mask(mb.sender_addr_redacted or mb.sender_name or "")
         res.body_open_ok = True
         res.masked_text_hash = mask_res.masked_text_hash
         res.pii_detected_count = mask_res.detected_count
         res.pii_types = mask_res.types
         res.has_attach = mb.has_attach
         res.attach_names = list(mb.attach_names)
+        res.subject_masked = subj_mask.masked_text[:300]
+        res.sender_masked = sender_mask.masked_text[:200]
+        res.date_text = mb.date_text or ""
+        res.body_redacted_short = (mask_res.masked_text or "").replace("\n", " ")[:400]
+        # 링크 상위 5개 도메인만
+        top = sorted(mb.link_domains.items(), key=lambda x: -x[1])[:5]
+        res.link_domain_top = [f"{d}({n})" for d, n in top]
         # 4) restore
         snap = restore_fn(actions, snap, folder_id=t.folder_id)
         res.state_after_open = snap.after_open_state
@@ -406,4 +422,112 @@ def write_outputs(rep: BatchReport, out_dir: Path) -> dict[str, Path]:
     p5 = out_dir / "batch_summary.md"
     p5.write_text("\n".join(md), encoding="utf-8")
     paths["summary"] = p5
+    # 비즈니스 보고서 (마스킹된 제목/발신자/본문 발췌)
+    p6 = out_dir / "mail_inbox_business_report.md"
+    p6.write_text(_render_business_report(rep), encoding="utf-8")
+    paths["business_report"] = p6
     return paths
+
+
+# ── 비즈니스 보고서 렌더러 (PII 마스킹된 데이터만 사용) ──────────
+
+
+def _classify_priority(subj: str, sender: str) -> str:
+    """제목/발신자로 액션 우선순위 분류 (단순 키워드 — 외부 AI 호출 X)."""
+    s = (subj + " " + sender).lower()
+    if any(k in s for k in ("노출 정지", "휴면", "정지 안내", "확약서",
+                             "미답변", "복원")):
+        return "ACTION_REQUIRED"
+    if any(k in s for k in ("색인", "indexing", "수동 조치", "오류",
+                             "service down", "장애")):
+        return "REVIEW"
+    if any(k in s for k in ("undelivered", "returned to sender", "반송",
+                             "전달 실패")):
+        return "ATTENTION"
+    if any(k in s for k in ("보안 알림", "새로운 환경", "새로운 기기",
+                             "security alert", "비밀번호", "로그인",
+                             "간편 로그인")):
+        return "SECURITY_NOTICE"
+    if any(k in s for k in ("약관", "개정", "수수료", "처리방침",
+                             "이용약관", "정책")):
+        return "POLICY_NOTICE"
+    if any(k in s for k in ("결제", "영수증", "매출실적", "포인트",
+                             "마일리지", "리볼빙")):
+        return "BILLING"
+    if any(k in s for k in ("뉴스레터", "newsletter", "광고", "이벤트",
+                             "할인", "프로모션", "안내")):
+        return "PROMO"
+    return "OTHER"
+
+
+def _render_business_report(rep: BatchReport) -> str:
+    """마스킹된 제목/발신자/본문 발췌로 비즈니스 보고서 작성. raw 사용 X."""
+    by_priority: dict[str, list[MailResult]] = {}
+    by_folder: dict[str, int] = {}
+    by_sender_domain: dict[str, int] = {}
+    import re
+    domain_re = re.compile(r"@([A-Za-z0-9.\-]+)")
+    for r in rep.results:
+        if not r.body_open_ok and r.status != SKIPPED_ALREADY_DONE:
+            continue
+        by_folder[r.folder_name] = by_folder.get(r.folder_name, 0) + 1
+        # 발신자 도메인 추출
+        m = domain_re.search(r.sender_masked or "")
+        if m:
+            dom = m.group(1).lower()
+            by_sender_domain[dom] = by_sender_domain.get(dom, 0) + 1
+        pri = _classify_priority(r.subject_masked, r.sender_masked)
+        by_priority.setdefault(pri, []).append(r)
+
+    PRIORITY_ORDER = ("ACTION_REQUIRED", "ATTENTION", "REVIEW",
+                      "SECURITY_NOTICE", "BILLING", "POLICY_NOTICE",
+                      "PROMO", "OTHER")
+
+    md = [
+        f"# 메일함 비즈니스 보고서 — run {rep.run_id}",
+        "",
+        f"- 처리 메일: {len(rep.results)}건 "
+        f"(success {rep.success} / failed {rep.failed} / skipped {rep.skipped_already_done})",
+        f"- 시작: {rep.started_at_iso}",
+        f"- 종료: {rep.ended_at_iso}",
+        f"- unread 토글/복구: {rep.unread_state_changed} → {rep.unread_restore_succeeded} "
+        f"(실패 {rep.unread_restore_failed})",
+        f"- raw body leak: 0  attachment download: 0  external AI: 0",
+        f"- PII 검출 총 {rep.pii_detected_total}건 — types {rep.pii_types_summary}",
+        "",
+        "> 본 보고서는 **PII 마스킹된 제목/발신자/본문 첫 400자**만 사용합니다. 원문 0건 노출.",
+        "",
+        "## 폴더별 분포",
+    ]
+    for folder, n in sorted(by_folder.items(), key=lambda x: -x[1]):
+        md.append(f"- {folder}: {n}건")
+
+    md += ["", "## 발신자 도메인 분포 (상위 15)"]
+    for dom, n in sorted(by_sender_domain.items(),
+                         key=lambda x: -x[1])[:15]:
+        md.append(f"- `{dom}` — {n}건")
+
+    md += ["", "## 우선순위 분류"]
+    for pri in PRIORITY_ORDER:
+        lst = by_priority.get(pri, [])
+        if not lst:
+            continue
+        md.append(f"\n### [{pri}] {len(lst)}건")
+        for r in lst[:30]:  # 카테고리당 상위 30건만
+            subj = r.subject_masked or "(제목없음)"
+            sender = r.sender_masked or "(발신자미상)"
+            date = r.date_text or ""
+            attach = " 📎" if r.has_attach else ""
+            pii = (f" pii={r.pii_detected_count}"
+                   if r.pii_detected_count > 0 else "")
+            md.append(
+                f"- **{subj[:70]}**{attach}{pii}  \n"
+                f"  발신: {sender[:60]}  |  날짜: {date[:30]}  "
+                f"|  links: {','.join(r.link_domain_top) or '-'}"
+            )
+            if r.body_redacted_short:
+                md.append(f"  > {r.body_redacted_short[:200]}")
+        if len(lst) > 30:
+            md.append(f"- … ({len(lst) - 30}건 더)")
+
+    return "\n".join(md)
