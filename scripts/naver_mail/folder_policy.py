@@ -31,11 +31,27 @@ KIND_WRITE_TO_ME = "self_mail" # 내게쓴메일함
 KIND_VIP = "vip"
 KIND_OTHER = "other"
 KIND_UNKNOWN = "unknown"
+# CLOSEOUT_01 추가:
+KIND_NAV_ACTION = "nav_action"            # 환경설정/로그아웃/고객센터 등 LNB 메뉴
+KIND_SMART_GROUP_HEADER = "smart_group_header"  # 스마트메일함 그룹 헤더
 
 KNOWN_KINDS = frozenset({
     KIND_INBOX, KIND_SMART, KIND_USER, KIND_SENT, KIND_DRAFT,
     KIND_SPAM, KIND_TRASH, KIND_ARCHIVE, KIND_ALL,
     KIND_RECEIPT, KIND_WRITE_TO_ME, KIND_VIP, KIND_OTHER, KIND_UNKNOWN,
+    KIND_NAV_ACTION, KIND_SMART_GROUP_HEADER,
+})
+
+# 실제 폴더로 간주되는 kind (count 검산 대상)
+COLLECTABLE_KIND_FOR_RECONCILIATION = frozenset({
+    KIND_INBOX, KIND_SMART, KIND_USER, KIND_SPAM, KIND_TRASH,
+    KIND_SENT, KIND_DRAFT, KIND_ARCHIVE,
+    KIND_RECEIPT, KIND_WRITE_TO_ME, KIND_VIP,
+})
+
+# 폴더 검산에서 제외되는 kind (집계 대상 X)
+NON_FOLDER_KIND = frozenset({
+    KIND_NAV_ACTION, KIND_SMART_GROUP_HEADER, KIND_ALL, KIND_OTHER,
 })
 
 
@@ -94,7 +110,9 @@ def _kind_to_flag(policy: FolderPolicy, kind: str) -> bool:
         KIND_UNKNOWN: policy.include_unknown_folders,
         KIND_OTHER: False,
         KIND_RECEIPT: False,
-        KIND_ALL: False,  # 전체메일은 다른 폴더와 중복 — 별도 정책
+        KIND_ALL: False,
+        KIND_NAV_ACTION: False,            # LNB 메뉴 — 절대 수집 X
+        KIND_SMART_GROUP_HEADER: False,    # 그룹 헤더 — 자식이 본체
     }.get(kind, False)
 
 

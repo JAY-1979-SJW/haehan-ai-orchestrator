@@ -42,6 +42,17 @@ class FolderInfo:
     default_policy_state: str = ""   # folder_policy.evaluate 결과
     adapter_selected: str = ""
     adapter_reason: str = ""
+    # CLOSEOUT_01 추가:
+    is_nav_action: bool = False
+    is_smart_group_header: bool = False
+    raw_kind: str = ""
+    is_support_menu: bool = False
+    folder_evidence_count: int = 0
+    unread_count_evidence: str = ""
+    unread_count_unknown: bool = False
+    requires_click_probe: bool = False
+    count_included_in_sum: bool = True
+    duplicate_count_group: str = ""
 
 
 # LNB 폴더 raw 목록 추출 (selector evidence 포함)
@@ -72,7 +83,8 @@ JSON.stringify((function(){
     if (/svg_archive/.test(cls)) return 'archive';
     if (/svg_depth/.test(cls)) return 'smart';
     if (/svg_folder/.test(cls)) return 'user';
-    if (/svg_smartmail|svg_my/.test(cls)) return 'other';
+    if (/svg_smartmail/.test(cls)) return 'smart_group_header';
+    if (/svg_my/.test(cls)) return 'other';
     return 'unknown';
   }
   function parentGroup(el) {
@@ -96,18 +108,48 @@ JSON.stringify((function(){
     var unread_count = -1;
     var m = unread_text.match(/(\d+)/);
     if (m) unread_count = parseInt(m[1], 10);
+    var unread_count_evidence;
+    if (unread_el && unread_count >= 0) unread_count_evidence = 'explicit_badge';
+    else if (unread_el) unread_count_evidence = 'badge_but_no_number';
+    else unread_count_evidence = 'no_badge_assumed_zero';
+
+    // LNB 메뉴/푸터 분리 — li.mailbox_item.support
+    var itCls = (it.className||'').toString();
+    var isSupport = /\bsupport\b/.test(itCls);
+    var raw_kind = detectKind(cls);
+    var kind = raw_kind;
+    if (isSupport) kind = 'nav_action';
+
+    // 폴더 evidence 다중 평가
+    var ev = {
+      svg_kind_class: raw_kind !== 'unknown',
+      has_unread_badge: !!unread_el,
+      has_href: !!href,
+      in_mailbox_item: /\bmailbox_item\b/.test(itCls),
+      not_support_menu: !isSupport,
+    };
+    var ev_count = 0;
+    for (var k in ev) if (ev[k]) ev_count++;
+
     out.push({
       name: nameClean,
-      kind: detectKind(cls),
+      kind: kind,
+      raw_kind: raw_kind,
       cls: cls.slice(0,120),
       title, href_attr: href || '',
       unread_text, unread_count,
+      unread_count_evidence: unread_count_evidence,
       parent_group: parentGroup(it),
       depth: depthOf(it),
+      is_support_menu: isSupport,
+      folder_evidence_count: ev_count,
       selector_evidence: {
-        item_cls: (it.className||'').toString().slice(0,80),
+        item_cls: itCls.slice(0,80),
+        label_cls: cls.slice(0,80),
         has_unread_el: !!unread_el,
         has_href: !!href,
+        is_support: isSupport,
+        evidence_flags: ev,
       },
     });
   }
@@ -151,11 +193,25 @@ def _classify_flags(f: FolderInfo) -> None:
     f.is_user_folder = (f.kind == fp.KIND_USER)
     f.is_spam = (f.kind == fp.KIND_SPAM)
     f.is_trash = (f.kind == fp.KIND_TRASH)
+    f.is_nav_action = (f.kind == fp.KIND_NAV_ACTION)
+    f.is_smart_group_header = (f.kind == fp.KIND_SMART_GROUP_HEADER)
     f.is_system_folder = f.kind in (
         fp.KIND_INBOX, fp.KIND_SENT, fp.KIND_DRAFT, fp.KIND_SPAM,
         fp.KIND_TRASH, fp.KIND_ARCHIVE, fp.KIND_ALL,
         fp.KIND_RECEIPT, fp.KIND_WRITE_TO_ME, fp.KIND_VIP,
     )
+    # 검산 합산 제외 대상
+    if f.kind in fp.NON_FOLDER_KIND:
+        f.count_included_in_sum = False
+        if f.is_smart_group_header:
+            f.duplicate_count_group = "smart_group_header"
+    # unread DOM 미존재 — 0 으로 보정
+    if f.unread_count_evidence == "no_badge_assumed_zero" and f.unread_count == -1:
+        f.unread_count = 0
+        f.unread_count_unknown = False
+    elif f.unread_count_evidence == "badge_but_no_number":
+        f.unread_count_unknown = True
+        f.requires_click_probe = True
 
 
 def discover_folders(actions: _ActionsP,
@@ -186,6 +242,10 @@ def discover_folders(actions: _ActionsP,
             parent_group=r.get("parent_group", ""),
             depth=int(r.get("depth", 0)),
             selector_evidence=r.get("selector_evidence") or {},
+            raw_kind=r.get("raw_kind", ""),
+            is_support_menu=bool(r.get("is_support_menu", False)),
+            folder_evidence_count=int(r.get("folder_evidence_count", 0)),
+            unread_count_evidence=r.get("unread_count_evidence", ""),
         )
         _classify_flags(f)
         f.folder_key = f"{f.name}::{f.kind}"
