@@ -177,15 +177,153 @@ def test_g2_choose_login_target_has_production_caller():
     assert callers, "G2 보수 후에도 production 호출 0건"
 
 
-# ── 10. POPUP_WAITING 정의는 있으되 미사용 — dead constant 마커 ───────
+# ── 10. G4 ACCEPTED_PLACEHOLDER: POPUP_WAITING 미사용은 의도된 확장 자리 ──
 
-def test_popup_waiting_state_defined_but_unused():
+def test_g4_popup_waiting_accepted_placeholder():
+    """POPUP_WAITING 은 classify 결과로 발화하지 않는 placeholder 상수.
+
+    재감사 시점 결정: 차기 팝업 분류 확장을 위한 자리표시로 ACCEPTED.
+    제거하거나 사용처가 생기면 본 테스트 수정.
+    """
     from local_agent import login_state_detector as d
 
     assert d.POPUP_WAITING == "POPUP_WAITING"
-    src = inspect.getsource(d.classify)
-    # classify 내부에서 반환되지 않음 — 향후 확장 자리표시
-    assert "POPUP_WAITING" not in src
+    classify_src = inspect.getsource(d.classify)
+    assert "POPUP_WAITING" not in classify_src
+
+
+# ── 10b. G3 ACCEPTED: LOGIN_ACTION_STARTED 는 engine 책임 ──────────────
+
+def test_g3_login_action_started_emitted_by_engine_only():
+    """classify() 는 페이지 표면 신호로만 분류하고, ACTION_STARTED 는
+    엔진이 LOGIN_REQUIRED 감지 후 결정 — 책임 분리는 의도된 설계."""
+    from local_agent import login_state_detector as d
+    from local_agent import login_auto_flow as f
+
+    # classify 가 LOGIN_ACTION_STARTED 를 결과 state 로 절대 반환하지 않음.
+    sample_urls = [
+        "https://accounts.google.com/signin",
+        "https://example.com/login",
+        "https://example.com/",
+        "https://accounts.google.com/signin/v2/challenge",
+        "https://accounts.google.com/o/oauth2/auth",
+        "https://mail.google.com/mail/u/0/",
+    ]
+    for url in sample_urls:
+        for prev in ("", d.LOGIN_REQUIRED, d.LOGIN_IN_PROGRESS, d.LOGIN_ACTION_STARTED):
+            r = d.classify(url, title="x", prev_state=prev)
+            assert r.state != d.LOGIN_ACTION_STARTED
+    # engine 측에서 emit 하는 이벤트로만 존재
+    assert hasattr(f, "EVT_LOGIN_ACTION_STARTED")
+
+
+# ── 10c. G5 해소: blog_write / cafe_write 진입부에 precheck 호출 ───────
+
+def test_g5_blog_and_cafe_have_login_precheck():
+    from desktop import local_server as ls
+
+    blog_src = inspect.getsource(ls._run_blog_write)
+    cafe_src = inspect.getsource(ls._run_cafe_write)
+    assert "_login_precheck_and_enqueue(" in blog_src
+    assert "_login_precheck_and_enqueue(" in cafe_src
+
+
+# ── 10d. resume executor 가 engine 에 주입된다 ──────────────────────────
+
+def test_engine_resume_executor_wired_in_local_server():
+    from desktop import local_server as ls
+
+    eng = ls._ensure_engine()
+    assert getattr(eng, "_resume_executor", None) is ls._default_resume_executor
+
+
+# ── 10e. command_resume_failed 이벤트 type 노출 ────────────────────────
+
+def test_command_resume_failed_event_exposed():
+    from local_agent import login_auto_flow as f
+
+    assert hasattr(f, "EVT_COMMAND_RESUME_FAILED")
+    assert f.EVT_COMMAND_RESUME_FAILED == "command_resume_failed"
+
+
+# ── 10f. PendingCommand 확장 필드 존재 ─────────────────────────────────
+
+def test_pending_command_extended_fields_present():
+    from dataclasses import fields
+
+    from local_agent.login_auto_flow import PendingCommand
+
+    names = {fld.name for fld in fields(PendingCommand)}
+    assert {
+        "command_id", "action", "target_id_hint", "enqueued_at",
+        "source_action", "task_id", "original_payload",
+        "login_state_at_enqueue", "resume_status",
+    }.issubset(names)
+
+
+# ── 10g. 종단 통합: precheck → enqueue → LOGGED_IN → resume ────────────
+
+def test_end_to_end_pipeline_stitched(monkeypatch):
+    """blog_write 진입 → LOGIN_REQUIRED 감지 → enqueue → LOGGED_IN 감지 시
+    자동 재개 (resume executor) 까지 한 번에 검증."""
+    import asyncio
+
+    from local_agent import login_state_detector as d
+    from local_agent.browser_realtime_watcher import TargetSnapshot
+    from desktop import local_server as ls
+
+    # watcher 상태: 한 target 이 LOGIN_REQUIRED
+    monkeypatch.setitem(
+        ls._login_watcher_state, "prev_login_states",
+        {"T-1": d.LOGIN_REQUIRED},
+    )
+    monkeypatch.setitem(
+        ls._login_watcher_state, "prev_targets",
+        [TargetSnapshot(
+            target_id="T-1",
+            url="https://accounts.google.com/signin",
+            title="Sign in", seen_at=1.0,
+        )],
+    )
+
+    broadcasts: list[dict] = []
+
+    async def fake_broadcast(msg: dict) -> None:
+        broadcasts.append(msg)
+
+    monkeypatch.setattr(ls, "_broadcast", fake_broadcast)
+
+    # resume executor 호출 흔적 추적
+    resume_calls: list[str] = []
+
+    def fake_resume(cmd):
+        resume_calls.append(cmd.command_id)
+        return True
+
+    eng = ls._ensure_engine()
+    eng._pending = None
+    eng._resume_executor = fake_resume
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(ls._run_blog_write({"title": "T", "body": "B"}))
+
+    # 자동화 실제 실행은 건너뛰고 pending 으로 들어감
+    assert eng.pending_command is not None
+    cmd_id = eng.pending_command.command_id
+
+    # 사용자가 직접 로그인 처리 → LOGGED_IN 감지 시뮬레이션
+    evs = eng.on_target_state(
+        "T-1",
+        d.classify(
+            "https://mail.google.com/mail/u/0/", title="Inbox",
+            body_sample="Sign out",
+        ),
+    )
+    types = [e.type for e in evs]
+    assert "logged_in_detected" in types
+    assert "command_auto_resumed" in types
+    assert resume_calls == [cmd_id]
+    assert eng.pending_command is None
 
 
 # ── 11. CHALLENGE → LOGGED_IN 전이 회로 생존성 ────────────────────────
