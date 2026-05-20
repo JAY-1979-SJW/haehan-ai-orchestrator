@@ -1,0 +1,157 @@
+"""네이버 카페 탐색 — 내 카페 목록 조회 / 카페 구조 파악.
+
+사용:
+    python -m scripts.naver.cafe._runner my-cafes
+    python -m scripts.naver.cafe._runner explore --cafe-url=https://cafe.naver.com/0moo
+"""
+from __future__ import annotations
+
+import json
+import re
+import time
+from pathlib import Path
+
+from playwright.sync_api import Page
+
+from scripts.logger import get_logger
+from scripts.naver.auth import ensure_naver_login
+
+_log = get_logger(__name__)
+
+ROOT = Path(__file__).resolve().parents[3]
+_DATA_DIR = ROOT / "data" / "cafe"
+
+_CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"
+_LIST_URL = "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page=1&userDisplay=1"
+
+
+def get_my_cafes(page: Page) -> list[dict]:
+    """내가 가입한 카페 목록 반환.
+
+    Returns:
+        [{ cafe_id, cafe_name, href, member_count }]
+    """
+    if not ensure_naver_login(page).get("ok"):
+        raise RuntimeError("네이버 로그인 필요")
+
+    _log.info("[explorer] 카페홈 접속: %s", _CAFE_HOME_URL)
+    page.goto(_CAFE_HOME_URL, timeout=30000, wait_until="domcontentloaded")
+    time.sleep(8)
+
+    cafes = page.evaluate(r"""() => {
+        const seen = new Set();
+        const result = [];
+        document.querySelectorAll('a[href]').forEach(a => {
+            const href = a.href || '';
+            const m = href.match(/^https:\/\/cafe\.naver\.com\/([a-zA-Z0-9_]+)$/);
+            if (!m) return;
+            const cafeId = m[1];
+            if (cafeId === 'cafesupport') return;
+            if (seen.has(cafeId)) return;
+            seen.add(cafeId);
+
+            // 카페명: 링크 자신 또는 인접 요소에서 추출
+            const container = a.closest('li, [class*="item"], [class*="cafe"]') || a.parentElement;
+            let name = '';
+            if (container) {
+                const nameEl = container.querySelector('[class*="name"], strong, b, .title');
+                name = (nameEl?.innerText || container.innerText || '').trim().split('\n')[0];
+            }
+            if (!name) name = a.innerText.trim().split('\n')[0];
+
+            // 멤버 수
+            const memberText = container?.innerText || '';
+            const memberM = memberText.match(/멤버수\s*[\n\s]*([\d,]+)/);
+            const member_count = memberM ? parseInt(memberM[1].replace(/,/g, '')) : 0;
+
+            result.push({ cafe_id: cafeId, cafe_name: name, href, member_count });
+        });
+        return result;
+    }""")
+
+    _log.info("[explorer] 내 카페 %d개 확인", len(cafes))
+    return cafes
+
+
+def explore_cafe(page: Page, cafe_url: str) -> dict:
+    """카페 구조 탐색 — 게시판 목록, 회원수, 소개 반환.
+
+    Args:
+        page: Playwright 페이지
+        cafe_url: 카페 홈 URL (예: https://cafe.naver.com/0moo)
+
+    Returns:
+        {
+            cafe_id, cafe_name, clubid, member_count,
+            boards: [{ name, menu_id }],
+            description, created_at
+        }
+    """
+    if not ensure_naver_login(page).get("ok"):
+        raise RuntimeError("네이버 로그인 필요")
+
+    _log.info("[explorer] 카페 탐색: %s", cafe_url)
+    page.goto(cafe_url, timeout=25000, wait_until="domcontentloaded")
+    time.sleep(4)
+
+    info = page.evaluate(r"""() => {
+        // clubid 추출
+        let clubid = '';
+        const scripts = Array.from(document.querySelectorAll('script'));
+        for (const s of scripts) {
+            const m = (s.textContent || '').match(/clubid['":\s]+(\d+)/i);
+            if (m) { clubid = m[1]; break; }
+        }
+        if (!clubid) {
+            const m = location.href.match(/clubid=(\d+)/);
+            if (m) clubid = m[1];
+        }
+
+        // 카페명
+        const cafe_name = (
+            document.querySelector('.cafe-name, .cafetitle, h1.title, [class*="cafe-title"]')?.innerText ||
+            document.title
+        ).trim().split('\n')[0];
+
+        // 회원수
+        const memberText = document.querySelector('[class*="member"], .member-count, .total_count')?.innerText || '';
+        const memberM = memberText.replace(/,/g, '').match(/\d+/);
+        const member_count = memberM ? parseInt(memberM[0]) : 0;
+
+        // 게시판 목록 (좌측 메뉴)
+        const boardEls = document.querySelectorAll(
+            '.cafe-menu-list li a, #menuListBar li a, .MenuList a, [class*="board-list"] a, [class*="menu-list"] a'
+        );
+        const boards = Array.from(boardEls).map(a => {
+            const m = a.href.match(/menuid=(\d+)/);
+            return { name: a.innerText.trim(), menu_id: m ? m[1] : '' };
+        }).filter(b => b.name && b.menu_id);
+
+        // 소개
+        const description = document.querySelector(
+            '.cafe-intro, .intro-text, [class*="description"], [class*="intro"]'
+        )?.innerText?.trim() || '';
+
+        return { cafe_name, clubid, member_count, boards, description };
+    }""")
+
+    # URL에서 cafe_id 추출
+    m = re.search(r"cafe\.naver\.com/([a-zA-Z0-9_]+)", cafe_url)
+    cafe_id = m.group(1) if m else ""
+
+    result = {
+        "cafe_id": cafe_id,
+        "cafe_url": cafe_url,
+        **info,
+    }
+    _log.info("[explorer] 탐색 완료: %s (게시판 %d개)", result.get("cafe_name"), len(info.get("boards", [])))
+    return result
+
+
+def save_my_cafes(cafes: list[dict]) -> str:
+    """내 카페 목록 JSON 저장."""
+    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    path = _DATA_DIR / "my_cafes.json"
+    path.write_text(json.dumps(cafes, ensure_ascii=False, indent=2), encoding="utf-8")
+    _log.info("[explorer] 내 카페 목록 저장: %s", path)
+    return str(path)

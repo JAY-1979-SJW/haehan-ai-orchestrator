@@ -246,3 +246,81 @@ export async function getNewsArticle(
   const params = new URLSearchParams({ url });
   return getJson<NewsArticleDetail>(`/api/v1/external/naver/news-article?${params}`, signal);
 }
+
+// ── 네이버 카페 ──────────────────────────────────────────────────────────────
+
+export interface MyCafe {
+  cafe_id: string;
+  cafe_name: string;
+  href: string;
+  member_count: number;
+}
+
+export interface CafeArticle {
+  article_id: string;
+  title: string;
+  category: string;
+  type: string;
+  date: string;
+  view_count: string;
+  href: string;
+  confidence: string;
+}
+
+export interface CafeSummary {
+  my_cafes_count: number;
+  latest_raw_file: string | null;
+  latest_raw_count: number;
+  latest_classified_file: string | null;
+  latest_classified_count: number;
+  has_report: boolean;
+  latest_report_file: string | null;
+  duration_ms: number;
+}
+
+export async function getCafeSummary(signal?: AbortSignal): Promise<CafeSummary> {
+  return getJson<CafeSummary>("/api/v1/naver-cafe/summary", signal);
+}
+
+export async function getMyCafes(signal?: AbortSignal): Promise<{ cafes: MyCafe[]; count: number }> {
+  return getJson<{ cafes: MyCafe[]; count: number }>("/api/v1/naver-cafe/my-cafes", signal);
+}
+
+export async function getCafeArticles(
+  limit = 50,
+  offset = 0,
+  category?: string,
+  signal?: AbortSignal,
+): Promise<{ total: number; items: CafeArticle[]; source_file: string }> {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (category) params.set("category", category);
+  return getJson(`/api/v1/naver-cafe/articles?${params}`, signal);
+}
+
+export async function getCafeReport(signal?: AbortSignal): Promise<{ report: string; source_file: string }> {
+  return getJson("/api/v1/naver-cafe/report", signal);
+}
+
+export interface CafeTopQuestion { title: string; views: string | number; date: string; href: string }
+export interface CafeCluster {
+  topic: string; size: number; total_views: number; avg_views: number;
+  rep_href: string; similar: string[];
+}
+export interface CafeCategorySummary {
+  category: string; total: number; question_count: number; info_count: number;
+  notice_count: number; resource_count: number; total_views: number;
+  avg_question_views: number;
+  top_questions: CafeTopQuestion[];
+  top_infos: { title: string; views: string | number; date: string }[];
+  keywords: { word: string; count: number }[];
+  question_clusters: CafeCluster[];
+}
+export interface CafeKB {
+  generated_at: string; total: number;
+  categories: CafeCategorySummary[];
+  source_file: string; duration_ms: number;
+}
+
+export async function getCafeKB(signal?: AbortSignal): Promise<CafeKB> {
+  return getJson<CafeKB>("/api/v1/naver-cafe/kb", signal);
+}
