@@ -77,7 +77,16 @@ class CollectionResult:
     notes: list[str] = field(default_factory=list)
     filter_applied: bool = False
     filter_evidence: dict = field(default_factory=dict)
-    mismatch_reason: str = ""  # UI_COUNT_SCOPE_DIFFERENT 등
+    mismatch_reason: str = ""
+    # PAGINATION_DEPTH_01 추가:
+    pagination_strategy_used: str = ""   # "url_page" | "page_button" | "next_arrow" | "mixed"
+    page_records: list[dict] = field(default_factory=list)
+    # 각 page_record: {idx, url, item_count, unread_count, sn_hash, next_state}
+    last_page_evidence: list[str] = field(default_factory=list)
+    # 가능 값: "next_disabled" | "no_new_sn" | "url_page_no_change" |
+    #          "scroll_no_more" | "dom_last_marker"
+    ui_count_scope_evidence: dict = field(default_factory=dict)
+    # {inbox_unread, total_aggregate, smart_folder_breakdown, source}
 
 
 # ── PII 마스킹 (mail_read.body_reader.redact 재사용) ─────────────────
@@ -217,6 +226,130 @@ def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0
     return (bool(method), evidence)
 
 
+# ── 다음 페이지 상태 / lnb breakdown ─────────────────────────────────
+
+NEXT_STATE_EXPR = r"""
+JSON.stringify((function(){
+  var nx = document.querySelector(
+    '.pagination .button_next, .pagination .page_navigation_next, '
+    + '.pagination .next, button.button_next');
+  if (!nx) return {next_present: false, next_disabled: true,
+                   selected_page: ''};
+  var dis = !!nx.disabled || nx.getAttribute('aria-disabled')==='true'
+            || nx.classList.contains('disabled');
+  var sel = document.querySelector('.pagination .page.selected .page_link');
+  var sel_pg = sel ? (sel.innerText||'').trim().replace(/[^0-9]/g,'') : '';
+  var btns = Array.from(document.querySelectorAll(
+    '.pagination .page_list .page .page_link'))
+    .map(b=>(b.innerText||'').trim().replace(/[^0-9]/g,''))
+    .filter(Boolean);
+  return {next_present: true, next_disabled: dis,
+          selected_page: sel_pg, visible_page_buttons: btns};
+})())
+"""
+
+# Naver Mail lnb 의 폴더별 unread count 분해
+LNB_UNREAD_BREAKDOWN_EXPR = r"""
+JSON.stringify((function(){
+  var items = Array.from(document.querySelectorAll('.lnb .mailbox_item, .lnb a'));
+  var breakdown = {};
+  var total_aggregate = -1;
+  var inbox_unread = -1;
+  for (var i = 0; i < items.length; i++) {
+    var el = items[i];
+    var text = (el.innerText||'').replace(/\s+/g,' ').trim();
+    var title = el.getAttribute('title')||'';
+    // "전체 안읽은 메일" — 합산
+    if (title === '전체 안읽은 메일' || /^전체 안읽은/.test(text)) {
+      var m = text.match(/(\d+)/);
+      if (m) total_aggregate = parseInt(m[1], 10);
+    }
+    // 받은메일함 unread
+    if (/받은메일함/.test(text) && /안 ?읽은/.test(text)) {
+      var m2 = text.match(/안 ?읽은 메일 (\d+) ?개/);
+      if (m2) inbox_unread = parseInt(m2[1], 10);
+    }
+    // 스마트메일함 하위 (프로모션/청구·결제/SNS/카페 등)
+    var smart = ['프로모션','청구·결제','SNS','카페','쇼핑','뉴스레터'];
+    for (var s = 0; s < smart.length; s++) {
+      var name = smart[s];
+      if (text.indexOf(name + ' 안 ') >= 0 || text.indexOf(name + '\n안') >= 0
+          || text.startsWith(name + ' 안')) {
+        var m3 = text.match(/안 ?읽은 메일 (\d+) ?개/);
+        if (m3) breakdown[name] = parseInt(m3[1], 10);
+      }
+    }
+  }
+  // toolbar 현재 폴더 unread
+  var tb = document.querySelector('.mail_toolbar_summary');
+  var tb_unread = -1;
+  if (tb) {
+    var m4 = (tb.innerText||'').match(/안읽은 메일\s*(\d+)\s*개/);
+    if (m4) tb_unread = parseInt(m4[1], 10);
+  }
+  // source 판정
+  var source = 'inbox_only';
+  var sum_smart = 0;
+  for (var k in breakdown) sum_smart += breakdown[k];
+  if (total_aggregate > 0 && inbox_unread > 0
+      && total_aggregate > inbox_unread + 5) {
+    source = 'aggregate_with_smart_folders';
+  }
+  return {
+    inbox_unread: inbox_unread,
+    total_aggregate: total_aggregate,
+    smart_folder_breakdown: breakdown,
+    toolbar_current_unread: tb_unread,
+    source: source,
+  };
+})())
+"""
+
+
+def _bump_page_url(current_url: str, page_n: int) -> str:
+    """URL의 page 쿼리를 N으로 설정. ?page=N 직접 이동용."""
+    if not current_url or not current_url.startswith("http"):
+        return ""
+    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+    p = urlparse(current_url)
+    qs = dict(parse_qsl(p.query, keep_blank_values=True))
+    qs["page"] = str(page_n)
+    return urlunparse(p._replace(query=urlencode(qs)))
+
+
+def _advance_page(actions: "Actions", target_idx: int,
+                  current_url: str) -> tuple[bool, str]:
+    """전략 우선순위: url_page → page_button → next_arrow.
+
+    Returns (advanced, strategy_label).
+    """
+    # A. URL?page=N (가장 신뢰)
+    new_url = _bump_page_url(current_url, target_idx)
+    if new_url:
+        actions.navigate(new_url)
+        time.sleep(1.0)
+        ok = actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
+        if ok:
+            return (True, "url_page")
+
+    # B. 번호 버튼
+    clicked = actions.evaluate(_click_page_expr(str(target_idx)))
+    if clicked:
+        return (True, "page_button")
+
+    # C. next-arrow
+    clicked = actions.evaluate(
+        "(function(){var nx=document.querySelector("
+        "'.pagination .button_next:not([disabled]):not(.disabled), "
+        ".pagination .page_navigation_next:not([disabled]):not(.disabled), "
+        ".pagination .next:not([disabled]):not(.disabled)');"
+        "if(nx){nx.click();return true;}return false;})()"
+    )
+    if clicked:
+        return (True, "next_arrow")
+    return (False, "")
+
+
 # ── 페이지네이션 수집 ───────────────────────────────────────────────
 
 def _click_page_expr(pg: str) -> str:
@@ -308,20 +441,31 @@ def collect_inbox(
                 break
         return added
 
+    def _sn_hash(payload: dict) -> str:
+        import hashlib
+        sns = sorted((it.get("sn") or "") for it in (payload or {}).get("items", []))
+        return hashlib.sha1("|".join(sns).encode()).hexdigest()[:12]
+
+    def _next_state() -> dict:
+        return actions.evaluate(NEXT_STATE_EXPR) or {}
+
+    def _record_page(idx: int, payload: dict) -> None:
+        items = (payload or {}).get("items", [])
+        result.page_records.append({
+            "idx": idx,
+            "url": (payload or {}).get("href", ""),
+            "item_count": len(items),
+            "unread_count": sum(1 for r in items if r.get("is_unread")),
+            "sn_hash": _sn_hash(payload),
+            "next_state": _next_state(),
+        })
+
     _absorb(first, "1")
     result.pages_visited.append("1")
+    _record_page(1, first)
 
-    # 페이지네이션: 보이는 번호 버튼 우선 → 그 다음 next-arrow 반복
-    NEXT_CLICK_EXPR = (
-        "(function(){"
-        "var nx=document.querySelector("
-        "'.pagination .page_navigation_next:not([disabled]):not(.disabled), "
-        ".pagination .next:not([disabled]):not(.disabled), "
-        "button.page_navigation_next, a.page_navigation_next');"
-        "if(nx){nx.click();return true;}return false;})()"
-    )
-
-    consecutive_empty = 0
+    strategies_used: set[str] = set()
+    consecutive_no_new = 0
     page_index = 1
     while True:
         if result.warn_limit_reached:
@@ -330,38 +474,121 @@ def collect_inbox(
             result.warn_limit_reached = True
             result.notes.append(f"max_pages={max_pages}_도달")
             break
-        # 다음 페이지로 이동 — 우선 번호 버튼, 없으면 next-arrow
-        next_num = str(page_index + 1)
-        clicked = actions.evaluate(_click_page_expr(next_num))
-        if not clicked:
-            clicked = actions.evaluate(NEXT_CLICK_EXPR)
-        if not clicked:
-            consecutive_empty += 1
-            if consecutive_empty >= 2:
+        target_idx = page_index + 1
+
+        # 다음 페이지 전 sn_hash 기준점
+        sn_hash_before = result.page_records[-1]["sn_hash"]
+        url_before = result.page_records[-1]["url"]
+        nxt_before = result.page_records[-1]["next_state"]
+
+        # next 가 disabled 면 즉시 종료 근거 수집
+        if nxt_before.get("next_disabled") is True:
+            result.last_page_evidence.append("next_disabled")
+
+        advanced, strat = _advance_page(actions, target_idx, url_before)
+        if not advanced:
+            # URL/번호/next 모두 실패 — last_page_evidence 보강
+            if "next_disabled" not in result.last_page_evidence:
+                # 추가 검증: URL ?page=N+1 직접 시도해도 변화 없음
+                trial_url = _bump_page_url(url_before, target_idx)
+                if trial_url:
+                    actions.navigate(trial_url)
+                    time.sleep(1.5)
+                    actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
+                    after = actions.evaluate(LIST_EXPR) or {}
+                    if _sn_hash(after) == sn_hash_before:
+                        result.last_page_evidence.append("url_page_no_change")
+                    else:
+                        # 의외로 변화 — 진행
+                        page_index += 1
+                        added = _absorb(after, str(page_index))
+                        result.pages_visited.append(str(page_index))
+                        _record_page(page_index, after)
+                        strategies_used.add("url_page")
+                        if added == 0:
+                            consecutive_no_new += 1
+                            if consecutive_no_new >= 2:
+                                result.last_page_evidence.append("no_new_sn")
+                                break
+                        else:
+                            consecutive_no_new = 0
+                        continue
+            # 종료 판정 (근거 2개 이상 요구)
+            if len(set(result.last_page_evidence)) >= 2:
                 result.last_page_reached = True
-                break
-            continue
-        page_index += 1
+            else:
+                result.notes.append(
+                    f"insufficient_last_page_evidence:{result.last_page_evidence}"
+                )
+                # 추가 증거 부족 — WARN
+            break
+
+        strategies_used.add(strat)
         time.sleep(1.0)
         actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=8.0)
         more = actions.evaluate(LIST_EXPR) or {}
-        added = _absorb(more, str(page_index))
-        result.pages_visited.append(str(page_index))
-        if added == 0:
-            consecutive_empty += 1
-            if consecutive_empty >= 2:
+
+        # sn_hash 가 이전과 동일 — URL/click 이 실제로는 진행 안 함
+        if _sn_hash(more) == sn_hash_before:
+            # url_page 전략이 실패한 것 → evidence 누적, absorb 하지 않음
+            if strat == "url_page":
+                result.last_page_evidence.append("url_page_no_change")
+            else:
+                result.last_page_evidence.append("no_new_sn")
+            # 종료 판정
+            if len(set(result.last_page_evidence)) >= 2:
                 result.last_page_reached = True
                 break
+            # 단일 근거라도 한 번 더 시도하지 않고 곧장 종료 후보
+            consecutive_no_new += 1
+            if consecutive_no_new >= 2:
+                # 근거 부족이라도 무한 루프 방지 — last_page_reached False 로 두고 종료
+                result.notes.append(
+                    f"loop_safety_break_evidence={list(set(result.last_page_evidence))}"
+                )
+                break
+            continue
+
+        page_index += 1
+        added = _absorb(more, str(page_index))
+        result.pages_visited.append(str(page_index))
+        _record_page(page_index, more)
+        if added == 0:
+            consecutive_no_new += 1
+            if consecutive_no_new >= 2:
+                result.last_page_evidence.append("no_new_sn")
+                if len(set(result.last_page_evidence)) >= 2:
+                    result.last_page_reached = True
+                    break
         else:
-            consecutive_empty = 0
+            consecutive_no_new = 0
+
+    # UI count scope evidence 수집
+    result.ui_count_scope_evidence = actions.evaluate(LNB_UNREAD_BREAKDOWN_EXPR) or {}
+
+    # pagination 전략 정리
+    if len(strategies_used) == 1:
+        result.pagination_strategy_used = next(iter(strategies_used))
+    elif len(strategies_used) > 1:
+        result.pagination_strategy_used = "mixed:" + ",".join(sorted(strategies_used))
+    else:
+        result.pagination_strategy_used = "single_page"
 
     # 종료 — collected_unread 계산
     result.items = list(seen_sns.values())
     result.collected_unread = sum(1 for i in result.items if i.read_state == "UNREAD")
+
+    # last_page_reached 최종 판정
     if not result.warn_limit_reached and not result.last_page_reached:
-        # 자연 종료 — 명시적 last 표시
-        result.last_page_reached = True
-        result.notes.append("자연_종료_(pages_exhausted)")
+        # 자연 종료 시: 근거가 2개 이상이어야 True
+        if len(set(result.last_page_evidence)) >= 2:
+            result.last_page_reached = True
+            result.notes.append("자연_종료_근거2개+")
+        else:
+            result.last_page_reached = False
+            result.notes.append(
+                f"WARN_DYNAMIC_PAGE_MISSED_evidence={result.last_page_evidence}"
+            )
     return result
 
 
@@ -395,4 +622,8 @@ def result_to_dict(r: CollectionResult) -> dict:
         "filter_applied": r.filter_applied,
         "filter_evidence": r.filter_evidence,
         "mismatch_reason": r.mismatch_reason,
+        "pagination_strategy_used": r.pagination_strategy_used,
+        "page_records": r.page_records,
+        "last_page_evidence": r.last_page_evidence,
+        "ui_count_scope_evidence": r.ui_count_scope_evidence,
     }

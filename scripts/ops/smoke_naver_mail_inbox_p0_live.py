@@ -59,7 +59,7 @@ def run_mode(target_id: str, mode: str, out_dir: Path,
 
 
 def main():
-    out_dir = Path("data/inspection/naver_mail_unread_filter_fix")
+    out_dir = Path("data/inspection/naver_mail_unread_pagination_depth")
     out_dir.mkdir(parents=True, exist_ok=True)
     target_id = cdp.ensure_about_blank_target()
     print(f"[boot] target_id={target_id[:12]}")
@@ -80,6 +80,12 @@ def main():
         r.collected_unread = d.get("collected_unread", 0)
         r.filter_applied = d.get("filter_applied", False)
         r.filter_evidence = d.get("filter_evidence", {})
+        r.pagination_strategy_used = d.get("pagination_strategy_used", "")
+        r.page_records = d.get("page_records", [])
+        r.last_page_evidence = d.get("last_page_evidence", [])
+        r.ui_count_scope_evidence = d.get("ui_count_scope_evidence", {})
+        r.last_page_reached = d.get("last_page_reached", False)
+        r.pages_visited = d.get("pages_visited", [])
         r.items = [ic.CollectedItem(**it) for it in d.get("items", [])]
         return r
     r1 = _to_result(list_only)
@@ -94,6 +100,18 @@ def main():
         json.dumps(filter_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\n=== FILTER AUDIT ===")
     print(json.dumps(filter_audit, ensure_ascii=False, indent=2))
+
+    # 새: pagination depth audit
+    from scripts.ops import audit_naver_mail_unread_pagination_depth as audit_depth
+    dv = audit_depth.judge_pagination_depth(r2)
+    depth_audit = {
+        "verdict": dv.code, "passed": dv.passed, "reasons": dv.reasons,
+        "metrics": dv.metrics,
+    }
+    (out_dir / "pagination_depth_audit.json").write_text(
+        json.dumps(depth_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("\n=== PAGINATION DEPTH AUDIT ===")
+    print(json.dumps(depth_audit, ensure_ascii=False, indent=2))
 
     summary = {
         "list_only": {k: list_only.get(k) for k in

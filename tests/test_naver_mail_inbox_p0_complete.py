@@ -53,10 +53,33 @@ class FakeActions:
             "count": len(rows), "items": rows,
         }
 
+    def _build_url(self) -> str:
+        if self.current_page == "1":
+            return self.url
+        # ?page=N 형태
+        sep = "&" if "?" in self.url else "?"
+        return f"{self.url}{sep}page={self.current_page}"
+
     def evaluate(self, expr: str):
         self.call_log.append(f"eval:{expr[:40]}")
+        # NEXT_STATE_EXPR
+        if "next_present" in expr and "next_disabled" in expr:
+            idx = self.page_buttons.index(self.current_page) if self.current_page in self.page_buttons else 0
+            is_last = idx + 1 >= len(self.page_buttons)
+            return {"next_present": not is_last, "next_disabled": is_last,
+                    "selected_page": self.current_page,
+                    "visible_page_buttons": list(self.page_buttons)}
+        # LNB breakdown
+        if "smart_folder_breakdown" in expr or "total_aggregate" in expr and "inbox_unread" in expr:
+            return getattr(self, "_lnb_breakdown", {
+                "inbox_unread": 3, "total_aggregate": 3,
+                "smart_folder_breakdown": {}, "toolbar_current_unread": 3,
+                "source": "inbox_only",
+            })
         if "JSON.stringify" in expr and "li.mail_item" in expr and "rows" in expr:
-            return self._list_payload()
+            p = self._list_payload()
+            p["href"] = self._build_url()
+            return p
         if "page_link" in expr and "querySelectorAll" in expr and ".pagination" in expr and "return btns.map" in expr:
             return list(self.page_buttons)
         if "page_link" in expr and "btns[i].click" in expr:
@@ -102,6 +125,13 @@ class FakeActions:
     def navigate(self, url):
         self.nav_log.append(url)
         self.call_log.append(f"nav:{url[:60]}")
+        # URL ?page=N 으로 current_page 동기화
+        import re as _re
+        m = _re.search(r"[?&]page=(\d+)", url)
+        if m:
+            pg = m.group(1)
+            if pg in self.page_responses:
+                self.current_page = pg
 
     def wait_dom(self, expr, timeout_s=8.0):
         return True
