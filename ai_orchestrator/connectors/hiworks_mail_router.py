@@ -1,0 +1,133 @@
+"""하이웍스 메일 엔드포인트 (/api/v1/hiworks-mail/*).
+
+- GET  /inbox   : POP3 수신 (환경변수 설정 필요)
+- POST /compose : 작성 준비 (브라우저 자동화, dry_run 지원)
+- POST /send    : 발송 (confirmed=True 필수)
+"""
+from __future__ import annotations
+
+import logging
+import time
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
+from ..audit_logger import log_event
+from ..auth import require_role
+
+logger = logging.getLogger(__name__)
+
+hiworks_mail_router = APIRouter(prefix="/hiworks-mail", tags=["hiworks-mail"])
+
+
+class HWMailComposeRequest(BaseModel):
+    to: str
+    subject: str = ""
+    body: str = ""
+    dry_run: bool = True
+
+
+class HWMailSendRequest(BaseModel):
+    confirmed: bool = False
+
+
+@hiworks_mail_router.get("/inbox")
+def api_inbox(
+    limit: int = 20,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """하이웍스 POP3 받은편지함 (환경변수 HIWORKS_MAIL_ACCOUNT/PASSWORD 필요)."""
+    t0 = time.monotonic()
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "hiworks_mail_reader", "hiworks_mail_reader.py"
+        )
+        if not spec or not spec.loader:
+            raise ImportError("hiworks_mail_reader.py 없음")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore[attr-defined]
+        items = mod.fetch_recent_mails(limit=limit)
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        log_event(
+            "HIWORKS_MAIL_INBOX_READ",
+            task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+            note=f"count={len(items)} duration_ms={duration_ms}",
+        )
+        return {"ok": True, "items": items, "count": len(items), "duration_ms": duration_ms}
+    except Exception as e:
+        logger.exception("hiworks inbox error")
+        raise HTTPException(status_code=500, detail=f"하이웍스 수신 오류: {e}")
+
+
+@hiworks_mail_router.post("/compose")
+def api_compose(
+    req: HWMailComposeRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """하이웍스 메일 작성 준비. dry_run=True 이면 브라우저 미실행."""
+    log_event(
+        "HIWORKS_MAIL_COMPOSE_REQUESTED",
+        task_id="-", actor=user["actor"], role=user["role"],
+        decision="ok" if req.dry_run else "pending_browser",
+        note=f"to={req.to} subject={req.subject[:30]} dry_run={req.dry_run}",
+    )
+
+    if req.dry_run:
+        return {
+            "ok": True, "dry_run": True, "to": req.to,
+            "subject": req.subject, "body_preview": req.body[:100],
+            "detail": "dry_run=True: 실행하려면 dry_run=False로 재요청",
+            "requires_send_approval": True,
+        }
+
+    try:
+        from scripts.hiworks.mail import fill_compose
+        from scripts.web_connector import get_page
+        page = get_page()
+        result = fill_compose(page, to=req.to, subject=req.subject, body=req.body)
+        return {
+            "ok": True, "dry_run": False, "to": req.to,
+            "subject": req.subject, "body_preview": req.body[:100],
+            "detail": "작성 완료. 발송하려면 /send 호출.",
+            "requires_send_approval": True, **result,
+        }
+    except Exception as e:
+        logger.exception("hiworks compose error")
+        raise HTTPException(status_code=500, detail=f"작성 실패: {e}")
+
+
+@hiworks_mail_router.post("/send")
+def api_send(
+    req: HWMailSendRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """현재 브라우저에 열린 하이웍스 작성 메일 발송. confirmed=True 필수."""
+    if not req.confirmed:
+        raise HTTPException(status_code=400, detail="confirmed=True 필수")
+
+    log_event(
+        "HIWORKS_MAIL_SEND_REQUESTED",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note="user confirmed send",
+    )
+
+    try:
+        from scripts.hiworks.mail import send_mail
+        from scripts.web_connector import get_page
+        page = get_page()
+        result = send_mail(page)
+        if result.get("success"):
+            log_event(
+                "HIWORKS_MAIL_SEND_SUCCESS",
+                task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+                note=f"detail={result.get('detail','')}",
+            )
+            return {"ok": True, **result}
+        raise HTTPException(status_code=500, detail=result.get("error_msg", "발송 실패"))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("hiworks send error")
+        raise HTTPException(status_code=500, detail=f"발송 오류: {e}")
