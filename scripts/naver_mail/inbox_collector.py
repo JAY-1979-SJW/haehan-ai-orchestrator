@@ -75,6 +75,9 @@ class CollectionResult:
     duplicate_sns: list[str] = field(default_factory=list)
     pages_visited: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    filter_applied: bool = False
+    filter_evidence: dict = field(default_factory=dict)
+    mismatch_reason: str = ""  # UI_COUNT_SCOPE_DIFFERENT 등
 
 
 # ── PII 마스킹 (mail_read.body_reader.redact 재사용) ─────────────────
@@ -116,36 +119,102 @@ def folder_id_from_url(url: str) -> str:
 
 # ── 안읽은 필터 적용 ────────────────────────────────────────────────
 
-UNREAD_FILTER_CLICK_EXPR = r"""
+# ── 안읽은 필터 — 2단계 (드롭다운) + 직접 링크 fallback ─────────────
+
+UNREAD_DIRECT_LINK_EXPR = r"""
 (function(){
-  // 필터 메뉴 열기 후 '안읽은 메일' 항목 클릭
-  // Naver Mail v2 — '안읽은 메일' 텍스트의 버튼/링크 후보
-  const candidates = Array.from(document.querySelectorAll('button, a, li'));
-  const unread = candidates.find(el => {
-    const t = (el.innerText||'').trim();
-    return t === '안읽은 메일' || t.startsWith('안읽은 메일');
-  });
-  if (unread) { unread.click(); return true; }
+  // 1차: 받은편지함 내부 직접 링크 (a.unread_mail_link / a.unread_mail)
+  var a = document.querySelector('a.unread_mail_link, a.unread_mail');
+  if (a && a.offsetParent !== null) { a.click(); return 'direct_link'; }
   return false;
 })()
 """
 
+UNREAD_DROPDOWN_OPEN_EXPR = r"""
+(function(){
+  var btn = document.querySelector('.button_task_wrap.button_filter, .button_filter');
+  if (!btn) return false;
+  btn.click();
+  return true;
+})()
+"""
 
-def apply_unread_filter(actions: Actions, timeout_s: float = 6.0) -> bool:
-    """안읽은 필터 클릭 시도. 적용되면 페이지 1로 가도록 잠시 대기."""
-    rsg.assert_action_allowed("filter_unread")  # whitelisted (not in FORBIDDEN)
-    ok = actions.evaluate(UNREAD_FILTER_CLICK_EXPR)
-    if not ok:
-        # 메뉴가 닫혀있을 수 있음 — '보기' 또는 필터 메뉴 토글 후 재시도 (best-effort)
-        actions.evaluate(
-            "(function(){var b=document.querySelector("
-            "'.button_filter_unread, [class*=\"filter_unread\"], .filter_btn');"
-            "if(b){b.click();return true;}return false;})()"
-        )
-        time.sleep(0.6)
-        ok = actions.evaluate(UNREAD_FILTER_CLICK_EXPR)
+UNREAD_DROPDOWN_CLICK_EXPR = r"""
+(function(){
+  // 드롭다운이 열린 상태에서 '안읽은 메일' context 아이템 클릭
+  var items = Array.from(document.querySelectorAll(
+    '.layer_context.layer_list_filter button.button_context_item, '
+    + '.layer_context button.button_context_item, '
+    + '.layer_list_filter li.context_item, '
+    + '.layer_list_filter button'
+  ));
+  for (var i = 0; i < items.length; i++) {
+    var t = (items[i].innerText || '').trim();
+    if (t === '안읽은 메일') { items[i].click(); return 'dropdown_item'; }
+  }
+  return false;
+})()
+"""
+
+# 필터 적용 marker — '안읽은 메일' 토스트/선택됨 표시 확인용
+FILTER_EVIDENCE_EXPR = r"""
+JSON.stringify((function(){
+  var sel = document.querySelector('.layer_context.layer_list_filter .selected, '
+    + '.lnb_filtered_mailbox .selected, .button_filter[aria-pressed="true"]');
+  var summary = document.querySelector('.mail_toolbar_summary');
+  var summary_txt = summary ? (summary.innerText||'').replace(/\s+/g,' ').slice(0,200) : '';
+  return {
+    has_selected_marker: !!sel,
+    selected_text: sel ? (sel.innerText||'').trim().slice(0,80) : '',
+    summary_text: summary_txt,
+    url: location.href,
+    title: document.title,
+    li_count: document.querySelectorAll('li.mail_item').length,
+  };
+})())
+"""
+
+
+def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0
+                        ) -> tuple[bool, dict]:
+    """안읽은 필터 적용 — 직접 링크 우선, 실패 시 드롭다운 2-step.
+
+    Returns:
+        (ok, evidence) — evidence 는 적용 전후 DOM marker / li count / url / summary
+    """
+    rsg.assert_action_allowed("filter_unread")
+
+    pre = actions.evaluate(FILTER_EVIDENCE_EXPR) or {}
+    method = ""
+    # 1) 직접 링크
+    res = actions.evaluate(UNREAD_DIRECT_LINK_EXPR)
+    if res:
+        method = str(res)
+    else:
+        # 2) 드롭다운 2-step
+        open_ok = actions.evaluate(UNREAD_DROPDOWN_OPEN_EXPR)
+        if open_ok:
+            time.sleep(0.5)
+            click_ok = actions.evaluate(UNREAD_DROPDOWN_CLICK_EXPR)
+            if click_ok:
+                method = str(click_ok)
+    time.sleep(1.0)
     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=timeout_s)
-    return bool(ok)
+    post = actions.evaluate(FILTER_EVIDENCE_EXPR) or {}
+    evidence = {
+        "method": method,
+        "pre": pre,
+        "post": post,
+        "li_count_changed": (
+            isinstance(pre, dict) and isinstance(post, dict)
+            and pre.get("li_count") != post.get("li_count")
+        ),
+        "url_changed": (
+            isinstance(pre, dict) and isinstance(post, dict)
+            and pre.get("url") != post.get("url")
+        ),
+    }
+    return (bool(method), evidence)
 
 
 # ── 페이지네이션 수집 ───────────────────────────────────────────────
@@ -172,8 +241,10 @@ def collect_inbox(
     rsg.assert_mode_valid(mode)
 
     # UNREAD_ONLY: 필터 적용 후 수집
+    filter_applied = False
+    filter_evidence: dict = {}
     if mode == rsg.MODE_UNREAD_ONLY:
-        apply_unread_filter(actions)
+        filter_applied, filter_evidence = apply_unread_filter(actions)
         time.sleep(0.5)
 
     # page 1 evaluate
@@ -187,6 +258,8 @@ def collect_inbox(
         folder_name=folder_name,
         mode=mode,
         unread_count_ui=unread_ui,
+        filter_applied=filter_applied,
+        filter_evidence=filter_evidence,
     )
     seen_sns: dict[str, CollectedItem] = {}
 
@@ -238,35 +311,42 @@ def collect_inbox(
     _absorb(first, "1")
     result.pages_visited.append("1")
 
-    pages = actions.evaluate(PAGES_EXPR) or []
-    if not isinstance(pages, list):
-        pages = []
+    # 페이지네이션: 보이는 번호 버튼 우선 → 그 다음 next-arrow 반복
+    NEXT_CLICK_EXPR = (
+        "(function(){"
+        "var nx=document.querySelector("
+        "'.pagination .page_navigation_next:not([disabled]):not(.disabled), "
+        ".pagination .next:not([disabled]):not(.disabled), "
+        "button.page_navigation_next, a.page_navigation_next');"
+        "if(nx){nx.click();return true;}return false;})()"
+    )
 
-    visited = {"1"}
     consecutive_empty = 0
-    candidates = pages + [str(i) for i in range(2, max_pages + 1)]
-    for pg in candidates:
+    page_index = 1
+    while True:
         if result.warn_limit_reached:
             break
-        if pg in visited:
-            continue
-        visited.add(pg)
-        if len(result.pages_visited) >= max_pages:
+        if page_index >= max_pages:
             result.warn_limit_reached = True
             result.notes.append(f"max_pages={max_pages}_도달")
             break
-        clicked = actions.evaluate(_click_page_expr(pg))
+        # 다음 페이지로 이동 — 우선 번호 버튼, 없으면 next-arrow
+        next_num = str(page_index + 1)
+        clicked = actions.evaluate(_click_page_expr(next_num))
+        if not clicked:
+            clicked = actions.evaluate(NEXT_CLICK_EXPR)
         if not clicked:
             consecutive_empty += 1
             if consecutive_empty >= 2:
                 result.last_page_reached = True
                 break
             continue
+        page_index += 1
         time.sleep(1.0)
         actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=8.0)
         more = actions.evaluate(LIST_EXPR) or {}
-        added = _absorb(more, pg)
-        result.pages_visited.append(pg)
+        added = _absorb(more, str(page_index))
+        result.pages_visited.append(str(page_index))
         if added == 0:
             consecutive_empty += 1
             if consecutive_empty >= 2:
@@ -312,4 +392,7 @@ def result_to_dict(r: CollectionResult) -> dict:
         "duplicate_sns": r.duplicate_sns,
         "pages_visited": r.pages_visited,
         "notes": r.notes,
+        "filter_applied": r.filter_applied,
+        "filter_evidence": r.filter_evidence,
+        "mismatch_reason": r.mismatch_reason,
     }
