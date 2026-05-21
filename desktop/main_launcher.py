@@ -240,9 +240,9 @@ def reset_lock() -> dict:
 # ── lifecycle hooks ──────────────────────────────────────────────────────
 
 def check_consent_hook() -> dict:
-    """동의 상태 확인 hook. 실제 동의 창 표시는 후속 공정.
+    """동의 상태 확인 hook — consent.json 파일 상태 조회 (창 미표시).
 
-    설계서 §6 lifecycle 의 1번 단계. 현재는 consent.json 존재 여부만 확인.
+    설계서 §6 lifecycle 의 1번 단계.
     """
     consent_file = app_root() / "data" / "consent.json"
     if not consent_file.exists():
@@ -256,6 +256,20 @@ def check_consent_hook() -> dict:
         }
     except Exception as e:
         return {"agreed": False, "needs_prompt": True, "source": "error", "error": str(e)}
+
+
+def run_consent_flow(dialog_runner=None) -> bool:
+    """실제 동의 창 실행 — HAEHAN_CONSENT_DIALOG_01.
+
+    webview_app_pywebview._check_consent 를 재사용한다.
+    HAEHAN_SKIP_GUI=1 환경 또는 runner 주입을 통해 테스트 가능.
+    """
+    try:
+        from desktop.webview_app_pywebview import _check_consent
+    except Exception as e:
+        logger.error("consent dialog import 실패: %s", type(e).__name__)
+        return False
+    return bool(_check_consent(dialog_runner=dialog_runner))
 
 
 def load_token_status_hook() -> dict:
@@ -593,6 +607,21 @@ def main(argv: Optional[list[str]] = None) -> int:
     if mode == AppMode.DIAGNOSTICS:
         print_diagnostics(AppMode.DIAGNOSTICS)
         return 0
+
+    # 동의 확인 — HAEHAN_CONSENT_DIALOG_01
+    consent_state = check_consent_hook()
+    if not consent_state.get("agreed"):
+        skip_gui_env = os.environ.get("HAEHAN_SKIP_GUI", "").strip() in ("1", "true", "True")
+        if skip_gui_env:
+            # CI/test 환경: 자동 거부 → 진입 차단
+            logger.error("consent 미동의 + HAEHAN_SKIP_GUI=1 → 진입 차단")
+            print("HaehanAI 동의가 필요합니다.", file=sys.stderr)
+            return 4
+        agreed = run_consent_flow()
+        if not agreed:
+            logger.info("사용자가 동의를 거부하여 종료합니다.")
+            print("HaehanAI 동의가 필요합니다.", file=sys.stderr)
+            return 4
 
     # Tray / Admin — 락 획득 필요
     lock = acquire_lock()
