@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { RefreshCw, Bot, Cpu, Play, Square, X, Camera, Globe, Loader2, AlertCircle } from 'lucide-react'
 import { PanelShell, EmptyState, HelpSection, HelpTitle, HelpList, HelpNote, StatusCard } from './PanelShell'
 import { useAppStore } from '@/store/appStore'
 import { wsClient } from '@/lib/ws'
 import { cn } from '@/lib/utils'
+import { localAgentApi, type LocalAgentHealth } from '@/api/localAgent'
 
 // ── 작업 큐 ──────────────────────────────────────────────────────────────────
 export function TaskQueuePanel() {
@@ -139,26 +140,228 @@ export function EumPanel() {
 }
 
 // ── 브라우저 상태 ─────────────────────────────────────────────────────────────
+// ── 브라우저 상태 ─────────────────────────────────────────────────────────────
 export function BrowserPanel() {
-  const { browserStatus } = useAppStore()
+  const { browserStatus, browserTabsState, setBrowserTabsState } = useAppStore()
+  const [statusLoading, setStatusLoading] = useState(false)
+  const [startLoading, setStartLoading]   = useState(false)
+  const [quitLoading, setQuitLoading]     = useState(false)
+  const [tabLoading, setTabLoading]       = useState(false)
+  const [lastTs, setLastTs]               = useState(0)
+
+  const requestStatus = useCallback(() => {
+    setStatusLoading(true)
+    wsClient.send({ action: 'browser_status' })
+    setTimeout(() => { setStatusLoading(false); setLastTs(Date.now()) }, 800)
+  }, [])
+
+  const requestTabs = useCallback(() => {
+    setTabLoading(true)
+    setBrowserTabsState({ status: 'loading' })
+    wsClient.send({ action: 'tab_list' })
+    setTimeout(() => setTabLoading(false), 1000)
+  }, [setBrowserTabsState])
+
+  useEffect(() => { requestStatus(); requestTabs() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleStart() {
+    setStartLoading(true)
+    wsClient.send({ action: 'browser_start' })
+    setTimeout(() => { setStartLoading(false); requestStatus() }, 1500)
+  }
+
+  function handleQuit() {
+    setQuitLoading(true)
+    wsClient.send({ action: 'browser_quit' })
+    setTimeout(() => { setQuitLoading(false); requestStatus(); setBrowserTabsState({ status: 'idle', tabs: [] }) }, 1500)
+  }
+
+  function handleTabClose(tab_id: string) {
+    wsClient.send({ action: 'tab_close', tab_id })
+    setTimeout(() => requestTabs(), 600)
+  }
+
+  const alive = browserStatus.cdp_alive === true
+  const statusLabel = alive ? '실행 중' : browserStatus.cdp_alive === false ? '정지' : '확인 필요'
+  const statusColor = alive ? 'text-emerald-600' : 'text-red-500'
+
   return (
-    <PanelShell title="브라우저 상태" desc="AI 브라우저가 백그라운드에서 실행되며 작업 결과를 대화창으로 보고합니다.">
-      <StatusCard rows={[
-        { label: 'CDP 포트',  value: browserStatus.port  || '—', id: 'bs-port' },
-        { label: '현재 URL',  value: browserStatus.url   || '—', id: 'bs-url'  },
-        { label: '작업 상태', value: browserStatus.state || '대기', id: 'bs-state' },
-      ]} />
-      <HelpNote>브라우저는 화면에 표시되지 않으며, 작업 완료 시 대화창으로 결과를 보고합니다.</HelpNote>
+    <PanelShell title="브라우저 상태" desc="AI CDP 브라우저의 실행 상태와 탭 목록을 실시간으로 확인하고 제어합니다.">
+      {/* 상태 카드 */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Globe size={14} className={alive ? 'text-emerald-500' : 'text-zinc-400'} />
+          <span className={`text-[13px] font-semibold ${statusColor}`}>{statusLabel}</span>
+          {browserStatus.tab_count !== undefined && (
+            <span className="text-[11px] text-zinc-400 ml-1">탭 {browserStatus.tab_count}개</span>
+          )}
+          {browserStatus.message_ko && (
+            <span className="text-[11px] text-zinc-400 ml-2">{browserStatus.message_ko}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={requestStatus}
+            disabled={statusLoading}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-[11px] text-zinc-600 hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+          >
+            <RefreshCw size={11} className={statusLoading ? 'animate-spin' : ''} />
+            새로고침
+          </button>
+          <button
+            onClick={handleStart}
+            disabled={startLoading || alive}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white text-[11px] hover:bg-emerald-600 disabled:opacity-40 transition-colors"
+          >
+            {startLoading ? <Loader2 size={11} className="animate-spin" /> : <Play size={11} />}
+            시작
+          </button>
+          <button
+            onClick={handleQuit}
+            disabled={quitLoading || !alive}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500 text-white text-[11px] hover:bg-red-600 disabled:opacity-40 transition-colors"
+          >
+            {quitLoading ? <Loader2 size={11} className="animate-spin" /> : <Square size={11} />}
+            종료
+          </button>
+        </div>
+      </div>
+
+      {browserStatus.error && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-[12px] text-red-600 mb-3">
+          <AlertCircle size={13} /> {browserStatus.error}
+        </div>
+      )}
+
+      {lastTs > 0 && (
+        <p className="text-[11px] text-zinc-400 mb-4">마지막 조회: {new Date(lastTs).toLocaleTimeString('ko')}</p>
+      )}
+
+      {/* 탭 목록 */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[12px] font-semibold text-zinc-700">열린 탭</span>
+        <button
+          onClick={requestTabs}
+          disabled={tabLoading}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw size={10} className={tabLoading ? 'animate-spin' : ''} /> 새로고침
+        </button>
+      </div>
+
+      {browserTabsState.status === 'loading' && (
+        <div className="flex items-center gap-2 text-[12px] text-zinc-400 py-3">
+          <Loader2 size={13} className="animate-spin" /> 탭 목록 로딩 중…
+        </div>
+      )}
+      {browserTabsState.status === 'done' && browserTabsState.tabs.length === 0 && (
+        <EmptyState title="열린 탭 없음" desc="브라우저를 시작하거나 탭 목록을 새로고침하세요." />
+      )}
+      {browserTabsState.tabs.length > 0 && (
+        <div className="space-y-1.5">
+          {browserTabsState.tabs.map(tab => (
+            <div
+              key={tab.tab_id}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-100 bg-white hover:bg-zinc-50 group"
+            >
+              <Globe size={12} className="text-zinc-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] font-medium text-zinc-800 truncate">{tab.title || '(제목 없음)'}</div>
+                <div className="text-[10px] text-zinc-400 truncate">{tab.url}</div>
+              </div>
+              <button
+                onClick={() => handleTabClose(tab.tab_id)}
+                className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-5 h-5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                title="탭 닫기"
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4">
+        <HelpNote>CDP 브라우저는 화면에 표시되지 않으며, AI가 자동으로 조작합니다. 작업 완료 시 대화창으로 결과를 보고합니다.</HelpNote>
+      </div>
     </PanelShell>
   )
 }
 
 // ── 스크린샷 ──────────────────────────────────────────────────────────────────
 export function ScreenshotPanel() {
+  const { screenshotState, setScreenshotState } = useAppStore()
+
+  const requestScreenshot = useCallback(() => {
+    setScreenshotState({ status: 'loading', error: '' })
+    wsClient.send({ action: 'screenshot' })
+  }, [setScreenshotState])
+
+  useEffect(() => { requestScreenshot() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { status, data, format, error, ts } = screenshotState
+
   return (
-    <PanelShell title="스크린샷" desc="AI 브라우저 작업 중 캡처된 화면입니다.">
-      <EmptyState title="캡처된 이미지가 없습니다" desc="AI 브라우저가 작업을 수행하면 캡처 이미지가 이곳에 저장됩니다." />
-    </PanelShell>
+    <div className="flex flex-col h-full bg-[#FAFAFA]">
+      <div className="flex items-center justify-between px-8 py-5 border-b border-zinc-200 flex-shrink-0">
+        <div>
+          <h2 className="text-[17px] font-bold text-zinc-900 mb-0.5">스크린샷</h2>
+          <p className="text-[12px] text-zinc-400">
+            {ts ? `마지막 캡처: ${new Date(ts).toLocaleTimeString('ko')}` : 'AI 브라우저 현재 화면'}
+          </p>
+        </div>
+        <button
+          onClick={requestScreenshot}
+          disabled={status === 'loading'}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-600 hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+        >
+          {status === 'loading'
+            ? <Loader2 size={12} className="animate-spin" />
+            : <Camera size={12} />
+          }
+          캡처
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-auto p-6">
+        {status === 'idle' && (
+          <EmptyState title="캡처된 이미지가 없습니다" desc="캡처 버튼을 누르거나 브라우저가 실행 중인지 확인하세요." />
+        )}
+        {status === 'loading' && (
+          <div className="flex items-center justify-center h-64 gap-2 text-[13px] text-zinc-400">
+            <Loader2 size={16} className="animate-spin" /> 스크린샷 캡처 중…
+          </div>
+        )}
+        {status === 'error' && (
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <AlertCircle size={32} className="text-red-400" />
+            <p className="text-[13px] text-red-500 text-center max-w-xs">{error || '캡처 실패'}</p>
+            <button
+              onClick={requestScreenshot}
+              className="px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-600 text-[12px] hover:bg-zinc-200 transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
+        {status === 'done' && data && (
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={`data:image/${format};base64,${data}`}
+              alt="브라우저 스크린샷"
+              className="max-w-full rounded-lg border border-zinc-200 shadow-sm"
+              style={{ maxHeight: 'calc(100vh - 240px)' }}
+            />
+            <p className="text-[11px] text-zinc-400">
+              캡처 시각: {ts ? new Date(ts).toLocaleTimeString('ko') : '—'}
+            </p>
+          </div>
+        )}
+        {status === 'done' && !data && (
+          <EmptyState title="이미지 데이터 없음" desc="브라우저가 실행 중인지 확인하세요." />
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -378,6 +581,203 @@ function SettingsField({ label, help, children }: { label: string; help?: string
   )
 }
 
+// ── 로컬 AI 에이전트 ──────────────────────────────────────────────────────────
+
+type AgentProvider = '서버 AI' | '로컬 AI'
+type RunStatus = 'idle' | 'running' | 'done' | 'error'
+
+export function LocalAgentPanel() {
+  const [provider, setProvider] = useState<AgentProvider>('서버 AI')
+  const [prompt, setPrompt] = useState('')
+  const [model, setModel] = useState('claude-sonnet-4-5')
+  const [useMcp, setUseMcp] = useState(true)
+  const [status, setStatus] = useState<RunStatus>('idle')
+  const [result, setResult] = useState('')
+  const [providerInfo, setProviderInfo] = useState('')
+  const [health, setHealth] = useState<LocalAgentHealth | null>(null)
+  const [healthLoading, setHealthLoading] = useState(false)
+
+  // 로컬 AI health 조회
+  async function loadHealth() {
+    setHealthLoading(true)
+    try {
+      const h = await localAgentApi.health()
+      setHealth(h)
+    } catch {
+      setHealth(null)
+    } finally {
+      setHealthLoading(false)
+    }
+  }
+
+  useEffect(() => { loadHealth() }, [])
+
+  async function handleRun() {
+    if (!prompt.trim()) return
+    setStatus('running')
+    setResult('')
+    setProviderInfo('')
+
+    try {
+      if (provider === '로컬 AI') {
+        // 로컬 AI: local_server(8765)/local-agent/run
+        const res = await localAgentApi.run({ prompt: prompt.trim(), model, use_mcp: useMcp })
+        setResult(res.result)
+        setProviderInfo(`provider: ${res.provider} | model: ${res.model}`)
+        setStatus(res.ok ? 'done' : 'error')
+      } else {
+        // 서버 AI: /api/v1/agent/run (프록시 → cad.haehan-ai.kr)
+        const res = await fetch('http://127.0.0.1:8765/api/v1/agent/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt.trim(), model }),
+        })
+        const data = await res.json()
+        setResult(data.result ?? data.detail ?? JSON.stringify(data))
+        setProviderInfo(`provider: 서버 AI | model: ${model}`)
+        setStatus(res.ok ? 'done' : 'error')
+      }
+    } catch (e: unknown) {
+      setResult(`요청 실패: ${e instanceof Error ? e.message : String(e)}`)
+      setStatus('error')
+    }
+  }
+
+  function handleReset() {
+    setStatus('idle')
+    setResult('')
+    setProviderInfo('')
+    setPrompt('')
+  }
+
+  const isBusy = status === 'running'
+
+  return (
+    <PanelShell title="로컬 AI 에이전트" desc="로컬 AI(Anthropic SDK + MCP) 또는 서버 AI를 선택하여 CAD 물량산출 에이전트를 실행합니다.">
+      <div className="space-y-5">
+
+        {/* provider 선택 */}
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">실행 위치</p>
+          <div className="flex gap-2">
+            {(['서버 AI', '로컬 AI'] as AgentProvider[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setProvider(p)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 rounded-lg border text-[13px] font-semibold transition-colors',
+                  provider === p
+                    ? 'bg-[#f97316] text-white border-[#f97316]'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                )}
+              >
+                {p === '로컬 AI' ? <Cpu size={14} /> : <Bot size={14} />}
+                {p}
+              </button>
+            ))}
+          </div>
+          {provider === '로컬 AI' && (
+            <div className="mt-2">
+              {healthLoading ? (
+                <p className="text-[11px] text-zinc-400">상태 확인 중…</p>
+              ) : health ? (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className={cn('text-[10px] px-2 py-0.5 rounded border font-semibold',
+                    health.available ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'
+                  )}>
+                    {health.available ? '로컬 AI 가용' : '로컬 AI 불가'}
+                  </span>
+                  {health.anthropic_sdk && <span className="text-[10px] px-2 py-0.5 rounded border bg-zinc-50 text-zinc-600 border-zinc-200">Anthropic SDK</span>}
+                  {health.api_key_set && <span className="text-[10px] px-2 py-0.5 rounded border bg-zinc-50 text-zinc-600 border-zinc-200">API Key 설정됨</span>}
+                  {health.claude_cli && <span className="text-[10px] px-2 py-0.5 rounded border bg-zinc-50 text-zinc-600 border-zinc-200">Claude CLI</span>}
+                  {health.mcp_server_found && <span className="text-[10px] px-2 py-0.5 rounded border bg-zinc-50 text-zinc-600 border-zinc-200">MCP 서버 발견</span>}
+                </div>
+              ) : (
+                <p className="text-[11px] text-red-500">로컬 서버(8765) 미연결</p>
+              )}
+              {/* MCP 사용 토글 */}
+              <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit">
+                <input type="checkbox" checked={useMcp} onChange={e => setUseMcp(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-zinc-300 accent-[#f97316]" />
+                <span className="text-[12px] text-zinc-600">CAD MCP 서버 연결</span>
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* 모델 선택 */}
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">모델</label>
+          <select
+            value={model} onChange={e => setModel(e.target.value)}
+            className="w-full max-w-xs border border-zinc-200 rounded-lg px-3 py-2 text-[13px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#f97316]/30"
+          >
+            <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+            <option value="claude-opus-4-5">claude-opus-4-5</option>
+            <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+          </select>
+        </div>
+
+        {/* 프롬프트 입력 */}
+        <div>
+          <label className="block text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">프롬프트</label>
+          <textarea
+            value={prompt} onChange={e => setPrompt(e.target.value)}
+            placeholder={"CAD 물량산출 작업을 입력하세요.\n예: 서부청소년 프로젝트 현재 상태 확인해줘"}
+            rows={5}
+            disabled={isBusy}
+            className="w-full border border-zinc-200 rounded-lg px-3 py-2.5 text-[13px] text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#f97316]/30 resize-y disabled:bg-zinc-50"
+          />
+        </div>
+
+        {/* 실행 버튼 */}
+        {(status === 'idle' || status === 'error') && (
+          <button
+            onClick={handleRun}
+            disabled={!prompt.trim()}
+            className="w-full py-2.5 rounded-lg bg-[#f97316] text-white text-[13px] font-semibold hover:bg-[#ea580c] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {provider} 실행
+          </button>
+        )}
+
+        {/* 실행 중 */}
+        {isBusy && (
+          <div className="flex items-center gap-3 py-4">
+            <RefreshCw size={16} className="animate-spin text-[#f97316]" />
+            <span className="text-[13px] text-zinc-600">{provider} 처리 중… (최대 120초)</span>
+          </div>
+        )}
+
+        {/* 결과 */}
+        {(status === 'done' || status === 'error') && (
+          <div className={cn('rounded-lg border p-4 space-y-2',
+            status === 'done' ? 'bg-zinc-50 border-zinc-200' : 'bg-red-50 border-red-200'
+          )}>
+            <div className="flex items-center justify-between">
+              <p className={cn('text-[11px] font-semibold',
+                status === 'done' ? 'text-zinc-500' : 'text-red-600'
+              )}>
+                {status === 'done' ? '실행 완료' : '오류 발생'}
+                {providerInfo && ` — ${providerInfo}`}
+              </p>
+              <button onClick={handleReset}
+                className="text-[11px] text-zinc-400 underline hover:text-zinc-600">
+                초기화
+              </button>
+            </div>
+            <pre className="whitespace-pre-wrap text-[12px] text-zinc-800 font-mono leading-relaxed max-h-96 overflow-y-auto scrollbar-thin">
+              {result}
+            </pre>
+          </div>
+        )}
+
+      </div>
+    </PanelShell>
+  )
+}
+
+
 // ── 카페 글쓰기 ───────────────────────────────────────────────────────────────
 const CAFE_BOARDS = [
   '건설질문&경험자의견',
@@ -555,6 +955,393 @@ export function CafeWritePanel() {
             </span>
           </div>
         )}
+      </div>
+    </PanelShell>
+  )
+}
+
+// ── 카페 목록 / 게시글 조회 ───────────────────────────────────────────────────
+export function CafeListPanel() {
+  const { cafeListState, cafePostsState, cafeReadState } = useAppStore()
+  const [selectedCafe, setSelectedCafe] = useState<{ name: string; url: string } | null>(null)
+  const [selectedPost, setSelectedPost] = useState<{ title: string; link: string } | null>(null)
+
+  function loadCafes() {
+    useAppStore.getState().setCafeListState({ status: 'loading', cafes: [], error: '' })
+    wsClient.send({ action: 'naver_cafe_list' })
+  }
+  function loadPosts(url: string) {
+    useAppStore.getState().setCafePostsState({ status: 'loading', cafe_url: url, posts: [], error: '' })
+    wsClient.send({ action: 'naver_cafe_posts', cafe_url: url })
+  }
+  function readPost(link: string, title: string) {
+    setSelectedPost({ title, link })
+    useAppStore.getState().setCafeReadState({ status: 'loading', post: null, error: '' })
+    wsClient.send({ action: 'naver_cafe_read', post_url: link })
+  }
+
+  return (
+    <PanelShell title="카페 목록" desc="내가 가입한 네이버 카페 목록과 게시글을 조회합니다.">
+      <div className="space-y-5">
+
+        {/* 카페 목록 */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">내 카페</span>
+            <button onClick={loadCafes} disabled={cafeListState.status === 'loading'}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#F97316] text-white text-[11px] font-semibold hover:bg-[#ea580c] disabled:opacity-40 transition-colors">
+              <RefreshCw size={11} className={cafeListState.status === 'loading' ? 'animate-spin' : ''} />
+              {cafeListState.status === 'loading' ? '조회 중…' : '카페 목록 가져오기'}
+            </button>
+          </div>
+          {cafeListState.status === 'error' && <p className="text-[12px] text-red-500">{cafeListState.error}</p>}
+          {cafeListState.cafes.length > 0 && (
+            <div className="grid grid-cols-2 gap-1.5">
+              {cafeListState.cafes.map(c => (
+                <button key={c.cafe_id}
+                  onClick={() => { setSelectedCafe({ name: c.name, url: c.url }); setSelectedPost(null); loadPosts(c.url) }}
+                  className={cn(
+                    'text-left px-3 py-2 rounded-lg border text-[12px] transition-colors',
+                    selectedCafe?.url === c.url
+                      ? 'border-[#F97316] bg-orange-50 text-[#F97316] font-semibold'
+                      : 'border-zinc-200 hover:bg-zinc-50 text-zinc-700'
+                  )}>
+                  <div className="font-medium truncate">{c.name}</div>
+                  <div className="text-[10px] text-zinc-400 truncate">{c.cafe_id}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          {cafeListState.status === 'idle' && cafeListState.cafes.length === 0 && (
+            <EmptyState title="조회 버튼을 클릭하세요" desc="네이버에 로그인된 브라우저에서 내 카페 목록을 가져옵니다." />
+          )}
+        </div>
+
+        {/* 게시글 목록 */}
+        {selectedCafe && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">{selectedCafe.name} 최근 글</span>
+              <button onClick={() => loadPosts(selectedCafe.url)} disabled={cafePostsState.status === 'loading'}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[11px] text-zinc-500 hover:bg-zinc-100 disabled:opacity-40">
+                <RefreshCw size={10} className={cafePostsState.status === 'loading' ? 'animate-spin' : ''} />새로고침
+              </button>
+            </div>
+            {cafePostsState.status === 'loading' && (
+              <div className="flex items-center gap-2 py-3 text-zinc-400 text-[12px]"><RefreshCw size={13} className="animate-spin" />게시글 로딩 중…</div>
+            )}
+            {cafePostsState.posts.length > 0 && (
+              <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden">
+                {cafePostsState.posts.map((p, i) => (
+                  <button key={i} onClick={() => readPost(p.link, p.title)}
+                    className="flex items-start gap-2 w-full px-3 py-2 hover:bg-zinc-50 text-left transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12.5px] text-zinc-900 font-medium truncate">{p.title}</div>
+                      <div className="text-[10px] text-zinc-400">{p.author} · {p.date}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {cafePostsState.status === 'error' && <p className="text-[12px] text-red-500">{cafePostsState.error}</p>}
+          </div>
+        )}
+
+        {/* 글 본문 */}
+        {selectedPost && (
+          <div className="border border-zinc-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between">
+              <span className="text-[12px] font-semibold text-zinc-700 truncate flex-1">{selectedPost.title}</span>
+              <button onClick={() => setSelectedPost(null)} className="ml-2 text-[11px] text-zinc-400 hover:text-zinc-600 flex-shrink-0">✕</button>
+            </div>
+            {cafeReadState.status === 'loading' && (
+              <div className="flex items-center gap-2 p-4 text-zinc-400 text-[12px]"><RefreshCw size={13} className="animate-spin" />본문 로딩 중…</div>
+            )}
+            {cafeReadState.post && cafeReadState.status === 'done' && (
+              <div className="px-4 py-3 space-y-2">
+                <div className="text-[11px] text-zinc-400">{cafeReadState.post.author} · {cafeReadState.post.date} · 댓글 {cafeReadState.post.comment_count}개</div>
+                <p className="text-[12.5px] text-zinc-700 leading-relaxed whitespace-pre-wrap">{cafeReadState.post.body || '(본문 없음)'}</p>
+              </div>
+            )}
+            {cafeReadState.status === 'error' && <p className="px-4 py-3 text-[12px] text-red-500">{cafeReadState.error}</p>}
+          </div>
+        )}
+      </div>
+    </PanelShell>
+  )
+}
+
+// ── EUM 대시보드 ──────────────────────────────────────────────────────────────
+export function EumDashboardPanel() {
+  return (
+    <PanelShell title="EUM 대시보드" desc="건설근로자공제회 단말기 업무 분석 및 홍보 메일 초안을 생성합니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          'EUM 업무 현황 분석해줘',
+          '통신단절 단말기 조치 목록 알려줘',
+          '신규 현장 홍보 메일 초안 만들어줘',
+          '임대 종료 예정 현장 알려줘',
+        ]} />
+        <HelpNote>eum_business_dashboard.py 분석 결과를 AI가 해석하여 답변합니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 나라장터 G2B ──────────────────────────────────────────────────────────────
+export function G2bPanel() {
+  return (
+    <PanelShell title="나라장터" desc="조달청 나라장터(G2B) 입찰공고 조회 및 다운로드 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '오늘 전기 입찰공고 조회해줘',
+          '통신 관련 공고 검색해줘',
+          '입찰공고 첨부파일 다운로드해줘',
+          '최근 낙찰 결과 알려줘',
+        ]} />
+        <HelpNote>입찰·전자서명·투찰은 AI가 자동 실행하지 않습니다. 조회 전용입니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 가비아 ────────────────────────────────────────────────────────────────────
+export function GabiaPanel() {
+  return (
+    <PanelShell title="가비아" desc="가비아 도메인 현황 조회 및 관리 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '도메인 만료일 확인해줘',
+          '등록된 도메인 목록 보여줘',
+          'DNS 설정 현황 알려줘',
+        ]} />
+        <HelpNote>도메인 이전·결제는 AI가 자동 실행하지 않습니다. 조회 전용입니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 히웍스 메일 ───────────────────────────────────────────────────────────────
+export function HiworksMailPanel() {
+  return (
+    <PanelShell title="히웍스 메일" desc="히웍스 업무 메일 조회 및 발송 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '오늘 받은 메일 요약해줘',
+          '미확인 메일 알려줘',
+          '○○에게 메일 초안 작성해줘',
+          '메일 수신함 검색: 키워드',
+        ]} />
+        <HelpNote>메일 발송 전에는 반드시 AI가 내용을 보여주고 사용자 승인을 받습니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 히웍스 캘린더 ─────────────────────────────────────────────────────────────
+export function HiworksCalPanel() {
+  return (
+    <PanelShell title="히웍스 캘린더" desc="히웍스 일정 조회 및 등록 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '이번 주 일정 알려줘',
+          '다음 주 회의 일정 보여줘',
+          '일정 추가해줘: 6월 1일 오후 2시 팀 회의',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── Gmail ─────────────────────────────────────────────────────────────────────
+export function GmailPanel() {
+  return (
+    <PanelShell title="Gmail" desc="Gmail 수신함 조회 및 메일 작성 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '오늘 Gmail 확인해줘',
+          '미읽음 메일 요약해줘',
+          '○○에게 Gmail 답장 초안 작성해줘',
+        ]} />
+        <HelpNote>발송 전에는 반드시 사용자 승인을 받습니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── Google Drive ──────────────────────────────────────────────────────────────
+export function GdrivePanel() {
+  return (
+    <PanelShell title="Google Drive" desc="Google Drive 파일 목록 조회 및 업로드 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '드라이브 최근 파일 보여줘',
+          '○○ 폴더 목록 알려줘',
+          '파일 검색: 키워드',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── Google Sheets ─────────────────────────────────────────────────────────────
+export function GsheetsPanel() {
+  return (
+    <PanelShell title="Google Sheets" desc="Google 스프레드시트 데이터 조회 및 업데이트 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '○○ 시트 데이터 가져와줘',
+          '스프레드시트 특정 셀 값 알려줘',
+          '시트에 데이터 추가해줘',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── Google Calendar ───────────────────────────────────────────────────────────
+export function GcalendarPanel() {
+  return (
+    <PanelShell title="Google Calendar" desc="Google 캘린더 일정 조회 및 등록 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '이번 주 구글 캘린더 일정 알려줘',
+          '일정 추가: 내일 오전 10시 미팅',
+          '이번 달 전체 일정 요약해줘',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── Google Docs ───────────────────────────────────────────────────────────────
+export function GdocsPanel() {
+  return (
+    <PanelShell title="Google Docs" desc="Google 문서 조회 및 편집 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '최근 Google Docs 목록 보여줘',
+          '○○ 문서 내용 요약해줘',
+          '문서에 내용 추가해줘',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 네이버 메일 ───────────────────────────────────────────────────────────────
+export function NaverMailPanel() {
+  return (
+    <PanelShell title="네이버 메일" desc="네이버 메일 수신함 조회 및 발송 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '오늘 네이버 메일 확인해줘',
+          '미읽음 메일 요약해줘',
+          '○○에게 네이버 메일 초안 작성해줘',
+        ]} />
+        <HelpNote>발송 전에는 반드시 사용자 승인을 받습니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 유튜브 ────────────────────────────────────────────────────────────────────
+export function YoutubePanel() {
+  return (
+    <PanelShell title="유튜브" desc="유튜브 채널 관리 및 동영상 업로드 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '채널 최근 동영상 목록 보여줘',
+          '동영상 업로드 준비해줘',
+          '채널 통계 알려줘',
+        ]} />
+        <HelpNote>업로드 전에는 반드시 사용자 승인을 받습니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 스마트스토어 ──────────────────────────────────────────────────────────────
+export function SmartstorePanel() {
+  return (
+    <PanelShell title="스마트스토어" desc="네이버 스마트스토어 주문·재고·상품 관리 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '오늘 주문 현황 알려줘',
+          '미처리 주문 목록 보여줘',
+          '재고 부족 상품 알려줘',
+          '상품 정보 수정해줘',
+        ]} />
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 카카오 ────────────────────────────────────────────────────────────────────
+export function KakaoPanel() {
+  return (
+    <PanelShell title="카카오" desc="카카오 개발자 콘솔 및 카카오톡 채널 관리 자동화입니다.">
+      <HelpSection>
+        <HelpTitle>사용 방법</HelpTitle>
+        <HelpList items={[
+          '카카오 앱 현황 확인해줘',
+          '카카오톡 채널 메시지 발송 초안 만들어줘',
+          'API 키 현황 알려줘',
+        ]} />
+        <HelpNote>메시지 발송 전에는 반드시 사용자 승인을 받습니다.</HelpNote>
+      </HelpSection>
+    </PanelShell>
+  )
+}
+
+// ── 원격 접속 설정 ────────────────────────────────────────────────────────────
+export function RemoteAccessPanel() {
+  const [info, setInfo] = useState<{enabled?: boolean; token_masked?: string} | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function load() {
+    setLoading(true)
+    try {
+      const r = await fetch('http://127.0.0.1:8765/remote/status')
+      if (r.ok) setInfo(await r.json())
+    } catch { setInfo(null) } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
+
+  return (
+    <PanelShell title="원격 접속" desc="외부 네트워크에서 이 PC에 원격으로 접속하기 위한 설정입니다.">
+      <div className="space-y-4">
+        {info ? (
+          <StatusCard rows={[
+            { label: '원격 접속', value: info.enabled ? '활성화됨' : '비활성화', id: 'ra-enabled' },
+            { label: '토큰',      value: info.token_masked || '—',               id: 'ra-token' },
+          ]} />
+        ) : (
+          <p className="text-[13px] text-zinc-400">{loading ? '로딩 중…' : '로컬 서버 미연결'}</p>
+        )}
+        <HelpSection>
+          <HelpTitle>원격 접속 활성화 방법</HelpTitle>
+          <HelpList items={[
+            '트레이 아이콘 우클릭 → 원격 접속 활성화',
+            '활성화 후 토큰을 원격 클라이언트에 입력',
+            '허용 명령: ping, get_status, get_logs_tail, get_screenshot, open_url',
+          ]} />
+          <HelpNote>원격 접속은 Bearer 토큰 인증 방식입니다. 토큰은 트레이 메뉴에서 재발급할 수 있습니다.</HelpNote>
+        </HelpSection>
       </div>
     </PanelShell>
   )

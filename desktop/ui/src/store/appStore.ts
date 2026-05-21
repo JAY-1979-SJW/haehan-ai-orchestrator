@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { MenuItem, WsMessage } from '@/lib/ws'
+import type { BrowserTab, MenuItem, WsMessage } from '@/lib/ws'
 
 export interface ChatMessage {
   id: string
@@ -21,10 +21,33 @@ export interface TaskItem {
 }
 
 export interface BrowserStatus {
+  action?: string
+  count?: number
+  cdp_alive?: boolean
+  lock_active?: boolean
+  tab_count?: number
+  message_ko?: string
+  error?: string
   port?: string
   url?: string
   state?: string
   active?: boolean
+}
+
+export interface BrowserTabsState {
+  status: 'idle' | 'loading' | 'done' | 'error'
+  tabs: BrowserTab[]
+  session: object | null
+  error: string
+  ts: number
+}
+
+export interface ScreenshotState {
+  status: 'idle' | 'loading' | 'done' | 'error'
+  data: string   // base64 PNG
+  format: string
+  error: string
+  ts: number
 }
 
 export type BlogWriteStatus = 'idle' | 'writing' | 'awaiting_approval' | 'confirming' | 'done' | 'error'
@@ -50,6 +73,10 @@ export interface CafeState {
   error: string
 }
 
+export interface CafeListItem { cafe_id: string; name: string; url: string }
+export interface CafePostItem { title: string; author: string; date: string; link: string }
+export interface CafePost { title: string; author: string; date: string; body: string; comment_count: number; error?: string }
+
 interface AppState {
   connected: boolean
   connecting: boolean
@@ -60,10 +87,15 @@ interface AppState {
   tasks: TaskItem[]
   approvalTasks: TaskItem[]
   browserStatus: BrowserStatus
+  browserTabsState: BrowserTabsState
+  screenshotState: ScreenshotState
   blogState: BlogState
   cafeState: CafeState
   badgeApproval: number
   badgeTask: number
+  cafeListState: { status: 'idle' | 'loading' | 'done' | 'error'; cafes: CafeListItem[]; error: string }
+  cafePostsState: { status: 'idle' | 'loading' | 'done' | 'error'; cafe_url: string; posts: CafePostItem[]; error: string }
+  cafeReadState: { status: 'idle' | 'loading' | 'done' | 'error'; post: CafePost | null; error: string }
 
   setConnected: (v: boolean) => void
   setConnecting: (v: boolean) => void
@@ -75,33 +107,57 @@ interface AppState {
   addTask: (task: TaskItem) => void
   removeTask: (id: string) => void
   setBrowserStatus: (s: BrowserStatus) => void
+  setBrowserTabsState: (s: Partial<BrowserTabsState>) => void
+  setScreenshotState: (s: Partial<ScreenshotState>) => void
   setBlogState: (s: Partial<BlogState>) => void
   setCafeState: (s: Partial<CafeState>) => void
+  setCafeListState: (s: Partial<AppState['cafeListState']>) => void
+  setCafePostsState: (s: Partial<AppState['cafePostsState']>) => void
+  setCafeReadState: (s: Partial<AppState['cafeReadState']>) => void
   handleWsMessage: (msg: WsMessage) => void
 }
 
 const DEFAULT_MENU: MenuItem[] = [
   // AI 대화
-  { id: 'chat',             label: '대화',         icon: '💬', section: 'AI 대화',   visible: true,  min_role: 'any' },
-  { id: 'task_queue',       label: '작업 큐',       icon: '📋', section: 'AI 대화',   visible: true,  min_role: 'any' },
-  { id: 'approval',         label: '승인 대기',     icon: '✅', section: 'AI 대화',   visible: true,  min_role: 'any' },
+  { id: 'chat',            label: '대화',          icon: '💬', section: 'AI 대화',   visible: true,  min_role: 'any' },
+  { id: 'task_queue',      label: '작업 큐',        icon: '📋', section: 'AI 대화',   visible: true,  min_role: 'any' },
+  { id: 'approval',        label: '승인 대기',      icon: '✅', section: 'AI 대화',   visible: true,  min_role: 'any' },
   // 업무 조회
-  { id: 'news',             label: '뉴스',          icon: '📰', section: '업무 조회', visible: true,  min_role: 'any' },
-  { id: 'eum',              label: 'EUM 단말기',    icon: '🏗️', section: '업무 조회', visible: true,  min_role: 'admin' },
-  // 콘텐츠 작성
-  { id: 'blog_write',       label: '블로그 작성',   icon: '✏️', section: '콘텐츠',    visible: true,  min_role: 'any' },
-  { id: 'cafe_write',       label: '카페 글쓰기',   icon: '☕', section: '콘텐츠',    visible: true,  min_role: 'any' },
-  // 관리 대시보드 (admin-web)
-  { id: 'admin_dashboard',  label: '관리 대시보드', icon: '🖥️', section: '관리 웹',   visible: true,  min_role: 'admin' },
-  { id: 'admin_ops',        label: '운영 현황',     icon: '📊', section: '관리 웹',   visible: true,  min_role: 'admin' },
-  { id: 'admin_approvals',  label: '브라우저 승인', icon: '🔐', section: '관리 웹',   visible: true,  min_role: 'admin' },
-  { id: 'admin_agents',     label: '로컬 에이전트', icon: '🤖', section: '관리 웹',   visible: true,  min_role: 'admin' },
-  { id: 'admin_filemap',    label: '파일맵',        icon: '🗂️', section: '관리 웹',   visible: false, min_role: 'admin' },
-  { id: 'admin_cad',        label: 'CAD',           icon: '📐', section: '관리 웹',   visible: false, min_role: 'admin' },
+  { id: 'news',            label: '뉴스',           icon: '📰', section: '업무 조회', visible: true,  min_role: 'any' },
+  { id: 'eum',             label: 'EUM 단말기',     icon: '🏗️', section: '업무 조회', visible: true,  min_role: 'admin' },
+  { id: 'eum_dashboard',   label: 'EUM 대시보드',   icon: '📊', section: '업무 조회', visible: true,  min_role: 'admin' },
+  { id: 'g2b',             label: '나라장터',       icon: '🏛️', section: '업무 조회', visible: true,  min_role: 'admin' },
+  { id: 'gabia',           label: '가비아',         icon: '🌐', section: '업무 조회', visible: true,  min_role: 'admin' },
+  // 히웍스
+  { id: 'hiworks_mail',    label: '히웍스 메일',    icon: '📧', section: '히웍스',    visible: true,  min_role: 'any' },
+  { id: 'hiworks_cal',     label: '히웍스 캘린더',  icon: '📅', section: '히웍스',    visible: true,  min_role: 'any' },
+  // Google
+  { id: 'gmail',           label: 'Gmail',          icon: '📨', section: 'Google',    visible: true,  min_role: 'any' },
+  { id: 'gdrive',          label: 'Google Drive',   icon: '🗄️', section: 'Google',    visible: true,  min_role: 'any' },
+  { id: 'gsheets',         label: 'Google Sheets',  icon: '🔢', section: 'Google',    visible: true,  min_role: 'any' },
+  { id: 'gcalendar',       label: 'Google Calendar',icon: '🗓️', section: 'Google',    visible: true,  min_role: 'any' },
+  { id: 'gdocs',           label: 'Google Docs',    icon: '📄', section: 'Google',    visible: false, min_role: 'any' },
+  // 네이버
+  { id: 'naver_mail',      label: '네이버 메일',    icon: '💌', section: '네이버',    visible: true,  min_role: 'any' },
+  // 콘텐츠
+  { id: 'blog_write',      label: '블로그 작성',    icon: '✏️', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'cafe_write',      label: '카페 글쓰기',    icon: '☕', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'cafe_list',       label: '카페 목록',      icon: '📋', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'youtube',         label: '유튜브',         icon: '▶️', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'smartstore',      label: '스마트스토어',   icon: '🛒', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'kakao',           label: '카카오',         icon: '💛', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  // 관리 웹
+  { id: 'admin_dashboard', label: '관리 대시보드',  icon: '🖥️', section: '관리 웹',   visible: true,  min_role: 'admin' },
+  { id: 'admin_ops',       label: '운영 현황',      icon: '📈', section: '관리 웹',   visible: true,  min_role: 'admin' },
+  { id: 'admin_approvals', label: '브라우저 승인',  icon: '🔐', section: '관리 웹',   visible: true,  min_role: 'admin' },
+  { id: 'admin_agents',    label: '로컬 에이전트',  icon: '🤖', section: '관리 웹',   visible: true,  min_role: 'admin' },
+  { id: 'admin_filemap',   label: '파일맵',         icon: '🗂️', section: '관리 웹',   visible: false, min_role: 'admin' },
+  { id: 'admin_cad',       label: 'CAD',            icon: '📐', section: '관리 웹',   visible: false, min_role: 'admin' },
   // 시스템
-  { id: 'browser',          label: '브라우저 상태', icon: '🌐', section: '시스템',    visible: true,  min_role: 'admin' },
-  { id: 'screenshot',       label: '스크린샷',      icon: '📸', section: '시스템',    visible: false, min_role: 'admin' },
-  { id: 'logs',             label: '로그',          icon: '📋', section: '시스템',    visible: true,  min_role: 'admin' },
+  { id: 'remote_access',   label: '원격 접속',      icon: '🔗', section: '시스템',    visible: true,  min_role: 'admin' },
+  { id: 'browser',         label: '브라우저 상태',  icon: '🌐', section: '시스템',    visible: true,  min_role: 'admin' },
+  { id: 'screenshot',      label: '스크린샷',       icon: '📸', section: '시스템',    visible: false, min_role: 'admin' },
+  { id: 'logs',            label: '로그',           icon: '📜', section: '시스템',    visible: true,  min_role: 'admin' },
 ]
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -114,10 +170,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   tasks: [],
   approvalTasks: [],
   browserStatus: {},
+  browserTabsState: { status: 'idle', tabs: [], session: null, error: '', ts: 0 },
+  screenshotState: { status: 'idle', data: '', format: 'png', error: '', ts: 0 },
   blogState: { status: 'idle', title: '', tags: [], visibility: 'public', bodyPreview: '', resultUrl: '', error: '' },
   cafeState: { status: 'idle', title: '', board: '', bodyPreview: '', resultUrl: '', error: '' },
   badgeApproval: 0,
   badgeTask: 0,
+  cafeListState: { status: 'idle', cafes: [], error: '' },
+  cafePostsState: { status: 'idle', cafe_url: '', posts: [], error: '' },
+  cafeReadState: { status: 'idle', post: null, error: '' },
 
   setConnected: (v) => set({ connected: v, connecting: false }),
   setConnecting: (v) => set({ connecting: v }),
@@ -150,11 +211,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
 
   setBrowserStatus: (s) => set({ browserStatus: s }),
+  setBrowserTabsState: (s) => set((prev) => ({ browserTabsState: { ...prev.browserTabsState, ...s } })),
+  setScreenshotState: (s) => set((prev) => ({ screenshotState: { ...prev.screenshotState, ...s } })),
   setBlogState: (s) => set((prev) => ({ blogState: { ...prev.blogState, ...s } })),
   setCafeState: (s) => set((prev) => ({ cafeState: { ...prev.cafeState, ...s } })),
+  setCafeListState: (s) => set((prev) => ({ cafeListState: { ...prev.cafeListState, ...s } })),
+  setCafePostsState: (s) => set((prev) => ({ cafePostsState: { ...prev.cafePostsState, ...s } })),
+  setCafeReadState: (s) => set((prev) => ({ cafeReadState: { ...prev.cafeReadState, ...s } })),
 
   handleWsMessage: (msg) => {
-    const { addMessage, addTask, setMenuItems, setBrowserStatus, setBlogState, setCafeState } = get()
+    const { addMessage, addTask, setMenuItems, setBrowserStatus, setBrowserTabsState, setScreenshotState,
+            setBlogState, setCafeState,
+            setCafeListState, setCafePostsState, setCafeReadState } = get()
     switch (msg.type) {
       case 'menu':
         if (msg.items?.length) setMenuItems(msg.items)
@@ -185,6 +253,24 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       case 'browser_status':
         setBrowserStatus(msg)
+        break
+      case 'tab_list':
+        setBrowserTabsState({
+          status: 'done',
+          tabs: msg.tabs ?? [],
+          session: msg.session ?? null,
+          error: '',
+          ts: Date.now(),
+        })
+        break
+      case 'screenshot_result':
+        setScreenshotState({
+          status: msg.ok ? 'done' : 'error',
+          data: msg.data ?? '',
+          format: msg.format ?? 'png',
+          error: msg.error ?? '',
+          ts: Date.now(),
+        })
         break
       case 'user_present_task': {
         const t = msg.task
@@ -227,6 +313,28 @@ export const useAppStore = create<AppState>((set, get) => ({
           board: msg.board ?? '',
           bodyPreview: msg.body_preview ?? '',
           resultUrl: msg.result_url ?? '',
+          error: msg.error ?? '',
+        })
+        break
+      case 'naver_cafe_list':
+        setCafeListState({
+          status: msg.status === 'done' ? 'done' : msg.status === 'error' ? 'error' : 'loading',
+          cafes: msg.cafes ?? [],
+          error: msg.error ?? '',
+        })
+        break
+      case 'naver_cafe_posts':
+        setCafePostsState({
+          status: msg.status === 'done' ? 'done' : msg.status === 'error' ? 'error' : 'loading',
+          cafe_url: msg.cafe_url ?? '',
+          posts: msg.posts ?? [],
+          error: msg.error ?? '',
+        })
+        break
+      case 'naver_cafe_read':
+        setCafeReadState({
+          status: msg.status === 'done' ? 'done' : msg.status === 'error' ? 'error' : 'loading',
+          post: msg.post ?? null,
           error: msg.error ?? '',
         })
         break
