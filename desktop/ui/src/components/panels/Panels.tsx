@@ -208,30 +208,115 @@ export function LogsPanel() {
 
 // ── 설정 ──────────────────────────────────────────────────────────────────────
 export function SettingsPanel() {
-  const [serverUrl, setServerUrl] = useState(localStorage.getItem('server_url') || 'wss://api.haehan-ai.kr/ws/desktop')
+  const { connected } = useAppStore()
   const [name, setName] = useState(localStorage.getItem('user_name') || '사용자')
   const [role, setRole] = useState(localStorage.getItem('user_role') || 'any')
   const [saved, setSaved] = useState(false)
 
+  // 등록 폼
+  const [regCode, setRegCode] = useState('')
+  const [serverUrlInput, setServerUrlInput] = useState('https://haehan-ai.kr/orchestrator')
+  const [regStatus, setRegStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [regMsg, setRegMsg] = useState('')
+
+  // 에이전트 상태
+  const [agentInfo, setAgentInfo] = useState<{agent_id?: string; server_url?: string; server_connected?: boolean} | null>(null)
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8765/agent/status')
+      .then(r => r.json())
+      .then(d => setAgentInfo(d))
+      .catch(() => setAgentInfo(null))
+  }, [regStatus])
+
+  async function handleRegister() {
+    if (!regCode.trim()) return
+    setRegStatus('loading')
+    setRegMsg('')
+    try {
+      const r = await fetch('http://127.0.0.1:8765/agent/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_code: regCode.trim(), server_url: serverUrlInput.trim() }),
+      })
+      const d = await r.json()
+      if (d.ok) {
+        setRegStatus('ok')
+        setRegMsg(`등록 완료 · ${d.agent_id}`)
+        setRegCode('')
+      } else {
+        setRegStatus('error')
+        setRegMsg(d.error || '등록 실패')
+      }
+    } catch (e) {
+      setRegStatus('error')
+      setRegMsg('로컬 서버 미연결')
+    }
+  }
+
   function save() {
-    localStorage.setItem('server_url', serverUrl)
     localStorage.setItem('user_name', name)
     localStorage.setItem('user_role', role)
-    wsClient.reconnect()
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   return (
-    <PanelShell title="설정" desc="서버 연결 주소와 사용자 정보를 설정합니다.">
+    <PanelShell title="설정" desc="서버 연결 및 사용자 정보를 설정합니다.">
       <div className="space-y-6">
-        <SettingsField label="서버 주소" help="메인 서버의 WebSocket 주소입니다. 변경 후 앱을 재시작하면 적용됩니다.">
-          <input
-            value={serverUrl} onChange={e => setServerUrl(e.target.value)}
-            className="w-full max-w-md bg-white border border-zinc-200 rounded-lg px-3 py-2 text-[13px] text-zinc-900 outline-none focus:border-[#f97316]/50 focus:ring-2 focus:ring-[#f97316]/10 transition-all placeholder-zinc-400"
-            placeholder="ws://localhost:8000/ws/desktop"
-          />
-        </SettingsField>
+
+        {/* 에이전트 연결 상태 */}
+        <div className="bg-zinc-50 border border-zinc-200 rounded-lg px-4 py-3 space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">연결 상태</p>
+          <div className="flex items-center gap-2">
+            <span className={cn('inline-block w-2 h-2 rounded-full', connected ? 'bg-emerald-500' : 'bg-zinc-300')} />
+            <span className="text-[13px] text-zinc-700">{connected ? '로컬 서버(8765) 연결됨' : '로컬 서버 미연결'}</span>
+          </div>
+          {agentInfo?.agent_id ? (
+            <div className="pl-4 space-y-0.5">
+              <p className="text-[12px] text-zinc-600">에이전트: <span className="font-mono">{agentInfo.agent_id}</span></p>
+              <p className="text-[12px] text-zinc-600">서버: <span className="font-mono text-[11px]">{agentInfo.server_url}</span></p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className={cn('inline-block w-1.5 h-1.5 rounded-full', agentInfo.server_connected ? 'bg-emerald-500' : 'bg-red-400')} />
+                <span className="text-[11px] text-zinc-500">{agentInfo.server_connected ? '서버 WS 연결됨' : '서버 WS 미연결'}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[12px] text-zinc-400 pl-4">등록된 에이전트 없음</p>
+          )}
+        </div>
+
+        {/* 에이전트 등록 */}
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">에이전트 등록</p>
+          <div className="space-y-2 max-w-md">
+            <input
+              value={serverUrlInput} onChange={e => setServerUrlInput(e.target.value)}
+              className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-[12px] font-mono text-zinc-700 outline-none focus:border-[#f97316]/50"
+              placeholder="https://haehan-ai.kr/orchestrator"
+            />
+            <div className="flex gap-2">
+              <input
+                value={regCode} onChange={e => setRegCode(e.target.value)}
+                type="password"
+                className="flex-1 bg-white border border-zinc-200 rounded-lg px-3 py-2 text-[13px] text-zinc-900 outline-none focus:border-[#f97316]/50 focus:ring-2 focus:ring-[#f97316]/10"
+                placeholder="등록 코드 입력"
+                onKeyDown={e => e.key === 'Enter' && handleRegister()}
+              />
+              <button
+                onClick={handleRegister}
+                disabled={regStatus === 'loading' || !regCode.trim()}
+                className="px-4 py-2 rounded-lg text-[13px] font-semibold bg-[#f97316] text-white hover:bg-[#ea580c] disabled:opacity-40 transition-colors"
+              >
+                {regStatus === 'loading' ? '등록 중…' : '등록'}
+              </button>
+            </div>
+            {regMsg && (
+              <p className={cn('text-[12px]', regStatus === 'ok' ? 'text-emerald-600' : 'text-red-500')}>{regMsg}</p>
+            )}
+            <p className="text-[11px] text-zinc-400">관리자로부터 받은 1회용 등록 코드를 입력하세요.</p>
+          </div>
+        </div>
 
         <SettingsField label="사용자 이름">
           <input

@@ -999,17 +999,66 @@ async def _send_to_server(msg: dict) -> None:
             logger.warning("server ws send error: %s", exc)
 
 
+def _load_agent_credentials() -> tuple[str, str, str]:
+    """config.json + token_store에서 server_url, agent_id, device_token 로드.
+
+    반환: (server_url, agent_id, device_token) — 하나라도 없으면 빈 문자열 포함.
+    """
+    try:
+        from local_agent.desktop_config import load_config as _load_cfg
+        from local_agent.token_store import load_device_token as _load_tok
+        cfg = _load_cfg()
+        if not cfg.is_complete():
+            return "", "", ""
+        tok = _load_tok(cfg.server_url, cfg.agent_id)
+        return cfg.server_url, cfg.agent_id, tok
+    except Exception as exc:
+        logger.warning("credentials load error: %s", exc)
+        return "", "", ""
+
+
 async def _connect_to_server() -> None:
-    """서버 WebSocket에 연결 — 재연결 루프."""
+    """서버 WebSocket에 연결 — agent_id/device_token 인증 포함, 재연결 루프."""
     global _server_ws
     import websockets  # type: ignore
 
     while True:
+        server_url, agent_id, device_token = _load_agent_credentials()
+        if not agent_id or not device_token:
+            await _broadcast({"type": "system", "text": "⚠️ agent_id/token 미설정 — 서버 연결 건너뜀"})
+            logger.warning("server ws skip: agent_id or device_token not configured")
+            await asyncio.sleep(30)
+            continue
+
+        # server_url(https://...) → wss:// WebSocket URL 변환 (/api/v1/local-agents/ws)
+        from urllib.parse import urlparse, urlunparse
+        _p = urlparse(server_url)
+        _ws_scheme = "wss" if _p.scheme == "https" else ("ws" if _p.scheme == "http" else _p.scheme or "ws")
+        ws_url = urlunparse((_ws_scheme, _p.netloc, _p.path.rstrip("/") + "/api/v1/local-agents/ws", "", "", ""))
+
         try:
-            async with websockets.connect(_SERVER_WS_URL) as ws:
+            async with websockets.connect(ws_url, ping_interval=20, ping_timeout=20) as ws:
+                # 인증
+                await ws.send(json.dumps({
+                    "type": "auth",
+                    "agent_id": agent_id,
+                    "device_token": device_token,
+                }))
+                try:
+                    first = json.loads(await asyncio.wait_for(ws.recv(), timeout=15.0))
+                except asyncio.TimeoutError:
+                    logger.error("server auth timeout")
+                    await asyncio.sleep(5)
+                    continue
+                if first.get("type") != "auth_ok":
+                    await _broadcast({"type": "system", "text": f"🔴 서버 인증 실패: {first.get('type')}"})
+                    logger.error("server auth failed: %s", first.get("type"))
+                    await asyncio.sleep(10)
+                    continue
+
                 _server_ws = ws
-                await _broadcast({"type": "system", "text": "🟢 서버 연결됨"})
-                logger.info("connected to server WebSocket")
+                await _broadcast({"type": "system", "text": f"🟢 서버 연결됨 (agent: {agent_id[:8]}…)"})
+                logger.info("connected to server WebSocket (agent_id=%s)", agent_id)
                 async for raw in ws:
                     try:
                         msg = json.loads(raw)
@@ -1018,7 +1067,7 @@ async def _connect_to_server() -> None:
                         logger.warning("server message parse error: %s", exc)
         except Exception as exc:
             _server_ws = None
-            await _broadcast({"type": "system", "text": f"🔴 서버 연결 끊김 — 재연결 중…"})
+            await _broadcast({"type": "system", "text": "🔴 서버 연결 끊김 — 재연결 중…"})
             logger.warning("server ws disconnected: %s — retry in 5s", exc)
             await asyncio.sleep(5)
 
@@ -1117,6 +1166,64 @@ async def get_logs():
     except Exception as exc:
         logger.warning("logs read error: %s", exc)
         return {"lines": [], "error": str(exc)}
+
+
+# ── 에이전트 등록 API ─────────────────────────────────────────────────────────
+
+@app.post("/agent/register")
+async def agent_register(request: Request):
+    """등록 코드로 에이전트를 서버에 등록하고 device_token을 저장.
+
+    body: { "registration_code": "...", "server_url": "https://..." }
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False, "error": "요청 파싱 실패"}
+
+    reg_code = (body.get("registration_code") or "").strip()
+    server_url = (body.get("server_url") or "https://haehan-ai.kr/orchestrator").strip()
+    if not reg_code:
+        return {"ok": False, "error": "registration_code 필요"}
+
+    try:
+        from local_agent.registration_client import RegistrationClient, RegistrationError
+        from local_agent.token_store import save_device_token
+        from local_agent.desktop_config import load_config, save_config
+
+        client = RegistrationClient(server_url)
+        meta = client.register(reg_code)
+        save_device_token(server_url, meta.agent_id, meta.device_token)
+        cfg = load_config()
+        cfg.server_url = server_url
+        cfg.agent_id = meta.agent_id
+        save_config(cfg)
+        logger.info("agent registered: agent_id=%s", meta.agent_id)
+        await _broadcast({"type": "system", "text": f"✅ 등록 완료 — agent_id: {meta.agent_id[:12]}…"})
+        # 서버 WS 재연결 트리거
+        asyncio.create_task(_connect_to_server())
+        return {"ok": True, "agent_id": meta.agent_id}
+    except Exception as exc:
+        logger.error("register error: %s", exc)
+        return {"ok": False, "error": str(exc)}
+
+
+@app.get("/agent/status")
+async def agent_status():
+    """현재 등록된 에이전트 정보 반환 (token 제외)."""
+    try:
+        from local_agent.desktop_config import load_config
+        cfg = load_config()
+        server_connected = _server_ws is not None
+        return {
+            "ok": True,
+            "server_url": cfg.server_url,
+            "agent_id": cfg.agent_id,
+            "is_complete": cfg.is_complete(),
+            "server_connected": server_connected,
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
 
 
 # ── CAD bridge registry/status + lifecycle ───────────────────────────────────
