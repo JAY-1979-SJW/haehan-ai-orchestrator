@@ -23,22 +23,37 @@ export function TaskQueuePanel() {
 }
 
 // ── 승인 대기 ─────────────────────────────────────────────────────────────────
-// MVP 잠금: 승인/거부 버튼 미노출 (조회 전용)
 export function ApprovalPanel() {
-  const { approvalTasks } = useAppStore()
+  const { approvalTasks, removeTask } = useAppStore()
+
+  function handleApprove(task_id: string) {
+    wsClient.send({ action: 'approve', task_id })
+    removeTask(task_id)
+  }
+
+  function handleReject(task_id: string) {
+    wsClient.send({ action: 'reject', task_id })
+    removeTask(task_id)
+  }
+
   return (
-    <PanelShell title="승인 대기" desc="사용자 승인이 필요한 작업 목록입니다. 승인은 autowork 관리 웹에서 처리하세요.">
+    <PanelShell title="승인 대기" desc="AI가 실행을 요청한 작업 목록입니다. 내용을 확인하고 승인 또는 거부하세요.">
       {approvalTasks.length === 0
-        ? <EmptyState title="승인 대기 항목이 없습니다" desc="승인이 필요한 작업이 도착하면 이곳에 표시됩니다." />
+        ? <EmptyState title="승인 대기 항목이 없습니다" desc="AI가 승인이 필요한 작업을 요청하면 이곳에 표시됩니다." />
         : (
           <div className="space-y-3">
             {approvalTasks.map(t => (
-              <TaskCard key={t.task_id} task={t} showActions={false} />
+              <TaskCard
+                key={t.task_id}
+                task={t}
+                showActions={true}
+                onApprove={() => handleApprove(t.task_id)}
+                onReject={() => handleReject(t.task_id)}
+              />
             ))}
           </div>
         )
       }
-      <HelpNote>승인/거부는 관리 웹(autowork.haehan-ai.kr/browser-approvals)에서 처리합니다.</HelpNote>
     </PanelShell>
   )
 }
