@@ -141,13 +141,37 @@ export function EumPanel() {
 
 // ── 브라우저 상태 ─────────────────────────────────────────────────────────────
 // ── 브라우저 상태 ─────────────────────────────────────────────────────────────
+// ── Login Watcher 이벤트 라벨 ─────────────────────────────────────────────────
+const EVT_LABELS: Record<string, { label: string; color: string }> = {
+  target_created:       { label: '탭 열림',         color: 'text-emerald-600' },
+  target_closed:        { label: '탭 닫힘',         color: 'text-zinc-400'    },
+  target_url_changed:   { label: 'URL 변경',        color: 'text-blue-500'   },
+  target_title_changed: { label: '제목 변경',        color: 'text-zinc-500'   },
+  auth_popup_detected:  { label: '🔔 인증 팝업',    color: 'text-amber-600'  },
+  login_state_changed:  { label: '로그인 상태 변경', color: 'text-violet-600' },
+}
+
+const LOGIN_STATE_LABELS: Record<string, { label: string; color: string }> = {
+  LOGGED_IN:            { label: '로그인됨',    color: 'text-emerald-600' },
+  LOGIN_REQUIRED:       { label: '로그인 필요', color: 'text-amber-500'   },
+  LOGIN_IN_PROGRESS:    { label: '로그인 중',   color: 'text-blue-500'    },
+  LOGIN_ACTION_STARTED: { label: '로그인 시도', color: 'text-blue-400'    },
+  LOGIN_FAILED:         { label: '로그인 실패', color: 'text-red-500'      },
+  SESSION_EXPIRED:      { label: '세션 만료',   color: 'text-orange-500'  },
+  POPUP_WAITING:        { label: '팝업 대기',   color: 'text-amber-600'   },
+  LOGIN_UNKNOWN:        { label: '알 수 없음',  color: 'text-zinc-400'    },
+}
+
 export function BrowserPanel() {
-  const { browserStatus, browserTabsState, setBrowserTabsState } = useAppStore()
+  const { browserStatus, browserTabsState, setBrowserTabsState,
+          loginWatcherState, setLoginWatcherRunning, addLoginWatcherEvent: _a,
+          clearLoginWatcherEvents } = useAppStore()
   const [statusLoading, setStatusLoading] = useState(false)
   const [startLoading, setStartLoading]   = useState(false)
   const [quitLoading, setQuitLoading]     = useState(false)
   const [tabLoading, setTabLoading]       = useState(false)
   const [lastTs, setLastTs]               = useState(0)
+  void _a  // used via store only
 
   const requestStatus = useCallback(() => {
     setStatusLoading(true)
@@ -280,6 +304,92 @@ export function BrowserPanel() {
           ))}
         </div>
       )}
+
+      {/* ── Login Watcher ── */}
+      <div className="mt-6 border-t border-zinc-100 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-semibold text-zinc-700">로그인 감시</span>
+            <span className={cn(
+              'text-[10px] px-1.5 py-0.5 rounded-full font-semibold',
+              loginWatcherState.running
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-zinc-100 text-zinc-500'
+            )}>
+              {loginWatcherState.running ? '● 실행 중' : '○ 정지'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={clearLoginWatcherEvents}
+              className="px-2 py-1 rounded text-[11px] text-zinc-400 hover:bg-zinc-100 transition-colors"
+            >
+              초기화
+            </button>
+            {loginWatcherState.running ? (
+              <button
+                onClick={() => { setLoginWatcherRunning(false); wsClient.send({ action: 'login_watcher_stop' }) }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-200 text-zinc-700 text-[11px] hover:bg-zinc-300 transition-colors"
+              >
+                <Square size={10} /> 감시 중지
+              </button>
+            ) : (
+              <button
+                onClick={() => { wsClient.send({ action: 'login_watcher_start' }) }}
+                disabled={!alive}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-500 text-white text-[11px] hover:bg-violet-600 disabled:opacity-40 transition-colors"
+              >
+                <Play size={10} /> 감시 시작
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 로그인 상태 현황 */}
+        {Object.keys(loginWatcherState.loginStates).length > 0 && (
+          <div className="mb-3 space-y-1">
+            {Object.entries(loginWatcherState.loginStates).map(([tid, state]) => {
+              const meta = LOGIN_STATE_LABELS[state] ?? { label: state, color: 'text-zinc-500' }
+              const tab = browserTabsState.tabs.find(t => t.tab_id === tid)
+              return (
+                <div key={tid} className="flex items-center gap-2 px-2 py-1 rounded bg-zinc-50 text-[11px]">
+                  <span className={`font-semibold ${meta.color}`}>{meta.label}</span>
+                  <span className="text-zinc-500 truncate flex-1">{tab?.title || tab?.url || tid}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* 이벤트 로그 */}
+        {loginWatcherState.events.length === 0 ? (
+          <p className="text-[11px] text-zinc-400 py-2">
+            {loginWatcherState.running ? '이벤트 대기 중…' : '감시를 시작하면 브라우저 탭 변경과 로그인 상태를 실시간으로 수신합니다.'}
+          </p>
+        ) : (
+          <div className="space-y-0.5 max-h-48 overflow-y-auto scrollbar-thin">
+            {[...loginWatcherState.events].reverse().map((ev, i) => {
+              const meta = EVT_LABELS[ev.type] ?? { label: ev.type, color: 'text-zinc-500' }
+              const stateVal = ev.type === 'login_state_changed'
+                ? (ev.extra as Record<string, string>)?.state ?? ''
+                : ''
+              const stateMeta = stateVal ? (LOGIN_STATE_LABELS[stateVal] ?? { label: stateVal, color: 'text-zinc-500' }) : null
+              return (
+                <div key={i} className="flex items-start gap-2 px-2 py-1 rounded hover:bg-zinc-50 text-[11px]">
+                  <span className="text-zinc-300 flex-shrink-0 font-mono">
+                    {new Date(ev.ts * 1000).toLocaleTimeString('ko')}
+                  </span>
+                  <span className={`font-semibold flex-shrink-0 ${meta.color}`}>{meta.label}</span>
+                  {stateMeta && (
+                    <span className={`flex-shrink-0 ${stateMeta.color}`}>[{stateMeta.label}]</span>
+                  )}
+                  <span className="text-zinc-500 truncate">{ev.title || ev.sanitized_url}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="mt-4">
         <HelpNote>CDP 브라우저는 화면에 표시되지 않으며, AI가 자동으로 조작합니다. 작업 완료 시 대화창으로 결과를 보고합니다.</HelpNote>
