@@ -92,6 +92,15 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
         "--hidden-import", "websockets",
         "--hidden-import", "keyring",
         "--hidden-import", "keyring.backends.Windows",
+        # GUI hidden imports (AGENT_GUI_TRAY_01)
+        "--hidden-import", "tkinter",
+        "--hidden-import", "tkinter.ttk",
+        "--hidden-import", "tkinter.messagebox",
+        "--hidden-import", "pystray",
+        "--hidden-import", "pystray._win32",
+        "--hidden-import", "PIL",
+        "--hidden-import", "PIL.Image",
+        "--hidden-import", "PIL.ImageDraw",
         "--collect-submodules", "local_agent",
         # 엔트리: 모듈 실행 wrapper
         "-c", "import sys; from local_agent.desktop_launcher import main; sys.exit(main())",

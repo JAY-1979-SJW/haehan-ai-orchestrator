@@ -204,10 +204,20 @@ def main(argv: list[str] | None = None) -> int:
                     help="registration_code 환경변수명")
     ap.add_argument("--reset", action="store_true",
                     help="저장된 token 삭제 (server+agent_id 필요)")
+    ap.add_argument("--gui", action="store_true",
+                    help="GUI 모드 (tkinter + pystray tray) 실행")
     args = ap.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
+
+    if args.gui:
+        try:
+            from . import gui_tray
+            return gui_tray.run_tray_with_app(server_url=args.server)
+        except Exception as exc:
+            print(f"GUI 실행 실패: {type(exc).__name__}")
+            return 1
 
     if args.self_test:
         r = self_test()
