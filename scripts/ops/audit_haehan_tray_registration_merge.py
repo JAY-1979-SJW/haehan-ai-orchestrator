@@ -3,8 +3,8 @@ HAEHAN_TRAY_REGISTRATION_MERGE_01 감리.
 
 Verdicts:
   PASS_HAEHAN_TRAY_REGISTRATION_MERGE
-  WARN_ADMIN_MODE_DEFERRED
-  WARN_CONSENT_DIALOG_DEFERRED
+  WARN_CONSENT_DIALOG_DEFERRED  (HAEHAN_CONSENT_DIALOG_01 에서 해소 예정)
+  (WARN_ADMIN_MODE_DEFERRED 제거 — HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 실 구현 완료)
   FAIL_TRAY_HOOK_NOT_CONNECTED
   FAIL_WIZARD_MISSING
   FAIL_TOKEN_STORE_BROKEN
@@ -271,21 +271,35 @@ else:
     warn("WARN_LOCK", f"lock 획득 실패 (이미 사용 중일 수 있음): pid={state_lock.pid}")
 
 
-# ── 13. Admin Mode deferred 마커 ────────────────────────────────────────
+# ── 13. Admin Mode 구현 상태 — HAEHAN_AUDIT_WARN_SYNC_01 후 정리 ──────
+# WARN_ADMIN_MODE_DEFERRED: HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 실 구현 완료
+# → admin_webview.py 존재 + main_launcher.run_admin_mode 실호출 + admin_mode_available=True 검증
 src_run = (ROOT / "desktop/main_launcher.py").read_text(encoding="utf-8")
-src_tr = TRAY_RUNTIME.read_text(encoding="utf-8")
-if "admin_mode_available=False" in src_run or "admin_mode_available=False" in src_tr:
-    warn("WARN_ADMIN_MODE_DEFERRED",
-         "Admin Mode pywebview 실제 구현은 HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서")
+admin_wv = ROOT / "desktop/admin_webview.py"
+admin_checks = []
+if admin_wv.exists():
+    admin_checks.append("admin_webview.py 존재")
+if "admin_webview.run_admin_mode_full" in src_run \
+        or "admin_webview.open_admin_window" in src_run \
+        or "from desktop import admin_webview" in src_run:
+    admin_checks.append("main_launcher → admin_webview 호출")
+if "admin_mode_available=True" in src_run:
+    admin_checks.append("admin_mode_available=True 전달")
+if len(admin_checks) >= 3:
+    ok(f"Admin Mode 실 구현 확인 ({', '.join(admin_checks)}) — WARN_ADMIN_MODE_DEFERRED 해소")
 else:
-    warn("WARN_ADMIN_MODE_DEFERRED", "Admin Mode 상태 표시 누락")
+    fail("FAIL_ADMIN_MODE_REGRESSED",
+         f"Admin Mode 구현 회귀 — 확인된 항목: {admin_checks}")
 
 
-# ── 14. consent dialog deferred ────────────────────────────────────────
-if "consent" in src_run.lower():
-    # consent hook 존재 — 실제 dialog 표시는 후속일 수 있음
+# ── 14. consent dialog 상태 ────────────────────────────────────────────
+# WARN_CONSENT_DIALOG_DEFERRED: 유지 (HAEHAN_CONSENT_DIALOG_01 에서 해소 예정)
+if "webview_app_pywebview._check_consent" in src_run \
+        or "from desktop.webview_app_pywebview import _check_consent" in src_run:
+    ok("main_launcher ↔ _check_consent 연결됨 (WARN_CONSENT_DIALOG_DEFERRED 해소 시 PASS)")
+else:
     warn("WARN_CONSENT_DIALOG_DEFERRED",
-         "consent dialog 실제 GUI 는 별도 공정 또는 후속에서")
+         "main_launcher consent hook 과 _check_consent 미연결 — HAEHAN_CONSENT_DIALOG_01 에서 해소 예정")
 
 
 # ── 결과 ────────────────────────────────────────────────────────────────

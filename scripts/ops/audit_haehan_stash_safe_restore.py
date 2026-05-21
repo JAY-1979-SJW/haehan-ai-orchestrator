@@ -32,28 +32,36 @@ def warn(code, msg): warnings.append(f"{W} {code} — {msg}")
 def ok(msg):         passes.append(f"{P} {msg}")
 
 
-# ── 1. 복원 대상 13개 staged 여부 ──────────────────────────────────────
-diff_head = subprocess.run(
-    ["git", "diff", "--name-status", "HEAD"],
+# ── 1. 복원 대상 13개 검증 — commit history 기반 ───────────────────────
+# stash_safe_restore 커밋이 이미 적용된 후엔 working tree diff 가 비어있으므로
+# 커밋 자체의 변경 파일을 확인.
+log_scope = subprocess.run(
+    ["git", "log", "--all", "-E",
+     "--grep=^chore.haehan.: restore safe stashed",
+     "-1", "--name-status", "--pretty=format:%H"],
     cwd=ROOT, capture_output=True, text=True, timeout=10,
 )
-diff_cached = subprocess.run(
-    ["git", "diff", "--cached", "--name-status"],
-    cwd=ROOT, capture_output=True, text=True, timeout=10,
-)
-status_short = subprocess.run(
-    ["git", "status", "--short"],
-    cwd=ROOT, capture_output=True, text=True, timeout=10,
-)
+scope_lines = [l for l in log_scope.stdout.strip().split("\n") if l.strip()]
 
-# HEAD vs working tree (staged + unstaged 합쳐서 본 공정 변경 전체)
 all_changes = {}
-for line in diff_head.stdout.split("\n"):
-    if not line.strip():
-        continue
-    parts = line.split("\t", 1)
-    if len(parts) == 2:
-        all_changes[parts[1].replace("\\", "/")] = parts[0]
+if scope_lines and len(scope_lines) > 1:
+    # 커밋 발견 — commit 의 name-status 파싱
+    for line in scope_lines[1:]:
+        parts = line.split("\t", 1)
+        if len(parts) == 2:
+            all_changes[parts[1].replace("\\", "/")] = parts[0]
+else:
+    # fallback — working tree diff
+    diff_head = subprocess.run(
+        ["git", "diff", "--name-status", "HEAD"],
+        cwd=ROOT, capture_output=True, text=True, timeout=10,
+    )
+    for line in diff_head.stdout.split("\n"):
+        if not line.strip():
+            continue
+        parts = line.split("\t", 1)
+        if len(parts) == 2:
+            all_changes[parts[1].replace("\\", "/")] = parts[0]
 
 expected_restored = [
     "HaehanAI-Agent.spec",
