@@ -101,6 +101,9 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
         "--hidden-import", "PIL",
         "--hidden-import", "PIL.Image",
         "--hidden-import", "PIL.ImageDraw",
+        # customtkinter 모던 디자인
+        "--hidden-import", "customtkinter",
+        "--collect-data", "customtkinter",
         "--collect-submodules", "local_agent",
         # 엔트리: 모듈 실행 wrapper
         "-c", "import sys; from local_agent.desktop_launcher import main; sys.exit(main())",
