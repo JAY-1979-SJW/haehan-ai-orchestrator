@@ -514,12 +514,17 @@ def test_start_route_runner_failure_does_not_crash_desktop(monkeypatch):
 # 7. 정책 boundary — proxy / WS action 미등록
 # ──────────────────────────────────────────────
 
-def test_proxy_route_still_not_registered():
-    """proxy 라우트는 본 트랙 범위 밖 — 미등록 유지."""
+def test_proxy_route_enforces_allowlist_after_proxy_track():
+    """CAD-DESKTOP-HUB-CAD-BRIDGE-PROXY-01 이후 의미 보존 갱신.
+
+    proxy 라우트는 등록되었으나 lifecycle 트랙 정책 boundary 와
+    동일하게 read-only / candidate payload allow-list 외 path 는
+    403 으로 차단되어 실 upstream 호출이 발생하지 않는다.
+    """
     client = TestClient(app)
     res = client.get("/cad/bridge/proxy/openapi.json")
-    # 404 (미등록) 또는 405 (다른 메서드만 매칭) — 절대 200 으로 응답 안 함
-    assert res.status_code in (404, 405)
+    # allow-list 외 path — proxy 자체는 403 (lifecycle/runner 영향 0)
+    assert res.status_code == 403
 
 
 def test_ws_action_for_cad_bridge_not_registered():

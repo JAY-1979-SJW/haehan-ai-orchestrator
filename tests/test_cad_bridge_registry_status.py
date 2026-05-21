@@ -276,18 +276,22 @@ def test_status_route_does_not_crash_desktop_on_internal_error(
 # 8. lifecycle/proxy 라우트가 아직 없음 — 본 트랙 범위 분리
 # ──────────────────────────────────────────────
 
-@pytest.mark.parametrize("path", [
-    "/cad/bridge/proxy/openapi.json",
-    "/cad/bridge/proxy/acad/arch-quantity-tab/build-cards",
+@pytest.mark.parametrize("path,expected", [
+    # CAD-DESKTOP-HUB-CAD-BRIDGE-PROXY-01 이후 의미 보존 갱신:
+    # proxy 는 등록되었으나 allow-list 검증으로 차단됨.
+    # - acad/openapi.json 은 GET allow-list 에 포함 → 200 도 가능하나
+    #   본 테스트는 실 upstream 없이 호출하므로 502 (upstream_unreachable)
+    # - acad/arch-quantity-tab/build-cards 는 POST 전용 → GET 으로는 403
+    ("/cad/bridge/proxy/acad/arch-quantity-tab/build-cards", 403),
 ])
-def test_proxy_routes_not_yet_registered(client, path):
-    """CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01 이후 의미 보존 갱신.
+def test_proxy_routes_enforce_allowlist(client, path, expected):
+    """proxy 트랙 진입 이후: 라우트는 등록되어 있으나 allow-list 가 강제됨.
 
-    lifecycle 트랙에서 start/stop/restart 가 등록되었으므로 본 테스트는
-    proxy 미등록 검증만 남긴다 (proxy 는 별 트랙).
+    - GET allow-list 외 → 403 (path_not_in_get_allowlist)
+    - mutating keyword 포함 → 403 (mutating_keyword_blocked)
     """
     res = client.get(path)
-    assert res.status_code in (404, 405)
+    assert res.status_code == expected
 
 
 # ──────────────────────────────────────────────

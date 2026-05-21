@@ -124,15 +124,11 @@ def audit():
         findings.setdefault("_route_missing", []).append(
             "GET /cad/bridge/status route 미등록")
 
-    # 8) /cad/bridge/proxy 라우트는 본 트랙 정책상 아직 미등록.
-    # lifecycle start/stop/restart 는 CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01
-    # 트랙에서 추가됨 — 본 registry/status audit 은 proxy 부재만 검증.
-    forbidden_routes = (
-        '"/cad/bridge/proxy', "'/cad/bridge/proxy",
-    )
-    hits = _scan(srv_src, forbidden_routes)
-    if hits:
-        findings.setdefault("_proxy_routes_premature", []).extend(hits)
+    # 8) lifecycle start/stop/restart 는 CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01,
+    # proxy 는 CAD-DESKTOP-HUB-CAD-BRIDGE-PROXY-01 트랙에서 추가됨.
+    # 본 registry/status audit 은 status route 와 registry 구조에만 한정 —
+    # 추가 라우트(lifecycle / proxy) 부재 단언은 더 이상 하지 않는다.
+    # (각 트랙 audit 가 자체 정책을 검증)
 
     # 9) status 코드 5종 정의
     required_statuses = (
