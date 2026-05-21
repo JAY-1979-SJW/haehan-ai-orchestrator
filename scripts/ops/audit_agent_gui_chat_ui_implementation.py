@@ -120,7 +120,12 @@ def judge_gui_chat_ui(*, cli_regression_ok: bool = True,
         return GuiVerdict(False, "FAIL_EXTERNAL_AI_CALLED",
                           reasons=["adapter external_call_count != 0"],
                           metrics=metrics)
-    if "설정되지 않" not in r.text_redacted:
+    # 신 ServerProxyChatAdapter 는 placeholder text 대신 error_code 반환 — 둘 다 허용
+    has_placeholder_text = "설정되지 않" in (r.text_redacted or "")
+    has_not_configured_err = r.error_code in (
+        "DEVICE_TOKEN_MISSING", "AGENT_ID_MISSING", "API_KEY_NOT_SET",
+    )
+    if not (has_placeholder_text or has_not_configured_err):
         return GuiVerdict(False, "FAIL_AI_SETTINGS_MODAL_MISSING",
                           reasons=["not configured response missing"],
                           metrics=metrics)

@@ -148,14 +148,81 @@ class OpenAiDirectTestAdapter:
         )
 
 
-def make_default_adapter(*, mode: str = _cs.MODE_SERVER_PROXY
+class ServerProxyChatAdapter:
+    """상용 기본 모드 — 데스크앱 → 서버 proxy → OpenAI.
+
+    사용자 PC 에 OpenAI key 없음.
+    agent_id + device_token 은 controller / token_store 에서 자동 로드.
+    """
+
+    def __init__(self, *, server_url: str = "",
+                  agent_id: str = ""):
+        from . import server_proxy_chat_client as _spc
+        self._spc = _spc
+        # ctor 인자 비어 있으면 launcher 가 set_agent_id 로 갱신
+        self.server_url = server_url or "https://haehan-ai.kr/orchestrator"
+        self.agent_id = agent_id
+        self._client = _spc.ServerProxyChatClient(
+            server_url=self.server_url, agent_id=self.agent_id)
+
+    def set_context(self, *, server_url: str, agent_id: str) -> None:
+        self.server_url = server_url
+        self.agent_id = agent_id
+        self._client = self._spc.ServerProxyChatClient(
+            server_url=server_url, agent_id=agent_id)
+
+    def is_configured(self) -> bool:
+        return self._client.is_configured()
+
+    def validate_message(self, text: str) -> tuple[bool, str]:
+        if not text or not text.strip():
+            return (False, "메시지가 비어 있습니다.")
+        if len(text) > 8000:
+            return (False, "입력이 너무 깁니다.")
+        return (True, "")
+
+    def detect_sensitive_input(self, text: str) -> bool:
+        if not text:
+            return False
+        red = _aic.redact_input(text)
+        return _aic.has_pii_warning(text, red)
+
+    def send_message(self, *, text_raw: str) -> AdapterResponse:
+        ok, _ = self.validate_message(text_raw)
+        if not ok:
+            return AdapterResponse(
+                text_redacted="", ok=False,
+                error_code="EMPTY_OR_TOO_LONG", external_call_count=0,
+            )
+        if not self.is_configured():
+            return AdapterResponse(
+                text_redacted="", ok=False,
+                error_code=self._spc.ERR_DEVICE_TOKEN_MISSING,
+                external_call_count=0,
+            )
+        resp = self._client.chat(text_raw)
+        text_raw = ""  # 폐기
+        return AdapterResponse(
+            text_redacted=resp.text_redacted,
+            ok=resp.ok,
+            error_code=resp.error_code,
+            external_call_count=resp.external_call_count,
+        )
+
+
+def make_default_adapter(*, mode: str = _cs.MODE_SERVER_PROXY,
+                          server_url: str = "",
+                          agent_id: str = "",
                           ) -> "AiChatAdapter":
     """mode 별 adapter 분기.
 
-    - SERVER_PROXY (상용 기본) → PlaceholderAdapter (proxy 미구현)
-    - DEV_TEST_KEY → OpenAiDirectTestAdapter (실 OpenAI 호출)
+    - SERVER_PROXY (상용 기본) → ServerProxyChatAdapter (서버 경유)
+    - DEV_TEST_KEY → OpenAiDirectTestAdapter (실 OpenAI 직접 호출)
     - USER_BYOK → PlaceholderAdapter (이번 공정 OUT_OF_SCOPE)
     """
     if mode == _cs.MODE_DEV_TEST_KEY:
         return OpenAiDirectTestAdapter()
+    if mode == _cs.MODE_SERVER_PROXY:
+        return ServerProxyChatAdapter(server_url=server_url,
+                                        agent_id=agent_id)
     return PlaceholderAdapter()

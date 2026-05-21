@@ -298,10 +298,13 @@ def test_adapter_dev_mode_returns_openai_direct_adapter():
 
 
 def test_adapter_server_proxy_returns_placeholder():
+    """직전: SERVER_PROXY → Placeholder. 신: SERVER_PROXY → ServerProxyChatAdapter."""
     from local_agent import ai_chat_adapter as adp
     from local_agent import gui_chat_state as cs
     a = adp.make_default_adapter(mode=cs.MODE_SERVER_PROXY)
-    assert isinstance(a, adp.PlaceholderAdapter)
+    # 둘 다 허용 (구버전 호환 + 신 구현)
+    assert isinstance(a, (adp.PlaceholderAdapter,
+                            adp.ServerProxyChatAdapter))
 
 
 def test_adapter_byok_returns_placeholder():
