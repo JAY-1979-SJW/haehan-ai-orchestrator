@@ -19,6 +19,7 @@ from .sites.router import sites_router
 from .cad.router import cad_router
 from .web_task_router import web_task_router
 from .local_agent_router import local_agent_router
+from .agent_ai_proxy_router import agent_ai_proxy_router
 from .admin_ui_router import admin_ui_router
 from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
@@ -62,6 +63,7 @@ router.include_router(cad_router)
 router.include_router(cad_ai_router)
 router.include_router(web_task_router)
 router.include_router(local_agent_router)
+router.include_router(agent_ai_proxy_router)
 router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)

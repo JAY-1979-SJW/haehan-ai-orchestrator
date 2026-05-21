@@ -913,26 +913,55 @@ class HaehanAgentGuiApp:
             self.btn_modal_test.configure(state="disabled", text="테스트 중…")
             self.root.update_idletasks()
             try:
-                client = _occ.OpenAiDirectTestClient()
-                if not client.is_configured():
-                    messagebox.showwarning("키 없음",
-                                             "먼저 API key 를 저장하세요.")
+                mode = var_mode.get()
+                if mode == _cs2.MODE_DEV_TEST_KEY:
+                    client = _occ.OpenAiDirectTestClient()
+                    if not client.is_configured():
+                        messagebox.showwarning("키 없음",
+                                                 "먼저 API key 를 저장하세요.")
+                        return
+                    resp = client.health_check(timeout=15)
+                    ok = resp.ok
+                    model = resp.usage_summary.get('model', '?')
+                    err_code = resp.error_code
+                    err_msg = resp.user_message_kr
+                    duration = resp.duration_ms
+                    rlen = len(resp.text_redacted)
+                elif mode == _cs2.MODE_SERVER_PROXY:
+                    from . import server_proxy_chat_client as _spc
+                    if not self.ctrl.model.agent_id:
+                        messagebox.showwarning(
+                            "등록 필요",
+                            "먼저 등록을 완료하세요. (agent_id 가 없습니다.)")
+                        return
+                    client = _spc.ServerProxyChatClient(
+                        server_url=self.ctrl.model.server_url,
+                        agent_id=self.ctrl.model.agent_id,
+                    )
+                    resp = client.health_check(timeout=10)
+                    ok = resp.ok
+                    model = resp.model or "(server default)"
+                    err_code = resp.error_code
+                    err_msg = resp.user_message_kr
+                    duration = resp.duration_ms
+                    rlen = len(resp.text_redacted)
+                else:
+                    messagebox.showinfo(
+                        "준비 중", "USER_BYOK 모드는 별도 공정에서 활성화 예정입니다.")
                     return
-                resp = client.health_check(timeout=15)
-                if resp.ok:
+
+                if ok:
                     self.chat.set_ai_status(_cs2.AI_READY_PLACEHOLDER)
                     messagebox.showinfo(
                         "연결 테스트 PASS",
-                        f"OpenAI 응답 OK\n모델: {resp.usage_summary.get('model','?')}\n"
-                        f"응답 길이: {len(resp.text_redacted)}자\n"
-                        f"소요: {resp.duration_ms}ms",
+                        f"OK\n모델: {model}\n응답 길이: {rlen}자\n소요: {duration}ms",
                     )
                 else:
                     self.chat.set_ai_status(_cs2.AI_ERROR,
-                                              error_code=resp.error_code)
+                                              error_code=err_code)
                     messagebox.showerror(
                         "연결 테스트 실패",
-                        f"{resp.error_code}\n{resp.user_message_kr}",
+                        f"{err_code}\n{err_msg}",
                     )
             finally:
                 self.btn_modal_test.configure(state="normal",
@@ -990,12 +1019,18 @@ class HaehanAgentGuiApp:
 
         # mode 변경 시 버튼 활성 토글
         def _toggle_buttons(*_args):
-            is_dev = var_mode.get() == _cs2.MODE_DEV_TEST_KEY
-            for btn in (self.btn_modal_save, self.btn_modal_test,
-                         self.btn_modal_delete):
+            mode = var_mode.get()
+            is_dev = mode == _cs2.MODE_DEV_TEST_KEY
+            is_proxy = mode == _cs2.MODE_SERVER_PROXY
+            # 저장/삭제는 dev 모드 한정
+            for btn in (self.btn_modal_save, self.btn_modal_delete):
                 btn.configure(state="normal" if is_dev else "disabled")
+            # 연결 테스트는 dev or proxy 모두 활성
+            self.btn_modal_test.configure(
+                state="normal" if (is_dev or is_proxy) else "disabled")
 
         var_mode.trace_add("write", _toggle_buttons)
+        _toggle_buttons()
 
         ctk.CTkLabel(
             body,

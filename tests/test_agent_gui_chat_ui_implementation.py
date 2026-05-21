@@ -75,12 +75,20 @@ def test_placeholder_adapter_not_configured():
     assert a.is_configured() is False
 
 
-def test_placeholder_adapter_send_returns_not_configured():
+def test_placeholder_adapter_send_returns_not_configured(monkeypatch):
+    """기본 SERVER_PROXY 모드는 ServerProxyChatAdapter — token 없으면
+    error_code 반환. 외부 호출 0 유지."""
     from local_agent.ai_chat_adapter import make_default_adapter
+    from local_agent import token_store as ts
+    monkeypatch.setattr(ts, "has_device_token", lambda **kw: False)
+    monkeypatch.setattr(ts, "load_device_token", lambda **kw: None)
     a = make_default_adapter()
     r = a.send_message(text_raw="hello")
-    assert r.ok is True
-    assert "설정되지 않" in r.text_redacted
+    # placeholder text 또는 error_code 둘 중 하나
+    assert (("설정되지 않" in (r.text_redacted or ""))
+            or r.error_code in ("DEVICE_TOKEN_MISSING",
+                                  "AGENT_ID_MISSING",
+                                  "API_KEY_NOT_SET"))
     assert r.external_call_count == 0
 
 
