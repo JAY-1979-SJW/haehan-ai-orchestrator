@@ -6,7 +6,8 @@ import { MenuDrawer } from '@/components/MenuDrawer'
 import { IframePanel } from '@/components/IframePanel'
 import {
   TaskQueuePanel, ApprovalPanel, NewsPanel, EumPanel,
-  BrowserPanel, ScreenshotPanel, LogsPanel, SettingsPanel
+  BrowserPanel, ScreenshotPanel, LogsPanel, SettingsPanel,
+  BlogWritePanel, CafeWritePanel,
 } from '@/components/panels/Panels'
 import { useAppStore } from '@/store/appStore'
 import { wsClient } from '@/lib/ws'
@@ -19,6 +20,8 @@ const PANELS: Record<string, React.ComponentType> = {
   approval:         ApprovalPanel,
   news:             NewsPanel,
   eum:              EumPanel,
+  blog_write:       BlogWritePanel,
+  cafe_write:       CafeWritePanel,
   browser:          BrowserPanel,
   screenshot:       ScreenshotPanel,
   logs:             LogsPanel,

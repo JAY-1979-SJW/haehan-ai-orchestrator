@@ -129,7 +129,12 @@ class HaehanAgentGuiApp:
                   adapter: _adp.AiChatAdapter | None = None):
         self.ctrl = controller
         self.chat = chat_controller or cs.ChatUiController()
-        self.adapter = adapter or _adp.make_default_adapter()
+        # adapter — controller 의 server_url + agent_id 로 초기화
+        self.adapter = adapter or _adp.make_default_adapter(
+            mode=cs.MODE_SERVER_PROXY,
+            server_url=controller.model.server_url,
+            agent_id=controller.model.agent_id,
+        )
         self.current_page = PAGE_CHAT
         self._ws_thread: threading.Thread | None = None
         self._tabs: dict[str, object] = {}
@@ -684,8 +689,10 @@ class HaehanAgentGuiApp:
                                     border_color=COLOR["border"],
                                     text_color=COLOR["fg"])
 
-        # Step 2 widgets
-        var_code = tk.StringVar(value="")
+        # Step 2 widgets — env HAEHAN_AGENT_CODE 가 있으면 자동 주입
+        _env_code = os.environ.get("HAEHAN_AGENT_CODE", "").strip()
+        var_code = tk.StringVar(value=_env_code)
+        _auto_submit = bool(_env_code)
         ent_code = ctk.CTkEntry(content, textvariable=var_code,
                                   width=460, height=36, show="●",
                                   fg_color=COLOR["card"],
@@ -749,6 +756,9 @@ class HaehanAgentGuiApp:
                 return
             state["step"] = 2
             render()
+            # env code 있으면 Step 2 진입 직후 자동 등록 (사용자 클릭 불필요)
+            if _auto_submit:
+                win.after(300, on_register)
 
         def on_prev():
             state["step"] = max(1, state["step"] - 1)
@@ -769,6 +779,9 @@ class HaehanAgentGuiApp:
             # immediately wipe code (variable scope)
             var_code.set("")
 
+        # env code 자동 진행 — Step 1 도 기본 server_url 로 자동 통과
+        if _auto_submit:
+            win.after(200, on_next)
         btn_prev.pack(side="left")
         btn_next.pack(side="right")
         render()
@@ -789,6 +802,13 @@ class HaehanAgentGuiApp:
             self.ctrl.set_agent_id(meta.agent_id)
             self.ctrl.fire("register_success",
                             user_event=f"등록 성공 · {cd.mask_agent_id(meta.agent_id)}")
+            # adapter 가 새 server_url/agent_id 를 인지하도록 context 갱신
+            try:
+                if hasattr(self.adapter, "set_context"):
+                    self.adapter.set_context(server_url=server,
+                                              agent_id=meta.agent_id)
+            except Exception:
+                pass
             self.root.after(0, lambda: var_result.set(
                 f"✓ 등록 성공\nagent_id: {cd.mask_agent_id(meta.agent_id)}"))
         except rcli.RegistrationError:

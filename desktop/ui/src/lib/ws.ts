@@ -5,6 +5,8 @@ export type WsMessage =
   | { type: 'system'; text: string }
   | { type: 'task'; task_id: string; action_type: string; domain?: string; risk_level: string; description?: string; needs_approval?: boolean; execution_location?: string; status?: string; ts?: number }
   | { type: 'browser_status'; port?: string; url?: string; state?: string; active?: boolean }
+  | { type: 'blog_status'; status: string; title?: string; tags?: string[]; visibility?: string; body_preview?: string; result_url?: string; error?: string }
+  | { type: 'cafe_status'; status: string; title?: string; board?: string; body_preview?: string; result_url?: string; error?: string }
 
 export interface MenuItem {
   id: string

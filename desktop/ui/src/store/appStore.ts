@@ -27,6 +27,29 @@ export interface BrowserStatus {
   active?: boolean
 }
 
+export type BlogWriteStatus = 'idle' | 'writing' | 'awaiting_approval' | 'confirming' | 'done' | 'error'
+
+export interface BlogState {
+  status: BlogWriteStatus
+  title: string
+  tags: string[]
+  visibility: string
+  bodyPreview: string
+  resultUrl: string
+  error: string
+}
+
+export type CafeWriteStatus = 'idle' | 'writing' | 'awaiting_approval' | 'confirming' | 'done' | 'error'
+
+export interface CafeState {
+  status: CafeWriteStatus
+  title: string
+  board: string
+  bodyPreview: string
+  resultUrl: string
+  error: string
+}
+
 interface AppState {
   connected: boolean
   connecting: boolean
@@ -37,6 +60,8 @@ interface AppState {
   tasks: TaskItem[]
   approvalTasks: TaskItem[]
   browserStatus: BrowserStatus
+  blogState: BlogState
+  cafeState: CafeState
   badgeApproval: number
   badgeTask: number
 
@@ -50,6 +75,8 @@ interface AppState {
   addTask: (task: TaskItem) => void
   removeTask: (id: string) => void
   setBrowserStatus: (s: BrowserStatus) => void
+  setBlogState: (s: Partial<BlogState>) => void
+  setCafeState: (s: Partial<CafeState>) => void
   handleWsMessage: (msg: WsMessage) => void
 }
 
@@ -61,6 +88,9 @@ const DEFAULT_MENU: MenuItem[] = [
   // 업무 조회
   { id: 'news',             label: '뉴스',          icon: '📰', section: '업무 조회', visible: true,  min_role: 'any' },
   { id: 'eum',              label: 'EUM 단말기',    icon: '🏗️', section: '업무 조회', visible: true,  min_role: 'admin' },
+  // 콘텐츠 작성
+  { id: 'blog_write',       label: '블로그 작성',   icon: '✏️', section: '콘텐츠',    visible: true,  min_role: 'any' },
+  { id: 'cafe_write',       label: '카페 글쓰기',   icon: '☕', section: '콘텐츠',    visible: true,  min_role: 'any' },
   // 관리 대시보드 (admin-web)
   { id: 'admin_dashboard',  label: '관리 대시보드', icon: '🖥️', section: '관리 웹',   visible: true,  min_role: 'admin' },
   { id: 'admin_ops',        label: '운영 현황',     icon: '📊', section: '관리 웹',   visible: true,  min_role: 'admin' },
@@ -84,6 +114,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   tasks: [],
   approvalTasks: [],
   browserStatus: {},
+  blogState: { status: 'idle', title: '', tags: [], visibility: 'public', bodyPreview: '', resultUrl: '', error: '' },
+  cafeState: { status: 'idle', title: '', board: '', bodyPreview: '', resultUrl: '', error: '' },
   badgeApproval: 0,
   badgeTask: 0,
 
@@ -118,9 +150,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
 
   setBrowserStatus: (s) => set({ browserStatus: s }),
+  setBlogState: (s) => set((prev) => ({ blogState: { ...prev.blogState, ...s } })),
+  setCafeState: (s) => set((prev) => ({ cafeState: { ...prev.cafeState, ...s } })),
 
   handleWsMessage: (msg) => {
-    const { addMessage, addTask, setMenuItems, setBrowserStatus } = get()
+    const { addMessage, addTask, setMenuItems, setBrowserStatus, setBlogState, setCafeState } = get()
     switch (msg.type) {
       case 'menu':
         if (msg.items?.length) setMenuItems(msg.items)
@@ -151,6 +185,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       case 'browser_status':
         setBrowserStatus(msg)
+        break
+      case 'blog_status':
+        setBlogState({
+          status: msg.status as BlogWriteStatus,
+          title: msg.title ?? '',
+          tags: msg.tags ?? [],
+          visibility: msg.visibility ?? 'public',
+          bodyPreview: msg.body_preview ?? '',
+          resultUrl: msg.result_url ?? '',
+          error: msg.error ?? '',
+        })
+        break
+      case 'cafe_status':
+        setCafeState({
+          status: msg.status as CafeWriteStatus,
+          title: msg.title ?? '',
+          board: msg.board ?? '',
+          bodyPreview: msg.body_preview ?? '',
+          resultUrl: msg.result_url ?? '',
+          error: msg.error ?? '',
+        })
         break
     }
   },
