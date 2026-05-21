@@ -1187,13 +1187,16 @@ async def agent_register(request: Request):
         return {"ok": False, "error": "registration_code 필요"}
 
     try:
-        from local_agent.registration_client import RegistrationClient, RegistrationError
+        import platform
+        from local_agent.registration_client import register_with_code, RegistrationError
         from local_agent.token_store import save_device_token
         from local_agent.desktop_config import load_config, save_config
 
-        client = RegistrationClient(server_url)
-        meta = client.register(reg_code)
-        save_device_token(server_url, meta.agent_id, meta.device_token)
+        meta, device_token = register_with_code(
+            server_url, reg_code,
+            host=platform.node(), os_name=platform.system(), version="0.1.0"
+        )
+        save_device_token(server_url, meta.agent_id, device_token)
         cfg = load_config()
         cfg.server_url = server_url
         cfg.agent_id = meta.agent_id
