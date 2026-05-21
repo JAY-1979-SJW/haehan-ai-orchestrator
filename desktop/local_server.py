@@ -12,7 +12,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import httpx
 import uvicorn
@@ -1119,36 +1119,118 @@ async def get_logs():
         return {"lines": [], "error": str(exc)}
 
 
-# ── CAD bridge registry/status ────────────────────────────────────────────────
-# CAD-DESKTOP-HUB-CAD-BRIDGE-REGISTRY-STATUS-01.
-# 본 라우트는 sibling CAD repo 의 local_bridge 상태만 조회한다.
-# start/stop/restart/proxy 는 후속 lifecycle/proxy 트랙으로 분리.
+# ── CAD bridge registry/status + lifecycle ───────────────────────────────────
+# CAD-DESKTOP-HUB-CAD-BRIDGE-REGISTRY-STATUS-01 (status route)
+# CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01 (start/stop/restart + runnerState)
 from .cad_bridge_registry import (
     check_status as _cad_bridge_check_status,
     load_default_config as _cad_bridge_load_default_config,
 )
+from .cad_bridge_runner import CadBridgeRunner
+
+# Module-level singleton runner. proxy / WS action 미추가 — HTTP only.
+_cad_bridge_runner: Optional[CadBridgeRunner] = None
+
+
+def _get_cad_bridge_runner() -> CadBridgeRunner:
+    """Lazy singleton — 첫 호출 시 default config 로 인스턴스 생성."""
+    global _cad_bridge_runner
+    if _cad_bridge_runner is None:
+        _cad_bridge_runner = CadBridgeRunner()
+    return _cad_bridge_runner
+
+
+def _safe_runner_snapshot() -> dict:
+    """runner snapshot 을 안전하게 추출. 예외 시 빈 dict — desktop 서버 보호."""
+    try:
+        return _get_cad_bridge_runner().snapshot()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("cad_bridge runner snapshot error: %s", exc)
+        return {"state": "error", "lastError": str(exc)}
 
 
 @app.get("/cad/bridge/status")
 async def get_cad_bridge_status():
-    """CAD local_bridge 상태 조회 (read-only).
+    """CAD local_bridge 상태 조회 (read-only) + runner 내부 state.
 
     절대 process start/stop/kill 하지 않는다. HTTP GET openapi.json 만
     시도하고 실패는 STOPPED / UNREACHABLE 등으로 격리한다. desktop hub
     서버는 어떤 경우에도 본 호출로 인해 죽지 않는다.
+
+    응답에 `runnerState` 필드 1개 additive — lifecycle runner 의
+    snapshot(state/pid/port/cadRepoPath/lastError). 기존 registry/status
+    의 envelope (status/host/port/detail/signaturePathsPresent) 는
+    그대로 유지.
     """
     try:
         config = _cad_bridge_load_default_config()
         status = _cad_bridge_check_status(config)
-        return status.to_dict()
+        result = status.to_dict()
     except Exception as exc:  # noqa: BLE001 — 서버 안정성 우선
         logger.warning("cad_bridge_status unexpected error: %s", exc)
-        return {
+        result = {
             "status": "UNKNOWN",
             "host": None,
             "port": None,
             "detail": f"unexpected error: {type(exc).__name__}",
             "signaturePathsPresent": 0,
+        }
+    # additive: runnerState 1 필드만 추가
+    result["runnerState"] = _safe_runner_snapshot()
+    return result
+
+
+@app.post("/cad/bridge/start")
+async def post_cad_bridge_start():
+    """CAD bridge subprocess 기동 시도.
+
+    request body 없음 — 외부 PID / 임의 명령 인자 0건. cad_repo_path
+    미설정 / forbidden port / spawn 실패 등은 모두 200 + snapshot 으로
+    격리. desktop 서버는 어떤 경우에도 본 호출로 죽지 않는다.
+    """
+    try:
+        runner = _get_cad_bridge_runner()
+        started = runner.start()
+        return {"started": bool(started), "snapshot": runner.snapshot()}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("cad_bridge_start unexpected error: %s", exc)
+        return {
+            "started": False,
+            "snapshot": {"state": "error", "lastError": str(exc)},
+        }
+
+
+@app.post("/cad/bridge/stop")
+async def post_cad_bridge_stop():
+    """CAD bridge subprocess 종료 — 자기가 spawn 한 process 만 terminate.
+
+    외부 PID 인자 없음. body 없음. desktop.local_server 등 다른
+    프로세스에는 어떤 영향도 주지 않는다.
+    """
+    try:
+        runner = _get_cad_bridge_runner()
+        stopped = runner.stop()
+        return {"stopped": bool(stopped), "snapshot": runner.snapshot()}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("cad_bridge_stop unexpected error: %s", exc)
+        return {
+            "stopped": False,
+            "snapshot": {"state": "error", "lastError": str(exc)},
+        }
+
+
+@app.post("/cad/bridge/restart")
+async def post_cad_bridge_restart():
+    """stop + start. body 없음. 자기 process 외에 영향 0건."""
+    try:
+        runner = _get_cad_bridge_runner()
+        ok = runner.restart()
+        return {"restarted": bool(ok), "snapshot": runner.snapshot()}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("cad_bridge_restart unexpected error: %s", exc)
+        return {
+            "restarted": False,
+            "snapshot": {"state": "error", "lastError": str(exc)},
         }
 
 
