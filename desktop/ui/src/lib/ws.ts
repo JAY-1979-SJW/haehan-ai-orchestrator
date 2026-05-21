@@ -7,6 +7,8 @@ export type WsMessage =
   | { type: 'browser_status'; port?: string; url?: string; state?: string; active?: boolean }
   | { type: 'blog_status'; status: string; title?: string; tags?: string[]; visibility?: string; body_preview?: string; result_url?: string; error?: string }
   | { type: 'cafe_status'; status: string; title?: string; board?: string; body_preview?: string; result_url?: string; error?: string }
+  | { type: 'user_present_task'; task: { task_id: string; action_type: string; domain?: string; risk_level: string; description?: string; workflow_run_id?: string }; ts?: number }
+  | { type: 'task_blocked'; task_id?: string; workflow_run_id?: string; reason?: string; message_ko?: string; ts?: number }
 
 export interface MenuItem {
   id: string
