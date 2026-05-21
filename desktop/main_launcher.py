@@ -356,21 +356,36 @@ def _redact(s: str) -> str:
 
 
 def build_diagnostics(mode: AppMode = AppMode.TRAY) -> dict:
-    """진단 정보 dict 생성 — 모든 secret/PII redact 적용."""
+    """진단 정보 dict 생성 — 모든 secret/PII redact 적용.
+
+    HAEHAN_TRAY_REGISTRATION_MERGE_01: server_url / ws_url / agent_id (masked) /
+    heartbeat 상태를 tray_runtime 의 통합 source 와 동일하게 노출.
+    """
     consent = check_consent_hook()
     token = load_token_status_hook()
     role = role_check_hook(AppMode.ADMIN)
     lock_pid = _read_lock()
 
-    # agent_id 마스킹 시도
+    # tray_runtime 의 통합 source 사용 — server_url / agent_id / token_present
+    server_url_redacted = ""
+    ws_url_redacted = ""
     masked_aid = "—"
+    state = "NOT_REGISTERED"
+    keyring_backend = ""
     try:
-        from local_agent import token_store as _ts  # type: ignore
-        aid = getattr(_ts, "get_agent_id", lambda: "")()
-        if aid:
-            masked_aid = mask_agent_id(aid)
-    except Exception:
-        pass
+        from desktop import tray_runtime
+        status = tray_runtime.check_registration_status()
+        payload = tray_runtime.build_diagnostics_payload(
+            status=status,
+            heartbeat_state="CONNECTED" if status.registered else "NOT_REGISTERED",
+        )
+        server_url_redacted = payload.get("server_url_redacted", "")
+        ws_url_redacted = payload.get("ws_url_redacted", "")
+        masked_aid = payload.get("agent_id_masked") or "—"
+        state = payload.get("state", state)
+        keyring_backend = payload.get("keyring_backend", "")
+    except Exception as e:
+        logger.debug("diagnostics tray_runtime unavailable: %s", type(e).__name__)
 
     return {
         "app": "HaehanAI",
@@ -388,6 +403,7 @@ def build_diagnostics(mode: AppMode = AppMode.TRAY) -> dict:
         "token": {
             "present": token.get("present"),
             "source": token.get("source"),
+            "keyring_backend": keyring_backend,
             # 원문/해시 노출 금지
         },
         "role": {
@@ -396,10 +412,15 @@ def build_diagnostics(mode: AppMode = AppMode.TRAY) -> dict:
         },
         "agent_id_masked": masked_aid,
         "server": {
+            "url_redacted": server_url_redacted,
+            "ws_url_redacted": ws_url_redacted,
             "planned_port": 8765,
-            "started": False,  # foundation 단계는 미기동
+            "started": False,
         },
-        "admin_mode_available": False,  # 후속 공정에서 True로
+        "heartbeat": {
+            "state": state,
+        },
+        "admin_mode_available": False,
         "ts": datetime.now().isoformat(),
     }
 
@@ -451,15 +472,59 @@ def parse_mode(argv: Optional[list[str]] = None) -> AppMode:
 
 # ── main 디스패치 ─────────────────────────────────────────────────────────
 
-def run_tray_mode() -> int:
-    """Tray Mode 진입 — 본 공정에서는 hook 호출만, 실제 트레이는 후속."""
-    logger.info("[mode=tray] foundation — hook only")
+def run_tray_mode(*, skip_gui: bool = False, role: str = "any") -> int:
+    """Tray Mode 진입 — HAEHAN_TRAY_REGISTRATION_MERGE_01 에서 실제 통합.
+
+    foundation hook 들은 backward compat 용으로 유지 (deferred 반환).
+    실제 등록/heartbeat/트레이는 desktop.tray_runtime.run_tray_mode_full() 에서.
+    """
+    logger.info("[mode=tray] starting integrated tray runtime")
+
+    # foundation hook (backward compat — deferred 반환 유지)
     check_consent_hook()
     load_token_status_hook()
     start_local_server_hook()
     start_tray_hook()
-    logger.info("Tray Mode hook 완료 — 실제 트레이는 HAEHAN_TRAY_REGISTRATION_MERGE_01 에서 구현")
-    return 0
+
+    try:
+        from desktop import tray_runtime
+    except Exception as e:
+        logger.error("tray_runtime import 실패: %s", type(e).__name__)
+        return 1
+
+    try:
+        result = tray_runtime.run_tray_mode_full(
+            role=role,
+            admin_mode_available=False,  # HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 True
+            skip_gui=skip_gui,
+        )
+        logger.info("Tray runtime: registered=%s next=%s heartbeat=%s",
+                    result.get("registered"),
+                    result.get("next_action"),
+                    result.get("heartbeat_started"))
+        return 0
+    except Exception as e:
+        import traceback
+        logger.error("Tray Mode 실행 오류: %s\n%s",
+                     type(e).__name__, traceback.format_exc())
+        return 1
+
+
+def run_tray_mode_diagnostics() -> dict:
+    """Tray Mode 의 등록 상태 + heartbeat 계획을 반환 (테스트/진단용).
+
+    실제 GUI 미기동. 본 공정에서 추가된 진입점.
+    """
+    from desktop import tray_runtime
+    status = tray_runtime.check_registration_status()
+    next_action = tray_runtime.decide_next_action(status)
+    plan = tray_runtime.plan_heartbeat(status)
+    return {
+        "registered": status.registered,
+        "next_action": next_action,
+        "heartbeat_plan_can_start": plan.can_start,
+        "heartbeat_plan_reason": plan.reason,
+    }
 
 
 def run_admin_mode() -> int:
@@ -507,10 +572,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     if lock.stale:
         logger.info("stale lock 자동 정리됨 (이전 PID=%s)", lock.pid)
 
+    # 테스트/CI 환경: HAEHAN_SKIP_GUI=1 → GUI 미기동 모드
+    skip_gui = os.environ.get("HAEHAN_SKIP_GUI", "").strip() in ("1", "true", "True")
+
     try:
         if mode == AppMode.ADMIN:
             return run_admin_mode()
-        return run_tray_mode()
+        return run_tray_mode(skip_gui=skip_gui)
     finally:
         graceful_shutdown_hook()
 
