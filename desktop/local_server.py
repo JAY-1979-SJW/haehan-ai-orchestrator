@@ -1119,6 +1119,39 @@ async def get_logs():
         return {"lines": [], "error": str(exc)}
 
 
+# ── CAD bridge registry/status ────────────────────────────────────────────────
+# CAD-DESKTOP-HUB-CAD-BRIDGE-REGISTRY-STATUS-01.
+# 본 라우트는 sibling CAD repo 의 local_bridge 상태만 조회한다.
+# start/stop/restart/proxy 는 후속 lifecycle/proxy 트랙으로 분리.
+from .cad_bridge_registry import (
+    check_status as _cad_bridge_check_status,
+    load_default_config as _cad_bridge_load_default_config,
+)
+
+
+@app.get("/cad/bridge/status")
+async def get_cad_bridge_status():
+    """CAD local_bridge 상태 조회 (read-only).
+
+    절대 process start/stop/kill 하지 않는다. HTTP GET openapi.json 만
+    시도하고 실패는 STOPPED / UNREACHABLE 등으로 격리한다. desktop hub
+    서버는 어떤 경우에도 본 호출로 인해 죽지 않는다.
+    """
+    try:
+        config = _cad_bridge_load_default_config()
+        status = _cad_bridge_check_status(config)
+        return status.to_dict()
+    except Exception as exc:  # noqa: BLE001 — 서버 안정성 우선
+        logger.warning("cad_bridge_status unexpected error: %s", exc)
+        return {
+            "status": "UNKNOWN",
+            "host": None,
+            "port": None,
+            "detail": f"unexpected error: {type(exc).__name__}",
+            "signaturePathsPresent": 0,
+        }
+
+
 @app.on_event("startup")
 async def startup():
     asyncio.create_task(_connect_to_server())
