@@ -21,6 +21,7 @@ DEFAULT_CONFIG_PATH: Path = Path(
 
 _ALLOWED_KEYS: frozenset[str] = frozenset({
     "server_url", "agent_id", "label", "created_at", "version",
+    "local_host", "local_port",
 })
 
 
@@ -31,6 +32,8 @@ class DesktopConfig:
     label: str = ""
     created_at: str = ""
     version: str = ""
+    local_host: str = ""   # 비어있으면 127.0.0.1 기본값 사용
+    local_port: int = 0    # 0이면 8765 기본값 사용
 
     def is_complete(self) -> bool:
         return bool(self.server_url and self.agent_id)
@@ -53,12 +56,18 @@ def load_config(path: Optional[Path] = None) -> DesktopConfig:
     if not isinstance(raw, dict):
         return DesktopConfig()
     safe = _strip_secrets(raw)
+    try:
+        local_port = int(safe.get("local_port", 0))
+    except (ValueError, TypeError):
+        local_port = 0
     return DesktopConfig(
         server_url=str(safe.get("server_url", "")),
         agent_id=str(safe.get("agent_id", "")),
         label=str(safe.get("label", "")),
         created_at=str(safe.get("created_at", "")),
         version=str(safe.get("version", "")),
+        local_host=str(safe.get("local_host", "")),
+        local_port=local_port,
     )
 
 

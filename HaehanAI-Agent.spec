@@ -3,9 +3,27 @@ from PyInstaller.utils.hooks import collect_data_files
 from PyInstaller.utils.hooks import collect_submodules
 
 datas = []
-hiddenimports = ['websockets', 'keyring', 'keyring.backends.Windows', 'tkinter', 'tkinter.ttk', 'tkinter.messagebox', 'pystray', 'pystray._win32', 'PIL', 'PIL.Image', 'PIL.ImageDraw', 'customtkinter']
+hiddenimports = [
+    'websockets', 'keyring', 'keyring.backends.Windows',
+    'tkinter', 'tkinter.ttk', 'tkinter.messagebox',
+    'pystray', 'pystray._win32',
+    'PIL', 'PIL.Image', 'PIL.ImageDraw',
+    'customtkinter',
+    'starlette.middleware.base',
+    'uvicorn', 'fastapi', 'httpx',
+    'desktop.app_config',
+    'desktop.remote_access',
+    'desktop.tray_app',
+    'desktop.local_runner',
+    'desktop.status_provider',
+    'desktop.task_receiver',
+    'desktop.local_server',
+    'desktop.user_settings',
+    'desktop.webview_app_pywebview',
+]
 datas += collect_data_files('customtkinter')
 hiddenimports += collect_submodules('local_agent')
+hiddenimports += collect_submodules('desktop')
 
 
 a = Analysis(

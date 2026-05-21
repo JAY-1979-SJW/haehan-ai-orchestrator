@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  base: './',   // file:// 로드 시 상대 경로 사용 (Electron)
   build: {
     outDir: '../ui_dist',
     emptyOutDir: true,

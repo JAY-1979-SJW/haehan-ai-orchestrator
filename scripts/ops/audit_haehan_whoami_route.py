@@ -287,43 +287,75 @@ for mod in existing:
         fail("FAIL_EXISTING_ENTRYPOINT_BROKEN", f"{mod}: {e}")
 
 
-# ── 6. dirty scope 검증 ───────────────────────────────────────────────
+# ── 6. dirty scope 검증 — commit history 기반 ────────────────────────
+# HAEHAN_WHOAMI_ROUTE_01 커밋 자체의 변경 파일이 allowed 범위 내인지.
+# (이후 공정에서 working tree 가 다른 변경을 가지더라도 본 커밋 자체의 scope 만 검증)
 import subprocess
-diff = subprocess.run(
-    ["git", "diff", "--name-only", "HEAD"],
+log_scope = subprocess.run(
+    ["git", "log", "--all", "-E",
+     "--grep=^feat.haehan.: HAEHAN_WHOAMI_ROUTE_01",
+     "-1", "--name-only", "--pretty=format:%H"],
     cwd=ROOT, capture_output=True, text=True, timeout=10,
 )
-modified = [p.strip().replace("\\", "/") for p in diff.stdout.split("\n") if p.strip()]
+scope_lines = [l for l in log_scope.stdout.strip().split("\n") if l.strip()]
+if not scope_lines:
+    warn("WARN_COMMIT_NOT_FOUND",
+         "HAEHAN_WHOAMI_ROUTE_01 커밋 미발견 — working tree fallback")
+    diff = subprocess.run(
+        ["git", "diff", "--name-only", "HEAD"],
+        cwd=ROOT, capture_output=True, text=True, timeout=10,
+    )
+    modified = [p.strip().replace("\\", "/") for p in diff.stdout.split("\n") if p.strip()]
+else:
+    modified = [l.strip().replace("\\", "/") for l in scope_lines[1:]]
+
 allowed = {
     "desktop/local_server.py",
     "scripts/ops/audit_haehan_whoami_route.py",
     "tests/test_haehan_whoami_route.py",
 }
 pre_existing = {
-    "scripts/archive/data/chrome_ui_monitor_state.json",  # 본 세션 외 잔여
+    "scripts/archive/data/chrome_ui_monitor_state.json",
 }
 violations = [m for m in modified if m not in allowed and m not in pre_existing]
 if violations:
-    fail("FAIL_DIRTY_SCOPE_VIOLATION", f"본 공정 외 수정: {violations}")
+    fail("FAIL_DIRTY_SCOPE_VIOLATION", f"WHOAMI_ROUTE_01 커밋 범위 외: {violations}")
 else:
-    ok(f"수정 범위 검증 OK — 변경 {len(modified)}개 모두 허용 범위")
+    ok(f"수정 범위 검증 OK — WHOAMI_ROUTE_01 커밋 변경 {len(modified)}개 모두 허용 범위")
 
 
 # ── 7. 수정 금지 파일 staged 검사 ───────────────────────────────────────
-staged = subprocess.run(
-    ["git", "diff", "--cached", "--name-only"],
+# HAEHAN_WHOAMI_ROUTE_01 커밋 자체의 변경 파일에 금지 파일이 없는지 검증.
+# (이후 공정에서 stash 복원 등으로 staged 되더라도 본 검증은 commit history 기준)
+log = subprocess.run(
+    ["git", "log", "--all", "-E",
+     "--grep=^feat.haehan.: HAEHAN_WHOAMI_ROUTE_01",
+     "-1", "--name-only", "--pretty=format:%H"],
     cwd=ROOT, capture_output=True, text=True, timeout=10,
 )
-staged_files = set(p.strip().replace("\\", "/") for p in staged.stdout.split("\n") if p.strip())
-forbidden_staged = {
-    "desktop/webview_app_pywebview.py",
-    "desktop/tray_app.py",
-}
-bad = forbidden_staged & staged_files
-if bad:
-    fail("FAIL_DIRTY_SCOPE_VIOLATION", f"수정 금지 파일 staged: {bad}")
+lines = [l for l in log.stdout.strip().split("\n") if l.strip()]
+if not lines:
+    warn("WARN_COMMIT_NOT_FOUND", "HAEHAN_WHOAMI_ROUTE_01 커밋 미발견 — staged fallback")
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        cwd=ROOT, capture_output=True, text=True, timeout=10,
+    )
+    staged_files = set(p.strip().replace("\\", "/") for p in staged.stdout.split("\n") if p.strip())
+    forbidden_staged = {"desktop/webview_app_pywebview.py", "desktop/tray_app.py"}
+    bad = forbidden_staged & staged_files
+    if bad:
+        fail("FAIL_DIRTY_SCOPE_VIOLATION", f"수정 금지 파일 staged: {bad}")
+    else:
+        ok("수정 금지 파일 staged 없음 (fallback)")
 else:
-    ok("수정 금지 파일 (webview_app_pywebview / tray_app) staged 없음")
+    commit_files = set(l.strip().replace("\\", "/") for l in lines[1:])
+    forbidden_in_commit = {"desktop/webview_app_pywebview.py", "desktop/tray_app.py"}
+    bad = forbidden_in_commit & commit_files
+    if bad:
+        fail("FAIL_DIRTY_SCOPE_VIOLATION",
+             f"WHOAMI_ROUTE_01 커밋 자체에 금지 파일: {bad}")
+    else:
+        ok("WHOAMI_ROUTE_01 커밋 자체에 금지 파일 (webview_app_pywebview/tray_app) 없음")
 
 
 # ── 8. 라우터 추가 분량 (최소 수정 검증) ────────────────────────────────

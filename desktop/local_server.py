@@ -38,7 +38,12 @@ class RemoteAccessMiddleware(BaseHTTPMiddleware):
     """비 localhost 요청에 Bearer 토큰 검증. 원격 접속 비활성 시 localhost만 허용."""
 
     async def dispatch(self, request: StarletteRequest, call_next):
-        client_host = (request.client.host if request.client else "") or ""
+        # BaseHTTPMiddleware는 WebSocket 업그레이드 요청에서 request.client가 None이 되는
+        # Starlette 버그가 있으므로, WS 경로는 scope에서 직접 host를 읽음
+        if request.scope.get("type") == "websocket":
+            client_host = (request.scope.get("client") or ["127.0.0.1"])[0]
+        else:
+            client_host = (request.client.host if request.client else "") or ""
         is_local = client_host in ("127.0.0.1", "::1", "localhost")
         if is_local:
             return await call_next(request)

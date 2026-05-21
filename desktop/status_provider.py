@@ -23,8 +23,12 @@ _FORBIDDEN_STATUS_KEYS: frozenset[str] = frozenset({
     "raw_screenshot", "base64", "device_token",
 })
 
-# Default local admin mock UI URL (local only)
-ADMIN_MOCK_UI_URL = "http://localhost:3000/browser-approvals"
+# Default local admin mock UI URL (local only) — app_config 기반 동적 URL
+try:
+    from desktop.app_config import LOCAL_URL as _local_url
+    ADMIN_MOCK_UI_URL = f"{_local_url}/browser-approvals"
+except Exception:
+    ADMIN_MOCK_UI_URL = "http://127.0.0.1:8765/browser-approvals"
 
 # Module availability markers
 _BROWSER_TASK_HANDLER_MODULE = "local_agent.browser_task_handler"
