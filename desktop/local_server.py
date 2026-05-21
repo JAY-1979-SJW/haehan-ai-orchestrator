@@ -24,7 +24,23 @@ from .user_settings import load_menu, save_menu
 
 logger = logging.getLogger(__name__)
 
-_UI_DIR = Path(__file__).parent / "ui_dist"
+def _resolve_ui_dir() -> Path:
+    import sys
+    if getattr(sys, "frozen", False):
+        # onedir: exe 옆 _internal/ 폴더가 sys._MEIPASS
+        # onefile: sys._MEIPASS 임시 디렉터리
+        base = Path(getattr(sys, "_MEIPASS", None) or Path(sys.executable).parent)
+        for candidate in (
+            base / "desktop" / "ui_dist",
+            base / "ui_dist",
+            Path(sys.executable).parent / "_internal" / "desktop" / "ui_dist",
+            Path(sys.executable).parent / "_internal" / "ui_dist",
+        ):
+            if (candidate / "index.html").exists():
+                return candidate
+    return Path(__file__).parent / "ui_dist"
+
+_UI_DIR = _resolve_ui_dir()
 _SERVER_WS_URL = "wss://api.haehan-ai.kr/ws/desktop"  # 서버 측 Push WebSocket
 
 app = FastAPI(title="Haehan Desktop Local Server", docs_url=None, redoc_url=None)
