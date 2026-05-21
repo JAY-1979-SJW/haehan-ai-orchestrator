@@ -142,9 +142,10 @@ def _strip_secrets_from_url(url: str) -> str:
         return ""
     # userinfo (user:pass@host) 제거
     url = re.sub(r"://[^/@]*@", "://[REDACTED]@", url)
-    # query 파라미터 제거 (보안 우선)
+    # query 파라미터 제거 (보안 우선) — device_token 명시 포함
     url = re.sub(
-        r"([?&])(token|auth|secret|session|sid|sess|key|password|pwd)=[^&]*",
+        r"([?&])(device_token|registration_code|token|auth|secret|"
+        r"session|sid|sess|key|password|pwd|jwt|bearer|api_key)=[^&]*",
         r"\1\2=[REDACTED]", url, flags=re.IGNORECASE,
     )
     return url
