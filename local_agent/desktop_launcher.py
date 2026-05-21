@@ -254,8 +254,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if not args.agent_id:
-        print("--agent-id 필요. 등록은 --register 모드 사용.")
-        return 2
+        # 기본 동작 = GUI 실행 (인자 없이 더블클릭 / .exe 실행)
+        try:
+            from . import gui_tray
+            return gui_tray.run_tray_with_app(server_url=args.server)
+        except Exception as exc:
+            print(f"GUI 실행 실패: {type(exc).__name__}: {exc}")
+            print("CLI 사용: --self-test / --diagnostics / --register / --agent-id")
+            return 1
     return connect_flow(args.server, args.agent_id)
 
 

@@ -117,10 +117,90 @@ def _connect_browser():
     return browser, ctx
 
 
+def get_screen_size() -> tuple[int, int]:
+    """모니터 CSS 픽셀 해상도 감지 (DPI 스케일 적용).
+
+    Windows DPI 스케일 팩터(예: 150% = 1.5)를 물리 해상도에 나눠
+    로컬 Chrome과 동일한 CSS 픽셀 크기를 반환한다.
+    반환값을 Playwright set_viewport_size()에 그대로 사용 가능.
+    """
+    try:
+        import ctypes
+        # DPI 인식 없이 GetSystemMetrics → 물리 픽셀
+        user32 = ctypes.windll.user32  # type: ignore[attr-defined]
+        gdi32  = ctypes.windll.gdi32   # type: ignore[attr-defined]
+        phys_w = user32.GetSystemMetrics(0)
+        phys_h = user32.GetSystemMetrics(1)
+        # 시스템 DPI → CSS 픽셀 스케일 계산 (96 dpi = 100%)
+        hdc = user32.GetDC(0)
+        dpi = gdi32.GetDeviceCaps(hdc, 88)  # LOGPIXELSX
+        user32.ReleaseDC(0, hdc)
+        scale = dpi / 96.0
+        css_w = int(phys_w / scale)
+        css_h = int(phys_h / scale)
+        if css_w > 0 and css_h > 0:
+            log.debug("[viewport] 물리=%dx%d DPI=%d scale=%.2f CSS=%dx%d",
+                      phys_w, phys_h, dpi, scale, css_w, css_h)
+            return css_w, css_h
+    except Exception:
+        pass
+    import os
+    try:
+        w = int(os.environ.get("SCREEN_WIDTH", "0"))
+        h = int(os.environ.get("SCREEN_HEIGHT", "0"))
+        if w > 0 and h > 0:
+            return w, h
+    except ValueError:
+        pass
+    log.debug("[viewport] 화면 크기 감지 실패 — 기본값 1920×1080 사용")
+    return 1920, 1080
+
+
+def fit_viewport(page: Page) -> None:
+    """페이지 뷰포트를 실제 모니터 해상도에 맞추고 창을 최대화 복원.
+
+    CDP 연결 시 Playwright가 뷰포트를 설정하지 않는 문제 +
+    AI Chrome 창이 최소화 상태일 때 렌더링이 달라지는 문제를 동시에 해결.
+    get_page() / open_page() 호출 직후 자동 적용.
+    """
+    w, h = get_screen_size()
+    try:
+        page.set_viewport_size({"width": w, "height": h})
+        log.debug("[viewport] 뷰포트 설정: %dx%d", w, h)
+    except Exception as e:
+        log.warning("[viewport] set_viewport_size 실패: %s", e)
+
+    # 창이 최소화됐거나 작으면 최대화 복원 (CDP Browser.setWindowBounds)
+    # 주의: minimized → maximized 직접 불가. normal 경유 필수.
+    try:
+        cdp = page.context.new_cdp_session(page)
+        win = cdp.send("Browser.getWindowForTarget", {})
+        wid = win["windowId"]
+        state = win.get("bounds", {}).get("windowState", "")
+
+        if state in ("maximized", "fullscreen"):
+            pass  # 이미 최대화
+        else:
+            if state == "minimized":
+                # minimized → normal 먼저
+                cdp.send("Browser.setWindowBounds", {
+                    "windowId": wid, "bounds": {"windowState": "normal"},
+                })
+                time.sleep(0.2)
+            # normal → maximized
+            cdp.send("Browser.setWindowBounds", {
+                "windowId": wid, "bounds": {"windowState": "maximized"},
+            })
+            log.info("[viewport] 창 최대화 복원 완료 (이전 상태: %s)", state)
+    except Exception as e:
+        log.debug("[viewport] 창 복원 생략: %s", e)
+
+
 def open_page() -> Page:
     """CDP 브라우저에 연결해 새 페이지 반환."""
     _, ctx = _connect_browser()
     page = ctx.new_page()
+    fit_viewport(page)
     log.debug("새 페이지 생성 완료")
     return page
 
@@ -137,10 +217,12 @@ def get_page() -> Page:
     active = [p for p in pages if p.url not in ("about:blank", "")]
     if active:
         page = active[-1]
+        fit_viewport(page)
         log.debug("기존 탭 재사용: %s", page.url)
         return page
     # 탭이 없거나 모두 blank면 새 탭 생성
     page = ctx.new_page()
+    fit_viewport(page)
     log.debug("새 페이지 생성 완료")
     return page
 

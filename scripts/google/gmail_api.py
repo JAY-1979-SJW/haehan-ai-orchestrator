@@ -47,17 +47,21 @@ class GmailAPI:
             "trash": GOOGLE_URLS["gmail_trash"],
         }
         self.page.goto(url_map.get(folder, url_map["inbox"]), timeout=20000)
-        time.sleep(2.5)
+        time.sleep(3.0)
         rows = self.page.evaluate(
             r"""(limit) => {
                 const out = [];
-                for (const el of document.querySelectorAll('[role="listitem"]')) {
+                // Gmail 웹: tr.zA 행 파싱 (검증됨 2026-05-20)
+                for (const row of document.querySelectorAll('tr.zA')) {
                     if (out.length >= limit) break;
-                    const from = el.querySelector('[data-senders]')?.getAttribute('data-senders') || '';
-                    const subject = el.querySelector('[data-subject]')?.getAttribute('data-subject') || '';
-                    const date = el.querySelector('[data-date-time]')?.getAttribute('data-date-time') || '';
-                    const unread = el.classList.contains('zE') || !!el.querySelector('.zE');
-                    if (from || subject) out.push({from, subject, date, unread});
+                    const fromEl = row.querySelector('.yW span[email], .yW span[name], .zF');
+                    const from = fromEl?.getAttribute('email') || fromEl?.getAttribute('name') || fromEl?.innerText || '';
+                    const subjectEl = row.querySelector('.y6 span:not(.T3)');
+                    const subject = subjectEl?.innerText || row.querySelector('.y6')?.innerText || '';
+                    const dateEl = row.querySelector('.xW span, td.xW');
+                    const date = dateEl?.getAttribute('title') || dateEl?.innerText || '';
+                    const unread = row.classList.contains('zE');
+                    if (from || subject) out.push({from: from.trim(), subject: subject.trim(), date: date.trim(), unread, index: out.length});
                 }
                 return out;
             }""",

@@ -52,7 +52,8 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
     """
     match task:
         case "blog":
-            _gate_blog(sub)
+            if "--dry-run" not in [str(a) for a in args]:
+                _gate_blog(sub)
             blog.run(sub or "write", args)
         case "mail":
             _gate_mail(sub)
