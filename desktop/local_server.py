@@ -1397,6 +1397,54 @@ _LOG_FILE = Path(__file__).parent.parent / "data" / "logs" / "app.log"
 _LOG_MAX_LINES = 500
 
 
+# ── /api/v1/whoami (HAEHAN_WHOAMI_ROUTE_01) ────────────────────────────────
+# Admin Mode role guard 가 호출하는 안전한 role 조회 엔드포인트.
+# 응답에 token / device_token / registration_code / bearer / cookie / authorization /
+# sk- / secret / password / api_key 키는 절대 포함되지 않는다.
+# 127.0.0.1/local 접근이라는 이유로 admin 권한을 자동 부여하지 않는다 — 명시적 source 만 사용.
+
+_WHOAMI_KNOWN_ROLES = frozenset({"any", "user", "viewer", "admin", "owner"})
+
+
+def _resolve_whoami_role() -> tuple[str, str]:
+    """role + source 결정.
+
+    우선순위:
+      1) HAEHAN_ROLE 환경변수 (KNOWN_ROLES 만)
+      2) user_settings.json 의 role 필드 (있으면)
+      3) "any" (default)
+
+    127.0.0.1/local 이라는 이유로 admin 자동 부여 금지.
+    """
+    import os as _os
+    env_role = _os.environ.get("HAEHAN_ROLE", "").strip().lower()
+    if env_role in _WHOAMI_KNOWN_ROLES:
+        return env_role, "env"
+    try:
+        from .user_settings import load_role  # type: ignore
+        cfg_role = (load_role() or "").strip().lower()
+        if cfg_role in _WHOAMI_KNOWN_ROLES:
+            return cfg_role, "config"
+    except Exception:
+        pass
+    return "any", "default"
+
+
+@app.get("/api/v1/whoami")
+async def whoami():
+    """현재 사용자 role 조회 — Admin Mode role guard 용.
+
+    응답 키는 ok / role / admin / source 로 제한. 민감 정보 절대 미포함.
+    """
+    role, source = _resolve_whoami_role()
+    return {
+        "ok": True,
+        "role": role,
+        "admin": role in ("admin", "owner"),
+        "source": source,
+    }
+
+
 @app.get("/logs")
 async def get_logs():
     """최근 로그 라인 반환."""
