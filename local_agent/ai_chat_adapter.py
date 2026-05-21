@@ -96,11 +96,66 @@ def build_not_configured_response_text() -> str:
 # ── factory ────────────────────────────────────────────────────
 
 
+class OpenAiDirectTestAdapter:
+    """Developer Test Mode adapter — 실 OpenAI 호출.
+
+    key 미설정 → API_KEY_NOT_SET error
+    key 있음 → openai_chat_client.OpenAiDirectTestClient 위임
+    """
+
+    def __init__(self):
+        from . import openai_chat_client as _occ
+        self._client = _occ.OpenAiDirectTestClient()
+        self._occ = _occ
+
+    def is_configured(self) -> bool:
+        return self._client.is_configured()
+
+    def validate_message(self, text: str) -> tuple[bool, str]:
+        if not text or not text.strip():
+            return (False, "메시지가 비어 있습니다.")
+        if len(text) > 8000:
+            return (False, "입력이 너무 깁니다.")
+        return (True, "")
+
+    def detect_sensitive_input(self, text: str) -> bool:
+        if not text:
+            return False
+        red = _aic.redact_input(text)
+        return _aic.has_pii_warning(text, red)
+
+    def send_message(self, *, text_raw: str) -> AdapterResponse:
+        ok, _ = self.validate_message(text_raw)
+        if not ok:
+            return AdapterResponse(
+                text_redacted="", ok=False,
+                error_code="EMPTY_OR_TOO_LONG", external_call_count=0,
+            )
+        if not self.is_configured():
+            return AdapterResponse(
+                text_redacted="", ok=False,
+                error_code=self._occ.ERR_API_KEY_NOT_SET,
+                external_call_count=0,
+            )
+        req = self._occ.OpenAiChatRequest(text=text_raw)
+        text_raw = ""  # 폐기
+        resp = self._client.chat(req)
+        return AdapterResponse(
+            text_redacted=resp.text_redacted,
+            ok=resp.ok,
+            error_code=resp.error_code,
+            external_call_count=resp.external_call_count,
+        )
+
+
 def make_default_adapter(*, mode: str = _cs.MODE_SERVER_PROXY
                           ) -> "AiChatAdapter":
-    """현재 공정 default = PlaceholderAdapter.
+    """mode 별 adapter 분기.
 
-    다음 공정에서 mode 별 실제 adapter (OpenAIServerProxyAdapter /
-    OpenAIByokAdapter / OpenAIDevTestKeyAdapter) 로 교체된다.
+    - SERVER_PROXY (상용 기본) → PlaceholderAdapter (proxy 미구현)
+    - DEV_TEST_KEY → OpenAiDirectTestAdapter (실 OpenAI 호출)
+    - USER_BYOK → PlaceholderAdapter (이번 공정 OUT_OF_SCOPE)
     """
+    if mode == _cs.MODE_DEV_TEST_KEY:
+        return OpenAiDirectTestAdapter()
     return PlaceholderAdapter()

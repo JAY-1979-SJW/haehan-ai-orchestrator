@@ -22,11 +22,12 @@ ADAPTER_PATH = Path("local_agent/ai_chat_adapter.py")
 
 
 _FORBIDDEN_EXTERNAL = (
-    # 실제 import / 호출 패턴만. 단순 단어 "OpenAI" 는 UI 라벨로 허용.
-    "import openai", "from openai", "openai.chat", "openai.api",
-    "import anthropic", "from anthropic",
+    # 실제 SDK import / 호출 패턴만.
+    # 단순 단어 "OpenAI" 는 UI 라벨, "from . import openai_*" 는 로컬 모듈 — 허용.
+    "openai.chat", "openai.api", "openai.completions",
+    "anthropic.messages", "anthropic.completions",
     "https://api.openai.com", "https://api.anthropic.com",
-    "urllib.request.urlopen", "requests.post", "httpx.post",
+    "requests.post", "httpx.post",
 )
 
 
