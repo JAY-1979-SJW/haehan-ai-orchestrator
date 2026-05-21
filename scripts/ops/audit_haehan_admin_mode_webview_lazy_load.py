@@ -3,8 +3,8 @@ HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 감리.
 
 Verdicts:
   PASS_HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD
-  WARN_CONSENT_DIALOG_DEFERRED
-  WARN_WHOAMI_API_DEFERRED
+  WARN_CONSENT_DIALOG_DEFERRED  (HAEHAN_CONSENT_DIALOG_01 에서 해소 예정)
+  (WARN_WHOAMI_API_DEFERRED 제거 — HAEHAN_WHOAMI_ROUTE_01 에서 실 구현 완료)
   FAIL_ROLE_GUARD_BYPASSED
   FAIL_PYWEBVIEW_NOT_LAZY
   FAIL_SKIP_GUI_BROKEN
@@ -395,11 +395,23 @@ except Exception as e:
     warn("WARN_STAGED_CHECK", f"커밋 검사 실패: {e}")
 
 
-# ── 18. 후속 공정 deferred 마커 ────────────────────────────────────────
-warn("WARN_CONSENT_DIALOG_DEFERRED",
-     "consent dialog GUI 는 본 공정 OUT_OF_SCOPE — 별도 후속 공정")
-warn("WARN_WHOAMI_API_DEFERRED",
-     "/api/v1/whoami 라우터 실 구현은 별도 공정 — explicit_role / env / mock 으로 검증")
+# ── 18. 후속 공정 상태 — HAEHAN_AUDIT_WARN_SYNC_01 후 정리 ──────────
+# WARN_WHOAMI_API_DEFERRED: HAEHAN_WHOAMI_ROUTE_01 에서 실 라우터 완료 → 검증 후 PASS 전환
+ls_src = (ROOT / "desktop/local_server.py").read_text(encoding="utf-8")
+if "/api/v1/whoami" in ls_src and "async def whoami" in ls_src:
+    ok("/api/v1/whoami 실 라우터 구현 확인 (WARN_WHOAMI_API_DEFERRED 해소)")
+else:
+    fail("FAIL_WHOAMI_ROUTE_MISSING",
+         "/api/v1/whoami 라우터 누락 — HAEHAN_WHOAMI_ROUTE_01 회귀")
+
+# WARN_CONSENT_DIALOG_DEFERRED: 유지 (HAEHAN_CONSENT_DIALOG_01 에서 해소 예정)
+ml_src_check = (ROOT / "desktop/main_launcher.py").read_text(encoding="utf-8")
+if "webview_app_pywebview._check_consent" in ml_src_check \
+        or "from desktop.webview_app_pywebview import _check_consent" in ml_src_check:
+    ok("main_launcher ↔ _check_consent 연결됨 (WARN_CONSENT_DIALOG_DEFERRED 해소 시 PASS)")
+else:
+    warn("WARN_CONSENT_DIALOG_DEFERRED",
+         "main_launcher consent hook 과 _check_consent 미연결 — HAEHAN_CONSENT_DIALOG_01 에서 해소 예정")
 
 
 # ── 결과 ────────────────────────────────────────────────────────────────
