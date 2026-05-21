@@ -24,7 +24,7 @@ from PyQt6.QtGui import QIcon
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_URL = "http://127.0.0.1:8765"
+from desktop.app_config import LOCAL_URL as _LOCAL_URL  # noqa: E402
 _SERVER_READY_TIMEOUT = 8  # 초
 
 

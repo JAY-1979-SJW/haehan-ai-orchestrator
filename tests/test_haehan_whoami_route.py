@@ -319,28 +319,40 @@ def test_tray_menu_role_admin_has_admin_item_preserved():
 
 # ── 수정 금지 파일 미수정 ──────────────────────────────────────────────
 
-def test_webview_app_pywebview_not_modified_in_this_session():
-    """HEAD 시점과 비교했을 때 desktop/webview_app_pywebview.py 가
-    본 세션 변경분으로 staged 되지 않았음."""
+def test_webview_app_pywebview_not_modified_in_whoami_route_commit():
+    """HAEHAN_WHOAMI_ROUTE_01 커밋 자체가 desktop/webview_app_pywebview.py 를
+    수정하지 않았음 — 해당 공정의 '수정 금지' 정책 회귀 검증.
+
+    이후 공정 (예: HAEHAN_STASH_SAFE_RESTORE_01) 에서 stash 복원으로
+    해당 파일이 변경되더라도 본 검증은 commit history 기준이므로 영향 없음.
+    """
     import subprocess
-    staged = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
+    log = subprocess.run(
+        ["git", "log", "--all", "-E",
+         "--grep=^feat.haehan.: HAEHAN_WHOAMI_ROUTE_01",
+         "-1", "--name-only", "--pretty=format:%H"],
         cwd=ROOT, capture_output=True, text=True, timeout=5,
     )
-    staged_files = [p.strip().replace("\\", "/")
-                    for p in staged.stdout.split("\n") if p.strip()]
-    assert "desktop/webview_app_pywebview.py" not in staged_files
+    lines = [l for l in log.stdout.strip().split("\n") if l.strip()]
+    if not lines:
+        pytest.skip("HAEHAN_WHOAMI_ROUTE_01 커밋 미발견")
+    files = [l.strip().replace("\\", "/") for l in lines[1:]]
+    assert "desktop/webview_app_pywebview.py" not in files
 
 
-def test_tray_app_not_modified_in_this_session():
+def test_tray_app_not_modified_in_whoami_route_commit():
     import subprocess
-    staged = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
+    log = subprocess.run(
+        ["git", "log", "--all", "-E",
+         "--grep=^feat.haehan.: HAEHAN_WHOAMI_ROUTE_01",
+         "-1", "--name-only", "--pretty=format:%H"],
         cwd=ROOT, capture_output=True, text=True, timeout=5,
     )
-    staged_files = [p.strip().replace("\\", "/")
-                    for p in staged.stdout.split("\n") if p.strip()]
-    assert "desktop/tray_app.py" not in staged_files
+    lines = [l for l in log.stdout.strip().split("\n") if l.strip()]
+    if not lines:
+        pytest.skip("HAEHAN_WHOAMI_ROUTE_01 커밋 미발견")
+    files = [l.strip().replace("\\", "/") for l in lines[1:]]
+    assert "desktop/tray_app.py" not in files
 
 
 # ── local_server.py 최소 수정 검증 ─────────────────────────────────────

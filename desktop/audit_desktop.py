@@ -29,8 +29,9 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).parent.parent
 UI_DIST = Path(__file__).parent / "ui_dist"
 LOG_FILE = ROOT / "data" / "logs" / "app.log"
-LOCAL_URL = "http://127.0.0.1:8765"
-WS_URL    = "ws://127.0.0.1:8765/ws/ui"
+
+from desktop.app_config import LOCAL_HOST, LOCAL_PORT, LOCAL_URL  # noqa: E402
+WS_URL    = f"ws://{LOCAL_HOST}:{LOCAL_PORT}/ws/ui"
 PROXY_URL = f"{LOCAL_URL}/proxy/admin/"
 AUTOWORK  = "https://autowork.haehan-ai.kr"
 
@@ -77,13 +78,13 @@ class AuditReport:
 # ── 개별 감사 항목 ────────────────────────────────────────────────────────────
 
 def audit_port(report: AuditReport) -> None:
-    """포트 8765 LISTENING 확인."""
+    """로컬 서버 포트 LISTENING 확인."""
     try:
-        s = socket.create_connection(("127.0.0.1", 8765), timeout=2)
+        s = socket.create_connection((LOCAL_HOST, LOCAL_PORT), timeout=2)
         s.close()
-        report.add("포트 8765 LISTENING", "PASS", "")
+        report.add(f"포트 {LOCAL_PORT} LISTENING", "PASS", "")
     except OSError:
-        report.add("포트 8765 LISTENING", "FAIL", "local_server가 실행되지 않음")
+        report.add(f"포트 {LOCAL_PORT} LISTENING", "FAIL", "local_server가 실행되지 않음")
 
 
 def audit_static(report: AuditReport) -> None:

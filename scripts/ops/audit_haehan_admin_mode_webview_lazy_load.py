@@ -307,13 +307,26 @@ for mod in existing:
 # ── 16. dirty scope 검증 ────────────────────────────────────────────────
 import subprocess
 try:
-    diff = subprocess.run(
-        ["git", "diff", "--name-only", "HEAD"],
+    # HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 자체의 변경 파일이 allowed 범위 내인지.
+    # (이후 공정에서 working tree 가 다른 변경을 가지더라도 본 커밋 자체의 scope 만 검증)
+    log_scope = subprocess.run(
+        ["git", "log", "--all", "-E",
+         "--grep=^feat.haehan.: HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01",
+         "-1", "--name-only", "--pretty=format:%H"],
         cwd=ROOT, capture_output=True, text=True, timeout=10,
     )
-    modified_in_diff = [p.strip() for p in diff.stdout.split("\n") if p.strip()]
+    scope_lines = [l for l in log_scope.stdout.strip().split("\n") if l.strip()]
+    if not scope_lines:
+        warn("WARN_COMMIT_NOT_FOUND",
+             "ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 미발견 — working tree fallback")
+        diff = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            cwd=ROOT, capture_output=True, text=True, timeout=10,
+        )
+        modified_in_diff = [p.strip() for p in diff.stdout.split("\n") if p.strip()]
+    else:
+        modified_in_diff = [l.strip() for l in scope_lines[1:]]
 
-    # 본 공정 허용 수정 대상
     allowed = {
         "desktop/admin_webview.py",
         "desktop/main_launcher.py",
@@ -321,18 +334,7 @@ try:
         "scripts/ops/audit_haehan_admin_mode_webview_lazy_load.py",
         "tests/test_haehan_admin_mode_webview_lazy_load.py",
     }
-    # 본 공정과 무관하게 이미 dirty 한 파일 (이전 세션 잔여) 은 허용
     pre_existing_dirty = {
-        "HaehanAI-Agent.spec", "HaehanAI-Desktop.spec",
-        "desktop/audit_desktop.py", "desktop/local_server.py",
-        "desktop/status_provider.py", "desktop/tray_app.py",
-        "desktop/ui/src/index.css", "desktop/ui/vite.config.ts",
-        "desktop/ui_dist/index.html",
-        "desktop/ui_dist/assets/index-BNhZLJTm.css",
-        "desktop/ui_dist/assets/index-cwUmEBLw.js",
-        "desktop/user_settings.py",
-        "desktop/webview_app.py", "desktop/webview_app_pywebview.py",
-        "local_agent/desktop_config.py",
         "scripts/archive/data/chrome_ui_monitor_state.json",
     }
     scope_violations = [
@@ -342,11 +344,11 @@ try:
     ]
     if scope_violations:
         fail("FAIL_DIRTY_SCOPE_VIOLATION",
-             f"본 공정 범위 외 수정: {scope_violations}")
+             f"ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 범위 외: {scope_violations}")
     else:
-        ok(f"수정 범위 검증 OK — 변경 {len(modified_in_diff)}개 모두 허용 범위")
+        ok(f"수정 범위 검증 OK — ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 변경 {len(modified_in_diff)}개 모두 허용 범위")
 except Exception as e:
-    warn("WARN_DIFF_CHECK", f"git diff 확인 실패: {e}")
+    warn("WARN_DIFF_CHECK", f"확인 실패: {e}")
 
 
 # ── 17. 기존 webview_app_pywebview.py 미수정 (본 세션 변경분 없음) ──────
@@ -354,21 +356,43 @@ except Exception as e:
 # 이전 세션에서 dirty 상태였으므로 dirty 자체는 허용 — 단 본 공정 commit 직전에
 # git add desktop/webview_app_pywebview.py 가 호출되면 안 됨.
 try:
-    staged = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
+    # HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 자체의 변경 파일에 금지 파일이 없는지.
+    # (이후 공정에서 stash 복원 등으로 staged 되더라도 본 검증은 commit history 기준)
+    log = subprocess.run(
+        ["git", "log", "--all", "-E",
+         "--grep=^feat.haehan.: HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01",
+         "-1", "--name-only", "--pretty=format:%H"],
         cwd=ROOT, capture_output=True, text=True, timeout=10,
     )
-    staged_files = set(p.strip().replace("\\", "/") for p in staged.stdout.split("\n") if p.strip())
-    forbidden_staged = {"desktop/webview_app_pywebview.py",
-                        "desktop/tray_app.py"}
-    bad = forbidden_staged & staged_files
-    if bad:
-        fail("FAIL_DIRTY_SCOPE_VIOLATION",
-             f"수정 금지 파일이 staged: {bad}")
+    lines = [l for l in log.stdout.strip().split("\n") if l.strip()]
+    if not lines:
+        warn("WARN_COMMIT_NOT_FOUND",
+             "ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 미발견 — staged fallback")
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--name-only"],
+            cwd=ROOT, capture_output=True, text=True, timeout=10,
+        )
+        staged_files = set(p.strip().replace("\\", "/") for p in staged.stdout.split("\n") if p.strip())
+        forbidden_staged = {"desktop/webview_app_pywebview.py",
+                            "desktop/tray_app.py"}
+        bad = forbidden_staged & staged_files
+        if bad:
+            fail("FAIL_DIRTY_SCOPE_VIOLATION",
+                 f"수정 금지 파일이 staged: {bad}")
+        else:
+            ok("webview_app_pywebview / tray_app staged 없음 (fallback)")
     else:
-        ok("webview_app_pywebview / tray_app staged 없음")
+        commit_files = set(l.strip().replace("\\", "/") for l in lines[1:])
+        forbidden_in_commit = {"desktop/webview_app_pywebview.py",
+                               "desktop/tray_app.py"}
+        bad = forbidden_in_commit & commit_files
+        if bad:
+            fail("FAIL_DIRTY_SCOPE_VIOLATION",
+                 f"ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 자체에 금지 파일: {bad}")
+        else:
+            ok("ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 커밋 자체에 금지 파일 (webview_app_pywebview/tray_app) 없음")
 except Exception as e:
-    warn("WARN_STAGED_CHECK", f"staged 확인 실패: {e}")
+    warn("WARN_STAGED_CHECK", f"커밋 검사 실패: {e}")
 
 
 # ── 18. 후속 공정 deferred 마커 ────────────────────────────────────────
