@@ -21,8 +21,40 @@ from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
 from .user_settings import load_menu, save_menu
+from .remote_access import is_enabled as _remote_enabled, verify_token as _verify_token
 
 logger = logging.getLogger(__name__)
+
+
+# ── 원격 접속 토큰 미들웨어 ──────────────────────────────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import Response as StarletteResponse
+
+_EXEMPT_PATHS = {"/ws/ui", "/health"}
+
+
+class RemoteAccessMiddleware(BaseHTTPMiddleware):
+    """비 localhost 요청에 Bearer 토큰 검증. 원격 접속 비활성 시 localhost만 허용."""
+
+    async def dispatch(self, request: StarletteRequest, call_next):
+        client_host = (request.client.host if request.client else "") or ""
+        is_local = client_host in ("127.0.0.1", "::1", "localhost")
+        if is_local:
+            return await call_next(request)
+        # 비 localhost — 원격 접속 활성 여부 확인
+        if not _remote_enabled():
+            return StarletteResponse("원격 접속이 비활성화되어 있습니다.", status_code=403)
+        # WebSocket 업그레이드는 Sec-WebSocket-Protocol 또는 쿼리로 토큰 전달
+        if request.url.path in _EXEMPT_PATHS or request.url.path.startswith("/ws/"):
+            token = request.query_params.get("token", "")
+        else:
+            auth = request.headers.get("Authorization", "")
+            token = auth.removeprefix("Bearer ").strip()
+        if not _verify_token(token):
+            return StarletteResponse("액세스 토큰 불일치", status_code=401)
+        return await call_next(request)
+
 
 def _resolve_ui_dir() -> Path:
     import sys
@@ -44,6 +76,7 @@ _UI_DIR = _resolve_ui_dir()
 _SERVER_WS_URL = "wss://api.haehan-ai.kr/ws/desktop"  # 서버 측 Push WebSocket
 
 app = FastAPI(title="Haehan Desktop Local Server", docs_url=None, redoc_url=None)
+app.add_middleware(RemoteAccessMiddleware)
 
 # ── 연결된 로컬 UI 클라이언트 목록 ────────────────────────────────────────────
 _ui_clients: list[WebSocket] = []
@@ -123,6 +156,15 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
     elif action == "cafe_confirm":
         asyncio.create_task(_run_cafe_confirm())
 
+    elif action == "naver_cafe_list":
+        asyncio.create_task(_run_naver_cafe_list(ws))
+
+    elif action == "naver_cafe_posts":
+        asyncio.create_task(_run_naver_cafe_posts(ws, data))
+
+    elif action == "naver_cafe_read":
+        asyncio.create_task(_run_naver_cafe_read(ws, data))
+
     elif action == "browser_status":
         await _handle_browser_status(ws)
 
@@ -148,6 +190,64 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
 
     elif action == "browser_action":
         await _handle_browser_action(ws, data)
+
+    elif action == "screenshot":
+        await _handle_screenshot(ws)
+
+
+# ── 스크린샷 ──────────────────────────────────────────────────────────────────
+async def _handle_screenshot(ws: WebSocket) -> None:
+    """CDP /json API로 첫 번째 활성 탭을 찾아 Page.captureScreenshot 호출."""
+    import base64
+    import json as _json
+    import urllib.request
+
+    try:
+        from local_agent.browser_instance_guard import resolve_paths
+        paths = resolve_paths()
+        cdp_port = paths.cdp_port
+
+        # 탭 목록 조회
+        def _fetch_targets() -> list[dict]:
+            url = f"http://127.0.0.1:{cdp_port}/json"
+            with urllib.request.urlopen(url, timeout=3) as r:
+                return _json.loads(r.read())
+
+        targets = await asyncio.to_thread(_fetch_targets)
+        # page 타입 중 첫 번째 선택
+        page = next((t for t in targets if t.get("type") == "page"), None)
+        if page is None:
+            raise RuntimeError("활성 탭 없음 — 브라우저가 실행 중인지 확인하세요.")
+
+        ws_debug_url: str = page["webSocketDebuggerUrl"]
+
+        # aiohttp 없이 asyncio WebSocket으로 CDP 명령 전송
+        import websockets  # type: ignore
+
+        async def _capture() -> str:
+            async with websockets.connect(ws_debug_url, open_timeout=5) as cdp_ws:
+                cmd = _json.dumps({"id": 1, "method": "Page.captureScreenshot",
+                                   "params": {"format": "png", "quality": 80}})
+                await cdp_ws.send(cmd)
+                raw = await asyncio.wait_for(cdp_ws.recv(), timeout=10)
+                resp = _json.loads(raw)
+                if "error" in resp:
+                    raise RuntimeError(resp["error"].get("message", "CDP error"))
+                return resp["result"]["data"]
+
+        b64data = await _capture()
+        await ws.send_json({
+            "type": "screenshot_result",
+            "ok": True,
+            "format": "png",
+            "data": b64data,
+        })
+    except Exception as exc:
+        await ws.send_json({
+            "type": "screenshot_result",
+            "ok": False,
+            "error": str(exc),
+        })
 
 
 # ── 로그인 watcher (background poller) ───────────────────────────────────────
@@ -1002,6 +1102,63 @@ def _cafe_confirm_sync() -> dict:
     return confirm_publish(page)
 
 
+# ── 네이버 카페 목록 / 게시글 조회 ───────────────────────────────────────────────
+
+async def _run_naver_cafe_list(ws) -> None:
+    await ws.send_json({"type": "naver_cafe_list", "status": "loading"})
+    loop = asyncio.get_event_loop()
+    try:
+        cafes = await loop.run_in_executor(None, _naver_cafe_list_sync)
+        await ws.send_json({"type": "naver_cafe_list", "status": "done", "cafes": cafes})
+    except Exception as exc:
+        logger.error("naver_cafe_list error: %s", exc)
+        await ws.send_json({"type": "naver_cafe_list", "status": "error", "error": str(exc)})
+
+
+def _naver_cafe_list_sync() -> list:
+    from scripts.web_connector import get_page
+    from scripts.naver.cafe import NaverCafe
+    return NaverCafe(get_page()).open_my_cafes()
+
+
+async def _run_naver_cafe_posts(ws, data: dict) -> None:
+    cafe_url = data.get("cafe_url", "")
+    board_no = data.get("board_no", "")
+    limit    = int(data.get("limit", 30))
+    await ws.send_json({"type": "naver_cafe_posts", "status": "loading", "cafe_url": cafe_url})
+    loop = asyncio.get_event_loop()
+    try:
+        posts = await loop.run_in_executor(None, _naver_cafe_posts_sync, cafe_url, board_no, limit)
+        await ws.send_json({"type": "naver_cafe_posts", "status": "done", "cafe_url": cafe_url, "posts": posts})
+    except Exception as exc:
+        logger.error("naver_cafe_posts error: %s", exc)
+        await ws.send_json({"type": "naver_cafe_posts", "status": "error", "error": str(exc)})
+
+
+def _naver_cafe_posts_sync(cafe_url: str, board_no, limit: int) -> list:
+    from scripts.web_connector import get_page
+    from scripts.naver.cafe import NaverCafe
+    return NaverCafe(get_page()).list_posts(cafe_url=cafe_url, board_no=board_no, limit=limit)
+
+
+async def _run_naver_cafe_read(ws, data: dict) -> None:
+    post_url = data.get("post_url", "")
+    await ws.send_json({"type": "naver_cafe_read", "status": "loading"})
+    loop = asyncio.get_event_loop()
+    try:
+        post = await loop.run_in_executor(None, _naver_cafe_read_sync, post_url)
+        await ws.send_json({"type": "naver_cafe_read", "status": "done", "post": post})
+    except Exception as exc:
+        logger.error("naver_cafe_read error: %s", exc)
+        await ws.send_json({"type": "naver_cafe_read", "status": "error", "error": str(exc)})
+
+
+def _naver_cafe_read_sync(post_url: str) -> dict:
+    from scripts.web_connector import get_page
+    from scripts.naver.cafe import NaverCafe
+    return NaverCafe(get_page()).read_post(post_url=post_url)
+
+
 # ── 서버(8000) WebSocket 연결 및 Push 수신 ────────────────────────────────────
 _server_ws: Any = None
 
@@ -1141,8 +1298,78 @@ async def _on_server_message(msg: dict) -> None:
         })
     elif msg_type == "browser_status":
         await _broadcast({"type": "browser_status", **msg})
+    elif msg_type == "remote_control":
+        await _handle_remote_control(msg)
     else:
         await _broadcast(msg)
+
+
+async def _handle_remote_control(msg: dict) -> None:
+    """서버에서 온 원격 제어 명령 처리 — 화이트리스트만 실행."""
+    from .remote_access import ALLOWED_REMOTE_COMMANDS
+    cmd = msg.get("command", "")
+    req_id = msg.get("request_id", "")
+
+    if cmd not in ALLOWED_REMOTE_COMMANDS:
+        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
+                                "ok": False, "error": f"허용되지 않은 명령: {cmd}"})
+        logger.warning("remote_control: blocked command=%s", cmd)
+        return
+
+    try:
+        result = await _exec_remote_command(cmd, msg)
+        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
+                                "ok": True, "command": cmd, "data": result})
+    except Exception as exc:
+        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
+                                "ok": False, "error": str(exc)})
+        logger.error("remote_control error cmd=%s: %s", cmd, exc)
+
+
+async def _exec_remote_command(cmd: str, msg: dict) -> dict:
+    """허용된 원격 명령 실행 — 조회/열기만, 쓰기/삭제 금지."""
+    import platform
+
+    if cmd == "ping":
+        return {"pong": True, "ts": time.time()}
+
+    if cmd == "get_status":
+        from .local_runner import LocalRunner
+        runner = LocalRunner()
+        return {
+            "runner_state": runner.get_status(),
+            "platform": platform.system(),
+            "ui_clients": len(_ui_clients),
+        }
+
+    if cmd == "get_logs_tail":
+        log_file = Path(__file__).parent.parent / "data" / "logs" / "app.log"
+        if not log_file.exists():
+            return {"lines": []}
+        lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
+        # 민감 키 필터링
+        _FORBIDDEN = {"token", "password", "secret", "authorization", "cookie"}
+        safe = [l for l in lines if not any(k in l.lower() for k in _FORBIDDEN)]
+        return {"lines": safe[-100:]}
+
+    if cmd == "get_screenshot":
+        import base64
+        try:
+            from scripts.browser.cdp_client import get_screenshot
+            png = get_screenshot()
+            return {"format": "png", "data": base64.b64encode(png).decode()}
+        except Exception as exc:
+            return {"error": str(exc)}
+
+    if cmd == "open_url":
+        import webbrowser
+        url = str(msg.get("url", ""))
+        if not url.startswith(("http://", "https://")):
+            raise ValueError("허용되지 않은 URL 스킴")
+        webbrowser.open(url)
+        return {"opened": url}
+
+    raise ValueError(f"미구현 명령: {cmd}")
 
 
 _AUTOWORK_BASE = "https://autowork.haehan-ai.kr"
@@ -1395,7 +1622,120 @@ async def post_cad_bridge_proxy(path: str, request: Request):
 @app.on_event("startup")
 async def startup():
     asyncio.create_task(_connect_to_server())
-    logger.info("local server started on port 8765")
+    from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+    logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
+
+
+# ── index.html — 항상 최신 버전 서빙 (캐시 금지) ───────────────────────────────
+@app.get("/")
+@app.get("/index.html")
+async def serve_index():
+    """index.html을 no-cache 헤더와 함께 반환 — WebView2 캐시 방지."""
+    index_path = _UI_DIR / "index.html"
+    content = index_path.read_bytes()
+    return Response(
+        content=content,
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+# ── CAD 원격 서버 API 프록시 (/api/v1 → cad.haehan-ai.kr) ───────────────────
+# 프론트엔드(로컬 서빙)가 /api/v1/* 호출 시 원격 서버로 투명하게 전달
+_CAD_REMOTE_BASE = "https://cad.haehan-ai.kr"
+
+_HOP_BY_HOP = frozenset([
+    "host", "connection", "keep-alive", "proxy-authenticate",
+    "proxy-authorization", "te", "trailers", "transfer-encoding", "upgrade",
+])
+
+
+async def _proxy_to_remote(method: str, path: str, request: Request) -> Response:
+    url = f"{_CAD_REMOTE_BASE}/api/v1/{path}"
+    if request.url.query:
+        url += f"?{request.url.query}"
+    headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}
+    body = await request.body() if method in ("POST", "PUT", "PATCH") else None
+    try:
+        async with httpx.AsyncClient(timeout=30) as c:
+            resp = await c.request(method, url, headers=headers, content=body)
+        resp_headers = {k: v for k, v in resp.headers.items() if k.lower() not in _HOP_BY_HOP}
+        return Response(content=resp.content, status_code=resp.status_code,
+                        headers=resp_headers, media_type=resp.headers.get("content-type"))
+    except Exception as exc:
+        logger.warning("remote proxy error %s %s: %s", method, url, exc)
+        return Response(content=b'{"detail":"REMOTE_PROXY_ERROR"}',
+                        status_code=502, media_type="application/json")
+
+
+# ── 로컬 AI Agent 엔드포인트 (/local-agent) ──────────────────────────────────
+
+@app.get("/local-agent/health")
+async def local_agent_health():
+    """로컬 AI (Anthropic SDK / Claude Code CLI) 가용 여부 반환."""
+    from .local_agent_service import local_agent_health as _health
+    return _health()
+
+
+@app.post("/local-agent/run")
+async def local_agent_run(request: Request):
+    """로컬 AI + 로컬 MCP를 사용하여 에이전트 실행.
+
+    Body JSON:
+        prompt (str, 필수)
+        model  (str, optional) — 기본 claude-sonnet-4-5
+        use_mcp (bool, optional) — 기본 True
+    """
+    from .local_agent_service import run_local_agent as _run
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    result = await _run(body)
+    status_code = 200 if result.get("ok") else 500
+    return Response(
+        content=__import__("json").dumps(result, ensure_ascii=False),
+        status_code=status_code,
+        media_type="application/json",
+    )
+
+
+@app.get("/api/v1/{path:path}")
+async def proxy_api_get(path: str, request: Request):
+    return await _proxy_to_remote("GET", path, request)
+
+
+@app.post("/api/v1/{path:path}")
+async def proxy_api_post(path: str, request: Request):
+    return await _proxy_to_remote("POST", path, request)
+
+
+@app.put("/api/v1/{path:path}")
+async def proxy_api_put(path: str, request: Request):
+    return await _proxy_to_remote("PUT", path, request)
+
+
+@app.delete("/api/v1/{path:path}")
+async def proxy_api_delete(path: str, request: Request):
+    return await _proxy_to_remote("DELETE", path, request)
+
+
+# ── SPA fallback — /api, /cad, /ws, /proxy 외 모든 경로를 index.html로 ────────
+@app.get("/{full_path:path}")
+async def spa_fallback(full_path: str):
+    """React SPA 라우터용 catch-all — index.html 반환."""
+    index_path = _UI_DIR / "index.html"
+    if not index_path.exists():
+        return Response(content=b"index.html not found", status_code=404)
+    return Response(
+        content=index_path.read_bytes(),
+        media_type="text/html; charset=utf-8",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 # ── 정적 파일 서빙 — 모든 API/WS 라우트 등록 후 마지막에 마운트 ────────────────
@@ -1404,5 +1744,8 @@ app.mount("/", StaticFiles(directory=str(_UI_DIR), html=True), name="ui")
 
 
 def run():
+    from desktop.app_config import LOCAL_PORT, effective_bind_host
+    bind_host = effective_bind_host()
     logging.basicConfig(level=logging.INFO)
-    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="warning")
+    logger.info("local server binding %s:%s", bind_host, LOCAL_PORT)
+    uvicorn.run(app, host=bind_host, port=LOCAL_PORT, log_level="warning")

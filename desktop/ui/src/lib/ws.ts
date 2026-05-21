@@ -4,11 +4,26 @@ export type WsMessage =
   | { type: 'chat'; role: 'user' | 'assistant' | 'system'; text: string; ts?: number }
   | { type: 'system'; text: string }
   | { type: 'task'; task_id: string; action_type: string; domain?: string; risk_level: string; description?: string; needs_approval?: boolean; execution_location?: string; status?: string; ts?: number }
-  | { type: 'browser_status'; port?: string; url?: string; state?: string; active?: boolean }
+  | { type: 'browser_status'; action?: string; count?: number; cdp_alive?: boolean; lock_active?: boolean; tab_count?: number; message_ko?: string; error?: string; port?: string; url?: string; state?: string; active?: boolean }
+  | { type: 'browser_quit_result'; ok?: boolean; killed_pids?: number[]; failed_pids?: number[]; error?: string }
+  | { type: 'tab_list'; tabs: BrowserTab[]; session?: object }
+  | { type: 'tab_close_result'; ok: boolean; tab_id?: string; error?: string; message_ko?: string }
+  | { type: 'screenshot_result'; ok: boolean; format?: string; data?: string; error?: string }
+  | { type: 'login_watcher_started'; ok: boolean }
+  | { type: 'login_watcher_stopped'; ok: boolean }
   | { type: 'blog_status'; status: string; title?: string; tags?: string[]; visibility?: string; body_preview?: string; result_url?: string; error?: string }
   | { type: 'cafe_status'; status: string; title?: string; board?: string; body_preview?: string; result_url?: string; error?: string }
   | { type: 'user_present_task'; task: { task_id: string; action_type: string; domain?: string; risk_level: string; description?: string; workflow_run_id?: string }; ts?: number }
   | { type: 'task_blocked'; task_id?: string; workflow_run_id?: string; reason?: string; message_ko?: string; ts?: number }
+  | { type: 'naver_cafe_list'; status: string; cafes?: { cafe_id: string; name: string; url: string }[]; error?: string }
+  | { type: 'naver_cafe_posts'; status: string; cafe_url?: string; posts?: { title: string; author: string; date: string; link: string }[]; error?: string }
+  | { type: 'naver_cafe_read'; status: string; post?: { title: string; author: string; date: string; body: string; comment_count: number; error?: string } | null; error?: string }
+
+export interface BrowserTab {
+  tab_id: string
+  url: string
+  title: string
+}
 
 export interface MenuItem {
   id: string
