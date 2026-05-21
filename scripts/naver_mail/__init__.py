@@ -16,10 +16,10 @@ from . import (time_parser, read_state_guard, inbox_collector,
                folder_discovery, smart_folder_collector,
                folder_policy, folder_profile,
                pii_mask, unread_audit, body_pipeline_v2,
-               batch_runner, business_report)
+               batch_runner, business_report, action_item_dashboard)
 
 __all__ = ["time_parser", "read_state_guard", "inbox_collector",
            "folder_discovery", "smart_folder_collector",
            "folder_policy", "folder_profile",
            "pii_mask", "unread_audit", "body_pipeline_v2",
-           "batch_runner", "business_report"]
+           "batch_runner", "business_report", "action_item_dashboard"]
