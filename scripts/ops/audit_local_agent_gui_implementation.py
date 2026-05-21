@@ -86,12 +86,16 @@ def judge_impl(*, cli_regression_ok: bool = True) -> ImplVerdict:
                                metrics=metrics)
 
     # FAIL_TRAY_NOT_SYNCED
+    # 신 구조 (한글 항목) 또는 구 구조 (영문 항목) 둘 중 하나는 모두 있어야 함
     tray_src = Path("local_agent/gui_tray.py").read_text(encoding="utf-8")
-    for k in ("Dashboard", "Registration", "Logs", "Settings"):
-        if k not in tray_src:
-            return ImplVerdict(False, "FAIL_TRAY_NOT_SYNCED",
-                               reasons=[f"tray menu missing: {k}"],
-                               metrics=metrics)
+    old_set = ("Dashboard", "Registration", "Logs", "Settings")
+    new_set = ("열기", "Chat 열기", "상태 보기", "진단 보기", "AI 설정")
+    has_old = all(k in tray_src for k in old_set)
+    has_new = all(k in tray_src for k in new_set)
+    if not (has_old or has_new):
+        return ImplVerdict(False, "FAIL_TRAY_NOT_SYNCED",
+                           reasons=["tray menu neither old(EN) nor new(KR) set"],
+                           metrics=metrics)
 
     # FAIL_STATE_SOURCE_NOT_UNIFIED — gui_app 에 별도 state 변수가 있으면 의심
     # 기준: GuiController 외부 model 정의 없음
