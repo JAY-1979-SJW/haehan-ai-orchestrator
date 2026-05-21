@@ -472,11 +472,13 @@ def parse_mode(argv: Optional[list[str]] = None) -> AppMode:
 
 # ── main 디스패치 ─────────────────────────────────────────────────────────
 
-def run_tray_mode(*, skip_gui: bool = False, role: str = "any") -> int:
-    """Tray Mode 진입 — HAEHAN_TRAY_REGISTRATION_MERGE_01 에서 실제 통합.
+def run_tray_mode(*, skip_gui: bool = False,
+                  role: Optional[str] = None) -> int:
+    """Tray Mode 진입 — HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 admin_mode_available=True.
 
     foundation hook 들은 backward compat 용으로 유지 (deferred 반환).
     실제 등록/heartbeat/트레이는 desktop.tray_runtime.run_tray_mode_full() 에서.
+    role 미지정 시 admin_webview.resolve_current_role() 로 자동 결정.
     """
     logger.info("[mode=tray] starting integrated tray runtime")
 
@@ -488,17 +490,23 @@ def run_tray_mode(*, skip_gui: bool = False, role: str = "any") -> int:
 
     try:
         from desktop import tray_runtime
+        from desktop import admin_webview
     except Exception as e:
-        logger.error("tray_runtime import 실패: %s", type(e).__name__)
+        logger.error("tray_runtime/admin_webview import 실패: %s", type(e).__name__)
         return 1
+
+    # role 자동 결정 — explicit > env > api > "any"
+    if role is None:
+        role = admin_webview.resolve_current_role()
 
     try:
         result = tray_runtime.run_tray_mode_full(
             role=role,
-            admin_mode_available=False,  # HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 True
+            admin_mode_available=True,  # admin_webview 모듈 준비됨
             skip_gui=skip_gui,
         )
-        logger.info("Tray runtime: registered=%s next=%s heartbeat=%s",
+        logger.info("Tray runtime: role=%s registered=%s next=%s heartbeat=%s",
+                    role,
                     result.get("registered"),
                     result.get("next_action"),
                     result.get("heartbeat_started"))
@@ -527,19 +535,44 @@ def run_tray_mode_diagnostics() -> dict:
     }
 
 
-def run_admin_mode() -> int:
-    """Admin Mode 진입 — role 확인 후 pywebview lazy load (후속)."""
-    logger.info("[mode=admin] foundation — hook only")
-    role = role_check_hook(AppMode.ADMIN)
-    if role.get("deferred"):
-        logger.warning("ADMIN_ROLE_CHECK_DEFERRED — role 구현은 후속 공정에서")
-    elif not role.get("passed"):
-        logger.error("권한 부족 — Admin Mode 진입 불가")
-        return 2
+def run_admin_mode(*, skip_gui: Optional[bool] = None,
+                   explicit_role: Optional[str] = None,
+                   server_url: str = "http://127.0.0.1:8765") -> int:
+    """Admin Mode 진입 — admin_webview lazy load + role guard 실 통합.
+
+    Returns:
+        0 — 정상 진입/종료
+        1 — 모듈 로드 실패
+        2 — role guard 실패 또는 webview 오류
+    """
+    logger.info("[mode=admin] starting admin webview")
+
+    # foundation hook (backward compat — deferred 반환 유지)
+    role_check_hook(AppMode.ADMIN)
     start_local_server_hook()
     start_admin_webview_hook()
-    logger.info("Admin Mode hook 완료 — 실제 webview는 HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 구현")
-    return 0
+
+    try:
+        from desktop import admin_webview
+    except Exception as e:
+        logger.error("admin_webview import 실패: %s", type(e).__name__)
+        return 1
+
+    result = admin_webview.run_admin_mode_full(
+        explicit_role=explicit_role,
+        server_url=server_url,
+        skip_gui=skip_gui,
+    )
+
+    if result.get("ok"):
+        logger.info("Admin Mode 완료: %s (role=%s, window_opened=%s)",
+                    result.get("reason"), result.get("role"),
+                    result.get("window_opened"))
+        return 0
+
+    logger.error("Admin Mode 실패: %s (role=%s)",
+                 result.get("reason"), result.get("role"))
+    return 2
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -577,7 +610,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     try:
         if mode == AppMode.ADMIN:
-            return run_admin_mode()
+            return run_admin_mode(skip_gui=skip_gui)
         return run_tray_mode(skip_gui=skip_gui)
     finally:
         graceful_shutdown_hook()

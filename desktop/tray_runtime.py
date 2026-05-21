@@ -685,3 +685,31 @@ def run_tray_mode_full(
         result["heartbeat_reason"] = "not_registered"
 
     return result
+
+
+# ── Admin Mode 연결 (HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01) ──────────
+
+def open_admin_handler(
+    *,
+    explicit_role: Optional[str] = None,
+    server_url: str = "http://127.0.0.1:8765",
+    skip_gui: Optional[bool] = None,
+) -> dict:
+    """트레이 [관리화면 열기] 클릭 콜백.
+
+    admin_webview 를 lazy import 하여 pywebview 가 본 모듈 로드 시 import 되지 않도록
+    분리. role guard / single instance / skip_gui 처리는 admin_webview 가 담당.
+    """
+    try:
+        from desktop import admin_webview
+    except Exception as e:
+        logger.error("admin_webview import 실패: %s", type(e).__name__)
+        return {"ok": False,
+                "reason": f"admin_webview_unavailable:{type(e).__name__}",
+                "role": "",
+                "window_opened": False}
+    return admin_webview.open_admin_window(
+        explicit_role=explicit_role,
+        server_url=server_url,
+        skip_gui=skip_gui,
+    )
