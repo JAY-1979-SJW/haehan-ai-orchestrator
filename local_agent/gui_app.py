@@ -856,37 +856,151 @@ class HaehanAgentGuiApp:
             placeholder_text="sk-… (이번 공정에서는 저장 안 됨)",
         )
         ent_key.pack(anchor="w", padx=12, pady=(0, 6))
+        # 저장 상태 (live fingerprint)
+        from . import openai_key_store as _ks
+        var_save_state = tk.StringVar(value="")
+
+        def _refresh_save_state():
+            try:
+                fp = _ks.get_key_fingerprint()
+                if fp:
+                    var_save_state.set(f"저장됨 · {fp}")
+                else:
+                    var_save_state.set("저장 안 됨")
+            except Exception:
+                var_save_state.set("저장소 접근 실패")
+
         ctk.CTkLabel(
-            key_frame,
-            text="저장 상태: (placeholder — 다음 공정에서 활성화)",
+            key_frame, textvariable=var_save_state,
             text_color=COLOR["fg_subtle"],
             font=("Segoe UI", 10),
         ).pack(anchor="w", padx=12, pady=(0, 10))
+        _refresh_save_state()
 
         self._key_frame_widget = key_frame
         self._on_mode_change(var_mode.get(), key_frame)
 
-        # 버튼 (placeholder)
+        # ── 버튼 (DEV_TEST_KEY 모드만 활성) ──
+        from . import openai_chat_client as _occ
+        from . import gui_chat_state as _cs2
+
+        def _on_save():
+            raw = (var_key.get() or "").strip()
+            if not raw:
+                messagebox.showwarning("입력 필요", "API key 를 입력하세요.")
+                return
+            ok_v, code = _ks.validate_key_format(raw)
+            if not ok_v:
+                messagebox.showwarning("형식 오류",
+                                         "API key 형식이 올바르지 않습니다.")
+                # raw 즉시 폐기
+                var_key.set("")
+                return
+            r = _ks.save_dev_key(raw)
+            # 입력값 즉시 폐기
+            var_key.set("")
+            raw = ""
+            if r.ok:
+                messagebox.showinfo("저장됨",
+                                      f"API key 가 저장되었습니다.\n{r.fingerprint}")
+                _refresh_save_state()
+                self.chat.set_fingerprint(r.fingerprint)
+            else:
+                messagebox.showerror("저장 실패",
+                                       f"저장 실패: {r.error_code}")
+
+        def _on_test():
+            self.btn_modal_test.configure(state="disabled", text="테스트 중…")
+            self.root.update_idletasks()
+            try:
+                client = _occ.OpenAiDirectTestClient()
+                if not client.is_configured():
+                    messagebox.showwarning("키 없음",
+                                             "먼저 API key 를 저장하세요.")
+                    return
+                resp = client.health_check(timeout=15)
+                if resp.ok:
+                    self.chat.set_ai_status(_cs2.AI_READY_PLACEHOLDER)
+                    messagebox.showinfo(
+                        "연결 테스트 PASS",
+                        f"OpenAI 응답 OK\n모델: {resp.usage_summary.get('model','?')}\n"
+                        f"응답 길이: {len(resp.text_redacted)}자\n"
+                        f"소요: {resp.duration_ms}ms",
+                    )
+                else:
+                    self.chat.set_ai_status(_cs2.AI_ERROR,
+                                              error_code=resp.error_code)
+                    messagebox.showerror(
+                        "연결 테스트 실패",
+                        f"{resp.error_code}\n{resp.user_message_kr}",
+                    )
+            finally:
+                self.btn_modal_test.configure(state="normal",
+                                                text="연결 테스트")
+
+        def _on_delete():
+            if not messagebox.askyesno(
+                "삭제 확인",
+                "저장된 API key 를 Credential Manager 에서 삭제합니다. 계속할까요?",
+            ):
+                return
+            try:
+                _ks.delete_dev_key()
+            except Exception:
+                pass
+            self.chat.set_fingerprint("")
+            _refresh_save_state()
+            messagebox.showinfo("삭제됨", "API key 가 삭제되었습니다.")
+
+        # mode 가 DEV_TEST_KEY 또는 USER_BYOK 일 때 활성
+        dev_mode = var_mode.get() == _cs2.MODE_DEV_TEST_KEY
+
         row = ctk.CTkFrame(body, fg_color=COLOR["bg"])
         row.pack(fill="x", pady=12)
-        for label, fg, hov, tcol in (
-            ("저장", COLOR["accent"], COLOR["accent_hi"], "white"),
-            ("연결 테스트", COLOR["card"], COLOR["card_hov"], COLOR["fg"]),
-            ("삭제", "transparent", COLOR["card_hov"], COLOR["err"]),
-        ):
-            ctk.CTkButton(
-                row, text=label, width=100, height=32,
-                fg_color=fg, hover_color=hov, text_color=tcol,
-                border_color=COLOR["border"] if fg == "transparent" else fg,
-                border_width=1 if fg == "transparent" else 0,
-                state="disabled",
-                font=("Segoe UI", 11),
-            ).pack(side="left", padx=(0, 6))
+        self.btn_modal_save = ctk.CTkButton(
+            row, text="저장", width=100, height=32,
+            fg_color=COLOR["accent"], hover_color=COLOR["accent_hi"],
+            text_color="white", font=("Segoe UI", 11),
+            state="normal" if dev_mode else "disabled",
+            command=_on_save,
+        )
+        self.btn_modal_save.pack(side="left", padx=(0, 6))
+
+        self.btn_modal_test = ctk.CTkButton(
+            row, text="연결 테스트", width=110, height=32,
+            fg_color=COLOR["card"], hover_color=COLOR["card_hov"],
+            text_color=COLOR["fg"],
+            border_color=COLOR["border"], border_width=1,
+            font=("Segoe UI", 11),
+            state="normal" if dev_mode else "disabled",
+            command=_on_test,
+        )
+        self.btn_modal_test.pack(side="left", padx=(0, 6))
+
+        self.btn_modal_delete = ctk.CTkButton(
+            row, text="삭제", width=100, height=32,
+            fg_color="transparent", hover_color=COLOR["card_hov"],
+            text_color=COLOR["err"],
+            border_color=COLOR["err"], border_width=1,
+            font=("Segoe UI", 11),
+            state="normal" if dev_mode else "disabled",
+            command=_on_delete,
+        )
+        self.btn_modal_delete.pack(side="left")
+
+        # mode 변경 시 버튼 활성 토글
+        def _toggle_buttons(*_args):
+            is_dev = var_mode.get() == _cs2.MODE_DEV_TEST_KEY
+            for btn in (self.btn_modal_save, self.btn_modal_test,
+                         self.btn_modal_delete):
+                btn.configure(state="normal" if is_dev else "disabled")
+
+        var_mode.trace_add("write", _toggle_buttons)
 
         ctk.CTkLabel(
             body,
-            text="ⓘ 이번 공정은 UI 껍데기만. 실제 key 저장은 AGENT_OPENAI_BYOK_KEY_STORE_01\n"
-                  "에서 활성화됩니다. 화면에 입력해도 저장/전송되지 않습니다.",
+            text="ⓘ Developer Test Key 모드 — 저장된 key 로 실제 OpenAI 호출.\n"
+                  "   상용 기본은 Production Server Proxy — 사용자 입력 불필요.",
             text_color=COLOR["fg_faint"],
             font=("Segoe UI", 9), justify="left",
         ).pack(anchor="w", pady=(8, 0))
