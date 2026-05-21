@@ -72,6 +72,10 @@ def _build_cmd(*, onefile: bool, clean: bool) -> list[str]:
         "--noconfirm",
         "--onefile" if onefile else "--onedir",
         "--windowed",        # 콘솔 창 숨김 (운영자 앱)
+        "--exclude-module", "playwright",
+        "--exclude-module", "pytest",
+        "--exclude-module", "pytest_asyncio",
+        "--exclude-module", "anyio",
         # --- static data ---
         "--add-data", f"{ui_src}{os.pathsep}{ui_dest}",
         # --- hidden imports: webview ---

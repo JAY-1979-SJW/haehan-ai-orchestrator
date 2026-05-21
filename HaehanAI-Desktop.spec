@@ -16,7 +16,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['playwright', 'pytest', 'pytest_asyncio', 'anyio'],
     noarchive=False,
     optimize=0,
 )
