@@ -1234,6 +1234,38 @@ async def post_cad_bridge_restart():
         }
 
 
+# ── CAD bridge proxy (READ_ONLY + CANDIDATE_PAYLOAD allow-list 만) ────────
+# CAD-DESKTOP-HUB-CAD-BRIDGE-PROXY-01.
+# /cad/bridge/proxy/{path:path} — upstream http://127.0.0.1:8766/{path}
+# passthrough. mutating keyword / allow-list 외 path 는 403 차단.
+from .cad_bridge_proxy import proxy_cad_bridge_request as _cad_bridge_proxy_request
+
+
+@app.get("/cad/bridge/proxy/{path:path}")
+async def get_cad_bridge_proxy(path: str, request: Request):
+    """GET passthrough to CAD local_bridge — read-only allow-list only."""
+    return await _cad_bridge_proxy_request(
+        method="GET",
+        path=path,
+        query=str(request.url.query) or None,
+        body=None,
+        headers=dict(request.headers),
+    )
+
+
+@app.post("/cad/bridge/proxy/{path:path}")
+async def post_cad_bridge_proxy(path: str, request: Request):
+    """POST passthrough to CAD local_bridge — CANDIDATE_PAYLOAD allow-list only."""
+    body = await request.body()
+    return await _cad_bridge_proxy_request(
+        method="POST",
+        path=path,
+        query=str(request.url.query) or None,
+        body=body,
+        headers=dict(request.headers),
+    )
+
+
 @app.on_event("startup")
 async def startup():
     asyncio.create_task(_connect_to_server())

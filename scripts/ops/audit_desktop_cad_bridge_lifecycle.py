@@ -29,9 +29,11 @@ REQUIRED_RUNNER_ROUTES = (
     "/cad/bridge/start", "/cad/bridge/stop", "/cad/bridge/restart",
 )
 
-FORBIDDEN_PROXY_ROUTES_THIS_STAGE = (
-    "/cad/bridge/proxy",
-)
+# proxy 트랙(CAD-DESKTOP-HUB-CAD-BRIDGE-PROXY-01) 이후 의미 보존 갱신:
+# /cad/bridge/proxy 라우트 등록은 허용. 단, proxy 자체에 lifecycle 코드
+# 누출(subprocess/kill) 이 없어야 함 — 별도 audit_desktop_cad_bridge_proxy.py
+# 가 검증.
+FORBIDDEN_PROXY_ROUTES_THIS_STAGE: tuple = ()
 
 FORBIDDEN_WS_ACTIONS = (
     "cad_bridge_start", "cad_bridge_stop", "cad_bridge_restart",
