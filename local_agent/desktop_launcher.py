@@ -133,10 +133,16 @@ def _redacted_log(msg: str) -> None:
 
 def register_flow(server_url: str, registration_code: str) -> dict:
     """register-with-code → device_token 저장 까지."""
+    import platform, socket
     _redacted_log("register-with-code 호출 시작")
     try:
-        meta, device_token = rcli.register_with_code(server_url=server_url,
-                                                      registration_code=registration_code)
+        meta, device_token = rcli.register_with_code(
+            server_url=server_url,
+            registration_code=registration_code,
+            host=socket.gethostname() or "unknown-host",
+            os_name=(platform.system() + " " + platform.release()) or "unknown-os",
+            version="0.1.0",
+        )
     except rcli.RegistrationError as exc:
         return {"ok": False, "error_code": "REGISTRATION_ERROR",
                 "user_message": cd.explain_error("REG_CODE_INVALID")
@@ -153,7 +159,8 @@ def register_flow(server_url: str, registration_code: str) -> dict:
     # 원문 폐기
     device_token = ""
     return {"ok": True, "agent_id_masked": cd.mask_agent_id(agent_id),
-            "registered_at_iso": meta.registered_at_iso}
+            "registered_at_iso": getattr(meta, "registered_at",
+                                          getattr(meta, "registered_at_iso", ""))}
 
 
 # ── connect flow ─────────────────────────────────────────────────
