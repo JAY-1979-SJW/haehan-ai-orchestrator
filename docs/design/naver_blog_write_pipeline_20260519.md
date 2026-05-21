@@ -2,6 +2,7 @@
 
 작성일: 2026-05-19  
 검증일: 2026-05-19 (실브라우저 전수 검증 완료)  
+확정일: 2026-05-19 (로직 최종 확정)  
 대상 모듈: `scripts/naver/blog/writer.py`
 
 ---
@@ -22,6 +23,11 @@
 | 발행 버튼 | `button:has-text("발행")` | `get_by_role("button", name="발행", exact=True)` |
 | 최종발행 버튼 | `.btn_confirm` | `[class*="confirm_btn"]` |
 | 공개설정 값 | public=0 (오류) | public=2 (실검증) |
+| 본문 입력 방식 | `keyboard.type()` (느림, 서식 오염) | 클립보드 붙여넣기 pyperclip + Ctrl+V |
+| 서식 초기화 | 없음 (취소선 오염 발생) | `reset_formatting()` — write_body() 시작 전 자동 호출 |
+| 영상 업로드 | 미구현 | `insert_video()` — file_chooser + 제목 필수 + 완료 버튼 |
+| 툴바 활성 감지 | 없음 | `_is_toolbar_active()` — se-is-selected 클래스 기준 |
+| 서식 상태 보장 | 토글만 지원 | `set_bold(on=True/False)` — 이미 원하는 상태면 클릭 생략 |
 
 ---
 
@@ -75,13 +81,13 @@
 | 도구 | 메서드 | data-name | 검증 | 비고 |
 |------|--------|-----------|------|------|
 | 사진 | `insert_image(path/url)` | `image` | ✅ | 로컬파일/URL 분기 |
+| 동영상 | `insert_video(path, title, desc)` | `video` | ✅ | file_chooser + 제목 필수 + 완료 버튼 |
 | 인용구 | `insert_quote(text, style=0)` | `quotation` | ✅ | style=0~N |
 | 구분선 | `insert_divider(style=0)` | `horizontal-line` | ✅ | style=0~N |
 | OG 링크 카드 | `insert_link(url)` | `oglink` | ✅ | floating-search 입력창 |
 | 텍스트 링크 | `insert_text_link(url, text)` | `text-link` | — | 선택된 텍스트에 적용 |
 | 소스코드 | `insert_code_block(code, lang)` | `code` | ✅ | language 선택 지원 |
 | 표 | — | `table` | — | 미구현 |
-| 동영상 | — | `video` | — | 미구현 |
 
 ### 3-2. 텍스트 서식 도구
 
@@ -188,7 +194,60 @@ admin.blog.naver.com/{blog_id}/stat/today 패턴에서 추출
 
 ---
 
-## 8. 제약사항 및 보안 정책
+## 8. 에디터 상태 감지 (확정 2026-05-19)
+
+### 활성 상태 기준
+
+SE3 서식 버튼은 활성 시 `se-is-selected` 클래스가 추가된다. `aria-pressed="true"`도 함께 확인.
+
+```python
+bw._is_toolbar_active("bold")      # bool — 현재 활성 여부
+bw.get_editor_state()              # {"bold": bool, "italic": bool, ...}
+bw.reset_formatting()             # bold/italic/underline/strikethrough 모두 off
+```
+
+### 서식 버튼 DOM 등장 조건
+
+bold/italic/underline/strikethrough 버튼은 커서가 **본문(`se-section-text`) 안**에 있을 때만 DOM에 렌더링된다.  
+→ `write_body()` 시작 전 `.se-section-text` 클릭이 선행되어야 함.
+
+### 서식 보장 패턴
+
+```python
+bw.set_bold(on=True)   # 이미 활성 → 클릭 생략 (토글 오작동 방지)
+bw.set_bold(on=False)  # 이미 비활성 → 클릭 생략
+bw.set_bold(on=None)   # 무조건 토글 (이전 동작)
+```
+
+### 영상 업로드 흐름 (실검증 완료)
+
+```
+toolbar "video" 클릭
+  ↓
+file_chooser 이벤트 가로채기 + "동영상 추가"(nvu_local) 버튼 클릭
+  ↓
+file_chooser.set_files(path)
+  ↓
+업로드 완료 대기 (.nvu_state = "업로드 완료")
+  ↓
+제목 입력 필수 (input.nvu_inp — 미입력 시 "제목 미입력" 오류)
+  ↓
+"완료"(nvu_btn_submit) 클릭 → se-section-video 삽입
+```
+
+### 본문 입력 확정 방식
+
+```
+클립보드 붙여넣기 (pyperclip + Ctrl+V)
+  - \n → SE3가 단락으로 자동 변환
+  - keyboard.type() 대비 10배 이상 빠름
+  - 서식 오염(취소선·굵게) 없음
+  - write_body() 시작 전 reset_formatting() 자동 호출
+```
+
+---
+
+## 9. 제약사항 및 보안 정책
 
 - **외부 공개 발행**: CLAUDE.md 기준 매번 사용자 승인 필수
 - **쿠키/session 추출 금지**: storage_state 서버 전송 불가
@@ -198,7 +257,7 @@ admin.blog.naver.com/{blog_id}/stat/today 패턴에서 추출
 
 ---
 
-## 9. 파일 위치
+## 10. 파일 위치
 
 | 역할 | 파일 |
 |------|------|
