@@ -42,6 +42,21 @@ export interface BrowserTabsState {
   ts: number
 }
 
+export interface LoginWatcherEvent {
+  type: string
+  target_id: string
+  sanitized_url: string
+  title: string
+  extra: Record<string, unknown>
+  ts: number
+}
+
+export interface LoginWatcherState {
+  running: boolean
+  events: LoginWatcherEvent[]   // 최근 이벤트 (최대 50개)
+  loginStates: Record<string, string>  // target_id → login state
+}
+
 export interface ScreenshotState {
   status: 'idle' | 'loading' | 'done' | 'error'
   data: string   // base64 PNG
@@ -89,6 +104,7 @@ interface AppState {
   browserStatus: BrowserStatus
   browserTabsState: BrowserTabsState
   screenshotState: ScreenshotState
+  loginWatcherState: LoginWatcherState
   blogState: BlogState
   cafeState: CafeState
   badgeApproval: number
@@ -109,6 +125,9 @@ interface AppState {
   setBrowserStatus: (s: BrowserStatus) => void
   setBrowserTabsState: (s: Partial<BrowserTabsState>) => void
   setScreenshotState: (s: Partial<ScreenshotState>) => void
+  setLoginWatcherRunning: (v: boolean) => void
+  addLoginWatcherEvent: (e: LoginWatcherEvent) => void
+  clearLoginWatcherEvents: () => void
   setBlogState: (s: Partial<BlogState>) => void
   setCafeState: (s: Partial<CafeState>) => void
   setCafeListState: (s: Partial<AppState['cafeListState']>) => void
@@ -172,6 +191,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   browserStatus: {},
   browserTabsState: { status: 'idle', tabs: [], session: null, error: '', ts: 0 },
   screenshotState: { status: 'idle', data: '', format: 'png', error: '', ts: 0 },
+  loginWatcherState: { running: false, events: [], loginStates: {} },
   blogState: { status: 'idle', title: '', tags: [], visibility: 'public', bodyPreview: '', resultUrl: '', error: '' },
   cafeState: { status: 'idle', title: '', board: '', bodyPreview: '', resultUrl: '', error: '' },
   badgeApproval: 0,
@@ -213,6 +233,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   setBrowserStatus: (s) => set({ browserStatus: s }),
   setBrowserTabsState: (s) => set((prev) => ({ browserTabsState: { ...prev.browserTabsState, ...s } })),
   setScreenshotState: (s) => set((prev) => ({ screenshotState: { ...prev.screenshotState, ...s } })),
+  setLoginWatcherRunning: (v) => set((prev) => ({ loginWatcherState: { ...prev.loginWatcherState, running: v } })),
+  addLoginWatcherEvent: (e) => set((prev) => {
+    const events = [...prev.loginWatcherState.events, e].slice(-50)
+    const loginStates = e.type === 'login_state_changed' && e.extra && typeof (e.extra as Record<string, unknown>).state === 'string'
+      ? { ...prev.loginWatcherState.loginStates, [e.target_id]: (e.extra as Record<string, string>).state }
+      : prev.loginWatcherState.loginStates
+    return { loginWatcherState: { ...prev.loginWatcherState, events, loginStates } }
+  }),
+  clearLoginWatcherEvents: () => set((prev) => ({ loginWatcherState: { ...prev.loginWatcherState, events: [], loginStates: {} } })),
   setBlogState: (s) => set((prev) => ({ blogState: { ...prev.blogState, ...s } })),
   setCafeState: (s) => set((prev) => ({ cafeState: { ...prev.cafeState, ...s } })),
   setCafeListState: (s) => set((prev) => ({ cafeListState: { ...prev.cafeListState, ...s } })),
@@ -221,6 +250,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   handleWsMessage: (msg) => {
     const { addMessage, addTask, setMenuItems, setBrowserStatus, setBrowserTabsState, setScreenshotState,
+            setLoginWatcherRunning, addLoginWatcherEvent,
             setBlogState, setCafeState,
             setCafeListState, setCafePostsState, setCafeReadState } = get()
     switch (msg.type) {
@@ -253,6 +283,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       case 'browser_status':
         setBrowserStatus(msg)
+        break
+      case 'login_watcher_started':
+        setLoginWatcherRunning(true)
+        break
+      case 'login_watcher_stopped':
+        setLoginWatcherRunning(false)
+        break
+      case 'target_created':
+      case 'target_closed':
+      case 'target_url_changed':
+      case 'target_title_changed':
+      case 'auth_popup_detected':
+      case 'login_state_changed':
+        addLoginWatcherEvent({
+          type: msg.type,
+          target_id: msg.target_id,
+          sanitized_url: msg.sanitized_url ?? '',
+          title: msg.title ?? '',
+          extra: (msg.extra as Record<string, unknown>) ?? {},
+          ts: msg.ts ?? Date.now() / 1000,
+        })
         break
       case 'tab_list':
         setBrowserTabsState({

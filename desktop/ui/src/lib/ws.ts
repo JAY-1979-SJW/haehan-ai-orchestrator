@@ -11,6 +11,13 @@ export type WsMessage =
   | { type: 'screenshot_result'; ok: boolean; format?: string; data?: string; error?: string }
   | { type: 'login_watcher_started'; ok: boolean }
   | { type: 'login_watcher_stopped'; ok: boolean }
+  | { type: 'target_created';       target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'target_closed';        target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'target_url_changed';   target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'target_title_changed'; target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'auth_popup_detected';  target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'login_state_changed';  target_id: string; sanitized_url?: string; title?: string; extra?: object; ts?: number }
+  | { type: 'popup_detected';       added?: string[]; ts?: number }
   | { type: 'blog_status'; status: string; title?: string; tags?: string[]; visibility?: string; body_preview?: string; result_url?: string; error?: string }
   | { type: 'cafe_status'; status: string; title?: string; board?: string; body_preview?: string; result_url?: string; error?: string }
   | { type: 'user_present_task'; task: { task_id: string; action_type: string; domain?: string; risk_level: string; description?: string; workflow_run_id?: string }; ts?: number }
