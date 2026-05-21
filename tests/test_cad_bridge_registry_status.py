@@ -277,16 +277,16 @@ def test_status_route_does_not_crash_desktop_on_internal_error(
 # ──────────────────────────────────────────────
 
 @pytest.mark.parametrize("path", [
-    "/cad/bridge/start",
-    "/cad/bridge/stop",
-    "/cad/bridge/restart",
     "/cad/bridge/proxy/openapi.json",
     "/cad/bridge/proxy/acad/arch-quantity-tab/build-cards",
 ])
-def test_lifecycle_and_proxy_routes_not_yet_registered(client, path):
-    res = client.post(path) if path.endswith(("start", "stop", "restart")) \
-        else client.get(path)
-    # 미등록 또는 StaticFiles fallback (404)
+def test_proxy_routes_not_yet_registered(client, path):
+    """CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01 이후 의미 보존 갱신.
+
+    lifecycle 트랙에서 start/stop/restart 가 등록되었으므로 본 테스트는
+    proxy 미등록 검증만 남긴다 (proxy 는 별 트랙).
+    """
+    res = client.get(path)
     assert res.status_code in (404, 405)
 
 
