@@ -186,6 +186,29 @@ export const useAppStore = create<AppState>((set, get) => ({
       case 'browser_status':
         setBrowserStatus(msg)
         break
+      case 'user_present_task': {
+        const t = msg.task
+        const item: TaskItem = {
+          task_id: t.task_id,
+          action_type: t.action_type,
+          domain: t.domain,
+          risk_level: t.risk_level,
+          description: t.description,
+          needs_approval: true,
+          status: '사용자 확인 요청',
+          ts: msg.ts,
+        }
+        addTask(item)
+        addMessage({ role: 'system', text: `🔔 사용자 확인 요청: ${t.action_type}`, ts: Date.now() / 1000 })
+        break
+      }
+      case 'task_blocked':
+        addMessage({
+          role: 'system',
+          text: msg.message_ko || `작업 차단됨: ${msg.reason || '정책 위반'}`,
+          ts: Date.now() / 1000,
+        })
+        break
       case 'blog_status':
         setBlogState({
           status: msg.status as BlogWriteStatus,
