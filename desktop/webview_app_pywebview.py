@@ -121,44 +121,92 @@ def _setup_logging() -> None:
     )
 
 
-def _check_consent() -> bool:
-    """최초 실행 시 정보 제공 동의 창 표시. 동의하면 True 반환."""
-    consent_file = _app_root() / "data" / "consent.json"
+CONSENT_VERSION = "1"
+CONSENT_SCOPE = "haehan-desktop-default"
+
+# 동의 창에 표시되는 문구 — token/secret 등 민감 식별자를 포함하지 않는다.
+CONSENT_PROMPT_TEXT = (
+    "HaehanAI Desktop을 사용하려면 아래 항목에 동의해야 합니다.\n\n"
+    "■ 수집 항목: 앱 오류 로그, 실행 환경 정보\n"
+    "■ 이용 목적: 서비스 품질 개선 및 오류 분석\n"
+    "■ 보유 기간: 6개월\n\n"
+    "위 내용에 동의하십니까?"
+)
+
+
+def _default_tk_dialog_runner() -> bool:
+    """실제 tkinter 창. HAEHAN_SKIP_GUI=1 환경에서는 호출되지 않아야 한다."""
+    import tkinter as tk
+    from tkinter import messagebox
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    try:
+        return bool(messagebox.askyesno(
+            "HaehanAI 정보 제공 동의", CONSENT_PROMPT_TEXT, icon="question",
+        ))
+    finally:
+        root.destroy()
+
+
+def _consent_file_path() -> Path:
+    return _app_root() / "data" / "consent.json"
+
+
+def _save_consent(agreed: bool) -> None:
+    """동의 결과 저장. agreed/agreed_at/version/scope 만 저장 — secret 금지."""
+    from datetime import datetime
+    consent_file = _consent_file_path()
+    consent_file.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "agreed": bool(agreed),
+        "agreed_at": datetime.now().isoformat(),
+        "version": CONSENT_VERSION,
+        "scope": CONSENT_SCOPE,
+    }
+    consent_file.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _check_consent(dialog_runner=None) -> bool:
+    """최초 실행 시 정보 제공 동의 창 표시. 동의하면 True.
+
+    Args:
+        dialog_runner: 0-인자 callable -> bool. 주입 시 tkinter 대신 사용 (테스트/CI).
+    """
+    import os as _os
+    consent_file = _consent_file_path()
     if consent_file.exists():
         try:
             data = json.loads(consent_file.read_text(encoding="utf-8"))
-            if data.get("agreed"):
+            if data.get("agreed") is True:
                 return True
+            if data.get("agreed") is False:
+                # 명시적 거부 — 재차 동의 요구
+                pass
         except Exception:
+            # JSON 손상 — 안전하게 재동의 요구
             pass
 
-    # tkinter 동의 창
-    try:
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)
-        agreed = messagebox.askyesno(
-            "HaehanAI 정보 제공 동의",
-            "HaehanAI Desktop을 사용하려면 아래 항목에 동의해야 합니다.\n\n"
-            "■ 수집 항목: 앱 오류 로그, 실행 환경 정보\n"
-            "■ 이용 목적: 서비스 품질 개선 및 오류 분석\n"
-            "■ 보유 기간: 6개월\n\n"
-            "위 내용에 동의하십니까?",
-            icon="question"
-        )
-        root.destroy()
-    except Exception:
-        agreed = True  # GUI 없는 환경에서는 동의로 처리
+    skip_gui = _os.environ.get("HAEHAN_SKIP_GUI", "").strip() in ("1", "true", "True")
 
-    consent_file.parent.mkdir(parents=True, exist_ok=True)
-    import json as _json
-    from datetime import datetime
-    consent_file.write_text(
-        _json.dumps({"agreed": agreed, "ts": datetime.now().isoformat()}, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    if dialog_runner is not None:
+        try:
+            agreed = bool(dialog_runner())
+        except Exception:
+            agreed = False
+    elif skip_gui:
+        # GUI 미기동 환경 + runner 미주입 → 안전하게 거부
+        agreed = False
+    else:
+        try:
+            agreed = _default_tk_dialog_runner()
+        except Exception:
+            agreed = False
+
+    _save_consent(agreed)
     return agreed
 
 
