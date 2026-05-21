@@ -98,12 +98,12 @@ def run_tray_with_app(server_url: str = "https://haehan-ai.kr/orchestrator"
 
     image = _make_icon_image(color=_state_to_color(ctrl.model.state))
     menu = pystray.Menu(
-        pystray.MenuItem("Dashboard", on_open),
-        pystray.MenuItem("Registration", on_open),
-        pystray.MenuItem("Logs", on_open),
-        pystray.MenuItem("Settings", on_open),
+        pystray.MenuItem("열기", on_open),
+        pystray.MenuItem("Chat 열기", on_open),
+        pystray.MenuItem("상태 보기", on_open),
+        pystray.MenuItem("진단 보기", on_diagnostics),
+        pystray.MenuItem("AI 설정", on_open),
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem("진단", on_diagnostics),
         pystray.MenuItem("재등록", on_reset),
         pystray.MenuItem("종료", on_quit),
     )

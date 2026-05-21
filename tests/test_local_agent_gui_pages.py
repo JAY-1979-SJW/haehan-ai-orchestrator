@@ -11,18 +11,27 @@ import pytest
 
 
 def test_page_enum_all_four():
+    """직전 4탭 구조 → 신 3탭 (Chat/Status/Diagnostics) + alias 유지.
+    회귀 호환: 신 enum 3개 + 직전 alias 4개 모두 정의되어야 함."""
     from local_agent import gui_app
+    # 신 3탭 enum
+    for p in ("PAGE_CHAT", "PAGE_STATUS", "PAGE_DIAGNOSTICS"):
+        assert hasattr(gui_app, p)
+    # 직전 4 alias (회귀 호환)
     for p in ("PAGE_DASHBOARD", "PAGE_REGISTRATION",
               "PAGE_LOGS", "PAGE_SETTINGS"):
         assert hasattr(gui_app, p)
-    assert len(gui_app.ALL_PAGES) == 4
+    assert len(gui_app.ALL_PAGES) == 3   # 신 구조 기준
 
 
 def test_gui_app_has_page_builders():
+    """신 구조: _build_chat_tab / _build_status_tab / _build_diagnostics_tab.
+    직전: _build_ui alias 유지."""
     from local_agent.gui_app import HaehanAgentGuiApp
-    for m in ("_build_page_dashboard", "_build_page_registration",
-              "_build_page_logs", "_build_page_settings",
-              "show_page", "_bind_shortcuts"):
+    for m in ("_build_chat_tab", "_build_status_tab",
+              "_build_diagnostics_tab",
+              "show_page", "_bind_shortcuts",
+              "_build_ui"):
         assert hasattr(HaehanAgentGuiApp, m), f"missing: {m}"
 
 
@@ -127,8 +136,10 @@ def test_gui_app_binds_shortcuts():
 
 
 def test_tray_menu_synced_with_pages():
+    """신 구조 — 트레이 메뉴는 한글 항목 (열기/Chat/상태/진단/AI 설정/재등록/종료)."""
     src = Path("local_agent/gui_tray.py").read_text(encoding="utf-8")
-    for label in ("Dashboard", "Registration", "Logs", "Settings"):
+    for label in ("열기", "Chat 열기", "상태 보기", "진단 보기",
+                   "AI 설정", "재등록", "종료"):
         assert label in src, f"tray missing: {label}"
 
 
