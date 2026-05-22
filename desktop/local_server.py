@@ -1701,6 +1701,21 @@ async def startup():
     logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
 
 
+# ── Health endpoint — 항상 JSON 반환 (SPA fallback 차단) ─────────────────────
+@app.get("/health")
+async def health_check():
+    """로컬 서버 상태 확인. SPA fallback이 아닌 JSON만 반환."""
+    import time
+    from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+    return {
+        "ok": True,
+        "service": "haehan-local-server",
+        "host": LOCAL_HOST,
+        "port": LOCAL_PORT,
+        "ts": int(time.time()),
+    }
+
+
 # ── index.html — 항상 최신 버전 서빙 (캐시 금지) ───────────────────────────────
 @app.get("/")
 @app.get("/index.html")
@@ -1819,8 +1834,23 @@ async def spa_fallback(full_path: str):
     """React SPA 라우터용 catch-all.
     /assets/* 는 실제 파일을 올바른 MIME 타입으로 반환.
     그 외 경로는 index.html fallback.
+
+    보호: API/도구 경로는 SPA fallback 금지.
+    /api, /cad, /ws, /proxy, /agent, /local-agent, /logs, /health 로 시작하는
+    경로가 여기까지 도달하면 404 JSON을 반환한다.
     """
     import mimetypes
+    # API 경로 보호 — SPA fallback으로 흡수 금지
+    _API_PREFIXES = (
+        "api/", "cad/", "ws/", "proxy/", "agent/",
+        "local-agent/", "logs", "health",
+    )
+    if any(full_path == p.rstrip("/") or full_path.startswith(p) for p in _API_PREFIXES):
+        return Response(
+            content=b'{"detail":"NOT_FOUND","path":"/' + full_path.encode() + b'"}',
+            status_code=404,
+            media_type="application/json",
+        )
     if full_path.startswith("assets/"):
         asset_file = _UI_DIR / full_path
         if asset_file.is_file():
