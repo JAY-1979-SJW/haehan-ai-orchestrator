@@ -109,8 +109,10 @@ else:
 
 ALLOW_LEGACY_MENTION = {
     "docs/release/HAEHAN_DESKTOP_RELEASE_BASELINE_01.md",
+    "docs/release/HAEHAN_DESKTOP_USER_RUN_BASELINE_01.md",
     "scripts/ops/audit_haehan_legacy_entrypoint_guard.py",
     "scripts/ops/audit_haehan_desktop_release_baseline.py",
+    "scripts/ops/audit_haehan_desktop_user_run_baseline.py",
     "scripts/ops/audit_haehan_single_exe_build.py",
     "scripts/ops/audit_haehan_consent_dialog.py",
     "tests/test_haehan_legacy_entrypoint_guard.py",
