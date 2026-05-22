@@ -35,6 +35,21 @@ export interface LocalAgentHealth {
   mcp_server_path: string | null
 }
 
+export interface LocalAgentPreflight {
+  schema_version: string
+  ok: boolean
+  can_run: boolean
+  blocking_reasons: string[]
+  user_message: string
+  next_actions: string[]
+  provider_status: {
+    anthropic_sdk: { available: boolean; sdk_installed: boolean; api_key_set: boolean }
+    claude_cli: { available: boolean }
+  }
+  api_key_set: boolean
+  warnings: string[]
+}
+
 // ── API 클라이언트 ────────────────────────────────────────────────────────────
 
 export const localAgentApi = {
@@ -67,5 +82,18 @@ export const localAgentApi = {
       throw new Error(`로컬 에이전트 health 확인 실패: HTTP ${resp.status}`)
     }
     return resp.json() as Promise<LocalAgentHealth>
+  },
+
+  /**
+   * 로컬 AI 실행 사전 점검
+   *
+   * can_run=false 이면 실행 버튼 비활성화, blocking_reasons/next_actions 표시
+   */
+  async preflight(): Promise<LocalAgentPreflight> {
+    const resp = await fetch(`${LOCAL_SERVER}/local-agent/preflight`)
+    if (!resp.ok) {
+      throw new Error(`preflight 확인 실패: HTTP ${resp.status}`)
+    }
+    return resp.json() as Promise<LocalAgentPreflight>
   },
 }

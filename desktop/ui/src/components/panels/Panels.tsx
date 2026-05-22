@@ -4,7 +4,7 @@ import { PanelShell, EmptyState, HelpSection, HelpTitle, HelpList, HelpNote, Sta
 import { useAppStore } from '@/store/appStore'
 import { wsClient } from '@/lib/ws'
 import { cn } from '@/lib/utils'
-import { localAgentApi, type LocalAgentHealth } from '@/api/localAgent'
+import { localAgentApi, type LocalAgentHealth, type LocalAgentPreflight } from '@/api/localAgent'
 
 // ── 작업 큐 ──────────────────────────────────────────────────────────────────
 export function TaskQueuePanel() {
@@ -706,6 +706,8 @@ export function LocalAgentPanel() {
   const [providerInfo, setProviderInfo] = useState('')
   const [health, setHealth] = useState<LocalAgentHealth | null>(null)
   const [healthLoading, setHealthLoading] = useState(false)
+  const [preflight, setPreflight] = useState<LocalAgentPreflight | null>(null)
+  const [preflightLoading, setPreflightLoading] = useState(false)
 
   // 로컬 AI health 조회
   async function loadHealth() {
@@ -720,7 +722,27 @@ export function LocalAgentPanel() {
     }
   }
 
+  // 로컬 AI preflight 점검 (provider 전환 시 호출)
+  async function loadPreflight() {
+    setPreflightLoading(true)
+    setPreflight(null)
+    try {
+      const p = await localAgentApi.preflight()
+      setPreflight(p)
+    } catch {
+      setPreflight(null)
+    } finally {
+      setPreflightLoading(false)
+    }
+  }
+
   useEffect(() => { loadHealth() }, [])
+
+  // 로컬 AI 선택 시 preflight 자동 점검
+  useEffect(() => {
+    if (provider === '로컬 AI') { loadPreflight() }
+    else { setPreflight(null) }
+  }, [provider])
 
   async function handleRun() {
     if (!prompt.trim()) return
@@ -840,11 +862,47 @@ export function LocalAgentPanel() {
           />
         </div>
 
+        {/* 로컬 AI preflight 안내 */}
+        {provider === '로컬 AI' && (
+          <div>
+            {preflightLoading && (
+              <p className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                <RefreshCw size={11} className="animate-spin" /> 실행 가능 여부 점검 중…
+              </p>
+            )}
+            {!preflightLoading && preflight && !preflight.can_run && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={14} className="text-amber-600 mt-0.5 shrink-0" />
+                  <p className="text-[12px] text-amber-800 font-medium leading-snug">{preflight.user_message}</p>
+                </div>
+                {preflight.next_actions.length > 0 && (
+                  <ul className="ml-5 space-y-0.5">
+                    {preflight.next_actions.map((action, i) => (
+                      <li key={i} className="text-[11px] text-amber-700 list-disc">{action}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {!preflightLoading && preflight && preflight.can_run && preflight.warnings.length > 0 && (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-2.5 flex items-start gap-2">
+                <AlertCircle size={13} className="text-yellow-600 mt-0.5 shrink-0" />
+                <ul className="space-y-0.5">
+                  {preflight.warnings.map((w, i) => (
+                    <li key={i} className="text-[11px] text-yellow-700">{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 실행 버튼 */}
         {(status === 'idle' || status === 'error') && (
           <button
             onClick={handleRun}
-            disabled={!prompt.trim()}
+            disabled={!prompt.trim() || (provider === '로컬 AI' && preflight !== null && !preflight.can_run)}
             className="w-full py-2.5 rounded-lg bg-[#f97316] text-white text-[13px] font-semibold hover:bg-[#ea580c] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {provider} 실행
