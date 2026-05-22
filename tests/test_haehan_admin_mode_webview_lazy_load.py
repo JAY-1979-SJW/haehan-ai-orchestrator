@@ -474,8 +474,10 @@ def test_launcher_run_tray_mode_admin_role_skip_gui():
 
 # ── 기존 entrypoint 회귀 ────────────────────────────────────────────────
 
-def test_existing_webview_app_pywebview_importable():
-    importlib.import_module("desktop.webview_app_pywebview")
+def test_consent_module_importable():
+    """legacy UI 제거 후 consent 로직은 desktop.consent 에 존재."""
+    mod = importlib.import_module("desktop.consent")
+    assert hasattr(mod, "check_consent")
 
 
 def test_existing_local_server_importable():

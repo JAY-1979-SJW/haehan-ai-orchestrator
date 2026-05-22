@@ -53,14 +53,24 @@ def test_no_ui_dist_backup_resurrected():
     assert backups == [], f"ui_dist_backup_* 재출현: {[d.name for d in backups]}"
 
 
-def test_legacy_webview_app_preserved_but_not_official():
-    """desktop/webview_app.py 소스는 보존되지만, 정식 entry 가 import 하지 않음."""
-    assert (ROOT / "desktop" / "webview_app.py").exists()
-    code = _code_only(
-        (ROOT / "build/webview_launcher.py").read_text(encoding="utf-8")
-    )
-    assert "from desktop.webview_app import" not in code
-    assert "desktop.webview_app." not in code
+def test_legacy_webview_app_removed():
+    """desktop/webview_app.py 는 legacy UI 제거로 삭제됐다 (HAEHAN-DESKTOP-LEGACY-UI-REMOVAL-01)."""
+    assert not (ROOT / "desktop" / "webview_app.py").exists()
+
+
+def test_legacy_tray_app_removed():
+    """desktop/tray_app.py 는 legacy UI 제거로 삭제됐다."""
+    assert not (ROOT / "desktop" / "tray_app.py").exists()
+
+
+def test_legacy_webview_app_pywebview_removed():
+    """desktop/webview_app_pywebview.py 는 legacy UI 제거로 삭제됐다."""
+    assert not (ROOT / "desktop" / "webview_app_pywebview.py").exists()
+
+
+def test_legacy_ui_dir_removed():
+    """desktop/ui/ React SPA 소스는 legacy UI 제거로 삭제됐다."""
+    assert not (ROOT / "desktop" / "ui").exists()
 
 
 def test_baseline_doc_has_official_exe_and_sha256():

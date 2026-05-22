@@ -14,8 +14,9 @@ def test_launcher_uses_main_launcher():
 
 
 def test_launcher_no_direct_webview_entry():
-    """webview_app_pywebview.main 을 직접 import/호출하면 안됨.
+    """webview_app_pywebview.main 이 webview_launcher 에서 직접 호출되지 않는다.
 
+    legacy UI 제거 완료 — 이 조건은 제거 후에도 계속 유효.
     code line 만 검사하기 위해 docstring/주석 제거 후 비교.
     """
     src = (ROOT / "build/webview_launcher.py").read_text(encoding="utf-8")

@@ -261,15 +261,15 @@ def check_consent_hook() -> dict:
 def run_consent_flow(dialog_runner=None) -> bool:
     """실제 동의 창 실행 — HAEHAN_CONSENT_DIALOG_01.
 
-    webview_app_pywebview._check_consent 를 재사용한다.
+    desktop.consent.check_consent 를 사용한다 (legacy UI 제거 후 공유 모듈로 이전).
     HAEHAN_SKIP_GUI=1 환경 또는 runner 주입을 통해 테스트 가능.
     """
     try:
-        from desktop.webview_app_pywebview import _check_consent
+        from desktop.consent import check_consent
     except Exception as e:
         logger.error("consent dialog import 실패: %s", type(e).__name__)
         return False
-    return bool(_check_consent(dialog_runner=dialog_runner))
+    return bool(check_consent(dialog_runner=dialog_runner))
 
 
 def load_token_status_hook() -> dict:
