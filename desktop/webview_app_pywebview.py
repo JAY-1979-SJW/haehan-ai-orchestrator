@@ -25,7 +25,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-from desktop.app_config import LOCAL_HOST, LOCAL_PORT, LOCAL_URL as _LOCAL_URL  # noqa: E402
+from desktop.app_config import LOCAL_HOST, LOCAL_PORT, LOCAL_URL as _LOCAL_URL, ACTIVE_SHELL_URL as _ACTIVE_SHELL_URL  # noqa: E402
 _SERVER_PORT = LOCAL_PORT
 _SERVER_READY_TIMEOUT = 10
 
@@ -81,7 +81,7 @@ def run_pywebview(title: str = "Haehan AI", width: int = 1200, height: int = 800
 
     window = webview.create_window(
         title,
-        _LOCAL_URL,
+        _ACTIVE_SHELL_URL,  # HAEHAN_DESKTOP_UI=new_shell 이면 /app-new, 기본은 /
         width=width,
         height=height,
         min_size=(800, 560),

@@ -46,6 +46,13 @@ def _resolve() -> tuple[str, int]:
 LOCAL_HOST, LOCAL_PORT = _resolve()
 LOCAL_URL = f"http://{LOCAL_HOST}:{LOCAL_PORT}"
 
+# 신규 shell URL — HAEHAN_DESKTOP_UI=new_shell 환경변수로 선택
+# 기본값은 기존 shell (/) 유지. smoke PASS 후 기본값 변경 결정.
+_UI_MODE = os.getenv("HAEHAN_DESKTOP_UI", "legacy").strip().lower()
+ACTIVE_SHELL_URL = (
+    f"{LOCAL_URL}/app-new" if _UI_MODE == "new_shell" else LOCAL_URL
+)
+
 
 def effective_bind_host() -> str:
     """원격 접속 활성화 시 0.0.0.0, 아니면 LOCAL_HOST."""
@@ -56,4 +63,4 @@ def effective_bind_host() -> str:
         return LOCAL_HOST
 
 
-__all__ = ["LOCAL_HOST", "LOCAL_PORT", "LOCAL_URL", "effective_bind_host"]
+__all__ = ["LOCAL_HOST", "LOCAL_PORT", "LOCAL_URL", "ACTIVE_SHELL_URL", "effective_bind_host"]

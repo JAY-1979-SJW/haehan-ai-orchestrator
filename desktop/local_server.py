@@ -1701,6 +1701,68 @@ async def startup():
     logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
 
 
+# ── 신규 Desktop Shell — /app-new (Phase 2 smoke route) ─────────────────────
+# 기존 / 와 /index.html은 건드리지 않음. 새 shell은 /app-new 에서만 서빙.
+# 환경변수 HAEHAN_DESKTOP_UI=new_shell 이면 WebView/Launcher가 이 URL을 사용.
+@app.get("/app-new")
+async def new_shell():
+    """신규 Desktop Shell 조회 전용 HTML (Phase 2).
+
+    HTTP 재진입(self-call) 데드락을 피하기 위해 내부 서비스 함수를 직접 호출한다.
+    실행 버튼(AI run / CAD start) 은 비활성화 상태로만 표시.
+    """
+    from desktop.ui_new.shell_html import build_html_from_data
+    from desktop.local_agent_service import local_agent_health as _la_health, local_agent_preflight as _preflight
+    import time, json as _json
+
+    # ── 내부 서비스 직접 호출 (HTTP 재진입 없음) ──
+    la_health_data   = _la_health()
+    preflight_data   = _preflight()
+
+    # agent/status: device_token 기반, 직접 읽기
+    try:
+        from desktop.tray_runtime import check_registration_status
+        reg = check_registration_status()
+        agent_data = {
+            "ok": reg.registered,
+            "agent_id": getattr(reg, "agent_id", ""),
+            "server_url": getattr(reg, "server_url", ""),
+            "server_connected": getattr(reg, "registered", False),
+        }
+    except Exception:
+        agent_data = {"ok": False, "agent_id": "", "server_connected": False}
+
+    # whoami: role 파악
+    try:
+        from desktop.admin_webview import resolve_current_role
+        role = resolve_current_role()
+    except Exception:
+        role = "unknown"
+
+    # logs: 최근 로그 라인
+    try:
+        from desktop.status_provider import get_recent_logs
+        log_lines = get_recent_logs(n=15)
+    except Exception:
+        log_lines = []
+
+    data = {
+        "health": {"ok": True, "service": "haehan-local-server", "ts": int(time.time())},
+        "agent": agent_data,
+        "la_health": la_health_data if isinstance(la_health_data, dict) else la_health_data.__dict__,
+        "preflight": preflight_data if isinstance(preflight_data, dict) else _json.loads(_json.dumps(preflight_data, default=str)),
+        "whoami": {"ok": True, "role": role},
+        "logs": {"lines": log_lines},
+    }
+
+    html = build_html_from_data(data)
+    return Response(
+        content=html.encode("utf-8"),
+        media_type="text/html; charset=utf-8",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
+
 # ── Health endpoint — 항상 JSON 반환 (SPA fallback 차단) ─────────────────────
 @app.get("/health")
 async def health_check():
