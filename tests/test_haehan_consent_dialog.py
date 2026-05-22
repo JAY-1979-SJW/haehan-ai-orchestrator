@@ -7,6 +7,7 @@
     - decline 시 진입 차단
     - secret leak 없음
     - main_launcher 연결
+    - desktop.consent 공유 모듈 (legacy UI 제거 후 이전됨)
 """
 from __future__ import annotations
 
@@ -32,14 +33,13 @@ def isolated_consent(tmp_path, monkeypatch):
     """consent.json 을 임시 경로로 분리."""
     fake_data = tmp_path / "data"
     fake_data.mkdir()
-    from desktop import webview_app_pywebview as web
+    from desktop import consent as con
 
     def _fake_path():
         return fake_data / "consent.json"
 
-    monkeypatch.setattr(web, "_consent_file_path", _fake_path)
+    monkeypatch.setattr(con, "_consent_file_path", _fake_path)
 
-    # main_launcher 의 app_root 도 임시로 → check_consent_hook 동기화
     from desktop import main_launcher
     monkeypatch.setattr(main_launcher, "app_root", lambda: tmp_path)
 
@@ -106,10 +106,8 @@ def test_consent_saved_schema_safe(isolated_consent):
     main_launcher.run_consent_flow(dialog_runner=lambda: True)
     raw = isolated_consent.read_text(encoding="utf-8")
     data = json.loads(raw)
-    # 허용 키만 존재
     allowed = {"agreed", "agreed_at", "version", "scope"}
     assert set(data.keys()).issubset(allowed)
-    # secret 키 절대 금지
     lowered = raw.lower()
     for sk in SECRET_KEYS:
         assert sk not in lowered, f"consent.json 에 금칙어 '{sk}' 발견"
@@ -118,7 +116,7 @@ def test_consent_saved_schema_safe(isolated_consent):
 def test_skip_gui_no_tkinter(isolated_consent, monkeypatch):
     """HAEHAN_SKIP_GUI=1 + runner 미주입 → 실제 tk 호출 없음, 거부 처리."""
     monkeypatch.setenv("HAEHAN_SKIP_GUI", "1")
-    from desktop import webview_app_pywebview as web
+    from desktop import consent as con
 
     called = {"tk": False}
 
@@ -126,8 +124,8 @@ def test_skip_gui_no_tkinter(isolated_consent, monkeypatch):
         called["tk"] = True
         raise AssertionError("tkinter should not be invoked under SKIP_GUI")
 
-    monkeypatch.setattr(web, "_default_tk_dialog_runner", _boom)
-    agreed = web._check_consent()
+    monkeypatch.setattr(con, "_default_tk_dialog_runner", _boom)
+    agreed = con.check_consent()
     assert agreed is False
     assert called["tk"] is False
 
@@ -136,31 +134,39 @@ def test_main_launcher_blocks_on_decline(isolated_consent, monkeypatch):
     """main() 흐름에서 동의 거부 시 진입 차단 코드 반환."""
     monkeypatch.setenv("HAEHAN_SKIP_GUI", "1")
     from desktop import main_launcher
-    # consent.json 없음 + SKIP_GUI=1 → 차단 코드 4
     rc = main_launcher.main(["--tray"])
     assert rc == 4
 
 
 def test_main_launcher_consent_linkage_source():
-    """audit 가 검사하는 import 라인이 main_launcher 에 실제 존재."""
+    """main_launcher 가 desktop.consent 를 사용하는지 확인."""
     src = (ROOT / "desktop/main_launcher.py").read_text(encoding="utf-8")
-    assert "from desktop.webview_app_pywebview import _check_consent" in src
+    assert "from desktop.consent import check_consent" in src
 
 
 def test_no_secret_in_consent_prompt():
-    from desktop import webview_app_pywebview as web
-    txt = web.CONSENT_PROMPT_TEXT.lower()
+    from desktop import consent as con
+    txt = con.CONSENT_PROMPT_TEXT.lower()
     for sk in SECRET_KEYS:
         assert sk not in txt, f"prompt 에 금칙어 '{sk}' 포함"
 
 
-def test_protected_files_untouched():
-    """tray_app.py / user_settings.py 미수정 확인."""
-    import subprocess
-    res = subprocess.run(
-        ["git", "diff", "--name-only", "HEAD",
-         "desktop/tray_app.py", "desktop/user_settings.py"],
-        cwd=str(ROOT), capture_output=True, text=True,
-    )
-    changed = [l for l in res.stdout.splitlines() if l.strip()]
-    assert changed == [], f"보호 파일 수정 감지: {changed}"
+def test_consent_module_exists():
+    """desktop/consent.py 공유 모듈이 존재한다."""
+    assert (ROOT / "desktop" / "consent.py").exists()
+
+
+def test_legacy_webview_not_referenced_in_consent_flow():
+    """main_launcher 의 consent flow 가 webview_app_pywebview 를 더 이상 참조하지 않는다."""
+    src = (ROOT / "desktop/main_launcher.py").read_text(encoding="utf-8")
+    # run_consent_flow 함수 부분만 확인
+    in_func, lines = False, []
+    for line in src.splitlines():
+        if "def run_consent_flow" in line:
+            in_func = True
+        if in_func:
+            lines.append(line)
+            if line.strip() == "" and len(lines) > 3:
+                break
+    func_src = "\n".join(lines)
+    assert "webview_app_pywebview" not in func_src

@@ -295,11 +295,12 @@ def test_redact_function():
 
 # ── 기존 entrypoint 회귀 ────────────────────────────────────────────────
 
-def test_existing_desktop_webview_importable():
-    """기존 desktop/webview_app_pywebview 깨지지 않았는지."""
+def test_consent_module_importable():
+    """desktop.consent 공유 모듈 (legacy UI 제거 후 webview_app_pywebview에서 이전)."""
     import importlib
-    mod = importlib.import_module("desktop.webview_app_pywebview")
+    mod = importlib.import_module("desktop.consent")
     assert mod is not None
+    assert hasattr(mod, "check_consent")
 
 
 def test_existing_local_agent_launcher_importable():

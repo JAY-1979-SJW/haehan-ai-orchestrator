@@ -46,12 +46,10 @@ def _resolve() -> tuple[str, int]:
 LOCAL_HOST, LOCAL_PORT = _resolve()
 LOCAL_URL = f"http://{LOCAL_HOST}:{LOCAL_PORT}"
 
-# 신규 shell URL — HAEHAN_DESKTOP_UI=new_shell 환경변수로 선택
-# 기본값은 기존 shell (/) 유지. smoke PASS 후 기본값 변경 결정.
-_UI_MODE = os.getenv("HAEHAN_DESKTOP_UI", "legacy").strip().lower()
-ACTIVE_SHELL_URL = (
-    f"{LOCAL_URL}/app-new" if _UI_MODE == "new_shell" else LOCAL_URL
-)
+# new_shell이 공식 기본 UI — legacy UI 제거 완료 (HAEHAN-DESKTOP-LEGACY-UI-REMOVAL-01)
+# HAEHAN_DESKTOP_UI 환경변수는 호환성을 위해 유지되나 legacy 값은 무시된다.
+_UI_MODE = os.getenv("HAEHAN_DESKTOP_UI", "new_shell").strip().lower()
+ACTIVE_SHELL_URL = f"{LOCAL_URL}/app-new"  # legacy UI 제거 — 항상 /app-new 사용
 
 
 def effective_bind_host() -> str:

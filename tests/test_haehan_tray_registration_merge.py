@@ -495,9 +495,11 @@ def test_lock_file_no_secret():
 
 # ── 기존 entrypoint 회귀 ────────────────────────────────────────────────
 
-def test_existing_webview_app_importable():
+def test_consent_module_importable():
+    """legacy UI 제거 후 consent 로직은 desktop.consent 에 존재."""
     import importlib
-    importlib.import_module("desktop.webview_app_pywebview")
+    mod = importlib.import_module("desktop.consent")
+    assert hasattr(mod, "check_consent")
 
 
 def test_existing_local_server_importable():
