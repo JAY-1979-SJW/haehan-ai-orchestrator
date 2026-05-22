@@ -89,23 +89,33 @@ def log_dir() -> Path:
 # ── 로깅 ──────────────────────────────────────────────────────────────────
 
 def setup_logging(level: int = logging.INFO) -> None:
-    """콘솔 + 파일 동시 로깅. exe / 소스 모두 동작."""
+    """콘솔 + 파일 동시 로깅. exe / 소스 모두 동작.
+
+    logging.basicConfig 대신 root logger에 직접 핸들러를 추가한다.
+    PyInstaller frozen exe 에서 다른 패키지가 basicConfig를 먼저 호출해
+    no-op이 되는 문제를 방지.
+    """
     import logging.handlers
-    try:
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_dir() / "haehan_launcher.log",
-            maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8",
-        )
-        file_handler.setFormatter(logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        ))
-        logging.root.addHandler(file_handler)
-    except Exception:
-        pass
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    root = logging.getLogger()
+    root.setLevel(level)
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+
+    # 파일 핸들러 — 중복 추가 방지
+    log_path = log_dir() / "haehan_launcher.log"
+    has_file_handler = any(
+        isinstance(h, logging.handlers.RotatingFileHandler)
+        and getattr(h, "baseFilename", "") == str(log_path)
+        for h in root.handlers
     )
+    if not has_file_handler:
+        try:
+            fh = logging.handlers.RotatingFileHandler(
+                log_path, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8",
+            )
+            fh.setFormatter(fmt)
+            root.addHandler(fh)
+        except Exception:
+            pass
 
 
 # ── 단일 인스턴스 락 ──────────────────────────────────────────────────────
@@ -486,6 +496,80 @@ def parse_mode(argv: Optional[list[str]] = None) -> AppMode:
 
 # ── main 디스패치 ─────────────────────────────────────────────────────────
 
+def _is_server_up(url: str = "http://127.0.0.1:8765") -> bool:
+    """로컬 서버 응답 확인."""
+    import urllib.request
+    try:
+        urllib.request.urlopen(url + "/health", timeout=1)
+        return True
+    except Exception:
+        return False
+
+
+def _start_embedded_server() -> None:
+    """별도 스레드에서 uvicorn 임베디드 서버 기동."""
+    try:
+        import uvicorn
+        from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+        from desktop.local_server import app as _local_app
+        logger.info("임베디드 서버 uvicorn 시작: %s:%s", LOCAL_HOST, LOCAL_PORT)
+        uvicorn.run(_local_app, host=LOCAL_HOST, port=LOCAL_PORT,
+                    log_level="warning", log_config=None)
+    except Exception as exc:
+        import traceback
+        logger.error("임베디드 서버 기동 실패: %s\n%s", type(exc).__name__, traceback.format_exc())
+
+
+def ensure_server(timeout: float = 10.0) -> bool:
+    """서버가 없으면 임베디드로 기동. 준비되면 True 반환.
+
+    webview_app_pywebview.ensure_server 를 main_launcher 로 이전 (legacy UI 제거).
+    """
+    import threading, time
+    if _is_server_up():
+        logger.info("외부 서버 감지 — 재사용")
+        return True
+    logger.info("임베디드 서버 기동 중…")
+    t = threading.Thread(target=_start_embedded_server, daemon=True)
+    t.start()
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if _is_server_up():
+            logger.info("임베디드 서버 준비 완료")
+            return True
+        time.sleep(0.3)
+    logger.error("서버 준비 타임아웃 (%.0fs)", timeout)
+    return False
+
+
+def run_desktop_window(skip_gui: bool = False) -> None:
+    """pywebview 창을 열어 new_shell (/app-new) 을 표시한다.
+
+    webview_app_pywebview.run_pywebview 를 main_launcher 로 이전 (legacy UI 제거).
+    """
+    if skip_gui:
+        logger.info("SKIP_GUI=1 — pywebview 창 미기동")
+        return
+    from desktop.app_config import ACTIVE_SHELL_URL
+    try:
+        import webview
+        window = webview.create_window(
+            "Haehan AI",
+            ACTIVE_SHELL_URL,
+            width=1200,
+            height=800,
+            min_size=(800, 560),
+            resizable=True,
+            text_select=True,
+        )
+        webview.start(debug=False)
+    except ImportError:
+        logger.error("pywebview 미설치: pip install pywebview")
+    except Exception as exc:
+        import traceback
+        logger.error("pywebview 실행 오류: %s\n%s", type(exc).__name__, traceback.format_exc())
+
+
 def run_tray_mode(*, skip_gui: bool = False,
                   role: Optional[str] = None) -> int:
     """Tray Mode 진입 — HAEHAN_ADMIN_MODE_WEBVIEW_LAZY_LOAD_01 에서 admin_mode_available=True.
@@ -501,6 +585,11 @@ def run_tray_mode(*, skip_gui: bool = False,
     load_token_status_hook()
     start_local_server_hook()
     start_tray_hook()
+
+    # 서버 기동 — deferred hook 과 별도로 실제 기동 수행
+    server_ok = ensure_server()
+    if not server_ok:
+        logger.warning("서버 기동 실패 — WebView 그대로 진행")
 
     try:
         from desktop import tray_runtime
@@ -524,12 +613,15 @@ def run_tray_mode(*, skip_gui: bool = False,
                     result.get("registered"),
                     result.get("next_action"),
                     result.get("heartbeat_started"))
-        return 0
     except Exception as e:
         import traceback
         logger.error("Tray Mode 실행 오류: %s\n%s",
                      type(e).__name__, traceback.format_exc())
         return 1
+
+    # pywebview 창 기동 (new_shell)
+    run_desktop_window(skip_gui=skip_gui)
+    return 0
 
 
 def run_tray_mode_diagnostics() -> dict:
