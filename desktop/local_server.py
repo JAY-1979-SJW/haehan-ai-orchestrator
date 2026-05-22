@@ -16,8 +16,9 @@ from typing import Any, Optional
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .user_settings import load_menu, save_menu
@@ -82,6 +83,27 @@ _SERVER_WS_URL = "wss://api.haehan-ai.kr/ws/desktop"  # 서버 측 Push WebSocke
 
 app = FastAPI(title="Haehan Desktop Local Server", docs_url=None, redoc_url=None)
 app.add_middleware(RemoteAccessMiddleware)
+
+
+# ── 전역 예외 핸들러 — 보안 마스킹 ─────────────────────────────────────────────
+# HTTPException / RequestValidationError / 인증 오류: 기존 status_code 유지
+# 예상 밖 Exception만 500으로 마스킹 (stack trace / secret / token 노출 금지)
+
+@app.exception_handler(HTTPException)
+async def _http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+
+@app.exception_handler(Exception)
+async def _generic_exception_handler(request: Request, exc: Exception):
+    logger.error("처리되지 않은 예외 [%s %s]: %s", request.method, request.url.path, type(exc).__name__)
+    return JSONResponse(status_code=500, content={"detail": "내부 서버 오류"})
+
 
 # ── 연결된 로컬 UI 클라이언트 목록 ────────────────────────────────────────────
 _ui_clients: list[WebSocket] = []
@@ -1732,6 +1754,18 @@ async def local_agent_health():
     """로컬 AI (Anthropic SDK / Claude Code CLI) 가용 여부 반환."""
     from .local_agent_service import local_agent_health as _health
     return _health()
+
+
+@app.get("/local-agent/preflight")
+async def local_agent_preflight():
+    """로컬 AI 실행 사전 점검.
+
+    providers(anthropic_sdk, claude_cli) 중 하나라도 가용이면 can_run=true.
+    optional(cad, cdp) 은 down 이어도 can_run 에 영향 없음.
+    api_key 원문은 절대 반환하지 않으며 api_key_set(boolean) 만 반환.
+    """
+    from .local_agent_service import local_agent_preflight as _preflight
+    return _preflight()
 
 
 @app.post("/local-agent/run")
