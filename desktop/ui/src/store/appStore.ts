@@ -141,6 +141,7 @@ const DEFAULT_MENU: MenuItem[] = [
   { id: 'chat',            label: '대화',          icon: '💬', section: 'AI 대화',   visible: true,  min_role: 'any' },
   { id: 'task_queue',      label: '작업 큐',        icon: '📋', section: 'AI 대화',   visible: true,  min_role: 'any' },
   { id: 'approval',        label: '승인 대기',      icon: '✅', section: 'AI 대화',   visible: true,  min_role: 'any' },
+  { id: 'local_agent',     label: '로컬 에이전트',  icon: '🤖', section: 'AI 대화',   visible: true,  min_role: 'any' },
   // 업무 조회
   { id: 'news',            label: '뉴스',           icon: '📰', section: '업무 조회', visible: true,  min_role: 'any' },
   { id: 'eum',             label: 'EUM 단말기',     icon: '🏗️', section: '업무 조회', visible: true,  min_role: 'admin' },
