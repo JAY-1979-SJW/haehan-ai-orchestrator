@@ -21,6 +21,7 @@ ALL_MENU_ITEMS: list[dict[str, Any]] = [
     {"id": "chat",       "label": "대화",          "icon": "💬", "section": "AI 대화",   "min_role": "any",   "default": True},
     {"id": "task_queue", "label": "작업 큐",        "icon": "📋", "section": "AI 대화",   "min_role": "any",   "default": True},
     {"id": "approval",   "label": "승인 대기",      "icon": "✅", "section": "AI 대화",   "min_role": "any",   "default": True},
+    {"id": "local_agent","label": "로컬 에이전트",  "icon": "🤖", "section": "AI 대화",   "min_role": "any",   "default": True},
     {"id": "news",       "label": "뉴스",           "icon": "📰", "section": "업무 조회", "min_role": "any",   "default": True},
     {"id": "eum",             "label": "EUM 단말기",     "icon": "🏗️", "section": "업무 조회", "min_role": "admin", "default": True},
     {"id": "blog_write",      "label": "블로그 작성",    "icon": "✏️", "section": "콘텐츠",    "min_role": "any",   "default": True},
