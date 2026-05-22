@@ -639,7 +639,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     try:
         if mode == AppMode.ADMIN:
-            return run_admin_mode(skip_gui=skip_gui)
+            # HAEHAN_SINGLE_EXE_BUILD_01 갭A: HAEHAN_ROLE env 를 explicit_role 로 전달.
+            env_role = os.environ.get("HAEHAN_ROLE", "").strip().lower() or None
+            return run_admin_mode(skip_gui=skip_gui, explicit_role=env_role)
         return run_tray_mode(skip_gui=skip_gui)
     finally:
         graceful_shutdown_hook()
