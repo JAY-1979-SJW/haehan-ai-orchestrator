@@ -1812,9 +1812,24 @@ async def proxy_api_delete(path: str, request: Request):
 
 
 # ── SPA fallback — /api, /cad, /ws, /proxy 외 모든 경로를 index.html로 ────────
+# /assets/* 는 실제 정적 파일로 서빙 (catch-all보다 먼저 처리).
+# FastAPI @app.get 라우트가 app.mount 보다 우선하므로 여기서 분기한다.
 @app.get("/{full_path:path}")
 async def spa_fallback(full_path: str):
-    """React SPA 라우터용 catch-all — index.html 반환."""
+    """React SPA 라우터용 catch-all.
+    /assets/* 는 실제 파일을 올바른 MIME 타입으로 반환.
+    그 외 경로는 index.html fallback.
+    """
+    import mimetypes
+    if full_path.startswith("assets/"):
+        asset_file = _UI_DIR / full_path
+        if asset_file.is_file():
+            mime, _ = mimetypes.guess_type(str(asset_file))
+            return Response(
+                content=asset_file.read_bytes(),
+                media_type=mime or "application/octet-stream",
+                headers={"Cache-Control": "public, max-age=31536000, immutable"},
+            )
     index_path = _UI_DIR / "index.html"
     if not index_path.exists():
         return Response(content=b"index.html not found", status_code=404)

@@ -15,6 +15,7 @@ import {
   RemoteAccessPanel,
   BrowserPanel, ScreenshotPanel, LogsPanel, SettingsPanel,
   BlogWritePanel, CafeWritePanel,
+  LocalAgentPanel,
 } from '@/components/panels/Panels'
 import { useAppStore } from '@/store/appStore'
 import { wsClient } from '@/lib/ws'
@@ -50,6 +51,7 @@ const PANELS: Record<string, React.ComponentType> = {
   admin_agents:     () => <IframePanel src={`${ADMIN_BASE}/local-agents`}      title="로컬 에이전트" />,
   admin_filemap:    () => <IframePanel src={`${ADMIN_BASE}/file-map`}          title="파일맵" />,
   admin_cad:        () => <IframePanel src={`${ADMIN_BASE}/cad`}               title="CAD" />,
+  local_agent:      LocalAgentPanel,
   remote_access:    RemoteAccessPanel,
   browser:          BrowserPanel,
   screenshot:       ScreenshotPanel,
