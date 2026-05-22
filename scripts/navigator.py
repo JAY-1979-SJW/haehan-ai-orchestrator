@@ -474,8 +474,21 @@ def type_into(target: str, text: str, clear: bool = True) -> bool:
     try:
         handle.evaluate("e => e.scrollIntoView({block:'center'})")
         if tag in ("input", "textarea"):
-            handle.evaluate("e => { e.focus(); e.value = ''; e.dispatchEvent(new Event('input', {bubbles:true})); }")
-            frame.page.keyboard.type(text, delay=20)
+            # Vue.js/React 반응형 폼 대응: nativeInputValueSetter로 value 설정 후 input/change 이벤트 발행
+            handle.evaluate("""(e, val) => {
+                e.focus();
+                const nativeSetter = Object.getOwnPropertyDescriptor(
+                    Object.getPrototypeOf(e), 'value'
+                );
+                if (nativeSetter && nativeSetter.set) {
+                    nativeSetter.set.call(e, val);
+                } else {
+                    e.value = val;
+                }
+                e.dispatchEvent(new Event('input',  {bubbles: true}));
+                e.dispatchEvent(new Event('change', {bubbles: true}));
+            }""", text)
+            time.sleep(0.15)
         else:
             # contenteditable / Smart Editor paragraph: 클립보드 paste 1순위
             # 1. 마우스 클릭으로 에디터 활성화 (실제 좌표 클릭)
