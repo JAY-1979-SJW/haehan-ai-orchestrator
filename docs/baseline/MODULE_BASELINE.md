@@ -97,6 +97,12 @@ docs/baseline/modules/BACKEND_CORE_BASELINE.md
 
 ### common_tool_runtime
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md
+```
+
 - Responsibility: shared task/result contract, tool risk classification,
   approval requirement checks, safe execution metadata, and forbidden field
   rejection.
