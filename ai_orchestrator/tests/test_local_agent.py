@@ -215,17 +215,20 @@ def test_browser_readonly_instruction_can_request_visible_browser(admin_user):
             "url": "https://example.com",
             "visible_browser": True,
             "keep_open_ms": 5000,
+            "browser_channel": "chrome",
         },
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["visible_browser"] is True
     assert data["keep_open_ms"] == 5000
+    assert data["browser_channel"] == "chrome"
 
     import ai_orchestrator.local_agent_registry as _reg
     task = _reg.get_task(agent_id, data["task_id"])
     assert task.params["headless"] is False
     assert task.params["keep_open_ms"] == 5000
+    assert task.params["browser_channel"] == "chrome"
 
 
 def test_viewer_cannot_submit_browser_readonly_instruction(viewer_user, admin_user):

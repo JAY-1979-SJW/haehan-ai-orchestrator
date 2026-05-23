@@ -174,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument("--visible", action="store_true")
     parser.add_argument("--keep-open-ms", type=int, default=0)
+    parser.add_argument("--browser-channel", default="chromium", choices=("chromium", "chrome", "msedge"))
     args = parser.parse_args(argv)
 
     server = args.server.rstrip("/")
@@ -258,6 +259,7 @@ def main(argv: list[str] | None = None) -> int:
                 "max_html_chars": 100000,
                 "visible_browser": bool(args.visible),
                 "keep_open_ms": max(0, min(int(args.keep_open_ms), 30000)),
+                "browser_channel": args.browser_channel,
             },
         )
         task_id = str(queued.get("task_id") or "")
@@ -304,7 +306,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"title_len={observe.get('title_len')} "
                 f"pages={observe.get('pages_observed_count')} "
                 f"headless={observe.get('browser_headless')} "
-                f"keep_open_ms={observe.get('browser_keep_open_ms')}"
+                f"keep_open_ms={observe.get('browser_keep_open_ms')} "
+                f"channel={observe.get('browser_channel')}"
             )
         else:
             print("[WARN] observe summary - not returned")

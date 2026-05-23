@@ -76,6 +76,7 @@ def open_url_readonly(
     allow_about_blank: bool = False,
     headless: bool | None = None,
     keep_open_ms: int = 0,
+    browser_channel: str = "",
     _playwright_factory: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """URL 을 read-only 로 열고 페이지 구조 요약 dict 를 반환.
@@ -97,6 +98,7 @@ def open_url_readonly(
     except (TypeError, ValueError):
         keep_open_ms = 0
     keep_open_ms = max(0, min(keep_open_ms, 30000))
+    browser_channel = _normalize_browser_channel(browser_channel)
 
     audit_base = {
         "action": "controlled_browser_open",
@@ -105,6 +107,7 @@ def open_url_readonly(
         "allow_private_network": bool(allow_private_network),
         "headless": bool(headless),
         "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel or "chromium",
         "dry_run": False,
     }
     # url 원문은 about:blank 인 경우에만 audit 에 포함
@@ -167,6 +170,7 @@ def open_url_readonly(
             timeout_ms=timeout_ms,
             headless=bool(headless),
             keep_open_ms=keep_open_ms,
+            browser_channel=browser_channel,
         )
     except BrowserDependencyMissing as e:
         _audit.log_local_event(
@@ -240,6 +244,7 @@ def open_url_readonly(
         "html_truncated": html_truncated,
         "headless": bool(headless),
         "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel or "chromium",
         "login_required_hint": login_hint,
         "login_reason": login_reason,
         "modal_candidates": modal_candidates,
@@ -281,6 +286,15 @@ def _err(*, url: str, error_code: str, reason: str) -> dict[str, Any]:
     }
 
 
+def _normalize_browser_channel(value: Any) -> str:
+    channel = str(value or "").strip().lower()
+    if channel in {"", "chromium"}:
+        return ""
+    if channel in {"chrome", "msedge"}:
+        return channel
+    return ""
+
+
 def _open_and_read(
     factory: Callable[[], Any],
     url: str,
@@ -289,6 +303,7 @@ def _open_and_read(
     timeout_ms: int,
     headless: bool,
     keep_open_ms: int,
+    browser_channel: str,
 ) -> tuple[str, str, str]:
     """브라우저를 띄워 title/current_url/html 만 수집 후 전원 종료.
 
@@ -296,7 +311,10 @@ def _open_and_read(
     마우스/키보드 조작 API 도 호출하지 않는다.
     """
     with factory() as pw:
-        browser = pw.chromium.launch(headless=headless)
+        launch_kwargs: dict[str, Any] = {"headless": headless}
+        if browser_channel:
+            launch_kwargs["channel"] = browser_channel
+        browser = pw.chromium.launch(**launch_kwargs)
         try:
             context = browser.new_context()
             try:

@@ -54,6 +54,7 @@ def _make_full_observe_summary(**overrides) -> dict:
         "html_truncated": False,
         "browser_headless": True,
         "browser_keep_open_ms": 0,
+        "browser_channel": "chromium",
         "page_structure_counts": {
             "headings": 1, "links": 0, "buttons": 0,
             "inputs": 0, "forms": 0, "tables": 0,
@@ -126,15 +127,18 @@ class TestObserveSummaryStore:
         assert safe["observe_summary"]["title"] == "haehan internal test readonly"
         assert safe["observe_summary"]["browser_headless"] is True
         assert safe["observe_summary"]["browser_keep_open_ms"] == 0
+        assert safe["observe_summary"]["browser_channel"] == "chromium"
 
     def test_observe_summary_preserves_visible_browser_monitor_fields(self):
         obs = _make_full_observe_summary(
             browser_headless=False,
             browser_keep_open_ms=15000,
+            browser_channel="chrome",
         )
         result = _reg._build_observe_summary(obs)
         assert result["browser_headless"] is False
         assert result["browser_keep_open_ms"] == 15000
+        assert result["browser_channel"] == "chrome"
 
     def test_observe_summary_not_stored_on_failure(self):
         task = _make_task()

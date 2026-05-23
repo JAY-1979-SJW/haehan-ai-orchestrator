@@ -580,6 +580,9 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     except (TypeError, ValueError):
         keep_open_ms = 0
     keep_open_ms = max(0, min(keep_open_ms, 30000))
+    browser_channel = str(params.get("browser_channel", "") or "").strip().lower()
+    if browser_channel not in {"", "chromium", "chrome", "msedge"}:
+        browser_channel = ""
 
     try:
         result = browser_reader.open_url_readonly(
@@ -591,6 +594,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             allow_private_network=allow_private_network,
             headless=headless,
             keep_open_ms=keep_open_ms,
+            browser_channel=browser_channel,
         )
     except Exception as e:
         logger.exception("web_open_url_readonly 실행 실패")
@@ -623,6 +627,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         "html_truncated": bool(result.get("html_truncated", False)),
         "browser_headless": bool(result.get("headless", True)),
         "browser_keep_open_ms": int(result.get("keep_open_ms", 0) or 0),
+        "browser_channel": str(result.get("browser_channel") or "chromium")[:40],
         "login_required_hint": bool(result.get("login_required_hint", False)),
         "login_reason": list(result.get("login_reason") or []),
         "modal_candidates": _modal_list,
@@ -645,6 +650,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             "html_truncated": bool(result.get("html_truncated", False)),
             "browser_headless": bool(result.get("headless", True)),
             "browser_keep_open_ms": int(result.get("keep_open_ms", 0) or 0),
+            "browser_channel": str(result.get("browser_channel") or "chromium")[:40],
             "page_structure_counts": {
                 k: max(0, int(_counts.get(k) or 0))
                 for k in ("headings", "links", "buttons", "inputs", "forms", "tables")
