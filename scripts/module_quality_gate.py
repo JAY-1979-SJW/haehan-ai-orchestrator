@@ -76,6 +76,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("required_local_gate_wiring", check="required_local_gate_wiring"),
             GateStep("module_boundary_contract", check="module_boundary_contract"),
+            GateStep("root_legacy_script_contract", check="root_legacy_script_contract"),
         ),
     ),
     GateModule(
@@ -659,6 +660,8 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
         "tests/test_required_quality_gate.py",
+        "tests/test_root_legacy_scripts_audit.py",
+        "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/module_quality_gate.py --module repo_guard",
     )
     missing_needles = [needle for needle in required_needles if needle not in required_rendered]
@@ -690,6 +693,16 @@ def check_module_boundary_contract() -> tuple[bool, str]:
     return True, "module boundary map and audit pass"
 
 
+def check_root_legacy_script_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_root_legacy_scripts.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "root legacy script inventory is classified and locked"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
@@ -697,6 +710,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,
+    "root_legacy_script_contract": check_root_legacy_script_contract,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,

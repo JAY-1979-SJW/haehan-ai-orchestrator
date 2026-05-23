@@ -45,6 +45,7 @@ def test_repo_guard_includes_desktop_security_boundary():
     assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
     assert any(step.check == "required_local_gate_wiring" for step in repo_guard.steps)
     assert any(step.check == "module_boundary_contract" for step in repo_guard.steps)
+    assert any(step.check == "root_legacy_script_contract" for step in repo_guard.steps)
 
 
 def test_release_preflight_includes_admin_web_and_secret_scan():
@@ -164,6 +165,16 @@ def test_module_boundary_contract_passes_current_sources():
 
 def test_module_boundary_contract_registered_in_checks():
     assert "module_boundary_contract" in gate.CHECKS
+
+
+def test_root_legacy_script_contract_passes_current_sources():
+    ok, message = gate.check_root_legacy_script_contract()
+
+    assert ok, message
+
+
+def test_root_legacy_script_contract_registered_in_checks():
+    assert "root_legacy_script_contract" in gate.CHECKS
 
 
 def test_admin_web_audit_counts_vulnerability_entries_before_metadata():
