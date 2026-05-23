@@ -43,6 +43,7 @@ def test_repo_guard_includes_desktop_security_boundary():
 
     assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
     assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
+    assert any(step.check == "common_tool_runtime_contract" for step in repo_guard.steps)
     assert any(step.check == "required_local_gate_wiring" for step in repo_guard.steps)
     assert any(step.check == "module_boundary_contract" for step in repo_guard.steps)
     assert any(step.check == "root_legacy_script_contract" for step in repo_guard.steps)
@@ -145,6 +146,16 @@ def test_local_agent_browser_runtime_rules_pass_current_sources():
 
 def test_local_agent_browser_runtime_rules_registered_in_checks():
     assert "local_agent_browser_runtime_rules" in gate.CHECKS
+
+
+def test_common_tool_runtime_contract_passes_current_sources():
+    ok, message = gate.check_common_tool_runtime_contract()
+
+    assert ok, message
+
+
+def test_common_tool_runtime_contract_registered_in_checks():
+    assert "common_tool_runtime_contract" in gate.CHECKS
 
 
 def test_required_local_gate_wiring_passes_current_sources():
