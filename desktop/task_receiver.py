@@ -22,7 +22,9 @@
 """
 from __future__ import annotations
 
+import base64
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
@@ -77,6 +79,18 @@ _SAFETY_NOTICE_BY_LOC: dict[str, str] = {
     EXEC_LOC_SERVER_INTERNAL:
         "서버에서 자동 처리 중인 작업입니다.",
 }
+
+
+def _server_ops_auth_headers() -> dict[str, str]:
+    """Return auth headers for ops polling, or empty dict when unavailable."""
+    user = os.environ.get("HAEHAN_DESKTOP_OPS_BASIC_USER", "").strip()
+    password = os.environ.get("HAEHAN_DESKTOP_OPS_BASIC_PASSWORD", "")
+    if not user or not password:
+        return {}
+
+    raw = f"{user}:{password}".encode("utf-8")
+    encoded = base64.b64encode(raw).decode("ascii")
+    return {"Authorization": f"Basic {encoded}"}
 
 
 @dataclass
@@ -293,12 +307,17 @@ def poll_pending_tasks(source: str = "local") -> TaskQueueStatus:
             logger.warning("local task queue 조회 실패: %s", e)
 
     elif source == "server":
+        headers = _server_ops_auth_headers()
+        if not headers:
+            logger.debug("server ops/approvals skipped: auth credentials not configured")
+            return TaskQueueStatus()
+
         try:
             import urllib.request
             import json as _json
             req = urllib.request.Request(
                 "http://localhost:8000/api/v1/ops/approvals",
-                headers={"Authorization": "Bearer admin-token"},
+                headers=headers,
             )
             with urllib.request.urlopen(req, timeout=3) as resp:
                 data = _json.loads(resp.read().decode())
