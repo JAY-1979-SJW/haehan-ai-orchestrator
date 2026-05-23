@@ -23,6 +23,7 @@ async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
     from local_agent import desktop_config
     from local_agent import token_store
     from local_agent.connection_diagnostics import normalize_ws_url
+    from local_agent.network_bypass import websocket_connect_kwargs
 
     try:
         import websockets  # type: ignore
@@ -46,6 +47,7 @@ async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
             ping_interval=None,
             close_timeout=3,
             open_timeout=timeout,
+            **websocket_connect_kwargs(effective_server),
         ) as ws:
             await ws.send(json.dumps({
                 "type": "auth",

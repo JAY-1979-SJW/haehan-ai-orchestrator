@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from local_agent.network_bypass import direct_child_env
+
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -43,6 +45,7 @@ class GateCheck:
     command: tuple[str, ...]
     timeout: int
     classifier: Callable[[str, int], tuple[str, str]]
+    direct: Callable[[], tuple[str, str]] | None = None
 
 
 @dataclass(frozen=True)
@@ -151,12 +154,36 @@ def classify_pytest_requires_pass(output: str, returncode: int) -> tuple[str, st
     return "FAIL", "no passed tests observed"
 
 
+def run_playwright_bootstrap_direct() -> tuple[str, str]:
+    from ai_orchestrator.local_agent.playwright_bootstrap import PLAYWRIGHT_READY, check_playwright_status
+
+    status = check_playwright_status()
+    if status.get("status") == PLAYWRIGHT_READY and status.get("browser_available") is True:
+        return "PASS", f"version={status.get('package_version')} browser_available=True"
+    return "FAIL", f"{status.get('status')}: {status.get('message_ko')}"
+
+
+def run_playwright_smoke_direct() -> tuple[str, str]:
+    from ai_orchestrator.local_agent.playwright_runner import run_task
+    from ai_orchestrator.local_agent.task_protocol import STATUS_COMPLETED, build_task
+
+    cases = (
+        build_task("open_url", "about:blank", domain="release-runtime-smoke"),
+        build_task("read_page", "data:text/html,<h1>release-smoke</h1>", domain="release-runtime-smoke"),
+    )
+    for task in cases:
+        result = run_task(task)
+        if result.get("ok") is not True or result.get("status") != STATUS_COMPLETED:
+            return "FAIL", str(result.get("message_ko") or result.get("status") or "playwright smoke failed")
+    return "PASS", f"safe local browser smoke passed={len(cases)}"
+
+
 def make_checks(server_url: str) -> tuple[GateCheck, ...]:
     py = sys.executable
     return (
         GateCheck(
             "local_runtime_live",
-            (py, "verify_local_runtime_dry_run.py", "--live-server"),
+            (py, "verify_local_runtime_dry_run.py", "--live-server", "--skip-playwright"),
             120,
             classify_local_runtime_live,
         ),
@@ -180,15 +207,17 @@ def make_checks(server_url: str) -> tuple[GateCheck, ...]:
         ),
         GateCheck(
             "playwright_bootstrap",
-            (py, "-m", "pytest", "tests/test_local_playwright_bootstrap_20260508.py", "-q"),
+            (),
             120,
             classify_pytest_requires_pass,
+            direct=run_playwright_bootstrap_direct,
         ),
         GateCheck(
             "playwright_smoke",
-            (py, "-m", "pytest", "tests/test_local_playwright_smoke_20260508.py", "-q"),
+            (),
             180,
             classify_pytest_requires_pass,
+            direct=run_playwright_smoke_direct,
         ),
         GateCheck(
             "ai_proxy_contract",
@@ -206,6 +235,22 @@ def make_checks(server_url: str) -> tuple[GateCheck, ...]:
 
 
 def run_check(check: GateCheck, *, retries: int, retry_delay: float) -> CheckOutcome:
+    if check.direct is not None:
+        attempts = max(1, retries + 1)
+        last_status = "FAIL"
+        last_detail = "not run"
+        for attempt in range(1, attempts + 1):
+            print(f"[RUN] {check.name} attempt={attempt}/{attempts} - direct")
+            status, detail = check.direct()
+            last_status, last_detail = status, detail
+            print(f"[{status}] {check.name} - {detail}")
+            if status in {"PASS", "WARN"}:
+                return CheckOutcome(check.name, status, detail, attempt)
+            if attempt < attempts:
+                print(f"[WARN] {check.name} - failure observed; retrying after {retry_delay:g}s")
+                time.sleep(retry_delay)
+        return CheckOutcome(check.name, last_status, last_detail, attempts)
+
     if command_is_forbidden(check.command):
         return CheckOutcome(check.name, "FAIL", "forbidden command blocked", 0)
 
@@ -213,7 +258,7 @@ def run_check(check: GateCheck, *, retries: int, retry_delay: float) -> CheckOut
     last_status = "FAIL"
     last_detail = "not run"
     last_output = ""
-    env = os.environ.copy()
+    env = direct_child_env()
     env.setdefault("PYTHONIOENCODING", "utf-8")
     for attempt in range(1, attempts + 1):
         print(f"[RUN] {check.name} attempt={attempt}/{attempts} - {command_text(check.command)}")
@@ -255,7 +300,10 @@ def run_check(check: GateCheck, *, retries: int, retry_delay: float) -> CheckOut
 def print_plan(checks: tuple[GateCheck, ...]) -> None:
     print("Pre-deploy runtime gate plan")
     for check in checks:
-        print(f"- {check.name}: {command_text(check.command)}")
+        if check.direct is not None:
+            print(f"- {check.name}: direct")
+        else:
+            print(f"- {check.name}: {command_text(check.command)}")
 
 
 def main(argv: list[str] | None = None) -> int:

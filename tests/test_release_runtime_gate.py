@@ -12,6 +12,15 @@ def test_command_matrix_blocks_build_deploy_push_commands():
     assert gate.command_is_forbidden(("npm", "run", "build"))
 
 
+def test_playwright_checks_run_directly_to_avoid_nested_asyncio_subprocess():
+    checks = {check.name: check for check in gate.make_checks(gate.DEFAULT_SERVER_URL)}
+
+    assert checks["playwright_bootstrap"].direct is not None
+    assert checks["playwright_smoke"].direct is not None
+    assert checks["playwright_bootstrap"].command == ()
+    assert checks["local_runtime_live"].command[-1] == "--skip-playwright"
+
+
 def test_local_runtime_allows_only_packaging_warns():
     output = "\n".join([
         "[PASS] server http health - status=200",
@@ -35,6 +44,18 @@ def test_local_runtime_blocks_server_warns():
 
     assert status == "FAIL"
     assert "server http health" in detail
+
+
+def test_local_runtime_blocks_asyncio_subprocess_warns():
+    output = "\n".join([
+        "[WARN] python asyncio subprocess - PERMISSION_DENIED",
+        "RESULT=WARN_LOCAL_RUNTIME_DRY_RUN",
+    ])
+
+    status, detail = gate.classify_local_runtime_live(output, 0)
+
+    assert status == "FAIL"
+    assert "python asyncio subprocess" in detail
 
 
 def test_live_agent_smoke_allows_task_dispatch_skip_only():

@@ -15,6 +15,8 @@ from typing import Optional
 from urllib import error as _urlerr
 from urllib import request as _urlreq
 
+from . import network_bypass as _network_bypass
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,9 +77,13 @@ def register_with_code(
     req = _urlreq.Request(url, data=body, method="POST",
                           headers={"Content-Type": "application/json"})
 
-    open_fn = _opener if _opener is not None else _urlreq.urlopen
+    open_fn = _opener if _opener is not None else _network_bypass.urlopen_for_server
     try:
-        with open_fn(req, timeout=timeout) as resp:
+        if _opener is None:
+            response_ctx = open_fn(server_url, req, timeout=timeout)
+        else:
+            response_ctx = open_fn(req, timeout=timeout)
+        with response_ctx as resp:
             raw = resp.read().decode("utf-8")
     except _urlerr.HTTPError as e:
         # 응답 body는 원칙적으로 출력하지 않는다. status만 generic 메시지에 포함.

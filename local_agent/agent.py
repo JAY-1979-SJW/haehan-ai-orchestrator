@@ -27,6 +27,7 @@ from . import __version__, config
 from .actions import execute_action
 from .audit import log_local_event
 from . import desktop_config as _desk_cfg
+from . import network_bypass as _network_bypass
 from . import token_store as _token_store
 from .registration_client import (
     RegistrationError,
@@ -46,7 +47,7 @@ def _http_post(url: str, body: dict, basic_auth: Optional[tuple[str, str]] = Non
         u, p = basic_auth
         creds = base64.b64encode(f"{u}:{p}".encode()).decode()
         req.add_header("Authorization", f"Basic {creds}")
-    with _urlreq.urlopen(req, timeout=10) as resp:
+    with _network_bypass.urlopen_for_server(url, req, timeout=10) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -57,7 +58,7 @@ def _http_get(url: str, basic_auth: Optional[tuple[str, str]] = None) -> dict:
         u, p = basic_auth
         creds = base64.b64encode(f"{u}:{p}".encode()).decode()
         req.add_header("Authorization", f"Basic {creds}")
-    with _urlreq.urlopen(req, timeout=10) as resp:
+    with _network_bypass.urlopen_for_server(url, req, timeout=10) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -284,6 +285,8 @@ def run_websocket(*, server_url: Optional[str] = None,
               file=sys.stderr)
         return 2
     try:
+        os.environ["NO_PROXY"] = _network_bypass.extend_no_proxy()
+        os.environ["no_proxy"] = _network_bypass.extend_no_proxy()
         websocket_client.connect(agent_id, device_token)
     except websocket_client.WebSocketDisabled as e:
         print(str(e), file=sys.stderr)

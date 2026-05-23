@@ -27,6 +27,7 @@ from urllib.parse import urlparse, urlunparse
 from . import __version__, config
 from .actions import execute_action, FORBIDDEN_ACTIONS
 from .audit import log_local_event
+from .network_bypass import websocket_connect_kwargs
 
 
 class WebSocketDisabled(RuntimeError):
@@ -275,7 +276,12 @@ async def _run_session(agent_id: str, device_token: str) -> None:
     url = _server_ws_url()
     logger.info("WebSocket 연결 시도 | url=%s | agent_id=%s", url, agent_id)
 
-    async with websockets.connect(url, ping_interval=20, ping_timeout=20) as ws:
+    async with websockets.connect(
+        url,
+        ping_interval=20,
+        ping_timeout=20,
+        **websocket_connect_kwargs(config.SERVER_BASE_URL),
+    ) as ws:
         # 1) 인증
         await ws.send(json.dumps({
             "type": "auth",

@@ -7,6 +7,8 @@ import socket
 import urllib.error
 import urllib.request
 
+from local_agent.network_bypass import urlopen_for_server, websocket_connect_kwargs
+
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
@@ -67,7 +69,7 @@ def check_server_health(report: Report, server_url: str) -> None:
 
     try:
         req = urllib.request.Request(server_url.rstrip("/") + "/api/v1/health", method="GET")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urlopen_for_server(server_url, req, timeout=10) as resp:
             if resp.status == 200:
                 report.pass_("server health", "status=200")
             else:
@@ -93,7 +95,7 @@ def check_agent_ai_health(report: Report, server_url: str, agent_id: str, token:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urlopen_for_server(server_url, req, timeout=10) as resp:
             raw = resp.read().decode("utf-8")
             if resp.status != 200:
                 report.fail("agent-ai health", f"status={resp.status}")
@@ -138,6 +140,7 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
             ping_interval=None,
             close_timeout=3,
             open_timeout=timeout,
+            **websocket_connect_kwargs(server_url),
         ) as ws:
             await ws.send(json.dumps({
                 "type": "auth",
