@@ -254,9 +254,21 @@ def check_desktop_security_boundary() -> tuple[bool, str]:
         for hit in _source_contains(path, hardcoded_auth_forbidden):
             violations.append(f"{path} contains {hit!r}")
 
+    allowed_cad_boundary_imports = {
+        "desktop/cad_api_approval.py",
+        "desktop/cad_bridge_allowlist.py",
+    }
+    for path in (ROOT / "desktop").glob("*.py"):
+        rel = normalize_path(str(path.relative_to(ROOT)))
+        if rel in allowed_cad_boundary_imports:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "from local_agent.cad" in text or "import local_agent.cad" in text:
+            violations.append(f"{rel} imports local_agent.cad outside boundary")
+
     if violations:
         return False, "; ".join(violations)
-    return True, "desktop auth/cross-app shortcuts are blocked"
+    return True, "desktop auth/cross-app shortcuts are blocked and boundary imports are isolated"
 
 
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {

@@ -3,6 +3,7 @@ import json
 
 from fastapi import Response
 
+from desktop import cad_api_approval
 from desktop import cad_bridge_proxy
 from desktop import local_agent_service as svc
 from local_agent.cad.command_approval import CadCommandApprovalStore
@@ -73,7 +74,7 @@ def test_approved_cad_bridge_api_uses_proxy(monkeypatch):
         )
 
     monkeypatch.setattr(cad_bridge_proxy, "proxy_cad_bridge_request", _fake_proxy)
-    monkeypatch.setattr(svc, "_get_cad_api_approval_store", lambda: store)
+    monkeypatch.setattr(cad_api_approval, "get_default_cad_api_approval_store", lambda: store)
 
     result = asyncio.run(
         svc.run_local_agent({
@@ -108,7 +109,7 @@ def test_cad_bridge_api_rejects_scope_mismatch(monkeypatch):
         raise AssertionError("CAD bridge proxy must not run on scope mismatch")
 
     monkeypatch.setattr(cad_bridge_proxy, "proxy_cad_bridge_request", _should_not_proxy)
-    monkeypatch.setattr(svc, "_get_cad_api_approval_store", lambda: store)
+    monkeypatch.setattr(cad_api_approval, "get_default_cad_api_approval_store", lambda: store)
 
     result = asyncio.run(
         svc.run_local_agent({

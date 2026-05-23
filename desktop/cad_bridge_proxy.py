@@ -24,6 +24,7 @@ from typing import Mapping, Optional, Tuple
 import httpx
 from fastapi import Response
 
+from .cad_bridge_allowlist import GET_ALLOW, POST_ALLOW
 from .cad_bridge_registry import DEFAULT_CAD_BRIDGE_HOST, DEFAULT_CAD_BRIDGE_PORT
 
 logger = logging.getLogger(__name__)
@@ -46,55 +47,6 @@ MUTATING_KEYWORDS: Tuple[str, ...] = (
 
 DEFAULT_PROXY_TIMEOUT_SECONDS = 5.0
 
-
-# ──────────────────────────────────────────────
-# Allow-list — command_contract registry 우선, static fallback
-# ──────────────────────────────────────────────
-
-# Static fallback (registry import 실패 시 사용)
-_STATIC_POST_ALLOW: frozenset = frozenset({
-    "acad/arch-quantity-tab/build-cards",
-    "acad/inventory/analyze-drawing-inventory",
-    "acad/schedule-tables/detect",
-    "acad/construction-sequence/plan",
-})
-
-# Read-only / introspection endpoint 만 GET 허용
-GET_ALLOW: frozenset = frozenset({
-    "acad/health",
-    "acad/openapi.json",
-})
-
-
-def _derive_post_allow_from_registry() -> frozenset:
-    """command_contract.DEFAULT_REGISTRY 의 CANDIDATE_PAYLOAD endpointPath 수집.
-
-    import 실패 또는 endpointPath 부재 시 _STATIC_POST_ALLOW 로 fallback.
-    """
-    try:
-        from local_agent.cad.command_contract import (  # noqa: WPS433
-            DEFAULT_REGISTRY,
-            RiskLevel,
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.debug("registry import failed, using static allow: %s", exc)
-        return _STATIC_POST_ALLOW
-    paths: set = set()
-    try:
-        for tool_id in DEFAULT_REGISTRY.list_by_risk(RiskLevel.CANDIDATE_PAYLOAD):
-            entry = DEFAULT_REGISTRY.get(tool_id)
-            if entry.endpointPath:
-                paths.add(entry.endpointPath.lstrip("/"))
-    except Exception as exc:  # noqa: BLE001
-        logger.debug("registry walk failed, using static allow: %s", exc)
-        return _STATIC_POST_ALLOW
-    if not paths:
-        return _STATIC_POST_ALLOW
-    # 정합성: registry 결과는 항상 static 의 superset 이어야 함 — 단순 union 채택
-    return frozenset(paths | _STATIC_POST_ALLOW)
-
-
-POST_ALLOW: frozenset = _derive_post_allow_from_registry()
 
 
 # ──────────────────────────────────────────────
