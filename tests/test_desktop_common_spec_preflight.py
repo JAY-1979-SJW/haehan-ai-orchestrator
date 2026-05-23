@@ -84,7 +84,11 @@ def mock_provider(svc, monkeypatch):
 @pytest.fixture()
 def cad_cdp_down(svc, monkeypatch, mock_provider):
     """CAD/CDP down + provider 정상 환경."""
-    monkeypatch.setattr(svc, "_find_mcp_server", lambda: None)
+    monkeypatch.setattr(
+        svc,
+        "_cad_bridge_status_summary",
+        lambda: {"available": False, "mode": "approved_api_bridge", "status": "STOPPED"},
+    )
     monkeypatch.setattr(svc, "_check_cdp_available", lambda: False)
     yield
 
@@ -198,7 +202,7 @@ class TestPreflightOptionalNotBlocking:
         assert data["optional_status"]["cdp"]["available"] is False
         assert data["can_run"] is True
         warnings = data.get("warnings", [])
-        assert "CAD_MCP_SERVER_NOT_FOUND" in warnings
+        assert "CAD_API_BRIDGE_NOT_READY" in warnings
         assert "CDP_BROWSER_NOT_RUNNING" in warnings
 
 
@@ -364,7 +368,6 @@ class TestSecretScanAndNoExternalCall:
             raise AssertionError("외부 claude CLI 호출됨")
 
         monkeypatch.setattr(svc, "_run_with_anthropic_no_mcp", _should_not_call)
-        monkeypatch.setattr(svc, "_run_with_anthropic", _should_not_call)
         monkeypatch.setattr(svc, "_run_with_claude_code_cli", _should_not_call_cli)
 
         data = asyncio.run(svc.run_local_agent({"prompt": "test"}))

@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from desktop import cad_bridge_proxy as proxy_mod
+from desktop import local_server as local_server_mod
 from desktop.local_server import app
 
 PROXY_FILE = ROOT / "desktop" / "cad_bridge_proxy.py"
@@ -79,7 +80,9 @@ def fake_httpx(monkeypatch):
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    monkeypatch.setattr(local_server_mod, "_remote_enabled", lambda: True)
+    monkeypatch.setattr(local_server_mod, "_verify_token", lambda _token: True)
     return TestClient(app)
 
 

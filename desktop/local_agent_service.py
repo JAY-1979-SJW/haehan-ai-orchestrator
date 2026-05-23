@@ -1,15 +1,14 @@
-"""로컬 AI Agent 서비스 — MCP stdio + Anthropic SDK 직접 호출.
+"""Local AI agent service.
 
-실행 흐름:
-  1. CAD_REPO_PATH 환경변수로 mcp_server/server.py 위치 탐색
-  2. MCP stdio 클라이언트로 서버 연결 → 도구 목록 획득
-  3. Anthropic SDK로 Claude 호출 (tool_use 루프)
-  4. ANTHROPIC_API_KEY 없으면 Claude Code CLI 폴백
+Execution flow:
+  1. Run Anthropic SDK without direct cross-app MCP by default.
+  2. Fall back to Claude Code CLI when no SDK provider is available.
+  3. Forward cross-app CAD work only through approved CAD bridge API requests.
 
-보안:
-  - subprocess env에서 *_API_KEY 제거 (_safe_subprocess_env)
-  - API key 원문 로그 출력 금지 (sk- 패턴 마스킹)
-  - shell=True 금지
+Security:
+  - Strip *_API_KEY and *_SECRET from subprocess env where possible.
+  - Mask raw sk-* keys in logs.
+  - Keep shell=True disabled.
 """
 from __future__ import annotations
 
@@ -19,7 +18,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # ── 상수 ─────────────────────────────────────────────────────────────────────
 _AGENT_TIMEOUT_SEC = 120
-_MAX_TOOL_ROUNDS = 10
+_CROSS_APP_APPROVAL_ERROR = "CROSS_APP_API_APPROVAL_REQUIRED"
 
 
 # ── 보안 유틸 ─────────────────────────────────────────────────────────────────
@@ -47,29 +45,133 @@ def _mask_api_key(text: str) -> str:
 
 
 # ── MCP 서버 경로 탐색 ────────────────────────────────────────────────────────
-
 def _find_mcp_server() -> Path | None:
-    """CAD_REPO_PATH 환경변수 또는 상대경로로 mcp_server/server.py 탐색."""
-    candidates: list[Path] = []
+    """CAD MCP direct discovery is disabled.
 
-    # 1. 환경변수 명시
-    cad_root = os.environ.get("CAD_REPO_PATH", "")
-    if cad_root:
-        candidates.append(Path(cad_root) / "mcp_server" / "server.py")
-
-    # 2. orchestrator 프로젝트에서 나란히 있는 CAD 프로젝트 (개발 환경)
-    this_dir = Path(__file__).resolve().parent.parent  # orchestrator 루트
-    candidates.append(
-        this_dir.parent / "14. CAD 산출 프로그램_WORK" / "mcp_server" / "server.py"
-    )
-
-    for p in candidates:
-        if p.exists():
-            logger.info("MCP server 경로 확인: %s", p)
-            return p
-
-    logger.warning("mcp_server/server.py 를 찾지 못했습니다. 후보: %s", candidates)
+    Cross-app CAD access must go through the approved CAD bridge HTTP API.
+    Do not auto-discover sibling repositories or legacy CAD path env here.
+    """
     return None
+
+
+def _cad_bridge_status_summary() -> dict[str, Any]:
+    """Return CAD bridge API status without exposing local repository paths."""
+    try:
+        from .cad_bridge_registry import check_status, load_default_config
+
+        status = check_status(load_default_config())
+        return {
+            "available": status.status == "RUNNING",
+            "mode": "approved_api_bridge",
+            "status": status.status,
+            "host": status.host,
+            "port": status.port,
+        }
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("cad bridge status unavailable: %s", type(exc).__name__)
+        return {
+            "available": False,
+            "mode": "approved_api_bridge",
+            "status": "UNKNOWN",
+        }
+
+
+def _api_bridge_requested(req: dict) -> bool:
+    action = str(req.get("api_action") or req.get("action") or "").strip()
+    return bool(req.get("api_path") or action == "cad_bridge_api")
+
+
+def _cad_api_command_id(method: str, path: str) -> str:
+    return f"{method.upper()}:{path.strip()}"
+
+
+def _get_cad_api_approval_store() -> Any:
+    from local_agent.cad.command_approval import DEFAULT_APPROVAL_STORE
+
+    return DEFAULT_APPROVAL_STORE
+
+
+def _consume_cad_api_approval(req: dict, method: str, path: str) -> tuple[bool, str]:
+    approval_id = str(req.get("approval_id") or req.get("_approval_id") or "").strip()
+    approval_token = str(req.get("approval_token") or req.get("_approval_token") or "").strip()
+    if not approval_id:
+        return False, "CAD_API_APPROVAL_ID_MISSING"
+    if not approval_token:
+        return False, "CAD_API_APPROVAL_TOKEN_MISSING"
+
+    try:
+        store = _get_cad_api_approval_store()
+        record = store.get_record(approval_id)
+        expected_command = _cad_api_command_id(method, path)
+        if record.commandId != expected_command or record.toolId != "cad_bridge_api":
+            return False, "CAD_API_APPROVAL_SCOPE_MISMATCH"
+        if not store.consume(approval_id, approval_token):
+            return False, "CAD_API_APPROVAL_INVALID"
+        return True, ""
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("cad api approval verification failed: %s", type(exc).__name__)
+        return False, "CAD_API_APPROVAL_INVALID"
+
+
+async def _run_approved_api_bridge(req: dict, model: str) -> dict:
+    """Forward an approved cross-app request through the CAD bridge API proxy."""
+    path = str(req.get("api_path") or "").strip()
+    method = str(req.get("api_method") or "POST").strip().upper()
+    payload = req.get("api_payload", {})
+    if not path:
+        return _provider_error_response(
+            error_code="CAD_API_PATH_EMPTY",
+            user_message="Approved API path is empty.",
+            next_actions=["Use an allowlisted CAD bridge API path."],
+            provider="approved_api_bridge",
+            model=model,
+            can_retry=True,
+        )
+
+    if method not in {"GET", "POST"}:
+        return _provider_error_response(
+            error_code="CAD_API_METHOD_BLOCKED",
+            user_message="CAD bridge API method is not allowed.",
+            next_actions=["Use only GET or POST allowlisted paths."],
+            provider="approved_api_bridge",
+            model=model,
+            can_retry=False,
+        )
+
+    approved, approval_error = _consume_cad_api_approval(req, method, path)
+    if not approved:
+        return _provider_error_response(
+            error_code=approval_error or _CROSS_APP_APPROVAL_ERROR,
+            user_message="Cross-app calls require a valid one-time approval token.",
+            next_actions=["Create and approve a scoped CAD API request before retrying."],
+            provider="approved_api_bridge",
+            model=model,
+            can_retry=True,
+        )
+
+    from . import cad_bridge_proxy
+
+    body = None
+    headers = {"content-type": "application/json", "accept": "application/json"}
+    if method == "POST":
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+    resp = await cad_bridge_proxy.proxy_cad_bridge_request(
+        method,
+        path,
+        body=body,
+        headers=headers,
+    )
+    result = resp.body.decode("utf-8", errors="replace")
+    return {
+        "ok": 200 <= resp.status_code < 300,
+        "result": result,
+        "provider": "approved_api_bridge",
+        "model": model,
+        "tool_calls": 0,
+        "api_status": resp.status_code,
+        "approval_id": str(req.get("approval_id") or req.get("_approval_id") or ""),
+    }
 
 
 # ── Anthropic SDK 가용 여부 ───────────────────────────────────────────────────
@@ -81,157 +183,6 @@ def _anthropic_available() -> bool:
     except ImportError:
         return False
 
-
-# ── MCP stdio 클라이언트 (경량 구현) ─────────────────────────────────────────
-
-class _McpStdioClient:
-    """MCP stdio 전송 클라이언트 (최소 구현).
-
-    FastMCP/MCP SDK 없이도 동작하도록 JSON-RPC over stdin/stdout 을 직접 구현.
-    """
-
-    def __init__(self, server_path: Path) -> None:
-        self._server_path = server_path
-        self._proc: asyncio.subprocess.Process | None = None
-        self._req_id = 0
-        self._pending: dict[int, asyncio.Future] = {}
-        self._reader_task: asyncio.Task | None = None
-
-    async def start(self) -> None:
-        python = sys.executable
-        env = dict(os.environ)  # MCP 서버는 API 키가 필요할 수 있으므로 유지
-        self._proc = await asyncio.create_subprocess_exec(
-            python, str(self._server_path),
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=env,
-        )
-        self._reader_task = asyncio.create_task(self._read_loop())
-        # MCP initialize 핸드셰이크
-        await self._call("initialize", {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {"name": "local_agent_service", "version": "1.0"},
-        })
-        logger.info("MCP stdio 클라이언트 초기화 완료")
-
-    async def _read_loop(self) -> None:
-        assert self._proc and self._proc.stdout
-        try:
-            async for line in self._proc.stdout:
-                raw = line.decode("utf-8", errors="replace").strip()
-                if not raw:
-                    continue
-                try:
-                    msg = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
-                req_id = msg.get("id")
-                if req_id is not None and req_id in self._pending:
-                    fut = self._pending.pop(req_id)
-                    if not fut.done():
-                        if "error" in msg:
-                            fut.set_exception(RuntimeError(str(msg["error"])))
-                        else:
-                            fut.set_result(msg.get("result"))
-        except Exception as exc:
-            logger.debug("MCP read_loop 종료: %s", exc)
-
-    async def _call(self, method: str, params: dict) -> Any:
-        self._req_id += 1
-        rid = self._req_id
-        payload = json.dumps({"jsonrpc": "2.0", "id": rid, "method": method, "params": params})
-        assert self._proc and self._proc.stdin
-        self._proc.stdin.write((payload + "\n").encode("utf-8"))
-        await self._proc.stdin.drain()
-        fut: asyncio.Future = asyncio.get_event_loop().create_future()
-        self._pending[rid] = fut
-        return await asyncio.wait_for(fut, timeout=30)
-
-    async def list_tools(self) -> list[dict]:
-        result = await self._call("tools/list", {})
-        return result.get("tools", []) if result else []
-
-    async def call_tool(self, name: str, arguments: dict) -> Any:
-        result = await self._call("tools/call", {"name": name, "arguments": arguments})
-        return result
-
-    async def close(self) -> None:
-        if self._reader_task:
-            self._reader_task.cancel()
-        if self._proc:
-            try:
-                self._proc.stdin.close()  # type: ignore[union-attr]
-                await self._proc.wait()
-            except Exception:
-                pass
-
-
-# ── Anthropic SDK 기반 agent ──────────────────────────────────────────────────
-
-async def _run_with_anthropic(prompt: str, mcp: _McpStdioClient, model: str) -> str:
-    """Anthropic SDK + MCP tool_use 루프."""
-    import anthropic
-
-    tools_raw = await mcp.list_tools()
-
-    # Anthropic 형식으로 변환
-    tools_for_claude: list[dict] = []
-    for t in tools_raw:
-        tools_for_claude.append({
-            "name": t["name"],
-            "description": t.get("description", ""),
-            "input_schema": t.get("inputSchema", {"type": "object", "properties": {}}),
-        })
-
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    messages: list[dict] = [{"role": "user", "content": prompt}]
-
-    for _round in range(_MAX_TOOL_ROUNDS):
-        kwargs: dict[str, Any] = dict(
-            model=model,
-            max_tokens=4096,
-            messages=messages,
-        )
-        if tools_for_claude:
-            kwargs["tools"] = tools_for_claude
-
-        response = await asyncio.to_thread(client.messages.create, **kwargs)
-        stop_reason = response.stop_reason
-
-        # 응답 메시지를 누적
-        messages.append({"role": "assistant", "content": response.content})
-
-        if stop_reason == "end_turn":
-            # 텍스트 블록 추출
-            texts = [b.text for b in response.content if hasattr(b, "text")]
-            return "\n".join(texts)
-
-        if stop_reason == "tool_use":
-            tool_results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
-                logger.info("도구 호출: %s(%s)", block.name, list(block.input.keys()))
-                try:
-                    result = await mcp.call_tool(block.name, block.input)
-                    content_str = json.dumps(result, ensure_ascii=False)
-                except Exception as exc:
-                    content_str = f"오류: {exc}"
-
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": content_str,
-                })
-
-            messages.append({"role": "user", "content": tool_results})
-        else:
-            # 예상치 못한 stop_reason
-            break
-
-    return "에이전트 최대 라운드 초과"
 
 
 # ── Claude Code CLI 폴백 ──────────────────────────────────────────────────────
@@ -307,7 +258,7 @@ async def run_local_agent(req: dict) -> dict:
         req: {
             "prompt": str,
             "model": str (optional, 기본 claude-sonnet-4-5),
-            "use_mcp": bool (optional, 기본 True),
+            "use_mcp": bool (optional, default False; direct MCP is blocked),
         }
 
     Returns (기존 키 보존 + P3 확장 키):
@@ -335,7 +286,19 @@ async def run_local_agent(req: dict) -> dict:
         )
 
     model: str = req.get("model", "claude-sonnet-4-5")
-    use_mcp: bool = req.get("use_mcp", True)
+    if _api_bridge_requested(req):
+        return await _run_approved_api_bridge(req, model)
+
+    use_mcp: bool = req.get("use_mcp", False)
+    if use_mcp:
+        return _provider_error_response(
+            error_code=_CROSS_APP_APPROVAL_ERROR,
+            user_message="Direct CAD MCP execution is disabled. Use an approved API bridge request.",
+            next_actions=["Route CAD work through the approval gate and CAD bridge API proxy."],
+            provider="approved_api_bridge",
+            model=model,
+            can_retry=True,
+        )
 
     # provider preflight — 실행 전 가용 여부 확인
     has_sdk_provider = _anthropic_available()
@@ -363,28 +326,17 @@ async def run_local_agent(req: dict) -> dict:
                 can_retry=True,
             )
 
-    mcp: _McpStdioClient | None = None
     provider = "anthropic_sdk"
 
     try:
-        if use_mcp:
-            mcp_path = _find_mcp_server()
-            if mcp_path:
-                mcp = _McpStdioClient(mcp_path)
-                try:
-                    await mcp.start()
-                except Exception as exc:
-                    logger.warning("MCP 시작 실패 (무시하고 진행): %s", exc)
-                    mcp = None
-
         if _anthropic_available():
             result = await asyncio.wait_for(
-                _run_with_anthropic(prompt, mcp, model) if mcp else _run_with_anthropic_no_mcp(prompt, model),
+                _run_with_anthropic_no_mcp(prompt, model),
                 timeout=_AGENT_TIMEOUT_SEC,
             )
             provider = "anthropic_sdk"
         else:
-            logger.info("ANTHROPIC_API_KEY 없음 — Claude Code CLI 폴백")
+            logger.info("ANTHROPIC_API_KEY missing; falling back to Claude Code CLI")
             result = await asyncio.wait_for(
                 _run_with_claude_code_cli(prompt),
                 timeout=_AGENT_TIMEOUT_SEC,
@@ -396,25 +348,23 @@ async def run_local_agent(req: dict) -> dict:
     except asyncio.TimeoutError:
         return _provider_error_response(
             error_code="EXECUTION_TIMEOUT",
-            user_message=f"AI 에이전트 실행이 {_AGENT_TIMEOUT_SEC}초를 초과했습니다.",
-            next_actions=["더 간단한 작업으로 재시도하세요."],
+            user_message=f"AI agent execution exceeded {_AGENT_TIMEOUT_SEC} seconds.",
+            next_actions=["Retry with a smaller task."],
             provider=provider,
             model=model,
             can_retry=True,
         )
     except Exception as exc:
-        logger.error("run_local_agent 오류: %s", _mask_api_key(type(exc).__name__))
+        logger.error("run_local_agent error: %s", _mask_api_key(type(exc).__name__))
         return _provider_error_response(
             error_code="EXECUTION_FAILED",
-            user_message="AI 에이전트 실행 중 오류가 발생했습니다.",
-            next_actions=["잠시 후 다시 시도하세요.", "로그를 확인하세요."],
+            user_message="AI agent execution failed.",
+            next_actions=["Retry later.", "Check the local logs."],
             provider="error",
             model=model,
             can_retry=True,
         )
-    finally:
-        if mcp:
-            await mcp.close()
+
 
 
 async def _run_with_anthropic_no_mcp(prompt: str, model: str) -> str:
@@ -507,19 +457,22 @@ def local_agent_preflight() -> dict:
     can_run = not bool(core_blocks & set(blocking_reasons))
 
     # ── optional_status (CAD / CDP) — down 이어도 can_run 불변 ───────────────
-    mcp_path = _find_mcp_server()
-    cad_ok = mcp_path is not None
+    cad_status = _cad_bridge_status_summary()
+    cad_ok = bool(cad_status.get("available"))
     cdp_ok = _check_cdp_available()
 
     if not cad_ok:
-        warnings_list.append("CAD_MCP_SERVER_NOT_FOUND")
+        warnings_list.append("CAD_API_BRIDGE_NOT_READY")
     if not cdp_ok:
         warnings_list.append("CDP_BROWSER_NOT_RUNNING")
 
     optional_status = {
         "cad": {
             "available": cad_ok,
-            "path": str(mcp_path) if mcp_path else None,
+            "mode": cad_status.get("mode"),
+            "status": cad_status.get("status"),
+            "host": cad_status.get("host"),
+            "port": cad_status.get("port"),
         },
         "cdp": {
             "available": cdp_ok,
@@ -565,6 +518,7 @@ def _safe_health_summary() -> dict:
             "api_key_set": h.get("api_key_set", False),
             "claude_cli": h.get("claude_cli", False),
             "mcp_server_found": h.get("mcp_server_found", False),
+            "cad_bridge": h.get("cad_bridge", {}),
         }
     except Exception:
         return {"available": False, "error": "health_check_failed"}
@@ -648,7 +602,7 @@ def local_agent_health() -> dict:
 
     has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
     has_claude_cli = bool(shutil.which("claude"))
-    mcp_path = _find_mcp_server()
+    cad_status = _cad_bridge_status_summary()
 
     available = (has_sdk and has_api_key) or has_claude_cli
 
@@ -657,6 +611,7 @@ def local_agent_health() -> dict:
         "anthropic_sdk": has_sdk,
         "api_key_set": has_api_key,
         "claude_cli": has_claude_cli,
-        "mcp_server_found": mcp_path is not None,
-        "mcp_server_path": str(mcp_path) if mcp_path else None,
+        "mcp_server_found": False,
+        "mcp_server_path": None,
+        "cad_bridge": cad_status,
     }
