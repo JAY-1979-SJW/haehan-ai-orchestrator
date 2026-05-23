@@ -259,7 +259,7 @@ def main() -> None:
                 from pathlib import Path as _Path
                 from scripts.config import CDP_PORT as _CDP_PORT
 
-                STATE_FILE = _Path(__file__).resolve().parents[1] / "data" / "chrome_ui_monitor_state.json"
+                STATE_FILE = _Path(__file__).resolve().parents[1] / "data" / "runtime" / "chrome_ui_monitor_state.json"
                 sub_cmd = task or "status"
 
                 if sub_cmd == "start":

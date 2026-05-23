@@ -29,6 +29,8 @@ DESIGN_DOC = ROOT / "docs" / "design" / "local_agent_cdp_attach_dry_run_20260523
 HELPER = ROOT / "local_agent" / "cdp_attach.py"
 CDP_DAEMON = ROOT / "scripts" / "cdp_daemon.py"
 APP_REALTIME_CHECK = ROOT / "scripts" / "app_realtime_check.py"
+CHROME_UI_MONITOR = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
+CDP_CLIENT = ROOT / "scripts" / "cdp_client.py"
 
 SENSITIVE_PATTERNS = (
     re.compile(r"webSocketDebuggerUrl\s*[:=]\s*['\"]?ws://", re.I),
@@ -162,6 +164,17 @@ def check_existing_sources(findings: list[Finding]) -> None:
         add(findings, "PASS", "readonly_discovery_endpoints", "realtime check uses version/list")
     else:
         add(findings, "FAIL", "readonly_discovery_endpoints", "version/list not identified")
+
+    monitor_text = _read(CHROME_UI_MONITOR) if CHROME_UI_MONITOR.exists() else ""
+    client_text = _read(CDP_CLIENT) if CDP_CLIENT.exists() else ""
+    archive_state_literal = '"data" / "chrome_ui_monitor_state.json"'
+    runtime_state_literal = '"data" / "runtime" / "chrome_ui_monitor_state.json"'
+    if archive_state_literal in monitor_text or archive_state_literal in client_text:
+        add(findings, "FAIL", "chrome_ui_monitor_runtime_path", "archive/data state path remains active")
+    elif runtime_state_literal in monitor_text and runtime_state_literal in client_text:
+        add(findings, "PASS", "chrome_ui_monitor_runtime_path", "uses data/runtime state path")
+    else:
+        add(findings, "FAIL", "chrome_ui_monitor_runtime_path", "runtime state path not identified")
 
     forbidden_runtime = ["Network.getAllCookies", "Storage.get", "Storage.clearDataForOrigin"]
     helper_text = _read(HELPER) if HELPER.exists() else ""
