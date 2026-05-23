@@ -1,0 +1,283 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import socket
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parent
+SERVER_URL = "https://haehan-ai.kr/orchestrator"
+SERVER_HEALTH_URL = SERVER_URL + "/api/v1/health"
+OUT_OF_SCOPE = {
+    "scripts/archive/data/chrome_ui_monitor_state.json",
+    "scripts/ops/check_naver_mail.py",
+    "scripts/ops/check_remote_browser.py",
+    "scripts/ops/naver_login_and_mail.py",
+    "scripts/ops/verify_remote_browser.py",
+}
+
+
+class Report:
+    def __init__(self) -> None:
+        self.rows: list[tuple[str, str, str]] = []
+
+    def pass_(self, name: str, detail: str = "") -> None:
+        self.rows.append(("PASS", name, detail))
+
+    def warn(self, name: str, detail: str = "") -> None:
+        self.rows.append(("WARN", name, detail))
+
+    def fail(self, name: str, detail: str = "") -> None:
+        self.rows.append(("FAIL", name, detail))
+
+    def result(self) -> str:
+        if any(level == "FAIL" for level, _, _ in self.rows):
+            return "FAIL_LOCAL_RUNTIME_DRY_RUN"
+        if any(level == "WARN" for level, _, _ in self.rows):
+            return "WARN_LOCAL_RUNTIME_DRY_RUN"
+        return "PASS_LOCAL_RUNTIME_DRY_RUN"
+
+    def print(self) -> None:
+        for level, name, detail in self.rows:
+            suffix = f" - {detail}" if detail else ""
+            print(f"[{level}] {name}{suffix}")
+        print(f"RESULT={self.result()}")
+
+
+def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args,
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=timeout,
+        check=False,
+    )
+
+
+def _first_line(text: str) -> str:
+    return next((line.strip() for line in text.splitlines() if line.strip()), "")
+
+
+def check_git(report: Report) -> None:
+    staged = _run(["git", "diff", "--cached", "--name-only"])
+    if staged.returncode != 0:
+        report.warn("git staged check", "git unavailable")
+        return
+    staged_files = {line.strip().replace("\\", "/") for line in staged.stdout.splitlines()}
+    leaked = sorted(staged_files & OUT_OF_SCOPE)
+    if leaked:
+        report.fail("OUT_OF_SCOPE not staged", ", ".join(leaked))
+    else:
+        report.pass_("OUT_OF_SCOPE not staged")
+
+
+def check_portable_files(report: Report) -> None:
+    for name in ("install.bat", "start.bat", "diagnostics.bat", "uninstall.bat"):
+        if (ROOT / name).exists():
+            report.pass_(f"portable file exists: {name}")
+        else:
+            report.fail(f"portable file missing: {name}")
+
+
+def check_diagnostics_bat(report: Report) -> None:
+    proc = _run(["cmd", "/c", "diagnostics.bat"], timeout=60)
+    if proc.returncode == 0:
+        report.pass_("diagnostics.bat", _first_line(proc.stdout))
+    else:
+        report.fail("diagnostics.bat", _first_line(proc.stderr or proc.stdout))
+
+
+def check_desktop_shortcut(report: Report) -> None:
+    ps = (
+        "$desktop=[Environment]::GetFolderPath('Desktop'); "
+        "$lnk=Join-Path $desktop 'HaehanAI Desktop.lnk'; "
+        "if (-not (Test-Path -LiteralPath $lnk)) { 'exists=False'; exit 0 }; "
+        "$s=(New-Object -ComObject WScript.Shell).CreateShortcut($lnk); "
+        "'exists=True'; "
+        "'target=' + $s.TargetPath; "
+        "'working=' + $s.WorkingDirectory"
+    )
+    proc = _run(["powershell", "-NoProfile", "-Command", ps], timeout=30)
+    if proc.returncode != 0:
+        report.warn("desktop shortcut", "shortcut query failed")
+        return
+    lines = proc.stdout.splitlines()
+    if "exists=True" not in lines:
+        report.warn("desktop shortcut", "HaehanAI Desktop.lnk not found")
+        return
+    target = next((line[7:] for line in lines if line.startswith("target=")), "")
+    if Path(target).name.lower() == "start.bat":
+        report.pass_("desktop shortcut", "target=start.bat")
+    else:
+        report.warn("desktop shortcut", "target is not start.bat")
+
+
+def check_desktop_exe(report: Report) -> None:
+    exe = ROOT / "dist" / "HaehanAI-Desktop" / "HaehanAI-Desktop.exe"
+    if not exe.exists():
+        report.warn("desktop exe", "not found; portable start requires exe")
+        return
+    version = _run([str(exe), "--version"], timeout=30)
+    if version.returncode == 0:
+        report.pass_("desktop exe --version", _first_line(version.stdout))
+    else:
+        report.fail("desktop exe --version", _first_line(version.stderr or version.stdout))
+        return
+    diagnostics = _run([str(exe), "--diagnostics"], timeout=60)
+    if diagnostics.returncode != 0:
+        report.fail("desktop exe --diagnostics", _first_line(diagnostics.stderr or diagnostics.stdout))
+        return
+    try:
+        data = json.loads(diagnostics.stdout)
+    except json.JSONDecodeError:
+        report.warn("desktop exe --diagnostics", "non-json output")
+        return
+    server = data.get("server", {}) if isinstance(data, dict) else {}
+    heartbeat = data.get("heartbeat", {}) if isinstance(data, dict) else {}
+    detail = f"server={server.get('url_redacted','')} heartbeat={heartbeat.get('state','')}"
+    report.pass_("desktop exe --diagnostics", detail.strip())
+
+
+def check_local_agent(report: Report) -> None:
+    from local_agent import desktop_launcher
+
+    self_test = desktop_launcher.self_test()
+    if self_test.get("ok"):
+        report.pass_("local agent self-test")
+    else:
+        report.fail("local agent self-test", json.dumps(self_test, ensure_ascii=False)[:200])
+
+    diagnostics = desktop_launcher.show_diagnostics(SERVER_URL)
+    block = str(diagnostics.get("diagnostics_block", ""))
+    token_present = bool(diagnostics.get("token_present"))
+    status = next((s for s in ("DISCONNECTED", "CONNECTED", "NOT_REGISTERED",
+                               "TOKEN_MISSING", "AUTH_FAILED",
+                               "SERVER_UNREACHABLE", "NETWORK_BLOCKED")
+                   if s in block), "")
+    if status == "CONNECTED":
+        report.pass_("local agent server status", "CONNECTED")
+    elif status == "DISCONNECTED" and token_present:
+        report.pass_("local agent credentials", "registered token_present=True")
+    elif status in {"NOT_REGISTERED", "TOKEN_MISSING"}:
+        report.warn("local agent server status", str(status))
+    else:
+        report.warn("local agent server status", str(status or "UNKNOWN"))
+
+
+def check_server(report: Report, *, live_server: bool) -> None:
+    try:
+        with socket.create_connection(("haehan-ai.kr", 443), timeout=5):
+            report.pass_("server tcp 443", "haehan-ai.kr reachable")
+    except OSError as exc:
+        report.warn("server tcp 443", type(exc).__name__)
+
+    if not live_server:
+        report.warn("server http health", "skipped; pass --live-server to check")
+        return
+    try:
+        req = urllib.request.Request(SERVER_HEALTH_URL, method="GET")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                report.pass_("server http health", "status=200")
+            else:
+                report.warn("server http health", f"status={resp.status}")
+    except urllib.error.HTTPError as exc:
+        report.warn("server http health", f"status={exc.code}")
+    except urllib.error.URLError as exc:
+        report.warn("server http health", type(exc.reason).__name__)
+    except OSError as exc:
+        report.warn("server http health", type(exc).__name__)
+
+
+def check_playwright(report: Report) -> None:
+    from ai_orchestrator.local_agent.playwright_bootstrap import check_playwright_status
+
+    status = check_playwright_status()
+    state = status.get("status")
+    version = status.get("package_version")
+    if state == "PLAYWRIGHT_READY":
+        report.pass_("playwright", f"version={version} browser_available=True")
+    else:
+        report.warn("playwright", f"{state}: {status.get('message_ko','')}")
+
+
+def check_ai_proxy(report: Report) -> None:
+    from local_agent import ai_chat_adapter as adapter
+    from local_agent import gui_chat_state as chat_state
+    from local_agent import server_proxy_chat_client as client
+
+    c = client.ServerProxyChatClient(server_url=SERVER_URL, agent_id="")
+    health = c.health_check()
+    if health.ok:
+        report.pass_("ai proxy health")
+    elif health.error_code == client.ERR_AGENT_ID_MISSING:
+        report.pass_("ai proxy safe unauthenticated health", "AGENT_ID_MISSING")
+    else:
+        report.warn("ai proxy health", str(health.error_code))
+
+    a = adapter.make_default_adapter(
+        mode=chat_state.MODE_SERVER_PROXY,
+        server_url=SERVER_URL,
+        agent_id="",
+    )
+    response = a.send_message(text_raw="dry-run")
+    if response.ok:
+        report.pass_("ai adapter server proxy")
+    elif response.error_code == client.ERR_DEVICE_TOKEN_MISSING:
+        report.pass_("ai adapter safe no-token path", "DEVICE_TOKEN_MISSING external_call_count=0")
+    else:
+        report.warn("ai adapter server proxy", str(response.error_code))
+
+
+def check_agent_ws_auth(report: Report) -> None:
+    proc = _run([
+        sys.executable,
+        "verify_agent_ws_auth.py",
+        "--server",
+        SERVER_URL,
+        "--timeout",
+        "15",
+    ], timeout=45)
+    output = proc.stdout + "\n" + proc.stderr
+    if "RESULT=PASS_AGENT_WS_AUTH" in output:
+        status = next((line for line in proc.stdout.splitlines()
+                       if line.startswith("ws_auth_status=")), "ws_auth_status=AUTH_OK")
+        report.pass_("agent websocket auth", status.split("=", 1)[1])
+    else:
+        status = next((line for line in output.splitlines()
+                       if line.startswith("ws_auth_status=")), "ws_auth_status=UNKNOWN")
+        report.warn("agent websocket auth", status.split("=", 1)[1])
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--live-server", action="store_true")
+    args = parser.parse_args(argv)
+
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    report = Report()
+    check_git(report)
+    check_portable_files(report)
+    check_diagnostics_bat(report)
+    check_desktop_shortcut(report)
+    check_desktop_exe(report)
+    check_local_agent(report)
+    check_server(report, live_server=args.live_server)
+    check_playwright(report)
+    check_ai_proxy(report)
+    check_agent_ws_auth(report)
+    report.print()
+    return 1 if report.result().startswith("FAIL") else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
