@@ -962,12 +962,12 @@ def _build_observe_summary(raw: Optional[dict]) -> Optional[dict]:
         out["title_len"] = len(title)
 
     # Bool 필드
-    for key in ("login_required_hint", "html_truncated"):
+    for key in ("login_required_hint", "html_truncated", "browser_headless"):
         if key in raw:
             out[key] = bool(raw[key])
 
     # Integer 필드
-    for key in ("pages_observed_count", "modal_candidates_count"):
+    for key in ("pages_observed_count", "modal_candidates_count", "browser_keep_open_ms"):
         val = raw.get(key)
         if val is not None:
             try:
