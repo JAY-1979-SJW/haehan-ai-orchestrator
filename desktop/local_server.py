@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
 
@@ -82,7 +83,24 @@ def _resolve_ui_dir() -> Path:
 _UI_DIR = _resolve_ui_dir()
 _SERVER_WS_URL = "wss://api.haehan-ai.kr/ws/desktop"  # 서버 측 Push WebSocket
 
-app = FastAPI(title="Haehan Desktop Local Server", docs_url=None, redoc_url=None)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    server_task = asyncio.create_task(_connect_to_server())
+    from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+    logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
+    try:
+        yield
+    finally:
+        server_task.cancel()
+        try:
+            await server_task
+        except asyncio.CancelledError:
+            pass
+        except Exception as exc:
+            logger.debug("server websocket task shutdown error: %s", type(exc).__name__)
+
+
+app = FastAPI(title="Haehan Desktop Local Server", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.add_middleware(RemoteAccessMiddleware)
 
 
@@ -1658,11 +1676,6 @@ async def post_cad_bridge_proxy(path: str, request: Request):
     )
 
 
-@app.on_event("startup")
-async def startup():
-    asyncio.create_task(_connect_to_server())
-    from desktop.app_config import LOCAL_HOST, LOCAL_PORT
-    logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
 
 
 # ── 신규 Desktop Shell — /app-new (Phase 2 smoke route) ─────────────────────
