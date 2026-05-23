@@ -192,16 +192,41 @@ def get_launch_options(requires_user_auth: bool = False) -> dict[str, Any]:
 
 def _try_launch_chromium() -> tuple[bool, str]:
     """Chromium을 about:blank로 실행해 본다. 성공 여부와 오류 메시지 반환."""
+    probe = r'''
+from __future__ import annotations
+
+try:
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto("about:blank", timeout=10000)
+        browser.close()
+    print("PLAYWRIGHT_LAUNCH_OK")
+except Exception as exc:
+    message = str(exc).replace("\r", " ").replace("\n", " ")
+    print(f"PLAYWRIGHT_LAUNCH_ERROR:{type(exc).__name__}:{message[:1000]}")
+'''
     try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto("about:blank", timeout=10000)
-            browser.close()
-        return True, ""
+        result = subprocess.run(
+            [sys.executable, "-c", probe],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
     except Exception as exc:
         return False, str(exc)
+    if "PLAYWRIGHT_LAUNCH_OK" in result.stdout:
+        return True, ""
+    marker = next(
+        (line for line in result.stdout.splitlines() if line.startswith("PLAYWRIGHT_LAUNCH_ERROR:")),
+        "",
+    )
+    if marker:
+        return False, marker.removeprefix("PLAYWRIGHT_LAUNCH_ERROR:")
+    combined = (result.stdout + "\n" + result.stderr).strip()
+    return False, combined[:1000] or f"exit_code={result.returncode}"
 
 
 def _classify_launch_error(error: str, version: str | None) -> dict[str, Any]:
