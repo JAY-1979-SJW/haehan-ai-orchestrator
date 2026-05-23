@@ -62,6 +62,7 @@ MODULES: tuple[GateModule, ...] = (
         steps=(
             GateStep("out_of_scope_not_staged", check="out_of_scope_not_staged"),
             GateStep("forbidden_command_matrix", check="forbidden_command_matrix"),
+            GateStep("desktop_security_boundary", check="desktop_security_boundary"),
         ),
     ),
     GateModule(
@@ -219,9 +220,49 @@ def check_forbidden_command_matrix() -> tuple[bool, str]:
     return True, "module gate matrix contains no build/deploy/push commands"
 
 
+def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
+    text = (ROOT / path).read_text(encoding="utf-8", errors="replace")
+    return [needle for needle in needles if needle in text]
+
+
+def check_desktop_security_boundary() -> tuple[bool, str]:
+    """Block auth and cross-app shortcuts from returning to desktop runtime."""
+    violations: list[str] = []
+
+    local_agent_forbidden = (
+        "class _McpStdioClient",
+        "_run_with_anthropic(prompt, mcp",
+        "mcp_server/server.py",
+        "14. CAD",
+        'req.get("_approved")',
+        'req.get("approved_api")',
+    )
+    for hit in _source_contains("desktop/local_agent_service.py", local_agent_forbidden):
+        violations.append(f"desktop/local_agent_service.py contains {hit!r}")
+
+    hardcoded_auth_forbidden = (
+        "Bearer admin-token",
+        "Authorization: Bearer admin-token",
+        '"Authorization": "Bearer admin-token"',
+        "'Authorization': 'Bearer admin-token'",
+    )
+    for path in (
+        "desktop/task_receiver.py",
+        "desktop/local_agent_service.py",
+        "desktop/local_server.py",
+    ):
+        for hit in _source_contains(path, hardcoded_auth_forbidden):
+            violations.append(f"{path} contains {hit!r}")
+
+    if violations:
+        return False, "; ".join(violations)
+    return True, "desktop auth/cross-app shortcuts are blocked"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
+    "desktop_security_boundary": check_desktop_security_boundary,
 }
 
 
