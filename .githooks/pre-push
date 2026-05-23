@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
 
-echo "[pre-commit] local agent browser runtime gates"
+echo "[pre-push] required quality gate"
 python scripts/required_quality_gate.py
