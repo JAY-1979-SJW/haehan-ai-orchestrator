@@ -80,6 +80,7 @@ def test_backend_core_includes_runtime_contract_gate():
 def test_local_agent_e2e_module_includes_contract_gate():
     module = next(module for module in gate.MODULES if module.name == "local_agent_e2e")
 
+    assert any(step.check == "local_agent_e2e_baseline_contract" for step in module.steps)
     assert any(step.name == "local_agent_e2e_py_compile" for step in module.steps)
     assert any(
         any("audit_local_agent_e2e_flow_contract.py" in part for part in step.command)
@@ -221,6 +222,16 @@ def test_backend_core_baseline_contract_passes_current_sources():
 
 def test_backend_core_baseline_contract_registered_in_checks():
     assert "backend_core_baseline_contract" in gate.CHECKS
+
+
+def test_local_agent_e2e_baseline_contract_passes_current_sources():
+    ok, message = gate.check_local_agent_e2e_baseline_contract()
+
+    assert ok, message
+
+
+def test_local_agent_e2e_baseline_contract_registered_in_checks():
+    assert "local_agent_e2e_baseline_contract" in gate.CHECKS
 
 
 def test_backend_runtime_contract_passes_current_sources():

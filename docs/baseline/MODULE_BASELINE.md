@@ -116,6 +116,12 @@ docs/baseline/modules/BACKEND_CORE_BASELINE.md
 
 ### local_agent_e2e
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
+```
+
 - Responsibility: server queue to authenticated local-agent WebSocket dispatch,
   task delivery, task running/completion transitions, and safe result return.
 - Input: queued server tasks and authenticated `agent_id + device_token`
