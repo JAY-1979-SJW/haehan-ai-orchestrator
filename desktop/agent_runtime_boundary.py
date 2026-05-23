@@ -110,10 +110,9 @@ def register_with_code(**kwargs: Any) -> Any:
 
 
 def run_websocket_client(*, server_url: str, agent_id: str, device_token: str) -> Any:
-    from local_agent.websocket_client import run_websocket_client as _run_websocket_client
+    from local_agent import config
+    from local_agent.websocket_client import connect
 
-    return _run_websocket_client(
-        server_url=server_url,
-        agent_id=agent_id,
-        device_token=device_token,
-    )
+    config.SERVER_BASE_URL = server_url
+    config.WEBSOCKET_ENABLED = True
+    return connect(agent_id, device_token)
