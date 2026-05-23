@@ -197,6 +197,38 @@ MODULES: tuple[GateModule, ...] = (
         ),
     ),
     GateModule(
+        name="local_agent_e2e",
+        description="approved server task to authenticated local-agent WebSocket result contract",
+        steps=(
+            GateStep(
+                "local_agent_e2e_py_compile",
+                (
+                    PY,
+                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/audit_local_agent_e2e_flow_contract.py",
+                    "tests/test_local_agent_e2e_flow_contract.py",
+                ),
+            ),
+            GateStep(
+                "local_agent_e2e_contract",
+                (PY, "scripts/ops/audit_local_agent_e2e_flow_contract.py"),
+            ),
+            GateStep(
+                "local_agent_e2e_pytest",
+                (
+                    PY,
+                    "-m",
+                    "pytest",
+                    "tests/test_local_agent_e2e_flow_contract.py",
+                    "ai_orchestrator/tests/test_local_agent_ws.py",
+                    "-p",
+                    "no:cacheprovider",
+                    "-q",
+                ),
+            ),
+        ),
+    ),
+    GateModule(
         name="playwright_ai",
         description="local Playwright bootstrap and AI proxy no-secret contract",
         steps=(

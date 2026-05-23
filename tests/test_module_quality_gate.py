@@ -7,6 +7,7 @@ def test_module_matrix_has_expected_modules():
         "portable_install",
         "desktop_auth_runtime",
         "backend_core",
+        "local_agent_e2e",
         "live_agent",
         "playwright_ai",
         "release_preflight",
@@ -70,6 +71,17 @@ def test_backend_core_includes_runtime_contract_gate():
     assert any(step.name == "backend_core_py_compile" for step in module.steps)
     assert any(step.check == "backend_runtime_contract" for step in module.steps)
     assert any(step.name == "backend_core_pytest" for step in module.steps)
+
+
+def test_local_agent_e2e_module_includes_contract_gate():
+    module = next(module for module in gate.MODULES if module.name == "local_agent_e2e")
+
+    assert any(step.name == "local_agent_e2e_py_compile" for step in module.steps)
+    assert any(
+        any("audit_local_agent_e2e_flow_contract.py" in part for part in step.command)
+        for step in module.steps
+    )
+    assert any(step.name == "local_agent_e2e_pytest" for step in module.steps)
 
 
 def test_release_runtime_gate_is_live_only():
