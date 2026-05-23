@@ -26,6 +26,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from typing import Optional
+from urllib.parse import urlparse
 
 from fastapi import (
     APIRouter, Body, Depends, HTTPException, Query,
@@ -105,6 +106,14 @@ class AgentTaskRequest(BaseModel):
     params: dict = {}
 
 
+class BrowserReadonlyInstructionRequest(BaseModel):
+    instruction: str
+    url: str
+    wait_until: str = "domcontentloaded"
+    timeout_ms: int = 20000
+    max_html_chars: int = 100000
+
+
 class AgentTaskApprovalRequest(BaseModel):
     token_id: str
     reason: str = ""
@@ -160,6 +169,76 @@ def _capture_approval_note(task, agent_id: str, dry_run: bool) -> str:
         if raw_note:
             parts.append(f"note={str(raw_note)[:100]}")
     return " ".join(parts)
+
+
+_READONLY_WAIT_UNTIL_VALUES: frozenset[str] = frozenset({
+    "domcontentloaded", "load", "networkidle",
+})
+
+_UNSAFE_BROWSER_INSTRUCTION_TERMS: frozenset[str] = frozenset({
+    "click", "submit", "type", "input", "login", "sign in", "password",
+    "otp", "2fa", "pay", "purchase", "buy", "send", "transfer", "delete",
+    "remove", "download", "upload", "save", "register", "create account",
+    "approve", "confirm", "checkout",
+    "클릭", "제출", "입력", "로그인", "비밀번호", "패스워드", "인증번호",
+    "결제", "구매", "송금", "전송", "삭제", "다운로드", "업로드", "저장",
+    "등록", "가입", "승인", "확인", "체크아웃",
+})
+
+
+def _validate_readonly_browser_instruction(
+    body: BrowserReadonlyInstructionRequest,
+) -> tuple[str, str, str, int, int]:
+    instruction = str(body.instruction or "").strip()
+    if not instruction:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "EMPTY_BROWSER_INSTRUCTION"},
+        )
+    if len(instruction) > 500:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "BROWSER_INSTRUCTION_TOO_LONG"},
+        )
+
+    lowered = instruction.lower()
+    blocked = next(
+        (term for term in _UNSAFE_BROWSER_INSTRUCTION_TERMS if term in lowered),
+        "",
+    )
+    if blocked:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "UNSAFE_BROWSER_INSTRUCTION",
+                "message": "readonly browser instructions cannot request input, auth, downloads, or state changes",
+            },
+        )
+
+    url = str(body.url or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_BROWSER_URL"},
+        )
+    if parsed.username or parsed.password:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "URL_CREDENTIALS_NOT_ALLOWED"},
+        )
+
+    wait_until = str(body.wait_until or "domcontentloaded").strip()
+    if wait_until not in _READONLY_WAIT_UNTIL_VALUES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_WAIT_UNTIL"},
+        )
+
+    timeout_ms = max(1000, min(int(body.timeout_ms), 30000))
+    max_html_chars = max(1000, min(int(body.max_html_chars), 100000))
+    host = parsed.hostname or parsed.netloc
+    return instruction, url, host, timeout_ms, max_html_chars
 
 
 # ── HTTP 라우트 ──────────────────────────────────────────────────────────
@@ -462,6 +541,89 @@ def submit_local_agent_task(
             )
 
     return _reg.get_task(agent_id, task.task_id).to_safe()
+
+
+@local_agent_router.post("/{agent_id}/browser-readonly-instructions")
+def submit_browser_readonly_instruction(
+    agent_id: str,
+    body: BrowserReadonlyInstructionRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """Queue an approved-user browser instruction as a readonly local task."""
+    actor = user["actor"]
+    role = user["role"]
+
+    if _reg.get_agent(agent_id) is None:
+        log_event(
+            "LOCAL_AGENT_BROWSER_READONLY_INSTRUCTION_REJECTED",
+            "local-agent",
+            action_type="web_open_url_readonly",
+            actor=actor,
+            role=role,
+            note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
+        )
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "AGENT_NOT_FOUND",
+                    "message": f"unknown local agent: {agent_id}"},
+        )
+
+    instruction, url, host, timeout_ms, max_html_chars = (
+        _validate_readonly_browser_instruction(body)
+    )
+    params = {
+        "url": url,
+        "wait_until": body.wait_until,
+        "timeout_ms": timeout_ms,
+        "max_html_chars": max_html_chars,
+        "user_instruction": instruction,
+        "source": "approved_user_instruction",
+    }
+
+    try:
+        task = _reg.enqueue_task(
+            agent_id=agent_id,
+            action="web_open_url_readonly",
+            params=params,
+            requested_by=actor,
+        )
+    except _reg.UnknownActionError as e:
+        log_event(
+            "LOCAL_AGENT_BROWSER_READONLY_INSTRUCTION_REJECTED",
+            "local-agent",
+            action_type="web_open_url_readonly",
+            actor=actor,
+            role=role,
+            note=f"agent_id={agent_id} reason=UNKNOWN_ACTION",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "UNKNOWN_ACTION", "message": str(e)},
+        )
+
+    log_event(
+        "LOCAL_AGENT_BROWSER_READONLY_INSTRUCTION_QUEUED",
+        task.task_id,
+        risk_level=task.risk_level,
+        action_type=task.action,
+        actor=actor,
+        role=role,
+        note=(
+            f"agent_id={agent_id} url_host={host} "
+            f"instruction_len={len(instruction)} status={task.status}"
+        ),
+    )
+
+    return {
+        "task_id": task.task_id,
+        "agent_id": task.agent_id,
+        "action": task.action,
+        "status": task.status,
+        "risk_level": task.risk_level,
+        "requested_by": actor,
+        "instruction_accepted": True,
+        "url_host": host,
+    }
 
 
 @local_agent_router.post("/{agent_id}/capture-screenshot")

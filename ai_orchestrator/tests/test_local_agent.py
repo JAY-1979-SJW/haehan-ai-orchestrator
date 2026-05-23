@@ -176,6 +176,84 @@ def test_open_url_low_risk_queued(admin_user):
 
 # ── 5. delete_file 및 그 외 금지 액션 → 거절 ──────────────────────────
 
+def test_browser_readonly_instruction_queues_safe_task(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the page headings only",
+            "url": "https://example.com/path?private=query",
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["action"] == "web_open_url_readonly"
+    assert data["status"] == "queued"
+    assert data["risk_level"] == "low"
+    assert data["instruction_accepted"] is True
+    assert data["url_host"] == "example.com"
+    assert "private=query" not in resp.text
+    assert "Summarize the page" not in resp.text
+
+    import ai_orchestrator.local_agent_registry as _reg
+    task = _reg.get_task(agent_id, data["task_id"])
+    assert task.action == "web_open_url_readonly"
+    assert task.params["user_instruction"] == "Summarize the page headings only"
+    assert task.params["source"] == "approved_user_instruction"
+
+
+def test_viewer_cannot_submit_browser_readonly_instruction(viewer_user, admin_user):
+    admin_client = _make_test_client(admin_user)
+    agent_id = _register_agent(admin_client)["agent_id"]
+    viewer_client = _make_test_client(viewer_user)
+    resp = viewer_client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the page",
+            "url": "https://example.com",
+        },
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.parametrize("instruction", [
+    "login and enter the password",
+    "click the submit button",
+    "download the report",
+])
+def test_browser_readonly_instruction_blocks_state_changes(admin_user, instruction):
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": instruction,
+            "url": "https://example.com",
+        },
+    )
+    assert resp.status_code == 400
+    assert resp.json()["detail"]["error"] == "UNSAFE_BROWSER_INSTRUCTION"
+
+
+@pytest.mark.parametrize("url", [
+    "file:///C:/Windows/System32/cmd.exe",
+    "javascript:alert(1)",
+    "https://user:pass@example.com",
+])
+def test_browser_readonly_instruction_blocks_unsafe_urls(admin_user, url):
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the page",
+            "url": url,
+        },
+    )
+    assert resp.status_code == 400
+
+
 @pytest.mark.parametrize("action", [
     "delete_file", "upload_file", "modify_file", "execute_shell",
     "rm", "format_disk", "",
