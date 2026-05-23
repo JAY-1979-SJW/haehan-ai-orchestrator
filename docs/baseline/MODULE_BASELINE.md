@@ -69,6 +69,12 @@ Global prohibitions:
 
 ### backend_core
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/BACKEND_CORE_BASELINE.md
+```
+
 - Responsibility: server routes, authentication defaults, authorization,
   approval policy, task queue, state transitions, result intake, and audit
   events.
@@ -252,4 +258,3 @@ module baseline proposal
 -> verification
 -> report
 ```
-

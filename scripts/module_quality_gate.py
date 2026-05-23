@@ -149,6 +149,7 @@ MODULES: tuple[GateModule, ...] = (
         name="backend_core",
         description="backend module boundaries, route inventory, auth/security gates",
         steps=(
+            GateStep("backend_core_baseline_contract", check="backend_core_baseline_contract"),
             GateStep(
                 "backend_core_py_compile",
                 (
@@ -754,6 +755,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_app_baseline_contract.py",
         "tests/test_standard_workflow_contract.py",
         "tests/test_module_baseline_contract.py",
+        "tests/test_backend_core_baseline_contract.py",
         "tests/test_required_quality_gate.py",
         "tests/test_root_legacy_scripts_audit.py",
         "scripts/ops/audit_common_tool_runtime.py",
@@ -761,6 +763,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "scripts/ops/audit_app_baseline_contract.py",
         "scripts/ops/audit_standard_workflow_contract.py",
         "scripts/ops/audit_module_baseline_contract.py",
+        "scripts/ops/audit_backend_core_baseline_contract.py",
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/module_quality_gate.py --module repo_guard",
     )
@@ -853,6 +856,16 @@ def check_backend_runtime_contract() -> tuple[bool, str]:
     return True, "backend runtime route inventory and security patterns are locked"
 
 
+def check_backend_core_baseline_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_backend_core_baseline_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked backend_core baseline defines auth, approval, task, and dispatch boundaries"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
@@ -862,6 +875,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "app_baseline_contract": check_app_baseline_contract,
     "standard_workflow_contract": check_standard_workflow_contract,
     "module_baseline_contract": check_module_baseline_contract,
+    "backend_core_baseline_contract": check_backend_core_baseline_contract,
     "backend_runtime_contract": check_backend_runtime_contract,
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,

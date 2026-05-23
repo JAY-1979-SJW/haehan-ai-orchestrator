@@ -71,6 +71,7 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
 def test_backend_core_includes_runtime_contract_gate():
     module = next(module for module in gate.MODULES if module.name == "backend_core")
 
+    assert any(step.check == "backend_core_baseline_contract" for step in module.steps)
     assert any(step.name == "backend_core_py_compile" for step in module.steps)
     assert any(step.check == "backend_runtime_contract" for step in module.steps)
     assert any(step.name == "backend_core_pytest" for step in module.steps)
@@ -210,6 +211,16 @@ def test_module_baseline_contract_passes_current_sources():
 
 def test_module_baseline_contract_registered_in_checks():
     assert "module_baseline_contract" in gate.CHECKS
+
+
+def test_backend_core_baseline_contract_passes_current_sources():
+    ok, message = gate.check_backend_core_baseline_contract()
+
+    assert ok, message
+
+
+def test_backend_core_baseline_contract_registered_in_checks():
+    assert "backend_core_baseline_contract" in gate.CHECKS
 
 
 def test_backend_runtime_contract_passes_current_sources():
