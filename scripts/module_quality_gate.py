@@ -75,6 +75,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("desktop_security_boundary", check="desktop_security_boundary"),
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("common_tool_runtime_contract", check="common_tool_runtime_contract"),
+            GateStep("app_baseline_contract", check="app_baseline_contract"),
             GateStep("required_local_gate_wiring", check="required_local_gate_wiring"),
             GateStep("module_boundary_contract", check="module_boundary_contract"),
             GateStep("root_legacy_script_contract", check="root_legacy_script_contract"),
@@ -747,9 +748,13 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
         "tests/test_common_tool_runtime.py",
+        "tests/test_local_agent_e2e_flow_contract.py",
+        "tests/test_app_baseline_contract.py",
         "tests/test_required_quality_gate.py",
         "tests/test_root_legacy_scripts_audit.py",
         "scripts/ops/audit_common_tool_runtime.py",
+        "scripts/ops/audit_local_agent_e2e_flow_contract.py",
+        "scripts/ops/audit_app_baseline_contract.py",
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/module_quality_gate.py --module repo_guard",
     )
@@ -802,6 +807,16 @@ def check_common_tool_runtime_contract() -> tuple[bool, str]:
     return True, "common tool runtime contract blocks unsafe execution paths"
 
 
+def check_app_baseline_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_app_baseline_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked app baseline is present and referenced by governance rules"
+
+
 def check_backend_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_backend_runtime_contract.py"],
@@ -818,6 +833,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "desktop_security_boundary": check_desktop_security_boundary,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "common_tool_runtime_contract": check_common_tool_runtime_contract,
+    "app_baseline_contract": check_app_baseline_contract,
     "backend_runtime_contract": check_backend_runtime_contract,
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,

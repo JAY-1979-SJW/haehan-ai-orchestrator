@@ -128,6 +128,24 @@ scripts/<site>/              ← thin profile/workflow/action만 허용
 
 ## 8. New Code Checklist
 
+### 8.0 App Baseline Rule
+
+The locked app baseline is `docs/baseline/APP_BASELINE.md`.
+
+Before changing server, local-agent, browser, AI, approval, desktop runtime, or
+release logic, the change must be checked against that baseline. Every code
+change report must answer these four points:
+
+```text
+[ ] input/output contract
+[ ] authorization boundary
+[ ] state changes
+[ ] regression gate
+```
+
+If a planned change weakens the baseline, stop and request explicit user
+approval for a baseline/governance change before editing runtime code.
+
 새 코드 작성 전 반드시 아래를 먼저 확인한다:
 
 ```
