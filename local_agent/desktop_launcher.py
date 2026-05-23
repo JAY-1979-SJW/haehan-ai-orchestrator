@@ -95,32 +95,54 @@ def self_test() -> dict:
 
 
 def show_diagnostics(server_url: str) -> dict:
-    """저장된 token + 진단 출력."""
-    state = ts.redacted_state() if hasattr(ts, "redacted_state") else {}
-    # describe + load 메타로 재구성
+    """Print connection diagnostics without exposing token values."""
     available, backend = ts.describe_backend()
     cur_agent = ""
-    # 사용자 입장에서 'registered or not' 표시
+    effective_server = server_url
     try:
-        # 사용 가능한 키 enumeration 불가 — 별도 메타 파일이 있으면 읽지만
-        # 본 모듈은 agent_id 를 알지 못하면 None 반환.
-        pass
+        from local_agent import desktop_config as dc
+        cfg = dc.load_config()
+        if not effective_server and cfg.server_url:
+            effective_server = cfg.server_url
+        cur_agent = cfg.agent_id or ""
     except Exception:
         pass
 
+    token_present = False
+    if cur_agent and effective_server:
+        try:
+            token_present = ts.has_device_token(
+                server_url=effective_server,
+                agent_id=cur_agent,
+            )
+        except Exception:
+            token_present = False
+
+    if not cur_agent:
+        diag_state = cd.STATE_NOT_REGISTERED
+        last_error_code = ""
+    elif token_present:
+        diag_state = cd.STATE_DISCONNECTED
+        last_error_code = ""
+    else:
+        diag_state = cd.STATE_NOT_REGISTERED
+        last_error_code = "TOKEN_NOT_STORED"
+
     diag = cd.build_diagnostics(
-        server_base_url=server_url,
+        server_base_url=effective_server,
         agent_id=cur_agent,
-        state=cd.STATE_NOT_REGISTERED if not cur_agent else cd.STATE_DISCONNECTED,
+        state=diag_state,
+        last_error_code=last_error_code,
     )
-    out = {
-        "server_url": server_url,
-        "ws_url": cd.normalize_ws_url(server_url),
+    return {
+        "server_url": effective_server,
+        "ws_url": cd.normalize_ws_url(effective_server),
         "token_store_backend": backend,
         "token_store_available": available,
+        "agent_id_masked": cd.mask_agent_id(cur_agent),
+        "token_present": token_present,
         "diagnostics_block": cd.render_user_block(diag),
     }
-    return out
 
 
 # ── register flow ────────────────────────────────────────────────
