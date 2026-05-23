@@ -265,10 +265,13 @@ def check_desktop_security_boundary() -> tuple[bool, str]:
         text = path.read_text(encoding="utf-8", errors="replace")
         if "from local_agent.cad" in text or "import local_agent.cad" in text:
             violations.append(f"{rel} imports local_agent.cad outside boundary")
+        if rel in {"desktop/tray_runtime.py", "desktop/main_launcher.py"}:
+            if "from local_agent" in text or "import local_agent" in text:
+                violations.append(f"{rel} imports local_agent outside boundary")
 
     if violations:
         return False, "; ".join(violations)
-    return True, "desktop auth/cross-app shortcuts are blocked and boundary imports are isolated"
+    return True, "desktop auth/cross-app shortcuts are blocked and runtime boundary imports are isolated"
 
 
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {

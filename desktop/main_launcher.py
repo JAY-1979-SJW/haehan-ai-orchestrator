@@ -37,6 +37,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
+from . import agent_runtime_boundary
+
 __version__ = "0.2.0-launcher-foundation"
 
 logger = logging.getLogger(__name__)
@@ -288,9 +290,7 @@ def load_token_status_hook() -> dict:
     설계서 §6 lifecycle 의 2번 단계. 실제 로드는 후속 공정에서 keyring 연결.
     """
     try:
-        from local_agent import token_store as _ts  # type: ignore
-        # 존재 여부만 — 원문 절대 안 받음
-        present = bool(getattr(_ts, "has_token", lambda: False)())
+        present = agent_runtime_boundary.has_any_token()
         return {"present": present, "source": "keyring"}
     except Exception as e:
         return {"present": False, "source": "unavailable", "error": str(e)}

@@ -33,6 +33,8 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
+from . import agent_runtime_boundary
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,8 +92,7 @@ def check_registration_status(
     config_loader / token_checker 주입 가능 (테스트용).
     """
     if config_loader is None:
-        from local_agent.desktop_config import load_config
-        config_loader = load_config
+        config_loader = agent_runtime_boundary.load_desktop_config
 
     try:
         cfg = config_loader()
@@ -111,12 +112,10 @@ def check_registration_status(
     agent_id = cfg.agent_id
 
     if token_checker is None:
-        from local_agent.token_store import has_device_token, keyring_backend_name
-        token_present = has_device_token(
+        token_present, backend = agent_runtime_boundary.check_device_token(
             server_url, agent_id,
             allow_plaintext_fallback=plaintext_fallback,
         )
-        backend = keyring_backend_name()
     else:
         token_present = token_checker(server_url, agent_id)
         backend = "test"
@@ -232,8 +231,7 @@ def plan_heartbeat(status: RegistrationStatus) -> HeartbeatPlan:
         return HeartbeatPlan(can_start=False, reason="config_incomplete")
 
     try:
-        from local_agent.connection_diagnostics import normalize_ws_url
-        ws_url = normalize_ws_url(status.server_url)
+        ws_url = agent_runtime_boundary.normalize_ws_url(status.server_url)
     except Exception as e:
         return HeartbeatPlan(can_start=False, reason=f"ws_url_error:{type(e).__name__}")
 
@@ -266,8 +264,7 @@ def apply_registration_result(
         return WizardOutcome(success=False, error_code="invalid_input")
 
     if token_saver is None:
-        from local_agent.token_store import save_device_token
-        token_saver = save_device_token
+        token_saver = agent_runtime_boundary.save_device_token
 
     try:
         backend = token_saver(
@@ -278,19 +275,19 @@ def apply_registration_result(
         return WizardOutcome(success=False, error_code="token_store_failed",
                              error_message=type(e).__name__)
 
+    cfg = agent_runtime_boundary.build_desktop_config(
+        server_url=server_url,
+        agent_id=agent_id,
+        label=getattr(meta, "label", "") or "",
+        created_at=getattr(meta, "registered_at", "") or "",
+        version=getattr(meta, "version", "") or "",
+    )
     if config_saver is None:
-        from local_agent.desktop_config import save_config, DesktopConfig
-        cfg = DesktopConfig(
-            server_url=server_url,
-            agent_id=agent_id,
-            label=getattr(meta, "label", "") or "",
-            created_at=getattr(meta, "registered_at", "") or "",
-            version=getattr(meta, "version", "") or "",
-        )
-        try:
-            config_saver(cfg)
-        except Exception as e:
-            logger.warning("config save failed (token saved OK): %s", type(e).__name__)
+        config_saver = agent_runtime_boundary.save_desktop_config
+    try:
+        config_saver(cfg)
+    except Exception as e:
+        logger.warning("config save failed (token saved OK): %s", type(e).__name__)
 
     logger.info("registration complete — backend=%s agent=%s***",
                 backend, agent_id[:6])
@@ -307,8 +304,7 @@ def build_diagnostics_payload(
     reconnect_count: int = 0,
 ) -> dict:
     """진단 payload — redact 적용본. token 원문 절대 미포함."""
-    from local_agent.connection_diagnostics import build_diagnostics
-    d = build_diagnostics(
+    d = agent_runtime_boundary.build_diagnostics(
         server_base_url=status.server_url,
         agent_id=status.agent_id,
         state=heartbeat_state,
@@ -338,8 +334,7 @@ def run_registration_wizard_cli(
     registration_code 는 호출자가 입력받아 전달. 본 함수 종료 직전 None 처리.
     """
     if register_fn is None:
-        from local_agent.registration_client import register_with_code
-        register_fn = register_with_code
+        register_fn = agent_runtime_boundary.register_with_code
 
     try:
         meta, token = register_fn(
@@ -463,11 +458,10 @@ def run_registration_wizard_gui(
     def _step3(outcome: WizardOutcome):
         _clear()
         state["step"] = 3
-        from local_agent.connection_diagnostics import mask_agent_id
         ttk.Label(container, text="Step 3 / 3 — 등록 완료 ✓",
                   font=("Segoe UI", 14, "bold")).pack(anchor="w", pady=(0, 8))
         ttk.Label(container,
-                  text=f"agent_id   {mask_agent_id(outcome.agent_id)}",
+                  text=f"agent_id   {agent_runtime_boundary.mask_agent_id(outcome.agent_id)}",
                   font=("Consolas", 11)).pack(anchor="w")
         ttk.Label(container, text="상태       ● 연결됨").pack(anchor="w", pady=(4, 16))
         ttk.Label(container,
@@ -532,17 +526,13 @@ def start_heartbeat_background(
                 return
             # 실제 통합 — websocket_client 호출 (lazy import)
             try:
-                from local_agent.websocket_client import (  # type: ignore
-                    run_websocket_client,
-                )
-            except ImportError:
+                token = agent_runtime_boundary.load_device_token(plan.server_url, plan.agent_id)
+            except Exception:
                 logger.warning("websocket_client.run_websocket_client 미발견 — heartbeat 비활성")
                 if on_error:
                     on_error("ws_client_unavailable")
                 return
 
-            from local_agent.token_store import load_device_token
-            token = load_device_token(plan.server_url, plan.agent_id) or ""
             if not token:
                 if on_error:
                     on_error("TOKEN_NOT_STORED")
@@ -552,7 +542,7 @@ def start_heartbeat_background(
                 on_state_change("CONNECTING")
 
             try:
-                run_websocket_client(  # 시그니처는 모듈에 따라 다를 수 있음
+                agent_runtime_boundary.run_websocket_client(
                     server_url=plan.server_url,
                     agent_id=plan.agent_id,
                     device_token=token,
