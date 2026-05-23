@@ -22,6 +22,7 @@ ACTION_RISK: dict[str, str] = {
     "system_info":        "low",
     "list_allowed_apps":  "low",
     "open_url":           "low",
+    "web_open_url_readonly": "low",
     "open_url_execute":   "high",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
