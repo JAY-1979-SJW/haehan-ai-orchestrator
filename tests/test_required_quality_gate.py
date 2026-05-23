@@ -21,6 +21,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_common_tool_runtime.py" in rendered
     assert "tests/test_local_agent_e2e_flow_contract.py" in rendered
     assert "tests/test_app_baseline_contract.py" in rendered
+    assert "tests/test_standard_workflow_contract.py" in rendered
     assert "tests/test_required_quality_gate.py" in rendered
     assert "tests/test_module_boundaries.py" in rendered
     assert "tests/test_root_legacy_scripts_audit.py" in rendered
@@ -28,6 +29,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_local_agent_e2e_flow_contract.py" in rendered
     assert "scripts/ops/audit_app_baseline_contract.py" in rendered
+    assert "scripts/ops/audit_standard_workflow_contract.py" in rendered
     assert "scripts/ops/audit_module_boundaries.py" in rendered
     assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
     assert "scripts/module_quality_gate.py --module repo_guard" in rendered

@@ -1,0 +1,152 @@
+# HAEHAN Standard Workflow
+
+Status: LOCKED
+Baseline ID: HAEHAN-STANDARD-WORKFLOW-01
+Approved by: user approval in current Codex session
+Baseline HEAD: 796ebc2e22b0c7f536fa606ddec83c582aee6448
+Last updated: 2026-05-24
+
+## 1. Purpose
+
+This document defines the standard working contract for every HAEHAN code,
+documentation, gate, test, release, and verification task.
+
+No task should move directly into code edits unless the task scope, allowed
+files, forbidden actions, verification plan, and reporting format are clear.
+
+## 2. Standard Task Flow
+
+Every non-trivial task follows this flow:
+
+```text
+task request
+-> baseline and scope check
+-> working standard confirmation
+-> user approval when the scope changes governance, deploy, build, push, or live runtime
+-> implementation inside the approved scope
+-> focused verification
+-> gate verification
+-> standard report
+-> commit only when requested or when the approved task includes commit
+```
+
+## 3. Required Pre-Work Check
+
+Before editing code, the worker must identify:
+
+```text
+goal
+scope
+allowed files
+forbidden actions
+input/output contract
+authorization boundary
+state changes
+regression gate
+verification commands
+rollback or recovery plan
+```
+
+When any of these are unknown and cannot be inferred from the repository, stop
+and ask the user before editing runtime code.
+
+## 4. Forbidden By Default
+
+These actions require explicit task-level approval:
+
+- installer build
+- portable package creation
+- Docker build, pull, up, restart, or deploy
+- server deploy or restart
+- push
+- dependency install
+- browser or GUI launch
+- live external site automation
+- secret value output
+- OUT_OF_SCOPE file modification, staging, or commit
+- broad cleanup outside the approved scope
+
+## 5. Standard Verification Levels
+
+Use the narrowest verification that proves the change, then run the required
+gate when the change affects shared contracts.
+
+```text
+syntax: python -m py_compile targeted files
+unit: python -m pytest targeted tests -q
+contract: module-specific audit script
+module gate: python scripts/module_quality_gate.py --module <module>
+required gate: python scripts/required_quality_gate.py
+live smoke: only when explicitly approved
+```
+
+Build, deploy, Docker, installer, and live browser checks are separate stages.
+They must not be hidden inside dry-run gates.
+
+## 6. Standard Commit Rule
+
+Commit only when the approved task includes commit or the user explicitly
+requests it.
+
+Before commit:
+
+- `git status --short` must be reviewed.
+- Staged files must match the approved scope.
+- OUT_OF_SCOPE files must not be staged.
+- Relevant verification must pass.
+- The commit message must describe one purpose.
+
+## 7. Standard Function Explanation Rule
+
+For user learning, implementation reports should explain changed functions in
+plain language:
+
+```text
+function name
+why it exists
+input
+output
+failure behavior
+security or state boundary
+how to think when writing it manually
+```
+
+The explanation should be practical and tied to the actual code, not generic
+textbook material.
+
+## 8. Failure And Recovery Rule
+
+When a verification step fails:
+
+- Stop broad implementation work.
+- Report the failing command and safe summary.
+- Do not hide the failure with mock success.
+- Fix only inside the approved scope.
+- Re-run the smallest failing check first.
+- Run the relevant module or required gate after the fix.
+
+When runtime work fails:
+
+- Separate server, local-agent, browser, site, auth, approval, and environment
+  causes in the report.
+- Preserve logs and state needed for diagnosis.
+- Do not print raw secrets.
+- Retry only when a retry rule exists.
+
+## 9. Required Report Template
+
+Every completed task should use the standard report template:
+
+```text
+docs/templates/STANDARD_REPORT_TEMPLATE.md
+```
+
+Any task that changes runtime behavior must include the four baseline answers:
+
+```text
+input/output contract
+authorization boundary
+state changes
+regression gate
+```
+
