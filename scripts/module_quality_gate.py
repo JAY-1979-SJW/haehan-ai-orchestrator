@@ -100,6 +100,7 @@ MODULES: tuple[GateModule, ...] = (
         name="desktop_auth_runtime",
         description="desktop diagnostics, auth token presence, and runtime dry-run",
         steps=(
+            GateStep("desktop_auth_runtime_baseline_contract", check="desktop_auth_runtime_baseline_contract"),
             GateStep(
                 "desktop_auth_py_compile",
                 (
@@ -756,6 +757,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_dry_run_local_agent_cdp_attach.py",
         "tests/test_common_tool_runtime.py",
         "tests/test_common_tool_runtime_baseline_contract.py",
+        "tests/test_desktop_auth_runtime_baseline_contract.py",
         "tests/test_local_agent_e2e_flow_contract.py",
         "tests/test_app_baseline_contract.py",
         "tests/test_standard_workflow_contract.py",
@@ -768,6 +770,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_root_legacy_scripts_audit.py",
         "scripts/ops/audit_common_tool_runtime.py",
         "scripts/ops/audit_common_tool_runtime_baseline_contract.py",
+        "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
         "scripts/ops/audit_local_agent_e2e_flow_contract.py",
         "scripts/ops/audit_app_baseline_contract.py",
         "scripts/ops/audit_standard_workflow_contract.py",
@@ -836,6 +839,16 @@ def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
     if not ok:
         return False, message
     return True, "locked common_tool_runtime baseline defines task, risk, approval, and forbidden-field boundaries"
+
+
+def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked desktop_auth_runtime baseline defines auth, redaction, and isolation boundaries"
 
 
 def check_app_baseline_contract() -> tuple[bool, str]:
@@ -922,6 +935,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
+    "desktop_auth_runtime_baseline_contract": check_desktop_auth_runtime_baseline_contract,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "common_tool_runtime_baseline_contract": check_common_tool_runtime_baseline_contract,
     "common_tool_runtime_contract": check_common_tool_runtime_contract,

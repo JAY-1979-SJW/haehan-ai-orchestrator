@@ -199,6 +199,12 @@ docs/baseline/modules/PLAYWRIGHT_AI_BASELINE.md
 
 ### desktop_auth_runtime
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/DESKTOP_AUTH_RUNTIME_BASELINE.md
+```
+
 - Responsibility: desktop runtime authentication, task receiver auth headers,
   desktop security boundary checks, and prevention of cross-app shortcuts.
 - Input: configured session/auth context and server task receiver requests.
