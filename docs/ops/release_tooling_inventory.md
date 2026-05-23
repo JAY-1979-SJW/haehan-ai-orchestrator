@@ -14,6 +14,11 @@ deploy, push, start Docker, or run external browser/service automation.
     active-source secret scan.
   - Development-only tool audit findings are tracked separately and do not
     block the portable runtime release unless they affect shipped code.
+- `python verify_release_runtime_gate.py --retries 1 --retry-delay 8`
+  - Runs the live server, WebSocket auth, AI browser, AI proxy, and remote
+    task-dispatch checks sequentially before a deployment program is built.
+  - Retries transient live failures and separates packaging-only warnings, such
+    as a missing desktop exe before packaging, from deployment blockers.
 - `python verify_portable_zip_install.py --static-only`
   - Verifies portable install scripts without creating an installer.
 - `python verify_local_runtime_dry_run.py`
