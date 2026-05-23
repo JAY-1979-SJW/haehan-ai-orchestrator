@@ -28,11 +28,22 @@ def test_fallback_ui_allowlist_is_empty_after_api_defaults():
     unexpected_warnings = [
         finding.path
         for finding in findings
-        if finding.status == "WARN" and finding.path not in audit.GENERATED_RESIDUE_WARN
+        if finding.status == "WARN"
     ]
 
     assert audit.FALLBACK_UI_ALLOWED == ()
     assert unexpected_warnings == []
+
+
+def test_generated_residue_is_ignored_not_warned():
+    findings = audit.audit()
+    generated = [
+        finding
+        for finding in findings
+        if finding.path in audit.GENERATED_RESIDUE_WARN
+    ]
+
+    assert all(finding.status == "PASS" for finding in generated)
 
 
 def test_summary_passes_with_warnings():

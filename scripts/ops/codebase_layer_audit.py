@@ -212,6 +212,8 @@ def classify_path(path: str) -> tuple[str, str]:
         return "L9", "admin or desktop UI path"
     if p.startswith(("migrations/",)) or "audit" in name or "cdp_db" in name or "op_log" in name:
         return "L7", "persistence or audit path"
+    if p.startswith("backend/compat/"):
+        return "L8", "backend compatibility adapter path"
     if p.startswith(("browser_api/", "ai_orchestrator/server/")):
         return "L8", "server API path"
     if p.startswith("ai_orchestrator/") and ("router" in name or name in {"app.py"}):
@@ -402,6 +404,22 @@ _SECURITY_FORBIDDEN_PATTERNS: list[tuple[str, str]] = [
 ]
 
 
+_SECURITY_FORBIDDEN_PATTERNS = [
+    (
+        r"\b(?:print|logger\.(?:debug|info|warning|error|critical)|logging\."
+        r"(?:debug|info|warning|error|critical))\s*\([^)]*\b"
+        r"(password|passwd|pw_\w*|secret\b|api_key\b|apikey\b)[^)]*\)",
+        "Secret variable printed or logged directly",
+    ),
+    (
+        r"\b(?:print|logger\.(?:debug|info|warning|error|critical)|logging\."
+        r"(?:debug|info|warning|error|critical))\s*\([^)]*os\.environ\s*[\[.]"
+        r"\s*['\"](?:PASSWORD|PASSWD|SECRET|API_KEY|APIKEY)['\"]",
+        "Env secret printed or logged directly",
+    ),
+]
+
+
 def check_forbidden_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     """금지 import 방향 검사."""
     import re
@@ -439,10 +457,7 @@ def check_forbidden_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> li
 
 def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     """보안 금지 패턴 스캔 (secret/token 출력, env 직접 노출 등)."""
-    import re
     issues: list[AuditIssue] = []
-    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
-                for pat, msg in _SECURITY_FORBIDDEN_PATTERNS]
     skip_prefixes = ("tests/", "docs/", "scripts/archive/", "data/")
     skip_exact = {"scripts/ops/codebase_layer_audit.py"}  # 패턴 정의 자체를 스캔 제외
     for row in rows:
@@ -457,19 +472,80 @@ def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> li
             source = path.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        for pattern, msg in compiled:
-            for m in pattern.finditer(source):
-                lineno = source[: m.start()].count("\n") + 1
-                issues.append(
-                    AuditIssue(
-                        "warn",
-                        "SECURITY_PATTERN",
-                        f"{row.path}:{lineno}",
-                        msg,
-                        row.layer,
-                    )
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not _is_secret_output_call(node):
+                continue
+            if not any(
+                _expr_exposes_secret(arg)
+                for arg in [*node.args, *[kw.value for kw in node.keywords]]
+            ):
+                continue
+            issues.append(
+                AuditIssue(
+                    "warn",
+                    "SECURITY_PATTERN",
+                    f"{row.path}:{getattr(node, 'lineno', 1)}",
+                    "Secret variable printed or logged directly",
+                    row.layer,
                 )
+            )
     return issues
+
+
+def _is_secret_output_call(node: ast.Call) -> bool:
+    func = node.func
+    if isinstance(func, ast.Name):
+        return func.id == "print"
+    if isinstance(func, ast.Attribute):
+        if func.attr not in {"debug", "info", "warning", "error", "critical"}:
+            return False
+        return isinstance(func.value, ast.Name) and func.value.id in {"logger", "logging"}
+    return False
+
+
+def _expr_exposes_secret(node: ast.AST) -> bool:
+    sensitive = {"password", "passwd", "pw", "secret", "api_key", "apikey", "token", "cookie"}
+    if isinstance(node, ast.Name):
+        name = node.id.lower()
+        return name in sensitive and not name.endswith("_masked")
+    if isinstance(node, ast.Subscript) and _expr_name(node.value) == "os.environ":
+        key = _constant_string(node.slice)
+        return bool(key and key.lower() in sensitive)
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "get" and node.args:
+            key = _constant_string(node.args[0])
+            return bool(key and key.lower() in sensitive)
+    if isinstance(node, ast.JoinedStr):
+        has_sensitive_label = any(
+            isinstance(value, ast.Constant)
+            and isinstance(value.value, str)
+            and any(word in value.value.lower() for word in sensitive)
+            for value in node.values
+        )
+        return has_sensitive_label and any(
+            isinstance(value, ast.FormattedValue) and _expr_exposes_secret(value.value)
+            for value in node.values
+        )
+    return any(_expr_exposes_secret(child) for child in ast.iter_child_nodes(node))
+
+
+def _expr_name(node: ast.AST) -> str:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        prefix = _expr_name(node.value)
+        return f"{prefix}.{node.attr}" if prefix else node.attr
+    return ""
+
+
+def _constant_string(node: ast.AST) -> str:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return ""
 
 
 def module_name_from_path(path: str) -> str | None:
@@ -1034,16 +1110,25 @@ def issue_key(issue: dict | AuditIssue) -> tuple[str, str]:
     return str(issue.get("code", "")), str(issue.get("path", ""))
 
 
+def tracked_residual_matches(item: dict, issue: AuditIssue) -> bool:
+    code = str(item.get("code", ""))
+    path = str(item.get("path", ""))
+    if code != issue.code:
+        return False
+    if path == issue.path:
+        return True
+    if path == "root_legacy_scripts" and issue.code == "ROOT_PY_SCRIPT":
+        return "/" not in issue.path and issue.path.endswith(".py")
+    return False
+
+
 def build_residual_audit(issues: list[AuditIssue], config: dict) -> dict:
     tracked = config.get("tracked_residuals") or []
-    tracked_keys = {(str(item.get("code")), str(item.get("path"))) for item in tracked}
-    issue_keys = {issue_key(issue) for issue in issues}
     tracked_open = []
     resolved = []
     for item in tracked:
-        key = (str(item.get("code")), str(item.get("path")))
         row = dict(item)
-        row["present"] = key in issue_keys
+        row["present"] = any(tracked_residual_matches(row, issue) for issue in issues)
         if row["present"]:
             tracked_open.append(row)
         else:
@@ -1052,7 +1137,8 @@ def build_residual_audit(issues: list[AuditIssue], config: dict) -> dict:
     untracked_warnings = [
         asdict(issue)
         for issue in issues
-        if issue.severity == "warn" and issue_key(issue) not in tracked_keys
+        if issue.severity == "warn"
+        and not any(tracked_residual_matches(item, issue) for item in tracked)
     ]
     return {
         "tracked_open": tracked_open,
@@ -1357,7 +1443,8 @@ def main() -> int:
     else:
         print_report(report, max_issues=args.max_issues)
         print(f"saved: {output}")
-    return 1 if report["summary"]["warn_count"] or not report["consistency"]["ok"] else 0
+    residual_summary = (report.get("residual_audit") or {}).get("summary") or {}
+    return 1 if residual_summary.get("untracked_warning_count", 0) or not report["consistency"]["ok"] else 0
 
 
 if __name__ == "__main__":

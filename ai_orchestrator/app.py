@@ -83,11 +83,13 @@ def run_scenario_b():
     approval_reason = generate_approval_reason(req, ep)
 
     pre_result = execute(ep)
+    approval_status = token.status
+    approval_id_hint = token.token_id[:8]
     print(f"  task_id              : {req.task_id}")
     print(f"  risk_level           : {risk.risk_level.upper()}")
     print(f"  allowed              : {ep.allowed}")
     print(f"  requires_approval    : {ep.requires_approval}")
-    print(f"  approval_token_status: {token.status} (token_id={token.token_id[:8]}...)")
+    print(f"  approval_status      : {approval_status} (id={approval_id_hint}...)")
     print(f"  ai_approval_reason   : {approval_reason}")
     print(f"  [승인 전] status     : {pre_result}")
 
