@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 from scripts.logger import get_logger
 from scripts.popup_monitor import _record_event
@@ -26,7 +26,7 @@ from scripts.popup_classifier import classify, is_auto_handleable
 
 _log = get_logger(__name__)
 
-STATE_FILE = ROOT / "data" / "chrome_ui_monitor_state.json"
+STATE_FILE = REPO_ROOT / "data" / "runtime" / "chrome_ui_monitor_state.json"
 _stop_event = threading.Event()
 
 
@@ -52,6 +52,7 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
 
     _save_state({
         "running": True,
+        "pid": __import__("os").getpid(),
         "started_at": time.time(),
         "processed": 0,
         "handled": 0,
@@ -116,6 +117,7 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
 
             _save_state({
                 "running": True,
+                "pid": __import__("os").getpid(),
                 "updated_at": time.time(),
                 "processed": processed,
                 "handled": handled,
@@ -129,6 +131,7 @@ def run_monitor(poll_interval_s: float = 3.0, auto_handle: bool = True) -> None:
     _log.info("Chrome UI Monitor 종료")
     _save_state({
         "running": False,
+        "pid": __import__("os").getpid(),
         "stopped_at": time.time(),
         "processed": processed,
         "handled": handled,
