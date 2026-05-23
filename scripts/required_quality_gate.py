@@ -30,6 +30,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
         "tests/test_module_quality_gate.py",
+        "tests/test_required_quality_gate.py",
     ),
     (sys.executable, "scripts/ops/dry_run_local_agent_cdp_attach.py"),
     (
@@ -39,6 +40,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
+        "tests/test_required_quality_gate.py",
         "-p",
         "no:cacheprovider",
         "-q",
