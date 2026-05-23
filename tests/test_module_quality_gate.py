@@ -98,6 +98,12 @@ def test_release_runtime_gate_is_live_only():
     assert any("verify_release_runtime_gate.py" in step.command for step in module.steps)
 
 
+def test_playwright_ai_includes_baseline_contract_gate():
+    module = next(module for module in gate.MODULES if module.name == "playwright_ai")
+
+    assert any(step.check == "playwright_ai_baseline_contract" for step in module.steps)
+
+
 def test_desktop_security_boundary_passes_current_runtime_sources():
     ok, message = gate.check_desktop_security_boundary()
 
@@ -243,6 +249,16 @@ def test_approval_flow_baseline_contract_passes_current_sources():
 
 def test_approval_flow_baseline_contract_registered_in_checks():
     assert "approval_flow_baseline_contract" in gate.CHECKS
+
+
+def test_playwright_ai_baseline_contract_passes_current_sources():
+    ok, message = gate.check_playwright_ai_baseline_contract()
+
+    assert ok, message
+
+
+def test_playwright_ai_baseline_contract_registered_in_checks():
+    assert "playwright_ai_baseline_contract" in gate.CHECKS
 
 
 def test_backend_runtime_contract_passes_current_sources():

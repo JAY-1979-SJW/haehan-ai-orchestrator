@@ -167,6 +167,12 @@ docs/baseline/modules/APPROVAL_FLOW_BASELINE.md
 
 ### playwright_ai
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/PLAYWRIGHT_AI_BASELINE.md
+```
+
 - Responsibility: local-only browser automation and AI-assisted task planning
   through approved local-agent execution paths.
 - Input: approved browser task contract, safe URL/action parameters, AI prompt
