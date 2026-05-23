@@ -189,6 +189,12 @@ Module responsibilities:
 - `release_preflight`: release-time static checks.
 - `release_runtime`: live runtime readiness checks.
 
+The detailed module contract is locked in:
+
+```text
+docs/baseline/MODULE_BASELINE.md
+```
+
 ## 9. Required Gates
 
 The required local gate is:
