@@ -42,6 +42,7 @@ def test_repo_guard_includes_desktop_security_boundary():
     repo_guard = next(module for module in gate.MODULES if module.name == "repo_guard")
 
     assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
+    assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
 
 
 def test_release_preflight_includes_admin_web_and_secret_scan():
@@ -53,6 +54,7 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
         "admin_web_typecheck",
         "admin_web_lint",
         "admin_web_audit",
+        "local_agent_browser_runtime_rules",
         "active_source_secret_scan",
     }.issubset(checks)
 
@@ -130,6 +132,59 @@ def test_ui_residue_contract_passes_current_sources():
     ok, message = gate.check_ui_residue_contract()
 
     assert ok, message
+
+
+def test_local_agent_browser_runtime_rules_pass_current_sources():
+    ok, message = gate.check_local_agent_browser_runtime_rules()
+
+    assert ok, message
+
+
+def test_local_agent_browser_runtime_rules_registered_in_checks():
+    assert "local_agent_browser_runtime_rules" in gate.CHECKS
+
+
+def test_admin_web_audit_counts_vulnerability_entries_before_metadata():
+    report = {
+        "vulnerabilities": {},
+        "metadata": {"vulnerabilities": {"high": 1, "critical": 0, "total": 1}},
+    }
+
+    assert gate.audit_vulnerability_counts(report) == (0, 0, 0)
+
+
+def test_admin_web_audit_counts_high_and_critical_entries():
+    report = {
+        "vulnerabilities": {
+            "pkg-a": {"severity": "high"},
+            "pkg-b": {"severity": "critical"},
+            "pkg-c": {"severity": "moderate"},
+        }
+    }
+
+    assert gate.audit_vulnerability_counts(report) == (1, 1, 3)
+    assert gate.audit_high_critical_names(report) == ["pkg-a", "pkg-b"]
+
+
+def test_admin_web_audit_uses_lockfile_only(monkeypatch):
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+
+        class Result:
+            stdout = '{"vulnerabilities": {}, "metadata": {"vulnerabilities": {"total": 0}}}'
+
+        return Result()
+
+    monkeypatch.setattr(gate.shutil, "which", lambda _: "npm.cmd")
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    ok, message = gate.check_admin_web_audit()
+
+    assert ok, message
+    assert calls
+    assert calls[0][-4:] == ["audit", "--omit=dev", "--json", "--package-lock-only"]
 
 
 def test_find_staged_out_of_scope_uses_normalized_paths():

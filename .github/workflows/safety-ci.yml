@@ -2,17 +2,9 @@ name: Safety CI
 
 on:
   pull_request:
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
   push:
     branches:
       - master
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - ".github/ISSUE_TEMPLATE/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -109,6 +101,24 @@ jobs:
             ai_orchestrator/tests/test_dev_reg_audit_log_unit.py \
             ai_orchestrator/tests/test_task_state.py \
             -q
+
+      - name: Local agent browser runtime gates
+        run: |
+          python -m py_compile \
+            local_agent/cdp_attach.py \
+            scripts/archive/misc/chrome_ui_monitor.py \
+            scripts/cdp_client.py \
+            scripts/ops/dry_run_local_agent_cdp_attach.py \
+            tests/test_local_agent_browser_runtime_operating_rules.py \
+            tests/test_local_agent_cdp_attach.py \
+            tests/test_dry_run_local_agent_cdp_attach.py
+          python scripts/ops/dry_run_local_agent_cdp_attach.py
+          python -m pytest \
+            tests/test_local_agent_browser_runtime_operating_rules.py \
+            tests/test_local_agent_cdp_attach.py \
+            tests/test_dry_run_local_agent_cdp_attach.py \
+            -q
+          python scripts/module_quality_gate.py --module repo_guard
 
       - name: Excluded artifact scan
         run: |

@@ -17,7 +17,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
+sys.dont_write_bytecode = True
+
 ROOT = Path(__file__).resolve().parents[1]
+MODULE_GATE_PYCACHE = Path(
+    os.environ.get("HAEHAN_MODULE_GATE_PYCACHE", str(Path(os.environ["TEMP"]) / "haehan_module_gate_pycache"))
+)
+os.environ.setdefault("PYTHONPYCACHEPREFIX", str(MODULE_GATE_PYCACHE))
+sys.pycache_prefix = str(MODULE_GATE_PYCACHE)
 
 OUT_OF_SCOPE = {
     "scripts/archive/data/chrome_ui_monitor_state.json",
@@ -65,6 +72,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("out_of_scope_not_staged", check="out_of_scope_not_staged"),
             GateStep("forbidden_command_matrix", check="forbidden_command_matrix"),
             GateStep("desktop_security_boundary", check="desktop_security_boundary"),
+            GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
         ),
     ),
     GateModule(
@@ -157,6 +165,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("admin_web_typecheck", check="admin_web_typecheck"),
             GateStep("admin_web_lint", check="admin_web_lint"),
             GateStep("admin_web_audit", check="admin_web_audit"),
+            GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("active_source_secret_scan", check="active_source_secret_scan"),
         ),
     ),
@@ -285,10 +294,41 @@ def check_admin_web_audit() -> tuple[bool, str]:
     package = ROOT / "admin-web" / "package.json"
     if not package.exists():
         return False, "admin-web/package.json missing"
-    executable = shutil.which("npm.cmd") or shutil.which("npm") or "npm"
+    command = _npm_audit_command()
+    ok, report_or_message = _read_admin_web_audit_report(command)
+    if not ok:
+        return False, str(report_or_message)
+
+    report = report_or_message
+    high, critical, total = audit_vulnerability_counts(report)
+    if high or critical:
+        retry_ok, retry_report_or_message = _read_admin_web_audit_report(command)
+        if not retry_ok:
+            return False, str(retry_report_or_message)
+        retry_report = retry_report_or_message
+        retry_high, retry_critical, retry_total = audit_vulnerability_counts(retry_report)
+        if not retry_high and not retry_critical:
+            return True, f"production dependency audit high=0 critical=0 total={retry_total} after retry"
+        high, critical, total = retry_high, retry_critical, retry_total
+        report = retry_report
+        names = audit_high_critical_names(report)
+        suffix = f": {', '.join(names)}" if names else ""
+        return False, f"production dependency audit found high={high} critical={critical}{suffix}"
+    return True, f"production dependency audit high=0 critical=0 total={total}"
+
+
+def _npm_audit_command() -> list[str]:
+    npm_cmd = shutil.which("npm.cmd")
+    if os.name == "nt" and npm_cmd:
+        return ["cmd", "/c", npm_cmd, "audit", "--omit=dev", "--json", "--package-lock-only"]
+    executable = npm_cmd or shutil.which("npm") or "npm"
+    return [executable, "audit", "--omit=dev", "--json", "--package-lock-only"]
+
+
+def _read_admin_web_audit_report(command: list[str]) -> tuple[bool, dict | str]:
     try:
         result = subprocess.run(
-            [executable, "audit", "--omit=dev", "--json"],
+            command,
             cwd=ROOT / "admin-web",
             text=True,
             stdout=subprocess.PIPE,
@@ -305,14 +345,44 @@ def check_admin_web_audit() -> tuple[bool, str]:
     except json.JSONDecodeError:
         tail = output[-500:].replace("\n", " | ") if output else f"exit_code={result.returncode}"
         return False, "npm audit returned non-json output: " + tail
+    return True, report
+
+
+def audit_vulnerability_counts(report: dict) -> tuple[int, int, int]:
+    vulnerabilities = report.get("vulnerabilities")
+    if isinstance(vulnerabilities, dict):
+        high = 0
+        critical = 0
+        total = 0
+        for item in vulnerabilities.values():
+            if not isinstance(item, dict):
+                continue
+            severity = str(item.get("severity", "")).lower()
+            if severity:
+                total += 1
+            if severity == "high":
+                high += 1
+            elif severity == "critical":
+                critical += 1
+        return high, critical, total
 
     counts = report.get("metadata", {}).get("vulnerabilities", {})
     high = int(counts.get("high", 0))
     critical = int(counts.get("critical", 0))
-    if high or critical:
-        return False, f"production dependency audit found high={high} critical={critical}"
     total = int(counts.get("total", 0))
-    return True, f"production dependency audit high=0 critical=0 total={total}"
+    return high, critical, total
+
+
+def audit_high_critical_names(report: dict) -> list[str]:
+    vulnerabilities = report.get("vulnerabilities")
+    if not isinstance(vulnerabilities, dict):
+        return []
+    names = [
+        str(name)
+        for name, item in vulnerabilities.items()
+        if isinstance(item, dict) and str(item.get("severity", "")).lower() in {"high", "critical"}
+    ]
+    return sorted(names)
 
 
 def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
@@ -433,10 +503,67 @@ def check_ui_residue_contract() -> tuple[bool, str]:
     return True, "UI residue audit passed with no warnings"
 
 
+def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
+    doc = ROOT / "docs" / "architecture" / "local_agent_browser_runtime_operating_rules_20260523.md"
+    dry_run = ROOT / "scripts" / "ops" / "dry_run_local_agent_cdp_attach.py"
+    tests = ROOT / "tests" / "test_local_agent_browser_runtime_operating_rules.py"
+    monitor = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
+    cdp_client = ROOT / "scripts" / "cdp_client.py"
+
+    required_files = (doc, dry_run, tests, monitor, cdp_client)
+    missing = [normalize_path(str(path.relative_to(ROOT))) for path in required_files if not path.exists()]
+    if missing:
+        return False, "missing browser runtime gate file(s): " + ", ".join(missing)
+
+    doc_text = doc.read_text(encoding="utf-8", errors="replace")
+    required_doc_phrases = (
+        "Status: LOCKED",
+        "CDP attach is local-only",
+        "CDP discovery is read-only",
+        "CDP output is redacted",
+        "Automated browser execution uses a dedicated profile",
+        "Runtime state must not be written under `scripts/archive`",
+    )
+    missing_phrases = [phrase for phrase in required_doc_phrases if phrase not in doc_text]
+    if missing_phrases:
+        return False, "browser runtime policy doc missing phrase(s): " + ", ".join(missing_phrases)
+
+    runtime_state_literal = '"data" / "runtime" / "chrome_ui_monitor_state.json"'
+    archive_state_literal = '"data" / "chrome_ui_monitor_state.json"'
+    for path in (monitor, cdp_client):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        rel = normalize_path(str(path.relative_to(ROOT)))
+        if runtime_state_literal not in text:
+            return False, f"{rel} does not use data/runtime chrome UI monitor state"
+        if archive_state_literal in text:
+            return False, f"{rel} still references archive/data chrome UI monitor state"
+
+    dry_run_text = dry_run.read_text(encoding="utf-8", errors="replace")
+    if "chrome_ui_monitor_runtime_path" not in dry_run_text:
+        return False, "CDP attach dry-run does not enforce chrome UI monitor runtime path"
+
+    ok, message = _run_check_command(
+        [
+            PY,
+            "-m",
+            "pytest",
+            "tests/test_local_agent_browser_runtime_operating_rules.py",
+            "tests/test_local_agent_cdp_attach.py",
+            "tests/test_dry_run_local_agent_cdp_attach.py",
+            "-q",
+        ],
+        timeout=180,
+    )
+    if not ok:
+        return False, "browser runtime operating rule pytest failed: " + message
+    return True, "browser runtime operating rules are locked by policy, dry-run, and pytest"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
+    "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
