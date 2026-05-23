@@ -6,6 +6,8 @@ playwright_bootstrap.py의 상태 진단, 정책 상수, 옵션 반환을 검증
 from __future__ import annotations
 
 import pytest
+import types
+import ai_orchestrator.local_agent.playwright_bootstrap as bootstrap
 from ai_orchestrator.local_agent.playwright_bootstrap import (
     PLAYWRIGHT_READY,
     PLAYWRIGHT_PACKAGE_MISSING,
@@ -23,6 +25,7 @@ from ai_orchestrator.local_agent.playwright_bootstrap import (
     get_launch_options,
     _classify_launch_error,
     _get_playwright_version,
+    _try_launch_chromium,
 )
 
 
@@ -176,6 +179,33 @@ def test_classify_unknown_error():
 def test_classify_browser_missing_has_install_command():
     r = _classify_launch_error("Executable not found", None)
     assert r["install_command"] is not None
+
+def test_try_launch_chromium_parses_subprocess_success(monkeypatch):
+    def fake_run(*args, **kwargs):
+        return types.SimpleNamespace(stdout="PLAYWRIGHT_LAUNCH_OK\n", stderr="", returncode=0)
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", fake_run)
+
+    ok, error = _try_launch_chromium()
+
+    assert ok is True
+    assert error == ""
+
+def test_try_launch_chromium_parses_subprocess_error_marker(monkeypatch):
+    def fake_run(*args, **kwargs):
+        return types.SimpleNamespace(
+            stdout="PLAYWRIGHT_LAUNCH_ERROR:PermissionError:access denied\n",
+            stderr="Future exception was never retrieved",
+            returncode=0,
+        )
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", fake_run)
+
+    ok, error = _try_launch_chromium()
+
+    assert ok is False
+    assert error == "PermissionError:access denied"
+    assert "Future exception" not in error
 
 
 # ── 8. _get_playwright_version ────────────────────────────────────────────────
