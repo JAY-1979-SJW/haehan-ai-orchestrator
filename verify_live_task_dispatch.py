@@ -10,6 +10,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from local_agent.network_bypass import direct_child_env, urlopen_for_server
+
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -35,7 +37,7 @@ def _request_json(method: str, url: str, body: dict | None = None,
         data = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    with urlopen_for_server(url, req, timeout=timeout) as resp:
         raw = resp.read().decode("utf-8")
         try:
             payload = json.loads(raw) if raw else {}
@@ -45,7 +47,7 @@ def _request_json(method: str, url: str, body: dict | None = None,
 
 
 def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
-    env = os.environ.copy()
+    env = direct_child_env()
     env["HAEHAN_AGENT_WS_ENABLED"] = "true"
     env["HAEHAN_AGENT_POLL_SEC"] = "2"
     env["PYTHONIOENCODING"] = "utf-8"

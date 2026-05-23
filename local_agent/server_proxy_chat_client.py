@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 
 from . import connection_diagnostics as cd
 from . import gui_state as gs
+from . import network_bypass as nb
 from . import token_store as ts
 
 logger = logging.getLogger("haehan_server_proxy_chat")
@@ -136,8 +137,12 @@ class ServerProxyChatClient:
         ctx = ssl.create_default_context()
         t0 = time.time()
         try:
-            opener = _opener or urllib.request.urlopen
-            with opener(req, timeout=timeout, context=ctx) as r:
+            opener = _opener or nb.urlopen_for_server
+            if _opener is None:
+                rctx = opener(self.server_url, req, timeout=timeout, context=ctx)
+            else:
+                rctx = opener(req, timeout=timeout, context=ctx)
+            with rctx as r:
                 raw = r.read()
                 status = r.status
         except urllib.error.HTTPError as e:

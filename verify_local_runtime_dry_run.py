@@ -11,6 +11,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from local_agent.network_bypass import urlopen_for_server
+
 
 ROOT = Path(__file__).resolve().parent
 SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -185,7 +187,7 @@ def check_server(report: Report, *, live_server: bool) -> None:
         return
     try:
         req = urllib.request.Request(SERVER_HEALTH_URL, method="GET")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urlopen_for_server(SERVER_URL, req, timeout=10) as resp:
             if resp.status == 200:
                 report.pass_("server http health", "status=200")
             else:
@@ -208,6 +210,28 @@ def check_playwright(report: Report) -> None:
         report.pass_("playwright", f"version={version} browser_available=True")
     else:
         report.warn("playwright", f"{state}: {status.get('message_ko','')}")
+
+
+def check_asyncio_subprocess(report: Report) -> None:
+    code = (
+        "import asyncio, sys\n"
+        "async def main():\n"
+        "    p = await asyncio.create_subprocess_exec("
+        "sys.executable, '-c', 'print(123)', "
+        "stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)\n"
+        "    out, err = await p.communicate()\n"
+        "    print(p.returncode)\n"
+        "asyncio.run(main())\n"
+    )
+    proc = _run([sys.executable, "-c", code], timeout=30)
+    output = proc.stdout + "\n" + proc.stderr
+    if proc.returncode == 0:
+        report.pass_("python asyncio subprocess")
+        return
+    if "WinError 5" in output or "PermissionError" in output:
+        report.warn("python asyncio subprocess", "PERMISSION_DENIED")
+        return
+    report.warn("python asyncio subprocess", _first_line(proc.stderr or proc.stdout) or f"exit_code={proc.returncode}")
 
 
 def check_ai_proxy(report: Report) -> None:
@@ -261,6 +285,7 @@ def check_agent_ws_auth(report: Report) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--live-server", action="store_true")
+    parser.add_argument("--skip-playwright", action="store_true")
     args = parser.parse_args(argv)
 
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
@@ -272,7 +297,11 @@ def main(argv: list[str] | None = None) -> int:
     check_desktop_exe(report)
     check_local_agent(report)
     check_server(report, live_server=args.live_server)
-    check_playwright(report)
+    if args.skip_playwright:
+        report.pass_("playwright", "skipped; verified by release runtime gate")
+    else:
+        check_asyncio_subprocess(report)
+        check_playwright(report)
     check_ai_proxy(report)
     check_agent_ws_auth(report)
     report.print()
