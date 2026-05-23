@@ -391,7 +391,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                     continue
 
                 # 2) 로컬 실행 후 result 회신 (서버 상태: running → completed/failed)
-                result_msg = process_task(task)
+                result_msg = await asyncio.to_thread(process_task, task)
                 result_msg["agent_id"] = agent_id
                 await ws.send(json.dumps(result_msg))
             elif mtype == "user_present_task":
