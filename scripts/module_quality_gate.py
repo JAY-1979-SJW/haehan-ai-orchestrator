@@ -7,6 +7,7 @@ installer builds, Docker operations, deploys, or staged out-of-scope files.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -73,6 +74,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("forbidden_command_matrix", check="forbidden_command_matrix"),
             GateStep("desktop_security_boundary", check="desktop_security_boundary"),
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
+            GateStep("required_local_gate_wiring", check="required_local_gate_wiring"),
         ),
     ),
     GateModule(
@@ -561,11 +563,85 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     return True, "browser runtime operating rules are locked by policy, dry-run, and pytest"
 
 
+def check_required_local_gate_wiring() -> tuple[bool, str]:
+    workflows_dir = ROOT / ".github" / "workflows"
+    workflow_files = []
+    if workflows_dir.exists():
+        workflow_files = [
+            normalize_path(str(path.relative_to(ROOT)))
+            for path in workflows_dir.iterdir()
+            if path.is_file() and path.suffix.lower() in {".yml", ".yaml"}
+        ]
+    if workflow_files:
+        return False, "GitHub Actions workflow files are forbidden: " + ", ".join(sorted(workflow_files))
+
+    required_gate = ROOT / "scripts" / "required_quality_gate.py"
+    pre_commit = ROOT / ".githooks" / "pre-commit"
+    pre_push = ROOT / ".githooks" / "pre-push"
+    required_files = (required_gate, pre_commit, pre_push)
+    missing = [normalize_path(str(path.relative_to(ROOT))) for path in required_files if not path.exists()]
+    if missing:
+        return False, "missing required local gate file(s): " + ", ".join(missing)
+
+    hook_call = "python scripts/required_quality_gate.py"
+    for hook in (pre_commit, pre_push):
+        text = hook.read_text(encoding="utf-8", errors="replace")
+        rel = normalize_path(str(hook.relative_to(ROOT)))
+        if hook_call not in text:
+            return False, f"{rel} does not delegate to scripts/required_quality_gate.py"
+
+    spec = importlib.util.spec_from_file_location("required_quality_gate", required_gate)
+    if spec is None or spec.loader is None:
+        return False, "required_quality_gate import spec failed"
+    required_gate_mod = importlib.util.module_from_spec(spec)
+    try:
+        sys.modules[spec.name] = required_gate_mod
+        spec.loader.exec_module(required_gate_mod)
+    except Exception as exc:
+        return False, f"required_quality_gate import failed: {type(exc).__name__}"
+
+    offenders = [
+        required_gate_mod.command_text(command)
+        for command in required_gate_mod.COMMANDS
+        if required_gate_mod.command_is_forbidden(command)
+    ]
+    if offenders:
+        return False, "required gate contains forbidden command(s): " + "; ".join(offenders)
+
+    required_rendered = "\n".join(required_gate_mod.command_text(command) for command in required_gate_mod.COMMANDS)
+    required_needles = (
+        "scripts/ops/dry_run_local_agent_cdp_attach.py",
+        "tests/test_local_agent_browser_runtime_operating_rules.py",
+        "tests/test_local_agent_cdp_attach.py",
+        "tests/test_dry_run_local_agent_cdp_attach.py",
+        "tests/test_required_quality_gate.py",
+        "scripts/module_quality_gate.py --module repo_guard",
+    )
+    missing_needles = [needle for needle in required_needles if needle not in required_rendered]
+    if missing_needles:
+        return False, "required gate missing command target(s): " + ", ".join(missing_needles)
+
+    config = subprocess.run(
+        ["git", "config", "--get", "core.hooksPath"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
+    if hooks_path != ".githooks":
+        return False, "core.hooksPath must be .githooks; run python scripts/install_git_hooks.py"
+
+    return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
+    "required_local_gate_wiring": check_required_local_gate_wiring,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
