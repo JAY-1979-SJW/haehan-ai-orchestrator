@@ -73,7 +73,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
         shouldMask = !authVerified;
         break;
       case 'reveal_on_trusted_device':
-        shouldMask = false;
+        shouldMask = !authVerified;
         break;
       case 'reveal_for_export_with_warning':
         shouldMask = true;

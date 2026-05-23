@@ -43,7 +43,9 @@ GMAIL_TOKEN_PATH = Path(_gtok) if _gtok else LOG_DIR / "gmail_token.json"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # ── HTTP 인증 (구조 토대만, 실제 강제는 추후 단계) ─────────────────
-AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+# Fail closed by default. Tests may monkeypatch this to False, but production
+# deployments must keep authentication enabled.
+AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 
 _http_users_env = os.environ.get("HTTP_USERS_PATH", "").strip()
 HTTP_USERS_PATH = Path(_http_users_env) if _http_users_env else Path(__file__).parent / "policies" / "http_users.json"

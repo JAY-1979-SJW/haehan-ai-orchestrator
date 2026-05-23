@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8400/api/v1';
+import {
+  backendJsonHeaders,
+  getBackendApiBase,
+  requireBackendRole,
+} from '@/lib/backend-auth';
 
 export const dynamic = 'force-dynamic';
+const APPROVAL_ROLES = ['admin', 'owner'] as const;
 
 interface RouteParams {
   params: {
@@ -15,13 +19,15 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse> {
   try {
+    const auth = await requireBackendRole(request, APPROVAL_ROLES);
+    if (auth instanceof NextResponse) return auth;
+
     const { id } = params;
 
-    const response = await fetch(`${API_BASE}/browser-approvals/requests/${id}`, {
+    const response = await fetch(`${getBackendApiBase()}/browser-approvals/requests/${id}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(auth),
+      cache: 'no-store',
     });
 
     const data = await response.json();

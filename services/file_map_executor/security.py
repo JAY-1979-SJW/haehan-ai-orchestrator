@@ -1,8 +1,9 @@
 """Security and validation utilities for file-map-executor."""
 
-import os
 from pathlib import Path
 from typing import Tuple
+
+TMP_ROOT = Path("/tmp").resolve()
 
 
 def validate_target_path(base_target_dir: str) -> Tuple[bool, str]:
@@ -17,11 +18,10 @@ def validate_target_path(base_target_dir: str) -> Tuple[bool, str]:
     if not base_target_dir:
         return False, "base_target_dir is required"
 
-    if not base_target_dir.startswith('/tmp'):
-        return False, f"base_target_dir must start with /tmp (smoke mode only): {base_target_dir}"
-
     try:
-        path = Path(base_target_dir)
+        path = Path(base_target_dir).resolve()
+        if path != TMP_ROOT and TMP_ROOT not in path.parents:
+            return False, f"base_target_dir must be inside /tmp (smoke mode only): {base_target_dir}"
         if path.exists() and not path.is_dir():
             return False, f"base_target_dir must be a directory: {base_target_dir}"
     except Exception as e:

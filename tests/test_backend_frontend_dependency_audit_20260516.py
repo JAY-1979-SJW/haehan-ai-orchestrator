@@ -217,13 +217,15 @@ class TestEnvelopeConversionVerdict:
 
 @pytest.fixture(scope="module")
 def client():
+    import ai_orchestrator.config as config
+    config.AUTH_ENABLED = False
     from ai_orchestrator.server import app
     return TestClient(app, raise_server_exceptions=False)
 
 
 @pytest.fixture(scope="module")
 def admin_auth():
-    return {"Authorization": "Bearer admin-token"}
+    return {}
 
 
 class TestSiteTasksDryRunKeyContract:
@@ -282,10 +284,12 @@ class TestSiteTasksDryRunKeyContract:
 
         _reg.register(_DummyConn(), overwrite=True)
         try:
+            import ai_orchestrator.config as config
+            config.AUTH_ENABLED = False
             c = TC(app, raise_server_exceptions=False)
             r = c.post(
                 "/api/v1/site-tasks/dry-run",
-                headers={"Authorization": "Bearer admin-token"},
+                headers={},
                 json={"task_id": "t-unsupported", "target_site": "dummy_dep",
                       "action": "unsupported_action", "params": {},
                       "risk_level": "low", "requires_approval": False},

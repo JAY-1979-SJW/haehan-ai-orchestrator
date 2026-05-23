@@ -1,11 +1,4 @@
-/**
- * 운영센터 API 클라이언트.
- * 실제 백엔드 read-only API를 우선 호출하고, 실패 시 mock/fallback으로 복구.
- *
- * 금지: secret/token/password/session/cookie 노출
- * 금지: 실제 승인/거절 실행, 실제 위험 실행
- * 모든 함수: GET/read-only only
- */
+import { getBackendApiBase } from "@/lib/backend-auth";
 import type {
   ApprovalItem,
   AuditEventRow,
@@ -14,19 +7,10 @@ import type {
   DashboardMetric,
   IntegrationStatus,
 } from "./types";
-import {
-  MOCK_APPROVAL_QUEUE,
-  MOCK_AUDIT_EVENTS,
-  MOCK_AGENT_STATUSES,
-  MOCK_WEB_TASKS,
-  MOCK_METRICS,
-  MOCK_INTEGRATIONS,
-} from "./mockOpsData";
 
-const API_BASE = "/api/v1";
 const TIMEOUT_MS = 5000;
 
-type FetchSource = "live" | "fallback" | "error" | "static";
+type FetchSource = "live" | "error" | "unauthorized";
 
 export interface OpsResult<T> {
   data: T;
@@ -34,123 +18,82 @@ export interface OpsResult<T> {
   error?: string;
 }
 
-async function safeGet<T>(
+async function getJson(
   path: string,
-  fallback: T,
-  timeoutMs = TIMEOUT_MS,
-): Promise<{ data: unknown; source: FetchSource; error?: string }> {
+  authorization?: string | null,
+): Promise<{ data?: unknown; status: number; error?: string }> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      headers: { Authorization: "Bearer admin-token" },
+    const headers: HeadersInit = { "Content-Type": "application/json" };
+    if (authorization) headers.Authorization = authorization;
+    const res = await fetch(`${getBackendApiBase()}${path}`, {
+      headers,
       cache: "no-store",
       signal: controller.signal,
     });
-    if (!res.ok) {
-      return { data: fallback, source: "fallback", error: `HTTP ${res.status}` };
-    }
-    const json = await res.json();
-    return { data: json, source: (json?.source as FetchSource) ?? "live" };
+    if (!res.ok) return { status: res.status, error: `HTTP ${res.status}` };
+    return { status: res.status, data: await res.json() };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { data: fallback, source: "fallback", error: msg };
+    return {
+      status: 0,
+      error: err instanceof Error ? err.message : String(err),
+    };
   } finally {
     clearTimeout(timer);
   }
 }
 
-// ── 승인 대기 ────────────────────────────────────────────────────────────────
-
-export async function fetchApprovalQueue(): Promise<OpsResult<ApprovalItem[]>> {
-  const { data, source, error } = await safeGet("/ops/approvals", null);
-  if (source === "live" || source === "static") {
-    const items = (data as { items?: ApprovalItem[] })?.items;
-    if (Array.isArray(items)) {
-      return { data: items, source: "live" };
-    }
-  }
-  return { data: MOCK_APPROVAL_QUEUE, source: "fallback", error };
+function emptyResult<T>(data: T, status: number, error?: string): OpsResult<T> {
+  return {
+    data,
+    source: status === 401 || status === 403 ? "unauthorized" : "error",
+    error: error || "invalid_response",
+  };
 }
 
-// ── 웹 작업 목록 ─────────────────────────────────────────────────────────────
-
-export async function fetchWebTasks(): Promise<OpsResult<WebTaskAction[]>> {
-  const { data, source, error } = await safeGet("/ops/web-tasks", null);
-  if (source === "live" || source === "static") {
-    const tasks = (data as { tasks?: WebTaskAction[] })?.tasks;
-    if (Array.isArray(tasks)) {
-      return { data: tasks, source: "live" };
-    }
-  }
-  return { data: MOCK_WEB_TASKS, source: "fallback", error };
+export async function fetchApprovalQueue(auth?: string | null): Promise<OpsResult<ApprovalItem[]>> {
+  const result = await getJson("/ops/approvals", auth);
+  const items = (result.data as { items?: ApprovalItem[] } | undefined)?.items;
+  if (Array.isArray(items)) return { data: items, source: "live" };
+  return emptyResult([], result.status, result.error);
 }
 
-// ── 감사 이벤트 ──────────────────────────────────────────────────────────────
-
-export async function fetchAuditEvents(limit = 20): Promise<OpsResult<AuditEventRow[]>> {
-  const { data, source, error } = await safeGet(`/ops/audit-events?limit=${limit}`, null);
-  if (source === "live" || source === "static") {
-    const events = (data as { events?: AuditEventRow[] })?.events;
-    if (Array.isArray(events)) {
-      return { data: events, source: "live" };
-    }
-  }
-  // /logs fallback
-  const logsResult = await safeGet(`/logs?limit=${limit}`, null);
-  if (logsResult.source === "live") {
-    const logsData = logsResult.data as { events?: AuditEventRow[] } | AuditEventRow[];
-    const events = Array.isArray(logsData)
-      ? logsData
-      : (logsData as { events?: AuditEventRow[] }).events;
-    if (Array.isArray(events)) {
-      return { data: events, source: "live" };
-    }
-  }
-  return { data: MOCK_AUDIT_EVENTS, source: "fallback", error };
+export async function fetchWebTasks(auth?: string | null): Promise<OpsResult<WebTaskAction[]>> {
+  const result = await getJson("/ops/web-tasks", auth);
+  const tasks = (result.data as { tasks?: WebTaskAction[] } | undefined)?.tasks;
+  if (Array.isArray(tasks)) return { data: tasks, source: "live" };
+  return emptyResult([], result.status, result.error);
 }
 
-// ── 로컬 에이전트 상태 ───────────────────────────────────────────────────────
-
-export async function fetchAgentStatuses(): Promise<OpsResult<AgentStatus[]>> {
-  const { data, source, error } = await safeGet("/ops/agents", null);
-  if (source === "live" || source === "static") {
-    const agents = (data as { agents?: AgentStatus[] })?.agents;
-    if (Array.isArray(agents)) {
-      return { data: agents, source: "live" };
-    }
-  }
-  return { data: MOCK_AGENT_STATUSES, source: "fallback", error };
+export async function fetchAuditEvents(limit = 20, auth?: string | null): Promise<OpsResult<AuditEventRow[]>> {
+  const result = await getJson(`/ops/audit-events?limit=${limit}`, auth);
+  const events = (result.data as { events?: AuditEventRow[] } | undefined)?.events;
+  if (Array.isArray(events)) return { data: events, source: "live" };
+  return emptyResult([], result.status, result.error);
 }
 
-// ── 대시보드 메트릭 ──────────────────────────────────────────────────────────
-
-export async function fetchDashboardMetrics(): Promise<OpsResult<DashboardMetric[]>> {
-  const { data, source, error } = await safeGet("/ops/summary", null);
-  if (source === "live" || source === "static") {
-    const metrics = (data as { metrics?: DashboardMetric[] })?.metrics;
-    if (Array.isArray(metrics)) {
-      return { data: metrics, source: "live" };
-    }
-  }
-  return { data: MOCK_METRICS, source: "fallback", error };
+export async function fetchAgentStatuses(auth?: string | null): Promise<OpsResult<AgentStatus[]>> {
+  const result = await getJson("/ops/agents", auth);
+  const agents = (result.data as { agents?: AgentStatus[] } | undefined)?.agents;
+  if (Array.isArray(agents)) return { data: agents, source: "live" };
+  return emptyResult([], result.status, result.error);
 }
 
-// ── 연동 현황 ────────────────────────────────────────────────────────────────
-
-export async function fetchIntegrations(): Promise<OpsResult<IntegrationStatus[]>> {
-  const { data, source, error } = await safeGet("/ops/integrations", null);
-  if (source === "live" || source === "static") {
-    const integrations = (data as { integrations?: IntegrationStatus[] })?.integrations;
-    if (Array.isArray(integrations)) {
-      return { data: integrations, source: "live" };
-    }
-  }
-  return { data: MOCK_INTEGRATIONS, source: "fallback", error };
+export async function fetchDashboardMetrics(auth?: string | null): Promise<OpsResult<DashboardMetric[]>> {
+  const result = await getJson("/ops/summary", auth);
+  const metrics = (result.data as { metrics?: DashboardMetric[] } | undefined)?.metrics;
+  if (Array.isArray(metrics)) return { data: metrics, source: "live" };
+  return emptyResult([], result.status, result.error);
 }
 
-// ── 레거시 호환 (기존 import 유지) ───────────────────────────────────────────
-// 이전 코드가 MOCK_AUDIT_EVENTS 를 직접 반환하던 인터페이스 유지
+export async function fetchIntegrations(auth?: string | null): Promise<OpsResult<IntegrationStatus[]>> {
+  const result = await getJson("/ops/integrations", auth);
+  const integrations = (result.data as { integrations?: IntegrationStatus[] } | undefined)?.integrations;
+  if (Array.isArray(integrations)) return { data: integrations, source: "live" };
+  return emptyResult([], result.status, result.error);
+}
+
 export async function fetchApprovalQueueLegacy(): Promise<ApprovalItem[]> {
   const result = await fetchApprovalQueue();
   return result.data;

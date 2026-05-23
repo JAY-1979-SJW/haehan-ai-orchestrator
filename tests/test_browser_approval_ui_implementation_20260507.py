@@ -25,8 +25,10 @@ from ai_orchestrator.browser_tool.approval_record_store import (
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
     """FastAPI test client."""
+    import ai_orchestrator.config as config
+    monkeypatch.setattr(config, "AUTH_ENABLED", False)
     return TestClient(app)
 
 
@@ -538,3 +540,38 @@ class TestAppendOnlyBehavior:
         assert len(records) == 2
         assert records[0]["approval_event_type"] == "APPROVAL_REQUESTED"
         assert records[1]["approval_event_type"] == "APPROVAL_REQUESTED"
+
+
+class TestApprovalAuthGate:
+    """Approval APIs must require admin/owner when auth is enabled."""
+
+    def test_list_requires_auth_when_enabled(self, monkeypatch, tmp_path):
+        import ai_orchestrator.config as config
+        monkeypatch.setattr(config, "AUTH_ENABLED", True)
+        monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")
+        config.HTTP_USERS_PATH.write_text(
+            json.dumps([
+                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+            ]),
+            encoding="utf-8",
+        )
+        secure_client = TestClient(app)
+        response = secure_client.get("/api/v1/browser-approvals/requests")
+        assert response.status_code == 401
+
+    def test_viewer_blocked_when_enabled(self, monkeypatch, tmp_path):
+        import ai_orchestrator.config as config
+        monkeypatch.setattr(config, "AUTH_ENABLED", True)
+        monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")
+        config.HTTP_USERS_PATH.write_text(
+            json.dumps([
+                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+            ]),
+            encoding="utf-8",
+        )
+        secure_client = TestClient(app)
+        response = secure_client.get(
+            "/api/v1/browser-approvals/requests",
+            auth=("viewer_u", "pw-viewer"),
+        )
+        assert response.status_code == 403

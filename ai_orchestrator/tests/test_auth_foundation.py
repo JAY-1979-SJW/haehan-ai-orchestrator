@@ -45,7 +45,10 @@ def auth_users_file(tmp_path, monkeypatch):
 def test_auth_disabled_returns_dummy_owner(auth_disabled):
     assert config.AUTH_ENABLED is False
     user = auth.get_current_user(credentials=None)
-    assert user == {"actor": "system", "role": "owner"}
+    assert user["actor"] == "system"
+    assert user["role"] == "owner"
+    assert user["organization_ids"] == ["default-org"]
+    assert user["active_organization_id"] == "default-org"
 
 
 def test_require_role_allows_dummy_owner(auth_disabled):

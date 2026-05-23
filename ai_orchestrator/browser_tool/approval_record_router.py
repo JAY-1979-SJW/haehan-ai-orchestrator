@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
+from ai_orchestrator import config
 from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
 from ai_orchestrator.auth import require_role
 from .approval_record_store import (
@@ -126,6 +127,7 @@ def _to_approval_response(record: dict) -> ApprovalRecordResponse:
 async def list_approvals(
     status: Optional[str] = None,
     approval_id: Optional[str] = None,
+    _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalListResponse:
     """List approval requests.
 
@@ -176,7 +178,10 @@ async def list_approvals(
 
 
 @approval_record_router.get("/requests/{approval_id}", response_model=ApprovalRecordResponse)
-async def get_approval(approval_id: str) -> ApprovalRecordResponse:
+async def get_approval(
+    approval_id: str,
+    _user: dict = Depends(require_role("admin", "owner")),
+) -> ApprovalRecordResponse:
     """Get approval request by approval_id."""
     try:
         latest = get_latest_approval_status(approval_id, APPROVAL_RECORD_STORE_PATH)
@@ -185,6 +190,8 @@ async def get_approval(approval_id: str) -> ApprovalRecordResponse:
         return _to_approval_response(latest)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Approval not found")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to get approval: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -193,17 +200,20 @@ async def get_approval(approval_id: str) -> ApprovalRecordResponse:
 @approval_record_router.post("/requests", response_model=ApprovalRecordResponse)
 async def create_approval(
     req: ApprovalRequestCreate,
+    _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalRecordResponse:
     """Create approval request."""
     try:
+        actor = _user.get("actor", req.requested_by) if config.AUTH_ENABLED else req.requested_by
+        role = _user.get("role", req.requested_role) if config.AUTH_ENABLED else req.requested_role
         approval_record = build_approval_request(
             workflow_run_id=req.workflow_run_id,
             workflow_id=req.workflow_id,
             action_name=req.action_name,
             operation_type=req.operation_type,
             approval_scope=req.approval_scope,
-            requested_by=req.requested_by,
-            requested_role=req.requested_role,
+            requested_by=actor,
+            requested_role=role,
             tenant_id=req.tenant_id,
             user_id=req.user_id,
             site_id=req.site_id,
@@ -244,17 +254,20 @@ async def create_approval(
 async def approve_request(
     approval_id: str,
     req: ApprovalDecisionCreate,
+    _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalRecordResponse:
     """Grant approval for a request."""
     try:
+        actor = _user.get("actor", req.decided_by) if config.AUTH_ENABLED else req.decided_by
+        role = _user.get("role", req.decided_role) if config.AUTH_ENABLED else req.decided_role
         # Set event type to APPROVAL_GRANTED (endpoint implies this)
         event_type = "APPROVAL_GRANTED"
 
         decision_record = build_approval_decision(
             approval_id=approval_id,
             approval_event_type=event_type,
-            decided_by=req.decided_by,
-            decided_role=req.decided_role,
+            decided_by=actor,
+            decided_role=role,
             decision_reason=req.decision_reason,
         )
 
@@ -291,17 +304,20 @@ async def approve_request(
 async def reject_request(
     approval_id: str,
     req: ApprovalDecisionCreate,
+    _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalRecordResponse:
     """Reject approval for a request."""
     try:
+        actor = _user.get("actor", req.decided_by) if config.AUTH_ENABLED else req.decided_by
+        role = _user.get("role", req.decided_role) if config.AUTH_ENABLED else req.decided_role
         # Set event type to APPROVAL_REJECTED (endpoint implies this)
         event_type = "APPROVAL_REJECTED"
 
         decision_record = build_approval_decision(
             approval_id=approval_id,
             approval_event_type=event_type,
-            decided_by=req.decided_by,
-            decided_role=req.decided_role,
+            decided_by=actor,
+            decided_role=role,
             decision_reason=req.decision_reason,
         )
 
@@ -335,7 +351,10 @@ async def reject_request(
 
 
 @approval_record_router.get("/requests/{approval_id}/history", response_model=ApprovalHistoryResponse)
-async def get_approval_history_endpoint(approval_id: str) -> ApprovalHistoryResponse:
+async def get_approval_history_endpoint(
+    approval_id: str,
+    _user: dict = Depends(require_role("admin", "owner")),
+) -> ApprovalHistoryResponse:
     """Get approval event history for a specific approval_id."""
     try:
         events = get_approval_history_records(approval_id, APPROVAL_RECORD_STORE_PATH)

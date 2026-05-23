@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8400/api/v1';
+import {
+  backendJsonHeaders,
+  getBackendApiBase,
+  requireBackendRole,
+} from '@/lib/backend-auth';
 
 export const dynamic = 'force-dynamic';
+const APPROVAL_ROLES = ['admin', 'owner'] as const;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    const auth = await requireBackendRole(request, APPROVAL_ROLES);
+    if (auth instanceof NextResponse) return auth;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const approval_id = searchParams.get('approval_id');
 
-    let url = `${API_BASE}/browser-approvals/requests`;
+    let url = `${getBackendApiBase()}/browser-approvals/requests`;
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (approval_id) params.append('approval_id', approval_id);
@@ -21,9 +28,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(auth),
+      cache: 'no-store',
     });
 
     const data = await response.json();
@@ -44,14 +50,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    const auth = await requireBackendRole(request, APPROVAL_ROLES);
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
 
-    const response = await fetch(`${API_BASE}/browser-approvals/requests`, {
+    const response = await fetch(`${getBackendApiBase()}/browser-approvals/requests`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: backendJsonHeaders(auth),
       body: JSON.stringify(body),
+      cache: 'no-store',
     });
 
     const data = await response.json();
