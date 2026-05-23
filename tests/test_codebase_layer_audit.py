@@ -5,6 +5,7 @@ from scripts.ops.codebase_layer_audit import (
     ClassifiedFile,
     audit,
     build_residual_audit,
+    check_security_patterns,
     check_consistency,
     classify_path,
     diff_snapshot,
@@ -28,6 +29,7 @@ def test_classify_core_layers():
     assert classify_path("admin-web/src/app/page.tsx")[0] == "L9"
     assert classify_path("agent/excel/workflows.py")[0] == "L10"
     assert classify_path("docs/layer_classification.md")[0] == "L12"
+    assert classify_path("backend/compat/legacy_5050/adapters/common.py")[0] == "L8"
 
 
 def test_audit_detects_root_python_script():
@@ -88,6 +90,51 @@ def test_residual_audit_tracks_configured_issue():
     assert residual["summary"]["tracked_open_count"] == 1
     assert residual["summary"]["resolved_tracked_count"] == 1
     assert residual["summary"]["untracked_warning_count"] == 1
+
+
+def test_residual_audit_tracks_root_script_group():
+    issues = [
+        AuditIssue("warn", "ROOT_PY_SCRIPT", "app.py", "root", "L4"),
+        AuditIssue("warn", "ROOT_PY_SCRIPT", "executor.py", "root", "L4"),
+    ]
+    config = {
+        "tracked_residuals": [
+            {"code": "ROOT_PY_SCRIPT", "path": "root_legacy_scripts", "status": "accepted"},
+        ]
+    }
+
+    residual = build_residual_audit(issues, config)
+
+    assert residual["summary"]["tracked_open_count"] == 1
+    assert residual["summary"]["untracked_warning_count"] == 0
+
+
+def test_security_patterns_ignore_auth_header_construction(tmp_path):
+    source = tmp_path / "client.py"
+    source.write_text(
+        'headers = {"Authorization": f"Bearer {api_key}"}\n'
+        'safe = f"{username}:{password}"\n',
+        encoding="utf-8",
+    )
+    rows = [ClassifiedFile("client.py", "L3", "test", 1, 1.0)]
+
+    issues = check_security_patterns(rows, root=tmp_path)
+
+    assert issues == []
+
+
+def test_security_patterns_detect_secret_logging(tmp_path):
+    source = tmp_path / "client.py"
+    source.write_text(
+        "logger.info('key %s', api_key)\n"
+        "print(f\"password: {result.get('password')}\")\n",
+        encoding="utf-8",
+    )
+    rows = [ClassifiedFile("client.py", "L3", "test", 1, 1.0)]
+
+    issues = check_security_patterns(rows, root=tmp_path)
+
+    assert [issue.code for issue in issues] == ["SECURITY_PATTERN", "SECURITY_PATTERN"]
 
 
 def test_validate_config_accepts_residual_schema():

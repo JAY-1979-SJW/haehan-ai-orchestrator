@@ -356,6 +356,7 @@ def print_excel_download_summary(result: dict[str, Any]) -> None:
     if download:
         print(f"file: {download.get('saved_path')}")
         print(f"size: {download.get('size')}")
-    print(f"password: {result.get('password') or os.getenv('EUM_EXCEL_PASSWORD') or DEFAULT_EXCEL_PASSWORD}")
+    password_masked = "***" if (result.get("password") or os.getenv("EUM_EXCEL_PASSWORD") or DEFAULT_EXCEL_PASSWORD) else ""
+    print(f"password: {password_masked}")
     if result.get("saved_path"):
         print(f"log: {result.get('saved_path')}")

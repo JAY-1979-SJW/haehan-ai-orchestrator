@@ -7,6 +7,7 @@ packages. This script is intentionally read-only.
 from __future__ import annotations
 
 import argparse
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -79,6 +80,20 @@ def has_files(path: Path) -> bool:
     return path.exists() and path.is_dir() and any(child.is_file() for child in path.rglob("*"))
 
 
+def is_git_ignored(rel: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", rel],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
 def audit() -> list[Finding]:
     findings: list[Finding] = []
 
@@ -114,7 +129,10 @@ def audit() -> list[Finding]:
     for rel in GENERATED_RESIDUE_WARN:
         path = repo_path(rel)
         if path.exists():
-            findings.append(Finding("WARN", rel, "local generated artifact; keep ignored and exclude from packages"))
+            if is_git_ignored(rel):
+                findings.append(Finding("PASS", rel, "local generated artifact is ignored and excluded from release"))
+            else:
+                findings.append(Finding("WARN", rel, "local generated artifact is not ignored"))
 
     for rel in EMPTY_RESIDUE_WARN:
         path = repo_path(rel)
