@@ -8,6 +8,7 @@ def test_module_matrix_has_expected_modules():
         "desktop_auth_runtime",
         "live_agent",
         "playwright_ai",
+        "release_preflight",
     }.issubset(set(gate.module_names()))
 
 
@@ -40,6 +41,18 @@ def test_repo_guard_includes_desktop_security_boundary():
     repo_guard = next(module for module in gate.MODULES if module.name == "repo_guard")
 
     assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
+
+
+def test_release_preflight_includes_admin_web_and_secret_scan():
+    release = next(module for module in gate.MODULES if module.name == "release_preflight")
+    checks = {step.check for step in release.steps}
+
+    assert {
+        "admin_web_typecheck",
+        "admin_web_lint",
+        "admin_web_audit",
+        "active_source_secret_scan",
+    }.issubset(checks)
 
 
 def test_desktop_security_boundary_passes_current_runtime_sources():
@@ -95,6 +108,12 @@ def test_redact_masks_auth_and_secret_values():
     assert "sk-testsecretvalue12345" not in redacted
     assert "plain-device-token" not in redacted
     assert "<redacted>" in redacted
+
+
+def test_active_source_secret_scan_passes_current_sources():
+    ok, message = gate.check_active_source_secret_scan()
+
+    assert ok, message
 
 
 def test_find_staged_out_of_scope_uses_normalized_paths():

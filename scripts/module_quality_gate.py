@@ -7,8 +7,10 @@ installer builds, Docker operations, deploys, or staged out-of-scope files.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -147,6 +149,16 @@ MODULES: tuple[GateModule, ...] = (
             ),
         ),
     ),
+    GateModule(
+        name="release_preflight",
+        description="admin-web static checks and active-source secret scan",
+        steps=(
+            GateStep("admin_web_typecheck", check="admin_web_typecheck"),
+            GateStep("admin_web_lint", check="admin_web_lint"),
+            GateStep("admin_web_audit", check="admin_web_audit"),
+            GateStep("active_source_secret_scan", check="active_source_secret_scan"),
+        ),
+    ),
 )
 
 
@@ -220,9 +232,117 @@ def check_forbidden_command_matrix() -> tuple[bool, str]:
     return True, "module gate matrix contains no build/deploy/push commands"
 
 
+def _run_check_command(command: list[str], *, cwd: Path = ROOT, timeout: int = 120) -> tuple[bool, str]:
+    executable = command[0]
+    if executable == "npm":
+        executable = shutil.which("npm.cmd") or shutil.which("npm") or "npm"
+    try:
+        result = subprocess.run(
+            [executable, *command[1:]],
+            cwd=cwd,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            timeout=timeout,
+        )
+    except FileNotFoundError:
+        return False, f"{command[0]} not found"
+    output = redact(result.stdout or "").strip()
+    tail = output[-500:].replace("\n", " | ") if output else ""
+    if result.returncode == 0:
+        return True, tail or "ok"
+    return False, tail or f"exit_code={result.returncode}"
+
+
+def check_admin_web_typecheck() -> tuple[bool, str]:
+    package = ROOT / "admin-web" / "package.json"
+    if not package.exists():
+        return False, "admin-web/package.json missing"
+    return _run_check_command(["npm", "run", "typecheck"], cwd=ROOT / "admin-web")
+
+
+def check_admin_web_lint() -> tuple[bool, str]:
+    package = ROOT / "admin-web" / "package.json"
+    if not package.exists():
+        return False, "admin-web/package.json missing"
+    return _run_check_command(["npm", "run", "lint"], cwd=ROOT / "admin-web")
+
+
+def check_admin_web_audit() -> tuple[bool, str]:
+    package = ROOT / "admin-web" / "package.json"
+    if not package.exists():
+        return False, "admin-web/package.json missing"
+    executable = shutil.which("npm.cmd") or shutil.which("npm") or "npm"
+    try:
+        result = subprocess.run(
+            [executable, "audit", "--omit=dev", "--json"],
+            cwd=ROOT / "admin-web",
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            timeout=120,
+        )
+    except FileNotFoundError:
+        return False, "npm not found"
+
+    output = redact(result.stdout or "").strip()
+    try:
+        report = json.loads(output)
+    except json.JSONDecodeError:
+        tail = output[-500:].replace("\n", " | ") if output else f"exit_code={result.returncode}"
+        return False, "npm audit returned non-json output: " + tail
+
+    counts = report.get("metadata", {}).get("vulnerabilities", {})
+    high = int(counts.get("high", 0))
+    critical = int(counts.get("critical", 0))
+    if high or critical:
+        return False, f"production dependency audit found high={high} critical={critical}"
+    total = int(counts.get("total", 0))
+    return True, f"production dependency audit high=0 critical=0 total={total}"
+
+
 def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
     text = (ROOT / path).read_text(encoding="utf-8", errors="replace")
     return [needle for needle in needles if needle in text]
+
+
+def _is_secret_scan_excluded(path: Path) -> bool:
+    rel = normalize_path(str(path.relative_to(ROOT)))
+    parts = set(rel.split("/"))
+    if parts & {"node_modules", ".next", "ui_dist", "logs", "tests", "__pycache__", ".claude", ".github"}:
+        return True
+    if rel.startswith(("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/")):
+        return True
+    if rel in {"scripts/module_quality_gate.py"}:
+        return True
+    return False
+
+
+def check_active_source_secret_scan() -> tuple[bool, str]:
+    patterns = (
+        re.compile(r"BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY"),
+        re.compile(r"AKIA[0-9A-Z]{16}"),
+        re.compile(r"sk-[A-Za-z0-9_-]{12,}"),
+        re.compile(r"(?i)Authorization\s*:\s*Bearer\s+[A-Za-z0-9._~+/=-]+"),
+        re.compile(r"Bearer admin-token"),
+    )
+    suffixes = {".py", ".ts", ".tsx", ".js", ".json", ".yml", ".yaml", ".bat", ".ps1", ".sh"}
+    hits: list[str] = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in suffixes:
+            continue
+        if _is_secret_scan_excluded(path):
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(pattern.search(text) for pattern in patterns):
+            hits.append(normalize_path(str(path.relative_to(ROOT))))
+            if len(hits) >= 20:
+                break
+    if hits:
+        return False, "possible active-source secret hits: " + ", ".join(hits)
+    return True, "no active-source secret patterns detected"
 
 
 def imports_local_agent(text: str) -> bool:
@@ -289,6 +409,10 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
+    "admin_web_typecheck": check_admin_web_typecheck,
+    "admin_web_lint": check_admin_web_lint,
+    "admin_web_audit": check_admin_web_audit,
+    "active_source_secret_scan": check_active_source_secret_scan,
 }
 
 
