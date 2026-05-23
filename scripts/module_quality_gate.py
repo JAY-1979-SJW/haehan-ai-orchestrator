@@ -550,6 +550,8 @@ def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
             "tests/test_local_agent_browser_runtime_operating_rules.py",
             "tests/test_local_agent_cdp_attach.py",
             "tests/test_dry_run_local_agent_cdp_attach.py",
+            "-p",
+            "no:cacheprovider",
             "-q",
         ],
         timeout=180,
