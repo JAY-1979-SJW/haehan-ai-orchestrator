@@ -69,7 +69,7 @@ def store():
 def client(store):
     if not _UI_AVAILABLE:
         pytest.skip("fastapi not available")
-    app = create_app(store)
+    app = create_app(store, enable_html_ui=True)
     return TestClient(app, raise_server_exceptions=True)
 
 

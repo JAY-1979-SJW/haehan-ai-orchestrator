@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 
 try:
@@ -39,6 +40,12 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_HOST = "127.0.0.1"  # 외부 네트워크 노출 금지
 DEFAULT_PORT = 18080
+
+
+def _html_ui_fallback_enabled() -> bool:
+    return os.getenv("HAEHAN_USER_PRESENT_UI_FALLBACK", "").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
 
 
 # ── HTML 생성 헬퍼 ───────────────────────────────────────────────────────────
@@ -159,7 +166,11 @@ h1 {{ font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #0F172A; }}
 
 # ── FastAPI 앱 팩토리 ─────────────────────────────────────────────────────────
 
-def create_app(store: UserPresentStateStore | None = None) -> Any:
+def create_app(
+    store: UserPresentStateStore | None = None,
+    *,
+    enable_html_ui: bool | None = None,
+) -> Any:
     """
     FastAPI 앱 인스턴스를 생성한다.
     store를 주입하지 않으면 default_store를 사용한다.
@@ -169,6 +180,7 @@ def create_app(store: UserPresentStateStore | None = None) -> Any:
         raise RuntimeError("fastapi가 설치되어 있지 않습니다. pip install fastapi 후 재시도하세요.")
 
     _store = store if store is not None else default_store
+    html_ui_enabled = _html_ui_fallback_enabled() if enable_html_ui is None else bool(enable_html_ui)
 
     app = FastAPI(
         title="로컬 Agent 사용자 직접 인증 UI",
@@ -187,11 +199,18 @@ def create_app(store: UserPresentStateStore | None = None) -> Any:
             "note": "127.0.0.1 전용 로컬 UI 서버",
         }
 
-    @app.get("/", response_class=HTMLResponse)
-    async def index() -> HTMLResponse:
+    @app.get("/")
+    async def index() -> Any:
         tasks = _store.list_user_present_tasks()
         sanitized = [_store.sanitize_user_present_task_for_user(t) for t in tasks]
-        return HTMLResponse(_render_page_html(sanitized))
+        if html_ui_enabled:
+            return HTMLResponse(_render_page_html(sanitized))
+        return JSONResponse({
+            "tasks": sanitized,
+            "count": len(sanitized),
+            "safe_to_execute": False,
+            "html_ui_enabled": False,
+        })
 
     @app.get("/tasks")
     async def list_tasks() -> dict[str, Any]:
@@ -223,9 +242,10 @@ def create_app(store: UserPresentStateStore | None = None) -> Any:
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc))
         sanitized = _store.sanitize_user_present_task_for_user(updated)
-        # HTML 폼 제출 시 리다이렉트
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url="/", status_code=303)
+        if html_ui_enabled:
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url="/", status_code=303)
+        return JSONResponse({**sanitized, "safe_to_execute": False})
 
     @app.post("/tasks/{workflow_run_id}/cancel")
     async def cancel_task(workflow_run_id: str = Path(...)) -> Any:
@@ -240,8 +260,11 @@ def create_app(store: UserPresentStateStore | None = None) -> Any:
             updated = _store.mark_user_cancelled(workflow_run_id)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc))
-        from fastapi.responses import RedirectResponse
-        return RedirectResponse(url="/", status_code=303)
+        sanitized = _store.sanitize_user_present_task_for_user(updated)
+        if html_ui_enabled:
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url="/", status_code=303)
+        return JSONResponse({**sanitized, "safe_to_execute": False})
 
     return app
 
