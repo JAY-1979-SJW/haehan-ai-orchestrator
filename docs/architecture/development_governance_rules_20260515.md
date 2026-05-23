@@ -131,6 +131,8 @@ scripts/<site>/              ← thin profile/workflow/action만 허용
 ### 8.0 App Baseline Rule
 
 The locked app baseline is `docs/baseline/APP_BASELINE.md`.
+The locked standard workflow is `docs/baseline/STANDARD_WORKFLOW.md`.
+The locked report template is `docs/templates/STANDARD_REPORT_TEMPLATE.md`.
 
 Before changing server, local-agent, browser, AI, approval, desktop runtime, or
 release logic, the change must be checked against that baseline. Every code
@@ -145,6 +147,10 @@ change report must answer these four points:
 
 If a planned change weakens the baseline, stop and request explicit user
 approval for a baseline/governance change before editing runtime code.
+
+Every non-trivial task must follow `docs/baseline/STANDARD_WORKFLOW.md` and
+final reports should use `docs/templates/STANDARD_REPORT_TEMPLATE.md`, including
+function-level explanations for changed code.
 
 새 코드 작성 전 반드시 아래를 먼저 확인한다:
 

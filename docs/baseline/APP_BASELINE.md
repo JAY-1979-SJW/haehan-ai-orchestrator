@@ -225,6 +225,16 @@ state changes
 regression gate
 ```
 
+All work must also follow the locked standard workflow and reporting template:
+
+```text
+docs/baseline/STANDARD_WORKFLOW.md
+docs/templates/STANDARD_REPORT_TEMPLATE.md
+```
+
+The standard workflow controls task scoping, user approval, forbidden actions,
+verification, recovery, function-level explanation, and final reporting.
+
 ## 10. Release And Install Rules
 
 Before release or installer/portable work:
@@ -304,4 +314,3 @@ baseline change proposal
 -> verification
 -> commit
 ```
-
