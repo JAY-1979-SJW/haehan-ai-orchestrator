@@ -224,6 +224,12 @@ docs/baseline/modules/DESKTOP_AUTH_RUNTIME_BASELINE.md
 
 ### portable_install
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/PORTABLE_INSTALL_BASELINE.md
+```
+
 - Responsibility: portable ZIP install/start/diagnostics/uninstall scripts and
   user-facing no-admin installation flow.
 - Input: extracted app folder and user execution of `.bat` files.
