@@ -9,6 +9,7 @@ def test_module_matrix_has_expected_modules():
         "live_agent",
         "playwright_ai",
         "release_preflight",
+        "release_runtime",
     }.issubset(set(gate.module_names()))
 
 
@@ -53,6 +54,14 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
         "admin_web_audit",
         "active_source_secret_scan",
     }.issubset(checks)
+
+
+def test_release_runtime_gate_is_live_only():
+    module = next(module for module in gate.MODULES if module.name == "release_runtime")
+
+    assert module.steps
+    assert all(step.live for step in module.steps)
+    assert any("verify_release_runtime_gate.py" in step.command for step in module.steps)
 
 
 def test_desktop_security_boundary_passes_current_runtime_sources():

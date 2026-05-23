@@ -159,6 +159,17 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("active_source_secret_scan", check="active_source_secret_scan"),
         ),
     ),
+    GateModule(
+        name="release_runtime",
+        description="sequential live server, AI browser, and remote-control readiness gate",
+        steps=(
+            GateStep(
+                "release_runtime_gate",
+                (PY, "verify_release_runtime_gate.py", "--retries", "1", "--retry-delay", "8"),
+                live=True,
+            ),
+        ),
+    ),
 )
 
 
