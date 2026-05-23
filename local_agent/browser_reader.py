@@ -25,7 +25,9 @@ Playwright 가 설치되어 있지 않은 환경에서는
 from __future__ import annotations
 
 import logging
+import os
 import re
+import time
 from typing import Any, Callable
 from urllib.parse import urlparse
 
@@ -72,6 +74,8 @@ def open_url_readonly(
     keyword_hints: list[str] | None = None,
     allow_private_network: bool = False,
     allow_about_blank: bool = False,
+    headless: bool | None = None,
+    keep_open_ms: int = 0,
     _playwright_factory: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """URL 을 read-only 로 열고 페이지 구조 요약 dict 를 반환.
@@ -86,11 +90,21 @@ def open_url_readonly(
     호출자가 명시하지 않으면 기본 동작(URL_SCHEME_BLOCKED)이 유지된다.
     """
     url_category = _categorize_url(url)
+    if headless is None:
+        headless = os.getenv("HAEHAN_BROWSER_HEADLESS", "true").lower() != "false"
+    try:
+        keep_open_ms = int(keep_open_ms)
+    except (TypeError, ValueError):
+        keep_open_ms = 0
+    keep_open_ms = max(0, min(keep_open_ms, 30000))
+
     audit_base = {
         "action": "controlled_browser_open",
         "url_category": url_category,
         "allow_about_blank": bool(allow_about_blank),
         "allow_private_network": bool(allow_private_network),
+        "headless": bool(headless),
+        "keep_open_ms": keep_open_ms,
         "dry_run": False,
     }
     # url 원문은 about:blank 인 경우에만 audit 에 포함
@@ -149,7 +163,10 @@ def open_url_readonly(
     try:
         page_title, current_url, html = _open_and_read(
             factory, url,
-            wait_until=wait_until, timeout_ms=timeout_ms,
+            wait_until=wait_until,
+            timeout_ms=timeout_ms,
+            headless=bool(headless),
+            keep_open_ms=keep_open_ms,
         )
     except BrowserDependencyMissing as e:
         _audit.log_local_event(
@@ -221,6 +238,8 @@ def open_url_readonly(
         "current_url": (current_url or "")[:500],
         "title": (page_title or "")[:300],
         "html_truncated": html_truncated,
+        "headless": bool(headless),
+        "keep_open_ms": keep_open_ms,
         "login_required_hint": login_hint,
         "login_reason": login_reason,
         "modal_candidates": modal_candidates,
@@ -268,6 +287,8 @@ def _open_and_read(
     *,
     wait_until: str,
     timeout_ms: int,
+    headless: bool,
+    keep_open_ms: int,
 ) -> tuple[str, str, str]:
     """브라우저를 띄워 title/current_url/html 만 수집 후 전원 종료.
 
@@ -275,7 +296,7 @@ def _open_and_read(
     마우스/키보드 조작 API 도 호출하지 않는다.
     """
     with factory() as pw:
-        browser = pw.chromium.launch(headless=True)
+        browser = pw.chromium.launch(headless=headless)
         try:
             context = browser.new_context()
             try:
@@ -285,6 +306,8 @@ def _open_and_read(
                     page_title = page.title()
                     current_url = page.url
                     html = page.content()
+                    if keep_open_ms > 0:
+                        time.sleep(keep_open_ms / 1000.0)
                     return page_title, current_url, html
                 finally:
                     _safe_close(page)
