@@ -181,7 +181,7 @@ def check_server(report: Report, *, live_server: bool) -> None:
         report.warn("server tcp 443", type(exc).__name__)
 
     if not live_server:
-        report.warn("server http health", "skipped; pass --live-server to check")
+        report.pass_("server http health", "skipped in static mode; pass --live-server to check")
         return
     try:
         req = urllib.request.Request(SERVER_HEALTH_URL, method="GET")

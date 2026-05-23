@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import json
+from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
@@ -258,6 +259,32 @@ def test_main_diagnostics_returns_zero(monkeypatch, capsys):
     rc = desktop_launcher.main(["--diagnostics",
                                  "--server", "https://haehan-ai.kr/orchestrator"])
     assert rc == 0
+
+
+def test_show_diagnostics_reports_stored_credentials(monkeypatch):
+    from local_agent import desktop_config
+    from local_agent import desktop_launcher
+
+    monkeypatch.setattr(
+        desktop_config,
+        "load_config",
+        lambda: SimpleNamespace(
+            server_url="https://haehan-ai.kr/orchestrator",
+            agent_id="la-abcdef123456",
+        ),
+    )
+    monkeypatch.setattr(
+        desktop_launcher.ts,
+        "has_device_token",
+        lambda *, server_url, agent_id: True,
+    )
+
+    result = desktop_launcher.show_diagnostics("https://haehan-ai.kr/orchestrator")
+
+    assert result["token_present"] is True
+    assert result["agent_id_masked"] == "la-abc***3456"
+    assert "DISCONNECTED" in result["diagnostics_block"]
+    assert "abcdef123456" not in result["diagnostics_block"]
 
 
 def test_main_register_requires_env(monkeypatch, capsys):
