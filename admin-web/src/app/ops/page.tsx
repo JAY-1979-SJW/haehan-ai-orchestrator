@@ -1,14 +1,13 @@
+import { headers } from "next/headers";
+import type { ExternalWebTaskSummary, SafetyPolicyNotice } from "./lib/types";
 import {
-  MOCK_METRICS,
-  MOCK_WORK_TRADES,
-  MOCK_APPROVAL_QUEUE,
-  MOCK_WEB_TASKS,
-  MOCK_AGENT_STATUSES,
-  MOCK_AUDIT_EVENTS,
-  MOCK_INTEGRATIONS,
-  SAFETY_POLICIES,
-} from "./lib/mockOpsData";
-import type { ExternalWebTaskSummary } from "./lib/types";
+  fetchAgentStatuses,
+  fetchApprovalQueue,
+  fetchAuditEvents,
+  fetchDashboardMetrics,
+  fetchIntegrations,
+  fetchWebTasks,
+} from "./lib/opsApiClient";
 import { OpsDashboard } from "./components/OpsDashboard";
 import { WorkTradeBoard } from "./components/WorkTradeBoard";
 import { ApprovalQueue } from "./components/ApprovalQueue";
@@ -20,72 +19,99 @@ import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
 import { SafetyPolicyBanner } from "./components/SafetyPolicyBanner";
 import { ApiStatusBanner } from "./components/ApiStatusBanner";
 
-function buildExternalSummaries(): ExternalWebTaskSummary[] {
-  const providers = ["naver", "google"];
+const SAFETY_POLICIES: SafetyPolicyNotice[] = [
+  {
+    id: "auth-required",
+    title: "Authentication required",
+    description: "Ops data is shown only from authenticated backend responses.",
+    level: "block",
+  },
+  {
+    id: "no-mock-fallback",
+    title: "Mock fallback disabled",
+    description: "Backend failures are surfaced instead of replaced with sample data.",
+    level: "warn",
+  },
+];
+
+function buildExternalSummaries(tasks: Awaited<ReturnType<typeof fetchWebTasks>>["data"]): ExternalWebTaskSummary[] {
+  const providers = Array.from(new Set(tasks.map((task) => task.provider)));
   return providers.map((provider) => {
-    const tasks = MOCK_WEB_TASKS.filter((t) => t.provider === provider);
+    const providerTasks = tasks.filter((task) => task.provider === provider);
     return {
       provider,
-      totalCount: tasks.length,
-      readyCount: tasks.filter((t) => t.status === "ready").length,
-      holdCount: tasks.filter((t) => t.status === "hold").length,
-      oauthRequiredCount: tasks.filter((t) => t.status === "oauth_required").length,
-      agentRequiredCount: tasks.filter((t) => t.status === "agent_required").length,
+      totalCount: providerTasks.length,
+      readyCount: providerTasks.filter((task) => task.status === "ready").length,
+      holdCount: providerTasks.filter((task) => task.status === "hold").length,
+      oauthRequiredCount: providerTasks.filter((task) => task.status === "oauth_required").length,
+      agentRequiredCount: providerTasks.filter((task) => task.status === "agent_required").length,
     };
   });
 }
 
-export default function OpsPage() {
-  const externalSummaries = buildExternalSummaries();
+export default async function OpsPage() {
+  const authorization = headers().get("authorization");
+  const [
+    metrics,
+    approvalQueue,
+    webTasks,
+    auditEvents,
+    agentStatuses,
+    integrations,
+  ] = await Promise.all([
+    fetchDashboardMetrics(authorization),
+    fetchApprovalQueue(authorization),
+    fetchWebTasks(authorization),
+    fetchAuditEvents(20, authorization),
+    fetchAgentStatuses(authorization),
+    fetchIntegrations(authorization),
+  ]);
+
+  const externalSummaries = buildExternalSummaries(webTasks.data);
+  const failures = [
+    metrics,
+    approvalQueue,
+    webTasks,
+    auditEvents,
+    agentStatuses,
+    integrations,
+  ].filter((result) => result.source !== "live");
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-8">
-        {/* 헤더 */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">운영센터</h1>
+            <h1 className="text-xl font-bold text-gray-900">Ops Center</h1>
             <p className="mt-0.5 text-xs text-gray-400">
-              비서앱 · 작업 승인 · 에이전트 · 감사 로그 통합 운영
+              Live approvals, web tasks, agents, integrations, and audit events
             </p>
           </div>
           <a
             href="/"
             className="rounded bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
           >
-            ← 홈으로
+            Home
           </a>
         </div>
 
-        {/* API 연결 상태 배너 */}
         <ApiStatusBanner />
 
-        {/* 안전 정책 */}
+        {failures.length > 0 && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+            Backend data unavailable for {failures.length} panel(s). Mock fallback is disabled.
+          </div>
+        )}
+
         <SafetyPolicyBanner policies={SAFETY_POLICIES} />
-
-        {/* 운영 대시보드 */}
-        <OpsDashboard metrics={MOCK_METRICS} />
-
-        {/* 승인 대기 */}
-        <ApprovalQueue items={MOCK_APPROVAL_QUEUE} />
-
-        {/* 공종 관리 */}
-        <WorkTradeBoard trades={MOCK_WORK_TRADES} />
-
-        {/* 웹 업무 목록 */}
-        <WebTaskPanel tasks={MOCK_WEB_TASKS} />
-
-        {/* 외부 웹 업무 현황 */}
+        <OpsDashboard metrics={metrics.data} />
+        <ApprovalQueue items={approvalQueue.data} />
+        <WorkTradeBoard trades={[]} />
+        <WebTaskPanel tasks={webTasks.data} />
         <ExternalWebTaskSummaryPanel summaries={externalSummaries} />
-
-        {/* 로컬 에이전트 상태 */}
-        <AgentStatusPanel agents={MOCK_AGENT_STATUSES} />
-
-        {/* 연동 현황 */}
-        <IntegrationStatusPanel integrations={MOCK_INTEGRATIONS} />
-
-        {/* 감사 이벤트 */}
-        <AuditEventTable events={MOCK_AUDIT_EVENTS} />
+        <AgentStatusPanel agents={agentStatuses.data} />
+        <IntegrationStatusPanel integrations={integrations.data} />
+        <AuditEventTable events={auditEvents.data} />
       </div>
     </main>
   );

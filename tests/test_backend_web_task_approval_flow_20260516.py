@@ -341,13 +341,15 @@ class TestWebTaskRunIntegrationBoundary:
 
     @pytest.fixture(scope="class")
     def client(self):
+        import ai_orchestrator.config as config
+        config.AUTH_ENABLED = False
         from fastapi.testclient import TestClient
         from ai_orchestrator.server import app
         return TestClient(app, raise_server_exceptions=False)
 
     @pytest.fixture(scope="class")
     def auth(self):
-        return {"Authorization": "Bearer admin-token"}
+        return {}
 
     def test_dry_run_via_client_no_pending_record(self, client, auth):
         """TestClient dry_run=True — dev_reg_approval pending 레코드 없음."""

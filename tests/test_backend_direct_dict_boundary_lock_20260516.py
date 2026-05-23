@@ -48,13 +48,15 @@ HOLD_REASON_CAD_AI = (
 
 @pytest.fixture(scope="module")
 def client():
+    import ai_orchestrator.config as config
+    config.AUTH_ENABLED = False
     from ai_orchestrator.server import app
     return TestClient(app, raise_server_exceptions=False)
 
 
 @pytest.fixture(scope="module")
 def auth():
-    return {"Authorization": "Bearer admin-token"}
+    return {}
 
 
 # ── 1. HOLD gate: webhooks/telegram ──────────────────────────────────────────

@@ -88,7 +88,10 @@ def test_auth_disabled_returns_dummy_owner(monkeypatch):
     _disable_auth(monkeypatch)
     from ai_orchestrator.auth import get_current_user
     user = get_current_user(credentials=None)
-    assert user == {"actor": "system", "role": "owner"}
+    assert user["actor"] == "system"
+    assert user["role"] == "owner"
+    assert user["organization_ids"] == ["default-org"]
+    assert user["active_organization_id"] == "default-org"
 
 
 # ── 2. AUTH_ENABLED=True + missing Authorization → 401 ───────────────────

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type ApiStatus = "checking" | "live" | "fallback" | "error";
+type ApiStatus = "checking" | "live" | "unauthorized" | "error";
 
 interface PanelStatus {
   label: string;
@@ -13,24 +13,24 @@ interface PanelStatus {
 async function checkEndpoint(path: string): Promise<ApiStatus> {
   try {
     const res = await fetch(`/api/v1${path}`, {
-      headers: { Authorization: "Bearer admin-token" },
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
     });
     if (res.ok) return "live";
-    return "fallback";
+    if (res.status === 401 || res.status === 403) return "unauthorized";
+    return "error";
   } catch {
-    return "fallback";
+    return "error";
   }
 }
 
 export function ApiStatusBanner() {
   const [panels, setPanels] = useState<PanelStatus[]>([
-    { label: "승인 대기", path: "/ops/approvals", status: "checking" },
-    { label: "웹 작업", path: "/ops/web-tasks", status: "checking" },
-    { label: "감사 로그", path: "/ops/audit-events", status: "checking" },
-    { label: "에이전트", path: "/ops/agents", status: "checking" },
-    { label: "연동 현황", path: "/ops/integrations", status: "checking" },
+    { label: "approvals", path: "/ops/approvals", status: "checking" },
+    { label: "web tasks", path: "/ops/web-tasks", status: "checking" },
+    { label: "audit", path: "/ops/audit-events", status: "checking" },
+    { label: "agents", path: "/ops/agents", status: "checking" },
+    { label: "integrations", path: "/ops/integrations", status: "checking" },
   ]);
   const [checked, setChecked] = useState(false);
 
@@ -45,35 +45,35 @@ export function ApiStatusBanner() {
         prev.map((p, i) => ({
           ...p,
           status:
-            results[i].status === "fulfilled"
-              ? results[i].value
-              : "fallback",
+            results[i].status === "fulfilled" ? results[i].value : "error",
         }))
       );
       setChecked(true);
     }
     check();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const liveCount = panels.filter((p) => p.status === "live").length;
-  const allFallback = checked && liveCount === 0;
+  const allUnavailable = checked && liveCount === 0;
   const allLive = checked && liveCount === panels.length;
 
-  const bannerBg = allFallback
-    ? "bg-yellow-50 border-yellow-200"
+  const bannerBg = allUnavailable
+    ? "bg-red-50 border-red-200"
     : allLive
     ? "bg-green-50 border-green-200"
     : "bg-blue-50 border-blue-200";
 
-  const bannerText = allFallback
-    ? "백엔드 API 미연결 — 안전한 대체 데이터 표시 중 (read-only 모드)"
+  const bannerText = allUnavailable
+    ? "Backend API auth/connection failed. Mock fallback is disabled."
     : allLive
-    ? "백엔드 API 연결됨 — 실시간 데이터 표시 중"
+    ? "Backend API connected. Showing live data."
     : checked
-    ? `백엔드 API 부분 연결 (${liveCount}/${panels.length})`
-    : "API 상태 확인 중…";
+    ? `Backend API partially connected (${liveCount}/${panels.length}). Mock fallback is disabled.`
+    : "Checking backend API status...";
 
   return (
     <div
@@ -91,6 +91,8 @@ export function ApiStatusBanner() {
                     ? "bg-green-500"
                     : p.status === "checking"
                     ? "bg-gray-300"
+                    : p.status === "unauthorized"
+                    ? "bg-red-500"
                     : "bg-yellow-400"
                 }`}
               />
@@ -98,7 +100,7 @@ export function ApiStatusBanner() {
             </span>
           ))}
         </div>
-        <span className="ml-auto text-gray-400">⚠️ 위험 실행 비활성 · read-only</span>
+        <span className="ml-auto text-gray-400">read-only</span>
       </div>
     </div>
   );

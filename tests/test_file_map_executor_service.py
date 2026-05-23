@@ -91,6 +91,23 @@ class TestCleanupExecuteEndpoint:
         assert data["ok"] is False
         assert "/tmp" in data["error"]
 
+    def test_execute_tmp_prefix_escape_rejected(self):
+        """/tmp_evil must not pass the /tmp boundary check."""
+        payload = {
+            "dry_run": True,
+            "preflight_id": "test-preflight-123",
+            "approval_token": "user-approved-cleanup-12345678-1234-5678-1234-567812345678",
+            "user_confirmed_execution": True,
+            "base_target_dir": "/tmp_evil/test_cleanup",
+            "plans": []
+        }
+
+        response = client.post("/cleanup/execute", json=payload)
+        assert response.status_code == 400
+        data = response.json()
+        assert data["ok"] is False
+        assert "inside /tmp" in data["error"]
+
     def test_execute_empty_plans(self):
         """POST /cleanup/execute with empty plans should succeed with 0 count."""
         payload = {

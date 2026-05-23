@@ -207,19 +207,21 @@ class TestOpsPageAssembly:
         for component in required:
             assert component in src, f"{component} import 누락"
 
-    def test_ops_page_uses_mock_data(self):
+    def test_ops_page_uses_live_data_without_mock_fallback(self):
         src = (ADMIN_WEB / "page.tsx").read_text(encoding="utf-8")
-        assert "MOCK_METRICS" in src
-        assert "MOCK_APPROVAL_QUEUE" in src
-        assert "MOCK_WORK_TRADES" in src
+        assert "fetchDashboardMetrics" in src
+        assert "fetchApprovalQueue" in src
+        assert "MOCK_METRICS" not in src
+        assert "MOCK_APPROVAL_QUEUE" not in src
 
     def test_home_page_has_ops_link(self):
         home = (ADMIN_WEB.parent / "page.tsx").read_text(encoding="utf-8")
         assert "/ops" in home
 
-    def test_ops_api_client_has_fallback(self):
+    def test_ops_api_client_has_no_mock_fallback(self):
         src = (ADMIN_WEB / "lib/opsApiClient.ts").read_text(encoding="utf-8")
-        assert "fallback" in src or "MOCK_" in src
+        assert "MOCK_" not in src
+        assert "Bearer admin-token" not in src
 
 
 class TestOpsNoExternalApiCallInComponents:

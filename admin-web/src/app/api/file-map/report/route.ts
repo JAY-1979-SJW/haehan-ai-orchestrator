@@ -70,7 +70,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
       case 'reveal_on_trusted_device':
         // 로컬 화면: 항상 원본 허용
-        shouldMask = false;
+        shouldMask = !authVerified;
+        authRequired = !authVerified;
         break;
 
       case 'reveal_for_export_with_warning':

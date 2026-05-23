@@ -156,7 +156,7 @@ export function getMaskingPolicy(mode: FileMapMaskingMode, authVerified: boolean
   switch (mode) {
     case 'mask_always': return true;
     case 'reveal_after_auth': return !authVerified;
-    case 'reveal_on_trusted_device': return false;
+    case 'reveal_on_trusted_device': return !authVerified;
     case 'reveal_for_export_with_warning': return true;
     default: return true;
   }

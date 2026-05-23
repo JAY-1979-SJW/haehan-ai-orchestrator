@@ -23,6 +23,7 @@ services:
       # 컨테이너 내부 고정 경로. .env 가 override 해도 이 값이 우선 적용된다.
       LOG_DIR: /app/ai_orchestrator/storage
       HTTP_USERS_PATH: /run/secrets/api/http_users.json
+      AUTH_ENABLED: "true"
       APP_HOST: 0.0.0.0
       APP_PORT: "8400"
     extra_hosts:
