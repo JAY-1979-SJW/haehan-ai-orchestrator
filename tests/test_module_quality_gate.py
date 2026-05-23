@@ -6,6 +6,7 @@ def test_module_matrix_has_expected_modules():
         "repo_guard",
         "portable_install",
         "desktop_auth_runtime",
+        "backend_core",
         "live_agent",
         "playwright_ai",
         "release_preflight",
@@ -61,6 +62,14 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
         "local_agent_browser_runtime_rules",
         "active_source_secret_scan",
     }.issubset(checks)
+
+
+def test_backend_core_includes_runtime_contract_gate():
+    module = next(module for module in gate.MODULES if module.name == "backend_core")
+
+    assert any(step.name == "backend_core_py_compile" for step in module.steps)
+    assert any(step.check == "backend_runtime_contract" for step in module.steps)
+    assert any(step.name == "backend_core_pytest" for step in module.steps)
 
 
 def test_release_runtime_gate_is_live_only():
@@ -156,6 +165,16 @@ def test_common_tool_runtime_contract_passes_current_sources():
 
 def test_common_tool_runtime_contract_registered_in_checks():
     assert "common_tool_runtime_contract" in gate.CHECKS
+
+
+def test_backend_runtime_contract_passes_current_sources():
+    ok, message = gate.check_backend_runtime_contract()
+
+    assert ok, message
+
+
+def test_backend_runtime_contract_registered_in_checks():
+    assert "backend_runtime_contract" in gate.CHECKS
 
 
 def test_required_local_gate_wiring_passes_current_sources():

@@ -143,6 +143,60 @@ MODULES: tuple[GateModule, ...] = (
         ),
     ),
     GateModule(
+        name="backend_core",
+        description="backend module boundaries, route inventory, auth/security gates",
+        steps=(
+            GateStep(
+                "backend_core_py_compile",
+                (
+                    PY,
+                    "scripts/py_compile_no_cache.py",
+                    "ai_orchestrator/server.py",
+                    "ai_orchestrator/router.py",
+                    "ai_orchestrator/auth.py",
+                    "ai_orchestrator/auth_router.py",
+                    "ai_orchestrator/approval.py",
+                    "ai_orchestrator/web_task_router.py",
+                    "ai_orchestrator/web_task_approval_service.py",
+                    "ai_orchestrator/local_agent_router.py",
+                    "ai_orchestrator/local_agent_registry.py",
+                    "ai_orchestrator/server/action_task_api.py",
+                    "ai_orchestrator/server/local_agent_task_api.py",
+                    "ai_orchestrator/server/server_egress_policy.py",
+                    "ai_orchestrator/server/execution_location_guard.py",
+                    "ai_orchestrator/server/external_url_blocker.py",
+                    "scripts/ops/audit_backend_runtime_contract.py",
+                ),
+            ),
+            GateStep("backend_runtime_contract", check="backend_runtime_contract"),
+            GateStep(
+                "backend_core_pytest",
+                (
+                    PY,
+                    "-m",
+                    "pytest",
+                    "tests/test_backend_runtime_contract_gate.py",
+                    "tests/test_backend_api_contract_audit_20260516.py",
+                    "tests/test_backend_service_layer_task_policy_20260516.py",
+                    "tests/test_backend_policy_layer_safety_registry_20260516.py",
+                    "tests/test_backend_router_server_cycle_break_20260516.py",
+                    "tests/test_backend_direct_dict_boundary_lock_20260516.py",
+                    "tests/test_backend_operation_final_closeout_20260518.py",
+                    "tests/test_server_local_agent_task_api_20260508.py",
+                    "tests/test_server_action_task_api_wiring_20260509.py",
+                    "tests/test_server_task_api_approval_gate_20260509.py",
+                    "tests/test_server_egress_policy_20260508.py",
+                    "tests/test_server_side_external_web_execution_guard_20260508.py",
+                    "tests/test_no_server_playwright_execution_20260508.py",
+                    "tests/test_authed_local_agent_dispatch_dry_run.py",
+                    "-p",
+                    "no:cacheprovider",
+                    "-q",
+                ),
+            ),
+        ),
+    ),
+    GateModule(
         name="playwright_ai",
         description="local Playwright bootstrap and AI proxy no-secret contract",
         steps=(
@@ -716,12 +770,23 @@ def check_common_tool_runtime_contract() -> tuple[bool, str]:
     return True, "common tool runtime contract blocks unsafe execution paths"
 
 
+def check_backend_runtime_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_backend_runtime_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "backend runtime route inventory and security patterns are locked"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "common_tool_runtime_contract": check_common_tool_runtime_contract,
+    "backend_runtime_contract": check_backend_runtime_contract,
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,
     "root_legacy_script_contract": check_root_legacy_script_contract,
