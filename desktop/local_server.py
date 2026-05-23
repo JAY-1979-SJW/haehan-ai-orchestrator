@@ -21,6 +21,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from . import agent_runtime_boundary, browser_runtime_boundary
 from .user_settings import load_menu, save_menu
 from .remote_access import is_enabled as _remote_enabled, verify_token as _verify_token
 
@@ -230,8 +231,7 @@ async def _handle_screenshot(ws: WebSocket) -> None:
     import urllib.request
 
     try:
-        from local_agent.browser_instance_guard import resolve_paths
-        paths = resolve_paths()
+        paths = browser_runtime_boundary.resolve_paths()
         cdp_port = paths.cdp_port
 
         # 탭 목록 조회
@@ -309,22 +309,14 @@ async def _stop_login_watcher() -> None:
 
 
 async def _login_watcher_loop() -> None:
-    from local_agent.browser_instance_guard import resolve_paths
-    from local_agent.browser_realtime_watcher import (
-        compute_events,
-        detect_login_states,
-        from_cdp_targets,
-        login_state_change_events,
-    )
-    from local_agent.browser_session_store import default_store as _bs
-
-    paths = resolve_paths()
+    paths = browser_runtime_boundary.resolve_paths()
+    _bs = browser_runtime_boundary.browser_session_store()
     while True:
         try:
             rows = await _fetch_cdp_targets(paths.cdp_port)
-            curr = from_cdp_targets(rows)
+            curr = browser_runtime_boundary.from_cdp_targets(rows)
             prev = _login_watcher_state["prev_targets"]
-            evs = compute_events(prev, curr)
+            evs = browser_runtime_boundary.compute_events(prev, curr)
             for e in evs:
                 await _broadcast({
                     "type": e.event_type,
@@ -334,10 +326,10 @@ async def _login_watcher_loop() -> None:
                     "extra": e.extra,
                     "ts": time.time(),
                 })
-            login_states = detect_login_states(
+            login_states = browser_runtime_boundary.detect_login_states(
                 curr, prev_states=_login_watcher_state["prev_login_states"],
             )
-            login_evs = login_state_change_events(
+            login_evs = browser_runtime_boundary.login_state_change_events(
                 _login_watcher_state["prev_login_states"], login_states,
             )
             engine = _login_watcher_state["engine"]
@@ -486,7 +478,7 @@ def plan_stale_tab_cleanup(
 
 def _sync_store_with_targets(targets: list[dict]) -> dict[str, list[str]]:
     """현재 CDP target 목록과 session_store 의 탭을 정합."""
-    from local_agent.browser_session_store import default_store as _bs
+    _bs = browser_runtime_boundary.browser_session_store()
 
     ids = [str(t.get("id", "")) for t in targets if t.get("id")]
     diff = _bs.diff_targets(ids)
@@ -506,11 +498,10 @@ def _sync_store_with_targets(targets: list[dict]) -> dict[str, list[str]]:
 
 
 async def _handle_browser_status(ws: WebSocket) -> None:
-    from local_agent.browser_instance_guard import decide_browser_start, resolve_paths
-    from local_agent.browser_session_store import default_store as _bs
+    _bs = browser_runtime_boundary.browser_session_store()
 
-    paths = resolve_paths()
-    decision = await asyncio.to_thread(decide_browser_start, paths)
+    paths = browser_runtime_boundary.resolve_paths()
+    decision = await asyncio.to_thread(browser_runtime_boundary.decide_browser_start, paths)
     targets = await _fetch_cdp_targets(paths.cdp_port) if decision.cdp_alive else []
     if decision.cdp_alive:
         _sync_store_with_targets(targets)
@@ -531,21 +522,12 @@ async def _handle_browser_status(ws: WebSocket) -> None:
 
 
 async def _handle_browser_start(ws: WebSocket) -> None:
-    from local_agent.browser_instance_guard import (
-        ACTION_ATTACH_EXISTING,
-        ACTION_ATTACH_ORPHAN_CDP,
-        ACTION_BLOCKED_BY_LOCK,
-        ACTION_ERROR_MULTIPLE,
-        ACTION_START_NEW,
-        decide_browser_start,
-        resolve_paths,
-    )
-    from local_agent.browser_session_store import default_store as _bs
+    _bs = browser_runtime_boundary.browser_session_store()
 
-    paths = resolve_paths()
-    decision = await asyncio.to_thread(decide_browser_start, paths)
+    paths = browser_runtime_boundary.resolve_paths()
+    decision = await asyncio.to_thread(browser_runtime_boundary.decide_browser_start, paths)
 
-    if decision.action == ACTION_ERROR_MULTIPLE:
+    if decision.action == browser_runtime_boundary.ACTION_ERROR_MULTIPLE:
         await _broadcast({
             "type": "browser_status",
             "action": decision.action,
@@ -563,7 +545,7 @@ async def _handle_browser_start(ws: WebSocket) -> None:
         })
         return
 
-    if decision.action == ACTION_BLOCKED_BY_LOCK:
+    if decision.action == browser_runtime_boundary.ACTION_BLOCKED_BY_LOCK:
         await ws.send_json({
             "type": "browser_start_result",
             "ok": False,
@@ -572,7 +554,10 @@ async def _handle_browser_start(ws: WebSocket) -> None:
         })
         return
 
-    if decision.action in (ACTION_ATTACH_EXISTING, ACTION_ATTACH_ORPHAN_CDP):
+    if decision.action in (
+        browser_runtime_boundary.ACTION_ATTACH_EXISTING,
+        browser_runtime_boundary.ACTION_ATTACH_ORPHAN_CDP,
+    ):
         _bs.start_session() if _bs.snapshot().get("status") != "BROWSER_RUNNING" else None
         targets = await _fetch_cdp_targets(paths.cdp_port)
         _sync_store_with_targets(targets)
@@ -595,11 +580,10 @@ async def _handle_browser_start(ws: WebSocket) -> None:
 
     # ACTION_START_NEW → 실제 시작은 기존 web_connector._ensure_cdp_daemon 경로에 위임.
     # 이번 공정에서는 데몬을 직접 spawn 하지 않고 안내만 한다.
-    if decision.action == ACTION_START_NEW:
-        from local_agent.browser_instance_guard import write_lock_file
+    if decision.action == browser_runtime_boundary.ACTION_START_NEW:
         import os as _os
 
-        write_lock_file(paths, _os.getpid())
+        browser_runtime_boundary.write_lock_file(paths, _os.getpid())
         try:
             await asyncio.to_thread(_start_via_web_connector)
             _bs.start_session()
@@ -613,8 +597,7 @@ async def _handle_browser_start(ws: WebSocket) -> None:
             err = "START_FAILED"
             msg = f"자동화 Chrome 시작 실패: {exc}"
         finally:
-            from local_agent.browser_instance_guard import clear_lock_file
-            clear_lock_file(paths)
+            browser_runtime_boundary.clear_lock_file(paths)
         await ws.send_json({
             "type": "browser_start_result",
             "ok": ok,
@@ -632,15 +615,11 @@ def _start_via_web_connector() -> None:
 
 
 async def _handle_browser_quit(ws: WebSocket) -> None:
-    from local_agent.browser_instance_guard import (
-        quit_automation_browsers,
-        resolve_paths,
-    )
-    from local_agent.browser_session_store import default_store as _bs
+    _bs = browser_runtime_boundary.browser_session_store()
 
     await _stop_login_watcher()
-    paths = resolve_paths()
-    result = await asyncio.to_thread(quit_automation_browsers, paths)
+    paths = browser_runtime_boundary.resolve_paths()
+    result = await asyncio.to_thread(browser_runtime_boundary.quit_automation_browsers, paths)
     _bs.mark_browser_closed()
     await _broadcast({
         "type": "browser_status",
@@ -657,10 +636,9 @@ async def _handle_browser_quit(ws: WebSocket) -> None:
 
 
 async def _handle_tab_list(ws: WebSocket) -> None:
-    from local_agent.browser_instance_guard import resolve_paths
-    from local_agent.browser_session_store import default_store as _bs
+    _bs = browser_runtime_boundary.browser_session_store()
 
-    paths = resolve_paths()
+    paths = browser_runtime_boundary.resolve_paths()
     targets = await _fetch_cdp_targets(paths.cdp_port)
     diff = _sync_store_with_targets(targets)
     await ws.send_json({
@@ -685,11 +663,8 @@ async def _handle_tab_list(ws: WebSocket) -> None:
 
 
 async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
-    from local_agent.browser_instance_guard import resolve_paths
-    from local_agent.browser_session_store import (
-        TAB_CLOSED,
-        default_store as _bs,
-    )
+    _bs = browser_runtime_boundary.browser_session_store()
+    TAB_CLOSED = browser_runtime_boundary.TAB_CLOSED
     import urllib.request
 
     tab_id = str(tab_id or "").strip()
@@ -711,7 +686,7 @@ async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
         })
         return
 
-    paths = resolve_paths()
+    paths = browser_runtime_boundary.resolve_paths()
 
     def _close() -> bool:
         try:
@@ -746,10 +721,8 @@ _LOGIN_BLOCKING_STATES = (
 
 
 def _ensure_engine():
-    from local_agent.login_auto_flow import LoginAutoFlowEngine
-
     if _login_watcher_state.get("engine") is None:
-        _login_watcher_state["engine"] = LoginAutoFlowEngine(
+        _login_watcher_state["engine"] = browser_runtime_boundary.create_login_auto_flow_engine(
             resume_executor=_default_resume_executor,
         )
     elif getattr(
@@ -779,13 +752,13 @@ async def _login_precheck_and_enqueue(action_name: str, data: dict) -> bool:
     if not state:
         return False
 
-    from local_agent.browser_realtime_watcher import choose_login_target
-    from local_agent.login_auto_flow import PendingCommand
-
     engine = _ensure_engine()
     snapshots = _login_watcher_state.get("prev_targets") or []
-    selected = choose_login_target(snapshots, work_target_id=target_id) or target_id
-    cmd = PendingCommand(
+    selected = browser_runtime_boundary.choose_login_target(
+        snapshots,
+        work_target_id=target_id,
+    ) or target_id
+    cmd = browser_runtime_boundary.create_pending_command(
         command_id=f"cmd_{action_name}_{int(time.time() * 1000)}",
         action=action_name,
         source_action=action_name,
@@ -858,14 +831,10 @@ async def _handle_browser_action(ws: WebSocket, data: dict) -> None:
 
 async def _execute_browser_action(payload: dict, *, send_to: WebSocket | None) -> None:
     """browser action 명령을 실행하고 표준 broadcast/응답을 수행."""
-    from local_agent.browser_action_executor import (
-        ERR_TARGET_CLOSED,
-        ERR_TARGET_NOT_FOUND,
-        build_request_from_payload,
-        execute,
-    )
+    ERR_TARGET_CLOSED = browser_runtime_boundary.ERR_TARGET_CLOSED
+    ERR_TARGET_NOT_FOUND = browser_runtime_boundary.ERR_TARGET_NOT_FOUND
 
-    req = build_request_from_payload(payload)
+    req = browser_runtime_boundary.build_browser_action_request(payload)
 
     # 로그인 사전 체크 — resume 경로(_from_resume) 가 아니면 차단 시 enqueue
     if not payload.get("_from_resume"):
@@ -890,7 +859,7 @@ async def _execute_browser_action(payload: dict, *, send_to: WebSocket | None) -
     })
 
     try:
-        result = await asyncio.to_thread(execute, req)
+        result = await asyncio.to_thread(browser_runtime_boundary.execute_browser_action, req)
     except Exception as exc:
         result = None
         await _broadcast({
@@ -1205,12 +1174,10 @@ def _load_agent_credentials() -> tuple[str, str, str]:
     반환: (server_url, agent_id, device_token) — 하나라도 없으면 빈 문자열 포함.
     """
     try:
-        from local_agent.desktop_config import load_config as _load_cfg
-        from local_agent.token_store import load_device_token as _load_tok
-        cfg = _load_cfg()
+        cfg = agent_runtime_boundary.load_desktop_config()
         if not cfg.is_complete():
             return "", "", ""
-        tok = _load_tok(cfg.server_url, cfg.agent_id)
+        tok = agent_runtime_boundary.load_device_token(cfg.server_url, cfg.agent_id)
         return cfg.server_url, cfg.agent_id, tok
     except Exception as exc:
         logger.warning("credentials load error: %s", exc)
@@ -1506,19 +1473,17 @@ async def agent_register(request: Request):
 
     try:
         import platform
-        from local_agent.registration_client import register_with_code, RegistrationError
-        from local_agent.token_store import save_device_token
-        from local_agent.desktop_config import load_config, save_config
 
-        meta, device_token = register_with_code(
-            server_url, reg_code,
+        meta, device_token = agent_runtime_boundary.register_with_code(
+            server_url=server_url,
+            registration_code=reg_code,
             host=platform.node(), os_name=platform.system(), version="0.1.0"
         )
-        save_device_token(server_url, meta.agent_id, device_token)
-        cfg = load_config()
+        agent_runtime_boundary.save_device_token(server_url, meta.agent_id, device_token)
+        cfg = agent_runtime_boundary.load_desktop_config()
         cfg.server_url = server_url
         cfg.agent_id = meta.agent_id
-        save_config(cfg)
+        agent_runtime_boundary.save_desktop_config(cfg)
         logger.info("agent registered: agent_id=%s", meta.agent_id)
         await _broadcast({"type": "system", "text": f"✅ 등록 완료 — agent_id: {meta.agent_id[:12]}…"})
         # 서버 WS 재연결 트리거
@@ -1533,8 +1498,7 @@ async def agent_register(request: Request):
 async def agent_status():
     """현재 등록된 에이전트 정보 반환 (token 제외)."""
     try:
-        from local_agent.desktop_config import load_config
-        cfg = load_config()
+        cfg = agent_runtime_boundary.load_desktop_config()
         server_connected = _server_ws is not None
         return {
             "ok": True,

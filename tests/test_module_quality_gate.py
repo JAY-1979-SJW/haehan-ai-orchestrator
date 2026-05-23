@@ -67,9 +67,9 @@ def test_cad_boundary_imports_are_isolated_to_boundary_modules():
 
 def test_tray_and_launcher_use_runtime_boundary_for_local_agent_imports():
     offenders = []
-    for rel in ("desktop/tray_runtime.py", "desktop/main_launcher.py"):
+    for rel in ("desktop/tray_runtime.py", "desktop/main_launcher.py", "desktop/local_server.py"):
         text = (gate.ROOT / rel).read_text(encoding="utf-8", errors="replace")
-        if "from local_agent" in text or "import local_agent" in text:
+        if gate.imports_local_agent(text):
             offenders.append(rel)
 
     assert offenders == []

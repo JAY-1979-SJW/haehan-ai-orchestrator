@@ -225,6 +225,13 @@ def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
     return [needle for needle in needles if needle in text]
 
 
+def imports_local_agent(text: str) -> bool:
+    return bool(re.search(
+        r"(?m)^\s*(?:from\s+local_agent(?:\.|\s+import\b)|import\s+local_agent(?:\.|\s|$))",
+        text,
+    ))
+
+
 def check_desktop_security_boundary() -> tuple[bool, str]:
     """Block auth and cross-app shortcuts from returning to desktop runtime."""
     violations: list[str] = []
@@ -265,8 +272,12 @@ def check_desktop_security_boundary() -> tuple[bool, str]:
         text = path.read_text(encoding="utf-8", errors="replace")
         if "from local_agent.cad" in text or "import local_agent.cad" in text:
             violations.append(f"{rel} imports local_agent.cad outside boundary")
-        if rel in {"desktop/tray_runtime.py", "desktop/main_launcher.py"}:
-            if "from local_agent" in text or "import local_agent" in text:
+        if rel in {
+            "desktop/tray_runtime.py",
+            "desktop/main_launcher.py",
+            "desktop/local_server.py",
+        }:
+            if imports_local_agent(text):
                 violations.append(f"{rel} imports local_agent outside boundary")
 
     if violations:
