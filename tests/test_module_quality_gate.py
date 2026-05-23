@@ -48,6 +48,23 @@ def test_desktop_security_boundary_passes_current_runtime_sources():
     assert ok, message
 
 
+def test_cad_boundary_imports_are_isolated_to_boundary_modules():
+    allowed = {
+        "desktop/cad_api_approval.py",
+        "desktop/cad_bridge_allowlist.py",
+    }
+    offenders = []
+    for path in (gate.ROOT / "desktop").glob("*.py"):
+        rel = gate.normalize_path(str(path.relative_to(gate.ROOT)))
+        if rel in allowed:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if "from local_agent.cad" in text or "import local_agent.cad" in text:
+            offenders.append(rel)
+
+    assert offenders == []
+
+
 def test_python_compile_steps_use_no_cache_wrapper():
     compile_steps = [step for step in gate.all_steps() if step.name.endswith("_py_compile")]
 

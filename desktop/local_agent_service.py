@@ -21,6 +21,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from . import cad_api_approval
+
 logger = logging.getLogger(__name__)
 
 # ── 상수 ─────────────────────────────────────────────────────────────────────
@@ -81,38 +83,6 @@ def _api_bridge_requested(req: dict) -> bool:
     return bool(req.get("api_path") or action == "cad_bridge_api")
 
 
-def _cad_api_command_id(method: str, path: str) -> str:
-    return f"{method.upper()}:{path.strip()}"
-
-
-def _get_cad_api_approval_store() -> Any:
-    from local_agent.cad.command_approval import DEFAULT_APPROVAL_STORE
-
-    return DEFAULT_APPROVAL_STORE
-
-
-def _consume_cad_api_approval(req: dict, method: str, path: str) -> tuple[bool, str]:
-    approval_id = str(req.get("approval_id") or req.get("_approval_id") or "").strip()
-    approval_token = str(req.get("approval_token") or req.get("_approval_token") or "").strip()
-    if not approval_id:
-        return False, "CAD_API_APPROVAL_ID_MISSING"
-    if not approval_token:
-        return False, "CAD_API_APPROVAL_TOKEN_MISSING"
-
-    try:
-        store = _get_cad_api_approval_store()
-        record = store.get_record(approval_id)
-        expected_command = _cad_api_command_id(method, path)
-        if record.commandId != expected_command or record.toolId != "cad_bridge_api":
-            return False, "CAD_API_APPROVAL_SCOPE_MISMATCH"
-        if not store.consume(approval_id, approval_token):
-            return False, "CAD_API_APPROVAL_INVALID"
-        return True, ""
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("cad api approval verification failed: %s", type(exc).__name__)
-        return False, "CAD_API_APPROVAL_INVALID"
-
-
 async def _run_approved_api_bridge(req: dict, model: str) -> dict:
     """Forward an approved cross-app request through the CAD bridge API proxy."""
     path = str(req.get("api_path") or "").strip()
@@ -138,10 +108,14 @@ async def _run_approved_api_bridge(req: dict, model: str) -> dict:
             can_retry=False,
         )
 
-    approved, approval_error = _consume_cad_api_approval(req, method, path)
-    if not approved:
+    approval = cad_api_approval.consume_cad_api_approval_request(
+        req,
+        method=method,
+        path=path,
+    )
+    if not approval.ok:
         return _provider_error_response(
-            error_code=approval_error or _CROSS_APP_APPROVAL_ERROR,
+            error_code=approval.error_code or _CROSS_APP_APPROVAL_ERROR,
             user_message="Cross-app calls require a valid one-time approval token.",
             next_actions=["Create and approve a scoped CAD API request before retrying."],
             provider="approved_api_bridge",
@@ -170,7 +144,7 @@ async def _run_approved_api_bridge(req: dict, model: str) -> dict:
         "model": model,
         "tool_calls": 0,
         "api_status": resp.status_code,
-        "approval_id": str(req.get("approval_id") or req.get("_approval_id") or ""),
+        "approval_id": approval.approval_id,
     }
 
 
