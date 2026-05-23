@@ -18,10 +18,12 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_local_agent_browser_runtime_operating_rules.py" in rendered
     assert "tests/test_local_agent_cdp_attach.py" in rendered
     assert "tests/test_dry_run_local_agent_cdp_attach.py" in rendered
+    assert "tests/test_common_tool_runtime.py" in rendered
     assert "tests/test_required_quality_gate.py" in rendered
     assert "tests/test_module_boundaries.py" in rendered
     assert "tests/test_root_legacy_scripts_audit.py" in rendered
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
+    assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_module_boundaries.py" in rendered
     assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
     assert "scripts/module_quality_gate.py --module repo_guard" in rendered
