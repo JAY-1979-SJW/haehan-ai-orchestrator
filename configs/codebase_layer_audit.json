@@ -4,7 +4,7 @@
     "max_openapi_failed": 0,
     "max_pydantic_failed": 0,
     "max_document_failed": 0,
-    "max_circular_imports": 1,
+    "max_circular_imports": 0,
     "max_unknown_layer_files": 20
   },
   "tracked_residuals": [
@@ -21,16 +21,16 @@
       "status": "accepted",
       "owner": "platform",
       "next_action": "Phase 3 CLOSED: probe/test/ops/eum-legacy scripts relocated. Flask active root modules (app.py + 28 files) retained as systemd/gunicorn entrypoints. Relocation deferred to Flask->FastAPI migration phase."
-    },
-    {
-      "code": "CIRCULAR_IMPORT",
-      "path": "scripts.naver",
-      "status": "accepted",
-      "owner": "platform",
-      "next_action": "scripts/naver/__init__.py 의 NaverServices 가 lazy property 로 scripts.naver.cafe 를 참조하여 정적 분석상 부모-자식 사이클로 감지됨. 런타임 사이클 아님(import 가 함수 내부 lazy). 의도된 진입점 패턴이므로 추적 잔여로 등재. 차기 작업: NaverServices facade 를 별도 모듈로 분리하여 패키지 __init__ 무게 줄이는 리팩터링 검토."
     }
   ],
   "resolved_residuals": [
+    {
+      "code": "CIRCULAR_IMPORT",
+      "path": "scripts.naver",
+      "status": "resolved",
+      "owner": "platform",
+      "next_action": "Resolved by loading NaverCafe through importlib in NaverServices facade."
+    },
     {
       "code": "CIRCULAR_IMPORT",
       "path": "ai_orchestrator.local_agent_models",
