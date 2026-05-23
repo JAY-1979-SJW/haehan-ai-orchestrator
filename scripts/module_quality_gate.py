@@ -150,6 +150,7 @@ MODULES: tuple[GateModule, ...] = (
         description="backend module boundaries, route inventory, auth/security gates",
         steps=(
             GateStep("backend_core_baseline_contract", check="backend_core_baseline_contract"),
+            GateStep("approval_flow_baseline_contract", check="approval_flow_baseline_contract"),
             GateStep(
                 "backend_core_py_compile",
                 (
@@ -758,6 +759,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_module_baseline_contract.py",
         "tests/test_backend_core_baseline_contract.py",
         "tests/test_local_agent_e2e_baseline_contract.py",
+        "tests/test_approval_flow_baseline_contract.py",
         "tests/test_required_quality_gate.py",
         "tests/test_root_legacy_scripts_audit.py",
         "scripts/ops/audit_common_tool_runtime.py",
@@ -767,6 +769,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "scripts/ops/audit_module_baseline_contract.py",
         "scripts/ops/audit_backend_core_baseline_contract.py",
         "scripts/ops/audit_local_agent_e2e_baseline_contract.py",
+        "scripts/ops/audit_approval_flow_baseline_contract.py",
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/module_quality_gate.py --module repo_guard",
     )
@@ -879,6 +882,16 @@ def check_local_agent_e2e_baseline_contract() -> tuple[bool, str]:
     return True, "locked local_agent_e2e baseline defines auth, dispatch, state, and redaction boundaries"
 
 
+def check_approval_flow_baseline_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_approval_flow_baseline_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked approval_flow baseline defines API-default approval and fail-closed behavior"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
@@ -890,6 +903,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "module_baseline_contract": check_module_baseline_contract,
     "backend_core_baseline_contract": check_backend_core_baseline_contract,
     "local_agent_e2e_baseline_contract": check_local_agent_e2e_baseline_contract,
+    "approval_flow_baseline_contract": check_approval_flow_baseline_contract,
     "backend_runtime_contract": check_backend_runtime_contract,
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,

@@ -143,6 +143,12 @@ docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
 
 ### approval_flow
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/APPROVAL_FLOW_BASELINE.md
+```
+
 - Responsibility: approval decision routing, API approval default flow, local
   UI fallback only when explicitly enabled, and high-risk action blocking.
 - Input: user identity, task risk, approval request payload, and configured

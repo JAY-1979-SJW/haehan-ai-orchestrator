@@ -72,6 +72,7 @@ def test_backend_core_includes_runtime_contract_gate():
     module = next(module for module in gate.MODULES if module.name == "backend_core")
 
     assert any(step.check == "backend_core_baseline_contract" for step in module.steps)
+    assert any(step.check == "approval_flow_baseline_contract" for step in module.steps)
     assert any(step.name == "backend_core_py_compile" for step in module.steps)
     assert any(step.check == "backend_runtime_contract" for step in module.steps)
     assert any(step.name == "backend_core_pytest" for step in module.steps)
@@ -232,6 +233,16 @@ def test_local_agent_e2e_baseline_contract_passes_current_sources():
 
 def test_local_agent_e2e_baseline_contract_registered_in_checks():
     assert "local_agent_e2e_baseline_contract" in gate.CHECKS
+
+
+def test_approval_flow_baseline_contract_passes_current_sources():
+    ok, message = gate.check_approval_flow_baseline_contract()
+
+    assert ok, message
+
+
+def test_approval_flow_baseline_contract_registered_in_checks():
+    assert "approval_flow_baseline_contract" in gate.CHECKS
 
 
 def test_backend_runtime_contract_passes_current_sources():
