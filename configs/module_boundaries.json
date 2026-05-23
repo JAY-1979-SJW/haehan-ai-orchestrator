@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "status": "locked",
+  "modules": [
+    {
+      "name": "repo_guard",
+      "owner": "platform",
+      "layer": "L2",
+      "paths": [
+        ".githooks/",
+        "scripts/required_quality_gate.py",
+        "scripts/module_quality_gate.py",
+        "scripts/install_git_hooks.py",
+        "tests/test_required_quality_gate.py",
+        "tests/test_module_quality_gate.py"
+      ],
+      "required_gate": "required_local_gate_wiring"
+    },
+    {
+      "name": "local_agent_browser_runtime",
+      "owner": "local-agent",
+      "layer": "L4",
+      "paths": [
+        "local_agent/cdp_attach.py",
+        "scripts/archive/misc/chrome_ui_monitor.py",
+        "scripts/cdp_client.py",
+        "scripts/ops/dry_run_local_agent_cdp_attach.py",
+        "docs/architecture/local_agent_browser_runtime_operating_rules_20260523.md",
+        "tests/test_local_agent_browser_runtime_operating_rules.py",
+        "tests/test_local_agent_cdp_attach.py",
+        "tests/test_dry_run_local_agent_cdp_attach.py"
+      ],
+      "required_gate": "local_agent_browser_runtime_rules"
+    },
+    {
+      "name": "desktop_runtime",
+      "owner": "desktop",
+      "layer": "L10",
+      "paths": [
+        "desktop/",
+        "local_agent/desktop_launcher.py",
+        "verify_local_runtime_dry_run.py",
+        "verify_agent_ws_auth.py"
+      ],
+      "required_gate": "desktop_security_boundary"
+    },
+    {
+      "name": "admin_web",
+      "owner": "frontend",
+      "layer": "L9",
+      "paths": [
+        "admin-web/package.json",
+        "admin-web/package-lock.json",
+        "admin-web/src/",
+        "tests/test_ui_residue_audit.py"
+      ],
+      "required_gate": "release_preflight"
+    },
+    {
+      "name": "portable_install",
+      "owner": "release",
+      "layer": "L10",
+      "paths": [
+        "install.bat",
+        "start.bat",
+        "diagnostics.bat",
+        "uninstall.bat",
+        "README_실행방법.txt",
+        "verify_portable_zip_install.py",
+        "tests/test_portable_zip_install_contract.py"
+      ],
+      "required_gate": "portable_install"
+    },
+    {
+      "name": "server_api",
+      "owner": "backend",
+      "layer": "L8",
+      "paths": [
+        "ai_orchestrator/",
+        "services/",
+        "verify_live_agent_smoke.py",
+        "verify_live_task_dispatch.py"
+      ],
+      "required_gate": "live_agent"
+    },
+    {
+      "name": "site_automation",
+      "owner": "automation",
+      "layer": "L5",
+      "paths": [
+        "scripts/site_engine/",
+        "scripts/naver/",
+        "scripts/g2b/",
+        "scripts/google/",
+        "scripts/hiworks/",
+        "scripts/youtube/"
+      ],
+      "required_gate": "codebase_layer_audit"
+    },
+    {
+      "name": "legacy_root_quarantine",
+      "owner": "platform",
+      "layer": "L12",
+      "paths": [
+        "app.py",
+        "approval_manager.py",
+        "audit_logger.py",
+        "dashboard.py",
+        "executor.py"
+      ],
+      "required_gate": "codebase_layer_audit",
+      "status": "accepted_residual"
+    }
+  ],
+  "forbidden_cross_boundary": [
+    {
+      "rule": "github_actions_disabled",
+      "forbidden_path_glob": ".github/workflows/*.yml"
+    },
+    {
+      "rule": "archive_runtime_state_write_forbidden",
+      "forbidden_path": "scripts/archive/data/chrome_ui_monitor_state.json"
+    }
+  ]
+}

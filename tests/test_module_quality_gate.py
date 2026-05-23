@@ -44,6 +44,7 @@ def test_repo_guard_includes_desktop_security_boundary():
     assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
     assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
     assert any(step.check == "required_local_gate_wiring" for step in repo_guard.steps)
+    assert any(step.check == "module_boundary_contract" for step in repo_guard.steps)
 
 
 def test_release_preflight_includes_admin_web_and_secret_scan():
@@ -155,6 +156,16 @@ def test_required_local_gate_wiring_registered_in_checks():
     assert "required_local_gate_wiring" in gate.CHECKS
 
 
+def test_module_boundary_contract_passes_current_sources():
+    ok, message = gate.check_module_boundary_contract()
+
+    assert ok, message
+
+
+def test_module_boundary_contract_registered_in_checks():
+    assert "module_boundary_contract" in gate.CHECKS
+
+
 def test_admin_web_audit_counts_vulnerability_entries_before_metadata():
     report = {
         "vulnerabilities": {},
@@ -196,6 +207,37 @@ def test_admin_web_audit_uses_lockfile_only(monkeypatch):
     assert ok, message
     assert calls
     assert calls[0][-4:] == ["audit", "--omit=dev", "--json", "--package-lock-only"]
+
+
+def test_admin_web_audit_accepts_clean_fallback_command(monkeypatch):
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+
+        class Result:
+            stdout = (
+                '{"vulnerabilities": {"next": {"severity": "high"}}, '
+                '"metadata": {"vulnerabilities": {"high": 1, "critical": 0, "total": 1}}}'
+            )
+
+        class CleanResult:
+            stdout = '{"vulnerabilities": {}, "metadata": {"vulnerabilities": {"total": 0}}}'
+
+        return Result() if len(calls) == 1 else CleanResult()
+
+    monkeypatch.setattr(gate.shutil, "which", lambda name: "npm.cmd" if name == "npm.cmd" else "npm")
+    monkeypatch.setattr(gate.os, "name", "nt")
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    ok, message = gate.check_admin_web_audit()
+
+    assert ok, message
+    assert calls
+
+
+def test_admin_web_audit_next_floor_passes_current_lockfile():
+    assert gate.next_lockfile_meets_security_floor()
 
 
 def test_find_staged_out_of_scope_uses_normalized_paths():
