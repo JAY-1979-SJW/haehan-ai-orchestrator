@@ -25,7 +25,13 @@
 """
 from __future__ import annotations
 
+from importlib import import_module
+
 from playwright.sync_api import Page
+
+
+def _load_class(module_name: str, class_name: str):
+    return getattr(import_module(module_name), class_name)
 
 
 class NaverServices:
@@ -72,7 +78,7 @@ class NaverServices:
     @property
     def cafe(self):
         if self._cafe is None:
-            from scripts.naver.cafe import NaverCafe
+            NaverCafe = _load_class("scripts.naver.cafe", "NaverCafe")
             self._cafe = NaverCafe(self.page)
         return self._cafe
 
