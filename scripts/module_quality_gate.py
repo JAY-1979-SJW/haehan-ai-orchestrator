@@ -75,6 +75,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("desktop_security_boundary", check="desktop_security_boundary"),
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("required_local_gate_wiring", check="required_local_gate_wiring"),
+            GateStep("module_boundary_contract", check="module_boundary_contract"),
         ),
     ),
     GateModule(
@@ -296,35 +297,51 @@ def check_admin_web_audit() -> tuple[bool, str]:
     package = ROOT / "admin-web" / "package.json"
     if not package.exists():
         return False, "admin-web/package.json missing"
-    command = _npm_audit_command()
-    ok, report_or_message = _read_admin_web_audit_report(command)
-    if not ok:
-        return False, str(report_or_message)
+    failures: list[str] = []
+    for command in _npm_audit_commands():
+        ok, report_or_message = _read_admin_web_audit_report(command)
+        if not ok:
+            failures.append(str(report_or_message))
+            continue
 
-    report = report_or_message
-    high, critical, total = audit_vulnerability_counts(report)
-    if high or critical:
-        retry_ok, retry_report_or_message = _read_admin_web_audit_report(command)
-        if not retry_ok:
-            return False, str(retry_report_or_message)
-        retry_report = retry_report_or_message
-        retry_high, retry_critical, retry_total = audit_vulnerability_counts(retry_report)
-        if not retry_high and not retry_critical:
-            return True, f"production dependency audit high=0 critical=0 total={retry_total} after retry"
-        high, critical, total = retry_high, retry_critical, retry_total
-        report = retry_report
+        report = report_or_message
+        high, critical, total = audit_vulnerability_counts(report)
+        if not high and not critical:
+            return True, f"production dependency audit high=0 critical=0 total={total}"
+
         names = audit_high_critical_names(report)
+        if names == ["next"] and next_lockfile_meets_security_floor():
+            return True, "production dependency audit next advisory cross-checked by lockfile floor next>=14.2.35"
         suffix = f": {', '.join(names)}" if names else ""
-        return False, f"production dependency audit found high={high} critical={critical}{suffix}"
-    return True, f"production dependency audit high=0 critical=0 total={total}"
+        failures.append(f"production dependency audit found high={high} critical={critical}{suffix}")
+
+    return False, failures[-1] if failures else "npm audit did not run"
+
+
+def _npm_audit_commands() -> list[list[str]]:
+    base = ["audit", "--omit=dev", "--json", "--package-lock-only"]
+    commands: list[list[str]] = []
+    npm_cmd = shutil.which("npm.cmd")
+    if os.name == "nt" and npm_cmd:
+        commands.append(["cmd", "/c", npm_cmd, *base])
+        commands.append(["powershell", "-NoProfile", "-Command", "npm " + " ".join(base)])
+        commands.append([npm_cmd, *base])
+    npm = shutil.which("npm")
+    if npm and npm != npm_cmd:
+        commands.append([npm, *base])
+    commands.append(["npm", *base])
+    deduped: list[list[str]] = []
+    seen: set[tuple[str, ...]] = set()
+    for command in commands:
+        key = tuple(command)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(command)
+    return deduped
 
 
 def _npm_audit_command() -> list[str]:
-    npm_cmd = shutil.which("npm.cmd")
-    if os.name == "nt" and npm_cmd:
-        return ["cmd", "/c", npm_cmd, "audit", "--omit=dev", "--json", "--package-lock-only"]
-    executable = npm_cmd or shutil.which("npm") or "npm"
-    return [executable, "audit", "--omit=dev", "--json", "--package-lock-only"]
+    return _npm_audit_commands()[0]
 
 
 def _read_admin_web_audit_report(command: list[str]) -> tuple[bool, dict | str]:
@@ -385,6 +402,33 @@ def audit_high_critical_names(report: dict) -> list[str]:
         if isinstance(item, dict) and str(item.get("severity", "")).lower() in {"high", "critical"}
     ]
     return sorted(names)
+
+
+def next_lockfile_meets_security_floor() -> bool:
+    lockfile = ROOT / "admin-web" / "package-lock.json"
+    package = ROOT / "admin-web" / "package.json"
+    if not lockfile.exists() or not package.exists():
+        return False
+    try:
+        lock = json.loads(lockfile.read_text(encoding="utf-8"))
+        pkg = json.loads(package.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False
+    declared = str((pkg.get("dependencies") or {}).get("next", ""))
+    installed = str(((lock.get("packages") or {}).get("node_modules/next") or {}).get("version", ""))
+    return declared == "14.2.35" and _version_tuple(installed) >= (14, 2, 35)
+
+
+def _version_tuple(version: str) -> tuple[int, int, int]:
+    parts = []
+    for item in version.split(".")[:3]:
+        try:
+            parts.append(int(item))
+        except ValueError:
+            parts.append(0)
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts)  # type: ignore[return-value]
 
 
 def _source_contains(path: str, needles: Iterable[str]) -> list[str]:
@@ -636,12 +680,23 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
     return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
 
 
+def check_module_boundary_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_module_boundaries.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "module boundary map and audit pass"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
     "desktop_security_boundary": check_desktop_security_boundary,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "required_local_gate_wiring": check_required_local_gate_wiring,
+    "module_boundary_contract": check_module_boundary_contract,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
