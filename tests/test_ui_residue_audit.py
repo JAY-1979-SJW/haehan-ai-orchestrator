@@ -23,16 +23,11 @@ def test_active_ui_entrypoints_are_present():
     assert missing == []
 
 
-def test_fallback_ui_is_warned_not_failed():
+def test_fallback_ui_allowlist_is_empty_after_api_defaults():
     findings = audit.audit()
-    fallback = {
-        finding.path: finding.status
-        for finding in findings
-        if finding.path in audit.FALLBACK_UI_ALLOWED
-    }
 
-    assert fallback
-    assert all(status == "WARN" for status in fallback.values())
+    assert audit.FALLBACK_UI_ALLOWED == ()
+    assert all(finding.status != "WARN" for finding in findings)
 
 
 def test_summary_passes_with_warnings():

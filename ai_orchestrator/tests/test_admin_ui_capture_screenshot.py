@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
+    monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "1")
     import ai_orchestrator.auth as _auth; importlib.reload(_auth)
     import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
     import ai_orchestrator.admin_ui_router as _adm; importlib.reload(_adm)

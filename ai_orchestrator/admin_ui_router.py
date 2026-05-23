@@ -18,12 +18,20 @@
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import os
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 
 from .auth import require_role
 
 admin_ui_router = APIRouter(prefix="/admin", tags=["admin-ui"])
+
+
+def _legacy_admin_ui_fallback_enabled() -> bool:
+    return os.getenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
 
 
 # confirm 문구와 성공 안내 문구는 테스트가 substring 으로 검증한다.
@@ -702,6 +710,11 @@ def admin_local_agents_page(
     기존 /api/v1/local-agents , /api/v1/local-agents/{id}/capture-screenshot
     엔드포인트로 수행한다. 서버 측 상태 변경은 없다.
     """
+    if not _legacy_admin_ui_fallback_enabled():
+        raise HTTPException(
+            status_code=404,
+            detail="legacy admin UI fallback is disabled; use admin-web",
+        )
     return HTMLResponse(content=_LOCAL_AGENTS_HTML, status_code=200)
 
 

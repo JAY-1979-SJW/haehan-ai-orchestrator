@@ -30,15 +30,20 @@ ACTIVE_UI_REQUIRED = (
     "desktop/admin_webview.py",
 )
 
-FALLBACK_UI_ALLOWED = (
-    "ai_orchestrator/admin_ui_router.py",
-    "local_agent/user_present_ui_server.py",
-)
+FALLBACK_UI_ALLOWED = ()
 
 API_BACKED_APPROVAL_UI = {
     "ai_orchestrator/local_agent/browser/approval_server.py": (
         "approval_api_client",
         "HAEHAN_LOCAL_APPROVAL_UI_FALLBACK",
+    ),
+    "local_agent/user_present_ui_server.py": (
+        "HAEHAN_USER_PRESENT_UI_FALLBACK",
+        "html_ui_enabled",
+    ),
+    "ai_orchestrator/admin_ui_router.py": (
+        "HAEHAN_ADMIN_LEGACY_UI_FALLBACK",
+        "legacy admin UI fallback is disabled",
     ),
 }
 
