@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 import uuid
@@ -43,6 +44,12 @@ from flask import Flask, request, jsonify, Response
 _PORT = 7722
 _HOST = "127.0.0.1"
 _TIMEOUT_SECONDS = 120   # 승인 대기 최대 시간
+
+
+def _local_ui_fallback_enabled() -> bool:
+    return os.getenv("HAEHAN_LOCAL_APPROVAL_UI_FALLBACK", "").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
 
 # ── 상태 ────────────────────────────────────────────────────────────────────
 
@@ -312,6 +319,18 @@ def request_approval(
     -------
     bool : True = 승인, False = 거부/타임아웃
     """
+    if not _local_ui_fallback_enabled():
+        from ai_orchestrator.local_agent.browser.approval_api_client import request_approval_via_api
+
+        result = request_approval_via_api(
+            action=action,
+            label=label,
+            category=category,
+            detail=detail or {},
+            timeout=timeout,
+        )
+        return result.approved
+
     ensure_server_running()
 
     req_id = f"apr_{uuid.uuid4().hex[:8]}"
@@ -412,6 +431,27 @@ def request_approval_async(
     # ... AUTO 액션 계속 실행 ...
     approved = handle.wait()   # 필요 시점에 blocking 대기
     """
+    if not _local_ui_fallback_enabled():
+        approved = request_approval(
+            action,
+            label,
+            category=category,
+            detail=detail or {},
+            timeout=1,
+            auto_open_browser=False,
+        )
+        req = ApprovalRequest(
+            request_id=f"api_{uuid.uuid4().hex[:8]}",
+            action=action,
+            label=label,
+            category=category,
+            detail=detail or {},
+            created_at=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+            result="approved" if approved else "rejected",
+        )
+        req.event.set()
+        return AsyncApprovalHandle(req)
+
     ensure_server_running()
 
     req_id = f"apr_{uuid.uuid4().hex[:8]}"
