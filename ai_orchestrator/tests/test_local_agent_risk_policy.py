@@ -31,6 +31,7 @@ def test_action_risk_levels():
     assert ACTION_RISK["system_info"] == "low"
     assert ACTION_RISK["list_allowed_apps"] == "low"
     assert ACTION_RISK["open_url"] == "low"
+    assert ACTION_RISK["web_open_url_readonly"] == "low"
 
     # medium risk
     assert ACTION_RISK["list_files_readonly"] == "medium"
@@ -131,6 +132,21 @@ def test_low_risk_non_auto_complete_action():
     assert task.status == "queued"
 
 
+def test_web_open_url_readonly_is_low_risk_queued():
+    """read-only browser observation is queued for local agent execution."""
+    from ai_orchestrator.local_agent_registry import enqueue_task
+
+    task = enqueue_task(
+        agent_id="test-agent",
+        action="web_open_url_readonly",
+        params={"url": "https://example.com/"},
+        requested_by="test-user",
+    )
+    assert task.action == "web_open_url_readonly"
+    assert task.risk_level == "low"
+    assert task.status == "queued"
+
+
 def test_medium_risk_action():
     """medium risk 액션은 queued 상태."""
     from ai_orchestrator.local_agent_registry import enqueue_task
@@ -162,3 +178,9 @@ def test_browser_actions_defined():
     for action, expected_risk in browser_actions.items():
         assert action in ACTION_RISK
         assert ACTION_RISK[action] == expected_risk
+
+
+def test_web_open_url_readonly_auto_execute_registered():
+    from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+
+    assert "web_open_url_readonly" in AUTO_EXECUTE_VIA_AGENT

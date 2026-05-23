@@ -120,6 +120,12 @@ def _build_result_message(task: dict, result) -> dict:
     data = getattr(result, "data", None)
     if isinstance(data, dict) and data:
         msg["data"] = data
+        observe_summary = data.get("observe_summary")
+        if isinstance(observe_summary, dict):
+            msg["observe_summary"] = observe_summary
+        audit_summary = data.get("audit_summary")
+        if isinstance(audit_summary, dict):
+            msg["audit_summary"] = audit_summary
     return msg
 
 

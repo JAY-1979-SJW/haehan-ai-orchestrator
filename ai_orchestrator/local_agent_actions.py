@@ -28,6 +28,7 @@ AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
     "safe_app_presence_known_paths",
     "safe_app_capability_matrix",
     "open_url_execute",
+    "web_open_url_readonly",
     # browser automation actions (BROWSER-4E)
     "browser.inspect",
     "browser.plan_click",
