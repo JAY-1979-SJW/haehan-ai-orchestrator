@@ -943,7 +943,7 @@ def _build_observe_summary(raw: Optional[dict]) -> Optional[dict]:
 
     # String enum 필드 — 길이 제한
     for key in ("target_kind", "url_category", "status_category",
-                "error_category", "blocked_reason"):
+                "error_category", "blocked_reason", "browser_channel"):
         val = raw.get(key)
         if val is not None:
             out[key] = str(val)[:80]

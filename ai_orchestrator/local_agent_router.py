@@ -114,6 +114,7 @@ class BrowserReadonlyInstructionRequest(BaseModel):
     max_html_chars: int = 100000
     visible_browser: bool = False
     keep_open_ms: int = 0
+    browser_channel: str = "chromium"
 
 
 class AgentTaskApprovalRequest(BaseModel):
@@ -190,7 +191,7 @@ _UNSAFE_BROWSER_INSTRUCTION_TERMS: frozenset[str] = frozenset({
 
 def _validate_readonly_browser_instruction(
     body: BrowserReadonlyInstructionRequest,
-) -> tuple[str, str, str, int, int, int]:
+) -> tuple[str, str, str, int, int, int, str]:
     instruction = str(body.instruction or "").strip()
     if not instruction:
         raise HTTPException(
@@ -240,8 +241,14 @@ def _validate_readonly_browser_instruction(
     timeout_ms = max(1000, min(int(body.timeout_ms), 30000))
     max_html_chars = max(1000, min(int(body.max_html_chars), 100000))
     keep_open_ms = max(0, min(int(body.keep_open_ms), 30000))
+    browser_channel = str(body.browser_channel or "chromium").strip().lower()
+    if browser_channel not in {"chromium", "chrome", "msedge"}:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_BROWSER_CHANNEL"},
+        )
     host = parsed.hostname or parsed.netloc
-    return instruction, url, host, timeout_ms, max_html_chars, keep_open_ms
+    return instruction, url, host, timeout_ms, max_html_chars, keep_open_ms, browser_channel
 
 
 # ── HTTP 라우트 ──────────────────────────────────────────────────────────
@@ -571,7 +578,7 @@ def submit_browser_readonly_instruction(
                     "message": f"unknown local agent: {agent_id}"},
         )
 
-    instruction, url, host, timeout_ms, max_html_chars, keep_open_ms = (
+    instruction, url, host, timeout_ms, max_html_chars, keep_open_ms, browser_channel = (
         _validate_readonly_browser_instruction(body)
     )
     params = {
@@ -581,6 +588,7 @@ def submit_browser_readonly_instruction(
         "max_html_chars": max_html_chars,
         "headless": not bool(body.visible_browser),
         "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel,
         "user_instruction": instruction,
         "source": "approved_user_instruction",
     }
@@ -616,7 +624,7 @@ def submit_browser_readonly_instruction(
         note=(
             f"agent_id={agent_id} url_host={host} "
             f"instruction_len={len(instruction)} visible_browser={bool(body.visible_browser)} "
-            f"keep_open_ms={keep_open_ms} status={task.status}"
+            f"keep_open_ms={keep_open_ms} browser_channel={browser_channel} status={task.status}"
         ),
     )
 
@@ -631,6 +639,7 @@ def submit_browser_readonly_instruction(
         "url_host": host,
         "visible_browser": bool(body.visible_browser),
         "keep_open_ms": keep_open_ms,
+        "browser_channel": browser_channel,
     }
 
 

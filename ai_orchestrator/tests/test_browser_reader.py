@@ -277,6 +277,22 @@ def test_visible_browser_option_launches_headed() -> None:
     assert launches[-1][1]["headless"] is False
 
 
+def test_browser_channel_option_uses_real_browser_channel() -> None:
+    from local_agent.browser_reader import open_url_readonly
+
+    factory, log = _make_fake_factory()
+    r = open_url_readonly(
+        "https://example.com/",
+        headless=False,
+        browser_channel="chrome",
+        _playwright_factory=factory,
+    )
+    assert r["ok"] is True
+    assert r["browser_channel"] == "chrome"
+    launches = [e for e in log if isinstance(e, tuple) and e and e[0] == "launch"]
+    assert launches[-1][1]["channel"] == "chrome"
+
+
 def test_analyze_html_structure_is_wired_in() -> None:
     from local_agent.browser_reader import open_url_readonly
 
