@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import agent_runtime_boundary
+from .local_agent_daemon import LocalAgentDaemon
 
 __version__ = "0.2.0-launcher-foundation"
 
@@ -602,11 +603,13 @@ def run_tray_mode(*, skip_gui: bool = False,
     if role is None:
         role = admin_webview.resolve_current_role()
 
+    daemon: LocalAgentDaemon | None = None
     try:
         result = tray_runtime.run_tray_mode_full(
             role=role,
             admin_mode_available=True,  # admin_webview 모듈 준비됨
             skip_gui=skip_gui,
+            start_heartbeat=False,
         )
         logger.info("Tray runtime: role=%s registered=%s next=%s heartbeat=%s",
                     role,
@@ -620,8 +623,27 @@ def run_tray_mode(*, skip_gui: bool = False,
         return 1
 
     # pywebview 창 기동 (new_shell)
-    run_desktop_window(skip_gui=skip_gui)
-    return 0
+    if not skip_gui:
+        try:
+            status = tray_runtime.check_registration_status()
+            daemon = LocalAgentDaemon(app_root=app_root())
+            daemon_state = daemon.start(status)
+            logger.info(
+                "local agent daemon state: started=%s reason=%s pid=%s agent=%s",
+                daemon_state.started,
+                daemon_state.reason,
+                daemon_state.pid,
+                daemon_state.agent_id_masked,
+            )
+        except Exception as e:
+            logger.warning("local agent daemon unavailable: %s", type(e).__name__)
+
+    try:
+        run_desktop_window(skip_gui=skip_gui)
+        return 0
+    finally:
+        if daemon is not None:
+            daemon.stop()
 
 
 def run_tray_mode_diagnostics() -> dict:

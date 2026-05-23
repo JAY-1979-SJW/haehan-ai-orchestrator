@@ -639,6 +639,7 @@ def run_tray_mode_full(
     role: str = "any",
     admin_mode_available: bool = False,
     skip_gui: bool = False,
+    start_heartbeat: bool = True,
 ) -> dict:
     """Tray Mode 통합 진입.
 
@@ -655,13 +656,14 @@ def run_tray_mode_full(
         "role": role,
         "admin_mode_available": admin_mode_available,
         "skip_gui": skip_gui,
+        "start_heartbeat": start_heartbeat,
     }
 
     if skip_gui:
         return result
 
     # heartbeat 시작 (등록된 경우)
-    if next_action == "heartbeat":
+    if start_heartbeat and next_action == "heartbeat":
         plan = plan_heartbeat(status)
         if plan.can_start:
             start_heartbeat_background(plan,
@@ -672,7 +674,7 @@ def run_tray_mode_full(
             result["heartbeat_reason"] = plan.reason
     else:
         result["heartbeat_started"] = False
-        result["heartbeat_reason"] = "not_registered"
+        result["heartbeat_reason"] = "disabled" if next_action == "heartbeat" else "not_registered"
 
     return result
 
