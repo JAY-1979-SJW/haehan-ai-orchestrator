@@ -153,6 +153,7 @@ MODULES: tuple[GateModule, ...] = (
         name="release_preflight",
         description="admin-web static checks and active-source secret scan",
         steps=(
+            GateStep("ui_residue_contract", check="ui_residue_contract"),
             GateStep("admin_web_typecheck", check="admin_web_typecheck"),
             GateStep("admin_web_lint", check="admin_web_lint"),
             GateStep("admin_web_audit", check="admin_web_audit"),
@@ -416,6 +417,22 @@ def check_desktop_security_boundary() -> tuple[bool, str]:
     return True, "desktop auth/cross-app shortcuts are blocked and runtime boundary imports are isolated"
 
 
+def check_ui_residue_contract() -> tuple[bool, str]:
+    try:
+        from scripts import ui_residue_audit
+    except ImportError:
+        import ui_residue_audit
+
+    findings = ui_residue_audit.audit()
+    failed = [finding for finding in findings if finding.status == "FAIL"]
+    warned = [finding for finding in findings if finding.status == "WARN"]
+    if failed:
+        return False, "UI residue failures: " + ", ".join(finding.path for finding in failed)
+    if warned:
+        return True, "UI residue audit passed with warnings: " + ", ".join(finding.path for finding in warned)
+    return True, "UI residue audit passed with no warnings"
+
+
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
@@ -424,6 +441,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
     "active_source_secret_scan": check_active_source_secret_scan,
+    "ui_residue_contract": check_ui_residue_contract,
 }
 
 

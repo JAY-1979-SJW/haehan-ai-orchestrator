@@ -49,6 +49,7 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
     checks = {step.check for step in release.steps}
 
     assert {
+        "ui_residue_contract",
         "admin_web_typecheck",
         "admin_web_lint",
         "admin_web_audit",
@@ -121,6 +122,12 @@ def test_redact_masks_auth_and_secret_values():
 
 def test_active_source_secret_scan_passes_current_sources():
     ok, message = gate.check_active_source_secret_scan()
+
+    assert ok, message
+
+
+def test_ui_residue_contract_passes_current_sources():
+    ok, message = gate.check_ui_residue_contract()
 
     assert ok, message
 
