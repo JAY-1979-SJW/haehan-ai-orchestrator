@@ -36,6 +36,18 @@ def test_command_matrix_blocks_build_deploy_and_push_commands():
     assert offenders == []
 
 
+def test_repo_guard_includes_desktop_security_boundary():
+    repo_guard = next(module for module in gate.MODULES if module.name == "repo_guard")
+
+    assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
+
+
+def test_desktop_security_boundary_passes_current_runtime_sources():
+    ok, message = gate.check_desktop_security_boundary()
+
+    assert ok, message
+
+
 def test_python_compile_steps_use_no_cache_wrapper():
     compile_steps = [step for step in gate.all_steps() if step.name.endswith("_py_compile")]
 
