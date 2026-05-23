@@ -112,6 +112,8 @@ class BrowserReadonlyInstructionRequest(BaseModel):
     wait_until: str = "domcontentloaded"
     timeout_ms: int = 20000
     max_html_chars: int = 100000
+    visible_browser: bool = False
+    keep_open_ms: int = 0
 
 
 class AgentTaskApprovalRequest(BaseModel):
@@ -188,7 +190,7 @@ _UNSAFE_BROWSER_INSTRUCTION_TERMS: frozenset[str] = frozenset({
 
 def _validate_readonly_browser_instruction(
     body: BrowserReadonlyInstructionRequest,
-) -> tuple[str, str, str, int, int]:
+) -> tuple[str, str, str, int, int, int]:
     instruction = str(body.instruction or "").strip()
     if not instruction:
         raise HTTPException(
@@ -237,8 +239,9 @@ def _validate_readonly_browser_instruction(
 
     timeout_ms = max(1000, min(int(body.timeout_ms), 30000))
     max_html_chars = max(1000, min(int(body.max_html_chars), 100000))
+    keep_open_ms = max(0, min(int(body.keep_open_ms), 30000))
     host = parsed.hostname or parsed.netloc
-    return instruction, url, host, timeout_ms, max_html_chars
+    return instruction, url, host, timeout_ms, max_html_chars, keep_open_ms
 
 
 # ── HTTP 라우트 ──────────────────────────────────────────────────────────
@@ -568,7 +571,7 @@ def submit_browser_readonly_instruction(
                     "message": f"unknown local agent: {agent_id}"},
         )
 
-    instruction, url, host, timeout_ms, max_html_chars = (
+    instruction, url, host, timeout_ms, max_html_chars, keep_open_ms = (
         _validate_readonly_browser_instruction(body)
     )
     params = {
@@ -576,6 +579,8 @@ def submit_browser_readonly_instruction(
         "wait_until": body.wait_until,
         "timeout_ms": timeout_ms,
         "max_html_chars": max_html_chars,
+        "headless": not bool(body.visible_browser),
+        "keep_open_ms": keep_open_ms,
         "user_instruction": instruction,
         "source": "approved_user_instruction",
     }
@@ -610,7 +615,8 @@ def submit_browser_readonly_instruction(
         role=role,
         note=(
             f"agent_id={agent_id} url_host={host} "
-            f"instruction_len={len(instruction)} status={task.status}"
+            f"instruction_len={len(instruction)} visible_browser={bool(body.visible_browser)} "
+            f"keep_open_ms={keep_open_ms} status={task.status}"
         ),
     )
 
@@ -623,6 +629,8 @@ def submit_browser_readonly_instruction(
         "requested_by": actor,
         "instruction_accepted": True,
         "url_host": host,
+        "visible_browser": bool(body.visible_browser),
+        "keep_open_ms": keep_open_ms,
     }
 
 

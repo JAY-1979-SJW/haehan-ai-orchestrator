@@ -256,6 +256,25 @@ def test_basic_title_current_url_and_content_collected() -> None:
     # goto 한 번만 호출
     gotos = [e for e in log if isinstance(e, tuple) and e and e[0] == "goto"]
     assert len(gotos) == 1
+    launches = [e for e in log if isinstance(e, tuple) and e and e[0] == "launch"]
+    assert launches[-1][1]["headless"] is True
+
+
+def test_visible_browser_option_launches_headed() -> None:
+    from local_agent.browser_reader import open_url_readonly
+
+    factory, log = _make_fake_factory()
+    r = open_url_readonly(
+        "https://example.com/",
+        headless=False,
+        keep_open_ms=0,
+        _playwright_factory=factory,
+    )
+    assert r["ok"] is True
+    assert r["headless"] is False
+    assert r["keep_open_ms"] == 0
+    launches = [e for e in log if isinstance(e, tuple) and e and e[0] == "launch"]
+    assert launches[-1][1]["headless"] is False
 
 
 def test_analyze_html_structure_is_wired_in() -> None:

@@ -201,6 +201,31 @@ def test_browser_readonly_instruction_queues_safe_task(admin_user):
     assert task.action == "web_open_url_readonly"
     assert task.params["user_instruction"] == "Summarize the page headings only"
     assert task.params["source"] == "approved_user_instruction"
+    assert task.params["headless"] is True
+    assert task.params["keep_open_ms"] == 0
+
+
+def test_browser_readonly_instruction_can_request_visible_browser(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the page headings only",
+            "url": "https://example.com",
+            "visible_browser": True,
+            "keep_open_ms": 5000,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["visible_browser"] is True
+    assert data["keep_open_ms"] == 5000
+
+    import ai_orchestrator.local_agent_registry as _reg
+    task = _reg.get_task(agent_id, data["task_id"])
+    assert task.params["headless"] is False
+    assert task.params["keep_open_ms"] == 5000
 
 
 def test_viewer_cannot_submit_browser_readonly_instruction(viewer_user, admin_user):

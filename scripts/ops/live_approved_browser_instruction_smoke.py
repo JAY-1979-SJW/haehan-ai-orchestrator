@@ -172,6 +172,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--server", default=DEFAULT_SERVER)
     parser.add_argument("--url", default="https://example.com/")
     parser.add_argument("--timeout", type=int, default=90)
+    parser.add_argument("--visible", action="store_true")
+    parser.add_argument("--keep-open-ms", type=int, default=0)
     args = parser.parse_args(argv)
 
     server = args.server.rstrip("/")
@@ -254,6 +256,8 @@ def main(argv: list[str] | None = None) -> int:
                 "wait_until": "domcontentloaded",
                 "timeout_ms": 20000,
                 "max_html_chars": 100000,
+                "visible_browser": bool(args.visible),
+                "keep_open_ms": max(0, min(int(args.keep_open_ms), 30000)),
             },
         )
         task_id = str(queued.get("task_id") or "")
@@ -298,7 +302,9 @@ def main(argv: list[str] | None = None) -> int:
                 "[PASS] observe summary - "
                 f"status={observe.get('status_category')} "
                 f"title_len={observe.get('title_len')} "
-                f"pages={observe.get('pages_observed_count')}"
+                f"pages={observe.get('pages_observed_count')} "
+                f"headless={observe.get('browser_headless')} "
+                f"keep_open_ms={observe.get('browser_keep_open_ms')}"
             )
         else:
             print("[WARN] observe summary - not returned")
