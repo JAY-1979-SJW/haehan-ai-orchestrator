@@ -1852,7 +1852,7 @@ async def local_agent_run(request: Request):
     Body JSON:
         prompt (str, 필수)
         model  (str, optional) — 기본 claude-sonnet-4-5
-        use_mcp (bool, optional) — 기본 True
+        use_mcp (bool, optional) — 기본 False; direct MCP is blocked
     """
     from .local_agent_service import run_local_agent as _run
     try:
