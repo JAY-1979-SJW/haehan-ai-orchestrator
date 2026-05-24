@@ -51,25 +51,10 @@ def test_google_tab_registry_keeps_high_risk_cloud_under_cloud_or_ai() -> None:
     assert "vertex_ai" in ai_surfaces
 
 
-def test_google_tab_registry_records_known_host_normalization_warnings() -> None:
+def test_google_tab_registry_has_no_host_normalization_warnings() -> None:
     summary = tab_registry.build_google_tab_summary()
-    warnings = {
-        (item["surface_key"], item["action_key"], item["surface_host"], item["action_host"])
-        for item in summary["host_warnings"]
-    }
 
-    assert (
-        "merchant_center",
-        "merchant_center_product_update",
-        "merchants.google.com",
-        "merchant.google.com",
-    ) in warnings
-    assert (
-        "adsense",
-        "adsense_ad_unit_or_payment_change",
-        "adsense.google.com",
-        "www.google.com",
-    ) in warnings
+    assert summary["host_warnings"] == []
 
 
 def test_google_tab_owner_packages_exist() -> None:
