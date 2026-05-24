@@ -39,6 +39,8 @@ def audit() -> tuple[bool, list[str]]:
         "final_send_clicked",
         "gmail_delete_requires_user_final_approval",
         "Gmail delete is disabled in automation",
+        "sender_present=",
+        "input[name=\"q\"]",
     )
     for phrase in required:
         if phrase not in combined:
