@@ -126,7 +126,7 @@ Google refactoring must be staged:
 
 1. Baseline and registry lock.
 2. Workspace module split. Detailed baseline: `docs/baseline/GOOGLE_WORKSPACE_MODULE_BASELINE.md`.
-3. Cloud module split.
+3. Cloud module split. Detailed baseline: `docs/baseline/GOOGLE_CLOUD_MODULE_BASELINE.md`.
 4. YouTube module split.
 5. Marketing module split.
 6. AI and developer module split.
