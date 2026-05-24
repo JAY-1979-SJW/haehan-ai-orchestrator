@@ -18,6 +18,16 @@ def _mask_agent_id(agent_id: str) -> str:
     return f"{agent_id[:6]}***{agent_id[-4:]}"
 
 
+def _websocket_close_code(exc: object) -> int | None:
+    for attr in ("rcvd", "rcvd_close"):
+        close = getattr(exc, attr, None)
+        code = getattr(close, "code", None)
+        if isinstance(code, int):
+            return code
+    code = getattr(exc, "code", None)
+    return code if isinstance(code, int) else None
+
+
 async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
     from local_agent import __version__
     from local_agent import desktop_config
@@ -65,6 +75,11 @@ async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
             return False, str(first.get("type") or "AUTH_REJECTED"), _mask_agent_id(agent_id)
     except asyncio.TimeoutError:
         return False, "AUTH_TIMEOUT", _mask_agent_id(agent_id)
+    except getattr(websockets.exceptions, "ConnectionClosed", Exception) as exc:
+        code = _websocket_close_code(exc)
+        if code == 4401:
+            return False, "AUTH_FAILED_4401", _mask_agent_id(agent_id)
+        return False, f"WS_CLOSED_{code or 'UNKNOWN'}", _mask_agent_id(agent_id)
     except OSError as exc:
         return False, type(exc).__name__, _mask_agent_id(agent_id)
     finally:
