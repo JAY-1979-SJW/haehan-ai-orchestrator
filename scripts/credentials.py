@@ -39,12 +39,15 @@ KEY_FILE = ROOT / "data" / ".cred.key"
 # 레거시 평문 파일 (마이그레이션 후 archive)
 _LEGACY_ENV_FILES = {
     "naver": ROOT / "data" / ".env_naver",
-    "google": ROOT / "data" / ".env_google",
 }
 _LEGACY_ENV_KEYS = {
     "naver": ("NAVER_ID", "NAVER_PW"),
-    "google": ("GOOGLE_ID", "GOOGLE_PW"),
 }
+_PASSWORD_LOGIN_DISABLED_SITES = {"google"}
+
+
+def _is_password_login_disabled(site: str) -> bool:
+    return (site or "").strip().lower() in _PASSWORD_LOGIN_DISABLED_SITES
 
 
 def _get_or_create_key() -> bytes:
@@ -169,6 +172,8 @@ def _load() -> dict:
 
 def set_cred(site: str, *, id: str, pw: str, **extra) -> None:
     """사이트 자격증명 저장 (pw 자동 암호화)."""
+    if _is_password_login_disabled(site):
+        raise ValueError(f"password credential storage is disabled for {site}")
     data = _load()
     rec = {"id": id, "pw_enc": _encrypt(pw)}
     rec.update(extra)
@@ -178,6 +183,8 @@ def set_cred(site: str, *, id: str, pw: str, **extra) -> None:
 
 def get_cred(site: str) -> dict:
     """사이트 자격증명 읽기. pw 자동 복호화."""
+    if _is_password_login_disabled(site):
+        return {"id": "", "pw": ""}
     data = _load()
     rec = data.get(site, {})
     if not rec:
@@ -190,7 +197,7 @@ def get_cred(site: str) -> dict:
 
 
 def list_sites() -> list[str]:
-    return list(_load().keys())
+    return [site for site in _load().keys() if not _is_password_login_disabled(site)]
 
 
 def delete_cred(site: str) -> bool:
