@@ -15,6 +15,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_COMMAND_TIMEOUT_SECONDS = 120
 
 COMMANDS: tuple[tuple[str, ...], ...] = (
     (
@@ -42,6 +43,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/ops/audit_google_gmail_function_contract.py",
         "scripts/ops/audit_site_work_function_baseline.py",
+        "scripts/google/gmail_analysis.py",
         "ai_orchestrator/local_agent/common_tool_runtime.py",
         "scripts/module_quality_gate.py",
         "tests/test_common_tool_runtime.py",
@@ -65,6 +67,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_module_boundaries.py",
         "tests/test_root_legacy_scripts_audit.py",
         "tests/test_google_gmail_function_contract.py",
+        "tests/test_google_gmail_analysis.py",
         "tests/test_site_work_function_baseline.py",
     ),
     (sys.executable, "scripts/ops/dry_run_local_agent_cdp_attach.py"),
@@ -109,6 +112,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_module_boundaries.py",
         "tests/test_root_legacy_scripts_audit.py",
         "tests/test_google_gmail_function_contract.py",
+        "tests/test_google_gmail_analysis.py",
         "tests/test_site_work_function_baseline.py",
         "-p",
         "no:cacheprovider",
@@ -164,6 +168,17 @@ def command_is_forbidden(command: tuple[str, ...]) -> bool:
     return any(token in lowered for token in FORBIDDEN_COMMAND_TOKENS)
 
 
+def command_timeout_seconds() -> int:
+    raw = os.environ.get("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "").strip()
+    if not raw:
+        return DEFAULT_COMMAND_TIMEOUT_SECONDS
+    try:
+        value = int(raw)
+    except ValueError:
+        return DEFAULT_COMMAND_TIMEOUT_SECONDS
+    return max(1, value)
+
+
 def run_command(command: tuple[str, ...]) -> GateResult:
     name = command_text(command)
     if command_is_forbidden(command):
@@ -175,15 +190,24 @@ def run_command(command: tuple[str, ...]) -> GateResult:
     pycache.mkdir(parents=True, exist_ok=True)
     env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))
 
-    result = subprocess.run(
-        list(command),
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=False,
-        env=env,
-    )
+    timeout_s = command_timeout_seconds()
+    try:
+        result = subprocess.run(
+            list(command),
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            env=env,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired as exc:
+        output = redact((exc.stdout or exc.stderr or "") if isinstance(exc.stdout or exc.stderr, str) else "").strip()
+        if output:
+            print(output)
+        return GateResult(name=name, ok=False, detail=f"timeout_after={timeout_s}s")
+
     output = redact(result.stdout or "").strip()
     if output:
         print(output)

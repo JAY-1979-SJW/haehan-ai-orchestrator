@@ -10,17 +10,21 @@ if str(ROOT) not in sys.path:
 
 GMAIL_CLI = ROOT / "scripts" / "google" / "gmail.py"
 GMAIL_API = ROOT / "scripts" / "google" / "gmail_api.py"
+GMAIL_ANALYSIS = ROOT / "scripts" / "google" / "gmail_analysis.py"
+GOOGLE_ROUTER = ROOT / "scripts" / "google" / "router.py"
 
 
 def audit() -> tuple[bool, list[str]]:
     failures: list[str] = []
-    for path in (GMAIL_CLI, GMAIL_API):
+    for path in (GMAIL_CLI, GMAIL_API, GMAIL_ANALYSIS, GOOGLE_ROUTER):
         if not path.exists():
             failures.append(f"missing file: {path.relative_to(ROOT)}")
 
     cli = GMAIL_CLI.read_text(encoding="utf-8", errors="replace") if GMAIL_CLI.exists() else ""
     api = GMAIL_API.read_text(encoding="utf-8", errors="replace") if GMAIL_API.exists() else ""
-    combined = cli + "\n" + api
+    analysis = GMAIL_ANALYSIS.read_text(encoding="utf-8", errors="replace") if GMAIL_ANALYSIS.exists() else ""
+    router = GOOGLE_ROUTER.read_text(encoding="utf-8", errors="replace") if GOOGLE_ROUTER.exists() else ""
+    combined = cli + "\n" + api + "\n" + analysis + "\n" + router
 
     forbidden = (
         "send_btn.click",
@@ -41,6 +45,8 @@ def audit() -> tuple[bool, list[str]]:
         "Gmail delete is disabled in automation",
         "sender_present=",
         "input[name=\"q\"]",
+        "mail analyze",
+        "read_analyze_no_state_change",
     )
     for phrase in required:
         if phrase not in combined:

@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 
 from scripts import required_quality_gate as gate
 
@@ -63,3 +64,41 @@ def test_git_hooks_delegate_to_required_gate():
 
 def test_github_actions_workflow_removed():
     assert not (ROOT / ".github" / "workflows" / "safety-ci.yml").exists()
+
+
+def test_run_command_passes_timeout(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["timeout"] = kwargs["timeout"]
+        captured["command"] = tuple(command)
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "7")
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(tmp_path / "pycache"))
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    result = gate.run_command((gate.sys.executable, "--version"))
+
+    assert result.ok is True
+    assert captured["timeout"] == 7
+    assert captured["command"] == (gate.sys.executable, "--version")
+
+
+def test_run_command_fails_fast_on_timeout(monkeypatch, tmp_path):
+    def fake_run(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"], output="partial output")
+
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "3")
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(tmp_path / "pycache"))
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    result = gate.run_command((gate.sys.executable, "--version"))
+
+    assert result.ok is False
+    assert result.detail == "timeout_after=3s"
