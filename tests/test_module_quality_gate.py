@@ -42,6 +42,12 @@ def test_portable_install_includes_baseline_contract_gate():
     assert any(step.check == "portable_install_baseline_contract" for step in module.steps)
 
 
+def test_release_preflight_includes_baseline_contract_gate():
+    module = next(module for module in gate.MODULES if module.name == "release_preflight")
+
+    assert any(step.check == "release_preflight_baseline_contract" for step in module.steps)
+
+
 def test_command_matrix_blocks_build_deploy_and_push_commands():
     offenders = [
         step.name
@@ -302,6 +308,16 @@ def test_portable_install_baseline_contract_passes_current_sources():
 
 def test_portable_install_baseline_contract_registered_in_checks():
     assert "portable_install_baseline_contract" in gate.CHECKS
+
+
+def test_release_preflight_baseline_contract_passes_current_sources():
+    ok, message = gate.check_release_preflight_baseline_contract()
+
+    assert ok, message
+
+
+def test_release_preflight_baseline_contract_registered_in_checks():
+    assert "release_preflight_baseline_contract" in gate.CHECKS
 
 
 def test_backend_runtime_contract_passes_current_sources():
