@@ -1,19 +1,8 @@
-"""Gmail OOP 인터페이스 (기존 gmail.py task 함수 보존).
+"""Safe Gmail browser adapter.
 
-기존 `gmail.run("compose", [...])` CLI 스타일에 추가로,
-Python 코드에서 직접 호출할 수 있는 클래스 제공.
-
-사용:
-    from scripts.google.gmail_api import GmailAPI
-    from scripts.web_connector import get_page
-    g = GmailAPI(get_page())
-    g.send(to="x@y.com", subject="안녕", body="내용")
-    g.list_inbox(limit=20)
-    g.read(0)
-    g.reply(0, "답장 내용")
-    g.mark_read(0)
-    g.label(0, "중요")
-    g.search("from:naver.com")
+This adapter keeps the legacy public methods but does not click final Send or
+Delete controls. Gmail writes must flow through the Google work approval path
+and remain no-final-submit until a separate approved final action exists.
 """
 from __future__ import annotations
 
@@ -22,23 +11,20 @@ from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
-from scripts.critical_logger import log_critical
 from scripts.config import GOOGLE_URLS
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
 
 class GmailAPI:
-    """Gmail 웹 UI 자동화 (CDP 기반)."""
+    """Gmail UI helper for user-present CDP sessions."""
 
     def __init__(self, page: Page):
         self.page = page
 
-    # ── 목록/탐색 ────────────────────────────────────────────────────
-
-    def list_inbox(self, limit: int = 20, folder: str = "inbox") -> list[dict]:
-        """받은편지함 목록."""
+    def list_inbox(self, limit: int = 20, folder: str = "inbox") -> list[dict[str, Any]]:
+        """Return a redacted list of visible messages from a Gmail folder."""
         url_map = {
             "inbox": GOOGLE_URLS["gmail_inbox"],
             "sent": GOOGLE_URLS["gmail_sent"],
@@ -51,204 +37,202 @@ class GmailAPI:
         rows = self.page.evaluate(
             r"""(limit) => {
                 const out = [];
-                // Gmail 웹: tr.zA 행 파싱 (검증됨 2026-05-20)
-                for (const row of document.querySelectorAll('tr.zA')) {
+                for (const row of document.querySelectorAll('tr.zA, [role="listitem"]')) {
                     if (out.length >= limit) break;
-                    const fromEl = row.querySelector('.yW span[email], .yW span[name], .zF');
-                    const from = fromEl?.getAttribute('email') || fromEl?.getAttribute('name') || fromEl?.innerText || '';
-                    const subjectEl = row.querySelector('.y6 span:not(.T3)');
-                    const subject = subjectEl?.innerText || row.querySelector('.y6')?.innerText || '';
-                    const dateEl = row.querySelector('.xW span, td.xW');
-                    const date = dateEl?.getAttribute('title') || dateEl?.innerText || '';
+                    const fromEl = row.querySelector('.yW span[email], .yW span[name], .zF, [data-senders]');
+                    const subjectEl = row.querySelector('.y6 span:not(.T3), [data-subject]');
+                    const dateEl = row.querySelector('.xW span, td.xW, [data-date-time]');
+                    const from = fromEl?.getAttribute('name') || fromEl?.getAttribute('data-senders') || fromEl?.innerText || '';
+                    const subject = subjectEl?.getAttribute('data-subject') || subjectEl?.innerText || '';
+                    const date = dateEl?.getAttribute('title') || dateEl?.getAttribute('data-date-time') || dateEl?.innerText || '';
                     const unread = row.classList.contains('zE');
-                    if (from || subject) out.push({from: from.trim(), subject: subject.trim(), date: date.trim(), unread, index: out.length});
+                    if (from || subject) {
+                        out.push({
+                            from_preview: from.trim().slice(0, 80),
+                            subject_preview: subject.trim().slice(0, 120),
+                            date: date.trim().slice(0, 80),
+                            unread,
+                            index: out.length
+                        });
+                    }
                 }
                 return out;
             }""",
             limit,
         )
-        _log.info("[gmail] %s 목록 %d개", folder, len(rows))
+        _log.info("[gmail] listed folder=%s count=%d", folder, len(rows))
         return rows
 
-    def search(self, query: str, limit: int = 20) -> list[dict]:
-        """검색 + 결과 목록 반환."""
+    def search(self, query: str, limit: int = 20) -> list[dict[str, Any]]:
+        """Search Gmail and return visible result previews."""
         self.page.goto(GOOGLE_URLS["gmail_home"], timeout=20000)
-        time.sleep(2)
+        time.sleep(2.0)
         try:
-            box = self.page.locator('input[placeholder*="Search"], input[aria-label*="검색"]').first
+            box = self.page.locator(
+                'input[placeholder*="Search"], input[aria-label*="Search"], input[aria-label*="search"]'
+            ).first
             box.click(timeout=3000)
             box.fill(query, timeout=3000)
             self.page.keyboard.press("Enter")
-            time.sleep(3)
-        except Exception as e:
-            _log.error("[gmail] 검색 실패: %s", e)
+            time.sleep(3.0)
+        except Exception as exc:
+            _log.error("[gmail] search failed: %s", exc)
             return []
-        return self.list_inbox(limit=limit, folder="inbox")  # 같은 셀렉터로 결과 파싱
+        return self.list_inbox(limit=limit, folder="inbox")
 
-    # ── 발송/답장 ────────────────────────────────────────────────────
-
-    def send(self, *, to: str, subject: str, body: str,
-             cc: str | None = None, bcc: str | None = None) -> dict:
-        """새 메일 발송."""
+    def send(
+        self,
+        *,
+        to: str,
+        subject: str,
+        body: str,
+        cc: str | None = None,
+        bcc: str | None = None,
+    ) -> dict[str, Any]:
+        """Fill a Gmail compose draft only. Final Send is never clicked."""
         self.page.goto(GOOGLE_URLS["gmail_home"], timeout=20000)
         time.sleep(2.5)
         try:
-            # JS로 "편지쓰기" 버튼 찾기 (has-text selector 대체)
-            compose_clicked = self.page.evaluate("""
-            () => {
-                for (const btn of document.querySelectorAll('div[role="button"], button')) {
-                    const txt = (btn.innerText || '').trim();
-                    if (txt === '편지쓰기' || txt === 'Compose') {
-                        btn.click();
-                        return true;
-                    }
-                }
-                return false;
-            }
-            """)
-            if not compose_clicked:
-                raise RuntimeError("'편지쓰기' 버튼 못 찾음")
-            time.sleep(2)
-
-            to_input = self.page.locator(
-                'input[aria-label*="To"], input[aria-label*="받는사람"], textarea[name="to"]'
-            ).first
-            to_input.click(timeout=3000)
-            self.page.keyboard.type(to, delay=20)
-            self.page.keyboard.press("Tab")
-            time.sleep(0.5)
-
+            self._open_compose()
+            self._fill_recipient("to", to)
             if cc:
-                # Cc 열기
-                try:
-                    self.page.locator('span:has-text("Cc"), span:has-text("참조")').first.click(timeout=1500)
-                    self.page.locator('input[aria-label*="Cc"], input[aria-label*="참조"]').first.fill(cc, timeout=2000)
-                except Exception:
-                    pass
-
+                self._fill_optional_recipient("Cc", cc)
             if bcc:
-                try:
-                    self.page.locator('span:has-text("Bcc"), span:has-text("숨은참조")').first.click(timeout=1500)
-                    self.page.locator('input[aria-label*="Bcc"], input[aria-label*="숨은참조"]').first.fill(bcc, timeout=2000)
-                except Exception:
-                    pass
+                self._fill_optional_recipient("Bcc", bcc)
+            self._fill_subject(subject)
+            self._fill_body(body)
+            return {
+                "ok": True,
+                "mode": "draft_only_no_final_submit",
+                "final_send_clicked": False,
+                "fields_filled": ["to", "subject", "body"],
+            }
+        except Exception as exc:
+            _log.error("[gmail] draft fill failed: %s", exc)
+            return {"ok": False, "error": str(exc)[:100]}
 
-            subj = self.page.locator('input[aria-label*="Subject"], input[name="subjectbox"]').first
-            subj.fill(subject, timeout=3000)
-            time.sleep(0.3)
-
-            self.page.evaluate(
-                """(text) => {
-                    const ed = document.querySelector('div[contenteditable="true"][aria-label*="Message"], div[contenteditable="true"]');
-                    if (ed) {
-                        ed.focus();
-                        ed.innerHTML = text.replace(/\\n/g, '<br>');
-                        ed.dispatchEvent(new Event('input', {bubbles: true}));
-                    }
-                }""",
-                body,
-            )
-            time.sleep(0.5)
-
-            send_btn = self.page.locator(
-                'div[role="button"][aria-label*="Send"], div[role="button"][aria-label*="보내기"]'
-            ).first
-            send_btn.click(timeout=5000)
-            time.sleep(2.5)
-            log_critical("MAIL_SEND", f"Gmail 발송: {to}", subject=subject[:50], mode="gmail_send")
-            return {"ok": True, "to": to, "subject": subject}
-        except Exception as e:
-            _log.error("[gmail] 발송 실패: %s", e)
-            return {"ok": False, "error": str(e)[:100]}
-
-    def reply(self, mail_index: int, body: str, reply_all: bool = False) -> dict:
-        """N번째 메일에 답장."""
+    def reply(self, mail_index: int, body: str, reply_all: bool = False) -> dict[str, Any]:
+        """Fill a reply draft only. Final Send is never clicked."""
         self.list_inbox(limit=max(mail_index + 1, 10))
         try:
-            items = self.page.locator('[role="listitem"]')
-            items.nth(mail_index).click(timeout=5000)
-            time.sleep(2)
-            btn_label = "전체답장" if reply_all else "답장"
-            self.page.locator(
-                f'div[role="button"]:has-text("{btn_label}"), div[role="button"][aria-label*="Reply"]'
-            ).first.click(timeout=4000)
-            time.sleep(1.5)
-            self.page.evaluate(
-                """(text) => {
-                    const ed = document.querySelector('div[contenteditable="true"]');
-                    if (ed) { ed.focus(); ed.innerHTML = text.replace(/\\n/g, '<br>');
-                              ed.dispatchEvent(new Event('input', {bubbles: true})); }
-                }""",
-                body,
-            )
-            time.sleep(0.5)
-            self.page.locator(
-                'div[role="button"][aria-label*="Send"], div[role="button"][aria-label*="보내기"]'
-            ).first.click(timeout=4000)
-            time.sleep(2)
-            log_critical("MAIL_SEND", f"Gmail 답장: idx={mail_index}", mode="gmail_reply")
-            return {"ok": True, "mail_index": mail_index}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:100]}
+            self.page.locator('tr.zA, [role="listitem"]').nth(mail_index).click(timeout=5000)
+            time.sleep(2.0)
+            labels = ["Reply all", "Reply"] if reply_all else ["Reply"]
+            self._click_by_text(labels)
+            time.sleep(1.0)
+            self._fill_body(body)
+            return {
+                "ok": True,
+                "mode": "reply_draft_only_no_final_submit",
+                "final_send_clicked": False,
+                "mail_index": mail_index,
+            }
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)[:100]}
 
-    # ── 읽기/상태 변경 ───────────────────────────────────────────────
-
-    def read(self, mail_index: int) -> dict:
-        """N번째 메일 열어서 본문 추출."""
+    def read(self, mail_index: int) -> dict[str, Any]:
+        """Open a visible message and return a redacted body preview."""
         self.list_inbox(limit=max(mail_index + 1, 10))
         try:
-            items = self.page.locator('[role="listitem"]')
-            items.nth(mail_index).click(timeout=5000)
+            self.page.locator('tr.zA, [role="listitem"]').nth(mail_index).click(timeout=5000)
             time.sleep(2.5)
             data = self.page.evaluate(
                 """() => {
                     const subj = document.querySelector('h2[data-thread-perm-id], h2.hP')?.innerText || '';
-                    const from_el = document.querySelector('[email], .gD');
-                    const sender = from_el?.getAttribute('email') || from_el?.innerText || '';
+                    const sender = document.querySelector('[email], .gD')?.innerText || '';
                     const body = document.querySelector('[role="article"] [dir="ltr"], .a3s')?.innerText || '';
-                    return {subject: subj, sender, body: body.substring(0, 4000)};
+                    return {
+                        subject_preview: subj.slice(0, 120),
+                        sender_preview: sender.slice(0, 80),
+                        body_preview: body.slice(0, 1000)
+                    };
                 }"""
             )
             return {"ok": True, **data}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:100]}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)[:100]}
 
-    def mark_read(self, mail_index: int) -> dict:
-        """읽음 표시."""
+    def mark_read(self, mail_index: int) -> dict[str, Any]:
+        """Open a message, which may mark it read in Gmail."""
+        self.list_inbox(limit=max(mail_index + 1, 10))
         try:
-            self.list_inbox(limit=max(mail_index + 1, 10))
-            items = self.page.locator('[role="listitem"]')
-            items.nth(mail_index).click(timeout=5000)
+            self.page.locator('tr.zA, [role="listitem"]').nth(mail_index).click(timeout=5000)
             time.sleep(1.5)
-            # 메일 열면 자동으로 읽음
             self.page.goto(GOOGLE_URLS["gmail_inbox"], timeout=10000)
-            return {"ok": True, "mail_index": mail_index}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:100]}
+            return {"ok": True, "mail_index": mail_index, "state_change": "gmail_may_mark_read"}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)[:100]}
 
-    def star(self, mail_index: int) -> dict:
-        """별표."""
-        try:
-            self.list_inbox(limit=max(mail_index + 1, 10))
-            items = self.page.locator('[role="listitem"]')
-            it = items.nth(mail_index)
-            it.locator('span[role="checkbox"][aria-label*="Star"], .T-KT').first.click(timeout=3000)
-            return {"ok": True, "mail_index": mail_index}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:100]}
+    def star(self, mail_index: int) -> dict[str, Any]:
+        """Block starring until a dedicated approval-gated action is added."""
+        return {
+            "ok": False,
+            "mode": "blocked",
+            "reason": "gmail_star_requires_user_final_approval",
+            "mail_index": mail_index,
+        }
 
-    def delete(self, mail_index: int) -> dict:
-        """N번째 메일 삭제."""
+    def delete(self, mail_index: int) -> dict[str, Any]:
+        """Block deletion until a dedicated approval-gated action is added."""
+        return {
+            "ok": False,
+            "mode": "blocked",
+            "reason": "gmail_delete_requires_user_final_approval",
+            "mail_index": mail_index,
+        }
+
+    def _open_compose(self) -> None:
+        if self._compose_visible():
+            return
+        self._click_by_text(["Compose"])
+        time.sleep(1.5)
+        if not self._compose_visible():
+            self.page.locator('div[role="button"][gh="cm"], div[aria-label*="Compose"]').first.click(timeout=4000)
+            time.sleep(1.5)
+
+    def _compose_visible(self) -> bool:
+        selectors = ['input[name="subjectbox"]', 'textarea[name="to"]', 'div[contenteditable="true"]']
+        for selector in selectors:
+            try:
+                if self.page.locator(selector).first.bounding_box(timeout=500) is not None:
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def _fill_recipient(self, field: str, value: str) -> None:
+        if not value:
+            return
+        selector = (
+            'textarea[name="to"], div[name="to"] input[type="text"], '
+            'input[aria-label*="To"], input[aria-label*="Recipient"]'
+        )
+        target = self.page.locator(selector).first
+        target.click(timeout=4000)
+        self.page.keyboard.type(value, delay=10)
+        self.page.keyboard.press("Enter")
+
+    def _fill_optional_recipient(self, label: str, value: str) -> None:
         try:
-            self.list_inbox(limit=max(mail_index + 1, 10))
-            items = self.page.locator('[role="listitem"]')
-            items.nth(mail_index).click(timeout=5000)
-            time.sleep(1.5)
-            self.page.locator(
-                'div[role="button"][aria-label*="Delete"], div[role="button"][aria-label*="삭제"]'
-            ).first.click(timeout=4000)
-            time.sleep(1.5)
-            log_critical("OTHER", f"Gmail 삭제: idx={mail_index}", mode="gmail_delete")
-            return {"ok": True}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:100]}
+            self._click_by_text([label])
+            self._fill_recipient(label.lower(), value)
+        except Exception:
+            _log.warning("[gmail] optional recipient field skipped: %s", label)
+
+    def _fill_subject(self, value: str) -> None:
+        self.page.locator('input[name="subjectbox"], input[aria-label*="Subject"]').first.fill(value, timeout=4000)
+
+    def _fill_body(self, value: str) -> None:
+        target = self.page.locator('div[contenteditable="true"][role="textbox"], div[contenteditable="true"]').last
+        target.click(timeout=4000)
+        self.page.keyboard.type(value, delay=5)
+
+    def _click_by_text(self, labels: list[str]) -> None:
+        last_error: Exception | None = None
+        for label in labels:
+            try:
+                self.page.get_by_text(label, exact=False).first.click(timeout=3000)
+                return
+            except Exception as exc:
+                last_error = exc
+        raise RuntimeError(f"Gmail control not found: {'/'.join(labels)}") from last_error

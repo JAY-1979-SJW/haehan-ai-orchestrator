@@ -84,8 +84,10 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("root_legacy_script_contract", check="root_legacy_script_contract"),
             GateStep("site_registry_baseline", check="site_registry_baseline"),
             GateStep("site_sso_subdomain_runtime_baseline", check="site_sso_subdomain_runtime_baseline"),
+            GateStep("site_work_function_baseline", check="site_work_function_baseline"),
             GateStep("google_automation_baseline_contract", check="google_automation_baseline_contract"),
             GateStep("google_workspace_module_baseline_contract", check="google_workspace_module_baseline_contract"),
+            GateStep("google_gmail_function_contract", check="google_gmail_function_contract"),
             GateStep("google_workspace_router_compatibility", check="google_workspace_router_compatibility"),
             GateStep("google_cloud_module_baseline_contract", check="google_cloud_module_baseline_contract"),
             GateStep("google_cloud_router_compatibility", check="google_cloud_router_compatibility"),
@@ -856,6 +858,16 @@ def check_site_sso_subdomain_runtime_baseline() -> tuple[bool, str]:
     return True, "shared SSO subdomain runtime baseline is locked for Google and Naver"
 
 
+def check_site_work_function_baseline() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_site_work_function_baseline.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked site work function baseline preserves routed work, counts, and approval boundaries"
+
+
 def check_google_automation_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_google_automation_baseline_contract.py"],
@@ -874,6 +886,16 @@ def check_google_workspace_module_baseline_contract() -> tuple[bool, str]:
     if not ok:
         return False, message
     return True, "locked Google Workspace baseline preserves workspace counts and approval boundaries"
+
+
+def check_google_gmail_function_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_google_gmail_function_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "Gmail function contract blocks final send/delete and preserves no-final-submit"
 
 
 def check_google_workspace_router_compatibility() -> tuple[bool, str]:
@@ -1079,8 +1101,10 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "root_legacy_script_contract": check_root_legacy_script_contract,
     "site_registry_baseline": check_site_registry_baseline,
     "site_sso_subdomain_runtime_baseline": check_site_sso_subdomain_runtime_baseline,
+    "site_work_function_baseline": check_site_work_function_baseline,
     "google_automation_baseline_contract": check_google_automation_baseline_contract,
     "google_workspace_module_baseline_contract": check_google_workspace_module_baseline_contract,
+    "google_gmail_function_contract": check_google_gmail_function_contract,
     "google_workspace_router_compatibility": check_google_workspace_router_compatibility,
     "google_cloud_module_baseline_contract": check_google_cloud_module_baseline_contract,
     "google_cloud_router_compatibility": check_google_cloud_router_compatibility,

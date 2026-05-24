@@ -344,7 +344,7 @@ def main() -> None:
                     print(f"  권장사항: {', '.join(result['recommendations'])}")
                 print(f"\n✓ 분석 결과:")
                 print(json.dumps(result, ensure_ascii=False, indent=2)[:500])
-            case cmd if cmd in ("naver", "google", "gmail", "youtube", "kakao", "eum", "hiworks",
+            case cmd if cmd in ("naver", "google", "gmail", "youtube", "kakao", "eum", "hiworks", "gabia",
                                    "smartstore", "g2b", "local"):
                 # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 case로 처리)
                 from scripts.router import dispatch
