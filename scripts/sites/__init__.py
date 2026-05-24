@@ -1,0 +1,2 @@
+"""Shared site automation contracts."""
+
