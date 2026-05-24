@@ -124,6 +124,27 @@ def test_render_user_block_no_token_leak():
 # ── 5) gui_app imports ─────────────────────────────────────────
 
 
+def test_desktop_launcher_diagnostics_includes_safe_recovery_plan(monkeypatch):
+    from local_agent import desktop_launcher as dl
+    from local_agent import token_store as ts
+    import local_agent.desktop_config as dc
+
+    class _Cfg:
+        server_url = "https://x.example/orchestrator?device_token=SECRET"
+        agent_id = "la-leak123test456"
+
+    monkeypatch.setattr(ts, "describe_backend", lambda: (True, "test-backend"))
+    monkeypatch.setattr(ts, "has_device_token", lambda **_: False)
+    monkeypatch.setattr(dc, "load_config", lambda: _Cfg())
+
+    data = dl.show_diagnostics("")
+    assert data["recovery_plan"]["next_action"] == "REGISTER_REQUIRED"
+    blob = json.dumps(data, ensure_ascii=False)
+    assert "SECRET" not in blob
+    assert "leak123test456" not in blob
+    assert '"device_token"' not in blob
+
+
 def test_gui_app_module_imports():
     from local_agent import gui_app
     assert hasattr(gui_app, "HaehanAgentGuiApp")

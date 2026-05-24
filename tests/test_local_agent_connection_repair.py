@@ -196,6 +196,46 @@ def test_build_diagnostics_suggests_action_for_auth_failed():
     assert any("재등록" in s for s in d.suggested_actions)
 
 
+def test_auth_failed_recovery_requires_user_confirmed_reregister():
+    plan = cd.build_recovery_plan(
+        state=cd.STATE_AUTH_FAILED,
+        last_error_code="AUTH_FAILED_4401",
+        token_present=True,
+    )
+    assert plan.code == "AUTH_FAILED_4401"
+    assert plan.next_action == "RE_REGISTER_REQUIRED"
+    assert plan.requires_user_confirmation is True
+    assert plan.can_auto_retry is False
+    assert plan.should_delete_token is False
+    assert any("--reset" in command for command in plan.commands)
+    blob = json.dumps(plan.to_dict(), ensure_ascii=False)
+    assert "device_token" not in blob
+    assert "Bearer " not in blob
+
+
+def test_heartbeat_lost_recovery_allows_auto_retry_without_token_delete():
+    plan = cd.build_recovery_plan(
+        state=cd.STATE_DISCONNECTED,
+        last_error_code="HEARTBEAT_LOST",
+        token_present=True,
+    )
+    assert plan.next_action == "AUTO_RECONNECT"
+    assert plan.can_auto_retry is True
+    assert plan.should_delete_token is False
+
+
+def test_render_recovery_block_has_no_secret_values_for_auth_failed():
+    plan = cd.build_recovery_plan(
+        state=cd.STATE_AUTH_FAILED,
+        last_error_code="AUTH_FAILED_4401",
+        token_present=True,
+    )
+    block = cd.render_recovery_block(plan)
+    assert "AUTH_FAILED_4401" in block
+    assert "Bearer " not in block
+    assert "registration_code=" not in block
+
+
 def test_build_diagnostics_invalid_url_safe():
     d = cd.build_diagnostics(
         server_base_url="bad-url-no-scheme",
