@@ -82,6 +82,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("required_local_gate_wiring", check="required_local_gate_wiring"),
             GateStep("module_boundary_contract", check="module_boundary_contract"),
             GateStep("root_legacy_script_contract", check="root_legacy_script_contract"),
+            GateStep("site_registry_baseline", check="site_registry_baseline"),
         ),
     ),
     GateModule(
@@ -827,6 +828,16 @@ def check_root_legacy_script_contract() -> tuple[bool, str]:
     return True, "root legacy script inventory is classified and locked"
 
 
+def check_site_registry_baseline() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/validate_site_registry_baseline.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "official site registry covers site modules and policy fields"
+
+
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_common_tool_runtime.py"],
@@ -978,6 +989,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "required_local_gate_wiring": check_required_local_gate_wiring,
     "module_boundary_contract": check_module_boundary_contract,
     "root_legacy_script_contract": check_root_legacy_script_contract,
+    "site_registry_baseline": check_site_registry_baseline,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,

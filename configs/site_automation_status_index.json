@@ -1,24 +1,101 @@
 {
-  "schema_version": 1,
-  "updated_at": "2026-05-13",
-  "status_values": [
-    "planned",
-    "discovered",
-    "designed",
-    "implemented",
-    "verified",
-    "complete_baseline",
-    "complete_live",
-    "blocked"
-  ],
+  "schema_version": 2,
+  "updated_at": "2026-05-24",
+  "purpose": "Official site automation registry. New site work must be registered here before implementation.",
+  "registry_contract": {
+    "required_fields": [
+      "site_id",
+      "display_name",
+      "category",
+      "domains",
+      "status",
+      "execution_policy",
+      "login_policy",
+      "risk_level",
+      "tools",
+      "tests",
+      "owner_module",
+      "notes"
+    ],
+    "status_values": [
+      "active",
+      "partial",
+      "cataloged",
+      "planned",
+      "blocked",
+      "archived"
+    ],
+    "execution_policy_values": [
+      "browser_readonly",
+      "api_preferred",
+      "local_agent_required",
+      "manual_live_read",
+      "manual_or_oauth_only",
+      "blocked"
+    ],
+    "login_policy_values": [
+      "none",
+      "existing_session_only",
+      "user_present_only",
+      "user_present_or_oauth_only",
+      "oauth_only",
+      "blocked"
+    ],
+    "risk_level_values": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "script_dirs_requiring_registry": [
+      "eum",
+      "g2b",
+      "gabia",
+      "google",
+      "hiworks",
+      "kakao",
+      "naver",
+      "naver_mail",
+      "smartstore",
+      "youtube"
+    ],
+    "excluded_script_dirs": [
+      "__pycache__",
+      "archive",
+      "explorer",
+      "file-map",
+      "form",
+      "haehan",
+      "local_agent",
+      "ops",
+      "site_engine",
+      "smoke"
+    ]
+  },
   "sites": [
     {
       "site_id": "eum",
-      "label": "건설근로자공제회 EUM",
-      "status": "complete_baseline",
-      "completion_report": "docs/reports/eum_completion_report_20260513.md",
-      "reference_doc": "docs/eum_logic_reference_20260513.md",
-      "index_doc": "docs/site_automation_status_index.md",
+      "display_name": "EUM",
+      "category": "business_portal",
+      "domains": [
+        "wss.eis.eum.go.kr",
+        "eis.eum.go.kr"
+      ],
+      "status": "partial",
+      "execution_policy": "local_agent_required",
+      "login_policy": "user_present_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/eum"
+      ],
+      "tests": [
+        "tests/test_eum_surface_imports.py"
+      ],
+      "owner_module": "scripts/eum",
+      "notes": [
+        "Read and prepare workflows are allowed after approval gate checks.",
+        "Live submit workflows require explicit user approval and evidence."
+      ],
       "workflows": [
         {"key": "device_inventory", "risk": "read", "status": "complete"},
         {"key": "new_sites", "risk": "read", "status": "complete"},
@@ -30,133 +107,430 @@
         {"key": "device_deregistration", "risk": "approval", "status": "complete_baseline"}
       ],
       "pending": [
-        "device_registration live submit E2E requires real values and approval",
-        "device_deregistration live submit E2E requires real values and approval"
+        "Live registration and deregistration E2E require real values and approval."
+      ]
+    },
+    {
+      "site_id": "g2b",
+      "display_name": "G2B Nara Market",
+      "category": "public_bid",
+      "domains": [
+        "g2b.go.kr"
+      ],
+      "status": "partial",
+      "execution_policy": "browser_readonly",
+      "login_policy": "user_present_only",
+      "risk_level": "critical",
+      "tools": [
+        "scripts/g2b"
+      ],
+      "tests": [
+        "tests/test_g2b_site_engine_skeleton.py"
+      ],
+      "owner_module": "scripts/g2b",
+      "notes": [
+        "Read-only public notice workflows are allowed.",
+        "Certificate, bid, contract, payment, and submit workflows remain blocked or user-present."
+      ],
+      "workflows": [
+        {"key": "public_notice_search", "risk": "read", "status": "verified"},
+        {"key": "public_notice_detail", "risk": "read", "status": "verified"},
+        {"key": "attachment_list", "risk": "read", "status": "verified"}
+      ],
+      "pending": [
+        "Automatic attachment download remains blocked; prepare manifests only."
+      ]
+    },
+    {
+      "site_id": "gabia",
+      "display_name": "Gabia",
+      "category": "domain_dns",
+      "domains": [
+        "gabia.com"
+      ],
+      "status": "partial",
+      "execution_policy": "manual_or_oauth_only",
+      "login_policy": "user_present_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/gabia"
+      ],
+      "tests": [
+        "tests/test_gabia_site_engine.py",
+        "tests/test_gabia_site_settings_canonical_registry_20260517.py"
+      ],
+      "owner_module": "scripts/gabia",
+      "notes": [
+        "DNS and domain changes are state-changing and require approval."
+      ],
+      "workflows": [],
+      "pending": [
+        "Keep settings aligned with the canonical external-site registry."
+      ]
+    },
+    {
+      "site_id": "google",
+      "display_name": "Google Workspace",
+      "category": "workspace",
+      "domains": [
+        "accounts.google.com",
+        "google.com",
+        "mail.google.com",
+        "drive.google.com",
+        "calendar.google.com",
+        "docs.google.com",
+        "sheets.google.com"
+      ],
+      "status": "partial",
+      "execution_policy": "api_preferred",
+      "login_policy": "user_present_or_oauth_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/google",
+        "ai_orchestrator/connectors/gmail_router.py"
+      ],
+      "tests": [
+        "tests/test_google_site_engine.py",
+        "tests/test_google_surfaces.py",
+        "tests/test_google_workflows.py",
+        "tests/test_google_user_present_session_auth.py"
+      ],
+      "owner_module": "scripts/google",
+      "notes": [
+        "Password replay login is disabled.",
+        "Use existing browser session, user-present login, or OAuth/API integration."
+      ],
+      "workflows": [
+        {"key": "home_scan", "risk": "read", "status": "complete_baseline"},
+        {"key": "gmail", "risk": "private_data", "status": "implemented"},
+        {"key": "drive_calendar_docs_sheets", "risk": "private_data", "status": "partial_api_preferred"}
+      ],
+      "pending": [
+        "Per-surface live read completion remains separate.",
+        "Write workflows require dry-run evidence and approval."
       ]
     },
     {
       "site_id": "hiworks",
-      "label": "하이웍스",
-      "status": "complete_baseline",
-      "completion_report": "docs/reports/hiworks_completion_report_20260513.md",
-      "reference_doc": "docs/hiworks_logic_reference_20260513.md",
-      "index_doc": "docs/site_automation_status_index.md",
+      "display_name": "Hiworks",
+      "category": "groupware",
+      "domains": [
+        "hiworks.com"
+      ],
+      "status": "partial",
+      "execution_policy": "api_preferred",
+      "login_policy": "user_present_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/hiworks"
+      ],
+      "tests": [
+        "tests/test_hiworks_surface_imports.py"
+      ],
+      "owner_module": "scripts/hiworks",
+      "notes": [
+        "Actual mail send remains approval-gated.",
+        "Official API integration remains a separate track."
+      ],
       "workflows": [
         {"key": "dashboard", "risk": "read", "status": "complete"},
-        {"key": "apps", "risk": "read", "status": "complete"},
         {"key": "mail", "risk": "read", "status": "complete"},
         {"key": "compose", "risk": "read", "status": "complete"},
-        {"key": "service_scan", "risk": "read", "status": "complete"},
-        {"key": "action_catalog", "risk": "read", "status": "complete"},
-        {"key": "prepare_section", "risk": "prepare", "status": "complete_baseline"},
-        {"key": "submit_section", "risk": "send", "status": "complete_baseline"},
-        {"key": "prepare_sales_mail", "risk": "prepare", "status": "complete"},
         {"key": "send_batch_plan", "risk": "prepare", "status": "complete_baseline"}
       ],
       "pending": [
-        "actual mail send remains approval-gated and is not implemented for batch send",
-        "state-changing section buttons require --approved and --confirm=HIWORKS_APPROVED_SUBMIT",
-        "live submit E2E should run only after an approved dry-run evidence record",
-        "official Hiworks API integration remains a separate future track"
-      ]
-    },
-    {
-      "site_id": "naver",
-      "label": "네이버 서비스",
-      "status": "implemented",
-      "completion_report": "",
-      "reference_doc": "docs/NAVER_SERVICES_EXPANSION_PLAN.md",
-      "index_doc": "docs/site_automation_status_index.md",
-      "workflows": [],
-      "pending": ["split service-level completion reports"]
-    },
-    {
-      "site_id": "g2b",
-      "label": "나라장터",
-      "status": "verified",
-      "completion_report": "docs/reports/g2b_completion_report_20260513.md",
-      "reference_doc": "docs/reports/g2b_public_notice_readonly_matrix_20260507.md",
-      "index_doc": "docs/site_automation_status_index.md",
-      "workflows": [
-        {"key": "public_notice_search", "risk": "read", "status": "verified"},
-        {"key": "public_notice_list", "risk": "read", "status": "verified"},
-        {"key": "public_notice_detail", "risk": "read", "status": "verified"},
-        {"key": "attachment_list", "risk": "read", "status": "verified"},
-        {"key": "readonly_policy_gate", "risk": "blocked", "status": "verified"}
-      ],
-      "pending": [
-        "login, certificate, bid, contract, payment, and final submit workflows remain user-present or blocked",
-        "automatic attachment download remains blocked; prepare manifests only"
-      ]
-    },
-      {
-        "site_id": "google",
-        "label": "Google/Gmail",
-        "status": "implemented",
-        "completion_report": "docs/reports/google_surface_exploration_completion_report_20260513.md",
-        "reference_doc": "docs/google_surface_catalog_reference_20260513.md",
-        "index_doc": "docs/site_automation_status_index.md",
-        "workflows": [
-          {"key": "home_scan", "risk": "read", "status": "complete_baseline"},
-          {"key": "surface_catalog", "risk": "read", "status": "complete"},
-          {"key": "work_action_catalog", "risk": "read", "status": "complete"},
-          {"key": "execution_adapter_catalog", "risk": "read", "status": "complete"},
-          {"key": "execution_verify_log", "risk": "read", "status": "complete"},
-          {"key": "work_prepare_execute_gate", "risk": "approval", "status": "complete_baseline"},
-          {"key": "live_surface_read", "risk": "read", "status": "complete_baseline"},
-          {"key": "gmail", "risk": "private_data", "status": "implemented"},
-          {"key": "drive_calendar_docs_sheets", "risk": "private_data", "status": "partial_api_preferred"},
-          {"key": "console_ai_android_youtube_studio", "risk": "write_possible", "status": "cataloged_gated"},
-          {"key": "workspace_youtube_cloud_ai_business_actions", "risk": "approval", "status": "implemented_gated"}
-        ],
-        "pending": ["per-surface live read completion", "surface-specific final adapters can be strengthened under the common approval contract", "OAuth/API completion criteria", "write workflows require dry-run and approval"]
-      },
-    {
-      "site_id": "kakao",
-      "label": "Kakao",
-      "status": "planned",
-      "completion_report": "",
-      "reference_doc": "docs/KAKAO_DESKTOP_DESIGN.md",
-      "index_doc": "docs/site_automation_status_index.md",
-      "workflows": [],
-      "pending": ["desktop automation baseline"]
-    },
-    {
-      "site_id": "smartstore",
-      "label": "네이버 스마트스토어",
-      "status": "complete_baseline",
-      "completion_report": "docs/reports/smartstore_completion_report_20260513.md",
-      "reference_doc": "docs/smartstore_logic_reference_20260513.md",
-      "index_doc": "docs/site_automation_status_index.md",
-      "workflows": [
-        {"key": "action_catalog", "risk": "read", "status": "complete"},
-        {"key": "product_prepare", "risk": "prepare", "status": "complete_baseline"},
-        {"key": "product_submit", "risk": "approval", "status": "complete_baseline"},
-        {"key": "product_list", "risk": "read", "status": "partial"},
-        {"key": "order_inventory_analytics", "risk": "read", "status": "partial"}
-      ],
-      "pending": [
-        "live SmartStore E2E remains paused after Naver robot detection",
-        "non-dry-run save requires dry-run evidence and --approved --confirm=SMARTSTORE_APPROVED_SUBMIT",
-        "SEO, AI review reply, competitor analysis, CSV import, order, inventory, and analytics need separate workflow verification"
+        "State-changing section buttons require approved confirmation."
       ]
     },
     {
       "site_id": "homepage",
-      "label": "Haehan AI Homepage",
-      "status": "security_watch_active",
-      "completion_report": "../30. 해한 AI 홈페이지/haehan-ai/docs/work-log.md",
-      "reference_doc": "../30. 해한 AI 홈페이지/haehan-ai/docs/security-audit.md",
-      "index_doc": "docs/common_operations_index.md",
+      "display_name": "Haehan AI Homepage",
+      "category": "owned_web",
+      "domains": [
+        "haehan-ai.kr"
+      ],
+      "status": "active",
+      "execution_policy": "api_preferred",
+      "login_policy": "none",
+      "risk_level": "medium",
+      "tools": [
+        "configs/common_operations_index.json"
+      ],
+      "tests": [
+        "tests/test_common_operations_index.py"
+      ],
+      "owner_module": "configs/common_operations_index.json",
+      "notes": [
+        "Owned web property. Security audit and deployment gates are tracked separately."
+      ],
       "workflows": [
         {"key": "security_audit_quick_watch", "risk": "read", "status": "active"},
-        {"key": "security_audit_full_daily", "risk": "read", "status": "active"},
-        {"key": "deployment_security_gate", "risk": "approval", "status": "complete_baseline"},
-        {"key": "audit_log_retention", "risk": "read", "status": "active"}
+        {"key": "deployment_security_gate", "risk": "approval", "status": "complete_baseline"}
       ],
       "pending": [
-        "confirm production notification channel for audit failures",
-        "run full security audit before deployment approval"
+        "Run full security audit before deployment approval."
+      ]
+    },
+    {
+      "site_id": "kakao",
+      "display_name": "Kakao",
+      "category": "social_login",
+      "domains": [
+        "kakao.com"
+      ],
+      "status": "planned",
+      "execution_policy": "manual_or_oauth_only",
+      "login_policy": "user_present_or_oauth_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/kakao"
+      ],
+      "tests": [],
+      "owner_module": "scripts/kakao",
+      "notes": [
+        "No password replay automation is allowed."
+      ],
+      "workflows": [],
+      "pending": [
+        "Desktop automation baseline is not yet implemented."
+      ]
+    },
+    {
+      "site_id": "naver",
+      "display_name": "Naver",
+      "category": "portal",
+      "domains": [
+        "naver.com"
+      ],
+      "status": "partial",
+      "execution_policy": "local_agent_required",
+      "login_policy": "user_present_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/naver"
+      ],
+      "tests": [
+        "tests/test_naver_site_engine.py"
+      ],
+      "owner_module": "scripts/naver",
+      "notes": [
+        "Service-specific tools must be listed as child entries or mapped tools."
+      ],
+      "workflows": [],
+      "pending": [
+        "Split service-level completion reports."
+      ]
+    },
+    {
+      "site_id": "naver_mail",
+      "display_name": "Naver Mail",
+      "category": "naver_service",
+      "domains": [
+        "mail.naver.com"
+      ],
+      "status": "cataloged",
+      "execution_policy": "local_agent_required",
+      "login_policy": "user_present_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/naver_mail",
+        "ai_orchestrator/connectors/naver"
+      ],
+      "tests": [
+        "tests/test_naver_mail_tools.py"
+      ],
+      "owner_module": "scripts/naver_mail",
+      "notes": [
+        "Private mail data must be redacted in logs."
+      ],
+      "workflows": [],
+      "pending": [
+        "Confirm live read/write boundaries before activation."
+      ]
+    },
+    {
+      "site_id": "smartstore",
+      "display_name": "Naver SmartStore",
+      "category": "naver_service",
+      "domains": [
+        "sell.smartstore.naver.com",
+        "smartstore.naver.com"
+      ],
+      "status": "partial",
+      "execution_policy": "local_agent_required",
+      "login_policy": "user_present_only",
+      "risk_level": "critical",
+      "tools": [
+        "scripts/smartstore"
+      ],
+      "tests": [
+        "tests/test_smartstore_surface_imports.py"
+      ],
+      "owner_module": "scripts/smartstore",
+      "notes": [
+        "Non-dry-run save requires dry-run evidence and explicit approval."
+      ],
+      "workflows": [
+        {"key": "action_catalog", "risk": "read", "status": "complete"},
+        {"key": "product_prepare", "risk": "prepare", "status": "complete_baseline"},
+        {"key": "product_submit", "risk": "approval", "status": "complete_baseline"}
+      ],
+      "pending": [
+        "Live SmartStore E2E remains paused after robot detection."
+      ]
+    },
+    {
+      "site_id": "youtube",
+      "display_name": "YouTube",
+      "category": "google_service",
+      "domains": [
+        "youtube.com",
+        "studio.youtube.com"
+      ],
+      "status": "cataloged",
+      "execution_policy": "api_preferred",
+      "login_policy": "user_present_or_oauth_only",
+      "risk_level": "high",
+      "tools": [
+        "scripts/youtube"
+      ],
+      "tests": [
+        "tests/test_youtube_site_engine.py"
+      ],
+      "owner_module": "scripts/youtube",
+      "notes": [
+        "Treat uploads, edits, comments, and account actions as approval-gated writes."
+      ],
+      "workflows": [],
+      "pending": [
+        "Surface-specific live read and API contracts remain to be finalized."
+      ]
+    },
+    {
+      "site_id": "hometax",
+      "display_name": "Hometax",
+      "category": "public_admin",
+      "domains": [
+        "hometax.go.kr"
+      ],
+      "status": "planned",
+      "execution_policy": "manual_or_oauth_only",
+      "login_policy": "user_present_only",
+      "risk_level": "critical",
+      "tools": [
+        "ai_orchestrator/external_sites/provider_registry.py"
+      ],
+      "tests": [
+        "tests/test_external_site_canonical_registry_20260517.py"
+      ],
+      "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
+      "notes": [
+        "Certificate and tax workflows require strict user-present approval."
+      ],
+      "workflows": [],
+      "pending": [
+        "No live automation until a dedicated safety design is approved."
+      ]
+    },
+    {
+      "site_id": "wetax",
+      "display_name": "Wetax",
+      "category": "public_admin",
+      "domains": [
+        "wetax.go.kr"
+      ],
+      "status": "planned",
+      "execution_policy": "manual_or_oauth_only",
+      "login_policy": "user_present_only",
+      "risk_level": "critical",
+      "tools": [
+        "ai_orchestrator/external_sites/provider_registry.py"
+      ],
+      "tests": [
+        "tests/test_external_site_canonical_registry_20260517.py"
+      ],
+      "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
+      "notes": [
+        "Tax workflows require strict user-present approval."
+      ],
+      "workflows": [],
+      "pending": [
+        "No live automation until a dedicated safety design is approved."
+      ]
+    },
+    {
+      "site_id": "government24",
+      "display_name": "Government24",
+      "category": "public_admin",
+      "domains": [
+        "gov.kr"
+      ],
+      "status": "planned",
+      "execution_policy": "manual_or_oauth_only",
+      "login_policy": "user_present_only",
+      "risk_level": "critical",
+      "tools": [
+        "ai_orchestrator/external_sites/provider_registry.py",
+        "scripts/local_agent/gov"
+      ],
+      "tests": [
+        "tests/test_external_site_canonical_registry_20260517.py"
+      ],
+      "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
+      "notes": [
+        "Civil document and certificate workflows require strict approval."
+      ],
+      "workflows": [],
+      "pending": [
+        "No live automation until a dedicated safety design is approved."
+      ]
+    },
+    {
+      "site_id": "email_generic",
+      "display_name": "Generic Email Provider",
+      "category": "generic_email",
+      "domains": [],
+      "status": "cataloged",
+      "execution_policy": "api_preferred",
+      "login_policy": "user_present_or_oauth_only",
+      "risk_level": "high",
+      "tools": [
+        "ai_orchestrator/external_sites/provider_registry.py"
+      ],
+      "tests": [
+        "tests/test_external_site_canonical_registry_20260517.py"
+      ],
+      "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
+      "notes": [
+        "Provider-specific registrations must be added before implementation."
+      ],
+      "workflows": [],
+      "pending": [
+        "Promote to a concrete site entry before building provider-specific tools."
+      ]
+    },
+    {
+      "site_id": "bank_generic",
+      "display_name": "Generic Bank Provider",
+      "category": "generic_financial",
+      "domains": [],
+      "status": "blocked",
+      "execution_policy": "blocked",
+      "login_policy": "blocked",
+      "risk_level": "critical",
+      "tools": [
+        "ai_orchestrator/external_sites/provider_registry.py"
+      ],
+      "tests": [
+        "tests/test_external_site_canonical_registry_20260517.py"
+      ],
+      "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
+      "notes": [
+        "Financial automation is blocked until a dedicated legal/security review is approved."
+      ],
+      "workflows": [],
+      "pending": [
+        "Promote only through a separate approved financial-site baseline."
       ]
     }
   ]
