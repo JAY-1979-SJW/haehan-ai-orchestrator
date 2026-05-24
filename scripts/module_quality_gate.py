@@ -87,6 +87,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("google_workspace_module_baseline_contract", check="google_workspace_module_baseline_contract"),
             GateStep("google_workspace_router_compatibility", check="google_workspace_router_compatibility"),
             GateStep("google_cloud_module_baseline_contract", check="google_cloud_module_baseline_contract"),
+            GateStep("google_cloud_router_compatibility", check="google_cloud_router_compatibility"),
         ),
     ),
     GateModule(
@@ -882,6 +883,16 @@ def check_google_cloud_module_baseline_contract() -> tuple[bool, str]:
     return True, "locked Google Cloud baseline preserves cloud counts, host, and security boundaries"
 
 
+def check_google_cloud_router_compatibility() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_google_cloud_router_compatibility.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "Google Cloud router compatibility and catalog-only safeguards are locked"
+
+
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_common_tool_runtime.py"],
@@ -1038,6 +1049,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "google_workspace_module_baseline_contract": check_google_workspace_module_baseline_contract,
     "google_workspace_router_compatibility": check_google_workspace_router_compatibility,
     "google_cloud_module_baseline_contract": check_google_cloud_module_baseline_contract,
+    "google_cloud_router_compatibility": check_google_cloud_router_compatibility,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
