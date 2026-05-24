@@ -125,7 +125,7 @@ python scripts/module_quality_gate.py --module repo_guard
 Google refactoring must be staged:
 
 1. Baseline and registry lock.
-2. Workspace module split.
+2. Workspace module split. Detailed baseline: `docs/baseline/GOOGLE_WORKSPACE_MODULE_BASELINE.md`.
 3. Cloud module split.
 4. YouTube module split.
 5. Marketing module split.
@@ -142,4 +142,3 @@ Do not split all Google modules in one change.
   deeper file movement must preserve the locked counts.
 - Approval actions are contract-gated, but not all have final production API
   execution adapters.
-
