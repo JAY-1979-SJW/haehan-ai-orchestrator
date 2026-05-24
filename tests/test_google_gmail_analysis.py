@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 from scripts.google import gmail_analysis
@@ -32,9 +31,20 @@ def test_analyze_text_redacts_and_extracts_business_signals() -> None:
 
 
 def test_save_analysis_does_not_write_raw_secret(monkeypatch) -> None:
-    temp_dir = Path(tempfile.mkdtemp(prefix="gmail-analysis-test-", dir="C:\\tmp"))
-    monkeypatch.setattr(gmail_analysis, "REPORT_DIR", temp_dir)
-    monkeypatch.setattr(gmail_analysis, "LATEST_REPORT", temp_dir / "latest.json")
+    writes: dict[str, str] = {}
+
+    def fake_mkdir(self: Path, *args, **kwargs) -> None:
+        return None
+
+    def fake_write_text(self: Path, text: str, *args, **kwargs) -> int:
+        writes[str(self)] = text
+        return len(text)
+
+    latest = Path("virtual-gmail-analysis/latest.json")
+    monkeypatch.setattr(gmail_analysis, "REPORT_DIR", Path("virtual-gmail-analysis/reports"))
+    monkeypatch.setattr(gmail_analysis, "LATEST_REPORT", latest)
+    monkeypatch.setattr(Path, "mkdir", fake_mkdir)
+    monkeypatch.setattr(Path, "write_text", fake_write_text)
 
     analysis = gmail_analysis.analyze_text(
         subject="Security token notice",
@@ -42,14 +52,14 @@ def test_save_analysis_does_not_write_raw_secret(monkeypatch) -> None:
         body="token abc123 password value 010-9999-8888",
     )
     data, path = gmail_analysis.save_analysis(analysis)
-    text = path.read_text(encoding="utf-8")
+    text = writes[str(path)]
 
     assert data["state_change"] is False
     assert "010-9999-8888" not in text
     assert "password" not in text.lower()
     assert "token" not in text.lower()
     assert "[redacted-sensitive]" in text
-    assert json.loads((temp_dir / "latest.json").read_text(encoding="utf-8"))["ok"] is True
+    assert json.loads(writes[str(latest)])["ok"] is True
 
 
 def test_print_summary_omits_body_text(capsys) -> None:
