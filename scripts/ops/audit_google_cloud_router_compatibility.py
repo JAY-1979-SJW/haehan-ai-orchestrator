@@ -108,6 +108,35 @@ def _audit_catalog_only_services() -> list[str]:
     return failures
 
 
+def _audit_readonly_open_services() -> list[str]:
+    from scripts.google.cloud import router
+
+    failures: list[str] = []
+    for service, surface_key in CLOUD_SERVICES.items():
+        action_key = f"{surface_key}_open"
+        result = router.run_cloud(service, "open", [])
+        if result.get("ok") is not True:
+            failures.append(f"{service}: read-only open must return ok=True")
+        if result.get("mode") != "read_only_open":
+            failures.append(f"{service}: mode must be read_only_open")
+        if result.get("state_change") is not False:
+            failures.append(f"{service}: read-only open state_change must be False")
+        if result.get("execution_allowed") is not True:
+            failures.append(f"{service}: read-only open must be execution_allowed")
+        if result.get("requires_approval") is not False:
+            failures.append(f"{service}: read-only open must not require approval")
+        if result.get("surface", {}).get("key") != surface_key:
+            failures.append(f"{service}: read-only surface mismatch {result.get('surface')!r}")
+        if result.get("action_key") != action_key:
+            failures.append(f"{service}: read-only action mismatch {result.get('action_key')!r}")
+        navigation = result.get("browser_navigation", {})
+        if navigation.get("live_open") is not False:
+            failures.append(f"{service}: read-only contract must not open a live browser")
+        if navigation.get("final_click_allowed") is not False:
+            failures.append(f"{service}: final click must stay blocked")
+    return failures
+
+
 def _audit_forbidden_source_patterns() -> list[str]:
     failures: list[str] = []
     for base in SCAN_PATHS:
@@ -124,12 +153,14 @@ def audit() -> tuple[bool, list[str]]:
     failures: list[str] = []
     failures.extend(_audit_router_summary())
     failures.extend(_audit_unknown_service())
+    failures.extend(_audit_readonly_open_services())
     failures.extend(_audit_catalog_only_services())
     failures.extend(_audit_forbidden_source_patterns())
     return not failures, failures or [
         "Google Cloud router summary preserves locked counts",
         "Google Cloud router safely rejects unknown services",
-        "Google Cloud wrappers are catalog-only and non-executing",
+        "Google Cloud wrappers expose read-only open contracts",
+        "Google Cloud wrappers block non-read tasks as catalog-only",
         "Google Cloud source contains no gcloud/API/final-click execution patterns",
     ]
 

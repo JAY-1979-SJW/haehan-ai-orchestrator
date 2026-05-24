@@ -115,5 +115,42 @@ def test_cloud_wrappers_are_catalog_only_and_do_not_execute() -> None:
         assert "browser_final_click" in result["forbidden_execution"]
 
 
+def test_cloud_wrappers_execute_read_only_open_contracts() -> None:
+    wrappers = {
+        "console": ("cloud_console", "cloud_console_open"),
+        "maps_platform": ("maps_platform", "maps_platform_open"),
+        "api_credentials": ("cloud_apis_credentials", "cloud_apis_credentials_open"),
+        "iam": ("cloud_iam", "cloud_iam_open"),
+        "billing": ("cloud_billing", "cloud_billing_open"),
+        "run": ("cloud_run", "cloud_run_open"),
+        "compute": ("compute_engine", "compute_engine_open"),
+        "storage": ("cloud_storage", "cloud_storage_open"),
+        "bigquery": ("bigquery", "bigquery_open"),
+        "gke": ("gke", "gke_open"),
+        "sql": ("cloud_sql", "cloud_sql_open"),
+        "pubsub": ("pubsub", "pubsub_open"),
+        "secret_manager": ("secret_manager", "secret_manager_open"),
+        "logging": ("cloud_logging", "cloud_logging_open"),
+        "monitoring": ("cloud_monitoring", "cloud_monitoring_open"),
+    }
+
+    for service, (surface_key, action_key) in wrappers.items():
+        result = router.run_cloud(service, "open", [])
+        assert result["ok"] is True
+        assert result["mode"] == "read_only_open"
+        assert result["state_change"] is False
+        assert result["execution_allowed"] is True
+        assert result["requires_approval"] is False
+        assert result["surface"]["key"] == surface_key
+        assert result["action_key"] == action_key
+        assert result["target_url"].startswith("https://console.cloud.google.com")
+        assert result["browser_navigation"]["live_open"] is False
+        assert result["browser_navigation"]["final_click_allowed"] is False
+
+        action_result = router.run_cloud(service, action_key, [])
+        assert action_result["ok"] is True
+        assert action_result["action_key"] == action_key
+
+
 def test_vertex_ai_is_not_cloud_owned() -> None:
     assert "vertex_ai" not in [surface["key"] for surface in registry.list_surfaces()]
