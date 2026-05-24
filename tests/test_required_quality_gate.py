@@ -5,6 +5,7 @@ from scripts import required_quality_gate as gate
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TEST_PYCACHE = ROOT
 
 
 def test_required_gate_has_no_forbidden_commands():
@@ -66,12 +67,26 @@ def test_github_actions_workflow_removed():
     assert not (ROOT / ".github" / "workflows" / "safety-ci.yml").exists()
 
 
-def test_run_command_passes_timeout(monkeypatch, tmp_path):
+def test_required_gate_default_timeout_is_short():
+    assert gate.DEFAULT_COMMAND_TIMEOUT_SECONDS == 30
+
+
+def test_required_gate_splits_pytest_commands_into_small_groups():
+    pytest_commands = [command for command in gate.COMMANDS if gate.command_is_pytest(command)]
+
+    assert len(pytest_commands) >= 4
+    for command in pytest_commands:
+        test_files = [part for part in command if part.startswith("tests/")]
+        assert 1 <= len(test_files) <= 13
+
+
+def test_run_command_passes_timeout(monkeypatch):
     captured = {}
 
     def fake_run(command, **kwargs):
         captured["timeout"] = kwargs["timeout"]
         captured["command"] = tuple(command)
+        captured["stdin"] = kwargs["stdin"]
 
         class Result:
             returncode = 0
@@ -80,7 +95,7 @@ def test_run_command_passes_timeout(monkeypatch, tmp_path):
         return Result()
 
     monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "7")
-    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(tmp_path / "pycache"))
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(TEST_PYCACHE))
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
     result = gate.run_command((gate.sys.executable, "--version"))
@@ -88,17 +103,44 @@ def test_run_command_passes_timeout(monkeypatch, tmp_path):
     assert result.ok is True
     assert captured["timeout"] == 7
     assert captured["command"] == (gate.sys.executable, "--version")
+    assert captured["stdin"] == subprocess.DEVNULL
 
 
-def test_run_command_fails_fast_on_timeout(monkeypatch, tmp_path):
+def test_run_command_fails_fast_on_timeout(monkeypatch):
     def fake_run(command, **kwargs):
         raise subprocess.TimeoutExpired(command, kwargs["timeout"], output="partial output")
 
     monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "3")
-    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(tmp_path / "pycache"))
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_PYCACHE", str(TEST_PYCACHE))
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
     result = gate.run_command((gate.sys.executable, "--version"))
 
     assert result.ok is False
     assert result.detail == "timeout_after=3s"
+
+
+def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["env"] = kwargs["env"]
+        captured["stdout"] = kwargs["stdout"]
+        captured["stderr"] = kwargs["stderr"]
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setenv("PYTHONPYCACHEPREFIX", "C:/tmp/problematic-pycache")
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_required_quality_gate.py", "-q"))
+
+    assert result.ok is True
+    assert "PYTHONPYCACHEPREFIX" not in captured["env"]
+    assert captured["env"]["PYTHONDONTWRITEBYTECODE"] == "1"
+    assert captured["stdout"] is None
+    assert captured["stderr"] is None

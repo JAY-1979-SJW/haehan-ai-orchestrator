@@ -15,7 +15,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_COMMAND_TIMEOUT_SECONDS = 120
+DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
+PYTEST_FLAGS = ("-p", "no:cacheprovider", "-q")
 
 COMMANDS: tuple[tuple[str, ...], ...] = (
     (
@@ -105,18 +106,46 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_local_agent_e2e_baseline_contract.py",
         "tests/test_approval_flow_baseline_contract.py",
         "tests/test_playwright_ai_baseline_contract.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_required_quality_gate.py",
         "tests/test_module_boundaries.py",
         "tests/test_root_legacy_scripts_audit.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_google_gmail_function_contract.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_google_gmail_analysis.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_site_work_function_baseline.py",
-        "-p",
-        "no:cacheprovider",
-        "-q",
+        *PYTEST_FLAGS,
     ),
     (sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"),
 )
@@ -168,6 +197,10 @@ def command_is_forbidden(command: tuple[str, ...]) -> bool:
     return any(token in lowered for token in FORBIDDEN_COMMAND_TOKENS)
 
 
+def command_is_pytest(command: tuple[str, ...]) -> bool:
+    return "-m" in command and "pytest" in command
+
+
 def command_timeout_seconds() -> int:
     raw = os.environ.get("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "").strip()
     if not raw:
@@ -186,18 +219,26 @@ def run_command(command: tuple[str, ...]) -> GateResult:
 
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
-    pycache = Path(env.get("HAEHAN_REQUIRED_GATE_PYCACHE", str(Path(env.get("TEMP", str(ROOT / "tmp"))) / "haehan_required_gate_pycache")))
-    pycache.mkdir(parents=True, exist_ok=True)
-    env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))
+    if command_is_pytest(command):
+        env.pop("PYTHONPYCACHEPREFIX", None)
+        env.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+    else:
+        pycache = Path(
+            env.get("HAEHAN_REQUIRED_GATE_PYCACHE", str(Path(env.get("TEMP", str(ROOT / "tmp"))) / "haehan_required_gate_pycache"))
+        )
+        pycache.mkdir(parents=True, exist_ok=True)
+        env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))
 
     timeout_s = command_timeout_seconds()
+    is_pytest = command_is_pytest(command)
     try:
         result = subprocess.run(
             list(command),
             cwd=ROOT,
+            stdin=subprocess.DEVNULL,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stdout=None if is_pytest else subprocess.PIPE,
+            stderr=None if is_pytest else subprocess.STDOUT,
             check=False,
             env=env,
             timeout=timeout_s,
@@ -208,9 +249,10 @@ def run_command(command: tuple[str, ...]) -> GateResult:
             print(output)
         return GateResult(name=name, ok=False, detail=f"timeout_after={timeout_s}s")
 
-    output = redact(result.stdout or "").strip()
-    if output:
-        print(output)
+    if not is_pytest:
+        output = redact(result.stdout or "").strip()
+        if output:
+            print(output)
     return GateResult(name=name, ok=result.returncode == 0, detail=f"exit_code={result.returncode}")
 
 
