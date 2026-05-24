@@ -79,6 +79,10 @@ def explain_error(code: str) -> str:
 
 # ── 서버 URL 정규화 ──────────────────────────────────────────────
 
+def _safe_user_message(message: str) -> str:
+    return str(message or "").replace("device_token", "device credential")
+
+
 _SERVER_PATH = "/api/v1/local-agents/ws"
 
 
@@ -136,6 +140,28 @@ class ConnectionDiagnostics:
         return asdict(self)
 
 
+@dataclass
+class RecoveryPlan:
+    """Safe recovery guidance for local-agent connection failures.
+
+    This object must never contain raw device tokens, registration codes,
+    passwords, cookies, or Authorization values. Token deletion is intentionally
+    represented as a user-confirmed action instead of an automatic side effect.
+    """
+
+    code: str
+    user_message: str
+    next_action: str
+    requires_user_confirmation: bool
+    can_auto_retry: bool
+    should_delete_token: bool
+    commands: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
 def _strip_secrets_from_url(url: str) -> str:
     """URL 쿼리/유저인포에 token/secret/auth/session 이 있으면 redacted."""
     if not url:
@@ -146,7 +172,7 @@ def _strip_secrets_from_url(url: str) -> str:
     url = re.sub(
         r"([?&])(device_token|registration_code|token|auth|secret|"
         r"session|sid|sess|key|password|pwd|jwt|bearer|api_key)=[^&]*",
-        r"\1\2=[REDACTED]", url, flags=re.IGNORECASE,
+        r"\1credential=[REDACTED]", url, flags=re.IGNORECASE,
     )
     return url
 
@@ -167,9 +193,92 @@ def build_diagnostics(
         state=state,
         last_heartbeat_iso=last_heartbeat_iso,
         last_error_code=last_error_code,
-        last_error_message_user=explain_error(last_error_code) if last_error_code else "",
+        last_error_message_user=_safe_user_message(explain_error(last_error_code)) if last_error_code else "",
         reconnect_count=reconnect_count,
         suggested_actions=_suggest_actions(state, last_error_code),
+    )
+
+
+def build_recovery_plan(
+    *,
+    state: str,
+    last_error_code: str = "",
+    token_present: bool = False,
+) -> RecoveryPlan:
+    """Return a safe recovery plan for the current connection state.
+
+    AUTH_FAILED_4401 means the server rejected the saved device credential.
+    The user should re-register, but diagnostics must not delete the token by
+    itself. Keeping deletion behind an explicit reset action preserves evidence
+    and prevents accidental data loss when the server is misconfigured.
+    """
+    code = (last_error_code or "").upper()
+    if state == STATE_AUTH_FAILED or code == "AUTH_FAILED_4401":
+        return RecoveryPlan(
+            code="AUTH_FAILED_4401",
+            user_message=_safe_user_message(explain_error("AUTH_FAILED_4401")),
+            next_action="RE_REGISTER_REQUIRED",
+            requires_user_confirmation=True,
+            can_auto_retry=False,
+            should_delete_token=False,
+            commands=[
+                "--diagnostics",
+                "--reset --agent-id <masked-agent-id>",
+                "--register",
+            ],
+            warnings=[
+                "Do not print or copy the raw device credential.",
+                "Delete the stored token only after the user confirms reset.",
+            ],
+        )
+    if code == "TOKEN_NOT_STORED" or (state == STATE_NOT_REGISTERED and not token_present):
+        return RecoveryPlan(
+            code="TOKEN_NOT_STORED",
+            user_message=_safe_user_message(explain_error("TOKEN_NOT_STORED")),
+            next_action="REGISTER_REQUIRED",
+            requires_user_confirmation=True,
+            can_auto_retry=False,
+            should_delete_token=False,
+            commands=["--diagnostics", "--register"],
+        )
+    if state == STATE_SERVER_UNREACHABLE or code == "SERVER_NOT_REACHABLE":
+        return RecoveryPlan(
+            code="SERVER_NOT_REACHABLE",
+            user_message=_safe_user_message(explain_error("SERVER_NOT_REACHABLE")),
+            next_action="CHECK_NETWORK_OR_SERVER",
+            requires_user_confirmation=False,
+            can_auto_retry=True,
+            should_delete_token=False,
+            commands=["--diagnostics"],
+        )
+    if state == STATE_NETWORK_BLOCKED or code == "NETWORK_BLOCKED_PROXY":
+        return RecoveryPlan(
+            code="NETWORK_BLOCKED_PROXY",
+            user_message=_safe_user_message(explain_error("NETWORK_BLOCKED_PROXY")),
+            next_action="CHECK_PROXY_OR_FIREWALL",
+            requires_user_confirmation=False,
+            can_auto_retry=False,
+            should_delete_token=False,
+            commands=["--diagnostics"],
+        )
+    if code == "HEARTBEAT_LOST":
+        return RecoveryPlan(
+            code="HEARTBEAT_LOST",
+            user_message=_safe_user_message(explain_error("HEARTBEAT_LOST")),
+            next_action="AUTO_RECONNECT",
+            requires_user_confirmation=False,
+            can_auto_retry=True,
+            should_delete_token=False,
+            commands=["--diagnostics"],
+        )
+    return RecoveryPlan(
+        code=code or "NO_ERROR",
+        user_message=_safe_user_message(explain_error(code)) if code else "",
+        next_action="NO_ACTION",
+        requires_user_confirmation=False,
+        can_auto_retry=False,
+        should_delete_token=False,
+        commands=["--diagnostics"],
     )
 
 
@@ -222,6 +331,28 @@ def render_user_block(d: ConnectionDiagnostics) -> str:
 
 
 # ── 토큰/시크릿 leak 자기검증 ──────────────────────────────────
+
+
+def render_recovery_block(plan: RecoveryPlan) -> str:
+    lines = [
+        "Recovery:",
+        f"  code: {plan.code}",
+        f"  next_action: {plan.next_action}",
+        f"  user_confirmation_required: {str(plan.requires_user_confirmation).lower()}",
+        f"  auto_retry: {str(plan.can_auto_retry).lower()}",
+        f"  auto_delete_token: {str(plan.should_delete_token).lower()}",
+    ]
+    if plan.user_message:
+        lines.append(f"  message: {plan.user_message}")
+    if plan.commands:
+        lines.append("  commands:")
+        for command in plan.commands:
+            lines.append(f"    - {command}")
+    if plan.warnings:
+        lines.append("  warnings:")
+        for warning in plan.warnings:
+            lines.append(f"    - {warning}")
+    return "\n".join(lines)
 
 
 _LEAK_KEYS = ("token", "secret", "device_token", "password",

@@ -134,14 +134,21 @@ def show_diagnostics(server_url: str) -> dict:
         state=diag_state,
         last_error_code=last_error_code,
     )
+    recovery = cd.build_recovery_plan(
+        state=diag_state,
+        last_error_code=last_error_code,
+        token_present=token_present,
+    )
     return {
-        "server_url": effective_server,
-        "ws_url": cd.normalize_ws_url(effective_server),
+        "server_url": diag.server_url_redacted,
+        "ws_url": diag.ws_url_redacted,
         "token_store_backend": backend,
         "token_store_available": available,
         "agent_id_masked": cd.mask_agent_id(cur_agent),
         "token_present": token_present,
+        "recovery_plan": recovery.to_dict(),
         "diagnostics_block": cd.render_user_block(diag),
+        "recovery_block": cd.render_recovery_block(recovery),
     }
 
 
@@ -249,10 +256,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.diagnostics:
         r = show_diagnostics(args.server)
         print(json.dumps({k: v for k, v in r.items()
-                          if k != "diagnostics_block"},
+                          if k not in ("diagnostics_block", "recovery_block")},
                          ensure_ascii=False, indent=2))
         print()
         print(r["diagnostics_block"])
+        print()
+        print(r["recovery_block"])
         return 0
 
     if args.reset:

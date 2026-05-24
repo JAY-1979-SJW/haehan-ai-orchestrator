@@ -122,6 +122,16 @@ def check_agent_ai_health(report: Report, server_url: str, agent_id: str, token:
         report.fail("agent-ai authenticated health", "ok=false")
 
 
+def _websocket_close_code(exc: object) -> int | None:
+    for attr in ("rcvd", "rcvd_close"):
+        close = getattr(exc, attr, None)
+        code = getattr(close, "code", None)
+        if isinstance(code, int):
+            return code
+    code = getattr(exc, "code", None)
+    return code if isinstance(code, int) else None
+
+
 async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str,
                              timeout: float) -> None:
     from local_agent import __version__
@@ -172,6 +182,14 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
             report.fail("websocket heartbeat", "timeout")
     except asyncio.TimeoutError:
         report.fail("websocket", "timeout")
+    except getattr(websockets.exceptions, "ConnectionClosed", Exception) as exc:
+        code = _websocket_close_code(exc)
+        if code == 4401:
+            report.fail("websocket auth", "AUTH_FAILED_4401")
+        else:
+            report.fail("websocket", f"closed code={code or 'unknown'}")
+    except (TypeError, json.JSONDecodeError):
+        report.fail("websocket", "invalid json")
     except OSError as exc:
         report.fail("websocket", type(exc).__name__)
     finally:
@@ -191,6 +209,16 @@ def main(argv: list[str] | None = None) -> int:
     check_server_health(report, server_url)
     check_agent_ai_health(report, server_url, agent_id, token)
     asyncio.run(check_ws_heartbeat(report, server_url, agent_id, token, args.timeout))
+    if any(level == "FAIL" and "AUTH_FAILED_4401" in detail
+           for level, _, detail in report.rows):
+        from local_agent import connection_diagnostics as cd
+
+        plan = cd.build_recovery_plan(
+            state=cd.STATE_AUTH_FAILED,
+            last_error_code="AUTH_FAILED_4401",
+            token_present=bool(token),
+        )
+        report.warn("recovery", plan.next_action)
     report.warn("task dispatch", "skipped; admin/owner credentials not present")
     token = ""
     report.print()
