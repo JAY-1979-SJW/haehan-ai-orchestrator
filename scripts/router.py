@@ -33,6 +33,7 @@ _SERVICE_ROUTERS: dict[str, tuple[str, str]] = {
     "eum":         ("scripts.eum.router",          "run_eum"),
     "hiworks":     ("scripts.hiworks.router",      "run_hiworks"),
     "smartstore":  ("scripts.smartstore.router",   "run_smartstore"),
+    "gabia":       ("scripts.gabia.router",        "run_gabia"),
     "g2b":         ("scripts.g2b.router",          "run_g2b"),
     "local":       ("scripts.local_agent.router",  "run_local_agent"),
     "explore":     ("scripts.explorer.router",     "run_explorer"),
