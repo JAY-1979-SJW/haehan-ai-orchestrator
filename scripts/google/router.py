@@ -1,8 +1,9 @@
 """Google service router."""
 from __future__ import annotations
 
-from . import calendar, docs, drive, gmail, live_inputs, sheets, surface_explorer, surfaces, workflows
+from . import live_inputs, surface_explorer, surfaces, workflows
 from .base import check_session
+from .workspace import router as workspace_router
 from scripts.gate import check as gate_check
 from .gates import gate_google_send_plan, gate_google_submit_plan, gate_google_oauth_required  # noqa: F401
 from .profile import GOOGLE_PROFILE  # noqa: F401
@@ -56,19 +57,19 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
                 "gmail_send" if sub in ("send", "compose") else "goto",
                 risk="approve" if sub in ("send", "compose") else "auto",
             )
-            gmail.run(sub or "list", args)
+            workspace_router.run_workspace("gmail", sub or "list", args)
         case "drive":
             gate_check("goto")
-            drive.run(sub or "list", args)
+            workspace_router.run_workspace("drive", sub or "list", args)
         case "calendar":
             gate_check("goto")
-            calendar.run(sub or "today", args)
+            workspace_router.run_workspace("calendar", sub or "today", args)
         case "docs":
             gate_check("goto")
-            docs.run(sub or "recent", args)
+            workspace_router.run_workspace("docs", sub or "recent", args)
         case "sheets":
             gate_check("goto")
-            sheets.run(sub or "recent", args)
+            workspace_router.run_workspace("sheets", sub or "recent", args)
         case "surfaces":
             _cmd_surfaces(sub or "catalog", args)
         case "work" | "actions":
