@@ -83,6 +83,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("module_boundary_contract", check="module_boundary_contract"),
             GateStep("root_legacy_script_contract", check="root_legacy_script_contract"),
             GateStep("site_registry_baseline", check="site_registry_baseline"),
+            GateStep("google_automation_baseline_contract", check="google_automation_baseline_contract"),
         ),
     ),
     GateModule(
@@ -838,6 +839,16 @@ def check_site_registry_baseline() -> tuple[bool, str]:
     return True, "official site registry covers site modules and policy fields"
 
 
+def check_google_automation_baseline_contract() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_google_automation_baseline_contract.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked Google automation baseline preserves tabs, counts, and host rules"
+
+
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_common_tool_runtime.py"],
@@ -990,6 +1001,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "module_boundary_contract": check_module_boundary_contract,
     "root_legacy_script_contract": check_root_legacy_script_contract,
     "site_registry_baseline": check_site_registry_baseline,
+    "google_automation_baseline_contract": check_google_automation_baseline_contract,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
