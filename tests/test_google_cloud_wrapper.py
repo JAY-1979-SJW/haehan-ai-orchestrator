@@ -3,6 +3,7 @@ from __future__ import annotations
 from importlib import import_module
 
 from scripts.google.cloud import registry, router
+from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
 
 
 def test_cloud_registry_preserves_locked_counts() -> None:
@@ -154,3 +155,29 @@ def test_cloud_wrappers_execute_read_only_open_contracts() -> None:
 
 def test_vertex_ai_is_not_cloud_owned() -> None:
     assert "vertex_ai" not in [surface["key"] for surface in registry.list_surfaces()]
+
+
+def test_cloud_readonly_contract_converts_to_local_browser_task() -> None:
+    result = dry_run_cloud_readonly_browser_task("storage", "open", [])
+    task = result["local_agent_task"]
+
+    assert result["ok"] is True
+    assert result["dry_run_result"]["ok"] is True
+    assert task["action"] == "web_open_url_readonly"
+    assert task["execution_location"] == "local_agent"
+    assert task["risk_level"] == "read"
+    assert task["requires_approval"] is False
+    assert task["params"]["url"] == "https://console.cloud.google.com/storage"
+    assert task["params"]["target_url_host"] == "console.cloud.google.com"
+    assert task["metadata"]["google_tab"] == "cloud"
+    assert task["metadata"]["cloud_action"] == "cloud_storage_open"
+
+
+def test_cloud_non_read_contract_does_not_convert_to_local_browser_task() -> None:
+    result = dry_run_cloud_readonly_browser_task("storage", "cloud_storage_create_bucket", [])
+
+    assert result["ok"] is False
+    assert result["reason"] == "cloud_contract_not_readonly_open"
+    assert result["cloud_mode"] == "catalog_only"
+    assert result["state_change"] is False
+    assert result["local_agent_task"] is None
