@@ -247,6 +247,12 @@ docs/baseline/modules/PORTABLE_INSTALL_BASELINE.md
 
 ### release_preflight
 
+Detailed baseline:
+
+```text
+docs/baseline/modules/RELEASE_PREFLIGHT_BASELINE.md
+```
+
 - Responsibility: static release readiness checks, admin-web checks, secret
   scan classification, UI residue audit, and no-build preflight verification.
 - Input: source tree, package scripts, static audit rules, and test fixtures.
