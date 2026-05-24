@@ -59,7 +59,9 @@ def _task_list(page: Any, args: list[str]) -> None:
     )
     print(f"  visible_messages: {len(rows)}")
     for index, row in enumerate(rows, 1):
-        print(f"  [{index}] {row['from'][:30]:30s} | {row['subject'][:60]}")
+        has_sender = "yes" if row.get("from") else "no"
+        has_subject = "yes" if row.get("subject") else "no"
+        print(f"  [{index}] sender_present={has_sender} subject_present={has_subject}")
 
 
 def _task_compose_draft(page: Any, args: list[str]) -> None:
@@ -85,7 +87,7 @@ def _task_search(page: Any, args: list[str]) -> None:
     print(f"\n[task] Gmail search: {query[:80]}")
     page_goto(page, GOOGLE_URLS["gmail_home"])
     page_wait_visible(page, '[role="main"]', timeout=20000)
-    if page_wait_type(page, 'input[placeholder*="Search"], input[aria-label*="Search"]', query):
+    if page_wait_type(page, _gmail_search_selector(), query):
         page.keyboard.press("Enter")
         page_wait_visible(page, '[role="main"]', timeout=10000)
         print("  [ok] search submitted")
@@ -138,3 +140,12 @@ def _fill_body(page: Any, value: str) -> None:
     if not focused:
         raise RuntimeError("Gmail body field not found")
     page.keyboard.type(value, delay=5)
+
+
+def _gmail_search_selector() -> str:
+    return (
+        'input[name="q"], '
+        'input[placeholder*="Search"], input[placeholder*="검색"], '
+        'input[aria-label*="Search"], input[aria-label*="search"], input[aria-label*="검색"], '
+        'input[type="search"], input[type="text"][role="combobox"]'
+    )

@@ -69,7 +69,9 @@ class GmailAPI:
         time.sleep(2.0)
         try:
             box = self.page.locator(
-                'input[placeholder*="Search"], input[aria-label*="Search"], input[aria-label*="search"]'
+                'input[name="q"], input[placeholder*="Search"], input[placeholder*="검색"], '
+                'input[aria-label*="Search"], input[aria-label*="search"], input[aria-label*="검색"], '
+                'input[type="search"], input[type="text"][role="combobox"]'
             ).first
             box.click(timeout=3000)
             box.fill(query, timeout=3000)

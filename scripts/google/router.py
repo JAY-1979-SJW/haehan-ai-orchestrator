@@ -44,6 +44,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
     task: session-check | login | mail | drive | calendar | docs | sheets | surfaces | work
     """
     if site == "gmail":
+        args = ([sub] if sub else []) + args
+        sub = task
         task = "mail"
 
     match task:
