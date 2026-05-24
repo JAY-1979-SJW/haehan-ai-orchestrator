@@ -12,6 +12,7 @@ from .validators import validate_google_no_plain_secret  # noqa: F401
 __status__ = {
     "tasks": {
         "mail list": "done",
+        "mail analyze": "done",
         "mail compose": "done",
         "mail send": "done",
         "drive list": "partial",

@@ -10,6 +10,7 @@ from typing import Any
 
 from scripts.config import GOOGLE_URLS
 
+from . import gmail_analysis
 from .base import task_context, page_goto, page_wait_type, page_wait_visible
 
 
@@ -23,6 +24,8 @@ def run(task: str, args: list[str]) -> None:
                 _task_compose_draft(page, args)
             case "search":
                 _task_search(page, args)
+            case "analyze":
+                _task_analyze(page, args)
             case "delete":
                 print("  [blocked] Gmail delete is disabled in automation; use approval-gated user flow.")
             case _:
@@ -93,6 +96,18 @@ def _task_search(page: Any, args: list[str]) -> None:
         print("  [ok] search submitted")
     else:
         print("  [warn] search input not found")
+
+
+def _task_analyze(page: Any, args: list[str]) -> None:
+    index = 0
+    if args:
+        try:
+            index = max(0, int(args[0]))
+        except ValueError:
+            print("  [error] usage: analyze [zero_based_mail_index]")
+            return
+    result, path = gmail_analysis.analyze_visible_message(page, index)
+    gmail_analysis.print_analysis_summary(result, path)
 
 
 def _open_compose(page: Any) -> None:
