@@ -57,6 +57,27 @@ The server is the final operational source of truth for HAEHAN.
 - If local runtime behavior conflicts with `docs/baseline/APP_BASELINE.md`, the
   app baseline wins and the change must stop for governance approval.
 
+### 3.2 Auto-Run Rule
+
+Automation may run safe verification and reporting inside the approved scope:
+baseline audits, targeted pytest, `py_compile`, `git diff --check`, residue
+audits, standard reports, and approved-scope file checks.
+
+Automation must stop and report on verification failure, unexpected long
+runtime, external app involvement, or any next action that would change live
+runtime, persistent state, deployment, installation, credentials, permissions,
+or another app.
+
+Commit is allowed only when the approved task includes commit or the user
+explicitly requests commit. Push is allowed only when the user explicitly
+requests push.
+
+Auto-run must not perform server deploy/restart, Docker build/up/restart,
+installer or portable build, live external browser automation, dependency
+install, permission change, process termination, broad cleanup, persistent
+local autostart, background recovery registration, or always-on monitoring
+registration without separate explicit approval.
+
 ---
 
 ## 4. Generic Site Engine Rule

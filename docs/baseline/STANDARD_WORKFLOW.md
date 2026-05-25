@@ -82,6 +82,39 @@ local-agent, browser automation, approval, task state, release, or deploy:
 - report any local-only behavior that would bypass the server contract before
   editing runtime code
 
+## 3.3 Auto-Run Rule
+
+Automation is allowed only for safe, bounded work inside the approved scope.
+
+The worker may automatically run:
+
+- baseline and contract audits
+- focused unit tests and targeted pytest
+- `python -m py_compile` for targeted Python files
+- `git diff --check` and staged diff checks
+- residue/legacy cleanup audits
+- standard report generation
+- approved-scope file status checks
+
+The worker must stop and report before continuing when:
+
+- any verification command fails
+- a command exceeds the expected task runtime
+- an external app, workspace, server, browser, test runner, or background
+  process appears relevant to the failure
+- the next action would change live runtime, persistent state, deployment,
+  installation, credentials, permissions, or another app
+
+The worker may commit only when the user explicitly requests commit or the
+approved task includes commit.
+The worker may push only when the user explicitly requests push.
+
+Auto-run must never perform server deploy/restart, Docker build/up/restart,
+installer or portable build, live external browser automation, dependency
+install, permission change, process termination, broad cleanup, persistent
+local autostart, background recovery registration, or always-on monitoring
+registration without separate explicit approval.
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:
@@ -103,6 +136,9 @@ These actions require explicit task-level approval:
   approval, policy, task state, audit, release, or deploy decisions
 - adding persistent local autostart, background recovery, or always-on
   monitoring outside an explicitly approved server-baseline task
+- automated commit unless the approved task includes commit or the user
+  explicitly requests commit
+- automated push unless the user explicitly requests push
 
 ## 5. Standard Verification Levels
 
