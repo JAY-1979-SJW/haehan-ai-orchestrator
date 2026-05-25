@@ -34,6 +34,12 @@ REQUIRED_WORKFLOW_PHRASES = (
     "The server is the final operational source of truth for HAEHAN.",
     "treat desktop and local-agent code as subordinate execution layers",
     "do not add persistent local autostart",
+    "Auto-Run Rule",
+    "Automation is allowed only for safe, bounded work inside the approved scope.",
+    "baseline and contract audits",
+    "The worker may commit only when the user explicitly requests commit",
+    "The worker may push only when the user explicitly requests push",
+    "Auto-run must never perform server deploy/restart",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -58,6 +64,7 @@ REQUIRED_REFERENCE_PHRASES = (
     "docs/baseline/STANDARD_WORKFLOW.md",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
     "The server is the final operational source of truth for HAEHAN.",
+    "Auto-Run Rule",
 )
 
 
