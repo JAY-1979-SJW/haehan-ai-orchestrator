@@ -5,8 +5,10 @@
  * POST /api/v1/naver-mail/compose → 네이버 메일 작성 (dry_run 먼저, 확인 후 실행)
  */
 import { useEffect, useState, useCallback } from "react";
-import { getAssistantInbox, postNaverMailCompose } from "@/lib/assistant/api";
-import type { InboxItem, MailComposeResponse } from "@/lib/assistant/api";
+import { getAssistantInbox } from "@/lib/assistant/api";
+import { postNaverMailCompose } from "@/lib/assistant/mutations";
+import type { InboxItem } from "@/lib/assistant/api";
+import type { MailComposeResponse } from "@/lib/assistant/mutations";
 
 const SOURCE_LABEL: Record<string, string> = {
   telegram_command: "텔레그램",

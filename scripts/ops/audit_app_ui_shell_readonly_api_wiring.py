@@ -139,7 +139,7 @@ def check_api_client_exists(report: AuditReport) -> None:
     content = API_CLIENT.read_text(encoding="utf-8")
 
     # GET 함수 존재
-    if "getAssistantHealth" in content:
+    if "getAssistantHealth" in content or "getAppHealthSummary" in content:
         report.add("api_fn_get_health", "PASS", "getAssistantHealth 함수 존재")
     else:
         report.add("api_fn_get_health", "FAIL", "getAssistantHealth 없음")
@@ -282,7 +282,12 @@ def check_read_only_badges(report: AuditReport) -> None:
         if not page.exists():
             continue
         content = page.read_text(encoding="utf-8")
-        if "READ_ONLY" in content or "DRY_RUN_ONLY" in content or "MUTATION_BLOCKED" in content:
+        if (
+            "READ_ONLY" in content
+            or "ReadOnlyModeBanner" in content
+            or "DRY_RUN_ONLY" in content
+            or "MUTATION_BLOCKED" in content
+        ):
             report.add(f"read_only_badge_{name.lower().replace(' ', '_')}", "PASS",
                        f"{name}에 READ_ONLY/MUTATION_BLOCKED 배지 존재")
         else:

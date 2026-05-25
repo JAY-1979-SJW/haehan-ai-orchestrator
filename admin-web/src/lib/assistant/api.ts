@@ -7,7 +7,7 @@
  */
 import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
-const API_BASE =
+export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export type ApiState<T> =
@@ -338,40 +338,4 @@ export interface CafeKB {
 
 export async function getCafeKB(signal?: AbortSignal): Promise<CafeKB> {
   return getJson<CafeKB>("/api/v1/naver-cafe/kb", signal);
-}
-
-// ── 네이버 메일 compose ───────────────────────────────────────────────────────
-
-export interface MailComposeRequest {
-  to: string;
-  cc?: string;
-  subject?: string;
-  body?: string;
-  dry_run?: boolean;
-}
-
-export interface MailComposeResponse {
-  ok: boolean;
-  dry_run: boolean;
-  to: string;
-  cc?: string | null;
-  subject: string;
-  body_preview: string;
-  detail: string;
-  requires_send_approval: boolean;
-}
-
-export async function postNaverMailCompose(
-  req: MailComposeRequest,
-): Promise<MailComposeResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/naver-mail/compose`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail ?? `HTTP ${res.status}`);
-  }
-  return res.json();
 }

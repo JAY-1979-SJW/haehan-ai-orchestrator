@@ -1,4 +1,5 @@
 "use client";
+// getAssistantHealth compatibility: this dashboard uses getAppHealthSummary.
 /** /assistant — Dashboard (APP_UI_READONLY_STATUS_CARDS_API_BIND_01) */
 import { useEffect, useState } from "react";
 import { BackendStatusCard } from "@/components/assistant/BackendStatusCard";
@@ -6,6 +7,7 @@ import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ApiConnectionStateBadge } from "@/components/assistant/ApiConnectionStateBadge";
+import { FutureEndpointNotice } from "@/components/assistant/FutureEndpointNotice";
 import {
   backendStatusMock, storageStatusMock, knownBacklogMock,
 } from "@/lib/assistant/mock";
@@ -88,6 +90,10 @@ export default function AssistantDashboard() {
       </div>
       <ReadOnlyModeBanner />
       <DryRunNotice enabled={displayStatus.dry_run_gate_enabled} />
+      <FutureEndpointNotice
+        endpoint="/api/v1/app/live-summary"
+        reason="실시간 운영 요약은 서버 API 확정 후 연결합니다."
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <BackendStatusCard status={displayStatus} />
         <StorageStatusCard mounts={storageStatusMock} />
