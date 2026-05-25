@@ -31,6 +31,11 @@ REQUIRED_BASELINE_PHRASES = (
     "authorization boundary",
     "state changes",
     "regression gate",
+    "local verification is not the final verdict",
+    "the server repository HEAD matches the intended release HEAD",
+    "server smoke checks pass through the public route or server-side nginx route",
+    "server stress checks pass through the public route or server-side nginx route",
+    "post-deploy logs are checked for new runtime errors",
 )
 
 REQUIRED_GOVERNANCE_PHRASES = (

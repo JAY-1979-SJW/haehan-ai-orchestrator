@@ -82,6 +82,18 @@ local-agent, browser automation, approval, task state, release, or deploy:
 - report any local-only behavior that would bypass the server contract before
   editing runtime code
 
+Local smoke, local stress, and local build results are preliminary evidence
+only. A runtime change is not complete until the approved server deployment
+target is at the intended HEAD and server smoke plus server stress checks pass
+against the public server route or the server-side nginx route.
+
+Before server pull, build, or service replacement, the worker must inspect
+server `git status --short --branch`. If the server worktree is dirty, preserve
+the server-local changes with an explicit stash or report-only decision before
+pulling. Server-only secret override files such as `docker-compose.override.yml`
+must be reported and left uncommitted unless a separate approved secret
+configuration task says otherwise.
+
 ## 3.3 Auto-Run Rule
 
 Automation is allowed only for safe, bounded work inside the approved scope.
