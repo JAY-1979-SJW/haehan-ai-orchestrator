@@ -244,7 +244,7 @@ def check_pywebview() -> dict:
     except ImportError:
         return {"ok": False, "installed": False, "verdict": "WARN_PYWEBVIEW_NOT_INSTALLED"}
 
-    entry = ROOT / "desktop" / "webview_app_pywebview.py"
+    entry = ROOT / "desktop" / "main_launcher.py"
     return {
         "ok": True,
         "installed": True,
@@ -389,7 +389,7 @@ def _write_summary(report: dict) -> str:
         f"| agent_id visible | {'✅' if ag.get('agent_id_visible') else '❌'} |",
         f"| server_connected | {'✅' if ag.get('server_connected') else '❌'} |",
         f"| pywebview 설치 | {'✅' if pv.get('installed') else '⚠️ 미설치'} |",
-        f"| webview_app_pywebview.py | {'✅' if pv.get('entry_exists') else '❌'} |",
+        f"| desktop/main_launcher.py | {'✅' if pv.get('entry_exists') else '❌'} |",
         f"| lifecycle health | {'✅' if lc.get('health_ok') else '❌'} |",
         f"| secret leak | {'✅ 없음' if not report.get('secret_scan',{}).get('leak_found') else '❌ 발견'} |",
         "",
@@ -416,7 +416,7 @@ def _write_summary(report: dict) -> str:
         "python -m uvicorn desktop.local_server:app --host 127.0.0.1 --port 8765",
         "",
         "# pywebview 앱",
-        "python -m desktop.webview_app_pywebview",
+        "python -m desktop.main_launcher",
         "```",
     ]
 

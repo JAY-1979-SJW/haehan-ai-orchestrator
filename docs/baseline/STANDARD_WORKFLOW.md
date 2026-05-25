@@ -50,6 +50,38 @@ rollback or recovery plan
 When any of these are unknown and cannot be inferred from the repository, stop
 and ask the user before editing runtime code.
 
+## 3.1 Target App Scope Rule
+
+For baseline work, cleanup, runtime inspection, and recovery work, the worker
+must act only on the approved target app or repository.
+
+If another app, workspace, server, browser, test runner, or background process
+is discovered while inspecting the target app:
+
+- identify it as external to the approved scope
+- report the finding and likely impact
+- do not stop, modify, delete, stage, or commit anything for that external app
+- ask for separate approval before taking any action on that external app
+
+External-app findings may be used as diagnostic context, but they must not
+change the target app baseline or cleanup scope.
+
+## 3.2 Server-First Operating Rule
+
+The server is the final operational source of truth for HAEHAN. For any work
+that touches runtime behavior, connectivity, recovery, monitoring, desktop,
+local-agent, browser automation, approval, task state, release, or deploy:
+
+- check `docs/baseline/APP_BASELINE.md` before implementation
+- preserve the server as the owner of identity, authorization, approval,
+  policy, task queue, task state, result intake, audit records, and deploy
+  decisions
+- treat desktop and local-agent code as subordinate execution layers
+- do not add persistent local autostart, background recovery, or always-on
+  monitoring unless the approved server-baseline task explicitly allows it
+- report any local-only behavior that would bypass the server contract before
+  editing runtime code
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:
@@ -65,6 +97,12 @@ These actions require explicit task-level approval:
 - secret value output
 - OUT_OF_SCOPE file modification, staging, or commit
 - broad cleanup outside the approved scope
+- stopping or modifying another app, workspace, server, browser, test runner, or
+  background process discovered during target-app work
+- making desktop or local-agent runtime the source of truth for identity,
+  approval, policy, task state, audit, release, or deploy decisions
+- adding persistent local autostart, background recovery, or always-on
+  monitoring outside an explicitly approved server-baseline task
 
 ## 5. Standard Verification Levels
 
@@ -149,4 +187,3 @@ authorization boundary
 state changes
 regression gate
 ```
-

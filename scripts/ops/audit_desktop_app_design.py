@@ -14,7 +14,7 @@ ROOT     = Path(__file__).parent.parent.parent
 DIST     = ROOT / "dist/HaehanAI-Desktop"
 INTERNAL = DIST / "_internal"
 SPEC     = ROOT / "HaehanAI-Desktop.spec"
-WEBVIEW  = ROOT / "desktop/webview_app_pywebview.py"
+WEBVIEW  = ROOT / "desktop/main_launcher.py"
 SERVER   = ROOT / "desktop/local_server.py"
 WATCHDOG = ROOT / "scripts/ops/audit_desktop_app_watchdog.py"
 LOG_FILE = ROOT / "data/logs/desktop_app.log"
@@ -71,7 +71,7 @@ print("\n[S2] 로그 설정 확인")
 if WEBVIEW.exists():
     src = WEBVIEW.read_text(encoding="utf-8")
     if "_setup_logging" in src:     ok("_setup_logging 함수 존재")
-    else: fail("FAIL_NO_LOGGING", "webview_app_pywebview에 _setup_logging 없음")
+    else: fail("FAIL_NO_LOGGING", "main_launcher에 _setup_logging 없음")
 
     if "sys.executable" in src or "sys.frozen" in src:
         ok("exe 경로 기반 로그 경로 설정")
@@ -81,7 +81,7 @@ if WEBVIEW.exists():
     if "traceback.format_exc" in src: ok("서버 오류 traceback 포함")
     else: warn("WARN_NO_TRACEBACK", "embedded server error에 traceback 없음")
 else:
-    fail("FAIL_NO_WEBVIEW", "webview_app_pywebview.py 없음")
+    fail("FAIL_NO_WEBVIEW", "desktop/main_launcher.py 없음")
 
 # ── S3. 서버 코드 확인 ────────────────────────────────────────────────────
 print("\n[S3] 서버 코드 확인")
@@ -140,7 +140,7 @@ if WEBVIEW.exists():
     if "consent" in src.lower():
         ok("동의(consent) 로직 존재")
     else:
-        warn("WARN_NO_CONSENT", "webview_app_pywebview에 동의 창 없음 — 추가 필요")
+        warn("WARN_NO_CONSENT", "main_launcher에 동의 창 없음 — 추가 필요")
 if CONSENT.exists():
     ok(f"consent.json 존재: {CONSENT}")
 else:

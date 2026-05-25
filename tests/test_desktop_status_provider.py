@@ -118,11 +118,11 @@ class TestStatusProviderTokenSafety(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class TestStatusProviderURLs(unittest.TestCase):
-    def test_admin_mock_ui_url_is_localhost(self):
+    def test_admin_mock_ui_url_is_loopback(self):
         """Admin mock UI URL must always be localhost — never production."""
         provider = LocalStatusProvider()
         url = provider.get_admin_mock_ui_url()
-        self.assertIn("localhost", url)
+        self.assertTrue("localhost" in url or "127.0.0.1" in url)
         self.assertNotIn("haehan.ai", url)
         self.assertNotIn("production", url.lower())
 
@@ -142,7 +142,9 @@ class TestStatusProviderURLs(unittest.TestCase):
 
     def test_default_admin_ui_url_constant(self):
         """ADMIN_MOCK_UI_URL constant must be local."""
-        self.assertIn("localhost", ADMIN_MOCK_UI_URL)
+        self.assertTrue(
+            "localhost" in ADMIN_MOCK_UI_URL or "127.0.0.1" in ADMIN_MOCK_UI_URL
+        )
         self.assertIn("browser-approvals", ADMIN_MOCK_UI_URL)
 
 
@@ -198,19 +200,12 @@ class TestTaskSchedulerScript(unittest.TestCase):
     def test_task_scheduler_setup_script_exists(self):
         self.assertTrue(self.script_path.exists())
 
-    def test_task_scheduler_setup_script_contains_logon_trigger(self):
-        """Script must register an AtLogon trigger."""
-        self.assertIn("atlogon", self.content_lower,
-                      "Script must include AtLogon trigger")
-
-    def test_task_scheduler_setup_script_contains_restart_policy(self):
-        """Script must include failure restart policy."""
-        has_restart = (
-            "restartcount" in self.content_lower or
-            "restartinterval" in self.content_lower or
-            "restart" in self.content_lower
-        )
-        self.assertTrue(has_restart, "Script must specify restart-on-failure policy")
+    def test_task_scheduler_setup_script_is_cleanup_only(self):
+        """Script must remove legacy autostart jobs, not register new ones."""
+        self.assertIn("unregister-scheduledtask", self.content_lower)
+        self.assertNotIn("new-scheduledtasktrigger", self.content_lower)
+        self.assertNotIn("-atlogon", self.content_lower)
+        self.assertNotIn("register-scheduledtask `", self.content_lower)
 
     def test_task_scheduler_setup_script_does_not_contain_secrets(self):
         """Script must not include any secret or token values."""
@@ -229,17 +224,15 @@ class TestTaskSchedulerScript(unittest.TestCase):
             self.assertNotIn(production_indicator, self.content_lower,
                              f"Script contains production URL: '{production_indicator}'")
 
-    def test_task_scheduler_setup_script_has_uninstall_option(self):
-        """Script should support uninstall/removal of the task."""
-        self.assertIn("uninstall", self.content_lower)
-
-    def test_task_scheduler_setup_script_uses_register_scheduled_task(self):
-        """Script must use PowerShell Task Scheduler cmdlets."""
-        self.assertIn("register-scheduledtask", self.content_lower)
-
-    def test_task_scheduler_setup_script_limited_run_level(self):
-        """Task must run with limited (non-elevated) permissions."""
-        self.assertIn("limited", self.content_lower)
+    def test_task_scheduler_setup_script_removes_known_legacy_tasks(self):
+        """Script should remove known legacy Haehan scheduled tasks."""
+        for task_name in (
+            "haehanagenttray",
+            "haehanagentwatchdog",
+            "haehancdpdaemon",
+            "haehancdpchrome",
+        ):
+            self.assertIn(task_name, self.content_lower)
 
 
 # ---------------------------------------------------------------------------

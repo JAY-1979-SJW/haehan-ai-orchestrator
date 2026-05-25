@@ -55,7 +55,7 @@ def _ensure_launcher() -> None:
     LAUNCHER.parent.mkdir(parents=True, exist_ok=True)
     if not LAUNCHER.exists():
         LAUNCHER.write_text(
-            "import sys\nfrom desktop.webview_app_pywebview import main\nsys.exit(main())\n",
+            "import sys\nfrom desktop.main_launcher import main\nsys.exit(main())\n",
             encoding="utf-8",
         )
 

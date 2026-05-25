@@ -11,8 +11,8 @@
   python scripts/cdp_daemon.py restart     # 재시작
   python scripts/cdp_daemon.py status      # 상태 확인
   python scripts/cdp_daemon.py logs        # 로그 확인
-  python scripts/cdp_daemon.py install     # Windows 로그인 시 자동 시작 등록
-  python scripts/cdp_daemon.py uninstall   # 자동 시작 해제
+  python scripts/cdp_daemon.py install     # disabled; reports manual startup policy
+  python scripts/cdp_daemon.py uninstall   # remove legacy startup wrapper
   python scripts/cdp_daemon.py _run        # 내부 전용 (데몬 본체 직접 실행)
 """
 from __future__ import annotations
@@ -797,31 +797,10 @@ def _startup_folder() -> Path:
 
 
 def cmd_install() -> None:
-    """시작 프로그램 폴더에 VBS 래퍼 등록 — 로그인 시 자동 시작 (Windows 전용)."""
-    if sys.platform != "win32":
-        print("✗ install 명령은 Windows 전용입니다")
-        print("  Linux에서는 systemd 서비스로 등록하세요:")
-        print(f"  python {Path(__file__).name} _run  (ExecStart에 지정)")
-        return
-
-    script  = Path(__file__).resolve()
-    pythonw = Path(sys.executable).parent / "pythonw.exe"
-    if not pythonw.exists():
-        pythonw = Path(sys.executable)
-
-    startup_dir = _startup_folder()
-    vbs_path    = startup_dir / f"{TASK_NAME}.vbs"
-
-    vbs_content = f'''Set WshShell = CreateObject("WScript.Shell")
-WshShell.Run """{pythonw}"" ""{script}"" _run", 0, False
-'''
-    startup_dir.mkdir(parents=True, exist_ok=True)
-    vbs_path.write_text(vbs_content, encoding="utf-8")
-
-    print(f"✓ 시작 프로그램 등록 완료")
-    print(f"  파일: {vbs_path}")
-    print(f"  실행: {pythonw} {script} _run")
-    print("  트리거: Windows 로그인 시 자동 시작")
+    """Report the manual-start policy; legacy autostart registration is disabled."""
+    print("CDP autostart install is disabled by the target-app scope baseline.")
+    print("Use explicit, task-scoped start only: python scripts/cdp_daemon.py start")
+    print("To remove an old startup wrapper, run: python scripts/cdp_daemon.py uninstall")
 
 
 def cmd_uninstall() -> None:

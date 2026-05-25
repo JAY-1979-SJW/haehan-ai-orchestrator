@@ -73,9 +73,9 @@ class TestInScopeWebDesktopSkeleton:
         """admin-web/src 디렉터리 존재."""
         assert (REPO_ROOT / "admin-web" / "src").is_dir()
 
-    def test_desktop_tray_app_exists(self):
-        """desktop/tray_app.py 데스크 앱 골조 존재."""
-        assert (REPO_ROOT / "desktop" / "tray_app.py").exists()
+    def test_desktop_tray_app_removed(self):
+        """legacy desktop/tray_app.py must not be resurrected."""
+        assert not (REPO_ROOT / "desktop" / "tray_app.py").exists()
 
     def test_desktop_local_runner_exists(self):
         """desktop/local_runner.py 데스크 앱 로컬 실행 골조 존재."""

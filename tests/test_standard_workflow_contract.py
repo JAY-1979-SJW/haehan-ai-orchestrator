@@ -25,3 +25,20 @@ def test_standard_report_template_requires_learning_explanation():
     assert "Failure behavior:" in text
     assert "How to think when writing it manually:" in text
 
+
+def test_standard_workflow_limits_actions_to_target_app():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "Target App Scope Rule" in text
+    assert "approved target app or repository" in text
+    assert "do not stop, modify, delete, stage, or commit anything for that external app" in text
+    assert "ask for separate approval" in text
+
+
+def test_standard_workflow_preserves_server_first_operating_rule():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "Server-First Operating Rule" in text
+    assert "The server is the final operational source of truth for HAEHAN." in text
+    assert "treat desktop and local-agent code as subordinate execution layers" in text
+    assert "do not add persistent local autostart" in text

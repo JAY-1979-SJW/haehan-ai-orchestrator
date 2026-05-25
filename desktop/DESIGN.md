@@ -20,7 +20,7 @@ Haehan AI 데스크 앱은 Windows PC에서 AI 오케스트레이터 시스템�
 │  로컬 PC (Windows)                                           │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  PyQt6 QWebEngineView  (desktop/webview_app.py)      │   │
+│  │  HaehanAI Desktop launcher (desktop/main_launcher.py) │   │
 │  │  창 크기: 기본 1000×720, 최소 720×520                  │   │
 │  │  http://127.0.0.1:8765 로드                           │   │
 │  └─────────────────────┬────────────────────────────────┘   │
@@ -66,7 +66,7 @@ Haehan AI 데스크 앱은 Windows PC에서 AI 오케스트레이터 시스템�
 
 ```
 desktop/
-├── webview_app.py        L10  PyQt6 네이티브 래퍼
+├── main_launcher.py      통합 데스크톱 진입점
 ├── local_server.py       L8   FastAPI 로컬 서버 (8765)
 ├── user_settings.py      L8   사용자 메뉴 설정 저장/로드
 ├── audit_desktop.py      L11  상시 감사 스크립트
@@ -213,7 +213,7 @@ npm run build
 ### 앱 실행
 ```bash
 # 프로젝트 루트에서
-python -m desktop.webview_app
+python -m desktop.main_launcher
 ```
 
 ### 감사 스크립트 실행

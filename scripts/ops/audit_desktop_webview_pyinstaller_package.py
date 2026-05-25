@@ -31,7 +31,7 @@ EXE_ONEFILE = ROOT / "dist" / f"{APP_NAME}.exe"
 UI_DIST = ROOT / "desktop" / "ui_dist"
 LAUNCHER = ROOT / "build" / "webview_launcher.py"
 BUILD_SCRIPT = ROOT / "scripts" / "build_desktop_webview_app_windows.py"
-WEBVIEW_ENTRY = ROOT / "desktop" / "webview_app_pywebview.py"
+WEBVIEW_ENTRY = ROOT / "desktop" / "main_launcher.py"
 
 BASE_URL = "http://127.0.0.1:8765"
 
