@@ -65,6 +65,44 @@ It must not:
 | Ops/audit | `scripts/ops/`, `tests/` | Verification, audits, reports, dry-runs | Deploy, restart, install, or mutate runtime without approval |
 | Inventories/reports | `docs/inventory/`, `docs/reports/` | Durable tracking and task evidence | Replace executable audits or tests |
 
+## Parallel Work Design
+
+The structure is designed for parallel work only when ownership boundaries are explicit and write sets are disjoint.
+
+Parallel work may run across these independent lanes:
+
+```text
+app UI shell and screens
+server API contracts
+local-agent dispatch and connection recovery
+tool/site adapter contracts
+standard UI package
+inventories, reports, and audits
+```
+
+Parallel work must follow these rules:
+
+- each workstream must declare its owner module before editing
+- each workstream must use a disjoint write set
+- shared baselines may be edited by one workstream at a time
+- cross-module changes must run every affected module gate
+- server-first contracts must not be weakened to unblock a parallel task
+- executable app commands may attach only to inventoried `active` or `locked`
+  tools and connections
+- unresolved conflicts must stop at report, not be silently merged
+
+The module boundary map remains the ownership source for parallel work:
+
+```text
+configs/module_boundaries.json
+docs/architecture/module_boundary_map_20260523.md
+scripts/ops/audit_module_boundaries.py
+```
+
+Parallel work is not allowed for live deploy, server restart, process kill,
+credential reset, persistent autostart, or always-on monitoring unless the user
+approves that stage explicitly.
+
 ## Canonical Flow
 
 ```text

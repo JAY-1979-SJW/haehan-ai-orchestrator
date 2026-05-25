@@ -13,8 +13,27 @@ def test_app_structure_locks_server_first_control_surface():
     assert "The app must be developed as a server-first control surface." in text
     assert "The server is the final operational source of truth for HAEHAN." in text
     assert "## Structural Layers" in text
+    assert "## Parallel Work Design" in text
     assert "## Canonical Flow" in text
     assert "## Forbidden Structure" in text
+
+
+def test_app_structure_locks_parallel_work_design():
+    text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
+
+    assert "ownership boundaries are explicit and write sets are disjoint" in text
+    assert "app UI shell and screens" in text
+    assert "server API contracts" in text
+    assert "local-agent dispatch and connection recovery" in text
+    assert "tool/site adapter contracts" in text
+    assert "standard UI package" in text
+    assert "inventories, reports, and audits" in text
+    assert "each workstream must declare its owner module before editing" in text
+    assert "each workstream must use a disjoint write set" in text
+    assert "shared baselines may be edited by one workstream at a time" in text
+    assert "cross-module changes must run every affected module gate" in text
+    assert "configs/module_boundaries.json" in text
+    assert "Parallel work is not allowed for live deploy" in text
 
 
 def test_app_structure_locks_recovery_boundary():
