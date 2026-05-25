@@ -3,7 +3,7 @@
 Status: LOCKED
 Baseline ID: HAEHAN-COMMON-ENGINE-COMMERCIALIZATION-BASELINE-01
 Approved by: user approval in current Codex session
-Baseline HEAD: pending-current-session
+Baseline HEAD: a7120cf17d1a45276c151b5938f904a295cf7b05
 Last updated: 2026-05-25
 
 ## 1. Purpose
