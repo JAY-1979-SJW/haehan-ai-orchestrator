@@ -3,6 +3,9 @@ FastAPI action router 테스트:
   POST /api/v1/actions/prepare
   POST /api/v1/actions/evidence
 """
+import base64
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,8 +23,28 @@ EVIDENCE_URL = "/api/v1/actions/evidence"
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def client(monkeypatch, tmp_path):
+    import ai_orchestrator.config as config
+
+    users_path = tmp_path / "http_users.json"
+    users_path.write_text(
+        json.dumps([
+            {
+                "username": "operator_u",
+                "password_hash": "pw-operator",
+                "role": "operator",
+                "enabled": True,
+            },
+        ]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(config, "AUTH_ENABLED", True)
+    monkeypatch.setattr(config, "HTTP_USERS_PATH", users_path)
+
+    auth = base64.b64encode(b"operator_u:pw-operator").decode("ascii")
+    client = TestClient(app)
+    client.headers.update({"Authorization": f"Basic {auth}"})
+    return client
 
 
 @pytest.fixture(autouse=True)
