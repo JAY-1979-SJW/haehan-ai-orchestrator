@@ -1,6 +1,6 @@
 ﻿# HAEHAN Connection Inventory
 
-Status: ACTIVE
+Status: LOCKED
 Owner baseline: `docs/baseline/APP_BASELINE.md`
 Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`
 Last updated: 2026-05-25
@@ -25,6 +25,52 @@ allowed direction, recovery policy, redaction boundary, and verification
 command are documented and passing.
 
 Unknown or unclassified connections must fail closed before command execution.
+
+## Connection Logic Lock
+
+The current connection structure is locked to the server-first runtime flow:
+
+```text
+authenticated user instruction
+-> server task creation
+-> auth/risk/approval policy check
+-> local-agent queue
+-> local-agent WebSocket authentication
+-> task dispatch
+-> local execution
+-> result return
+-> server state update
+-> audit event
+```
+
+Locked execution rules:
+
+- The server is the final operational source of truth for connection state,
+  task state, approvals, results, and audit events.
+- App UI routes may display connection status and submit server actions, but
+  must not call local-agent, desktop, browser, Gmail, or site-work execution
+  paths directly.
+- Local-agent execution is allowed only through the authenticated WebSocket
+  dispatch path using `agent_id + device_token`.
+- Browser or CDP background execution is allowed only when the dispatched task
+  carries an explicit `background_approved=True` marker from the approval path.
+- Desktop and local-agent logs are diagnostic evidence only; they must not
+  replace server task state or server audit events.
+- AI agent work must leave the structured audit event and the user-verifiable
+  AI Agent Work Record required by `docs/baseline/STANDARD_WORKFLOW.md`.
+- Any connection outside `Current Connection Index`, or any connection with
+  missing source, target, auth boundary, recovery policy, redaction boundary,
+  or verification command, is locked out of executable routing until this
+  inventory and its owner baseline are updated and verified.
+
+Required lock verification:
+
+```text
+python scripts/ops/audit_standard_workflow_contract.py
+python scripts/ops/audit_local_agent_e2e_baseline_contract.py
+python scripts/ops/audit_local_agent_e2e_flow_contract.py
+python -m pytest tests/test_connection_inventory_lock.py -q
+```
 
 ## Classification Fields
 

@@ -170,6 +170,10 @@ approval, policy, task state, audit history, release, or deploy decisions.
 User task requests, agent execution status, verification evidence, and task
 results must leave a safe task history.
 The server task state and server audit events are the final source of truth.
+Every runtime task path must attempt structured audit logging by default. If a
+local or desktop audit sink is unavailable, the runtime must record the audit
+write failure and the original safe event to a fallback audit sink, or fail the
+task before performing state-changing work.
 
 Work reports and inspection artifacts must reference the relevant task or
 verification evidence when available:
@@ -189,6 +193,32 @@ Logs and reports must not contain raw secrets, tokens, cookies, sessions,
 passwords, OTP values, approval tokens, raw auth headers, sensitive personal
 data, full sensitive local file paths, full page HTML, or automatic raw
 screenshot captures.
+
+## 3.6.1 AI Agent Work Record Rule
+
+Every AI agent task, in every operating mode, must leave a user-verifiable
+work record in addition to structured audit logs.
+
+The work record must be safe for the user to inspect and must include:
+
+- user request summary
+- agent role or execution mode
+- approved scope and approval status
+- ordered work steps performed
+- files, tools, commands, or runtime targets touched
+- decisions made and the reason for each material decision
+- verification evidence and result
+- generated reports, commits, pushes, or deployment references when applicable
+- remaining risks, blocked work, and next approval needed
+
+The work record must be linked from the final task report when a report is
+required. For trivial tasks, the final assistant response may serve as the work
+record if it contains the safe summary, verification, and residual risk.
+
+The work record must not contain raw secrets, raw credentials, raw cookies,
+raw tokens, approval tokens, raw auth headers, raw user files, raw page
+content, full screenshots, full browser traces, or unrelated third-party
+content.
 
 ## 3.7 User Data Contribution Consent Rule
 

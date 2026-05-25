@@ -1,11 +1,14 @@
-"""로컬 감사 로그 (PC 보관, 서버에는 요약만 보고).
+"""Local audit logging for the PC-side local agent.
 
-토큰 / 패스워드 / 쿠키 등 민감 키는 _strip_sensitive() 로 제거 후 기록.
+Raw secrets are stripped before writing. Raw local audit files remain PC-local;
+the server receives only safe summaries through task results.
 """
 from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -26,28 +29,81 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset({
 
 def _strip_sensitive(d: Any) -> Any:
     if isinstance(d, dict):
-        return {k: _strip_sensitive(v) for k, v in d.items()
-                if k.lower() not in _SENSITIVE_KEYS}
+        return {
+            k: _strip_sensitive(v)
+            for k, v in d.items()
+            if k.lower() not in _SENSITIVE_KEYS
+        }
     if isinstance(d, list):
         return [_strip_sensitive(x) for x in d]
     return d
 
 
-def log_local_event(event_type: str, **fields: Any) -> None:
-    """로컬 감사 로그에 한 줄 추가. 민감값은 자동 제거."""
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _fallback_audit_paths() -> list[Path]:
+    paths: list[Path] = []
+    env_path = os.getenv("HAEHAN_AGENT_AUDIT_FALLBACK", "").strip()
+    if env_path:
+        paths.append(Path(env_path))
+    paths.append(Path.cwd() / "logs" / "local_agent_audit.jsonl")
+    paths.append(Path(tempfile.gettempdir()) / "haehan_agent" / "audit.jsonl")
+    return paths
+
+
+def _append_jsonl(path: Path, entry: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def log_local_event(event_type: str, **fields: Any) -> bool:
+    """Append one safe local audit event.
+
+    Returns True when the primary audit path was written. If the primary path
+    fails, returns False after writing a failure marker and the original event
+    to the first writable fallback path. If every path fails, returns False and
+    emits a process log error.
+    """
     safe_fields = _strip_sensitive(fields)
-    entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+    entry: dict[str, Any] = {
+        "timestamp": _now_iso(),
         "event_type": event_type,
         **safe_fields,
     }
     path: Path = config.LOCAL_AUDIT_PATH
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        _append_jsonl(path, entry)
+        return True
     except OSError as e:
-        logger.error("로컬 감사 로그 기록 실패: %s | entry=%s", e, entry)
+        failure_entry = {
+            "timestamp": _now_iso(),
+            "event_type": "local_audit_write_failed",
+            "error_code": e.__class__.__name__,
+            "original_event_type": event_type,
+        }
+        fallback_entry = {
+            **entry,
+            "audit_write_fallback": True,
+            "primary_audit_error_code": e.__class__.__name__,
+        }
+        for fallback in _fallback_audit_paths():
+            if fallback == path:
+                continue
+            try:
+                _append_jsonl(fallback, failure_entry)
+                _append_jsonl(fallback, fallback_entry)
+                logger.error(
+                    "local audit primary write failed; wrote fallback audit: %s",
+                    e,
+                )
+                return False
+            except OSError:
+                continue
+        logger.error("local audit write failed on all paths: %s | entry=%s", e, entry)
+        return False
 
 
 __all__ = ["log_local_event"]
