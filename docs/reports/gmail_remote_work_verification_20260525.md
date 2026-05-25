@@ -65,12 +65,12 @@ Conclusion:
 
 ## Remote Dispatch Verification
 
-Commands rerun on 2026-05-25:
+Initial commands rerun on 2026-05-25:
 - `python verify_live_agent_smoke.py --server https://haehan-ai.kr/orchestrator --timeout 15`
 - `python verify_live_task_dispatch.py --server https://haehan-ai.kr/orchestrator --timeout 70`
 - `python verify_agent_ws_auth.py --server https://haehan-ai.kr/orchestrator --timeout 15`
 
-Observed result:
+Initial observed result:
 - Server TCP 443 reachable.
 - Server health endpoint returned `status=200`.
 - Local agent config was present with masked agent id `la-49a***d7b0`.
@@ -79,11 +79,29 @@ Observed result:
   - WebSocket auth `AUTH_FAILED_4401`
   - task create `status=401`
 
-Conclusion:
+Initial conclusion:
 - The live server is reachable.
-- The current local-agent credential is rejected by the server.
-- Remote server -> local-agent dispatch is not currently verified.
+- The old local-agent credential was rejected by the server.
 - Recovery required: re-register the local agent and rerun dispatch smoke.
+
+Recovery and final commands rerun on 2026-05-25:
+- Local agent re-registered with a fresh one-time registration code.
+- New local agent id observed: `la-7af***fbc9`.
+- `python verify_agent_ws_auth.py --server https://haehan-ai.kr/orchestrator --timeout 15`
+- `python verify_live_task_dispatch.py --server https://haehan-ai.kr/orchestrator --timeout 70 --temp-admin`
+- `python scripts/ops/live_approved_browser_instruction_smoke.py --server https://haehan-ai.kr/orchestrator --timeout 90`
+
+Final observed result:
+- WebSocket auth returned `AUTH_OK`.
+- Generic live task dispatch created `ws_noop` task `lat-e2b41e5ad580`.
+- The task reached `status=completed`.
+- Approved browser-instruction dispatch also completed through a temporary registered agent.
+
+Final conclusion:
+- Live server -> local-agent WebSocket authentication is verified.
+- Authenticated remote task creation -> local worker execution -> completed status is verified.
+- Protected task APIs require admin authentication; `verify_live_task_dispatch.py` now supports `--user/--password` or `--temp-admin` instead of assuming unauthenticated task creation.
+- This proves the remote-dispatch path, but it is not a Gmail-specific remote task execution proof.
 
 ## Final Status
 
@@ -92,14 +110,14 @@ Closed:
 - Gmail safety contract confirmed.
 - Gmail no-final-submit live-input coverage confirmed.
 - Auth failure reporting fixed in `verify_agent_ws_auth.py` so 4401 is reported cleanly.
+- Local agent re-registered with a fresh server credential.
+- Live WebSocket auth confirmed.
+- Live authenticated task dispatch confirmed.
 
 Open:
-- Remote dispatch E2E for Gmail is not proven with the current agent credential.
-- Current blocker is local-agent registration/token mismatch, not Gmail automation code.
+- Gmail-specific remote dispatch remains separate from the verified generic dispatch path.
+- A Gmail-specific remote verifier or task wiring is still required before claiming Gmail remote execution end-to-end.
 
 Next required action:
-- Re-register local agent with a fresh registration code.
-- Rerun:
-  - `python verify_agent_ws_auth.py --server https://haehan-ai.kr/orchestrator --timeout 15`
-  - `python verify_live_task_dispatch.py --server https://haehan-ai.kr/orchestrator --timeout 70`
-  - Gmail-specific remote dispatch, once such task wiring or a verifier exists.
+- Add or identify the Gmail-specific remote task wiring.
+- Run that verifier against the authenticated local agent without clicking final send.

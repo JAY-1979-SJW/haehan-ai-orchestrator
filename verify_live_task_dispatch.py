@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
+import secrets
 import subprocess
 import sys
 import time
@@ -29,13 +31,21 @@ def _load_agent_id() -> str:
     return desktop_config.load_config().agent_id.strip()
 
 
+def _basic_header(username: str, password: str) -> str:
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    return f"Basic {token}"
+
+
 def _request_json(method: str, url: str, body: dict | None = None,
+                  basic_auth: tuple[str, str] | None = None,
                   timeout: int = 10) -> tuple[int, dict]:
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
         data = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
+    if basic_auth is not None:
+        headers["Authorization"] = _basic_header(*basic_auth)
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
     with urlopen_for_server(url, req, timeout=timeout) as resp:
         raw = resp.read().decode("utf-8")
@@ -85,6 +95,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", default=DEFAULT_SERVER_URL)
     parser.add_argument("--timeout", type=int, default=70)
+    parser.add_argument("--user", default=os.getenv("HAEHAN_AGENT_USER", ""))
+    parser.add_argument("--password", default=os.getenv("HAEHAN_AGENT_PASSWORD", ""))
+    parser.add_argument(
+        "--temp-admin",
+        action="store_true",
+        help="create a short-lived remote admin user for authenticated live verification",
+    )
     args = parser.parse_args(argv)
 
     server_url = args.server.rstrip("/")
@@ -93,6 +110,19 @@ def main(argv: list[str] | None = None) -> int:
         print("[FAIL] agent config - agent_id missing")
         print("RESULT=FAIL_LIVE_TASK_DISPATCH")
         return 1
+
+    auth: tuple[str, str] | None = None
+    temp_admin_user = ""
+    if args.user:
+        auth = (args.user, args.password)
+    elif args.temp_admin:
+        from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+
+        temp_admin_user = f"codex_dispatch_{secrets.token_hex(4)}"
+        temp_admin_password = secrets.token_urlsafe(24)
+        remote_user("add", temp_admin_user, temp_admin_password)
+        auth = (temp_admin_user, temp_admin_password)
+        print("[PASS] temp admin user added")
 
     log_path = ROOT / "logs" / "live_task_worker.log"
     worker = _start_worker(server_url, log_path)
@@ -111,6 +141,7 @@ def main(argv: list[str] | None = None) -> int:
                 "POST",
                 tasks_url,
                 {"action": "ws_noop", "params": {}},
+                basic_auth=auth,
             )
         except urllib.error.HTTPError as exc:
             print(f"[FAIL] task create - status={exc.code}")
@@ -136,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         while time.time() < deadline:
             time.sleep(2)
             try:
-                _, detail = _request_json("GET", detail_url)
+                _, detail = _request_json("GET", detail_url, basic_auth=auth)
             except Exception as exc:
                 last_error = type(exc).__name__
                 continue
@@ -155,6 +186,14 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")
+        if temp_admin_user:
+            try:
+                from scripts.ops.live_approved_browser_instruction_smoke import remote_user
+
+                remote_user("remove", temp_admin_user)
+                print("[PASS] temp admin user removed")
+            except Exception:
+                print("[WARN] temp admin user cleanup failed")
 
 
 if __name__ == "__main__":
