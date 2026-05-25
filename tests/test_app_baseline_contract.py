@@ -20,3 +20,8 @@ def test_app_baseline_is_locked_source_of_truth():
     assert "authorization boundary" in text
     assert "state changes" in text
     assert "regression gate" in text
+    assert "local verification is not the final verdict" in text
+    assert "the server repository HEAD matches the intended release HEAD" in text
+    assert "server smoke checks pass through the public route or server-side nginx route" in text
+    assert "server stress checks pass through the public route or server-side nginx route" in text
+    assert "post-deploy logs are checked for new runtime errors" in text

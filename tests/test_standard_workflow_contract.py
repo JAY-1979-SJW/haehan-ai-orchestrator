@@ -42,6 +42,10 @@ def test_standard_workflow_preserves_server_first_operating_rule():
     assert "The server is the final operational source of truth for HAEHAN." in text
     assert "treat desktop and local-agent code as subordinate execution layers" in text
     assert "do not add persistent local autostart" in text
+    assert "Local smoke, local stress, and local build results are preliminary evidence" in text
+    assert "server smoke plus server stress checks pass" in text
+    assert "server `git status --short --branch`" in text
+    assert "server-local changes with an explicit stash or report-only decision" in text
 
 
 def test_standard_workflow_defines_safe_auto_run_rule():

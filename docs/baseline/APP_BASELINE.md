@@ -358,6 +358,18 @@ Before release or installer/portable work:
 - Installer build, Docker deploy, server deploy, and push require explicit
   approval for that stage.
 
+For server deployment, local verification is not the final verdict. The final
+deployment verdict requires:
+
+- the server repository HEAD matches the intended release HEAD
+- server-local uncommitted changes are preserved or explicitly reported before
+  pull/build/replacement
+- server-only secret override files remain uncommitted unless separately
+  approved
+- server smoke checks pass through the public route or server-side nginx route
+- server stress checks pass through the public route or server-side nginx route
+- post-deploy logs are checked for new runtime errors
+
 ## 11. Failure And Recovery Rules
 
 Failures must not be hidden behind mock success.
