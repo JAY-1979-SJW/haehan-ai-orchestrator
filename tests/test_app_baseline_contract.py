@@ -12,6 +12,10 @@ def test_app_baseline_is_locked_source_of_truth():
 
     assert "Status: LOCKED" in text
     assert "This baseline is the top-level source of truth for app development." in text
+    assert "The server is the final operational source of truth for HAEHAN." in text
+    assert "The final runtime baseline is server-first:" in text
+    assert "Desktop and local-agent code are subordinate execution layers." in text
+    assert "must not register persistent autostart" in text
     assert "input/output contract" in text
     assert "authorization boundary" in text
     assert "state changes" in text

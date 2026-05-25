@@ -12,7 +12,7 @@ pywebview 는 모듈 import 시점에 import 하지 않고 open_admin_window 호
   6. 같은 프로세스 내 admin window 중복 생성 방지
   7. 창 닫기는 local_server 종료시키지 않음 (open_admin_window 반환만 함)
 
-기존 desktop/webview_app_pywebview.py 는 본 모듈과 무관 — Desktop.exe 진입점은 그대로 유지.
+Legacy webview entrypoints are removed; Desktop.exe enters through main_launcher.
 본 모듈은 통합 HaehanAI.exe 의 Admin Mode 전용.
 """
 from __future__ import annotations

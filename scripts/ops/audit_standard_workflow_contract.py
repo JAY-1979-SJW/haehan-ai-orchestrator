@@ -26,6 +26,14 @@ REQUIRED_WORKFLOW_PHRASES = (
     "state changes",
     "regression gate",
     "rollback or recovery plan",
+    "Target App Scope Rule",
+    "act only on the approved target app or repository",
+    "do not stop, modify, delete, stage, or commit anything for that external app",
+    "ask for separate approval before taking any action on that external app",
+    "Server-First Operating Rule",
+    "The server is the final operational source of truth for HAEHAN.",
+    "treat desktop and local-agent code as subordinate execution layers",
+    "do not add persistent local autostart",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -49,6 +57,7 @@ REQUIRED_TEMPLATE_PHRASES = (
 REQUIRED_REFERENCE_PHRASES = (
     "docs/baseline/STANDARD_WORKFLOW.md",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
+    "The server is the final operational source of truth for HAEHAN.",
 )
 
 
@@ -98,4 +107,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

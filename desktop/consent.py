@@ -1,6 +1,6 @@
 """HaehanAI Desktop 정보 제공 동의 로직 (공유 모듈).
 
-webview_app_pywebview.py 에서 분리 — HAEHAN-DESKTOP-LEGACY-UI-REMOVAL-01.
+Moved from the removed legacy webview entrypoint — HAEHAN-DESKTOP-LEGACY-UI-REMOVAL-01.
 main_launcher.py 및 향후 진입점에서 공통으로 사용한다.
 
 보안:

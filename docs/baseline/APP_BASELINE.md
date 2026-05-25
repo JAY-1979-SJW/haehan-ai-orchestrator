@@ -8,6 +8,8 @@ Last updated: 2026-05-24
 
 ## 1. Purpose
 
+The server is the final operational source of truth for HAEHAN.
+
 HAEHAN AI Orchestrator receives authenticated user instructions on the server,
 checks authorization, approval, execution location, and safety policy, then
 dispatches safe work to a local PC agent when local browser or local tool
@@ -22,6 +24,23 @@ The app must preserve these roles:
 - Browser automation: local-only execution through the local agent.
 - AI: instruction interpretation and task assistance. AI must not bypass auth,
   approval, execution-location, or secret-redaction gates.
+
+## 1.1 Final Server Baseline
+
+The final runtime baseline is server-first:
+
+- The server owns identity, authorization, approval, policy, task queue, task
+  state, result intake, audit records, and release/deploy decisions.
+- Desktop and local-agent code are subordinate execution layers. They may run
+  local UI, local tools, browser automation, and recovery probes only after the
+  server contract allows or dispatches that work.
+- Desktop and local-agent code must not become an independent source of truth
+  for task state, approval, user identity, policy, or audit history.
+- Desktop and local-agent code must not register persistent autostart,
+  background recovery, or always-on monitoring unless a server-baseline task
+  explicitly approves that runtime behavior.
+- A local cleanup or desktop build may remove legacy execution paths only when
+  the result keeps the server as the final operational baseline.
 
 ## 2. Canonical Runtime Flow
 

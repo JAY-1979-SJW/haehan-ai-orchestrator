@@ -13,13 +13,11 @@ hiddenimports = [
     'uvicorn', 'fastapi', 'httpx',
     'desktop.app_config',
     'desktop.remote_access',
-    'desktop.tray_app',
     'desktop.local_runner',
     'desktop.status_provider',
     'desktop.task_receiver',
     'desktop.local_server',
     'desktop.user_settings',
-    'desktop.webview_app_pywebview',
 ]
 datas += collect_data_files('customtkinter')
 hiddenimports += collect_submodules('local_agent')

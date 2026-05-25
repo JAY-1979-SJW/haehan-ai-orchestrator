@@ -15,6 +15,11 @@ GOVERNANCE = ROOT / "docs" / "architecture" / "development_governance_rules_2026
 REQUIRED_BASELINE_PHRASES = (
     "Status: LOCKED",
     "Baseline ID: HAEHAN-APP-BASELINE-01",
+    "The server is the final operational source of truth for HAEHAN.",
+    "The final runtime baseline is server-first:",
+    "Desktop and local-agent code are subordinate execution layers.",
+    "Desktop and local-agent code must not become an independent source of truth",
+    "must not register persistent autostart",
     "server task creation",
     "local-agent WebSocket authentication",
     "AUTH_ENABLED",
@@ -30,6 +35,9 @@ REQUIRED_BASELINE_PHRASES = (
 
 REQUIRED_GOVERNANCE_PHRASES = (
     "docs/baseline/APP_BASELINE.md",
+    "The server is the final operational source of truth for HAEHAN.",
+    "Desktop and local-agent code are subordinate execution layers.",
+    "Persistent local autostart, background recovery, and always-on monitoring are",
     "input/output contract",
     "authorization boundary",
     "state changes",

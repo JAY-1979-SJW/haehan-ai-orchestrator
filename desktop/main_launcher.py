@@ -5,7 +5,7 @@
     lifecycle hook 만 구현. 실제 Tray/Admin 통합은 후속 공정에서 진행.
 
 본 모듈은 기존 진입점을 깨지 않는다:
-    - desktop/webview_app_pywebview.py (Desktop.exe 진입점)
+    - desktop/main_launcher.py (Desktop.exe 진입점)
     - local_agent/desktop_launcher.py (Agent.exe 진입점)
 
 위 두 모듈은 그대로 동작하며, 본 launcher는 통합 후보 진입점일 뿐이다.
@@ -524,7 +524,7 @@ def _start_embedded_server() -> None:
 def ensure_server(timeout: float = 10.0) -> bool:
     """서버가 없으면 임베디드로 기동. 준비되면 True 반환.
 
-    webview_app_pywebview.ensure_server 를 main_launcher 로 이전 (legacy UI 제거).
+    Legacy webview server startup logic now lives in main_launcher.
     """
     import threading, time
     if _is_server_up():
@@ -546,7 +546,7 @@ def ensure_server(timeout: float = 10.0) -> bool:
 def run_desktop_window(skip_gui: bool = False) -> None:
     """pywebview 창을 열어 new_shell (/app-new) 을 표시한다.
 
-    webview_app_pywebview.run_pywebview 를 main_launcher 로 이전 (legacy UI 제거).
+    Legacy webview window startup logic now lives in main_launcher.
     """
     if skip_gui:
         logger.info("SKIP_GUI=1 — pywebview 창 미기동")

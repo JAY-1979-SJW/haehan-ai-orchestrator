@@ -43,6 +43,20 @@
 
 **위반 시**: layer audit WARN 또는 BLOCK_REFACTORING 발생.
 
+### 3.1 Server-First Operating Rule
+
+The server is the final operational source of truth for HAEHAN.
+
+- Server owns identity, authorization, approval, policy, task queue, task state,
+  result intake, audit records, and release/deploy decisions.
+- Desktop and local-agent code are subordinate execution layers.
+- Desktop and local-agent code must not become an independent source of truth
+  for task state, approval, user identity, policy, or audit history.
+- Persistent local autostart, background recovery, and always-on monitoring are
+  forbidden unless an approved server-baseline task explicitly allows them.
+- If local runtime behavior conflicts with `docs/baseline/APP_BASELINE.md`, the
+  app baseline wins and the change must stop for governance approval.
+
 ---
 
 ## 4. Generic Site Engine Rule
@@ -133,6 +147,9 @@ scripts/<site>/              ← thin profile/workflow/action만 허용
 The locked app baseline is `docs/baseline/APP_BASELINE.md`.
 The locked standard workflow is `docs/baseline/STANDARD_WORKFLOW.md`.
 The locked report template is `docs/templates/STANDARD_REPORT_TEMPLATE.md`.
+
+The server is the final operational source of truth. Desktop/local-agent work
+must remain subordinate to the server contract defined in APP_BASELINE.
 
 Before changing server, local-agent, browser, AI, approval, desktop runtime, or
 release logic, the change must be checked against that baseline. Every code

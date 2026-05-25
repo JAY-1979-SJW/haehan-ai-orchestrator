@@ -28,13 +28,13 @@ def _code_only(src: str) -> str:
 
 
 def test_official_entrypoint_uses_main_launcher():
-    src = (ROOT / "build/webview_launcher.py").read_text(encoding="utf-8")
+    src = (ROOT / "scripts/build_desktop_webview_app_windows.py").read_text(encoding="utf-8")
     assert "from desktop.main_launcher import main" in src
 
 
 def test_official_entrypoint_no_webview_direct():
     code = _code_only(
-        (ROOT / "build/webview_launcher.py").read_text(encoding="utf-8")
+        (ROOT / "scripts/build_desktop_webview_app_windows.py").read_text(encoding="utf-8")
     )
     assert "from desktop.webview_app_pywebview import main" not in code
     assert "webview_app_pywebview.main(" not in code
