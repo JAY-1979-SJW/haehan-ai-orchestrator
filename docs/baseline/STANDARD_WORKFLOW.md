@@ -139,6 +139,20 @@ The report must include:
 
 Logs alone are not sufficient as final work evidence.
 
+## 3.5 App Structure Rule
+
+When app structure, app shell, UI routing, navigation, task screens, approval
+screens, connection screens, or control-surface behavior changes, the worker
+must update:
+
+- `docs/architecture/APP_STRUCTURE.md`
+- the relevant inventory document under `docs/inventory/`
+- `docs/reports/<task>_<yyyymmdd>.md`
+
+The app must remain a server-first control surface. App UI, desktop runtime,
+and local-agent code must not become independent sources of truth for identity,
+approval, policy, task state, audit history, release, or deploy decisions.
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:

@@ -13,6 +13,7 @@ WORKFLOW = ROOT / "docs" / "baseline" / "STANDARD_WORKFLOW.md"
 REPORT_TEMPLATE = ROOT / "docs" / "templates" / "STANDARD_REPORT_TEMPLATE.md"
 APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
 GOVERNANCE = ROOT / "docs" / "architecture" / "development_governance_rules_20260515.md"
+APP_STRUCTURE = ROOT / "docs" / "architecture" / "APP_STRUCTURE.md"
 TOOL_INVENTORY = ROOT / "docs" / "inventory" / "TOOL_INVENTORY.md"
 CONNECTION_INVENTORY = ROOT / "docs" / "inventory" / "CONNECTION_INVENTORY.md"
 
@@ -46,6 +47,9 @@ REQUIRED_WORKFLOW_PHRASES = (
     "docs/inventory/TOOL_INVENTORY.md",
     "docs/inventory/CONNECTION_INVENTORY.md",
     "Logs alone are not sufficient as final work evidence.",
+    "App Structure Rule",
+    "docs/architecture/APP_STRUCTURE.md",
+    "The app must remain a server-first control surface.",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -72,6 +76,7 @@ REQUIRED_REFERENCE_PHRASES = (
     "The server is the final operational source of truth for HAEHAN.",
     "Auto-Run Rule",
     "Tool Inventory And Report Rule",
+    "docs/architecture/APP_STRUCTURE.md",
 )
 
 REQUIRED_INVENTORY_PHRASES = (
@@ -79,6 +84,16 @@ REQUIRED_INVENTORY_PHRASES = (
     "Owner baseline: `docs/baseline/APP_BASELINE.md`",
     "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`",
     "Lock Needed Queue",
+)
+
+REQUIRED_APP_STRUCTURE_PHRASES = (
+    "Status: ACTIVE",
+    "The app must be developed as a server-first control surface.",
+    "The server is the final operational source of truth for HAEHAN.",
+    "## Structural Layers",
+    "## Canonical Flow",
+    "## Forbidden Structure",
+    "## Development Order",
 )
 
 
@@ -93,6 +108,7 @@ def audit() -> tuple[bool, list[str]]:
         REPORT_TEMPLATE,
         APP_BASELINE,
         GOVERNANCE,
+        APP_STRUCTURE,
         TOOL_INVENTORY,
         CONNECTION_INVENTORY,
     )
@@ -104,6 +120,7 @@ def audit() -> tuple[bool, list[str]]:
     template_text = REPORT_TEMPLATE.read_text(encoding="utf-8", errors="replace")
     app_baseline_text = APP_BASELINE.read_text(encoding="utf-8", errors="replace")
     governance_text = GOVERNANCE.read_text(encoding="utf-8", errors="replace")
+    app_structure_text = APP_STRUCTURE.read_text(encoding="utf-8", errors="replace")
     tool_inventory_text = TOOL_INVENTORY.read_text(encoding="utf-8", errors="replace")
     connection_inventory_text = CONNECTION_INVENTORY.read_text(encoding="utf-8", errors="replace")
 
@@ -134,11 +151,16 @@ def audit() -> tuple[bool, list[str]]:
             + ", ".join(missing_connection_inventory)
         )
 
+    missing_app_structure = missing_phrases(app_structure_text, REQUIRED_APP_STRUCTURE_PHRASES)
+    if missing_app_structure:
+        failures.append("app structure missing phrase(s): " + ", ".join(missing_app_structure))
+
     return not failures, failures or [
         "STANDARD_WORKFLOW exists and is locked",
         "STANDARD_REPORT_TEMPLATE contains required report fields",
         "app baseline and governance rules reference the standard workflow",
         "tool and connection inventories exist",
+        "app structure baseline exists",
     ]
 
 
