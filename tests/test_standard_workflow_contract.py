@@ -74,3 +74,23 @@ def test_inventory_documents_exist_and_define_lock_queue():
         assert "Owner baseline: `docs/baseline/APP_BASELINE.md`" in text
         assert "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`" in text
         assert "Lock Needed Queue" in text
+
+
+def test_standard_workflow_requires_app_structure_updates():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "App Structure Rule" in text
+    assert "docs/architecture/APP_STRUCTURE.md" in text
+    assert "The app must remain a server-first control surface." in text
+
+
+def test_app_structure_baseline_exists_and_locks_control_surface():
+    text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
+
+    assert "Status: ACTIVE" in text
+    assert "The app must be developed as a server-first control surface." in text
+    assert "The server is the final operational source of truth for HAEHAN." in text
+    assert "## Structural Layers" in text
+    assert "## Canonical Flow" in text
+    assert "## Forbidden Structure" in text
+    assert "## Development Order" in text

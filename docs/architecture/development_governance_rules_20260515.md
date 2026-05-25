@@ -94,6 +94,20 @@ and remaining unknowns or lock-needed items.
 
 Logs alone are not sufficient as final work evidence.
 
+### 3.4 App Structure Rule
+
+App structure, app shell, UI routing, navigation, task screens, approval
+screens, connection screens, and control-surface behavior must follow
+`docs/architecture/APP_STRUCTURE.md`.
+
+The app must remain a server-first control surface. App UI, desktop runtime,
+and local-agent code must not become independent sources of truth for identity,
+approval, policy, task state, audit history, release, or deploy decisions.
+
+Any app structure change must update `docs/architecture/APP_STRUCTURE.md`, the
+relevant inventory document under `docs/inventory/`, and a task report under
+`docs/reports/`.
+
 ---
 
 ## 4. Generic Site Engine Rule
