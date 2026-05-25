@@ -164,7 +164,8 @@ material.
 Future app work should follow this order:
 
 ```text
-tool inventory
+app development standard
+-> tool inventory
 -> connection inventory
 -> tool contract lock
 -> connection/recovery lock
@@ -181,6 +182,8 @@ When app structure, app shell, UI routing, navigation, task screens, approval
 screens, connection screens, or control-surface behavior changes, update:
 
 - `docs/architecture/APP_STRUCTURE.md`
+- `docs/baseline/APP_DEVELOPMENT_STANDARD.md` when app shell, route, screen,
+  API integration, or UI completion rules change
 - `docs/inventory/TOOL_INVENTORY.md` when tools are created, removed, or
   reclassified
 - `docs/inventory/CONNECTION_INVENTORY.md` when connections are created,
@@ -192,8 +195,10 @@ screens, connection screens, or control-surface behavior changes, update:
 Minimum structure verification:
 
 ```text
+python scripts/ops/audit_app_development_standard.py
 python scripts/ops/audit_app_structure_contract.py
 python scripts/ops/audit_standard_workflow_contract.py
+python -m pytest tests/test_app_development_standard.py -q
 python -m pytest tests/test_app_structure_contract.py -q
 python -m pytest tests/test_standard_workflow_contract.py -q
 ```

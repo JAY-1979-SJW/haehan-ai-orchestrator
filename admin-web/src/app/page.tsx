@@ -1,290 +1,336 @@
-'use client';
+"use client";
+
 import Link from "next/link";
-import { AppInstallButton } from "@/components/app/AppInstallButton";
 import {
-  TopAccentLine,
-  StatusBadge,
-  MetricCard,
-  GateStatusCard,
-  WarehouseCard,
-  ConstructionPhaseTable,
+  Alert,
+  AppShell,
   Button,
-  Input,
-  Select,
-} from "@haehan/design-system";
-import type { ConstructionPhaseRow } from "@haehan/design-system";
+  DataTable,
+  Header,
+  MetricCard,
+  ReportList,
+  Sidebar,
+  StatusBadge,
+} from "@/standard-ui";
 
-const AGENT_METRICS = [
-  { label: "온라인 에이전트", value: "3", sub: "대 온라인", accentColor: "#059669" as const },
-  { label: "대기 중 태스크", value: "7", sub: "건 대기", accentColor: "#F97316" as const },
-  { label: "오늘 처리 완료", value: "24", sub: "건 완료", accentColor: "#1D4ED8" as const },
-  { label: "승인 대기", value: "2", sub: "건 미처리", accentColor: "#B91C1C" as const },
-];
-
-const GATES = [
+const navGroups = [
   {
-    gateName: "FORBIDDEN_IMPORT",
-    decision: "PASS" as const,
-    reason: "역방향 import 없음",
+    label: "운영",
+    items: [
+      { href: "/", label: "Dashboard", active: true },
+      { href: "/assistant/tasks", label: "Tasks" },
+      { href: "/browser-approvals", label: "Approvals" },
+      { href: "/local-agents", label: "Agents" },
+    ],
   },
   {
-    gateName: "SECURITY_PATTERN",
-    decision: "PASS" as const,
-    reason: "secret 노출 없음",
+    label: "관리",
+    items: [
+      { href: "/ops", label: "Audit" },
+      { href: "/assistant/storage", label: "Tools" },
+      { href: "/assistant/external-sites", label: "Connections" },
+      { href: "/assistant/logs", label: "Reports" },
+    ],
   },
   {
-    gateName: "CIRCULAR_IMPORT",
-    decision: "PASS" as const,
-    reason: "순환 의존성 없음",
-  },
-  {
-    gateName: "QUALITY_GATE",
-    decision: "WARN" as const,
-    reason: "미완성 모듈 3개",
-  },
-];
-
-const WAREHOUSES = [
-  {
-    title: "EUM 단말기",
-    path: "data/eum_all_devices_complete.json",
-    fileCount: 22,
-    status: "PASS" as const,
-    description: "비전아이(주) 임대 현장 22개",
-  },
-  {
-    title: "G2B 입찰",
-    path: "data/g2b",
-    fileCount: 154,
-    status: "PASS" as const,
-    description: "최근 동기화: 2026-05-14",
-  },
-  {
-    title: "히웍스 공지",
-    path: "data/hiworks",
-    fileCount: 8,
-    status: "HOLD" as const,
-    description: "최근 동기화: 2026-05-13",
-  },
-  {
-    title: "YouTube 콘텐츠",
-    path: "data/youtube",
-    fileCount: 5,
-    status: "HOLD" as const,
-    description: "최근 동기화: 2026-05-10",
+    label: "설정",
+    items: [
+      { href: "/assistant", label: "Consent" },
+      { href: "/assistant/deployment", label: "Settings" },
+    ],
   },
 ];
 
-const PHASE_ROWS: ConstructionPhaseRow[] = [
+const metrics = [
+  { label: "서버 상태", value: "정상", sub: "마지막 확인: 방금 전", accentColor: "#059669" },
+  { label: "에이전트 연결", value: "1", sub: "주의 필요 0건", accentColor: "#2563EB" },
+  { label: "승인 대기", value: "2", sub: "높은 위험 1건", accentColor: "#F97316" },
+  { label: "실패/차단", value: "0", sub: "사용자 조치 없음", accentColor: "#B91C1C" },
+];
+
+const taskRows: Array<Record<string, unknown>> = [
   {
-    phase: "기반 공사",
-    code: "FOUNDATION_01",
-    status: "DONE",
-    completedAt: "2026-04-22",
-    notes: "P1 App Foundation PASS",
+    id: "task-1024",
+    action: "공고 페이지 읽기",
+    state: "완료",
+    approval: "불필요",
+    owner: "browser.inspect",
+    next: "보고서 열기",
   },
   {
-    phase: "디자인시스템",
-    code: "DS_ROOT_01",
-    status: "DONE",
-    completedAt: "2026-05-15",
-    notes: "00.디자인시스템 구축",
+    id: "task-1025",
+    action: "메일 초안 준비",
+    state: "승인 대기",
+    approval: "필요",
+    owner: "gmail.compose",
+    next: "승인 검토",
   },
   {
-    phase: "소비 앱 계약",
-    code: "DS_CONSUMER_REF_01",
-    status: "DONE",
-    completedAt: "2026-05-15",
-    notes: "@haehan/design-system 계약 고정",
-  },
-  {
-    phase: "비서앱 웹 기초",
-    code: "ASSISTANT_WEB_01",
-    status: "IN_PROGRESS",
-    completedAt: undefined,
-    notes: "admin-web 첫 화면 구성 중",
-  },
-  {
-    phase: "에이전트 제어 고도화",
-    code: "AGENT_CTRL_01",
-    status: "PENDING",
-    completedAt: undefined,
-    notes: "태스크 생성·취소·상태 폴링",
-  },
-  {
-    phase: "승인/감사 로그",
-    code: "AUDIT_LOG_01",
-    status: "PENDING",
-    completedAt: undefined,
-    notes: "운영 통제 기능",
-  },
-  {
-    phase: "도메인 공개",
-    code: "DOMAIN_PUBLISH_01",
-    status: "PENDING",
-    completedAt: undefined,
-    notes: "design.haehan-ai.kr 연결 예정",
+    id: "task-1026",
+    action: "에이전트 상태 확인",
+    state: "진행 중",
+    approval: "불필요",
+    owner: "local_agent.status",
+    next: "상태 새로고침",
   },
 ];
 
-const APPROVAL_QUEUE = [
-  { id: "APR-001", title: "히웍스 공지 자동 게시 승인", requestedAt: "09:12" },
-  { id: "APR-002", title: "G2B 투찰 참여 여부 확인 요청", requestedAt: "08:44" },
+const approvalRows: Array<Record<string, unknown>> = [
+  {
+    id: "apr-2401",
+    task: "task-1025",
+    summary: "메일 초안 생성 후 사용자가 최종 전송",
+    risk: "중간",
+    expires: "30분 남음",
+  },
+  {
+    id: "apr-2402",
+    task: "task-1027",
+    summary: "외부 사이트 제출 전 사용자 확인",
+    risk: "높음",
+    expires: "12분 남음",
+  },
 ];
 
-const QUICK_TASK_OPTIONS = [
-  { value: "eum", label: "EUM 단말기 현황 추출" },
-  { value: "g2b", label: "G2B 입찰 조회" },
-  { value: "hiworks", label: "히웍스 공지 수집" },
-  { value: "youtube", label: "YouTube 콘텐츠 분석" },
+const reportItems = [
+  {
+    title: "앱 개발 기준서",
+    path: "docs/baseline/APP_DEVELOPMENT_STANDARD.md",
+    date: "2026-05-25",
+    category: "LOCKED",
+  },
+  {
+    title: "동의 기반 개발자료 export",
+    path: "docs/reports/user_data_contribution_consent_20260525.md",
+    date: "2026-05-25",
+    category: "PASS",
+  },
 ];
+
+const taskColumns = [
+  { key: "id", header: "작업 ID", width: 120 },
+  { key: "action", header: "작업" },
+  {
+    key: "state",
+    header: "상태",
+    width: 110,
+    render: (row: Record<string, unknown>) => (
+      <StatusBadge
+        status={row.state === "완료" ? "PASS" : row.state === "승인 대기" ? "WARN" : "PARTIAL"}
+        label={String(row.state)}
+        size="sm"
+      />
+    ),
+  },
+  { key: "approval", header: "승인", width: 90 },
+  { key: "owner", header: "도구/모듈", width: 150 },
+  { key: "next", header: "다음 조치", width: 120 },
+];
+
+const approvalColumns = [
+  { key: "id", header: "승인 ID", width: 120 },
+  { key: "task", header: "작업 ID", width: 120 },
+  { key: "summary", header: "안전 요약" },
+  {
+    key: "risk",
+    header: "위험",
+    width: 90,
+    render: (row: Record<string, unknown>) => (
+      <StatusBadge
+        status={row.risk === "높음" ? "HOLD" : "WARN"}
+        label={String(row.risk)}
+        size="sm"
+      />
+    ),
+  },
+  { key: "expires", header: "만료", width: 110 },
+];
+
+function Panel({
+  title,
+  right,
+  children,
+}: {
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E5E7EB",
+        borderRadius: 8,
+        padding: 18,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 14,
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{title}</h2>
+        {right}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
-      {/* 1. 상단 4px 오렌지 Top Accent Line */}
-      <TopAccentLine />
-
-      <div className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 lg:px-8">
-
-        {/* 2. 비서앱 대시보드 헤더 */}
-        <div className="mb-6 flex items-start justify-between">
+    <AppShell
+      sidebar={
+        <Sidebar
+          logo={
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>HAEHAN AI</div>
+              <div style={{ marginTop: 4, fontSize: 11, color: "rgba(255,255,255,0.58)" }}>
+                서버 기준 운영 앱
+              </div>
+            </div>
+          }
+          groups={navGroups}
+          footer={
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.58)", lineHeight: 1.5 }}>
+              표준 UI 기반
+              <br />
+              static/dry-run 화면
+            </div>
+          }
+        />
+      }
+      header={
+        <Header
+          title="운영 대시보드"
+          right={
+            <>
+              <StatusBadge status="PASS" label="서버 기준" />
+              <StatusBadge status="READ_ONLY_ALLOWED" label="읽기 전용" />
+            </>
+          }
+        />
+      }
+    >
+      <div data-testid="app-standard-dashboard" style={{ padding: 24, maxWidth: 1320, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 18 }}>
           <div>
-            <h1 className="text-[22px] font-bold text-[#0F172A]">해한 AI 비서</h1>
-            <p className="mt-1 text-[13px] text-[#6B7280]">
-              AI 오케스트레이터 운영 대시보드 — 에이전트·게이트·창고 통합 관제
+            <h1 style={{ margin: 0, fontSize: 22, lineHeight: 1.25, color: "#0F172A" }}>
+              지금 처리할 일을 한 화면에서 확인합니다
+            </h1>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280" }}>
+              작업, 승인, 에이전트, 감사 기록은 서버가 가진 안전한 상태만 표시합니다.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge status="PASS" label="시스템 정상" />
-            <AppInstallButton />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <Link href="/ops">
+              <Button variant="secondary">감사 보기</Button>
+            </Link>
+            <Link href="/assistant/tasks">
+              <Button variant="primary">작업 보기</Button>
+            </Link>
           </div>
         </div>
 
-        {/* 3. 로컬 에이전트 ON/OFF 상태 카드 */}
-        <section className="mb-6">
-          <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">로컬 에이전트 현황</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {AGENT_METRICS.map((m) => (
-              <MetricCard
-                key={m.label}
-                label={m.label}
-                value={m.value}
-                sub={m.sub}
-                accentColor={m.accentColor}
-              />
-            ))}
-          </div>
-        </section>
+        <Alert type="info" title="표준 UI 기준 화면">
+          이 화면은 앱 개발 기준서에 맞춘 첫 운영 화면입니다. 서버 API 연결 전까지 정적 계약 화면으로 유지합니다.
+        </Alert>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
-          <div className="flex flex-col gap-6">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+            gap: 12,
+            marginTop: 18,
+          }}
+        >
+          {metrics.map((metric) => (
+            <MetricCard key={metric.label} {...metric} />
+          ))}
+        </div>
 
-            {/* 4. 승인 대기 큐 요약 */}
-            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold text-[#374151]">승인 대기</h2>
-                <StatusBadge status="WARN" label={`${APPROVAL_QUEUE.length}건 대기`} />
-              </div>
-              <ul className="space-y-2">
-                {APPROVAL_QUEUE.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center justify-between rounded-lg bg-[#F9FAFB] px-3 py-2"
-                  >
-                    <div>
-                      <span className="text-[11px] font-mono text-[#9CA3AF] mr-2">{item.id}</span>
-                      <span className="text-[13px] text-[#374151]">{item.title}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] text-[#9CA3AF]">{item.requestedAt}</span>
-                      <Button variant="secondary" size="sm">승인</Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.5fr) minmax(320px, 0.85fr)",
+            gap: 16,
+            marginTop: 16,
+            alignItems: "start",
+          }}
+        >
+          <div style={{ display: "grid", gap: 16 }}>
+            <Panel
+              title="최근 작업"
+              right={<StatusBadge status="WARN" label="승인 대기 우선" size="sm" />}
+            >
+              <DataTable columns={taskColumns} rows={taskRows} keyField="id" />
+            </Panel>
 
-            {/* 5. 작업 실행 게이트 상태 */}
-            <section>
-              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">실행 게이트</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {GATES.map((g) => (
-                  <GateStatusCard
-                    key={g.gateName}
-                    gateName={g.gateName}
-                    decision={g.decision}
-                    reason={g.reason}
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* 7. 최근 작업 공정표 */}
-            <section>
-              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">작업 공정표</h2>
-              <ConstructionPhaseTable rows={PHASE_ROWS} />
-            </section>
-          </div>
-
-          <div className="flex flex-col gap-6">
-
-            {/* 8. 빠른 작업 입력 영역 */}
-            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
-              <h2 className="mb-4 text-[13px] font-semibold text-[#374151]">빠른 작업 생성</h2>
-              <div className="flex flex-col gap-3">
-                <Select
-                  label="업무 도메인"
-                  options={QUICK_TASK_OPTIONS}
-                />
-                <Input label="작업 제목" placeholder="예: 5월 EUM 단말기 현황 추출" />
-                <Input label="메모 (선택)" placeholder="추가 지시사항 입력" />
-                <Button variant="primary" size="md">
-                  작업 생성
+            <Panel title="승인 대기">
+              <DataTable columns={approvalColumns} rows={approvalRows} keyField="id" />
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <Button variant="secondary" disabled title="서버 승인 API 연결 후 활성화됩니다.">
+                  승인
+                </Button>
+                <Button variant="ghost" disabled title="서버 승인 API 연결 후 활성화됩니다.">
+                  거절
                 </Button>
               </div>
-            </section>
+            </Panel>
+          </div>
 
-            {/* 6. 업무별 창고 카드 */}
-            <section>
-              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">업무 창고</h2>
-              <div className="flex flex-col gap-3">
-                {WAREHOUSES.map((w) => (
-                  <WarehouseCard
-                    key={w.title}
-                    title={w.title}
-                    path={w.path}
-                    fileCount={w.fileCount}
-                    status={w.status}
-                    description={w.description}
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* 운영 링크 */}
-            <section className="rounded-[12px] border border-[#E5E7EB] bg-white p-5">
-              <h2 className="mb-3 text-[13px] font-semibold text-[#374151]">운영 메뉴</h2>
-              <div className="flex flex-col gap-2">
+          <div style={{ display: "grid", gap: 16 }}>
+            <Panel title="에이전트 연결">
+              <div style={{ display: "grid", gap: 10 }}>
                 {[
-                  { href: "/local-agents", label: "로컬 에이전트 관리", badge: "운영 중" },
-                  { href: "/cad", label: "AI CAD 워크스페이스", badge: "운영 중" },
-                  { href: "/file-map", label: "파일 지도 리포트", badge: "신기능" },
-                  { href: "/external-tasks", label: "외부 웹 업무 현황", badge: "신기능" },
-                  { href: "/ops", label: "운영센터 (승인/감사/연동)", badge: "신기능" },
-                ].map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <div className="flex items-center justify-between rounded-lg bg-[#F9FAFB] px-3 py-2 hover:bg-[#F3F4F6] transition-colors">
-                      <span className="text-[13px] text-[#374151]">{item.label}</span>
-                      <StatusBadge status="PASS" label={item.badge} />
+                  ["Connected", "주 작업 PC", "마지막 확인: 방금 전", "PASS"],
+                  ["Waiting", "예비 에이전트", "작업 없음", "READ_ONLY_ALLOWED"],
+                  ["Unknown", "외부 앱", "현재 범위 밖, 보고만 필요", "WARN"],
+                ].map(([state, name, note, status]) => (
+                  <div
+                    key={name}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      padding: "10px 12px",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{name}</div>
+                      <div style={{ marginTop: 2, fontSize: 12, color: "#6B7280" }}>{note}</div>
                     </div>
-                  </Link>
+                    <StatusBadge status={status} label={state} size="sm" />
+                  </div>
                 ))}
               </div>
-            </section>
+            </Panel>
+
+            <Panel title="동의 상태">
+              <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.6 }}>
+                개발자료 제공 동의는 선택 사항이며 언제든 철회할 수 있습니다. 원문 프롬프트, 파일,
+                이메일, 스크린샷, 토큰은 수집하지 않습니다.
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <StatusBadge status="WARN" label="선택 필요" />
+                <Button variant="secondary" disabled title="동의 API 연결 후 활성화됩니다.">
+                  동의 관리
+                </Button>
+              </div>
+            </Panel>
+
+            <Panel title="최근 보고서">
+              <ReportList items={reportItems} />
+            </Panel>
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
