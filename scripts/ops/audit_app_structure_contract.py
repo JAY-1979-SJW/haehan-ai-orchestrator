@@ -15,7 +15,8 @@ GOVERNANCE = ROOT / "docs" / "architecture" / "development_governance_rules_2026
 REPORT = ROOT / "docs" / "reports" / "app_structure_guard_20260525.md"
 
 REQUIRED_APP_STRUCTURE_PHRASES = (
-    "Status: ACTIVE",
+    "Status: LOCKED",
+    "Baseline ID: HAEHAN-APP-STRUCTURE-01",
     "The app must be developed as a server-first control surface.",
     "The server is the final operational source of truth for HAEHAN.",
     "## Structural Layers",

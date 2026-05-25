@@ -87,7 +87,8 @@ def test_standard_workflow_requires_app_structure_updates():
 def test_app_structure_baseline_exists_and_locks_control_surface():
     text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
 
-    assert "Status: ACTIVE" in text
+    assert "Status: LOCKED" in text
+    assert "Baseline ID: HAEHAN-APP-STRUCTURE-01" in text
     assert "The app must be developed as a server-first control surface." in text
     assert "The server is the final operational source of truth for HAEHAN." in text
     assert "## Structural Layers" in text
