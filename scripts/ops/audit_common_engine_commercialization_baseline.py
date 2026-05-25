@@ -21,6 +21,7 @@ REQUIRED_BASELINE_PHRASES = (
     "commercial product",
     "common engine contract",
     "connection and recovery hardening",
+    "local_agent_connection_recovery",
     "site/tool-specific module baseline",
     "app control surface",
     "app UI first",

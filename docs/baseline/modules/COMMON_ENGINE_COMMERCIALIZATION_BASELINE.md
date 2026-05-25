@@ -42,6 +42,7 @@ The commercial engine must include these locked layers:
 - `backend_core`
 - `approval_flow`
 - `local_agent_e2e`
+- `local_agent_connection_recovery`
 - `desktop_auth_runtime`
 - `playwright_ai`
 - `release_preflight`
@@ -226,7 +227,8 @@ python scripts/module_quality_gate.py --module release_runtime --include-live
 
 - Gmail-specific remote execution still requires a Gmail-specific remote task
   verifier on top of the verified generic dispatch path.
-- Reconnect/backoff implementation is not fully locked by this baseline yet.
+- Reconnect/backoff and recovery behavior are locked in
+  `docs/baseline/modules/LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md`.
 - Site/tool-specific commercial baselines must be added before claiming
   commercial readiness for each domain.
 - Packaging and operations remain separate release stages.

@@ -30,6 +30,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_common_tool_runtime.py",
         "scripts/ops/audit_common_tool_runtime_baseline_contract.py",
         "scripts/ops/audit_common_engine_commercialization_baseline.py",
+        "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
         "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
         "scripts/ops/audit_portable_install_baseline_contract.py",
         "scripts/ops/audit_release_preflight_baseline_contract.py",
@@ -77,6 +78,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "scripts/ops/audit_common_tool_runtime.py"),
     (sys.executable, "scripts/ops/audit_common_tool_runtime_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_common_engine_commercialization_baseline.py"),
+    (sys.executable, "scripts/ops/audit_local_agent_connection_recovery_baseline.py"),
     (sys.executable, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_portable_install_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_release_preflight_baseline_contract.py"),
@@ -109,6 +111,13 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_backend_core_baseline_contract.py",
         "tests/test_local_agent_e2e_baseline_contract.py",
         "tests/test_approval_flow_baseline_contract.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_local_agent_connection_recovery_baseline.py",
         *PYTEST_FLAGS,
     ),
     (
@@ -222,6 +231,18 @@ def command_timeout_seconds() -> int:
     return max(1, value)
 
 
+def command_timeout_for(command: tuple[str, ...]) -> int:
+    timeout_s = command_timeout_seconds()
+    if (
+        len(command) >= 4
+        and command[1].endswith("scripts/module_quality_gate.py")
+        and "--module" in command
+        and "repo_guard" in command
+    ):
+        return max(timeout_s, 120)
+    return timeout_s
+
+
 def run_command(command: tuple[str, ...]) -> GateResult:
     name = command_text(command)
     if command_is_forbidden(command):
@@ -239,7 +260,7 @@ def run_command(command: tuple[str, ...]) -> GateResult:
         pycache.mkdir(parents=True, exist_ok=True)
         env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))
 
-    timeout_s = command_timeout_seconds()
+    timeout_s = command_timeout_for(command)
     is_pytest = command_is_pytest(command)
     try:
         result = subprocess.run(
