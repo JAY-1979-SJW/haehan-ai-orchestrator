@@ -291,6 +291,7 @@ Commercial app development must also satisfy:
 
 ```text
 docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md
+docs/baseline/APP_DEVELOPMENT_STANDARD.md
 ```
 
 ## 9. Required Gates
@@ -333,11 +334,14 @@ All work must also follow the locked standard workflow and reporting template:
 
 ```text
 docs/baseline/STANDARD_WORKFLOW.md
+docs/baseline/APP_DEVELOPMENT_STANDARD.md
 docs/templates/STANDARD_REPORT_TEMPLATE.md
 ```
 
 The standard workflow controls task scoping, user approval, forbidden actions,
 verification, recovery, function-level explanation, and final reporting.
+The app development standard controls app shell, route, screen, API integration,
+privacy, and UI completion requirements.
 
 ## 10. Release And Install Rules
 
