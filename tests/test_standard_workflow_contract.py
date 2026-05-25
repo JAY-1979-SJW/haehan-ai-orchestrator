@@ -26,6 +26,17 @@ def test_standard_report_template_requires_learning_explanation():
     assert "How to think when writing it manually:" in text
 
 
+def test_standard_report_template_requires_agent_work_record():
+    text = audit.REPORT_TEMPLATE.read_text(encoding="utf-8")
+
+    assert "Agent Work Record" in text
+    assert "User request summary:" in text
+    assert "Agent role or execution mode:" in text
+    assert "Ordered work steps performed:" in text
+    assert "Decisions and reasons:" in text
+    assert "User-visible evidence path:" in text
+
+
 def test_standard_workflow_limits_actions_to_target_app():
     text = audit.WORKFLOW.read_text(encoding="utf-8")
 
@@ -71,10 +82,13 @@ def test_standard_workflow_requires_inventory_and_reports():
 
 
 def test_inventory_documents_exist_and_define_lock_queue():
-    for path in (audit.TOOL_INVENTORY, audit.CONNECTION_INVENTORY):
-        text = path.read_text(encoding="utf-8")
+    tool_text = audit.TOOL_INVENTORY.read_text(encoding="utf-8")
+    connection_text = audit.CONNECTION_INVENTORY.read_text(encoding="utf-8")
 
-        assert "Status: ACTIVE" in text
+    assert "Status: ACTIVE" in tool_text
+    assert "Status: LOCKED" in connection_text
+
+    for text in (tool_text, connection_text):
         assert "Owner baseline: `docs/baseline/APP_BASELINE.md`" in text
         assert "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`" in text
         assert "Lock Needed Queue" in text
@@ -108,8 +122,19 @@ def test_standard_workflow_requires_safe_task_history_and_audit_logs():
 
     assert "Task History And Audit Log Rule" in text
     assert "The server task state and server audit events are the final source of truth." in text
+    assert "Every runtime task path must attempt structured audit logging by default." in text
     assert "Local-agent and desktop logs are diagnostic evidence only." in text
     assert "approval tokens, raw auth headers" in text
+
+
+def test_standard_workflow_requires_ai_agent_work_record():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "AI Agent Work Record Rule" in text
+    assert "Every AI agent task, in every operating mode, must leave a user-verifiable" in text
+    assert "ordered work steps performed" in text
+    assert "decisions made and the reason for each material decision" in text
+    assert "The work record must be linked from the final task report" in text
 
 
 def test_standard_workflow_requires_user_data_contribution_consent():

@@ -48,6 +48,18 @@ routine refactor.
      create portable ZIPs, run Docker deploys, push, or stage OUT_OF_SCOPE
      files.
 
+7. Local audit logging is always-on.
+   - Every local-agent connection, dispatch, browser open, block, failure, and
+     result path must call the structured local audit logger.
+   - The primary audit path is configurable with `HAEHAN_AGENT_AUDIT`.
+   - If the primary audit path is not writable, the agent must write a
+     `local_audit_write_failed` marker and the original safe event to a
+     fallback audit path such as `HAEHAN_AGENT_AUDIT_FALLBACK`, repo `logs/`,
+     or the OS temp directory.
+   - Audit logs must remain redacted: no raw secrets, tokens, cookies, sessions,
+     passwords, OTP values, API keys, auth headers, full page HTML, or raw local
+     sensitive content.
+
 ## Required Gates
 
 Before changing local-agent browser runtime behavior, run:

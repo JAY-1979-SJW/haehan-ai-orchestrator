@@ -344,6 +344,11 @@ The app development standard controls app shell, route, screen, API integration,
 privacy, and UI completion requirements.
 The app connection and command system is locked by
 `docs/baseline/APP_DEVELOPMENT_STANDARD.md` sections 9.1 and 9.2: only inventoried `active` or `locked` tools may be attached to executable UI, routes, server actions, or local-agent dispatch.
+The executable connection structure is locked by
+`docs/inventory/CONNECTION_INVENTORY.md`: app UI may submit server actions and
+display server-owned connection status, but it must not bypass the server-first
+task queue, approval gate, local-agent WebSocket authentication, server state
+update, or audit event path.
 
 ## 10. Release And Install Rules
 

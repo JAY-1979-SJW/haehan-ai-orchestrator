@@ -88,6 +88,7 @@ python -m local_agent.agent --ping
 | `HAEHAN_AGENT_POLL_SEC` | `10` | 폴링 주기 |
 | `HAEHAN_AGENT_PUBLIC_DIR` | `~/Documents/haehan-public` | list_files_readonly 화이트리스트 |
 | `HAEHAN_AGENT_AUDIT` | `~/.haehan_agent/audit.jsonl` | 로컬 감사 로그 |
+| `HAEHAN_AGENT_AUDIT_FALLBACK` | `logs/local_agent_audit.jsonl` or temp fallback | primary 감사 로그 쓰기 실패 시 대체 감사 로그 |
 | `HAEHAN_AGENT_TOKEN` | `~/.haehan_agent/device_token` | device_token 보관 위치 |
 | `HAEHAN_AGENT_USER` / `HAEHAN_AGENT_PASSWORD` | (없음) | 서버 Basic auth |
 

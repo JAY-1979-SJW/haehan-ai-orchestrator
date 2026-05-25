@@ -16,14 +16,26 @@
 - Unchanged protected files:
 - Build/deploy/push/installer status:
 
-## 3. Baseline Contract Answers
+## 3. Agent Work Record
+
+- User request summary:
+- Agent role or execution mode:
+- Approval status:
+- Ordered work steps performed:
+- Files, tools, commands, or runtime targets touched:
+- Decisions and reasons:
+- User-visible evidence path:
+- Remaining risks or blocked work:
+- Next approval needed:
+
+## 4. Baseline Contract Answers
 
 - Input/output contract:
 - Authorization boundary:
 - State changes:
 - Regression gate:
 
-## 4. Function-Level Explanation
+## 5. Function-Level Explanation
 
 For each changed function:
 
@@ -37,7 +49,7 @@ Security or state boundary:
 How to think when writing it manually:
 ```
 
-## 5. Verification
+## 6. Verification
 
 - Syntax checks:
 - Unit tests:
@@ -47,14 +59,14 @@ How to think when writing it manually:
 - Live checks:
 - Skipped checks and reason:
 
-## 6. Findings
+## 7. Findings
 
 - PASS:
 - WARN:
 - FAIL:
 - Remaining risk:
 
-## 7. Prohibited Actions Check
+## 8. Prohibited Actions Check
 
 - Secret value output:
 - OUT_OF_SCOPE modification/staging:
@@ -62,7 +74,7 @@ How to think when writing it manually:
 - Build/installer/portable package:
 - Push:
 
-## 8. Final Verdict
+## 9. Final Verdict
 
 Use one explicit verdict:
 
@@ -72,8 +84,7 @@ WARN_<TASK_NAME>_<REASON>
 FAIL_<TASK_NAME>_<REASON>
 ```
 
-## 9. Next Work
+## 10. Next Work
 
 - Recommended next task:
 - Required approval before next task:
-

@@ -56,7 +56,12 @@ REQUIRED_WORKFLOW_PHRASES = (
     "The app must remain a server-first control surface.",
     "Task History And Audit Log Rule",
     "The server task state and server audit events are the final source of truth.",
+    "Every runtime task path must attempt structured audit logging by default.",
     "Local-agent and desktop logs are diagnostic evidence only.",
+    "AI Agent Work Record Rule",
+    "Every AI agent task, in every operating mode, must leave a user-verifiable",
+    "ordered work steps performed",
+    "decisions made and the reason for each material decision",
     "User Data Contribution Consent Rule",
     "explicit user data contribution consent",
     "Development material must be redacted, minimized, and purpose-bound.",
@@ -69,6 +74,12 @@ REQUIRED_TEMPLATE_PHRASES = (
     "End HEAD",
     "Git status",
     "Changed files",
+    "Agent Work Record",
+    "User request summary",
+    "Agent role or execution mode",
+    "Ordered work steps performed",
+    "Decisions and reasons",
+    "User-visible evidence path",
     "Input/output contract",
     "Authorization boundary",
     "State changes",
@@ -91,11 +102,28 @@ REQUIRED_REFERENCE_PHRASES = (
 )
 
 REQUIRED_INVENTORY_PHRASES = (
-    "Status: ACTIVE",
     "Owner baseline: `docs/baseline/APP_BASELINE.md`",
     "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`",
     "Lock Needed Queue",
 )
+
+REQUIRED_TOOL_INVENTORY_PHRASES = (
+    "Status: ACTIVE",
+) + REQUIRED_INVENTORY_PHRASES
+
+REQUIRED_CONNECTION_INVENTORY_PHRASES = (
+    "Status: LOCKED",
+    "Connection Logic Lock",
+    "authenticated user instruction",
+    "local-agent WebSocket authentication",
+    "The server is the final operational source of truth for connection state",
+    "must not call local-agent, desktop, browser, Gmail, or site-work execution",
+    "paths directly",
+    "agent_id + device_token",
+    "background_approved=True",
+    "AI Agent Work Record",
+    "Unknown or unclassified connections must fail closed before command execution.",
+) + REQUIRED_INVENTORY_PHRASES
 
 REQUIRED_APP_STRUCTURE_PHRASES = (
     "Status: LOCKED",
@@ -152,13 +180,13 @@ def audit() -> tuple[bool, list[str]]:
     if missing_references:
         failures.append("governance/app baseline missing reference(s): " + ", ".join(missing_references))
 
-    missing_tool_inventory = missing_phrases(tool_inventory_text, REQUIRED_INVENTORY_PHRASES)
+    missing_tool_inventory = missing_phrases(tool_inventory_text, REQUIRED_TOOL_INVENTORY_PHRASES)
     if missing_tool_inventory:
         failures.append("tool inventory missing phrase(s): " + ", ".join(missing_tool_inventory))
 
     missing_connection_inventory = missing_phrases(
         connection_inventory_text,
-        REQUIRED_INVENTORY_PHRASES,
+        REQUIRED_CONNECTION_INVENTORY_PHRASES,
     )
     if missing_connection_inventory:
         failures.append(
