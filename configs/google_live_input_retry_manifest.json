@@ -1,0 +1,25 @@
+{
+  "site_id": "google",
+  "mode": "no_final_submit",
+  "description": "Retry manifest for Google live-fill items that timed out on the first background run.",
+  "items": [
+    {
+      "action_key": "gmail_send_email",
+      "values": {
+        "to": "reviewer@example.com",
+        "subject": "DRAFT_ONLY_REVIEW",
+        "body": "Approval-before-send draft.",
+        "attachment_path": "tmp/google_live_assets/haehan_google_input_test.png"
+      }
+    },
+    {
+      "action_key": "cloud_iam_change_role",
+      "values": {
+        "project": "example-project",
+        "principal": "user@example.com",
+        "role": "roles/viewer",
+        "change": "grant"
+      }
+    }
+  ]
+}

@@ -45,8 +45,18 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_module_boundaries.py",
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/ops/audit_google_gmail_function_contract.py",
+        "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py",
         "scripts/ops/audit_site_work_function_baseline.py",
         "scripts/google/gmail_analysis.py",
+        "scripts/google/live_surface_explorer.py",
+        "scripts/google/cloud/live_console_explorer.py",
+        "scripts/google/ai_usage_labels.py",
+        "scripts/google/android_app_dev_labels.py",
+        "scripts/google/android_app_dev_report.py",
+        "scripts/google/domain_taxonomy.py",
+        "scripts/google/precision_report.py",
+        "scripts/google/subdomain_logic.py",
+        "scripts/google/tab_logic.py",
         "ai_orchestrator/local_agent/common_tool_runtime.py",
         "scripts/module_quality_gate.py",
         "tests/test_common_tool_runtime.py",
@@ -72,6 +82,15 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_root_legacy_scripts_audit.py",
         "tests/test_google_gmail_function_contract.py",
         "tests/test_google_gmail_analysis.py",
+        "tests/test_google_live_surface_explorer.py",
+        "tests/test_google_cloud_live_console_explorer.py",
+        "tests/test_google_ai_usage_labels.py",
+        "tests/test_google_android_app_dev.py",
+        "tests/test_google_domain_taxonomy.py",
+        "tests/test_google_precision_report.py",
+        "tests/test_google_subdomain_logic.py",
+        "tests/test_google_tab_logic.py",
+        "tests/test_site_sso_subdomain_runtime.py",
         "tests/test_site_work_function_baseline.py",
     ),
     (sys.executable, "scripts/ops/dry_run_local_agent_cdp_attach.py"),
@@ -93,6 +112,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "scripts/ops/audit_module_boundaries.py"),
     (sys.executable, "scripts/ops/audit_root_legacy_scripts.py"),
     (sys.executable, "scripts/ops/audit_google_gmail_function_contract.py"),
+    (sys.executable, "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py"),
     (sys.executable, "scripts/ops/audit_site_work_function_baseline.py"),
     (
         sys.executable,
@@ -105,6 +125,12 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_portable_install_baseline_contract.py",
         "tests/test_release_preflight_baseline_contract.py",
         "tests/test_local_agent_e2e_flow_contract.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_app_baseline_contract.py",
         "tests/test_standard_workflow_contract.py",
         "tests/test_module_baseline_contract.py",
@@ -157,6 +183,21 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "-m",
         "pytest",
         "tests/test_google_gmail_analysis.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_google_subdomain_logic.py",
+        "tests/test_google_tab_logic.py",
+        "tests/test_google_live_surface_explorer.py",
+        "tests/test_google_cloud_live_console_explorer.py",
+        "tests/test_google_ai_usage_labels.py",
+        "tests/test_google_android_app_dev.py",
+        "tests/test_google_domain_taxonomy.py",
+        "tests/test_google_precision_report.py",
+        "tests/test_site_sso_subdomain_runtime.py",
         *PYTEST_FLAGS,
     ),
     (
@@ -239,7 +280,7 @@ def command_timeout_for(command: tuple[str, ...]) -> int:
         and "--module" in command
         and "repo_guard" in command
     ):
-        return max(timeout_s, 120)
+        return max(timeout_s, 240)
     return timeout_s
 
 

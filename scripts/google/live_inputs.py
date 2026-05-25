@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 from . import workflows
 
@@ -162,8 +163,8 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
     except Exception as exc:
-        result["status"] = "failed"
-        result["warnings"].append(str(exc))
+        result["warnings"].append(f"playwright_live_input_unavailable: {exc}")
+        _dispatch_live_input_direct_cdp(action, values, result)
     return _save_result(result)
 
 
@@ -288,6 +289,300 @@ def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) ->
         _fill_play_console_release_handoff(page, action, values, result)
     else:
         _open_only(page, action, values, result)
+
+
+def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) -> None:
+    """Fallback live input path that uses the existing CDP browser directly."""
+    from scripts.cdp_console import connect
+
+    try:
+        cdp_context = connect(url_contains="about:blank")
+        session_manager = cdp_context
+        session = session_manager.__enter__()
+    except Exception:
+        session_manager = connect()
+        session = session_manager.__enter__()
+    try:
+        session.goto(action["target_url"], wait_idle=False)
+        session.wait(4.0)
+        key = action["key"]
+        if key == "gmail_send_email":
+            compose_values = {
+                "view": "cm",
+                "fs": "1",
+                "to": values.get("to", ""),
+                "su": values.get("subject", ""),
+                "body": values.get("body", ""),
+            }
+            compose_url = "https://mail.google.com/mail/u/0/?" + urlencode(compose_values)
+            session.goto(compose_url, wait_idle=False)
+            session.wait(4.0)
+            result.setdefault("clicked_nonfinal_controls", []).append(
+                {"field": "compose", "method": "gmail_compose_url"}
+            )
+            session.wait(2.0)
+            _cdp_verify_gmail_compose_values(session, values, result)
+            _cdp_detect_file_input(session, values.get("attachment_path", ""), "attachment_path", result)
+            result["warnings"].append("CDP fallback did not click Send.")
+        elif key == "youtube_studio_upload_video":
+            _cdp_click_text(session, ["Create", "Upload videos", "만들기", "업로드"], result, "youtube_upload_open")
+            session.wait(2.0)
+            _cdp_detect_file_input(session, values.get("video_path", ""), "video_path", result)
+            _cdp_fill_first(session, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result)
+            _cdp_fill_first(session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result)
+            result["warnings"].append("CDP fallback verified upload controls but did not publish.")
+        elif key == "youtube_studio_edit_video_metadata":
+            _cdp_fill_first(session, [
+                'input[aria-label*="Search"]',
+                'input[placeholder*="Search"]',
+                'input[type="search"]',
+            ], values.get("video_id_or_url", "") or values.get("video_id", ""), "video_lookup", result, press_enter=True)
+            for field in ("title", "description", "visibility"):
+                if values.get(field):
+                    result["skipped_fields"].append(field)
+            result["warnings"].append("CDP fallback performed lookup only; metadata save was not clicked.")
+        elif key in ("search_console_submit_indexing", "search_console_submit_sitemap"):
+            field = "url" if key == "search_console_submit_indexing" else "sitemap_url"
+            _cdp_fill_first(session, [
+                'input[aria-label*="URL"]',
+                'input[aria-label*="Sitemap"]',
+                'input[placeholder*="sitemap"]',
+                'input[type="url"]',
+                'input[type="text"]',
+            ], values.get(field, ""), field, result, press_enter=False)
+            if values.get("property"):
+                result["filled_fields"].append("property")
+            result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
+        elif key == "cloud_iam_change_role":
+            _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
+            session.wait(2.0)
+            _cdp_fill_first(session, [
+                'input[aria-label*="principal"]',
+                'input[aria-label*="Principal"]',
+                'input[type="email"]',
+                'input[type="text"]',
+            ], values.get("principal", ""), "principal", result, press_enter=True)
+            for field in ("project", "role", "change"):
+                if values.get(field):
+                    result["filled_fields"].append(field)
+            result["warnings"].append("CDP fallback did not click final Grant/Save.")
+        elif key in ("cloud_create_api_credential", "ai_studio_create_api_key", "play_console_prepare_release"):
+            for field, value in values.items():
+                if not value:
+                    result["skipped_fields"].append(field)
+                    continue
+                _cdp_fill_first(session, [
+                    'input[aria-label*="Search"]',
+                    'input[placeholder*="Search"]',
+                    'input[aria-label*="project"]',
+                    'input[aria-label*="Project"]',
+                    'input[type="search"]',
+                    'input[type="text"]',
+                ], str(value), field, result)
+            result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
+        else:
+            for field, value in values.items():
+                if value:
+                    result["skipped_fields"].append(field)
+            result["status"] = "opened_only_no_adapter"
+        result["final_control_policy"] = {
+            "mode": "no_final_submit",
+            "blocked_labels": list(FINAL_CONTROL_LABELS),
+            "detected_controls": _detect_final_controls_cdp(session),
+        }
+        result["current_url"] = session.url
+        result["title"] = session.title
+        if result["status"] == "started":
+            result["status"] = "filled_no_final_submit"
+    except Exception as exc:
+        result["status"] = "failed"
+        result["warnings"].append(f"direct_cdp_live_input_failed: {exc}")
+    finally:
+        session_manager.__exit__(None, None, None)
+
+
+def _cdp_fill_first(
+    session: Any,
+    selectors: list[str],
+    value: str,
+    field: str,
+    result: dict,
+    *,
+    press_enter: bool = False,
+    contenteditable: bool = False,
+) -> bool:
+    if not value:
+        result["skipped_fields"].append(field)
+        return False
+    data, err = session.js_json(
+        """(function(selectors, value, pressEnter, contenteditable) {
+            function shown(el) {
+                var s = getComputedStyle(el);
+                var r = el.getBoundingClientRect();
+                return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+            }
+            for (var selector of selectors) {
+                var matches = Array.from(document.querySelectorAll(selector)).filter(shown);
+                var el = matches[matches.length - 1];
+                if (!el) continue;
+                el.focus();
+                el.click();
+                if (contenteditable || el.isContentEditable) {
+                    el.textContent = value;
+                } else {
+                    el.value = value;
+                }
+                el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: value}));
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+                if (pressEnter) {
+                    el.dispatchEvent(new KeyboardEvent('keydown', {bubbles: true, key: 'Enter'}));
+                    el.dispatchEvent(new KeyboardEvent('keyup', {bubbles: true, key: 'Enter'}));
+                }
+                return {ok: true, selector: selector};
+            }
+            return {ok: false};
+        })(""" + json.dumps(selectors) + ", " + json.dumps(value) + ", " + json.dumps(press_enter) + ", " + json.dumps(contenteditable) + ")"
+    )
+    if not err and isinstance(data, dict) and data.get("ok"):
+        result["filled_fields"].append(field)
+        return True
+    result["skipped_fields"].append(field)
+    result["warnings"].append(f"field not found by CDP: {field}")
+    return False
+
+
+def _cdp_click_text(session: Any, labels: list[str], result: dict, field: str) -> bool:
+    data, err = session.js_json(
+        """(function(labels) {
+            function norm(v) { return (v || '').replace(/\\s+/g, ' ').trim(); }
+            function shown(el) {
+                var s = getComputedStyle(el);
+                var r = el.getBoundingClientRect();
+                return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+            }
+            var controls = Array.from(document.querySelectorAll('button,[role="button"],a,div[aria-label],span[aria-label]')).filter(shown);
+            for (var label of labels) {
+                for (var el of controls) {
+                    var text = norm(el.innerText || el.value);
+                    var aria = norm(el.getAttribute('aria-label'));
+                    var title = norm(el.getAttribute('title'));
+                    if (text.includes(label) || aria.includes(label) || title.includes(label)) {
+                        el.click();
+                        return {ok: true, label: label, text: text.slice(0, 80), aria: aria.slice(0, 80)};
+                    }
+                }
+            }
+            return {ok: false};
+        })(""" + json.dumps(labels) + ")"
+    )
+    if not err and isinstance(data, dict) and data.get("ok"):
+        result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
+        return True
+    result["warnings"].append(f"button not found by CDP: {field}")
+    return False
+
+
+def _cdp_detect_file_input(session: Any, file_path: str, field: str, result: dict) -> bool:
+    if not file_path:
+        result["skipped_fields"].append(field)
+        return False
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.exists():
+        result["skipped_fields"].append(field)
+        result["warnings"].append(f"file not found: {file_path}")
+        return False
+    data, err = session.js_json(
+        """(function() {
+            return Array.from(document.querySelectorAll('input[type="file"]')).map(function(el) {
+                var r = el.getBoundingClientRect();
+                return {visible: r.width > 0 && r.height > 0, accept: el.accept || '', multiple: !!el.multiple};
+            });
+        })()"""
+    )
+    if not err and isinstance(data, list):
+        result["filled_fields"].append(field)
+        result["warnings"].append(f"file input verified by CDP, file not uploaded: {path}")
+        return True
+    result["skipped_fields"].append(field)
+    result["warnings"].append(f"file input not found by CDP: {field}")
+    return False
+
+
+def _cdp_verify_gmail_compose_values(session: Any, values: dict, result: dict) -> None:
+    data, err = session.js_json(
+        """(function(expected) {
+            function text(el) { return ((el && (el.innerText || el.textContent || el.value)) || '').trim(); }
+            var bodyText = document.body ? document.body.innerText : '';
+            var subject = '';
+            var subjectInput = document.querySelector('input[name="subjectbox"]');
+            if (subjectInput) subject = subjectInput.value || '';
+            var recipientVisible = bodyText.includes(expected.to);
+            var subjectVisible = subject.includes(expected.subject) || bodyText.includes(expected.subject);
+            var bodyVisible = bodyText.includes(expected.body);
+            var composeOpen = !!document.querySelector('input[name="subjectbox"], textarea[name="to"], div[role="dialog"]');
+            return {
+                composeOpen: composeOpen,
+                recipientVisible: recipientVisible,
+                subjectVisible: subjectVisible,
+                bodyVisible: bodyVisible,
+                url: location.href,
+                title: document.title
+            };
+        })(""" + json.dumps(
+            {
+                "to": values.get("to", ""),
+                "subject": values.get("subject", ""),
+                "body": values.get("body", ""),
+            }
+        ) + ")"
+    )
+    if err or not isinstance(data, dict):
+        for field in ("to", "subject", "body"):
+            if values.get(field):
+                result["skipped_fields"].append(field)
+        result["warnings"].append("Gmail compose value verification failed by CDP.")
+        return
+    checks = {
+        "to": data.get("recipientVisible"),
+        "subject": data.get("subjectVisible"),
+        "body": data.get("bodyVisible"),
+    }
+    for field, ok in checks.items():
+        if not values.get(field):
+            result["skipped_fields"].append(field)
+        elif ok:
+            result["filled_fields"].append(field)
+        else:
+            result["skipped_fields"].append(field)
+            result["warnings"].append(f"Gmail compose value not visible: {field}")
+    if not data.get("composeOpen"):
+        result["warnings"].append("Gmail compose window was not detected.")
+
+
+def _detect_final_controls_cdp(session: Any) -> list[dict]:
+    data, err = session.js_json(
+        """(function(labels) {
+            function norm(value) { return (value || '').replace(/\\s+/g, ' ').trim(); }
+            function shown(el) {
+                var s = getComputedStyle(el);
+                var r = el.getBoundingClientRect();
+                return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+            }
+            var controls = Array.from(document.querySelectorAll('button,[role="button"],input[type="button"],input[type="submit"],a')).filter(shown);
+            var results = [];
+            for (var el of controls) {
+                var text = norm(el.innerText || el.value);
+                var aria = norm(el.getAttribute('aria-label'));
+                var title = norm(el.getAttribute('title'));
+                var matched = labels.find(function(label) { return text.includes(label) || aria.includes(label) || title.includes(label); });
+                if (matched) results.push({label: matched, text: text.slice(0, 80), aria: aria.slice(0, 80), title: title.slice(0, 80)});
+            }
+            return results.slice(0, 25);
+        })(""" + json.dumps(list(FINAL_CONTROL_LABELS)) + ")"
+    )
+    return data if not err and isinstance(data, list) else []
 
 
 def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> None:
