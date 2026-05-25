@@ -4,7 +4,7 @@ Status: LOCKED
 Baseline ID: HAEHAN-LOCAL-AGENT-E2E-BASELINE-01
 Approved by: user approval in current Codex session
 Baseline HEAD: 6dfdc5d11636ea3ac0d902fc65e7ac8e090b4480
-Last updated: 2026-05-24
+Last updated: 2026-05-25
 
 ## 1. Purpose
 
@@ -92,6 +92,15 @@ Unapproved high-risk tasks must not appear in the local-agent dispatch queue.
 
 ## 7. State Changes
 
+Dispatch concurrency rule:
+
+- A single local-agent WebSocket session must receive at most one active task at
+  a time.
+- Concurrent server submissions must remain queued and drain one by one through
+  `queued -> delivered -> running -> completed | failed` for that agent.
+- True simultaneous local execution requires multiple registered agents or an
+  explicitly approved multi-worker local-agent design.
+
 Normal state:
 
 ```text
@@ -159,6 +168,7 @@ Runtime/local-agent verification:
 
 ```text
 python scripts/ops/audit_local_agent_e2e_flow_contract.py
+python scripts/ops/live_parallel_task_dispatch_smoke.py --temp-admin --count 5 --concurrency 5 --timeout 90
 python scripts/module_quality_gate.py --module local_agent_e2e
 python scripts/module_quality_gate.py --module repo_guard
 python scripts/required_quality_gate.py

@@ -407,6 +407,9 @@ The current operationally verified dry-run scope is:
 - Authenticated user can queue readonly browser work.
 - Authenticated local agent can receive dispatched work.
 - Task transitions `queued -> delivered -> running -> completed`.
+- Concurrent server task submissions are accepted and completed without loss;
+  a single local agent drains them sequentially, while true simultaneous local
+  execution requires multiple agents or an approved multi-worker design.
 - Dispatch/final response contain no forbidden secret fields.
 - Unapproved high-risk work is excluded from dispatch.
 
