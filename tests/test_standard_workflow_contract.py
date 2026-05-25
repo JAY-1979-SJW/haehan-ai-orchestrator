@@ -105,3 +105,13 @@ def test_standard_workflow_requires_safe_task_history_and_audit_logs():
     assert "The server task state and server audit events are the final source of truth." in text
     assert "Local-agent and desktop logs are diagnostic evidence only." in text
     assert "approval tokens, raw auth headers" in text
+
+
+def test_standard_workflow_requires_user_data_contribution_consent():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "User Data Contribution Consent Rule" in text
+    assert "explicit user data contribution consent" in text
+    assert "Development material must be redacted, minimized, and purpose-bound." in text
+    assert "If consent is missing, expired, revoked, or outside the recorded purpose" in text
+    assert "raw user prompts, raw files, raw page" in text

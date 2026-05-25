@@ -139,6 +139,26 @@ secrets, tokens, cookies, sessions, passwords, OTP values, approval tokens, raw
 auth headers, sensitive personal data, full sensitive local file paths, full
 page HTML, or automatic raw screenshot captures.
 
+## User Data Contribution Consent Boundary
+
+The app may offer a consent control for contributing safe task records to product
+improvement, but the server owns the explicit user data contribution consent
+record and enforcement.
+
+Consent must be separate from normal service use, purpose-specific,
+category-specific, revocable, and tied to retention and deletion rules.
+
+Only redacted and minimized development material may leave the task history
+boundary: safe intent summaries, safe result summaries, task categories,
+tool/module identifiers, state transitions, error codes, verification
+references, and user feedback.
+
+The app, desktop runtime, local agent, reports, and diagnostics must not send or store raw user prompts, raw files, raw page content, raw screenshots, raw
+emails, raw document bodies, raw browser traces, secrets, credentials, tokens,
+cookies, sessions, passwords, OTP values, approval tokens, raw auth headers,
+sensitive personal data, or unrelated third-party content as development
+material.
+
 ## Development Order
 
 Future app work should follow this order:

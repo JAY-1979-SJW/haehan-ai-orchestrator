@@ -183,6 +183,41 @@ raw screenshot captures.
 
 Invalid state transitions are defects and must be blocked by tests or gates.
 
+## 5.2 User Data Contribution Consent Rule
+
+Task history, safe summaries, tool outcomes, verification evidence, and user
+feedback may be used as product improvement or development material only after
+an explicit user data contribution consent is recorded by the server.
+
+The server must store the consent record as the final source of truth. Consent
+must be separate from normal service use, specific to the allowed data
+categories and purposes, revocable, and linked to retention and deletion rules.
+
+Allowed development material is limited to redacted, minimized, purpose-bound
+records such as:
+
+```text
+task category
+tool_id or module
+safe user intent summary
+safe result summary
+error code
+state transition
+verification reference
+user feedback
+masked organization or user reference
+```
+
+Development datasets must not contain raw user prompts, raw files, raw page
+content, raw screenshots, raw emails, raw document bodies, raw browser traces,
+secrets, credentials, tokens, cookies, sessions, passwords, OTP values,
+approval tokens, raw auth headers, sensitive personal data, or unrelated
+third-party content.
+
+No task record may be used for product improvement, model training, benchmark
+creation, quality analysis, or feature planning when consent is missing,
+expired, revoked, or outside the recorded purpose.
+
 ## 6. Security Prohibitions
 
 These patterns are forbidden in runtime code:

@@ -38,6 +38,23 @@ raw auth headers, sensitive personal data, full sensitive local file paths, full
 page HTML, and automatic raw screenshot captures are forbidden in logs, reports,
 task history, and audit events.
 
+## User Data Contribution Consent Boundary
+
+Product improvement and development material may use agent user task history
+only after explicit server-recorded user data contribution consent.
+
+Consent must be separate from normal service use, purpose-specific,
+category-specific, revocable, and tied to retention and deletion rules.
+
+Development material is limited to redacted and minimized safe summaries,
+categories, tool/module identifiers, state transitions, error codes,
+verification references, and user feedback.
+
+Raw prompts, files, page content, screenshots, emails, document bodies, browser
+traces, secrets, credentials, tokens, cookies, sessions, passwords, OTP values,
+approval tokens, raw auth headers, sensitive personal data, and unrelated
+third-party content remain forbidden as development material.
+
 ## Added Verification
 
 ```text

@@ -53,6 +53,10 @@ REQUIRED_WORKFLOW_PHRASES = (
     "Task History And Audit Log Rule",
     "The server task state and server audit events are the final source of truth.",
     "Local-agent and desktop logs are diagnostic evidence only.",
+    "User Data Contribution Consent Rule",
+    "explicit user data contribution consent",
+    "Development material must be redacted, minimized, and purpose-bound.",
+    "If consent is missing, expired, revoked, or outside the recorded purpose",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -98,6 +102,7 @@ REQUIRED_APP_STRUCTURE_PHRASES = (
     "## Forbidden Structure",
     "## Recovery Boundary",
     "## Task History And Audit Log Boundary",
+    "## User Data Contribution Consent Boundary",
     "## Development Order",
 )
 
