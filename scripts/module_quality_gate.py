@@ -75,6 +75,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("desktop_security_boundary", check="desktop_security_boundary"),
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("common_tool_runtime_baseline_contract", check="common_tool_runtime_baseline_contract"),
+            GateStep("common_engine_commercialization_baseline", check="common_engine_commercialization_baseline"),
             GateStep("common_tool_runtime_contract", check="common_tool_runtime_contract"),
             GateStep("app_baseline_contract", check="app_baseline_contract"),
             GateStep("standard_workflow_contract", check="standard_workflow_contract"),
@@ -93,6 +94,34 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("google_cloud_router_compatibility", check="google_cloud_router_compatibility"),
             GateStep("google_cloud_action_policy_baseline_contract", check="google_cloud_action_policy_baseline_contract"),
             GateStep("google_cloud_readonly_local_browser_dryrun", check="google_cloud_readonly_local_browser_dryrun"),
+        ),
+    ),
+    GateModule(
+        name="common_engine_commercialization",
+        description="engine-first commercial readiness contract and app control-surface boundary",
+        steps=(
+            GateStep("common_engine_commercialization_baseline", check="common_engine_commercialization_baseline"),
+            GateStep(
+                "common_engine_commercialization_py_compile",
+                (
+                    PY,
+                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/audit_common_engine_commercialization_baseline.py",
+                    "tests/test_common_engine_commercialization_baseline.py",
+                ),
+            ),
+            GateStep(
+                "common_engine_commercialization_pytest",
+                (
+                    PY,
+                    "-m",
+                    "pytest",
+                    "tests/test_common_engine_commercialization_baseline.py",
+                    "-p",
+                    "no:cacheprovider",
+                    "-q",
+                ),
+            ),
         ),
     ),
     GateModule(
@@ -770,6 +799,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_dry_run_local_agent_cdp_attach.py",
         "tests/test_common_tool_runtime.py",
         "tests/test_common_tool_runtime_baseline_contract.py",
+        "tests/test_common_engine_commercialization_baseline.py",
         "tests/test_desktop_auth_runtime_baseline_contract.py",
         "tests/test_portable_install_baseline_contract.py",
         "tests/test_release_preflight_baseline_contract.py",
@@ -785,6 +815,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_root_legacy_scripts_audit.py",
         "scripts/ops/audit_common_tool_runtime.py",
         "scripts/ops/audit_common_tool_runtime_baseline_contract.py",
+        "scripts/ops/audit_common_engine_commercialization_baseline.py",
         "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
         "scripts/ops/audit_portable_install_baseline_contract.py",
         "scripts/ops/audit_release_preflight_baseline_contract.py",
@@ -968,6 +999,16 @@ def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
     return True, "locked common_tool_runtime baseline defines task, risk, approval, and forbidden-field boundaries"
 
 
+def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_common_engine_commercialization_baseline.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked common engine commercialization baseline defines engine-first app readiness"
+
+
 def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"],
@@ -1087,6 +1128,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "release_preflight_baseline_contract": check_release_preflight_baseline_contract,
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "common_tool_runtime_baseline_contract": check_common_tool_runtime_baseline_contract,
+    "common_engine_commercialization_baseline": check_common_engine_commercialization_baseline,
     "common_tool_runtime_contract": check_common_tool_runtime_contract,
     "app_baseline_contract": check_app_baseline_contract,
     "standard_workflow_contract": check_standard_workflow_contract,

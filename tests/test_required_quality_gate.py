@@ -22,6 +22,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_dry_run_local_agent_cdp_attach.py" in rendered
     assert "tests/test_common_tool_runtime.py" in rendered
     assert "tests/test_common_tool_runtime_baseline_contract.py" in rendered
+    assert "tests/test_common_engine_commercialization_baseline.py" in rendered
     assert "tests/test_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "tests/test_portable_install_baseline_contract.py" in rendered
     assert "tests/test_release_preflight_baseline_contract.py" in rendered
@@ -39,6 +40,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
+    assert "scripts/ops/audit_common_engine_commercialization_baseline.py" in rendered
     assert "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "scripts/ops/audit_portable_install_baseline_contract.py" in rendered
     assert "scripts/ops/audit_release_preflight_baseline_contract.py" in rendered

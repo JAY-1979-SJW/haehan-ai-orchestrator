@@ -120,6 +120,38 @@ docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md
 - Known WARN: site-specific tools still need individual profiles on top of this
   shared contract.
 
+### common_engine_commercialization
+
+Detailed baseline:
+
+```text
+docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md
+```
+
+- Responsibility: engine-first commercial readiness across common runtime,
+  backend auth, approval, local-agent dispatch, connection recovery, task
+  evidence, and app control surface boundaries.
+- Input: locked lower-level module baselines, verified live/local-agent
+  connection evidence, normalized task/result contracts, and app development
+  proposals.
+- Output: PASS/FAIL readiness result, safe commercialization order, required
+  verification matrix, and blocked status when app work would bypass the engine.
+- Allowed paths: common engine commercialization baseline, its audit/test files,
+  APP_BASELINE, MODULE_BASELINE, and gate wiring.
+- Forbidden behavior: app UI first execution shortcuts, mock success for live
+  failure, direct local tool/browser execution from app UI, approval bypass, or
+  raw secret/session/token/cookie output.
+- Security boundary: app work may only operate as an app control surface over
+  authenticated, approval-safe, auditable engine APIs.
+- State changes: none during the baseline audit; runtime task state remains
+  owned by backend_core and local_agent_e2e.
+- Required verification:
+  `python scripts/ops/audit_common_engine_commercialization_baseline.py`,
+  `python -m pytest tests/test_common_engine_commercialization_baseline.py -q`,
+  and `python scripts/module_quality_gate.py --module common_engine_commercialization`.
+- Known WARN: Gmail-specific remote execution, reconnect/backoff implementation,
+  and domain-specific commercial baselines still require follow-up work.
+
 ### local_agent_e2e
 
 Detailed baseline:
