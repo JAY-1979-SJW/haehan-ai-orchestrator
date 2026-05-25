@@ -14,6 +14,19 @@ Logs are not sufficient as final evidence. Any task that creates, changes,
 removes, audits, or classifies a tool must update this inventory or record why
 the tool is out of scope.
 
+## Attachment Lock Rule
+
+Only tools with status `active` or `locked` may be attached to app UI routes,
+server actions, background jobs, or local-agent dispatch.
+
+Tools with status `legacy`, `deprecated`, `unknown`, `TBD`, or entries in
+`Lock Needed Queue` may be shown as inventory evidence only. They must not be
+wired to executable commands until their owner baseline, connection, command
+class, input/output contract, approval boundary, redaction boundary, failure
+behavior, and verification command are documented and passing.
+
+Unknown tool execution must fail closed as `unknown_tool_execute`.
+
 ## Classification Fields
 
 Every locked tool entry should define:

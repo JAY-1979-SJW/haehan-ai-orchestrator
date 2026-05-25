@@ -45,6 +45,13 @@ REQUIRED_STANDARD_PHRASES = (
     "## 8. Security And Privacy Standard",
     "## 8.1 User Trust Standard",
     "## 9. Development Order",
+    "## 9.1 Connection And Command Lock",
+    "Allowed command classes:",
+    "Forbidden command classes:",
+    "unknown_tool_execute",
+    "## 9.2 Developed Tool Attachment Lock",
+    "Only developed and inventoried tools may be attached to the app.",
+    "Tools in `legacy`, `deprecated`, `unknown`, `TBD`, or `Lock Needed Queue`",
     "## 10. Verification Standard",
     "python scripts/ops/audit_app_development_standard.py",
     "## 11. Completion Rule",
@@ -57,6 +64,8 @@ REQUIRED_REFERENCE_PHRASES = (
     "User Data Contribution Consent Boundary",
     "docs/baseline/APP_DEVELOPMENT_STANDARD.md",
     "The app development standard controls app shell, route, screen, API integration",
+    "The app connection and command system is locked",
+    "only inventoried `active` or `locked` tools may be attached",
 )
 
 

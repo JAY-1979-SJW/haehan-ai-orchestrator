@@ -72,6 +72,29 @@ def test_app_development_standard_locks_development_order():
     assert "user data contribution consent view" in text
 
 
+def test_app_development_standard_locks_connections_and_commands():
+    text = audit.STANDARD.read_text(encoding="utf-8")
+
+    assert "## 9.1 Connection And Command Lock" in text
+    assert "Allowed command classes:" in text
+    assert "Forbidden command classes:" in text
+    assert "server_restart" in text
+    assert "process_kill" in text
+    assert "unknown_tool_execute" in text
+    assert "must not wire them to an executable handler" in text
+
+
+def test_app_development_standard_only_attaches_developed_tools():
+    text = audit.STANDARD.read_text(encoding="utf-8")
+
+    assert "## 9.2 Developed Tool Attachment Lock" in text
+    assert "Only developed and inventoried tools may be attached to the app." in text
+    assert "docs/inventory/TOOL_INVENTORY.md" in text
+    assert "docs/inventory/CONNECTION_INVENTORY.md" in text
+    assert "status is `active` or `locked`" in text
+    assert "Tools in `legacy`, `deprecated`, `unknown`, `TBD`, or `Lock Needed Queue`" in text
+
+
 def test_app_development_standard_requires_first_time_flow_and_error_messages():
     text = audit.STANDARD.read_text(encoding="utf-8")
 
