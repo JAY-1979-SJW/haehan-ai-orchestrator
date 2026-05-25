@@ -32,9 +32,19 @@ def test_app_structure_locks_recovery_boundary():
     assert "audit-first unless their task is separately approved" in text
 
 
+def test_app_structure_locks_task_history_and_audit_log_boundary():
+    text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
+
+    assert "## Task History And Audit Log Boundary" in text
+    assert "The server task state and server audit events are the final source of truth." in text
+    assert "Local-agent and desktop logs are diagnostic evidence only." in text
+    assert "must not contain raw" in text
+
+
 def test_app_structure_guard_report_exists():
     text = audit.REPORT.read_text(encoding="utf-8")
 
     assert "App Structure Guard" in text
     assert "Recovery Boundary" in text
     assert "No live recovery script was added." in text
+    assert "Task History And Audit Log Boundary" in text
