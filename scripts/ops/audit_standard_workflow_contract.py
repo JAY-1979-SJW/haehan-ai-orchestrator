@@ -13,6 +13,8 @@ WORKFLOW = ROOT / "docs" / "baseline" / "STANDARD_WORKFLOW.md"
 REPORT_TEMPLATE = ROOT / "docs" / "templates" / "STANDARD_REPORT_TEMPLATE.md"
 APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
 GOVERNANCE = ROOT / "docs" / "architecture" / "development_governance_rules_20260515.md"
+TOOL_INVENTORY = ROOT / "docs" / "inventory" / "TOOL_INVENTORY.md"
+CONNECTION_INVENTORY = ROOT / "docs" / "inventory" / "CONNECTION_INVENTORY.md"
 
 REQUIRED_WORKFLOW_PHRASES = (
     "Status: LOCKED",
@@ -40,6 +42,10 @@ REQUIRED_WORKFLOW_PHRASES = (
     "The worker may commit only when the user explicitly requests commit",
     "The worker may push only when the user explicitly requests push",
     "Auto-run must never perform server deploy/restart",
+    "Tool Inventory And Report Rule",
+    "docs/inventory/TOOL_INVENTORY.md",
+    "docs/inventory/CONNECTION_INVENTORY.md",
+    "Logs alone are not sufficient as final work evidence.",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -65,6 +71,14 @@ REQUIRED_REFERENCE_PHRASES = (
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
     "The server is the final operational source of truth for HAEHAN.",
     "Auto-Run Rule",
+    "Tool Inventory And Report Rule",
+)
+
+REQUIRED_INVENTORY_PHRASES = (
+    "Status: ACTIVE",
+    "Owner baseline: `docs/baseline/APP_BASELINE.md`",
+    "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`",
+    "Lock Needed Queue",
 )
 
 
@@ -74,7 +88,14 @@ def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
 
 def audit() -> tuple[bool, list[str]]:
     failures: list[str] = []
-    paths = (WORKFLOW, REPORT_TEMPLATE, APP_BASELINE, GOVERNANCE)
+    paths = (
+        WORKFLOW,
+        REPORT_TEMPLATE,
+        APP_BASELINE,
+        GOVERNANCE,
+        TOOL_INVENTORY,
+        CONNECTION_INVENTORY,
+    )
     missing_paths = [str(path.relative_to(ROOT)) for path in paths if not path.exists()]
     if missing_paths:
         return False, ["missing required path(s): " + ", ".join(missing_paths)]
@@ -83,6 +104,8 @@ def audit() -> tuple[bool, list[str]]:
     template_text = REPORT_TEMPLATE.read_text(encoding="utf-8", errors="replace")
     app_baseline_text = APP_BASELINE.read_text(encoding="utf-8", errors="replace")
     governance_text = GOVERNANCE.read_text(encoding="utf-8", errors="replace")
+    tool_inventory_text = TOOL_INVENTORY.read_text(encoding="utf-8", errors="replace")
+    connection_inventory_text = CONNECTION_INVENTORY.read_text(encoding="utf-8", errors="replace")
 
     missing_workflow = missing_phrases(workflow_text, REQUIRED_WORKFLOW_PHRASES)
     if missing_workflow:
@@ -97,10 +120,25 @@ def audit() -> tuple[bool, list[str]]:
     if missing_references:
         failures.append("governance/app baseline missing reference(s): " + ", ".join(missing_references))
 
+    missing_tool_inventory = missing_phrases(tool_inventory_text, REQUIRED_INVENTORY_PHRASES)
+    if missing_tool_inventory:
+        failures.append("tool inventory missing phrase(s): " + ", ".join(missing_tool_inventory))
+
+    missing_connection_inventory = missing_phrases(
+        connection_inventory_text,
+        REQUIRED_INVENTORY_PHRASES,
+    )
+    if missing_connection_inventory:
+        failures.append(
+            "connection inventory missing phrase(s): "
+            + ", ".join(missing_connection_inventory)
+        )
+
     return not failures, failures or [
         "STANDARD_WORKFLOW exists and is locked",
         "STANDARD_REPORT_TEMPLATE contains required report fields",
         "app baseline and governance rules reference the standard workflow",
+        "tool and connection inventories exist",
     ]
 
 

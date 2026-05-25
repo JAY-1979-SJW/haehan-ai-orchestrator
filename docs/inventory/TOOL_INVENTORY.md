@@ -1,0 +1,60 @@
+﻿# HAEHAN Tool Inventory
+
+Status: ACTIVE
+Owner baseline: `docs/baseline/APP_BASELINE.md`
+Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`
+Last updated: 2026-05-25
+
+## Purpose
+
+This document is the durable inventory for developed tools, runtime entrypoints,
+automation scripts, site modules, and operational helpers.
+
+Logs are not sufficient as final evidence. Any task that creates, changes,
+removes, audits, or classifies a tool must update this inventory or record why
+the tool is out of scope.
+
+## Classification Fields
+
+Every locked tool entry should define:
+
+```text
+tool name
+path
+category: server | local-agent | desktop | site | ops | legacy
+status: active | locked | legacy | deprecated | unknown
+execution location: server | local-agent | desktop | user-direct | audit-only
+approval requirement
+input contract
+output contract
+risk level
+verification command
+owner baseline
+notes
+```
+
+## Current Inventory Index
+
+| Tool group | Primary paths | Category | Status | Execution location | Owner baseline | Verification |
+|---|---|---|---|---|---|---|
+| Backend core | `ai_orchestrator/server/`, backend audits/tests | server | locked | server | `BACKEND_CORE_BASELINE.md` | `python scripts/ops/audit_backend_core_baseline_contract.py` |
+| Common tool runtime | `ai_orchestrator/local_agent/common_tool_runtime.py` | local-agent | locked | local-agent | `COMMON_TOOL_RUNTIME_BASELINE.md` | `python scripts/ops/audit_common_tool_runtime.py` |
+| Local-agent E2E | local-agent dispatch/auth tests and audits | local-agent | locked | local-agent | `LOCAL_AGENT_E2E_BASELINE.md` | `python scripts/ops/audit_local_agent_e2e_flow_contract.py` |
+| Connection recovery | connection diagnostics, WebSocket probes, recovery audits | local-agent | locked | local-agent | `LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md` | `python scripts/ops/audit_local_agent_connection_recovery_baseline.py` |
+| Approval flow | approval API/policy/state audits and tests | server | locked | server | `APPROVAL_FLOW_BASELINE.md` | `python scripts/ops/audit_approval_flow_baseline_contract.py` |
+| Playwright AI | local Playwright/AI proxy contracts | local-agent | locked | local-agent | `PLAYWRIGHT_AI_BASELINE.md` | `python scripts/ops/audit_playwright_ai_baseline_contract.py` |
+| Site work functions | `scripts/google/`, `scripts/naver/`, `scripts/smartstore/`, `scripts/hiworks/`, `scripts/gabia/`, `scripts/youtube/` | site | locked | server/local-agent/user-direct by profile | `SITE_WORK_FUNCTION_BASELINE` | `python scripts/ops/audit_site_work_function_baseline.py` |
+| Gmail functions | `scripts/google/gmail_analysis.py`, Gmail workflow coverage | site | locked | local-agent/user-direct for state-changing work | Google/Gmail function contract | `python scripts/ops/audit_google_gmail_function_contract.py` |
+| Desktop runtime | `desktop/main_launcher.py`, `desktop/local_server.py`, desktop audits | desktop | locked | desktop subordinate to server | `DESKTOP_AUTH_RUNTIME_BASELINE.md` | `python scripts/ops/audit_desktop_auth_runtime_baseline_contract.py` |
+| Release preflight | release preflight audits/tests | ops | locked | audit-only | `RELEASE_PREFLIGHT_BASELINE.md` | `python scripts/ops/audit_release_preflight_baseline_contract.py` |
+| Root legacy scripts | root-level script inventory | legacy | locked | audit-only unless separately approved | repo guard | `python scripts/ops/audit_root_legacy_scripts.py` |
+| Legacy desktop UI runtime | removed legacy desktop UI entrypoints/archive | legacy | deprecated | none | server-first operating baseline | `python scripts/ops/audit_legacy_app_runtime_cleanup.py` |
+
+## Lock Needed Queue
+
+Use this section for tools found during inventory work that are not yet
+classified.
+
+| Tool/path | Current evidence | Required owner | Next lock action |
+|---|---|---|---|
+| TBD | TBD | TBD | TBD |
