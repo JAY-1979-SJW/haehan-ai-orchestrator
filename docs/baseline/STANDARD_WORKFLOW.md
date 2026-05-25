@@ -153,6 +153,31 @@ The app must remain a server-first control surface. App UI, desktop runtime,
 and local-agent code must not become independent sources of truth for identity,
 approval, policy, task state, audit history, release, or deploy decisions.
 
+## 3.6 Task History And Audit Log Rule
+
+User task requests, agent execution status, verification evidence, and task
+results must leave a safe task history.
+The server task state and server audit events are the final source of truth.
+
+Work reports and inspection artifacts must reference the relevant task or
+verification evidence when available:
+
+- server task or audit identifier
+- masked agent or user reference
+- execution location
+- approval requirement and approval status
+- state transition
+- safe result summary or error code
+- report path and verification command
+
+Local-agent and desktop logs are diagnostic evidence only. They must not become
+the final source of truth for task history, approval, policy, state, or audit.
+
+Logs and reports must not contain raw secrets, tokens, cookies, sessions,
+passwords, OTP values, approval tokens, raw auth headers, sensitive personal
+data, full sensitive local file paths, full page HTML, or automatic raw
+screenshot captures.
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:
@@ -177,6 +202,10 @@ These actions require explicit task-level approval:
 - automated commit unless the approved task includes commit or the user
   explicitly requests commit
 - automated push unless the user explicitly requests push
+- storing raw secrets, tokens, cookies, sessions, passwords, OTP values,
+  approval tokens, raw auth headers, sensitive personal data, full sensitive
+  local file paths, full page HTML, or automatic raw screenshot captures in task
+  history, audit logs, reports, or local diagnostic logs
 
 ## 5. Standard Verification Levels
 

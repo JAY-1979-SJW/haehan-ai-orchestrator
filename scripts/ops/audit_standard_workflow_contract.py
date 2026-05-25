@@ -50,6 +50,9 @@ REQUIRED_WORKFLOW_PHRASES = (
     "App Structure Rule",
     "docs/architecture/APP_STRUCTURE.md",
     "The app must remain a server-first control surface.",
+    "Task History And Audit Log Rule",
+    "The server task state and server audit events are the final source of truth.",
+    "Local-agent and desktop logs are diagnostic evidence only.",
     "docs/templates/STANDARD_REPORT_TEMPLATE.md",
 )
 
@@ -94,6 +97,7 @@ REQUIRED_APP_STRUCTURE_PHRASES = (
     "## Canonical Flow",
     "## Forbidden Structure",
     "## Recovery Boundary",
+    "## Task History And Audit Log Boundary",
     "## Development Order",
 )
 

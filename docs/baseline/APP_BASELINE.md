@@ -147,6 +147,40 @@ queued -> cancelled
 delivered | running -> cancel_requested -> cancelled | failed | completed
 ```
 
+## 5.1 Task History And Audit Log Rule
+
+Task history and audit logs must be recorded. The server task state and server
+audit events are the final source of truth.
+
+Required task/audit records should include:
+
+```text
+task_id
+masked agent_id
+user or organization reference
+requested action
+tool_id or module
+execution location
+approval requirement
+approval status
+state transition
+started_at
+ended_at
+result status
+safe summary
+error code
+verification reference
+report path
+```
+
+Local-agent and desktop logs are diagnostic evidence only. They must not become
+the final source of truth for task history, approval, policy, state, or audit.
+
+Task history and audit logs must not contain raw secrets, tokens, cookies,
+sessions, passwords, OTP values, approval tokens, raw auth headers, sensitive
+personal data, full sensitive local file paths, full page HTML, or automatic
+raw screenshot captures.
+
 Invalid state transitions are defects and must be blocked by tests or gates.
 
 ## 6. Security Prohibitions

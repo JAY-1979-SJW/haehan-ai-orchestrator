@@ -119,6 +119,26 @@ Forbidden without separate explicit approval:
 
 Recovery scripts in this repository must be audit-first unless their task is separately approved as a live runtime recovery operation.
 
+## Task History And Audit Log Boundary
+
+User task requests, agent execution status, verification evidence, and task
+results must leave a safe task history.
+The server task state and server audit events are the final source of truth.
+
+The app may display task history, approval status, execution status, safe
+summaries, error codes, report paths, and verification references that come from
+server-owned records.
+
+The app, desktop runtime, and local agent must not become independent sources
+of truth for task history, approval, policy, state, or audit.
+
+Local-agent and desktop logs are diagnostic evidence only.
+
+Task history, audit logs, reports, and local diagnostics must not contain raw
+secrets, tokens, cookies, sessions, passwords, OTP values, approval tokens, raw
+auth headers, sensitive personal data, full sensitive local file paths, full
+page HTML, or automatic raw screenshot captures.
+
 ## Development Order
 
 Future app work should follow this order:

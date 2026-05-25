@@ -94,4 +94,14 @@ def test_app_structure_baseline_exists_and_locks_control_surface():
     assert "## Canonical Flow" in text
     assert "## Forbidden Structure" in text
     assert "## Recovery Boundary" in text
+    assert "## Task History And Audit Log Boundary" in text
     assert "## Development Order" in text
+
+
+def test_standard_workflow_requires_safe_task_history_and_audit_logs():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "Task History And Audit Log Rule" in text
+    assert "The server task state and server audit events are the final source of truth." in text
+    assert "Local-agent and desktop logs are diagnostic evidence only." in text
+    assert "approval tokens, raw auth headers" in text

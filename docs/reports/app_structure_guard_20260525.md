@@ -25,6 +25,19 @@ approval:
 - process termination outside the approved target app
 - editing another workspace, app, server, browser, or test runner
 
+## Task History And Audit Log Boundary
+
+Task history and audit logs must be recorded through server-owned task state
+and server audit events as the final source of truth.
+
+Local-agent and desktop logs are diagnostic evidence only. They must not become
+the final source of truth for task history, approval, policy, state, or audit.
+
+Raw secrets, tokens, cookies, sessions, passwords, OTP values, approval tokens,
+raw auth headers, sensitive personal data, full sensitive local file paths, full
+page HTML, and automatic raw screenshot captures are forbidden in logs, reports,
+task history, and audit events.
+
 ## Added Verification
 
 ```text

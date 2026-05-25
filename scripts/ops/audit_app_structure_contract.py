@@ -31,6 +31,10 @@ REQUIRED_APP_STRUCTURE_PHRASES = (
     "always-on monitoring registration",
     "process termination outside the approved target app",
     "audit-first unless their task is separately approved",
+    "## Task History And Audit Log Boundary",
+    "The server task state and server audit events are the final source of truth.",
+    "Local-agent and desktop logs are diagnostic evidence only.",
+    "must not contain raw",
     "## Development Order",
 )
 
@@ -50,6 +54,9 @@ REQUIRED_REPORT_PHRASES = (
     "App Structure Guard",
     "Recovery Boundary",
     "No live recovery script was added.",
+    "Task History And Audit Log Boundary",
+    "server-owned task state",
+    "Raw secrets, tokens, cookies, sessions, passwords, OTP values",
 )
 
 
