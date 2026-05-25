@@ -3,7 +3,7 @@
 Status: LOCKED
 Baseline ID: HAEHAN-LOCAL-AGENT-CONNECTION-RECOVERY-BASELINE-01
 Approved by: user approval in current Codex session
-Baseline HEAD: pending-current-session
+Baseline HEAD: 6a3d1d86d168ff3c70c8cf5b53e5b15cf75fe189
 Last updated: 2026-05-25
 
 ## 1. Purpose
