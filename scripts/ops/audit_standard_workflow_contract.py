@@ -93,6 +93,7 @@ REQUIRED_APP_STRUCTURE_PHRASES = (
     "## Structural Layers",
     "## Canonical Flow",
     "## Forbidden Structure",
+    "## Recovery Boundary",
     "## Development Order",
 )
 

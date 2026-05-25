@@ -93,4 +93,5 @@ def test_app_structure_baseline_exists_and_locks_control_surface():
     assert "## Structural Layers" in text
     assert "## Canonical Flow" in text
     assert "## Forbidden Structure" in text
+    assert "## Recovery Boundary" in text
     assert "## Development Order" in text

@@ -94,6 +94,31 @@ contract:
 - site-specific modules duplicating common execution gates
 - reports/logs replacing durable inventory updates
 
+## Recovery Boundary
+
+Recovery work is diagnostic-first and server-baseline controlled.
+
+Allowed without separate runtime approval:
+
+- read-only structure audits
+- read-only inventory checks
+- read-only connection diagnostics
+- redacted recovery plan reports
+- verification commands that do not change live runtime or persistent state
+
+Forbidden without separate explicit approval:
+
+- automatic server deploy/restart
+- Docker build, pull, up, restart, or deploy
+- local-agent token deletion or credential reset
+- persistent local autostart registration
+- background recovery registration
+- always-on monitoring registration
+- process termination outside the approved target app
+- editing another workspace, app, server, browser, or test runner
+
+Recovery scripts in this repository must be audit-first unless their task is separately approved as a live runtime recovery operation.
+
 ## Development Order
 
 Future app work should follow this order:
@@ -127,7 +152,9 @@ screens, connection screens, or control-surface behavior changes, update:
 Minimum structure verification:
 
 ```text
+python scripts/ops/audit_app_structure_contract.py
 python scripts/ops/audit_standard_workflow_contract.py
+python -m pytest tests/test_app_structure_contract.py -q
 python -m pytest tests/test_standard_workflow_contract.py -q
 ```
 
