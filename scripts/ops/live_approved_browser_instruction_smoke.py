@@ -43,7 +43,13 @@ import sys
 from pathlib import Path
 
 payload = json.loads(sys.stdin.read())
-path = Path("/home/ubuntu/apps/haehan-ai-orchestrator-api/secrets/api/http_users.json")
+path_candidates = [
+    Path("/home/ubuntu/apps/haehan-ai-orchestrator/secrets/api/http_users.json"),
+    Path("/home/ubuntu/apps/haehan-ai-orchestrator-api/secrets/api/http_users.json"),
+]
+path = next((candidate for candidate in path_candidates if candidate.exists()), path_candidates[0])
+if not path.exists():
+    raise SystemExit(f"http_users file not found: {path}")
 raw = json.loads(path.read_text(encoding="utf-8"))
 if not isinstance(raw, list):
     raise SystemExit("http_users format is not a list")

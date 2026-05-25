@@ -1,7 +1,19 @@
+"""Live smoke for parallel server task submission to one local agent.
+
+This check verifies the server-first path:
+
+server concurrent task creation -> local-agent WebSocket dispatch
+-> local ws_noop execution -> server task result state.
+
+It does not prove parallel local execution inside one local agent process. The
+current local agent processes one WebSocket task at a time; this smoke verifies
+that concurrent submissions are safely queued and all complete without loss.
+"""
 from __future__ import annotations
 
 import argparse
 import base64
+import concurrent.futures
 import json
 import os
 import secrets
@@ -11,11 +23,15 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from local_agent.network_bypass import direct_child_env, urlopen_for_server
 
 
-ROOT = Path(__file__).resolve().parent
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
 
@@ -40,10 +56,10 @@ def _register_temp_agent(
         "POST",
         f"{server_url}/api/v1/local-agents/registration-codes",
         {
-            "label": "codex-live-task-dispatch-smoke",
+            "label": "codex-live-parallel-smoke",
             "expires_in_minutes": 10,
             "allowed_actions": ["ws_noop"],
-            "note": "live task dispatch smoke",
+            "note": "live parallel task dispatch smoke",
             "smoke_test": True,
         },
         basic_auth=auth,
@@ -58,9 +74,9 @@ def _register_temp_agent(
         f"{server_url}/api/v1/local-agents/register-with-code",
         {
             "registration_code": registration_code,
-            "host": "codex-live-task-local",
+            "host": "codex-live-parallel-local",
             "os_name": "Windows",
-            "version": "task-dispatch-smoke",
+            "version": "parallel-smoke",
         },
         timeout=15,
     )
@@ -76,9 +92,13 @@ def _basic_header(username: str, password: str) -> str:
     return f"Basic {token}"
 
 
-def _request_json(method: str, url: str, body: dict | None = None,
-                  basic_auth: tuple[str, str] | None = None,
-                  timeout: int = 10) -> tuple[int, dict]:
+def _request_json(
+    method: str,
+    url: str,
+    body: dict[str, Any] | None = None,
+    basic_auth: tuple[str, str] | None = None,
+    timeout: int = 10,
+) -> tuple[int, dict[str, Any]]:
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
@@ -132,7 +152,7 @@ def _start_token_worker(
     env["HAEHAN_LIVE_SERVER_URL"] = server_url
     env["HAEHAN_LIVE_AGENT_ID"] = agent_id
     env["HAEHAN_LIVE_DEVICE_TOKEN"] = device_token
-    env["HAEHAN_AGENT_AUDIT"] = str(ROOT / "logs" / "live_task_dispatch_audit.jsonl")
+    env["HAEHAN_AGENT_AUDIT"] = str(ROOT / "logs" / "live_parallel_task_audit.jsonl")
     env["PYTHONIOENCODING"] = "utf-8"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     out = open(log_path, "a", encoding="utf-8")
@@ -157,10 +177,48 @@ def _stop_worker(proc: subprocess.Popen) -> None:
         proc.wait(timeout=8)
 
 
+def _create_task(
+    *,
+    tasks_url: str,
+    auth: tuple[str, str] | None,
+    index: int,
+) -> dict[str, Any]:
+    status, payload = _request_json(
+        "POST",
+        tasks_url,
+        {
+            "action": "ws_noop",
+            "params": {
+                "parallel_smoke": True,
+                "index": index,
+            },
+        },
+        basic_auth=auth,
+        timeout=15,
+    )
+    return {
+        "index": index,
+        "http_status": status,
+        "task_id": str(payload.get("task_id") or ""),
+        "initial_status": str(payload.get("status") or ""),
+    }
+
+
+def _poll_task(
+    *,
+    detail_url: str,
+    auth: tuple[str, str] | None,
+) -> tuple[str, str]:
+    _, detail = _request_json("GET", detail_url, basic_auth=auth, timeout=10)
+    return str(detail.get("status") or ""), str(detail.get("error_code") or "")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", default=DEFAULT_SERVER_URL)
-    parser.add_argument("--timeout", type=int, default=70)
+    parser.add_argument("--timeout", type=int, default=90)
+    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--concurrency", type=int, default=5)
     parser.add_argument("--user", default=os.getenv("HAEHAN_AGENT_USER", ""))
     parser.add_argument("--password", default=os.getenv("HAEHAN_AGENT_PASSWORD", ""))
     parser.add_argument(
@@ -170,6 +228,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    count = max(2, min(args.count, 20))
+    concurrency = max(2, min(args.concurrency, count))
     server_url = args.server.rstrip("/")
     agent_id = ""
     device_token = ""
@@ -181,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.temp_admin:
         from scripts.ops.live_approved_browser_instruction_smoke import remote_user
 
-        temp_admin_user = f"codex_dispatch_{secrets.token_hex(4)}"
+        temp_admin_user = f"codex_parallel_{secrets.token_hex(4)}"
         temp_admin_password = secrets.token_urlsafe(24)
         remote_user("add", temp_admin_user, temp_admin_password)
         auth = (temp_admin_user, temp_admin_password)
@@ -190,80 +250,122 @@ def main(argv: list[str] | None = None) -> int:
             agent_id, device_token = _register_temp_agent(server_url=server_url, auth=auth)
         except Exception as exc:
             print(f"[FAIL] temp agent register - {type(exc).__name__}")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
         print(f"[PASS] temp agent registered - agent_id={_mask_agent_id(agent_id)}")
     else:
         agent_id = _load_agent_id()
         if not agent_id:
             print("[FAIL] agent config - agent_id missing")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
 
-    log_path = ROOT / "logs" / "live_task_worker.log"
+    log_path = ROOT / "logs" / "live_parallel_task_worker.log"
     worker = (
         _start_token_worker(server_url, agent_id, device_token, log_path)
         if device_token
         else _start_worker(server_url, log_path)
     )
     device_token = ""
-    print(f"[PASS] worker start - pid={worker.pid} agent_id={_mask_agent_id(agent_id)}")
+    print(
+        "[PASS] worker start - "
+        f"pid={worker.pid} agent_id={_mask_agent_id(agent_id)}"
+    )
 
     try:
         time.sleep(5)
         if worker.poll() is not None:
             print(f"[FAIL] worker exited early - code={worker.returncode}")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
 
         tasks_url = f"{server_url}/api/v1/local-agents/{agent_id}/tasks"
+        started_at = time.time()
+        created: list[dict[str, Any]] = []
         try:
-            status, created = _request_json(
-                "POST",
-                tasks_url,
-                {"action": "ws_noop", "params": {}},
-                basic_auth=auth,
-            )
+            with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
+                futures = [
+                    executor.submit(
+                        _create_task,
+                        tasks_url=tasks_url,
+                        auth=auth,
+                        index=i,
+                    )
+                    for i in range(count)
+                ]
+                for future in concurrent.futures.as_completed(futures):
+                    created.append(future.result())
         except urllib.error.HTTPError as exc:
             print(f"[FAIL] task create - status={exc.code}")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
         except (urllib.error.URLError, OSError) as exc:
             print(f"[FAIL] task create - {type(exc).__name__}")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
 
-        task_id = str(created.get("task_id") or "")
-        initial_status = str(created.get("status") or "")
-        if status != 200 or not task_id:
-            print(f"[FAIL] task create - status={status} task_id_present={bool(task_id)}")
-            print("RESULT=FAIL_LIVE_TASK_DISPATCH")
+        created.sort(key=lambda row: int(row["index"]))
+        creation_elapsed_ms = int((time.time() - started_at) * 1000)
+        task_ids = [row["task_id"] for row in created if row["task_id"]]
+        all_created = len(task_ids) == count and all(row["http_status"] == 200 for row in created)
+        print(
+            "[PASS]" if all_created else "[FAIL]",
+            "parallel task create - "
+            f"count={len(task_ids)}/{count} concurrency={concurrency} elapsed_ms={creation_elapsed_ms}",
+        )
+        for row in created:
+            print(
+                "  task "
+                f"index={row['index']} id={row['task_id'] or '-'} "
+                f"initial={row['initial_status'] or '-'} http={row['http_status']}"
+            )
+        if not all_created:
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
             return 1
-        print(f"[PASS] task create - task_id={task_id} status={initial_status}")
 
-        detail_url = f"{tasks_url}/{task_id}"
+        pending = set(task_ids)
+        final: dict[str, tuple[str, str]] = {}
         deadline = time.time() + args.timeout
-        last_status = initial_status
-        last_error = ""
-        while time.time() < deadline:
+        while pending and time.time() < deadline:
             time.sleep(2)
-            try:
-                _, detail = _request_json("GET", detail_url, basic_auth=auth)
-            except Exception as exc:
-                last_error = type(exc).__name__
-                continue
-            last_status = str(detail.get("status") or last_status)
-            last_error = str(detail.get("error_code") or "")
-            if last_status in {"completed", "failed", "cancelled", "expired"}:
-                break
+            for task_id in list(pending):
+                try:
+                    status, error_code = _poll_task(
+                        detail_url=f"{tasks_url}/{task_id}",
+                        auth=auth,
+                    )
+                except Exception:
+                    continue
+                if status in {"completed", "failed", "cancelled", "expired"}:
+                    final[task_id] = (status, error_code)
+                    pending.remove(task_id)
 
-        print(f"[PASS] task final observed - task_id={task_id} status={last_status}")
-        if last_status == "completed":
-            print("RESULT=PASS_LIVE_TASK_DISPATCH")
-            return 0
-        print(f"[FAIL] task not completed - status={last_status} error_code={last_error or '-'}")
-        print("RESULT=FAIL_LIVE_TASK_DISPATCH")
-        return 1
+        completed = [task_id for task_id, (status, _) in final.items() if status == "completed"]
+        failed = {
+            task_id: {"status": status, "error_code": error_code}
+            for task_id, (status, error_code) in final.items()
+            if status != "completed"
+        }
+        for task_id in sorted(pending):
+            failed[task_id] = {"status": "timeout", "error_code": ""}
+
+        print(
+            "[PASS]" if len(completed) == count else "[FAIL]",
+            "parallel task final - "
+            f"completed={len(completed)}/{count} failed={len(failed)}",
+        )
+        if failed:
+            print(json.dumps(failed, ensure_ascii=False, indent=2))
+            print("RESULT=FAIL_LIVE_PARALLEL_TASK_DISPATCH")
+            return 1
+
+        print(
+            "[PASS] server queued concurrent submissions; "
+            "single local agent completed all ws_noop tasks"
+        )
+        print("[WARN] local execution model - single worker processes tasks sequentially per agent")
+        print("RESULT=PASS_LIVE_PARALLEL_TASK_DISPATCH")
+        return 0
     finally:
         _stop_worker(worker)
         print("[PASS] worker stopped")
