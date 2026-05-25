@@ -29,11 +29,15 @@ REQUIRED_LOCAL_AGENT_PHRASES = (
     "failed state update",
     "Local-agent WebSocket must require `agent_id + device_token`.",
     "Unapproved high-risk tasks must not appear in the local-agent dispatch queue.",
+    "A single local-agent WebSocket session must receive at most one active task at",
+    "Concurrent server submissions must remain queued and drain one by one",
+    "True simultaneous local execution requires multiple registered agents",
     "queued -> delivered -> running -> completed",
     "waiting_approval -> queued -> delivered -> running -> completed | failed",
     "execute server-contract-bypassing user-direct commands",
     "accept unauthenticated WebSocket tasks",
     "python scripts/ops/audit_local_agent_e2e_flow_contract.py",
+    "python scripts/ops/live_parallel_task_dispatch_smoke.py --temp-admin --count 5 --concurrency 5 --timeout 90",
     "python scripts/module_quality_gate.py --module local_agent_e2e",
 )
 
@@ -82,4 +86,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
