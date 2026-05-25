@@ -202,6 +202,7 @@ def test_browser_readonly_instruction_queues_safe_task(admin_user):
     assert task.params["user_instruction"] == "Summarize the page headings only"
     assert task.params["source"] == "approved_user_instruction"
     assert task.params["headless"] is True
+    assert task.params["background_approved"] is True
     assert task.params["keep_open_ms"] == 0
 
 
@@ -221,14 +222,38 @@ def test_browser_readonly_instruction_can_request_visible_browser(admin_user):
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["visible_browser"] is True
+    assert data["background_approved"] is False
     assert data["keep_open_ms"] == 5000
     assert data["browser_channel"] == "chrome"
 
     import ai_orchestrator.local_agent_registry as _reg
     task = _reg.get_task(agent_id, data["task_id"])
     assert task.params["headless"] is False
+    assert task.params["background_approved"] is False
     assert task.params["keep_open_ms"] == 5000
     assert task.params["browser_channel"] == "chrome"
+
+
+def test_browser_readonly_instruction_can_disable_background(admin_user):
+    client = _make_test_client(admin_user)
+    agent_id = _register_agent(client)["agent_id"]
+    resp = client.post(
+        f"/api/v1/local-agents/{agent_id}/browser-readonly-instructions",
+        json={
+            "instruction": "Summarize the page headings only",
+            "url": "https://example.com",
+            "allow_background": False,
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["allow_background"] is False
+    assert data["background_approved"] is False
+
+    import ai_orchestrator.local_agent_registry as _reg
+    task = _reg.get_task(agent_id, data["task_id"])
+    assert task.params["headless"] is False
+    assert task.params["background_approved"] is False
 
 
 def test_viewer_cannot_submit_browser_readonly_instruction(viewer_user, admin_user):

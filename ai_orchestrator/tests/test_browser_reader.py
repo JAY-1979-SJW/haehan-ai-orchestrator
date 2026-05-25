@@ -619,6 +619,7 @@ def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
     # 단 한 번 호출, url 전달
     assert len(captured) == 1
     assert captured[0]["url"] == "https://example.com/"
+    assert captured[0]["headless"] is False
 
 
 def test_action_default_allow_private_network_false(monkeypatch) -> None:
@@ -646,6 +647,61 @@ def test_action_default_allow_private_network_false(monkeypatch) -> None:
     )
     assert captured, "factory was never called"
     assert captured[0]["allow_private_network"] is False
+    assert captured[0]["headless"] is False
+
+
+def test_action_web_open_url_readonly_background_requires_approval(monkeypatch) -> None:
+    from local_agent import browser_reader
+    from local_agent.actions import execute_action
+
+    def fake_open(**_kwargs):
+        raise AssertionError("browser should not open without background approval")
+
+    monkeypatch.setattr(browser_reader, "open_url_readonly", fake_open)
+
+    r = execute_action(
+        "web_open_url_readonly",
+        {"url": "https://example.com/", "headless": True},
+    )
+    assert r.success is False
+    assert r.error_code == "BACKGROUND_NOT_APPROVED"
+
+
+def test_action_web_open_url_readonly_background_with_approval(monkeypatch) -> None:
+    from local_agent import browser_reader
+    from local_agent.actions import execute_action
+
+    captured: list[dict] = []
+
+    def fake_open(**kwargs):
+        captured.append(dict(kwargs))
+        return {
+            "ok": True,
+            "url": kwargs.get("url"),
+            "current_url": "https://example.com/",
+            "title": "Home",
+            "html_truncated": False,
+            "headless": kwargs.get("headless"),
+            "login_required_hint": False,
+            "login_reason": [],
+            "modal_candidates": [],
+            "page_structure": {"ok": True, "counts": {}},
+            "summary": "title=Home links=0 buttons=0 forms=0 tables=0",
+        }
+
+    monkeypatch.setattr(browser_reader, "open_url_readonly", fake_open)
+
+    r = execute_action(
+        "web_open_url_readonly",
+        {
+            "url": "https://example.com/",
+            "headless": True,
+            "background_approved": True,
+        },
+    )
+    assert r.success is True
+    assert captured[0]["headless"] is True
+    assert r.data["background_approved"] is True
 
 
 def test_action_web_open_url_readonly_missing_url() -> None:

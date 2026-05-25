@@ -113,6 +113,7 @@ class BrowserReadonlyInstructionRequest(BaseModel):
     timeout_ms: int = 20000
     max_html_chars: int = 100000
     visible_browser: bool = False
+    allow_background: bool = True
     keep_open_ms: int = 0
     browser_channel: str = "chromium"
 
@@ -581,12 +582,14 @@ def submit_browser_readonly_instruction(
     instruction, url, host, timeout_ms, max_html_chars, keep_open_ms, browser_channel = (
         _validate_readonly_browser_instruction(body)
     )
+    background_approved = bool(body.allow_background) and not bool(body.visible_browser)
     params = {
         "url": url,
         "wait_until": body.wait_until,
         "timeout_ms": timeout_ms,
         "max_html_chars": max_html_chars,
-        "headless": not bool(body.visible_browser),
+        "headless": background_approved,
+        "background_approved": background_approved,
         "keep_open_ms": keep_open_ms,
         "browser_channel": browser_channel,
         "user_instruction": instruction,
@@ -624,6 +627,7 @@ def submit_browser_readonly_instruction(
         note=(
             f"agent_id={agent_id} url_host={host} "
             f"instruction_len={len(instruction)} visible_browser={bool(body.visible_browser)} "
+            f"allow_background={bool(body.allow_background)} "
             f"keep_open_ms={keep_open_ms} browser_channel={browser_channel} status={task.status}"
         ),
     )
@@ -638,6 +642,8 @@ def submit_browser_readonly_instruction(
         "instruction_accepted": True,
         "url_host": host,
         "visible_browser": bool(body.visible_browser),
+        "allow_background": bool(body.allow_background),
+        "background_approved": background_approved,
         "keep_open_ms": keep_open_ms,
         "browser_channel": browser_channel,
     }

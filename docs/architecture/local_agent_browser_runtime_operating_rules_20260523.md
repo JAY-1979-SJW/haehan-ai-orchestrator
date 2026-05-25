@@ -29,6 +29,13 @@ routine refactor.
      rather than a personal Chrome profile.
    - Existing-session attach remains inspection-only unless a later approval
      gate explicitly enables stronger behavior.
+   - Headless/background execution is allowed only when the server task carries
+     an explicit user-approved background marker such as
+     `background_approved=True`. Without that marker, read-only browser work
+     must run in visible mode or be rejected before opening a browser.
+   - Login, credential issue, submit, publish, billing, IAM, API key, upload,
+     send, edit, and delete workflows remain separate approval actions. A
+     background approval marker does not downgrade those workflows to read-only.
 
 5. Runtime state must not be written under `scripts/archive`.
    - `chrome_ui_monitor_state.json` is runtime state and must live under
