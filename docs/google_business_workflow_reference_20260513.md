@@ -28,6 +28,8 @@ Rules:
 - Surface catalog: `data/google_surface_catalog_latest.json`
 - Action catalog: `data/google_work_action_catalog_latest.json`
 - Execution adapter catalog: `data/google_execution_adapter_catalog_latest.json`
+- Full Google live-read latest: `data/google_surface_live_latest.json`
+- Cloud Console live-read latest: `data/google_cloud_console_live_latest.json`
 - Prepare latest: `data/google_prepare_latest.json`
 - Prepare history: `data/google_prepares/`
 - Execution audit results: `data/google_execution_results/`
@@ -37,6 +39,16 @@ Rules:
 
 ```powershell
 python scripts\cdp_client.py google surfaces catalog
+python scripts\cdp_client.py google subdomains catalog
+python scripts\cdp_client.py google subdomains classify gmail read
+python scripts\cdp_client.py google subdomains classify mail.google.com send
+python scripts\cdp_client.py google tabs catalog
+python scripts\cdp_client.py google tabs classify workspace gmail read
+python scripts\cdp_client.py google tabs classify workspace mail.google.com send
+python scripts\cdp_client.py google cloud live-read
+python scripts\cdp_client.py google cloud live-logic
+python scripts\cdp_client.py google surfaces live-read
+python scripts\cdp_client.py google surfaces live-logic
 python scripts\cdp_client.py google work catalog
 python scripts\cdp_client.py google work adapters
 python scripts\cdp_client.py google work live-coverage
@@ -50,9 +62,97 @@ python scripts\cdp_client.py google work verify data\google_execution_results\<r
 The last command is intentionally approval-gated. Without approval it records a
 blocked execution result and does not change Google state.
 
+## Subdomain Logic
+
+`scripts/google/subdomain_logic.py` groups the Google surface and workflow
+catalogs by host. The logic is intentionally server-first and user-present:
+
+- login operations create only a user-present login entry task; auto-login,
+  credential replay, cookies, tokens, and session export stay blocked
+- read/open/status/inspect operations create `web_open_url_readonly`
+  local-agent tasks
+- send, publish, upload, billing, IAM, deploy, secret, credential, delete, and
+  other state-changing operations return an approval-gate result without a
+  local-agent task
+- unknown Google subdomains fail closed
+
+## Tab Logic
+
+`scripts/google/tab_logic.py` exposes the same logic per Google tab:
+`search`, `identity`, `workspace`, `cloud`, `ai`, `youtube`, `marketing`,
+`developer`, and `media`.
+
+Every tab package exports:
+
+- `summary()`
+- `catalog()`
+- `classify_operation(key_or_host, operation)`
+
+The app can attach tab UI to these functions. A host outside the requested tab
+fails closed, read operations stay `web_open_url_readonly`, and state-changing
+operations stay approval-gated without creating a local-agent execution task.
+
+Each tab catalog includes `user_guidance` so the app can explain what a user
+can request:
+
+- Search: open Google home/search read-only and inspect public controls.
+- Identity: check account/login state and guide user-present login.
+- Workspace: open Gmail, Drive, Calendar, Docs, Sheets, Slides, Forms, Meet,
+  Chat, Contacts, Keep, and Tasks; prepare drafts/plans; approval is required
+  for send/share/upload/create/edit/publish/delete.
+- Cloud: open Cloud Console surfaces read-only; approval is required for API
+  keys, IAM, billing, deploys, resource changes, and secret changes.
+- AI: open AI Studio, Gemini, and Vertex AI read-only; approval is required for
+  prompts, key creation, training, or deploy.
+- YouTube: open YouTube/Studio read-only and prepare upload/metadata plans;
+  approval is required for upload, publish, metadata edits, and interactions.
+- Marketing: open Search Console, Business Profile, Analytics, Tag Manager,
+  Ads, Merchant Center, AdSense, and Looker Studio read-only; approval is
+  required for indexing, listing changes, tag publish, ad spend, and merchant
+  listing changes.
+- Developer: open developer docs, Play Console, Firebase, Apps Script, and
+  Colab read-only; approval is required for release, config, deploy, and code
+  execution.
+- Media: open Photos read-only; approval is required for upload, delete, share,
+  or album changes.
+
+## Cloud Console Live Logic
+
+`scripts/google/cloud/live_console_explorer.py` performs direct-CDP,
+read-only Cloud Console inspection against the already running local Chrome
+debugging profile. It does not use Playwright, does not click, does not type,
+does not submit, and does not export cookies, storage, tokens, or secret
+values.
+
+The live command stores redacted evidence in:
+
+- `data/google_cloud_console_live_latest.json`
+- `data/google_cloud_console_live/`
+
+`google cloud live-logic` converts the latest evidence into Cloud-tab logic:
+per surface live-read status, observed headings, observed control counts,
+observed risk controls, read actions, and approval-gated actions.
+It also includes per-surface `user_guidance`, so the app can show what the user
+may ask for on Cloud Console pages such as IAM, Billing, Cloud Run, Compute
+Engine, Storage, BigQuery, GKE, SQL, Pub/Sub, Secret Manager, Logging, and
+Monitoring.
+
+`scripts/google/live_surface_explorer.py` performs the same direct-CDP,
+read-only inspection for all 50 Google surfaces and writes:
+
+- `data/google_surface_live_latest.json`
+- `data/google_surface_live/`
+
+`google surfaces live-logic` converts that evidence into app logic for all
+Google surfaces, including Search, Identity, Workspace, Cloud, AI, YouTube,
+Marketing, Developer, and Media tabs. If a full 50-surface report is not the
+latest report, the logic can merge the latest Cloud report so the app still
+gets one complete Google live-logic contract.
+
 ## Coverage Baseline
 
 - 50 Google surfaces are indexed.
+- 50 Google surfaces are represented by `google surfaces live-logic`.
 - 96 Google work actions are indexed.
 - 50 read actions are implemented as catalog/read entries.
 - 46 state-changing actions are implemented as approval-gated prepare/execute

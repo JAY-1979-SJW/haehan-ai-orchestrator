@@ -22,6 +22,16 @@
       }
     },
     {
+      "action_key": "youtube_studio_edit_video_metadata",
+      "values": {
+        "video_id": "DRAFT_ONLY_LOOKUP",
+        "video_id_or_url": "DRAFT_ONLY_LOOKUP",
+        "title": "DRAFT_ONLY_METADATA",
+        "description": "Approval-before-save metadata draft.",
+        "visibility": "private"
+      }
+    },
+    {
       "action_key": "search_console_submit_indexing",
       "values": {
         "property": "https://example.com/",
@@ -49,13 +59,15 @@
       "values": {
         "project": "example-project",
         "credential_type": "api_key",
-        "name": "draft-only-key"
+        "name": "draft-only-key",
+        "label": "draft-only-key"
       }
     },
     {
       "action_key": "ai_studio_create_api_key",
       "values": {
         "project": "example-project",
+        "key_label": "draft-only-key",
         "key_policy": "draft-only"
       }
     },

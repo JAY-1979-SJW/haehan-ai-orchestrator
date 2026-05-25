@@ -20,10 +20,16 @@ REQUIRED_PHRASES = (
     "Read actions: 50",
     "Approval actions: 46",
     "Host normalization warnings: 0",
+    "Live logic surfaces: 50",
     "user_present_session",
     "host_warnings == []",
     "scripts/google/tab_registry.py",
+    "scripts/google/subdomain_logic.py",
+    "scripts/google/tab_logic.py",
+    "scripts/google/live_surface_explorer.py",
+    "scripts/google/cloud/live_console_explorer.py",
     "tests/test_google_tab_registry.py",
+    "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
 
@@ -54,6 +60,7 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
+    from scripts.google import live_surface_explorer, subdomain_logic, tab_logic
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -76,10 +83,27 @@ def audit() -> tuple[bool, list[str]]:
     if summary["host_warnings"]:
         failures.append(f"Google host warnings must be zero, got {len(summary['host_warnings'])}")
 
+    subdomain_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
+    if subdomain_catalog.get("credential_replay_allowed") is not False:
+        failures.append("Google subdomain logic must block credential replay")
+    if subdomain_catalog.get("auto_login") is not False:
+        failures.append("Google subdomain logic must block auto-login")
+
+    tab_catalog = tab_logic.build_all_tab_logic_catalog()
+    if tab_catalog.get("tab_count") != 9:
+        failures.append("Google tab logic must expose 9 locked tabs")
+    if not all(tab.get("user_guidance", {}).get("user_can_request") for tab in tab_catalog.get("tabs", [])):
+        failures.append("Google tab logic must expose user guidance for every tab")
+
+    live_logic = live_surface_explorer.build_google_surface_live_logic()
+    if live_logic.get("surface_count") != 50:
+        failures.append(f"Google live logic surface count mismatch: {live_logic.get('surface_count')}")
+
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
         "9 Google tabs, 50 surfaces, and 96 actions are registered",
         "Google host warnings are zero",
+        "Google subdomain, tab, and 50-surface live logic contracts are present",
     ]
 
 
@@ -93,4 +117,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -1,8 +1,24 @@
 """Google service router."""
 from __future__ import annotations
 
-from . import live_inputs, surface_explorer, surfaces, workflows
+import json
+
+from . import (
+    ai_usage_labels,
+    android_app_dev_labels,
+    android_app_dev_report,
+    domain_taxonomy,
+    live_inputs,
+    live_surface_explorer,
+    precision_report,
+    subdomain_logic,
+    surface_explorer,
+    surfaces,
+    tab_logic,
+    workflows,
+)
 from .base import check_session
+from .cloud import live_console_explorer
 from .workspace import router as workspace_router
 from scripts.gate import check as gate_check
 from .gates import gate_google_send_plan, gate_google_submit_plan, gate_google_oauth_required  # noqa: F401
@@ -20,6 +36,15 @@ __status__ = {
         "docs recent": "partial",
         "sheets recent": "partial",
         "surfaces catalog": "done",
+        "surfaces live-read": "read_only",
+        "subdomains catalog": "done",
+        "subdomains classify": "done",
+        "tabs catalog": "done",
+        "tabs classify": "done",
+        "android labels": "done",
+        "android report": "done",
+        "domains taxonomy": "done",
+        "cloud live-read": "read_only",
         "surfaces explore": "read_only",
         "work catalog": "done",
         "work adapters": "done",
@@ -45,8 +70,7 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
     task: session-check | login | mail | drive | calendar | docs | sheets | surfaces | work
     """
     if site == "gmail":
-        args = ([sub] if sub else []) + args
-        sub = task
+        sub = sub or task
         task = "mail"
 
     match task:
@@ -67,6 +91,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
         case "calendar":
             gate_check("goto")
             workspace_router.run_workspace("calendar", sub or "today", args)
+        case "cloud":
+            _cmd_cloud(sub or "summary", args)
         case "docs":
             gate_check("goto")
             workspace_router.run_workspace("docs", sub or "recent", args)
@@ -75,6 +101,18 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             workspace_router.run_workspace("sheets", sub or "recent", args)
         case "surfaces":
             _cmd_surfaces(sub or "catalog", args)
+        case "subdomains":
+            _cmd_subdomains(sub or "catalog", args)
+        case "tabs":
+            _cmd_tabs(sub or "catalog", args)
+        case "ai":
+            _cmd_ai(sub or "catalog", args)
+        case "android" | "android-app" | "app-dev":
+            _cmd_android(sub or "report", args)
+        case "domains" | "taxonomy" | "classification":
+            _cmd_domains(sub or "report", args)
+        case "report" | "precision":
+            _cmd_precision(sub or "build", args)
         case "work" | "actions":
             _cmd_work(sub or "catalog", args)
         case _:
@@ -116,6 +154,42 @@ def _cmd_login() -> None:
 
 def _cmd_surfaces(sub: str, args: list[str] | None = None) -> None:
     args = args or []
+    if sub in ("live-logic", "logic"):
+        logic = live_surface_explorer.build_google_surface_live_logic()
+        print(json.dumps(logic, ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("live-read", "live-explore"):
+        keys: list[str] = []
+        tabs: list[str] = []
+        exclude_tabs: list[str] = []
+        wait_seconds = 3.0
+        limit = None
+        snapshot_limit = 80
+        for arg in args:
+            if arg.startswith("--key="):
+                keys.append(arg.split("=", 1)[1])
+            elif arg.startswith("--keys="):
+                keys.extend([key for key in arg.split("=", 1)[1].split(",") if key])
+            elif arg.startswith("--tabs="):
+                tabs.extend([tab for tab in arg.split("=", 1)[1].split(",") if tab])
+            elif arg.startswith("--exclude-tabs="):
+                exclude_tabs.extend([tab for tab in arg.split("=", 1)[1].split(",") if tab])
+            elif arg.startswith("--wait-seconds="):
+                wait_seconds = float(arg.split("=", 1)[1])
+            elif arg.startswith("--limit="):
+                limit = int(arg.split("=", 1)[1])
+            elif arg.startswith("--snapshot-limit="):
+                snapshot_limit = int(arg.split("=", 1)[1])
+        report, path = live_surface_explorer.explore_google_surfaces_direct_cdp(
+            keys=keys or None,
+            tabs=tabs or None,
+            exclude_tabs=exclude_tabs or None,
+            wait_seconds=wait_seconds,
+            limit=limit,
+            snapshot_limit=snapshot_limit,
+        )
+        live_surface_explorer.print_google_surface_live_summary(report, path)
+        return
     if sub in ("explore", "scan", "read"):
         keys: list[str] = []
         limit = None
@@ -142,6 +216,125 @@ def _cmd_surfaces(sub: str, args: list[str] | None = None) -> None:
     catalog = surfaces.build_surface_catalog()
     path = surfaces.save_surface_catalog(catalog)
     surfaces.print_surface_summary(catalog, path)
+
+
+def _cmd_subdomains(sub: str, args: list[str]) -> None:
+    if sub in ("catalog", "list", "index"):
+        catalog = subdomain_logic.build_google_subdomain_logic_catalog()
+        print("=" * 60)
+        print("Google subdomain logic catalog")
+        print("=" * 60)
+        print(f"subdomains: {catalog['subdomain_count']}")
+        print(f"login_policy: {catalog['login_policy']}")
+        for item in catalog["subdomains"]:
+            print(
+                f"- {item['host']}: "
+                f"surfaces={len(item['surface_keys'])} "
+                f"read={len(item['read_actions'])} "
+                f"approval={len(item['approval_actions'])} "
+                f"{item['risk_boundary']}"
+            )
+        return
+    if sub in ("classify", "check", "task"):
+        if not args:
+            print("  [error] usage: python scripts/cdp_client.py google subdomains classify <host-or-service> [operation]")
+            return
+        operation = args[1] if len(args) > 1 else "read"
+        result = subdomain_logic.classify_google_subdomain_operation(args[0], operation)
+        print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+        return
+    print(f"  [error] unknown subdomains task: {sub}")
+
+
+def _cmd_tabs(sub: str, args: list[str]) -> None:
+    if sub in ("catalog", "list", "index"):
+        catalog = tab_logic.build_all_tab_logic_catalog()
+        print("=" * 60)
+        print("Google tab logic catalog")
+        print("=" * 60)
+        print(f"tabs: {catalog['tab_count']}")
+        for item in catalog["tabs"]:
+            print(
+                f"- {item['tab_key']}: "
+                f"surfaces={item['surface_count']} "
+                f"read={item['read_action_count']} "
+                f"approval={item['approval_action_count']} "
+                f"hosts={len(item['hosts'])}"
+            )
+        return
+    if sub in ("classify", "check", "task"):
+        if len(args) < 2:
+            print("  [error] usage: python scripts/cdp_client.py google tabs classify <tab> <host-or-service> [operation]")
+            return
+        operation = args[2] if len(args) > 2 else "read"
+        result = tab_logic.classify_tab_operation(args[0], args[1], operation)
+        print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+        return
+    print(f"  [error] unknown tabs task: {sub}")
+
+
+def _cmd_cloud(sub: str, args: list[str]) -> None:
+    if sub in ("live-read", "live-explore", "console-read"):
+        keys: list[str] = []
+        wait_seconds = 4.0
+        limit = 80
+        for arg in args:
+            if arg.startswith("--keys="):
+                keys.extend([key for key in arg.split("=", 1)[1].split(",") if key])
+            elif arg.startswith("--wait-seconds="):
+                wait_seconds = float(arg.split("=", 1)[1])
+            elif arg.startswith("--limit="):
+                limit = int(arg.split("=", 1)[1])
+        report, path = live_console_explorer.explore_cloud_console_surfaces(
+            keys=keys or None,
+            wait_seconds=wait_seconds,
+            limit=limit,
+        )
+        live_console_explorer.print_cloud_console_live_summary(report, path)
+        return
+    if sub in ("live-logic", "console-logic"):
+        logic = live_console_explorer.build_cloud_console_live_logic()
+        print(json.dumps(logic, ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("summary", "catalog"):
+        catalog = tab_logic.build_tab_logic_catalog("cloud")
+        print(json.dumps(catalog, ensure_ascii=False, indent=2, default=str))
+        return
+    print(f"  [error] unknown cloud task: {sub}")
+
+
+def _cmd_ai(sub: str, args: list[str]) -> None:
+    if sub in ("labels", "usage", "pricing", "catalog"):
+        print(json.dumps(ai_usage_labels.build_google_ai_usage_labels(), ensure_ascii=False, indent=2, default=str))
+        return
+    print(f"  [error] unknown ai task: {sub}")
+
+
+def _cmd_android(sub: str, args: list[str]) -> None:
+    if sub in ("labels", "usage", "pricing", "catalog"):
+        print(json.dumps(android_app_dev_labels.build_android_app_dev_labels(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("report", "build", "verify"):
+        report, json_path, md_path = android_app_dev_report.save_android_app_dev_report()
+        android_app_dev_report.print_android_app_dev_summary(report, json_path, md_path)
+        return
+    print(f"  [error] unknown android task: {sub}")
+
+
+def _cmd_domains(sub: str, args: list[str]) -> None:
+    if sub in ("catalog", "labels", "taxonomy", "classify", "report", "build", "verify"):
+        report, json_path, md_path = domain_taxonomy.save_google_domain_taxonomy()
+        domain_taxonomy.print_google_domain_taxonomy_summary(report, json_path, md_path)
+        return
+    print(f"  [error] unknown domains task: {sub}")
+
+
+def _cmd_precision(sub: str, args: list[str]) -> None:
+    if sub in ("build", "report", "verify"):
+        report, json_path, md_path = precision_report.save_google_precision_report()
+        precision_report.print_google_precision_summary(report, json_path, md_path)
+        return
+    print(f"  [error] unknown precision task: {sub}")
 
 
 def _cmd_work(sub: str, args: list[str]) -> None:

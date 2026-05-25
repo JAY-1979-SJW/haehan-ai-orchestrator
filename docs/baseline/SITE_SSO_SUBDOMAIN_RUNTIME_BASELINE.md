@@ -16,6 +16,13 @@ approved subdomains and services.
 This baseline does not approve automatic login, credential replay, cookie
 export, session export, or write actions.
 
+Google subdomain-specific feature logic is implemented in
+`scripts/google/subdomain_logic.py`. It converts the locked Google surface and
+workflow catalogs into host-level read and approval boundaries without
+performing credential entry or exporting session material.
+Google tab-level feature logic is implemented in `scripts/google/tab_logic.py`
+and exposed through all nine Google tab packages.
+
 ## 2. Universal Flow
 
 All SSO providers must follow this flow:
@@ -101,6 +108,20 @@ The shared runtime contract is:
   secret values must not be returned
 - blocked actions must not create local-agent tasks
 
+Google subdomain feature logic must also enforce:
+
+- `login`, `signin`, and account entry operations return a user-present login
+  entry task only; auto-login and credential replay stay false
+- read/open/status/inspect operations create only `web_open_url_readonly`
+  local-agent tasks
+- send, publish, upload, billing, IAM, deploy, secret, credential, delete, and
+  other state-changing operations return an approval-gate result without a
+  local-agent execution task
+- unknown Google subdomains fail closed before execution
+- tab-level logic must expose `summary()`, `catalog()`, and
+  `classify_operation(...)` for every locked Google tab
+- hosts outside the requested Google tab must fail closed
+
 ## 7. Forbidden Behavior
 
 The following are forbidden in this baseline:
@@ -121,7 +142,6 @@ Minimum verification:
 
 ```text
 python scripts/ops/audit_site_sso_subdomain_runtime_baseline.py
-python -m pytest tests/test_site_sso_subdomain_runtime.py -q
+python -m pytest tests/test_site_sso_subdomain_runtime.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py -q
 python scripts/module_quality_gate.py --module repo_guard
 ```
-

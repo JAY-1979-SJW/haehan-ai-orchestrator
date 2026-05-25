@@ -38,6 +38,15 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_required_quality_gate.py" in rendered
     assert "tests/test_module_boundaries.py" in rendered
     assert "tests/test_root_legacy_scripts_audit.py" in rendered
+    assert "tests/test_google_subdomain_logic.py" in rendered
+    assert "tests/test_google_tab_logic.py" in rendered
+    assert "tests/test_google_live_surface_explorer.py" in rendered
+    assert "tests/test_google_cloud_live_console_explorer.py" in rendered
+    assert "tests/test_google_ai_usage_labels.py" in rendered
+    assert "tests/test_google_android_app_dev.py" in rendered
+    assert "tests/test_google_domain_taxonomy.py" in rendered
+    assert "tests/test_google_precision_report.py" in rendered
+    assert "tests/test_site_sso_subdomain_runtime.py" in rendered
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
@@ -56,6 +65,16 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_playwright_ai_baseline_contract.py" in rendered
     assert "scripts/ops/audit_module_boundaries.py" in rendered
     assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
+    assert "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py" in rendered
+    assert "scripts/google/live_surface_explorer.py" in rendered
+    assert "scripts/google/cloud/live_console_explorer.py" in rendered
+    assert "scripts/google/ai_usage_labels.py" in rendered
+    assert "scripts/google/android_app_dev_labels.py" in rendered
+    assert "scripts/google/android_app_dev_report.py" in rendered
+    assert "scripts/google/domain_taxonomy.py" in rendered
+    assert "scripts/google/precision_report.py" in rendered
+    assert "scripts/google/subdomain_logic.py" in rendered
+    assert "scripts/google/tab_logic.py" in rendered
     assert "scripts/module_quality_gate.py --module repo_guard" in rendered
 
 
@@ -128,7 +147,7 @@ def test_repo_guard_gate_gets_extended_timeout(monkeypatch):
     result = gate.run_command((gate.sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"))
 
     assert result.ok is True
-    assert captured["timeout"] == 120
+    assert captured["timeout"] == 240
 
 
 def test_run_command_fails_fast_on_timeout(monkeypatch):

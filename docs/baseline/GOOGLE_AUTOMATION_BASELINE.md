@@ -4,7 +4,7 @@ Status: LOCKED
 Baseline ID: GOOGLE-AUTOMATION-BASELINE-01
 Approved by: user approval in current Codex session
 Baseline HEAD: c2307e8ffe9d38d6842a542c7be68efe5f234b09
-Last updated: 2026-05-24
+Last updated: 2026-05-25
 
 ## 1. Purpose
 
@@ -20,6 +20,7 @@ Current locked counts:
 - Read actions: 50
 - Approval actions: 46
 - Host normalization warnings: 0
+- Live logic surfaces: 50
 
 ## 2. Required Sub-Tabs
 
@@ -106,16 +107,24 @@ Representative host boundaries:
 - `scripts/google/tab_registry.py`: official Google sub-tab registry.
 - `scripts/google/surfaces.py`: 50 Google surfaces.
 - `scripts/google/workflows.py`: 96 Google actions and approval handoff contract.
+- `scripts/google/subdomain_logic.py`: host-level read and approval boundary.
+- `scripts/google/tab_logic.py`: app-attachable tab-level logic and user guidance.
+- `scripts/google/live_surface_explorer.py`: direct-CDP read-only live evidence for all 50 surfaces.
+- `scripts/google/cloud/live_console_explorer.py`: direct-CDP read-only Cloud Console evidence.
 - `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
 - `tests/test_google_tab_registry.py`: tab, host, count, and owner-package contract.
+- `tests/test_google_subdomain_logic.py`: host-level execution boundary contract.
+- `tests/test_google_tab_logic.py`: tab-level execution boundary and UI guidance contract.
+- `tests/test_google_live_surface_explorer.py`: 50-surface live-logic contract.
+- `tests/test_google_cloud_live_console_explorer.py`: Cloud Console live-logic contract.
 
 ## 7. Required Verification
 
 Minimum verification before committing Google work:
 
 ```text
-python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py
-python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py -q
+python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
+python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py -q
 python scripts/ops/audit_google_automation_baseline_contract.py
 python scripts/module_quality_gate.py --module repo_guard
 ```
@@ -138,7 +147,7 @@ Do not split all Google modules in one change.
 
 - Runtime live E2E with real Google account/OAuth is separate from this static
   baseline.
-- Workspace/Cloud/YouTube/Marketing modules currently have package placeholders;
-  deeper file movement must preserve the locked counts.
+- Workspace, Cloud, YouTube, Marketing, AI, Developer, and Media expose common
+  app-attachable tab logic; deeper file movement must preserve the locked counts.
 - Approval actions are contract-gated, but not all have final production API
   execution adapters.
