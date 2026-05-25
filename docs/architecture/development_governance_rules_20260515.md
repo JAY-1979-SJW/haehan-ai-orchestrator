@@ -78,6 +78,22 @@ install, permission change, process termination, broad cleanup, persistent
 local autostart, background recovery registration, or always-on monitoring
 registration without separate explicit approval.
 
+### 3.3 Tool Inventory And Report Rule
+
+Tool, runtime entrypoint, connector, automation script, site module, and
+operational helper work must update durable inventory and reporting:
+
+- `docs/inventory/TOOL_INVENTORY.md`
+- `docs/inventory/CONNECTION_INVENTORY.md`
+- `docs/reports/<task>_<yyyymmdd>.md`
+- `data/inspection/<task>/...` when machine-readable audit output exists
+
+The report must include scope, inspected paths, classification, execution
+location, approval requirement, input/output contract, verification results,
+and remaining unknowns or lock-needed items.
+
+Logs alone are not sufficient as final work evidence.
+
 ---
 
 ## 4. Generic Site Engine Rule

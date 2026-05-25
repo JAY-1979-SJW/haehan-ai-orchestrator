@@ -53,3 +53,24 @@ def test_standard_workflow_defines_safe_auto_run_rule():
     assert "The worker may commit only when the user explicitly requests commit" in text
     assert "The worker may push only when the user explicitly requests push" in text
     assert "Auto-run must never perform server deploy/restart" in text
+
+
+def test_standard_workflow_requires_inventory_and_reports():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "Tool Inventory And Report Rule" in text
+    assert "docs/inventory/TOOL_INVENTORY.md" in text
+    assert "docs/inventory/CONNECTION_INVENTORY.md" in text
+    assert "docs/reports/<task>_<yyyymmdd>.md" in text
+    assert "data/inspection/<task>/..." in text
+    assert "Logs alone are not sufficient as final work evidence." in text
+
+
+def test_inventory_documents_exist_and_define_lock_queue():
+    for path in (audit.TOOL_INVENTORY, audit.CONNECTION_INVENTORY):
+        text = path.read_text(encoding="utf-8")
+
+        assert "Status: ACTIVE" in text
+        assert "Owner baseline: `docs/baseline/APP_BASELINE.md`" in text
+        assert "Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`" in text
+        assert "Lock Needed Queue" in text

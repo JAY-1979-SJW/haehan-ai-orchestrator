@@ -115,6 +115,30 @@ install, permission change, process termination, broad cleanup, persistent
 local autostart, background recovery registration, or always-on monitoring
 registration without separate explicit approval.
 
+## 3.4 Tool Inventory And Report Rule
+
+When a task creates, changes, removes, audits, or classifies a tool, runtime
+entrypoint, connector, automation script, site module, or operational helper,
+the worker must update or create:
+
+- `docs/inventory/TOOL_INVENTORY.md` for the durable tool list
+- `docs/inventory/CONNECTION_INVENTORY.md` for durable connection tracking
+- `docs/reports/<task>_<yyyymmdd>.md` for the human-readable task report
+- `data/inspection/<task>/...` when machine-readable audit output exists
+
+The report must include:
+
+- scope
+- changed or inspected tool paths
+- classification: active, locked, legacy, deprecated, unknown
+- execution location: server, local-agent, desktop, user-direct, audit-only
+- approval requirement
+- input/output contract
+- verification commands and results
+- remaining unknowns or lock-needed items
+
+Logs alone are not sufficient as final work evidence.
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:
