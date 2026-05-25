@@ -777,8 +777,7 @@ def test_completed_failed_not_expired(admin_user):
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
         ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
-        # 두 task 모두 delivered로 전환
-        assert ws.receive_json()["type"] == "task"
+        # 단일 WS 세션은 한 번에 하나씩 delivered로 전환한다.
         assert ws.receive_json()["type"] == "task"
 
         ws.send_json({"type": "running", "task_id": c1["task_id"]})
@@ -792,6 +791,7 @@ def test_completed_failed_not_expired(admin_user):
         assert ws.receive_json()["type"] == "result_ack"
 
         # c2 실패
+        assert ws.receive_json()["type"] == "task"
         ws.send_json({
             "type": "result", "task_id": c2["task_id"],
             "success": False, "error_code": "ERR", "error": "fail",

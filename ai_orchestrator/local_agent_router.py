@@ -1362,10 +1362,14 @@ def _safe_str(value) -> str:
 
 
 async def _push_queued(ws: WebSocket, agent_id: str) -> int:
-    """해당 에이전트의 queued 작업을 모두 delivered 로 전환하며 push. 전송 개수 반환."""
+    """해당 에이전트의 queued 작업을 최대 1개 delivered 로 전환하며 push. 전송 개수 반환."""
+    # A single local-agent WebSocket session is sequential:
+    # task -> running_ack -> result -> next task.
+    if _reg.get_active_task_count(agent_id) > 0:
+        return 0
     pending = _reg.list_pending_for_agent(agent_id)
     sent = 0
-    for t in pending:
+    for t in pending[:1]:
         updated = _reg.mark_delivered(agent_id, t.task_id)
         if updated is None or updated.status != "delivered":
             continue
