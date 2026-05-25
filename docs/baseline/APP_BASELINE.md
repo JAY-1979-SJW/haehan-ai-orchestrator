@@ -173,6 +173,7 @@ playwright_ai
 live_agent
 release_preflight
 release_runtime
+common_engine_commercialization
 ```
 
 Module responsibilities:
@@ -188,11 +189,20 @@ Module responsibilities:
 - `live_agent`: live server connectivity and task dispatch smoke checks.
 - `release_preflight`: release-time static checks.
 - `release_runtime`: live runtime readiness checks.
+- `common_engine_commercialization`: engine-first commercial readiness contract
+  that composes common runtime, backend, approval, local-agent, connection,
+  evidence, and app control-surface boundaries.
 
 The detailed module contract is locked in:
 
 ```text
 docs/baseline/MODULE_BASELINE.md
+```
+
+Commercial app development must also satisfy:
+
+```text
+docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md
 ```
 
 ## 9. Required Gates
@@ -281,6 +291,7 @@ Currently locked as PASS:
 - Common tool runtime contract.
 - Backend runtime route/security contract.
 - Local-agent E2E dispatch flow contract.
+- Common engine commercialization baseline.
 - Required local quality gate.
 - Repo guard.
 - OUT_OF_SCOPE preservation.

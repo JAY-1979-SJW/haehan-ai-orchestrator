@@ -7,6 +7,7 @@ def test_module_matrix_has_expected_modules():
         "portable_install",
         "desktop_auth_runtime",
         "backend_core",
+        "common_engine_commercialization",
         "local_agent_e2e",
         "live_agent",
         "playwright_ai",
@@ -64,6 +65,7 @@ def test_repo_guard_includes_desktop_security_boundary():
     assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
     assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
     assert any(step.check == "common_tool_runtime_baseline_contract" for step in repo_guard.steps)
+    assert any(step.check == "common_engine_commercialization_baseline" for step in repo_guard.steps)
     assert any(step.check == "common_tool_runtime_contract" for step in repo_guard.steps)
     assert any(step.check == "app_baseline_contract" for step in repo_guard.steps)
     assert any(step.check == "standard_workflow_contract" for step in repo_guard.steps)
@@ -288,6 +290,24 @@ def test_common_tool_runtime_baseline_contract_passes_current_sources():
 
 def test_common_tool_runtime_baseline_contract_registered_in_checks():
     assert "common_tool_runtime_baseline_contract" in gate.CHECKS
+
+
+def test_common_engine_commercialization_module_includes_contract_gate():
+    module = next(module for module in gate.MODULES if module.name == "common_engine_commercialization")
+
+    assert any(step.check == "common_engine_commercialization_baseline" for step in module.steps)
+    assert any(step.name == "common_engine_commercialization_py_compile" for step in module.steps)
+    assert any(step.name == "common_engine_commercialization_pytest" for step in module.steps)
+
+
+def test_common_engine_commercialization_baseline_passes_current_sources():
+    ok, message = gate.check_common_engine_commercialization_baseline()
+
+    assert ok, message
+
+
+def test_common_engine_commercialization_baseline_registered_in_checks():
+    assert "common_engine_commercialization_baseline" in gate.CHECKS
 
 
 def test_desktop_auth_runtime_baseline_contract_passes_current_sources():

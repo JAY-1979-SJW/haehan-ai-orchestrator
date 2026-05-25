@@ -16,6 +16,7 @@ MODULES = (
     "repo_guard",
     "backend_core",
     "common_tool_runtime",
+    "common_engine_commercialization",
     "local_agent_e2e",
     "approval_flow",
     "playwright_ai",
@@ -77,7 +78,7 @@ def audit() -> tuple[bool, list[str]]:
 
     return not failures, failures or [
         "MODULE_BASELINE exists and is locked",
-        "10 module contracts are present",
+        "11 module contracts are present",
         "app baseline references MODULE_BASELINE",
     ]
 
@@ -92,4 +93,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
