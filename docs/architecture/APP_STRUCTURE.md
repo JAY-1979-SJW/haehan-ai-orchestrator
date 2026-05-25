@@ -1,6 +1,7 @@
 ﻿# HAEHAN App Structure
 
-Status: ACTIVE
+Status: LOCKED
+Baseline ID: HAEHAN-APP-STRUCTURE-01
 Owner baseline: `docs/baseline/APP_BASELINE.md`
 Workflow rule: `docs/baseline/STANDARD_WORKFLOW.md`
 Last updated: 2026-05-25

@@ -94,7 +94,8 @@ REQUIRED_INVENTORY_PHRASES = (
 )
 
 REQUIRED_APP_STRUCTURE_PHRASES = (
-    "Status: ACTIVE",
+    "Status: LOCKED",
+    "Baseline ID: HAEHAN-APP-STRUCTURE-01",
     "The app must be developed as a server-first control surface.",
     "The server is the final operational source of truth for HAEHAN.",
     "## Structural Layers",

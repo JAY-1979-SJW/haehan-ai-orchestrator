@@ -10,6 +10,8 @@ def test_app_structure_contract_passes():
 def test_app_structure_locks_server_first_control_surface():
     text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
 
+    assert "Status: LOCKED" in text
+    assert "Baseline ID: HAEHAN-APP-STRUCTURE-01" in text
     assert "The app must be developed as a server-first control surface." in text
     assert "The server is the final operational source of truth for HAEHAN." in text
     assert "## Structural Layers" in text
