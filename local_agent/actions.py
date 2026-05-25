@@ -572,9 +572,22 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         hints = []
 
     allow_private_network = bool(params.get("allow_private_network", False))
+    background_approved = bool(
+        params.get("background_approved", False)
+        or params.get("allow_background_after_approval", False)
+        or params.get("_approved", False)
+    )
     headless = params.get("headless")
-    if headless is not None:
+    if headless is None:
+        headless = background_approved
+    else:
         headless = bool(headless)
+    if headless and not background_approved:
+        return ActionResult(
+            False, "web_open_url_readonly 백그라운드 거절", {},
+            "headless background execution requires user-approved background_approved=True",
+            error_code="BACKGROUND_NOT_APPROVED",
+        )
     try:
         keep_open_ms = int(params.get("keep_open_ms", 0))
     except (TypeError, ValueError):
@@ -628,6 +641,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         "browser_headless": bool(result.get("headless", True)),
         "browser_keep_open_ms": int(result.get("keep_open_ms", 0) or 0),
         "browser_channel": str(result.get("browser_channel") or "chromium")[:40],
+        "background_approved": background_approved,
         "login_required_hint": bool(result.get("login_required_hint", False)),
         "login_reason": list(result.get("login_reason") or []),
         "modal_candidates": _modal_list,
@@ -651,6 +665,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             "browser_headless": bool(result.get("headless", True)),
             "browser_keep_open_ms": int(result.get("keep_open_ms", 0) or 0),
             "browser_channel": str(result.get("browser_channel") or "chromium")[:40],
+            "background_approved": background_approved,
             "page_structure_counts": {
                 k: max(0, int(_counts.get(k) or 0))
                 for k in ("headings", "links", "buttons", "inputs", "forms", "tables")
