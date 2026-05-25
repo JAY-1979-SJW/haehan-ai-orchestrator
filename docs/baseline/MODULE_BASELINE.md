@@ -179,6 +179,40 @@ docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
 - Known WARN: disconnect/retry recovery requires a future module-specific
   recovery baseline.
 
+### local_agent_connection_recovery
+
+Detailed baseline:
+
+```text
+docs/baseline/modules/LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md
+```
+
+- Responsibility: local-agent registration repair, stale credential recovery,
+  WebSocket authentication probing, heartbeat loss handling, reconnect/backoff,
+  server/network/proxy failure classification, and redacted diagnostics.
+- Input: configured server URL, masked local agent identity, stored credential
+  presence, WebSocket close/error status, heartbeat state, and dispatch probe
+  result.
+- Output: PASS/FAIL connection readiness, safe recovery plan, redacted user
+  diagnostics, and live-check commands that do not reveal raw credentials.
+- Allowed paths: local-agent connection diagnostics, WebSocket client,
+  connection/live verification scripts, connection recovery baseline, and
+  focused tests/audits.
+- Forbidden behavior: raw token/code/cookie/session/password output,
+  indefinite retry on `AUTH_FAILED_4401`, automatic token deletion without user
+  confirmation, mock success for auth/network failure, or app UI direct
+  reconnect shortcuts outside the engine contract.
+- Security boundary: connection repair may guide registration/reset but may not
+  bypass backend auth, approval, task dispatch, or credential redaction.
+- State changes: no state changes during static audits; live checks may only
+  perform approved auth/heartbeat/readonly dispatch probes.
+- Required verification:
+  `python scripts/ops/audit_local_agent_connection_recovery_baseline.py`,
+  `python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q`,
+  and `python scripts/module_quality_gate.py --module local_agent_connection_recovery`.
+- Known WARN: live checks depend on current server and local credential, and
+  Gmail-specific remote execution is separate.
+
 ### approval_flow
 
 Detailed baseline:

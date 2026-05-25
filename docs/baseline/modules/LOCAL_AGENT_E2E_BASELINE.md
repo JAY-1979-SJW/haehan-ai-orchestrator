@@ -167,7 +167,8 @@ python scripts/required_quality_gate.py
 ## 11. Known WARN
 
 - Real local browser launch is a separate approved live/runtime stage.
-- Network disconnect and reconnect recovery need a future recovery baseline.
+- Network disconnect and reconnect recovery are locked separately in
+  `docs/baseline/modules/LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md`.
 - Long-running task timeout and retry policy need a future module-specific
   criterion.
 - Site-specific automation must be layered on top of the common tool runtime
@@ -187,4 +188,3 @@ local_agent_e2e baseline proposal
 -> verification
 -> report
 ```
-

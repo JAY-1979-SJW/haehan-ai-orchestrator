@@ -76,6 +76,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("common_tool_runtime_baseline_contract", check="common_tool_runtime_baseline_contract"),
             GateStep("common_engine_commercialization_baseline", check="common_engine_commercialization_baseline"),
+            GateStep("local_agent_connection_recovery_baseline", check="local_agent_connection_recovery_baseline"),
             GateStep("common_tool_runtime_contract", check="common_tool_runtime_contract"),
             GateStep("app_baseline_contract", check="app_baseline_contract"),
             GateStep("standard_workflow_contract", check="standard_workflow_contract"),
@@ -117,6 +118,39 @@ MODULES: tuple[GateModule, ...] = (
                     "-m",
                     "pytest",
                     "tests/test_common_engine_commercialization_baseline.py",
+                    "-p",
+                    "no:cacheprovider",
+                    "-q",
+                ),
+            ),
+        ),
+    ),
+    GateModule(
+        name="local_agent_connection_recovery",
+        description="local-agent registration repair, WebSocket auth, heartbeat, and reconnect recovery",
+        steps=(
+            GateStep("local_agent_connection_recovery_baseline", check="local_agent_connection_recovery_baseline"),
+            GateStep(
+                "local_agent_connection_recovery_py_compile",
+                (
+                    PY,
+                    "scripts/py_compile_no_cache.py",
+                    "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
+                    "tests/test_local_agent_connection_recovery_baseline.py",
+                    "verify_agent_ws_auth.py",
+                    "verify_live_agent_smoke.py",
+                    "verify_live_task_dispatch.py",
+                ),
+            ),
+            GateStep(
+                "local_agent_connection_recovery_pytest",
+                (
+                    PY,
+                    "-m",
+                    "pytest",
+                    "tests/test_local_agent_connection_recovery_baseline.py",
+                    "tests/test_local_agent_connection_repair.py",
+                    "tests/test_live_agent_smoke_recovery.py",
                     "-p",
                     "no:cacheprovider",
                     "-q",
@@ -800,6 +834,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_common_tool_runtime.py",
         "tests/test_common_tool_runtime_baseline_contract.py",
         "tests/test_common_engine_commercialization_baseline.py",
+        "tests/test_local_agent_connection_recovery_baseline.py",
         "tests/test_desktop_auth_runtime_baseline_contract.py",
         "tests/test_portable_install_baseline_contract.py",
         "tests/test_release_preflight_baseline_contract.py",
@@ -816,6 +851,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "scripts/ops/audit_common_tool_runtime.py",
         "scripts/ops/audit_common_tool_runtime_baseline_contract.py",
         "scripts/ops/audit_common_engine_commercialization_baseline.py",
+        "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
         "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
         "scripts/ops/audit_portable_install_baseline_contract.py",
         "scripts/ops/audit_release_preflight_baseline_contract.py",
@@ -1009,6 +1045,16 @@ def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
     return True, "locked common engine commercialization baseline defines engine-first app readiness"
 
 
+def check_local_agent_connection_recovery_baseline() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_local_agent_connection_recovery_baseline.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "locked local-agent connection recovery baseline defines repair and reconnect readiness"
+
+
 def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"],
@@ -1129,6 +1175,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "local_agent_browser_runtime_rules": check_local_agent_browser_runtime_rules,
     "common_tool_runtime_baseline_contract": check_common_tool_runtime_baseline_contract,
     "common_engine_commercialization_baseline": check_common_engine_commercialization_baseline,
+    "local_agent_connection_recovery_baseline": check_local_agent_connection_recovery_baseline,
     "common_tool_runtime_contract": check_common_tool_runtime_contract,
     "app_baseline_contract": check_app_baseline_contract,
     "standard_workflow_contract": check_standard_workflow_contract,

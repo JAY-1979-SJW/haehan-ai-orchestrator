@@ -23,6 +23,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_common_tool_runtime.py" in rendered
     assert "tests/test_common_tool_runtime_baseline_contract.py" in rendered
     assert "tests/test_common_engine_commercialization_baseline.py" in rendered
+    assert "tests/test_local_agent_connection_recovery_baseline.py" in rendered
     assert "tests/test_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "tests/test_portable_install_baseline_contract.py" in rendered
     assert "tests/test_release_preflight_baseline_contract.py" in rendered
@@ -41,6 +42,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
     assert "scripts/ops/audit_common_engine_commercialization_baseline.py" in rendered
+    assert "scripts/ops/audit_local_agent_connection_recovery_baseline.py" in rendered
     assert "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py" in rendered
     assert "scripts/ops/audit_portable_install_baseline_contract.py" in rendered
     assert "scripts/ops/audit_release_preflight_baseline_contract.py" in rendered
@@ -106,6 +108,27 @@ def test_run_command_passes_timeout(monkeypatch):
     assert captured["timeout"] == 7
     assert captured["command"] == (gate.sys.executable, "--version")
     assert captured["stdin"] == subprocess.DEVNULL
+
+
+def test_repo_guard_gate_gets_extended_timeout(monkeypatch):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["timeout"] = kwargs["timeout"]
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "30")
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    result = gate.run_command((gate.sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"))
+
+    assert result.ok is True
+    assert captured["timeout"] == 120
 
 
 def test_run_command_fails_fast_on_timeout(monkeypatch):

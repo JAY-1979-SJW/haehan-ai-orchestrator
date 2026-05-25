@@ -18,6 +18,7 @@ MODULES = (
     "common_tool_runtime",
     "common_engine_commercialization",
     "local_agent_e2e",
+    "local_agent_connection_recovery",
     "approval_flow",
     "playwright_ai",
     "desktop_auth_runtime",
@@ -78,7 +79,7 @@ def audit() -> tuple[bool, list[str]]:
 
     return not failures, failures or [
         "MODULE_BASELINE exists and is locked",
-        "11 module contracts are present",
+        "12 module contracts are present",
         "app baseline references MODULE_BASELINE",
     ]
 
