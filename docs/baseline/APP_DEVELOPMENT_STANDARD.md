@@ -521,6 +521,80 @@ Do not build live browser automation, server deploy/restart, installer,
 background recovery, always-on monitoring, or process termination into the app
 without separate explicit approval.
 
+## 9.1 Connection And Command Lock
+
+The current app connection and command system is locked to documented,
+server-first contracts only.
+
+Allowed app connection sources:
+
+```text
+server read-only status APIs
+server task state APIs
+server approval APIs
+server audit/report APIs
+server consent APIs
+local-agent connection status reported by the server
+static or dry-run contracts documented in this baseline
+```
+
+Allowed command classes:
+
+```text
+read
+list
+status
+preview
+dry_run
+approval_request
+approve
+reject
+cancel
+consent_grant
+consent_revoke
+report_export
+```
+
+Forbidden command classes:
+
+```text
+server_restart
+server_deploy
+docker_up
+docker_restart
+process_kill
+local_autostart
+browser_final_submit
+credential_extract
+cookie_export
+session_export
+raw_file_export
+cross_app_control
+unknown_tool_execute
+```
+
+The app may show a disabled or blocked state for forbidden commands, but it
+must not wire them to an executable handler.
+
+## 9.2 Developed Tool Attachment Lock
+
+Only developed and inventoried tools may be attached to the app.
+
+A tool is attachable only when all of these are true:
+
+- it exists in `docs/inventory/TOOL_INVENTORY.md`
+- its status is `active` or `locked`
+- its connection exists in `docs/inventory/CONNECTION_INVENTORY.md`
+- its command class is listed in the allowed command classes above
+- its auth, approval, input, output, redaction, and failure behavior are
+  documented
+- its verification command passes
+
+Tools in `legacy`, `deprecated`, `unknown`, `TBD`, or `Lock Needed Queue` may
+be displayed as inventory evidence only. They must not be attached to buttons,
+routes, background jobs, scheduled jobs, server actions, or local-agent
+dispatch until they are promoted by a baseline update and audit.
+
 ## 10. Verification Standard
 
 Minimum verification for app work:

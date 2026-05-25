@@ -13,6 +13,19 @@ browser, external API, and operational helper connections.
 Any task that creates, changes, removes, audits, or classifies a connection must
 update this inventory or record why the connection is out of scope.
 
+## Attachment Lock Rule
+
+Only connections with status `active` or `locked` may be used by app UI routes,
+server actions, background jobs, or local-agent dispatch.
+
+Connections with status `legacy`, `deprecated`, `unknown`, `TBD`, or entries
+in `Lock Needed Queue` may be shown as inventory evidence only. They must not
+be used for executable commands until their source, target, auth boundary,
+allowed direction, recovery policy, redaction boundary, and verification
+command are documented and passing.
+
+Unknown or unclassified connections must fail closed before command execution.
+
 ## Classification Fields
 
 Every locked connection entry should define:
