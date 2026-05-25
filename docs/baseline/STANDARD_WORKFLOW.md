@@ -178,6 +178,29 @@ passwords, OTP values, approval tokens, raw auth headers, sensitive personal
 data, full sensitive local file paths, full page HTML, or automatic raw
 screenshot captures.
 
+## 3.7 User Data Contribution Consent Rule
+
+Agent user task history may be used for product improvement or development
+material only when the server has recorded explicit user data contribution consent.
+
+Consent must be separate from normal service use, purpose-specific,
+category-specific, revocable, and tied to retention and deletion rules.
+
+Development material must be redacted, minimized, and purpose-bound. It may use
+safe intent summaries, safe result summaries, task categories, tool/module
+identifiers, state transitions, error codes, verification references, and user
+feedback.
+
+Development material must not contain raw user prompts, raw files, raw page
+content, raw screenshots, raw emails, raw document bodies, raw browser traces,
+secrets, credentials, tokens, cookies, sessions, passwords, OTP values,
+approval tokens, raw auth headers, sensitive personal data, or unrelated
+third-party content.
+
+If consent is missing, expired, revoked, or outside the recorded purpose, the
+record must not be used for product improvement, model training, benchmark
+creation, quality analysis, or feature planning.
+
 ## 4. Forbidden By Default
 
 These actions require explicit task-level approval:
@@ -206,6 +229,9 @@ These actions require explicit task-level approval:
   approval tokens, raw auth headers, sensitive personal data, full sensitive
   local file paths, full page HTML, or automatic raw screenshot captures in task
   history, audit logs, reports, or local diagnostic logs
+- using task history, audit logs, reports, prompts, files, screenshots, emails,
+  document bodies, browser traces, or local diagnostics as development material
+  without explicit server-recorded user data contribution consent
 
 ## 5. Standard Verification Levels
 

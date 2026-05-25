@@ -36,6 +36,7 @@ notes
 | Connection | Source | Target | Status | Auth boundary | Recovery policy | Verification |
 |---|---|---|---|---|---|---|
 | Server task queue | authenticated server API | backend task state | locked | server auth/approval | server-owned state transitions | `python scripts/ops/audit_backend_core_baseline_contract.py` |
+| Data contribution API | authenticated server API | server consent/export gate and JSONL consent store | active | server auth + explicit consent record | consent revoke blocks future export; JSONL replay restores consent state | `python -m pytest tests/test_user_data_contribution_consent.py -q` |
 | Local-agent WebSocket | local agent | server dispatch endpoint | locked | `agent_id + device_token` | bounded reconnect/backoff, no raw token output | `python scripts/ops/audit_local_agent_e2e_flow_contract.py` |
 | Connection recovery probes | local agent diagnostics | server auth/heartbeat/dispatch probes | locked | redacted credentials only | safe recovery plan, no indefinite auth retry | `python scripts/ops/audit_local_agent_connection_recovery_baseline.py` |
 | Desktop local server | desktop UI/runtime | `desktop/local_server.py` on local host | locked | subordinate to server contract | no persistent autostart without approval | `python scripts/ops/audit_desktop_auth_runtime_baseline_contract.py` |

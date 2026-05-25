@@ -41,6 +41,15 @@ def test_app_structure_locks_task_history_and_audit_log_boundary():
     assert "must not contain raw" in text
 
 
+def test_app_structure_locks_user_data_contribution_consent_boundary():
+    text = audit.APP_STRUCTURE.read_text(encoding="utf-8")
+
+    assert "## User Data Contribution Consent Boundary" in text
+    assert "explicit user data contribution consent" in text
+    assert "Only redacted and minimized development material" in text
+    assert "must not send or store raw user prompts" in text
+
+
 def test_app_structure_guard_report_exists():
     text = audit.REPORT.read_text(encoding="utf-8")
 
@@ -48,3 +57,4 @@ def test_app_structure_guard_report_exists():
     assert "Recovery Boundary" in text
     assert "No live recovery script was added." in text
     assert "Task History And Audit Log Boundary" in text
+    assert "User Data Contribution Consent Boundary" in text
