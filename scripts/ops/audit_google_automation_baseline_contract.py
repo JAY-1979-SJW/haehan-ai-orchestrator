@@ -33,10 +33,13 @@ REQUIRED_PHRASES = (
     "scripts/google/cloud/live_console_explorer.py",
     "scripts/google/secret_action_gate.py",
     "scripts/google/domain_readiness_audit.py",
+    "scripts/google/vision_usage_gate.py",
     "python scripts/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_domain_readiness_audit.py",
     "tests/test_google_secret_action_gate.py",
+    "tests/test_google_vision_usage_gate.py",
+    "monthly_free_limit_units = 1000",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -68,7 +71,15 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google import domain_readiness_audit, live_surface_explorer, secret_action_gate, subdomain_logic, tab_logic, workflows
+    from scripts.google import (
+        domain_readiness_audit,
+        live_surface_explorer,
+        secret_action_gate,
+        subdomain_logic,
+        tab_logic,
+        vision_usage_gate,
+        workflows,
+    )
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -145,6 +156,20 @@ def audit() -> tuple[bool, list[str]]:
     if secret_policy.get("raw_secret_output_allowed") is not False:
         failures.append("Google secret action gate must block raw secret output")
 
+    if vision_usage_gate.MONTHLY_FREE_LIMIT_UNITS != 1000:
+        failures.append("Google Vision monthly free-unit limit must stay 1000")
+    if vision_usage_gate.WARNING_THRESHOLD_UNITS != 800:
+        failures.append("Google Vision warning threshold must stay 800")
+    vision_gate = vision_usage_gate.evaluate_vision_monthly_free_gate(
+        current_month_units=999,
+        image_count=2,
+        features=["text_detection"],
+    )
+    if vision_gate.get("status") != "blocked":
+        failures.append("Google Vision must block projected usage above free units")
+    if vision_gate.get("secret_values_output") is not False:
+        failures.append("Google Vision gate must not output raw secret values")
+
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
         "9 Google tabs, 50 surfaces, and 96 actions are registered",
@@ -152,6 +177,7 @@ def audit() -> tuple[bool, list[str]]:
         "Google subdomain, tab, and 50-surface live logic contracts are present",
         "Google domain readiness covers OAuth/API and browser fallback boundaries",
         "Google secret issuance modes are gated and raw secret output is blocked",
+        "Google Vision monthly free-unit gate is locked",
         "Google undeveloped work counts and backlog boundaries are locked",
     ]
 
