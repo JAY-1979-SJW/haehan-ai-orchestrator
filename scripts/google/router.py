@@ -16,6 +16,7 @@ from . import (
     surfaces,
     tab_logic,
     workflows,
+    youtube_upload,
 )
 from .base import check_session
 from .cloud import live_console_explorer
@@ -105,6 +106,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             _cmd_subdomains(sub or "catalog", args)
         case "tabs":
             _cmd_tabs(sub or "catalog", args)
+        case "youtube":
+            _cmd_youtube(sub or "catalog", args)
         case "ai":
             _cmd_ai(sub or "catalog", args)
         case "android" | "android-app" | "app-dev":
@@ -322,11 +325,63 @@ def _cmd_android(sub: str, args: list[str]) -> None:
 
 
 def _cmd_domains(sub: str, args: list[str]) -> None:
+    if sub in ("page-tabs", "tabs", "subtabs"):
+        surface_key = args[0] if args else None
+        catalog = domain_taxonomy.build_google_page_tab_catalog(surface_key)
+        domain_taxonomy.print_google_page_tab_summary(catalog)
+        return
     if sub in ("catalog", "labels", "taxonomy", "classify", "report", "build", "verify"):
         report, json_path, md_path = domain_taxonomy.save_google_domain_taxonomy()
         domain_taxonomy.print_google_domain_taxonomy_summary(report, json_path, md_path)
         return
     print(f"  [error] unknown domains task: {sub}")
+
+
+def _cmd_youtube(sub: str, args: list[str]) -> None:
+    from scripts.google import youtube
+
+    if sub in ("catalog", "summary"):
+        print(json.dumps(youtube.catalog(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("tabs", "page-tabs", "subtabs"):
+        print(json.dumps(youtube.page_tabs(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("upload-prepare", "prepare-upload", "upload-plan"):
+        values = workflows.parse_kv_args(args)
+        plan, path = workflows.prepare_action("youtube_studio_upload_video", values)
+        print("=" * 60)
+        print("YouTube Studio upload prepare")
+        print("=" * 60)
+        print(f"saved: {path}")
+        print(f"latest: {workflows.LATEST_PREPARE}")
+        print(f"ready_for_approval: {plan['ready_for_approval']}")
+        print(f"approval_required: {plan['approval']['required']}")
+        print(f"state_change: {plan['state_change']}")
+        if plan["missing_inputs"]:
+            print(f"missing_inputs: {', '.join(plan['missing_inputs'])}")
+        print("live_fill: python scripts/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit")
+        return
+    if sub in ("upload-check", "check-upload", "upload-preapproval"):
+        values = workflows.parse_kv_args(args)
+        plan, path = youtube_upload.save_youtube_upload_plan(values)
+        youtube_upload.print_youtube_upload_plan(plan, path)
+        return
+    if sub in ("upload-live-fill", "live-fill-upload"):
+        if not args:
+            print("  [error] usage: python scripts/cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit")
+            return
+        if "--no-final-submit" not in args:
+            print("  [error] youtube upload-live-fill requires --no-final-submit")
+            return
+        result, path = live_inputs.run_live_input(args[0], no_final_submit=True)
+        live_inputs.print_live_input_summary(result, path)
+        return
+    if sub in ("classify", "check"):
+        target = args[0] if args else "www.youtube.com"
+        operation = args[1] if len(args) > 1 else "read"
+        print(json.dumps(youtube.classify_operation(target, operation), ensure_ascii=False, indent=2, default=str))
+        return
+    print(f"  [error] unknown youtube task: {sub}")
 
 
 def _cmd_precision(sub: str, args: list[str]) -> None:
@@ -347,6 +402,11 @@ def _cmd_work(sub: str, args: list[str]) -> None:
         catalog = workflows.build_adapter_catalog()
         path = workflows.save_adapter_catalog(catalog)
         workflows.print_adapter_summary(catalog, path)
+        return
+    if sub in ("undeveloped", "gaps", "missing", "todo"):
+        report = workflows.build_undeveloped_report()
+        path = workflows.save_undeveloped_report(report)
+        workflows.print_undeveloped_summary(report, path)
         return
     if sub == "prepare":
         if not args:

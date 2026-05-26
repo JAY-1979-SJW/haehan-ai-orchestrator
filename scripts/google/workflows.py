@@ -24,6 +24,8 @@ EXECUTION_DIR = ROOT / "data" / "google_execution_results"
 LATEST_ADAPTER_CATALOG = ROOT / "data" / "google_execution_adapter_catalog_latest.json"
 ADAPTER_CATALOG_DIR = ROOT / "data" / "google_execution_adapter_catalogs"
 VERIFICATION_DIR = ROOT / "data" / "google_execution_verifications"
+LATEST_UNDEVELOPED_REPORT = ROOT / "data" / "google_work_undeveloped_latest.json"
+UNDEVELOPED_REPORT_DIR = ROOT / "data" / "google_work_undeveloped_reports"
 
 APPROVAL_PHRASE = "GOOGLE_APPROVED_EXECUTE"
 
@@ -771,6 +773,94 @@ def save_adapter_catalog(catalog: dict | None = None, path: Path | None = None) 
     return target
 
 
+def build_undeveloped_report(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTIONS) -> dict:
+    """Separate implemented Google work from gated or missing development work."""
+    action_catalog = build_action_catalog(actions)
+    adapter_by_action = {
+        adapter["action_key"]: adapter for adapter in build_adapter_catalog(actions)["adapters"]
+    }
+    from . import live_inputs
+
+    live_coverage = live_inputs.build_live_input_coverage()
+    live_supported = {item["action_key"]: item for item in live_coverage["supported"]}
+    readonly_complete: list[dict] = []
+    live_input_supported: list[dict] = []
+    prepare_or_open_only: list[dict] = []
+    production_final_blocked: list[dict] = []
+    missing_adapter_profiles: list[dict] = []
+
+    for action in action_catalog["actions"]:
+        adapter = adapter_by_action.get(action["key"])
+        item = {
+            "action_key": action["key"],
+            "surface_key": action["surface_key"],
+            "operation": action["operation"],
+            "label": action["label"],
+            "requires_approval": action["requires_approval"],
+            "required_inputs": action["required_inputs"],
+            "target_url": action["target_url"],
+            "adapter_key": adapter.get("adapter_key") if adapter else "",
+        }
+        if not adapter:
+            item["development_status"] = "missing_adapter_profile"
+            missing_adapter_profiles.append(item)
+            continue
+        if not action["requires_approval"]:
+            item["development_status"] = "implemented_readonly"
+            item["final_state_policy"] = "read_only"
+            readonly_complete.append(item)
+            continue
+        item["final_state_policy"] = adapter["final_state_policy"]
+        item["production_final_status"] = "not_approved_for_agent_execution"
+        production_final_blocked.append(item)
+        if action["key"] in live_supported:
+            item["development_status"] = "implemented_live_input_no_final_submit"
+            item["live_input_mode"] = live_supported[action["key"]]["live_input_mode"]
+            live_input_supported.append(item)
+        else:
+            item["development_status"] = "prepare_or_open_only"
+            item["live_input_mode"] = "not_implemented"
+            prepare_or_open_only.append(item)
+
+    return {
+        "site_id": "google",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "policy": {
+            "baseline": "Google Home -> My Account -> registered subdomain -> approval URL",
+            "read_surfaces": "implemented_readonly",
+            "approval_actions": "prepare first, user approval required before any final external state change",
+            "live_input": "supported actions may prefill non-secret values with no_final_submit",
+            "final_execution": "blocked for agent unless a separate production adapter is explicitly approved",
+        },
+        "counts": {
+            "actions": len(action_catalog["actions"]),
+            "readonly_complete": len(readonly_complete),
+            "approval_actions": action_catalog["counts"]["approval_actions"],
+            "live_input_supported": len(live_input_supported),
+            "prepare_or_open_only": len(prepare_or_open_only),
+            "production_final_blocked": len(production_final_blocked),
+            "missing_adapter_profiles": len(missing_adapter_profiles),
+        },
+        "readonly_complete": readonly_complete,
+        "live_input_supported": live_input_supported,
+        "prepare_or_open_only": prepare_or_open_only,
+        "production_final_blocked": production_final_blocked,
+        "missing_adapter_profiles": missing_adapter_profiles,
+    }
+
+
+def save_undeveloped_report(report: dict | None = None, path: Path | None = None) -> Path:
+    report = report or build_undeveloped_report()
+    UNDEVELOPED_REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    LATEST_UNDEVELOPED_REPORT.parent.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    target = path or UNDEVELOPED_REPORT_DIR / f"google_work_undeveloped_{timestamp}.json"
+    text = json.dumps(report, ensure_ascii=False, indent=2)
+    target.write_text(text, encoding="utf-8")
+    LATEST_UNDEVELOPED_REPORT.write_text(text, encoding="utf-8")
+    return target
+
+
 def get_action(action_key: str) -> GoogleWorkAction:
     for action in GOOGLE_WORK_ACTIONS:
         if action.key == action_key:
@@ -943,6 +1033,24 @@ def print_adapter_summary(catalog: dict, path: Path) -> None:
             f"- {item['action_key']}: {item['adapter_key']} "
             f"[{item['implementation_status']}]"
         )
+
+
+def print_undeveloped_summary(report: dict, path: Path) -> None:
+    print("=" * 60)
+    print("Google undeveloped work report")
+    print("=" * 60)
+    print(f"saved: {path}")
+    print(f"latest: {LATEST_UNDEVELOPED_REPORT}")
+    print(f"actions: {report['counts']['actions']}")
+    print(f"readonly_complete: {report['counts']['readonly_complete']}")
+    print(f"approval_actions: {report['counts']['approval_actions']}")
+    print(f"live_input_supported: {report['counts']['live_input_supported']}")
+    print(f"prepare_or_open_only: {report['counts']['prepare_or_open_only']}")
+    print(f"production_final_blocked: {report['counts']['production_final_blocked']}")
+    print(f"missing_adapter_profiles: {report['counts']['missing_adapter_profiles']}")
+    print("prepare_or_open_only:")
+    for item in report["prepare_or_open_only"]:
+        print(f"- {item['action_key']}: {item['surface_key']} {item['operation']}")
 
 
 def _redact_values(values: dict[str, str]) -> dict[str, str]:

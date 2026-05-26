@@ -19,6 +19,9 @@ Current locked counts:
 - Google actions: 96
 - Read actions: 50
 - Approval actions: 46
+- Live input supported approval actions: 9
+- Prepare/open-only approval actions: 37
+- Production final execution blocked: 46
 - Host normalization warnings: 0
 - Live logic surfaces: 50
 
@@ -57,6 +60,49 @@ Forbidden:
 - account, mail, file, prompt, or private content output in logs
 
 The active login method is `user_present_session`.
+
+### 3.1 Google Connection Sequence Lock
+
+All Google browser/OAuth work must start from the Google primary entry and move
+in order. Directly opening a Google subdomain, Google OAuth URL, YouTube Studio,
+or Cloud Console URL without this sequence is a runtime error and must be logged
+before retry.
+
+Locked sequence:
+
+1. Open Google Home: `https://www.google.com/`.
+2. Check account state through `https://myaccount.google.com/` using only
+   non-secret indicators.
+3. Open the requested registered Google subdomain in the same local browser
+   profile.
+4. Open approval/OAuth URLs only after steps 1-3 have been verified.
+
+Runtime rules:
+
+- The browser profile must be the managed local-agent/CDP profile when screen
+  or tab verification is required.
+- If a URL is opened in a normal browser window and CDP cannot inspect it, record
+  `OAUTH_WINDOW_OPENED_OUTSIDE_CDP`, close or ignore that tab, and retry through
+  the locked sequence.
+- If Playwright cannot attach because of Windows permission errors, record
+  `PLAYWRIGHT_PROCESS_PERMISSION_DENIED` and use the direct Chrome DevTools HTTP
+  API only for read-only tab open/status checks.
+- OAuth helper URLs must use a registered redirect URI. For local CLI approval,
+  prefer loopback redirect `http://127.0.0.1:8765/oauth2callback`; OOB redirect
+  `urn:ietf:wg:oauth:2.0:oob` is not the runtime baseline.
+- Do not proceed from Google Home to OAuth unless the target subdomain is
+  registered and the operation remains read-only or approval-gated.
+- This sequence and OAuth-client matching rule is common SSO policy, not a
+  YouTube-only workaround. Other Google services must not use the older direct
+  OAuth-entry pattern.
+- A web-app OAuth client must be used only with its registered web callback
+  URI and declared scopes. Local Google API work such as YouTube caption read
+  should use a Desktop app OAuth client JSON unless the web client explicitly
+  registers a matching local redirect URI and scope.
+- For Google Console setup screens, the agent may enter non-secret setup values
+  such as application type, client name, and redirect URI when CDP can inspect
+  the page. The final Create/Save action remains user-direct. If CDP cannot
+  inspect the page, the agent must provide the exact values for user entry.
 
 ## 4. Action Risk Rules
 
@@ -112,6 +158,9 @@ Representative host boundaries:
 - `scripts/google/live_surface_explorer.py`: direct-CDP read-only live evidence for all 50 surfaces.
 - `scripts/google/cloud/live_console_explorer.py`: direct-CDP read-only Cloud Console evidence.
 - `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
+- `python scripts/cdp_client.py google work undeveloped`: required Google gap
+  report for separating implemented read-only work, no-final-submit input
+  support, prepare/open-only items, and production final-execution blocks.
 - `tests/test_google_tab_registry.py`: tab, host, count, and owner-package contract.
 - `tests/test_google_subdomain_logic.py`: host-level execution boundary contract.
 - `tests/test_google_tab_logic.py`: tab-level execution boundary and UI guidance contract.
@@ -151,3 +200,7 @@ Do not split all Google modules in one change.
   app-attachable tab logic; deeper file movement must preserve the locked counts.
 - Approval actions are contract-gated, but not all have final production API
   execution adapters.
+- Current undeveloped-work baseline: 37 approval actions are prepare/open-only,
+  9 approval actions support live input with `--no-final-submit`, and all 46
+  approval actions remain blocked from agent final execution until a separate
+  production adapter is explicitly approved.

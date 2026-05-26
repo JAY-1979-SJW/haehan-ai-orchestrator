@@ -19,6 +19,9 @@ REQUIRED_PHRASES = (
     "Google actions: 96",
     "Read actions: 50",
     "Approval actions: 46",
+    "Live input supported approval actions: 9",
+    "Prepare/open-only approval actions: 37",
+    "Production final execution blocked: 46",
     "Host normalization warnings: 0",
     "Live logic surfaces: 50",
     "user_present_session",
@@ -28,6 +31,7 @@ REQUIRED_PHRASES = (
     "scripts/google/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
+    "python scripts/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
@@ -60,7 +64,7 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google import live_surface_explorer, subdomain_logic, tab_logic
+    from scripts.google import live_surface_explorer, subdomain_logic, tab_logic, workflows
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -99,11 +103,35 @@ def audit() -> tuple[bool, list[str]]:
     if live_logic.get("surface_count") != 50:
         failures.append(f"Google live logic surface count mismatch: {live_logic.get('surface_count')}")
 
+    undeveloped = workflows.build_undeveloped_report()
+    expected_undeveloped_counts = {
+        "actions": 96,
+        "readonly_complete": 50,
+        "approval_actions": 46,
+        "live_input_supported": 9,
+        "prepare_or_open_only": 37,
+        "production_final_blocked": 46,
+        "missing_adapter_profiles": 0,
+    }
+    for key, expected in expected_undeveloped_counts.items():
+        actual = undeveloped["counts"].get(key)
+        if actual != expected:
+            failures.append(f"Google undeveloped lock mismatch {key}: expected {expected}, got {actual}")
+    supported = {item["action_key"] for item in undeveloped["live_input_supported"]}
+    prepare_only = {item["action_key"] for item in undeveloped["prepare_or_open_only"]}
+    for key in ("gmail_send_email", "youtube_studio_upload_video", "cloud_create_api_credential"):
+        if key not in supported:
+            failures.append(f"Google live-input lock missing supported action: {key}")
+    for key in ("drive_upload_share_file", "ads_campaign_budget_change", "vertex_ai_start_job_or_deploy"):
+        if key not in prepare_only:
+            failures.append(f"Google prepare/open-only lock missing backlog action: {key}")
+
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
         "9 Google tabs, 50 surfaces, and 96 actions are registered",
         "Google host warnings are zero",
         "Google subdomain, tab, and 50-surface live logic contracts are present",
+        "Google undeveloped work counts and backlog boundaries are locked",
     ]
 
 
