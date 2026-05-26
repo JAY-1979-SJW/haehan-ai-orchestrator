@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from scripts.youtube import research
+from scripts.youtube import browser_transcript
 from scripts.youtube.router import _read_json_file
 
 
@@ -372,6 +373,32 @@ def test_collect_video_summary_blocks_invalid_url():
 
     assert result["status"] == "blocked"
     assert result["reason"] == "invalid_youtube_video_url_or_id"
+
+
+def test_browser_transcript_summary_does_not_store_raw_transcript():
+    result = browser_transcript.summarize_visible_segments(
+        [
+            "00:00",
+            "Harness engineering starts with clear specifications and repeatable checks.",
+            "Prompt quality improves when requirements and examples are separated.",
+        ],
+        video_id="3yyLg1xbQSs",
+    )
+
+    assert result["status"] == "ok"
+    assert result["raw_transcript_stored"] is False
+    assert result["segment_count_observed"] == 3
+    assert result["derived_summary"]["topics"]
+    assert "Harness engineering starts" in result["derived_summary"]["highlights"][0]
+
+
+def test_browser_transcript_executor_blocks_invalid_url():
+    result, path = browser_transcript.collect_visible_transcript_summary("https://example.com/nope")
+
+    assert path.exists()
+    assert result["status"] == "blocked"
+    assert result["reason"] == "invalid_youtube_video_url_or_id"
+    assert result["raw_transcript_stored"] is False
 
 
 def test_collect_video_info_uses_official_api(monkeypatch):
