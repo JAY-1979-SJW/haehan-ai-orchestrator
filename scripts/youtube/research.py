@@ -196,6 +196,8 @@ def search_videos(
     *,
     max_results: int = 5,
     api_key: str | None = None,
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
     captions_only: bool = False,
 ) -> tuple[dict[str, Any], Path]:
     """Search public YouTube videos through the official Data API.
@@ -204,38 +206,41 @@ def search_videos(
     to scraping YouTube search pages.
     """
     key = _api_key(api_key)
+    token = _oauth_token(oauth_token, token_file)
     max_results = max(1, min(int(max_results), 10))
-    if not key:
+    if not key and not token:
         payload = {
             "schema_version": 1,
             "created_at": _now(),
             "workflow": "youtube_research_search",
             "ok": False,
             "status": "blocked",
-            "reason": "youtube_data_api_key_required",
+            "reason": "youtube_data_api_key_or_oauth_token_required",
             "query": safe_preview(query, limit=120),
             "state_change": False,
             "secret_values_read": False,
             "results": [],
-            "next_step": "Set YOUTUBE_API_KEY or provide approved official API credentials.",
+            "next_step": "Set YOUTUBE_API_KEY or provide approved official OAuth credentials.",
             "captions_only": captions_only,
         }
         return payload, _write_report(payload, LATEST_SEARCH, "youtube_research_search")
 
     search_params: dict[str, str | int] = {
-        "key": key,
         "part": "snippet",
         "q": query,
         "type": "video",
         "maxResults": max_results,
         "safeSearch": "moderate",
     }
+    if key:
+        search_params["key"] = key
     if captions_only:
         search_params["videoCaption"] = "closedCaption"
 
-    search_data = _get_json(
-        YOUTUBE_SEARCH_URL,
-        search_params,
+    search_data = (
+        _get_json(YOUTUBE_SEARCH_URL, search_params)
+        if key
+        else _get_json_oauth(YOUTUBE_SEARCH_URL, search_params, token)
     )
     video_ids = [
         item.get("id", {}).get("videoId", "")
@@ -244,14 +249,15 @@ def search_videos(
     ]
     details: dict[str, Any] = {"items": []}
     if video_ids:
-        details = _get_json(
-            YOUTUBE_VIDEOS_URL,
-            {
-                "key": key,
+        detail_params: dict[str, str | int] = {
                 "part": "snippet,contentDetails,statistics",
                 "id": ",".join(video_ids),
-            },
-        )
+            }
+        if key:
+            detail_params["key"] = key
+            details = _get_json(YOUTUBE_VIDEOS_URL, detail_params)
+        else:
+            details = _get_json_oauth(YOUTUBE_VIDEOS_URL, detail_params, token)
 
     detail_by_id = {item.get("id"): item for item in details.get("items", [])}
     rows: list[dict[str, Any]] = []
@@ -296,6 +302,8 @@ def search_videos(
         "state_change": False,
         "secret_values_read": False,
         "api_key_output": "redacted",
+        "oauth_token_output": "redacted",
+        "credential_source": "api_key" if key else "oauth",
         "captions_only": captions_only,
         "result_count": len(rows),
         "results": rows,
