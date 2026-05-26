@@ -4,7 +4,7 @@ Status: LOCKED
 Baseline ID: SITE-SSO-SUBDOMAIN-RUNTIME-BASELINE-01
 Approved by: user approval in current Codex session
 Baseline HEAD: 45d10852a3ba8756ecb11c5cdcec8a5ad4da8ac2
-Last updated: 2026-05-24
+Last updated: 2026-05-26
 
 ## 1. Purpose
 
@@ -22,6 +22,24 @@ workflow catalogs into host-level read and approval boundaries without
 performing credential entry or exporting session material.
 Google tab-level feature logic is implemented in `scripts/google/tab_logic.py`
 and exposed through all nine Google tab packages.
+
+## 1.1 Occasional Site Login Handoff
+
+For sites that are used only once or infrequently, a developed site module is not required before login assistance.
+The allowed mode is an occasional-site login handoff:
+
+- open the approved entry URL in the local-agent browser with
+  `web_open_url_readonly`
+- the user enters credentials directly
+- auto login and credential replay remain false
+- the agent may perform only a read-only session check using non-secret page
+  indicators
+- cookies, sessions, tokens, passwords, OTPs, Authorization headers, and raw
+  page content must not be exported
+- no state-changing work is allowed after login unless the user separately
+  approves the final action
+- if the site becomes repeated or business-critical, it must be promoted to a
+  registered site module before broader automation is added
 
 ## 2. Universal Flow
 

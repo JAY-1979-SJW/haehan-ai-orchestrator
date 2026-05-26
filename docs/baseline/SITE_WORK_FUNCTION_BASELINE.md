@@ -35,6 +35,12 @@ Every user-facing work item must be classified into one of these tiers:
   that must be completed directly by the user.
 - `blocked`: the module must refuse to create an executable task.
 
+For one-time or infrequent sites, login may use an occasional-site login
+handoff without developing a full site module. This handoff opens only the
+approved entry URL in the local-agent browser, requires the user to enter
+credentials directly, allows only read-only session checks, and must not perform
+state-changing work.
+
 A work item is not complete if it has only a file or class but no router entry,
 no gate policy, or no test/audit coverage.
 
