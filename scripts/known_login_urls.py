@@ -115,11 +115,11 @@ KNOWN_LOGIN_URLS: dict[str, str] = {
     "eum.cw.or.kr": "https://eum.cw.or.kr/login",
 
     # ── 네이버 쇼핑몰 (스마트스토어 셀러센터) ──────────────────────────
-    "sell.smartstore.naver.com": "https://nid.naver.com/nidlogin.login?url=https%3A%2F%2Fsell.smartstore.naver.com%2F",
-    "smartstore.naver.com": "https://nid.naver.com/nidlogin.login?url=https%3A%2F%2Fsmartstore.naver.com%2F",
-    "commerce.naver.com": "https://nid.naver.com/nidlogin.login?url=https%3A%2F%2Fcommerce.naver.com%2F",
-    "center.shopping.naver.com": "https://nid.naver.com/nidlogin.login?url=https%3A%2F%2Fcenter.shopping.naver.com%2F",
-    "adcenter.naver.com": "https://nid.naver.com/nidlogin.login?url=https%3A%2F%2Fadcenter.naver.com%2F",  # 네이버 광고센터
+    "sell.smartstore.naver.com": "https://www.naver.com/",
+    "smartstore.naver.com": "https://www.naver.com/",
+    "commerce.naver.com": "https://www.naver.com/",
+    "center.shopping.naver.com": "https://www.naver.com/",
+    "adcenter.naver.com": "https://www.naver.com/",  # 네이버 광고센터
 
     # ── 정부 부처 (정부24 통합인증센터 SSO 사용 다수) ───────────────────
     "moef.go.kr": "https://www.moef.go.kr/com/cmm/EgovLoginUsr.do",
@@ -167,7 +167,7 @@ KNOWN_LOGIN_URLS: dict[str, str] = {
     "notion.so": "https://www.notion.so/login",
     "zoom.us": "https://zoom.us/signin",
     "outlook.live.com": "https://login.live.com/",
-    "mail.naver.com": "https://nid.naver.com/nidlogin.login",
+    "mail.naver.com": "https://www.naver.com/",
     "mail.daum.net": "https://logins.daum.net/accounts/loginform.do",
     "mail.google.com": "https://accounts.google.com/ServiceLogin",
 

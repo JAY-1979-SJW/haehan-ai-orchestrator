@@ -109,7 +109,7 @@ def snapshot_mail(actions: _Actions, sn: str,
     """본문 진입 전 unread 상태 확인."""
     # unread 목록으로 이동 후 상태 확인
     actions.navigate(f"https://mail.naver.com/v2/folders/{folder_id}/unread")
-    time.sleep(2.0)
+    time.sleep(0.2)
     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=10.0)
     st = state_in_unread_list(actions, sn)
     return MailReadSnapshot(sn=sn, before_state=st)
@@ -127,7 +127,7 @@ def open_body_and_audit_state(actions: _Actions,
         .format(folder_id=folder_id, sn=snap.sn)
     t0 = _ms()
     actions.navigate(url)
-    time.sleep(3.5)
+    time.sleep(0.3)
     actions.wait_dom(
         "document.querySelector('iframe#readFrame, iframe[id*=\"read\"], "
         ".mail_view_content, .read_content')",
@@ -151,10 +151,10 @@ def restore_unread_state(actions: _Actions,
     ok, reason = attempt_restore_via_body_page(actions)
     snap.restore_attempted = True
     snap.restore_reason = reason
-    time.sleep(2.0)
+    time.sleep(0.2)
     # unread 목록으로 가서 다시 확인
     actions.navigate(f"https://mail.naver.com/v2/folders/{folder_id}/unread")
-    time.sleep(2.5)
+    time.sleep(0.3)
     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=10.0)
     after = state_in_unread_list(actions, snap.sn)
     snap.after_restore_state = after

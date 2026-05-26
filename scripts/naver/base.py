@@ -35,16 +35,19 @@ from scripts.site_base import (  # noqa: E402
     check_session as _check_session_base,
     task_context as _task_context_base,
 )
+from scripts.naver.browser_gate import require_naver_browser  # noqa: E402
 
 
 def check_session() -> dict:
     """데몬 Chrome에서 네이버 로그인 상태 실시간 확인."""
+    require_naver_browser()
     return _check_session_base("naver")
 
 
 @contextmanager
 def task_context(task: str, args: list[str]) -> Generator:
     """네이버 작업 컨텍스트 — 데몬 Chrome 연결 + 로그인 확인."""
+    require_naver_browser()
     with _task_context_base(
         "naver", task, args,
         start_url="https://www.naver.com/",

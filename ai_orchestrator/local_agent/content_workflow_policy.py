@@ -116,4 +116,4 @@ NAVER_BLOG_DOMAINS: frozenset[str] = frozenset({
     "blog.naver.com", "m.blog.naver.com",
 })
 
-NAVER_LOGIN_DOMAIN = "nid.naver.com"
+NAVER_LOGIN_DOMAIN = "www.naver.com"

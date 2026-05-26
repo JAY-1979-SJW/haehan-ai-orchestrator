@@ -2,7 +2,7 @@
 """네이버 수동 로그인 확인 smoke 스크립트.
 
 실행 예:
-  python scripts/smoke_naver_manual_login_probe.py --url https://nid.naver.com/nidlogin.login --wait-seconds 120
+  python scripts/smoke_naver_manual_login_probe.py --url https://www.naver.com/ --wait-seconds 120
 
 동작:
   - 접속 허용 호스트는 기본으로 www.naver.com / nid.naver.com 만.
@@ -21,7 +21,7 @@ import os
 import sys
 
 
-DEFAULT_URL = "https://nid.naver.com/nidlogin.login"
+DEFAULT_URL = "https://www.naver.com/"
 DEFAULT_ALLOWED_HOSTS = ("www.naver.com", "nid.naver.com")
 
 

@@ -266,7 +266,7 @@ def discover_folders(actions: _ActionsP,
             if f.unread_count > 0 and f.kind in learn_kinds:
                 clicked = actions.evaluate(_click_folder_expr(f.name))
                 if clicked:
-                    time.sleep(click_delay_s)
+                    time.sleep(min(click_delay_s, 0.2))
                     actions.wait_dom(
                         "document.querySelector('li.mail_item, .mail_list_wrap')",
                         timeout_s=8.0,
@@ -280,7 +280,7 @@ def discover_folders(actions: _ActionsP,
                         f.folder_key = f"{f.name}::{f.kind}::{fid}"
         # 받은편지함으로 복귀
         actions.navigate("https://mail.naver.com/v2/folders/0/all")
-        time.sleep(2.0)
+        time.sleep(0.2)
 
     # adapter 자동 선택
     from . import folder_policy as fp

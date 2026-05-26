@@ -203,11 +203,11 @@ def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0
         # 2) 드롭다운 2-step
         open_ok = actions.evaluate(UNREAD_DROPDOWN_OPEN_EXPR)
         if open_ok:
-            time.sleep(0.5)
+            time.sleep(0.1)
             click_ok = actions.evaluate(UNREAD_DROPDOWN_CLICK_EXPR)
             if click_ok:
                 method = str(click_ok)
-    time.sleep(1.0)
+    time.sleep(0.2)
     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=timeout_s)
     post = actions.evaluate(FILTER_EVIDENCE_EXPR) or {}
     evidence = {
@@ -327,7 +327,7 @@ def _advance_page(actions: "Actions", target_idx: int,
     new_url = _bump_page_url(current_url, target_idx)
     if new_url:
         actions.navigate(new_url)
-        time.sleep(1.0)
+        time.sleep(0.2)
         ok = actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
         if ok:
             return (True, "url_page")
@@ -378,7 +378,7 @@ def collect_inbox(
     filter_evidence: dict = {}
     if mode == rsg.MODE_UNREAD_ONLY:
         filter_applied, filter_evidence = apply_unread_filter(actions)
-        time.sleep(0.5)
+        time.sleep(0.1)
 
     # page 1 evaluate
     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=12.0)
@@ -493,7 +493,7 @@ def collect_inbox(
                 trial_url = _bump_page_url(url_before, target_idx)
                 if trial_url:
                     actions.navigate(trial_url)
-                    time.sleep(1.5)
+                    time.sleep(0.2)
                     actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=6.0)
                     after = actions.evaluate(LIST_EXPR) or {}
                     if _sn_hash(after) == sn_hash_before:
@@ -524,7 +524,7 @@ def collect_inbox(
             break
 
         strategies_used.add(strat)
-        time.sleep(1.0)
+        time.sleep(0.2)
         actions.wait_dom("document.querySelector('li.mail_item')", timeout_s=8.0)
         more = actions.evaluate(LIST_EXPR) or {}
 

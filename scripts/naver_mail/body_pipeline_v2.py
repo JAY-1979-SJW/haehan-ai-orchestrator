@@ -123,7 +123,7 @@ class TargetMail:
 def run(actions: Actions, targets: list[TargetMail],
         *, mode: str = MODE_DRY_RUN,
         max_bodies: int = 2,
-        inter_mail_sleep_s: float = 1.5
+        inter_mail_sleep_s: float = 0.2
         ) -> PipelineReport:
     """본문 진입 파이프라인 실행.
 

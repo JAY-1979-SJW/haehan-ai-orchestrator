@@ -35,6 +35,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 
 # ── 설정 ─────────────────────────────────────────────────────────────
 DAEMON_STATE_FILE = ROOT / "data" / "cdp_daemon_state.json"
@@ -152,6 +153,7 @@ def _sanitize_chrome_prefs() -> None:
 
 
 def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
+    assert_browser_launch_allowed(component="scripts.cdp_daemon", action="chrome_cdp_launch")
     exe, kind = _find_browser(BROWSER_TYPE)
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     _sanitize_chrome_prefs()
@@ -602,6 +604,8 @@ def cmd_start() -> None:
         return
     except Exception:
         pass
+
+    assert_browser_launch_allowed(component="scripts.cdp_daemon", action="cdp_daemon_start")
 
     script = Path(__file__).resolve()
     if sys.platform == "win32":

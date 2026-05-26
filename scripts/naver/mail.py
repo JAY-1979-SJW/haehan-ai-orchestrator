@@ -25,6 +25,7 @@ from scripts.web_connector import get_page
 from scripts.login_session import ensure_login
 from scripts.logger import get_logger
 from scripts import cdp_db
+from scripts.gate import check as gate_check
 
 _log = get_logger(__name__)
 
@@ -360,6 +361,7 @@ def send_mail(page) -> dict[str, Any]:
     Returns:
         {success, recipient, subject, error_msg}
     """
+    gate_check("naver_mail_send")
     result: dict[str, Any] = {"success": False}
     main = page.frames[0]
 
@@ -742,6 +744,7 @@ class NaverMail:
             self.page.keyboard.type(body, delay=10)
             _time_v2.sleep(0.5)
             if send:
+                gate_check("naver_mail_send")
                 self.page.locator('button:has-text("보내기"), .btn_send').first.click(timeout=3000)
                 _time_v2.sleep(3)
                 log_critical("MAIL_SEND", f"네이버 메일 발송: {subject[:30]}", to=to)

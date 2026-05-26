@@ -10,6 +10,7 @@ import urllib.request
 import urllib.error
 
 from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
 CDP_HOST = "127.0.0.1"
 CDP_PORT = 9222
@@ -64,6 +65,8 @@ def ensure_cdp(host: str = CDP_HOST, port: int = CDP_PORT,
         L2("CDP_BOOT_OK", ACTOR, host=host, port=port, retries=0,
            total_ms=0, reason="already_up")
         return base
+
+    assert_browser_launch_allowed(component="ai_orchestrator.local_agent.browser.cdp_launcher", action="cdp_scheduler_start")
 
     if not is_task_registered(task_name):
         L2("CDP_BOOT_FAIL", ACTOR, reason="task_not_registered", task=task_name)

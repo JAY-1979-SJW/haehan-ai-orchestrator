@@ -31,6 +31,7 @@ import sys
 sys.path.insert(0, str(ROOT))
 from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST, CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -53,6 +54,7 @@ def _ensure_cdp_daemon() -> None:
             pass
 
     log.info("[web_connector] CDP 데몬 미실행 — 앱 요청으로 자동 기동")
+    assert_browser_launch_allowed(component="scripts.web_connector", action="cdp_daemon_autostart")
     daemon_script = ROOT / "scripts" / "cdp_daemon.py"
     import subprocess, sys
     subprocess.Popen(
@@ -300,6 +302,7 @@ def persistent_session(
     storage_path = s_dir / "state.json"
 
     with sync_playwright() as p:
+        assert_browser_launch_allowed(component="scripts.web_connector", action="playwright_persistent_context")
         ctx = p.chromium.launch_persistent_context(
             user_data_dir=str(s_dir),
             headless=headless,
