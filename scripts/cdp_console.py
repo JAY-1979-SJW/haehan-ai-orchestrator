@@ -90,8 +90,8 @@ class CDPSession:
         rows = s.extract_table("table")
     """
 
-    def __init__(self, ws_url: str):
-        self._ws = websocket.create_connection(ws_url, timeout=15)
+    def __init__(self, ws_url: str, timeout: float = 15):
+        self._ws = websocket.create_connection(ws_url, timeout=timeout)
         self._msg_id = 0
 
     # ── 저수준 CDP ────────────────────────────────────────────────────────────
@@ -407,14 +407,14 @@ class CDPSession:
 # ── 편의 연결 함수 ────────────────────────────────────────────────────────────
 
 @contextmanager
-def connect(url_contains: str = "") -> Generator[CDPSession, None, None]:
+def connect(url_contains: str = "", websocket_timeout: float = 15) -> Generator[CDPSession, None, None]:
     """CDP 세션 컨텍스트 매니저.
 
     with connect() as s:
         rows = s.extract_table()
     """
     tab = _find_tab(url_contains)
-    s = CDPSession(tab["webSocketDebuggerUrl"])
+    s = CDPSession(tab["webSocketDebuggerUrl"], timeout=websocket_timeout)
     try:
         yield s
     finally:

@@ -218,9 +218,66 @@ def test_google_live_input_final_control_policy_lists_required_blocks():
 def test_google_live_input_timeout_can_be_extended(monkeypatch):
     monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_TIMEOUT_MS", "300000")
     monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_LOCATOR_TIMEOUT_MS", "30000")
+    monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_CDP_TIMEOUT_SEC", "120")
 
     assert live_inputs._page_timeout(45000) == 300000
     assert live_inputs._locator_timeout(5000) == 30000
+    assert live_inputs._cdp_websocket_timeout() == 120.0
+
+
+def test_google_live_input_direct_cdp_first_default(monkeypatch):
+    monkeypatch.delenv("HAEHAN_GOOGLE_LIVE_INPUT_DIRECT_CDP_FIRST", raising=False)
+    assert live_inputs._direct_cdp_first() is True
+
+    monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_DIRECT_CDP_FIRST", "0")
+    assert live_inputs._direct_cdp_first() is False
+
+
+def test_google_direct_cdp_timeout_records_opened_no_final_submit():
+    class SlowSession:
+        @property
+        def url(self):
+            raise TimeoutError("Connection timed out")
+
+        @property
+        def title(self):
+            return ""
+
+    action = {"key": "cloud_iam_change_role", "target_url": "https://console.cloud.google.com/iam-admin/iam"}
+    result = {
+        "status": "started",
+        "warnings": [],
+        "state_change_final_button_clicked": False,
+    }
+
+    live_inputs._record_direct_cdp_incomplete(action, result, SlowSession(), TimeoutError("Connection timed out"))
+
+    assert result["status"] == "opened_no_final_submit"
+    assert result["current_url"] == action["target_url"]
+    assert result["state_change_final_button_clicked"] is False
+    assert any("incomplete_after_open" in warning for warning in result["warnings"])
+
+
+def test_google_direct_cdp_without_session_records_blocked():
+    action = {"key": "cloud_iam_change_role", "target_url": "https://console.cloud.google.com/iam-admin/iam"}
+    result = {
+        "status": "started",
+        "warnings": [],
+        "state_change_final_button_clicked": False,
+    }
+
+    live_inputs._record_direct_cdp_incomplete(action, result, None, RuntimeError("no usable CDP tab"))
+
+    assert result["status"] == "blocked_browser_control_unavailable"
+    assert result["state_change_final_button_clicked"] is False
+
+
+def test_google_cloud_iam_live_input_target_includes_project():
+    action = {"key": "cloud_iam_change_role", "target_url": "https://console.cloud.google.com/iam-admin/iam"}
+
+    target = live_inputs._live_input_target_url(action, {"project": "example project"})
+
+    assert target == "https://console.cloud.google.com/iam-admin/iam?project=example%20project"
 
 
 def test_youtube_upload_retry_requires_verified_video_input():

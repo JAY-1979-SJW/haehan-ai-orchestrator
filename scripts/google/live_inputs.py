@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import json
 import os
+import requests
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode, urlsplit
 
 from . import workflows
 
@@ -89,6 +90,103 @@ def _locator_timeout(default_ms: int) -> int:
 def _cdp_wait(session: Any, seconds: float) -> None:
     multiplier = _env_float("HAEHAN_GOOGLE_LIVE_INPUT_WAIT_MULTIPLIER", 1.5)
     session.wait(seconds * multiplier)
+
+
+def _cdp_websocket_timeout() -> float:
+    return _env_float("HAEHAN_GOOGLE_LIVE_INPUT_CDP_TIMEOUT_SEC", 60.0)
+
+
+def _direct_cdp_first() -> bool:
+    raw = os.environ.get("HAEHAN_GOOGLE_LIVE_INPUT_DIRECT_CDP_FIRST", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+class _CDPSessionManager:
+    def __init__(self, session: Any):
+        self._session = session
+
+    def __enter__(self) -> Any:
+        return self._session
+
+    def __exit__(self, *_: Any) -> None:
+        self._session.close()
+
+
+def _new_cdp_target_session(target_url: str) -> _CDPSessionManager:
+    from scripts.cdp_console import CDPSession
+    from scripts.config import CDP_HOST, CDP_PORT
+
+    encoded_url = quote(target_url, safe=":/?&=%#")
+    endpoint = f"http://{CDP_HOST}:{CDP_PORT}/json/new?{encoded_url}"
+    timeout = min(max(5.0, _cdp_websocket_timeout()), 30.0)
+    last_error: Exception | None = None
+    for method in (requests.put, requests.get):
+        try:
+            response = method(endpoint, timeout=timeout)
+            response.raise_for_status()
+            payload = response.json()
+            ws_url = payload.get("webSocketDebuggerUrl")
+            if not ws_url:
+                raise RuntimeError("CDP new target response did not include websocket URL")
+            return _CDPSessionManager(CDPSession(ws_url, timeout=_cdp_websocket_timeout()))
+        except Exception as exc:
+            last_error = exc
+    raise RuntimeError(f"CDP new target unavailable: {last_error}")
+
+
+def _live_input_target_url(action: dict, values: dict) -> str:
+    target = action.get("target_url", "")
+    if action.get("key") == "cloud_iam_change_role" and values.get("project") and "project=" not in target:
+        separator = "&" if "?" in target else "?"
+        target = f"{target}{separator}project={quote(str(values['project']), safe='')}"
+    return target
+
+
+def _connect_live_input_cdp(action: dict, result: dict) -> Any:
+    from scripts.cdp_console import connect
+
+    target_url = action.get("target_url", "")
+    try:
+        return _new_cdp_target_session(target_url)
+    except Exception as exc:
+        result["warnings"].append(f"cdp_new_target_unavailable: {exc}")
+
+    host = urlsplit(target_url).netloc
+    for token in (host, "google", ""):
+        try:
+            return connect(url_contains=token, websocket_timeout=_cdp_websocket_timeout())
+        except Exception as exc:
+            result["warnings"].append(f"cdp_existing_tab_unavailable({token or 'any'}): {exc}")
+    raise RuntimeError("no usable CDP tab")
+
+
+def _safe_cdp_identity(session: Any, action: dict) -> dict:
+    identity = {"current_url": "", "title": ""}
+    if session is not None:
+        try:
+            identity["current_url"] = session.url
+        except Exception:
+            identity["current_url"] = ""
+        try:
+            identity["title"] = session.title
+        except Exception:
+            identity["title"] = ""
+    if session is not None and not identity["current_url"] and action.get("target_url"):
+        identity["current_url"] = action["target_url"]
+    return identity
+
+
+def _record_direct_cdp_incomplete(action: dict, result: dict, session: Any, exc: Exception) -> None:
+    identity = _safe_cdp_identity(session, action)
+    result.update(identity)
+    current_url = identity.get("current_url", "")
+    if current_url and current_url != "about:blank":
+        result["status"] = "opened_no_final_submit"
+        result["warnings"].append(f"direct_cdp_live_input_incomplete_after_open: {exc}")
+    else:
+        result["status"] = "blocked_browser_control_unavailable"
+        result["warnings"].append(f"direct_cdp_live_input_blocked: {exc}")
+    result["state_change_final_button_clicked"] = False
 
 
 def build_live_input_coverage() -> dict:
@@ -187,6 +285,12 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
         result["warnings"].append("missing inputs: " + ", ".join(plan["missing_inputs"]))
         return _save_result(result)
 
+    if _direct_cdp_first():
+        _dispatch_live_input_direct_cdp(action, values, result)
+        if not result["status"].startswith("blocked") and result["status"] != "failed":
+            return _save_result(result)
+        result["warnings"].append("direct CDP first path was unavailable; retrying Playwright path.")
+
     try:
         from scripts.web_connector import get_page
 
@@ -263,7 +367,7 @@ def run_live_input_manifest(
                     "final_clicked": result.get("state_change_final_button_clicked", False),
                 }
             )
-            if result["status"] == "filled_no_final_submit":
+            if result["status"] in ("filled_no_final_submit", "opened_no_final_submit"):
                 summary["counts"]["filled"] += 1
             elif result["status"].startswith("blocked"):
                 summary["counts"]["blocked"] += 1
@@ -346,17 +450,13 @@ def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) ->
 
 def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) -> None:
     """Fallback live input path that uses the existing CDP browser directly."""
-    from scripts.cdp_console import connect
-
+    session_manager = None
+    session = None
+    target_action = {**action, "target_url": _live_input_target_url(action, values)}
     try:
-        cdp_context = connect(url_contains="about:blank")
-        session_manager = cdp_context
+        session_manager = _connect_live_input_cdp(target_action, result)
         session = session_manager.__enter__()
-    except Exception:
-        session_manager = connect()
-        session = session_manager.__enter__()
-    try:
-        session.goto(action["target_url"], wait_idle=False)
+        session.goto(target_action["target_url"], wait_idle=False)
         _cdp_wait(session, 4.0)
         key = action["key"]
         if key == "gmail_send_email":
@@ -407,17 +507,39 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
                 result["filled_fields"].append("property")
             result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
         elif key == "cloud_iam_change_role":
-            _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
+            opened_panel = _cdp_click_first_selector(session, [
+                'button[instrumentationid="iam-add-member"]',
+                'iam-add-member-action button',
+                'button[aria-label*="Grant access"]',
+                'button[aria-label*="권한"]',
+            ], result, "grant_access_panel")
+            if not opened_panel:
+                opened_panel = _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
             _cdp_wait(session, 2.0)
-            _cdp_fill_first(session, [
+            principal_filled = _cdp_fill_first(session, [
                 'input[aria-label*="principal"]',
                 'input[aria-label*="Principal"]',
+                'input[id*="add-member-bar-input"]',
                 'input[type="email"]',
                 'input[type="text"]',
             ], values.get("principal", ""), "principal", result, press_enter=True)
-            for field in ("project", "role", "change"):
-                if values.get(field):
-                    result["filled_fields"].append(field)
+            if values.get("project"):
+                result["filled_fields"].append("project")
+            if not opened_panel:
+                result["status"] = "opened_no_final_submit"
+                result["warnings"].append("IAM Grant access panel was not opened; role/change were not entered.")
+                for field in ("role", "change"):
+                    if values.get(field):
+                        result["skipped_fields"].append(field)
+            elif principal_filled:
+                for field in ("role", "change"):
+                    if values.get(field):
+                        result["skipped_fields"].append(field)
+                result["warnings"].append("IAM principal was entered; role/change require visual picker confirmation.")
+                result["status"] = "opened_no_final_submit"
+            else:
+                result["status"] = "opened_no_final_submit"
+                result["warnings"].append("IAM Grant access panel opened, but principal input was not verified.")
             result["warnings"].append("CDP fallback did not click final Grant/Save.")
         elif key in ("cloud_create_api_credential", "ai_studio_create_api_key", "play_console_prepare_release"):
             for field, value in values.items():
@@ -445,10 +567,10 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
     except Exception as exc:
-        result["status"] = "failed"
-        result["warnings"].append(f"direct_cdp_live_input_failed: {exc}")
+        _record_direct_cdp_incomplete(target_action, result, session, exc)
     finally:
-        session_manager.__exit__(None, None, None)
+        if session_manager is not None:
+            session_manager.__exit__(None, None, None)
 
 
 def _needs_direct_cdp_retry(action: dict, result: dict) -> bool:
@@ -537,6 +659,30 @@ def _cdp_fill_first(
         return True
     result["skipped_fields"].append(field)
     result["warnings"].append(f"field not found by CDP: {field}")
+    return False
+
+
+def _cdp_click_first_selector(session: Any, selectors: list[str], result: dict, field: str) -> bool:
+    data, err = session.js_json(
+        """(function(selectors) {
+            function shown(el) {
+                var s = getComputedStyle(el);
+                var r = el.getBoundingClientRect();
+                return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+            }
+            for (var selector of selectors) {
+                var el = Array.from(document.querySelectorAll(selector)).find(shown);
+                if (!el) continue;
+                el.click();
+                return {ok: true, selector: selector};
+            }
+            return {ok: false};
+        })(""" + json.dumps(selectors) + ")"
+    )
+    if not err and isinstance(data, dict) and data.get("ok"):
+        result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
+        return True
+    result["warnings"].append(f"button selector not found by CDP: {field}")
     return False
 
 
