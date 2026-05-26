@@ -139,6 +139,7 @@ def _cmd_oauth(sub: str, args: list[str]) -> None:
         print("YouTube server OAuth preapproval")
         print("=" * 60)
         print(f"status: {result['status']}")
+        print(f"user_approval_mode: {result['user_approval_mode']}")
         print(f"project: {result['google_cloud_inputs']['project']}")
         print(f"application_type: {result['google_cloud_inputs']['application_type']}")
         print(f"client_name: {result['google_cloud_inputs']['client_name']}")

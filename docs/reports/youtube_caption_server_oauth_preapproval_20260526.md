@@ -2,6 +2,7 @@
 
 Status: ready_for_user_console_approval
 Final location: server
+User approval mode: final approval only
 Date: 2026-05-26
 
 ## Locked Console Inputs
@@ -50,7 +51,10 @@ python scripts/cdp_client.py youtube research caption-list video_id=<owned_or_au
 
 ## Approval Boundary
 
-The agent may prepare exact input values and non-secret command lines. The user
-must perform the Google Console Create/Save action and any Google OAuth consent
-approval. If the server callback endpoint is not reachable from Google, stop
-and report that as a server route/deploy issue before attempting token exchange.
+This is the final-approval-only version. The agent prepares exact input values,
+non-secret command lines, and redacted reports without asking the user to choose
+between intermediate implementation paths. The user performs only the final
+Google Console Create/Save action and any Google OAuth consent approval.
+
+If the server callback endpoint is not reachable from Google, stop and report
+that as a server route/deploy issue before attempting token exchange.
