@@ -177,7 +177,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 - Required actions: 96
 - Required read actions: 50
 - Required approval actions: 46
-- Required live-input supported approval actions: 9
+- Required live-input supported approval actions: 46
 - Required boundaries:
   - Gmail is implemented.
   - Drive, Calendar, Docs, and Sheets remain `partial`.

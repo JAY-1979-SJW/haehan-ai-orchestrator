@@ -28,7 +28,7 @@ REQUIRED_PHRASES = (
     "Required actions: 96",
     "Required read actions: 50",
     "Required approval actions: 46",
-    "Required live-input supported approval actions: 9",
+    "Required live-input supported approval actions: 46",
     "Required action catalog minimum services: 17",
     "## Site Work Matrix",
     "## Work Acceptance Rule",
@@ -135,7 +135,7 @@ def audit() -> tuple[bool, list[str]]:
 
     coverage = live_inputs.build_live_input_coverage()
     supported_count = coverage.get("counts", {}).get("live_input_supported")
-    if supported_count != 9:
+    if supported_count != 46:
         failures.append(f"google live input support mismatch: {supported_count}")
 
     cloud_dry = dry_run_cloud_readonly_browser_task("compute", "open")
