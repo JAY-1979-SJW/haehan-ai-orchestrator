@@ -34,7 +34,7 @@ def test_youtube_search_route_blocks_without_api_key(monkeypatch) -> None:
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "blocked"
-    assert data["reason"] == "youtube_data_api_key_required"
+    assert data["reason"] == "youtube_data_api_key_or_oauth_token_required"
     assert data["state_change"] is False
     assert data["secret_values_read"] is False
     assert "report_path" in data
