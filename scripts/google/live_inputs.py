@@ -19,22 +19,25 @@ LATEST_LIVE_INPUT_MANIFEST = ROOT / "data" / "google_live_input_manifest_latest.
 LIVE_INPUT_COVERAGE_DIR = ROOT / "data" / "google_live_input_coverage"
 LATEST_LIVE_INPUT_COVERAGE = ROOT / "data" / "google_live_input_coverage_latest.json"
 LIVE_INPUT_ADAPTERS = {
-    action.key: "safe_generic_input_handoff" for action in workflows.WRITE_ACTIONS
+    action.key: "safe_domain_specific_prefill" for action in workflows.WRITE_ACTIONS
 }
 LIVE_INPUT_ADAPTERS.update({
     "gmail_send_email": "safe_pre_final_input",
     "cloud_iam_change_role": "safe_pre_final_input",
     "search_console_submit_indexing": "safe_pre_final_input",
     "youtube_studio_upload_video": "safe_pre_final_input",
-    "youtube_studio_edit_video_metadata": "safe_lookup_handoff",
+    "youtube_studio_edit_video_metadata": "safe_domain_specific_lookup_prefill",
     "search_console_submit_sitemap": "safe_pre_final_input",
     "ai_studio_create_api_key": "safe_secret_issue_final_click_ready",
     "cloud_create_api_credential": "safe_secret_issue_final_click_ready",
-    "play_console_prepare_release": "safe_handoff_no_release",
+    "play_console_prepare_release": "safe_release_final_click_ready",
 })
 DOMAIN_SPECIFIC_PREFILL_MODES = {
     "safe_pre_final_input",
     "safe_secret_issue_final_click_ready",
+    "safe_release_final_click_ready",
+    "safe_domain_specific_prefill",
+    "safe_domain_specific_lookup_prefill",
 }
 GENERIC_HANDOFF_MODES = {
     "safe_generic_input_handoff",
@@ -466,6 +469,7 @@ def print_live_manifest_summary(summary: dict, path: Path) -> None:
 
 def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) -> None:
     key = action["key"]
+    mode = LIVE_INPUT_ADAPTERS.get(key, "")
     if key == "gmail_send_email":
         _fill_gmail_send_v2(page, action, values, result)
     elif key == "cloud_iam_change_role":
@@ -484,6 +488,8 @@ def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) ->
         _fill_cloud_api_credential(page, action, values, result)
     elif key == "play_console_prepare_release":
         _fill_play_console_release_handoff(page, action, values, result)
+    elif mode in DOMAIN_SPECIFIC_PREFILL_MODES:
+        _fill_domain_specific_input_handoff(page, action, values, result)
     elif key in LIVE_INPUT_ADAPTERS:
         _fill_generic_input_handoff(page, action, values, result)
     else:
@@ -597,6 +603,8 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
                     'input[type="text"]',
                 ], str(value), field, result)
             result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
+        elif LIVE_INPUT_ADAPTERS.get(key) in DOMAIN_SPECIFIC_PREFILL_MODES:
+            _cdp_fill_domain_specific_input_handoff(session, action, values, result)
         else:
             _cdp_fill_generic_input_handoff(session, action, values, result)
         result["final_control_policy"] = {
@@ -652,6 +660,26 @@ def _generic_selectors(field: str) -> list[str]:
         'input[type="text"]',
         "textarea",
     ]
+
+
+def _domain_prefill_selectors(action: dict, field: str) -> list[str]:
+    selectors = _generic_selectors(field)
+    surface = action.get("surface_key", "")
+    operation = action.get("operation", "")
+    field_key = field.lower()
+    if surface in {"drive", "photos", "youtube_studio", "play_console"} and any(
+        token in field_key for token in ("path", "file", "artifact", "media", "video", "photo")
+    ):
+        return ['input[type="file"]'] + selectors
+    if surface in {"chat", "gemini", "keep"} or field_key in {"body", "message", "prompt", "content", "release_notes"}:
+        return selectors + ['[contenteditable="true"]', '[role="textbox"]']
+    if "url" in field_key:
+        return ['input[type="url"]'] + selectors
+    if "email" in field_key or "attendees" in field_key or "share_target" in field_key:
+        return ['input[type="email"]'] + selectors
+    if operation in {"deploy", "release", "create", "change", "publish"}:
+        return selectors + ['[role="textbox"]']
+    return selectors
 
 
 def _cdp_fill_first(
@@ -776,6 +804,28 @@ def _cdp_fill_generic_input_handoff(session: Any, action: dict, values: dict, re
         _cdp_fill_first(session, _generic_selectors(field), value, field, result)
     result["warnings"].append(
         "Generic CDP handoff adapter ran with no final submit; final state-changing controls were not clicked."
+    )
+
+
+def _cdp_fill_domain_specific_input_handoff(session: Any, action: dict, values: dict, result: dict) -> None:
+    result["adapter_mode"] = LIVE_INPUT_ADAPTERS.get(action["key"], "safe_domain_specific_prefill")
+    result["prefill_scope"] = action.get("surface_key", "")
+    for field in action.get("required_inputs", []):
+        value = str(values.get(field, ""))
+        if not value or value == "[redacted]":
+            result["skipped_fields"].append(field)
+            continue
+        _cdp_fill_first(session, _domain_prefill_selectors(action, field), value, field, result)
+    for field, value in values.items():
+        if field in action.get("required_inputs", []):
+            continue
+        value = str(value)
+        if not value or value == "[redacted]":
+            continue
+        _cdp_fill_first(session, _domain_prefill_selectors(action, field), value, field, result)
+    result["final_approval_boundary"] = "user_clicks_final_visible_control"
+    result["warnings"].append(
+        f"Domain-specific CDP prefill ran for {action.get('surface_key')}; final submit/save/publish/deploy/create control was not clicked."
     )
 
 
@@ -1272,6 +1322,7 @@ def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: di
 
 
 def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
+    result["adapter_mode"] = "safe_release_final_click_ready"
     page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
     _page_wait(page, 5000)
     app = values.get("app", "") or values.get("package", "")
@@ -1290,10 +1341,38 @@ def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, re
         press_enter=True,
     )
     for field in ("track", "artifact_path", "release_notes"):
-        if values.get(field):
+        value = str(values.get(field, ""))
+        if not value:
             result["skipped_fields"].append(field)
+            continue
+        _fill_first(page, _domain_prefill_selectors(action, field), value, field, result)
+    result["final_approval_boundary"] = "user_clicks_final_release_control"
     result["warnings"].append(
-        "Play Console app lookup only; release upload/review/rollout controls were not clicked."
+        "Play Console release screen prepared; final review/rollout/release control was not clicked."
+    )
+
+
+def _fill_domain_specific_input_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 3000)
+    result["adapter_mode"] = LIVE_INPUT_ADAPTERS.get(action["key"], "safe_domain_specific_prefill")
+    result["prefill_scope"] = action.get("surface_key", "")
+    for field in action.get("required_inputs", []):
+        value = str(values.get(field, ""))
+        if not value or value == "[redacted]":
+            result["skipped_fields"].append(field)
+            continue
+        _fill_first(page, _domain_prefill_selectors(action, field), value, field, result)
+    for field, value in values.items():
+        if field in action.get("required_inputs", []):
+            continue
+        value = str(value)
+        if not value or value == "[redacted]":
+            continue
+        _fill_first(page, _domain_prefill_selectors(action, field), value, field, result)
+    result["final_approval_boundary"] = "user_clicks_final_visible_control"
+    result["warnings"].append(
+        f"Domain-specific Google prefill ran for {action.get('surface_key')}; final submit/save/publish/deploy/create control was not clicked."
     )
 
 
