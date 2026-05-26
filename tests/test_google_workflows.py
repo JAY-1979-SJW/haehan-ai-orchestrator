@@ -126,6 +126,31 @@ def test_google_adapter_catalog_has_profile_for_every_action(monkeypatch):
     assert latest.exists()
 
 
+def test_google_undeveloped_report_separates_live_input_from_prepare_only(monkeypatch):
+    root = _test_dir()
+    monkeypatch.setattr(workflows, "LATEST_UNDEVELOPED_REPORT", root / "latest_undeveloped.json")
+    monkeypatch.setattr(workflows, "UNDEVELOPED_REPORT_DIR", root / "undeveloped")
+
+    report = workflows.build_undeveloped_report()
+    path = workflows.save_undeveloped_report(report)
+    readonly = {item["action_key"] for item in report["readonly_complete"]}
+    supported = {item["action_key"] for item in report["live_input_supported"]}
+    prepare_only = {item["action_key"] for item in report["prepare_or_open_only"]}
+
+    assert "google_home_open" in readonly
+    assert "gmail_send_email" in supported
+    assert "youtube_studio_upload_video" in supported
+    assert "ads_campaign_budget_change" in prepare_only
+    assert "gmail_send_email" not in prepare_only
+    assert report["counts"]["approval_actions"] == (
+        report["counts"]["live_input_supported"] + report["counts"]["prepare_or_open_only"]
+    )
+    assert report["counts"]["production_final_blocked"] == report["counts"]["approval_actions"]
+    assert report["counts"]["missing_adapter_profiles"] == 0
+    assert path.exists()
+    assert workflows.LATEST_UNDEVELOPED_REPORT.exists()
+
+
 def test_google_work_action_catalog_save_writes_latest(monkeypatch):
     root = _test_dir()
     latest = root / "latest.json"
@@ -187,6 +212,19 @@ def test_google_live_input_final_control_policy_lists_required_blocks():
     assert "Publish" in labels
     assert "Request indexing" in labels
     assert "Release" in labels
+
+
+def test_youtube_upload_retry_requires_verified_video_input():
+    action = {"key": "youtube_studio_upload_video"}
+
+    assert (
+        live_inputs._needs_direct_cdp_retry(action, {"filled_fields": [], "skipped_fields": ["video_path"]})
+        is True
+    )
+    assert (
+        live_inputs._needs_direct_cdp_retry(action, {"filled_fields": ["video_path"], "skipped_fields": []})
+        is False
+    )
 
 
 def test_google_live_input_coverage_tracks_supported_and_remaining(monkeypatch):
