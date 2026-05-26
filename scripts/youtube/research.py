@@ -890,7 +890,27 @@ def download_caption(
         }
         return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
 
-    text = _get_text_oauth(f"{YOUTUBE_CAPTIONS_URL}/{urllib.parse.quote(caption_id)}", {"tfmt": tfmt}, token)
+    try:
+        text = _get_text_oauth(f"{YOUTUBE_CAPTIONS_URL}/{urllib.parse.quote(caption_id)}", {"tfmt": tfmt}, token)
+    except Exception as exc:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_caption_download",
+            "ok": False,
+            "status": "blocked",
+            "reason": "official_caption_download_forbidden_or_unavailable",
+            "error_type": type(exc).__name__,
+            "error_summary": safe_preview(str(exc), limit=200),
+            "caption_id": safe_preview(caption_id, limit=120),
+            "requested_format": tfmt,
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "next_step": "Use an owned/authorized video with downloadable captions, or provide a user-exported transcript file.",
+        }
+        return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
     sanitized = SENSITIVE_WORDS.sub("[redacted-sensitive]", text)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     transcript_path = _resolve_repo_path(output) if output else REPORT_DIR / f"youtube_caption_download_{_stamp()}.{tfmt}"

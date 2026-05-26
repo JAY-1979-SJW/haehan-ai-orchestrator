@@ -206,6 +206,22 @@ def test_caption_download_rejects_bad_format():
     assert "srt" in result["allowed_formats"]
 
 
+def test_caption_download_reports_forbidden_without_traceback(monkeypatch):
+    def fake_get_text_oauth(url, params, token):
+        raise PermissionError("HTTP Error 403: Forbidden")
+
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
+    monkeypatch.setattr(research, "_get_text_oauth", fake_get_text_oauth)
+
+    result, path = research.download_caption("caption-1")
+
+    assert path.exists()
+    assert result["status"] == "blocked"
+    assert result["reason"] == "official_caption_download_forbidden_or_unavailable"
+    assert result["oauth_token_output"] == "redacted"
+    assert result["state_change"] is False
+
+
 def test_caption_download_writes_sanitized_transcript(monkeypatch):
     tmp_path = _test_dir()
     calls = []
