@@ -1,6 +1,7 @@
 """Shared SSO/subdomain runtime rules for large portal providers."""
 from __future__ import annotations
 
+import urllib.parse
 from typing import Any
 
 from ai_orchestrator.local_agent.common_tool_runtime import (
@@ -73,6 +74,20 @@ OAUTH_CLIENT_POLICY = {
     "error_code_for_mismatch": "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH",
 }
 
+OCCASIONAL_SITE_LOGIN_POLICY = {
+    "developed_site_required": False,
+    "tool_development_required": False,
+    "one_time_or_infrequent_use": True,
+    "entry_url_required": True,
+    "auto_login": False,
+    "credential_replay_allowed": False,
+    "user_enters_credentials": True,
+    "agent_password_or_otp_entry_allowed": False,
+    "readonly_session_check_only": True,
+    "state_change_allowed": False,
+    "final_approval_required_for_state_change": True,
+}
+
 
 def _contains_forbidden_field(value: Any) -> bool:
     if isinstance(value, dict):
@@ -113,6 +128,58 @@ def build_login_entry_task(provider_id: str) -> dict[str, Any]:
             "shared_profile_required": True,
             "same_profile_subdomain_navigation": True,
             "secret_export_allowed": False,
+        },
+    )
+
+
+def _normalize_public_entry_url(url: str) -> tuple[str, str]:
+    parsed = urllib.parse.urlparse((url or "").strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("occasional site login requires an http(s) entry URL")
+    host = parsed.hostname or ""
+    if host.lower() in {"localhost"} or host.startswith("127.") or host == "::1":
+        raise ValueError("occasional site login entry URL must not be localhost")
+    clean = urllib.parse.urlunparse(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path or "/",
+            "",
+            "",
+            "",
+        )
+    )
+    return clean, host
+
+
+def build_occasional_site_login_task(entry_url: str, *, site_label: str = "") -> dict[str, Any]:
+    """Build a user-present login handoff for an undeveloped or infrequent site."""
+    clean_url, host = _normalize_public_entry_url(entry_url)
+    return build_common_tool_task(
+        tool_namespace=TOOL_BROWSER,
+        action="web_open_url_readonly",
+        execution_location=EXECUTION_LOCAL_AGENT,
+        risk_level=RISK_READ,
+        requires_approval=False,
+        params={
+            "url": clean_url,
+            "target_url_host": host,
+            "wait_until": "domcontentloaded",
+            "timeout_ms": 15000,
+            "allow_private_network": False,
+        },
+        metadata={
+            "site_id": site_label or host,
+            "site_label": site_label or host,
+            "sso_stage": "occasional_site_login_user_present",
+            "occasional_site_login_policy": OCCASIONAL_SITE_LOGIN_POLICY,
+            "auto_login": False,
+            "user_present_required": True,
+            "shared_profile_required": True,
+            "same_profile_subdomain_navigation": False,
+            "secret_export_allowed": False,
+            "developed_site_required": False,
+            "tool_development_required": False,
         },
     )
 
@@ -187,6 +254,19 @@ def dry_run_login_entry_task(provider_id: str) -> dict[str, Any]:
     return {
         "ok": bool(result.get("ok")),
         "provider_id": provider_id,
+        "state_change": False,
+        "local_agent_task": task,
+        "dry_run_result": result,
+        "contains_forbidden_field": _contains_forbidden_field({"task": task, "result": result}),
+    }
+
+
+def dry_run_occasional_site_login_task(entry_url: str, *, site_label: str = "") -> dict[str, Any]:
+    task = build_occasional_site_login_task(entry_url, site_label=site_label)
+    result = dry_run_common_tool_flow(task)
+    return {
+        "ok": bool(result.get("ok")),
+        "entry_url": task["params"]["url"],
         "state_change": False,
         "local_agent_task": task,
         "dry_run_result": result,

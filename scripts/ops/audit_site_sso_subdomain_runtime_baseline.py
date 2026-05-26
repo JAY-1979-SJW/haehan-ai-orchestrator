@@ -31,6 +31,10 @@ REQUIRED_PHRASES = (
     "unknown Google subdomains fail closed before execution",
     "hosts outside the requested Google tab must fail closed",
     "auto-login and credential replay stay false",
+    "Occasional Site Login Handoff",
+    "developed site module is not required",
+    "user enters credentials directly",
+    "read-only session check",
 )
 
 
@@ -49,7 +53,11 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("SSO baseline missing phrase(s): " + ", ".join(missing))
 
     from scripts.sites.readonly_check import build_provider_readonly_check_plan
-    from scripts.sites.sso_runtime import build_blocked_operation_result, build_login_entry_task
+    from scripts.sites.sso_runtime import (
+        build_blocked_operation_result,
+        build_login_entry_task,
+        dry_run_occasional_site_login_task,
+    )
     from scripts.sites.subdomain_registry import get_provider, validate_registry
     from scripts.google import subdomain_logic, tab_logic
 
@@ -93,6 +101,23 @@ def audit() -> tuple[bool, list[str]]:
     if blocked.get("local_agent_task") is not None or blocked.get("state_change") is not False:
         failures.append("blocked operation created an unsafe task")
 
+    occasional = dry_run_occasional_site_login_task("https://example.com/", site_label="example")
+    occasional_task = occasional.get("local_agent_task", {})
+    occasional_meta = occasional_task.get("metadata", {})
+    if occasional.get("ok") is not True or occasional.get("state_change") is not False:
+        failures.append("occasional site login dry-run failed")
+    if occasional.get("contains_forbidden_field") is not False:
+        failures.append("occasional site login contains forbidden field")
+    if occasional_meta.get("auto_login") is not False:
+        failures.append("occasional site login: auto_login must be false")
+    if occasional_meta.get("developed_site_required") is not False:
+        failures.append("occasional site login: developed_site_required must be false")
+    policy = occasional_meta.get("occasional_site_login_policy", {})
+    if policy.get("user_enters_credentials") is not True:
+        failures.append("occasional site login: user must enter credentials")
+    if policy.get("state_change_allowed") is not False:
+        failures.append("occasional site login: state changes must be false")
+
     google_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
     if google_catalog.get("auto_login") is not False:
         failures.append("google subdomain logic: auto_login must be false")
@@ -125,6 +150,7 @@ def audit() -> tuple[bool, list[str]]:
         "SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE exists and is locked",
         "Google and Naver share user-present SSO profile rules",
         "registered subdomain services convert to local read-only tasks",
+        "occasional site login handoff stays user-present and read-only",
         "Google subdomain feature logic preserves login/read/approval boundaries",
         "Google tab feature logic exposes all locked tabs with fail-closed host boundaries",
         "write-like SSO operations remain blocked without local-agent tasks",

@@ -3,7 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.sites.readonly_check import build_provider_readonly_check_plan
-from scripts.sites.sso_runtime import build_blocked_operation_result, build_login_entry_task, build_subdomain_readonly_task
+from scripts.sites.sso_runtime import (
+    build_blocked_operation_result,
+    build_login_entry_task,
+    build_occasional_site_login_task,
+    build_subdomain_readonly_task,
+    dry_run_occasional_site_login_task,
+)
 from scripts.sites.subdomain_registry import get_provider, validate_registry
 
 
@@ -32,6 +38,36 @@ def test_login_entry_task_requires_user_present_without_auto_login() -> None:
     assert metadata["oauth_client_policy"]["agent_non_secret_prefill_allowed"] is True
     assert metadata["oauth_client_policy"]["final_external_create_requires_user"] is True
     assert metadata["oauth_client_policy"]["request_user_input_when_prefill_blocked"] is True
+
+
+def test_occasional_site_login_handoff_requires_user_present_without_development() -> None:
+    task = build_occasional_site_login_task("https://example.com/", site_label="example")
+    metadata = task["metadata"]
+    policy = metadata["occasional_site_login_policy"]
+
+    assert task["action"] == "web_open_url_readonly"
+    assert task["execution_location"] == "local_agent"
+    assert task["risk_level"] == "read"
+    assert task["requires_approval"] is False
+    assert task["params"]["target_url_host"] == "example.com"
+    assert metadata["auto_login"] is False
+    assert metadata["user_present_required"] is True
+    assert metadata["developed_site_required"] is False
+    assert metadata["tool_development_required"] is False
+    assert metadata["secret_export_allowed"] is False
+    assert policy["user_enters_credentials"] is True
+    assert policy["agent_password_or_otp_entry_allowed"] is False
+    assert policy["readonly_session_check_only"] is True
+    assert policy["state_change_allowed"] is False
+
+
+def test_occasional_site_login_dry_run_has_no_forbidden_fields() -> None:
+    result = dry_run_occasional_site_login_task("https://example.com/login", site_label="example")
+
+    assert result["ok"] is True
+    assert result["state_change"] is False
+    assert result["contains_forbidden_field"] is False
+    assert result["local_agent_task"]["metadata"]["occasional_site_login_policy"]["auto_login"] is False
 
 
 def test_google_and_naver_subdomain_tasks_share_contract() -> None:
@@ -86,3 +122,14 @@ def test_sso_baseline_documents_common_oauth_client_policy() -> None:
     assert "agent may prefill non-secret fields" in baseline
     assert "final external create" in baseline
     assert "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH" in baseline
+
+
+def test_sso_baseline_documents_occasional_site_login_handoff() -> None:
+    baseline = (Path(__file__).resolve().parents[1] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Occasional Site Login Handoff" in baseline
+    assert "developed site module is not required" in baseline
+    assert "user enters credentials directly" in baseline
+    assert "read-only session check" in baseline
