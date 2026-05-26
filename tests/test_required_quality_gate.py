@@ -176,6 +176,7 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     captured = {}
 
     def fake_run(command, **kwargs):
+        captured["command"] = tuple(command)
         captured["env"] = kwargs["env"]
         captured["stdout"] = kwargs["stdout"]
         captured["stderr"] = kwargs["stderr"]
@@ -192,7 +193,27 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_required_quality_gate.py", "-q"))
 
     assert result.ok is True
+    assert captured["command"] == (
+        gate.sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_required_quality_gate.py",
+        "-q",
+    )
     assert "PYTHONPYCACHEPREFIX" not in captured["env"]
     assert captured["env"]["PYTHONDONTWRITEBYTECODE"] == "1"
+    assert "required_gate_temp" in captured["env"]["TEMP"]
+    assert captured["env"]["TEMP"] == captured["env"]["TMP"]
+    assert captured["env"]["TEMP"] == captured["env"]["TMPDIR"]
     assert captured["stdout"] is None
     assert captured["stderr"] is None
+
+
+def test_pytest_temp_gets_isolated_workspace_dir(monkeypatch):
+    base = gate.ROOT / "tmp" / "required_gate_test_temp"
+    env = {"HAEHAN_REQUIRED_GATE_TEMP": str(base)}
+
+    temp_root = gate.isolated_pytest_temp(env)
+
+    assert temp_root.exists()
+    assert temp_root.parent == base
