@@ -196,6 +196,7 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         result, path = research.search_videos(
             query,
             max_results=int(values.get("max") or values.get("limit") or 5),
+            token_file=values.get("token_file") or values.get("token"),
             captions_only=captions_only,
         )
         print("=" * 60)

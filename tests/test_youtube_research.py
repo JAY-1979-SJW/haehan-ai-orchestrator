@@ -17,12 +17,14 @@ def _test_dir() -> Path:
 def test_search_blocks_without_api_key(monkeypatch):
     monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_API_KEY", raising=False)
+    monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
     result, path = research.search_videos("ai browser automation", max_results=3, captions_only=True)
 
     assert path.exists()
     assert result["status"] == "blocked"
     assert result["state_change"] is False
-    assert result["reason"] == "youtube_data_api_key_required"
+    assert result["reason"] == "youtube_data_api_key_or_oauth_token_required"
     assert result["captions_only"] is True
 
 
@@ -55,6 +57,38 @@ def test_search_uses_caption_filter_and_keeps_captioned_results(monkeypatch):
     assert result["result_count"] == 1
     assert result["results"][0]["video_id"] == "captioned"
     assert result["results"][0]["script_collection_status"] == "caption_candidate"
+
+
+def test_search_can_use_official_oauth_without_api_key(monkeypatch):
+    calls = []
+
+    def fake_get_json_oauth(url, params, token):
+        calls.append((url, params, token))
+        if url.endswith("/search"):
+            return {
+                "items": [
+                    {"id": {"videoId": "captioned"}, "snippet": {"title": "A", "channelTitle": "C"}},
+                ]
+            }
+        return {
+            "items": [
+                {"id": "captioned", "contentDetails": {"caption": "true"}, "statistics": {}},
+            ]
+        }
+
+    monkeypatch.setattr(research, "_api_key", lambda explicit=None: "")
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
+    monkeypatch.setattr(research, "_get_json_oauth", fake_get_json_oauth)
+
+    result, _path = research.search_videos("ai", captions_only=True)
+
+    assert calls[0][0].endswith("/search")
+    assert "key" not in calls[0][1]
+    assert calls[0][2] == "fake-oauth"
+    assert result["status"] == "ok"
+    assert result["credential_source"] == "oauth"
+    assert result["oauth_token_output"] == "redacted"
+    assert result["result_count"] == 1
 
 
 def test_transcript_plan_blocks_unofficial_scraping():
