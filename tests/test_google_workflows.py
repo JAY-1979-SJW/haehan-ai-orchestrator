@@ -215,6 +215,14 @@ def test_google_live_input_final_control_policy_lists_required_blocks():
     assert "Release" in labels
 
 
+def test_google_live_input_timeout_can_be_extended(monkeypatch):
+    monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_TIMEOUT_MS", "300000")
+    monkeypatch.setenv("HAEHAN_GOOGLE_LIVE_INPUT_LOCATOR_TIMEOUT_MS", "30000")
+
+    assert live_inputs._page_timeout(45000) == 300000
+    assert live_inputs._locator_timeout(5000) == 30000
+
+
 def test_youtube_upload_retry_requires_verified_video_input():
     action = {"key": "youtube_studio_upload_video"}
 

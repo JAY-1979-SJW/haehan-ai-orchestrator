@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -50,6 +51,44 @@ FINAL_CONTROL_LABELS = (
     "Release",
     "출시",
 )
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0.1, float(raw))
+    except ValueError:
+        return default
+
+
+def _page_timeout(default_ms: int = 45000) -> int:
+    return max(default_ms, _env_int("HAEHAN_GOOGLE_LIVE_INPUT_TIMEOUT_MS", 180000))
+
+
+def _page_wait(page: Any, milliseconds: int) -> None:
+    multiplier = _env_float("HAEHAN_GOOGLE_LIVE_INPUT_WAIT_MULTIPLIER", 1.5)
+    page.wait_for_timeout(int(milliseconds * multiplier))
+
+
+def _locator_timeout(default_ms: int) -> int:
+    return max(default_ms, _env_int("HAEHAN_GOOGLE_LIVE_INPUT_LOCATOR_TIMEOUT_MS", 15000))
+
+
+def _cdp_wait(session: Any, seconds: float) -> None:
+    multiplier = _env_float("HAEHAN_GOOGLE_LIVE_INPUT_WAIT_MULTIPLIER", 1.5)
+    session.wait(seconds * multiplier)
 
 
 def build_live_input_coverage() -> dict:
@@ -318,7 +357,7 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
         session = session_manager.__enter__()
     try:
         session.goto(action["target_url"], wait_idle=False)
-        session.wait(4.0)
+        _cdp_wait(session, 4.0)
         key = action["key"]
         if key == "gmail_send_email":
             compose_values = {
@@ -330,17 +369,17 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
             }
             compose_url = "https://mail.google.com/mail/u/0/?" + urlencode(compose_values)
             session.goto(compose_url, wait_idle=False)
-            session.wait(4.0)
+            _cdp_wait(session, 4.0)
             result.setdefault("clicked_nonfinal_controls", []).append(
                 {"field": "compose", "method": "gmail_compose_url"}
             )
-            session.wait(2.0)
+            _cdp_wait(session, 2.0)
             _cdp_verify_gmail_compose_values(session, values, result)
             _cdp_detect_file_input(session, values.get("attachment_path", ""), "attachment_path", result)
             result["warnings"].append("CDP fallback did not click Send.")
         elif key == "youtube_studio_upload_video":
             _cdp_click_text(session, ["Create", "Upload videos", "만들기", "업로드"], result, "youtube_upload_open")
-            session.wait(2.0)
+            _cdp_wait(session, 2.0)
             _cdp_detect_file_input(session, values.get("video_path", ""), "video_path", result)
             _cdp_fill_first(session, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result)
             _cdp_fill_first(session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result)
@@ -369,7 +408,7 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
             result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
         elif key == "cloud_iam_change_role":
             _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
-            session.wait(2.0)
+            _cdp_wait(session, 2.0)
             _cdp_fill_first(session, [
                 'input[aria-label*="principal"]',
                 'input[aria-label*="Principal"]',
@@ -656,10 +695,10 @@ def _detect_final_controls_cdp(session: Any) -> list[dict]:
 
 
 def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2500)
+    page.goto(action["target_url"], timeout=_page_timeout(30000), wait_until="domcontentloaded")
+    _page_wait(page, 2500)
     _click_text(page, ["Compose", "편지쓰기", "작성"], result, optional=True)
-    page.wait_for_timeout(1500)
+    _page_wait(page, 1500)
     _fill_first(
         page,
         [
@@ -694,8 +733,8 @@ def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> Non
 
 
 def _fill_gmail_send_v2(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3500)
+    page.goto(action["target_url"], timeout=_page_timeout(30000), wait_until="domcontentloaded")
+    _page_wait(page, 3500)
     _ensure_gmail_compose_open(page, result)
     _fill_first(
         page,
@@ -715,7 +754,7 @@ def _fill_gmail_send_v2(page: Any, action: dict, values: dict, result: dict) -> 
         result,
         press_enter=True,
     ) or _fill_gmail_recipient_js(page, values.get("to", ""), "to", result)
-    page.wait_for_timeout(800)
+    _page_wait(page, 800)
     if not _fill_first(
         page,
         [
@@ -747,7 +786,7 @@ def _ensure_gmail_compose_open(page: Any, result: dict) -> None:
                 "gmail_compose",
                 result,
             )
-        page.wait_for_timeout(2000)
+        _page_wait(page, 2000)
     if not _gmail_compose_visible(page):
         result["warnings"].append("Gmail compose window did not stay open.")
 
@@ -764,7 +803,7 @@ def _gmail_compose_visible(page: Any) -> bool:
             try:
                 matches = frame.locator(selector)
                 for index in range(min(matches.count(), 8)):
-                    if matches.nth(index).bounding_box(timeout=500) is not None:
+                    if matches.nth(index).bounding_box(timeout=_locator_timeout(500)) is not None:
                         return True
             except Exception:
                 continue
@@ -776,8 +815,8 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
     target = action["target_url"]
     if project and "project=" not in target:
         target = f"{target}?project={project}"
-    page.goto(target, timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(5000)
+    page.goto(target, timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 5000)
     if not _click_first_selector(
         page,
         ['button[instrumentationid="iam-add-member"]', 'iam-add-member-action button'],
@@ -785,7 +824,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
         result,
     ):
         _click_text(page, ["Grant access", "액세스 권한 부여", "권한 부여"], result, optional=True)
-    page.wait_for_timeout(2500)
+    _page_wait(page, 2500)
     _fill_first(
         page,
         [
@@ -801,7 +840,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
         result,
         press_enter=True,
     )
-    page.wait_for_timeout(1200)
+    _page_wait(page, 1200)
     role = values.get("role", "")
     if role and _click_first_selector(
         page,
@@ -814,7 +853,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
         "role_picker",
         result,
     ):
-        page.wait_for_timeout(1500)
+        _page_wait(page, 1500)
         if _fill_first(
             page,
             [
@@ -830,7 +869,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
             result,
             press_enter=True,
         ):
-            page.wait_for_timeout(800)
+            _page_wait(page, 800)
         else:
             try:
                 page.keyboard.type(role, delay=5)
@@ -853,8 +892,8 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
 
 
 def _fill_search_console_url_inspection(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(4000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 4000)
     _fill_first(
         page,
         [
@@ -871,8 +910,8 @@ def _fill_search_console_url_inspection(page: Any, action: dict, values: dict, r
 
 
 def _fill_search_console_sitemap(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(4000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 4000)
     sitemap = values.get("sitemap_url", "") or values.get("sitemap", "")
     _fill_first(
         page,
@@ -900,10 +939,10 @@ def _fill_youtube_studio_upload(page: Any, action: dict, values: dict, result: d
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"video file not found: {video_path}")
         return
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(4000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 4000)
     _click_text(page, ["Create", "만들기", "Upload videos", "동영상 업로드"], result, optional=True)
-    page.wait_for_timeout(2000)
+    _page_wait(page, 2000)
     try:
         page.set_input_files('input[type="file"]', video_path)
         result["filled_fields"].append("video_path")
@@ -922,8 +961,8 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"video file not found: {video_path}")
         return
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(5000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 5000)
     _click_first_selector(
         page,
         [
@@ -937,9 +976,9 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
         result,
     )
     _click_text(page, ["Create", "Upload videos", "만들기", "동영상 업로드"], result, optional=True)
-    page.wait_for_timeout(2500)
+    _page_wait(page, 2500)
     _click_text(page, ["Upload videos", "동영상 업로드"], result, optional=True)
-    page.wait_for_timeout(2500)
+    _page_wait(page, 2500)
     try:
         page.set_input_files('input[type="file"]', video_path)
         result["filled_fields"].append("video_path")
@@ -948,7 +987,7 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"file input failed: {exc}")
         return
-    page.wait_for_timeout(5000)
+    _page_wait(page, 5000)
     _fill_first(
         page,
         ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]', '#textbox[aria-label*="Title"]'],
@@ -967,8 +1006,8 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
 
 
 def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(5000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 5000)
     query = values.get("video_id", "") or values.get("title", "")
     _fill_first(
         page,
@@ -983,7 +1022,7 @@ def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result:
         result,
         press_enter=True,
     )
-    page.wait_for_timeout(2000)
+    _page_wait(page, 2000)
     if values.get("title"):
         result["skipped_fields"].append("title")
     if values.get("description"):
@@ -994,8 +1033,8 @@ def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result:
 
 
 def _fill_ai_studio_api_key(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(4000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 4000)
     project = values.get("project", "")
     if project:
         _fill_first(
@@ -1020,8 +1059,8 @@ def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: di
     target = action["target_url"]
     if project and "project=" not in target:
         target = f"{target}?project={project}"
-    page.goto(target, timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(5000)
+    page.goto(target, timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 5000)
     if project:
         result["filled_fields"].append("project")
     credential_type = values.get("credential_type", "")
@@ -1034,8 +1073,8 @@ def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: di
 
 
 def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(5000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 5000)
     app = values.get("app", "") or values.get("package", "")
     _fill_first(
         page,
@@ -1060,8 +1099,8 @@ def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, re
 
 
 def _fill_generic_input_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(3000)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 3000)
     result["adapter_mode"] = "safe_generic_input_handoff"
     for field in action.get("required_inputs", []):
         value = str(values.get(field, ""))
@@ -1083,8 +1122,8 @@ def _fill_generic_input_handoff(page: Any, action: dict, values: dict, result: d
 
 
 def _open_only(page: Any, action: dict, values: dict, result: dict) -> None:
-    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2500)
+    page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
+    _page_wait(page, 2500)
     for key, value in values.items():
         if value:
             result["skipped_fields"].append(key)
@@ -1111,11 +1150,11 @@ def _fill_first(
                 count = min(matches.count(), 12)
                 for index in range(count):
                     locator = matches.nth(index)
-                    if locator.bounding_box(timeout=1000) is None:
+                    if locator.bounding_box(timeout=_locator_timeout(1000)) is None:
                         continue
-                    locator.click(timeout=3000)
+                    locator.click(timeout=_locator_timeout(3000))
                     try:
-                        locator.fill(value, timeout=5000)
+                        locator.fill(value, timeout=_locator_timeout(5000))
                     except Exception:
                         page.keyboard.type(value, delay=5)
                     if press_enter:
@@ -1139,7 +1178,7 @@ def _fill_contenteditable(page: Any, value: str, field: str, result: dict) -> bo
             try:
                 locator = frame.locator(selector).last
                 if locator.count() > 0:
-                    locator.click(timeout=3000)
+                    locator.click(timeout=_locator_timeout(3000))
                     page.keyboard.type(value, delay=5)
                     result["filled_fields"].append(field)
                     return True
@@ -1156,7 +1195,7 @@ def _click_text(page: Any, labels: list[str], result: dict, *, optional: bool = 
             try:
                 locator = frame.get_by_text(label, exact=False).first
                 if locator.count() > 0:
-                    locator.click(timeout=4000)
+                    locator.click(timeout=_locator_timeout(4000))
                     return True
             except Exception:
                 continue
@@ -1199,7 +1238,7 @@ def _click_first_selector(page: Any, selectors: list[str], field: str, result: d
             try:
                 locator = frame.locator(selector).first
                 if locator.count() > 0:
-                    locator.click(timeout=5000)
+                    locator.click(timeout=_locator_timeout(5000))
                     result.setdefault("clicked_nonfinal_controls", []).append(
                         {"field": field, "selector": selector}
                     )
@@ -1354,7 +1393,7 @@ def _attach_file_input(page: Any, file_path: str, field: str, result: dict) -> b
             count = inputs.count()
             for index in range(count - 1, -1, -1):
                 try:
-                    inputs.nth(index).set_input_files(str(path), timeout=5000)
+                    inputs.nth(index).set_input_files(str(path), timeout=_locator_timeout(5000))
                     result["filled_fields"].append(field)
                     result["warnings"].append(f"local file attached: {path}")
                     return True
