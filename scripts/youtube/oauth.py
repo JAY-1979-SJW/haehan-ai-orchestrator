@@ -25,6 +25,9 @@ AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 DEFAULT_REDIRECT_URI = "http://127.0.0.1:8765/oauth2callback"
 DEFAULT_TOKEN_FILE = TOKEN_DIR / "youtube_oauth_authorized_user.json"
+SERVER_REDIRECT_URI = "https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback"
+SERVER_CLIENT_FILE = "/run/secrets/api/youtube_oauth_client.json"
+SERVER_TOKEN_FILE = "/app/ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json"
 YOUTUBE_SCOPES = {
     "readonly": "https://www.googleapis.com/auth/youtube.readonly",
     "upload": "https://www.googleapis.com/auth/youtube.upload",
@@ -99,7 +102,7 @@ def _load_client(values: dict[str, str]) -> tuple[dict[str, Any], str]:
 
 
 def _redirect_uri(values: dict[str, str], client: dict[str, Any]) -> str:
-    explicit = values.get("redirect_uri", "").strip()
+    explicit = (values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_REDIRECT_URI", "")).strip()
     if explicit:
         return explicit
     for uri in client.get("redirect_uris", []):
@@ -184,7 +187,12 @@ def exchange_code(values: dict[str, str]) -> tuple[dict[str, Any], Path]:
     code = values.get("code", "").strip()
     client, source = _load_client(values)
     redirect_uri = _redirect_uri(values, client) if client else values.get("redirect_uri") or DEFAULT_REDIRECT_URI
-    output = _resolve(values.get("output") or values.get("token_file") or DEFAULT_TOKEN_FILE)
+    output = _resolve(
+        values.get("output")
+        or values.get("token_file")
+        or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE", "")
+        or DEFAULT_TOKEN_FILE
+    )
     if not code:
         payload = {
             "schema_version": 1,
@@ -237,3 +245,59 @@ def exchange_code(values: dict[str, str]) -> tuple[dict[str, Any], Path]:
         "token_file": str(output),
     }
     return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_token_result")
+
+
+def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict[str, Any], Path]:
+    """Build the server-first Google Console input pack for YouTube captions OAuth."""
+    values = values or {}
+    redirect_uri = values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_SERVER_REDIRECT_URI") or SERVER_REDIRECT_URI
+    client_file = values.get("client_file") or os.environ.get("YOUTUBE_SERVER_CLIENT_FILE") or SERVER_CLIENT_FILE
+    token_file = values.get("token_file") or os.environ.get("YOUTUBE_SERVER_TOKEN_FILE") or SERVER_TOKEN_FILE
+    scope = _scope_text({"scope": values.get("scope") or "force-ssl"})
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_caption_server_oauth_preapproval",
+        "status": "ready_for_user_console_approval",
+        "state_change": False,
+        "final_approval_required": "User creates the OAuth client in Google Cloud Console.",
+        "server_baseline": True,
+        "google_cloud_inputs": {
+            "project": values.get("project") or "haehan-ai",
+            "api": "YouTube Data API v3",
+            "credential_type": "OAuth client ID",
+            "application_type": "Web application",
+            "client_name": values.get("client_name") or "haehan-youtube-server-captions",
+            "authorized_redirect_uri": redirect_uri,
+            "scope": scope,
+        },
+        "server_secret_placement": {
+            "client_json_path": client_file,
+            "token_file_path": token_file,
+            "commit_policy": "never commit client JSON, access token, refresh token, or auth code",
+        },
+        "server_env": {
+            "YOUTUBE_CLIENT_SECRETS_FILE": client_file,
+            "YOUTUBE_OAUTH_REDIRECT_URI": redirect_uri,
+            "YOUTUBE_OAUTH_TOKEN_FILE": token_file,
+        },
+        "post_approval_commands": [
+            (
+                "python scripts/cdp_client.py youtube oauth start "
+                f"scope=force-ssl client_file={client_file} redirect_uri={redirect_uri}"
+            ),
+            (
+                "python scripts/cdp_client.py youtube oauth exchange "
+                f"code=<returned_code> client_file={client_file} redirect_uri={redirect_uri} output={token_file}"
+            ),
+            (
+                "python scripts/cdp_client.py youtube research caption-list "
+                f"video_id=<owned_or_authorized_video_id> token_file={token_file}"
+            ),
+        ],
+        "approval_boundary": (
+            "The agent may prepare values and commands. The user performs the Google Console "
+            "Create/Save step and any Google OAuth consent approval."
+        ),
+    }
+    return payload, _write_report(payload, LATEST_AUTH_PLAN, "youtube_caption_server_oauth_preapproval")
