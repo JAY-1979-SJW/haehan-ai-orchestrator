@@ -20,9 +20,11 @@ secrets/
 # 개발 도구
 .git/
 .gitignore
+docker-compose.override.yml
 __pycache__/
 *.pyc
 *.pyo
+*.tsbuildinfo
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
