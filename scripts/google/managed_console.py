@@ -1,0 +1,111 @@
+"""Managed Google Console browser entrypoints.
+
+Google Console and OAuth approval preparation must use the managed CDP browser
+profile. This module intentionally does not call OS/default browser openers.
+"""
+from __future__ import annotations
+
+from typing import Any
+
+GOOGLE_HOME_URL = "https://www.google.com/"
+GOOGLE_ACCOUNT_URL = "https://myaccount.google.com/"
+GOOGLE_CLOUD_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
+
+YOUTUBE_SERVER_OAUTH_INPUTS = {
+    "project": "haehan-ai",
+    "api": "YouTube Data API v3",
+    "credential_type": "OAuth client ID",
+    "application_type": "Web application",
+    "client_name": "haehan-youtube-server-captions",
+    "authorized_redirect_uri": "https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback",
+    "scope": "https://www.googleapis.com/auth/youtube.force-ssl",
+}
+
+
+def build_youtube_oauth_console_open_plan() -> dict[str, Any]:
+    """Return the locked, non-secret Google Console open plan."""
+    return {
+        "status": "ready_for_managed_console_open",
+        "browser_runtime": "managed_local_agent_cdp_profile",
+        "default_browser_allowed": False,
+        "os_browser_openers_forbidden": [
+            "PowerShell URL opener",
+            "Python default browser opener",
+            "OS file/URL opener",
+            "shell URL open",
+        ],
+        "open_method": "scripts.web_connector.get_page().goto",
+        "sequence": [
+            {
+                "step": 1,
+                "stage": "google_home",
+                "url": GOOGLE_HOME_URL,
+                "verification": "reachable_in_managed_cdp_profile",
+            },
+            {
+                "step": 2,
+                "stage": "account_state",
+                "url": GOOGLE_ACCOUNT_URL,
+                "verification": "user_present_account_state_only_no_secret_export",
+            },
+            {
+                "step": 3,
+                "stage": "cloud_credentials",
+                "url": GOOGLE_CLOUD_CREDENTIALS_URL,
+                "verification": "console_credentials_page_reachable_in_same_profile",
+            },
+        ],
+        "non_secret_inputs": dict(YOUTUBE_SERVER_OAUTH_INPUTS),
+        "agent_allowed_steps": [
+            "open managed CDP browser tab",
+            "navigate through the locked Google connection sequence",
+            "enter non-secret setup values when the page is inspectable",
+            "save redacted evidence and reports",
+        ],
+        "user_only_steps": [
+            "Google Console Create/Save for OAuth client",
+            "Google OAuth consent approval",
+            "download or place client JSON into approved secret storage",
+        ],
+        "final_approval_boundary": "user_final_approval_only",
+        "state_change": False,
+    }
+
+
+def open_youtube_oauth_console_managed(*, dry_run: bool = False, timeout_ms: int = 60000) -> dict[str, Any]:
+    """Open Google Console credentials through the managed CDP browser only."""
+    plan = build_youtube_oauth_console_open_plan()
+    if dry_run:
+        return {**plan, "dry_run": True, "opened": False}
+
+    from scripts.web_connector import get_page
+
+    page = get_page()
+    visited: list[dict[str, Any]] = []
+    for item in plan["sequence"]:
+        page.goto(item["url"], timeout=timeout_ms)
+        try:
+            page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
+        except Exception:
+            pass
+        try:
+            page.bring_to_front()
+        except Exception:
+            pass
+        visited.append(
+            {
+                "stage": item["stage"],
+                "target_url": item["url"],
+                "current_url": page.url,
+                "title": page.title(),
+            }
+        )
+
+    return {
+        **plan,
+        "dry_run": False,
+        "opened": True,
+        "visited": visited,
+        "current_url": page.url,
+        "current_title": page.title(),
+    }

@@ -60,6 +60,15 @@ python scripts/local_user_secret_store.py status youtube oauth_client_json
 
 ## Post-Approval Commands
 
+Open Google Console only through the managed local-agent/CDP browser profile.
+Default browser openers are not allowed for this flow.
+
+```powershell
+python scripts/cdp_daemon.py start
+python scripts/cdp_client.py google console youtube-oauth-open --dry-run
+python scripts/cdp_client.py google console youtube-oauth-open
+```
+
 Run these on the server after the user creates/saves the Google Console OAuth
 client and places the downloaded client JSON in the server secret path.
 

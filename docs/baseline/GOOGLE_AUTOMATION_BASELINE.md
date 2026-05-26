@@ -81,6 +81,16 @@ Runtime rules:
 
 - The browser profile must be the managed local-agent/CDP profile when screen
   or tab verification is required.
+- OS/default browser openers are forbidden for Google/YouTube Console, OAuth,
+  approval, and setup flows. Do not use `Start-Process <url>`,
+  `webbrowser.open`, `os.startfile`, Explorer URL opens, or shell URL opens for
+  these flows. The only allowed browser opener is the managed local-agent/CDP
+  path (`python scripts/cdp_daemon.py start` plus `python scripts/cdp_client.py
+  goto ...` or a Google router command backed by `scripts.web_connector`).
+- The locked Google Console OAuth helper command is:
+  `python scripts/cdp_client.py google console youtube-oauth-open`. Use
+  `--dry-run` for preflight. This command opens Google Home, Google Account,
+  then Cloud Console Credentials in the same managed CDP profile.
 - If a URL is opened in a normal browser window and CDP cannot inspect it, record
   `OAUTH_WINDOW_OPENED_OUTSIDE_CDP`, close or ignore that tab, and retry through
   the locked sequence.
@@ -177,6 +187,8 @@ Representative host boundaries:
 - `scripts/google/live_surface_explorer.py`: direct-CDP read-only live evidence for all 50 surfaces.
 - `scripts/google/cloud/live_console_explorer.py`: direct-CDP read-only Cloud Console evidence.
 - `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
+- `scripts/google/managed_console.py`: managed-CDP-only Google Console/OAuth
+  entrypoint; default browser openers are forbidden.
 - `python scripts/cdp_client.py google work undeveloped`: required Google gap
   report for separating implemented read-only work, no-final-submit input
   support, prepare/open-only items, and production final-execution blocks.
@@ -192,7 +204,8 @@ Minimum verification before committing Google work:
 
 ```text
 python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
-python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py -q
+python -m py_compile scripts/google/managed_console.py
+python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py tests/test_google_managed_console.py -q
 python scripts/ops/audit_google_automation_baseline_contract.py
 python scripts/module_quality_gate.py --module repo_guard
 ```

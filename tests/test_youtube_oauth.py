@@ -200,6 +200,18 @@ def test_server_preapproval_defines_final_console_values():
     assert any("local_user_secret_store.py status youtube oauth_client_json" in item for item in result["local_secret_commands"])
 
 
+def test_youtube_server_console_preapproval_has_managed_browser_plan():
+    from scripts.google import managed_console
+
+    result, _path = oauth.build_server_preapproval({})
+    plan = managed_console.build_youtube_oauth_console_open_plan()
+
+    assert result["user_approval_mode"] == "final_approval_only"
+    assert plan["default_browser_allowed"] is False
+    assert plan["non_secret_inputs"]["authorized_redirect_uri"] == result["google_cloud_inputs"]["authorized_redirect_uri"]
+    assert plan["non_secret_inputs"]["client_name"] == result["google_cloud_inputs"]["client_name"]
+
+
 def test_auth_plan_uses_local_secret_ref_without_secret_output(monkeypatch):
     ref = "local-secret://youtube/oauth_client_json"
     monkeypatch.setattr(
