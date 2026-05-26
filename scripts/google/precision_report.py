@@ -48,6 +48,20 @@ def _load_latest_live_input_results_by_action() -> dict[str, dict[str, Any]]:
     return results
 
 
+LIVE_FILL_SAFE_NO_FINAL_STATUSES = {
+    "filled_no_final_submit",
+    "opened_no_final_submit",
+    "opened_no_upload_input",
+}
+
+
+def _is_live_fill_safe_no_final(item: dict[str, Any]) -> bool:
+    return (
+        item.get("status") in LIVE_FILL_SAFE_NO_FINAL_STATUSES
+        and not item.get("state_change_final_button_clicked")
+    )
+
+
 def build_google_precision_report() -> dict[str, Any]:
     live_logic = live_surface_explorer.build_google_surface_live_logic()
     subdomain_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
@@ -86,7 +100,7 @@ def build_google_precision_report() -> dict[str, Any]:
         if any(item.get("final_clicked") for item in fills):
             status = "fail"
             findings.append("final click was recorded")
-        if fills and any(item.get("status") != "filled_no_final_submit" for item in fills):
+        if fills and any(not _is_live_fill_safe_no_final(item) for item in fills):
             status = "warn" if status == "pass" else status
             findings.append("some live-fill items did not fully complete")
         if surface.get("approval_actions") and not surface.get("observed_risk_controls"):
@@ -145,7 +159,7 @@ def build_google_precision_report() -> dict[str, Any]:
             "surface_warn": sum(1 for surface in surfaces if surface["status"] == "warn"),
             "surface_fail": sum(1 for surface in surfaces if surface["status"] == "fail"),
             "live_fill_total": len(live_input_results),
-            "live_fill_completed": sum(1 for item in live_input_results.values() if item.get("status") == "filled_no_final_submit"),
+            "live_fill_completed": sum(1 for item in live_input_results.values() if _is_live_fill_safe_no_final(item)),
             "live_fill_failed": sum(1 for item in live_input_results.values() if item.get("status") == "failed"),
             "final_clicked_count": sum(1 for item in live_input_results.values() if item.get("state_change_final_button_clicked")),
         },
