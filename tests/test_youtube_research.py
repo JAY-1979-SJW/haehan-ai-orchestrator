@@ -401,6 +401,30 @@ def test_browser_transcript_executor_blocks_invalid_url():
     assert result["raw_transcript_stored"] is False
 
 
+def test_browser_transcript_executor_reports_cdp_selection_block(monkeypatch):
+    monkeypatch.setattr(
+        browser_transcript,
+        "select_cdp_session",
+        lambda **kwargs: {
+            "ok": False,
+            "status": "blocked",
+            "reason": "cdp_session_conflict_or_unavailable",
+            "selected_cdp_port": 0,
+            "selected_reason": "",
+            "detected_tabs": [{"port": 9222, "avoid_tab_count": 1}],
+            "avoided_domains": ["naver.com"],
+            "cross_work_conflict": True,
+        },
+    )
+
+    result, _path = browser_transcript.collect_visible_transcript_summary("https://www.youtube.com/watch?v=3yyLg1xbQSs")
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "cdp_session_conflict_or_unavailable"
+    assert result["cdp_selection"]["cross_work_conflict"] is True
+    assert result["raw_transcript_stored"] is False
+
+
 def test_collect_video_info_uses_official_api(monkeypatch):
     calls = []
 

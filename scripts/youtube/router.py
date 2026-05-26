@@ -303,6 +303,7 @@ def _cmd_research(sub: str, args: list[str]) -> None:
             max_segments=int(values.get("max_segments") or values.get("segments") or 160),
             wait_seconds=float(values.get("wait") or values.get("wait_seconds") or 4),
             open_transcript=values.get("open_transcript", "1") not in {"0", "false", "no"},
+            cdp_ports=values.get("cdp_ports") or values.get("ports") or values.get("cdp_port"),
         )
         print("=" * 60)
         print("YouTube browser visible transcript summary")
@@ -313,6 +314,7 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print(f"words: {result.get('word_like_count', 0)}")
         print(f"topics: {', '.join(result.get('derived_summary', {}).get('topics', [])) or '-'}")
         print(f"raw_transcript_stored: {result.get('raw_transcript_stored', False)}")
+        print(f"selected_cdp_port: {result.get('cdp_selection', {}).get('selected_cdp_port') or '-'}")
         print(f"reason: {result.get('reason') or '-'}")
         print(f"next_step: {result.get('next_step') or '-'}")
         print(f"saved: {path}")
