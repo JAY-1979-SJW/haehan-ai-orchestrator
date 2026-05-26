@@ -15,6 +15,7 @@ work by itself. It verifies that:
 
 - an approved baseline document exists;
 - changed files stay inside the approved scope;
+- a resumable AI work record exists when the gate requires it;
 - runtime reports are present and healthy where required;
 - no secret values are emitted in monitoring reports.
 
@@ -23,9 +24,12 @@ work by itself. It verifies that:
 ```text
 write baseline
 -> user approval
+-> start safe AI work record
 -> run work monitor
 -> implement only approved scope
+-> append work record after material steps
 -> run quality/deploy/runtime gates
+-> complete or block work record with next resume step
 -> record report
 ```
 
@@ -42,6 +46,9 @@ Draft or missing baseline documents must block monitored work.
 ## 4. Scope Rules
 
 The work monitor receives explicit approved path prefixes.
+Parallel work must identify its lane and use staged-only checking before a
+lane-specific commit when another approved lane has dirty work in the same
+repository.
 
 Allowed examples:
 
@@ -58,6 +65,16 @@ Allowed examples:
 
 Changed files outside the approved prefixes must fail the monitor.
 
+Two changed-source modes are allowed:
+
+- `worktree`: checks every dirty path and is required before deploy, runtime
+  replacement, or operational closeout.
+- `staged`: checks only staged files and is allowed only for lane-specific
+  commits during approved parallel work.
+
+Each parallel lane must have explicit scopes. A lane must not stage, commit,
+or modify another lane's files.
+
 ## 5. Runtime Guard Rules
 
 When runtime checking is enabled, the monitor must verify the latest reports:
@@ -68,6 +85,24 @@ When runtime checking is enabled, the monitor must verify the latest reports:
 
 If a report is missing or has `ok: false`, monitored work fails.
 
+## 5.1 AI Work Record Guard Rules
+
+When work-record checking is enabled, the monitor must verify:
+
+- `data/runtime/ai_work_record_latest.json` exists;
+- the record lane matches the requested monitor lane when both are present;
+- the record contains `task_id`, `request_summary`, `approval_status`,
+  `status`, `approved_scopes`, and `resume_next_step`;
+- `secret_values_output` is `false`;
+- the latest record is sufficient for the next AI session to resume or close
+  the work without relying on chat history alone.
+
+The durable history is appended to:
+
+```text
+data/runtime/ai_work_record_history.jsonl
+```
+
 ## 6. Forbidden Behavior
 
 The monitor must not:
@@ -77,6 +112,10 @@ The monitor must not:
 - mutate unrelated app containers;
 - print raw secrets, tokens, passwords, cookies, sessions, or OTP values;
 - silently ignore out-of-scope modified files.
+- start new non-trivial work while the required work record is missing or not
+  resumable.
+- use staged-only checking for deploy, server pull, container build, runtime
+  restart, or final operational closeout.
 
 ## 7. Report Location
 
