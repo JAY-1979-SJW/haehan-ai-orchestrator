@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts import local_user_secret_store
+from scripts.google.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
 from security_utils import safe_preview
 
 
@@ -361,6 +362,12 @@ def handle_server_callback(values: dict[str, str]) -> tuple[dict[str, Any], Path
 def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict[str, Any], Path]:
     """Build the server-first Google Console input pack for YouTube captions OAuth."""
     values = values or {}
+    secret_action_mode = normalize_secret_action_mode(values.get("secret_action_mode"))
+    secret_issue_approved = str(values.get("secret_issue_approved", "")).strip().lower() in {"1", "true", "yes", "on"}
+    secret_policy = build_secret_action_policy(
+        secret_action_mode,
+        secret_issue_approved=secret_issue_approved,
+    )
     redirect_uri = values.get("redirect_uri") or os.environ.get("YOUTUBE_OAUTH_SERVER_REDIRECT_URI") or SERVER_REDIRECT_URI
     client_file = values.get("client_file") or os.environ.get("YOUTUBE_SERVER_CLIENT_FILE") or SERVER_CLIENT_FILE
     token_file = values.get("token_file") or os.environ.get("YOUTUBE_SERVER_TOKEN_FILE") or SERVER_TOKEN_FILE
@@ -371,7 +378,8 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         "workflow": "youtube_caption_server_oauth_preapproval",
         "status": "ready_for_user_console_approval",
         "state_change": False,
-        "user_approval_mode": "final_approval_only",
+        "user_approval_mode": secret_policy["mode"],
+        "secret_action_policy": secret_policy,
         "intermediate_user_prompts": False,
         "final_approval_required": "User clicks the final Google Console approval button after the agent completes all non-secret inputs.",
         "server_baseline": True,

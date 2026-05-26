@@ -312,11 +312,28 @@ def _cmd_cloud(sub: str, args: list[str]) -> None:
 
 def _cmd_console(sub: str, args: list[str]) -> None:
     dry_run = "--dry-run" in args
+    secret_action_mode = "final_approval_only"
+    secret_issue_approved = "--secret-issue-approved" in args
+    for arg in args:
+        if arg.startswith("--secret-action-mode="):
+            secret_action_mode = arg.split("=", 1)[1]
     if sub in ("youtube-oauth-plan", "youtube-oauth-preapproval", "plan"):
-        print(json.dumps(managed_console.build_youtube_oauth_console_open_plan(), ensure_ascii=False, indent=2, default=str))
+        print(json.dumps(
+            managed_console.build_youtube_oauth_console_open_plan(
+                secret_action_mode=secret_action_mode,
+                secret_issue_approved=secret_issue_approved,
+            ),
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        ))
         return
     if sub in ("youtube-oauth-open", "open-youtube-oauth", "open"):
-        result = managed_console.open_youtube_oauth_console_managed(dry_run=dry_run)
+        result = managed_console.open_youtube_oauth_console_managed(
+            dry_run=dry_run,
+            secret_action_mode=secret_action_mode,
+            secret_issue_approved=secret_issue_approved,
+        )
         print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
         return
     if sub in ("youtube-oauth-fill", "fill-youtube-oauth", "youtube-oauth-prefill"):
@@ -324,6 +341,8 @@ def _cmd_console(sub: str, args: list[str]) -> None:
         result, path = oauth_console_fill.prefill_youtube_oauth_console(
             dry_run=dry_run,
             approved_api_enable=approved_api_enable,
+            secret_action_mode=secret_action_mode,
+            secret_issue_approved=secret_issue_approved,
         )
         oauth_console_fill.print_prefill_summary(result, path)
         return

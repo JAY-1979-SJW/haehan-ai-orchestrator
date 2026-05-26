@@ -31,10 +31,12 @@ REQUIRED_PHRASES = (
     "scripts/google/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
+    "scripts/google/secret_action_gate.py",
     "scripts/google/domain_readiness_audit.py",
     "python scripts/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_domain_readiness_audit.py",
+    "tests/test_google_secret_action_gate.py",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -66,7 +68,7 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google import domain_readiness_audit, live_surface_explorer, subdomain_logic, tab_logic, workflows
+    from scripts.google import domain_readiness_audit, live_surface_explorer, secret_action_gate, subdomain_logic, tab_logic, workflows
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -137,6 +139,11 @@ def audit() -> tuple[bool, list[str]]:
         failures.append("Google domain readiness must cover all 50 surfaces")
     if readiness.get("global_policy", {}).get("browser_fallback") != "user_present_cdp_session_selection_required":
         failures.append("Google browser fallback must require CDP session selection")
+    secret_policy = secret_action_gate.build_secret_action_policy("secret_issue_agent_click")
+    if secret_policy.get("status") != "blocked":
+        failures.append("Google agent secret issue click must require explicit approval")
+    if secret_policy.get("raw_secret_output_allowed") is not False:
+        failures.append("Google secret action gate must block raw secret output")
 
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
@@ -144,6 +151,7 @@ def audit() -> tuple[bool, list[str]]:
         "Google host warnings are zero",
         "Google subdomain, tab, and 50-surface live logic contracts are present",
         "Google domain readiness covers OAuth/API and browser fallback boundaries",
+        "Google secret issuance modes are gated and raw secret output is blocked",
         "Google undeveloped work counts and backlog boundaries are locked",
     ]
 

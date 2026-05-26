@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .secret_action_gate import build_secret_action_policy
+
 GOOGLE_HOME_URL = "https://www.google.com/"
 GOOGLE_ACCOUNT_URL = "https://myaccount.google.com/"
 GOOGLE_CLOUD_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
@@ -22,8 +24,16 @@ YOUTUBE_SERVER_OAUTH_INPUTS = {
 }
 
 
-def build_youtube_oauth_console_open_plan() -> dict[str, Any]:
+def build_youtube_oauth_console_open_plan(
+    *,
+    secret_action_mode: str = "final_approval_only",
+    secret_issue_approved: bool = False,
+) -> dict[str, Any]:
     """Return the locked, non-secret Google Console open plan."""
+    secret_policy = build_secret_action_policy(
+        secret_action_mode,
+        secret_issue_approved=secret_issue_approved,
+    )
     return {
         "status": "ready_for_managed_console_open",
         "browser_runtime": "managed_local_agent_cdp_profile",
@@ -56,6 +66,7 @@ def build_youtube_oauth_console_open_plan() -> dict[str, Any]:
             },
         ],
         "non_secret_inputs": dict(YOUTUBE_SERVER_OAUTH_INPUTS),
+        "secret_action_policy": secret_policy,
         "agent_allowed_steps": [
             "open managed CDP browser tab",
             "navigate through the locked Google connection sequence",
@@ -72,13 +83,25 @@ def build_youtube_oauth_console_open_plan() -> dict[str, Any]:
             "final approval for storing the downloaded client JSON or generated token",
         ],
         "final_approval_boundary": "user_final_approval_only",
+        "user_approval_mode": secret_policy["mode"],
         "state_change": False,
     }
 
 
-def open_youtube_oauth_console_managed(*, dry_run: bool = False, timeout_ms: int = 60000) -> dict[str, Any]:
+def open_youtube_oauth_console_managed(
+    *,
+    dry_run: bool = False,
+    timeout_ms: int = 60000,
+    secret_action_mode: str = "final_approval_only",
+    secret_issue_approved: bool = False,
+) -> dict[str, Any]:
     """Open Google Console credentials through the managed CDP browser only."""
-    plan = build_youtube_oauth_console_open_plan()
+    plan = build_youtube_oauth_console_open_plan(
+        secret_action_mode=secret_action_mode,
+        secret_issue_approved=secret_issue_approved,
+    )
+    if plan["secret_action_policy"]["status"] == "blocked":
+        return {**plan, "dry_run": dry_run, "opened": False, "status": "blocked"}
     if dry_run:
         return {**plan, "dry_run": True, "opened": False}
 
