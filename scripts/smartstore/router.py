@@ -38,7 +38,9 @@ def run_smartstore(task: str | None, sub: str | None, args: list[str]) -> None:
     """Route SmartStore commands.
 
     task: actions | prepare | submit | product | order | inventory | seo |
-          ai | competitor | csv | analytics | session-check
+          ai | competitor | csv | analytics | session-check | live-probe |
+          page-tools | page-functions | dashboard | menus | advanced |
+          draft-fill | login-watch
     """
     match task or "help":
         case "actions" | "action-catalog":
@@ -65,6 +67,24 @@ def run_smartstore(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_analytics(sub, args)
         case "session-check":
             _cmd_session_check()
+        case "live-probe" | "dashboard-check" | "probe":
+            _cmd_live_probe(([sub] if sub else []) + args)
+        case "page-tools" | "page-inventory" | "tools-from-page":
+            _cmd_page_tools(([sub] if sub else []) + args)
+        case "page-functions" | "current-page-functions" | "functions":
+            _cmd_page_functions(([sub] if sub else []) + args)
+        case "dashboard" | "dashboard-summary":
+            _cmd_dashboard_summary(([sub] if sub else []) + args)
+        case "menus" | "menu":
+            _cmd_menus(sub, args)
+        case "advanced" | "analyze-menu" | "menu-advanced":
+            _cmd_advanced(sub, args)
+        case "draft-fill" | "fill-draft" | "write-draft":
+            _cmd_draft_fill(sub, args)
+        case "approved" | "approve":
+            _cmd_approved(sub, args)
+        case "login-watch" | "watch-login":
+            _cmd_login_watch(([sub] if sub else []) + args)
         case _:
             _print_help()
 
@@ -320,6 +340,256 @@ def _cmd_session_check() -> None:
     print("=" * 60)
 
 
+def _cmd_live_probe(args: list[str]) -> None:
+    from scripts.smartstore.live_probe import probe_dashboard, save_probe_report
+
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    wait_seconds = float(_option_value(args, "--wait=") or 6.0)
+    result = probe_dashboard(allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+    path = save_probe_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+
+
+def _cmd_page_tools(args: list[str]) -> None:
+    from scripts.smartstore.page_tools import collect_page_tools, save_page_tools_report
+
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    wait_seconds = float(_option_value(args, "--wait=") or 8.0)
+    result = collect_page_tools(allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+    path = save_page_tools_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+
+
+def _cmd_page_functions(args: list[str]) -> None:
+    from scripts.smartstore.page_functions import collect_current_page_functions, save_page_functions_report
+
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    result = collect_current_page_functions(allow_mixed_readonly=allow_mixed)
+    path = save_page_functions_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+    if not result.ok:
+        raise SystemExit(1)
+
+
+def _cmd_dashboard_summary(args: list[str]) -> None:
+    from scripts.smartstore.page_tools import collect_dashboard_summary, save_dashboard_report
+
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    result = collect_dashboard_summary(allow_mixed_readonly=allow_mixed)
+    path = save_dashboard_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+
+
+def _cmd_menus(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.menu_tools import (
+        build_menu_catalog,
+        collect_all_menu_snapshots,
+        collect_menu_snapshot,
+        list_menu_specs,
+        save_all_menu_snapshots,
+        save_menu_catalog,
+        save_menu_snapshot,
+    )
+
+    action = sub or "catalog"
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    wait_seconds = float(_option_value(args, "--wait=") or 6.0)
+
+    if action in ("catalog", "list", "tools"):
+        catalog = build_menu_catalog()
+        path = save_menu_catalog(catalog)
+        _print_result(catalog)
+        print(f"saved: {path}")
+        return
+
+    if action in ("snapshot", "open", "inspect"):
+        menu_id = _option_value(args, "--menu=") or (args[0] if args else "")
+        if not menu_id:
+            names = ", ".join(spec.menu_id for spec in list_menu_specs())
+            raise SystemExit(f"menu id required: --menu=<id>; available={names}")
+        result = collect_menu_snapshot(menu_id, allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+        path = save_menu_snapshot(result)
+        _print_result(result.to_dict())
+        print(f"saved: {path}")
+        if not result.ok:
+            raise SystemExit(1)
+        return
+
+    if action in ("all", "snapshot-all", "inspect-all"):
+        payload = collect_all_menu_snapshots(allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+        path = save_all_menu_snapshots(payload)
+        _print_result(payload)
+        print(f"saved: {path}")
+        if payload.get("ok_count") != payload.get("menu_count"):
+            raise SystemExit(1)
+        return
+
+    menu_ids = {spec.menu_id for spec in list_menu_specs()}
+    if action in menu_ids:
+        result = collect_menu_snapshot(action, allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+        path = save_menu_snapshot(result)
+        _print_result(result.to_dict())
+        print(f"saved: {path}")
+        if not result.ok:
+            raise SystemExit(1)
+        return
+
+    print("usage: python scripts/cdp_client.py smartstore menus catalog")
+    print("       python scripts/cdp_client.py smartstore menus snapshot --menu=<id>")
+
+
+def _cmd_advanced(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.advanced_tools import (
+        analyze_all_menus,
+        analyze_menu,
+        build_advanced_catalog,
+        save_advanced_all,
+        save_advanced_report,
+    )
+
+    action = sub or "catalog"
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    wait_seconds = float(_option_value(args, "--wait=") or 6.0)
+    if action in ("catalog", "profiles", "tools"):
+        _print_result(build_advanced_catalog())
+        return
+    if action in ("all", "analyze-all"):
+        payload = analyze_all_menus(allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+        path = save_advanced_all(payload)
+        _print_result(payload)
+        print(f"saved: {path}")
+        if payload.get("ok_count") != payload.get("menu_count"):
+            raise SystemExit(1)
+        return
+    from scripts.smartstore.menu_tools import list_menu_specs
+
+    menu_ids = {spec.menu_id for spec in list_menu_specs()}
+    menu_id = _option_value(args, "--menu=") or (action if action in menu_ids else "")
+    if not menu_id:
+        menu_id = next((arg for arg in args if not str(arg).startswith("--")), action)
+    result = analyze_menu(menu_id, allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+    path = save_advanced_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+    if not result.ok:
+        raise SystemExit(1)
+
+
+def _cmd_draft_fill(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.draft_fill import fill_product_draft, load_product_data, save_draft_fill_report
+
+    workflow = sub or "product"
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    wait_seconds = float(_option_value(args, "--wait=") or 12.0)
+    data_path = _option_value(args, "--data=") or _option_value(args, "--file=")
+    if workflow not in ("product", "product-draft", "sample-product"):
+        raise SystemExit("usage: python scripts/cdp_client.py smartstore draft-fill product [--data=<json>]")
+    data = load_product_data(data_path)
+    result = fill_product_draft(data, allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
+    path = save_draft_fill_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+    if not result.ok:
+        raise SystemExit(1)
+
+
+def _cmd_approved(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.approved_product_workflow import (
+        approved_both_test_product_cycle,
+        approved_cleanup_product,
+        approved_save_product,
+        approved_test_product_cycle,
+        save_approved_product_report,
+    )
+
+    action = sub or "save-product"
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    approved = _flag(args, "--approved")
+    confirm = _option_value(args, "--confirm=") or ""
+    cleanup = _flag(args, "--cleanup") or _flag(args, "--delete-after")
+    wait_seconds = float(_option_value(args, "--wait=") or 10.0)
+    if action in ("save-product", "product-save", "publish-product"):
+        result = approved_save_product(
+            approved=approved,
+            confirm=confirm,
+            allow_mixed_readonly=allow_mixed,
+            cleanup=cleanup,
+            wait_seconds=wait_seconds,
+        )
+    elif action in ("test-cycle", "both-test-cycle"):
+        payload = approved_both_test_product_cycle(
+            approved=approved,
+            confirm=confirm,
+            allow_mixed_readonly=allow_mixed,
+            cleanup=cleanup,
+            wait_seconds=wait_seconds,
+        )
+        from pathlib import Path
+        out = Path("data/smartstore_approved_product_latest.json")
+        out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        _print_result(payload)
+        print(f"saved: {out.resolve()}")
+        if not payload.get("ok"):
+            raise SystemExit(1)
+        return
+    elif action in ("test-individual", "individual-test-cycle"):
+        result = approved_test_product_cycle(
+            product_type="individual",
+            approved=approved,
+            confirm=confirm,
+            allow_mixed_readonly=allow_mixed,
+            cleanup=cleanup,
+            wait_seconds=wait_seconds,
+        )
+    elif action in ("test-group", "group-test-cycle"):
+        result = approved_test_product_cycle(
+            product_type="group",
+            approved=approved,
+            confirm=confirm,
+            allow_mixed_readonly=allow_mixed,
+            cleanup=cleanup,
+            wait_seconds=wait_seconds,
+        )
+    elif action in ("cleanup-product", "delete-product"):
+        product_name = _option_value(args, "--name=") or _option_value(args, "--product-name=") or ""
+        if not product_name:
+            raise SystemExit("approved cleanup-product requires --name=<test product name>")
+        result = approved_cleanup_product(
+            product_name=product_name,
+            approved=approved,
+            confirm=confirm,
+            allow_mixed_readonly=allow_mixed,
+            wait_seconds=wait_seconds,
+        )
+    else:
+        raise SystemExit("usage: smartstore approved save-product --approved --confirm=SMARTSTORE_APPROVED_SUBMIT [--cleanup]")
+    path = save_approved_product_report(result)
+    _print_result(result.to_dict())
+    print(f"saved: {path}")
+    if not result.ok:
+        raise SystemExit(1)
+
+
+def _cmd_login_watch(args: list[str]) -> None:
+    from scripts.smartstore.live_probe import watch_login_and_save
+
+    allow_mixed = _flag(args, "--allow-mixed-readonly")
+    timeout_seconds = int(_option_value(args, "--timeout=") or 300)
+    interval_seconds = float(_option_value(args, "--interval=") or 1.0)
+    result = watch_login_and_save(
+        allow_mixed_readonly=allow_mixed,
+        timeout_seconds=timeout_seconds,
+        interval_seconds=interval_seconds,
+    )
+    _print_result(result.to_dict())
+    if not result.ok:
+        raise SystemExit(1)
+
+
 def _print_help() -> None:
     print(
         """SmartStore usage:
@@ -333,7 +603,18 @@ def _print_help() -> None:
   python scripts/cdp_client.py smartstore ai <review-text>
   python scripts/cdp_client.py smartstore competitor <keyword>
   python scripts/cdp_client.py smartstore csv <file>
-  python scripts/cdp_client.py smartstore analytics"""
+  python scripts/cdp_client.py smartstore analytics
+  python scripts/cdp_client.py smartstore live-probe --allow-mixed-readonly
+  python scripts/cdp_client.py smartstore page-tools --allow-mixed-readonly
+  python scripts/cdp_client.py smartstore page-functions
+  python scripts/cdp_client.py smartstore dashboard --allow-mixed-readonly
+  python scripts/cdp_client.py smartstore menus catalog
+  python scripts/cdp_client.py smartstore menus snapshot --menu=product
+  python scripts/cdp_client.py smartstore menus snapshot-all
+  python scripts/cdp_client.py smartstore advanced product
+  python scripts/cdp_client.py smartstore advanced all
+  python scripts/cdp_client.py smartstore draft-fill product
+  python scripts/cdp_client.py smartstore login-watch --timeout=300"""
     )
 
 
