@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from uuid import uuid4
 
 from scripts.youtube import oauth
+
+
+def _test_dir() -> Path:
+    path = Path("tmp") / "youtube_oauth_tests" / uuid4().hex
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def test_auth_plan_blocks_without_client(monkeypatch):
@@ -21,7 +28,8 @@ def test_auth_plan_blocks_without_client(monkeypatch):
     assert result["client_secret_output"] == "redacted"
 
 
-def test_auth_plan_uses_client_file_without_secret_output(tmp_path: Path):
+def test_auth_plan_uses_client_file_without_secret_output():
+    tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     client_file.write_text(
         json.dumps({"installed": {"client_id": "client-id.apps.googleusercontent.com", "client_secret": "super-secret"}}),
@@ -38,7 +46,8 @@ def test_auth_plan_uses_client_file_without_secret_output(tmp_path: Path):
     assert "super-secret" not in str(result)
 
 
-def test_auth_plan_prefers_desktop_client_redirect_uri(tmp_path: Path):
+def test_auth_plan_prefers_desktop_client_redirect_uri():
+    tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     client_file.write_text(
         json.dumps(
@@ -60,7 +69,8 @@ def test_auth_plan_prefers_desktop_client_redirect_uri(tmp_path: Path):
     assert "redirect_uri=http%3A%2F%2Flocalhost" in result["auth_url"]
 
 
-def test_exchange_code_writes_authorized_user_token(monkeypatch, tmp_path: Path):
+def test_exchange_code_writes_authorized_user_token(monkeypatch):
+    tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     token_file = tmp_path / "token.json"
     client_file.write_text(
@@ -103,7 +113,8 @@ def test_exchange_code_writes_authorized_user_token(monkeypatch, tmp_path: Path)
     assert saved["client_secret"] == "super-secret"
 
 
-def test_exchange_blocks_without_code(tmp_path: Path):
+def test_exchange_blocks_without_code():
+    tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     client_file.write_text(
         json.dumps({"installed": {"client_id": "client-id.apps.googleusercontent.com", "client_secret": "super-secret"}}),

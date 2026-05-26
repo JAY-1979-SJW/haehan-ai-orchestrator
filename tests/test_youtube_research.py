@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from uuid import uuid4
 
 from scripts.youtube import research
 from scripts.youtube.router import _read_json_file
+
+
+def _test_dir() -> Path:
+    path = Path("tmp") / "youtube_research_tests" / uuid4().hex
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def test_search_blocks_without_api_key(monkeypatch):
@@ -125,7 +132,8 @@ def test_caption_download_rejects_bad_format():
     assert "srt" in result["allowed_formats"]
 
 
-def test_caption_download_writes_sanitized_transcript(monkeypatch, tmp_path: Path):
+def test_caption_download_writes_sanitized_transcript(monkeypatch):
+    tmp_path = _test_dir()
     calls = []
 
     def fake_get_text_oauth(url, params, token):
@@ -206,7 +214,8 @@ def test_collect_comments_uses_official_api(monkeypatch):
     assert result["comments"][0]["text"] == "Great automation insight"
 
 
-def test_analyze_user_provided_transcript(tmp_path: Path):
+def test_analyze_user_provided_transcript():
+    tmp_path = _test_dir()
     transcript = tmp_path / "transcript.txt"
     transcript.write_text(
         "This video explains YouTube search automation. "
@@ -224,7 +233,8 @@ def test_analyze_user_provided_transcript(tmp_path: Path):
     assert result["business_report"]["main_topics"]
 
 
-def test_analyze_redacts_sensitive_keywords(tmp_path: Path):
+def test_analyze_redacts_sensitive_keywords():
+    tmp_path = _test_dir()
     transcript = tmp_path / "transcript.txt"
     transcript.write_text("The password and bearer token should not be exposed.", encoding="utf-8")
 
@@ -307,7 +317,8 @@ def test_strategy_scorecard_scores_reference_video():
     assert "produce_video" in result["recommended_actions"] or "prepare_script_outline" in result["recommended_actions"]
 
 
-def test_router_json_reader_accepts_utf8_bom(tmp_path: Path):
+def test_router_json_reader_accepts_utf8_bom():
+    tmp_path = _test_dir()
     path = tmp_path / "bom.json"
     path.write_text('{"ok": true}', encoding="utf-8-sig")
 

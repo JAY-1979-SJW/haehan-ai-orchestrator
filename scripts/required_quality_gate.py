@@ -12,6 +12,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -296,6 +297,18 @@ def command_timeout_for(command: tuple[str, ...]) -> int:
     return timeout_s
 
 
+def command_with_runtime_args(command: tuple[str, ...]) -> tuple[str, ...]:
+    return command
+
+
+def isolated_pytest_temp(env: dict[str, str]) -> Path:
+    default_base = ROOT / "tmp" / "required_gate_temp"
+    base = Path(env.get("HAEHAN_REQUIRED_GATE_TEMP", str(default_base)))
+    target = base / uuid4().hex
+    target.mkdir(parents=True, exist_ok=True)
+    return target
+
+
 def run_command(command: tuple[str, ...]) -> GateResult:
     name = command_text(command)
     if command_is_forbidden(command):
@@ -306,6 +319,10 @@ def run_command(command: tuple[str, ...]) -> GateResult:
     if command_is_pytest(command):
         env.pop("PYTHONPYCACHEPREFIX", None)
         env.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+        temp_root = isolated_pytest_temp(env)
+        env["TMP"] = str(temp_root)
+        env["TEMP"] = str(temp_root)
+        env["TMPDIR"] = str(temp_root)
     else:
         pycache = Path(
             env.get("HAEHAN_REQUIRED_GATE_PYCACHE", str(Path(env.get("TEMP", str(ROOT / "tmp"))) / "haehan_required_gate_pycache"))
@@ -317,7 +334,7 @@ def run_command(command: tuple[str, ...]) -> GateResult:
     is_pytest = command_is_pytest(command)
     try:
         result = subprocess.run(
-            list(command),
+            list(command_with_runtime_args(command)),
             cwd=ROOT,
             stdin=subprocess.DEVNULL,
             text=True,
