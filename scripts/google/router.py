@@ -19,6 +19,7 @@ from . import (
     youtube_upload,
     managed_console,
     oauth_console_fill,
+    vision_usage_gate,
 )
 from .base import check_session
 from .cloud import live_console_explorer
@@ -114,6 +115,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             _cmd_youtube(sub or "catalog", args)
         case "ai":
             _cmd_ai(sub or "catalog", args)
+        case "vision":
+            _cmd_vision(sub or "gate", args)
         case "android" | "android-app" | "app-dev":
             _cmd_android(sub or "report", args)
         case "domains" | "taxonomy" | "classification":
@@ -359,6 +362,29 @@ def _cmd_ai(sub: str, args: list[str]) -> None:
     print(f"  [error] unknown ai task: {sub}")
 
 
+def _cmd_vision(sub: str, args: list[str]) -> None:
+    if sub not in ("gate", "usage-gate", "monthly-free-gate", "free-gate"):
+        print(f"  [error] unknown vision task: {sub}")
+        return
+    values = _parse_option_args(args)
+    features = values.get("features", "text_detection").replace(";", ",").split(",")
+    payload = vision_usage_gate.evaluate_vision_monthly_free_gate(
+        current_month_units=int(values.get("current-month-units", "0")),
+        image_count=int(values.get("images", "0")),
+        page_count=int(values.get("pages", "0")),
+        features=features,
+        cost_approved=values.get("cost-approved", "false").lower() in ("1", "true", "yes"),
+    )
+    path = vision_usage_gate.save_vision_monthly_free_gate(payload)
+    print(
+        "google_vision_usage_gate "
+        f"status={payload['status']} ok={payload['ok']} "
+        f"current={payload['current_month_units']} requested={payload['requested_units']} "
+        f"projected={payload['projected_month_units']} limit={payload['monthly_free_limit_units']} "
+        f"report={path}"
+    )
+
+
 def _cmd_android(sub: str, args: list[str]) -> None:
     if sub in ("labels", "usage", "pricing", "catalog"):
         print(json.dumps(android_app_dev_labels.build_android_app_dev_labels(), ensure_ascii=False, indent=2, default=str))
@@ -537,3 +563,24 @@ def _cmd_work(sub: str, args: list[str]) -> None:
         live_inputs.print_live_manifest_summary(summary, path)
         return
     print(f"  [error] unknown google work task: {sub}")
+
+
+def _parse_option_args(args: list[str]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    index = 0
+    while index < len(args):
+        arg = args[index]
+        if not arg.startswith("--"):
+            index += 1
+            continue
+        key = arg[2:]
+        if "=" in key:
+            name, value = key.split("=", 1)
+            values[name] = value
+        elif index + 1 < len(args) and not args[index + 1].startswith("--"):
+            values[key] = args[index + 1]
+            index += 1
+        else:
+            values[key] = "true"
+        index += 1
+    return values

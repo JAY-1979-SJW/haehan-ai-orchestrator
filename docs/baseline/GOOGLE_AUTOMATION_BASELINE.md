@@ -166,6 +166,23 @@ Approval actions must:
 - default to no final submit for live browser input
 - save a verification or evidence artifact
 
+### 4.1 Google Vision Monthly Free-Unit Gate
+
+Cloud Vision work must run through the monthly free-unit gate before API use.
+The locked free boundary is 1,000 units per month. The gate warns at 800 units
+and blocks any projected month total above 1,000 units unless explicit cost
+approval is present.
+
+The unit estimate is:
+
+```text
+monthly_free_limit_units = 1000
+requested_units = (image_count + page_count) * feature_count
+```
+
+API key or service-account issuance for Vision follows the Google
+`secret_action_mode` gate, and raw secret output remains forbidden.
+
 ## 5. Host Rules
 
 Surface host and action target host must match unless a documented exception is
@@ -215,6 +232,10 @@ Representative host boundaries:
   next-step requirement. The audit also writes a per-domain Markdown gate report
   to `docs/reports/google_domain_readiness_latest.md` so each Google domain can
   be reviewed independently before new automation work starts.
+- `scripts/google/vision_usage_gate.py`: Google Cloud Vision monthly free-unit
+  cost gate. It locks `monthly_free_limit_units = 1000`, warns at 800 units,
+  blocks projected usage above 1,000 units without cost approval, and routes API
+  key/service-account creation back through `secret_action_mode`.
 - `python scripts/cdp_client.py google work undeveloped`: required Google gap
   report for separating implemented read-only work, no-final-submit input
   support, prepare/open-only items, and production final-execution blocks.
@@ -225,6 +246,8 @@ Representative host boundaries:
 - `tests/test_google_cloud_live_console_explorer.py`: Cloud Console live-logic contract.
 - `tests/test_google_secret_action_gate.py`: secret issuance mode and raw-secret
   output contract.
+- `tests/test_google_vision_usage_gate.py`: Vision monthly free-unit warning,
+  blocking, cost-approval, unit-estimation, and secret-output contract.
 
 ## 7. Required Verification
 
@@ -235,9 +258,11 @@ python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scrip
 python -m py_compile scripts/google/managed_console.py
 python -m py_compile scripts/google/secret_action_gate.py
 python -m py_compile scripts/google/domain_readiness_audit.py
+python -m py_compile scripts/google/vision_usage_gate.py scripts/google/router.py
 python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py tests/test_google_managed_console.py -q
 python -m pytest tests/test_google_domain_readiness_audit.py -q
 python -m pytest tests/test_google_secret_action_gate.py tests/test_google_managed_console.py tests/test_youtube_oauth.py -q
+python -m pytest tests/test_google_vision_usage_gate.py -q
 python scripts/google/domain_readiness_audit.py
 python scripts/ops/audit_google_automation_baseline_contract.py
 python scripts/module_quality_gate.py --module repo_guard
