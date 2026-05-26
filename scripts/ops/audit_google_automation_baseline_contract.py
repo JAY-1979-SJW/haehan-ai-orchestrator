@@ -42,7 +42,7 @@ REQUIRED_PHRASES = (
     "monthly_free_limit_units = 1000",
     "scripts/ops/audit_google_prefill_maturity.py",
     "Strict final-approval-only prefill is a higher bar than live-input support.",
-    "41 strict prefill",
+    "39 strict prefill",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -178,18 +178,21 @@ def audit() -> tuple[bool, list[str]]:
     expected_prefill_counts = {
         "approval_actions": 46,
         "live_input_supported": 46,
-        "domain_specific_prefill": 5,
+        "domain_specific_prefill": 7,
         "generic_handoff": 37,
-        "partial_handoff": 4,
-        "strict_prefill_gaps": 41,
+        "partial_handoff": 2,
+        "strict_prefill_gaps": 39,
     }
     for key, expected in expected_prefill_counts.items():
         actual = prefill_maturity["counts"].get(key)
         if actual != expected:
             failures.append(f"Google strict prefill maturity mismatch {key}: expected {expected}, got {actual}")
     priority_gaps = {item["action_key"] for item in prefill_maturity.get("priority_gaps", [])}
-    if priority_gaps != {"cloud_create_api_credential", "ai_studio_create_api_key"}:
-        failures.append("Google strict prefill priority gaps must remain API key issuance actions")
+    if priority_gaps:
+        failures.append("Google strict prefill priority gaps must be empty after API key issuance prefill readiness")
+    priority_ready = {item["action_key"] for item in prefill_maturity.get("priority_ready", [])}
+    if priority_ready != {"cloud_create_api_credential", "ai_studio_create_api_key"}:
+        failures.append("Google API key issuance actions must be marked final-click-ready")
 
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
