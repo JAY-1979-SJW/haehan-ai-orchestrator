@@ -43,7 +43,7 @@ GOOGLE_SERVICES = (
 
 NAVER_SERVICES = (
     SubdomainService("naver_home", "Naver Home", "https://www.naver.com/", "www.naver.com"),
-    SubdomainService("naver_login", "Naver Login", "https://nid.naver.com/", "nid.naver.com"),
+    SubdomainService("naver_login", "Naver Login", "https://www.naver.com/", "www.naver.com"),
     SubdomainService("naver_mail", "Naver Mail", "https://mail.naver.com/", "mail.naver.com"),
     SubdomainService("naver_cafe", "Naver Cafe", "https://cafe.naver.com/", "cafe.naver.com"),
     SubdomainService("naver_blog", "Naver Blog", "https://blog.naver.com/", "blog.naver.com"),
@@ -132,4 +132,3 @@ def validate_registry() -> list[str]:
             if service.default_action != "web_open_url_readonly":
                 errors.append(f"{provider.provider_id}/{service.key}: action must be web_open_url_readonly")
     return errors
-

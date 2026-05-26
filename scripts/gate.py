@@ -70,6 +70,9 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     "mail_send":       RiskLevel.APPROVE,
     "gmail_send":      RiskLevel.APPROVE,
     "naver_mail_send": RiskLevel.APPROVE,
+    "naver_mail_delete": RiskLevel.APPROVE,
+    "naver_mail_move": RiskLevel.APPROVE,
+    "naver_mail_settings_save": RiskLevel.APPROVE,
 
     # 결제/이체 (비가역)
     "payment":         RiskLevel.APPROVE,

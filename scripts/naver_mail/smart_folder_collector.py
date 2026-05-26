@@ -92,7 +92,7 @@ def collect_all(actions: _Actions, *,
 
     # 0) 받은편지함으로 시작
     actions.navigate("https://mail.naver.com/v2/folders/0/all")
-    time.sleep(2.5)
+    time.sleep(0.2)
     actions.wait_dom("document.querySelector('li.mail_item, .lnb')", timeout_s=10.0)
 
     # 1) UI snapshot BEFORE
@@ -108,7 +108,7 @@ def collect_all(actions: _Actions, *,
     for f in targets:
         unread_url = f"https://mail.naver.com/v2/folders/{f.folder_id}/unread"
         actions.navigate(unread_url)
-        time.sleep(navigate_inter_folder_delay_s)
+        time.sleep(min(navigate_inter_folder_delay_s, 0.2))
         actions.wait_dom("document.querySelector('li.mail_item, .mail_list_wrap')",
                          timeout_s=15.0)
         # 이 URL 은 이미 UNREAD 필터가 적용된 상태 — apply_unread_filter 호출 불필요

@@ -33,6 +33,8 @@ import logging
 import time as _time_default
 from typing import Any, Callable
 
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+
 from .browser_reader import (
     BrowserDependencyMissing,
     _detect_login_required,
@@ -168,6 +170,7 @@ def probe_manual_login_flow(
 
     factory = _browser_factory
     if factory is None:
+        assert_browser_launch_allowed(component="local_agent.browser_login_probe", action="playwright_launch")
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:

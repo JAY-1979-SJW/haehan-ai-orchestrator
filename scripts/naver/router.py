@@ -103,10 +103,14 @@ def _gate_blog(sub: str) -> None:
 
 
 def _gate_mail(sub: str) -> None:
-    if sub in ("send", "compose"):
+    if sub in ("send",):
         gate_check("naver_mail_send")    # APPROVE — 외부 발송
+    elif sub in ("delete", "trash"):
+        gate_check("naver_mail_delete")  # APPROVE — 메일 삭제/휴지통 이동
+    elif sub in ("move", "archive", "spam", "label", "unlabel"):
+        gate_check("naver_mail_move")    # APPROVE — 메일함/분류 상태 변경
     else:
-        gate_check("goto")               # AUTO — 수신함 조회
+        gate_check("goto")               # AUTO — 읽기/작성 준비
 
 
 def _option_value(args: list[str], prefix: str) -> str | None:
@@ -804,13 +808,15 @@ def _cmd_login() -> None:
     from scripts.web_connector import browser_session
     from scripts.login_session import is_logged_in
     from scripts.login_detector import monitor_for_login
+    from scripts.naver.browser_gate import require_naver_browser
 
     print("=" * 60)
     print("네이버 로그인")
     print("=" * 60)
 
+    require_naver_browser()
     with browser_session() as page:
-        page.goto("https://nid.naver.com/nidlogin.login", timeout=60000)
+        page.goto("https://www.naver.com/", timeout=60000)
 
         if is_logged_in(page, "naver"):
             print("✓ 이미 로그인 상태입니다")

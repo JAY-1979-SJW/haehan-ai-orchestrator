@@ -13,6 +13,8 @@ from typing import Optional, Any, Dict, List
 import logging
 from dataclasses import dataclass, asdict
 
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,6 +143,7 @@ class BrowserController:
         Raises:
             BrowserControllerError: If browser launch fails
         """
+        assert_browser_launch_allowed(component="local_agent.browser_controller", action="playwright_launch")
         try:
             from playwright.async_api import async_playwright
 

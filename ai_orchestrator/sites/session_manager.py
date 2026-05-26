@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Literal, Optional
 
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+
 from . import secrets_policy
 from .browser import DEFAULT_HEADLESS, DEFAULT_TIMEOUT_MS
 
@@ -214,6 +216,7 @@ def open_persistent_context(
     pw_cm = playwright_sync_api.sync_playwright()
     pw = pw_cm.start()
     try:
+        assert_browser_launch_allowed(component="ai_orchestrator.sites.session_manager", action="playwright_persistent_context")
         context = pw.chromium.launch_persistent_context(
             user_data_dir=str(profile_dir),
             headless=headless,

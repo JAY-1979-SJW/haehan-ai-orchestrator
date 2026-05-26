@@ -15,18 +15,36 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from scripts.gate import check as gate_check
+
 # 모드 상수
 MODE_LIST_ONLY = "LIST_ONLY"
 MODE_UNREAD_ONLY = "UNREAD_ONLY"
 MODE_FULL_READ = "FULL_READ"
+MODE_ALL = "ALL"
 
 # 절대 호출 금지 동작 (collector 가 호출 시 RuntimeError)
+ALLOWED_ACTIONS = frozenset({
+    "read", "list", "search", "open_body", "compose", "draft",
+    "reply", "reply_all", "forward", "edit_draft",
+})
+
+APPROVAL_GATED_ACTIONS: dict[str, str] = {
+    "send": "naver_mail_send",
+    "delete": "naver_mail_delete",
+    "trash": "naver_mail_delete",
+    "move": "naver_mail_move",
+    "archive": "naver_mail_move",
+    "spam": "naver_mail_move",
+    "star": "naver_mail_move",
+    "important": "naver_mail_move",
+    "label": "naver_mail_move",
+    "unlabel": "naver_mail_move",
+}
+
 FORBIDDEN_ACTIONS = frozenset({
-    "send", "reply", "reply_all", "forward",
-    "delete", "move", "spam", "trash",
-    "star", "important", "label", "unlabel",
     "download_attachment", "open_attachment",
-    "screenshot_body",  # 본 정식 파이프라인에서 본문 캡쳐 금지
+    "screenshot_body",
 })
 
 
@@ -34,7 +52,13 @@ class ForbiddenActionError(RuntimeError):
     pass
 
 
-def assert_action_allowed(action: str) -> None:
+def assert_action_allowed(action: str, *, force: bool = False, **metadata: Any) -> None:
+    if action in ALLOWED_ACTIONS:
+        return
+    gate_name = APPROVAL_GATED_ACTIONS.get(action)
+    if gate_name:
+        gate_check(gate_name, force=force, mail_action=action, **metadata)
+        return
     if action in FORBIDDEN_ACTIONS:
         raise ForbiddenActionError(
             f"FORBIDDEN_ACTION_BLOCKED: {action!r} — 정책상 금지된 동작입니다."
@@ -42,7 +66,7 @@ def assert_action_allowed(action: str) -> None:
 
 
 def assert_mode_valid(mode: str) -> None:
-    if mode not in (MODE_LIST_ONLY, MODE_UNREAD_ONLY, MODE_FULL_READ):
+    if mode not in (MODE_LIST_ONLY, MODE_UNREAD_ONLY, MODE_FULL_READ, MODE_ALL):
         raise ValueError(f"UNKNOWN_MODE: {mode!r}")
 
 

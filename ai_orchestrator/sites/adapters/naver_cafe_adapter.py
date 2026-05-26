@@ -52,7 +52,7 @@ class NaverCafeAdapter(SiteAdapter):
 
     # ── 진입점 URL ─────────────────────────────────────────────
     HOME_URL: ClassVar[str] = "https://cafe.naver.com/"
-    LOGIN_URL: ClassVar[str] = "https://nid.naver.com/nidlogin.login"
+    LOGIN_URL: ClassVar[str] = "https://www.naver.com/"
 
     # ── URL 힌트 (소문자 기준으로 비교) ────────────────────────
     # 일반 로그인 페이지로 리다이렉트됨 → 세션 없음.

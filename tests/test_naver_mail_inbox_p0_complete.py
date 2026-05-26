@@ -371,11 +371,26 @@ def test_pii_mask_subject_with_phone():
 
 
 def test_forbidden_actions_blocked_at_guard():
-    for act in ("send", "delete", "move", "spam", "star", "label",
-                "download_attachment", "open_attachment", "screenshot_body",
-                "reply", "forward"):
+    for act in ("download_attachment", "open_attachment", "screenshot_body"):
         with pytest.raises(rsg.ForbiddenActionError):
             rsg.assert_action_allowed(act)
+
+
+def test_state_changing_mail_actions_require_approval_gate():
+    from scripts.gate import GateBlocked
+
+    for act in ("send", "delete", "move", "spam", "star", "label",
+                "download_attachment", "open_attachment", "screenshot_body",
+                "trash", "archive"):
+        if act in ("download_attachment", "open_attachment", "screenshot_body"):
+            continue
+        with pytest.raises(GateBlocked):
+            rsg.assert_action_allowed(act)
+
+
+def test_write_preparation_actions_allowed_at_guard():
+    for act in ("compose", "draft", "reply", "reply_all", "forward"):
+        rsg.assert_action_allowed(act)
 
 
 def test_collect_does_not_invoke_destructive_calls():

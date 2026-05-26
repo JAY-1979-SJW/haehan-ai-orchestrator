@@ -26,6 +26,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+
 from .web_reader import (
     MEDIUM_KEYWORDS,
     RISK_WRITE_KEYWORDS,
@@ -277,6 +279,7 @@ def perform_browser_action_readwrite_guarded(
 
     factory = _playwright_factory
     if factory is None:
+        assert_browser_launch_allowed(component="local_agent.browser_actions", action="playwright_launch")
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:

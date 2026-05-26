@@ -29,6 +29,8 @@ import os
 import re
 import time
 from typing import Any, Callable
+
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 from urllib.parse import urlparse
 
 from . import audit as _audit
@@ -146,6 +148,7 @@ def open_url_readonly(
 
     factory = _playwright_factory
     if factory is None:
+        assert_browser_launch_allowed(component="local_agent.browser_reader", action="playwright_launch")
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:

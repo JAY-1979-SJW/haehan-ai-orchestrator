@@ -26,6 +26,7 @@ sys.path.insert(0, str(_ROOT))
 from ai_orchestrator.local_agent.browser.cdp import (
     is_cdp_available, get_chrome_start_command, DEFAULT_CDP_PORT,
 )
+from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
 
 def _find_chrome_exe() -> str | None:
@@ -64,6 +65,8 @@ def main() -> None:
         print("[오류] Chrome 실행 파일을 찾을 수 없습니다.")
         print("       Chrome이 설치되어 있는지 확인하세요.")
         sys.exit(1)
+
+    assert_browser_launch_allowed(component="scripts.local_agent.start_chrome_with_cdp", action="chrome_cdp_launch")
 
     profile_dir = str(_ROOT / "data" / "browser_sessions" / args.profile)
     cmd = get_chrome_start_command(

@@ -35,7 +35,7 @@ _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT / "data" / ".env_naver"
 
-NAVER_LOGIN_URL = "https://nid.naver.com/nidlogin.login"
+NAVER_LOGIN_URL = "https://www.naver.com/"
 
 
 # ── 자격증명 로드 ──────────────────────────────────────────────────────────
@@ -247,6 +247,38 @@ def _submit_login_form(page) -> dict:
         return {"ok": False, "reason": str(enter_error)[:120]}
 
 
+def _open_login_from_naver_main(page) -> dict:
+    """Start Naver login from www.naver.com, then wait for the login form."""
+    page.goto(NAVER_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
+    time.sleep(1.0)
+
+    try:
+        if page.locator("#id").first.is_visible(timeout=1000):
+            return {"ok": True, "method": "already_on_login_form"}
+    except Exception:
+        pass
+
+    selectors = (
+        "a[href*='nid.naver.com/nidlogin.login']",
+        "a.MyView-module__link_login___HpHMW",
+        "a.link_login",
+        "#account a",
+        "#gnb_login_button",
+    )
+    for selector in selectors:
+        try:
+            el = page.locator(selector).first
+            if not el.is_visible(timeout=1000):
+                continue
+            el.click(timeout=3000)
+            page.locator("#id").first.wait_for(state="visible", timeout=10000)
+            return {"ok": True, "method": f"click:{selector}"}
+        except Exception:
+            continue
+
+    return {"ok": False, "reason": "login_link_not_found"}
+
+
 def _detect_captcha(page) -> bool:
     """캡차/보안문자/2차인증 감지."""
     try:
@@ -311,8 +343,15 @@ def login_naver(
 
     # 3. 로그인 페이지 진입
     _log.info("[naver-auth] 로그인 페이지 진입")
-    page.goto(NAVER_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
-    time.sleep(2)
+    entry_result = _open_login_from_naver_main(page)
+    if not entry_result.get("ok"):
+        return {
+            "ok": False,
+            "reason": f"login_entry_failed:{entry_result.get('reason', 'unknown')}",
+            "needs_manual": True,
+            "current_url": page.url,
+        }
+    time.sleep(1)
 
     # 4. ID/PW 입력 — 안전 입력 (기존 자동완성 값 처리)
     id_result = _safe_human_input(page, '#id', nid, label="ID", delay_ms=70)
