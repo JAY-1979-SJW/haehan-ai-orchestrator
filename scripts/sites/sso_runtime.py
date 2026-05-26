@@ -52,6 +52,27 @@ BLOCKED_OPERATION_KEYWORDS = frozenset(
     }
 )
 
+SSO_CONNECTION_POLICY = {
+    "entry_first": True,
+    "account_state_before_subdomain": True,
+    "target_subdomain_before_approval": True,
+    "direct_oauth_entry_allowed": False,
+    "error_code_for_direct_oauth": "SSO_DIRECT_OAUTH_ENTRY_BLOCKED",
+}
+
+OAUTH_CLIENT_POLICY = {
+    "client_type_must_match_runtime": True,
+    "redirect_uri_must_match_client_registration": True,
+    "scope_must_match_declared_workflow": True,
+    "web_app_client_for_local_cli_allowed": False,
+    "local_cli_preferred_client_type": "desktop_app",
+    "agent_non_secret_prefill_allowed": True,
+    "prefill_requires_observable_target": True,
+    "final_external_create_requires_user": True,
+    "request_user_input_when_prefill_blocked": True,
+    "error_code_for_mismatch": "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH",
+}
+
 
 def _contains_forbidden_field(value: Any) -> bool:
     if isinstance(value, dict):
@@ -85,6 +106,8 @@ def build_login_entry_task(provider_id: str) -> dict[str, Any]:
             "site_id": provider.provider_id,
             "sso_provider": provider.provider_id,
             "sso_stage": "login_entry_user_present",
+            "sso_connection_policy": SSO_CONNECTION_POLICY,
+            "oauth_client_policy": OAUTH_CLIENT_POLICY,
             "auto_login": False,
             "user_present_required": True,
             "shared_profile_required": True,
@@ -115,6 +138,8 @@ def build_subdomain_readonly_task(provider_id: str, service_key: str) -> dict[st
             "sso_provider": provider.provider_id,
             "sso_service": service.key,
             "sso_stage": "subdomain_readonly",
+            "sso_connection_policy": SSO_CONNECTION_POLICY,
+            "oauth_client_policy": OAUTH_CLIENT_POLICY,
             "auto_login": False,
             "user_present_required": True,
             "shared_profile_required": True,
@@ -136,6 +161,8 @@ def build_blocked_operation_result(provider_id: str, service_key: str, operation
         "service_key": service_key,
         "operation": operation,
         "state_change": False,
+        "sso_connection_policy": SSO_CONNECTION_POLICY,
+        "oauth_client_policy": OAUTH_CLIENT_POLICY,
         "local_agent_task": None,
     }
 
@@ -165,4 +192,3 @@ def dry_run_login_entry_task(provider_id: str) -> dict[str, Any]:
         "dry_run_result": result,
         "contains_forbidden_field": _contains_forbidden_field({"task": task, "result": result}),
     }
-

@@ -37,6 +37,35 @@ All SSO providers must follow this flow:
    or credential actions require a separate approval flow and final execution
    gate.
 
+Common connection lock:
+
+- direct OAuth URL entry is forbidden before the provider primary entry,
+  account-state check, and target registered subdomain check are complete
+- failed direct OAuth entry must be recorded as
+  `SSO_DIRECT_OAUTH_ENTRY_BLOCKED` before retry
+- browser/OAuth work that requires screen or tab verification must use the
+  managed local-agent/CDP browser profile
+- if Playwright attachment fails, use direct Chrome DevTools HTTP API only for
+  read-only open/status checks and record the failure
+
+Common OAuth client lock:
+
+- OAuth client type must match the runtime that is executing the flow
+- redirect URI must match the URI registered on that OAuth client
+- requested scope must match the declared workflow and consent setup
+- web-app OAuth clients must not be reused for local CLI token exchange unless
+  the web client explicitly has a matching local redirect URI and scope
+- local CLI/API token exchange should use a Desktop app OAuth client JSON
+- the agent may prefill non-secret fields such as app type, display name,
+  callback URI, scope label, and description when the target page is observable
+  through the managed browser runtime
+- if the target page is not observable, the agent must request or provide the
+  exact input values and wait for the user to enter them
+- final external create, save, submit, publish, grant, billing, IAM, or
+  credential-generation actions must remain user-direct unless a separate
+  explicit final-execution approval gate exists
+- mismatches must be recorded as `OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH`
+
 ## 3. Locked Providers
 
 The initial locked SSO providers are:
@@ -52,6 +81,15 @@ Google:
 - login entry: `https://www.google.com/`
 - account entry: `https://myaccount.google.com/`
 - login policy: `user_present_sso_profile`
+- connection sequence lock:
+  1. `https://www.google.com/`
+  2. `https://myaccount.google.com/`
+  3. requested registered Google subdomain in the same browser profile
+  4. approval/OAuth URL only after the first three steps are verified
+- direct OAuth/subdomain entry before Google Home is a runtime error and must be
+  recorded before retry
+- YouTube/local API token work must use a Desktop app OAuth client unless the
+  existing web-app client has an explicitly matching redirect URI and scope
 
 Naver:
 

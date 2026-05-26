@@ -35,7 +35,22 @@ routine refactor.
      must run in visible mode or be rejected before opening a browser.
    - Login, credential issue, submit, publish, billing, IAM, API key, upload,
      send, edit, and delete workflows remain separate approval actions. A
-     background approval marker does not downgrade those workflows to read-only.
+   background approval marker does not downgrade those workflows to read-only.
+   - SSO/OAuth browser work must follow the provider connection sequence before
+     opening approval URLs: provider home, account-state page, registered target
+     subdomain, then approval/OAuth URL.
+   - Direct OAuth URL entry before that sequence is a runtime error. Record
+     `SSO_DIRECT_OAUTH_ENTRY_BLOCKED`, then retry from the provider home.
+   - OAuth clients must match the runtime: web-app OAuth clients are for their
+     registered web callbacks, and local CLI/API token exchange should use a
+     Desktop app OAuth client JSON. Redirect URI or scope mismatch must be
+     recorded as `OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH`.
+   - The agent may prefill non-secret browser form fields when the target page
+     is observable through CDP. If the page cannot be inspected or screenshotted,
+     the agent must provide the exact values to the user instead of blind
+     coordinate/keyboard entry.
+   - Final external create/save/submit/approve actions remain user-direct unless
+     a separate explicit final-execution approval gate exists.
 
 5. Runtime state must not be written under `scripts/archive`.
    - `chrome_ui_monitor_state.json` is runtime state and must live under

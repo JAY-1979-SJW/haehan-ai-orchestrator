@@ -24,6 +24,11 @@ def test_browser_runtime_operating_rules_doc_is_locked():
         "CDP output is redacted",
         "Automated browser execution uses a dedicated profile",
         "Runtime state must not be written under `scripts/archive`",
+        "SSO_DIRECT_OAUTH_ENTRY_BLOCKED",
+        "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH",
+        "Desktop app OAuth client JSON",
+        "prefill non-secret browser form fields",
+        "Final external create/save/submit/approve actions remain user-direct",
         "scripts/archive/data/chrome_ui_monitor_state.json",
         "data/runtime/",
     ]
