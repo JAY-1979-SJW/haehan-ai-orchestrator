@@ -19,6 +19,7 @@ __status__ = {
         "research video-info": "done_official_api",
         "research comments": "done_official_api",
         "research transcript-plan": "done_policy_gated",
+        "research script-collect": "done_official_oauth",
         "research caption-list": "done_official_oauth",
         "research caption-download": "done_official_oauth",
         "research analyze": "done_user_transcript",
@@ -220,6 +221,36 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print(f"video_id: {result['video_id']}")
         print("allowed: user transcript file, owner/OAuth caption file, manually exported caption file")
         print("blocked: unofficial caption scraping")
+        print(f"saved: {path}")
+        return
+    if sub in ("script-collect", "collect-script", "script", "transcript-collect"):
+        source = (
+            values.get("url")
+            or values.get("video_url")
+            or values.get("video_id")
+            or values.get("id")
+            or values.get("query")
+            or (args[0] if args and "=" not in args[0] else "")
+        )
+        if not source:
+            print("  [error] usage: youtube research script-collect url=<youtube_url> [token_file=...] [tfmt=srt] [analyze=1]")
+            return
+        result, path = research.collect_script_from_url(
+            source,
+            tfmt=values.get("tfmt", "srt"),
+            token_file=values.get("token_file") or values.get("token"),
+            analyze=values.get("analyze") in {"1", "true", "yes"},
+        )
+        print("=" * 60)
+        print("YouTube script collect")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"video_id: {result.get('video_id') or '-'}")
+        print(f"caption_count: {result.get('caption_count', 0)}")
+        print(f"transcript_path: {result.get('transcript_path') or '-'}")
+        print(f"analysis_report: {result.get('analysis_report') or '-'}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"next_step: {result.get('next_step') or '-'}")
         print(f"saved: {path}")
         return
     if sub in ("caption-list", "captions", "caption-tracks"):
