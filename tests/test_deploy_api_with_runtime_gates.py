@@ -41,3 +41,22 @@ def test_run_json_command_rejects_non_ok_payload(monkeypatch):
     payload = json.loads(str(exc_info.value))
     assert payload["step"] == "test_gate"
     assert payload["payload"]["status"] == "failed"
+
+
+def test_wait_container_healthy_waits_until_docker_health_is_ready(monkeypatch):
+    states = [
+        {"State": {"Status": "running", "Health": {"Status": "starting"}}, "RestartCount": 0},
+        {"State": {"Status": "running", "Health": {"Status": "healthy"}}, "RestartCount": 0},
+    ]
+
+    def fake_run(args, *, timeout=30):
+        return 0, json.dumps([states.pop(0)]), ""
+
+    monkeypatch.setattr(deploy_gate, "run", fake_run)
+    monkeypatch.setattr(deploy_gate.time, "sleep", lambda delay: None)
+
+    payload = deploy_gate.wait_container_healthy("api", attempts=2, delay=0)
+
+    assert payload["ok"] is True
+    assert payload["step"] == "container_health"
+    assert payload["attempt"] == 2
