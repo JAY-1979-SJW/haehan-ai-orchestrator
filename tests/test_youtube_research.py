@@ -59,6 +59,93 @@ def test_transcript_plan_blocks_unofficial_scraping():
     assert result["state_change"] is False
 
 
+def test_caption_list_blocks_without_oauth(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+
+    result, path = research.list_captions("abc123")
+
+    assert path.exists()
+    assert result["status"] == "blocked"
+    assert result["reason"] == "youtube_oauth_token_required"
+    assert result["state_change"] is False
+    assert result["oauth_token_output"] == "redacted"
+
+
+def test_caption_list_uses_official_oauth(monkeypatch):
+    calls = []
+
+    def fake_get_json_oauth(url, params, token):
+        calls.append((url, params, token))
+        return {
+            "items": [
+                {
+                    "id": "caption-1",
+                    "snippet": {
+                        "videoId": "abc123",
+                        "language": "en",
+                        "name": "English",
+                        "trackKind": "standard",
+                        "status": "serving",
+                    },
+                }
+            ]
+        }
+
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
+    monkeypatch.setattr(research, "_get_json_oauth", fake_get_json_oauth)
+
+    result, _path = research.list_captions("abc123")
+
+    assert calls[0][0].endswith("/captions")
+    assert calls[0][1] == {"part": "snippet", "videoId": "abc123"}
+    assert calls[0][2] == "fake-oauth"
+    assert result["status"] == "ok"
+    assert result["caption_count"] == 1
+    assert result["captions"][0]["caption_id"] == "caption-1"
+
+
+def test_caption_download_blocks_without_oauth(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+
+    result, path = research.download_caption("caption-1")
+
+    assert path.exists()
+    assert result["status"] == "blocked"
+    assert result["reason"] == "youtube_oauth_token_required"
+    assert result["state_change"] is False
+
+
+def test_caption_download_rejects_bad_format():
+    result, _path = research.download_caption("caption-1", tfmt="html")
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "unsupported_caption_format"
+    assert "srt" in result["allowed_formats"]
+
+
+def test_caption_download_writes_sanitized_transcript(monkeypatch, tmp_path: Path):
+    calls = []
+
+    def fake_get_text_oauth(url, params, token):
+        calls.append((url, params, token))
+        return "1\n00:00:00,000 --> 00:00:01,000\nThe bearer token should be hidden."
+
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "fake-oauth")
+    monkeypatch.setattr(research, "_get_text_oauth", fake_get_text_oauth)
+
+    output = tmp_path / "caption.srt"
+    result, _path = research.download_caption("caption-1", output=output)
+
+    assert calls[0][0].endswith("/captions/caption-1")
+    assert calls[0][1] == {"tfmt": "srt"}
+    assert calls[0][2] == "fake-oauth"
+    assert result["status"] == "ok"
+    assert Path(result["transcript_path"]).read_text(encoding="utf-8").count("[redacted-sensitive]") >= 2
+    assert "fake-oauth" not in str(result)
+
+
 def test_collect_video_info_uses_official_api(monkeypatch):
     calls = []
 

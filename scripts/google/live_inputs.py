@@ -150,6 +150,9 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
 
         page = get_page()
         _dispatch_live_input(page, action, values, result)
+        if _needs_direct_cdp_retry(action, result):
+            result["warnings"].append("Playwright path did not verify upload input; retrying direct CDP read-only detection.")
+            _dispatch_live_input_direct_cdp(action, values, result)
         result["final_control_policy"] = {
             "mode": "no_final_submit",
             "blocked_labels": list(FINAL_CONTROL_LABELS),
@@ -162,9 +165,15 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
             pass
         if result["status"] == "started":
             result["status"] = "filled_no_final_submit"
+        if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
+            result["status"] = "opened_no_upload_input"
+            result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
     except Exception as exc:
         result["warnings"].append(f"playwright_live_input_unavailable: {exc}")
         _dispatch_live_input_direct_cdp(action, values, result)
+        if action["key"] == "youtube_studio_upload_video" and "video_path" not in result["filled_fields"]:
+            result["status"] = "opened_no_upload_input"
+            result["warnings"].append("YouTube upload input was not verified; no video was uploaded or published.")
     return _save_result(result)
 
 
@@ -401,6 +410,14 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
         session_manager.__exit__(None, None, None)
 
 
+def _needs_direct_cdp_retry(action: dict, result: dict) -> bool:
+    return (
+        action["key"] == "youtube_studio_upload_video"
+        and "video_path" not in result.get("filled_fields", [])
+        and "video_path" in result.get("skipped_fields", [])
+    )
+
+
 def _cdp_fill_first(
     session: Any,
     selectors: list[str],
@@ -501,7 +518,7 @@ def _cdp_detect_file_input(session: Any, file_path: str, field: str, result: dic
             });
         })()"""
     )
-    if not err and isinstance(data, list):
+    if not err and isinstance(data, list) and data:
         result["filled_fields"].append(field)
         result["warnings"].append(f"file input verified by CDP, file not uploaded: {path}")
         return True

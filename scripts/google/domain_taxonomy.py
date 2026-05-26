@@ -201,6 +201,106 @@ HIGH_RISK_TERMS = ("billing", "iam", "credential", "secret", "deploy", "release"
 PRIVATE_TERMS = ("private", "contact", "media", "prompt", "logs")
 
 
+PAGE_TAB_SPECS: dict[str, list[tuple[str, str, str]]] = {
+    "google_home": [
+        ("search", "Search", "readonly"),
+        ("apps_launcher", "Google apps launcher", "readonly"),
+        ("account_indicator", "Account indicator", "readonly_sensitive"),
+    ],
+    "google_account": [
+        ("home", "Account home", "readonly_sensitive"),
+        ("security", "Security", "approval_required"),
+        ("personal_info", "Personal info", "approval_required"),
+        ("data_privacy", "Data and privacy", "approval_required"),
+        ("payments", "Payments and subscriptions", "approval_required"),
+    ],
+    "gmail": [
+        ("inbox", "Inbox", "readonly_private"),
+        ("search", "Mail search", "readonly_private"),
+        ("compose", "Compose draft", "no_final_submit"),
+        ("sent", "Sent mail", "readonly_private"),
+        ("settings", "Settings", "approval_required"),
+    ],
+    "drive": [
+        ("my_drive", "My Drive", "readonly_private"),
+        ("shared", "Shared files", "readonly_private"),
+        ("recent", "Recent files", "readonly_private"),
+        ("upload", "Upload", "approval_required"),
+        ("share", "Share and permissions", "approval_required"),
+    ],
+    "calendar": [
+        ("calendar_view", "Calendar view", "readonly_private"),
+        ("event_detail", "Event detail", "readonly_private"),
+        ("create_event", "Create event", "no_final_submit"),
+        ("settings", "Calendar settings", "approval_required"),
+    ],
+    "docs": [("recent", "Recent documents", "readonly_private"), ("editor", "Document editor", "approval_required"), ("share", "Share", "approval_required")],
+    "sheets": [("recent", "Recent spreadsheets", "readonly_private"), ("grid", "Sheet grid", "approval_required"), ("share", "Share", "approval_required")],
+    "slides": [("recent", "Recent presentations", "readonly_private"), ("editor", "Presentation editor", "approval_required"), ("present_share", "Present and share", "approval_required")],
+    "forms": [("forms_home", "Forms home", "readonly_private"), ("questions", "Questions", "approval_required"), ("responses", "Responses", "readonly_private"), ("send", "Send form", "approval_required")],
+    "meet": [("home", "Meet home", "readonly_private"), ("join", "Join meeting", "approval_required"), ("create", "Create meeting", "approval_required")],
+    "chat": [("spaces", "Spaces", "readonly_private"), ("direct_messages", "Direct messages", "readonly_private"), ("send_message", "Send message", "approval_required")],
+    "contacts": [("contacts", "Contacts", "readonly_private"), ("labels", "Labels", "approval_required"), ("create_edit", "Create or edit contact", "approval_required")],
+    "keep": [("notes", "Notes", "readonly_private"), ("labels", "Labels", "approval_required"), ("archive_trash", "Archive and trash", "approval_required")],
+    "tasks": [("task_lists", "Task lists", "readonly_private"), ("task_detail", "Task detail", "readonly_private"), ("create_edit", "Create or edit task", "approval_required")],
+    "cloud_console": [("dashboard", "Project dashboard", "readonly_sensitive"), ("resources", "Resources", "readonly_sensitive"), ("activity", "Activity", "readonly_sensitive")],
+    "maps_platform": [("apis", "Maps APIs", "readonly_sensitive"), ("keys", "API keys", "approval_required"), ("quotas_billing", "Quotas and billing", "approval_required")],
+    "cloud_apis_credentials": [("enabled_apis", "Enabled APIs", "readonly_sensitive"), ("credentials", "Credentials", "approval_required"), ("oauth_consent", "OAuth consent", "approval_required")],
+    "cloud_iam": [("principals", "Principals", "readonly_sensitive"), ("roles", "Roles", "approval_required"), ("service_accounts", "Service accounts", "approval_required")],
+    "cloud_billing": [("billing_accounts", "Billing accounts", "readonly_sensitive"), ("budgets", "Budgets", "approval_required"), ("payment_profile", "Payment profile", "approval_required")],
+    "cloud_run": [("services", "Services", "readonly_sensitive"), ("revisions", "Revisions", "readonly_sensitive"), ("deploy", "Deploy", "approval_required")],
+    "compute_engine": [("vm_instances", "VM instances", "readonly_sensitive"), ("disks", "Disks", "approval_required"), ("networking", "Networking", "approval_required")],
+    "cloud_storage": [("buckets", "Buckets", "readonly_sensitive"), ("objects", "Objects", "readonly_sensitive"), ("permissions", "Permissions", "approval_required")],
+    "bigquery": [("explorer", "Explorer", "readonly_sensitive"), ("query", "Query editor", "approval_required"), ("export", "Export", "approval_required")],
+    "gke": [("clusters", "Clusters", "readonly_sensitive"), ("workloads", "Workloads", "readonly_sensitive"), ("apply_change", "Apply change", "approval_required")],
+    "cloud_sql": [("instances", "Instances", "readonly_sensitive"), ("databases", "Databases", "approval_required"), ("backups", "Backups", "approval_required")],
+    "pubsub": [("topics", "Topics", "readonly_sensitive"), ("subscriptions", "Subscriptions", "readonly_sensitive"), ("publish", "Publish message", "approval_required")],
+    "secret_manager": [("secrets", "Secrets", "secret_sensitive"), ("versions", "Versions", "secret_sensitive"), ("create_update", "Create or update secret", "approval_required")],
+    "cloud_logging": [("logs_explorer", "Logs Explorer", "readonly_private"), ("queries", "Saved queries", "approval_required"), ("sinks", "Sinks", "approval_required")],
+    "cloud_monitoring": [("dashboards", "Dashboards", "readonly_sensitive"), ("alerts", "Alert policies", "approval_required"), ("uptime_checks", "Uptime checks", "approval_required")],
+    "ai_studio": [("prompts", "Prompts", "no_final_submit"), ("api_keys", "API keys", "approval_required"), ("models", "Models", "readonly_sensitive")],
+    "gemini": [("chat", "Chat", "no_final_submit"), ("history", "History", "readonly_private"), ("settings", "Settings", "approval_required")],
+    "vertex_ai": [("model_garden", "Model Garden", "readonly_sensitive"), ("endpoints", "Endpoints", "approval_required"), ("jobs", "Jobs", "approval_required")],
+    "android_developers": [("docs", "Docs", "readonly"), ("jetpack_compose", "Jetpack Compose", "readonly"), ("samples", "Samples", "readonly")],
+    "play_console": [("dashboard", "Dashboard", "readonly_sensitive"), ("testing", "Testing tracks", "approval_required"), ("releases", "Releases", "approval_required"), ("store_listing", "Store listing", "approval_required"), ("policy", "Policy", "readonly_sensitive")],
+    "firebase_console": [("project_overview", "Project overview", "readonly_sensitive"), ("auth", "Authentication", "approval_required"), ("firestore", "Firestore", "approval_required"), ("hosting", "Hosting", "approval_required"), ("crashlytics", "Crashlytics", "readonly_private")],
+    "search_console": [("overview", "Overview", "readonly_sensitive"), ("performance", "Performance", "readonly_sensitive"), ("url_inspection", "URL inspection", "no_final_submit"), ("indexing", "Indexing", "approval_required"), ("sitemaps", "Sitemaps", "approval_required")],
+    "business_profile": [("profile", "Business profile", "readonly_sensitive"), ("posts", "Posts", "approval_required"), ("reviews", "Reviews", "approval_required"), ("photos", "Photos", "approval_required")],
+    "analytics": [("reports", "Reports", "readonly_sensitive"), ("explore", "Explore", "readonly_sensitive"), ("admin", "Admin", "approval_required"), ("export", "Export", "approval_required")],
+    "tag_manager": [("workspace", "Workspace", "readonly_sensitive"), ("tags", "Tags", "approval_required"), ("triggers", "Triggers", "approval_required"), ("versions", "Versions", "approval_required"), ("publish", "Publish", "approval_required")],
+    "ads": [("overview", "Overview", "readonly_sensitive"), ("campaigns", "Campaigns", "approval_required"), ("budgets", "Budgets", "approval_required"), ("billing", "Billing", "approval_required")],
+    "merchant_center": [("overview", "Overview", "readonly_sensitive"), ("products", "Products", "approval_required"), ("feeds", "Feeds", "approval_required"), ("shipping_tax", "Shipping and tax", "approval_required")],
+    "adsense": [("sites", "Sites", "readonly_sensitive"), ("ads", "Ads", "approval_required"), ("payments", "Payments", "approval_required"), ("reports", "Reports", "readonly_sensitive")],
+    "looker_studio": [("reports", "Reports", "readonly_sensitive"), ("data_sources", "Data sources", "approval_required"), ("share", "Share", "approval_required")],
+    "youtube": [
+        ("home", "Home", "readonly"),
+        ("search", "Search", "readonly"),
+        ("subscriptions", "Subscriptions", "readonly_private"),
+        ("library_history", "Library and history", "readonly_private"),
+        ("shorts", "Shorts", "readonly"),
+        ("channel", "Channel page", "readonly_private"),
+        ("interactions", "Like, comment, subscribe", "approval_required"),
+    ],
+    "youtube_studio": [
+        ("dashboard", "Dashboard", "readonly_sensitive"),
+        ("content", "Content", "readonly_sensitive"),
+        ("upload", "Upload video", "no_final_submit"),
+        ("analytics", "Analytics", "readonly_sensitive"),
+        ("comments", "Comments", "approval_required"),
+        ("subtitles", "Subtitles", "approval_required"),
+        ("copyright", "Copyright", "readonly_sensitive"),
+        ("earn", "Earn / monetization", "approval_required"),
+        ("customization", "Customization", "approval_required"),
+        ("settings", "Settings", "approval_required"),
+    ],
+    "photos": [("photos", "Photos", "readonly_private"), ("albums", "Albums", "readonly_private"), ("sharing", "Sharing", "approval_required"), ("upload", "Upload", "approval_required")],
+    "google_developers": [("products", "Products", "readonly"), ("docs", "Docs", "readonly"), ("api_guides", "API guides", "readonly")],
+    "chrome_developers": [("docs", "Docs", "readonly"), ("webview", "WebView", "readonly"), ("pwa", "PWA", "readonly")],
+    "apps_script": [("projects", "Projects", "readonly_sensitive"), ("editor", "Editor", "approval_required"), ("deployments", "Deployments", "approval_required"), ("triggers", "Triggers", "approval_required")],
+    "colab": [("notebooks", "Notebooks", "readonly_private"), ("runtime", "Runtime", "approval_required"), ("files", "Files", "readonly_private"), ("sharing", "Sharing", "approval_required")],
+}
+
+
 def _host(url: str) -> str:
     return url.split("/")[2] if "://" in url else ""
 
@@ -262,6 +362,28 @@ def _not_allowed(surface: dict[str, Any]) -> list[str]:
     return blocked
 
 
+def _page_tabs(surface: dict[str, Any]) -> list[dict[str, Any]]:
+    tabs = []
+    for tab_key, label, handling in PAGE_TAB_SPECS[surface["key"]]:
+        state_change = handling in {"approval_required", "no_final_submit"}
+        tabs.append(
+            {
+                "tab_key": tab_key,
+                "label": label,
+                "handling": handling,
+                "state_change_possible": state_change,
+                "approval_required": handling == "approval_required",
+                "final_submit": "blocked_without_approval_phrase" if state_change else "not_applicable",
+                "user_can_request": [
+                    f"Open {surface['label']} / {label} read-only.",
+                    f"Classify visible controls in {surface['label']} / {label}.",
+                    f"Prepare a dry-run plan before changing {surface['label']} / {label}.",
+                ],
+            }
+        )
+    return tabs
+
+
 def build_google_domain_taxonomy() -> dict[str, Any]:
     surface_catalog = surfaces.build_surface_catalog()
     tab_summary = tab_registry.build_google_tab_summary()
@@ -277,8 +399,14 @@ def build_google_domain_taxonomy() -> dict[str, Any]:
 
     missing = sorted(set(item["key"] for item in surface_catalog["surfaces"]) - set(SURFACE_GROUPS))
     stale = sorted(set(SURFACE_GROUPS) - set(item["key"] for item in surface_catalog["surfaces"]))
-    if missing or stale:
-        raise ValueError(f"Google domain taxonomy mismatch: missing={missing}, stale={stale}")
+    missing_page_tabs = sorted(set(item["key"] for item in surface_catalog["surfaces"]) - set(PAGE_TAB_SPECS))
+    stale_page_tabs = sorted(set(PAGE_TAB_SPECS) - set(item["key"] for item in surface_catalog["surfaces"]))
+    if missing or stale or missing_page_tabs or stale_page_tabs:
+        raise ValueError(
+            "Google domain taxonomy mismatch: "
+            f"missing={missing}, stale={stale}, "
+            f"missing_page_tabs={missing_page_tabs}, stale_page_tabs={stale_page_tabs}"
+        )
 
     domain_items = []
     for surface in surface_catalog["surfaces"]:
@@ -314,6 +442,7 @@ def build_google_domain_taxonomy() -> dict[str, Any]:
                 "user_can_request": _user_can_request(surface, group, subsection),
                 "approval_required_for": _approval_required_for(surface, approval_actions),
                 "not_allowed": _not_allowed(surface),
+                "page_tabs": _page_tabs(surface),
             }
         )
 
@@ -341,6 +470,7 @@ def build_google_domain_taxonomy() -> dict[str, Any]:
             "domain_groups": len(groups),
             "surfaces": len(domain_items),
             "hosts": len({item["host"] for item in domain_items}),
+            "page_tabs": sum(len(item["page_tabs"]) for item in domain_items),
             "approval_surfaces": sum(1 for item in domain_items if item["approval_level"] != "readonly_allowed"),
             "readonly_surfaces": sum(1 for item in domain_items if item["approval_level"] == "readonly_allowed"),
         },
@@ -354,6 +484,38 @@ def build_google_domain_taxonomy() -> dict[str, Any]:
         },
         "groups": groups,
         "domains": domain_items,
+    }
+
+
+def build_google_page_tab_catalog(surface_key: str | None = None) -> dict[str, Any]:
+    taxonomy = build_google_domain_taxonomy()
+    domains = taxonomy["domains"]
+    if surface_key:
+        normalized = surface_key.strip().lower()
+        domains = [
+            item
+            for item in domains
+            if item["surface_key"] == normalized
+            or item["host"] == normalized
+            or item["domain_group"] == normalized
+            or item["tab_key"] == normalized
+        ]
+    return {
+        "site_id": "google",
+        "filter": surface_key or "",
+        "surface_count": len(domains),
+        "page_tab_count": sum(len(item["page_tabs"]) for item in domains),
+        "surfaces": [
+            {
+                "surface_key": item["surface_key"],
+                "label": item["label"],
+                "domain_group": item["domain_group"],
+                "tab_key": item["tab_key"],
+                "host": item["host"],
+                "page_tabs": item["page_tabs"],
+            }
+            for item in domains
+        ],
     }
 
 
@@ -379,6 +541,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
         f"- Domain groups: {report['counts']['domain_groups']}",
         f"- Surfaces: {report['counts']['surfaces']}",
         f"- Hosts: {report['counts']['hosts']}",
+        f"- Page tabs: {report['counts']['page_tabs']}",
         f"- Approval surfaces: {report['counts']['approval_surfaces']}",
         f"- Read-only surfaces: {report['counts']['readonly_surfaces']}",
         "",
@@ -405,6 +568,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                 f"- User can request: {'; '.join(item['user_can_request'])}",
                 f"- Approval required for: {', '.join(item['approval_required_for'])}",
                 f"- Not allowed: {', '.join(item['not_allowed'])}",
+                f"- Page tabs: {', '.join(tab['tab_key'] for tab in item['page_tabs'])}",
                 "",
             ]
         )
@@ -418,11 +582,24 @@ def print_google_domain_taxonomy_summary(report: dict[str, Any], json_path: Path
     print(f"groups: {report['counts']['domain_groups']}")
     print(f"surfaces: {report['counts']['surfaces']}")
     print(f"hosts: {report['counts']['hosts']}")
+    print(f"page_tabs: {report['counts']['page_tabs']}")
     print(f"approval_surfaces: {report['counts']['approval_surfaces']}")
     print(f"readonly_surfaces: {report['counts']['readonly_surfaces']}")
     print(f"json: {json_path}")
     print(f"markdown: {md_path}")
     print(f"latest: {LATEST_REPORT}")
+
+
+def print_google_page_tab_summary(catalog: dict[str, Any]) -> None:
+    print("=" * 60)
+    print("Google page tab labels")
+    print("=" * 60)
+    print(f"filter: {catalog['filter'] or '(all)'}")
+    print(f"surfaces: {catalog['surface_count']}")
+    print(f"page_tabs: {catalog['page_tab_count']}")
+    for surface in catalog["surfaces"]:
+        tabs = ", ".join(item["tab_key"] for item in surface["page_tabs"])
+        print(f"- {surface['surface_key']} ({surface['host']}): {tabs}")
 
 
 def main() -> int:

@@ -6,12 +6,21 @@ from scripts.google import subdomain_logic
 def test_google_subdomain_logic_catalog_groups_surfaces_and_actions_by_host() -> None:
     catalog = subdomain_logic.build_google_subdomain_logic_catalog()
     by_host = {item["host"]: item for item in catalog["subdomains"]}
+    sequence = catalog["connection_sequence_lock"]
 
     assert catalog["site_id"] == "google"
     assert catalog["login_policy"] == "user_present_sso_profile"
     assert catalog["auto_login"] is False
     assert catalog["credential_replay_allowed"] is False
     assert catalog["same_profile_subdomain_navigation"] is True
+    assert [step["stage"] for step in sequence] == [
+        "google_home",
+        "account_state",
+        "target_subdomain",
+        "approval_url",
+    ]
+    assert sequence[0]["url"] == "https://www.google.com/"
+    assert sequence[1]["url"] == "https://myaccount.google.com/"
     assert "mail.google.com" in by_host
     assert "gmail" in by_host["mail.google.com"]["surface_keys"]
     assert "gmail_send_email" in by_host["mail.google.com"]["approval_actions"]
@@ -43,6 +52,7 @@ def test_google_subdomain_login_is_user_present_only() -> None:
     assert result["auto_login"] is False
     assert result["credential_replay_allowed"] is False
     assert result["user_present_required"] is True
+    assert result["connection_sequence_lock"][0]["stage"] == "google_home"
     assert task["metadata"]["auto_login"] is False
     assert task["metadata"]["user_present_required"] is True
 
