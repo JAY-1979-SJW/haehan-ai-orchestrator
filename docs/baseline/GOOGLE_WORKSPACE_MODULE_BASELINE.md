@@ -38,8 +38,8 @@ Locked counts:
 - Workspace actions: 24
 - Workspace read actions: 12
 - Workspace approval actions: 12
-- Workspace live input supported actions: 1
-- Workspace prepare/open-only approval actions: 11
+- Workspace live input supported actions: 12
+- Workspace prepare/open-only approval actions: 0
 
 ## 3. Host Boundaries
 
@@ -89,8 +89,8 @@ Approval actions:
 - `keep_create_note`
 - `tasks_create_task`
 
-Only `gmail_send_email` currently supports safe live input. It must remain
-`no_final_submit_only` unless a separate approved final-send implementation is
+All 12 Workspace approval actions support safe live input handoff. They must
+remain `no_final_submit_only` unless a separate approved final implementation is
 added.
 
 ## 5. Authentication And Data Rules
@@ -171,7 +171,6 @@ python scripts/module_quality_gate.py --module repo_guard
 ## 10. Known WARN
 
 - Workspace module packages are not fully split yet.
-- Gmail send is the only Workspace live-input-supported approval action.
-- Drive, Calendar, Docs, Sheets, Slides, Forms, Meet, Chat, Contacts, Keep,
-  and Tasks approval actions are prepare/open-only until separately implemented.
-
+- All Workspace approval actions are live-input-handoff supported with
+  no-final-submit. Final send, upload, create, edit, publish, share, or save
+  controls remain blocked until separately approved.

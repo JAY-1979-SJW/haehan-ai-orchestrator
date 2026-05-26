@@ -5,7 +5,20 @@ from scripts.google.live_inputs import build_live_input_coverage
 from scripts.google.tab_registry import build_google_tab_summary
 
 WORKSPACE_TAB_KEY = "workspace"
-WORKSPACE_LIVE_INPUT_ACTIONS = ("gmail_send_email",)
+WORKSPACE_LIVE_INPUT_ACTIONS = (
+    "gmail_send_email",
+    "drive_upload_share_file",
+    "calendar_create_event",
+    "docs_create_edit_document",
+    "sheets_update_cells",
+    "slides_create_presentation",
+    "forms_create_publish",
+    "meet_create_meeting",
+    "chat_send_message",
+    "contacts_create_update",
+    "keep_create_note",
+    "tasks_create_task",
+)
 
 
 def workspace_summary() -> dict:
@@ -47,4 +60,3 @@ def get_action(action_key: str) -> dict:
 
 def is_live_input_supported(action_key: str) -> bool:
     return action_key in WORKSPACE_LIVE_INPUT_ACTIONS
-

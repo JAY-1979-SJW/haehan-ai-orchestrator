@@ -43,8 +43,8 @@ Locked counts:
 - Cloud read actions: 15
 - Cloud approval actions: 14
 - Cloud hosts: `console.cloud.google.com`
-- Cloud live input supported actions: 2
-- Cloud prepare/open-only approval actions: 12
+- Cloud live input supported actions: 14
+- Cloud prepare/open-only approval actions: 0
 
 Important boundary:
 
@@ -175,7 +175,7 @@ python scripts/module_quality_gate.py --module repo_guard
 ## 8. Known WARN
 
 - Cloud wrapper modules are not implemented yet.
-- Cloud live input exists for two safe handoff/no-final-submit actions.
+- Cloud live input exists for all 14 approval actions as safe
+  handoff/no-final-submit actions.
 - No production `gcloud` or Google Cloud API execution adapter is approved in
   this baseline.
-

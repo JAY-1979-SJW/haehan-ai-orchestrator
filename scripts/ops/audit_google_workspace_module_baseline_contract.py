@@ -48,9 +48,9 @@ REQUIRED_PHRASES = (
     "Workspace actions: 24",
     "Workspace read actions: 12",
     "Workspace approval actions: 12",
-    "Workspace live input supported actions: 1",
-    "Workspace prepare/open-only approval actions: 11",
-    "Only `gmail_send_email` currently supports safe live input.",
+    "Workspace live input supported actions: 12",
+    "Workspace prepare/open-only approval actions: 0",
+    "All 12 Workspace approval actions support safe live input handoff.",
     "no Google password replay",
     "no mail body, account name, file name, document body, attendee, contact,",
     "no broad Google refactor outside Workspace",
@@ -104,7 +104,7 @@ def audit() -> tuple[bool, list[str]]:
 
     live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
     workspace_live = [action["key"] for action in workspace["actions"] if action["key"] in live_supported]
-    if workspace_live != ["gmail_send_email"]:
+    if workspace_live != list(WORKSPACE_APPROVAL_ACTIONS):
         failures.append("Workspace live-input-supported actions changed: " + ", ".join(workspace_live))
 
     return not failures, failures or [
@@ -124,4 +124,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

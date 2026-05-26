@@ -29,6 +29,20 @@ LEGACY_WRAPPERS = {
 }
 
 CATALOG_ONLY_SERVICES = ("slides", "forms", "meet", "chat", "contacts", "keep", "tasks")
+WORKSPACE_APPROVAL_ACTIONS = [
+    "gmail_send_email",
+    "drive_upload_share_file",
+    "calendar_create_event",
+    "docs_create_edit_document",
+    "sheets_update_cells",
+    "slides_create_presentation",
+    "forms_create_publish",
+    "meet_create_meeting",
+    "chat_send_message",
+    "contacts_create_update",
+    "keep_create_note",
+    "tasks_create_task",
+]
 
 
 def _patch(obj: object, name: str, replacement: object) -> Callable[[], None]:
@@ -120,13 +134,13 @@ def _audit_workspace_counts() -> list[str]:
         "action_count": 24,
         "read_action_count": 12,
         "approval_action_count": 12,
-        "live_input_supported_actions": ["gmail_send_email"],
+        "live_input_supported_actions": WORKSPACE_APPROVAL_ACTIONS,
     }
     for key, value in expected.items():
         if summary.get(key) != value:
             failures.append(f"workspace {key} mismatch: expected {value!r}, got {summary.get(key)!r}")
-    if len(summary.get("prepare_or_open_only_approval_actions", [])) != 11:
-        failures.append("workspace prepare/open-only approval action count must be 11")
+    if summary.get("prepare_or_open_only_approval_actions", []) != []:
+        failures.append("workspace prepare/open-only approval action count must be 0")
     return failures
 
 
