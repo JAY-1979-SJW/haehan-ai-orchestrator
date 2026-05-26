@@ -43,12 +43,20 @@ Optional user-local secret reference:
 
 ```text
 YOUTUBE_CLIENT_SECRETS_FILE=local-secret://youtube/oauth_client_json
+YOUTUBE_CLIENT_SECRETS_REF=local-secret://youtube/oauth_client_json
 ```
 
 The local secret reference points to the current Windows/OS user keyring entry.
 It may be used after the user approves storing the Google OAuth client JSON
 locally. Reports and command output must show only the reference, not the raw
 client JSON, client secret, token, or authorization code.
+
+Local user secret commands:
+
+```powershell
+python scripts/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>
+python scripts/local_user_secret_store.py status youtube oauth_client_json
+```
 
 ## Post-Approval Commands
 

@@ -29,6 +29,7 @@ DEFAULT_TOKEN_FILE = TOKEN_DIR / "youtube_oauth_authorized_user.json"
 SERVER_REDIRECT_URI = "https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback"
 SERVER_CLIENT_FILE = "/run/secrets/api/youtube_oauth_client.json"
 SERVER_TOKEN_FILE = "/app/ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json"
+LOCAL_CLIENT_SECRET_REF = "local-secret://youtube/oauth_client_json"
 YOUTUBE_SCOPES = {
     "readonly": "https://www.googleapis.com/auth/youtube.readonly",
     "upload": "https://www.googleapis.com/auth/youtube.upload",
@@ -397,16 +398,21 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         },
         "server_secret_placement": {
             "client_json_path": client_file,
-            "local_secret_ref": "local-secret://youtube/oauth_client_json",
+            "local_secret_ref": LOCAL_CLIENT_SECRET_REF,
             "token_file_path": token_file,
             "commit_policy": "never commit client JSON, access token, refresh token, or auth code",
         },
         "server_env": {
             "YOUTUBE_CLIENT_SECRETS_FILE": client_file,
+            "YOUTUBE_CLIENT_SECRETS_REF": LOCAL_CLIENT_SECRET_REF,
             "YOUTUBE_OAUTH_REDIRECT_URI": redirect_uri,
             "YOUTUBE_OAUTH_TOKEN_FILE": token_file,
             "YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED": "true",
         },
+        "local_secret_commands": [
+            "python scripts/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>",
+            "python scripts/local_user_secret_store.py status youtube oauth_client_json",
+        ],
         "post_approval_commands": [
             (
                 "python scripts/cdp_client.py youtube oauth start "
