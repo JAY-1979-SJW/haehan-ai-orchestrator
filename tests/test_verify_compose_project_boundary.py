@@ -38,7 +38,8 @@ def test_compose_project_boundary_passes_for_expected_project():
         {"type": "bind", "target": "/dev/shm"},
     ]
 
-    payload = boundary.evaluate(config, sorted(boundary.EXPECTED_CONTAINERS.values()))
+    expected = sorted(boundary.EXPECTED_CONTAINERS.values())
+    payload = boundary.evaluate(config, expected, expected)
 
     assert payload["ok"] is True
     assert payload["status"] == "ok"
@@ -71,3 +72,12 @@ def test_compose_project_boundary_fails_for_unexpected_running_project_container
 
     assert payload["ok"] is False
     assert "project_running_containers_mismatch" in payload["failed_check_ids"]
+
+
+def test_compose_project_boundary_fails_for_private_network_intruder():
+    expected = sorted(boundary.EXPECTED_CONTAINERS.values())
+
+    payload = boundary.evaluate(base_config(), expected, expected + ["other-app"])
+
+    assert payload["ok"] is False
+    assert "private_network_containers_mismatch" in payload["failed_check_ids"]
