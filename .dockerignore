@@ -1,5 +1,9 @@
 # 로컬 전용 — 배포 이미지에 포함 불필요
 scripts/
+!scripts/
+!scripts/youtube/
+!scripts/youtube/**
+!scripts/local_user_secret_store.py
 data/
 local_agent/
 docs/
