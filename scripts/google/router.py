@@ -18,6 +18,7 @@ from . import (
     workflows,
     youtube_upload,
     managed_console,
+    oauth_console_fill,
 )
 from .base import check_session
 from .cloud import live_console_explorer
@@ -318,8 +319,16 @@ def _cmd_console(sub: str, args: list[str]) -> None:
         result = managed_console.open_youtube_oauth_console_managed(dry_run=dry_run)
         print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
         return
+    if sub in ("youtube-oauth-fill", "fill-youtube-oauth", "youtube-oauth-prefill"):
+        approved_api_enable = "--approved-api-enable" in args
+        result, path = oauth_console_fill.prefill_youtube_oauth_console(
+            dry_run=dry_run,
+            approved_api_enable=approved_api_enable,
+        )
+        oauth_console_fill.print_prefill_summary(result, path)
+        return
     if sub in ("summary", "catalog"):
-        print(json.dumps({"commands": ["youtube-oauth-plan", "youtube-oauth-open --dry-run", "youtube-oauth-open"]}, ensure_ascii=False, indent=2))
+        print(json.dumps({"commands": ["youtube-oauth-plan", "youtube-oauth-open --dry-run", "youtube-oauth-open", "youtube-oauth-fill --dry-run", "youtube-oauth-fill"]}, ensure_ascii=False, indent=2))
         return
     print(f"  [error] unknown console task: {sub}")
 

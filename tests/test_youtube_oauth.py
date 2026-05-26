@@ -188,8 +188,11 @@ def test_server_preapproval_defines_final_console_values():
     assert result["server_baseline"] is True
     assert result["user_approval_mode"] == "final_approval_only"
     assert result["intermediate_user_prompts"] is False
-    assert "Google Console Create/Save for OAuth client" in result["user_only_steps"]
+    assert "stop before the final Google Console Create/Save button" in result["agent_allowed_steps"]
+    assert "final click on the Google Console Create/Save button" in result["user_only_steps"]
+    assert "Google Console Create/Save for OAuth client" not in result["user_only_steps"]
     assert "prepare exact non-secret console inputs" in result["agent_allowed_steps"]
+    assert "the user only handles Google login/MFA and the final visible approval button" in result["automation_goal"]
     assert result["google_cloud_inputs"]["application_type"] == "Web application"
     assert result["google_cloud_inputs"]["authorized_redirect_uri"].startswith("https://haehan-ai.kr/")
     assert "youtube.force-ssl" in result["google_cloud_inputs"]["scope"]

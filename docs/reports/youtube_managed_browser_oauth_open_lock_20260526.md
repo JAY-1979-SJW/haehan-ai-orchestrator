@@ -25,8 +25,21 @@ Locked order:
 3. `https://console.cloud.google.com/apis/credentials`
 
 The agent may enter non-secret setup values only when the managed CDP page is
-inspectable. The final Google Console Create/Save and OAuth consent actions
-remain user-only.
+inspectable. The agent must stop before the final Google Console Create/Save
+button so the user only presses the final visible approval button. Google
+login/MFA and OAuth consent approval remain user-only.
+
+Prefill command:
+
+```powershell
+python scripts/cdp_client.py google console youtube-oauth-fill
+```
+
+Prefill dry-run:
+
+```powershell
+python scripts/cdp_client.py google console youtube-oauth-fill --dry-run
+```
 
 Regression check:
 

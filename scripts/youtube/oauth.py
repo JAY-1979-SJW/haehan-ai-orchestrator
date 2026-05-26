@@ -373,20 +373,31 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         "state_change": False,
         "user_approval_mode": "final_approval_only",
         "intermediate_user_prompts": False,
-        "final_approval_required": "User creates the OAuth client in Google Cloud Console.",
+        "final_approval_required": "User clicks the final Google Console approval button after the agent completes all non-secret inputs.",
         "server_baseline": True,
         "agent_allowed_steps": [
             "prepare exact non-secret console inputs",
+            "open Google Console through the managed CDP browser profile",
+            "prepare YouTube Data API v3 enablement screen",
+            "fill OAuth consent and OAuth client fields with non-secret values",
+            "stop before the final Google Console Create/Save button",
+            "after the user clicks the final button, capture the OAuth client JSON into approved secret storage without printing it",
             "prepare server environment variable names and paths",
             "store user-approved local secrets in OS keyring via local-secret references",
+            "start the OAuth consent URL and exchange the callback code on the server when enabled",
             "validate generated command structure",
             "write redacted audit/report artifacts",
         ],
         "user_only_steps": [
-            "Google Console Create/Save for OAuth client",
+            "Google account login and MFA/2FA when required",
+            "final click on the Google Console Create/Save button",
             "Google OAuth consent approval",
-            "confirm raw client JSON or token placement into approved secret store",
+            "final approval for storing client JSON or generated tokens in the approved secret store",
         ],
+        "automation_goal": (
+            "The agent fills every non-secret YouTube OAuth issuance field and prepares the server token flow; "
+            "the user only handles Google login/MFA and the final visible approval button."
+        ),
         "google_cloud_inputs": {
             "project": values.get("project") or "haehan-ai",
             "api": "YouTube Data API v3",
@@ -428,9 +439,9 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
             ),
         ],
         "approval_boundary": (
-            "Final-approval-only mode: the agent prepares values, commands, and redacted reports "
-            "without asking for intermediate user choices. The user performs only the final Google "
-            "Console Create/Save step and any Google OAuth consent approval."
+            "Final-approval-only mode: the agent prepares values, opens the managed console, fills "
+            "non-secret fields, and stops before the final Google Console Create/Save button. "
+            "The user handles only Google login/MFA and the final visible approval button."
         ),
     }
     return payload, _write_report(payload, LATEST_AUTH_PLAN, "youtube_caption_server_oauth_preapproval")
