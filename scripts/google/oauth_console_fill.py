@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from . import managed_console
+from .secret_action_gate import build_secret_action_policy
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,9 +38,17 @@ def _stamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
-def build_youtube_oauth_console_fill_plan() -> dict[str, Any]:
+def build_youtube_oauth_console_fill_plan(
+    *,
+    secret_action_mode: str = "final_approval_only",
+    secret_issue_approved: bool = False,
+) -> dict[str, Any]:
     """Return the non-secret prefill contract for the YouTube OAuth client."""
     inputs = managed_console.YOUTUBE_SERVER_OAUTH_INPUTS
+    secret_policy = build_secret_action_policy(
+        secret_action_mode,
+        secret_issue_approved=secret_issue_approved,
+    )
     return {
         "schema_version": 1,
         "created_at": _now(),
@@ -48,7 +57,8 @@ def build_youtube_oauth_console_fill_plan() -> dict[str, Any]:
         "browser_runtime": "managed_local_agent_cdp_profile",
         "default_browser_allowed": False,
         "state_change_final_button_clicked": False,
-        "final_button_user_only": True,
+        "final_button_user_only": secret_policy["final_button_user_only"],
+        "secret_action_policy": secret_policy,
         "final_button_labels": list(FINAL_BUTTON_LABELS),
         "agent_steps": [
             "open Google Home in managed CDP profile",
@@ -187,14 +197,29 @@ def _detect_final_controls(page: Any) -> list[dict[str, Any]]:
     return detected
 
 
+def _click_final_control(page: Any) -> dict[str, Any]:
+    clicked = _click_text(page, FINAL_BUTTON_LABELS, optional=True)
+    return {
+        "stage": "final_secret_issue_click",
+        **clicked,
+        "raw_secret_output_allowed": False,
+        "secret_capture_policy": "store only approved local-secret reference; do not print raw secret",
+    }
+
+
 def prefill_youtube_oauth_console(
     *,
     dry_run: bool = False,
     approved_api_enable: bool = False,
+    secret_action_mode: str = "final_approval_only",
+    secret_issue_approved: bool = False,
     timeout_ms: int = 60000,
 ) -> tuple[dict[str, Any], Path | None]:
     """Open/fill Google Console OAuth form and stop before final Create/Save."""
-    plan = build_youtube_oauth_console_fill_plan()
+    plan = build_youtube_oauth_console_fill_plan(
+        secret_action_mode=secret_action_mode,
+        secret_issue_approved=secret_issue_approved,
+    )
     result: dict[str, Any] = {
         **plan,
         "dry_run": dry_run,
@@ -203,6 +228,11 @@ def prefill_youtube_oauth_console(
         "actions": [],
         "warnings": [],
     }
+    if plan["secret_action_policy"]["status"] == "blocked":
+        result["status"] = "blocked"
+        result["reason"] = plan["secret_action_policy"]["blocked_reason"]
+        result["next_step"] = plan["secret_action_policy"]["next_step"]
+        return result, None
     if dry_run:
         return result, None
 
@@ -251,12 +281,25 @@ def prefill_youtube_oauth_console(
             }
         )
         result["final_control_policy"] = {
-            "mode": "user_click_only",
+            "mode": plan["secret_action_policy"]["mode"],
             "state_change_final_button_clicked": False,
             "detected_controls": _detect_final_controls(page),
+            "raw_secret_output_allowed": False,
         }
         required = [item for item in result["actions"] if item["stage"] in {"client_name", "authorized_redirect_uri"}]
-        result["status"] = "ready_for_user_final_button" if all(item.get("ok") for item in required) else "needs_user_attention_or_ui_changed"
+        required_ok = all(item.get("ok") for item in required)
+        if required_ok and plan["secret_action_policy"]["agent_final_secret_issue_allowed"]:
+            final_click = _click_final_control(page)
+            result["actions"].append(final_click)
+            result["state_change_final_button_clicked"] = bool(final_click.get("ok"))
+            result["final_control_policy"]["state_change_final_button_clicked"] = bool(final_click.get("ok"))
+            result["status"] = (
+                "secret_issue_clicked_waiting_secret_storage"
+                if final_click.get("ok")
+                else "needs_user_attention_or_ui_changed"
+            )
+        else:
+            result["status"] = "ready_for_user_final_button" if required_ok else "needs_user_attention_or_ui_changed"
         result["current_url"] = getattr(page, "url", "")
         result["current_title"] = _safe_title(page)
     except Exception as exc:
@@ -276,6 +319,8 @@ def print_prefill_summary(result: dict[str, Any], path: Path | None) -> None:
     print(f"dry_run: {result['dry_run']}")
     print(f"final_button_user_only: {result['final_button_user_only']}")
     print(f"state_change_final_button_clicked: {result['state_change_final_button_clicked']}")
+    print(f"secret_action_mode: {result['secret_action_policy']['mode']}")
+    print(f"raw_secret_output_allowed: {result['secret_action_policy']['raw_secret_output_allowed']}")
     print(f"client_name: {result['non_secret_inputs']['client_name']}")
     print(f"redirect_uri: {result['non_secret_inputs']['authorized_redirect_uri']}")
     if path:

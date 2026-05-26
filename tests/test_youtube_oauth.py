@@ -187,6 +187,8 @@ def test_server_preapproval_defines_final_console_values():
     assert result["status"] == "ready_for_user_console_approval"
     assert result["server_baseline"] is True
     assert result["user_approval_mode"] == "final_approval_only"
+    assert result["secret_action_policy"]["mode"] == "final_approval_only"
+    assert result["secret_action_policy"]["raw_secret_output_allowed"] is False
     assert result["intermediate_user_prompts"] is False
     assert "stop before the final Google Console Create/Save button" in result["agent_allowed_steps"]
     assert "final click on the Google Console Create/Save button" in result["user_only_steps"]
@@ -201,6 +203,34 @@ def test_server_preapproval_defines_final_console_values():
     assert result["server_env"]["YOUTUBE_CLIENT_SECRETS_REF"] == "local-secret://youtube/oauth_client_json"
     assert result["server_env"]["YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED"] == "true"
     assert any("local_user_secret_store.py status youtube oauth_client_json" in item for item in result["local_secret_commands"])
+
+
+def test_server_preapproval_supports_secret_issue_user_click_mode():
+    result, _path = oauth.build_server_preapproval({"secret_action_mode": "secret_issue_user_click"})
+
+    assert result["user_approval_mode"] == "secret_issue_user_click"
+    assert result["secret_action_policy"]["final_button_user_only"] is True
+    assert result["secret_action_policy"]["agent_final_secret_issue_allowed"] is False
+    assert result["secret_action_policy"]["raw_secret_output_allowed"] is False
+
+
+def test_server_preapproval_blocks_agent_secret_click_without_approval():
+    result, _path = oauth.build_server_preapproval({"secret_action_mode": "secret_issue_agent_click"})
+
+    assert result["user_approval_mode"] == "secret_issue_agent_click"
+    assert result["secret_action_policy"]["status"] == "blocked"
+    assert result["secret_action_policy"]["blocked_reason"] == "secret_issue_agent_click_requires_explicit_approval"
+    assert result["secret_action_policy"]["raw_secret_output_allowed"] is False
+
+
+def test_server_preapproval_allows_agent_secret_click_with_explicit_approval():
+    result, _path = oauth.build_server_preapproval(
+        {"secret_action_mode": "secret_issue_agent_click", "secret_issue_approved": "true"}
+    )
+
+    assert result["secret_action_policy"]["status"] == "ok"
+    assert result["secret_action_policy"]["agent_final_secret_issue_allowed"] is True
+    assert result["secret_action_policy"]["raw_secret_output_allowed"] is False
 
 
 def test_youtube_server_console_preapproval_has_managed_browser_plan():

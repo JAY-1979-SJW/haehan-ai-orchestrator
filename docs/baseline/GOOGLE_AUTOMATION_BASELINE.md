@@ -137,6 +137,18 @@ Runtime rules:
   presence and use the reference for OAuth preparation, but must not print,
   log, commit, or include the raw secret value in reports. If the OS keyring is
   unavailable, the flow must stop and report `keyring_unavailable`.
+- Google secret/API key/OAuth client issuance uses the locked
+  `secret_action_mode` gate:
+  - `final_approval_only`: default. The agent prepares non-secret inputs and
+    stops before the final secret-generating Create/Save/Generate button.
+  - `secret_issue_user_click`: the agent prepares the screen and the user clicks
+    the final visible secret-generating button.
+  - `secret_issue_agent_click`: the agent may click the final
+    secret-generating button only when the exact task carries
+    `secret_issue_approved=True`.
+- All `secret_action_mode` values keep raw secret, token, API key, OAuth client
+  secret, cookie, OTP, and password output forbidden. Reports may include only
+  redacted status and `local-secret://<kind>/<name>` references.
 
 ## 4. Action Risk Rules
 
@@ -194,6 +206,9 @@ Representative host boundaries:
 - `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
 - `scripts/google/managed_console.py`: managed-CDP-only Google Console/OAuth
   entrypoint; default browser openers are forbidden.
+- `scripts/google/secret_action_gate.py`: Google secret/API key/OAuth issuance
+  click policy. It defines `final_approval_only`, `secret_issue_user_click`, and
+  `secret_issue_agent_click`, and always blocks raw secret output.
 - `scripts/google/domain_readiness_audit.py`: all-domain OAuth/API/browser
   fallback readiness audit. Every Google surface must report its read strategy,
   fallback strategy, approval boundary, secret-output boundary, and blocked
@@ -208,6 +223,8 @@ Representative host boundaries:
 - `tests/test_google_tab_logic.py`: tab-level execution boundary and UI guidance contract.
 - `tests/test_google_live_surface_explorer.py`: 50-surface live-logic contract.
 - `tests/test_google_cloud_live_console_explorer.py`: Cloud Console live-logic contract.
+- `tests/test_google_secret_action_gate.py`: secret issuance mode and raw-secret
+  output contract.
 
 ## 7. Required Verification
 
@@ -216,9 +233,11 @@ Minimum verification before committing Google work:
 ```text
 python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
 python -m py_compile scripts/google/managed_console.py
+python -m py_compile scripts/google/secret_action_gate.py
 python -m py_compile scripts/google/domain_readiness_audit.py
 python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py tests/test_google_managed_console.py -q
 python -m pytest tests/test_google_domain_readiness_audit.py -q
+python -m pytest tests/test_google_secret_action_gate.py tests/test_google_managed_console.py tests/test_youtube_oauth.py -q
 python scripts/google/domain_readiness_audit.py
 python scripts/ops/audit_google_automation_baseline_contract.py
 python scripts/module_quality_gate.py --module repo_guard

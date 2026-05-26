@@ -14,6 +14,8 @@ def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
     assert plan["open_method"] == "scripts.web_connector.get_page().goto"
     assert plan["state_change"] is False
     assert plan["final_approval_boundary"] == "user_final_approval_only"
+    assert plan["secret_action_policy"]["mode"] == "final_approval_only"
+    assert plan["secret_action_policy"]["raw_secret_output_allowed"] is False
     assert "stop before the final Google Console Create/Save button" in plan["agent_allowed_steps"]
     assert "final click on the Google Console Create/Save button" in plan["user_only_steps"]
     assert "Google Console Create/Save for OAuth client" not in plan["user_only_steps"]
@@ -62,6 +64,7 @@ def test_youtube_oauth_console_fill_plan_stops_before_final_button() -> None:
     assert plan["default_browser_allowed"] is False
     assert plan["state_change_final_button_clicked"] is False
     assert plan["final_button_user_only"] is True
+    assert plan["secret_action_policy"]["agent_final_secret_issue_allowed"] is False
     assert "stop before final Create/Save button" in plan["agent_steps"]
     assert "final click on the visible Google Console Create/Save button" in plan["user_only_steps"]
     assert plan["non_secret_inputs"]["client_name"] == "haehan-youtube-server-captions"
@@ -76,3 +79,27 @@ def test_youtube_oauth_console_fill_dry_run_does_not_open_browser() -> None:
     assert result["status"] == "dry_run"
     assert result["state_change_final_button_clicked"] is False
     assert result["final_button_user_only"] is True
+
+
+def test_secret_issue_agent_click_requires_explicit_approval() -> None:
+    result, path = oauth_console_fill.prefill_youtube_oauth_console(
+        dry_run=True,
+        secret_action_mode="secret_issue_agent_click",
+    )
+
+    assert path is None
+    assert result["status"] == "blocked"
+    assert result["secret_action_policy"]["blocked_reason"] == "secret_issue_agent_click_requires_explicit_approval"
+    assert result["secret_action_policy"]["raw_secret_output_allowed"] is False
+
+
+def test_secret_issue_agent_click_can_be_approved_for_final_button() -> None:
+    plan = oauth_console_fill.build_youtube_oauth_console_fill_plan(
+        secret_action_mode="secret_issue_agent_click",
+        secret_issue_approved=True,
+    )
+
+    assert plan["secret_action_policy"]["status"] == "ok"
+    assert plan["secret_action_policy"]["agent_final_secret_issue_allowed"] is True
+    assert plan["final_button_user_only"] is False
+    assert plan["secret_action_policy"]["raw_secret_output_allowed"] is False
