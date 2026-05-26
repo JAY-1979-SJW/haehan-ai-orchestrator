@@ -3,7 +3,7 @@
 본 스크립트는 /ws/ui 경로로 connect 하여:
   1. browser_start 호출 → clean-start 탭 dedup 확인 (about:blank 1개)
   2. tab_list 호출 → count = 1 확인
-  3. browser_action(navigate, https://nid.naver.com/nidlogin.login)
+  3. browser_action(navigate, https://www.naver.com/)
   4. login_state_change / login_action_started / login_target_selected /
      logged_in_detected / command_auto_resumed 이벤트 수집
 
@@ -21,7 +21,7 @@ import time
 import websockets
 
 WS_URL = "ws://127.0.0.1:8765/ws/ui"
-NAVER_LOGIN_URL = "https://nid.naver.com/nidlogin.login"
+NAVER_LOGIN_URL = "https://www.naver.com/"
 
 CAPTURED_TYPES = {
     "browser_start_result", "browser_status",

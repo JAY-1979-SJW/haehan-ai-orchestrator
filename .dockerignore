@@ -5,6 +5,7 @@ scripts/
 !scripts/youtube/**
 !scripts/local_user_secret_store.py
 data/
+tmp/
 local_agent/
 docs/
 *.md
