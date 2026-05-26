@@ -22,3 +22,18 @@ def test_google_precision_report_markdown_mentions_ai_labels() -> None:
     assert "Google AI Usage Labels" in markdown
     assert "Google AI Studio" in markdown
     assert "Host Summary" in markdown
+
+
+def test_google_precision_report_accepts_safe_no_final_handoff_statuses() -> None:
+    assert precision_report._is_live_fill_safe_no_final(
+        {"status": "filled_no_final_submit", "state_change_final_button_clicked": False}
+    )
+    assert precision_report._is_live_fill_safe_no_final(
+        {"status": "opened_no_final_submit", "state_change_final_button_clicked": False}
+    )
+    assert precision_report._is_live_fill_safe_no_final(
+        {"status": "opened_no_upload_input", "state_change_final_button_clicked": False}
+    )
+    assert not precision_report._is_live_fill_safe_no_final(
+        {"status": "opened_no_final_submit", "state_change_final_button_clicked": True}
+    )
