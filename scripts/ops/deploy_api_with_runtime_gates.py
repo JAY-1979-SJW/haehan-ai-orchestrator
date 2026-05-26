@@ -151,6 +151,11 @@ def deploy(args: argparse.Namespace) -> dict[str, Any]:
     if not git_status_clean():
         raise RuntimeError("server_worktree_must_be_clean_after_pull")
     steps.append(must([sys.executable, "scripts/ops/verify_docker_context_policy.py"], step="docker_context_policy", timeout=120))
+    steps.append(run_json_command([
+        sys.executable,
+        "scripts/ops/verify_compose_project_boundary.py",
+        "--json",
+    ], step="compose_project_boundary", timeout=120))
     steps.append(must(["docker", "compose", "build", args.service], step="docker_compose_build", timeout=900))
     steps.append(must(["docker", "compose", "up", "-d", "--no-deps", args.service], step="docker_compose_up", timeout=300))
     steps.append(wait_health(args.health_url, attempts=args.health_attempts, delay=args.health_delay))
