@@ -1,7 +1,7 @@
 """YouTube recording/upload router."""
 from __future__ import annotations
 
-from . import oauth, recording, research, uploader
+from . import browser_transcript, oauth, recording, research, uploader
 from .gates import gate_youtube_upload_plan, gate_youtube_publish_plan  # noqa: F401
 from .profile import YOUTUBE_PROFILE  # noqa: F401
 from .validators import validate_youtube_no_plain_secret  # noqa: F401
@@ -21,6 +21,7 @@ __status__ = {
         "research transcript-plan": "done_policy_gated",
         "research script-collect": "done_official_oauth",
         "research video-summary": "done_official_sources_with_fallback_plan",
+        "research browser-transcript-summary": "done_user_present_visible_transcript",
         "research caption-list": "done_official_oauth",
         "research caption-download": "done_official_oauth",
         "research analyze": "done_user_transcript",
@@ -283,6 +284,37 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print(f"script_status: {result.get('source_status', {}).get('script_collect') or '-'}")
         print(f"fallback_required: {result.get('fallback_required', False)}")
         print(f"next_step: {result.get('fallback_plan', {}).get('next_step') or '-'}")
+        print(f"saved: {path}")
+        return
+    if sub in ("browser-transcript-summary", "visible-transcript-summary", "deep-summary"):
+        source = (
+            values.get("url")
+            or values.get("video_url")
+            or values.get("video_id")
+            or values.get("id")
+            or values.get("query")
+            or (args[0] if args and "=" not in args[0] else "")
+        )
+        if not source:
+            print("  [error] usage: youtube research browser-transcript-summary url=<youtube_url> [max_segments=160]")
+            return
+        result, path = browser_transcript.collect_visible_transcript_summary(
+            source,
+            max_segments=int(values.get("max_segments") or values.get("segments") or 160),
+            wait_seconds=float(values.get("wait") or values.get("wait_seconds") or 4),
+            open_transcript=values.get("open_transcript", "1") not in {"0", "false", "no"},
+        )
+        print("=" * 60)
+        print("YouTube browser visible transcript summary")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"video_id: {result.get('video_id') or '-'}")
+        print(f"segments: {result.get('segment_count_observed', 0)}")
+        print(f"words: {result.get('word_like_count', 0)}")
+        print(f"topics: {', '.join(result.get('derived_summary', {}).get('topics', [])) or '-'}")
+        print(f"raw_transcript_stored: {result.get('raw_transcript_stored', False)}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"next_step: {result.get('next_step') or '-'}")
         print(f"saved: {path}")
         return
     if sub in ("caption-list", "captions", "caption-tracks"):
