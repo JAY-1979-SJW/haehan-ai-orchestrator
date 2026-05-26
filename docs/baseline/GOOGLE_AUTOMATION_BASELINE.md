@@ -117,13 +117,18 @@ Runtime rules:
   presented as the final server result.
 - For Google Console setup screens, the agent may enter non-secret setup values
   such as application type, client name, and redirect URI when CDP can inspect
-  the page. The final Create/Save action remains user-direct. If CDP cannot
-  inspect the page, the agent must provide the exact values for user entry.
+  the page. The agent must stop before the final Google Console Create/Save
+  button so the user only needs to press the final visible approval button. If
+  CDP cannot inspect the page, the agent must stop and report
+  `GOOGLE_CONSOLE_NOT_INSPECTABLE` instead of handing the whole flow back as a
+  manual implementation path.
 - The current YouTube server OAuth setup uses `final_approval_only` mode. The
   agent must not stop to ask whether the user wants intermediate/manual
-  implementation choices; it prepares the non-secret inputs and validation
-  artifacts, then leaves only the final Google Console Create/Save and OAuth
-  consent actions to the user.
+  implementation choices; it prepares the non-secret inputs, opens the managed
+  console, fills the OAuth setup fields, and then stops before the final
+  Create/Save button. After the user clicks the final button, the agent handles
+  the issued client JSON and server token flow through approved secret storage.
+  The user handles only Google login/MFA and the final visible approval button.
 - User-specific Google/YouTube client JSON, OAuth tokens, API keys, and other
   secret values may be placed by the user or an approved local-agent step into
   the local OS user secret store. The runtime reference format is

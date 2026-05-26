@@ -30,6 +30,18 @@ through the official YouTube Data API.
 The client JSON, access token, refresh token, and authorization code must never
 be committed to Git or printed in reports.
 
+## Automation Goal
+
+The agent performs the OAuth issuance flow through the managed CDP browser:
+open Google Console, prepare API enablement, fill non-secret OAuth
+consent/client fields, and stop before the final Google Console Create/Save
+button. After the user presses the final visible approval button, the agent
+places the issued client JSON or generated token into approved secret storage
+without printing raw secret values.
+
+The user handles only Google login/MFA, OAuth consent approval, and the final
+visible approval button.
+
 ## Server Environment
 
 ```env
@@ -67,6 +79,8 @@ Default browser openers are not allowed for this flow.
 python scripts/cdp_daemon.py start
 python scripts/cdp_client.py google console youtube-oauth-open --dry-run
 python scripts/cdp_client.py google console youtube-oauth-open
+python scripts/cdp_client.py google console youtube-oauth-fill --dry-run
+python scripts/cdp_client.py google console youtube-oauth-fill
 ```
 
 Run these on the server after the user creates/saves the Google Console OAuth
@@ -81,9 +95,9 @@ python scripts/cdp_client.py youtube research caption-list video_id=<owned_or_au
 ## Approval Boundary
 
 This is the final-approval-only version. The agent prepares exact input values,
-non-secret command lines, and redacted reports without asking the user to choose
-between intermediate implementation paths. The user performs only the final
-Google Console Create/Save action and any Google OAuth consent approval.
+opens the managed console, fills non-secret setup fields, and stops before the
+Google Console Create/Save button. The user performs only Google login/MFA,
+OAuth consent approval, and the final visible approval button.
 
 If the server callback endpoint is not reachable from Google, stop and report
 that as a server route/deploy issue before attempting token exchange.

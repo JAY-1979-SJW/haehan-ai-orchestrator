@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.google import managed_console
+from scripts.google import oauth_console_fill
 
 
 def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
@@ -13,7 +14,9 @@ def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
     assert plan["open_method"] == "scripts.web_connector.get_page().goto"
     assert plan["state_change"] is False
     assert plan["final_approval_boundary"] == "user_final_approval_only"
-    assert "Google Console Create/Save for OAuth client" in plan["user_only_steps"]
+    assert "stop before the final Google Console Create/Save button" in plan["agent_allowed_steps"]
+    assert "final click on the Google Console Create/Save button" in plan["user_only_steps"]
+    assert "Google Console Create/Save for OAuth client" not in plan["user_only_steps"]
 
 
 def test_youtube_oauth_console_sequence_starts_from_google_home() -> None:
@@ -49,3 +52,27 @@ def test_dry_run_does_not_open_browser() -> None:
     assert result["dry_run"] is True
     assert result["opened"] is False
     assert result["default_browser_allowed"] is False
+
+
+def test_youtube_oauth_console_fill_plan_stops_before_final_button() -> None:
+    plan = oauth_console_fill.build_youtube_oauth_console_fill_plan()
+
+    assert plan["status"] == "ready_for_ai_prefill"
+    assert plan["browser_runtime"] == "managed_local_agent_cdp_profile"
+    assert plan["default_browser_allowed"] is False
+    assert plan["state_change_final_button_clicked"] is False
+    assert plan["final_button_user_only"] is True
+    assert "stop before final Create/Save button" in plan["agent_steps"]
+    assert "final click on the visible Google Console Create/Save button" in plan["user_only_steps"]
+    assert plan["non_secret_inputs"]["client_name"] == "haehan-youtube-server-captions"
+    assert plan["non_secret_inputs"]["authorized_redirect_uri"].startswith("https://haehan-ai.kr/")
+
+
+def test_youtube_oauth_console_fill_dry_run_does_not_open_browser() -> None:
+    result, path = oauth_console_fill.prefill_youtube_oauth_console(dry_run=True)
+
+    assert path is None
+    assert result["dry_run"] is True
+    assert result["status"] == "dry_run"
+    assert result["state_change_final_button_clicked"] is False
+    assert result["final_button_user_only"] is True
