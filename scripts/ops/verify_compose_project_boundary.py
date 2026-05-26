@@ -39,6 +39,7 @@ EXPECTED_NETWORKS = {
     "default": {"name": "haehan-ai-orchestrator_default", "external": False},
     "app_web": {"name": "app_web", "external": True},
 }
+PRIVATE_NETWORK = "haehan-ai-orchestrator_default"
 EXPECTED_VOLUMES = {
     "api_storage": "haehan-ai-orchestrator-api-storage",
 }
@@ -96,6 +97,21 @@ def project_container_names(project: str = PROJECT) -> list[str]:
     return sorted(line.strip() for line in out.splitlines() if line.strip())
 
 
+def network_container_names(network: str = PRIVATE_NETWORK) -> list[str]:
+    code, out, err = run([
+        "docker",
+        "network",
+        "inspect",
+        network,
+        "--format",
+        "{{json .Containers}}",
+    ])
+    if code != 0:
+        raise RuntimeError(f"docker network inspect failed: {err[-500:]}")
+    containers = json.loads(out or "{}") or {}
+    return sorted(item.get("Name", "") for item in containers.values() if item.get("Name"))
+
+
 def published_ports(service: dict[str, Any]) -> set[tuple[str, str, int, str]]:
     ports = set()
     for port in service.get("ports", []) or []:
@@ -115,7 +131,11 @@ def service_networks(service: dict[str, Any]) -> set[str]:
     return set(networks)
 
 
-def evaluate(config: dict[str, Any], running_containers: list[str]) -> dict[str, Any]:
+def evaluate(
+    config: dict[str, Any],
+    running_containers: list[str],
+    private_network_containers: list[str] | None = None,
+) -> dict[str, Any]:
     failed: list[str] = []
     details: dict[str, Any] = {}
 
@@ -185,6 +205,12 @@ def evaluate(config: dict[str, Any], running_containers: list[str]) -> dict[str,
         details["expected_running_containers"] = expected_running
         details["actual_running_containers"] = sorted(running_containers)
 
+    if private_network_containers is not None and sorted(private_network_containers) != expected_running:
+        failed.append("private_network_containers_mismatch")
+        details["private_network"] = PRIVATE_NETWORK
+        details["expected_private_network_containers"] = expected_running
+        details["actual_private_network_containers"] = sorted(private_network_containers)
+
     return {
         "schema_version": 1,
         "ok": not failed,
@@ -216,7 +242,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    payload = evaluate(compose_config(), project_container_names())
+    payload = evaluate(compose_config(), project_container_names(), network_container_names())
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     else:

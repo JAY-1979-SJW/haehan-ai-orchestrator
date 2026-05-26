@@ -71,6 +71,11 @@ def run_checks(container: str) -> dict[str, Any]:
         container,
         "--json",
     ])
+    boundary_code, boundary_out, boundary_err = run([
+        sys.executable,
+        "scripts/ops/verify_compose_project_boundary.py",
+        "--json",
+    ])
     try:
         orphan_payload: dict[str, Any] = load_json_output(orphan_out)
     except Exception:
@@ -91,7 +96,23 @@ def run_checks(container: str) -> dict[str, Any]:
             "error_summary": (drift_err or drift_out)[:300],
             "secret_values_output": False,
         }
-    ok = bool(drift_payload.get("ok")) and bool(orphan_payload.get("ok")) and drift_code == 0
+    try:
+        boundary_payload: dict[str, Any] = load_json_output(boundary_out)
+    except Exception:
+        boundary_payload = {
+            "ok": False,
+            "status": "compose_project_boundary_check_failed",
+            "failed_check_ids": ["compose_project_boundary_check_failed"],
+            "error_summary": (boundary_err or boundary_out)[:300],
+            "secret_values_output": False,
+        }
+    ok = (
+        bool(drift_payload.get("ok"))
+        and bool(orphan_payload.get("ok"))
+        and bool(boundary_payload.get("ok"))
+        and drift_code == 0
+        and boundary_code == 0
+    )
     return {
         "schema_version": 1,
         "created_at": now(),
@@ -109,6 +130,11 @@ def run_checks(container: str) -> dict[str, Any]:
             "ok": orphan_payload.get("ok"),
             "failed_check_ids": orphan_payload.get("failed_check_ids", []),
             "untracked_in_container_count": orphan_payload.get("untracked_in_container_count"),
+        },
+        "compose_project_boundary": {
+            "status": boundary_payload.get("status"),
+            "ok": boundary_payload.get("ok"),
+            "failed_check_ids": boundary_payload.get("failed_check_ids", []),
         },
         "secret_values_output": False,
     }
