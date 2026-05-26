@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -77,6 +78,45 @@ def test_caption_list_blocks_without_oauth(monkeypatch):
     assert result["reason"] == "youtube_oauth_token_required"
     assert result["state_change"] is False
     assert result["oauth_token_output"] == "redacted"
+
+
+def test_oauth_token_reads_authorized_user_token_key(tmp_path, monkeypatch):
+    token_file = tmp_path / "token.json"
+    token_file.write_text(json.dumps({"token": "access-token-from-file"}), encoding="utf-8")
+
+    token = research._oauth_token(token_file=token_file)
+
+    assert token == "access-token-from-file"
+
+
+def test_oauth_token_refreshes_authorized_user_file(tmp_path, monkeypatch):
+    token_file = tmp_path / "token.json"
+    token_file.write_text(
+        json.dumps({
+            "token": "expired-access-token",
+            "refresh_token": "refresh-value",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "client_id": "client-id",
+            "client_secret": "client-secret",
+        }),
+        encoding="utf-8",
+    )
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return json.dumps({"access_token": "fresh-access-token"}).encode("utf-8")
+
+    monkeypatch.setattr(research.urllib.request, "urlopen", lambda request, timeout=30: Response())
+
+    token = research._oauth_token(token_file=token_file)
+
+    assert token == "fresh-access-token"
 
 
 def test_caption_list_uses_official_oauth(monkeypatch):
