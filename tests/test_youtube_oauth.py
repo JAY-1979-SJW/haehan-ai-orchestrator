@@ -195,7 +195,9 @@ def test_server_preapproval_defines_final_console_values():
     assert "youtube.force-ssl" in result["google_cloud_inputs"]["scope"]
     assert result["server_secret_placement"]["commit_policy"].startswith("never commit")
     assert result["server_secret_placement"]["local_secret_ref"] == "local-secret://youtube/oauth_client_json"
+    assert result["server_env"]["YOUTUBE_CLIENT_SECRETS_REF"] == "local-secret://youtube/oauth_client_json"
     assert result["server_env"]["YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED"] == "true"
+    assert any("local_user_secret_store.py status youtube oauth_client_json" in item for item in result["local_secret_commands"])
 
 
 def test_auth_plan_uses_local_secret_ref_without_secret_output(monkeypatch):
