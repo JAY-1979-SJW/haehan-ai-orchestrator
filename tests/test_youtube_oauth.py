@@ -185,6 +185,10 @@ def test_server_preapproval_defines_final_console_values():
     assert path.exists()
     assert result["status"] == "ready_for_user_console_approval"
     assert result["server_baseline"] is True
+    assert result["user_approval_mode"] == "final_approval_only"
+    assert result["intermediate_user_prompts"] is False
+    assert "Google Console Create/Save for OAuth client" in result["user_only_steps"]
+    assert "prepare exact non-secret console inputs" in result["agent_allowed_steps"]
     assert result["google_cloud_inputs"]["application_type"] == "Web application"
     assert result["google_cloud_inputs"]["authorized_redirect_uri"].startswith("https://haehan-ai.kr/")
     assert "youtube.force-ssl" in result["google_cloud_inputs"]["scope"]

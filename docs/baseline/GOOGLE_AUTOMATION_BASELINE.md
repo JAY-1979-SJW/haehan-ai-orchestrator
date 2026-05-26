@@ -109,6 +109,11 @@ Runtime rules:
   such as application type, client name, and redirect URI when CDP can inspect
   the page. The final Create/Save action remains user-direct. If CDP cannot
   inspect the page, the agent must provide the exact values for user entry.
+- The current YouTube server OAuth setup uses `final_approval_only` mode. The
+  agent must not stop to ask whether the user wants intermediate/manual
+  implementation choices; it prepares the non-secret inputs and validation
+  artifacts, then leaves only the final Google Console Create/Save and OAuth
+  consent actions to the user.
 
 ## 4. Action Risk Rules
 

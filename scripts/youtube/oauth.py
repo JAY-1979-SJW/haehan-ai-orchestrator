@@ -260,8 +260,21 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         "workflow": "youtube_caption_server_oauth_preapproval",
         "status": "ready_for_user_console_approval",
         "state_change": False,
+        "user_approval_mode": "final_approval_only",
+        "intermediate_user_prompts": False,
         "final_approval_required": "User creates the OAuth client in Google Cloud Console.",
         "server_baseline": True,
+        "agent_allowed_steps": [
+            "prepare exact non-secret console inputs",
+            "prepare server environment variable names and paths",
+            "validate generated command structure",
+            "write redacted audit/report artifacts",
+        ],
+        "user_only_steps": [
+            "Google Console Create/Save for OAuth client",
+            "Google OAuth consent approval",
+            "server secret placement when it contains raw client JSON or tokens",
+        ],
         "google_cloud_inputs": {
             "project": values.get("project") or "haehan-ai",
             "api": "YouTube Data API v3",
@@ -296,8 +309,9 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
             ),
         ],
         "approval_boundary": (
-            "The agent may prepare values and commands. The user performs the Google Console "
-            "Create/Save step and any Google OAuth consent approval."
+            "Final-approval-only mode: the agent prepares values, commands, and redacted reports "
+            "without asking for intermediate user choices. The user performs only the final Google "
+            "Console Create/Save step and any Google OAuth consent approval."
         ),
     }
     return payload, _write_report(payload, LATEST_AUTH_PLAN, "youtube_caption_server_oauth_preapproval")
