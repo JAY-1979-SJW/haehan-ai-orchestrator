@@ -31,8 +31,10 @@ REQUIRED_PHRASES = (
     "scripts/google/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
+    "scripts/google/domain_readiness_audit.py",
     "python scripts/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
+    "tests/test_google_domain_readiness_audit.py",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -64,7 +66,7 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google import live_surface_explorer, subdomain_logic, tab_logic, workflows
+    from scripts.google import domain_readiness_audit, live_surface_explorer, subdomain_logic, tab_logic, workflows
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -128,11 +130,20 @@ def audit() -> tuple[bool, list[str]]:
     if prepare_only:
         failures.append("Google prepare/open-only backlog must be empty after generic handoff adapter lock")
 
+    readiness = domain_readiness_audit.build_google_domain_readiness_audit()
+    if readiness.get("ok") is not True:
+        failures.append("Google domain readiness audit must pass")
+    if readiness.get("counts", {}).get("surfaces") != 50:
+        failures.append("Google domain readiness must cover all 50 surfaces")
+    if readiness.get("global_policy", {}).get("browser_fallback") != "user_present_cdp_session_selection_required":
+        failures.append("Google browser fallback must require CDP session selection")
+
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
         "9 Google tabs, 50 surfaces, and 96 actions are registered",
         "Google host warnings are zero",
         "Google subdomain, tab, and 50-surface live logic contracts are present",
+        "Google domain readiness covers OAuth/API and browser fallback boundaries",
         "Google undeveloped work counts and backlog boundaries are locked",
     ]
 
