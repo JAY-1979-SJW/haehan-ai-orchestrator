@@ -40,6 +40,9 @@ REQUIRED_PHRASES = (
     "tests/test_google_secret_action_gate.py",
     "tests/test_google_vision_usage_gate.py",
     "monthly_free_limit_units = 1000",
+    "scripts/ops/audit_google_prefill_maturity.py",
+    "Strict final-approval-only prefill is a higher bar than live-input support.",
+    "41 strict prefill",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -80,6 +83,7 @@ def audit() -> tuple[bool, list[str]]:
         vision_usage_gate,
         workflows,
     )
+    from scripts.ops import audit_google_prefill_maturity
     from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -170,6 +174,23 @@ def audit() -> tuple[bool, list[str]]:
     if vision_gate.get("secret_values_output") is not False:
         failures.append("Google Vision gate must not output raw secret values")
 
+    prefill_maturity = audit_google_prefill_maturity.build_report()
+    expected_prefill_counts = {
+        "approval_actions": 46,
+        "live_input_supported": 46,
+        "domain_specific_prefill": 5,
+        "generic_handoff": 37,
+        "partial_handoff": 4,
+        "strict_prefill_gaps": 41,
+    }
+    for key, expected in expected_prefill_counts.items():
+        actual = prefill_maturity["counts"].get(key)
+        if actual != expected:
+            failures.append(f"Google strict prefill maturity mismatch {key}: expected {expected}, got {actual}")
+    priority_gaps = {item["action_key"] for item in prefill_maturity.get("priority_gaps", [])}
+    if priority_gaps != {"cloud_create_api_credential", "ai_studio_create_api_key"}:
+        failures.append("Google strict prefill priority gaps must remain API key issuance actions")
+
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",
         "9 Google tabs, 50 surfaces, and 96 actions are registered",
@@ -178,6 +199,7 @@ def audit() -> tuple[bool, list[str]]:
         "Google domain readiness covers OAuth/API and browser fallback boundaries",
         "Google secret issuance modes are gated and raw secret output is blocked",
         "Google Vision monthly free-unit gate is locked",
+        "Google strict prefill maturity gaps are explicit and tracked",
         "Google undeveloped work counts and backlog boundaries are locked",
     ]
 

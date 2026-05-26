@@ -32,6 +32,17 @@ LIVE_INPUT_ADAPTERS.update({
     "cloud_create_api_credential": "safe_handoff_no_create",
     "play_console_prepare_release": "safe_handoff_no_release",
 })
+DOMAIN_SPECIFIC_PREFILL_MODES = {
+    "safe_pre_final_input",
+}
+GENERIC_HANDOFF_MODES = {
+    "safe_generic_input_handoff",
+}
+PARTIAL_HANDOFF_MODES = {
+    "safe_handoff_no_create",
+    "safe_handoff_no_release",
+    "safe_lookup_handoff",
+}
 FINAL_CONTROL_LABELS = (
     "Send",
     "보내기",
@@ -194,6 +205,9 @@ def build_live_input_coverage() -> dict:
     actions = [item for item in workflows.build_action_catalog()["actions"] if item["requires_approval"]]
     supported: list[dict] = []
     unsupported: list[dict] = []
+    domain_specific_prefill: list[dict] = []
+    generic_handoff: list[dict] = []
+    partial_handoff: list[dict] = []
     for action in actions:
         item = {
             "action_key": action["key"],
@@ -207,15 +221,30 @@ def build_live_input_coverage() -> dict:
             item["live_input_mode"] = mode
             item["final_state_policy"] = "no_final_submit_only"
             supported.append(item)
+            if mode in DOMAIN_SPECIFIC_PREFILL_MODES:
+                item["prefill_maturity"] = "domain_specific_final_approval_ready"
+                domain_specific_prefill.append(item)
+            elif mode in GENERIC_HANDOFF_MODES:
+                item["prefill_maturity"] = "generic_handoff_needs_domain_prefill"
+                generic_handoff.append(item)
+            elif mode in PARTIAL_HANDOFF_MODES:
+                item["prefill_maturity"] = "partial_handoff_needs_domain_prefill"
+                partial_handoff.append(item)
+            else:
+                item["prefill_maturity"] = "unknown_handoff_needs_review"
+                partial_handoff.append(item)
         else:
             item["live_input_mode"] = "open_only_or_prepare_only"
             item["final_state_policy"] = "approval_handoff_required"
+            item["prefill_maturity"] = "unsupported"
             unsupported.append(item)
+    strict_prefill_gaps = generic_handoff + partial_handoff + unsupported
     coverage = {
         "site_id": "google",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "policy": {
             "default": "prepare_all_actions_but_live_fill_only_supported_adapters",
+            "strict_completion": "domain_specific_prefill_only_counts_as_final_approval_ready",
             "final_controls": list(FINAL_CONTROL_LABELS),
             "manifest_template": "configs/google_live_input_manifest_template.json",
         },
@@ -223,9 +252,17 @@ def build_live_input_coverage() -> dict:
             "approval_actions": len(actions),
             "live_input_supported": len(supported),
             "prepare_or_open_only": len(unsupported),
+            "domain_specific_prefill": len(domain_specific_prefill),
+            "generic_handoff": len(generic_handoff),
+            "partial_handoff": len(partial_handoff),
+            "strict_prefill_gaps": len(strict_prefill_gaps),
         },
         "supported": supported,
         "prepare_or_open_only": unsupported,
+        "domain_specific_prefill": domain_specific_prefill,
+        "generic_handoff": generic_handoff,
+        "partial_handoff": partial_handoff,
+        "strict_prefill_gaps": strict_prefill_gaps,
     }
     return coverage
 
@@ -251,6 +288,10 @@ def print_live_input_coverage(coverage: dict, path: Path) -> None:
     print(f"approval_actions: {coverage['counts']['approval_actions']}")
     print(f"live_input_supported: {coverage['counts']['live_input_supported']}")
     print(f"prepare_or_open_only: {coverage['counts']['prepare_or_open_only']}")
+    print(f"domain_specific_prefill: {coverage['counts']['domain_specific_prefill']}")
+    print(f"generic_handoff: {coverage['counts']['generic_handoff']}")
+    print(f"partial_handoff: {coverage['counts']['partial_handoff']}")
+    print(f"strict_prefill_gaps: {coverage['counts']['strict_prefill_gaps']}")
     print("supported:")
     for item in coverage["supported"]:
         print(f"- {item['action_key']}: {item['live_input_mode']}")
