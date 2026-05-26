@@ -27,12 +27,14 @@ LATEST_TRANSCRIPT_PLAN = ROOT / "data" / "youtube_transcript_plan_latest.json"
 LATEST_ANALYSIS = ROOT / "data" / "youtube_transcript_analysis_latest.json"
 LATEST_CAPTION_LIST = ROOT / "data" / "youtube_caption_list_latest.json"
 LATEST_CAPTION_DOWNLOAD = ROOT / "data" / "youtube_caption_download_latest.json"
+LATEST_SCRIPT_COLLECT = ROOT / "data" / "youtube_script_collect_latest.json"
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_COMMENT_THREADS_URL = "https://www.googleapis.com/youtube/v3/commentThreads"
 YOUTUBE_CAPTIONS_URL = "https://www.googleapis.com/youtube/v3/captions"
 CAPTION_DOWNLOAD_FORMATS = {"srt", "vtt", "ttml"}
+YOUTUBE_VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 TRANSCRIPT_SOURCE_POLICY = {
     "allowed": [
         "user_provided_transcript_file",
@@ -162,6 +164,29 @@ def parse_kv_args(args: list[str]) -> dict[str, str]:
     if positional and "query" not in values:
         values["query"] = " ".join(positional)
     return values
+
+
+def parse_youtube_video_id(value: str) -> str:
+    """Extract a YouTube video id from a known URL form or a raw id."""
+    raw = (value or "").strip()
+    if YOUTUBE_VIDEO_ID_RE.fullmatch(raw):
+        return raw
+    try:
+        parsed = urllib.parse.urlparse(raw)
+    except ValueError:
+        return ""
+    host = parsed.netloc.lower()
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if host.endswith("youtu.be") and path_parts and YOUTUBE_VIDEO_ID_RE.fullmatch(path_parts[0]):
+        return path_parts[0]
+    if "youtube.com" not in host:
+        return ""
+    query_id = urllib.parse.parse_qs(parsed.query).get("v", [""])[0]
+    if YOUTUBE_VIDEO_ID_RE.fullmatch(query_id):
+        return query_id
+    if len(path_parts) >= 2 and path_parts[0] in {"shorts", "embed", "live"} and YOUTUBE_VIDEO_ID_RE.fullmatch(path_parts[1]):
+        return path_parts[1]
+    return ""
 
 
 def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
@@ -933,6 +958,146 @@ def download_caption(
         "word_like_count": len(WORD_RE.findall(sanitized)),
     }
     return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
+
+
+def collect_script_from_url(
+    url_or_video_id: str,
+    *,
+    tfmt: str = "srt",
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
+    analyze: bool = False,
+) -> tuple[dict[str, Any], Path]:
+    """Collect a transcript from a YouTube URL through approved sources only."""
+    video_id = parse_youtube_video_id(url_or_video_id)
+    if not video_id:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_script_collect",
+            "ok": False,
+            "status": "blocked",
+            "reason": "invalid_youtube_video_url_or_id",
+            "input": safe_preview(url_or_video_id, limit=180),
+            "state_change": False,
+            "secret_values_read": False,
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "next_step": "Provide a YouTube watch, youtu.be, shorts, embed URL, or an 11-character video id.",
+        }
+        return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
+
+    plan, plan_path = build_transcript_collection_plan(video_id)
+    caption_list, caption_list_path = list_captions(video_id, oauth_token=oauth_token, token_file=token_file)
+    if caption_list.get("status") != "ok":
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_script_collect",
+            "ok": False,
+            "status": "blocked",
+            "reason": caption_list.get("reason") or "caption_list_unavailable",
+            "video_id": safe_preview(video_id, limit=80),
+            "video_url": f"https://www.youtube.com/watch?v={video_id}",
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "plan_report": str(plan_path),
+            "caption_list_report": str(caption_list_path),
+            "allowed_next_steps": plan["allowed_next_steps"],
+            "blocked_next_steps": plan["blocked_next_steps"],
+            "next_step": caption_list.get("next_step") or "Provide approved OAuth credentials or a user-exported transcript file.",
+        }
+        return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
+
+    captions = caption_list.get("captions", [])
+    if not captions:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_script_collect",
+            "ok": False,
+            "status": "blocked",
+            "reason": "caption_track_not_found",
+            "video_id": safe_preview(video_id, limit=80),
+            "video_url": f"https://www.youtube.com/watch?v={video_id}",
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "plan_report": str(plan_path),
+            "caption_list_report": str(caption_list_path),
+            "caption_count": 0,
+            "allowed_next_steps": plan["allowed_next_steps"],
+            "blocked_next_steps": plan["blocked_next_steps"],
+            "next_step": "Use a video with authorized captions, or provide a user-exported browser-visible transcript file.",
+        }
+        return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
+
+    selected = captions[0]
+    download, download_path = download_caption(
+        selected["caption_id"],
+        tfmt=tfmt,
+        oauth_token=oauth_token,
+        token_file=token_file,
+    )
+    if download.get("status") != "ok":
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_script_collect",
+            "ok": False,
+            "status": "blocked",
+            "reason": download.get("reason") or "caption_download_unavailable",
+            "video_id": safe_preview(video_id, limit=80),
+            "video_url": f"https://www.youtube.com/watch?v={video_id}",
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "plan_report": str(plan_path),
+            "caption_list_report": str(caption_list_path),
+            "caption_download_report": str(download_path),
+            "caption_count": caption_list.get("caption_count", len(captions)),
+            "selected_caption": selected,
+            "allowed_next_steps": plan["allowed_next_steps"],
+            "blocked_next_steps": plan["blocked_next_steps"],
+            "next_step": download.get("next_step") or "Use an owned/authorized video with downloadable captions, or provide a user-exported transcript file.",
+        }
+        return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
+
+    analysis_path = ""
+    analysis_status = "skipped"
+    if analyze:
+        analysis, analysis_report_path = analyze_transcript(download["transcript_path"], video_id=video_id)
+        analysis_status = analysis.get("status", "unknown")
+        analysis_path = str(analysis_report_path)
+
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_script_collect",
+        "ok": True,
+        "status": "ok",
+        "video_id": safe_preview(video_id, limit=80),
+        "video_url": f"https://www.youtube.com/watch?v={video_id}",
+        "state_change": False,
+        "secret_values_read": False,
+        "oauth_token_output": "redacted",
+        "source_policy": "official_youtube_captions_api_authorized_only",
+        "plan_report": str(plan_path),
+        "caption_list_report": str(caption_list_path),
+        "caption_download_report": str(download_path),
+        "caption_count": caption_list.get("caption_count", len(captions)),
+        "selected_caption": selected,
+        "transcript_path": download["transcript_path"],
+        "character_count": download.get("character_count", 0),
+        "word_like_count": download.get("word_like_count", 0),
+        "analysis_status": analysis_status,
+        "analysis_report": analysis_path,
+        "copyright_note": "Do not publish copied transcript text without rights review.",
+    }
+    return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
 
 
 def _read_transcript(path: str | Path) -> str:

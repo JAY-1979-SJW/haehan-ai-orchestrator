@@ -244,6 +244,82 @@ def test_caption_download_writes_sanitized_transcript(monkeypatch):
     assert "fake-oauth" not in str(result)
 
 
+def test_parse_youtube_video_id_from_watch_url():
+    assert research.parse_youtube_video_id("https://www.youtube.com/watch?v=3yyLg1xbQSs") == "3yyLg1xbQSs"
+
+
+def test_parse_youtube_video_id_from_short_url():
+    assert research.parse_youtube_video_id("https://youtu.be/3yyLg1xbQSs?si=demo") == "3yyLg1xbQSs"
+    assert research.parse_youtube_video_id("https://www.youtube.com/shorts/3yyLg1xbQSs") == "3yyLg1xbQSs"
+
+
+def test_collect_script_from_url_downloads_first_caption(monkeypatch):
+    tmp_path = _test_dir()
+    transcript = tmp_path / "caption.srt"
+    transcript.write_text("caption text", encoding="utf-8")
+
+    def fake_list_captions(video_id, *, oauth_token=None, token_file=None):
+        return {
+            "status": "ok",
+            "caption_count": 1,
+            "captions": [{"caption_id": "caption-1", "language": "ko", "status": "serving"}],
+        }, tmp_path / "captions.json"
+
+    def fake_download_caption(caption_id, *, tfmt="srt", oauth_token=None, token_file=None, output=None):
+        return {
+            "status": "ok",
+            "transcript_path": str(transcript),
+            "character_count": 12,
+            "word_like_count": 2,
+        }, tmp_path / "download.json"
+
+    monkeypatch.setattr(research, "list_captions", fake_list_captions)
+    monkeypatch.setattr(research, "download_caption", fake_download_caption)
+
+    result, path = research.collect_script_from_url("https://www.youtube.com/watch?v=3yyLg1xbQSs")
+
+    assert path.exists()
+    assert result["status"] == "ok"
+    assert result["video_id"] == "3yyLg1xbQSs"
+    assert result["transcript_path"] == str(transcript)
+    assert result["selected_caption"]["caption_id"] == "caption-1"
+
+
+def test_collect_script_from_url_reports_forbidden_caption_download(monkeypatch):
+    tmp_path = _test_dir()
+
+    def fake_list_captions(video_id, *, oauth_token=None, token_file=None):
+        return {
+            "status": "ok",
+            "caption_count": 1,
+            "captions": [{"caption_id": "caption-1", "language": "ko", "status": "serving"}],
+        }, tmp_path / "captions.json"
+
+    def fake_download_caption(caption_id, *, tfmt="srt", oauth_token=None, token_file=None, output=None):
+        return {
+            "status": "blocked",
+            "reason": "official_caption_download_forbidden_or_unavailable",
+            "next_step": "Use an owned/authorized video with downloadable captions, or provide a user-exported transcript file.",
+        }, tmp_path / "download.json"
+
+    monkeypatch.setattr(research, "list_captions", fake_list_captions)
+    monkeypatch.setattr(research, "download_caption", fake_download_caption)
+
+    result, _path = research.collect_script_from_url("https://www.youtube.com/watch?v=3yyLg1xbQSs")
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "official_caption_download_forbidden_or_unavailable"
+    assert "browser_hidden_caption_endpoint_scraping" in result["blocked_next_steps"]
+    assert "user-exported transcript file" in result["next_step"]
+
+
+def test_collect_script_from_url_blocks_invalid_url():
+    result, _path = research.collect_script_from_url("https://example.com/not-youtube")
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "invalid_youtube_video_url_or_id"
+
+
 def test_collect_video_info_uses_official_api(monkeypatch):
     calls = []
 
