@@ -21,6 +21,7 @@ REQUIRED_PATTERNS = {
     ".gitignore",
     "docker-compose.override.yml",
     "data/",
+    "tmp/",
     "secrets/",
     ".env*",
     "__pycache__/",
