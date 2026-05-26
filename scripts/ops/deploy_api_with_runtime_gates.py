@@ -111,6 +111,13 @@ def wait_container_healthy(container: str, *, attempts: int, delay: float) -> di
     }, ensure_ascii=False))
 
 
+def payload_ok(payload: dict[str, Any]) -> bool:
+    if payload.get("ok") is True:
+        return True
+    verdict = payload.get("verdict")
+    return isinstance(verdict, dict) and verdict.get("ok") is True
+
+
 def run_json_command(args: list[str], *, step: str, timeout: int = 240) -> dict[str, Any]:
     code, out, err = run(args, timeout=timeout)
     try:
@@ -122,7 +129,7 @@ def run_json_command(args: list[str], *, step: str, timeout: int = 240) -> dict[
             "error_summary": (err or out)[-500:],
             "secret_values_output": False,
         }
-    if code != 0 or not payload.get("ok"):
+    if code != 0 or not payload_ok(payload):
         raise RuntimeError(json.dumps({
             "step": step,
             "ok": False,

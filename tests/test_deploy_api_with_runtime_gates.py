@@ -43,6 +43,18 @@ def test_run_json_command_rejects_non_ok_payload(monkeypatch):
     assert payload["payload"]["status"] == "failed"
 
 
+def test_run_json_command_accepts_verdict_ok_payload(monkeypatch):
+    def fake_run(args, *, timeout=240):
+        return 0, json.dumps({"verdict": {"ok": True, "status": "ok"}}), ""
+
+    monkeypatch.setattr(deploy_gate, "run", fake_run)
+
+    payload = deploy_gate.run_json_command(["python", "drift.py"], step="runtime_drift")
+
+    assert payload["ok"] is True
+    assert payload["payload"]["verdict"]["ok"] is True
+
+
 def test_wait_container_healthy_waits_until_docker_health_is_ready(monkeypatch):
     states = [
         {"State": {"Status": "running", "Health": {"Status": "starting"}}, "RestartCount": 0},
