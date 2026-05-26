@@ -52,7 +52,13 @@ def build_report() -> dict[str, Any]:
             for item in coverage["strict_prefill_gaps"]
             if item["action_key"] in {"cloud_create_api_credential", "ai_studio_create_api_key"}
         ],
+        "priority_ready": [
+            item
+            for item in coverage["domain_specific_prefill"]
+            if item["action_key"] in {"cloud_create_api_credential", "ai_studio_create_api_key"}
+        ],
         "strict_prefill_gaps": coverage["strict_prefill_gaps"],
+        "domain_specific_prefill": coverage["domain_specific_prefill"],
         "secret_values_output": False,
         "next_step": (
             "Build domain-specific prefill adapters for priority key issuance, then replace generic handoffs per domain."
@@ -85,6 +91,10 @@ def render_text(report: dict[str, Any]) -> str:
         lines.append("")
         lines.append("priority_gaps:")
         lines.extend(f"- {item['action_key']}: {item['live_input_mode']}" for item in report["priority_gaps"])
+    if report.get("priority_ready"):
+        lines.append("")
+        lines.append("priority_ready:")
+        lines.extend(f"- {item['action_key']}: {item['live_input_mode']}" for item in report["priority_ready"])
     return "\n".join(lines)
 
 

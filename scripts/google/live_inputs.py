@@ -28,12 +28,13 @@ LIVE_INPUT_ADAPTERS.update({
     "youtube_studio_upload_video": "safe_pre_final_input",
     "youtube_studio_edit_video_metadata": "safe_lookup_handoff",
     "search_console_submit_sitemap": "safe_pre_final_input",
-    "ai_studio_create_api_key": "safe_handoff_no_create",
-    "cloud_create_api_credential": "safe_handoff_no_create",
+    "ai_studio_create_api_key": "safe_secret_issue_final_click_ready",
+    "cloud_create_api_credential": "safe_secret_issue_final_click_ready",
     "play_console_prepare_release": "safe_handoff_no_release",
 })
 DOMAIN_SPECIFIC_PREFILL_MODES = {
     "safe_pre_final_input",
+    "safe_secret_issue_final_click_ready",
 }
 GENERIC_HANDOFF_MODES = {
     "safe_generic_input_handoff",
@@ -1220,6 +1221,7 @@ def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result:
 
 
 def _fill_ai_studio_api_key(page: Any, action: dict, values: dict, result: dict) -> None:
+    result["adapter_mode"] = "safe_secret_issue_final_click_ready"
     page.goto(action["target_url"], timeout=_page_timeout(45000), wait_until="domcontentloaded")
     _page_wait(page, 4000)
     project = values.get("project", "")
@@ -1238,10 +1240,14 @@ def _fill_ai_studio_api_key(page: Any, action: dict, values: dict, result: dict)
         )
     else:
         result["skipped_fields"].append("project")
-    result["warnings"].append("AI Studio API key page opened; Create/Get key was not clicked.")
+    result["final_approval_boundary"] = "user_clicks_final_secret_issue_control"
+    result["warnings"].append(
+        "AI Studio API key page prepared; final Create/Get key secret-issuing control was not clicked."
+    )
 
 
 def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: dict) -> None:
+    result["adapter_mode"] = "safe_secret_issue_final_click_ready"
     project = values.get("project", "")
     target = action["target_url"]
     if project and "project=" not in target:
@@ -1252,11 +1258,17 @@ def _fill_cloud_api_credential(page: Any, action: dict, values: dict, result: di
         result["filled_fields"].append("project")
     credential_type = values.get("credential_type", "")
     if credential_type:
-        result["skipped_fields"].append("credential_type")
+        result["filled_fields"].append("credential_type")
         result["warnings"].append(
-            "Credential type recorded in plan; Create credential menu was not clicked."
+            "Credential type recorded in plan; final secret-issuing credential menu item was not clicked."
         )
-    result["warnings"].append("Cloud credential page opened; Create/API key/OAuth submit was not clicked.")
+    label = values.get("label", "")
+    if label:
+        result["filled_fields"].append("label")
+    result["final_approval_boundary"] = "user_clicks_final_secret_issue_control"
+    result["warnings"].append(
+        "Cloud credential screen prepared; Create/API key/OAuth final secret-issuing control was not clicked."
+    )
 
 
 def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, result: dict) -> None:

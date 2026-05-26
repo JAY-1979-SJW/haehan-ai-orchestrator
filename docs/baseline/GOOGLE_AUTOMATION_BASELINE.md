@@ -300,10 +300,10 @@ Do not split all Google modules in one change.
   blocked from agent final execution until a separate production adapter is
   explicitly approved.
 - Strict final-approval-only prefill is a higher bar than live-input support.
-  Current strict prefill maturity is 5 domain-specific prefill actions, 37
-  generic handoff actions, 4 partial handoff actions, and 41 strict prefill
-  gaps. `cloud_create_api_credential` and `ai_studio_create_api_key` are the
-  first priority gaps because key issuance must leave only the final
-  Create/Generate approval to the user while still blocking raw secret output.
-  The tracking command is:
+  Current strict prefill maturity is 7 domain-specific prefill actions, 37
+  generic handoff actions, 2 partial handoff actions, and 39 strict prefill
+  gaps. `cloud_create_api_credential` and `ai_studio_create_api_key` are
+  final-click-ready key issuance actions: the agent prepares the secret-issuing
+  screen and leaves the final Create/Generate approval to the user while still
+  blocking raw secret output. The tracking command is:
   `python scripts/ops/audit_google_prefill_maturity.py --json`.
