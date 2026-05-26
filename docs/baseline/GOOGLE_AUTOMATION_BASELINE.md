@@ -197,7 +197,9 @@ Representative host boundaries:
 - `scripts/google/domain_readiness_audit.py`: all-domain OAuth/API/browser
   fallback readiness audit. Every Google surface must report its read strategy,
   fallback strategy, approval boundary, secret-output boundary, and blocked
-  next-step requirement.
+  next-step requirement. The audit also writes a per-domain Markdown gate report
+  to `docs/reports/google_domain_readiness_latest.md` so each Google domain can
+  be reviewed independently before new automation work starts.
 - `python scripts/cdp_client.py google work undeveloped`: required Google gap
   report for separating implemented read-only work, no-final-submit input
   support, prepare/open-only items, and production final-execution blocks.
@@ -242,7 +244,8 @@ Do not split all Google modules in one change.
   baseline.
 - Google domain readiness is checked across all 50 surfaces so OAuth/API,
   user-present browser fallback, secret-output blocking, and blocked next-step
-  reporting do not regress the way YouTube caption OAuth initially did.
+  reporting do not regress the way YouTube caption OAuth initially did. Each
+  surface must pass the per-domain required checks, not only aggregate counts.
 - Workspace, Cloud, YouTube, Marketing, AI, Developer, and Media expose common
   app-attachable tab logic; deeper file movement must preserve the locked counts.
 - Approval actions are contract-gated, but not all have final production API

@@ -10,6 +10,9 @@ def test_google_domain_readiness_covers_all_surfaces() -> None:
     assert report["counts"]["surfaces"] == 50
     assert report["counts"]["domain_groups"] == 10
     assert report["global_policy"]["browser_fallback"] == "user_present_cdp_session_selection_required"
+    assert len(report["per_domain_required_checks"]) == 9
+    assert all(item["readiness_level"] == "ready" for item in report["domains"])
+    assert all(not item["failed_required_checks"] for item in report["domains"])
 
 
 def test_google_domain_readiness_locks_youtube_fallback() -> None:
@@ -20,6 +23,8 @@ def test_google_domain_readiness_locks_youtube_fallback() -> None:
     assert by_key["youtube"]["needs_cdp_session_selection"] is True
     assert by_key["youtube"]["secret_output_allowed"] is False
     assert by_key["youtube"]["must_report_next_step_when_blocked"] is True
+    assert "youtube_like_oauth_or_browser_fallback" in by_key["youtube"]["risk_flags"]
+    assert by_key["youtube"]["required_checks"]["browser_fallback_cdp_selection"]["ok"] is True
 
 
 def test_google_domain_readiness_locks_cloud_credentials_secret_boundary() -> None:
@@ -37,3 +42,7 @@ def test_google_domain_readiness_report_can_be_saved() -> None:
 
     assert path.exists()
     assert report["status"] == "ok"
+    assert audit.LATEST_DOC_REPORT.exists()
+    markdown = audit.LATEST_DOC_REPORT.read_text(encoding="utf-8")
+    assert "| `youtube` | `www.youtube.com` |" in markdown
+    assert "Browser fallback must use user-present CDP session selection." in markdown
