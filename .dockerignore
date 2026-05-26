@@ -25,6 +25,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.tsbuildinfo
+**/*.tsbuildinfo
+admin-web/tsconfig.tsbuildinfo
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
