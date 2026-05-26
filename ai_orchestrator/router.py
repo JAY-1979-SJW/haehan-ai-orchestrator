@@ -34,6 +34,7 @@ from .connectors.gmail_router import gmail_router
 from .ops_router import ops_router
 from .app_status_router import app_status_router
 from .user_data_contribution_router import user_data_contribution_router
+from .youtube_oauth_router import youtube_oauth_router
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
@@ -77,6 +78,7 @@ router.include_router(gmail_router)        # gmail inbox/collect/compose/send
 router.include_router(ops_router)           # read-only ops center API
 router.include_router(app_status_router)    # read-only app status endpoints (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 router.include_router(user_data_contribution_router)
+router.include_router(youtube_oauth_router)
 
 
 class TaskSubmit(BaseModel):

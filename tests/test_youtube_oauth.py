@@ -193,3 +193,70 @@ def test_server_preapproval_defines_final_console_values():
     assert result["google_cloud_inputs"]["authorized_redirect_uri"].startswith("https://haehan-ai.kr/")
     assert "youtube.force-ssl" in result["google_cloud_inputs"]["scope"]
     assert result["server_secret_placement"]["commit_policy"].startswith("never commit")
+    assert result["server_env"]["YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED"] == "true"
+
+
+def test_server_callback_waits_when_exchange_disabled(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED", raising=False)
+
+    result, path = oauth.handle_server_callback({"code": "secret-code", "state": "state-1"})
+
+    assert path.exists()
+    assert result["status"] == "waiting_server_exchange_enabled"
+    assert result["code_received"] is True
+    assert result["code_output"] == "redacted"
+    assert "secret-code" not in str(result)
+
+
+def test_server_callback_reports_google_error_without_secret():
+    result, _path = oauth.handle_server_callback({"error": "access_denied", "state": "state-1"})
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "google_oauth_error"
+    assert result["code_output"] == "redacted"
+
+
+def test_server_callback_exchanges_when_enabled(monkeypatch):
+    work_dir = _test_dir()
+    client_file = work_dir / "client_secret.json"
+    token_file = work_dir / "server-token.json"
+    client_file.write_text(
+        json.dumps(
+            {
+                "web": {
+                    "client_id": "client-id.apps.googleusercontent.com",
+                    "client_secret": "super-secret",
+                    "redirect_uris": ["https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED", "true")
+
+    def fake_post_form(url, data):
+        assert data["code"] == "secret-code"
+        return {
+            "access_token": "access-secret",
+            "refresh_token": "refresh-secret",
+            "expires_in": 3600,
+            "scope": oauth.YOUTUBE_SCOPES["force-ssl"],
+        }
+
+    monkeypatch.setattr(oauth, "_post_form", fake_post_form)
+
+    result, _path = oauth.handle_server_callback(
+        {
+            "code": "secret-code",
+            "client_file": str(client_file),
+            "token_file": str(token_file),
+            "redirect_uri": "https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback",
+        }
+    )
+
+    assert result["status"] == "ok"
+    assert result["state_change"] is True
+    assert result["refresh_token_present"] is True
+    assert token_file.exists()
+    assert "secret-code" not in str(result)
+    assert "access-secret" not in str(result)

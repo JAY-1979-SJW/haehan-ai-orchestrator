@@ -247,6 +247,103 @@ def exchange_code(values: dict[str, str]) -> tuple[dict[str, Any], Path]:
     return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_token_result")
 
 
+def _truthy_env(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def handle_server_callback(values: dict[str, str]) -> tuple[dict[str, Any], Path]:
+    """Handle the server OAuth callback without returning raw code or tokens."""
+    code = values.get("code", "").strip()
+    error = values.get("error", "").strip()
+    state = values.get("state", "").strip()
+    exchange_enabled = _truthy_env("YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED")
+    redirect_uri = (
+        values.get("redirect_uri")
+        or os.environ.get("YOUTUBE_OAUTH_REDIRECT_URI")
+        or SERVER_REDIRECT_URI
+    )
+    client_file = (
+        values.get("client_file")
+        or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE")
+        or SERVER_CLIENT_FILE
+    )
+    token_file = (
+        values.get("token_file")
+        or os.environ.get("YOUTUBE_OAUTH_TOKEN_FILE")
+        or SERVER_TOKEN_FILE
+    )
+    base = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_oauth_server_callback",
+        "state_change": False,
+        "code_received": bool(code),
+        "code_output": "redacted",
+        "token_output": "redacted",
+        "client_secret_output": "redacted",
+        "state_preview": safe_preview(state, limit=80),
+        "redirect_uri": safe_preview(redirect_uri, limit=200),
+        "callback_exchange_enabled": exchange_enabled,
+        "approval_boundary": "User completed Google OAuth consent before this callback.",
+    }
+    if error:
+        payload = {
+            **base,
+            "status": "blocked",
+            "reason": "google_oauth_error",
+            "error": safe_preview(error, limit=120),
+            "next_step": "Resolve the Google OAuth error and retry from the server OAuth start command.",
+        }
+        return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_server_callback")
+    if not code:
+        payload = {
+            **base,
+            "status": "blocked",
+            "reason": "authorization_code_missing",
+            "next_step": "Retry Google OAuth consent; callback must include code.",
+        }
+        return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_server_callback")
+    if not exchange_enabled:
+        payload = {
+            **base,
+            "status": "waiting_server_exchange_enabled",
+            "reason": "callback_exchange_disabled",
+            "next_step": "Set YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED=true on the server to exchange automatically after final user consent.",
+            "token_file": safe_preview(token_file, limit=200),
+        }
+        return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_server_callback")
+    try:
+        exchanged, path = exchange_code(
+            {
+                "code": code,
+                "client_file": client_file,
+                "redirect_uri": redirect_uri,
+                "output": token_file,
+            }
+        )
+    except Exception as exc:  # pragma: no cover - network/Google dependent
+        payload = {
+            **base,
+            "status": "failed",
+            "reason": "token_exchange_failed",
+            "error": safe_preview(type(exc).__name__, limit=80),
+            "error_summary": safe_preview(str(exc), limit=240),
+            "token_file": safe_preview(token_file, limit=200),
+        }
+        return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_server_callback")
+    payload = {
+        **base,
+        "status": exchanged.get("status", "unknown"),
+        "reason": exchanged.get("reason", ""),
+        "state_change": exchanged.get("status") == "ok",
+        "token_file": exchanged.get("token_file", safe_preview(token_file, limit=200)),
+        "refresh_token_present": bool(exchanged.get("refresh_token_present")),
+        "scope": exchanged.get("scope", ""),
+        "exchange_report": str(path),
+    }
+    return payload, _write_report(payload, LATEST_TOKEN_RESULT, "youtube_oauth_server_callback")
+
+
 def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict[str, Any], Path]:
     """Build the server-first Google Console input pack for YouTube captions OAuth."""
     values = values or {}
@@ -293,6 +390,7 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
             "YOUTUBE_CLIENT_SECRETS_FILE": client_file,
             "YOUTUBE_OAUTH_REDIRECT_URI": redirect_uri,
             "YOUTUBE_OAUTH_TOKEN_FILE": token_file,
+            "YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED": "true",
         },
         "post_approval_commands": [
             (
