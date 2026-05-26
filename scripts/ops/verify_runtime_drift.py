@@ -139,6 +139,54 @@ def local_snapshot(root: Path, *, remote: str, branch: str, paths: tuple[str, ..
     }
 
 
+def local_container_fingerprint(*, container: str, container_root: str, paths: tuple[str, ...]) -> dict[str, Any]:
+    container_code = CONTAINER_FINGERPRINT_CODE % {
+        "container_root": container_root,
+        "paths_json": json.dumps(list(paths)),
+    }
+    code, out, err = run_command(["docker", "exec", container, "python", "-c", container_code], timeout=120)
+    if code != 0:
+        raise RuntimeError(f"container fingerprint failed: {err or out}")
+    return json.loads(out)
+
+
+def local_container_status(container: str) -> dict[str, Any]:
+    code, out, err = run_command(["docker", "inspect", container], timeout=30)
+    if code != 0:
+        raise RuntimeError(f"docker inspect failed: {err or out}")
+    data = json.loads(out)[0]
+    return {
+        "name": data.get("Name", "").lstrip("/"),
+        "image_id": data.get("Image", ""),
+        "image_name": data.get("Config", {}).get("Image", ""),
+        "status": data.get("State", {}).get("Status", ""),
+        "health": data.get("State", {}).get("Health", {}).get("Status", ""),
+        "restart_count": data.get("RestartCount", 0),
+        "compose_project": data.get("Config", {}).get("Labels", {}).get("com.docker.compose.project", ""),
+        "compose_service": data.get("Config", {}).get("Labels", {}).get("com.docker.compose.service", ""),
+    }
+
+
+def self_snapshot(
+    root: Path,
+    *,
+    remote: str,
+    branch: str,
+    container: str,
+    container_root: str,
+    paths: tuple[str, ...],
+) -> dict[str, Any]:
+    snapshot = local_snapshot(root, remote=remote, branch=branch, paths=paths)
+    snapshot["kind"] = "self"
+    snapshot["container"] = local_container_status(container)
+    snapshot["container_fingerprint"] = local_container_fingerprint(
+        container=container,
+        container_root=container_root,
+        paths=paths,
+    )
+    return snapshot
+
+
 CONTAINER_FINGERPRINT_CODE = r"""
 import hashlib, json
 from pathlib import Path
@@ -422,6 +470,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--branch", default=DEFAULT_BRANCH)
     parser.add_argument("--container-root", default=DEFAULT_CONTAINER_ROOT)
     parser.add_argument("--path", action="append", dest="paths", default=[])
+    parser.add_argument("--self", action="store_true", help="Check the current host repo against its local container.")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -430,15 +479,25 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     paths = tuple(args.paths) if args.paths else DEFAULT_RUNTIME_PATHS
     local = local_snapshot(ROOT, remote=args.remote, branch=args.branch, paths=paths)
-    server = remote_snapshot(
-        server=args.server,
-        remote_path=args.remote_path,
-        container=args.container,
-        remote=args.remote,
-        branch=args.branch,
-        container_root=args.container_root,
-        paths=paths,
-    )
+    if args.self:
+        server = self_snapshot(
+            ROOT,
+            remote=args.remote,
+            branch=args.branch,
+            container=args.container,
+            container_root=args.container_root,
+            paths=paths,
+        )
+    else:
+        server = remote_snapshot(
+            server=args.server,
+            remote_path=args.remote_path,
+            container=args.container,
+            remote=args.remote,
+            branch=args.branch,
+            container_root=args.container_root,
+            paths=paths,
+        )
     verdict = evaluate(local, server)
     payload = {"local": local, "server": server, "verdict": verdict}
     if args.json:
