@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from scripts.sites.readonly_check import build_provider_readonly_check_plan
 from scripts.sites.sso_runtime import build_blocked_operation_result, build_login_entry_task, build_subdomain_readonly_task
 from scripts.sites.subdomain_registry import get_provider, validate_registry
@@ -15,14 +17,21 @@ def test_sso_registry_has_google_and_naver() -> None:
 
 def test_login_entry_task_requires_user_present_without_auto_login() -> None:
     task = build_login_entry_task("google")
+    metadata = task["metadata"]
 
     assert task["action"] == "web_open_url_readonly"
     assert task["execution_location"] == "local_agent"
     assert task["risk_level"] == "read"
-    assert task["metadata"]["auto_login"] is False
-    assert task["metadata"]["user_present_required"] is True
-    assert task["metadata"]["shared_profile_required"] is True
-    assert task["metadata"]["secret_export_allowed"] is False
+    assert metadata["auto_login"] is False
+    assert metadata["user_present_required"] is True
+    assert metadata["shared_profile_required"] is True
+    assert metadata["secret_export_allowed"] is False
+    assert metadata["sso_connection_policy"]["direct_oauth_entry_allowed"] is False
+    assert metadata["oauth_client_policy"]["web_app_client_for_local_cli_allowed"] is False
+    assert metadata["oauth_client_policy"]["local_cli_preferred_client_type"] == "desktop_app"
+    assert metadata["oauth_client_policy"]["agent_non_secret_prefill_allowed"] is True
+    assert metadata["oauth_client_policy"]["final_external_create_requires_user"] is True
+    assert metadata["oauth_client_policy"]["request_user_input_when_prefill_blocked"] is True
 
 
 def test_google_and_naver_subdomain_tasks_share_contract() -> None:
@@ -37,6 +46,8 @@ def test_google_and_naver_subdomain_tasks_share_contract() -> None:
         assert task["metadata"]["auto_login"] is False
         assert task["metadata"]["user_present_required"] is True
         assert task["metadata"]["same_profile_subdomain_navigation"] is True
+        assert task["metadata"]["sso_connection_policy"]["entry_first"] is True
+        assert task["metadata"]["oauth_client_policy"]["redirect_uri_must_match_client_registration"] is True
 
     assert google["params"]["target_url_host"] == "mail.google.com"
     assert naver["params"]["target_url_host"] == "mail.naver.com"
@@ -61,4 +72,17 @@ def test_blocked_operation_does_not_create_local_agent_task() -> None:
     assert blocked["state_change"] is False
     assert blocked["local_agent_task"] is None
     assert blocked["reason"] == "sso_subdomain_operation_requires_separate_approval_gate"
+    assert blocked["sso_connection_policy"]["error_code_for_direct_oauth"] == "SSO_DIRECT_OAUTH_ENTRY_BLOCKED"
+    assert blocked["oauth_client_policy"]["error_code_for_mismatch"] == "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH"
 
+
+def test_sso_baseline_documents_common_oauth_client_policy() -> None:
+    baseline = (Path(__file__).resolve().parents[1] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "direct OAuth URL entry is forbidden" in baseline
+    assert "Desktop app OAuth client" in baseline
+    assert "agent may prefill non-secret fields" in baseline
+    assert "final external create" in baseline
+    assert "OAUTH_CLIENT_REDIRECT_SCOPE_MISMATCH" in baseline
