@@ -90,6 +90,9 @@ Common modules:
 - `logging_utils.py`: compatibility facade that delegates to `security_utils.py`.
 - `scripts/credentials.py`: encrypted credential storage; CLI `get` and `list`
   must show only masked IDs and masked password previews.
+- `scripts/local_user_secret_store.py`: per-user local OS keyring storage for
+  approved secret material such as OAuth client JSON. Commands return only
+  status and `local-secret://...` references, never raw secret values.
 
 Rules:
 
@@ -102,6 +105,9 @@ Rules:
    own sensitive-key list.
 5. If a site needs a stricter rule, add it to `security_utils.py` first and
    then reuse it from the site-specific module.
+6. User-specific OAuth/API secrets must be passed by approved local secret
+   reference when possible. The reference may be logged; the resolved value must
+   not be logged, printed, or committed.
 
 ## Login Strategy Classification
 

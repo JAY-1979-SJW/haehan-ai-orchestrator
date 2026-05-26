@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts import local_user_secret_store
 from security_utils import safe_preview
 
 
@@ -76,7 +77,12 @@ def parse_kv_args(args: list[str]) -> dict[str, str]:
 
 
 def _load_client(values: dict[str, str]) -> tuple[dict[str, Any], str]:
-    client_file = values.get("client_file") or values.get("client_secrets_file") or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE", "")
+    client_file = (
+        values.get("client_file")
+        or values.get("client_secrets_file")
+        or os.environ.get("YOUTUBE_CLIENT_SECRETS_FILE", "")
+        or os.environ.get("YOUTUBE_CLIENT_SECRETS_REF", "")
+    )
     client_id = values.get("client_id") or os.environ.get("YOUTUBE_OAUTH_CLIENT_ID") or os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
     client_secret = (
         values.get("client_secret")
@@ -85,15 +91,22 @@ def _load_client(values: dict[str, str]) -> tuple[dict[str, Any], str]:
     )
     source = "env_or_args"
     if client_file:
-        path = _resolve(client_file)
-        if not path.exists():
-            return {}, f"client_file_not_found:{path}"
-        data = json.loads(path.read_text(encoding="utf-8"))
+        if client_file.startswith(local_user_secret_store.REF_PREFIX):
+            raw = local_user_secret_store.load_secret(client_file)
+            if not raw:
+                return {}, "local_secret_ref_missing_or_unavailable"
+            data = json.loads(raw)
+            source = client_file
+        else:
+            path = _resolve(client_file)
+            if not path.exists():
+                return {}, f"client_file_not_found:{path}"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            source = str(path)
         node = data.get("installed") or data.get("web") or data
         client_id = node.get("client_id", client_id)
         client_secret = node.get("client_secret", client_secret)
         redirect_uris = [str(uri) for uri in node.get("redirect_uris", []) if uri]
-        source = str(path)
     else:
         redirect_uris = []
     if not client_id or not client_secret:
@@ -364,13 +377,14 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         "agent_allowed_steps": [
             "prepare exact non-secret console inputs",
             "prepare server environment variable names and paths",
+            "store user-approved local secrets in OS keyring via local-secret references",
             "validate generated command structure",
             "write redacted audit/report artifacts",
         ],
         "user_only_steps": [
             "Google Console Create/Save for OAuth client",
             "Google OAuth consent approval",
-            "server secret placement when it contains raw client JSON or tokens",
+            "confirm raw client JSON or token placement into approved secret store",
         ],
         "google_cloud_inputs": {
             "project": values.get("project") or "haehan-ai",
@@ -383,6 +397,7 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
         },
         "server_secret_placement": {
             "client_json_path": client_file,
+            "local_secret_ref": "local-secret://youtube/oauth_client_json",
             "token_file_path": token_file,
             "commit_policy": "never commit client JSON, access token, refresh token, or auth code",
         },

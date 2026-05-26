@@ -114,6 +114,14 @@ Runtime rules:
   implementation choices; it prepares the non-secret inputs and validation
   artifacts, then leaves only the final Google Console Create/Save and OAuth
   consent actions to the user.
+- User-specific Google/YouTube client JSON, OAuth tokens, API keys, and other
+  secret values may be placed by the user or an approved local-agent step into
+  the local OS user secret store. The runtime reference format is
+  `local-secret://<kind>/<name>`; for YouTube OAuth client JSON the locked
+  reference is `local-secret://youtube/oauth_client_json`. The agent may verify
+  presence and use the reference for OAuth preparation, but must not print,
+  log, commit, or include the raw secret value in reports. If the OS keyring is
+  unavailable, the flow must stop and report `keyring_unavailable`.
 
 ## 4. Action Risk Rules
 

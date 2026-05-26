@@ -39,6 +39,17 @@ YOUTUBE_OAUTH_TOKEN_FILE=/app/ai_orchestrator/storage/secrets/youtube_oauth_auth
 YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED=true
 ```
 
+Optional user-local secret reference:
+
+```text
+YOUTUBE_CLIENT_SECRETS_FILE=local-secret://youtube/oauth_client_json
+```
+
+The local secret reference points to the current Windows/OS user keyring entry.
+It may be used after the user approves storing the Google OAuth client JSON
+locally. Reports and command output must show only the reference, not the raw
+client JSON, client secret, token, or authorization code.
+
 ## Post-Approval Commands
 
 Run these on the server after the user creates/saves the Google Console OAuth

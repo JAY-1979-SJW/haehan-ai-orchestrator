@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from scripts.youtube import oauth
+from scripts import local_user_secret_store
 
 
 def _test_dir() -> Path:
@@ -193,7 +194,34 @@ def test_server_preapproval_defines_final_console_values():
     assert result["google_cloud_inputs"]["authorized_redirect_uri"].startswith("https://haehan-ai.kr/")
     assert "youtube.force-ssl" in result["google_cloud_inputs"]["scope"]
     assert result["server_secret_placement"]["commit_policy"].startswith("never commit")
+    assert result["server_secret_placement"]["local_secret_ref"] == "local-secret://youtube/oauth_client_json"
     assert result["server_env"]["YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED"] == "true"
+
+
+def test_auth_plan_uses_local_secret_ref_without_secret_output(monkeypatch):
+    ref = "local-secret://youtube/oauth_client_json"
+    monkeypatch.setattr(
+        local_user_secret_store,
+        "load_secret",
+        lambda value: json.dumps(
+            {
+                "web": {
+                    "client_id": "client-id.apps.googleusercontent.com",
+                    "client_secret": "super-secret",
+                    "redirect_uris": ["https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback"],
+                }
+            }
+        )
+        if value == ref
+        else "",
+    )
+
+    result, _path = oauth.build_auth_plan({"client_file": ref, "scope": "force-ssl"})
+
+    assert result["status"] == "ready_for_user_approval"
+    assert result["client_source"] == ref
+    assert "youtube.force-ssl" in result["scope"]
+    assert "super-secret" not in str(result)
 
 
 def test_server_callback_waits_when_exchange_disabled(monkeypatch):
