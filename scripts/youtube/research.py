@@ -28,6 +28,7 @@ LATEST_ANALYSIS = ROOT / "data" / "youtube_transcript_analysis_latest.json"
 LATEST_CAPTION_LIST = ROOT / "data" / "youtube_caption_list_latest.json"
 LATEST_CAPTION_DOWNLOAD = ROOT / "data" / "youtube_caption_download_latest.json"
 LATEST_SCRIPT_COLLECT = ROOT / "data" / "youtube_script_collect_latest.json"
+LATEST_VIDEO_SUMMARY = ROOT / "data" / "youtube_video_summary_latest.json"
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
@@ -336,32 +337,42 @@ def search_videos(
     return payload, _write_report(payload, LATEST_SEARCH, "youtube_research_search")
 
 
-def collect_video_info(video_id: str, *, api_key: str | None = None) -> tuple[dict[str, Any], Path]:
+def collect_video_info(
+    video_id: str,
+    *,
+    api_key: str | None = None,
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
+) -> tuple[dict[str, Any], Path]:
     """Collect public video metadata through the official YouTube Data API."""
     key = _api_key(api_key)
+    token = _oauth_token(oauth_token, token_file)
     video_id = video_id.strip()
-    if not key:
+    if not key and not token:
         payload = {
             "schema_version": 1,
             "created_at": _now(),
             "workflow": "youtube_video_info",
             "ok": False,
             "status": "blocked",
-            "reason": "youtube_data_api_key_required",
+            "reason": "youtube_data_api_key_or_oauth_token_required",
             "video_id": safe_preview(video_id, limit=80),
             "state_change": False,
             "secret_values_read": False,
+            "api_key_output": "redacted",
+            "oauth_token_output": "redacted",
         }
         return payload, _write_report(payload, ROOT / "data" / "youtube_video_info_latest.json", "youtube_video_info")
 
-    data = _get_json(
-        YOUTUBE_VIDEOS_URL,
-        {
-            "key": key,
-            "part": "snippet,contentDetails,statistics",
-            "id": video_id,
-        },
-    )
+    params: dict[str, str | int] = {
+        "part": "snippet,contentDetails,statistics",
+        "id": video_id,
+    }
+    if key:
+        params["key"] = key
+        data = _get_json(YOUTUBE_VIDEOS_URL, params)
+    else:
+        data = _get_json_oauth(YOUTUBE_VIDEOS_URL, params, token)
     items = data.get("items", [])
     if not items:
         payload = {
@@ -390,6 +401,9 @@ def collect_video_info(video_id: str, *, api_key: str | None = None) -> tuple[di
         "url": f"https://www.youtube.com/watch?v={video_id}",
         "state_change": False,
         "secret_values_read": False,
+        "api_key_output": "redacted",
+        "oauth_token_output": "redacted",
+        "credential_source": "api_key" if key else "oauth",
         "video": {
             "title": safe_preview(snippet.get("title", ""), limit=180),
             "channel_title": safe_preview(snippet.get("channelTitle", ""), limit=120),
@@ -419,38 +433,44 @@ def collect_comments(
     max_results: int = 20,
     order: str = "relevance",
     api_key: str | None = None,
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
 ) -> tuple[dict[str, Any], Path]:
     """Collect public top-level comments through the official API."""
     key = _api_key(api_key)
+    token = _oauth_token(oauth_token, token_file)
     video_id = video_id.strip()
     max_results = max(1, min(int(max_results), 100))
-    if not key:
+    if not key and not token:
         payload = {
             "schema_version": 1,
             "created_at": _now(),
             "workflow": "youtube_comment_collection",
             "ok": False,
             "status": "blocked",
-            "reason": "youtube_data_api_key_required",
+            "reason": "youtube_data_api_key_or_oauth_token_required",
             "video_id": safe_preview(video_id, limit=80),
             "state_change": False,
             "secret_values_read": False,
+            "api_key_output": "redacted",
+            "oauth_token_output": "redacted",
             "comments": [],
         }
         return payload, _write_report(payload, ROOT / "data" / "youtube_comments_latest.json", "youtube_comments")
 
     try:
-        data = _get_json(
-            YOUTUBE_COMMENT_THREADS_URL,
-            {
-                "key": key,
-                "part": "snippet",
-                "videoId": video_id,
-                "maxResults": max_results,
-                "order": order if order in {"time", "relevance"} else "relevance",
-                "textFormat": "plainText",
-            },
-        )
+        params: dict[str, str | int] = {
+            "part": "snippet",
+            "videoId": video_id,
+            "maxResults": max_results,
+            "order": order if order in {"time", "relevance"} else "relevance",
+            "textFormat": "plainText",
+        }
+        if key:
+            params["key"] = key
+            data = _get_json(YOUTUBE_COMMENT_THREADS_URL, params)
+        else:
+            data = _get_json_oauth(YOUTUBE_COMMENT_THREADS_URL, params, token)
         status = "ok"
         reason = ""
     except Exception as exc:
@@ -482,6 +502,9 @@ def collect_comments(
         "video_id": safe_preview(video_id, limit=80),
         "state_change": False,
         "secret_values_read": False,
+        "api_key_output": "redacted",
+        "oauth_token_output": "redacted",
+        "credential_source": "api_key" if key else "oauth",
         "comment_count": len(comments),
         "comments": comments,
     }
@@ -1098,6 +1121,117 @@ def collect_script_from_url(
         "copyright_note": "Do not publish copied transcript text without rights review.",
     }
     return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
+
+
+def collect_video_summary_from_url(
+    url_or_video_id: str,
+    *,
+    token_file: str | Path | None = None,
+    max_comments: int = 20,
+    tfmt: str = "srt",
+) -> tuple[dict[str, Any], Path]:
+    """Build a compliant summary package for a public YouTube video."""
+    video_id = parse_youtube_video_id(url_or_video_id)
+    if not video_id:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_video_summary",
+            "ok": False,
+            "status": "blocked",
+            "reason": "invalid_youtube_video_url_or_id",
+            "input": safe_preview(url_or_video_id, limit=180),
+            "state_change": False,
+            "secret_values_read": False,
+            "next_step": "Provide a YouTube watch, youtu.be, shorts, embed URL, or an 11-character video id.",
+        }
+        return payload, _write_report(payload, LATEST_VIDEO_SUMMARY, "youtube_video_summary")
+
+    info, info_path = collect_video_info(video_id, token_file=token_file)
+    comments, comments_path = collect_comments(video_id, max_results=max_comments, token_file=token_file)
+    script, script_path = collect_script_from_url(video_id, token_file=token_file, tfmt=tfmt, analyze=False)
+
+    video = info.get("video", {}) if info.get("status") == "ok" else {}
+    comment_rows = comments.get("comments", []) if comments.get("status") == "ok" else []
+    source_text = " ".join(
+        [
+            str(video.get("title", "")),
+            str(video.get("description", "")),
+            " ".join(str(tag) for tag in video.get("tags", [])),
+            " ".join(str(item.get("text", "")) for item in comment_rows[:20]),
+        ]
+    )
+    keywords = _top_keywords(source_text, limit=12)
+    transcript_status = script.get("status", "unknown")
+    summary_status = "transcript_assisted" if transcript_status == "ok" else "metadata_comment_summary"
+    status = "ok" if info.get("status") == "ok" else "partial"
+    if info.get("status") != "ok" and comments.get("status") != "ok" and transcript_status != "ok":
+        status = "blocked"
+
+    fallback_required = transcript_status != "ok"
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_video_summary",
+        "ok": status != "blocked",
+        "status": status,
+        "summary_status": summary_status,
+        "reason": "" if status != "blocked" else "all_official_summary_sources_unavailable",
+        "video_id": safe_preview(video_id, limit=80),
+        "video_url": f"https://www.youtube.com/watch?v={video_id}",
+        "state_change": False,
+        "secret_values_read": False,
+        "oauth_token_output": "redacted",
+        "reports": {
+            "video_info": str(info_path),
+            "comments": str(comments_path),
+            "script_collect": str(script_path),
+            "transcript_analysis": script.get("analysis_report") or "",
+        },
+        "source_status": {
+            "video_info": info.get("status", "unknown"),
+            "comments": comments.get("status", "unknown"),
+            "script_collect": transcript_status,
+            "script_reason": script.get("reason", ""),
+            "caption_count": script.get("caption_count", 0),
+        },
+        "video": {
+            "title": video.get("title", ""),
+            "channel_title": video.get("channel_title", ""),
+            "published_at": video.get("published_at", ""),
+            "duration": video.get("duration", ""),
+            "caption_available_hint": video.get("caption_available_hint", ""),
+            "statistics": video.get("statistics", {}),
+        },
+        "summary": {
+            "method": summary_status,
+            "brief": (
+                f"{video.get('channel_title', '-')} channel video about {video.get('title', '-')}"
+                if video
+                else "Official metadata was unavailable; summary requires a browser-visible transcript or audio summary pass."
+            ),
+            "topics": [row["keyword"] for row in keywords[:8]],
+            "signals": {
+                "comment_count_collected": comments.get("comment_count", 0),
+                "transcript_word_like_count": script.get("word_like_count", 0),
+                "metadata_available": bool(video),
+            },
+        },
+        "fallback_required": fallback_required,
+        "fallback_plan": {
+            "approved_browser_visible_transcript": fallback_required,
+            "approved_local_audio_stt_summary": fallback_required,
+            "store_full_third_party_transcript": False,
+            "blocked": list(TRANSCRIPT_SOURCE_POLICY["blocked"]),
+            "next_step": (
+                "Open a user-approved browser transcript/audio summary task and store only derived summary outputs."
+                if fallback_required
+                else "Use the authorized transcript analysis report for deeper summarization."
+            ),
+        },
+        "copyright_note": "Do not publish copied transcript text without rights review.",
+    }
+    return payload, _write_report(payload, LATEST_VIDEO_SUMMARY, "youtube_video_summary")
 
 
 def _read_transcript(path: str | Path) -> str:

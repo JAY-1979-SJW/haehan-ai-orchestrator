@@ -320,6 +320,60 @@ def test_collect_script_from_url_blocks_invalid_url():
     assert result["reason"] == "invalid_youtube_video_url_or_id"
 
 
+def test_collect_video_summary_uses_metadata_comments_and_script_status(monkeypatch):
+    tmp_path = _test_dir()
+
+    def fake_collect_video_info(video_id, *, api_key=None, oauth_token=None, token_file=None):
+        return {
+            "status": "ok",
+            "video": {
+                "title": "Harness engineering tutorial",
+                "channel_title": "Demo Channel",
+                "published_at": "2026-01-01T00:00:00Z",
+                "description": "Harness engineering and browser automation planning.",
+                "tags": ["harness", "engineering"],
+                "duration": "PT10M",
+                "caption_available_hint": "true",
+                "statistics": {"view_count": "10"},
+            },
+        }, tmp_path / "info.json"
+
+    def fake_collect_comments(video_id, *, max_results=20, order="relevance", api_key=None, oauth_token=None, token_file=None):
+        return {
+            "status": "ok",
+            "comment_count": 1,
+            "comments": [{"text": "Great harness engineering explanation", "like_count": 2}],
+        }, tmp_path / "comments.json"
+
+    def fake_collect_script_from_url(url_or_video_id, *, tfmt="srt", oauth_token=None, token_file=None, analyze=False):
+        return {
+            "status": "blocked",
+            "reason": "official_caption_download_forbidden_or_unavailable",
+            "caption_count": 1,
+        }, tmp_path / "script.json"
+
+    monkeypatch.setattr(research, "collect_video_info", fake_collect_video_info)
+    monkeypatch.setattr(research, "collect_comments", fake_collect_comments)
+    monkeypatch.setattr(research, "collect_script_from_url", fake_collect_script_from_url)
+
+    result, path = research.collect_video_summary_from_url("https://www.youtube.com/watch?v=3yyLg1xbQSs")
+
+    assert path.exists()
+    assert result["status"] == "ok"
+    assert result["summary_status"] == "metadata_comment_summary"
+    assert result["source_status"]["script_collect"] == "blocked"
+    assert result["fallback_required"] is True
+    assert result["fallback_plan"]["store_full_third_party_transcript"] is False
+    assert "harness" in result["summary"]["topics"]
+
+
+def test_collect_video_summary_blocks_invalid_url():
+    result, _path = research.collect_video_summary_from_url("https://example.com/not-youtube")
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "invalid_youtube_video_url_or_id"
+
+
 def test_collect_video_info_uses_official_api(monkeypatch):
     calls = []
 

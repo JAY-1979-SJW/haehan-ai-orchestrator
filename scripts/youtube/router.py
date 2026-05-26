@@ -20,6 +20,7 @@ __status__ = {
         "research comments": "done_official_api",
         "research transcript-plan": "done_policy_gated",
         "research script-collect": "done_official_oauth",
+        "research video-summary": "done_official_sources_with_fallback_plan",
         "research caption-list": "done_official_oauth",
         "research caption-download": "done_official_oauth",
         "research analyze": "done_user_transcript",
@@ -251,6 +252,37 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print(f"analysis_report: {result.get('analysis_report') or '-'}")
         print(f"reason: {result.get('reason') or '-'}")
         print(f"next_step: {result.get('next_step') or '-'}")
+        print(f"saved: {path}")
+        return
+    if sub in ("video-summary", "summary", "summarize", "summarise"):
+        source = (
+            values.get("url")
+            or values.get("video_url")
+            or values.get("video_id")
+            or values.get("id")
+            or values.get("query")
+            or (args[0] if args and "=" not in args[0] else "")
+        )
+        if not source:
+            print("  [error] usage: youtube research video-summary url=<youtube_url> [token_file=...] [comments=20]")
+            return
+        result, path = research.collect_video_summary_from_url(
+            source,
+            token_file=values.get("token_file") or values.get("token"),
+            max_comments=int(values.get("comments") or values.get("max_comments") or 20),
+            tfmt=values.get("tfmt", "srt"),
+        )
+        print("=" * 60)
+        print("YouTube video summary")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"summary_status: {result.get('summary_status') or '-'}")
+        print(f"video_id: {result.get('video_id') or '-'}")
+        print(f"title: {result.get('video', {}).get('title') or '-'}")
+        print(f"topics: {', '.join(result.get('summary', {}).get('topics', [])) or '-'}")
+        print(f"script_status: {result.get('source_status', {}).get('script_collect') or '-'}")
+        print(f"fallback_required: {result.get('fallback_required', False)}")
+        print(f"next_step: {result.get('fallback_plan', {}).get('next_step') or '-'}")
         print(f"saved: {path}")
         return
     if sub in ("caption-list", "captions", "caption-tracks"):
