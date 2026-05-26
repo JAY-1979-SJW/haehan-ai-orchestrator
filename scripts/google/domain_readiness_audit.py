@@ -243,8 +243,6 @@ def save_google_domain_readiness_audit(report: dict[str, Any] | None = None) -> 
     path.write_text(text, encoding="utf-8")
     LATEST_REPORT.write_text(text, encoding="utf-8")
     markdown = render_google_domain_readiness_markdown(report)
-    doc_path = DOC_REPORT_DIR / f"google_domain_readiness_{_stamp()}.md"
-    doc_path.write_text(markdown, encoding="utf-8")
     LATEST_DOC_REPORT.write_text(markdown, encoding="utf-8")
     return report, path
 

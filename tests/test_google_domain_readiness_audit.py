@@ -46,3 +46,15 @@ def test_google_domain_readiness_report_can_be_saved() -> None:
     markdown = audit.LATEST_DOC_REPORT.read_text(encoding="utf-8")
     assert "| `youtube` | `www.youtube.com` |" in markdown
     assert "Browser fallback must use user-present CDP session selection." in markdown
+
+
+def test_google_domain_readiness_markdown_does_not_create_timestamped_doc(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(audit, "REPORT_DIR", tmp_path / "data")
+    monkeypatch.setattr(audit, "LATEST_REPORT", tmp_path / "latest.json")
+    monkeypatch.setattr(audit, "DOC_REPORT_DIR", tmp_path / "docs")
+    monkeypatch.setattr(audit, "LATEST_DOC_REPORT", tmp_path / "docs" / "google_domain_readiness_latest.md")
+
+    audit.save_google_domain_readiness_audit()
+
+    docs = sorted((tmp_path / "docs").glob("*.md"))
+    assert docs == [tmp_path / "docs" / "google_domain_readiness_latest.md"]
