@@ -86,6 +86,31 @@ def wait_health(url: str, *, attempts: int, delay: float) -> dict[str, Any]:
     }, ensure_ascii=False))
 
 
+def wait_container_healthy(container: str, *, attempts: int, delay: float) -> dict[str, Any]:
+    last: dict[str, Any] = {}
+    for attempt in range(1, attempts + 1):
+        code, out, err = run(["docker", "inspect", container], timeout=30)
+        if code == 0:
+            data = json.loads(out)[0]
+            state = data.get("State", {})
+            last = {
+                "status": state.get("Status", ""),
+                "health": state.get("Health", {}).get("Status", ""),
+                "restart_count": data.get("RestartCount", 0),
+            }
+            if last["status"] == "running" and last["health"] in {"", "healthy"}:
+                return {"step": "container_health", "ok": True, "attempt": attempt, "state": last}
+        else:
+            last = {"status": "inspect_failed", "stderr_tail": err[-500:]}
+        time.sleep(delay)
+    raise RuntimeError(json.dumps({
+        "step": "container_health",
+        "ok": False,
+        "attempts": attempts,
+        "last_state": last,
+    }, ensure_ascii=False))
+
+
 def run_json_command(args: list[str], *, step: str, timeout: int = 240) -> dict[str, Any]:
     code, out, err = run(args, timeout=timeout)
     try:
@@ -122,6 +147,7 @@ def deploy(args: argparse.Namespace) -> dict[str, Any]:
     steps.append(must(["docker", "compose", "build", args.service], step="docker_compose_build", timeout=900))
     steps.append(must(["docker", "compose", "up", "-d", "--no-deps", args.service], step="docker_compose_up", timeout=300))
     steps.append(wait_health(args.health_url, attempts=args.health_attempts, delay=args.health_delay))
+    steps.append(wait_container_healthy(args.container, attempts=args.health_attempts, delay=args.health_delay))
     steps.append(run_json_command([
         sys.executable,
         "scripts/ops/verify_container_orphans.py",
@@ -173,6 +199,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         payload = deploy(args)
     except Exception as exc:
+        error_payload = None
+        try:
+            error_payload = json.loads(str(exc))
+        except Exception:
+            pass
         payload = {
             "schema_version": 1,
             "created_at": now(),
@@ -181,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             "status": "failed",
             "error_type": type(exc).__name__,
             "error_summary": str(exc)[:1000],
+            "error_payload": error_payload,
             "secret_values_output": False,
         }
         write_report(payload, report_path)
