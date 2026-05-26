@@ -22,8 +22,8 @@ buttons.
 - Cloud surfaces: 15
 - Cloud registry actions: 29
 - read_only actions: 15
-- prepare_only actions: 12
-- approval_required actions: 2
+- prepare_only actions: 0
+- approval_required actions: 14
 - forbidden execution classes: 7
 - Cloud host: `console.cloud.google.com`
 
@@ -50,11 +50,19 @@ change state and must not output secret values.
 
 ## 4. prepare_only Actions
 
-These actions are high risk and may only prepare a plan, open a page, or produce
-redacted handoff evidence. They must not submit, save, create, deploy, publish,
-export, or mutate resources.
+No Cloud approval action remains prepare-only after the generic
+no-final-submit handoff adapter was added. This does not approve final submit,
+save, create, deploy, publish, export, or resource mutation.
+
+## 5. approval_required Actions
+
+These actions are the Cloud approval actions with live-input handoff support in
+the current registry. They are still no-final-submit actions until a separate final
+approval implementation is approved.
 
 - `maps_platform_change_key_or_quota`
+- `cloud_create_api_credential`
+- `cloud_iam_change_role`
 - `cloud_billing_budget_or_link`
 - `cloud_run_deploy_service`
 - `compute_engine_create_vm`
@@ -66,15 +74,6 @@ export, or mutate resources.
 - `secret_manager_create_update`
 - `cloud_logging_create_sink`
 - `cloud_monitoring_create_alert`
-
-## 5. approval_required Actions
-
-These actions are the only Cloud approval actions with live-input support in the
-current registry. They are still no-final-submit actions until a separate final
-approval implementation is approved.
-
-- `cloud_create_api_credential`
-- `cloud_iam_change_role`
 
 Required behavior:
 
@@ -113,20 +112,20 @@ Concrete forbidden behavior includes:
 | Surface | read_only | prepare_only | approval_required |
 | --- | --- | --- | --- |
 | `cloud_console` | `cloud_console_open` | - | - |
-| `maps_platform` | `maps_platform_open` | `maps_platform_change_key_or_quota` | - |
+| `maps_platform` | `maps_platform_open` | - | `maps_platform_change_key_or_quota` |
 | `cloud_apis_credentials` | `cloud_apis_credentials_open` | - | `cloud_create_api_credential` |
 | `cloud_iam` | `cloud_iam_open` | - | `cloud_iam_change_role` |
-| `cloud_billing` | `cloud_billing_open` | `cloud_billing_budget_or_link` | - |
-| `cloud_run` | `cloud_run_open` | `cloud_run_deploy_service` | - |
-| `compute_engine` | `compute_engine_open` | `compute_engine_create_vm` | - |
-| `cloud_storage` | `cloud_storage_open` | `cloud_storage_create_bucket` | - |
-| `bigquery` | `bigquery_open` | `bigquery_run_query_or_export` | - |
-| `gke` | `gke_open` | `gke_apply_change` | - |
-| `cloud_sql` | `cloud_sql_open` | `cloud_sql_change_instance` | - |
-| `pubsub` | `pubsub_open` | `pubsub_create_or_publish` | - |
-| `secret_manager` | `secret_manager_open` | `secret_manager_create_update` | - |
-| `cloud_logging` | `cloud_logging_open` | `cloud_logging_create_sink` | - |
-| `cloud_monitoring` | `cloud_monitoring_open` | `cloud_monitoring_create_alert` | - |
+| `cloud_billing` | `cloud_billing_open` | - | `cloud_billing_budget_or_link` |
+| `cloud_run` | `cloud_run_open` | - | `cloud_run_deploy_service` |
+| `compute_engine` | `compute_engine_open` | - | `compute_engine_create_vm` |
+| `cloud_storage` | `cloud_storage_open` | - | `cloud_storage_create_bucket` |
+| `bigquery` | `bigquery_open` | - | `bigquery_run_query_or_export` |
+| `gke` | `gke_open` | - | `gke_apply_change` |
+| `cloud_sql` | `cloud_sql_open` | - | `cloud_sql_change_instance` |
+| `pubsub` | `pubsub_open` | - | `pubsub_create_or_publish` |
+| `secret_manager` | `secret_manager_open` | - | `secret_manager_create_update` |
+| `cloud_logging` | `cloud_logging_open` | - | `cloud_logging_create_sink` |
+| `cloud_monitoring` | `cloud_monitoring_open` | - | `cloud_monitoring_create_alert` |
 
 ## 8. Required Verification
 
@@ -137,4 +136,3 @@ python scripts/ops/audit_google_cloud_action_policy_baseline_contract.py
 python scripts/ops/audit_google_cloud_router_compatibility.py
 python scripts/module_quality_gate.py --module repo_guard
 ```
-

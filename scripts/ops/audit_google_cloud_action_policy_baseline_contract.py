@@ -29,8 +29,12 @@ READ_ONLY_ACTIONS = (
     "cloud_monitoring_open",
 )
 
-PREPARE_ONLY_ACTIONS = (
+PREPARE_ONLY_ACTIONS = ()
+
+APPROVAL_REQUIRED_ACTIONS = (
     "maps_platform_change_key_or_quota",
+    "cloud_create_api_credential",
+    "cloud_iam_change_role",
     "cloud_billing_budget_or_link",
     "cloud_run_deploy_service",
     "compute_engine_create_vm",
@@ -42,11 +46,6 @@ PREPARE_ONLY_ACTIONS = (
     "secret_manager_create_update",
     "cloud_logging_create_sink",
     "cloud_monitoring_create_alert",
-)
-
-APPROVAL_REQUIRED_ACTIONS = (
-    "cloud_create_api_credential",
-    "cloud_iam_change_role",
 )
 
 FORBIDDEN_EXECUTION_CLASSES = (
@@ -64,8 +63,8 @@ REQUIRED_PHRASES = (
     "Baseline ID: GOOGLE-CLOUD-ACTION-POLICY-BASELINE-01",
     "Cloud registry actions: 29",
     "read_only actions: 15",
-    "prepare_only actions: 12",
-    "approval_required actions: 2",
+    "prepare_only actions: 0",
+    "approval_required actions: 14",
     "forbidden execution classes: 7",
     "Cloud host: `console.cloud.google.com`",
     "This is a policy-only stage.",
@@ -125,9 +124,9 @@ def audit() -> tuple[bool, list[str]]:
 
     if len(READ_ONLY_ACTIONS) != 15:
         failures.append(f"read_only action count changed: {len(READ_ONLY_ACTIONS)}")
-    if len(PREPARE_ONLY_ACTIONS) != 12:
+    if len(PREPARE_ONLY_ACTIONS) != 0:
         failures.append(f"prepare_only action count changed: {len(PREPARE_ONLY_ACTIONS)}")
-    if len(APPROVAL_REQUIRED_ACTIONS) != 2:
+    if len(APPROVAL_REQUIRED_ACTIONS) != 14:
         failures.append(f"approval_required action count changed: {len(APPROVAL_REQUIRED_ACTIONS)}")
     if len(policy_keys) != 29:
         failures.append(f"Cloud policy action count changed: {len(policy_keys)}")

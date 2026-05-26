@@ -47,8 +47,20 @@ CLOUD_APPROVAL_ACTIONS = (
 )
 
 CLOUD_LIVE_INPUT_ACTIONS = (
+    "maps_platform_change_key_or_quota",
     "cloud_create_api_credential",
     "cloud_iam_change_role",
+    "cloud_billing_budget_or_link",
+    "cloud_run_deploy_service",
+    "compute_engine_create_vm",
+    "cloud_storage_create_bucket",
+    "bigquery_run_query_or_export",
+    "gke_apply_change",
+    "cloud_sql_change_instance",
+    "pubsub_create_or_publish",
+    "secret_manager_create_update",
+    "cloud_logging_create_sink",
+    "cloud_monitoring_create_alert",
 )
 
 REQUIRED_PHRASES = (
@@ -59,8 +71,8 @@ REQUIRED_PHRASES = (
     "Cloud read actions: 15",
     "Cloud approval actions: 14",
     "Cloud hosts: `console.cloud.google.com`",
-    "Cloud live input supported actions: 2",
-    "Cloud prepare/open-only approval actions: 12",
+    "Cloud live input supported actions: 14",
+    "Cloud prepare/open-only approval actions: 0",
     "`vertex_ai` also uses `console.cloud.google.com`, but it belongs to the `ai`",
     "raw project id, service account, key material, billing account, secret value,",
     "actual `gcloud` execution",
@@ -121,8 +133,8 @@ def audit() -> tuple[bool, list[str]]:
     if cloud_live != CLOUD_LIVE_INPUT_ACTIONS:
         failures.append("Cloud live-input-supported actions changed: " + ", ".join(cloud_live))
 
-    if len(set(CLOUD_APPROVAL_ACTIONS) - set(cloud_live)) != 12:
-        failures.append("Cloud prepare/open-only approval action count must be 12")
+    if set(CLOUD_APPROVAL_ACTIONS) - set(cloud_live):
+        failures.append("Cloud prepare/open-only approval action count must be 0")
 
     return not failures, failures or [
         "GOOGLE_CLOUD_MODULE_BASELINE exists and is locked",
@@ -142,4 +154,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

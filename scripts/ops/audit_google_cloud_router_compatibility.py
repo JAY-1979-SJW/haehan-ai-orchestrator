@@ -50,6 +50,22 @@ FORBIDDEN_SOURCE_PATTERNS = (
     "set_input_files",
     "keyboard.press",
 )
+CLOUD_APPROVAL_ACTIONS = [
+    "maps_platform_change_key_or_quota",
+    "cloud_create_api_credential",
+    "cloud_iam_change_role",
+    "cloud_billing_budget_or_link",
+    "cloud_run_deploy_service",
+    "compute_engine_create_vm",
+    "cloud_storage_create_bucket",
+    "bigquery_run_query_or_export",
+    "gke_apply_change",
+    "cloud_sql_change_instance",
+    "pubsub_create_or_publish",
+    "secret_manager_create_update",
+    "cloud_logging_create_sink",
+    "cloud_monitoring_create_alert",
+]
 
 SCAN_PATHS = (
     ROOT / "scripts" / "google" / "cloud",
@@ -67,13 +83,13 @@ def _audit_router_summary() -> list[str]:
         "read_action_count": 15,
         "approval_action_count": 14,
         "hosts": ["console.cloud.google.com"],
-        "live_input_supported_actions": ["cloud_create_api_credential", "cloud_iam_change_role"],
+        "live_input_supported_actions": CLOUD_APPROVAL_ACTIONS,
     }
     for key, value in expected.items():
         if summary.get(key) != value:
             failures.append(f"Cloud summary {key} mismatch: expected {value!r}, got {summary.get(key)!r}")
-    if len(summary.get("prepare_or_open_only_approval_actions", [])) != 12:
-        failures.append("Cloud prepare/open-only approval action count must be 12")
+    if summary.get("prepare_or_open_only_approval_actions", []) != []:
+        failures.append("Cloud prepare/open-only approval action count must be 0")
     return failures
 
 

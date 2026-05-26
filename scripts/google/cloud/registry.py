@@ -5,7 +5,22 @@ from scripts.google.live_inputs import build_live_input_coverage
 from scripts.google.tab_registry import build_google_tab_summary
 
 CLOUD_TAB_KEY = "cloud"
-CLOUD_LIVE_INPUT_ACTIONS = ("cloud_create_api_credential", "cloud_iam_change_role")
+CLOUD_LIVE_INPUT_ACTIONS = (
+    "maps_platform_change_key_or_quota",
+    "cloud_create_api_credential",
+    "cloud_iam_change_role",
+    "cloud_billing_budget_or_link",
+    "cloud_run_deploy_service",
+    "compute_engine_create_vm",
+    "cloud_storage_create_bucket",
+    "bigquery_run_query_or_export",
+    "gke_apply_change",
+    "cloud_sql_change_instance",
+    "pubsub_create_or_publish",
+    "secret_manager_create_update",
+    "cloud_logging_create_sink",
+    "cloud_monitoring_create_alert",
+)
 
 
 def cloud_summary() -> dict:
@@ -47,4 +62,3 @@ def get_action(action_key: str) -> dict:
 
 def is_live_input_supported(action_key: str) -> bool:
     return action_key in CLOUD_LIVE_INPUT_ACTIONS
-

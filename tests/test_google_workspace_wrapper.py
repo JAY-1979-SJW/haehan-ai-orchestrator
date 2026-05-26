@@ -5,6 +5,22 @@ from importlib import import_module
 from scripts.google.workspace import registry, router
 
 
+WORKSPACE_APPROVAL_ACTIONS = [
+    "gmail_send_email",
+    "drive_upload_share_file",
+    "calendar_create_event",
+    "docs_create_edit_document",
+    "sheets_update_cells",
+    "slides_create_presentation",
+    "forms_create_publish",
+    "meet_create_meeting",
+    "chat_send_message",
+    "contacts_create_update",
+    "keep_create_note",
+    "tasks_create_task",
+]
+
+
 def test_workspace_registry_preserves_locked_counts() -> None:
     summary = registry.workspace_summary()
 
@@ -12,8 +28,8 @@ def test_workspace_registry_preserves_locked_counts() -> None:
     assert summary["action_count"] == 24
     assert summary["read_action_count"] == 12
     assert summary["approval_action_count"] == 12
-    assert summary["live_input_supported_actions"] == ["gmail_send_email"]
-    assert len(summary["prepare_or_open_only_approval_actions"]) == 11
+    assert summary["live_input_supported_actions"] == WORKSPACE_APPROVAL_ACTIONS
+    assert summary["prepare_or_open_only_approval_actions"] == []
 
 
 def test_workspace_registry_surfaces_are_expected() -> None:
@@ -40,20 +56,7 @@ def test_workspace_registry_approval_actions_are_expected() -> None:
         if action["requires_approval"]
     ]
 
-    assert approval_actions == [
-        "gmail_send_email",
-        "drive_upload_share_file",
-        "calendar_create_event",
-        "docs_create_edit_document",
-        "sheets_update_cells",
-        "slides_create_presentation",
-        "forms_create_publish",
-        "meet_create_meeting",
-        "chat_send_message",
-        "contacts_create_update",
-        "keep_create_note",
-        "tasks_create_task",
-    ]
+    assert approval_actions == WORKSPACE_APPROVAL_ACTIONS
 
 
 def test_workspace_router_summary_returns_registry() -> None:
