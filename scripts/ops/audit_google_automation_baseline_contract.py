@@ -42,7 +42,7 @@ REQUIRED_PHRASES = (
     "monthly_free_limit_units = 1000",
     "scripts/ops/audit_google_prefill_maturity.py",
     "Strict final-approval-only prefill is a higher bar than live-input support.",
-    "39 strict prefill",
+    "0 strict prefill",
     "tests/test_google_live_surface_explorer.py",
     "Do not split all Google modules in one change.",
 )
@@ -178,10 +178,10 @@ def audit() -> tuple[bool, list[str]]:
     expected_prefill_counts = {
         "approval_actions": 46,
         "live_input_supported": 46,
-        "domain_specific_prefill": 7,
-        "generic_handoff": 37,
-        "partial_handoff": 2,
-        "strict_prefill_gaps": 39,
+        "domain_specific_prefill": 46,
+        "generic_handoff": 0,
+        "partial_handoff": 0,
+        "strict_prefill_gaps": 0,
     }
     for key, expected in expected_prefill_counts.items():
         actual = prefill_maturity["counts"].get(key)
