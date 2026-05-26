@@ -5,8 +5,8 @@
 - Total Google work actions: 96
 - Read-only actions implemented: 50
 - Approval actions: 46
-- Live input supported with `--no-final-submit`: 9
-- Prepare/open-only approval actions: 37
+- Live input supported with `--no-final-submit`: 46
+- Prepare/open-only approval actions: 0
 - Missing adapter profiles: 0
 - Production final execution by agent: blocked for all 46 approval actions until a separately approved production adapter exists
 
@@ -33,7 +33,7 @@ and may prefill supported non-secret inputs only under `--no-final-submit`.
 - `cloud_iam_change_role`
 - `play_console_prepare_release`
 
-## Prepare/Open-Only Development Backlog
+## Generic Live Input Handoff Actions
 
 - `drive_upload_share_file`
 - `calendar_create_event`
@@ -72,6 +72,11 @@ and may prefill supported non-secret inputs only under `--no-final-submit`.
 - `merchant_center_product_update`
 - `adsense_ad_unit_or_payment_change`
 - `looker_studio_create_or_share_report`
+
+These actions use `safe_generic_input_handoff`: open the target surface, attempt
+non-secret text input where a visible field is available, and keep final submit,
+save, send, create, grant, deploy, release, publish, upload, or payment controls
+blocked.
 
 ## Verification
 

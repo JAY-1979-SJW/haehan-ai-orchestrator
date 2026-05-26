@@ -19,8 +19,8 @@ REQUIRED_PHRASES = (
     "Google actions: 96",
     "Read actions: 50",
     "Approval actions: 46",
-    "Live input supported approval actions: 9",
-    "Prepare/open-only approval actions: 37",
+    "Live input supported approval actions: 46",
+    "Prepare/open-only approval actions: 0",
     "Production final execution blocked: 46",
     "Host normalization warnings: 0",
     "Live logic surfaces: 50",
@@ -108,8 +108,8 @@ def audit() -> tuple[bool, list[str]]:
         "actions": 96,
         "readonly_complete": 50,
         "approval_actions": 46,
-        "live_input_supported": 9,
-        "prepare_or_open_only": 37,
+        "live_input_supported": 46,
+        "prepare_or_open_only": 0,
         "production_final_blocked": 46,
         "missing_adapter_profiles": 0,
     }
@@ -123,8 +123,10 @@ def audit() -> tuple[bool, list[str]]:
         if key not in supported:
             failures.append(f"Google live-input lock missing supported action: {key}")
     for key in ("drive_upload_share_file", "ads_campaign_budget_change", "vertex_ai_start_job_or_deploy"):
-        if key not in prepare_only:
-            failures.append(f"Google prepare/open-only lock missing backlog action: {key}")
+        if key not in supported:
+            failures.append(f"Google generic live-input lock missing supported action: {key}")
+    if prepare_only:
+        failures.append("Google prepare/open-only backlog must be empty after generic handoff adapter lock")
 
     return not failures, failures or [
         "GOOGLE_AUTOMATION_BASELINE exists and is locked",

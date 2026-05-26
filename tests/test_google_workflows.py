@@ -140,8 +140,9 @@ def test_google_undeveloped_report_separates_live_input_from_prepare_only(monkey
     assert "google_home_open" in readonly
     assert "gmail_send_email" in supported
     assert "youtube_studio_upload_video" in supported
-    assert "ads_campaign_budget_change" in prepare_only
+    assert "ads_campaign_budget_change" in supported
     assert "gmail_send_email" not in prepare_only
+    assert prepare_only == set()
     assert report["counts"]["approval_actions"] == (
         report["counts"]["live_input_supported"] + report["counts"]["prepare_or_open_only"]
     )
@@ -242,7 +243,8 @@ def test_google_live_input_coverage_tracks_supported_and_remaining(monkeypatch):
     assert "search_console_submit_sitemap" in supported
     assert "cloud_create_api_credential" in supported
     assert "play_console_prepare_release" in supported
-    assert "ads_campaign_budget_change" in remaining
+    assert "ads_campaign_budget_change" in supported
+    assert remaining == set()
     assert coverage["counts"]["approval_actions"] == (
         coverage["counts"]["live_input_supported"] + coverage["counts"]["prepare_or_open_only"]
     )
