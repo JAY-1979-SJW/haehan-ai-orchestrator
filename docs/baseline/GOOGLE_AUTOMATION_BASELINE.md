@@ -19,8 +19,8 @@ Current locked counts:
 - Google actions: 96
 - Read actions: 50
 - Approval actions: 46
-- Live input supported approval actions: 9
-- Prepare/open-only approval actions: 37
+- Live input supported approval actions: 46
+- Prepare/open-only approval actions: 0
 - Production final execution blocked: 46
 - Host normalization warnings: 0
 - Live logic surfaces: 50
@@ -200,7 +200,8 @@ Do not split all Google modules in one change.
   app-attachable tab logic; deeper file movement must preserve the locked counts.
 - Approval actions are contract-gated, but not all have final production API
   execution adapters.
-- Current undeveloped-work baseline: 37 approval actions are prepare/open-only,
-  9 approval actions support live input with `--no-final-submit`, and all 46
-  approval actions remain blocked from agent final execution until a separate
-  production adapter is explicitly approved.
+- Current undeveloped-work baseline: 0 approval actions are prepare/open-only,
+  all 46 approval actions support either a surface-specific or generic live
+  input handoff with `--no-final-submit`, and all 46 approval actions remain
+  blocked from agent final execution until a separate production adapter is
+  explicitly approved.

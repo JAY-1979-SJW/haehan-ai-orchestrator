@@ -17,6 +17,9 @@ LATEST_LIVE_INPUT_MANIFEST = ROOT / "data" / "google_live_input_manifest_latest.
 LIVE_INPUT_COVERAGE_DIR = ROOT / "data" / "google_live_input_coverage"
 LATEST_LIVE_INPUT_COVERAGE = ROOT / "data" / "google_live_input_coverage_latest.json"
 LIVE_INPUT_ADAPTERS = {
+    action.key: "safe_generic_input_handoff" for action in workflows.WRITE_ACTIONS
+}
+LIVE_INPUT_ADAPTERS.update({
     "gmail_send_email": "safe_pre_final_input",
     "cloud_iam_change_role": "safe_pre_final_input",
     "search_console_submit_indexing": "safe_pre_final_input",
@@ -26,7 +29,7 @@ LIVE_INPUT_ADAPTERS = {
     "ai_studio_create_api_key": "safe_handoff_no_create",
     "cloud_create_api_credential": "safe_handoff_no_create",
     "play_console_prepare_release": "safe_handoff_no_release",
-}
+})
 FINAL_CONTROL_LABELS = (
     "Send",
     "보내기",
@@ -296,6 +299,8 @@ def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) ->
         _fill_cloud_api_credential(page, action, values, result)
     elif key == "play_console_prepare_release":
         _fill_play_console_release_handoff(page, action, values, result)
+    elif key in LIVE_INPUT_ADAPTERS:
+        _fill_generic_input_handoff(page, action, values, result)
     else:
         _open_only(page, action, values, result)
 
@@ -390,10 +395,7 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
                 ], str(value), field, result)
             result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
         else:
-            for field, value in values.items():
-                if value:
-                    result["skipped_fields"].append(field)
-            result["status"] = "opened_only_no_adapter"
+            _cdp_fill_generic_input_handoff(session, action, values, result)
         result["final_control_policy"] = {
             "mode": "no_final_submit",
             "blocked_labels": list(FINAL_CONTROL_LABELS),
@@ -416,6 +418,37 @@ def _needs_direct_cdp_retry(action: dict, result: dict) -> bool:
         and "video_path" not in result.get("filled_fields", [])
         and "video_path" in result.get("skipped_fields", [])
     )
+
+
+def _safe_to_generic_fill(field: str, value: str) -> bool:
+    if not value or value == "[redacted]":
+        return False
+    lowered = field.lower()
+    blocked_markers = ("password", "token", "secret", "cookie", "key")
+    file_markers = ("path", "file", "artifact", "media", "video", "photo")
+    return not any(marker in lowered for marker in blocked_markers + file_markers)
+
+
+def _generic_selectors(field: str) -> list[str]:
+    token = field.replace("_", " ").replace("-", " ")
+    compact = field.replace("_", "-")
+    return [
+        f'input[name="{field}"]',
+        f'textarea[name="{field}"]',
+        f'input[id*="{field}"]',
+        f'textarea[id*="{field}"]',
+        f'input[id*="{compact}"]',
+        f'textarea[id*="{compact}"]',
+        f'input[aria-label*="{token}" i]',
+        f'textarea[aria-label*="{token}" i]',
+        f'input[placeholder*="{token}" i]',
+        f'textarea[placeholder*="{token}" i]',
+        'input[type="search"]',
+        'input[type="url"]',
+        'input[type="email"]',
+        'input[type="text"]',
+        "textarea",
+    ]
 
 
 def _cdp_fill_first(
@@ -497,6 +530,26 @@ def _cdp_click_text(session: Any, labels: list[str], result: dict, field: str) -
         return True
     result["warnings"].append(f"button not found by CDP: {field}")
     return False
+
+
+def _cdp_fill_generic_input_handoff(session: Any, action: dict, values: dict, result: dict) -> None:
+    result["adapter_mode"] = "safe_generic_input_handoff"
+    for field in action.get("required_inputs", []):
+        value = str(values.get(field, ""))
+        if not _safe_to_generic_fill(field, value):
+            result["skipped_fields"].append(field)
+            continue
+        _cdp_fill_first(session, _generic_selectors(field), value, field, result)
+    for field, value in values.items():
+        if field in action.get("required_inputs", []):
+            continue
+        value = str(value)
+        if not _safe_to_generic_fill(field, value):
+            continue
+        _cdp_fill_first(session, _generic_selectors(field), value, field, result)
+    result["warnings"].append(
+        "Generic CDP handoff adapter ran with no final submit; final state-changing controls were not clicked."
+    )
 
 
 def _cdp_detect_file_input(session: Any, file_path: str, field: str, result: dict) -> bool:
@@ -1003,6 +1056,29 @@ def _fill_play_console_release_handoff(page: Any, action: dict, values: dict, re
             result["skipped_fields"].append(field)
     result["warnings"].append(
         "Play Console app lookup only; release upload/review/rollout controls were not clicked."
+    )
+
+
+def _fill_generic_input_handoff(page: Any, action: dict, values: dict, result: dict) -> None:
+    page.goto(action["target_url"], timeout=45000, wait_until="domcontentloaded")
+    page.wait_for_timeout(3000)
+    result["adapter_mode"] = "safe_generic_input_handoff"
+    for field in action.get("required_inputs", []):
+        value = str(values.get(field, ""))
+        if not _safe_to_generic_fill(field, value):
+            result["skipped_fields"].append(field)
+            continue
+        _fill_first(page, _generic_selectors(field), value, field, result)
+    for field, value in values.items():
+        if field in action.get("required_inputs", []):
+            continue
+        value = str(value)
+        if not _safe_to_generic_fill(field, value):
+            continue
+        _fill_first(page, _generic_selectors(field), value, field, result)
+    result["warnings"].append(
+        "Generic Google handoff adapter ran with no final submit; file, secret, publish, deploy, send, save, grant, "
+        "or create controls were not clicked."
     )
 
 
