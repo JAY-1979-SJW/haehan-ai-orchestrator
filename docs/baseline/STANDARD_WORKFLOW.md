@@ -4,7 +4,7 @@ Status: LOCKED
 Baseline ID: HAEHAN-STANDARD-WORKFLOW-01
 Approved by: user approval in current Codex session
 Baseline HEAD: 796ebc2e22b0c7f536fa606ddec83c582aee6448
-Last updated: 2026-05-24
+Last updated: 2026-05-26
 
 ## 1. Purpose
 
@@ -21,6 +21,7 @@ Every non-trivial task follows this flow:
 ```text
 task request
 -> baseline and scope check
+-> work overview and approval mode summary
 -> working standard confirmation
 -> user approval when the scope changes governance, deploy, build, push, or live runtime
 -> implementation inside the approved scope
@@ -29,6 +30,38 @@ task request
 -> standard report
 -> commit only when requested or when the approved task includes commit
 ```
+
+## 2.1 Work Overview And Final-Approval-Only Rule
+
+For non-trivial tasks, the worker should start by giving the user a concise
+work overview before implementation. The overview must cover:
+
+```text
+goal
+target app or repository
+server-first baseline impact
+major work steps
+expected verification
+state-changing or final-approval-only actions
+commit, push, deploy, or live-runtime boundary
+```
+
+Once the user approves that overview, the worker proceeds inside the approved
+scope without repeatedly asking "how should I proceed?" for intermediate
+implementation choices. The default operating mode is:
+
+```text
+one overview approval
+-> autonomous preparation, implementation, validation, and reporting
+-> stop only for blockers, scope changes, secrets, live runtime, deploy, push,
+   or final state-changing approval
+-> user performs the final approval action only
+```
+
+This rule does not authorize hidden state changes. Create, Save, Submit,
+Consent, Publish, Delete, payment, permission grant, deploy, restart, secret
+entry, and other state-changing actions remain final user approval points unless
+the user has separately approved that exact execution stage.
 
 ## 3. Required Pre-Work Check
 

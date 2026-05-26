@@ -15,6 +15,17 @@ def test_standard_workflow_is_locked():
     assert "docs/templates/STANDARD_REPORT_TEMPLATE.md" in text
 
 
+def test_standard_workflow_defines_overview_then_final_approval_only():
+    text = audit.WORKFLOW.read_text(encoding="utf-8")
+
+    assert "Work Overview And Final-Approval-Only Rule" in text
+    assert "work overview before implementation" in text
+    assert "one overview approval" in text
+    assert "without repeatedly asking" in text
+    assert "user performs the final approval action only" in text
+    assert "Create, Save, Submit" in text
+
+
 def test_standard_report_template_requires_learning_explanation():
     text = audit.REPORT_TEMPLATE.read_text(encoding="utf-8")
 

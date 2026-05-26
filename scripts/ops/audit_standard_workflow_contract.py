@@ -20,6 +20,10 @@ CONNECTION_INVENTORY = ROOT / "docs" / "inventory" / "CONNECTION_INVENTORY.md"
 REQUIRED_WORKFLOW_PHRASES = (
     "Status: LOCKED",
     "Baseline ID: HAEHAN-STANDARD-WORKFLOW-01",
+    "Work Overview And Final-Approval-Only Rule",
+    "work overview before implementation",
+    "one overview approval",
+    "user performs the final approval action only",
     "goal",
     "scope",
     "allowed files",
