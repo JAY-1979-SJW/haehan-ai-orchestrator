@@ -119,8 +119,33 @@ def _oauth_token(explicit: str | None = None, token_file: str | Path | None = No
             parsed = json.loads(raw)
         except json.JSONDecodeError:
             return ""
-        return str(parsed.get("access_token") or "")
+        refreshed = _refresh_oauth_token(parsed)
+        if refreshed:
+            return refreshed
+        return str(parsed.get("access_token") or parsed.get("token") or "")
     return raw
+
+
+def _refresh_oauth_token(parsed: dict[str, Any]) -> str:
+    refresh_token = str(parsed.get("refresh_token") or "")
+    client_id = str(parsed.get("client_id") or "")
+    client_secret = str(parsed.get("client_secret") or "")
+    token_uri = str(parsed.get("token_uri") or "https://oauth2.googleapis.com/token")
+    if not refresh_token or not client_id or not client_secret:
+        return ""
+    encoded = urllib.parse.urlencode({
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }).encode("utf-8")
+    request = urllib.request.Request(token_uri, data=encoded, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception:
+        return ""
+    return str(payload.get("access_token") or "")
 
 
 def parse_kv_args(args: list[str]) -> dict[str, str]:
