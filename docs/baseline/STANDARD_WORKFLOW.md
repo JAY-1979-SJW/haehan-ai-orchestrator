@@ -248,6 +248,44 @@ The work record must be linked from the final task report when a report is
 required. For trivial tasks, the final assistant response may serve as the work
 record if it contains the safe summary, verification, and residual risk.
 
+For non-trivial operational work, the durable work record is:
+
+```text
+data/runtime/ai_work_record_latest.json
+data/runtime/ai_work_record_history.jsonl
+```
+
+The standard helper is:
+
+```text
+python scripts/ops/ai_work_record.py start ...
+python scripts/ops/ai_work_record.py append ...
+python scripts/ops/ai_work_record.py complete ...
+python scripts/ops/work_approval_watch.py --require-work-record ...
+```
+
+Before a new AI session continues operational work, it must inspect the latest
+work record and use `resume_next_step` as the starting point unless a newer
+user instruction changes the scope.
+
+Parallel work in the same repository must use a named lane. Each lane records:
+
+```text
+lane
+approved_scopes
+forbidden_scopes
+resume_next_step
+```
+
+Lane-specific commits may use:
+
+```text
+python scripts/ops/work_approval_watch.py --once --changed-source staged --lane <lane> ...
+```
+
+Full worktree checking remains mandatory before deploy, runtime replacement,
+server pull, container build, service restart, or operational closeout.
+
 The work record must not contain raw secrets, raw credentials, raw cookies,
 raw tokens, approval tokens, raw auth headers, raw user files, raw page
 content, full screenshots, full browser traces, or unrelated third-party
