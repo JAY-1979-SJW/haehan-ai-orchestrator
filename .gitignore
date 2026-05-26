@@ -1,6 +1,7 @@
 # 환경변수 및 민감 정보
 .env
 .env.local
+docker-compose.override.yml
 *.pem
 *.key
 secrets/
