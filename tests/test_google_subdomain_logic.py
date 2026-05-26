@@ -13,6 +13,8 @@ def test_google_subdomain_logic_catalog_groups_surfaces_and_actions_by_host() ->
     assert catalog["auto_login"] is False
     assert catalog["credential_replay_allowed"] is False
     assert catalog["same_profile_subdomain_navigation"] is True
+    assert catalog["browser_runtime"] == "managed_local_agent_cdp_profile"
+    assert catalog["default_browser_allowed"] is False
     assert [step["stage"] for step in sequence] == [
         "google_home",
         "account_state",

@@ -140,6 +140,8 @@ def build_google_subdomain_logic_catalog() -> dict[str, Any]:
         "auto_login": False,
         "credential_replay_allowed": False,
         "same_profile_subdomain_navigation": True,
+        "browser_runtime": "managed_local_agent_cdp_profile",
+        "default_browser_allowed": False,
         "connection_sequence_lock": list(GOOGLE_CONNECTION_SEQUENCE),
         "subdomain_count": len(subdomains),
         "subdomains": subdomains,

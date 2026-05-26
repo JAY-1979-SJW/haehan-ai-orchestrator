@@ -45,6 +45,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_google_ai_usage_labels.py" in rendered
     assert "tests/test_google_android_app_dev.py" in rendered
     assert "tests/test_google_domain_taxonomy.py" in rendered
+    assert "tests/test_google_managed_console.py" in rendered
     assert "tests/test_google_youtube_upload.py" in rendered
     assert "tests/test_google_precision_report.py" in rendered
     assert "tests/test_site_sso_subdomain_runtime.py" in rendered
@@ -76,6 +77,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/google/android_app_dev_labels.py" in rendered
     assert "scripts/google/android_app_dev_report.py" in rendered
     assert "scripts/google/domain_taxonomy.py" in rendered
+    assert "scripts/google/managed_console.py" in rendered
     assert "scripts/google/precision_report.py" in rendered
     assert "scripts/google/subdomain_logic.py" in rendered
     assert "scripts/google/tab_logic.py" in rendered

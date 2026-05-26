@@ -17,6 +17,7 @@ from . import (
     tab_logic,
     workflows,
     youtube_upload,
+    managed_console,
 )
 from .base import check_session
 from .cloud import live_console_explorer
@@ -94,6 +95,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             workspace_router.run_workspace("calendar", sub or "today", args)
         case "cloud":
             _cmd_cloud(sub or "summary", args)
+        case "console":
+            _cmd_console(sub or "summary", args)
         case "docs":
             gate_check("goto")
             workspace_router.run_workspace("docs", sub or "recent", args)
@@ -304,6 +307,21 @@ def _cmd_cloud(sub: str, args: list[str]) -> None:
         print(json.dumps(catalog, ensure_ascii=False, indent=2, default=str))
         return
     print(f"  [error] unknown cloud task: {sub}")
+
+
+def _cmd_console(sub: str, args: list[str]) -> None:
+    dry_run = "--dry-run" in args
+    if sub in ("youtube-oauth-plan", "youtube-oauth-preapproval", "plan"):
+        print(json.dumps(managed_console.build_youtube_oauth_console_open_plan(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("youtube-oauth-open", "open-youtube-oauth", "open"):
+        result = managed_console.open_youtube_oauth_console_managed(dry_run=dry_run)
+        print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("summary", "catalog"):
+        print(json.dumps({"commands": ["youtube-oauth-plan", "youtube-oauth-open --dry-run", "youtube-oauth-open"]}, ensure_ascii=False, indent=2))
+        return
+    print(f"  [error] unknown console task: {sub}")
 
 
 def _cmd_ai(sub: str, args: list[str]) -> None:

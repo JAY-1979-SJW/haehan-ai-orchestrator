@@ -36,6 +36,10 @@ ALIAS: dict[str, str] = {
     "blog":       "https://blog.naver.com/",
     # 구글
     "google":     "https://www.google.com/",
+    "google-account": "https://myaccount.google.com/",
+    "google-console": "https://console.cloud.google.com/",
+    "google-credentials": "https://console.cloud.google.com/apis/credentials",
+    "google-oauth-credentials": "https://console.cloud.google.com/apis/credentials",
     "gmail":      "https://mail.google.com/",
     "calendar":   "https://calendar.google.com/",
     "drive":      "https://drive.google.com/",
