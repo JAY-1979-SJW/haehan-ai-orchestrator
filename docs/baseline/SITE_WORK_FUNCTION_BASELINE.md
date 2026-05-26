@@ -141,7 +141,7 @@ then implemented through a router, gate, test, and audit.
 | Research Search | search videos and collect public metadata | read | official YouTube Data API only |
 | Video Info | collect title, description, channel, date, stats, caption hint | read | official YouTube Data API only |
 | Comments | collect public top-level comments | read | official YouTube Data API only |
-| Transcript Plan | decide compliant transcript collection path | read/prepare | user-provided or owner/OAuth captions only |
+| Transcript Plan | decide compliant transcript collection path | read/prepare | server Web OAuth or user-provided captions only |
 | Transcript Analysis | analyze user-provided transcript/caption file | read/prepare | local extractive analysis |
 | Context Report | analyze video metadata, comments, and optional transcript | read/prepare | local extractive analysis |
 | Strategy Scorecard | apply reference video/comment/transcript signals to my production and management scores | read/prepare | local scoring model |

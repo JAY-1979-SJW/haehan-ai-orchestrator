@@ -4,7 +4,7 @@ Status: LOCKED
 Baseline ID: GOOGLE-AUTOMATION-BASELINE-01
 Approved by: user approval in current Codex session
 Baseline HEAD: c2307e8ffe9d38d6842a542c7be68efe5f234b09
-Last updated: 2026-05-25
+Last updated: 2026-05-26
 
 ## 1. Purpose
 
@@ -87,8 +87,12 @@ Runtime rules:
 - If Playwright cannot attach because of Windows permission errors, record
   `PLAYWRIGHT_PROCESS_PERMISSION_DENIED` and use the direct Chrome DevTools HTTP
   API only for read-only tab open/status checks.
-- OAuth helper URLs must use a registered redirect URI. For local CLI approval,
-  prefer loopback redirect `http://127.0.0.1:8765/oauth2callback`; OOB redirect
+- OAuth helper URLs must use a registered redirect URI. The final YouTube
+  captions OAuth baseline is server-first: Google Console must register the
+  web callback `https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback`
+  and the server must keep client JSON and authorized-user token files outside
+  Git. Local loopback redirect `http://127.0.0.1:8765/oauth2callback` is a
+  development fallback only, not the final operating baseline. OOB redirect
   `urn:ietf:wg:oauth:2.0:oob` is not the runtime baseline.
 - Do not proceed from Google Home to OAuth unless the target subdomain is
   registered and the operation remains read-only or approval-gated.
@@ -96,9 +100,11 @@ Runtime rules:
   YouTube-only workaround. Other Google services must not use the older direct
   OAuth-entry pattern.
 - A web-app OAuth client must be used only with its registered web callback
-  URI and declared scopes. Local Google API work such as YouTube caption read
-  should use a Desktop app OAuth client JSON unless the web client explicitly
-  registers a matching local redirect URI and scope.
+  URI and declared scopes. For YouTube caption read/list/download, the locked
+  final target is the server web OAuth client and scope
+  `https://www.googleapis.com/auth/youtube.force-ssl`. Desktop app OAuth JSON
+  may be used only for isolated local development checks and must not be
+  presented as the final server result.
 - For Google Console setup screens, the agent may enter non-secret setup values
   such as application type, client name, and redirect URI when CDP can inspect
   the page. The final Create/Save action remains user-direct. If CDP cannot

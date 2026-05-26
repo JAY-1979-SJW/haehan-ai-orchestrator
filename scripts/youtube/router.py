@@ -133,6 +133,21 @@ def _cmd_upload(sub: str, args: list[str]) -> None:
 
 def _cmd_oauth(sub: str, args: list[str]) -> None:
     values = oauth.parse_kv_args(args)
+    if sub in ("server-preapproval", "server-approval", "caption-server-preapproval"):
+        result, path = oauth.build_server_preapproval(values)
+        print("=" * 60)
+        print("YouTube server OAuth preapproval")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"project: {result['google_cloud_inputs']['project']}")
+        print(f"application_type: {result['google_cloud_inputs']['application_type']}")
+        print(f"client_name: {result['google_cloud_inputs']['client_name']}")
+        print(f"redirect_uri: {result['google_cloud_inputs']['authorized_redirect_uri']}")
+        print(f"scope: {result['google_cloud_inputs']['scope']}")
+        print(f"client_json_path: {result['server_secret_placement']['client_json_path']}")
+        print(f"token_file_path: {result['server_secret_placement']['token_file_path']}")
+        print(f"saved: {path}")
+        return
     if sub in ("start", "url", "authorize", "auth-url"):
         result, path = oauth.build_auth_plan(values)
         print("=" * 60)
