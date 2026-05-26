@@ -15,6 +15,8 @@ from typing import Any
 
 from security_utils import safe_preview
 
+from scripts.cdp_session_selector import select_cdp_session
+
 from .research import parse_youtube_video_id
 
 
@@ -172,12 +174,53 @@ def summarize_visible_segments(
     }
 
 
+def _parse_ports(value: str | None) -> list[int] | None:
+    if not value:
+        return None
+    ports: list[int] = []
+    for item in value.replace(";", ",").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        try:
+            port = int(item)
+        except ValueError:
+            continue
+        if 1 <= port <= 65535 and port not in ports:
+            ports.append(port)
+    return ports or None
+
+
+def _open_page_with_selected_cdp(selection: dict[str, Any], url: str, video_id: str, *, open_existing: bool):
+    from playwright.sync_api import sync_playwright
+
+    port = int(selection["selected_cdp_port"])
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+    if not browser.contexts:
+        browser.close()
+        playwright.stop()
+        raise RuntimeError("selected CDP session has no browser context")
+    context = browser.contexts[0]
+    page = None
+    if open_existing:
+        for item in reversed(context.pages):
+            if video_id in (item.url or "") or "youtube.com" in (item.url or ""):
+                page = item
+                break
+    if page is None:
+        page = context.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    return playwright, browser, page
+
+
 def collect_visible_transcript_summary(
     url_or_video_id: str,
     *,
     max_segments: int = 160,
     wait_seconds: float = 4.0,
     open_transcript: bool = True,
+    cdp_ports: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     """Open a YouTube URL in the local user browser and summarize visible transcript text."""
     video_id = parse_youtube_video_id(url_or_video_id)
@@ -188,11 +231,33 @@ def collect_visible_transcript_summary(
         return payload, _write_report(payload)
 
     url = f"https://www.youtube.com/watch?v={video_id}"
-    try:
-        from scripts.web_connector import open_page
+    cdp_selection = select_cdp_session(
+        target_domains=["youtube.com", "youtu.be"],
+        avoid_domains=["naver.com"],
+        ports=_parse_ports(cdp_ports),
+    )
+    if not cdp_selection.get("ok"):
+        payload = summarize_visible_segments([], video_id=video_id, url=url)
+        payload.update(
+            {
+                "status": "blocked",
+                "ok": False,
+                "reason": cdp_selection.get("reason") or "cdp_session_selection_failed",
+                "cdp_selection": cdp_selection,
+                "next_step": cdp_selection.get("next_step") or "Open a clean CDP browser session, then retry.",
+            }
+        )
+        return payload, _write_report(payload)
 
-        page = open_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    playwright = None
+    browser = None
+    try:
+        playwright, browser, page = _open_page_with_selected_cdp(
+            cdp_selection,
+            url,
+            video_id,
+            open_existing=not open_transcript,
+        )
         page.wait_for_timeout(int(max(0.5, wait_seconds) * 1000))
         open_result: dict[str, Any] = {"clicked": False, "label": ""}
         if open_transcript:
@@ -211,12 +276,25 @@ def collect_visible_transcript_summary(
                 "reason": "browser_visible_transcript_executor_unavailable",
                 "error_type": type(exc).__name__,
                 "error_summary": safe_preview(str(exc), limit=240),
-                "next_step": "Start local CDP Chrome, open the video, show the transcript panel, then rerun this executor.",
+                "cdp_selection": cdp_selection,
+                "next_step": "Open a clean local CDP Chrome, show the video transcript panel if needed, then rerun this executor.",
             }
         )
         return payload, _write_report(payload)
+    finally:
+        try:
+            if browser is not None:
+                browser.close()
+        except Exception:
+            pass
+        try:
+            if playwright is not None:
+                playwright.stop()
+        except Exception:
+            pass
 
     payload = summarize_visible_segments(list(segments)[:max_segments], video_id=video_id, url=url)
+    payload["cdp_selection"] = cdp_selection
     payload["browser_action"] = {
         "opened_video_url": True,
         "open_transcript_attempted": open_transcript,
