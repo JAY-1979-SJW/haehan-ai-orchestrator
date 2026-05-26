@@ -1,7 +1,7 @@
 """YouTube recording/upload router."""
 from __future__ import annotations
 
-from . import recording, research, uploader
+from . import oauth, recording, research, uploader
 from .gates import gate_youtube_upload_plan, gate_youtube_publish_plan  # noqa: F401
 from .profile import YOUTUBE_PROFILE  # noqa: F401
 from .validators import validate_youtube_no_plain_secret  # noqa: F401
@@ -13,10 +13,14 @@ __status__ = {
         "upload prepare": "done",
         "upload execute": "approval_gated",
         "upload verify": "done",
+        "oauth start": "done_user_approval_url",
+        "oauth exchange": "done_user_code_exchange",
         "research search": "done_official_api",
         "research video-info": "done_official_api",
         "research comments": "done_official_api",
         "research transcript-plan": "done_policy_gated",
+        "research caption-list": "done_official_oauth",
+        "research caption-download": "done_official_oauth",
         "research analyze": "done_user_transcript",
         "research context-report": "done_metadata_comments_transcript",
         "research scorecard": "done_strategy_scoring",
@@ -33,6 +37,8 @@ def run_youtube(task: str, sub: str, args: list[str]) -> None:
             _cmd_record(sub or "prepare", args)
         case "upload":
             _cmd_upload(sub or "prepare", args)
+        case "oauth" | "auth":
+            _cmd_oauth(sub or "start", args)
         case "research" | "analyze":
             _cmd_research(sub or "search", args)
         case "status":
@@ -125,6 +131,37 @@ def _cmd_upload(sub: str, args: list[str]) -> None:
     print(f"  [error] unknown youtube upload task: {sub}")
 
 
+def _cmd_oauth(sub: str, args: list[str]) -> None:
+    values = oauth.parse_kv_args(args)
+    if sub in ("start", "url", "authorize", "auth-url"):
+        result, path = oauth.build_auth_plan(values)
+        print("=" * 60)
+        print("YouTube OAuth authorization")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"redirect_uri: {result.get('redirect_uri') or '-'}")
+        print(f"scope: {result.get('scope') or '-'}")
+        print(f"saved: {path}")
+        if result["status"] == "ready_for_user_approval":
+            print("auth_url:")
+            print(result["auth_url"])
+            print("exchange: python scripts\\cdp_client.py youtube oauth exchange code=<returned_code> client_file=<client_secret.json>")
+        return
+    if sub in ("exchange", "token"):
+        result, path = oauth.exchange_code(values)
+        print("=" * 60)
+        print("YouTube OAuth token exchange")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"refresh_token_present: {result.get('refresh_token_present', False)}")
+        print(f"token_file: {result.get('token_file') or '-'}")
+        print(f"saved: {path}")
+        return
+    print(f"  [error] unknown youtube oauth task: {sub}")
+
+
 def _confirm_arg(args: list[str]) -> str:
     for arg in args:
         if arg.startswith("--confirm="):
@@ -167,6 +204,54 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print("allowed: user transcript file, owner/OAuth caption file, manually exported caption file")
         print("blocked: unofficial caption scraping")
         print(f"saved: {path}")
+        return
+    if sub in ("caption-list", "captions", "caption-tracks"):
+        video_id = values.get("video_id") or values.get("id") or (args[0] if args and "=" not in args[0] else "")
+        if not video_id:
+            print("  [error] usage: youtube research caption-list video_id=... [token_file=...]")
+            return
+        result, path = research.list_captions(
+            video_id,
+            token_file=values.get("token_file") or values.get("token"),
+        )
+        print("=" * 60)
+        print("YouTube caption list")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"caption_count: {result.get('caption_count', 0)}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"saved: {path}")
+        for item in result.get("captions", [])[:10]:
+            print(f"- {item['caption_id']} | {item.get('language') or '-'} | {item.get('name') or '-'}")
+        return
+    if sub in ("caption-download", "download-caption"):
+        caption_id = values.get("caption_id") or values.get("id") or (args[0] if args and "=" not in args[0] else "")
+        if not caption_id:
+            print("  [error] usage: youtube research caption-download caption_id=... [tfmt=srt] [token_file=...] [analyze=1]")
+            return
+        result, path = research.download_caption(
+            caption_id,
+            tfmt=values.get("tfmt", "srt"),
+            token_file=values.get("token_file") or values.get("token"),
+            output=values.get("output") or None,
+        )
+        print("=" * 60)
+        print("YouTube caption download")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"caption_id: {result.get('caption_id') or '-'}")
+        print(f"transcript_path: {result.get('transcript_path') or '-'}")
+        print(f"characters: {result.get('character_count', 0)}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"saved: {path}")
+        if result.get("status") == "ok" and values.get("analyze") in {"1", "true", "yes"}:
+            analysis, analysis_path = research.analyze_transcript(
+                result["transcript_path"],
+                video_id=values.get("video_id", ""),
+                title=values.get("title", ""),
+            )
+            print(f"analysis_status: {analysis['status']}")
+            print(f"analysis_saved: {analysis_path}")
         return
     if sub in ("video-info", "info", "metadata"):
         video_id = values.get("video_id") or values.get("id") or (args[0] if args and "=" not in args[0] else "")

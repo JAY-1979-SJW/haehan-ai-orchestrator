@@ -1,0 +1,116 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from scripts.youtube import oauth
+
+
+def test_auth_plan_blocks_without_client(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_OAUTH_CLIENT_ID", raising=False)
+    monkeypatch.delenv("YOUTUBE_OAUTH_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("GOOGLE_OAUTH_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("YOUTUBE_CLIENT_SECRETS_FILE", raising=False)
+
+    result, path = oauth.build_auth_plan({})
+
+    assert path.exists()
+    assert result["status"] == "blocked"
+    assert result["reason"] == "oauth_client_id_or_secret_required"
+    assert result["client_secret_output"] == "redacted"
+
+
+def test_auth_plan_uses_client_file_without_secret_output(tmp_path: Path):
+    client_file = tmp_path / "client_secret.json"
+    client_file.write_text(
+        json.dumps({"installed": {"client_id": "client-id.apps.googleusercontent.com", "client_secret": "super-secret"}}),
+        encoding="utf-8",
+    )
+
+    result, _path = oauth.build_auth_plan({"client_file": str(client_file), "scope": "readonly upload"})
+
+    assert result["status"] == "ready_for_user_approval"
+    assert "https://accounts.google.com/o/oauth2/v2/auth?" in result["auth_url"]
+    assert "127.0.0.1%3A8765%2Foauth2callback" in result["auth_url"]
+    assert "youtube.readonly" in result["auth_url"]
+    assert "youtube.upload" in result["auth_url"]
+    assert "super-secret" not in str(result)
+
+
+def test_auth_plan_prefers_desktop_client_redirect_uri(tmp_path: Path):
+    client_file = tmp_path / "client_secret.json"
+    client_file.write_text(
+        json.dumps(
+            {
+                "installed": {
+                    "client_id": "client-id.apps.googleusercontent.com",
+                    "client_secret": "super-secret",
+                    "redirect_uris": ["http://localhost"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result, _path = oauth.build_auth_plan({"client_file": str(client_file), "scope": "readonly"})
+
+    assert result["status"] == "ready_for_user_approval"
+    assert result["redirect_uri"] == "http://localhost"
+    assert "redirect_uri=http%3A%2F%2Flocalhost" in result["auth_url"]
+
+
+def test_exchange_code_writes_authorized_user_token(monkeypatch, tmp_path: Path):
+    client_file = tmp_path / "client_secret.json"
+    token_file = tmp_path / "token.json"
+    client_file.write_text(
+        json.dumps(
+            {
+                "installed": {
+                    "client_id": "client-id.apps.googleusercontent.com",
+                    "client_secret": "super-secret",
+                    "redirect_uris": ["http://localhost"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def fake_post_form(url, data):
+        assert url == oauth.TOKEN_URL
+        assert data["grant_type"] == "authorization_code"
+        assert data["redirect_uri"] == "http://localhost"
+        return {
+            "access_token": "access-secret",
+            "refresh_token": "refresh-secret",
+            "expires_in": 3600,
+            "scope": oauth.YOUTUBE_SCOPES["readonly"],
+        }
+
+    monkeypatch.setattr(oauth, "_post_form", fake_post_form)
+
+    result, _path = oauth.exchange_code(
+        {"code": "user-code", "client_file": str(client_file), "output": str(token_file)}
+    )
+
+    assert result["status"] == "ok"
+    assert result["refresh_token_present"] is True
+    assert result["token_output"] == "redacted"
+    assert "access-secret" not in str(result)
+    saved = json.loads(token_file.read_text(encoding="utf-8"))
+    assert saved["token"] == "access-secret"
+    assert saved["refresh_token"] == "refresh-secret"
+    assert saved["client_secret"] == "super-secret"
+
+
+def test_exchange_blocks_without_code(tmp_path: Path):
+    client_file = tmp_path / "client_secret.json"
+    client_file.write_text(
+        json.dumps({"installed": {"client_id": "client-id.apps.googleusercontent.com", "client_secret": "super-secret"}}),
+        encoding="utf-8",
+    )
+
+    result, _path = oauth.exchange_code({"client_file": str(client_file)})
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "authorization_code_required"

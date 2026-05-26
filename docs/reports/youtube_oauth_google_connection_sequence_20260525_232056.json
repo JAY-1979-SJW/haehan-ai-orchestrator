@@ -1,0 +1,17 @@
+﻿{
+    "schema_version":  1,
+    "created_at":  "2026-05-25T14:20:56Z",
+    "workflow":  "youtube_oauth_google_connection_sequence",
+    "status":  "oauth_error_after_ordered_connection",
+    "sequence":  [
+                     "https://www.google.com/",
+                     "https://myaccount.google.com/",
+                     "https://www.youtube.com/",
+                     "accounts.google.com OAuth approval URL"
+                 ],
+    "error_code":  "GOOGLE_OAUTH_OOB_REDIRECT_REJECTED_OR_UNSUPPORTED",
+    "message":  "Google OAuth error page was reached after the locked ordered connection sequence. The previous OOB redirect URI is not suitable for this runtime.",
+    "corrective_action":  "Switch OAuth helper from OOB redirect to local loopback callback or use a registered web redirect URI.",
+    "state_change":  false,
+    "secret_values_read":  false
+}

@@ -1,0 +1,18 @@
+﻿{
+    "schema_version":  1,
+    "created_at":  "2026-05-25T14:24:46Z",
+    "workflow":  "youtube_oauth_google_connection_sequence",
+    "status":  "blocked_by_google_oauth_client_redirect",
+    "sequence_verified":  [
+                              "google_home",
+                              "myaccount",
+                              "youtube",
+                              "oauth_url"
+                          ],
+    "error_code":  "GOOGLE_OAUTH_REDIRECT_URI_NOT_ACCEPTED",
+    "message":  "The ordered Google connection sequence was followed, but Google returned an OAuth error page for the current client redirect URI.",
+    "likely_cause":  "Existing Google OAuth client is a web-app/NextAuth client or does not include the local loopback redirect URI required for CLI token exchange.",
+    "corrective_action":  "Use a Desktop OAuth client JSON, or add a local loopback redirect URI to a compatible OAuth client before token exchange.",
+    "state_change":  false,
+    "secret_values_read":  false
+}

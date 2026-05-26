@@ -25,10 +25,14 @@ REPORT_DIR = ROOT / "data" / "youtube_research_reports"
 LATEST_SEARCH = ROOT / "data" / "youtube_research_search_latest.json"
 LATEST_TRANSCRIPT_PLAN = ROOT / "data" / "youtube_transcript_plan_latest.json"
 LATEST_ANALYSIS = ROOT / "data" / "youtube_transcript_analysis_latest.json"
+LATEST_CAPTION_LIST = ROOT / "data" / "youtube_caption_list_latest.json"
+LATEST_CAPTION_DOWNLOAD = ROOT / "data" / "youtube_caption_download_latest.json"
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_COMMENT_THREADS_URL = "https://www.googleapis.com/youtube/v3/commentThreads"
+YOUTUBE_CAPTIONS_URL = "https://www.googleapis.com/youtube/v3/captions"
+CAPTION_DOWNLOAD_FORMATS = {"srt", "vtt", "ttml"}
 TRANSCRIPT_SOURCE_POLICY = {
     "allowed": [
         "user_provided_transcript_file",
@@ -89,6 +93,36 @@ def _api_key(explicit: str | None = None) -> str:
     return explicit or os.environ.get("YOUTUBE_API_KEY", "") or os.environ.get("GOOGLE_YOUTUBE_API_KEY", "")
 
 
+def _resolve_repo_path(path: str | Path) -> Path:
+    resolved = Path(path)
+    if not resolved.is_absolute():
+        resolved = ROOT / resolved
+    return resolved
+
+
+def _oauth_token(explicit: str | None = None, token_file: str | Path | None = None) -> str:
+    if explicit:
+        return explicit
+    env_token = os.environ.get("YOUTUBE_OAUTH_ACCESS_TOKEN") or os.environ.get("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN")
+    if env_token:
+        return env_token
+    if not token_file:
+        return ""
+    path = _resolve_repo_path(token_file)
+    if not path.exists():
+        return ""
+    raw = path.read_text(encoding="utf-8", errors="replace").strip()
+    if not raw:
+        return ""
+    if raw.startswith("{"):
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return ""
+        return str(parsed.get("access_token") or "")
+    return raw
+
+
 def parse_kv_args(args: list[str]) -> dict[str, str]:
     values: dict[str, str] = {}
     positional: list[str] = []
@@ -110,6 +144,26 @@ def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
     request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
     with urllib.request.urlopen(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _get_json_oauth(url: str, params: dict[str, str | int], token: str) -> dict[str, Any]:
+    query = urllib.parse.urlencode(params)
+    request = urllib.request.Request(
+        f"{url}?{query}",
+        headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _get_text_oauth(url: str, params: dict[str, str | int], token: str) -> str:
+    query = urllib.parse.urlencode(params)
+    request = urllib.request.Request(
+        f"{url}?{query}",
+        headers={"Accept": "text/plain,text/vtt,application/x-subrip,*/*", "Authorization": f"Bearer {token}"},
+    )
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return response.read().decode("utf-8", errors="replace")
 
 
 def search_videos(
@@ -692,10 +746,144 @@ def build_transcript_collection_plan(video_id: str, *, owned: bool = False) -> t
     return payload, _write_report(payload, LATEST_TRANSCRIPT_PLAN, "youtube_transcript_plan")
 
 
+def list_captions(
+    video_id: str,
+    *,
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """List authorized caption tracks through the official YouTube Data API."""
+    video_id = video_id.strip()
+    token = _oauth_token(oauth_token, token_file)
+    if not token:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_caption_list",
+            "ok": False,
+            "status": "blocked",
+            "reason": "youtube_oauth_token_required",
+            "video_id": safe_preview(video_id, limit=80),
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "next_step": "Provide an approved owner/authorized OAuth access token or a user-provided transcript file.",
+            "captions": [],
+        }
+        return payload, _write_report(payload, LATEST_CAPTION_LIST, "youtube_caption_list")
+
+    data = _get_json_oauth(
+        YOUTUBE_CAPTIONS_URL,
+        {"part": "snippet", "videoId": video_id},
+        token,
+    )
+    captions: list[dict[str, Any]] = []
+    for item in data.get("items", []):
+        snippet = item.get("snippet", {})
+        captions.append(
+            {
+                "caption_id": safe_preview(item.get("id", ""), limit=120),
+                "video_id": safe_preview(snippet.get("videoId", video_id), limit=80),
+                "language": safe_preview(snippet.get("language", ""), limit=40),
+                "name": safe_preview(snippet.get("name", ""), limit=120),
+                "track_kind": safe_preview(snippet.get("trackKind", ""), limit=80),
+                "audio_track_type": safe_preview(snippet.get("audioTrackType", ""), limit=80),
+                "status": safe_preview(snippet.get("status", ""), limit=80),
+                "is_draft": bool(snippet.get("isDraft", False)),
+                "last_updated": safe_preview(snippet.get("lastUpdated", ""), limit=80),
+            }
+        )
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_caption_list",
+        "ok": True,
+        "status": "ok",
+        "video_id": safe_preview(video_id, limit=80),
+        "state_change": False,
+        "secret_values_read": False,
+        "oauth_token_output": "redacted",
+        "source_policy": "official_youtube_captions_api_authorized_only",
+        "caption_count": len(captions),
+        "captions": captions,
+    }
+    return payload, _write_report(payload, LATEST_CAPTION_LIST, "youtube_caption_list")
+
+
+def download_caption(
+    caption_id: str,
+    *,
+    tfmt: str = "srt",
+    oauth_token: str | None = None,
+    token_file: str | Path | None = None,
+    output: str | Path | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Download an authorized caption track through the official YouTube Data API."""
+    caption_id = caption_id.strip()
+    tfmt = (tfmt or "srt").strip().lower()
+    if tfmt not in CAPTION_DOWNLOAD_FORMATS:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_caption_download",
+            "ok": False,
+            "status": "blocked",
+            "reason": "unsupported_caption_format",
+            "caption_id": safe_preview(caption_id, limit=120),
+            "requested_format": safe_preview(tfmt, limit=20),
+            "allowed_formats": sorted(CAPTION_DOWNLOAD_FORMATS),
+            "state_change": False,
+            "secret_values_read": False,
+        }
+        return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
+
+    token = _oauth_token(oauth_token, token_file)
+    if not token:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_caption_download",
+            "ok": False,
+            "status": "blocked",
+            "reason": "youtube_oauth_token_required",
+            "caption_id": safe_preview(caption_id, limit=120),
+            "requested_format": tfmt,
+            "state_change": False,
+            "secret_values_read": False,
+            "oauth_token_output": "redacted",
+            "source_policy": "official_youtube_captions_api_authorized_only",
+            "next_step": "Provide an approved owner/authorized OAuth access token or a user-provided transcript file.",
+        }
+        return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
+
+    text = _get_text_oauth(f"{YOUTUBE_CAPTIONS_URL}/{urllib.parse.quote(caption_id)}", {"tfmt": tfmt}, token)
+    sanitized = SENSITIVE_WORDS.sub("[redacted-sensitive]", text)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    transcript_path = _resolve_repo_path(output) if output else REPORT_DIR / f"youtube_caption_download_{_stamp()}.{tfmt}"
+    transcript_path.parent.mkdir(parents=True, exist_ok=True)
+    transcript_path.write_text(sanitized, encoding="utf-8")
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_caption_download",
+        "ok": True,
+        "status": "ok",
+        "caption_id": safe_preview(caption_id, limit=120),
+        "requested_format": tfmt,
+        "state_change": False,
+        "secret_values_read": False,
+        "oauth_token_output": "redacted",
+        "source_policy": "official_youtube_captions_api_authorized_only",
+        "transcript_path": str(transcript_path),
+        "character_count": len(sanitized),
+        "word_like_count": len(WORD_RE.findall(sanitized)),
+    }
+    return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
+
+
 def _read_transcript(path: str | Path) -> str:
-    transcript_path = Path(path)
-    if not transcript_path.is_absolute():
-        transcript_path = ROOT / transcript_path
+    transcript_path = _resolve_repo_path(path)
     text = transcript_path.read_text(encoding="utf-8", errors="replace")
     return SENSITIVE_WORDS.sub("[redacted-sensitive]", text)
 

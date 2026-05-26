@@ -1,0 +1,11 @@
+﻿{
+    "schema_version":  1,
+    "created_at":  "2026-05-25T14:14:24Z",
+    "workflow":  "youtube_oauth_browser_retry",
+    "status":  "retry_required",
+    "error_code":  "PLAYWRIGHT_PROCESS_PERMISSION_DENIED",
+    "message":  "CDP daemon is alive, but cdp_client.py goto failed while starting Playwright transport with WinError 5 access denied.",
+    "corrective_action":  "Use Chrome DevTools HTTP API /json/new to open OAuth URL without Playwright.",
+    "state_change":  false,
+    "secret_values_read":  false
+}

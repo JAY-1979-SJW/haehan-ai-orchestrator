@@ -31,6 +31,36 @@ LOGIN_OPERATIONS = frozenset({"login", "signin", "sign_in", "account_login"})
 CREDENTIAL_OPERATIONS = frozenset(
     {"credential", "credentials", "password", "otp", "cookie", "session_export"}
 )
+GOOGLE_CONNECTION_SEQUENCE = (
+    {
+        "step": 1,
+        "stage": "google_home",
+        "url": "https://www.google.com/",
+        "required": True,
+        "verification": "host_is_www_google_com_and_page_reachable",
+    },
+    {
+        "step": 2,
+        "stage": "account_state",
+        "url": "https://myaccount.google.com/",
+        "required": True,
+        "verification": "user_present_account_state_only_no_secret_export",
+    },
+    {
+        "step": 3,
+        "stage": "target_subdomain",
+        "url": "",
+        "required": True,
+        "verification": "registered_google_subdomain_reachable_in_same_profile",
+    },
+    {
+        "step": 4,
+        "stage": "approval_url",
+        "url": "",
+        "required": False,
+        "verification": "approval_or_oauth_url_only_after_steps_1_to_3",
+    },
+)
 
 
 def _host(value: str) -> str:
@@ -110,6 +140,7 @@ def build_google_subdomain_logic_catalog() -> dict[str, Any]:
         "auto_login": False,
         "credential_replay_allowed": False,
         "same_profile_subdomain_navigation": True,
+        "connection_sequence_lock": list(GOOGLE_CONNECTION_SEQUENCE),
         "subdomain_count": len(subdomains),
         "subdomains": subdomains,
     }
@@ -166,6 +197,7 @@ def build_google_login_entry_logic() -> dict[str, Any]:
         "auto_login": False,
         "credential_replay_allowed": False,
         "user_present_required": True,
+        "connection_sequence_lock": list(GOOGLE_CONNECTION_SEQUENCE),
         "local_agent_task": task,
     }
 
