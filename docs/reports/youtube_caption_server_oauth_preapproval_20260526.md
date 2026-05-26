@@ -36,6 +36,7 @@ be committed to Git or printed in reports.
 YOUTUBE_CLIENT_SECRETS_FILE=/run/secrets/api/youtube_oauth_client.json
 YOUTUBE_OAUTH_REDIRECT_URI=https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback
 YOUTUBE_OAUTH_TOKEN_FILE=/app/ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json
+YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED=true
 ```
 
 ## Post-Approval Commands
@@ -58,3 +59,22 @@ Google Console Create/Save action and any Google OAuth consent approval.
 
 If the server callback endpoint is not reachable from Google, stop and report
 that as a server route/deploy issue before attempting token exchange.
+
+## Server Callback
+
+The server callback route is:
+
+```text
+GET /api/v1/oauth/youtube/callback
+```
+
+The public deployment path is:
+
+```text
+https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback
+```
+
+The callback never returns raw authorization codes or OAuth tokens. When
+`YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED=true` is configured on the server, the
+callback may exchange the returned code after the user's final Google consent
+and write the authorized-user token to the configured server token file.
