@@ -22,8 +22,8 @@ from . import (
     managed_console,
     oauth_console_fill,
     vision_usage_gate,
+    router_management,
 )
-from .base import check_session
 from .cloud import live_console_explorer
 from .workspace import router as workspace_router
 from scripts.gate import check as gate_check
@@ -61,6 +61,7 @@ __status__ = {
         "work live-coverage": "done",
         "login": "done",
         "session-check": "done",
+        "check": "done",
     },
     "note": (
         "Gmail is implemented; Drive/Calendar/Docs/Sheets are partial. "
@@ -81,10 +82,13 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
 
     match task:
         case "session-check":
-            _cmd_session_check()
+            router_management.run_session_check()
+        case "check" | "module-check" | "modules":
+            router_management.run_module_check()
+        case "records" | "work-records" | "worklog":
+            router_management.run_work_records(([sub] if sub else []) + args)
         case "login":
-            gate_check("wait_login", risk="notify")
-            _cmd_login()
+            router_management.run_login()
         case "mail":
             gate_check(
                 "gmail_send" if sub in ("send", "compose") else "goto",
@@ -133,40 +137,6 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             _cmd_work(sub or "catalog", args)
         case _:
             print(f"  [error] unknown google task: {task}")
-
-
-def _cmd_session_check() -> None:
-    print("=" * 60)
-    print("Google session check")
-    print("=" * 60)
-    result = check_session()
-    if result["error"]:
-        print(f"[fail] daemon connection failed: {result['error']}")
-    elif result["logged_in"]:
-        print("[ok] logged in")
-    else:
-        print("[needs-login] run: python scripts/cdp_client.py google login")
-    print("=" * 60)
-
-
-def _cmd_login() -> None:
-    """User-present Google login helper."""
-    from scripts.google.auth import login_google
-    from scripts.web_connector import get_page
-
-    print("=" * 60)
-    print("Google login")
-    print("=" * 60)
-    page = get_page()
-    result = login_google(page, wait_for_user_s=300)
-    if result["ok"]:
-        print(f"[ok] login success: {result.get('user')} ({result.get('reason')})")
-    else:
-        print(f"[fail] login failed: {result.get('reason')}")
-        if result.get("hint"):
-            print(f"  hint: {result['hint']}")
-    print("=" * 60)
-
 
 def _cmd_surfaces(sub: str, args: list[str] | None = None) -> None:
     args = args or []

@@ -103,6 +103,20 @@ The durable history is appended to:
 data/runtime/ai_work_record_history.jsonl
 ```
 
+Domain-specific operational lanes must use lane-separated work records when
+parallel work is active. Google management work is locked to the `google` lane:
+
+```text
+data/runtime/ai_work_records/google/latest.json
+data/runtime/ai_work_records/google/history.jsonl
+python scripts/cdp_client.py google records --limit=10
+```
+
+Google module checks and Google domain boundary audits must append a checkpoint
+to that lane after each material run. A new AI session must inspect the Google
+lane latest record before changing Google modules, gates, login policy, final
+approval policy, or secret-handling policy.
+
 ## 6. Forbidden Behavior
 
 The monitor must not:

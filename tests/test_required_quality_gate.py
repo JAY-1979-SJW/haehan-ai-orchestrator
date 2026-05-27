@@ -221,7 +221,7 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
         "tests/test_required_quality_gate.py",
     )
     assert captured["command"][4] == "-q"
-    assert captured["command"][5].startswith("--basetemp=")
+    assert len(captured["command"]) == 5
     assert "PYTHONPYCACHEPREFIX" not in captured["env"]
     assert captured["env"]["PYTHONDONTWRITEBYTECODE"] == "1"
     assert "required_gate_temp" in captured["env"]["TEMP"]
@@ -231,7 +231,7 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     assert captured["stderr"] is None
 
 
-def test_youtube_research_pytest_uses_default_temp(monkeypatch):
+def test_youtube_research_pytest_uses_workspace_temp(monkeypatch):
     captured = {}
 
     def fake_run(command, **kwargs):
@@ -249,9 +249,11 @@ def test_youtube_research_pytest_uses_default_temp(monkeypatch):
     result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_youtube_research.py", "-q"))
 
     assert result.ok is True
+    assert not any(part.startswith("--basetemp=") for part in captured["command"])
+    assert "required_gate_temp" in captured["env"]["TEMP"]
 
 
-def test_google_youtube_search_pytest_uses_default_temp(monkeypatch):
+def test_google_youtube_search_pytest_uses_workspace_temp(monkeypatch):
     captured = {}
 
     def fake_run(command, **kwargs):
@@ -271,15 +273,16 @@ def test_google_youtube_search_pytest_uses_default_temp(monkeypatch):
         if "tests/test_google_youtube_search.py" in command and gate.command_is_pytest(command)
     )
 
-    assert gate.command_needs_isolated_pytest_temp(command) is False
+    assert gate.command_needs_isolated_pytest_temp(command) is True
     result = gate.run_command(command)
 
     assert result.ok is True
     assert not any(part.startswith("--basetemp=") for part in captured["command"])
-    assert "PYTHONPYCACHEPREFIX" in captured["env"]
+    assert "required_gate_temp" in captured["env"]["TEMP"]
+    assert "PYTHONPYCACHEPREFIX" not in captured["env"]
 
 
-def test_ai_work_session_gate_pytest_uses_default_temp(monkeypatch):
+def test_ai_work_session_gate_pytest_uses_workspace_temp(monkeypatch):
     captured = {}
 
     def fake_run(command, **kwargs):
@@ -299,17 +302,19 @@ def test_ai_work_session_gate_pytest_uses_default_temp(monkeypatch):
         if "tests/test_ai_work_session_gate.py" in command and gate.command_is_pytest(command)
     )
 
-    assert gate.command_needs_isolated_pytest_temp(command) is False
+    assert gate.command_needs_isolated_pytest_temp(command) is True
     result = gate.run_command(command)
 
     assert result.ok is True
     assert not any(part.startswith("--basetemp=") for part in captured["command"])
-    assert "PYTHONPYCACHEPREFIX" in captured["env"]
+    assert "required_gate_temp" in captured["env"]["TEMP"]
+    assert "PYTHONPYCACHEPREFIX" not in captured["env"]
 
 
-def test_pytest_temp_gets_isolated_workspace_dir(monkeypatch):
-    base = gate.ROOT / "tmp" / "required_gate_test_temp"
-    env = {"HAEHAN_REQUIRED_GATE_TEMP": str(base)}
+def test_pytest_temp_gets_isolated_runtime_dir(monkeypatch):
+    base = gate.ROOT / ".pytest-tmp" / "required_gate_test_temp"
+    monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TEMP", str(base))
+    env = {}
 
     temp_root = gate.isolated_pytest_temp(env)
 
