@@ -1,8 +1,9 @@
-"""Hiworks one-recipient-at-a-time sales mail batch planning."""
+"""Hiworks one-recipient-at-a-time sales mail batch planning and execution."""
 from __future__ import annotations
 
 import json
 import random
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -90,6 +91,74 @@ def save_send_plan(plan: dict[str, Any], output_dir: str | Path = DATA_DIR) -> P
     return path
 
 
+APPROVAL_CONFIRM_TEXT = "HIWORKS_APPROVED_SEND_BATCH"
+LATEST_SEND_RESULT_PATH = DATA_DIR / "hiworks_sales_mail_send_result_latest.json"
+SEND_RESULT_DIR = DATA_DIR / "hiworks_send_results"
+
+
+def execute_send_batch(plan: dict[str, Any], *, page) -> dict[str, Any]:
+    """승인된 배치 발송 플랜을 실행한다. 1통씩 compose→fill→send→delay 순으로 진행."""
+    from scripts.hiworks.mail import fill_compose, send_mail
+
+    items = plan.get("items") or []
+    results: list[dict[str, Any]] = []
+    sent = 0
+    failed = 0
+
+    for item in items:
+        item_result: dict[str, Any] = {
+            "index": item["index"],
+            "to": item["to"],
+            "subject": item["subject"],
+            "delay_seconds": item["delay_seconds"],
+            "sent": False,
+            "error": None,
+            "timestamp": datetime.now().isoformat(),
+        }
+        try:
+            fill_compose(page, to=item["to"], subject=item["subject"], body=item.get("body", ""))
+            send_result = send_mail(page)
+            item_result["sent"] = send_result.get("success", False)
+            item_result["detail"] = send_result.get("detail")
+            if item_result["sent"]:
+                sent += 1
+            else:
+                failed += 1
+                item_result["error"] = send_result.get("error_msg") or "send_failed"
+        except Exception as exc:
+            failed += 1
+            item_result["error"] = str(exc)
+
+        results.append(item_result)
+
+        # 마지막 항목이 아닐 때만 딜레이
+        if item["index"] < len(items):
+            time.sleep(item["delay_seconds"])
+
+    result = {
+        "timestamp": datetime.now().isoformat(),
+        "mode": "executed",
+        "provider": "hiworks",
+        "selected": len(items),
+        "sent": sent,
+        "failed": failed,
+        "items": results,
+        "send_status": "done",
+    }
+    _save_send_result(result)
+    return result
+
+
+def _save_send_result(result: dict[str, Any]) -> Path:
+    SEND_RESULT_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = SEND_RESULT_DIR / f"hiworks_send_result_{stamp}.json"
+    payload = json.dumps(result, ensure_ascii=False, indent=2)
+    path.write_text(payload, encoding="utf-8")
+    LATEST_SEND_RESULT_PATH.write_text(payload, encoding="utf-8")
+    return path
+
+
 def print_send_plan(plan: dict[str, Any], path: Path | None = None) -> None:
     print("=" * 60)
     print("Hiworks sales-mail send plan")
@@ -103,3 +172,15 @@ def print_send_plan(plan: dict[str, Any], path: Path | None = None) -> None:
         print(f"- #{item['index']} {item['to']} delay={item['delay_seconds']}s | {item['subject']}")
     if path:
         print(f"saved: {path}")
+
+
+def print_send_result(result: dict[str, Any]) -> None:
+    print("=" * 60)
+    print("Hiworks sales-mail send result")
+    print("=" * 60)
+    print(f"mode: {result.get('mode')}")
+    print(f"selected: {result.get('selected')}  sent: {result.get('sent')}  failed: {result.get('failed')}")
+    for item in result.get("items", []):
+        status = "✓" if item.get("sent") else "✗"
+        err = f" [{item['error']}]" if item.get("error") else ""
+        print(f"  {status} #{item['index']} {item['to']}{err}")

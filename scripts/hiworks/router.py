@@ -27,7 +27,12 @@ from scripts.hiworks.explorer import (
     save_apps,
 )
 from scripts.hiworks.mail import open_compose
-from scripts.hiworks.mail_batch import print_send_plan
+from scripts.hiworks.mail_batch import (
+    APPROVAL_CONFIRM_TEXT,
+    execute_send_batch,
+    print_send_plan,
+    print_send_result,
+)
 from scripts.hiworks.run_log import work_run
 from scripts.hiworks.schemas import DATA_DIR, HIWORKS_DASHBOARD_URL, HIWORKS_MAIL_URL, workflow_for_alias
 from scripts.hiworks.service_explorer import print_service_summary, save_service_report, scan_service, selected_targets
@@ -250,7 +255,9 @@ def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
 
 def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
     dry_run = "--dry-run" in args or sub in (None, "dry-run")
-    option_args = [a for a in ([sub] if sub else []) + list(args) if a and a != "--dry-run"]
+    approved = "--approved" in args
+    confirm = option_value(args, "--confirm=") or ""
+    option_args = [a for a in ([sub] if sub else []) + list(args) if a and a not in ("--dry-run", "--approved")]
     limit = 5
     delay_min = 15
     delay_max = 45
@@ -263,9 +270,25 @@ def _cmd_send_batch(sub: str | None, args: list[str]) -> None:
         elif text.startswith("--delay-max="):
             delay_max = int(text.split("=", 1)[1])
 
+    if approved and not dry_run:
+        if confirm != APPROVAL_CONFIRM_TEXT:
+            raise SystemExit(f"approved send requires --confirm={APPROVAL_CONFIRM_TEXT}")
+        gates.check_send(force=True, context="hiworks batch send", dry_run=False)
+        workflow = workflow_for_alias("send-batch") or {"key": "send_batch_execute", "risk": "send"}
+        with work_run(workflow, [str(limit), f"--delay-min={delay_min}", f"--delay-max={delay_max}", "--approved"]):
+            from scripts.hiworks.explorer import open_hiworks
+            from scripts.hiworks.schemas import HIWORKS_MAIL_URL
+            plan, _ = build_and_save_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
+            page = open_hiworks(HIWORKS_MAIL_URL)
+            result = execute_send_batch(plan, page=page)
+            print_send_result(result)
+        return
+
     if not dry_run:
-        gates.check_send()
-        raise SystemExit("Actual Hiworks batch send is approval-gated. Run with --dry-run first.")
+        raise SystemExit(
+            "Actual Hiworks batch send requires --approved --confirm=HIWORKS_APPROVED_SEND_BATCH\n"
+            "Run with --dry-run first to preview the plan."
+        )
 
     gates.check_read()
     workflow = workflow_for_alias("send-batch") or {"key": "send_batch_plan", "risk": "prepare"}
