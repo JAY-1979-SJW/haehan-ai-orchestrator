@@ -58,6 +58,8 @@ def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[s
         args,
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         timeout=timeout,
@@ -91,7 +93,7 @@ def check_portable_files(report: Report) -> None:
 
 
 def check_diagnostics_bat(report: Report) -> None:
-    proc = _run(["cmd", "/c", "diagnostics.bat"], timeout=60)
+    proc = _run(["cmd", "/c", str(ROOT / "diagnostics.bat")], timeout=60)
     if proc.returncode == 0:
         report.pass_("diagnostics.bat", _first_line(proc.stdout))
     else:
