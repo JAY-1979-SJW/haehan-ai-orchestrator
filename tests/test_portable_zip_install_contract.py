@@ -210,9 +210,11 @@ def test_diagnostics_bat_runtime_smoke_writes_complete_masked_log() -> None:
     env["HAEHAN_DESKTOP_OPS_BASIC_PASSWORD"] = "verify-password-should-not-leak"
 
     result = subprocess.run(
-        ["cmd", "/c", "diagnostics.bat"],
+        ["cmd", "/c", str(ROOT / "diagnostics.bat")],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         env=env,
         timeout=60,
