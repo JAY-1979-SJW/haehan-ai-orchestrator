@@ -1,7 +1,12 @@
 """Google service entrypoint."""
 from __future__ import annotations
 
-from playwright.sync_api import Page
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
+else:
+    Page = Any
 
 
 class Google:
