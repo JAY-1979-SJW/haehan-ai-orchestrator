@@ -75,6 +75,7 @@ def test_repo_guard_includes_desktop_security_boundary():
     assert any(step.check == "required_local_gate_wiring" for step in repo_guard.steps)
     assert any(step.check == "module_boundary_contract" for step in repo_guard.steps)
     assert any(step.check == "root_legacy_script_contract" for step in repo_guard.steps)
+    assert any(step.check == "google_domain_module_boundaries" for step in repo_guard.steps)
 
 
 def test_release_preflight_includes_admin_web_and_secret_scan():
@@ -368,6 +369,16 @@ def test_backend_runtime_contract_passes_current_sources():
 
 def test_backend_runtime_contract_registered_in_checks():
     assert "backend_runtime_contract" in gate.CHECKS
+
+
+def test_google_domain_module_boundaries_pass_current_sources():
+    ok, message = gate.check_google_domain_module_boundaries()
+
+    assert ok, message
+
+
+def test_google_domain_module_boundaries_registered_in_checks():
+    assert "google_domain_module_boundaries" in gate.CHECKS
 
 
 def test_required_local_gate_wiring_passes_current_sources():

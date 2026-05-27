@@ -17,6 +17,7 @@
     {"path": "candidate_store.py", "category": "workflow_legacy_module", "next_action": "Move candidate persistence behind workflow package."},
     {"path": "candidate_to_task.py", "category": "workflow_legacy_module", "next_action": "Move conversion flow under workflow module."},
     {"path": "close_2_more.py", "category": "archive_candidate", "next_action": "Archive if no operational caller remains."},
+    {"path": "conftest.py", "category": "verification_tool", "next_action": "Keep as pytest runtime guard forcing repo-local temporary directories."},
     {"path": "dashboard.py", "category": "runtime_entrypoint", "next_action": "Keep until dashboard route migration is complete."},
     {"path": "email_classifier.py", "category": "workflow_legacy_module", "next_action": "Move under mail workflow module."},
     {"path": "email_task_approval.py", "category": "workflow_legacy_module", "next_action": "Move under mail workflow module."},

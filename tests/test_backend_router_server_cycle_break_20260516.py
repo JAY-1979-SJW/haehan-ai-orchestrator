@@ -134,8 +134,9 @@ def test_canonical_endpoint_count_registered():
         if isinstance(r, (APIRoute, APIWebSocketRoute))
     ]
     # Runtime route count is locked by scripts/ops/audit_backend_runtime_contract.py.
-    assert len(routes) == 84, (
-        f"등록된 route 수={len(routes)}, 기준=84"
+    from scripts.ops import audit_backend_runtime_contract as audit
+    assert len(routes) == audit.EXPECTED_RUNTIME_ROUTES, (
+        f"등록된 route 수={len(routes)}, 기준={audit.EXPECTED_RUNTIME_ROUTES}"
     )
 
 

@@ -6,7 +6,7 @@
     from scripts.web_connector import open_page, close_page, browser_session
 
     # 단건
-    page = open_page()
+    page = open_page(allow_new_tab=True, reason="manual-single")
     ...
     close_page(page)
 
@@ -32,6 +32,13 @@ sys.path.insert(0, str(ROOT))
 from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST, CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
+from scripts.browser_task_session import (  # noqa: E402
+    BrowserTaskPolicy,
+    cleanup_task_pages,
+    close_all_pages,
+    get_or_create_task_page,
+    mark_task_owned,
+)
 
 log = get_logger(__name__)
 
@@ -198,10 +205,21 @@ def fit_viewport(page: Page) -> None:
         log.debug("[viewport] 창 복원 생략: %s", e)
 
 
-def open_page() -> Page:
+def open_page(*, allow_new_tab: bool = False, reason: str | None = None) -> Page:
     """CDP 브라우저에 연결해 새 페이지 반환."""
     _, ctx = _connect_browser()
+    if not allow_new_tab:
+        active = [p for p in ctx.pages if p.url not in ("about:blank", "")]
+        if active:
+            page = active[-1]
+            mark_task_owned(page, BrowserTaskPolicy(task_id="legacy-open-page"), owned=False)
+            fit_viewport(page)
+            log.debug("reused existing page: %s", page.url)
+            return page
+    if allow_new_tab and not reason:
+        raise ValueError("allow_new_tab requires a reason")
     page = ctx.new_page()
+    mark_task_owned(page, BrowserTaskPolicy(task_id=reason or "legacy-open-page"), owned=True)
     fit_viewport(page)
     log.debug("새 페이지 생성 완료")
     return page
@@ -219,11 +237,13 @@ def get_page() -> Page:
     active = [p for p in pages if p.url not in ("about:blank", "")]
     if active:
         page = active[-1]
+        mark_task_owned(page, BrowserTaskPolicy(task_id="get-page"), owned=False)
         fit_viewport(page)
         log.debug("기존 탭 재사용: %s", page.url)
         return page
     # 탭이 없거나 모두 blank면 새 탭 생성
     page = ctx.new_page()
+    mark_task_owned(page, BrowserTaskPolicy(task_id="get-page-fallback"), owned=True)
     fit_viewport(page)
     log.debug("새 페이지 생성 완료")
     return page
@@ -244,18 +264,63 @@ def get_page_by_url(*patterns: str, create_url: str | None = None) -> Page:
             return page
     if create_url:
         page = ctx.new_page()
+        mark_task_owned(page, BrowserTaskPolicy(task_id="get-page-by-url", start_url=create_url), owned=True)
         page.goto(create_url, timeout=30000)
         return page
     return get_page()
 
 
+def get_task_page(
+    *,
+    task_id: str,
+    allowed_hosts: tuple[str, ...] = (),
+    url_patterns: tuple[str, ...] = (),
+    start_url: str | None = None,
+    max_tabs: int = 1,
+) -> Page:
+    """Return the bounded tab for a task, creating at most one when needed."""
+    _, ctx = _connect_browser()
+    policy = BrowserTaskPolicy(
+        task_id=task_id,
+        allowed_hosts=allowed_hosts,
+        url_patterns=url_patterns,
+        start_url=start_url,
+        max_tabs=max_tabs,
+    )
+    page = get_or_create_task_page(ctx, policy)
+    fit_viewport(page)
+    return page
+
+
+def cleanup_task_tabs(
+    *,
+    task_id: str,
+    allowed_hosts: tuple[str, ...] = (),
+    url_patterns: tuple[str, ...] = (),
+    keep_page: Page | None = None,
+    max_tabs: int = 1,
+) -> dict[str, int]:
+    """Clean task-owned, duplicate, and blank tabs after a CDP task."""
+    _, ctx = _connect_browser()
+    policy = BrowserTaskPolicy(
+        task_id=task_id,
+        allowed_hosts=allowed_hosts,
+        url_patterns=url_patterns,
+        max_tabs=max_tabs,
+    )
+    return cleanup_task_pages(ctx, policy, keep_page=keep_page)
+
+
 def close_page(page: Page) -> None:
-    """페이지 닫기."""
+    """Close only pages owned by the current helper."""
+    if not bool(getattr(page, "_haehan_task_owned_page", True)):
+        log.debug("skip closing reused page: %s", getattr(page, "url", ""))
+        return
     try:
         page.close()
-        log.debug("페이지 닫힘")
+        log.debug("page closed")
     except Exception as e:
-        log.debug("페이지 닫기 무시: %s", e)
+        log.debug("ignore page close failure: %s", e)
 
 
 @contextmanager
@@ -265,7 +330,7 @@ def browser_session() -> Generator[Page, None, None]:
     with browser_session() as page:
         page_goto(page, url)
     """
-    page = open_page()
+    page = open_page(allow_new_tab=True, reason="browser-session")
     try:
         yield page
     finally:
@@ -273,6 +338,50 @@ def browser_session() -> Generator[Page, None, None]:
 
 
 # ── Persistent Context (세션 저장/복원) ──────────────────────────────
+
+@contextmanager
+def browser_task_session(
+    *,
+    task_id: str,
+    allowed_hosts: tuple[str, ...] = (),
+    url_patterns: tuple[str, ...] = (),
+    start_url: str | None = None,
+    max_tabs: int = 1,
+) -> Generator[Page, None, None]:
+    """Yield one bounded task tab and clean task-owned tabs on exit."""
+    page = get_task_page(
+        task_id=task_id,
+        allowed_hosts=allowed_hosts,
+        url_patterns=url_patterns,
+        start_url=start_url,
+        max_tabs=max_tabs,
+    )
+    try:
+        yield page
+    finally:
+        cleanup_task_tabs(
+            task_id=task_id,
+            allowed_hosts=allowed_hosts,
+            url_patterns=url_patterns,
+            keep_page=page,
+            max_tabs=max_tabs,
+        )
+
+
+def shutdown_browser_session(*, close_browser: bool = False) -> dict[str, int | bool]:
+    """Close every tab, and optionally close the cached CDP browser object."""
+    global _BROWSER_CONTEXT_CACHE, _BROWSER_CACHE
+    browser, ctx = _connect_browser()
+    closed = close_all_pages(ctx)
+    if close_browser:
+        try:
+            browser.close()
+        except Exception:
+            pass
+        _BROWSER_CONTEXT_CACHE = None
+        _BROWSER_CACHE = None
+    return {"closed_tabs": closed, "browser_closed": close_browser}
+
 
 SESSION_BASE_DIR = ROOT / "data" / "browser_sessions"
 

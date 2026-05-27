@@ -14,6 +14,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
+try:
+    from scripts.runtime_temp import usable_temp_base
+except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
+    from runtime_temp import usable_temp_base
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 30
@@ -322,19 +327,7 @@ def command_is_pytest(command: tuple[str, ...]) -> bool:
 
 
 def command_needs_isolated_pytest_temp(command: tuple[str, ...]) -> bool:
-    if not command_is_pytest(command):
-        return False
-    # This suite owns its temporary files under repo-local tmp/. On Windows,
-    # forcing --basetemp can trigger pytest cleanup permission errors before any
-    # test code runs.
-    test_files = tuple(part for part in command if part.startswith("tests/"))
-    if test_files == ("tests/test_youtube_research.py",):
-        return False
-    if "tests/test_google_youtube_search.py" in test_files:
-        return False
-    if "tests/test_ai_work_session_gate.py" in test_files:
-        return False
-    return True
+    return command_is_pytest(command)
 
 
 def command_timeout_seconds() -> int:
@@ -365,10 +358,8 @@ def command_with_runtime_args(command: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def isolated_pytest_temp(env: dict[str, str]) -> Path:
-    default_base = ROOT / "tmp" / "required_gate_temp"
-    base = Path(env.get("HAEHAN_REQUIRED_GATE_TEMP", str(default_base)))
+    base = usable_temp_base("required_gate_temp", "HAEHAN_REQUIRED_GATE_TEMP")
     target = base / uuid4().hex
-    base.mkdir(parents=True, exist_ok=True)
     return target
 
 
@@ -397,8 +388,6 @@ def run_command(command: tuple[str, ...]) -> GateResult:
     timeout_s = command_timeout_for(command)
     is_pytest = command_is_pytest(command)
     runtime_command = list(command_with_runtime_args(command))
-    if use_isolated_pytest_temp:
-        runtime_command.append(f"--basetemp={temp_root}")
     try:
         result = subprocess.run(
             runtime_command,

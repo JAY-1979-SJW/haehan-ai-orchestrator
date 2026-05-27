@@ -26,6 +26,9 @@ CODE_MIXED_DOMAIN_SESSION = "mixed_domain_session"
 CODE_AMBIGUOUS_DOMAIN_SESSION = "ambiguous_domain_session"
 CODE_UNKNOWN_TASK = "unknown_task"
 CODE_TARGET_CREATE_FAILED = "target_create_failed"
+CODE_TARGET_CREATE_BLOCKED = "target_create_blocked"
+CODE_TAB_LIMIT_EXCEEDED = "tab_limit_exceeded"
+CODE_INFRASTRUCTURE_URL_TAB = "infrastructure_url_tab"
 
 TASK_DOMAIN_GROUPS: dict[str, tuple[str, ...]] = {
     "naver": ("naver.com", "pstatic.net"),
@@ -34,9 +37,21 @@ TASK_DOMAIN_GROUPS: dict[str, tuple[str, ...]] = {
     "google": ("google.com", "google.co.kr", "gstatic.com", "googleapis.com"),
 }
 
+DEFAULT_TASK_TAB_LIMITS: dict[str, int] = {
+    "naver": 1,
+    "smartstore": 1,
+    "youtube": 1,
+    "google": 1,
+}
+DEFAULT_TOTAL_TAB_LIMIT = 6
+INFRASTRUCTURE_URL_PATTERNS = (
+    "haehan-ai-orchestrator/data/browser_sessions/",
+    "haehan-ai-orchestrator/data/cdp_profile/",
+)
+
 CONFLICT_DOMAIN_GROUPS: dict[str, tuple[str, ...]] = {
-    "naver": ("smartstore", "youtube", "google"),
-    "smartstore": ("naver", "youtube", "google"),
+    "naver": ("youtube", "google"),
+    "smartstore": ("youtube", "google"),
     "youtube": ("naver",),
     "google": ("naver",),
 }
@@ -102,6 +117,9 @@ class TargetIsolationReport:
     target_id: str = ""
     start_url: str = ""
     page: dict[str, Any] = field(default_factory=dict)
+    tab_limit: int | None = None
+    existing_task_tabs: int = 0
+    existing_total_tabs: int = 0
     messages: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -114,6 +132,9 @@ class TargetIsolationReport:
             "target_id": self.target_id,
             "start_url": self.start_url,
             "page": self.page,
+            "tab_limit": self.tab_limit,
+            "existing_task_tabs": self.existing_task_tabs,
+            "existing_total_tabs": self.existing_total_tabs,
             "messages": self.messages,
         }
 
@@ -121,6 +142,15 @@ class TargetIsolationReport:
 def _host_matches(host: str, suffixes: Iterable[str]) -> bool:
     clean = host.lower().strip(".")
     return any(clean == suffix or clean.endswith("." + suffix) for suffix in suffixes)
+
+
+def is_infrastructure_url(url: str) -> bool:
+    lowered = str(url or "").lower()
+    return any(pattern in lowered for pattern in INFRASTRUCTURE_URL_PATTERNS)
+
+
+def infrastructure_urls(session: CdpSession) -> list[str]:
+    return [page.url for page in session.pages if is_infrastructure_url(page.url)]
 
 
 def session_domain_groups(session: CdpSession) -> set[str]:
@@ -143,6 +173,7 @@ def _session_summary(session: CdpSession) -> dict[str, Any]:
         "endpoint": session.endpoint,
         "port": session.port,
         "domain_groups": sorted(session_domain_groups(session)),
+        "infrastructure_urls": infrastructure_urls(session),
         "pages": [{"url": page.url, "title": page.title} for page in session.pages],
     }
 
@@ -171,9 +202,19 @@ def evaluate_sessions(task: str, sessions: Iterable[CdpSession]) -> SelectionRep
     conflict_groups = set(CONFLICT_DOMAIN_GROUPS.get(task_key, ()))
     candidates: list[CdpSession] = []
     mixed: list[CdpSession] = []
+    invalid_infra: list[CdpSession] = []
+    tab_limited: list[tuple[CdpSession, int, int]] = []
     for session in all_sessions:
         groups = session_domain_groups(session)
         if task_key not in groups:
+            continue
+        if infrastructure_urls(session):
+            invalid_infra.append(session)
+            continue
+        task_tab_count = _task_page_count(task_key, session.pages)
+        task_tab_limit = _resolve_task_tab_limit(task_key, None)
+        if task_tab_limit is not None and task_tab_count > task_tab_limit:
+            tab_limited.append((session, task_tab_count, task_tab_limit))
             continue
         if groups & conflict_groups:
             mixed.append(session)
@@ -197,6 +238,27 @@ def evaluate_sessions(task: str, sessions: Iterable[CdpSession]) -> SelectionRep
             selected_port=selected.port,
             selected_endpoint=selected.endpoint,
             messages=[f"Selected {task_key} CDP session by open tab domain."],
+            sessions=summaries,
+        )
+    if invalid_infra:
+        return SelectionReport(
+            ok=False,
+            code=CODE_INFRASTRUCTURE_URL_TAB,
+            task=task_key,
+            messages=[
+                f"{task_key} CDP session contains internal profile/data URL tabs. Close those tabs or reuse a clean domain tab before running background work.",
+            ],
+            sessions=summaries,
+        )
+    if tab_limited:
+        details = ", ".join(f"port {session.port}: {count}/{limit}" for session, count, limit in tab_limited)
+        return SelectionReport(
+            ok=False,
+            code=CODE_TAB_LIMIT_EXCEEDED,
+            task=task_key,
+            messages=[
+                f"{task_key} CDP session has too many task-domain tabs ({details}). Reuse one tab or clean up duplicates before running work.",
+            ],
             sessions=summaries,
         )
     if mixed:
@@ -254,6 +316,46 @@ def _read_cdp_page_dicts(host: str, port: int, timeout: float = 2.0) -> list[dic
     return [row for row in payload if isinstance(row, dict) and row.get("type") == "page"]
 
 
+def _page_dict_to_cdp_page(row: dict[str, Any]) -> CdpPage:
+    return CdpPage(url=str(row.get("url") or ""), title=str(row.get("title") or ""))
+
+
+def _task_page_count(task: str, pages: Iterable[CdpPage]) -> int:
+    task_key = task.strip().lower()
+    suffixes = TASK_DOMAIN_GROUPS.get(task_key, ())
+    count = 0
+    for page in pages:
+        host = page.host
+        if not host:
+            continue
+        is_smartstore = _host_matches(host, TASK_DOMAIN_GROUPS["smartstore"])
+        if task_key == "smartstore":
+            count += int(is_smartstore)
+            continue
+        if is_smartstore:
+            continue
+        count += int(_host_matches(host, suffixes))
+    return count
+
+
+def _resolve_task_tab_limit(task: str, max_task_tabs: int | None) -> int | None:
+    if max_task_tabs is not None:
+        return max_task_tabs
+    raw = os.environ.get(f"CDP_MAX_{task.strip().upper()}_TABS", "").strip()
+    if raw:
+        return int(raw)
+    return DEFAULT_TASK_TAB_LIMITS.get(task.strip().lower(), 1)
+
+
+def _resolve_total_tab_limit(max_total_tabs: int | None) -> int | None:
+    if max_total_tabs is not None:
+        return max_total_tabs
+    raw = os.environ.get("CDP_MAX_TOTAL_TABS", "").strip()
+    if raw:
+        return int(raw)
+    return DEFAULT_TOTAL_TAB_LIMIT
+
+
 def _read_browser_ws_url(host: str, port: int, timeout: float = 2.0) -> str:
     with urllib.request.urlopen(f"http://{host}:{port}/json/version", timeout=timeout) as response:
         payload = json.loads(response.read().decode("utf-8") or "{}")
@@ -285,12 +387,17 @@ def create_isolated_target(
     start_url: str,
     host: str = DEFAULT_HOST,
     timeout: float = 5.0,
+    max_task_tabs: int | None = None,
+    max_total_tabs: int | None = None,
+    allow_create: bool | None = None,
 ) -> TargetIsolationReport:
     """Create a dedicated tab in an existing CDP browser session.
 
     This is the common tab-isolation gate for parallel browser work. It never
-    launches, restarts, or closes a browser; it only creates a new CDP target in
-    a session that has already been selected by the caller.
+    launches, restarts, or closes a browser. Creating a new CDP target is
+    blocked by default so audits/tests cannot open visible tabs by accident.
+    Live callers must pass allow_create=True or set
+    HAEHAN_CDP_CREATE_TARGET_ALLOWED=1.
     """
     try:
         from scripts.gate import check as gate_check
@@ -307,7 +414,65 @@ def create_isolated_target(
             messages=[str(exc)],
         )
 
+    task_key = task.strip().lower()
+    tab_limit = _resolve_task_tab_limit(task_key, max_task_tabs)
+    total_tab_limit = _resolve_total_tab_limit(max_total_tabs)
+    if allow_create is None:
+        allow_create = os.environ.get("HAEHAN_CDP_CREATE_TARGET_ALLOWED", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
     try:
+        current_page_dicts = _read_cdp_page_dicts(host, port, timeout=min(timeout, 2.0))
+        current_pages = [_page_dict_to_cdp_page(row) for row in current_page_dicts]
+        existing_task_tabs = _task_page_count(task_key, current_pages)
+        existing_total_tabs = len(current_page_dicts)
+        if tab_limit is not None and existing_task_tabs >= tab_limit:
+            return TargetIsolationReport(
+                ok=False,
+                code=CODE_TAB_LIMIT_EXCEEDED,
+                task=task_key,
+                work=work,
+                port=port,
+                start_url=start_url,
+                tab_limit=tab_limit,
+                existing_task_tabs=existing_task_tabs,
+                existing_total_tabs=existing_total_tabs,
+                messages=[
+                    f"{task_key} already has {existing_task_tabs} tab(s) in this CDP browser; max allowed is {tab_limit}. Reuse the existing tab instead of creating another.",
+                ],
+            )
+        if total_tab_limit is not None and existing_total_tabs >= total_tab_limit:
+            return TargetIsolationReport(
+                ok=False,
+                code=CODE_TAB_LIMIT_EXCEEDED,
+                task=task_key,
+                work=work,
+                port=port,
+                start_url=start_url,
+                tab_limit=tab_limit,
+                existing_task_tabs=existing_task_tabs,
+                existing_total_tabs=existing_total_tabs,
+                messages=[
+                    f"CDP browser already has {existing_total_tabs} page tab(s); max total allowed is {total_tab_limit}. Reuse an existing task tab or clean up surplus tabs before creating another.",
+                ],
+            )
+        if not allow_create:
+            return TargetIsolationReport(
+                ok=False,
+                code=CODE_TARGET_CREATE_BLOCKED,
+                task=task_key,
+                work=work,
+                port=port,
+                start_url=start_url,
+                tab_limit=tab_limit,
+                existing_task_tabs=existing_task_tabs,
+                existing_total_tabs=existing_total_tabs,
+                messages=[
+                    "CDP target creation is blocked by default. Pass allow_create=True only for an approved live task.",
+                ],
+            )
         browser_ws_url = _read_browser_ws_url(host, port, timeout=min(timeout, 2.0))
         if not browser_ws_url:
             raise RuntimeError("browser_websocket_url_missing")
@@ -330,6 +495,9 @@ def create_isolated_target(
             target_id=target_id,
             start_url=start_url,
             page=page,
+            tab_limit=tab_limit,
+            existing_task_tabs=existing_task_tabs,
+            existing_total_tabs=existing_total_tabs,
             messages=[
                 "Created an isolated tab in the existing CDP session; no browser launch, restart, or close action.",
             ],
