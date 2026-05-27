@@ -461,6 +461,13 @@ def login(page) -> dict:
 
             log.info("로그인 성공: user=%s url=%s", user_name, page.url)
             ctx.set_result(msg="로그인 성공", ok=True, user=user_name)
+            # 세션 자동 저장 (다음 실행 시 복원)
+            try:
+                from scripts.auth_session import save_session as _save
+                _save("eum.cw.or.kr", page)
+                log.info("[eum-auth] 세션 저장 완료")
+            except Exception as _e:
+                log.debug("[eum-auth] 세션 저장 실패 (무시): %s", _e)
             return {"ok": True, "reason": "로그인 성공", "user": user_name}
 
         # 실패 메시지 추출 시도
@@ -491,7 +498,7 @@ def login(page) -> dict:
 
 
 def ensure_logged_in(page) -> None:
-    """로그인 상태를 보장한다. 세션 없으면 자동 로그인.
+    """로그인 상태를 보장한다. 세션 없으면 저장 세션 복원 → 자동 로그인 순으로 시도.
 
     모든 EUM 명령 진입 시 자동 호출됨.
     로그인 실패 시 RuntimeError 발생 → 작업 중단.
@@ -499,6 +506,25 @@ def ensure_logged_in(page) -> None:
     if is_logged_in(page):
         log.debug("EUM 세션 유효 — 로그인 생략")
         return
+
+    # 저장된 세션 복원 시도
+    try:
+        from scripts.auth_session import restore_session as _restore
+        r = _restore("eum.cw.or.kr", page)
+        if r.get("ok"):
+            log.info("[eum-auth] 저장 세션 복원 완료 (saved_at=%s)", r.get("saved_at"))
+            print(f"  [EUM] 세션 복원 ✔ ({r.get('saved_at', '?')} 저장본)", flush=True)
+            # 복원 후 페이지 이동해 로그인 확인
+            try:
+                page.goto(EUM_BASE + "/web/man/WEBMAN390M00", timeout=12000, wait_until="domcontentloaded")
+            except Exception:
+                pass
+            if is_logged_in(page):
+                log.info("[eum-auth] 세션 복원 후 로그인 확인됨")
+                return
+            log.info("[eum-auth] 세션 복원 후 로그인 미확인 — 신규 로그인 진행")
+    except Exception as _e:
+        log.debug("[eum-auth] 세션 복원 시도 실패 (무시): %s", _e)
 
     log.info("EUM 세션 없음 — 자동 로그인 시도")
     print("  [EUM] 세션 없음 → 자동 로그인 중...", end=" ", flush=True)

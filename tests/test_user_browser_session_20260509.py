@@ -7,14 +7,14 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 
-from ai_orchestrator.local_agent.browser.session import (
+from ai_orchestrator.local_agent.browser.browser_session import (
     get_session_dir, list_profiles, _DEFAULT_SESSION_ROOT,
 )
 
 
 def test_session_dir_created(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "ai_orchestrator.local_agent.browser.session._DEFAULT_SESSION_ROOT",
+        "ai_orchestrator.local_agent.browser.browser_session._DEFAULT_SESSION_ROOT",
         tmp_path / "browser_sessions",
     )
     d = get_session_dir("test_profile")
@@ -25,7 +25,7 @@ def test_session_dir_created(tmp_path, monkeypatch):
 
 def test_session_dir_default_profile(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "ai_orchestrator.local_agent.browser.session._DEFAULT_SESSION_ROOT",
+        "ai_orchestrator.local_agent.browser.browser_session._DEFAULT_SESSION_ROOT",
         tmp_path / "browser_sessions",
     )
     d = get_session_dir()  # default
@@ -55,7 +55,7 @@ def test_empty_profile_name_blocked():
 def test_list_profiles_returns_list(tmp_path, monkeypatch):
     root = tmp_path / "browser_sessions"
     monkeypatch.setattr(
-        "ai_orchestrator.local_agent.browser.session._DEFAULT_SESSION_ROOT",
+        "ai_orchestrator.local_agent.browser.browser_session._DEFAULT_SESSION_ROOT",
         root,
     )
     assert list_profiles() == []
