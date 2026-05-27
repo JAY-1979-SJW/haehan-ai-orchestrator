@@ -225,7 +225,7 @@ async def check_site(site: dict, targets: list[dict]) -> SessionState:
     elif data.get("login_error"):
         status = "LOGIN_ERROR"
         detail = "로그인 오류 메시지 감지"
-    elif data.get("has_login_form") or login_url.split("//")[1].split("/")[0] in href:
+    elif data.get("has_login_form"):
         status = "LOGIN_REQUIRED"
         detail = "로그인 폼 감지 — 세션 만료"
     elif has_session and (
