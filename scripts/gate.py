@@ -73,6 +73,12 @@ _RISK_REGISTRY: dict[str, RiskLevel] = {
     "naver_mail_delete": RiskLevel.APPROVE,
     "naver_mail_move": RiskLevel.APPROVE,
     "naver_mail_settings_save": RiskLevel.APPROVE,
+    "naver_paid_api_key_issue": RiskLevel.BLOCK,
+    "naver_paid_api_use": RiskLevel.BLOCK,
+    "naver_searchad_campaign_create": RiskLevel.BLOCK,
+    "naver_searchad_budget_update": RiskLevel.BLOCK,
+    "naver_payment_method_register": RiskLevel.BLOCK,
+    "naver_ad_publish": RiskLevel.BLOCK,
 
     # 결제/이체 (비가역)
     "payment":         RiskLevel.APPROVE,

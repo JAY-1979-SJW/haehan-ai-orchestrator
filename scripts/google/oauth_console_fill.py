@@ -13,6 +13,7 @@ from typing import Any
 
 from . import managed_console
 from .secret_action_gate import build_secret_action_policy
+from .work_mode_gate import build_google_work_mode_policy
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,21 +41,33 @@ def _stamp() -> str:
 
 def build_youtube_oauth_console_fill_plan(
     *,
+    google_work_mode: str | None = None,
+    background_approved: bool = False,
     secret_action_mode: str = "final_approval_only",
     secret_issue_approved: bool = False,
 ) -> dict[str, Any]:
     """Return the non-secret prefill contract for the YouTube OAuth client."""
     inputs = managed_console.YOUTUBE_SERVER_OAUTH_INPUTS
+    work_mode_policy = build_google_work_mode_policy(
+        google_work_mode,
+        background_approved=background_approved,
+    )
     secret_policy = build_secret_action_policy(
         secret_action_mode,
         secret_issue_approved=secret_issue_approved,
     )
+    status = "ready_for_ai_prefill"
+    if work_mode_policy["status"] == "blocked" or secret_policy["status"] == "blocked":
+        status = "blocked"
     return {
         "schema_version": 1,
         "created_at": _now(),
         "workflow": "youtube_oauth_google_console_prefill",
-        "status": "ready_for_ai_prefill",
+        "status": status,
         "browser_runtime": "managed_local_agent_cdp_profile",
+        "google_work_mode_policy": work_mode_policy,
+        "google_work_mode": work_mode_policy["mode"],
+        "background_approved": bool(background_approved),
         "default_browser_allowed": False,
         "state_change_final_button_clicked": False,
         "final_button_user_only": secret_policy["final_button_user_only"],
@@ -211,12 +224,16 @@ def prefill_youtube_oauth_console(
     *,
     dry_run: bool = False,
     approved_api_enable: bool = False,
+    google_work_mode: str | None = None,
+    background_approved: bool = False,
     secret_action_mode: str = "final_approval_only",
     secret_issue_approved: bool = False,
     timeout_ms: int = 60000,
 ) -> tuple[dict[str, Any], Path | None]:
     """Open/fill Google Console OAuth form and stop before final Create/Save."""
     plan = build_youtube_oauth_console_fill_plan(
+        google_work_mode=google_work_mode,
+        background_approved=background_approved,
         secret_action_mode=secret_action_mode,
         secret_issue_approved=secret_issue_approved,
     )
@@ -228,10 +245,15 @@ def prefill_youtube_oauth_console(
         "actions": [],
         "warnings": [],
     }
-    if plan["secret_action_policy"]["status"] == "blocked":
+    if plan["status"] == "blocked":
         result["status"] = "blocked"
-        result["reason"] = plan["secret_action_policy"]["blocked_reason"]
-        result["next_step"] = plan["secret_action_policy"]["next_step"]
+        blocked_policy = (
+            plan["google_work_mode_policy"]
+            if plan["google_work_mode_policy"]["status"] == "blocked"
+            else plan["secret_action_policy"]
+        )
+        result["reason"] = blocked_policy["blocked_reason"]
+        result["next_step"] = blocked_policy["next_step"]
         return result, None
     if dry_run:
         return result, None

@@ -8,6 +8,7 @@ HOOK = ROOT / ".git" / "hooks" / "pre-commit"
 
 HOOK_BODY = """#!/bin/sh
 python scripts/quality_gate.py --staged --enforce
+python scripts/ops/audit_google_home_login_gate.py
 """
 
 
@@ -30,4 +31,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

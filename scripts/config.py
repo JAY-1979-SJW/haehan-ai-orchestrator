@@ -63,7 +63,7 @@ NAVER_URLS = {
 
 # ── 로그인 확인용 프로브 URL ─────────────────────────────────────────
 LOGIN_PROBE_URLS = {
-    "google":   "https://myaccount.google.com/",
+    "google":   "https://www.google.com/",
     "naver":    "https://www.naver.com/",
     "kakao":    "https://accounts.kakao.com/",
     "youtube":  "https://www.youtube.com/",

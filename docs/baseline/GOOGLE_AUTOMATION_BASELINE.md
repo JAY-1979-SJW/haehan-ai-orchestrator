@@ -71,11 +71,16 @@ before retry.
 Locked sequence:
 
 1. Open Google Home: `https://www.google.com/`.
-2. Check account state through `https://myaccount.google.com/` using only
+2. Select `google_work_mode` before any Google browser task:
+   - `main`: visible user-present browser work.
+   - `background`: already-authenticated background work only after explicit
+     `background_approved=True` approval for the exact task.
+   Missing or invalid work mode is blocked by `scripts/google/work_mode_gate.py`.
+3. Check account state through `https://myaccount.google.com/` using only
    non-secret indicators.
-3. Open the requested registered Google subdomain in the same local browser
+4. Open the requested registered Google subdomain in the same local browser
    profile.
-4. Open approval/OAuth URLs only after steps 1-3 have been verified.
+5. Open approval/OAuth URLs only after steps 1-4 have been verified.
 
 Runtime rules:
 
@@ -166,7 +171,47 @@ Approval actions must:
 - default to no final submit for live browser input
 - save a verification or evidence artifact
 
-### 4.1 Google Vision Monthly Free-Unit Gate
+### 4.1 Google Ads No-Paid Signup Gate
+
+Google Ads account creation is state-changing and ad-spend capable. The only
+supported signup path is `google_work_mode=main` plus
+`ads_signup_approved=True`, and it remains a no-paid-action handoff.
+
+During Ads signup, the agent must stop before billing/payment submission,
+budget submission, campaign publish/launch, and website URL asset-scan or
+commercial asset-use consent unless the user explicitly approves that exact
+consent. `paid_execution_allowed`, `billing_submit_allowed`,
+`budget_submit_allowed`, and `campaign_publish_allowed` must remain `False` in
+the signup plan.
+
+### 4.2 Google Workspace Basic Feature Gate
+
+Common user workflows for Gmail, Drive, Google Photos, Calendar, Docs, Sheets,
+Slides, Forms, Meet, Chat, Contacts, Keep, Tasks, Search, YouTube, Maps,
+Translate, News, Alerts, Shopping, Google Account, and Chrome are locked by
+`scripts/google/workspace_basic.py`.
+
+The baseline separates:
+
+- `read_only`: list/search/read/analyze visible metadata or redacted content.
+- `draft_only_no_final_submit`: fill drafts but stop before final send/save.
+- `approval_required`: prepare upload/share/create/update plans without final
+  execution.
+- `user_only`: final send, delete, publish, billing, or irreversible actions.
+
+The agent performs the instructed work up to the final boundary. Before final
+approval, basic plans use `ready_until_final_approval` and keep
+`state_change_allowed=False` and `final_submit_allowed=False`. After explicit
+`final_execution_approved=True`, draft-only and approval-required operations may
+move to `ready_for_final_execution` inside the approved scope. User-only actions
+remain direct user handoff.
+Google Photos face/location/EXIF output, photo download, photo share, upload,
+and delete remain blocked without a separate approval or user-only handoff.
+Google Account permission changes, saved password output, Maps location-history
+output, YouTube playlist changes, Google Alert creation, and Chrome password
+checks remain blocked without approval or user-only handoff.
+
+### 4.3 Google Vision Monthly Free-Unit Gate
 
 Cloud Vision work must run through the monthly free-unit gate before API use.
 The locked free boundary is 1,000 units per month. The gate warns at 800 units
@@ -226,6 +271,17 @@ Representative host boundaries:
 - `scripts/google/secret_action_gate.py`: Google secret/API key/OAuth issuance
   click policy. It defines `final_approval_only`, `secret_issue_user_click`, and
   `secret_issue_agent_click`, and always blocks raw secret output.
+- `scripts/google/work_mode_gate.py`: Google browser work mode gate. It requires
+  `google_work_mode` to be `main` or `background`, blocks missing mode, and
+  requires `background_approved=True` before background execution.
+- `scripts/google/workspace_basic.py`: Google Workspace and consumer basic
+  feature gate for Gmail, Drive, Google Photos, Calendar, Docs, Sheets, Slides,
+  Forms, Meet, Chat, Contacts, Keep, Tasks, Search, YouTube, Maps, Translate,
+  News, Alerts, Shopping, Google Account, and Chrome. It separates read-only,
+  draft-only, approval-required, and user-only operations.
+- `scripts/google/ads_signup.py`: Google Ads no-paid signup gate. It classifies
+  account creation, website asset-scan consent, billing, budget, and campaign
+  publish boundaries before Keyword Planner access checks.
 - `scripts/google/domain_readiness_audit.py`: all-domain OAuth/API/browser
   fallback readiness audit. Every Google surface must report its read strategy,
   fallback strategy, approval boundary, secret-output boundary, and blocked
@@ -246,6 +302,12 @@ Representative host boundaries:
 - `tests/test_google_cloud_live_console_explorer.py`: Cloud Console live-logic contract.
 - `tests/test_google_secret_action_gate.py`: secret issuance mode and raw-secret
   output contract.
+- `tests/test_google_work_mode_gate.py`: main/background mode selection and
+  background approval contract.
+- `tests/test_google_workspace_basic.py`: Workspace basic feature plan,
+  no-final-submit, and user-only boundary contract.
+- `tests/test_google_ads_signup.py`: Google Ads signup approval, no-paid-action,
+  asset-consent, billing, budget, and campaign publish boundary contract.
 - `tests/test_google_vision_usage_gate.py`: Vision monthly free-unit warning,
   blocking, cost-approval, unit-estimation, and secret-output contract.
 
@@ -255,13 +317,15 @@ Minimum verification before committing Google work:
 
 ```text
 python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
-python -m py_compile scripts/google/managed_console.py
+python -m py_compile scripts/google/managed_console.py scripts/google/workspace_basic.py scripts/google/ads_signup.py
 python -m py_compile scripts/google/secret_action_gate.py
 python -m py_compile scripts/google/domain_readiness_audit.py
 python -m py_compile scripts/google/vision_usage_gate.py scripts/google/router.py
 python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py tests/test_google_managed_console.py -q
 python -m pytest tests/test_google_domain_readiness_audit.py -q
-python -m pytest tests/test_google_secret_action_gate.py tests/test_google_managed_console.py tests/test_youtube_oauth.py -q
+python -m pytest tests/test_google_secret_action_gate.py tests/test_google_managed_console.py tests/test_google_workspace_basic.py tests/test_google_ads_signup.py tests/test_youtube_oauth.py -q
+python -m pytest tests/test_google_home_login_gate.py -q
+python scripts/ops/audit_google_home_login_gate.py
 python -m pytest tests/test_google_vision_usage_gate.py -q
 python scripts/google/domain_readiness_audit.py
 python scripts/ops/audit_google_automation_baseline_contract.py

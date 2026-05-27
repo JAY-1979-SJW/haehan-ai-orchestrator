@@ -7,6 +7,7 @@ from scripts.sites.sso_runtime import (
     build_blocked_operation_result,
     build_login_entry_task,
     build_occasional_site_login_task,
+    build_raw_credential_handoff_rejection,
     build_subdomain_readonly_task,
     dry_run_occasional_site_login_task,
 )
@@ -57,8 +58,22 @@ def test_occasional_site_login_handoff_requires_user_present_without_development
     assert metadata["secret_export_allowed"] is False
     assert policy["user_enters_credentials"] is True
     assert policy["agent_password_or_otp_entry_allowed"] is False
+    assert policy["raw_credential_handoff_allowed"] is False
+    assert policy["credential_capture_allowed_even_with_user_request"] is False
+    assert policy["allowed_agent_login_role"] == "open_login_surface_detect_completion_save_session_only"
     assert policy["readonly_session_check_only"] is True
     assert policy["state_change_allowed"] is False
+
+
+def test_raw_credential_handoff_is_blocked_even_when_user_requests() -> None:
+    result = build_raw_credential_handoff_rejection(site_label="smartstore")
+
+    assert result["ok"] is False
+    assert result["blocked"] is True
+    assert result["agent_may_receive_raw_credentials"] is False
+    assert result["agent_may_type_password_or_otp"] is False
+    assert result["secret_values_output"] is False
+    assert result["allowed_next_step"] == "user_present_login_then_agent_detects_completion_and_saves_domain_session"
 
 
 def test_occasional_site_login_dry_run_has_no_forbidden_fields() -> None:

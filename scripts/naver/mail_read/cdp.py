@@ -73,6 +73,23 @@ def navigate(target_id: str, url: str, port: int = CDP_PORT) -> None:
             return
 
 
+def create_target(url: str = "about:blank", port: int = CDP_PORT) -> str:
+    """Create a new tab in an existing CDP browser session.
+
+    This does not launch, restart, or close the browser. It only asks the
+    already-running CDP endpoint to create an isolated target for concurrent
+    automation work.
+    """
+    with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=2) as r:
+        browser_ws = json.loads(r.read())["webSocketDebuggerUrl"]
+    ws = websocket.create_connection(browser_ws, timeout=8)
+    try:
+        ev = _send(ws, 1, "Target.createTarget", {"url": url}, timeout=5.0)
+    finally:
+        ws.close()
+    return str(ev.get("result", {}).get("targetId") or "")
+
+
 def screenshot_png(target_id: str, port: int = CDP_PORT) -> bytes | None:
     for t in list_pages(port):
         if t.get("id") == target_id:

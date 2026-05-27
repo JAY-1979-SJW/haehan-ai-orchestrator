@@ -25,6 +25,7 @@ __status__ = {
         "company seo monitor": "done",
         "developers entrypoints": "done",
         "shopping competitors": "done",
+        "keyword tools": "done",
         "excel report": "done",
         "cafe list": "done",
         "cafe posts": "done",
@@ -58,6 +59,8 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
         case "mail":
             _gate_mail(sub)
             mail.run(sub or "inbox", args)
+        case "blog-assets" | "blog-media":
+            _cmd_blog_assets(sub or "plan", args)
         case "content":
             _cmd_content(sub or "explore", args)
         case "seo":
@@ -66,6 +69,8 @@ def run_naver(task: str, sub: str, args: list[str]) -> None:
             _cmd_developers(sub or "entrypoints", args)
         case "shopping":
             _cmd_shopping(sub or "competitors", args)
+        case "keyword-tools" | "keywords" | "keyword":
+            _cmd_keyword_tools(sub or "catalog", args)
         case "excel" | "report":
             _cmd_excel(sub or "report", args)
         case "cafe":
@@ -173,6 +178,95 @@ def _parse_datetime_arg(value: str, field: str):
         raise SystemExit(f"{field} must be ISO datetime, example: 2026-05-13T15:00:00") from exc
 
 
+def _cmd_blog_assets(sub: str, args: list[str]) -> None:
+    from pathlib import Path
+
+    from scripts.naver.blog.assets import (
+        analyze_blog_asset_images,
+        analyze_blog_asset_images_with_pixels,
+        collect_blog_asset_inventory,
+        create_shopping_upload_manifest,
+        build_blog_asset_plan,
+        save_blog_image_analysis,
+        save_blog_asset_plan,
+        save_blog_pixel_analysis,
+        save_shopping_upload_manifest,
+    )
+
+    blog_id = _option_value(args, "--blog-id=") or _option_value(args, "--blog=") or "gonobi"
+    target_pages = _int_option(args, "--target=", 1000)
+
+    if sub in ("plan", "prepare"):
+        plan = build_blog_asset_plan(blog_id, target_pages=target_pages)
+        path = save_blog_asset_plan(plan)
+        print(json.dumps(plan.to_dict(), ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("inventory", "collect", "scan"):
+        gate_check("scan_page")
+        port = _int_option(args, "--port=", 9232)
+        max_index_pages = _int_option(args, "--max-index-pages=", 50)
+        scroll_steps = _int_option(args, "--scroll-steps=", 10)
+        wait_raw = _option_value(args, "--wait=") or "2.5"
+        try:
+            wait_seconds = float(wait_raw)
+        except ValueError as exc:
+            raise SystemExit("--wait=<seconds> required") from exc
+        payload = collect_blog_asset_inventory(
+            blog_id=blog_id,
+            target_pages=target_pages,
+            port=port,
+            wait_seconds=wait_seconds,
+            max_index_pages=max_index_pages,
+            scroll_steps=scroll_steps,
+        )
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        if not payload.get("ok"):
+            raise SystemExit(1)
+        return
+
+    if sub in ("analyze", "analysis", "image-analysis", "images"):
+        inventory_path = Path(_option_value(args, "--data=") or "data/naver_blog_asset_inventory_latest.json")
+        if not inventory_path.exists():
+            raise SystemExit(f"inventory file not found: {inventory_path}")
+        inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+        payload = analyze_blog_asset_images(inventory)
+        path = save_blog_image_analysis(payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("pixel-analyze", "pixel-analysis", "visual-analyze", "download-analyze"):
+        inventory_path = Path(_option_value(args, "--data=") or "data/naver_blog_asset_inventory_latest.json")
+        if not inventory_path.exists():
+            raise SystemExit(f"inventory file not found: {inventory_path}")
+        inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+        limit = _int_option(args, "--limit=", 100)
+        output_dir = _option_value(args, "--output-dir=") or "tmp/naver_blog_downloaded_images"
+        payload = analyze_blog_asset_images_with_pixels(inventory, output_dir=output_dir, limit=limit)
+        path = save_blog_pixel_analysis(payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("manifest", "shopping-manifest", "reuse-manifest"):
+        inventory_path = Path(_option_value(args, "--data=") or "data/naver_blog_asset_inventory_latest.json")
+        if not inventory_path.exists():
+            raise SystemExit(f"inventory file not found: {inventory_path}")
+        inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+        confirm = _option_value(args, "--rights-confirm=") or ""
+        payload = create_shopping_upload_manifest(inventory, rights_confirm=confirm)
+        path = save_shopping_upload_manifest(payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        if not payload.get("ok"):
+            raise SystemExit(1)
+        return
+
+    print("usage: python scripts/cdp_client.py naver blog-assets [plan|inventory|analyze|pixel-analyze|manifest] --blog-id=gonobi [--target=1000]")
+
+
 def _cmd_content(sub: str, args: list[str]) -> None:
     from scripts.web_connector import get_page
     from scripts.naver.content import (
@@ -249,6 +343,36 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
         payload = build_entrypoints()
         _print_saved(payload, str(path))
         return
+
+
+def _cmd_keyword_tools(sub: str, args: list[str]) -> None:
+    from scripts.naver import keyword_tools
+
+    query = _option_phrase(args, "--query=") or _option_value(args, "--keywords=") or ""
+    topic = _option_value(args, "--topic=") or ""
+
+    if sub in ("catalog", "tools", "status"):
+        gate_check("scan_page")
+        payload = keyword_tools.build_tool_catalog()
+        path = keyword_tools.save_payload(payload)
+        keyword_tools.print_summary(payload, path)
+        return
+
+    if sub in ("plan", "research-plan", "datalab", "shopping", "shopping-insight", "searchad-plan"):
+        gate_check("scan_page")
+        payload = keyword_tools.build_keyword_plan(query, topic=topic)
+        payload["selected_tool"] = sub
+        path = keyword_tools.save_payload(payload)
+        keyword_tools.print_summary(payload, path)
+        return
+
+    if sub in ("paid-blocks", "paid-policy", "block-paid"):
+        payload = keyword_tools.assert_paid_actions_blocked()
+        path = keyword_tools.save_payload(payload)
+        keyword_tools.print_summary(payload, path)
+        return
+
+    print("usage: python scripts/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=...")
 
     if sub in ("plan", "prepare", "searchadvisor"):
         gate_check("scan_page")
@@ -462,10 +586,202 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
 
     if sub in ("list", "cafes"):
         gate_check("scan_page")
-        page = get_page()
-        cafes = NaverCafe(page).open_my_cafes()
-        out = {"generated_at": datetime.now().isoformat(timespec="seconds"), "cafes": cafes}
+        from scripts.naver.cafe import list_background_runner
+
+        strict_domain = "--strict-domain" in args
+        report = list_background_runner.collect_background(
+            allow_mixed_readonly=not strict_domain,
+            per_page=_int_option(args, "--per-page=", 100),
+        )
+        if not report.ok:
+            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "cafes": report.cafes,
+            "favorites": report.favorites,
+            "manages": report.manages,
+            "joined_total": report.joined_total,
+            "favorite_total": report.favorite_total,
+            "manage_total": report.manage_total,
+            "readonly": True,
+            "attach_only": True,
+            "browser_launch": False,
+            "browser_close": False,
+        }
         path = Path("data/naver_cafes_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("home", "main", "main-page"):
+        gate_check("scan_page")
+        from scripts.naver.cafe import list_background_runner
+
+        strict_domain = "--strict-domain" in args
+        report = list_background_runner.collect_main_background(
+            allow_mixed_readonly=not strict_domain,
+        )
+        if not report.ok:
+            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            **report.to_dict(),
+            "readonly": True,
+            "attach_only": True,
+            "browser_launch": False,
+            "browser_close": False,
+        }
+        path = Path("data/naver_cafe_main_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("topic-search", "search", "topics"):
+        gate_check("scan_page")
+        from scripts.naver.cafe import list_background_runner
+
+        strict_domain = "--strict-domain" in args
+        query = _option_phrase(args, "--query=") or _option_value(args, "--keywords=") or ""
+        report = list_background_runner.collect_topic_search_background(
+            allow_mixed_readonly=not strict_domain,
+            keywords=query,
+            limit_per_keyword=_int_option(args, "--limit=", 10),
+        )
+        if not report.ok:
+            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            **report.to_dict(),
+            "readonly": True,
+            "attach_only": True,
+            "browser_launch": False,
+            "browser_close": False,
+        }
+        path = Path("data/naver_cafe_topic_search_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("join-submit", "join-approve"):
+        from scripts.naver.cafe.join_request import APPROVAL_CONFIRM_TEXT
+
+        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
+            args[0] if args and not str(args[0]).startswith("--") else ""
+        )
+        approved = "--approved" in args
+        confirm = _option_value(args, "--confirm=") or ""
+        approved_by = _option_value(args, "--approved-by=") or "operator"
+        if not cafe_url:
+            raise SystemExit("cafe join-submit requires --cafe-url=CAFE")
+        if not approved or confirm != APPROVAL_CONFIRM_TEXT:
+            raise SystemExit(f"cafe join-submit requires --approved --confirm={APPROVAL_CONFIRM_TEXT}")
+        gate_check(
+            "naver_cafe_join_submit",
+            risk="approve",
+            force=True,
+            service="naver_cafe",
+            cafe_url=cafe_url,
+            approved_by=approved_by,
+        )
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "ok": True,
+            "cafe_url": cafe_url,
+            "approval_gate": "naver_cafe_join_submit",
+            "approved_by": approved_by,
+            "browser_submit_executed": False,
+            "final_click_adapter_required": True,
+            "message": "Join submit approval gate passed; final browser click must be executed by a visible-form adapter.",
+        }
+        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+        path = Path(f"data/naver_cafe_{safe_cafe}_join_submit_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("join", "join-request", "join-prepare", "approval-request"):
+        gate_check("scan_page")
+        from scripts.naver.cafe import list_background_runner
+
+        strict_domain = "--strict-domain" in args
+        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
+            args[0] if args and not str(args[0]).startswith("--") else ""
+        )
+        if not cafe_url:
+            raise SystemExit("cafe join-request requires --cafe-url=CAFE")
+        nickname = _option_phrase(args, "--nickname=") or ""
+        purpose = _option_phrase(args, "--purpose=") or ""
+        answers = {}
+        for arg in args:
+            text = str(arg)
+            if text.startswith("--answer=") and ":" in text:
+                key, value = text.split("=", 1)[1].split(":", 1)
+                answers[key.strip()] = value.strip()
+        report = list_background_runner.collect_joined_cafe_background(
+            cafe_url=cafe_url,
+            mode="join-request",
+            allow_mixed_readonly=not strict_domain,
+            nickname=nickname,
+            purpose=purpose,
+            answers=answers,
+        )
+        if not report.ok:
+            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            **report.to_dict(),
+            "readonly": False,
+            "prepare_only": True,
+            "approval_required": True,
+            "final_submit_blocked": True,
+            "attach_only": True,
+            "browser_launch": False,
+            "browser_close": False,
+        }
+        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+        path = Path(f"data/naver_cafe_{safe_cafe}_join_request_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        return
+
+    if sub in ("collect", "collect-home", "member-collect", "boards", "collect-boards"):
+        gate_check("scan_page")
+        from scripts.naver.cafe import list_background_runner
+
+        strict_domain = "--strict-domain" in args
+        cafe_url = _option_value(args, "--cafe-url=") or _option_value(args, "--cafe=") or (
+            args[0] if args and not str(args[0]).startswith("--") else "soho"
+        )
+        mode = "boards" if sub in ("boards", "collect-boards") or "--boards" in args else "home"
+        report = list_background_runner.collect_joined_cafe_background(
+            cafe_url=cafe_url,
+            mode=mode,
+            allow_mixed_readonly=not strict_domain,
+        )
+        if not report.ok:
+            raise SystemExit(json.dumps(report.to_dict(), ensure_ascii=False))
+        out = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            **report.to_dict(),
+            "readonly": True,
+            "attach_only": True,
+            "browser_launch": False,
+            "browser_close": False,
+        }
+        suffix = "boards" if mode == "boards" else "collect"
+        safe_cafe = "".join(ch for ch in cafe_url if ch.isalnum() or ch in ("_", "-")) or "cafe"
+        path = Path(f"data/naver_cafe_{safe_cafe}_{suffix}_latest.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(out, ensure_ascii=False, indent=2))
         print(f"saved: {path}")
@@ -503,7 +819,7 @@ def _cmd_cafe(sub: str, args: list[str]) -> None:
         return
 
     if sub not in ("write", "prepare-post", "publish"):
-        print("usage: python scripts/cdp_client.py naver cafe [list|posts|read|write|publish] ...")
+        print("usage: python scripts/cdp_client.py naver cafe [list|home|topic-search|join-request|collect|boards|posts|read|write|publish] ...")
         return
 
     cafe_url = _option_value(args, "--cafe-url=") or ""
@@ -740,7 +1056,7 @@ def _cmd_talk(sub: str, args: list[str]) -> None:
         return
 
     gate_check("naver_mail_send", force=approved, service="naver_talk", partner=partner)
-    result = NaverTalk(get_page()).send_message(partner, message, confirm=True)
+    result = NaverTalk(get_page()).send_message(partner, message, confirm=True, approval_confirm=confirm)
     out = {**plan, "ok": bool(result.get("ok")), "result": result}
     _print_saved(out, _save_latest("naver_talk_send_latest.json", out))
 

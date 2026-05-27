@@ -7,6 +7,7 @@ from . import (
     ai_usage_labels,
     android_app_dev_labels,
     android_app_dev_report,
+    ads_signup,
     domain_taxonomy,
     live_inputs,
     live_surface_explorer,
@@ -16,6 +17,7 @@ from . import (
     surfaces,
     tab_logic,
     workflows,
+    workspace_basic,
     youtube_upload,
     managed_console,
     oauth_console_fill,
@@ -102,6 +104,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
         case "docs":
             gate_check("goto")
             workspace_router.run_workspace("docs", sub or "recent", args)
+        case "basic" | "workspace-basic":
+            _cmd_workspace_basic(sub or "catalog", args)
         case "sheets":
             gate_check("goto")
             workspace_router.run_workspace("sheets", sub or "recent", args)
@@ -115,6 +119,8 @@ def run_google(site: str, task: str, sub: str, args: list[str]) -> None:
             _cmd_youtube(sub or "catalog", args)
         case "ai":
             _cmd_ai(sub or "catalog", args)
+        case "ads":
+            _cmd_ads(sub or "signup-plan", args)
         case "vision":
             _cmd_vision(sub or "gate", args)
         case "android" | "android-app" | "app-dev":
@@ -362,6 +368,88 @@ def _cmd_ai(sub: str, args: list[str]) -> None:
     print(f"  [error] unknown ai task: {sub}")
 
 
+def _cmd_ads(sub: str, args: list[str]) -> None:
+    values = _parse_option_args(args)
+    google_work_mode = values.get("google-work-mode") or values.get("google_work_mode")
+    background_approved = values.get("background-approved", values.get("background_approved", "false")).lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    ads_signup_approved = values.get("ads-signup-approved", values.get("ads_signup_approved", "false")).lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    website_asset_scan_approved = values.get(
+        "website-asset-scan-approved",
+        values.get("website_asset_scan_approved", "false"),
+    ).lower() in ("1", "true", "yes", "on")
+    if sub in ("signup-plan", "signup", "account-signup", "keyword-planner-gate"):
+        print(json.dumps(
+            ads_signup.build_ads_signup_plan(
+                google_work_mode=google_work_mode,
+                background_approved=background_approved,
+                ads_signup_approved=ads_signup_approved,
+                website_asset_scan_approved=website_asset_scan_approved,
+            ),
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        ))
+        return
+    if sub in ("classify-signup-screen", "classify"):
+        text = " ".join(args)
+        print(json.dumps(ads_signup.classify_ads_signup_screen(text), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("summary", "catalog"):
+        print(json.dumps({"commands": ["signup-plan --google-work-mode=main --ads-signup-approved"]}, ensure_ascii=False, indent=2))
+        return
+    print(f"  [error] unknown ads task: {sub}")
+
+
+def _cmd_workspace_basic(sub: str, args: list[str]) -> None:
+    values = _parse_option_args(args)
+    google_work_mode = values.get("google-work-mode") or values.get("google_work_mode")
+    background_approved = values.get("background-approved", values.get("background_approved", "false")).lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    final_execution_approved = values.get(
+        "final-execution-approved",
+        values.get("final_execution_approved", "false"),
+    ).lower() in ("1", "true", "yes", "on")
+    if sub in ("catalog", "list", "summary"):
+        print(json.dumps(workspace_basic.build_basic_feature_catalog(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("plan", "prepare"):
+        if len(args) < 2:
+            print("  [error] usage: python scripts/cdp_client.py google basic plan <surface> <operation> [key=value ...] --google-work-mode=main")
+            return
+        surface = args[0]
+        operation = args[1]
+        plan_values = workflows.parse_kv_args([arg for arg in args[2:] if not arg.startswith("--")])
+        print(json.dumps(
+            workspace_basic.build_basic_work_plan(
+                surface,
+                operation,
+                plan_values,
+                google_work_mode=google_work_mode,
+                background_approved=background_approved,
+                final_execution_approved=final_execution_approved,
+            ),
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        ))
+        return
+    print(f"  [error] unknown workspace basic task: {sub}")
+
+
 def _cmd_vision(sub: str, args: list[str]) -> None:
     if sub not in ("gate", "usage-gate", "monthly-free-gate", "free-gate"):
         print(f"  [error] unknown vision task: {sub}")
@@ -417,6 +505,195 @@ def _cmd_youtube(sub: str, args: list[str]) -> None:
         return
     if sub in ("tabs", "page-tabs", "subtabs"):
         print(json.dumps(youtube.page_tabs(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("signal-model", "public-signal-model", "data-model", "limits"):
+        print(json.dumps(youtube.public_signal_model(), ensure_ascii=False, indent=2, default=str))
+        return
+    if sub in ("search", "search-videos", "video-search"):
+        values = _parse_option_args(args)
+        positional = [arg for arg in args if not arg.startswith("--") and "=" not in arg]
+        query = values.get("query") or values.get("q") or " ".join(positional)
+        if not query:
+            print("  [error] usage: python scripts/cdp_client.py google youtube search --query=... [--source=auto|official|browser] [--limit=10]")
+            return
+        result, path = youtube.video_search(
+            query,
+            max_results=int(values.get("limit", values.get("max", "10"))),
+            source=values.get("source", "auto"),
+            wait_seconds=float(values.get("wait-seconds", values.get("wait_seconds", "3"))),
+        )
+        print("=" * 60)
+        print("Google YouTube search")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"source: {result.get('source')}")
+        print(f"result_count: {result.get('result_count', 0)}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"saved: {path}")
+        for item in result.get("results", [])[:10]:
+            print(f"- {item.get('video_id') or '-'} | {item.get('title') or '-'} | {item.get('channel_title') or '-'}")
+        return
+    if sub in ("rank", "rank-analysis", "analyze-search", "search-analysis"):
+        values = _parse_option_args(args)
+        positional = [arg for arg in args if not arg.startswith("--") and "=" not in arg]
+        query = values.get("query") or values.get("q") or " ".join(positional)
+        collect_transcripts = values.get("collect-transcripts", values.get("collect_transcripts", "true")).lower() not in (
+            "0",
+            "false",
+            "no",
+        )
+        result, path = youtube.rank_analysis(
+            query=query,
+            search_report_path=values.get("search-report") or values.get("search_report"),
+            max_videos=int(values.get("limit", values.get("max", "5"))),
+            collect_transcripts=collect_transcripts,
+            wait_seconds=float(values.get("wait-seconds", values.get("wait_seconds", "3"))),
+        )
+        print("=" * 60)
+        print("Google YouTube rank transcript analysis")
+        print("=" * 60)
+        print(f"query: {result.get('query') or '-'}")
+        print(f"analyzed_count: {result.get('analyzed_count', 0)}")
+        print(f"raw_transcript_stored: {result.get('raw_transcript_stored', False)}")
+        print(f"saved: {path}")
+        for item in result.get("ranked_videos", [])[:10]:
+            scores = item.get("scores", {})
+            transcript = item.get("transcript_summary", {})
+            print(
+                f"- score={scores.get('overall_opportunity_score')} "
+                f"rank={item.get('search_rank')} "
+                f"transcript={transcript.get('status')} "
+                f"{item.get('title') or '-'}"
+            )
+        return
+    if sub in ("research-run", "market-run", "run-market-research"):
+        values = _parse_option_args(args)
+        topic = values.get("topic", "")
+        auto_keywords = values.get("auto-keywords", values.get("auto_keywords", "true")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        raw_keywords = values.get("keywords") or values.get("queries") or values.get("query") or values.get("q") or ""
+        keywords = [item.strip() for item in raw_keywords.replace(";", ",").split(",") if item.strip()]
+        keywords.extend([arg for arg in args if not arg.startswith("--") and "=" not in arg])
+        collect_transcripts = values.get("collect-transcripts", values.get("collect_transcripts", "false")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        collect_comments = values.get("collect-comments", values.get("collect_comments", "true")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        result, json_path, markdown_path = youtube.market_research_run(
+            topic=topic,
+            keywords=keywords,
+            auto_keywords=auto_keywords,
+            per_keyword_limit=int(values.get("per-keyword-limit", values.get("per_keyword_limit", values.get("videos", values.get("limit", "10"))))),
+            source=values.get("source", "auto"),
+            collect_transcripts=collect_transcripts,
+            max_transcript_videos=int(values.get("max-transcript-videos", values.get("max_transcript_videos", values.get("transcripts", "5")))),
+            collect_comments=collect_comments,
+            max_comment_videos=int(values.get("max-comment-videos", values.get("max_comment_videos", "5"))),
+            max_comments=int(values.get("max-comments", values.get("max_comments", values.get("comments", "20")))),
+            max_comment_pages=int(values.get("max-comment-pages", values.get("max_comment_pages", "1"))),
+            include_comment_replies=values.get("include-comment-replies", values.get("include_comment_replies", "false")).lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            ),
+            wait_seconds=float(values.get("wait-seconds", values.get("wait_seconds", "3"))),
+        )
+        print("=" * 60)
+        print("Google YouTube market research run")
+        print("=" * 60)
+        print(f"status: {result.get('status')}")
+        print(f"topic: {result.get('topic') or '-'}")
+        print(f"keywords: {', '.join(result.get('keywords', [])) or '-'}")
+        print(f"unique_video_count: {result.get('unique_video_count', 0)}")
+        print(f"json: {json_path}")
+        print(f"markdown: {markdown_path}")
+        for item in result.get("top_videos", [])[:10]:
+            scores = item.get("scores", {})
+            topic_info = item.get("topic_classification", {})
+            print(
+                f"- score={scores.get('topic_opportunity_score')} "
+                f"coverage={item.get('coverage_count')} "
+                f"topic={topic_info.get('primary_topic')} "
+                f"{item.get('title') or '-'}"
+            )
+        return
+    if sub in ("topic", "topic-analysis", "market", "market-analysis"):
+        values = _parse_option_args(args)
+        keywords: list[str] = []
+        topic = values.get("topic", "")
+        auto_keywords = values.get("auto-keywords", values.get("auto_keywords", "false")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if topic:
+            keywords.extend(youtube.expand_topic_keywords(topic, auto_keywords=auto_keywords))
+        raw_keywords = values.get("keywords") or values.get("queries") or values.get("query") or values.get("q") or ""
+        if raw_keywords:
+            keywords.extend([item.strip() for item in raw_keywords.replace(";", ",").split(",") if item.strip()])
+        keywords.extend([arg for arg in args if not arg.startswith("--") and "=" not in arg])
+        collect_transcripts = values.get("collect-transcripts", values.get("collect_transcripts", "false")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        collect_comments = values.get("collect-comments", values.get("collect_comments", "false")).lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        result, path = youtube.topic_analysis(
+            keywords,
+            per_keyword_limit=int(values.get("per-keyword-limit", values.get("per_keyword_limit", values.get("limit", "10")))),
+            source=values.get("source", "auto"),
+            collect_transcripts=collect_transcripts,
+            max_transcript_videos=int(values.get("max-transcript-videos", values.get("max_transcript_videos", "5"))),
+            collect_comments=collect_comments,
+            max_comment_videos=int(values.get("max-comment-videos", values.get("max_comment_videos", "5"))),
+            max_comments=int(values.get("max-comments", values.get("max_comments", "20"))),
+            max_comment_pages=int(values.get("max-comment-pages", values.get("max_comment_pages", "1"))),
+            include_comment_replies=values.get("include-comment-replies", values.get("include_comment_replies", "false")).lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            ),
+            wait_seconds=float(values.get("wait-seconds", values.get("wait_seconds", "3"))),
+        )
+        print("=" * 60)
+        print("Google YouTube keyword topic market analysis")
+        print("=" * 60)
+        print(f"status: {result.get('status')}")
+        print(f"keywords: {', '.join(result.get('keywords', [])) or '-'}")
+        print(f"unique_video_count: {result.get('unique_video_count', 0)}")
+        print(f"raw_transcript_stored: {result.get('raw_transcript_stored', False)}")
+        print(f"raw_comments_stored: {result.get('raw_comments_stored', False)}")
+        print(f"saved: {path}")
+        for item in result.get("videos", [])[:10]:
+            scores = item.get("scores", {})
+            topic = item.get("topic_classification", {})
+            print(
+                f"- score={scores.get('topic_opportunity_score')} "
+                f"coverage={item.get('coverage_count')} "
+                f"rank={item.get('best_observed_rank')} "
+                f"topic={topic.get('primary_topic')} "
+                f"{item.get('title') or '-'}"
+            )
         return
     if sub in ("upload-prepare", "prepare-upload", "upload-plan"):
         values = workflows.parse_kv_args(args)

@@ -98,14 +98,20 @@ Rules:
 
 1. Do not log raw password, token, cookie, session, storage state, API key,
    client secret, OTP, authorization header, or private key values.
-2. Do not print raw login IDs in CLI status output unless the command's only
+2. Do not receive raw login IDs, passwords, OTPs, recovery codes, or other
+   login secrets in chat or agent instructions, even if the user offers them or
+   asks to change the rule. The user may decide to log in, but the user enters
+   credentials directly in the browser or an approved local secret store. The
+   agent role is limited to opening the login surface, detecting completion,
+   and saving a domain-scoped session artifact.
+3. Do not print raw login IDs in CLI status output unless the command's only
    purpose is interactive credential entry by the user.
-3. Redaction must be recursive across mappings, lists, and tuples.
-4. New site modules must import the common helpers instead of defining their
+4. Redaction must be recursive across mappings, lists, and tuples.
+5. New site modules must import the common helpers instead of defining their
    own sensitive-key list.
-5. If a site needs a stricter rule, add it to `security_utils.py` first and
+6. If a site needs a stricter rule, add it to `security_utils.py` first and
    then reuse it from the site-specific module.
-6. User-specific OAuth/API secrets must be passed by approved local secret
+7. User-specific OAuth/API secrets must be passed by approved local secret
    reference when possible. The reference may be logged; the resolved value must
    not be logged, printed, or committed.
 

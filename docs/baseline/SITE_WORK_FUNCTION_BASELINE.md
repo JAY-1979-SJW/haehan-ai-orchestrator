@@ -17,6 +17,7 @@ The baseline covers the currently developed site work modules:
 - `hiworks`
 - `gabia`
 - `youtube`
+- internal `market_research`
 - shared `sites` SSO/subdomain runtime
 
 All work must run from the local browser/local agent path. Server-side
@@ -144,7 +145,8 @@ then implemented through a router, gate, test, and audit.
 
 | Area | User Work | Tier | Current Verification |
 | --- | --- | --- | --- |
-| Research Search | search videos and collect public metadata | read | official YouTube Data API only |
+| Research Search | search videos and collect public metadata | read | official YouTube Data API or public YouTube search DOM read-only; no clicks, inputs, cookie export, hidden endpoints, or challenge bypass |
+| Market Research Topic Analysis | expand a topic such as SmartStore into keyword searches, classify repeated exposure, and score observed results | read/prepare | implemented inside current app; see `MARKET_RESEARCH_MODULE_BASELINE` |
 | Video Info | collect title, description, channel, date, stats, caption hint | read | official YouTube Data API only |
 | Comments | collect public top-level comments | read | official YouTube Data API only |
 | Transcript Plan | decide compliant transcript collection path | read/prepare | server Web OAuth or user-provided captions only |
@@ -257,6 +259,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 ### YouTube
 
 - Router command: `python scripts/cdp_client.py youtube ...`
+- Market research command: `python scripts/cdp_client.py google youtube topic ...`
 - Required routed tasks:
   - `record prepare`
   - `record execute`
@@ -267,6 +270,8 @@ site login session is missing or when only catalog/dry-run evidence exists.
   - upload defaults to dry-run unless live execution is explicitly requested
     and approved.
   - missing local video files must block approval readiness.
+  - keyword/topic research remains an internal app module and must not create a
+    separate public domain unless productization is approved.
 
 ## Required Evidence
 

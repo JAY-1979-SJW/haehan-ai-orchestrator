@@ -40,6 +40,15 @@ _log = get_logger(__name__)
 
 # 사이트별 로그인 감지 패턴
 LOGIN_PATTERNS = {
+    "smartstore": {
+        "domains": ["sell.smartstore.naver.com", "smartstore.naver.com"],
+        "logged_in_signs": [
+            ("text", "상품관리"),
+            ("text", "판매관리"),
+            ("text", "정산관리"),
+            ("selector", "a[href*='logout']"),
+        ],
+    },
     "naver": {
         "domains": ["naver.com", "mail.naver.com"],
         "logged_in_signs": [
@@ -106,6 +115,8 @@ def _host_from_url(url: str) -> str:
 
 def _storage_host_for_url(url: str) -> str:
     host = _host_from_url(url)
+    if host in {"sell.smartstore.naver.com", "smartstore.naver.com"}:
+        return "sell.smartstore.naver.com"
     if host.endswith(".office.hiworks.com"):
         return "office.hiworks.com"
     if host.endswith(".naver.com"):

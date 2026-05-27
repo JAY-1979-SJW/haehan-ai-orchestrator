@@ -367,6 +367,28 @@ def _cmd_research(sub: str, args: list[str]) -> None:
             print(f"analysis_status: {analysis['status']}")
             print(f"analysis_saved: {analysis_path}")
         return
+    if sub in ("store-transcript", "full-transcript-store", "store-full-transcript"):
+        transcript_file = values.get("transcript") or values.get("transcript_file") or values.get("file")
+        if not transcript_file:
+            print("  [error] usage: youtube research store-transcript transcript=<path> rights_confirmed=1 [video_id=...] [title=...]")
+            return
+        result, path = research.store_full_transcript_file(
+            transcript_file,
+            video_id=values.get("video_id", ""),
+            title=values.get("title", ""),
+            rights_confirmed=values.get("rights_confirmed", values.get("rights", "0")) in {"1", "true", "yes", "confirmed"},
+            source_type=values.get("source_type", "user_provided_or_licensed"),
+            output=values.get("output") or None,
+        )
+        print("=" * 60)
+        print("YouTube full transcript store")
+        print("=" * 60)
+        print(f"status: {result['status']}")
+        print(f"full_transcript_stored: {result.get('full_transcript_stored', False)}")
+        print(f"raw_transcript_path: {result.get('raw_transcript_path') or '-'}")
+        print(f"reason: {result.get('reason') or '-'}")
+        print(f"saved: {path}")
+        return
     if sub in ("video-info", "info", "metadata"):
         video_id = values.get("video_id") or values.get("id") or (args[0] if args and "=" not in args[0] else "")
         if not video_id:
@@ -389,6 +411,9 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         result, path = research.collect_comments(
             video_id,
             max_results=int(values.get("max") or values.get("limit") or 20),
+            max_pages=int(values.get("pages") or values.get("max_pages") or 1),
+            max_comments_total=int(values.get("total") or values.get("max_total") or values.get("max_comments_total") or 100),
+            include_replies=values.get("include_replies", values.get("replies", "0")) in {"1", "true", "yes"},
             order=values.get("order", "relevance"),
         )
         print("=" * 60)
@@ -396,6 +421,8 @@ def _cmd_research(sub: str, args: list[str]) -> None:
         print("=" * 60)
         print(f"status: {result['status']}")
         print(f"comment_count: {result.get('comment_count', 0)}")
+        print(f"pages_fetched: {result.get('pages_fetched', 0)}")
+        print(f"next_page_token_present: {result.get('next_page_token_present', False)}")
         print(f"reason: {result.get('reason') or '-'}")
         print(f"saved: {path}")
         return

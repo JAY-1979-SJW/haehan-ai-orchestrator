@@ -11,6 +11,7 @@ import json
 import os
 import re
 import urllib.parse
+import urllib.error
 import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
@@ -29,6 +30,7 @@ LATEST_CAPTION_LIST = ROOT / "data" / "youtube_caption_list_latest.json"
 LATEST_CAPTION_DOWNLOAD = ROOT / "data" / "youtube_caption_download_latest.json"
 LATEST_SCRIPT_COLLECT = ROOT / "data" / "youtube_script_collect_latest.json"
 LATEST_VIDEO_SUMMARY = ROOT / "data" / "youtube_video_summary_latest.json"
+LATEST_FULL_TRANSCRIPT_STORE = ROOT / "data" / "youtube_full_transcript_store_latest.json"
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
@@ -193,7 +195,7 @@ def parse_youtube_video_id(value: str) -> str:
 def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
     query = urllib.parse.urlencode(params)
     request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=20) as response:
+    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -203,7 +205,7 @@ def _get_json_oauth(url: str, params: dict[str, str | int], token: str) -> dict[
         f"{url}?{query}",
         headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
+    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -213,8 +215,30 @@ def _get_text_oauth(url: str, params: dict[str, str | int], token: str) -> str:
         f"{url}?{query}",
         headers={"Accept": "text/plain,text/vtt,application/x-subrip,*/*", "Authorization": f"Bearer {token}"},
     )
-    with urllib.request.urlopen(request, timeout=20) as response:
+    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
         return response.read().decode("utf-8", errors="replace")
+
+
+def _urlopen_with_dead_proxy_fallback(request: urllib.request.Request, *, timeout: int):
+    try:
+        return urllib.request.urlopen(request, timeout=timeout)
+    except urllib.error.URLError as exc:
+        if not _should_retry_without_proxy(exc):
+            raise
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        return opener.open(request, timeout=timeout)
+
+
+def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
+    reason = str(getattr(exc, "reason", exc))
+    proxy_values = [
+        os.environ.get("HTTPS_PROXY", ""),
+        os.environ.get("HTTP_PROXY", ""),
+        os.environ.get("https_proxy", ""),
+        os.environ.get("http_proxy", ""),
+    ]
+    dead_local_proxy = any("127.0.0.1:9" in value or "localhost:9" in value for value in proxy_values)
+    return dead_local_proxy and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
 
 
 def search_videos(
@@ -431,6 +455,9 @@ def collect_comments(
     video_id: str,
     *,
     max_results: int = 20,
+    max_pages: int = 1,
+    max_comments_total: int = 100,
+    include_replies: bool = False,
     order: str = "relevance",
     api_key: str | None = None,
     oauth_token: str | None = None,
@@ -441,6 +468,8 @@ def collect_comments(
     token = _oauth_token(oauth_token, token_file)
     video_id = video_id.strip()
     max_results = max(1, min(int(max_results), 100))
+    max_pages = max(1, min(int(max_pages), 50))
+    max_comments_total = max(1, min(int(max_comments_total), 5000))
     if not key and not token:
         payload = {
             "schema_version": 1,
@@ -458,39 +487,66 @@ def collect_comments(
         }
         return payload, _write_report(payload, ROOT / "data" / "youtube_comments_latest.json", "youtube_comments")
 
-    try:
-        params: dict[str, str | int] = {
-            "part": "snippet",
-            "videoId": video_id,
-            "maxResults": max_results,
-            "order": order if order in {"time", "relevance"} else "relevance",
-            "textFormat": "plainText",
-        }
-        if key:
-            params["key"] = key
-            data = _get_json(YOUTUBE_COMMENT_THREADS_URL, params)
-        else:
-            data = _get_json_oauth(YOUTUBE_COMMENT_THREADS_URL, params, token)
-        status = "ok"
-        reason = ""
-    except Exception as exc:
-        data = {"items": []}
-        status = "blocked_or_unavailable"
-        reason = type(exc).__name__ + ": " + str(exc)[:180]
-
     comments: list[dict[str, Any]] = []
-    for item in data.get("items", []):
-        top = item.get("snippet", {}).get("topLevelComment", {}).get("snippet", {})
-        comments.append(
-            {
-                "comment_id": safe_preview(item.get("id", ""), limit=120),
-                "author_display_name": safe_preview(top.get("authorDisplayName", ""), limit=80),
-                "published_at": top.get("publishedAt", ""),
-                "updated_at": top.get("updatedAt", ""),
-                "like_count": top.get("likeCount", 0),
-                "text": safe_preview(SENSITIVE_WORDS.sub("[redacted-sensitive]", top.get("textDisplay", "")), limit=1000),
+    pages_fetched = 0
+    next_page_token = ""
+    status = "ok"
+    reason = ""
+    try:
+        while pages_fetched < max_pages and len(comments) < max_comments_total:
+            params: dict[str, str | int] = {
+                "part": "snippet,replies" if include_replies else "snippet",
+                "videoId": video_id,
+                "maxResults": min(max_results, max_comments_total - len(comments)),
+                "order": order if order in {"time", "relevance"} else "relevance",
+                "textFormat": "plainText",
             }
-        )
+            if next_page_token:
+                params["pageToken"] = next_page_token
+            if key:
+                params["key"] = key
+                data = _get_json(YOUTUBE_COMMENT_THREADS_URL, params)
+            else:
+                data = _get_json_oauth(YOUTUBE_COMMENT_THREADS_URL, params, token)
+            pages_fetched += 1
+            for item in data.get("items", []):
+                top_comment = item.get("snippet", {}).get("topLevelComment", {})
+                top = top_comment.get("snippet", {})
+                comments.append(
+                    _comment_row(
+                        comment_id=str(top_comment.get("id") or item.get("id") or ""),
+                        snippet=top,
+                        parent_id="",
+                        kind="top_level",
+                    )
+                )
+                if len(comments) >= max_comments_total:
+                    break
+                if include_replies:
+                    for reply in item.get("replies", {}).get("comments", []):
+                        reply_snippet = reply.get("snippet", {})
+                        comments.append(
+                            _comment_row(
+                                comment_id=str(reply.get("id") or ""),
+                                snippet=reply_snippet,
+                                parent_id=str(item.get("id") or ""),
+                                kind="reply",
+                            )
+                        )
+                        if len(comments) >= max_comments_total:
+                            break
+                if len(comments) >= max_comments_total:
+                    break
+            next_page_token = str(data.get("nextPageToken") or "")
+            if not next_page_token:
+                break
+    except Exception as exc:
+        if not comments:
+            status = "blocked_or_unavailable"
+        else:
+            status = "partial"
+        reason = type(exc).__name__ + ": " + str(exc)[:180]
+    classification = classify_comments(comments)
 
     payload = {
         "schema_version": 1,
@@ -505,10 +561,77 @@ def collect_comments(
         "api_key_output": "redacted",
         "oauth_token_output": "redacted",
         "credential_source": "api_key" if key else "oauth",
+        "collection_scope": "bounded_full_public_comment_threads",
+        "pages_fetched": pages_fetched,
+        "next_page_token_present": bool(next_page_token),
+        "max_pages": max_pages,
+        "max_comments_total": max_comments_total,
+        "include_replies": include_replies,
         "comment_count": len(comments),
+        "classification": classification,
         "comments": comments,
     }
     return payload, _write_report(payload, ROOT / "data" / "youtube_comments_latest.json", "youtube_comments")
+
+
+COMMENT_CLASS_RULES: dict[str, tuple[str, ...]] = {
+    "question": ("?", "how", "what", "why", "where", "when", "\uc5b4\ub5bb\uac8c", "\ubb50", "\uc65c", "\uc9c8\ubb38", "\uad81\uae08"),
+    "positive_feedback": ("great", "good", "thanks", "helpful", "useful", "\uac10\uc0ac", "\uc88b", "\ub3c4\uc6c0", "\uc720\uc775"),
+    "negative_feedback": ("bad", "wrong", "problem", "error", "hate", "\uc544\uc27d", "\ubb38\uc81c", "\uc624\ub958", "\ubd88\ud3b8", "\ubcc4\ub85c"),
+    "request": ("please", "can you", "make", "show", "\ud574\uc8fc", "\ub9cc\ub4e4", "\ubcf4\uc5ec", "\uc694\uccad"),
+    "price_business": ("price", "cost", "money", "profit", "\uac00\uaca9", "\ube44\uc6a9", "\uc218\uc775", "\ub9e4\ucd9c", "\ub3c8"),
+    "implementation": ("setup", "install", "tool", "code", "api", "\uc124\uc815", "\uc124\uce58", "\ub3c4\uad6c", "\ucf54\ub4dc", "\uc790\ub3d9\ud654"),
+}
+
+
+def _comment_row(*, comment_id: str, snippet: dict[str, Any], parent_id: str, kind: str) -> dict[str, Any]:
+    return {
+        "comment_id": safe_preview(comment_id, limit=120),
+        "parent_id": safe_preview(parent_id, limit=120),
+        "kind": kind,
+        "author_display_name": safe_preview(snippet.get("authorDisplayName", ""), limit=80),
+        "published_at": snippet.get("publishedAt", ""),
+        "updated_at": snippet.get("updatedAt", ""),
+        "like_count": snippet.get("likeCount", 0),
+        "text": safe_preview(SENSITIVE_WORDS.sub("[redacted-sensitive]", snippet.get("textDisplay", "")), limit=1000),
+    }
+
+
+def classify_comments(comments: list[dict[str, Any]]) -> dict[str, Any]:
+    """Classify collected comments into simple market-research buckets."""
+    buckets: dict[str, list[dict[str, Any]]] = {key: [] for key in COMMENT_CLASS_RULES}
+    buckets["uncategorized"] = []
+    keyword_text = []
+    for row in comments:
+        text = str(row.get("text", ""))
+        lower = text.lower()
+        matched = False
+        for label, terms in COMMENT_CLASS_RULES.items():
+            if any(term.lower() in lower for term in terms):
+                buckets[label].append(row)
+                matched = True
+        if not matched:
+            buckets["uncategorized"].append(row)
+        keyword_text.append(text)
+    bucket_counts = {key: len(value) for key, value in buckets.items() if value}
+    top_samples = {}
+    for key, rows in buckets.items():
+        if not rows:
+            continue
+        sorted_rows = sorted(rows, key=lambda item: _int_value(item.get("like_count")), reverse=True)
+        top_samples[key] = [
+            {
+                "like_count": _int_value(row.get("like_count")),
+                "text_preview": safe_preview(row.get("text", ""), limit=180),
+            }
+            for row in sorted_rows[:3]
+        ]
+    return {
+        "comment_count": len(comments),
+        "bucket_counts": bucket_counts,
+        "top_keywords": _top_keywords(" ".join(keyword_text), limit=20),
+        "top_samples": top_samples,
+    }
 
 
 def analyze_video_context(
@@ -983,6 +1106,85 @@ def download_caption(
     return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
 
 
+def store_full_transcript_file(
+    transcript_file: str | Path,
+    *,
+    video_id: str = "",
+    title: str = "",
+    rights_confirmed: bool = False,
+    source_type: str = "user_provided_or_licensed",
+    output: str | Path | None = None,
+) -> tuple[dict[str, Any], Path]:
+    """Store a full transcript only when the user confirms rights/authorization."""
+    if not rights_confirmed:
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_full_transcript_store",
+            "ok": False,
+            "status": "blocked",
+            "reason": "rights_confirmation_required",
+            "video_id": safe_preview(video_id, limit=80),
+            "title": safe_preview(title, limit=180),
+            "state_change": False,
+            "full_transcript_stored": False,
+            "allowed_sources": [
+                "user_provided_transcript_file",
+                "owned_or_licensed_transcript_file",
+                "official_caption_download_with_authorized_oauth",
+            ],
+            "blocked_sources": [
+                "third_party_browser_visible_transcript_full_text_storage",
+                "hidden_caption_endpoint_scraping",
+                "unofficial_transcript_api_without_approval",
+            ],
+            "next_step": "Rerun with rights_confirmed=1 only for owned, licensed, or user-provided transcript text.",
+        }
+        return payload, _write_report(payload, LATEST_FULL_TRANSCRIPT_STORE, "youtube_full_transcript_store")
+
+    source = _resolve_repo_path(transcript_file)
+    if not source.exists() or not source.is_file():
+        payload = {
+            "schema_version": 1,
+            "created_at": _now(),
+            "workflow": "youtube_full_transcript_store",
+            "ok": False,
+            "status": "blocked",
+            "reason": "transcript_file_not_found",
+            "input": safe_preview(str(transcript_file), limit=180),
+            "state_change": False,
+            "full_transcript_stored": False,
+        }
+        return payload, _write_report(payload, LATEST_FULL_TRANSCRIPT_STORE, "youtube_full_transcript_store")
+
+    text = SENSITIVE_WORDS.sub("[redacted-sensitive]", source.read_text(encoding="utf-8", errors="replace"))
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    suffix = source.suffix if source.suffix else ".txt"
+    target = _resolve_repo_path(output) if output else REPORT_DIR / f"youtube_full_transcript_{_stamp()}{suffix}"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+    payload = {
+        "schema_version": 1,
+        "created_at": _now(),
+        "workflow": "youtube_full_transcript_store",
+        "ok": True,
+        "status": "ok",
+        "video_id": safe_preview(video_id, limit=80),
+        "title": safe_preview(title, limit=180),
+        "state_change": False,
+        "source_type": safe_preview(source_type, limit=80),
+        "rights_confirmed": True,
+        "secret_values_read": False,
+        "full_transcript_stored": True,
+        "raw_transcript_path": str(target),
+        "character_count": len(text),
+        "word_like_count": len(WORD_RE.findall(text)),
+        "policy": "owned_licensed_or_user_provided_full_text_only",
+        "copyright_note": "Store and reuse only when you have rights or authorization for this transcript.",
+    }
+    return payload, _write_report(payload, LATEST_FULL_TRANSCRIPT_STORE, "youtube_full_transcript_store")
+
+
 def collect_script_from_url(
     url_or_video_id: str,
     *,
@@ -1249,6 +1451,14 @@ def _top_keywords(text: str, *, limit: int = 12) -> list[dict[str, Any]]:
     words = [word.lower() for word in WORD_RE.findall(text)]
     words = [word for word in words if word not in STOPWORDS and len(word) > 1]
     return [{"keyword": word, "count": count} for word, count in Counter(words).most_common(limit)]
+
+
+def _int_value(value: Any) -> int:
+    text = str(value or "").replace(",", "").strip()
+    try:
+        return int(float(text))
+    except ValueError:
+        return 0
 
 
 def analyze_transcript(transcript_file: str | Path, *, video_id: str = "", title: str = "") -> tuple[dict[str, Any], Path]:

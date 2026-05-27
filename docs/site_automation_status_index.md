@@ -87,3 +87,33 @@ The homepage repository is now included in the common operations index as
 - Status: `security_watch_active`
 - Production watch: quick audit every 5 minutes, full audit daily at 03:40 KST
 - Production latest status: `/home/ubuntu/logs/security-audit/latest.status`
+
+## Naver Developed Tools Update - 2026-05-27
+
+Naver remains `implemented_partial`, but the developed tools are now indexed in
+`docs/naver_developed_tools_index.md`.
+
+Verified or implemented Naver tool groups:
+
+- `keyword-tools`: catalog, research plan, Datalab/shopping/SearchAd planning,
+  and paid-action block policy.
+- `cafe`: list, home, topic-search, join-request, join-submit approval gate,
+  joined-cafe home collection, and board collection.
+- `naver_mail`: background read, settings inspection, and approval gates for
+  send/delete/move/settings-save.
+- `browser_cdp_selection_gate`: common CDP tab isolation for parallel browser
+  work.
+
+Latest focused verification:
+
+```powershell
+python -m pytest tests\test_browser_cdp_selection_gate.py tests\test_naver_cafe_list_collector.py tests\test_naver_mail_background_runner.py tests\test_naver_service_router.py -q
+```
+
+Result: `52 passed`.
+
+Remaining:
+
+- Actual visible-form cafe join final click remains a separate approval-gated
+  adapter.
+- Paid Naver API/search-ad/payment/ad-publish actions remain blocked.

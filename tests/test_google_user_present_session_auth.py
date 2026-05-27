@@ -17,6 +17,7 @@ def test_google_login_defaults_to_user_present_session(monkeypatch: pytest.Monke
     from scripts.google import auth
 
     page = _FakePage()
+    assert auth.GOOGLE_LOGIN_URL == "https://www.google.com/"
     assert not hasattr(auth, "_load_credentials")
     assert not hasattr(auth, "save_credentials")
     assert not hasattr(auth, "_safe_human_input")
@@ -68,3 +69,28 @@ def test_google_login_timeout_is_safe_failure(monkeypatch: pytest.MonkeyPatch) -
     assert result["ok"] is False
     assert result["method"] == "user_present_session"
     assert result["reason"] == "user_present_login_timeout"
+
+
+def test_google_login_gate_blocks_direct_accounts_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts.google import auth
+
+    page = _FakePage()
+    monkeypatch.setattr(auth, "GOOGLE_LOGIN_URL", "https://accounts.google.com/signin")
+    monkeypatch.setattr(auth, "detect_login_state", lambda _page: {"logged_in": False})
+
+    with pytest.raises(ValueError, match="FORBIDDEN_LOGIN_URL_DIRECT_ENTRY"):
+        auth.login_google(page, wait_for_user_s=1)
+
+    assert page.goto_calls == []
+
+
+def test_google_login_probe_gate_blocks_direct_accounts_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import login_session
+
+    page = _FakePage()
+    monkeypatch.setitem(login_session.LOGIN_PROBE_URLS, "google", "https://accounts.google.com/signin")
+
+    with pytest.raises(ValueError, match="FORBIDDEN_LOGIN_URL_DIRECT_ENTRY"):
+        login_session._probe(page, "google", [], [])
+
+    assert page.goto_calls == []

@@ -50,7 +50,7 @@ NAVER_SERVICES = (
     SubdomainService("naver_mybox", "Naver MYBOX", "https://mybox.naver.com/", "mybox.naver.com"),
     SubdomainService("naver_calendar", "Naver Calendar", "https://calendar.naver.com/", "calendar.naver.com"),
     SubdomainService("naver_pay", "Naver Pay", "https://new-m.pay.naver.com/", "new-m.pay.naver.com"),
-    SubdomainService("naver_smartstore", "Naver Smartstore", "https://smartstore.naver.com/", "smartstore.naver.com"),
+    SubdomainService("naver_smartstore", "Naver Smartstore Center", "https://sell.smartstore.naver.com/#/home/dashboard", "sell.smartstore.naver.com"),
     SubdomainService("naver_search_advisor", "Naver Search Advisor", "https://searchadvisor.naver.com/", "searchadvisor.naver.com"),
     SubdomainService("naver_place", "Naver SmartPlace", "https://new.smartplace.naver.com/", "new.smartplace.naver.com"),
 )
