@@ -123,18 +123,25 @@
       "owner": "naver",
       "status": "implemented_partial",
       "reference_docs": [
+        "docs/naver_developed_tools_index.md",
         "docs/NAVER_SERVICES_EXPANSION_PLAN.md",
         "docs/naver_live_safety_policy_20260513.md"
       ],
       "primary_artifacts": [
         "data/naver_service_action_catalog_latest.json",
+        "data/naver_keyword_tools_latest.json",
+        "data/naver_cafes_latest.json",
+        "data/naver_cafe_royaltyserver_join_request_latest.json",
+        "data/naver_cafe_royaltyserver_boards_latest.json",
         "data/naver_company_seo_full_latest.json",
         "data/naver_shopping_competitors_latest.json"
       ],
       "next_actions": [
-        "Split Naver into service-level completion reports.",
+        "Use docs/naver_developed_tools_index.md before adding more Naver automation.",
+        "Keep common CDP tab isolation active for parallel browser work.",
         "Keep live browser work slow and page-complete before moving on.",
-        "Stop on robot/security challenge signals."
+        "Stop on robot/security challenge signals.",
+        "Keep paid Naver API, search-ad, payment, and ad publish actions blocked."
       ]
     },
     {
@@ -182,6 +189,8 @@
       "owner": "google",
       "status": "implemented_gated",
       "reference_docs": [
+        "docs/google_developed_tools_index.md",
+        "docs/google_domain_function_index.md",
         "docs/google_surface_catalog_reference_20260513.md",
         "docs/google_business_workflow_reference_20260513.md",
         "docs/youtube_recording_upload_workflow_20260513.md",
@@ -194,6 +203,8 @@
         "data/youtube_upload_plan_latest.json"
       ],
       "next_actions": [
+        "Use docs/google_developed_tools_index.md before adding more Google automation.",
+        "Use docs/google_domain_function_index.md to classify Google work by domain before implementation.",
         "Complete per-surface live read reports.",
         "Prefer official APIs for Gmail, Drive, Calendar, Docs, Sheets, and YouTube when available.",
         "Keep publish, upload, IAM, billing, API key, indexing, release, and comment actions approval-gated."

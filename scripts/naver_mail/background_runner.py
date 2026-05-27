@@ -21,6 +21,7 @@ from scripts.browser_cdp_selection_gate import (
     CODE_MIXED_DOMAIN_SESSION,
     CdpSession,
     SelectionReport,
+    create_isolated_target,
     discover_sessions,
     evaluate_sessions,
 )
@@ -110,6 +111,19 @@ def find_mail_target_id(*, port: int) -> tuple[str, dict[str, Any]]:
     return "", {}
 
 
+def create_isolated_mail_target(*, port: int) -> tuple[str, dict[str, Any]]:
+    report = create_isolated_target(
+        task="naver",
+        work="mail:background",
+        port=port,
+        start_url="https://mail.naver.com/",
+    )
+    if not report.ok or not report.target_id:
+        return "", {}
+    cdp.wait_dom(report.target_id, "location.href.includes('mail.naver.com')", timeout=15.0, port=port)
+    return report.target_id, report.page
+
+
 def inspect_background(
     *,
     allow_mixed_readonly: bool = False,
@@ -124,13 +138,13 @@ def inspect_background(
             selection=selection.to_dict(),
         )
 
-    target_id, page = find_mail_target_id(port=session.port)
+    target_id, page = create_isolated_mail_target(port=session.port)
     if not target_id:
         return BackgroundReport(
             ok=False,
             code="no_mail_target",
             port=session.port,
-            messages=["No Naver Mail target tab was found."],
+            messages=["Could not create an isolated Naver Mail CDP target tab."],
             selection=selection.to_dict(),
         )
 
@@ -154,7 +168,7 @@ def inspect_background(
         mail_count=len(items),
         folder_kind_counts=kind_counts,
         settings_menus=menus,
-        messages=["Attached to existing Naver Mail CDP target; no browser launch or state-changing action."],
+        messages=["Created an isolated tab in the existing Naver CDP session; no browser launch, restart, close, or state-changing action."],
         selection=selection.to_dict(),
     )
 

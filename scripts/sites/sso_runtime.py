@@ -83,9 +83,24 @@ OCCASIONAL_SITE_LOGIN_POLICY = {
     "credential_replay_allowed": False,
     "user_enters_credentials": True,
     "agent_password_or_otp_entry_allowed": False,
+    "user_may_disclose_raw_credentials_to_agent": False,
+    "raw_credential_handoff_allowed": False,
+    "credential_capture_allowed_even_with_user_request": False,
+    "allowed_agent_login_role": "open_login_surface_detect_completion_save_session_only",
     "readonly_session_check_only": True,
     "state_change_allowed": False,
     "final_approval_required_for_state_change": True,
+}
+
+RAW_CREDENTIAL_HANDOFF_POLICY = {
+    "accepted": False,
+    "reason": "raw_login_credentials_must_not_be_disclosed_to_agent",
+    "user_authority_boundary": (
+        "The user may decide to log in, but the user enters credentials directly "
+        "in the browser or an approved local secret store; the agent does not "
+        "receive, echo, log, store, replay, or type raw passwords, OTPs, or recovery codes."
+    ),
+    "allowed_flow": "user_present_login_then_agent_detects_completion_and_saves_domain_session",
 }
 
 
@@ -231,6 +246,20 @@ def build_blocked_operation_result(provider_id: str, service_key: str, operation
         "sso_connection_policy": SSO_CONNECTION_POLICY,
         "oauth_client_policy": OAUTH_CLIENT_POLICY,
         "local_agent_task": None,
+    }
+
+
+def build_raw_credential_handoff_rejection(*, site_label: str = "") -> dict[str, Any]:
+    """Return the locked result for attempts to give raw login secrets to the agent."""
+    return {
+        "ok": False,
+        "blocked": True,
+        "site_label": site_label,
+        "policy": RAW_CREDENTIAL_HANDOFF_POLICY,
+        "secret_values_output": False,
+        "agent_may_receive_raw_credentials": False,
+        "agent_may_type_password_or_otp": False,
+        "allowed_next_step": RAW_CREDENTIAL_HANDOFF_POLICY["allowed_flow"],
     }
 
 

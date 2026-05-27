@@ -10,6 +10,41 @@ def _session(port, urls):
     )
 
 
+def test_create_isolated_mail_target_uses_common_tab_gate(monkeypatch):
+    calls = []
+    waits = []
+
+    class FakeIsolationReport:
+        ok = True
+        target_id = "mail-target"
+        page = {"id": "mail-target", "url": "https://mail.naver.com/", "title": "Naver Mail"}
+
+    def fake_create_isolated_target(**kwargs):
+        calls.append(kwargs)
+        return FakeIsolationReport()
+
+    monkeypatch.setattr(br, "create_isolated_target", fake_create_isolated_target)
+    monkeypatch.setattr(
+        br.cdp,
+        "wait_dom",
+        lambda target_id, expr, *, timeout, port: waits.append((target_id, expr, timeout, port)) or True,
+    )
+
+    target_id, page = br.create_isolated_mail_target(port=9222)
+
+    assert target_id == "mail-target"
+    assert page["title"] == "Naver Mail"
+    assert calls == [
+        {
+            "task": "naver",
+            "work": "mail:background",
+            "port": 9222,
+            "start_url": "https://mail.naver.com/",
+        }
+    ]
+    assert waits[0][0] == "mail-target"
+
+
 def test_background_runner_strict_mode_rejects_mixed_naver_google_session():
     sessions = [_session(9222, ["https://mail.naver.com/", "https://accounts.google.com/"])]
     session, selection = br.select_naver_session(sessions=sessions, allow_mixed_readonly=False)

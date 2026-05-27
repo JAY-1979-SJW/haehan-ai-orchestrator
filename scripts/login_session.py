@@ -30,6 +30,10 @@ log = get_logger(__name__)
 def _probe(page: Page, site: str, logged_in_sels: list[str],
            logged_out_sels: list[str], url_block: str = "") -> bool:
     """공통 로그인 판별 — URL 이동 후 셀렉터 다중 매칭."""
+    if site.lower() == "google":
+        from local_agent import site_entry_policy
+
+        site_entry_policy.assert_main_page_first(LOGIN_PROBE_URLS[site], site_key="google")
     try:
         page.goto(LOGIN_PROBE_URLS[site], timeout=15000, wait_until="domcontentloaded")
         time.sleep(1)

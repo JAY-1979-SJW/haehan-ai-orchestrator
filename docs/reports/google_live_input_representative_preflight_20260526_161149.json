@@ -1,0 +1,67 @@
+{
+  "site_id": "google",
+  "report_type": "representative_live_input_dry_preflight",
+  "generated_at": "2026-05-26T16:11:49.213672+00:00",
+  "status": "passed",
+  "policy": {
+    "live_browser_opened": false,
+    "external_state_change": false,
+    "final_submit_policy": "blocked; live command requires --no-final-submit",
+    "representative_scope": "Gmail, Search Console, Cloud credential, Cloud IAM"
+  },
+  "coverage_counts": {
+    "approval_actions": 46,
+    "live_input_supported": 46,
+    "prepare_or_open_only": 0,
+    "domain_specific_prefill": 7,
+    "generic_handoff": 37,
+    "partial_handoff": 2,
+    "strict_prefill_gaps": 39
+  },
+  "checks": {
+    "approval_actions_46": true,
+    "live_input_supported_46": true,
+    "prepare_or_open_only_zero": true,
+    "representatives_supported": true,
+    "representatives_ready": true,
+    "state_change_false": true
+  },
+  "representatives": [
+    {
+      "action_key": "gmail_send_email",
+      "surface_key": "gmail",
+      "mode": "safe_pre_final_input",
+      "ready_for_approval": true,
+      "missing_inputs": [],
+      "state_change": false,
+      "no_final_submit_command": "python scripts\\cdp_client.py google work live-fill C:\\work\\01. haehan-ai-orchestrator\\data\\google_prepares\\google_prepare_gmail_send_email_20260526_161149.json --no-final-submit"
+    },
+    {
+      "action_key": "search_console_submit_sitemap",
+      "surface_key": "search_console",
+      "mode": "safe_pre_final_input",
+      "ready_for_approval": true,
+      "missing_inputs": [],
+      "state_change": false,
+      "no_final_submit_command": "python scripts\\cdp_client.py google work live-fill C:\\work\\01. haehan-ai-orchestrator\\data\\google_prepares\\google_prepare_search_console_submit_sitemap_20260526_161149.json --no-final-submit"
+    },
+    {
+      "action_key": "cloud_create_api_credential",
+      "surface_key": "cloud_apis_credentials",
+      "mode": "safe_secret_issue_final_click_ready",
+      "ready_for_approval": true,
+      "missing_inputs": [],
+      "state_change": false,
+      "no_final_submit_command": "python scripts\\cdp_client.py google work live-fill C:\\work\\01. haehan-ai-orchestrator\\data\\google_prepares\\google_prepare_cloud_create_api_credential_20260526_161149.json --no-final-submit"
+    },
+    {
+      "action_key": "cloud_iam_change_role",
+      "surface_key": "cloud_iam",
+      "mode": "safe_pre_final_input",
+      "ready_for_approval": true,
+      "missing_inputs": [],
+      "state_change": false,
+      "no_final_submit_command": "python scripts\\cdp_client.py google work live-fill C:\\work\\01. haehan-ai-orchestrator\\data\\google_prepares\\google_prepare_cloud_iam_change_role_20260526_161149.json --no-final-submit"
+    }
+  ]
+}

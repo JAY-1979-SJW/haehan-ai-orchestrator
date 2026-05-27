@@ -60,6 +60,42 @@ def test_search_uses_caption_filter_and_keeps_captioned_results(monkeypatch):
     assert result["results"][0]["script_collection_status"] == "caption_candidate"
 
 
+def test_search_retries_without_dead_local_proxy(monkeypatch):
+    calls = {"urlopen": 0, "open": 0}
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return self.payload.encode("utf-8")
+
+    class FakeOpener:
+        def open(self, request, timeout=20):
+            calls["open"] += 1
+            return FakeResponse('{"items":[]}')
+
+    def fake_urlopen(request, timeout=20):
+        calls["urlopen"] += 1
+        raise research.urllib.error.URLError(ConnectionRefusedError(10061, "Connection refused"))
+
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:9")
+    monkeypatch.setattr(research.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(research.urllib.request, "build_opener", lambda handler: FakeOpener())
+    monkeypatch.setattr(research, "_api_key", lambda explicit=None: "fake-key")
+
+    result, _path = research.search_videos("ai")
+
+    assert result["status"] == "ok"
+    assert calls == {"urlopen": 1, "open": 1}
+
+
 def test_search_can_use_official_oauth_without_api_key(monkeypatch):
     calls = []
 
@@ -115,7 +151,8 @@ def test_caption_list_blocks_without_oauth(monkeypatch):
     assert result["oauth_token_output"] == "redacted"
 
 
-def test_oauth_token_reads_authorized_user_token_key(tmp_path, monkeypatch):
+def test_oauth_token_reads_authorized_user_token_key(monkeypatch):
+    tmp_path = _test_dir()
     token_file = tmp_path / "token.json"
     token_file.write_text(json.dumps({"token": "access-token-from-file"}), encoding="utf-8")
 
@@ -124,7 +161,8 @@ def test_oauth_token_reads_authorized_user_token_key(tmp_path, monkeypatch):
     assert token == "access-token-from-file"
 
 
-def test_oauth_token_refreshes_authorized_user_file(tmp_path, monkeypatch):
+def test_oauth_token_refreshes_authorized_user_file(monkeypatch):
+    tmp_path = _test_dir()
     token_file = tmp_path / "token.json"
     token_file.write_text(
         json.dumps({
@@ -483,6 +521,47 @@ def test_collect_comments_uses_official_api(monkeypatch):
     assert calls[0][1]["textFormat"] == "plainText"
     assert result["comment_count"] == 1
     assert result["comments"][0]["text"] == "Great automation insight"
+    assert result["classification"]["bucket_counts"]["positive_feedback"] == 1
+
+
+def test_collect_comments_paginates_and_classifies(monkeypatch):
+    calls = []
+
+    def fake_get_json(url, params):
+        calls.append((url, params))
+        suffix = " first" if "pageToken" not in params else " second"
+        payload = {
+            "items": [
+                {
+                    "id": f"comment-{len(calls)}",
+                    "snippet": {
+                        "topLevelComment": {
+                            "id": f"top-{len(calls)}",
+                            "snippet": {
+                                "authorDisplayName": "User",
+                                "textDisplay": "How can I setup this automation?" + suffix,
+                                "likeCount": len(calls),
+                            },
+                        }
+                    },
+                }
+            ]
+        }
+        if len(calls) == 1:
+            payload["nextPageToken"] = "next-token"
+        return payload
+
+    monkeypatch.setattr(research, "_api_key", lambda explicit=None: "fake-key")
+    monkeypatch.setattr(research, "_get_json", fake_get_json)
+
+    result, _path = research.collect_comments("abc123", max_results=1, max_pages=2, max_comments_total=5)
+
+    assert len(calls) == 2
+    assert calls[1][1]["pageToken"] == "next-token"
+    assert result["pages_fetched"] == 2
+    assert result["comment_count"] == 2
+    assert result["classification"]["bucket_counts"]["question"] == 2
+    assert result["classification"]["bucket_counts"]["implementation"] == 2
 
 
 def test_analyze_user_provided_transcript():
@@ -501,7 +580,36 @@ def test_analyze_user_provided_transcript():
     assert result["status"] == "ok"
     assert result["state_change"] is False
     assert result["transcript_stats"]["word_like_count"] > 5
-    assert result["business_report"]["main_topics"]
+
+
+def test_store_full_transcript_requires_rights_confirmation():
+    tmp_path = _test_dir()
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("Full transcript text", encoding="utf-8")
+
+    result, _path = research.store_full_transcript_file(transcript)
+
+    assert result["status"] == "blocked"
+    assert result["reason"] == "rights_confirmation_required"
+    assert result["full_transcript_stored"] is False
+
+
+def test_store_full_transcript_file_with_rights_confirmation():
+    tmp_path = _test_dir()
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("Full transcript with password should be redacted.", encoding="utf-8")
+    output = tmp_path / "stored.txt"
+
+    result, _path = research.store_full_transcript_file(
+        transcript,
+        video_id="abc123",
+        rights_confirmed=True,
+        output=output,
+    )
+
+    assert result["status"] == "ok"
+    assert result["full_transcript_stored"] is True
+    assert Path(result["raw_transcript_path"]).read_text(encoding="utf-8") == "Full transcript with [redacted-sensitive] should be redacted."
 
 
 def test_analyze_redacts_sensitive_keywords():

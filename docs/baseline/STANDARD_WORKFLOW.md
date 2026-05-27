@@ -264,6 +264,24 @@ python scripts/ops/ai_work_record.py complete ...
 python scripts/ops/work_approval_watch.py --require-work-record ...
 ```
 
+For lane-separated work that must be closed and resumed from a designated
+path, use:
+
+```text
+python scripts/ops/ai_work_session.py --lane <lane> start ...
+python scripts/ops/ai_work_session.py --lane <lane> checkpoint ...
+python scripts/ops/ai_work_session.py --lane <lane> close ...
+python scripts/ops/ai_work_session.py --lane <lane> resume-check --json
+```
+
+The default lane-separated record path is:
+
+```text
+data/runtime/ai_work_records/<lane>/latest.json
+data/runtime/ai_work_records/<lane>/history.jsonl
+data/runtime/ai_work_records/latest_lane.json
+```
+
 Before a new AI session continues operational work, it must inspect the latest
 work record and use `resume_next_step` as the starting point unless a newer
 user instruction changes the scope.

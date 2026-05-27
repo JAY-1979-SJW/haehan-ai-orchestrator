@@ -16,6 +16,7 @@ from scripts.naver.auth import ensure_naver_login
 
 _log = get_logger(__name__)
 TALK_URL = "https://talk.naver.com/"
+TALK_SEND_CONFIRM_TEXT = "NAVER_APPROVED_SEND"
 
 
 class NaverTalk:
@@ -58,8 +59,14 @@ class NaverTalk:
             _log.error("[naver-talk] list_chats 실패: %s", e)
             return []
 
-    def send_message(self, partner_name: str, message: str, confirm: bool = False) -> dict:
-        """메시지 발송. confirm=False 시 입력만, True 시 발송."""
+    def send_message(
+        self,
+        partner_name: str,
+        message: str,
+        confirm: bool = False,
+        approval_confirm: str = "",
+    ) -> dict:
+        """메시지 발송. confirm=False 시 입력만, True 시 승인 확인 후 발송."""
         if not self.open():
             return {"ok": False, "error": "open_failed"}
         try:
@@ -68,6 +75,13 @@ class NaverTalk:
             self.page.locator('[contenteditable="true"], textarea').first.fill(message, timeout=3000)
             time.sleep(0.5)
             if confirm:
+                if approval_confirm != TALK_SEND_CONFIRM_TEXT:
+                    return {
+                        "ok": False,
+                        "mode": "filled_not_sent",
+                        "error": "approval_required",
+                        "requires": ["--approved", f"--confirm={TALK_SEND_CONFIRM_TEXT}"],
+                    }
                 self.page.locator('button:has-text("전송"), .btn_send').first.click(timeout=3000)
                 time.sleep(2)
                 log_critical("OTHER", f"네이버 톡톡 발송: {partner_name}",

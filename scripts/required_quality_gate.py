@@ -46,10 +46,17 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_module_boundaries.py",
         "scripts/ops/audit_root_legacy_scripts.py",
         "scripts/ops/audit_google_gmail_function_contract.py",
+        "scripts/ops/audit_google_home_login_gate.py",
         "scripts/ops/audit_google_automation_baseline_contract.py",
         "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py",
         "scripts/ops/audit_site_work_function_baseline.py",
+        "scripts/ops/audit_ai_agent_app_structure_design_baseline.py",
+        "scripts/ops/audit_ai_agent_ui_structure_blueprint.py",
+        "scripts/ops/audit_mcp_gateway_baseline.py",
+        "scripts/ops/ai_work_session.py",
+        "scripts/ops/audit_ai_work_session_gate.py",
         "scripts/google/gmail_analysis.py",
+        "scripts/google/ads_signup.py",
         "scripts/google/live_surface_explorer.py",
         "scripts/google/cloud/live_console_explorer.py",
         "scripts/google/ai_usage_labels.py",
@@ -60,6 +67,9 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/google/precision_report.py",
         "scripts/google/subdomain_logic.py",
         "scripts/google/tab_logic.py",
+        "scripts/google/work_mode_gate.py",
+        "scripts/google/workspace_basic.py",
+        "scripts/google/youtube/search.py",
         "scripts/google/youtube_upload.py",
         "scripts/youtube/oauth.py",
         "scripts/youtube/research.py",
@@ -89,18 +99,26 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_root_legacy_scripts_audit.py",
         "tests/test_google_gmail_function_contract.py",
         "tests/test_google_gmail_analysis.py",
+        "tests/test_google_ads_signup.py",
         "tests/test_google_live_surface_explorer.py",
         "tests/test_google_cloud_live_console_explorer.py",
         "tests/test_google_ai_usage_labels.py",
         "tests/test_google_android_app_dev.py",
         "tests/test_google_domain_taxonomy.py",
         "tests/test_google_managed_console.py",
+        "tests/test_google_work_mode_gate.py",
+        "tests/test_google_workspace_basic.py",
+        "tests/test_google_youtube_search.py",
         "tests/test_google_youtube_upload.py",
         "tests/test_google_precision_report.py",
         "tests/test_google_subdomain_logic.py",
         "tests/test_google_tab_logic.py",
         "tests/test_site_sso_subdomain_runtime.py",
         "tests/test_site_work_function_baseline.py",
+        "tests/test_ai_agent_app_structure_design_baseline.py",
+        "tests/test_ai_agent_ui_structure_blueprint.py",
+        "tests/test_mcp_gateway_baseline.py",
+        "tests/test_ai_work_session_gate.py",
         "tests/test_youtube_oauth.py",
         "tests/test_youtube_research.py",
     ),
@@ -123,9 +141,14 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "scripts/ops/audit_module_boundaries.py"),
     (sys.executable, "scripts/ops/audit_root_legacy_scripts.py"),
     (sys.executable, "scripts/ops/audit_google_gmail_function_contract.py"),
+    (sys.executable, "scripts/ops/audit_google_home_login_gate.py"),
     (sys.executable, "scripts/ops/audit_google_automation_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py"),
     (sys.executable, "scripts/ops/audit_site_work_function_baseline.py"),
+    (sys.executable, "scripts/ops/audit_ai_agent_app_structure_design_baseline.py"),
+    (sys.executable, "scripts/ops/audit_ai_agent_ui_structure_blueprint.py"),
+    (sys.executable, "scripts/ops/audit_mcp_gateway_baseline.py"),
+    (sys.executable, "scripts/ops/audit_ai_work_session_gate.py"),
     (
         sys.executable,
         "-m",
@@ -201,6 +224,16 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         sys.executable,
         "-m",
         "pytest",
+        "tests/test_google_home_login_gate.py",
+        "tests/test_google_ads_signup.py",
+        "tests/test_google_workspace_basic.py",
+        "tests/test_google_youtube_search.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_google_subdomain_logic.py",
         "tests/test_google_tab_logic.py",
         "tests/test_google_live_surface_explorer.py",
@@ -209,10 +242,17 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_google_android_app_dev.py",
         "tests/test_google_domain_taxonomy.py",
         "tests/test_google_managed_console.py",
+        "tests/test_google_work_mode_gate.py",
         "tests/test_google_youtube_upload.py",
         "tests/test_google_precision_report.py",
         "tests/test_site_sso_subdomain_runtime.py",
         "tests/test_youtube_oauth.py",
+        *PYTEST_FLAGS,
+    ),
+    (
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/test_youtube_research.py",
         *PYTEST_FLAGS,
     ),
@@ -221,6 +261,10 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "-m",
         "pytest",
         "tests/test_site_work_function_baseline.py",
+        "tests/test_ai_agent_app_structure_design_baseline.py",
+        "tests/test_ai_agent_ui_structure_blueprint.py",
+        "tests/test_mcp_gateway_baseline.py",
+        "tests/test_ai_work_session_gate.py",
         *PYTEST_FLAGS,
     ),
     (sys.executable, "scripts/module_quality_gate.py", "--module", "repo_guard"),
@@ -277,6 +321,22 @@ def command_is_pytest(command: tuple[str, ...]) -> bool:
     return "-m" in command and "pytest" in command
 
 
+def command_needs_isolated_pytest_temp(command: tuple[str, ...]) -> bool:
+    if not command_is_pytest(command):
+        return False
+    # This suite owns its temporary files under repo-local tmp/. On Windows,
+    # forcing --basetemp can trigger pytest cleanup permission errors before any
+    # test code runs.
+    test_files = tuple(part for part in command if part.startswith("tests/"))
+    if test_files == ("tests/test_youtube_research.py",):
+        return False
+    if "tests/test_google_youtube_search.py" in test_files:
+        return False
+    if "tests/test_ai_work_session_gate.py" in test_files:
+        return False
+    return True
+
+
 def command_timeout_seconds() -> int:
     raw = os.environ.get("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "").strip()
     if not raw:
@@ -308,7 +368,7 @@ def isolated_pytest_temp(env: dict[str, str]) -> Path:
     default_base = ROOT / "tmp" / "required_gate_temp"
     base = Path(env.get("HAEHAN_REQUIRED_GATE_TEMP", str(default_base)))
     target = base / uuid4().hex
-    target.mkdir(parents=True, exist_ok=True)
+    base.mkdir(parents=True, exist_ok=True)
     return target
 
 
@@ -319,7 +379,8 @@ def run_command(command: tuple[str, ...]) -> GateResult:
 
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
-    if command_is_pytest(command):
+    use_isolated_pytest_temp = command_needs_isolated_pytest_temp(command)
+    if use_isolated_pytest_temp:
         env.pop("PYTHONPYCACHEPREFIX", None)
         env.setdefault("PYTHONDONTWRITEBYTECODE", "1")
         temp_root = isolated_pytest_temp(env)
@@ -335,9 +396,12 @@ def run_command(command: tuple[str, ...]) -> GateResult:
 
     timeout_s = command_timeout_for(command)
     is_pytest = command_is_pytest(command)
+    runtime_command = list(command_with_runtime_args(command))
+    if use_isolated_pytest_temp:
+        runtime_command.append(f"--basetemp={temp_root}")
     try:
         result = subprocess.run(
-            list(command_with_runtime_args(command)),
+            runtime_command,
             cwd=ROOT,
             stdin=subprocess.DEVNULL,
             text=True,

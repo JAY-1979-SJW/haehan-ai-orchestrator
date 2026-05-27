@@ -196,3 +196,34 @@ Recording, upload, and public publishing are separate approval decisions.
 New site work must reuse the common helpers before writing logs, audit events,
 DB-safe records, or CLI status output. Site-specific sensitive-key lists should
 not be created unless the shared module is updated first.
+
+## Naver Developed Tools Update
+
+Updated: 2026-05-27
+
+Naver developed tools are indexed separately:
+
+- Tool index: `docs/naver_developed_tools_index.md`
+- Service catalog: `scripts/naver/service_catalog.py`
+- Cafe tools: `scripts/naver/cafe/`
+- Keyword tools: `scripts/naver/keyword_tools.py`
+- Mail background/tools: `scripts/naver_mail/`, `scripts/naver/mail_read/`
+- Common tab isolation gate: `scripts/browser_cdp_selection_gate.py`
+
+Current verified Naver tool groups:
+
+- service catalog
+- keyword tools and free-only paid-action blocks
+- cafe list/home/topic-search
+- cafe join-request and join-submit approval gate
+- joined cafe home and board collection
+- Naver Mail background read and settings inspection
+
+Policy:
+
+- CDP browser work must use existing sessions and common tab isolation.
+- Cafe join-request is prepare-only. Final join submit requires
+  `NAVER_APPROVED_CAFE_JOIN`.
+- Naver Mail send/delete/move/settings-save remain approval-gated.
+- Paid Naver API, search-ad campaign/budget, payment registration, and ad
+  publish actions remain blocked.
