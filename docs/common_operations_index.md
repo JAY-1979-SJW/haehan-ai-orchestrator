@@ -51,10 +51,10 @@ Before new work:
 | Homepage | security watch active | Homepage `docs/security-audit.md`, homepage `docs/work-log.md` | Confirm notification channel and run full audit before deployment approval. |
 | EUM | complete baseline | `docs/eum_logic_reference_20260513.md` | Live submit only after explicit approval and real values. |
 | Hiworks | complete baseline | `docs/hiworks_logic_reference_20260513.md` | Keep mail send and state-changing section actions approval-gated. |
-| Naver | implemented partial | `docs/NAVER_SERVICES_EXPANSION_PLAN.md`, `docs/naver_live_safety_policy_20260513.md` | Split service-level completion reports and stop on robot/security challenge signals. |
+| Naver | implemented partial | `docs/naver_developed_tools_index.md`, `docs/NAVER_SERVICES_EXPANSION_PLAN.md`, `docs/naver_live_safety_policy_20260513.md` | Use the developed tool index first; keep CDP tab isolation, approval gates, and paid-feature blocks active. |
 | SmartStore | complete baseline | `docs/smartstore_logic_reference_20260513.md` | Verify SEO, competitor, CSV import, order, inventory, and analytics workflows separately. |
 | G2B | verified read-only | `docs/reports/g2b_completion_report_20260513.md`, `docs/reports/g2b_public_notice_readonly_matrix_20260507.md` | Keep public notice and attachment-list work read-only; login/certificate/bid/contract/payment/final submit remain blocked or user-present only. |
-| Google/YouTube | implemented gated | `docs/google_surface_catalog_reference_20260513.md`, `docs/google_business_workflow_reference_20260513.md` | Complete per-surface live read reports and prefer official APIs where available. |
+| Google/YouTube | implemented gated | `docs/google_developed_tools_index.md`, `docs/google_domain_function_index.md`, `docs/google_surface_catalog_reference_20260513.md`, `docs/google_business_workflow_reference_20260513.md` | Use the developed tool and domain function indexes first; complete per-surface live read reports and prefer official APIs where available. |
 
 ## Homepage Security Link
 

@@ -9,13 +9,18 @@ from scripts.naver import service_catalog
 def test_service_catalog_lists_all_naver_sections(tmp_path):
     catalog = service_catalog.build_catalog()
 
-    for key in ("mail", "content", "cafe", "calendar", "mybox", "pay", "talk", "place", "smartstore"):
+    for key in ("mail", "blog-assets", "content", "cafe", "keyword-tools", "calendar", "mybox", "pay", "talk", "place", "smartstore"):
         assert key in catalog["features"]
 
     path = service_catalog.save_catalog(catalog, tmp_path / "catalog.json")
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert saved["site"] == "naver"
-    assert saved["features"]["cafe"]["read"] == ["list", "posts", "read"]
+    assert saved["features"]["cafe"]["read"] == ["list", "home", "topic-search", "collect", "boards", "posts", "read"]
+    assert "join-request" in saved["features"]["cafe"]["prepare"]
+    assert "UTF-8 query encoding" in saved["features"]["cafe"]["policy"]
+    assert "approval-gated" in saved["features"]["cafe"]["policy"]
+    assert "paid Naver API" in saved["features"]["keyword-tools"]["policy"]
+    assert "rights confirmation" in saved["features"]["blog-assets"]["policy"]
 
 
 def test_dry_run_calendar_add_does_not_open_browser(monkeypatch):
@@ -85,3 +90,31 @@ def test_option_phrase_preserves_korean_query_with_spaces():
         ["--query=AI", "업무", "자동화", "--display=20"],
         "--query=",
     ) == "AI 업무 자동화"
+
+
+def test_keyword_tools_plan_records_free_only_policy(monkeypatch):
+    saved = {}
+    monkeypatch.setattr(router, "gate_check", lambda *a, **k: None)
+
+    import scripts.naver.keyword_tools as kt
+
+    monkeypatch.setattr(kt, "save_payload", lambda payload: saved.setdefault("payload", payload) or "path")
+    monkeypatch.setattr(kt, "print_summary", lambda payload, path: None)
+
+    router._cmd_keyword_tools("plan", ["--query=인테리어", "AI"])
+
+    payload = saved["payload"]
+    assert payload["workflow"] == "naver_keyword_research_plan"
+    assert payload["keywords"] == ["인테리어 AI"]
+    assert payload["free_only_policy"]["paid_api_key_issue"] == "blocked"
+    assert any(item["gate"] == "naver_ad_publish" for item in payload["paid_actions_blocked"])
+
+
+def test_keyword_tools_paid_blocks_are_blocked():
+    from scripts.naver import keyword_tools
+
+    result = keyword_tools.assert_paid_actions_blocked()
+
+    assert result["ok"] is True
+    assert "naver_paid_api_key_issue" in result["blocked_gates"]
+    assert "naver_payment_method_register" in result["blocked_gates"]

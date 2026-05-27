@@ -307,18 +307,43 @@
       "login_policy": "user_present_only",
       "risk_level": "high",
       "tools": [
-        "scripts/naver"
+        "scripts/naver",
+        "scripts/naver/cafe",
+        "scripts/naver/keyword_tools.py",
+        "scripts/naver/service_catalog.py",
+        "scripts/browser_cdp_selection_gate.py"
       ],
       "tests": [
-        "tests/test_naver_site_engine.py"
+        "tests/test_naver_site_engine.py",
+        "tests/test_naver_service_router.py",
+        "tests/test_naver_cafe_list_collector.py",
+        "tests/test_browser_cdp_selection_gate.py"
       ],
       "owner_module": "scripts/naver",
       "notes": [
-        "Service-specific tools must be listed as child entries or mapped tools."
+        "Developed Naver tools are indexed in docs/naver_developed_tools_index.md.",
+        "Cafe join request is prepare-only; final join submit is approval-gated.",
+        "Cafe collection and keyword tools are read-only/free-only.",
+        "Paid Naver API, search-ad campaign, budget, payment, and ad publish actions are blocked.",
+        "Parallel browser work must use common CDP tab isolation."
       ],
-      "workflows": [],
+      "workflows": [
+        {"key": "service_catalog", "risk": "read", "status": "implemented"},
+        {"key": "keyword_tools_catalog", "risk": "read", "status": "implemented"},
+        {"key": "keyword_research_plan", "risk": "read", "status": "implemented"},
+        {"key": "keyword_paid_policy_blocks", "risk": "blocked", "status": "implemented"},
+        {"key": "cafe_list", "risk": "read", "status": "verified"},
+        {"key": "cafe_home", "risk": "read", "status": "implemented"},
+        {"key": "cafe_topic_search", "risk": "read", "status": "verified"},
+        {"key": "cafe_join_request", "risk": "prepare", "status": "verified"},
+        {"key": "cafe_join_submit_gate", "risk": "approval", "status": "implemented"},
+        {"key": "cafe_member_collect", "risk": "read", "status": "verified"},
+        {"key": "cafe_board_collect", "risk": "read", "status": "verified"},
+        {"key": "cdp_tab_isolation", "risk": "read", "status": "verified"}
+      ],
       "pending": [
-        "Split service-level completion reports."
+        "Final visible-form adapter for actual cafe join submit remains separate and approval-gated.",
+        "Split broader Naver service-level completion reports when needed."
       ]
     },
     {
@@ -334,18 +359,32 @@
       "risk_level": "high",
       "tools": [
         "scripts/naver_mail",
+        "scripts/naver_mail/background_runner.py",
+        "scripts/naver_mail/settings_panel.py",
+        "scripts/naver/mail_read",
         "ai_orchestrator/connectors/naver"
       ],
       "tests": [
-        "tests/test_naver_mail_tools.py"
+        "tests/test_naver_mail_tools.py",
+        "tests/test_naver_mail_background_runner.py",
+        "tests/test_naver_mail_settings_panel.py"
       ],
       "owner_module": "scripts/naver_mail",
       "notes": [
-        "Private mail data must be redacted in logs."
+        "Private mail data must be redacted in logs.",
+        "Read and compose/prepare are allowed after gates; send, delete, move, and settings save require approval.",
+        "Background browser work uses common CDP tab isolation."
       ],
-      "workflows": [],
+      "workflows": [
+        {"key": "mail_background_read", "risk": "read", "status": "verified"},
+        {"key": "mail_settings_inspect", "risk": "read", "status": "implemented"},
+        {"key": "mail_send_gate", "risk": "approval", "status": "implemented"},
+        {"key": "mail_delete_gate", "risk": "approval", "status": "implemented"},
+        {"key": "mail_move_gate", "risk": "approval", "status": "implemented"},
+        {"key": "mail_settings_save_gate", "risk": "approval", "status": "implemented"}
+      ],
       "pending": [
-        "Confirm live read/write boundaries before activation."
+        "Keep live send/delete/move/settings-save behind explicit approval."
       ]
     },
     {

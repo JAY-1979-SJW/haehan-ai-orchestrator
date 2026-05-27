@@ -15,6 +15,7 @@ ai_orchestrator/policies/http_users.json
 __pycache__/
 *.pyc
 *.pyo
+Python/
 .venv/
 venv/
 env/

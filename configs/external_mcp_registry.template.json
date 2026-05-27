@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "status": "template",
+  "purpose": "Register external MCP servers or app adapters before wiring them into admin-web.",
+  "rules": {
+    "secrets_in_registry": "forbidden",
+    "default_enabled": false,
+    "execution_surface": "mcp_gateway",
+    "approval_gate_required_for": [
+      "write",
+      "delete",
+      "publish",
+      "send",
+      "payment",
+      "permission_change",
+      "credential_issue",
+      "external_state_change"
+    ],
+    "result_policy": "Every tool call must return a visible result artifact, report path, or approval request id."
+  },
+  "servers": [
+    {
+      "id": "example-filesystem-mcp",
+      "display_name": "Example Filesystem MCP",
+      "kind": "stdio",
+      "enabled": false,
+      "owner_app": "external",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "<approved-workspace-path>"
+      ],
+      "env_secret_refs": [],
+      "allowed_tools": [
+        "list_allowed_directories",
+        "directory_tree",
+        "read_file"
+      ],
+      "blocked_tools": [
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "move_file"
+      ],
+      "risk_level": "medium",
+      "read_only_default": true,
+      "approval_required": true,
+      "ui_surface": "/",
+      "result_target": "ai-agent-result-panel",
+      "notes": "Template only. Replace with an owned MCP server or adapter after approval."
+    },
+    {
+      "id": "example-app-adapter",
+      "display_name": "Example App Adapter",
+      "kind": "http",
+      "enabled": false,
+      "owner_app": "our-program",
+      "base_url": "http://127.0.0.1:<port>/mcp",
+      "auth": "env_secret_ref",
+      "env_secret_refs": [
+        "EXAMPLE_APP_MCP_TOKEN"
+      ],
+      "allowed_tools": [
+        "list_tools",
+        "get_status",
+        "run_readonly_report"
+      ],
+      "blocked_tools": [
+        "submit",
+        "delete",
+        "publish",
+        "change_permission"
+      ],
+      "risk_level": "medium",
+      "read_only_default": true,
+      "approval_required": true,
+      "ui_surface": "/",
+      "result_target": "ai-agent-result-panel",
+      "notes": "Use this pattern when another owned app exposes an API but not a native MCP server."
+    }
+  ]
+}

@@ -51,6 +51,46 @@ def _naver_login(page, *, force_login: bool = False):
     }
 
 
+def _smartstore_is_logged_in(page):
+    try:
+        from scripts.smartstore.live_probe import classify_probe
+
+        raw = page.evaluate(
+            """() => {
+              const clean = (value) => String(value || '').replace(/\\s+/g, ' ').trim();
+              const body = clean(document.body ? document.body.innerText : '');
+              const href = String(location.href || '');
+              const host = String(location.host || '').toLowerCase();
+              const title = String(document.title || '');
+              const combined = `${href} ${title} ${body}`;
+              return {
+                href,
+                host,
+                title,
+                markers: {
+                  naverLogin: /nid\\.naver\\.com|로그인|아이디|비밀번호|sign in/i.test(combined),
+                  smartstore: /스마트스토어|스마트스토어센터|상품관리|판매관리|정산관리|문의\\/리뷰관리|스토어/i.test(combined),
+                  sellerCenter: /sell\\.smartstore\\.naver\\.com|판매자|센터/i.test(combined),
+                  challenge: /보안|captcha|자동입력|로봇|인증번호|비정상|차단/i.test(combined)
+                },
+                bodySample: body.slice(0, 500)
+              };
+            }"""
+        )
+        return bool(classify_probe(raw or {}).get("logged_in"))
+    except Exception:
+        return False
+
+
+def _smartstore_login(page):
+    return {
+        "ok": False,
+        "reason": "manual_smartstore_login_required",
+        "user": "",
+        "needs_manual": True,
+    }
+
+
 def _google_is_logged_in(page):
     from scripts.login_detector import detect_login_state
     s = detect_login_state(page)
@@ -130,6 +170,14 @@ _REGISTRY: dict[str, SiteSpec] = {
         is_logged_in=_naver_is_logged_in,
         login=_naver_login,
         login_strategy="registered_only",
+    ),
+    "smartstore": SiteSpec(
+        key="smartstore",
+        base_url="https://sell.smartstore.naver.com/#/home/dashboard",
+        login_domain_hints=("sell.smartstore.naver.com", "nid.naver.com", "/nidlogin"),
+        is_logged_in=_smartstore_is_logged_in,
+        login=_smartstore_login,
+        login_strategy="manual_only",
     ),
     "google": SiteSpec(
         key="google",

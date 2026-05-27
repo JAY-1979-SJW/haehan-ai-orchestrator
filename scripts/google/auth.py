@@ -3,7 +3,7 @@
 Google credential replay is intentionally not implemented here. The supported
 runtime path is:
 1. Reuse an already logged-in Google/Gmail/YouTube browser session.
-2. Otherwise open the Google sign-in page.
+2. Otherwise open Google Home and let the user enter the sign-in flow.
 3. Wait for the user to complete login manually.
 
 This module must not collect, save, type, replay, or log Google passwords,
@@ -17,10 +17,11 @@ from typing import Any
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
+from local_agent import site_entry_policy
 
 _log = get_logger(__name__)
 
-GOOGLE_LOGIN_URL = "https://accounts.google.com/signin"
+GOOGLE_LOGIN_URL = "https://www.google.com/"
 GOOGLE_SESSION_METHOD = "user_present_session"
 
 
@@ -78,7 +79,8 @@ def login_google(
     if existing is not None:
         return existing
 
-    _log.info("[google-auth] opening Google sign-in for user-present login")
+    _log.info("[google-auth] opening Google Home for user-present login")
+    site_entry_policy.assert_main_page_first(GOOGLE_LOGIN_URL, site_key="google")
     try:
         page.goto(GOOGLE_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
     except Exception as e:

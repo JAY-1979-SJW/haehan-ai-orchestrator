@@ -40,17 +40,26 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_root_legacy_scripts_audit.py" in rendered
     assert "tests/test_google_subdomain_logic.py" in rendered
     assert "tests/test_google_tab_logic.py" in rendered
+    assert "tests/test_google_ads_signup.py" in rendered
     assert "tests/test_google_live_surface_explorer.py" in rendered
     assert "tests/test_google_cloud_live_console_explorer.py" in rendered
     assert "tests/test_google_ai_usage_labels.py" in rendered
     assert "tests/test_google_android_app_dev.py" in rendered
     assert "tests/test_google_domain_taxonomy.py" in rendered
     assert "tests/test_google_managed_console.py" in rendered
+    assert "tests/test_google_work_mode_gate.py" in rendered
+    assert "tests/test_google_workspace_basic.py" in rendered
+    assert "tests/test_google_home_login_gate.py" in rendered
     assert "tests/test_google_youtube_upload.py" in rendered
+    assert "tests/test_google_youtube_search.py" in rendered
     assert "tests/test_google_precision_report.py" in rendered
     assert "tests/test_site_sso_subdomain_runtime.py" in rendered
     assert "tests/test_youtube_oauth.py" in rendered
     assert "tests/test_youtube_research.py" in rendered
+    assert "tests/test_ai_agent_app_structure_design_baseline.py" in rendered
+    assert "tests/test_ai_agent_ui_structure_blueprint.py" in rendered
+    assert "tests/test_mcp_gateway_baseline.py" in rendered
+    assert "tests/test_ai_work_session_gate.py" in rendered
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
@@ -69,8 +78,15 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_playwright_ai_baseline_contract.py" in rendered
     assert "scripts/ops/audit_module_boundaries.py" in rendered
     assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
+    assert "scripts/ops/audit_google_home_login_gate.py" in rendered
     assert "scripts/ops/audit_google_automation_baseline_contract.py" in rendered
     assert "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py" in rendered
+    assert "scripts/ops/audit_ai_agent_app_structure_design_baseline.py" in rendered
+    assert "scripts/ops/audit_ai_agent_ui_structure_blueprint.py" in rendered
+    assert "scripts/ops/audit_mcp_gateway_baseline.py" in rendered
+    assert "scripts/ops/ai_work_session.py" in rendered
+    assert "scripts/ops/audit_ai_work_session_gate.py" in rendered
+    assert "scripts/google/ads_signup.py" in rendered
     assert "scripts/google/live_surface_explorer.py" in rendered
     assert "scripts/google/cloud/live_console_explorer.py" in rendered
     assert "scripts/google/ai_usage_labels.py" in rendered
@@ -81,6 +97,9 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/google/precision_report.py" in rendered
     assert "scripts/google/subdomain_logic.py" in rendered
     assert "scripts/google/tab_logic.py" in rendered
+    assert "scripts/google/work_mode_gate.py" in rendered
+    assert "scripts/google/workspace_basic.py" in rendered
+    assert "scripts/google/youtube/search.py" in rendered
     assert "scripts/google/youtube_upload.py" in rendered
     assert "scripts/youtube/oauth.py" in rendered
     assert "scripts/youtube/research.py" in rendered
@@ -195,13 +214,14 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_required_quality_gate.py", "-q"))
 
     assert result.ok is True
-    assert captured["command"] == (
+    assert captured["command"][:4] == (
         gate.sys.executable,
         "-m",
         "pytest",
         "tests/test_required_quality_gate.py",
-        "-q",
     )
+    assert captured["command"][4] == "-q"
+    assert captured["command"][5].startswith("--basetemp=")
     assert "PYTHONPYCACHEPREFIX" not in captured["env"]
     assert captured["env"]["PYTHONDONTWRITEBYTECODE"] == "1"
     assert "required_gate_temp" in captured["env"]["TEMP"]
@@ -211,11 +231,88 @@ def test_run_command_avoids_pycache_prefix_for_pytest(monkeypatch):
     assert captured["stderr"] is None
 
 
+def test_youtube_research_pytest_uses_default_temp(monkeypatch):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = tuple(command)
+        captured["env"] = kwargs["env"]
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+
+    result = gate.run_command((gate.sys.executable, "-m", "pytest", "tests/test_youtube_research.py", "-q"))
+
+    assert result.ok is True
+
+
+def test_google_youtube_search_pytest_uses_default_temp(monkeypatch):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = tuple(command)
+        captured["env"] = kwargs["env"]
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    command = next(
+        command
+        for command in gate.COMMANDS
+        if "tests/test_google_youtube_search.py" in command and gate.command_is_pytest(command)
+    )
+
+    assert gate.command_needs_isolated_pytest_temp(command) is False
+    result = gate.run_command(command)
+
+    assert result.ok is True
+    assert not any(part.startswith("--basetemp=") for part in captured["command"])
+    assert "PYTHONPYCACHEPREFIX" in captured["env"]
+
+
+def test_ai_work_session_gate_pytest_uses_default_temp(monkeypatch):
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = tuple(command)
+        captured["env"] = kwargs["env"]
+
+        class Result:
+            returncode = 0
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setattr(gate.subprocess, "run", fake_run)
+    command = next(
+        command
+        for command in gate.COMMANDS
+        if "tests/test_ai_work_session_gate.py" in command and gate.command_is_pytest(command)
+    )
+
+    assert gate.command_needs_isolated_pytest_temp(command) is False
+    result = gate.run_command(command)
+
+    assert result.ok is True
+    assert not any(part.startswith("--basetemp=") for part in captured["command"])
+    assert "PYTHONPYCACHEPREFIX" in captured["env"]
+
+
 def test_pytest_temp_gets_isolated_workspace_dir(monkeypatch):
     base = gate.ROOT / "tmp" / "required_gate_test_temp"
     env = {"HAEHAN_REQUIRED_GATE_TEMP": str(base)}
 
     temp_root = gate.isolated_pytest_temp(env)
 
-    assert temp_root.exists()
+    assert not temp_root.exists()
     assert temp_root.parent == base
+    assert base.exists()

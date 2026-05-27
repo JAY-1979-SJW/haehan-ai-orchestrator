@@ -24,6 +24,13 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
         "prepare": ["compose"],
         "submit": ["send"],
     },
+    "blog-assets": {
+        "commands": ["blog-assets plan", "blog-assets inventory", "blog-assets analyze", "blog-assets pixel-analyze", "blog-assets manifest"],
+        "read": ["plan", "inventory", "analyze", "pixel-analyze"],
+        "prepare": ["manifest"],
+        "submit": [],
+        "policy": "inventory only by default; shopping reuse manifest requires explicit operator rights confirmation",
+    },
     "content": {
         "commands": ["content explore", "content actions"],
         "read": ["explore", "actions"],
@@ -52,6 +59,17 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
         "prepare": [],
         "submit": [],
     },
+    "keyword-tools": {
+        "commands": [
+            "keyword-tools catalog", "keyword-tools plan",
+            "keyword-tools datalab", "keyword-tools shopping",
+            "keyword-tools searchad-plan", "keyword-tools paid-blocks",
+        ],
+        "read": ["catalog", "plan", "datalab", "shopping", "searchad-plan", "paid-blocks"],
+        "prepare": [],
+        "submit": [],
+        "policy": "free-only; paid Naver API, ad campaign, budget, payment, and publish actions are blocked",
+    },
     "excel": {
         "commands": ["excel report"],
         "read": ["report"],
@@ -59,10 +77,11 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
         "submit": [],
     },
     "cafe": {
-        "commands": ["cafe list", "cafe posts", "cafe read", "cafe write", "cafe publish"],
-        "read": ["list", "posts", "read"],
-        "prepare": ["write"],
-        "submit": ["publish"],
+        "commands": ["cafe list", "cafe home", "cafe topic-search", "cafe join-request", "cafe collect", "cafe boards", "cafe posts", "cafe read", "cafe write", "cafe publish"],
+        "read": ["list", "home", "topic-search", "collect", "boards", "posts", "read"],
+        "prepare": ["join-request", "write"],
+        "submit": ["join-submit", "publish"],
+        "policy": "topic-search and cafe collection use an existing Naver CDP target with UTF-8 query encoding; cafe join-request is prepare-only and final join submit is approval-gated",
     },
     "calendar": {
         "commands": ["calendar list", "calendar add"],
@@ -87,6 +106,7 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
         "read": ["list"],
         "prepare": ["send"],
         "submit": ["send --execute"],
+        "policy": "AI may draft/fill TalkTalk messages, but final send requires explicit approval and NAVER_APPROVED_SEND confirmation",
     },
     "place": {
         "commands": ["place list", "place reviews"],
@@ -96,9 +116,10 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
     },
     "smartstore": {
         "commands": ["smartstore actions", "smartstore product list", "smartstore submit"],
-        "read": ["actions", "product list"],
-        "prepare": ["prepare product"],
-        "submit": ["submit product"],
+        "read": ["actions", "product list", "review list", "inquiry list"],
+        "prepare": ["prepare product", "customer reply draft"],
+        "submit": ["submit product", "review reply send", "inquiry reply send", "talk message send"],
+        "policy": "Product save and customer-visible replies/messages are approval-gated; AI drafting and classification are prepare-only",
     },
 }
 

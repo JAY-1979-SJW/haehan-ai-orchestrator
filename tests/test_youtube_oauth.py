@@ -181,7 +181,7 @@ def test_exchange_uses_server_token_file_env(monkeypatch):
 
 
 def test_server_preapproval_defines_final_console_values():
-    result, path = oauth.build_server_preapproval({})
+    result, path = oauth.build_server_preapproval({"google_work_mode": "main"})
 
     assert path.exists()
     assert result["status"] == "ready_for_user_console_approval"
@@ -206,7 +206,9 @@ def test_server_preapproval_defines_final_console_values():
 
 
 def test_server_preapproval_supports_secret_issue_user_click_mode():
-    result, _path = oauth.build_server_preapproval({"secret_action_mode": "secret_issue_user_click"})
+    result, _path = oauth.build_server_preapproval(
+        {"google_work_mode": "main", "secret_action_mode": "secret_issue_user_click"}
+    )
 
     assert result["user_approval_mode"] == "secret_issue_user_click"
     assert result["secret_action_policy"]["final_button_user_only"] is True
@@ -215,7 +217,9 @@ def test_server_preapproval_supports_secret_issue_user_click_mode():
 
 
 def test_server_preapproval_blocks_agent_secret_click_without_approval():
-    result, _path = oauth.build_server_preapproval({"secret_action_mode": "secret_issue_agent_click"})
+    result, _path = oauth.build_server_preapproval(
+        {"google_work_mode": "main", "secret_action_mode": "secret_issue_agent_click"}
+    )
 
     assert result["user_approval_mode"] == "secret_issue_agent_click"
     assert result["secret_action_policy"]["status"] == "blocked"
@@ -225,7 +229,7 @@ def test_server_preapproval_blocks_agent_secret_click_without_approval():
 
 def test_server_preapproval_allows_agent_secret_click_with_explicit_approval():
     result, _path = oauth.build_server_preapproval(
-        {"secret_action_mode": "secret_issue_agent_click", "secret_issue_approved": "true"}
+        {"google_work_mode": "main", "secret_action_mode": "secret_issue_agent_click", "secret_issue_approved": "true"}
     )
 
     assert result["secret_action_policy"]["status"] == "ok"
@@ -236,8 +240,8 @@ def test_server_preapproval_allows_agent_secret_click_with_explicit_approval():
 def test_youtube_server_console_preapproval_has_managed_browser_plan():
     from scripts.google import managed_console
 
-    result, _path = oauth.build_server_preapproval({})
-    plan = managed_console.build_youtube_oauth_console_open_plan()
+    result, _path = oauth.build_server_preapproval({"google_work_mode": "main"})
+    plan = managed_console.build_youtube_oauth_console_open_plan(google_work_mode="main")
 
     assert result["user_approval_mode"] == "final_approval_only"
     assert plan["default_browser_allowed"] is False

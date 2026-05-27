@@ -15,6 +15,7 @@ from typing import Any
 
 from scripts import local_user_secret_store
 from scripts.google.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
+from scripts.google.work_mode_gate import build_google_work_mode_policy
 from security_utils import safe_preview
 
 
@@ -362,6 +363,10 @@ def handle_server_callback(values: dict[str, str]) -> tuple[dict[str, Any], Path
 def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict[str, Any], Path]:
     """Build the server-first Google Console input pack for YouTube captions OAuth."""
     values = values or {}
+    work_mode_policy = build_google_work_mode_policy(
+        values.get("google_work_mode") or values.get("work_mode"),
+        background_approved=str(values.get("background_approved", "")).strip().lower() in {"1", "true", "yes", "on"},
+    )
     secret_action_mode = normalize_secret_action_mode(values.get("secret_action_mode"))
     secret_issue_approved = str(values.get("secret_issue_approved", "")).strip().lower() in {"1", "true", "yes", "on"}
     secret_policy = build_secret_action_policy(
@@ -372,12 +377,18 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
     client_file = values.get("client_file") or os.environ.get("YOUTUBE_SERVER_CLIENT_FILE") or SERVER_CLIENT_FILE
     token_file = values.get("token_file") or os.environ.get("YOUTUBE_SERVER_TOKEN_FILE") or SERVER_TOKEN_FILE
     scope = _scope_text({"scope": values.get("scope") or "force-ssl"})
+    status = "ready_for_user_console_approval"
+    if work_mode_policy["status"] == "blocked" or secret_policy["status"] == "blocked":
+        status = "blocked"
     payload = {
         "schema_version": 1,
         "created_at": _now(),
         "workflow": "youtube_caption_server_oauth_preapproval",
-        "status": "ready_for_user_console_approval",
+        "status": status,
         "state_change": False,
+        "google_work_mode_policy": work_mode_policy,
+        "google_work_mode": work_mode_policy["mode"],
+        "background_approved": work_mode_policy["background_approved"],
         "user_approval_mode": secret_policy["mode"],
         "secret_action_policy": secret_policy,
         "intermediate_user_prompts": False,

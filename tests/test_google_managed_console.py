@@ -7,7 +7,7 @@ from scripts.google import oauth_console_fill
 
 
 def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
-    plan = managed_console.build_youtube_oauth_console_open_plan()
+    plan = managed_console.build_youtube_oauth_console_open_plan(google_work_mode="main")
 
     assert plan["browser_runtime"] == "managed_local_agent_cdp_profile"
     assert plan["default_browser_allowed"] is False
@@ -15,6 +15,8 @@ def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
     assert plan["state_change"] is False
     assert plan["final_approval_boundary"] == "user_final_approval_only"
     assert plan["secret_action_policy"]["mode"] == "final_approval_only"
+    assert plan["google_work_mode_policy"]["status"] == "ok"
+    assert plan["google_work_mode"] == "main"
     assert plan["secret_action_policy"]["raw_secret_output_allowed"] is False
     assert "stop before the final Google Console Create/Save button" in plan["agent_allowed_steps"]
     assert "final click on the Google Console Create/Save button" in plan["user_only_steps"]
@@ -22,7 +24,7 @@ def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
 
 
 def test_youtube_oauth_console_sequence_starts_from_google_home() -> None:
-    plan = managed_console.build_youtube_oauth_console_open_plan()
+    plan = managed_console.build_youtube_oauth_console_open_plan(google_work_mode="main")
     sequence = plan["sequence"]
 
     assert [item["stage"] for item in sequence] == [
@@ -33,6 +35,12 @@ def test_youtube_oauth_console_sequence_starts_from_google_home() -> None:
     assert sequence[0]["url"] == "https://www.google.com/"
     assert sequence[1]["url"] == "https://myaccount.google.com/"
     assert sequence[2]["url"] == "https://console.cloud.google.com/apis/credentials"
+
+
+def test_google_login_probe_uses_home_first() -> None:
+    from scripts.config import LOGIN_PROBE_URLS
+
+    assert LOGIN_PROBE_URLS["google"] == "https://www.google.com/"
 
 
 def test_managed_console_module_does_not_use_os_browser_openers() -> None:
@@ -49,7 +57,7 @@ def test_managed_console_module_does_not_use_os_browser_openers() -> None:
 
 
 def test_dry_run_does_not_open_browser() -> None:
-    result = managed_console.open_youtube_oauth_console_managed(dry_run=True)
+    result = managed_console.open_youtube_oauth_console_managed(dry_run=True, google_work_mode="main")
 
     assert result["dry_run"] is True
     assert result["opened"] is False
@@ -57,7 +65,7 @@ def test_dry_run_does_not_open_browser() -> None:
 
 
 def test_youtube_oauth_console_fill_plan_stops_before_final_button() -> None:
-    plan = oauth_console_fill.build_youtube_oauth_console_fill_plan()
+    plan = oauth_console_fill.build_youtube_oauth_console_fill_plan(google_work_mode="main")
 
     assert plan["status"] == "ready_for_ai_prefill"
     assert plan["browser_runtime"] == "managed_local_agent_cdp_profile"
@@ -65,6 +73,7 @@ def test_youtube_oauth_console_fill_plan_stops_before_final_button() -> None:
     assert plan["state_change_final_button_clicked"] is False
     assert plan["final_button_user_only"] is True
     assert plan["secret_action_policy"]["agent_final_secret_issue_allowed"] is False
+    assert plan["google_work_mode"] == "main"
     assert "stop before final Create/Save button" in plan["agent_steps"]
     assert "final click on the visible Google Console Create/Save button" in plan["user_only_steps"]
     assert plan["non_secret_inputs"]["client_name"] == "haehan-youtube-server-captions"
@@ -72,7 +81,7 @@ def test_youtube_oauth_console_fill_plan_stops_before_final_button() -> None:
 
 
 def test_youtube_oauth_console_fill_dry_run_does_not_open_browser() -> None:
-    result, path = oauth_console_fill.prefill_youtube_oauth_console(dry_run=True)
+    result, path = oauth_console_fill.prefill_youtube_oauth_console(dry_run=True, google_work_mode="main")
 
     assert path is None
     assert result["dry_run"] is True
@@ -84,6 +93,7 @@ def test_youtube_oauth_console_fill_dry_run_does_not_open_browser() -> None:
 def test_secret_issue_agent_click_requires_explicit_approval() -> None:
     result, path = oauth_console_fill.prefill_youtube_oauth_console(
         dry_run=True,
+        google_work_mode="main",
         secret_action_mode="secret_issue_agent_click",
     )
 
@@ -95,6 +105,7 @@ def test_secret_issue_agent_click_requires_explicit_approval() -> None:
 
 def test_secret_issue_agent_click_can_be_approved_for_final_button() -> None:
     plan = oauth_console_fill.build_youtube_oauth_console_fill_plan(
+        google_work_mode="main",
         secret_action_mode="secret_issue_agent_click",
         secret_issue_approved=True,
     )

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from .secret_action_gate import build_secret_action_policy
+from .work_mode_gate import build_google_work_mode_policy
 
 GOOGLE_HOME_URL = "https://www.google.com/"
 GOOGLE_ACCOUNT_URL = "https://myaccount.google.com/"
@@ -26,17 +27,29 @@ YOUTUBE_SERVER_OAUTH_INPUTS = {
 
 def build_youtube_oauth_console_open_plan(
     *,
+    google_work_mode: str | None = None,
+    background_approved: bool = False,
     secret_action_mode: str = "final_approval_only",
     secret_issue_approved: bool = False,
 ) -> dict[str, Any]:
     """Return the locked, non-secret Google Console open plan."""
+    work_mode_policy = build_google_work_mode_policy(
+        google_work_mode,
+        background_approved=background_approved,
+    )
     secret_policy = build_secret_action_policy(
         secret_action_mode,
         secret_issue_approved=secret_issue_approved,
     )
+    status = "ready_for_managed_console_open"
+    if work_mode_policy["status"] == "blocked" or secret_policy["status"] == "blocked":
+        status = "blocked"
     return {
-        "status": "ready_for_managed_console_open",
+        "status": status,
         "browser_runtime": "managed_local_agent_cdp_profile",
+        "google_work_mode_policy": work_mode_policy,
+        "google_work_mode": work_mode_policy["mode"],
+        "background_approved": bool(background_approved),
         "default_browser_allowed": False,
         "os_browser_openers_forbidden": [
             "PowerShell URL opener",
@@ -92,15 +105,19 @@ def open_youtube_oauth_console_managed(
     *,
     dry_run: bool = False,
     timeout_ms: int = 60000,
+    google_work_mode: str | None = None,
+    background_approved: bool = False,
     secret_action_mode: str = "final_approval_only",
     secret_issue_approved: bool = False,
 ) -> dict[str, Any]:
     """Open Google Console credentials through the managed CDP browser only."""
     plan = build_youtube_oauth_console_open_plan(
+        google_work_mode=google_work_mode,
+        background_approved=background_approved,
         secret_action_mode=secret_action_mode,
         secret_issue_approved=secret_issue_approved,
     )
-    if plan["secret_action_policy"]["status"] == "blocked":
+    if plan["status"] == "blocked":
         return {**plan, "dry_run": dry_run, "opened": False, "status": "blocked"}
     if dry_run:
         return {**plan, "dry_run": True, "opened": False}
