@@ -34,6 +34,8 @@ def run(cmd: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = None) 
         cwd=cwd,
         env=env,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=90,
     )
@@ -253,14 +255,14 @@ def run_full_sandbox_check() -> list[Check]:
     env["HAEHAN_PORTABLE_DESKTOP_DIR"] = str(desktop_dir)
     env["HAEHAN_PORTABLE_SHORTCUT_NAME"] = shortcut_name
 
-    install = run(["cmd", "/c", "install.bat"], cwd=sandbox, env=env)
+    install = run(["cmd", "/c", str(sandbox / "install.bat")], cwd=sandbox, env=env)
     checks.append(Check("sandbox install.bat: executes", install.returncode == 0, install.stderr.strip() or install.stdout.strip()))
     checks.append(Check("sandbox install.bat: shortcut created", shortcut.exists(), str(shortcut)))
     checks.append(Check("sandbox install.bat: logs folder created", (sandbox / "logs").is_dir()))
     checks.append(Check("sandbox install.bat: config folder created", (sandbox / "config").is_dir()))
 
     diag_before = latest_diagnostics_log(sandbox)
-    diagnostics = run(["cmd", "/c", "diagnostics.bat"], cwd=sandbox, env=env)
+    diagnostics = run(["cmd", "/c", str(sandbox / "diagnostics.bat")], cwd=sandbox, env=env)
     checks.append(Check("sandbox diagnostics.bat: executes", diagnostics.returncode == 0, diagnostics.stderr.strip()))
     diag_after = latest_diagnostics_log(sandbox)
     checks.append(Check("sandbox diagnostics.bat: new log created", diag_after is not None and diag_after != diag_before, str(diag_after or "")))
@@ -291,17 +293,17 @@ def run_full_sandbox_check() -> list[Check]:
         ])
         checks.append(Check("sandbox diagnostics.bat: log has no secret values", ok, detail))
 
-    uninstall = run(["cmd", "/c", "uninstall.bat"], cwd=sandbox, env=env)
+    uninstall = run(["cmd", "/c", str(sandbox / "uninstall.bat")], cwd=sandbox, env=env)
     checks.append(Check("sandbox uninstall.bat: executes", uninstall.returncode == 0, uninstall.stderr.strip() or uninstall.stdout.strip()))
     checks.append(Check("sandbox uninstall.bat: shortcut removed", not shortcut.exists(), str(shortcut)))
     checks.append(Check("sandbox uninstall.bat: logs preserved", (sandbox / "logs").is_dir()))
     checks.append(Check("sandbox uninstall.bat: config preserved", (sandbox / "config").is_dir()))
     checks.append(Check("sandbox uninstall.bat: app preserved", (sandbox / "dist" / "HaehanAI-Desktop" / "HaehanAI-Desktop.exe").is_file()))
 
-    reinstall = run(["cmd", "/c", "install.bat"], cwd=sandbox, env=env)
+    reinstall = run(["cmd", "/c", str(sandbox / "install.bat")], cwd=sandbox, env=env)
     checks.append(Check("sandbox recovery: reinstall executes", reinstall.returncode == 0, reinstall.stderr.strip() or reinstall.stdout.strip()))
     checks.append(Check("sandbox recovery: shortcut recreated", shortcut.exists(), str(shortcut)))
-    recovery_uninstall = run(["cmd", "/c", "uninstall.bat"], cwd=sandbox, env=env)
+    recovery_uninstall = run(["cmd", "/c", str(sandbox / "uninstall.bat")], cwd=sandbox, env=env)
     checks.append(Check("sandbox recovery: cleanup uninstall executes", recovery_uninstall.returncode == 0, recovery_uninstall.stderr.strip() or recovery_uninstall.stdout.strip()))
     checks.append(Check("sandbox recovery: shortcut removed again", not shortcut.exists(), str(shortcut)))
 
