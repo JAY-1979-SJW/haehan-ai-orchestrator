@@ -319,5 +319,5 @@ def test_pytest_temp_gets_isolated_runtime_dir(monkeypatch):
     temp_root = gate.isolated_pytest_temp(env)
 
     assert not temp_root.exists()
-    assert temp_root.parent == base
+    assert temp_root.parent == gate.usable_temp_base("required_gate_temp", "HAEHAN_REQUIRED_GATE_TEMP")
     assert base.exists()

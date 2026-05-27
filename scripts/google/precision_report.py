@@ -69,7 +69,11 @@ def build_google_precision_report() -> dict[str, Any]:
     action_catalog = workflows.build_action_catalog()
     live_manifest = _load_manifest()
     live_input_results = _load_latest_live_input_results_by_action()
+    live_input_coverage = live_inputs.build_live_input_coverage()
     ai_labels = build_google_ai_usage_labels()
+    live_fill_total = len(live_input_results)
+    if live_fill_total == 0:
+        live_fill_total = int(live_input_coverage.get("counts", {}).get("live_input_supported", 0))
 
     actions_by_surface: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for action in action_catalog["actions"]:
@@ -158,7 +162,7 @@ def build_google_precision_report() -> dict[str, Any]:
             "surface_pass": sum(1 for surface in surfaces if surface["status"] == "pass"),
             "surface_warn": sum(1 for surface in surfaces if surface["status"] == "warn"),
             "surface_fail": sum(1 for surface in surfaces if surface["status"] == "fail"),
-            "live_fill_total": len(live_input_results),
+            "live_fill_total": live_fill_total,
             "live_fill_completed": sum(1 for item in live_input_results.values() if _is_live_fill_safe_no_final(item)),
             "live_fill_failed": sum(1 for item in live_input_results.values() if item.get("status") == "failed"),
             "final_clicked_count": sum(1 for item in live_input_results.values() if item.get("state_change_final_button_clicked")),
@@ -175,6 +179,7 @@ def build_google_precision_report() -> dict[str, Any]:
         "source_artifacts": {
             "surface_live_latest": str(live_surface_explorer.LATEST_REPORT),
             "live_input_manifest_latest": str(live_inputs.LATEST_LIVE_INPUT_MANIFEST),
+            "live_input_coverage_latest": str(live_inputs.LATEST_LIVE_INPUT_COVERAGE),
             "live_input_results_dir": str(live_inputs.LIVE_INPUT_DIR),
             "precision_report_latest": str(LATEST_REPORT),
         },
