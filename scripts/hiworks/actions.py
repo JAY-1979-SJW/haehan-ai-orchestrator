@@ -160,6 +160,29 @@ def classify_button(button: dict[str, Any]) -> dict[str, Any]:
 
 def load_service_surface(path: str | Path | None = None) -> dict[str, Any]:
     source = Path(path) if path else LATEST_SURFACE_PATH
+    if not source.exists():
+        services = []
+        for key, target in SERVICE_TARGETS.items():
+            services.append(
+                {
+                    "key": key,
+                    "label": target.get("label") or key,
+                    "target_url": target.get("url") or "",
+                    "surface": {
+                        "url": target.get("url") or "",
+                        "title": target.get("label") or key,
+                        "counts": {"inputs": 0, "buttons": 0},
+                        "inputs": [],
+                        "buttons": [],
+                    },
+                }
+            )
+        return {
+            "schema_version": 1,
+            "source": "fallback_service_targets",
+            "services": services,
+            "secret_values_output": False,
+        }
     return json.loads(source.read_text(encoding="utf-8"))
 
 
