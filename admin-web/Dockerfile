@@ -21,10 +21,15 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV MARKET_RESEARCH_REPO_ROOT=/app
+ENV PATH=/opt/pydeps/bin:$PATH
 
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 nextjs \
- && apk add --no-cache python3
+ && apk add --no-cache python3 py3-pip
+
+COPY requirements.txt ./requirements.txt
+RUN python3 -m venv /opt/pydeps \
+ && /opt/pydeps/bin/pip install --no-cache-dir -r requirements.txt
 
 COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/static ./.next/static
