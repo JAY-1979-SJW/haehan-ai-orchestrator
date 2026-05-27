@@ -1,11 +1,25 @@
-"""Keep direct script execution from using workspace-local bytecode caches."""
+"""Keep direct script execution on repo-local temp and bytecode paths."""
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
-if "PYTHONPYCACHEPREFIX" not in os.environ and "TEMP" in os.environ:
-    pycache = Path(os.environ["TEMP"]) / "haehan_scripts_pycache"
+from runtime_temp import usable_temp_base
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _repo_temp() -> Path:
+    return usable_temp_base("python_runtime", "HAEHAN_WORKSPACE_TEMP")
+
+
+temp_root = _repo_temp()
+for key in ("TMP", "TEMP", "TMPDIR"):
+    os.environ[key] = str(temp_root)
+
+if "PYTHONPYCACHEPREFIX" not in os.environ:
+    pycache = temp_root / "pycache"
     os.environ["PYTHONPYCACHEPREFIX"] = str(pycache)
     sys.pycache_prefix = str(pycache)

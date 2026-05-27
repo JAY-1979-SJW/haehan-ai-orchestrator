@@ -25,6 +25,7 @@ build/
 
 # 테스트/커버리지
 .pytest_cache/
+.pytest-tmp/
 .coverage
 htmlcov/
 tests/fixtures/*

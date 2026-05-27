@@ -282,6 +282,13 @@ data/runtime/ai_work_records/<lane>/history.jsonl
 data/runtime/ai_work_records/latest_lane.json
 ```
 
+Google domain/module management uses the fixed `google` lane. Its latest state
+and visible history can be reviewed with:
+
+```text
+python scripts/cdp_client.py google records --limit=10
+```
+
 Before a new AI session continues operational work, it must inspect the latest
 work record and use `resume_next_step` as the starting point unless a newer
 user instruction changes the scope.

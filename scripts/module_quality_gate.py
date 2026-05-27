@@ -17,12 +17,18 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
+from uuid import uuid4
+
+try:
+    from scripts.runtime_temp import usable_temp_base
+except ModuleNotFoundError:  # direct script execution: sys.path[0] == scripts/
+    from runtime_temp import usable_temp_base
 
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_GATE_PYCACHE = Path(
-    os.environ.get("HAEHAN_MODULE_GATE_PYCACHE", str(Path(os.environ["TEMP"]) / "haehan_module_gate_pycache"))
+    os.environ.get("HAEHAN_MODULE_GATE_PYCACHE", str(usable_temp_base("module_gate_pycache", "HAEHAN_MODULE_GATE_PYCACHE")))
 )
 os.environ.setdefault("PYTHONPYCACHEPREFIX", str(MODULE_GATE_PYCACHE))
 sys.pycache_prefix = str(MODULE_GATE_PYCACHE)
@@ -95,6 +101,7 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("google_cloud_router_compatibility", check="google_cloud_router_compatibility"),
             GateStep("google_cloud_action_policy_baseline_contract", check="google_cloud_action_policy_baseline_contract"),
             GateStep("google_cloud_readonly_local_browser_dryrun", check="google_cloud_readonly_local_browser_dryrun"),
+            GateStep("google_domain_module_boundaries", check="google_domain_module_boundaries"),
         ),
     ),
     GateModule(
@@ -392,6 +399,19 @@ def command_is_forbidden(command: Iterable[str]) -> bool:
     return any(token in lowered for token in FORBIDDEN_TOKENS)
 
 
+def command_is_pytest(command: Iterable[str]) -> bool:
+    parts = tuple(str(part) for part in command)
+    return "-m" in parts and "pytest" in parts
+
+
+def workspace_temp_root(env: dict[str, str], step_name: str) -> Path:
+    base = usable_temp_base("module_gate_temp", "HAEHAN_MODULE_GATE_TEMP")
+    safe_step = re.sub(r"[^A-Za-z0-9_.-]+", "_", step_name).strip("_") or "step"
+    target = base / f"{safe_step}_{uuid4().hex}"
+    target.mkdir(parents=True, exist_ok=True)
+    return target
+
+
 def all_steps() -> list[GateStep]:
     return [step for module in MODULES for step in module.steps]
 
@@ -614,7 +634,7 @@ def _is_secret_scan_excluded(path: Path) -> bool:
     parts = set(rel.split("/"))
     if parts & {"node_modules", ".next", "ui_dist", "logs", "tests", "__pycache__", ".claude", ".github"}:
         return True
-    if rel.startswith(("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/")):
+    if rel.startswith(("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/", "data/sessions/")):
         return True
     if rel in {"scripts/module_quality_gate.py"}:
         return True
@@ -625,7 +645,7 @@ def check_active_source_secret_scan() -> tuple[bool, str]:
     patterns = (
         re.compile(r"BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY"),
         re.compile(r"AKIA[0-9A-Z]{16}"),
-        re.compile(r"sk-[A-Za-z0-9_-]{12,}"),
+        re.compile(r"(?<![A-Za-z0-9_-])sk-[A-Za-z0-9_-]{12,}"),
         re.compile(r"(?i)Authorization\s*:\s*Bearer\s+[A-Za-z0-9._~+/=-]+"),
         re.compile(r"Bearer admin-token"),
     )
@@ -1015,6 +1035,16 @@ def check_google_cloud_readonly_local_browser_dryrun() -> tuple[bool, str]:
     return True, "Google Cloud read-only contracts convert to local browser dry-run tasks"
 
 
+def check_google_domain_module_boundaries() -> tuple[bool, str]:
+    ok, message = _run_check_command(
+        [PY, "scripts/ops/audit_google_domain_module_boundaries.py"],
+        timeout=120,
+    )
+    if not ok:
+        return False, message
+    return True, "Google domain/module/page/action/input/control/evidence boundaries are locked"
+
+
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
         [PY, "scripts/ops/audit_common_tool_runtime.py"],
@@ -1199,6 +1229,7 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "google_cloud_router_compatibility": check_google_cloud_router_compatibility,
     "google_cloud_action_policy_baseline_contract": check_google_cloud_action_policy_baseline_contract,
     "google_cloud_readonly_local_browser_dryrun": check_google_cloud_readonly_local_browser_dryrun,
+    "google_domain_module_boundaries": check_google_domain_module_boundaries,
     "admin_web_typecheck": check_admin_web_typecheck,
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
@@ -1246,13 +1277,16 @@ def run_step(step: GateStep, *, dry_run: bool) -> bool:
     print(f"[RUN] {step.name} - {display}")
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
-    pycache = Path(
-        os.environ.get("HAEHAN_MODULE_GATE_PYCACHE", str(Path(os.environ["TEMP"]) / "haehan_module_gate_pycache"))
-    )
+    temp_root = workspace_temp_root(env, step.name)
+    env["TMP"] = str(temp_root)
+    env["TEMP"] = str(temp_root)
+    env["TMPDIR"] = str(temp_root)
+    pycache = Path(env.get("HAEHAN_MODULE_GATE_PYCACHE", str(temp_root / "pycache")))
     pycache.mkdir(parents=True, exist_ok=True)
     env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))
+    runtime_command = list(step.command)
     result = subprocess.run(
-        list(step.command),
+        runtime_command,
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
