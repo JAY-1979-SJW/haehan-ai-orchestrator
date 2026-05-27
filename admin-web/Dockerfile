@@ -1,15 +1,16 @@
 # Stage 1: deps
 FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-COPY vendor ./vendor
+WORKDIR /repo/admin-web
+COPY admin-web/package.json admin-web/package-lock.json ./
+COPY admin-web/vendor ./vendor
 RUN npm ci
 
 # Stage 2: builder
 FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+WORKDIR /repo
+COPY --from=deps /repo/admin-web/node_modules ./admin-web/node_modules
+COPY admin-web ./admin-web
+WORKDIR /repo/admin-web
 RUN npm run build
 
 # Stage 3: runner
@@ -19,12 +20,19 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV MARKET_RESEARCH_REPO_ROOT=/app
 
 RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 nextjs
+ && adduser --system --uid 1001 nextjs \
+ && apk add --no-cache python3
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/static ./.next/static
+COPY --chown=nextjs:nodejs scripts ./scripts
+COPY --chown=nextjs:nodejs security_utils.py ./security_utils.py
+
+RUN mkdir -p /app/data /app/docs/reports \
+ && chown -R nextjs:nodejs /app/data /app/docs
 
 USER nextjs
 
