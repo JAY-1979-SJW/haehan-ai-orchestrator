@@ -221,8 +221,8 @@ site login session is missing or when only catalog/dry-run evidence exists.
 - Router command: `python scripts/cdp_client.py smartstore ...`
 - Required action catalog counts:
   - read total: 8
-  - prepare total: 3
-  - approval total: 4
+  - prepare total: 4
+  - approval total: 6
 - Required boundaries:
   - product registration has a complete baseline.
   - product list, order, inventory, and analytics remain partial.

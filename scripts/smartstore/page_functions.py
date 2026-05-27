@@ -22,6 +22,8 @@ APPROVAL_TOKENS = (
     "save",
     "submit",
     "send",
+    "reply",
+    "message",
     "delete",
     "cancel",
     "apply",
@@ -40,6 +42,40 @@ APPROVAL_TOKENS = (
     "이미지 등록",
     "동영상 등록",
     "임시저장",
+)
+
+CUSTOMER_COMMUNICATION_TOKENS = (
+    "reply",
+    "message",
+    "talk",
+    "review",
+    "inquiry",
+    "답변",
+    "댓글",
+    "메시지",
+    "톡톡",
+    "리뷰",
+    "문의",
+    "상담",
+)
+
+READ_CONTROL_TOKENS = (
+    "search",
+    "filter",
+    "view",
+    "list",
+    "detail",
+    "help",
+    "조회",
+    "검색",
+    "필터",
+    "상세",
+    "도움말",
+    "가이드",
+    "보기",
+    "목록",
+    "대기",
+    "건",
 )
 
 
@@ -156,8 +192,24 @@ def _page_kind(url: str, body_sample: str) -> str:
 
 
 def _control_risk(control: dict[str, Any]) -> str:
-    text = f"{control.get('text') or ''} {control.get('href') or ''} {control.get('type') or ''}".lower()
-    return "approval" if any(token.lower() in text for token in APPROVAL_TOKENS) else "read"
+    label = f"{control.get('text') or ''} {control.get('href') or ''}".lower()
+    control_type = str(control.get("type") or "").lower()
+    if any(token.lower() in label for token in READ_CONTROL_TOKENS):
+        return "read"
+    if any(token.lower() in label for token in APPROVAL_TOKENS):
+        return "approval"
+    if control_type == "submit":
+        return "approval"
+    return "read"
+
+
+def _control_policy(control: dict[str, Any]) -> str:
+    label = f"{control.get('text') or ''} {control.get('href') or ''}".lower()
+    if any(token.lower() in label for token in CUSTOMER_COMMUNICATION_TOKENS):
+        return "customer_communication_approval_required"
+    if _control_risk(control) == "approval":
+        return "state_change_approval_required"
+    return "read_or_navigation"
 
 
 def _field_kind(field: dict[str, Any]) -> tuple[str, str]:
@@ -224,6 +276,7 @@ def build_page_functions(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
             "selector": str(control.get("selector") or ""),
             "url": str(control.get("href") or ""),
             "reason": "state-changing control" if risk == "approval" else "read/navigation/help control",
+            "policy": _control_policy(control),
         })
     for idx, table in enumerate(snapshot.get("tables") or []):
         label = ", ".join(str(item) for item in (table.get("headers") or [])) or f"table_{idx + 1}"
@@ -320,6 +373,8 @@ def collect_current_page_functions(*, allow_mixed_readonly: bool = False) -> Pag
         messages=[
             "Developed visible SmartStore page functions into read/prepare/approval tool records.",
             "No save, temporary save, register, cancel, upload, send, delete, apply, or approve control was clicked.",
+            "Review replies, inquiry replies, customer comments, and TalkTalk messages may be drafted by AI but final send/register remains approval-gated.",
+            "Use UTF-8 JSON files for Korean product data; PowerShell stdin can corrupt Korean text in some shells.",
         ],
         selection=selection.to_dict(),
     )

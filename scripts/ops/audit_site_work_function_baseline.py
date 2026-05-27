@@ -164,7 +164,7 @@ def audit() -> tuple[bool, list[str]]:
         for item in smartstore_catalog.get("sections", [])
         if isinstance(item, dict)
     }
-    expected_smart = {"read": 8, "prepare": 3, "approval": 4}
+    expected_smart = {"read": 8, "prepare": 4, "approval": 6}
     for risk, expected in expected_smart.items():
         item = smart_counts.get(risk)
         total = item.get("total") if isinstance(item, dict) else None

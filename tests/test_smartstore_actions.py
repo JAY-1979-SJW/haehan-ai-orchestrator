@@ -10,6 +10,10 @@ from scripts.smartstore import live_probe
 from scripts.smartstore import menu_tools
 from scripts.smartstore import page_tools
 from scripts.smartstore import page_functions
+from scripts.smartstore import router
+from scripts.smartstore.product_register import build_product_register_pipeline
+from scripts.smartstore.product_register import gates as product_register_gates
+from scripts.smartstore.product_register.input_data import read_utf8_json_file
 
 
 def test_action_catalog_has_read_prepare_and_approval_sections():
@@ -66,6 +70,54 @@ def test_save_records(tmp_path):
     assert json.loads(catalog_path.read_text(encoding="utf-8"))["site_id"] == "smartstore"
     assert json.loads(plan_path.read_text(encoding="utf-8"))["product_type"] == "group"
     assert json.loads(record_path.read_text(encoding="utf-8"))["workflow"] == "product_register"
+
+
+def test_smartstore_json_arg_requires_utf8_json_file(tmp_path):
+    data_path = tmp_path / "product.json"
+    data_path.write_text('{"name":"LED 슬림 T3","price":10000,"stock":5}', encoding="utf-8")
+
+    data, path = router._read_json_arg([f"--data={data_path}"])
+
+    assert data["name"] == "LED 슬림 T3"
+    assert path == str(data_path)
+    with pytest.raises(SystemExit):
+        router._read_json_arg([])
+    with pytest.raises(SystemExit):
+        router._read_json_arg([f"--data={tmp_path / 'product.txt'}"])
+
+
+def test_product_register_pipeline_separates_modules_and_gates():
+    pipeline = build_product_register_pipeline()
+
+    steps = {step["step"]: step for step in pipeline["steps"]}
+    assert steps["input_data"]["module"].endswith("product_register.input_data")
+    assert steps["draft"]["stage"] == product_register_gates.PREPARE
+    assert steps["approval"]["stage"] == product_register_gates.APPROVAL
+    assert f"--confirm={product_register_gates.APPROVAL_CONFIRM_TEXT}" in steps["approval"]["requires"]
+
+
+def test_product_register_gate_blocks_customer_send_without_approval():
+    result = product_register_gates.check_action("talk.message.send")
+
+    assert result.ok is False
+    assert result.code == "approval_required"
+    assert "draft customer replies" in result.message
+    assert product_register_gates.check_action(
+        "talk.message.send",
+        approved=True,
+        confirm=product_register_gates.APPROVAL_CONFIRM_TEXT,
+    ).ok
+
+
+def test_product_register_input_data_rejects_non_json(tmp_path):
+    data_path = tmp_path / "product.json"
+    data_path.write_text('{"name":"LED 슬림 T3"}', encoding="utf-8")
+    bad_path = tmp_path / "product.txt"
+    bad_path.write_text("{}", encoding="utf-8")
+
+    assert read_utf8_json_file(data_path).data["name"] == "LED 슬림 T3"
+    with pytest.raises(ValueError):
+        read_utf8_json_file(bad_path)
 
 
 def test_smartstore_probe_classifies_login_required():
@@ -609,6 +661,45 @@ def test_smartstore_page_functions_classifies_current_page_tools():
     assert by_label["저장하기"]["risk"] == "approval"
     assert by_label["도움말"]["risk"] == "read"
     assert any(item["kind"] == "table" for item in functions)
+
+
+def test_smartstore_page_functions_flags_customer_reply_controls():
+    functions = page_functions.build_page_functions(
+        {
+            "href": "https://sell.smartstore.naver.com/#/comments/reviews",
+            "bodySample": "review reply",
+            "headings": [],
+            "fields": [],
+            "fileInputs": [],
+            "controls": [{"text": "Reply send", "href": "", "type": "", "selector": "button"}],
+            "tables": [],
+        }
+    )
+
+    reply = next(item for item in functions if item["label"] == "Reply send")
+    assert reply["risk"] == "approval"
+    assert reply["policy"] == "customer_communication_approval_required"
+
+
+def test_smartstore_page_functions_keeps_search_submit_read_only():
+    functions = page_functions.build_page_functions(
+        {
+            "href": "https://sell.smartstore.naver.com/#/products/origin-list",
+            "bodySample": "product list",
+            "headings": [],
+            "fields": [],
+            "fileInputs": [],
+            "controls": [
+                {"text": "Search", "href": "", "type": "submit", "selector": "button"},
+                {"text": "Approval pending 0", "href": "https://sell.smartstore.naver.com/", "type": "", "selector": "a"},
+            ],
+            "tables": [],
+        }
+    )
+
+    by_label = {item["label"]: item for item in functions}
+    assert by_label["Search"]["risk"] == "read"
+    assert by_label["Approval pending 0"]["risk"] == "read"
 
 
 def test_smartstore_approved_product_save_requires_approval():

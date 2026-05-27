@@ -21,6 +21,13 @@ SUBMIT_RECORD_DIR = DATA_DIR / "smartstore_submits"
 
 APPROVAL_CONFIRM_TEXT = "SMARTSTORE_APPROVED_SUBMIT"
 
+CUSTOMER_COMMUNICATION_POLICY = {
+    "scope": ["review.reply", "inquiry.reply", "talk.message"],
+    "ai_allowed": ["read customer messages", "classify sentiment", "draft reply text"],
+    "ai_blocked_without_approval": ["send reply", "register reply", "send talk message"],
+    "approval": f"external customer communication requires --approved --confirm={APPROVAL_CONFIRM_TEXT}",
+}
+
 READ_ACTIONS = [
     {
         "action_id": "dashboard.open",
@@ -116,6 +123,16 @@ PREPARE_ACTIONS = [
         "required_fields": ["products"],
         "optional_fields": ["product_type", "max_retries", "stop_on_error"],
     },
+    {
+        "action_id": "customer.reply.draft.prepare",
+        "label": "draft review/inquiry/TalkTalk reply without sending",
+        "module": "scripts.naver.automation.ai_responder",
+        "risk": "prepare",
+        "status": "planned",
+        "required_fields": ["source_message", "reply_intent"],
+        "optional_fields": ["tone", "product_context", "order_context"],
+        "policy": CUSTOMER_COMMUNICATION_POLICY,
+    },
 ]
 
 APPROVAL_ACTIONS = [
@@ -150,6 +167,25 @@ APPROVAL_ACTIONS = [
         "risk": "approval",
         "status": "planned",
         "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
+        "policy": CUSTOMER_COMMUNICATION_POLICY,
+    },
+    {
+        "action_id": "inquiry.reply.send",
+        "label": "send SmartStore inquiry reply",
+        "module": "scripts.naver.automation.ai_responder",
+        "risk": "approval",
+        "status": "planned",
+        "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
+        "policy": CUSTOMER_COMMUNICATION_POLICY,
+    },
+    {
+        "action_id": "talk.message.send",
+        "label": "send Naver TalkTalk customer message",
+        "module": "scripts.naver.talk.NaverTalk.send_message",
+        "risk": "approval",
+        "status": "planned",
+        "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
+        "policy": CUSTOMER_COMMUNICATION_POLICY,
     },
 ]
 
@@ -178,6 +214,7 @@ def build_action_catalog() -> dict[str, Any]:
             "read": "may read/list only after normal navigation gate",
             "prepare": "may fill/prepare explicit product data but must not save by default",
             "submit": f"requires --approved and --confirm={APPROVAL_CONFIRM_TEXT}",
+            "customer_communication": CUSTOMER_COMMUNICATION_POLICY,
             "live_explore": "paused after Naver robot detection; prefer dry-run/static catalog first",
         },
         "sections": [

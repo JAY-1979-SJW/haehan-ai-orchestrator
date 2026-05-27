@@ -81,6 +81,8 @@ def run_smartstore(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_advanced(sub, args)
         case "draft-fill" | "fill-draft" | "write-draft":
             _cmd_draft_fill(sub, args)
+        case "product-register" | "register-pipeline" | "pipeline":
+            _cmd_product_register(sub, args)
         case "approved" | "approve":
             _cmd_approved(sub, args)
         case "login-watch" | "watch-login":
@@ -111,14 +113,13 @@ def _live_page(args: list[str], *, workflow: str):
 
 
 def _read_json_arg(args: list[str]) -> tuple[dict, str]:
-    path = _option_value(args, "--data=") or _option_value(args, "--file=")
-    if not path:
-        sample = Path("data/sample_product_data.json")
-        raise SystemExit(f"product data required: --data=<json>; sample={sample}")
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise SystemExit("product data JSON must be an object")
-    return data, path
+    try:
+        from scripts.smartstore.product_register.input_data import require_product_data_arg
+
+        source = require_product_data_arg(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    return source.data, source.path
 
 
 def _cmd_actions(sub: str | None, args: list[str]) -> None:
@@ -487,14 +488,33 @@ def _cmd_draft_fill(sub: str | None, args: list[str]) -> None:
     wait_seconds = float(_option_value(args, "--wait=") or 12.0)
     data_path = _option_value(args, "--data=") or _option_value(args, "--file=")
     if workflow not in ("product", "product-draft", "sample-product"):
-        raise SystemExit("usage: python scripts/cdp_client.py smartstore draft-fill product [--data=<json>]")
-    data = load_product_data(data_path)
+        raise SystemExit("usage: python scripts/cdp_client.py smartstore draft-fill product --data=<utf8-json-file>")
+    if workflow == "sample-product":
+        data = load_product_data(None)
+    else:
+        if not data_path:
+            raise SystemExit(
+                "smartstore draft-fill product requires --data=<utf8-json-file>. "
+                "Use sample-product explicitly for generated test data."
+            )
+        _read_json_arg([f"--data={data_path}"])
+        data = load_product_data(data_path)
     result = fill_product_draft(data, allow_mixed_readonly=allow_mixed, wait_seconds=wait_seconds)
     path = save_draft_fill_report(result)
     _print_result(result.to_dict())
     print(f"saved: {path}")
     if not result.ok:
         raise SystemExit(1)
+
+
+def _cmd_product_register(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.product_register import build_product_register_pipeline
+
+    action = sub or "pipeline"
+    if action not in ("pipeline", "plan", "gates", "modules", None, ""):
+        raise SystemExit("usage: python scripts/cdp_client.py smartstore product-register pipeline")
+    payload = build_product_register_pipeline()
+    _print_result(payload)
 
 
 def _cmd_approved(sub: str | None, args: list[str]) -> None:
