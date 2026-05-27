@@ -58,8 +58,8 @@ services:
 
   admin-web:
     build:
-      context: ./admin-web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: admin-web/Dockerfile
     image: haehan-ai-orchestrator-admin-web:local
     container_name: haehan-ai-orchestrator-admin-web
     expose:

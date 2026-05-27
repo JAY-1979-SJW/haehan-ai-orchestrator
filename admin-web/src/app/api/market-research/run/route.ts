@@ -47,9 +47,9 @@ export async function POST(request: Request) {
   const transcriptVideos = clampNumber(body.transcriptVideos, 5, 0, 10);
   const collectTranscripts = Boolean(body.collectTranscripts);
 
-  const repoRoot = path.resolve(process.cwd(), "..");
+  const repoRoot = process.env.MARKET_RESEARCH_REPO_ROOT || process.cwd();
   const args = [
-    "scripts\\cdp_client.py",
+    path.join("scripts", "cdp_client.py"),
     "google",
     "youtube",
     "research-run",
