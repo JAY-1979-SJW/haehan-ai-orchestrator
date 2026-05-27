@@ -35,6 +35,7 @@ RUN python3 -m venv /opt/pydeps \
 
 COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /repo/admin-web/.next/static ./.next/static
+COPY --chown=nextjs:nodejs ai_orchestrator ./ai_orchestrator
 COPY --chown=nextjs:nodejs scripts ./scripts
 COPY --chown=nextjs:nodejs security_utils.py ./security_utils.py
 
