@@ -17,9 +17,11 @@ STAGE_ACTIONS: dict[str, set[str]] = {
         "product.list",
         "review.list",
         "inquiry.list",
+        "category.taxonomy.read",
     },
     PREPARE: {
         "input.load",
+        "category.resolve",
         "category.select",
         "detail.write",
         "image.prepare",
@@ -121,3 +123,15 @@ def require_action(action: str, *, approved: bool = False, confirm: str = "") ->
     if not result.ok:
         raise PermissionError(result.message)
     return result
+
+
+def check_category_resolution(resolution: dict[str, Any]) -> GateResult:
+    if resolution.get("auto_select_allowed"):
+        return GateResult(ok=True, stage=PREPARE, action="category.resolve")
+    return GateResult(
+        ok=False,
+        stage=PREPARE,
+        action="category.resolve",
+        code="manual_review_required",
+        message="Category confidence is too low for automatic selection.",
+    )

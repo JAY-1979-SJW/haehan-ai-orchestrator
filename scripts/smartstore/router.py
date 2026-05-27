@@ -83,6 +83,8 @@ def run_smartstore(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_draft_fill(sub, args)
         case "product-register" | "register-pipeline" | "pipeline":
             _cmd_product_register(sub, args)
+        case "category-taxonomy" | "categories" | "category-resolver":
+            _cmd_category_taxonomy(sub, args)
         case "approved" | "approve":
             _cmd_approved(sub, args)
         case "login-watch" | "watch-login":
@@ -515,6 +517,26 @@ def _cmd_product_register(sub: str | None, args: list[str]) -> None:
         raise SystemExit("usage: python scripts/cdp_client.py smartstore product-register pipeline")
     payload = build_product_register_pipeline()
     _print_result(payload)
+
+
+def _cmd_category_taxonomy(sub: str | None, args: list[str]) -> None:
+    from scripts.smartstore.product_register.category_resolver import resolve_category_candidates
+    from scripts.smartstore.product_register.category_taxonomy import build_default_taxonomy, load_taxonomy, save_taxonomy
+
+    action = sub or "resolve"
+    if action in ("seed", "build", "cache"):
+        payload = build_default_taxonomy()
+        path = save_taxonomy(payload)
+        _print_result({**payload, "saved": str(path)})
+        return
+    if action in ("list", "show"):
+        _print_result(load_taxonomy())
+        return
+    if action in ("resolve", "classify"):
+        data, _data_path = _read_json_arg(args)
+        _print_result(resolve_category_candidates(data))
+        return
+    raise SystemExit("usage: python scripts/cdp_client.py smartstore category-taxonomy [seed|list|resolve --data=<utf8-json-file>]")
 
 
 def _cmd_approved(sub: str | None, args: list[str]) -> None:

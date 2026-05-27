@@ -13,6 +13,8 @@ from scripts.smartstore import page_functions
 from scripts.smartstore import router
 from scripts.smartstore.product_register import build_product_register_pipeline
 from scripts.smartstore.product_register import gates as product_register_gates
+from scripts.smartstore.product_register.category_resolver import resolve_category_candidates
+from scripts.smartstore.product_register.category_taxonomy import build_default_taxonomy
 from scripts.smartstore.product_register.input_data import read_utf8_json_file
 
 
@@ -91,6 +93,8 @@ def test_product_register_pipeline_separates_modules_and_gates():
 
     steps = {step["step"]: step for step in pipeline["steps"]}
     assert steps["input_data"]["module"].endswith("product_register.input_data")
+    assert steps["category_taxonomy"]["stage"] == product_register_gates.READ
+    assert steps["category_resolver"]["stage"] == product_register_gates.PREPARE
     assert steps["draft"]["stage"] == product_register_gates.PREPARE
     assert steps["approval"]["stage"] == product_register_gates.APPROVAL
     assert f"--confirm={product_register_gates.APPROVAL_CONFIRM_TEXT}" in steps["approval"]["requires"]
@@ -118,6 +122,39 @@ def test_product_register_input_data_rejects_non_json(tmp_path):
     assert read_utf8_json_file(data_path).data["name"] == "LED 슬림 T3"
     with pytest.raises(ValueError):
         read_utf8_json_file(bad_path)
+
+
+def test_product_register_input_data_accepts_utf8_bom(tmp_path):
+    data_path = tmp_path / "product.json"
+    data_path.write_text('\ufeff{"name":"LED 슬림 T3"}', encoding="utf-8")
+
+    assert read_utf8_json_file(data_path).data["name"] == "LED 슬림 T3"
+
+
+def test_category_resolver_scores_lighting_candidates():
+    taxonomy = build_default_taxonomy()
+    result = resolve_category_candidates(
+        {
+            "name": "LED 슬림 T3 라인조명",
+            "category": "간접조명",
+            "keywords": ["국산 조명", "LED모듈"],
+        },
+        taxonomy=taxonomy,
+    )
+
+    assert result["ok"] is True
+    assert result["auto_select_allowed"] is True
+    assert result["kc_required"] is True
+    assert result["catalog_followup_required"] is True
+    assert result["top"]["category_id"]
+
+
+def test_category_resolver_requires_manual_review_for_unknown_product():
+    result = resolve_category_candidates({"name": "unmapped specialty item"}, taxonomy=build_default_taxonomy())
+
+    assert result["auto_select_allowed"] is False
+    assert result["manual_review_required"] is True
+    assert product_register_gates.check_category_resolution(result).code == "manual_review_required"
 
 
 def test_smartstore_probe_classifies_login_required():
