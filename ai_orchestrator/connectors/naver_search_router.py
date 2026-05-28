@@ -256,4 +256,142 @@ def api_crawl_report(
     return {**result, "duration_ms": duration_ms}
 
 
+# ── 분석 엔드포인트 ──────────────────────────────────────────────
+
+
+@naver_search_router.get("/shopping-search/analysis/price-dist")
+def api_price_distribution(
+    query: Optional[str] = None,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """가격 구간별 상품 수 집계."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.analysis import price_distribution
+        keywords = [query] if query else None
+        result = price_distribution(keywords=keywords)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("[SHOPPING-ANALYSIS-PRICE-DIST-ERR] %s", e)
+        result = {"ranges": [], "error": str(e)}
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_ANALYSIS_PRICE_DIST",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"query={query} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
+@naver_search_router.get("/shopping-search/analysis/malls")
+def api_mall_analysis(
+    query: Optional[str] = None,
+    top_n: int = 30,
+    exclude_large: bool = False,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """업체별 집계: 상품수, 최저가, 평균가, 최고가, 브랜드수."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.analysis import mall_analysis
+        keywords = [query] if query else None
+        result = mall_analysis(keywords=keywords, top_n=top_n, exclude_large=exclude_large)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("[SHOPPING-ANALYSIS-MALLS-ERR] %s", e)
+        result = {"malls": [], "total_malls": 0, "error": str(e)}
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_ANALYSIS_MALLS",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"query={query} top_n={top_n} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
+@naver_search_router.get("/shopping-search/analysis/brands")
+def api_brand_analysis(
+    query: Optional[str] = None,
+    top_n: int = 20,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """브랜드별 집계: 상품수, 가격 범위, 판매몰 수."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.analysis import brand_analysis
+        keywords = [query] if query else None
+        result = brand_analysis(keywords=keywords, top_n=top_n)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("[SHOPPING-ANALYSIS-BRANDS-ERR] %s", e)
+        result = {"brands": [], "total_brands": 0, "error": str(e)}
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_ANALYSIS_BRANDS",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"query={query} top_n={top_n} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
+@naver_search_router.get("/shopping-search/analysis/keywords")
+def api_keyword_summary(
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """키워드별 요약: 상품수, 가격 min/avg/max, 업체수, 브랜드수."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.analysis import keyword_summary
+        result = keyword_summary()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("[SHOPPING-ANALYSIS-KEYWORDS-ERR] %s", e)
+        result = {"keywords": [], "total_products": 0, "error": str(e)}
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_ANALYSIS_KEYWORDS",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
+@naver_search_router.get("/shopping-search/analysis/competition")
+def api_competition_score(
+    query: str,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """키워드 경쟁 강도 점수 (0~100). 높을수록 경쟁 치열."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.analysis import competition_score
+        result = competition_score(query)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("[SHOPPING-ANALYSIS-COMPETITION-ERR] %s", e)
+        result = {"keyword": query, "score": 0, "error": str(e)}
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_ANALYSIS_COMPETITION",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"query={query} score={result.get('score')} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
 __all__ = ["naver_search_router"]
