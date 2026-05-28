@@ -12,6 +12,9 @@
 """
 from __future__ import annotations
 
+# 서브패키지 노출
+from scripts.naver.automation import smartstore, content, integration, platform  # noqa: F401
+
 __all__ = [
     "MailAutomation",
     "ReviewAutoResponder",

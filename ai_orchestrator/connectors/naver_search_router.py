@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends
 from ..audit_logger import log_event
 from ..auth import require_role
 from . import naver_search_queries as q
+from .naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,108 @@ def api_search_status(
              f"duration_ms={duration_ms}",
     )
     return {**status.to_dict(), "duration_ms": duration_ms}
+
+
+@naver_search_router.post("/blog-search/run")
+def api_run_blog_search(
+    query: str,
+    max_pages: int = 1,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """블로그 검색 즉시 실행 — dry_run=False, DB 적재."""
+    t0 = time.monotonic()
+    outcome = run_naver_blog_search_job(query=query, max_pages=max_pages)
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_BLOG_SEARCH_RUN",
+        task_id="-",
+        actor=user["actor"], role=user["role"], decision=outcome.status,
+        note=f"query={query} collected={outcome.collected} duration_ms={duration_ms}",
+    )
+    return {
+        "status": outcome.status,
+        "query": query,
+        "collected": outcome.collected,
+        "db_status": outcome.db_status,
+        "duration_ms": duration_ms,
+    }
+
+
+@naver_search_router.post("/shopping-search/run")
+def api_run_shopping_search(
+    query: str,
+    max_pages: int = 1,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """쇼핑 검색 즉시 실행 — dry_run=False, DB 적재."""
+    t0 = time.monotonic()
+    outcome = run_naver_shopping_search_job(query=query, max_pages=max_pages)
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_SEARCH_RUN",
+        task_id="-",
+        actor=user["actor"], role=user["role"], decision=outcome.status,
+        note=f"query={query} collected={outcome.collected} duration_ms={duration_ms}",
+    )
+    return {
+        "status": outcome.status,
+        "query": query,
+        "collected": outcome.collected,
+        "db_status": outcome.db_status,
+        "duration_ms": duration_ms,
+    }
+
+
+@naver_search_router.get("/shopping-search/history")
+def api_shopping_history(
+    query: Optional[str] = None,
+    limit: int = 100,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """쇼핑 검색 수집 이력 조회 — 가격 비교 분석용."""
+    t0 = time.monotonic()
+    page = q.search_shopping_items(
+        query=query, limit=limit, offset=0,
+        sort=q.SHOP_SORT_COLLECTED_DESC,
+    )
+    duration_ms = int((time.monotonic() - t0) * 1000)
+
+    # 키워드별 가격 통계 계산
+    page_dict = page.to_dict()
+    items = page_dict.get("items", [])
+    stats: dict = {}
+    for item in items:
+        kw = item.get("query", "")
+        price = item.get("lprice")
+        if not kw or not price:
+            continue
+        if kw not in stats:
+            stats[kw] = {"prices": [], "brands": set(), "mall_names": set()}
+        stats[kw]["prices"].append(price)
+        if item.get("brand"):
+            stats[kw]["brands"].add(item["brand"])
+        if item.get("mall_name"):
+            stats[kw]["mall_names"].add(item["mall_name"])
+
+    summary: dict = {}
+    for kw, d in stats.items():
+        prices = sorted(d["prices"])
+        summary[kw] = {
+            "count": len(prices),
+            "min_price": prices[0] if prices else None,
+            "max_price": prices[-1] if prices else None,
+            "avg_price": int(sum(prices) / len(prices)) if prices else None,
+            "brands": list(d["brands"])[:10],
+            "mall_names": list(d["mall_names"])[:10],
+        }
+
+    log_event(
+        "NAVER_SHOPPING_HISTORY_READ",
+        task_id="-",
+        actor=user["actor"], role=user["role"], decision="ok",
+        note=f"total={page.total} duration_ms={duration_ms}",
+    )
+    return {**page_dict, "summary": summary, "duration_ms": duration_ms}
 
 
 __all__ = ["naver_search_router"]
