@@ -250,3 +250,73 @@ python scripts/eum_business_dashboard.py
 - ⚠️ 영천 현장 = NO 21 (영천경마공원 1단계 건설 전기공사) 확인됨
 - ⚠️ 임차인은 모두 "비전아이(주)" - 단말기 사용하는 실제 공사업체는 "공사업체" 컬럼에 별도 기재
 - ⚠️ tbody 기반 추출은 실패 → 반드시 `table.querySelectorAll('tr')` 사용
+
+---
+
+# 네이버 OpenAPI 운영규칙 (2026-05-29 확인)
+
+## 앱 정보
+
+| 항목 | 값 |
+|------|-----|
+| 앱 이름 | 해한AI검색 |
+| Client ID | `.env` 의 `NAVER_OPENAPI_CLIENT_ID` 참조 |
+| Client Secret | `.env` 의 `NAVER_OPENAPI_CLIENT_SECRET` 참조 |
+| 개발 상태 | **개발 중** (검수 전 — 본인 계정만 로그인 가능) |
+| 카테고리 | 기타 |
+| 앱 URL | `https://developers.naver.com/apps/#/myapps/cSW_L1d1Gic9ElCbzA_k/overview` |
+
+## 등록된 API
+
+| API | 유형 | 일일 허용량 | 상태 |
+|-----|------|------------|------|
+| **검색** (`search/**`) | 비로그인 오픈 API | 25,000 회/일 | ✅ 활성 |
+| 네이버 로그인 | 로그인 오픈 API | — | 개발 중 (검수 전) |
+
+## 서비스 환경 설정
+
+| 환경 | URL |
+|------|-----|
+| 비로그인 WEB | `http://localhost` |
+| 로그인 PC 웹 서비스 URL | `http://localhost` |
+| 로그인 Callback URL | `http://localhost/callback` |
+
+⚠️ 실서비스 배포 시 위 URL을 실제 도메인으로 변경 필요
+
+## 운영 정책
+
+```
+NAVER_OPENAPI_DRY_RUN=false   # 실제 호출 활성화
+NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
+일일 한도: 25,000 회 (검색 API)
+```
+
+### 금지 사항 (개발자센터 정책 + 보안 정책)
+- 유료 API 키 발급 금지
+- 광고 캠페인 생성 / 예산 설정 / 결제 등록 금지
+- 카페 쓰기 API — 현재 앱에 미등록, 사용 금지
+- Client ID / Secret 원문 로그 출력 금지
+- 일일 허용량 초과 자동 호출 금지
+
+### 허용 범위 (비로그인 검색 API)
+- 블로그 검색: `GET /v1/search/blog.json`
+- 쇼핑 검색 (경쟁사 조사): `GET /v1/search/shop.json`
+- 뉴스 검색: `GET /v1/search/news.json`
+- 정렬: `sim`(유사도) / `date`(날짜) 만 허용
+
+## 카페 API 미등록 확인
+
+사용자가 앱 등록 시 **카페 API를 선택하지 않음** — 검색 API만 등록됨.
+카페 자동화는 **CDP 브라우저 세션 방식**으로만 운영 (OpenAPI 미사용).
+
+## CDP 강제 시작
+
+브라우저 CDP가 내려갔을 때:
+```bash
+python scripts/cdp_force_start.py start [URL]
+python scripts/cdp_force_start.py status
+python scripts/cdp_force_start.py stop
+```
+- 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
+- 프로필: `data/cdp_profile/ai_chrome`
+- PID 파일: `data/cdp_force_pid.json`

@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_GROUPS } from "@/lib/nav";
 
 interface PageShellProps {
   title: string;
@@ -39,39 +39,47 @@ export function PageShell({ title, description, headerRight, children }: PageShe
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {NAV_ITEMS.map((item) => {
-            const active = isNavActive(item.href, item.exact, pathname);
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-[10px] text-[13px] transition-colors relative no-underline"
-                style={{
-                  background: active ? "#FFF7ED" : "transparent",
-                  color: active ? "#F97316" : "#6B7280",
-                  fontWeight: active ? 600 : 400,
-                }}
-              >
-                {active && (
-                  <span
-                    className="absolute left-0 top-0 bottom-0 rounded-r-full"
-                    style={{ width: 3, background: "#F97316" }}
-                  />
-                )}
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
-                  style={{
-                    background: active ? "#FED7AA" : "#F3F4F6",
-                    color: active ? "#C2410C" : "#6B7280",
-                  }}
-                  aria-hidden="true"
-                >
-                  {item.shortLabel.slice(0, 1)}
-                </span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={gi}>
+              <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-widest uppercase"
+                style={{ color: "#9CA3AF" }}>
+                {group.group}
+              </div>
+              {group.items.map((item) => {
+                const active = isNavActive(item.href, item.exact, pathname);
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-[9px] text-[13px] transition-colors relative no-underline"
+                    style={{
+                      background: active ? "#FFF7ED" : "transparent",
+                      color: active ? "#F97316" : "#6B7280",
+                      fontWeight: active ? 600 : 400,
+                    }}
+                  >
+                    {active && (
+                      <span
+                        className="absolute left-0 top-0 bottom-0 rounded-r-full"
+                        style={{ width: 3, background: "#F97316" }}
+                      />
+                    )}
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
+                      style={{
+                        background: active ? "#FED7AA" : "#F3F4F6",
+                        color: active ? "#C2410C" : "#6B7280",
+                      }}
+                      aria-hidden="true"
+                    >
+                      {item.shortLabel.slice(0, 1)}
+                    </span>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </aside>
 
@@ -107,7 +115,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
         className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
         aria-label="모바일 하단 메뉴"
       >
-        {NAV_ITEMS.slice(0, 5).map((item) => {
+        {NAV_GROUPS.flatMap((g) => g.items).slice(0, 5).map((item) => {
           const active = isNavActive(item.href, item.exact, pathname);
           return (
             <Link

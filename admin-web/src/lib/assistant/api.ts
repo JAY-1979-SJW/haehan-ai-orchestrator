@@ -339,3 +339,91 @@ export interface CafeKB {
 export async function getCafeKB(signal?: AbortSignal): Promise<CafeKB> {
   return getJson<CafeKB>("/api/v1/naver-cafe/kb", signal);
 }
+
+// ── 네이버 키워드 검색 ─────────────────────────────────────────
+export interface SearchRunResult {
+  status: string;
+  query: string;
+  collected: number;
+  db_status: string;
+  duration_ms: number;
+}
+
+export async function runNaverBlogSearch(query: string, maxPages = 1): Promise<SearchRunResult> {
+  const params = new URLSearchParams({ query, max_pages: String(maxPages) });
+  const res = await fetch(`${API_BASE}/api/v1/external/naver/blog-search/run?${params}`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`blog-search/run: ${res.status}`);
+  return res.json();
+}
+
+export async function runNaverShoppingSearch(query: string, maxPages = 1): Promise<SearchRunResult> {
+  const params = new URLSearchParams({ query, max_pages: String(maxPages) });
+  const res = await fetch(`${API_BASE}/api/v1/external/naver/shopping-search/run?${params}`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`shopping-search/run: ${res.status}`);
+  return res.json();
+}
+
+export async function getNaverSearchStatus(signal?: AbortSignal) {
+  return getJson("/api/v1/external/naver/search-status", signal);
+}
+
+export async function getNaverBlogSearchResults(query?: string, limit = 30, signal?: AbortSignal) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (query) params.set("query", query);
+  return getJson(`/api/v1/external/naver/blog-search?${params}`, signal);
+}
+
+export async function getNaverShoppingSearchResults(query?: string, limit = 30, signal?: AbortSignal) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (query) params.set("query", query);
+  return getJson(`/api/v1/external/naver/shopping-search?${params}`, signal);
+}
+
+export interface ShoppingHistorySummaryItem {
+  count: number;
+  min_price: number | null;
+  max_price: number | null;
+  avg_price: number | null;
+  brands: string[];
+  mall_names: string[];
+}
+
+export interface ShoppingHistoryItem {
+  query: string;
+  title: string;
+  link: string;
+  lprice: number | null;
+  hprice: number | null;
+  mall_name: string;
+  brand: string;
+  maker: string;
+  product_id: string;
+  collected_at: string;
+  source: string;
+}
+
+export interface ShoppingHistoryResponse {
+  total: number;
+  items: ShoppingHistoryItem[];
+  limit: number;
+  offset: number;
+  summary: Record<string, ShoppingHistorySummaryItem>;
+  duration_ms: number;
+}
+
+export async function getShoppingHistory(
+  query?: string,
+  limit = 100,
+  signal?: AbortSignal,
+): Promise<ShoppingHistoryResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (query) params.set("query", query);
+  return getJson<ShoppingHistoryResponse>(
+    `/api/v1/external/naver/shopping-search/history?${params}`,
+    signal,
+  );
+}
