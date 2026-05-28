@@ -464,3 +464,149 @@ export async function getCrawlReport(query: string, signal?: AbortSignal): Promi
   const params = new URLSearchParams({ query });
   return getJson<CrawlResult>(`/api/v1/external/naver/shopping-search/crawl-report?${params}`, signal);
 }
+
+// ── 쇼핑 시장 분석 API ────────────────────────────────────────────────────
+
+export interface PriceRange {
+  label: string;
+  lo: number;
+  hi: number | null;
+  count: number;
+}
+
+export interface PriceDistResponse {
+  ranges: PriceRange[];
+  total_with_price: number;
+  keywords: string[];
+  duration_ms: number;
+}
+
+export interface MallItem {
+  mall_name: string;
+  count: number;
+  min_price: number | null;
+  avg_price: number | null;
+  max_price: number | null;
+  brand_count: number;
+  is_large: boolean;
+}
+
+export interface MallAnalysisResponse {
+  malls: MallItem[];
+  total_malls: number;
+  specialist_count: number;
+  large_malls: MallItem[];
+  keywords: string[];
+  duration_ms: number;
+}
+
+export interface BrandItem {
+  brand: string;
+  count: number;
+  min_price: number | null;
+  max_price: number | null;
+  mall_count: number;
+}
+
+export interface BrandAnalysisResponse {
+  brands: BrandItem[];
+  total_brands: number;
+  keywords: string[];
+  duration_ms: number;
+}
+
+export interface KeywordSummaryItem {
+  query: string;
+  count: number;
+  min_price: number | null;
+  avg_price: number | null;
+  max_price: number | null;
+  mall_count: number;
+  brand_count: number;
+}
+
+export interface KeywordSummaryResponse {
+  keywords: KeywordSummaryItem[];
+  total_products: number;
+  duration_ms: number;
+}
+
+export interface CompetitionScoreResponse {
+  keyword: string;
+  score: number;
+  detail: {
+    product_count: number;
+    max_count_in_db: number;
+    price_std: number;
+    mall_count: number;
+    total_mall_count: number;
+    n_count: number;
+    n_std: number;
+    n_malls: number;
+  };
+  duration_ms: number;
+}
+
+/** GET /api/v1/external/naver/shopping-search/analysis/price-dist */
+export async function getShoppingPriceDist(
+  query?: string,
+  signal?: AbortSignal,
+): Promise<PriceDistResponse> {
+  const params = new URLSearchParams();
+  if (query) params.set("query", query);
+  const qs = params.toString();
+  return getJson<PriceDistResponse>(
+    `/api/v1/external/naver/shopping-search/analysis/price-dist${qs ? "?" + qs : ""}`,
+    signal,
+  );
+}
+
+/** GET /api/v1/external/naver/shopping-search/analysis/malls */
+export async function getShoppingMallAnalysis(
+  query?: string,
+  topN = 30,
+  signal?: AbortSignal,
+): Promise<MallAnalysisResponse> {
+  const params = new URLSearchParams({ top_n: String(topN) });
+  if (query) params.set("query", query);
+  return getJson<MallAnalysisResponse>(
+    `/api/v1/external/naver/shopping-search/analysis/malls?${params}`,
+    signal,
+  );
+}
+
+/** GET /api/v1/external/naver/shopping-search/analysis/brands */
+export async function getShoppingBrandAnalysis(
+  query?: string,
+  topN = 20,
+  signal?: AbortSignal,
+): Promise<BrandAnalysisResponse> {
+  const params = new URLSearchParams({ top_n: String(topN) });
+  if (query) params.set("query", query);
+  return getJson<BrandAnalysisResponse>(
+    `/api/v1/external/naver/shopping-search/analysis/brands?${params}`,
+    signal,
+  );
+}
+
+/** GET /api/v1/external/naver/shopping-search/analysis/keywords */
+export async function getShoppingKeywordSummary(
+  signal?: AbortSignal,
+): Promise<KeywordSummaryResponse> {
+  return getJson<KeywordSummaryResponse>(
+    "/api/v1/external/naver/shopping-search/analysis/keywords",
+    signal,
+  );
+}
+
+/** GET /api/v1/external/naver/shopping-search/analysis/competition?query=... */
+export async function getCompetitionScore(
+  query: string,
+  signal?: AbortSignal,
+): Promise<CompetitionScoreResponse> {
+  const params = new URLSearchParams({ query });
+  return getJson<CompetitionScoreResponse>(
+    `/api/v1/external/naver/shopping-search/analysis/competition?${params}`,
+    signal,
+  );
+}
