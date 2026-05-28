@@ -8,7 +8,14 @@
 import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8400";
+
+// 로컬 개발용 Basic 인증 헤더
+const _API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
+const _API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!";
+const _AUTH_HEADER = typeof btoa !== "undefined"
+  ? `Basic ${btoa(`${_API_USER}:${_API_PASS}`)}`
+  : "";
 
 export type ApiState<T> =
   | { status: "idle" }
@@ -67,14 +74,18 @@ async function getJson<T>(
   path: string,
   signal?: AbortSignal,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    signal,
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} ${res.statusText}`);
-  }
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
+  const res = await fetch(`${API_BASE}${path}`, { method: "GET", headers, signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return res.json() as Promise<T>;
+}
+
+async function postJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers, signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
   return res.json() as Promise<T>;
 }
 
@@ -351,20 +362,12 @@ export interface SearchRunResult {
 
 export async function runNaverBlogSearch(query: string, maxPages = 1): Promise<SearchRunResult> {
   const params = new URLSearchParams({ query, max_pages: String(maxPages) });
-  const res = await fetch(`${API_BASE}/api/v1/external/naver/blog-search/run?${params}`, {
-    method: "POST",
-  });
-  if (!res.ok) throw new Error(`blog-search/run: ${res.status}`);
-  return res.json();
+  return postJson<SearchRunResult>(`/api/v1/external/naver/blog-search/run?${params}`);
 }
 
 export async function runNaverShoppingSearch(query: string, maxPages = 1): Promise<SearchRunResult> {
   const params = new URLSearchParams({ query, max_pages: String(maxPages) });
-  const res = await fetch(`${API_BASE}/api/v1/external/naver/shopping-search/run?${params}`, {
-    method: "POST",
-  });
-  if (!res.ok) throw new Error(`shopping-search/run: ${res.status}`);
-  return res.json();
+  return postJson<SearchRunResult>(`/api/v1/external/naver/shopping-search/run?${params}`);
 }
 
 export async function getNaverSearchStatus(signal?: AbortSignal) {
