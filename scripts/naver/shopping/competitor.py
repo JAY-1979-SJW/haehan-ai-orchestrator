@@ -1,0 +1,37 @@
+"""경쟁사 조사 — 게이트 + 기존 CompetitorAnalysis 통합."""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(ROOT))
+
+from .gate import gate_competitor
+from .search import search_shopping
+
+
+def analyze_competitor(keyword: str, display: int = 20) -> dict:
+    """경쟁사 가격/상품 수집 — NOTIFY 게이트."""
+    gate_competitor(keyword)
+    result = search_shopping(keyword, display=display)
+    return result
+
+
+def price_summary(keyword: str) -> dict:
+    """수집된 데이터에서 가격 통계 반환."""
+    gate_competitor(keyword)
+    from ai_orchestrator.connectors import naver_search_queries as q
+    page = q.search_shopping_items(query=keyword, limit=100, offset=0)
+    items = page.items
+    prices = [i.get("lprice") for i in items if i.get("lprice")]
+    if not prices:
+        return {"keyword": keyword, "count": 0}
+    return {
+        "keyword": keyword,
+        "count": len(prices),
+        "min_price": min(prices),
+        "max_price": max(prices),
+        "avg_price": sum(prices) // len(prices),
+        "items": items[:10],
+    }
