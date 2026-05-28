@@ -430,3 +430,37 @@ export async function getShoppingHistory(
     signal,
   );
 }
+
+export interface CrawlResult {
+  ok: boolean;
+  keyword?: string;
+  count?: number;
+  products?: Array<{
+    rank: number;
+    title: string;
+    price: number | null;
+    mall: string;
+    review_count: number | null;
+    buy_count: number | null;
+    wish_count: number | null;
+    rating: number | null;
+    delivery: string;
+  }>;
+  stats?: {
+    price: { min: number; avg: number; max: number };
+    review: { min: number; avg: number; max: number; total: number };
+    rating: { avg: number; max: number };
+  };
+  duration_ms?: number;
+  error?: string;
+}
+
+export async function crawlNaverShopping(query: string, limit = 40): Promise<CrawlResult> {
+  const params = new URLSearchParams({ query, limit: String(limit) });
+  return postJson<CrawlResult>(`/api/v1/external/naver/shopping-search/crawl?${params}`);
+}
+
+export async function getCrawlReport(query: string, signal?: AbortSignal): Promise<CrawlResult> {
+  const params = new URLSearchParams({ query });
+  return getJson<CrawlResult>(`/api/v1/external/naver/shopping-search/crawl-report?${params}`, signal);
+}

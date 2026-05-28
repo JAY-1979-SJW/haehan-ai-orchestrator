@@ -6,9 +6,12 @@ import {
   runNaverShoppingSearch,
   getNaverBlogSearchResults,
   getShoppingHistory,
+  crawlNaverShopping,
+  getCrawlReport,
   type SearchRunResult,
   type ShoppingHistoryResponse,
   type ShoppingHistoryItem,
+  type CrawlResult,
 } from "@/lib/assistant/api";
 
 type Tab = "blog" | "shopping" | "tools";
@@ -68,6 +71,14 @@ export default function KeywordsClient() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
+  // CDP 크롤링 상태
+  const [crawlResult, setCrawlResult] = useState<CrawlResult | null>(null);
+  const [crawlLoading, setCrawlLoading] = useState(false);
+  const [crawlError, setCrawlError] = useState<string | null>(null);
+  const [crawlReport, setCrawlReport] = useState<CrawlResult | null>(null);
+  const [crawlReportLoading, setCrawlReportLoading] = useState(false);
+  const [crawlReportError, setCrawlReportError] = useState<string | null>(null);
+
   const TABS: { id: Tab; label: string }[] = [
     { id: "blog",     label: "블로그 검색" },
     { id: "shopping", label: "경쟁사 조사" },
@@ -104,6 +115,36 @@ export default function KeywordsClient() {
       setShopState((s) => ({ ...s, running: false, result }));
     } catch (e) {
       setShopState((s) => ({ ...s, running: false, error: String(e) }));
+    }
+  };
+
+  const handleCrawl = async () => {
+    if (!shopQuery.trim()) return;
+    setCrawlLoading(true);
+    setCrawlResult(null);
+    setCrawlError(null);
+    try {
+      const data = await crawlNaverShopping(shopQuery.trim(), 40);
+      setCrawlResult(data);
+    } catch (e) {
+      setCrawlError(String(e));
+    } finally {
+      setCrawlLoading(false);
+    }
+  };
+
+  const handleCrawlReport = async () => {
+    if (!shopQuery.trim()) return;
+    setCrawlReportLoading(true);
+    setCrawlReport(null);
+    setCrawlReportError(null);
+    try {
+      const data = await getCrawlReport(shopQuery.trim());
+      setCrawlReport(data);
+    } catch (e) {
+      setCrawlReportError(String(e));
+    } finally {
+      setCrawlReportLoading(false);
     }
   };
 
@@ -275,7 +316,195 @@ export default function KeywordsClient() {
               >
                 {historyLoading ? "분석 중…" : "분석 조회"}
               </button>
+              <button
+                onClick={handleCrawl}
+                disabled={crawlLoading || !shopQuery.trim()}
+                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm font-semibold rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {crawlLoading ? "크롤링 중…" : "리뷰·별점 수집 (CDP)"}
+              </button>
+              <button
+                onClick={handleCrawlReport}
+                disabled={crawlReportLoading || !shopQuery.trim()}
+                className="px-4 py-2 border border-[#1D4ED8] text-[#1D4ED8] text-sm font-semibold rounded-lg hover:bg-[#EFF6FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {crawlReportLoading ? "조회 중…" : "크롤링 결과 보기"}
+              </button>
             </div>
+
+            {/* CDP 크롤링 오류 */}
+            {crawlError && (
+              <div className="border border-[#FCA5A5] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-xs font-semibold text-[#DC2626] mb-1">CDP 크롤링 오류</p>
+                <p className="text-xs text-[#7F1D1D] font-mono">{crawlError}</p>
+              </div>
+            )}
+
+            {/* CDP 크롤링 결과 */}
+            {crawlResult && (
+              <div className="space-y-3">
+                <div className={`border rounded-xl p-4 ${crawlResult.ok ? "border-[#BFDBFE] bg-[#EFF6FF]" : "border-[#FCA5A5] bg-[#FEF2F2]"}`}>
+                  <p className={`text-xs font-semibold mb-2 ${crawlResult.ok ? "text-[#1D4ED8]" : "text-[#DC2626]"}`}>
+                    CDP 크롤링 {crawlResult.ok ? "완료" : "실패"} — {crawlResult.count ?? 0}건 수집 ({crawlResult.duration_ms} ms)
+                  </p>
+                  {crawlResult.stats && (
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">가격</p>
+                        <p className="text-[#374151]">최저 {crawlResult.stats.price.min.toLocaleString()}원</p>
+                        <p className="text-[#374151]">평균 {crawlResult.stats.price.avg.toLocaleString()}원</p>
+                        <p className="text-[#374151]">최고 {crawlResult.stats.price.max.toLocaleString()}원</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">리뷰</p>
+                        <p className="text-[#374151]">최소 {crawlResult.stats.review.min}</p>
+                        <p className="text-[#374151]">평균 {crawlResult.stats.review.avg}</p>
+                        <p className="text-[#374151]">합계 {crawlResult.stats.review.total.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">별점</p>
+                        <p className="text-[#374151]">평균 {crawlResult.stats.rating.avg}</p>
+                        <p className="text-[#374151]">최고 {crawlResult.stats.rating.max}</p>
+                      </div>
+                    </div>
+                  )}
+                  {crawlResult.error && (
+                    <p className="text-xs text-[#7F1D1D] font-mono mt-1">{crawlResult.error}</p>
+                  )}
+                </div>
+
+                {crawlResult.products && crawlResult.products.length > 0 && (
+                  <div className="border border-[#BFDBFE] rounded-xl overflow-hidden">
+                    <p className="text-xs font-semibold text-[#1D4ED8] px-4 py-3 border-b border-[#BFDBFE] bg-[#EFF6FF]">
+                      CDP 수집 상품 ({crawlResult.products.length}건)
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-[#DBEAFE] text-[#1E40AF]">
+                            <th className="text-right px-3 py-2 font-semibold">#</th>
+                            <th className="text-left px-3 py-2 font-semibold">상품명</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">가격</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">리뷰</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">구매수</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">별점</th>
+                            <th className="text-left px-3 py-2 font-semibold">판매몰</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {crawlResult.products.map((p, idx) => (
+                            <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-[#F0F9FF]"}>
+                              <td className="px-3 py-2 text-right text-[#9CA3AF]">{p.rank}</td>
+                              <td className="px-3 py-2 text-[#111827] max-w-[200px] truncate" title={p.title}>{p.title}</td>
+                              <td className="px-3 py-2 text-right font-mono text-[#111827] whitespace-nowrap">
+                                {p.price != null ? p.price.toLocaleString() + "원" : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#374151]">
+                                {p.review_count != null ? p.review_count.toLocaleString() : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#374151]">
+                                {p.buy_count != null ? p.buy_count.toLocaleString() : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#F59E0B]">
+                                {p.rating != null ? p.rating.toFixed(1) : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-[#374151]">{p.mall || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* CDP 보고서 오류 */}
+            {crawlReportError && (
+              <div className="border border-[#FCA5A5] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-xs font-semibold text-[#DC2626] mb-1">CDP 보고서 오류</p>
+                <p className="text-xs text-[#7F1D1D] font-mono">{crawlReportError}</p>
+              </div>
+            )}
+
+            {/* CDP 보고서 결과 */}
+            {crawlReport && (
+              <div className="space-y-3">
+                <div className="border border-[#BFDBFE] bg-[#EFF6FF] rounded-xl p-4">
+                  <p className="text-xs font-semibold text-[#1D4ED8] mb-2">
+                    CDP 보고서 — {crawlReport.keyword} ({crawlReport.count ?? 0}건, {crawlReport.duration_ms} ms)
+                  </p>
+                  {crawlReport.stats && (
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">가격</p>
+                        <p className="text-[#374151]">최저 {crawlReport.stats.price.min.toLocaleString()}원</p>
+                        <p className="text-[#374151]">평균 {crawlReport.stats.price.avg.toLocaleString()}원</p>
+                        <p className="text-[#374151]">최고 {crawlReport.stats.price.max.toLocaleString()}원</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">리뷰</p>
+                        <p className="text-[#374151]">최소 {crawlReport.stats.review.min}</p>
+                        <p className="text-[#374151]">평균 {crawlReport.stats.review.avg}</p>
+                        <p className="text-[#374151]">합계 {crawlReport.stats.review.total.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-[#BFDBFE]">
+                        <p className="font-semibold text-[#1D4ED8] mb-1">별점</p>
+                        <p className="text-[#374151]">평균 {crawlReport.stats.rating.avg}</p>
+                        <p className="text-[#374151]">최고 {crawlReport.stats.rating.max}</p>
+                      </div>
+                    </div>
+                  )}
+                  {crawlReport.error && (
+                    <p className="text-xs text-[#7F1D1D] font-mono mt-1">{crawlReport.error}</p>
+                  )}
+                </div>
+
+                {crawlReport.products && crawlReport.products.length > 0 && (
+                  <div className="border border-[#BFDBFE] rounded-xl overflow-hidden">
+                    <p className="text-xs font-semibold text-[#1D4ED8] px-4 py-3 border-b border-[#BFDBFE] bg-[#EFF6FF]">
+                      CDP 보고서 상품 ({crawlReport.products.length}건)
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-[#DBEAFE] text-[#1E40AF]">
+                            <th className="text-right px-3 py-2 font-semibold">#</th>
+                            <th className="text-left px-3 py-2 font-semibold">상품명</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">가격</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">리뷰</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">구매수</th>
+                            <th className="text-right px-3 py-2 font-semibold whitespace-nowrap">별점</th>
+                            <th className="text-left px-3 py-2 font-semibold">판매몰</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {crawlReport.products.map((p, idx) => (
+                            <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-[#F0F9FF]"}>
+                              <td className="px-3 py-2 text-right text-[#9CA3AF]">{p.rank}</td>
+                              <td className="px-3 py-2 text-[#111827] max-w-[200px] truncate" title={p.title}>{p.title}</td>
+                              <td className="px-3 py-2 text-right font-mono text-[#111827] whitespace-nowrap">
+                                {p.price != null ? p.price.toLocaleString() + "원" : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#374151]">
+                                {p.review_count != null ? p.review_count.toLocaleString() : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#374151]">
+                                {p.buy_count != null ? p.buy_count.toLocaleString() : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right text-[#F59E0B]">
+                                {p.rating != null ? p.rating.toFixed(1) : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-[#374151]">{p.mall || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 수집 오류 */}
             {shopState.error && (

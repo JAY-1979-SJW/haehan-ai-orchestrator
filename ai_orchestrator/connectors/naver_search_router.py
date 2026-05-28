@@ -198,4 +198,62 @@ def api_shopping_history(
     return {**page_dict, "summary": summary, "duration_ms": duration_ms}
 
 
+@naver_search_router.post("/shopping-search/crawl")
+def api_crawl_shopping(
+    query: str,
+    limit: int = 40,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """CDP 브라우저 크롤링 — 리뷰·별점·구매수 포함 수집."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.crawl import crawl_shopping
+        result = crawl_shopping(query=query, limit=limit)
+    except Exception as e:
+        logger.warning("[SHOPPING-CRAWL-ERR] %s", e)
+        result = {"ok": False, "error": str(e)}
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_CRAWL",
+        task_id="-", actor=user["actor"], role=user["role"],
+        decision="ok" if result.get("ok") else "error",
+        note=f"query={query} count={result.get('count',0)} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
+@naver_search_router.get("/shopping-search/crawl-report")
+def api_crawl_report(
+    query: str,
+    days: int = 30,
+    limit: int = 50,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """CDP 크롤링 수집 이력 보고서 — 리뷰·별점·구매수 포함."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+    t0 = time.monotonic()
+    try:
+        from scripts.naver.shopping.crawl import full_summary
+        result = full_summary(query=query)
+    except Exception as e:
+        logger.warning("[SHOPPING-CRAWL-REPORT-ERR] %s", e)
+        result = {"keyword": query, "count": 0, "error": str(e)}
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_SHOPPING_CRAWL_REPORT",
+        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        note=f"query={query} count={result.get('count',0)} duration_ms={duration_ms}",
+    )
+    return {**result, "duration_ms": duration_ms}
+
+
 __all__ = ["naver_search_router"]
