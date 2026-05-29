@@ -3,6 +3,7 @@
  * restart/compose 버튼 없음, server_apply_allowed=false
  */
 import { useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { DeploymentSopPanel } from "@/components/assistant/DeploymentSopPanel";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
@@ -15,10 +16,10 @@ export default function DeploymentStatusPage() {
   const isSynced = status.state === "SYNCED";
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="배포 현황" description="서버 배포 상태 · SOP" chatDomain="ops">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">배포 상태</h1>
         <span className="text-xs font-mono bg-[#FEF3C7] text-[#92400E] px-2 py-0.5 rounded border border-[#FDE68A]">
           server_apply_allowed=false
         </span>
@@ -103,6 +104,7 @@ export default function DeploymentStatusPage() {
         <span>force-push 없음</span><span>·</span>
         <span>server_apply_allowed=false</span>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

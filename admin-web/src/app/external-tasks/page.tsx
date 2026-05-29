@@ -15,6 +15,7 @@
 "use client";
 
 import React from "react";
+import { PageShell } from "@/components/ui/PageShell";
 
 type Classification =
   | "SERVER_READONLY_ALLOWED"
@@ -353,15 +354,8 @@ export default function ExternalTasksPage() {
   const providers = ["naver", "google"];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">외부 웹 업무 현황</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          네이버·구글 등 외부 서비스와의 웹 업무 연결 상태.
-          실행 위치·인증 방식·승인 필요 여부를 확인하세요.
-        </p>
-      </div>
-
+    <PageShell title="외부 업무 현황" description="외부 웹 업무 · 승인 분류" chatDomain="default">
+      <div className="space-y-6">
       {/* 분류 범례 */}
       <div className="mb-6 flex flex-wrap gap-2">
         {Object.entries(CLASSIFICATION_STYLES).map(([key, val]) => (
@@ -408,6 +402,7 @@ export default function ExternalTasksPage() {
         실행 가능한 항목도 승인 게이트를 통과해야 최종 실행됩니다.
         서버에서 Google/Naver 계정 로그인을 자동 실행하지 않습니다.
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

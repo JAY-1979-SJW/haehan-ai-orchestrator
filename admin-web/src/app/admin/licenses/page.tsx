@@ -72,7 +72,7 @@ export default function LicensesPage() {
   const active  = licenses.filter(l => l.active).length;
 
   return (
-    <PageShell title="라이선스 관리" description="사용자 라이선스 발급·조회·취소">
+    <PageShell title="라이선스 관리" description="사용자 라이선스 발급·조회·취소" chatDomain="default">
       <div className="space-y-6">
 
         {/* 통계 */}

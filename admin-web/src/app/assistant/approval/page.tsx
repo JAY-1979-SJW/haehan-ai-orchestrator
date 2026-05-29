@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/approval — 승인 게이트 read-only (APP_APPROVAL_GATE_READONLY_POLISH_01) */
 import { useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { GateBadge } from "@/components/assistant/GateBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
@@ -15,10 +16,10 @@ export default function ApprovalGatePage() {
   const notConnected = approvalGatesMock.filter((g) => g.current_behavior === "NOT_CONNECTED").length;
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="승인 게이트" description="실행 대기 · 승인 처리" chatDomain="ops">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">승인 게이트</h1>
         <span className="text-xs font-mono bg-[#FEE2E2] text-[#B91C1C] px-2 py-0.5 rounded border border-[#FECACA]">
           MUTATION_BLOCKED
         </span>
@@ -120,6 +121,7 @@ export default function ApprovalGatePage() {
         <span>token 원문 표시 금지</span><span>·</span>
         <span>B-1 미연결 — 의도된 미완</span>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

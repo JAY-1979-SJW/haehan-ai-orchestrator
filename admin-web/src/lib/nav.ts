@@ -36,6 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
     group: "콘텐츠",
     items: [
       { key: "youtube",  label: "YouTube 관리", shortLabel: "유튜브", href: "/youtube" },
+      { key: "google",   label: "구글 허브",    shortLabel: "구글",   href: "/google" },
       { key: "market",   label: "시장 조사",    shortLabel: "시장",   href: "/market-research" },
       { key: "blog",     label: "블로그 관리",  shortLabel: "블로그", href: "/naver/blog" },
       { key: "cafe",     label: "카페 탐색",    shortLabel: "카페",   href: "/assistant/cafe" },

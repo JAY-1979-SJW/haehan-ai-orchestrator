@@ -2,6 +2,7 @@
 // getAssistantHealth compatibility: this dashboard uses getAppHealthSummary.
 /** /assistant — Dashboard (APP_UI_READONLY_STATUS_CARDS_API_BIND_01) */
 import { useEffect, useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { BackendStatusCard } from "@/components/assistant/BackendStatusCard";
 import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
@@ -78,9 +79,9 @@ export default function AssistantDashboard() {
     : "idle";
 
   return (
-    <div className="space-y-4">
+    <PageShell title="AI 비서" description="백엔드 상태 · 스토리지 · 작업 현황" chatDomain="default">
+      <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">대시보드</h1>
         <ApiConnectionStateBadge
           state={loadState}
           meta={healthState.status === "success" || healthState.status === "mock_fallback"
@@ -111,5 +112,6 @@ export default function AssistantDashboard() {
         </div>
       </div>
     </div>
+    </PageShell>
   );
 }

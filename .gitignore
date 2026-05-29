@@ -199,3 +199,14 @@ data/**/*.xlsx
 data/**/*.zip
 data/**/downloads/
 data/**/runs/
+
+# Electron 빌드 산출물
+dist-electron/
+
+# 로컬 데이터 파일
+data/naver_search.db
+data/hanafax_template.docx
+data/*.db
+
+# 검증 스크립트
+admin-web/verify_*.js

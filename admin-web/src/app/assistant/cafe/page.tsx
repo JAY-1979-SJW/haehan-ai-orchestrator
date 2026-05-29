@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/cafe — 네이버 카페 수집·분석 조회 (read-only) */
 import { useState, useCallback, useEffect } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import {
   getCafeSummary, getMyCafes, getCafeArticles, getCafeKB,
   type MyCafe, type CafeArticle, type CafeSummary, type CafeKB, type CafeCategorySummary,
@@ -194,7 +195,8 @@ export default function CafePage() {
   }[c] ?? "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]");
 
   return (
-    <div className="space-y-4">
+    <PageShell title="카페 탐색" description="네이버 카페 수집 · 분석" chatDomain="naver">
+      <div className="space-y-4">
       <ReadOnlyModeBanner />
       <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-4">
@@ -365,6 +367,7 @@ export default function CafePage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

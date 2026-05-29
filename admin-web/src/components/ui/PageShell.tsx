@@ -1,14 +1,16 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/lib/nav";
+import { UniversalChat } from "@/components/chat/UniversalChat";
 
 interface PageShellProps {
   title: string;
   description?: string;
   headerRight?: ReactNode;
+  chatDomain?: string;   // 채팅 패널 도메인 (없으면 채팅 숨김)
   children: ReactNode;
 }
 
@@ -17,18 +19,16 @@ function isNavActive(href: string, exact: boolean | undefined, pathname: string)
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function PageShell({ title, description, headerRight, children }: PageShellProps) {
+export function PageShell({ title, description, headerRight, chatDomain, children }: PageShellProps) {
   const pathname = usePathname();
+  const [chatOpen, setChatOpen] = useState(false);
 
   return (
     <div className="flex min-h-dvh bg-[#F5F7FA]">
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-[220px] h-dvh sticky top-0 bg-white shrink-0 overflow-hidden"
         style={{ borderRight: "1px solid #E5E7EB" }}>
-        {/* Orange accent top */}
         <div className="h-1 shrink-0 bg-[#F97316]" />
-
-        {/* Logo */}
         <div className="h-[56px] flex items-center px-4 shrink-0"
           style={{ borderBottom: "1px solid #F3F4F6" }}>
           <span className="text-[14px] font-bold text-[#0F172A]">
@@ -36,8 +36,6 @@ export function PageShell({ title, description, headerRight, children }: PageShe
             <span className="text-[11px] font-normal text-[#9CA3AF] ml-1">Admin</span>
           </span>
         </div>
-
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
           {NAV_GROUPS.map((group, gi) => (
             <div key={gi}>
@@ -48,30 +46,22 @@ export function PageShell({ title, description, headerRight, children }: PageShe
               {group.items.map((item) => {
                 const active = isNavActive(item.href, item.exact, pathname);
                 return (
-                  <Link
-                    key={item.key}
-                    href={item.href}
+                  <Link key={item.key} href={item.href}
                     className="flex items-center gap-3 px-4 py-[9px] text-[13px] transition-colors relative no-underline"
                     style={{
                       background: active ? "#FFF7ED" : "transparent",
                       color: active ? "#F97316" : "#6B7280",
                       fontWeight: active ? 600 : 400,
-                    }}
-                  >
+                    }}>
                     {active && (
-                      <span
-                        className="absolute left-0 top-0 bottom-0 rounded-r-full"
-                        style={{ width: 3, background: "#F97316" }}
-                      />
+                      <span className="absolute left-0 top-0 bottom-0 rounded-r-full"
+                        style={{ width: 3, background: "#F97316" }} />
                     )}
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
                       style={{
                         background: active ? "#FED7AA" : "#F3F4F6",
                         color: active ? "#C2410C" : "#6B7280",
-                      }}
-                      aria-hidden="true"
-                    >
+                      }} aria-hidden="true">
                       {item.shortLabel.slice(0, 1)}
                     </span>
                     <span>{item.label}</span>
@@ -85,10 +75,9 @@ export function PageShell({ title, description, headerRight, children }: PageShe
 
       {/* Main area */}
       <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Orange top accent */}
         <div className="h-1 bg-[#F97316] shrink-0" />
 
-        {/* Sticky header */}
+        {/* Header */}
         <header className="shrink-0 bg-white z-10 px-4 md:px-6 h-[56px] lg:h-[52px] flex items-center gap-3"
           style={{ borderBottom: "1px solid #F3F4F6" }}>
           <div className="flex-1 flex items-center gap-3 min-w-0">
@@ -100,46 +89,64 @@ export function PageShell({ title, description, headerRight, children }: PageShe
               <span className="text-[12px] text-[#6B7280] truncate hidden sm:block">{description}</span>
             )}
           </div>
-          {headerRight && (
-            <div className="flex items-center gap-2 shrink-0">{headerRight}</div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {headerRight}
+            {chatDomain && (
+              <button onClick={() => setChatOpen(v => !v)}
+                title="AI 채팅"
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors text-sm"
+                style={{
+                  background: chatOpen ? "#FFF7ED" : "#F3F4F6",
+                  color:      chatOpen ? "#F97316" : "#6B7280",
+                  border:     chatOpen ? "1px solid #FED7AA" : "1px solid transparent",
+                }}>
+                💬
+              </button>
+            )}
+          </div>
         </header>
 
-        {/* Page content — flex-1 + overflow-hidden so children can use h-full */}
-        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
-          {children}
-        </main>
+        {/* Content + Chat Panel */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
+            {children}
+          </main>
+
+          {/* 채팅 패널 — chatDomain 있고 토글 ON일 때 표시 */}
+          {chatDomain && chatOpen && (
+            <div className="hidden lg:flex w-[300px] shrink-0 flex-col border-l border-[#E5E7EB] bg-[#F9FAFB]"
+              style={{ height: "100%" }}>
+              <UniversalChat
+                domain={chatDomain}
+                title="AI 어시스턴트"
+                className="flex-1 rounded-none border-0 border-none"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      <nav
-        className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
-        aria-label="모바일 하단 메뉴"
-      >
-        {/* 모바일 하단 핵심 5개: 홈·스마트스토어·YouTube·업무·운영 */}
+      {/* 모바일 하단 탭 */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
+        aria-label="모바일 하단 메뉴">
         {[
-          NAV_GROUPS[0].items[0],  // 대시보드
-          NAV_GROUPS[1].items[0],  // 스마트스토어 AI 채팅
-          NAV_GROUPS[2].items[0],  // YouTube
-          NAV_GROUPS[4].items[0],  // 메일 Inbox
-          NAV_GROUPS[0].items[2],  // 운영센터
+          NAV_GROUPS[0].items[0],
+          NAV_GROUPS[1].items[0],
+          NAV_GROUPS[2].items[0],
+          NAV_GROUPS[4].items[0],
+          NAV_GROUPS[0].items[2],
         ].map((item) => {
           const active = isNavActive(item.href, item.exact, pathname);
           return (
-            <Link
-              key={item.key}
-              href={item.href}
+            <Link key={item.key} href={item.href}
               className="flex h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-md no-underline"
               style={{ color: active ? "#F97316" : "#6B7280" }}
-              aria-current={active ? "page" : undefined}
-            >
-              <span
-                className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold"
+              aria-current={active ? "page" : undefined}>
+              <span className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-bold"
                 style={{
                   background: active ? "#FFF7ED" : "transparent",
-                  border: active ? "1px solid #FED7AA" : "1px solid transparent",
-                }}
-                aria-hidden="true"
-              >
+                  border:     active ? "1px solid #FED7AA" : "1px solid transparent",
+                }} aria-hidden="true">
                 {item.shortLabel.slice(0, 1)}
               </span>
               <span className="max-w-full truncate text-[11px] font-semibold">{item.shortLabel}</span>

@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/news — 네이버 뉴스 조회 (read-only) */
 import { useState, useCallback } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import {
   getNewsMain,
   getNewsSearch,
@@ -84,7 +85,8 @@ export default function NewsPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <PageShell title="뉴스 수집" description="네이버 뉴스 검색 · 수집" chatDomain="naver">
+      <div className="space-y-4">
       <ReadOnlyModeBanner />
 
       <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
@@ -262,6 +264,7 @@ export default function NewsPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

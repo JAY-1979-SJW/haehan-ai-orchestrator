@@ -50,3 +50,11 @@ def api_verify(key: str,
                user: dict = Depends(require_role("admin", "owner"))) -> dict:
     ok, rec, reason = verify(key)
     return {"ok": ok, "reason": reason, "record": rec}
+
+
+@router.get("/licenses/{key}/verify")
+def api_verify_public(key: str) -> dict:
+    """라이선스 검증 (인증 불필요 — 클라이언트 앱 전용)."""
+    ok, rec, reason = verify(key)
+    safe = {"name": rec["name"], "plan": rec["plan"], "expires_at": rec["expires_at"]} if rec else None
+    return {"ok": ok, "reason": reason, "record": safe}

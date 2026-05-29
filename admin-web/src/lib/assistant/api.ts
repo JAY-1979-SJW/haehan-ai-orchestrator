@@ -8,7 +8,7 @@
 import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8400";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
 
 // 로컬 개발용 Basic 인증 헤더
 const _API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";

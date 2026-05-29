@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/tasks — Task Queue (APP_TASK_QUEUE_READONLY_LIST_POLISH_01) */
 import { useEffect, useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { TaskTable } from "@/components/assistant/TaskTable";
 import { DryRunNotice } from "@/components/assistant/DryRunNotice";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
@@ -80,10 +81,10 @@ export default function TaskQueuePage() {
     inboxState.status === "success" ? inboxState.data.items.length : taskQueueMock.length;
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="작업 목록" description="작업 큐 · 실행 현황" chatDomain="default">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">작업 큐</h1>
         <ApiConnectionStateBadge
           state={loadState}
           meta={inboxState.status === "success" || inboxState.status === "mock_fallback"
@@ -148,6 +149,7 @@ export default function TaskQueuePage() {
           <TaskTable tasks={displayTasks} />
         </div>
       )}
-    </div>
+      </div>
+    </PageShell>
   );
 }

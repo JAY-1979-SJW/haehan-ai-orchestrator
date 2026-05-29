@@ -18,6 +18,7 @@ export default function BrowserApprovalsPage() {
     <PageShell
       title="Browser Approvals"
       description="Browser action approval workflow"
+      chatDomain="ops"
     >
       <BrowserApprovalPanel />
     </PageShell>

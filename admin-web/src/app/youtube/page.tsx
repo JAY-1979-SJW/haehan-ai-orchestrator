@@ -66,7 +66,7 @@ export default function YouTubePage() {
   const channel   = status?.channel;
 
   return (
-    <PageShell title="YouTube 관리" description="OAuth 인증 · 업로드 · 시장 조사">
+    <PageShell title="YouTube 관리" description="OAuth 인증 · 업로드 · 시장 조사" chatDomain="youtube">
       <div className="space-y-6">
 
         {/* 채널 상태 */}
@@ -155,7 +155,7 @@ export default function YouTubePage() {
           <button onClick={getAuthUrl} disabled={urlLoading}
             className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
               urlLoading ? "bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed"
-                         : "bg-[#FF0000] text-white hover:bg-[#CC0000]"
+                         : "bg-[#F97316] text-white hover:bg-[#EA580C]"
             }`}>
             {urlLoading ? "URL 생성 중..." : "YouTube 인증 URL 생성"}
           </button>
@@ -171,7 +171,7 @@ export default function YouTubePage() {
               </div>
               <div className="flex gap-2">
                 <a href={authUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 py-2 rounded-xl bg-[#4285F4] text-white text-sm font-semibold text-center hover:bg-[#3367D6] transition-colors">
+                  className="flex-1 py-2 rounded-xl bg-[#F97316] text-white text-sm font-semibold text-center hover:bg-[#EA580C] transition-colors">
                   Google 인증 페이지 열기
                 </a>
                 <button onClick={() => copy(authUrl)}

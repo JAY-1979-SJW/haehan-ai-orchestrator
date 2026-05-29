@@ -5,98 +5,118 @@
 <title>구글 허브</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Malgun Gothic', sans-serif; }
-html, body { height: 100%; background: #0F172A; color: #E2E8F0; overflow: hidden; display: flex; flex-direction: column; }
+html, body { height: 100%; background: #F5F7FA; color: #111827; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── 상단 오렌지 accent ── */
+#top-bar { height: 4px; background: #F97316; flex-shrink: 0; }
 
 /* ── 헤더 ── */
 #header {
-  padding: 14px 20px 10px; background: #0F172A;
-  border-bottom: 1px solid #1E293B;
+  padding: 0 20px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #F3F4F6;
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  height: 52px;
 }
-#header h1 { font-size: 15px; font-weight: 700; color: #60A5FA; }
+#header-logo {
+  display: flex; align-items: center; gap-8px;
+  font-size: 14px; font-weight: 700; color: #0F172A; white-space: nowrap;
+}
+#header-logo span { color: #F97316; }
 #search {
   flex: 1; max-width: 320px; padding: 6px 12px;
-  background: #1E293B; border: 1px solid #334155; border-radius: 20px;
-  color: #E2E8F0; font-size: 13px; outline: none;
+  background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 20px;
+  color: #111827; font-size: 13px; outline: none;
 }
-#search:focus { border-color: #60A5FA; }
-#status-bar { font-size: 11px; color: #64748B; margin-left: auto; }
+#search:focus { border-color: #F97316; background: #FFFFFF; }
+#search::placeholder { color: #9CA3AF; }
+#status-bar { font-size: 11px; color: #9CA3AF; margin-left: auto; white-space: nowrap; }
 
 /* ── 도메인 카드 그리드 ── */
 #cards-wrap { flex: 1; overflow-y: auto; padding: 12px 16px; }
 .group-label {
-  font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em;
-  text-transform: uppercase; margin: 10px 0 6px;
+  font-size: 10px; font-weight: 700; color: #9CA3AF; letter-spacing: 0.08em;
+  text-transform: uppercase; margin: 12px 0 6px; padding-left: 2px;
 }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-bottom: 4px; }
 .card {
-  background: #1E293B; border: 1px solid #334155; border-radius: 10px;
-  padding: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;
+  padding: 12px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
   position: relative;
 }
-.card:hover { background: #253347; border-color: #60A5FA33; }
-.card.active { border-color: #60A5FA; background: #1A2A3F; }
+.card:hover { border-color: #FED7AA; box-shadow: 0 1px 6px rgba(249,115,22,0.08); }
+.card.active { border-color: #F97316; background: #FFF7ED; }
 .card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.card-icon { font-size: 20px; line-height: 1; }
-.card-name { font-size: 13px; font-weight: 600; color: #E2E8F0; }
-.card-desc { font-size: 11px; color: #94A3B8; line-height: 1.4; margin-bottom: 8px; min-height: 30px; }
+.card-icon { font-size: 18px; line-height: 1; }
+.card-name { font-size: 13px; font-weight: 600; color: #111827; }
+.card-desc { font-size: 11px; color: #6B7280; line-height: 1.4; margin-bottom: 8px; min-height: 30px; }
 .card-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 .btn-action {
-  font-size: 10px; padding: 3px 8px; border: none; border-radius: 4px; cursor: pointer;
+  font-size: 10px; padding: 3px 8px; border: none; border-radius: 6px; cursor: pointer;
   font-weight: 600; transition: background 0.1s;
 }
-.btn-open   { background: #1D4ED8; color: #BFDBFE; }
-.btn-open:hover { background: #2563EB; }
-.btn-do     { background: #064E3B; color: #6EE7B7; }
-.btn-do:hover { background: #065F46; }
+.btn-open   { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+.btn-open:hover { background: #FED7AA; }
+.btn-do     { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+.btn-do:hover { background: #BBF7D0; }
 .badge-approval {
   position: absolute; top: 8px; right: 8px;
-  font-size: 9px; background: #78350F; color: #FCD34D; padding: 1px 5px; border-radius: 3px;
+  font-size: 9px; background: #FEF3C7; color: #92400E; padding: 1px 5px;
+  border-radius: 3px; border: 1px solid #FDE68A;
 }
 .card.hidden { display: none; }
 
 /* ── 채팅 영역 ── */
 #chat-area {
-  flex-shrink: 0; border-top: 1px solid #1E293B;
-  background: #0F172A; display: flex; flex-direction: column; height: 220px;
+  flex-shrink: 0; border-top: 1px solid #E5E7EB;
+  background: #FFFFFF; display: flex; flex-direction: column; height: 220px;
 }
 #chat-messages {
   flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 6px;
 }
 .msg { max-width: 85%; padding: 7px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; }
-.msg.user { align-self: flex-end; background: #1D4ED8; color: #EFF6FF; border-bottom-right-radius: 3px; }
-.msg.ai   { align-self: flex-start; background: #1E293B; color: #E2E8F0; border-bottom-left-radius: 3px; }
-.msg.ai .domain-tag { display: inline-block; background: #0F3460; color: #60A5FA; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 4px; }
-.msg.ai .action-tag { display: inline-block; background: #1A3A1A; color: #6EE7B7; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
-.msg.ai .err { color: #F87171; }
-.msg.system { align-self: center; background: transparent; color: #475569; font-size: 11px; font-style: italic; }
+.msg.user { align-self: flex-end; background: #F97316; color: #FFFFFF; border-bottom-right-radius: 3px; }
+.msg.ai   { align-self: flex-start; background: #F3F4F6; color: #111827; border-bottom-left-radius: 3px; }
+.msg.ai .domain-tag {
+  display: inline-block; background: #FFF7ED; color: #C2410C;
+  border: 1px solid #FED7AA; font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-right: 4px;
+}
+.msg.ai .action-tag {
+  display: inline-block; background: #F0FDF4; color: #16A34A;
+  border: 1px solid #BBF7D0; font-size: 10px; padding: 1px 6px; border-radius: 4px;
+}
+.msg.ai .err { color: #DC2626; }
+.msg.system { align-self: center; background: transparent; color: #9CA3AF; font-size: 11px; font-style: italic; }
 #chat-input-row {
   display: flex; gap: 8px; padding: 8px 16px 10px; align-items: center;
+  border-top: 1px solid #F3F4F6;
 }
 #chat-input {
-  flex: 1; padding: 8px 14px; background: #1E293B; border: 1px solid #334155;
-  border-radius: 20px; color: #E2E8F0; font-size: 13px; outline: none;
+  flex: 1; padding: 8px 14px; background: #F9FAFB; border: 1px solid #E5E7EB;
+  border-radius: 20px; color: #111827; font-size: 13px; outline: none;
 }
-#chat-input:focus { border-color: #60A5FA; }
-#chat-input::placeholder { color: #475569; }
+#chat-input:focus { border-color: #F97316; background: #FFFFFF; }
+#chat-input::placeholder { color: #9CA3AF; }
 #chat-send {
-  padding: 8px 16px; background: #1D4ED8; color: white; border: none;
+  padding: 8px 16px; background: #F97316; color: white; border: none;
   border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer;
   white-space: nowrap;
 }
-#chat-send:hover { background: #2563EB; }
-#chat-send:disabled { background: #334155; color: #64748B; cursor: default; }
+#chat-send:hover { background: #EA580C; }
+#chat-send:disabled { background: #E5E7EB; color: #9CA3AF; cursor: default; }
 </style>
 </head>
 <body>
 
+<div id="top-bar"></div>
+
 <div id="header">
-  <h1>🌐 구글 허브</h1>
+  <div id="header-logo">Haehan <span>AI</span> &nbsp;구글 허브</div>
   <input id="search" type="text" placeholder="도메인·기능 검색..." oninput="filterCards(this.value)">
-  <span id="status-bar">32개 도메인</span>
+  <span id="status-bar">32개 서비스</span>
 </div>
 
-<div id="cards-wrap" id="cards-container"></div>
+<div id="cards-wrap"></div>
 
 <div id="chat-area">
   <div id="chat-messages">
@@ -268,9 +288,9 @@ function renderList(listKey, col1, col2) {
     const items = d[listKey] || [];
     if (!items.length) return `<span class="domain-tag">${name}</span> 결과 없음`;
     const rows = items.slice(0,5).map(i =>
-      `<div style="font-size:11px;padding:2px 0;border-bottom:1px solid #334155">
-        <span style="color:#E2E8F0">${(i[col1]||'').substring(0,50)}</span>
-        ${col2 && i[col2] ? `<span style="color:#64748B;margin-left:6px">${(i[col2]||'').substring(0,40)}</span>` : ''}
+      `<div style="font-size:11px;padding:2px 0;border-bottom:1px solid #F3F4F6">
+        <span style="color:#111827">${(i[col1]||'').substring(0,50)}</span>
+        ${col2 && i[col2] ? `<span style="color:#9CA3AF;margin-left:6px">${(i[col2]||'').substring(0,40)}</span>` : ''}
       </div>`
     ).join('');
     return `<span class="domain-tag">${name}</span> ${items.length}건<br>${rows}`;
@@ -281,12 +301,12 @@ function renderChannel(d, name) {
   const ch = d.channel || {};
   if (!ch.title) return `<span class="domain-tag">${name}</span> 채널 정보 없음`;
   return `<span class="domain-tag">YouTube Studio</span> <b>${ch.title}</b><br>
-    <small style="color:#94A3B8">구독자 ${ch.subscriber_count || '?'} · 동영상 ${ch.video_count || '?'} · 조회수 ${ch.view_count || '?'}</small>`;
+    <small style="color:#6B7280">구독자 ${ch.subscriber_count || '?'} · 동영상 ${ch.video_count || '?'} · 조회수 ${ch.view_count || '?'}</small>`;
 }
 
 function renderGcp(d, name) {
   return `<span class="domain-tag">GCP</span> ${d.project || ''}<br>
-    <small style="color:#94A3B8">${d.url || ''}</small>`;
+    <small style="color:#6B7280">${d.url || ''}</small>`;
 }
 
 // ── 도메인 열기 + 실제 데이터 가져오기 ──────────────────────────────────
@@ -355,7 +375,6 @@ async function sendChat() {
 
   addMsg("user", msg);
 
-  // 1. 키워드 매핑
   const lm = msg.toLowerCase();
   const matched = CMD_MAP.find(c => c.words.some(w => lm.includes(w)));
 
@@ -368,7 +387,6 @@ async function sendChat() {
         const res = await fetch(SERVER + api.path, { headers: { "x-license-key": LICENSE } });
         const d = await res.json();
         if (d.ok !== false) {
-          const dom = CATALOG.find(c => c.host === matched.host);
           addMsg("ai", api.render(d, matched.domain));
         } else {
           addMsg("ai", `<span class="domain-tag">${matched.domain}</span> <span class="err">${d.error||"오류"}</span>`);
@@ -377,7 +395,6 @@ async function sendChat() {
         addMsg("ai", `<span class="domain-tag">${matched.domain}</span> <span class="err">서버 연결 필요</span>`);
       }
     } else {
-      // 채팅 API 위임
       try {
         const res = await fetch(`${SERVER}/api/v1/google/chat`, {
           method: "POST",
@@ -392,7 +409,6 @@ async function sendChat() {
       }
     }
   } else {
-    // 서버에 전체 위임
     try {
       const res = await fetch(`${SERVER}/api/v1/google/chat`, {
         method: "POST",

@@ -137,7 +137,7 @@ function NaverLoginCard() {
 // ── 메인 페이지 ───────────────────────────────────────────────────────────────
 export default function HomePage() {
   return (
-    <PageShell title="Haehan AI" description="스마트스토어 · 운영 · AI 자동화">
+    <PageShell title="Haehan AI" description="스마트스토어 · 운영 · AI 자동화" chatDomain="default">
       <div className="space-y-6">
 
         {/* 헤더 */}

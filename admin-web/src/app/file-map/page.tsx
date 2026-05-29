@@ -79,7 +79,7 @@ export default function FileMapPage() {
   }, []);
 
   return (
-    <PageShell title="파일 지도" description="로컬 파일 지도 스캔 및 정리 계획">
+    <PageShell title="파일 지도" description="로컬 파일 지도 스캔 및 정리 계획" chatDomain="file-map">
       <div className="max-w-4xl">
         {/* 탭 네비게이션 */}
         <div className="mb-4 border-b border-gray-200">

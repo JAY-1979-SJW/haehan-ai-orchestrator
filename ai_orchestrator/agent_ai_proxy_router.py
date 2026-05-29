@@ -12,7 +12,9 @@ policy:
 """
 from __future__ import annotations
 
+import base64
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from threading import Lock
@@ -23,6 +25,10 @@ from pydantic import BaseModel, Field
 
 from . import local_agent_registry as _reg
 from . import openai_proxy_caller as _caller
+
+# Web UI Basic Auth 우회용 자격증명 (환경변수 또는 기본값)
+_WEB_UI_USER = os.environ.get("NEXT_PUBLIC_API_USER", "owner")
+_WEB_UI_PASS = os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!")
 
 logger = logging.getLogger("haehan_agent_ai_proxy")
 
@@ -82,6 +88,19 @@ def _authenticate(agent_id: str | None, authorization: str | None,
         raise HTTPException(status_code=401,
                               detail={"code": "AGENT_ID_MISSING",
                                        "message": "X-Agent-Id 헤더 필요"})
+
+    # Web UI Basic Auth 우회 — agent_id="web-ui" + Basic owner:pass
+    if agent_id == "web-ui" and authorization:
+        try:
+            scheme, encoded = authorization.strip().split(" ", 1)
+            if scheme.lower() == "basic":
+                decoded = base64.b64decode(encoded).decode("utf-8")
+                uname, pwd = decoded.split(":", 1)
+                if uname == _WEB_UI_USER and pwd == _WEB_UI_PASS:
+                    return "web-ui"
+        except Exception:
+            pass
+
     token = ""
     if authorization:
         a = authorization.strip()

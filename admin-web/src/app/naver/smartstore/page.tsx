@@ -58,7 +58,7 @@ export default async function SmartStorePage() {
   }
 
   return (
-    <PageShell title="스마트스토어 관리" description="상품관리·주문·정산·리뷰 등 13개 메뉴 통합 관리">
+    <PageShell title="스마트스토어 관리" description="상품관리·주문·정산·리뷰 등 13개 메뉴 통합 관리" chatDomain="smartstore">
       <SmartStoreClient
         catalog={catalog}
         catalogError={catalogError}
