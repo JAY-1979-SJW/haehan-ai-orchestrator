@@ -35,8 +35,18 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "news",    label: "뉴스 수집",   shortLabel: "뉴스", href: "/assistant/news" },
       { key: "market",      label: "시장조사",       shortLabel: "시장", href: "/market-research" },
       { key: "blog",        label: "블로그 관리",    shortLabel: "블로그", href: "/naver/blog" },
-      { key: "smartstore",  label: "스마트스토어",   shortLabel: "스토어", href: "/naver/smartstore" },
       { key: "keywords",    label: "키워드 검색",    shortLabel: "키워드", href: "/naver/keywords" },
+    ],
+  },
+  {
+    group: "스마트스토어",
+    items: [
+      { key: "ss-home",      label: "스토어 대시보드", shortLabel: "대시보드", href: "/naver/smartstore" },
+      { key: "ss-products",  label: "상품 관리",       shortLabel: "상품",    href: "/naver/smartstore/products" },
+      { key: "ss-orders",    label: "주문/정산",       shortLabel: "주문",    href: "/naver/smartstore/orders" },
+      { key: "ss-reviews",   label: "리뷰/문의",       shortLabel: "리뷰",    href: "/naver/smartstore/reviews" },
+      { key: "ss-stats",     label: "데이터 분석",     shortLabel: "통계",    href: "/naver/smartstore/stats" },
+      { key: "ss-marketing", label: "마케팅/혜택",     shortLabel: "마케팅",  href: "/naver/smartstore/marketing" },
     ],
   },
   {
