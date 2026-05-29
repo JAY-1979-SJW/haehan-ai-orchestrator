@@ -1,7 +1,6 @@
 "use client";
 /** SmartStoreClient — 13개 메뉴 기반 통합 관리 (대시보드/상품/주문·정산/리뷰·문의/액션 카탈로그/제출 이력) */
 import { useState, useCallback } from "react";
-import AgentCommandBar from "./AgentCommandBar";
 import SmartStoreChat from "./SmartStoreChat";
 import type { ActionCatalog, ActionItem, CatalogSection, SubmitRecord } from "./page";
 import {
@@ -282,7 +281,6 @@ export default function SmartStoreClient({
 
   return (
     <div className="space-y-4">
-      {tab !== "chat" && <AgentCommandBar />}
       {/* 계약 정책 배너 */}
       {catalog?.contract && (
         <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-4">
