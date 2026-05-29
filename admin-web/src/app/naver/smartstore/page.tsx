@@ -58,7 +58,7 @@ export default async function SmartStorePage() {
   }
 
   return (
-    <PageShell title="스마트스토어 관리" description="네이버 스마트스토어 액션 카탈로그 및 제출 이력 조회">
+    <PageShell title="스마트스토어 관리" description="상품관리·주문·정산·리뷰 등 13개 메뉴 통합 관리">
       <SmartStoreClient
         catalog={catalog}
         catalogError={catalogError}
