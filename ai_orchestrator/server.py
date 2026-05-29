@@ -2,6 +2,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .logging_setup import setup_logging
 from .router import router
 from .config import APP_HOST, APP_PORT
@@ -48,6 +49,13 @@ app.include_router(router)
 
 from .browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 app.add_middleware(BrowserGateMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "file://"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if __name__ == "__main__":
     import uvicorn

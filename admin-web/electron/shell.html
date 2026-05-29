@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Malgun Gothic', sans-serif; }
-  html, body { height: 100%; overflow: hidden; background: #111827; }
+  html, body { height: 100%; overflow: hidden; background: #111827; display: flex; flex-direction: column; }
 
   /* ── 상단 네비게이션 바 ── */
   #nav {
@@ -65,9 +65,11 @@
 
   /* ── 콘텐츠 영역 ── */
   webview {
-    display: block;
-    width: 100%; height: calc(100vh - 42px);
+    display: flex;
+    flex: 1;
+    width: 100%;
     border: none;
+    min-height: 0;
   }
 </style>
 </head>
