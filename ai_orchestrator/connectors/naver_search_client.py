@@ -20,6 +20,17 @@ from . import naver_openapi_config as cfg_mod
 logger = logging.getLogger(__name__)
 
 
+def _requests_transport(method: str, url: str, headers: dict, params: dict) -> tuple:
+    """기본 HTTP transport — requests 라이브러리 사용."""
+    import requests  # noqa: PLC0415
+    resp = requests.request(method, url, headers=headers, timeout=10)
+    try:
+        body = resp.json()
+    except Exception:  # noqa: BLE001
+        body = {}
+    return resp.status_code, body
+
+
 SOURCE_BLOG = "naver_blog"
 SOURCE_SHOP = "naver_shop"
 
@@ -112,7 +123,7 @@ class NaverSearchClient:
         transport: Optional[Any] = None,
     ):
         self._config = config or cfg_mod.load_config()
-        self._transport = transport
+        self._transport = transport if transport is not None else _requests_transport
 
     @property
     def config(self) -> cfg_mod.NaverOpenApiConfig:

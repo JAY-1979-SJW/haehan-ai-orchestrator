@@ -25,7 +25,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from .auth import require_role
-from .dev_reg_approval import list_pending as _list_pending
+from .dev_reg_approval import list_pending as _list_pending, mark_expired_internal as _mark_expired
 from .audit_logger import read_recent_logs as _read_logs
 from .web_task_registry import list_entries as _list_web_tasks
 from .external_work_registry import list_external_works as _list_external
@@ -73,6 +73,32 @@ def _build_task_name(rec: dict) -> str:
     if provider and action_type:
         return f"{provider}/{action_type}"
     return rec.get("task_id", "-")
+
+
+@ops_router.post("/approvals/gc")
+def gc_expired_approvals(
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """만료된 승인 대기 항목 일괄 정리 (expired 처리)."""
+    from datetime import datetime, timezone
+    try:
+        pending = _list_pending()
+        now = datetime.now(timezone.utc)
+        cleared = []
+        for rec in pending:
+            exp = rec.get("expires_at", "")
+            if exp:
+                try:
+                    exp_dt = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+                    if exp_dt <= now:
+                        _mark_expired(rec.get("task_id", ""))
+                        cleared.append(rec.get("task_id", ""))
+                except Exception:
+                    pass
+        return {"cleared": len(cleared), "ids": cleared}
+    except Exception as e:
+        logger.warning("ops/approvals/gc 실패: %s", e)
+        return {"cleared": 0, "error": str(e)}
 
 
 # ─── 웹 작업 레지스트리 ──────────────────────────────────────────────────────
