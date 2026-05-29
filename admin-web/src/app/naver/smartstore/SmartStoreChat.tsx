@@ -249,7 +249,7 @@ export default function SmartStoreChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-220px)] min-h-[400px] border border-[#E5E7EB] rounded-2xl bg-white overflow-hidden">
+    <div className="flex flex-col h-full min-h-[400px] border border-[#E5E7EB] rounded-2xl bg-white overflow-hidden">
 
       {/* 헤더 */}
       <div className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
