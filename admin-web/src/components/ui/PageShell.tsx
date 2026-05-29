@@ -105,8 +105,8 @@ export function PageShell({ title, description, headerRight, children }: PageShe
           )}
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
+        {/* Page content — flex-1 + overflow-hidden so children can use h-full */}
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
           {children}
         </main>
       </div>

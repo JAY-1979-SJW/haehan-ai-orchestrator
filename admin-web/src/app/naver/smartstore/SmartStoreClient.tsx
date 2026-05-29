@@ -279,6 +279,35 @@ export default function SmartStoreClient({
   const requiredFields = formFields?.required ?? ["name", "price", "stock", "category"];
   const optionalFields = formFields?.optional ?? ["description", "brand", "manufacturer", "main_image", "model_name", "options"];
 
+  // 채팅 탭: 전체 높이 고정 레이아웃 (스크롤 없음)
+  if (tab === "chat") {
+    return (
+      <div className="flex flex-col h-full gap-4">
+        <div className="bg-white rounded-xl border border-[#E5E7EB] p-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-bold text-[#111827]">스마트스토어</span>
+            <div className="flex gap-1 overflow-x-auto">
+              {TABS.map((t) => (
+                <button key={t.id} onClick={() => handleTabChange(t.id)}
+                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+                    t.id === "chat"
+                      ? "bg-[#F97316] text-white font-semibold"
+                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
+                  }`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto shrink-0"><NotificationPanel /></div>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0">
+          <SmartStoreChat />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* 계약 정책 배너 */}
@@ -324,9 +353,6 @@ export default function SmartStoreClient({
             </button>
           ))}
         </div>
-
-        {/* ── AI 채팅 탭 ── */}
-        {tab === "chat" && <SmartStoreChat />}
 
         {/* ── 대시보드 탭 ── */}
         {tab === "dashboard" && (
