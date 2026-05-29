@@ -115,7 +115,14 @@ export function PageShell({ title, description, headerRight, children }: PageShe
         className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
         aria-label="모바일 하단 메뉴"
       >
-        {NAV_GROUPS.flatMap((g) => g.items).slice(0, 5).map((item) => {
+        {/* 모바일 하단 핵심 5개: 홈·스마트스토어·YouTube·업무·운영 */}
+        {[
+          NAV_GROUPS[0].items[0],  // 대시보드
+          NAV_GROUPS[1].items[0],  // 스마트스토어 AI 채팅
+          NAV_GROUPS[2].items[0],  // YouTube
+          NAV_GROUPS[4].items[0],  // 메일 Inbox
+          NAV_GROUPS[0].items[2],  // 운영센터
+        ].map((item) => {
           const active = isNavActive(item.href, item.exact, pathname);
           return (
             <Link
