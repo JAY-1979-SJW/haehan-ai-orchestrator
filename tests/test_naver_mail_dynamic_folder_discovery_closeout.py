@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 import pytest
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     folder_discovery as fd,
     folder_policy as fp,
     folder_profile as fpr,

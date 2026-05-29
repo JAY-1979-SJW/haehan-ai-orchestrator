@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     action_item_dashboard as aid,
     business_report as br,
     unknown_classification_rules as ur,

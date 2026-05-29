@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import action_item_dashboard as aid
+from scripts.naver.mail import action_item_dashboard as aid
 
 
 _REQUIRED_FIELDS = (

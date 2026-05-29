@@ -5,7 +5,7 @@ import re
 
 import pytest
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     folder_discovery as fd,
     smart_folder_collector as sfc,
     inbox_collector as ic,

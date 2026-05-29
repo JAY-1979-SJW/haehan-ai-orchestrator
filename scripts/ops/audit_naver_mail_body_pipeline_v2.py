@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import body_pipeline_v2 as bp
+from scripts.naver.mail import body_pipeline_v2 as bp
 
 
 # 외부 AI 호출 흔적 패턴

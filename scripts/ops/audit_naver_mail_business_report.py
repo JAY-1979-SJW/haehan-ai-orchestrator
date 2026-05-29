@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import business_report as br
+from scripts.naver.mail import business_report as br
 
 
 @dataclass

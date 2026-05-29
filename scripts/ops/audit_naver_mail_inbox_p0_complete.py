@@ -16,8 +16,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from scripts.naver_mail import inbox_collector as ic
-from scripts.naver_mail import read_state_guard as rsg
+from scripts.naver.mail import inbox_collector as ic
+from scripts.naver.mail import read_state_guard as rsg
 
 
 @dataclass

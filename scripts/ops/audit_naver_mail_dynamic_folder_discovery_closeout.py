@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import folder_policy as fp
-from scripts.naver_mail import folder_profile as fpr
+from scripts.naver.mail import folder_policy as fp
+from scripts.naver.mail import folder_profile as fpr
 
 
 @dataclass

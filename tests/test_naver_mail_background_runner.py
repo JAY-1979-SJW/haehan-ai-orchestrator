@@ -1,5 +1,5 @@
 from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
-from scripts.naver_mail import background_runner as br
+from scripts.naver.mail import background_runner as br
 
 
 def _session(port, urls):

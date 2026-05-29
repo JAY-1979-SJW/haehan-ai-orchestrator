@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from scripts.naver_mail import action_item_dashboard as aid
-from scripts.naver_mail import business_report as br
+from scripts.naver.mail import action_item_dashboard as aid
+from scripts.naver.mail import business_report as br
 from scripts.ops import audit_naver_mail_action_item_dashboard as audit
 
 
@@ -330,18 +330,18 @@ def test_audit_pass_when_clean_with_high3_only():
 
 
 def test_regression_business_report_imports():
-    from scripts.naver_mail import business_report as br
+    from scripts.naver.mail import business_report as br
     assert hasattr(br, "build_report")
     assert hasattr(br, "ActionItem")
 
 
 def test_regression_batch_runner_imports():
-    from scripts.naver_mail import batch_runner as bt
+    from scripts.naver.mail import batch_runner as bt
     assert hasattr(bt, "run_batch")
 
 
 def test_regression_body_pipeline_v2_imports():
-    from scripts.naver_mail import body_pipeline_v2 as bp
+    from scripts.naver.mail import body_pipeline_v2 as bp
     assert hasattr(bp, "run")
 
 

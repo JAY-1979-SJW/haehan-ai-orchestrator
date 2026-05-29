@@ -1,7 +1,7 @@
 import pytest
 
 from scripts.gate import GateBlocked
-from scripts.naver_mail import settings_panel as sp
+from scripts.naver.mail import settings_panel as sp
 
 
 class FakeSettingsActions:

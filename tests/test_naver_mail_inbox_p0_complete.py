@@ -10,12 +10,12 @@ from typing import Any
 
 import pytest
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     inbox_collector as ic,
     read_state_guard as rsg,
     time_parser as tp,
 )
-from scripts.naver_mail.inbox_collector import LIST_EXPR, PAGES_EXPR
+from scripts.naver.mail.inbox_collector import LIST_EXPR, PAGES_EXPR
 
 KST = timezone(timedelta(hours=9))
 

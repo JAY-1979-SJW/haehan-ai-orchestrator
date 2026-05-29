@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 import pytest
 
-from scripts.naver_mail import business_report as br
+from scripts.naver.mail import business_report as br
 from scripts.ops import audit_naver_mail_business_report as audit
 
 
@@ -282,18 +282,18 @@ def test_audit_fail_unread_restore_regression():
 
 
 def test_regression_batch_runner_imports():
-    from scripts.naver_mail import batch_runner as bt
+    from scripts.naver.mail import batch_runner as bt
     assert hasattr(bt, "run_batch")
 
 
 def test_regression_body_pipeline_v2_imports():
-    from scripts.naver_mail import body_pipeline_v2 as bp
+    from scripts.naver.mail import body_pipeline_v2 as bp
     assert hasattr(bp, "run")
 
 
 def test_regression_folder_discovery_imports():
-    from scripts.naver_mail import folder_discovery as fd
-    from scripts.naver_mail import folder_profile as fpr
+    from scripts.naver.mail import folder_discovery as fd
+    from scripts.naver.mail import folder_profile as fpr
     assert hasattr(fd, "discover_folders")
     assert hasattr(fpr, "build_snapshot")
 

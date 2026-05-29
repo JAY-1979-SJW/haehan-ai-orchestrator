@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 from scripts.naver.mail_read import cdp
-from scripts.naver_mail import (batch_runner as br,
+from scripts.naver.mail import (batch_runner as br,
                                 folder_discovery as fd,
                                 inbox_collector as ic,
                                 smart_folder_collector as sfc)

@@ -192,14 +192,32 @@ class NaverSmartStore:
         return {"ok": True, **self._extract_visible_table(limit)}
 
     def open_product_register(self) -> bool:
-        """상품 등록 페이지 진입 (작성은 사용자가 직접)."""
-        if not self._ensure_section("products"):
-            return False
-        for label in ["상품 등록", "상품등록", "신규 상품"]:
-            if self._click_menu(label):
-                _log.info("[smartstore] 상품 등록 페이지 진입")
+        """상품 등록 페이지 진입.
+
+        전략 1: GeneralProductRegister.open() (직접 URL + 사이드바 fallback)
+        전략 2: #/products/new 직접 이동 후 팝업 처리
+        """
+        try:
+            from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+            reg = GeneralProductRegister(self.page)
+            if reg.open():
+                _log.info("[smartstore] 상품 등록 페이지 진입 완료")
                 return True
-        return False
+        except Exception as e:
+            _log.warning("[smartstore] GeneralProductRegister.open 실패: %s — 직접 URL 시도", e)
+
+        # 최후 fallback: 직접 URL 이동만
+        try:
+            from scripts.naver.smartstore.navigation.popup_handler import dismiss_all_popups
+            self.page.goto("https://sell.smartstore.naver.com/#/products/new",
+                           timeout=20000, wait_until="domcontentloaded")
+            time.sleep(4)
+            dismiss_all_popups(self.page)
+            _log.info("[smartstore] 상품 등록 URL 직접 이동: %s", self.page.url)
+            return True
+        except Exception as e:
+            _log.error("[smartstore] 상품 등록 진입 최종 실패: %s", e)
+            return False
 
     @property
     def product_register(self):

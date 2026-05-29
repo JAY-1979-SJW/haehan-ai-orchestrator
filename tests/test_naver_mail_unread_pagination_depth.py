@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.naver_mail import inbox_collector as ic
-from scripts.naver_mail import read_state_guard as rsg
+from scripts.naver.mail import inbox_collector as ic
+from scripts.naver.mail import read_state_guard as rsg
 from scripts.ops import audit_naver_mail_unread_pagination_depth as audit
 
 # 기존 FakeActions 재사용 import

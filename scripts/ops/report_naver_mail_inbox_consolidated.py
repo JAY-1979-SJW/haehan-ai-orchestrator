@@ -18,8 +18,8 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from scripts.naver_mail import pii_mask, business_report as br
-from scripts.naver_mail.batch_runner import (
+from scripts.naver.mail import pii_mask, business_report as br
+from scripts.naver.mail.batch_runner import (
     MailResult, BatchReport, _classify_priority, _render_business_report,
     UNREAD_CHANGED_RESTORED, BODY_READ_OK, SKIPPED_ALREADY_DONE,
 )
