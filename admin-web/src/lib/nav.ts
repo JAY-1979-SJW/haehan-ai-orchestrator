@@ -36,6 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "market",      label: "시장조사",       shortLabel: "시장", href: "/market-research" },
       { key: "blog",        label: "블로그 관리",    shortLabel: "블로그", href: "/naver/blog" },
       { key: "keywords",    label: "키워드 검색",    shortLabel: "키워드", href: "/naver/keywords" },
+      { key: "naver-session", label: "네이버 세션",   shortLabel: "세션",   href: "/naver/session" },
     ],
   },
   {
@@ -43,8 +44,9 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "ss-home",      label: "스토어 대시보드", shortLabel: "대시보드", href: "/naver/smartstore" },
       { key: "ss-products",  label: "상품 관리",       shortLabel: "상품",    href: "/naver/smartstore/products" },
-      { key: "ss-orders",    label: "주문/정산",       shortLabel: "주문",    href: "/naver/smartstore/orders" },
-      { key: "ss-reviews",   label: "리뷰/문의",       shortLabel: "리뷰",    href: "/naver/smartstore/reviews" },
+      { key: "ss-orders",      label: "주문 관리",       shortLabel: "주문",    href: "/naver/smartstore/orders" },
+      { key: "ss-settlements", label: "정산 관리",       shortLabel: "정산",    href: "/naver/smartstore/settlements" },
+      { key: "ss-reviews",     label: "리뷰/문의",       shortLabel: "리뷰",    href: "/naver/smartstore/reviews" },
       { key: "ss-stats",     label: "데이터 분석",     shortLabel: "통계",    href: "/naver/smartstore/stats" },
       { key: "ss-marketing", label: "마케팅/혜택",     shortLabel: "마케팅",  href: "/naver/smartstore/marketing" },
     ],
@@ -55,6 +57,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "external-tasks",  label: "외부 업무 현황",  shortLabel: "외부",   href: "/external-tasks" },
       { key: "external-sites",  label: "외부 사이트",     shortLabel: "사이트", href: "/assistant/external-sites" },
       { key: "browser-approvals",label: "브라우저 승인",  shortLabel: "승인",   href: "/browser-approvals" },
+    ],
+  },
+  {
+    group: "관리자",
+    items: [
+      { key: "licenses", label: "라이선스 관리", shortLabel: "라이선스", href: "/admin/licenses" },
     ],
   },
   {

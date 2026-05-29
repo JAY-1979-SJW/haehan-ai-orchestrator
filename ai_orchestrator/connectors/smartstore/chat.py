@@ -1,6 +1,11 @@
-"""스마트스토어 AI 채팅 엔드포인트 — Claude / GPT → 도구 호출 → SSE 스트리밍."""
+"""스마트스토어 AI 채팅 엔드포인트 — Claude / GPT → 도구 호출 → SSE 스트리밍.
+
+CDP 도구(collect_*, open_seller_center 등)는 로컬 에이전트로 라우팅.
+캐시 조회(list_*)는 서버에서 직접 처리.
+"""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import sys
@@ -19,6 +24,13 @@ router = APIRouter()
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 GPT_MODEL    = "gpt-4o-mini"
 WRITE_TOOLS  = {"auto_register_product", "edit_product"}
+
+# CDP가 필요한 도구 — 로컬 에이전트로 라우팅
+CDP_TOOLS = {
+    "collect_products", "collect_orders", "collect_settlements",
+    "collect_reviews", "collect_stats", "open_seller_center",
+    "auto_register_product", "edit_product", "popup_handle",
+}
 
 SYSTEM_PROMPT = """당신은 스마트스토어 셀러센터 AI 에이전트입니다.
 사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
@@ -91,15 +103,21 @@ def _to_gpt_tools(confirmed: bool) -> list:
 
 # ── 로컬 도구 실행 ─────────────────────────────────────────────────────────────
 
-def _run_tool(name: str, inputs: dict) -> dict:
-    """FastAPI 내부에서 직접 도구 로직 호출 (HTTP 왕복 없음)."""
+def _run_tool(name: str, inputs: dict, license_key: str | None = None) -> dict:
+    """도구 실행 — CDP 도구는 로컬 에이전트로, 나머지는 서버 직접 처리."""
     sys.path.insert(0, str(ROOT))
-    from . import products as P, orders as O, settlements as S, reviews as R
-    from . import stats as ST, popup as PO, seller_center as SC, description as D
     from ._helpers import load_ss
 
-    cdp = "http://127.0.0.1:9222"
+    # ── 로컬 에이전트 라우팅 (CDP 도구) ────────────────────────────────────────
+    if name in CDP_TOOLS and license_key:
+        from .agent_ws import call_local_tool
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(call_local_tool(license_key, name, inputs))
+        finally:
+            loop.close()
 
+    # ── 서버 직접 처리 (캐시 조회, AI 생성 등) ──────────────────────────────────
     try:
         if name == "list_products":        return load_ss("products")
         if name == "list_orders":          return load_ss("orders")
@@ -245,7 +263,7 @@ def _sse(event: str, data: dict) -> str:
 
 # ── Claude 루프 ───────────────────────────────────────────────────────────────
 
-def _run_claude(messages: list, confirmed: bool):
+def _run_claude(messages: list, confirmed: bool, license_key: str | None = None):
     import anthropic
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
@@ -280,7 +298,7 @@ def _run_claude(messages: list, confirmed: bool):
                 return
             step += 1
             yield _sse("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
-            result = _run_tool(b.name, dict(b.input))
+            result = _run_tool(b.name, dict(b.input), license_key)
             yield _sse("step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result})
             tool_results.append({"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)})
 
@@ -292,7 +310,7 @@ def _run_claude(messages: list, confirmed: bool):
 
 # ── GPT 루프 ─────────────────────────────────────────────────────────────────
 
-def _run_gpt(messages: list, confirmed: bool):
+def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None):
     from openai import OpenAI
     api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
@@ -326,7 +344,7 @@ def _run_gpt(messages: list, confirmed: bool):
                 return
             step += 1
             yield _sse("step_start", {"step": step, "tool": name, "inputs": inputs, "write": is_write})
-            result = _run_tool(name, inputs)
+            result = _run_tool(name, inputs, license_key)
             yield _sse("step_done", {"step": step, "tool": name, "ok": result.get("ok") is not False, "result": result})
             tool_results.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)})
 
@@ -343,22 +361,32 @@ class ChatMessage(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
-    messages:  List[ChatMessage]
-    confirmed: bool = False
-    provider:  str  = "gpt"      # "claude" | "gpt"
+    messages:    List[ChatMessage]
+    confirmed:   bool = False
+    provider:    str  = "gpt"   # "claude" | "gpt"
+    license_key: Optional[str] = None  # 로컬 에이전트 라우팅용
 
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
 
 @router.post("/chat")
 def api_chat(body: ChatRequest, user: dict = Depends(require_role("admin", "owner"))):
-    """자연어 명령 → LLM tool_use → 도구 직접 실행 → SSE 스트리밍."""
+    """자연어 명령 → LLM tool_use → 도구 실행(CDP=로컬, 나머지=서버) → SSE."""
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
+
+    # 라이선스 검증 (제공된 경우)
+    lic_key = body.license_key
+    if lic_key:
+        from .license import verify
+        ok, _, reason = verify(lic_key)
+        if not ok:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=403, detail=f"라이선스 오류: {reason}")
 
     def generate():
         try:
             runner = _run_gpt if body.provider == "gpt" else _run_claude
-            yield from runner(messages, body.confirmed)
+            yield from runner(messages, body.confirmed, lic_key)
         except Exception as e:
             yield _sse("error", {"message": str(e)})
 
