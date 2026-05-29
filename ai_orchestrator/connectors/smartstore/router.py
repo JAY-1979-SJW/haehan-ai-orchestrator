@@ -12,6 +12,8 @@ from .description   import router as description_router
 from .popup         import router as popup_router
 from .seller_center import router as seller_center_router
 from .chat          import router as chat_router
+from .admin         import router as admin_router
+from .agent_ws      import router as agent_ws_router
 
 smartstore_router = APIRouter(prefix="/smartstore", tags=["smartstore"])
 
@@ -26,5 +28,7 @@ smartstore_router.include_router(description_router)
 smartstore_router.include_router(popup_router)
 smartstore_router.include_router(seller_center_router)
 smartstore_router.include_router(chat_router)
+smartstore_router.include_router(admin_router)
+smartstore_router.include_router(agent_ws_router)
 
 __all__ = ["smartstore_router"]
