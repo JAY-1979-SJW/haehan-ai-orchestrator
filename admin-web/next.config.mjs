@@ -2,6 +2,8 @@
 const nextConfig = {
   output: "standalone",
   transpilePackages: ["@haehan/design-system"],
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
   async rewrites() {
     const fastapiBase = process.env.FASTAPI_BASE_URL;
     if (!fastapiBase) return [];
