@@ -9,6 +9,9 @@ const path  = require("path");
 const fs    = require("fs");
 const { spawn, execSync } = require("child_process");
 
+// 앱 이름 고정 (userData 경로 = AppData\Roaming\Haehan AI)
+app.setName("Haehan AI");
+
 // 상단 메뉴바 완전 제거
 Menu.setApplicationMenu(null);
 
