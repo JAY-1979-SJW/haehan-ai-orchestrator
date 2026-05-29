@@ -389,3 +389,46 @@ result2, _ = oauth.exchange_code({'code': '<CODE>'})
 - 타 계정 영상 무단 업로드 금지
 - youtube.upload 스코프 자동 실행 — 사용자 명시 승인 후에만
 - public 공개 영상 업로드 — 별도 승인 필수 (기본값: private)
+
+---
+
+# 로컬 개발 스택 포트 구성 (2026-05-30 기준)
+
+| 서비스 | 포트 | 비고 |
+|--------|------|------|
+| FastAPI 서버 | 8401 | `python -m uvicorn ai_orchestrator.server:app --host 0.0.0.0 --port 8401` |
+| Next.js 프론트엔드 | 3000 | `cd admin-web && npm run dev` |
+| Electron 앱 | — | `dist-electron/win-unpacked/Haehan AI.exe` |
+
+## 서버 시작 순서
+1. FastAPI: `python -m uvicorn ai_orchestrator.server:app --host 0.0.0.0 --port 8401`
+2. Next.js: `cd admin-web && npm run dev`
+3. Electron 앱 실행
+
+## Electron 앱 설정 경로
+- userData: `%APPDATA%\Haehan AI\config.json`
+- 라이선스 키: config.json 의 `license_key` 참조 (원문 출력 금지)
+- asar 위치: `dist-electron\win-unpacked\resources\app.asar`
+
+## Electron asar 패치 절차
+```powershell
+$asarPath = "C:\work\01. haehan-ai-orchestrator\dist-electron\win-unpacked\resources\app.asar"
+$extractDir = "C:\work\01. haehan-ai-orchestrator\dist-electron\app-extracted"
+Set-Location "C:\work\01. haehan-ai-orchestrator\admin-web\electron"
+# 1. 추출
+node -e "const asar=require('@electron/asar');asar.extractAll(process.argv[1],process.argv[2]);console.log('ok');" -- $asarPath $extractDir
+# 2. 수정된 파일 복사
+Copy-Item "admin-web\electron\main.js" "$extractDir\main.js" -Force
+Copy-Item "admin-web\electron\shell.html" "$extractDir\shell.html" -Force
+# 3. 재패킹
+node -e "const asar=require('@electron/asar');asar.createPackage(process.argv[1],process.argv[2]).then(()=>console.log('packed'));" -- $extractDir $asarPath
+```
+
+## YouTube OAuth 자동 팝업 정책 (2026-05-30 변경)
+- 앱 시작 시 자동 팝업 **제거** (기존: 2초 후 자동 표시)
+- 연결 방법: 트레이 메뉴 "YouTube 계정 재연결" 또는 화면 내 "● YouTube 미연결" 버튼 클릭
+- `checkYouTubeToken()` 은 packed app에서 `process.execPath` 기준 경로로 토큰 파일 탐색
+
+## shell.html webview 레이아웃
+- body: `display: flex; flex-direction: column; height: 100%`
+- webview: `flex: 1; min-height: 0` — calc(100vh) 대신 flex로 전체 높이 채움
