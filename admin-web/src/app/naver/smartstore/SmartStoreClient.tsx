@@ -1,6 +1,8 @@
 "use client";
 /** SmartStoreClient — 13개 메뉴 기반 통합 관리 (대시보드/상품/주문·정산/리뷰·문의/액션 카탈로그/제출 이력) */
 import { useState, useCallback } from "react";
+import AgentCommandBar from "./AgentCommandBar";
+import SmartStoreChat from "./SmartStoreChat";
 import type { ActionCatalog, ActionItem, CatalogSection, SubmitRecord } from "./page";
 import {
   getSmartStoreStatus,
@@ -9,8 +11,9 @@ import {
   type SmartStoreStatusResponse,
   type SmartStoreHistoryResponse,
 } from "@/lib/assistant/api";
+import NotificationPanel from "./NotificationPanel";
 
-type Tab = "dashboard" | "products" | "orders" | "reviews" | "catalog" | "history";
+type Tab = "chat" | "dashboard" | "products" | "orders" | "reviews" | "catalog" | "history";
 
 // ── 뱃지 스타일 ──
 const RISK_BADGE: Record<string, string> = {
@@ -196,7 +199,7 @@ export default function SmartStoreClient({
   submit: initSubmit,
   submitError: initSubmitError,
 }: Props) {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("chat");
 
   // 카탈로그 상태
   const [catalog, setCatalog] = useState<ActionCatalog | null>(initCatalog);
@@ -261,6 +264,7 @@ export default function SmartStoreClient({
   };
 
   const TABS: { id: Tab; label: string }[] = [
+    { id: "chat",      label: "AI 채팅" },
     { id: "dashboard", label: "대시보드" },
     { id: "products",  label: "상품 관리" },
     { id: "orders",    label: "주문/정산" },
@@ -278,6 +282,7 @@ export default function SmartStoreClient({
 
   return (
     <div className="space-y-4">
+      {tab !== "chat" && <AgentCommandBar />}
       {/* 계약 정책 배너 */}
       {catalog?.contract && (
         <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-4">
@@ -298,8 +303,11 @@ export default function SmartStoreClient({
           <span className="text-lg font-bold text-[#111827]">스마트스토어</span>
           <span className="text-xs bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] px-2 py-0.5 rounded font-semibold">13개 메뉴</span>
           {catalog?.generated_at && (
-            <span className="text-xs text-[#9CA3AF] ml-auto">{catalog.generated_at}</span>
+            <span className="text-xs text-[#9CA3AF]">{catalog.generated_at}</span>
           )}
+          <div className="ml-auto">
+            <NotificationPanel />
+          </div>
         </div>
 
         {/* 탭 바 */}
@@ -318,6 +326,9 @@ export default function SmartStoreClient({
             </button>
           ))}
         </div>
+
+        {/* ── AI 채팅 탭 ── */}
+        {tab === "chat" && <SmartStoreChat />}
 
         {/* ── 대시보드 탭 ── */}
         {tab === "dashboard" && (
