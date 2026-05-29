@@ -27,6 +27,7 @@ from .action_router import action_router
 from .cad_ai_router import cad_ai_router
 from .connectors.naver_search_router import naver_search_router
 from .connectors.naver_news_router import naver_news_router
+from .connectors.smartstore_router import smartstore_router
 from .connectors.naver_cafe_router import naver_cafe_router
 from .connectors.naver_mail_router import naver_mail_router
 from .connectors.hiworks_mail_router import hiworks_mail_router
@@ -81,6 +82,7 @@ router.include_router(app_status_router)    # read-only app status endpoints (AP
 router.include_router(user_data_contribution_router)
 router.include_router(youtube_oauth_router)
 router.include_router(youtube_research_router)
+router.include_router(smartstore_router)         # read-only smartstore catalog/history/form-fields
 
 
 class TaskSubmit(BaseModel):
