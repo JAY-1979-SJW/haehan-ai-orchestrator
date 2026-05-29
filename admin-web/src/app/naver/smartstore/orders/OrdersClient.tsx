@@ -1,33 +1,195 @@
 "use client";
-/** OrdersClient — 주문/정산 (주문 현황/정산 내역/배송 처리) */
+/** OrdersClient — 주문/정산 (주문 현황/정산 내역/배송 처리) — CDP 수집 연동 */
 import { useState } from "react";
+import {
+  getSSOrders,
+  collectSSOrders,
+  getSSSettlements,
+  collectSSSettlements,
+  type SSTableData,
+} from "@/lib/assistant/api";
 
 type Tab = "status" | "settlement" | "delivery";
 
 const ORDER_FLOW = ["결제완료", "배송준비", "배송중", "배송완료"];
 
-const ORDER_STEPS = [
-  { label: "주문 목록",    desc: "판매관리 > 주문 목록에서 전체 주문 확인" },
-  { label: "발송 처리",    desc: "송장번호 입력 후 배송 상태 자동 업데이트" },
-  { label: "반품/교환",    desc: "고객 요청 수락 → 회수 완료 → 환불 처리" },
-];
+function CollectPanel({
+  label,
+  data,
+  loading,
+  error,
+  onCollect,
+  onLoad,
+  collectLimit,
+  siteUrl,
+  siteLinkLabel,
+}: {
+  label: string;
+  data: SSTableData | null;
+  loading: boolean;
+  error: string | null;
+  onCollect: () => void;
+  onLoad: () => void;
+  collectLimit?: number;
+  siteUrl: string;
+  siteLinkLabel: string;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* 수집/조회 버튼 */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={onCollect}
+          disabled={loading}
+          className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors font-semibold"
+        >
+          {loading ? "수집 중…" : "수집"}
+        </button>
+        <button
+          onClick={onLoad}
+          disabled={loading}
+          className="px-4 py-2 border border-[#E5E7EB] text-sm rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 transition-colors"
+        >
+          조회
+        </button>
+        {data?.collected_at && (
+          <span className="text-xs text-[#9CA3AF]">
+            수집: {data.collected_at}
+            {data.duration_ms !== undefined && ` (${data.duration_ms}ms)`}
+          </span>
+        )}
+      </div>
 
-const SETTLEMENT_INFO = [
-  { label: "정산 주기",   value: "구매 확정일 기준 영업일 +2일" },
-  { label: "월 정산일",   value: "매월 25일 (공휴일 시 전 영업일)" },
-  { label: "정산 내역",   value: "정산관리 > 정산 내역에서 확인" },
-  { label: "세금계산서",  value: "월별 세금계산서 자동 발행" },
-  { label: "정산 계좌",   value: "판매자 정보 > 정산 계좌에서 설정" },
-];
+      {/* 오류 표시 */}
+      {error && (
+        <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+          <p className="text-sm text-[#DC2626]">{error}</p>
+        </div>
+      )}
+      {data?.error && (
+        <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+          <p className="text-sm text-[#DC2626]">{data.error}</p>
+          {data.hint && <p className="text-xs text-[#9CA3AF] mt-1">{data.hint}</p>}
+        </div>
+      )}
+
+      {/* 테이블 */}
+      {data?.ok && data.headers && data.rows && (
+        <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+          <table className="w-full text-xs">
+            <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+              <tr>
+                {data.headers.map((h) => (
+                  <th key={h} className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((row, i) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
+                  {row.map((cell, j) => (
+                    <td key={j} className="px-3 py-2 text-[#374151] whitespace-nowrap">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 미수집 안내 */}
+      {!data && !error && (
+        <div className="border border-[#E5E7EB] rounded-xl p-8 text-center space-y-2">
+          <p className="text-sm text-[#6B7280]">아직 수집된 데이터가 없습니다.</p>
+          <p className="text-xs text-[#9CA3AF]">[수집] 버튼을 눌러 셀러센터에서 데이터를 가져오세요.</p>
+          <button
+            onClick={onCollect}
+            disabled={loading}
+            className="mt-2 px-4 py-2 bg-[#1D4ED8] text-white text-xs rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors"
+          >
+            수집 시작
+          </button>
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <a
+          href={siteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs px-3 py-1.5 rounded-lg border border-[#F97316] text-[#F97316] hover:bg-[#FFF7ED] transition-colors"
+        >
+          {siteLinkLabel} →
+        </a>
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersClient() {
   const [tab, setTab] = useState<Tab>("status");
+
+  const [ordersData, setOrdersData] = useState<SSTableData | null>(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  const [settlementsData, setSettlementsData] = useState<SSTableData | null>(null);
+  const [settlementsLoading, setSettlementsLoading] = useState(false);
+  const [settlementsError, setSettlementsError] = useState<string | null>(null);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "status",     label: "주문 현황" },
     { id: "settlement", label: "정산 내역" },
     { id: "delivery",   label: "배송 처리" },
   ];
+
+  async function handleOrdersCollect() {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      setOrdersData(await collectSSOrders(50));
+    } catch (e) {
+      setOrdersError(String(e));
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  async function handleOrdersLoad() {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      setOrdersData(await getSSOrders());
+    } catch (e) {
+      setOrdersError(String(e));
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  async function handleSettlementsCollect() {
+    setSettlementsLoading(true);
+    setSettlementsError(null);
+    try {
+      setSettlementsData(await collectSSSettlements(30));
+    } catch (e) {
+      setSettlementsError(String(e));
+    } finally {
+      setSettlementsLoading(false);
+    }
+  }
+
+  async function handleSettlementsLoad() {
+    setSettlementsLoading(true);
+    setSettlementsError(null);
+    try {
+      setSettlementsData(await getSSSettlements());
+    } catch (e) {
+      setSettlementsError(String(e));
+    } finally {
+      setSettlementsLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -51,7 +213,7 @@ export default function OrdersClient() {
 
         {/* ── 주문 현황 탭 ── */}
         {tab === "status" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* 주문 흐름 */}
             <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-3">
               <p className="text-sm font-semibold text-[#111827]">주문 처리 흐름</p>
@@ -67,72 +229,32 @@ export default function OrdersClient() {
               </div>
             </div>
 
-            {/* 주문 처리 항목 */}
-            <div className="space-y-2">
-              {ORDER_STEPS.map((item) => (
-                <div key={item.label} className="border border-[#E5E7EB] rounded-xl p-4 bg-white flex gap-4">
-                  <span className="text-xs font-semibold text-[#F97316] bg-[#FFF7ED] border border-[#FED7AA] px-2 py-1 rounded shrink-0">
-                    {item.label}
-                  </span>
-                  <p className="text-xs text-[#6B7280] self-center">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end">
-              <a
-                href="https://sell.smartstore.naver.com/#/orders/list"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs px-3 py-1.5 rounded-lg border border-[#F97316] text-[#F97316] hover:bg-[#FFF7ED] transition-colors"
-              >
-                셀러센터 주문 목록 바로가기 →
-              </a>
-            </div>
+            <CollectPanel
+              label="주문"
+              data={ordersData}
+              loading={ordersLoading}
+              error={ordersError}
+              onCollect={handleOrdersCollect}
+              onLoad={handleOrdersLoad}
+              siteUrl="https://sell.smartstore.naver.com/#/orders/list"
+              siteLinkLabel="셀러센터 주문 목록 바로가기"
+            />
           </div>
         )}
 
         {/* ── 정산 내역 탭 ── */}
         {tab === "settlement" && (
           <div className="space-y-4">
-            <div className="border border-[#DDD6FE] bg-[#F5F3FF] rounded-xl p-4 space-y-3">
-              <p className="text-sm font-semibold text-[#7C3AED]">정산 주기 안내</p>
-              <div className="space-y-2">
-                {SETTLEMENT_INFO.map((item) => (
-                  <div key={item.label} className="flex gap-3 text-xs">
-                    <span className="font-semibold text-[#6B7280] w-24 shrink-0">{item.label}</span>
-                    <span className="text-[#111827]">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-2">
-              <p className="text-sm font-semibold text-[#111827]">정산 계좌 연결 안내</p>
-              <ol className="space-y-1.5">
-                {[
-                  "셀러센터 > 판매자 정보 > 정산 계좌 접속",
-                  "사업자 명의 계좌 또는 본인 명의 계좌 등록",
-                  "계좌 인증 완료 후 정산 수령 시작",
-                ].map((step, i) => (
-                  <li key={i} className="flex gap-2 text-xs text-[#374151]">
-                    <span className="text-[#F97316] font-bold shrink-0">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="flex justify-end">
-              <a
-                href="https://sell.smartstore.naver.com/#/settlement"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs px-3 py-1.5 rounded-lg border border-[#F97316] text-[#F97316] hover:bg-[#FFF7ED] transition-colors"
-              >
-                셀러센터 정산 내역 바로가기 →
-              </a>
-            </div>
+            <CollectPanel
+              label="정산"
+              data={settlementsData}
+              loading={settlementsLoading}
+              error={settlementsError}
+              onCollect={handleSettlementsCollect}
+              onLoad={handleSettlementsLoad}
+              siteUrl="https://sell.smartstore.naver.com/#/settlement"
+              siteLinkLabel="셀러센터 정산 내역 바로가기"
+            />
           </div>
         )}
 

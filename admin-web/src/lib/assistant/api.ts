@@ -642,3 +642,69 @@ export async function getCompetitionScore(
     signal,
   );
 }
+
+// ── 스마트스토어 수집·조회 ────────────────────────────────────────────────────
+export interface SSTableData {
+  ok: boolean;
+  headers?: string[];
+  rows?: string[][];
+  collected_at?: string;
+  duration_ms?: number;
+  error?: string;
+  hint?: string;
+}
+
+export interface SSStatsData {
+  ok: boolean;
+  sales_today?: number;
+  sales_week?: number;
+  sales_month?: number;
+  visitors_today?: number;
+  orders_today?: number;
+  collected_at?: string;
+  duration_ms?: number;
+  error?: string;
+  hint?: string;
+}
+
+export async function getSSProducts(signal?: AbortSignal): Promise<SSTableData> {
+  return getJson<SSTableData>("/api/v1/smartstore/products", signal);
+}
+export async function collectSSProducts(limit = 50): Promise<SSTableData> {
+  return postJson<SSTableData>(`/api/v1/smartstore/products/collect?limit=${limit}`);
+}
+
+export async function getSSOrders(signal?: AbortSignal): Promise<SSTableData> {
+  return getJson<SSTableData>("/api/v1/smartstore/orders", signal);
+}
+export async function collectSSOrders(limit = 50): Promise<SSTableData> {
+  return postJson<SSTableData>(`/api/v1/smartstore/orders/collect?limit=${limit}`);
+}
+
+export async function getSSSettlements(signal?: AbortSignal): Promise<SSTableData> {
+  return getJson<SSTableData>("/api/v1/smartstore/settlements", signal);
+}
+export async function collectSSSettlements(limit = 30): Promise<SSTableData> {
+  return postJson<SSTableData>(`/api/v1/smartstore/settlements/collect?limit=${limit}`);
+}
+
+export async function getSSReviews(signal?: AbortSignal): Promise<SSTableData> {
+  return getJson<SSTableData>("/api/v1/smartstore/reviews", signal);
+}
+export async function collectSSReviews(limit = 30): Promise<SSTableData> {
+  return postJson<SSTableData>(`/api/v1/smartstore/reviews/collect?limit=${limit}`);
+}
+
+export async function getSSStats(signal?: AbortSignal): Promise<SSStatsData> {
+  return getJson<SSStatsData>("/api/v1/smartstore/stats", signal);
+}
+export async function collectSSStats(): Promise<SSStatsData> {
+  return postJson<SSStatsData>("/api/v1/smartstore/stats/collect");
+}
+
+export async function getSSMarketing(signal?: AbortSignal): Promise<SSTableData> {
+  return getJson<SSTableData>("/api/v1/smartstore/marketing", signal);
+}
+export async function collectSSMarketing(): Promise<SSTableData> {
+  return postJson<SSTableData>("/api/v1/smartstore/marketing/collect");
+}

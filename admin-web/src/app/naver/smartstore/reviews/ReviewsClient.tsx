@@ -1,16 +1,13 @@
 "use client";
-/** ReviewsClient — 리뷰/문의 (고객 리뷰/고객 문의/자동응답 설정) */
+/** ReviewsClient — 리뷰/문의 (고객 리뷰/고객 문의/자동응답 설정) — CDP 수집 연동 */
 import { useState } from "react";
+import {
+  getSSReviews,
+  collectSSReviews,
+  type SSTableData,
+} from "@/lib/assistant/api";
 
 type Tab = "reviews" | "inquiries" | "autorespond";
-
-const STAR_DIST: { star: number; count: number; pct: number }[] = [
-  { star: 5, count: 84, pct: 84 },
-  { star: 4, count: 10, pct: 10 },
-  { star: 3, count: 3,  pct: 3  },
-  { star: 2, count: 2,  pct: 2  },
-  { star: 1, count: 1,  pct: 1  },
-];
 
 const INQUIRY_TYPES = [
   { type: "배송 문의",  desc: "배송 예정일, 운송장 조회 등", sla: "12시간 내" },
@@ -26,12 +23,39 @@ const AUTO_TEMPLATES = [
 
 export default function ReviewsClient() {
   const [tab, setTab] = useState<Tab>("reviews");
+  const [data, setData] = useState<SSTableData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "reviews",     label: "고객 리뷰" },
     { id: "inquiries",   label: "고객 문의" },
     { id: "autorespond", label: "자동응답 설정" },
   ];
+
+  async function handleCollect() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await collectSSReviews(30));
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLoad() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await getSSReviews());
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -56,48 +80,81 @@ export default function ReviewsClient() {
         {/* ── 고객 리뷰 탭 ── */}
         {tab === "reviews" && (
           <div className="space-y-4">
-            {/* 별점 분포 */}
-            <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <p className="text-sm font-semibold text-[#111827]">별점 분포</p>
-                <span className="text-xs bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] px-2 py-0.5 rounded font-semibold">
-                  평균 4.7점
+            {/* 수집/조회 버튼 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleCollect}
+                disabled={loading}
+                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors font-semibold"
+              >
+                {loading ? "수집 중…" : "수집"}
+              </button>
+              <button
+                onClick={handleLoad}
+                disabled={loading}
+                className="px-4 py-2 border border-[#E5E7EB] text-sm rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 transition-colors"
+              >
+                조회
+              </button>
+              {data?.collected_at && (
+                <span className="text-xs text-[#9CA3AF]">
+                  수집: {data.collected_at}
+                  {data.duration_ms !== undefined && ` (${data.duration_ms}ms)`}
                 </span>
-              </div>
-              <div className="space-y-2">
-                {STAR_DIST.map((row) => (
-                  <div key={row.star} className="flex items-center gap-3">
-                    <span className="text-xs text-[#6B7280] w-8 shrink-0">{row.star}점</span>
-                    <div className="flex-1 bg-[#F3F4F6] rounded-full h-2 overflow-hidden">
-                      <div
-                        className="h-full bg-[#F97316] rounded-full"
-                        style={{ width: `${row.pct}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-[#6B7280] w-12 text-right shrink-0">{row.count}건</span>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
 
-            {/* 리뷰 관리 정책 */}
-            <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-2">
-              <p className="text-sm font-semibold text-[#111827]">리뷰 관리 정책</p>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex gap-3">
-                  <span className="font-semibold text-[#6B7280] w-28 shrink-0">평균 별점 목표</span>
-                  <span className="text-[#111827]">4.5점 이상 유지</span>
-                </div>
-                <div className="flex gap-3">
-                  <span className="font-semibold text-[#6B7280] w-28 shrink-0">수동 응답 기준</span>
-                  <span className="text-[#111827]">3점 이하 리뷰는 24시간 내 수동 응답 권장</span>
-                </div>
-                <div className="flex gap-3">
-                  <span className="font-semibold text-[#6B7280] w-28 shrink-0">리뷰 삭제 요청</span>
-                  <span className="text-[#111827]">허위 리뷰만 네이버 고객센터에 신고 가능</span>
-                </div>
+            {/* 오류 표시 */}
+            {error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{error}</p>
               </div>
-            </div>
+            )}
+            {data?.error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{data.error}</p>
+                {data.hint && <p className="text-xs text-[#9CA3AF] mt-1">{data.hint}</p>}
+              </div>
+            )}
+
+            {/* 테이블 */}
+            {data?.ok && data.headers && data.rows && (
+              <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                    <tr>
+                      {data.headers.map((h) => (
+                        <th key={h} className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rows.map((row, i) => (
+                      <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
+                        {row.map((cell, j) => (
+                          <td key={j} className="px-3 py-2 text-[#374151] whitespace-nowrap">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* 미수집 안내 */}
+            {!data && !error && (
+              <div className="border border-[#E5E7EB] rounded-xl p-8 text-center space-y-2">
+                <p className="text-sm text-[#6B7280]">아직 수집된 데이터가 없습니다.</p>
+                <p className="text-xs text-[#9CA3AF]">[수집] 버튼을 눌러 셀러센터에서 데이터를 가져오세요.</p>
+                <button
+                  onClick={handleCollect}
+                  disabled={loading}
+                  className="mt-2 px-4 py-2 bg-[#1D4ED8] text-white text-xs rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors"
+                >
+                  수집 시작
+                </button>
+              </div>
+            )}
 
             <div className="flex justify-end">
               <a

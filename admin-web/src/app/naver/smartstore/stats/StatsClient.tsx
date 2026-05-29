@@ -1,29 +1,54 @@
 "use client";
-/** StatsClient — 데이터 분석 (매출 통계/방문 통계/상품 분석) */
+/** StatsClient — 데이터 분석 (매출 통계/방문 통계/상품 분석) — CDP 수집 연동 */
 import { useState } from "react";
+import {
+  getSSStats,
+  collectSSStats,
+  type SSStatsData,
+} from "@/lib/assistant/api";
 
 type Tab = "sales" | "traffic" | "products";
 
-const SALES_CARDS = [
-  { label: "오늘 매출",   value: "–",       sub: "실시간 데이터는 셀러센터에서 확인" },
-  { label: "이번 주 매출", value: "–",       sub: "월~오늘 누적" },
-  { label: "이번 달 매출", value: "–",       sub: "월초부터 오늘까지 누적" },
-];
-
-const TOP_PRODUCTS = [
-  { name: "무선 LED 무드등 USB 충전식", clicks: 1240, cvr: "3.8%" },
-  { name: "캠핑용 랜턴 방수 휴대용",   clicks: 890,  cvr: "2.1%" },
-  { name: "야간 독서등 클립형",        clicks: 560,  cvr: "4.5%" },
-];
+function fmt(v: number | undefined): string {
+  if (v === undefined || v === null) return "–";
+  return v.toLocaleString();
+}
 
 export default function StatsClient() {
   const [tab, setTab] = useState<Tab>("sales");
+  const [data, setData] = useState<SSStatsData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "sales",    label: "매출 통계" },
     { id: "traffic",  label: "방문 통계" },
     { id: "products", label: "상품 분석" },
   ];
+
+  async function handleCollect() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await collectSSStats());
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLoad() {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await getSSStats());
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -48,26 +73,83 @@ export default function StatsClient() {
         {/* ── 매출 통계 탭 ── */}
         {tab === "sales" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {SALES_CARDS.map((card) => (
-                <div key={card.label} className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
-                  <p className="text-xs text-[#6B7280] mb-1">{card.label}</p>
-                  <p className="text-2xl font-bold text-[#111827]">{card.value}</p>
-                  <p className="text-xs text-[#9CA3AF] mt-1">{card.sub}</p>
-                </div>
-              ))}
+            {/* 수집/조회 버튼 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleCollect}
+                disabled={loading}
+                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors font-semibold"
+              >
+                {loading ? "수집 중…" : "수집"}
+              </button>
+              <button
+                onClick={handleLoad}
+                disabled={loading}
+                className="px-4 py-2 border border-[#E5E7EB] text-sm rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 transition-colors"
+              >
+                조회
+              </button>
+              {data?.collected_at && (
+                <span className="text-xs text-[#9CA3AF]">
+                  수집: {data.collected_at}
+                  {data.duration_ms !== undefined && ` (${data.duration_ms}ms)`}
+                </span>
+              )}
             </div>
 
-            <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-4">
-              <p className="text-xs font-semibold text-[#C2410C] mb-1">실시간 매출 데이터</p>
-              <p className="text-xs text-[#92400E]">
-                실시간 매출 데이터는 API 연동이 필요합니다. 정확한 수치는 셀러센터 데이터분석 메뉴에서 확인하세요.
-              </p>
+            {/* 오류 표시 */}
+            {error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{error}</p>
+              </div>
+            )}
+            {data?.error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{data.error}</p>
+                {data.hint && <p className="text-xs text-[#9CA3AF] mt-1">{data.hint}</p>}
+              </div>
+            )}
+
+            {/* 수치 카드 */}
+            {data?.ok && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "오늘 매출",     value: fmt(data.sales_today),   sub: "오늘 누적 (원)" },
+                  { label: "이번 주 매출",  value: fmt(data.sales_week),    sub: "주간 누적 (원)" },
+                  { label: "이번 달 매출",  value: fmt(data.sales_month),   sub: "월간 누적 (원)" },
+                  { label: "오늘 방문자",   value: fmt(data.visitors_today), sub: "순 방문자 (UV)" },
+                  { label: "오늘 주문 수",  value: fmt(data.orders_today),  sub: "결제 완료 건수" },
+                ].map((card) => (
+                  <div key={card.label} className="border border-[#E5E7EB] rounded-xl p-4 bg-white">
+                    <p className="text-xs text-[#6B7280] mb-1">{card.label}</p>
+                    <p className="text-2xl font-bold text-[#111827]">{card.value}</p>
+                    <p className="text-xs text-[#9CA3AF] mt-1">{card.sub}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 미수집 안내 */}
+            {!data && !error && (
+              <div className="border border-[#E5E7EB] rounded-xl p-8 text-center space-y-2">
+                <p className="text-sm text-[#6B7280]">아직 수집된 데이터가 없습니다.</p>
+                <p className="text-xs text-[#9CA3AF]">[수집] 버튼을 눌러 셀러센터에서 통계를 가져오세요.</p>
+                <button
+                  onClick={handleCollect}
+                  disabled={loading}
+                  className="mt-2 px-4 py-2 bg-[#1D4ED8] text-white text-xs rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors"
+                >
+                  수집 시작
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-end">
               <a
                 href="https://sell.smartstore.naver.com/#/analytics/sales"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block mt-2 text-xs px-3 py-1.5 rounded-lg border border-[#F97316] text-[#F97316] hover:bg-white transition-colors"
+                className="text-xs px-3 py-1.5 rounded-lg border border-[#F97316] text-[#F97316] hover:bg-[#FFF7ED] transition-colors"
               >
                 셀러센터 매출 통계 바로가기 →
               </a>
@@ -108,29 +190,6 @@ export default function StatsClient() {
         {/* ── 상품 분석 탭 ── */}
         {tab === "products" && (
           <div className="space-y-4">
-            <div className="border border-[#E5E7EB] rounded-xl overflow-hidden">
-              <table className="w-full text-xs">
-                <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                  <tr>
-                    <th className="text-left px-4 py-2.5 text-[#6B7280] font-semibold">상품명</th>
-                    <th className="text-right px-4 py-2.5 text-[#6B7280] font-semibold">클릭수</th>
-                    <th className="text-right px-4 py-2.5 text-[#6B7280] font-semibold">구매전환율</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {TOP_PRODUCTS.map((p, i) => (
-                    <tr key={p.name} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
-                      <td className="px-4 py-2.5 text-[#111827]">{p.name}</td>
-                      <td className="px-4 py-2.5 text-right text-[#374151]">{p.clicks.toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <span className="text-[#16A34A] font-semibold">{p.cvr}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
             <div className="border border-[#E5E7EB] rounded-xl p-4 space-y-2">
               <p className="text-xs font-semibold text-[#6B7280]">상품 분석 활용 팁</p>
               <ul className="space-y-1">

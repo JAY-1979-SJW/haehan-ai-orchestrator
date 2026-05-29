@@ -1,14 +1,13 @@
 "use client";
-/** ProductsClient — 상품 관리 (목록/등록/일괄 등록) */
+/** ProductsClient — 상품 관리 (목록/등록/일괄 등록) — CDP 수집 연동 */
 import { useState } from "react";
+import {
+  getSSProducts,
+  collectSSProducts,
+  type SSTableData,
+} from "@/lib/assistant/api";
 
 type Tab = "list" | "register" | "bulk";
-
-const PRODUCT_STATUS: { label: string; badge: string }[] = [
-  { label: "판매중",   badge: "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]" },
-  { label: "일시품절", badge: "bg-[#FFF7ED] text-[#C2410C] border-[#FED7AA]" },
-  { label: "판매중지", badge: "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]" },
-];
 
 const REGISTER_STEPS = [
   { step: 1, title: "카테고리 선택", desc: "정확한 카테고리 선택 (판매 수수료 결정)", required: true },
@@ -18,15 +17,11 @@ const REGISTER_STEPS = [
   { step: 5, title: "저장 및 노출",  desc: "임시저장 → 최종 저장 → 노출 설정 확인", required: true },
 ];
 
-const SAMPLE_PRODUCTS = [
-  { name: "무선 LED 무드등 USB 충전식", status: "판매중",   price: "29,900원", stock: 142 },
-  { name: "캠핑용 랜턴 방수 휴대용",   status: "일시품절", price: "45,000원", stock: 0 },
-  { name: "야간 독서등 클립형",        status: "판매중지", price: "18,500원", stock: 23 },
-];
-
 export default function ProductsClient() {
   const [tab, setTab] = useState<Tab>("list");
-  const [filter, setFilter] = useState<string>("전체");
+  const [data, setData] = useState<SSTableData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "list",     label: "상품 목록" },
@@ -34,12 +29,31 @@ export default function ProductsClient() {
     { id: "bulk",     label: "일괄 등록" },
   ];
 
-  const statusBadge = (status: string) => {
-    const found = PRODUCT_STATUS.find((s) => s.label === status);
-    return found?.badge ?? "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]";
-  };
+  async function handleCollect() {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await collectSSProducts(50);
+      setData(result);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const filtered = filter === "전체" ? SAMPLE_PRODUCTS : SAMPLE_PRODUCTS.filter((p) => p.status === filter);
+  async function handleLoad() {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getSSProducts();
+      setData(result);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -64,42 +78,81 @@ export default function ProductsClient() {
         {/* ── 상품 목록 탭 ── */}
         {tab === "list" && (
           <div className="space-y-4">
-            {/* 필터 */}
-            <div className="flex gap-2 flex-wrap">
-              {["전체", "판매중", "일시품절", "판매중지"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    filter === f
-                      ? "border-[#F97316] bg-[#FFF7ED] text-[#C2410C] font-semibold"
-                      : "border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-
-            {/* 상품 목록 */}
-            <div className="space-y-2">
-              {filtered.map((product) => (
-                <div key={product.name} className="border border-[#E5E7EB] rounded-xl p-4 bg-white flex items-center gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#111827] truncate">{product.name}</p>
-                    <p className="text-xs text-[#6B7280] mt-0.5">재고 {product.stock}개 · {product.price}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold shrink-0 ${statusBadge(product.status)}`}>
-                    {product.status}
-                  </span>
-                </div>
-              ))}
-              {filtered.length === 0 && (
-                <div className="border border-[#E5E7EB] rounded-xl p-8 text-center">
-                  <p className="text-sm text-[#6B7280]">해당 상태의 상품이 없습니다.</p>
-                </div>
+            {/* 수집/조회 버튼 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleCollect}
+                disabled={loading}
+                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors font-semibold"
+              >
+                {loading ? "수집 중…" : "수집"}
+              </button>
+              <button
+                onClick={handleLoad}
+                disabled={loading}
+                className="px-4 py-2 border border-[#E5E7EB] text-sm rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 transition-colors"
+              >
+                조회
+              </button>
+              {data?.collected_at && (
+                <span className="text-xs text-[#9CA3AF]">
+                  수집: {data.collected_at}
+                  {data.duration_ms !== undefined && ` (${data.duration_ms}ms)`}
+                </span>
               )}
             </div>
+
+            {/* 오류 표시 */}
+            {error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{error}</p>
+              </div>
+            )}
+            {data?.error && (
+              <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-4">
+                <p className="text-sm text-[#DC2626]">{data.error}</p>
+                {data.hint && <p className="text-xs text-[#9CA3AF] mt-1">{data.hint}</p>}
+              </div>
+            )}
+
+            {/* 테이블 동적 렌더링 */}
+            {data?.ok && data.headers && data.rows && (
+              <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                    <tr>
+                      {data.headers.map((h) => (
+                        <th key={h} className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rows.map((row, i) => (
+                      <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
+                        {row.map((cell, j) => (
+                          <td key={j} className="px-3 py-2 text-[#374151] whitespace-nowrap">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* 미수집 안내 */}
+            {!data && !error && (
+              <div className="border border-[#E5E7EB] rounded-xl p-8 text-center space-y-2">
+                <p className="text-sm text-[#6B7280]">아직 수집된 데이터가 없습니다.</p>
+                <p className="text-xs text-[#9CA3AF]">[수집] 버튼을 눌러 셀러센터에서 데이터를 가져오세요.</p>
+                <button
+                  onClick={handleCollect}
+                  disabled={loading}
+                  className="mt-2 px-4 py-2 bg-[#1D4ED8] text-white text-xs rounded-lg hover:bg-[#1E40AF] disabled:opacity-50 transition-colors"
+                >
+                  수집 시작
+                </button>
+              </div>
+            )}
 
             {/* 셀러센터 바로가기 */}
             <div className="flex justify-end">
