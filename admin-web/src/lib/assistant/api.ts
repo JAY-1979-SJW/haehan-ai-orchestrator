@@ -460,6 +460,38 @@ export async function crawlNaverShopping(query: string, limit = 40): Promise<Cra
   return postJson<CrawlResult>(`/api/v1/external/naver/shopping-search/crawl?${params}`);
 }
 
+// ── 스마트스토어 ─────────────────────────────────────────────────
+export interface SmartStoreStatusResponse {
+  catalog: {
+    generated_at?: string;
+    contract?: Record<string, string>;
+    sections?: Array<{
+      name: string;
+      actions: Array<{ action_id: string; label: string; risk: string; status: string; required_fields?: string[] }>;
+      summary: { total: number; implemented: number; approval_gated: number };
+    }>;
+  };
+  db_path: string;
+}
+
+export interface SmartStoreHistoryResponse {
+  latest: Record<string, unknown>;
+  history: Array<Record<string, unknown>>;
+  count: number;
+}
+
+export async function getSmartStoreStatus(signal?: AbortSignal): Promise<SmartStoreStatusResponse> {
+  return getJson<SmartStoreStatusResponse>("/api/v1/smartstore/status", signal);
+}
+
+export async function getSmartStoreHistory(signal?: AbortSignal): Promise<SmartStoreHistoryResponse> {
+  return getJson<SmartStoreHistoryResponse>("/api/v1/smartstore/submit-history", signal);
+}
+
+export async function getSmartStoreFormFields(signal?: AbortSignal) {
+  return getJson<{ required: string[]; optional: string[] }>("/api/v1/smartstore/product-form-fields", signal);
+}
+
 export async function getCrawlReport(query: string, signal?: AbortSignal): Promise<CrawlResult> {
   const params = new URLSearchParams({ query });
   return getJson<CrawlResult>(`/api/v1/external/naver/shopping-search/crawl-report?${params}`, signal);
