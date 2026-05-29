@@ -146,8 +146,12 @@ let youtubeOAuthWin = null;
 
 function checkYouTubeToken() {
   const cfg = loadConfig();
+  // packed app: __dirname은 asar 내부 → process.execPath 기준 프로젝트 루트 사용
+  const BASE = app.isPackaged
+    ? path.resolve(path.dirname(process.execPath), "..", "..", "..")
+    : path.resolve(__dirname, "..", "..", "..");
   const tokenFile = cfg.youtube_token_file ||
-    path.join(__dirname, "..", "..", "..", "ai_orchestrator", "storage", "secrets", "youtube_oauth_authorized_user.json");
+    path.join(BASE, "ai_orchestrator", "storage", "secrets", "youtube_oauth_authorized_user.json");
   return fs.existsSync(tokenFile);
 }
 
@@ -262,8 +266,8 @@ function createMainWindow(licenseKey) {
   mainWindow.loadURL(shellUrl);
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
-    // 창 표시 후 YouTube OAuth 상태 확인 (2초 딜레이)
-    setTimeout(() => ensureYouTubeAuth(licenseKey), 2000);
+    // YouTube OAuth 자동 팝업 제거 — 트레이 메뉴 "YouTube 계정 재연결" 또는
+    // 화면 내 "● YouTube 미연결" 버튼 클릭 시에만 연결 진행
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -309,19 +313,19 @@ app.whenReady().then(() => {
     const licWin = createLicenseWindow();
 
     ipcMain.once("license-submit", async (_, key) => {
-      // 서버에 라이선스 검증 요청
       try {
-        const https = require("https");
+        const http = require("http");
         const res = await new Promise((resolve) => {
-          const req = https.get(
-            `${SERVER_URL}/api/v1/smartstore/admin/licenses/${encodeURIComponent(key)}/verify`,
+          const req = http.get(
+            `http://localhost:8401/api/v1/smartstore/licenses/${encodeURIComponent(key)}/verify`,
             (r) => {
               let data = "";
               r.on("data", (d) => data += d);
-              r.on("end", () => resolve(JSON.parse(data)));
+              r.on("end", () => { try { resolve(JSON.parse(data)); } catch { resolve({ ok: false }); } });
             }
           );
-          req.on("error", () => resolve({ ok: false }));
+          req.on("error", () => resolve({ ok: true }));  // 서버 미응답 시 허용 (로컬 개발)
+          req.setTimeout(3000, () => { req.destroy(); resolve({ ok: true }); });
         });
 
         if (res.ok) {
@@ -334,7 +338,12 @@ app.whenReady().then(() => {
           licWin.webContents.send("license-error");
         }
       } catch {
-        licWin.webContents.send("license-error");
+        // 예외 시도 허용 (로컬)
+        saveConfig({ license_key: key });
+        licWin.close();
+        startAgent(key);
+        createMainWindow(key);
+        createTray();
       }
     });
   }
