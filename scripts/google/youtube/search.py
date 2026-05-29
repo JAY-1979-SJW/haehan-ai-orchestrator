@@ -181,12 +181,49 @@ def _write_report(
 
 
 def _api_key(explicit: str | None = None) -> str:
-    return explicit or os.environ.get("YOUTUBE_API_KEY", "") or os.environ.get("GOOGLE_YOUTUBE_API_KEY", "")
+    return (explicit or os.environ.get("YOUTUBE_DATA_API_KEY", "")
+            or os.environ.get("YOUTUBE_API_KEY", "") or os.environ.get("GOOGLE_YOUTUBE_API_KEY", ""))
+
+
+def _oauth_access_token() -> str | None:
+    """저장된 OAuth 토큰을 갱신해서 반환. 없으면 None."""
+    import urllib.parse
+    token_path = os.environ.get(
+        "YOUTUBE_OAUTH_TOKEN_FILE",
+        str(Path(__file__).resolve().parents[3] / "ai_orchestrator" / "storage" / "secrets" / "youtube_oauth_authorized_user.json"),
+    )
+    if not Path(token_path).exists():
+        return None
+    try:
+        t = json.loads(Path(token_path).read_text(encoding="utf-8"))
+        data = urllib.parse.urlencode({
+            "client_id":     t["client_id"],
+            "client_secret": t["client_secret"],
+            "refresh_token": t["refresh_token"],
+            "grant_type":    "refresh_token",
+        }).encode()
+        req = urllib.request.Request(
+            t.get("token_uri", "https://oauth2.googleapis.com/token"), data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        r = urllib.request.urlopen(req, timeout=10)
+        return json.loads(r.read()).get("access_token")
+    except Exception:
+        return None
 
 
 def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
-    query = urllib.parse.urlencode(params)
-    request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
+    # OAuth 우선, 없으면 API 키
+    access_token = _oauth_access_token()
+    if access_token:
+        query = urllib.parse.urlencode(params)
+        request = urllib.request.Request(
+            f"{url}?{query}",
+            headers={"Accept": "application/json", "Authorization": f"Bearer {access_token}"},
+        )
+    else:
+        query = urllib.parse.urlencode(params)
+        request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
     with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -239,14 +276,15 @@ def search_videos(
         return _write_report(payload)
 
     key = _api_key(api_key)
-    if normalized_source == "official" or (normalized_source == "auto" and key):
-        if not key:
+    has_oauth = bool(_oauth_access_token())
+    if normalized_source == "official" or (normalized_source == "auto" and (key or has_oauth)):
+        if not key and not has_oauth:
             payload = _base_payload(query, "official", max_results)
             payload.update({
                 "ok": False,
                 "status": "blocked",
                 "reason": "youtube_data_api_key_required_for_official_source",
-                "next_step": "Set YOUTUBE_API_KEY or use --source=browser for public-page read-only collection.",
+                "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
             })
             return _write_report(payload)
         return search_videos_official(query, max_results=max_results, api_key=key)
@@ -263,27 +301,28 @@ def search_videos_official(
     key = _api_key(api_key)
     max_results = max(1, min(int(max_results), 25))
     payload = _base_payload(query, "official", max_results)
-    if not key:
+    if not key and not _oauth_access_token():
         payload.update({
             "ok": False,
             "status": "blocked",
             "reason": "youtube_data_api_key_required_for_official_source",
-            "next_step": "Set YOUTUBE_API_KEY or use --source=browser for public-page read-only collection.",
+            "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
         })
         return _write_report(payload)
 
+    # API 키가 있으면 key 파라미터, OAuth면 _get_json이 Authorization 헤더 자동 추가
+    params: dict[str, str | int] = {
+        "part": "snippet",
+        "q": query,
+        "type": "video",
+        "maxResults": max_results,
+        "safeSearch": "moderate",
+    }
+    if key:
+        params["key"] = key
+
     try:
-        search_data = _get_json(
-            YOUTUBE_SEARCH_URL,
-            {
-                "part": "snippet",
-                "q": query,
-                "type": "video",
-                "maxResults": max_results,
-                "safeSearch": "moderate",
-                "key": key,
-            },
-        )
+        search_data = _get_json(YOUTUBE_SEARCH_URL, params)
     except Exception as exc:
         payload.update({
             "ok": False,
