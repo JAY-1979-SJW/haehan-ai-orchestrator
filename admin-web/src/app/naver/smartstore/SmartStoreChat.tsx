@@ -86,7 +86,7 @@ export default function SmartStoreChat() {
   const historyRef = useRef<ChatMessage[]>([]);  // ref로 관리 — state race 방지
   const [input, setInput]           = useState("");
   const [running, setRunning]       = useState(false);
-  const [provider, setProvider]     = useState<"claude" | "gpt">("claude");
+  const [provider, setProvider]     = useState<"claude" | "gpt">("gpt");
   const [pendingConfirm, setPendingConfirm] = useState<{
     tool: string; inputs: Record<string, unknown>; message: string; userText: string;
   } | null>(null);
