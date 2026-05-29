@@ -18,6 +18,7 @@ import { AuditEventTable } from "./components/AuditEventTable";
 import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
 import { SafetyPolicyBanner } from "./components/SafetyPolicyBanner";
 import { ApiStatusBanner } from "./components/ApiStatusBanner";
+import { PageShell } from "@/components/ui/PageShell";
 
 const SAFETY_POLICIES: SafetyPolicyNotice[] = [
   {
@@ -78,23 +79,8 @@ export default async function OpsPage() {
   ].filter((result) => result.source !== "live");
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Ops Center</h1>
-            <p className="mt-0.5 text-xs text-gray-400">
-              Live approvals, web tasks, agents, integrations, and audit events
-            </p>
-          </div>
-          <a
-            href="/"
-            className="rounded bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
-          >
-            Home
-          </a>
-        </div>
-
+    <PageShell title="운영센터" description="서버 상태 · 승인 · 감사 로그" chatDomain="ops">
+      <div className="space-y-8">
         <ApiStatusBanner />
 
         {failures.length > 0 && (
@@ -113,6 +99,6 @@ export default async function OpsPage() {
         <IntegrationStatusPanel integrations={integrations.data} />
         <AuditEventTable events={auditEvents.data} />
       </div>
-    </main>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { PageShell } from "@/components/ui/PageShell";
 
 interface SessionStatus {
   logged_in: boolean;
@@ -82,13 +83,8 @@ export default function NaverSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-6">
-      <div className="max-w-xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-[#111827]">네이버 로그인 세션</h1>
-          <p className="text-sm text-[#6B7280] mt-1">CDP 브라우저를 시작하고 네이버 로그인 세션을 백엔드에 저장합니다.</p>
-        </div>
-
+    <PageShell title="로그인 세션" description="네이버 CDP 세션 관리" chatDomain="naver">
+      <div className="space-y-6">
         {/* 세션 상태 카드 */}
         <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
@@ -176,6 +172,6 @@ export default function NaverSessionPage() {
           </ul>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/logs — 로그·감사 (APP_LOGS_AUDIT_READONLY_VIEW_01) */
 import { useEffect, useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { AuditLogList } from "@/components/assistant/AuditLogList";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
@@ -95,10 +96,10 @@ export default function LogsAuditPage() {
     opsState.status === "success" ? opsState.data.events.length : auditLogsMock.length;
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="시스템 로그" description="감사 이벤트 · 운영 로그" chatDomain="ops">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">로그 · 감사</h1>
         <ApiConnectionStateBadge
           state={loadState}
           meta={opsState.status === "success" || opsState.status === "mock_fallback"
@@ -159,6 +160,7 @@ export default function LogsAuditPage() {
           <AuditLogList entries={entries} />
         </div>
       )}
-    </div>
+      </div>
+    </PageShell>
   );
 }

@@ -38,6 +38,7 @@ export default async function MarketResearchPage() {
     <PageShell
       title="Market Research"
       description="YouTube keyword, video, comment, and transcript signal reports"
+      chatDomain="market"
     >
       <MarketResearchClient
         data={data}

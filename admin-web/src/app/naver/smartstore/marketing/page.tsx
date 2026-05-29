@@ -4,7 +4,7 @@ import MarketingClient from "./MarketingClient";
 
 export default function MarketingPage() {
   return (
-    <PageShell title="마케팅/혜택" description="쿠폰·할인 · 프로모션 · SEO 최적화">
+    <PageShell title="마케팅/혜택" description="쿠폰·할인 · 프로모션 · SEO 최적화" chatDomain="smartstore">
       <MarketingClient />
     </PageShell>
   );

@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/external-sites — External Sites (APP_EXTERNAL_SITES_READONLY_POLISH_01) */
 import { useEffect, useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { ProviderCard } from "@/components/assistant/ProviderCard";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
@@ -81,10 +82,10 @@ export default function ExternalSitesPage() {
   const needsAuth = providers.filter((p) => p.user_present_required).length;
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="외부 사이트" description="외부 서비스 연동 현황" chatDomain="default">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">외부 사이트</h1>
         <ApiConnectionStateBadge
           state={loadState}
           meta={state.status === "success" || state.status === "mock_fallback" ? state.meta : undefined}
@@ -145,6 +146,7 @@ export default function ExternalSitesPage() {
         <span>cookie 없음</span><span>·</span>
         <span>접속 버튼 없음</span>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

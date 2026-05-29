@@ -1,6 +1,7 @@
 "use client";
 /** /assistant/storage — Storage Status (APP_STORAGE_READONLY_POLISH_01) */
 import { useEffect, useState } from "react";
+import { PageShell } from "@/components/ui/PageShell";
 import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ApiConnectionStateBadge } from "@/components/assistant/ApiConnectionStateBadge";
@@ -78,10 +79,10 @@ export default function StorageStatusPage() {
   const disposable = mounts.filter((m) => m.persistence === "DISPOSABLE").length;
 
   return (
-    <div className="space-y-4">
-      {/* 헤더 */}
+    <PageShell title="저장소" description="스토리지 상태 · TTL 정책" chatDomain="ops">
+      <div className="space-y-4">
+      {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-lg font-bold text-[#111827]">스토리지 상태</h1>
         <ApiConnectionStateBadge
           state={loadState}
           meta={state.status === "success" || state.status === "mock_fallback" ? state.meta : undefined}
@@ -154,6 +155,7 @@ export default function StorageStatusPage() {
         <span>mount 변경 없음</span><span>·</span>
         <span>token 원문 금지</span>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }
