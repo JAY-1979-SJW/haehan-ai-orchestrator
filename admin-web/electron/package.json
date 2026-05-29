@@ -1,0 +1,41 @@
+{
+  "name": "haehan-ai-desktop",
+  "version": "1.0.0",
+  "description": "Haehan AI 데스크톱 앱",
+  "main": "main.js",
+  "scripts": {
+    "start":  "electron .",
+    "pack":   "electron-builder --dir",
+    "dist":   "electron-builder",
+    "dist:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.haehan.ai",
+    "productName": "Haehan AI",
+    "directories": {
+      "output": "../../dist-electron"
+    },
+    "files": [
+      "main.js",
+      "icon.png"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["Korean"],
+      "language": "1042"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
