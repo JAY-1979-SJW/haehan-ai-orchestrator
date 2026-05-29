@@ -13,7 +13,7 @@ const { spawn, execSync } = require("child_process");
 Menu.setApplicationMenu(null);
 
 // ── 설정 ─────────────────────────────────────────────────────────────────────
-const SERVER_URL  = "https://autowork.haehan-ai.kr";
+const SERVER_URL  = "http://localhost:3000";
 const CONFIG_PATH = path.join(app.getPath("userData"), "config.json");
 
 function loadConfig() {
