@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "cafe",    label: "카페 탐색",   shortLabel: "카페", href: "/assistant/cafe" },
       { key: "news",    label: "뉴스 수집",   shortLabel: "뉴스", href: "/assistant/news" },
       { key: "market",      label: "시장조사",       shortLabel: "시장", href: "/market-research" },
+      { key: "youtube",     label: "YouTube 관리",   shortLabel: "유튜브", href: "/youtube" },
       { key: "blog",        label: "블로그 관리",    shortLabel: "블로그", href: "/naver/blog" },
       { key: "keywords",    label: "키워드 검색",    shortLabel: "키워드", href: "/naver/keywords" },
       { key: "naver-session", label: "네이버 세션",   shortLabel: "세션",   href: "/naver/session" },
