@@ -22,7 +22,7 @@ from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
 
 _log = get_logger(__name__)
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 DB_PATH = ROOT / "data" / "cdp.db"
 
 

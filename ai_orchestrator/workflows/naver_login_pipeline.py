@@ -1,0 +1,243 @@
+"""네이버 로그인 파이프라인 (L6 Business Workflow).
+
+1단계(우선): 로그인 → 브라우저 세션(쿠키/스토리지) 저장
+2단계: 세션 상태 메타 저장 (status JSON)
+
+세션은 기존 auth_session.save_session() 체계로 저장됩니다.
+  저장: data/sessions/naver.com.json  (Fernet 암호화)
+  복원: from scripts.auth_session import restore_session
+        restore_session('naver.com', page)
+"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from scripts.logger import get_logger
+
+log = get_logger(__name__)
+
+CDP_HOST = "127.0.0.1"
+CDP_PORT = 9222
+
+NAVER_SESSION_HOST = "naver.com"
+SESSION_STATUS_FILE = ROOT / "data" / "naver_session_state.json"
+
+# 서브도메인별 개별 저장 대상 (각 도메인 쿠키를 분리 보관)
+NAVER_SUBDOMAINS = [
+    "naver.com",
+    "nid.naver.com",
+    "mail.naver.com",
+    "cafe.naver.com",
+    "smartstore.naver.com",
+    "shopping.naver.com",
+    "news.naver.com",
+    "developers.naver.com",
+    "smartplace.naver.com",
+]
+
+
+# ── 공개 인터페이스 ──────────────────────────────────────────────────────────
+
+def load_session_status() -> dict:
+    """저장된 세션 상태 메타를 반환합니다."""
+    if not SESSION_STATUS_FILE.exists():
+        return {"logged_in": False, "user": None, "checked_at": None}
+    try:
+        return json.loads(SESSION_STATUS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {"logged_in": False, "user": None, "checked_at": None}
+
+
+def has_saved_browser_session() -> bool:
+    """auth_session 저장소에 naver.com 세션이 있는지 확인합니다."""
+    from scripts.auth_session import list_sessions
+    return any(s["host"] == NAVER_SESSION_HOST for s in list_sessions())
+
+
+def list_naver_sessions() -> list[dict]:
+    """저장된 네이버 서브도메인 세션 목록을 반환합니다."""
+    from scripts.auth_session import list_sessions
+    saved = {s["host"]: s for s in list_sessions()}
+    result = []
+    for host in NAVER_SUBDOMAINS:
+        if host in saved:
+            result.append(saved[host])
+    # 목록에 없는 추가 저장분도 포함 (동적으로 감지된 서브도메인)
+    for s in list_sessions():
+        if "naver.com" in s["host"] and s["host"] not in [r["host"] for r in result]:
+            result.append(s)
+    return result
+
+
+def run_naver_login_pipeline() -> dict:
+    """CDP 시작 → 로그인 → 브라우저 세션 저장 → 상태 저장.
+
+    우선순위: 로그인 성공 직후 실제 쿠키/스토리지를 먼저 저장하고,
+    이후 상태 메타를 기록합니다.
+
+    Returns:
+        {"ok": bool, "logged_in": bool, "user": str|None, "message": str}
+    """
+    log.info("[naver_login_pipeline] 시작")
+
+    # ── Step 1: CDP 시작 ────────────────────────────────────────────────────
+    if not _is_cdp_alive():
+        log.info("[naver_login_pipeline] CDP 미실행 — 시작 시도")
+        try:
+            _start_cdp()
+        except Exception as e:
+            return _fail(f"CDP 브라우저 시작 실패: {e}")
+
+    # ── Step 2: 브라우저 연결 ────────────────────────────────────────────────
+    try:
+        from playwright.sync_api import sync_playwright
+        pw = sync_playwright().start()
+        browser = pw.chromium.connect_over_cdp(f"http://{CDP_HOST}:{CDP_PORT}")
+
+        ctx = None
+        for _ in range(10):
+            if browser.contexts:
+                ctx = browser.contexts[0]
+                break
+            time.sleep(1)
+
+        if not ctx:
+            pw.stop()
+            return _fail("브라우저 컨텍스트 없음")
+
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+
+    except Exception as e:
+        return _fail(f"브라우저 연결 실패: {e}")
+
+    # ── Step 3: 현재 로그인 상태 확인 ────────────────────────────────────────
+    try:
+        from scripts.login_detector import detect_login_state
+        current = detect_login_state(page)
+        if current.get("logged_in"):
+            user = current.get("user")
+            log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
+            _save_browser_session(page)
+            _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
+            pw.stop()
+            return {"ok": True, "logged_in": True, "user": user,
+                    "message": f"이미 로그인됨: {user} — 세션 저장 완료"}
+    except Exception:
+        pass
+
+    # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
+    try:
+        from scripts.naver.auth import login_naver
+        result = login_naver(page)
+    except Exception as e:
+        pw.stop()
+        return _fail(f"로그인 함수 오류: {e}")
+
+    logged_in = bool(result and result.get("ok"))
+    user = result.get("user") if result else None
+
+    # CAPTCHA — 세션 저장 불가, 대기 상태 기록
+    if not logged_in and result and result.get("captcha_required"):
+        _save_status({"logged_in": False, "user": None, "checked_at": _now(), "pending_captcha": True})
+        pw.stop()
+        return {"ok": False, "logged_in": False, "user": None, "captcha": True,
+                "message": "CAPTCHA/2FA 감지 — 브라우저에서 직접 완료 후 다시 실행하세요"}
+
+    # ── Step 5: 세션 저장 (로그인 성공 시 최우선) ─────────────────────────────
+    if logged_in:
+        try:
+            _save_browser_session(page)
+            log.info("[naver_login_pipeline] 브라우저 세션 저장 완료: data/sessions/naver.com.json")
+        except Exception as e:
+            log.warning("[naver_login_pipeline] 브라우저 세션 저장 실패: %s", e)
+
+    # ── Step 6: 상태 메타 저장 ────────────────────────────────────────────────
+    status = {
+        "logged_in": logged_in,
+        "user": user,
+        "checked_at": _now(),
+        "source": "login",
+        "browser_session_saved": logged_in and has_saved_browser_session(),
+    }
+    if not logged_in:
+        status["error"] = result.get("reason", "로그인 실패") if result else "로그인 실패"
+    _save_status(status)
+
+    log.info("[naver_login_pipeline] 완료: logged_in=%s user=%s", logged_in, user)
+    pw.stop()
+
+    return {
+        "ok": logged_in,
+        "logged_in": logged_in,
+        "user": user,
+        "message": f"로그인 성공, 세션 저장 완료: {user}" if logged_in else status.get("error", "로그인 실패"),
+    }
+
+
+# ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
+
+def _is_cdp_alive(timeout: float = 2.0) -> bool:
+    try:
+        with urllib.request.urlopen(
+            f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout
+        ) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def _start_cdp() -> None:
+    from scripts.cdp_force_start import cmd_start
+    if cmd_start() != 0:
+        raise RuntimeError("CDP 브라우저 시작 실패")
+
+
+def _save_browser_session(page) -> None:
+    """네이버 전체 쿠키를 통합 저장 + 서브도메인별 분리 저장."""
+    from scripts.auth_session import save_session
+
+    # 1. naver.com 통합 저장 (전체 네이버 쿠키)
+    save_session(NAVER_SESSION_HOST, page, host_filter=True)
+
+    # 2. 브라우저에 실제 존재하는 서브도메인별 분리 저장
+    ctx = page.context
+    all_cookies = ctx.cookies()
+    found_domains: set[str] = set()
+    for c in all_cookies:
+        d = (c.get("domain") or "").lstrip(".")
+        if "naver.com" in d:
+            found_domains.add(d)
+
+    for subdomain in found_domains:
+        if subdomain == NAVER_SESSION_HOST:
+            continue  # 통합본과 중복 스킵
+        try:
+            save_session(subdomain, page, host_filter=True)
+            log.info("[naver_login_pipeline] 서브도메인 세션 저장: %s", subdomain)
+        except Exception as e:
+            log.warning("[naver_login_pipeline] 서브도메인 세션 저장 실패 %s: %s", subdomain, e)
+
+
+def _save_status(state: dict) -> None:
+    SESSION_STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SESSION_STATUS_FILE.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def _fail(msg: str) -> dict:
+    log.error("[naver_login_pipeline] %s", msg)
+    _save_status({"logged_in": False, "user": None, "checked_at": _now(), "error": msg})
+    return {"ok": False, "logged_in": False, "user": None, "message": msg}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()

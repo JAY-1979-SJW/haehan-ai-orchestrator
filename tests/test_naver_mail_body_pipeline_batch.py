@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.naver_mail import batch_runner as br
-from scripts.naver_mail import unread_audit as ua
+from scripts.naver.mail import batch_runner as br
+from scripts.naver.mail import unread_audit as ua
 from scripts.ops import audit_naver_mail_body_pipeline_batch as audit
 
 
@@ -285,19 +285,19 @@ def test_audit_fail_checkpoint_broken():
 
 
 def test_regression_body_pipeline_v2_imports():
-    from scripts.naver_mail import body_pipeline_v2 as bp
+    from scripts.naver.mail import body_pipeline_v2 as bp
     assert hasattr(bp, "run")
 
 
 def test_regression_dynamic_folder_discovery_imports():
-    from scripts.naver_mail import folder_discovery as fd
-    from scripts.naver_mail import folder_profile as fpr
+    from scripts.naver.mail import folder_discovery as fd
+    from scripts.naver.mail import folder_profile as fpr
     assert hasattr(fd, "discover_folders")
     assert hasattr(fpr, "build_snapshot")
 
 
 def test_regression_smart_folder_coverage_imports():
-    from scripts.naver_mail import smart_folder_collector as sfc
+    from scripts.naver.mail import smart_folder_collector as sfc
     assert hasattr(sfc, "collect_all")
 
 

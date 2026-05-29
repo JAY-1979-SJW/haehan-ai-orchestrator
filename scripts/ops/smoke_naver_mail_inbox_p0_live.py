@@ -9,8 +9,8 @@ import time
 from pathlib import Path
 
 from scripts.naver.mail_read import cdp
-from scripts.naver_mail import inbox_collector as ic
-from scripts.naver_mail import read_state_guard as rsg
+from scripts.naver.mail import inbox_collector as ic
+from scripts.naver.mail import read_state_guard as rsg
 from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
 
 

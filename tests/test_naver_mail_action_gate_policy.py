@@ -3,7 +3,7 @@ import pytest
 from scripts.gate import GateBlocked
 from scripts.naver import mail
 from scripts.naver import router
-from scripts.naver_mail import read_state_guard as rsg
+from scripts.naver.mail import read_state_guard as rsg
 
 
 @pytest.mark.parametrize(

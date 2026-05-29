@@ -16,7 +16,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from scripts.naver.mail_read import cdp
-from scripts.naver_mail import (folder_discovery as fd,
+from scripts.naver.mail import (folder_discovery as fd,
                                 folder_policy as fp,
                                 folder_profile as fpr,
                                 smart_folder_collector as sfc)

@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.naver_mail import action_item_dashboard as aid
+from scripts.naver.mail import action_item_dashboard as aid
 from scripts.ops import audit_naver_mail_action_item_dashboard as audit
 
 

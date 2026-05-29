@@ -35,7 +35,24 @@ from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 
-DASHBOARD = "https://sell.smartstore.naver.com/#/home/dashboard"
+DASHBOARD        = "https://sell.smartstore.naver.com/#/home/dashboard"
+PRODUCTS_NEW_URL = "https://sell.smartstore.naver.com/#/products/new"
+
+# 폼 렌더링 확인용 셀렉터 (하나라도 나타나면 진입 성공)
+_FORM_READY_SELS = [
+    'input[name="product.salePrice"]',
+    'input[name="product.name"]',
+    'input[name="product.stockQuantity"]',
+    'input[placeholder*="상품명"]',
+    'input[placeholder*="판매가"]',
+]
+
+# 상품 유형 선택 모달 — "일반상품" 버튼 후보
+_PRODUCT_TYPE_BTN = [
+    "일반 상품",
+    "일반상품",
+    "단일 상품",
+]
 
 
 class GeneralProductRegister:
@@ -48,45 +65,115 @@ class GeneralProductRegister:
     # ── 초기화: 사이드바 클릭으로 진입 ──────────────────────────────────
 
     def open(self, timeout_s: int = 30) -> bool:
-        """대시보드 → '상품관리' → '상품 등록' 자동 클릭으로 진입."""
+        """상품 등록 페이지 진입.
+
+        전략 1 (기본): 직접 URL 이동 (#/products/new) → 팝업 처리 → 폼 렌더링 대기
+        전략 2 (fallback): 사이드바 클릭 방식
+        """
         r = ensure_naver_login(self.page)
         assert_session_integrity(r, site="smartstore", workflow="product_general_open")
         if not r.get("ok"):
             return False
 
-        # 대시보드 진입
-        self.page.goto(DASHBOARD, timeout=timeout_s * 1000, wait_until="domcontentloaded")
-        time.sleep(5)
-        try:
-            handle_page_popups(self.page, timeout_s=2.0)
-            close_popup_windows(self.page)
-        except Exception:
-            pass
-
-        # 사이드바 '상품관리' 클릭
-        if not self._click_sidebar_text("상품관리"):
-            _log.error("[gen-reg] '상품관리' 클릭 실패")
-            return False
-        time.sleep(2)
-
-        # '상품 등록' 클릭 (사이드바 펼쳐진 후)
-        if not self._click_sidebar_text("상품 등록"):
-            _log.error("[gen-reg] '상품 등록' 클릭 실패")
-            return False
-        time.sleep(4)  # 동적 페이지 로드 대기
-
-        # 가격 input 존재로 진입 검증
-        try:
-            self.page.locator('input[name="product.salePrice"]').first.wait_for(
-                state="attached", timeout=10000
-            )
-            _log.info("[gen-reg] 일반 상품 등록 페이지 진입 완료")
-            self._opened = True
-            log_critical("OTHER", "일반 상품 등록 페이지 진입", mode="general_register_start")
+        # ── 전략 1: 직접 URL 이동 ──────────────────────────────────────
+        if self._open_via_url(timeout_s):
             return True
-        except Exception as e:
-            _log.error("[gen-reg] 페이지 검증 실패: %s", e)
+
+        _log.warning("[gen-reg] 직접 URL 진입 실패 — 사이드바 클릭 방식으로 재시도")
+
+        # ── 전략 2: 사이드바 클릭 (fallback) ───────────────────────────
+        return self._open_via_sidebar(timeout_s)
+
+    def _open_via_url(self, timeout_s: int = 30) -> bool:
+        """#/products/new 직접 이동 → 팝업 처리 → 폼 렌더링 대기."""
+        try:
+            from scripts.naver.smartstore.navigation.popup_handler import dismiss_all_popups
+
+            self.page.goto(PRODUCTS_NEW_URL,
+                           timeout=timeout_s * 1000, wait_until="domcontentloaded")
+            time.sleep(3)
+
+            # 팝업/공지 처리
+            dismiss_all_popups(self.page)
+            time.sleep(1)
+
+            # 상품 유형 선택 모달 처리 ("일반상품" 선택)
+            self._select_product_type()
+            time.sleep(2)
+
+            # 폼 렌더링 대기 (최대 timeout_s 초)
+            if self._wait_for_form(timeout_s=15):
+                _log.info("[gen-reg] 직접 URL 진입 성공: %s", self.page.url)
+                self._opened = True
+                log_critical("OTHER", "일반 상품 등록 페이지 진입", mode="url_direct")
+                return True
+
             return False
+
+        except Exception as e:
+            _log.warning("[gen-reg] 직접 URL 진입 오류: %s", e)
+            return False
+
+    def _open_via_sidebar(self, timeout_s: int = 30) -> bool:
+        """대시보드 → 사이드바 클릭 방식 (fallback)."""
+        try:
+            from scripts.naver.smartstore.navigation.popup_handler import dismiss_all_popups
+
+            self.page.goto(DASHBOARD, timeout=timeout_s * 1000, wait_until="domcontentloaded")
+            time.sleep(4)
+            dismiss_all_popups(self.page)
+
+            # '상품관리' 클릭
+            if not self._click_sidebar_text("상품관리"):
+                _log.error("[gen-reg] 사이드바 '상품관리' 클릭 실패")
+                return False
+            time.sleep(3)
+
+            # '상품 등록' 탐색 — 사이드바(x<280) + 콘텐츠 영역(x<600) 모두 탐색
+            for x_max in [280, 600]:
+                if self._click_sidebar_text("상품 등록", x_max=x_max):
+                    time.sleep(4)
+                    self._select_product_type()
+                    time.sleep(2)
+                    if self._wait_for_form(timeout_s=15):
+                        _log.info("[gen-reg] 사이드바 방식 진입 성공")
+                        self._opened = True
+                        log_critical("OTHER", "일반 상품 등록 페이지 진입", mode="sidebar_click")
+                        return True
+
+            _log.error("[gen-reg] 사이드바 방식 실패")
+            return False
+
+        except Exception as e:
+            _log.error("[gen-reg] 사이드바 방식 오류: %s", e)
+            return False
+
+    def _select_product_type(self) -> None:
+        """상품 유형 선택 모달이 뜨면 '일반 상품' 선택."""
+        for btn_txt in _PRODUCT_TYPE_BTN:
+            try:
+                btn = self.page.get_by_text(btn_txt, exact=True).first
+                if btn.count() > 0 and btn.is_visible(timeout=2000):
+                    btn.click(timeout=3000)
+                    time.sleep(1)
+                    _log.info("[gen-reg] 상품 유형 선택: '%s'", btn_txt)
+                    return
+            except Exception:
+                pass
+
+    def _wait_for_form(self, timeout_s: int = 15) -> bool:
+        """폼 렌더링 대기 — 하나라도 나타나면 True."""
+        deadline = time.time() + timeout_s
+        while time.time() < deadline:
+            for sel in _FORM_READY_SELS:
+                try:
+                    el = self.page.locator(sel).first
+                    if el.count() > 0 and el.is_visible(timeout=500):
+                        return True
+                except Exception:
+                    pass
+            time.sleep(0.8)
+        return False
 
     def _click_sidebar_text(self, text: str, x_max: int = 280) -> bool:
         """사이드바 메뉴 텍스트로 좌표 찾아 마우스 클릭."""

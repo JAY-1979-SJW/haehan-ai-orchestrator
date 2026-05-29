@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 from scripts.naver.mail_read import cdp
-from scripts.naver_mail import (body_pipeline_v2 as bp,
+from scripts.naver.mail import (body_pipeline_v2 as bp,
                                 folder_discovery as fd,
                                 inbox_collector as ic,
                                 read_state_guard as rsg)

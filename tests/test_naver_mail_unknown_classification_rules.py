@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     unknown_classification_rules as ur,
     business_report as br,
 )
@@ -338,10 +338,10 @@ def test_audit_warn_low_confidence_kept():
 
 
 def test_regression_action_dashboard_imports():
-    from scripts.naver_mail import action_item_dashboard as aid
+    from scripts.naver.mail import action_item_dashboard as aid
     assert hasattr(aid, "build_dashboard")
 
 
 def test_regression_business_report_imports():
-    from scripts.naver_mail import business_report as br
+    from scripts.naver.mail import business_report as br
     assert hasattr(br, "build_report")

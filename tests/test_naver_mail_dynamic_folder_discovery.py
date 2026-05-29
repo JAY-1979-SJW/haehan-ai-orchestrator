@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 import pytest
 
-from scripts.naver_mail import (
+from scripts.naver.mail import (
     folder_discovery as fd,
     folder_policy as fp,
     folder_profile as fpr,
@@ -301,7 +301,7 @@ def test_no_destructive_calls_during_discovery():
 
 def test_regression_smart_folder_coverage_still_works():
     """4개 폴더 244건 시나리오에서 기존 collect_all 호출이 그대로 동작."""
-    from scripts.naver_mail import smart_folder_collector as sfc
+    from scripts.naver.mail import smart_folder_collector as sfc
     fa = MultiFolderActions(
         lnb_raw=_full_lnb()[:6] + [_full_lnb()[3]],  # subset
         folder_responses_by_url={

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import inbox_collector as ic
+from scripts.naver.mail import inbox_collector as ic
 
 
 @dataclass

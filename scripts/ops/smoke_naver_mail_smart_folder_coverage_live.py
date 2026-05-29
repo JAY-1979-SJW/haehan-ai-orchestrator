@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 from scripts.naver.mail_read import cdp
-from scripts.naver_mail import smart_folder_collector as sfc
+from scripts.naver.mail import smart_folder_collector as sfc
 from scripts.ops import audit_naver_mail_smart_folder_coverage as audit
 
 

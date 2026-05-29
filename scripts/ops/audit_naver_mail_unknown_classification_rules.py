@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from scripts.naver_mail import unknown_classification_rules as ur
-from scripts.naver_mail import business_report as br
+from scripts.naver.mail import unknown_classification_rules as ur
+from scripts.naver.mail import business_report as br
 
 
 _FORBIDDEN = ("api.anthropic.com", "api.openai.com", "claude.ai",

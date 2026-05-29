@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from scripts.naver_mail import smart_folder_collector as sfc
+from scripts.naver.mail import smart_folder_collector as sfc
 
 
 @dataclass
