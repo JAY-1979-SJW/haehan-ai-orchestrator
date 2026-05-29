@@ -23,7 +23,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
   return (
     <div className="flex min-h-dvh bg-[#F5F7FA]">
       {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-[220px] min-h-screen bg-white shrink-0"
+      <aside className="hidden lg:flex flex-col w-[220px] h-dvh sticky top-0 bg-white shrink-0 overflow-hidden"
         style={{ borderRight: "1px solid #E5E7EB" }}>
         {/* Orange accent top */}
         <div className="h-1 shrink-0 bg-[#F97316]" />

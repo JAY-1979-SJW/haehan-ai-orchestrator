@@ -81,10 +81,13 @@ async function getJson<T>(
   return res.json() as Promise<T>;
 }
 
-async function postJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function postJson<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
-  const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers, signal });
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST", headers, signal,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
   return res.json() as Promise<T>;
 }
@@ -674,6 +677,78 @@ export async function collectSSProducts(limit = 50): Promise<SSTableData> {
   return postJson<SSTableData>(`/api/v1/smartstore/products/collect?limit=${limit}`);
 }
 
+// ── 상품 상세 ────────────────────────────────────────────────────────────────
+
+export interface ProductOption {
+  option_name: string;
+  option_value: string;
+  price_diff: number;
+  stock: number;
+}
+
+export interface ProductDetail {
+  product_id: string;
+  channel_product_id?: string;
+  name?: string;
+  status?: string;
+  category?: string;
+  price?: number;
+  original_price?: number;
+  stock?: number;
+  min_purchase?: number;
+  max_purchase?: number;
+  main_image_url?: string;
+  images?: string[];
+  has_options?: boolean;
+  options?: ProductOption[];
+  delivery_fee?: number;
+  view_count?: number;
+  order_count?: number;
+  review_count?: number;
+  review_score?: number;
+  detail_url?: string;
+  collected_at?: string;
+  source?: string;
+  _missing_fields?: string[];
+}
+
+export interface ProductDetailResponse {
+  ok: boolean;
+  product?: ProductDetail;
+  source?: string;
+  collected_at?: string;
+  duration_ms?: number;
+  error?: string;
+  hint?: string;
+}
+
+export async function getSSProductDetail(
+  productId: string,
+  refresh = false,
+  signal?: AbortSignal
+): Promise<ProductDetailResponse> {
+  return getJson<ProductDetailResponse>(
+    `/api/v1/smartstore/products/${encodeURIComponent(productId)}?refresh=${refresh}`,
+    signal
+  );
+}
+
+export async function collectSSProductDetail(productId: string): Promise<ProductDetailResponse> {
+  return postJson<ProductDetailResponse>(
+    `/api/v1/smartstore/products/${encodeURIComponent(productId)}/collect`
+  );
+}
+
+export type SellerCenterPageKey =
+  | "register" | "list" | "dashboard" | "orders" | "settlement" | "reviews" | "stats";
+
+export async function openSellerCenter(pageKey: SellerCenterPageKey): Promise<{
+  ok: boolean; page_key?: string; url?: string; message?: string; error?: string; hint?: string;
+}> {
+  return postJson(`/api/v1/smartstore/open?page_key=${pageKey}`);
+}
+
+
 export async function getSSOrders(signal?: AbortSignal): Promise<SSTableData> {
   return getJson<SSTableData>("/api/v1/smartstore/orders", signal);
 }
@@ -707,4 +782,279 @@ export async function getSSMarketing(signal?: AbortSignal): Promise<SSTableData>
 }
 export async function collectSSMarketing(): Promise<SSTableData> {
   return postJson<SSTableData>("/api/v1/smartstore/marketing/collect");
+}
+
+export interface DescriptionSection {
+  key: string;
+  label: string;
+  required: boolean;
+  data_keys: string[];
+}
+
+export async function getDescriptionSections(): Promise<{
+  ok: boolean;
+  sections: DescriptionSection[];
+  default_sections: string[];
+}> {
+  return getJson("/api/v1/smartstore/description/sections");
+}
+
+export async function renderDescription(
+  sections: string[],
+  data: Record<string, unknown>,
+): Promise<{ ok: boolean; html?: string; sections?: string[]; error?: string }> {
+  return postJson("/api/v1/smartstore/description/render", { sections, data });
+}
+
+export async function aiGenerateDescription(
+  data: Record<string, unknown>,
+  model?: "quality",
+): Promise<{ ok: boolean; html?: string; warnings?: string[]; error?: string; errors?: string[] }> {
+  return postJson("/api/v1/smartstore/description/ai-generate", { data, model: model ?? null });
+}
+
+export async function gptGenerateDescription(
+  data: Record<string, unknown>,
+  images: string[],
+  model?: "quality",
+): Promise<{
+  ok: boolean;
+  html?: string;
+  model?: string;
+  image_analysis?: Record<string, unknown>;
+  warnings?: string[];
+  error?: string;
+  errors?: string[];
+}> {
+  return postJson("/api/v1/smartstore/description/gpt-generate", {
+    data,
+    images,
+    model: model ?? null,
+  });
+}
+
+export interface AutoRegisterResult {
+  ok: boolean;
+  dry_run: boolean;
+  steps?: Record<string, { ok: boolean; [k: string]: unknown }>;
+  errors?: string[];
+  error?: string;
+  hint?: string;
+}
+
+export interface ProductEditResult {
+  ok: boolean;
+  product_id?: string;
+  dry_run?: boolean;
+  steps?: Record<string, { ok: boolean; [k: string]: unknown }>;
+  failed_sections?: string[];
+  errors?: string[];
+  error?: string;
+  hint?: string;
+}
+
+export async function editProduct(
+  productId: string,
+  fields: Record<string, unknown>,
+  dryRun = true,
+): Promise<ProductEditResult> {
+  return postJson(`/api/v1/smartstore/products/${encodeURIComponent(productId)}/edit`, {
+    fields,
+    dry_run: dryRun,
+  });
+}
+
+export async function autoRegisterProduct(
+  data: Record<string, unknown>,
+  dryRun = true,
+): Promise<AutoRegisterResult> {
+  return postJson("/api/v1/smartstore/products/auto-register", { data, dry_run: dryRun });
+}
+
+export async function getSettlementsSummary(): Promise<{
+  ok: boolean;
+  total_rows?: number;
+  total_amount?: number;
+  total_amount_str?: string;
+  collected_at?: string;
+  headers?: string[];
+  error?: string;
+}> {
+  return getJson("/api/v1/smartstore/settlements/summary");
+}
+
+export async function getSSSettlementsSummary(signal?: AbortSignal) {
+  return getSettlementsSummary();
+}
+
+// ── CDP 팝업 관리 ──────────────────────────────────────────────────────────
+
+export interface PopupScanResult {
+  ok: boolean;
+  url?: string;
+  found?: number;
+  popups?: { selector: string; text: string; has_close_btn: boolean }[];
+  error?: string;
+}
+
+export interface PopupHandleResult {
+  ok: boolean;
+  url?: string;
+  closed?: number;
+  page_clean?: boolean;
+  popups_before?: number;
+  popups_after?: number;
+  detail?: unknown[];
+  error?: string;
+}
+
+export interface PopupStatusResult {
+  ok: boolean;
+  watching?: boolean;
+  total_events?: number;
+  new_tab_count?: number;
+  new_window_count?: number;
+  layer_count?: number;
+  recent_events?: { kind: string; ts: string; handled: boolean; [k: string]: unknown }[];
+}
+
+export async function getCategoryCacheInfo(): Promise<{
+  ok: boolean; exists?: boolean; count?: number; built_at?: string;
+  sample?: { id: string; name: string; path: string; level: number; last: boolean }[];
+}> {
+  return getJson("/api/v1/smartstore/categories/cache");
+}
+
+export async function buildCategoryCache(): Promise<{
+  ok: boolean; count?: number; path?: string; error?: string; hint?: string;
+}> {
+  return postJson("/api/v1/smartstore/categories/cache/build");
+}
+
+export async function searchCategories(q: string): Promise<{
+  ok: boolean; count?: number; query?: string;
+  results?: { id: string; name: string; path: string; level: number; last: boolean }[];
+}> {
+  return getJson(`/api/v1/smartstore/categories/search?q=${encodeURIComponent(q)}`);
+}
+
+export async function popupUnblock(): Promise<{ ok: boolean; methods?: string[]; error?: string }> {
+  return postJson("/api/v1/smartstore/popup/unblock");
+}
+
+export async function popupScan(): Promise<PopupScanResult> {
+  return postJson("/api/v1/smartstore/popup/scan");
+}
+
+export async function popupHandle(): Promise<PopupHandleResult> {
+  return postJson("/api/v1/smartstore/popup/handle");
+}
+
+export async function popupStatus(): Promise<PopupStatusResult> {
+  return getJson("/api/v1/smartstore/popup/status");
+}
+
+export async function popupPollerStatus(): Promise<{ ok: boolean; running?: boolean; poll_count?: number; interval?: number; error_streak?: number }> {
+  return getJson("/api/v1/smartstore/popup/poller");
+}
+
+export async function popupPollerStart(interval = 5): Promise<{ ok: boolean; running?: boolean }> {
+  return postJson(`/api/v1/smartstore/popup/poller/start?interval=${interval}`);
+}
+
+export async function popupPollerStop(): Promise<{ ok: boolean }> {
+  return postJson("/api/v1/smartstore/popup/poller/stop");
+}
+
+// ── 스마트스토어 AI 에이전트 ──────────────────────────────────────────────────
+
+export type AgentSSEEvent =
+  | { event: "start";            data: { prompt: string; confirmed: boolean } }
+  | { event: "text";             data: { text: string } }
+  | { event: "step_start";       data: { step: number; tool: string; inputs: Record<string, unknown>; write: boolean } }
+  | { event: "step_done";        data: { step: number; tool: string; ok: boolean; result: Record<string, unknown> } }
+  | { event: "confirm_required"; data: { tool: string; inputs: Record<string, unknown>; message: string } }
+  | { event: "done";             data: { steps: number } }
+  | { event: "error";            data: { message: string } };
+
+// ── 상세설명 템플릿 ───────────────────────────────────────────────────────────
+
+export interface DescTemplate {
+  id: string;
+  name: string;
+  category: string;
+  sections: string[];
+  source: string;
+  created_at: string;
+  data?: Record<string, unknown>;
+  html?: string;
+}
+
+export async function listDescTemplates(): Promise<{ ok: boolean; templates: DescTemplate[]; count: number }> {
+  return getJson("/api/v1/smartstore/description/templates");
+}
+
+export async function getDescTemplate(id: string): Promise<{ ok: boolean } & Partial<DescTemplate>> {
+  return getJson(`/api/v1/smartstore/description/templates/${id}`);
+}
+
+export async function saveDescTemplate(body: {
+  name: string; category: string; sections: string[];
+  data: Record<string, unknown>; html: string; source: string;
+}): Promise<{ ok: boolean; id: string; name: string }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
+  const res = await fetch(`${API_BASE}/api/v1/smartstore/description/templates/save`, {
+    method: "POST", headers, body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function deleteDescTemplate(id: string): Promise<{ ok: boolean }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
+  const res = await fetch(`${API_BASE}/api/v1/smartstore/description/templates/${id}`, {
+    method: "DELETE", headers,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export function runSmartStoreAgent(
+  prompt: string,
+  confirmed: boolean,
+  onEvent: (e: AgentSSEEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
+
+  return fetch(`${API_BASE}/api/v1/smartstore/agent/run`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ prompt, confirmed }),
+    signal,
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split("\n\n");
+      buf = parts.pop() ?? "";
+      for (const part of parts) {
+        const eventLine = part.match(/^event: (.+)/m)?.[1]?.trim();
+        const dataLine  = part.match(/^data: (.+)/m)?.[1]?.trim();
+        if (eventLine && dataLine) {
+          try {
+            onEvent({ event: eventLine, data: JSON.parse(dataLine) } as AgentSSEEvent);
+          } catch { /* ignore malformed */ }
+        }
+      }
+    }
+  });
 }

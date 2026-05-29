@@ -1064,8 +1064,8 @@ export default function ProductsClient() {
                           {r.ok ? "✓" : "✗"}
                         </span>
                         <span className="font-mono text-[#6B7280] w-24 shrink-0">{step}</span>
-                        {!r.ok && r.error && (
-                          <span className="text-[#DC2626] truncate">{String(r.error)}</span>
+                        {!r.ok && r.error != null && (
+                          <span className="text-[#DC2626] truncate">{String(r.error as unknown)}</span>
                         )}
                       </div>
                     ))}
@@ -1175,8 +1175,8 @@ export default function ProductsClient() {
                           r.ok ? "bg-[#03C75A] text-white" : "bg-[#DC2626] text-white"
                         }`}>{r.ok ? "✓" : "✗"}</span>
                         <span className="font-mono text-[#6B7280] w-24 shrink-0">{step}</span>
-                        {!r.ok && r.error && <span className="text-[#DC2626] truncate">{String(r.error)}</span>}
-                        {r.ok && r.selector && <span className="text-[#9CA3AF] truncate">{String(r.selector)}</span>}
+                        {!r.ok && r.error != null && <span className="text-[#DC2626] truncate">{String(r.error as unknown)}</span>}
+                        {r.ok && r.selector != null && <span className="text-[#9CA3AF] truncate">{String((r as Record<string,unknown>).selector)}</span>}
                       </div>
                     ))}
                   </div>
