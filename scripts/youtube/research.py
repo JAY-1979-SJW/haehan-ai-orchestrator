@@ -19,6 +19,13 @@ from pathlib import Path
 from typing import Any
 
 from security_utils import safe_preview
+from scripts.youtube.http import (
+    api_key as _resolve_api_key,
+    oauth_token as _resolve_oauth_token,
+    get_json as _http_get_json,
+    get_text as _http_get_text,
+    urlopen_with_dead_proxy_fallback as _urlopen_with_dead_proxy_fallback,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -95,7 +102,7 @@ def _write_report(payload: dict[str, Any], latest: Path, prefix: str) -> Path:
 
 
 def _api_key(explicit: str | None = None) -> str:
-    return explicit or os.environ.get("YOUTUBE_API_KEY", "") or os.environ.get("GOOGLE_YOUTUBE_API_KEY", "")
+    return _resolve_api_key(explicit)
 
 
 def _resolve_repo_path(path: str | Path) -> Path:
@@ -106,51 +113,7 @@ def _resolve_repo_path(path: str | Path) -> Path:
 
 
 def _oauth_token(explicit: str | None = None, token_file: str | Path | None = None) -> str:
-    if explicit:
-        return explicit
-    env_token = os.environ.get("YOUTUBE_OAUTH_ACCESS_TOKEN") or os.environ.get("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN")
-    if env_token:
-        return env_token
-    if not token_file:
-        return ""
-    path = _resolve_repo_path(token_file)
-    if not path.exists():
-        return ""
-    raw = path.read_text(encoding="utf-8", errors="replace").strip()
-    if not raw:
-        return ""
-    if raw.startswith("{"):
-        try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError:
-            return ""
-        refreshed = _refresh_oauth_token(parsed)
-        if refreshed:
-            return refreshed
-        return str(parsed.get("access_token") or parsed.get("token") or "")
-    return raw
-
-
-def _refresh_oauth_token(parsed: dict[str, Any]) -> str:
-    refresh_token = str(parsed.get("refresh_token") or "")
-    client_id = str(parsed.get("client_id") or "")
-    client_secret = str(parsed.get("client_secret") or "")
-    token_uri = str(parsed.get("token_uri") or "https://oauth2.googleapis.com/token")
-    if not refresh_token or not client_id or not client_secret:
-        return ""
-    encoded = urllib.parse.urlencode({
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "refresh_token": refresh_token,
-        "grant_type": "refresh_token",
-    }).encode("utf-8")
-    request = urllib.request.Request(token_uri, data=encoded, headers={"Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except Exception:
-        return ""
-    return str(payload.get("access_token") or "")
+    return _resolve_oauth_token(explicit, token_file)
 
 
 def parse_kv_args(args: list[str]) -> dict[str, str]:
@@ -193,52 +156,15 @@ def parse_youtube_video_id(value: str) -> str:
 
 
 def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
-    query = urllib.parse.urlencode(params)
-    request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
-    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
-        return json.loads(response.read().decode("utf-8"))
+    return _http_get_json(url, params)
 
 
 def _get_json_oauth(url: str, params: dict[str, str | int], token: str) -> dict[str, Any]:
-    query = urllib.parse.urlencode(params)
-    request = urllib.request.Request(
-        f"{url}?{query}",
-        headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
-    )
-    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
-        return json.loads(response.read().decode("utf-8"))
+    return _http_get_json(url, params, token=token)
 
 
 def _get_text_oauth(url: str, params: dict[str, str | int], token: str) -> str:
-    query = urllib.parse.urlencode(params)
-    request = urllib.request.Request(
-        f"{url}?{query}",
-        headers={"Accept": "text/plain,text/vtt,application/x-subrip,*/*", "Authorization": f"Bearer {token}"},
-    )
-    with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
-        return response.read().decode("utf-8", errors="replace")
-
-
-def _urlopen_with_dead_proxy_fallback(request: urllib.request.Request, *, timeout: int):
-    try:
-        return urllib.request.urlopen(request, timeout=timeout)
-    except urllib.error.URLError as exc:
-        if not _should_retry_without_proxy(exc):
-            raise
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        return opener.open(request, timeout=timeout)
-
-
-def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
-    reason = str(getattr(exc, "reason", exc))
-    proxy_values = [
-        os.environ.get("HTTPS_PROXY", ""),
-        os.environ.get("HTTP_PROXY", ""),
-        os.environ.get("https_proxy", ""),
-        os.environ.get("http_proxy", ""),
-    ]
-    dead_local_proxy = any("127.0.0.1:9" in value or "localhost:9" in value for value in proxy_values)
-    return dead_local_proxy and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
+    return _http_get_text(url, params, token=token)
 
 
 def search_videos(

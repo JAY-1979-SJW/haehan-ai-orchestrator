@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Malgun Gothic', sans-serif; }
+  html, body { height: 100%; overflow: hidden; background: #111827; }
+
+  /* ── 상단 네비게이션 바 ── */
+  #nav {
+    display: flex; align-items: center; gap: 4px;
+    height: 42px; padding: 0 12px;
+    background: #111827; border-bottom: 1px solid #1F2937;
+    -webkit-app-region: drag;
+  }
+  #nav .logo {
+    font-size: 13px; font-weight: 700; color: #F97316;
+    margin-right: 12px; letter-spacing: -0.3px;
+    -webkit-app-region: no-drag;
+  }
+  #nav button {
+    -webkit-app-region: no-drag;
+    padding: 5px 14px; border: none; border-radius: 6px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: #9CA3AF; background: transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  #nav button:hover { background: #1F2937; color: #F3F4F6; }
+  #nav button.active { background: #F97316; color: #fff; }
+  #yt-status {
+    margin-left: auto; font-size: 11px; padding: 3px 10px;
+    border-radius: 10px; font-weight: 600;
+    -webkit-app-region: no-drag; cursor: default;
+  }
+  #yt-status.ok  { background: #064E3B; color: #6EE7B7; }
+  #yt-status.off { background: #1F2937; color: #6B7280; cursor: pointer; }
+  #yt-status.off:hover { background: #374151; color: #F3F4F6; }
+
+  /* ── 구글 드롭다운 ── */
+  .dropdown { position: relative; -webkit-app-region: no-drag; }
+  .dropdown-btn {
+    padding: 5px 14px; border: none; border-radius: 6px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: #9CA3AF; background: transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  .dropdown-btn:hover, .dropdown-btn.active { background: #1F2937; color: #F3F4F6; }
+  .dropdown-btn.active { color: #60A5FA; }
+  .dropdown-menu {
+    display: none; position: absolute; top: 36px; left: 0;
+    background: #1F2937; border: 1px solid #374151; border-radius: 8px;
+    min-width: 160px; padding: 4px; z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .dropdown:hover .dropdown-menu { display: block; }
+  .dropdown-menu button {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 12px; border: none; border-radius: 5px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    color: #D1D5DB; background: transparent;
+    transition: background 0.1s;
+  }
+  .dropdown-menu button:hover { background: #374151; color: #F9FAFB; }
+  .dropdown-menu .divider { height: 1px; background: #374151; margin: 4px 0; }
+
+  /* ── 콘텐츠 영역 ── */
+  webview {
+    display: block;
+    width: 100%; height: calc(100vh - 42px);
+    border: none;
+  }
+</style>
+</head>
+<body>
+<div id="nav">
+  <span class="logo">Haehan AI</span>
+  <button id="btn-smartstore" class="active" onclick="navigate('smartstore')">스마트스토어</button>
+  <button id="btn-youtube" onclick="navigate('youtube')">유튜브 리서치</button>
+
+  <button id="btn-google-hub" onclick="navigate('google-hub')">🌐 구글 허브</button>
+
+  <span id="yt-status" class="off" onclick="connectYouTube()" title="클릭하여 YouTube 계정 연결">● YouTube 미연결</span>
+</div>
+<webview id="view" allowpopups></webview>
+
+<script>
+  const params  = new URLSearchParams(location.search);
+  const SERVER  = params.get("server")  || "";
+  const LICENSE = params.get("license") || "";
+
+  const PAGES = {
+    smartstore:    `/naver/smartstore?license=${encodeURIComponent(LICENSE)}`,
+    youtube:       `/youtube/research?license=${encodeURIComponent(LICENSE)}`,
+    "google-hub":  null,   // 로컬 허브 페이지 (별도 처리)
+  };
+
+  const view = document.getElementById("view");
+  let current = "smartstore";
+
+  // 구글 허브 로컬 파일 경로
+  const HUB_PATH = location.pathname.replace("shell.html","google-hub.html");
+  const HUB_URL  = `file://${HUB_PATH}?server=${encodeURIComponent(SERVER)}&license=${encodeURIComponent(LICENSE)}`;
+
+  function navigate(section) {
+    if (current === section) return;
+    current = section;
+    document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active"));
+    const tabEl = document.getElementById("btn-" + section) || document.getElementById("btn-google-hub");
+    if (tabEl) tabEl.classList.add("active");
+
+    if (section === "google-hub") {
+      view.src = HUB_URL;
+    } else {
+      const url = PAGES[section] || "/";
+      view.src = SERVER + url;
+    }
+  }
+
+  // 구글 허브에서 외부 사이트 열기 요청 수신
+  window.addEventListener("message", e => {
+    if (e.data?.type === "navigate-external" && e.data.url) {
+      view.src = e.data.url;
+    }
+  });
+
+  // 초기 로드
+  view.src = SERVER + PAGES.smartstore;
+
+  // 서버 내부 링크는 webview 안에서 처리, 외부 링크는 시스템 브라우저로
+  view.addEventListener("new-window", (e) => {
+    if (e.url.startsWith(SERVER)) {
+      view.src = e.url;
+    } else {
+      require("electron").shell.openExternal(e.url);
+    }
+  });
+
+  // YouTube 연결 상태
+  function setYouTubeStatus(connected) {
+    const el = document.getElementById("yt-status");
+    if (connected) {
+      el.textContent = "● YouTube 연결됨";
+      el.className = "ok";
+      el.onclick = null;
+      el.title = "YouTube 계정 연결됨";
+    } else {
+      el.textContent = "● YouTube 미연결";
+      el.className = "off";
+      el.onclick = connectYouTube;
+      el.title = "클릭하여 YouTube 계정 연결";
+    }
+  }
+
+  function connectYouTube() {
+    if (window.electronAPI) window.electronAPI.connectYouTube();
+  }
+
+  if (window.electronAPI) {
+    window.electronAPI.onYouTubeStatus((status) => {
+      setYouTubeStatus(status === "connected");
+    });
+  }
+
+  // 서버에서 YouTube 토큰 상태 확인
+  fetch(SERVER + "/api/v1/oauth/youtube/status", {
+    headers: { "x-license-key": LICENSE }
+  }).then(r => r.json()).then(d => setYouTubeStatus(d.ok === true)).catch(() => {});
+</script>
+</body>
+</html>

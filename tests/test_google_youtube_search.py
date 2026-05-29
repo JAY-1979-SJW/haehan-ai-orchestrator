@@ -97,6 +97,8 @@ def test_browser_search_blocks_on_challenge(monkeypatch):
 def test_official_search_blocks_without_api_key(monkeypatch):
     monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_API_KEY", raising=False)
+    monkeypatch.delenv("YOUTUBE_DATA_API_KEY", raising=False)
+    monkeypatch.setattr(search, "_oauth_access_token", lambda: None)
 
     result, _path = search.search_videos("ai", source="official")
 
@@ -175,6 +177,7 @@ def test_official_search_retries_without_dead_local_proxy(monkeypatch):
     monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:9")
     monkeypatch.setattr(search.urllib.request, "urlopen", fake_urlopen)
     monkeypatch.setattr(search.urllib.request, "build_opener", lambda handler: FakeOpener())
+    monkeypatch.setattr(search, "_oauth_access_token", lambda: None)
 
     result, _path = search.search_videos_official("ai", api_key="fake-key")
 
@@ -184,6 +187,7 @@ def test_official_search_retries_without_dead_local_proxy(monkeypatch):
 
 def test_auto_search_falls_back_to_browser_when_api_key_missing(monkeypatch):
     monkeypatch.setattr(search, "_api_key", lambda explicit=None: "")
+    monkeypatch.setattr(search, "_oauth_access_token", lambda: None)
     monkeypatch.setattr(
         search,
         "connect",

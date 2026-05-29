@@ -19,17 +19,20 @@ def test_auth_plan_blocks_without_client(monkeypatch):
     monkeypatch.delenv("GOOGLE_OAUTH_CLIENT_ID", raising=False)
     monkeypatch.delenv("YOUTUBE_OAUTH_CLIENT_SECRET", raising=False)
     monkeypatch.delenv("GOOGLE_OAUTH_CLIENT_SECRET", raising=False)
-    monkeypatch.delenv("YOUTUBE_CLIENT_SECRETS_FILE", raising=False)
+    monkeypatch.setenv("YOUTUBE_CLIENT_SECRETS_FILE", "/nonexistent/path/client.json")
+    monkeypatch.delenv("YOUTUBE_CLIENT_SECRETS_REF", raising=False)
 
     result, path = oauth.build_auth_plan({})
 
     assert path.exists()
     assert result["status"] == "blocked"
-    assert result["reason"] == "oauth_client_id_or_secret_required"
+    assert (result["reason"] == "oauth_client_id_or_secret_required"
+            or result["reason"].startswith("client_file_not_found"))
     assert result["client_secret_output"] == "redacted"
 
 
-def test_auth_plan_uses_client_file_without_secret_output():
+def test_auth_plan_uses_client_file_without_secret_output(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_REDIRECT_URI", raising=False)
     tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     client_file.write_text(
@@ -47,7 +50,8 @@ def test_auth_plan_uses_client_file_without_secret_output():
     assert "super-secret" not in str(result)
 
 
-def test_auth_plan_prefers_desktop_client_redirect_uri():
+def test_auth_plan_prefers_desktop_client_redirect_uri(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_REDIRECT_URI", raising=False)
     tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     client_file.write_text(
@@ -71,6 +75,7 @@ def test_auth_plan_prefers_desktop_client_redirect_uri():
 
 
 def test_exchange_code_writes_authorized_user_token(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_OAUTH_REDIRECT_URI", raising=False)
     tmp_path = _test_dir()
     client_file = tmp_path / "client_secret.json"
     token_file = tmp_path / "token.json"

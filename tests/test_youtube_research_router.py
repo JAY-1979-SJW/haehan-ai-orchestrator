@@ -28,6 +28,11 @@ def test_youtube_research_status_route_is_read_only() -> None:
 def test_youtube_search_route_blocks_without_api_key(monkeypatch) -> None:
     monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_API_KEY", raising=False)
+    monkeypatch.delenv("YOUTUBE_DATA_API_KEY", raising=False)
+    monkeypatch.delenv("YOUTUBE_OAUTH_TOKEN_FILE", raising=False)
+    import scripts.youtube.research as _r
+    monkeypatch.setattr(_r, "_api_key", lambda explicit=None: "")
+    monkeypatch.setattr(_r, "_oauth_token", lambda explicit=None, token_file=None: "")
 
     response = _client().get("/api/v1/youtube/research/search?query=ai&max_results=3&captions_only=true")
 

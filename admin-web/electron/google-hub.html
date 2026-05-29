@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>구글 허브</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'Malgun Gothic', sans-serif; }
+html, body { height: 100%; background: #0F172A; color: #E2E8F0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── 헤더 ── */
+#header {
+  padding: 14px 20px 10px; background: #0F172A;
+  border-bottom: 1px solid #1E293B;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+#header h1 { font-size: 15px; font-weight: 700; color: #60A5FA; }
+#search {
+  flex: 1; max-width: 320px; padding: 6px 12px;
+  background: #1E293B; border: 1px solid #334155; border-radius: 20px;
+  color: #E2E8F0; font-size: 13px; outline: none;
+}
+#search:focus { border-color: #60A5FA; }
+#status-bar { font-size: 11px; color: #64748B; margin-left: auto; }
+
+/* ── 도메인 카드 그리드 ── */
+#cards-wrap { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.group-label {
+  font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em;
+  text-transform: uppercase; margin: 10px 0 6px;
+}
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-bottom: 4px; }
+.card {
+  background: #1E293B; border: 1px solid #334155; border-radius: 10px;
+  padding: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.card:hover { background: #253347; border-color: #60A5FA33; }
+.card.active { border-color: #60A5FA; background: #1A2A3F; }
+.card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.card-icon { font-size: 20px; line-height: 1; }
+.card-name { font-size: 13px; font-weight: 600; color: #E2E8F0; }
+.card-desc { font-size: 11px; color: #94A3B8; line-height: 1.4; margin-bottom: 8px; min-height: 30px; }
+.card-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.btn-action {
+  font-size: 10px; padding: 3px 8px; border: none; border-radius: 4px; cursor: pointer;
+  font-weight: 600; transition: background 0.1s;
+}
+.btn-open   { background: #1D4ED8; color: #BFDBFE; }
+.btn-open:hover { background: #2563EB; }
+.btn-do     { background: #064E3B; color: #6EE7B7; }
+.btn-do:hover { background: #065F46; }
+.badge-approval {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 9px; background: #78350F; color: #FCD34D; padding: 1px 5px; border-radius: 3px;
+}
+.card.hidden { display: none; }
+
+/* ── 채팅 영역 ── */
+#chat-area {
+  flex-shrink: 0; border-top: 1px solid #1E293B;
+  background: #0F172A; display: flex; flex-direction: column; height: 220px;
+}
+#chat-messages {
+  flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 6px;
+}
+.msg { max-width: 85%; padding: 7px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; }
+.msg.user { align-self: flex-end; background: #1D4ED8; color: #EFF6FF; border-bottom-right-radius: 3px; }
+.msg.ai   { align-self: flex-start; background: #1E293B; color: #E2E8F0; border-bottom-left-radius: 3px; }
+.msg.ai .domain-tag { display: inline-block; background: #0F3460; color: #60A5FA; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 4px; }
+.msg.ai .action-tag { display: inline-block; background: #1A3A1A; color: #6EE7B7; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+.msg.ai .err { color: #F87171; }
+.msg.system { align-self: center; background: transparent; color: #475569; font-size: 11px; font-style: italic; }
+#chat-input-row {
+  display: flex; gap: 8px; padding: 8px 16px 10px; align-items: center;
+}
+#chat-input {
+  flex: 1; padding: 8px 14px; background: #1E293B; border: 1px solid #334155;
+  border-radius: 20px; color: #E2E8F0; font-size: 13px; outline: none;
+}
+#chat-input:focus { border-color: #60A5FA; }
+#chat-input::placeholder { color: #475569; }
+#chat-send {
+  padding: 8px 16px; background: #1D4ED8; color: white; border: none;
+  border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer;
+  white-space: nowrap;
+}
+#chat-send:hover { background: #2563EB; }
+#chat-send:disabled { background: #334155; color: #64748B; cursor: default; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🌐 구글 허브</h1>
+  <input id="search" type="text" placeholder="도메인·기능 검색..." oninput="filterCards(this.value)">
+  <span id="status-bar">32개 도메인</span>
+</div>
+
+<div id="cards-wrap" id="cards-container"></div>
+
+<div id="chat-area">
+  <div id="chat-messages">
+    <div class="msg system">AI에게 한국어로 명령하세요 — 예) "캘린더에 내일 오전 10시 미팅 추가해줘", "드라이브에서 최근 파일 보여줘"</div>
+  </div>
+  <div id="chat-input-row">
+    <input id="chat-input" type="text" placeholder="구글 도구에 명령하세요..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send" onclick="sendChat()">⚡ 실행</button>
+  </div>
+</div>
+
+<script>
+const params  = new URLSearchParams(location.search);
+const SERVER  = params.get("server")  || "";
+const LICENSE = params.get("license") || "";
+
+// ── 도메인 카탈로그 (32개, 그룹별 한국어) ──────────────────────────────────
+const CATALOG = [
+  // 커뮤니케이션
+  { g:"커뮤니케이션", host:"mail.google.com",      icon:"✉️",  name:"Gmail",          desc:"이메일 수신·발송·검색·분석",       url:"https://mail.google.com/",        openKey:"gmail_open",            doKey:"gmail_send_email",             doLabel:"메일 작성" },
+  { g:"커뮤니케이션", host:"calendar.google.com",   icon:"📅",  name:"캘린더",         desc:"일정 조회·생성·관리",              url:"https://calendar.google.com/",    openKey:"calendar_open",         doKey:"calendar_create_event",        doLabel:"일정 추가" },
+  { g:"커뮤니케이션", host:"chat.google.com",        icon:"💬",  name:"Chat",           desc:"팀 메시지·공간·메시지 발송",       url:"https://chat.google.com/",        openKey:"chat_open",             doKey:"chat_send_message",            doLabel:"메시지 발송" },
+  { g:"커뮤니케이션", host:"meet.google.com",        icon:"🎥",  name:"Meet",           desc:"화상회의 참여·회의 생성",          url:"https://meet.google.com/",        openKey:"meet_open",             doKey:"meet_create_meeting",          doLabel:"회의 생성" },
+  { g:"커뮤니케이션", host:"contacts.google.com",    icon:"👥",  name:"연락처",         desc:"연락처 조회·생성·수정",            url:"https://contacts.google.com/",    openKey:"contacts_open",         doKey:"contacts_create_update",       doLabel:"연락처 추가" },
+
+  // 업무 도구
+  { g:"업무 도구",   host:"docs.google.com",         icon:"📄",  name:"Docs",           desc:"문서 작성·편집·공유",              url:"https://docs.google.com/",        openKey:"docs_open",             doKey:"docs_create_edit_document",    doLabel:"문서 생성" },
+  { g:"업무 도구",   host:"docs.google.com",         icon:"📊",  name:"Sheets",         desc:"스프레드시트 조회·셀 업데이트",    url:"https://sheets.google.com/",      openKey:"sheets_open",           doKey:"sheets_update_cells",          doLabel:"시트 편집" },
+  { g:"업무 도구",   host:"docs.google.com",         icon:"🎞️", name:"Slides",         desc:"프레젠테이션 작성·편집",           url:"https://slides.google.com/",      openKey:"slides_open",           doKey:"slides_create_presentation",   doLabel:"슬라이드 생성" },
+  { g:"업무 도구",   host:"docs.google.com",         icon:"📋",  name:"Forms",          desc:"설문 생성·배포·응답 수집",         url:"https://forms.google.com/",       openKey:"forms_open",            doKey:"forms_create_publish",         doLabel:"설문 생성" },
+  { g:"업무 도구",   host:"keep.google.com",         icon:"🗒️", name:"Keep",           desc:"메모·할일·리마인더 관리",          url:"https://keep.google.com/",        openKey:"keep_open",             doKey:"keep_create_note",             doLabel:"메모 추가" },
+  { g:"업무 도구",   host:"tasks.google.com",        icon:"✅",  name:"Tasks",          desc:"작업 목록·완료 체크",              url:"https://tasks.google.com/",       openKey:"tasks_open",            doKey:"tasks_create_task",            doLabel:"작업 추가" },
+  { g:"업무 도구",   host:"script.google.com",       icon:"⚙️", name:"Apps Script",    desc:"Google 앱 스크립트 자동화·배포",   url:"https://script.google.com/",      openKey:"apps_script_open",      doKey:"apps_script_deploy",           doLabel:"스크립트 배포" },
+
+  // 저장·미디어
+  { g:"저장·미디어", host:"drive.google.com",        icon:"📁",  name:"Drive",          desc:"파일 저장·공유·검색",              url:"https://drive.google.com/",       openKey:"drive_open",            doKey:"drive_upload_share_file",      doLabel:"파일 업로드" },
+  { g:"저장·미디어", host:"photos.google.com",       icon:"🖼️", name:"Photos",         desc:"사진·영상 조회·업로드·공유",       url:"https://photos.google.com/",      openKey:"photos_open",           doKey:"photos_upload_share",          doLabel:"사진 업로드" },
+  { g:"저장·미디어", host:"www.youtube.com",         icon:"▶️", name:"YouTube",         desc:"영상 시청·댓글·구독",              url:"https://www.youtube.com/",        openKey:"youtube_open",          doKey:"youtube_comment_or_subscribe", doLabel:"댓글·구독" },
+  { g:"저장·미디어", host:"studio.youtube.com",      icon:"🎬",  name:"YouTube Studio", desc:"영상 업로드·메타데이터 편집·분석", url:"https://studio.youtube.com/",     openKey:"youtube_studio_open",   doKey:"youtube_studio_upload_video",  doLabel:"영상 업로드" },
+
+  // 마케팅·분석
+  { g:"마케팅·분석", host:"analytics.google.com",   icon:"📈",  name:"Analytics",      desc:"웹사이트 트래픽·전환 분석",        url:"https://analytics.google.com/",  openKey:"analytics_open",        doKey:"analytics_export_or_configure",doLabel:"내보내기" },
+  { g:"마케팅·분석", host:"ads.google.com",          icon:"📢",  name:"Google Ads",     desc:"광고 캠페인 조회·예산 관리",       url:"https://ads.google.com/",         openKey:"ads_open",              doKey:"ads_campaign_budget_change",   doLabel:"캠페인 수정" },
+  { g:"마케팅·분석", host:"adsense.google.com",      icon:"💰",  name:"AdSense",        desc:"광고 수익·광고단위 관리",          url:"https://adsense.google.com/",     openKey:"adsense_open",          doKey:"adsense_ad_unit_or_payment_change", doLabel:"광고단위 수정" },
+  { g:"마케팅·분석", host:"search.google.com",       icon:"🔍",  name:"Search Console", desc:"검색 노출·색인 요청·사이트맵",     url:"https://search.google.com/",      openKey:"search_console_open",   doKey:"search_console_submit_indexing",doLabel:"색인 요청" },
+  { g:"마케팅·분석", host:"tagmanager.google.com",   icon:"🏷️", name:"Tag Manager",    desc:"태그 관리·컨테이너 버전 게시",     url:"https://tagmanager.google.com/",  openKey:"tag_manager_open",      doKey:"tag_manager_publish_version",  doLabel:"버전 게시" },
+  { g:"마케팅·분석", host:"merchants.google.com",    icon:"🛒",  name:"Merchant Center",desc:"상품 피드·쇼핑 광고 관리",         url:"https://merchants.google.com/",   openKey:"merchant_center_open",  doKey:"merchant_center_product_update",doLabel:"상품 업데이트" },
+  { g:"마케팅·분석", host:"business.google.com",     icon:"🏪",  name:"Business Profile",desc:"비즈니스 정보·게시물 업데이트",   url:"https://business.google.com/",    openKey:"business_profile_open", doKey:"business_profile_post_or_update",doLabel:"게시물 작성" },
+  { g:"마케팅·분석", host:"lookerstudio.google.com", icon:"📉",  name:"Looker Studio",  desc:"데이터 시각화·대시보드 생성",      url:"https://lookerstudio.google.com/",openKey:"looker_studio_open",    doKey:"looker_studio_create_or_share_report",doLabel:"리포트 생성" },
+
+  // 클라우드·개발
+  { g:"클라우드·개발",host:"console.cloud.google.com",icon:"☁️", name:"GCP Console",   desc:"Cloud Run·GCE·BigQuery 등 16개 서비스", url:"https://console.cloud.google.com/?project=haehan-ai", openKey:"cloud_console_open", doKey:"cloud_run_deploy_service", doLabel:"서비스 배포" },
+  { g:"클라우드·개발",host:"console.firebase.google.com",icon:"🔥",name:"Firebase",    desc:"앱 인증·DB·호스팅·규칙 배포",     url:"https://console.firebase.google.com/", openKey:"firebase_console_open", doKey:"firebase_deploy_rules", doLabel:"규칙 배포" },
+  { g:"클라우드·개발",host:"aistudio.google.com",    icon:"🤖",  name:"AI Studio",      desc:"Gemini API 테스트·API 키 생성",    url:"https://aistudio.google.com/",    openKey:"ai_studio_open",        doKey:"ai_studio_create_api_key",     doLabel:"API 키 생성" },
+  { g:"클라우드·개발",host:"gemini.google.com",       icon:"✨",  name:"Gemini",         desc:"Gemini AI 채팅·프롬프트 제출",     url:"https://gemini.google.com/",      openKey:"gemini_open",           doKey:"gemini_submit_prompt",         doLabel:"프롬프트 제출" },
+  { g:"클라우드·개발",host:"colab.research.google.com",icon:"🔬", name:"Colab",         desc:"Python 노트북 실행·ML 실험",       url:"https://colab.research.google.com/", openKey:"colab_open",          doKey:"colab_execute_notebook",       doLabel:"노트북 실행" },
+  { g:"클라우드·개발",host:"play.google.com",         icon:"🎮",  name:"Play Console",   desc:"앱 배포 준비·심사·통계 조회",      url:"https://play.google.com/console/", openKey:"play_console_open",    doKey:"play_console_prepare_release", doLabel:"릴리즈 준비" },
+
+  // 계정·정보
+  { g:"계정·정보",   host:"myaccount.google.com",    icon:"👤",  name:"내 계정",        desc:"Google 계정 보안·개인정보 설정",   url:"https://myaccount.google.com/",   openKey:"google_account_open",   doKey:null,                           doLabel:null },
+  { g:"계정·정보",   host:"developers.google.com",   icon:"🧑‍💻", name:"Google Dev",   desc:"API 문서·샘플·튜토리얼",           url:"https://developers.google.com/",  openKey:"google_developers_open",doKey:null,                           doLabel:null },
+  { g:"계정·정보",   host:"developer.android.com",   icon:"🤖",  name:"Android Dev",    desc:"Android 개발 가이드·레퍼런스",     url:"https://developer.android.com/",  openKey:"android_developers_open",doKey:null,                          doLabel:null },
+];
+
+// ── 채팅 명령 → 도메인 액션 매핑 ──────────────────────────────────────────
+const CMD_MAP = [
+  { words:["메일","이메일","gmail","지메일","받은편지","보내"],  domain:"Gmail",         host:"mail.google.com",         action:"gmail_open" },
+  { words:["일정","캘린더","calendar","미팅","회의 추가","약속"], domain:"캘린더",        host:"calendar.google.com",     action:"calendar_create_event" },
+  { words:["드라이브","drive","파일","파일 보","파일 업"],       domain:"Drive",         host:"drive.google.com",         action:"drive_open" },
+  { words:["문서","docs","구글닥스"],                            domain:"Docs",          host:"docs.google.com",          action:"docs_open" },
+  { words:["시트","sheets","스프레드"],                          domain:"Sheets",        host:"docs.google.com",          action:"sheets_open" },
+  { words:["유튜브 스튜디오","studio","영상 업로드"],            domain:"YouTube Studio",host:"studio.youtube.com",       action:"youtube_studio_open" },
+  { words:["유튜브","youtube","영상 검색","동영상"],             domain:"YouTube",       host:"www.youtube.com",          action:"youtube_open" },
+  { words:["분석","analytics","트래픽"],                         domain:"Analytics",     host:"analytics.google.com",     action:"analytics_open" },
+  { words:["광고","ads","캠페인"],                               domain:"Google Ads",    host:"ads.google.com",           action:"ads_open" },
+  { words:["gcp","클라우드","cloud run","bigquery","vm","배포"], domain:"GCP Console",   host:"console.cloud.google.com", action:"cloud_console_open" },
+  { words:["제미나이","gemini","ai 채팅","ai 질문"],             domain:"Gemini",        host:"gemini.google.com",        action:"gemini_open" },
+  { words:["서치콘솔","search console","색인","seo"],            domain:"Search Console",host:"search.google.com",        action:"search_console_open" },
+  { words:["keep","메모","노트"],                                domain:"Keep",          host:"keep.google.com",          action:"keep_open" },
+  { words:["tasks","작업","할일","todo"],                        domain:"Tasks",         host:"tasks.google.com",         action:"tasks_open" },
+  { words:["meet","화상","회의 참"],                             domain:"Meet",          host:"meet.google.com",          action:"meet_open" },
+  { words:["포토","photos","사진"],                              domain:"Photos",        host:"photos.google.com",        action:"photos_open" },
+  { words:["firebase","파이어베이스"],                           domain:"Firebase",      host:"console.firebase.google.com",action:"firebase_console_open" },
+  { words:["ai studio","aistudio","api 키"],                    domain:"AI Studio",     host:"aistudio.google.com",      action:"ai_studio_open" },
+  { words:["어드센스","adsense","수익"],                         domain:"AdSense",       host:"adsense.google.com",       action:"adsense_open" },
+  { words:["머천트","merchant","상품 피드","쇼핑"],              domain:"Merchant Center",host:"merchants.google.com",    action:"merchant_center_open" },
+  { words:["태그매니저","tag manager","태그"],                   domain:"Tag Manager",   host:"tagmanager.google.com",    action:"tag_manager_open" },
+  { words:["looker","루커","대시보드","데이터 시각"],            domain:"Looker Studio", host:"lookerstudio.google.com",  action:"looker_studio_open" },
+  { words:["비즈니스 프로필","business profile","비즈니스"],     domain:"Business",      host:"business.google.com",      action:"business_profile_open" },
+  { words:["연락처","contacts","주소록"],                        domain:"연락처",        host:"contacts.google.com",      action:"contacts_open" },
+  { words:["colab","코랩","노트북","파이썬"],                    domain:"Colab",         host:"colab.research.google.com",action:"colab_open" },
+  { words:["플레이 콘솔","play console","앱 배포","앱 출시"],    domain:"Play Console",  host:"play.google.com",          action:"play_console_open" },
+  { words:["apps script","앱스스크립트"],                       domain:"Apps Script",   host:"script.google.com",        action:"apps_script_open" },
+  { words:["내 계정","my account","계정 설정"],                  domain:"내 계정",       host:"myaccount.google.com",     action:"google_account_open" },
+];
+
+// ── UI 렌더링 ──────────────────────────────────────────────────────────────
+function buildCards() {
+  const wrap = document.getElementById("cards-wrap");
+  const groups = [...new Set(CATALOG.map(d => d.g))];
+  groups.forEach(g => {
+    const label = document.createElement("div");
+    label.className = "group-label"; label.textContent = g; label.dataset.group = g;
+    wrap.appendChild(label);
+    const row = document.createElement("div");
+    row.className = "cards"; row.dataset.group = g;
+    CATALOG.filter(d => d.g === g).forEach(d => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.host = d.host; card.dataset.name = d.name; card.dataset.desc = d.desc;
+      if (d.doKey) {
+        const badge = document.createElement("span");
+        badge.className = "badge-approval"; badge.textContent = "승인필요"; card.appendChild(badge);
+      }
+      const hasApi = !!ACTION_APIS[d.openKey];
+      card.innerHTML += `
+        <div class="card-top">
+          <span class="card-icon">${d.icon}</span>
+          <span class="card-name">${d.name}</span>
+        </div>
+        <div class="card-desc">${d.desc}</div>
+        <div class="card-actions">
+          <button class="btn-action btn-open" onclick="openDomain('${d.url}','${d.name}','${d.openKey}')">
+            ${hasApi ? '📊 가져오기' : '🔗 열기'}
+          </button>
+          ${d.doKey ? `<button class="btn-action btn-do" onclick="requestAction('${d.host}','${d.doKey}','${d.doLabel}','${d.name}')">${d.doLabel}</button>` : ''}
+        </div>`;
+      card.addEventListener("click", e => { if (e.target.tagName === "BUTTON") return; highlightCard(d.host); });
+      row.appendChild(card);
+    });
+    wrap.appendChild(row);
+  });
+  document.getElementById("status-bar").textContent = `${CATALOG.length}개 서비스`;
+}
+
+function highlightCard(host) {
+  document.querySelectorAll(".card").forEach(c => c.classList.toggle("active", c.dataset.host === host));
+}
+
+function filterCards(q) {
+  const kw = q.trim().toLowerCase();
+  const groups = {};
+  CATALOG.forEach((d, i) => {
+    const match = !kw || d.name.toLowerCase().includes(kw) || d.desc.toLowerCase().includes(kw) || d.host.includes(kw) || d.g.toLowerCase().includes(kw);
+    const cards = document.querySelectorAll(`.card`);
+    if (cards[i]) cards[i].classList.toggle("hidden", !match);
+    if (!groups[d.g]) groups[d.g] = false;
+    if (match) groups[d.g] = true;
+  });
+  document.querySelectorAll(".group-label, .cards").forEach(el => {
+    if (el.dataset.group) el.style.display = groups[el.dataset.group] === false ? "none" : "";
+  });
+}
+
+// ── 실제 실행 가능한 API 맵 ─────────────────────────────────────────────
+const ACTION_APIS = {
+  gmail_open:             { method:"GET",  path:"/api/v1/google/tools/gmail/inbox",           render: renderList("items","from_preview","subject_preview") },
+  calendar_open:          { method:"GET",  path:"/api/v1/google/tools/calendar/today",         render: renderList("events","title","aria") },
+  drive_open:             { method:"GET",  path:"/api/v1/google/tools/drive/recent",            render: renderList("files","name","") },
+  docs_open:              { method:"GET",  path:"/api/v1/google/tools/docs/recent",             render: renderList("docs","name","url") },
+  sheets_open:            { method:"GET",  path:"/api/v1/google/tools/sheets/recent",           render: renderList("sheets","name","url") },
+  youtube_open:           { method:"GET",  path:"/api/v1/google/tools/youtube/search?query=",  render: renderList("results","title","channel") },
+  youtube_studio_open:    { method:"GET",  path:"/api/v1/google/tools/youtube/studio/status",  render: renderChannel },
+  cloud_console_open:     { method:"GET",  path:"/api/v1/google/tools/gcp/status",             render: renderGcp },
+};
+
+function renderList(listKey, col1, col2) {
+  return (d, name) => {
+    const items = d[listKey] || [];
+    if (!items.length) return `<span class="domain-tag">${name}</span> 결과 없음`;
+    const rows = items.slice(0,5).map(i =>
+      `<div style="font-size:11px;padding:2px 0;border-bottom:1px solid #334155">
+        <span style="color:#E2E8F0">${(i[col1]||'').substring(0,50)}</span>
+        ${col2 && i[col2] ? `<span style="color:#64748B;margin-left:6px">${(i[col2]||'').substring(0,40)}</span>` : ''}
+      </div>`
+    ).join('');
+    return `<span class="domain-tag">${name}</span> ${items.length}건<br>${rows}`;
+  };
+}
+
+function renderChannel(d, name) {
+  const ch = d.channel || {};
+  if (!ch.title) return `<span class="domain-tag">${name}</span> 채널 정보 없음`;
+  return `<span class="domain-tag">YouTube Studio</span> <b>${ch.title}</b><br>
+    <small style="color:#94A3B8">구독자 ${ch.subscriber_count || '?'} · 동영상 ${ch.video_count || '?'} · 조회수 ${ch.view_count || '?'}</small>`;
+}
+
+function renderGcp(d, name) {
+  return `<span class="domain-tag">GCP</span> ${d.project || ''}<br>
+    <small style="color:#94A3B8">${d.url || ''}</small>`;
+}
+
+// ── 도메인 열기 + 실제 데이터 가져오기 ──────────────────────────────────
+async function openDomain(url, name, actionKey) {
+  addMsg("user", `${name} 확인`);
+  const api = actionKey && ACTION_APIS[actionKey];
+  if (api && SERVER) {
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.textContent = "로딩중..."; }
+    try {
+      const fullUrl = SERVER + api.path;
+      const res = await fetch(fullUrl, { headers: { "x-license-key": LICENSE } });
+      const d = await res.json();
+      if (d.ok !== false) {
+        addMsg("ai", api.render(d, name));
+      } else {
+        addMsg("ai", `<span class="domain-tag">${name}</span> <span class="err">${d.error || "오류"}</span> — <a href="#" onclick="navigateOut('${url}')">사이트 열기</a>`);
+      }
+    } catch {
+      navigateOut(url);
+      addMsg("ai", `<span class="domain-tag">${name}</span> 사이트를 열었습니다.`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "🔗 열기"; }
+    }
+  } else {
+    navigateOut(url);
+    addMsg("ai", `<span class="domain-tag">${name}</span> 사이트를 열었습니다.`);
+  }
+}
+
+function navigateOut(url) {
+  window.parent.postMessage({ type: "navigate-external", url }, "*");
+}
+
+// ── 상태 변경 액션 요청 ──────────────────────────────────────────────────
+async function requestAction(host, actionKey, label, domainName) {
+  addMsg("user", `${domainName} → ${label}`);
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = "처리중..."; }
+  try {
+    const res = await fetch(`${SERVER}/api/v1/google/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-license-key": LICENSE },
+      body: JSON.stringify({ host, action_key: actionKey })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      addMsg("ai", `<span class="action-tag">✅ ${label}</span> ${d.message || "완료"}`);
+    } else {
+      addMsg("ai", `<span class="action-tag">🔒 ${label}</span> <span class="err">${d.reason || d.detail || "승인 필요"}</span>`);
+    }
+  } catch {
+    addMsg("ai", `<span class="domain-tag">${domainName}</span> <span class="err">서버 미연결 — 사이트를 직접 여세요.</span>`);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+// ── 채팅 처리 ────────────────────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  document.getElementById("chat-send").disabled = true;
+
+  addMsg("user", msg);
+
+  // 1. 키워드 매핑
+  const lm = msg.toLowerCase();
+  const matched = CMD_MAP.find(c => c.words.some(w => lm.includes(w)));
+
+  if (matched) {
+    highlightCard(matched.host);
+    const api = ACTION_APIS[matched.action];
+    if (api && SERVER) {
+      addMsg("ai", `<span class="domain-tag">${matched.domain}</span> 데이터를 가져옵니다...`);
+      try {
+        const res = await fetch(SERVER + api.path, { headers: { "x-license-key": LICENSE } });
+        const d = await res.json();
+        if (d.ok !== false) {
+          const dom = CATALOG.find(c => c.host === matched.host);
+          addMsg("ai", api.render(d, matched.domain));
+        } else {
+          addMsg("ai", `<span class="domain-tag">${matched.domain}</span> <span class="err">${d.error||"오류"}</span>`);
+        }
+      } catch {
+        addMsg("ai", `<span class="domain-tag">${matched.domain}</span> <span class="err">서버 연결 필요</span>`);
+      }
+    } else {
+      // 채팅 API 위임
+      try {
+        const res = await fetch(`${SERVER}/api/v1/google/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-license-key": LICENSE },
+          body: JSON.stringify({ message: msg, domain: matched.domain, action_key: matched.action, host: matched.host })
+        });
+        const d = await res.json();
+        addMsg("ai", d.reply || `<span class="domain-tag">${matched.domain}</span> 처리됨`);
+      } catch {
+        const dom = CATALOG.find(c => c.host === matched.host);
+        if (dom) { navigateOut(dom.url); addMsg("ai", `<span class="domain-tag">${matched.domain}</span> 사이트를 열었습니다.`); }
+      }
+    }
+  } else {
+    // 서버에 전체 위임
+    try {
+      const res = await fetch(`${SERVER}/api/v1/google/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-license-key": LICENSE },
+        body: JSON.stringify({ message: msg })
+      });
+      const d = await res.json();
+      addMsg("ai", d.reply || "명령을 처리했습니다.");
+    } catch {
+      addMsg("ai", `<span class="err">어떤 구글 서비스를 원하시나요?</span> 예) "Gmail 열어줘", "드라이브 파일 보여줘", "캘린더 일정 추가해줘"`);
+    }
+  }
+
+  document.getElementById("chat-send").disabled = false;
+  input.focus();
+}
+
+function addMsg(role, html) {
+  const box = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.innerHTML = html;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── shell.html iframe 메시지 처리 ────────────────────────────────────────
+window.addEventListener("message", e => {
+  if (e.data?.type === "hub-navigate") {
+    const dom = CATALOG.find(c => c.host === e.data.host);
+    if (dom) openDomain(dom.url, dom.name);
+  }
+});
+
+buildCards();
+</script>
+</body>
+</html>
