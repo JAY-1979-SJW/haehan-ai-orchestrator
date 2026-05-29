@@ -110,12 +110,12 @@ def api_run_blog_search(
         "NAVER_BLOG_SEARCH_RUN",
         task_id="-",
         actor=user["actor"], role=user["role"], decision=outcome.status,
-        note=f"query={query} collected={outcome.collected} duration_ms={duration_ms}",
+        note=f"query={query} inserted={outcome.inserted_count} duration_ms={duration_ms}",
     )
     return {
         "status": outcome.status,
         "query": query,
-        "collected": outcome.collected,
+        "collected": outcome.inserted_count,
         "db_status": outcome.db_status,
         "duration_ms": duration_ms,
     }
@@ -135,12 +135,12 @@ def api_run_shopping_search(
         "NAVER_SHOPPING_SEARCH_RUN",
         task_id="-",
         actor=user["actor"], role=user["role"], decision=outcome.status,
-        note=f"query={query} collected={outcome.collected} duration_ms={duration_ms}",
+        note=f"query={query} inserted={outcome.inserted_count} duration_ms={duration_ms}",
     )
     return {
         "status": outcome.status,
         "query": query,
-        "collected": outcome.collected,
+        "collected": outcome.inserted_count,
         "db_status": outcome.db_status,
         "duration_ms": duration_ms,
     }
