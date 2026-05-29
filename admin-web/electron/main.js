@@ -20,7 +20,7 @@ function getServerUrl() {
     } catch {}
   }
 
-  return "http://localhost:3000";
+  return "https://autowork.haehan-ai.kr";
 }
 
 function saveServerUrl(url) {
@@ -53,6 +53,7 @@ function createWindow() {
   });
 
   mainWindow.loadURL(`${serverUrl}/naver/smartstore`);
+  // 첫 페이지: 스마트스토어 AI 채팅
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
 
