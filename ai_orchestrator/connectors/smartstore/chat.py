@@ -345,7 +345,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages:  List[ChatMessage]
     confirmed: bool = False
-    provider:  str  = "claude"   # "claude" | "gpt"
+    provider:  str  = "gpt"      # "claude" | "gpt"
 
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
