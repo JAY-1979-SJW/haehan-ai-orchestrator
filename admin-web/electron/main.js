@@ -291,6 +291,9 @@ function createTray() {
 
 // ── 앱 진입 ───────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // 이 PC에서 상시 자동 시작 등록
+  app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
+
   const cfg = loadConfig();
 
   if (cfg.license_key) {
