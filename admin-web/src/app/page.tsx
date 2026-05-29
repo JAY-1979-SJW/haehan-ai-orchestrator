@@ -1,527 +1,185 @@
 "use client";
-
-import type { ReactNode } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  Alert,
-  AppShell,
-  Button,
-  DataTable,
-  Header,
-  MetricCard,
-  ReportList,
-  Sidebar,
-  StatusBadge,
-} from "@/standard-ui";
+import { PageShell } from "@/components/ui/PageShell";
+import { API_BASE } from "@/lib/assistant/api";
 
-type FlowRow = {
-  id: string;
-  layer: string;
-  role: string;
-  surface: string;
-  gate: string;
-  status: string;
-};
+// ── 네이버 세션 상태 타입 ─────────────────────────────────────────────────────
+interface SessionStatus {
+  logged_in: boolean;
+  user: string | null;
+  checked_at: string | null;
+  pending_captcha: boolean;
+  browser_session_saved: boolean;
+  error: string | null;
+}
 
-type ToolRow = {
-  id: string;
-  tool: string;
-  route: string;
-  execution: string;
-  policy: string;
-  status: string;
-};
-
-type ActionRow = {
-  id: string;
-  action: string;
-  target: string;
-  input: string;
-  outcome: string;
-  href: string;
-  status: string;
-};
-
-const navGroups = [
-  {
-    label: "Operate",
-    items: [
-      { href: "/", label: "Dashboard", active: true },
-      { href: "/market-research", label: "Market Research" },
-      { href: "/local-agents", label: "Local Agents" },
-      { href: "/browser-approvals", label: "Approvals" },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [
-      { href: "/cad", label: "AI CAD" },
-      { href: "/file-map", label: "File Map" },
-      { href: "/assistant/tasks", label: "Tasks" },
-      { href: "/external-tasks", label: "External Tasks" },
-    ],
-  },
-  {
-    label: "Govern",
-    items: [
-      { href: "/ops", label: "Ops Center" },
-      { href: "/assistant/logs", label: "Work Logs" },
-      { href: "/assistant/deployment", label: "Deployment" },
-    ],
-  },
+// ── 빠른 메뉴 ────────────────────────────────────────────────────────────────
+const QUICK_MENUS = [
+  { href: "/naver/smartstore",             label: "스마트스토어",  desc: "AI 채팅·상품·주문·정산",    color: "#F97316", bg: "#FFF7ED", border: "#FED7AA" },
+  { href: "/naver/smartstore/products",    label: "상품 관리",    desc: "상품 목록·등록·수정",       color: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" },
+  { href: "/naver/smartstore/orders",      label: "주문 관리",    desc: "주문 목록·처리",            color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
+  { href: "/naver/smartstore/settlements", label: "정산 관리",    desc: "정산 내역·요약",            color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+  { href: "/naver/smartstore/reviews",     label: "리뷰/문의",    desc: "고객 리뷰·문의 확인",       color: "#C2410C", bg: "#FFF7ED", border: "#FED7AA" },
+  { href: "/naver/smartstore/stats",       label: "데이터 분석",  desc: "매출·방문 통계",            color: "#0891B2", bg: "#ECFEFF", border: "#A5F3FC" },
+  { href: "/ops",                          label: "운영센터",     desc: "서버 상태·감사 로그",       color: "#374151", bg: "#F9FAFB", border: "#E5E7EB" },
+  { href: "/naver/session",                label: "세션 관리",    desc: "네이버 로그인 세션",        color: "#03C75A", bg: "#F0FDF4", border: "#BBF7D0" },
 ];
 
-const metrics = [
-  { label: "App surfaces", value: "9", sub: "admin-web routes registered", accentColor: "#2563EB" },
-  { label: "Execution path", value: "Gated", sub: "UI -> API -> task -> approval", accentColor: "#F97316" },
-  { label: "Local runtime", value: "Bounded", sub: "browser and desktop work stay local", accentColor: "#059669" },
-  { label: "MCP Gateway", value: "Ready", sub: "registry template disabled by default", accentColor: "#7C3AED" },
-];
+// ── 네이버 로그인 카드 ────────────────────────────────────────────────────────
+function NaverLoginCard() {
+  const [status, setStatus]         = useState<SessionStatus | null>(null);
+  const [loading, setLoading]       = useState(false);
+  const [loginRunning, setLoginRunning] = useState(false);
+  const [result, setResult]         = useState<{ ok: boolean; msg: string } | null>(null);
 
-const flowRows: FlowRow[] = [
-  {
-    id: "app",
-    layer: "App UI",
-    role: "Command, approval, report review",
-    surface: "admin-web",
-    gate: "bounded forms",
-    status: "PASS",
-  },
-  {
-    id: "server",
-    layer: "Server",
-    role: "Route tasks and enforce policy",
-    surface: "API routes / backend",
-    gate: "allowlisted endpoints",
-    status: "PASS",
-  },
-  {
-    id: "local",
-    layer: "Local Agent",
-    role: "Use browser, files, and desktop tools",
-    surface: "loopback runtime",
-    gate: "user-present session",
-    status: "PASS",
-  },
-  {
-    id: "ai",
-    layer: "AI Orchestration",
-    role: "Plan, prepare, verify, summarize",
-    surface: "scripts and task queue",
-    gate: "approval before final action",
-    status: "PASS",
-  },
-];
+  const AUTH = typeof btoa !== "undefined"
+    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!"}`)}`
+    : "";
 
-const toolRows: ToolRow[] = [
-  {
-    id: "market",
-    tool: "Market Research",
-    route: "/market-research",
-    execution: "YouTube search, rank, topic report",
-    policy: "read/prepare",
-    status: "PASS",
-  },
-  {
-    id: "agents",
-    tool: "Local Agents",
-    route: "/local-agents",
-    execution: "agent registration and task status",
-    policy: "loopback only",
-    status: "PASS",
-  },
-  {
-    id: "approval",
-    tool: "Browser Approvals",
-    route: "/browser-approvals",
-    execution: "final browser action review",
-    policy: "user approval",
-    status: "PASS",
-  },
-  {
-    id: "files",
-    tool: "File Map",
-    route: "/file-map",
-    execution: "report, cleanup plan, rollback package",
-    policy: "approval-gated execution",
-    status: "PASS",
-  },
-  {
-    id: "cad",
-    tool: "AI CAD",
-    route: "/cad",
-    execution: "CAD assistant workflow",
-    policy: "local desktop boundary",
-    status: "PARTIAL",
-  },
-  {
-    id: "mcp",
-    tool: "External MCP Gateway",
-    route: "/",
-    execution: "Registered MCP servers and owned app adapters",
-    policy: "disabled-by-default; approval-gated writes",
-    status: "PARTIAL",
-  },
-];
+  const fetchStatus = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API_BASE}/api/v1/naver/session/status`,
+        { headers: { Authorization: AUTH } });
+      if (r.ok) setStatus(await r.json());
+    } catch { /* 서버 미연결 시 무시 */ }
+    finally { setLoading(false); }
+  }, [AUTH]);
 
-const quickActionRows: ActionRow[] = [
-  {
-    id: "smartstore-research",
-    action: "Analyze SmartStore market",
-    target: "Market Research",
-    input: "Preset keyword set",
-    outcome: "Ranked videos, comments, and summary report",
-    href: "/market-research",
-    status: "READ_ONLY_ALLOWED",
-  },
-  {
-    id: "approval-review",
-    action: "Review final actions",
-    target: "Browser Approvals",
-    input: "No typing",
-    outcome: "Approve, reject, or inspect exact submit boundary",
-    href: "/browser-approvals",
-    status: "USER_DIRECT_REQUIRED",
-  },
-  {
-    id: "agent-health",
-    action: "Check local runtime",
-    target: "Local Agents",
-    input: "No typing",
-    outcome: "Agent connection, tasks, and diagnostics",
-    href: "/local-agents",
-    status: "PASS",
-  },
-  {
-    id: "file-map",
-    action: "Open file map result",
-    target: "File Map",
-    input: "No typing",
-    outcome: "Latest report, cleanup plan, and gated execution",
-    href: "/file-map",
-    status: "PASS",
-  },
-];
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
-const reports = [
-  {
-    title: "AI agent app structure baseline",
-    path: "docs/baseline/AI_AGENT_APP_STRUCTURE_DESIGN_BASELINE.md",
-    date: "2026-05-27",
-    category: "LOCKED",
-  },
-  {
-    title: "AI agent UI structure blueprint",
-    path: "docs/baseline/AI_AGENT_UI_STRUCTURE_BLUEPRINT.md",
-    date: "2026-05-27",
-    category: "LOCKED",
-  },
-  {
-    title: "Site work function baseline",
-    path: "docs/baseline/SITE_WORK_FUNCTION_BASELINE.md",
-    date: "2026-05-27",
-    category: "LOCKED",
-  },
-  {
-    title: "Latest YouTube market research",
-    path: "data/youtube_market_research_latest.json",
-    date: "2026-05-27",
-    category: "REPORT",
-  },
-  {
-    title: "MCP gateway baseline",
-    path: "docs/baseline/MCP_GATEWAY_BASELINE.md",
-    date: "2026-05-27",
-    category: "LOCKED",
-  },
-  {
-    title: "MCP registry template",
-    path: "configs/external_mcp_registry.template.json",
-    date: "2026-05-27",
-    category: "TEMPLATE",
-  },
-];
+  const handleLogin = async () => {
+    setLoginRunning(true);
+    setResult(null);
+    try {
+      const r = await fetch(`${API_BASE}/api/v1/naver/session/login`,
+        { method: "POST", headers: { Authorization: AUTH } });
+      const d = await r.json();
+      setResult({ ok: d.ok, msg: d.message ?? (d.ok ? "로그인 완료" : "실패") });
+      await fetchStatus();
+    } catch (e) {
+      setResult({ ok: false, msg: String(e) });
+    } finally {
+      setLoginRunning(false);
+    }
+  };
 
-const latestResults = [
-  ["Market report", "data/youtube_market_research_latest.json", "Open report or rerun preset"],
-  ["Approval queue", "/browser-approvals", "Review user-final actions"],
-  ["Runtime state", "/local-agents", "Check agent and task health"],
-  ["Structure baseline", "docs/baseline/AI_AGENT_APP_STRUCTURE_DESIGN_BASELINE.md", "Audit locked UI contract"],
-  ["UI blueprint", "docs/baseline/AI_AGENT_UI_STRUCTURE_BLUEPRINT.md", "Follow result-first tool screen template"],
-  ["MCP Gateway readiness", "configs/external_mcp_registry.template.json", "Register MCP servers before enabling calls"],
-];
+  const loggedIn   = status?.logged_in ?? false;
+  const captcha    = status?.pending_captcha ?? false;
 
-const flowColumns = [
-  { key: "layer", header: "Layer", width: 140 },
-  { key: "role", header: "Role" },
-  { key: "surface", header: "Surface", width: 190 },
-  { key: "gate", header: "Gate", width: 180 },
-  {
-    key: "status",
-    header: "Status",
-    width: 100,
-    render: (row: FlowRow) => <StatusBadge status={row.status} label={row.status} size="sm" />,
-  },
-];
-
-const toolColumns = [
-  { key: "tool", header: "Tool", width: 160 },
-  { key: "route", header: "Route", width: 160 },
-  { key: "execution", header: "Execution" },
-  { key: "policy", header: "Policy", width: 180 },
-  {
-    key: "status",
-    header: "Status",
-    width: 100,
-    render: (row: ToolRow) => <StatusBadge status={row.status} label={row.status} size="sm" />,
-  },
-];
-
-const quickActionColumns = [
-  { key: "action", header: "Button-first action", width: 190 },
-  { key: "target", header: "Tool", width: 150 },
-  { key: "input", header: "Input", width: 150 },
-  { key: "outcome", header: "Immediate result" },
-  {
-    key: "status",
-    header: "Gate",
-    width: 140,
-    render: (row: ActionRow) => <StatusBadge status={row.status} label={row.status} size="sm" />,
-  },
-  {
-    key: "href",
-    header: "Open",
-    width: 90,
-    render: (row: ActionRow) => (
-      <Link href={row.href}>
-        <Button variant="secondary" size="xs">Open</Button>
-      </Link>
-    ),
-  },
-];
-
-function Panel({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   return (
-    <section
-      style={{
-        background: "#FFFFFF",
-        border: "1px solid #E5E7EB",
-        borderRadius: 8,
-        padding: 18,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          marginBottom: 14,
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{title}</h2>
-        {right}
+    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-4">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#111827]">네이버 로그인 세션</p>
+          <p className="text-xs text-[#6B7280] mt-0.5">스마트스토어 CDP 자동화에 사용됩니다</p>
+        </div>
+        <button onClick={fetchStatus} disabled={loading}
+          className="text-xs text-[#9CA3AF] hover:text-[#6B7280] disabled:opacity-40 transition-colors">
+          {loading ? "조회 중..." : "새로고침"}
+        </button>
       </div>
-      {children}
-    </section>
+
+      {/* 세션 상태 */}
+      <div className="flex items-center gap-3">
+        {captcha ? (
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">⚠ CAPTCHA 대기</span>
+        ) : loggedIn ? (
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">✓ 로그인됨</span>
+        ) : (
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[#F9FAFB] text-[#6B7280] border border-[#E5E7EB]">✗ 미로그인</span>
+        )}
+        {status?.user && <span className="text-sm font-medium text-[#111827]">{status.user}</span>}
+      </div>
+
+      {status && (
+        <div className="text-xs text-[#9CA3AF] space-y-1">
+          {status.checked_at && <p>최종 확인: {new Date(status.checked_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p>}
+          <p>세션 파일: {status.browser_session_saved
+            ? <span className="text-[#16A34A] font-medium">저장됨 ✓</span>
+            : <span>없음</span>}
+          </p>
+          {status.error && <p className="text-[#DC2626]">{status.error}</p>}
+          {captcha && <p className="text-[#92400E]">브라우저에서 CAPTCHA를 직접 완료 후 새로고침하세요.</p>}
+        </div>
+      )}
+
+      {/* 로그인 버튼 */}
+      <button onClick={handleLogin} disabled={loginRunning}
+        className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+          loginRunning
+            ? "bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed"
+            : "bg-[#03C75A] text-white hover:bg-[#02A84A]"
+        }`}>
+        {loginRunning ? "실행 중... (CDP 시작 + 로그인)" : "네이버 로그인 실행"}
+      </button>
+
+      {result && (
+        <div className={`text-xs rounded-lg p-3 ${
+          result.ok
+            ? "bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]"
+            : "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]"
+        }`}>
+          {result.msg}
+        </div>
+      )}
+
+      <Link href="/naver/session"
+        className="block text-center text-xs text-[#6B7280] hover:text-[#111827] transition-colors">
+        세션 상세 관리 →
+      </Link>
+    </div>
   );
 }
 
-export default function Home() {
+// ── 메인 페이지 ───────────────────────────────────────────────────────────────
+export default function HomePage() {
   return (
-    <AppShell
-      sidebar={
-        <Sidebar
-          logo={
+    <PageShell title="Haehan AI" description="스마트스토어 · 운영 · AI 자동화">
+      <div className="space-y-6">
+
+        {/* 헤더 */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F97316] flex items-center justify-center text-white font-bold text-sm shrink-0">AI</div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>HAEHAN AI</div>
-              <div style={{ marginTop: 4, fontSize: 11, color: "rgba(255,255,255,0.62)" }}>
-                Unified AI Agent App
-              </div>
+              <h1 className="text-lg font-bold text-[#111827]">Haehan AI 오케스트레이터</h1>
+              <p className="text-sm text-[#6B7280]">스마트스토어 자동화 · CDP 브라우저 제어 · AI 에이전트</p>
             </div>
-          }
-          groups={navGroups}
-          footer={
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.62)", lineHeight: 1.5 }}>
-              Server + Local + App
-              <br />
-              approval-gated runtime
-            </div>
-          }
-        />
-      }
-      header={
-        <Header
-          title="AI Agent Operations"
-          right={
-            <>
-              <StatusBadge status="PASS" label="BASELINE LOCKED" />
-              <StatusBadge status="READ_ONLY_ALLOWED" label="PREPARE ALLOWED" />
-            </>
-          }
-        />
-      }
-    >
-      <div data-testid="ai-agent-app-dashboard" style={{ padding: 24, maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 18 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, lineHeight: 1.25, color: "#0F172A" }}>
-              Server, local agent, app UI, and AI orchestration are operated as one gated system.
-            </h1>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280", maxWidth: 820 }}>
-              The user gives the instruction, AI prepares and verifies the work, the local runtime performs bounded
-              actions, and final state-changing actions stop at the approval gate. Most work starts from buttons and
-              presets; natural-language input is the fallback for unusual work.
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <Link href="/market-research">
-              <Button variant="secondary">Open Research</Button>
-            </Link>
-            <Link href="/browser-approvals">
-              <Button variant="primary">Review Approvals</Button>
+            <Link href="/naver/smartstore"
+              className="ml-auto px-4 py-2 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] transition-colors shrink-0">
+              스마트스토어 AI 채팅 →
             </Link>
           </div>
         </div>
 
-        <Alert type="info" title="Operating contract">
-          All tool work must enter through a registered app surface, a bounded API or task route, and a documented
-          approval policy before it can change external state. The default UX is low-input: click a preset, see the
-          latest result, and approve only final state-changing work.
-        </Alert>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-            gap: 12,
-            marginTop: 18,
-          }}
-        >
-          {metrics.map((metric) => (
-            <MetricCard key={metric.label} {...metric} />
-          ))}
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.45fr) minmax(320px, 0.9fr)",
-            gap: 16,
-            marginTop: 16,
-            alignItems: "start",
-          }}
-        >
-          <div style={{ display: "grid", gap: 16 }}>
-            <Panel title="Quick Actions And Immediate Results" right={<StatusBadge status="PASS" label="LOW INPUT" size="sm" />}>
-              <DataTable columns={quickActionColumns} rows={quickActionRows} keyField="id" />
-            </Panel>
-
-            <Panel title="Runtime Integration Flow" right={<StatusBadge status="PASS" label="GATED" size="sm" />}>
-              <DataTable columns={flowColumns} rows={flowRows} keyField="id" />
-            </Panel>
-
-            <Panel title="Current App Tool Surfaces" right={<StatusBadge status="PARTIAL" label="EXPANDING" size="sm" />}>
-              <DataTable columns={toolColumns} rows={toolRows} keyField="id" />
-            </Panel>
+          {/* 빠른 메뉴 */}
+          <div className="lg:col-span-2 space-y-4">
+            <p className="text-sm font-semibold text-[#374151]">빠른 메뉴</p>
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+              {QUICK_MENUS.map((m) => (
+                <Link key={m.href} href={m.href}
+                  className="block bg-white border rounded-xl p-4 hover:shadow-sm transition-all group"
+                  style={{ borderColor: m.border }}>
+                  <p className="text-sm font-bold" style={{ color: m.color }}>{m.label}</p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">{m.desc}</p>
+                </Link>
+              ))}
+            </div>
           </div>
 
-          <div style={{ display: "grid", gap: 16 }}>
-            <Panel title="Chat And Result Workspace" right={<StatusBadge status="PARTIAL" label="SHELL READY" size="sm" />}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(240px, 0.9fr) minmax(0, 1.1fr)",
-                  gap: 12,
-                }}
-              >
-                <div style={{ border: "1px solid #E5E7EB", borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Instruction panel</div>
-                  <p style={{ margin: "6px 0 10px", fontSize: 12, color: "#6B7280", lineHeight: 1.45 }}>
-                    Use chat for exceptions. Common work should start from buttons and presets.
-                  </p>
-                  <textarea
-                    data-testid="ai-agent-chat-input"
-                    aria-label="AI instruction"
-                    placeholder="Example: summarize the latest SmartStore research and prepare approval items."
-                    rows={4}
-                    disabled
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      resize: "vertical",
-                      minHeight: 86,
-                      border: "1px solid #D1D5DB",
-                      borderRadius: 6,
-                      padding: "8px 10px",
-                      fontSize: 12,
-                      color: "#374151",
-                      background: "#F9FAFB",
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                    <Button variant="primary" size="sm" disabled title="Chat execution is enabled after task API wiring.">
-                      Send
-                    </Button>
-                    <Button variant="secondary" size="sm" disabled title="Preset conversion is enabled after task API wiring.">
-                      Convert to preset
-                    </Button>
-                  </div>
-                </div>
-
-                <div data-testid="ai-agent-result-panel" style={{ border: "1px solid #E5E7EB", borderRadius: 8, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Latest result panel</div>
-                    <StatusBadge status="READ_ONLY_ALLOWED" label="RESULT FIRST" size="sm" />
-                  </div>
-                  <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-                    {latestResults.map(([name, path, next]) => (
-                      <div
-                        key={name}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "130px minmax(0, 1fr)",
-                          gap: 8,
-                          padding: "8px 10px",
-                          border: "1px solid #F3F4F6",
-                          borderRadius: 6,
-                        }}
-                      >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#0F172A" }}>{name}</div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12, color: "#374151", overflowWrap: "anywhere" }}>{path}</div>
-                          <div style={{ marginTop: 2, fontSize: 11, color: "#6B7280" }}>{next}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Panel>
-
-            <Panel title="Next Development Focus">
-              <div style={{ display: "grid", gap: 10 }}>
-                {[
-                  ["Tool catalog", "List every Google, Naver, SmartStore, YouTube, CAD, and Ops capability in UI."],
-                  ["MCP Gateway readiness", "Register multiple MCP servers and owned app adapters before enabling calls."],
-                  ["Work records", "Persist AI work logs so another session can resume from the last verified state."],
-                  ["Approval console", "Expose pending user-final actions with risk, source, and exact submit boundary."],
-                  ["Runtime health", "Show server, container, local agent, drift, and gate status in one panel."],
-                ].map(([title, body]) => (
-                  <div key={title} style={{ border: "1px solid #E5E7EB", borderRadius: 8, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{title}</div>
-                    <div style={{ marginTop: 3, fontSize: 12, color: "#6B7280", lineHeight: 1.45 }}>{body}</div>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-
-            <Panel title="Baseline Artifacts">
-              <ReportList items={reports} />
-            </Panel>
+          {/* 네이버 로그인 설정 */}
+          <div className="space-y-4">
+            <p className="text-sm font-semibold text-[#374151]">로그인 설정</p>
+            <NaverLoginCard />
           </div>
+
         </div>
       </div>
-    </AppShell>
+    </PageShell>
   );
 }
