@@ -187,7 +187,6 @@ def _api_key(explicit: str | None = None) -> str:
 
 def _oauth_access_token() -> str | None:
     """저장된 OAuth 토큰을 갱신해서 반환. 없으면 None."""
-    import urllib.parse
     token_path = os.environ.get(
         "YOUTUBE_OAUTH_TOKEN_FILE",
         str(Path(__file__).resolve().parents[3] / "ai_orchestrator" / "storage" / "secrets" / "youtube_oauth_authorized_user.json"),

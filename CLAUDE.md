@@ -320,3 +320,64 @@ python scripts/cdp_force_start.py stop
 - 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
 - 프로필: `data/cdp_profile/ai_chrome`
 - PID 파일: `data/cdp_force_pid.json`
+
+---
+
+# YouTube Data API / OAuth 운영규칙 (2026-05-30 설정 완료)
+
+## GCP 프로젝트 정보
+
+| 항목 | 값 |
+|------|-----|
+| 프로젝트 | haehan-ai |
+| API 키 이름 | haehan-youtube-data-api |
+| OAuth 클라이언트 | haehan-youtube-server-captions (웹 애플리케이션) |
+| 콜백 URI | `https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback` |
+
+## 환경변수 (.env 기준)
+
+```
+YOUTUBE_DATA_API_KEY=AIzaSyBpS_1f20-MXjgaB7_0wLyIQ-SFX1bPwgM
+YOUTUBE_CLIENT_SECRETS_FILE=ai_orchestrator/storage/secrets/youtube_oauth_client.json
+YOUTUBE_OAUTH_TOKEN_FILE=ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json
+YOUTUBE_OAUTH_REDIRECT_URI=https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback
+YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED=true
+```
+
+## OAuth 토큰 스코프 (2026-05-30 인가 완료)
+
+| 스코프 | 용도 |
+|--------|------|
+| `youtube.force-ssl` | 자막 조회, 댓글 읽기 |
+| `youtube.upload` | 영상 업로드 |
+| `userinfo.profile` / `email` / `openid` | 계정 확인 |
+
+- 토큰 파일: `ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json`
+- refresh_token 포함 → 자동 갱신 가능
+- 인가 계정: skyjwshin@gmail.com
+
+## 토큰 만료 시 재인가 절차
+
+```python
+from scripts.youtube import oauth
+result, _ = oauth.build_auth_plan({'scope': 'force-ssl upload'})
+# result['auth_url'] 을 브라우저에서 열어 승인
+# 콜백 code= 파라미터 추출 후:
+result2, _ = oauth.exchange_code({'code': '<CODE>'})
+```
+
+또는 데스크 앱에서 자동 처리 (아래 참조).
+
+## 데스크 앱 YouTube OAuth 자동 로그인
+
+- `admin-web/electron/main.js` — 앱 시작 시 토큰 유효성 검사
+- 토큰 없거나 만료 시 → 승인 다이얼로그 표시
+- 사용자 승인 → OAuth 팝업 자동 열기 → 콜백 감지 → 토큰 저장
+- 토큰 파일 경로: `config.json`의 `youtube_token_file` 키로 관리
+
+## 금지 사항
+
+- API 키 / client_secret 원문 로그 출력 금지
+- 타 계정 영상 무단 업로드 금지
+- youtube.upload 스코프 자동 실행 — 사용자 명시 승인 후에만
+- public 공개 영상 업로드 — 별도 승인 필수 (기본값: private)

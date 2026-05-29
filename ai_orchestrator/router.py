@@ -30,13 +30,14 @@ from .connectors.naver_news_router import naver_news_router
 from .connectors.smartstore_router import smartstore_router
 from .connectors.naver_cafe_router import naver_cafe_router
 from .connectors.naver_mail_router import naver_mail_router
+from .connectors.naver_session_router import router as naver_session_router
 from .connectors.hiworks_mail_router import hiworks_mail_router
 from .connectors.gmail_router import gmail_router
 from .ops_router import ops_router
 from .app_status_router import app_status_router
 from .user_data_contribution_router import user_data_contribution_router
-from .youtube_oauth_router import youtube_oauth_router
-from .youtube_research_router import youtube_research_router
+from .connectors.youtube_router import youtube_router
+from .connectors.google_router import google_router
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
@@ -75,13 +76,14 @@ router.include_router(naver_search_router)  # read-only naver search endpoints
 router.include_router(naver_news_router)    # read-only naver news scraping endpoints
 router.include_router(naver_cafe_router)    # read-only naver cafe collection endpoints
 router.include_router(naver_mail_router)   # naver mail compose/send endpoints
+router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router) # hiworks mail inbox/compose/send
 router.include_router(gmail_router)        # gmail inbox/collect/compose/send
 router.include_router(ops_router)           # read-only ops center API
 router.include_router(app_status_router)    # read-only app status endpoints (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 router.include_router(user_data_contribution_router)
-router.include_router(youtube_oauth_router)
-router.include_router(youtube_research_router)
+router.include_router(youtube_router)
+router.include_router(google_router)
 router.include_router(smartstore_router)         # read-only smartstore catalog/history/form-fields
 
 

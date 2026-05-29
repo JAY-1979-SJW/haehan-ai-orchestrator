@@ -18,8 +18,11 @@ def _test_dir() -> Path:
 def test_search_blocks_without_api_key(monkeypatch):
     monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_API_KEY", raising=False)
+    monkeypatch.delenv("YOUTUBE_DATA_API_KEY", raising=False)
     monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.setattr(research, "_api_key", lambda explicit=None: "")
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "")
     result, path = research.search_videos("ai browser automation", max_results=3, captions_only=True)
 
     assert path.exists()
@@ -89,6 +92,7 @@ def test_search_retries_without_dead_local_proxy(monkeypatch):
     monkeypatch.setattr(research.urllib.request, "urlopen", fake_urlopen)
     monkeypatch.setattr(research.urllib.request, "build_opener", lambda handler: FakeOpener())
     monkeypatch.setattr(research, "_api_key", lambda explicit=None: "fake-key")
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "")
 
     result, _path = research.search_videos("ai")
 
@@ -141,6 +145,8 @@ def test_transcript_plan_blocks_unofficial_scraping():
 def test_caption_list_blocks_without_oauth(monkeypatch):
     monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("YOUTUBE_OAUTH_TOKEN_FILE", raising=False)
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "")
 
     result, path = research.list_captions("abc123")
 
@@ -228,6 +234,8 @@ def test_caption_list_uses_official_oauth(monkeypatch):
 def test_caption_download_blocks_without_oauth(monkeypatch):
     monkeypatch.delenv("YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("GOOGLE_YOUTUBE_OAUTH_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("YOUTUBE_OAUTH_TOKEN_FILE", raising=False)
+    monkeypatch.setattr(research, "_oauth_token", lambda explicit=None, token_file=None: "")
 
     result, path = research.download_caption("caption-1")
 

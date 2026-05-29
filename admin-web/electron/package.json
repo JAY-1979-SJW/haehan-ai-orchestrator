@@ -2,11 +2,12 @@
   "name": "haehan-ai-desktop",
   "version": "1.0.0",
   "description": "Haehan AI 데스크톱 앱",
+  "author": "Haehan",
   "main": "main.js",
   "scripts": {
-    "start":  "electron .",
-    "pack":   "electron-builder --dir",
-    "dist":   "electron-builder",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
     "dist:win": "electron-builder --win"
   },
   "build": {
@@ -17,17 +18,43 @@
     },
     "files": [
       "main.js",
+      "preload.js",
+      "shell.html",
+      "google-hub.html",
       "icon.png"
     ],
+    "extraResources": [
+      { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] }
+    ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "icon.png"
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png",
+      "signingHashAlgorithms": [],
+      "sign": null
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["Korean"],
+      "installerLanguages": [
+        "Korean"
+      ],
       "language": "1042"
+    },
+    "portable": {
+      "artifactName": "HaehanAI-${version}-portable.exe"
     },
     "mac": {
       "target": "dmg",
@@ -36,6 +63,7 @@
   },
   "devDependencies": {
     "electron": "^31.0.0",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.0.0",
+    "electron-packager": "^17.1.2"
   }
 }
