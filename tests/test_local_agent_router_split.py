@@ -83,3 +83,12 @@ def test_up_queue_separated():
     assert drained == [{"k": 1}]
     # 파사드: 루트에서도 동일 함수 사용 가능
     from ai_orchestrator.local_agent_router import _enqueue_up_task  # noqa: F401
+
+
+def test_task_query_router_separated():
+    """작업 조회(list/get) 라우트군은 task leaf 서브라우터로 분리된다."""
+    from ai_orchestrator.local_agent_router_task import task_router
+    paths = " ".join(getattr(r, "path", "") for r in task_router.routes)
+    assert "/{agent_id}/tasks" in paths
+    # 컴포지션 루트에도 포함(include)
+    assert any(p.endswith("/tasks") for p in _main_paths())
