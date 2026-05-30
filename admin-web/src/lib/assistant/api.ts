@@ -10,10 +10,11 @@ import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
 
-// 로컬 개발용 Basic 인증 헤더
+// Basic 인증 헤더 — 값은 .env.local의 NEXT_PUBLIC_API_USER/PASS에서만 읽음
+// TODO: proxy 전환 후 클라이언트에서 제거 예정
 const _API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
-const _API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!";
-const _AUTH_HEADER = typeof btoa !== "undefined"
+const _API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "";
+const _AUTH_HEADER = typeof btoa !== "undefined" && _API_PASS
   ? `Basic ${btoa(`${_API_USER}:${_API_PASS}`)}`
   : "";
 

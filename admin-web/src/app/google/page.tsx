@@ -6,7 +6,7 @@ import { API_BASE } from "@/lib/assistant/api";
 
 const AUTH =
   typeof btoa !== "undefined"
-    ? `Basic ${btoa("owner:haehan2024!")}`
+    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
     : "";
 
 interface Service {
