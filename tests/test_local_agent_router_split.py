@@ -114,3 +114,11 @@ def test_browser_router_separated():
     main = " ".join(_main_paths())
     for kw in ("browser-readonly", "capture-screenshot", "open-url-execution"):
         assert kw in main, f"루트 include 누락: {kw}"
+
+
+def test_user_present_router_separated():
+    """사용자임장 라우트군은 user_present leaf 서브라우터로 분리된다."""
+    from ai_orchestrator.local_agent_router_user_present import user_present_router
+    paths = " ".join(getattr(r, "path", "") for r in user_present_router.routes)
+    assert "user-present" in paths
+    assert any("user-present" in p for p in _main_paths())
