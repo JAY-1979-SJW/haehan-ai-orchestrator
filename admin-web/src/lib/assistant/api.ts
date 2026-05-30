@@ -197,6 +197,35 @@ export async function getAppStorageStatus(
   return getJson<AppStorageStatusResponse>("/api/v1/app/storage/status", signal);
 }
 
+export interface AppLiveSummaryData {
+  service: string;
+  health_status: string;
+  post_tasks_dry_run_enabled: boolean;
+  phase1_closeout_status: string;
+  container_health_source: string;
+  read_only: boolean;
+  mutation_allowed: boolean;
+  storage: {
+    named_volume_status: string;
+    app_logs_bind_mount_status: string;
+    audit_log_policy: string;
+  };
+  generated_at: string;
+}
+
+export interface AppLiveSummaryResponse {
+  ok: boolean;
+  data: AppLiveSummaryData;
+  meta: { read_only: true; mutation_allowed: false };
+}
+
+/** GET /api/v1/app/live-summary — 실시간 운영 요약 (read-only) */
+export async function getAppLiveSummary(
+  signal?: AbortSignal,
+): Promise<AppLiveSummaryResponse> {
+  return getJson<AppLiveSummaryResponse>("/api/v1/app/live-summary", signal);
+}
+
 // ── APP_LOGS_AUDIT_READONLY_VIEW_01 ───────────────────────────────────────
 
 export type { OpsAuditEventsResponse, OpsSummaryResponse } from "@/types/assistant";
