@@ -43,7 +43,7 @@ SEPARATED_MODULES: list[dict] = [
         "max_root_loc": 430,
         "leaf_glob": "scripts/google/live_inputs_*.py",
         # 공유 leaf (설정/상수/env, CDP 프리미티브 등)
-        "shared_leaves": {"config", "cdp"},
+        "shared_leaves": {"config", "cdp", "fill"},
     },
 ]
 
