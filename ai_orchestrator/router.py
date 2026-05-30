@@ -38,6 +38,12 @@ from .app_status_router import app_status_router
 from .user_data_contribution_router import user_data_contribution_router
 from .connectors.youtube_router import youtube_router
 from .connectors.google_router import google_router
+from .connectors.naver_blog_router import naver_blog_router
+from .connectors.user_auth_router import user_auth_router
+from .connectors.gabia_router import gabia_router
+from .connectors.kakao_setup_router import kakao_setup_router
+from .connectors.session_status_router import session_status_router
+from .connectors.hanafax_router import hanafax_router
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
@@ -85,6 +91,12 @@ router.include_router(user_data_contribution_router)
 router.include_router(youtube_router)
 router.include_router(google_router)
 router.include_router(smartstore_router)         # read-only smartstore catalog/history/form-fields
+router.include_router(naver_blog_router)         # naver blog compose/drafts/seo
+router.include_router(user_auth_router)          # user signup/login/mypage
+router.include_router(gabia_router)              # gabia dns/domain/login watch
+router.include_router(kakao_setup_router)        # 카카오 앱 등록 실시간 게이트
+router.include_router(session_status_router)     # 앱별 로그인 세션 현황
+router.include_router(hanafax_router)            # 하나팩스 팩스 발송
 
 
 class TaskSubmit(BaseModel):
