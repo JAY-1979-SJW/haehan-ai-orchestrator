@@ -18,9 +18,9 @@
     },
     "files": [
       "main.js",
+      "lib/**/*",
       "preload.js",
       "shell.html",
-      "google-hub.html",
       "icon.png"
     ],
     "extraResources": [
