@@ -164,7 +164,7 @@ export default function HomePage() {
   }
 
   return (
-    <PageShell title="Haehan AI" description="AI 오케스트레이터 대시보드" chatDomain="default">
+    <PageShell title="Haehan AI" description="AI 오케스트레이터 대시보드" chatDomain="home">
       <div className="space-y-6 w-full">
 
         {/* 헤더 배너 */}

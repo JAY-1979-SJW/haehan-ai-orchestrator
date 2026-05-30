@@ -90,7 +90,7 @@ export default function AssistantDashboard() {
     : "idle";
 
   return (
-    <PageShell title="AI 비서" description="백엔드 상태 · 스토리지 · 작업 현황" chatDomain="default">
+    <PageShell title="AI 비서" description="백엔드 상태 · 스토리지 · 작업 현황" chatDomain="assistant">
       <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <ApiConnectionStateBadge
