@@ -119,6 +119,162 @@ SITES: list[dict] = [
         })()""",
         "login_url": "https://sell.smartstore.naver.com/",
     },
+    {
+        "key": "gabia",
+        "label": "가비아",
+        "url_hints": ["gabia.com", "my.gabia.com", "account.gabia.com"],
+        "session_cookie_pattern": r"gabia_session|gab_|PHPSESSID",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href.toLowerCase();
+            const has_logout = /로그아웃|logout/i.test(t);
+            const has_my = /마이가비아|내정보|계정관리|my.gabia/i.test(t);
+            const has_login_form = !!document.querySelector('input[type="password"]');
+            const on_login_page = url.includes('account.gabia.com');
+            const challenge = /OTP|2단계|추가 인증/.test(t);
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_logout || has_my,
+                has_logout_link: has_logout,
+                has_mypage: has_my,
+                has_login_form: has_login_form || on_login_page,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://account.gabia.com/gabia/login",
+    },
+    {
+        "key": "eum",
+        "label": "EUM (건설근로자공제회)",
+        "url_hints": ["eum.cw.or.kr"],
+        "session_cookie_pattern": r"JSESSIONID|eum_session",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href;
+            const has_logout = /로그아웃/.test(t);
+            const has_dashboard = /단말기|현장|공제|임대|관리/.test(t) && !url.includes('login') && !url.includes('WEBLOG');
+            const has_login_form = !!document.querySelector('input[type="password"], input[name="userId"], input[name="password"]');
+            const on_login = url.includes('WEBLOG') || url.includes('login');
+            const challenge = /인증|보안/.test(t) && has_login_form;
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_logout || has_dashboard,
+                has_logout_link: has_logout,
+                has_dashboard: has_dashboard,
+                has_login_form: has_login_form || on_login,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://eum.cw.or.kr/web/log/WEBLOG400M00",
+    },
+    {
+        "key": "youtube_studio",
+        "label": "YouTube Studio",
+        "url_hints": ["studio.youtube.com"],
+        "session_cookie_pattern": r"SSID|SID|HSID|LOGIN_INFO",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href;
+            const has_studio = url.includes('studio.youtube.com') && !url.includes('accounts.google');
+            const has_dashboard = /채널|영상|분석|구독자|수익/.test(t);
+            const has_login_form = !!document.querySelector('input[type="email"], input[name="identifier"]');
+            const has_account = !!document.querySelector('[aria-label*="계정"], [aria-label*="Account"]');
+            const challenge = /2단계|2-Step|추가 인증/.test(t);
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_studio && !has_login_form,
+                has_logout_link: false,
+                has_account_menu: has_account || has_dashboard,
+                has_login_form: has_login_form,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://studio.youtube.com/",
+    },
+    {
+        "key": "kakao",
+        "label": "카카오",
+        "url_hints": ["kakao.com", "accounts.kakao.com", "talk.kakao.com"],
+        "session_cookie_pattern": r"TIARA|_kauth_|kc_",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href.toLowerCase();
+            const has_logout = /로그아웃|logout/i.test(t);
+            const has_profile = /닉네임|프로필|내 계정|마이카카오/i.test(t);
+            const has_login_form = !!document.querySelector('input[type="password"], #loginId, #loginKey');
+            const on_login = url.includes('accounts.kakao.com/login') || url.includes('/login');
+            const challenge = /SMS|인증|카카오톡 인증/i.test(t) && has_login_form;
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_logout || has_profile,
+                has_logout_link: has_logout,
+                has_mypage: has_profile,
+                has_login_form: has_login_form || on_login,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://accounts.kakao.com/login",
+    },
+    {
+        "key": "hiworks",
+        "label": "하이웍스",
+        "url_hints": ["hiworks.com", "mail.hiworks.com"],
+        "session_cookie_pattern": r"hiworks_|hw_sess|PHPSESSID",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href.toLowerCase();
+            const has_logout = /로그아웃|logout/i.test(t);
+            const has_dashboard = /받은편지|캘린더|주소록|그룹웨어|업무/i.test(t);
+            const has_login_form = !!document.querySelector('input[type="password"], input[name="pw"], input[name="password"]');
+            const on_login = url.includes('/login') || url.includes('/auth');
+            const challenge = false;
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_logout || has_dashboard,
+                has_logout_link: has_logout,
+                has_dashboard: has_dashboard,
+                has_login_form: has_login_form || on_login,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://www.hiworks.com/login",
+    },
+    {
+        "key": "dataportal",
+        "label": "공공데이터포털",
+        "url_hints": ["data.go.kr"],
+        "session_cookie_pattern": r"JSESSIONID|dataportal_",
+        "logged_in_js": """(() => {
+            const t = document.body && document.body.innerText || '';
+            const url = location.href.toLowerCase();
+            const has_logout = /로그아웃|logout/i.test(t);
+            const has_mypage = /마이페이지|내 정보|활용현황|인증키/i.test(t);
+            const has_login_form = !!document.querySelector('input[type="password"], #loginId, input[name="password"]');
+            const on_login = url.includes('/login') || url.includes('/member/login');
+            const challenge = false;
+            return JSON.stringify({
+                href: location.href,
+                title: document.title,
+                has_session_cookie: has_logout || has_mypage,
+                has_logout_link: has_logout,
+                has_mypage: has_mypage,
+                has_login_form: has_login_form || on_login,
+                challenge: challenge,
+                login_error: false,
+            });
+        })()""",
+        "login_url": "https://www.data.go.kr/login/loginForm.do",
+    },
 ]
 
 

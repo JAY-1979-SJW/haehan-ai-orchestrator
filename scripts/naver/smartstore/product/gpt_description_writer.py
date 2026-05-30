@@ -301,6 +301,7 @@ class GptDescriptionWriter:
         features = p.get("features", [])
         features_str = "\n".join(
             f"- {f.get('icon','•')} {f.get('title','')}: {f.get('desc','')}"
+            if isinstance(f, dict) else f"- {f}"
             for f in features
         ) if features else "(없음)"
 

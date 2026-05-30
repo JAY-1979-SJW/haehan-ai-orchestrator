@@ -66,8 +66,13 @@ def prepare_upload_plan(local_path: str | Path, values: dict[str, Any]) -> tuple
     category_id = str(values.get("category_id") or "22")
     tags = _split_tags(str(values.get("tags") or ""))
     thumbnail = str(values.get("thumbnail") or "")
+    publish_at = str(values.get("publish_at") or "").strip()  # ISO 8601 예: 2026-06-01T09:00:00+09:00
     token_file = str(values.get("token_file") or values.get("youtube_token_file") or "")
     credentials_file = str(values.get("credentials_file") or values.get("client_secrets_file") or "")
+
+    # 예약 게시: privacyStatus는 반드시 private이어야 함
+    if publish_at and privacy != "private":
+        privacy = "private"
 
     file_scan = scan_video_file(video_path)
     metadata_ok = bool(title.strip()) and privacy in ALLOWED_PRIVACY
@@ -84,6 +89,7 @@ def prepare_upload_plan(local_path: str | Path, values: dict[str, Any]) -> tuple
             "tags": [safe_preview(tag, limit=80) for tag in tags],
             "category_id": category_id,
             "privacy_status": privacy,
+            "publish_at": publish_at,
             "thumbnail": thumbnail,
         },
         "auth": {
@@ -152,6 +158,10 @@ def _upload_with_official_api(plan: dict[str, Any]) -> dict[str, Any]:
     )
     youtube = build("youtube", "v3", credentials=creds)
     metadata = plan["metadata"]
+    status_body: dict[str, Any] = {"privacyStatus": metadata["privacy_status"]}
+    publish_at = metadata.get("publish_at", "")
+    if publish_at:
+        status_body["publishAt"] = publish_at  # ISO 8601, privacyStatus=private 필수
     body = {
         "snippet": {
             "title": metadata["title"],
@@ -159,7 +169,7 @@ def _upload_with_official_api(plan: dict[str, Any]) -> dict[str, Any]:
             "tags": metadata["tags"],
             "categoryId": metadata["category_id"],
         },
-        "status": {"privacyStatus": metadata["privacy_status"]},
+        "status": status_body,
     }
     media = MediaFileUpload(plan["local_path"], chunksize=-1, resumable=True)
     request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
