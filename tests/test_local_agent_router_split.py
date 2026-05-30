@@ -31,6 +31,7 @@ def test_diagnostics_route_preserved_via_include():
 
 
 def test_list_collection_root_preserved():
-    """컬렉션 루트(GET '') 는 보존된다."""
-    # prefix 부착 전이라 빈 path 가 루트에 존재
-    assert "" in _main_paths() or any(p == "" for p in _main_paths())
+    """컬렉션 루트(GET /local-agents) 는 루트에 보존된다."""
+    # APIRouter(prefix='/local-agents') 가 prefix 를 붙여 path 는 '/local-agents'
+    paths = _main_paths()
+    assert any(p.endswith("/local-agents") for p in paths), paths
