@@ -92,3 +92,14 @@ def test_task_query_router_separated():
     assert "/{agent_id}/tasks" in paths
     # 컴포지션 루트에도 포함(include)
     assert any(p.endswith("/tasks") for p in _main_paths())
+
+
+def test_task_approval_routes_in_task_router():
+    """작업 처리(cancel/approve/reject) 라우트군도 task leaf 로 합류된다."""
+    from ai_orchestrator.local_agent_router_task import task_router
+    paths = " ".join(getattr(r, "path", "") for r in task_router.routes)
+    for kw in ("/cancel", "/approve", "/reject"):
+        assert kw in paths, f"task_router 누락: {kw}"
+    main = " ".join(_main_paths())
+    for kw in ("/cancel", "/approve", "/reject"):
+        assert kw in main, f"루트 include 누락: {kw}"
