@@ -238,6 +238,42 @@ def test_no_conflict_with_prep():
     import tests.test_app_api_contract_endpoints_prep_20260518  # noqa
 
 
+# ── live-summary 엔드포인트 (실시간 운영 요약) ───────────────────────────────
+
+def test_live_summary_route_defined():
+    paths = _get_route_paths()
+    assert any("live-summary" in p for p in paths), f"live-summary 없음: {paths}"
+
+
+def test_live_summary_response_schema():
+    from ai_orchestrator.app_status_router import get_live_summary
+    result = get_live_summary()
+    assert result["ok"] is True
+    data = result["data"]
+    for key in ("service", "health_status", "post_tasks_dry_run_enabled",
+                "phase1_closeout_status", "read_only", "mutation_allowed",
+                "storage", "generated_at"):
+        assert key in data, f"누락 필드: {key}"
+    assert result["meta"]["read_only"] is True
+
+
+def test_live_summary_read_only_and_no_mutation():
+    from ai_orchestrator.app_status_router import get_live_summary
+    result = get_live_summary()
+    assert result["data"]["read_only"] is True
+    assert result["data"]["mutation_allowed"] is False
+    assert result["meta"]["mutation_allowed"] is False
+    assert result["meta"]["server_action_allowed"] is False
+
+
+def test_live_summary_no_secret_fields():
+    from ai_orchestrator.app_status_router import get_live_summary, _FORBIDDEN_RESPONSE_FIELDS
+    import json
+    blob = json.dumps(get_live_summary())
+    for field in _FORBIDDEN_RESPONSE_FIELDS:
+        assert field not in blob, f"금지 필드 노출: {field}"
+
+
 # ── audit verdict ─────────────────────────────────────────────────────────────
 
 def test_audit_verdict():
