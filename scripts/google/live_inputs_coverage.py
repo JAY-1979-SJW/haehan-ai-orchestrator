@@ -17,6 +17,7 @@ from .live_inputs_config import (
     PARTIAL_HANDOFF_MODES,
     LIVE_INPUT_COVERAGE_DIR,
     LATEST_LIVE_INPUT_COVERAGE,
+    FINAL_CONTROL_LABELS,
 )
 
 def build_live_input_coverage() -> dict:
