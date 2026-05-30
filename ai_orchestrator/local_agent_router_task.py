@@ -12,12 +12,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import require_role
 from .audit_logger import log_event
-from .approval import approve_token, reject_token
+from .approval import approve_token, reject_token, issue_token_for_dev_reg
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
 from . import local_agent_audit_event_policy as _policy
 from . import local_agent_audit_builders as _audit
-from .local_agent_router_schemas import AgentTaskApprovalRequest, CancelTaskRequest
+from .local_agent_router_validation import _capture_approval_note  # 공유 leaf
+from .local_agent_router_schemas import (
+    AgentTaskApprovalRequest, CancelTaskRequest, AgentTaskRequest,
+)
 
 _CANCEL_REASON_MAX_LEN = 200
 
@@ -318,3 +321,96 @@ def reject_local_agent_task(
     http_code = _policy.REJECT_STATUS_HTTP.get(status, 400)
     raise HTTPException(status_code=http_code,
                         detail={"error": status.upper(), "status": status})
+
+
+@task_router.post("/{agent_id}/tasks")
+def submit_local_agent_task(
+    agent_id: str,
+    body: AgentTaskRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """로컬 에이전트에게 작업 큐잉.
+
+    - 미등록 agent_id → 404
+    - 미등록 액션(delete_file/upload_file/modify_file/execute_shell …) → 400
+    - high risk → 승인 토큰 발행 + status=waiting_approval
+    """
+    actor = user["actor"]
+    role = user["role"]
+
+    if _reg.get_agent(agent_id) is None:
+        log_event(
+            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
+            action_type=body.action, actor=actor, role=role,
+            note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
+        )
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "AGENT_NOT_FOUND",
+                    "message": f"미등록 에이전트: {agent_id}"},
+        )
+
+    try:
+        task = _reg.enqueue_task(
+            agent_id=agent_id,
+            action=body.action,
+            params=body.params,
+            requested_by=actor,
+        )
+    except _reg.UnknownActionError as e:
+        log_event(
+            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
+            action_type=str(body.action), actor=actor, role=role,
+            note=f"agent_id={agent_id} reason=UNKNOWN_ACTION",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "UNKNOWN_ACTION", "message": str(e)},
+        )
+
+    # high risk → 승인 토큰 발행 + waiting_approval 이벤트
+    if task.risk_level == "high":
+        token = issue_token_for_dev_reg(
+            task_id=task.task_id,
+            requested_by=actor,
+            risk_level=task.risk_level,
+            ttl_minutes=30,
+        )
+        _reg.attach_token(task.task_id, token.token_id, token.public_id)
+        log_event(
+            "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
+            risk_level=task.risk_level,
+            action_type=task.action,
+            actor=actor, role=role,
+            token_id=token.token_id,
+            note=f"agent_id={agent_id}",
+        )
+        if _guards.is_capture_screenshot_task(task):
+            log_event(
+                "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED", task.task_id,
+                risk_level=task.risk_level,
+                action_type=task.action,
+                actor=actor, role=role,
+                token_id=token.token_id,
+                note=_capture_approval_note(
+                    task, agent_id, _guards.task_is_dry_run(task),
+                ),
+            )
+    else:
+        log_event(
+            "LOCAL_AGENT_TASK_QUEUED", task.task_id,
+            risk_level=task.risk_level,
+            action_type=task.action,
+            actor=actor, role=role,
+            note=f"agent_id={agent_id} status={task.status}",
+        )
+        if task.status == "completed":
+            log_event(
+                "LOCAL_AGENT_TASK_COMPLETED", task.task_id,
+                risk_level=task.risk_level,
+                action_type=task.action,
+                actor="system",
+                note=f"agent_id={agent_id}",
+            )
+
+    return _reg.get_task(agent_id, task.task_id).to_safe()
