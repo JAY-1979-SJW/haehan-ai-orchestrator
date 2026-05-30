@@ -76,3 +76,9 @@ try:
         raise ValueError(f"포트 범위 초과: {APP_PORT}")
 except (ValueError, TypeError):
     APP_PORT = 8400
+
+# ── JWT 인증 ────────────────────────────────────────────────────────────────
+import secrets as _secrets
+JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_DAYS = 30
