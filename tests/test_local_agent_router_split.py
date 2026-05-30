@@ -40,6 +40,27 @@ def test_registration_routes_preserved_via_include():
         assert kw in paths, f"루트에서 누락: {kw}"
 
 
+def test_validation_helpers_separated():
+    """검증/감사노트 헬퍼는 validation 공유 leaf 로 분리되고 파사드로 재노출된다."""
+    from ai_orchestrator import local_agent_router_validation as v
+    assert hasattr(v, "_validate_readonly_browser_instruction")
+    assert hasattr(v, "_capture_approval_note")
+    # 파사드: 루트에서도 동일 이름 사용 가능
+    from ai_orchestrator.local_agent_router import _validate_readonly_browser_instruction  # noqa: F401
+
+
+def test_validation_blocks_unsafe_instruction():
+    """검증 헬퍼가 위험 지시(click 등)를 400 으로 차단한다(이동 후 동작 보존)."""
+    import pytest
+    from fastapi import HTTPException
+    from ai_orchestrator.local_agent_router_validation import _validate_readonly_browser_instruction
+    from ai_orchestrator.local_agent_router_schemas import BrowserReadonlyInstructionRequest
+    with pytest.raises(HTTPException):
+        _validate_readonly_browser_instruction(
+            BrowserReadonlyInstructionRequest(instruction="click login", url="https://x.com")
+        )
+
+
 def test_diagnostics_route_preserved_via_include():
     """분리 후에도 /diagnostics 경로가 컴포지션 루트에 포함되어 있어야 한다."""
     assert any("diagnostics" in p for p in _main_paths())
