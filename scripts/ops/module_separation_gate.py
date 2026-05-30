@@ -36,6 +36,15 @@ SEPARATED_MODULES: list[dict] = [
         # 누구나 import 가능한 공유 leaf (계약/공용 유틸/검증/큐상태)
         "shared_leaves": {"schemas", "guards", "validation", "up_queue"},
     },
+    {
+        "name": "google_live_inputs",
+        "root": "scripts/google/live_inputs.py",
+        # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400.
+        "max_root_loc": 1605,
+        "leaf_glob": "scripts/google/live_inputs_*.py",
+        # 공유 leaf (설정/상수/env, CDP 프리미티브 등)
+        "shared_leaves": {"config", "cdp"},
+    },
 ]
 
 
