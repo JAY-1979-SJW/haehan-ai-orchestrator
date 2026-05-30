@@ -122,3 +122,10 @@ def test_user_present_router_separated():
     paths = " ".join(getattr(r, "path", "") for r in user_present_router.routes)
     assert "user-present" in paths
     assert any("user-present" in p for p in _main_paths())
+
+
+def test_cleanup_router_separated():
+    """정리(cleanup) 라우트군은 cleanup leaf 서브라우터로 분리된다."""
+    from ai_orchestrator.local_agent_router_cleanup import cleanup_router
+    assert any("cleanup" in getattr(r, "path", "") for r in cleanup_router.routes)
+    assert any("cleanup" in p for p in _main_paths())
