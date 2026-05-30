@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { login, setToken } from "@/lib/userAuth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,8 +19,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { token } = await login(email, password);
-      setToken(token);
-      router.push("/mypage");
+      setToken(token); // localStorage + 쿠키 동시 저장 → 미들웨어 인식
+      router.push(returnTo.startsWith("/") ? returnTo : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "로그인 실패");
     } finally {
