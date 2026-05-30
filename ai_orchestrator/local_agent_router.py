@@ -399,18 +399,10 @@ def list_local_agents(
     return {"agents": _reg.list_agents()}
 
 
-@local_agent_router.get("/diagnostics")
-def get_local_agents_diagnostics(
-    user: dict = Depends(require_role("admin", "owner", "viewer")),
-):
-    """Local agent 운영 진단 정보 (read-only).
-
-    agent/task 상태 집계, 민감정보 제외 (token_id, raw params, raw audit, raw html/url/secret 등).
-    allowlist field만 반환 (counts, status, timestamps).
-    """
-    with _reg._lock:
-        diagnostics = local_agent_diagnostics.build_local_agent_diagnostics()
-    return diagnostics
+# 진단 라우트군(/diagnostics 등 read-only)은 local_agent_router_query 로 분리.
+# 컴포지션 루트가 include_router 로 관리(경로 동일).
+from .local_agent_router_query import query_router as _query_router  # noqa: E402
+local_agent_router.include_router(_query_router)
 
 
 @local_agent_router.post("/{agent_id}/tasks")
