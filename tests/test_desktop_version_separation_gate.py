@@ -40,3 +40,22 @@ def test_old_shell_markers_absent():
     shell = _read(ELECTRON / "shell.html")
     for marker in OLD_SHELL_MARKERS:
         assert marker not in shell, f"shell.html 구버전 마커 잔존: {marker!r}"
+
+
+def test_no_leaf_to_leaf_coupling():
+    """통신 분리: leaf 모듈은 sibling leaf 모듈을 직접 import 하지 않아야 한다."""
+    result = run_gate()
+    coupling = [f for f in result.findings if f.category == "LEAF_COUPLING"]
+    assert not coupling, "leaf 결합 위반:\n" + "\n".join(f.detail for f in coupling)
+
+
+def test_leaf_coupling_rule_detects_violation():
+    """가드: leaf 가 sibling leaf 를 require 하면 규칙이 위반으로 잡아야 한다."""
+    import re
+    from scripts.ops.desktop_version_separation_gate import LEAF_LIB_MODULES
+
+    fake_source = 'const a = require("./mainWindow");\nconst b = require("./config");\n'
+    require_re = re.compile(r"""require\(\s*['"]\./([A-Za-z0-9_]+)['"]\s*\)""")
+    deps = require_re.findall(fake_source)
+    violations = [d for d in deps if d in LEAF_LIB_MODULES]
+    assert violations == ["mainWindow"], f"기대: ['mainWindow'], 실제: {violations}"

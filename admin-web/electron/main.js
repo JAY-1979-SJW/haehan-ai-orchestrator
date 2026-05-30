@@ -20,20 +20,35 @@ const { loadConfig, saveConfig, isOwnerMode } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
 const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
-const { startYouTubeOAuth } = require("./lib/youtube");
+const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, hasTray } = require("./lib/tray");
+const { bus, EVENTS } = require("./lib/bus");
 const { Menu } = require("electron");
+
+// youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
+setWindowProvider(getMainWindow);
 
 // 앱 이름 고정 (userData = AppData\Roaming\Haehan AI), 상단 메뉴바 제거
 app.setName("Haehan AI");
 Menu.setApplicationMenu(null);
+
+// ── 버스 구독 (컴포지션 루트) ──────────────────────────────────────────────────
+// 발행자(tray 등)는 sibling 모듈을 직접 부르지 않고 이벤트만 emit 하며,
+// 실제 처리는 여기(main)에서 모듈 동작에 연결한다.
+bus.on(EVENTS.SHOW_WINDOW, () => showMainWindow());
+bus.on(EVENTS.YOUTUBE_RECONNECT, () => ensureYouTubeAuth(loadConfig().license_key || ""));
+// YouTube 연결 상태 → 렌더러(shell.html)로 전달하는 단일 경로
+bus.on(EVENTS.YOUTUBE_STATUS, (status) => {
+  const win = getMainWindow();
+  if (win) win.webContents.send("youtube-status", status);
+});
 
 // 단일 인스턴스 보장
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on("second-instance", () => showMainWindow());
+  app.on("second-instance", () => bus.emit(EVENTS.SHOW_WINDOW));
 
   app.whenReady().then(() => {
     // 이 PC 상시 자동 시작 등록
@@ -51,10 +66,8 @@ if (!gotLock) {
       startLicenseFlow();
     }
 
-    app.on("activate", () => {
-      if (!getMainWindow()) createMainWindow(loadConfig().license_key || "");
-      else showMainWindow();
-    });
+    // 창 표시/복원은 버스로 일원화 (showMainWindow 가 없으면 재생성까지 처리)
+    app.on("activate", () => bus.emit(EVENTS.SHOW_WINDOW));
   });
 }
 
@@ -85,8 +98,7 @@ function startLicenseFlow() {
 ipcMain.on("youtube-connect", async () => {
   const key = loadConfig().license_key || "";
   const ok = await startYouTubeOAuth(key);
-  const win = getMainWindow();
-  if (win) win.webContents.send("youtube-status", ok ? "connected" : "failed");
+  bus.emit(EVENTS.YOUTUBE_STATUS, ok ? "connected" : "failed");
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
