@@ -4,11 +4,6 @@ import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH =
-  typeof btoa !== "undefined"
-    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-    : "";
-
 interface Service {
   g: string;
   icon: string;
@@ -333,7 +328,7 @@ export default function GoogleHubPage() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/google/action`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: AUTH },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ host: s.url, action_key: s.doKey }),
       });
       const d = await r.json();
@@ -355,7 +350,7 @@ export default function GoogleHubPage() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/google/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: AUTH },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg }),
       });
       const d = await r.json();

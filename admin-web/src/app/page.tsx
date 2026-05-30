@@ -47,19 +47,15 @@ function NaverLoginCard() {
   const [loginRunning, setLoginRunning] = useState(false);
   const [result, setResult]         = useState<{ ok: boolean; msg: string } | null>(null);
 
-  const AUTH = typeof btoa !== "undefined"
-    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-    : "";
-
   const fetchStatus = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/api/v1/naver/session/status`,
-        { headers: { Authorization: AUTH } });
+        { headers: {} });
       if (r.ok) setStatus(await r.json());
     } catch { /* 서버 미연결 시 무시 */ }
     finally { setLoading(false); }
-  }, [AUTH]);
+  }, []);
 
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
@@ -68,7 +64,7 @@ function NaverLoginCard() {
     setResult(null);
     try {
       const r = await fetch(`${API_BASE}/api/v1/naver/session/login`,
-        { method: "POST", headers: { Authorization: AUTH } });
+        { method: "POST", headers: {} });
       const d = await r.json();
       setResult({ ok: d.ok, msg: d.message ?? (d.ok ? "로그인 완료" : "실패") });
       await fetchStatus();

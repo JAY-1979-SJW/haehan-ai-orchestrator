@@ -3,10 +3,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-  : "";
-
 // ── 빠른 버튼 ─────────────────────────────────────────────────────────────────
 const QUICK_GROUPS = [
   {
@@ -70,7 +66,7 @@ export default function DataPortalPage() {
 
   // 세션 상태 조회
   useEffect(() => {
-    fetch(`${API_BASE}/api/v1/sessions/status`, { headers: { Authorization: AUTH } })
+    fetch(`${API_BASE}/api/v1/sessions/status`, { headers: {} })
       .then((r) => r.json())
       .then((d) => {
         const site = d.sites?.find((s: { key: string; status: string }) => s.key === "dataportal");
@@ -89,7 +85,7 @@ export default function DataPortalPage() {
     // 로그인 감지 요청이면 실제 스크립트 실행
     if (text.includes("로그인 감지")) {
       try {
-        await fetch(`${API_BASE}/api/v1/sessions/refresh`, { method: "POST", headers: { Authorization: AUTH } });
+        await fetch(`${API_BASE}/api/v1/sessions/refresh`, { method: "POST", headers: {} });
       } catch { /* ignore */ }
     }
 
@@ -97,7 +93,7 @@ export default function DataPortalPage() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/google/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: AUTH },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: `[공공데이터포털 data.go.kr] ${text}\n\n운영 원칙:\n- 로그인은 사용자가 브라우저에서 직접 수행\n- 인증키(API Key) 값은 출력하지 않음\n- 신청/발급 절차 안내는 단계별로 명확하게\n- 실제 CDP 이동이 필요하면 URL을 알려줌`
         }),

@@ -7,16 +7,12 @@
  */
 import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
+// 모든 API 호출은 /api/proxy/* 를 통해 서버사이드에서 인증 처리.
+// 클라이언트 번들에 자격증명 미포함.
+export const API_BASE = "/api/proxy";
 
-// Basic 인증 헤더 — 값은 .env.local의 NEXT_PUBLIC_API_USER/PASS에서만 읽음
-// TODO: proxy 전환 후 클라이언트에서 제거 예정
-const _API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
-const _API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "";
-const _AUTH_HEADER = typeof btoa !== "undefined" && _API_PASS
-  ? `Basic ${btoa(`${_API_USER}:${_API_PASS}`)}`
-  : "";
+// _AUTH_HEADER 제거 완료 — proxy 라우트(src/app/api/proxy/[...path]/route.ts)가 처리
+const _AUTH_HEADER = "";
 
 export type ApiState<T> =
   | { status: "idle" }
