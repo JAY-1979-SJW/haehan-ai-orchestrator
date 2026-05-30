@@ -354,7 +354,7 @@ export default function ExternalTasksPage() {
   const providers = ["naver", "google"];
 
   return (
-    <PageShell title="외부 업무 현황" description="외부 웹 업무 · 승인 분류" chatDomain="default">
+    <PageShell title="외부 업무 현황" description="외부 웹 업무 · 승인 분류" chatDomain="ops">
       <div className="space-y-6">
       {/* 분류 범례 */}
       <div className="mb-6 flex flex-wrap gap-2">

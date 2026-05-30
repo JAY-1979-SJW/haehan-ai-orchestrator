@@ -1,4 +1,5 @@
 export { Btn } from "./Btn";
+export { Card } from "./Card";
 export { StatusBadge } from "./StatusBadge";
 export {
   AdminTable,
