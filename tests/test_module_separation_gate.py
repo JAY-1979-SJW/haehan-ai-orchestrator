@@ -15,6 +15,11 @@ def test_local_agent_router_registered():
     assert "local_agent_router" in names
 
 
+def test_blog_mixin_registered():
+    names = {m["name"] for m in SEPARATED_MODULES}
+    assert "blog_mixin" in names
+
+
 def test_no_root_too_large():
     result = run_gate()
     assert result.count("ROOT_TOO_LARGE") == 0
