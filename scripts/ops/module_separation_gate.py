@@ -40,7 +40,7 @@ SEPARATED_MODULES: list[dict] = [
         "name": "google_live_inputs",
         "root": "scripts/google/live_inputs.py",
         # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400.
-        "max_root_loc": 430,
+        "max_root_loc": 400,
         "leaf_glob": "scripts/google/live_inputs_*.py",
         # 공유 leaf (설정/상수/env, CDP 프리미티브 등)
         "shared_leaves": {"config", "cdp", "fill"},

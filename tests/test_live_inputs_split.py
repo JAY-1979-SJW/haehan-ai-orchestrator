@@ -15,3 +15,21 @@ def test_public_api_preserved_via_facade():
     for name in ("ROOT", "_env_int", "DOMAIN_SPECIFIC_PREFILL_MODES",
                  "build_live_input_coverage", "run_live_input"):
         assert hasattr(li, name), f"파사드 누락: {name}"
+
+
+def test_all_leaves_separated_and_facade():
+    """live_inputs 가 6개 leaf 로 분리되고 파사드가 공개 API 를 보존한다."""
+    import importlib
+    for leaf in ("config", "cdp", "coverage", "fill", "domain_fillers", "report"):
+        importlib.import_module(f"scripts.google.live_inputs_{leaf}")
+    from scripts.google import live_inputs as li
+    for name in ("run_live_input", "run_live_input_manifest", "build_live_input_coverage",
+                 "print_live_input_summary", "_fill_gmail_send", "_cdp_fill_first"):
+        assert hasattr(li, name), f"파사드 누락: {name}"
+
+
+def test_root_is_thin():
+    """live_inputs 루트는 ≤400 LOC (오케스트레이션+파사드)."""
+    import pathlib
+    p = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "google" / "live_inputs.py"
+    assert sum(1 for _ in p.open(encoding="utf-8")) <= 400
