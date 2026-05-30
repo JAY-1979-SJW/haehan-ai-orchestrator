@@ -49,7 +49,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerLanguages": [
-        "Korean"
+        "ko_KR"
       ],
       "language": "1042"
     },
