@@ -274,6 +274,31 @@ def test_live_summary_no_secret_fields():
         assert field not in blob, f"금지 필드 노출: {field}"
 
 
+# ── deployment-status 엔드포인트 (배포 상태, 실행 없음) ──────────────────────
+
+def test_deployment_status_route_defined():
+    paths = _get_route_paths()
+    assert any("deployment-status" in p for p in paths), f"deployment-status 없음: {paths}"
+
+
+def test_deployment_status_response_schema():
+    from ai_orchestrator.app_status_router import get_deployment_status
+    result = get_deployment_status()
+    assert result["ok"] is True
+    data = result["data"]
+    for key in ("state", "build_required", "sop_steps", "deploy_action_allowed", "generated_at"):
+        assert key in data, f"누락 필드: {key}"
+    assert isinstance(data["sop_steps"], list)
+
+
+def test_deployment_status_no_server_action():
+    from ai_orchestrator.app_status_router import get_deployment_status
+    result = get_deployment_status()
+    assert result["data"]["deploy_action_allowed"] is False
+    assert result["meta"]["server_action_allowed"] is False
+    assert result["meta"]["mutation_allowed"] is False
+
+
 # ── audit verdict ─────────────────────────────────────────────────────────────
 
 def test_audit_verdict():

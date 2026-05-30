@@ -2,17 +2,33 @@
 /** /assistant/deployment — Deployment Status (APP_DEPLOYMENT_READONLY_POLISH_01)
  * restart/compose 버튼 없음, server_apply_allowed=false
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { DeploymentSopPanel } from "@/components/assistant/DeploymentSopPanel";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
 import { deploymentStatusMock } from "@/lib/assistant/mock";
+import { getAppDeploymentStatus } from "@/lib/assistant/api";
 
 export default function DeploymentStatusPage() {
   const [showSop, setShowSop] = useState(true);
+  const [status, setStatus] = useState(deploymentStatusMock);
 
-  const status = deploymentStatusMock;
+  // /api/v1/app/deployment-status 연결 (실패 시 mock 유지)
+  useEffect(() => {
+    const ctrl = new AbortController();
+    getAppDeploymentStatus(ctrl.signal)
+      .then((r) => setStatus({
+        server_head: r.data.server_head ?? "—",
+        origin_head: r.data.origin_head ?? "—",
+        state: r.data.state,
+        build_required: r.data.build_required,
+        sop_steps: r.data.sop_steps,
+      } as typeof deploymentStatusMock))
+      .catch(() => { /* mock 유지 */ });
+    return () => ctrl.abort();
+  }, []);
+
   const isSynced = status.state === "SYNCED";
 
   return (
