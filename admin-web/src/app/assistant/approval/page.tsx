@@ -1,15 +1,26 @@
 "use client";
 /** /assistant/approval — 승인 게이트 read-only (APP_APPROVAL_GATE_READONLY_POLISH_01) */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { GateBadge } from "@/components/assistant/GateBadge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 import { ForbiddenActionBanner } from "@/components/assistant/ForbiddenActionBanner";
 import { approvalGatesMock, knownBacklogMock } from "@/lib/assistant/mock";
+import { getOpsApprovals } from "@/lib/assistant/api";
 
 export default function ApprovalGatePage() {
   const [showBacklog, setShowBacklog] = useState(false);
+  // 실시간 승인 대기 큐(read-only). 게이트 정책 표는 정적 유지(B-1 의도된 미완 — approve→execute 미연결).
+  const [pending, setPending] = useState<{ count: number; live: boolean } | null>(null);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    getOpsApprovals(ctrl.signal)
+      .then((r) => setPending({ count: r.items.length, live: r.source === "live" }))
+      .catch(() => setPending(null));
+    return () => ctrl.abort();
+  }, []);
 
   const total = approvalGatesMock.length;
   const blocked = approvalGatesMock.filter((g) => g.current_behavior === "BLOCKED").length;
@@ -20,6 +31,15 @@ export default function ApprovalGatePage() {
       <div className="space-y-4">
       {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
+        {pending ? (
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#16A34A] text-white">
+            ● 승인 대기 {pending.count}건 {pending.live ? "(live)" : ""}
+          </span>
+        ) : (
+          <span className="text-xs font-mono bg-[#F3F4F6] text-[#6B7280] px-2 py-0.5 rounded border border-[#E5E7EB]">
+            승인 대기 큐 연결 안 됨
+          </span>
+        )}
         <span className="text-xs font-mono bg-[#FEE2E2] text-[#B91C1C] px-2 py-0.5 rounded border border-[#FECACA]">
           MUTATION_BLOCKED
         </span>

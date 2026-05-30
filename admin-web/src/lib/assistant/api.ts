@@ -262,6 +262,26 @@ export async function getOpsSummary(signal?: AbortSignal) {
   return getJson<import("@/types/assistant").OpsSummaryResponse>("/api/v1/ops/summary", signal);
 }
 
+export interface OpsApprovalItem {
+  approvalId?: string;
+  taskKey?: string;
+  provider?: string;
+  riskLevel?: string;
+  state?: string;
+  requestedAt?: string;
+  [k: string]: unknown;
+}
+
+export interface OpsApprovalsResponse {
+  items: OpsApprovalItem[];
+  source: string;
+}
+
+/** GET /api/v1/ops/approvals — read-only 승인 대기 큐 (실행/승인 액션 없음) */
+export async function getOpsApprovals(signal?: AbortSignal): Promise<OpsApprovalsResponse> {
+  return getJson<OpsApprovalsResponse>("/api/v1/ops/approvals", signal);
+}
+
 // ── 네이버 뉴스 스크래핑 read-only ───────────────────────────────────────
 
 export interface NewsArticleItem {
