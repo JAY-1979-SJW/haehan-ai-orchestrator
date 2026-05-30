@@ -756,12 +756,22 @@ def collect_public_comment_summary(
     max_pages: int = 1,
     max_comments_total: int = 100,
     include_replies: bool = False,
+    comment_collector: Any = None,
 ) -> dict[str, Any]:
-    """Collect and summarize public top-level comments through official API only."""
-    try:
-        from scripts.youtube import research
+    """Collect and summarize public top-level comments through official API only.
 
-        comments, report_path = research.collect_comments(
+    레이어 규칙(google 도메인은 youtube 도메인을 직접 import 금지)을 지키기 위해
+    youtube 수집기를 정적 import 하지 않고 런타임에 해석/주입한다. 호출자가
+    ``comment_collector`` 를 주입하면 그것을 쓰고, 없으면 공식 YouTube Data API
+    수집기를 late-binding 으로 가져온다(없으면 우아하게 차단 응답).
+    """
+    try:
+        if comment_collector is None:
+            from importlib import import_module
+
+            comment_collector = import_module("scripts.youtube.research").collect_comments
+
+        comments, report_path = comment_collector(
             video_id,
             max_results=max_results,
             max_pages=max_pages,

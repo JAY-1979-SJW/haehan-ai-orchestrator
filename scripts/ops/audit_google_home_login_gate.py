@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 from local_agent import site_entry_policy
 from scripts.config import LOGIN_PROBE_URLS
 from scripts.google import auth, managed_console
-from scripts.google.work_mode_gate import build_google_work_mode_policy
+from scripts.gates.work_mode_gate import build_google_work_mode_policy
 
 GOOGLE_HOME = "https://www.google.com/"
 FORBIDDEN_ACCOUNTS = "https://accounts.google.com/signin"

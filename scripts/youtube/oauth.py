@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts import local_user_secret_store
-from scripts.google.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
-from scripts.google.work_mode_gate import build_google_work_mode_policy
+from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
+from scripts.gates.work_mode_gate import build_google_work_mode_policy
 from security_utils import safe_preview
 
 
