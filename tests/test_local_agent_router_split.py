@@ -103,3 +103,14 @@ def test_task_approval_routes_in_task_router():
     main = " ".join(_main_paths())
     for kw in ("/cancel", "/approve", "/reject"):
         assert kw in main, f"루트 include 누락: {kw}"
+
+
+def test_browser_router_separated():
+    """브라우저 라우트군은 browser leaf 서브라우터로 분리된다."""
+    from ai_orchestrator.local_agent_router_browser import browser_router
+    paths = " ".join(getattr(r, "path", "") for r in browser_router.routes)
+    for kw in ("browser-readonly", "capture-screenshot", "open-url-execution"):
+        assert kw in paths, f"browser_router 누락: {kw}"
+    main = " ".join(_main_paths())
+    for kw in ("browser-readonly", "capture-screenshot", "open-url-execution"):
+        assert kw in main, f"루트 include 누락: {kw}"
