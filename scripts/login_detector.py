@@ -65,10 +65,16 @@ LOGIN_PATTERNS = {
         ],
     },
     "kakao": {
-        "domains": ["kakao.com", "accounts.kakao.com"],
+        "domains": ["kakao.com", "accounts.kakao.com", "developers.kakao.com"],
         "logged_in_signs": [
+            ("text", "로그아웃"),
+            ("selector", "a[href*='logout']"),
             ("selector", ".thumb_profile"),
             ("selector", "[class*='profile']"),
+            ("selector", "[class*='myapp'], [class*='my_app']"),
+        ],
+        "logged_out_signs": [
+            ("selector", "a[href*='login']:not([href*='logout'])"),
         ],
     },
     "eum.cw.or.kr": {
