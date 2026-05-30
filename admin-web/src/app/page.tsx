@@ -48,7 +48,7 @@ function NaverLoginCard() {
   const [result, setResult]         = useState<{ ok: boolean; msg: string } | null>(null);
 
   const AUTH = typeof btoa !== "undefined"
-    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!"}`)}`
+    ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
     : "";
 
   const fetchStatus = useCallback(async () => {
