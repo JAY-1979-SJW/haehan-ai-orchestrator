@@ -45,6 +45,14 @@ SEPARATED_MODULES: list[dict] = [
         # 공유 leaf (설정/상수/env, CDP 프리미티브 등)
         "shared_leaves": {"config", "cdp", "fill"},
     },
+    {
+        "name": "cafe_mixin",
+        "root": "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py",
+        "max_root_loc": 1285,  # ratchet: 서브믹스인 분리하며 낮춘다(목표 ≤ 200)
+        "leaf_glob": "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_*.py",
+        # 공유 leaf (_js 등 공통 헬퍼)
+        "shared_leaves": {"common"},
+    },
 ]
 
 
