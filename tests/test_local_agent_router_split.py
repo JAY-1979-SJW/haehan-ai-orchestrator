@@ -129,3 +129,17 @@ def test_cleanup_router_separated():
     from ai_orchestrator.local_agent_router_cleanup import cleanup_router
     assert any("cleanup" in getattr(r, "path", "") for r in cleanup_router.routes)
     assert any("cleanup" in p for p in _main_paths())
+
+
+def test_ws_router_separated():
+    """WebSocket 엔드포인트는 ws leaf 서브라우터로 분리된다."""
+    from ai_orchestrator.local_agent_router_ws import ws_router
+    assert any("WebSocket" in type(r).__name__ for r in ws_router.routes)
+
+
+def test_main_is_thin_composition_root():
+    """컴포지션 루트는 얇아야 한다(≤150 LOC) — 모든 라우트군이 leaf 로 분리됨."""
+    import pathlib
+    p = pathlib.Path(__file__).resolve().parents[1] / "ai_orchestrator" / "local_agent_router.py"
+    loc = sum(1 for _ in p.open(encoding="utf-8"))
+    assert loc <= 150, f"루트가 너무 큼: {loc} LOC"

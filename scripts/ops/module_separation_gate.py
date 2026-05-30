@@ -31,7 +31,7 @@ SEPARATED_MODULES: list[dict] = [
         "name": "local_agent_router",
         "root": "ai_orchestrator/local_agent_router.py",
         # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400(얇은 컴포지션 루트).
-        "max_root_loc": 580,
+        "max_root_loc": 150,
         "leaf_glob": "ai_orchestrator/local_agent_router_*.py",
         # 누구나 import 가능한 공유 leaf (계약/공용 유틸/검증/큐상태)
         "shared_leaves": {"schemas", "guards", "validation", "up_queue"},
