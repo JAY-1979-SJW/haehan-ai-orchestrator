@@ -6,6 +6,49 @@
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 
+// ── 빠른 버튼 그룹 ───────────────────────────────────────────────────────────
+const QUICK_GROUPS = [
+  {
+    label: "조회",
+    color: "#1D4ED8",
+    bg: "#EFF6FF",
+    border: "#BFDBFE",
+    actions: [
+      { label: "상품 목록",  prompt: "상품 목록을 보여줘" },
+      { label: "주문 확인",  prompt: "최근 주문 목록을 확인해줘" },
+      { label: "정산 조회",  prompt: "정산 내역을 조회해줘" },
+      { label: "리뷰 확인",  prompt: "최근 리뷰와 문의를 확인해줘" },
+      { label: "통계 조회",  prompt: "데이터 분석 통계를 조회해줘" },
+    ],
+  },
+  {
+    label: "실시간 수집",
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+    border: "#DDD6FE",
+    actions: [
+      { label: "상품 수집",  prompt: "CDP로 상품 목록을 실시간 수집해줘" },
+      { label: "주문 수집",  prompt: "CDP로 주문 목록을 실시간 수집해줘" },
+      { label: "정산 수집",  prompt: "CDP로 정산 내역을 실시간 수집해줘" },
+      { label: "리뷰 수집",  prompt: "CDP로 리뷰와 문의를 실시간 수집해줘" },
+      { label: "통계 수집",  prompt: "CDP로 데이터 분석 통계를 실시간 수집해줘" },
+    ],
+  },
+  {
+    label: "화면 이동",
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    actions: [
+      { label: "셀러센터 대시보드", prompt: "셀러센터 대시보드를 열어줘" },
+      { label: "상품 등록 화면",    prompt: "셀러센터 상품 등록 페이지를 열어줘" },
+      { label: "주문 화면",         prompt: "셀러센터 주문 페이지를 열어줘" },
+      { label: "정산 화면",         prompt: "셀러센터 정산 페이지를 열어줘" },
+      { label: "리뷰 화면",         prompt: "셀러센터 리뷰 페이지를 열어줘" },
+    ],
+  },
+];
+
 // ── 예시 칩 ──────────────────────────────────────────────────────────────────
 const EXAMPLE_CHIPS = [
   { label: "상품 목록",     prompt: "상품 목록을 보여줘" },
@@ -91,6 +134,7 @@ export default function SmartStoreChat() {
     tool: string; inputs: Record<string, unknown>; message: string; userText: string;
   } | null>(null);
 
+  const [quickOpen, setQuickOpen] = useState(false);
   const abortRef  = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -291,6 +335,40 @@ export default function SmartStoreChat() {
           >
             초기화
           </button>
+        )}
+      </div>
+
+      {/* 빠른 버튼 패널 */}
+      <div className="shrink-0 border-b border-[#E5E7EB]">
+        <button
+          onClick={() => setQuickOpen((p) => !p)}
+          className="w-full flex items-center justify-between px-4 py-2 text-xs text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <span className="font-semibold text-[#374151]">⚡ 빠른 작업</span>
+          <span>{quickOpen ? "▲" : "▼"}</span>
+        </button>
+        {quickOpen && (
+          <div className="px-3 pb-3 space-y-2 bg-[#FAFAFA]">
+            {QUICK_GROUPS.map((g) => (
+              <div key={g.label}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1"
+                  style={{ color: g.color }}>{g.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {g.actions.map((a) => (
+                    <button
+                      key={a.label}
+                      disabled={running}
+                      onClick={() => { handleChip(a.prompt); setQuickOpen(false); }}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors disabled:opacity-40 hover:shadow-sm"
+                      style={{ background: g.bg, borderColor: g.border, color: g.color }}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

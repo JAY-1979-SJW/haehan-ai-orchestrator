@@ -53,14 +53,18 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     group: "업무",
     items: [
-      { key: "inbox",    label: "메일 Inbox",  shortLabel: "메일", href: "/assistant/inbox" },
-      { key: "tasks",    label: "작업 목록",   shortLabel: "작업", href: "/assistant/tasks" },
-      { key: "approval", label: "승인 게이트", shortLabel: "승인", href: "/assistant/approval" },
+      { key: "bid",      label: "나라장터 입찰", shortLabel: "입찰", href: "/bid" },
+      { key: "inbox",    label: "메일 Inbox",    shortLabel: "메일", href: "/assistant/inbox" },
+      { key: "tasks",    label: "작업 목록",     shortLabel: "작업", href: "/assistant/tasks" },
+      { key: "approval", label: "승인 게이트",   shortLabel: "승인", href: "/assistant/approval" },
     ],
   },
   {
     group: "외부 연동",
     items: [
+      { key: "gabia",             label: "가비아 도메인",  shortLabel: "가비아", href: "/gabia" },
+      { key: "hanafax",           label: "하나팩스",       shortLabel: "팩스",  href: "/hanafax" },
+      { key: "dataportal",        label: "공공데이터포털", shortLabel: "공공",  href: "/dataportal" },
       { key: "external-tasks",    label: "외부 업무 현황", shortLabel: "외부",  href: "/external-tasks" },
       { key: "external-sites",    label: "외부 사이트",    shortLabel: "사이트", href: "/assistant/external-sites" },
       { key: "browser-approvals", label: "브라우저 승인",  shortLabel: "승인",  href: "/browser-approvals" },

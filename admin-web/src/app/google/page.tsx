@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
@@ -255,6 +256,7 @@ const GROUP_COLORS: Record<string, { color: string; bg: string; border: string }
 interface ChatMsg { role: "user" | "ai" | "system"; html: string }
 
 export default function GoogleHubPage() {
+  const router = useRouter();
   const [query, setQuery]             = useState("");
   const [activeKey, setActiveKey]     = useState<string | null>(null);
   const [msgs, setMsgs]               = useState<ChatMsg[]>([{
@@ -279,25 +281,43 @@ export default function GoogleHubPage() {
     return s.name.toLowerCase().includes(q) || s.desc.includes(q) || s.g.includes(q);
   });
 
+  // openKey → URL slug 매핑
+  const SERVICE_SLUG: Record<string, string> = {
+    gmail_open: "gmail", calendar_create_event: "calendar", calendar_open: "calendar",
+    drive_open: "drive", drive_upload_share_file: "drive",
+    docs_open: "docs", docs_create_edit_document: "docs",
+    sheets_open: "sheets", sheets_update_cells: "sheets",
+    youtube_studio_open: "youtube_studio", youtube_studio_upload_video: "youtube_studio",
+    youtube_open: "youtube",
+    analytics_open: "analytics",
+    ads_open: "ads", ads_campaign_budget_change: "ads",
+    search_console_open: "search_console", search_console_submit_indexing: "search_console",
+    cloud_console_open: "gcp", cloud_run_deploy_service: "gcp",
+    firebase_console_open: "firebase",
+    ai_studio_open: "ai_studio",
+    gemini_open: "gemini",
+    keep_open: "keep", keep_create_note: "keep",
+    tasks_open: "tasks", tasks_create_task: "tasks",
+    meet_open: "meet", meet_create_meeting: "meet",
+    chat_open: "chat", chat_send_message: "chat",
+    contacts_open: "contacts", contacts_create_update: "contacts",
+    slides_open: "slides", slides_create_presentation: "slides",
+    forms_open: "forms", forms_create_publish: "forms",
+    photos_open: "photos", photos_upload_share: "photos",
+    apps_script_open: "apps_script", apps_script_deploy: "apps_script",
+    looker_studio_open: "looker",
+    merchant_center_open: "merchant", merchant_center_product_update: "merchant",
+    business_profile_open: "business", business_profile_post_or_update: "business",
+    tag_manager_open: "tag_manager", tag_manager_publish_version: "tag_manager",
+    adsense_open: "adsense",
+    google_account_open: "account",
+    colab_open: "colab",
+    play_console_open: "play",
+  };
+
   const handleCardClick = (s: Service) => {
-    const key = s.name;
-    setActiveKey(key === activeKey ? null : key);
-    const theme = GROUP_COLORS[s.g] ?? GROUP_COLORS["계정·정보"];
-    const tipsHtml = s.tips.map((t) => `<li style="margin-top:4px">• ${t}</li>`).join("");
-    addMsg("ai",
-      `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">` +
-      `<span style="font-size:20px">${s.icon}</span>` +
-      `<span style="font-size:13px;font-weight:700;color:#111827">${s.name}</span>` +
-      `<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${theme.bg};color:${theme.color};border:1px solid ${theme.border}">${s.g}</span>` +
-      `</div>` +
-      `<p style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:10px">${s.detail}</p>` +
-      `<p style="font-size:11px;font-weight:700;color:#6B7280;margin-bottom:4px">이런 분께 추천</p>` +
-      `<ul style="font-size:11px;color:#6B7280;padding:0;list-style:none;margin-bottom:10px">${tipsHtml}</ul>` +
-      `<a href="${s.url}" target="_blank" rel="noopener noreferrer" ` +
-      `style="display:inline-block;font-size:11px;font-weight:600;padding:5px 12px;border-radius:8px;` +
-      `background:${theme.bg};color:${theme.color};border:1px solid ${theme.border};text-decoration:none">` +
-      `🔗 ${s.name} 열기</a>`
-    );
+    const slug = SERVICE_SLUG[s.openKey] ?? s.openKey.replace(/_open$/, "").replace(/_/g, "_");
+    router.push(`/google/${slug}`);
   };
 
   const openSite = (e: React.MouseEvent, s: Service) => {
