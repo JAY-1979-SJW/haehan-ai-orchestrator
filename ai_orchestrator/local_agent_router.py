@@ -70,23 +70,8 @@ try:
 except ImportError:
     _UP_DISPATCHER_AVAILABLE = False
 
-# ── USER_PRESENT_TASK in-memory 전송 대기 큐 ─────────────────────────────────
-# agent_id → [task_message, ...]
-# WS heartbeat/pull 시 드레인하여 전송.
-import threading as _threading
-_up_task_queue: dict[str, list] = {}
-_up_task_queue_lock = _threading.Lock()
-
-
-def _enqueue_up_task(agent_id: str, task_message: dict) -> None:
-    with _up_task_queue_lock:
-        _up_task_queue.setdefault(agent_id, []).append(task_message)
-
-
-def _drain_up_tasks(agent_id: str) -> list:
-    with _up_task_queue_lock:
-        tasks = _up_task_queue.pop(agent_id, [])
-    return tasks
+# USER_PRESENT_TASK 전송 대기 큐는 local_agent_router_up_queue(공유 leaf)로 분리. 파사드 재노출.
+from .local_agent_router_up_queue import _enqueue_up_task, _drain_up_tasks  # noqa: E402,F401
 
 logger = logging.getLogger(__name__)
 
