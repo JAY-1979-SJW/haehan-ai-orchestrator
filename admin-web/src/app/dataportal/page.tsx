@@ -112,7 +112,7 @@ export default function DataPortalPage() {
   }, [running]);
 
   return (
-    <PageShell title="공공데이터포털" description="data.go.kr · API 키 발급·관리·신청">
+    <PageShell title="공공데이터포털" description="data.go.kr · API 키 발급·관리·신청" chatDomain="dataportal">
       <div className="flex flex-col gap-4 w-full" style={{ minHeight: "calc(100vh - 120px)" }}>
 
         {/* 헤더 */}

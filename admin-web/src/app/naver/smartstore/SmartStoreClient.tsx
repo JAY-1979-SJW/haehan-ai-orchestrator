@@ -2,189 +2,22 @@
 /** SmartStoreClient — 13개 메뉴 기반 통합 관리 (대시보드/상품/주문·정산/리뷰·문의/액션 카탈로그/제출 이력) */
 import { useState, useCallback } from "react";
 import SmartStoreChat from "./SmartStoreChat";
-import type { ActionCatalog, ActionItem, CatalogSection, SubmitRecord } from "./page";
+import type { ActionCatalog, SubmitRecord } from "./page";
 import {
   getSmartStoreStatus,
   getSmartStoreHistory,
   getSmartStoreFormFields,
-  type SmartStoreStatusResponse,
   type SmartStoreHistoryResponse,
 } from "@/lib/assistant/api";
 import NotificationPanel from "./NotificationPanel";
+import { MenuCard } from "./components/MenuCard";
+import { ActionCard } from "./components/ActionCard";
+import { SectionBlock } from "./components/SectionBlock";
+import { HistoryRow } from "./components/HistoryRow";
+import { STATIC_MENUS, REGISTER_STEPS } from "./components/constants";
 
 type Tab = "chat" | "dashboard" | "products" | "orders" | "reviews" | "catalog" | "history";
 
-// ── 뱃지 스타일 ──
-const RISK_BADGE: Record<string, string> = {
-  read:     "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]",
-  prepare:  "bg-[#FFF7ED] text-[#C2410C] border-[#FED7AA]",
-  approval: "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]",
-  submit:   "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]",
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  implemented:       "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-  complete_baseline: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-  approval_gated:    "bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]",
-  planned:           "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]",
-};
-
-// ── 13개 메뉴 카드 색상 ──
-const MENU_CARD_COLOR: Record<string, string> = {
-  products:   "border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8]",
-  orders:     "border-[#BBF7D0] bg-[#F0FDF4] text-[#16A34A]",
-  settlement: "border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]",
-  reviews:    "border-[#FED7AA] bg-[#FFF7ED] text-[#C2410C]",
-};
-
-interface MenuItem {
-  key: string;
-  label: string;
-  features: string[];
-  locked?: boolean;
-}
-
-// ── 정적 메뉴 정의 (API fallback) ──
-const STATIC_MENUS: MenuItem[] = [
-  { key: "products",   label: "상품관리",     features: ["상품 목록", "상품 등록", "상품 수정", "카탈로그 가격관리", "배송정보 관리"] },
-  { key: "orders",     label: "판매관리",     features: ["주문 목록", "발송 처리", "반품/교환"] },
-  { key: "settlement", label: "정산관리",     features: ["정산 내역", "세금계산서"] },
-  { key: "reviews",    label: "문의/리뷰관리", features: ["고객 리뷰", "고객 문의", "리뷰 자동응답"] },
-  { key: "store",      label: "스토어관리",   features: ["스토어 정보", "공지사항", "구독 관리"] },
-  { key: "marketing",  label: "혜택/마케팅",  features: ["쿠폰", "할인", "포인트"] },
-  { key: "delivery",   label: "N배송 관리",   features: ["배송 현황", "반품 처리"] },
-  { key: "solution",   label: "커머스솔루션", features: ["솔루션 현황"] },
-  { key: "stats",      label: "데이터분석",   features: ["매출 통계", "방문 통계", "상품 분석"] },
-  { key: "ads",        label: "광고관리",     features: ["광고 현황"], locked: true },
-  { key: "promo",      label: "프로모션 관리", features: ["프로모션 목록"] },
-  { key: "connect",    label: "쇼핑 커넥트",  features: ["채널 연결"] },
-  { key: "seller",     label: "판매자 정보",  features: ["사업자 정보", "정책 관리"] },
-];
-
-// ── 상품 등록 5단계 ──
-const REGISTER_STEPS = [
-  { step: 1, title: "카테고리 선택", desc: "생활/건강 > 조명 > 무드등/취침등", required: true },
-  { step: 2, title: "기본 정보",     desc: "상품명, 판매가, 재고 입력", required: true },
-  { step: 3, title: "이미지 등록",   desc: "대표이미지(필수), 추가이미지(선택)", required: true },
-  { step: 4, title: "상세 설명",     desc: "스마트에디터 또는 HTML 작성", required: false },
-  { step: 5, title: "저장",          desc: "임시저장 → 최종 저장(노출설정)", required: true },
-];
-
-// ── 서브 컴포넌트 ──
-
-function MenuCard({ menu }: { menu: MenuItem }) {
-  const color = MENU_CARD_COLOR[menu.key] ?? "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]";
-  return (
-    <div className={`border rounded-xl p-3 ${color} relative`}>
-      {menu.locked && (
-        <span className="absolute top-2 right-2 text-[10px] bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded font-semibold">잠금</span>
-      )}
-      <p className="text-sm font-bold mb-1.5">{menu.label}</p>
-      <ul className="space-y-0.5">
-        {menu.features.map((f) => (
-          <li key={f} className="text-xs opacity-80 flex items-center gap-1">
-            <span className="w-1 h-1 rounded-full bg-current opacity-50 shrink-0" />
-            {f}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ActionCard({ action }: { action: ActionItem }) {
-  return (
-    <div className="border border-[#E5E7EB] rounded-lg p-3 bg-white hover:bg-[#F9FAFB] transition-colors">
-      <div className="flex items-start gap-2 flex-wrap">
-        <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold ${RISK_BADGE[action.risk] ?? RISK_BADGE.read}`}>
-          {action.risk}
-        </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_BADGE[action.status] ?? STATUS_BADGE.planned}`}>
-          {action.status}
-        </span>
-        <span className="text-xs font-mono text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded border border-[#E5E7EB]">
-          {action.action_id}
-        </span>
-      </div>
-      <p className="mt-1.5 text-sm font-medium text-[#111827]">{action.label}</p>
-      <p className="text-xs text-[#9CA3AF] font-mono truncate mt-0.5">{action.module}</p>
-      {action.required_fields && action.required_fields.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          <span className="text-xs text-[#6B7280]">필수:</span>
-          {action.required_fields.map((f) => (
-            <span key={f} className="text-xs bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded">{f}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SectionBlock({ section }: { section: CatalogSection }) {
-  const SECTION_COLOR: Record<string, string> = {
-    read:     "border-[#BBF7D0] bg-[#F0FDF4] text-[#16A34A]",
-    prepare:  "border-[#FED7AA] bg-[#FFF7ED] text-[#C2410C]",
-    approval: "border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]",
-    submit:   "border-[#FECACA] bg-[#FEF2F2] text-[#DC2626]",
-  };
-  const color = SECTION_COLOR[section.name] ?? "border-[#E5E7EB] bg-[#F9FAFB] text-[#6B7280]";
-  return (
-    <div className="space-y-2">
-      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${color}`}>
-        <span className="font-bold text-sm uppercase">{section.name}</span>
-        <span className="text-xs">총 {section.summary.total}개</span>
-        <span className="text-xs">구현 {section.summary.implemented}개</span>
-        {section.summary.approval_gated > 0 && (
-          <span className="text-xs">승인필요 {section.summary.approval_gated}개</span>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-2 pl-2">
-        {section.actions.map((a) => (
-          <ActionCard key={a.action_id} action={a} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HistoryRow({ record, index }: { record: Record<string, unknown>; index: number }) {
-  const [open, setOpen] = useState(false);
-  const ts = (record.generated_at ?? record.timestamp ?? "") as string;
-  const wf = (record.workflow ?? "-") as string;
-  const pt = (record.product_type ?? "-") as string;
-  const dr = record.dry_run === true;
-  return (
-    <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-2.5 bg-white hover:bg-[#F9FAFB] text-left"
-      >
-        <span className="text-xs text-[#9CA3AF] w-6 shrink-0">#{index + 1}</span>
-        <span className="text-xs font-mono text-[#6B7280] w-40 shrink-0 truncate">{ts}</span>
-        <span className="text-xs text-[#111827] font-medium">{wf}</span>
-        <span className="text-xs text-[#6B7280]">{pt}</span>
-        {dr ? (
-          <span className="ml-auto text-xs bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-1.5 py-0.5 rounded">dry_run</span>
-        ) : (
-          <span className="ml-auto text-xs bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded">live</span>
-        )}
-        <span className="text-xs text-[#9CA3AF] ml-2">{open ? "▲" : "▼"}</span>
-      </button>
-      {open && (
-        <div className="border-t border-[#E5E7EB] px-4 py-3 bg-[#F9FAFB] space-y-1">
-          {Object.entries(record).map(([k, v]) => (
-            <div key={k} className="flex gap-3 text-xs">
-              <span className="font-mono text-[#6B7280] w-32 shrink-0">{k}</span>
-              <span className="text-[#111827] break-all">{JSON.stringify(v)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Props ──
 interface Props {
   catalog: ActionCatalog | null;
   catalogError: string | null;
