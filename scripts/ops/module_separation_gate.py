@@ -53,6 +53,69 @@ SEPARATED_MODULES: list[dict] = [
         # 공유 leaf (_js 등 공통 헬퍼)
         "shared_leaves": {"common"},
     },
+    {
+        "name": "blog_mixin",
+        "root": "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py",
+        "max_root_loc": 30,
+        "leaf_glob": "ai_orchestrator/local_agent/browser/mixins/blog_mixin_*.py",
+        "shared_leaves": {"common"},
+    },
+    {
+        "name": "page_helper",
+        "root": "scripts/page_helper.py",
+        "max_root_loc": 45,
+        "leaf_glob": "scripts/page_helper_*.py",
+        "shared_leaves": {"common", "interact"},
+    },
+    {
+        "name": "navigator",
+        "root": "scripts/navigator.py",
+        "max_root_loc": 25,
+        "leaf_glob": "scripts/navigator_*.py",
+        "shared_leaves": {"common", "scan", "verify"},
+    },
+    {
+        "name": "local_agent_registry",
+        "root": "ai_orchestrator/local_agent_registry.py",
+        "max_root_loc": 75,
+        "leaf_glob": "ai_orchestrator/local_agent_registry_*.py",
+        "shared_leaves": {"common", "sanitize", "agent"},
+    },
+    {
+        "name": "google_workflows",
+        "root": "scripts/google/workflows.py",
+        "max_root_loc": 35,
+        "leaf_glob": "scripts/google/workflows_*.py",
+        "shared_leaves": {"common", "actions"},
+    },
+    {
+        "name": "naver_router",
+        "root": "scripts/naver/router.py",
+        "max_root_loc": 95,
+        "leaf_glob": "scripts/naver/router_*.py",
+        "shared_leaves": {"common"},
+    },
+    {
+        "name": "youtube_search",
+        "root": "scripts/google/youtube/search.py",
+        "max_root_loc": 40,
+        "leaf_glob": "scripts/google/youtube/search_*.py",
+        "shared_leaves": {"common", "search", "score", "transcript"},
+    },
+    {
+        "name": "youtube_research",
+        "root": "scripts/youtube/research.py",
+        "max_root_loc": 40,
+        "leaf_glob": "scripts/youtube/research_*.py",
+        "shared_leaves": {"common", "search", "analysis", "captions"},
+    },
+    {
+        "name": "module_quality_gate",
+        "root": "scripts/module_quality_gate.py",
+        "max_root_loc": 45,
+        "leaf_glob": "scripts/module_quality_gate_*.py",
+        "shared_leaves": {"common", "modules", "checks_repo", "checks_audit", "checks_web"},
+    },
 ]
 
 
