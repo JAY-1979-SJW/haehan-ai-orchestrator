@@ -226,6 +226,27 @@ export async function getAppLiveSummary(
   return getJson<AppLiveSummaryResponse>("/api/v1/app/live-summary", signal);
 }
 
+export interface AppDeploymentStatusResponse {
+  ok: boolean;
+  data: {
+    server_head: string | null;
+    origin_head: string | null;
+    state: string;
+    build_required: boolean;
+    sop_steps: string[];
+    deploy_action_allowed: boolean;
+    generated_at: string;
+  };
+  meta: { read_only: true; mutation_allowed: false };
+}
+
+/** GET /api/v1/app/deployment-status — 배포 상태 (read-only, 실행 없음) */
+export async function getAppDeploymentStatus(
+  signal?: AbortSignal,
+): Promise<AppDeploymentStatusResponse> {
+  return getJson<AppDeploymentStatusResponse>("/api/v1/app/deployment-status", signal);
+}
+
 // ── APP_LOGS_AUDIT_READONLY_VIEW_01 ───────────────────────────────────────
 
 export type { OpsAuditEventsResponse, OpsSummaryResponse } from "@/types/assistant";

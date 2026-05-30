@@ -7,6 +7,7 @@ Priority 1 read-only endpoints:
 - GET /app/providers
 - GET /app/storage/status
 - GET /app/live-summary
+- GET /app/deployment-status
 
 보기만 가능. 스위치 없음. mutation 일체 금지.
 """
@@ -136,6 +137,31 @@ def get_live_summary() -> dict[str, Any]:
                 "app_logs_bind_mount_status": "configured",
                 "audit_log_policy": "PERSISTENT_AUDIT_REQUIRED",
             },
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        "meta": {**_META_READ_ONLY},
+    }
+
+
+@app_status_router.get("/deployment-status")
+def get_deployment_status() -> dict[str, Any]:
+    """배포 상태 read-only 조회 — 배포 SOP/상태 안내만. git 명령/빌드/배포 실행 없음.
+
+    server_head/origin_head 비교나 배포 트리거는 하지 않는다(서버 액션 금지).
+    """
+    return {
+        "ok": True,
+        "data": {
+            "server_head": None,
+            "origin_head": None,
+            "state": "not_checked",
+            "build_required": False,
+            "sop_steps": [
+                "git pull origin master",
+                "docker compose build",
+                "docker compose up -d",
+            ],
+            "deploy_action_allowed": False,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         },
         "meta": {**_META_READ_ONLY},
