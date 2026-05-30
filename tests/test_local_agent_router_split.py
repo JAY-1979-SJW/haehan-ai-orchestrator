@@ -71,3 +71,15 @@ def test_list_collection_root_preserved():
     # APIRouter(prefix='/local-agents') 가 prefix 를 붙여 path 는 '/local-agents'
     paths = _main_paths()
     assert any(p.endswith("/local-agents") for p in paths), paths
+
+
+def test_up_queue_separated():
+    """USER_PRESENT 전송 대기 큐 상태/함수는 up_queue 공유 leaf 로 분리된다."""
+    from ai_orchestrator import local_agent_router_up_queue as q
+    assert hasattr(q, "_enqueue_up_task") and hasattr(q, "_drain_up_tasks")
+    # 동작 보존: enqueue → drain
+    q._enqueue_up_task("agentX", {"k": 1})
+    drained = q._drain_up_tasks("agentX")
+    assert drained == [{"k": 1}]
+    # 파사드: 루트에서도 동일 함수 사용 가능
+    from ai_orchestrator.local_agent_router import _enqueue_up_task  # noqa: F401
