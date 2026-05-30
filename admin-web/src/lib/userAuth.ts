@@ -1,5 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
 const TOKEN_KEY = "haehan_ai_token";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30일 (JWT_EXPIRE_DAYS와 일치)
 
 export interface UserInfo {
   id: string;
@@ -17,10 +18,19 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  // 미들웨어(서버사이드)가 읽을 수 있도록 쿠키에도 저장
+  document.cookie = [
+    `${TOKEN_KEY}=${encodeURIComponent(token)}`,
+    `path=/`,
+    `max-age=${COOKIE_MAX_AGE}`,
+    `samesite=lax`,
+    ...(location.protocol === "https:" ? ["secure"] : []),
+  ].join("; ");
 }
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; samesite=lax`;
 }
 
 async function post(path: string, body: object): Promise<Response> {
