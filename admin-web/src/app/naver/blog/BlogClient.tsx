@@ -3,10 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-  : "";
-
 type Tab = "write" | "drafts" | "seo";
 
 const CATEGORIES = ["일반", "건설·시공", "공사관리", "노무·안전", "장비·자재", "계약·하도급", "기타"];
@@ -56,8 +52,7 @@ export default function BlogClient() {
   const loadDrafts = useCallback(async () => {
     setDraftsLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/api/v1/naver/blog/drafts?limit=30`,
-        { headers: { Authorization: AUTH } });
+      const r = await fetch(`${API_BASE}/api/v1/naver/blog/drafts?limit=30`);
       const d = await r.json();
       setDrafts(d.items ?? []);
       setDraftsTotal(d.total ?? 0);
@@ -75,7 +70,7 @@ export default function BlogClient() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/naver/blog/compose`, {
         method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           body,
@@ -101,7 +96,7 @@ export default function BlogClient() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/naver/blog/seo`, {
         method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: seoTitle, body: seoBody }),
       });
       const d = await r.json();

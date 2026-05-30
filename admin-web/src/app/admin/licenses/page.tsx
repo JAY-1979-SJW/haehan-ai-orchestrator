@@ -3,10 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-  : "";
-
 interface License {
   key:         string;
   name:        string;
@@ -32,7 +28,7 @@ export default function LicensesPage() {
     setLoading(true);
     try {
       const r = await fetch(`${API_BASE}/api/v1/smartstore/admin/licenses`,
-        { headers: { Authorization: AUTH } });
+        { headers: {} });
       const d = await r.json();
       setLicenses(d.licenses ?? []);
     } finally { setLoading(false); }
@@ -46,7 +42,7 @@ export default function LicensesPage() {
     try {
       const r = await fetch(`${API_BASE}/api/v1/smartstore/admin/licenses/issue`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: AUTH },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, email: form.email, plan: form.plan, expire_days: Number(form.days) }),
       });
       const d = await r.json();
@@ -57,7 +53,7 @@ export default function LicensesPage() {
   const revoke = async (key: string) => {
     if (!confirm("라이선스를 취소하시겠습니까?")) return;
     await fetch(`${API_BASE}/api/v1/smartstore/admin/licenses/${encodeURIComponent(key)}`, {
-      method: "DELETE", headers: { Authorization: AUTH },
+      method: "DELETE",
     });
     load();
   };

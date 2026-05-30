@@ -3,10 +3,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-  : "";
-
 interface OAuthStatus {
   ok: boolean;
   status: string;
@@ -61,7 +57,6 @@ function UploadCard({ hasUpload }: { hasUpload: boolean }) {
       if (scheduled && publishAt) fd.append("publish_at", new Date(publishAt).toISOString());
       const r = await fetch(`${API_BASE}/api/v1/youtube/upload/prepare`, {
         method: "POST",
-        headers: { Authorization: AUTH },
         body: fd,
       });
       const d = await r.json();
@@ -82,7 +77,7 @@ function UploadCard({ hasUpload }: { hasUpload: boolean }) {
     try {
       const r = await fetch(`${API_BASE}/api/v1/youtube/upload/execute`, {
         method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan_path: planPath, confirm: "YOUTUBE_APPROVED_UPLOAD", dry_run: false }),
       });
       const d = await r.json();
@@ -279,8 +274,7 @@ export default function YouTubePage() {
   const loadStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/api/v1/oauth/youtube/status`,
-        { headers: { Authorization: AUTH } });
+      const r = await fetch(`${API_BASE}/api/v1/oauth/youtube/status`);
       setStatus(await r.json());
     } catch { setStatus({ ok: false, status: "error", scopes: [], has_upload_scope: false }); }
     finally { setLoading(false); }
@@ -293,8 +287,7 @@ export default function YouTubePage() {
     setAuthUrl("");
     try {
       const r = await fetch(
-        `${API_BASE}/api/v1/oauth/youtube/auth-url?scope=force-ssl+upload`,
-        { headers: { Authorization: AUTH } });
+        `${API_BASE}/api/v1/oauth/youtube/auth-url?scope=force-ssl+upload`);
       const d = await r.json();
       setAuthUrl(d.auth_url || "");
     } finally { setUrlLoading(false); }

@@ -3,14 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 
-const AUTH = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${process.env.NEXT_PUBLIC_API_USER ?? "owner"}:${process.env.NEXT_PUBLIC_API_PASS ?? ""}`)}`
-  : "";
-
 const api = (path: string, opts?: RequestInit) =>
   fetch(`${API_BASE}/api/v1/hanafax${path}`, {
     ...opts,
-    headers: { "Content-Type": "application/json", Authorization: AUTH, ...(opts?.headers ?? {}) },
+    headers: { "Content-Type": "application/json", ...(opts?.headers ?? {}) },
   });
 
 // ── 타입 ─────────────────────────────────────────────────────────────────────
