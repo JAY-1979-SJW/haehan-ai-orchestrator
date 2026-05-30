@@ -129,62 +129,11 @@ from .local_agent_router_user_present import user_present_router as _user_presen
 local_agent_router.include_router(_user_present_router)
 
 
-class AgentCleanupRequest(BaseModel):
-    """agent cleanup 요청."""
-    dry_run: bool = True
-    force: bool = False
-    confirm: Optional[str] = None
+# 정리(cleanup) 라우트군은 local_agent_router_cleanup 로 분리. 컴포지션 루트가 관리.
+from .local_agent_router_cleanup import cleanup_router as _cleanup_router  # noqa: E402
+local_agent_router.include_router(_cleanup_router)
 
 
-@local_agent_router.post("/{agent_id}/cleanup")
-def cleanup_local_agent(
-    agent_id: str,
-    body: AgentCleanupRequest,
-    user: dict = Depends(require_role("admin", "owner")),
-):
-    """smoke-test agent cleanup endpoint.
-
-    dry_run=true (기본): preview만 반환, 실제 삭제 안 함
-    force=true + confirm 정확 일치: 실제 cleanup 수행
-
-    Response:
-    {
-        "agent_id": str,
-        "dry_run": bool,
-        "eligible": bool,
-        "reason": str,
-        "status": "preview" | "cleaned" | "error",
-        "deleted": bool,
-        "task_count": int
-    }
-    """
-    actor = user.get("name", "system") if user else "system"
-
-    result = _reg.cleanup_agent_and_tasks(
-        agent_id,
-        dry_run=body.dry_run,
-        force=body.force,
-        confirm=body.confirm,
-        actor=actor,
-    )
-
-    # 실제 cleanup 수행 시 audit log 기록
-    if result.get("deleted"):
-        log_event(
-            "LOCAL_AGENT_CLEANUP", agent_id,
-            actor=actor,
-            role=user.get("role", "") if user else "",
-            note=(
-                f"status=cleanup_success"
-                f" task_count={result.get('task_count', 0)}"
-                f" tasks_deleted={result.get('tasks_deleted', 0)}"
-            ),
-        )
-
-    return result
-
-
-# 작업(task) 조회 라우트군은 local_agent_router_task 로 분리. 컴포지션 루트가 관리.
 from .local_agent_router_task import task_router as _task_router  # noqa: E402
 local_agent_router.include_router(_task_router)
 
