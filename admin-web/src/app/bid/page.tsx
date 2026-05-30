@@ -101,7 +101,7 @@ export default function BidPage() {
   };
 
   return (
-    <PageShell title="입찰분석 BID" description="G2B 나라장터 공고 조회 · AI 분석">
+    <PageShell title="입찰분석 BID" description="G2B 나라장터 공고 조회 · AI 분석" chatDomain="bid">
       <div className="space-y-4 w-full">
 
         {/* 헤더 */}

@@ -257,7 +257,7 @@ function QueuePanel() {
 // ── 메인 페이지 ───────────────────────────────────────────────────────────────
 export default function HanafaxPage() {
   return (
-    <PageShell title="하나팩스" description="팩스 발송 자동화">
+    <PageShell title="하나팩스" description="팩스 발송 자동화" chatDomain="hanafax">
       <div className="space-y-5 w-full">
         <StatusCard />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

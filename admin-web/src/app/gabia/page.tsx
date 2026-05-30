@@ -183,7 +183,7 @@ export default function GabiaPage() {
   }, [messages, running]);
 
   return (
-    <PageShell title="가비아" description="도메인·DNS·호스팅 AI 자동화">
+    <PageShell title="가비아" description="도메인·DNS·호스팅 AI 자동화" chatDomain="gabia">
       <div className="flex flex-col h-full w-full" style={{ minHeight: "calc(100vh - 120px)" }}>
 
         {/* 안내 배너 */}

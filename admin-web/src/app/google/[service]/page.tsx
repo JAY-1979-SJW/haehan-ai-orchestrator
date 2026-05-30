@@ -244,7 +244,7 @@ export default function GoogleServicePage() {
   }, [running, cfg.name]);
 
   return (
-    <PageShell title={`${cfg.icon} ${cfg.name}`} description="Google 앱 AI 에이전트">
+    <PageShell title={`${cfg.icon} ${cfg.name}`} description="Google 앱 AI 에이전트" chatDomain="google">
       <div className="flex flex-col h-full w-full gap-4" style={{ minHeight: "calc(100vh - 120px)" }}>
 
         {/* 헤더 */}
