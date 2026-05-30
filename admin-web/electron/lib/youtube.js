@@ -8,7 +8,10 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const { SERVER_URL, loadConfig } = require("./config");
-const { getMainWindow } = require("./mainWindow");
+// 통신 분리: mainWindow 모듈을 직접 import 하지 않는다.
+// 모달 부모 창 참조는 컴포지션 루트(main.js)가 provider 로 주입한다.
+let _getParentWindow = () => null;
+function setWindowProvider(fn) { _getParentWindow = typeof fn === "function" ? fn : () => null; }
 
 let youtubeOAuthWin = null;
 
@@ -51,7 +54,7 @@ function openYouTubeOAuthPopup(authUrl, licenseKey, resolve) {
     width: 520, height: 680,
     title: "YouTube 계정 연결",
     webPreferences: { nodeIntegration: false, contextIsolation: true },
-    parent: getMainWindow(), modal: true,
+    parent: _getParentWindow(), modal: true,
   });
 
   youtubeOAuthWin.loadURL(authUrl);
@@ -86,7 +89,7 @@ function openYouTubeOAuthPopup(authUrl, licenseKey, resolve) {
 
 async function ensureYouTubeAuth(licenseKey) {
   if (checkYouTubeToken()) return; // 이미 토큰 있음
-  const win = getMainWindow();
+  const win = _getParentWindow();
 
   const choice = await dialog.showMessageBox(win, {
     type: "question",
@@ -108,4 +111,4 @@ async function ensureYouTubeAuth(licenseKey) {
   }
 }
 
-module.exports = { checkYouTubeToken, startYouTubeOAuth, ensureYouTubeAuth };
+module.exports = { checkYouTubeToken, startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider };

@@ -1,14 +1,16 @@
 /**
- * lib/tray.js — 시스템 트레이
- * 트레이 버그 수정: '열기'·더블클릭 모두 showMainWindow()로 위임 →
- * 창이 숨김/최소화/파괴 어떤 상태든 확실히 앞으로 표시한다.
+ * lib/tray.js — 시스템 트레이 (이벤트 발행자)
+ *
+ * 통신 분리: sibling 모듈(mainWindow/youtube)을 직접 import 하지 않는다.
+ * 트레이 동작은 버스 이벤트로만 발행하고, 구독(실제 처리)은 컴포지션 루트(main.js)가 한다.
+ *   - 열기/클릭/더블클릭 → EVENTS.SHOW_WINDOW
+ *   - YouTube 재연결      → EVENTS.YOUTUBE_RECONNECT
+ *   - 종료는 electron app API 직접 호출(프레임워크, sibling 모듈 아님)
  */
 const { app, Tray, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { loadConfig } = require("./config");
-const { showMainWindow } = require("./mainWindow");
-const { ensureYouTubeAuth } = require("./youtube");
+const { bus, EVENTS } = require("./bus");
 
 let tray = null;
 
@@ -19,14 +21,14 @@ function createTray() {
   tray = new Tray(iconPath);
   tray.setToolTip("Haehan AI");
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: "열기", click: () => showMainWindow() },
-    { label: "YouTube 계정 재연결", click: () => ensureYouTubeAuth(loadConfig().license_key || "") },
+    { label: "열기", click: () => bus.emit(EVENTS.SHOW_WINDOW) },
+    { label: "YouTube 계정 재연결", click: () => bus.emit(EVENTS.YOUTUBE_RECONNECT) },
     { type: "separator" },
     { label: "종료", click: () => app.quit() },
   ]));
 
-  tray.on("click", () => showMainWindow());
-  tray.on("double-click", () => showMainWindow());
+  tray.on("click", () => bus.emit(EVENTS.SHOW_WINDOW));
+  tray.on("double-click", () => bus.emit(EVENTS.SHOW_WINDOW));
   return tray;
 }
 

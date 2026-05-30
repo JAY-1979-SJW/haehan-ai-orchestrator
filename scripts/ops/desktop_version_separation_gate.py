@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,12 +30,20 @@ LIB = ELECTRON / "lib"
 # 신버전 필수 모듈 (앱 실행 코드 모듈화 결과)
 REQUIRED_MODULES = [
     "config.js",
+    "bus.js",
     "agent.js",
     "mainWindow.js",
     "youtube.js",
     "licenseWindow.js",
     "tray.js",
 ]
+
+# 통신 분리 강제 규칙:
+#   - SHARED: 공유 계약(config)·통신 채널(bus) — 누구나 import 가능
+#   - LEAF:   기능 모듈 — 서로(sibling leaf)를 직접 import 금지, bus/주입으로만 통신
+#   - main.js(컴포지션 루트)는 예외 — 모든 모듈 wiring 허용
+SHARED_LIB_MODULES = {"config", "bus"}
+LEAF_LIB_MODULES = {"agent", "mainWindow", "youtube", "licenseWindow", "tray"}
 
 # main.js 가 각 모듈을 실제로 wiring 하는지 확인할 require 토큰
 REQUIRED_MAIN_REQUIRES = [
@@ -140,6 +149,21 @@ def run_gate() -> GateResult:
     if any("google-hub" in str(x) for x in files):
         result.add("FORBIDDEN_OLD_ARTIFACT", "package.json build.files 에 google-hub.html 참조 잔존")
 
+    # 6) 통신 분리: leaf 모듈이 sibling leaf 모듈을 직접 require 하면 위반
+    #    허용: SHARED(config/bus), 비-lib(electron, path, fs ...). main.js 는 예외(컴포지션 루트).
+    require_re = re.compile(r"""require\(\s*['"]\./([A-Za-z0-9_]+)['"]\s*\)""")
+    for leaf in sorted(LEAF_LIB_MODULES):
+        src = _read(LIB / f"{leaf}.js")
+        if not src:
+            continue
+        for dep in require_re.findall(src):
+            if dep in LEAF_LIB_MODULES and dep != leaf:
+                result.add(
+                    "LEAF_COUPLING",
+                    f"lib/{leaf}.js 가 sibling leaf 모듈 './{dep}' 를 직접 import "
+                    f"(bus 이벤트/주입으로 통신해야 함)",
+                )
+
     return result
 
 
@@ -149,7 +173,7 @@ def main() -> int:
     args = ap.parse_args()
 
     result = run_gate()
-    categories = ["FORBIDDEN_OLD_ARTIFACT", "MISSING_MODULE", "NON_MODULAR"]
+    categories = ["FORBIDDEN_OLD_ARTIFACT", "MISSING_MODULE", "NON_MODULAR", "LEAF_COUPLING"]
     counts = {c: result.count(c) for c in categories}
 
     if args.json:
