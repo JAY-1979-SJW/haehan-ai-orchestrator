@@ -1,0 +1,17 @@
+[Unit]
+Description=Haehan AI Orchestrator Deploy Trigger Daemon
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/apps/haehan-ai-orchestrator
+EnvironmentFile=/home/ubuntu/apps/haehan-ai-orchestrator/.env
+ExecStart=/usr/bin/python3 /home/ubuntu/apps/haehan-ai-orchestrator/scripts/ops/deploy_trigger_daemon.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
