@@ -101,35 +101,35 @@ function SendPanel() {
         <div>
           <label className="block text-xs font-medium text-[#374151] mb-1">수신 팩스번호 *</label>
           <input value={fax} onChange={(e) => setFax(e.target.value)} placeholder="02-XXXX-XXXX"
-            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]" />
+            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-[#374151] mb-1">수신자명</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="ABC건설"
-            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]" />
+            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]" />
         </div>
       </div>
 
       <div>
         <label className="block text-xs font-medium text-[#374151] mb-1">제목 *</label>
         <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="팩스 제목"
-          className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8]" />
+          className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]" />
       </div>
 
       <div>
         <label className="block text-xs font-medium text-[#374151] mb-1">본문</label>
         <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} placeholder="팩스 본문 내용"
-          className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] resize-none" />
+          className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none" />
       </div>
 
       <label className="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)}
-          className="w-4 h-4 rounded accent-[#1D4ED8]" />
+          className="w-4 h-4 rounded accent-[#F97316]" />
         <span className="text-xs text-[#374151]">팩스 발송을 승인합니다</span>
       </label>
 
       <button onClick={send} disabled={sending || !fax || !subject || !confirmed}
-        className="w-full py-2.5 rounded-xl bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-[#1E40AF] disabled:opacity-40 transition-colors">
+        className="w-full py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] disabled:opacity-40 transition-colors">
         {sending ? "발송 중..." : "팩스 발송"}
       </button>
 

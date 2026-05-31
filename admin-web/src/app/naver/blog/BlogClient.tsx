@@ -129,7 +129,7 @@ export default function BlogClient() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg font-bold text-[#111827]">네이버 블로그</span>
           <span className="text-xs bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-2 py-0.5 rounded font-semibold">승인 필요</span>
@@ -247,7 +247,7 @@ export default function BlogClient() {
                 className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316] resize-y" />
             </div>
             <button onClick={handleSeo} disabled={seoLoading || (!seoTitle.trim() && !seoBody.trim())}
-              className="px-4 py-2 bg-[#1D4ED8] text-white text-sm font-semibold rounded-lg hover:bg-[#1E40AF] disabled:opacity-50">
+              className="px-4 py-2 bg-[#F97316] text-white text-sm font-semibold rounded-lg hover:bg-[#EA580C] disabled:opacity-50">
               {seoLoading ? "분석 중…" : "SEO 분석"}
             </button>
             {seoError && <p className="text-xs text-[#DC2626]">오류: {seoError}</p>}
