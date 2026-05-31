@@ -271,7 +271,21 @@ async def gabia_chat(body: ChatRequest):
                     }
                 )
 
-            messages.append(msg)
+            # ChatCompletionMessage 객체를 dict로 변환해야 다음 API 호출에 전달 가능
+            messages.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                    "tool_calls": [
+                        {
+                            "id": tc.id,
+                            "type": "function",
+                            "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                        }
+                        for tc in (msg.tool_calls or [])
+                    ],
+                }
+            )
             messages.extend(tool_results)
 
     return StreamingResponse(
