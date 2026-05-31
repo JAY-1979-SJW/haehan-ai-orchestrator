@@ -6,6 +6,7 @@
   - 미정의 액션 호출 시 ActionResult(success=False, error_code="UNKNOWN_ACTION").
   - open_url 은 http(s) 만 허용. file:// / javascript: / data: 차단.
 """
+
 from __future__ import annotations
 
 import logging
@@ -15,14 +16,14 @@ import subprocess
 import sys
 import webbrowser
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from . import config
-from . import browser_actions
 from ai_orchestrator.browser_tool import route_browser_task_with_params
+
+from . import browser_actions, config
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,12 @@ class ActionResult:
 
 # ── 액션 구현 ────────────────────────────────────────────────────────────
 
+
 def action_ping(_params: dict) -> ActionResult:
     return ActionResult(
-        success=True, summary="pong", data={"pong_at": _now_iso()},
+        success=True,
+        summary="pong",
+        data={"pong_at": _now_iso()},
     )
 
 
@@ -86,11 +90,11 @@ def action_open_url(params: dict) -> ActionResult:
     if not isinstance(dry_run, bool):
         dry_run = str(dry_run).lower() in ("true", "1", "yes")
 
-    parsed = urlparse(url)
-
     if not dry_run:
         return ActionResult(
-            False, "open_url 실패", {"dry_run": False},
+            False,
+            "open_url 실패",
+            {"dry_run": False},
             "actual open_url requires approval and is not enabled in this stage",
             error_code="ACTUAL_EXECUTION_NOT_ENABLED",
         )
@@ -110,36 +114,53 @@ def action_open_url(params: dict) -> ActionResult:
     )
 
 
-_OPEN_URL_SENSITIVE_KEYS: frozenset[str] = frozenset({
-    "password", "passwd", "pwd", "token", "access_token",
-    "refresh_token", "session_token", "device_token",
-    "cookie", "cookies", "session", "client_secret",
-    "secret", "api_secret", "api_key", "auth", "authorization",
-})
+_OPEN_URL_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "session_token",
+        "device_token",
+        "cookie",
+        "cookies",
+        "session",
+        "client_secret",
+        "secret",
+        "api_secret",
+        "api_key",
+        "auth",
+        "authorization",
+    }
+)
 
 
-def _validate_open_url_params(url: str, params: dict) -> "ActionResult | None":
+def _validate_open_url_params(url: str, params: dict) -> ActionResult | None:
     """URL + 민감정보 공통 검증. 문제 있으면 ActionResult 반환, 없으면 None."""
     if not url:
-        return ActionResult(False, "open_url 실패", {}, "url 누락",
-                            error_code="MISSING_URL")
+        return ActionResult(False, "open_url 실패", {}, "url 누락", error_code="MISSING_URL")
     for key in params:
         if key.lower() in _OPEN_URL_SENSITIVE_KEYS:
             return ActionResult(
-                False, "open_url 차단", {},
+                False,
+                "open_url 차단",
+                {},
                 f"민감정보 포함: {key!r}",
                 error_code="SENSITIVE_DATA_DETECTED",
             )
     parsed = urlparse(url)
     if parsed.scheme.lower() not in config.URL_ALLOWED_SCHEMES:
         return ActionResult(
-            False, "open_url 차단", {},
+            False,
+            "open_url 차단",
+            {},
             f"허용되지 않은 스킴: {parsed.scheme!r} (http/https 만 허용)",
             error_code="URL_SCHEME_NOT_ALLOWED",
         )
     if not parsed.netloc:
-        return ActionResult(False, "open_url 차단", {},
-                            "잘못된 URL", error_code="INVALID_URL")
+        return ActionResult(False, "open_url 차단", {}, "잘못된 URL", error_code="INVALID_URL")
     return None
 
 
@@ -153,7 +174,9 @@ def action_open_url_execute(params: dict) -> ActionResult:
     approved = bool(params.get("_approved", False))
     if not approved:
         return ActionResult(
-            False, "open_url_execute 차단", {},
+            False,
+            "open_url_execute 차단",
+            {},
             "승인 플래그 없이 actual 실행 불가 (_approved=True 필요)",
             error_code="OPEN_URL_NOT_APPROVED",
         )
@@ -174,7 +197,9 @@ def action_open_url_execute(params: dict) -> ActionResult:
     except Exception as e:
         logger.exception("open_url_execute webbrowser.open 실패")
         return ActionResult(
-            False, "open_url_execute 실패", {},
+            False,
+            "open_url_execute 실패",
+            {},
             str(e)[:200],
             error_code="BROWSER_OPEN_FAILED",
         )
@@ -238,7 +263,9 @@ def action_capture_screenshot(params: dict) -> ActionResult:
     approved = bool(params.get("_approved"))
     if not approved:
         return ActionResult(
-            False, "capture_screenshot 승인 플래그 없음", {},
+            False,
+            "capture_screenshot 승인 플래그 없음",
+            {},
             "action 단계 방어: _approved 플래그 없이 실제 캡처 불가",
             error_code="SCREENSHOT_NOT_APPROVED",
         )
@@ -246,19 +273,21 @@ def action_capture_screenshot(params: dict) -> ActionResult:
     task_id = str(params.get("_task_id", "")).strip()
     if not task_id:
         return ActionResult(
-            False, "capture_screenshot task_id 없음", {},
+            False,
+            "capture_screenshot task_id 없음",
+            {},
             "_task_id 누락 — 파일명 생성 불가, 실제 실행 거절",
             error_code="SCREENSHOT_MISSING_TASK_ID",
         )
-    safe_task_id = "".join(
-        c for c in task_id if c.isalnum() or c in ("-", "_")
-    )[:32] or "untagged"
+    safe_task_id = "".join(c for c in task_id if c.isalnum() or c in ("-", "_"))[:32] or "untagged"
 
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
         return ActionResult(
-            False, "capture_screenshot 실패 (디렉터리 생성 불가)", {},
+            False,
+            "capture_screenshot 실패 (디렉터리 생성 불가)",
+            {},
             str(e)[:200],
             error_code="SCREENSHOT_DIR_UNAVAILABLE",
         )
@@ -270,7 +299,9 @@ def action_capture_screenshot(params: dict) -> ActionResult:
             raise ValueError("target_dir_not_dir")
     except (OSError, ValueError):
         return ActionResult(
-            False, "capture_screenshot 차단 (디렉터리 해석 실패)", {},
+            False,
+            "capture_screenshot 차단 (디렉터리 해석 실패)",
+            {},
             "LOCAL_AGENT_SCREENSHOT_DIR 이 비정상 상태",
             error_code="SCREENSHOT_PATH_ESCAPED",
         )
@@ -279,19 +310,23 @@ def action_capture_screenshot(params: dict) -> ActionResult:
         img, width, height = _grab_screen()
     except _ScreenshotDependencyMissing as e:
         return ActionResult(
-            False, "capture_screenshot 실패 (의존성 없음)", {},
+            False,
+            "capture_screenshot 실패 (의존성 없음)",
+            {},
             str(e),
             error_code="SCREENSHOT_DEPENDENCY_MISSING",
         )
     except Exception as e:  # pragma: no cover - 환경별 실패
         logger.exception("screenshot grab 실패")
         return ActionResult(
-            False, "capture_screenshot 실패", {},
+            False,
+            "capture_screenshot 실패",
+            {},
             str(e)[:200],
             error_code="SCREENSHOT_CAPTURE_FAILED",
         )
 
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     basename = f"screenshot_{safe_task_id}_{ts}.png"
     out_path = target_dir / basename
 
@@ -301,7 +336,9 @@ def action_capture_screenshot(params: dict) -> ActionResult:
         resolved.relative_to(resolved_dir)
     except (OSError, ValueError):
         return ActionResult(
-            False, "capture_screenshot 차단 (경로 이탈)", {},
+            False,
+            "capture_screenshot 차단 (경로 이탈)",
+            {},
             "지정된 스크린샷 디렉터리 바깥에 저장 시도",
             error_code="SCREENSHOT_PATH_ESCAPED",
         )
@@ -310,7 +347,9 @@ def action_capture_screenshot(params: dict) -> ActionResult:
         img.save(out_path, format="PNG")
     except OSError as e:
         return ActionResult(
-            False, "capture_screenshot 저장 실패", {},
+            False,
+            "capture_screenshot 저장 실패",
+            {},
             str(e)[:200],
             error_code="SCREENSHOT_WRITE_FAILED",
         )
@@ -322,10 +361,7 @@ def action_capture_screenshot(params: dict) -> ActionResult:
 
     # storage_ref: 디스크 경로가 아닌 참조 키. agent_id 가 주입돼 있으면 3-tier,
     # 없으면 2-tier 형식 ("{task_id}/{basename}"). 절대경로/드라이브 경로 금지.
-    agent_id_safe = "".join(
-        c for c in str(params.get("_agent_id", "")).strip()
-        if c.isalnum() or c in ("-", "_")
-    )[:64]
+    agent_id_safe = "".join(c for c in str(params.get("_agent_id", "")).strip() if c.isalnum() or c in ("-", "_"))[:64]
     if agent_id_safe:
         storage_ref = f"{agent_id_safe}/{safe_task_id}/{basename}"
     else:
@@ -349,9 +385,7 @@ def action_capture_screenshot(params: dict) -> ActionResult:
     }
     if approval_id:
         data["approval_id"] = approval_id
-    sensitive_warning = str(
-        params.get("_sensitive_screen_warning", "") or ""
-    ).strip()[:80]
+    sensitive_warning = str(params.get("_sensitive_screen_warning", "") or "").strip()[:80]
     if sensitive_warning:
         data["sensitive_screen_warning"] = sensitive_warning
 
@@ -374,10 +408,7 @@ def _capture_screenshot_dry_run(target_dir: Path) -> ActionResult:
     """
     dir_ready = _check_screenshot_dir_ready(target_dir)
     backend = _detect_backend()
-    summary = (
-        f"dry_run:true screenshot_dir_ready:{str(dir_ready).lower()} "
-        f"backend_available:{backend} upload:false"
-    )
+    summary = f"dry_run:true screenshot_dir_ready:{str(dir_ready).lower()} backend_available:{backend} upload:false"
     return ActionResult(
         success=True,
         summary=summary,
@@ -410,11 +441,13 @@ def _detect_backend() -> str:
     """캡처 백엔드 가용성만 판단. 실제 grab 은 하지 않는다."""
     try:
         from PIL import ImageGrab  # type: ignore  # noqa: F401
+
         return "ImageGrab"
     except ImportError:
         pass
     try:
         import mss  # type: ignore  # noqa: F401
+
         return "mss"
     except ImportError:
         pass
@@ -447,8 +480,7 @@ def _grab_screen():
         import mss.tools  # type: ignore
     except ImportError as e:
         raise _ScreenshotDependencyMissing(
-            "Pillow(ImageGrab) 또는 mss 가 필요합니다. "
-            "pip install pillow 또는 pip install mss"
+            "Pillow(ImageGrab) 또는 mss 가 필요합니다. pip install pillow 또는 pip install mss"
         ) from e
 
     class _MSSShot:
@@ -458,7 +490,7 @@ def _grab_screen():
             self._raw = raw
             self.size = (raw.width, raw.height)
 
-        def save(self, path, format="PNG"):  # noqa: A002 - match PIL signature
+        def save(self, path, format="PNG"):
             mss.tools.to_png(self._raw.rgb, self._raw.size, output=str(path))
 
     with mss.mss() as sct:
@@ -483,7 +515,9 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     html = params.get("html")
     if not isinstance(html, str):
         return ActionResult(
-            False, "web_analyze_html 실패", {},
+            False,
+            "web_analyze_html 실패",
+            {},
             "html 누락 또는 문자열이 아님",
             error_code="MISSING_HTML",
         )
@@ -491,7 +525,9 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     base_url = params.get("base_url")
     if base_url is not None and not isinstance(base_url, str):
         return ActionResult(
-            False, "web_analyze_html 실패", {},
+            False,
+            "web_analyze_html 실패",
+            {},
             "base_url 은 문자열이어야 함",
             error_code="INVALID_BASE_URL",
         )
@@ -499,19 +535,25 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     hints = params.get("keyword_hints") or []
     if not isinstance(hints, list):
         return ActionResult(
-            False, "web_analyze_html 실패", {},
+            False,
+            "web_analyze_html 실패",
+            {},
             "keyword_hints 는 list 여야 함",
             error_code="INVALID_HINTS",
         )
 
     try:
         page = web_reader.analyze_html_structure(
-            html=html, base_url=base_url, keyword_hints=hints,
+            html=html,
+            base_url=base_url,
+            keyword_hints=hints,
         )
     except Exception as e:
         logger.exception("web_analyze_html 실행 실패")
         return ActionResult(
-            False, "web_analyze_html 예외", {},
+            False,
+            "web_analyze_html 예외",
+            {},
             str(e)[:200],
             error_code="ANALYZE_FAILED",
         )
@@ -527,7 +569,8 @@ def action_web_analyze_html(params: dict) -> ActionResult:
         f"risky={len(risky)}"
     )
     return ActionResult(
-        success=True, summary=summary,
+        success=True,
+        summary=summary,
         data={"page_structure": page},
     )
 
@@ -547,8 +590,11 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     url = str(params.get("url", "")).strip()
     if not url:
         return ActionResult(
-            False, "web_open_url_readonly 실패", {},
-            "url 누락", error_code="MISSING_URL",
+            False,
+            "web_open_url_readonly 실패",
+            {},
+            "url 누락",
+            error_code="MISSING_URL",
         )
 
     wait_until = params.get("wait_until", "domcontentloaded")
@@ -584,7 +630,9 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
         headless = bool(headless)
     if headless and not background_approved:
         return ActionResult(
-            False, "web_open_url_readonly 백그라운드 거절", {},
+            False,
+            "web_open_url_readonly 백그라운드 거절",
+            {},
             "headless background execution requires user-approved background_approved=True",
             error_code="BACKGROUND_NOT_APPROVED",
         )
@@ -612,8 +660,11 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     except Exception as e:
         logger.exception("web_open_url_readonly 실행 실패")
         return ActionResult(
-            False, "web_open_url_readonly 예외", {},
-            str(e)[:200], error_code="BROWSER_OPEN_FAILED",
+            False,
+            "web_open_url_readonly 예외",
+            {},
+            str(e)[:200],
+            error_code="BROWSER_OPEN_FAILED",
         )
 
     if not isinstance(result, dict) or not result.get("ok"):
@@ -623,8 +674,11 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             code = str(result.get("error_code", code))
             reason = str(result.get("reason", reason))
         return ActionResult(
-            False, "web_open_url_readonly 거절", {},
-            reason[:200], error_code=code,
+            False,
+            "web_open_url_readonly 거절",
+            {},
+            reason[:200],
+            error_code=code,
         )
 
     # HTML 원문은 반환 data 에 포함하지 않는다.
@@ -651,7 +705,8 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
             "target_kind": _url_cat,
             "url_category": _url_cat,
             "final_url_sanitized": _safe_final_url(
-                str(result.get("current_url") or ""), _url_cat,
+                str(result.get("current_url") or ""),
+                _url_cat,
             ),
             "title": _title_raw[:300],
             "title_len": len(_title_raw),
@@ -697,8 +752,11 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     url = str(params.get("url", "")).strip()
     if not url:
         return ActionResult(
-            False, "web_probe_manual_login 실패", {},
-            "url 누락", error_code="MISSING_URL",
+            False,
+            "web_probe_manual_login 실패",
+            {},
+            "url 누락",
+            error_code="MISSING_URL",
         )
 
     kwargs: dict = {"url": url}
@@ -708,22 +766,26 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
                 kwargs[key] = int(params[key])
             except (TypeError, ValueError):
                 return ActionResult(
-                    False, "web_probe_manual_login 실패", {},
-                    f"{key} 값이 정수가 아님", error_code="INVALID_PARAM",
+                    False,
+                    "web_probe_manual_login 실패",
+                    {},
+                    f"{key} 값이 정수가 아님",
+                    error_code="INVALID_PARAM",
                 )
 
     for key in ("success_url_contains", "success_text_hints", "allowed_hosts"):
         if key in params and params[key] is not None:
             if not isinstance(params[key], list):
                 return ActionResult(
-                    False, "web_probe_manual_login 실패", {},
-                    f"{key} 는 list 여야 함", error_code="INVALID_PARAM",
+                    False,
+                    "web_probe_manual_login 실패",
+                    {},
+                    f"{key} 는 list 여야 함",
+                    error_code="INVALID_PARAM",
                 )
             kwargs[key] = list(params[key])
 
-    kwargs["allow_private_network"] = bool(
-        params.get("allow_private_network", False)
-    )
+    kwargs["allow_private_network"] = bool(params.get("allow_private_network", False))
 
     # 테스트 전용 주입 (프로덕션 호출에는 주어지지 않음).
     if "_browser_factory" in params:
@@ -736,8 +798,11 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     except Exception as e:
         logger.exception("web_probe_manual_login 실행 실패")
         return ActionResult(
-            False, "web_probe_manual_login 예외", {},
-            str(e)[:200], error_code="BROWSER_OPEN_FAILED",
+            False,
+            "web_probe_manual_login 예외",
+            {},
+            str(e)[:200],
+            error_code="BROWSER_OPEN_FAILED",
         )
 
     if not isinstance(result, dict) or not result.get("ok"):
@@ -746,17 +811,18 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
         data: dict = {}
         if isinstance(result, dict):
             code = str(result.get("error_code", code))
-            reason = str(
-                result.get("summary") or result.get("reason") or reason
-            )
+            reason = str(result.get("summary") or result.get("reason") or reason)
             data = {
                 "mode": result.get("mode"),
                 "initial": result.get("initial"),
                 "last_observation": result.get("last_observation"),
             }
         return ActionResult(
-            False, "web_probe_manual_login 거절", data,
-            reason[:200], error_code=code,
+            False,
+            "web_probe_manual_login 거절",
+            data,
+            reason[:200],
+            error_code=code,
         )
 
     after = result.get("after") or {}
@@ -776,7 +842,8 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
 
 
 def _action_browser_guarded(
-    action_name: str, params: dict,
+    action_name: str,
+    params: dict,
 ) -> ActionResult:
     """web_*_guarded 액션 공통 디스패처.
 
@@ -784,7 +851,6 @@ def _action_browser_guarded(
     success=True, approval_required=True, action_executed=False 로 반환한다.
     blocked 액션도 동일하게 즉시 거절된다 (차이: summary 에 blocked 표기).
     """
-    from . import browser_actions
 
     if not isinstance(params, dict):
         params = {}
@@ -792,29 +858,41 @@ def _action_browser_guarded(
     url = str(params.get("url", "")).strip()
     if not url:
         return ActionResult(
-            False, f"{action_name} 실패", {},
-            "url 누락", error_code="MISSING_URL",
+            False,
+            f"{action_name} 실패",
+            {},
+            "url 누락",
+            error_code="MISSING_URL",
         )
 
     selector = params.get("selector")
     if selector is not None and not isinstance(selector, str):
         return ActionResult(
-            False, f"{action_name} 실패", {},
-            "selector 는 문자열이어야 함", error_code="INVALID_SELECTOR",
+            False,
+            f"{action_name} 실패",
+            {},
+            "selector 는 문자열이어야 함",
+            error_code="INVALID_SELECTOR",
         )
 
     text = params.get("text")
     if text is not None and not isinstance(text, str):
         return ActionResult(
-            False, f"{action_name} 실패", {},
-            "text 는 문자열이어야 함", error_code="INVALID_TEXT",
+            False,
+            f"{action_name} 실패",
+            {},
+            "text 는 문자열이어야 함",
+            error_code="INVALID_TEXT",
         )
 
     value = params.get("value")
     if value is not None and not isinstance(value, (str, int, float)):
         return ActionResult(
-            False, f"{action_name} 실패", {},
-            "value 는 문자열/숫자여야 함", error_code="INVALID_VALUE",
+            False,
+            f"{action_name} 실패",
+            {},
+            "value 는 문자열/숫자여야 함",
+            error_code="INVALID_VALUE",
         )
     value_norm: str | None = None
     if value is not None:
@@ -839,7 +917,9 @@ def _action_browser_guarded(
     internal_action = internal_action_map.get(action_name)
     if internal_action is None:
         return ActionResult(
-            False, f"{action_name} 미등록", {},
+            False,
+            f"{action_name} 미등록",
+            {},
             "지원되지 않는 guarded 액션",
             error_code="UNKNOWN_ACTION",
         )
@@ -858,20 +938,27 @@ def _action_browser_guarded(
     except Exception as e:
         logger.exception("%s 실행 실패", action_name)
         return ActionResult(
-            False, f"{action_name} 예외", {},
-            str(e)[:200], error_code="BROWSER_ACTION_FAILED",
+            False,
+            f"{action_name} 예외",
+            {},
+            str(e)[:200],
+            error_code="BROWSER_ACTION_FAILED",
         )
 
     if not isinstance(result, dict):
         return ActionResult(
-            False, f"{action_name} 비정상 응답", {},
-            "result is not dict", error_code="BROWSER_ACTION_FAILED",
+            False,
+            f"{action_name} 비정상 응답",
+            {},
+            "result is not dict",
+            error_code="BROWSER_ACTION_FAILED",
         )
 
     # URL 검증 실패 / 의존성 없음 등은 ok=False.
     if not result.get("ok"):
         return ActionResult(
-            False, f"{action_name} 거절",
+            False,
+            f"{action_name} 거절",
             {
                 "risk": result.get("risk", "critical"),
                 "approval_required": bool(result.get("approval_required", True)),
@@ -912,7 +999,9 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     page_observation = params.get("page_observation")
     if not isinstance(page_observation, dict):
         return ActionResult(
-            False, "web_build_site_map_prompt 실패", {},
+            False,
+            "web_build_site_map_prompt 실패",
+            {},
             "page_observation dict 누락",
             error_code="MISSING_PAGE_OBSERVATION",
         )
@@ -920,7 +1009,9 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     user_goal = params.get("user_goal")
     if user_goal is not None and not isinstance(user_goal, str):
         return ActionResult(
-            False, "web_build_site_map_prompt 실패", {},
+            False,
+            "web_build_site_map_prompt 실패",
+            {},
             "user_goal 은 문자열이어야 함",
             error_code="INVALID_USER_GOAL",
         )
@@ -928,7 +1019,9 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     domain_profile = params.get("domain_profile")
     if domain_profile is not None and not isinstance(domain_profile, dict):
         return ActionResult(
-            False, "web_build_site_map_prompt 실패", {},
+            False,
+            "web_build_site_map_prompt 실패",
+            {},
             "domain_profile 은 dict 이어야 함",
             error_code="INVALID_DOMAIN_PROFILE",
         )
@@ -936,7 +1029,9 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     hints = params.get("keyword_hints")
     if hints is not None and not isinstance(hints, list):
         return ActionResult(
-            False, "web_build_site_map_prompt 실패", {},
+            False,
+            "web_build_site_map_prompt 실패",
+            {},
             "keyword_hints 는 list 여야 함",
             error_code="INVALID_HINTS",
         )
@@ -954,8 +1049,11 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     except Exception as e:
         logger.exception("web_build_site_map_prompt 실행 실패")
         return ActionResult(
-            False, "web_build_site_map_prompt 예외", {},
-            str(e)[:200], error_code="SITE_MAP_BUILD_FAILED",
+            False,
+            "web_build_site_map_prompt 예외",
+            {},
+            str(e)[:200],
+            error_code="SITE_MAP_BUILD_FAILED",
         )
 
     counts = (payload.get("page_summary") or {}).get("counts", {}) or {}
@@ -971,7 +1069,8 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
         f"safe={len(heur.get('safe_navigation_candidates') or [])}"
     )
     return ActionResult(
-        success=True, summary=summary,
+        success=True,
+        summary=summary,
         data={"site_map_prompt_payload": payload},
     )
 
@@ -1011,7 +1110,9 @@ def action_scan_file_tree(params: dict) -> ActionResult:
     root_path = str(params.get("root_path", "")).strip()
     if not root_path:
         return ActionResult(
-            False, "scan_file_tree 실패", {},
+            False,
+            "scan_file_tree 실패",
+            {},
             "root_path 누락",
             error_code="MISSING_ROOT_PATH",
         )
@@ -1027,7 +1128,9 @@ def action_scan_file_tree(params: dict) -> ActionResult:
                 kwargs[key] = int(params[key])
             except (TypeError, ValueError):
                 return ActionResult(
-                    False, "scan_file_tree 실패", {},
+                    False,
+                    "scan_file_tree 실패",
+                    {},
                     f"{key} 값이 정수가 아님",
                     error_code="INVALID_PARAM",
                 )
@@ -1041,7 +1144,9 @@ def action_scan_file_tree(params: dict) -> ActionResult:
     except Exception as e:
         logger.exception("scan_file_tree 실행 실패")
         return ActionResult(
-            False, "scan_file_tree 예외", {},
+            False,
+            "scan_file_tree 예외",
+            {},
             str(e)[:200],
             error_code="SCAN_FAILED",
         )
@@ -1050,7 +1155,10 @@ def action_scan_file_tree(params: dict) -> ActionResult:
         code = str(report.get("error_code", "SCAN_FAILED")) if isinstance(report, dict) else "SCAN_FAILED"
         summary = str(report.get("summary", "scan failed")) if isinstance(report, dict) else "scan failed"
         return ActionResult(
-            False, "scan_file_tree 거절", {}, summary,
+            False,
+            "scan_file_tree 거절",
+            {},
+            summary,
             error_code=code,
         )
 
@@ -1073,31 +1181,32 @@ def action_list_files_readonly(params: dict) -> ActionResult:
     target_path = Path(target).resolve()
     if not _is_under_allowed_dirs(target_path):
         return ActionResult(
-            False, "허용되지 않은 디렉터리", {"dir": str(target_path)},
+            False,
+            "허용되지 않은 디렉터리",
+            {"dir": str(target_path)},
             "READ_ONLY_DIRS 화이트리스트 외부 경로",
             error_code="DIR_NOT_ALLOWED",
         )
     if not target_path.exists() or not target_path.is_dir():
-        return ActionResult(False, "디렉터리 없음", {"dir": str(target_path)},
-                            error_code="DIR_NOT_FOUND")
+        return ActionResult(False, "디렉터리 없음", {"dir": str(target_path)}, error_code="DIR_NOT_FOUND")
 
     entries = []
     try:
         for p in sorted(target_path.iterdir()):
-            entries.append({
-                "name": p.name,
-                "is_dir": p.is_dir(),
-                "size": p.stat().st_size if p.is_file() else None,
-            })
+            entries.append(
+                {
+                    "name": p.name,
+                    "is_dir": p.is_dir(),
+                    "size": p.stat().st_size if p.is_file() else None,
+                }
+            )
     except OSError as e:
-        return ActionResult(False, "iterdir 실패", {"dir": str(target_path)},
-                            str(e), error_code="LIST_FAILED")
+        return ActionResult(False, "iterdir 실패", {"dir": str(target_path)}, str(e), error_code="LIST_FAILED")
     return ActionResult(
         success=True,
         summary=f"{len(entries)} entries",
         data={"dir": str(target_path), "entries": entries},
     )
-
 
 
 def action_browser_inspect(params: dict) -> ActionResult:
@@ -1146,9 +1255,9 @@ def action_cdp_run(params: dict) -> ActionResult:
     반환:
         ActionResult.data = {"output": "...", "exit_code": 0}
     """
-    site    = str(params.get("site", "google")).strip()
-    task    = str(params.get("task", "")).strip()
-    args    = params.get("args") or []
+    site = str(params.get("site", "google")).strip()
+    task = str(params.get("task", "")).strip()
+    args = params.get("args") or []
     timeout = int(params.get("timeout", 90))
     no_wait = bool(params.get("no_wait", True))
 
@@ -1175,8 +1284,7 @@ def action_cdp_run(params: dict) -> ActionResult:
         return ActionResult(
             success=success,
             summary=f"cdp {site}/{task} {'ok' if success else 'fail'}",
-            data={"output": output.strip(), "exit_code": proc.returncode,
-                  "site": site, "task": task, "args": args},
+            data={"output": output.strip(), "exit_code": proc.returncode, "site": site, "task": task, "args": args},
             error="" if success else output[-400:],
             error_code="" if success else "CDP_RUN_ERROR",
         )
@@ -1249,6 +1357,85 @@ def action_cad_execute(params: dict) -> ActionResult:
     )
 
 
+# ── KRAS 서식 액션 ────────────────────────────────────────────────────────
+
+
+def action_kras_form_create_session(params: dict) -> ActionResult:
+    """KRAS 서식 세션 생성 — prefill 자동 주입 포함.
+
+    params:
+      form_type   (str, 필수) — 예: "risk_assessment", "tbm_log"
+      project_id  (str|int)   — 미지정 시 KRAS_PROJECT_ID 환경변수 사용
+      site_id     (str|int)   — 선택
+    """
+    from . import kras_connector
+
+    form_type = str(params.get("form_type", "")).strip()
+    if not form_type:
+        return ActionResult(False, "form_type 필수", {}, "form_type 파라미터 없음", error_code="MISSING_PARAM")
+
+    project_id = params.get("project_id") or os.getenv("KRAS_PROJECT_ID", "")
+    if not project_id:
+        return ActionResult(
+            False,
+            "project_id 필수",
+            {},
+            "project_id 파라미터 또는 KRAS_PROJECT_ID 환경변수 없음",
+            error_code="MISSING_PARAM",
+        )
+
+    site_id = params.get("site_id")
+    try:
+        session = kras_connector.create_form_session(form_type, project_id, site_id)
+        return ActionResult(
+            success=True,
+            summary=f"KRAS 세션 생성: {session.get('display_name', form_type)}",
+            data=session,
+        )
+    except Exception as exc:
+        logger.exception("kras.form.create_session 실패")
+        return ActionResult(False, "KRAS 세션 생성 실패", {}, str(exc), error_code="KRAS_API_ERROR")
+
+
+def action_kras_form_get_session(params: dict) -> ActionResult:
+    """KRAS 서식 세션 상태 조회.
+
+    params:
+      session_id  (str, 필수)
+    """
+    from . import kras_connector
+
+    session_id = str(params.get("session_id", "")).strip()
+    if not session_id:
+        return ActionResult(False, "session_id 필수", {}, "session_id 파라미터 없음", error_code="MISSING_PARAM")
+    try:
+        session = kras_connector.get_form_session(session_id)
+        return ActionResult(
+            success=True,
+            summary=f"KRAS 세션: {session.get('status', '?')}",
+            data=session,
+        )
+    except Exception as exc:
+        logger.exception("kras.form.get_session 실패")
+        return ActionResult(False, "KRAS 세션 조회 실패", {}, str(exc), error_code="KRAS_API_ERROR")
+
+
+def action_kras_form_list_forms(_params: dict) -> ActionResult:
+    """KRAS 사용 가능한 서식 목록 조회."""
+    from . import kras_connector
+
+    try:
+        forms = kras_connector.list_forms()
+        return ActionResult(
+            success=True,
+            summary=f"KRAS 서식 {len(forms)}개",
+            data={"forms": forms, "count": len(forms)},
+        )
+    except Exception as exc:
+        logger.exception("kras.form.list_forms 실패")
+        return ActionResult(False, "KRAS 서식 목록 조회 실패", {}, str(exc), error_code="KRAS_API_ERROR")
+
+
 # ── 디스패치 ──────────────────────────────────────────────────────────────
 
 # 1단계에서 본 모듈에 노출되는 액션. 명시적으로 등록되지 않은 액션은
@@ -1277,26 +1464,39 @@ _ACTIONS = {
     "cad.status": action_cad_status,
     "cad.autocad_ping": action_cad_autocad_ping,
     "cad.execute": action_cad_execute,
+    # KRAS 서식 작성 연동 (kras_connector.py)
+    "kras.form.create_session": action_kras_form_create_session,
+    "kras.form.get_session": action_kras_form_get_session,
+    "kras.form.list_forms": action_kras_form_list_forms,
 }
 
 # 명시적 거절 액션 (오해 방지를 위해 별도 표기 — 등록 자체는 안 함)
-FORBIDDEN_ACTIONS: frozenset[str] = frozenset({
-    "delete_file", "upload_file", "modify_file", "execute_shell",
-})
+FORBIDDEN_ACTIONS: frozenset[str] = frozenset(
+    {
+        "delete_file",
+        "upload_file",
+        "modify_file",
+        "execute_shell",
+    }
+)
 
 
 def execute_action(action: str, params: dict) -> ActionResult:
     action = (action or "").strip().lower()
     if action in FORBIDDEN_ACTIONS:
         return ActionResult(
-            False, f"{action} 거절", {},
+            False,
+            f"{action} 거절",
+            {},
             "1단계 금지 액션 (파일 수정/삭제/전송, unrestricted shell)",
             error_code="ACTION_FORBIDDEN",
         )
     fn = _ACTIONS.get(action)
     if fn is None:
         return ActionResult(
-            False, f"{action} 미등록", {},
+            False,
+            f"{action} 미등록",
+            {},
             "지원되지 않는 액션",
             error_code="UNKNOWN_ACTION",
         )
@@ -1304,13 +1504,13 @@ def execute_action(action: str, params: dict) -> ActionResult:
         return fn(params or {})
     except Exception as e:
         logger.exception("action %s 실행 실패", action)
-        return ActionResult(False, f"{action} 예외", {}, str(e),
-                            error_code="EXECUTION_ERROR")
+        return ActionResult(False, f"{action} 예외", {}, str(e), error_code="EXECUTION_ERROR")
 
 
 # ── 헬퍼 ──────────────────────────────────────────────────────────────────
 
-def _safe_final_url(current_url: str, url_category: str) -> "str | None":
+
+def _safe_final_url(current_url: str, url_category: str) -> str | None:
     """final_url_sanitized 용 sanitize: query/fragment 제거, 허용 대상만 반환."""
     if url_category == "about_blank":
         return "about:blank"
@@ -1322,7 +1522,7 @@ def _safe_final_url(current_url: str, url_category: str) -> "str | None":
         if host in ("127.0.0.1", "localhost"):
             port_str = f":{parsed.port}" if parsed.port else ""
             return f"{parsed.scheme}://{host}{port_str}{parsed.path}"
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return None
 
@@ -1379,12 +1579,13 @@ def _build_audit_summary(
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _agent_version() -> str:
     try:
         from . import __version__
+
         return __version__
     except Exception:
         return "0.0.0"
@@ -1405,23 +1606,28 @@ def _is_under_allowed_dirs(path: Path) -> bool:
 
 
 __all__ = [
-    "ActionResult", "execute_action",
     "FORBIDDEN_ACTIONS",
-    "action_ping", "action_system_info", "action_list_allowed_apps",
-    "action_open_url", "action_open_url_execute", "action_capture_screenshot",
-    "action_list_files_readonly",
-    "action_scan_file_tree",
-    "action_web_analyze_html",
-    "action_web_open_url_readonly",
-    "action_web_build_site_map_prompt",
-    "action_web_click_guarded",
-    "action_web_type_guarded",
-    "action_web_select_guarded",
-    "action_web_scroll_guarded",
-    "action_web_probe_manual_login",
+    "ActionResult",
     "action_browser_inspect",
-    "action_cad_ping",
-    "action_cad_status",
     "action_cad_autocad_ping",
     "action_cad_execute",
+    "action_cad_ping",
+    "action_cad_status",
+    "action_capture_screenshot",
+    "action_list_allowed_apps",
+    "action_list_files_readonly",
+    "action_open_url",
+    "action_open_url_execute",
+    "action_ping",
+    "action_scan_file_tree",
+    "action_system_info",
+    "action_web_analyze_html",
+    "action_web_build_site_map_prompt",
+    "action_web_click_guarded",
+    "action_web_open_url_readonly",
+    "action_web_probe_manual_login",
+    "action_web_scroll_guarded",
+    "action_web_select_guarded",
+    "action_web_type_guarded",
+    "execute_action",
 ]
