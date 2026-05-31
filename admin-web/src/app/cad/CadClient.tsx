@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import TakeoffPanel from "./TakeoffPanel";
 import {
   PageShell,
   Btn,
@@ -78,7 +79,11 @@ function nextId() { return String(++_msgId); }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────────
 
+type Tab = "workspace" | "takeoff";
+
 export default function CadClient() {
+  const [tab, setTab] = useState<Tab>("takeoff");
+
   // ── 에이전트 / 태스크 상태 ──
   const [agents, setAgents] = useState<LocalAgent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("");
@@ -223,9 +228,35 @@ export default function CadClient() {
   return (
     <PageShell
       title="AI CAD 워크스페이스"
-      description="자연어로 AutoCAD를 제어하세요"
+      description="도면 파싱 · 물량산출 · AutoCAD 제어"
       headerRight={<span className="text-[11px] text-[#9CA3AF]">10초 자동 갱신</span>}
     >
+      {/* ── 탭 ── */}
+      <div className="flex gap-1 mb-5 border-b border-[#E5E7EB]">
+        {([
+          { id: "takeoff", label: "📐 물량산출", desc: "도면 파싱 · 실 목록 · AI 분석" },
+          { id: "workspace", label: "🤖 AI 워크스페이스", desc: "AutoCAD 자연어 제어" },
+        ] as { id: Tab; label: string; desc: string }[]).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="px-5 py-2.5 text-[12px] font-medium transition-colors"
+            style={{
+              borderBottom: tab === t.id ? "2px solid #F97316" : "2px solid transparent",
+              color: tab === t.id ? "#F97316" : "#6B7280",
+            }}
+            title={t.desc}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── 물량산출 탭 ── */}
+      {tab === "takeoff" && <TakeoffPanel />}
+
+      {/* ── AI 워크스페이스 탭 ── */}
+      {tab === "workspace" && <>
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <KpiCard title="온라인 에이전트" value={onlineCount} />
@@ -449,6 +480,8 @@ export default function CadClient() {
           </div>
         </div>
       </div>
+
+      </>}
 
       {/* 결과 상세 모달 */}
       {resultTask && (
