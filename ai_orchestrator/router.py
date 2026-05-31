@@ -98,6 +98,9 @@ router.include_router(kakao_setup_router)        # 카카오 앱 등록 실시�
 router.include_router(session_status_router)     # 앱별 로그인 세션 현황
 router.include_router(hanafax_router)            # 하나팩스 팩스 발송
 
+from .routers.deploy_router import router as deploy_router
+router.include_router(deploy_router)             # GitHub webhook → 자동 배포
+
 
 class TaskSubmit(BaseModel):
     task_id: str
