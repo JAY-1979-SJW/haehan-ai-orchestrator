@@ -3,16 +3,18 @@
 The gate is conservative by design: it audits all changes and only blocks in
 `--enforce` mode. Pre-commit installation uses staged changes only.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / "configs" / "quality_gate.json"
@@ -44,8 +46,7 @@ def _run_git(args: list[str]) -> str:
         ["git", *args],
         cwd=ROOT,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     if result.returncode != 0:
@@ -143,11 +144,27 @@ def _diff_for(path: str, *, staged: bool) -> str:
         return ""
 
 
+def _has_local_docker_cli(path: str, *, staged: bool) -> bool:
+    """Return True if added lines pass docker/docker-compose as a subprocess list first element."""
+    if not path.endswith(".py"):
+        return False
+    if path == "scripts/quality_gate.py":
+        return False
+    diff = _diff_for(path, staged=staged)
+    added = "\n".join(line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++"))
+    # Match ["docker", ... or ["docker-compose", ... patterns (subprocess list first element)
+    return (
+        '["docker",' in added or "['docker'," in added or '["docker-compose",' in added or "['docker-compose'," in added
+    )
+
+
 def _has_destructive_sql(path: str, config: dict[str, Any], *, staged: bool) -> bool:
     if not (path.startswith("migrations/") or path.endswith(".sql")):
         return False
     diff = _diff_for(path, staged=staged).lower()
-    added_lines = "\n".join(line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++"))
+    added_lines = "\n".join(
+        line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++")
+    )
     return any(token in added_lines for token in config["destructive_sql_tokens"])
 
 
@@ -195,7 +212,7 @@ def record_deploy_dry_run(command: list[str], *, exit_code: int, output: str = "
     path = ROOT / str(config.get("deploy_dry_run_evidence_path"))
     path.parent.mkdir(parents=True, exist_ok=True)
     record = {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "status": "ok" if exit_code == 0 else "failed",
         "command": command,
         "exit_code": exit_code,
@@ -287,6 +304,18 @@ def evaluate_changes(
                 "Deploy-related changes require successful deploy dry-run evidence before commit/deploy.",
             )
         )
+
+    if config.get("no_local_docker_cli"):
+        for row in files:
+            if _has_local_docker_cli(row.path, staged=staged):
+                issues.append(
+                    GateIssue(
+                        "error",
+                        "NO_LOCAL_DOCKER_CLI",
+                        row.path,
+                        "로컬 PC에 Docker CLI 없음 — subprocess로 docker/docker-compose 직접 호출 금지. 배포는 서버에서 수행.",
+                    )
+                )
 
     return issues
 

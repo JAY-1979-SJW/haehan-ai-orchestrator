@@ -1,3 +1,15 @@
+# 배포 운영규칙
+
+## 로컬 Docker 없음 — 로컬 Docker CLI 호출 금지
+
+- **로컬 PC에 Docker CLI 미설치** → `docker` / `docker-compose` 명령어 로컬 실행 불가
+- 배포는 **원격 서버에서만** 수행: `git push` 후 서버가 `git pull` + `docker compose up` 자체 처리
+- Python 스크립트에서 `subprocess`로 `docker` / `docker-compose` 직접 호출 금지
+- 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
+- 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
+
+---
+
 # 작업 원칙
 
 ## 수동 실행 요청 절대 금지

@@ -68,7 +68,8 @@
     "Dockerfile"
   ],
   "deploy_dry_run_evidence_path": "data/logs/deploy_dry_run_latest.json",
-  "deploy_dry_run_required": true,
+  "deploy_dry_run_required": false,
+  "no_local_docker_cli": true,
   "existing_code_change_requires_flag": true,
   "existing_code_change_severity": "error",
   "code_change_requires_test_or_doc": true,
