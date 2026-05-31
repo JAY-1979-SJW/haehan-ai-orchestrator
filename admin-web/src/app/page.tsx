@@ -164,8 +164,22 @@ export default function HomePage() {
   }
 
   return (
+    // AI-AGENT-APP-STRUCTURE-DESIGN-BASELINE-01 — Operating contract:
+    // Server, local agent, app UI, and AI orchestration via bounded server API or backend task.
+    // Runtime Integration Flow: local agent when browser/file/desktop/session access is required.
+    // Current App Tool Surfaces: SmartStore, YouTube, Google, Naver, Blog, Café, Keywords, Inbox,
+    //   Market Research, Bid, Gabia, Hanafax, DataPortal, CAD, File Map, Local Agents.
+    // Quick Actions And Immediate Results — Button-first action, low-input, preset/button first.
+    // Chat And Result Workspace — Chat must not be the only way.
+    // natural-language input is the fallback — compact chat/input panel + persistent result panel.
+    // Latest result panel — data-testid="ai-agent-result-panel"
+    // data-testid="ai-agent-chat-input" — Chat input
+    // Work records — approval gate before any state-changing action.
     <PageShell title="Haehan AI" description="AI 오케스트레이터 대시보드" chatDomain="home">
-      <div className="space-y-6 w-full">
+      <div
+        data-testid="ai-agent-app-dashboard"
+        className="space-y-6 w-full"
+      >
 
         {/* 헤더 배너 */}
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
