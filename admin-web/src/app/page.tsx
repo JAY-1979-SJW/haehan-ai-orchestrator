@@ -165,6 +165,7 @@ export default function HomePage() {
 
   return (
     // AI agent UI structure blueprint — docs/baseline/AI_AGENT_UI_STRUCTURE_BLUEPRINT.md
+    // External MCP Gateway — Registered MCP servers and owned app adapters — MCP Gateway readiness
     // AI-AGENT-APP-STRUCTURE-DESIGN-BASELINE-01 — Operating contract:
     // Server, local agent, app UI, and AI orchestration via bounded server API or backend task.
     // Runtime Integration Flow: local agent when browser/file/desktop/session access is required.

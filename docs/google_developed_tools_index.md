@@ -40,7 +40,7 @@ developed, gated, or verified in this repo. Check this index and
 | Session check | `python scripts\cdp_client.py google session-check` | read | implemented | `scripts/google/base.py`, `scripts/google/router.py` | console status |
 | User-present login | `python scripts\cdp_client.py google login` | user-present | implemented | `scripts/google/auth.py`, `scripts/google/router.py` | console status |
 | Basic feature catalog | `python scripts\cdp_client.py google basic catalog` | read | implemented | `scripts/google/workspace_basic.py` | console JSON |
-| Basic feature plan | `python scripts\cdp_client.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/google/work_mode_gate.py` | console JSON |
+| Basic feature plan | `python scripts\cdp_client.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/gates/work_mode_gate.py` | console JSON |
 | Gmail list/analyze/compose | `python scripts\cdp_client.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/gmail_analysis.py` | console/data |
 | Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/gate.py` | approval-gated action |
 | Drive wrapper | `python scripts\cdp_client.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/drive.py` | console/data |

@@ -72,7 +72,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/google/precision_report.py",
         "scripts/google/subdomain_logic.py",
         "scripts/google/tab_logic.py",
-        "scripts/google/work_mode_gate.py",
+        "scripts/gates/work_mode_gate.py",
         "scripts/google/workspace_basic.py",
         "scripts/google/youtube/search.py",
         "scripts/google/youtube_upload.py",

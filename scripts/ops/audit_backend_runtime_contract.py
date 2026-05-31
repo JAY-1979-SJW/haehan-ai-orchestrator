@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-EXPECTED_RUNTIME_ROUTES = 96
+EXPECTED_RUNTIME_ROUTES = 206  # 업데이트: 신규 커넥터(gabia/hanafax/user_auth/kakao/naver_blog) 추가 후
 
 REQUIRED_ROUTES = {
     ("GET", "/api/v1/auth/me"),

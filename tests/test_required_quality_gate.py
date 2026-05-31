@@ -97,7 +97,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/google/precision_report.py" in rendered
     assert "scripts/google/subdomain_logic.py" in rendered
     assert "scripts/google/tab_logic.py" in rendered
-    assert "scripts/google/work_mode_gate.py" in rendered
+    assert "scripts/gates/work_mode_gate.py" in rendered
     assert "scripts/google/workspace_basic.py" in rendered
     assert "scripts/google/youtube/search.py" in rendered
     assert "scripts/google/youtube_upload.py" in rendered
