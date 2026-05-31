@@ -10,6 +10,7 @@ Security:
   - Mask raw sk-* keys in logs.
   - Keep shell=True disabled.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,6 +32,7 @@ _CROSS_APP_APPROVAL_ERROR = "CROSS_APP_API_APPROVAL_REQUIRED"
 
 
 # ── 보안 유틸 ─────────────────────────────────────────────────────────────────
+
 
 def _safe_subprocess_env() -> dict[str, str]:
     """subprocess 실행 시 API 키를 제거한 환경변수 반환."""
@@ -69,7 +71,7 @@ def _cad_bridge_status_summary() -> dict[str, Any]:
             "host": status.host,
             "port": status.port,
         }
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("cad bridge status unavailable: %s", type(exc).__name__)
         return {
             "available": False,
@@ -148,18 +150,21 @@ async def _run_approved_api_bridge(req: dict, model: str) -> dict:
     }
 
 
-# ── Anthropic SDK 가용 여부 ───────────────────────────────────────────────────
+# ── OpenAI SDK 가용 여부 ─────────────────────────────────────────────────────
+
 
 def _anthropic_available() -> bool:
+    """하위 호환 — OpenAI 키 설정 여부로 대체."""
     try:
-        import anthropic  # noqa: F401
-        return bool(os.environ.get("ANTHROPIC_API_KEY"))
+        import openai  # noqa: F401
+
+        return bool(os.environ.get("OPENAI_API_KEY"))
     except ImportError:
         return False
 
 
-
 # ── Claude Code CLI 폴백 ──────────────────────────────────────────────────────
+
 
 async def _run_with_claude_code_cli(prompt: str) -> str:
     """Claude Code CLI (`claude`) 폴백 실행."""
@@ -172,7 +177,11 @@ async def _run_with_claude_code_cli(prompt: str) -> str:
     env.update({k: v for k, v in os.environ.items() if k.upper().endswith("_API_KEY")})
 
     proc = await asyncio.create_subprocess_exec(
-        claude_bin, "-p", prompt, "--output-format", "text",
+        claude_bin,
+        "-p",
+        prompt,
+        "--output-format",
+        "text",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=env,
@@ -187,6 +196,7 @@ async def _run_with_claude_code_cli(prompt: str) -> str:
 
 
 # ── 공개 API ──────────────────────────────────────────────────────────────────
+
 
 def _provider_error_response(
     error_code: str,
@@ -275,17 +285,17 @@ async def run_local_agent(req: dict) -> dict:
         )
 
     # provider preflight — 실행 전 가용 여부 확인
-    has_sdk_provider = _anthropic_available()
+    has_sdk_provider = _anthropic_available()  # OpenAI 키 여부
     has_cli_provider = bool(shutil.which("claude"))
 
     if not has_sdk_provider and not has_cli_provider:
-        has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+        has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
         if not has_api_key and not has_cli_provider:
             return _provider_error_response(
                 error_code="NO_PROVIDER_AVAILABLE",
-                user_message="AI 에이전트를 실행할 수 없습니다. API 키 또는 Claude CLI가 필요합니다.",
+                user_message="AI 에이전트를 실행할 수 없습니다. OPENAI_API_KEY 또는 Claude CLI가 필요합니다.",
                 next_actions=[
-                    "설정에서 Anthropic API 키를 등록하세요.",
+                    "설정에서 OpenAI API 키를 등록하세요.",
                     "Claude Code CLI 설치 상태를 확인하세요.",
                 ],
                 model=model,
@@ -294,23 +304,23 @@ async def run_local_agent(req: dict) -> dict:
         if has_api_key and not has_sdk_provider:
             return _provider_error_response(
                 error_code="PROVIDER_NOT_READY",
-                user_message="Anthropic SDK가 설치되어 있지 않습니다.",
-                next_actions=["pip install anthropic 으로 SDK를 설치하세요."],
+                user_message="OpenAI SDK가 설치되어 있지 않습니다.",
+                next_actions=["pip install openai 으로 SDK를 설치하세요."],
                 model=model,
                 can_retry=True,
             )
 
-    provider = "anthropic_sdk"
+    provider = "openai_sdk"
 
     try:
         if _anthropic_available():
             result = await asyncio.wait_for(
-                _run_with_anthropic_no_mcp(prompt, model),
+                _run_with_openai_no_mcp(prompt, model),
                 timeout=_AGENT_TIMEOUT_SEC,
             )
-            provider = "anthropic_sdk"
+            provider = "openai_sdk"
         else:
-            logger.info("ANTHROPIC_API_KEY missing; falling back to Claude Code CLI")
+            logger.info("OPENAI_API_KEY missing; falling back to Claude Code CLI")
             result = await asyncio.wait_for(
                 _run_with_claude_code_cli(prompt),
                 timeout=_AGENT_TIMEOUT_SEC,
@@ -319,7 +329,7 @@ async def run_local_agent(req: dict) -> dict:
 
         return {"ok": True, "result": result, "provider": provider, "model": model, "tool_calls": 0}
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return _provider_error_response(
             error_code="EXECUTION_TIMEOUT",
             user_message=f"AI agent execution exceeded {_AGENT_TIMEOUT_SEC} seconds.",
@@ -340,20 +350,20 @@ async def run_local_agent(req: dict) -> dict:
         )
 
 
+async def _run_with_openai_no_mcp(prompt: str, model: str) -> str:
+    """MCP 없이 OpenAI SDK 단순 호출."""
+    from openai import OpenAI
 
-async def _run_with_anthropic_no_mcp(prompt: str, model: str) -> str:
-    """MCP 없이 Anthropic SDK 단순 호출."""
-    import anthropic
-
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    client = OpenAI(api_key=api_key)
+    gpt_model = "gpt-4o-mini" if "claude" in model.lower() else model
     response = await asyncio.to_thread(
-        client.messages.create,
-        model=model,
+        client.chat.completions.create,
+        model=gpt_model,
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    texts = [b.text for b in response.content if hasattr(b, "text")]
-    return "\n".join(texts)
+    return response.choices[0].message.content or ""
 
 
 def local_agent_preflight() -> dict:
@@ -374,31 +384,32 @@ def local_agent_preflight() -> dict:
     # ── provider_status ──────────────────────────────────────────────────────
     has_sdk = False
     try:
-        import anthropic  # noqa: F401
+        import openai  # noqa: F401
+
         has_sdk = True
     except ImportError:
         pass
 
-    has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
     has_claude_cli = bool(shutil.which("claude"))
 
-    provider_anthropic_ok = has_sdk and has_api_key
+    provider_openai_ok = has_sdk and has_api_key
     provider_cli_ok = has_claude_cli
 
     if not has_api_key:
         blocking_reasons.append("API_KEY_MISSING")
     if not has_sdk and has_api_key:
-        blocking_reasons.append("ANTHROPIC_SDK_NOT_INSTALLED")
+        blocking_reasons.append("OPENAI_SDK_NOT_INSTALLED")
     if not has_claude_cli:
         blocking_reasons.append("CLAUDE_CLI_NOT_FOUND")
 
-    provider_available = provider_anthropic_ok or provider_cli_ok
+    provider_available = provider_openai_ok or provider_cli_ok
     if not provider_available:
         blocking_reasons.append("NO_PROVIDER_AVAILABLE")
 
     provider_status = {
-        "anthropic_sdk": {
-            "available": provider_anthropic_ok,
+        "openai_sdk": {
+            "available": provider_openai_ok,
             "sdk_installed": has_sdk,
             "api_key_set": has_api_key,
         },
@@ -502,6 +513,7 @@ def _safe_whoami_summary() -> dict:
     """role/source/admin 요약. 실패 시 안전값 반환, crash 금지."""
     try:
         from desktop.local_server import _resolve_whoami_role  # type: ignore
+
         role, source = _resolve_whoami_role()
         return {
             "available": True,
@@ -510,9 +522,10 @@ def _safe_whoami_summary() -> dict:
             "source": source,
         }
     except Exception:
-        pass
+        logger.debug("whoami primary lookup failed, trying env fallback")
     try:
         import os as _os
+
         role = _os.environ.get("HAEHAN_ROLE", "any").strip().lower()
         return {"available": True, "role": role, "admin": role in ("admin", "owner"), "source": "env_fallback"}
     except Exception:
@@ -523,6 +536,7 @@ def _safe_consent_summary() -> dict:
     """consent.json 상태 요약. 실패 시 agreed=False 로 안전 처리."""
     try:
         from desktop.main_launcher import check_consent_hook  # type: ignore
+
         result = check_consent_hook()
         return {
             "agreed": bool(result.get("agreed", False)),
@@ -558,6 +572,7 @@ def _build_user_guidance(blocking_reasons: list[str], can_run: bool) -> tuple[st
 def _check_cdp_available() -> bool:
     """CDP 브라우저 소켓 포트(9222) 리슨 여부 확인 — 실패해도 예외 없음."""
     import socket
+
     try:
         with socket.create_connection(("127.0.0.1", 9222), timeout=0.5):
             return True
@@ -569,12 +584,13 @@ def local_agent_health() -> dict:
     """로컬 AI 가용 여부 상태 반환."""
     has_sdk = False
     try:
-        import anthropic  # noqa: F401
+        import openai  # noqa: F401
+
         has_sdk = True
     except ImportError:
         pass
 
-    has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
     has_claude_cli = bool(shutil.which("claude"))
     cad_status = _cad_bridge_status_summary()
 
@@ -582,7 +598,7 @@ def local_agent_health() -> dict:
 
     return {
         "available": available,
-        "anthropic_sdk": has_sdk,
+        "openai_sdk": has_sdk,
         "api_key_set": has_api_key,
         "claude_cli": has_claude_cli,
         "mcp_server_found": False,
