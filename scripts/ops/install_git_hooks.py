@@ -13,7 +13,7 @@ import stat
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[2]  # scripts/ops/ → repo root
 # core.hooksPath = .githooks (프로젝트 설정)
 HOOKS_DIR = ROOT / ".githooks"
 
@@ -22,7 +22,7 @@ PRE_COMMIT = """\
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
 # staged .py 파일 목록
 r = subprocess.run(
@@ -66,7 +66,7 @@ PRE_PUSH = """\
 import subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
 # Claude Code AI 코드 검수
 result = subprocess.run(

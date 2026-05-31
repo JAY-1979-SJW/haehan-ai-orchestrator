@@ -1,14 +1,41 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env python3
+import subprocess, sys
+from pathlib import Path
 
-# ruff: staged .py 파일 문법/품질 검사
-STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
-if [ -n "$STAGED_PY" ]; then
-  echo "[pre-commit] ruff 문법/품질 검사"
-  python -m ruff check --fix --config configs/ruff.toml $STAGED_PY && \
-  python -m ruff format --config configs/ruff.toml $STAGED_PY && \
-  git add $STAGED_PY || true
-fi
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
-echo "[pre-commit] local agent browser runtime gates"
-python scripts/required_quality_gate.py
+# staged .py 파일 목록
+r = subprocess.run(
+    ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+    cwd=str(ROOT), capture_output=True, text=True,
+)
+py_files = [f for f in r.stdout.splitlines() if f.endswith(".py")]
+
+if py_files:
+    cfg = str(ROOT / "configs" / "ruff.toml")
+    # 1. ruff check (자동 수정 + 수정 불가 오류는 FAIL)
+    check = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--fix", "--config", cfg] + py_files,
+        cwd=str(ROOT),
+    )
+    # 2. ruff format
+    subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--config", cfg] + py_files,
+        cwd=str(ROOT),
+    )
+    # ruff check 이 수정한 파일을 다시 stage
+    subprocess.run(["git", "add"] + py_files, cwd=str(ROOT))
+    if check.returncode != 0:
+        print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
+        sys.exit(1)
+
+# 기존 quality gate (pre-commit 내장)
+from pathlib import Path as _P
+import importlib.util, os
+gate = ROOT / "scripts" / "quality_gate.py"
+if gate.exists():
+    result = subprocess.run(
+        [sys.executable, str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
+        cwd=str(ROOT),
+    )
+    sys.exit(result.returncode)
