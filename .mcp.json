@@ -6,6 +6,13 @@
       "args": ["-m", "ai_orchestrator.mcp_server"],
       "cwd": "C:\\work\\01. haehan-ai-orchestrator",
       "env": {}
+    },
+    "pc-inventory": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["scripts/local/pc_inventory_mcp.py"],
+      "cwd": "C:\\work\\01. haehan-ai-orchestrator",
+      "env": {}
     }
   }
 }
