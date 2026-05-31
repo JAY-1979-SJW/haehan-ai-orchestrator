@@ -31,7 +31,9 @@ logger = logging.getLogger("deploy_trigger_daemon")
 
 ROOT = Path(__file__).resolve().parents[2]
 DEPLOY_SCRIPT = ROOT / "scripts" / "ops" / "deploy_api_with_runtime_gates.py"
-HOST = "127.0.0.1"
+# 0.0.0.0 으로 바인드해야 컨테이너(host.docker.internal)에서 접근 가능.
+# HMAC-SHA256 서명 검증으로 무단 트리거를 차단한다.
+HOST = "0.0.0.0"
 PORT = 8401
 
 _lock = threading.Lock()
