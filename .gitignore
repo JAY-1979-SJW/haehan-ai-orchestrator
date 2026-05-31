@@ -185,6 +185,9 @@ data/_legacy_creds/
 # Generated management indexes
 data/worktree_change_index_latest.json
 
+# Auto-generated timestamped reports (runtime artifacts — commit selectively)
+docs/reports/youtube_market_research_*.md
+
 # Site automation generated artifacts
 # Runtime evidence stays local by default. Promote intentional evidence to
 # docs/reports/ or tests/fixtures/ when it must be reviewed or committed.
