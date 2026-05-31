@@ -1,8 +1,12 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env python3
+import subprocess, sys
+from pathlib import Path
 
-echo "[pre-push] required quality gate"
-python scripts/required_quality_gate.py
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
 
-echo "[pre-push] Claude Code AI 코드 검수"
-python scripts/ops/ai_code_review_gate.py
+# Claude Code AI 코드 검수
+result = subprocess.run(
+    [sys.executable, str(ROOT / "scripts" / "ops" / "ai_code_review_gate.py")],
+    cwd=str(ROOT),
+)
+sys.exit(result.returncode)
