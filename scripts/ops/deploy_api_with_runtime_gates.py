@@ -27,10 +27,10 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def run(args: list[str], *, timeout: int = 300) -> tuple[int, str, str]:
+def run(args: list[str], *, timeout: int = 300, cwd: str | None = None) -> tuple[int, str, str]:
     proc = subprocess.run(
         args,
-        cwd=str(ROOT),
+        cwd=cwd or str(ROOT),
         text=True,
         capture_output=True,
         timeout=timeout,
@@ -39,8 +39,8 @@ def run(args: list[str], *, timeout: int = 300) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
-def must(args: list[str], *, step: str, timeout: int = 300) -> dict[str, Any]:
-    code, out, err = run(args, timeout=timeout)
+def must(args: list[str], *, step: str, timeout: int = 300, cwd: str | None = None) -> dict[str, Any]:
+    code, out, err = run(args, timeout=timeout, cwd=cwd)
     result = {
         "step": step,
         "command": " ".join(args),
@@ -118,8 +118,8 @@ def payload_ok(payload: dict[str, Any]) -> bool:
     return isinstance(verdict, dict) and verdict.get("ok") is True
 
 
-def run_json_command(args: list[str], *, step: str, timeout: int = 240) -> dict[str, Any]:
-    code, out, err = run(args, timeout=timeout)
+def run_json_command(args: list[str], *, step: str, timeout: int = 240, cwd: str | None = None) -> dict[str, Any]:
+    code, out, err = run(args, timeout=timeout, cwd=cwd)
     try:
         payload = json.loads(out)
     except Exception:
@@ -142,6 +142,7 @@ def run_json_command(args: list[str], *, step: str, timeout: int = 240) -> dict[
 
 def deploy(args: argparse.Namespace) -> dict[str, Any]:
     steps: list[dict[str, Any]] = []
+    compose_dir = str(Path(args.compose_dir).resolve()) if args.compose_dir else str(ROOT)
     if not args.approved:
         raise RuntimeError("deployment_requires_--approved")
     if not git_status_clean():
@@ -151,13 +152,12 @@ def deploy(args: argparse.Namespace) -> dict[str, Any]:
     if not git_status_clean():
         raise RuntimeError("server_worktree_must_be_clean_after_pull")
     steps.append(must([sys.executable, "scripts/ops/verify_docker_context_policy.py"], step="docker_context_policy", timeout=120))
-    steps.append(run_json_command([
-        sys.executable,
-        "scripts/ops/verify_compose_project_boundary.py",
-        "--json",
-    ], step="compose_project_boundary", timeout=120))
-    steps.append(must(["docker", "compose", "build", args.service], step="docker_compose_build", timeout=900))
-    steps.append(must(["docker", "compose", "up", "-d", "--no-deps", args.service], step="docker_compose_up", timeout=300))
+    verify_boundary_cmd = [sys.executable, "scripts/ops/verify_compose_project_boundary.py", "--json"]
+    if args.compose_dir:
+        verify_boundary_cmd += ["--compose-dir", compose_dir]
+    steps.append(run_json_command(verify_boundary_cmd, step="compose_project_boundary", timeout=120))
+    steps.append(must(["docker", "compose", "build", args.service], step="docker_compose_build", timeout=900, cwd=compose_dir))
+    steps.append(must(["docker", "compose", "up", "-d", "--no-deps", args.service], step="docker_compose_up", timeout=300, cwd=compose_dir))
     steps.append(wait_health(args.health_url, attempts=args.health_attempts, delay=args.health_delay))
     steps.append(wait_container_healthy(args.container, attempts=args.health_attempts, delay=args.health_delay))
     steps.append(run_json_command([
@@ -194,6 +194,7 @@ def write_report(payload: dict[str, Any], path: Path) -> None:
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Deploy API with mandatory runtime integrity gates.")
     parser.add_argument("--approved", action="store_true", help="Required live deployment approval flag.")
+    parser.add_argument("--compose-dir", default=None, help="Directory containing docker-compose.yml (defaults to repo root).")
     parser.add_argument("--remote", default="origin")
     parser.add_argument("--branch", default="master")
     parser.add_argument("--service", default=DEFAULT_SERVICE)

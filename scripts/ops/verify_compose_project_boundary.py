@@ -15,7 +15,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT = "haehan-ai-orchestrator-api"
+PROJECT = "haehan-ai-orchestrator"
 
 EXPECTED_SERVICES = {
     "ai-orchestrator-api",
@@ -36,10 +36,10 @@ EXPECTED_IMAGES = {
     "file-map-executor": "haehan-ai-orchestrator-file-map-executor:local",
 }
 EXPECTED_NETWORKS = {
-    "default": {"name": "haehan-ai-orchestrator-api_default", "external": False},
+    "default": {"name": "haehan-ai-orchestrator_default", "external": False},
     "app_web": {"name": "app_web", "external": True},
 }
-PRIVATE_NETWORK = "haehan-ai-orchestrator-api_default"
+PRIVATE_NETWORK = "haehan-ai-orchestrator_default"
 EXPECTED_VOLUMES = {
     "api_storage": "haehan-ai-orchestrator-api-storage",
 }
@@ -64,10 +64,10 @@ REQUIRED_READ_ONLY_BINDS = {
 }
 
 
-def run(args: list[str], *, timeout: int = 120) -> tuple[int, str, str]:
+def run(args: list[str], *, timeout: int = 120, cwd: str | None = None) -> tuple[int, str, str]:
     proc = subprocess.run(
         args,
-        cwd=str(ROOT),
+        cwd=cwd or str(ROOT),
         text=True,
         capture_output=True,
         timeout=timeout,
@@ -76,8 +76,8 @@ def run(args: list[str], *, timeout: int = 120) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
-def compose_config() -> dict[str, Any]:
-    code, out, err = run(["docker", "compose", "config", "--format", "json"])
+def compose_config(cwd: str | None = None) -> dict[str, Any]:
+    code, out, err = run(["docker", "compose", "config", "--format", "json"], cwd=cwd)
     if code != 0:
         raise RuntimeError(f"docker compose config failed: {err[-500:]}")
     return json.loads(out)
@@ -237,12 +237,14 @@ def render_text(payload: dict[str, Any]) -> str:
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Verify compose project isolation boundaries.")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--compose-dir", default=None, help="Directory containing docker-compose.yml (defaults to repo root).")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    payload = evaluate(compose_config(), project_container_names(), network_container_names())
+    compose_dir = str(Path(args.compose_dir).resolve()) if args.compose_dir else None
+    payload = evaluate(compose_config(cwd=compose_dir), project_container_names(), network_container_names())
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     else:
