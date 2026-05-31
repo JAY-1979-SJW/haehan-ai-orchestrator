@@ -1,0 +1,36 @@
+# ruff 품질 게이트 설정
+# 참조: https://docs.astral.sh/ruff/configuration/
+
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (미사용 import, 미정의 변수 등)
+    "W",    # pycodestyle warnings
+    "B",    # flake8-bugbear (잠재적 버그)
+    "S",    # flake8-bandit (보안)
+    "I",    # isort (import 정렬)
+    "UP",   # pyupgrade (구버전 문법)
+    "RUF",  # ruff 전용 규칙
+]
+ignore = [
+    "E501",   # line too long — 120자 제한으로 완화
+    "S101",   # assert 사용 — 테스트 코드에서 정상
+    "S603",   # subprocess — 이 프로젝트에서 의도적 사용
+    "S607",   # subprocess partial path — 동일
+    "S608",   # SQL injection — ORM 사용
+    "B008",   # FastAPI Depends() 패턴
+    "B904",   # raise from — 기존 코드 호환
+    "UP007",  # X | Y 타입 힌트 — Python 3.9 호환
+    "RUF012", # mutable class attrs — FastAPI 패턴
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["S", "B"]
+"scripts/**" = ["S", "B"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

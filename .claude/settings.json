@@ -2,6 +2,17 @@
   "model": "sonnet",
   "enableAllProjectMcpServers": true,
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/ops/install_git_hooks.py",
+            "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|NotebookEdit",
