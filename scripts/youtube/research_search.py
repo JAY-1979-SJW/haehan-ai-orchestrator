@@ -1,27 +1,31 @@
 """YouTube video search and comment collection."""
+
 from __future__ import annotations
 
+import hashlib
+import json
+import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.youtube.research_common import (
-    _now,
-    _write_report,
+    LATEST_SEARCH,
+    ROOT,
+    SENSITIVE_WORDS,
+    YOUTUBE_COMMENT_THREADS_URL,
+    YOUTUBE_SEARCH_URL,
+    YOUTUBE_VIDEOS_URL,
     _api_key,
-    _oauth_token,
     _get_json,
     _get_json_oauth,
     _int_value,
+    _now,
+    _oauth_token,
     _top_keywords,
-    SENSITIVE_WORDS,
-    ROOT,
-    LATEST_SEARCH,
-    YOUTUBE_SEARCH_URL,
-    YOUTUBE_VIDEOS_URL,
-    YOUTUBE_COMMENT_THREADS_URL,
+    _write_report,
 )
-
+from security_utils import safe_preview
 
 COMMENT_CLASS_RULES: dict[str, tuple[str, ...]] = {
     "question": ("?", "how", "what", "why", "where", "when", "어떻게", "뭐", "왜", "질문", "궁금"),
@@ -31,6 +35,47 @@ COMMENT_CLASS_RULES: dict[str, tuple[str, ...]] = {
     "price_business": ("price", "cost", "money", "profit", "가격", "비용", "수익", "매출", "돈"),
     "implementation": ("setup", "install", "tool", "code", "api", "설정", "설치", "도구", "코드", "자동화"),
 }
+
+
+_SEARCH_CACHE_DB = Path(__file__).resolve().parents[2] / "data" / "youtube_search_cache.db"
+_CACHE_TTL_SECONDS = 86_400  # 24시간
+
+
+def _cache_key(query: str, max_results: int, captions_only: bool) -> str:
+    raw = f"{query.strip().lower()}|{max_results}|{captions_only}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _cache_get(key: str) -> dict | None:
+    try:
+        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
+        row = con.execute("SELECT payload, cached_at FROM search_cache WHERE cache_key=?", (key,)).fetchone()
+        con.close()
+        if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
+            return json.loads(row[0])
+    except Exception:
+        pass
+    return None
+
+
+def _cache_set(key: str, payload: dict) -> None:
+    try:
+        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
+        con.execute(
+            "CREATE TABLE IF NOT EXISTS search_cache (cache_key TEXT PRIMARY KEY, payload TEXT, cached_at REAL)"
+        )
+        con.execute(
+            "INSERT OR REPLACE INTO search_cache VALUES (?,?,?)",
+            (key, json.dumps(payload, ensure_ascii=False), time.time()),
+        )
+        # 72시간 초과 항목 자동 정리
+        con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
+        con.commit()
+        con.close()
+    except Exception:
+        pass
 
 
 def search_videos(
@@ -44,12 +89,21 @@ def search_videos(
 ) -> tuple[dict[str, Any], Path]:
     """Search public YouTube videos through the official Data API.
 
+    캐시: 동일 쿼리는 24시간 내 결과를 재사용해 API 유닛 소모를 절약한다.
     If no API key is configured, the result is blocked instead of falling back
     to scraping YouTube search pages.
     """
     key = _api_key(api_key)
     token = _oauth_token(oauth_token, token_file)
     max_results = max(1, min(int(max_results), 10))
+
+    # ── 캐시 조회 (API 유닛 절약) ──────────────────────────────────────────
+    ck = _cache_key(query, max_results, captions_only)
+    cached = _cache_get(ck)
+    if cached:
+        cached["cache_hit"] = True
+        return cached, _write_report(cached, LATEST_SEARCH, "youtube_research_search")
+
     if not key and not token:
         payload = {
             "schema_version": 1,
@@ -92,9 +146,9 @@ def search_videos(
     details: dict[str, Any] = {"items": []}
     if video_ids:
         detail_params: dict[str, str | int] = {
-                "part": "snippet,contentDetails,statistics",
-                "id": ",".join(video_ids),
-            }
+            "part": "snippet,contentDetails,statistics",
+            "id": ",".join(video_ids),
+        }
         if key:
             detail_params["key"] = key
             details = _get_json(YOUTUBE_VIDEOS_URL, detail_params)
