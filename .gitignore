@@ -117,6 +117,7 @@ cookies*
 session*
 !session_manager.py
 !test_session_manager.py
+!session_status_router.py
 storage_state*
 
 # Runtime execution artifacts (Stage 3~5)
