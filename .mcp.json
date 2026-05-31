@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "haehan-orchestrator": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "ai_orchestrator.mcp_server"],
+      "cwd": "C:\\work\\01. haehan-ai-orchestrator",
+      "env": {}
+    }
+  }
+}
