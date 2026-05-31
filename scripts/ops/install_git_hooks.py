@@ -6,15 +6,16 @@
 실행:
   python scripts/ops/install_git_hooks.py
 """
+
 from __future__ import annotations
 
-import os
 import stat
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HOOKS_DIR = ROOT / ".git" / "hooks"
+# core.hooksPath = .githooks (프로젝트 설정)
+HOOKS_DIR = ROOT / ".githooks"
 
 PRE_COMMIT = """\
 #!/usr/bin/env python3

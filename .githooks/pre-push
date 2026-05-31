@@ -3,3 +3,6 @@ set -eu
 
 echo "[pre-push] required quality gate"
 python scripts/required_quality_gate.py
+
+echo "[pre-push] Claude Code AI 코드 검수"
+python scripts/ops/ai_code_review_gate.py
