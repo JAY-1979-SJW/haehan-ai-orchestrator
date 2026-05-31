@@ -3,11 +3,13 @@ from fastapi import APIRouter
 
 from .oauth    import router as oauth_router
 from .research import router as research_router
+from .upload   import router as upload_router
 
 youtube_router = APIRouter(tags=["youtube"])
 
 # URL 경로는 기존과 동일하게 유지 (Google Cloud Console 콜백 URL 변경 불필요)
 youtube_router.include_router(oauth_router,    prefix="/oauth/youtube")
 youtube_router.include_router(research_router, prefix="/youtube/research")
+youtube_router.include_router(upload_router,   prefix="/youtube/upload")
 
 __all__ = ["youtube_router"]

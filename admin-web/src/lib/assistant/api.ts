@@ -7,15 +7,12 @@
  */
 import type { ApiConnectionMeta, ErrorKind } from "@/types/assistant";
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
+// 모든 API 호출은 /api/proxy/* 를 통해 서버사이드에서 인증 처리.
+// 클라이언트 번들에 자격증명 미포함.
+export const API_BASE = "/api/proxy";
 
-// 로컬 개발용 Basic 인증 헤더
-const _API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
-const _API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!";
-const _AUTH_HEADER = typeof btoa !== "undefined"
-  ? `Basic ${btoa(`${_API_USER}:${_API_PASS}`)}`
-  : "";
+// _AUTH_HEADER 제거 완료 — proxy 라우트(src/app/api/proxy/[...path]/route.ts)가 처리
+const _AUTH_HEADER = "";
 
 export type ApiState<T> =
   | { status: "idle" }
@@ -197,6 +194,56 @@ export async function getAppStorageStatus(
   return getJson<AppStorageStatusResponse>("/api/v1/app/storage/status", signal);
 }
 
+export interface AppLiveSummaryData {
+  service: string;
+  health_status: string;
+  post_tasks_dry_run_enabled: boolean;
+  phase1_closeout_status: string;
+  container_health_source: string;
+  read_only: boolean;
+  mutation_allowed: boolean;
+  storage: {
+    named_volume_status: string;
+    app_logs_bind_mount_status: string;
+    audit_log_policy: string;
+  };
+  generated_at: string;
+}
+
+export interface AppLiveSummaryResponse {
+  ok: boolean;
+  data: AppLiveSummaryData;
+  meta: { read_only: true; mutation_allowed: false };
+}
+
+/** GET /api/v1/app/live-summary — 실시간 운영 요약 (read-only) */
+export async function getAppLiveSummary(
+  signal?: AbortSignal,
+): Promise<AppLiveSummaryResponse> {
+  return getJson<AppLiveSummaryResponse>("/api/v1/app/live-summary", signal);
+}
+
+export interface AppDeploymentStatusResponse {
+  ok: boolean;
+  data: {
+    server_head: string | null;
+    origin_head: string | null;
+    state: string;
+    build_required: boolean;
+    sop_steps: string[];
+    deploy_action_allowed: boolean;
+    generated_at: string;
+  };
+  meta: { read_only: true; mutation_allowed: false };
+}
+
+/** GET /api/v1/app/deployment-status — 배포 상태 (read-only, 실행 없음) */
+export async function getAppDeploymentStatus(
+  signal?: AbortSignal,
+): Promise<AppDeploymentStatusResponse> {
+  return getJson<AppDeploymentStatusResponse>("/api/v1/app/deployment-status", signal);
+}
+
 // ── APP_LOGS_AUDIT_READONLY_VIEW_01 ───────────────────────────────────────
 
 export type { OpsAuditEventsResponse, OpsSummaryResponse } from "@/types/assistant";
@@ -210,6 +257,26 @@ export async function getOpsAuditEvents(signal?: AbortSignal) {
 /** GET /api/v1/ops/summary — read-only 운영 요약 */
 export async function getOpsSummary(signal?: AbortSignal) {
   return getJson<import("@/types/assistant").OpsSummaryResponse>("/api/v1/ops/summary", signal);
+}
+
+export interface OpsApprovalItem {
+  approvalId?: string;
+  taskKey?: string;
+  provider?: string;
+  riskLevel?: string;
+  state?: string;
+  requestedAt?: string;
+  [k: string]: unknown;
+}
+
+export interface OpsApprovalsResponse {
+  items: OpsApprovalItem[];
+  source: string;
+}
+
+/** GET /api/v1/ops/approvals — read-only 승인 대기 큐 (실행/승인 액션 없음) */
+export async function getOpsApprovals(signal?: AbortSignal): Promise<OpsApprovalsResponse> {
+  return getJson<OpsApprovalsResponse>("/api/v1/ops/approvals", signal);
 }
 
 // ── 네이버 뉴스 스크래핑 read-only ───────────────────────────────────────

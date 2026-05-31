@@ -16,7 +16,7 @@ export const metadata = {
 export default function BrowserApprovalsPage() {
   return (
     <PageShell
-      title="Browser Approvals"
+      title="브라우저 승인"
       description="Browser action approval workflow"
       chatDomain="ops"
     >

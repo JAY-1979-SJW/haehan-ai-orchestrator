@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from scripts.google import managed_console
-from scripts.google.work_mode_gate import build_google_work_mode_policy, normalize_google_work_mode
+from scripts.gates.work_mode_gate import build_google_work_mode_policy, normalize_google_work_mode
 from scripts.youtube import oauth
 
 

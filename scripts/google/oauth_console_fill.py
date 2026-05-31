@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from . import managed_console
-from .secret_action_gate import build_secret_action_policy
-from .work_mode_gate import build_google_work_mode_policy
+from scripts.gates.secret_action_gate import build_secret_action_policy
+from scripts.gates.work_mode_gate import build_google_work_mode_policy
 
 
 ROOT = Path(__file__).resolve().parents[2]

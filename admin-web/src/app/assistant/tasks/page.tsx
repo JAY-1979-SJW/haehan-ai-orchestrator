@@ -81,7 +81,7 @@ export default function TaskQueuePage() {
     inboxState.status === "success" ? inboxState.data.items.length : taskQueueMock.length;
 
   return (
-    <PageShell title="작업 목록" description="작업 큐 · 실행 현황" chatDomain="default">
+    <PageShell title="작업 목록" description="작업 큐 · 실행 현황" chatDomain="ops">
       <div className="space-y-4">
       {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">

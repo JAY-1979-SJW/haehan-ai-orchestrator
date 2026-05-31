@@ -582,6 +582,28 @@ def import_owner(module: str, known_modules: set[str]) -> str | None:
     return None
 
 
+def _import_time_nodes(tree: ast.AST) -> list[ast.AST]:
+    """모듈 import 시점에 '실제로 실행되는' import 노드만 수집한다.
+
+    함수/메서드(FunctionDef/AsyncFunctionDef) 본문 안의 import 는 호출 시점에만
+    실행되어 import-time 순환을 만들지 않는다(순환 회피용 표준 패턴). 이를 그래프
+    엣지로 세면 false-positive CIRCULAR_IMPORT 가 발생하므로 제외한다.
+    모듈/클래스 본문 및 모듈레벨 if·try·with 안의 import 는 import-time 이므로 포함.
+    """
+    nodes: list[ast.AST] = []
+
+    def walk(node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue  # 함수 본문(지연 import) → import-time 엣지 아님
+            if isinstance(child, (ast.Import, ast.ImportFrom)):
+                nodes.append(child)
+            walk(child)
+
+    walk(tree)
+    return nodes
+
+
 def parse_import_edges(rows: list[ClassifiedFile], root: Path = ROOT) -> dict[str, set[str]]:
     known = {
         module
@@ -598,7 +620,7 @@ def parse_import_edges(rows: list[ClassifiedFile], root: Path = ROOT) -> dict[st
             tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
         except SyntaxError:
             continue
-        for node in ast.walk(tree):
+        for node in _import_time_nodes(tree):
             imported: list[str] = []
             if isinstance(node, ast.Import):
                 imported = [alias.name for alias in node.names]
@@ -905,9 +927,22 @@ def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) ->
     return issues
 
 
+def _is_package_containment(a: str, b: str) -> bool:
+    """a 와 b 가 부모-자식(패키지 containment) 관계인가 (둘 중 하나가 다른 쪽의 조상 패키지)."""
+    return a == b or a.startswith(b + ".") or b.startswith(a + ".")
+
+
 def check_circular_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> dict:
     graph = parse_import_edges(rows, root)
-    cycles = find_cycles(graph)
+    # 순환 탐지용 그래프: 패키지↔자기 서브모듈(부모-자식) 엣지 제외.
+    # __init__ 가 서브모듈을 재노출하고 서브모듈이 패키지 이름을 import 하는 패턴은
+    # cross-component 순환이 아니라 동일 패키지 내부 재노출이므로 false-positive 다.
+    # 형제/무관 모듈 간 실제 순환은 그대로 탐지된다.
+    cycle_graph = {
+        module: {t for t in targets if not _is_package_containment(module, t)}
+        for module, targets in graph.items()
+    }
+    cycles = find_cycles(cycle_graph)
     return {
         "module_count": len(graph),
         "edge_count": sum(len(v) for v in graph.values()),
