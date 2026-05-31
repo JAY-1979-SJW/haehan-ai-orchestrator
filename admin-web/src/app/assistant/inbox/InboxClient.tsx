@@ -221,7 +221,7 @@ function ComposeModal({ onClose }: { onClose: () => void }) {
             <div className="flex justify-end gap-2 pt-1">
               <button onClick={onClose} className="text-xs px-4 py-2 border border-[#E5E7EB] rounded text-[#374151] hover:bg-[#F3F4F6]">취소</button>
               <button onClick={handlePreview} disabled={busy}
-                className="text-xs px-4 py-2 bg-[#1D4ED8] text-white rounded hover:bg-[#1E40AF] disabled:opacity-50">
+                className="text-xs px-4 py-2 bg-[#F97316] text-white rounded hover:bg-[#EA580C] disabled:opacity-50">
                 {busy ? "확인 중…" : "다음 — 내용 확인"}
               </button>
             </div>
@@ -254,7 +254,7 @@ function ComposeModal({ onClose }: { onClose: () => void }) {
           <div className="p-8 text-center">
             <div className="text-2xl mb-2">✓</div>
             <p className="text-sm font-semibold text-[#15803D]">메일이 발송되었습니다.</p>
-            <button onClick={onClose} className="mt-4 text-xs px-4 py-2 bg-[#1D4ED8] text-white rounded hover:bg-[#1E40AF]">닫기</button>
+            <button onClick={onClose} className="mt-4 text-xs px-4 py-2 bg-[#F97316] text-white rounded hover:bg-[#EA580C]">닫기</button>
           </div>
         )}
 
@@ -338,7 +338,7 @@ export function InboxClient() {
           </button>
           <button
             onClick={() => setShowCompose(true)}
-            className="text-xs px-3 py-1 bg-[#1D4ED8] text-white rounded hover:bg-[#1E40AF]"
+            className="text-xs px-3 py-1 bg-[#F97316] text-white rounded hover:bg-[#EA580C]"
           >
             메일 쓰기
           </button>

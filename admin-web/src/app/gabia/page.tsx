@@ -337,10 +337,10 @@ export default function GabiaPage() {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
             placeholder="가비아 업무를 지시하세요 (예: autowork DNS A 레코드 추가해줘)"
             disabled={running}
-            className="flex-1 border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] focus:border-transparent disabled:opacity-50"
+            className="flex-1 border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent disabled:opacity-50"
           />
           <button onClick={() => send(input)} disabled={running || !input.trim()}
-            className="px-5 py-2.5 rounded-xl bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-[#1E40AF] disabled:opacity-40 transition-colors">
+            className="px-5 py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] disabled:opacity-40 transition-colors">
             {running ? "실행 중" : "전송"}
           </button>
         </div>

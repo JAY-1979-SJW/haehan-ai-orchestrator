@@ -89,7 +89,7 @@ export default function NewsPage() {
       <div className="space-y-4">
       <ReadOnlyModeBanner />
 
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg font-bold text-[#111827]">네이버 뉴스</span>
           <span className="text-xs bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] px-2 py-0.5 rounded font-semibold">
@@ -105,7 +105,7 @@ export default function NewsPage() {
               onClick={() => setTab(t.id)}
               className={`text-sm px-4 py-2 -mb-px border-b-2 transition-colors ${
                 tab === t.id
-                  ? "border-[#1D4ED8] text-[#1D4ED8] font-semibold"
+                  ? "border-[#F97316] text-[#F97316] font-semibold"
                   : "border-transparent text-[#6B7280] hover:text-[#111827]"
               }`}
             >
@@ -121,7 +121,7 @@ export default function NewsPage() {
               <button
                 onClick={loadMain}
                 disabled={mainLoading}
-                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg disabled:opacity-50"
+                className="px-4 py-2 bg-[#F97316] text-white text-sm rounded-lg disabled:opacity-50"
               >
                 {mainLoading ? "불러오는 중…" : "메인 뉴스 불러오기"}
               </button>
@@ -173,12 +173,12 @@ export default function NewsPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && doSearch()}
                 placeholder="검색어 입력 후 Enter"
-                className="flex-1 border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1D4ED8]"
+                className="flex-1 border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
               />
               <button
                 onClick={doSearch}
                 disabled={searchLoading || !query.trim()}
-                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg disabled:opacity-50"
+                className="px-4 py-2 bg-[#F97316] text-white text-sm rounded-lg disabled:opacity-50"
               >
                 {searchLoading ? "검색 중…" : "검색"}
               </button>
@@ -227,12 +227,12 @@ export default function NewsPage() {
                 value={articleUrl}
                 onChange={(e) => setArticleUrl(e.target.value)}
                 placeholder="https://n.news.naver.com/article/..."
-                className="flex-1 border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1D4ED8]"
+                className="flex-1 border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
               />
               <button
                 onClick={loadArticle}
                 disabled={articleLoading || !articleUrl.trim()}
-                className="px-4 py-2 bg-[#1D4ED8] text-white text-sm rounded-lg disabled:opacity-50"
+                className="px-4 py-2 bg-[#F97316] text-white text-sm rounded-lg disabled:opacity-50"
               >
                 {articleLoading ? "불러오는 중…" : "불러오기"}
               </button>
