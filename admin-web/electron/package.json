@@ -24,7 +24,8 @@
       "icon.png"
     ],
     "extraResources": [
-      { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] }
+      { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] },
+      { "from": "../../dist/haehan-server", "to": "server/haehan-server" }
     ],
     "win": {
       "target": [
