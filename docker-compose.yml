@@ -2,6 +2,7 @@
 #   이 compose 는 "신규 FastAPI 인증/RBAC API" 전용이다.
 #   기존 ai-orchestrator-dashboard.service / ai-orchestrator-monitor.service
 #   (systemd) 는 이 compose 로 관리하지 않는다. 서비스는 단 1개.
+name: haehan-ai-orchestrator
 version: "3.9"
 
 services:
