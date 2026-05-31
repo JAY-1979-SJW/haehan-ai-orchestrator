@@ -1,0 +1,129 @@
+"""CDP 공통 헬퍼 — 백그라운드 스레드로 이벤트 범람 처리."""
+import json, base64, urllib.request, websocket, time, threading
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SHOT_PATH = ROOT / "data" / "browser_screenshot.png"
+
+
+class CDP:
+    def __init__(self, port: int = 9222):
+        self._port = port
+        self._pending: dict = {}
+        self._results: dict = {}
+        self._callbacks: dict = {}
+        self._lock = threading.Lock()
+        self._seq = 0
+        self._alive = True
+        self._ws = self._connect()
+        threading.Thread(target=self._reader, daemon=True).start()
+
+    def _get_ws_url(self) -> str:
+        with urllib.request.urlopen(f"http://127.0.0.1:{self._port}/json") as r:
+            tabs = json.loads(r.read())
+        page_tab = next((t for t in tabs if t.get("type") == "page"), tabs[0])
+        return page_tab["webSocketDebuggerUrl"]
+
+    def _connect(self):
+        return websocket.create_connection(self._get_ws_url(), timeout=None)
+
+    def _reconnect(self):
+        """연결이 끊기면 재연결."""
+        for _ in range(5):
+            try:
+                time.sleep(0.5)
+                self._ws = self._connect()
+                return True
+            except Exception:
+                pass
+        return False
+
+    def on(self, method: str, callback):
+        """CDP 이벤트 콜백 등록. callback(params) 형태."""
+        with self._lock:
+            self._callbacks[method] = callback
+
+    def off(self, method: str):
+        with self._lock:
+            self._callbacks.pop(method, None)
+
+    def _reader(self):
+        while self._alive:
+            try:
+                raw = self._ws.recv()
+                if not raw:          # 빈 문자열 = 연결 종료
+                    raise EOFError("empty recv")
+                msg = json.loads(raw)
+                mid = msg.get("id")
+                method = msg.get("method", "")
+                if mid:
+                    with self._lock:
+                        self._results[mid] = msg
+                        ev = self._pending.get(mid)
+                    if ev:
+                        ev.set()
+                elif method:
+                    with self._lock:
+                        cb = self._callbacks.get(method)
+                    if cb:
+                        try:
+                            cb(msg.get("params", {}))
+                        except Exception:
+                            pass
+            except Exception:
+                if self._alive:
+                    self._reconnect()  # 끊기면 재연결 후 계속
+
+    def send(self, method: str, params: dict | None = None, timeout: int = 15) -> dict:
+        with self._lock:
+            self._seq += 1
+            mid = self._seq
+            ev = threading.Event()
+            self._pending[mid] = ev
+        self._ws.send(json.dumps({"id": mid, "method": method, "params": params or {}}))
+        ev.wait(timeout)
+        with self._lock:
+            self._pending.pop(mid, None)
+            return self._results.pop(mid, {})
+
+    def js(self, expr: str, timeout: int = 8) -> str:
+        r = self.send("Runtime.evaluate", {"expression": expr, "timeout": timeout * 1000}, timeout + 2)
+        res = r.get("result", {}).get("result", {})
+        return res.get("value", res.get("description", ""))
+
+    def navigate(self, url: str, wait: float = 3.0):
+        self.send("Page.navigate", {"url": url})
+        time.sleep(wait)
+
+    def shot(self, label: str = "") -> bool:
+        r = self.send("Page.captureScreenshot", {"format": "png", "quality": 80}, 10)
+        data = r.get("result", {}).get("data", "")
+        if data:
+            SHOT_PATH.write_bytes(base64.b64decode(data))
+            if label:
+                print(f"  [📷] {label}")
+            return True
+        print(f"  [📷] 캡처 실패: {label}")
+        return False
+
+    def dom_enable(self):
+        self.send("DOM.enable")
+        time.sleep(0.3)
+
+    def query_node_ids(self, selector: str) -> list[int]:
+        doc = self.send("DOM.getDocument", {"depth": 0})
+        root = doc.get("result", {}).get("root", {}).get("nodeId", 0)
+        if not root:
+            return []
+        q = self.send("DOM.querySelectorAll", {"nodeId": root, "selector": selector})
+        return q.get("result", {}).get("nodeIds", [])
+
+    def set_file_input(self, node_id: int, files: list[str]) -> dict:
+        return self.send("DOM.setFileInputFiles", {"files": files, "nodeId": node_id})
+
+    def close(self):
+        self._alive = False
+        try:
+            self._ws.close()
+        except Exception:
+            pass
