@@ -23,7 +23,8 @@ const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
-const { Menu } = require("electron");
+const { Menu, dialog } = require("electron");
+const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 
 // youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
 setWindowProvider(getMainWindow);
@@ -50,9 +51,21 @@ if (!gotLock) {
 } else {
   app.on("second-instance", () => bus.emit(EVENTS.SHOW_WINDOW));
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     // 이 PC 상시 자동 시작 등록
     app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
+
+    // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
+    const serverReady = await startFastAPIServer();
+    if (!serverReady) {
+      dialog.showErrorBox(
+        "서버 시작 실패",
+        "Haehan AI 서버를 시작할 수 없습니다.\n" +
+        "로그 파일(%APPDATA%\\Haehan AI\\logs\\fastapi.log)을 확인하세요."
+      );
+      app.quit();
+      return;
+    }
 
     const cfg = loadConfig();
 
@@ -102,7 +115,7 @@ ipcMain.on("youtube-connect", async () => {
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
-app.on("before-quit", () => { setQuiting(true); stopAgent(); });
+app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); });
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)
 app.on("window-all-closed", () => { if (!hasTray()) app.quit(); });
