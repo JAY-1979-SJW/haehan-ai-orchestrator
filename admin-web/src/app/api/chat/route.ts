@@ -1,6 +1,6 @@
 const BACKEND  = process.env.BACKEND_URL ?? "http://localhost:8401";
-const API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
-const API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!";
+const API_USER = process.env.API_USER ?? "owner";
+const API_PASS = process.env.API_PASS ?? "";
 const AUTH     = `Basic ${Buffer.from(`${API_USER}:${API_PASS}`).toString("base64")}`;
 
 export async function POST(req: Request) {

@@ -205,3 +205,38 @@ def test_strip_jsonc_allows_trailing_commas():
     src = '{"arr": [1, 2, 3,], "obj": {"k": "v",},}'
     data = json.loads(_strip_jsonc(src))
     assert data == {"arr": [1, 2, 3], "obj": {"k": "v"}}
+
+
+# ── 순환 탐지 정확화 (모듈 분리 기준서) ──────────────────────────────────────
+
+def test_import_time_nodes_excludes_function_local():
+    """함수 본문 안 import 는 import-time 엣지로 세지 않는다(순환 false-positive 방지)."""
+    import ast
+    from scripts.ops.codebase_layer_audit import _import_time_nodes
+    src = (
+        "import a\n"
+        "from b import x\n"
+        "def f():\n"
+        "    import c\n"
+        "    from d import y\n"
+        "class K:\n"
+        "    import e\n"  # 클래스 본문은 import-time
+    )
+    names = []
+    for n in _import_time_nodes(ast.parse(src)):
+        if isinstance(n, ast.Import):
+            names += [a.name for a in n.names]
+        elif isinstance(n, ast.ImportFrom):
+            names.append(n.module)
+    assert "a" in names and "b" in names and "e" in names
+    assert "c" not in names and "d" not in names  # 함수 내부 제외
+
+
+def test_package_containment_excluded_from_cycles():
+    """부모-자식(패키지 containment) 관계는 cross-component 순환에서 제외."""
+    from scripts.ops.codebase_layer_audit import _is_package_containment
+    assert _is_package_containment("a.b", "a.b.c") is True
+    assert _is_package_containment("a.b.c", "a.b") is True
+    assert _is_package_containment("a.b", "a.b") is True
+    assert _is_package_containment("a.b", "a.c") is False   # 형제는 실제 순환으로 탐지
+    assert _is_package_containment("a.b", "x.y") is False

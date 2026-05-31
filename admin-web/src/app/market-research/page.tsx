@@ -36,7 +36,7 @@ export default async function MarketResearchPage() {
 
   return (
     <PageShell
-      title="Market Research"
+      title="시장 조사"
       description="YouTube keyword, video, comment, and transcript signal reports"
       chatDomain="market"
     >

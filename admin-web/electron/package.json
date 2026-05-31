@@ -18,9 +18,9 @@
     },
     "files": [
       "main.js",
+      "lib/**/*",
       "preload.js",
       "shell.html",
-      "google-hub.html",
       "icon.png"
     ],
     "extraResources": [
@@ -49,7 +49,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerLanguages": [
-        "Korean"
+        "ko_KR"
       ],
       "language": "1042"
     },

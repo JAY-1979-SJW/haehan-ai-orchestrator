@@ -5,56 +5,10 @@
  * /api/smartstore/chat Route Handler → Anthropic SDK → FastAPI 직접 호출 (단일 LLM)
  */
 import { useState, useRef, useCallback, useEffect } from "react";
-
-// ── 예시 칩 ──────────────────────────────────────────────────────────────────
-const EXAMPLE_CHIPS = [
-  { label: "상품 목록",     prompt: "상품 목록을 보여줘" },
-  { label: "주문 확인",     prompt: "최근 주문 목록을 확인해줘" },
-  { label: "정산 조회",     prompt: "정산 내역을 조회해줘" },
-  { label: "리뷰 확인",     prompt: "최근 리뷰와 문의를 확인해줘" },
-  { label: "상품 수집",     prompt: "CDP로 상품 목록을 실시간 수집해줘" },
-  { label: "셀러센터 열기", prompt: "셀러센터 상품 목록 페이지를 열어줘" },
-  { label: "통계 수집",     prompt: "데이터 분석 통계를 수집해줘" },
-];
-
-const TOOL_LABEL: Record<string, string> = {
-  list_products:      "상품 목록 조회",
-  collect_products:   "상품 목록 수집",
-  list_orders:        "주문 목록 조회",
-  collect_orders:     "주문 목록 수집",
-  list_settlements:   "정산 내역 조회",
-  collect_settlements:"정산 내역 수집",
-  list_reviews:       "리뷰/문의 조회",
-  collect_reviews:    "리뷰/문의 수집",
-  list_stats:         "통계 조회",
-  collect_stats:      "통계 수집",
-  register_product:   "상품 등록",
-  edit_product:       "상품 수정",
-  open_seller_center: "셀러센터 이동",
-};
-
-// ── 메시지 타입 ──────────────────────────────────────────────────────────────
-type StepItem = {
-  step: number;
-  tool: string;
-  write: boolean;
-  status: "running" | "ok" | "fail";
-  detail?: string;
-};
-
-type AiBlock =
-  | { type: "text";    text: string }
-  | { type: "step";    item: StepItem }
-  | { type: "confirm"; tool: string; inputs: Record<string, unknown>; message: string }
-  | { type: "done";    steps: number }
-  | { type: "error";   message: string };
-
-type Message =
-  | { role: "user";      text: string }
-  | { role: "assistant"; blocks: AiBlock[]; streaming: boolean };
-
-// ── Anthropic MessageParam 호환 타입 ─────────────────────────────────────────
-type ChatMessage = { role: "user" | "assistant"; content: string };
+import { QUICK_GROUPS, EXAMPLE_CHIPS } from "./components/constants";
+import { UserBubble } from "./components/UserBubble";
+import { AssistantBubble } from "./components/AssistantBubble";
+import type { Message, ChatMessage, AiBlock } from "./components/types";
 
 // ── SSE 파서 ─────────────────────────────────────────────────────────────────
 async function readSSE(
@@ -91,6 +45,7 @@ export default function SmartStoreChat() {
     tool: string; inputs: Record<string, unknown>; message: string; userText: string;
   } | null>(null);
 
+  const [quickOpen, setQuickOpen] = useState(false);
   const abortRef  = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -294,6 +249,40 @@ export default function SmartStoreChat() {
         )}
       </div>
 
+      {/* 빠른 버튼 패널 */}
+      <div className="shrink-0 border-b border-[#E5E7EB]">
+        <button
+          onClick={() => setQuickOpen((p) => !p)}
+          className="w-full flex items-center justify-between px-4 py-2 text-xs text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+        >
+          <span className="font-semibold text-[#374151]">⚡ 빠른 작업</span>
+          <span>{quickOpen ? "▲" : "▼"}</span>
+        </button>
+        {quickOpen && (
+          <div className="px-3 pb-3 space-y-2 bg-[#FAFAFA]">
+            {QUICK_GROUPS.map((g) => (
+              <div key={g.label}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1"
+                  style={{ color: g.color }}>{g.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {g.actions.map((a) => (
+                    <button
+                      key={a.label}
+                      disabled={running}
+                      onClick={() => { handleChip(a.prompt); setQuickOpen(false); }}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium border transition-colors disabled:opacity-40 hover:shadow-sm"
+                      style={{ background: g.bg, borderColor: g.border, color: g.color }}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.length === 0 && (
@@ -382,160 +371,4 @@ export default function SmartStoreChat() {
       </div>
     </div>
   );
-}
-
-// ── 사용자 말풍선 ─────────────────────────────────────────────────────────────
-function UserBubble({ text }: { text: string }) {
-  return (
-    <div className="flex justify-end">
-      <div className="max-w-[75%] bg-[#F97316] text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-sm leading-relaxed shadow-sm">
-        {text}
-      </div>
-    </div>
-  );
-}
-
-// ── AI 말풍선 ────────────────────────────────────────────────────────────────
-function AssistantBubble({
-  blocks,
-  streaming,
-  pendingConfirm,
-  onConfirm,
-  onCancelConfirm,
-}: {
-  blocks: AiBlock[];
-  streaming: boolean;
-  pendingConfirm: { tool: string; inputs: Record<string, unknown>; message: string } | null;
-  onConfirm: () => void;
-  onCancelConfirm: () => void;
-}) {
-  const isEmpty = blocks.length === 0;
-
-  return (
-    <div className="flex justify-start gap-2">
-      <div className="w-7 h-7 rounded-lg bg-[#F97316] flex items-center justify-center text-white text-xs font-bold shrink-0 mt-1">
-        AI
-      </div>
-      <div className="max-w-[80%] min-w-[120px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl rounded-tl-md px-4 py-3 space-y-2 shadow-sm">
-        {isEmpty && streaming && (
-          <span className="flex gap-1 items-center h-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF] animate-bounce [animation-delay:0ms]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF] animate-bounce [animation-delay:150ms]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#9CA3AF] animate-bounce [animation-delay:300ms]" />
-          </span>
-        )}
-
-        {blocks.map((block, i) => (
-          <BlockView
-            key={i}
-            block={block}
-            pendingConfirm={pendingConfirm}
-            onConfirm={onConfirm}
-            onCancelConfirm={onCancelConfirm}
-          />
-        ))}
-
-        {streaming && blocks.length > 0 && (
-          <span className="inline-block w-1.5 h-4 bg-[#F97316] animate-pulse rounded-sm" />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── 블록 렌더러 ───────────────────────────────────────────────────────────────
-function BlockView({
-  block,
-  pendingConfirm,
-  onConfirm,
-  onCancelConfirm,
-}: {
-  block: AiBlock;
-  pendingConfirm: { tool: string; inputs: Record<string, unknown>; message: string } | null;
-  onConfirm: () => void;
-  onCancelConfirm: () => void;
-}) {
-  if (block.type === "text") {
-    return <p className="text-sm text-[#111827] leading-relaxed whitespace-pre-wrap">{block.text}</p>;
-  }
-
-  if (block.type === "step") {
-    const { item } = block;
-    const icon =
-      item.status === "running" ? <span className="w-3 h-3 rounded-full bg-[#F97316] animate-pulse shrink-0" /> :
-      item.status === "ok"      ? <span className="text-[#16A34A] font-bold text-sm shrink-0">✓</span> :
-                                  <span className="text-[#DC2626] font-bold text-sm shrink-0">✗</span>;
-    return (
-      <div className="flex items-center gap-2 text-xs py-1 px-2 bg-white rounded-lg border border-[#E5E7EB]">
-        <span className="w-5 h-5 rounded-full bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center text-[10px] font-bold text-[#6B7280] shrink-0">
-          {item.step}
-        </span>
-        {icon}
-        <span className={`font-medium ${item.write ? "text-[#C2410C]" : "text-[#1D4ED8]"}`}>
-          {TOOL_LABEL[item.tool] ?? item.tool}
-        </span>
-        {item.write && (
-          <span className="text-[10px] bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded font-semibold">
-            쓰기
-          </span>
-        )}
-        {item.detail && <span className="text-[#DC2626] truncate">{item.detail}</span>}
-      </div>
-    );
-  }
-
-  if (block.type === "confirm") {
-    // pendingConfirm이 있을 때만 버튼 활성화
-    const active = !!pendingConfirm;
-    return (
-      <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-3 space-y-2">
-        <p className="text-xs font-semibold text-[#C2410C]">작업 승인 필요</p>
-        <p className="text-xs text-[#92400E]">{block.message}</p>
-        <div className="bg-white border border-[#FED7AA] rounded-lg p-2 space-y-1">
-          {Object.entries(block.inputs).map(([k, v]) => (
-            <div key={k} className="flex gap-2 text-xs">
-              <span className="font-mono text-[#92400E] w-20 shrink-0">{k}</span>
-              <span className="text-[#111827]">{String(v)}</span>
-            </div>
-          ))}
-        </div>
-        {active && (
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={onConfirm}
-              className="flex-1 py-1.5 rounded-lg bg-[#F97316] text-white text-xs font-semibold hover:bg-[#EA580C] transition-colors"
-            >
-              승인하고 실행
-            </button>
-            <button
-              onClick={onCancelConfirm}
-              className="flex-1 py-1.5 rounded-lg border border-[#E5E7EB] text-xs text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-            >
-              취소
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (block.type === "done") {
-    return (
-      <div className="flex items-center gap-2 text-xs text-[#16A34A] font-semibold pt-1">
-        <span>✓</span>
-        <span>완료 — {block.steps}단계 처리됨</span>
-      </div>
-    );
-  }
-
-  if (block.type === "error") {
-    return (
-      <div className="flex items-center gap-2 text-xs text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] rounded-lg px-3 py-2">
-        <span className="font-bold shrink-0">✗</span>
-        <span>{block.message}</span>
-      </div>
-    );
-  }
-
-  return null;
 }

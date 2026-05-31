@@ -25,6 +25,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
     import ai_orchestrator.auth as _auth; importlib.reload(_auth)
+    # local_agent_router 분리 후: 서브라우터 leaf 들도 reload 해야 갱신된 auth 를
+    # 재바인딩한다(의존 순서: 공유 leaf → 라우트 leaf → 컴포지션 루트).
+    for _m in (
+        "local_agent_router_schemas", "local_agent_router_up_queue",
+        "local_agent_router_validation", "local_agent_router_guards",
+        "local_agent_router_registration", "local_agent_router_query",
+        "local_agent_router_task", "local_agent_router_browser",
+        "local_agent_router_user_present", "local_agent_router_cleanup",
+        "local_agent_router_ws",
+    ):
+        try:
+            importlib.reload(importlib.import_module(f"ai_orchestrator.{_m}"))
+        except ModuleNotFoundError:
+            pass
     import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
 
     import ai_orchestrator.audit_logger as _al

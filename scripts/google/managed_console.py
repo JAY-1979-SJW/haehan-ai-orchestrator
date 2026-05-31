@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .secret_action_gate import build_secret_action_policy
-from .work_mode_gate import build_google_work_mode_policy
+from scripts.gates.secret_action_gate import build_secret_action_policy
+from scripts.gates.work_mode_gate import build_google_work_mode_policy
 
 GOOGLE_HOME_URL = "https://www.google.com/"
 GOOGLE_ACCOUNT_URL = "https://myaccount.google.com/"

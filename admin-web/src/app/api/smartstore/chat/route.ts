@@ -3,8 +3,8 @@
  * LLM 호출·도구 실행은 FastAPI에서 처리. API 키는 서버 .env 한 곳에서만 관리.
  */
 const BACKEND  = process.env.BACKEND_URL ?? "http://localhost:8400";
-const API_USER = process.env.NEXT_PUBLIC_API_USER ?? "owner";
-const API_PASS = process.env.NEXT_PUBLIC_API_PASS ?? "haehan2024!";
+const API_USER = process.env.API_USER ?? "owner";
+const API_PASS = process.env.API_PASS ?? "";
 const AUTH     = `Basic ${Buffer.from(`${API_USER}:${API_PASS}`).toString("base64")}`;
 
 export async function POST(req: Request) {

@@ -6,6 +6,8 @@ Priority 1 read-only endpoints:
 - GET /app/health/summary
 - GET /app/providers
 - GET /app/storage/status
+- GET /app/live-summary
+- GET /app/deployment-status
 
 보기만 가능. 스위치 없음. mutation 일체 금지.
 """
@@ -110,6 +112,61 @@ def get_providers() -> dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────────────
 # GET /app/storage/status
 # ─────────────────────────────────────────────────────────────────────────────
+
+@app_status_router.get("/live-summary")
+def get_live_summary() -> dict[str, Any]:
+    """실시간 운영 요약 — 헬스·DRY_RUN 게이트·Phase·스토리지 정책을 한 번에 read-only 조회.
+
+    mutation/실행/승인 없음. secret/token 미반환. generated_at 으로 실시간성 제공.
+    """
+    # DRY_RUN 게이트는 현재 운영 정책상 항상 활성(True). router.py 의 상수와 동일하며,
+    # router→app_status_router 순환 import 를 피하기 위해 직접 import 하지 않는다.
+    # (health/summary 엔드포인트와 동일한 처리)
+    return {
+        "ok": True,
+        "data": {
+            "service": "haehan-ai-orchestrator",
+            "health_status": "ok",
+            "post_tasks_dry_run_enabled": True,
+            "phase1_closeout_status": "complete",
+            "container_health_source": "static",
+            "read_only": True,
+            "mutation_allowed": False,
+            "storage": {
+                "named_volume_status": "configured",
+                "app_logs_bind_mount_status": "configured",
+                "audit_log_policy": "PERSISTENT_AUDIT_REQUIRED",
+            },
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        "meta": {**_META_READ_ONLY},
+    }
+
+
+@app_status_router.get("/deployment-status")
+def get_deployment_status() -> dict[str, Any]:
+    """배포 상태 read-only 조회 — 배포 SOP/상태 안내만. git 명령/빌드/배포 실행 없음.
+
+    server_head/origin_head 비교나 배포 트리거는 하지 않는다(서버 액션 금지).
+    """
+    return {
+        "ok": True,
+        "data": {
+            "server_head": None,
+            "origin_head": None,
+            "state": "not_checked",
+            "build_required": False,
+            "sop_steps": [
+                "git pull origin master",
+                "docker compose build",
+                "docker compose up -d",
+            ],
+            "deploy_action_allowed": False,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        "meta": {**_META_READ_ONLY},
+    }
+
 
 @app_status_router.get("/storage/status")
 def get_storage_status() -> dict[str, Any]:

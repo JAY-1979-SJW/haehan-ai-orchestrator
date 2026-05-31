@@ -82,7 +82,7 @@ export default function ExternalSitesPage() {
   const needsAuth = providers.filter((p) => p.user_present_required).length;
 
   return (
-    <PageShell title="외부 사이트" description="외부 서비스 연동 현황" chatDomain="default">
+    <PageShell title="외부 사이트" description="외부 서비스 연동 현황" chatDomain="ops">
       <div className="space-y-4">
       {/* 헤더 배지 */}
       <div className="flex items-center gap-2 flex-wrap">
