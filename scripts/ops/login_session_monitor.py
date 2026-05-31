@@ -13,6 +13,7 @@ data/login_session_monitor_latest.json 갱신.
     쿠키/토큰/비밀번호 값 출력 금지.
     세션 존재 여부(bool)만 출력.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,8 +22,8 @@ import json
 import sys
 import time
 import urllib.request
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -252,15 +253,16 @@ SITES: list[dict] = [
     {
         "key": "dataportal",
         "label": "공공데이터포털",
-        "url_hints": ["data.go.kr"],
+        "url_hints": ["data.go.kr", "auth.data.go.kr"],
         "session_cookie_pattern": r"JSESSIONID|dataportal_",
         "logged_in_js": """(() => {
             const t = document.body && document.body.innerText || '';
             const url = location.href.toLowerCase();
             const has_logout = /로그아웃|logout/i.test(t);
             const has_mypage = /마이페이지|내 정보|활용현황|인증키/i.test(t);
-            const has_login_form = !!document.querySelector('input[type="password"], #loginId, input[name="password"]');
-            const on_login = url.includes('/login') || url.includes('/member/login');
+            const on_mypage = url.includes('my-page') || url.includes('mypage') || url.includes('member/info');
+            const has_login_form = !on_mypage && !!document.querySelector('input[type="password"], #loginId, input[name="password"]');
+            const on_login = !on_mypage && (url.includes('/login') || url.includes('/member/login') || url.includes('common-login'));
             const challenge = false;
             return JSON.stringify({
                 href: location.href,
@@ -280,11 +282,12 @@ SITES: list[dict] = [
 
 # ── 상태 모델 ─────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class SessionState:
     key: str
     label: str
-    status: str          # LOGGED_IN | SESSION_EXPIRED | LOGIN_REQUIRED | CHALLENGE | ERROR | NO_TAB
+    status: str  # LOGGED_IN | SESSION_EXPIRED | LOGIN_REQUIRED | CHALLENGE | ERROR | NO_TAB
     detail: str
     href: str
     title: str
@@ -298,11 +301,10 @@ class SessionState:
 
 # ── CDP 헬퍼 ──────────────────────────────────────────────────────────────────
 
+
 def _cdp_targets() -> list[dict]:
     try:
-        with urllib.request.urlopen(
-            f"http://127.0.0.1:{CDP_PORT}/json/list", timeout=2.0
-        ) as r:
+        with urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}/json/list", timeout=2.0) as r:
             return [t for t in json.loads(r.read()) if isinstance(t, dict)]
     except Exception:
         return []
@@ -311,12 +313,17 @@ def _cdp_targets() -> list[dict]:
 async def _eval_js(ws_url: str, expr: str, timeout: float = 5.0) -> dict | None:
     try:
         import websockets as _ws
+
         async with _ws.connect(ws_url, max_size=4 * 1024 * 1024, open_timeout=4) as conn:
-            await conn.send(json.dumps({
-                "id": 1,
-                "method": "Runtime.evaluate",
-                "params": {"expression": expr, "returnByValue": True},
-            }))
+            await conn.send(
+                json.dumps(
+                    {
+                        "id": 1,
+                        "method": "Runtime.evaluate",
+                        "params": {"expression": expr, "returnByValue": True},
+                    }
+                )
+            )
             raw = await asyncio.wait_for(conn.recv(), timeout=timeout)
             val = json.loads(raw).get("result", {}).get("result", {}).get("value")
             if isinstance(val, str):
@@ -338,24 +345,34 @@ def _find_tab_for_site(targets: list[dict], url_hints: list[str]) -> dict | None
 
 # ── 사이트별 세션 체크 ────────────────────────────────────────────────────────
 
+
 async def check_site(site: dict, targets: list[dict]) -> SessionState:
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     tab = _find_tab_for_site(targets, site["url_hints"])
 
     if tab is None:
         return SessionState(
-            key=site["key"], label=site["label"],
-            status="NO_TAB", detail="브라우저에 해당 탭 없음",
-            href="", title="", has_session_cookie=False, checked_at=now,
+            key=site["key"],
+            label=site["label"],
+            status="NO_TAB",
+            detail="브라우저에 해당 탭 없음",
+            href="",
+            title="",
+            has_session_cookie=False,
+            checked_at=now,
         )
 
     ws_url = tab.get("webSocketDebuggerUrl", "")
     if not ws_url:
         return SessionState(
-            key=site["key"], label=site["label"],
-            status="ERROR", detail="webSocketDebuggerUrl 없음",
-            href=tab.get("url", ""), title=tab.get("title", ""),
-            has_session_cookie=False, checked_at=now,
+            key=site["key"],
+            label=site["label"],
+            status="ERROR",
+            detail="webSocketDebuggerUrl 없음",
+            href=tab.get("url", ""),
+            title=tab.get("title", ""),
+            has_session_cookie=False,
+            checked_at=now,
         )
 
     data = await _eval_js(ws_url, site["logged_in_js"])
@@ -363,16 +380,19 @@ async def check_site(site: dict, targets: list[dict]) -> SessionState:
     if data is None or (isinstance(data, dict) and data.get("_err")):
         err = (data or {}).get("_err", "eval 실패")
         return SessionState(
-            key=site["key"], label=site["label"],
-            status="ERROR", detail=err,
-            href=tab.get("url", ""), title=tab.get("title", ""),
-            has_session_cookie=False, checked_at=now,
+            key=site["key"],
+            label=site["label"],
+            status="ERROR",
+            detail=err,
+            href=tab.get("url", ""),
+            title=tab.get("title", ""),
+            has_session_cookie=False,
+            checked_at=now,
         )
 
     href = data.get("href", "")
     title = data.get("title", "")
     has_session = bool(data.get("has_session_cookie"))
-    login_url = site["login_url"]
 
     # 상태 판정
     if data.get("challenge"):
@@ -385,8 +405,10 @@ async def check_site(site: dict, targets: list[dict]) -> SessionState:
         status = "LOGIN_REQUIRED"
         detail = "로그인 폼 감지 — 세션 만료"
     elif has_session and (
-        data.get("has_logout_link") or data.get("has_account_menu")
-        or data.get("has_dashboard") or data.get("has_mypage")
+        data.get("has_logout_link")
+        or data.get("has_account_menu")
+        or data.get("has_dashboard")
+        or data.get("has_mypage")
     ):
         status = "LOGGED_IN"
         detail = "세션 정상"
@@ -398,10 +420,14 @@ async def check_site(site: dict, targets: list[dict]) -> SessionState:
         detail = "세션 쿠키 없음"
 
     return SessionState(
-        key=site["key"], label=site["label"],
-        status=status, detail=detail,
-        href=href, title=title,
-        has_session_cookie=has_session, checked_at=now,
+        key=site["key"],
+        label=site["label"],
+        status=status,
+        detail=detail,
+        href=href,
+        title=title,
+        has_session_cookie=has_session,
+        checked_at=now,
     )
 
 
@@ -417,20 +443,21 @@ def _report(states: list[SessionState], elapsed: float) -> None:
     for s in states:
         prev = _prev_states.get(s.key, "")
         changed = s.status != prev
-        icon = "✅" if s.status == "LOGGED_IN" else (
-            "🔴" if s.status in _ALERT_STATUSES else
-            "⚠️" if s.status in ("ERROR", "NO_TAB") else "❓"
+        icon = (
+            "✅"
+            if s.status == "LOGGED_IN"
+            else ("🔴" if s.status in _ALERT_STATUSES else "⚠️" if s.status in ("ERROR", "NO_TAB") else "❓")
         )
 
         if changed:
             if s.status in _ALERT_STATUSES:
                 print(
-                    f"\n{'='*60}\n"
+                    f"\n{'=' * 60}\n"
                     f"[{ts}] 🚨 세션 경고 — {s.label}\n"
                     f"  상태: {s.status}\n"
                     f"  원인: {s.detail}\n"
                     f"  URL : {s.href[:100]}\n"
-                    f"{'='*60}\n",
+                    f"{'=' * 60}\n",
                     flush=True,
                 )
             else:
@@ -448,7 +475,7 @@ def _report(states: list[SessionState], elapsed: float) -> None:
 
     # JSON 저장
     payload = {
-        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "checked_at": datetime.now(UTC).isoformat(),
         "elapsed_sec": round(elapsed, 2),
         "cdp_available": len(_cdp_targets()) > 0,
         "sites": [s.to_dict() for s in states],
@@ -458,6 +485,7 @@ def _report(states: list[SessionState], elapsed: float) -> None:
 
 
 # ── 메인 루프 ─────────────────────────────────────────────────────────────────
+
 
 async def run_once() -> list[SessionState]:
     targets = _cdp_targets()
