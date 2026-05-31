@@ -202,6 +202,8 @@ data/**/runs/
 
 # Electron 빌드 산출물
 dist-electron/
+dist-electron-release/
+dist-electron-setup/
 
 # 로컬 데이터 파일
 data/naver_search.db

@@ -9,9 +9,10 @@ from .module_quality_gate_common import (  # noqa: F401
     ROOT, PY, OUT_OF_SCOPE, FORBIDDEN_TOKENS, MODULE_GATE_PYCACHE,
     GateStep, GateModule,
     normalize_path, redact, command_text, command_is_forbidden, command_is_pytest,
-    workspace_temp_root, _run_check_command, _source_contains, _is_secret_scan_excluded,
+    workspace_temp_root, _run_check_command, _source_contains,
     find_staged_out_of_scope, git_staged_paths, all_steps,
 )
+from .module_quality_gate_checks_web import _is_secret_scan_excluded  # noqa: F401
 from .module_quality_gate_modules import (  # noqa: F401
     MODULES, module_names, selected_modules, iter_selected_steps,
 )
