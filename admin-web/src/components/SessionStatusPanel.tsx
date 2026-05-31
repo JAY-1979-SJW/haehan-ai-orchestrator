@@ -57,7 +57,13 @@ export default function SessionStatusPanel() {
     finally { setRefreshing(false); }
   }, []);
 
-  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+  useEffect(() => {
+    fetchStatus();
+    const id = setInterval(fetchStatus, 60_000);
+    const onFocus = () => fetchStatus();
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(id); window.removeEventListener("focus", onFocus); };
+  }, [fetchStatus]);
 
   const checkedAt = data?.checked_at
     ? new Date(data.checked_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })

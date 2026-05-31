@@ -19,6 +19,7 @@ import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
 import { SafetyPolicyBanner } from "./components/SafetyPolicyBanner";
 import { ApiStatusBanner } from "./components/ApiStatusBanner";
 import { PageShell } from "@/components/ui/PageShell";
+import SessionStatusPanel from "@/components/SessionStatusPanel";
 
 const SAFETY_POLICIES: SafetyPolicyNotice[] = [
   {
@@ -98,6 +99,7 @@ export default async function OpsPage() {
         <AgentStatusPanel agents={agentStatuses.data} />
         <IntegrationStatusPanel integrations={integrations.data} />
         <AuditEventTable events={auditEvents.data} />
+        <SessionStatusPanel />
       </div>
     </PageShell>
   );
