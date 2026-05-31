@@ -1,5 +1,14 @@
 #!/bin/sh
 set -eu
 
+# ruff: staged .py 파일 문법/품질 검사
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+if [ -n "$STAGED_PY" ]; then
+  echo "[pre-commit] ruff 문법/품질 검사"
+  python -m ruff check --fix --config configs/ruff.toml $STAGED_PY && \
+  python -m ruff format --config configs/ruff.toml $STAGED_PY && \
+  git add $STAGED_PY || true
+fi
+
 echo "[pre-commit] local agent browser runtime gates"
 python scripts/required_quality_gate.py
