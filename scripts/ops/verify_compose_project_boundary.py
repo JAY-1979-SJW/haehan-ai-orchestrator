@@ -15,7 +15,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROJECT = "haehan-ai-orchestrator"
+PROJECT = "haehan-ai-orchestrator-api"
 
 EXPECTED_SERVICES = {
     "ai-orchestrator-api",
@@ -36,10 +36,10 @@ EXPECTED_IMAGES = {
     "file-map-executor": "haehan-ai-orchestrator-file-map-executor:local",
 }
 EXPECTED_NETWORKS = {
-    "default": {"name": "haehan-ai-orchestrator_default", "external": False},
+    "default": {"name": "haehan-ai-orchestrator-api_default", "external": False},
     "app_web": {"name": "app_web", "external": True},
 }
-PRIVATE_NETWORK = "haehan-ai-orchestrator_default"
+PRIVATE_NETWORK = "haehan-ai-orchestrator-api_default"
 EXPECTED_VOLUMES = {
     "api_storage": "haehan-ai-orchestrator-api-storage",
 }
