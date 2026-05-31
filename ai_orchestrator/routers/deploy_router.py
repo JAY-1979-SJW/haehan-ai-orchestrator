@@ -18,14 +18,12 @@ import hmac
 import json
 import logging
 import os
-import subprocess
-import sys
-import threading
-from datetime import datetime, timezone
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from ..auth import require_role
 
@@ -34,11 +32,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/deploy", tags=["deploy"])
 
 ROOT = Path(__file__).resolve().parents[2]
-DEPLOY_SCRIPT = ROOT / "scripts" / "ops" / "deploy_api_with_runtime_gates.py"
 STATUS_FILE = ROOT / "data" / "runtime" / "deploy_api_with_runtime_gates_latest.json"
-
-_lock = threading.Lock()
-_running = False
+# 호스트 트리거 데몬 주소 (host.docker.internal:8401)
+TRIGGER_HOST = os.environ.get("DEPLOY_TRIGGER_HOST", "host.docker.internal")
+TRIGGER_PORT = int(os.environ.get("DEPLOY_TRIGGER_PORT", "8401"))
+TRIGGER_URL = f"http://{TRIGGER_HOST}:{TRIGGER_PORT}/trigger"
 
 
 def _webhook_secret() -> bytes:
@@ -56,34 +54,38 @@ def _verify_signature(body: bytes, sig_header: str | None) -> None:
         raise HTTPException(status_code=401, detail="invalid_signature")
 
 
-def _run_deploy() -> None:
-    global _running
+def _forward_to_daemon(body: bytes) -> dict[str, Any]:
+    """호스트 deploy_trigger_daemon 으로 트리거 전달."""
+    secret = os.environ.get("DEPLOY_WEBHOOK_SECRET", "").encode()
+    sig = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
+    req = urllib.request.Request(
+        TRIGGER_URL,
+        data=body,
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "X-Deploy-Signature": sig,
+        },
+    )
     try:
-        logger.info("deploy_webhook: starting deploy")
-        subprocess.run(
-            [sys.executable, str(DEPLOY_SCRIPT), "--approved"],
-            cwd=str(ROOT),
-            timeout=900,
-            check=False,
-        )
-        logger.info("deploy_webhook: deploy finished")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:200]
+        if e.code == 409:
+            raise HTTPException(status_code=409, detail="deploy_already_running")
+        raise HTTPException(status_code=502, detail=f"trigger_daemon_error:{e.code}:{detail}")
     except Exception as exc:
-        logger.error("deploy_webhook: error: %s", exc)
-    finally:
-        with _lock:
-            _running = False
+        raise HTTPException(status_code=503, detail=f"trigger_daemon_unreachable:{exc}")
 
 
 @router.post("/webhook", status_code=status.HTTP_202_ACCEPTED)
 async def github_webhook(
     request: Request,
-    background_tasks: BackgroundTasks,
     x_hub_signature_256: str | None = Header(default=None),
     x_github_event: str | None = Header(default=None),
 ) -> dict[str, Any]:
-    """GitHub push 이벤트를 수신하여 배포를 트리거한다."""
-    global _running
-
+    """GitHub push 이벤트를 수신하여 호스트 배포 데몬으로 트리거를 전달한다."""
     body = await request.body()
     _verify_signature(body, x_hub_signature_256)
 
@@ -99,14 +101,9 @@ async def github_webhook(
     if ref != "refs/heads/master":
         return {"accepted": False, "reason": f"branch_ignored:{ref}"}
 
-    with _lock:
-        if _running:
-            raise HTTPException(status_code=409, detail="deploy_already_running")
-        _running = True
-
-    background_tasks.add_task(_run_deploy)
-    logger.info("deploy_webhook: accepted push ref=%s", ref)
-    return {"accepted": True, "ref": ref, "secret_values_output": False}
+    result = _forward_to_daemon(body)
+    logger.info("deploy_webhook: forwarded to daemon ref=%s result=%s", ref, result)
+    return {"accepted": True, "ref": ref, "daemon": result, "secret_values_output": False}
 
 
 @router.get("/status")
