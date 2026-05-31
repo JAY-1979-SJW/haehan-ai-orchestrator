@@ -54,10 +54,32 @@ def _verify(body: bytes, sig: str | None) -> bool:
     return hmac.compare_digest(expected, sig)
 
 
+def _collect_deploy_summary() -> dict:
+    """배포 직전 변경 요약 (dry-run 리포트용)."""
+    summary: dict = {}
+    try:
+        log = subprocess.run(
+            ["git", "log", "HEAD~5..HEAD", "--oneline"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=10,
+        )
+        summary["recent_commits"] = log.stdout.strip().splitlines()
+        diff_stat = subprocess.run(
+            ["git", "diff", "HEAD~1..HEAD", "--stat"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=10,
+        )
+        summary["diff_stat"] = diff_stat.stdout.strip()
+    except Exception as exc:
+        summary["summary_error"] = str(exc)
+    return summary
+
+
 def _run_deploy() -> None:
     global _running
     try:
         logger.info("deploy: starting")
+        summary = _collect_deploy_summary()
+        if summary.get("recent_commits"):
+            logger.info("deploy: recent commits: %s", summary["recent_commits"][:3])
         result = subprocess.run(
             [sys.executable, str(DEPLOY_SCRIPT), "--approved"],
             cwd=str(ROOT),
@@ -65,6 +87,18 @@ def _run_deploy() -> None:
             check=False,
         )
         logger.info("deploy: finished exit_code=%d", result.returncode)
+        # dry-run 리포트에 변경 요약 병합
+        try:
+            import json
+            from pathlib import Path
+            report_path = ROOT / "data" / "runtime" / "deploy_api_with_runtime_gates_latest.json"
+            if report_path.exists():
+                data = json.loads(report_path.read_text(encoding="utf-8"))
+                data["deploy_summary"] = summary
+                data["secret_values_output"] = False
+                report_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
     except Exception as exc:
         logger.error("deploy: error: %s", exc)
     finally:
