@@ -2,33 +2,33 @@
 운영 대시보드 (5단계) — Flask 기반 내부 운영 UI
 인증: HTTP Basic Auth (ORCH_DASHBOARD_USER / ORCH_DASHBOARD_PASSWORD 환경변수)
 """
-import base64
+
 import hmac
 import json
-import logging
 import os
 import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, Response, jsonify, render_template, request
 
 import approval_manager
 import audit_logger
+from cad_router import cad_bp
 from inbox_router import inbox_bp
-from tasks_router import tasks_bp
-from webhooks_router import webhooks_bp
 from log_analyzer import (
     _read_jsonl,
-    summarize_recent_activity,
-    summarize_failures,
-    summarize_pending_approvals,
     generate_ai_ops_summary,
     save_cache,
+    summarize_failures,
+    summarize_pending_approvals,
+    summarize_recent_activity,
 )
 from logger import get_logger
 from logging_utils import mask_sensitive
+from tasks_router import tasks_bp
+from webhooks_router import webhooks_bp
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _DECISIONS_PATH = os.path.join(_BASE_DIR, "storage", "approval_decisions.jsonl")
@@ -38,15 +38,15 @@ log = get_logger("dashboard")
 
 # ── HTTP Basic Auth ───────────────────────────────────────────────────────────
 
+
 def _check_auth(username: str, password: str) -> bool:
     exp_user = os.environ.get("ORCH_DASHBOARD_USER", "")
     exp_pass = os.environ.get("ORCH_DASHBOARD_PASSWORD", "")
     if not exp_user or not exp_pass:
         return False
     # 상수시간 비교 — timing attack 방지
-    return (
-        hmac.compare_digest(username.encode("utf-8"), exp_user.encode("utf-8"))
-        and hmac.compare_digest(password.encode("utf-8"), exp_pass.encode("utf-8"))
+    return hmac.compare_digest(username.encode("utf-8"), exp_user.encode("utf-8")) and hmac.compare_digest(
+        password.encode("utf-8"), exp_pass.encode("utf-8")
     )
 
 
@@ -57,8 +57,7 @@ def _require_auth() -> Response | None:
 
     if not exp_user or not exp_pass:
         return Response(
-            "대시보드 인증 환경변수 미설정\n"
-            "ORCH_DASHBOARD_USER / ORCH_DASHBOARD_PASSWORD 를 설정하세요.",
+            "대시보드 인증 환경변수 미설정\nORCH_DASHBOARD_USER / ORCH_DASHBOARD_PASSWORD 를 설정하세요.",
             503,
         )
 
@@ -67,11 +66,7 @@ def _require_auth() -> Response | None:
     password = auth.password if auth else ""
 
     if not _check_auth(username, password):
-        ip = (
-            request.headers.get("X-Forwarded-For", request.remote_addr or "unknown")
-            .split(",")[0]
-            .strip()
-        )
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
         log.warning("dashboard.auth_failed ip=%s path=%s", ip, request.path)
         return Response(
             "인증이 필요합니다.",
@@ -80,18 +75,19 @@ def _require_auth() -> Response | None:
         )
     return None
 
+
 # 사용자 레지스트리 — 로컬/테스트 전용. 운영 배포 전 실제 인증으로 교체 필요.
 _USERS = {
-    "viewer-1":   {"role": "viewer"},
+    "viewer-1": {"role": "viewer"},
     "operator-1": {"role": "operator"},
-    "admin-1":    {"role": "admin"},
+    "admin-1": {"role": "admin"},
 }
 
 _RISK_RANK = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 _ROLE_MAX_RISK = {
-    "viewer":   None,
+    "viewer": None,
     "operator": "medium",
-    "admin":    "high",
+    "admin": "high",
 }
 
 
@@ -107,6 +103,7 @@ def create_app() -> Flask:
     app.register_blueprint(inbox_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(webhooks_bp)
+    app.register_blueprint(cad_bp)
 
     @app.route("/dashboard")
     def dashboard():
@@ -137,14 +134,8 @@ def create_app() -> Flask:
         audit_path = os.path.join(_BASE_DIR, "logs", "audit.jsonl")
         history_path = os.path.join(_BASE_DIR, "storage", "execution_history.jsonl")
 
-        audit_events = [
-            e for e in _read_jsonl(audit_path)
-            if e.get("task_id") == task_id
-        ]
-        history_events = [
-            e for e in _read_jsonl(history_path)
-            if e.get("task_id") == task_id
-        ]
+        audit_events = [e for e in _read_jsonl(audit_path) if e.get("task_id") == task_id]
+        history_events = [e for e in _read_jsonl(history_path) if e.get("task_id") == task_id]
 
         token_info = None
         for tid, entry in approval_manager._store.items():
@@ -228,20 +219,20 @@ def _get_live_pending_tokens() -> list:
         elapsed = now - entry.get("issued_at", now)
         if elapsed > approval_manager.TOKEN_TTL_SECONDS:
             continue
-        pending.append({
-            "token_id_display": token_id[:6] + "***",
-            "token_full": token_id,
-            "task_id": entry.get("task_id"),
-            "risk_level": entry.get("risk_level"),
-            "issued_at": entry.get("issued_at"),
-            "ttl_remaining": int(approval_manager.TOKEN_TTL_SECONDS - elapsed),
-        })
+        pending.append(
+            {
+                "token_id_display": token_id[:6] + "***",
+                "token_full": token_id,
+                "task_id": entry.get("task_id"),
+                "risk_level": entry.get("risk_level"),
+                "issued_at": entry.get("issued_at"),
+                "ttl_remaining": int(approval_manager.TOKEN_TTL_SECONDS - elapsed),
+            }
+        )
     return pending
 
 
-def _process_decision(
-    token_id: str, task_id: str, user_id: str, reason: str, action: str
-) -> tuple:
+def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, action: str) -> tuple:
     if not token_id or not task_id or not user_id:
         return {"error": "token_id, task_id, user_id are required"}, 400
 
@@ -298,15 +289,16 @@ def _process_decision(
     execution_result = None
     if action == "approve" and risk_level in {"low", "medium"}:
         from executor import execute_task
+
         execution_result = execute_task(task_id)
 
     resp: dict = {
-        "status":     "ok",
-        "decision":   decision,
-        "task_id":    task_id,
+        "status": "ok",
+        "decision": decision,
+        "task_id": task_id,
         "risk_level": risk_level,
-        "user_id":    user_id,
-        "role":       role,
+        "user_id": user_id,
+        "role": role,
         "note": (
             "high risk approved but execution remains blocked"
             if risk_level == "high" and decision == "APPROVED"
@@ -315,27 +307,28 @@ def _process_decision(
     }
     if execution_result is not None:
         resp["execution"] = {
-            "status":      execution_result.get("status"),
+            "status": execution_result.get("status"),
             "duration_ms": execution_result.get("duration_ms"),
-            "error":       execution_result.get("error"),
+            "error": execution_result.get("error"),
         }
     return resp, 200
 
 
 def _record_decision(
-    token_id: str, task_id: str, user_id: str, role: str,
-    decision: str, risk_level: str, reason: str = ""
+    token_id: str, task_id: str, user_id: str, role: str, decision: str, risk_level: str, reason: str = ""
 ) -> None:
-    entry = mask_sensitive({
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "token_prefix": token_id[:6] + "***" if token_id else None,
-        "task_id": task_id,
-        "user_id": user_id,
-        "role": role,
-        "decision": decision,
-        "risk_level": risk_level,
-        "reason": reason,
-    })
+    entry = mask_sensitive(
+        {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "token_prefix": token_id[:6] + "***" if token_id else None,
+            "task_id": task_id,
+            "user_id": user_id,
+            "role": role,
+            "decision": decision,
+            "risk_level": risk_level,
+            "reason": reason,
+        }
+    )
     os.makedirs(os.path.dirname(_DECISIONS_PATH), exist_ok=True)
     with open(_DECISIONS_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -343,11 +336,11 @@ def _record_decision(
 
 def run_dashboard(host: str = "127.0.0.1", port: int = 5050, debug: bool = False) -> None:
     app = create_app()
-    print(f"\n{'='*60}")
-    print(f"  haehan-ai-orchestrator 운영 대시보드")
+    print(f"\n{'=' * 60}")
+    print("  haehan-ai-orchestrator 운영 대시보드")
     print(f"  http://{host}:{port}/dashboard")
-    print(f"  [주의] 인증 없음 — 로컬/내부 테스트 전용")
-    print(f"{'='*60}\n")
+    print("  [주의] 인증 없음 — 로컬/내부 테스트 전용")
+    print(f"{'=' * 60}\n")
     app.run(host=host, port=port, debug=debug)
 
 
