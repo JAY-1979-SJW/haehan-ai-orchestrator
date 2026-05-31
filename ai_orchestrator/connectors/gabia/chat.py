@@ -1,4 +1,4 @@
-"""가비아 AI 채팅 엔드포인트 — Claude → 도구 호출 → SSE 스트리밍.
+"""가비아 AI 채팅 엔드포인트 — GPT → 도구 호출 → SSE 스트리밍.
 
 지원 도구:
   - get_status          : 가비아 업무 현황 조회
@@ -10,13 +10,13 @@
 
 금지: 비밀번호/OTP 자동 입력, 최종 저장 버튼 자동 클릭, 결제 자동화
 """
+
 from __future__ import annotations
 
 import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -26,7 +26,7 @@ router = APIRouter()
 
 ROOT = Path(__file__).resolve().parents[4]
 
-CLAUDE_MODEL = "claude-haiku-4-5-20251001"
+GPT_MODEL = "gpt-4o-mini"
 
 SYSTEM_PROMPT = """당신은 가비아(Gabia) 도메인/DNS/호스팅 업무 AI 에이전트입니다.
 사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
@@ -49,46 +49,44 @@ SYSTEM_PROMPT = """당신은 가비아(Gabia) 도메인/DNS/호스팅 업무 AI 
 
 
 def _tool_defs() -> list:
-    import anthropic
+    def _fn(name, desc, props, required=None):
+        return {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": desc,
+                "parameters": {"type": "object", "properties": props, "required": required or []},
+            },
+        }
+
     return [
-        anthropic.types.ToolParam(
-            name="get_status",
-            description="가비아 업무 현황 및 게이트 정책을 조회합니다.",
-            input_schema={"type": "object", "properties": {}, "required": []},
+        _fn("get_status", "가비아 업무 현황 및 게이트 정책을 조회합니다.", {}),
+        _fn(
+            "start_login_watch",
+            "가비아 로그인 감지를 시작합니다.",
+            {
+                "timeout": {"type": "integer", "description": "최대 대기 시간(초), 기본 300"},
+            },
         ),
-        anthropic.types.ToolParam(
-            name="start_login_watch",
-            description="가비아 로그인 감지를 시작합니다. 사용자가 브라우저에서 직접 로그인하면 자동 감지합니다.",
-            input_schema={"type": "object", "properties": {
-                "timeout": {"type": "integer", "description": "최대 대기 시간(초), 기본 300"}
-            }, "required": []},
-        ),
-        anthropic.types.ToolParam(
-            name="get_dns_tasks",
-            description="가비아 DNS 업무 레지스트리 목록을 조회합니다.",
-            input_schema={"type": "object", "properties": {}, "required": []},
-        ),
-        anthropic.types.ToolParam(
-            name="get_nav_plan",
-            description="가비아 DNS 업무 브라우저 네비게이션 단계별 계획을 조회합니다.",
-            input_schema={"type": "object", "properties": {}, "required": []},
-        ),
-        anthropic.types.ToolParam(
-            name="prepare_dns_record",
-            description="DNS 레코드 입력 초안을 준비합니다. 실제 저장하지 않고 초안만 생성합니다.",
-            input_schema={"type": "object", "properties": {
+        _fn("get_dns_tasks", "가비아 DNS 업무 레지스트리 목록을 조회합니다.", {}),
+        _fn("get_nav_plan", "가비아 DNS 업무 브라우저 네비게이션 단계별 계획을 조회합니다.", {}),
+        _fn(
+            "prepare_dns_record",
+            "DNS 레코드 입력 초안을 준비합니다. 실제 저장하지 않습니다.",
+            {
                 "subdomain": {"type": "string", "description": "서브도메인 (예: autowork, app, api)"},
-                "record_type": {"type": "string", "enum": ["A", "CNAME", "MX", "TXT"], "description": "레코드 유형"},
+                "record_type": {"type": "string", "enum": ["A", "CNAME", "MX", "TXT"]},
                 "value": {"type": "string", "description": "레코드 값 (IP 또는 도메인)"},
                 "ttl": {"type": "integer", "description": "TTL (기본 3600)"},
-            }, "required": ["subdomain", "record_type", "value"]},
+            },
+            ["subdomain", "record_type", "value"],
         ),
-        anthropic.types.ToolParam(
-            name="open_gabia_dns",
-            description="CDP 브라우저로 가비아 DNS 관리 화면을 엽니다.",
-            input_schema={"type": "object", "properties": {
-                "domain": {"type": "string", "description": "도메인 (기본: haehan-ai.kr)"}
-            }, "required": []},
+        _fn(
+            "open_gabia_dns",
+            "CDP 브라우저로 가비아 DNS 관리 화면을 엽니다.",
+            {
+                "domain": {"type": "string", "description": "도메인 (기본: haehan-ai.kr)"},
+            },
         ),
     ]
 
@@ -104,10 +102,16 @@ def _run_tool(name: str, inputs: dict) -> str:
             {"name": "도메인 연장/이전", "gate": "APPROVAL_REQUIRED", "user_required": True},
             {"name": "결제/청구", "gate": "BLOCKED", "user_required": True},
         ]
-        return json.dumps({"provider": "gabia", "base_url": "https://www.gabia.com",
-                           "dns_mgmt_url": "https://my.gabia.com/service/domain/haehan-ai.kr/dns",
-                           "login_note": "OTP/2FA 필수 — 사용자가 브라우저에서 직접 로그인",
-                           "operations": ops}, ensure_ascii=False)
+        return json.dumps(
+            {
+                "provider": "gabia",
+                "base_url": "https://www.gabia.com",
+                "dns_mgmt_url": "https://my.gabia.com/service/domain/haehan-ai.kr/dns",
+                "login_note": "OTP/2FA 필수 — 사용자가 브라우저에서 직접 로그인",
+                "operations": ops,
+            },
+            ensure_ascii=False,
+        )
 
     if name == "start_login_watch":
         script = ROOT / "scripts" / "gabia_login_watch.py"
@@ -117,30 +121,53 @@ def _run_tool(name: str, inputs: dict) -> str:
         try:
             proc = subprocess.Popen(
                 [sys.executable, str(script), "--timeout", str(timeout)],
-                cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                cwd=str(ROOT),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-            return json.dumps({"ok": True, "pid": proc.pid,
-                               "message": f"로그인 감지 시작 (최대 {timeout}초). 브라우저에서 가비아 로그인을 진행하세요."})
+            return json.dumps(
+                {
+                    "ok": True,
+                    "pid": proc.pid,
+                    "message": f"로그인 감지 시작 (최대 {timeout}초). 브라우저에서 가비아 로그인을 진행하세요.",
+                }
+            )
         except Exception as e:
             return json.dumps({"ok": False, "message": str(e)})
 
     if name == "get_dns_tasks":
         try:
             from ai_orchestrator.gabia.gabia_dns_work_registry import list_gabia_external_works
+
             works = list_gabia_external_works()
-            return json.dumps([{"id": w.external_work_id, "action": w.action_type,
-                                "category": w.category, "risk": w.risk_level,
-                                "approval_required": w.approval_required,
-                                "desc": w.description} for w in works], ensure_ascii=False)
+            return json.dumps(
+                [
+                    {
+                        "id": w.external_work_id,
+                        "action": w.action_type,
+                        "category": w.category,
+                        "risk": w.risk_level,
+                        "approval_required": w.approval_required,
+                        "desc": w.description,
+                    }
+                    for w in works
+                ],
+                ensure_ascii=False,
+            )
         except Exception as e:
             return json.dumps({"error": str(e)})
 
     if name == "get_nav_plan":
         try:
             from ai_orchestrator.gabia.gabia_browser_task import GABIA_NAV_PLAN
-            return json.dumps([{"step": s["step"], "actor": s["actor"],
-                                "action": s["action"], "safe_to_auto": s["safe_to_auto"]}
-                               for s in GABIA_NAV_PLAN], ensure_ascii=False)
+
+            return json.dumps(
+                [
+                    {"step": s["step"], "actor": s["actor"], "action": s["action"], "safe_to_auto": s["safe_to_auto"]}
+                    for s in GABIA_NAV_PLAN
+                ],
+                ensure_ascii=False,
+            )
         except Exception as e:
             return json.dumps({"error": str(e)})
 
@@ -151,11 +178,15 @@ def _run_tool(name: str, inputs: dict) -> str:
         ttl = inputs.get("ttl", 3600)
         fqdn = f"{subdomain}.haehan-ai.kr"
         draft = {
-            "fqdn": fqdn, "record_type": record_type, "value": value, "ttl": ttl,
-            "safe_to_prepare": True, "safe_to_click_final_button": False,
+            "fqdn": fqdn,
+            "record_type": record_type,
+            "value": value,
+            "ttl": ttl,
+            "safe_to_prepare": True,
+            "safe_to_click_final_button": False,
             "requires_final_approval": True,
             "note": f"{fqdn} {record_type} 레코드 초안 생성됨. 가비아 DNS 관리 화면에서 사용자가 직접 저장해야 합니다.",
-            "dns_mgmt_url": f"https://my.gabia.com/service/domain/haehan-ai.kr/dns",
+            "dns_mgmt_url": "https://my.gabia.com/service/domain/haehan-ai.kr/dns",
         }
         return json.dumps(draft, ensure_ascii=False)
 
@@ -164,57 +195,67 @@ def _run_tool(name: str, inputs: dict) -> str:
         url = f"https://my.gabia.com/service/domain/{domain}/dns"
         try:
             from scripts.web_connector import get_page
+
             page = get_page()
             page.goto(url, timeout=15000)
             return json.dumps({"ok": True, "url": url, "message": "DNS 관리 화면으로 이동했습니다."})
         except Exception as e:
-            return json.dumps({"ok": False, "url": url, "message": f"CDP 이동 실패: {e}. 브라우저에서 직접 접속하세요: {url}"})
+            return json.dumps(
+                {"ok": False, "url": url, "message": f"CDP 이동 실패: {e}. 브라우저에서 직접 접속하세요: {url}"}
+            )
 
     return json.dumps({"error": f"unknown tool: {name}"})
 
 
 class ChatRequest(BaseModel):
-    messages: List[dict]
-    confirmed: Optional[bool] = False
+    messages: list[dict]
+    confirmed: bool | None = False
 
 
 @router.post("/chat")
 async def gabia_chat(body: ChatRequest):
-    import anthropic
+    import os
 
-    client = anthropic.Anthropic()
+    from openai import OpenAI
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse({"detail": "OPENAI_API_KEY 미설정"}, status_code=503)
+
+    client = OpenAI(api_key=api_key)
 
     async def stream():
-        messages = [{"role": m["role"], "content": m["content"]} for m in body.messages]
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + [
+            {"role": m["role"], "content": m["content"]} for m in body.messages
+        ]
         tools = _tool_defs()
         step = 0
 
         while True:
-            resp = client.messages.create(
-                model=CLAUDE_MODEL,
+            resp = client.chat.completions.create(
+                model=GPT_MODEL,
                 max_tokens=2048,
-                system=SYSTEM_PROMPT,
                 tools=tools,
+                tool_choice="auto",
                 messages=messages,
             )
+            msg = resp.choices[0].message
 
-            # 텍스트 블록 스트리밍
-            for block in resp.content:
-                if hasattr(block, "text") and block.text:
-                    yield f"event: text\ndata: {json.dumps({'text': block.text}, ensure_ascii=False)}\n\n"
+            if msg.content:
+                yield f"event: text\ndata: {json.dumps({'text': msg.content}, ensure_ascii=False)}\n\n"
 
-            if resp.stop_reason != "tool_use":
+            if not msg.tool_calls:
                 yield f"event: done\ndata: {json.dumps({'steps': step})}\n\n"
                 break
 
             # 도구 실행
             tool_results = []
-            for block in resp.content:
-                if block.type != "tool_use":
-                    continue
+            for tc in msg.tool_calls:
                 step += 1
-                tool_name = block.name
-                tool_inputs = block.input or {}
+                tool_name = tc.function.name
+                tool_inputs = json.loads(tc.function.arguments or "{}")
 
                 yield f"event: step\ndata: {json.dumps({'step': step, 'tool': tool_name, 'status': 'running'}, ensure_ascii=False)}\n\n"
 
@@ -222,14 +263,17 @@ async def gabia_chat(body: ChatRequest):
 
                 yield f"event: step\ndata: {json.dumps({'step': step, 'tool': tool_name, 'status': 'ok', 'detail': result_str[:200]}, ensure_ascii=False)}\n\n"
 
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": result_str,
-                })
+                tool_results.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result_str,
+                    }
+                )
 
-            messages.append({"role": "assistant", "content": resp.content})
-            messages.append({"role": "user", "content": tool_results})
+            messages.append(msg)
+            messages.extend(tool_results)
 
-    return StreamingResponse(stream(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
+    return StreamingResponse(
+        stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
+    )
