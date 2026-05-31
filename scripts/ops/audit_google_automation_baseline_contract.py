@@ -31,8 +31,8 @@ REQUIRED_PHRASES = (
     "scripts/google/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
-    "scripts/google/secret_action_gate.py",
-    "scripts/google/work_mode_gate.py",
+    "scripts/gates/secret_action_gate.py",
+    "scripts/gates/work_mode_gate.py",
     "scripts/google/workspace_basic.py",
     "scripts/google/ads_signup.py",
     "scripts/google/domain_readiness_audit.py",
@@ -82,10 +82,10 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google baseline missing phrase(s): " + ", ".join(missing))
 
+    from scripts.gates import secret_action_gate
     from scripts.google import (
         domain_readiness_audit,
         live_surface_explorer,
-        secret_action_gate,
         subdomain_logic,
         tab_logic,
         vision_usage_gate,

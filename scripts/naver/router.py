@@ -28,7 +28,7 @@ __status__ = {
         "content explore": "done", "content actions": "done",
         "company seo": "done", "developers entrypoints": "done",
         "shopping competitors": "done", "keyword tools": "done",
-        "excel report": "done", "cafe list": "done",
+        "excel report": "done", "cafe list": "done", "cafe write": "done",
         "calendar list/add": "done", "mybox list/search/upload": "done",
         "pay orders/points": "done", "talk list/send": "done",
         "place list/reviews": "done", "smartstore alias": "done",

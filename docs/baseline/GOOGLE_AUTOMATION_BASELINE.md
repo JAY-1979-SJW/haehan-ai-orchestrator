@@ -75,7 +75,7 @@ Locked sequence:
    - `main`: visible user-present browser work.
    - `background`: already-authenticated background work only after explicit
      `background_approved=True` approval for the exact task.
-   Missing or invalid work mode is blocked by `scripts/google/work_mode_gate.py`.
+   Missing or invalid work mode is blocked by `scripts/gates/work_mode_gate.py`.
 3. Check account state through `https://myaccount.google.com/` using only
    non-secret indicators.
 4. Open the requested registered Google subdomain in the same local browser
@@ -268,10 +268,10 @@ Representative host boundaries:
 - `scripts/google/live_inputs.py`: live input coverage and no-final-submit policy.
 - `scripts/google/managed_console.py`: managed-CDP-only Google Console/OAuth
   entrypoint; default browser openers are forbidden.
-- `scripts/google/secret_action_gate.py`: Google secret/API key/OAuth issuance
+- `scripts/gates/secret_action_gate.py`: Google secret/API key/OAuth issuance
   click policy. It defines `final_approval_only`, `secret_issue_user_click`, and
   `secret_issue_agent_click`, and always blocks raw secret output.
-- `scripts/google/work_mode_gate.py`: Google browser work mode gate. It requires
+- `scripts/gates/work_mode_gate.py`: Google browser work mode gate. It requires
   `google_work_mode` to be `main` or `background`, blocks missing mode, and
   requires `background_approved=True` before background execution.
 - `scripts/google/workspace_basic.py`: Google Workspace and consumer basic
@@ -318,7 +318,7 @@ Minimum verification before committing Google work:
 ```text
 python -m py_compile scripts/google/auth.py scripts/google/tab_registry.py scripts/google/surfaces.py scripts/google/workflows.py scripts/google/live_inputs.py scripts/google/subdomain_logic.py scripts/google/tab_logic.py scripts/google/live_surface_explorer.py scripts/google/cloud/live_console_explorer.py
 python -m py_compile scripts/google/managed_console.py scripts/google/workspace_basic.py scripts/google/ads_signup.py
-python -m py_compile scripts/google/secret_action_gate.py
+python -m py_compile scripts/gates/secret_action_gate.py
 python -m py_compile scripts/google/domain_readiness_audit.py
 python -m py_compile scripts/google/vision_usage_gate.py scripts/google/router.py
 python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine.py tests/test_google_surfaces.py tests/test_google_workflows.py tests/test_google_user_present_session_auth.py tests/test_youtube_site_engine.py tests/test_youtube_workflow.py tests/test_google_subdomain_logic.py tests/test_google_tab_logic.py tests/test_google_live_surface_explorer.py tests/test_google_cloud_live_console_explorer.py tests/test_google_managed_console.py -q
