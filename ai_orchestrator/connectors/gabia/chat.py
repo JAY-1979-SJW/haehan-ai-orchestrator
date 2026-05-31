@@ -216,7 +216,7 @@ class ChatRequest(BaseModel):
 async def gabia_chat(body: ChatRequest):
     import os
 
-    from openai import OpenAI
+    from openai import AsyncOpenAI
 
     api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
@@ -224,7 +224,7 @@ async def gabia_chat(body: ChatRequest):
 
         return JSONResponse({"detail": "OPENAI_API_KEY 미설정"}, status_code=503)
 
-    client = OpenAI(api_key=api_key)
+    client = AsyncOpenAI(api_key=api_key)
 
     async def stream():
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + [
@@ -234,7 +234,7 @@ async def gabia_chat(body: ChatRequest):
         step = 0
 
         while True:
-            resp = client.chat.completions.create(
+            resp = await client.chat.completions.create(
                 model=GPT_MODEL,
                 max_tokens=2048,
                 tools=tools,
