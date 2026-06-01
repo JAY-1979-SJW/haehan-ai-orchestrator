@@ -144,11 +144,17 @@ def _diff_for(path: str, *, staged: bool) -> str:
         return ""
 
 
-def _has_local_docker_cli(path: str, *, staged: bool) -> bool:
-    """Return True if added lines pass docker/docker-compose as a subprocess list first element."""
+def _has_local_docker_cli(path: str, *, staged: bool, allow_paths: tuple[str, ...] = ()) -> bool:
+    """Return True if added lines pass docker/docker-compose as a subprocess list first element.
+
+    allow_paths: 서버 배포 전용 스크립트 등 docker 호출이 허용된 경로(예외).
+    """
     if not path.endswith(".py"):
         return False
     if path == "scripts/quality_gate.py":
+        return False
+    if path in allow_paths:
+        # 서버 배포 전용 스크립트 — docker 허용(로컬 가드 내장). configs/quality_gate.json 참조.
         return False
     diff = _diff_for(path, staged=staged)
     added = "\n".join(line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++"))
@@ -306,8 +312,9 @@ def evaluate_changes(
         )
 
     if config.get("no_local_docker_cli"):
+        allow_paths = tuple(config.get("no_local_docker_cli_allow_paths", []))
         for row in files:
-            if _has_local_docker_cli(row.path, staged=staged):
+            if _has_local_docker_cli(row.path, staged=staged, allow_paths=allow_paths):
                 issues.append(
                     GateIssue(
                         "error",

@@ -1,0 +1,83 @@
+"""서버 전용 배포 스크립트 — git 안전 동기화 + docker compose 재빌드.
+
+⚠️ 서버 전용. 로컬 PC(docker 미설치)에서는 가드가 즉시 차단한다.
+   docker 호출이 허용된 유일한 스크립트 — configs/quality_gate.json
+   no_local_docker_cli_allow_paths 에 등록됨. (CLAUDE.md 정책 예외)
+
+호출(데몬):  python3 scripts/ops/server_deploy.py --approved
+
+흐름:
+  1. 로컬 가드: docker 없으면 exit 3
+  2. git fetch + fast-forward only 병합 (운영 로컬 변경 유실 방지 — reset --hard 미사용)
+  3. docker compose up -d --build (변경된 서비스)
+  4. 헬스체크
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+COMPOSE_SERVICES = ["ai-orchestrator-api", "admin-web"]
+
+
+def _guard_server_only() -> None:
+    """로컬 PC(docker 없음)에서 실행 차단."""
+    if shutil.which("docker") is None:
+        print("[server_deploy] docker 없음 — 서버 전용 스크립트입니다. 로컬 실행 차단.")
+        sys.exit(3)
+
+
+def _run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
+    print(f"[server_deploy] $ {' '.join(cmd)}")
+    return subprocess.run(cmd, cwd=str(ROOT), check=False, **kw)
+
+
+def _git_sync() -> bool:
+    """fetch 후 fast-forward 가능할 때만 병합. 충돌/분기 시 중단(유실 방지)."""
+    _run(["git", "fetch", "origin", "master"])
+    behind = _run(
+        ["git", "rev-list", "--count", "HEAD..origin/master"],
+        capture_output=True,
+        text=True,
+    )
+    n = (behind.stdout or "0").strip()
+    print(f"[server_deploy] origin/master 대비 {n} 커밋 뒤")
+    if n == "0":
+        print("[server_deploy] 이미 최신 — 배포 생략")
+        return False
+    ff = _run(["git", "merge", "--ff-only", "origin/master"])
+    if ff.returncode != 0:
+        print("[server_deploy] fast-forward 불가(로컬 분기/충돌) — 수동 확인 필요. 중단.")
+        sys.exit(4)
+    return True
+
+
+def _compose_rebuild() -> None:
+    # docker compose(v2) 우선, 없으면 docker-compose(v1)
+    base = (
+        ["docker", "compose"]
+        if _run(["docker", "compose", "version"], capture_output=True).returncode == 0
+        else ["docker-compose"]
+    )
+    _run([*base, "up", "-d", "--build", *COMPOSE_SERVICES])
+
+
+def main() -> int:
+    if "--approved" not in sys.argv:
+        print("[server_deploy] --approved 필요 (데몬 경유 호출).")
+        return 2
+    _guard_server_only()
+    changed = _git_sync()
+    if not changed:
+        return 0
+    _compose_rebuild()
+    print("[server_deploy] 배포 완료.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

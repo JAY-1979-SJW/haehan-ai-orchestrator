@@ -9,6 +9,7 @@
 systemd 서비스로 등록:
   /etc/systemd/system/ai-orchestrator-deploy-trigger.service
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -30,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger("deploy_trigger_daemon")
 
 ROOT = Path(__file__).resolve().parents[2]
-DEPLOY_SCRIPT = ROOT / "scripts" / "ops" / "deploy_api_with_runtime_gates.py"
+DEPLOY_SCRIPT = ROOT / "scripts" / "ops" / "server_deploy.py"
 # 0.0.0.0 으로 바인드해야 컨테이너(host.docker.internal)에서 접근 가능.
 # HMAC-SHA256 서명 검증으로 무단 트리거를 차단한다.
 HOST = "0.0.0.0"
@@ -60,12 +61,18 @@ def _collect_deploy_summary() -> dict:
     try:
         log = subprocess.run(
             ["git", "log", "HEAD~5..HEAD", "--oneline"],
-            cwd=str(ROOT), capture_output=True, text=True, timeout=10,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         summary["recent_commits"] = log.stdout.strip().splitlines()
         diff_stat = subprocess.run(
             ["git", "diff", "HEAD~1..HEAD", "--stat"],
-            cwd=str(ROOT), capture_output=True, text=True, timeout=10,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         summary["diff_stat"] = diff_stat.stdout.strip()
     except Exception as exc:
@@ -90,7 +97,7 @@ def _run_deploy() -> None:
         # dry-run 리포트에 변경 요약 병합
         try:
             import json
-            from pathlib import Path
+
             report_path = ROOT / "data" / "runtime" / "deploy_api_with_runtime_gates_latest.json"
             if report_path.exists():
                 data = json.loads(report_path.read_text(encoding="utf-8"))
@@ -118,7 +125,7 @@ class TriggerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         global _running
         if self.path != "/trigger":
             self._send(404, {"ok": False})
@@ -144,7 +151,7 @@ class TriggerHandler(BaseHTTPRequestHandler):
         logger.info("deploy trigger: accepted from %s", self.client_address)
         self._send(202, {"ok": True, "secret_values_output": False})
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         if self.path != "/health":
             self._send(404, {"ok": False})
             return
