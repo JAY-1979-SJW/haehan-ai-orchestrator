@@ -83,8 +83,11 @@ Status: DRAFT (승인 대기 — 코드 전 설계)
 
 ## 5. 단계별 구현 순서 (승인 후, 각 단계 게이트)
 
-1. 서버: `GET /sites/catalog` + 카탈로그 데이터(external_work_registry 그룹핑) + 테스트
-2. 클라이언트(로컬): config.js에 `enabled_sites`/`site_settings` 헬퍼 + 저장/로드
+1. ✅ **완료** 서버: `GET /sites/catalog` + 카탈로그 데이터(external_work_registry 그룹핑) + 테스트 (커밋 08b0e19)
+2. ✅ **완료** 클라이언트(로컬): `config.js`에 `getEnabledSites/setEnabledSites/getSiteSettings/setSiteSettings`
+   - `enabled_sites`(문자열 배열, 중복제거) / `site_settings`(사이트별 병합 저장)
+   - 민감 키(`pass|pwd|secret|token|cookie|credential|otp|apikey|private`) 저장 자동 차단(`_stripSensitive`)
+   - 기능검증: round-trip·병합·민감키 차단·config.json 평문 미저장 모두 통과
 3. 화면: 사이트 선택·설정 UI (카탈로그 fetch → 토글 → 로컬 저장)
 4. local-agent: enabled_sites 반영(선택 사이트만 활성)
 5. E2E: 카탈로그 조회 → 선택 → 로컬 저장 → 재시작 후 유지 확인
