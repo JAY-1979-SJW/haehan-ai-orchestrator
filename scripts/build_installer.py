@@ -69,6 +69,12 @@ def step_next_build() -> bool:
         shutil.copytree(public_src, public_dst)
         print(f"✅ public 복사: {public_dst}")
 
+    # Electron 래퍼 스크립트 복사 (Next.js 14 + Electron WebSocket 오류 suppress)
+    wrapper_src = ELECTRON_DIR / "lib" / "nextjs_wrapper.js"
+    wrapper_dst = NEXT_STANDALONE / "wrapper.js"
+    shutil.copy2(wrapper_src, wrapper_dst)
+    print(f"✅ wrapper 복사: {wrapper_dst}")
+
     print("✅ Next.js 빌드 완료")
     return True
 
