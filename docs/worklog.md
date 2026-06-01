@@ -34,12 +34,20 @@
 - agent.js: getEnabledSites() → `--enabled-sites` 전달
 - tests/test_local_agent_site_gate.py 4종, STOP 0, 게이트 통과
 
+### P1-5 부분 완료 (운영 라이브) + 502 인시던트 해소
+- push(a2a9c6e) → **복구된 데몬이 자동 배포** (api+admin-web 재빌드)
+- **카탈로그 운영 라이브**: `GET /orchestrator/api/v1/sites/catalog` → 401(JWT보호) 확인 ✅
+- local-agent.exe 재빌드+설치본 반영(--enabled-sites 인식 확인), asar에 P1-4 agent.js 반영
+- ⚠️ **502 인시던트(약 5분)**: 컨테이너 재빌드로 docker IP 변경 → nginx 옛 IP 캐시 → 502. `nginx -s reload`로 해소(health 200 복구)
+- **원인 수정 커밋(미push)**: `server_deploy.py`에 `_reload_nginx()` 추가 — compose up 후 nginx 재해결
+  - ⚠️ 지금 push하면 데몬이 또 재빌드→첫 배포는 여전히 502(실행중 스크립트는 git_sync 전 버전). 다음 의도된 배포 때 push + 배포 후 수동 nginx reload로 처리
+  - 로컬 master가 origin보다 1커밋 앞섬(이 수정)
+
 ### 다음 할 일 (NEXT)
-- **P1-5**: E2E 통합 검증 — 앱 실행 → /settings/sites에서 선택 → config.json 저장 확인 → 에이전트 재시작 시 --enabled-sites 반영 확인
-  - 선행: asar에 agent.js/config.js 반영(완료) + **local-agent.exe 재빌드**(local_agent.py 변경 반영) 필요
-  - 실앱 검증: window.haehanLocal 왕복 + 사이트 토글 저장
+- **P1-5 잔여**: 데스크톱 실앱 E2E — 앱 실행 → /settings/sites 토글 → config.json 저장 → 에이전트 --enabled-sites 반영. (로컬 Next.js standalone 빌드가 이번 세션 불안정했음 → 서버 UI는 owner IP로 접근해 페이지 렌더 확인 가능, 단 window.haehanLocal 저장은 데스크톱 webview 필요)
+- **server_deploy nginx-reload 수정 push** (배포 502 영구 방지) — 다음 배포 시 함께
 - 정리정돈(미착수): 루트 스크립트 39개, STORAGE_BOUNDARY 11개, UNKNOWN 레이어
-- 참고: 카탈로그 사이트 추가 = external_work_registry 항목 추가 (현재 naver/google/gabia)
+- 카탈로그 사이트 추가 = external_work_registry 항목 추가 (현재 naver/google/gabia)
 - 참고: 카탈로그는 현재 naver/google/gabia만. 사이트 추가 = external_work_registry 항목 추가
 - 결정사항: 원격화면 보류 → 화면은 로컬 전용. 청사진 P2(원격 UI) 보류 표기됨
 - 피드백 반영: 단계마다 "중단할까요" 묻지 않고 자동 진행 (feedback.md)
