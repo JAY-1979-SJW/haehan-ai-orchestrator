@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,10 +22,25 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data" / "grant_radar"
+# 쓰기 데이터는 영속 경로(HAEHAN_DATA_DIR), 읽기전용 프로필은 번들 configs
+_ENV_DATA = os.environ.get("HAEHAN_DATA_DIR")
+DATA_DIR = (Path(_ENV_DATA) / "grant_radar") if _ENV_DATA else (ROOT / "data" / "grant_radar")
 REPORT_FILE = DATA_DIR / "report_latest.json"
 DRAFT_DIR = DATA_DIR / "drafts"
 COMPANY_FILE = ROOT / "configs" / "grant_radar_company.json"
+
+
+def _grant_cmd(task: str) -> list[str]:
+    """grant_radar 서브태스크 실행 커맨드.
+
+    동결 exe(PyInstaller)는 `-m` 미지원 → run_server.py --grant-task 디스패치 사용.
+    개발 모드는 `python -m scripts.grant_radar.<module>`.
+    """
+    module = {"scan": "scan", "report": "report", "fill": "form_fill"}[task]
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--grant-task", task]
+    return [sys.executable, "-m", f"scripts.grant_radar.{module}"]
+
 
 grant_radar_router = APIRouter(prefix="/grant-radar", tags=["grant-radar"])
 
@@ -72,7 +88,7 @@ def trigger_scan():
     _scan_running = True
     try:
         scan = subprocess.run(
-            [sys.executable, "-m", "scripts.grant_radar.scan"],
+            _grant_cmd("scan"),
             cwd=str(ROOT),
             capture_output=True,
             text=True,
@@ -81,7 +97,7 @@ def trigger_scan():
             timeout=180,
         )
         rep = subprocess.run(
-            [sys.executable, "-m", "scripts.grant_radar.report"],
+            _grant_cmd("report"),
             cwd=str(ROOT),
             capture_output=True,
             text=True,
@@ -192,7 +208,7 @@ def fill_form(body: FillRequest):
     )
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "scripts.grant_radar.form_fill"],
+            _grant_cmd("fill"),
             cwd=str(ROOT),
             input=payload,
             capture_output=True,

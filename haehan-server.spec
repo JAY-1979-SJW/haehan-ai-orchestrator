@@ -92,6 +92,8 @@ datas = [
     (str(ROOT / 'configs'), 'configs'),
     # ai_orchestrator 패키지 내 데이터
     (str(ROOT / 'ai_orchestrator'), 'ai_orchestrator'),
+    # grant_radar 서브태스크 모듈 (run_server --grant-task 디스패치용)
+    (str(ROOT / 'scripts' / 'grant_radar'), 'scripts/grant_radar'),
     # Playwright 드라이버 (driver/package)
     (str(Path(sys.executable).parent / 'Lib' / 'site-packages' / 'playwright' / 'driver'), 'playwright/driver'),
 ]

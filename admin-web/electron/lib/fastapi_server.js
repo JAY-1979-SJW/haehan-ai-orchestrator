@@ -84,6 +84,8 @@ async function startFastAPIServer() {
       ...process.env,
       HAEHAN_PORT: String(FASTAPI_PORT),
       HAEHAN_HOST: "127.0.0.1",
+      // grant_radar 등 쓰기 데이터 영속 경로 (서버·서브태스크 공유)
+      HAEHAN_DATA_DIR: path.join(app.getPath("userData"), "data"),
     },
   });
 

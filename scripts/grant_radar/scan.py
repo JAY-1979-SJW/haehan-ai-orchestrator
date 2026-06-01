@@ -14,12 +14,16 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-OUT_DIR = ROOT / "data" / "grant_radar"
+# 영속 데이터 경로 — HAEHAN_DATA_DIR(번들/Electron) 우선, 없으면 소스 레이아웃(dev)
+_ENV_DATA = os.environ.get("HAEHAN_DATA_DIR")
+OUT_DIR = (
+    (Path(_ENV_DATA) / "grant_radar") if _ENV_DATA else (Path(__file__).resolve().parents[2] / "data" / "grant_radar")
+)
 OUT_FILE = OUT_DIR / "scan_latest.json"
 
 PER_PORTAL_CAP = 40
