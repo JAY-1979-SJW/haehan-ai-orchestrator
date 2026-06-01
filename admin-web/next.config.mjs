@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  distDir: "../dist/nextjs",
   transpilePackages: ["@haehan/design-system"],
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },

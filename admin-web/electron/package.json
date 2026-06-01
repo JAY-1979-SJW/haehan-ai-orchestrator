@@ -14,7 +14,7 @@
     "appId": "com.haehan.ai",
     "productName": "Haehan AI",
     "directories": {
-      "output": "../../dist-electron"
+      "output": "../../dist-electron-new"
     },
     "files": [
       "main.js",
@@ -26,7 +26,7 @@
     "extraResources": [
       { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] },
       { "from": "../../dist/haehan-server", "to": "server/haehan-server" },
-      { "from": "../../dist/nextjs/standalone", "to": "nextjs" }
+      { "from": "../.next/standalone", "to": "nextjs" }
     ],
     "win": {
       "target": [
