@@ -22,12 +22,24 @@
 - 구현: `webview_preload.js`(window.haehanLocal 4개), main.js ipcMain.handle 4개, shell.html preload 부착, mainWindow preload 경로 전달
 - 검증: STOP 0, 게이트 통과, asar 반영(webview_preload 포함, 핸들러 4개)
 
+### P1-3 화면 완료
+- `localConfig.ts`(브리지 가드 래퍼), `sitesCatalog.ts`(카탈로그 JWT fetch), `/settings/sites` 토글 페이지, nav 추가
+- tsc 0, STOP 0, 게이트 통과
+- 실앱 검증(webview window.haehanLocal 왕복)은 앱 재시작 시 확인 — 미수행
+
+### P1-4 완료
+- local_agent.py: `_TOOL_SITE` 매핑 + `_site_allowed` 게이트 + `--enabled-sites` 인자
+  - enabled_sites 비면 제한없음(owner/기존 보존), 값 있으면 해당 사이트 tool만, 미등록 tool 항상 허용
+  - 미활성 tool → `site_not_enabled` 거부 반환
+- agent.js: getEnabledSites() → `--enabled-sites` 전달
+- tests/test_local_agent_site_gate.py 4종, STOP 0, 게이트 통과
+
 ### 다음 할 일 (NEXT)
-- **P1-3 화면 본구현**: 사이트 선택 토글 UI (admin-web/src) — 카탈로그 fetch → 토글 → `window.haehanLocal.setEnabledSites` 저장
-  - 클라 헬퍼 `admin-web/src/lib/localConfig.ts`(window.haehanLocal 가드 래퍼) 먼저
-  - 실앱 검증: 앱 실행 → webview에서 window.haehanLocal 동작 확인(앱 재시작 필요)
-- **P1-4**: local-agent가 enabled_sites만 활성
-- **P1-5**: E2E (선택→저장→재시작 유지)
+- **P1-5**: E2E 통합 검증 — 앱 실행 → /settings/sites에서 선택 → config.json 저장 확인 → 에이전트 재시작 시 --enabled-sites 반영 확인
+  - 선행: asar에 agent.js/config.js 반영(완료) + **local-agent.exe 재빌드**(local_agent.py 변경 반영) 필요
+  - 실앱 검증: window.haehanLocal 왕복 + 사이트 토글 저장
+- 정리정돈(미착수): 루트 스크립트 39개, STORAGE_BOUNDARY 11개, UNKNOWN 레이어
+- 참고: 카탈로그 사이트 추가 = external_work_registry 항목 추가 (현재 naver/google/gabia)
 - 참고: 카탈로그는 현재 naver/google/gabia만. 사이트 추가 = external_work_registry 항목 추가
 - 결정사항: 원격화면 보류 → 화면은 로컬 전용. 청사진 P2(원격 UI) 보류 표기됨
 - 피드백 반영: 단계마다 "중단할까요" 묻지 않고 자동 진행 (feedback.md)
