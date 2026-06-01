@@ -81,8 +81,9 @@ Claude 데스크앱처럼:
 - 클라이언트: 사이트 선택·설정 화면 + **로컬 저장**(자격증명·세션·데이터 로컬)
 - 서버는 사용자 업무 데이터 미보관
 
-### 🔨 P2 — 사용자별 UI 접근 (보안 강화)
-- middleware JWT 위조 검증 + nginx UI 잠금 해제 (`MULTIUSER_UI_ACCESS_PLAN.md`)
+### ⏸️ P2 — 사용자별 원격 UI 접근 — **보류(2026-06-02)**
+- 원격 화면 기능 보류 결정. 화면은 당분간 **로컬 전용**(앱 번들/localhost).
+- 재개 시: middleware JWT 위조 검증 + nginx UI 잠금 해제 (`MULTIUSER_UI_ACCESS_PLAN.md`)
 
 ### 🔨 P3 — 사용자별 local-agent 결합
 - device_token ↔ user_id, register-with-code 연계
