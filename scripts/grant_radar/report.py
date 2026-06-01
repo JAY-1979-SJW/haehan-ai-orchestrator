@@ -11,13 +11,16 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data" / "grant_radar"
+# 쓰기 데이터는 영속 경로(env), 읽기 전용 프로필은 번들 configs
+_ENV_DATA = os.environ.get("HAEHAN_DATA_DIR")
+DATA_DIR = (Path(_ENV_DATA) / "grant_radar") if _ENV_DATA else (ROOT / "data" / "grant_radar")
 SCAN_FILE = DATA_DIR / "scan_latest.json"
 REPORT_JSON = DATA_DIR / "report_latest.json"
 REPORT_MD = DATA_DIR / "report_latest.md"

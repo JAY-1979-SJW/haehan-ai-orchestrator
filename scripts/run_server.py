@@ -33,6 +33,25 @@ def _setup_bundle_env() -> None:
             if env_file.exists():
                 os.environ.setdefault("HAEHAN_ENV_FILE", str(env_file))
                 break
+        # 영속 데이터 경로 기본값 (Electron이 미주입 시) — %APPDATA%\Haehan AI\data
+        if not os.environ.get("HAEHAN_DATA_DIR"):
+            appdata = os.environ.get("APPDATA") or str(exe_dir)
+            os.environ["HAEHAN_DATA_DIR"] = str(Path(appdata) / "Haehan AI" / "data")
+
+
+def _dispatch_grant_task() -> bool:
+    """동결 exe에서 `-m` 대체 — `--grant-task {scan|report|fill}` 처리."""
+    if "--grant-task" not in sys.argv:
+        return False
+    task = sys.argv[sys.argv.index("--grant-task") + 1]
+    module = {"scan": "scan", "report": "report", "fill": "form_fill"}.get(task)
+    if not module:
+        print(f"[run_server] 알 수 없는 grant-task: {task}")
+        sys.exit(2)
+    import importlib
+
+    mod = importlib.import_module(f"scripts.grant_radar.{module}")
+    sys.exit(mod.main())
 
 
 def _find_port() -> int:
@@ -42,6 +61,10 @@ def _find_port() -> int:
 
 def main() -> None:
     _setup_bundle_env()
+
+    # grant_radar 서브태스크 디스패치 (동결 exe에서 -m 대체)
+    if _dispatch_grant_task():
+        return
 
     import uvicorn
 

@@ -45,6 +45,14 @@
 - `grant_radar_router`: `POST /grant-radar/fill`(confirm 게이트→subprocess→`log_event("GRANT_FORM_FILLED")`). 로컬 전용.
 - UI: 초안 패널 "신청폼에 채우기" 버튼 → 사이트주소 입력 → 필드 감지 확인 → 입력. **제출은 사용자 직접**.
 
+## 번들(설치본) 실행 수정 — 데이터 경로 + 동결 exe 디스패치
+PyInstaller 동결 exe에선 `-m` 미지원 + 데이터 경로가 MEIPASS(휘발성)로 어긋나는 문제 수정:
+- **데이터 경로**: `HAEHAN_DATA_DIR` env 우선(없으면 dev 소스 `data/grant_radar`). scan·report·router 공유.
+- **동결 디스패치**: `run_server.py --grant-task {scan|report|fill}` → 해당 모듈 main 실행. router는 `getattr(sys,'frozen')`로 `--grant-task`/`-m` 분기(`_grant_cmd`).
+- **번들**: `haehan-server.spec` datas에 `scripts/grant_radar` 추가.
+- **Electron**: `fastapi_server.js`가 spawn env에 `HAEHAN_DATA_DIR=userData/data` 주입. (없을 때 run_server는 `%APPDATA%/Haehan AI/data` 기본값)
+- 검증: dev=소스경로, env지정=해당경로 OK.
+
 ## 다음 단계(선택)
 - 포털 확장: K-Startup(AJAX go_view)·소상공인24 등.
 - 라벨 정밀 매핑(현재 v1은 최대 textarea 단일 입력).
