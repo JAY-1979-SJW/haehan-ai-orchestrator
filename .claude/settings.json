@@ -2,6 +2,17 @@
   "model": "sonnet",
   "enableAllProjectMcpServers": true,
   "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/ops/behavior_gate.py",
+            "statusMessage": "행동 게이트 검사 중..."
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
@@ -9,6 +20,11 @@
             "type": "command",
             "command": "python scripts/ops/install_git_hooks.py",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
+          },
+          {
+            "type": "command",
+            "command": "python -c \"import os;p='docs/worklog.md';print(''.join(open(p,encoding='utf-8').readlines()[:45])) if os.path.exists(p) else None\"",
+            "statusMessage": "지난 작업 로그 확인 중..."
           }
         ]
       }
