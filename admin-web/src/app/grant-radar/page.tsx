@@ -43,6 +43,8 @@ export default function GrantRadarPage() {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [onlyRelevant, setOnlyRelevant] = useState(true);
+  const [draftBusy, setDraftBusy] = useState<number | null>(null);
+  const [draft, setDraft] = useState<{ title: string; text: string } | null>(null);
 
   const loadReport = useCallback(async () => {
     setLoading(true);
@@ -75,6 +77,40 @@ export default function GrantRadarPage() {
       setScanning(false);
     }
   }, [loadReport]);
+
+  // 신청서 초안: 승인(confirm) 후에만 생성
+  const requestDraft = useCallback(async (index: number) => {
+    setDraftBusy(index);
+    setError(null);
+    try {
+      // 1) 미리보기 + 승인 요청
+      const pre = await fetch(`${API}/draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_index: index, confirm: false }),
+      }).then((r) => r.json());
+      const t = pre?.preview?.title ?? "이 사업";
+      if (!window.confirm(`'${t}'\n\n신청서 초안을 작성할까요? (외부 제출 아님 — 편집용 초안만 생성)`)) {
+        setDraftBusy(null);
+        return;
+      }
+      // 2) 승인 → 생성
+      const res = await fetch(`${API}/draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_index: index, confirm: true }),
+      }).then((r) => r.json());
+      if (res.ok) {
+        setDraft({ title: res.title, text: res.draft });
+      } else {
+        setError(`초안 생성 실패 (${res.reason ?? "오류"})`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "초안 요청 실패");
+    } finally {
+      setDraftBusy(null);
+    }
+  }, []);
 
   useEffect(() => {
     loadReport();
@@ -134,6 +170,7 @@ export default function GrantRadarPage() {
                   <th style={{ padding: "8px 10px" }}>담당자</th>
                   <th style={{ padding: "8px 10px" }}>키워드</th>
                   <th style={{ padding: "8px 10px" }}>포털</th>
+                  <th style={{ padding: "8px 10px" }}>신청서</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,6 +189,25 @@ export default function GrantRadarPage() {
                     <td style={{ padding: "8px 10px" }}>{it.manager ?? "-"}</td>
                     <td style={{ padding: "8px 10px", color: "#F97316", fontSize: 12 }}>{it.matched.join(", ") || "-"}</td>
                     <td style={{ padding: "8px 10px", color: "#6B7280", fontSize: 12 }}>{it.portal_name || it.portal}</td>
+                    <td style={{ padding: "8px 10px" }}>
+                      {(() => {
+                        const origIndex = report!.items!.indexOf(it);
+                        return (
+                          <button
+                            onClick={() => requestDraft(origIndex)}
+                            disabled={draftBusy !== null}
+                            style={{
+                              padding: "4px 10px", borderRadius: 8, border: "1px solid #FED7AA",
+                              background: draftBusy === origIndex ? "#FFEDD5" : "#FFF7ED", color: "#C2410C",
+                              fontSize: 12, fontWeight: 600, cursor: draftBusy !== null ? "default" : "pointer",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {draftBusy === origIndex ? "작성중…" : "초안 작성"}
+                          </button>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -161,6 +217,32 @@ export default function GrantRadarPage() {
 
         {!loading && report?.ok && items.length === 0 && (
           <div style={{ color: "#6B7280", fontSize: 14, padding: "24px 0" }}>표시할 사업이 없습니다.</div>
+        )}
+
+        {/* 신청서 초안 편집 패널 */}
+        {draft && (
+          <div style={{ marginTop: 20, border: "1px solid #E5E7EB", borderRadius: 12, padding: 16, background: "#fff" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <strong style={{ fontSize: 14, color: "#111827" }}>신청서 초안 — {draft.title}</strong>
+              <button onClick={() => setDraft(null)} style={{ border: "none", background: "transparent", color: "#6B7280", cursor: "pointer", fontSize: 13 }}>닫기 ✕</button>
+            </div>
+            <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 8 }}>
+              편집용 초안입니다. 외부 제출은 사용자가 직접 진행하세요. (저장 위치: data/grant_radar/drafts/)
+            </div>
+            <textarea
+              value={draft.text}
+              onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+              style={{ width: "100%", minHeight: 280, fontSize: 13, lineHeight: 1.6, padding: 12, border: "1px solid #E5E7EB", borderRadius: 8, fontFamily: "inherit", resize: "vertical" }}
+            />
+            <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+              <button
+                onClick={() => navigator.clipboard?.writeText(draft.text)}
+                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #E5E7EB", background: "#F9FAFB", fontSize: 13, cursor: "pointer" }}
+              >
+                📋 복사
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </PageShell>

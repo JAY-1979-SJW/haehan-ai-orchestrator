@@ -33,7 +33,13 @@
 - 외부 발행/제출/결제/서명 없음. mutation은 로컬 JSON 생성뿐.
 - 스캔은 로그인 불필요한 공개 페이지만 대상.
 
+## Phase 2 (구현 완료) — 회사 프로필 + 승인 + 신청서 초안
+- `configs/grant_radar_company.json` — 회사 프로필(사업자번호 등 민감정보는 placeholder, repo 미포함).
+- `openai_client.generate_application_draft(grant, company)` — 공고+프로필 기반 LLM 초안(MOCK 폴백). 응답에서 business_no 마스킹.
+- `grant_radar_router`: `POST /grant-radar/draft`(confirm=true 승인 시에만 생성·저장·`log_event("GRANT_DRAFT_CREATED")`), `GET /grant-radar/drafts`.
+- UI: 행별 "초안 작성" 버튼 → 승인 확인 → 편집 가능 초안 패널. 초안 저장 `data/grant_radar/drafts/`.
+- **안전**: 초안=로컬 파일, 외부 제출 없음. confirm 없으면 미생성(미리보기만).
+
 ## 다음 단계
-- Phase 2: 회사 프로필 저장(L7) + 승인 게이트(approval.py 재사용) + 신청서 초안(LLM).
 - Phase 3: CDP 폼 자동입력(form_runner 패턴) — **제출 직전 정지, 최종 제출은 사용자**.
-- 포털 확장: 기업마당(bizinfo)·K-Startup·중소벤처24·CCEI 스캐너 추가.
+- 포털 확장: K-Startup(AJAX go_view 특수처리)·소상공인24 등 추가 검토.
