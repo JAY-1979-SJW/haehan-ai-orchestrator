@@ -11,7 +11,7 @@
 ## 레이어/파일
 | 파일 | 레이어 | 역할 |
 |------|--------|------|
-| `scripts/grant_radar/scan.py` | L10/L5 | 헤드리스 Chromium 다중 포털 스캔(NIPA·기업마당·중기부=anchor, CCEI=rows) → `data/grant_radar/scan_latest.json` |
+| `scripts/grant_radar/scan.py` | L10/L5 | 헤드리스 Chromium 6개 포털 스캔(anchor: NIPA·기업마당·중기부 / rows: CCEI·중소벤처24·SBA) → `data/grant_radar/scan_latest.json` |
 | `scripts/grant_radar/report.py` | L6 | 적합도 점수(키워드+가중치) + 마감/담당자 파싱 + LLM 요약(상위 8건) → `report_latest.json`/`.md` |
 | `configs/grant_radar_profile.json` | L1 | 업종 키워드·가중치 (민감정보 미포함) |
 | `ai_orchestrator/connectors/grant_radar_router.py` | L8 | `GET /api/v1/grant-radar/report`, `POST /api/v1/grant-radar/scan` |
