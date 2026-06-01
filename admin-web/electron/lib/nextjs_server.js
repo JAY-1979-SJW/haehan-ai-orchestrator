@@ -25,8 +25,8 @@ function resolveServerJs() {
     const p = path.join(process.resourcesPath, "nextjs", "server.js");
     return fs.existsSync(p) ? p : null;
   }
-  // 개발 모드: 프로젝트 루트 기준 dist/nextjs/standalone/server.js
-  const dev = path.join(__dirname, "..", "..", "..", "dist", "nextjs", "standalone", "server.js");
+  // 개발 모드: admin-web/.next/standalone/server.js
+  const dev = path.join(__dirname, "..", "..", ".next", "standalone", "server.js");
   return fs.existsSync(dev) ? dev : null;
 }
 
