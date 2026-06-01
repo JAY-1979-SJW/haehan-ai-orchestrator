@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-06-02 (오후 재개) — P1 1단계: 사이트 카탈로그 엔드포인트
+
+### 한 일
+- **P1-1 완료**: `GET /api/v1/sites/catalog` (커밋 08b0e19)
+  - `external_work_registry.list_site_catalog()` — provider(naver/google/gabia)별 그룹핑
+  - `sites/router.py` 엔드포인트(JWT 로그인 사용자), 그룹핑은 registry 호출만(router 얇게)
+  - 민감필드(notes) 미노출, 사용자 선택/설정 서버 미저장(순수 로컬)
+  - `tests/test_site_catalog.py` 4종, 게이트 통과(STOP 0)
+- 작업 로그 훅 활성화됨(SessionStart → worklog 상단 자동 표시)
+
+### 다음 할 일 (NEXT)
+- **P1-2**: 클라이언트 로컬 저장 헬퍼 — `electron/lib/config.js`에 `enabled_sites`/`site_settings` get/set
+- **P1-3**: 사이트 선택 화면 (카탈로그 fetch → 토글 → 로컬 저장)
+- **P1-4**: local-agent가 enabled_sites만 활성
+- **P1-5**: E2E (선택→저장→재시작 유지)
+- 참고: 카탈로그는 현재 naver/google/gabia만(external_work_registry 등록분). 사이트 추가 = 레지스트리 항목 추가
+- 기준서: docs/architecture/SITE_CATALOG_LOCAL_CONFIG_PLAN.md
+
+---
+
 ## 2026-06-02 — 멀티유저 제품 방향 확정 + 운영 회원승인 배포
 
 ### 한 일
