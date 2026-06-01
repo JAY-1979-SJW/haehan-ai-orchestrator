@@ -16,15 +16,38 @@ import sys
 from pathlib import Path
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[2]
-REPORT_FILE = ROOT / "data" / "grant_radar" / "report_latest.json"
+DATA_DIR = ROOT / "data" / "grant_radar"
+REPORT_FILE = DATA_DIR / "report_latest.json"
+DRAFT_DIR = DATA_DIR / "drafts"
+COMPANY_FILE = ROOT / "configs" / "grant_radar_company.json"
 
 grant_radar_router = APIRouter(prefix="/grant-radar", tags=["grant-radar"])
 
 _scan_running = False
+
+# 응답에서 가리는 민감 키 (감사/보안)
+_MASK_KEYS = {"business_no", "_note"}
+
+
+def _load_company() -> dict:
+    try:
+        return json.loads(COMPANY_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _load_report_items() -> list[dict]:
+    if not REPORT_FILE.exists():
+        return []
+    try:
+        return json.loads(REPORT_FILE.read_text(encoding="utf-8")).get("items", [])
+    except Exception:
+        return []
 
 
 @grant_radar_router.get("/report")
@@ -77,3 +100,74 @@ def trigger_scan():
         return {"ok": False, "reason": "exec_error"}
     finally:
         _scan_running = False
+
+
+class DraftRequest(BaseModel):
+    item_index: int
+    confirm: bool = False
+
+
+@grant_radar_router.post("/draft")
+def make_draft(body: DraftRequest):
+    """신청서 초안 생성. confirm=True(사용자 승인) 시에만 LLM 생성·저장.
+
+    외부 제출이 아닌 로컬 초안 작성. 실제 제출은 사용자 최종 단계(Phase 3).
+    """
+    items = _load_report_items()
+    if body.item_index < 0 or body.item_index >= len(items):
+        return {"ok": False, "reason": "invalid_item"}
+    grant = items[body.item_index]
+
+    # 승인 게이트: confirm 없으면 미생성, 미리보기만 반환
+    if not body.confirm:
+        return {
+            "ok": False,
+            "need_confirm": True,
+            "preview": {
+                "title": grant.get("title", ""),
+                "deadline": grant.get("dday") or grant.get("deadline"),
+                "portal": grant.get("portal_name", ""),
+            },
+        }
+
+    company = _load_company()
+    try:
+        from ..openai_client import generate_application_draft
+
+        draft = generate_application_draft(grant, company)
+    except Exception as e:
+        logger.error("초안 생성 오류: %s", e)
+        return {"ok": False, "reason": "draft_error"}
+
+    # 저장
+    DRAFT_DIR.mkdir(parents=True, exist_ok=True)
+    safe_name = "".join(c for c in grant.get("title", "draft")[:40] if c.isalnum() or c in " _-").strip() or "draft"
+    path = DRAFT_DIR / f"{body.item_index:03d}_{safe_name}.md"
+    path.write_text(draft, encoding="utf-8")
+
+    # 감사 로그 (외부 제출 아님, 초안 생성 기록)
+    try:
+        from ..audit_logger import log_event
+
+        log_event(
+            event_type="GRANT_DRAFT_CREATED",
+            task_id=f"grant-{body.item_index}",
+            risk_level="low",
+            actor="user",
+            action_type="grant.draft",
+            target=grant.get("title", "")[:60],
+            note=f"portal={grant.get('portal')}",
+        )
+    except Exception as e:
+        logger.warning("초안 감사로그 기록 실패(무시): %s", e)
+
+    return {"ok": True, "title": grant.get("title", ""), "draft": draft, "saved": path.name}
+
+
+@grant_radar_router.get("/drafts")
+def list_drafts():
+    """저장된 신청서 초안 목록."""
+    if not DRAFT_DIR.exists():
+        return {"ok": True, "drafts": []}
+    files = sorted(DRAFT_DIR.glob("*.md"))
+    return {"ok": True, "drafts": [{"name": f.name, "size": f.stat().st_size} for f in files]}
