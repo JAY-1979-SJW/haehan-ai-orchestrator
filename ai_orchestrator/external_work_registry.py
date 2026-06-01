@@ -23,30 +23,29 @@
   medium — 조회/열람, 계정 인증 필요
   high   — 쓰기·게시·수정·삭제·제출 포함
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class ExternalWorkEntry:
-    work_key: str               # "{provider}/{work_type}"
+    work_key: str  # "{provider}/{work_type}"
     provider: str
     work_type: str
     description: str
-    classification: str         # 분류값
-    execution_location: str     # SERVER / LOCAL_AGENT / USER_DIRECT / OFFICIAL_API
-    risk_level: str             # low / medium / high
+    classification: str  # 분류값
+    execution_location: str  # SERVER / LOCAL_AGENT / USER_DIRECT / OFFICIAL_API
+    risk_level: str  # low / medium / high
     requires_approval: bool
-    requires_auth: bool         # 계정 인증 필요 여부
-    auth_method: str            # none / oauth / browser_session / user_direct
+    requires_auth: bool  # 계정 인증 필요 여부
+    auth_method: str  # none / oauth / browser_session / user_direct
     registered_in_web_task: bool  # web_task_registry.py에 등록 여부
     notes: str = ""
 
 
 _ENTRIES: list[ExternalWorkEntry] = [
-
     # ── Naver: read-only 검색 (SERVER_READONLY_ALLOWED) ──────────────────────
     ExternalWorkEntry(
         work_key="naver/blog_search",
@@ -90,7 +89,6 @@ _ENTRIES: list[ExternalWorkEntry] = [
         registered_in_web_task=False,
         notes="naver_search_router /api/v1/external/naver/status 로 제공.",
     ),
-
     # ── Naver: 개발자 앱 등록 (WEB_TASK_REGISTRY — 이미 등록됨) ───────────────
     ExternalWorkEntry(
         work_key="naver/app_register",
@@ -106,7 +104,6 @@ _ENTRIES: list[ExternalWorkEntry] = [
         registered_in_web_task=True,
         notes="사전 로그인 세션 필요. web_task_registry naver/app_register 등록됨.",
     ),
-
     # ── Naver: 블로그 작성/게시 (LOCAL_AGENT_REQUIRED) ────────────────────────
     ExternalWorkEntry(
         work_key="naver/blog_write",
@@ -121,7 +118,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         auth_method="browser_session",
         registered_in_web_task=False,
         notes="서버 브라우저 금지. local_agent/browser/mixins/blog_mixin.py 구현 있음. "
-              "실제 게시는 사용자 승인 후 로컬 에이전트가 수행.",
+        "실제 게시는 사용자 승인 후 로컬 에이전트가 수행.",
     ),
     ExternalWorkEntry(
         work_key="naver/cafe_post",
@@ -151,7 +148,6 @@ _ENTRIES: list[ExternalWorkEntry] = [
         registered_in_web_task=False,
         notes="메일 발송은 사용자가 직접 확인 후 실행. local_agent/browser/mixins/mail_mixin.py.",
     ),
-
     # ── Google: 공식 API/OAuth 계열 ──────────────────────────────────────────
     ExternalWorkEntry(
         work_key="google/oauth_submit",
@@ -180,7 +176,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         auth_method="oauth",
         registered_in_web_task=False,
         notes="gmail_reader.py 구현 있음. credentials.json + token.json 설정 필요. "
-              "server /api/v1/inbox/email/fetch 엔드포인트로 제공.",
+        "server /api/v1/inbox/email/fetch 엔드포인트로 제공.",
     ),
     ExternalWorkEntry(
         work_key="google/calendar_read",
@@ -224,7 +220,6 @@ _ENTRIES: list[ExternalWorkEntry] = [
         registered_in_web_task=False,
         notes="서버 브라우저 Google 로그인 자동화 금지. execution_location_guard 차단 대상.",
     ),
-
     # ── Gabia: DNS 관리 (TRUSTED_SESSION_AND_USER_APPROVAL) ──────────────────
     ExternalWorkEntry(
         work_key="gabia/dns_record_prepare",
@@ -286,6 +281,50 @@ _ENTRIES: list[ExternalWorkEntry] = [
 
 _REGISTRY: dict[str, ExternalWorkEntry] = {e.work_key: e for e in _ENTRIES}
 
+# provider → (표시명, 카테고리). 미등록 provider는 (provider, "other") 기본값.
+_PROVIDER_LABELS: dict[str, tuple[str, str]] = {
+    "naver": ("네이버", "commerce"),
+    "google": ("구글", "productivity"),
+    "gabia": ("가비아", "infra"),
+}
+
+
+def list_site_catalog() -> list[dict]:
+    """사이트 단위 카탈로그 — provider별로 external work를 그룹핑해 반환.
+
+    각 사용자가 클라이언트에서 '쓸 사이트'를 고를 때 보는 목록.
+    민감정보 없음(설명·분류·위험도만). 사용자 선택/설정은 서버에 저장하지 않는다(순수 로컬).
+    """
+    by_provider: dict[str, list[ExternalWorkEntry]] = {}
+    for e in _ENTRIES:
+        by_provider.setdefault(e.provider, []).append(e)
+
+    catalog: list[dict] = []
+    for provider in sorted(by_provider):
+        entries = by_provider[provider]
+        label, category = _PROVIDER_LABELS.get(provider, (provider, "other"))
+        catalog.append(
+            {
+                "site_id": provider,
+                "name": label,
+                "category": category,
+                "needs_local_agent": any(e.execution_location == "LOCAL_AGENT" for e in entries),
+                "work_count": len(entries),
+                "works": [
+                    {
+                        "work_key": e.work_key,
+                        "work_type": e.work_type,
+                        "description": e.description,
+                        "risk_level": e.risk_level,
+                        "requires_approval": e.requires_approval,
+                        "execution_location": e.execution_location,
+                    }
+                    for e in entries
+                ],
+            }
+        )
+    return catalog
+
 
 def get_external_work(provider: str, work_type: str) -> ExternalWorkEntry | None:
     return _REGISTRY.get(f"{provider}/{work_type}")
@@ -320,4 +359,4 @@ def list_external_works(
     ]
 
 
-__all__ = ["ExternalWorkEntry", "get_external_work", "list_external_works"]
+__all__ = ["ExternalWorkEntry", "get_external_work", "list_external_works", "list_site_catalog"]

@@ -8,17 +8,19 @@
 기존 /health, /tasks, /approve, /reject 와 충돌하지 않도록 별도 prefix 없이
 api/v1 아래에 공존시킨다 (main router 가 prefix="/api/v1" 유지).
 """
+
 from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from ..audit_logger import log_event
 from ..auth import require_role
+from ..connectors.user_auth_router import get_jwt_user
+from ..external_work_registry import list_site_catalog
 from . import registry
 from .health import SiteHealthService
 from .models import SiteTask
@@ -39,6 +41,15 @@ class SiteTaskDryRunBody(BaseModel):
     execution_mode: str = "dry_run"
     # requested_by / actor_role 은 body 에서 받지 않는다.
     # 서버가 current_user 로 덮어쓴다 (body.role 스푸핑 방어 원칙 유지).
+
+
+@sites_router.get("/sites/catalog")
+def site_catalog(user: dict = Depends(get_jwt_user)):
+    """사이트 카탈로그 — 로그인(승인)된 사용자가 '쓸 사이트'를 고를 목록.
+
+    사용자 선택/설정은 클라이언트 로컬에 저장(순수 로컬 원칙). 서버는 목록만 제공.
+    """
+    return {"sites": list_site_catalog()}
 
 
 @sites_router.get("/connectors")
