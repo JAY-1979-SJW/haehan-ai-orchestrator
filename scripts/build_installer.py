@@ -23,10 +23,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST_SERVER = ROOT / "dist" / "haehan-server"
-DIST_ELECTRON = ROOT / "dist-electron"
+DIST_ELECTRON = ROOT / "dist-electron-new"
 SPEC_FILE = ROOT / "haehan-server.spec"
 ADMIN_WEB = ROOT / "admin-web"
 ELECTRON_DIR = ADMIN_WEB / "electron"
+NEXT_STANDALONE = ADMIN_WEB / ".next" / "standalone"
 
 
 def run(cmd: list[str], cwd: Path | None = None, shell: bool = False) -> int:
@@ -42,11 +43,32 @@ def run(cmd: list[str], cwd: Path | None = None, shell: bool = False) -> int:
 
 
 def step_next_build() -> bool:
-    """Next.js 프로덕션 빌드."""
+    """Next.js 프로덕션 빌드 + standalone에 static/public 복사."""
     print("\n🔨 [1/3] Next.js 빌드...")
     rc = run(["npm", "run", "build"], cwd=ADMIN_WEB, shell=True)
     if rc != 0:
         return False
+
+    # standalone은 .next/static 과 public/ 을 포함하지 않으므로 수동 복사
+    static_src = ADMIN_WEB / ".next" / "static"
+    static_dst = NEXT_STANDALONE / ".next" / "static"
+    public_src = ADMIN_WEB / "public"
+    public_dst = NEXT_STANDALONE / "public"
+
+    if static_src.exists():
+        if static_dst.exists():
+            shutil.rmtree(static_dst)
+        shutil.copytree(static_src, static_dst)
+        print(f"✅ static 복사: {static_dst}")
+    else:
+        print("⚠️  .next/static 없음 — 생략")
+
+    if public_src.exists():
+        if public_dst.exists():
+            shutil.rmtree(public_dst)
+        shutil.copytree(public_src, public_dst)
+        print(f"✅ public 복사: {public_dst}")
+
     print("✅ Next.js 빌드 완료")
     return True
 
