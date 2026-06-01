@@ -29,9 +29,15 @@ function createMainWindow(licenseKey) {
     show: false,
   });
 
-  // shell.html에 서버 URL과 라이선스 키를 쿼리로 전달 (신버전: 네비바 없이 / 통합 UI 로드)
+  // shell.html에 서버 URL·라이선스 키·webview preload 경로를 쿼리로 전달
+  // (신버전: 네비바 없이 / 통합 UI 로드). preload = 로컬 설정 브리지(P1-3).
   const shellPath = path.join(__dirname, "..", "shell.html");
-  const shellUrl = `file://${shellPath}?server=${encodeURIComponent(SERVER_URL)}&license=${encodeURIComponent(licenseKey)}`;
+  const webviewPreload = path.join(__dirname, "..", "webview_preload.js"); // dev·설치본 모두 electron 리소스 기준
+  const shellUrl =
+    `file://${shellPath}` +
+    `?server=${encodeURIComponent(SERVER_URL)}` +
+    `&license=${encodeURIComponent(licenseKey)}` +
+    `&preload=${encodeURIComponent("file://" + webviewPreload)}`;
   mainWindow.loadURL(shellUrl);
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
