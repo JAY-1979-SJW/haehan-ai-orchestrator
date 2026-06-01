@@ -40,6 +40,11 @@
 - UI: 행별 "초안 작성" 버튼 → 승인 확인 → 편집 가능 초안 패널. 초안 저장 `data/grant_radar/drafts/`.
 - **안전**: 초안=로컬 파일, 외부 제출 없음. confirm 없으면 미생성(미리보기만).
 
-## 다음 단계
-- Phase 3: CDP 폼 자동입력(form_runner 패턴) — **제출 직전 정지, 최종 제출은 사용자**.
-- 포털 확장: K-Startup(AJAX go_view 특수처리)·소상공인24 등 추가 검토.
+## Phase 3 (구현 완료) — CDP 신청폼 자동입력
+- `scripts/grant_radar/form_fill.py` — stdin JSON, CDP(9222) 대상 탭 입력칸 탐지→가장 큰 textarea에 초안 입력. **submit 절대 미클릭**. confirm=False=계획만.
+- `grant_radar_router`: `POST /grant-radar/fill`(confirm 게이트→subprocess→`log_event("GRANT_FORM_FILLED")`). 로컬 전용.
+- UI: 초안 패널 "신청폼에 채우기" 버튼 → 사이트주소 입력 → 필드 감지 확인 → 입력. **제출은 사용자 직접**.
+
+## 다음 단계(선택)
+- 포털 확장: K-Startup(AJAX go_view)·소상공인24 등.
+- 라벨 정밀 매핑(현재 v1은 최대 textarea 단일 입력).

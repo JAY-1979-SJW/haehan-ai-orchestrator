@@ -171,3 +171,57 @@ def list_drafts():
         return {"ok": True, "drafts": []}
     files = sorted(DRAFT_DIR.glob("*.md"))
     return {"ok": True, "drafts": [{"name": f.name, "size": f.stat().st_size} for f in files]}
+
+
+class FillRequest(BaseModel):
+    url_substr: str
+    text: str
+    confirm: bool = False
+    target_index: int | None = None
+
+
+@grant_radar_router.post("/fill")
+def fill_form(body: FillRequest):
+    """신청폼 자동입력 (로컬 CDP). confirm=False면 채울 필드 계획만 반환.
+
+    ★ submit 미클릭 — 최종 제출은 사용자. 로컬 전용(서버엔 CDP 없음).
+    """
+    payload = json.dumps(
+        {"url_substr": body.url_substr, "text": body.text, "confirm": body.confirm, "target_index": body.target_index},
+        ensure_ascii=False,
+    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "scripts.grant_radar.form_fill"],
+            cwd=str(ROOT),
+            input=payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=90,
+        )
+        out = (proc.stdout or "").strip().splitlines()
+        result = json.loads(out[-1]) if out else {"ok": False, "reason": "no_output"}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "reason": "timeout"}
+    except Exception as e:
+        logger.error("폼 입력 오류: %s", e)
+        return {"ok": False, "reason": "exec_error"}
+
+    if result.get("ok"):
+        try:
+            from ..audit_logger import log_event
+
+            log_event(
+                event_type="GRANT_FORM_FILLED",
+                task_id="grant-fill",
+                risk_level="low",
+                actor="user",
+                action_type="grant.fill",
+                target=body.url_substr[:60],
+                note=f"filled_len={result.get('filled_len')}",
+            )
+        except Exception as e:
+            logger.warning("폼입력 감사로그 실패(무시): %s", e)
+    return result
