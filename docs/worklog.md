@@ -5,19 +5,22 @@
 
 ---
 
-## 2026-06-02 (오후 재개) — P1 1단계: 사이트 카탈로그 엔드포인트
+## 2026-06-02 (오후 재개) — P1 사이트 카탈로그 + 로컬 설정
 
 ### 한 일
 - **P1-1 완료**: `GET /api/v1/sites/catalog` (커밋 08b0e19)
-  - `external_work_registry.list_site_catalog()` — provider(naver/google/gabia)별 그룹핑
-  - `sites/router.py` 엔드포인트(JWT 로그인 사용자), 그룹핑은 registry 호출만(router 얇게)
-  - 민감필드(notes) 미노출, 사용자 선택/설정 서버 미저장(순수 로컬)
-  - `tests/test_site_catalog.py` 4종, 게이트 통과(STOP 0)
-- 작업 로그 훅 활성화됨(SessionStart → worklog 상단 자동 표시)
+  - `external_work_registry.list_site_catalog()` provider별 그룹핑, `sites/router.py`(JWT), 민감필드 미노출
+  - `tests/test_site_catalog.py` 4종, STOP 0
+- **P1-2 완료**: `config.js` 로컬 저장 헬퍼 (커밋 직후)
+  - getEnabledSites/setEnabledSites/getSiteSettings/setSiteSettings
+  - enabled_sites(중복제거) / site_settings(병합) / 민감키 저장 차단 / 순수 로컬
+  - 기능검증(electron 스텁): round-trip·병합·민감키차단·평문미저장 통과
+- 작업 로그 훅 활성화(SessionStart → worklog 상단 자동 표시)
 
 ### 다음 할 일 (NEXT)
-- **P1-2**: 클라이언트 로컬 저장 헬퍼 — `electron/lib/config.js`에 `enabled_sites`/`site_settings` get/set
-- **P1-3**: 사이트 선택 화면 (카탈로그 fetch → 토글 → 로컬 저장)
+- **P1-3**: 사이트 선택 화면 — 카탈로그 fetch(`GET /api/v1/sites/catalog`) → 토글 UI → 로컬 저장(config 헬퍼)
+  - 위치: admin-web/src/app/ (예: /settings/sites 페이지) + Electron IPC로 config.js 헬퍼 호출 경로 필요
+  - 주의: 웹(Next.js)에서 Electron config.js를 직접 못 부름 → preload/IPC 브리지 또는 로컬 저장 경로 설계 먼저
 - **P1-4**: local-agent가 enabled_sites만 활성
 - **P1-5**: E2E (선택→저장→재시작 유지)
 - 참고: 카탈로그는 현재 naver/google/gabia만(external_work_registry 등록분). 사이트 추가 = 레지스트리 항목 추가
