@@ -22,11 +22,18 @@ let _ready = false;
 
 function resolveServerJs() {
   if (app.isPackaged) {
-    const p = path.join(process.resourcesPath, "nextjs", "server.js");
-    return fs.existsSync(p) ? p : null;
+    // wrapper.js → server.js 순으로 우선 탐색 (wrapper가 WebSocket 오류 suppress)
+    const base = path.join(process.resourcesPath, "nextjs");
+    const wrapper = path.join(base, "wrapper.js");
+    if (fs.existsSync(wrapper)) return wrapper;
+    const server = path.join(base, "server.js");
+    return fs.existsSync(server) ? server : null;
   }
-  // 개발 모드: admin-web/.next/standalone/server.js
-  const dev = path.join(__dirname, "..", "..", ".next", "standalone", "server.js");
+  // 개발 모드: admin-web/.next/standalone/wrapper.js → server.js
+  const standaloneDir = path.join(__dirname, "..", "..", ".next", "standalone");
+  const wrapper = path.join(standaloneDir, "wrapper.js");
+  if (fs.existsSync(wrapper)) return wrapper;
+  const dev = path.join(standaloneDir, "server.js");
   return fs.existsSync(dev) ? dev : null;
 }
 
