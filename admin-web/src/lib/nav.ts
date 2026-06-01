@@ -54,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
     group: "업무",
     items: [
       { key: "bid",      label: "나라장터 입찰", shortLabel: "입찰", href: "/bid" },
+      { key: "grant-radar", label: "정부 지원사업", shortLabel: "지원", href: "/grant-radar" },
       { key: "inbox",    label: "메일 Inbox",    shortLabel: "메일", href: "/assistant/inbox" },
       { key: "tasks",    label: "작업 목록",     shortLabel: "작업", href: "/assistant/tasks" },
       { key: "approval", label: "승인 게이트",   shortLabel: "승인", href: "/assistant/approval" },
