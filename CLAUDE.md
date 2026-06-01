@@ -15,6 +15,14 @@
 - 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
 - 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
 
+### 정책 예외 (Scoped Exception) — `scripts/ops/server_deploy.py`
+
+- **유일하게 docker 호출이 허용된 스크립트.** `configs/quality_gate.json` 의 `no_local_docker_cli_allow_paths` 에 등록.
+- 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.
+- 안전장치: 스크립트 최상단 `_guard_server_only()` 가 docker 미설치(=로컬 PC) 시 `exit 3`로 즉시 차단 → 로컬에서 절대 실행 불가.
+- 이 예외는 **이 파일 1개에만** 적용. 다른 파일의 docker 호출은 그대로 차단.
+- 배포 데몬(`scripts/ops/deploy_trigger_daemon.py`)이 이 스크립트를 호출(삭제된 `deploy_api_with_runtime_gates.py` 대체).
+
 ---
 
 # 작업 원칙
