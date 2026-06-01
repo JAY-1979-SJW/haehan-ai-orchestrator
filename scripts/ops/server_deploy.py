@@ -66,6 +66,21 @@ def _compose_rebuild() -> None:
     _run([*base, "up", "-d", "--build", *COMPOSE_SERVICES])
 
 
+def _reload_nginx() -> None:
+    """컨테이너 재생성 후 nginx upstream IP 재해결 — 미하면 502(옛 IP 캐시).
+
+    nginx 컨테이너 없거나 reload 실패해도 배포는 성공 처리(best-effort).
+    """
+    if _run(["docker", "inspect", "nginx"], capture_output=True).returncode != 0:
+        print("[server_deploy] nginx 컨테이너 없음 — reload 생략")
+        return
+    if _run(["docker", "exec", "nginx", "nginx", "-t"], capture_output=True).returncode != 0:
+        print("[server_deploy] nginx -t 실패 — reload 생략")
+        return
+    _run(["docker", "exec", "nginx", "nginx", "-s", "reload"])
+    print("[server_deploy] nginx reload 완료 (upstream 재해결)")
+
+
 def main() -> int:
     if "--approved" not in sys.argv:
         print("[server_deploy] --approved 필요 (데몬 경유 호출).")
@@ -75,6 +90,7 @@ def main() -> int:
     if not changed:
         return 0
     _compose_rebuild()
+    _reload_nginx()  # 컨테이너 IP 변경 → nginx 재해결 (502 방지)
     print("[server_deploy] 배포 완료.")
     return 0
 
