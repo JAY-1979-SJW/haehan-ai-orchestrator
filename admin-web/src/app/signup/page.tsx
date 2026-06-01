@@ -1,17 +1,16 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signup, setToken } from "@/lib/userAuth";
+import { signup } from "@/lib/userAuth";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false); // 가입 접수 → 승인 대기 안내
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,15 +19,41 @@ export default function SignupPage() {
     if (password.length < 8) { setError("비밀번호는 최소 8자입니다"); return; }
     setLoading(true);
     try {
-      const { token } = await signup(email, name, password);
-      setToken(token);
-      router.push("/mypage");
+      // 가입은 즉시 로그인되지 않음 — 관리자 승인 후 로그인 가능
+      await signup(email, name, password);
+      setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "회원가입 실패");
     } finally {
       setLoading(false);
     }
   };
+
+  // 가입 접수 완료 → 승인 대기 안내 화면
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-[#F97316] flex items-center justify-center text-white font-bold text-sm">AI</div>
+            <span className="text-xl font-bold text-[#111827]">Haehan AI</span>
+          </div>
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 shadow-sm text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#FFF7ED] flex items-center justify-center text-2xl">✓</div>
+            <h1 className="text-lg font-bold text-[#111827] mb-2">가입이 접수되었습니다</h1>
+            <p className="text-sm text-[#6B7280] mb-1">관리자 승인 후 로그인하실 수 있습니다.</p>
+            <p className="text-sm text-[#6B7280] mb-6">승인이 완료되면 입력하신 이메일로 안내드립니다.</p>
+            <Link
+              href="/login"
+              className="inline-block w-full py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] transition-colors"
+            >
+              로그인 화면으로
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center px-4">
@@ -41,7 +66,7 @@ export default function SignupPage() {
 
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-8 shadow-sm">
           <h1 className="text-lg font-bold text-[#111827] mb-1">회원가입</h1>
-          <p className="text-sm text-[#6B7280] mb-6">Haehan AI 서비스를 시작하세요</p>
+          <p className="text-sm text-[#6B7280] mb-6">가입 후 관리자 승인을 거쳐 이용하실 수 있습니다</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

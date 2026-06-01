@@ -41,11 +41,17 @@ async function post(path: string, body: object): Promise<Response> {
   });
 }
 
-export async function signup(email: string, name: string, password: string): Promise<{ token: string; user: UserInfo }> {
+export interface SignupResult {
+  status: string; // "pending_approval"
+  message: string;
+  user: UserInfo;
+}
+
+export async function signup(email: string, name: string, password: string): Promise<SignupResult> {
   const res = await post("/api/v1/users/signup", { email, name, password });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail ?? "회원가입 실패");
-  return data;
+  return data; // { status, message, user } — 토큰 미발급(승인 후 로그인)
 }
 
 export async function login(email: string, password: string): Promise<{ token: string; user: UserInfo }> {
