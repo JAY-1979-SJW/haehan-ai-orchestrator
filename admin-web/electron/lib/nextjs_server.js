@@ -69,6 +69,7 @@ async function startNextServer() {
 
   serverProc = fork(serverJs, [], {
     silent: true,
+    cwd: path.dirname(serverJs),   // standalone/ 를 cwd로 — .next/ 상대 경로 탐색에 필수
     env: {
       ...process.env,
       PORT: String(NEXT_PORT),
