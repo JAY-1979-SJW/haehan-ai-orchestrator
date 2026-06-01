@@ -71,6 +71,32 @@ except ImportError:
 # ── CDP 도구 실행 ─────────────────────────────────────────────────────────────
 
 
+# tool → 소속 사이트(site_id). 미등록 tool은 None(=제한 안 받음).
+_TOOL_SITE: dict[str, str] = {
+    "collect_products": "naver",
+    "collect_orders": "naver",
+    "collect_settlements": "naver",
+    "collect_reviews": "naver",
+    "collect_stats": "naver",
+    "open_seller_center": "naver",
+    "auto_register_product": "naver",
+    "edit_product": "naver",
+    "popup_handle": "naver",
+}
+
+
+def _site_allowed(tool: str, enabled_sites: set[str] | None) -> bool:
+    """enabled_sites 가 비어있으면 제한 없음(기존/owner 보존).
+    값이 있으면 tool 소속 사이트가 목록에 있을 때만 허용. 미등록 tool은 항상 허용.
+    """
+    if not enabled_sites:
+        return True
+    site = _TOOL_SITE.get(tool)
+    if site is None:
+        return True
+    return site in enabled_sites
+
+
 def _run_cdp_tool(name: str, inputs: dict) -> dict:
     """로컬 Chrome CDP에서 도구를 실행합니다."""
     try:
@@ -173,9 +199,11 @@ def _run_cdp_tool(name: str, inputs: dict) -> dict:
 # ── WebSocket 에이전트 ────────────────────────────────────────────────────────
 
 
-def run_agent(server_url: str, license_key: str, retry_interval: int = 5):
+def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enabled_sites: set[str] | None = None):
     ws_url = f"{server_url}/api/v1/smartstore/agent/ws?license={license_key}"
     print(f"[에이전트] 서버 연결 중: {ws_url}")
+    if enabled_sites:
+        print(f"[에이전트] 활성 사이트 제한: {sorted(enabled_sites)}")
 
     def on_message(ws, message):
         try:
@@ -189,7 +217,17 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5):
                 tool = msg["tool"]
                 inputs = msg.get("inputs", {})
                 print(f"[에이전트] 도구 실행: {tool} {inputs}")
-                result = _run_cdp_tool(tool, inputs)
+                if not _site_allowed(tool, enabled_sites):
+                    site = _TOOL_SITE.get(tool, tool)
+                    print(f"[에이전트] 거부: '{site}' 사이트 미활성")
+                    result = {
+                        "ok": False,
+                        "error": "site_not_enabled",
+                        "site": site,
+                        "hint": f"'{site}' 사이트가 활성화되지 않았습니다. 사이트 설정에서 켜세요.",
+                    }
+                else:
+                    result = _run_cdp_tool(tool, inputs)
                 print(f"[에이전트] 결과: ok={result.get('ok')}")
                 ws.send(
                     json.dumps(
@@ -233,9 +271,11 @@ if __name__ == "__main__":
     parser.add_argument("--server", default="wss://autowork.haehan-ai.kr", help="서버 WS URL")
     parser.add_argument("--retry", type=int, default=5, help="재연결 대기(초)")
     parser.add_argument("--parent-pid", type=int, default=0, help="부모(Electron) PID — 종료 시 자동 종료")
+    parser.add_argument("--enabled-sites", default="", help="활성 사이트 id 쉼표목록(비면 제한 없음)")
     args = parser.parse_args()
 
     if args.parent_pid:
         _watch_parent(args.parent_pid)
 
-    run_agent(args.server, args.license, args.retry)
+    enabled = {s.strip() for s in args.enabled_sites.split(",") if s.strip()}
+    run_agent(args.server, args.license, args.retry, enabled_sites=enabled)

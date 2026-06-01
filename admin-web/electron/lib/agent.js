@@ -6,7 +6,7 @@ const { app } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn, execSync } = require("child_process");
-const { FASTAPI_URL } = require("./config");
+const { FASTAPI_URL, getEnabledSites } = require("./config");
 
 let agentProc = null;
 
@@ -48,12 +48,16 @@ function startAgent(licenseKey) {
     cwd = scriptDir;
   }
 
-  console.log("[agent] 시작:", cmd);
+  // 사용자가 켠 사이트만 에이전트에 활성(비면 제한 없음 — 기존/owner 보존). P1-4
+  const enabledSites = getEnabledSites().join(",");
+
+  console.log("[agent] 시작:", cmd, enabledSites ? `(사이트: ${enabledSites})` : "(사이트 제한 없음)");
   agentProc = spawn(cmd, [
     ...args,
     "--license", licenseKey,
     "--server", FASTAPI_URL.replace("https://", "wss://").replace("http://", "ws://"),
     "--parent-pid", String(process.pid),
+    "--enabled-sites", enabledSites,
   ], { cwd, detached: false });
 
   agentProc.stdout.on("data", (d) => console.log("[agent]", d.toString().trim()));
