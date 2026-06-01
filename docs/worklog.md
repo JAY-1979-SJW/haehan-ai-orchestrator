@@ -45,7 +45,7 @@
 
 ### 다음 할 일 (NEXT)
 - **P1-5 잔여**: 데스크톱 실앱 E2E — 앱 실행 → /settings/sites 토글 → config.json 저장 → 에이전트 --enabled-sites 반영. (로컬 Next.js standalone 빌드가 이번 세션 불안정했음 → 서버 UI는 owner IP로 접근해 페이지 렌더 확인 가능, 단 window.haehanLocal 저장은 데스크톱 webview 필요)
-- **server_deploy nginx-reload 수정 push** (배포 502 영구 방지) — 다음 배포 시 함께
+- ✅ **server_deploy nginx-reload 수정 push+배포 완료**(a62acc1) — 서버 반영 확인(_reload_nginx 2곳). 전환 배포 시 502 ~20초(즉시 reload로 복구). **이후 배포는 자가복구**(데몬이 nginx 자동 reload)
 - 정리정돈(미착수): 루트 스크립트 39개, STORAGE_BOUNDARY 11개, UNKNOWN 레이어
 - 카탈로그 사이트 추가 = external_work_registry 항목 추가 (현재 naver/google/gabia)
 - 참고: 카탈로그는 현재 naver/google/gabia만. 사이트 추가 = external_work_registry 항목 추가
