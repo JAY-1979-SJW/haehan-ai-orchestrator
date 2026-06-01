@@ -17,14 +17,20 @@
   - 기능검증(electron 스텁): round-trip·병합·민감키차단·평문미저장 통과
 - 작업 로그 훅 활성화(SessionStart → worklog 상단 자동 표시)
 
+### P1-3 (IPC 브리지) 완료
+- 설계 확정 + **원격화면 기능 보류**(보안위험 해소, 로컬 UI 전용) — docs/architecture/P1_3_IPC_BRIDGE_PLAN.md
+- 구현: `webview_preload.js`(window.haehanLocal 4개), main.js ipcMain.handle 4개, shell.html preload 부착, mainWindow preload 경로 전달
+- 검증: STOP 0, 게이트 통과, asar 반영(webview_preload 포함, 핸들러 4개)
+
 ### 다음 할 일 (NEXT)
-- **P1-3**: 사이트 선택 화면 — 카탈로그 fetch(`GET /api/v1/sites/catalog`) → 토글 UI → 로컬 저장(config 헬퍼)
-  - 위치: admin-web/src/app/ (예: /settings/sites 페이지) + Electron IPC로 config.js 헬퍼 호출 경로 필요
-  - 주의: 웹(Next.js)에서 Electron config.js를 직접 못 부름 → preload/IPC 브리지 또는 로컬 저장 경로 설계 먼저
+- **P1-3 화면 본구현**: 사이트 선택 토글 UI (admin-web/src) — 카탈로그 fetch → 토글 → `window.haehanLocal.setEnabledSites` 저장
+  - 클라 헬퍼 `admin-web/src/lib/localConfig.ts`(window.haehanLocal 가드 래퍼) 먼저
+  - 실앱 검증: 앱 실행 → webview에서 window.haehanLocal 동작 확인(앱 재시작 필요)
 - **P1-4**: local-agent가 enabled_sites만 활성
 - **P1-5**: E2E (선택→저장→재시작 유지)
-- 참고: 카탈로그는 현재 naver/google/gabia만(external_work_registry 등록분). 사이트 추가 = 레지스트리 항목 추가
-- 기준서: docs/architecture/SITE_CATALOG_LOCAL_CONFIG_PLAN.md
+- 참고: 카탈로그는 현재 naver/google/gabia만. 사이트 추가 = external_work_registry 항목 추가
+- 결정사항: 원격화면 보류 → 화면은 로컬 전용. 청사진 P2(원격 UI) 보류 표기됨
+- 피드백 반영: 단계마다 "중단할까요" 묻지 않고 자동 진행 (feedback.md)
 
 ---
 
