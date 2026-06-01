@@ -241,6 +241,29 @@ export default function GrantRadarPage() {
               >
                 📋 복사
               </button>
+              <button
+                onClick={async () => {
+                  const site = window.prompt("신청폼이 열린 사이트 주소 일부를 입력하세요 (예: data.go.kr)", "");
+                  if (!site) return;
+                  // 1) 계획(dry-run)
+                  const plan = await fetch(`${API}/fill`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url_substr: site, text: draft.text, confirm: false }),
+                  }).then((r) => r.json());
+                  if (plan.reason === "target_tab_not_found") { alert(`'${site}' 탭을 찾지 못했습니다. 신청폼을 먼저 여세요.`); return; }
+                  const n = plan.fields?.length ?? 0;
+                  if (!window.confirm(`'${site}' 탭에서 입력칸 ${n}개 감지.\n가장 큰 입력칸에 초안을 채울까요? (제출은 직접 — 자동 제출 안 함)`)) return;
+                  // 2) 실제 입력
+                  const res = await fetch(`${API}/fill`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url_substr: site, text: draft.text, confirm: true }),
+                  }).then((r) => r.json());
+                  alert(res.ok ? `입력 완료 (${res.filled_len}자). 내용 확인 후 직접 제출하세요.` : `입력 실패: ${res.reason ?? "오류"}`);
+                }}
+                style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #FED7AA", background: "#FFF7ED", color: "#C2410C", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                ✍ 신청폼에 채우기 (제출 안 함)
+              </button>
             </div>
           </div>
         )}
