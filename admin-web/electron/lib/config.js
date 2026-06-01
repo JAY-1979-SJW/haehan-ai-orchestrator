@@ -11,7 +11,10 @@ const fs = require("fs");
 app.setName("Haehan AI");
 
 // 서버 URL (webview가 띄우는 Next.js / API 베이스)
-const SERVER_URL = "http://localhost:3000";
+const SERVER_URL = "http://127.0.0.1:3000";
+
+// FastAPI 서버 URL (local-agent WebSocket 연결 대상)
+const FASTAPI_URL = process.env.HAEHAN_FASTAPI_URL || "http://127.0.0.1:8401";
 
 // userData\config.json 경로를 지연 계산 (app.setName 적용 이후 호출 보장)
 function configPath() {
@@ -53,4 +56,4 @@ function isOwnerMode(cfg = loadConfig()) {
   return cfg.owner_mode === true || process.env.HAEHAN_OWNER === "1";
 }
 
-module.exports = { SERVER_URL, configPath, loadConfig, saveConfig, patchConfig, isOwnerMode };
+module.exports = { SERVER_URL, FASTAPI_URL, configPath, loadConfig, saveConfig, patchConfig, isOwnerMode };

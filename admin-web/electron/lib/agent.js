@@ -6,12 +6,12 @@ const { app } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn, execSync } = require("child_process");
-const { SERVER_URL } = require("./config");
+const { FASTAPI_URL } = require("./config");
 
 let agentProc = null;
 
 function resolvePython() {
-  const candidates = ["python", "python3", path.join(process.resourcesPath, "python", "python.exe")];
+  const candidates = ["python", "python3"];
   for (const p of candidates) {
     try { execSync(`"${p}" --version`, { stdio: "ignore" }); return p; } catch {}
   }
@@ -21,29 +21,40 @@ function resolvePython() {
 function startAgent(licenseKey) {
   stopAgent();
 
-  const python = resolvePython();
-  if (!python) { console.error("[agent] Python을 찾을 수 없습니다"); return; }
+  let cmd, args, cwd;
 
-  // 개발: __dirname=electron/lib → 4단계 상위가 프로젝트 루트
-  // 패키징: process.resourcesPath 아래 scripts/ 번들
-  const scriptDir = app.isPackaged
-    ? process.resourcesPath
-    : path.join(__dirname, "..", "..", "..");
-  const agentScript = path.join(scriptDir, "scripts", "local_agent.py");
-
-  if (!fs.existsSync(agentScript)) {
-    console.error("[agent] local_agent.py를 찾을 수 없습니다:", agentScript);
-    return;
+  if (app.isPackaged) {
+    // 패키징: local-agent.exe 사용 (Python 런타임 포함 번들)
+    const exePath = path.join(process.resourcesPath, "local-agent", "local-agent.exe");
+    if (!fs.existsSync(exePath)) {
+      console.error("[agent] local-agent.exe 없음:", exePath);
+      return;
+    }
+    cmd = exePath;
+    args = [];
+    cwd = path.join(process.resourcesPath, "local-agent");
+  } else {
+    // 개발: Python + local_agent.py
+    const python = resolvePython();
+    if (!python) { console.error("[agent] Python을 찾을 수 없습니다"); return; }
+    const scriptDir = path.join(__dirname, "..", "..", "..");
+    const agentScript = path.join(scriptDir, "scripts", "local_agent.py");
+    if (!fs.existsSync(agentScript)) {
+      console.error("[agent] local_agent.py 없음:", agentScript);
+      return;
+    }
+    cmd = python;
+    args = [agentScript];
+    cwd = scriptDir;
   }
 
-  console.log("[agent] 시작:", python, agentScript);
-  agentProc = spawn(python, [
-    agentScript,
+  console.log("[agent] 시작:", cmd);
+  agentProc = spawn(cmd, [
+    ...args,
     "--license", licenseKey,
-    "--server", SERVER_URL.replace("https://", "wss://").replace("http://", "ws://"),
-    // 부모(Electron) PID 전달 → Electron이 비정상 종료돼도 에이전트가 self-exit
+    "--server", FASTAPI_URL.replace("https://", "wss://").replace("http://", "ws://"),
     "--parent-pid", String(process.pid),
-  ], { cwd: scriptDir, detached: false });
+  ], { cwd, detached: false });
 
   agentProc.stdout.on("data", (d) => console.log("[agent]", d.toString().trim()));
   agentProc.stderr.on("data", (d) => console.error("[agent]", d.toString().trim()));
