@@ -179,6 +179,18 @@ Electron                  Electron (얇은 셸)
 
 ---
 
+## 4-D. 인증 모델 (이중 구조 — 구현됨)
+
+| 대상 | 인증 방식 | 적용 엔드포인트 |
+|------|----------|----------------|
+| 배포 사용자(end user) | **JWT** (`users/login` → 토큰) | `/users/me`, 사용자 기능 |
+| 관리자(owner) | **HTTP Basic Auth** (`require_role`, `/api/proxy`가 자동 주입) | `/users/pending`, `/users/{id}/approve`, `/admin/licenses` 등 |
+
+- 회원 승인 화면(`/admin/users`)은 기존 `admin/licenses`와 동일하게 `/api/proxy` 경유 → Basic Auth 자동 주입 → owner 콘솔에서 바로 동작.
+- 프로덕션: `/orchestrator/api/v1/users/pending|approve` 는 nginx `/orchestrator/` catch-all IP 잠금(owner IP)으로 추가 보호. **단, `/users/signup`·`/users/login` 은 배포 사용자용으로 공개 예외 필요(Phase 2 nginx 작업).**
+
+---
+
 ## 5. owner / client 흐름 (전환 후)
 
 ### owner (당신) — 변화 없음

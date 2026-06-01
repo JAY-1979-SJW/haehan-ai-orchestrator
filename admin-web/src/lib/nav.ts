@@ -74,6 +74,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     group: "관리자",
     items: [
+      { key: "user-approval", label: "회원 승인", shortLabel: "승인", href: "/admin/users" },
       { key: "licenses", label: "라이선스 관리", shortLabel: "라이선스", href: "/admin/licenses" },
     ],
   },

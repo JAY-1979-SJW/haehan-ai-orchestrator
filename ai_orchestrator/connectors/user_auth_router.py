@@ -10,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from .. import config, user_db
+from ..auth import require_role  # 관리자(Basic Auth) — 승인 등 owner 작업
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -50,11 +51,8 @@ def get_jwt_user(
     return user
 
 
-def require_owner_user(user: dict = Depends(get_jwt_user)) -> dict:
-    """관리자(owner/admin) 전용 — 승인 등 통제 작업용."""
-    if user.get("role") not in ("owner", "admin"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="관리자 권한이 필요합니다")
-    return user
+# 관리자 승인 작업은 ..auth.require_role(Basic Auth)로 게이트한다.
+# (일반 사용자 인증은 JWT get_jwt_user, 관리자 작업은 Basic Auth — 기존 admin/licenses와 동일 모델)
 
 
 # ── 요청/응답 모델 ─────────────────────────────────────────────────────────────
@@ -174,8 +172,8 @@ def change_password(body: PasswordChangeRequest, user: dict = Depends(get_jwt_us
 
 
 @user_auth_router.get("/pending", response_model=list[PendingUserResponse])
-def list_pending(owner: dict = Depends(require_owner_user)):
-    """승인 대기 사용자 목록."""
+def list_pending(_admin: dict = Depends(require_role("admin", "owner"))):
+    """승인 대기 사용자 목록 (관리자 전용)."""
     return [
         PendingUserResponse(id=u["id"], email=u["email"], name=u["name"], created_at=u["created_at"])
         for u in user_db.list_pending_users()
@@ -183,8 +181,8 @@ def list_pending(owner: dict = Depends(require_owner_user)):
 
 
 @user_auth_router.post("/{user_id}/approve", status_code=200)
-def approve(user_id: str, owner: dict = Depends(require_owner_user)):
-    """승인 대기 사용자를 활성화(enabled=1)."""
+def approve(user_id: str, _admin: dict = Depends(require_role("admin", "owner"))):
+    """승인 대기 사용자를 활성화(enabled=1) (관리자 전용)."""
     if not user_db.approve_user(user_id):
         raise HTTPException(status_code=404, detail="대상 사용자를 찾을 수 없습니다")
     return {"status": "approved", "user_id": user_id}
