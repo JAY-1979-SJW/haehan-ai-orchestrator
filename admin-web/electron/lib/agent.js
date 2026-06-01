@@ -41,6 +41,8 @@ function startAgent(licenseKey) {
     agentScript,
     "--license", licenseKey,
     "--server", SERVER_URL.replace("https://", "wss://").replace("http://", "ws://"),
+    // 부모(Electron) PID 전달 → Electron이 비정상 종료돼도 에이전트가 self-exit
+    "--parent-pid", String(process.pid),
   ], { cwd: scriptDir, detached: false });
 
   agentProc.stdout.on("data", (d) => console.log("[agent]", d.toString().trim()));
@@ -49,7 +51,19 @@ function startAgent(licenseKey) {
 }
 
 function stopAgent() {
-  if (agentProc) { agentProc.kill(); agentProc = null; }
+  if (!agentProc) return;
+  const pid = agentProc.pid;
+  try {
+    if (process.platform === "win32" && pid) {
+      // Windows: 자식 프로세스 트리까지 강제 종료 (kill()은 트리 미정리)
+      execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore" });
+    } else {
+      agentProc.kill();
+    }
+  } catch {
+    try { agentProc.kill(); } catch {}
+  }
+  agentProc = null;
 }
 
 module.exports = { startAgent, stopAgent };
