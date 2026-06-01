@@ -53,6 +53,18 @@ PORTALS = [
         "url": "https://ccei.creativekorea.or.kr/seoul/custom/notice_list.do",
         "mode": "rows",
     },
+    {
+        "key": "SMES",
+        "name": "중소벤처24(소상공인·중소기업 통합)",
+        "url": "https://www.smes.go.kr/main/sportsBsnsPolicy?progress=ok&cntPerPage=30",
+        "mode": "rows",
+    },
+    {
+        "key": "SBA",
+        "name": "서울경제진흥원",
+        "url": "https://www.sba.seoul.kr/kr/sbcu31l1",
+        "mode": "rows",
+    },
 ]
 
 # ── anchor 모드: 상세 링크 + 행 텍스트 ────────────────────────────────────────
@@ -80,12 +92,13 @@ _ROWS_JS = """
 () => {
   const out = [];
   const seen = new Set();
-  const dateRe = /20\\d\\d[.\\-]\\d{1,2}[.\\-]\\d{1,2}/;
+  const dateRe = /(20\\d\\d[.\\-]\\d{1,2}[.\\-]\\d{1,2})|(\\d{2}-\\d{2}-\\d{2})|(D-\\d+)/;
   document.querySelectorAll('tr, li').forEach(e => {
     const t = (e.innerText || '').trim().replace(/\\s+/g, ' ');
     if (t.length < 15 || t.length > 200) return;
     if (!dateRe.test(t)) return;
-    if (/센터소개|알림마당 사업공고 입찰|로그인 창조경제/.test(t)) return;
+    // 네비게이션/메뉴 행 제외 (포털 범용)
+    if (/센터소개|알림마당 사업공고 입찰|로그인 창조경제|전체 사업 접수중|전체메뉴|사업소개 사업공고/.test(t)) return;
     if (seen.has(t)) return;
     seen.add(t);
     out.push({ title: t.slice(0, 80), url: location.href, raw: t });
