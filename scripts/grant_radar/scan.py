@@ -1,7 +1,11 @@
 """scan.py — 정부 포털 지원사업 공고 스캔 (별도 헤드리스 브라우저).
 
-메인 Chrome(9222)과 무관한 headless Chromium을 띄워 공고 목록을 추출한다.
+메인 Chrome(9222)과 무관한 headless Chromium을 띄워 여러 포털의 공고 목록을 추출한다.
 로그인 불필요한 공개 페이지만 대상. 결과를 data/grant_radar/scan_latest.json 에 저장.
+
+포털별 추출 모드:
+  - "anchor": 상세 링크(href)가 있는 포털 → 링크+행텍스트 추출 (NIPA·기업마당·중기부)
+  - "rows"  : 상세가 javascript 호출인 포털 → 행 텍스트만 추출, 링크는 목록 URL (CCEI)
 
 실행:
     python -m scripts.grant_radar.scan
@@ -18,44 +22,88 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "data" / "grant_radar"
 OUT_FILE = OUT_DIR / "scan_latest.json"
 
+PER_PORTAL_CAP = 40
+
 # 스캔 대상 포털 (공개 목록 페이지)
 PORTALS = [
     {
         "key": "NIPA",
         "name": "정보통신산업진흥원",
         "url": "https://www.nipa.kr/home/2-2",
-        # 상세 링크 패턴: /home/2-2/<번호>
+        "mode": "anchor",
         "detail_pattern": "/home/2-2/",
+    },
+    {
+        "key": "BIZINFO",
+        "name": "기업마당(중앙·지자체 통합)",
+        "url": "https://www.bizinfo.go.kr/web/lay1/bbs/S1T122C128/AS/74/list.do",
+        "mode": "anchor",
+        "detail_pattern": "/sii/siia/selectSIIA",
+    },
+    {
+        "key": "MSS",
+        "name": "중소벤처기업부",
+        "url": "https://www.mss.go.kr/site/smba/ex/bbs/List.do?cbIdx=310",
+        "mode": "anchor",
+        "detail_pattern": "/site/smba/contents/view.do",
+    },
+    {
+        "key": "CCEI",
+        "name": "서울창조경제혁신센터",
+        "url": "https://ccei.creativekorea.or.kr/seoul/custom/notice_list.do",
+        "mode": "rows",
     },
 ]
 
+# ── anchor 모드: 상세 링크 + 행 텍스트 ────────────────────────────────────────
+_ANCHOR_JS = """
+(pattern) => {
+  const out = [];
+  const seen = new Set();
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.href || '';
+    if (!href.includes(pattern)) return;
+    let row = a.closest('li,tr,article,.item,.board-item,.list-item') || a.parentElement;
+    const raw = ((row && row.innerText) || a.innerText || '').trim().replace(/\\s+/g, ' ');
+    const title = (a.innerText || '').trim().replace(/\\s+/g, ' ');
+    const key = href + '|' + title;
+    if (seen.has(key) || raw.length < 10 || !title) return;
+    seen.add(key);
+    out.push({ title, url: href, raw });
+  });
+  return out;
+}
+"""
 
-def _extract_rows(page, detail_pattern: str) -> list[dict]:
-    """상세 링크를 가진 목록 행에서 (제목·원문텍스트·링크)를 추출."""
-    js = """
-    (pattern) => {
-      const out = [];
-      const seen = new Set();
-      document.querySelectorAll('a').forEach(a => {
-        const href = a.href || '';
-        if (!href.includes(pattern)) return;
-        if (!/\\/(\\d+)(\\?|$|#)/.test(href)) return;  // 상세 번호 링크만
-        // 행 컨테이너로 올라가 원문 텍스트 확보(날짜·담당자 포함)
-        let row = a.closest('li,tr,article,.item,.board-item') || a.parentElement;
-        const raw = ((row && row.innerText) || a.innerText || '').trim().replace(/\\s+/g, ' ');
-        const title = (a.innerText || '').trim().replace(/\\s+/g, ' ');
-        const key = href + '|' + title;
-        if (seen.has(key) || raw.length < 8) return;
-        seen.add(key);
-        out.push({ title, url: href, raw });
-      });
-      return out;
-    }
-    """
+# ── rows 모드: 날짜 포함 행 텍스트(상세가 JS 호출인 포털) ──────────────────────
+_ROWS_JS = """
+() => {
+  const out = [];
+  const seen = new Set();
+  const dateRe = /20\\d\\d[.\\-]\\d{1,2}[.\\-]\\d{1,2}/;
+  document.querySelectorAll('tr, li').forEach(e => {
+    const t = (e.innerText || '').trim().replace(/\\s+/g, ' ');
+    if (t.length < 15 || t.length > 200) return;
+    if (!dateRe.test(t)) return;
+    if (/센터소개|알림마당 사업공고 입찰|로그인 창조경제/.test(t)) return;
+    if (seen.has(t)) return;
+    seen.add(t);
+    out.push({ title: t.slice(0, 80), url: location.href, raw: t });
+  });
+  return out;
+}
+"""
+
+
+def _extract(page, portal: dict) -> list[dict]:
     try:
-        return page.evaluate(js, detail_pattern)
+        if portal["mode"] == "anchor":
+            rows = page.evaluate(_ANCHOR_JS, portal["detail_pattern"])
+        else:
+            rows = page.evaluate(_ROWS_JS)
+        return rows[:PER_PORTAL_CAP]
     except Exception as e:
-        print(f"[scan] 추출 오류: {e}")
+        print(f"[scan] {portal['key']} 추출 오류: {e}")
         return []
 
 
@@ -72,9 +120,9 @@ def scan_all() -> dict:
         page = browser.new_page()
         for portal in PORTALS:
             try:
-                page.goto(portal["url"], wait_until="networkidle", timeout=35000)
-                page.wait_for_timeout(1500)
-                rows = _extract_rows(page, portal["detail_pattern"])
+                page.goto(portal["url"], wait_until="networkidle", timeout=40000)
+                page.wait_for_timeout(1800)
+                rows = _extract(page, portal)
                 for r in rows:
                     r["portal"] = portal["key"]
                     r["portal_name"] = portal["name"]
