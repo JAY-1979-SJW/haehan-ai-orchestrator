@@ -16,7 +16,10 @@
  */
 const { app, ipcMain } = require("electron");
 
-const { loadConfig, saveConfig, isOwnerMode } = require("./lib/config");
+const {
+  loadConfig, saveConfig, isOwnerMode,
+  getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
+} = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
 const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
@@ -137,6 +140,16 @@ function startLicenseFlow() {
     }
   });
 }
+
+// ── 로컬 설정 브리지 (P1-3) — webview UI ↔ config.json ──────────────────────
+// invoke/handle (비동기, 값 반환). 사이트 선택·설정만. config.js가 민감값 차단.
+ipcMain.handle("local-config:get-enabled-sites", () => getEnabledSites());
+ipcMain.handle("local-config:set-enabled-sites", (_e, ids) => setEnabledSites(ids).enabled_sites || []);
+ipcMain.handle("local-config:get-site-settings", (_e, siteId) => getSiteSettings(siteId));
+ipcMain.handle("local-config:set-site-settings", (_e, siteId, settings) => {
+  setSiteSettings(siteId, settings);
+  return getSiteSettings(siteId);
+});
 
 // shell.html → YouTube 연결 요청
 ipcMain.on("youtube-connect", async () => {
