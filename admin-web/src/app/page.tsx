@@ -149,10 +149,15 @@ export default function HomePage() {
   // 비회원도 앱을 볼 수 있도록 강제 리다이렉트 없이 사용자 정보만 조회한다.
   // (로그인하지 않은 경우 헤더에 '로그인' 링크가 표시된다)
   useEffect(() => {
-    getMe().then((u) => {
-      setUser(u);
-      setAuthChecked(true);
-    });
+    getMe()
+      .then((u) => {
+        setUser(u);
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        // 네트워크 오류 등으로 getMe()가 실패해도 로딩 중 상태에서 벗어나도록 처리
+        setAuthChecked(true);
+      });
   }, []);
 
   if (!authChecked) {
