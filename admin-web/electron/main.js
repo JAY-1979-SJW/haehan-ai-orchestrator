@@ -27,6 +27,7 @@ const { Menu, dialog } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
+const { startCdpBrowser, stopCdpBrowser } = require("./lib/cdp_manager");
 
 // youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
 setWindowProvider(getMainWindow);
@@ -57,6 +58,9 @@ if (!gotLock) {
     // 이 PC 상시 자동 시작 등록
     app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
 
+    // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
+    if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
+
     // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
     const serverReady = await startFastAPIServer();
     if (!serverReady) {
@@ -68,6 +72,11 @@ if (!gotLock) {
       app.quit();
       return;
     }
+
+    // ── CDP 브라우저 시작 (번들 Chromium 또는 시스템 Chrome) ────────────────
+    startCdpBrowser().then((ok) => {
+      if (!ok) console.warn("[main] CDP 브라우저 자동 시작 실패 — 수동 실행 필요");
+    });
 
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();
@@ -137,7 +146,7 @@ ipcMain.on("youtube-connect", async () => {
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
-app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); });
+app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); stopCdpBrowser(); });
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)
 app.on("window-all-closed", () => { if (!hasTray()) app.quit(); });

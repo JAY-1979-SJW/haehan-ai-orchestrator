@@ -5,6 +5,7 @@ Usage:
     python scripts/ops/codebase_layer_audit.py --json
     python scripts/ops/codebase_layer_audit.py --watch --interval 2
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,14 +13,14 @@ import ast
 import importlib
 import inspect
 import json
-import re
 import os
+import re
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT = ROOT / "data" / "codebase_layer_audit_latest.json"
@@ -41,6 +42,13 @@ EXCLUDED_DIRS = {
     "node_modules",
     ".next",
     ".claude",
+    # 빌드 아티팩트 — .gitignore와 동일 원칙, 소스 감사 제외
+    "dist",
+    "dist-installer",
+    "dist-electron",
+    "dist-electron-release",
+    "dist-electron-setup",
+    "build",
 }
 
 ACTIVE_EXTENSIONS = {
@@ -218,11 +226,17 @@ def classify_path(path: str) -> tuple[str, str]:
         return "L8", "server API path"
     if p.startswith("ai_orchestrator/") and ("router" in name or name in {"app.py"}):
         return "L8", "platform API router/app"
-    if p.startswith(("agent/excel/", "agent/hancom/", "agent/local_inventory/", "agent/local_software_manager/", "local_agent/cad/")):
+    if p.startswith(
+        ("agent/excel/", "agent/hancom/", "agent/local_inventory/", "agent/local_software_manager/", "local_agent/cad/")
+    ):
         return "L10", "local PC app automation path"
-    if p.startswith(("agent/connectors/", "ai_orchestrator/connectors/", "browser_worker/", "mcp_server/", "adapters/")):
+    if p.startswith(
+        ("agent/connectors/", "ai_orchestrator/connectors/", "browser_worker/", "mcp_server/", "adapters/")
+    ):
         return "L3", "connector/adapter path"
-    if p.startswith(("scripts/explorer/", "scripts/form/")) or name.startswith(("cdp_", "navigator", "popup_", "page_")):
+    if p.startswith(("scripts/explorer/", "scripts/form/")) or name.startswith(
+        ("cdp_", "navigator", "popup_", "page_")
+    ):
         return "L4", "generic browser automation path"
     if p.startswith("ai_orchestrator/local_agent/browser/") or p.startswith("local_agent/browser_"):
         return "L4", "local browser automation path"
@@ -343,9 +357,19 @@ def audit(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
 
 # 레이어 번호 낮을수록 하위. 상위→하위만 허용.
 _LAYER_ORDER = {
-    "L1": 1, "L2": 2, "L3": 3, "L4": 4, "L5": 5,
-    "L6": 6, "L7": 7, "L8": 8, "L9": 9, "L10": 10,
-    "L11": 11, "L12": 12, "UNKNOWN": 99,
+    "L1": 1,
+    "L2": 2,
+    "L3": 3,
+    "L4": 4,
+    "L5": 5,
+    "L6": 6,
+    "L7": 7,
+    "L8": 8,
+    "L9": 9,
+    "L10": 10,
+    "L11": 11,
+    "L12": 12,
+    "UNKNOWN": 99,
 }
 
 # 절대 금지 import 패턴: (소스 모듈 prefix, 금지 import prefix, 이유)
@@ -393,14 +417,14 @@ _FORBIDDEN_IMPORT_PAIRS: list[tuple[str, str, str]] = [
 # 주의: 오탐 최소화를 위해 변수명을 엄격히 한정 (token_id, token_status 등은 제외)
 _SECURITY_FORBIDDEN_PATTERNS: list[tuple[str, str]] = [
     # print(password) / print(passwd) / print(secret) 등 — 단독 변수명만
-    (r"print\s*\(\s*(password|passwd|pw_\w*|secret\b|api_key\b|apikey\b)\s*\)",
-     "Secret variable printed directly"),
+    (r"print\s*\(\s*(password|passwd|pw_\w*|secret\b|api_key\b|apikey\b)\s*\)", "Secret variable printed directly"),
     # os.environ["PASSWORD"] 등 — 대문자 환경변수 직접 출력
-    (r"print\s*\(\s*os\.environ\s*[\[.]\s*['\"](?:PASSWORD|PASSWD|SECRET|API_KEY|APIKEY)['\"]",
-     "Env secret printed directly"),
+    (
+        r"print\s*\(\s*os\.environ\s*[\[.]\s*['\"](?:PASSWORD|PASSWD|SECRET|API_KEY|APIKEY)['\"]",
+        "Env secret printed directly",
+    ),
     # f"{password}" / f"{secret}" — 단독 변수명 보간 (token_id, token_status 등 제외)
-    (r"\{(password|passwd|secret\b|api_key\b|apikey\b)\}",
-     "Plain secret variable in f-string or format"),
+    (r"\{(password|passwd|secret\b|api_key\b|apikey\b)\}", "Plain secret variable in f-string or format"),
 ]
 
 
@@ -423,6 +447,7 @@ _SECURITY_FORBIDDEN_PATTERNS = [
 def check_forbidden_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     """금지 import 방향 검사."""
     import re
+
     issues: list[AuditIssue] = []
     for row in rows:
         if not row.path.endswith(".py"):
@@ -479,10 +504,7 @@ def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> li
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call) or not _is_secret_output_call(node):
                 continue
-            if not any(
-                _expr_exposes_secret(arg)
-                for arg in [*node.args, *[kw.value for kw in node.keywords]]
-            ):
+            if not any(_expr_exposes_secret(arg) for arg in [*node.args, *[kw.value for kw in node.keywords]]):
                 continue
             issues.append(
                 AuditIssue(
@@ -527,8 +549,7 @@ def _expr_exposes_secret(node: ast.AST) -> bool:
             for value in node.values
         )
         return has_sensitive_label and any(
-            isinstance(value, ast.FormattedValue) and _expr_exposes_secret(value.value)
-            for value in node.values
+            isinstance(value, ast.FormattedValue) and _expr_exposes_secret(value.value) for value in node.values
         )
     return any(_expr_exposes_secret(child) for child in ast.iter_child_nodes(node))
 
@@ -605,11 +626,7 @@ def _import_time_nodes(tree: ast.AST) -> list[ast.AST]:
 
 
 def parse_import_edges(rows: list[ClassifiedFile], root: Path = ROOT) -> dict[str, set[str]]:
-    known = {
-        module
-        for row in rows
-        if (module := module_name_from_path(row.path))
-    }
+    known = {module for row in rows if (module := module_name_from_path(row.path))}
     graph: dict[str, set[str]] = {module: set() for module in known}
     for row in rows:
         current = module_name_from_path(row.path)
@@ -730,17 +747,15 @@ _ROUTER_FILE_PATTERNS = [
     "browser_api/*.py",
 ]
 
+
 # router 파일임을 판별하는 경로 패턴
 def _is_router_file(path: str) -> bool:
     import fnmatch
+
     for pat in _ROUTER_FILE_PATTERNS:
         if fnmatch.fnmatch(path, pat):
             return True
-    return (
-        path.endswith("/router.py")
-        or path.endswith("_router.py")
-        or "/server/" in path and path.endswith(".py")
-    )
+    return path.endswith("/router.py") or path.endswith("_router.py") or ("/server/" in path and path.endswith(".py"))
 
 
 def check_router_thinness(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
@@ -749,9 +764,9 @@ def check_router_thinness(rows: list[ClassifiedFile], root: Path = ROOT) -> list
     known debt 파일은 INFO로 분류, 신규 위반만 WARN.
     """
     import re
+
     issues: list[AuditIssue] = []
-    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
-                for pat, msg in _ROUTER_FORBIDDEN_PATTERNS]
+    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg) for pat, msg in _ROUTER_FORBIDDEN_PATTERNS]
     skip_prefixes = ("tests/", "docs/", "scripts/archive/", "scripts/ops/")
     for row in rows:
         if not row.path.endswith(".py"):
@@ -770,12 +785,15 @@ def check_router_thinness(rows: list[ClassifiedFile], root: Path = ROOT) -> list
             for m in pattern.finditer(source):
                 lineno = source[: m.start()].count("\n") + 1
                 severity = "info" if is_known_debt else "warn"
-                issues.append(AuditIssue(
-                    severity, "ROUTER_THINNESS",
-                    f"{row.path}:{lineno}",
-                    f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
-                    row.layer,
-                ))
+                issues.append(
+                    AuditIssue(
+                        severity,
+                        "ROUTER_THINNESS",
+                        f"{row.path}:{lineno}",
+                        f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
+                        row.layer,
+                    )
+                )
     return issues
 
 
@@ -821,11 +839,12 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
     known debt 파일은 INFO로 분류, 신규 위반만 WARN.
     """
     import re
+
     issues: list[AuditIssue] = []
-    session_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
-                        for pat, msg in _STORAGE_FORBIDDEN_PATTERNS]
-    db_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg)
-                   for pat, msg in _DB_DIRECT_ACCESS_PATTERNS]
+    session_compiled = [
+        (re.compile(pat, re.IGNORECASE | re.MULTILINE), msg) for pat, msg in _STORAGE_FORBIDDEN_PATTERNS
+    ]
+    db_compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE), msg) for pat, msg in _DB_DIRECT_ACCESS_PATTERNS]
     all_known_debt = _STORAGE_BOUNDARY_KNOWN_DEBT | _STORAGE_BOUNDARY_TEST_KNOWN_DEBT
     for row in rows:
         if not row.path.endswith(".py"):
@@ -849,24 +868,30 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
                 for m in pattern.finditer(source):
                     lineno = source[: m.start()].count("\n") + 1
                     severity = "info" if is_known_debt else "warn"
-                    issues.append(AuditIssue(
-                        severity, "STORAGE_BOUNDARY",
-                        f"{row.path}:{lineno}",
-                        f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
-                        row.layer,
-                    ))
+                    issues.append(
+                        AuditIssue(
+                            severity,
+                            "STORAGE_BOUNDARY",
+                            f"{row.path}:{lineno}",
+                            f"{'[KNOWN_DEBT] ' if is_known_debt else ''}{msg}",
+                            row.layer,
+                        )
+                    )
         # DB 직접 접근 (storage 계층 외, test 파일 별도 처리)
         if not any(row.path.startswith(p) for p in _STORAGE_ALLOWED_PREFIXES):
             for pattern, msg in db_compiled:
                 for m in pattern.finditer(source):
                     lineno = source[: m.start()].count("\n") + 1
                     severity = "info" if (is_known_debt or is_test) else "warn"
-                    issues.append(AuditIssue(
-                        severity, "STORAGE_BOUNDARY",
-                        f"{row.path}:{lineno}",
-                        f"{'[KNOWN_DEBT] ' if (is_known_debt or is_test) else ''}{msg}",
-                        row.layer,
-                    ))
+                    issues.append(
+                        AuditIssue(
+                            severity,
+                            "STORAGE_BOUNDARY",
+                            f"{row.path}:{lineno}",
+                            f"{'[KNOWN_DEBT] ' if (is_known_debt or is_test) else ''}{msg}",
+                            row.layer,
+                        )
+                    )
     return issues
 
 
@@ -874,11 +899,16 @@ def check_storage_boundary(rows: list[ClassifiedFile], root: Path = ROOT) -> lis
 
 # 서버 사이드에서 실행 금지 사이트 목록 (로그인/인증/결제/투찰 필요 사이트)
 _SERVER_FORBIDDEN_SITES = [
-    "gabia.com", "my.gabia.com", "accounts.gabia.com",
-    "g2b.go.kr", "www.g2b.go.kr",
+    "gabia.com",
+    "my.gabia.com",
+    "accounts.gabia.com",
+    "g2b.go.kr",
+    "www.g2b.go.kr",
     "hiworks.co.kr",
-    "hometax.go.kr", "unipass.customs.go.kr",
-    "login.kakao.com", "accounts.kakao.com",
+    "hometax.go.kr",
+    "unipass.customs.go.kr",
+    "login.kakao.com",
+    "accounts.kakao.com",
     "nid.naver.com",
     "accounts.google.com",
 ]
@@ -889,12 +919,18 @@ _SERVER_BROWSER_FORBIDDEN_PATTERNS = [
     (r"goto\s*\(\s*['\"]https?://(?:www\.)?g2b\.go\.kr", "G2B server-side goto 금지"),
     (r"navigate\s*\(\s*['\"]https?://(?:my\.gabia\.com|g2b\.go\.kr)", "금지 사이트 server-side navigate 금지"),
     (r"playwright\s*\.\s*chromium.*launch.*gabia", "Gabia playwright 로그인 server-side 금지"),
-    (r"cdp_client\.goto\s*\(\s*['\"]https?://(?:my\.gabia\.com|accounts\.gabia\.com)", "Gabia CDP login server-side 금지"),
+    (
+        r"cdp_client\.goto\s*\(\s*['\"]https?://(?:my\.gabia\.com|accounts\.gabia\.com)",
+        "Gabia CDP login server-side 금지",
+    ),
 ]
 
 # SERVER_BROWSER_GUARD 검사 제외 경로
 _BROWSER_GUARD_SKIP_PREFIXES = (
-    "tests/", "docs/", "scripts/archive/", "data/",
+    "tests/",
+    "docs/",
+    "scripts/archive/",
+    "data/",
     "scripts/ops/codebase_layer_audit.py",
 )
 
@@ -902,9 +938,12 @@ _BROWSER_GUARD_SKIP_PREFIXES = (
 def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) -> list[AuditIssue]:
     """SERVER_BROWSER_GUARD: 금지 사이트 server-side 브라우저 직접 실행 패턴 감지."""
     import re
+
     issues: list[AuditIssue] = []
-    compiled = [(re.compile(pat, re.IGNORECASE | re.MULTILINE | re.DOTALL), msg)
-                for pat, msg in _SERVER_BROWSER_FORBIDDEN_PATTERNS]
+    compiled = [
+        (re.compile(pat, re.IGNORECASE | re.MULTILINE | re.DOTALL), msg)
+        for pat, msg in _SERVER_BROWSER_FORBIDDEN_PATTERNS
+    ]
     for row in rows:
         if not row.path.endswith(".py"):
             continue
@@ -920,10 +959,15 @@ def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) ->
         for pattern, msg in compiled:
             for m in pattern.finditer(source):
                 lineno = source[: m.start()].count("\n") + 1
-                issues.append(AuditIssue(
-                    "warn", "SERVER_BROWSER_GUARD",
-                    f"{row.path}:{lineno}", msg, row.layer,
-                ))
+                issues.append(
+                    AuditIssue(
+                        "warn",
+                        "SERVER_BROWSER_GUARD",
+                        f"{row.path}:{lineno}",
+                        msg,
+                        row.layer,
+                    )
+                )
     return issues
 
 
@@ -939,8 +983,7 @@ def check_circular_imports(rows: list[ClassifiedFile], root: Path = ROOT) -> dic
     # cross-component 순환이 아니라 동일 패키지 내부 재노출이므로 false-positive 다.
     # 형제/무관 모듈 간 실제 순환은 그대로 탐지된다.
     cycle_graph = {
-        module: {t for t in targets if not _is_package_containment(module, t)}
-        for module, targets in graph.items()
+        module: {t for t in targets if not _is_package_containment(module, t)} for module, targets in graph.items()
     }
     cycles = find_cycles(cycle_graph)
     return {
@@ -1172,8 +1215,7 @@ def build_residual_audit(issues: list[AuditIssue], config: dict) -> dict:
     untracked_warnings = [
         asdict(issue)
         for issue in issues
-        if issue.severity == "warn"
-        and not any(tracked_residual_matches(item, issue) for item in tracked)
+        if issue.severity == "warn" and not any(tracked_residual_matches(item, issue) for item in tracked)
     ]
     return {
         "tracked_open": tracked_open,
@@ -1317,25 +1359,19 @@ def build_report(root: Path = ROOT, config: dict | None = None) -> dict:
         )
     for item in schema_validation["openapi"]:
         if not item["ok"]:
-            issues.append(
-                AuditIssue("warn", "OPENAPI_SCHEMA_FAILED", item["module"], item["error"], "L8")
-            )
+            issues.append(AuditIssue("warn", "OPENAPI_SCHEMA_FAILED", item["module"], item["error"], "L8"))
     for item in schema_validation["pydantic"]:
         if not item["ok"]:
-            issues.append(
-                AuditIssue("warn", "PYDANTIC_SCHEMA_FAILED", item["module"], item["error"], "L1")
-            )
+            issues.append(AuditIssue("warn", "PYDANTIC_SCHEMA_FAILED", item["module"], item["error"], "L1"))
     for item in schema_validation["documents"]:
         if not item["ok"]:
-            issues.append(
-                AuditIssue("warn", "DOCUMENT_SCHEMA_FAILED", item["path"], item["error"], "L1")
-            )
+            issues.append(AuditIssue("warn", "DOCUMENT_SCHEMA_FAILED", item["path"], item["error"], "L1"))
     issues = sorted(issues, key=lambda x: ({"warn": 0, "info": 1}.get(x.severity, 2), x.code, x.path))
     counts: dict[str, int] = {}
     for row in rows:
         counts[row.layer] = counts.get(row.layer, 0) + 1
     report = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "root": str(root),
         "layers": {key: asdict(layer) for key, layer in LAYERS.items()},
         "counts": dict(sorted(counts.items())),

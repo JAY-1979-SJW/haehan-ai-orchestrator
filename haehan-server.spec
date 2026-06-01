@@ -17,6 +17,24 @@ block_cipher = None
 
 # ── Hidden imports ──────────────────────────────────────────────────────────
 hidden_imports = [
+    # ai_orchestrator 패키지 (uvicorn 문자열 import 대응)
+    "ai_orchestrator",
+    "ai_orchestrator.server",
+    "ai_orchestrator.router",
+    "ai_orchestrator.auth",
+    "ai_orchestrator.user_db",
+    "ai_orchestrator.local_agent_registry",
+    "ai_orchestrator.local_agent_registry_common",
+    "ai_orchestrator.local_agent_registry_agent",
+    "ai_orchestrator.local_agent_registry_task_queue",
+    "ai_orchestrator.local_agent_registry_task_lifecycle",
+    "ai_orchestrator.local_agent_registry_task_cancel",
+    "ai_orchestrator.local_agent_registry_cleanup",
+    "ai_orchestrator.local_agent_registry_sanitize",
+    "ai_orchestrator.local_agent_router",
+    "ai_orchestrator.local_agent_router_ws",
+    "ai_orchestrator.local_agent_router_registration",
+    "ai_orchestrator.audit_logger",
     # FastAPI / uvicorn
     "uvicorn.logging",
     "uvicorn.loops",
@@ -82,6 +100,36 @@ hidden_imports = [
     "jinja2",
     "yaml",
     "toml",
+    # Auth / Google
+    "jwt",
+    "google",
+    "google.oauth2",
+    "google.oauth2.credentials",
+    "google.auth.transport.requests",
+    "google_auth_oauthlib",
+    "google_auth_oauthlib.flow",
+    "googleapiclient",
+    "googleapiclient.discovery",
+    "googleapiclient.errors",
+    # DB
+    "psycopg2",
+    "psycopg2.extras",
+    "psycopg2.extensions",
+    # System / UI
+    "keyring",
+    "pystray",
+    "win32clipboard",
+    "win32process",
+    "win32security",
+    "winerror",
+    "psutil",
+    # Data
+    "numpy",
+    "openpyxl",
+    "openpyxl.styles",
+    "openpyxl.utils",
+    "requests",
+    "requests.adapters",
 ]
 
 # ── Data files ──────────────────────────────────────────────────────────────
@@ -92,8 +140,10 @@ datas = [
     (str(ROOT / 'configs'), 'configs'),
     # ai_orchestrator 패키지 내 데이터
     (str(ROOT / 'ai_orchestrator'), 'ai_orchestrator'),
-    # grant_radar 서브태스크 모듈 (run_server --grant-task 디스패치용)
-    (str(ROOT / 'scripts' / 'grant_radar'), 'scripts/grant_radar'),
+    # scripts 전체 (realtime_audit, naver, google 등 런타임 import)
+    (str(ROOT / 'scripts'), 'scripts'),
+    # 루트 레벨 모듈 (logging_utils 등 ai_orchestrator가 직접 import)
+    *[(str(p), '.') for p in ROOT.glob('*.py') if p.stem not in ('run_server', 'conftest')],
     # Playwright 드라이버 (driver/package)
     (str(Path(sys.executable).parent / 'Lib' / 'site-packages' / 'playwright' / 'driver'), 'playwright/driver'),
 ]
