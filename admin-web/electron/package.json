@@ -25,7 +25,8 @@
     ],
     "extraResources": [
       { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] },
-      { "from": "../../dist/haehan-server", "to": "server/haehan-server" }
+      { "from": "../../dist/haehan-server", "to": "server/haehan-server" },
+      { "from": "../../dist/nextjs/standalone", "to": "nextjs" }
     ],
     "win": {
       "target": [

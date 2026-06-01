@@ -25,6 +25,7 @@ const { createTray, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, dialog } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
+const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 
 // youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
 setWindowProvider(getMainWindow);
@@ -62,6 +63,18 @@ if (!gotLock) {
         "서버 시작 실패",
         "Haehan AI 서버를 시작할 수 없습니다.\n" +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\fastapi.log)을 확인하세요."
+      );
+      app.quit();
+      return;
+    }
+
+    // ── Next.js 서버 시작 ────────────────────────────────────────────────────
+    const nextReady = await startNextServer();
+    if (!nextReady) {
+      dialog.showErrorBox(
+        "UI 서버 시작 실패",
+        "Haehan AI UI 서버를 시작할 수 없습니다.\n" +
+        "로그 파일(%APPDATA%\\Haehan AI\\logs\\nextjs.log)을 확인하세요."
       );
       app.quit();
       return;
@@ -115,7 +128,7 @@ ipcMain.on("youtube-connect", async () => {
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
-app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); });
+app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); });
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)
 app.on("window-all-closed", () => { if (!hasTray()) app.quit(); });
