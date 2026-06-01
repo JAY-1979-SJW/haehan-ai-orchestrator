@@ -1,49 +1,51 @@
 import logging
-from typing import Optional
+from dataclasses import asdict as _asdict
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .models import TaskRequest
-
-logger = logging.getLogger(__name__)
-from .planner import plan
-from .executor import execute
-from .approval import issue_token, approve_token, validate_token, reject_token
+from .action_router import action_router
+from .admin_ui_router import admin_ui_router
+from .agent_ai_proxy_router import agent_ai_proxy_router
+from .app_status_router import app_status_router
+from .approval import approve_token, issue_token, reject_token
 from .audit_logger import log_event, read_recent_logs
 from .auth import require_role
-from .telegram_webhook import handle_telegram_webhook, handle_telegram_update
-from .inbox import read_recent_inbox, get_inbox_item as _get_inbox_item
-from .gmail_reader import collect_to_inbox as _collect_gmail
-from dataclasses import asdict as _asdict
-from .sites.router import sites_router
-from .cad.router import cad_router
-from .web_task_router import web_task_router
-from .local_agent_router import local_agent_router
-from .agent_ai_proxy_router import agent_ai_proxy_router
-from .admin_ui_router import admin_ui_router
 from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
-from .action_router import action_router
+from .cad.router import cad_router
 from .cad_ai_router import cad_ai_router
-from .connectors.naver_search_router import naver_search_router
-from .connectors.naver_news_router import naver_news_router
-from .connectors.smartstore_router import smartstore_router
+from .config_router import config_router
+from .connectors.gabia_router import gabia_router
+from .connectors.gmail_router import gmail_router
+from .connectors.google_router import google_router
+from .connectors.hanafax_router import hanafax_router
+from .connectors.hiworks_mail_router import hiworks_mail_router
+from .connectors.kakao_setup_router import kakao_setup_router
+from .connectors.naver_blog_router import naver_blog_router
 from .connectors.naver_cafe_router import naver_cafe_router
 from .connectors.naver_mail_router import naver_mail_router
+from .connectors.naver_news_router import naver_news_router
+from .connectors.naver_search_router import naver_search_router
 from .connectors.naver_session_router import router as naver_session_router
-from .connectors.hiworks_mail_router import hiworks_mail_router
-from .connectors.gmail_router import gmail_router
-from .ops_router import ops_router
-from .app_status_router import app_status_router
-from .user_data_contribution_router import user_data_contribution_router
-from .connectors.youtube_router import youtube_router
-from .connectors.google_router import google_router
-from .connectors.naver_blog_router import naver_blog_router
-from .connectors.user_auth_router import user_auth_router
-from .connectors.gabia_router import gabia_router
-from .connectors.kakao_setup_router import kakao_setup_router
 from .connectors.session_status_router import session_status_router
-from .connectors.hanafax_router import hanafax_router
+from .connectors.smartstore_router import smartstore_router
+from .connectors.user_auth_router import user_auth_router
+from .connectors.youtube_router import youtube_router
+from .executor import execute
+from .gmail_reader import collect_to_inbox as _collect_gmail
+from .inbox import get_inbox_item as _get_inbox_item
+from .inbox import read_recent_inbox
+from .local_agent_router import local_agent_router
+from .models import TaskRequest
+from .ops_router import ops_router
+from .planner import plan
+from .sites.router import sites_router
+from .telegram_webhook import handle_telegram_update, handle_telegram_webhook
+from .user_data_contribution_router import user_data_contribution_router
+from .web_task_router import web_task_router
+
+logger = logging.getLogger(__name__)
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
@@ -79,27 +81,31 @@ router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
-router.include_router(naver_news_router)    # read-only naver news scraping endpoints
-router.include_router(naver_cafe_router)    # read-only naver cafe collection endpoints
-router.include_router(naver_mail_router)   # naver mail compose/send endpoints
+router.include_router(naver_news_router)  # read-only naver news scraping endpoints
+router.include_router(naver_cafe_router)  # read-only naver cafe collection endpoints
+router.include_router(naver_mail_router)  # naver mail compose/send endpoints
 router.include_router(naver_session_router)  # naver session login pipeline
-router.include_router(hiworks_mail_router) # hiworks mail inbox/compose/send
-router.include_router(gmail_router)        # gmail inbox/collect/compose/send
-router.include_router(ops_router)           # read-only ops center API
-router.include_router(app_status_router)    # read-only app status endpoints (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
+router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
+router.include_router(gmail_router)  # gmail inbox/collect/compose/send
+router.include_router(ops_router)  # read-only ops center API
+router.include_router(
+    app_status_router
+)  # read-only app status endpoints (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 router.include_router(user_data_contribution_router)
 router.include_router(youtube_router)
 router.include_router(google_router)
-router.include_router(smartstore_router)         # read-only smartstore catalog/history/form-fields
-router.include_router(naver_blog_router)         # naver blog compose/drafts/seo
-router.include_router(user_auth_router)          # user signup/login/mypage
-router.include_router(gabia_router)              # gabia dns/domain/login watch
-router.include_router(kakao_setup_router)        # 카카오 앱 등록 실시간 게이트
-router.include_router(session_status_router)     # 앱별 로그인 세션 현황
-router.include_router(hanafax_router)            # 하나팩스 팩스 발송
+router.include_router(smartstore_router)  # read-only smartstore catalog/history/form-fields
+router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
+router.include_router(user_auth_router)  # user signup/login/mypage
+router.include_router(gabia_router)  # gabia dns/domain/login watch
+router.include_router(kakao_setup_router)  # 카카오 앱 등록 실시간 게이트
+router.include_router(session_status_router)  # 앱별 로그인 세션 현황
+router.include_router(hanafax_router)  # 하나팩스 팩스 발송
 
-from .routers.deploy_router import router as deploy_router
-router.include_router(deploy_router)             # GitHub webhook → 자동 배포
+from .routers.deploy_router import router as deploy_router  # noqa: E402
+
+router.include_router(deploy_router)  # GitHub webhook → 자동 배포
+router.include_router(config_router)  # 데스크톱 env 배포 + 로컬 재로딩
 
 
 class TaskSubmit(BaseModel):
@@ -110,19 +116,19 @@ class TaskSubmit(BaseModel):
     description: str
     payload: dict = {}
     # 호환을 위해 필드는 유지하지만 서버에서 신뢰하지 않고 current_user.actor 로 덮어쓴다.
-    requested_by: Optional[str] = None
+    requested_by: str | None = None
 
 
 class ApproveRequest(BaseModel):
     # 호환을 위해 필드는 유지하나 서버는 current_user.actor / current_user.role 만 신뢰한다.
-    approved_by: Optional[str] = None
-    role: Optional[str] = None
+    approved_by: str | None = None
+    role: str | None = None
 
 
 class RejectRequest(BaseModel):
     # 호환을 위해 필드는 유지하나 서버는 current_user.actor / current_user.role 만 신뢰한다.
-    rejected_by: Optional[str] = None
-    role: Optional[str] = None
+    rejected_by: str | None = None
+    role: str | None = None
     reason: str = ""
 
 
@@ -191,22 +197,32 @@ def submit_task(
     data = body.model_dump()
     data["requested_by"] = actor
     req = TaskRequest(**data)
-    logger.info("작업 수신 | task=%s | action=%s | actor=%s | role=%s",
-                req.task_id, req.action_type, actor, role)
-    log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type,
-              target=req.target, actor=actor, role=role)
+    logger.info("작업 수신 | task=%s | action=%s | actor=%s | role=%s", req.task_id, req.action_type, actor, role)
+    log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type, target=req.target, actor=actor, role=role)
 
     risk, ep = plan(req)
-    log_event("PLAN_CREATED", req.task_id, risk_level=risk.risk_level,
-              action_type=req.action_type, allowed=ep.allowed,
-              requires_approval=ep.requires_approval, actor="system")
+    log_event(
+        "PLAN_CREATED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+        actor="system",
+    )
 
     # dry-run gate: token 발행 및 실제 execute 차단
     if POST_TASKS_DRY_RUN_ENABLED and ep.requires_approval and ep.allowed:
-        log_event("DRY_RUN_GATE_BLOCKED", req.task_id, risk_level=risk.risk_level,
-                  action_type=req.action_type, allowed=ep.allowed,
-                  requires_approval=ep.requires_approval, actor=actor,
-                  note="POST_TASKS_DRY_RUN_ENABLED=True: token 발행 차단")
+        log_event(
+            "DRY_RUN_GATE_BLOCKED",
+            req.task_id,
+            risk_level=risk.risk_level,
+            action_type=req.action_type,
+            allowed=ep.allowed,
+            requires_approval=ep.requires_approval,
+            actor=actor,
+            note="POST_TASKS_DRY_RUN_ENABLED=True: token 발행 차단",
+        )
         return {
             "task_id": req.task_id,
             "risk_level": risk.risk_level,
@@ -223,9 +239,16 @@ def submit_task(
     if ep.requires_approval and ep.allowed:
         token = issue_token(req, risk, ttl_minutes=30)
         token_id = token.token_id
-        log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level,
-                  action_type=req.action_type, decision="issued",
-                  actor=actor, role=role, note=f"token_id={token_id}")
+        log_event(
+            "APPROVAL_ISSUED",
+            req.task_id,
+            risk_level=risk.risk_level,
+            action_type=req.action_type,
+            decision="issued",
+            actor=actor,
+            role=role,
+            note=f"token_id={token_id}",
+        )
 
     result = execute(ep, req=req, risk_level=risk.risk_level)
     _exec_event = "DRY_RUN_RETURNED"
@@ -233,9 +256,15 @@ def submit_task(
         _exec_event = "EXECUTION_RATE_LIMITED"
     elif result.startswith("BLOCKED:execution_timeout"):
         _exec_event = "EXECUTION_TIMEOUT"
-    log_event(_exec_event, req.task_id, risk_level=risk.risk_level,
-              action_type=req.action_type, allowed=ep.allowed,
-              decision=result, actor="executor")
+    log_event(
+        _exec_event,
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        decision=result,
+        actor="executor",
+    )
 
     return {
         "task_id": req.task_id,
@@ -263,9 +292,9 @@ def approve_task(
     role = user["role"]
     token, status = approve_token(token_id, task_id, actor, role)
     audit_event = _STATUS_AUDIT.get(status, "APPROVAL_DENIED")
-    log_event(audit_event, task_id,
-              token_id=token_id, actor=actor, role=role,
-              decision=status, risk_level=token.risk_level)
+    log_event(
+        audit_event, task_id, token_id=token_id, actor=actor, role=role, decision=status, risk_level=token.risk_level
+    )
     http_status = _STATUS_HTTP.get(status, 400)
     if http_status != 200:
         raise HTTPException(status_code=http_status, detail={"status": status})
@@ -286,9 +315,16 @@ def reject_task(
     role = user["role"]
     token, status = reject_token(token_id, task_id, actor, role, body.reason)
     audit_event = _REJECT_STATUS_AUDIT.get(status, "APPROVAL_REJECTED")
-    log_event(audit_event, task_id,
-              token_id=token_id, actor=actor, role=role,
-              decision=status, risk_level=token.risk_level, note=body.reason)
+    log_event(
+        audit_event,
+        task_id,
+        token_id=token_id,
+        actor=actor,
+        role=role,
+        decision=status,
+        risk_level=token.risk_level,
+        note=body.reason,
+    )
     http_status = _REJECT_STATUS_HTTP.get(status, 400)
     if http_status != 200:
         raise HTTPException(status_code=http_status, detail={"status": status})
@@ -296,9 +332,15 @@ def reject_task(
 
 
 _TG_WEBHOOK_HTTP = {
-    "invalid_payload": 400, "invalid_action": 400, "user_not_found": 403,
-    "forbidden": 403, "rate_limited": 429, "not_found": 404,
-    "already_used": 409, "expired": 410, "task_mismatch": 400,
+    "invalid_payload": 400,
+    "invalid_action": 400,
+    "user_not_found": 403,
+    "forbidden": 403,
+    "rate_limited": 429,
+    "not_found": 404,
+    "already_used": 409,
+    "expired": 410,
+    "task_mismatch": 400,
 }
 
 

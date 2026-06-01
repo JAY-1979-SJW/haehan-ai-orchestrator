@@ -26,6 +26,7 @@ const { bus, EVENTS } = require("./lib/bus");
 const { Menu, dialog } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
+const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
 
 // youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
 setWindowProvider(getMainWindow);
@@ -81,6 +82,14 @@ if (!gotLock) {
     }
 
     const cfg = loadConfig();
+
+    // ── 원격 서버에서 환경변수 fetch → 로컬 FastAPI에 주입 ───────────────────
+    const licenseKey = isOwnerMode(cfg) ? (cfg.license_key || "") : (cfg.license_key || "");
+    if (licenseKey) {
+      fetchAndApplyRemoteConfig(licenseKey).catch((e) =>
+        console.warn("[main] remote config 적용 실패 (무시):", e.message)
+      );
+    }
 
     // 소유자 모드 또는 저장된 라이선스 → 바로 시작
     if (isOwnerMode(cfg) || cfg.license_key) {
