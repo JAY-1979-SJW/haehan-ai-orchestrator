@@ -26,7 +26,7 @@ const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
-const { Menu, dialog } = require("electron");
+const { Menu, dialog, session } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
@@ -63,6 +63,16 @@ if (!gotLock) {
 
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
+
+    // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
+    // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
+    try {
+      await session.fromPartition("persist:haehan").clearStorageData({
+        storages: ["serviceworkers", "cachestorage"],
+      });
+    } catch (e) {
+      console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
+    }
 
     // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
     const serverReady = await startFastAPIServer();

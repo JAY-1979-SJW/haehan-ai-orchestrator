@@ -26,6 +26,15 @@
   box-sizing: border-box;
 }
 
+/* script/style 은 절대 렌더되지 않도록 보장 — next dev(Tailwind v4) 환경에서
+   preflight 가 UA의 script{display:none} 을 덮어 flight 스크립트가 텍스트로
+   보이던 문제 방지. (프로덕션 빌드와 동일 동작으로 통일) */
+script,
+[type="application/json"],
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
