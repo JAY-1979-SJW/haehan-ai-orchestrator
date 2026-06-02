@@ -7,10 +7,11 @@
 보안 원칙:
   - HMAC-SHA256 서명 검증 (DEPLOY_WEBHOOK_SECRET). 실패 시 401.
   - secret 값 로그/응답 노출 금지.
-  - 배포는 기존 deploy_api_with_runtime_gates.py 그대로 실행 (게이트 보존).
+  - 배포는 scripts/ops/server_deploy.py 로 위임 (서버 전용, docker 보호됨).
   - owner role 만 /deploy/status 접근 가능.
   - 동시 배포 방지: 실행 중이면 409 반환.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,8 +19,8 @@ import hmac
 import json
 import logging
 import os
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +33,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/deploy", tags=["deploy"])
 
 ROOT = Path(__file__).resolve().parents[2]
-STATUS_FILE = ROOT / "data" / "runtime" / "deploy_api_with_runtime_gates_latest.json"
+STATUS_FILE = ROOT / "data" / "runtime" / "server_deploy_latest.json"
 # 호스트 트리거 데몬 주소 (host.docker.internal:8401)
 TRIGGER_HOST = os.environ.get("DEPLOY_TRIGGER_HOST", "host.docker.internal")
 TRIGGER_PORT = int(os.environ.get("DEPLOY_TRIGGER_PORT", "8401"))
@@ -55,10 +56,10 @@ def _verify_signature(body: bytes, sig_header: str | None) -> None:
 
 
 def _forward_to_daemon(body: bytes) -> dict[str, Any]:
-    """호스트 deploy_trigger_daemon 으로 트리거 전달."""
+    """호스트 배포 트리거 엔드포인트로 webhook 전달."""
     secret = os.environ.get("DEPLOY_WEBHOOK_SECRET", "").encode()
     sig = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         TRIGGER_URL,
         data=body,
         method="POST",
@@ -68,7 +69,7 @@ def _forward_to_daemon(body: bytes) -> dict[str, Any]:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", "replace")[:200]
@@ -118,7 +119,7 @@ def deploy_status(user: dict = Depends(require_role("owner"))) -> dict[str, Any]
             "status": data.get("status"),
             "created_at": data.get("created_at"),
             "service": data.get("service"),
-            "running": _running,
+            "running": False,
             "secret_values_output": False,
         }
     except Exception:

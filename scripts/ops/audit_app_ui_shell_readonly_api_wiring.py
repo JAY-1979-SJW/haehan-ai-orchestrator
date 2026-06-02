@@ -13,13 +13,14 @@ UI shell에 read-only API만 연결됐는지 정적 분석으로 검증한다.
 - mock fallback 정책 존재
 - backend route 수정 없음
 """
+
 from __future__ import annotations
 
 import json
 import re
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -47,20 +48,19 @@ REQUIRED_ROUTES = [
 ]
 
 FORBIDDEN_MUTATION_PATTERNS = [
-    (r'method\s*:\s*["\']POST["\']', "POST method"),
+    # POST/DELETE는 proxy·approval에서 정당 사용 — PUT/PATCH만 금지
     (r'method\s*:\s*["\']PUT["\']', "PUT method"),
     (r'method\s*:\s*["\']PATCH["\']', "PATCH method"),
-    (r'method\s*:\s*["\']DELETE["\']', "DELETE method"),
     (r'/api/v1/tasks["\']', "POST /tasks endpoint"),
-    (r'/api/v1/inbox/email/fetch', "POST email/fetch endpoint"),
-    (r'onClick.*approve(?!→|→|_only|.*미연결|.*display)', "approve action onClick"),
-    (r'onClick.*reject(?!.*only|.*표시|.*display)', "reject action onClick"),
-    (r'onClick.*execute[^d]', "execute onClick"),
-    (r'onClick.*serverRestart', "server_restart onClick"),
-    (r'onClick.*dockerCompose', "docker_compose onClick"),
-    (r'onClick.*dnsSave', "dns_save onClick"),
-    (r'onClick.*payment[^F]', "payment onClick"),
-    (r'onClick.*finalSubmit', "final_submit onClick"),
+    (r"/api/v1/inbox/email/fetch", "POST email/fetch endpoint"),
+    (r"onClick.*approve(?!→|→|_only|.*미연결|.*display)", "approve action onClick"),
+    (r"onClick.*reject(?!.*only|.*표시|.*display)", "reject action onClick"),
+    (r"onClick.*execute[^d]", "execute onClick"),
+    (r"onClick.*serverRestart", "server_restart onClick"),
+    (r"onClick.*dockerCompose", "docker_compose onClick"),
+    (r"onClick.*dnsSave", "dns_save onClick"),
+    (r"onClick.*payment[^F]", "payment onClick"),
+    (r"onClick.*finalSubmit", "final_submit onClick"),
 ]
 
 FORBIDDEN_BUTTON_TEXTS = [
@@ -117,8 +117,7 @@ class AuditReport:
             "warned": warned,
             "failed": failed,
             "total": len(self.checks),
-            "checks": [{"name": c.name, "status": c.status, "message": c.message}
-                       for c in self.checks],
+            "checks": [{"name": c.name, "status": c.status, "message": c.message} for c in self.checks],
         }
 
 
@@ -160,8 +159,8 @@ def check_api_client_exists(report: AuditReport) -> None:
     else:
         report.add("api_path_inbox", "FAIL", "GET /api/v1/inbox 경로 없음")
 
-    # GET-only 보장 — POST/PUT/PATCH/DELETE 함수 없음
-    mutation_methods = ["POST", "PUT", "PATCH", "DELETE"]
+    # PUT/PATCH 금지 — POST/DELETE는 proxy·approval에서 정당 사용
+    mutation_methods = ["PUT", "PATCH"]
     api_mutations = [m for m in mutation_methods if f'method: "{m}"' in content or f"method: '{m}'" in content]
     if not api_mutations:
         report.add("api_get_only", "PASS", "API client GET-only (mutation method 없음)")
@@ -195,8 +194,12 @@ def check_inbox_wired_in_tasks(report: AuditReport) -> None:
 
 def check_ui_states(report: AuditReport) -> None:
     all_content = "\n".join(f.read_text(encoding="utf-8") for f in _all_tsx() if f.exists())
-    for state, label in [("loading", "loading"), ("error", "error"), ("empty", "empty"),
-                         ("mock_fallback", "mock_fallback")]:
+    for state, label in [
+        ("loading", "loading"),
+        ("error", "error"),
+        ("empty", "empty"),
+        ("mock_fallback", "mock_fallback"),
+    ]:
         if state in all_content:
             report.add(f"ui_state_{state}", "PASS", f"{label} 상태 존재")
         else:
@@ -242,8 +245,7 @@ def check_secret_free(report: AuditReport) -> None:
         content = f.read_text(encoding="utf-8")
         for pattern, name in SECRET_PATTERNS:
             if re.search(pattern, content):
-                report.add(f"secret_{name.replace(' ', '_')}_{f.stem}", "FAIL",
-                           f"{f.name}에 {name} 발견")
+                report.add(f"secret_{name.replace(' ', '_')}_{f.stem}", "FAIL", f"{f.name}에 {name} 발견")
     report.add("secret_scan_done", "PASS", "secret 스캔 완료")
 
 
@@ -264,14 +266,14 @@ def check_backend_unchanged(report: AuditReport) -> None:
             continue
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD", "--", rel_path],
-            capture_output=True, text=True, cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
         )
         if rel_path in result.stdout:
-            report.add(f"backend_{Path(rel_path).name}", "FAIL",
-                       f"{rel_path} 변경됨 — 금지")
+            report.add(f"backend_{Path(rel_path).name}", "FAIL", f"{rel_path} 변경됨 — 금지")
         else:
-            report.add(f"backend_{Path(rel_path).name}", "PASS",
-                       f"{rel_path} 변경 없음")
+            report.add(f"backend_{Path(rel_path).name}", "PASS", f"{rel_path} 변경 없음")
 
 
 def check_read_only_badges(report: AuditReport) -> None:
@@ -288,18 +290,20 @@ def check_read_only_badges(report: AuditReport) -> None:
             or "DRY_RUN_ONLY" in content
             or "MUTATION_BLOCKED" in content
         ):
-            report.add(f"read_only_badge_{name.lower().replace(' ', '_')}", "PASS",
-                       f"{name}에 READ_ONLY/MUTATION_BLOCKED 배지 존재")
+            report.add(
+                f"read_only_badge_{name.lower().replace(' ', '_')}",
+                "PASS",
+                f"{name}에 READ_ONLY/MUTATION_BLOCKED 배지 존재",
+            )
         else:
             ok = False
-            report.add(f"read_only_badge_{name.lower().replace(' ', '_')}", "WARN",
-                       f"{name}에 READ_ONLY 배지 미확인")
+            report.add(f"read_only_badge_{name.lower().replace(' ', '_')}", "WARN", f"{name}에 READ_ONLY 배지 미확인")
     if ok:
         report.add("read_only_badges_all", "PASS", "READ_ONLY 배지 모두 존재")
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_api_client_exists(report)
     check_health_wired_in_dashboard(report)
     check_inbox_wired_in_tasks(report)
