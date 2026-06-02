@@ -5,6 +5,7 @@
 - 사용자 설정 저장/로드 API 제공
 - 민감 정보 절대 노출 금지
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +14,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import uvicorn
@@ -23,8 +24,9 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from . import agent_runtime_boundary, browser_runtime_boundary
+from .remote_access import is_enabled as _remote_enabled
+from .remote_access import verify_token as _verify_token
 from .user_settings import load_menu, save_menu
-from .remote_access import is_enabled as _remote_enabled, verify_token as _verify_token
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +68,7 @@ class RemoteAccessMiddleware(BaseHTTPMiddleware):
 
 def _resolve_ui_dir() -> Path:
     import sys
+
     if getattr(sys, "frozen", False):
         # onedir: exe 옆 _internal/ 폴더가 sys._MEIPASS
         # onefile: sys._MEIPASS 임시 디렉터리
@@ -80,13 +83,15 @@ def _resolve_ui_dir() -> Path:
                 return candidate
     return Path(__file__).parent / "ui_dist"
 
+
 _UI_DIR = _resolve_ui_dir()
-_SERVER_WS_URL = "wss://api.haehan-ai.kr/ws/desktop"  # 서버 측 Push WebSocket
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     server_task = asyncio.create_task(_connect_to_server())
     from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+
     logger.info("local server started on %s:%s", LOCAL_HOST, LOCAL_PORT)
     try:
         yield
@@ -107,6 +112,7 @@ app.add_middleware(RemoteAccessMiddleware)
 # ── 전역 예외 핸들러 — 보안 마스킹 ─────────────────────────────────────────────
 # HTTPException / RequestValidationError / 인증 오류: 기존 status_code 유지
 # 예상 밖 Exception만 500으로 마스킹 (stack trace / secret / token 노출 금지)
+
 
 @app.exception_handler(HTTPException)
 async def _http_exception_handler(request: Request, exc: HTTPException):
@@ -244,7 +250,6 @@ async def _handle_ui_message(data: dict, ws: WebSocket) -> None:
 # ── 스크린샷 ──────────────────────────────────────────────────────────────────
 async def _handle_screenshot(ws: WebSocket) -> None:
     """CDP /json API로 첫 번째 활성 탭을 찾아 Page.captureScreenshot 호출."""
-    import base64
     import json as _json
     import urllib.request
 
@@ -255,7 +260,7 @@ async def _handle_screenshot(ws: WebSocket) -> None:
         # 탭 목록 조회
         def _fetch_targets() -> list[dict]:
             url = f"http://127.0.0.1:{cdp_port}/json"
-            with urllib.request.urlopen(url, timeout=3) as r:
+            with urllib.request.urlopen(url, timeout=3) as r:  # noqa: S310
                 return _json.loads(r.read())
 
         targets = await asyncio.to_thread(_fetch_targets)
@@ -271,8 +276,9 @@ async def _handle_screenshot(ws: WebSocket) -> None:
 
         async def _capture() -> str:
             async with websockets.connect(ws_debug_url, open_timeout=5) as cdp_ws:
-                cmd = _json.dumps({"id": 1, "method": "Page.captureScreenshot",
-                                   "params": {"format": "png", "quality": 80}})
+                cmd = _json.dumps(
+                    {"id": 1, "method": "Page.captureScreenshot", "params": {"format": "png", "quality": 80}}
+                )
                 await cdp_ws.send(cmd)
                 raw = await asyncio.wait_for(cdp_ws.recv(), timeout=10)
                 resp = _json.loads(raw)
@@ -281,27 +287,31 @@ async def _handle_screenshot(ws: WebSocket) -> None:
                 return resp["result"]["data"]
 
         b64data = await _capture()
-        await ws.send_json({
-            "type": "screenshot_result",
-            "ok": True,
-            "format": "png",
-            "data": b64data,
-        })
+        await ws.send_json(
+            {
+                "type": "screenshot_result",
+                "ok": True,
+                "format": "png",
+                "data": b64data,
+            }
+        )
     except Exception as exc:
-        await ws.send_json({
-            "type": "screenshot_result",
-            "ok": False,
-            "error": str(exc),
-        })
+        await ws.send_json(
+            {
+                "type": "screenshot_result",
+                "ok": False,
+                "error": str(exc),
+            }
+        )
 
 
 # ── 로그인 watcher (background poller) ───────────────────────────────────────
 
 _login_watcher_task: asyncio.Task | None = None
 _login_watcher_state = {
-    "prev_targets": [],         # list[TargetSnapshot]
-    "prev_login_states": {},    # target_id → state
-    "engine": None,             # LoginAutoFlowEngine
+    "prev_targets": [],  # list[TargetSnapshot]
+    "prev_login_states": {},  # target_id → state
+    "engine": None,  # LoginAutoFlowEngine
 }
 _LOGIN_WATCHER_INTERVAL_SEC = 2.0
 
@@ -321,7 +331,7 @@ async def _stop_login_watcher() -> None:
     _login_watcher_task.cancel()
     try:
         await _login_watcher_task
-    except (asyncio.CancelledError, Exception):
+    except (asyncio.CancelledError, Exception):  # noqa: S110
         pass
     _login_watcher_task = None
 
@@ -336,47 +346,53 @@ async def _login_watcher_loop() -> None:
             prev = _login_watcher_state["prev_targets"]
             evs = browser_runtime_boundary.compute_events(prev, curr)
             for e in evs:
-                await _broadcast({
-                    "type": e.event_type,
-                    "target_id": e.target_id,
-                    "sanitized_url": e.sanitized_url,
-                    "title": e.title,
-                    "extra": e.extra,
-                    "ts": time.time(),
-                })
+                await _broadcast(
+                    {
+                        "type": e.event_type,
+                        "target_id": e.target_id,
+                        "sanitized_url": e.sanitized_url,
+                        "title": e.title,
+                        "extra": e.extra,
+                        "ts": time.time(),
+                    }
+                )
             login_states = browser_runtime_boundary.detect_login_states(
-                curr, prev_states=_login_watcher_state["prev_login_states"],
+                curr,
+                prev_states=_login_watcher_state["prev_login_states"],
             )
             login_evs = browser_runtime_boundary.login_state_change_events(
-                _login_watcher_state["prev_login_states"], login_states,
+                _login_watcher_state["prev_login_states"],
+                login_states,
             )
             engine = _login_watcher_state["engine"]
             for ev in login_evs:
-                await _broadcast({
-                    "type": ev.event_type,
-                    "target_id": ev.target_id,
-                    "sanitized_url": ev.sanitized_url,
-                    "title": ev.title,
-                    "extra": ev.extra,
-                    "ts": time.time(),
-                })
+                await _broadcast(
+                    {
+                        "type": ev.event_type,
+                        "target_id": ev.target_id,
+                        "sanitized_url": ev.sanitized_url,
+                        "title": ev.title,
+                        "extra": ev.extra,
+                        "ts": time.time(),
+                    }
+                )
                 det = login_states.get(ev.target_id)
                 if det is None:
                     continue
                 _bs.set_login_state(ev.target_id, det.state)
                 for engine_ev in engine.on_target_state(ev.target_id, det):
-                    await _broadcast({
-                        "type": engine_ev.type,
-                        "target_id": engine_ev.target_id,
-                        "sanitized_url": engine_ev.sanitized_url,
-                        "title": engine_ev.title,
-                        "extra": engine_ev.extra,
-                        "ts": time.time(),
-                    })
+                    await _broadcast(
+                        {
+                            "type": engine_ev.type,
+                            "target_id": engine_ev.target_id,
+                            "sanitized_url": engine_ev.sanitized_url,
+                            "title": engine_ev.title,
+                            "extra": engine_ev.extra,
+                            "ts": time.time(),
+                        }
+                    )
             _login_watcher_state["prev_targets"] = curr
-            _login_watcher_state["prev_login_states"] = {
-                tid: det.state for tid, det in login_states.items()
-            }
+            _login_watcher_state["prev_login_states"] = {tid: det.state for tid, det in login_states.items()}
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -386,13 +402,15 @@ async def _login_watcher_loop() -> None:
 
 # ── 브라우저 lifecycle 핸들러 ────────────────────────────────────────────────
 
+
 def _fetch_cdp_targets_sync(port: int) -> list[dict]:
     """CDP /json/list — page 타입만 반환."""
     import urllib.request
 
     try:
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{int(port)}/json/list", timeout=1.5,
+            f"http://127.0.0.1:{int(port)}/json/list",
+            timeout=1.5,
         ) as resp:
             data = json.loads(resp.read().decode("utf-8") or "[]")
     except Exception:
@@ -412,9 +430,7 @@ def _apply_stale_tab_cleanup(targets: list[dict], cdp_port: int) -> dict:
     """
     plan = plan_stale_tab_cleanup(targets, keep_url="about:blank")
     closed: list[str] = []
-    detected = len(plan["close_ids"]) + (
-        1 if plan["navigate_keep_to"] else 0
-    ) + (1 if plan["open_new_keep_url"] else 0)
+    detected = len(plan["close_ids"]) + (1 if plan["navigate_keep_to"] else 0) + (1 if plan["open_new_keep_url"] else 0)
 
     # 1. 잉여 탭 close
     if plan["close_ids"]:
@@ -425,9 +441,9 @@ def _apply_stale_tab_cleanup(targets: list[dict], cdp_port: int) -> dict:
                 try:
                     if _close_target(tid):
                         closed.append(tid)
-                except Exception:
+                except Exception:  # noqa: S112
                     continue
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     # 2. keep 탭 navigate to about:blank
@@ -436,7 +452,7 @@ def _apply_stale_tab_cleanup(targets: list[dict], cdp_port: int) -> dict:
             from scripts.web_connector import get_page
 
             get_page().goto(plan["navigate_keep_to"], timeout=10000)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     # 3. 탭 0개면 새 탭 open
@@ -447,9 +463,9 @@ def _apply_stale_tab_cleanup(targets: list[dict], cdp_port: int) -> dict:
             page = open_page()
             try:
                 page.goto("about:blank", timeout=10000)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     return {"closed": closed, "detected": detected, "plan": plan}
@@ -480,8 +496,7 @@ def plan_stale_tab_cleanup(
     rows = [t for t in (targets or []) if isinstance(t, dict)]
     pages = [t for t in rows if t.get("type") == "page"]
     if not pages:
-        return {"close_ids": [], "keep_id": "", "navigate_keep_to": keep_url,
-                "open_new_keep_url": True}
+        return {"close_ids": [], "keep_id": "", "navigate_keep_to": keep_url, "open_new_keep_url": True}
     keep = pages[0]
     close_ids = [str(t.get("id", "")) for t in pages[1:] if t.get("id")]
     keep_url_cur = str(keep.get("url", "") or "")
@@ -546,30 +561,36 @@ async def _handle_browser_start(ws: WebSocket) -> None:
     decision = await asyncio.to_thread(browser_runtime_boundary.decide_browser_start, paths)
 
     if decision.action == browser_runtime_boundary.ACTION_ERROR_MULTIPLE:
-        await _broadcast({
-            "type": "browser_status",
-            "action": decision.action,
-            "count": decision.count,
-            "error": decision.error,
-            "matched_pids": decision.matched_pids,
-            "message_ko": decision.message_ko,
-        })
-        await ws.send_json({
-            "type": "browser_start_result",
-            "ok": False,
-            "error": decision.error,
-            "count": decision.count,
-            "message_ko": decision.message_ko,
-        })
+        await _broadcast(
+            {
+                "type": "browser_status",
+                "action": decision.action,
+                "count": decision.count,
+                "error": decision.error,
+                "matched_pids": decision.matched_pids,
+                "message_ko": decision.message_ko,
+            }
+        )
+        await ws.send_json(
+            {
+                "type": "browser_start_result",
+                "ok": False,
+                "error": decision.error,
+                "count": decision.count,
+                "message_ko": decision.message_ko,
+            }
+        )
         return
 
     if decision.action == browser_runtime_boundary.ACTION_BLOCKED_BY_LOCK:
-        await ws.send_json({
-            "type": "browser_start_result",
-            "ok": False,
-            "error": decision.error or "LOCK_ACTIVE",
-            "message_ko": decision.message_ko,
-        })
+        await ws.send_json(
+            {
+                "type": "browser_start_result",
+                "ok": False,
+                "error": decision.error or "LOCK_ACTIVE",
+                "message_ko": decision.message_ko,
+            }
+        )
         return
 
     if decision.action in (
@@ -584,16 +605,18 @@ async def _handle_browser_start(ws: WebSocket) -> None:
         targets = await _fetch_cdp_targets(paths.cdp_port)
         _sync_store_with_targets(targets)
         await _start_login_watcher()
-        await ws.send_json({
-            "type": "browser_start_result",
-            "ok": True,
-            "action": decision.action,
-            "count": max(decision.count, 1),
-            "message_ko": decision.message_ko,
-            "tab_count": len(targets),
-            "stale_tabs_closed": cleanup.get("closed", []),
-            "stale_tabs_detected": cleanup.get("detected", 0),
-        })
+        await ws.send_json(
+            {
+                "type": "browser_start_result",
+                "ok": True,
+                "action": decision.action,
+                "count": max(decision.count, 1),
+                "message_ko": decision.message_ko,
+                "tab_count": len(targets),
+                "stale_tabs_closed": cleanup.get("closed", []),
+                "stale_tabs_detected": cleanup.get("detected", 0),
+            }
+        )
         return
 
     # ACTION_START_NEW → 실제 시작은 기존 web_connector._ensure_cdp_daemon 경로에 위임.
@@ -616,18 +639,20 @@ async def _handle_browser_start(ws: WebSocket) -> None:
             msg = f"자동화 Chrome 시작 실패: {exc}"
         finally:
             browser_runtime_boundary.clear_lock_file(paths)
-        await ws.send_json({
-            "type": "browser_start_result",
-            "ok": ok,
-            "action": decision.action,
-            "error": err,
-            "message_ko": msg,
-        })
+        await ws.send_json(
+            {
+                "type": "browser_start_result",
+                "ok": ok,
+                "action": decision.action,
+                "error": err,
+                "message_ko": msg,
+            }
+        )
 
 
 def _start_via_web_connector() -> None:
     """기존 web_connector 경로를 통해 데몬 자동 기동."""
-    from scripts.web_connector import _ensure_cdp_daemon  # noqa: WPS437 — 의도된 내부 사용
+    from scripts.web_connector import _ensure_cdp_daemon
 
     _ensure_cdp_daemon()
 
@@ -639,18 +664,22 @@ async def _handle_browser_quit(ws: WebSocket) -> None:
     paths = browser_runtime_boundary.resolve_paths()
     result = await asyncio.to_thread(browser_runtime_boundary.quit_automation_browsers, paths)
     _bs.mark_browser_closed()
-    await _broadcast({
-        "type": "browser_status",
-        "action": "browser_quit",
-        "count": 0,
-        "killed_pids": result.get("killed_pids", []),
-        "failed_pids": result.get("failed_pids", []),
-        "ok": result.get("ok", False),
-    })
-    await ws.send_json({
-        "type": "browser_quit_result",
-        **result,
-    })
+    await _broadcast(
+        {
+            "type": "browser_status",
+            "action": "browser_quit",
+            "count": 0,
+            "killed_pids": result.get("killed_pids", []),
+            "failed_pids": result.get("failed_pids", []),
+            "ok": result.get("ok", False),
+        }
+    )
+    await ws.send_json(
+        {
+            "type": "browser_quit_result",
+            **result,
+        }
+    )
 
 
 async def _handle_tab_list(ws: WebSocket) -> None:
@@ -659,25 +688,29 @@ async def _handle_tab_list(ws: WebSocket) -> None:
     paths = browser_runtime_boundary.resolve_paths()
     targets = await _fetch_cdp_targets(paths.cdp_port)
     diff = _sync_store_with_targets(targets)
-    await ws.send_json({
-        "type": "tab_list",
-        "tabs": [
-            {
-                "tab_id": str(t.get("id", "")),
-                "url": t.get("url", ""),
-                "title": t.get("title", ""),
-            }
-            for t in targets
-        ],
-        "diff": diff,
-        "session": _bs.snapshot(),
-    })
+    await ws.send_json(
+        {
+            "type": "tab_list",
+            "tabs": [
+                {
+                    "tab_id": str(t.get("id", "")),
+                    "url": t.get("url", ""),
+                    "title": t.get("title", ""),
+                }
+                for t in targets
+            ],
+            "diff": diff,
+            "session": _bs.snapshot(),
+        }
+    )
     if diff["added"]:
-        await _broadcast({
-            "type": "popup_detected",
-            "added": diff["added"],
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "popup_detected",
+                "added": diff["added"],
+                "ts": time.time(),
+            }
+        )
 
 
 async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
@@ -687,21 +720,27 @@ async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
 
     tab_id = str(tab_id or "").strip()
     if not tab_id:
-        await ws.send_json({
-            "type": "tab_close_result", "ok": False, "error": "MISSING_TAB_ID",
-        })
+        await ws.send_json(
+            {
+                "type": "tab_close_result",
+                "ok": False,
+                "error": "MISSING_TAB_ID",
+            }
+        )
         return
 
     known = _bs.get_tab(tab_id)
     if known is not None and known.status == TAB_CLOSED:
-        await ws.send_json({
-            "type": "tab_close_result",
-            "ok": False,
-            "tab_id": tab_id,
-            "status": TAB_CLOSED,
-            "error": "TAB_CLOSED",
-            "message_ko": "이미 닫힌 탭입니다 — 새 탭을 만들지 않습니다.",
-        })
+        await ws.send_json(
+            {
+                "type": "tab_close_result",
+                "ok": False,
+                "tab_id": tab_id,
+                "status": TAB_CLOSED,
+                "error": "TAB_CLOSED",
+                "message_ko": "이미 닫힌 탭입니다 — 새 탭을 만들지 않습니다.",
+            }
+        )
         return
 
     paths = browser_runtime_boundary.resolve_paths()
@@ -718,12 +757,14 @@ async def _handle_tab_close(ws: WebSocket, tab_id: str) -> None:
 
     ok = await asyncio.to_thread(_close)
     _bs.mark_tab_closed(tab_id)
-    await ws.send_json({
-        "type": "tab_close_result",
-        "ok": ok,
-        "tab_id": tab_id,
-        "status": TAB_CLOSED,
-    })
+    await ws.send_json(
+        {
+            "type": "tab_close_result",
+            "ok": ok,
+            "tab_id": tab_id,
+            "status": TAB_CLOSED,
+        }
+    )
 
 
 # ── 로그인 사전 체크 & 자동 재개 ─────────────────────────────────────────────
@@ -743,9 +784,14 @@ def _ensure_engine():
         _login_watcher_state["engine"] = browser_runtime_boundary.create_login_auto_flow_engine(
             resume_executor=_default_resume_executor,
         )
-    elif getattr(
-        _login_watcher_state["engine"], "_resume_executor", None,
-    ) is None:
+    elif (
+        getattr(
+            _login_watcher_state["engine"],
+            "_resume_executor",
+            None,
+        )
+        is None
+    ):
         _login_watcher_state["engine"]._resume_executor = _default_resume_executor
     return _login_watcher_state["engine"]
 
@@ -772,10 +818,13 @@ async def _login_precheck_and_enqueue(action_name: str, data: dict) -> bool:
 
     engine = _ensure_engine()
     snapshots = _login_watcher_state.get("prev_targets") or []
-    selected = browser_runtime_boundary.choose_login_target(
-        snapshots,
-        work_target_id=target_id,
-    ) or target_id
+    selected = (
+        browser_runtime_boundary.choose_login_target(
+            snapshots,
+            work_target_id=target_id,
+        )
+        or target_id
+    )
     cmd = browser_runtime_boundary.create_pending_command(
         command_id=f"cmd_{action_name}_{int(time.time() * 1000)}",
         action=action_name,
@@ -787,20 +836,24 @@ async def _login_precheck_and_enqueue(action_name: str, data: dict) -> bool:
         resume_status="pending",
     )
     engine.enqueue_work_command(cmd)
-    await _broadcast({
-        "type": "login_target_selected",
-        "target_id": selected,
-        "extra": {"reason": "precheck", "blocking_state": state},
-        "ts": time.time(),
-    })
-    await _broadcast({
-        "type": "command_enqueued_pending_login",
-        "command_id": cmd.command_id,
-        "action": action_name,
-        "blocking_state": state,
-        "target_id": selected,
-        "ts": time.time(),
-    })
+    await _broadcast(
+        {
+            "type": "login_target_selected",
+            "target_id": selected,
+            "extra": {"reason": "precheck", "blocking_state": state},
+            "ts": time.time(),
+        }
+    )
+    await _broadcast(
+        {
+            "type": "command_enqueued_pending_login",
+            "command_id": cmd.command_id,
+            "action": action_name,
+            "blocking_state": state,
+            "target_id": selected,
+            "ts": time.time(),
+        }
+    )
     return True
 
 
@@ -868,66 +921,80 @@ async def _execute_browser_action(payload: dict, *, send_to: WebSocket | None) -
             await _broadcast(msg)
             return
 
-    await _broadcast({
-        "type": "browser_action_started",
-        "command_id": req.command_id,
-        "action_type": req.action_type,
-        "target_id": req.target_id,
-        "ts": time.time(),
-    })
+    await _broadcast(
+        {
+            "type": "browser_action_started",
+            "command_id": req.command_id,
+            "action_type": req.action_type,
+            "target_id": req.target_id,
+            "ts": time.time(),
+        }
+    )
 
     try:
         result = await asyncio.to_thread(browser_runtime_boundary.execute_browser_action, req)
     except Exception as exc:
         result = None
-        await _broadcast({
-            "type": "browser_action_failed",
-            "command_id": req.command_id,
-            "action_type": req.action_type,
-            "target_id": req.target_id,
-            "error_code": "RUNNER_FAILED",
-            "reason": f"{type(exc).__name__}: {exc}",
-            "recoverable": True,
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "browser_action_failed",
+                "command_id": req.command_id,
+                "action_type": req.action_type,
+                "target_id": req.target_id,
+                "error_code": "RUNNER_FAILED",
+                "reason": f"{type(exc).__name__}: {exc}",
+                "recoverable": True,
+                "ts": time.time(),
+            }
+        )
         if send_to is not None:
-            await send_to.send_json({
-                "type": "browser_action_result", "ok": False,
-                "command_id": req.command_id, "error_code": "RUNNER_FAILED",
-            })
+            await send_to.send_json(
+                {
+                    "type": "browser_action_result",
+                    "ok": False,
+                    "command_id": req.command_id,
+                    "error_code": "RUNNER_FAILED",
+                }
+            )
         return
 
     result_dict = result.to_dict()
     if result.ok:
-        await _broadcast({
-            "type": "browser_action_completed",
-            **result_dict,
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "browser_action_completed",
+                **result_dict,
+                "ts": time.time(),
+            }
+        )
     else:
         evt_type = "browser_action_failed"
         if result.error_code == ERR_TARGET_NOT_FOUND:
             evt_type = "target_not_found"
         elif result.error_code == ERR_TARGET_CLOSED:
             evt_type = "target_closed"
-        await _broadcast({
-            "type": evt_type,
-            **result_dict,
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": evt_type,
+                **result_dict,
+                "ts": time.time(),
+            }
+        )
 
     if send_to is not None:
-        await send_to.send_json({
-            "type": "browser_action_result",
-            **result_dict,
-        })
+        await send_to.send_json(
+            {
+                "type": "browser_action_result",
+                **result_dict,
+            }
+        )
 
 
 # ── 블로그 작성 — 스레드에서 blocking I/O 실행 ────────────────────────────────
 async def _run_blog_write(data: dict) -> None:
     """write_post()를 스레드풀에서 실행하고 상태를 UI에 브로드캐스트."""
-    title      = data.get("title", "").strip()
-    body       = data.get("body", "").strip()
+    title = data.get("title", "").strip()
+    body = data.get("body", "").strip()
     visibility = data.get("visibility", "public")
     brand_tags = data.get("brand_tags") or []
 
@@ -936,18 +1003,19 @@ async def _run_blog_write(data: dict) -> None:
         return
 
     if await _login_precheck_and_enqueue("blog_write", data):
-        await _broadcast({
-            "type": "blog_status",
-            "status": "waiting_login",
-            "title": title,
-        })
+        await _broadcast(
+            {
+                "type": "blog_status",
+                "status": "waiting_login",
+                "title": title,
+            }
+        )
         return
 
     await _broadcast({"type": "blog_status", "status": "writing", "title": title})
 
-    loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _blog_write_sync, title, body, visibility, brand_tags)
+        result = await asyncio.to_thread(_blog_write_sync, title, body, visibility, brand_tags)
     except Exception as exc:
         logger.error("blog_write error: %s", exc)
         await _broadcast({"type": "blog_status", "status": "error", "error": str(exc)})
@@ -955,25 +1023,30 @@ async def _run_blog_write(data: dict) -> None:
 
     if result.get("mode") == "awaiting_approval":
         s = result.get("summary", {})
-        await _broadcast({
-            "type": "blog_status",
-            "status": "awaiting_approval",
-            "title": s.get("title", title),
-            "tags": s.get("tags", []),
-            "visibility": s.get("visibility", visibility),
-            "body_preview": s.get("body_preview", ""),
-        })
+        await _broadcast(
+            {
+                "type": "blog_status",
+                "status": "awaiting_approval",
+                "title": s.get("title", title),
+                "tags": s.get("tags", []),
+                "visibility": s.get("visibility", visibility),
+                "body_preview": s.get("body_preview", ""),
+            }
+        )
     else:
-        await _broadcast({
-            "type": "blog_status",
-            "status": "error",
-            "error": result.get("error", "작성 실패"),
-        })
+        await _broadcast(
+            {
+                "type": "blog_status",
+                "status": "error",
+                "error": result.get("error", "작성 실패"),
+            }
+        )
 
 
 def _blog_write_sync(title: str, body: str, visibility: str, brand_tags: list) -> dict:
-    from scripts.web_connector import get_page
     from scripts.naver.blog.writer import write_post
+    from scripts.web_connector import get_page
+
     page = get_page()
     return write_post(
         page,
@@ -988,42 +1061,46 @@ def _blog_write_sync(title: str, body: str, visibility: str, brand_tags: list) -
 async def _run_blog_confirm() -> None:
     """발행 패널이 열린 상태에서 confirm_publish()를 스레드풀에서 실행."""
     await _broadcast({"type": "blog_status", "status": "confirming"})
-    loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _blog_confirm_sync)
+        result = await asyncio.to_thread(_blog_confirm_sync)
     except Exception as exc:
         logger.error("blog_confirm error: %s", exc)
         await _broadcast({"type": "blog_status", "status": "error", "error": str(exc)})
         return
 
     if result.get("ok"):
-        await _broadcast({
-            "type": "blog_status",
-            "status": "done",
-            "result_url": result.get("url", ""),
-        })
+        await _broadcast(
+            {
+                "type": "blog_status",
+                "status": "done",
+                "result_url": result.get("url", ""),
+            }
+        )
     else:
-        await _broadcast({
-            "type": "blog_status",
-            "status": "error",
-            "error": result.get("error", "발행 실패"),
-        })
+        await _broadcast(
+            {
+                "type": "blog_status",
+                "status": "error",
+                "error": result.get("error", "발행 실패"),
+            }
+        )
 
 
 def _blog_confirm_sync() -> dict:
-    from scripts.web_connector import get_page
     from scripts.naver.blog.writer import confirm_publish
+    from scripts.web_connector import get_page
+
     page = get_page()
     return confirm_publish(page)
 
 
 # ── 카페 글쓰기 ───────────────────────────────────────────────────────────────
 async def _run_cafe_write(data: dict) -> None:
-    cafe_url   = data.get("cafe_url", "https://cafe.naver.com/0moo")
-    board      = data.get("board", "")
-    title      = data.get("title", "").strip()
-    body       = data.get("body", "").strip()
-    tags       = data.get("tags") or []
+    cafe_url = data.get("cafe_url", "https://cafe.naver.com/0moo")
+    board = data.get("board", "")
+    title = data.get("title", "").strip()
+    body = data.get("body", "").strip()
+    tags = data.get("tags") or []
     members_only = data.get("members_only", False)
 
     if not title or not body:
@@ -1031,21 +1108,20 @@ async def _run_cafe_write(data: dict) -> None:
         return
 
     if await _login_precheck_and_enqueue("cafe_write", data):
-        await _broadcast({
-            "type": "cafe_status",
-            "status": "waiting_login",
-            "title": title,
-            "board": board,
-        })
+        await _broadcast(
+            {
+                "type": "cafe_status",
+                "status": "waiting_login",
+                "title": title,
+                "board": board,
+            }
+        )
         return
 
     await _broadcast({"type": "cafe_status", "status": "writing", "title": title, "board": board})
 
-    loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(
-            None, _cafe_write_sync, cafe_url, board, title, body, tags, members_only
-        )
+        result = await asyncio.to_thread(_cafe_write_sync, cafe_url, board, title, body, tags, members_only)
     except Exception as exc:
         logger.error("cafe_write error: %s", exc)
         await _broadcast({"type": "cafe_status", "status": "error", "error": str(exc)})
@@ -1053,25 +1129,29 @@ async def _run_cafe_write(data: dict) -> None:
 
     if result.get("mode") == "awaiting_approval":
         s = result.get("summary", {})
-        await _broadcast({
-            "type": "cafe_status",
-            "status": "awaiting_approval",
-            "title": s.get("title", title),
-            "board": s.get("board", board),
-            "body_preview": s.get("body_preview", ""),
-        })
+        await _broadcast(
+            {
+                "type": "cafe_status",
+                "status": "awaiting_approval",
+                "title": s.get("title", title),
+                "board": s.get("board", board),
+                "body_preview": s.get("body_preview", ""),
+            }
+        )
     else:
-        await _broadcast({
-            "type": "cafe_status",
-            "status": "error",
-            "error": result.get("error", "작성 실패"),
-        })
+        await _broadcast(
+            {
+                "type": "cafe_status",
+                "status": "error",
+                "error": result.get("error", "작성 실패"),
+            }
+        )
 
 
-def _cafe_write_sync(cafe_url: str, board: str, title: str, body: str,
-                     tags: list, members_only: bool) -> dict:
-    from scripts.web_connector import get_page
+def _cafe_write_sync(cafe_url: str, board: str, title: str, body: str, tags: list, members_only: bool) -> dict:
     from scripts.naver.cafe.writer import write_post
+    from scripts.web_connector import get_page
+
     page = get_page()
     return write_post(
         page,
@@ -1087,42 +1167,46 @@ def _cafe_write_sync(cafe_url: str, board: str, title: str, body: str,
 
 async def _run_cafe_confirm() -> None:
     await _broadcast({"type": "cafe_status", "status": "confirming"})
-    loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _cafe_confirm_sync)
+        result = await asyncio.to_thread(_cafe_confirm_sync)
     except Exception as exc:
         logger.error("cafe_confirm error: %s", exc)
         await _broadcast({"type": "cafe_status", "status": "error", "error": str(exc)})
         return
 
     if result.get("ok"):
-        await _broadcast({
-            "type": "cafe_status",
-            "status": "done",
-            "result_url": result.get("url", ""),
-        })
+        await _broadcast(
+            {
+                "type": "cafe_status",
+                "status": "done",
+                "result_url": result.get("url", ""),
+            }
+        )
     else:
-        await _broadcast({
-            "type": "cafe_status",
-            "status": "error",
-            "error": result.get("error", "발행 실패"),
-        })
+        await _broadcast(
+            {
+                "type": "cafe_status",
+                "status": "error",
+                "error": result.get("error", "발행 실패"),
+            }
+        )
 
 
 def _cafe_confirm_sync() -> dict:
-    from scripts.web_connector import get_page
     from scripts.naver.cafe.writer import confirm_publish
+    from scripts.web_connector import get_page
+
     page = get_page()
     return confirm_publish(page)
 
 
 # ── 네이버 카페 목록 / 게시글 조회 ───────────────────────────────────────────────
 
+
 async def _run_naver_cafe_list(ws) -> None:
     await ws.send_json({"type": "naver_cafe_list", "status": "loading"})
-    loop = asyncio.get_event_loop()
     try:
-        cafes = await loop.run_in_executor(None, _naver_cafe_list_sync)
+        cafes = await asyncio.to_thread(_naver_cafe_list_sync)
         await ws.send_json({"type": "naver_cafe_list", "status": "done", "cafes": cafes})
     except Exception as exc:
         logger.error("naver_cafe_list error: %s", exc)
@@ -1130,19 +1214,19 @@ async def _run_naver_cafe_list(ws) -> None:
 
 
 def _naver_cafe_list_sync() -> list:
-    from scripts.web_connector import get_page
     from scripts.naver.cafe import NaverCafe
+    from scripts.web_connector import get_page
+
     return NaverCafe(get_page()).open_my_cafes()
 
 
 async def _run_naver_cafe_posts(ws, data: dict) -> None:
     cafe_url = data.get("cafe_url", "")
     board_no = data.get("board_no", "")
-    limit    = int(data.get("limit", 30))
+    limit = int(data.get("limit", 30))
     await ws.send_json({"type": "naver_cafe_posts", "status": "loading", "cafe_url": cafe_url})
-    loop = asyncio.get_event_loop()
     try:
-        posts = await loop.run_in_executor(None, _naver_cafe_posts_sync, cafe_url, board_no, limit)
+        posts = await asyncio.to_thread(_naver_cafe_posts_sync, cafe_url, board_no, limit)
         await ws.send_json({"type": "naver_cafe_posts", "status": "done", "cafe_url": cafe_url, "posts": posts})
     except Exception as exc:
         logger.error("naver_cafe_posts error: %s", exc)
@@ -1150,17 +1234,17 @@ async def _run_naver_cafe_posts(ws, data: dict) -> None:
 
 
 def _naver_cafe_posts_sync(cafe_url: str, board_no, limit: int) -> list:
-    from scripts.web_connector import get_page
     from scripts.naver.cafe import NaverCafe
+    from scripts.web_connector import get_page
+
     return NaverCafe(get_page()).list_posts(cafe_url=cafe_url, board_no=board_no, limit=limit)
 
 
 async def _run_naver_cafe_read(ws, data: dict) -> None:
     post_url = data.get("post_url", "")
     await ws.send_json({"type": "naver_cafe_read", "status": "loading"})
-    loop = asyncio.get_event_loop()
     try:
-        post = await loop.run_in_executor(None, _naver_cafe_read_sync, post_url)
+        post = await asyncio.to_thread(_naver_cafe_read_sync, post_url)
         await ws.send_json({"type": "naver_cafe_read", "status": "done", "post": post})
     except Exception as exc:
         logger.error("naver_cafe_read error: %s", exc)
@@ -1168,8 +1252,9 @@ async def _run_naver_cafe_read(ws, data: dict) -> None:
 
 
 def _naver_cafe_read_sync(post_url: str) -> dict:
-    from scripts.web_connector import get_page
     from scripts.naver.cafe import NaverCafe
+    from scripts.web_connector import get_page
+
     return NaverCafe(get_page()).read_post(post_url=post_url)
 
 
@@ -1217,6 +1302,7 @@ async def _connect_to_server() -> None:
 
         # server_url(https://...) → wss:// WebSocket URL 변환 (/api/v1/local-agents/ws)
         from urllib.parse import urlparse, urlunparse
+
         _p = urlparse(server_url)
         _ws_scheme = "wss" if _p.scheme == "https" else ("ws" if _p.scheme == "http" else _p.scheme or "ws")
         ws_url = urlunparse((_ws_scheme, _p.netloc, _p.path.rstrip("/") + "/api/v1/local-agents/ws", "", "", ""))
@@ -1224,14 +1310,18 @@ async def _connect_to_server() -> None:
         try:
             async with websockets.connect(ws_url, ping_interval=20, ping_timeout=20) as ws:
                 # 인증
-                await ws.send(json.dumps({
-                    "type": "auth",
-                    "agent_id": agent_id,
-                    "device_token": device_token,
-                }))
+                await ws.send(
+                    json.dumps(
+                        {
+                            "type": "auth",
+                            "agent_id": agent_id,
+                            "device_token": device_token,
+                        }
+                    )
+                )
                 try:
                     first = json.loads(await asyncio.wait_for(ws.recv(), timeout=15.0))
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.error("server auth timeout")
                     await asyncio.sleep(5)
                     continue
@@ -1262,29 +1352,33 @@ async def _on_server_message(msg: dict) -> None:
     msg_type = msg.get("type", "")
 
     if msg_type == "task":
-        await _broadcast({
-            "type": "task",
-            "task_id": msg.get("task_id"),
-            "action_type": msg.get("action_type", ""),
-            "domain": msg.get("domain", ""),
-            "risk_level": msg.get("risk_level", "low"),
-            "description": msg.get("description", ""),
-            "needs_approval": msg.get("needs_approval", False),
-            "execution_location": msg.get("execution_location", ""),
-            "status": msg.get("status", "수신 대기"),
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "task",
+                "task_id": msg.get("task_id"),
+                "action_type": msg.get("action_type", ""),
+                "domain": msg.get("domain", ""),
+                "risk_level": msg.get("risk_level", "low"),
+                "description": msg.get("description", ""),
+                "needs_approval": msg.get("needs_approval", False),
+                "execution_location": msg.get("execution_location", ""),
+                "status": msg.get("status", "수신 대기"),
+                "ts": time.time(),
+            }
+        )
     elif msg_type == "user_present_task":
         # UI 미연결 상태에서는 실행을 보류한다. WAITING_USER_PRESENT 유지.
         task = msg.get("task") or {}
         if not _ui_clients:
             workflow_run_id = task.get("workflow_run_id", "")
-            await _send_to_server({
-                "action": "user_present_ack",
-                "workflow_run_id": workflow_run_id,
-                "status": "WAITING_FOR_USER",
-                "ui_connected": False,
-            })
+            await _send_to_server(
+                {
+                    "action": "user_present_ack",
+                    "workflow_run_id": workflow_run_id,
+                    "status": "WAITING_FOR_USER",
+                    "ui_connected": False,
+                }
+            )
             logger.info(
                 "user_present_task held: UI disconnected (workflow_run_id=%s)",
                 workflow_run_id,
@@ -1293,21 +1387,25 @@ async def _on_server_message(msg: dict) -> None:
         await _broadcast({"type": "user_present_task", "task": task, "ts": time.time()})
     elif msg_type == "task_blocked":
         # 서버측 정책 차단 통지 — UI에 사유만 표시. 실행 명령 아님.
-        await _broadcast({
-            "type": "task_blocked",
-            "task_id": msg.get("task_id", ""),
-            "workflow_run_id": msg.get("workflow_run_id", ""),
-            "reason": msg.get("reason", ""),
-            "message_ko": msg.get("message_ko", ""),
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "task_blocked",
+                "task_id": msg.get("task_id", ""),
+                "workflow_run_id": msg.get("workflow_run_id", ""),
+                "reason": msg.get("reason", ""),
+                "message_ko": msg.get("message_ko", ""),
+                "ts": time.time(),
+            }
+        )
     elif msg_type == "result":
-        await _broadcast({
-            "type": "chat",
-            "role": "assistant",
-            "text": msg.get("message", "작업 완료"),
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "chat",
+                "role": "assistant",
+                "text": msg.get("message", "작업 완료"),
+                "ts": time.time(),
+            }
+        )
     elif msg_type == "browser_status":
         await _broadcast({"type": "browser_status", **msg})
     elif msg_type == "remote_control":
@@ -1319,22 +1417,24 @@ async def _on_server_message(msg: dict) -> None:
 async def _handle_remote_control(msg: dict) -> None:
     """서버에서 온 원격 제어 명령 처리 — 화이트리스트만 실행."""
     from .remote_access import ALLOWED_REMOTE_COMMANDS
+
     cmd = msg.get("command", "")
     req_id = msg.get("request_id", "")
 
     if cmd not in ALLOWED_REMOTE_COMMANDS:
-        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
-                                "ok": False, "error": f"허용되지 않은 명령: {cmd}"})
+        await _send_to_server(
+            {"type": "remote_control_result", "request_id": req_id, "ok": False, "error": f"허용되지 않은 명령: {cmd}"}
+        )
         logger.warning("remote_control: blocked command=%s", cmd)
         return
 
     try:
         result = await _exec_remote_command(cmd, msg)
-        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
-                                "ok": True, "command": cmd, "data": result})
+        await _send_to_server(
+            {"type": "remote_control_result", "request_id": req_id, "ok": True, "command": cmd, "data": result}
+        )
     except Exception as exc:
-        await _send_to_server({"type": "remote_control_result", "request_id": req_id,
-                                "ok": False, "error": str(exc)})
+        await _send_to_server({"type": "remote_control_result", "request_id": req_id, "ok": False, "error": str(exc)})
         logger.error("remote_control error cmd=%s: %s", cmd, exc)
 
 
@@ -1347,6 +1447,7 @@ async def _exec_remote_command(cmd: str, msg: dict) -> dict:
 
     if cmd == "get_status":
         from .local_runner import LocalRunner
+
         runner = LocalRunner()
         return {
             "runner_state": runner.get_status(),
@@ -1361,13 +1462,15 @@ async def _exec_remote_command(cmd: str, msg: dict) -> dict:
         lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
         # 민감 키 필터링
         _FORBIDDEN = {"token", "password", "secret", "authorization", "cookie"}
-        safe = [l for l in lines if not any(k in l.lower() for k in _FORBIDDEN)]
+        safe = [line for line in lines if not any(k in line.lower() for k in _FORBIDDEN)]
         return {"lines": safe[-100:]}
 
     if cmd == "get_screenshot":
         import base64
+
         try:
             from scripts.browser.cdp_client import get_screenshot
+
             png = get_screenshot()
             return {"format": "png", "data": base64.b64encode(png).decode()}
         except Exception as exc:
@@ -1375,6 +1478,7 @@ async def _exec_remote_command(cmd: str, msg: dict) -> dict:
 
     if cmd == "open_url":
         import webbrowser
+
         url = str(msg.get("url", ""))
         if not url.startswith(("http://", "https://")):
             raise ValueError("허용되지 않은 URL 스킴")
@@ -1387,6 +1491,7 @@ async def _exec_remote_command(cmd: str, msg: dict) -> dict:
 _AUTOWORK_BASE = "https://autowork.haehan-ai.kr"
 _PROXY_STRIP_HEADERS = {"x-frame-options", "content-security-policy", "content-encoding", "transfer-encoding"}
 
+
 @app.get("/proxy/admin/{path:path}")
 async def proxy_admin(path: str, request: Request) -> Response:
     """autowork.haehan-ai.kr 페이지를 프록시로 서빙 — X-Frame-Options 제거."""
@@ -1398,8 +1503,12 @@ async def proxy_admin(path: str, request: Request) -> Response:
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
             resp = await client.get(target, headers={"Accept": "text/html,application/xhtml+xml,*/*"})
         headers = {k: v for k, v in resp.headers.items() if k.lower() not in _PROXY_STRIP_HEADERS}
-        return Response(content=resp.content, status_code=resp.status_code,
-                        headers=headers, media_type=resp.headers.get("content-type"))
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            headers=headers,
+            media_type=resp.headers.get("content-type"),
+        )
     except Exception as exc:
         logger.warning("proxy error %s: %s", target, exc)
         return Response(content=f"프록시 오류: {exc}".encode(), status_code=502)
@@ -1429,15 +1538,17 @@ def _resolve_whoami_role() -> tuple[str, str]:
     127.0.0.1/local 이라는 이유로 admin 자동 부여 금지.
     """
     import os as _os
+
     env_role = _os.environ.get("HAEHAN_ROLE", "").strip().lower()
     if env_role in _WHOAMI_KNOWN_ROLES:
         return env_role, "env"
     try:
         from .user_settings import load_role  # type: ignore
+
         cfg_role = (load_role() or "").strip().lower()
         if cfg_role in _WHOAMI_KNOWN_ROLES:
             return cfg_role, "config"
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return "any", "default"
 
@@ -1473,6 +1584,7 @@ async def get_logs():
 
 # ── 에이전트 등록 API ─────────────────────────────────────────────────────────
 
+
 @app.post("/agent/register")
 async def agent_register(request: Request):
     """등록 코드로 에이전트를 서버에 등록하고 device_token을 저장.
@@ -1495,7 +1607,9 @@ async def agent_register(request: Request):
         meta, device_token = agent_runtime_boundary.register_with_code(
             server_url=server_url,
             registration_code=reg_code,
-            host=platform.node(), os_name=platform.system(), version="0.1.0"
+            host=platform.node(),
+            os_name=platform.system(),
+            version="0.1.0",
         )
         agent_runtime_boundary.save_device_token(server_url, meta.agent_id, device_token)
         cfg = agent_runtime_boundary.load_desktop_config()
@@ -1534,12 +1648,14 @@ async def agent_status():
 # CAD-DESKTOP-HUB-CAD-BRIDGE-LIFECYCLE-01 (start/stop/restart + runnerState)
 from .cad_bridge_registry import (
     check_status as _cad_bridge_check_status,
+)
+from .cad_bridge_registry import (
     load_default_config as _cad_bridge_load_default_config,
 )
 from .cad_bridge_runner import CadBridgeRunner
 
 # Module-level singleton runner. proxy / WS action 미추가 — HTTP only.
-_cad_bridge_runner: Optional[CadBridgeRunner] = None
+_cad_bridge_runner: CadBridgeRunner | None = None
 
 
 def _get_cad_bridge_runner() -> CadBridgeRunner:
@@ -1554,7 +1670,7 @@ def _safe_runner_snapshot() -> dict:
     """runner snapshot 을 안전하게 추출. 예외 시 빈 dict — desktop 서버 보호."""
     try:
         return _get_cad_bridge_runner().snapshot()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("cad_bridge runner snapshot error: %s", exc)
         return {"state": "error", "lastError": str(exc)}
 
@@ -1576,7 +1692,7 @@ async def get_cad_bridge_status():
         config = _cad_bridge_load_default_config()
         status = _cad_bridge_check_status(config)
         result = status.to_dict()
-    except Exception as exc:  # noqa: BLE001 — 서버 안정성 우선
+    except Exception as exc:
         logger.warning("cad_bridge_status unexpected error: %s", exc)
         result = {
             "status": "UNKNOWN",
@@ -1602,7 +1718,7 @@ async def post_cad_bridge_start():
         runner = _get_cad_bridge_runner()
         started = runner.start()
         return {"started": bool(started), "snapshot": runner.snapshot()}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("cad_bridge_start unexpected error: %s", exc)
         return {
             "started": False,
@@ -1621,7 +1737,7 @@ async def post_cad_bridge_stop():
         runner = _get_cad_bridge_runner()
         stopped = runner.stop()
         return {"stopped": bool(stopped), "snapshot": runner.snapshot()}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("cad_bridge_stop unexpected error: %s", exc)
         return {
             "stopped": False,
@@ -1636,7 +1752,7 @@ async def post_cad_bridge_restart():
         runner = _get_cad_bridge_runner()
         ok = runner.restart()
         return {"restarted": bool(ok), "snapshot": runner.snapshot()}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("cad_bridge_restart unexpected error: %s", exc)
         return {
             "restarted": False,
@@ -1676,8 +1792,6 @@ async def post_cad_bridge_proxy(path: str, request: Request):
     )
 
 
-
-
 # ── 신규 Desktop Shell — /app-new (Phase 2 smoke route) ─────────────────────
 # 기존 / 와 /index.html은 건드리지 않음. 새 shell은 /app-new 에서만 서빙.
 # 환경변수 HAEHAN_DESKTOP_UI=new_shell 이면 WebView/Launcher가 이 URL을 사용.
@@ -1688,17 +1802,21 @@ async def new_shell():
     HTTP 재진입(self-call) 데드락을 피하기 위해 내부 서비스 함수를 직접 호출한다.
     실행 버튼(AI run / CAD start) 은 비활성화 상태로만 표시.
     """
+    import json as _json
+    import time
+
+    from desktop.local_agent_service import local_agent_health as _la_health
+    from desktop.local_agent_service import local_agent_preflight as _preflight
     from desktop.ui_new.shell_html import build_html_from_data
-    from desktop.local_agent_service import local_agent_health as _la_health, local_agent_preflight as _preflight
-    import time, json as _json
 
     # ── 내부 서비스 직접 호출 (HTTP 재진입 없음) ──
-    la_health_data   = _la_health()
-    preflight_data   = _preflight()
+    la_health_data = _la_health()
+    preflight_data = _preflight()
 
     # agent/status: device_token 기반, 직접 읽기
     try:
         from desktop.tray_runtime import check_registration_status
+
         reg = check_registration_status()
         agent_data = {
             "ok": reg.registered,
@@ -1712,6 +1830,7 @@ async def new_shell():
     # whoami: role 파악
     try:
         from desktop.admin_webview import resolve_current_role
+
         role = resolve_current_role()
     except Exception:
         role = "unknown"
@@ -1719,6 +1838,7 @@ async def new_shell():
     # logs: 최근 로그 라인
     try:
         from desktop.status_provider import get_recent_logs
+
         log_lines = get_recent_logs(n=15)
     except Exception:
         log_lines = []
@@ -1727,7 +1847,9 @@ async def new_shell():
         "health": {"ok": True, "service": "haehan-local-server", "ts": int(time.time())},
         "agent": agent_data,
         "la_health": la_health_data if isinstance(la_health_data, dict) else la_health_data.__dict__,
-        "preflight": preflight_data if isinstance(preflight_data, dict) else _json.loads(_json.dumps(preflight_data, default=str)),
+        "preflight": preflight_data
+        if isinstance(preflight_data, dict)
+        else _json.loads(_json.dumps(preflight_data, default=str)),
         "whoami": {"ok": True, "role": role},
         "logs": {"lines": log_lines},
     }
@@ -1745,7 +1867,9 @@ async def new_shell():
 async def health_check():
     """로컬 서버 상태 확인. SPA fallback이 아닌 JSON만 반환."""
     import time
+
     from desktop.app_config import LOCAL_HOST, LOCAL_PORT
+
     return {
         "ok": True,
         "service": "haehan-local-server",
@@ -1773,14 +1897,86 @@ async def serve_index():
     )
 
 
+# ── CAD 로컬 라우터 (/api/v1/cad → 로컬 캐시 직접 서빙) ─────────────────────
+try:
+    import os as _os
+    import sys as _sys
+
+    _cad_program_path = _os.environ.get("CAD_SERVER_PATH", r"C:\work\03. cad-program")
+    if _cad_program_path not in _sys.path:
+        _sys.path.insert(0, _cad_program_path)
+    from fastapi import APIRouter as _APIRouter
+    from fastapi import Request as _Req
+    from fastapi.responses import JSONResponse as _JSONResponse
+    from flask import Flask as _Flask
+
+    from cad_router import cad_bp as _cad_bp
+
+    _flask_app = _Flask("cad_local")
+    _flask_app.register_blueprint(_cad_bp)
+
+    _cad_router = _APIRouter(prefix="/api/v1/cad")
+
+    @_cad_router.get("/projects")
+    async def _cad_projects():
+        with _flask_app.test_request_context("/api/v1/cad/projects"):
+            from cad_router import list_projects
+
+            r = list_projects()
+            return _JSONResponse(content=r.get_json(), status_code=r.status_code)
+
+    @_cad_router.get("/{project}/status")
+    async def _cad_status(project: str, discipline: str = "건축"):
+        with _flask_app.test_request_context(f"/api/v1/cad/{project}/status?discipline={discipline}"):
+            from cad_router import project_status
+
+            r = project_status(project)
+            return _JSONResponse(content=r.get_json(), status_code=r.status_code)
+
+    @_cad_router.get("/{project}/rooms")
+    async def _cad_rooms(project: str, discipline: str = "건축", drawing_no: str = "", min_area: float = 0.5):
+        with _flask_app.test_request_context(
+            f"/api/v1/cad/{project}/rooms?discipline={discipline}&drawing_no={drawing_no}&min_area={min_area}"
+        ):
+            from cad_router import list_rooms
+
+            r = list_rooms(project)
+            return _JSONResponse(content=r.get_json(), status_code=r.status_code)
+
+    @_cad_router.post("/{project}/analyze")
+    async def _cad_analyze(project: str, req: _Req):
+        body = await req.body()
+        with _flask_app.test_request_context(
+            f"/api/v1/cad/{project}/analyze", method="POST", data=body, content_type="application/json"
+        ):
+            from cad_router import analyze_project
+
+            r = analyze_project(project)
+            return _JSONResponse(content=r.get_json(), status_code=r.status_code)
+
+    app.include_router(_cad_router)
+    logger.info("CAD 로컬 라우터 마운트 완료 (/api/v1/cad)")
+except Exception as _e:
+    logger.warning("CAD 로컬 라우터 마운트 실패 (원격 프록시로 폴백): %s", _e)
+
 # ── CAD 원격 서버 API 프록시 (/api/v1 → cad.haehan-ai.kr) ───────────────────
 # 프론트엔드(로컬 서빙)가 /api/v1/* 호출 시 원격 서버로 투명하게 전달
 _CAD_REMOTE_BASE = "https://cad.haehan-ai.kr"
 
-_HOP_BY_HOP = frozenset([
-    "host", "connection", "keep-alive", "proxy-authenticate",
-    "proxy-authorization", "te", "trailers", "transfer-encoding", "upgrade",
-])
+_HOP_BY_HOP = frozenset(
+    [
+        "host",
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "transfer-encoding",
+        "upgrade",
+        "authorization",
+    ]
+)
 
 
 async def _proxy_to_remote(method: str, path: str, request: Request) -> Response:
@@ -1793,20 +1989,25 @@ async def _proxy_to_remote(method: str, path: str, request: Request) -> Response
         async with httpx.AsyncClient(timeout=30) as c:
             resp = await c.request(method, url, headers=headers, content=body)
         resp_headers = {k: v for k, v in resp.headers.items() if k.lower() not in _HOP_BY_HOP}
-        return Response(content=resp.content, status_code=resp.status_code,
-                        headers=resp_headers, media_type=resp.headers.get("content-type"))
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            headers=resp_headers,
+            media_type=resp.headers.get("content-type"),
+        )
     except Exception as exc:
         logger.warning("remote proxy error %s %s: %s", method, url, exc)
-        return Response(content=b'{"detail":"REMOTE_PROXY_ERROR"}',
-                        status_code=502, media_type="application/json")
+        return Response(content=b'{"detail":"REMOTE_PROXY_ERROR"}', status_code=502, media_type="application/json")
 
 
 # ── 로컬 AI Agent 엔드포인트 (/local-agent) ──────────────────────────────────
+
 
 @app.get("/local-agent/health")
 async def local_agent_health():
     """로컬 AI (Anthropic SDK / Claude Code CLI) 가용 여부 반환."""
     from .local_agent_service import local_agent_health as _health
+
     return _health()
 
 
@@ -1819,6 +2020,7 @@ async def local_agent_preflight():
     api_key 원문은 절대 반환하지 않으며 api_key_set(boolean) 만 반환.
     """
     from .local_agent_service import local_agent_preflight as _preflight
+
     return _preflight()
 
 
@@ -1832,6 +2034,7 @@ async def local_agent_run(request: Request):
         use_mcp (bool, optional) — 기본 False; direct MCP is blocked
     """
     from .local_agent_service import run_local_agent as _run
+
     try:
         body = await request.json()
     except Exception:
@@ -1879,10 +2082,17 @@ async def spa_fallback(full_path: str):
     경로가 여기까지 도달하면 404 JSON을 반환한다.
     """
     import mimetypes
+
     # API 경로 보호 — SPA fallback으로 흡수 금지
     _API_PREFIXES = (
-        "api/", "cad/", "ws/", "proxy/", "agent/",
-        "local-agent/", "logs", "health",
+        "api/",
+        "cad/",
+        "ws/",
+        "proxy/",
+        "agent/",
+        "local-agent/",
+        "logs",
+        "health",
     )
     if any(full_path == p.rstrip("/") or full_path.startswith(p) for p in _API_PREFIXES):
         return Response(
@@ -1916,6 +2126,7 @@ app.mount("/", StaticFiles(directory=str(_UI_DIR), html=True), name="ui")
 
 def run():
     from desktop.app_config import LOCAL_PORT, effective_bind_host
+
     bind_host = effective_bind_host()
     logging.basicConfig(level=logging.INFO)
     logger.info("local server binding %s:%s", bind_host, LOCAL_PORT)

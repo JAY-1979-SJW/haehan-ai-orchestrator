@@ -11,7 +11,7 @@ export function getBackendApiBase(): string {
     process.env.ORCHESTRATOR_API_BASE ||
     process.env.FASTAPI_BASE_URL ||
     process.env.NEXT_PUBLIC_API_BASE ||
-    'http://localhost:8400/api/v1'
+    'http://localhost:8401/api/v1'
   ).replace(/\/$/, '');
 }
 
