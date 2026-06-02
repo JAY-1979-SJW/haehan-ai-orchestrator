@@ -1,8 +1,9 @@
 """네이버 블로그 API 라우터 — 초안 저장·조회·SEO 분석."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,17 +13,18 @@ from pydantic import BaseModel
 from ai_orchestrator.auth import require_role
 from scripts.realtime_audit import emit_event
 
-naver_blog_router = APIRouter(prefix="/api/v1/naver/blog", tags=["naver-blog"])
+naver_blog_router = APIRouter(prefix="/naver/blog", tags=["naver-blog"])
 
 DRAFTS_DIR = Path(__file__).resolve().parents[2] / "data" / "blog_drafts"
 DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 # ── 모델 ─────────────────────────────────────────────────────────────────────
+
 
 class ComposeRequest(BaseModel):
     title: str
@@ -39,6 +41,7 @@ class SeoRequest(BaseModel):
 
 
 # ── 엔드포인트 ───────────────────────────────────────────────────────────────
+
 
 @naver_blog_router.post("/compose")
 def compose_post(
@@ -86,17 +89,19 @@ def list_drafts(
     for f in files:
         try:
             d = json.loads(f.read_text(encoding="utf-8"))
-            drafts.append({
-                "id":         d.get("id", f.stem),
-                "title":      d.get("title", ""),
-                "category":   d.get("category", ""),
-                "tags":       d.get("tags", []),
-                "body_length": d.get("body_length", 0),
-                "status":     d.get("status", "draft"),
-                "created_at": d.get("created_at", ""),
-                "published_url": d.get("published_url"),
-            })
-        except Exception:
+            drafts.append(
+                {
+                    "id": d.get("id", f.stem),
+                    "title": d.get("title", ""),
+                    "category": d.get("category", ""),
+                    "tags": d.get("tags", []),
+                    "body_length": d.get("body_length", 0),
+                    "status": d.get("status", "draft"),
+                    "created_at": d.get("created_at", ""),
+                    "published_url": d.get("published_url"),
+                }
+            )
+        except Exception:  # noqa: S110
             pass
     return {"ok": True, "total": len(files), "items": drafts}
 
@@ -109,10 +114,11 @@ def analyze_seo(
     """제목·본문 SEO 분석 및 태그 추천 (브라우저 불필요)."""
     try:
         from scripts.naver.blog.seo.seo import BlogSEO
+
         seo = BlogSEO(page=None)  # type: ignore[arg-type]
         title_result = seo.analyze_title(req.title)
-        body_result  = seo.analyze_body(req.body, req.target_keywords or None)
-        tags         = seo.suggest_tags(req.body)
+        body_result = seo.analyze_body(req.body, req.target_keywords or None)
+        tags = seo.suggest_tags(req.body)
         return {"ok": True, "title": title_result, "body": body_result, "suggested_tags": tags}
     except Exception as e:
         # 브라우저 없이 실행할 수 없는 경우 기본 분석으로 폴백
@@ -126,6 +132,6 @@ def analyze_seo(
             "fallback": True,
             "error": str(e)[:100],
             "title": {"length": len(req.title), "ok": 20 <= len(req.title) <= 50},
-            "body":  {"length": len(req.body), "word_count": len(words)},
+            "body": {"length": len(req.body), "word_count": len(words)},
             "suggested_tags": top_tags,
         }
