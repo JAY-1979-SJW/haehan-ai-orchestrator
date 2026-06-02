@@ -28,10 +28,11 @@
     - SSE / WebSocket 프록시 (현 cad-backend 에는 WS 경로 있음 — 차단).
     - 대용량 스트리밍 업로드 (현재는 body 버퍼링).
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import httpx
 from fastapi import APIRouter, Depends, Request, Response
@@ -51,39 +52,45 @@ _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 _WRITE_ROLES = frozenset({"operator", "admin", "owner"})
 
 # 상류로 **전달 금지** 헤더 (소문자로 비교)
-_HOP_BY_HOP_REQUEST = frozenset({
-    "host",
-    "authorization",
-    "cookie",
-    "content-length",
-    "connection",
-    "keep-alive",
-    "proxy-authorization",
-    "te",
-    "trailer",
-    "transfer-encoding",
-    "upgrade",
-    # 오케스트레이터 전용 — 상류에 노출 금지
-    "x-task-id",
-    "x-approval-token-id",
-})
+_HOP_BY_HOP_REQUEST = frozenset(
+    {
+        "host",
+        "authorization",
+        "cookie",
+        "content-length",
+        "connection",
+        "keep-alive",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        # 오케스트레이터 전용 — 상류에 노출 금지
+        "x-task-id",
+        "x-approval-token-id",
+    }
+)
 
 # 응답에서 제거할 hop-by-hop 헤더
-_HOP_BY_HOP_RESPONSE = frozenset({
-    "connection",
-    "keep-alive",
-    "transfer-encoding",
-    "te",
-    "trailer",
-    "upgrade",
-    "proxy-authenticate",
-    "content-encoding",  # httpx 가 이미 디코딩
-    "content-length",    # Starlette 이 재계산
-})
+_HOP_BY_HOP_RESPONSE = frozenset(
+    {
+        "connection",
+        "keep-alive",
+        "transfer-encoding",
+        "te",
+        "trailer",
+        "upgrade",
+        "proxy-authenticate",
+        "content-encoding",  # httpx 가 이미 디코딩
+        "content-length",  # Starlette 이 재계산
+    }
+)
 
 
 def _filter_request_headers(
-    raw: Iterable[tuple[str, str]], *, actor: str,
+    raw: Iterable[tuple[str, str]],
+    *,
+    actor: str,
 ) -> dict:
     out: dict[str, str] = {}
     for k, v in raw:
@@ -100,15 +107,15 @@ def _filter_request_headers(
 def _filter_response_headers(
     raw: Iterable[tuple[str, str]],
 ) -> list[tuple[str, str]]:
-    return [
-        (k, v) for k, v in raw
-        if k.lower() not in _HOP_BY_HOP_RESPONSE
-    ]
+    return [(k, v) for k, v in raw if k.lower() not in _HOP_BY_HOP_RESPONSE]
 
 
 def _require_approval(
-    method: str, role: str, task_id: str, token_id: str,
-) -> Optional[str]:
+    method: str,
+    role: str,
+    task_id: str,
+    token_id: str,
+) -> str | None:
     """쓰기 메서드용 추가 게이트. 통과하면 None, 거절 시 사유 문자열."""
     if method.upper() not in _WRITE_METHODS:
         return None
@@ -118,7 +125,7 @@ def _require_approval(
         return "approval_required"
     try:
         ok = approval.validate_token(token_id, task_id)
-    except Exception:  # noqa: BLE001 — 토큰 저장소 이슈도 실패로 귀결
+    except Exception:
         logger.exception("approval.validate_token 예외")
         return "approval_store_error"
     if not ok:
@@ -127,8 +134,14 @@ def _require_approval(
 
 
 def _denial_event(
-    *, path: str, method: str, actor: str, role: str,
-    task_id: str, token_id: str, reason: str,
+    *,
+    path: str,
+    method: str,
+    actor: str,
+    role: str,
+    task_id: str,
+    token_id: str,
+    reason: str,
 ) -> None:
     log_event(
         "CAD_PROXY_DENIED",
@@ -146,6 +159,7 @@ def _denial_event(
 @cad_router.api_route(
     "/{path:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    include_in_schema=False,
 )
 async def cad_proxy(
     path: str,
@@ -176,9 +190,12 @@ async def cad_proxy(
     reason = _require_approval(method, role, task_id, token_id)
     if reason is not None:
         _denial_event(
-            path=upstream_path, method=method,
-            actor=actor, role=role,
-            task_id=task_id, token_id=token_id,
+            path=upstream_path,
+            method=method,
+            actor=actor,
+            role=role,
+            task_id=task_id,
+            token_id=token_id,
             reason=reason,
         )
         return Response(
@@ -207,7 +224,9 @@ async def cad_proxy(
             task_id=task_id or "-",
             action_type=f"cad_proxy:{method}",
             target=upstream_path,
-            actor=actor, role=role, token_id=token_id or "",
+            actor=actor,
+            role=role,
+            token_id=token_id or "",
             decision="timeout",
             note=f"timeout={config.CAD_PROXY_TIMEOUT_SEC}s",
         )
@@ -222,7 +241,9 @@ async def cad_proxy(
             task_id=task_id or "-",
             action_type=f"cad_proxy:{method}",
             target=upstream_path,
-            actor=actor, role=role, token_id=token_id or "",
+            actor=actor,
+            role=role,
+            token_id=token_id or "",
             decision="unreachable",
             note=f"{type(e).__name__}",
         )
@@ -238,7 +259,9 @@ async def cad_proxy(
         task_id=task_id or "-",
         action_type=f"cad_proxy:{method}",
         target=upstream_path,
-        actor=actor, role=role, token_id=token_id or "",
+        actor=actor,
+        role=role,
+        token_id=token_id or "",
         decision=str(upstream.status_code),
         note=f"method={method} upstream_status={upstream.status_code}",
     )

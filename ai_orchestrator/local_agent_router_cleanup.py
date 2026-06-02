@@ -3,24 +3,25 @@
 leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 로 관리.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .auth import require_role
-from .audit_logger import log_event
 from . import local_agent_registry as _reg
+from .audit_logger import log_event
+from .auth import require_role
 
 cleanup_router = APIRouter()
 
 
 class AgentCleanupRequest(BaseModel):
     """agent cleanup 요청."""
+
     dry_run: bool = True
     force: bool = False
-    confirm: Optional[str] = None
+    confirm: str | None = None
 
 
 @cleanup_router.post("/{agent_id}/cleanup")
@@ -58,7 +59,8 @@ def cleanup_local_agent(
     # 실제 cleanup 수행 시 audit log 기록
     if result.get("deleted"):
         log_event(
-            "LOCAL_AGENT_CLEANUP", agent_id,
+            "LOCAL_AGENT_CLEANUP",
+            agent_id,
             actor=actor,
             role=user.get("role", "") if user else "",
             note=(
@@ -69,5 +71,3 @@ def cleanup_local_agent(
         )
 
     return result
-
-
