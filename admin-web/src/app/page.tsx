@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/ui/PageShell";
 import { API_BASE } from "@/lib/assistant/api";
 import { getMe, type UserInfo } from "@/lib/userAuth";
@@ -145,9 +146,8 @@ function NaverLoginCard() {
 export default function HomePage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
 
-  // 비회원도 앱을 볼 수 있도록 강제 리다이렉트 없이 사용자 정보만 조회한다.
-  // (로그인하지 않은 경우 헤더에 '로그인' 링크가 표시된다)
   useEffect(() => {
     getMe()
       .then((u) => {
@@ -155,12 +155,17 @@ export default function HomePage() {
         setAuthChecked(true);
       })
       .catch(() => {
-        // 네트워크 오류 등으로 getMe()가 실패해도 로딩 중 상태에서 벗어나도록 처리
         setAuthChecked(true);
       });
   }, []);
 
-  if (!authChecked) {
+  useEffect(() => {
+    if (authChecked && !user) {
+      router.replace("/about");
+    }
+  }, [authChecked, user, router]);
+
+  if (!authChecked || !user) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-sm text-[#9CA3AF]">로딩 중...</div>

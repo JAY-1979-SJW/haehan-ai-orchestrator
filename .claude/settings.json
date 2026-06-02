@@ -1,14 +1,22 @@
 {
   "model": "sonnet",
   "enableAllProjectMcpServers": true,
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
   "hooks": {
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python scripts/ops/behavior_gate.py",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
             "statusMessage": "행동 게이트 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\worklog_realtime.py\" stop",
+            "statusMessage": "작업 로그 완료 기록 중..."
           }
         ]
       }
@@ -18,13 +26,24 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python scripts/ops/install_git_hooks.py",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\install_git_hooks.py\"",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
           },
           {
             "type": "command",
-            "command": "python -c \"import os;p='docs/worklog.md';print(''.join(open(p,encoding='utf-8').readlines()[:45])) if os.path.exists(p) else None\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\worklog_realtime.py\" session",
             "statusMessage": "지난 작업 로그 확인 중..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\worklog_realtime.py\" prompt",
+            "statusMessage": "작업 지시 로그 기록 중..."
           }
         ]
       }
@@ -36,6 +55,16 @@
           {
             "type": "command",
             "command": "python -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\worklog_realtime.py\" tool",
+            "statusMessage": "작업 로그 기록 중..."
           }
         ]
       }
