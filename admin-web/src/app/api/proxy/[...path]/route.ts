@@ -80,15 +80,15 @@ async function proxy(req: NextRequest, segments: string[]): Promise<NextResponse
   const responseHeaders = buildResponseHeaders(upstream);
   const contentType = upstream.headers.get("content-type") ?? "";
 
-  // SSE / 스트리밍 응답 — body를 그대로 패스스루
-  if (contentType.includes("text/event-stream") || upstream.body) {
+  // SSE — body를 그대로 패스스루
+  if (contentType.includes("text/event-stream")) {
     return new Response(upstream.body, {
       status: upstream.status,
       headers: responseHeaders,
     });
   }
 
-  // 일반 응답
+  // 일반 응답 (204 No Content 등 body=null 포함)
   const data = await upstream.arrayBuffer();
   return new NextResponse(data, {
     status: upstream.status,

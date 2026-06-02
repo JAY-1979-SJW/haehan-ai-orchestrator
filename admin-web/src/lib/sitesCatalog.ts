@@ -1,10 +1,8 @@
 /**
  * sitesCatalog.ts — 서버 사이트 카탈로그 조회 (GET /api/v1/sites/catalog).
- * JWT 인증 필요(get_jwt_user) → userAuth 토큰을 Bearer 로 전달.
+ * /api/proxy/ 경유로 호출하여 FastAPI URL을 클라이언트에 노출하지 않는다.
  */
-import { getToken } from "@/lib/userAuth";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
+import { apiFetch } from "@/lib/api";
 
 export interface CatalogWork {
   work_key: string;
@@ -24,12 +22,11 @@ export interface CatalogSite {
   works: CatalogWork[];
 }
 
+interface CatalogResponse {
+  sites: CatalogSite[];
+}
+
 export async function fetchSiteCatalog(): Promise<CatalogSite[]> {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}/api/v1/sites/catalog`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error(`카탈로그 조회 실패 (${res.status})`);
-  const data = await res.json();
+  const data = await apiFetch<CatalogResponse>("/sites/catalog");
   return Array.isArray(data.sites) ? data.sites : [];
 }

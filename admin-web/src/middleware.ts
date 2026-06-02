@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
 const TOKEN_COOKIE = "haehan_ai_token";
 
@@ -12,31 +13,28 @@ const PUBLIC_PATHS = [
   "/api/v1/users/login",
 ];
 
-// 관리자(admin/owner) 전용 경로
-const ADMIN_PATHS = [
-  "/ops",
-  "/admin",
-  "/naver/session",
-  "/assistant/approval",
-  "/assistant/logs",
-  "/assistant/deployment",
-  "/assistant/storage",
-  "/browser-approvals",
-];
-
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
 function isNextInternal(pathname: string): boolean {
-  return pathname.startsWith("/_next") ||
+  return (
+    pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/icons") ||
     pathname.startsWith("/images") ||
-    pathname === "/";  // 홈(대시보드)은 공개 — 세션 위젯은 클라이언트에서 처리
+    pathname === "/"  // 홈(대시보드)은 공개 — 세션 위젯은 클라이언트에서 처리
+  );
 }
 
-export function middleware(req: NextRequest) {
+function redirectToLogin(req: NextRequest): NextResponse {
+  const { pathname, search } = req.nextUrl;
+  const loginUrl = new URL("/login", req.url);
+  loginUrl.searchParams.set("returnTo", pathname + search);
+  return NextResponse.redirect(loginUrl);
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Next.js 내부 경로, 정적 파일 — 통과
@@ -50,22 +48,22 @@ export function middleware(req: NextRequest) {
 
   // JWT 쿠키 확인
   const token = req.cookies.get(TOKEN_COOKIE)?.value;
+  if (!token) return redirectToLogin(req);
 
-  if (!token) {
-    // 미로그인 → /login?returnTo=<원래경로>
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("returnTo", pathname + req.nextUrl.search);
-    return NextResponse.redirect(loginUrl);
+  // JWT 서명 검증 (jose — Edge Runtime 호환)
+  // JWT_SECRET 미설정 시 서명 검증을 건너뛰고 쿠키 존재만 확인 (개발 편의)
+  const secret = process.env.JWT_SECRET;
+  if (secret) {
+    try {
+      await jwtVerify(token, new TextEncoder().encode(secret));
+    } catch {
+      // 서명 불일치 또는 만료 → 재로그인
+      return redirectToLogin(req);
+    }
   }
 
-  // TODO: JWT 서명 검증 (JWT_SECRET을 Edge Runtime에서 읽을 수 있을 때)
-  // 현재는 쿠키 존재 여부만 확인 — 실제 토큰 유효성은 FastAPI에서 검증
-  // const payload = verifyJwt(token);
-  // if (!payload) return NextResponse.redirect(new URL("/login", req.url));
-
-  // 관리자 전용 경로 — 쿠키에서 role 확인 불가능 (httpOnly 아닌 경우 JS에서 설정하므로
-  // role 정보가 없음). 클라이언트 측 role 체크는 PageShell authRequired="admin"으로 처리.
-
+  // 관리자 전용 경로 — JWT payload에 role 미포함(서버 DB 조회 필요)이므로
+  // API 레벨에서 requireBackendRole()이 보호하며 클라이언트 PageShell이 UI를 제한함.
   return NextResponse.next();
 }
 
