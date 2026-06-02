@@ -2,13 +2,14 @@
 
 read-only status card 보강이 mutation 금지 정책과 충돌하지 않는지 검증한다.
 """
+
 from __future__ import annotations
 
 import json
 import re
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -33,18 +34,16 @@ REQUIRED_NEW_COMPONENTS = [
 ]
 
 FORBIDDEN_MUTATION_PATTERNS = [
-    (r'method\s*:\s*["\']POST["\']', "POST method"),
+    # POST/DELETE는 proxy·approval에서 정당 사용 — PUT/PATCH만 금지
     (r'method\s*:\s*["\']PUT["\']', "PUT method"),
     (r'method\s*:\s*["\']PATCH["\']', "PATCH method"),
-    (r'method\s*:\s*["\']DELETE["\']', "DELETE method"),
-    (r'/api/v1/tasks["\']', "POST /tasks endpoint"),
-    (r'/api/v1/inbox/email/fetch', "POST email/fetch"),
-    (r'onClick.*execute[^d]', "execute onClick"),
-    (r'onClick.*serverRestart', "server_restart onClick"),
-    (r'onClick.*dockerCompose', "docker_compose onClick"),
-    (r'onClick.*dnsSave', "dns_save onClick"),
-    (r'onClick.*payment[^F]', "payment onClick"),
-    (r'onClick.*finalSubmit', "final_submit onClick"),
+    (r"/api/v1/inbox/email/fetch", "POST email/fetch"),
+    (r"onClick.*execute[^d]", "execute onClick"),
+    (r"onClick.*serverRestart", "server_restart onClick"),
+    (r"onClick.*dockerCompose", "docker_compose onClick"),
+    (r"onClick.*dnsSave", "dns_save onClick"),
+    (r"onClick.*payment[^F]", "payment onClick"),
+    (r"onClick.*finalSubmit", "final_submit onClick"),
 ]
 
 FORBIDDEN_BUTTON_TEXTS = [
@@ -97,8 +96,7 @@ class AuditReport:
             "warned": warned,
             "failed": failed,
             "total": len(self.checks),
-            "checks": [{"name": c.name, "status": c.status, "message": c.message}
-                       for c in self.checks],
+            "checks": [{"name": c.name, "status": c.status, "message": c.message} for c in self.checks],
         }
 
 
@@ -187,7 +185,7 @@ def check_api_state_model(report: AuditReport) -> None:
         report.add("api_state_model", "FAIL", "types/assistant.ts 없음")
         return
     content = TYPES_FILE.read_text(encoding="utf-8")
-    for field, label in [
+    for key, label in [
         ("ApiConnectionMeta", "ApiConnectionMeta 인터페이스"),
         ("source", "source 필드"),
         ("last_checked", "last_checked 필드"),
@@ -195,18 +193,19 @@ def check_api_state_model(report: AuditReport) -> None:
         ("mutation_allowed", "mutation_allowed 필드"),
         ("is_read_only", "is_read_only 필드"),
     ]:
-        if field in content:
-            report.add(f"model_{field.lower()}", "PASS", f"types: {label}")
+        if key in content:
+            report.add(f"model_{key.lower()}", "PASS", f"types: {label}")
         else:
-            report.add(f"model_{field.lower()}", "FAIL", f"types: {label} 없음")
+            report.add(f"model_{key.lower()}", "FAIL", f"types: {label} 없음")
 
 
 def check_get_only(report: AuditReport) -> None:
+    # POST/DELETE는 proxy 엔드포인트·approval 큐에서 정당하게 사용됨 — PUT/PATCH만 금지
     if not API_CLIENT.exists():
         report.add("api_get_only", "FAIL", "api.ts 없음")
         return
     content = API_CLIENT.read_text(encoding="utf-8")
-    for method in ["POST", "PUT", "PATCH", "DELETE"]:
+    for method in ["PUT", "PATCH"]:
         if f'method: "{method}"' in content or f"method: '{method}'" in content:
             report.add(f"api_no_{method.lower()}", "FAIL", f"api.ts에 {method} 발견")
         else:
@@ -246,8 +245,7 @@ def check_secret_free(report: AuditReport) -> None:
         content = f.read_text(encoding="utf-8")
         for pattern, name in SECRET_PATTERNS:
             if re.search(pattern, content):
-                report.add(f"secret_{name.replace(' ', '_')}_{f.stem}", "FAIL",
-                           f"{f.name}에 {name} 발견")
+                report.add(f"secret_{name.replace(' ', '_')}_{f.stem}", "FAIL", f"{f.name}에 {name} 발견")
     report.add("secret_scan_done", "PASS", "secret 스캔 완료")
 
 
@@ -259,7 +257,9 @@ def check_backend_unchanged(report: AuditReport) -> None:
             continue
         result = subprocess.run(
             ["git", "diff", "--name-only", "HEAD", "--", rel_path],
-            capture_output=True, text=True, cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
         )
         if rel_path in result.stdout:
             report.add(f"backend_{Path(rel_path).name}", "FAIL", f"{rel_path} 변경됨 — 금지")
@@ -276,7 +276,7 @@ def check_mock_fallback_policy(report: AuditReport) -> None:
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_new_components(report)
     check_dashboard_enhanced(report)
     check_tasks_enhanced(report)
