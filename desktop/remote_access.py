@@ -11,6 +11,7 @@
 - 원격 제어 허용 명령 화이트리스트만 실행
 - 비가역 작업(파일 삭제, DB write, 배포) 원격 실행 금지
 """
+
 from __future__ import annotations
 
 import json
@@ -19,28 +20,28 @@ import os
 import secrets
 import socket
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-_TOKEN_PATH = Path(
-    os.getenv("HAEHAN_AGENT_DESKTOP_CONFIG",
-              str(Path.home() / ".haehan_agent" / "config.json"))
-).parent / "remote_token"
+_TOKEN_PATH = (
+    Path(os.getenv("HAEHAN_AGENT_DESKTOP_CONFIG", str(Path.home() / ".haehan_agent" / "config.json"))).parent
+    / "remote_token"
+)
 
-_STATE_PATH = Path(
-    os.getenv("HAEHAN_AGENT_DESKTOP_CONFIG",
-              str(Path.home() / ".haehan_agent" / "config.json"))
-).parent / "remote_access_state.json"
+_STATE_PATH = (
+    Path(os.getenv("HAEHAN_AGENT_DESKTOP_CONFIG", str(Path.home() / ".haehan_agent" / "config.json"))).parent
+    / "remote_access_state.json"
+)
 
 # 원격 제어 허용 명령 화이트리스트
-ALLOWED_REMOTE_COMMANDS: frozenset[str] = frozenset({
-    "get_status",
-    "get_screenshot",
-    "open_url",
-    "get_logs_tail",
-    "ping",
-})
+ALLOWED_REMOTE_COMMANDS: frozenset[str] = frozenset(
+    {
+        "get_status",
+        "open_url",
+        "get_logs_tail",
+        "ping",
+    }
+)
 
 
 def _get_local_ip() -> str:
@@ -95,14 +96,14 @@ def _generate_token() -> str:
     return token
 
 
-def _load_token() -> Optional[str]:
+def _load_token() -> str | None:
     try:
         return _TOKEN_PATH.read_text(encoding="utf-8").strip() or None
     except Exception:
         return None
 
 
-def get_token() -> Optional[str]:
+def get_token() -> str | None:
     """저장된 토큰 반환. 없으면 None."""
     return _load_token()
 
@@ -128,7 +129,7 @@ def rotate_token() -> str:
     return token
 
 
-def verify_token(provided: Optional[str]) -> bool:
+def verify_token(provided: str | None) -> bool:
     """제공된 토큰이 저장된 토큰과 일치하는지 검증."""
     stored = _load_token()
     if not stored or not provided:
@@ -137,8 +138,13 @@ def verify_token(provided: Optional[str]) -> bool:
 
 
 __all__ = [
-    "is_enabled", "enable", "disable",
-    "get_token", "get_token_masked", "get_access_url",
-    "rotate_token", "verify_token",
     "ALLOWED_REMOTE_COMMANDS",
+    "disable",
+    "enable",
+    "get_access_url",
+    "get_token",
+    "get_token_masked",
+    "is_enabled",
+    "rotate_token",
+    "verify_token",
 ]
