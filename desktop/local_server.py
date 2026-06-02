@@ -1465,17 +1465,6 @@ async def _exec_remote_command(cmd: str, msg: dict) -> dict:
         safe = [line for line in lines if not any(k in line.lower() for k in _FORBIDDEN)]
         return {"lines": safe[-100:]}
 
-    if cmd == "get_screenshot":
-        import base64
-
-        try:
-            from scripts.browser.cdp_client import get_screenshot
-
-            png = get_screenshot()
-            return {"format": "png", "data": base64.b64encode(png).decode()}
-        except Exception as exc:
-            return {"error": str(exc)}
-
     if cmd == "open_url":
         import webbrowser
 
@@ -1542,14 +1531,6 @@ def _resolve_whoami_role() -> tuple[str, str]:
     env_role = _os.environ.get("HAEHAN_ROLE", "").strip().lower()
     if env_role in _WHOAMI_KNOWN_ROLES:
         return env_role, "env"
-    try:
-        from .user_settings import load_role  # type: ignore
-
-        cfg_role = (load_role() or "").strip().lower()
-        if cfg_role in _WHOAMI_KNOWN_ROLES:
-            return cfg_role, "config"
-    except Exception:  # noqa: S110
-        pass
     return "any", "default"
 
 
@@ -1835,11 +1816,9 @@ async def new_shell():
     except Exception:
         role = "unknown"
 
-    # logs: 최근 로그 라인
+    # logs: 최근 로그 라인 (LOG_FILE 직접 읽기)
     try:
-        from desktop.status_provider import get_recent_logs
-
-        log_lines = get_recent_logs(n=15)
+        log_lines = _LOG_FILE.read_text(encoding="utf-8", errors="replace").splitlines()[-15:]
     except Exception:
         log_lines = []
 
