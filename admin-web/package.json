@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "clean": "rimraf .next && echo '.next cache cleared'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
