@@ -31,7 +31,10 @@ const { Menu, dialog, session } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
-const { startCdpBrowser, stopCdpBrowser } = require("./lib/cdp_manager");
+const { startCdpBrowser, stopCdpBrowser, isCdpAlive } = require("./lib/cdp_manager");
+// CDP watchdog — 앱이 CDP 를 책임지고 항상 살려둔다(클릭→앱 출력이 항상 되도록)
+let cdpWatchdogTimer = null;
+let appQuitting = false;
 
 // youtube 모듈에 메인 창 provider 주입 (youtube → mainWindow 직접 의존 제거)
 setWindowProvider(getMainWindow);
@@ -91,10 +94,21 @@ if (!gotLock) {
       return;
     }
 
-    // ── CDP 브라우저 시작 (번들 Chromium 또는 시스템 Chrome) ────────────────
+    // ── CDP 브라우저 시작 + 감시(죽으면 자동 재기동) ─────────────────────────
     startCdpBrowser().then((ok) => {
       if (!ok) console.warn("[main] CDP 브라우저 자동 시작 실패 — 수동 실행 필요");
     });
+    // watchdog: 15초마다 CDP 생존 확인, 끊겼으면 앱이 자동 재기동
+    if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer);
+    cdpWatchdogTimer = setInterval(async () => {
+      if (appQuitting) return;
+      try {
+        if (!(await isCdpAlive())) {
+          console.warn("[main] CDP 끊김 감지 — 자동 재기동");
+          await startCdpBrowser();
+        }
+      } catch (_) { /* ignore */ }
+    }, 15000);
 
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();
@@ -187,7 +201,7 @@ ipcMain.on("youtube-connect", async () => {
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
-app.on("before-quit", () => { setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); stopCdpBrowser(); });
+app.on("before-quit", () => { appQuitting = true; if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer); setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); stopCdpBrowser(); });
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)
 app.on("window-all-closed", () => { if (!hasTray()) app.quit(); });
