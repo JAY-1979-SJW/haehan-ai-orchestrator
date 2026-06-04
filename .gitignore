@@ -118,6 +118,8 @@ session*
 !session_manager.py
 !test_session_manager.py
 !session_status_router.py
+!session_probe.py
+!session_probe_fix.md
 storage_state*
 
 # Runtime execution artifacts (Stage 3~5)
