@@ -1,28 +1,46 @@
 """
-비서앱 MVP 홍보영상 제작 스크립트
+홍보영상 제작 스크립트 (공용)
 - Playwright: 실제 브라우저 조작 녹화 (스크린샷 시퀀스)
 - PIL: 한글+영어 자막 합성
 - FFmpeg: MP4 변환
+
+사용:
+    python make_promo_video.py                          # 기본값
+    python make_promo_video.py --url http://localhost:8080 --scenes scenes.json --out promo.mp4
 """
-import os
+
+import argparse
+import json
+import subprocess
 import sys
 import time
-import subprocess
-import shutil
 from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont
+
+
+def _parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--url", default="http://localhost:3000", help="앱 베이스 URL")
+    p.add_argument("--scenes", default=None, help="씬 정의 JSON 파일 경로 (없으면 기본값 사용)")
+    p.add_argument("--out", default=None, help="출력 MP4 경로")
+    p.add_argument("--watermark", default="Haehan AI — MVP Demo", help="우상단 워터마크 텍스트")
+    return p.parse_args()
+
+
+_ARGS = _parse_args()
 
 ROOT = Path(__file__).resolve().parents[2]
 PROMO_DIR = ROOT / "data" / "promo"
 FRAMES_DIR = PROMO_DIR / "frames"
-OUTPUT_VIDEO = PROMO_DIR / "haehan_assistant_mvp_promo.mp4"
-BASE_URL = "http://localhost:3000"
+OUTPUT_VIDEO = Path(_ARGS.out) if _ARGS.out else PROMO_DIR / "promo.mp4"
+BASE_URL = _ARGS.url
 
 PROMO_DIR.mkdir(parents=True, exist_ok=True)
 FRAMES_DIR.mkdir(parents=True, exist_ok=True)
 
-# ── 자막 정의 ─────────────────────────────────────────────────────────────
-SCENES = [
+# ── 자막 정의 (외부 JSON 또는 기본값) ────────────────────────────────────
+_DEFAULT_SCENES = [
     {
         "url": "/assistant",
         "actions": [],
@@ -102,6 +120,11 @@ SCENES = [
     },
 ]
 
+if _ARGS.scenes and Path(_ARGS.scenes).exists():
+    SCENES = json.loads(Path(_ARGS.scenes).read_text(encoding="utf-8"))
+else:
+    SCENES = _DEFAULT_SCENES
+
 FPS = 24
 FONT_PATH_KO = "malgun.ttf"
 FONT_PATH_EN = "arial.ttf"
@@ -138,7 +161,7 @@ def add_caption(img: Image.Image, caption_ko: str, caption_en: str, fonts) -> Im
     draw.text((w // 2, h - bar_h + 54), caption_en, font=font_en, fill=(180, 210, 255), anchor="mt")
 
     # 워터마크
-    draw.text((w - 10, 10), "Haehan AI — MVP Demo", font=font_watermark, fill=(255, 255, 255, 120), anchor="ra")
+    draw.text((w - 10, 10), _ARGS.watermark, font=font_watermark, fill=(255, 255, 255, 120), anchor="ra")
 
     # AI 자동화 배지 (좌상단) — 이모지 제거, malgun 폰트로 한글 정상 표시
     badge = "AI 자동화 작업 중"
@@ -197,8 +220,15 @@ def run():
                     except Exception:
                         pass
                 elif action == "nav_tour":
-                    nav_links = ["/assistant/tasks", "/assistant/approval", "/assistant/external-sites",
-                                 "/assistant/logs", "/assistant/storage", "/assistant/deployment", "/assistant"]
+                    nav_links = [
+                        "/assistant/tasks",
+                        "/assistant/approval",
+                        "/assistant/external-sites",
+                        "/assistant/logs",
+                        "/assistant/storage",
+                        "/assistant/deployment",
+                        "/assistant",
+                    ]
                     for link in nav_links:
                         page.goto(BASE_URL + link)
                         page.wait_for_load_state("domcontentloaded")
@@ -227,14 +257,22 @@ def run():
     # ── FFmpeg MP4 변환 ──────────────────────────────────────────────────────
     print("[2/3] FFmpeg MP4 변환 중...")
     ffmpeg_cmd = [
-        "ffmpeg", "-y",
-        "-framerate", str(FPS),
-        "-i", str(FRAMES_DIR / "frame_%05d.jpg"),
-        "-c:v", "libx264",
-        "-preset", "slow",
-        "-crf", "18",
-        "-pix_fmt", "yuv420p",
-        "-movflags", "+faststart",
+        "ffmpeg",
+        "-y",
+        "-framerate",
+        str(FPS),
+        "-i",
+        str(FRAMES_DIR / "frame_%05d.jpg"),
+        "-c:v",
+        "libx264",
+        "-preset",
+        "slow",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
         str(OUTPUT_VIDEO),
     ]
     result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
@@ -242,7 +280,7 @@ def run():
         print("FFmpeg 오류:", result.stderr[-500:])
         sys.exit(1)
 
-    print(f"\n[3/3] 완료!")
+    print("\n[3/3] 완료!")
     print(f"  출력 파일: {OUTPUT_VIDEO}")
     size_mb = OUTPUT_VIDEO.stat().st_size / 1024 / 1024
     print(f"  파일 크기: {size_mb:.1f} MB")

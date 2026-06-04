@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""
+Stop 훅: AI 응답에서 금지 행동 패턴 감지 → exit(2)로 차단.
+Claude Code가 응답을 완성하기 직전 실행됨.
+"""
+
+import json
+import re
+import sys
+from pathlib import Path
+
+# stop_hook_active 시 무한루프 방지
+data = {}
+try:
+    raw = sys.stdin.read()
+    if raw.strip():
+        data = json.loads(raw)
+except Exception:
+    pass
+
+if data.get("stop_hook_active"):
+    sys.exit(0)
+
+# ── 금지 패턴 ──────────────────────────────────────────────────────────────
+FORBIDDEN: list[tuple[str, str]] = [
+    (r"터미널에서\s*(실행|입력)", "터미널 직접 실행 요청"),
+    (r"직접\s*(입력|실행|확인|진행)하", "직접 입력/실행 요청"),
+    (r"수동으로\s*(진행|처리|실행|확인)", "수동 진행 요청"),
+    (r"콘솔에서\s*직접", "콘솔 직접 확인 요청"),
+    (r"오류\s*(내용|메시지)를?\s*(보여|알려)", "오류 내용 보고 요청"),
+    (r"어떤\s*오류인지\s*(알려|확인해)", "오류 확인 요청"),
+    (r"다음\s*명령(어|을)?\s*(을\s*)?(실행|입력)하", "명령어 직접 실행 요청"),
+    (r"!\s*python\s+\S+.*입력", "! python 명령 입력 요청"),
+    (r"(실행해|입력해)\s*주세요", "직접 실행 요청 문구"),
+    (r"아래\s*(명령|커맨드)(를|을|어)?\s*(실행|입력)", "명령어 직접 실행 요청"),
+]
+
+# ── transcript 에서 마지막 assistant 메시지 추출 ──────────────────────────
+transcript_path = data.get("transcript_path", "")
+last_text = ""
+
+if transcript_path and Path(transcript_path).exists():
+    try:
+        lines = Path(transcript_path).read_text(encoding="utf-8", errors="replace").splitlines()
+        # jsonl 형식: 각 줄이 JSON 객체
+        for line in reversed(lines):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+                if obj.get("role") == "assistant":
+                    content = obj.get("content", "")
+                    if isinstance(content, list):
+                        parts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+                        last_text = " ".join(parts)
+                    elif isinstance(content, str):
+                        last_text = content
+                    break
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+if not last_text:
+    sys.exit(0)
+
+# ── 패턴 매칭 ─────────────────────────────────────────────────────────────
+hits = []
+for pattern, label in FORBIDDEN:
+    if re.search(pattern, last_text):
+        hits.append(label)
+
+if hits:
+    print(f"[behavior_gate] ❌ 금지 행동 감지: {', '.join(hits)}", file=sys.stderr)
+    print("[behavior_gate] CLAUDE.md 원칙: AI가 도구로 직접 수행해야 합니다. 응답을 수정하세요.", file=sys.stderr)
+    sys.exit(2)
+
+sys.exit(0)
