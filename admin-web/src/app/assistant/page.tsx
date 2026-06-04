@@ -2,6 +2,7 @@
 // getAssistantHealth compatibility: this dashboard uses getAppHealthSummary.
 /** /assistant — Dashboard (APP_UI_READONLY_STATUS_CARDS_API_BIND_01) */
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageShell } from "@/components/ui/PageShell";
 import { BackendStatusCard } from "@/components/assistant/BackendStatusCard";
 import { StorageStatusCard } from "@/components/assistant/StorageStatusCard";
@@ -90,58 +91,48 @@ export default function AssistantDashboard() {
     : "idle";
 
   return (
-    <PageShell title="AI 비서" description="백엔드 상태 · 스토리지 · 작업 현황" chatDomain="assistant">
-      <div className="space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
-        <ApiConnectionStateBadge
-          state={loadState}
-          meta={healthState.status === "success" || healthState.status === "mock_fallback"
-            ? healthState.meta : undefined}
-          label="health/summary"
-        />
-      </div>
-      <ReadOnlyModeBanner />
-      <DryRunNotice enabled={displayStatus.dry_run_gate_enabled} />
-      {live ? (
-        <div className="rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#16A34A] text-white">● 연결됨</span>
-            <span className="text-sm font-semibold text-[#111827]">실시간 운영 요약</span>
-            <span className="ml-auto font-mono text-[11px] text-[#6B7280]">/api/v1/app/live-summary</span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1.5 text-xs">
-            <div><span className="text-[#9CA3AF]">서비스</span> <span className="text-[#374151] font-medium">{live.data.service}</span></div>
-            <div><span className="text-[#9CA3AF]">헬스</span> <span className="text-[#16A34A] font-semibold">{live.data.health_status.toUpperCase()}</span></div>
-            <div><span className="text-[#9CA3AF]">DRY_RUN 게이트</span> <span className="font-semibold text-[#2563EB]">{live.data.post_tasks_dry_run_enabled ? "활성" : "해제"}</span></div>
-            <div><span className="text-[#9CA3AF]">Phase1</span> <span className="text-[#374151] font-medium">{live.data.phase1_closeout_status}</span></div>
-          </div>
-          <div className="mt-2 font-mono text-[11px] text-[#9CA3AF]">
-            read_only={String(live.data.read_only)} · mutation_allowed={String(live.data.mutation_allowed)} · {new Date(live.data.generated_at).toLocaleString()}
-          </div>
-        </div>
-      ) : (
-        <FutureEndpointNotice
-          endpoint="/api/v1/app/live-summary"
-          reason="실시간 운영 요약은 서버 API 확정 후 연결합니다."
-        />
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <BackendStatusCard status={displayStatus} />
-        <StorageStatusCard mounts={storageStatusMock} />
-      </div>
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
-        <div className="text-sm font-semibold text-[#111827] mb-3">Known Backlog</div>
-        <div className="space-y-1.5">
-          {knownBacklogMock.map((item) => (
-            <div key={item.id} className="flex items-start gap-2 text-xs">
-              <span className="font-mono text-[#6B7280] w-10 shrink-0">{item.id}</span>
-              <span className="text-[#374151]">{item.title}</span>
-              <span className="ml-auto text-[#9CA3AF] shrink-0">{item.app_note}</span>
+    <PageShell title="AI 비서" description="무엇이든 말로 지시하세요" chatDomain="assistant">
+      <div className="space-y-5">
+        {/* 소개 */}
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F97316] flex items-center justify-center text-white font-bold text-sm">AI</div>
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-[#111827]">무엇이든 말로 지시하세요</h2>
+              <p className="text-xs text-[#6B7280] mt-0.5">우측 상단 💬 버튼을 눌러 자연어로 요청하면 AI 비서가 알아서 처리합니다.</p>
             </div>
-          ))}
+            <span className="ml-auto shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
+              {loadState === "error" ? "● 점검 필요" : "● 정상 작동"}
+            </span>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {["상품 목록 보여줘", "최근 주문 확인해줘", "리뷰 정리해줘", "Gmail 받은편지함 확인", "EUM 신규현장 알려줘"].map((ex) => (
+              <span key={ex} className="text-xs px-3 py-1.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-[#374151]">{ex}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* 주요 기능 바로가기 */}
+        <div>
+          <p className="text-sm font-semibold text-[#111827] mb-2">주요 기능</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              { href: "/naver/smartstore/products", label: "상품 관리", emoji: "📦" },
+              { href: "/naver/smartstore/orders", label: "주문 관리", emoji: "🧾" },
+              { href: "/eum", label: "EUM 영업메일", emoji: "📡" },
+              { href: "/market-research", label: "시장 조사", emoji: "🔍" },
+              { href: "/youtube", label: "YouTube 관리", emoji: "▶️" },
+              { href: "/ops", label: "운영센터", emoji: "🛠️" },
+            ].map((m) => (
+              <Link key={m.href} href={m.href}
+                className="rounded-xl border border-[#E5E7EB] bg-white p-4 hover:border-[#F97316] hover:bg-[#FFF7ED] transition-colors">
+                <div className="text-2xl mb-1">{m.emoji}</div>
+                <div className="text-sm font-semibold text-[#111827]">{m.label}</div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </PageShell>
   );
 }
