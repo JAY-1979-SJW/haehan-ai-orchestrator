@@ -46,14 +46,15 @@
     with connect_to_page(page) as s:
         data = s.extract_table()
 """
+
 from __future__ import annotations
 
 import json
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 import requests
 import websocket
@@ -63,8 +64,8 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.config import CDP_HOST, CDP_PORT  # noqa: E402
 
-
 # ── 탭 조회 ───────────────────────────────────────────────────────────────────
+
 
 def get_tabs() -> list[dict]:
     try:
@@ -83,6 +84,7 @@ def _find_tab(url_contains: str = "") -> dict:
 
 # ── CDPSession ────────────────────────────────────────────────────────────────
 
+
 class CDPSession:
     """CDP WebSocket 세션 — CLI·API 공용.
 
@@ -91,15 +93,16 @@ class CDPSession:
     """
 
     def __init__(self, ws_url: str, timeout: float = 15):
-        self._ws = websocket.create_connection(ws_url, timeout=timeout)
+        # suppress_origin: Chrome 148+ 는 Origin 헤더가 있는 DevTools WS 업그레이드를
+        # 403 Forbidden 으로 거부한다(DNS rebinding 보호). Origin 을 제거해야 연결됨.
+        self._ws = websocket.create_connection(ws_url, timeout=timeout, suppress_origin=True)
         self._msg_id = 0
 
     # ── 저수준 CDP ────────────────────────────────────────────────────────────
 
     def cdp(self, method: str, params: dict | None = None) -> dict:
         self._msg_id += 1
-        self._ws.send(json.dumps({"id": self._msg_id, "method": method,
-                                   "params": params or {}}))
+        self._ws.send(json.dumps({"id": self._msg_id, "method": method, "params": params or {}}))
         while True:
             resp = json.loads(self._ws.recv())
             if resp.get("id") == self._msg_id:
@@ -107,12 +110,15 @@ class CDPSession:
 
     def js(self, expression: str, timeout_ms: int = 8000) -> tuple[str, bool]:
         """JS 실행 → (결과문자열, 에러여부)."""
-        resp = self.cdp("Runtime.evaluate", {
-            "expression": expression,
-            "returnByValue": True,
-            "awaitPromise": True,
-            "timeout": timeout_ms,
-        })
+        resp = self.cdp(
+            "Runtime.evaluate",
+            {
+                "expression": expression,
+                "returnByValue": True,
+                "awaitPromise": True,
+                "timeout": timeout_ms,
+            },
+        )
         if "error" in resp:
             return str(resp["error"]), True
         res = resp.get("result", {}).get("result", {})
@@ -125,8 +131,7 @@ class CDPSession:
             return "undefined", False
         if rtype == "object" and val is None:
             return res.get("description", "object"), False
-        return (json.dumps(val, ensure_ascii=False)
-                if not isinstance(val, str) else val), False
+        return (json.dumps(val, ensure_ascii=False) if not isinstance(val, str) else val), False
 
     def js_json(self, expression: str) -> tuple[object, bool]:
         """JS → Python 객체. 반환값을 JSON.stringify로 감싸서 파싱."""
@@ -254,13 +259,13 @@ class CDPSession:
         """모든 매칭 요소의 innerText 목록 반환."""
         data, err = self.js_json(
             f"Array.from(document.querySelectorAll({json.dumps(selector)}))"
-            f".map(function(el){{return el.innerText.trim();}})")
+            f".map(function(el){{return el.innerText.trim();}})"
+        )
         return [] if err else data
 
     def get_attr(self, selector: str, attr: str) -> str:
         """첫 번째 매칭 요소의 속성값 반환."""
-        val, _ = self.js(f"document.querySelector({json.dumps(selector)})"
-                          f"?.getAttribute({json.dumps(attr)})||''")
+        val, _ = self.js(f"document.querySelector({json.dumps(selector)})?.getAttribute({json.dumps(attr)})||''")
         return val
 
     def get_attrs(self, selector: str, attr: str) -> list[str]:
@@ -268,7 +273,8 @@ class CDPSession:
         attr_js = json.dumps(attr)
         data, err = self.js_json(
             f"Array.from(document.querySelectorAll({json.dumps(selector)}))"
-            f".map(function(el){{return el.getAttribute({attr_js})||'';}})")
+            f".map(function(el){{return el.getAttribute({attr_js})||'';}})"
+        )
         return [] if err else data
 
     def get_attrs_map(self, selector: str) -> list[dict]:
@@ -282,8 +288,7 @@ class CDPSession:
         }})()""")
         return {} if (err or data is None) else data
 
-    def extract_table(self, selector: str = "table",
-                      skip_header_rows: int = 0) -> list[list[str]]:
+    def extract_table(self, selector: str = "table", skip_header_rows: int = 0) -> list[list[str]]:
         """테이블 데이터를 2D 리스트로 추출."""
         data, err = self.js_json(f"""(function(){{
             var tbl=document.querySelector({json.dumps(selector)});
@@ -298,8 +303,7 @@ class CDPSession:
             return []
         return data[skip_header_rows:]
 
-    def extract_list(self, row_selector: str,
-                     field_map: dict[str, str]) -> list[dict]:
+    def extract_list(self, row_selector: str, field_map: dict[str, str]) -> list[dict]:
         """반복 행에서 필드맵 기반으로 데이터 추출.
 
         Args:
@@ -350,8 +354,7 @@ class CDPSession:
         if err:
             return []
         if filter_text:
-            return [d for d in data
-                    if filter_text in d['text'] or filter_text in d['href']]
+            return [d for d in data if filter_text in d["text"] or filter_text in d["href"]]
         return data
 
     def suggest_selectors(self, text: str) -> list[dict]:
@@ -382,6 +385,7 @@ class CDPSession:
     def screenshot(self, path: str | Path | None = None) -> Path:
         """스크린샷 저장 후 경로 반환."""
         import base64
+
         resp = self.cdp("Page.captureScreenshot", {"format": "png"})
         data = base64.b64decode(resp["result"]["data"])
         out = Path(path) if path else ROOT / "data" / f"shot_{int(time.time())}.png"
@@ -405,6 +409,7 @@ class CDPSession:
 
 
 # ── 편의 연결 함수 ────────────────────────────────────────────────────────────
+
 
 @contextmanager
 def connect(url_contains: str = "", websocket_timeout: float = 15) -> Generator[CDPSession, None, None]:
@@ -443,41 +448,44 @@ def connect_to_page(page) -> Generator[CDPSession, None, None]:
 
 # ── CLI 출력 헬퍼 ─────────────────────────────────────────────────────────────
 
+
 def _print_summary(data: dict) -> None:
     if not data:
-        print("요약 데이터 없음"); return
-    print(f"\n{'='*60}")
-    print(f"제목: {data.get('title','')}")
-    print(f"URL : {data.get('url','')}")
-    print(f"텍스트: {data.get('bodyLen',0):,}자")
-    for tbl in data.get('tables', []):
-        print(f"\n  [테이블{tbl['index']}] id={tbl['id']!r} {tbl['rows']}행×{tbl['cols']}열")
+        print("요약 데이터 없음")
+        return
+    print(f"\n{'=' * 60}")
+    print(f"제목: {data.get('title', '')}")
+    print(f"URL : {data.get('url', '')}")
+    print(f"텍스트: {data.get('bodyLen', 0):,}자")
+    for tbl in data.get("tables", []):
+        print(f"\n  [테이블{tbl['index']}] id={tbl['id']!r} {tbl['rows']}행x{tbl['cols']}열")
         print(f"    헤더: {tbl['headers']}")
-    for frm in data.get('forms', []):
+    for frm in data.get("forms", []):
         print(f"\n  [폼{frm['index']}] id={frm['id']!r} action={frm['action']!r}")
-        for f in frm['fields']:
+        for f in frm["fields"]:
             print(f"    {f['tag']}[{f['type']}] name={f['name']!r} id={f['id']!r} '{f['placeholder']}'")
-    print(f"\n  [버튼] {len(data.get('buttons',[]))}개")
-    for b in data.get('buttons', []):
+    print(f"\n  [버튼] {len(data.get('buttons', []))}개")
+    for b in data.get("buttons", []):
         print(f"    {b['tag']} {b['text']!r} id={b['id']!r}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 # ── CLI 명령 ─────────────────────────────────────────────────────────────────
 
+
 def _cli_tabs():
     tabs = [t for t in get_tabs() if t.get("type") == "page"]
     print(f"\n탭 {len(tabs)}개")
-    print("─"*70)
+    print("─" * 70)
     for i, t in enumerate(tabs):
-        print(f"  [{i+1}] {(t.get('title') or '')[:45]}")
+        print(f"  [{i + 1}] {(t.get('title') or '')[:45]}")
         print(f"       {(t.get('url') or '')[:70]}")
     print()
 
 
 def _cli_repl():
     tab = _find_tab()
-    print(f"\nCDP REPL  {tab.get('title','')[:50]}  |  {tab.get('url','')[:60]}")
+    print(f"\nCDP REPL  {tab.get('title', '')[:50]}  |  {tab.get('url', '')[:60]}")
     print("단축: .summary .form .links .find<텍스트> .table[셀렉터] .inspect<셀렉터>  |  exit\n")
     s = CDPSession(tab["webSocketDebuggerUrl"])
     try:
@@ -485,17 +493,23 @@ def _cli_repl():
             try:
                 line = input(">>> ").strip()
             except (EOFError, KeyboardInterrupt):
-                print("\n종료"); break
-            if not line: continue
-            if line.lower() in ("exit","quit","q"): break
+                print("\n종료")
+                break
+            if not line:
+                continue
+            if line.lower() in ("exit", "quit", "q"):
+                break
 
             if line == ".summary":
-                _print_summary(s.page_summary()); continue
+                _print_summary(s.page_summary())
+                continue
             if line == ".form":
-                for f in s.get_form_fields(): print(" ", f)
+                for f in s.get_form_fields():
+                    print(" ", f)
                 continue
             if line == ".links":
-                for l in s.get_links(): print(f"  {l['text']!r:35s} {l['href']}")
+                for l in s.get_links():  # noqa: E741
+                    print(f"  {l['text']!r:35s} {l['href']}")
                 continue
             if line.startswith(".find "):
                 for e in s.find_elements(line[6:]):
@@ -520,9 +534,11 @@ def _cli_repl():
                     print(f"  [{r['type']}] {r['selector']}  {r['sample']!r}")
                 continue
             if line.startswith(".goto "):
-                print(s.goto(line[6:])); continue
+                print(s.goto(line[6:]))
+                continue
             if line == ".shot":
-                print(s.screenshot()); continue
+                print(s.screenshot())
+                continue
 
             val, err = s.js(line)
             print(f"{'[오류] ' if err else '<< '}{val}")
@@ -533,7 +549,8 @@ def _cli_repl():
 def main():
     args = sys.argv[1:]
     if not args:
-        _cli_repl(); return
+        _cli_repl()
+        return
 
     cmd, rest = args[0].lower(), args[1:]
 
@@ -552,9 +569,9 @@ def main():
                 print(f"{'[오류] ' if err else ''}{val}")
             case "goto":
                 print(s.goto(rest[0] if rest else ""))
-            case "screenshot"|"shot":
+            case "screenshot" | "shot":
                 print(s.screenshot(rest[0] if rest else None))
-            case "page-summary"|"summary":
+            case "page-summary" | "summary":
                 _print_summary(s.page_summary())
             case "find":
                 for e in s.find_elements(" ".join(rest)):
@@ -578,12 +595,12 @@ def main():
                 print(f"  총 {len(rows)}행")
             case "form":
                 for f in s.get_form_fields():
-                    vis = "✓" if f['visible'] else "○"
-                    sel = f"#{f['id']}" if f['id'] else f"[name={f['name']!r}]" if f['name'] else ""
+                    vis = "✓" if f["visible"] else "○"
+                    sel = f"#{f['id']}" if f["id"] else f"[name={f['name']!r}]" if f["name"] else ""
                     print(f"  {vis} <{f['tag']}> {sel} type={f['type']!r} '{f['placeholder']}'")
             case "links":
-                for l in s.get_links(rest[0] if rest else ""):
-                    vis = "✓" if l['visible'] else "○"
+                for l in s.get_links(rest[0] if rest else ""):  # noqa: E741
+                    vis = "✓" if l["visible"] else "○"
                     print(f"  {vis} {l['text']!r:35s} {l['href']}")
             case "suggest":
                 for r in s.suggest_selectors(" ".join(rest)):
@@ -603,7 +620,7 @@ def main():
                             url = req.get("url", "")
                             if url not in seen:
                                 seen.add(url)
-                                print(f"  {req.get('method',''):4s} {url[:100]}")
+                                print(f"  {req.get('method', ''):4s} {url[:100]}")
                     except Exception:
                         pass
                 print(f"\n총 {len(seen)}개")

@@ -84,6 +84,31 @@ def api_description_ai_generate(
 
     model = QUALITY_MODEL if body.model == "quality" else DEFAULT_MODEL
     result = AIDescriptionWriter(model=model).generate(body.data)
+
+    # Claude(ANTHROPIC_API_KEY) 미설정 시 GPT로 자동 폴백 — 사용자 흐름이 끊기지 않게.
+    err_text = str(result.get("error", "")) + " ".join(map(str, result.get("errors", [])))
+    if not result.get("ok") and "ANTHROPIC_API_KEY" in err_text:
+        from scripts.naver.smartstore.product.gpt_description_writer import (
+            DEFAULT_MODEL as GPT_DEFAULT_MODEL,
+        )
+        from scripts.naver.smartstore.product.gpt_description_writer import (
+            GptDescriptionWriter,
+        )
+
+        gpt_result = GptDescriptionWriter(model=GPT_DEFAULT_MODEL).generate(body.data)
+        if gpt_result.get("ok"):
+            gpt_result["fellback_to_gpt"] = True
+            gpt_result["notice"] = "Claude(ANTHROPIC_API_KEY) 미설정 — GPT로 상세설명을 생성했습니다."
+            log_event(
+                "SMARTSTORE_AI_DESCRIPTION",
+                task_id="-",
+                actor=user["actor"],
+                role=user["role"],
+                decision="ok",
+                note=f"model=claude→gpt fallback name={body.data.get('name', '')[:20]}",
+            )
+        return gpt_result
+
     if result.get("ok"):
         log_event(
             "SMARTSTORE_AI_DESCRIPTION",

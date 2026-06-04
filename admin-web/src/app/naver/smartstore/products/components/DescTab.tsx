@@ -17,6 +17,7 @@ interface DescTabProps {
   descHtml: string | null;
   descLoading: boolean;
   descError: string | null;
+  descNotice?: string | null;
   aiLoading: boolean;
   aiModel: "default" | "quality";
   gptLoading: boolean;
@@ -45,7 +46,7 @@ interface DescTabProps {
 
 export default function DescTab({
   templates, tmplLoading, savingTmpl, tmplName, tmplCategory, tmplMsg, showSaveForm,
-  descSections, selectedSections, descData, descHtml, descLoading, descError,
+  descSections, selectedSections, descData, descHtml, descLoading, descError, descNotice,
   aiLoading, aiModel, gptLoading, gptModel, gptImages, gptAnalysis,
   templateBase, useTemplateBase, onToggleTemplateBase,
   onLoadTemplates, onLoadTemplate, onDeleteTemplate, onSaveTemplate,
@@ -202,6 +203,13 @@ export default function DescTab({
       {descError && (
         <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-3">
           <p className="text-sm text-[#DC2626]">{descError}</p>
+        </div>
+      )}
+
+      {/* 안내(예: Claude 키 미설정 → GPT 폴백) */}
+      {descNotice && (
+        <div className="border border-[#FDE68A] bg-[#FFFBEB] rounded-xl p-3">
+          <p className="text-sm text-[#B45309]">ℹ️ {descNotice}</p>
         </div>
       )}
 

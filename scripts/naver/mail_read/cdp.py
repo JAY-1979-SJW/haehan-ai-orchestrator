@@ -2,12 +2,12 @@
 
 자동화 Chrome 9222 fixed. WebSocket 한 호출당 fresh 연결.
 """
+
 from __future__ import annotations
 
 import json
 import time
 import urllib.request
-from dataclasses import dataclass
 from typing import Any
 
 import websocket  # type: ignore
@@ -28,8 +28,7 @@ def find_target(predicate, port: int = CDP_PORT) -> dict | None:
     return None
 
 
-def _send(ws, msg_id: int, method: str, params: dict | None = None,
-          timeout: float = 8.0) -> dict:
+def _send(ws, msg_id: int, method: str, params: dict | None = None, timeout: float = 8.0) -> dict:
     ws.send(json.dumps({"id": msg_id, "method": method, "params": params or {}}))
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -50,9 +49,8 @@ def _send(ws, msg_id: int, method: str, params: dict | None = None,
 def evaluate(target_id: str, expr: str, timeout: float = 8.0, port: int = CDP_PORT) -> Any:
     for t in list_pages(port):
         if t.get("id") == target_id:
-            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=8)
-            ev = _send(ws, 1, "Runtime.evaluate",
-                       {"expression": expr, "returnByValue": True}, timeout=timeout)
+            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=8, suppress_origin=True)
+            ev = _send(ws, 1, "Runtime.evaluate", {"expression": expr, "returnByValue": True}, timeout=timeout)
             ws.close()
             val = ev.get("result", {}).get("result", {}).get("value")
             if isinstance(val, str):
@@ -67,7 +65,7 @@ def evaluate(target_id: str, expr: str, timeout: float = 8.0, port: int = CDP_PO
 def navigate(target_id: str, url: str, port: int = CDP_PORT) -> None:
     for t in list_pages(port):
         if t.get("id") == target_id:
-            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5)
+            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=5, suppress_origin=True)
             _send(ws, 10, "Page.navigate", {"url": url}, timeout=5.0)
             ws.close()
             return
@@ -82,7 +80,7 @@ def create_target(url: str = "about:blank", port: int = CDP_PORT) -> str:
     """
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=2) as r:
         browser_ws = json.loads(r.read())["webSocketDebuggerUrl"]
-    ws = websocket.create_connection(browser_ws, timeout=8)
+    ws = websocket.create_connection(browser_ws, timeout=8, suppress_origin=True)
     try:
         ev = _send(ws, 1, "Target.createTarget", {"url": url}, timeout=5.0)
     finally:
@@ -93,10 +91,11 @@ def create_target(url: str = "about:blank", port: int = CDP_PORT) -> str:
 def screenshot_png(target_id: str, port: int = CDP_PORT) -> bytes | None:
     for t in list_pages(port):
         if t.get("id") == target_id:
-            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=8)
+            ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=8, suppress_origin=True)
             ev = _send(ws, 2, "Page.captureScreenshot", {"format": "png"}, timeout=10.0)
             ws.close()
             import base64
+
             data = ev.get("result", {}).get("data")
             return base64.b64decode(data) if data else None
     return None
@@ -113,14 +112,15 @@ def ensure_about_blank_target(port: int = CDP_PORT) -> str:
     # 새 탭 생성
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=2) as r:
         browser_ws = json.loads(r.read())["webSocketDebuggerUrl"]
-    ws = websocket.create_connection(browser_ws, timeout=8)
+    ws = websocket.create_connection(browser_ws, timeout=8, suppress_origin=True)
     ev = _send(ws, 1, "Target.createTarget", {"url": "about:blank"}, timeout=5.0)
     ws.close()
     return ev.get("result", {}).get("targetId", "")
 
 
-def wait_dom(target_id: str, expr_truthy: str, timeout: float = 18.0,
-             interval: float = 1.0, port: int = CDP_PORT) -> bool:
+def wait_dom(
+    target_id: str, expr_truthy: str, timeout: float = 18.0, interval: float = 1.0, port: int = CDP_PORT
+) -> bool:
     deadline = time.time() + timeout
     while time.time() < deadline:
         v = evaluate(target_id, f"!!({expr_truthy})", timeout=4.0, port=port)

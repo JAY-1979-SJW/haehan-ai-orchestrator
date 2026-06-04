@@ -1,6 +1,13 @@
 """CDP 공통 헬퍼 — 백그라운드 스레드로 이벤트 범람 처리."""
-import json, base64, urllib.request, websocket, time, threading
+
+import base64
+import json
+import threading
+import time
+import urllib.request
 from pathlib import Path
+
+import websocket
 
 ROOT = Path(__file__).resolve().parents[1]
 SHOT_PATH = ROOT / "data" / "browser_screenshot.png"
@@ -25,7 +32,7 @@ class CDP:
         return page_tab["webSocketDebuggerUrl"]
 
     def _connect(self):
-        return websocket.create_connection(self._get_ws_url(), timeout=None)
+        return websocket.create_connection(self._get_ws_url(), timeout=None, suppress_origin=True)
 
     def _reconnect(self):
         """연결이 끊기면 재연결."""
@@ -51,7 +58,7 @@ class CDP:
         while self._alive:
             try:
                 raw = self._ws.recv()
-                if not raw:          # 빈 문자열 = 연결 종료
+                if not raw:  # 빈 문자열 = 연결 종료
                     raise EOFError("empty recv")
                 msg = json.loads(raw)
                 mid = msg.get("id")
