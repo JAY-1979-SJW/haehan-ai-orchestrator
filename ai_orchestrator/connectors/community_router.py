@@ -208,3 +208,67 @@ def run_now(user: dict = Depends(require_role("admin", "owner"))) -> dict:
         note=f"sites={rep.get('site_count')} ok={rep.get('ok_count')}",
     )
     return {"ok": True, **rep}
+
+
+# ── 알림 설정 (텔레그램) ─────────────────────────────────────────────────────
+
+
+class TelegramSetupRequest(BaseModel):
+    token: str
+
+
+class NotifyToggleRequest(BaseModel):
+    enabled: bool
+
+
+@community_router.get("/notify/config")
+def notify_config(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """알림 설정(토큰 마스킹)."""
+    _ensure_path()
+    from scripts.community.notifier import public_config
+
+    return {"ok": True, **public_config()}
+
+
+@community_router.post("/notify/telegram")
+def notify_telegram_setup(req: TelegramSetupRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """봇 토큰 저장 + chat_id 자동 감지(봇에 메시지를 먼저 보내야 감지됨)."""
+    _ensure_path()
+    from scripts.community.notifier import public_config, set_token_and_detect
+
+    r = set_token_and_detect(req.token)
+    if not r.get("ok"):
+        raise HTTPException(status_code=400, detail=r.get("error") or "설정 실패")
+    log_event(
+        "COMMUNITY_NOTIFY_SETUP",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"chat_detected={r.get('detected')}",
+    )
+    return {"ok": True, "detected": r.get("detected"), **public_config()}
+
+
+@community_router.post("/notify/test")
+def notify_test(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """테스트 메시지 발송."""
+    _ensure_path()
+    from scripts.community.notifier import send_message
+
+    res = send_message("✅ 해한 AI 알림 연결 테스트입니다. 자율 분석 리포트가 이 채널로 전송됩니다.")
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("error") or "발송 실패(봇에 먼저 메시지를 보냈는지 확인)")
+    return {"ok": True}
+
+
+@community_router.post("/notify/toggle")
+def notify_toggle(req: NotifyToggleRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """알림 발송 on/off."""
+    _ensure_path()
+    from scripts.community.notifier import load_config, public_config, save_config
+
+    cfg = load_config()
+    cfg["enabled"] = bool(req.enabled)
+    save_config(cfg)
+    return {"ok": True, **public_config()}

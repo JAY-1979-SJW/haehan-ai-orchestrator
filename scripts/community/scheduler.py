@@ -89,6 +89,16 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
             "last_ok": report["ok_count"],
         }
     )
+
+    # 알림 발송 (설정·활성화된 경우에만, best-effort)
+    if sites:
+        try:
+            from scripts.community.notifier import notify_report
+
+            notify_report(report)
+        except Exception:
+            pass
+
     return report
 
 
