@@ -8,6 +8,7 @@ OpenAPI로 못 가져오는 항목:
 
 수집 대상: search.shopping.naver.com/search/all?query=<keyword>
 """
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,6 @@ import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[4]
 DB_PATH = ROOT / "data" / "shopping_competitor_v2.db"
@@ -137,8 +137,9 @@ def crawl_shopping(
     cdp_port: int = 9222,
 ) -> dict:
     """CDP 브라우저로 네이버쇼핑 크롤링 — 리뷰/별점 포함."""
-    import websocket
     import urllib.request
+
+    import websocket
 
     # CDP 탭 획득
     with urllib.request.urlopen(f"http://127.0.0.1:{cdp_port}/json/list", timeout=3) as r:
@@ -147,7 +148,7 @@ def crawl_shopping(
         return {"ok": False, "error": "no_cdp_page"}
 
     tab = pages[0]
-    ws = websocket.create_connection(tab["webSocketDebuggerUrl"], timeout=15)
+    ws = websocket.create_connection(tab["webSocketDebuggerUrl"], timeout=15, suppress_origin=True)
 
     def send(mid, method, params=None, timeout=15.0):
         ws.send(json.dumps({"id": mid, "method": method, "params": params or {}}))
@@ -173,10 +174,15 @@ def crawl_shopping(
         time.sleep(1)
 
     # 상품 추출
-    r = send(3, "Runtime.evaluate", {
-        "expression": f"JSON.stringify(({_EXTRACT_JS})({limit}))",
-        "returnByValue": True,
-    }, timeout=15)
+    r = send(
+        3,
+        "Runtime.evaluate",
+        {
+            "expression": f"JSON.stringify(({_EXTRACT_JS})({limit}))",
+            "returnByValue": True,
+        },
+        timeout=15,
+    )
     ws.close()
 
     raw = r.get("result", {}).get("result", {}).get("value", "[]")
@@ -209,35 +215,46 @@ def crawl_shopping(
                (collected_at, keyword, rank, title, price, mall, brand,
                 review_count, buy_count, wish_count, rating, delivery, link)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (now, keyword, p.get("rank"), p.get("title"), p.get("price"),
-             p.get("mall"), p.get("brand"), p.get("review_count"),
-             p.get("buy_count"), p.get("wish_count"),
-             p.get("rating"), p.get("delivery"), p.get("link")),
+            (
+                now,
+                keyword,
+                p.get("rank"),
+                p.get("title"),
+                p.get("price"),
+                p.get("mall"),
+                p.get("brand"),
+                p.get("review_count"),
+                p.get("buy_count"),
+                p.get("wish_count"),
+                p.get("rating"),
+                p.get("delivery"),
+                p.get("link"),
+            ),
         )
     conn.commit()
     conn.close()
 
     # 통계 계산
-    prices   = [p["price"]        for p in products if p.get("price")]
-    reviews  = [p["review_count"] for p in products if p.get("review_count")]
-    ratings  = [p["rating"]       for p in products if p.get("rating")]
+    prices = [p["price"] for p in products if p.get("price")]
+    reviews = [p["review_count"] for p in products if p.get("review_count")]
+    ratings = [p["rating"] for p in products if p.get("rating")]
 
     return {
-        "ok":       True,
-        "keyword":  keyword,
-        "count":    len(products),
+        "ok": True,
+        "keyword": keyword,
+        "count": len(products),
         "products": products,
         "stats": {
             "price": {
-                "min": min(prices)  if prices  else None,
-                "avg": sum(prices)  // len(prices) if prices else None,
-                "max": max(prices)  if prices  else None,
+                "min": min(prices) if prices else None,
+                "avg": sum(prices) // len(prices) if prices else None,
+                "max": max(prices) if prices else None,
             },
             "review": {
-                "min":   min(reviews)  if reviews else None,
-                "avg":   sum(reviews)  // len(reviews) if reviews else None,
-                "max":   max(reviews)  if reviews else None,
-                "total": sum(reviews)  if reviews else 0,
+                "min": min(reviews) if reviews else None,
+                "avg": sum(reviews) // len(reviews) if reviews else None,
+                "max": max(reviews) if reviews else None,
+                "total": sum(reviews) if reviews else 0,
             },
             "rating": {
                 "avg": round(sum(ratings) / len(ratings), 2) if ratings else None,
@@ -271,15 +288,17 @@ def full_summary(keyword: str) -> dict:
     if not items:
         return {"keyword": keyword, "count": 0}
 
-    prices  = [i["price"]        for i in items if i.get("price")]
+    prices = [i["price"] for i in items if i.get("price")]
     reviews = [i["review_count"] for i in items if i.get("review_count")]
-    ratings = [i["rating"]       for i in items if i.get("rating")]
+    ratings = [i["rating"] for i in items if i.get("rating")]
 
     return {
-        "keyword":  keyword,
-        "count":    len(items),
-        "price":    {"min": min(prices), "avg": sum(prices)//len(prices), "max": max(prices)} if prices else {},
-        "review":   {"min": min(reviews), "avg": sum(reviews)//len(reviews), "max": max(reviews), "total": sum(reviews)} if reviews else {},
-        "rating":   {"avg": round(sum(ratings)/len(ratings),2), "max": max(ratings)} if ratings else {},
-        "top10":    items[:10],
+        "keyword": keyword,
+        "count": len(items),
+        "price": {"min": min(prices), "avg": sum(prices) // len(prices), "max": max(prices)} if prices else {},
+        "review": {"min": min(reviews), "avg": sum(reviews) // len(reviews), "max": max(reviews), "total": sum(reviews)}
+        if reviews
+        else {},
+        "rating": {"avg": round(sum(ratings) / len(ratings), 2), "max": max(ratings)} if ratings else {},
+        "top10": items[:10],
     }

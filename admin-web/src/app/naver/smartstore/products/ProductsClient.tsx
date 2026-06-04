@@ -131,6 +131,7 @@ export default function ProductsClient() {
   const [descHtml, setDescHtml] = useState<string | null>(null);
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState<string | null>(null);
+  const [descNotice, setDescNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (tab !== "desc") return;
@@ -162,6 +163,7 @@ export default function ProductsClient() {
   async function handleGptGenerate() {
     setGptLoading(true);
     setDescError(null);
+    setDescNotice(null);
     setDescHtml(null);
     setGptAnalysis(null);
     try {
@@ -175,6 +177,7 @@ export default function ProductsClient() {
         : await gptGenerateDescription(data, images, model === "quality" ? "quality" : undefined, base);
       if (res.ok && res.html) {
         setDescHtml(res.html);
+        if ("notice" in res && res.notice) setDescNotice(res.notice as string);
         if ("image_analysis" in res && res.image_analysis) setGptAnalysis(res.image_analysis as Record<string, unknown>);
       } else {
         const msgs = res.errors ?? (res.error ? [res.error] : ["AI 생성 실패"]);
@@ -190,12 +193,14 @@ export default function ProductsClient() {
   async function handleAiGenerate() {
     setAiLoading(true);
     setDescError(null);
+    setDescNotice(null);
     setDescHtml(null);
     try {
       const data = JSON.parse(descData);
       const res = await aiGenerateDescription(data, aiModel === "quality" ? "quality" : undefined);
       if (res.ok && res.html) {
         setDescHtml(res.html);
+        if ("notice" in res && res.notice) setDescNotice(res.notice as string);
       } else {
         const msgs = res.errors ?? (res.error ? [res.error] : ["AI 생성 실패"]);
         setDescError(msgs.join("\n"));
@@ -503,6 +508,7 @@ export default function ProductsClient() {
             descHtml={descHtml}
             descLoading={descLoading}
             descError={descError}
+            descNotice={descNotice}
             aiLoading={aiLoading}
             aiModel={aiModel}
             gptLoading={gptLoading}

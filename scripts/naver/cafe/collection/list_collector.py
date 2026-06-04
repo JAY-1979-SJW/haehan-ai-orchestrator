@@ -4,6 +4,7 @@ This module normalizes the Cafe home API response used by
 ``https://section.cafe.naver.com``. It does not launch or close browsers and
 contains no state-changing actions.
 """
+
 from __future__ import annotations
 
 import json
@@ -91,7 +92,9 @@ def normalize_api_cafe(row: dict[str, Any], *, source: str = "join") -> CafeList
     )
 
 
-def parse_api_payload(payload: dict[str, Any] | str, *, source: str = "join") -> tuple[list[CafeListItem], dict[str, Any]]:
+def parse_api_payload(
+    payload: dict[str, Any] | str, *, source: str = "join"
+) -> tuple[list[CafeListItem], dict[str, Any]]:
     if isinstance(payload, str):
         payload = json.loads(payload)
     message = payload.get("message") if isinstance(payload, dict) else None
@@ -163,7 +166,7 @@ def evaluate_async(target_id: str, expr: str, *, port: int, timeout: float = 30.
     for page in cdp.list_pages(port):
         if page.get("id") != target_id:
             continue
-        ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=8)
+        ws = websocket.create_connection(page["webSocketDebuggerUrl"], timeout=8, suppress_origin=True)
         try:
             event = cdp._send(  # type: ignore[attr-defined]
                 ws,
@@ -190,5 +193,7 @@ def collect_cafe_list_from_target(
     time.sleep(max(0.0, wait_s))
     raw = evaluate_async(target_id, build_fetch_expression(per_page=per_page), port=port)
     if not isinstance(raw, dict):
-        return CafeListReport(ok=False, code="invalid_fetch_result", messages=["Cafe API fetch did not return an object."])
+        return CafeListReport(
+            ok=False, code="invalid_fetch_result", messages=["Cafe API fetch did not return an object."]
+        )
     return build_report(raw)

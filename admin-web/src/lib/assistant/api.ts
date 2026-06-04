@@ -876,7 +876,15 @@ export async function renderDescription(
 export async function aiGenerateDescription(
   data: Record<string, unknown>,
   model?: "quality",
-): Promise<{ ok: boolean; html?: string; warnings?: string[]; error?: string; errors?: string[] }> {
+): Promise<{
+  ok: boolean;
+  html?: string;
+  warnings?: string[];
+  error?: string;
+  errors?: string[];
+  fellback_to_gpt?: boolean;
+  notice?: string;
+}> {
   return postJson("/api/v1/smartstore/description/ai-generate", { data, model: model ?? null });
 }
 
