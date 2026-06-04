@@ -21,6 +21,7 @@ from .connectors.gmail_router import gmail_router
 from .connectors.google_router import google_router
 from .connectors.hanafax_router import hanafax_router
 from .connectors.hiworks_mail_router import hiworks_mail_router
+from .connectors.inquiry_router import inquiry_router
 from .connectors.kakao_setup_router import kakao_setup_router
 from .connectors.naver_blog_router import naver_blog_router
 from .connectors.naver_cafe_router import naver_cafe_router
@@ -82,6 +83,7 @@ router.include_router(naver_search_router)  # read-only naver search endpoints
 router.include_router(naver_news_router)  # read-only naver news scraping endpoints
 router.include_router(naver_cafe_router)  # read-only naver cafe collection endpoints
 router.include_router(community_router)  # 범용 커뮤니티 게시글 추출(휴리스틱→GPT)
+router.include_router(inquiry_router)  # 문의 게시판(공개 접수 + 관리자 조회)
 router.include_router(naver_mail_router)  # naver mail compose/send endpoints
 router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
