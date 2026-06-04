@@ -16,7 +16,7 @@ let isQuiting = false;
 function setQuiting(v) { isQuiting = v; }
 function getMainWindow() { return mainWindow; }
 
-function createMainWindow(licenseKey) {
+function createMainWindow(licenseKey, startHidden = false) {
   mainWindow = new BrowserWindow({
     width: 1280, height: 820,
     minWidth: 900, minHeight: 600,
@@ -40,7 +40,8 @@ function createMainWindow(licenseKey) {
     `&preload=${encodeURIComponent("file://" + webviewPreload)}`;
   mainWindow.loadURL(shellUrl);
 
-  mainWindow.once("ready-to-show", () => mainWindow.show());
+  // startHidden(=Windows 자동시작) 이면 창을 띄우지 않고 트레이에 대기
+  mainWindow.once("ready-to-show", () => { if (!startHidden) mainWindow.show(); });
 
   // 서버 내부 링크는 webview, 외부 링크는 시스템 브라우저
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

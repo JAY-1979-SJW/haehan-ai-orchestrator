@@ -72,6 +72,19 @@ if (!gotLock) {
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
 
+    // 자동시작 기본 ON (최초 1회만 설정 — 이후 트레이 토글 존중). 자동시작 시 --hidden 으로
+    // 떠서 트레이에 대기(창 안 띄움). CDP·서버는 백그라운드로 계속 동작.
+    try {
+      const _cfg0 = loadConfig();
+      if (!_cfg0.auto_launch_initialized) {
+        app.setLoginItemSettings({ openAtLogin: true, openAsHidden: true, args: ["--hidden"] });
+        saveConfig({ ..._cfg0, auto_launch_initialized: true });
+        console.log("[main] 자동시작 기본 활성화 (Windows 로그인 시 트레이 대기)");
+      }
+    } catch (e) {
+      console.warn("[main] 자동시작 설정 실패(무시):", e.message);
+    }
+
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
     try {
@@ -142,8 +155,9 @@ if (!gotLock) {
     // 소유자 모드 또는 저장된 라이선스 → 바로 시작
     if (isOwnerMode(cfg) || cfg.license_key) {
       const key = cfg.license_key || "OWNER";
+      const startHidden = process.argv.includes("--hidden");
       startAgent(key);
-      createMainWindow(key);
+      createMainWindow(key, startHidden);
       createTray(app.getLoginItemSettings().openAtLogin);
     } else {
       startLicenseFlow();
