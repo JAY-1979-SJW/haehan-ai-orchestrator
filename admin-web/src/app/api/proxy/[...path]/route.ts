@@ -46,9 +46,18 @@ function buildUpstreamHeaders(req: NextRequest): HeadersInit {
       headers[key] = value;
     }
   });
-  // 클라이언트가 Authorization(Bearer)을 보냈으면 그것을 우선. 없을 때만 서버 Basic 주입.
+  // 인증 우선순위: ① 클라이언트 Authorization(Bearer) → ② haehan_ai_token 쿠키(사용자 JWT)
+  // → ③ 서버 Basic. self-contained 앱은 ②(webview_preload 가 심는 쿠키)로 JWT 보호
+  // 엔드포인트(inbox/logs/ops/tasks 등)를 인증한다. 미설정 시에만 서버 Basic 폴백.
   const hasClientAuth = "Authorization" in headers || "authorization" in headers;
-  if (AUTH && !hasClientAuth) headers["Authorization"] = AUTH;
+  if (!hasClientAuth) {
+    const cookieTok = req.cookies.get("haehan_ai_token")?.value;
+    if (cookieTok) {
+      headers["Authorization"] = `Bearer ${decodeURIComponent(cookieTok)}`;
+    } else if (AUTH) {
+      headers["Authorization"] = AUTH;
+    }
+  }
   return headers;
 }
 
