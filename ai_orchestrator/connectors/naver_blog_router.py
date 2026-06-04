@@ -40,7 +40,52 @@ class SeoRequest(BaseModel):
     target_keywords: list[str] = []
 
 
+class AIGenerateRequest(BaseModel):
+    topic: str
+    tone: str = "정보형"
+
+
 # ── 엔드포인트 ───────────────────────────────────────────────────────────────
+
+
+@naver_blog_router.post("/ai-generate")
+def ai_generate_blog(
+    req: AIGenerateRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict[str, Any]:
+    """주제 → AI 가 제목·본문·태그 생성 (초안 작성용, 발행 아님)."""
+    import re
+
+    topic = (req.topic or "").strip()
+    if not topic:
+        return {"ok": False, "error": "주제를 입력하세요"}
+    from ai_orchestrator.openai_proxy_caller import call_openai_chat
+
+    prompt = (
+        "당신은 네이버 블로그 전문 작가입니다. 아래 주제로 블로그 글을 작성하세요.\n"
+        f"톤: {req.tone}. 자연스러운 한국어, 본문 800~1500자, 소제목(■) 활용.\n"
+        "아래 형식으로만 출력하세요. JSON 쓰지 마세요.\n"
+        "제목: (한 줄 제목)\n"
+        "태그: 태그1, 태그2, 태그3 (쉼표 구분, 최대 8개)\n"
+        "본문:\n"
+        "(여기에 본문 전체)\n\n"
+        f"주제: {topic}"
+    )
+    res = call_openai_chat(message=prompt)
+    if not res.ok:
+        return {"ok": False, "error": res.error_code or "생성 실패"}
+    text = res.text.strip()
+    title, tags, body = topic, [], text
+    mt = re.search(r"제목\s*[:：]\s*(.+)", text)  # noqa: RUF001
+    if mt:
+        title = mt.group(1).strip()
+    mg = re.search(r"태그\s*[:：]\s*(.+)", text)  # noqa: RUF001
+    if mg:
+        tags = [t.strip().lstrip("#") for t in re.split(r"[,，]", mg.group(1)) if t.strip()][:8]  # noqa: RUF001
+    mb = re.search(r"본문\s*[:：]\s*\n?(.+)", text, re.S)  # noqa: RUF001
+    if mb:
+        body = mb.group(1).strip()
+    return {"ok": True, "title": title, "body": body, "tags": tags}
 
 
 @naver_blog_router.post("/compose")
