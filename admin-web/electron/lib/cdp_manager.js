@@ -16,6 +16,7 @@ const CDP_PORT = 9222;
 const CDP_HOST = "127.0.0.1";
 
 let chromePid = null;
+let chromeLaunching = false;  // 중복 기동 가드 (watchdog가 기동 중 또 spawn하는 레이스 방지)
 
 function resolveChromeExe() {
   if (app.isPackaged) {
@@ -76,7 +77,21 @@ async function startCdpBrowser() {
     console.log("[cdp] 이미 실행 중");
     return true;
   }
+  // 이미 기동 중이면 중복 spawn 금지(여러 chrome이 같은 프로필을 다퉈 CDP 불안정해지는 문제).
+  // CDP가 뜰 때까지 대기만 한다.
+  if (chromeLaunching) {
+    console.log("[cdp] 기동 중 — 중복 실행 생략, CDP 대기");
+    return await waitCdp(15000);
+  }
+  chromeLaunching = true;
+  try {
+    return await _doStartCdp();
+  } finally {
+    chromeLaunching = false;
+  }
+}
 
+async function _doStartCdp() {
   const chromeExe = resolveChromeExe();
   if (!chromeExe) {
     console.warn("[cdp] Chrome 실행 파일 없음 — CDP 브라우저 수동 실행 필요");
