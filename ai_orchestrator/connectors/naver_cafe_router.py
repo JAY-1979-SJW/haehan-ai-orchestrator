@@ -248,6 +248,16 @@ def api_ai_analyze(
     if not articles:
         raise HTTPException(status_code=404, detail="조건에 맞는 게시글이 없습니다 (분류/기간 확인)")
 
+    # 전체 수집분을 대표하도록 조회수 상위로 샘플링(관심 높은 글이 흐름을 잘 보여줌).
+    def _views(a: dict) -> int:
+        try:
+            return int(str(a.get("view_count", "0")).replace(",", "") or 0)
+        except (ValueError, TypeError):
+            return 0
+
+    articles_sorted = sorted(articles, key=_views, reverse=True)
+    cap = max(1, min(body.max_posts, 600))
+
     # analyzer 입력 매핑(title/views/comments/date)
     posts = [
         {
@@ -256,8 +266,9 @@ def api_ai_analyze(
             "comments": a.get("comment_count", ""),
             "date": a.get("date", ""),
         }
-        for a in articles
-    ][: max(1, min(body.max_posts, 600))]
+        for a in articles_sorted
+    ][:cap]
+    total_collected = len(articles)
 
     _ensure_path()
     from scripts.community.analyzer import analyze_posts
@@ -282,6 +293,7 @@ def api_ai_analyze(
         **report,
         "source_file": path.name,
         "post_count": len(posts),
+        "total_collected": total_collected,
         "category": body.category,
         "days": body.days,
         "duration_ms": duration_ms,
