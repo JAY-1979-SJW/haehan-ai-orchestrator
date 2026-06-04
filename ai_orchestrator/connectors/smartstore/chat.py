@@ -43,7 +43,9 @@ SYSTEM_PROMPT = """당신은 스마트스토어 셀러센터 AI 에이전트입�
 - 상품 등록·수정 등 쓰기 작업은 confirmed=true일 때만 실행합니다
 - 조회·수집은 바로 실행합니다
 - 결과가 많으면 핵심만 요약해서 한국어로 간결하게 답변합니다
-- 도구 결과의 rows/items 배열은 건수와 주요 항목만 요약합니다"""
+- 도구 결과의 rows/items 배열은 건수와 주요 항목만 요약합니다
+- **목록을 답변할 때는 반드시 각 항목을 줄바꿈(\\n)으로 구분해 한 줄에 하나씩 출력합니다. 절대 한 줄에 여러 항목을 나열하지 마세요.**
+  예: "1. 첫째 항목\\n2. 둘째 항목\\n3. 셋째 항목" """
 
 
 # ── 도구 정의 ─────────────────────────────────────────────────────────────────
@@ -165,10 +167,18 @@ def _to_gpt_tools(confirmed: bool) -> list:
 # ── 로컬 도구 실행 ─────────────────────────────────────────────────────────────
 
 
-def _run_tool(name: str, inputs: dict, license_key: str | None = None) -> dict:
+def _run_tool(name: str, inputs: dict, license_key: str | None = None, images: list | None = None) -> dict:
     """도구 실행 — CDP 도구는 로컬 에이전트로, 나머지는 서버 직접 처리."""
     sys.path.insert(0, str(ROOT))
     from ._helpers import load_ss
+
+    images = images or []
+    # 첨부 사진 → 등록/수정 도구의 이미지 필드로 주입 (LLM이 명시 안 해도 자동 사용)
+    if images and name in ("auto_register_product", "edit_product"):
+        inputs = {**inputs}
+        inputs.setdefault("main_image", images[0])
+        if len(images) > 1:
+            inputs.setdefault("additional_images", images[1:])
 
     # ── 로컬 에이전트 라우팅 (CDP 도구) ────────────────────────────────────────
     if name in CDP_TOOLS and license_key:
@@ -326,6 +336,23 @@ def _run_tool(name: str, inputs: dict, license_key: str | None = None) -> dict:
                 return {**ProductFormRunner(page).edit(product_id, fields), "dry_run": True}
 
         if name == "generate_description":
+            data = inputs.get("data", {})
+            # 사진 첨부 또는 model=gpt → GPT(이미지 지원). 그 외 Claude.
+            if images or inputs.get("model") == "gpt":
+                from scripts.naver.smartstore.product.gpt_description_writer import (
+                    DEFAULT_MODEL as GPT_DEFAULT,
+                )
+                from scripts.naver.smartstore.product.gpt_description_writer import (
+                    QUALITY_MODEL as GPT_QUALITY,
+                )
+                from scripts.naver.smartstore.product.gpt_description_writer import (
+                    GptDescriptionWriter,
+                )
+
+                return GptDescriptionWriter(model=GPT_QUALITY if images else GPT_DEFAULT).generate(
+                    data, images=images or None
+                )
+
             from scripts.naver.smartstore.product.ai_description_writer import (
                 DEFAULT_MODEL,
                 QUALITY_MODEL,
@@ -334,7 +361,7 @@ def _run_tool(name: str, inputs: dict, license_key: str | None = None) -> dict:
 
             return AIDescriptionWriter(
                 model=QUALITY_MODEL if inputs.get("model") == "quality" else DEFAULT_MODEL
-            ).generate(inputs.get("data", {}))
+            ).generate(data)
 
         if name == "search_categories":
             from scripts.naver.smartstore.product.category_cache import load_cache
@@ -372,7 +399,7 @@ def _sse(event: str, data: dict) -> str:
 # ── Claude 루프 ───────────────────────────────────────────────────────────────
 
 
-def _run_claude(messages: list, confirmed: bool, license_key: str | None = None):
+def _run_claude(messages: list, confirmed: bool, license_key: str | None = None, images: list | None = None):
     import anthropic
 
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -417,7 +444,7 @@ def _run_claude(messages: list, confirmed: bool, license_key: str | None = None)
                 return
             step += 1
             yield _sse("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
-            result = _run_tool(b.name, dict(b.input), license_key)
+            result = _run_tool(b.name, dict(b.input), license_key, images)
             yield _sse(
                 "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
             )
@@ -434,7 +461,7 @@ def _run_claude(messages: list, confirmed: bool, license_key: str | None = None)
 # ── GPT 루프 ─────────────────────────────────────────────────────────────────
 
 
-def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None):
+def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None, images: list | None = None):
     from openai import OpenAI
 
     api_key = os.environ.get("OPENAI_API_KEY", "")
@@ -478,7 +505,7 @@ def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None):
                 return
             step += 1
             yield _sse("step_start", {"step": step, "tool": name, "inputs": inputs, "write": is_write})
-            result = _run_tool(name, inputs, license_key)
+            result = _run_tool(name, inputs, license_key, images)
             yield _sse("step_done", {"step": step, "tool": name, "ok": result.get("ok") is not False, "result": result})
             tool_results.append(
                 {"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)}
@@ -503,6 +530,7 @@ class ChatRequest(BaseModel):
     confirmed: bool = False
     provider: str = "gpt"  # "claude" | "gpt"
     license_key: str | None = None  # 로컬 에이전트 라우팅용
+    images: list[str] = []  # 채팅 첨부 사진(로컬 경로) — 상세설명 생성·상품 등록에 사용
 
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
@@ -512,6 +540,19 @@ class ChatRequest(BaseModel):
 def api_chat(body: ChatRequest, user: dict = Depends(require_role("admin", "owner"))):
     """자연어 명령 → LLM tool_use → 도구 실행(CDP=로컬, 나머지=서버) → SSE."""
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
+    images = body.images or []
+
+    # 첨부 사진이 있으면 LLM이 인지하도록 마지막 user 메시지에 힌트 추가
+    if images:
+        note = (
+            f"\n\n[첨부 사진 {len(images)}장이 있습니다. "
+            "상세설명 생성(generate_description)이나 상품 등록(auto_register_product) 시 "
+            "이 사진을 자동으로 사용합니다.]"
+        )
+        for m in reversed(messages):
+            if m["role"] == "user":
+                m["content"] += note
+                break
 
     # 라이선스 검증 (제공된 경우)
     lic_key = body.license_key
@@ -527,7 +568,7 @@ def api_chat(body: ChatRequest, user: dict = Depends(require_role("admin", "owne
     def generate():
         try:
             runner = _run_gpt if body.provider == "gpt" else _run_claude
-            yield from runner(messages, body.confirmed, lic_key)
+            yield from runner(messages, body.confirmed, lic_key, images)
         except Exception as e:
             yield _sse("error", {"message": str(e)})
 

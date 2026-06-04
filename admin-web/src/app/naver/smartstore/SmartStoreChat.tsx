@@ -46,6 +46,15 @@ export default function SmartStoreChat() {
   } | null>(null);
 
   const [quickOpen, setQuickOpen] = useState(false);
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
+  const lastImagesRef = useRef<string[]>([]);  // confirm 재실행 시 같은 사진 재사용
+
+  async function handleAttach() {
+    const hl = (window as unknown as { haehanLocal?: { pickImages?: () => Promise<string[]> } }).haehanLocal;
+    if (!hl?.pickImages) { alert("데스크탑 앱에서만 사진 선택이 가능합니다."); return; }
+    const imgs = await hl.pickImages();
+    if (imgs?.length) setAttachedImages((prev) => [...prev, ...imgs]);
+  }
   const abortRef  = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -90,8 +99,10 @@ export default function SmartStoreChat() {
     }
   }, []);
 
-  const execute = useCallback(async (userText: string, confirmed: boolean) => {
+  const execute = useCallback(async (userText: string, confirmed: boolean, imgs: string[] = []) => {
     if (!userText.trim() || running) return;
+    // 새 요청이면 사진 갱신, confirm 재실행이면 직전 사진 유지
+    if (!confirmed) lastImagesRef.current = imgs;
 
     // API 전송용 history를 동기적으로 구성 (ref → race 없음)
     let apiMessages: ChatMessage[];
@@ -119,7 +130,7 @@ export default function SmartStoreChat() {
       const res = await fetch("/api/smartstore/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, confirmed, provider }),
+        body: JSON.stringify({ messages: apiMessages, confirmed, provider, images: lastImagesRef.current }),
         signal: abortRef.current.signal,
       });
 
@@ -184,7 +195,8 @@ export default function SmartStoreChat() {
     const text = input.trim();
     if (!text) return;
     setInput("");
-    execute(text, false);
+    execute(text, false, attachedImages);
+    setAttachedImages([]);  // 전송 후 첨부 비움(전송된 사진은 lastImagesRef에 보존)
   }
 
   function handleChip(prompt: string) {
@@ -342,11 +354,32 @@ export default function SmartStoreChat() {
 
       {/* 입력창 */}
       <div className="shrink-0 px-4 py-3 border-t border-[#E5E7EB] bg-white">
+        {/* 첨부 사진 썸네일 */}
+        {attachedImages.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {attachedImages.map((img, i) => (
+              <div key={i} className="flex items-center gap-1 bg-[#FFF7ED] border border-[#FED7AA] rounded-lg pl-2 pr-1 py-1">
+                <span className="text-[11px] text-[#C2410C] max-w-[140px] truncate">🖼 {img.split(/[\\/]/).pop()}</span>
+                <button type="button" onClick={() => setAttachedImages((prev) => prev.filter((_, j) => j !== i))}
+                  className="text-[#9CA3AF] hover:text-[#DC2626] text-xs px-1">×</button>
+              </div>
+            ))}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <button
+            type="button"
+            onClick={handleAttach}
+            disabled={running}
+            title="사진 첨부"
+            className="shrink-0 px-3 py-2.5 rounded-xl border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50 transition-colors"
+          >
+            📎
+          </button>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="예: 무드등 29800원 재고 50개로 등록해줘"
+            placeholder="예: 이 사진으로 무드등 상세설명 만들어줘 / 29800원 재고 50개로 등록해줘"
             disabled={running}
             className="flex-1 border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#F97316]/30 focus:border-[#F97316] disabled:opacity-50 transition-all resize-none"
           />
