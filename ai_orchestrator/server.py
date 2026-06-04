@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("haehan-ai-orchestrator 시작 | host=%s port=%s", APP_HOST, APP_PORT)
+    _LOOPBACK_ONLY = {"127.0.0.1", "::1", "localhost"}
+    if APP_HOST not in _LOOPBACK_ONLY:
+        logger.warning(
+            "[보안] APP_HOST=%s — loopback 외 인터페이스 노출 상태입니다. 운영/패키징 환경에서는 127.0.0.1로 기동하세요.",
+            APP_HOST,
+        )
     task = asyncio.create_task(schedule_loop())
 
     # CDP 팝업 백그라운드 폴러 시작 (CDP 미연결 시 자동 재시도)
@@ -57,10 +63,16 @@ from .browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 app.add_middleware(BrowserGateMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "file://"],
-    allow_origin_regex=r"http://.*",
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "file://",
+    ],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
