@@ -11,6 +11,9 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/v1/users/signup",
   "/api/v1/users/login",
+  // 공개 문의 접수(비로그인). GET/PATCH 는 백엔드 require_role 이 보호하므로 안전.
+  "/api/proxy/api/v1/inquiries",
+  "/api/v1/inquiries",
 ];
 
 function isPublic(pathname: string): boolean {
