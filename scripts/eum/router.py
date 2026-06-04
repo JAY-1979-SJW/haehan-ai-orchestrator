@@ -4,6 +4,7 @@
 로그인 여부를 자동 확인 후 필요 시 즉시 재로그인한다.
 별도의 'eum login' 명령 없이도 항상 로그인 상태가 보장된다.
 """
+
 from __future__ import annotations
 
 from scripts.gate import check as gate_check
@@ -12,17 +13,17 @@ from scripts.logger import get_logger
 __status__ = {
     "tasks": {
         "extract (WEBMAN390M00)": "done",
-        "dashboard":              "done",
-        "promo-mail preview":     "done",
-        "promo-mail send":        "done",
+        "dashboard": "done",
+        "promo-mail preview": "done",
+        "promo-mail send": "done",
         "new-sites (WEBMAN380M00)": "done",
         "task-run (전체 파이프라인)": "done",
         # 신규 추가 (2026-05-12)
-        "login (자동 로그인)":         "done",
+        "login (자동 로그인)": "done",
         "monitor (통신단절/미사용 감지)": "done",
         "history (WEBMAN400M00 이력)": "done",
         "demolition (WEBMAN382M00 철거)": "done",
-        "explore (전체 사이트 탐색)":   "done",
+        "explore (전체 사이트 탐색)": "done",
         # 신규 추가 (2026-05-12 권한 기능)
         "registration (WEBMAN381M00 신규등록)": "done",
         "deregistration (WEBMAN382M00 말소)": "done",
@@ -41,8 +42,9 @@ def _get_page():
     세션이 없거나 만료됐으면 자동으로 재로그인.
     모든 브라우저 접근 명령에서 get_page() 대신 이 함수를 사용한다.
     """
-    from scripts.web_connector import get_page
     from scripts.eum.auth import ensure_logged_in
+    from scripts.web_connector import get_page
+
     page = get_page()
     ensure_logged_in(page)
     return page
@@ -102,14 +104,16 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
 
 # ── 명령 구현 ─────────────────────────────────────────────────────────
 
+
 def _cmd_extract(sub: str | None, args: list[str]) -> None:
     """단말기설치현황 전체 추출 (WEBMAN390M00)."""
     gate_check("eum_extract_all_devices")
-    page = _get_page()  # 자동 로그인 보장
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 단말기설치현황 추출")
     print("=" * 60)
     from scripts.eum_extract_all_devices import main
+
     main()
 
 
@@ -120,6 +124,7 @@ def _cmd_dashboard() -> None:
     print("EUM 업무 대시보드")
     print("=" * 60)
     from scripts.eum_business_dashboard import main
+
     main()
 
 
@@ -140,8 +145,11 @@ def _cmd_mail(sub: str | None, args: list[str]) -> None:
     print(f"EUM 홍보메일 {'발송' if mode == 'send' else '초안 생성'}")
     print("=" * 60)
     if mode == "send":
-        raise SystemExit("EUM sales-mail send is not wired here yet. Prepare a queue first, then use the approved company-mail sender.")
+        raise SystemExit(
+            "EUM sales-mail send is not wired here yet. Prepare a queue first, then use the approved company-mail sender."
+        )
     from scripts.eum.sales_mail import main
+
     limit = 30
     min_grade = "A"
     for arg in option_args:
@@ -153,30 +161,35 @@ def _cmd_mail(sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_new_sites() -> None:
-    """신규 현장 발굴 (WEBMAN380M00)."""
+    """신규 현장 전수 수집 (WEBMAN370M00 설치대상) → 영업메일 소스 저장."""
     gate_check("eum_extract_all_devices")
     print("=" * 60)
-    print("EUM 신규 현장 발굴")
+    print("EUM 신규 현장 전수 수집")
     print("=" * 60)
+    from scripts.eum.install_targets import collect_all_install_targets
     from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
+    from scripts.site_access import open_site
+
+    page = open_site("eum")
+    result = collect_all_install_targets(page)  # 표시개수 100 + 전 페이지 순회
+    print(f"수집 신규현장: {result.get('total', 0)}개 ({result.get('pages_visited', 0)}페이지)")
     rows = load_new_site_projects(DEFAULT_SOURCE)
     with_email = sum(1 for row in rows if row.get("이메일"))
-    print(f"source: {DEFAULT_SOURCE}")
-    print(f"projects: {len(rows)}")
-    print(f"with email: {with_email}")
+    print(f"저장: {result.get('saved_path', DEFAULT_SOURCE)}")
+    print(f"이메일 확보: {with_email}/{len(rows)}")
     print("next: python scripts/cdp_client.py eum sales-mail")
 
 
 def _cmd_install_targets(sub: str | None, args: list[str]) -> None:
     """Verify WEBMAN370M00 install targets from screen and optional Excel download."""
     gate_check("eum_extract_all_devices")
-    from scripts.site_access import open_site
     from scripts.eum.install_targets import (
         download_install_targets_excel,
         print_excel_download_summary,
         print_summary,
         verify_install_targets,
     )
+    from scripts.site_access import open_site
 
     page = open_site("eum")
     if sub in {"download-excel", "excel"} or "download-excel" in args or "excel" in args:
@@ -201,6 +214,7 @@ def _cmd_task_run() -> None:
     print("EUM 전체 작업 자동 실행")
     print("=" * 60)
     from scripts.eum_task_runner import main
+
     main()
 
 
@@ -212,6 +226,7 @@ def _cmd_login() -> None:
     print("=" * 60)
     _get_page()  # ensure_logged_in 내부에서 결과 출력
     from scripts.web_connector import get_page
+
     print(f"  현재 URL: {get_page().url}")
     print("=" * 60)
 
@@ -223,18 +238,20 @@ def _cmd_monitor() -> None:
     print("EUM 단말기 운용 모니터링")
     print("=" * 60)
     from scripts.eum.monitor import main
+
     main()
 
 
 def _cmd_history(sub: str | None, args: list[str]) -> None:
     """단말기 이력 조회 (WEBMAN400M00)."""
     gate_check("eum_extract_all_devices")
-    page = _get_page()  # 자동 로그인 보장
+    _get_page()  # 자동 로그인 보장
     print("=" * 60)
     print("EUM 단말기 이력 조회")
     print("=" * 60)
     device_id = sub or (args[0] if args else None)
     from scripts.eum.history import main
+
     main(device_id=device_id)
 
 
@@ -251,6 +268,7 @@ def _cmd_demolition(sub: str | None, args: list[str]) -> None:
     print("EUM 단말기 철거 관리")
     print("=" * 60)
     from scripts.eum.demolition import main
+
     main(apply=apply_mode, device_id=device_id)
 
 
@@ -262,14 +280,15 @@ def _cmd_explore() -> None:
     print("EUM 전체 사이트 세밀 탐색")
     print("=" * 60)
     from scripts.eum.full_explorer import main
+
     main()
 
 
 def _cmd_explore_accessible(sub: str | None = None, args: list[str] | None = None) -> None:
     """Explore pages available in the current account menu."""
     gate_check("eum_extract_all_devices")
-    from scripts.site_access import open_site
     from scripts.eum.access_explorer import explore_accessible_pages, print_summary, save_accessible_pages
+    from scripts.site_access import open_site
 
     page = open_site("eum")
     max_pages = int(sub) if sub and str(sub).isdigit() else None
@@ -282,8 +301,8 @@ def _cmd_explore_accessible(sub: str | None = None, args: list[str] | None = Non
 def _cmd_work_index() -> None:
     """Build a read-only EUM business/work index from the live UI."""
     gate_check("eum_extract_all_devices")
-    from scripts.site_access import open_site
     from scripts.eum.workspace import build_work_index, print_summary, save_work_index
+    from scripts.site_access import open_site
 
     page = open_site("eum")
     index = build_work_index(page)
@@ -294,8 +313,8 @@ def _cmd_work_index() -> None:
 def _cmd_capabilities() -> None:
     """Print current-account EUM workflow availability."""
     gate_check("eum_extract_all_devices")
-    from scripts.site_access import open_site
     from scripts.eum.workspace import build_work_index
+    from scripts.site_access import open_site
 
     page = open_site("eum")
     index = build_work_index(page)
@@ -339,8 +358,8 @@ def _cmd_open_menu(sub: str | None, args: list[str]) -> None:
         print("usage: python scripts/cdp_client.py eum open-menu <menu-name-or-WEBMAN-code>")
         return
 
-    from scripts.site_access import open_site
     from scripts.eum.menu_actions import open_menu_page, print_menu_result, save_menu_result
+    from scripts.site_access import open_site
 
     page = open_site("eum")
     result = open_menu_page(page, query)
@@ -488,6 +507,7 @@ def _cmd_registration(sub: str | None, args: list[str], *, submit: bool = False)
 
         result = register_device(project_code, project_code, device_id, location, submit=submit)
         import json
+
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return result
     else:
@@ -512,6 +532,7 @@ def _cmd_deregistration(sub: str | None, args: list[str], *, submit: bool = Fals
 
         result = deregister_device(device_id, date_str, submit=submit)
         import json
+
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return result
     else:
