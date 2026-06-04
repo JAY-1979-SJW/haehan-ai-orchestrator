@@ -225,7 +225,7 @@ export default function ReviewsClient() {
                 </div>
                 <div className="flex gap-3">
                   <span className="font-semibold text-[#6B7280] w-28 shrink-0">승인 상태</span>
-                  <span className="text-[#111827]">read-only (응답 발행은 approval_gated)</span>
+                  <span className="text-[#111827]">조회 전용 (답변 발행은 승인 후 실행)</span>
                 </div>
               </div>
             </div>
