@@ -83,7 +83,6 @@ export const NAV_GROUPS: NavGroup[] = [
     group: "개발 도구",
     items: [
       { key: "local-agents", label: "Local Agents", shortLabel: "Agents", href: "/local-agents" },
-      { key: "cad",          label: "AI CAD",       shortLabel: "CAD",    href: "/cad" },
       { key: "file-map",     label: "File Map",     shortLabel: "Files",  href: "/file-map" },
       { key: "deployment",   label: "배포 현황",    shortLabel: "배포",   href: "/assistant/deployment" },
       { key: "logs",         label: "시스템 로그",  shortLabel: "로그",   href: "/assistant/logs" },

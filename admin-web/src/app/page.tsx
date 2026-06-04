@@ -25,7 +25,6 @@ const QUICK_MENUS = [
   { href: "/naver/smartstore/settlements", label: "정산 관리",    desc: "정산 내역·요약",            color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
   { href: "/naver/smartstore/reviews",     label: "리뷰/문의",    desc: "고객 리뷰·문의 확인",       color: "#C2410C", bg: "#FFF7ED", border: "#FED7AA" },
   { href: "/naver/smartstore/stats",       label: "데이터 분석",  desc: "매출·방문 통계",            color: "#0891B2", bg: "#ECFEFF", border: "#A5F3FC" },
-  { href: "/cad",                          label: "CAD 자동화",   desc: "물량산출·안전구획도",       color: "#F97316", bg: "#FFF7ED", border: "#FED7AA" },
   { href: "/ops",                          label: "운영센터",     desc: "서버 상태·감사 로그",       color: "#374151", bg: "#F9FAFB", border: "#E5E7EB" },
   { href: "/gabia",                          label: "가비아",       desc: "도메인·DNS·호스팅 AI 자동화", color: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" },
   { href: "/hanafax",                        label: "하나팩스",     desc: "팩스 발송·큐·잔액 관리",      color: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" },
@@ -36,7 +35,6 @@ const QUICK_MENUS = [
 // ── 서비스 현황 카드 ──────────────────────────────────────────────────────────
 const SERVICE_STATUS = [
   { label: "KRAS 위험성평가", url: "https://kras.haehan-ai.kr", status: "운영중", color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
-  { label: "CAD 물량산출",   url: "/cad",                       status: "운영중", color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
   { label: "스마트스토어 AI", url: "/naver/smartstore",          status: "운영중", color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
   { label: "YouTube 자동화", url: "/youtube",                    status: "운영중", color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0" },
 ];
@@ -199,7 +197,7 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#F97316] flex items-center justify-center text-white font-bold text-sm shrink-0">AI</div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-bold text-[#111827]">Haehan AI 오케스트레이터</h1>
-              <p className="text-sm text-[#6B7280]">CAD 자동화 · 위험성평가 · 스마트스토어 · AI 에이전트</p>
+              <p className="text-sm text-[#6B7280]">위험성평가 · 스마트스토어 · AI 에이전트</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {user ? (

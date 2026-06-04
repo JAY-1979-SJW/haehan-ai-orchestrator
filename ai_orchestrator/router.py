@@ -13,8 +13,6 @@ from .audit_logger import log_event, read_recent_logs
 from .auth import require_role
 from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
-from .cad.router import cad_router
-from .cad_ai_router import cad_ai_router
 from .config_router import config_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
@@ -72,8 +70,6 @@ def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)
 router.include_router(sites_router)
-router.include_router(cad_router)
-router.include_router(cad_ai_router)
 router.include_router(web_task_router)
 router.include_router(local_agent_router)
 router.include_router(agent_ai_proxy_router)

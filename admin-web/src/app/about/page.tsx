@@ -7,24 +7,6 @@ import { useRouter } from "next/navigation";
 // ── 데이터 ────────────────────────────────────────────────────────────────────
 const FEATURES = [
   {
-    icon: "📐",
-    title: "CAD 물량산출 자동화",
-    desc: "DXF/DWG 도면을 업로드하면 AI가 자동으로 물량을 산출하고 Excel 산출서를 만들어 드립니다.",
-    detail: "며칠 걸리던 작업을 5분으로",
-    badge: "NEW",
-    badgeColor: "#F97316",
-    href: "/cad",
-  },
-  {
-    icon: "📋",
-    title: "안전구획도 자동 작성",
-    desc: "도면 정보 입력 → AI가 안전구획도를 자동으로 그려 CAD 파일로 출력합니다.",
-    detail: "착공 전 필수 도면 자동화",
-    badge: "NEW",
-    badgeColor: "#F97316",
-    href: "/cad",
-  },
-  {
     icon: "🛡️",
     title: "위험성평가 (KRAS)",
     desc: "KOSHA DB 연동으로 법적 제출용 위험성평가표를 자동 생성합니다. 월 1회 DB 자동 갱신.",
@@ -65,7 +47,7 @@ const FEATURES = [
 
 const HOW_IT_WORKS = [
   { step: "01", title: "회원가입", desc: "이메일과 비밀번호로 30초 만에 가입합니다." },
-  { step: "02", title: "기능 선택", desc: "CAD 자동화, 스마트스토어, AI 에이전트 중 필요한 기능을 선택합니다." },
+  { step: "02", title: "기능 선택", desc: "스마트스토어, AI 에이전트 중 필요한 기능을 선택합니다." },
   { step: "03", title: "자동화 실행", desc: "도면·데이터를 업로드하거나 AI에게 지시하면 결과물이 자동으로 만들어집니다." },
 ];
 
@@ -74,7 +56,7 @@ const PLANS = [
     name: "Free",
     price: "무료",
     desc: "기본 기능 무제한 체험",
-    features: ["CAD 물량산출 월 10회", "스마트스토어 AI 채팅", "운영센터 조회", "이메일 지원"],
+    features: ["스마트스토어 AI 채팅", "운영센터 조회", "이메일 지원"],
     cta: "무료로 시작하기",
     ctaHref: "/signup",
     highlight: false,
@@ -83,7 +65,7 @@ const PLANS = [
     name: "Pro",
     price: "문의",
     desc: "실서비스 전체 기능",
-    features: ["CAD 자동화 무제한", "안전구획도 자동 작성", "스마트스토어 완전 자동화", "YouTube 자동화", "AI 에이전트 전체", "감사 로그 전체 이력", "우선 지원"],
+    features: ["스마트스토어 완전 자동화", "YouTube 자동화", "AI 에이전트 전체", "감사 로그 전체 이력", "우선 지원"],
     cta: "도입 문의",
     ctaHref: "mailto:skyjwshin@gmail.com",
     highlight: true,
@@ -158,7 +140,7 @@ export default function AboutPage() {
           <span className="text-[#F97316]">모든 업무를 AI가</span> 자동으로
         </h1>
         <p className="text-base sm:text-lg text-[#6B7280] max-w-2xl mx-auto mb-8 leading-relaxed">
-          CAD 물량산출서, 안전구획도, 위험성평가표 — 착공 전 필수 서류 3종을 도면 하나로.<br className="hidden sm:block" />
+          위험성평가표 — 착공 전 필수 서류를 자동으로.<br className="hidden sm:block" />
           스마트스토어·YouTube까지 AI 에이전트가 한 번에 처리합니다.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -181,8 +163,8 @@ export default function AboutPage() {
         {/* 수치 */}
         <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
           {[
-            { v: "5분", l: "물량산출 소요 시간" },
-            { v: "3종", l: "착공 서류 자동화" },
+            { v: "AI", l: "자동화 에이전트" },
+            { v: "전체", l: "업무 자동화" },
             { v: "24/7", l: "자동 운영" },
             { v: "실서비스", l: "데모 아닌 실제 운영" },
           ].map((s) => (

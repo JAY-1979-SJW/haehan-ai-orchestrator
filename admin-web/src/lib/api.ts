@@ -192,42 +192,6 @@ export function getLocalAgentsDiagnostics(): Promise<LocalAgentDiagnosticsRespon
   return apiFetch<LocalAgentDiagnosticsResponse>("/local-agents/diagnostics");
 }
 
-export interface CadChatRequest {
-  agent_id: string;
-  message: string;
-  conversation?: Array<{ role: "user" | "assistant"; content: string }>;
-}
-
-export interface CadChatResponse {
-  reply: string;
-  action: string | null;
-  params: Record<string, unknown> | null;
-  task_id: string | null;
-  task_status: string | null;
-  confidence: number;
-  ai_used: boolean;
-}
-
-export function chatWithCad(body: CadChatRequest): Promise<CadChatResponse> {
-  return apiFetch<CadChatResponse>("/cad-ai/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export interface CadActionItem {
-  name: string;
-  label: string;
-  description: string;
-  params: Record<string, unknown>;
-  risk: string;
-}
-
-export function getCadActions(): Promise<{ actions: CadActionItem[] }> {
-  return apiFetch<{ actions: CadActionItem[] }>("/cad-ai/actions");
-}
-
 export interface SubmitTaskRequest {
   action: string;
   params?: Record<string, unknown>;
