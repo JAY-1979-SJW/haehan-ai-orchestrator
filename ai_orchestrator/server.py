@@ -25,6 +25,15 @@ async def lifespan(app: FastAPI):
         )
     task = asyncio.create_task(schedule_loop())
 
+    # 커뮤니티 자율 분석 스케줄러 (등록 사이트 주기 수집·분석·리포트)
+    try:
+        from .connectors.community_scheduler import community_schedule_loop
+
+        community_task = asyncio.create_task(community_schedule_loop())
+    except Exception as e:
+        community_task = None
+        logger.warning("커뮤니티 스케줄러 시작 실패 (무시): %s", e)
+
     # CDP 팝업 백그라운드 폴러 시작 (CDP 미연결 시 자동 재시도)
     try:
         import pathlib
@@ -47,6 +56,12 @@ async def lifespan(app: FastAPI):
             await task
         except asyncio.CancelledError:
             pass
+        if community_task:
+            community_task.cancel()
+            try:
+                await community_task
+            except asyncio.CancelledError:
+                pass
         if poller:
             try:
                 stop_poller()

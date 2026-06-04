@@ -174,3 +174,37 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
         note=f"method={method} posts={len(posts)}",
     )
     return {**report, "source_method": method, "posts": posts[:50]}
+
+
+# ── 자율 스케줄러 (리포트 조회 + 수동 실행) ──────────────────────────────────
+
+
+@community_router.get("/reports")
+def reports(limit: int = 10, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """저장된 자율 분석 리포트 목록 + 스케줄 상태."""
+    _ensure_path()
+    from scripts.community.scheduler import get_state, list_reports
+
+    return {"ok": True, "state": get_state(), "reports": list_reports(limit=max(1, min(limit, 30)))}
+
+
+@community_router.post("/run-now")
+def run_now(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """등록된 모든 사이트를 지금 즉시 수집·분석·리포트 저장."""
+    _ensure_path()
+    from scripts.community.scheduler import run_all_sites
+
+    try:
+        rep = run_all_sites(reason="manual")
+    except Exception as e:
+        logger.exception("community run-now error")
+        raise HTTPException(status_code=500, detail=f"실행 실패: {e}")
+    log_event(
+        "COMMUNITY_RUN_NOW",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"sites={rep.get('site_count')} ok={rep.get('ok_count')}",
+    )
+    return {"ok": True, **rep}
