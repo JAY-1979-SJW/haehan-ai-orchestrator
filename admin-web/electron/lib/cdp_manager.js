@@ -97,7 +97,7 @@ async function startCdpBrowser() {
     "--disable-infobars",
     "--disable-session-crashed-bubble",
     "--hide-crash-restore-bubble",
-    "--start-maximized",
+    "--window-size=1100,800",
   ], {
     detached: true,
     stdio: "ignore",
@@ -108,7 +108,23 @@ async function startCdpBrowser() {
 
   const ok = await waitCdp(15000);
   if (!ok) console.error("[cdp] Chrome CDP 응답 타임아웃");
+  else minimizeCdpWindow();  // 백그라운드: CDP 준비 후 우리 창만 최소화(로그인 필요 시 복원)
   return ok;
+}
+
+/** CDP 크롬 창을 백그라운드로 최소화 (우리 PID의 창만, 사용자 다른 크롬엔 영향 없음). */
+function minimizeCdpWindow() {
+  if (process.platform !== "win32" || !chromePid) return;
+  // 우리가 띄운 chrome.exe 의 자식 포함, 해당 PID 트리의 MainWindowHandle 만 최소화(6=SW_MINIMIZE)
+  const ps =
+    "$ErrorActionPreference='SilentlyContinue';" +
+    "Add-Type -Name U -Namespace W -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(System.IntPtr h,int n);';" +
+    `$ids=@(${chromePid}); ` +
+    `Get-CimInstance Win32_Process -Filter \"ParentProcessId=${chromePid}\" | ForEach-Object { $ids+=$_.ProcessId };` +
+    "Get-Process -Id $ids -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { [W.U]::ShowWindowAsync($_.MainWindowHandle,6) | Out-Null }";
+  try {
+    require("child_process").exec(`powershell -NoProfile -WindowStyle Hidden -Command "${ps}"`, () => {});
+  } catch (_) { /* best-effort */ }
 }
 
 function stopCdpBrowser() {
