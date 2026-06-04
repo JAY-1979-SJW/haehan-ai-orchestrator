@@ -430,6 +430,19 @@ def ensure_naver_login(
     return_url: str | None = None,
 ) -> dict[str, Any]:
     """현재 페이지의 네이버 도메인 로그인 확인 → 미로그인이면 자동 로그인 → 원래 페이지 복귀."""
+    # 현재 페이지가 네이버 도메인이 아니면 로그인 판정 전에 네이버로 이동
+    # (호출처가 about:blank/타 사이트에 있어도 쿠키 기반 로그인을 올바로 감지하기 위함)
+    try:
+        _cur = page.url or ""
+    except Exception:
+        _cur = ""
+    if "naver.com" not in _cur:
+        try:
+            page.goto("https://www.naver.com/", timeout=20000, wait_until="domcontentloaded")
+            time.sleep(1)
+        except Exception:
+            pass
+
     state = detect_login_state(page)
     if state.get("logged_in"):
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
