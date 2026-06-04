@@ -19,13 +19,14 @@
     from scripts.logger import set_level
     set_level("DEBUG")
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import sys
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LOG_DIR = ROOT / "data" / "logs"
@@ -33,14 +34,14 @@ LOG_FILE = LOG_DIR / "app.log"
 
 # ── 포맷 ─────────────────────────────────────────────────────────────
 _FMT_CONSOLE = "%(levelname)s  %(name)s │ %(message)s"
-_FMT_FILE    = "%(asctime)s  %(levelname)s  %(name)s │ %(message)s"
-_DATE_FMT    = "%Y-%m-%d %H:%M:%S"
+_FMT_FILE = "%(asctime)s  %(levelname)s  %(name)s │ %(message)s"
+_DATE_FMT = "%Y-%m-%d %H:%M:%S"
 
 # ── 레벨 매핑 ────────────────────────────────────────────────────────
 _LEVEL_MAP = {
     "DEBUG": logging.DEBUG,
-    "INFO":  logging.INFO,
-    "WARN":  logging.WARNING,
+    "INFO": logging.INFO,
+    "WARN": logging.WARNING,
     "WARNING": logging.WARNING,
     "ERROR": logging.ERROR,
 }
@@ -59,17 +60,22 @@ def _init_root() -> None:
 
     root.setLevel(logging.DEBUG)  # 핸들러가 레벨 게이트를 담당
 
-    # 콘솔 핸들러
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(_resolve_level())
-    ch.setFormatter(logging.Formatter(_FMT_CONSOLE))
-    root.addHandler(ch)
+    # 콘솔 핸들러 (frozen exe의 cp949 stdout에서도 한글·em-dash 안전 기록)
+    stream = sys.stdout
+    if stream is not None:
+        try:
+            # utf-8 로 강제 + 인코딩 불가 문자는 대체(크래시 방지)
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+        except Exception:
+            pass
+        ch = logging.StreamHandler(stream)
+        ch.setLevel(_resolve_level())
+        ch.setFormatter(logging.Formatter(_FMT_CONSOLE))
+        root.addHandler(ch)
 
-    # 파일 핸들러 (최대 5MB × 3개 로테이션)
+    # 파일 핸들러 (최대 5MB x 3개 로테이션)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    fh = RotatingFileHandler(
-        LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-    )
+    fh = RotatingFileHandler(LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
     fh.setLevel(logging.DEBUG)  # 파일은 항상 전체 기록
     fh.setFormatter(logging.Formatter(_FMT_FILE, datefmt=_DATE_FMT))
     root.addHandler(fh)
@@ -79,6 +85,7 @@ _init_root()
 
 
 # ── 공개 API ─────────────────────────────────────────────────────────
+
 
 def get_logger(name: str) -> logging.Logger:
     """모듈별 로거 반환.

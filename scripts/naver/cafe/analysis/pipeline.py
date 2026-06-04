@@ -9,10 +9,10 @@ Stage 3: TF-IDF 유사도 군집화 (미분류 보완)
     python -m scripts.naver.cafe.pipeline --input data/cafe/raw_articles_*.json
     python -m scripts.naver.cafe.pipeline  # data/cafe/ 최신 파일 자동 선택
 """
+
 from __future__ import annotations
 
 import json
-import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -24,8 +24,7 @@ _DATA_DIR = ROOT / "data" / "cafe"
 def _load_raw(input_path: str | None = None) -> list[dict]:
     if input_path:
         return json.loads(Path(input_path).read_text(encoding="utf-8"))
-    files = sorted(_DATA_DIR.glob("raw_articles_*.json"),
-                   key=lambda f: f.stat().st_mtime, reverse=True)
+    files = sorted(_DATA_DIR.glob("raw_articles_*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
     if not files:
         raise FileNotFoundError(f"수집 파일 없음: {_DATA_DIR}")
     print(f"[pipeline] 입력 파일: {files[0].name}")
@@ -35,26 +34,25 @@ def _load_raw(input_path: str | None = None) -> list[dict]:
 def _stage3_tfidf(articles: list[dict], classified: list[dict]) -> list[dict]:
     """Stage 3: TF-IDF 코사인 유사도로 미분류 보완."""
     try:
+        import numpy as np
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
-        import numpy as np
-    except ImportError:
+    except Exception:
+        # sklearn 미설치/번들 누락(frozen exe의 OSError 포함) → TF-IDF 보완 생략
         return classified
 
     needs_review_idx = [i for i, c in enumerate(classified) if c.get("needs_review")]
     if not needs_review_idx:
         return classified
 
-    high_conf = [(i, c) for i, c in enumerate(classified)
-                 if c["confidence"] in ("high", "medium") and not c.get("needs_review")]
+    high_conf = [
+        (i, c) for i, c in enumerate(classified) if c["confidence"] in ("high", "medium") and not c.get("needs_review")
+    ]
     if not high_conf:
         return classified
 
     # 텍스트 준비
-    all_texts = [
-        (articles[i].get("title", "") + " " + articles[i].get("body", ""))[:500]
-        for i in range(len(articles))
-    ]
+    all_texts = [(articles[i].get("title", "") + " " + articles[i].get("body", ""))[:500] for i in range(len(articles))]
     try:
         vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 3), max_features=3000)
         tfidf = vec.fit_transform(all_texts)
@@ -70,14 +68,16 @@ def _stage3_tfidf(articles: list[dict], classified: list[dict]) -> list[dict]:
             best_score = float(sims[j][best_ref_j])
             if best_score >= 0.25:
                 ref_cls = classified[ref_indices[best_ref_j]]
-                classified[review_i].update({
-                    "type": ref_cls["type"],
-                    "category": ref_cls["category"],
-                    "confidence": "medium",
-                    "stage": 3,
-                    "needs_review": False,
-                    "tfidf_similarity": round(best_score, 3),
-                })
+                classified[review_i].update(
+                    {
+                        "type": ref_cls["type"],
+                        "category": ref_cls["category"],
+                        "confidence": "medium",
+                        "stage": 3,
+                        "needs_review": False,
+                        "tfidf_similarity": round(best_score, 3),
+                    }
+                )
     except Exception as e:
         print(f"[pipeline] Stage3 TF-IDF 실패 (무시): {e}")
 
@@ -180,7 +180,9 @@ def run_pipeline(input_path: str | None = None) -> dict:
 
 
 if __name__ == "__main__":
-    import argparse, sys
+    import argparse
+    import sys
+
     sys.path.insert(0, str(ROOT))
     p = argparse.ArgumentParser()
     p.add_argument("--input", default=None)
