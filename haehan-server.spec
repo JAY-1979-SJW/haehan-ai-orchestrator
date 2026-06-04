@@ -97,6 +97,10 @@ hidden_imports = [
     "email.mime",
     "email.mime.text",
     "email.mime.multipart",
+    # 메일 프로토콜 (hiworks_mail_reader.py 가 동적 로드 — 정적분석 누락 방지)
+    "poplib",
+    "imaplib",
+    "smtplib",
     "jinja2",
     "yaml",
     "toml",
