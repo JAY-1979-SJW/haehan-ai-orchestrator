@@ -29,6 +29,43 @@ if py_files:
         print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
         sys.exit(1)
 
+# ── 프론트(.ts/.tsx) 검사 ───────────────────────────────────────────────────
+all_staged = r.stdout.splitlines()
+ts_files = [f for f in all_staged if f.endswith((".ts", ".tsx")) and f.startswith("admin-web/")]
+
+# 대량 삭제 경고 (비차단) — 코드 보존 원칙(기존 코드 무단 삭제 금지) 환기
+nstat = subprocess.run(
+    ["git", "diff", "--cached", "--numstat", "--diff-filter=M"],
+    cwd=str(ROOT), capture_output=True, text=True,
+)
+big = []
+for line in nstat.stdout.splitlines():
+    parts = line.split("\t")
+    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+        added, deleted, path = int(parts[0]), int(parts[1]), parts[2]
+        if path.endswith((".py", ".ts", ".tsx")) and (deleted - added) >= 60:
+            big.append((path, deleted, added))
+if big:
+    print("WARN: 대량 코드 삭제 감지 — 코드 보존 원칙 확인:")
+    for path, d, a in big:
+        print(f"      {path}: -{d}/+{a}")
+    print("      의도된 삭제면 그대로 진행됩니다(경고만, 차단 안 함).")
+
+# 프론트 타입체크 (차단) — npm/.cmd 셸 의존 회피 위해 node 로 tsc 직접 호출
+if ts_files:
+    tsc = ROOT / "admin-web" / "node_modules" / "typescript" / "bin" / "tsc"
+    if tsc.exists():
+        print("[tsc] 프론트 타입체크 (tsconfig.app.json)…")
+        tc = subprocess.run(
+            ["node", str(tsc), "--noEmit", "-p", "tsconfig.app.json"],
+            cwd=str(ROOT / "admin-web"),
+        )
+        if tc.returncode != 0:
+            print("[tsc] 프론트 타입 오류가 있습니다. 수정 후 재커밋하세요.")
+            sys.exit(1)
+    else:
+        print("[tsc] typescript 미설치 — 프론트 타입체크 스킵")
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os
