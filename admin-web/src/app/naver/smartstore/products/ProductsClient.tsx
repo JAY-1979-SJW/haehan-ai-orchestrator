@@ -168,12 +168,16 @@ export default function ProductsClient() {
       const data = JSON.parse(descData);
       const images = gptImages.split("\n").map(s => s.trim()).filter(Boolean);
       const base = (useTemplateBase && templateBase) ? templateBase : undefined;
-      const res = await gptGenerateDescription(data, images, gptModel === "quality" ? "quality" : undefined, base);
+      // 전역 AI 모델(설정 페이지) 에 따라 GPT/Claude 자동 라우팅 — 사용자는 모델 안 고름
+      const model = (typeof window !== "undefined" ? localStorage.getItem("haehan_ai_model") : null) || "fast";
+      const res = model === "claude"
+        ? await aiGenerateDescription(data, "quality")
+        : await gptGenerateDescription(data, images, model === "quality" ? "quality" : undefined, base);
       if (res.ok && res.html) {
         setDescHtml(res.html);
-        if (res.image_analysis) setGptAnalysis(res.image_analysis);
+        if ("image_analysis" in res && res.image_analysis) setGptAnalysis(res.image_analysis as Record<string, unknown>);
       } else {
-        const msgs = res.errors ?? (res.error ? [res.error] : ["GPT 생성 실패"]);
+        const msgs = res.errors ?? (res.error ? [res.error] : ["AI 생성 실패"]);
         setDescError(msgs.join("\n"));
       }
     } catch (e) {

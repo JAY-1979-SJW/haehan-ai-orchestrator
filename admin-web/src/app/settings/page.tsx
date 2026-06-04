@@ -29,6 +29,16 @@ export default function SettingsPage() {
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSuccess, setPwSuccess] = useState(false);
 
+  // AI 모델 전역 설정 (localStorage) — 상세설명·AI 생성이 이 값을 사용
+  const [aiModel, setAiModelState] = useState("fast");
+  useEffect(() => {
+    try { setAiModelState(localStorage.getItem("haehan_ai_model") || "fast"); } catch { /* ignore */ }
+  }, []);
+  const changeAiModel = (v: string) => {
+    setAiModelState(v);
+    try { localStorage.setItem("haehan_ai_model", v); } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     getMe().then((u) => {
       if (!u) { router.push("/login"); return; }
@@ -125,6 +135,18 @@ export default function SettingsPage() {
             <p className="text-xs text-[#9CA3AF] mt-1">사용자 승인·관리, 라이선스, 운영센터</p>
           </Link>
         )}
+
+        {/* AI 모델 (전역) */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
+          <h2 className="text-sm font-bold text-[#111827] mb-1">AI 모델</h2>
+          <p className="text-xs text-[#6B7280] mb-3">상품 상세설명·AI 생성에 쓸 모델입니다. 스마트스토어 등 모든 화면에 적용됩니다.</p>
+          <select value={aiModel} onChange={(e) => changeAiModel(e.target.value)}
+            className="w-full border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]">
+            <option value="fast">빠름 — GPT-4o mini (저렴·빠름, 권장)</option>
+            <option value="quality">고품질 — GPT-4o (이미지 분석 강함)</option>
+            <option value="claude">Claude (고품질, 자연스러운 문장)</option>
+          </select>
+        </div>
 
         {/* 비밀번호 변경 */}
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">

@@ -168,16 +168,6 @@ export default function DescTab({
           placeholder={"📁 사진 선택 버튼을 쓰거나, 사진을 여기로 끌어다 놓으세요.\n(URL·경로 직접 입력도 가능 — 한 줄에 하나)"}
           className="w-full border border-dashed border-[#A7F3D0] rounded-lg p-2 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#16A34A] resize-none"
         />
-        <div className="flex gap-1">
-          <button onClick={() => onSetGptModel("default")}
-            className={`flex-1 py-1.5 text-xs rounded-lg border font-semibold transition-colors ${gptModel==="default" ? "bg-[#16A34A] text-white border-[#16A34A]" : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F9FAFB]"}` }>
-            GPT-4o mini (빠름)
-          </button>
-          <button onClick={() => onSetGptModel("quality")}
-            className={`flex-1 py-1.5 text-xs rounded-lg border font-semibold transition-colors ${gptModel==="quality" ? "bg-[#16A34A] text-white border-[#16A34A]" : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F9FAFB]"}` }>
-            GPT-4o (Vision)
-          </button>
-        </div>
         {templateBase && (
           <label className="flex items-center gap-2 text-xs text-[#374151] bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-2.5 py-2 cursor-pointer">
             <input type="checkbox" checked={useTemplateBase} onChange={(e) => onToggleTemplateBase(e.target.checked)} />
@@ -185,9 +175,10 @@ export default function DescTab({
           </label>
         )}
         <button onClick={onGptGenerate} disabled={gptLoading || aiLoading || descLoading}
-          className="w-full py-2.5 rounded-xl bg-[#16A34A] text-white text-xs font-semibold hover:bg-[#15803D] disabled:opacity-50 transition-colors">
-          {gptLoading ? "GPT 생성 중…" : (templateBase && useTemplateBase) ? "🤖 템플릿 기반 AI 수정" : "🤖 GPT로 자동 생성"}
+          className="w-full py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-semibold hover:bg-[#15803D] disabled:opacity-50 transition-colors">
+          {gptLoading || aiLoading ? "AI 생성 중…" : (templateBase && useTemplateBase) ? "🤖 템플릿 기반 AI 수정" : "🤖 AI 상세설명 생성"}
         </button>
+        <p className="text-[11px] text-[#9CA3AF] text-center">모델(GPT/Claude)은 설정 페이지에서 선택합니다</p>
         {gptAnalysis && (
           <details className="text-xs">
             <summary className="cursor-pointer text-[#6B7280] hover:text-[#374151]">이미지 분석 결과 보기</summary>
@@ -198,47 +189,14 @@ export default function DescTab({
         )}
       </div>
 
-      {/* AI 생성 + 섹션 렌더링 버튼 */}
-      <div className="flex gap-2">
-        <div className="flex-1 space-y-1">
-          <div className="flex gap-1">
-            <button
-              onClick={() => onSetAiModel("default")}
-              className={`flex-1 py-1.5 text-xs rounded-lg border font-semibold transition-colors ${
-                aiModel === "default"
-                  ? "bg-[#7C3AED] text-white border-[#7C3AED]"
-                  : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F9FAFB]"
-              }`}
-            >
-              Haiku (빠름)
-            </button>
-            <button
-              onClick={() => onSetAiModel("quality")}
-              className={`flex-1 py-1.5 text-xs rounded-lg border font-semibold transition-colors ${
-                aiModel === "quality"
-                  ? "bg-[#7C3AED] text-white border-[#7C3AED]"
-                  : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F9FAFB]"
-              }`}
-            >
-              Sonnet (고품질)
-            </button>
-          </div>
-          <button
-            onClick={onAiGenerate}
-            disabled={aiLoading || descLoading}
-            className="w-full py-3 rounded-xl bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] disabled:opacity-50 transition-colors"
-          >
-            {aiLoading ? "AI 생성 중…" : "✨ AI로 자동 생성"}
-          </button>
-        </div>
-        <button
-          onClick={onRenderDesc}
-          disabled={descLoading || aiLoading || selectedSections.length === 0}
-          className="flex-1 py-3 rounded-xl bg-[#1D4ED8] text-white text-sm font-semibold hover:bg-[#1E40AF] disabled:opacity-50 transition-colors"
-        >
-          {descLoading ? "렌더링 중…" : `섹션 빌더 (${selectedSections.length}개)`}
-        </button>
-      </div>
+      {/* AI 없이 폼 데이터로 만들기 (보조) */}
+      <button
+        onClick={onRenderDesc}
+        disabled={descLoading || aiLoading || selectedSections.length === 0}
+        className="w-full py-2 rounded-xl border border-[#1D4ED8] text-[#1D4ED8] text-xs font-semibold hover:bg-[#EFF6FF] disabled:opacity-50 transition-colors"
+      >
+        {descLoading ? "렌더링 중…" : `🧩 AI 없이 폼 데이터로 만들기 (섹션 ${selectedSections.length}개)`}
+      </button>
 
       {/* 오류 */}
       {descError && (
