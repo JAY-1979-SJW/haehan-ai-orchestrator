@@ -216,3 +216,15 @@ data/*.db
 
 # 검증 스크립트
 admin-web/verify_*.js
+
+# ── 빌드·테스트·런타임 산출물 (배포·추적 제외) ──
+dist-installer/
+**/playwright-report/
+**/test-results/
+data/*.jpg
+data/e2e_report/
+data/promo_video/
+data/grant_radar/
+data/local/
+docs/app-extracted*/
+dist-installer/app-extracted*/
