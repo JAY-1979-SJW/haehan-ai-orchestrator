@@ -101,8 +101,10 @@ router.include_router(session_status_router)  # 앱별 로그인 세션 현황
 router.include_router(hanafax_router)  # 하나팩스 팩스 발송
 
 from .routers.deploy_router import router as deploy_router  # noqa: E402
+from .routers.server_router import router as server_router  # noqa: E402
 
 router.include_router(deploy_router)  # GitHub webhook → 자동 배포
+router.include_router(server_router)  # 서버 인스턴스/헬스/배포 개요
 router.include_router(config_router)  # 데스크톱 env 배포 + 로컬 재로딩
 
 from .connectors.grant_radar_router import grant_radar_router  # noqa: E402
