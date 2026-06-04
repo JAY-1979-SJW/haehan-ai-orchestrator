@@ -6,7 +6,6 @@ import {
   getCafeSummary, getMyCafes, getCafeArticles, getCafeKB,
   type MyCafe, type CafeArticle, type CafeSummary, type CafeKB, type CafeCategorySummary,
 } from "@/lib/assistant/api";
-import { ReadOnlyModeBanner } from "@/components/assistant/ReadOnlyModeBanner";
 
 type Tab = "summary" | "my-cafes" | "articles" | "report";
 
@@ -233,11 +232,10 @@ export function CafeClient() {
   return (
     <PageShell title="카페 탐색" description="네이버 카페 수집 · 분석" chatDomain="naver">
       <div className="space-y-4">
-      <ReadOnlyModeBanner />
       <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg font-bold text-[#111827]">네이버 카페</span>
-          <span className="text-xs bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] px-2 py-0.5 rounded font-semibold">조회 전용</span>
+          <span className="text-xs bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-2 py-0.5 rounded font-semibold">수집 · 분석</span>
         </div>
 
         <div className="flex gap-1 border-b border-[#E5E7EB] mb-4">
