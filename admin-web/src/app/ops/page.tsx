@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import type { ExternalWebTaskSummary, SafetyPolicyNotice } from "./lib/types";
 import {
   fetchAgentStatuses,
@@ -52,7 +52,9 @@ function buildExternalSummaries(tasks: Awaited<ReturnType<typeof fetchWebTasks>>
 }
 
 export default async function OpsPage() {
-  const authorization = headers().get("authorization");
+  const authHeader = headers().get("authorization");
+  const cookieToken = cookies().get("haehan_ai_token")?.value;
+  const authorization = authHeader ?? (cookieToken ? `Bearer ${decodeURIComponent(cookieToken)}` : null);
   const [
     metrics,
     approvalQueue,

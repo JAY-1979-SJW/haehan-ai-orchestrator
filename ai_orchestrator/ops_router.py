@@ -17,19 +17,21 @@
   - DB write 없음. schema 변경 없음.
   - 기존 API 응답 key/status code 변경 없음.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from datetime import UTC
 
 from fastapi import APIRouter, Depends, Query
 
-from .auth import require_role
-from .dev_reg_approval import list_pending as _list_pending, mark_expired_internal as _mark_expired
-from .audit_logger import read_recent_logs as _read_logs
-from .web_task_registry import list_entries as _list_web_tasks
-from .external_work_registry import list_external_works as _list_external
 from . import local_agent_registry as _reg
+from .audit_logger import read_recent_logs as _read_logs
+from .connectors.user_auth_router import get_jwt_user
+from .dev_reg_approval import list_pending as _list_pending
+from .dev_reg_approval import mark_expired_internal as _mark_expired
+from .external_work_registry import list_external_works as _list_external
+from .web_task_registry import list_entries as _list_web_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -38,26 +40,29 @@ ops_router = APIRouter(prefix="/ops", tags=["ops-readonly"])
 
 # ─── 승인 대기 ────────────────────────────────────────────────────────────────
 
+
 @ops_router.get("/approvals")
 def get_ops_approvals(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """승인 대기 목록 — dev_reg_approval.list_pending() 기반."""
     try:
         pending = _list_pending()
         items = []
         for rec in pending:
-            items.append({
-                "taskId": rec.get("task_id", ""),
-                "taskName": _build_task_name(rec),
-                "provider": rec.get("provider", ""),
-                "actionType": rec.get("action_type", ""),
-                "riskLevel": rec.get("risk_level", "medium"),
-                "requestedAt": rec.get("created_at", ""),
-                "expiresAt": rec.get("expires_at", ""),
-                "status": "pending_approval",
-                "requestedBy": rec.get("actor", "unknown"),
-            })
+            items.append(
+                {
+                    "taskId": rec.get("task_id", ""),
+                    "taskName": _build_task_name(rec),
+                    "provider": rec.get("provider", ""),
+                    "actionType": rec.get("action_type", ""),
+                    "riskLevel": rec.get("risk_level", "medium"),
+                    "requestedAt": rec.get("created_at", ""),
+                    "expiresAt": rec.get("expires_at", ""),
+                    "status": "pending_approval",
+                    "requestedBy": rec.get("actor", "unknown"),
+                }
+            )
         return {"items": items, "source": "live"}
     except Exception as e:
         logger.warning("ops/approvals 조회 실패: %s", e)
@@ -77,13 +82,14 @@ def _build_task_name(rec: dict) -> str:
 
 @ops_router.post("/approvals/gc")
 def gc_expired_approvals(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """만료된 승인 대기 항목 일괄 정리 (expired 처리)."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     try:
         pending = _list_pending()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cleared = []
         for rec in pending:
             exp = rec.get("expires_at", "")
@@ -93,8 +99,8 @@ def gc_expired_approvals(
                     if exp_dt <= now:
                         _mark_expired(rec.get("task_id", ""))
                         cleared.append(rec.get("task_id", ""))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("만료일 파싱 실패 (무시): %s", exc)
         return {"cleared": len(cleared), "ids": cleared}
     except Exception as e:
         logger.warning("ops/approvals/gc 실패: %s", e)
@@ -103,9 +109,10 @@ def gc_expired_approvals(
 
 # ─── 웹 작업 레지스트리 ──────────────────────────────────────────────────────
 
+
 @ops_router.get("/web-tasks")
 def get_ops_web_tasks(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """등록된 웹 작업 목록 — web_task_registry.list_entries() 기반."""
     try:
@@ -115,18 +122,20 @@ def get_ops_web_tasks(
             status = "ready"
             if not e.get("read_only") and e.get("requires_approval"):
                 status = "ready"  # approval gate 완비
-            tasks.append({
-                "taskKey": e["task_key"],
-                "provider": e["provider"],
-                "actionType": e["action_type"],
-                "description": e["description"],
-                "executionLocation": "LOCAL_AGENT",
-                "riskLevel": e["risk_level"],
-                "requiresApproval": e["requires_approval"],
-                "dryRunSupported": True,
-                "classification": "WEB_TASK_REGISTRY",
-                "status": status,
-            })
+            tasks.append(
+                {
+                    "taskKey": e["task_key"],
+                    "provider": e["provider"],
+                    "actionType": e["action_type"],
+                    "description": e["description"],
+                    "executionLocation": "LOCAL_AGENT",
+                    "riskLevel": e["risk_level"],
+                    "requiresApproval": e["requires_approval"],
+                    "dryRunSupported": True,
+                    "classification": "WEB_TASK_REGISTRY",
+                    "status": status,
+                }
+            )
         return {"tasks": tasks, "source": "live"}
     except Exception as e:
         logger.warning("ops/web-tasks 조회 실패: %s", e)
@@ -135,10 +144,11 @@ def get_ops_web_tasks(
 
 # ─── 감사 이벤트 ─────────────────────────────────────────────────────────────
 
+
 @ops_router.get("/audit-events")
 def get_ops_audit_events(
     limit: int = Query(default=20, ge=1, le=100),
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """감사 이벤트 최근 N건 — audit_logger.read_recent_logs() 기반."""
     try:
@@ -148,15 +158,17 @@ def get_ops_audit_events(
             event_type = entry.get("event_type", "")
             raw_status = entry.get("decision", "")
             status = _map_audit_status(raw_status, event_type)
-            events.append({
-                "eventId": f"evt-{i:04d}",
-                "eventType": event_type,
-                "taskId": entry.get("task_id", "-"),
-                "status": status,
-                "timestamp": entry.get("timestamp", ""),
-                "actor": entry.get("actor", "-"),
-                "summary": _build_event_summary(entry),
-            })
+            events.append(
+                {
+                    "eventId": f"evt-{i:04d}",
+                    "eventType": event_type,
+                    "taskId": entry.get("task_id", "-"),
+                    "status": status,
+                    "timestamp": entry.get("timestamp", ""),
+                    "actor": entry.get("actor", "-"),
+                    "summary": _build_event_summary(entry),
+                }
+            )
         return {"events": events, "source": "live"}
     except Exception as e:
         logger.warning("ops/audit-events 조회 실패: %s", e)
@@ -194,9 +206,10 @@ def _build_event_summary(entry: dict) -> str:
 
 # ─── 로컬 에이전트 상태 ──────────────────────────────────────────────────────
 
+
 @ops_router.get("/agents")
 def get_ops_agents(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """로컬 에이전트 상태 목록 — local_agent_registry.list_agents() 기반."""
     try:
@@ -205,16 +218,18 @@ def get_ops_agents(
         for a in agents_raw:
             # to_safe() 는 token_hash/device_token 제외하고 반환
             status_val = a.get("status", "offline")
-            agents.append({
-                "agentId": a.get("agent_id", ""),
-                "agentName": a.get("name", a.get("agent_id", "")),
-                "status": _map_agent_status(status_val),
-                "lastHeartbeat": a.get("last_seen_at", a.get("registered_at", "")),
-                "canReceiveTasks": status_val not in ("offline", "error"),
-                "userDirectRequired": False,
-                "serverExecutable": False,
-                "blockingPolicy": None,
-            })
+            agents.append(
+                {
+                    "agentId": a.get("agent_id", ""),
+                    "agentName": a.get("name", a.get("agent_id", "")),
+                    "status": _map_agent_status(status_val),
+                    "lastHeartbeat": a.get("last_seen_at", a.get("registered_at", "")),
+                    "canReceiveTasks": status_val not in ("offline", "error"),
+                    "userDirectRequired": False,
+                    "serverExecutable": False,
+                    "blockingPolicy": None,
+                }
+            )
         return {"agents": agents, "source": "live"}
     except Exception as e:
         logger.warning("ops/agents 조회 실패: %s", e)
@@ -223,22 +238,28 @@ def get_ops_agents(
 
 def _map_agent_status(raw: str) -> str:
     _map = {
-        "online": "online", "active": "online",
-        "idle": "idle", "waiting": "idle",
-        "busy": "busy", "running": "busy",
-        "offline": "offline", "disconnected": "offline",
-        "error": "error", "failed": "error",
+        "online": "online",
+        "active": "online",
+        "idle": "idle",
+        "waiting": "idle",
+        "busy": "busy",
+        "running": "busy",
+        "offline": "offline",
+        "disconnected": "offline",
+        "error": "error",
+        "failed": "error",
     }
     return _map.get(raw.lower() if raw else "", "offline")
 
 
 # ─── 외부 웹 업무 ─────────────────────────────────────────────────────────────
 
+
 @ops_router.get("/external-work")
 def get_ops_external_work(
-    provider: Optional[str] = Query(default=None),
-    classification: Optional[str] = Query(default=None),
-    user: dict = Depends(require_role("admin", "owner")),
+    provider: str | None = Query(default=None),
+    classification: str | None = Query(default=None),
+    user: dict = Depends(get_jwt_user),
 ):
     """외부 웹 업무 분류 목록 — external_work_registry 기반."""
     try:
@@ -315,7 +336,7 @@ _STATIC_INTEGRATIONS = [
 
 @ops_router.get("/integrations")
 def get_ops_integrations(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """연동 현황 — static registry 기반 (연결 여부는 runtime 감지 X, 정책 기준)."""
     return {"integrations": _STATIC_INTEGRATIONS, "source": "static"}
@@ -323,9 +344,10 @@ def get_ops_integrations(
 
 # ─── 대시보드 메트릭 집계 ────────────────────────────────────────────────────
 
+
 @ops_router.get("/summary")
 def get_ops_summary(
-    user: dict = Depends(require_role("admin", "owner")),
+    user: dict = Depends(get_jwt_user),
 ):
     """대시보드 메트릭 집계 — 각 모듈 상태를 읽어 집계."""
     try:
@@ -335,10 +357,7 @@ def get_ops_summary(
 
     try:
         agents_raw = _reg.list_agents()
-        online_count = sum(
-            1 for a in agents_raw
-            if _map_agent_status(a.get("status", "")) == "online"
-        )
+        online_count = sum(1 for a in agents_raw if _map_agent_status(a.get("status", "")) == "online")
     except Exception:
         online_count = 0
         agents_raw = []
