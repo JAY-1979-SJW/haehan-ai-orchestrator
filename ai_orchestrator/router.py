@@ -14,6 +14,7 @@ from .auth import require_role
 from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
 from .config_router import config_router
+from .connectors.community_router import community_router
 from .connectors.eum_router import eum_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
@@ -80,6 +81,7 @@ router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
 router.include_router(naver_news_router)  # read-only naver news scraping endpoints
 router.include_router(naver_cafe_router)  # read-only naver cafe collection endpoints
+router.include_router(community_router)  # 범용 커뮤니티 게시글 추출(휴리스틱→GPT)
 router.include_router(naver_mail_router)  # naver mail compose/send endpoints
 router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
