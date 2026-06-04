@@ -124,11 +124,11 @@ if (!gotLock) {
       if (appQuitting) return;
       try {
         if (!(await isCdpAlive())) {
-          console.warn("[main] CDP 끊김 감지 — 자동 재기동");
-          await startCdpBrowser();
+          console.warn("[main] CDP 끊김 감지 — 백그라운드로 자동 재기동");
+          await startCdpBrowser();  // 최소화로 다시 떠 백그라운드 복귀(화면에 안 뜸)
         }
       } catch (_) { /* ignore */ }
-    }, 15000);
+    }, 6000);
 
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();

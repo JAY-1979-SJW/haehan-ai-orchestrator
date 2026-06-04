@@ -106,11 +106,15 @@ async function startCdpBrowser() {
   chromePid = proc.pid;
   console.log("[cdp] Chrome PID:", chromePid);
 
+  // 창이 뜨자마자 즉시·반복 최소화 → 백그라운드(보이는 플래시 최소화).
+  // 사용자가 닫아 watchdog가 재기동해도 화면에 뜨지 않고 백그라운드로 들어감.
+  minimizeCdpWindow(5000);
+
   const ok = await waitCdp(15000);
   if (!ok) { console.error("[cdp] Chrome CDP 응답 타임아웃"); return ok; }
-  // 재기동 시: 세션 복원된 여분 탭 정리(탭 1개만 유지) + 백그라운드(최소화)
+  // 세션 복원된 여분 탭 정리(탭 1개만 유지)
   await closeExtraTabs();
-  minimizeCdpWindow();  // 로그인 필요 시 자동화가 bring_to_front 로 복원
+  minimizeCdpWindow(2000);  // 탭 정리 후 한 번 더(로그인 필요 시 자동화가 bring_to_front)
   return ok;
 }
 
@@ -144,24 +148,23 @@ async function closeExtraTabs() {
   } catch (_) { /* best-effort */ }
 }
 
-/** CDP 크롬 창을 백그라운드로 최소화 (우리 PID 트리의 창만 — 사용자 다른 크롬엔 영향 없음). */
-function minimizeCdpWindow(attempts = 4) {
-  if (process.platform !== "win32" || !chromePid) return;
-  // 우리가 띄운 chrome.exe + 자식 프로세스의 MainWindowHandle 만 최소화(6=SW_MINIMIZE)
+/** CDP 크롬 창을 백그라운드로 최소화. --remote-debugging-port 마커로 우리 Chrome을
+ * 직접 찾아 최소화(PID 트리 의존 X — spawn PID가 죽어도 동작). 사용자 다른 크롬엔 영향 없음.
+ * 창이 뜨자마자 잡게 durationMs 동안 300ms 간격 반복(플래시 최소화). */
+function minimizeCdpWindow(durationMs = 4000) {
+  if (process.platform !== "win32") return;
   const ps =
     "$ErrorActionPreference='SilentlyContinue';" +
     "Add-Type -Name U -Namespace W -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(System.IntPtr h,int n);';" +
-    `$ids=@(${chromePid}); ` +
-    `Get-CimInstance Win32_Process -Filter \"ParentProcessId=${chromePid}\" | ForEach-Object { $ids+=$_.ProcessId };` +
-    "Get-Process -Id $ids -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { [W.U]::ShowWindowAsync($_.MainWindowHandle,6) | Out-Null }";
-  // 창 핸들이 늦게 생기므로 몇 번 재시도(백그라운드 전환 확실히).
-  let n = 0;
+    `Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -like '*--remote-debugging-port=${CDP_PORT}*' } | ForEach-Object { ` +
+    "$p=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue; if($p -and $p.MainWindowHandle -ne 0){ [W.U]::ShowWindowAsync($p.MainWindowHandle,6) | Out-Null } }";
+  const deadline = Date.now() + durationMs;
   const tick = () => {
-    if (n++ >= attempts || !chromePid) return;
+    if (Date.now() > deadline) return;
     try {
       require("child_process").exec(`powershell -NoProfile -WindowStyle Hidden -Command "${ps}"`, () => {});
     } catch (_) { /* ignore */ }
-    setTimeout(tick, 1500);
+    setTimeout(tick, 300);
   };
   tick();
 }
