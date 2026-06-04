@@ -1,9 +1,11 @@
 import os
+import secrets as _secrets
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # 명시적 UTF-8 인코딩으로 .env 파일 로드 (인코딩 오류 방지)
-load_dotenv(encoding='utf-8')
+load_dotenv(encoding="utf-8")
 
 # LOG_LEVEL — 유효하지 않은 값은 INFO로 대체
 _log_level_env = os.environ.get("LOG_LEVEL", "INFO").upper().strip()
@@ -19,6 +21,7 @@ AUDIT_RECORD_STORE_PATH = LOG_DIR / "audit_records.jsonl"
 INBOX_PATH = LOG_DIR / "inbox.jsonl"
 EXECUTION_HISTORY_PATH = LOG_DIR / "execution_history.jsonl"
 
+
 # ── 실행 리밋 (low 위험 인라인 실행에만 적용) ─────────────────────
 # 보수적 기본값: 짧은 시간 내 동일 action/사용자 반복 차단, 실행 시간 상한
 def _env_int(name: str, default: int, lo: int = 1, hi: int = 3600) -> int:
@@ -27,6 +30,7 @@ def _env_int(name: str, default: int, lo: int = 1, hi: int = 3600) -> int:
         return v if lo <= v <= hi else default
     except (TypeError, ValueError):
         return default
+
 
 EXEC_RATE_LIMIT_WINDOW_SEC = _env_int("EXEC_RATE_LIMIT_WINDOW_SEC", 60, 1, 3600)
 EXEC_RATE_LIMIT_ACTION_MAX = _env_int("EXEC_RATE_LIMIT_ACTION_MAX", 3, 1, 1000)
@@ -55,8 +59,7 @@ HTTP_USERS_PATH = Path(_http_users_env) if _http_users_env else Path(__file__).p
 # compose 의 cad-quantity_default 외부 네트워크로부터 ``cad-backend`` DNS
 # 로 해석된다. 테스트/로컬에서는 env 로 덮어쓴다.
 CAD_BACKEND_URL = (
-    os.environ.get("CAD_BACKEND_URL", "http://cad-backend:8000").strip()
-    or "http://cad-backend:8000"
+    os.environ.get("CAD_BACKEND_URL", "http://cad-backend:8000").strip() or "http://cad-backend:8000"
 ).rstrip("/")
 # 프록시 타임아웃(초). 파서/업로드처럼 긴 호출은 env 로 상향 가능.
 try:
@@ -66,8 +69,9 @@ try:
 except (TypeError, ValueError):
     CAD_PROXY_TIMEOUT_SEC = 60.0
 
-# APP_HOST
-APP_HOST = os.environ.get("APP_HOST", "127.0.0.1").strip() or "127.0.0.1"
+# APP_HOST — 0.0.0.0/:: 입력 시 loopback으로 교정
+_env_host = os.environ.get("APP_HOST", "127.0.0.1").strip()
+APP_HOST = "127.0.0.1" if _env_host in ("", "0.0.0.0", "::") else _env_host  # noqa: S104
 
 # APP_PORT — 범위 밖이거나 숫자 아니면 기본값 8400
 try:
@@ -78,7 +82,6 @@ except (ValueError, TypeError):
     APP_PORT = 8400
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────
-import secrets as _secrets
 JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30

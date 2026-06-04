@@ -28,7 +28,7 @@ from .connectors.naver_search_router import naver_search_router
 from .connectors.naver_session_router import router as naver_session_router
 from .connectors.session_status_router import session_status_router
 from .connectors.smartstore_router import smartstore_router
-from .connectors.user_auth_router import user_auth_router
+from .connectors.user_auth_router import get_jwt_user, user_auth_router
 from .connectors.youtube_router import youtube_router
 from .executor import execute
 from .gmail_reader import collect_to_inbox as _collect_gmail
@@ -359,13 +359,19 @@ def telegram_webhook(body: dict):
 
 
 @router.get("/inbox")
-def get_inbox_list(limit: int = 20):
+def get_inbox_list(
+    limit: int = 20,
+    user: dict = Depends(get_jwt_user),
+):
     limit = max(1, min(limit, 500))
     return read_recent_inbox(limit=limit)
 
 
 @router.get("/inbox/{item_id}")
-def get_inbox_item_endpoint(item_id: str):
+def get_inbox_item_endpoint(
+    item_id: str,
+    user: dict = Depends(get_jwt_user),
+):
     item = _get_inbox_item(item_id)
     if not item:
         raise HTTPException(status_code=404, detail=f"inbox item 없음: {item_id}")
@@ -387,6 +393,9 @@ def fetch_email_inbox(
 
 
 @router.get("/logs")
-def get_logs(limit: int = 20):
+def get_logs(
+    limit: int = 20,
+    user: dict = Depends(get_jwt_user),
+):
     limit = max(1, min(limit, 500))
     return read_recent_logs(limit=limit)
