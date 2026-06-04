@@ -214,6 +214,80 @@ def api_articles(
     }
 
 
+class CafeAnalyzeRequest(BaseModel):
+    category: str | None = None  # 특정 분류만 분석(없으면 전체)
+    days: int | None = None  # 최근 N일 글만(없으면 전체 수집분)
+    max_posts: int = 400  # 분석에 넣을 최대 글 수(상한)
+
+
+@naver_cafe_router.post("/ai-analyze")
+def api_ai_analyze(
+    body: CafeAnalyzeRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """수집·분류된 카페 글을 AI(커뮤니티 analyzer)로 분석 → 트렌드·수익기회 보고.
+
+    - 입력: 최신 classified 파일(없으면 404).
+    - 필터: category(분류) / days(최근 N일).
+    - 출력: {summary, trends[], opportunities[], topics[], actions[]} + 메타.
+    """
+    t0 = time.monotonic()
+    path = _latest_file("classified_*.json")
+    if not path:
+        raise HTTPException(status_code=404, detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요")
+    articles = json.loads(path.read_text(encoding="utf-8"))
+
+    if body.category:
+        articles = [a for a in articles if a.get("category") == body.category]
+    if body.days and body.days > 0:
+        from datetime import datetime, timedelta
+
+        cutoff = (datetime.now() - timedelta(days=body.days)).strftime("%Y-%m-%d")
+        articles = [a for a in articles if str(a.get("date", "")) >= cutoff]
+
+    if not articles:
+        raise HTTPException(status_code=404, detail="조건에 맞는 게시글이 없습니다 (분류/기간 확인)")
+
+    # analyzer 입력 매핑(title/views/comments/date)
+    posts = [
+        {
+            "title": a.get("title", ""),
+            "views": a.get("view_count", ""),
+            "comments": a.get("comment_count", ""),
+            "date": a.get("date", ""),
+        }
+        for a in articles
+    ][: max(1, min(body.max_posts, 600))]
+
+    _ensure_path()
+    from scripts.community.analyzer import analyze_posts
+
+    ctx = "네이버 카페 수집글"
+    if body.category:
+        ctx += f" · 분류={body.category}"
+    report = analyze_posts(posts, context=ctx)
+    if not report.get("ok"):
+        raise HTTPException(status_code=502, detail=f"AI 분석 실패: {report.get('error', '알 수 없음')}")
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "NAVER_CAFE_AI_ANALYZE",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"posts={len(posts)} cat={body.category or '-'} days={body.days or '-'} duration_ms={duration_ms}",
+    )
+    return {
+        **report,
+        "source_file": path.name,
+        "post_count": len(posts),
+        "category": body.category,
+        "days": body.days,
+        "duration_ms": duration_ms,
+    }
+
+
 @naver_cafe_router.get("/kb")
 def api_kb(
     user: dict = Depends(require_role("admin", "owner")),
