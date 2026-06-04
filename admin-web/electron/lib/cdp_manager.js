@@ -107,24 +107,63 @@ async function startCdpBrowser() {
   console.log("[cdp] Chrome PID:", chromePid);
 
   const ok = await waitCdp(15000);
-  if (!ok) console.error("[cdp] Chrome CDP 응답 타임아웃");
-  else minimizeCdpWindow();  // 백그라운드: CDP 준비 후 우리 창만 최소화(로그인 필요 시 복원)
+  if (!ok) { console.error("[cdp] Chrome CDP 응답 타임아웃"); return ok; }
+  // 재기동 시: 세션 복원된 여분 탭 정리(탭 1개만 유지) + 백그라운드(최소화)
+  await closeExtraTabs();
+  minimizeCdpWindow();  // 로그인 필요 시 자동화가 bring_to_front 로 복원
   return ok;
 }
 
-/** CDP 크롬 창을 백그라운드로 최소화 (우리 PID의 창만, 사용자 다른 크롬엔 영향 없음). */
-function minimizeCdpWindow() {
+/** CDP HTTP GET → JSON (실패 시 null). */
+function httpGetJson(p) {
+  return new Promise((resolve) => {
+    const req = http.get(`http://${CDP_HOST}:${CDP_PORT}${p}`, { timeout: 3000 }, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => { try { resolve(JSON.parse(data)); } catch { resolve(null); } });
+    });
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => { req.destroy(); resolve(null); });
+  });
+}
+
+/** 세션 복원으로 열린 여분 탭을 닫아 page 탭 1개만 유지(쿠키/로그인은 프로필에 보존). */
+async function closeExtraTabs() {
+  try {
+    const list = await httpGetJson("/json/list");
+    if (!Array.isArray(list)) return;
+    const pages = list.filter((t) => t.type === "page");
+    for (let i = 1; i < pages.length; i++) {
+      await new Promise((resolve) => {
+        const req = http.get(`http://${CDP_HOST}:${CDP_PORT}/json/close/${pages[i].id}`, { timeout: 3000 }, () => resolve());
+        req.on("error", () => resolve());
+        req.on("timeout", () => { req.destroy(); resolve(); });
+      });
+    }
+    if (pages.length > 1) console.log(`[cdp] 여분 탭 ${pages.length - 1}개 정리`);
+  } catch (_) { /* best-effort */ }
+}
+
+/** CDP 크롬 창을 백그라운드로 최소화 (우리 PID 트리의 창만 — 사용자 다른 크롬엔 영향 없음). */
+function minimizeCdpWindow(attempts = 4) {
   if (process.platform !== "win32" || !chromePid) return;
-  // 우리가 띄운 chrome.exe 의 자식 포함, 해당 PID 트리의 MainWindowHandle 만 최소화(6=SW_MINIMIZE)
+  // 우리가 띄운 chrome.exe + 자식 프로세스의 MainWindowHandle 만 최소화(6=SW_MINIMIZE)
   const ps =
     "$ErrorActionPreference='SilentlyContinue';" +
     "Add-Type -Name U -Namespace W -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(System.IntPtr h,int n);';" +
     `$ids=@(${chromePid}); ` +
     `Get-CimInstance Win32_Process -Filter \"ParentProcessId=${chromePid}\" | ForEach-Object { $ids+=$_.ProcessId };` +
     "Get-Process -Id $ids -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { [W.U]::ShowWindowAsync($_.MainWindowHandle,6) | Out-Null }";
-  try {
-    require("child_process").exec(`powershell -NoProfile -WindowStyle Hidden -Command "${ps}"`, () => {});
-  } catch (_) { /* best-effort */ }
+  // 창 핸들이 늦게 생기므로 몇 번 재시도(백그라운드 전환 확실히).
+  let n = 0;
+  const tick = () => {
+    if (n++ >= attempts || !chromePid) return;
+    try {
+      require("child_process").exec(`powershell -NoProfile -WindowStyle Hidden -Command "${ps}"`, () => {});
+    } catch (_) { /* ignore */ }
+    setTimeout(tick, 1500);
+  };
+  tick();
 }
 
 function stopCdpBrowser() {
