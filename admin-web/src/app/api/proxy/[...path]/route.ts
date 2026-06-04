@@ -28,6 +28,7 @@ const FORWARD_REQUEST_HEADERS = new Set([
   "cache-control",
   "x-request-id",
   "x-device-token",
+  "authorization", // 사용자 JWT(Bearer) 전달 — user-auth(getMe/login 등). 미포함 시 서버 Basic 주입.
 ]);
 
 // 클라이언트에 그대로 전달할 응답 헤더 목록
@@ -45,7 +46,9 @@ function buildUpstreamHeaders(req: NextRequest): HeadersInit {
       headers[key] = value;
     }
   });
-  if (AUTH) headers["Authorization"] = AUTH;
+  // 클라이언트가 Authorization(Bearer)을 보냈으면 그것을 우선. 없을 때만 서버 Basic 주입.
+  const hasClientAuth = "Authorization" in headers || "authorization" in headers;
+  if (AUTH && !hasClientAuth) headers["Authorization"] = AUTH;
   return headers;
 }
 

@@ -19,12 +19,13 @@ const { app, ipcMain } = require("electron");
 const {
   loadConfig, saveConfig, isOwnerMode,
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
+  getAuthToken,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
 const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
-const { createTray, hasTray } = require("./lib/tray");
+const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
 const { bus, EVENTS } = require("./lib/bus");
 const { Menu, dialog, session } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
@@ -49,6 +50,13 @@ bus.on(EVENTS.YOUTUBE_STATUS, (status) => {
   const win = getMainWindow();
   if (win) win.webContents.send("youtube-status", status);
 });
+// 트레이 자동실행 토글
+bus.on(EVENTS.TOGGLE_AUTO_LAUNCH, () => {
+  const current = app.getLoginItemSettings().openAtLogin;
+  const next = !current;
+  app.setLoginItemSettings({ openAtLogin: next, openAsHidden: false });
+  updateAutoLaunchCheck(next);
+});
 
 // 단일 인스턴스 보장
 const gotLock = app.requestSingleInstanceLock();
@@ -58,9 +66,6 @@ if (!gotLock) {
   app.on("second-instance", () => bus.emit(EVENTS.SHOW_WINDOW));
 
   app.whenReady().then(async () => {
-    // 이 PC 상시 자동 시작 등록
-    app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
-
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
 
@@ -118,7 +123,7 @@ if (!gotLock) {
       const key = cfg.license_key || "OWNER";
       startAgent(key);
       createMainWindow(key);
-      createTray();
+      createTray(app.getLoginItemSettings().openAtLogin);
     } else {
       startLicenseFlow();
     }
@@ -144,7 +149,7 @@ function startLicenseFlow() {
       licWin.close();
       startAgent(key);
       createMainWindow(key);
-      createTray();
+      createTray(app.getLoginItemSettings().openAtLogin);
     } else {
       licWin.webContents.send("license-error");
     }
@@ -153,6 +158,8 @@ function startLicenseFlow() {
 
 // ── 로컬 설정 브리지 (P1-3) — webview UI ↔ config.json ──────────────────────
 // invoke/handle (비동기, 값 반환). 사이트 선택·설정만. config.js가 민감값 차단.
+// 영속 로그인: webview_preload 가 저장된 세션 토큰을 localStorage 에 주입하기 위해 조회
+ipcMain.handle("local-config:get-auth-token", () => getAuthToken());
 ipcMain.handle("local-config:get-enabled-sites", () => getEnabledSites());
 ipcMain.handle("local-config:set-enabled-sites", (_e, ids) => setEnabledSites(ids).enabled_sites || []);
 ipcMain.handle("local-config:get-site-settings", (_e, siteId) => getSiteSettings(siteId));
