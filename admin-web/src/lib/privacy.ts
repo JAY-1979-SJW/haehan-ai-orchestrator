@@ -36,7 +36,7 @@ const EXCLUDE_PATTERNS = [
   '마이크로소프트.*오피스',
   'microsoft.*office',
   'office',
-  'autocad',
+
   '\\.iso$',
   '\\.cab$',
   'installer',

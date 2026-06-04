@@ -4,8 +4,6 @@ leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 
 [docs/module_separation_standard.md]
 """
 
-from __future__ import annotations
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 

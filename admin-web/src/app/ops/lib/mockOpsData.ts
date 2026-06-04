@@ -99,18 +99,6 @@ export const MOCK_WORK_TRADES: WorkTrade[] = [
     notes: "OAuth 설정 필요",
   },
   {
-    tradeKey: "cad-integration",
-    tradeName: "CAD 연결",
-    description: "별도 CAD 앱 연동 (local_worker_plugins)",
-    classification: "EXTERNAL_APP_HOLD",
-    executionLocation: "LOCAL_AGENT",
-    riskLevel: "low",
-    requiresApproval: false,
-    requiresAuth: false,
-    status: "HOLD",
-    notes: "별도 앱 개발 완료 후 연결통로 공사",
-  },
-  {
     tradeKey: "hwpx-integration",
     tradeName: "HWPX 편집",
     description: "별도 HWP/HWPX 앱 연동 (hancom COM)",
@@ -320,14 +308,6 @@ export const MOCK_INTEGRATIONS: IntegrationStatus[] = [
     connected: true,
     authMethod: "bot_token",
     notes: "BOT_TOKEN 설정됨. 승인 알림 발송 활성화",
-  },
-  {
-    key: "cad-app",
-    name: "CAD 앱 연동",
-    classification: "EXTERNAL_APP_HOLD",
-    connected: false,
-    authMethod: "none",
-    notes: "별도 앱 개발 완료 후 연결통로 공사 예정",
   },
   {
     key: "hwpx-app",
