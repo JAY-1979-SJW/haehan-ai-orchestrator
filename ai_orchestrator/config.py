@@ -69,9 +69,15 @@ try:
 except (TypeError, ValueError):
     CAD_PROXY_TIMEOUT_SEC = 60.0
 
-# APP_HOST — 0.0.0.0/:: 입력 시 loopback으로 교정
+# APP_HOST — 데스크톱(frozen) 앱만 loopback 강제(외부 접근 차단). 서버/개발은 명시값 존중.
+import sys as _sys  # noqa: E402
+
 _env_host = os.environ.get("APP_HOST", "127.0.0.1").strip()
-APP_HOST = "127.0.0.1" if _env_host in ("", "0.0.0.0", "::") else _env_host  # noqa: S104
+_is_desktop = getattr(_sys, "frozen", False)  # PyInstaller 패키지 앱
+if _is_desktop and _env_host in ("", "0.0.0.0", "::"):  # noqa: S104
+    APP_HOST = "127.0.0.1"  # 데스크톱: 0.0.0.0/:: 입력돼도 loopback으로 교정
+else:
+    APP_HOST = _env_host or "127.0.0.1"
 
 # APP_PORT — 범위 밖이거나 숫자 아니면 기본값 8400
 try:

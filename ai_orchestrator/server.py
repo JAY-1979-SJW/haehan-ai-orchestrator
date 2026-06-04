@@ -61,6 +61,16 @@ app.include_router(router)
 from .browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 
 app.add_middleware(BrowserGateMiddleware)
+
+# CORS — 데스크톱(frozen) 앱은 localhost만 허용(외부 차단). 서버는 정상 도메인 허용.
+import sys as _sys  # noqa: E402
+
+_is_desktop = getattr(_sys, "frozen", False)
+_cors_regex = (
+    r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+    if _is_desktop
+    else r"https?://([a-z0-9-]+\.)*haehan-ai\.kr|http://(localhost|127\.0\.0\.1)(:\d+)?"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -70,7 +80,7 @@ app.add_middleware(
         "http://127.0.0.1:3001",
         "file://",
     ],
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origin_regex=_cors_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
