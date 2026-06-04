@@ -80,6 +80,23 @@ def collect_and_prepare(
             "duration_ms": int((time.monotonic() - t0) * 1000),
         }
     except Exception as e:
+        # 로그인 미완료/세션 없음(LoginError/StepFailure) → 500 대신 graceful 안내.
+        try:
+            from scripts.site_access import LoginError
+            from scripts.site_watch import StepFailure
+
+            login_issue = isinstance(e, (LoginError, StepFailure))
+        except Exception:
+            login_issue = False
+        if login_issue or "로그인" in str(e):
+            logger.info("eum collect — 로그인 필요: %s", str(e)[:120])
+            return {
+                "ok": False,
+                "needs_login": True,
+                "error": "EUM 로그인이 필요합니다. EUM에 먼저 로그인한 뒤 다시 시도하세요.",
+                "collected_sites": 0,
+                "duration_ms": int((time.monotonic() - t0) * 1000),
+            }
         logger.exception("eum collect error")
         raise HTTPException(status_code=500, detail=f"EUM 수집 실패: {e}")
 
