@@ -1,5 +1,7 @@
 "use client";
+import type { DragEvent } from "react";
 import type { DescTemplate, DescriptionSection } from "@/lib/assistant/api";
+import { ProductForm } from "./ProductForm";
 
 interface DescTabProps {
   templates: DescTemplate[];
@@ -51,6 +53,24 @@ export default function DescTab({
   onGptGenerate, onAiGenerate, onRenderDesc,
   onSetTmplName, onSetTmplCategory, onSetShowSaveForm,
 }: DescTabProps) {
+  // 사진 입력: 경로 직접 타이핑 대신 파일선택/드래그앤드롭으로 경로 자동 추가
+  const appendImages = (paths: string[]) => {
+    const clean = paths.filter(Boolean);
+    if (!clean.length) return;
+    const cur = gptImages.trim();
+    onSetGptImages((cur ? cur + "\n" : "") + clean.join("\n"));
+  };
+  const onPickImages = async () => {
+    const hl = (window as unknown as { haehanLocal?: { pickImages?: () => Promise<string[]> } }).haehanLocal;
+    if (!hl?.pickImages) { alert("데스크탑 앱에서만 파일 선택이 가능합니다. 경로/URL을 직접 입력해 주세요."); return; }
+    appendImages(await hl.pickImages());
+  };
+  const onDropImages = (e: DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const paths = Array.from(e.dataTransfer.files).map((f) => (f as unknown as { path?: string }).path ?? "");
+    appendImages(paths);
+  };
+
   return (
     <div className="space-y-4">
       {/* 템플릿 선택기 */}
@@ -123,26 +143,30 @@ export default function DescTab({
         </div>
       </div>
 
-      {/* 상품 데이터 입력 */}
+      {/* 상품 정보 입력 — 폼 (코드 대신 입력칸, JSON 직접편집은 폼 내부 고급 접기) */}
       <div>
-        <p className="text-sm font-semibold text-[#111827] mb-2">상품 데이터 (JSON)</p>
-        <textarea
-          value={descData}
-          onChange={(e) => onSetDescData(e.target.value)}
-          rows={10}
-          className="w-full border border-[#E5E7EB] rounded-xl p-3 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] resize-y"
-        />
+        <p className="text-sm font-semibold text-[#111827] mb-2">상품 정보</p>
+        <ProductForm value={descData} onChange={onSetDescData} />
       </div>
 
       {/* GPT 생성 섹션 */}
       <div className="border border-[#E5E7EB] rounded-xl p-3 space-y-2">
         <p className="text-xs font-semibold text-[#111827]">GPT로 생성 <span className="text-[#9CA3AF] font-normal">(이미지 Vision 지원)</span></p>
+        <div className="flex items-center gap-2">
+          <button onClick={onPickImages} type="button"
+            className="px-3 py-1.5 rounded-lg bg-[#16A34A] text-white text-xs font-semibold hover:bg-[#15803D] whitespace-nowrap">
+            📁 사진 선택
+          </button>
+          <span className="text-[11px] text-[#9CA3AF]">사진을 고르거나 아래 칸에 끌어다 놓으세요 (여러 장 가능)</span>
+        </div>
         <textarea
           value={gptImages}
           onChange={(e) => onSetGptImages(e.target.value)}
+          onDrop={onDropImages}
+          onDragOver={(e) => e.preventDefault()}
           rows={3}
-          placeholder={"이미지 URL 또는 경로 (한 줄에 하나)\nhttps://example.com/product.jpg\nC:/images/product.png"}
-          className="w-full border border-[#E5E7EB] rounded-lg p-2 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#16A34A] resize-none"
+          placeholder={"📁 사진 선택 버튼을 쓰거나, 사진을 여기로 끌어다 놓으세요.\n(URL·경로 직접 입력도 가능 — 한 줄에 하나)"}
+          className="w-full border border-dashed border-[#A7F3D0] rounded-lg p-2 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#16A34A] resize-none"
         />
         <div className="flex gap-1">
           <button onClick={() => onSetGptModel("default")}

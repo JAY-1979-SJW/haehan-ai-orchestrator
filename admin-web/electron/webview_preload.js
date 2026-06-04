@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("haehanLocal", {
   setEnabledSites: (ids) => ipcRenderer.invoke("local-config:set-enabled-sites", ids),
   getSiteSettings: (siteId) => ipcRenderer.invoke("local-config:get-site-settings", siteId),
   setSiteSettings: (siteId, settings) => ipcRenderer.invoke("local-config:set-site-settings", siteId, settings),
+  // 사진 선택: 네이티브 파일 탐색기 → 고른 이미지의 로컬 경로 배열
+  pickImages: () => ipcRenderer.invoke("local-file:pick-images"),
 });
 
 // ── 상시 로그인: 저장된 세션 토큰을 localStorage 에 항상 동기화 ────────────────────

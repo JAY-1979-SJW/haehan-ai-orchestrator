@@ -6,6 +6,7 @@ import type {
   PopupStatusResult,
   SellerCenterPageKey,
 } from "@/lib/assistant/api";
+import { ProductForm } from "./ProductForm";
 
 interface AutoTabProps {
   autoData: string;
@@ -97,16 +98,11 @@ export default function AutoTab({
         )}
       </div>
 
-      {/* 상품 데이터 입력 */}
+      {/* 상품 정보 입력 — 폼 (코드 대신 입력칸) */}
       <div>
-        <p className="text-sm font-semibold text-[#111827] mb-2">상품 데이터 (JSON)</p>
-        <p className="text-xs text-[#9CA3AF] mb-2">필수: name, price, stock, category</p>
-        <textarea
-          value={autoData}
-          onChange={(e) => onSetAutoData(e.target.value)}
-          rows={12}
-          className="w-full border border-[#E5E7EB] rounded-xl p-3 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#F97316] resize-y"
-        />
+        <p className="text-sm font-semibold text-[#111827] mb-2">상품 정보</p>
+        <p className="text-xs text-[#9CA3AF] mb-2">필수: 상품명 · 판매가 · 재고 · 카테고리</p>
+        <ProductForm value={autoData} onChange={onSetAutoData} />
       </div>
 
       {/* 팝업 관리 패널 */}

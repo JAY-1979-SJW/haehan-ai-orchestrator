@@ -168,6 +168,17 @@ ipcMain.handle("local-config:set-site-settings", (_e, siteId, settings) => {
   return getSiteSettings(siteId);
 });
 
+// 사진 선택: 네이티브 파일 탐색기로 이미지를 고르면 로컬 경로 배열 반환.
+// (사용자가 경로를 직접 타이핑하지 않게 — 백엔드는 로컬 경로를 직접 읽어 base64 처리)
+ipcMain.handle("local-file:pick-images", async () => {
+  const res = await dialog.showOpenDialog({
+    title: "상품 사진 선택",
+    properties: ["openFile", "multiSelections"],
+    filters: [{ name: "이미지", extensions: ["jpg", "jpeg", "png", "webp", "gif", "bmp"] }],
+  });
+  return res.canceled ? [] : res.filePaths;
+});
+
 // shell.html → YouTube 연결 요청
 ipcMain.on("youtube-connect", async () => {
   const key = loadConfig().license_key || "";

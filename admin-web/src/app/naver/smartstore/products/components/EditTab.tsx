@@ -1,5 +1,6 @@
 "use client";
 import type { ProductEditResult } from "@/lib/assistant/api";
+import { ProductForm } from "./ProductForm";
 
 interface EditTabProps {
   editProductId: string;
@@ -53,16 +54,11 @@ export default function EditTab({
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-[#111827] mb-1.5">수정 필드 (JSON)</p>
+        <p className="text-sm font-semibold text-[#111827] mb-1.5">수정할 항목</p>
         <p className="text-xs text-[#9CA3AF] mb-2">
-          수정할 항목만 값 입력 · 수정 안 할 항목은 빈 문자열/0으로 두면 건너뜁니다
+          바꿀 항목만 입력하세요 · 비워둔 항목은 그대로 유지됩니다
         </p>
-        <textarea
-          value={editFields}
-          onChange={e => onSetEditFields(e.target.value)}
-          rows={10}
-          className="w-full border border-[#E5E7EB] rounded-xl p-3 text-xs font-mono text-[#374151] focus:outline-none focus:ring-1 focus:ring-[#7C3AED] resize-y"
-        />
+        <ProductForm value={editFields} onChange={onSetEditFields} />
       </div>
 
       <button
