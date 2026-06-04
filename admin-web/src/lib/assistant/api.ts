@@ -1097,10 +1097,11 @@ export function runSmartStoreAgent(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (_AUTH_HEADER) headers["Authorization"] = _AUTH_HEADER;
 
-  return fetch(`${API_BASE}/api/v1/smartstore/agent/run`, {
+  // 백엔드 실제 엔드포인트는 /smartstore/chat (messages 기반). 경로·body 정합.
+  return fetch(`${API_BASE}/api/v1/smartstore/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ prompt, confirmed }),
+    body: JSON.stringify({ messages: [{ role: "user", content: prompt }], confirmed, provider: "gpt" }),
     signal,
   }).then(async (res) => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

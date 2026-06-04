@@ -30,6 +30,7 @@ const QUICK_MENUS = [
   { href: "/hanafax",                        label: "하나팩스",     desc: "팩스 발송·큐·잔액 관리",      color: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" },
   { href: "/bid",                            label: "입찰분석 BID", desc: "나라장터 공고 조회·AI 분석",   color: "#111827", bg: "#F9FAFB", border: "#E5E7EB" },
   { href: "/dataportal",                     label: "공공데이터포털", desc: "API 키 발급·관리·데이터 신청", color: "#0891B2", bg: "#ECFEFF", border: "#A5F3FC" },
+  { href: "/eum",                            label: "EUM 단말기 영업", desc: "신규현장 발굴·영업메일(하이웍스)", color: "#0891B2", bg: "#ECFEFF", border: "#A5F3FC" },
 ];
 
 // ── 서비스 현황 카드 ──────────────────────────────────────────────────────────

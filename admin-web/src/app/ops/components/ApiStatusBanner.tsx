@@ -12,9 +12,12 @@ interface PanelStatus {
 
 async function checkEndpoint(path: string): Promise<ApiStatus> {
   try {
+    // 상태 체크도 인증 필요 — localStorage 토큰을 Bearer 로 부착(미부착 시 401=unauthorized 표시되던 문제).
+    const token = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
     const res = await fetch(`/api/v1${path}`, {
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (res.ok) return "live";
     if (res.status === 401 || res.status === 403) return "unauthorized";

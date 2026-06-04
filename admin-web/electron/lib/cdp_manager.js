@@ -54,12 +54,17 @@ async function waitCdp(timeoutMs = 15000) {
 }
 
 function resolveProfileDir() {
+  // 단일 출처: HAEHAN_CDP_PROFILE 가 있으면 dev/packaged 무관 최우선.
+  // (앱·cdp_force_start.py·cdp_daemon.py 가 동일 프로필을 공유 → 상시 로그인 보장)
+  if (process.env.HAEHAN_CDP_PROFILE) {
+    return process.env.HAEHAN_CDP_PROFILE;
+  }
   if (!app.isPackaged) {
     // 개발: 프로젝트 data/cdp_profile 사용 (세션 공유)
     return path.join(__dirname, "..", "..", "..", "data", "cdp_profile", "ai_chrome");
   }
-  // 패키징: userData 기준 (HAEHAN_CDP_PROFILE 환경변수로 override 가능)
-  return process.env.HAEHAN_CDP_PROFILE || path.join(app.getPath("userData"), "cdp_profile", "ai_chrome");
+  // 패키징: userData 기준
+  return path.join(app.getPath("userData"), "cdp_profile", "ai_chrome");
 }
 
 /**

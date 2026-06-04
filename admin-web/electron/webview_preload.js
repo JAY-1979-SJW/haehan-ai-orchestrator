@@ -24,6 +24,15 @@ ipcRenderer.invoke("local-config:get-auth-token").then((token) => {
       if (window.localStorage.getItem("haehan_ai_token") !== token) {
         window.localStorage.setItem("haehan_ai_token", token);
       }
+      // SSR 서버 컴포넌트(예: /ops 운영센터)는 localStorage 를 못 읽는다.
+      // 동일 토큰을 쿠키로도 제공 → ops 페이지가 cookies().get("haehan_ai_token") 으로
+      // 읽어 백엔드 인증에 사용(미설정 시 6개 패널 전부 "Backend unavailable" 표시되던 문제 해결).
+      // ops 페이지가 decodeURIComponent 하므로 여기서 encodeURIComponent 로 맞춘다.
+      try {
+        document.cookie =
+          "haehan_ai_token=" + encodeURIComponent(token) +
+          "; path=/; SameSite=Lax; max-age=31536000";
+      } catch (_) { /* cookie 설정 불가 시 무시 */ }
     }
   } catch (_) { /* storage 접근 불가 시 무시 */ }
 }).catch(() => {});
