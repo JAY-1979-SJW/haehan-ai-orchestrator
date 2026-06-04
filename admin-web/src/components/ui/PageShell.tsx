@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/lib/nav";
 import { UniversalChat } from "@/components/chat/UniversalChat";
+import { AiDock } from "@/components/chat/AiDock";
 
 interface PageShellProps {
   title: string;
@@ -154,6 +155,9 @@ export function PageShell({ title, description, headerRight, chatDomain, childre
           );
         })}
       </nav>
+
+      {/* 전 화면 하단 고정 AI 상담 독 (도메인 자동 연동) */}
+      <AiDock />
     </div>
   );
 }
