@@ -8,18 +8,19 @@ data/eum_all_devices_complete.json 로드 후:
 사용:
     python scripts/eum/monitor.py
 """
+
 from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -27,7 +28,7 @@ DATA_DIR = ROOT / "data"
 DEVICES_FILE = DATA_DIR / "eum_all_devices_complete.json"
 
 # 미사용 임계값 (설치일수 기준)
-UNUSED_THRESHOLD_DAYS = 180   # 6개월 이상 설치 → 장기 모니터링 대상
+UNUSED_THRESHOLD_DAYS = 180  # 6개월 이상 설치 → 장기 모니터링 대상
 # 준공 임박 임계값 (철거 예정일까지 남은 일수)
 DEMOLITION_WARNING_DAYS = 30
 
@@ -43,7 +44,8 @@ def _load_devices() -> list[dict]:
         if isinstance(data, list):
             return data
         if isinstance(data, dict):
-            return data.get("devices", data.get("data", []))
+            # 추출기는 all_devices 키로 저장 — devices/data/all_devices 순으로 처리
+            return data.get("devices") or data.get("all_devices") or data.get("data") or []
         return []
     except Exception as e:
         log.error("단말기 데이터 로드 실패: %s", e)
@@ -96,14 +98,16 @@ def analyze(devices: list[dict]) -> dict:
         # 통신단절 판단 (통신상태 필드)
         comm_state = str(dev.get("통신상태", "")).strip()
         if comm_state and comm_state not in ("정상", "온라인", "연결", ""):
-            comm_disconnected.append({
-                "고유번호": dev.get("고유번호", ""),
-                "단말기번호": dev.get("단말기번호", ""),
-                "공사명": dev.get("공사명", ""),
-                "통신상태": comm_state,
-                "설치일": dev.get("설치일", ""),
-                "관할지사": dev.get("관할지사", ""),
-            })
+            comm_disconnected.append(
+                {
+                    "고유번호": dev.get("고유번호", ""),
+                    "단말기번호": dev.get("단말기번호", ""),
+                    "공사명": dev.get("공사명", ""),
+                    "통신상태": comm_state,
+                    "설치일": dev.get("설치일", ""),
+                    "관할지사": dev.get("관할지사", ""),
+                }
+            )
             continue
 
         # 철거일 임박 판단
@@ -112,29 +116,33 @@ def analyze(devices: list[dict]) -> dict:
         if demolition_date:
             days_left = (demolition_date - today).days
             if days_left <= DEMOLITION_WARNING_DAYS:
-                demolition_soon.append({
-                    "고유번호": dev.get("고유번호", ""),
-                    "단말기번호": dev.get("단말기번호", ""),
-                    "공사명": dev.get("공사명", ""),
-                    "철거일": demolition_str,
-                    "남은일수": days_left,
-                    "관할지사": dev.get("관할지사", ""),
-                })
+                demolition_soon.append(
+                    {
+                        "고유번호": dev.get("고유번호", ""),
+                        "단말기번호": dev.get("단말기번호", ""),
+                        "공사명": dev.get("공사명", ""),
+                        "철거일": demolition_str,
+                        "남은일수": days_left,
+                        "관할지사": dev.get("관할지사", ""),
+                    }
+                )
                 continue
 
         # 장기 설치 판단 (설치일수)
         days_raw = dev.get("설치일수", "") or dev.get("설치일수(일)", "")
         installed_days = _parse_days(days_raw)
         if installed_days is not None and installed_days >= UNUSED_THRESHOLD_DAYS:
-            long_installed.append({
-                "고유번호": dev.get("고유번호", ""),
-                "단말기번호": dev.get("단말기번호", ""),
-                "공사명": dev.get("공사명", ""),
-                "설치일수": installed_days,
-                "설치일": dev.get("설치일", ""),
-                "관할지사": dev.get("관할지사", ""),
-                "운용상태": dev.get("운용상태", ""),
-            })
+            long_installed.append(
+                {
+                    "고유번호": dev.get("고유번호", ""),
+                    "단말기번호": dev.get("단말기번호", ""),
+                    "공사명": dev.get("공사명", ""),
+                    "설치일수": installed_days,
+                    "설치일": dev.get("설치일", ""),
+                    "관할지사": dev.get("관할지사", ""),
+                    "운용상태": dev.get("운용상태", ""),
+                }
+            )
             continue
 
         normal.append(dev)
@@ -163,7 +171,7 @@ def main() -> dict:
         devices = _load_devices()
         if not devices:
             print("단말기 데이터가 없습니다.")
-            print(f"먼저 실행: python scripts/eum_extract_all_devices.py")
+            print("먼저 실행: python scripts/eum_extract_all_devices.py")
             ctx.set_result(msg="데이터 없음", ok=False)
             return {}
 
