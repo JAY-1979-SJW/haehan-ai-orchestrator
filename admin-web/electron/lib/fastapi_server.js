@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const http = require("http");
+const { getOrCreateJwtSecret } = require("./config");
 
 const FASTAPI_PORT = parseInt(process.env.HAEHAN_PORT || "8401", 10);
 const HEALTH_URL = `http://127.0.0.1:${FASTAPI_PORT}/api/v1/health`;
@@ -86,6 +87,11 @@ async function startFastAPIServer() {
       HAEHAN_HOST: "127.0.0.1",
       // 프로젝트 data/ 경로 — licenses.json, grant_radar 등 영속 데이터 공유
       HAEHAN_DATA_DIR: path.join(process.resourcesPath, "..", "..", "..", "data"),
+      // self-contained 데스크톱: 127.0.0.1 loopback 전용 + 외부 접근 차단(BrowserGate/CORS)
+      // 하에서 로컬 앱을 신뢰 → Basic 인증 생략. 외부/타앱은 네트워크 계층에서 차단됨.
+      AUTH_ENABLED: "false",
+      // JWT_SECRET 고정 — 재시작에도 사용자 세션 토큰 유효(상시 로그인). userData 에 1회 생성·저장.
+      JWT_SECRET: getOrCreateJwtSecret(),
     },
   });
 

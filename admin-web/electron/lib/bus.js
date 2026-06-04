@@ -21,6 +21,8 @@ const EVENTS = Object.freeze({
   YOUTUBE_STATUS: "youtube:status",
   // 앱 종료 요청
   APP_QUIT: "app:quit",
+  // Windows 시작 시 자동 실행 토글 요청
+  TOGGLE_AUTO_LAUNCH: "app:toggle-auto-launch",
 });
 
 // 단일 버스 인스턴스 (메인 프로세스 전역). 핸들러 수가 많지 않으므로 경고 한도만 상향.

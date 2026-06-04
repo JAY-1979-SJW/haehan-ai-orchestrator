@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* head/style/script 가 텍스트로 렌더되던 문제 방지 — UA display:none 강제 보장 */
+  head, style, script, title, meta, link { display: none !important; }
   html, body { height: 100%; overflow: hidden; display: flex; flex-direction: column; background: #F5F7FA; }
   webview { flex: 1; width: 100%; border: none; min-height: 0; }
 </style>

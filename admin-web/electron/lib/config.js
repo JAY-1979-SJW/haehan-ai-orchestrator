@@ -5,6 +5,7 @@
 const { app } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 
 // 앱 이름 고정 — userData 가 %APPDATA%\Haehan AI 로 결정되도록 경로 계산 전에 강제.
 // (require 순서와 무관하게 항상 동일한 config.json 을 쓰게 한다)
@@ -98,6 +99,28 @@ function setSiteSettings(siteId, settings) {
   return patchConfig({ site_settings: all });
 }
 
+// ── 영속 로그인용 JWT_SECRET / 토큰 (userData config.json, 비추적) ────────────────
+// JWT_SECRET 을 이 PC 에 고정해 FastAPI 재시작에도 발급 토큰이 유효하게 한다.
+// (env 미설정 시 FastAPI 는 재시작마다 랜덤 secret → 토큰 무효화되던 문제 해결)
+function getOrCreateJwtSecret() {
+  const cfg = loadConfig();
+  if (typeof cfg.jwt_secret === "string" && cfg.jwt_secret.length >= 32) return cfg.jwt_secret;
+  const secret = crypto.randomBytes(32).toString("hex");
+  patchConfig({ jwt_secret: secret });
+  return secret;
+}
+
+/** 저장된 사용자 세션 토큰(있으면). webview localStorage 에 주입해 상시 로그인 유지. */
+function getAuthToken() {
+  const t = loadConfig().auth_token;
+  return typeof t === "string" ? t : "";
+}
+
+/** 사용자 세션 토큰 저장(로그인/갱신 시). */
+function setAuthToken(token) {
+  return patchConfig({ auth_token: typeof token === "string" ? token : "" });
+}
+
 module.exports = {
   SERVER_URL,
   FASTAPI_URL,
@@ -106,6 +129,9 @@ module.exports = {
   saveConfig,
   patchConfig,
   isOwnerMode,
+  getOrCreateJwtSecret,
+  getAuthToken,
+  setAuthToken,
   getEnabledSites,
   setEnabledSites,
   getSiteSettings,

@@ -27,17 +27,17 @@ URL: https://sell.smartstore.naver.com/
   n.smartstore.list_settlements()               # 정산
   n.smartstore.stats(period="today")            # 통계
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups, close_popup_windows
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import close_popup_windows, handle_page_popups
 from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
@@ -72,10 +72,23 @@ class NaverSmartStore:
 
     # ── 초기화 ──────────────────────────────────────────────────────────
 
+    def _section_open_failed(self) -> dict:
+        """섹션 진입 실패 응답 — 인증 게이트 사유(2FA/캡차 등)가 있으면 첨부해 표면화."""
+        err = {"ok": False, "error": "section_open_failed"}
+        la = getattr(self, "_last_auth", None)
+        if isinstance(la, dict) and la.get("reason"):
+            err["auth_reason"] = la.get("reason")
+            err["needs_user"] = bool(la.get("needs_user"))
+            if la.get("hint"):
+                err["hint"] = la.get("hint")
+        return err
+
     def open_dashboard(self) -> bool:
         """셀러센터 대시보드 진입."""
         r = ensure_naver_login(self.page, return_url=DASHBOARD_URL)
         assert_session_integrity(r, site="smartstore", workflow="dashboard")
+        # 인증 게이트 사유(2FA/캡차 등)를 보관 → 섹션 실패 응답에 표면화
+        self._last_auth = r if not r.get("ok") else None
         if not r.get("ok"):
             return False
         self.page.goto(DASHBOARD_URL, timeout=20000, wait_until="domcontentloaded")
@@ -93,7 +106,8 @@ class NaverSmartStore:
         """좌측 사이드바 메뉴 클릭 → 페이지 변화 대기."""
         before_url = self.page.url
         try:
-            clicked = self.page.evaluate(r"""
+            clicked = self.page.evaluate(
+                r"""
             (label) => {
                 const isVisible = (el) => {
                     const s = window.getComputedStyle(el);
@@ -118,7 +132,9 @@ class NaverSmartStore:
                 }
                 return false;
             }
-            """, label)
+            """,
+                label,
+            )
             if not clicked:
                 return False
             deadline = time.time() + wait_s
@@ -182,14 +198,131 @@ class NaverSmartStore:
             _log.error("[smartstore] 테이블 추출 실패: %s", e)
             return {"headers": [], "rows": []}
 
+    # 상품 목록은 <table> 이 아니라 ARIA 그리드(role=row/gridcell) — 표준 table 추출이 못 잡음.
+    ARIA_GRID_JS = r"""
+    (limit) => {
+        const rows = [...document.querySelectorAll('[role=row]')];
+        // 헤더: columnheader 가 가장 많은 행
+        let headers = [];
+        for (const r of rows) {
+            const hs = [...r.querySelectorAll('[role=columnheader]')]
+                .map(c => (c.innerText || '').replace(/\s+/g, ' ').trim().substring(0, 30)).filter(Boolean);
+            if (hs.length > headers.length) headers = hs;
+        }
+        // 데이터 행: gridcell 중 8자리+ 숫자(상품번호) 포함하는 행
+        const out = [];
+        for (const r of rows) {
+            const cells = [...r.querySelectorAll('[role=gridcell]')]
+                .map(c => (c.innerText || '').replace(/\s+/g, ' ').trim().substring(0, 200)).filter(Boolean);
+            if (!cells.length) continue;
+            if (cells.some(c => /^\d{8,}$/.test(c))) {
+                out.push(cells);
+                if (out.length >= limit) break;
+            }
+        }
+        return { headers, rows: out };
+    }
+    """
+
+    def _extract_aria_grid(self, limit: int = 50) -> dict:
+        """ag-Grid(가상스크롤) ARIA 그리드 — 뷰포트를 스크롤하며 상품 행을 누적 수집.
+
+        ag-Grid 는 보이는 행만 DOM 렌더(virtualization)하므로, .ag-body-viewport 를
+        내려가며 매 렌더 상태에서 role=gridcell 행을 모아 상품번호로 dedup 한다.
+        """
+        headers: list = []
+        seen: dict = {}
+        try:
+            self.page.evaluate(
+                "() => { const v = document.querySelector('.ag-body-viewport'); if (v) v.scrollTop = 0; }"
+            )
+            time.sleep(0.4)
+            for _ in range(40):  # 스크롤 안전장치
+                chunk = self.page.evaluate(self.ARIA_GRID_JS, 200) or {}
+                if chunk.get("headers") and not headers:
+                    headers = chunk["headers"]
+                new = 0
+                for row in chunk.get("rows", []):
+                    pid = next((c for c in row if isinstance(c, str) and c.isdigit() and len(c) >= 8), None)
+                    if pid and pid not in seen:
+                        seen[pid] = row
+                        new += 1
+                if len(seen) >= limit:
+                    break
+                at_bottom = self.page.evaluate("""() => {
+                    const v = document.querySelector('.ag-body-viewport');
+                    if (!v) return true;
+                    const b = v.scrollTop; v.scrollTop = b + v.clientHeight * 0.8;
+                    return v.scrollTop <= b + 2;
+                }""")
+                time.sleep(0.55)
+                if at_bottom and new == 0:
+                    break
+            return {"headers": headers, "rows": list(seen.values())[:limit]}
+        except Exception as e:
+            _log.error("[smartstore] ARIA 그리드 스크롤 추출 실패: %s", e)
+            return {"headers": headers, "rows": list(seen.values())[:limit]}
+
+    def _open_products_list(self) -> bool:
+        """상품 조회/수정 목록(origin-list) 진입 + 팝업 닫기 + 검색.
+
+        상위 '상품관리' 메뉴 클릭은 서브메뉴만 펼치고 대시보드에 머무르므로,
+        실제 목록 라우트(#/products/origin-list)로 직접 이동한다.
+        """
+        try:
+            self.page.goto(
+                "https://sell.smartstore.naver.com/#/products/origin-list", timeout=20000, wait_until="domcontentloaded"
+            )
+            time.sleep(4)
+            try:
+                handle_page_popups(self.page, timeout_s=2.0)
+                close_popup_windows(self.page)
+            except Exception:
+                pass
+            # 잔여 안내 팝업(상품 등록 한도 등) 닫기
+            self.page.evaluate(r"""(() => {
+                document.querySelectorAll('button,a,span').forEach(e => {
+                    const t = (e.textContent || '').trim();
+                    if (/^(닫기|확인|오늘 하루 보지 않기)$/.test(t)) { try { e.click(); } catch (_) {} }
+                });
+            })()""")
+            time.sleep(1)
+            # 필터 보정: 검색 버튼 위쪽의 '전체'(판매상태·기간)를 모두 선택 → 일부만 보이던 문제 해결
+            self.page.evaluate(r"""(() => {
+                const sb = [...document.querySelectorAll('button,a')].find(e => (e.innerText || '').trim() === '검색');
+                const limitY = sb ? sb.getBoundingClientRect().top : 99999;
+                document.querySelectorAll('label,button,a,span').forEach(e => {
+                    const t = (e.innerText || '').trim();
+                    const r = e.getBoundingClientRect();
+                    if (t === '전체' && r.top < limitY && r.width > 0 && r.height > 0) { try { e.click(); } catch (_) {} }
+                });
+            })()""")
+            time.sleep(1)
+            # 검색 → 목록 로드
+            self.page.evaluate(r"""(() => {
+                const b = [...document.querySelectorAll('button,a')]
+                    .find(e => (e.innerText || '').trim() === '검색' && e.getBoundingClientRect().width > 0);
+                if (b) b.click();
+            })()""")
+            time.sleep(3)
+            return True
+        except Exception as e:
+            _log.error("[smartstore] 상품목록 진입 실패: %s", e)
+            return False
+
     # ── 상품 관리 ────────────────────────────────────────────────────────
 
     def list_products(self, limit: int = 50) -> dict:
-        """판매 상품 목록."""
-        if not self._ensure_section("products"):
-            return {"ok": False, "error": "section_open_failed"}
+        """판매 상품 목록 (origin-list, 전체 필터, ag-Grid 가상스크롤 수집)."""
+        if not self.open_dashboard():  # 로그인 보장(+ 인증 게이트 사유 보관)
+            return self._section_open_failed()
+        if not self._open_products_list():
+            return self._section_open_failed()
         log_critical("OTHER", "스마트스토어 상품 목록 조회", limit=limit)
-        return {"ok": True, **self._extract_visible_table(limit)}
+        grid = self._extract_aria_grid(limit)  # 뷰포트 스크롤하며 전체 누적
+        if not grid.get("rows"):
+            grid = self._extract_visible_table(limit)  # 폴백(table 형 페이지)
+        return {"ok": True, **grid}
 
     def open_product_register(self) -> bool:
         """상품 등록 페이지 진입.
@@ -199,6 +332,7 @@ class NaverSmartStore:
         """
         try:
             from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+
             reg = GeneralProductRegister(self.page)
             if reg.open():
                 _log.info("[smartstore] 상품 등록 페이지 진입 완료")
@@ -209,8 +343,10 @@ class NaverSmartStore:
         # 최후 fallback: 직접 URL 이동만
         try:
             from scripts.naver.smartstore.navigation.popup_handler import dismiss_all_popups
-            self.page.goto("https://sell.smartstore.naver.com/#/products/new",
-                           timeout=20000, wait_until="domcontentloaded")
+
+            self.page.goto(
+                "https://sell.smartstore.naver.com/#/products/new", timeout=20000, wait_until="domcontentloaded"
+            )
             time.sleep(4)
             dismiss_all_popups(self.page)
             _log.info("[smartstore] 상품 등록 URL 직접 이동: %s", self.page.url)
@@ -224,6 +360,7 @@ class NaverSmartStore:
         """ProductRegister (그룹상품) 인스턴스."""
         if not hasattr(self, "_product_register") or self._product_register is None:
             from scripts.naver.smartstore.product import ProductRegister
+
             self._product_register = ProductRegister(self.page)
         return self._product_register
 
@@ -232,31 +369,36 @@ class NaverSmartStore:
         """GeneralProductRegister (일반 상품, 가격/재고 포함) 인스턴스."""
         if not hasattr(self, "_general_product") or self._general_product is None:
             from scripts.naver.smartstore.general_product import GeneralProductRegister
+
             self._general_product = GeneralProductRegister(self.page)
         return self._general_product
 
-    def register_general_product(self, data: dict, save_after: bool = False,
-                                 require_confirm: bool = True) -> dict:
+    def register_general_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
         """원샷 일반 상품 등록 (가격/재고 포함).
 
         data: {name, price, stock, category, main_image, ...}
         """
-        return self.general_product.register_product(
-            data, save_after=save_after, require_confirm=require_confirm
-        )
+        return self.general_product.register_product(data, save_after=save_after, require_confirm=require_confirm)
 
     @property
     def bulk_register(self):
         """일괄 등록 인스턴스 (재시도 + DB 기록 + 진행 보고)."""
         if not hasattr(self, "_bulk_register") or self._bulk_register is None:
             from scripts.naver.smartstore.bulk import BulkRegister
+
             self._bulk_register = BulkRegister(self.page)
         return self._bulk_register
 
-    def register_bulk(self, products: list[dict], product_type: str = "general",
-                      save_after: bool = False, require_confirm: bool = False,
-                      max_retries: int = 2, stop_on_error: bool = False,
-                      on_progress=None) -> dict:
+    def register_bulk(
+        self,
+        products: list[dict],
+        product_type: str = "general",
+        save_after: bool = False,
+        require_confirm: bool = False,
+        max_retries: int = 2,
+        stop_on_error: bool = False,
+        on_progress=None,
+    ) -> dict:
         """일괄 상품 등록.
 
         Args:
@@ -269,14 +411,19 @@ class NaverSmartStore:
             on_progress: callable(i, total, result) 진행 콜백
         """
         return self.bulk_register.register_all(
-            products, product_type=product_type, save_after=save_after,
-            require_confirm=require_confirm, max_retries=max_retries,
-            stop_on_error=stop_on_error, on_progress=on_progress,
+            products,
+            product_type=product_type,
+            save_after=save_after,
+            require_confirm=require_confirm,
+            max_retries=max_retries,
+            stop_on_error=stop_on_error,
+            on_progress=on_progress,
         )
 
     def register_history(self, limit: int = 50, ok_only: bool = False) -> list[dict]:
         """DB에서 등록 이력 조회."""
         from scripts.naver.smartstore.bulk import get_register_history
+
         return get_register_history(limit=limit, ok_only=ok_only)
 
     @property
@@ -284,6 +431,7 @@ class NaverSmartStore:
         """SmartEditor ONE wrapper."""
         if not hasattr(self, "_smart_editor") or self._smart_editor is None:
             from scripts.naver.smartstore.advanced import SmartEditorONE
+
             self._smart_editor = SmartEditorONE(self.page)
         return self._smart_editor
 
@@ -292,6 +440,7 @@ class NaverSmartStore:
         """가격/재고/배송 wrapper."""
         if not hasattr(self, "_price_stock") or self._price_stock is None:
             from scripts.naver.smartstore.advanced import PriceStockEditor
+
             self._price_stock = PriceStockEditor(self.page)
         return self._price_stock
 
@@ -300,11 +449,11 @@ class NaverSmartStore:
         """판매옵션 wrapper."""
         if not hasattr(self, "_product_option") or self._product_option is None:
             from scripts.naver.smartstore.advanced import ProductOptionEditor
+
             self._product_option = ProductOptionEditor(self.page)
         return self._product_option
 
-    def register_product(self, data: dict, save_after: bool = False,
-                         require_confirm: bool = True) -> dict:
+    def register_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
         """원샷 상품 등록.
 
         Args:
@@ -312,9 +461,7 @@ class NaverSmartStore:
             save_after: True면 마지막에 저장 시도
             require_confirm: 저장 전 input() 확인
         """
-        return self.product_register.register_product(
-            data, save_after=save_after, require_confirm=require_confirm
-        )
+        return self.product_register.register_product(data, save_after=save_after, require_confirm=require_confirm)
 
     # ── 판매 관리 (주문) ─────────────────────────────────────────────────
 
@@ -441,6 +588,7 @@ class NaverSmartStore:
 
 # ── SmartStore 통합 래퍼 (scripts/smartstore/ 통합) ──────────────────────────
 
+
 class SmartStore:
     """스마트스토어 통합 진입점 — 모든 기능 하나의 객체로 접근.
 
@@ -480,6 +628,7 @@ class SmartStore:
         """그룹상품 등록."""
         if self._products is None:
             from scripts.naver.smartstore.product import ProductRegister
+
             self._products = ProductRegister(self.page)
         return self._products
 
@@ -488,6 +637,7 @@ class SmartStore:
         """일반 상품 등록 (가격/재고)."""
         if self._general is None:
             from scripts.naver.smartstore.general_product import GeneralProductRegister
+
             self._general = GeneralProductRegister(self.page)
         return self._general
 
@@ -496,6 +646,7 @@ class SmartStore:
         """일괄 등록."""
         if self._bulk is None:
             from scripts.naver.smartstore.bulk import BulkRegister
+
             self._bulk = BulkRegister(self.page)
         return self._bulk
 
@@ -504,6 +655,7 @@ class SmartStore:
         """주문 자동 처리."""
         if self._orders is None:
             from scripts.naver.automation.order_automation import OrderAutomation
+
             self._orders = OrderAutomation(self.page)
         return self._orders
 
@@ -512,6 +664,7 @@ class SmartStore:
         """재고 모니터링."""
         if self._inventory is None:
             from scripts.naver.automation.inventory_monitor import InventoryMonitor
+
             self._inventory = InventoryMonitor(self.page)
         return self._inventory
 
@@ -520,6 +673,7 @@ class SmartStore:
         """매출/방문 분석 대시보드."""
         if self._analytics is None:
             from scripts.naver.automation.analytics_dashboard import AnalyticsDashboard
+
             self._analytics = AnalyticsDashboard(self.page)
         return self._analytics
 
@@ -528,6 +682,7 @@ class SmartStore:
         """CSV/Excel 일괄 가져오기."""
         if self._csv is None:
             from scripts.naver.automation.csv_import import CSVImporter
+
             self._csv = CSVImporter(self.page)
         return self._csv
 
@@ -536,6 +691,7 @@ class SmartStore:
         """리뷰 자동 응답."""
         if self._reviews is None:
             from scripts.naver.automation.review_automation import ReviewAutoResponder
+
             self._reviews = ReviewAutoResponder(self.page)
         return self._reviews
 
@@ -544,6 +700,7 @@ class SmartStore:
         """AI 기반 응답/생성 (Claude/OpenAI)."""
         if self._ai is None:
             from scripts.naver.automation.ai_responder import AIResponder
+
             self._ai = AIResponder()
         return self._ai
 
@@ -552,6 +709,7 @@ class SmartStore:
         """SEO 최적화."""
         if self._seo is None:
             from scripts.naver.automation.seo_optimizer import SEOOptimizer
+
             self._seo = SEOOptimizer(self.page)
         return self._seo
 
@@ -560,6 +718,7 @@ class SmartStore:
         """경쟁사 분석."""
         if self._competitor is None:
             from scripts.naver.automation.competitor_analysis import CompetitorAnalysis
+
             self._competitor = CompetitorAnalysis(self.page)
         return self._competitor
 
@@ -568,6 +727,7 @@ class SmartStore:
         """이미지 일괄 처리."""
         if self._image is None:
             from scripts.naver.automation.image_processor import ImageProcessor
+
             self._image = ImageProcessor()
         return self._image
 
@@ -576,6 +736,7 @@ class SmartStore:
         """다중 채널 알림."""
         if self._notifier is None:
             from scripts.naver.automation.notification_hub import NotificationHub
+
             self._notifier = NotificationHub(self.page)
         return self._notifier
 
@@ -584,6 +745,7 @@ class SmartStore:
         """에러 자동 복구."""
         if self._error_recovery is None:
             from scripts.naver.automation.error_recovery import ErrorRecovery
+
             self._error_recovery = ErrorRecovery(self.page)
         return self._error_recovery
 
@@ -592,6 +754,7 @@ class SmartStore:
         """정기 실행 스케줄러."""
         if self._scheduler is None:
             from scripts.naver.automation.scheduler import Scheduler
+
             self._scheduler = Scheduler()
         return self._scheduler
 
@@ -600,5 +763,6 @@ class SmartStore:
         """세션 자동 관리."""
         if self._session is None:
             from scripts.naver.automation.session_manager import SessionManager
+
             self._session = SessionManager(self.page)
         return self._session

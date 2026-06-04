@@ -19,6 +19,7 @@
   # 또는: login_naver(page, naver_id="...", naver_pw="...")
   # 결과: {ok, user, reason}
 """
+
 from __future__ import annotations
 
 import os
@@ -26,8 +27,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state, wait_for_login_generic
 
 _log = get_logger(__name__)
@@ -39,6 +40,7 @@ NAVER_LOGIN_URL = "https://www.naver.com/"
 
 
 # ── 자격증명 로드 ──────────────────────────────────────────────────────────
+
 
 def _load_credentials(
     naver_id: str | None = None,
@@ -52,6 +54,7 @@ def _load_credentials(
     if not nid or not pw:
         try:
             from scripts.credentials import get_cred
+
             cred = get_cred("naver")
             if not nid and cred.get("id"):
                 nid = cred["id"]
@@ -106,8 +109,8 @@ def save_credentials(naver_id: str, naver_pw: str) -> Path:
 
 # ── 봇 감지 회피 타이핑 + 안전 입력 ────────────────────────────────────────
 
-def _safe_human_input(page, selector: str, value: str,
-                     label: str = "필드", delay_ms: int = 80) -> dict:
+
+def _safe_human_input(page, selector: str, value: str, label: str = "필드", delay_ms: int = 80) -> dict:
     """입력 전 필드 검사 → 기존 값 처리 후 사람처럼 타이핑.
 
     동작:
@@ -182,10 +185,8 @@ def _safe_human_input(page, selector: str, value: str,
             pass
 
         if final != value:
-            _log.warning("[naver-auth] %s 입력 검증 실패 (기대=%d자, 실제=%d자)",
-                         label, len(value), len(final))
-            return {"ok": False, "action": action, "before": current, "after": final,
-                    "reason": "value_mismatch"}
+            _log.warning("[naver-auth] %s 입력 검증 실패 (기대=%d자, 실제=%d자)", label, len(value), len(final))
+            return {"ok": False, "action": action, "before": current, "after": final, "reason": "value_mismatch"}
 
         _log.info("[naver-auth] %s 입력 완료 (%s, %d자)", label, action, len(value))
         return {"ok": True, "action": action, "before": current, "after": final}
@@ -216,6 +217,7 @@ def _human_type(page, selector: str, text: str, delay_ms: int = 80) -> None:
 
 
 # ── 캡차/보안문자 감지 ─────────────────────────────────────────────────────
+
 
 def _submit_login_form(page) -> dict:
     """Submit the login form with fallbacks for unstable animated buttons."""
@@ -297,6 +299,7 @@ def _detect_captcha(page) -> bool:
 
 # ── 메인 로그인 함수 ────────────────────────────────────────────────────────
 
+
 def login_naver(
     page,
     naver_id: str | None = None,
@@ -318,8 +321,11 @@ def login_naver(
     # 1. 자격증명
     nid, pw = _load_credentials(naver_id, naver_pw)
     if not nid or not pw:
-        return {"ok": False, "reason": "no_credentials",
-                "hint": "환경변수 NAVER_ID/NAVER_PW 또는 data/.env_naver 파일 필요"}
+        return {
+            "ok": False,
+            "reason": "no_credentials",
+            "hint": "환경변수 NAVER_ID/NAVER_PW 또는 data/.env_naver 파일 필요",
+        }
 
     log_critical("AUTH_SUCCESS", "네이버 로그인 시도", user=nid, mode="auto_login_start")
 
@@ -328,16 +334,20 @@ def login_naver(
         state = detect_login_state(page)
         if state.get("logged_in") and "naver" in page.url and not force_relogin:
             current_user = state.get("user", "")
-            if current_user and nid in current_user or current_user == nid:
+            if (current_user and nid in current_user) or current_user == nid:
                 _log.info("[naver-auth] 동일 사용자 이미 로그인됨: %s", current_user)
                 return {"ok": True, "user": current_user, "reason": "already_logged_in"}
             else:
                 _log.warning("[naver-auth] 다른 사용자 로그인 상태: %s (목표: %s)", current_user, nid)
                 # 로그아웃 후 재로그인 필요
                 # 일단 알림 후 진행 (사용자가 결정)
-                return {"ok": False, "reason": "different_user_logged_in",
-                        "current_user": current_user, "target_user": nid,
-                        "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요."}
+                return {
+                    "ok": False,
+                    "reason": "different_user_logged_in",
+                    "current_user": current_user,
+                    "target_user": nid,
+                    "hint": "현재 다른 사용자로 로그인됨. 먼저 로그아웃 필요.",
+                }
     except Exception:
         pass
 
@@ -354,22 +364,23 @@ def login_naver(
     time.sleep(1)
 
     # 4. ID/PW 입력 — 안전 입력 (기존 자동완성 값 처리)
-    id_result = _safe_human_input(page, '#id', nid, label="ID", delay_ms=70)
+    id_result = _safe_human_input(page, "#id", nid, label="ID", delay_ms=70)
     if not id_result["ok"]:
         _log.error("[naver-auth] ID 입력 실패: %s", id_result.get("reason"))
-        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}",
-                "id_result": id_result}
+        return {"ok": False, "reason": f"id_input_failed:{id_result.get('reason', 'unknown')}", "id_result": id_result}
     time.sleep(0.6)
 
-    pw_result = _safe_human_input(page, '#pw', pw, label="PW", delay_ms=80)
+    pw_result = _safe_human_input(page, "#pw", pw, label="PW", delay_ms=80)
     if not pw_result["ok"]:
         _log.error("[naver-auth] PW 입력 실패: %s", pw_result.get("reason"))
-        return {"ok": False, "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
-                "pw_result": _redact_input_result(pw_result)}
+        return {
+            "ok": False,
+            "reason": f"pw_input_failed:{pw_result.get('reason', 'unknown')}",
+            "pw_result": _redact_input_result(pw_result),
+        }
     time.sleep(0.5)
 
-    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s",
-              id_result["action"], pw_result["action"])
+    _log.info("[naver-auth] 입력 완료 — ID:%s, PW:%s", id_result["action"], pw_result["action"])
 
     # 5. 로그인 버튼 클릭
     try:
@@ -424,6 +435,42 @@ def ensure_naver_login(
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
 
     original_url = return_url or page.url
+
+    # ── 순차 인증창 게이트 (SSO 우선) ──────────────────────────────────────────
+    # 네이버 세션이 있으면 커머스 SSO(간편 로그인)를 자동 클릭한다. 그 결과 2단계 인증(2FA)·
+    # 캡차가 뜨면 자동 입력이 불가능한 보안 단계이므로 명확한 사유로 반환(섹션 실패로 묻히지 않게).
+    try:
+        from scripts.naver.auth_window_gate import (
+            STAGE_CAPTCHA,
+            STAGE_LOGGED_IN,
+            STAGE_TWO_FACTOR,
+            advance_once,
+        )
+
+        step = advance_once(page)
+        if step.get("action") == "sso_clicked":
+            time.sleep(5)
+            step = advance_once(page)
+            if step.get("action") == "wait_callback":
+                time.sleep(4)
+                step = advance_once(page)
+        if step.get("stage") == STAGE_LOGGED_IN and detect_login_state(page).get("logged_in"):
+            ls = detect_login_state(page)
+            return {"ok": True, "user": ls.get("user"), "reason": "sso_logged_in"}
+        if step.get("stage") in (STAGE_TWO_FACTOR, STAGE_CAPTCHA):
+            reason = "two_factor_required" if step["stage"] == STAGE_TWO_FACTOR else "captcha_required"
+            _log.warning("[naver-auth] 인증창 게이트: %s → 사용자 입력 대기", reason)
+            return {
+                "ok": False,
+                "reason": reason,
+                "needs_user": True,
+                "hint": step.get("hint"),
+                "captcha_required": step["stage"] == STAGE_CAPTCHA,
+            }
+    except Exception as e:
+        _log.debug("[naver-auth] auth-gate 스킵: %s", str(e)[:100])
+
+    # ── fallback: 기존 자격증명 기반 로그인 ────────────────────────────────────
     result = login_naver(page, naver_id, naver_pw)
     if not result["ok"]:
         return result

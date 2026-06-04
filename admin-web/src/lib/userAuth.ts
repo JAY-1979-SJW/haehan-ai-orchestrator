@@ -1,4 +1,7 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8401";
+// same-origin 프록시(/api/proxy → 서버사이드 포워딩). 데스크톱 webview(127.0.0.1:3000)에서
+// localhost:8401 직접 호출 시 cross-origin CORS 차단되어 getMe 실패 → 랜딩으로 튕기던 문제 해결.
+// assistant/api.ts 와 동일한 same-origin 규약.
+const API_BASE = "/api/proxy";
 const TOKEN_KEY = "haehan_ai_token";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30일 (JWT_EXPIRE_DAYS와 일치)
 

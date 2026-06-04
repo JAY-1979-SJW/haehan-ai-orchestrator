@@ -9,6 +9,7 @@
   python scripts/cdp_force_start.py status   # 상태 확인
   python scripts/cdp_force_start.py stop     # 종료
 """
+
 from __future__ import annotations
 
 import json
@@ -24,7 +25,10 @@ sys.path.insert(0, str(ROOT))
 
 CDP_PORT = 9222
 CDP_HOST = "127.0.0.1"
-PROFILE_DIR = ROOT / "data" / "cdp_profile" / "ai_chrome"
+# 프로필 경로 단일화: HAEHAN_CDP_PROFILE(앱·런처 공통 단일 출처) 우선, 없으면 기본 data/cdp_profile/ai_chrome.
+# cdp_manager.js(패키지 앱)·cdp_daemon.py 도 동일 env 사용 → 9222 브라우저 프로필이 런처마다 갈리지 않음.
+_PROFILE_ENV = os.environ.get("HAEHAN_CDP_PROFILE", "").strip()
+PROFILE_DIR = Path(_PROFILE_ENV) if _PROFILE_ENV else (ROOT / "data" / "cdp_profile" / "ai_chrome")
 PID_FILE = ROOT / "data" / "cdp_force_pid.json"
 
 CHROME_CANDIDATES = [
@@ -43,9 +47,7 @@ def _find_chrome() -> str:
 
 def _is_cdp_alive(timeout: float = 2.0) -> bool:
     try:
-        with urllib.request.urlopen(
-            f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout
-        ) as r:
+        with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
             return r.status == 200
     except Exception:
         return False
@@ -70,9 +72,11 @@ def _sanitize_prefs() -> None:
         p = data.setdefault("profile", {})
         changed = False
         if p.get("exit_type") != "Normal":
-            p["exit_type"] = "Normal"; changed = True
+            p["exit_type"] = "Normal"
+            changed = True
         if p.get("exited_cleanly") is not True:
-            p["exited_cleanly"] = True; changed = True
+            p["exited_cleanly"] = True
+            changed = True
         if changed:
             prefs.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
             print("  [PREFS] 정상화 완료")
@@ -133,12 +137,10 @@ def cmd_start(url: str = "") -> int:
 
 def _show_info() -> None:
     try:
-        with urllib.request.urlopen(
-            f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=3
-        ) as r:
+        with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=3) as r:
             info = json.loads(r.read())
-        print(f"  브라우저: {info.get('Browser','?')}")
-        print(f"  WebSocket: {info.get('webSocketDebuggerUrl','?')}")
+        print(f"  브라우저: {info.get('Browser', '?')}")
+        print(f"  WebSocket: {info.get('webSocketDebuggerUrl', '?')}")
     except Exception:
         pass
 
