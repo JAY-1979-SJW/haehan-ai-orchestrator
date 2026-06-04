@@ -27,19 +27,18 @@ Claude 버전(ai_description_writer.py)과 동일한 S1~S12 HTML 구조를 출�
     if result["ok"]:
         html = result["html"]
 """
+
 from __future__ import annotations
 
 import base64
 import json
 import os
 import re
-import time
 import urllib.request
 from pathlib import Path
-from typing import Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
@@ -48,10 +47,10 @@ ROOT = Path(__file__).resolve().parents[4]
 # 모델 설정
 # ══════════════════════════════════════════════════════════════════════════════
 
-DEFAULT_MODEL = "gpt-4o-mini"   # 빠름·저렴
-QUALITY_MODEL = "gpt-4o"        # 고품질·이미지 분석
-API_ENDPOINT  = "https://api.openai.com/v1/chat/completions"
-MAX_TOKENS    = 4000
+DEFAULT_MODEL = "gpt-4o-mini"  # 빠름·저렴
+QUALITY_MODEL = "gpt-4o"  # 고품질·이미지 분석
+API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+MAX_TOKENS = 4000
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 시스템 프롬프트 (Claude 버전과 동일 기준)
@@ -156,37 +155,44 @@ AS·보증 (S10):
 # GptDescriptionWriter
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class GptDescriptionWriter:
     """GPT-4o 기반 상품 상세설명 생성기 (Vision 지원)."""
 
     def __init__(self, model: str = DEFAULT_MODEL):
-        self.model     = model
+        self.model = model
         self._api_key: str | None = None
 
     # ── 공개 인터페이스 ──────────────────────────────────────────────────────
 
-    def generate(self, product: dict, images: list[str] | None = None) -> dict:
+    def generate(self, product: dict, images: list[str] | None = None, base: str | None = None) -> dict:
         """상품 데이터 + 이미지(선택)로 HTML 상세설명 생성.
 
         Args:
             product: 상품 데이터 dict
             images:  이미지 URL 목록 또는 로컬 경로 목록 (선택)
+            base:    표준 템플릿 베이스(기존 상세설명 HTML/텍스트). 주면 AI가
+                     구조·톤은 유지하고 새 상품에 맞게 문구만 수정(템플릿 기반 수정 모드).
 
         Returns:
             {"ok": bool, "html": str, "model": str,
              "image_analysis": dict|None, "warnings": list}
         """
         from scripts.naver.smartstore.product.ai_description_writer import validate_product_data
+
         errs = validate_product_data(product)
-        hard  = [e for e in errs if e.startswith("[필수]") or e.startswith("[오류]")]
+        hard = [e for e in errs if e.startswith("[필수]") or e.startswith("[오류]")]
         warns = [e for e in errs if not e.startswith("[필수]") and not e.startswith("[오류]")]
         if hard:
             return {"ok": False, "errors": hard}
 
         api_key = self._get_api_key()
         if not api_key:
-            return {"ok": False, "error": "OPENAI_API_KEY 미설정",
-                    "hint": ".env 파일에 OPENAI_API_KEY=sk-... 추가 필요"}
+            return {
+                "ok": False,
+                "error": "OPENAI_API_KEY 미설정",
+                "hint": ".env 파일에 OPENAI_API_KEY=sk-... 추가 필요",
+            }
 
         # 이미지 분석
         image_analysis: dict | None = None
@@ -201,15 +207,20 @@ class GptDescriptionWriter:
 
         # HTML 생성
         system = SYSTEM_PROMPT
-        user   = self._build_user_prompt(product, image_analysis)
+        user = self._build_user_prompt(product, image_analysis, base)
         result = self._call_gpt(api_key, system, user, use_model, images)
         if not result["ok"]:
             return result
 
         html = self._finalize_html(result["text"])
-        log_critical("OTHER", "GPT 상세설명 생성",
-                     product=product.get("name", "")[:30],
-                     model=use_model, chars=len(html), images=len(images or []))
+        log_critical(
+            "OTHER",
+            "GPT 상세설명 생성",
+            product=product.get("name", "")[:30],
+            model=use_model,
+            chars=len(html),
+            images=len(images or []),
+        )
         _log.info("[gpt-desc] 생성 완료: %d자 / 이미지 %d장", len(html), len(images or []))
 
         return {
@@ -237,8 +248,7 @@ class GptDescriptionWriter:
         if len(content) == 1:  # 이미지 없으면 분석 스킵
             return None
 
-        result = self._call_gpt(api_key, "", "", QUALITY_MODEL,
-                                _content_override=content)
+        result = self._call_gpt(api_key, "", "", QUALITY_MODEL, _content_override=content)
         if not result["ok"]:
             _log.warning("[gpt-desc] 이미지 분석 실패: %s", result.get("error"))
             return None
@@ -265,10 +275,9 @@ class GptDescriptionWriter:
         p = Path(img)
         if not p.exists():
             return None
-        ext   = p.suffix.lower().lstrip(".")
-        mime  = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png",
-                 "gif": "gif", "webp": "webp"}.get(ext, "jpeg")
-        data  = base64.b64encode(p.read_bytes()).decode()
+        ext = p.suffix.lower().lstrip(".")
+        mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "gif": "gif", "webp": "webp"}.get(ext, "jpeg")
+        data = base64.b64encode(p.read_bytes()).decode()
         return {
             "type": "image_url",
             "image_url": {
@@ -297,51 +306,72 @@ class GptDescriptionWriter:
 
     # ── 프롬프트 빌드 ─────────────────────────────────────────────────────────
 
-    def _build_user_prompt(self, p: dict, image_analysis: dict | None) -> str:
+    def _build_user_prompt(self, p: dict, image_analysis: dict | None, base: str | None = None) -> str:
         features = p.get("features", [])
-        features_str = "\n".join(
-            f"- {f.get('icon','•')} {f.get('title','')}: {f.get('desc','')}"
-            if isinstance(f, dict) else f"- {f}"
-            for f in features
-        ) if features else "(없음)"
+        features_str = (
+            "\n".join(
+                f"- {f.get('icon', '•')} {f.get('title', '')}: {f.get('desc', '')}" if isinstance(f, dict) else f"- {f}"
+                for f in features
+            )
+            if features
+            else "(없음)"
+        )
 
         specs = p.get("specs", {})
         specs_str = "\n".join(f"- {k}: {v}" for k, v in specs.items()) if specs else "(없음)"
 
         image_section = ""
         if image_analysis:
-            image_section = (
-                "\n이미지 분석 결과 (참고):\n"
-                + json.dumps(image_analysis, ensure_ascii=False, indent=2)
-            )
+            image_section = "\n이미지 분석 결과 (참고):\n" + json.dumps(image_analysis, ensure_ascii=False, indent=2)
 
-        return USER_PROMPT_TEMPLATE.format(
-            name              = p.get("name", ""),
-            category          = p.get("category", ""),
-            brand             = p.get("brand", ""),
-            price_str         = f"{int(p.get('price', 0)):,}원",
-            target            = p.get("target", ""),
-            features_str      = features_str,
-            price_guarantee   = p.get("price_guarantee", "동일 제품 최저가 보장"),
-            lowest_price_reason = p.get("lowest_price_reason", ""),
-            durability        = p.get("durability", ""),
-            certifications_str = ", ".join(p.get("certifications", [])) or "",
-            origin            = p.get("origin", ""),
-            distributor       = p.get("distributor", ""),
-            specs_str         = specs_str,
-            keywords_str      = ", ".join(p.get("keywords", [])),
-            as_warranty       = p.get("as_warranty", "1년"),
-            as_contact        = p.get("as_contact", "스마트스토어 문의"),
-            notice_str        = "\n".join(f"- {n}" for n in p.get("notice", [])) or "(없음)",
-            delivery_str      = p.get("delivery", "평일 오후 2시 이전 주문 → 당일 출고"),
-            image_analysis_section = image_section,
+        prompt = USER_PROMPT_TEMPLATE.format(
+            name=p.get("name", ""),
+            category=p.get("category", ""),
+            brand=p.get("brand", ""),
+            price_str=f"{int(p.get('price', 0)):,}원",
+            target=p.get("target", ""),
+            features_str=features_str,
+            price_guarantee=p.get("price_guarantee", "동일 제품 최저가 보장"),
+            lowest_price_reason=p.get("lowest_price_reason", ""),
+            durability=p.get("durability", ""),
+            certifications_str=", ".join(p.get("certifications", [])) or "",
+            origin=p.get("origin", ""),
+            distributor=p.get("distributor", ""),
+            specs_str=specs_str,
+            keywords_str=", ".join(p.get("keywords", [])),
+            as_warranty=p.get("as_warranty", "1년"),
+            as_contact=p.get("as_contact", "스마트스토어 문의"),
+            notice_str="\n".join(f"- {n}" for n in p.get("notice", [])) or "(없음)",
+            delivery_str=p.get("delivery", "평일 오후 2시 이전 주문 → 당일 출고"),
+            image_analysis_section=image_section,
         )
+
+        # 템플릿 기반 수정 모드: base(기존 상세설명) 가 있으면 그것을 변형하도록 지시.
+        if base:
+            base_text = base if isinstance(base, str) else json.dumps(base, ensure_ascii=False)
+            base_plain = re.sub(r"<[^>]+>", " ", base_text)
+            base_plain = re.sub(r"\s+", " ", base_plain).strip()[:4000]
+            if base_plain:
+                prompt += (
+                    "\n\n[표준 템플릿 베이스]\n"
+                    "아래 기존 상세설명을 베이스로 사용하세요. 섹션 구성·문체·톤·길이·구조는 "
+                    "그대로 유지하고, 위 새 상품 정보에 맞게 상품 고유 문구(상품명·특징·스펙·소개)만 "
+                    "교체·보정하세요. 완전히 새로 작성하지 말고 베이스를 변형하세요.\n"
+                    f"[기존 상세설명]\n{base_plain}"
+                )
+        return prompt
 
     # ── GPT API 호출 ─────────────────────────────────────────────────────────
 
-    def _call_gpt(self, api_key: str, system: str, user: str, model: str,
-                  images: list[str] | None = None,
-                  _content_override: list | None = None) -> dict:
+    def _call_gpt(
+        self,
+        api_key: str,
+        system: str,
+        user: str,
+        model: str,
+        images: list[str] | None = None,
+        _content_override: list | None = None,
+    ) -> dict:
         """OpenAI Chat Completions API 호출."""
         messages: list[dict] = []
         if system:
@@ -362,19 +392,21 @@ class GptDescriptionWriter:
         else:
             messages.append({"role": "user", "content": user})
 
-        payload = json.dumps({
-            "model": model,
-            "messages": messages,
-            "max_tokens": MAX_TOKENS,
-            "temperature": 0.7,
-        }).encode("utf-8")
+        payload = json.dumps(
+            {
+                "model": model,
+                "messages": messages,
+                "max_tokens": MAX_TOKENS,
+                "temperature": 0.7,
+            }
+        ).encode("utf-8")
 
         req = urllib.request.Request(
             API_ENDPOINT,
-            data    = payload,
-            method  = "POST",
-            headers = {
-                "Content-Type":  "application/json",
+            data=payload,
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
             },
         )
@@ -383,8 +415,9 @@ class GptDescriptionWriter:
                 data = json.loads(resp.read().decode("utf-8"))
             text = data["choices"][0]["message"]["content"]
             usage = data.get("usage", {})
-            _log.info("[gpt-desc] tokens: prompt=%s completion=%s",
-                      usage.get("prompt_tokens"), usage.get("completion_tokens"))
+            _log.info(
+                "[gpt-desc] tokens: prompt=%s completion=%s", usage.get("prompt_tokens"), usage.get("completion_tokens")
+            )
             return {"ok": True, "text": text}
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")[:200]
@@ -400,7 +433,7 @@ class GptDescriptionWriter:
         # <div class="pd"> 시작 지점만 추출
         m = re.search(r'<div[^>]*class="[^"]*\bpd\b[^"]*"', text)
         if m:
-            text = text[m.start():]
+            text = text[m.start() :]
         return text.strip()
 
     def _get_api_key(self) -> str | None:
@@ -410,6 +443,7 @@ class GptDescriptionWriter:
         if not key:
             try:
                 from dotenv import load_dotenv
+
                 load_dotenv(ROOT / ".env")
                 key = os.environ.get("OPENAI_API_KEY", "")
             except Exception:
@@ -420,7 +454,7 @@ class GptDescriptionWriter:
 
 # ── 편의 함수 ─────────────────────────────────────────────────────────────────
 
-def generate_with_gpt(product: dict, images: list[str] | None = None,
-                      model: str = DEFAULT_MODEL) -> dict:
+
+def generate_with_gpt(product: dict, images: list[str] | None = None, model: str = DEFAULT_MODEL) -> dict:
     """모듈 레벨 편의 함수."""
     return GptDescriptionWriter(model=model).generate(product, images=images)

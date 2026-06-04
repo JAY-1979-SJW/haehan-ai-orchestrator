@@ -21,6 +21,9 @@ interface DescTabProps {
   gptModel: "default" | "quality";
   gptImages: string;
   gptAnalysis: Record<string, unknown> | null;
+  templateBase: string | null;
+  useTemplateBase: boolean;
+  onToggleTemplateBase: (v: boolean) => void;
   onLoadTemplates: () => void;
   onLoadTemplate: (id: string) => void;
   onDeleteTemplate: (id: string, name: string) => void;
@@ -42,6 +45,7 @@ export default function DescTab({
   templates, tmplLoading, savingTmpl, tmplName, tmplCategory, tmplMsg, showSaveForm,
   descSections, selectedSections, descData, descHtml, descLoading, descError,
   aiLoading, aiModel, gptLoading, gptModel, gptImages, gptAnalysis,
+  templateBase, useTemplateBase, onToggleTemplateBase,
   onLoadTemplates, onLoadTemplate, onDeleteTemplate, onSaveTemplate,
   onToggleSection, onSetDescData, onSetGptImages, onSetGptModel, onSetAiModel,
   onGptGenerate, onAiGenerate, onRenderDesc,
@@ -150,9 +154,15 @@ export default function DescTab({
             GPT-4o (Vision)
           </button>
         </div>
+        {templateBase && (
+          <label className="flex items-center gap-2 text-xs text-[#374151] bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-2.5 py-2 cursor-pointer">
+            <input type="checkbox" checked={useTemplateBase} onChange={(e) => onToggleTemplateBase(e.target.checked)} />
+            <span>📋 불러온 템플릿 기반으로 수정 <span className="text-[#9CA3AF]">(구조·톤 유지, 문구만 교체)</span></span>
+          </label>
+        )}
         <button onClick={onGptGenerate} disabled={gptLoading || aiLoading || descLoading}
           className="w-full py-2.5 rounded-xl bg-[#16A34A] text-white text-xs font-semibold hover:bg-[#15803D] disabled:opacity-50 transition-colors">
-          {gptLoading ? "GPT 생성 중…" : "🤖 GPT로 자동 생성"}
+          {gptLoading ? "GPT 생성 중…" : (templateBase && useTemplateBase) ? "🤖 템플릿 기반 AI 수정" : "🤖 GPT로 자동 생성"}
         </button>
         {gptAnalysis && (
           <details className="text-xs">
