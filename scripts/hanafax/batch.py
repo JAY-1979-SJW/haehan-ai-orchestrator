@@ -10,6 +10,7 @@
     python scripts/cdp_client.py hanafax batch-send [--limit=N] [--delay=30] [--dry-run]
     python scripts/cdp_client.py hanafax batch-send --approved --confirm=HANAFAX_APPROVED_BATCH
 """
+
 from __future__ import annotations
 
 import json
@@ -49,7 +50,11 @@ def build_batch_plan(
     delay_seconds: int = 30,
 ) -> dict[str, Any]:
     """발송 플랜 생성 (dry-run용)."""
-    rows = load_queue(queue_path, limit=limit)
+    # 큐 파일이 아직 없으면 빈 계획(0건)으로 처리 — dry-run 은 크래시 대신 빈 결과 반환.
+    try:
+        rows = load_queue(queue_path, limit=limit)
+    except FileNotFoundError:
+        rows = []
     items = [
         {
             "index": i + 1,
