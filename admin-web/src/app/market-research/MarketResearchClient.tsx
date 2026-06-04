@@ -51,8 +51,9 @@ const topicOptions = [
   { value: "ai_work_automation", label: "AI Work Automation" },
 ];
 
-export default function MarketResearchClient({ data, markdown, error }: Props) {
-  const [topic, setTopic] = useState("smartstore");
+export default function MarketResearchClient({ data: initialData, error }: Props) {
+  const [data, setData] = useState(initialData);
+  const [topic, setTopic] = useState("");
   const [perKeywordLimit, setPerKeywordLimit] = useState(10);
   const [comments, setComments] = useState(100);
   const [commentPages, setCommentPages] = useState(5);
@@ -81,30 +82,25 @@ export default function MarketResearchClient({ data, markdown, error }: Props) {
   const channels = data?.top_channels ?? [];
 
   async function runResearch() {
+    if (!topic.trim()) { setRunStatus("주제(검색어)를 입력하세요"); return; }
     setRunning(true);
-    setRunStatus("Running market research...");
+    setRunStatus("시장조사 중… (1~2분 소요)");
     try {
-      const response = await fetch("/api/market-research/run", {
+      const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
+      const response = await fetch("/api/proxy/api/v1/google/youtube/market-research", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topic,
-          perKeywordLimit,
-          comments,
-          commentPages,
-          collectTranscripts,
-          transcriptVideos,
-        }),
+        headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+        body: JSON.stringify({ topic: topic.trim() }),
       });
       const payload = await response.json();
       if (!response.ok || !payload.ok) {
-        setRunStatus(`Failed: ${payload.reason || payload.error || "unknown_error"}`);
+        setRunStatus(`실패: ${payload.detail || payload.error || "오류"}`);
         return;
       }
-      setRunStatus("Completed. Reloading latest report...");
-      window.location.reload();
+      setData(payload.data);
+      setRunStatus(`완료 — "${topic.trim()}" 결과를 표시합니다.`);
     } catch (err) {
-      setRunStatus(`Failed: ${err instanceof Error ? err.message : "unknown_error"}`);
+      setRunStatus(`실패: ${err instanceof Error ? err.message : "오류"}`);
     } finally {
       setRunning(false);
     }
@@ -127,24 +123,28 @@ export default function MarketResearchClient({ data, markdown, error }: Props) {
 
       <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
         <div className="border border-[#E5E7EB] bg-white p-4">
-          <h2 className="text-sm font-semibold text-[#111827]">주제 선택</h2>
+          <h2 className="text-sm font-semibold text-[#111827]">주제 검색</h2>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-[#4B5563]">
-              주제
-              <select
-                className="mt-1 h-9 w-full border border-[#D1D5DB] bg-white px-2 text-sm text-[#111827]"
+              조사할 주제 (검색어)
+              <input
+                type="text"
+                className="mt-1 h-9 w-full border border-[#D1D5DB] bg-white px-3 text-sm text-[#111827] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#F97316]"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
-              >
-                {topicOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="예: 스마트스토어 상세페이지, 캠핑용품, 다이어트 식품…"
+                onKeyDown={(e) => { if (e.key === "Enter" && !running) runResearch(); }}
+              />
             </label>
-
-            <p className="text-xs text-[#9CA3AF]">영상·댓글·키워드 수집량 등 상세 설정은 자동으로 적용됩니다.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {["스마트스토어", "위탁판매", "상위노출", "네이버광고"].map((s) => (
+                <button key={s} type="button" onClick={() => setTopic(s)}
+                  className="text-xs px-2.5 py-1 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-[#6B7280] hover:border-[#F97316] hover:text-[#F97316]">
+                  {s}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-[#9CA3AF]">원하는 검색어를 입력하세요. 수집량 등 상세 설정은 자동 적용됩니다.</p>
           </div>
         </div>
 
