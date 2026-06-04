@@ -56,39 +56,54 @@ export default function ProductListTab({
         </div>
       )}
 
-      {data?.ok && data.headers && data.rows && (
-        <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
-          <table className="w-full text-xs">
-            <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-              <tr>
-                {data.headers.map((h) => (
-                  <th key={h} className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.rows.map((row, i) => {
-                const pidIdx = findProductIdIndex(data.headers!);
-                const pid = extractProductId(row, pidIdx);
-                return (
-                  <tr
-                    key={i}
-                    onClick={() => { if (pid) onRowClick(pid); }}
-                    className={`${i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"} ${pid ? "cursor-pointer hover:bg-[#FFF7ED] transition-colors" : ""}`}
-                  >
-                    {row.map((cell, j) => (
-                      <td key={j} className="px-3 py-2 text-[#374151] whitespace-nowrap">{cell}</td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="text-xs text-[#9CA3AF] px-3 py-2 border-t border-[#E5E7EB]">
-            행을 클릭하면 상품 상세를 확인할 수 있습니다.
-          </p>
-        </div>
-      )}
+      {data?.ok && data.headers && data.rows && (() => {
+        // 셀러센터에서 수집할 때 섞여 들어온 '가짜 버튼' 열(수정/복사/시작하기 등) 숨김 — 실제 데이터 열만 표시
+        const JUNK = new Set(["수정", "복사", "시작하기", "그룹 전환", "으로 판매", "스마트스토어", "삭제", "선택", ""]);
+        const cols = data.headers!.map((h, i) => ({ label: (h || "").trim(), i })).filter((c) => !JUNK.has(c.label));
+        const pidIdx = findProductIdIndex(data.headers!);
+        return (
+          <div className="overflow-x-auto border border-[#E5E7EB] rounded-xl">
+            <table className="w-full text-xs">
+              <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                <tr>
+                  {cols.map((c) => (
+                    <th key={c.i} className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">{c.label}</th>
+                  ))}
+                  <th className="text-left px-3 py-2.5 text-[#6B7280] font-semibold whitespace-nowrap">동작</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows!.map((row, i) => {
+                  const pid = extractProductId(row, pidIdx);
+                  return (
+                    <tr
+                      key={i}
+                      onClick={() => { if (pid) onRowClick(pid); }}
+                      className={`${i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"} ${pid ? "cursor-pointer hover:bg-[#FFF7ED] transition-colors" : ""}`}
+                    >
+                      {cols.map((c) => (
+                        <td key={c.i} className="px-3 py-2 text-[#374151] whitespace-nowrap">{row[c.i]}</td>
+                      ))}
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); if (pid) window.open(`https://sell.smartstore.naver.com/#/products/${pid}`, "_blank"); }}
+                          disabled={!pid}
+                          className="px-2.5 py-1 rounded-lg border border-[#16A34A] text-[#16A34A] text-[11px] font-semibold hover:bg-[#F0FDF4] disabled:opacity-40"
+                        >
+                          셀러센터 열기
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="text-xs text-[#9CA3AF] px-3 py-2 border-t border-[#E5E7EB]">
+              행 클릭 = 상품 선택(수정 탭 자동입력) · [셀러센터 열기] = 수정·복사·시작 등 실제 작업
+            </p>
+          </div>
+        );
+      })()}
 
       {!data && !error && (
         <div className="border border-[#E5E7EB] rounded-xl p-8 text-center space-y-2">
