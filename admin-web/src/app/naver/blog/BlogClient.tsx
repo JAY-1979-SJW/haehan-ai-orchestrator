@@ -37,6 +37,33 @@ export default function BlogClient() {
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
+  // AI 글 생성
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) { setAiError("주제를 입력하세요"); return; }
+    setAiLoading(true); setAiError(null);
+    try {
+      const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
+      const r = await fetch(`${API_BASE}/api/v1/naver/blog/ai-generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+        body: JSON.stringify({ topic: aiTopic.trim() }),
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) { setAiError(d.error || d.detail || "생성 실패"); return; }
+      setTitle(d.title || "");
+      setBody(d.body || "");
+      if (Array.isArray(d.tags)) setTagInput(d.tags.join(", "));
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "생성 실패");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   // 초안 목록
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [draftsLoading, setDraftsLoading] = useState(false);
@@ -149,6 +176,22 @@ export default function BlogClient() {
         {/* ── 글쓰기 요청 ── */}
         {tab === "write" && (
           <div className="space-y-3 max-w-2xl">
+            {/* AI 글 생성 */}
+            <div className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3 space-y-2">
+              <p className="text-xs font-semibold text-[#9A3412]">✨ 주제만 입력하면 AI가 제목·본문·태그를 써줍니다</p>
+              <div className="flex gap-2">
+                <input value={aiTopic} onChange={e => setAiTopic(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !aiLoading) handleAiGenerate(); }}
+                  placeholder="예: LED 간접조명 셀프 시공 후기, 캠핑 초보 장비 추천…"
+                  className="flex-1 border border-[#FDBA74] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]" />
+                <button onClick={handleAiGenerate} disabled={aiLoading}
+                  className="px-4 py-2 rounded-lg bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] disabled:opacity-50 whitespace-nowrap">
+                  {aiLoading ? "작성 중…" : "✨ AI 글 생성"}
+                </button>
+              </div>
+              {aiError && <p className="text-xs text-[#DC2626]">{aiError}</p>}
+              <p className="text-[11px] text-[#C2410C]">생성 후 아래 제목·본문·태그가 자동으로 채워집니다. 검토·수정 후 [초안 저장]하세요.</p>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-[#374151] mb-1">제목 *</label>
               <input value={title} onChange={e => setTitle(e.target.value)}
