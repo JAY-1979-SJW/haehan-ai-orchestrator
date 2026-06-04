@@ -24,9 +24,25 @@
       "icon.png"
     ],
     "extraResources": [
-      { "from": "../../scripts", "to": "scripts", "filter": ["local_agent.py"] },
-      { "from": "../../dist/haehan-server", "to": "server/haehan-server" },
-      { "from": "../.next/standalone", "to": "nextjs" }
+      {
+        "from": "../../scripts",
+        "to": "scripts",
+        "filter": [
+          "local_agent.py"
+        ]
+      },
+      {
+        "from": "../../dist/haehan-server",
+        "to": "server/haehan-server"
+      },
+      {
+        "from": "../../dist/local-agent",
+        "to": "local-agent"
+      },
+      {
+        "from": "../.next/standalone",
+        "to": "nextjs"
+      }
     ],
     "win": {
       "target": [
@@ -43,9 +59,7 @@
           ]
         }
       ],
-      "icon": "icon.png",
-      "signingHashAlgorithms": [],
-      "sign": null
+      "icon": "icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -64,8 +78,9 @@
     }
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "electron": "^31.0.0",
-    "electron-builder": "^24.0.0",
+    "electron-builder": "^26.8.1",
     "electron-packager": "^17.1.2"
   }
 }

@@ -14,6 +14,7 @@ from .auth import require_role
 from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
 from .config_router import config_router
+from .connectors.eum_router import eum_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
 from .connectors.google_router import google_router
@@ -82,6 +83,7 @@ router.include_router(naver_cafe_router)  # read-only naver cafe collection endp
 router.include_router(naver_mail_router)  # naver mail compose/send endpoints
 router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
+router.include_router(eum_router)  # EUM 신규현장 수집 + 영업메일(하이웍스 발송)
 router.include_router(gmail_router)  # gmail inbox/collect/compose/send
 router.include_router(ops_router)  # read-only ops center API
 router.include_router(
