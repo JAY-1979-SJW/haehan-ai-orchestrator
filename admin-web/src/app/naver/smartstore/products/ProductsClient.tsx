@@ -411,22 +411,48 @@ export default function ProductsClient() {
         onClose={() => setDrawerProductId(null)}
       />
       <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-        {/* 탭 바 */}
-        <div className="flex gap-1 border-b border-[#E5E7EB] mb-4 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`text-sm px-4 py-2 -mb-px border-b-2 transition-colors whitespace-nowrap ${
-                tab === t.id
-                  ? "border-[#F97316] text-[#F97316] font-semibold"
-                  : "border-transparent text-[#6B7280] hover:text-[#111827]"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* 상위 탭 바 (3개) — 등록 3종·수정은 '상품 등록' 하위로 통합 */}
+        <div className="flex gap-1 border-b border-[#E5E7EB] mb-3 overflow-x-auto">
+          {[
+            { id: "list" as Tab, label: "📋 상품 보기", group: ["list"] },
+            { id: "register" as Tab, label: "➕ 상품 등록", group: ["register", "bulk", "auto", "edit"] },
+            { id: "desc" as Tab, label: "🎨 상세설명", group: ["desc"] },
+          ].map((p) => {
+            const active = p.group.includes(tab);
+            return (
+              <button
+                key={p.id}
+                onClick={() => setTab(p.id)}
+                className={`text-sm px-4 py-2 -mb-px border-b-2 transition-colors whitespace-nowrap ${
+                  active ? "border-[#F97316] text-[#F97316] font-semibold" : "border-transparent text-[#6B7280] hover:text-[#111827]"
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
+        {/* '상품 등록' 하위 탭 */}
+        {["register", "bulk", "auto", "edit"].includes(tab) && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {[
+              { id: "register" as Tab, label: "단일 등록" },
+              { id: "bulk" as Tab, label: "일괄 등록" },
+              { id: "auto" as Tab, label: "자동 등록" },
+              { id: "edit" as Tab, label: "상품 수정" },
+            ].map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setTab(s.id)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  tab === s.id ? "bg-[#F97316] text-white border-[#F97316]" : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {tab === "list" && (
           <ProductListTab
