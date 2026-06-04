@@ -423,6 +423,19 @@ def login_naver(
     return {"ok": state.get("score", 0) >= 2, "user": state.get("user"), "reason": "ambiguous"}
 
 
+def _naver_auth_cookies_present(page) -> bool:
+    """네이버 인증 쿠키(NID_AUT + NID_SES)가 컨텍스트에 있으면 True.
+
+    httpOnly 라 페이지 JS(document.cookie)로는 안 보이므로 Playwright 컨텍스트에서 직접 조회.
+    """
+    try:
+        cookies = page.context.cookies("https://www.naver.com")
+        names = {c.get("name") for c in cookies}
+        return "NID_AUT" in names and "NID_SES" in names
+    except Exception:
+        return False
+
+
 def ensure_naver_login(
     page,
     naver_id: str | None = None,
@@ -446,6 +459,12 @@ def ensure_naver_login(
     state = detect_login_state(page)
     if state.get("logged_in"):
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
+
+    # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
+    # 이 쿠키는 httpOnly 라 detect_login_state 의 document.cookie 신호로는 안 잡힌다.
+    if _naver_auth_cookies_present(page):
+        _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
+        return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
 
     original_url = return_url or page.url
 

@@ -160,6 +160,31 @@ export function CafeClient() {
   const [collectingCafes, setCollectingCafes] = useState(false);
   const [collectingUrl, setCollectingUrl] = useState<string | null>(null);
   const [collectMsg, setCollectMsg] = useState<string | null>(null);
+  const [collectDays, setCollectDays] = useState(90); // 수집 기간(일). 3650=전체
+
+  // ── AI 분석 보고 ──────────────────────────────────────────────────────────
+  type AiReport = {
+    ok: boolean; summary: string; trends: string[];
+    opportunities: { idea: string; why: string }[];
+    topics: { name: string; share: string }[];
+    actions: string[]; post_count: number; category: string | null;
+  };
+  const [aiReport, setAiReport] = useState<AiReport | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiCategory, setAiCategory] = useState("");
+
+  const runAiAnalyze = async () => {
+    setAiLoading(true); setAiError(null);
+    try {
+      const d = await apiPost("/api/v1/naver-cafe/ai-analyze", {
+        category: aiCategory || null, max_posts: 400,
+      });
+      if (d.ok) setAiReport(d as AiReport);
+      else setAiError(d.detail || d.error || "AI 분석 실패");
+    } catch (e) { setAiError(e instanceof Error ? e.message : "AI 분석 실패"); }
+    finally { setAiLoading(false); }
+  };
 
   const apiPost = async (path: string, body: unknown) => {
     const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
@@ -185,7 +210,7 @@ export function CafeClient() {
     const url = cafe.href || `https://cafe.naver.com/${cafe.cafe_id}`;
     setCollectingUrl(cafe.cafe_id); setCollectMsg(`${cafe.cafe_name || cafe.cafe_id} 수집 중… (1~2분)`);
     try {
-      const d = await apiPost("/api/v1/naver-cafe/collect", { cafe_url: url, days: 90 });
+      const d = await apiPost("/api/v1/naver-cafe/collect", { cafe_url: url, days: collectDays });
       if (d.ok) { setCollectMsg(`${cafe.cafe_name || cafe.cafe_id} — 게시글 ${d.collected}건 수집 완료`); loadSummary(); }
       else setCollectMsg(`수집 실패: ${d.detail || d.error || ""}`);
     } catch (e) { setCollectMsg(`수집 실패: ${e instanceof Error ? e.message : ""}`); }
@@ -288,8 +313,20 @@ export function CafeClient() {
                 className="px-3 py-1.5 border border-[#E5E7EB] text-xs rounded-lg text-[#6B7280] disabled:opacity-50">
                 {cafesLoading ? "불러오는 중…" : "새로고침"}
               </button>
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-[11px] text-[#6B7280]">수집 기간</span>
+                <select value={collectDays} onChange={(e) => setCollectDays(Number(e.target.value))}
+                  className="border border-[#E5E7EB] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-[#1D4ED8]">
+                  <option value={7}>최근 1주</option>
+                  <option value={30}>최근 1개월</option>
+                  <option value={90}>최근 3개월</option>
+                  <option value={180}>최근 6개월</option>
+                  <option value={365}>최근 1년</option>
+                  <option value={3650}>전체 기간</option>
+                </select>
+              </div>
             </div>
-            <p className="text-[11px] text-[#9CA3AF]">[내 카페 수집]으로 가입 카페를 가져온 뒤, 각 카페의 [게시글 수집]을 누르세요. (네이버 로그인 필요)</p>
+            <p className="text-[11px] text-[#9CA3AF]">[내 카페 수집]으로 가입 카페를 가져온 뒤, 각 카페의 [게시글 수집]을 누르세요. 수집 기간을 먼저 고르세요(게시판 구분 없이 전체글 수집). (네이버 로그인 필요)</p>
             {collectMsg && <p className="text-xs text-[#16A34A]">{collectMsg}</p>}
             {cafesError && <p className="text-xs text-[#DC2626]">오류: {cafesError}</p>}
             <div className="divide-y divide-[#E5E7EB]">
@@ -373,6 +410,88 @@ export function CafeClient() {
         {/* ── 분석 보고서 ── */}
         {tab === "report" && (
           <div className="space-y-4">
+            {/* AI 분석 — 트렌드·수익기회 */}
+            <div className="border border-[#DBEAFE] bg-[#F8FAFF] rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-[#1D4ED8]">🤖 AI 분석 — 흐름·수익기회</span>
+                <select value={aiCategory} onChange={(e) => setAiCategory(e.target.value)}
+                  className="border border-[#E5E7EB] rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-[#1D4ED8]">
+                  <option value="">전체 분류</option>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <button onClick={runAiAnalyze} disabled={aiLoading}
+                  className="px-3 py-1.5 bg-[#1D4ED8] text-white text-xs rounded-lg font-semibold disabled:opacity-50">
+                  {aiLoading ? "분석 중… (10~30초)" : "AI 분석 실행"}
+                </button>
+                {aiReport && (
+                  <span className="text-[11px] text-[#6B7280] ml-auto">
+                    {aiReport.post_count}건 분석 {aiReport.category ? `· ${aiReport.category}` : ""}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-[#9CA3AF]">수집·분류된 카페 글을 AI가 읽고 지금의 흐름과 수익 기회를 정리합니다.</p>
+              {aiError && <p className="text-xs text-[#DC2626]">오류: {aiError}</p>}
+
+              {aiReport && (
+                <div className="space-y-3">
+                  {aiReport.summary && (
+                    <div className="bg-white rounded-lg border border-[#E5E7EB] p-3">
+                      <p className="text-xs font-semibold text-[#6B7280] mb-1">📋 전체 흐름</p>
+                      <p className="text-sm text-[#111827]">{aiReport.summary}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {aiReport.trends?.length > 0 && (
+                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3">
+                        <p className="text-xs font-semibold text-[#6B7280] mb-2">🔥 지금 뜨는 흐름</p>
+                        <ul className="space-y-1">
+                          {aiReport.trends.map((t, i) => (
+                            <li key={i} className="text-xs text-[#111827] flex gap-1.5"><span className="text-[#1D4ED8]">•</span>{t}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {aiReport.topics?.length > 0 && (
+                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3">
+                        <p className="text-xs font-semibold text-[#6B7280] mb-2">🧩 주요 토픽 비중</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {aiReport.topics.map((tp, i) => (
+                            <span key={i} className="text-xs bg-[#F3F4F6] text-[#374151] px-2 py-0.5 rounded-full border border-[#E5E7EB]">
+                              {tp.name} <span className="text-[#9CA3AF]">({tp.share})</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {aiReport.opportunities?.length > 0 && (
+                    <div className="bg-white rounded-lg border border-[#BBF7D0] p-3">
+                      <p className="text-xs font-semibold text-[#16A34A] mb-2">💰 수익 기회</p>
+                      <div className="space-y-2">
+                        {aiReport.opportunities.map((o, i) => (
+                          <div key={i} className="bg-[#F0FDF4] rounded-lg px-3 py-2 border border-[#BBF7D0]">
+                            <p className="text-sm font-medium text-[#111827]">{o.idea}</p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">{o.why}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {aiReport.actions?.length > 0 && (
+                    <div className="bg-white rounded-lg border border-[#FED7AA] p-3">
+                      <p className="text-xs font-semibold text-[#C2410C] mb-2">✅ 바로 해볼 액션</p>
+                      <ul className="space-y-1">
+                        {aiReport.actions.map((a, i) => (
+                          <li key={i} className="text-xs text-[#111827] flex gap-1.5"><span className="text-[#C2410C]">{i + 1}.</span>{a}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 규칙 기반 통계 보고서 */}
             <div className="flex items-center gap-3 flex-wrap">
               <button onClick={loadKB} disabled={kbLoading}
                 className="px-3 py-1.5 border border-[#E5E7EB] text-xs rounded-lg text-[#6B7280] disabled:opacity-50">
