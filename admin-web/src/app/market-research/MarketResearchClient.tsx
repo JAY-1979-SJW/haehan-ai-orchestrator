@@ -127,10 +127,10 @@ export default function MarketResearchClient({ data, markdown, error }: Props) {
 
       <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
         <div className="border border-[#E5E7EB] bg-white p-4">
-          <h2 className="text-sm font-semibold text-[#111827]">Run Preset</h2>
+          <h2 className="text-sm font-semibold text-[#111827]">주제 선택</h2>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-[#4B5563]">
-              Topic
+              주제
               <select
                 className="mt-1 h-9 w-full border border-[#D1D5DB] bg-white px-2 text-sm text-[#111827]"
                 value={topic}
@@ -144,42 +144,23 @@ export default function MarketResearchClient({ data, markdown, error }: Props) {
               </select>
             </label>
 
-            <NumberField label="Videos per keyword" value={perKeywordLimit} min={1} max={25} onChange={setPerKeywordLimit} />
-            <NumberField label="Comments per page" value={comments} min={1} max={100} onChange={setComments} />
-            <NumberField label="Comment pages" value={commentPages} min={1} max={50} onChange={setCommentPages} />
-
-            <label className="flex items-center gap-2 text-sm text-[#374151]">
-              <input
-                type="checkbox"
-                checked={collectTranscripts}
-                onChange={(event) => setCollectTranscripts(event.target.checked)}
-              />
-              Visible transcript summaries
-            </label>
-
-            <NumberField label="Transcript videos" value={transcriptVideos} min={0} max={20} onChange={setTranscriptVideos} />
+            <p className="text-xs text-[#9CA3AF]">영상·댓글·키워드 수집량 등 상세 설정은 자동으로 적용됩니다.</p>
           </div>
         </div>
 
         <div className="border border-[#E5E7EB] bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-[#111827]">Command</h2>
-            <span className="text-xs text-[#6B7280]">Run from repository root</span>
-          </div>
-          <pre className="mt-3 overflow-auto bg-[#111827] p-3 text-xs leading-5 text-white">{command}</pre>
+          <h2 className="text-sm font-semibold text-[#111827]">시장조사 실행</h2>
+          <p className="mt-2 text-xs text-[#6B7280]">선택한 주제로 유튜브 인기 영상·키워드·시청자 반응을 모아 보여줍니다.</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={runResearch}
               disabled={running}
-              className="h-9 border border-[#F97316] bg-[#F97316] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 rounded-lg bg-[#F97316] px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {running ? "Running" : "Run"}
+              {running ? "조사 중…" : "🔍 시장조사 실행"}
             </button>
-            <span className="text-xs text-[#6B7280]">{runStatus || "Execution is capped by the internal API gate."}</span>
-          </div>
-          <div className="mt-3 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            The run endpoint accepts only allowlisted topics and bounded numeric limits. Raw transcript storage and state-changing YouTube actions remain blocked.
+            {runStatus && <span className="text-xs text-[#6B7280]">{runStatus}</span>}
           </div>
         </div>
       </section>
@@ -250,25 +231,9 @@ export default function MarketResearchClient({ data, markdown, error }: Props) {
             ))}
           </Panel>
 
-          <Panel title="Boundary">
-            {(data?.public_signal_model?.not_officially_available ?? []).slice(0, 5).map((item) => (
-              <div key={item} className="border-b border-[#F3F4F6] py-2 text-xs text-[#4B5563] last:border-0">
-                {item}
-              </div>
-            ))}
-          </Panel>
         </aside>
       </section>
 
-      <section className="border border-[#E5E7EB] bg-white p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[#111827]">Markdown Report</h2>
-          <span className="text-xs text-[#6B7280]">{data?.markdown_report ?? "-"}</span>
-        </div>
-        <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap bg-[#F9FAFB] p-3 text-xs leading-5 text-[#374151]">
-          {markdown || "No Markdown report available."}
-        </pre>
-      </section>
     </div>
   );
 }
