@@ -29,11 +29,11 @@ async function checkEndpoint(path: string): Promise<ApiStatus> {
 
 export function ApiStatusBanner() {
   const [panels, setPanels] = useState<PanelStatus[]>([
-    { label: "approvals", path: "/ops/approvals", status: "checking" },
-    { label: "web tasks", path: "/ops/web-tasks", status: "checking" },
-    { label: "audit", path: "/ops/audit-events", status: "checking" },
-    { label: "agents", path: "/ops/agents", status: "checking" },
-    { label: "integrations", path: "/ops/integrations", status: "checking" },
+    { label: "승인 대기", path: "/ops/approvals", status: "checking" },
+    { label: "웹 작업", path: "/ops/web-tasks", status: "checking" },
+    { label: "감사 로그", path: "/ops/audit-events", status: "checking" },
+    { label: "에이전트", path: "/ops/agents", status: "checking" },
+    { label: "연동", path: "/ops/integrations", status: "checking" },
   ]);
   const [checked, setChecked] = useState(false);
 
@@ -71,12 +71,12 @@ export function ApiStatusBanner() {
     : "bg-blue-50 border-blue-200";
 
   const bannerText = allUnavailable
-    ? "Backend API auth/connection failed. Mock fallback is disabled."
+    ? "백엔드 연결/인증 실패 — 데이터를 불러올 수 없습니다."
     : allLive
-    ? "Backend API connected. Showing live data."
+    ? "백엔드 연결됨 — 실시간 데이터 표시 중"
     : checked
-    ? `Backend API partially connected (${liveCount}/${panels.length}). Mock fallback is disabled.`
-    : "Checking backend API status...";
+    ? `백엔드 일부 연결됨 (${liveCount}/${panels.length})`
+    : "백엔드 상태 확인 중…";
 
   return (
     <div
@@ -103,7 +103,7 @@ export function ApiStatusBanner() {
             </span>
           ))}
         </div>
-        <span className="ml-auto text-gray-400">read-only</span>
+        <span className="ml-auto text-gray-400">읽기 전용</span>
       </div>
     </div>
   );
