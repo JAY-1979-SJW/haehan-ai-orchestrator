@@ -81,6 +81,13 @@ if (!gotLock) {
     } catch (e) {
       console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
     }
+    // HTTP 디스크 캐시도 비움 — 빌드 변경 시 옛 Next 청크/HTML 이 캐시돼 옛 화면이 뜨던
+    // 문제 해결(쿠키·localStorage 토큰은 보존). 로컬 서버라 재다운로드 비용 작음.
+    try {
+      await session.fromPartition("persist:haehan").clearCache();
+    } catch (e) {
+      console.warn("[main] webview HTTP 캐시 정리 실패(무시):", e.message);
+    }
 
     // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
     const serverReady = await startFastAPIServer();
