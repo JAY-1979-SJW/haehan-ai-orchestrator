@@ -120,6 +120,7 @@ function Header({ user, onLogout }: { user: UserInfo | null; onLogout: () => voi
 export default function AboutPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
 
   useEffect(() => { getMe().then(setUser); }, []);
 
@@ -257,12 +258,21 @@ export default function AboutPage() {
                   </li>
                 ))}
               </ul>
-              <Link href={p.ctaHref}
-                className={`block w-full text-center py-2.5 rounded-xl font-semibold text-sm transition-colors ${p.highlight
-                  ? "bg-[#F97316] text-white hover:bg-[#EA580C]"
-                  : "border border-[#E5E7EB] text-[#374151] hover:border-[#F97316] hover:text-[#F97316]"}`}>
-                {p.cta}
-              </Link>
+              {p.ctaHref.startsWith("mailto") ? (
+                <button onClick={() => setInquiryOpen(true)}
+                  className={`block w-full text-center py-2.5 rounded-xl font-semibold text-sm transition-colors ${p.highlight
+                    ? "bg-[#F97316] text-white hover:bg-[#EA580C]"
+                    : "border border-[#E5E7EB] text-[#374151] hover:border-[#F97316] hover:text-[#F97316]"}`}>
+                  {p.cta}
+                </button>
+              ) : (
+                <Link href={p.ctaHref}
+                  className={`block w-full text-center py-2.5 rounded-xl font-semibold text-sm transition-colors ${p.highlight
+                    ? "bg-[#F97316] text-white hover:bg-[#EA580C]"
+                    : "border border-[#E5E7EB] text-[#374151] hover:border-[#F97316] hover:text-[#F97316]"}`}>
+                  {p.cta}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -324,11 +334,76 @@ export default function AboutPage() {
             <Link href="/signup" className="hover:text-[#6B7280]">회원가입</Link>
             <Link href="/login" className="hover:text-[#6B7280]">로그인</Link>
             <Link href="/mypage" className="hover:text-[#6B7280]">마이페이지</Link>
-            <a href="mailto:skyjwshin@gmail.com" className="hover:text-[#6B7280]">문의</a>
+            <button onClick={() => setInquiryOpen(true)} className="hover:text-[#6B7280]">문의</button>
           </div>
           <p>© 2026 Haehan AI</p>
         </div>
       </footer>
+
+      {inquiryOpen && <InquiryModal onClose={() => setInquiryOpen(false)} />}
+    </div>
+  );
+}
+
+function InquiryModal({ onClose }: { onClose: () => void }) {
+  const [form, setForm] = useState({ name: "", contact: "", company: "", subject: "", message: "", website: "" });
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [err, setErr] = useState("");
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function submit() {
+    if (!form.name.trim() || !form.message.trim()) { setErr("이름과 문의 내용을 입력해 주세요."); return; }
+    setState("sending"); setErr("");
+    try {
+      const r = await fetch("/api/proxy/api/v1/inquiries", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || "전송 실패");
+      setState("done");
+    } catch (e) { setState("error"); setErr(String(e)); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+        {state === "done" ? (
+          <div className="text-center py-6">
+            <p className="text-2xl mb-2">✅</p>
+            <p className="text-lg font-bold text-[#111827]">문의가 접수되었습니다</p>
+            <p className="text-sm text-[#6B7280] mt-1">빠른 시일 내에 답변드리겠습니다.</p>
+            <button onClick={onClose} className="mt-5 px-5 py-2 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C]">닫기</button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-lg font-bold text-[#111827]">도입 문의</p>
+              <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#111827]">✕</button>
+            </div>
+            <div className="space-y-2.5">
+              <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="이름 *"
+                className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#F97316]" />
+              <input value={form.contact} onChange={(e) => set("contact", e.target.value)} placeholder="연락처 (이메일 또는 전화)"
+                className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#F97316]" />
+              <input value={form.company} onChange={(e) => set("company", e.target.value)} placeholder="회사/기관 (선택)"
+                className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#F97316]" />
+              <input value={form.subject} onChange={(e) => set("subject", e.target.value)} placeholder="제목"
+                className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#F97316]" />
+              <textarea value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="문의 내용 *" rows={4}
+                className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#F97316] resize-none" />
+              {/* 허니팟(봇 차단) — 사용자 눈에 안 보임 */}
+              <input value={form.website} onChange={(e) => set("website", e.target.value)} tabIndex={-1} autoComplete="off"
+                style={{ position: "absolute", left: "-9999px" }} aria-hidden="true" />
+            </div>
+            {err && <p className="text-xs text-[#DC2626] mt-2">{err}</p>}
+            <button onClick={submit} disabled={state === "sending"}
+              className="mt-4 w-full py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C] disabled:opacity-50">
+              {state === "sending" ? "전송 중…" : "문의 보내기"}
+            </button>
+            <p className="text-[11px] text-[#9CA3AF] mt-2 text-center">남겨주신 연락처로 답변드립니다.</p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
