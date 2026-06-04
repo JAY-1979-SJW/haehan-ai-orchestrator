@@ -63,6 +63,9 @@ export default function ProductsClient() {
   const [tmplCategory, setTmplCategory]       = useState("");
   const [tmplMsg, setTmplMsg]                 = useState<{ ok: boolean; text: string } | null>(null);
   const [showSaveForm, setShowSaveForm]        = useState(false);
+  // 템플릿 기반 수정 모드: 불러온 템플릿 HTML 을 베이스로 AI 가 새 상품에 맞게 수정
+  const [templateBase, setTemplateBase]        = useState<string | null>(null);
+  const [useTemplateBase, setUseTemplateBase]  = useState(true);
 
   async function loadTemplates() {
     setTmplLoading(true);
@@ -79,8 +82,8 @@ export default function ProductsClient() {
       if (!t.ok) return;
       if (t.sections) setSelectedSections(t.sections);
       if (t.data)     setDescData(JSON.stringify(t.data, null, 2));
-      if (t.html)     setDescHtml(t.html);
-      setTmplMsg({ ok: true, text: `"${t.name}" 템플릿 불러옴` });
+      if (t.html)   { setDescHtml(t.html); setTemplateBase(t.html); setUseTemplateBase(true); }
+      setTmplMsg({ ok: true, text: `"${t.name}" 템플릿 불러옴 — AI 생성 시 이 템플릿 기반으로 수정합니다` });
       setTimeout(() => setTmplMsg(null), 3000);
     } catch (e) { setTmplMsg({ ok: false, text: String(e) }); }
   }
@@ -164,7 +167,8 @@ export default function ProductsClient() {
     try {
       const data = JSON.parse(descData);
       const images = gptImages.split("\n").map(s => s.trim()).filter(Boolean);
-      const res = await gptGenerateDescription(data, images, gptModel === "quality" ? "quality" : undefined);
+      const base = (useTemplateBase && templateBase) ? templateBase : undefined;
+      const res = await gptGenerateDescription(data, images, gptModel === "quality" ? "quality" : undefined, base);
       if (res.ok && res.html) {
         setDescHtml(res.html);
         if (res.image_analysis) setGptAnalysis(res.image_analysis);
@@ -475,6 +479,9 @@ export default function ProductsClient() {
             gptModel={gptModel}
             gptImages={gptImages}
             gptAnalysis={gptAnalysis}
+            templateBase={templateBase}
+            useTemplateBase={useTemplateBase}
+            onToggleTemplateBase={setUseTemplateBase}
             onLoadTemplates={loadTemplates}
             onLoadTemplate={handleLoadTemplate}
             onDeleteTemplate={handleDeleteTemplate}

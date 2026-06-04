@@ -1,17 +1,17 @@
 """상세설명 생성·렌더링·템플릿 엔드포인트."""
+
 from __future__ import annotations
 
 import datetime
 import json
 import re
 import sys
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ...auth import require_role
 from ...audit_logger import log_event
+from ...auth import require_role
 from ._helpers import ROOT, tmpl_dir
 
 router = APIRouter()
@@ -19,36 +19,49 @@ router = APIRouter()
 
 # ── 섹션 ─────────────────────────────────────────────────────────────────────
 
+
 @router.get("/description/sections")
 def api_description_sections(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.product.page_builder import SECTION_REGISTRY, DEFAULT_SECTIONS
+    from scripts.naver.smartstore.product.page_builder import DEFAULT_SECTIONS, SECTION_REGISTRY
+
     return {
         "ok": True,
-        "sections": [{"key": k, "label": v["label"], "required": v["required"], "data_keys": v["data_keys"]}
-                     for k, v in SECTION_REGISTRY.items()],
+        "sections": [
+            {"key": k, "label": v["label"], "required": v["required"], "data_keys": v["data_keys"]}
+            for k, v in SECTION_REGISTRY.items()
+        ],
         "default_sections": DEFAULT_SECTIONS,
     }
 
 
 # ── 렌더링 ────────────────────────────────────────────────────────────────────
 
+
 class DescriptionRenderRequest(BaseModel):
-    sections: List[str]
+    sections: list[str]
     data: dict
 
 
 @router.post("/description/render")
-def api_description_render(body: DescriptionRenderRequest,
-                            user: dict = Depends(require_role("admin", "owner"))) -> dict:
+def api_description_render(
+    body: DescriptionRenderRequest, user: dict = Depends(require_role("admin", "owner"))
+) -> dict:
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.product.page_builder import ProductPageBuilder
+
     try:
         builder = ProductPageBuilder()
         builder.select(body.sections)
         html = builder.render(body.data)
-        log_event("SMARTSTORE_DESCRIPTION_RENDER", task_id="-", actor=user["actor"],
-                  role=user["role"], decision="ok", note=f"sections={body.sections}")
+        log_event(
+            "SMARTSTORE_DESCRIPTION_RENDER",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"sections={body.sections}",
+        )
         return {"ok": True, "html": html, "sections": builder.sections}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -56,49 +69,72 @@ def api_description_render(body: DescriptionRenderRequest,
 
 # ── AI 생성 ───────────────────────────────────────────────────────────────────
 
+
 class AIDescriptionRequest(BaseModel):
     data: dict
-    model: Optional[str] = None
+    model: str | None = None
 
 
 @router.post("/description/ai-generate")
-def api_description_ai_generate(body: AIDescriptionRequest,
-                                 user: dict = Depends(require_role("admin", "owner"))) -> dict:
+def api_description_ai_generate(
+    body: AIDescriptionRequest, user: dict = Depends(require_role("admin", "owner"))
+) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.product.ai_description_writer import AIDescriptionWriter, DEFAULT_MODEL, QUALITY_MODEL
+    from scripts.naver.smartstore.product.ai_description_writer import DEFAULT_MODEL, QUALITY_MODEL, AIDescriptionWriter
+
     model = QUALITY_MODEL if body.model == "quality" else DEFAULT_MODEL
     result = AIDescriptionWriter(model=model).generate(body.data)
     if result.get("ok"):
-        log_event("SMARTSTORE_AI_DESCRIPTION", task_id="-", actor=user["actor"], role=user["role"],
-                  decision="ok", note=f"model={model} name={body.data.get('name','')[:20]}")
+        log_event(
+            "SMARTSTORE_AI_DESCRIPTION",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"model={model} name={body.data.get('name', '')[:20]}",
+        )
     return result
 
 
 class GptDescriptionRequest(BaseModel):
     data: dict
-    images: List[str] = []
-    model: Optional[str] = None
+    images: list[str] = []
+    model: str | None = None
+    base: str | None = None  # 표준 템플릿 베이스(있으면 템플릿 기반 수정 모드)
 
 
 @router.post("/description/gpt-generate")
-def api_description_gpt_generate(body: GptDescriptionRequest,
-                                  user: dict = Depends(require_role("admin", "owner"))) -> dict:
+def api_description_gpt_generate(
+    body: GptDescriptionRequest, user: dict = Depends(require_role("admin", "owner"))
+) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.product.gpt_description_writer import GptDescriptionWriter, DEFAULT_MODEL, QUALITY_MODEL
+    from scripts.naver.smartstore.product.gpt_description_writer import (
+        DEFAULT_MODEL,
+        QUALITY_MODEL,
+        GptDescriptionWriter,
+    )
+
     use_model = QUALITY_MODEL if (body.model == "quality" or body.images) else DEFAULT_MODEL
-    result = GptDescriptionWriter(model=use_model).generate(body.data, images=body.images or None)
+    result = GptDescriptionWriter(model=use_model).generate(body.data, images=body.images or None, base=body.base)
     if result.get("ok"):
-        log_event("SMARTSTORE_GPT_DESCRIPTION", task_id="-", actor=user["actor"], role=user["role"],
-                  decision="ok", note=f"model={use_model} images={len(body.images)} name={body.data.get('name','')[:20]}")
+        log_event(
+            "SMARTSTORE_GPT_DESCRIPTION",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"model={use_model} images={len(body.images)} name={body.data.get('name', '')[:20]}",
+        )
     return result
 
 
 # ── 템플릿 ────────────────────────────────────────────────────────────────────
 
+
 class TemplateSaveRequest(BaseModel):
     name: str
     category: str
-    sections: List[str]
+    sections: list[str]
     data: dict
     html: str
     source: str = "manual"
@@ -111,29 +147,56 @@ def api_templates_list(user: dict = Depends(require_role("admin", "owner"))) -> 
     for f in sorted(d.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
             t = json.loads(f.read_text(encoding="utf-8"))
-            templates.append({"id": f.stem, "name": t.get("name", f.stem), "category": t.get("category", ""),
-                               "sections": t.get("sections", []), "source": t.get("source", "manual"),
-                               "created_at": t.get("created_at", ""), "data": t.get("data", {})})
-        except Exception:
-            pass
-    log_event("SMARTSTORE_TEMPLATES_LIST", task_id="-", actor=user["actor"], role=user["role"],
-              decision="ok", note=f"count={len(templates)}")
+            templates.append(
+                {
+                    "id": f.stem,
+                    "name": t.get("name", f.stem),
+                    "category": t.get("category", ""),
+                    "sections": t.get("sections", []),
+                    "source": t.get("source", "manual"),
+                    "created_at": t.get("created_at", ""),
+                    "data": t.get("data", {}),
+                }
+            )
+        except Exception:  # noqa: S112 — 손상된 템플릿 파일은 조용히 건너뜀
+            continue
+    log_event(
+        "SMARTSTORE_TEMPLATES_LIST",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"count={len(templates)}",
+    )
     return {"ok": True, "templates": templates, "count": len(templates)}
 
 
 @router.post("/description/templates/save")
-def api_templates_save(body: TemplateSaveRequest,
-                        user: dict = Depends(require_role("admin", "owner"))) -> dict:
-    d    = tmpl_dir()
+def api_templates_save(body: TemplateSaveRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    d = tmpl_dir()
     safe = re.sub(r"[^\w가-힣]", "_", body.name)[:40]
-    ts   = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    tid  = f"{safe}_{ts}"
-    payload = {"id": tid, "name": body.name, "category": body.category, "sections": body.sections,
-               "data": body.data, "html": body.html, "source": body.source,
-               "created_at": datetime.datetime.now().isoformat(timespec="seconds"), "created_by": user["actor"]}
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    tid = f"{safe}_{ts}"
+    payload = {
+        "id": tid,
+        "name": body.name,
+        "category": body.category,
+        "sections": body.sections,
+        "data": body.data,
+        "html": body.html,
+        "source": body.source,
+        "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "created_by": user["actor"],
+    }
     (d / f"{tid}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    log_event("SMARTSTORE_TEMPLATE_SAVE", task_id="-", actor=user["actor"], role=user["role"],
-              decision="ok", note=f"id={tid} name={body.name}")
+    log_event(
+        "SMARTSTORE_TEMPLATE_SAVE",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"id={tid} name={body.name}",
+    )
     return {"ok": True, "id": tid, "name": body.name}
 
 
@@ -144,8 +207,14 @@ def api_templates_get(template_id: str, user: dict = Depends(require_role("admin
         return {"ok": False, "error": "template_not_found"}
     try:
         t = json.loads(f.read_text(encoding="utf-8"))
-        log_event("SMARTSTORE_TEMPLATE_GET", task_id="-", actor=user["actor"], role=user["role"],
-                  decision="ok", note=f"id={template_id}")
+        log_event(
+            "SMARTSTORE_TEMPLATE_GET",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"id={template_id}",
+        )
         return {"ok": True, **t}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -157,6 +226,12 @@ def api_templates_delete(template_id: str, user: dict = Depends(require_role("ad
     if not f.exists():
         return {"ok": False, "error": "template_not_found"}
     f.unlink()
-    log_event("SMARTSTORE_TEMPLATE_DELETE", task_id="-", actor=user["actor"], role=user["role"],
-              decision="ok", note=f"id={template_id}")
+    log_event(
+        "SMARTSTORE_TEMPLATE_DELETE",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"id={template_id}",
+    )
     return {"ok": True, "id": template_id}

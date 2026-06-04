@@ -884,6 +884,7 @@ export async function gptGenerateDescription(
   data: Record<string, unknown>,
   images: string[],
   model?: "quality",
+  base?: string,
 ): Promise<{
   ok: boolean;
   html?: string;
@@ -897,6 +898,7 @@ export async function gptGenerateDescription(
     data,
     images,
     model: model ?? null,
+    base: base ?? null,  // 표준 템플릿 베이스 → 템플릿 기반 수정 모드
   });
 }
 
