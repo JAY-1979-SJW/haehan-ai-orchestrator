@@ -116,7 +116,7 @@ export default function LogsAuditPage() {
 
       {/* 배너 */}
       <ReadOnlyModeBanner />
-      <ForbiddenActionBanner reason="execute / approve / delete 실행 연결 없음 — 이 화면은 읽기 전용 감사 화면입니다" />
+      <ForbiddenActionBanner reason="이 화면은 기록을 보는 읽기 전용 화면입니다 (실행 기능 없음)" />
 
       {/* 로딩 */}
       {opsState.status === "loading" && (
@@ -130,7 +130,7 @@ export default function LogsAuditPage() {
         <div className="flex items-center gap-2 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">
           <span className="font-mono font-bold">MOCK_FALLBACK</span>
           <span>— API 응답 불가, mock 데이터 표시 중</span>
-          <span className="ml-auto font-mono text-[10px]">read_only=true</span>
+          <span className="ml-auto font-mono text-[10px]">읽기 전용</span>
         </div>
       )}
 
@@ -138,8 +138,8 @@ export default function LogsAuditPage() {
       {opsState.status === "empty" && (
         <EmptyStatePanel
           title="현재 기록된 이벤트가 없습니다"
-          description="읽기 전용 상태입니다 — DRY_RUN_ONLY, 실행 연결 없음"
-          badge="READ_ONLY · AUDIT_LOG"
+          description="읽기 전용 화면입니다 (실행 기능 없음)"
+          badge="읽기 전용 · 감사 기록"
         />
       )}
 

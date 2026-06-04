@@ -41,7 +41,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
 
       {/* 배너 */}
       <ReadOnlyModeBanner />
-      <ForbiddenActionBanner reason="execute / approve / reject / delete 실행 연결 없음 (B-1, B-2) — 이 화면은 읽기 전용 상세 화면입니다" />
+      <ForbiddenActionBanner reason="이 화면은 상세 내용을 보는 읽기 전용 화면입니다 (실행 기능 없음)" />
 
       {/* mock fallback 알림 */}
       {(loadState === "mock_fallback" || loadState === "error") && (

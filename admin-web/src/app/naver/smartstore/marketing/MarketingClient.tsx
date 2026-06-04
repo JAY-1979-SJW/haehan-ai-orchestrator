@@ -299,7 +299,7 @@ export default function MarketingClient() {
                 </div>
                 <div className="flex gap-3">
                   <span className="font-semibold text-[#6B7280] w-28 shrink-0">승인 상태</span>
-                  <span className="text-[#111827]">read-only 분석 가능 (변경은 approval_gated)</span>
+                  <span className="text-[#111827]">조회·분석은 자유롭게, 변경은 승인 후 실행</span>
                 </div>
               </div>
             </div>

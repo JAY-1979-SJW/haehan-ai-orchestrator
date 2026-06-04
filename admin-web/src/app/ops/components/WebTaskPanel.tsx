@@ -47,7 +47,7 @@ export function WebTaskPanel({ tasks }: { tasks: WebTaskAction[] }) {
               </span>
               <span>실행위치: <span className="font-mono">{t.executionLocation}</span></span>
               {t.requiresApproval && <span className="text-red-600">승인 필요</span>}
-              {t.dryRunSupported && <span className="text-blue-600">dry-run 지원</span>}
+              {t.dryRunSupported && <span className="text-blue-600">테스트 모드 지원</span>}
             </div>
             <div className="mt-3 flex gap-2">
               <button

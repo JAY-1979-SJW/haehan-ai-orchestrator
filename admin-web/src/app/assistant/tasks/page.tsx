@@ -105,7 +105,7 @@ export default function TaskQueuePage() {
       {/* 배너 */}
       <ReadOnlyModeBanner />
       <DryRunNotice enabled />
-      <ForbiddenActionBanner reason="execute / approve→execute 버튼 없음 (B-1, B-2) — 이 화면은 실행 기능이 없는 읽기 전용 화면입니다" />
+      <ForbiddenActionBanner reason="이 화면은 작업을 보는 읽기 전용 화면입니다 (실행 기능 없음)" />
 
       {/* 로딩 */}
       {inboxState.status === "loading" && (
@@ -118,8 +118,8 @@ export default function TaskQueuePage() {
       {inboxState.status === "empty" && (
         <EmptyStatePanel
           title="현재 표시할 작업이 없습니다"
-          description="읽기 전용 상태입니다 — DRY_RUN_ONLY, 실행 연결 없음"
-          badge="READ_ONLY · DRY_RUN_ONLY"
+          description="읽기 전용 화면입니다 (실행 기능 없음)"
+          badge="읽기 전용"
         />
       )}
 
@@ -128,7 +128,7 @@ export default function TaskQueuePage() {
         <div className="flex items-center gap-2 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">
           <span className="font-mono font-bold">MOCK_FALLBACK</span>
           <span>— API 응답 불가, mock 데이터 표시 중</span>
-          <span className="ml-auto font-mono text-[10px]">read_only=true</span>
+          <span className="ml-auto font-mono text-[10px]">읽기 전용</span>
         </div>
       )}
 

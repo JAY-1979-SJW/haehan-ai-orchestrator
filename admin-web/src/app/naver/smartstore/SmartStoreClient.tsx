@@ -12,7 +12,6 @@ import {
 import NotificationPanel from "./NotificationPanel";
 import { MenuCard } from "./components/MenuCard";
 import { ActionCard } from "./components/ActionCard";
-import { SectionBlock } from "./components/SectionBlock";
 import { HistoryRow } from "./components/HistoryRow";
 import { STATIC_MENUS, REGISTER_STEPS } from "./components/constants";
 
@@ -34,9 +33,7 @@ export default function SmartStoreClient({
   const [tab, setTab] = useState<Tab>("chat");
 
   // 카탈로그 상태
-  const [catalog, setCatalog] = useState<ActionCatalog | null>(initCatalog);
-  const [catalogError, setCatalogError] = useState<string | null>(initCatalogError);
-  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalog] = useState<ActionCatalog | null>(initCatalog);
 
   // 이력 상태
   const [historyData, setHistoryData] = useState<SmartStoreHistoryResponse | null>(null);
@@ -47,20 +44,6 @@ export default function SmartStoreClient({
   const [formFields, setFormFields] = useState<{ required: string[]; optional: string[] } | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const refreshCatalog = useCallback(async () => {
-    setCatalogLoading(true);
-    setCatalogError(null);
-    try {
-      const res = await getSmartStoreStatus();
-      if (res.catalog && res.catalog.sections) {
-        setCatalog(res.catalog as unknown as ActionCatalog);
-      }
-    } catch (e) {
-      setCatalogError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setCatalogLoading(false);
-    }
-  }, []);
 
   const loadHistory = useCallback(async () => {
     if (historyData) return;
@@ -101,8 +84,7 @@ export default function SmartStoreClient({
     { id: "products",  label: "상품 관리" },
     { id: "orders",    label: "주문/정산" },
     { id: "reviews",   label: "리뷰/문의" },
-    { id: "catalog",   label: "액션 카탈로그" },
-    { id: "history",   label: "제출 이력" },
+    { id: "history",   label: "처리 이력" },
   ];
 
   const historyItems = historyData?.history ?? [];
@@ -143,18 +125,13 @@ export default function SmartStoreClient({
 
   return (
     <div className="space-y-4">
-      {/* 계약 정책 배너 */}
+      {/* 안전 안내 — 조회는 자유, 저장은 승인 후에만 */}
       {catalog?.contract && (
-        <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-4">
-          <p className="text-xs font-bold text-[#C2410C] mb-2">계약 정책 (읽기 전용)</p>
-          <div className="grid grid-cols-1 gap-1">
-            {Object.entries(catalog.contract).map(([k, v]) => (
-              <div key={k} className="flex gap-2 text-xs">
-                <span className="font-mono text-[#92400E] w-24 shrink-0">{k}:</span>
-                <span className="text-[#78350F]">{v}</span>
-              </div>
-            ))}
-          </div>
+        <div className="border border-[#FED7AA] bg-[#FFF7ED] rounded-xl p-3">
+          <p className="text-xs text-[#92400E]">
+            🔒 <span className="font-semibold">안전 모드</span> · 상품·주문 <b>조회</b>는 자유롭게 가능하고,
+            상품 <b>등록·수정 등 저장</b> 작업은 <b>승인을 누른 뒤에만</b> 실행됩니다.
+          </p>
         </div>
       )}
 
@@ -400,28 +377,7 @@ export default function SmartStoreClient({
           </div>
         )}
 
-        {/* ── 액션 카탈로그 탭 ── */}
-        {tab === "catalog" && (
-          <div className="space-y-6">
-            <div className="flex justify-end">
-              <button
-                onClick={refreshCatalog}
-                disabled={catalogLoading}
-                className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F3F4F6] disabled:opacity-50 transition-colors"
-              >
-                {catalogLoading ? "갱신 중..." : "실시간 갱신"}
-              </button>
-            </div>
-            {catalogError && (
-              <p className="text-xs text-[#DC2626]">카탈로그 로드 오류: {catalogError}</p>
-            )}
-            {catalog?.sections?.map((s) => (
-              <SectionBlock key={s.name} section={s} />
-            ))}
-          </div>
-        )}
-
-        {/* ── 제출 이력 탭 ── */}
+        {/* ── 처리 이력 탭 ── */}
         {tab === "history" && (
           <div className="space-y-3">
             {historyLoading && <p className="text-xs text-[#6B7280]">이력 로드 중...</p>}
@@ -443,9 +399,9 @@ export default function SmartStoreClient({
                     <span className="font-mono text-xs text-[#6B7280] w-32 shrink-0">{k}</span>
                     <span className="text-[#111827] text-xs">
                       {v === true ? (
-                        <span className="bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-1.5 py-0.5 rounded text-xs">dry_run</span>
+                        <span className="bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-1.5 py-0.5 rounded text-xs">테스트(미저장)</span>
                       ) : v === false ? (
-                        <span className="bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded text-xs">live</span>
+                        <span className="bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded text-xs">실제 실행</span>
                       ) : (
                         String(v)
                       )}

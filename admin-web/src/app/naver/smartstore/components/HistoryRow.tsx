@@ -18,7 +18,7 @@ export function HistoryRow({ record, index }: { record: Record<string, unknown>;
         <span className="text-xs text-[#111827] font-medium">{wf}</span>
         <span className="text-xs text-[#6B7280]">{pt}</span>
         {dr ? (
-          <span className="ml-auto text-xs bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-1.5 py-0.5 rounded">dry_run</span>
+          <span className="ml-auto text-xs bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] px-1.5 py-0.5 rounded">테스트(미저장)</span>
         ) : (
           <span className="ml-auto text-xs bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-1.5 py-0.5 rounded">live</span>
         )}
