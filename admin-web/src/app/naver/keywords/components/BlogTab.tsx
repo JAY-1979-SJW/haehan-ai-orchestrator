@@ -94,9 +94,12 @@ export function BlogTab({
           <p className="text-xs font-semibold text-[#374151] mb-2">
             결과 목록 ({Array.isArray(blogState.listData) ? blogState.listData.length : "—"}건)
           </p>
-          <pre className="text-xs text-[#374151] font-mono whitespace-pre-wrap overflow-x-auto max-h-64">
-            {JSON.stringify(blogState.listData, null, 2)}
-          </pre>
+          <details>
+            <summary className="text-xs text-[#9CA3AF] cursor-pointer hover:text-[#6B7280]">원문 데이터 보기</summary>
+            <pre className="text-xs text-[#374151] font-mono whitespace-pre-wrap overflow-x-auto max-h-64 mt-2">
+              {JSON.stringify(blogState.listData, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
     </div>

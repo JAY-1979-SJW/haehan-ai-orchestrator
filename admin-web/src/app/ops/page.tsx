@@ -24,14 +24,14 @@ import SessionStatusPanel from "@/components/SessionStatusPanel";
 const SAFETY_POLICIES: SafetyPolicyNotice[] = [
   {
     id: "auth-required",
-    title: "Authentication required",
-    description: "Ops data is shown only from authenticated backend responses.",
+    title: "인증 필요",
+    description: "운영 데이터는 인증된 응답에서만 표시됩니다.",
     level: "block",
   },
   {
     id: "no-mock-fallback",
-    title: "Mock fallback disabled",
-    description: "Backend failures are surfaced instead of replaced with sample data.",
+    title: "샘플 데이터 대체 비활성",
+    description: "백엔드 오류 시 샘플로 가리지 않고 그대로 표시합니다.",
     level: "warn",
   },
 ];
@@ -88,7 +88,7 @@ export default async function OpsPage() {
 
         {failures.length > 0 && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-            Backend data unavailable for {failures.length} panel(s). Mock fallback is disabled.
+            {failures.length}개 항목을 불러오지 못했습니다.
           </div>
         )}
 
