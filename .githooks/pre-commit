@@ -29,6 +29,31 @@ if py_files:
         print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
         sys.exit(1)
 
+# ── frozen-safe 검사 (ai_orchestrator/** 만) ────────────────────────────────
+# frozen exe 에서 sys.executable=haehan-server.exe(파이썬 아님) → sys.executable 로
+# .py 스크립트를 실행하면 깨짐. in-process 호출로 유도. 정당하면 줄에 # frozen-ok.
+frozen_targets = [f for f in py_files if f.startswith("ai_orchestrator/")]
+if frozen_targets:
+    fdiff = subprocess.run(
+        ["git", "diff", "--cached", "-U0", "--"] + frozen_targets,
+        cwd=str(ROOT), capture_output=True, text=True,
+    )
+    bad_lines = []
+    for line in fdiff.stdout.splitlines():
+        if line.startswith("+") and not line.startswith("+++"):
+            body = line[1:]
+            if "sys.executable" in body and "frozen-ok" not in body:
+                if (".py" in body) or ("SCRIPT" in body) or ("script" in body.lower()):
+                    bad_lines.append(body.strip())
+    if bad_lines:
+        print("=" * 60)
+        print("[frozen-safe] frozen exe 에서 깨지는 패턴: sys.executable 로 스크립트 실행")
+        for b in bad_lines:
+            print(f"    + {b[:90]}")
+        print("    → in-process 호출로 바꾸거나, 정당하면 해당 줄에 '# frozen-ok' 주석 추가.")
+        print("=" * 60)
+        sys.exit(1)
+
 # ── 프론트(.ts/.tsx) 검사 ───────────────────────────────────────────────────
 all_staged = r.stdout.splitlines()
 ts_files = [f for f in all_staged if f.endswith((".ts", ".tsx")) and f.startswith("admin-web/")]
