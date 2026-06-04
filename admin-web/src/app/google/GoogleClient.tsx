@@ -315,10 +315,27 @@ export function GoogleClient() {
     router.push(`/google/${slug}`);
   };
 
-  const openSite = (e: React.MouseEvent, s: Service) => {
+  const openSite = async (e: React.MouseEvent, s: Service) => {
     e.stopPropagation();
-    window.open(s.url, "_blank", "noopener,noreferrer");
-    addMsg("ai", `<span style="color:#16A34A;font-weight:600">✓ ${s.name}</span> 사이트를 새 탭에서 열었습니다.`);
+    addMsg("ai", `<span style="color:#6B7280">⏳ ${s.name} 여는 중…</span>`);
+    try {
+      const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
+      const r = await fetch(`${API_BASE}/api/v1/google/tools/open`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+        body: JSON.stringify({ url: s.url }),
+      });
+      const d = await r.json();
+      if (r.ok && d.ok) {
+        addMsg("ai", `<span style="color:#16A34A;font-weight:600">✓ ${s.name}</span> 을(를) 로그인된 브라우저에서 열었습니다.`);
+      } else {
+        window.open(s.url, "_blank", "noopener,noreferrer");
+        addMsg("ai", `<span style="color:#C2410C">${s.name}</span> — 브라우저 미연결로 새 창에서 열었습니다.`);
+      }
+    } catch {
+      window.open(s.url, "_blank", "noopener,noreferrer");
+      addMsg("ai", `<span style="color:#C2410C">${s.name}</span> — 새 창에서 열었습니다.`);
+    }
   };
 
   const requestAction = async (e: React.MouseEvent, s: Service) => {
