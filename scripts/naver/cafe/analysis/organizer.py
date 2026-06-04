@@ -6,6 +6,7 @@ API 호출 없음. TF-IDF + 코사인 유사도로 유사 질문 군집화.
     python -m scripts.naver.cafe.organizer
     python -m scripts.naver.cafe.organizer --input data/cafe/classified_*.json
 """
+
 from __future__ import annotations
 
 import json
@@ -19,16 +20,23 @@ _DATA_DIR = ROOT / "data" / "cafe"
 
 # ── 카테고리 순서 (보고서용) ──────────────────────────────────────────
 CAT_ORDER = [
-    "노무", "계약·하도급", "공사관리", "세무·회계",
-    "법규·인허가", "안전", "행정·서류", "장비·자재", "커뮤니티", "기타",
+    "노무",
+    "계약·하도급",
+    "공사관리",
+    "세무·회계",
+    "법규·인허가",
+    "안전",
+    "행정·서류",
+    "장비·자재",
+    "커뮤니티",
+    "기타",
 ]
 
 
 def _load_classified(input_path: str | None = None) -> list[dict]:
     if input_path:
         return json.loads(Path(input_path).read_text(encoding="utf-8"))
-    files = sorted(_DATA_DIR.glob("classified_*.json"),
-                   key=lambda f: f.stat().st_mtime, reverse=True)
+    files = sorted(_DATA_DIR.glob("classified_*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
     if not files:
         raise FileNotFoundError(f"분류 파일 없음: {_DATA_DIR}")
     print(f"[organizer] 입력: {files[0].name}")
@@ -52,21 +60,34 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
     try:
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
-        import numpy as np
-    except ImportError:
-        # sklearn 없으면 군집화 없이 개별 반환
-        return [{"representative": q, "members": [], "size": 1,
-                 "avg_views": int(q.get("view_count", 0) or 0),
-                 "total_views": int(q.get("view_count", 0) or 0)} for q in questions]
+    except Exception:
+        # sklearn 미설치/번들 누락(frozen exe의 OSError 포함) → 군집화 없이 개별 반환
+        return [
+            {
+                "representative": q,
+                "members": [],
+                "size": 1,
+                "avg_views": int(q.get("view_count", 0) or 0),
+                "total_views": int(q.get("view_count", 0) or 0),
+            }
+            for q in questions
+        ]
 
     texts = [q.get("title", "") for q in questions]
     try:
         vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 3), max_features=5000)
         tfidf = vec.fit_transform(texts)
     except Exception:
-        return [{"representative": q, "members": [], "size": 1,
-                 "avg_views": int(q.get("view_count", 0) or 0),
-                 "total_views": int(q.get("view_count", 0) or 0)} for q in questions]
+        return [
+            {
+                "representative": q,
+                "members": [],
+                "size": 1,
+                "avg_views": int(q.get("view_count", 0) or 0),
+                "total_views": int(q.get("view_count", 0) or 0),
+            }
+            for q in questions
+        ]
 
     n = len(questions)
     assigned = [-1] * n
@@ -98,13 +119,15 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
         rep = max(members, key=lambda q: int(q.get("view_count", 0) or 0))
         non_rep = [m for m in members if m["article_id"] != rep["article_id"]]
         views = [int(m.get("view_count", 0) or 0) for m in members]
-        result.append({
-            "representative": rep,
-            "members": non_rep,
-            "size": len(members),
-            "avg_views": round(sum(views) / len(views), 1) if views else 0,
-            "total_views": sum(views),
-        })
+        result.append(
+            {
+                "representative": rep,
+                "members": non_rep,
+                "size": len(members),
+                "avg_views": round(sum(views) / len(views), 1) if views else 0,
+                "total_views": sum(views),
+            }
+        )
 
     # 총 조회수 내림차순 정렬
     result.sort(key=lambda c: c["total_views"], reverse=True)
@@ -114,12 +137,52 @@ def _cluster_questions(questions: list[dict], sim_threshold: float = 0.35) -> li
 def _extract_recurring_keywords(articles: list[dict], top_n: int = 30) -> list[dict]:
     """제목 한글 명사 2글자 이상 빈도 추출."""
     STOP = {
-        "것", "수", "때", "곳", "중", "후", "전", "분", "점", "등",
-        "및", "관련", "해당", "경우", "내용", "부분", "현재", "상태",
-        "사항", "방법", "문제", "작업", "진행", "확인", "처리", "요청",
-        "질문", "답변", "건설", "공무", "카페", "회원", "게시",
-        "문의", "부탁", "안녕", "감사", "합니다", "드립니다", "입니다",
-        "있나요", "인가요", "될까요", "할까요", "어떻게", "어디서",
+        "것",
+        "수",
+        "때",
+        "곳",
+        "중",
+        "후",
+        "전",
+        "분",
+        "점",
+        "등",
+        "및",
+        "관련",
+        "해당",
+        "경우",
+        "내용",
+        "부분",
+        "현재",
+        "상태",
+        "사항",
+        "방법",
+        "문제",
+        "작업",
+        "진행",
+        "확인",
+        "처리",
+        "요청",
+        "질문",
+        "답변",
+        "건설",
+        "공무",
+        "카페",
+        "회원",
+        "게시",
+        "문의",
+        "부탁",
+        "안녕",
+        "감사",
+        "합니다",
+        "드립니다",
+        "입니다",
+        "있나요",
+        "인가요",
+        "될까요",
+        "할까요",
+        "어떻게",
+        "어디서",
     }
     cnt: Counter = Counter()
     for a in articles:
@@ -158,13 +221,16 @@ def _build_category_summary(cat: str, articles: list[dict]) -> dict:
         "total_views": sum(all_views),
         "avg_question_views": round(sum(q_views) / len(q_views), 1) if q_views else 0,
         "top_questions": [
-            {"title": a["title"][:60], "views": a.get("view_count", "0"),
-             "date": a.get("date", ""), "href": a.get("href", "")}
+            {
+                "title": a["title"][:60],
+                "views": a.get("view_count", "0"),
+                "date": a.get("date", ""),
+                "href": a.get("href", ""),
+            }
             for a in top_questions
         ],
         "top_infos": [
-            {"title": a["title"][:60], "views": a.get("view_count", "0"), "date": a.get("date", "")}
-            for a in top_infos
+            {"title": a["title"][:60], "views": a.get("view_count", "0"), "date": a.get("date", "")} for a in top_infos
         ],
         "keywords": keywords,
         "question_clusters": [
@@ -194,27 +260,29 @@ def _generate_text_report(summaries: list[dict], total: int) -> str:
 
     for s in summaries:
         cat = s["category"]
-        lines.append(f"\n{'─'*65}")
-        lines.append(f"▶ [{cat}]  총 {s['total']:,}건  |  질문 {s['question_count']:,}건  |  "
-                     f"총조회 {s['total_views']:,}  |  질문평균조회 {s['avg_question_views']}회")
-        lines.append(f"{'─'*65}")
+        lines.append(f"\n{'─' * 65}")
+        lines.append(
+            f"▶ [{cat}]  총 {s['total']:,}건  |  질문 {s['question_count']:,}건  |  "
+            f"총조회 {s['total_views']:,}  |  질문평균조회 {s['avg_question_views']}회"
+        )
+        lines.append(f"{'─' * 65}")
 
         if s["keywords"]:
             kw = "  ".join(f"{k['word']}({k['count']})" for k in s["keywords"][:12])
             lines.append(f"  🔑 핵심 키워드: {kw}")
 
         if s["top_questions"]:
-            lines.append(f"\n  📌 조회수 상위 질문")
+            lines.append("\n  📌 조회수 상위 질문")
             for i, q in enumerate(s["top_questions"][:7], 1):
                 lines.append(f"     {i}. [{q['views']:>5}회] {q['title']}")
 
         if s["top_infos"]:
-            lines.append(f"\n  📖 정보공유 상위")
+            lines.append("\n  📖 정보공유 상위")
             for inf in s["top_infos"][:3]:
                 lines.append(f"     · [{inf['views']:>5}회] {inf['title']}")
 
         if s["question_clusters"]:
-            lines.append(f"\n  🔗 반복 질문 군집 (유사 질문 묶음)")
+            lines.append("\n  🔗 반복 질문 군집 (유사 질문 묶음)")
             for c in s["question_clusters"][:8]:
                 lines.append(f"     [{c['size']}건 / 총{c['total_views']}조회] {c['topic']}")
                 for sim in c["similar"][:3]:
@@ -256,14 +324,16 @@ def organize(input_path: str | None = None) -> dict:
     kb_path.write_text(json.dumps(kb_data, ensure_ascii=False, indent=2), encoding="utf-8")
     txt_path.write_text(report_text, encoding="utf-8")
 
-    print(f"\n[organizer] 저장 완료:")
+    print("\n[organizer] 저장 완료:")
     print(f"  JSON: {kb_path.name}")
     print(f"  TXT : {txt_path.name}")
     return {"kb_path": str(kb_path), "txt_path": str(txt_path), "report_text": report_text, "summaries": summaries}
 
 
 if __name__ == "__main__":
-    import argparse, sys
+    import argparse
+    import sys
+
     sys.path.insert(0, str(ROOT))
     p = argparse.ArgumentParser()
     p.add_argument("--input", default=None)

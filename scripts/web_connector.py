@@ -14,23 +14,23 @@
     with browser_session() as page:
         page_goto(page, "https://...")
 """
+
 from __future__ import annotations
 
 import json
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 from playwright.sync_api import Page, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 _DAEMON_STATE = ROOT / "data" / "cdp_daemon_state.json"
 
-import sys
+import sys  # noqa: E402
+
 sys.path.insert(0, str(ROOT))
-from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST, CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed  # noqa: E402
 from scripts.browser_task_session import (  # noqa: E402
     BrowserTaskPolicy,
@@ -39,6 +39,9 @@ from scripts.browser_task_session import (  # noqa: E402
     get_or_create_task_page,
     mark_task_owned,
 )
+from scripts.config import CDP_HOST as _DEFAULT_CDP_HOST  # noqa: E402
+from scripts.config import CDP_PORT as _DEFAULT_CDP_PORT  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -63,7 +66,9 @@ def _ensure_cdp_daemon() -> None:
     log.info("[web_connector] CDP 데몬 미실행 — 앱 요청으로 자동 기동")
     assert_browser_launch_allowed(component="scripts.web_connector", action="cdp_daemon_autostart")
     daemon_script = ROOT / "scripts" / "cdp_daemon.py"
-    import subprocess, sys
+    import subprocess
+    import sys
+
     subprocess.Popen(
         [sys.executable, str(daemon_script), "start"],
         stdout=subprocess.DEVNULL,
@@ -84,8 +89,27 @@ def _ensure_cdp_daemon() -> None:
     raise RuntimeError("CDP 데몬 자동 기동 실패 — 수동으로 'python scripts/cdp_daemon.py start' 실행하세요")
 
 
+def _is_cdp_live(port: int) -> bool:
+    """해당 포트에 CDP 브라우저가 이미 떠 있는지 빠르게 확인."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(f"http://{_DEFAULT_CDP_HOST}:{port}/json/version", timeout=2) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
 def _get_cdp_port() -> int:
-    """cdp_daemon_state.json에서 CDP 포트 읽기. 데몬 미실행 시 자동 기동."""
+    """CDP 포트 결정.
+
+    1순위: 기본 포트(9222)에 앱 watchdog 브라우저가 이미 떠 있으면 그대로 사용
+            (블로그·스마트스토어 도구와 동일 경로 — 데몬 불필요).
+    2순위: cdp_daemon_state.json 기반 데몬 포트 (없으면 자동 기동).
+    """
+    if _is_cdp_live(_DEFAULT_CDP_PORT):
+        log.debug("[web_connector] 기본 포트 %s CDP 활성 — 데몬 생략", _DEFAULT_CDP_PORT)
+        return _DEFAULT_CDP_PORT
     _ensure_cdp_daemon()
     state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
     return state.get("cdp_port", _DEFAULT_CDP_PORT)
@@ -119,8 +143,8 @@ def _connect_browser():
         raise RuntimeError("CDP 브라우저 컨텍스트 생성 실패")
 
     # 캐싱 (전역 변수 업데이트)
-    globals()['_BROWSER_CACHE'] = browser
-    globals()['_BROWSER_CONTEXT_CACHE'] = ctx
+    globals()["_BROWSER_CACHE"] = browser
+    globals()["_BROWSER_CONTEXT_CACHE"] = ctx
     log.debug("브라우저 context 캐싱 완료")
 
     return browser, ctx
@@ -135,9 +159,10 @@ def get_screen_size() -> tuple[int, int]:
     """
     try:
         import ctypes
+
         # DPI 인식 없이 GetSystemMetrics → 물리 픽셀
         user32 = ctypes.windll.user32  # type: ignore[attr-defined]
-        gdi32  = ctypes.windll.gdi32   # type: ignore[attr-defined]
+        gdi32 = ctypes.windll.gdi32  # type: ignore[attr-defined]
         phys_w = user32.GetSystemMetrics(0)
         phys_h = user32.GetSystemMetrics(1)
         # 시스템 DPI → CSS 픽셀 스케일 계산 (96 dpi = 100%)
@@ -148,12 +173,12 @@ def get_screen_size() -> tuple[int, int]:
         css_w = int(phys_w / scale)
         css_h = int(phys_h / scale)
         if css_w > 0 and css_h > 0:
-            log.debug("[viewport] 물리=%dx%d DPI=%d scale=%.2f CSS=%dx%d",
-                      phys_w, phys_h, dpi, scale, css_w, css_h)
+            log.debug("[viewport] 물리=%dx%d DPI=%d scale=%.2f CSS=%dx%d", phys_w, phys_h, dpi, scale, css_w, css_h)
             return css_w, css_h
     except Exception:
         pass
     import os
+
     try:
         w = int(os.environ.get("SCREEN_WIDTH", "0"))
         h = int(os.environ.get("SCREEN_HEIGHT", "0"))
@@ -161,7 +186,7 @@ def get_screen_size() -> tuple[int, int]:
             return w, h
     except ValueError:
         pass
-    log.debug("[viewport] 화면 크기 감지 실패 — 기본값 1920×1080 사용")
+    log.debug("[viewport] 화면 크기 감지 실패 — 기본값 1920x1080 사용")
     return 1920, 1080
 
 
@@ -192,14 +217,22 @@ def fit_viewport(page: Page) -> None:
         else:
             if state == "minimized":
                 # minimized → normal 먼저
-                cdp.send("Browser.setWindowBounds", {
-                    "windowId": wid, "bounds": {"windowState": "normal"},
-                })
+                cdp.send(
+                    "Browser.setWindowBounds",
+                    {
+                        "windowId": wid,
+                        "bounds": {"windowState": "normal"},
+                    },
+                )
                 time.sleep(0.2)
             # normal → maximized
-            cdp.send("Browser.setWindowBounds", {
-                "windowId": wid, "bounds": {"windowState": "maximized"},
-            })
+            cdp.send(
+                "Browser.setWindowBounds",
+                {
+                    "windowId": wid,
+                    "bounds": {"windowState": "maximized"},
+                },
+            )
             log.info("[viewport] 창 최대화 복원 완료 (이전 상태: %s)", state)
     except Exception as e:
         log.debug("[viewport] 창 복원 생략: %s", e)
@@ -338,6 +371,7 @@ def browser_session() -> Generator[Page, None, None]:
 
 
 # ── Persistent Context (세션 저장/복원) ──────────────────────────────
+
 
 @contextmanager
 def browser_task_session(

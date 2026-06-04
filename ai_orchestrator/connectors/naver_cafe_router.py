@@ -4,32 +4,115 @@
 - data/cafe/ 디렉터리에 저장된 수집·분류 결과 파일을 읽어 반환.
 - 민감정보(쿠키/세션/경로 풀) 응답 금지.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import time
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from ..audit_logger import log_event
 from ..auth import require_role
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parents[3]
+# parents[2] = repo 루트(소스) / _internal(frozen exe) — collector(_OUT_DIR)와 동일 기준
+ROOT = Path(__file__).resolve().parents[2]
 _CAFE_DIR = ROOT / "data" / "cafe"
 
 naver_cafe_router = APIRouter(
-    prefix="/naver-cafe", tags=["naver-cafe"],
+    prefix="/naver-cafe",
+    tags=["naver-cafe"],
 )
 
 
 def _latest_file(pattern: str) -> Path | None:
     files = sorted(_CAFE_DIR.glob(pattern), key=lambda f: f.stat().st_mtime, reverse=True)
     return files[0] if files else None
+
+
+def _ensure_path() -> None:
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+
+
+# ── 수집 (CDP, 네이버 로그인 필요) ────────────────────────────────────────────
+
+
+class CafeCollectRequest(BaseModel):
+    cafe_url: str
+    days: int = 90
+    max_detail: int = 300
+
+
+@naver_cafe_router.post("/collect-my-cafes")
+def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """내 가입 카페 목록을 CDP 로 수집해 저장."""
+    try:
+        _ensure_path()
+        from scripts.naver.cafe.explorer import get_my_cafes, save_my_cafes
+        from scripts.web_connector import get_page
+
+        page = get_page()
+        cafes = get_my_cafes(page)
+        save_my_cafes(cafes)
+        log_event(
+            "NAVER_CAFE_COLLECT_MY_CAFES",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"count={len(cafes)}",
+        )
+        return {"ok": True, "count": len(cafes), "cafes": cafes}
+    except Exception as e:
+        logger.exception("collect my-cafes error")
+        raise HTTPException(status_code=500, detail=f"카페 목록 수집 실패: {e}")
+
+
+@naver_cafe_router.post("/collect")
+def collect_cafe_articles(
+    req: CafeCollectRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """선택한 카페의 게시글을 수집 + 분류 (CDP). 외부 발행 아님(읽기/수집)."""
+    cafe_url = (req.cafe_url or "").strip()
+    if not cafe_url.startswith("http"):
+        raise HTTPException(status_code=400, detail="카페 URL 을 입력하세요")
+    try:
+        _ensure_path()
+        from scripts.naver.cafe.collector import collect_articles
+        from scripts.naver.cafe.organizer import organize
+        from scripts.naver.cafe.pipeline import run_pipeline
+        from scripts.web_connector import get_page
+
+        page = get_page()
+        articles = collect_articles(
+            page,
+            cafe_url=cafe_url,
+            days=max(1, min(req.days, 365)),
+            max_detail=max(1, min(req.max_detail, 500)),
+        )
+        run_pipeline()
+        organize()
+        log_event(
+            "NAVER_CAFE_COLLECT",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"url={cafe_url[:40]} n={len(articles)}",
+        )
+        return {"ok": True, "collected": len(articles)}
+    except Exception as e:
+        logger.exception("collect cafe articles error")
+        raise HTTPException(status_code=500, detail=f"게시글 수집 실패: {e}")
 
 
 @naver_cafe_router.get("/my-cafes")
@@ -45,7 +128,10 @@ def api_my_cafes(
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
         "NAVER_CAFE_MY_CAFES_READ",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note=f"count={len(cafes)} duration_ms={duration_ms}",
     )
     return {"cafes": cafes, "count": len(cafes), "duration_ms": duration_ms}
@@ -53,7 +139,7 @@ def api_my_cafes(
 
 @naver_cafe_router.get("/collected")
 def api_collected(
-    cafe_id: Optional[str] = None,
+    cafe_id: str | None = None,
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
     """수집된 raw_articles 파일 목록 반환 (최근 10개)."""
@@ -71,7 +157,10 @@ def api_collected(
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
         "NAVER_CAFE_COLLECTED_READ",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note=f"files={len(items)} duration_ms={duration_ms}",
     )
     return {"files": items, "count": len(items), "duration_ms": duration_ms}
@@ -81,7 +170,7 @@ def api_collected(
 def api_articles(
     limit: int = 50,
     offset: int = 0,
-    category: Optional[str] = None,
+    category: str | None = None,
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
     """최신 classified 파일에서 게시글 목록 반환."""
@@ -93,11 +182,14 @@ def api_articles(
     if category:
         articles = [a for a in articles if a.get("category") == category]
     total = len(articles)
-    page_items = articles[offset: offset + limit]
+    page_items = articles[offset : offset + limit]
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
         "NAVER_CAFE_ARTICLES_READ",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note=f"total={total} returned={len(page_items)} duration_ms={duration_ms}",
     )
     return {
@@ -135,7 +227,10 @@ def api_kb(
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
         "NAVER_CAFE_KB_READ",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note=f"categories={len(kb.get('categories', []))} duration_ms={duration_ms}",
     )
     return {**kb, "source_file": path.name, "duration_ms": duration_ms}
@@ -154,7 +249,10 @@ def api_report(
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
         "NAVER_CAFE_REPORT_READ",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note=f"chars={len(text)} duration_ms={duration_ms}",
     )
     return {"report": text, "source_file": path.name, "duration_ms": duration_ms}
@@ -172,7 +270,7 @@ def api_summary(
     if my_cafes_path.exists():
         try:
             my_cafes_count = len(json.loads(my_cafes_path.read_text(encoding="utf-8")))
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     raw_path = _latest_file("raw_articles_*.json")
@@ -182,7 +280,7 @@ def api_summary(
         try:
             raw_count = len(json.loads(raw_path.read_text(encoding="utf-8")))
             raw_file = raw_path.name
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     cls_path = _latest_file("classified_*.json")
@@ -192,7 +290,7 @@ def api_summary(
         try:
             cls_count = len(json.loads(cls_path.read_text(encoding="utf-8")))
             cls_file = cls_path.name
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     report_path = _latest_file("organized_report_*.txt")
