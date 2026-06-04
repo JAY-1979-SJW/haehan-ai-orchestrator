@@ -8,12 +8,14 @@ from __future__ import annotations
 import json
 import re
 import secrets
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 _FILE = ROOT / "data" / "inquiries" / "inquiries.jsonl"
+_LOCK = threading.Lock()  # 동시 append/재기록 직렬화(업데이트 유실 방지)
 
 _MAXLEN = {"name": 60, "contact": 120, "company": 80, "subject": 120, "message": 4000}
 _VALID_STATUS = {"new", "read", "done"}
@@ -41,9 +43,10 @@ def add_inquiry(data: dict) -> dict:
         "memo": "",
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
-    _FILE.parent.mkdir(parents=True, exist_ok=True)
-    with _FILE.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    with _LOCK:
+        _FILE.parent.mkdir(parents=True, exist_ok=True)
+        with _FILE.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     return rec
 
 
@@ -65,25 +68,28 @@ def list_inquiries(limit: int = 200) -> list[dict]:
 
 
 def update_inquiry(inquiry_id: str, status: str | None = None, memo: str | None = None) -> bool:
-    """상태/메모 갱신 → 전체 재기록."""
-    items = list_inquiries(limit=100000)
-    found = False
-    for r in items:
-        if r.get("id") == inquiry_id:
-            if status and status in _VALID_STATUS:
-                r["status"] = status
-            if memo is not None:
-                r["memo"] = str(memo)[:2000]
-            found = True
-            break
-    if not found:
-        return False
-    # 시간순(오래된→최신)으로 재기록
-    items.sort(key=lambda r: r.get("created_at", ""))
-    _FILE.parent.mkdir(parents=True, exist_ok=True)
-    with _FILE.open("w", encoding="utf-8") as f:
+    """상태/메모 갱신 → 전체 재기록. 락으로 read-modify-write 직렬화(유실 방지)."""
+    with _LOCK:
+        items = list_inquiries(limit=100000)
+        found = False
         for r in items:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            if r.get("id") == inquiry_id:
+                if status and status in _VALID_STATUS:
+                    r["status"] = status
+                if memo is not None:
+                    r["memo"] = str(memo)[:2000]
+                found = True
+                break
+        if not found:
+            return False
+        # 시간순(오래된→최신)으로 원자적 재기록(temp → replace)
+        items.sort(key=lambda r: r.get("created_at", ""))
+        _FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = _FILE.with_suffix(".jsonl.tmp")
+        with tmp.open("w", encoding="utf-8") as f:
+            for r in items:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        tmp.replace(_FILE)
     return True
 
 
