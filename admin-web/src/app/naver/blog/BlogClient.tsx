@@ -37,6 +37,38 @@ export default function BlogClient() {
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
+  // 사진·동영상 첨부
+  const [media, setMedia] = useState<{ name: string; kind: string; preview: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const r = await fetch(`${API_BASE}/api/v1/naver/blog/upload`, {
+          method: "POST",
+          headers: { ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+          body: fd,
+        });
+        const d = await r.json();
+        if (r.ok && d.ok) {
+          setMedia(prev => [...prev, { name: d.name, kind: d.kind, preview: URL.createObjectURL(file) }]);
+        } else {
+          setSaveResult({ ok: false, msg: d.detail || d.error || "업로드 실패" });
+        }
+      } catch (e) {
+        setSaveResult({ ok: false, msg: `업로드 오류: ${String(e)}` });
+      }
+    }
+    setUploading(false);
+  };
+
+  const removeMedia = (name: string) => setMedia(prev => prev.filter(m => m.name !== name));
+
   // AI 글 생성
   const [aiTopic, setAiTopic] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -103,13 +135,14 @@ export default function BlogClient() {
           body,
           category: category || "일반",
           tags: tagInput.split(",").map(t => t.trim()).filter(Boolean),
+          media: media.map(m => m.name),
           dry_run: true,
         }),
       });
       const d = await r.json();
       if (!r.ok || !d.ok) throw new Error(d.detail || "저장 실패");
-      setSaveResult({ ok: true, msg: `초안 저장 완료 (${d.draft_id})` });
-      setTitle(""); setBody(""); setCat(""); setTagInput("");
+      setSaveResult({ ok: true, msg: `초안 저장 완료 (${d.draft_id})${media.length ? ` · 미디어 ${media.length}개` : ""}` });
+      setTitle(""); setBody(""); setCat(""); setTagInput(""); setMedia([]);
     } catch (e) {
       setSaveResult({ ok: false, msg: String(e) });
     } finally {
@@ -220,6 +253,33 @@ export default function BlogClient() {
                 className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316] resize-y" />
               <p className="text-xs text-[#9CA3AF] mt-1">{body.length}자</p>
             </div>
+
+            {/* 사진·동영상 첨부 */}
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">사진·동영상 첨부</label>
+              <label className="inline-flex items-center gap-2 px-3 py-2 border border-dashed border-[#FDBA74] rounded-lg text-sm text-[#C2410C] bg-[#FFF7ED] cursor-pointer hover:bg-[#FFEDD5] transition-colors">
+                <span>📎 {uploading ? "업로드 중…" : "이미지·동영상 선택"}</span>
+                <input type="file" accept="image/*,video/*" multiple className="hidden"
+                  disabled={uploading}
+                  onChange={e => { handleUpload(e.target.files); e.currentTarget.value = ""; }} />
+              </label>
+              <p className="text-[11px] text-[#9CA3AF] mt-1">JPG·PNG·GIF·MP4·MOV 등 (개당 최대 200MB)</p>
+              {media.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
+                  {media.map(m => (
+                    <div key={m.name} className="relative group border border-[#E5E7EB] rounded-lg overflow-hidden bg-[#F9FAFB]">
+                      {m.kind === "video"
+                        ? <video src={m.preview} className="w-full h-20 object-cover" muted />
+                        : <img src={m.preview} alt="" className="w-full h-20 object-cover" />}
+                      <span className="absolute bottom-0 left-0 text-[9px] px-1 bg-black/50 text-white">{m.kind === "video" ? "동영상" : "사진"}</span>
+                      <button onClick={() => removeMedia(m.name)} type="button"
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white text-xs leading-none hover:bg-[#DC2626]">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-3">
               <button onClick={handleSave} disabled={saving || !title.trim()}
                 className="px-4 py-2 bg-[#F97316] text-white text-sm font-semibold rounded-lg hover:bg-[#EA6C0A] disabled:opacity-50 transition-colors">
