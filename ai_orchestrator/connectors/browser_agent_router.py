@@ -43,15 +43,18 @@ def run_task(body: AgentTaskRequest, user: dict = Depends(require_role("admin", 
         sys.path.insert(0, str(ROOT))
     try:
         from scripts.browser_agent.agent import run_browser_task
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        result = run_browser_task(
-            page,
-            instruction=body.instruction.strip(),
-            start_url=(body.url or "").strip() or None,
-            max_steps=max(1, min(body.max_steps, 25)),
-        )
+        # Playwright(sync)는 단일 전용 스레드에서만 — get_page+실행을 함께 그 스레드에서.
+        def _do() -> dict:
+            return run_browser_task(
+                get_page(),
+                instruction=body.instruction.strip(),
+                start_url=(body.url or "").strip() or None,
+                max_steps=max(1, min(body.max_steps, 25)),
+            )
+
+        result = run_on_browser_thread(_do, timeout=240)
     except Exception as e:
         logger.exception("browser agent error")
         raise HTTPException(status_code=500, detail=f"에이전트 실행 실패: {e}")

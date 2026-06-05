@@ -49,6 +49,31 @@ log = get_logger(__name__)
 _BROWSER_CONTEXT_CACHE = None
 _BROWSER_CACHE = None
 
+# ── Playwright(sync) 전용 단일 스레드 ─────────────────────────────────
+# Playwright sync API 는 생성 스레드에서만 접근 가능. FastAPI sync 엔드포인트는
+# 스레드풀(여러 스레드)에서 돌기 때문에, 모든 브라우저 작업을 단일 전용 스레드에서
+# 실행해 "Cannot switch to a different thread" 를 방지한다.
+import concurrent.futures  # noqa: E402
+import threading  # noqa: E402
+
+_BROWSER_EXECUTOR = None
+_BROWSER_EXECUTOR_LOCK = threading.Lock()
+
+
+def run_on_browser_thread(fn, *args, timeout: float = 300, **kwargs):
+    """Playwright(sync) 작업을 단일 전용 스레드에서 실행하고 결과를 반환.
+
+    오케스트레이터/라우터(스레드풀)에서 브라우저를 만질 때 반드시 이 헬퍼를 통한다.
+    fn 내부에서 get_page()/open_page() 등 playwright 호출을 수행하면, 항상 같은
+    스레드에서 연결·사용되어 스레드 친화성 문제가 사라진다.
+    """
+    global _BROWSER_EXECUTOR
+    with _BROWSER_EXECUTOR_LOCK:
+        if _BROWSER_EXECUTOR is None:
+            _BROWSER_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="browser")
+    fut = _BROWSER_EXECUTOR.submit(fn, *args, **kwargs)
+    return fut.result(timeout=timeout)
+
 
 def _ensure_cdp_daemon() -> None:
     """CDP 데몬이 꺼져 있으면 앱 요청 시점에 자동 기동.
