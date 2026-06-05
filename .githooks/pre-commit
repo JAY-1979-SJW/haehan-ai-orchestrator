@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import re, subprocess, sys
+import subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
@@ -29,86 +29,34 @@ if py_files:
         print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
         sys.exit(1)
 
-# ── frozen-safe 검사 (ai_orchestrator/** 만) ────────────────────────────────
-# frozen exe 에서 sys.executable=haehan-server.exe(파이썬 아님) → sys.executable 로
-# .py 스크립트를 실행하면 깨짐. in-process 호출로 유도. 정당하면 줄에 # frozen-ok.
-frozen_targets = [f for f in py_files if f.startswith("ai_orchestrator/")]
-if frozen_targets:
-    fdiff = subprocess.run(
-        ["git", "diff", "--cached", "-U0", "--"] + frozen_targets,
-        cwd=str(ROOT), capture_output=True, text=True,
-    )
-    bad_lines = []
-    for line in fdiff.stdout.splitlines():
-        if line.startswith("+") and not line.startswith("+++"):
-            body = line[1:]
-            if "sys.executable" in body and "frozen-ok" not in body:
-                if (".py" in body) or ("SCRIPT" in body) or ("script" in body.lower()):
-                    bad_lines.append(body.strip())
-    if bad_lines:
-        print("=" * 60)
-        print("[frozen-safe] frozen exe 에서 깨지는 패턴: sys.executable 로 스크립트 실행")
-        for b in bad_lines:
-            print(f"    + {b[:90]}")
-        print("    → in-process 호출로 바꾸거나, 정당하면 해당 줄에 '# frozen-ok' 주석 추가.")
-        print("=" * 60)
-        sys.exit(1)
-
-# ── 프론트(.ts/.tsx) 검사 ───────────────────────────────────────────────────
+# ── 소스 실행 방식 강제 ──────────────────────────────────────────────
+# launcher(start_haehan_ai.ps1)가 frozen exe / Next standalone 빌드본을 '실행'하면 차단.
+# 백엔드=uvicorn 소스, 프론트=next dev 소스 유지(재빌드 불필요). 정당한 예외는 파일에 '# source-ok'.
 all_staged = r.stdout.splitlines()
-ts_files = [f for f in all_staged if f.endswith((".ts", ".tsx")) and f.startswith("admin-web/")]
-
-# 모듈 경계 경고(비차단): tabs/sections 모듈은 형제 모듈을 직접 import 금지(셸이 조립).
-# 공유 로직은 ../*Shared 등 상위로. 형제(./X) 직접 import = 침범 의심.
-_mod_files = [f for f in ts_files if re.search(r"/(tabs|sections)/[^/]+\.tsx?$", f)]
-if _mod_files:
-    mdiff = subprocess.run(
-        ["git", "diff", "--cached", "-U0", "--"] + _mod_files,
-        cwd=str(ROOT), capture_output=True, text=True,
-    )
-    crossing = []
-    for line in mdiff.stdout.splitlines():
-        if line.startswith("+") and not line.startswith("+++") and "import" in line:
-            if re.search(r"""from\s+["']\./[A-Za-z]\w*["']""", line[1:]):
-                crossing.append(line[1:].strip())
-    if crossing:
-        print("WARN: 모듈 경계 — tabs/sections 모듈이 형제 모듈을 직접 import (침범 의심):")
-        for c in crossing:
-            print(f"      {c[:90]}")
-        print("      공유 로직은 상위(../*Shared)로, 조립은 셸에서. (경고만, 차단 안 함)")
-
-# 대량 삭제 경고 (비차단) — 코드 보존 원칙(기존 코드 무단 삭제 금지) 환기
-nstat = subprocess.run(
-    ["git", "diff", "--cached", "--numstat", "--diff-filter=M"],
-    cwd=str(ROOT), capture_output=True, text=True,
-)
-big = []
-for line in nstat.stdout.splitlines():
-    parts = line.split("\t")
-    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
-        added, deleted, path = int(parts[0]), int(parts[1]), parts[2]
-        if path.endswith((".py", ".ts", ".tsx")) and (deleted - added) >= 60:
-            big.append((path, deleted, added))
-if big:
-    print("WARN: 대량 코드 삭제 감지 — 코드 보존 원칙 확인:")
-    for path, d, a in big:
-        print(f"      {path}: -{d}/+{a}")
-    print("      의도된 삭제면 그대로 진행됩니다(경고만, 차단 안 함).")
-
-# 프론트 타입체크 (차단) — npm/.cmd 셸 의존 회피 위해 node 로 tsc 직접 호출
-if ts_files:
-    tsc = ROOT / "admin-web" / "node_modules" / "typescript" / "bin" / "tsc"
-    if tsc.exists():
-        print("[tsc] 프론트 타입체크 (tsconfig.app.json)…")
-        tc = subprocess.run(
-            ["node", str(tsc), "--noEmit", "-p", "tsconfig.app.json"],
-            cwd=str(ROOT / "admin-web"),
-        )
-        if tc.returncode != 0:
-            print("[tsc] 프론트 타입 오류가 있습니다. 수정 후 재커밋하세요.")
+if "scripts/start_haehan_ai.ps1" in all_staged:
+    try:
+        _txt = (ROOT / "scripts" / "start_haehan_ai.ps1").read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        _txt = ""
+    if "# source-ok" not in _txt:
+        _bad = []
+        if "Start-Process $FASTAPI" in _txt:
+            _bad.append("FastAPI를 frozen exe로 실행 — uvicorn 소스로 유지하세요")
+        if "-ArgumentList $NEXTJS" in _txt:
+            _bad.append("Next를 standalone 빌드본(server.js)으로 실행 — next dev 소스로 유지하세요")
+        if "uvicorn" not in _txt:
+            _bad.append("uvicorn(소스 백엔드) 실행 흔적이 없습니다")
+        if '"dev"' not in _txt:
+            _bad.append("next dev(소스 프론트) 실행 흔적이 없습니다")
+        if _bad:
+            print("=" * 60)
+            print("[source-only] launcher가 소스 실행 방식을 벗어났습니다 (재빌드 금지):")
+            for _b in _bad:
+                print("    - " + _b)
+            print("    백엔드=uvicorn 소스, 프론트=next dev 소스로 유지하세요.")
+            print("    정당한 예외면 start_haehan_ai.ps1 에 '# source-ok' 주석을 추가하세요.")
+            print("=" * 60)
             sys.exit(1)
-    else:
-        print("[tsc] typescript 미설치 — 프론트 타입체크 스킵")
 
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P

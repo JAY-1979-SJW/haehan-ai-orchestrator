@@ -49,6 +49,35 @@ if py_files:
         print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
         sys.exit(1)
 
+# ── 소스 실행 방식 강제 ──────────────────────────────────────────────
+# launcher(start_haehan_ai.ps1)가 frozen exe / Next standalone 빌드본을 '실행'하면 차단.
+# 백엔드=uvicorn 소스, 프론트=next dev 소스 유지(재빌드 불필요). 정당한 예외는 파일에 '# source-ok'.
+all_staged = r.stdout.splitlines()
+if "scripts/start_haehan_ai.ps1" in all_staged:
+    try:
+        _txt = (ROOT / "scripts" / "start_haehan_ai.ps1").read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        _txt = ""
+    if "# source-ok" not in _txt:
+        _bad = []
+        if "Start-Process $FASTAPI" in _txt:
+            _bad.append("FastAPI를 frozen exe로 실행 — uvicorn 소스로 유지하세요")
+        if "-ArgumentList $NEXTJS" in _txt:
+            _bad.append("Next를 standalone 빌드본(server.js)으로 실행 — next dev 소스로 유지하세요")
+        if "uvicorn" not in _txt:
+            _bad.append("uvicorn(소스 백엔드) 실행 흔적이 없습니다")
+        if '"dev"' not in _txt:
+            _bad.append("next dev(소스 프론트) 실행 흔적이 없습니다")
+        if _bad:
+            print("=" * 60)
+            print("[source-only] launcher가 소스 실행 방식을 벗어났습니다 (재빌드 금지):")
+            for _b in _bad:
+                print("    - " + _b)
+            print("    백엔드=uvicorn 소스, 프론트=next dev 소스로 유지하세요.")
+            print("    정당한 예외면 start_haehan_ai.ps1 에 '# source-ok' 주석을 추가하세요.")
+            print("=" * 60)
+            sys.exit(1)
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os
