@@ -173,7 +173,8 @@ _USER_MSG = {
 
 _TASK_HINT = re.compile(
     r"https?://|\.com|\.kr|사이트|로그인|들어가|접속|조회|정리해|수집|크롤|페이지에서|"
-    r"클릭|입력|주문|상품|단말기|연락처|목록|스크랩|추출해|가져와|확인해",
+    r"클릭|입력|주문|상품|단말기|연락처|목록|스크랩|추출해|가져와|확인해|"
+    r"세션|현황|분석해|분석 ?해|카페 ?분석|상태",
     re.IGNORECASE,
 )
 
@@ -198,17 +199,95 @@ def _resolve_url(url: str | None, message: str) -> str | None:
     return None
 
 
-def _maybe_run_browser_task(message: str, model: str | None) -> str | None:
-    """메시지가 브라우저 작업이면 에이전트 실행 후 결과 텍스트, 아니면 None(→ 일반 챗)."""
+_OP_CATALOG = (
+    "- session_status: 외부 사이트 로그인 세션 현황(네이버/스토어/EUM/가비아/하이웍스 등 로그인 여부)\n"
+    "- cafe_analyze: 이미 수집된 네이버 카페 글을 AI로 분석(흐름·뜨는 주제·수익기회)\n"
+    "- community_analyze: 특정 사이트 URL의 글을 수집+AI분석 (url 필수)\n"
+    "- browser: 그 외 모든 웹사이트 작업(로그인·조회·정리·클릭·입력·수집 등)\n"
+    "- chat: 위에 해당 없는 일반 질문·대화·조언"
+)
+
+
+def _op_session_status() -> str:
+    from scripts.ops.session_probe import probe_all
+
+    d = probe_all()
+    sites = d.get("sites", [])
+    if not sites:
+        return "세션 점검 실패 — CDP 브라우저가 떠 있는지 확인하세요."
+    li = sum(1 for s in sites if s.get("status") == "LOGGED_IN")
+    lines = [f"{'✅' if s.get('status') == 'LOGGED_IN' else '❌'} {s.get('key')}" for s in sites]
+    return f"🔐 로그인 세션 현황 — {li}/{len(sites)} 로그인\n" + "  ".join(lines)
+
+
+def _fmt_report(rep: dict, header: str) -> str:
+    if not rep.get("ok"):
+        return f"{header} 분석 실패: {rep.get('error', '')}"
+    trends = " / ".join(rep.get("trends", [])[:4])
+    opps = " / ".join(o.get("idea", "") for o in rep.get("opportunities", [])[:3])
+    return f"📊 {header}\n흐름: {rep.get('summary', '')}\n🔥 {trends}\n💰 {opps}"
+
+
+def _op_cafe_analyze() -> str:
+    from pathlib import Path
+
+    cafe_dir = Path(__file__).resolve().parents[1] / "data" / "cafe"
+    files = sorted(cafe_dir.glob("classified_*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not files:
+        return "수집된 카페 글이 없습니다 — 먼저 카페 게시글을 수집하세요."
+    articles = json.loads(files[0].read_text(encoding="utf-8"))
+    arts = sorted(articles, key=lambda a: int(str(a.get("view_count", "0")).replace(",", "") or 0), reverse=True)
+    posts = [
+        {
+            "title": a.get("title", ""),
+            "views": a.get("view_count", ""),
+            "comments": a.get("comment_count", ""),
+            "date": a.get("date", ""),
+        }
+        for a in arts
+    ][:300]
+    from scripts.community.analyzer import analyze_posts
+
+    return _fmt_report(analyze_posts(posts, context="네이버 카페 수집글"), f"카페 분석 ({len(posts)}건)")
+
+
+def _op_community_analyze(url: str | None) -> str:
+    if not url:
+        return "분석할 사이트 URL이 필요합니다 (예: https://...)."
+    from scripts.community.analyzer import analyze_posts
+    from scripts.community.universal_extractor import extract_posts
+    from scripts.web_connector import get_page
+
+    ex = extract_posts(get_page(), url, max_posts=40)
+    if not ex.get("ok"):
+        return f"수집 실패: {ex.get('error', '')}"
+    return _fmt_report(analyze_posts(ex.get("posts", []), context=url), f"{url} 분석")
+
+
+def _op_browser(instruction: str, url: str | None) -> str | None:
+    try:
+        from scripts.browser_agent.agent import run_browser_task
+        from scripts.web_connector import get_page
+
+        r = run_browser_task(get_page(), instruction=instruction, start_url=url, max_steps=12)
+    except Exception:
+        return None  # CDP 없음(서버 등) → 일반 챗 폴백
+    if r.get("needs_login"):
+        return f"🔐 로그인이 필요합니다.\n{r.get('result', '')}\n로그인하신 뒤 다시 같은 명령을 주세요."
+    if r.get("blocked"):
+        return f"⛔ 위험 동작이라 멈췄습니다.\n{r.get('result', '')}\n직접 승인이 필요합니다."
+    return f"✅ 작업 결과\n{r.get('result', '')}"
+
+
+def _route_app_task(message: str, model: str | None) -> str | None:
+    """메시지를 앱 작업(op)으로 분류해 실제 실행. 일반 대화면 None(→ 일반 챗)."""
     if not _TASK_HINT.search(message):
         return None
-    # 1) LLM 의도 분류 + URL/지시 추출
     classify = _caller.call_openai_chat(
         message=(
-            "다음 사용자 메시지가 '웹사이트에서 직접 수행하는 브라우저 작업'(로그인·조회·정리·수집·"
-            "클릭·입력 등 브라우저 조작)인지 판단해 JSON만 출력(설명 금지).\n"
-            '{"is_task": true/false, "url": "시작 URL 또는 빈문자열", "instruction": "수행할 작업 한 줄"}\n'
-            "단순 질문·대화·조언·정보검색이면 is_task=false.\n\n"
+            "사용자 메시지를 아래 작업 중 하나로 분류해 JSON만 출력(설명 금지).\n"
+            f"{_OP_CATALOG}\n"
+            '{"op":"...", "url":"http로 시작하는 URL 또는 빈문자열", "instruction":"수행할 작업 한 줄"}\n\n'
             f"메시지: {message[:500]}"
         ),
         model=model,
@@ -222,27 +301,17 @@ def _maybe_run_browser_task(message: str, model: str | None) -> str | None:
         task = json.loads(m.group(0))
     except Exception:
         return None
-    if not task.get("is_task"):
-        return None
-    # 2) 로컬 브라우저 에이전트 실행
-    try:
-        from scripts.browser_agent.agent import run_browser_task
-        from scripts.web_connector import get_page
-
-        page = get_page()
-        r = run_browser_task(
-            page,
-            instruction=task.get("instruction") or message,
-            start_url=_resolve_url((task.get("url") or "").strip(), message),
-            max_steps=12,
-        )
-    except Exception:
-        return None  # CDP 없음(서버 등) → 일반 챗 폴백
-    if r.get("needs_login"):
-        return f"🔐 로그인이 필요합니다.\n{r.get('result', '')}\n로그인하신 뒤 다시 같은 명령을 주세요."
-    if r.get("blocked"):
-        return f"⛔ 위험 동작이라 멈췄습니다.\n{r.get('result', '')}\n직접 승인이 필요합니다."
-    return f"✅ 작업 결과\n{r.get('result', '')}"
+    op = task.get("op", "chat")
+    url = _resolve_url((task.get("url") or "").strip(), message)
+    if op == "session_status":
+        return _op_session_status()
+    if op == "cafe_analyze":
+        return _op_cafe_analyze()
+    if op == "community_analyze":
+        return _op_community_analyze(url)
+    if op == "browser":
+        return _op_browser(task.get("instruction") or message, url)
+    return None  # chat
 
 
 # ── endpoints ────────────────────────────────────────────────
@@ -294,14 +363,15 @@ def agent_ai_chat(
     if len(msg) > MAX_MESSAGE_LEN:
         return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
 
-    # ── 총괄 라우팅: 브라우저 작업이면 로컬 에이전트로 실제 실행 ──
+    # ── 총괄 라우팅: 앱 작업(세션/카페분석/커뮤니티/브라우저)이면 실제 실행 ──
     try:
-        _browser = _maybe_run_browser_task(msg, body.model)
+        _task = _route_app_task(msg, body.model)
     except Exception:
-        _browser = None
-    if _browser is not None:
-        logger.info("agent_ai_chat browser-task agent=%s", _mask_agent_id(agent_id))
-        return ChatResponse(ok=True, text=_browser, model="browser-agent")
+        logger.exception("route_app_task error")
+        _task = None
+    if _task is not None:
+        logger.info("agent_ai_chat app-task agent=%s", _mask_agent_id(agent_id))
+        return ChatResponse(ok=True, text=_task, model="app-agent")
 
     # OpenAI 호출
     result = _caller.call_openai_chat(message=msg, model=body.model)
