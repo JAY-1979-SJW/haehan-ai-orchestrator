@@ -49,6 +49,39 @@ if py_files:
         print("[ruff] 수정 불가 오류가 있습니다. 위 내용을 확인하고 재커밋하세요.")
         sys.exit(1)
 
+# ── 로그인 세션 파기 코드 차단 ───────────────────────────────────────
+# 세션을 임의 로그아웃/쿠키삭제하면 '매번 재로그인' 문제 발생(CLAUDE.md 로그인 세션 보존).
+# staged .py 에 세션 파기 패턴이 추가되면 차단. 정당한 로그아웃이면 줄에 '# session-ok'.
+# (이 훅 설치 파일 자신은 패턴을 데이터로 가지므로 제외)
+_sg_files = [f for f in py_files if not f.endswith("install_git_hooks.py")]
+if _sg_files:
+    _sdiff = subprocess.run(
+        ["git", "diff", "--cached", "-U0", "--"] + _sg_files,
+        cwd=str(ROOT), capture_output=True, text=True,
+    )
+    _sess_pat = (
+        "nidlogin.logout", "logout.naver", "clear_cookies", "delete_cookies",
+        "deleteallcookies", "cookies.clear", "context.clear_cookies",
+    )
+    _sess_bad = []
+    for _ln in _sdiff.stdout.splitlines():
+        if _ln.startswith("+") and not _ln.startswith("+++"):
+            _body = _ln[1:]
+            if "session-ok" in _body:
+                continue
+            _low = _body.lower()
+            if any(_pp in _low for _pp in _sess_pat):
+                _sess_bad.append(_body.strip())
+    if _sess_bad:
+        print("=" * 60)
+        print("[session-guard] 로그인 세션 파기 코드 감지 — 매번 재로그인 유발:")
+        for _b in _sess_bad[:8]:
+            print("    + " + _b[:90])
+        print("    세션은 유지해야 합니다(CLAUDE.md 로그인 세션 보존).")
+        print("    정당한 로그아웃이면 해당 줄에 '# session-ok' 주석을 추가하세요.")
+        print("=" * 60)
+        sys.exit(1)
+
 # ── 소스 실행 방식 강제 ──────────────────────────────────────────────
 # launcher(start_haehan_ai.ps1)가 frozen exe / Next standalone 빌드본을 '실행'하면 차단.
 # 백엔드=uvicorn 소스, 프론트=next dev 소스 유지(재빌드 불필요). 정당한 예외는 파일에 '# source-ok'.
