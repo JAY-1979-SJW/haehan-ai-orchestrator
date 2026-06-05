@@ -230,3 +230,4 @@ data/grant_radar/
 data/local/
 docs/app-extracted*/
 dist-installer/app-extracted*/
+dist-electron-new/
