@@ -177,6 +177,26 @@ _TASK_HINT = re.compile(
     re.IGNORECASE,
 )
 
+# 사이트명 → 시작 URL (분류기가 URL을 못 줄 때 메시지에서 매핑)
+_KNOWN_SITES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"eum|공제회|단말기", re.IGNORECASE), "https://eum.cw.or.kr/web/man/WEBMAN390M00"),
+    (re.compile(r"스마트스토어|스토어|판매자", re.IGNORECASE), "https://sell.smartstore.naver.com/"),
+    (re.compile(r"가비아|gabia|도메인", re.IGNORECASE), "https://my.gabia.com/"),
+    (re.compile(r"하이웍스|hiworks|팩스", re.IGNORECASE), "https://office.hiworks.com/"),
+    (re.compile(r"카페", re.IGNORECASE), "https://section.cafe.naver.com/ca-fe/home"),
+    (re.compile(r"네이버", re.IGNORECASE), "https://www.naver.com"),
+]
+
+
+def _resolve_url(url: str | None, message: str) -> str | None:
+    """분류기 url이 유효(http)면 그대로, 아니면 메시지에서 알려진 사이트로 매핑."""
+    if url and url.lower().startswith("http"):
+        return url
+    for rx, mapped in _KNOWN_SITES:
+        if rx.search(message):
+            return mapped
+    return None
+
 
 def _maybe_run_browser_task(message: str, model: str | None) -> str | None:
     """메시지가 브라우저 작업이면 에이전트 실행 후 결과 텍스트, 아니면 None(→ 일반 챗)."""
@@ -213,7 +233,7 @@ def _maybe_run_browser_task(message: str, model: str | None) -> str | None:
         r = run_browser_task(
             page,
             instruction=task.get("instruction") or message,
-            start_url=(task.get("url") or "").strip() or None,
+            start_url=_resolve_url((task.get("url") or "").strip(), message),
             max_steps=12,
         )
     except Exception:

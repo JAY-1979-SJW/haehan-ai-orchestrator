@@ -171,6 +171,9 @@ def _execute(page, decision: dict, obs: dict) -> str:
 def run_browser_task(page, instruction: str, start_url: str | None = None, max_steps: int = 12) -> dict:
     """AI가 로컬 CDP 브라우저를 운전해 지시를 수행. 동작 기록 + 결과 반환."""
     steps: list[dict] = []
+    # 잘못된 시작 URL(http로 시작 안 함)은 무시 — 현재 페이지/지시로 진행.
+    if start_url and not start_url.lower().startswith("http"):
+        start_url = None
     if start_url:
         try:
             page.goto(start_url, wait_until="domcontentloaded", timeout=30000)
