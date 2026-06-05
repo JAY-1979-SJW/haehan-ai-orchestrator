@@ -29,6 +29,26 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
+  // 비동기 브라우저 작업 폴링 — 로그인 완료 후 백그라운드 결과를 채팅에 추가.
+  const pollJob = useCallback(async (jobId: string) => {
+    for (let i = 0; i < 100; i++) {          // 최대 ~5분 (100 × 3초)
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const res = await fetch(`/api/task/${jobId}`, { cache: "no-store" });
+        const d = await res.json() as { status: string; result?: string };
+        if (d.status === "done") {
+          setMsgs(prev => [...prev, { role: "ai", text: d.result || "작업 완료", streaming: false }]);
+          return;
+        }
+        if (d.status === "unknown") {
+          setMsgs(prev => [...prev, { role: "ai", text: "작업을 찾을 수 없습니다.", streaming: false }]);
+          return;
+        }
+      } catch { /* 폴링 일시 실패는 무시하고 재시도 */ }
+    }
+    setMsgs(prev => [...prev, { role: "ai", text: "⏱ 시간이 초과됐습니다 — 로그인 후 다시 명령해 주세요.", streaming: false }]);
+  }, []);
+
   const send = useCallback(async (prompt: string) => {
     if (!prompt.trim() || running) return;
     setInput("");
@@ -37,10 +57,12 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
     setMsgs(prev => [...prev, { role: "user", text: prompt }]);
     setMsgs(prev => [...prev, { role: "ai", text: "", streaming: true }]);
 
+    let fullText = "";
     try {
       await stream("/api/chat", { message: prompt, domain }, (event, data) => {
         if (event === "text") {
           const chunk = (data as { text: string }).text ?? "";
+          fullText += chunk;
           setMsgs(prev => {
             const next = [...prev];
             const last = next[next.length - 1];
@@ -64,6 +86,19 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
           });
         }
       });
+
+      // 비동기 브라우저 작업(job): 로그인 필요 시 마커가 옴 → 마커 제거 후 결과 폴링.
+      const jm = fullText.match(/\[\[JOB:([A-Za-z0-9_-]+)\]\]/);
+      if (jm) {
+        setMsgs(prev => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role === "ai")
+            next[next.length - 1] = { ...last, text: last.text.replace(/\n*\[\[JOB:[^\]]+\]\]/, "").trim(), streaming: false };
+          return next;
+        });
+        await pollJob(jm[1]);
+      }
     } catch {
       setMsgs(prev => {
         const next = [...prev];
@@ -75,7 +110,7 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
       setRunning(false);
       inputRef.current?.focus();
     }
-  }, [domain, running, stream]);
+  }, [domain, running, stream, pollJob]);
 
   return (
     <div className={`flex flex-col bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden ${className}`}>

@@ -193,7 +193,9 @@ def _execute(page, decision: dict, obs: dict) -> str:
     return f"알 수 없는 동작: {action}"
 
 
-def run_browser_task(page, instruction: str, start_url: str | None = None, max_steps: int = 12) -> dict:
+def run_browser_task(
+    page, instruction: str, start_url: str | None = None, max_steps: int = 12, login_wait: bool = True
+) -> dict:
     """AI가 로컬 CDP 브라우저를 운전해 지시를 수행. 동작 기록 + 결과 반환."""
     steps: list[dict] = []
     # 잘못된 시작 URL(http로 시작 안 함)은 무시 — 현재 페이지/지시로 진행.
@@ -218,7 +220,9 @@ def run_browser_task(page, instruction: str, start_url: str | None = None, max_s
             except Exception:
                 pass
             _show_cdp_window()
-            if not login_waited and _wait_for_login(page, start_url, timeout=180):
+            # login_wait=True(동기)면 로그인 완료까지 대기 후 이어감.
+            # login_wait=False(비동기 오케스트레이터)면 대기 없이 즉시 needs_login 반환.
+            if login_wait and not login_waited and _wait_for_login(page, start_url, timeout=180):
                 login_waited = True
                 steps.append({"action": "logged_in", "note": "로그인 완료 — 작업 자동 계속"})
                 continue  # 재관찰 → 로그인된 상태로 작업 진행
