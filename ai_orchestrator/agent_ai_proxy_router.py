@@ -199,11 +199,20 @@ def _resolve_url(url: str | None, message: str) -> str | None:
     return None
 
 
+# 브라우저 의도 동사 — 사이트명과 함께 있으면 LLM 분류 없이 브라우저로 직행(결정론적).
+_BROWSER_INTENT = re.compile(
+    r"연결|열어|열기|띄워|띄우|접속|들어가|들어와|이동|가줘|가봐|보여줘|로그인|"
+    r"open|connect|go ?to",
+    re.IGNORECASE,
+)
+
+
 _OP_CATALOG = (
     "- session_status: 외부 사이트 로그인 세션 현황(네이버/스토어/EUM/가비아/하이웍스 등 로그인 여부)\n"
     "- cafe_analyze: 이미 수집된 네이버 카페 글을 AI로 분석(흐름·뜨는 주제·수익기회)\n"
     "- community_analyze: 특정 사이트 URL의 글을 수집+AI분석 (url 필수)\n"
-    "- browser: 그 외 모든 웹사이트 작업(로그인·조회·정리·클릭·입력·수집 등)\n"
+    "- browser: 그 외 모든 웹사이트 작업(연결·열기·접속·이동·로그인·조회·정리·클릭·입력·수집 등). "
+    "사이트명만 말해도(예: '네이버 연결해줘', '스마트스토어 열어') 여기로 분류.\n"
     "- chat: 위에 해당 없는 일반 질문·대화·조언"
 )
 
@@ -275,8 +284,16 @@ def _op_browser(instruction: str, url: str | None) -> str | None:
             lambda: run_browser_task(get_page(), instruction=instruction, start_url=url, max_steps=12),
             timeout=240,
         )
-    except Exception:
-        return None  # CDP 없음(서버 등) → 일반 챗 폴백
+    except Exception as e:
+        import logging
+        import traceback
+
+        logging.getLogger(__name__).warning("[_op_browser] 실패: %s\n%s", e, traceback.format_exc())
+        # CDP 자체에 연결 못 하면 서버(브라우저 없음) → 일반 챗 폴백(None).
+        # 그 외(브라우저는 있는데 작업 중 오류)는 사용자에게 오류를 알린다.
+        if "connect" in str(e).lower() or "ECONNREFUSED" in str(e) or "cdp" in str(e).lower():
+            return None
+        return f"⚠ 브라우저 작업 중 오류: {str(e)[:150]}"
     if r.get("needs_login"):
         return f"🔐 로그인이 필요합니다.\n{r.get('result', '')}\n로그인하신 뒤 다시 같은 명령을 주세요."
     if r.get("blocked"):
@@ -285,9 +302,15 @@ def _op_browser(instruction: str, url: str | None) -> str | None:
 
 
 def _route_app_task(message: str, model: str | None) -> str | None:
-    """메시지를 앱 작업(op)으로 분류해 실제 실행. 일반 대화면 None(→ 일반 챗)."""
-    if not _TASK_HINT.search(message):
-        return None
+    """모든 자연어를 분류기에 통과(키워드 제약 없음). 작업이면 실행, 일반 대화면
+    None 반환 → GPT가 그대로 응답. 사용자 지시: '모든 자연어 받아들여, 제약 걸지마'.
+    """
+    # 결정론적 직행: 알려진 사이트명 + 브라우저 의도(연결/열기/접속 등) → LLM 분류 생략.
+    # (LLM 분류가 호출마다 흔들려 '네이버 연결해줘'가 일반챗으로 새는 문제 방지)
+    direct_url = _resolve_url("", message)
+    if direct_url and _BROWSER_INTENT.search(message):
+        return _op_browser(message, direct_url)
+
     classify = _caller.call_openai_chat(
         message=(
             "사용자 메시지를 아래 작업 중 하나로 분류해 JSON만 출력(설명 금지).\n"

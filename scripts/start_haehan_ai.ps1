@@ -1,6 +1,14 @@
 # Haehan AI 전체 스택 시작 스크립트
-# 순서: 1. FastAPI(번들 exe) → 2. Next.js standalone → 3. CDP Chrome → 4. Electron 앱
+# 순서: 1. FastAPI(소스 uvicorn) → 2. Next.js standalone → 3. CDP Chrome → 4. Electron 앱
 # Windows 시작프로그램 등록 시 자동 실행
+
+# ── 콘솔 숨김 (앱 실행 터미널 백그라운드) ──────────────────────────────────────
+# launcher PowerShell 창을 즉시 숨겨 백그라운드로. 진행 로그는 data/server_*.log 참고.
+try {
+    Add-Type -Name Win32 -Namespace Hide -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(System.IntPtr h, int n); [DllImport("kernel32.dll")] public static extern System.IntPtr GetConsoleWindow();' -ErrorAction SilentlyContinue
+    $consoleH = [Hide.Win32]::GetConsoleWindow()
+    if ($consoleH -ne [System.IntPtr]::Zero) { [Hide.Win32]::ShowWindow($consoleH, 0) | Out-Null }  # 0 = SW_HIDE
+} catch {}
 
 $ROOT     = "C:\work\01. haehan-ai-orchestrator"
 $ELECTRON = "$ROOT\dist-installer\win-unpacked\Haehan AI.exe"
@@ -25,16 +33,26 @@ function Wait-Port($port, $label, $maxSec = 30) {
     return $false
 }
 
-# ── 1. FastAPI 번들 서버 (포트 8401) ─────────────────────────────────────────
+# ── 1. FastAPI 소스 서버 (포트 8401) ─────────────────────────────────────────
+# frozen exe(haehan-server.exe)는 옛 코드를 박제 → 소스 변경 미반영. 소스(uvicorn)를
+# pythonw(콘솔 없음)로 띄워 코드 수정이 재시작만으로 즉시 반영되게 한다. 로그는 파일로.
+$PYW = "C:\Users\skyjw\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe"
+if (-not (Test-Path $PYW)) { $PYW = (Get-Command pythonw -ErrorAction SilentlyContinue).Source }
+if (-not $PYW) { $PYW = (Get-Command python -ErrorAction SilentlyContinue).Source }
 if (Test-Port 8401) {
     Write-Host "[1/4] FastAPI 이미 실행 중"
 } else {
-    Write-Host "[1/4] FastAPI 번들 서버 시작..."
-    if (-not (Test-Path $FASTAPI)) {
-        Write-Host "[1/4] haehan-server.exe 없음: $FASTAPI" -ForegroundColor Red; exit 1
+    Write-Host "[1/4] FastAPI 소스 서버 시작..."
+    if (-not $PYW -or -not (Test-Path $PYW)) {
+        Write-Host "[1/4] python 실행파일 없음: $PYW" -ForegroundColor Red; exit 1
     }
     $env:HAEHAN_DATA_DIR = "$ROOT\data"
-    Start-Process $FASTAPI -WindowStyle Hidden
+    Start-Process -FilePath $PYW `
+        -ArgumentList "-m","uvicorn","ai_orchestrator.server:app","--host","127.0.0.1","--port","8401" `
+        -WorkingDirectory $ROOT `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput "$ROOT\data\server_out.log" `
+        -RedirectStandardError  "$ROOT\data\server_err.log"
     if (-not (Wait-Port 8401 "FastAPI" 40)) { exit 1 }
 }
 
