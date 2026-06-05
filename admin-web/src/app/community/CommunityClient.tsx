@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Site, type Report, authHeader, J } from "./communityShared";
 import { InstantAnalyze } from "./sections/InstantAnalyze";
+import { AgentTask } from "./sections/AgentTask";
 import { MonitoredSites } from "./sections/MonitoredSites";
 import { TelegramNotify } from "./sections/TelegramNotify";
 import { AutoReports } from "./sections/AutoReports";
@@ -46,6 +47,7 @@ export function CommunityClient() {
   return (
     <div className="space-y-4 max-w-5xl">
       <InstantAnalyze onAnalyze={analyze} analyzingUrl={analyzingUrl} />
+      <AgentTask />
       <MonitoredSites sites={sites} analyzingUrl={analyzingUrl} onAnalyze={analyze} onChanged={loadSites} onError={setError} />
       <TelegramNotify />
       <AutoReports siteCount={sites.length} onError={setError} />
