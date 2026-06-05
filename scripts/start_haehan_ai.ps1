@@ -56,22 +56,26 @@ if (Test-Port 8401) {
     if (-not (Wait-Port 8401 "FastAPI" 40)) { exit 1 }
 }
 
-# ── 2. Next.js standalone 서버 (포트 3000) ───────────────────────────────────
+# ── 2. Next.js 소스(dev) 서버 (포트 3000) ────────────────────────────────────
+# 백엔드(소스 uvicorn)와 일관되게 프론트도 next dev 로 실행 → 재빌드 없이 파일 저장만으로
+# 즉시 반영(standalone 빌드본 불필요, env는 .env.local 의 로컬 백엔드·API_PASS 사용).
+$WEBDIR  = "$ROOT\admin-web"
+$NEXTBIN = "$WEBDIR\node_modules\next\dist\bin\next"
 if (Test-Port 3000) {
     Write-Host "[2/4] Next.js 이미 실행 중"
 } else {
-    Write-Host "[2/4] Next.js 서버 시작..."
-    if (-not (Test-Path $NEXTJS)) {
-        Write-Host "[2/4] Next.js standalone 없음: $NEXTJS" -ForegroundColor Red; exit 1
+    Write-Host "[2/4] Next.js 소스(dev) 서버 시작..."
+    if (-not (Test-Path $NEXTBIN)) {
+        Write-Host "[2/4] next 실행파일 없음: $NEXTBIN" -ForegroundColor Red; exit 1
     }
-    $env:PORT      = "3000"
-    $env:HOSTNAME  = "0.0.0.0"
-    $env:NODE_ENV  = "production"
+    $env:NODE_ENV   = "development"
     $env:OWNER_MODE = "true"
-    Start-Process node -ArgumentList $NEXTJS `
-        -WorkingDirectory (Split-Path $NEXTJS) `
-        -WindowStyle Hidden
-    if (-not (Wait-Port 3000 "Next.js" 30)) { exit 1 }
+    Start-Process node -ArgumentList "`"$NEXTBIN`"","dev","-p","3000" `
+        -WorkingDirectory $WEBDIR `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput "$ROOT\data\next_out.log" `
+        -RedirectStandardError  "$ROOT\data\next_err.log"
+    if (-not (Wait-Port 3000 "Next.js" 60)) { exit 1 }
 }
 
 # ── 3. CDP Chrome (포트 9222) ─────────────────────────────────────────────────
