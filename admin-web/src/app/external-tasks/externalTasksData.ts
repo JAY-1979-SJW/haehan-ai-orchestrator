@@ -1,0 +1,237 @@
+/** 외주 작업 — 작업 카탈로그·분류/위험 스타일 데이터 */
+
+export type Classification =
+  | "SERVER_READONLY_ALLOWED"
+  | "WEB_TASK_REGISTRY"
+  | "OFFICIAL_API_OR_OAUTH_REQUIRED"
+  | "LOCAL_AGENT_REQUIRED"
+  | "USER_DIRECT_REQUIRED"
+  | "QUARANTINE_OR_HOLD";
+
+export interface ExternalWorkEntry {
+  work_key: string;
+  provider: string;
+  work_type: string;
+  description: string;
+  classification: Classification;
+  execution_location: string;
+  risk_level: string;
+  requires_approval: boolean;
+  requires_auth: boolean;
+  auth_method: string;
+  registered_in_web_task: boolean;
+  notes: string;
+}
+
+// 정적 분류 목록 — 실제 API 연동 전 정책 표시용
+export const EXTERNAL_WORKS: ExternalWorkEntry[] = [
+  // ── Naver read-only (서버 실행 가능) ─────────────────────────────────
+  {
+    work_key: "naver/blog_search",
+    provider: "naver",
+    work_type: "blog_search",
+    description: "네이버 블로그 검색 결과 조회 (조회 전용)",
+    classification: "SERVER_READONLY_ALLOWED",
+    execution_location: "SERVER",
+    risk_level: "low",
+    requires_approval: false,
+    requires_auth: false,
+    auth_method: "none",
+    registered_in_web_task: false,
+    notes: "/api/v1/external/naver/blog-search",
+  },
+  {
+    work_key: "naver/shopping_search",
+    provider: "naver",
+    work_type: "shopping_search",
+    description: "네이버 쇼핑 검색 결과 조회 (조회 전용)",
+    classification: "SERVER_READONLY_ALLOWED",
+    execution_location: "SERVER",
+    risk_level: "low",
+    requires_approval: false,
+    requires_auth: false,
+    auth_method: "none",
+    registered_in_web_task: false,
+    notes: "/api/v1/external/naver/shopping-search",
+  },
+  {
+    work_key: "naver/search_status",
+    provider: "naver",
+    work_type: "search_status",
+    description: "네이버 검색 수집 상태 조회 (조회 전용)",
+    classification: "SERVER_READONLY_ALLOWED",
+    execution_location: "SERVER",
+    risk_level: "low",
+    requires_approval: false,
+    requires_auth: false,
+    auth_method: "none",
+    registered_in_web_task: false,
+    notes: "/api/v1/external/naver/status",
+  },
+  // ── Naver web task 등록됨 ─────────────────────────────────────────────
+  {
+    work_key: "naver/app_register",
+    provider: "naver",
+    work_type: "app_register",
+    description: "네이버 개발자 센터 앱 등록 (승인 필요)",
+    classification: "WEB_TASK_REGISTRY",
+    execution_location: "LOCAL_AGENT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "browser_session",
+    registered_in_web_task: true,
+    notes: "web_task_registry 등록됨. 로컬 에이전트 + 사전 로그인 필요.",
+  },
+  // ── Naver 로컬 에이전트 필요 ─────────────────────────────────────────
+  {
+    work_key: "naver/blog_write",
+    provider: "naver",
+    work_type: "blog_write",
+    description: "네이버 블로그 글 작성/게시 (로컬 에이전트 필요)",
+    classification: "LOCAL_AGENT_REQUIRED",
+    execution_location: "LOCAL_AGENT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "browser_session",
+    registered_in_web_task: false,
+    notes: "서버 직접 실행 불가. 로컬 에이전트 + 사용자 승인 필요.",
+  },
+  {
+    work_key: "naver/cafe_post",
+    provider: "naver",
+    work_type: "cafe_post",
+    description: "네이버 카페 게시글 작성/게시 (로컬 에이전트 필요)",
+    classification: "LOCAL_AGENT_REQUIRED",
+    execution_location: "LOCAL_AGENT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "browser_session",
+    registered_in_web_task: false,
+    notes: "서버 직접 실행 불가.",
+  },
+  {
+    work_key: "naver/mail_send",
+    provider: "naver",
+    work_type: "mail_send",
+    description: "네이버 메일 발송 (사용자 직접 확인 필요)",
+    classification: "USER_DIRECT_REQUIRED",
+    execution_location: "USER_DIRECT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "browser_session",
+    registered_in_web_task: false,
+    notes: "발송은 사용자가 직접 확인 후 실행.",
+  },
+  // ── Google web task 등록됨 ────────────────────────────────────────────
+  {
+    work_key: "google/oauth_submit",
+    provider: "google",
+    work_type: "oauth_submit",
+    description: "Google Cloud Console OAuth 클라이언트 등록 (승인 필요)",
+    classification: "WEB_TASK_REGISTRY",
+    execution_location: "LOCAL_AGENT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "browser_session",
+    registered_in_web_task: true,
+    notes: "web_task_registry 등록됨. 사전 로그인 필요.",
+  },
+  // ── Google 공식 API/OAuth 필요 ────────────────────────────────────────
+  {
+    work_key: "google/gmail_read",
+    provider: "google",
+    work_type: "gmail_read",
+    description: "Gmail 수신함 조회 (공식 Gmail API + OAuth2)",
+    classification: "OFFICIAL_API_OR_OAUTH_REQUIRED",
+    execution_location: "OFFICIAL_API",
+    risk_level: "medium",
+    requires_approval: false,
+    requires_auth: true,
+    auth_method: "oauth",
+    registered_in_web_task: false,
+    notes: "credentials.json + token.json 설정 완료 시 활성화. /api/v1/inbox/email/fetch",
+  },
+  {
+    work_key: "google/calendar_read",
+    provider: "google",
+    work_type: "calendar_read",
+    description: "Google Calendar 일정 조회 (공식 API + OAuth2)",
+    classification: "OFFICIAL_API_OR_OAUTH_REQUIRED",
+    execution_location: "OFFICIAL_API",
+    risk_level: "medium",
+    requires_approval: false,
+    requires_auth: true,
+    auth_method: "oauth",
+    registered_in_web_task: false,
+    notes: "공식 API client 미구현. FUTURE_INTEGRATION.",
+  },
+  {
+    work_key: "google/drive_read",
+    provider: "google",
+    work_type: "drive_read",
+    description: "Google Drive 파일 조회 (공식 Drive API + OAuth2)",
+    classification: "OFFICIAL_API_OR_OAUTH_REQUIRED",
+    execution_location: "OFFICIAL_API",
+    risk_level: "medium",
+    requires_approval: false,
+    requires_auth: true,
+    auth_method: "oauth",
+    registered_in_web_task: false,
+    notes: "공식 Drive API client 미구현. FUTURE_INTEGRATION.",
+  },
+  {
+    work_key: "google/browser_login",
+    provider: "google",
+    work_type: "browser_login",
+    description: "Google 계정 브라우저 로그인 자동화 — 차단됨",
+    classification: "QUARANTINE_OR_HOLD",
+    execution_location: "USER_DIRECT",
+    risk_level: "high",
+    requires_approval: true,
+    requires_auth: true,
+    auth_method: "user_direct",
+    registered_in_web_task: false,
+    notes: "서버 브라우저 Google 로그인 자동화 금지. execution_location_guard 차단.",
+  },
+];
+
+// ── 분류별 배지 스타일 ───────────────────────────────────────────────────────
+
+export const CLASSIFICATION_STYLES: Record<Classification, { badge: string; label: string }> = {
+  SERVER_READONLY_ALLOWED: {
+    badge: "bg-green-100 text-green-800",
+    label: "조회 가능",
+  },
+  WEB_TASK_REGISTRY: {
+    badge: "bg-blue-100 text-blue-800",
+    label: "실행 요청 가능 (승인 필요)",
+  },
+  OFFICIAL_API_OR_OAUTH_REQUIRED: {
+    badge: "bg-yellow-100 text-yellow-800",
+    label: "OAuth/API 설정 필요",
+  },
+  LOCAL_AGENT_REQUIRED: {
+    badge: "bg-orange-100 text-orange-800",
+    label: "로컬 에이전트 필요",
+  },
+  USER_DIRECT_REQUIRED: {
+    badge: "bg-purple-100 text-purple-800",
+    label: "사용자 직접 조작 필요",
+  },
+  QUARANTINE_OR_HOLD: {
+    badge: "bg-red-100 text-red-800",
+    label: "차단됨",
+  },
+};
+
+export const RISK_STYLES: Record<string, string> = {
+  low: "text-green-700",
+  medium: "text-yellow-700",
+  high: "text-red-700",
+};
+
