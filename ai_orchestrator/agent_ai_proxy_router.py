@@ -400,6 +400,40 @@ def _route_app_task(message: str, model: str | None) -> str | None:
     return None  # chat
 
 
+# ── 세션 대화 기억 ──────────────────────────────────────────────────
+# 채팅창(session_id)별로 최근 대화(user/assistant)를 보관해 멀티턴을 잇는다.
+# AI가 "뭘 할까요?" 묻고 사용자가 답하면, 이전 맥락을 에이전트가 함께 보고 이어 진행.
+_SESSIONS: dict[str, list[dict]] = {}
+_SESSION_AGENT: dict[str, bool] = {}  # 세션의 직전 턴이 에이전트였는지(연속성 라우팅)
+_SESS_LOCK = Lock()
+_SESS_MAX_MSGS = 12  # 세션당 메시지 보관 수
+_SESS_MAX = 300  # 세션 수 상한
+
+
+def _session_history(sid: str) -> list[dict]:
+    with _SESS_LOCK:
+        return list(_SESSIONS.get(sid, []))
+
+
+def _session_is_agent(sid: str) -> bool:
+    with _SESS_LOCK:
+        return _SESSION_AGENT.get(sid, False)
+
+
+def _session_record(sid: str, user_msg: str, assistant_msg: str, was_agent: bool) -> None:
+    with _SESS_LOCK:
+        if len(_SESSIONS) > _SESS_MAX:
+            for k in list(_SESSIONS)[:-200]:
+                _SESSIONS.pop(k, None)
+                _SESSION_AGENT.pop(k, None)
+        h = _SESSIONS.setdefault(sid, [])
+        h.append({"role": "user", "content": (user_msg or "")[:1500]})
+        h.append({"role": "assistant", "content": (assistant_msg or "")[:1500]})
+        if len(h) > _SESS_MAX_MSGS:
+            del h[: len(h) - _SESS_MAX_MSGS]
+        _SESSION_AGENT[sid] = was_agent
+
+
 # 필요시만 연결: 앱/브라우저/도구가 필요할 법한 신호(사이트·동작·기능 단어, URL)가 있을 때만
 # 도구 에이전트를 띄운다. 순수 잡담·일반지식 질문은 None → 빠른 일반 GPT가 바로 답.
 # (차단이 아니라 라우팅 — 신호는 넓게 잡아 작업이 일반챗으로 새지 않게 한다)
@@ -419,19 +453,17 @@ def _needs_agent(message: str) -> bool:
     return bool(_NEEDS_AGENT.search(message or ""))
 
 
-def _run_free_agent_task(message: str, model: str | None) -> str | None:
+def _run_free_agent_task(message: str, model: str | None, history: list[dict] | None = None) -> str | None:
     """자율 도구호출 에이전트로 명령 수행(분류기·고정URL 없이 GPT가 직접).
 
-    필요시만 연결: 도구가 필요할 신호가 없으면 None → 일반 GPT가 답(에이전트 미가동).
+    라우팅(에이전트 vs 일반챗)은 호출부(agent_ai_chat)가 결정. history 로 멀티턴 맥락 유지.
     CDP 없으면(서버 등) None → 일반 챗 폴백. 로그인 필요 시 비동기 job + 안내 반환.
     """
-    if not _needs_agent(message):
-        return None  # 순수 대화 → 일반 GPT (도구·브라우저 미연결)
     try:
         from scripts.browser_agent.free_agent import run_free_agent
     except Exception:
         return None
-    r = run_free_agent(message, model=model, login_wait=False)
+    r = run_free_agent(message, model=model, login_wait=False, history=history)
     if r.get("no_browser"):
         return None  # 브라우저 없음 → 일반 챗
     if not r.get("needs_login"):
@@ -451,7 +483,7 @@ def _run_free_agent_task(message: str, model: str | None) -> str | None:
         from scripts.browser_agent.free_agent import run_free_agent as _rfa
 
         try:
-            res = _rfa(message, model=model, login_wait=True)
+            res = _rfa(message, model=model, login_wait=True, history=history)
             txt = res.get("text") or "완료"
         except Exception as e:
             txt = f"⚠ 작업 오류: {str(e)[:150]}"
@@ -531,50 +563,44 @@ def agent_ai_chat(
     if len(msg) > MAX_MESSAGE_LEN:
         return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
 
-    # ── 자율 도구호출 에이전트: GPT가 도구를 직접 골라 명령 수행(분류기·고정URL 없음) ──
-    # CDP 없으면(서버) None → 아래 일반 챗 폴백. 기존 _route_app_task/_op_*는 보존(미사용).
-    try:
-        _task = _run_free_agent_task(msg, body.model)
-    except Exception:
-        logger.exception("free_agent error")
-        _task = None
-    if _task is not None:
-        logger.info("agent_ai_chat free-agent agent=%s", _mask_agent_id(agent_id))
-        return ChatResponse(ok=True, text=_task, model="app-agent")
+    # ── 세션 기억 + 멀티턴 라우팅 ──
+    # 같은 채팅창(session_id)의 이전 대화를 함께 보고 이어 진행. 직전 턴이 에이전트면
+    # 짧은 후속 답("쇼핑")도 에이전트로(키워드 없어도 연속). 순수 잡담은 일반 GPT.
+    sid = (body.session_id or "default")[:80]
+    history = _session_history(sid)
+    use_agent = _needs_agent(msg) or _session_is_agent(sid)
 
-    # OpenAI 호출
-    result = _caller.call_openai_chat(message=msg, model=body.model)
-    msg = ""  # 원문 폐기
+    if use_agent:
+        try:
+            _task = _run_free_agent_task(msg, body.model, history)
+        except Exception:
+            logger.exception("free_agent error")
+            _task = None
+        if _task is not None:
+            logger.info("agent_ai_chat free-agent agent=%s", _mask_agent_id(agent_id))
+            _session_record(sid, msg, _task, was_agent=True)
+            return ChatResponse(ok=True, text=_task, model="app-agent")
 
-    # 로그 — preview 만, 원문 0
-    log_meta = {
-        "agent": _mask_agent_id(agent_id),
-        "model": result.model_used or _caller.get_default_model(),
-        "ok": result.ok,
-        "error_code": result.error_code,
-        "duration_ms": result.duration_ms,
-        "response_length": len(result.text or ""),
-        "preview": (result.text or "")[:PREVIEW_CAP] if result.ok else "",
+    # 일반 GPT (대화 맥락 유지) — call_openai_agent(no tools) 로 history 반영
+    _sys = {
+        "role": "system",
+        "content": "당신은 해한 AI 비서입니다. 한국어로 간결·정확하게, 이전 대화 맥락을 이어 답하세요.",
     }
-    logger.info("agent_ai_chat %s", log_meta)
-
-    if not result.ok:
+    res = _caller.call_openai_agent(
+        messages=[_sys, *history, {"role": "user", "content": msg}], tools=None, model=body.model
+    )
+    user_raw, msg = msg, ""  # 원문 폐기(세션 기록용으로만 보관)
+    if not res.get("ok"):
+        ec = res.get("error_code", "PROVIDER_ERROR")
+        logger.info("agent_ai_chat plain ok=False ec=%s agent=%s", ec, _mask_agent_id(agent_id))
         return ChatResponse(
-            ok=False,
-            error_code=result.error_code,
-            user_message_kr=_USER_MSG.get(result.error_code, "AI 응답 오류"),
-            model=result.model_used or "",
-            duration_ms=result.duration_ms,
+            ok=False, error_code=ec, user_message_kr=_USER_MSG.get(ec, "AI 응답 오류"), model=res.get("model", "")
         )
+    text = ((res.get("message") or {}).get("content") or "").strip() or "…"
+    logger.info("agent_ai_chat plain ok agent=%s len=%d", _mask_agent_id(agent_id), len(text))
+    _session_record(sid, user_raw, text, was_agent=False)
     return ChatResponse(
-        ok=True,
-        text=result.text,
-        finish_reason=result.finish_reason if False else "",  # not in schema
-        model=result.model_used or _caller.get_default_model(),
-        usage_summary=result.usage_summary or {},
-        external_call_count=1,
-        duration_ms=result.duration_ms,
-        user_message_kr="",
+        ok=True, text=text, model=res.get("model", "") or _caller.get_default_model(), external_call_count=1
     )
 
 

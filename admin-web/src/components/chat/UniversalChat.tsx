@@ -23,6 +23,10 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
   const [running, setRunning]   = useState(false);
   const bottomRef               = useRef<HTMLDivElement>(null);
   const inputRef                = useRef<HTMLInputElement>(null);
+  // 채팅창별 세션 ID(멀티턴 대화 맥락 유지용)
+  const sessionId               = useRef<string>(
+    typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `s-${Math.random().toString(36).slice(2)}`
+  );
   const { stream, abort }       = useChatStream();
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
 
     let fullText = "";
     try {
-      await stream("/api/chat", { message: prompt, domain }, (event, data) => {
+      await stream("/api/chat", { message: prompt, domain, session_id: sessionId.current }, (event, data) => {
         if (event === "text") {
           const chunk = (data as { text: string }).text ?? "";
           fullText += chunk;
