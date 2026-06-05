@@ -34,20 +34,21 @@ function Wait-Port($port, $label, $maxSec = 30) {
 }
 
 # ── 1. FastAPI 소스 서버 (포트 8401) ─────────────────────────────────────────
-# frozen exe(haehan-server.exe)는 옛 코드를 박제 → 소스 변경 미반영. 소스(uvicorn)를
-# pythonw(콘솔 없음)로 띄워 코드 수정이 재시작만으로 즉시 반영되게 한다. 로그는 파일로.
-$PYW = "C:\Users\skyjw\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe"
-if (-not (Test-Path $PYW)) { $PYW = (Get-Command pythonw -ErrorAction SilentlyContinue).Source }
-if (-not $PYW) { $PYW = (Get-Command python -ErrorAction SilentlyContinue).Source }
+# 소스(uvicorn)로 띄워 코드 수정이 재시작만으로 즉시 반영. python.exe(콘솔 보유)로 실행하되
+# 서버가 시작 시 자기 콘솔을 숨긴다(server._hide_own_console). → 콘솔이 '존재'하므로 subprocess
+# 자식들이 이 콘솔을 상속해 매번 새 터미널 창을 안 띄움(작업 중 깜빡임 방지). pythonw(콘솔 없음)면
+# 자식 콘솔앱이 새 창을 만들어 깜빡임 발생 → python.exe 로 변경.
+$PY = "C:\Users\skyjw\AppData\Local\Python\pythoncore-3.14-64\python.exe"
+if (-not (Test-Path $PY)) { $PY = (Get-Command python -ErrorAction SilentlyContinue).Source }
 if (Test-Port 8401) {
     Write-Host "[1/4] FastAPI 이미 실행 중"
 } else {
     Write-Host "[1/4] FastAPI 소스 서버 시작..."
-    if (-not $PYW -or -not (Test-Path $PYW)) {
-        Write-Host "[1/4] python 실행파일 없음: $PYW" -ForegroundColor Red; exit 1
+    if (-not $PY -or -not (Test-Path $PY)) {
+        Write-Host "[1/4] python 실행파일 없음: $PY" -ForegroundColor Red; exit 1
     }
     $env:HAEHAN_DATA_DIR = "$ROOT\data"
-    Start-Process -FilePath $PYW `
+    Start-Process -FilePath $PY `
         -ArgumentList "-m","uvicorn","ai_orchestrator.server:app","--host","127.0.0.1","--port","8401" `
         -WorkingDirectory $ROOT `
         -WindowStyle Hidden `
