@@ -4,6 +4,7 @@
     python -m scripts.naver.cafe._runner my-cafes
     python -m scripts.naver.cafe._runner explore --cafe-url=https://cafe.naver.com/0moo
 """
+
 from __future__ import annotations
 
 import json
@@ -22,7 +23,53 @@ ROOT = Path(__file__).resolve().parents[4]
 _DATA_DIR = ROOT / "data" / "cafe"
 
 _CAFE_HOME_URL = "https://section.cafe.naver.com/ca-fe/home"
-_LIST_URL = "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page=1&userDisplay=1"
+_LIST_URL = (
+    "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page=1&userDisplay=1"
+)
+
+
+# 가입카페 전용 API (홈 DOM에는 추천/최근방문 카페가 섞여 부정확).
+_MY_CAFE_API = (
+    "https://apis.naver.com/cafe-home-web/cafe-home/v3/homepc?myCafeCount=500&useMyCafeEvent=false&articleCount=0"
+)
+
+
+def _fetch_joined_cafes_via_api(page: Page) -> list[dict]:
+    """가입카페 전용 API로 정확한 목록만 조회(추천/최근방문 제외). 실패 시 빈 리스트."""
+    try:
+        raw = page.evaluate(
+            """async (u) => {
+                try {
+                    const r = await fetch(u, {headers: {'Accept': 'application/json'}, credentials: 'include'});
+                    if (!r.ok) return '';
+                    return await r.text();
+                } catch (e) { return ''; }
+            }""",
+            _MY_CAFE_API,
+        )
+        if not raw:
+            return []
+        data = json.loads(raw)
+        result = data.get("message", {}).get("result", {}) or {}
+        items = (result.get("myCafe", {}) or {}).get("cafes", []) or []
+        out = []
+        for c in items:
+            slug = c.get("cafeUrl", "")
+            if not slug:
+                continue
+            out.append(
+                {
+                    "cafe_id": slug,
+                    "cafe_name": c.get("cafeName", ""),
+                    "href": f"https://cafe.naver.com/{slug}",
+                    "clubid": str(c.get("cafeId", "")),  # 숫자 clubid — 수집 시 재사용 가능
+                    "member_count": 0,
+                }
+            )
+        return out
+    except Exception as e:
+        _log.debug("[explorer] 가입카페 API 오류: %s", str(e)[:100])
+        return []
 
 
 def get_my_cafes(page: Page) -> list[dict]:
@@ -36,8 +83,17 @@ def get_my_cafes(page: Page) -> list[dict]:
 
     _log.info("[explorer] 카페홈 접속: %s", _CAFE_HOME_URL)
     page.goto(_CAFE_HOME_URL, timeout=30000, wait_until="domcontentloaded")
-    time.sleep(8)
+    time.sleep(2)
 
+    # 1순위: 가입카페 전용 API (정확)
+    cafes = _fetch_joined_cafes_via_api(page)
+    if cafes:
+        _log.info("[explorer] 내 가입카페 %d개 (API)", len(cafes))
+        return cafes
+
+    # 폴백: API 실패 시 기존 DOM 스크래핑(추천/최근방문 혼입 가능 — 최후수단)
+    _log.warning("[explorer] 가입카페 API 실패 — DOM 폴백")
+    time.sleep(6)
     cafes = page.evaluate(r"""() => {
         const seen = new Set();
         const result = [];
