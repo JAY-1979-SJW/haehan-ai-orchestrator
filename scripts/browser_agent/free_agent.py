@@ -23,9 +23,20 @@ _SYSTEM = (
     "- 결제·구매·송금·삭제·발송·제출 등 되돌릴 수 없는 동작은 절대 직접 하지 말고, 사용자에게 "
     "확인을 요청하는 문장으로 끝내세요.\n"
     "- 로그인 페이지가 나오면 당신은 로그인할 수 없으니, 사용자에게 로그인을 요청하세요.\n"
+    "- 앱 내부 기능(카페·커뮤니티 분석, 블로그, 지원사업, 뉴스/키워드, 세션, 정산 등)이 필요하면 "
+    "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요. 위험·민감 동작(발송·"
+    "결제·삭제·발행·승인 등)은 자동 차단되니, 무엇을 할지 사용자에게 알리고 확인을 받으세요.\n"
     "- 웹/브라우저가 필요 없는 일반 질문·대화·조언은 도구를 쓰지 말고 바로 한국어로 답하세요.\n"
     "- 같은 도구를 의미 없이 반복하지 말고, 목적을 달성하면 도구 없이 한국어로 결과를 간단히 보고하세요."
 )
+
+# 앱 동작 실행 시 부여할 owner 컨텍스트(데스크톱=owner 본인).
+_OWNER = {
+    "actor": "ai-agent",
+    "role": "owner",
+    "organization_ids": ["default-org"],
+    "active_organization_id": "default-org",
+}
 
 _TOOLS = [
     {
@@ -90,6 +101,33 @@ _TOOLS = [
             "name": "session_status",
             "description": "외부 사이트(네이버/스토어/EUM/가비아 등) 로그인 세션 현황을 조회한다.",
             "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_app_actions",
+            "description": "앱 내부 기능(동작) 목록을 검색한다. 사용자가 앱 기능을 요청하면 먼저 이걸로 정확한 path 와 위험도를 확인. 예: '카페 분석', '블로그', '지원사업', '세션'.",
+            "parameters": {
+                "type": "object",
+                "properties": {"query": {"type": "string", "description": "검색어(공백구분 다중 가능)"}},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_app_action",
+            "description": "앱 내부 기능을 실행한다. path 는 list_app_actions 가 알려준 값. 위험·민감 동작은 자동 차단되며, 그때는 사용자에게 확인을 받아야 한다. params 는 해당 동작의 입력값(JSON 객체).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "동작 경로(list_app_actions 결과의 path)"},
+                    "params": {"type": "object", "description": "동작 입력값"},
+                },
+                "required": ["path"],
+            },
         },
     },
 ]
@@ -167,6 +205,21 @@ def run_free_agent(message: str, model: str | None = None, max_steps: int = 12, 
             from ai_orchestrator.agent_ai_proxy_router import _op_session_status
 
             return _op_session_status()
+        if name == "list_app_actions":
+            from ai_orchestrator import app_actions
+
+            acts = app_actions.list_actions(args.get("query", ""))
+            head = f"앱 동작 {len(acts)}개" + (" (상위 40)" if len(acts) > 40 else "") + ":\n"
+            return head + "\n".join(f"  [{a['risk']}] {a['path']} — {a['desc']}" for a in acts[:40])
+        if name == "run_app_action":
+            from ai_orchestrator import app_actions
+
+            rr = app_actions.run_action(args.get("path", ""), args.get("params") or {}, _OWNER)
+            if rr.get("needs_confirm"):
+                return rr.get("message", "확인이 필요한 동작입니다.")
+            if rr.get("ok"):
+                return f"실행 결과:\n{rr.get('result', '')}"
+            return f"실행 실패: {rr.get('error', '')}"
         return f"알 수 없는 도구: {name}"
 
     messages: list[dict] = [
