@@ -4,7 +4,6 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/lib/nav";
-import { UniversalChat } from "@/components/chat/UniversalChat";
 import { AiDock } from "@/components/chat/AiDock";
 
 interface PageShellProps {
@@ -20,12 +19,13 @@ function isNavActive(href: string, exact: boolean | undefined, pathname: string)
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function PageShell({ title, description, headerRight, chatDomain, children }: PageShellProps) {
+export function PageShell({ title, description, headerRight, children }: PageShellProps) {
   const pathname = usePathname();
-  const [chatOpen, setChatOpen] = useState(false);
+  // 우측 상시 AI 상담 패널 (기본 열림). 데스크톱은 콘텐츠가 가려지지 않게 우측 공간 확보.
+  const [dockOpen, setDockOpen] = useState(true);
 
   return (
-    <div className="flex min-h-dvh bg-[#F5F7FA]">
+    <div className={`flex min-h-dvh bg-[#F5F7FA] ${dockOpen ? "lg:pr-[360px]" : ""}`}>
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-[220px] h-dvh sticky top-0 bg-white shrink-0 overflow-hidden"
         style={{ borderRight: "1px solid #E5E7EB" }}>
@@ -92,18 +92,16 @@ export function PageShell({ title, description, headerRight, chatDomain, childre
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {headerRight}
-            {chatDomain && (
-              <button onClick={() => setChatOpen(v => !v)}
-                title="AI 채팅"
-                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors text-sm"
-                style={{
-                  background: chatOpen ? "#FFF7ED" : "#F3F4F6",
-                  color:      chatOpen ? "#F97316" : "#6B7280",
-                  border:     chatOpen ? "1px solid #FED7AA" : "1px solid transparent",
-                }}>
-                💬
-              </button>
-            )}
+            <button onClick={() => setDockOpen(v => !v)}
+              title="AI 상담 패널 열기/접기"
+              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors text-sm"
+              style={{
+                background: dockOpen ? "#FFF7ED" : "#F3F4F6",
+                color:      dockOpen ? "#F97316" : "#6B7280",
+                border:     dockOpen ? "1px solid #FED7AA" : "1px solid transparent",
+              }}>
+              💬
+            </button>
           </div>
         </header>
 
@@ -112,18 +110,7 @@ export function PageShell({ title, description, headerRight, chatDomain, childre
           <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 pb-[calc(84px+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:pb-6">
             {children}
           </main>
-
-          {/* 채팅 패널 — chatDomain 있고 토글 ON일 때 표시 */}
-          {chatDomain && chatOpen && (
-            <div className="hidden lg:flex w-[300px] shrink-0 flex-col border-l border-[#E5E7EB] bg-[#F9FAFB]"
-              style={{ height: "100%" }}>
-              <UniversalChat
-                domain={chatDomain}
-                title="AI 어시스턴트"
-                className="flex-1 rounded-none border-0 border-none"
-              />
-            </div>
-          )}
+          {/* 우측 상시 AI 패널은 전역 <AiDock/> 가 담당 (아래) */}
         </div>
       </div>
 
@@ -156,8 +143,8 @@ export function PageShell({ title, description, headerRight, chatDomain, childre
         })}
       </nav>
 
-      {/* 전 화면 하단 고정 AI 상담 독 (도메인 자동 연동) */}
-      <AiDock />
+      {/* 우측 상시 AI 상담 패널 (도메인 자동 연동, 모든 앱 도구 연결) */}
+      <AiDock open={dockOpen} setOpen={setDockOpen} />
     </div>
   );
 }
