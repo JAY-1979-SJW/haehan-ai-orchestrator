@@ -6,6 +6,7 @@ policy:
   - 로그에 key/응답 전문 0
   - usage summary / 응답 길이 / preview 80자 만 호출자에게 반환
 """
+
 from __future__ import annotations
 
 import http.client
@@ -60,13 +61,15 @@ def get_default_model() -> str:
     return os.environ.get("OPENAI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
 
 
-def call_openai_chat(*, message: str,
-                       model: str | None = None,
-                       max_tokens: int = DEFAULT_MAX_TOKENS,
-                       timeout: int = DEFAULT_TIMEOUT_SEC,
-                       _opener=None,
-                       _api_url: str = DEFAULT_API_URL,
-                       ) -> ProxyCallResult:
+def call_openai_chat(
+    *,
+    message: str,
+    model: str | None = None,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+    timeout: int = DEFAULT_TIMEOUT_SEC,
+    _opener=None,
+    _api_url: str = DEFAULT_API_URL,
+) -> ProxyCallResult:
     """env OPENAI_API_KEY 사용. 변수는 함수 scope 안에서만."""
     if not message or not message.strip():
         return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY)
@@ -77,19 +80,25 @@ def call_openai_chat(*, message: str,
     if not api_key or len(api_key) < 20:
         return ProxyCallResult(ok=False, error_code=ERR_API_KEY_NOT_SET)
 
-    body = json.dumps({
-        "model": (model or get_default_model()),
-        "messages": [{"role": "user", "content": message}],
-        "max_tokens": int(max_tokens),
-        "temperature": 0.2,
-    }).encode("utf-8")
+    body = json.dumps(
+        {
+            "model": (model or get_default_model()),
+            "messages": [{"role": "user", "content": message}],
+            "max_tokens": int(max_tokens),
+            "temperature": 0.2,
+        }
+    ).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    request = urllib.request.Request(_api_url, data=body,
-                                       headers=headers, method="POST")
+    request = urllib.request.Request(
+        _api_url,
+        data=body,  # noqa: S310 — 상수 OpenAI API URL
+        headers=headers,
+        method="POST",
+    )
     ctx = ssl.create_default_context()
     t0 = time.time()
     try:
@@ -119,36 +128,99 @@ def call_openai_chat(*, message: str,
     try:
         data = json.loads(raw.decode("utf-8"))
     except Exception:
-        return ProxyCallResult(ok=False, error_code=ERR_PROVIDER_ERROR,
-                                duration_ms=dur)
+        return ProxyCallResult(ok=False, error_code=ERR_PROVIDER_ERROR, duration_ms=dur)
     return _parse_success(data, dur)
+
+
+def call_openai_agent(
+    *,
+    messages: list[dict],
+    tools: list[dict] | None = None,
+    model: str | None = None,
+    max_tokens: int = 700,
+    timeout: int = 60,
+    _opener=None,
+    _api_url: str = DEFAULT_API_URL,
+) -> dict:
+    """OpenAI function-calling 1턴 호출. assistant 메시지(content/tool_calls)를 반환.
+
+    자율 도구호출 에이전트(free_agent)용. 기존 call_openai_chat은 보존.
+    반환: {"ok": bool, "message": {...}|None, "error_code": str, "model": str}
+    """
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if not api_key or len(api_key) < 20:
+        return {"ok": False, "error_code": ERR_API_KEY_NOT_SET}
+    payload: dict = {
+        "model": (model or get_default_model()),
+        "messages": messages,
+        "max_tokens": int(max_tokens),
+        "temperature": 0.2,
+    }
+    if tools:
+        payload["tools"] = tools
+        payload["tool_choice"] = "auto"
+    body = json.dumps(payload).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    request = urllib.request.Request(_api_url, data=body, headers=headers, method="POST")  # noqa: S310
+    ctx = ssl.create_default_context()
+    try:
+        opener = _opener or urllib.request.urlopen
+        with opener(request, timeout=timeout, context=ctx) as r:
+            raw = r.read()
+    except urllib.error.HTTPError as e:
+        api_key = ""
+        return {"ok": False, "error_code": _classify_http_error(e, duration=0).error_code}
+    except (urllib.error.URLError, TimeoutError):
+        api_key = ""
+        return {"ok": False, "error_code": ERR_NETWORK_ERROR}
+    except Exception:
+        api_key = ""
+        return {"ok": False, "error_code": ERR_PROVIDER_ERROR}
+    finally:
+        api_key = ""
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except Exception:
+        return {"ok": False, "error_code": ERR_PROVIDER_ERROR}
+    choices = data.get("choices") or []
+    if not choices:
+        return {"ok": False, "error_code": ERR_RESPONSE_EMPTY}
+    return {
+        "ok": True,
+        "message": choices[0].get("message") or {},
+        "finish_reason": choices[0].get("finish_reason", ""),
+        "model": data.get("model", ""),
+    }
 
 
 def _parse_success(data: dict, dur: int) -> ProxyCallResult:
     choices = data.get("choices") or []
     if not choices:
-        return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY,
-                                duration_ms=dur)
+        return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY, duration_ms=dur)
     msg = choices[0].get("message") or {}
     text = (msg.get("content") or "").strip()
     if not text:
-        return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY,
-                                duration_ms=dur)
+        return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY, duration_ms=dur)
     usage = data.get("usage") or {}
     return ProxyCallResult(
-        ok=True, text=text,
+        ok=True,
+        text=text,
         finish_reason=choices[0].get("finish_reason", ""),
         usage_summary={
             "prompt_tokens": usage.get("prompt_tokens"),
             "completion_tokens": usage.get("completion_tokens"),
             "total_tokens": usage.get("total_tokens"),
         },
-        duration_ms=dur, model_used=data.get("model", ""),
+        duration_ms=dur,
+        model_used=data.get("model", ""),
     )
 
 
-def _classify_http_error(e: urllib.error.HTTPError, *,
-                          duration: int) -> ProxyCallResult:
+def _classify_http_error(e: urllib.error.HTTPError, *, duration: int) -> ProxyCallResult:
     code = e.code
     try:
         body = e.read().decode("utf-8", errors="replace")[:200].lower()
@@ -157,8 +229,7 @@ def _classify_http_error(e: urllib.error.HTTPError, *,
     if code == 401:
         ec = ERR_API_KEY_INVALID
     elif code == 429:
-        ec = (ERR_API_QUOTA_EXCEEDED if ("quota" in body or "insufficient" in body)
-              else ERR_RATE_LIMITED)
+        ec = ERR_API_QUOTA_EXCEEDED if ("quota" in body or "insufficient" in body) else ERR_RATE_LIMITED
     elif code == 404:
         ec = ERR_MODEL_NOT_AVAILABLE if "model" in body else ERR_PROVIDER_ERROR
     elif code in (408, 504):
@@ -171,6 +242,10 @@ def _classify_http_error(e: urllib.error.HTTPError, *,
 
 
 __all__ = (
-    "ProxyCallResult", "call_openai_chat", "has_server_openai_key",
-    "get_default_model", "MAX_INPUT_CHARS", "DEFAULT_MODEL",
+    "DEFAULT_MODEL",
+    "MAX_INPUT_CHARS",
+    "ProxyCallResult",
+    "call_openai_chat",
+    "get_default_model",
+    "has_server_openai_key",
 )

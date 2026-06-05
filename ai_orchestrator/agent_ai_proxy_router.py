@@ -400,6 +400,50 @@ def _route_app_task(message: str, model: str | None) -> str | None:
     return None  # chat
 
 
+def _run_free_agent_task(message: str, model: str | None) -> str | None:
+    """자율 도구호출 에이전트로 명령 수행(분류기·고정URL 없이 GPT가 직접).
+
+    CDP 없으면(서버 등) None → 일반 챗 폴백. 로그인 필요 시 비동기 job + 안내 반환.
+    """
+    try:
+        from scripts.browser_agent.free_agent import run_free_agent
+    except Exception:
+        return None
+    r = run_free_agent(message, model=model, login_wait=False)
+    if r.get("no_browser"):
+        return None  # 브라우저 없음 → 일반 챗
+    if not r.get("needs_login"):
+        return r.get("text") or None
+
+    # 로그인 필요 → 비동기: 백그라운드로 로그인 대기+작업 재개, 즉시 안내.
+    import uuid
+
+    job_id = uuid.uuid4().hex[:12]
+    with _TASK_LOCK:
+        if len(_BROWSER_TASKS) > 50:
+            for k in list(_BROWSER_TASKS)[:-40]:
+                _BROWSER_TASKS.pop(k, None)
+        _BROWSER_TASKS[job_id] = {"status": "pending"}
+
+    def _resume() -> None:
+        from scripts.browser_agent.free_agent import run_free_agent as _rfa
+
+        try:
+            res = _rfa(message, model=model, login_wait=True)
+            txt = res.get("text") or "완료"
+        except Exception as e:
+            txt = f"⚠ 작업 오류: {str(e)[:150]}"
+        with _TASK_LOCK:
+            _BROWSER_TASKS[job_id] = {"status": "done", "result": txt}
+
+    Thread(target=_resume, daemon=True).start()
+    return (
+        "🔐 로그인이 필요합니다 — 화면에 뜬 브라우저에서 로그인해 주세요.\n"
+        "로그인하면 작업이 자동으로 이어지고, 잠시 후 결과가 여기에 표시됩니다.\n\n"
+        f"[[JOB:{job_id}]]"
+    )
+
+
 # ── endpoints ────────────────────────────────────────────────
 
 
@@ -465,14 +509,15 @@ def agent_ai_chat(
     if len(msg) > MAX_MESSAGE_LEN:
         return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
 
-    # ── 총괄 라우팅: 앱 작업(세션/카페분석/커뮤니티/브라우저)이면 실제 실행 ──
+    # ── 자율 도구호출 에이전트: GPT가 도구를 직접 골라 명령 수행(분류기·고정URL 없음) ──
+    # CDP 없으면(서버) None → 아래 일반 챗 폴백. 기존 _route_app_task/_op_*는 보존(미사용).
     try:
-        _task = _route_app_task(msg, body.model)
+        _task = _run_free_agent_task(msg, body.model)
     except Exception:
-        logger.exception("route_app_task error")
+        logger.exception("free_agent error")
         _task = None
     if _task is not None:
-        logger.info("agent_ai_chat app-task agent=%s", _mask_agent_id(agent_id))
+        logger.info("agent_ai_chat free-agent agent=%s", _mask_agent_id(agent_id))
         return ChatResponse(ok=True, text=_task, model="app-agent")
 
     # OpenAI 호출
