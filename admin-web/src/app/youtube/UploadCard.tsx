@@ -1,0 +1,247 @@
+"use client";
+/** 유튜브 — 업로드 카드 (폼→검토→완료 다단계) */
+import { useState, useRef } from "react";
+import { API_BASE } from "@/lib/assistant/api";
+
+export function UploadCard({ hasUpload }: { hasUpload: boolean }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [file, setFile]           = useState<File | null>(null);
+  const [title, setTitle]         = useState("");
+  const [desc, setDesc]           = useState("");
+  const [privacy, setPrivacy]     = useState("public");
+  const [tags, setTags]           = useState("");
+  const [publishAt, setPublishAt] = useState("");   // ISO 8601 예약 게시 시각
+  const [scheduled, setScheduled] = useState(false);
+  const [plan, setPlan]           = useState<Record<string, unknown> | null>(null);
+  const [planPath, setPlanPath]   = useState("");
+  const [step, setStep]           = useState<"form"|"review"|"done">("form");
+  const [loading, setLoading]     = useState(false);
+  const [result, setResult]       = useState<{ ok: boolean; msg: string; videoId?: string } | null>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, ""));
+  };
+
+  const handlePrepare = async () => {
+    if (!file) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("title", title || file.name.replace(/\.[^.]+$/, ""));
+      fd.append("description", desc);
+      fd.append("privacy", scheduled ? "private" : privacy);
+      fd.append("tags", tags);
+      if (scheduled && publishAt) fd.append("publish_at", new Date(publishAt).toISOString());
+      const r = await fetch(`${API_BASE}/api/v1/youtube/upload/prepare`, {
+        method: "POST",
+        body: fd,
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.detail || d.error || "플랜 생성 실패");
+      setPlan(d.plan);
+      setPlanPath(d.plan_path);
+      setStep("review");
+    } catch (e) {
+      setResult({ ok: false, msg: String(e) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExecute = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const r = await fetch(`${API_BASE}/api/v1/youtube/upload/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_path: planPath, confirm: "YOUTUBE_APPROVED_UPLOAD", dry_run: false }),
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.detail || d.result?.reason || "업로드 실패");
+      const vid = d.result?.video_id || "";
+      setResult({ ok: true, msg: "업로드 완료!", videoId: vid });
+      setStep("done");
+    } catch (e) {
+      setResult({ ok: false, msg: String(e) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setFile(null); setTitle(""); setDesc(""); setPrivacy("public"); setTags(""); setPublishAt(""); setScheduled(false);
+    setPlan(null); setPlanPath(""); setStep("form"); setResult(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const meta = plan ? (plan.metadata as Record<string, unknown>) : null;
+  const PRIVACY_LABEL: Record<string, string> = { public: "공개", private: "비공개", unlisted: "미등록" };
+
+  return (
+    <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 space-y-4">
+      <p className="text-sm font-bold text-[#111827]">영상 업로드</p>
+
+      {!hasUpload && (
+        <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-xl p-3 text-xs text-[#92400E]">
+          ⚠ 업로드 권한(youtube.upload)이 없습니다. 먼저 OAuth 재인증이 필요합니다.
+        </div>
+      )}
+
+      {/* STEP 1: 파일 선택 폼 */}
+      {step === "form" && (
+        <div className="space-y-3">
+          {/* 파일 드롭존 */}
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center cursor-pointer hover:border-[#F97316] transition-colors"
+          >
+            {file ? (
+              <div>
+                <p className="text-sm font-semibold text-[#111827]">{file.name}</p>
+                <p className="text-xs text-[#9CA3AF] mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-[#6B7280]">영상 파일을 클릭해서 선택</p>
+                <p className="text-xs text-[#9CA3AF] mt-1">mp4, mov, mkv, webm, avi</p>
+              </div>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept=".mp4,.mov,.mkv,.webm,.avi" className="hidden" onChange={handleFile} />
+
+          {/* 메타데이터 */}
+          <input
+            value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="제목"
+            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
+          />
+          <textarea
+            value={desc} onChange={e => setDesc(e.target.value)}
+            placeholder="설명 (선택)"
+            rows={2}
+            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#F97316] resize-none"
+          />
+          <input
+            value={tags} onChange={e => setTags(e.target.value)}
+            placeholder="태그 (쉼표 구분, 선택)"
+            className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
+          />
+          {/* 예약 게시 토글 */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <div
+              onClick={() => setScheduled(v => !v)}
+              className={`w-10 h-5 rounded-full transition-colors relative ${scheduled ? "bg-[#F97316]" : "bg-[#E5E7EB]"}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${scheduled ? "translate-x-5" : "translate-x-0.5"}`} />
+            </div>
+            <span className="text-sm text-[#374151]">예약 게시</span>
+          </label>
+
+          {scheduled ? (
+            <div className="space-y-1">
+              <input
+                type="datetime-local"
+                value={publishAt}
+                onChange={e => setPublishAt(e.target.value)}
+                min={new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 16)}
+                className="w-full border border-[#F97316] rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
+              />
+              <p className="text-xs text-[#9CA3AF]">예약 게시 시 비공개로 업로드 후 지정 시각에 자동 공개됩니다.</p>
+            </div>
+          ) : (
+            <select
+              value={privacy} onChange={e => setPrivacy(e.target.value)}
+              className="w-full border border-[#E5E7EB] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#F97316] bg-white"
+            >
+              <option value="public">공개</option>
+              <option value="unlisted">미등록</option>
+              <option value="private">비공개</option>
+            </select>
+          )}
+
+          <button
+            onClick={handlePrepare}
+            disabled={!file || !hasUpload || loading}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+              !file || !hasUpload || loading
+                ? "bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed"
+                : "bg-[#F97316] text-white hover:bg-[#EA580C]"
+            }`}
+          >
+            {loading ? "플랜 생성 중..." : "업로드 준비"}
+          </button>
+
+          {result && !result.ok && (
+            <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3 text-xs text-[#DC2626]">{result.msg}</div>
+          )}
+        </div>
+      )}
+
+      {/* STEP 2: 플랜 검토 및 최종 승인 */}
+      {step === "review" && meta && (
+        <div className="space-y-3">
+          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-4 space-y-2">
+            <p className="text-xs font-bold text-[#16A34A]">업로드 플랜 확인</p>
+            {[
+              ["제목", String(meta.title ?? "")],
+              ["공개 설정", String(meta.publish_at) ? `예약 (${new Date(String(meta.publish_at)).toLocaleString("ko-KR")})` : (PRIVACY_LABEL[String(meta.privacy_status)] ?? String(meta.privacy_status))],
+              ["설명", String(meta.description || "(없음)")],
+              ["태그", (meta.tags as string[])?.join(", ") || "(없음)"],
+            ].map(([k, v]) => (
+              <div key={k} className="flex gap-2 text-xs">
+                <span className="text-[#6B7280] w-20 shrink-0">{k}</span>
+                <span className="text-[#111827] font-medium">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={reset} className="py-2.5 rounded-xl border border-[#E5E7EB] text-sm text-[#6B7280] hover:bg-[#F3F4F6]">
+              취소
+            </button>
+            <button
+              onClick={handleExecute}
+              disabled={loading}
+              className={`py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                loading ? "bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed" : "bg-[#F97316] text-white hover:bg-[#EA580C]"
+              }`}
+            >
+              {loading ? "업로드 중..." : "최종 승인 · 업로드"}
+            </button>
+          </div>
+
+          {result && !result.ok && (
+            <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3 text-xs text-[#DC2626]">{result.msg}</div>
+          )}
+        </div>
+      )}
+
+      {/* STEP 3: 완료 */}
+      {step === "done" && result?.ok && (
+        <div className="space-y-3">
+          <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-4 text-center space-y-2">
+            <p className="text-sm font-bold text-[#16A34A]">✓ 업로드 완료</p>
+            {result.videoId && (
+              <a
+                href={`https://studio.youtube.com/video/${result.videoId}/edit`}
+                target="_blank" rel="noopener noreferrer"
+                className="block text-xs text-[#1D4ED8] hover:underline"
+              >
+                YouTube Studio에서 확인 →
+              </a>
+            )}
+          </div>
+          <button onClick={reset} className="w-full py-2.5 rounded-xl bg-[#F97316] text-white text-sm font-semibold hover:bg-[#EA580C]">
+            새 영상 업로드
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
