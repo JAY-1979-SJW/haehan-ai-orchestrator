@@ -400,11 +400,33 @@ def _route_app_task(message: str, model: str | None) -> str | None:
     return None  # chat
 
 
+# 필요시만 연결: 앱/브라우저/도구가 필요할 법한 신호(사이트·동작·기능 단어, URL)가 있을 때만
+# 도구 에이전트를 띄운다. 순수 잡담·일반지식 질문은 None → 빠른 일반 GPT가 바로 답.
+# (차단이 아니라 라우팅 — 신호는 넓게 잡아 작업이 일반챗으로 새지 않게 한다)
+_NEEDS_AGENT = re.compile(
+    r"https?://|\.com|\.kr|"
+    r"네이버|스토어|스마트스토어|카페|블로그|유튜브|구글|gmail|지메일|가비아|eum|공제회|하이웍스|카카오|"
+    r"나라장터|지원사업|공공데이터|사이트|페이지|"
+    r"열어|열기|연결|접속|들어가|이동|로그인|"
+    r"분석|수집|크롤|검색|조회|실행|정리|클릭|입력|작성|등록|발송|전송|보내|올려|업로드|다운로드|"
+    r"가져와|찾아|보여|만들|생성|새로고침|확인해|"
+    r"세션|현황|상태|정산|주문|상품|리뷰|키워드|뉴스|메일|팩스|승인|초안|seo|마케팅|입찰|기능",
+    re.IGNORECASE,
+)
+
+
+def _needs_agent(message: str) -> bool:
+    return bool(_NEEDS_AGENT.search(message or ""))
+
+
 def _run_free_agent_task(message: str, model: str | None) -> str | None:
     """자율 도구호출 에이전트로 명령 수행(분류기·고정URL 없이 GPT가 직접).
 
+    필요시만 연결: 도구가 필요할 신호가 없으면 None → 일반 GPT가 답(에이전트 미가동).
     CDP 없으면(서버 등) None → 일반 챗 폴백. 로그인 필요 시 비동기 job + 안내 반환.
     """
+    if not _needs_agent(message):
+        return None  # 순수 대화 → 일반 GPT (도구·브라우저 미연결)
     try:
         from scripts.browser_agent.free_agent import run_free_agent
     except Exception:
