@@ -43,14 +43,16 @@ def run_task(body: AgentTaskRequest, user: dict = Depends(require_role("admin", 
         sys.path.insert(0, str(ROOT))
     try:
         from scripts.browser_agent.agent import run_browser_task
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.web_connector import get_domain_page, get_page, run_on_browser_thread
 
-        # Playwright(sync)는 단일 전용 스레드에서만 — get_page+실행을 함께 그 스레드에서.
+        _url = (body.url or "").strip() or None
+
+        # 동일 도메인은 하나의 탭만(url 있을 때). Playwright(sync)는 단일 전용 스레드에서.
         def _do() -> dict:
             return run_browser_task(
-                get_page(),
+                get_domain_page(_url) if _url else get_page(),
                 instruction=body.instruction.strip(),
-                start_url=(body.url or "").strip() or None,
+                start_url=_url,
                 max_steps=max(1, min(body.max_steps, 25)),
             )
 

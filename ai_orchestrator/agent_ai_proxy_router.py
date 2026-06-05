@@ -277,11 +277,14 @@ def _op_community_analyze(url: str | None) -> str:
 def _op_browser(instruction: str, url: str | None) -> str | None:
     try:
         from scripts.browser_agent.agent import run_browser_task
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.web_connector import get_domain_page, get_page, run_on_browser_thread
 
-        # Playwright(sync)는 단일 전용 스레드에서만 실행.
+        # 동일 도메인은 하나의 탭만 재사용(url 있을 때). Playwright(sync)는 단일 전용 스레드.
+        def _pick():
+            return get_domain_page(url) if url else get_page()
+
         r = run_on_browser_thread(
-            lambda: run_browser_task(get_page(), instruction=instruction, start_url=url, max_steps=12),
+            lambda: run_browser_task(_pick(), instruction=instruction, start_url=url, max_steps=12),
             timeout=240,
         )
     except Exception as e:

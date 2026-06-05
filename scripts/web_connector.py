@@ -328,6 +328,44 @@ def get_page_by_url(*patterns: str, create_url: str | None = None) -> Page:
     return get_page()
 
 
+def _host_key(url: str) -> str:
+    """URL에서 도메인 키 추출(www. 정규화). 예: https://www.naver.com/x → naver.com"""
+    from urllib.parse import urlparse
+
+    try:
+        host = (urlparse(url).netloc or "").lower()
+    except Exception:
+        host = ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def get_domain_page(url: str) -> Page:
+    """동일 도메인은 하나의 탭만 — 같은 호스트 탭이 있으면 재사용, 없으면 새 탭.
+
+    AI 브라우저 작업이 사이트를 열 때 같은 도메인 탭이 중복 생성되지 않게 한다.
+    (예: 네이버를 두 번 열어도 네이버 탭은 1개. 스토어/EUM 등 다른 도메인은 각자 탭.)
+    """
+    _, ctx = _connect_browser()
+    key = _host_key(url)
+    if key:
+        for page in ctx.pages:
+            try:
+                if _host_key(page.url or "") == key:
+                    mark_task_owned(page, BrowserTaskPolicy(task_id="get-domain-page"), owned=False)
+                    fit_viewport(page)
+                    log.debug("동일 도메인 탭 재사용: %s", page.url)
+                    return page
+            except Exception:
+                continue
+    # 같은 도메인 탭 없음 → 새 탭(단, 빈 about:blank 탭이 있으면 그것을 사용)
+    blank = next((p for p in ctx.pages if (p.url or "") in ("about:blank", "")), None)
+    page = blank or ctx.new_page()
+    mark_task_owned(page, BrowserTaskPolicy(task_id="get-domain-page", start_url=url), owned=True)
+    fit_viewport(page)
+    log.debug("동일 도메인 탭 없음 → 새 탭: %s", url)
+    return page
+
+
 def get_task_page(
     *,
     task_id: str,
