@@ -20,7 +20,7 @@ import os
 import re
 import time
 from dataclasses import dataclass
-from threading import Lock
+from threading import Lock, Thread
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -274,17 +274,32 @@ def _op_community_analyze(url: str | None) -> str:
     return _fmt_report(analyze_posts(ex.get("posts", []), context=url), f"{url} 분석")
 
 
+# ── 비동기 브라우저 작업(job) 저장소 ──────────────────────────────
+# 로그인 대기로 채팅을 묶지 않도록, 로그인 필요 시 즉시 안내 후 백그라운드로 재개.
+_BROWSER_TASKS: dict[str, dict] = {}
+_TASK_LOCK = Lock()
+
+
+def _format_browser(r: dict) -> str:
+    if r.get("blocked"):
+        return f"⛔ 위험 동작이라 멈췄습니다.\n{r.get('result', '')}\n직접 승인이 필요합니다."
+    return f"✅ 작업 결과\n{r.get('result', '')}"
+
+
 def _op_browser(instruction: str, url: str | None) -> str | None:
     try:
         from scripts.browser_agent.agent import run_browser_task
         from scripts.web_connector import get_domain_page, get_page, run_on_browser_thread
+    except Exception:
+        return None
 
-        # 동일 도메인은 하나의 탭만 재사용(url 있을 때). Playwright(sync)는 단일 전용 스레드.
-        def _pick():
-            return get_domain_page(url) if url else get_page()
+    def _pick():
+        return get_domain_page(url) if url else get_page()
 
+    try:
+        # 1차: 로그인 대기 없이 실행(login_wait=False) — 로그인 필요하면 즉시 반환.
         r = run_on_browser_thread(
-            lambda: run_browser_task(_pick(), instruction=instruction, start_url=url, max_steps=12),
+            lambda: run_browser_task(_pick(), instruction=instruction, start_url=url, max_steps=12, login_wait=False),
             timeout=240,
         )
     except Exception as e:
@@ -292,16 +307,56 @@ def _op_browser(instruction: str, url: str | None) -> str | None:
         import traceback
 
         logging.getLogger(__name__).warning("[_op_browser] 실패: %s\n%s", e, traceback.format_exc())
-        # CDP 자체에 연결 못 하면 서버(브라우저 없음) → 일반 챗 폴백(None).
-        # 그 외(브라우저는 있는데 작업 중 오류)는 사용자에게 오류를 알린다.
-        if "connect" in str(e).lower() or "ECONNREFUSED" in str(e) or "cdp" in str(e).lower():
+        if "connect" in str(e).lower() or "cdp" in str(e).lower():
             return None
         return f"⚠ 브라우저 작업 중 오류: {str(e)[:150]}"
-    if r.get("needs_login"):
-        return f"🔐 로그인이 필요합니다.\n{r.get('result', '')}\n로그인하신 뒤 다시 같은 명령을 주세요."
-    if r.get("blocked"):
-        return f"⛔ 위험 동작이라 멈췄습니다.\n{r.get('result', '')}\n직접 승인이 필요합니다."
-    return f"✅ 작업 결과\n{r.get('result', '')}"
+
+    if not r.get("needs_login"):
+        return _format_browser(r)
+
+    # 로그인 필요 → 비동기: 백그라운드로 로그인 대기+작업 재개, 즉시 안내 반환.
+    import uuid
+
+    job_id = uuid.uuid4().hex[:12]
+    with _TASK_LOCK:
+        if len(_BROWSER_TASKS) > 50:  # 저장소 비대 방지
+            for k in list(_BROWSER_TASKS)[:-40]:
+                _BROWSER_TASKS.pop(k, None)
+        _BROWSER_TASKS[job_id] = {"status": "pending"}
+
+    def _resume() -> None:
+        from scripts.browser_agent.agent import run_browser_task as _rt
+        from scripts.web_connector import get_domain_page as _gdp
+        from scripts.web_connector import get_page as _gp
+        from scripts.web_connector import run_on_browser_thread as _rbt
+
+        try:
+            res = _rbt(
+                lambda: _rt(
+                    _gdp(url) if url else _gp(),
+                    instruction=instruction,
+                    start_url=url,
+                    max_steps=12,
+                    login_wait=True,
+                ),
+                timeout=300,
+            )
+            txt = (
+                _format_browser(res)
+                if not res.get("needs_login")
+                else "⏱ 로그인 대기 시간이 초과됐습니다. 로그인 후 다시 명령해 주세요."
+            )
+        except Exception as e:
+            txt = f"⚠ 작업 오류: {str(e)[:150]}"
+        with _TASK_LOCK:
+            _BROWSER_TASKS[job_id] = {"status": "done", "result": txt}
+
+    Thread(target=_resume, daemon=True).start()
+    return (
+        "🔐 로그인이 필요합니다 — 화면에 뜬 브라우저에서 해당 사이트에 로그인해 주세요.\n"
+        "로그인하면 작업이 자동으로 이어지고, 잠시 후 결과가 여기에 표시됩니다.\n\n"
+        f"[[JOB:{job_id}]]"
+    )
 
 
 def _route_app_task(message: str, model: str | None) -> str | None:
@@ -346,6 +401,22 @@ def _route_app_task(message: str, model: str | None) -> str | None:
 
 
 # ── endpoints ────────────────────────────────────────────────
+
+
+@agent_ai_proxy_router.get("/task/{job_id}")
+def agent_ai_task(
+    job_id: str,
+    x_agent_id: str | None = Header(default=None, alias="X-Agent-Id"),
+    authorization: str | None = Header(default=None),
+    x_device_token: str | None = Header(default=None, alias="X-Device-Token"),
+) -> dict:
+    """비동기 브라우저 작업(job) 상태 조회 — 프론트가 로그인 후 결과를 폴링한다."""
+    _authenticate(x_agent_id, authorization, x_device_token)
+    with _TASK_LOCK:
+        t = _BROWSER_TASKS.get(job_id)
+    if not t:
+        return {"status": "unknown"}
+    return {"status": t.get("status", "pending"), "result": t.get("result", "")}
 
 
 @agent_ai_proxy_router.get("/health")
