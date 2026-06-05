@@ -10,7 +10,7 @@ function authHeader(): Record<string, string> {
 const J = { "Content-Type": "application/json" };
 
 type Step = { action?: string; outcome?: string; result?: string; reason?: string; target?: string };
-type AgentResult = { ok?: boolean; blocked?: boolean; result?: string; steps?: Step[]; url?: string };
+type AgentResult = { ok?: boolean; blocked?: boolean; needs_login?: boolean; login_url?: string; result?: string; steps?: Step[]; url?: string };
 
 const EXAMPLES = [
   "이 카페에서 오늘 올라온 공지 제목 정리해줘",
@@ -77,7 +77,15 @@ export function AgentClient() {
       {error && <div className="border border-[#FECACA] bg-[#FEF2F2] rounded-xl p-3 text-sm text-[#DC2626]">오류: {error}</div>}
       {running && <p className="text-sm text-[#6B7280]">브라우저를 운전하는 중… (10~40초)</p>}
 
-      {res && (
+      {res?.needs_login && (
+        <div className="border border-[#FDE68A] bg-[#FFFBEB] rounded-2xl p-4 space-y-1">
+          <p className="text-sm font-semibold text-[#B45309]">🔐 로그인이 필요합니다</p>
+          <p className="text-xs text-[#92400E]">화면에 뜬 브라우저 창에서 해당 사이트에 로그인한 뒤, 다시 <b>[실행]</b>을 눌러주세요. (에이전트는 보안상 로그인을 대신할 수 없습니다)</p>
+          {res.login_url && <p className="text-[11px] text-[#9CA3AF] truncate">{res.login_url}</p>}
+        </div>
+      )}
+
+      {res && !res.needs_login && (
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 space-y-3">
           {res.blocked && (
             <p className="text-sm font-semibold text-[#C2410C]">⛔ 위험 동작 차단 — 직접 승인 후 진행하세요</p>

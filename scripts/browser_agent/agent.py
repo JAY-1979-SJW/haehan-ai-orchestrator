@@ -11,8 +11,39 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 import time
 from typing import Any
+
+# 로그인 페이지 감지 (이 URL이면 로그인 필요 → 사용자에게 요청)
+_LOGIN_RE = re.compile(r"nidlogin|/login|accounts\.|auth\.|/signin|/sso/|loginform|로그인", re.IGNORECASE)
+
+
+def _is_login_page(url: str) -> bool:
+    return bool(_LOGIN_RE.search(url or ""))
+
+
+def _show_cdp_window() -> None:
+    """CDP 크롬 창을 복원·앞으로 — 사용자가 직접 로그인하도록. win32 best-effort."""
+    if sys.platform != "win32":
+        return
+    ps = (
+        "$ErrorActionPreference='SilentlyContinue';"
+        "Add-Type -Name U -Namespace W -MemberDefinition "
+        '\'[DllImport("user32.dll")] public static extern bool ShowWindowAsync(System.IntPtr h,int n);'
+        '[DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h);\';'
+        "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | "
+        "Where-Object { $_.CommandLine -like '*--remote-debugging-port=9222*' } | ForEach-Object { "
+        "$p=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue; "
+        "if($p -and $p.MainWindowHandle -ne 0){ [W.U]::ShowWindowAsync($p.MainWindowHandle,9)|Out-Null;"
+        "[W.U]::SetForegroundWindow($p.MainWindowHandle)|Out-Null } }"
+    )
+    try:
+        subprocess.Popen(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps])
+    except Exception:
+        pass
+
 
 # 파괴적 동작 키워드 (클릭 대상 텍스트에 포함되면 차단)
 _DESTRUCTIVE = re.compile(
@@ -149,6 +180,23 @@ def run_browser_task(page, instruction: str, start_url: str | None = None, max_s
 
     for _ in range(max(1, min(max_steps, 25))):
         obs = _observe(page)
+
+        # 로그인 페이지면 멈추고 사용자에게 로그인 요청(에이전트는 로그인 못 함).
+        if _is_login_page(obs.get("url", "")):
+            try:
+                page.bring_to_front()
+            except Exception:
+                pass
+            _show_cdp_window()
+            steps.append({"action": "needs_login", "url": obs.get("url")})
+            return {
+                "ok": False,
+                "needs_login": True,
+                "result": "로그인이 필요합니다 — 화면에 뜬 브라우저에서 해당 사이트에 로그인한 뒤 다시 [실행]을 눌러주세요.",
+                "login_url": obs.get("url"),
+                "steps": steps,
+            }
+
         decision = _decide(instruction, obs, steps)
         action = decision.get("action")
 
