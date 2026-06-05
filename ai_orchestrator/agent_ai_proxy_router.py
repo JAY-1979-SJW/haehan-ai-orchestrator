@@ -10,17 +10,17 @@ policy:
   - raw chat 본문 / 응답 전문 디스크 저장 0 (메모리 처리만)
   - in-memory rate limit per agent
 """
+
 from __future__ import annotations
 
 import base64
 import logging
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from threading import Lock
-from typing import Optional
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from . import local_agent_registry as _reg
@@ -37,7 +37,7 @@ agent_ai_proxy_router = APIRouter(prefix="/agent-ai", tags=["agent-ai"])
 
 MAX_MESSAGE_LEN = 8000
 PREVIEW_CAP = 80
-RATE_LIMIT_PER_MIN = 30   # per agent
+RATE_LIMIT_PER_MIN = 30  # per agent
 
 
 # ── in-memory rate limit ─────────────────────────────────────
@@ -59,8 +59,7 @@ def _check_rate_limit(agent_id: str) -> bool:
     with _rate_lock:
         b = _rate_buckets.get(agent_id)
         if b is None or (now - b.last_minute_start) >= 60.0:
-            _rate_buckets[agent_id] = _AgentRate(
-                last_minute_start=now, count=1)
+            _rate_buckets[agent_id] = _AgentRate(last_minute_start=now, count=1)
             return True
         if b.count >= RATE_LIMIT_PER_MIN:
             return False
@@ -77,17 +76,13 @@ def _reset_rate_limit_for(agent_id: str) -> None:
 # ── 인증 ─────────────────────────────────────────────────────
 
 
-def _authenticate(agent_id: str | None, authorization: str | None,
-                   x_device_token: str | None
-                   ) -> str:
+def _authenticate(agent_id: str | None, authorization: str | None, x_device_token: str | None) -> str:
     """헤더에서 토큰 추출 + 검증. 성공 시 agent_id 반환, 실패 시 HTTPException.
 
     token 변수는 함수 scope 안에서만, 로그에 직접 출력 안 함.
     """
     if not agent_id:
-        raise HTTPException(status_code=401,
-                              detail={"code": "AGENT_ID_MISSING",
-                                       "message": "X-Agent-Id 헤더 필요"})
+        raise HTTPException(status_code=401, detail={"code": "AGENT_ID_MISSING", "message": "X-Agent-Id 헤더 필요"})
 
     # Web UI Basic Auth 우회 — agent_id="web-ui" + Basic owner:pass
     if agent_id == "web-ui" and authorization:
@@ -98,7 +93,19 @@ def _authenticate(agent_id: str | None, authorization: str | None,
                 uname, pwd = decoded.split(":", 1)
                 if uname == _WEB_UI_USER and pwd == _WEB_UI_PASS:
                     return "web-ui"
-        except Exception:
+        except Exception:  # noqa: S110 — 헤더 파싱 실패는 무시하고 다음 인증 경로로
+            pass
+
+    # 데스크톱 self-contained(owner) 모드: AUTH_ENABLED=false면 web-ui 비번 검증 우회.
+    # (앱이 곧 owner — require_role 등과 동일 정책. NEXT_PUBLIC_API_PASS↔API_PASS env
+    #  불일치로 데스크앱 AI 비서가 401 나는 문제 해결. 서버는 AUTH_ENABLED=true라 영향 없음.)
+    if agent_id == "web-ui":
+        try:
+            from ai_orchestrator import config as _cfg
+
+            if not getattr(_cfg, "AUTH_ENABLED", True):
+                return "web-ui"
+        except Exception:  # noqa: S110 — config 미가용 시 우회 안 하고 다음 경로로
             pass
 
     token = ""
@@ -109,17 +116,15 @@ def _authenticate(agent_id: str | None, authorization: str | None,
     if not token and x_device_token:
         token = x_device_token.strip()
     if not token:
-        raise HTTPException(status_code=401,
-                              detail={"code": "AUTH_REQUIRED",
-                                       "message": "device_token 필요"})
+        raise HTTPException(status_code=401, detail={"code": "AUTH_REQUIRED", "message": "device_token 필요"})
     try:
         agent = _reg.authenticate_agent(agent_id, token)
     finally:
-        token = ""   # 폐기
+        token = ""  # 폐기
     if agent is None:
-        raise HTTPException(status_code=401,
-                              detail={"code": "AUTH_FAILED",
-                                       "message": "agent_id 또는 device_token 거부"})
+        raise HTTPException(
+            status_code=401, detail={"code": "AUTH_FAILED", "message": "agent_id 또는 device_token 거부"}
+        )
     return agent.agent_id
 
 
@@ -128,9 +133,9 @@ def _authenticate(agent_id: str | None, authorization: str | None,
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=MAX_MESSAGE_LEN)
-    session_id: Optional[str] = None
+    session_id: str | None = None
     client_mode: str = "SERVER_PROXY"
-    model: Optional[str] = None
+    model: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -167,8 +172,7 @@ _USER_MSG = {
 def agent_ai_health(
     x_agent_id: str | None = Header(default=None, alias="X-Agent-Id"),
     authorization: str | None = Header(default=None),
-    x_device_token: str | None = Header(default=None,
-                                          alias="X-Device-Token"),
+    x_device_token: str | None = Header(default=None, alias="X-Device-Token"),
 ) -> dict:
     """짧은 health check. agent 인증 + OPENAI_API_KEY 존재 boolean.
 
@@ -188,8 +192,7 @@ def agent_ai_chat(
     body: ChatRequest,
     x_agent_id: str | None = Header(default=None, alias="X-Agent-Id"),
     authorization: str | None = Header(default=None),
-    x_device_token: str | None = Header(default=None,
-                                          alias="X-Device-Token"),
+    x_device_token: str | None = Header(default=None, alias="X-Device-Token"),
 ) -> ChatResponse:
     """server proxy chat — OpenAI key 는 서버 env 만 사용."""
     agent_id = _authenticate(x_agent_id, authorization, x_device_token)
@@ -197,25 +200,23 @@ def agent_ai_chat(
     # rate limit
     if not _check_rate_limit(agent_id):
         # raw chat history 디스크 저장 0 — 메타만 로그
-        logger.info("rate_limit_exceeded agent=%s",
-                    _mask_agent_id(agent_id))
+        logger.info("rate_limit_exceeded agent=%s", _mask_agent_id(agent_id))
         return ChatResponse(
-            ok=False, error_code="RATE_LIMITED_AGENT",
+            ok=False,
+            error_code="RATE_LIMITED_AGENT",
             user_message_kr=_USER_MSG["RATE_LIMITED_AGENT"],
         )
 
     # validate
     msg = (body.message or "").strip()
     if not msg:
-        return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG",
-                             user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
+        return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
     if len(msg) > MAX_MESSAGE_LEN:
-        return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG",
-                             user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
+        return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
 
     # OpenAI 호출
     result = _caller.call_openai_chat(message=msg, model=body.model)
-    msg = ""   # 원문 폐기
+    msg = ""  # 원문 폐기
 
     # 로그 — preview 만, 원문 0
     log_meta = {
@@ -231,18 +232,20 @@ def agent_ai_chat(
 
     if not result.ok:
         return ChatResponse(
-            ok=False, error_code=result.error_code,
-            user_message_kr=_USER_MSG.get(result.error_code,
-                                             "AI 응답 오류"),
+            ok=False,
+            error_code=result.error_code,
+            user_message_kr=_USER_MSG.get(result.error_code, "AI 응답 오류"),
             model=result.model_used or "",
             duration_ms=result.duration_ms,
         )
     return ChatResponse(
-        ok=True, text=result.text, finish_reason=result.finish_reason
-        if False else "",   # not in schema
+        ok=True,
+        text=result.text,
+        finish_reason=result.finish_reason if False else "",  # not in schema
         model=result.model_used or _caller.get_default_model(),
         usage_summary=result.usage_summary or {},
-        external_call_count=1, duration_ms=result.duration_ms,
+        external_call_count=1,
+        duration_ms=result.duration_ms,
         user_message_kr="",
     )
 
@@ -256,6 +259,10 @@ def _mask_agent_id(aid: str) -> str:
 
 
 __all__ = (
-    "agent_ai_proxy_router", "ChatRequest", "ChatResponse",
-    "MAX_MESSAGE_LEN", "RATE_LIMIT_PER_MIN", "_reset_rate_limit_for",
+    "MAX_MESSAGE_LEN",
+    "RATE_LIMIT_PER_MIN",
+    "ChatRequest",
+    "ChatResponse",
+    "_reset_rate_limit_for",
+    "agent_ai_proxy_router",
 )
