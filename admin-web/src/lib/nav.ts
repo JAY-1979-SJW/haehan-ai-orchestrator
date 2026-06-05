@@ -41,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "blog",     label: "블로그 관리",  shortLabel: "블로그", href: "/naver/blog" },
       { key: "cafe",     label: "카페 탐색",    shortLabel: "카페",   href: "/assistant/cafe" },
       { key: "community", label: "커뮤니티 레이더", shortLabel: "레이더", href: "/community" },
+      { key: "agent",    label: "원격 브라우저",  shortLabel: "원격",   href: "/agent" },
       { key: "news",     label: "뉴스 수집",    shortLabel: "뉴스",   href: "/assistant/news" },
     ],
   },
