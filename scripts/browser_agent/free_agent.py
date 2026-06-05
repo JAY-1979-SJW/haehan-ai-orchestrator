@@ -27,6 +27,8 @@ _SYSTEM = (
     "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요. 위험·민감 동작(발송·"
     "결제·삭제·발행·승인 등)은 자동 차단되니, 무엇을 할지 사용자에게 알리고 확인을 받으세요.\n"
     "- 웹/브라우저가 필요 없는 일반 질문·대화·조언은 도구를 쓰지 말고 바로 한국어로 답하세요.\n"
+    "- 이전 대화 맥락을 이어가세요. 지시가 모호하면(예: '탐색해줘'만 있고 목적이 불명확) 추측해 "
+    "실행하지 말고, 무엇을 원하는지 한 문장으로 사용자에게 되물으세요. 사용자가 답하면 그 맥락으로 이어 진행.\n"
     "- 같은 도구를 의미 없이 반복하지 말고, 목적을 달성하면 도구 없이 한국어로 결과를 간단히 보고하세요."
 )
 
@@ -146,9 +148,16 @@ def _fmt_obs(obs: dict) -> str:
     )
 
 
-def run_free_agent(message: str, model: str | None = None, max_steps: int = 12, login_wait: bool = False) -> dict:
+def run_free_agent(
+    message: str,
+    model: str | None = None,
+    max_steps: int = 12,
+    login_wait: bool = False,
+    history: list[dict] | None = None,
+) -> dict:
     """GPT 자율 도구호출로 사용자 명령 수행. 현재 페이지를 이어받아 작업.
 
+    history: 같은 채팅창의 이전 대화([{role,content}...]) — 멀티턴 맥락 유지.
     반환: {"ok": bool, "text": str, "needs_login": bool, "login_url": str}
     """
     from ai_orchestrator.openai_proxy_caller import call_openai_agent
@@ -222,10 +231,11 @@ def run_free_agent(message: str, model: str | None = None, max_steps: int = 12, 
             return f"실행 실패: {rr.get('error', '')}"
         return f"알 수 없는 도구: {name}"
 
-    messages: list[dict] = [
-        {"role": "system", "content": _SYSTEM},
-        {"role": "user", "content": message},
-    ]
+    messages: list[dict] = [{"role": "system", "content": _SYSTEM}]
+    for h in history or []:  # 이전 대화(멀티턴 맥락)
+        if h.get("role") in ("user", "assistant") and h.get("content"):
+            messages.append({"role": h["role"], "content": str(h["content"])[:1500]})
+    messages.append({"role": "user", "content": message})
     for _ in range(max(1, min(max_steps, 20))):
         res = call_openai_agent(messages=messages, tools=_TOOLS, model=model, max_tokens=700)
         if not res.get("ok"):
