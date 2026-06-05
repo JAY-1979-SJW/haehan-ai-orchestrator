@@ -88,7 +88,7 @@ def _observe(page) -> dict:
         return {"url": getattr(page, "url", ""), "title": "", "elements": [], "bodyText": f"(관찰 실패: {e})"}
 
 
-def _wait_for_login(page, target_url: str | None, timeout: int = 100) -> bool:
+def _wait_for_login(page, target_url: str | None, timeout: int = 180) -> bool:
     """사용자가 로그인할 때까지 폴링 대기. 로그인 페이지를 벗어나면(사이트 리다이렉트)
     원래 목표 URL로 이동해 작업을 재개할 수 있게 True 반환. 시간초과면 False.
 
@@ -218,7 +218,7 @@ def run_browser_task(page, instruction: str, start_url: str | None = None, max_s
             except Exception:
                 pass
             _show_cdp_window()
-            if not login_waited and _wait_for_login(page, start_url, timeout=100):
+            if not login_waited and _wait_for_login(page, start_url, timeout=180):
                 login_waited = True
                 steps.append({"action": "logged_in", "note": "로그인 완료 — 작업 자동 계속"})
                 continue  # 재관찰 → 로그인된 상태로 작업 진행
