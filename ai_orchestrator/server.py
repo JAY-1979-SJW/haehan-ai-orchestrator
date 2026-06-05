@@ -13,6 +13,29 @@ from .router import router
 logger = logging.getLogger(__name__)
 
 
+def _hide_own_console() -> None:
+    """Windows: 자기 콘솔 창을 숨긴다(부모 콘솔은 유지 → subprocess 자식이 상속해
+    매번 새 콘솔 창을 띄우지 않음 = 작업 중 터미널 깜빡임 방지). 콘솔이 없으면 무시."""
+    import sys
+
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        if hwnd:
+            ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE
+        print(
+            f"[console] hwnd={hwnd} (자식 상속용 콘솔 {'있음·숨김' if hwnd else '없음!'})", file=sys.stderr, flush=True
+        )
+    except Exception:  # noqa: S110 — 콘솔 숨김 실패는 무시(기능 영향 없음)
+        pass
+
+
+_hide_own_console()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
