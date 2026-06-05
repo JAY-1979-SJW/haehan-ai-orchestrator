@@ -132,6 +132,14 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
         )}
       </div>
 
+      {/* 사용법 안내 (상단 고정) */}
+      <div className="px-3 py-2 border-b border-[#FDE68A] bg-[#FFFBEB] text-[11px] leading-relaxed text-[#92400E] shrink-0">
+        <p className="font-bold mb-0.5">💡 이렇게 시켜보세요</p>
+        <p>• <b>로그인한 사이트에서</b>: 브라우저에서 로그인 후 → <b>&ldquo;여기서 ○○ 정리해줘&rdquo;</b> (현재 화면에서 작업)</p>
+        <p>• <b>사이트 열기</b>: &ldquo;네이버 연결해줘&rdquo; · <b>앱 기능</b>: &ldquo;카페 분석&rdquo;, &ldquo;세션 현황&rdquo;, &ldquo;블로그 SEO&rdquo;</p>
+        <p>• 일반 질문도 그냥 물어보세요 · <span className="text-[#B45309]">결제·발송·삭제 등은 확인 후 실행</span></p>
+      </div>
+
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 min-h-0">
         {msgs.length === 0 && (
