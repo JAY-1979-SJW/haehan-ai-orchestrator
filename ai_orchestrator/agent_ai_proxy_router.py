@@ -14,8 +14,10 @@ policy:
 from __future__ import annotations
 
 import base64
+import json
 import logging
 import os
+import re
 import time
 from dataclasses import dataclass
 from threading import Lock
@@ -165,6 +167,64 @@ _USER_MSG = {
 }
 
 
+# ── 총괄 라우팅: 브라우저 작업 위임 ──────────────────────────────
+# 메시지가 '웹사이트에서 직접 하는 작업'이면 로컬 CDP 브라우저 에이전트로 실행한다.
+# (데스크톱 = 로컬 CDP 있음 / 서버 = CDP 없어 자동 폴백 → 일반 챗)
+
+_TASK_HINT = re.compile(
+    r"https?://|\.com|\.kr|사이트|로그인|들어가|접속|조회|정리해|수집|크롤|페이지에서|"
+    r"클릭|입력|주문|상품|단말기|연락처|목록|스크랩|추출해|가져와|확인해",
+    re.IGNORECASE,
+)
+
+
+def _maybe_run_browser_task(message: str, model: str | None) -> str | None:
+    """메시지가 브라우저 작업이면 에이전트 실행 후 결과 텍스트, 아니면 None(→ 일반 챗)."""
+    if not _TASK_HINT.search(message):
+        return None
+    # 1) LLM 의도 분류 + URL/지시 추출
+    classify = _caller.call_openai_chat(
+        message=(
+            "다음 사용자 메시지가 '웹사이트에서 직접 수행하는 브라우저 작업'(로그인·조회·정리·수집·"
+            "클릭·입력 등 브라우저 조작)인지 판단해 JSON만 출력(설명 금지).\n"
+            '{"is_task": true/false, "url": "시작 URL 또는 빈문자열", "instruction": "수행할 작업 한 줄"}\n'
+            "단순 질문·대화·조언·정보검색이면 is_task=false.\n\n"
+            f"메시지: {message[:500]}"
+        ),
+        model=model,
+    )
+    if not classify.ok:
+        return None
+    m = re.search(r"\{.*\}", classify.text, re.S)
+    if not m:
+        return None
+    try:
+        task = json.loads(m.group(0))
+    except Exception:
+        return None
+    if not task.get("is_task"):
+        return None
+    # 2) 로컬 브라우저 에이전트 실행
+    try:
+        from scripts.browser_agent.agent import run_browser_task
+        from scripts.web_connector import get_page
+
+        page = get_page()
+        r = run_browser_task(
+            page,
+            instruction=task.get("instruction") or message,
+            start_url=(task.get("url") or "").strip() or None,
+            max_steps=12,
+        )
+    except Exception:
+        return None  # CDP 없음(서버 등) → 일반 챗 폴백
+    if r.get("needs_login"):
+        return f"🔐 로그인이 필요합니다.\n{r.get('result', '')}\n로그인하신 뒤 다시 같은 명령을 주세요."
+    if r.get("blocked"):
+        return f"⛔ 위험 동작이라 멈췄습니다.\n{r.get('result', '')}\n직접 승인이 필요합니다."
+    return f"✅ 작업 결과\n{r.get('result', '')}"
+
+
 # ── endpoints ────────────────────────────────────────────────
 
 
@@ -213,6 +273,15 @@ def agent_ai_chat(
         return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
     if len(msg) > MAX_MESSAGE_LEN:
         return ChatResponse(ok=False, error_code="EMPTY_OR_TOO_LONG", user_message_kr=_USER_MSG["EMPTY_OR_TOO_LONG"])
+
+    # ── 총괄 라우팅: 브라우저 작업이면 로컬 에이전트로 실제 실행 ──
+    try:
+        _browser = _maybe_run_browser_task(msg, body.model)
+    except Exception:
+        _browser = None
+    if _browser is not None:
+        logger.info("agent_ai_chat browser-task agent=%s", _mask_agent_id(agent_id))
+        return ChatResponse(ok=True, text=_browser, model="browser-agent")
 
     # OpenAI 호출
     result = _caller.call_openai_chat(message=msg, model=body.model)
