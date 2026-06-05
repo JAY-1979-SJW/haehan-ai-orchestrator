@@ -88,6 +88,31 @@ def _observe(page) -> dict:
         return {"url": getattr(page, "url", ""), "title": "", "elements": [], "bodyText": f"(관찰 실패: {e})"}
 
 
+def _wait_for_login(page, target_url: str | None, timeout: int = 100) -> bool:
+    """사용자가 로그인할 때까지 폴링 대기. 로그인 페이지를 벗어나면(사이트 리다이렉트)
+    원래 목표 URL로 이동해 작업을 재개할 수 있게 True 반환. 시간초과면 False.
+
+    로그인 진행을 방해하지 않도록, 로그인 완료 전에는 페이지를 건드리지 않고 url만 관찰한다.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(3)
+        try:
+            cur = page.url or ""
+        except Exception:
+            cur = ""
+        if cur and not _is_login_page(cur):
+            # 로그인 완료 → 원래 목표 페이지로 이동해 작업 재개
+            try:
+                if target_url and target_url not in cur:
+                    page.goto(target_url, wait_until="domcontentloaded", timeout=20000)
+                    time.sleep(1.5)
+            except Exception:
+                pass
+            return True
+    return False
+
+
 def _is_destructive(text: str) -> bool:
     return bool(_DESTRUCTIVE.search(text or ""))
 
@@ -181,21 +206,28 @@ def run_browser_task(page, instruction: str, start_url: str | None = None, max_s
         except Exception as e:
             return {"ok": False, "result": f"시작 URL 이동 실패: {e}", "steps": steps}
 
+    login_waited = False  # 로그인 대기는 작업당 1회만 (무한 대기 방지)
     for _ in range(max(1, min(max_steps, 25))):
         obs = _observe(page)
 
-        # 로그인 페이지면 멈추고 사용자에게 로그인 요청(에이전트는 로그인 못 함).
+        # 로그인 페이지면: 브라우저를 띄워 사용자 로그인을 유도하고, 완료될 때까지 대기 후
+        # 그 자리에서 작업을 자동으로 이어간다(재입력 불필요). 시간초과면 사용자에게 요청.
         if _is_login_page(obs.get("url", "")):
             try:
                 page.bring_to_front()
             except Exception:
                 pass
             _show_cdp_window()
+            if not login_waited and _wait_for_login(page, start_url, timeout=100):
+                login_waited = True
+                steps.append({"action": "logged_in", "note": "로그인 완료 — 작업 자동 계속"})
+                continue  # 재관찰 → 로그인된 상태로 작업 진행
             steps.append({"action": "needs_login", "url": obs.get("url")})
             return {
                 "ok": False,
                 "needs_login": True,
-                "result": "로그인이 필요합니다 — 화면에 뜬 브라우저에서 해당 사이트에 로그인한 뒤 다시 [실행]을 눌러주세요.",
+                "result": "로그인이 필요합니다 — 화면에 뜬 브라우저에서 해당 사이트에 로그인해 주세요. "
+                "로그인하면 작업이 자동으로 이어집니다(시간초과 시 다시 [실행]).",
                 "login_url": obs.get("url"),
                 "steps": steps,
             }

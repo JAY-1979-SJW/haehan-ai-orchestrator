@@ -256,9 +256,10 @@ def _op_community_analyze(url: str | None) -> str:
         return "분석할 사이트 URL이 필요합니다 (예: https://...)."
     from scripts.community.analyzer import analyze_posts
     from scripts.community.universal_extractor import extract_posts
-    from scripts.web_connector import get_page
+    from scripts.web_connector import get_page, run_on_browser_thread
 
-    ex = extract_posts(get_page(), url, max_posts=40)
+    # Playwright(sync)는 단일 전용 스레드에서만 실행.
+    ex = run_on_browser_thread(lambda: extract_posts(get_page(), url, max_posts=40), timeout=180)
     if not ex.get("ok"):
         return f"수집 실패: {ex.get('error', '')}"
     return _fmt_report(analyze_posts(ex.get("posts", []), context=url), f"{url} 분석")
@@ -267,9 +268,13 @@ def _op_community_analyze(url: str | None) -> str:
 def _op_browser(instruction: str, url: str | None) -> str | None:
     try:
         from scripts.browser_agent.agent import run_browser_task
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        r = run_browser_task(get_page(), instruction=instruction, start_url=url, max_steps=12)
+        # Playwright(sync)는 단일 전용 스레드에서만 실행.
+        r = run_on_browser_thread(
+            lambda: run_browser_task(get_page(), instruction=instruction, start_url=url, max_steps=12),
+            timeout=240,
+        )
     except Exception:
         return None  # CDP 없음(서버 등) → 일반 챗 폴백
     if r.get("needs_login"):
