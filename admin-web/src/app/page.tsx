@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/ui/PageShell";
 import { getMe, type UserInfo } from "@/lib/userAuth";
 import { UniversalChat } from "@/components/chat/UniversalChat";
-import { LiveScreen } from "@/components/chat/LiveScreen";
 
 export default function HomePage() {
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -40,12 +39,9 @@ export default function HomePage() {
     <PageShell title="Haehan AI 콘솔" description="AI에게 작업을 요청하세요 · 실제 작업은 브라우저(CDP)에서 수행됩니다">
       <div
         data-testid="ai-agent-console"
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100dvh-150px)] min-h-[460px]"
+        className="h-[calc(100dvh-150px)] min-h-[460px]"
       >
-        {/* 좌: AI 작업 콘솔(지시 + 결과) */}
         <UniversalChat domain="default" title="AI 작업 콘솔" className="h-full min-h-[300px]" />
-        {/* 우: 실제 작업 화면(CDP 라이브) */}
-        <LiveScreen className="h-full min-h-[300px]" />
       </div>
     </PageShell>
   );

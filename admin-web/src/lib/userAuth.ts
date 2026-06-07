@@ -66,13 +66,25 @@ export async function login(email: string, password: string): Promise<{ token: s
 
 export async function getMe(): Promise<UserInfo | null> {
   const token = getToken();
-  // 토큰이 없어도 /me 를 호출한다: 자기완결 데스크톱(AUTH off)은 서버가 owner 를 자동 반환 → 자동 로그인.
-  // 운영 웹(AUTH on)은 토큰 없으면 401 → null → 정상 로그인 흐름 유지.
   const res = await fetch(`${API_BASE}/api/v1/users/me`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) return null;
-  return res.json();
+  if (res.ok) return res.json();
+
+  // 자기완결 데스크톱(AUTH_ENABLED=false) fallback: /auth/me 시도.
+  // 번들 exe의 /users/me 가 구버전이어도 /auth/me 는 AUTH off 시 owner 반환.
+  if (res.status === 401) {
+    try {
+      const r2 = await fetch(`${API_BASE}/api/v1/auth/me`);
+      if (r2.ok) {
+        const d = await r2.json();
+        if (d.role === "owner" || d.actor === "system") {
+          return { id: "owner", email: "owner@local", name: "Owner", role: "owner", plan: "owner", created_at: "" };
+        }
+      }
+    } catch { /* 무시 */ }
+  }
+  return null;
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
