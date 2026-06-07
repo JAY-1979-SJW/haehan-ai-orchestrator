@@ -1,4 +1,4 @@
-# Haehan AI 전체 스택 시작 스크립트
+﻿# Haehan AI 전체 스택 시작 스크립트
 # 순서: 1. FastAPI(소스 uvicorn) → 2. Next.js standalone → 3. CDP Chrome → 4. Electron 앱
 # Windows 시작프로그램 등록 시 자동 실행
 
@@ -16,11 +16,14 @@ $FASTAPI  = "$ROOT\dist-installer\win-unpacked\resources\server\haehan-server\ha
 $NEXTJS   = "$ROOT\admin-web\.next\standalone\server.js"
 
 function Test-Port($port) {
+    # TCP 연결로 리스너 존재만 확인 — HTTP 404/리다이렉트도 'up'으로 정상 판정(GetResponse 예외 오판 방지).
     try {
-        $r = [System.Net.HttpWebRequest]::Create("http://127.0.0.1:$port")
-        $r.Timeout = 2000
-        $r.GetResponse().Close()
-        return $true
+        $cli = New-Object System.Net.Sockets.TcpClient
+        $iar = $cli.BeginConnect("127.0.0.1", $port, $null, $null)
+        $ok = $iar.AsyncWaitHandle.WaitOne(2000)
+        $up = $ok -and $cli.Connected
+        $cli.Close()
+        return $up
     } catch { return $false }
 }
 
@@ -48,6 +51,7 @@ if (Test-Port 8401) {
         Write-Host "[1/4] python 실행파일 없음: $PY" -ForegroundColor Red; exit 1
     }
     $env:HAEHAN_DATA_DIR = "$ROOT\data"
+    $env:AUTH_ENABLED = "false"   # 자기완결 데스크톱(owner): owner 자동 로그인 + loopback 신뢰
     Start-Process -FilePath $PY `
         -ArgumentList "-m","uvicorn","ai_orchestrator.server:app","--host","127.0.0.1","--port","8401" `
         -WorkingDirectory $ROOT `
