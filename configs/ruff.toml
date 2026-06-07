@@ -25,6 +25,9 @@ ignore = [
     "B904",   # raise from — 기존 코드 호환
     "UP007",  # X | Y 타입 힌트 — Python 3.9 호환
     "RUF012", # mutable class attrs — FastAPI 패턴
+    "RUF001", # ambiguous unicode (×, ✕ 등) — 한국어 UI 기호 의도적 사용
+    "RUF002", # ambiguous unicode in docstring — 동일
+    "RUF003", # ambiguous unicode in comment — 동일
 ]
 
 [lint.per-file-ignores]

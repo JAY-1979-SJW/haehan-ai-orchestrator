@@ -29,24 +29,30 @@ API 엔드포인트:
     POST /api/v1/smartstore/popup/handle    — 스캔 + 자동 닫기
     GET  /api/v1/smartstore/popup/status    — 감지 이력 조회
 """
+
 from __future__ import annotations
 
-import time
 import threading
-from typing import Callable, Any
-from pathlib import Path
+import time
+from collections.abc import Callable
 
 from scripts.logger import get_logger
 
 # ── 백그라운드 폴러 싱글톤 ────────────────────────────────────────────────────
-_poller: "CdpPopupPoller | None" = None
+_poller: CdpPopupPoller | None = None
 
 _log = get_logger(__name__)
 
 # ── 팝업 창 판정 기준 URL 패턴 ────────────────────────────────────────────────
 POPUP_URL_PATTERNS = [
-    "popup", "pop_", "/pop/", "modal", "layer",
-    "alert", "confirm", "dialog",
+    "popup",
+    "pop_",
+    "/pop/",
+    "modal",
+    "layer",
+    "alert",
+    "confirm",
+    "dialog",
 ]
 
 # ── 레이어 팝업 셀렉터 (우선순위 순) ─────────────────────────────────────────
@@ -86,30 +92,37 @@ LAYER_POPUP_SELS = [
 
 # ── 인라인 배너 셀렉터 (임시저장 불러오기 등) ────────────────────────────────
 BANNER_SELS = [
-    ".alert.seller-alert",          # 임시저장 불러오기 배너
+    ".alert.seller-alert",  # 임시저장 불러오기 배너
     ".seller-alert",
     "[class*='seller-alert']",
 ]
 
 # 배너 처리 액션 정의: 텍스트 → 클릭할 버튼 텍스트 or 행동
 BANNER_ACTIONS = {
-    "임시저장 된 내용":  "dismiss",   # 불러오기 무시 (닫기)
-    "임시저장된 내용":   "dismiss",
-    "불러오시겠습니까":  "dismiss",
+    "임시저장 된 내용": "dismiss",  # 불러오기 무시 (닫기)
+    "임시저장된 내용": "dismiss",
+    "불러오시겠습니까": "dismiss",
 }
 
 # ── 오탐 제외 클래스 키워드 ────────────────────────────────────────────────────
 EXCLUDE_CLASSES = [
-    "navbar", "side-nav", "dock-nav", "backdrop",
-    "seller-top-nav", "seller-side-bar",
+    "navbar",
+    "side-nav",
+    "dock-nav",
+    "backdrop",
+    "seller-top-nav",
+    "seller-side-bar",
     # alert 배너류 (팝업이 아닌 인라인 안내)
-    "alert-info", "alert-warning", "alert-danger", "alert-success",
+    "alert-info",
+    "alert-warning",
+    "alert-danger",
+    "alert-success",
     "ng-hide",
 ]
 
 # ── 승인(confirm) 버튼 셀렉터 — 확인/저장 버튼 우선 ─────────────────────────
 CONFIRM_BTN_SELS = [
-    "button.btn-primary",          # 셀러센터 주요 액션 버튼 (확인, 저장 등)
+    "button.btn-primary",  # 셀러센터 주요 액션 버튼 (확인, 저장 등)
     "button.btn-ok",
     "button[class*='confirm']",
     "button[class*='ok']",
@@ -135,63 +148,62 @@ CLOSE_TEXTS = ["닫기", "취소", "×", "✕", "X"]
 
 POPUP_LEVEL_MAP = [
     # ── 자동 처리 (단순 완료) ─────────────────────────────────────────────
-    ("임시저장 완료",    "auto"),
-    ("저장 완료",        "auto"),
-    ("등록 완료",        "auto"),
-    ("수정 완료",        "auto"),
-    ("처리 완료",        "auto"),
-    ("발송 완료",        "auto"),
-    ("설정 완료",        "auto"),
-    ("업로드 완료",      "auto"),
-    ("변경 완료",        "auto"),
-    ("삭제 완료",        "auto"),
+    ("임시저장 완료", "auto"),
+    ("저장 완료", "auto"),
+    ("등록 완료", "auto"),
+    ("수정 완료", "auto"),
+    ("처리 완료", "auto"),
+    ("발송 완료", "auto"),
+    ("설정 완료", "auto"),
+    ("업로드 완료", "auto"),
+    ("변경 완료", "auto"),
+    ("삭제 완료", "auto"),
     # ── 사용자 검토 필요 (AI 요약 → 알림 패널) ───────────────────────────
-    ("공지사항",         "review"),
-    ("공지",             "review"),
-    ("약관",             "review"),
-    ("정책",             "review"),
-    ("업데이트",         "review"),
-    ("변경 예정",        "review"),
-    ("중요",             "review"),
-    ("주의",             "review"),
-    ("경고",             "review"),
-    ("제한",             "review"),
-    ("정지",             "review"),
+    ("공지사항", "review"),
+    ("공지", "review"),
+    ("약관", "review"),
+    ("정책", "review"),
+    ("업데이트", "review"),
+    ("변경 예정", "review"),
+    ("중요", "review"),
+    ("주의", "review"),
+    ("경고", "review"),
+    ("제한", "review"),
+    ("정지", "review"),
     ("삭제하시겠습니까", "review"),  # 삭제 확인은 사용자가 직접
     ("진행하시겠습니까", "review"),
     # ── 오류 계열 → 닫기 후 알림 ────────────────────────────────────────
-    ("오류",             "review"),
-    ("실패",             "review"),
-    ("error",            "review"),
-    ("denied",           "review"),
+    ("오류", "review"),
+    ("실패", "review"),
+    ("error", "review"),
+    ("denied", "review"),
 ]
 
 # 하위 호환 (기존 코드 참조)
-POPUP_ACTION_MAP = [(k, "confirm" if v == "auto" else "close")
-                    for k, v in POPUP_LEVEL_MAP]
+POPUP_ACTION_MAP = [(k, "confirm" if v == "auto" else "close") for k, v in POPUP_LEVEL_MAP]
 
 
 class PopupEvent:
     """감지된 팝업 이벤트 기록."""
+
     def __init__(self, kind: str, detail: dict):
-        self.kind    = kind   # "new_tab" | "new_window" | "layer" | "dialog"
-        self.detail  = detail
-        self.ts      = time.strftime("%H:%M:%S")
+        self.kind = kind  # "new_tab" | "new_window" | "layer" | "dialog"
+        self.detail = detail
+        self.ts = time.strftime("%H:%M:%S")
         self.handled = False
 
     def to_dict(self) -> dict:
-        return {"kind": self.kind, "ts": self.ts,
-                "handled": self.handled, **self.detail}
+        return {"kind": self.kind, "ts": self.ts, "handled": self.handled, **self.detail}
 
 
 class CdpPopupManager:
     """CDP 컨텍스트 수준 팝업 통합 관리자."""
 
     def __init__(self):
-        self._context      = None
+        self._context = None
         self._events: list[PopupEvent] = []
-        self._lock         = threading.Lock()
-        self._watching     = False
+        self._lock = threading.Lock()
+        self._watching = False
         self._custom_handler: Callable | None = None
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -223,11 +235,14 @@ class CdpPopupManager:
         # ── 방법 2: CDP Browser.setPermission ─────────────────────────────
         try:
             cdp = context.new_cdp_session(context.pages[0])
-            cdp.send("Browser.setPermission", {
-                "permission": {"name": "notifications"},
-                "setting": "granted",
-                "origin": origin if origin != "*" else "https://sell.smartstore.naver.com",
-            })
+            cdp.send(
+                "Browser.setPermission",
+                {
+                    "permission": {"name": "notifications"},
+                    "setting": "granted",
+                    "origin": origin if origin != "*" else "https://sell.smartstore.naver.com",
+                },
+            )
             methods_tried.append("cdp:Browser.setPermission:notifications")
             cdp.detach()
         except Exception as e:
@@ -273,9 +288,9 @@ class CdpPopupManager:
             context:   Playwright BrowserContext
             on_popup:  팝업 감지 시 호출할 콜백 (선택) — (PopupEvent) -> None
         """
-        self._context        = context
+        self._context = context
         self._custom_handler = on_popup
-        self._watching       = True
+        self._watching = True
 
         # 새 페이지(탭/창) 생성 이벤트
         context.on("page", self._on_new_page)
@@ -345,7 +360,7 @@ class CdpPopupManager:
         for sel in LAYER_POPUP_SELS:
             try:
                 els = page.locator(sel)
-                n   = els.count()
+                n = els.count()
                 for i in range(min(n, 5)):
                     el = els.nth(i)
                     try:
@@ -366,9 +381,10 @@ class CdpPopupManager:
 
                         # 중복 제거: outerHTML 앞 80자를 키로 사용
                         try:
-                            key = (page.evaluate(
-                                f"document.querySelectorAll('{sel}')[{i}]?.outerHTML?.slice(0,80) || ''"
-                            ) or "")
+                            key = (
+                                page.evaluate(f"document.querySelectorAll('{sel}')[{i}]?.outerHTML?.slice(0,80) || ''")
+                                or ""
+                            )
                         except Exception:
                             key = f"{sel}:{i}"
                         if key in seen_outer_html_keys:
@@ -387,33 +403,39 @@ class CdpPopupManager:
                         buttons: list[str] = []
                         try:
                             btns = el.locator("button, a.btn, .btn").all()
-                            buttons = [b.inner_text(timeout=200).strip() for b in btns
-                                       if b.inner_text(timeout=200).strip()]
+                            buttons = [
+                                b.inner_text(timeout=200).strip() for b in btns if b.inner_text(timeout=200).strip()
+                            ]
                         except Exception:
                             pass
 
                         # 링크 목록 (공지 URL 등)
                         links: list[str] = []
                         try:
-                            hrefs = page.evaluate(
-                                f"[...document.querySelectorAll('{sel}')[{i}]"
-                                f"?.querySelectorAll('a[href]') || []]"
-                                f".map(a => ({{text: a.textContent.trim().slice(0,40), href: a.href.slice(0,100)}}))"
-                            ) or []
-                            links = [f"{l['text']} → {l['href']}" for l in hrefs if l.get("href")]
+                            hrefs = (
+                                page.evaluate(
+                                    f"[...document.querySelectorAll('{sel}')[{i}]"
+                                    f"?.querySelectorAll('a[href]') || []]"
+                                    f".map(a => ({{text: a.textContent.trim().slice(0,40), href: a.href.slice(0,100)}}))"
+                                )
+                                or []
+                            )
+                            links = [f"{ln['text']} → {ln['href']}" for ln in hrefs if ln.get("href")]
                         except Exception:
                             pass
 
                         has_close = _has_close_button(el)
-                        found.append({
-                            "selector":   sel,
-                            "index":      i,
-                            "text":       clean_text,        # 정제된 요약
-                            "full_text":  full_text,         # 전체 원문
-                            "buttons":    buttons,
-                            "links":      links,
-                            "has_close_btn": has_close,
-                        })
+                        found.append(
+                            {
+                                "selector": sel,
+                                "index": i,
+                                "text": clean_text,  # 정제된 요약
+                                "full_text": full_text,  # 전체 원문
+                                "buttons": buttons,
+                                "links": links,
+                                "has_close_btn": has_close,
+                            }
+                        )
                     except Exception:
                         pass
             except Exception:
@@ -437,23 +459,22 @@ class CdpPopupManager:
         # ── 0. 인라인 배너 처리 ──────────────────────────────────────────────
         banner_closed = self._handle_banners(page)
 
-        before  = self.scan_page(page)
-        closed  = banner_closed
+        before = self.scan_page(page)
+        closed = banner_closed
         approved: list[str] = []
         dismissed: list[str] = []
 
         for popup in before["popups"]:
-            sel       = popup["selector"]
-            text      = popup.get("text", "")
+            sel = popup["selector"]
+            text = popup.get("text", "")
             full_text = popup.get("full_text", text)
-            buttons   = popup.get("buttons", [])
-            links     = popup.get("links", [])
-            ok        = False
+            buttons = popup.get("buttons", [])
+            links = popup.get("links", [])
+            ok = False
 
             level = _classify_popup(text)
 
-            _log.info("[popup-mgr] 팝업 감지 — level=%s text='%s' buttons=%s",
-                      level, text[:60], buttons)
+            _log.info("[popup-mgr] 팝업 감지 — level=%s text='%s' buttons=%s", level, text[:60], buttons)
             if links:
                 _log.info("[popup-mgr] 팝업 링크: %s", links[:3])
 
@@ -465,54 +486,66 @@ class CdpPopupManager:
                 if level == "review":
                     # ── 사용자 확인 필요 → AI 요약 후 보류 큐 등록 ──────────
                     pending_id = f"{time.strftime('%H%M%S')}-{len(self._pending)}"
-                    summary    = _summarize_popup(full_text)
+                    summary = _summarize_popup(full_text)
                     pending_item = {
-                        "id":        pending_id,
-                        "text":      text,
+                        "id": pending_id,
+                        "text": text,
                         "full_text": full_text,
-                        "summary":   summary,
-                        "buttons":   buttons,
-                        "links":     links,
-                        "level":     level,
-                        "ts":        time.strftime("%H:%M:%S"),
-                        "status":    "pending",   # pending | approved | dismissed
+                        "summary": summary,
+                        "buttons": buttons,
+                        "links": links,
+                        "level": level,
+                        "ts": time.strftime("%H:%M:%S"),
+                        "status": "pending",  # pending | approved | dismissed
                     }
                     self._pending[pending_id] = pending_item
 
                     # 알림 이벤트에 보류 팝업 기록
-                    ev = PopupEvent("review", {
-                        "pending_id": pending_id,
-                        "text":       text,
-                        "summary":    summary,
-                        "full_text":  full_text,
-                        "buttons":    buttons,
-                        "links":      links,
-                    })
+                    ev = PopupEvent(
+                        "review",
+                        {
+                            "pending_id": pending_id,
+                            "text": text,
+                            "summary": summary,
+                            "full_text": full_text,
+                            "buttons": buttons,
+                            "links": links,
+                        },
+                    )
                     ev.handled = False  # 아직 미처리
                     with self._lock:
                         self._events.append(ev)
 
-                    _log.info("[popup-mgr] 팝업 보류 — id=%s summary='%s'",
-                              pending_id, summary[:60])
+                    _log.info("[popup-mgr] 팝업 보류 — id=%s summary='%s'", pending_id, summary[:60])
                     # 팝업은 닫지 않음 — 사용자 결정 대기
                     continue
 
                 elif level == "auto" and auto_confirm:
                     ok = _click_confirm_in(modal, page)
                     if ok:
-                        approved.append({
-                            "text": text, "full_text": full_text,
-                            "buttons": buttons, "links": links, "action": "confirm",
-                        })
+                        approved.append(
+                            {
+                                "text": text,
+                                "full_text": full_text,
+                                "buttons": buttons,
+                                "links": links,
+                                "action": "confirm",
+                            }
+                        )
                         _log.info("[popup-mgr] 팝업 자동 승인: '%s'", text[:40])
 
                 if not ok:
                     ok = _click_close_in(modal)
                     if ok:
-                        dismissed.append({
-                            "text": text, "full_text": full_text,
-                            "buttons": buttons, "links": links, "action": "close",
-                        })
+                        dismissed.append(
+                            {
+                                "text": text,
+                                "full_text": full_text,
+                                "buttons": buttons,
+                                "links": links,
+                                "action": "close",
+                            }
+                        )
                         _log.info("[popup-mgr] 팝업 닫기: '%s'", text[:40])
 
                 # ESC fallback
@@ -520,10 +553,15 @@ class CdpPopupManager:
                     page.keyboard.press("Escape")
                     time.sleep(0.3)
                     ok = True
-                    dismissed.append({
-                        "text": text, "full_text": full_text,
-                        "buttons": buttons, "links": links, "action": "esc",
-                    })
+                    dismissed.append(
+                        {
+                            "text": text,
+                            "full_text": full_text,
+                            "buttons": buttons,
+                            "links": links,
+                            "action": "esc",
+                        }
+                    )
             except Exception:
                 pass
 
@@ -538,30 +576,32 @@ class CdpPopupManager:
         after = self.scan_page(page)
 
         # 이벤트 — 팝업별 전체 내용 보존
-        ev = PopupEvent("layer", {
-            "before":    before["found"],
-            "closed":    closed,
-            "after":     after["found"],
-            "approved":  [a["text"] for a in approved],   # 알림 패널용 요약
-            "dismissed": [d["text"] for d in dismissed],
-            "popups":    approved + dismissed,             # 전체 상세 내용
-            "page_clean": after["found"] == 0,
-        })
+        ev = PopupEvent(
+            "layer",
+            {
+                "before": before["found"],
+                "closed": closed,
+                "after": after["found"],
+                "approved": [a["text"] for a in approved],  # 알림 패널용 요약
+                "dismissed": [d["text"] for d in dismissed],
+                "popups": approved + dismissed,  # 전체 상세 내용
+                "page_clean": after["found"] == 0,
+            },
+        )
         ev.handled = True
         with self._lock:
             self._events.append(ev)
 
-        _log.info("[popup-mgr] 레이어 처리: before=%d closed=%d after=%d",
-                  before["found"], closed, after["found"])
+        _log.info("[popup-mgr] 레이어 처리: before=%d closed=%d after=%d", before["found"], closed, after["found"])
         return {
-            "closed":       closed,
-            "page_clean":   after["found"] == 0,
+            "closed": closed,
+            "page_clean": after["found"] == 0,
             "popups_before": before["found"],
-            "popups_after":  after["found"],
-            "approved":     [a["text"]  for a in approved],
-            "dismissed":    [d["text"]  for d in dismissed],
-            "popups":       approved + dismissed,   # 전체 내용 포함
-            "detail":       before["popups"],
+            "popups_after": after["found"],
+            "approved": [a["text"] for a in approved],
+            "dismissed": [d["text"] for d in dismissed],
+            "popups": approved + dismissed,  # 전체 내용 포함
+            "detail": before["popups"],
         }
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -584,8 +624,7 @@ class CdpPopupManager:
                         None,
                     )
                     if action:
-                        found.append({"selector": sel, "index": i,
-                                      "text": text, "action": action})
+                        found.append({"selector": sel, "index": i, "text": text, "action": action})
             except Exception:
                 pass
         return {"found": len(found), "banners": found}
@@ -597,8 +636,8 @@ class CdpPopupManager:
 
         for banner in result["banners"]:
             action = banner.get("action", "dismiss")
-            sel    = banner["selector"]
-            idx    = banner["index"]
+            sel = banner["selector"]
+            idx = banner["index"]
 
             if action == "dismiss":
                 # ESC 또는 배너 외부 클릭으로 dismiss
@@ -645,7 +684,7 @@ class CdpPopupManager:
             elif action == "load":
                 # 불러오기 링크 클릭
                 try:
-                    el   = page.locator(sel).nth(idx)
+                    el = page.locator(sel).nth(idx)
                     link = el.locator("a.link-area, a[href]").first
                     if link.count() > 0:
                         link.click(timeout=2000)
@@ -669,9 +708,9 @@ class CdpPopupManager:
             "watching": self._watching,
             "total_events": len(self._events),
             "recent_events": events,
-            "new_tab_count":    sum(1 for e in self._events if e.kind == "new_tab"),
+            "new_tab_count": sum(1 for e in self._events if e.kind == "new_tab"),
             "new_window_count": sum(1 for e in self._events if e.kind == "new_window"),
-            "layer_count":      sum(1 for e in self._events if e.kind == "layer"),
+            "layer_count": sum(1 for e in self._events if e.kind == "layer"),
         }
 
     def clear_events(self) -> None:
@@ -704,6 +743,7 @@ def quick_handle(page, context=None) -> dict:
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
 
+
 def _is_popup_url(url: str) -> bool:
     u = url.lower()
     return any(p in u for p in POPUP_URL_PATTERNS)
@@ -723,15 +763,21 @@ def _has_close_button(modal_el) -> bool:
 def _clean_popup_text(raw: str) -> str:
     """팝업 inner_text에서 × 닫기 심볼·과도한 공백·버튼 텍스트를 제거해 핵심 메시지만 반환."""
     import re
+
     # × / ✕ / X 단독 줄 제거
-    lines = [l.strip() for l in raw.splitlines()]
+    lines = [ln.strip() for ln in raw.splitlines()]
     # 닫기 심볼 / 버튼 텍스트 단독 줄 제거
     skip = {"×", "✕", "X", "닫기", "확인", "취소", "OK", "완료", "저장"}
-    lines = [l for l in lines if l and l not in skip]
+    lines = [ln for ln in lines if ln and ln not in skip]
     text = " ".join(lines)
     # 연속 공백 제거
     text = re.sub(r"\s{2,}", " ", text).strip()
     return text[:80]
+
+
+def _summarize_popup(full_text: str) -> str:
+    """팝업 전문을 알림 패널용 짧은 요약으로 정제(잠재 NameError 방지용 정의)."""
+    return _clean_popup_text(full_text or "")
 
 
 def _classify_popup(text: str) -> str:
@@ -851,6 +897,7 @@ def _cleanup_backdrop(page) -> None:
 # 백그라운드 CDP 폴러 — 상시 팝업 감지
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class CdpPopupPoller:
     """백그라운드 스레드에서 CDP를 주기적으로 폴링해 팝업을 자동 처리.
 
@@ -862,21 +909,19 @@ class CdpPopupPoller:
     """
 
     def __init__(self, interval: int = 5, cdp_url: str = "http://127.0.0.1:9222"):
-        self.interval  = interval
-        self.cdp_url   = cdp_url
+        self.interval = interval
+        self.cdp_url = cdp_url
         self._stop_evt = threading.Event()
         self._thread: threading.Thread | None = None
-        self._mgr      = get_manager()
-        self.poll_count   = 0
+        self._mgr = get_manager()
+        self.poll_count = 0
         self.error_streak = 0
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
         self._stop_evt.clear()
-        self._thread = threading.Thread(
-            target=self._loop, name="CdpPopupPoller", daemon=True
-        )
+        self._thread = threading.Thread(target=self._loop, name="CdpPopupPoller", daemon=True)
         self._thread.start()
         _log.info("[poller] 백그라운드 팝업 폴러 시작 (interval=%ds)", self.interval)
 
@@ -904,72 +949,84 @@ class CdpPopupPoller:
                     self.error_streak = 0
 
     def _tick(self) -> None:
-        from playwright.sync_api import sync_playwright
+        # 영속 브라우저 스레드에서 캐시된 CDP 연결을 재사용한다.
+        # 과거: 매 틱 `with sync_playwright()` → 5초마다 새 node 드라이버 프로세스 +
+        # Windows conhost 콘솔 창이 깜빡이는 "상시 터미널" 문제. 이제 단일 영속 연결을
+        # 재사용하므로 틱당 드라이버 생성 0건. 단일 스레드 직렬화로 CDP 충돌도 예방.
+        from scripts.web_connector import run_on_browser_thread
 
-        with sync_playwright() as pw:
-            browser = pw.chromium.connect_over_cdp(self.cdp_url)
-            ctx     = browser.contexts[0]
-            pages   = ctx.pages
-
-            # 탭 수 변화 감지
-            current_urls = {p.url for p in pages}
-            with self._mgr._lock:
-                prev_urls = getattr(self._mgr, "_prev_urls", set())
-                new_urls  = current_urls - prev_urls
-                self._mgr._prev_urls = current_urls  # type: ignore[attr-defined]
-
-            # 새 탭/창 감지
-            for url in new_urls:
-                kind = "new_window" if _is_popup_url(url) else "new_tab"
-                ev   = PopupEvent(kind, {"url": url, "source": "poller"})
-                ev.handled = True
-                with self._mgr._lock:
-                    self._mgr._events.append(ev)
-                _log.info("[poller] 새 %s 감지: %s", kind, url[:80])
-
-            # smartstore 탭 팝업/배너 자동 처리
-            ss_page = (
-                next((p for p in pages if "products/create" in p.url), None)
-                or next((p for p in pages if "smartstore.naver.com" in p.url), None)
-            )
-            if ss_page:
-                mgr = CdpPopupManager()
-
-                # 배너 스캔
-                banners = mgr.scan_banners(ss_page)
-                if banners["found"] > 0:
-                    n = mgr._handle_banners(ss_page)
-                    _log.info("[poller] 배너 자동 처리: %d건", n)
-                    if n > 0:
-                        ev = PopupEvent("banner", {"closed": n, "source": "poller"})
-                        ev.handled = True
-                        with self._mgr._lock:
-                            self._mgr._events.append(ev)
-
-                # 모달 스캔
-                modals = mgr.scan_page(ss_page)
-                if modals["found"] > 0:
-                    result = mgr.handle_page(ss_page, auto_confirm=True)
-                    _log.info("[poller] 모달 자동 처리: closed=%d approved=%s clean=%s",
-                              result["closed"], result.get("approved"), result["page_clean"])
-                    # 공유 매니저에 이벤트 기록
-                    if result["closed"] > 0:
-                        ev = PopupEvent("layer", {
-                            "closed":    result["closed"],
-                            "approved":  result.get("approved", []),
-                            "dismissed": result.get("dismissed", []),
-                            "popups":    result.get("popups", []),   # 전체 내용
-                            "page_clean": result["page_clean"],
-                            "source":    "poller",
-                        })
-                        ev.handled = True
-                        with self._mgr._lock:
-                            self._mgr._events.append(ev)
-
+        run_on_browser_thread(self._tick_work, timeout=60)
         self.poll_count += 1
 
+    def _tick_work(self) -> None:
+        from scripts.web_connector import _connect_browser
 
-def start_poller(interval: int = 5) -> "CdpPopupPoller":
+        _browser, ctx = _connect_browser()  # 캐시된 영속 (browser, context)
+        pages = ctx.pages
+
+        # 탭 수 변화 감지
+        current_urls = {p.url for p in pages}
+        with self._mgr._lock:
+            prev_urls = getattr(self._mgr, "_prev_urls", set())
+            new_urls = current_urls - prev_urls
+            self._mgr._prev_urls = current_urls  # type: ignore[attr-defined]
+
+        # 새 탭/창 감지
+        for url in new_urls:
+            kind = "new_window" if _is_popup_url(url) else "new_tab"
+            ev = PopupEvent(kind, {"url": url, "source": "poller"})
+            ev.handled = True
+            with self._mgr._lock:
+                self._mgr._events.append(ev)
+            _log.info("[poller] 새 %s 감지: %s", kind, url[:80])
+
+        # smartstore 탭 팝업/배너 자동 처리
+        ss_page = next((p for p in pages if "products/create" in p.url), None) or next(
+            (p for p in pages if "smartstore.naver.com" in p.url), None
+        )
+        if ss_page:
+            mgr = CdpPopupManager()
+
+            # 배너 스캔
+            banners = mgr.scan_banners(ss_page)
+            if banners["found"] > 0:
+                n = mgr._handle_banners(ss_page)
+                _log.info("[poller] 배너 자동 처리: %d건", n)
+                if n > 0:
+                    ev = PopupEvent("banner", {"closed": n, "source": "poller"})
+                    ev.handled = True
+                    with self._mgr._lock:
+                        self._mgr._events.append(ev)
+
+            # 모달 스캔
+            modals = mgr.scan_page(ss_page)
+            if modals["found"] > 0:
+                result = mgr.handle_page(ss_page, auto_confirm=True)
+                _log.info(
+                    "[poller] 모달 자동 처리: closed=%d approved=%s clean=%s",
+                    result["closed"],
+                    result.get("approved"),
+                    result["page_clean"],
+                )
+                # 공유 매니저에 이벤트 기록
+                if result["closed"] > 0:
+                    ev = PopupEvent(
+                        "layer",
+                        {
+                            "closed": result["closed"],
+                            "approved": result.get("approved", []),
+                            "dismissed": result.get("dismissed", []),
+                            "popups": result.get("popups", []),  # 전체 내용
+                            "page_clean": result["page_clean"],
+                            "source": "poller",
+                        },
+                    )
+                    ev.handled = True
+                    with self._mgr._lock:
+                        self._mgr._events.append(ev)
+
+
+def start_poller(interval: int = 5) -> CdpPopupPoller:
     """전역 폴러 시작. 이미 실행 중이면 기존 인스턴스 반환."""
     global _poller
     if _poller and _poller.running:
@@ -993,8 +1050,8 @@ def poller_status() -> dict:
     if not _poller:
         return {"running": False, "poll_count": 0, "interval": 0}
     return {
-        "running":      _poller.running,
-        "poll_count":   _poller.poll_count,
-        "interval":     _poller.interval,
+        "running": _poller.running,
+        "poll_count": _poller.poll_count,
+        "interval": _poller.interval,
         "error_streak": _poller.error_streak,
     }
