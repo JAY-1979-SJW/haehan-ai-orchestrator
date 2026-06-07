@@ -31,7 +31,7 @@ const { Menu, dialog, session } = require("electron");
 const { startFastAPIServer, stopFastAPIServer } = require("./lib/fastapi_server");
 const { startNextServer, stopNextServer } = require("./lib/nextjs_server");
 const { fetchAndApplyRemoteConfig } = require("./lib/remote_config");
-const { startCdpBrowser, stopCdpBrowser, isCdpAlive } = require("./lib/cdp_manager");
+const { startCdpBrowser, stopCdpBrowser, isCdpAlive, setUseSystemChromeProfile } = require("./lib/cdp_manager");
 // CDP watchdog — 앱이 CDP 를 책임지고 항상 살려둔다(클릭→앱 출력이 항상 되도록)
 let cdpWatchdogTimer = null;
 let appQuitting = false;
@@ -52,6 +52,19 @@ bus.on(EVENTS.YOUTUBE_RECONNECT, () => ensureYouTubeAuth(loadConfig().license_ke
 bus.on(EVENTS.YOUTUBE_STATUS, (status) => {
   const win = getMainWindow();
   if (win) win.webContents.send("youtube-status", status);
+});
+// 시스템 Chrome 프로필 토글 (트레이 체크박스)
+bus.on(EVENTS.TOGGLE_SYSTEM_CHROME, () => {
+  const cfg = loadConfig();
+  const next = !cfg.useSystemChromeProfile;
+  setUseSystemChromeProfile(next);
+  // 트레이 메뉴 체크 상태 갱신
+  const { updateAutoLaunchCheck } = require("./lib/tray");
+  updateAutoLaunchCheck(app.getLoginItemSettings().openAtLogin);
+  const win = getMainWindow();
+  if (win) win.webContents.send("notify", next
+    ? "✅ 내 Chrome 세션 사용 ON — 다음 CDP 시작부터 적용됩니다"
+    : "ℹ️ 내 Chrome 세션 사용 OFF — 앱 전용 프로필로 전환됩니다");
 });
 // 트레이 자동실행 토글
 bus.on(EVENTS.TOGGLE_AUTO_LAUNCH, () => {

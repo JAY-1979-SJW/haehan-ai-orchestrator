@@ -12,14 +12,22 @@ const { app, Tray, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { bus, EVENTS } = require("./bus");
+const { loadConfig } = require("./config");
 
 let tray = null;
 
 function _buildMenu(autoLaunch) {
+  const useSystemChrome = !!(loadConfig().useSystemChromeProfile);
   return Menu.buildFromTemplate([
     { label: "열기", click: () => bus.emit(EVENTS.SHOW_WINDOW) },
     { label: "YouTube 계정 재연결", click: () => bus.emit(EVENTS.YOUTUBE_RECONNECT) },
     { type: "separator" },
+    {
+      label: "내 Chrome 세션 사용 (로그인 유지)",
+      type: "checkbox",
+      checked: useSystemChrome,
+      click: () => bus.emit(EVENTS.TOGGLE_SYSTEM_CHROME),
+    },
     {
       label: "Windows 시작 시 자동 실행",
       type: "checkbox",
