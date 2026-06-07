@@ -96,12 +96,17 @@ export const NAV_GROUPS_ALL: NavGroup[] = [
   },
 ];
 
-// 단일 AI 콘솔 모드: 홈(콘솔)만 노출, 나머지 탭은 숨김(코드/라우트는 보존 — URL 직접 접근 가능).
+// 콘솔 중심 모드: 좌측엔 기본 항목만 노출, 모든 작업은 AI 콘솔(채팅)에서. 나머지 탭은
+// 숨김(코드/라우트는 보존 — URL 직접 접근 가능). 전체 복원: NAV_GROUPS = NAV_GROUPS_ALL.
 export const NAV_GROUPS: NavGroup[] = [
   {
-    group: "홈",
+    group: "메뉴",
     items: [
-      { key: "home", label: "AI 콘솔", shortLabel: "AI", href: "/", exact: true },
+      { key: "home",          label: "AI 콘솔",    shortLabel: "AI",   href: "/", exact: true },
+      { key: "naver-session", label: "로그인 세션", shortLabel: "세션", href: "/naver/session" },
+      { key: "approval",      label: "승인 게이트", shortLabel: "승인", href: "/assistant/approval" },
+      { key: "ops",           label: "운영센터",   shortLabel: "운영", href: "/ops" },
+      { key: "mypage",        label: "설정",       shortLabel: "설정", href: "/mypage" },
     ],
   },
 ];
