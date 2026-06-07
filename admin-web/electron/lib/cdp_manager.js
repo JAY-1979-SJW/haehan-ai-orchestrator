@@ -26,7 +26,18 @@ let chromeLaunching = false;
 
 // ── Chrome 실행파일 탐색 ─────────────────────────────────────────────────────
 
-function resolveChromeExe() {
+function resolveChromeExe(isSystem = false) {
+  // 시스템 Chrome 프로필 사용 모드: 시스템 Chrome exe 우선 (버전 호환 보장)
+  const systemCandidates = [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    path.join(process.env.LOCALAPPDATA || "", "Google", "Chrome", "Application", "chrome.exe"),
+  ];
+  if (isSystem) {
+    const sysExe = systemCandidates.find(fs.existsSync);
+    if (sysExe) return sysExe;
+    // 시스템 Chrome 없으면 번들 Chromium fallback
+  }
   // 번들 Chromium (패키징 앱)
   if (app.isPackaged) {
     const bundled = path.join(
@@ -35,13 +46,7 @@ function resolveChromeExe() {
     );
     if (fs.existsSync(bundled)) return bundled;
   }
-  // 시스템 Chrome
-  const candidates = [
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    path.join(process.env.LOCALAPPDATA || "", "Google", "Chrome", "Application", "chrome.exe"),
-  ];
-  return candidates.find(fs.existsSync) || null;
+  return systemCandidates.find(fs.existsSync) || null;
 }
 
 // ── 프로필 경로 결정 ─────────────────────────────────────────────────────────
@@ -49,7 +54,13 @@ function resolveChromeExe() {
 function resolveProfileDir() {
   // 1순위: 명시 환경변수
   if (process.env.HAEHAN_CDP_PROFILE) {
-    return { dir: process.env.HAEHAN_CDP_PROFILE, isSystem: false };
+    // 환경변수 경로가 실제 시스템 Chrome 프로필 경로인지 판정
+    // → isSystem=true 여야 closeExistingChrome() 이 호출되어 프로필 잠금 해제됨
+    const sysProfile = resolveSystemChromeProfile();
+    const isSystem = sysProfile
+      ? process.env.HAEHAN_CDP_PROFILE.toLowerCase() === sysProfile.toLowerCase()
+      : false;
+    return { dir: process.env.HAEHAN_CDP_PROFILE, isSystem };
   }
   // 2순위: 사용자 Chrome 프로필 사용 모드
   if (process.env.USE_SYSTEM_CHROME_PROFILE === "true" || _loadConfig().useSystemChromeProfile) {
@@ -153,13 +164,12 @@ async function startCdpBrowser() {
 }
 
 async function _doStartCdp() {
-  const chromeExe = resolveChromeExe();
+  const { dir: profileDir, isSystem } = resolveProfileDir();
+  const chromeExe = resolveChromeExe(isSystem);
   if (!chromeExe) {
     console.warn("[cdp] Chrome 실행 파일 없음 — CDP 브라우저 수동 실행 필요");
     return false;
   }
-
-  const { dir: profileDir, isSystem } = resolveProfileDir();
 
   // 시스템 Chrome 프로필 사용 시: 기존 Chrome 먼저 종료 (프로필 잠금 해제)
   if (isSystem) {
