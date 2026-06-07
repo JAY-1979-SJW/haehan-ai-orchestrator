@@ -40,6 +40,17 @@ def _decode_token(token: str) -> str | None:
 def get_jwt_user(
     cred: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> dict:
+    # 자기완결 데스크톱(AUTH_ENABLED=false, loopback owner): 토큰 없이 owner 자동 인증.
+    # require_role 의 AUTH-off 정책(_DUMMY_USER owner)과 통일. 운영 웹(AUTH on)은 바이패스 0 → 기존 로그인 유지.
+    if not config.AUTH_ENABLED:
+        return {
+            "id": "owner",
+            "email": "owner@haehan-ai.local",
+            "name": "Owner",
+            "role": "owner",
+            "plan": "owner",
+            "created_at": "",
+        }
     if not cred:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="로그인이 필요합니다")
     user_id = _decode_token(cred.credentials)
