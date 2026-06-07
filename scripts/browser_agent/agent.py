@@ -18,10 +18,22 @@ from typing import Any
 
 # 로그인 페이지 감지 (이 URL이면 로그인 필요 → 사용자에게 요청)
 _LOGIN_RE = re.compile(r"nidlogin|/login|accounts\.|auth\.|/signin|/sso/|loginform|로그인", re.IGNORECASE)
+# 로그인 감지에서 제외할 정당한 서비스 URL (셀러센터, 스마트스토어 등은 /login이 경로의 일부이지만 로그인 페이지 아님)
+_LOGIN_EXEMPT_RE = re.compile(
+    r"sell\.smartstore\.naver\.com|"
+    r"partner\.naver\.com|"
+    r"adcenter\.naver\.com|"
+    r"shopping\.naver\.com",
+    re.IGNORECASE,
+)
 
 
 def _is_login_page(url: str) -> bool:
-    return bool(_LOGIN_RE.search(url or ""))
+    if not url:
+        return False
+    if _LOGIN_EXEMPT_RE.search(url):
+        return False
+    return bool(_LOGIN_RE.search(url))
 
 
 def _show_cdp_window() -> None:
