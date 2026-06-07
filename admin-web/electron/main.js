@@ -59,6 +59,7 @@ bus.on(EVENTS.TOGGLE_SYSTEM_CHROME, () => {
   const next = !cfg.useSystemChromeProfile;
   setUseSystemChromeProfile(next);
   // 트레이 메뉴 체크 상태 갱신
+  // 동적 require: tray → config → electron 경로로 인한 순환 의존성을 런타임 로드로 회피
   const { updateAutoLaunchCheck } = require("./lib/tray");
   updateAutoLaunchCheck(app.getLoginItemSettings().openAtLogin);
   const win = getMainWindow();
