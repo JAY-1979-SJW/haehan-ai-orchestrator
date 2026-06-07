@@ -24,6 +24,10 @@ _SYSTEM = (
     "- click/type_text 는 read_page 가 준 요소 번호(index)로 조작합니다.\n"
     "- 모든 동작(클릭·입력·제출·발송 포함)을 사용자 명령대로 직접 수행하세요. 제약 없이 실행합니다.\n"
     "- 로그인 페이지가 나오면 당신은 로그인할 수 없으니, 사용자에게 로그인을 요청하세요.\n"
+    "- 네이버 스마트스토어 작업(상품등록·상품목록·주문조회)은 전용 도구 "
+    "smartstore_register_product / smartstore_list_products / smartstore_list_orders 를 사용하세요. "
+    "단, 스마트스토어 셀러센터(sell.smartstore.naver.com)에 로그인된 세션이 필요합니다. "
+    "로그인 안 된 경우 사용자에게 CDP 브라우저에서 스마트스토어 셀러센터에 로그인을 요청하세요.\n"
     "- 앱 내부 기능(카페·커뮤니티 분석, 블로그, 지원사업, 뉴스/키워드, 세션, 정산 등)이 필요하면 "
     "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요.\n"
     "- 웹/브라우저가 필요 없는 일반 질문·대화·조언은 도구를 쓰지 말고 바로 한국어로 답하세요.\n"
@@ -132,6 +136,64 @@ _TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "smartstore_register_product",
+            "description": (
+                "네이버 스마트스토어에 상품을 등록한다(폼 자동 입력 후 임시저장 — 최종 저장은 사용자가 직접). "
+                "셀러센터 로그인 세션이 필요. 상품명·가격·재고는 필수. "
+                "완료 후 '폼 작성 완료, 저장 버튼을 눌러주세요' 안내."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "상품명(필수)"},
+                    "price": {"type": "integer", "description": "판매가(원, 필수)"},
+                    "stock": {"type": "integer", "description": "재고 수량(필수)"},
+                    "category": {"type": "string", "description": "카테고리 경로(예: '패션의류 > 상의 > 티셔츠')"},
+                    "description": {"type": "string", "description": "상품 설명(HTML 가능)"},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "description": "검색 태그 목록"},
+                    "main_image": {"type": "string", "description": "메인 이미지 파일 경로(로컬 절대경로)"},
+                    "tax_type": {"type": "string", "description": "과세유형: 과세(기본)|면세|영세"},
+                    "product_type": {"type": "string", "description": "상품유형: 신상품(기본)|중고"},
+                    "origin": {"type": "string", "description": "원산지(예: '국내산')"},
+                    "extra": {"type": "object", "description": "기타 추가 필드"},
+                },
+                "required": ["name", "price", "stock"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "smartstore_list_products",
+            "description": "네이버 스마트스토어 상품 목록을 조회한다(최근 캐시 또는 실시간 수집). 셀러센터 로그인 세션 필요.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "refresh": {"type": "boolean", "description": "True면 실시간 수집, False(기본)면 캐시 반환"},
+                    "limit": {"type": "integer", "description": "최대 상품 수(기본 50)"},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "smartstore_list_orders",
+            "description": "네이버 스마트스토어 최근 주문 목록을 조회한다. 셀러센터 로그인 세션 필요.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string", "description": "주문상태 필터(신규주문|발송대기|발송완료|전체)"},
+                    "limit": {"type": "integer", "description": "최대 주문 수(기본 30)"},
+                },
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -224,6 +286,12 @@ def run_free_agent(
             if rr.get("ok"):
                 return f"실행 결과:\n{rr.get('result', '')}"
             return f"실행 실패: {rr.get('error', '')}"
+        if name == "smartstore_register_product":
+            return _ss_register_product(args)
+        if name == "smartstore_list_products":
+            return _ss_list_products(args)
+        if name == "smartstore_list_orders":
+            return _ss_list_orders(args)
         return f"알 수 없는 도구: {name}"
 
     messages: list[dict] = [{"role": "system", "content": _SYSTEM}]
@@ -268,3 +336,111 @@ def run_free_agent(
                     return {"ok": False, "needs_login": True, "login_url": cur, "text": "로그인이 필요합니다."}
             messages.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": result[:4000]})
     return {"ok": True, "text": "최대 단계 도달 — 부분 수행", "needs_login": False}
+
+
+# ── 스마트스토어 전용 도구 핸들러 ──────────────────────────────────────────────
+
+_SS_API = "http://127.0.0.1:8401/api/v1/smartstore"
+_SS_AUTH = ("owner", "haehan2024!")  # Basic Auth (AUTH_ENABLED=false 환경)
+
+
+def _ss_call(method: str, path: str, **kwargs) -> dict:
+    """스마트스토어 FastAPI 내부 호출. requests Basic Auth."""
+    try:
+        import requests as _req
+
+        url = f"{_SS_API}{path}"
+        r = _req.request(method, url, auth=_SS_AUTH, timeout=120, **kwargs)
+        if r.status_code == 200:
+            return r.json()
+        return {"ok": False, "error": f"HTTP {r.status_code}", "body": r.text[:200]}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+def _ss_register_product(args: dict) -> str:
+    """상품 등록 폼 자동 입력 (임시저장, 최종 저장은 사용자 직접)."""
+    data = {
+        "name": args.get("name", ""),
+        "price": int(args.get("price") or 0),
+        "stock": int(args.get("stock") or 0),
+        "category": args.get("category", ""),
+        "description": args.get("description", ""),
+        "keywords": args.get("keywords") or [],
+        "main_image": args.get("main_image", ""),
+        "tax_type": args.get("tax_type", "과세"),
+        "product_type": args.get("product_type", "신상품"),
+        "origin": args.get("origin", ""),
+        **(args.get("extra") or {}),
+    }
+    result = _ss_call("POST", "/products/auto-register", json={"data": data, "dry_run": True})
+    if result.get("ok"):
+        sections = result.get("sections", {})
+        done = [k for k, v in sections.items() if isinstance(v, dict) and v.get("ok")]
+        fail = [k for k, v in sections.items() if isinstance(v, dict) and not v.get("ok")]
+        msg = f"✅ 상품 등록 폼 작성 완료!\n입력된 섹션: {', '.join(done) if done else '없음'}"
+        if fail:
+            msg += f"\n⚠️ 실패 섹션: {', '.join(fail)}"
+        msg += "\n\n📌 CDP 브라우저에서 최종 '저장' 버튼을 눌러주세요."
+        return msg
+    err = result.get("error", "알 수 없는 오류")
+    if "로그인" in err or "session" in err.lower() or "401" in err:
+        return (
+            "⚠️ 스마트스토어 셀러센터 로그인이 필요합니다. CDP 브라우저에서 sell.smartstore.naver.com 에 로그인해주세요."
+        )
+    return f"❌ 상품 등록 실패: {err}\n힌트: CDP 브라우저에서 스마트스토어 셀러센터에 로그인되어 있는지 확인하세요."
+
+
+def _ss_list_products(args: dict) -> str:
+    """상품 목록 조회."""
+    refresh = bool(args.get("refresh", False))
+    limit = int(args.get("limit") or 50)
+    if refresh:
+        result = _ss_call("POST", f"/products/collect?limit={limit}")
+    else:
+        result = _ss_call("GET", "/products")
+    if result.get("ok"):
+        rows = result.get("rows") or result.get("products") or []
+        if not rows:
+            return "상품 목록이 비어 있습니다. refresh=true 로 실시간 수집을 시도해보세요."
+        lines = [f"총 {len(rows)}개 상품:"]
+        for r in rows[:30]:
+            name = r.get("name") or r.get("productName", "")
+            pid = r.get("productId") or r.get("id", "")
+            price = r.get("price") or r.get("salePrice", "")
+            stock = r.get("stock") or r.get("stockCount", "")
+            status = r.get("status") or r.get("productStatus", "")
+            lines.append(f"  [{pid}] {name} — {price}원 / 재고 {stock} / {status}")
+        return "\n".join(lines)
+    err = result.get("error", "")
+    if "로그인" in err or "401" in err:
+        return "⚠️ 스마트스토어 셀러센터 로그인이 필요합니다."
+    return f"상품 목록 조회 실패: {err}"
+
+
+def _ss_list_orders(args: dict) -> str:
+    """주문 목록 조회."""
+    status = args.get("status", "")
+    limit = int(args.get("limit") or 30)
+    params = {}
+    if status:
+        params["status"] = status
+    params["limit"] = limit
+    result = _ss_call("GET", "/orders", params=params)
+    if result.get("ok"):
+        rows = result.get("rows") or result.get("orders") or []
+        if not rows:
+            return "주문 목록이 비어 있습니다."
+        lines = [f"총 {len(rows)}건 주문:"]
+        for r in rows[:30]:
+            oid = r.get("orderId") or r.get("id", "")
+            buyer = r.get("buyerName") or r.get("buyer", "")
+            prod = r.get("productName") or r.get("name", "")
+            amt = r.get("paymentAmount") or r.get("amount", "")
+            st = r.get("orderStatus") or r.get("status", "")
+            lines.append(f"  [{oid}] {buyer} / {prod} / {amt}원 / {st}")
+        return "\n".join(lines)
+    err = result.get("error", "")
+    if "로그인" in err or "401" in err:
+        return "⚠️ 스마트스토어 셀러센터 로그인이 필요합니다."
+    return f"주문 목록 조회 실패: {err}"
