@@ -170,11 +170,11 @@ function startLicenseFlow() {
   const licWin = createLicenseWindow();
 
   ipcMain.once("license-submit", async (_, key) => {
-    let ok = true;
+    let ok = false;
     try {
       const res = await verifyLicense(key);
       ok = !!res.ok;
-    } catch { ok = true; } // 예외 시 로컬 개발 편의로 허용
+    } catch { ok = false; } // fail-close: verifyLicense 자체 예외 시 거부 (오프라인 허용은 verifyLicense 내부에서 담당)
 
     if (ok) {
       saveConfig({ ...loadConfig(), license_key: key });
