@@ -103,7 +103,8 @@ if ($cdpAlive) {
     )
     $chromeExe = $chromePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
     if ($chromeExe) {
-        $profileDir = "$ROOT\data\cdp_profile\ai_chrome"
+        # 정본 프로필(로그인 보존) 우선 — HAEHAN_CDP_PROFILE(User env) 있으면 사용. 다른 런처와 통일.
+    $profileDir = if ($env:HAEHAN_CDP_PROFILE) { $env:HAEHAN_CDP_PROFILE } else { "$ROOT\data\cdp_profile\ai_chrome" }
         Start-Process $chromeExe -ArgumentList `
             "--remote-debugging-port=9222",
             "--user-data-dir=`"$profileDir`"",
