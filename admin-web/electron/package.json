@@ -41,7 +41,8 @@
       },
       {
         "from": "../.next/standalone",
-        "to": "nextjs"
+        "to": "nextjs",
+        "filter": ["**/*"]
       }
     ],
     "win": {
