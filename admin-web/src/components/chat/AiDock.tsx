@@ -2,7 +2,7 @@
 
 import { type Dispatch, type SetStateAction } from "react";
 import { usePathname } from "next/navigation";
-import SmartStoreChat from "@/app/naver/smartstore/SmartStoreChat";
+import SmartStoreChat from "@/app/naver/(legacy)/smartstore/SmartStoreChat";
 import { UniversalChat } from "./UniversalChat";
 
 /** 현재 경로 → AI 도메인 추론. 도구가 완비된 스마트스토어는 풀 에이전트로 분기. */
