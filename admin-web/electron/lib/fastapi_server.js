@@ -93,6 +93,9 @@ async function startFastAPIServer() {
       AUTH_ENABLED: "false",
       // JWT_SECRET 고정 — 재시작에도 사용자 세션 토큰 유효(상시 로그인). userData 에 1회 생성·저장.
       JWT_SECRET: getOrCreateJwtSecret(),
+      // Gmail OAuth2 credentials — 소스 repo 경로 고정 (frozen exe 내 config.py 기본경로 우선)
+      GMAIL_CREDENTIALS_PATH: path.join(process.resourcesPath, "..", "..", "..", "..", "ai_orchestrator", "storage", "secrets", "gmail_credentials.json"),
+      GMAIL_TOKEN_PATH: path.join(process.resourcesPath, "..", "..", "..", "..", "ai_orchestrator", "storage", "secrets", "gmail_token.json"),
     },
   });
 
