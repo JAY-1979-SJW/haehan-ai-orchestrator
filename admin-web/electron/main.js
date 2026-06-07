@@ -114,21 +114,12 @@ if (!gotLock) {
       return;
     }
 
-    // ── CDP 브라우저 시작 + 감시(죽으면 자동 재기동) ─────────────────────────
-    startCdpBrowser().then((ok) => {
-      if (!ok) console.warn("[main] CDP 브라우저 자동 시작 실패 — 수동 실행 필요");
-    });
-    // watchdog: 15초마다 CDP 생존 확인, 끊겼으면 앱이 자동 재기동
-    if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer);
-    cdpWatchdogTimer = setInterval(async () => {
-      if (appQuitting) return;
-      try {
-        if (!(await isCdpAlive())) {
-          console.warn("[main] CDP 끊김 감지 — 백그라운드로 자동 재기동");
-          await startCdpBrowser();  // 최소화로 다시 떠 백그라운드 복귀(화면에 안 뜸)
-        }
-      } catch (_) { /* ignore */ }
-    }, 6000);
+    // ── CDP 브라우저: 온디맨드 ────────────────────────────────────────────────
+    // 자동 시작/15초 워치독 제거(사용자 선택). CDP 창을 닫아도 다시 뜨지 않는다.
+    // 브라우저가 필요한 작업이 들어오면 백엔드(web_connector._ensure_cdp_daemon)가
+    // 그 시점에 CDP를 자동 기동하므로 기능 손실 없음. (startCdpBrowser 는 보존 —
+    // 추후 명시적 요청 시 호출 가능)
+    if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
 
     // ── Next.js 서버 시작 ────────────────────────────────────────────────────
     const nextReady = await startNextServer();
