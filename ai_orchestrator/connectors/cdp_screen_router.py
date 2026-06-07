@@ -22,10 +22,17 @@ def cdp_screen(user: dict = Depends(require_role("admin", "owner"))) -> Response
     from scripts.web_connector import run_on_browser_thread
 
     def _shot() -> bytes | None:
-        from scripts.web_connector import get_page
+        # get_page() 는 fit_viewport()로 최소화 창을 최대화 복원함 → 1.2초 폴링마다 창이
+        # 깜박이는 문제. 라이브 화면은 백그라운드 캡처면 충분하므로 _connect_browser()의
+        # 캐시 컨텍스트에서 창 상태를 건드리지 않고 스크린샷만 찍는다.
+        from scripts.web_connector import _connect_browser
 
-        page = get_page()
-        # 저화질 JPEG — 라이브 폴링이라 속도 우선. viewport 영역만(full_page=False 기본).
+        _browser, ctx = _connect_browser()
+        pages = ctx.pages if ctx else []
+        if not pages:
+            return None
+        page = pages[-1]  # 가장 최근(활성) 탭
+        # 저화질 JPEG — 폴링이라 속도 우선. CDP captureScreenshot 은 최소화 창도 렌더해 캡처됨.
         return page.screenshot(type="jpeg", quality=55)
 
     try:
