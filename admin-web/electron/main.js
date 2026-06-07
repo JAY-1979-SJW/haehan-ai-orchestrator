@@ -72,18 +72,10 @@ if (!gotLock) {
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
 
-    // 자동시작 기본 ON (최초 1회만 설정 — 이후 트레이 토글 존중). 자동시작 시 --hidden 으로
-    // 떠서 트레이에 대기(창 안 띄움). CDP·서버는 백그라운드로 계속 동작.
-    try {
-      const _cfg0 = loadConfig();
-      if (!_cfg0.auto_launch_initialized) {
-        app.setLoginItemSettings({ openAtLogin: true, openAsHidden: true, args: ["--hidden"] });
-        saveConfig({ ..._cfg0, auto_launch_initialized: true });
-        console.log("[main] 자동시작 기본 활성화 (Windows 로그인 시 트레이 대기)");
-      }
-    } catch (e) {
-      console.warn("[main] 자동시작 설정 실패(무시):", e.message);
-    }
+    // 자동시작 레지스트리 등록 비활성화(사용자 선택): 로그인 자동시작은 시작프로그램 폴더의
+    // start_haehan_ai.ps1(전체 스택 런처)이 단독 담당한다. 과거 여기서 setLoginItemSettings 로
+    // electron.app 레지스트리 Run 을 추가해, ps1 런처와 함께 앱이 이중 실행되던 문제 제거.
+    // 사용자가 원하면 트레이 메뉴(TOGGLE_AUTO_LAUNCH)로 직접 켤 수 있다.
 
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
