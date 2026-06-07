@@ -58,7 +58,7 @@ function startAgent(licenseKey) {
     "--server", FASTAPI_URL.replace("https://", "wss://").replace("http://", "ws://"),
     "--parent-pid", String(process.pid),
     "--enabled-sites", enabledSites,
-  ], { cwd, detached: false });
+  ], { cwd, detached: false, windowsHide: true });
 
   agentProc.stdout.on("data", (d) => console.log("[agent]", d.toString().trim()));
   agentProc.stderr.on("data", (d) => console.error("[agent]", d.toString().trim()));

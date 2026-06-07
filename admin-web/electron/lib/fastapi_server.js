@@ -80,6 +80,7 @@ async function startFastAPIServer() {
   serverProc = spawn(exePath, [], {
     cwd: path.dirname(exePath),
     detached: false,
+    windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...process.env,
