@@ -104,7 +104,7 @@ async function _doStartCdp() {
   console.log("[cdp] Chrome 시작:", chromeExe);
   const proc = spawn(chromeExe, [
     `--remote-debugging-port=${CDP_PORT}`,
-    "--remote-allow-origins=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+    "--remote-allow-origins=*",
     `--user-data-dir=${profileDir}`,
     "--no-first-run",
     "--no-default-browser-check",

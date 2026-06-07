@@ -31,15 +31,16 @@ Playwright `connect_over_cdp`로 연결하여 AI가 새 탭으로만 작업.
         # ... 작업
         # 컨텍스트 종료 시: AI가 연 탭만 닫고 Chrome은 유지
 """
+
 from __future__ import annotations
 
-import urllib.request
-import urllib.error
 import json
-import time
+import urllib.error
+import urllib.request
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Iterator, Any
+from typing import Any
 
 DEFAULT_CDP_PORT = 9222
 DEFAULT_CDP_HOST = "localhost"
@@ -62,7 +63,7 @@ def is_cdp_available(
     """CDP 포트가 응답하는지 확인. 결과 dict 반환 (예외 없음)."""
     url = f"{cdp_endpoint(host, port)}/json/version"
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as res:
+        with urllib.request.urlopen(url, timeout=timeout) as res:  # noqa: S310
             data = json.loads(res.read().decode("utf-8"))
         return {
             "available": True,
@@ -88,19 +89,19 @@ def get_chrome_start_command(
 ) -> str:
     """사용자에게 안내할 Chrome 디버깅 모드 시작 명령어 반환."""
     udd = user_data_dir or r"%LOCALAPPDATA%\Google\Chrome\User Data"
-    return f'"{chrome_path}" --remote-debugging-port={port} --user-data-dir="{udd}"'
+    return f'"{chrome_path}" --remote-debugging-port={port} --remote-allow-origins=* --user-data-dir="{udd}"'
 
 
 @dataclass
 class CDPSession:
     """CDP 연결 세션. AI가 연 탭(page) 추적."""
+
     playwright: Any
     browser: Any
     context: Any
     opened_pages: list = field(default_factory=list)
 
-    def new_tab(self, url: str | None = None, *, wait_until: str = "domcontentloaded",
-                timeout_ms: int = 30000) -> Any:
+    def new_tab(self, url: str | None = None, *, wait_until: str = "domcontentloaded", timeout_ms: int = 30000) -> Any:
         """AI 작업용 새 탭 열기. 종료 시 이 탭만 닫는다."""
         page = self.context.new_page()
         self.opened_pages.append(page)
@@ -116,7 +117,7 @@ class CDPSession:
                 if not page.is_closed():
                     page.close()
                     closed += 1
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         self.opened_pages.clear()
         return closed
@@ -127,7 +128,7 @@ class CDPSession:
         for p in self.context.pages:
             try:
                 result.append({"url": p.url, "title": p.title()})
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         return result
 
@@ -183,10 +184,10 @@ def open_cdp_session(
             session.close_opened_tabs()
             try:
                 browser.close()  # CDP 연결만 끊음, Chrome 종료 X
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
     finally:
         try:
             pw.stop()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
