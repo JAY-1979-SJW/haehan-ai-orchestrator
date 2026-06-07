@@ -9,7 +9,7 @@
 const { app } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { spawn } = require("child_process");
+const { spawn, execFile } = require("child_process");
 const http = require("http");
 
 const CDP_PORT = 9222;
@@ -116,6 +116,7 @@ async function _doStartCdp() {
   ], {
     detached: true,
     stdio: "ignore",
+    windowsHide: true,  // Windows 콘솔 창 노출 차단 (터미널 창 문제 방지)
   });
   proc.unref();
   chromePid = proc.pid;
@@ -177,7 +178,13 @@ function minimizeCdpWindow(durationMs = 4000) {
   const tick = () => {
     if (Date.now() > deadline) return;
     try {
-      require("child_process").exec(`powershell -NoProfile -WindowStyle Hidden -Command "${ps}"`, () => {});
+      // execFile + windowsHide:true → cmd.exe 래퍼 없이 powershell 직접 실행(콘솔 창 깜빡임 제거).
+      execFile(
+        "powershell",
+        ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps],
+        { windowsHide: true },
+        () => {},
+      );
     } catch (_) { /* ignore */ }
     setTimeout(tick, 300);
   };
