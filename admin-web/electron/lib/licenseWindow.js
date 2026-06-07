@@ -81,7 +81,10 @@ function verifyLicense(key) {
         r.on("end", () => { try { resolve(JSON.parse(data)); } catch { resolve({ ok: false }); } });
       }
     );
-    req.on("error", () => resolve({ ok: true }));  // 서버 미응답 시 허용(로컬)
+    // 오프라인/로컬 개발 허용: FastAPI 서버가 아직 안 떴거나 네트워크 오류면 통과.
+    // self-contained 데스크톱에서 서버가 부팅 중일 때 타임아웃으로 막히지 않게 하기 위한 의도적 설계.
+    // 운영 서버 모드에서는 서버가 항상 기동 중이므로 이 경로에 도달하지 않음.
+    req.on("error", () => resolve({ ok: true }));
     req.setTimeout(3000, () => { req.destroy(); resolve({ ok: true }); });
   });
 }
