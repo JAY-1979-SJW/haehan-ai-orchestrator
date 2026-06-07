@@ -49,6 +49,15 @@ class SeoRequest(BaseModel):
     target_keywords: list[str] = []
 
 
+class BlogWriteRequest(BaseModel):
+    title: str
+    body: str
+    tags: list[str] = []
+    category: str | None = None
+    media: list[str] = []  # 업로드된 사진·동영상 파일명
+    publish: bool = False  # False=임시저장(되돌림 가능) / True=실제 발행(외부공개 — 사용자 확인 필수)
+
+
 class AIGenerateRequest(BaseModel):
     topic: str
     tone: str = "정보형"
@@ -117,6 +126,52 @@ def get_media(
     return FileResponse(str(path))
 
 
+@naver_blog_router.post("/write-to-naver")
+def write_to_naver(
+    req: BlogWriteRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict[str, Any]:
+    """전용 작성기(BlogWriter)로 네이버 블로그에 직접 작성. 기본 임시저장, publish=True면 발행.
+
+    BlogWriter 가 SE3 셀렉터·iframe·자동로그인을 처리. 범용 클릭 에이전트보다 정확.
+    """
+    from scripts.web_connector import get_page, run_on_browser_thread
+
+    def _do() -> dict:
+        from scripts.naver.blog.core.writer import BlogWriter
+
+        page = get_page()
+        bw = BlogWriter(page)
+        if not bw.open():
+            return {
+                "ok": False,
+                "needs_login": True,
+                "error": "글쓰기 열기 실패 — 네이버 로그인 필요(브라우저에서 로그인 후 재시도).",
+            }
+        bw.set_title(req.title)
+        bw.write_body(req.body)
+        for m in req.media:
+            mp = UPLOADS_DIR / Path(m).name
+            if mp.exists():
+                (bw.insert_video if mp.suffix.lower() in _VID_EXT else bw.insert_image)(str(mp))
+        if req.category:
+            bw.set_category(req.category)
+        if req.tags:
+            bw.set_tags(req.tags)
+        return bw.publish() if req.publish else bw.save_draft()
+
+    result = run_on_browser_thread(_do, timeout=200)
+    emit_event(
+        "NAVER_BLOG_WRITE",
+        site="naver_blog",
+        workflow="blog_write_to_naver",
+        status="published" if req.publish else "draft",
+        risk="high" if req.publish else "low",
+        metadata={"title": req.title, "publish": req.publish, "media": len(req.media)},
+    )
+    return {"ok": bool(result and result.get("ok")), "publish": req.publish, "result": result}
+
+
 @naver_blog_router.post("/ai-generate")
 def ai_generate_blog(
     req: AIGenerateRequest,
@@ -145,13 +200,13 @@ def ai_generate_blog(
         return {"ok": False, "error": res.error_code or "생성 실패"}
     text = res.text.strip()
     title, tags, body = topic, [], text
-    mt = re.search(r"제목\s*[:：]\s*(.+)", text)  # noqa: RUF001
+    mt = re.search(r"제목\s*[:：]\s*(.+)", text)
     if mt:
         title = mt.group(1).strip()
-    mg = re.search(r"태그\s*[:：]\s*(.+)", text)  # noqa: RUF001
+    mg = re.search(r"태그\s*[:：]\s*(.+)", text)
     if mg:
-        tags = [t.strip().lstrip("#") for t in re.split(r"[,，]", mg.group(1)) if t.strip()][:8]  # noqa: RUF001
-    mb = re.search(r"본문\s*[:：]\s*\n?(.+)", text, re.S)  # noqa: RUF001
+        tags = [t.strip().lstrip("#") for t in re.split(r"[,，]", mg.group(1)) if t.strip()][:8]
+    mb = re.search(r"본문\s*[:：]\s*\n?(.+)", text, re.S)
     if mb:
         body = mb.group(1).strip()
     return {"ok": True, "title": title, "body": body, "tags": tags}

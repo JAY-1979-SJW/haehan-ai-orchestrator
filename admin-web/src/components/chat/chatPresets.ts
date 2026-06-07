@@ -23,6 +23,13 @@ export const CHAT_PRESETS: Record<string, ChatChip[]> = {
     { label: "캘린더 일정", prompt: "오늘 Google 캘린더 일정을 확인해줘" },
     { label: "GCP 상태",    prompt: "GCP 프로젝트 상태를 확인해줘" },
   ],
+  blog: [
+    { label: "주제로 글 작성", prompt: "다음 주제로 네이버 블로그 글을 작성해줘: " },
+    { label: "글 작성→임시저장", prompt: "다음 주제로 네이버 블로그 글을 써서 임시저장해줘: " },
+    { label: "SEO 분석",       prompt: "방금 작성한 블로그 글의 SEO를 분석해줘" },
+    { label: "초안 목록",      prompt: "저장된 블로그 초안 목록을 보여줘" },
+    { label: "블로그 현황",    prompt: "네이버 블로그 현황을 확인해줘" },
+  ],
   naver: [
     { label: "세션 상태",   prompt: "네이버 로그인 세션 상태를 확인해줘" },
     { label: "로그인",      prompt: "네이버 로그인을 실행해줘" },
