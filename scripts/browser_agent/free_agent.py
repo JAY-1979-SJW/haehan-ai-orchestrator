@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 from scripts.browser_agent import agent as _ag
 
@@ -341,7 +342,8 @@ def run_free_agent(
 # ── 스마트스토어 전용 도구 핸들러 ──────────────────────────────────────────────
 
 _SS_API = "http://127.0.0.1:8401/api/v1/smartstore"
-_SS_AUTH = ("owner", "haehan2024!")  # Basic Auth (AUTH_ENABLED=false 환경)
+# 서버 _WEB_UI_PASS(agent_ai_proxy_router.py)와 동일한 환경변수에서 읽어 동기화
+_SS_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
 
 
 def _ss_call(method: str, path: str, **kwargs) -> dict:
@@ -350,7 +352,7 @@ def _ss_call(method: str, path: str, **kwargs) -> dict:
         import requests as _req
 
         url = f"{_SS_API}{path}"
-        r = _req.request(method, url, auth=_SS_AUTH, timeout=120, **kwargs)
+        r = _req.request(method, url, auth=_SS_AUTH, timeout=30, **kwargs)
         if r.status_code == 200:
             return r.json()
         return {"ok": False, "error": f"HTTP {r.status_code}", "body": r.text[:200]}
