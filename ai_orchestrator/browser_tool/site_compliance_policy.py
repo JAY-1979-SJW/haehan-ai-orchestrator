@@ -5,10 +5,11 @@ Evaluates target domain/site against remote access and automation policies
 before dispatch without executing.
 Read-only, no execution, no DB write.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -51,15 +52,15 @@ GOOGLE_SERVICE_POLICIES = {
         "message_ko": "Google 로그인: 자동화 금지, OAuth consent 필요",
     },
     "mail.google.com": {
-        "capability": "OAUTH_API_ONLY",
+        "capability": "CDP_READ_ONLY",
         "site_type": "google_service",
-        "browser_automation_allowed": False,
-        "api_connector_required": True,
+        "browser_automation_allowed": True,
+        "api_connector_required": False,
         "user_present_required": False,
         "site_owner_approval_required": False,
         "official_remote_support_required": False,
-        "block_reason": "OAUTH_API_REQUIRED",
-        "message_ko": "Gmail: OAuth API 필수, 브라우저 자동화 차단",
+        "block_reason": None,
+        "message_ko": "Gmail: CDP 세션 로그인 상태에서 읽기 허용",
     },
     "drive.google.com": {
         "capability": "OAUTH_API_ONLY",
@@ -121,7 +122,7 @@ GOOGLE_SERVICE_POLICIES = {
 # Allowlist-safe sites (read-only browsing allowed)
 ALLOWLIST_SAFE_SITES = {
     "example.com",
-    "g2b.go.kr",      # G2B 나라장터 apex domain
+    "g2b.go.kr",  # G2B 나라장터 apex domain
     "www.g2b.go.kr",  # G2B 나라장터 www prefix (apex와 동일 공개 서비스)
 }
 
