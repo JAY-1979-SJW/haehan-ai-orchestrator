@@ -1,23 +1,12 @@
 @echo off
 setlocal
-pushd "%~dp0\admin-web" >nul
 
-echo [INFO] Admin Web 개발 서버 시작 확인 중...
+:: Next.js(admin-web) dev 서버를 로그 저장하며 안전하게 실행.
+:: 실제 로직은 PowerShell 런처에 위임 — Start-Process -RedirectStandardOutput 로
+:: 로그 경로를 값 전달해 공백("01. ") 경로에서도 리다이렉트 깨짐이 없다.
+:: (과거: npm run dev > ...01. haehan...\nextjs.log 가 공백에서 잘려 인자로 넘어가던 버그)
 
-:: 포트 3000 이미 사용 중이면 스킵
-netstat -ano | findstr ":3000 " >nul 2>&1
-if not errorlevel 1 (
-    echo [INFO] 포트 3000 이미 실행 중 - 별도 시작 불필요
-    popd >nul
-    exit /b 0
-)
+echo [INFO] Admin Web 개발 서버 시작...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ops\start_admin_logged.ps1"
 
-echo [INFO] Next.js 개발 서버 시작 (백그라운드)...
-
-:: npm run dev 를 백그라운드로 실행 (로그는 ..\data\next_out.log)
-if not exist "..\data" mkdir "..\data"
-start /min "NextJS-Dev" cmd /c "npm run dev > ..\data\next_out.log 2>&1"
-
-echo [INFO] 시작됨. 로그: data\next_out.log
-
-popd >nul
+endlocal
