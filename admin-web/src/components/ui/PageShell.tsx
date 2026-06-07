@@ -3,7 +3,7 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_GROUPS } from "@/lib/nav";
+import { NAV_GROUPS, NAV_ITEMS } from "@/lib/nav";
 import { AiDock } from "@/components/chat/AiDock";
 
 interface PageShellProps {
@@ -21,8 +21,8 @@ function isNavActive(href: string, exact: boolean | undefined, pathname: string)
 
 export function PageShell({ title, description, headerRight, children }: PageShellProps) {
   const pathname = usePathname();
-  // 우측 상시 AI 상담 패널 (기본 열림). 데스크톱은 콘텐츠가 가려지지 않게 우측 공간 확보.
-  const [dockOpen, setDockOpen] = useState(true);
+  // 단일 콘솔 모드: 홈 본문이 메인 콘솔이므로 우측 도크는 기본 접힘(중복 방지). 💬로 펼침.
+  const [dockOpen, setDockOpen] = useState(false);
 
   return (
     <div className={`flex min-h-dvh bg-[#F5F7FA] ${dockOpen ? "lg:pr-[360px]" : ""}`}>
@@ -117,13 +117,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
       {/* 모바일 하단 탭 */}
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#E5E7EB] bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
         aria-label="모바일 하단 메뉴">
-        {[
-          NAV_GROUPS[0].items[0],
-          NAV_GROUPS[1].items[0],
-          NAV_GROUPS[2].items[0],
-          NAV_GROUPS[4].items[0],
-          NAV_GROUPS[0].items[2],
-        ].map((item) => {
+        {NAV_ITEMS.slice(0, 5).map((item) => {
           const active = isNavActive(item.href, item.exact, pathname);
           return (
             <Link key={item.key} href={item.href}

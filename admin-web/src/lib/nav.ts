@@ -11,7 +11,8 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-export const NAV_GROUPS: NavGroup[] = [
+// 전체 탭 목록(보존) — 단일 AI 콘솔로 단순화하며 숨김. 복원 시 NAV_GROUPS = NAV_GROUPS_ALL.
+export const NAV_GROUPS_ALL: NavGroup[] = [
   {
     group: "홈",
     items: [
@@ -95,5 +96,15 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+// 단일 AI 콘솔 모드: 홈(콘솔)만 노출, 나머지 탭은 숨김(코드/라우트는 보존 — URL 직접 접근 가능).
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    group: "홈",
+    items: [
+      { key: "home", label: "AI 콘솔", shortLabel: "AI", href: "/", exact: true },
+    ],
+  },
+];
+
 // 기존 flat 목록 — 레거시 호환
-export const NAV_ITEMS: NavItem[]= NAV_GROUPS.flatMap((g) => g.items);
+export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);

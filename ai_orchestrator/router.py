@@ -15,6 +15,7 @@ from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
 from .config_router import config_router
 from .connectors.browser_agent_router import browser_agent_router
+from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
 from .connectors.eum_router import eum_router
 from .connectors.gabia_router import gabia_router
@@ -86,6 +87,7 @@ router.include_router(naver_cafe_router)  # read-only naver cafe collection endp
 router.include_router(community_router)  # 범용 커뮤니티 게시글 추출(휴리스틱→GPT)
 router.include_router(browser_agent_router)  # 로컬 CDP + AI 브라우저 에이전트(링크+지시→실행)
 router.include_router(inquiry_router)  # 문의 게시판(공개 접수 + 관리자 조회)
+router.include_router(cdp_screen_router)  # CDP 라이브 화면(스크린샷 JPEG) — 콘솔 옆 실시간 작업 화면
 router.include_router(naver_mail_router)  # naver mail compose/send endpoints
 router.include_router(naver_session_router)  # naver session login pipeline
 router.include_router(hiworks_mail_router)  # hiworks mail inbox/compose/send
