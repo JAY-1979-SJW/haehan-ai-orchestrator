@@ -21,12 +21,22 @@ export function LiveScreen({ className = "" }: { className?: string }) {
     let objUrl: string | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    const getHeaders = () => {
+      const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
+      return tok ? { Authorization: `Bearer ${tok}` } : {};
+    };
+
+    // 초기 연결 상태를 screenshot 폴링 전에 /cdp/status로 빠르게 확인
+    fetch(`${API_BASE}/api/v1/cdp/status`, { cache: "no-store", headers: getHeaders() })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (!stop && d) setAlive(!!d.connected); })
+      .catch(() => {});
+
     const tick = async () => {
       try {
-        const tok = typeof window !== "undefined" ? localStorage.getItem("haehan_ai_token") : null;
         const r = await fetch(`${API_BASE}/api/v1/cdp/screen.jpg`, {
           cache: "no-store",
-          headers: { ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+          headers: getHeaders(),
         });
         if (r.status === 200) {
           const blob = await r.blob();
