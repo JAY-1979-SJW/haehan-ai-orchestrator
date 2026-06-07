@@ -66,9 +66,10 @@ export async function login(email: string, password: string): Promise<{ token: s
 
 export async function getMe(): Promise<UserInfo | null> {
   const token = getToken();
-  if (!token) return null;
+  // 토큰이 없어도 /me 를 호출한다: 자기완결 데스크톱(AUTH off)은 서버가 owner 를 자동 반환 → 자동 로그인.
+  // 운영 웹(AUTH on)은 토큰 없으면 401 → null → 정상 로그인 흐름 유지.
   const res = await fetch(`${API_BASE}/api/v1/users/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) return null;
   return res.json();
