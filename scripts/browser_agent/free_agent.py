@@ -15,19 +15,17 @@ import json
 from scripts.browser_agent import agent as _ag
 
 _SYSTEM = (
-    "당신은 사용자의 로컬 로그인된 웹 브라우저를 운전하는 자율 에이전트입니다. "
+    "당신은 사용자의 로컬 로그인된 웹 브라우저를 완전히 제어하는 자율 에이전트입니다. "
     "사용자 명령을 달성하기 위해 제공된 도구를 스스로 골라 순서대로 사용하세요.\n"
     "- 먼저 read_page 로 '현재 열린 페이지'를 확인하세요. 사용자가 수동으로 로그인·이동해 둔 "
     "상태를 그대로 이어받아 작업합니다. 꼭 필요할 때만 navigate 로 이동하세요.\n"
     "- 사용자가 '여기서', '이 페이지에서', '현재 화면' 등으로 지시하면 절대 다른 곳으로 navigate 하지 말고 "
     "반드시 read_page 로 읽은 '지금 그 페이지'에서 작업하세요(사용자가 이미 로그인해 둔 사이트임).\n"
     "- click/type_text 는 read_page 가 준 요소 번호(index)로 조작합니다.\n"
-    "- 결제·구매·송금·삭제·발송·제출 등 되돌릴 수 없는 동작은 절대 직접 하지 말고, 사용자에게 "
-    "확인을 요청하는 문장으로 끝내세요.\n"
+    "- 모든 동작(클릭·입력·제출·발송 포함)을 사용자 명령대로 직접 수행하세요. 제약 없이 실행합니다.\n"
     "- 로그인 페이지가 나오면 당신은 로그인할 수 없으니, 사용자에게 로그인을 요청하세요.\n"
     "- 앱 내부 기능(카페·커뮤니티 분석, 블로그, 지원사업, 뉴스/키워드, 세션, 정산 등)이 필요하면 "
-    "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요. 위험·민감 동작(발송·"
-    "결제·삭제·발행·승인 등)은 자동 차단되니, 무엇을 할지 사용자에게 알리고 확인을 받으세요.\n"
+    "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요.\n"
     "- 웹/브라우저가 필요 없는 일반 질문·대화·조언은 도구를 쓰지 말고 바로 한국어로 답하세요.\n"
     "- 이전 대화 맥락을 이어가세요. 지시가 모호하면(예: '탐색해줘'만 있고 목적이 불명확) 추측해 "
     "실행하지 말고, 무엇을 원하는지 한 문장으로 사용자에게 되물으세요. 사용자가 답하면 그 맥락으로 이어 진행.\n"
@@ -153,7 +151,7 @@ def _fmt_obs(obs: dict) -> str:
 def run_free_agent(
     message: str,
     model: str | None = None,
-    max_steps: int = 12,
+    max_steps: int = 20,
     login_wait: bool = False,
     history: list[dict] | None = None,
 ) -> dict:
@@ -191,11 +189,6 @@ def run_free_agent(
         if name in ("click", "type_text"):
             obs = state.get("obs") or {}
             idx = args.get("index")
-            tgt = _ag._element_text(obs, idx)
-            if _ag._is_destructive(tgt):
-                return (
-                    f"차단: '{tgt[:40]}' 은(는) 위험 동작(결제/삭제/발송 등)이라 실행하지 않았습니다. 사용자 확인 필요."
-                )
             decision = (
                 {"action": "click", "index": idx}
                 if name == "click"
@@ -239,7 +232,7 @@ def run_free_agent(
             messages.append({"role": h["role"], "content": str(h["content"])[:1500]})
     messages.append({"role": "user", "content": message})
     for _ in range(max(1, min(max_steps, 20))):
-        res = call_openai_agent(messages=messages, tools=_TOOLS, model=model, max_tokens=700)
+        res = call_openai_agent(messages=messages, tools=_TOOLS, model=model, max_tokens=2000)
         if not res.get("ok"):
             return {"ok": False, "text": f"AI 오류: {res.get('error_code')}", "needs_login": False}
         msg = res["message"]

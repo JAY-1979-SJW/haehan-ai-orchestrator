@@ -13,6 +13,27 @@ import sys
 from pathlib import Path
 
 
+def _patch_playwright_node_subprocess() -> None:
+    """frozen exe 에서 Playwright node.js 서브프로세스가 libuv process_title 어설션으로
+    즉시 종료되는 문제를 막기 위해 CREATE_NO_WINDOW 플래그를 추가한다."""
+    if not (hasattr(sys, "_MEIPASS") and sys.platform == "win32"):
+        return
+    try:
+        import asyncio as _aio
+        import subprocess as _sp
+
+        _orig = _aio.create_subprocess_exec
+
+        async def _patched(*args: object, **kwargs: object) -> object:  # type: ignore[return]
+            if args and "node" in str(args[0]).lower():
+                kwargs["creationflags"] = int(kwargs.get("creationflags") or 0) | _sp.CREATE_NO_WINDOW
+            return await _orig(*args, **kwargs)  # type: ignore[arg-type]
+
+        _aio.create_subprocess_exec = _patched  # type: ignore[assignment]
+    except Exception:
+        pass
+
+
 def _setup_bundle_env() -> None:
     """PyInstaller 번들 환경 초기화."""
     # MEIPASS: 번들 내 리소스 루트
@@ -33,6 +54,23 @@ def _setup_bundle_env() -> None:
             if env_file.exists():
                 os.environ.setdefault("HAEHAN_ENV_FILE", str(env_file))
                 break
+        # Playwright 드라이버 경로 고정 (inspect.getfile 이 PYZ 경로를 반환해 깨지는 것 방지)
+        pw_driver = meipass_path / "playwright" / "driver"
+        node_exe = pw_driver / "node.exe"
+        cli_js = pw_driver / "package" / "cli.js"
+        if node_exe.exists() and cli_js.exists():
+            os.environ["PLAYWRIGHT_NODEJS_PATH"] = str(node_exe)
+            try:
+                import playwright._impl._driver as _pw_drv
+
+                _node = str(node_exe)
+                _cli = str(cli_js)
+                _pw_drv.compute_driver_executable = lambda: (_node, _cli)  # type: ignore[assignment]
+            except Exception:
+                pass
+        # node.exe 서브프로세스 CREATE_NO_WINDOW 패치
+        # (frozen exe 콘솔 핸들 문제로 libuv process_title 어설션 실패 방지)
+        _patch_playwright_node_subprocess()
         # 영속 데이터 경로 기본값 (Electron이 미주입 시) — %APPDATA%\Haehan AI\data
         if not os.environ.get("HAEHAN_DATA_DIR"):
             appdata = os.environ.get("APPDATA") or str(exe_dir)
