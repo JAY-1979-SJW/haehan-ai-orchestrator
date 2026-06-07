@@ -23,6 +23,8 @@ const EVENTS = Object.freeze({
   APP_QUIT: "app:quit",
   // Windows 시작 시 자동 실행 토글 요청
   TOGGLE_AUTO_LAUNCH: "app:toggle-auto-launch",
+  // 시스템 Chrome 프로필 사용 토글 (사용자 Chrome 세션 공유)
+  TOGGLE_SYSTEM_CHROME: "cdp:toggle-system-chrome",
 });
 
 // 단일 버스 인스턴스 (메인 프로세스 전역). 핸들러 수가 많지 않으므로 경고 한도만 상향.
