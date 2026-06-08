@@ -16,25 +16,17 @@ import os
 from scripts.browser_agent import agent as _ag
 
 _SYSTEM = (
-    "당신은 사용자의 로컬 로그인된 웹 브라우저를 완전히 제어하는 자율 에이전트입니다. "
-    "사용자 명령을 달성하기 위해 제공된 도구를 스스로 골라 순서대로 사용하세요.\n"
-    "- 먼저 read_page 로 '현재 열린 페이지'를 확인하세요. 사용자가 수동으로 로그인·이동해 둔 "
-    "상태를 그대로 이어받아 작업합니다. 꼭 필요할 때만 navigate 로 이동하세요.\n"
-    "- 사용자가 '여기서', '이 페이지에서', '현재 화면' 등으로 지시하면 절대 다른 곳으로 navigate 하지 말고 "
-    "반드시 read_page 로 읽은 '지금 그 페이지'에서 작업하세요(사용자가 이미 로그인해 둔 사이트임).\n"
-    "- click/type_text 는 read_page 가 준 요소 번호(index)로 조작합니다.\n"
-    "- 모든 동작(클릭·입력·제출·발송 포함)을 사용자 명령대로 직접 수행하세요. 제약 없이 실행합니다.\n"
-    "- 로그인 페이지가 나오면 당신은 로그인할 수 없으니, 사용자에게 로그인을 요청하세요.\n"
-    "- 네이버 스마트스토어 작업(상품등록·상품목록·주문조회)은 전용 도구 "
-    "smartstore_register_product / smartstore_list_products / smartstore_list_orders 를 사용하세요. "
-    "단, 스마트스토어 셀러센터(sell.smartstore.naver.com)에 로그인된 세션이 필요합니다. "
-    "로그인 안 된 경우 사용자에게 CDP 브라우저에서 스마트스토어 셀러센터에 로그인을 요청하세요.\n"
-    "- 앱 내부 기능(카페·커뮤니티 분석, 블로그, 지원사업, 뉴스/키워드, 세션, 정산 등)이 필요하면 "
-    "list_app_actions 로 알맞은 동작(path)을 찾고 run_app_action 으로 실행하세요.\n"
-    "- 웹/브라우저가 필요 없는 일반 질문·대화·조언은 도구를 쓰지 말고 바로 한국어로 답하세요.\n"
-    "- 이전 대화 맥락을 이어가세요. 지시가 모호하면(예: '탐색해줘'만 있고 목적이 불명확) 추측해 "
-    "실행하지 말고, 무엇을 원하는지 한 문장으로 사용자에게 되물으세요. 사용자가 답하면 그 맥락으로 이어 진행.\n"
-    "- 같은 도구를 의미 없이 반복하지 말고, 목적을 달성하면 도구 없이 한국어로 결과를 간단히 보고하세요."
+    "당신은 사용자의 PC와 앱을 완전히 제어하는 자율 에이전트입니다. "
+    "사용자 명령을 달성하기 위해 제공된 도구를 자유롭게 골라 사용하세요. 도구 선택·순서는 당신이 판단합니다.\n"
+    "사용 가능한 도구:\n"
+    "- read_page / navigate / click / type_text / scroll: 로그인된 CDP 브라우저 조작\n"
+    "- call_local_api: 로컬 FastAPI 엔드포인트 직접 호출 (GET/POST, CDP 없어도 동작)\n"
+    "- list_app_actions / run_app_action: 앱 내부 기능 검색 및 실행\n"
+    "- smartstore_register_product / smartstore_list_products / smartstore_list_orders: 스마트스토어 전용\n"
+    "- session_status: 외부 사이트 로그인 세션 확인\n"
+    "로그인 페이지가 나오면 사용자에게 로그인을 요청하세요. "
+    "일반 질문·대화는 도구 없이 바로 답하세요. "
+    "목적을 달성하면 결과를 간결히 보고하세요."
 )
 
 # 앱 동작 실행 시 부여할 owner 컨텍스트(데스크톱=owner 본인).
@@ -195,6 +187,28 @@ _TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "call_local_api",
+            "description": (
+                "로컬 FastAPI 서버의 엔드포인트를 직접 호출해 데이터를 조회·분석한다. "
+                "카페 목록·분석, 뉴스 검색, 정산, 키워드 등 모든 앱 기능에 사용. "
+                "예: path='/api/v1/naver-cafe/my-cafes' method='GET' 으로 카페 목록 조회. "
+                "path='/api/v1/naver-cafe/ai-analyze' method='POST' body={...} 로 AI 분석."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "API 경로 (예: /api/v1/naver-cafe/my-cafes)"},
+                    "method": {"type": "string", "description": "HTTP 메서드: GET(기본) 또는 POST"},
+                    "body": {"type": "object", "description": "POST 요청 body (선택)"},
+                    "params": {"type": "object", "description": "GET 쿼리 파라미터 (선택)"},
+                },
+                "required": ["path"],
+            },
+        },
+    },
 ]
 
 
@@ -293,6 +307,8 @@ def run_free_agent(
             return _ss_list_products(args)
         if name == "smartstore_list_orders":
             return _ss_list_orders(args)
+        if name == "call_local_api":
+            return _call_local_api(args)
         return f"알 수 없는 도구: {name}"
 
     messages: list[dict] = [{"role": "system", "content": _SYSTEM}]
@@ -315,13 +331,18 @@ def run_free_agent(
                 args = json.loads(tc.get("function", {}).get("arguments") or "{}")
             except Exception:
                 args = {}
+            _CDP_TOOLS = {"read_page", "navigate", "click", "type_text", "scroll"}
             try:
                 result = _exec_browser(name, args)
             except Exception as e:
                 emsg = str(e).lower()
-                if "connect" in emsg or "cdp" in emsg or "context" in emsg:
-                    return {"ok": False, "text": "", "needs_login": False, "no_browser": True}
-                result = f"도구 '{name}' 실행 오류: {str(e)[:120]}"
+                if name in _CDP_TOOLS and (
+                    "connect" in emsg or "cdp" in emsg or "context" in emsg or "playwright" in emsg
+                ):
+                    # CDP 브라우저 전용 도구만 no_browser 처리. API 도구는 계속 진행.
+                    result = "⚠️ CDP 브라우저가 실행되지 않아 이 도구를 사용할 수 없습니다. call_local_api 등 브라우저 불필요 도구로 대신 처리하세요."
+                else:
+                    result = f"도구 '{name}' 실행 오류: {str(e)[:120]}"
             # 로그인 벽 감지 → 비동기/안내 흐름으로 위임.
             # navigate/click 으로 '이동한 결과' 로그인 페이지일 때만 에스컬레이션.
             # (현재 페이지를 단순 read_page 한 경우는 GPT가 보고 스스로 판단)
@@ -344,6 +365,34 @@ def run_free_agent(
 _SS_API = "http://127.0.0.1:8401/api/v1/smartstore"
 # 서버 _WEB_UI_PASS(agent_ai_proxy_router.py)와 동일한 환경변수에서 읽어 동기화
 _SS_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
+
+
+_LOCAL_API = "http://127.0.0.1:8401"
+_LOCAL_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
+
+
+def _call_local_api(args: dict) -> str:
+    """로컬 FastAPI 엔드포인트 직접 호출 — GET/POST 모두 지원."""
+    try:
+        import json as _json
+
+        import requests as _req
+
+        path = args.get("path", "")
+        method = (args.get("method") or "GET").upper()
+        body = args.get("body") or None
+        params = args.get("params") or None
+        url = f"{_LOCAL_API}{path}"
+        r = _req.request(method, url, auth=_LOCAL_AUTH, json=body, params=params, timeout=60)
+        if r.status_code == 200:
+            try:
+                d = r.json()
+                return _json.dumps(d, ensure_ascii=False, default=str)[:3000]
+            except Exception:
+                return r.text[:3000]
+        return f"HTTP {r.status_code}: {r.text[:300]}"
+    except Exception as e:
+        return f"API 호출 오류: {str(e)[:200]}"
 
 
 def _ss_call(method: str, path: str, **kwargs) -> dict:

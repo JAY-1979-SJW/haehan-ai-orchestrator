@@ -100,6 +100,7 @@ def cmd_start(url: str = "") -> int:
         f"--remote-debugging-port={CDP_PORT}",
         "--remote-allow-origins=*",
         f"--user-data-dir={PROFILE_DIR}",
+        "--profile-directory=Default",
         "--no-first-run",
         "--no-default-browser-check",
         "--disable-blink-features=AutomationControlled",
@@ -109,6 +110,7 @@ def cmd_start(url: str = "") -> int:
         "--disable-features=InfoBars,SessionCrashedBubble",
         "--start-maximized",
     ]
+    print(f"  프로필: {PROFILE_DIR}")
     if url:
         args.append(url)
 
