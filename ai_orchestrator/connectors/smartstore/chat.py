@@ -10,8 +10,10 @@ import asyncio
 import json
 import os
 import sys
+import uuid
+from pathlib import Path
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -19,11 +21,13 @@ from ...audit_logger import log_event
 from ...auth import require_role
 from ._helpers import ROOT
 
+_TEMP_IMAGE_DIR = ROOT / "data" / "temp_images"
+
 router = APIRouter()
 
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 GPT_MODEL = "gpt-4o-mini"
-WRITE_TOOLS = {"auto_register_product", "edit_product"}
+WRITE_TOOLS = {"auto_register_product", "edit_product", "reply_reviews", "process_shipping", "delete_product"}
 
 # CDP가 필요한 도구 — 로컬 에이전트로 라우팅
 CDP_TOOLS = {
@@ -36,6 +40,11 @@ CDP_TOOLS = {
     "auto_register_product",
     "edit_product",
     "popup_handle",
+    "get_pending_reviews",
+    "reply_reviews",
+    "get_pending_orders",
+    "process_shipping",
+    "delete_product",
 }
 
 SYSTEM_PROMPT = """당신은 스마트스토어 셀러센터 AI 에이전트입니다.
@@ -133,6 +142,39 @@ def _tool_defs() -> list[dict]:
             "required": ["q"],
         },
         {"name": "popup_handle", "description": "CDP 브라우저 팝업을 자동으로 닫습니다.", "params": {}},
+        {
+            "name": "get_pending_reviews",
+            "description": "미답변 리뷰 목록을 조회하고 Claude AI 답변 초안을 생성합니다.",
+            "params": {"limit": {"type": "integer"}},
+        },
+        {
+            "name": "reply_reviews",
+            "description": "미답변 리뷰에 AI 초안으로 자동 답변을 저장합니다 (쓰기).",
+            "params": {"limit": {"type": "integer"}},
+        },
+        {
+            "name": "get_pending_orders",
+            "description": "미발송(발송대기) 주문 목록을 조회합니다.",
+            "params": {"limit": {"type": "integer"}},
+        },
+        {
+            "name": "process_shipping",
+            "description": "주문에 송장번호를 입력하고 발송처리합니다 (쓰기).",
+            "params": {
+                "order_id": {"type": "string"},
+                "tracking_number": {"type": "string"},
+                "carrier": {"type": "string"},
+            },
+            "required": ["order_id", "tracking_number"],
+        },
+        {
+            "name": "delete_product",
+            "description": "상품을 삭제합니다 (쓰기, 비가역).",
+            "params": {
+                "product_id": {"type": "string"},
+                "product_ids": {"type": "array", "items": {"type": "string"}},
+            },
+        },
     ]
 
 
@@ -383,6 +425,64 @@ def _run_tool(name: str, inputs: dict, license_key: str | None = None, images: l
                 mgr.unblock(ctx, origin="https://sell.smartstore.naver.com")
                 return mgr.handle_page(page, auto_confirm=True)
 
+        if name == "get_pending_reviews":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(cdp).contexts[0].pages[0]
+                result = ReviewAutoResponder(page).get_pending(limit=inputs.get("limit", 20))
+            if result.get("ok") and result.get("pending"):
+                from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder as _RA
+
+                result["pending"] = _RA(None).generate_replies(result["pending"])
+            return result
+
+        if name == "reply_reviews":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(cdp).contexts[0].pages[0]
+                return ReviewAutoResponder(page).reply_pending(limit=inputs.get("limit", 10), confirmed=True)
+
+        if name == "get_pending_orders":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.smartstore.product.order_shipping import OrderShippingProcessor
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(cdp).contexts[0].pages[0]
+                return OrderShippingProcessor(page).get_pending_orders(limit=inputs.get("limit", 50))
+
+        if name == "process_shipping":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.smartstore.product.order_shipping import OrderShippingProcessor
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(cdp).contexts[0].pages[0]
+                return OrderShippingProcessor(page).process_order(
+                    order_id=inputs["order_id"],
+                    tracking_number=inputs["tracking_number"],
+                    carrier=inputs.get("carrier", "CJ대한통운"),
+                    confirmed=True,
+                )
+
+        if name == "delete_product":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.smartstore.product.product_delete import ProductDeleter
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(cdp).contexts[0].pages[0]
+                deleter = ProductDeleter(page)
+                if inputs.get("product_ids"):
+                    return deleter.delete_bulk(inputs["product_ids"], confirmed=True)
+                return deleter.delete(inputs["product_id"], confirmed=True)
+
         return {"ok": False, "error": f"알 수 없는 도구: {name}"}
 
     except Exception as e:
@@ -584,3 +684,31 @@ def api_chat(body: ChatRequest, user: dict = Depends(require_role("admin", "owne
     return StreamingResponse(
         generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
+
+
+@router.post("/images/upload")
+async def api_upload_images(
+    files: list[UploadFile] = File(...),
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """웹 브라우저에서 첨부한 이미지를 서버 임시 디렉터리에 저장 후 경로 반환.
+
+    SmartStoreChat에서 Electron 없이 웹 HTML 파일선택으로 이미지를 첨부할 때 사용.
+    반환된 경로를 /chat 엔드포인트의 images[] 필드에 전달하면 GPT-4V가 분석한다.
+    """
+    _TEMP_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+    saved: list[str] = []
+    for f in files:
+        ext = Path(f.filename or "img").suffix or ".jpg"
+        dest = _TEMP_IMAGE_DIR / f"{uuid.uuid4().hex}{ext}"
+        dest.write_bytes(await f.read())
+        saved.append(str(dest))
+    log_event(
+        "SMARTSTORE_IMAGE_UPLOAD",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"count={len(saved)}",
+    )
+    return {"ok": True, "paths": saved}

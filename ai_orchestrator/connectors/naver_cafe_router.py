@@ -1,7 +1,6 @@
-"""네이버 카페 read-only 조회 엔드포인트 (/api/v1/naver-cafe/*).
+"""네이버 카페 엔드포인트 (/api/v1/naver-cafe/*).
 
-- 쓰기 API 없음. 모두 read-only.
-- data/cafe/ 디렉터리에 저장된 수집·분류 결과 파일을 읽어 반환.
+- read-only 조회 + AI 채팅(글쓰기 포함)
 - 민감정보(쿠키/세션/경로 풀) 응답 금지.
 """
 
@@ -9,10 +8,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import sys
 import time
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ..audit_logger import log_event
@@ -49,6 +51,7 @@ class CafeCollectRequest(BaseModel):
     cafe_url: str
     days: int = 90
     max_detail: int = 300
+    keyword: str = ""
 
 
 @naver_cafe_router.post("/collect-my-cafes")
@@ -98,6 +101,7 @@ def collect_cafe_articles(
             cafe_url=cafe_url,
             days=max(1, min(req.days, 365)),
             max_detail=max(1, min(req.max_detail, 500)),
+            keyword=req.keyword.strip(),
         )
         run_pipeline()
         organize()
@@ -107,7 +111,7 @@ def collect_cafe_articles(
             actor=user["actor"],
             role=user["role"],
             decision="ok",
-            note=f"url={cafe_url[:40]} n={len(articles)}",
+            note=f"url={cafe_url[:40]} n={len(articles)} keyword={req.keyword[:20] or '-'}",
         )
         return {"ok": True, "collected": len(articles)}
     except Exception as e:
@@ -392,3 +396,205 @@ def api_summary(
         "latest_report_file": report_path.name if report_path else None,
         "duration_ms": duration_ms,
     }
+
+
+# ── 채팅 ─────────────────────────────────────────────────────────────────────
+
+_CAFE_SYSTEM_PROMPT = """당신은 네이버 카페 AI 에이전트입니다.
+사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
+- 글쓰기(write_cafe_post)는 confirmed=true일 때만 실제 발행합니다. 기본은 임시저장.
+- 수집/조회는 바로 실행합니다.
+- 결과는 한국어로 간결하게 요약합니다."""
+
+_CAFE_WRITE_TOOLS = {"write_cafe_post"}
+_CDP = "http://127.0.0.1:9222"
+
+
+def _cafe_tool_defs() -> list[dict]:
+    return [
+        {
+            "name": "write_cafe_post",
+            "description": "네이버 카페에 글을 작성합니다. confirmed=false면 임시저장, true면 즉시 발행.",
+            "params": {
+                "cafe_url": {"type": "string", "description": "카페 URL (예: https://cafe.naver.com/0moo)"},
+                "board_name": {"type": "string", "description": "게시판 이름 (예: 기업홍보/기업자료)"},
+                "title": {"type": "string"},
+                "body": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "confirmed": {"type": "boolean", "description": "true면 즉시 발행, false면 임시저장"},
+            },
+            "required": ["cafe_url", "board_name", "title", "body"],
+        },
+        {
+            "name": "collect_cafe_posts",
+            "description": "카페 게시글을 수집합니다.",
+            "params": {
+                "cafe_url": {"type": "string"},
+                "keyword": {"type": "string"},
+                "days": {"type": "integer"},
+            },
+            "required": ["cafe_url"],
+        },
+        {
+            "name": "get_cafe_summary",
+            "description": "카페 수집 현황 요약을 반환합니다.",
+            "params": {},
+        },
+    ]
+
+
+def _run_cafe_tool(name: str, inputs: dict) -> dict:
+    sys.path.insert(0, str(ROOT))
+    try:
+        if name == "write_cafe_post":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.cafe import confirm_publish, write_post
+
+            confirmed = inputs.pop("confirmed", False)
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
+                result = write_post(page, **inputs, require_approval=not confirmed)
+                if confirmed and result.get("ok"):
+                    result = confirm_publish(page)
+            return result
+
+        if name == "collect_cafe_posts":
+            from playwright.sync_api import sync_playwright
+
+            from scripts.naver.cafe import collect_articles
+
+            with sync_playwright() as pw:
+                page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
+                articles = collect_articles(
+                    page,
+                    cafe_url=inputs["cafe_url"],
+                    days=inputs.get("days", 30),
+                    keyword=inputs.get("keyword", ""),
+                    max_detail=50,
+                )
+            return {"ok": True, "count": len(articles), "articles": articles[:20]}
+
+        if name == "get_cafe_summary":
+            t0 = time.monotonic()
+            raw_path = _latest_file("raw_articles_*.json")
+            raw_count = 0
+            if raw_path:
+                try:
+                    raw_count = len(json.loads(raw_path.read_text(encoding="utf-8")))
+                except Exception:  # noqa: S110
+                    pass
+            return {
+                "ok": True,
+                "raw_count": raw_count,
+                "raw_file": raw_path.name if raw_path else None,
+                "duration_ms": int((time.monotonic() - t0) * 1000),
+            }
+
+        return {"ok": False, "error": f"알 수 없는 도구: {name}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
+
+
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _run_cafe_claude(messages: list, confirmed: bool):
+    import anthropic
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        yield _sse("error", {"message": "ANTHROPIC_API_KEY 미설정"})
+        return
+
+    client = anthropic.Anthropic(api_key=api_key)
+    tools = []
+    for t in _cafe_tool_defs():
+        if not confirmed and t["name"] in _CAFE_WRITE_TOOLS:
+            continue
+        schema: dict = {"type": "object", "properties": t["params"]}
+        if "required" in t:
+            schema["required"] = t["required"]
+        tools.append(anthropic.types.ToolParam(name=t["name"], description=t["description"], input_schema=schema))
+
+    history = list(messages)
+    step = 0
+    while True:
+        res = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            system=_CAFE_SYSTEM_PROMPT,
+            tools=tools,
+            messages=history,
+        )
+        for b in res.content:
+            if b.type == "text" and b.text:
+                yield _sse("text", {"text": b.text})
+
+        if res.stop_reason != "tool_use":
+            break
+
+        tool_results = []
+        for b in res.content:
+            if b.type != "tool_use":
+                continue
+            is_write = b.name in _CAFE_WRITE_TOOLS
+            if is_write and not confirmed:
+                yield _sse(
+                    "confirm_required",
+                    {
+                        "tool": b.name,
+                        "inputs": b.input,
+                        "message": "글 발행에 승인이 필요합니다. confirmed=true로 재요청하세요.",
+                    },
+                )
+                return
+            step += 1
+            yield _sse("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
+            result = _run_cafe_tool(b.name, dict(b.input))
+            yield _sse(
+                "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
+            )
+            tool_results.append(
+                {"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)}
+            )
+
+        history.append({"role": "assistant", "content": res.content})
+        history.append({"role": "user", "content": tool_results})
+
+    yield _sse("done", {"steps": step})
+
+
+class CafeChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class CafeChatRequest(BaseModel):
+    messages: list[CafeChatMessage]
+    confirmed: bool = False
+
+
+@naver_cafe_router.post("/chat")
+def api_cafe_chat(body: CafeChatRequest, user: dict = Depends(require_role("admin", "owner"))):
+    """자연어 명령 → Claude tool_use → 카페 글쓰기/수집 → SSE."""
+    messages = [{"role": m.role, "content": m.content} for m in body.messages]
+
+    def generate():
+        try:
+            yield from _run_cafe_claude(messages, body.confirmed)
+        except Exception as e:
+            yield _sse("error", {"message": str(e)})
+
+    log_event(
+        "NAVER_CAFE_CHAT",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"msgs={len(messages)} confirmed={body.confirmed}",
+    )
+    return StreamingResponse(
+        generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )

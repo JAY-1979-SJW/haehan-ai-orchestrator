@@ -12,6 +12,7 @@
         save_path="data/cafe/raw_articles.json",
     )
 """
+
 from __future__ import annotations
 
 import json
@@ -19,7 +20,6 @@ import re
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
@@ -33,7 +33,10 @@ _OUT_DIR = ROOT / "data" / "cafe"
 
 # ── URL 패턴 ──────────────────────────────────────────────────────────
 # ArticleList.nhn → 리다이렉트 후 실제 menus/0 페이지 (클래식 DOM 유지)
-_LIST_URL = "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page={page}&userDisplay=50"
+_LIST_URL = (
+    "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page={page}&userDisplay=50"
+)
+_SEARCH_URL = "https://cafe.naver.com/ArticleSearchList.nhn?search.clubid={clubid}&search.searchBy=0&search.query={query}&search.page={page}&userDisplay=50"
 _ARTICLE_URL = "https://cafe.naver.com/f-e/cafes/{clubid}/articles/{article_id}"
 
 
@@ -51,7 +54,7 @@ def _get_clubid(page: Page, cafe_url: str) -> str:
         if m:
             return m.group(1)
     html = page.content()
-    for pattern in [r'"clubid"\s*:\s*"?(\d+)"?', r'clubid=(\d+)', r'/cafes/(\d+)']:
+    for pattern in [r'"clubid"\s*:\s*"?(\d+)"?', r"clubid=(\d+)", r"/cafes/(\d+)"]:
         m = re.search(pattern, html)
         if m:
             return m.group(1)
@@ -75,6 +78,55 @@ def _parse_date(date_str: str) -> date | None:
     if re.match(r"^\d{2}:\d{2}$", s):
         return today
     return None
+
+
+def _extract_search_page(page: Page, clubid: str, query: str, page_no: int) -> list[dict]:
+    """카페 검색 결과 1페이지 추출 (키워드 필터)."""
+    from urllib.parse import quote
+
+    url = _SEARCH_URL.format(clubid=clubid, query=quote(query), page=page_no)
+    page.goto(url, timeout=25000, wait_until="domcontentloaded")
+    time.sleep(3)
+
+    try:
+        items = page.evaluate("""
+        () => {
+            const out = [];
+            const rows = document.querySelectorAll('.article-board tbody tr');
+            rows.forEach(row => {
+                const titleEl = row.querySelector('a.article');
+                if (!titleEl) return;
+                const title = titleEl.innerText.trim();
+                if (!title) return;
+                const href = titleEl.href || '';
+                let author = '', date_str = '', views = '', comments = '';
+                row.querySelectorAll('td').forEach(td => {
+                    const cls = td.className || '';
+                    if (cls.includes('type_date')) {
+                        date_str = td.innerText.trim();
+                    } else if (cls.includes('type_readCount')) {
+                        views = td.innerText.trim().replace(/[^0-9]/g, '');
+                    } else if (cls.includes('type_replyCount')) {
+                        comments = td.innerText.trim().replace(/[^0-9]/g, '');
+                    } else {
+                        const nick = td.querySelector('.p-nick, .nick');
+                        if (nick && !author) author = nick.innerText.trim();
+                    }
+                });
+                const m = /articles\\/(\\d+)/.exec(href);
+                const article_id = m ? m[1] : '';
+                const is_notice = row.className.includes('board-notice');
+                if (article_id) out.push({ title, href, author, date_str, views, comments, article_id, board: '', is_notice });
+            });
+            return out;
+        }
+        """)
+        if items:
+            _log.debug("[cafe-search] 검색 p%d: %d건", page_no, len(items))
+            return items
+    except Exception as e:
+        _log.warning("[cafe-search] JS 추출 실패 p%d: %s", page_no, e)
+    return []
 
 
 def _extract_list_page(page: Page, clubid: str, page_no: int) -> list[dict]:
@@ -175,6 +227,7 @@ def collect_articles(
     max_pages: int = 200,
     max_detail: int = 300,
     save_path: str | None = None,
+    keyword: str = "",
 ) -> list[dict]:
     """카페 게시글 수집.
 
@@ -185,6 +238,7 @@ def collect_articles(
         max_pages: 목록 최대 페이지 수 (안전 상한)
         max_detail: 상세 방문 최대 글 수. 0이면 목록 메타만 수집.
         save_path: JSON 저장 경로. None이면 data/cafe/ 자동 경로.
+        keyword: 검색어. 지정 시 해당 키워드 검색 결과만 수집. 빈 문자열이면 전수 수집.
 
     Returns:
         수집된 게시글 dict 목록.
@@ -193,7 +247,8 @@ def collect_articles(
         raise RuntimeError("네이버 로그인 필요")
 
     cutoff = date.today() - timedelta(days=days)
-    _log.info("[cafe-collect] 수집 시작 — cutoff=%s, cafe=%s", cutoff, cafe_url)
+    kw = keyword.strip()
+    _log.info("[cafe-collect] 수집 시작 — cutoff=%s, cafe=%s, keyword=%r", cutoff, cafe_url, kw or "(전수)")
 
     clubid = _get_clubid(page, cafe_url)
     _log.info("[cafe-collect] clubid=%s", clubid)
@@ -205,7 +260,7 @@ def collect_articles(
     for page_no in range(1, max_pages + 1):
         if stop:
             break
-        items = _extract_list_page(page, clubid, page_no)
+        items = _extract_search_page(page, clubid, kw, page_no) if kw else _extract_list_page(page, clubid, page_no)
         if not items:
             _log.info("[cafe-collect] p%d: 결과 없음 — 수집 종료", page_no)
             break
@@ -227,20 +282,22 @@ def collect_articles(
                 break
 
             seen_ids.add(aid)
-            articles.append({
-                "article_id": aid,
-                "title": item.get("title", ""),
-                "href": item.get("href", ""),
-                "author": item.get("author", ""),
-                "date_str": item.get("date_str", ""),
-                "date": d.isoformat() if d else "",
-                "board": item.get("board", ""),
-                "view_count": item.get("views", "0") or "0",
-                "like_count": "0",
-                "comment_count": item.get("comments", "0") or "0",
-                "tags": [],
-                "body": "",
-            })
+            articles.append(
+                {
+                    "article_id": aid,
+                    "title": item.get("title", ""),
+                    "href": item.get("href", ""),
+                    "author": item.get("author", ""),
+                    "date_str": item.get("date_str", ""),
+                    "date": d.isoformat() if d else "",
+                    "board": item.get("board", ""),
+                    "view_count": item.get("views", "0") or "0",
+                    "like_count": "0",
+                    "comment_count": item.get("comments", "0") or "0",
+                    "tags": [],
+                    "body": "",
+                }
+            )
             new_in_page += 1
 
         _log.info("[cafe-collect] p%d: +%d건 (누계 %d건)", page_no, new_in_page, len(articles))
@@ -258,15 +315,17 @@ def collect_articles(
         for i, art in enumerate(detail_targets, 1):
             detail = _fetch_article_detail(page, clubid, art["article_id"])
             if detail:
-                art.update({
-                    "board": detail.get("board") or art.get("board", ""),
-                    "view_count": detail.get("view_count") or art.get("view_count", "0"),
-                    "like_count": detail.get("like_count", "0"),
-                    "comment_count": str(detail.get("comment_count") or art.get("comment_count", "0")),
-                    "tags": detail.get("tags", []),
-                    "body": detail.get("body", ""),
-                    "written_at": detail.get("written_at", ""),
-                })
+                art.update(
+                    {
+                        "board": detail.get("board") or art.get("board", ""),
+                        "view_count": detail.get("view_count") or art.get("view_count", "0"),
+                        "like_count": detail.get("like_count", "0"),
+                        "comment_count": str(detail.get("comment_count") or art.get("comment_count", "0")),
+                        "tags": detail.get("tags", []),
+                        "body": detail.get("body", ""),
+                        "written_at": detail.get("written_at", ""),
+                    }
+                )
             if i % 10 == 0:
                 _log.info("[cafe-collect] 상세 %d/%d 완료", i, len(detail_targets))
 
@@ -274,9 +333,11 @@ def collect_articles(
     _OUT_DIR.mkdir(parents=True, exist_ok=True)
     if save_path is None:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        save_path = str(_OUT_DIR / f"raw_articles_{ts}.json")
-    Path(save_path).write_text(
-        json.dumps(articles, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+        if kw:
+            slug = re.sub(r"[^\w가-힣]", "_", kw)[:30]
+            save_path = str(_OUT_DIR / f"keyword_{slug}_raw_articles_{ts}.json")
+        else:
+            save_path = str(_OUT_DIR / f"raw_articles_{ts}.json")
+    Path(save_path).write_text(json.dumps(articles, ensure_ascii=False, indent=2), encoding="utf-8")
     _log.info("[cafe-collect] 저장 완료: %s (%d건)", save_path, len(articles))
     return articles

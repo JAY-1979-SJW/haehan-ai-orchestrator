@@ -1,10 +1,11 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS, NAV_ITEMS } from "@/lib/nav";
 import { AiDock } from "@/components/chat/AiDock";
+import { getMe } from "@/lib/userAuth";
 
 interface PageShellProps {
   title: string;
@@ -21,8 +22,16 @@ function isNavActive(href: string, exact: boolean | undefined, pathname: string)
 
 export function PageShell({ title, description, headerRight, children }: PageShellProps) {
   const pathname = usePathname();
-  // 단일 콘솔 모드: 홈 본문이 메인 콘솔이므로 우측 도크는 기본 접힘(중복 방지). 💬로 펼침.
   const [dockOpen, setDockOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getMe().then((u) => {
+      if (u && (u.role === "owner" || u.role === "admin")) setIsAdmin(true);
+    }).catch(() => {});
+  }, []);
+
+  const visibleGroups = NAV_GROUPS.filter((g) => !g.adminOnly || isAdmin);
 
   return (
     <div className={`flex min-h-dvh bg-[#F5F7FA] ${dockOpen ? "lg:pr-[360px]" : ""}`}>
@@ -38,7 +47,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
           </span>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
-          {NAV_GROUPS.map((group, gi) => (
+          {visibleGroups.map((group, gi) => (
             <div key={gi}>
               <div className="px-4 pt-4 pb-1 text-[10px] font-semibold tracking-widest uppercase"
                 style={{ color: "#9CA3AF" }}>

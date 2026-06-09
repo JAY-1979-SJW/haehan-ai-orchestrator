@@ -250,6 +250,21 @@ def fit_viewport(page: Page) -> None:
                     },
                 )
                 time.sleep(0.2)
+            else:
+                # normal 상태인데 화면 밖에 있으면 먼저 복귀 (Chrome이 기억한 off-screen 위치 방지)
+                bounds = win.get("bounds", {})
+                left = bounds.get("left", 0)
+                top = bounds.get("top", 0)
+                if left > 3000 or top > 3000 or left < -1000 or top < -1000:
+                    cdp.send(
+                        "Browser.setWindowBounds",
+                        {
+                            "windowId": wid,
+                            "bounds": {"windowState": "normal", "left": 0, "top": 0, "width": 1280, "height": 900},
+                        },
+                    )
+                    time.sleep(0.2)
+                    log.info("[viewport] 화면 밖 창 복귀: left=%s top=%s → (0,0)", left, top)
             # normal → maximized
             cdp.send(
                 "Browser.setWindowBounds",

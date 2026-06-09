@@ -6,6 +6,7 @@
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { QUICK_GROUPS, EXAMPLE_CHIPS } from "./components/constants";
+import { detectActions } from "@/components/chat/chatPresets";
 import { UserBubble } from "./components/UserBubble";
 import { AssistantBubble } from "./components/AssistantBubble";
 import type { Message, ChatMessage, AiBlock } from "./components/types";
@@ -45,15 +46,36 @@ export default function SmartStoreChat() {
     tool: string; inputs: Record<string, unknown>; message: string; userText: string;
   } | null>(null);
 
-  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(true);
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const lastImagesRef = useRef<string[]>([]);  // confirm 재실행 시 같은 사진 재사용
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleAttach() {
+    // Electron 데스크탑: 네이티브 파일 다이얼로그
     const hl = (window as unknown as { haehanLocal?: { pickImages?: () => Promise<string[]> } }).haehanLocal;
-    if (!hl?.pickImages) { alert("데스크탑 앱에서만 사진 선택이 가능합니다."); return; }
-    const imgs = await hl.pickImages();
-    if (imgs?.length) setAttachedImages((prev) => [...prev, ...imgs]);
+    if (hl?.pickImages) {
+      const imgs = await hl.pickImages();
+      if (imgs?.length) setAttachedImages((prev) => [...prev, ...imgs]);
+      return;
+    }
+    // 웹 브라우저: HTML file input 트리거
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    e.target.value = "";
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
+    try {
+      const res = await fetch("/api/smartstore/images/upload", { method: "POST", body: form });
+      const data = await res.json() as { ok: boolean; paths: string[] };
+      if (data.ok && data.paths.length) setAttachedImages((prev) => [...prev, ...data.paths]);
+    } catch {
+      alert("이미지 업로드 실패. 서버 연결을 확인하세요.");
+    }
   }
   const abortRef  = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -92,7 +114,11 @@ export default function SmartStoreChat() {
     setMessages((prev) => {
       const last = prev[prev.length - 1];
       if (!last || last.role !== "assistant") return prev;
-      return [...prev.slice(0, -1), { ...last, streaming: false }];
+      return [...prev.slice(0, -1), {
+        ...last,
+        streaming: false,
+        actions: detectActions(summaryText || ""),
+      }];
     });
     if (summaryText) {
       historyRef.current = [...historyRef.current, { role: "assistant", content: summaryText }];
@@ -217,6 +243,7 @@ export default function SmartStoreChat() {
 
   return (
     <div className="flex flex-col h-full min-h-[400px] border border-[#E5E7EB] rounded-2xl bg-white overflow-hidden">
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileInput} />
 
       {/* 헤더 */}
       <div className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
@@ -328,6 +355,8 @@ export default function SmartStoreChat() {
               key={i}
               blocks={msg.blocks}
               streaming={msg.streaming}
+              actions={msg.actions}
+              onAction={(prompt) => handleChip(prompt)}
               pendingConfirm={pendingConfirm}
               onConfirm={handleConfirm}
               onCancelConfirm={() => setPendingConfirm(null)}

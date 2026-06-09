@@ -11,17 +11,17 @@
     # result["mode"] == "awaiting_approval" 이면 사용자 확인 후:
     confirm_publish(page)
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Any
 
 import pyperclip
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 
 _log = get_logger(__name__)
@@ -43,7 +43,7 @@ def _get_clubid(page: Page, cafe_url: str) -> str | None:
         m = re.search(r'"clubid"\s*:\s*"?(\d+)"?', html)
         if m:
             return m.group(1)
-        m = re.search(r'clubid=(\d+)', html)
+        m = re.search(r"clubid=(\d+)", html)
         if m:
             return m.group(1)
     except Exception:
@@ -147,18 +147,55 @@ class CafeWriter:
             _log.warning("[cafe-write] 임시저장 실패: %s", e)
             return False
 
-    def publish(self, wait_verify_s: int = 5) -> dict:
-        """등록 버튼 클릭 → 발행 완료 확인."""
+    def publish(self, wait_verify_s: int = 8) -> dict:
+        """등록 버튼 클릭 → URL 변경으로 발행 완료 확인."""
+        before_url = self.page.url
         try:
-            # 등록 버튼: btn_register, submit_btn 등 카페 SPA 기준으로 탐색
-            btn = self.page.locator(
-                "button.btn_register, button.submit_btn, button:has-text('등록'), "
-                "button[class*='register'], button[class*='submit']"
-            ).first
-            btn.click(timeout=8000)
-            time.sleep(wait_verify_s)
+            # 카페 SPA 등록 버튼 — 가장 구체적인 셀렉터 우선, 폴백 순서
+            for sel in [
+                "button.btn_register",
+                "button.submit_btn",
+                "button[class*='registerButton']",
+                "button[class*='Register']:not([class*='temp'])",
+                # 텍스트 기반은 마지막 — '등록' 텍스트가 여러 곳에 있을 수 있음
+                "button:has-text('등록하기')",
+                "button:has-text('게시')",
+            ]:
+                try:
+                    loc = self.page.locator(sel).first
+                    if loc.count() and loc.is_visible(timeout=1000):
+                        _log.info("[cafe-write] 등록 버튼 셀렉터: %s", sel)
+                        loc.click(timeout=8000)
+                        break
+                except Exception:
+                    continue
+            else:
+                # 폴백: DOM에서 '등록' 텍스트 버튼 중 마지막(오른쪽) 것
+                self.page.evaluate("""
+                () => {
+                    const btns = [...document.querySelectorAll('button')].filter(
+                        b => b.textContent.trim() === '등록' && !b.disabled
+                    );
+                    if (btns.length) btns[btns.length - 1].click();
+                }
+                """)
+
+            # URL 변경 대기 (글쓰기 페이지 → 게시글 페이지)
+            try:
+                self.page.wait_for_url(
+                    lambda url: "articles/write" not in url and url != before_url,
+                    timeout=wait_verify_s * 1000,
+                )
+            except Exception:
+                pass  # timeout — URL 체크로 판정
+
             final_url = self.page.url
             _log.info("[cafe-write] 발행 후 URL: %s", final_url)
+
+            if "articles/write" in final_url or final_url == before_url:
+                _log.warning("[cafe-write] URL 미변경 — 발행 실패 가능성")
+                return {"ok": False, "error": "url_unchanged", "url": final_url}
+
             log_critical("OTHER", "카페 글 발행", url=final_url)
             return {"ok": True, "url": final_url}
         except Exception as e:

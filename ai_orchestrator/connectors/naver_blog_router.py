@@ -1,16 +1,19 @@
-"""네이버 블로그 API 라우터 — 초안 저장·조회·SEO 분석."""
+"""네이버 블로그 API 라우터 — 초안 저장·조회·SEO 분석·AI 채팅."""
 
 from __future__ import annotations
 
 import json
+import os
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.auth import require_role
 from scripts.realtime_audit import emit_event
 
@@ -305,3 +308,227 @@ def analyze_seo(
             "body": {"length": len(req.body), "word_count": len(words)},
             "suggested_tags": top_tags,
         }
+
+
+# ── 채팅 ─────────────────────────────────────────────────────────────────────
+
+_BLOG_SYSTEM_PROMPT = """당신은 네이버 블로그 AI 에이전트입니다.
+사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
+- write_blog_post: publish=false면 임시저장, true면 즉시 발행 (발행은 confirmed=true 필요)
+- ai_generate_blog: 주제로 제목/본문/태그 초안 생성 (발행 없음)
+- 결과는 한국어로 간결하게 요약합니다."""
+
+_BLOG_WRITE_TOOLS = {"write_blog_post"}
+_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _blog_tool_defs() -> list[dict]:
+    return [
+        {
+            "name": "write_blog_post",
+            "description": "네이버 블로그에 글을 작성합니다. publish=false면 임시저장, true면 즉시 발행.",
+            "params": {
+                "title": {"type": "string"},
+                "body": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "category": {"type": "string"},
+                "publish": {"type": "boolean", "description": "true면 즉시 발행, false면 임시저장"},
+            },
+            "required": ["title", "body"],
+        },
+        {
+            "name": "ai_generate_blog",
+            "description": "주제를 받아 블로그 제목·본문·태그를 AI로 생성합니다 (발행 없음).",
+            "params": {
+                "topic": {"type": "string"},
+                "tone": {"type": "string", "enum": ["친근한", "전문적인", "정보성"]},
+            },
+            "required": ["topic"],
+        },
+        {
+            "name": "list_blog_drafts",
+            "description": "임시저장된 블로그 초안 목록을 반환합니다.",
+            "params": {},
+        },
+    ]
+
+
+def _run_blog_tool(name: str, inputs: dict, confirmed: bool) -> dict:
+    sys.path.insert(0, str(_ROOT))
+    try:
+        if name == "write_blog_post":
+            from scripts.web_connector import run_on_browser_thread
+
+            publish = inputs.pop("publish", False)
+            if publish and not confirmed:
+                return {"ok": False, "error": "발행은 confirmed=true가 필요합니다"}
+
+            def _do() -> dict:
+                from scripts.naver.blog.core.writer import BlogWriter
+                from scripts.web_connector import get_page
+
+                page = get_page()
+                bw = BlogWriter(page)
+                if not bw.open():
+                    return {"ok": False, "needs_login": True, "error": "글쓰기 열기 실패 — 네이버 로그인 필요"}
+                bw.set_title(inputs["title"])
+                bw.write_body(inputs["body"])
+                if inputs.get("category"):
+                    bw.set_category(inputs["category"])
+                if inputs.get("tags"):
+                    bw.set_tags(inputs["tags"])
+                return bw.publish() if publish else bw.save_draft()
+
+            result = run_on_browser_thread(_do, timeout=180)
+            return result or {"ok": False, "error": "브라우저 실행 실패"}
+
+        if name == "ai_generate_blog":
+            import re
+
+            from ai_orchestrator.openai_proxy_caller import call_openai_chat
+
+            topic = inputs.get("topic", "")
+            tone = inputs.get("tone", "정보성")
+            prompt = (
+                f"당신은 네이버 블로그 전문 작가입니다. 아래 주제로 블로그 글을 작성하세요.\n"
+                f"톤: {tone}. 자연스러운 한국어, 본문 800~1500자, 소제목(■) 활용.\n"
+                "아래 형식으로만 출력하세요.\n"
+                "제목: (한 줄 제목)\n태그: 태그1, 태그2 (최대 8개)\n본문:\n(본문 전체)\n\n"
+                f"주제: {topic}"
+            )
+            res = call_openai_chat(message=prompt)
+            if not res.ok:
+                return {"ok": False, "error": res.error_code or "생성 실패"}
+            text = res.text.strip()
+            title, tags, body = topic, [], text
+            mt = re.search(r"제목\s*[:：]\s*(.+)", text)
+            if mt:
+                title = mt.group(1).strip()
+            mg = re.search(r"태그\s*[:：]\s*(.+)", text)
+            if mg:
+                tags = [t.strip().lstrip("#") for t in re.split(r"[,，]", mg.group(1)) if t.strip()][:8]
+            mb = re.search(r"본문\s*[:：]\s*\n?(.+)", text, re.S)
+            if mb:
+                body = mb.group(1).strip()
+            return {"ok": True, "title": title, "body": body, "tags": tags}
+
+        if name == "list_blog_drafts":
+            drafts_dir = _ROOT / "data" / "blog_drafts"
+            if not drafts_dir.exists():
+                return {"ok": True, "drafts": []}
+            drafts = []
+            for f in sorted(drafts_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:20]:
+                try:
+                    d = json.loads(f.read_text(encoding="utf-8"))
+                    drafts.append({"id": f.stem, "title": d.get("title", ""), "created_at": d.get("created_at", "")})
+                except Exception:  # noqa: S110
+                    pass
+            return {"ok": True, "count": len(drafts), "drafts": drafts}
+
+        return {"ok": False, "error": f"알 수 없는 도구: {name}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
+
+
+def _sse_blog(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _run_blog_claude(messages: list, confirmed: bool):
+    import anthropic
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        yield _sse_blog("error", {"message": "ANTHROPIC_API_KEY 미설정"})
+        return
+
+    client = anthropic.Anthropic(api_key=api_key)
+    tools = []
+    for t in _blog_tool_defs():
+        if not confirmed and t["name"] in _BLOG_WRITE_TOOLS:
+            continue
+        schema: dict = {"type": "object", "properties": t["params"]}
+        if "required" in t:
+            schema["required"] = t["required"]
+        tools.append(anthropic.types.ToolParam(name=t["name"], description=t["description"], input_schema=schema))
+
+    history = list(messages)
+    step = 0
+    while True:
+        res = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            system=_BLOG_SYSTEM_PROMPT,
+            tools=tools,
+            messages=history,
+        )
+        for b in res.content:
+            if b.type == "text" and b.text:
+                yield _sse_blog("text", {"text": b.text})
+
+        if res.stop_reason != "tool_use":
+            break
+
+        tool_results = []
+        for b in res.content:
+            if b.type != "tool_use":
+                continue
+            is_write = b.name in _BLOG_WRITE_TOOLS
+            if is_write and not confirmed:
+                yield _sse_blog(
+                    "confirm_required",
+                    {
+                        "tool": b.name,
+                        "inputs": b.input,
+                        "message": "블로그 발행에 승인이 필요합니다. confirmed=true로 재요청하세요.",
+                    },
+                )
+                return
+            step += 1
+            yield _sse_blog("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
+            result = _run_blog_tool(b.name, dict(b.input), confirmed)
+            yield _sse_blog(
+                "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
+            )
+            tool_results.append(
+                {"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)}
+            )
+
+        history.append({"role": "assistant", "content": res.content})
+        history.append({"role": "user", "content": tool_results})
+
+    yield _sse_blog("done", {"steps": step})
+
+
+class BlogChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class BlogChatRequest(BaseModel):
+    messages: list[BlogChatMessage]
+    confirmed: bool = False
+
+
+@naver_blog_router.post("/chat")
+def api_blog_chat(body: BlogChatRequest, user: dict = Depends(require_role("admin", "owner"))):
+    """자연어 명령 → Claude tool_use → 블로그 글쓰기/초안 → SSE."""
+    messages = [{"role": m.role, "content": m.content} for m in body.messages]
+
+    def generate():
+        try:
+            yield from _run_blog_claude(messages, body.confirmed)
+        except Exception as e:
+            yield _sse_blog("error", {"message": str(e)})
+
+    log_event(
+        "NAVER_BLOG_CHAT",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"msgs={len(messages)} confirmed={body.confirmed}",
+    )
+    return StreamingResponse(
+        generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )

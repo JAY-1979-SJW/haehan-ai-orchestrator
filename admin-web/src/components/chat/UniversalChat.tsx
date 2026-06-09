@@ -1,12 +1,13 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useChatStream } from "./useChatStream";
-import { CHAT_PRESETS, ChatChip } from "./chatPresets";
+import { CHAT_PRESETS, ChatChip, detectActions } from "./chatPresets";
 
 interface Msg {
   role: "user" | "ai" | "system";
   text: string;
   streaming?: boolean;
+  actions?: ChatChip[];
 }
 
 interface Props {
@@ -14,6 +15,22 @@ interface Props {
   presetChips?: ChatChip[];
   title?: string;
   className?: string;
+}
+
+// domain → FastAPI 채팅 엔드포인트 매핑
+function chatEndpoint(domain: string): string {
+  if (domain === "cafe")        return "/api/naver/cafe/chat";
+  if (domain === "blog")        return "/api/naver/blog/chat";
+  if (domain === "smartstore")  return "/api/smartstore/chat";
+  return "/api/chat";
+}
+
+// domain별 요청 body 포맷 (cafe/blog는 messages[], 나머지는 message 단일 문자열)
+function chatBody(domain: string, prompt: string, sessionId: string, confirmed: boolean): object {
+  if (domain === "cafe" || domain === "blog") {
+    return { messages: [{ role: "user", content: prompt }], confirmed };
+  }
+  return { message: prompt, domain, session_id: sessionId };
 }
 
 export function UniversalChat({ domain = "default", presetChips, title, className = "" }: Props) {
@@ -63,7 +80,7 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
 
     let fullText = "";
     try {
-      await stream("/api/chat", { message: prompt, domain, session_id: sessionId.current }, (event, data) => {
+      await stream(chatEndpoint(domain), chatBody(domain, prompt, sessionId.current, false), (event, data) => {
         if (event === "text") {
           const chunk = (data as { text: string }).text ?? "";
           fullText += chunk;
@@ -77,7 +94,13 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
           setMsgs(prev => {
             const next = [...prev];
             const last = next[next.length - 1];
-            if (last?.role === "ai") next[next.length - 1] = { ...last, streaming: false };
+            if (last?.role === "ai") {
+              next[next.length - 1] = {
+                ...last,
+                streaming: false,
+                actions: detectActions(last.text),
+              };
+            }
             return next;
           });
         } else if (event === "error") {
@@ -148,7 +171,7 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
           </p>
         )}
         {msgs.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
             <div className={`max-w-[85%] px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
               m.role === "user"
                 ? "bg-[#F97316] text-white rounded-br-sm"
@@ -159,6 +182,17 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
                 <span className="inline-block w-1.5 h-3.5 bg-[#9CA3AF] ml-0.5 animate-pulse rounded-sm" />
               )}
             </div>
+            {/* B. 후속 액션 버튼 */}
+            {m.role === "ai" && !m.streaming && m.actions && m.actions.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">
+                {m.actions.map((a) => (
+                  <button key={a.label} onClick={() => send(a.prompt)} disabled={running}
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors disabled:opacity-40">
+                    {a.label} →
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         <div ref={bottomRef} />

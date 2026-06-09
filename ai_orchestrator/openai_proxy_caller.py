@@ -23,7 +23,7 @@ logger = logging.getLogger("haehan_openai_proxy")
 
 
 DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4o"
 DEFAULT_MAX_TOKENS = 400
 DEFAULT_TIMEOUT_SEC = 30
 MAX_INPUT_CHARS = 8000
@@ -93,9 +93,9 @@ def call_openai_chat(
         "Accept": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    request = urllib.request.Request(
+    request = urllib.request.Request(  # noqa: S310
         _api_url,
-        data=body,  # noqa: S310 — 상수 OpenAI API URL
+        data=body,
         headers=headers,
         method="POST",
     )
