@@ -5,6 +5,30 @@
 
 ---
 
+# 기존 구현 확인 의무 (위반 = 중복 구현 금지)
+
+## 자동화·수집·사이트 작업 전 필수 실행
+
+사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
+
+```bash
+python scripts/ops/capability_check.py <도메인>
+# 예시
+python scripts/ops/capability_check.py cafe
+python scripts/ops/capability_check.py smartstore
+python scripts/ops/capability_check.py eum
+python scripts/ops/capability_check.py naver mail
+```
+
+출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:
+- **기존 것을 사용한다** — 새로 짜지 않는다
+- API가 있으면 API 호출, Python 함수가 있으면 import해서 사용
+- 없을 때만 신규 작성 허용
+
+**CDP 직접 조작(websocket, JS 실행)은 기존 구현이 전혀 없을 때의 최후 수단이다.**
+
+---
+
 # 배포 운영규칙
 
 ## 로컬 Docker 없음 — 로컬 Docker CLI 호출 금지

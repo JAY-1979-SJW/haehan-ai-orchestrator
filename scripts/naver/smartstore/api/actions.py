@@ -4,6 +4,7 @@ The module is intentionally browser-light.  It builds a static baseline from
 the SmartStore modules already present in the repo, records dry-run plans, and
 keeps every state-changing operation behind an explicit confirmation token.
 """
+
 from __future__ import annotations
 
 import json
@@ -145,10 +146,26 @@ APPROVAL_ACTIONS = [
     },
     {
         "action_id": "review.reply.send",
-        "label": "send SmartStore review reply",
-        "module": "scripts.naver.automation.review_automation.ReviewAutoResponder",
+        "label": "send SmartStore review reply (AI auto-draft)",
+        "module": "scripts.naver.smartstore.product.review_reply.ReviewAutoResponder",
         "risk": "approval",
-        "status": "planned",
+        "status": "implemented",
+        "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
+    },
+    {
+        "action_id": "order.shipping.process",
+        "label": "process order shipping (input tracking number)",
+        "module": "scripts.naver.smartstore.product.order_shipping.OrderShippingProcessor",
+        "risk": "approval",
+        "status": "implemented",
+        "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
+    },
+    {
+        "action_id": "product.delete",
+        "label": "delete product(s) from smartstore",
+        "module": "scripts.naver.smartstore.product.product_delete.ProductDeleter",
+        "risk": "approval",
+        "status": "implemented",
         "requires": ["--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}"],
     },
 ]

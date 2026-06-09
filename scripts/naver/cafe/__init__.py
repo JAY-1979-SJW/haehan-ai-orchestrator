@@ -1,21 +1,52 @@
 """네이버 카페 자동화 패키지.
 
-NaverCafe 클래스: 기존 scripts/naver/cafe.py와 동일한 인터페이스 (패키지 전환 호환).
-write_post / confirm_publish: 새 글쓰기 자동화 (승인 게이트 포함).
+## 기능 목록 (새 작업 전 여기를 먼저 확인)
+
+### 수집 (collection/)
+- collect_articles(page, cafe_url, days, max_detail, keyword)
+    → 카페 게시글 전수 수집 또는 키워드 검색 수집
+    → 저장: data/cafe/raw_articles_*.json  (keyword 있으면 keyword_{slug}_*.json)
+- get_my_cafes(page)          → 내 가입 카페 목록
+- save_my_cafes(cafes)        → data/cafe/my_cafes.json 저장
+
+### 분류/분석 (analysis/)
+- run_pipeline(input_path)    → 3단계 분류 (규칙→형태소→TF-IDF) → classified_*.json
+- organize(input_path)        → 군집화·중복제거·KB 구조화 → organized_kb_*.json
+- analyze_posts(posts, ctx)   → AI 트렌드·수익기회 분석
+
+### 글쓰기 (write/)
+- write_post(page, cafe_url, board_name, title, body, ...)
+- confirm_publish(page)
+
+### API 엔드포인트 (ai_orchestrator/connectors/naver_cafe_router.py)
+- POST /naver-cafe/collect            (cafe_url, days, max_detail, keyword)
+- POST /naver-cafe/collect-my-cafes
+- POST /naver-cafe/ai-analyze         (category, days, max_posts)
+- GET  /naver-cafe/articles           (limit, offset, category)
+- GET  /naver-cafe/summary
+- GET  /naver-cafe/kb
+- GET  /naver-cafe/report
+
+### 클래스 (하위 호환)
+- NaverCafe: open_my_cafes / list_posts / read_post / write_post
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
+from scripts.community.analyzer import analyze_posts
 from scripts.logger import get_logger
-from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
-from .writer import write_post, confirm_publish
+from .analysis.organizer import organize
+from .analysis.pipeline import run_pipeline
+from .collection.collector import collect_articles
+from .collection.explorer import get_my_cafes, save_my_cafes
+from .writer import confirm_publish, write_post
 
 _log = get_logger(__name__)
 
@@ -68,13 +99,18 @@ class NaverCafe:
     def list_posts(self, cafe_url: str, board_no: int | str = "", limit: int = 30) -> list[dict]:
         if not self._ensure_login():
             return []
-        url = cafe_url if not board_no else f"{cafe_url}?iframe_url=/ArticleList.nhn?search.clubid=&search.menuid={board_no}"
+        url = (
+            cafe_url
+            if not board_no
+            else f"{cafe_url}?iframe_url=/ArticleList.nhn?search.clubid=&search.menuid={board_no}"
+        )
         self.page.goto(url, timeout=20000, wait_until="domcontentloaded")
         time.sleep(2.5)
         for f in self.page.frames:
             if "ArticleList" in f.url or "cafe.naver.com" in f.url:
                 try:
-                    posts = f.evaluate("""
+                    posts = f.evaluate(
+                        """
                     (limit) => {
                         const out = [];
                         document.querySelectorAll('.article-board tbody tr, .board-list li').forEach((row, i) => {
@@ -87,7 +123,9 @@ class NaverCafe:
                         });
                         return out;
                     }
-                    """, limit)
+                    """,
+                        limit,
+                    )
                     if posts:
                         return posts
                 except Exception:
@@ -115,9 +153,16 @@ class NaverCafe:
                     continue
         return {"error": "iframe_not_found"}
 
-    def write_post(self, cafe_url: str, board_name: str, title: str, body: str,
-                   tags: list[str] | None = None, members_only: bool = False,
-                   require_approval: bool = True) -> dict:
+    def write_post(
+        self,
+        cafe_url: str,
+        board_name: str,
+        title: str,
+        body: str,
+        tags: list[str] | None = None,
+        members_only: bool = False,
+        require_approval: bool = True,
+    ) -> dict:
         """카페 글쓰기 (새 writer 위임)."""
         return write_post(
             self.page,
@@ -131,4 +176,18 @@ class NaverCafe:
         )
 
 
-__all__ = ["NaverCafe", "write_post", "confirm_publish"]
+__all__ = [  # noqa: RUF022
+    # 수집
+    "collect_articles",
+    "get_my_cafes",
+    "save_my_cafes",
+    # 분석
+    "run_pipeline",
+    "organize",
+    "analyze_posts",
+    # 글쓰기
+    "write_post",
+    "confirm_publish",
+    # 클래스 (하위 호환)
+    "NaverCafe",
+]

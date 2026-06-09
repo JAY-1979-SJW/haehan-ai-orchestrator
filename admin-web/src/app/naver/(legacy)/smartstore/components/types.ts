@@ -14,9 +14,11 @@ export type AiBlock =
   | { type: "done";    steps: number }
   | { type: "error";   message: string };
 
+export type ActionChip = { label: string; prompt: string };
+
 export type Message =
   | { role: "user";      text: string }
-  | { role: "assistant"; blocks: AiBlock[]; streaming: boolean };
+  | { role: "assistant"; blocks: AiBlock[]; streaming: boolean; actions?: ActionChip[] };
 
 // ── Anthropic MessageParam 호환 타입 ─────────────────────────────────────────
 export type ChatMessage = { role: "user" | "assistant"; content: string };
