@@ -44,7 +44,6 @@ def run_scrape(
 
                 is_new = upsert_post(conn, post_dict)
                 upsert_images(conn, post.log_no, post.images)
-                conn.connection if hasattr(conn, "connection") else None
 
                 result.total += 1
                 if is_new:
