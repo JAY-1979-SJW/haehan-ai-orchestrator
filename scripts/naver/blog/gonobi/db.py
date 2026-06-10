@@ -139,6 +139,26 @@ def get_post(conn: sqlite3.Connection, log_no: str) -> dict | None:
     return d
 
 
+def reclassify_untagged(conn: sqlite3.Connection, limit: int = 100) -> int:
+    """our_category가 비어있는 포스트를 키워드 규칙으로 재분류. 업데이트 건수 반환."""
+    from .classifier import classify_post
+
+    rows = conn.execute(
+        "SELECT log_no, title, body FROM gonobi_posts WHERE our_category='' LIMIT ?",
+        (limit,),
+    ).fetchall()
+    updated = 0
+    for row in rows:
+        cat = classify_post(row["title"], row["body"])
+        conn.execute(
+            "UPDATE gonobi_posts SET our_category=? WHERE log_no=?",
+            (cat, row["log_no"]),
+        )
+        updated += 1
+    conn.commit()
+    return updated
+
+
 def count_posts(conn: sqlite3.Connection) -> dict:
     total = conn.execute("SELECT COUNT(*) FROM gonobi_posts").fetchone()[0]
     by_cat = conn.execute("SELECT our_category, COUNT(*) as cnt FROM gonobi_posts GROUP BY our_category").fetchall()

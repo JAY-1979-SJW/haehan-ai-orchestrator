@@ -119,25 +119,12 @@ async def get_stats():
 
 @gonobi_router.post("/classify")
 async def reclassify(limit: int = Query(100, description="재분류할 미분류 포스트 수")):
-    """our_category가 비어있는 포스트 AI 재분류."""
+    """our_category가 비어있는 포스트 키워드 재분류."""
     try:
-        from scripts.naver.blog.gonobi.classifier import classify_post
-        from scripts.naver.blog.gonobi.db import open_db
+        from scripts.naver.blog.gonobi.db import open_db, reclassify_untagged
 
-        updated = 0
         with open_db() as conn:
-            rows = conn.execute(
-                "SELECT log_no, title, body FROM gonobi_posts WHERE our_category='' LIMIT ?",
-                (limit,),
-            ).fetchall()
-            for row in rows:
-                cat = classify_post(row["title"], row["body"])
-                conn.execute(
-                    "UPDATE gonobi_posts SET our_category=? WHERE log_no=?",
-                    (cat, row["log_no"]),
-                )
-                updated += 1
-
+            updated = reclassify_untagged(conn, limit=limit)
         return {"updated": updated}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
