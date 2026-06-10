@@ -189,16 +189,7 @@ def iter_all_posts(
                 yield post
                 time.sleep(delay)
 
-            # 다음 페이지 존재 여부
-            if (
-                f"currentPage={page + 1}"
-                not in session.get(
-                    POST_LIST_URL,
-                    params={"blogId": BLOG_ID, "categoryNo": cat_no, "currentPage": page + 1},
-                    timeout=10,
-                ).text
-            ):
-                break
+            # 다음 페이지: 빈 결과가 올 때까지 계속 (HTML에 링크 없어도 데이터 존재)
             page += 1
-            if page > 20:
+            if page > 100:
                 break
