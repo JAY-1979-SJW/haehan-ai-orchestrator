@@ -124,12 +124,14 @@ def _fetch_post_detail(session: requests.Session, log_no: str) -> dict:
             body = el.get_text(separator="\n", strip=True)[:3000]
             break
 
-    # 이미지
+    # 이미지 (원본 URL — ?type=... 파라미터 제거)
     images: list[str] = []
     for img in soup.select("img[src]"):
         src = img.get("src", "")
         if "postfiles" in src or "blogfiles" in src or "mblogthumb" in src:
-            images.append(src)
+            src = src.split("?")[0]  # ?type=w80_blur 등 제거 → 원본
+            if src not in images:
+                images.append(src)
 
     # 태그
     tags = [t.get_text(strip=True) for t in soup.select(".post_tag a, .se-hashtag")]
