@@ -57,6 +57,15 @@ async def lifespan(app: FastAPI):
         community_task = None
         logger.warning("커뮤니티 스케줄러 시작 실패 (무시): %s", e)
 
+    # gonobi 블로그 주기적 수집 스케줄러
+    try:
+        from .connectors.gonobi_scheduler import gonobi_schedule_loop
+
+        gonobi_task = asyncio.create_task(gonobi_schedule_loop())
+    except Exception as e:
+        gonobi_task = None
+        logger.warning("gonobi 스케줄러 시작 실패 (무시): %s", e)
+
     # CDP 팝업 백그라운드 폴러 시작 (CDP 미연결 시 자동 재시도)
     try:
         import pathlib
@@ -83,6 +92,12 @@ async def lifespan(app: FastAPI):
             community_task.cancel()
             try:
                 await community_task
+            except asyncio.CancelledError:
+                pass
+        if gonobi_task:
+            gonobi_task.cancel()
+            try:
+                await gonobi_task
             except asyncio.CancelledError:
                 pass
         if poller:
