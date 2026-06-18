@@ -37,9 +37,15 @@ def test_blog_gpt_entrypoint_replaces_claude():
 # ── 2) 도구 정의가 OpenAI function 포맷인지 ──────────────────────
 
 
-@pytest.mark.parametrize("mod,fn", [(CAFE, "_to_gpt_tools_cafe"), (BLOG, "_to_gpt_tools_blog")])
-def test_tools_are_openai_function_format(mod, fn):
-    tools = getattr(_mod(mod), fn)(confirmed=True)
+@pytest.mark.parametrize("domain", ["cafe", "blog", "smartstore"])
+def test_tools_are_openai_function_format(domain):
+    # 도구 정의는 이제 중앙 레지스트리(tool_registry)에서 OpenAI 포맷으로 제공.
+    _mod(CAFE)  # 라우터 import → 레지스트리 등록 트리거
+    _mod(BLOG)
+    importlib.import_module("ai_orchestrator.connectors.smartstore.chat")
+    from ai_orchestrator.connectors import tool_registry as TR
+
+    tools = TR.openai_tools_for(domain, confirmed=True)
     assert tools, "도구가 비어있으면 안 됨"
     for t in tools:
         assert t["type"] == "function"
@@ -52,9 +58,11 @@ def test_tools_are_openai_function_format(mod, fn):
 
 
 def test_cafe_write_tool_hidden_until_confirmed():
-    m = _mod(CAFE)
-    names_unconf = {t["function"]["name"] for t in m._to_gpt_tools_cafe(False)}
-    names_conf = {t["function"]["name"] for t in m._to_gpt_tools_cafe(True)}
+    _mod(CAFE)  # 레지스트리 등록 트리거
+    from ai_orchestrator.connectors import tool_registry as TR
+
+    names_unconf = {t["function"]["name"] for t in TR.openai_tools_for("cafe", confirmed=False)}
+    names_conf = {t["function"]["name"] for t in TR.openai_tools_for("cafe", confirmed=True)}
     assert "write_cafe_post" not in names_unconf  # 미승인 시 발행도구 숨김
     assert "write_cafe_post" in names_conf
 

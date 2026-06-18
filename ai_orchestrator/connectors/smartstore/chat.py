@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from ...app_llm import APP_LLM_MODEL
 from ...audit_logger import log_event
 from ...auth import require_role
+from ..tool_registry import register, to_openai_tools
 from ._helpers import ROOT
 
 _TEMP_IMAGE_DIR = ROOT / "data" / "temp_images"
@@ -178,18 +179,8 @@ def _tool_defs() -> list[dict]:
     ]
 
 
-def _to_gpt_tools(confirmed: bool) -> list:
-    result = []
-    for t in _tool_defs():
-        if not confirmed and t["name"] in WRITE_TOOLS:
-            continue
-        params: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            params["required"] = t["required"]
-        result.append(
-            {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": params}}
-        )
-    return result
+# 스마트스토어 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("smartstore", _tool_defs, WRITE_TOOLS)
 
 
 # ── 로컬 도구 실행 ─────────────────────────────────────────────────────────────
@@ -485,7 +476,7 @@ def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None, im
         return
 
     client = OpenAI(api_key=api_key)
-    tools = _to_gpt_tools(confirmed)
+    tools = to_openai_tools(_tool_defs(), WRITE_TOOLS, confirmed)
     history = [{"role": "system", "content": SYSTEM_PROMPT}, *messages]
     step = 0
 
