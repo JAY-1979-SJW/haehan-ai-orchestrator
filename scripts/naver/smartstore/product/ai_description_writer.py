@@ -1,5 +1,9 @@
 """스마트스토어 상품 상세설명 AI 자동 작성 모듈 (L3 Connector).
 
+⚠ [LLM 경계] LEGACY(Claude 기반). 앱 표준은 gpt_description_writer(GPT) 이며
+활성 도구(generate_description)·등록 폼은 GPT 를 사용한다. 본 모듈은 활성 호출
+경로에서 사용되지 않는다(데드, 보존만). 신규 코드에서 import 금지.
+
 ────────────────────────────────────────────────────────────────────
 표준 구현방식 v2 — 신뢰 4대 기둥 기반
 ────────────────────────────────────────────────────────────────────
@@ -40,6 +44,7 @@
 
 ────────────────────────────────────────────────────────────────────
 """
+
 from __future__ import annotations
 
 import json
@@ -49,8 +54,8 @@ import time
 import urllib.request
 from pathlib import Path
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
@@ -60,28 +65,27 @@ ROOT = Path(__file__).resolve().parents[4]
 # 1. 입력 데이터 표준 v2
 # ══════════════════════════════════════════════════════════════════════════════
 
-REQUIRED_FIELDS     = ["name", "category", "price", "stock"]
-RECOMMENDED_FIELDS  = ["features", "keywords", "target", "brand"]
+REQUIRED_FIELDS = ["name", "category", "price", "stock"]
+RECOMMENDED_FIELDS = ["features", "keywords", "target", "brand"]
 
 TRUST_FIELDS = {
     # AS·품질
-    "as_warranty":          "보증 기간 (예: 구매일로부터 1년)",
-    "as_contact":           "AS 연락처 또는 방법",
-    "durability":           "내구성 설명 (소재, 테스트 기준 등)",
-    "quality_cert":         "품질 인증 (KC, CE, ISO 등)",
-    "certifications":       "인증 목록 (list)",
+    "as_warranty": "보증 기간 (예: 구매일로부터 1년)",
+    "as_contact": "AS 연락처 또는 방법",
+    "durability": "내구성 설명 (소재, 테스트 기준 등)",
+    "quality_cert": "품질 인증 (KC, CE, ISO 등)",
+    "certifications": "인증 목록 (list)",
     # 가격
-    "price_guarantee":      "최저가 보장 정책",
-    "price_research":       "가격 조사 출처/방법 (어떻게 최저가를 확인했는지)",
-    "lowest_price_reason":  "왜 저렴한가 (직수입/대량구매/총판계약 등)",
+    "price_guarantee": "최저가 보장 정책",
+    "price_research": "가격 조사 출처/방법 (어떻게 최저가를 확인했는지)",
+    "lowest_price_reason": "왜 저렴한가 (직수입/대량구매/총판계약 등)",
     # 원산지·유통
-    "origin":               "원산지 (예: 중국, 한국, 독일)",
-    "distributor":          "유통 경로 (예: 전국 공식 총판, 정식 수입사)",
+    "origin": "원산지 (예: 중국, 한국, 독일)",
+    "distributor": "유통 경로 (예: 전국 공식 총판, 정식 수입사)",
     "distribution_channel": "공급 경로 설명 (공장→총판→당사 등)",
 }
 
-OPTIONAL_FIELDS = ["specs", "notice", "howto", "delivery",
-                   "original_price", "self_made", "style"]
+OPTIONAL_FIELDS = ["specs", "notice", "howto", "delivery", "original_price", "self_made", "style"]
 
 DEFAULT_DELIVERY = (
     "평일 오후 2시 이전 주문 → 당일 출고 (주말·공휴일 제외) · "
@@ -98,16 +102,15 @@ def validate_product_data(data: dict) -> list[str]:
         if not data.get(f):
             errors.append(f"[필수] {f} 누락")
     if data.get("name") and len(str(data["name"])) > 100:
-        errors.append(f"[오류] name 100자 초과")
+        errors.append("[오류] name 100자 초과")
     if data.get("price") and int(data["price"]) < 10:
-        errors.append(f"[오류] price 최소 10원")
+        errors.append("[오류] price 최소 10원")
     # 권장 필드 경고
     missing_rec = [f for f in RECOMMENDED_FIELDS if not data.get(f)]
     if missing_rec:
         errors.append(f"[권장] 누락 시 품질 저하: {missing_rec}")
     # 신뢰 필드 경고
-    trust_missing = [k for k in ["as_warranty", "origin", "price_guarantee",
-                                  "distributor"] if not data.get(k)]
+    trust_missing = [k for k in ["as_warranty", "origin", "price_guarantee", "distributor"] if not data.get(k)]
     if trust_missing:
         errors.append(f"[권장] 신뢰 정보 누락 (상세페이지 설득력 저하): {trust_missing}")
     return errors
@@ -117,21 +120,21 @@ def build_trust_summary(data: dict) -> dict:
     """신뢰 4대 기둥 요약 dict 생성."""
     return {
         "price": {
-            "guarantee":  data.get("price_guarantee", "동일 상품 최저가 보장"),
-            "research":   data.get("price_research", ""),
-            "reason":     data.get("lowest_price_reason", ""),
+            "guarantee": data.get("price_guarantee", "동일 상품 최저가 보장"),
+            "research": data.get("price_research", ""),
+            "reason": data.get("lowest_price_reason", ""),
         },
         "quality": {
-            "warranty":   data.get("as_warranty", ""),
-            "contact":    data.get("as_contact", ""),
+            "warranty": data.get("as_warranty", ""),
+            "contact": data.get("as_contact", ""),
             "durability": data.get("durability", ""),
-            "cert":       data.get("quality_cert", ""),
-            "certs":      data.get("certifications", []),
+            "cert": data.get("quality_cert", ""),
+            "certs": data.get("certifications", []),
         },
         "origin": {
-            "country":    data.get("origin", ""),
+            "country": data.get("origin", ""),
             "distributor": data.get("distributor", ""),
-            "channel":    data.get("distribution_channel", ""),
+            "channel": data.get("distribution_channel", ""),
         },
     }
 
@@ -408,16 +411,16 @@ CSS는 외부 로드됩니다. <div class="pd">로 시작하는 순수 HTML만 �
 
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 QUALITY_MODEL = "claude-sonnet-4-6"
-API_ENDPOINT  = "https://api.anthropic.com/v1/messages"
+API_ENDPOINT = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VER = "2023-06-01"
-MAX_TOKENS    = 4000
+MAX_TOKENS = 4000
 
 
 class AIDescriptionWriter:
     """신뢰 4대 기둥 기반 상세설명 AI 자동 작성기."""
 
     def __init__(self, page=None, model: str = DEFAULT_MODEL):
-        self.page  = page
+        self.page = page
         self.model = model
         self._api_key: str | None = None
 
@@ -426,31 +429,38 @@ class AIDescriptionWriter:
     def generate(self, product: dict) -> dict:
         """표준 프롬프트로 HTML 상세설명 생성."""
         errs = validate_product_data(product)
-        hard  = [e for e in errs if e.startswith("[필수]") or e.startswith("[오류]")]
+        hard = [e for e in errs if e.startswith("[필수]") or e.startswith("[오류]")]
         warns = [e for e in errs if not e.startswith("[필수]") and not e.startswith("[오류]")]
         if hard:
             return {"ok": False, "errors": hard}
 
         api_key = self._get_api_key()
         if not api_key:
-            return {"ok": False, "error": "ANTHROPIC_API_KEY 미설정",
-                    "hint": ".env 파일에 ANTHROPIC_API_KEY=sk-ant-... 추가 필요"}
+            return {
+                "ok": False,
+                "error": "ANTHROPIC_API_KEY 미설정",
+                "hint": ".env 파일에 ANTHROPIC_API_KEY=sk-ant-... 추가 필요",
+            }
 
         system = SYSTEM_PROMPT + "\n\n" + FEW_SHOT_EXAMPLE
-        user   = self._build_user_prompt(product)
-        r      = self._call_claude(api_key, system, user)
+        user = self._build_user_prompt(product)
+        r = self._call_claude(api_key, system, user)
         if not r["ok"]:
             return r
 
         html = self._finalize_html(r["text"])
-        log_critical("OTHER", "AI 상세설명 생성 v2",
-                     product=product.get("name", "")[:30],
-                     model=self.model, chars=len(html), mode="ai_description_v2")
+        log_critical(
+            "OTHER",
+            "AI 상세설명 생성 v2",
+            product=product.get("name", "")[:30],
+            model=self.model,
+            chars=len(html),
+            mode="ai_description_v2",
+        )
         _log.info("[ai-desc] 생성 완료: %d자 / 경고: %s", len(html), warns)
         return {"ok": True, "html": html, "model": self.model, "warnings": warns}
 
-    def write(self, product: dict,
-              image_paths: list[str] | None = None) -> dict:
+    def write(self, product: dict, image_paths: list[str] | None = None) -> dict:
         """생성 + SmartEditor 자동 입력."""
         gen = self.generate(product)
         if not gen["ok"]:
@@ -458,16 +468,15 @@ class AIDescriptionWriter:
 
         html = gen["html"]
         if self.page is None:
-            return {"ok": True, "html": html, "inserted": False,
-                    "note": "page 없음 — HTML만 반환"}
+            return {"ok": True, "html": html, "inserted": False, "note": "page 없음 — HTML만 반환"}
 
         from scripts.naver.smartstore.product.description_editor import SmartEditorSession
+
         ed = SmartEditorSession(self.page)
 
         if "#/editor" not in self.page.url:
             if not ed.open(from_register_form=True):
-                return {"ok": False, "html": html, "inserted": False,
-                        "error": "SmartEditor 진입 실패"}
+                return {"ok": False, "html": html, "inserted": False, "error": "SmartEditor 진입 실패"}
             time.sleep(2)
 
         r_html = ed.block.insert_html(html)
@@ -476,12 +485,17 @@ class AIDescriptionWriter:
             ed.write_text(self._html_to_plain(html))
 
         img_results = []
-        for path in (image_paths or []):
+        for path in image_paths or []:
             img_results.append({"path": path, **ed.block.insert_image_file(path)})
 
-        return {"ok": True, "html": html, "inserted": True,
-                "images": img_results, "model": gen["model"],
-                "warnings": gen.get("warnings", [])}
+        return {
+            "ok": True,
+            "html": html,
+            "inserted": True,
+            "images": img_results,
+            "model": gen["model"],
+            "warnings": gen.get("warnings", []),
+        }
 
     def preview(self, product: dict) -> str:
         """HTML 미리보기 파일 저장 → 경로 반환."""
@@ -490,9 +504,11 @@ class AIDescriptionWriter:
             return ""
         out = ROOT / "data" / "smartstore" / "description_preview.html"
         out.parent.mkdir(parents=True, exist_ok=True)
-        full = (f"<!DOCTYPE html><html lang='ko'><head>"
-                f"<meta charset='utf-8'><meta name='viewport' content='width=device-width'>"
-                f"{CSS_DESIGN_SYSTEM}</head><body>{gen['html']}</body></html>")
+        full = (
+            f"<!DOCTYPE html><html lang='ko'><head>"
+            f"<meta charset='utf-8'><meta name='viewport' content='width=device-width'>"
+            f"{CSS_DESIGN_SYSTEM}</head><body>{gen['html']}</body></html>"
+        )
         out.write_text(full, encoding="utf-8")
         _log.info("[ai-desc] 미리보기: %s", out)
         return str(out)
@@ -504,7 +520,7 @@ class AIDescriptionWriter:
             if not items:
                 return f"{prefix}(미제공)"
             if isinstance(items, list):
-                return "\n".join(f"{prefix}{i+1}. {v}" for i, v in enumerate(items))
+                return "\n".join(f"{prefix}{i + 1}. {v}" for i, v in enumerate(items))
             return f"{prefix}{items}"
 
         def _dict(d, prefix="  "):
@@ -559,7 +575,8 @@ class AIDescriptionWriter:
             req = urllib.request.Request(
                 API_ENDPOINT,
                 data=json.dumps(payload).encode("utf-8"),
-                headers=headers, method="POST",
+                headers=headers,
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=60) as resp:
                 data = json.loads(resp.read())
@@ -575,7 +592,7 @@ class AIDescriptionWriter:
         text = re.sub(r"```html\s*", "", raw)
         text = re.sub(r"```\s*", "", text).strip()
         if '<div class="pd"' in text and not text.startswith('<div class="pd"'):
-            text = text[text.index('<div class="pd"'):]
+            text = text[text.index('<div class="pd"') :]
         elif "<div" not in text:
             text = f'<div class="pd">{text}</div>'
         return CSS_DESIGN_SYSTEM + "\n" + text
@@ -604,17 +621,15 @@ class AIDescriptionWriter:
 # 편의 함수
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def generate_description(product: dict, model: str = DEFAULT_MODEL) -> dict:
     """page 없이 HTML만 생성."""
     return AIDescriptionWriter(page=None, model=model).generate(product)
 
 
-def write_description(page, product: dict,
-                      image_paths: list[str] | None = None,
-                      model: str = DEFAULT_MODEL) -> dict:
+def write_description(page, product: dict, image_paths: list[str] | None = None, model: str = DEFAULT_MODEL) -> dict:
     """SmartEditor 자동 입력 원샷."""
-    return AIDescriptionWriter(page=page, model=model).write(
-        product, image_paths=image_paths)
+    return AIDescriptionWriter(page=page, model=model).write(product, image_paths=image_paths)
 
 
 def preview_description(product: dict, model: str = DEFAULT_MODEL) -> str:

@@ -20,6 +20,7 @@ import re
 import time
 from pathlib import Path
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -30,7 +31,7 @@ _CDP = "http://127.0.0.1:9222"
 _REVIEW_URL = "https://sell.smartstore.naver.com/#/reviews/list"
 _REPLY_API_URL = "https://sell.smartstore.naver.com/#/reviews/list"
 
-_GPT_MODEL = "gpt-4o-mini"  # 앱 표준=GPT
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 _SYSTEM_PROMPT = """당신은 네이버 스마트스토어 셀러입니다.
 고객 리뷰에 대해 진심 어린 감사 인사와 함께 짧고 친근한 답변을 작성합니다.

@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ..app_llm import APP_LLM_MODEL
 from ..audit_logger import log_event
 from ..auth import require_role
 
@@ -501,7 +502,7 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-_GPT_MODEL = "gpt-4o-mini"
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 
 def _to_gpt_tools_cafe(confirmed: bool) -> list:

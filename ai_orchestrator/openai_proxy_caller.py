@@ -19,11 +19,13 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from ai_orchestrator.app_llm import APP_LLM_QUALITY_MODEL
+
 logger = logging.getLogger("haehan_openai_proxy")
 
 
 DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = APP_LLM_QUALITY_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 DEFAULT_MAX_TOKENS = 400
 DEFAULT_TIMEOUT_SEC = 30
 MAX_INPUT_CHARS = 8000
