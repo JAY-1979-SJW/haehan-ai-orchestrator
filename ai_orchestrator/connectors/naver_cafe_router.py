@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from ..app_llm import APP_LLM_MODEL
 from ..audit_logger import log_event
 from ..auth import require_role
+from .tool_registry import register, to_openai_tools
 
 logger = logging.getLogger(__name__)
 
@@ -508,19 +509,8 @@ def _sse(event: str, data: dict) -> str:
 _GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 
-def _to_gpt_tools_cafe(confirmed: bool) -> list:
-    """카페 도구 정의 → OpenAI function-calling 포맷."""
-    result = []
-    for t in _cafe_tool_defs():
-        if not confirmed and t["name"] in _CAFE_WRITE_TOOLS:
-            continue
-        params: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            params["required"] = t["required"]
-        result.append(
-            {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": params}}
-        )
-    return result
+# 카페 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("cafe", _cafe_tool_defs, _CAFE_WRITE_TOOLS)
 
 
 def _run_cafe_gpt(messages: list, confirmed: bool):
@@ -533,7 +523,7 @@ def _run_cafe_gpt(messages: list, confirmed: bool):
         return
 
     client = OpenAI(api_key=api_key)
-    tools = _to_gpt_tools_cafe(confirmed)
+    tools = to_openai_tools(_cafe_tool_defs(), _CAFE_WRITE_TOOLS, confirmed)
     history = [{"role": "system", "content": _CAFE_SYSTEM_PROMPT}, *messages]
     step = 0
 
