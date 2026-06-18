@@ -9,12 +9,11 @@
   - cookie/session 값 응답 금지
   - dry_run=True(기본) 이면 브라우저 자동화 미실행, 작성 정보만 반환
 """
+
 from __future__ import annotations
 
 import logging
 import time
-from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -29,26 +28,28 @@ naver_mail_router = APIRouter(prefix="/naver-mail", tags=["naver-mail"])
 
 # ── 스키마 ────────────────────────────────────────────────────────────────────
 
+
 class MailComposeRequest(BaseModel):
-    to: str                         # 수신인 (콤마 구분 다중)
-    cc: Optional[str] = None
+    to: str  # 수신인 (콤마 구분 다중)
+    cc: str | None = None
     subject: str = ""
     body: str = ""
-    dry_run: bool = True            # True=자동화 미실행, False=실제 브라우저 실행
+    dry_run: bool = True  # True=자동화 미실행, False=실제 브라우저 실행
 
 
 class MailComposeResponse(BaseModel):
     ok: bool
     dry_run: bool
     to: str
-    cc: Optional[str]
+    cc: str | None
     subject: str
-    body_preview: str               # 본문 앞 100자
+    body_preview: str  # 본문 앞 100자
     detail: str = ""
     requires_send_approval: bool = True
 
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
+
 
 @naver_mail_router.post("/compose")
 def api_compose(
@@ -66,7 +67,9 @@ def api_compose(
 
     log_event(
         "NAVER_MAIL_COMPOSE_REQUESTED",
-        task_id="-", actor=user["actor"], role=user["role"],
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
         decision="ok" if req.dry_run else "pending_browser",
         note=f"to={req.to} subject={req.subject[:30]} dry_run={req.dry_run}",
     )
@@ -86,20 +89,27 @@ def api_compose(
     # dry_run=False: 실제 브라우저 자동화
     try:
         from scripts.naver.mail import compose as naver_compose
-        from scripts.web_connector import get_page
-        page = get_page()
-        result = naver_compose(
-            page=page,
-            to=req.to,
-            cc=req.cc,
-            subject=req.subject,
-            body=req.body,
-            send=False,
+        from scripts.web_connector import get_page, run_on_browser_thread
+
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        result = run_on_browser_thread(
+            lambda: naver_compose(
+                page=get_page(),
+                to=req.to,
+                cc=req.cc,
+                subject=req.subject,
+                body=req.body,
+                send=False,
+            ),
+            timeout=180,
         )
         duration_ms = int((time.monotonic() - t0) * 1000)
         log_event(
             "NAVER_MAIL_COMPOSE_DONE",
-            task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
             note=f"to={req.to} chips={result.get('final_chip_count')} duration_ms={duration_ms}",
         )
         return MailComposeResponse(
@@ -109,7 +119,7 @@ def api_compose(
             cc=req.cc,
             subject=req.subject,
             body_preview=body_preview,
-            detail=f"브라우저 작성 완료. 수신인 {result.get('final_chip_count',0)}명. 발송하려면 /send 호출.",
+            detail=f"브라우저 작성 완료. 수신인 {result.get('final_chip_count', 0)}명. 발송하려면 /send 호출.",
             requires_send_approval=True,
         )
     except Exception as e:
@@ -118,7 +128,7 @@ def api_compose(
 
 
 class MailSendRequest(BaseModel):
-    confirmed: bool = False     # 사용자가 UI에서 "발송 확인" 버튼을 눌렀는지 여부
+    confirmed: bool = False  # 사용자가 UI에서 "발송 확인" 버튼을 눌렀는지 여부
 
 
 @naver_mail_router.post("/send")
@@ -139,20 +149,27 @@ def api_send(
 
     log_event(
         "NAVER_MAIL_SEND_REQUESTED",
-        task_id="-", actor=user["actor"], role=user["role"], decision="ok",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
         note="user confirmed send",
     )
 
     try:
         from scripts.naver.mail import send_mail
-        from scripts.web_connector import get_page
-        page = get_page()
-        result = send_mail(page)
+        from scripts.web_connector import get_page, run_on_browser_thread
+
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        result = run_on_browser_thread(lambda: send_mail(get_page()), timeout=120)
         if result.get("success"):
             log_event(
                 "NAVER_MAIL_SEND_SUCCESS",
-                task_id="-", actor=user["actor"], role=user["role"], decision="ok",
-                note=f"recipient={result.get('recipient')} subject={result.get('subject','')[:30]}",
+                task_id="-",
+                actor=user["actor"],
+                role=user["role"],
+                decision="ok",
+                note=f"recipient={result.get('recipient')} subject={result.get('subject', '')[:30]}",
             )
             return {"ok": True, "detail": "발송 완료", **result}
         else:
