@@ -125,10 +125,10 @@ def api_compose(
 
     try:
         from scripts.google.gmail_api import GmailAPI
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        g = GmailAPI(page)
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        g = run_on_browser_thread(lambda: GmailAPI(get_page()), timeout=60)
         # GmailAPI.send는 실제 발송까지 처리하므로 compose 단계(fill only)를 별도 구현
         # 현재는 dry_run=False → compose 후 사용자에게 /send 호출 안내
         return {
@@ -168,11 +168,12 @@ def api_send(
     # GmailAPI는 stateless(브라우저 페이지 재사용) 이므로
     # /compose 후 브라우저에 열린 작성창에서 발송 버튼 클릭
     try:
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        sent = page.evaluate(
-            r"""() => {
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        sent = run_on_browser_thread(
+            lambda: get_page().evaluate(
+                r"""() => {
                 const btns = document.querySelectorAll('[data-tooltip="Send ⌘Enter"], [aria-label*="Send"], button[data-action*="send"]');
                 for (const b of btns) {
                     if (b.offsetParent !== null) { b.click(); return {found: true}; }
@@ -183,6 +184,8 @@ def api_send(
                 if (match) { match.click(); return {found: true, fallback: true}; }
                 return {found: false};
             }"""
+            ),
+            timeout=60,
         )
         if not sent.get("found"):
             raise HTTPException(status_code=400, detail="Gmail 발송 버튼을 찾을 수 없음 — /compose 먼저 실행")
