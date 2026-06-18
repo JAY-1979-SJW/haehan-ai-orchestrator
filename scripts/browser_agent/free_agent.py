@@ -407,12 +407,17 @@ def run_free_agent(
 
 # ── 스마트스토어 전용 도구 핸들러 ──────────────────────────────────────────────
 
-_SS_API = "http://127.0.0.1:8401/api/v1/smartstore"
+# 내부 FastAPI 포트는 환경마다 다르다(로컬 dev=8401, prod 컨테이너=8400).
+# 같은 프로세스가 listen 하는 포트(APP_PORT)로 자기 자신을 호출한다. 하드코딩 금지.
+# (prod 에서 8401 하드코딩 시 call_local_api/web_search/smartstore 도구 전부 연결거부됨)
+_LOCAL_PORT = (os.environ.get("APP_PORT") or "8401").strip() or "8401"
+
+_SS_API = f"http://127.0.0.1:{_LOCAL_PORT}/api/v1/smartstore"
 # 서버 _WEB_UI_PASS(agent_ai_proxy_router.py)와 동일한 환경변수에서 읽어 동기화
 _SS_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
 
 
-_LOCAL_API = "http://127.0.0.1:8401"
+_LOCAL_API = f"http://127.0.0.1:{_LOCAL_PORT}"
 _LOCAL_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
 
 

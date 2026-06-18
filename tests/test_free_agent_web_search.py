@@ -106,3 +106,33 @@ def test_system_prompt_forbids_deferring_to_user():
     # 핵심 행동 계약: 사용자에게 작업을 미루지 말 것
     assert "떠넘기" in sys
     assert "직접 검색하세요" in sys
+
+
+# ── 7) 내부 API 포트 — 하드코딩 금지, APP_PORT 따름 ──────────────
+# prod 컨테이너(8400) vs 로컬 dev(8401) 포트 차이로 call_local_api/web_search 가
+# 연결거부되던 회귀를 방지. _LOCAL_PORT 는 import 시점 평가 → reload 로 검증.
+
+
+def test_local_api_port_follows_app_port(monkeypatch):
+    import importlib
+
+    monkeypatch.setenv("APP_PORT", "8400")  # prod 컨테이너 포트
+    mod = importlib.reload(FA)
+    try:
+        assert mod._LOCAL_PORT == "8400"
+        assert mod._LOCAL_API == "http://127.0.0.1:8400"
+        assert mod._SS_API == "http://127.0.0.1:8400/api/v1/smartstore"
+        # 하드코딩 8401 흔적이 남아있지 않은지
+        assert "8401" not in mod._LOCAL_API
+    finally:
+        monkeypatch.delenv("APP_PORT", raising=False)
+        importlib.reload(mod)  # 모듈 상태 원복
+
+
+def test_local_api_port_fallback_when_unset(monkeypatch):
+    import importlib
+
+    monkeypatch.delenv("APP_PORT", raising=False)  # 미설정 환경
+    mod = importlib.reload(FA)
+    assert mod._LOCAL_PORT == "8401"  # 로컬 dev 기본값
+    assert mod._LOCAL_API == "http://127.0.0.1:8401"
