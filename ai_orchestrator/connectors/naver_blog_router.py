@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.auth import require_role
 from scripts.realtime_audit import emit_event
@@ -435,7 +436,7 @@ def _sse_blog(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-_GPT_MODEL = "gpt-4o-mini"
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 
 def _to_gpt_tools_blog(confirmed: bool) -> list:
