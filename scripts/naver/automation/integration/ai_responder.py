@@ -8,15 +8,15 @@
 
 요구: ANTHROPIC_API_KEY 또는 OPENAI_API_KEY 환경변수
 """
+
 from __future__ import annotations
 
 import json
 import os
 import urllib.request
-from typing import Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -24,7 +24,8 @@ _log = get_logger(__name__)
 class AIResponder:
     """LLM 기반 자동 응답 생성기."""
 
-    def __init__(self, provider: str = "anthropic", model: str | None = None):
+    def __init__(self, provider: str = "openai", model: str | None = None):
+        # 앱 표준=GPT(openai). anthropic 은 명시 지정 시에만(터미널/특수 용도).
         self.provider = provider
         if provider == "anthropic":
             self.api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -37,8 +38,7 @@ class AIResponder:
 
     def _call(self, system: str, user: str, max_tokens: int = 500) -> dict:
         if not self.api_key:
-            return {"ok": False, "error": "no_api_key",
-                    "hint": f"환경변수 {self.provider.upper()}_API_KEY 설정 필요"}
+            return {"ok": False, "error": "no_api_key", "hint": f"환경변수 {self.provider.upper()}_API_KEY 설정 필요"}
 
         if self.provider == "anthropic":
             payload = {
@@ -68,8 +68,10 @@ class AIResponder:
 
         try:
             req = urllib.request.Request(
-                self.endpoint, data=json.dumps(payload).encode("utf-8"),
-                headers=headers, method="POST",
+                self.endpoint,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read())
@@ -93,9 +95,9 @@ class AIResponder:
         user = f"""다음 리뷰에 답변해 주세요.
 
 [리뷰 정보]
-- 작성자: {review.get('author', '고객')}
-- 별점: {review.get('rating', '')}
-- 내용: {review.get('content', '')[:300]}
+- 작성자: {review.get("author", "고객")}
+- 별점: {review.get("rating", "")}
+- 내용: {review.get("content", "")[:300]}
 
 [가이드]
 - 매장명: {store_name}
@@ -105,8 +107,13 @@ class AIResponder:
 """
         r = self._call(system, user, max_tokens=300)
         if r.get("ok"):
-            log_critical("OTHER", f"AI 리뷰 답변 생성: {review.get('author', '')[:20]}",
-                         author=review.get("author"), model=self.model, mode="ai_reply_review")
+            log_critical(
+                "OTHER",
+                f"AI 리뷰 답변 생성: {review.get('author', '')[:20]}",
+                author=review.get("author"),
+                model=self.model,
+                mode="ai_reply_review",
+            )
         return r
 
     # ── 고객 문의 답변 ─────────────────────────────────────────────────
@@ -114,19 +121,16 @@ class AIResponder:
     def reply_to_inquiry(self, inquiry: dict, context: dict | None = None) -> dict:
         """문의 내용으로 답변 초안 생성."""
         context = context or {}
-        system = (
-            "당신은 친절한 스마트스토어 고객 응대 담당자입니다. "
-            "정확하고 간결하게 답변하세요. 200자 이내."
-        )
+        system = "당신은 친절한 스마트스토어 고객 응대 담당자입니다. 정확하고 간결하게 답변하세요. 200자 이내."
         user = f"""고객 문의에 답변해 주세요.
 
 [문의]
-{inquiry.get('content', '')[:500]}
+{inquiry.get("content", "")[:500]}
 
 [배경 정보]
-- 상품: {context.get('product', '')}
-- 배송 정책: {context.get('delivery', '평일 오후 2시까지 주문 당일 발송')}
-- 교환/반품: {context.get('return_policy', '수령 후 7일 이내 가능')}
+- 상품: {context.get("product", "")}
+- 배송 정책: {context.get("delivery", "평일 오후 2시까지 주문 당일 발송")}
+- 교환/반품: {context.get("return_policy", "수령 후 7일 이내 가능")}
 """
         return self._call(system, user, max_tokens=400)
 
@@ -141,19 +145,18 @@ class AIResponder:
         )
         user = f"""상품 상세설명을 작성해 주세요.
 
-상품명: {product.get('name', '')}
-카테고리: {product.get('category', '')}
-브랜드: {product.get('brand', '')}
-모델: {product.get('model_name', '')}
-주요 특징: {product.get('features', '미제공')}
-타겟 고객: {product.get('target', '일반 소비자')}
+상품명: {product.get("name", "")}
+카테고리: {product.get("category", "")}
+브랜드: {product.get("brand", "")}
+모델: {product.get("model_name", "")}
+주요 특징: {product.get("features", "미제공")}
+타겟 고객: {product.get("target", "일반 소비자")}
 """
         return self._call(system, user, max_tokens=800)
 
     # ── 블로그 글 초안 ────────────────────────────────────────────────
 
-    def draft_blog_post(self, topic: str, keywords: list[str] | None = None,
-                         length: str = "medium") -> dict:
+    def draft_blog_post(self, topic: str, keywords: list[str] | None = None, length: str = "medium") -> dict:
         """블로그 글 초안 생성."""
         length_map = {"short": 500, "medium": 1500, "long": 3000}
         max_tok = length_map.get(length, 1500)
