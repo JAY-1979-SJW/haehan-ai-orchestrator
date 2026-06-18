@@ -1,8 +1,12 @@
 """Local AI agent service.
 
+LLM 경계: 앱 표준 실행 = OpenAI(GPT). _run_with_openai_no_mcp 가 기본 경로이며
+claude 모델명이 와도 gpt 로 매핑한다. Claude Code CLI 는 OpenAI 미가용 시 폴백
+(=터미널 Claude Code 경계)에만 쓰인다. 앱 본 기능은 GPT 전용.
+
 Execution flow:
-  1. Run Anthropic SDK without direct cross-app MCP by default.
-  2. Fall back to Claude Code CLI when no SDK provider is available.
+  1. Run OpenAI(GPT) without direct cross-app MCP by default.
+  2. Fall back to Claude Code CLI when no OpenAI provider is available.
   3. Forward cross-app CAD work only through approved CAD bridge API requests.
 
 Security:
