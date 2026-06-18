@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from ai_orchestrator.app_llm import APP_LLM_MODEL
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.auth import require_role
+from ai_orchestrator.connectors.tool_registry import register, to_openai_tools
 from scripts.realtime_audit import emit_event
 
 naver_blog_router = APIRouter(prefix="/naver/blog", tags=["naver-blog"])
@@ -439,19 +440,8 @@ def _sse_blog(event: str, data: dict) -> str:
 _GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 
-def _to_gpt_tools_blog(confirmed: bool) -> list:
-    """블로그 도구 정의 → OpenAI function-calling 포맷."""
-    result = []
-    for t in _blog_tool_defs():
-        if not confirmed and t["name"] in _BLOG_WRITE_TOOLS:
-            continue
-        params: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            params["required"] = t["required"]
-        result.append(
-            {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": params}}
-        )
-    return result
+# 블로그 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("blog", _blog_tool_defs, _BLOG_WRITE_TOOLS)
 
 
 def _run_blog_gpt(messages: list, confirmed: bool):
@@ -464,7 +454,7 @@ def _run_blog_gpt(messages: list, confirmed: bool):
         return
 
     client = OpenAI(api_key=api_key)
-    tools = _to_gpt_tools_blog(confirmed)
+    tools = to_openai_tools(_blog_tool_defs(), _BLOG_WRITE_TOOLS, confirmed)
     history = [{"role": "system", "content": _BLOG_SYSTEM_PROMPT}, *messages]
     step = 0
 
