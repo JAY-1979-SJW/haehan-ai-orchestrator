@@ -57,14 +57,17 @@ def extract(req: ExtractRequest, user: dict = Depends(require_role("admin", "own
     try:
         _ensure_path()
         from scripts.community.universal_extractor import extract_posts
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        result = extract_posts(
-            page,
-            url,
-            max_posts=max(1, min(req.max_posts, 120)),
-            use_gpt=bool(req.use_gpt),
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        result = run_on_browser_thread(
+            lambda: extract_posts(
+                get_page(),
+                url,
+                max_posts=max(1, min(req.max_posts, 120)),
+                use_gpt=bool(req.use_gpt),
+            ),
+            timeout=300,
         )
         log_event(
             "COMMUNITY_EXTRACT",
@@ -141,10 +144,12 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
     if req.url:
         try:
             from scripts.community.universal_extractor import extract_posts
-            from scripts.web_connector import get_page
+            from scripts.web_connector import get_page, run_on_browser_thread
 
-            page = get_page()
-            ex = extract_posts(page, req.url.strip(), max_posts=max(1, min(req.max_posts, 120)))
+            ex = run_on_browser_thread(
+                lambda: extract_posts(get_page(), req.url.strip(), max_posts=max(1, min(req.max_posts, 120))),
+                timeout=300,
+            )
             if not ex.get("ok"):
                 raise HTTPException(status_code=502, detail=ex.get("error") or "추출 실패")
             posts = ex.get("posts", [])
