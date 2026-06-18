@@ -19,6 +19,7 @@ _SYSTEM = (
     "당신은 사용자의 PC와 앱을 완전히 제어하는 자율 에이전트입니다. "
     "사용자 명령을 달성하기 위해 제공된 도구를 자유롭게 골라 사용하세요. 도구 선택·순서는 당신이 판단합니다.\n"
     "사용 가능한 도구:\n"
+    "- web_search: 공개 웹 정보(뉴스·공모전·기업/기관 소식·일반 사실)를 검색 (브라우저 불필요)\n"
     "- read_page / navigate / click / type_text / scroll: 로그인된 CDP 브라우저 조작\n"
     "- call_local_api: 로컬 FastAPI 엔드포인트 직접 호출 (GET/POST, CDP 없어도 동작)\n"
     "- list_app_actions / run_app_action: 앱 내부 기능 검색 및 실행\n"
@@ -28,6 +29,16 @@ _SYSTEM = (
     "브라우저 수작업으로 새로 만들기 전에 반드시 먼저 list_app_actions 로 이미 만들어진 기능이 "
     "있는지 검색하세요. 있으면 run_app_action 으로 그 기능을 재사용합니다. "
     "검색 결과가 없을 때만 브라우저 도구로 직접 수행하세요.\n"
+    "■ 실행 원칙(필수): ⚠ 표시가 없는 동작은 사용자에게 묻지 말고 즉시 도구를 호출·실행하세요. "
+    "⚠ 동작(발송·결제·삭제)만 '~을(를) 실행할까요?' 라고 한 번 확인하세요. "
+    "절대로 '진행할까요?', '확인하시겠습니까?', '실행해도 될까요?' 같은 질문으로 흐름을 끊지 마세요.\n"
+    "■ 공개정보 조회 원칙(필수): 외부 공개 정보(뉴스·공모전·지원사업·기업/기관 소식·일반 사실)는 "
+    "특정 사이트 로그인이 꼭 필요한 게 아니라면 먼저 web_search 로 찾으세요(브라우저 불필요). "
+    "로그인된 내 계정 화면(메일·셀러센터·카페 등)에서만 가능한 일일 때만 브라우저 도구를 씁니다.\n"
+    "■ 떠넘기기 금지(필수): 절대로 '직접 검색하세요', '브라우저를 사용할 수 없습니다', "
+    "'다른 방법으로 확인하세요' 같이 작업을 사용자에게 미루지 마세요. "
+    "브라우저 도구가 막히면 web_search·call_local_api 등 대체 수단으로 끝까지 시도하고, "
+    "그래도 불가능하면 막힌 구체적 사유와 사용자가 할 수 있는 다음 행동(예: 해당 사이트 로그인)을 제시하세요.\n"
     "로그인 페이지가 나오면 사용자에게 로그인을 요청하세요. "
     "일반 질문·대화는 도구 없이 바로 답하세요. "
     "목적을 달성하면 결과를 간결히 보고하세요."
@@ -122,12 +133,17 @@ _TOOLS = [
         "type": "function",
         "function": {
             "name": "run_app_action",
-            "description": "앱 내부 기능을 실행한다. path 는 list_app_actions 가 알려준 값. 위험·민감 동작은 자동 차단되며, 그때는 사용자에게 확인을 받아야 한다. params 는 해당 동작의 입력값(JSON 객체).",
+            "description": (
+                "앱 내부 기능을 실행한다. path 는 list_app_actions 가 알려준 값. "
+                "⚠ 표시가 없는 동작은 즉시 실행. "
+                "⚠ 표시(발송·결제·삭제 등)는 confirmed=true 로 사용자 확인 후 실행."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "path": {"type": "string", "description": "동작 경로(list_app_actions 결과의 path)"},
                     "params": {"type": "object", "description": "동작 입력값"},
+                    "confirmed": {"type": "boolean", "description": "⚠ 동작만 사용. 사용자가 명시 승인한 경우 true."},
                 },
                 "required": ["path"],
             },
@@ -188,6 +204,25 @@ _TOOLS = [
                     "limit": {"type": "integer", "description": "최대 주문 수(기본 30)"},
                 },
                 "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": (
+                "공개 웹 정보를 검색한다(네이버 뉴스 검색, CDP 브라우저 불필요). "
+                "뉴스·공모전·지원사업·기업/기관 소식·일반 사실 확인에 사용. "
+                "특정 사이트 로그인이 필요 없는 공개정보 조회는 브라우저 대신 이 도구를 먼저 쓴다."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "검색어"},
+                    "page": {"type": "integer", "description": "페이지(기본 1)"},
+                },
+                "required": ["query"],
             },
         },
     },
@@ -295,11 +330,15 @@ def run_free_agent(
 
             acts = app_actions.list_actions(args.get("query", ""))
             head = f"앱 동작 {len(acts)}개" + (" (상위 40)" if len(acts) > 40 else "") + ":\n"
-            return head + "\n".join(f"  [{a['risk']}] {a['path']} — {a['desc']}" for a in acts[:40])
+            # DESTRUCTIVE 만 ⚠ 표시, 나머지는 표시 없음
+            return head + "\n".join(
+                f"  {'⚠ ' if a['risk'] == 'DESTRUCTIVE' else ''}{a['path']} — {a['desc']}" for a in acts[:40]
+            )
         if name == "run_app_action":
             from ai_orchestrator import app_actions
 
-            rr = app_actions.run_action(args.get("path", ""), args.get("params") or {}, _OWNER)
+            confirmed = bool(args.get("confirmed", False))
+            rr = app_actions.run_action(args.get("path", ""), args.get("params") or {}, _OWNER, confirmed=confirmed)
             if rr.get("needs_confirm"):
                 return rr.get("message", "확인이 필요한 동작입니다.")
             if rr.get("ok"):
@@ -311,6 +350,8 @@ def run_free_agent(
             return _ss_list_products(args)
         if name == "smartstore_list_orders":
             return _ss_list_orders(args)
+        if name == "web_search":
+            return _web_search(args)
         if name == "call_local_api":
             return _call_local_api(args)
         return f"알 수 없는 도구: {name}"
@@ -344,7 +385,7 @@ def run_free_agent(
                     "connect" in emsg or "cdp" in emsg or "context" in emsg or "playwright" in emsg
                 ):
                     # CDP 브라우저 전용 도구만 no_browser 처리. API 도구는 계속 진행.
-                    result = "⚠️ CDP 브라우저가 실행되지 않아 이 도구를 사용할 수 없습니다. call_local_api 등 브라우저 불필요 도구로 대신 처리하세요."
+                    result = "⚠️ CDP 브라우저가 실행되지 않아 이 도구를 사용할 수 없습니다. 공개정보 조회면 web_search, 앱 기능이면 call_local_api 등 브라우저 불필요 도구로 대신 처리하세요. 사용자에게 '직접 하라'고 떠넘기지 마세요."
                 else:
                     result = f"도구 '{name}' 실행 오류: {str(e)[:120]}"
             # 로그인 벽 감지 → 비동기/안내 흐름으로 위임.
@@ -373,6 +414,38 @@ _SS_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
 
 _LOCAL_API = "http://127.0.0.1:8401"
 _LOCAL_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
+
+
+def _web_search(args: dict) -> str:
+    """공개 웹 정보 검색 — 기존 네이버 뉴스검색 API(CDP 불필요) 재사용.
+
+    naver_news_router /api/v1/external/naver/news-search (Naver OpenAPI) 호출.
+    브라우저가 없어도 동작하므로, 공개정보 조회는 브라우저보다 이 경로를 먼저 쓴다.
+    """
+    query = (args.get("query") or "").strip()
+    if not query:
+        return "오류: query(검색어)가 필요합니다."
+    page = args.get("page") or 1
+    raw = _call_local_api(
+        {"path": "/api/v1/external/naver/news-search", "method": "GET", "params": {"query": query, "page": page}}
+    )
+    try:
+        import json as _json
+
+        data = _json.loads(raw)
+        items = data.get("items") or []
+    except Exception:
+        return f"검색 결과(원문): {raw}"
+    if not items:
+        return f"'{query}' 검색 결과가 없습니다. 더 일반적인 검색어로 다시 시도하거나, 로그인 사이트라면 브라우저로 접근하세요."
+    lines = [f"'{query}' 검색 결과 {len(items)}건:"]
+    for it in items[:10]:
+        title = (it.get("title") or "").strip()
+        summary = (it.get("summary") or "").strip()
+        url = it.get("url") or ""
+        when = it.get("datetime") or ""
+        lines.append(f"- {title} ({when})\n  {summary[:120]}\n  {url}")
+    return "\n".join(lines)
 
 
 def _call_local_api(args: dict) -> str:
