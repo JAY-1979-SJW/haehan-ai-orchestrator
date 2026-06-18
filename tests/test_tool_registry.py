@@ -48,3 +48,38 @@ def test_openai_tools_for_unknown_domain_is_empty():
     from ai_orchestrator.connectors.tool_registry import openai_tools_for
 
     assert openai_tools_for("nonexistent-domain") == []
+
+
+def test_free_agent_tools_absorbed():
+    # free_agent(OpenAI 직접포맷) 도구도 중앙 레지스트리에 흡수(register_openai).
+    importlib.import_module("scripts.browser_agent.free_agent")
+    from ai_orchestrator.connectors import tool_registry as TR
+
+    assert "agent" in TR.domains()
+    names = [t["name"] for t in TR.all_tools()["agent"]]
+    assert "web_search" in names and "read_page" in names
+    # OpenAI 재변환도 동일 포맷
+    oa = TR.openai_tools_for("agent")
+    assert oa and oa[0]["type"] == "function"
+
+
+def test_register_openai_normalizes_format():
+    from ai_orchestrator.connectors.tool_registry import all_tools, register_openai
+
+    register_openai(
+        "_t_norm",
+        [
+            {
+                "type": "function",
+                "function": {
+                    "name": "foo",
+                    "description": "d",
+                    "parameters": {"type": "object", "properties": {"x": {"type": "string"}}, "required": ["x"]},
+                },
+            }
+        ],
+    )
+    spec = all_tools()["_t_norm"][0]
+    assert spec["name"] == "foo"
+    assert spec["params"] == {"x": {"type": "string"}}
+    assert spec["required"] == ["x"]

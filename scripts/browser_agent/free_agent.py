@@ -250,6 +250,15 @@ _TOOLS = [
     },
 ]
 
+# 자율 에이전트 도구를 중앙 레지스트리에 등록(채팅 도구와 함께 all_tools 로 일괄 조회).
+# OpenAI 직접 포맷이므로 register_openai 로 정규화 등록. 실행은 _exec_browser 가 담당.
+try:
+    from ai_orchestrator.connectors.tool_registry import register_openai
+
+    register_openai("agent", _TOOLS)
+except Exception:
+    pass
+
 
 def _fmt_obs(obs: dict) -> str:
     """관찰 결과를 GPT가 읽을 텍스트로."""
