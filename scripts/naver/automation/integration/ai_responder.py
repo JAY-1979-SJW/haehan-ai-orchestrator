@@ -15,6 +15,7 @@ import json
 import os
 import urllib.request
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -33,7 +34,7 @@ class AIResponder:
             self.endpoint = "https://api.anthropic.com/v1/messages"
         else:
             self.api_key = os.environ.get("OPENAI_API_KEY")
-            self.model = model or "gpt-4o-mini"
+            self.model = model or APP_LLM_MODEL
             self.endpoint = "https://api.openai.com/v1/chat/completions"
 
     def _call(self, system: str, user: str, max_tokens: int = 500) -> dict:

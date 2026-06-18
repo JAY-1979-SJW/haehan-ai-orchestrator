@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ...app_llm import APP_LLM_MODEL
 from ...audit_logger import log_event
 from ...auth import require_role
 from ._helpers import ROOT
@@ -25,7 +26,7 @@ _TEMP_IMAGE_DIR = ROOT / "data" / "temp_images"
 
 router = APIRouter()
 
-GPT_MODEL = "gpt-4o-mini"
+GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (ai_orchestrator.app_llm 단일 출처)
 WRITE_TOOLS = {"auto_register_product", "edit_product", "reply_reviews", "process_shipping", "delete_product"}
 
 # CDP가 필요한 도구 — 로컬 에이전트로 라우팅

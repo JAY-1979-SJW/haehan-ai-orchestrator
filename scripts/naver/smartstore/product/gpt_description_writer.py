@@ -37,6 +37,7 @@ import re
 import urllib.request
 from pathlib import Path
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL, APP_LLM_QUALITY_MODEL
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -47,8 +48,8 @@ ROOT = Path(__file__).resolve().parents[4]
 # 모델 설정
 # ══════════════════════════════════════════════════════════════════════════════
 
-DEFAULT_MODEL = "gpt-4o-mini"  # 빠름·저렴
-QUALITY_MODEL = "gpt-4o"  # 고품질·이미지 분석
+DEFAULT_MODEL = APP_LLM_MODEL  # 빠름·저렴 (app_llm 단일 출처)
+QUALITY_MODEL = APP_LLM_QUALITY_MODEL  # 고품질·이미지 분석
 API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 MAX_TOKENS = 4000
 

@@ -22,11 +22,13 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ...app_llm import APP_LLM_MODEL
+
 router = APIRouter()
 
 ROOT = Path(__file__).resolve().parents[4]
 
-GPT_MODEL = "gpt-4o-mini"
+GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (ai_orchestrator.app_llm 단일 출처)
 
 SYSTEM_PROMPT = """당신은 가비아(Gabia) 도메인/DNS/호스팅 업무 AI 에이전트입니다.
 사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
