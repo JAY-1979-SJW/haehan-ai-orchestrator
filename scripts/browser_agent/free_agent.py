@@ -422,25 +422,25 @@ _LOCAL_AUTH = ("owner", os.environ.get("NEXT_PUBLIC_API_PASS", "haehan2024!"))
 
 
 def _web_search(args: dict) -> str:
-    """공개 웹 정보 검색 — 기존 네이버 뉴스검색 API(CDP 불필요) 재사용.
+    """공개 웹 정보 검색 — 네이버 뉴스검색(Naver OpenAPI) 커넥터를 in-process 직접 호출.
 
-    naver_news_router /api/v1/external/naver/news-search (Naver OpenAPI) 호출.
+    HTTP 자기호출(call_local_api) 대신 같은 프로세스의 커넥터 함수를 바로 부른다.
+    → 포트(8400/8401)·내부 인증(require_role)·네트워크 의존이 없어 local·prod 동일 동작.
     브라우저가 없어도 동작하므로, 공개정보 조회는 브라우저보다 이 경로를 먼저 쓴다.
     """
     query = (args.get("query") or "").strip()
     if not query:
         return "오류: query(검색어)가 필요합니다."
-    page = args.get("page") or 1
-    raw = _call_local_api(
-        {"path": "/api/v1/external/naver/news-search", "method": "GET", "params": {"query": query, "page": page}}
-    )
     try:
-        import json as _json
+        page = int(args.get("page") or 1)
+    except (TypeError, ValueError):
+        page = 1
+    try:
+        from ai_orchestrator.connectors.naver_news_router import _naver_openapi_news
 
-        data = _json.loads(raw)
-        items = data.get("items") or []
-    except Exception:
-        return f"검색 결과(원문): {raw}"
+        items = _naver_openapi_news(query, page=page)
+    except Exception as e:  # 키 미설정·네트워크 등 — 사용자에게 떠넘기지 말고 사유만 보고
+        return f"검색 중 오류가 발생했습니다({str(e)[:120]}). 검색어를 바꿔 다시 시도해 주세요."
     if not items:
         return f"'{query}' 검색 결과가 없습니다. 더 일반적인 검색어로 다시 시도하거나, 로그인 사이트라면 브라우저로 접근하세요."
     lines = [f"'{query}' 검색 결과 {len(items)}건:"]
