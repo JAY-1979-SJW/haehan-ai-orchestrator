@@ -61,10 +61,10 @@ def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> di
     try:
         _ensure_path()
         from scripts.naver.cafe.explorer import get_my_cafes, save_my_cafes
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        cafes = get_my_cafes(page)
+        # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
+        cafes = run_on_browser_thread(lambda: get_my_cafes(get_page()), timeout=120)
         save_my_cafes(cafes)
         log_event(
             "NAVER_CAFE_COLLECT_MY_CAFES",
@@ -94,15 +94,18 @@ def collect_cafe_articles(
         from scripts.naver.cafe.collector import collect_articles
         from scripts.naver.cafe.organizer import organize
         from scripts.naver.cafe.pipeline import run_pipeline
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        articles = collect_articles(
-            page,
-            cafe_url=cafe_url,
-            days=max(1, min(req.days, 365)),
-            max_detail=max(1, min(req.max_detail, 500)),
-            keyword=req.keyword.strip(),
+        # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
+        articles = run_on_browser_thread(
+            lambda: collect_articles(
+                get_page(),
+                cafe_url=cafe_url,
+                days=max(1, min(req.days, 365)),
+                max_detail=max(1, min(req.max_detail, 500)),
+                keyword=req.keyword.strip(),
+            ),
+            timeout=300,
         )
         run_pipeline()
         organize()
