@@ -132,11 +132,15 @@ def send_one(
     try:
         _ensure_root_on_path()
         from scripts.hiworks.mail import fill_compose, send_mail
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        fill_compose(page, to=req.to, subject=req.subject, body=req.body)
-        result = send_mail(page)
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        def _compose_and_send():
+            page = get_page()
+            fill_compose(page, to=req.to, subject=req.subject, body=req.body)
+            return send_mail(page)
+
+        result = run_on_browser_thread(_compose_and_send, timeout=180)
         ok = bool(result.get("success"))
         log_event(
             "EUM_SALES_MAIL_SEND",
