@@ -364,31 +364,19 @@ def _run_tool(name: str, inputs: dict, license_key: str | None = None, images: l
 
         if name == "generate_description":
             data = inputs.get("data", {})
-            # 사진 첨부 또는 model=gpt → GPT(이미지 지원). 그 외 Claude.
-            if images or inputs.get("model") == "gpt":
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    DEFAULT_MODEL as GPT_DEFAULT,
-                )
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    QUALITY_MODEL as GPT_QUALITY,
-                )
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    GptDescriptionWriter,
-                )
-
-                return GptDescriptionWriter(model=GPT_QUALITY if images else GPT_DEFAULT).generate(
-                    data, images=images or None
-                )
-
-            from scripts.naver.smartstore.product.ai_description_writer import (
-                DEFAULT_MODEL,
-                QUALITY_MODEL,
-                AIDescriptionWriter,
+            # 앱 표준=GPT. 이미지 있거나 model=quality 면 고품질(vision) 모델 사용.
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                DEFAULT_MODEL as GPT_DEFAULT,
+            )
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                QUALITY_MODEL as GPT_QUALITY,
+            )
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                GptDescriptionWriter,
             )
 
-            return AIDescriptionWriter(
-                model=QUALITY_MODEL if inputs.get("model") == "quality" else DEFAULT_MODEL
-            ).generate(data)
+            use_model = GPT_QUALITY if (images or inputs.get("model") == "quality") else GPT_DEFAULT
+            return GptDescriptionWriter(model=use_model).generate(data, images=images or None)
 
         if name == "search_categories":
             from scripts.naver.smartstore.product.category_cache import load_cache

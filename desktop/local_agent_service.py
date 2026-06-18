@@ -241,7 +241,7 @@ async def run_local_agent(req: dict) -> dict:
     Args:
         req: {
             "prompt": str,
-            "model": str (optional, 기본 claude-sonnet-4-5),
+            "model": str (optional, 기본 gpt-4o-mini),
             "use_mcp": bool (optional, default False; direct MCP is blocked),
         }
 
@@ -269,7 +269,7 @@ async def run_local_agent(req: dict) -> dict:
             next_actions=["실행할 작업 내용을 입력하세요."],
         )
 
-    model: str = req.get("model", "claude-sonnet-4-5")
+    model: str = req.get("model", "gpt-4o-mini")  # 앱 표준=GPT
     if _api_bridge_requested(req):
         return await _run_approved_api_bridge(req, model)
 
