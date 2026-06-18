@@ -11,80 +11,81 @@
 
 from __future__ import annotations
 
-import json
-
 from scripts.browser_agent import free_agent as FA
 
-# ── 1) web_search 정상 포맷 ──────────────────────────────────────
+# in-process 직접 호출 대상 커넥터 — 이걸 모킹하면 HTTP/포트/인증 없이 동작 검증.
+NEWS_MOD = "ai_orchestrator.connectors.naver_news_router"
+
+
+# ── 1) web_search 정상 포맷 (커넥터 직접 호출) ───────────────────
 
 
 def test_web_search_formats_items(monkeypatch):
-    fake = {
-        "items": [
-            {
-                "title": "공모전 A 개최",
-                "summary": "대우건설 스타트업 공모전 안내",
-                "url": "https://x/1",
-                "datetime": "Mon, 01 Jun 2026",
-            },
-            {"title": "공모전 B", "summary": "요약B", "url": "https://x/2", "datetime": "Tue, 02 Jun 2026"},
-        ],
-        "total": 2,
-        "query": "대우건설 공모전",
-    }
+    items = [
+        {
+            "title": "공모전 A 개최",
+            "summary": "대우건설 스타트업 공모전 안내",
+            "url": "https://x/1",
+            "datetime": "Mon, 01 Jun 2026",
+        },
+        {"title": "공모전 B", "summary": "요약B", "url": "https://x/2", "datetime": "Tue, 02 Jun 2026"},
+    ]
     captured = {}
 
-    def _fake_call(args):
-        captured.update(args)
-        return json.dumps(fake, ensure_ascii=False)
+    def _fake_news(query, page=1):
+        captured["query"] = query
+        captured["page"] = page
+        return items
 
-    monkeypatch.setattr(FA, "_call_local_api", _fake_call)
+    monkeypatch.setattr(NEWS_MOD + "._naver_openapi_news", _fake_news)
     out = FA._web_search({"query": "대우건설 공모전"})
 
-    # 기존 뉴스검색 API(CDP 불필요)를 재사용하는지
-    assert captured["path"] == "/api/v1/external/naver/news-search"
-    assert captured["method"] == "GET"
-    assert captured["params"]["query"] == "대우건설 공모전"
+    # HTTP 가 아니라 커넥터 함수를 직접 호출하는지(쿼리 전달 확인)
+    assert captured["query"] == "대우건설 공모전"
     # 결과 포맷에 제목·요약·URL 이 포함
     assert "공모전 A 개최" in out
     assert "https://x/1" in out
     assert "2건" in out
 
 
-# ── 2) 빈 검색어 방어 ────────────────────────────────────────────
+# ── 2) 빈 검색어 방어 (커넥터 미호출) ────────────────────────────
 
 
-def test_web_search_empty_query_no_network(monkeypatch):
+def test_web_search_empty_query_no_call(monkeypatch):
     called = {"n": 0}
 
-    def _fake_call(args):  # 호출되면 안 됨
+    def _fake_news(query, page=1):  # 호출되면 안 됨
         called["n"] += 1
-        return "{}"
+        return []
 
-    monkeypatch.setattr(FA, "_call_local_api", _fake_call)
+    monkeypatch.setattr(NEWS_MOD + "._naver_openapi_news", _fake_news)
     out = FA._web_search({"query": "   "})
     assert "검색어" in out
-    assert called["n"] == 0  # 빈 입력은 API 호출 없이 즉시 반환
+    assert called["n"] == 0  # 빈 입력은 커넥터 호출 없이 즉시 반환
 
 
 # ── 3) 무결과 — 떠넘기지 않고 재시도 가이드 ──────────────────────
 
 
 def test_web_search_no_items_guides_retry(monkeypatch):
-    monkeypatch.setattr(FA, "_call_local_api", lambda args: json.dumps({"items": []}))
+    monkeypatch.setattr(NEWS_MOD + "._naver_openapi_news", lambda query, page=1: [])
     out = FA._web_search({"query": "존재하지않는검색어zzz"})
     assert "결과가 없습니다" in out
     # 무결과여도 "직접 검색하세요" 식 떠넘기기 문구는 없어야 한다
     assert "직접 검색" not in out
 
 
-# ── 4) API 가 비정상(JSON 아님) 일 때도 죽지 않음 ────────────────
+# ── 4) 커넥터 예외(키 미설정·네트워크) 도 죽지 않고 사유 보고 ────
 
 
-def test_web_search_handles_nonjson(monkeypatch):
-    monkeypatch.setattr(FA, "_call_local_api", lambda args: "HTTP 503: 뉴스 검색 오류")
+def test_web_search_handles_connector_error(monkeypatch):
+    def _boom(query, page=1):
+        raise RuntimeError("NAVER_OPENAPI_CLIENT_ID / SECRET 환경변수 미설정")
+
+    monkeypatch.setattr(NEWS_MOD + "._naver_openapi_news", _boom)
     out = FA._web_search({"query": "x"})
-    assert "503" in out or "검색 결과" in out  # 원문을 그대로 노출, 예외 없이 반환
+    assert "오류" in out  # 예외 없이 사유 문자열 반환
+    assert "직접 검색" not in out  # 떠넘기지 않음
 
 
 # ── 5) 도구 배선 — _TOOLS / dispatch ─────────────────────────────
