@@ -14,11 +14,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# get_page() 로 CDP page 를 조작하는 네이버 라우터들
+# get_page() 로 CDP page 를 조작하는 라우터들 — 모두 run_on_browser_thread 필수
 NAVER_CDP_ROUTERS = [
     "ai_orchestrator/connectors/naver_cafe_router.py",
     "ai_orchestrator/connectors/naver_mail_router.py",
     "ai_orchestrator/connectors/naver_blog_router.py",
+    "ai_orchestrator/connectors/community_router.py",
+    "ai_orchestrator/connectors/eum_router.py",
+    "ai_orchestrator/connectors/gabia/chat.py",
+    "ai_orchestrator/connectors/gmail_router.py",
+    "ai_orchestrator/connectors/hiworks_mail_router.py",
 ]
 
 
