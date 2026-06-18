@@ -49,6 +49,26 @@ def register(domain: str, tool_defs: Callable[[], list[dict]], write_tools: set[
     _REGISTRY[domain] = {"tool_defs": tool_defs, "write_tools": set(write_tools or set())}
 
 
+def register_openai(domain: str, openai_tools: list[dict]) -> None:
+    """이미 OpenAI function 포맷인 도구를 등록(free_agent 등).
+
+    중앙 인벤토리(all_tools) 일관성을 위해 공통 도구정의 포맷으로 정규화해 보관한다.
+    """
+    normalized: list[dict] = []
+    for t in openai_tools:
+        fn = t.get("function", {})
+        params = fn.get("parameters", {}) or {}
+        spec = {
+            "name": fn.get("name", ""),
+            "description": fn.get("description", ""),
+            "params": params.get("properties", {}),
+        }
+        if "required" in params:
+            spec["required"] = params["required"]
+        normalized.append(spec)
+    _REGISTRY[domain] = {"tool_defs": lambda: normalized, "write_tools": set()}
+
+
 def openai_tools_for(domain: str, confirmed: bool = False) -> list[dict]:
     """등록된 도메인의 OpenAI 도구 목록을 바로 반환."""
     info = _REGISTRY.get(domain)
@@ -73,4 +93,4 @@ def domains() -> list[str]:
     return sorted(_REGISTRY)
 
 
-__all__ = ("all_tools", "domains", "openai_tools_for", "register", "to_openai_tools")
+__all__ = ("all_tools", "domains", "openai_tools_for", "register", "register_openai", "to_openai_tools")
