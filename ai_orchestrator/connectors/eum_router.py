@@ -194,12 +194,30 @@ def generate_quote(
         )
 
         import io
+        from datetime import date as _date
+
+        from scripts.eum.shared.layout_schema import OUTPUT_DIR
 
         safe_name = req.recipient.replace(" ", "_").replace("/", "_")[:30]
-        filename = f"견적서_{safe_name}_{req.quote_type}.xlsx"
+        today = _date.today().strftime("%Y%m%d")
+        filename = f"견적서_{safe_name}_{req.quote_type}_{today}.xlsx"
         from urllib.parse import quote as url_quote
 
         encoded_name = url_quote(filename, safe="")
+
+        # 단말기 견적서 폴더에 사본 저장
+        try:
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+            (OUTPUT_DIR / filename).write_bytes(xlsx_bytes)
+        except Exception as _save_err:
+            log_event(
+                "EUM_QUOTE_SAVE_FAIL",
+                task_id="-",
+                actor=user["actor"],
+                role=user["role"],
+                decision="warn",
+                note=str(_save_err),
+            )
 
         log_event(
             "EUM_QUOTE_GENERATE",
@@ -207,7 +225,7 @@ def generate_quote(
             actor=user["actor"],
             role=user["role"],
             decision="ok",
-            note=f"recipient={req.recipient} type={req.quote_type} qty={req.quantity} months={req.months}",
+            note=f"recipient={req.recipient} type={req.quote_type} qty={req.quantity} months={req.months} saved={filename}",
         )
         return StreamingResponse(
             io.BytesIO(xlsx_bytes),
