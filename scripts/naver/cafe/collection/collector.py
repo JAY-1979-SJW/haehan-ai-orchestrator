@@ -29,7 +29,15 @@ from scripts.naver.auth import ensure_naver_login
 _log = get_logger(__name__)
 
 ROOT = Path(__file__).resolve().parents[4]
-_OUT_DIR = ROOT / "data" / "cafe"
+
+
+def _cafe_out_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("cafe")
+
+
+_OUT_DIR = _cafe_out_dir()
 
 # ── URL 패턴 ──────────────────────────────────────────────────────────
 # ArticleList.nhn → 리다이렉트 후 실제 menus/0 페이지 (클래식 DOM 유지)

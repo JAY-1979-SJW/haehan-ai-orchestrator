@@ -102,10 +102,13 @@ def api_compose(
 
     try:
         from scripts.hiworks.mail import fill_compose
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        result = fill_compose(page, to=req.to, subject=req.subject, body=req.body)
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        result = run_on_browser_thread(
+            lambda: fill_compose(get_page(), to=req.to, subject=req.subject, body=req.body),
+            timeout=120,
+        )
         return {
             "ok": True,
             "dry_run": False,
@@ -141,10 +144,10 @@ def api_send(
 
     try:
         from scripts.hiworks.mail import send_mail
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        result = send_mail(page)
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        result = run_on_browser_thread(lambda: send_mail(get_page()), timeout=120)
         if result.get("success"):
             log_event(
                 "HIWORKS_MAIL_SEND_SUCCESS",

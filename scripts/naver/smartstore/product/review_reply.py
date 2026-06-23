@@ -3,7 +3,7 @@
 흐름:
   1. 리뷰 관리 페이지 진입
   2. 미답변 리뷰 목록 추출
-  3. Claude로 답변 초안 생성
+  3. GPT로 답변 초안 생성
   4. 각 리뷰에 답변 입력 → 저장 (confirmed=True 필수)
 
 사용:
@@ -15,13 +15,12 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import time
-import urllib.request
 from pathlib import Path
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -32,9 +31,7 @@ _CDP = "http://127.0.0.1:9222"
 _REVIEW_URL = "https://sell.smartstore.naver.com/#/reviews/list"
 _REPLY_API_URL = "https://sell.smartstore.naver.com/#/reviews/list"
 
-_CLAUDE_MODEL = "claude-haiku-4-5-20251001"
-_CLAUDE_API = "https://api.anthropic.com/v1/messages"
-_ANTHROPIC_VER = "2023-06-01"
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
 _SYSTEM_PROMPT = """당신은 네이버 스마트스토어 셀러입니다.
 고객 리뷰에 대해 진심 어린 감사 인사와 함께 짧고 친근한 답변을 작성합니다.
@@ -67,10 +64,10 @@ class ReviewAutoResponder:
         return {"ok": True, "pending": reviews, "count": len(reviews)}
 
     def generate_replies(self, reviews: list[dict]) -> list[dict]:
-        """각 리뷰에 대해 Claude 답변 초안 생성."""
+        """각 리뷰에 대해 GPT 답변 초안 생성."""
         api_key = self._get_api_key()
         if not api_key:
-            return [{"error": "ANTHROPIC_API_KEY 미설정", **r} for r in reviews]
+            return [{"error": "OPENAI_API_KEY 미설정", **r} for r in reviews]
 
         result = []
         for r in reviews:
@@ -233,38 +230,31 @@ class ReviewAutoResponder:
         score_num = int(re.search(r"\d", score_text).group()) if re.search(r"\d", score_text) else 5
         user_msg = f"별점: {score_num}점\n리뷰 내용: {review.get('content', '')}"
         try:
-            payload = {
-                "model": _CLAUDE_MODEL,
-                "max_tokens": 200,
-                "system": _SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": user_msg}],
-            }
-            req = urllib.request.Request(
-                _CLAUDE_API,
-                data=json.dumps(payload).encode(),
-                headers={
-                    "x-api-key": api_key,
-                    "anthropic-version": _ANTHROPIC_VER,
-                    "content-type": "application/json",
-                },
-                method="POST",
+            from openai import OpenAI
+
+            client = OpenAI(api_key=api_key)
+            resp = client.chat.completions.create(
+                model=_GPT_MODEL,
+                max_tokens=200,
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": user_msg},
+                ],
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read())
-            return data["content"][0]["text"].strip()
+            return (resp.choices[0].message.content or "").strip()
         except Exception as e:
-            _log.error("[review-reply] Claude 호출 실패: %s", e)
+            _log.error("[review-reply] GPT 호출 실패: %s", e)
             return "소중한 리뷰 감사합니다. 더 좋은 서비스로 보답하겠습니다 😊"
 
     def _get_api_key(self) -> str | None:
         if self._api_key:
             return self._api_key
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
+        key = os.environ.get("OPENAI_API_KEY", "")
         if not key:
             env_file = ROOT / ".env"
             if env_file.exists():
                 for line in env_file.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("ANTHROPIC_API_KEY="):
+                    if line.startswith("OPENAI_API_KEY="):
                         key = line.split("=", 1)[1].strip().strip('"').strip("'")
                         break
         self._api_key = key or None

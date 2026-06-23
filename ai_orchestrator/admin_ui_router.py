@@ -16,12 +16,13 @@
     디바이스 토큰 값은 절대 읽거나 표시하지 않는다.
   - 에이전트 필드는 모두 textContent 로만 DOM 에 삽입해 XSS 를 차단한다.
 """
+
 from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .auth import require_role
 
@@ -30,7 +31,10 @@ admin_ui_router = APIRouter(prefix="/admin", tags=["admin-ui"])
 
 def _legacy_admin_ui_fallback_enabled() -> bool:
     return os.getenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
 
 
@@ -703,18 +707,20 @@ _LOCAL_AGENTS_HTML = """<!DOCTYPE html>
 @admin_ui_router.get("/local-agents", response_class=HTMLResponse)
 def admin_local_agents_page(
     user: dict = Depends(require_role("admin", "owner")),
-) -> HTMLResponse:
+) -> Response:
     """관리자 전용 로컬 에이전트 화면.
 
-    본 라우트는 HTML 만 내려주며, 실제 목록/요청 호출은 브라우저 JS 가
+    레거시 서버렌더 HTML 은 기본 비활성 — admin-web 으로 이전됨. 비활성 시
+    구 URL 을 admin-web local-agents 페이지로 303 리다이렉트한다(404 차단 대신 신규 UI 안내).
+    HAEHAN_ADMIN_LEGACY_UI_FALLBACK 활성 시에만 구 서버렌더 HTML 을 반환.
+
+    본 라우트는 HTML/리다이렉트만 내려주며, 실제 목록/요청 호출은 브라우저 JS 가
     기존 /api/v1/local-agents , /api/v1/local-agents/{id}/capture-screenshot
     엔드포인트로 수행한다. 서버 측 상태 변경은 없다.
     """
     if not _legacy_admin_ui_fallback_enabled():
-        raise HTTPException(
-            status_code=404,
-            detail="legacy admin UI fallback is disabled; use admin-web",
-        )
+        # 레거시 비활성: admin-web local-agents 페이지로 안내(404 대신 303 리다이렉트).
+        return RedirectResponse(url="/orchestrator/admin-web/local-agents", status_code=303)
     return HTMLResponse(content=_LOCAL_AGENTS_HTML, status_code=200)
 
 

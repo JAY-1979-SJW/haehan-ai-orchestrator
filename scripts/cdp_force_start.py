@@ -63,7 +63,7 @@ def _wait_cdp(timeout: int = 20) -> bool:
 
 
 def _sanitize_prefs() -> None:
-    """비정상 종료 흔적 제거 — 복구 풍선 차단."""
+    """비정상 종료 흔적 제거 (exit_type/exited_cleanly 정상화)."""
     prefs = PROFILE_DIR / "Default" / "Preferences"
     if not prefs.exists():
         return
@@ -108,7 +108,8 @@ def cmd_start(url: str = "") -> int:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        "--start-maximized",
+        "--window-position=100,50",
+        "--window-size=1280,900",
     ]
     print(f"  프로필: {PROFILE_DIR}")
     if url:
@@ -130,68 +131,11 @@ def cmd_start(url: str = "") -> int:
     print(f"  CDP 포트 {CDP_PORT} 응답 대기...", end="", flush=True)
     if _wait_cdp(20):
         print(" ✓")
-        time.sleep(1)  # 창 렌더링 대기
-        _fix_window_position()
         _show_info()
         return 0
     else:
         print(" ✗ 타임아웃")
         return 1
-
-
-def _fix_window_position() -> None:
-    """Chrome 창이 화면 밖에 있으면 중앙으로 강제 이동 (Windows 전용)."""
-    if sys.platform != "win32":
-        return
-    try:
-        import ctypes
-
-        user32 = ctypes.windll.user32
-
-        class RECT(ctypes.Structure):
-            _fields_ = [
-                ("left", ctypes.c_long),
-                ("top", ctypes.c_long),
-                ("right", ctypes.c_long),
-                ("bottom", ctypes.c_long),
-            ]
-
-        screen_w = user32.GetSystemMetrics(0)
-        screen_h = user32.GetSystemMetrics(1)
-
-        # Chrome for Testing 또는 일반 Chrome 창 탐색
-        import subprocess
-
-        result = subprocess.run(
-            [
-                "powershell",
-                "-Command",
-                "Get-Process chrome | Where-Object {$_.MainWindowHandle -ne 0} | "
-                "Select-Object -ExpandProperty MainWindowHandle",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        handles = [int(h.strip()) for h in result.stdout.splitlines() if h.strip().isdigit()]
-        if not handles:
-            return
-
-        win_w, win_h = 1280, 900
-        x = (screen_w - win_w) // 2
-        y = (screen_h - win_h) // 2
-
-        for hwnd in handles:
-            rect = RECT()
-            user32.GetWindowRect(hwnd, ctypes.byref(rect))
-            # 화면 밖(좌표 >4000)이면 중앙으로 이동
-            if rect.left > 4000 or rect.top > 4000 or rect.left < -2000 or rect.top < -2000:
-                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-                user32.MoveWindow(hwnd, x, y, win_w, win_h, True)
-                user32.SetForegroundWindow(hwnd)
-                print(f"  [WIN] 창 위치 복구: {rect.left},{rect.top} → {x},{y} (size {win_w}x{win_h})")
-    except Exception as e:
-        print(f"  [WIN] 창 위치 복구 실패 (무시): {e}")
 
 
 def _show_info() -> None:

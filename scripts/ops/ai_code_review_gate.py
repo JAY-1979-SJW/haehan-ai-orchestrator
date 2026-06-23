@@ -1,5 +1,8 @@
 """Claude Code AI 코드 검수 게이트 (pre-push).
 
+[LLM 경계] 개발/터미널 도구 — 앱 런타임 아님. git 훅에서 Claude Code CLI 사용은
+의도된 경계(터미널=Claude Code). 앱 기능 LLM 은 GPT(ai_orchestrator.app_llm) 전용.
+
 git push 직전에 origin/master 대비 변경 diff를 Claude Code CLI로 리뷰한다.
 VERDICT: BLOCK 이 나오면 push를 차단한다.
 
@@ -10,13 +13,14 @@ VERDICT: BLOCK 이 나오면 push를 차단한다.
   AI_REVIEW_ENABLED=false  → 검수 건너뜀 (기본 true)
   AI_REVIEW_MODEL=haiku    → haiku(기본) / sonnet / opus
 """
+
 from __future__ import annotations
 
 import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,7 +106,7 @@ def run_review(diff: str) -> dict:
 
     prompt = PROMPT_TEMPLATE.format(diff=diff)
 
-    cmd = ["claude", "-p", prompt] + _model_flag()
+    cmd = ["claude", "-p", prompt, *_model_flag()]
     try:
         result = subprocess.run(
             cmd,
@@ -132,7 +136,7 @@ def run_review(diff: str) -> dict:
 
 def save_report(payload: dict) -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    payload["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    payload["created_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     payload["secret_values_output"] = False
     REPORT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 

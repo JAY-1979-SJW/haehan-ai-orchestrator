@@ -1,0 +1,98 @@
+"""10KB 미만 이미지만 골라서 재다운로드."""
+
+import logging
+import sys
+import time
+from pathlib import Path
+
+import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+logger = logging.getLogger(__name__)
+
+BASE = Path("data/gonobi_images")
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Referer": "https://blog.naver.com/gonobi",
+}
+MIN_SIZE = 10_000  # 10KB
+
+
+def main():
+    # 작은 파일 목록 수집
+    small_files = []
+    for folder in BASE.iterdir():
+        if folder.is_dir():
+            for f in folder.glob("*"):
+                if f.stat().st_size < MIN_SIZE:
+                    small_files.append(f)
+
+    logger.info("재다운로드 대상: %d개", len(small_files))
+
+    session = requests.Session()
+    session.headers.update(HEADERS)
+
+    done = 0
+    errors = 0
+    for i, fpath in enumerate(small_files, 1):
+        # 파일명에서 log_no 추출
+        log_no = fpath.stem.split("_")[0]
+
+        # DB에서 해당 포스트의 이미지 URL 순번 파악
+        n_str = fpath.stem.split("_")[1]
+        try:
+            n = int(n_str) - 1  # 0-indexed
+        except ValueError:
+            continue
+
+        # DB에서 URL 가져오기
+        from scripts.naver.blog.gonobi.db import open_db
+
+        with open_db() as conn:
+            rows = conn.execute("SELECT image_url FROM gonobi_images WHERE log_no=? ORDER BY id", (log_no,)).fetchall()
+
+        if n >= len(rows):
+            continue
+
+        url = rows[n]["image_url"].split("?")[0] + "?type=w966"
+
+        try:
+            resp = session.get(url, timeout=15)
+            if resp.status_code == 200 and len(resp.content) > MIN_SIZE:
+                fpath.write_bytes(resp.content)
+                done += 1
+            elif resp.status_code == 200:
+                # w966도 작으면 원본 그대로
+                fpath.write_bytes(resp.content)
+                done += 1
+            else:
+                errors += 1
+        except Exception as e:
+            logger.warning("실패 %s: %s", url[:60], e)
+            errors += 1
+
+        time.sleep(0.1)
+
+        if i % 100 == 0:
+            logger.info("[%d/%d] 완료:%d 오류:%d", i, len(small_files), done, errors)
+
+    logger.info("완료 — 재다운로드:%d 오류:%d", done, errors)
+
+    # 결과 확인
+    print("\n=== 최종 폴더별 현황 ===")
+    total = 0
+    still_small = 0
+    for folder in sorted(BASE.iterdir()):
+        if folder.is_dir():
+            files = list(folder.glob("*"))
+            s = sum(1 for f in files if f.stat().st_size < MIN_SIZE)
+            total += len(files)
+            still_small += s
+            print(f"  {folder.name:15} {len(files):4}개 | 10KB미만:{s}개")
+    print(f"\n합계: {total}개 | 여전히 작음: {still_small}개")
+
+
+if __name__ == "__main__":
+    main()

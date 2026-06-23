@@ -1,7 +1,10 @@
 """해한 AI 오케스트레이터 MCP 서버 (stdio transport).
 
+[LLM 경계] 이 MCP 서버는 '터미널 Claude Code'가 앱 도구를 호출하는 인터페이스다.
+도구 자체(상세설명 생성 등)는 앱 표준인 GPT(ai_orchestrator.app_llm)를 사용한다.
+
 Claude Code에서 다음 도구를 직접 호출할 수 있게 합니다:
-  - generate_description   : Claude/GPT로 상품 상세설명 HTML 생성
+  - generate_description   : GPT로 상품 상세설명 HTML 생성
   - save_template          : 상세설명 템플릿 저장
   - list_templates         : 저장된 템플릿 목록 조회
   - get_template           : 템플릿 상세(HTML 포함) 조회
@@ -12,13 +15,13 @@ Claude Code에서 다음 도구를 직접 호출할 수 있게 합니다:
 실행 (Claude Code가 자동으로 기동):
     python -m ai_orchestrator.mcp_server
 """
+
 from __future__ import annotations
 
-import json
-import os
-import sys
 import datetime
+import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -29,13 +32,14 @@ sys.path.insert(0, str(ROOT))
 # .env 로드
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
-except Exception:
+except Exception:  # noqa: S110
     pass
 
-import mcp.server.stdio
-import mcp.types as types
-from mcp.server import Server
+import mcp.server.stdio  # noqa: E402  (sys.path/.env 설정 후 import 필요)
+import mcp.types as types  # noqa: E402
+from mcp.server import Server  # noqa: E402
 
 app = Server("haehan-ai-orchestrator")
 
@@ -50,14 +54,14 @@ def _tmpl_dir() -> Path:
 
 # ── 도구 목록 ─────────────────────────────────────────────────────────────────
 
+
 @app.list_tools()
 async def list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="generate_description",
             description=(
-                "상품 데이터(JSON)를 받아 Claude 또는 GPT로 고품질 상세설명 HTML을 생성합니다. "
-                "model='claude'(기본) 또는 model='gpt'를 지정할 수 있습니다."
+                "상품 데이터(JSON)를 받아 GPT로 고품질 상세설명 HTML을 생성합니다. 생성 모델은 GPT(앱 표준)입니다."
             ),
             inputSchema={
                 "type": "object",
@@ -68,9 +72,9 @@ async def list_tools() -> list[types.Tool]:
                     },
                     "model": {
                         "type": "string",
-                        "enum": ["claude", "gpt", "builder"],
-                        "description": "생성 모델 선택 (기본: claude)",
-                        "default": "claude",
+                        "enum": ["gpt", "builder"],
+                        "description": "생성 모델 선택 (기본: gpt)",
+                        "default": "gpt",
                     },
                     "sections": {
                         "type": "array",
@@ -87,12 +91,12 @@ async def list_tools() -> list[types.Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "name":     {"type": "string",  "description": "템플릿 이름 (예: 무드등_감성표준)"},
-                    "category": {"type": "string",  "description": "제품군 (예: 조명)"},
-                    "sections": {"type": "array",   "items": {"type": "string"}},
-                    "data":     {"type": "object",  "description": "상품 샘플 데이터"},
-                    "html":     {"type": "string",  "description": "렌더링된 HTML"},
-                    "source":   {"type": "string",  "description": "생성 방식 (claude/gpt/builder)"},
+                    "name": {"type": "string", "description": "템플릿 이름 (예: 무드등_감성표준)"},
+                    "category": {"type": "string", "description": "제품군 (예: 조명)"},
+                    "sections": {"type": "array", "items": {"type": "string"}},
+                    "data": {"type": "object", "description": "상품 샘플 데이터"},
+                    "html": {"type": "string", "description": "렌더링된 HTML"},
+                    "source": {"type": "string", "description": "생성 방식 (claude/gpt/builder)"},
                 },
                 "required": ["name", "html"],
             },
@@ -130,9 +134,8 @@ async def list_tools() -> list[types.Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "product":  {"type": "object", "description": "상품 데이터"},
-                    "sections": {"type": "array",  "items": {"type": "string"},
-                                 "description": "포함할 섹션 목록"},
+                    "product": {"type": "object", "description": "상품 데이터"},
+                    "sections": {"type": "array", "items": {"type": "string"}, "description": "포함할 섹션 목록"},
                 },
                 "required": ["product"],
             },
@@ -231,15 +234,15 @@ async def list_tools() -> list[types.Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "name":        {"type": "string",  "description": "상품명"},
-                    "price":       {"type": "integer", "description": "판매가 (원)"},
-                    "stock":       {"type": "integer", "description": "재고 수량"},
-                    "category":    {"type": "string",  "description": "카테고리 경로 (예: 생활/주방 > 조명 > 무드등)"},
-                    "brand":       {"type": "string",  "description": "브랜드명"},
-                    "keywords":    {"type": "array",   "items": {"type": "string"}, "description": "검색 키워드"},
-                    "description": {"type": "string",  "description": "상세설명 HTML"},
-                    "model_name":  {"type": "string",  "description": "모델명"},
-                    "origin":      {"type": "string",  "description": "원산지"},
+                    "name": {"type": "string", "description": "상품명"},
+                    "price": {"type": "integer", "description": "판매가 (원)"},
+                    "stock": {"type": "integer", "description": "재고 수량"},
+                    "category": {"type": "string", "description": "카테고리 경로 (예: 생활/주방 > 조명 > 무드등)"},
+                    "brand": {"type": "string", "description": "브랜드명"},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "description": "검색 키워드"},
+                    "description": {"type": "string", "description": "상세설명 HTML"},
+                    "model_name": {"type": "string", "description": "모델명"},
+                    "origin": {"type": "string", "description": "원산지"},
                 },
                 "required": ["name", "price", "stock"],
             },
@@ -247,20 +250,19 @@ async def list_tools() -> list[types.Tool]:
         types.Tool(
             name="edit_product",
             description=(
-                "CDP 브라우저로 기존 상품을 수정합니다. "
-                "임시저장까지만 진행하며 최종 저장은 사용자가 직접 합니다."
+                "CDP 브라우저로 기존 상품을 수정합니다. 임시저장까지만 진행하며 최종 저장은 사용자가 직접 합니다."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "product_id": {"type": "string",  "description": "수정할 상품번호"},
-                    "name":       {"type": "string",  "description": "변경할 상품명"},
-                    "price":      {"type": "integer", "description": "변경할 판매가 (원)"},
-                    "stock":      {"type": "integer", "description": "변경할 재고 수량"},
+                    "product_id": {"type": "string", "description": "수정할 상품번호"},
+                    "name": {"type": "string", "description": "변경할 상품명"},
+                    "price": {"type": "integer", "description": "변경할 판매가 (원)"},
+                    "stock": {"type": "integer", "description": "변경할 재고 수량"},
                     "description": {"type": "string", "description": "변경할 상세설명 HTML"},
-                    "keywords":   {"type": "array",   "items": {"type": "string"}, "description": "변경할 검색 키워드"},
-                    "brand":      {"type": "string",  "description": "변경할 브랜드명"},
-                    "origin":     {"type": "string",  "description": "변경할 원산지"},
+                    "keywords": {"type": "array", "items": {"type": "string"}, "description": "변경할 검색 키워드"},
+                    "brand": {"type": "string", "description": "변경할 브랜드명"},
+                    "origin": {"type": "string", "description": "변경할 원산지"},
                 },
                 "required": ["product_id"],
             },
@@ -269,6 +271,7 @@ async def list_tools() -> list[types.Tool]:
 
 
 # ── 도구 실행 ─────────────────────────────────────────────────────────────────
+
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
@@ -338,38 +341,21 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
 
 # ── 구현 ──────────────────────────────────────────────────────────────────────
 
+
 async def _generate_description(args: dict) -> dict:
-    product  = args.get("product", {})
-    model    = args.get("model", "claude")
+    product = args.get("product", {})
+    model = args.get("model", "gpt")  # 앱 표준=GPT (구 기본값 claude)
     sections = args.get("sections")
 
-    # Claude
-    if model in ("claude", "auto"):
-        try:
-            from scripts.naver.smartstore.product.ai_description_writer import (
-                AIDescriptionWriter, QUALITY_MODEL,
-            )
-            w = AIDescriptionWriter(model=QUALITY_MODEL)
-            r = w.generate(product)
-            if r.get("ok") and r.get("html"):
-                return {"ok": True, "html": r["html"], "source": "claude",
-                        "model": QUALITY_MODEL, "chars": len(r["html"])}
-            if model == "claude":
-                return {"ok": False, "error": r.get("error", "Claude 생성 실패"),
-                        "hint": "ANTHROPIC_API_KEY를 .env에 추가하세요"}
-        except Exception as e:
-            if model == "claude":
-                return {"ok": False, "error": str(e)}
-
-    # GPT
-    if model in ("gpt", "auto"):
+    # GPT (앱 표준 — 구 Claude 경로 제거; claude/auto 요청도 GPT로 처리)
+    if model in ("gpt", "auto", "claude"):
         try:
             from scripts.naver.smartstore.product.gpt_description_writer import GptDescriptionWriter
+
             w = GptDescriptionWriter()
             r = w.generate(product)
             if r.get("ok") and r.get("html"):
-                return {"ok": True, "html": r["html"], "source": "gpt",
-                        "chars": len(r["html"])}
+                return {"ok": True, "html": r["html"], "source": "gpt", "chars": len(r["html"])}
             return {"ok": False, "error": r.get("error") or str(r.get("errors", "GPT 실패"))}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -379,10 +365,11 @@ async def _generate_description(args: dict) -> dict:
 
 
 def _render_description(args: dict) -> dict:
-    product  = args.get("product", {})
+    product = args.get("product", {})
     sections = args.get("sections")
     try:
-        from scripts.naver.smartstore.product.page_builder import ProductPageBuilder, DEFAULT_SECTIONS
+        from scripts.naver.smartstore.product.page_builder import DEFAULT_SECTIONS, ProductPageBuilder
+
         b = ProductPageBuilder()
         b.select(sections or DEFAULT_SECTIONS)
         html = b.render(product)
@@ -392,25 +379,23 @@ def _render_description(args: dict) -> dict:
 
 
 def _save_template(args: dict) -> dict:
-    d    = _tmpl_dir()
+    d = _tmpl_dir()
     name = args.get("name", "unnamed")
     safe = re.sub(r"[^\w가-힣]", "_", name)[:40]
-    ts   = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    tid  = f"{safe}_{ts}"
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    tid = f"{safe}_{ts}"
     payload = {
-        "id":         tid,
-        "name":       name,
-        "category":   args.get("category", ""),
-        "sections":   args.get("sections", []),
-        "data":       args.get("data", {}),
-        "html":       args.get("html", ""),
-        "source":     args.get("source", "manual"),
+        "id": tid,
+        "name": name,
+        "category": args.get("category", ""),
+        "sections": args.get("sections", []),
+        "data": args.get("data", {}),
+        "html": args.get("html", ""),
+        "source": args.get("source", "manual"),
         "created_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "created_by": "claude_code_mcp",
     }
-    (d / f"{tid}.json").write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    (d / f"{tid}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return {"ok": True, "id": tid, "name": name}
 
 
@@ -420,16 +405,18 @@ def _list_templates() -> dict:
     for f in sorted(d.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
         try:
             t = json.loads(f.read_text(encoding="utf-8"))
-            templates.append({
-                "id":         f.stem,
-                "name":       t.get("name", f.stem),
-                "category":   t.get("category", ""),
-                "source":     t.get("source", ""),
-                "created_at": t.get("created_at", ""),
-                "chars":      len(t.get("html", "")),
-                "sections":   t.get("sections", []),
-            })
-        except Exception:
+            templates.append(
+                {
+                    "id": f.stem,
+                    "name": t.get("name", f.stem),
+                    "category": t.get("category", ""),
+                    "source": t.get("source", ""),
+                    "created_at": t.get("created_at", ""),
+                    "chars": len(t.get("html", "")),
+                    "sections": t.get("sections", []),
+                }
+            )
+        except Exception:  # noqa: S110
             pass
     return {"ok": True, "templates": templates, "count": len(templates)}
 
@@ -461,28 +448,29 @@ def _list_products() -> dict:
 SS_DATA_DIR = ROOT / "data" / "smartstore"
 
 _SS_COLLECT_METHODS = {
-    "products":    ("list_products",    50),
-    "orders":      ("list_orders",      50),
+    "products": ("list_products", 50),
+    "orders": ("list_orders", 50),
     "settlements": ("list_settlements", 30),
-    "reviews":     ("list_reviews",     30),
-    "stats":       ("stats",            None),
+    "reviews": ("list_reviews", 30),
+    "stats": ("stats", None),
 }
 
 
 def _load_ss_data(name: str) -> dict:
     p = SS_DATA_DIR / f"{name}.json"
     if not p.exists():
-        return {"ok": False, "error": "no_data",
-                "hint": f"collect_{name} 도구를 먼저 실행하세요"}
+        return {"ok": False, "error": "no_data", "hint": f"collect_{name} 도구를 먼저 실행하세요"}
     try:
         import json as _j
+
         data = _j.loads(p.read_text(encoding="utf-8"))
-        if not data.get("ok") and data.get("error") in (
-            "section_open_failed", "CDP_ERROR", "playwright_error"
-        ):
-            return {"ok": False, "error": "no_data",
-                    "hint": f"이전 수집이 실패했습니다. collect_{name} 재실행 필요",
-                    "last_error": data.get("error")}
+        if not data.get("ok") and data.get("error") in ("section_open_failed", "CDP_ERROR", "playwright_error"):
+            return {
+                "ok": False,
+                "error": "no_data",
+                "hint": f"이전 수집이 실패했습니다. collect_{name} 재실행 필요",
+                "last_error": data.get("error"),
+            }
         return data
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -491,14 +479,14 @@ def _load_ss_data(name: str) -> dict:
 def _save_ss_data(name: str, data: dict) -> None:
     SS_DATA_DIR.mkdir(parents=True, exist_ok=True)
     import json as _j
-    (SS_DATA_DIR / f"{name}.json").write_text(
-        _j.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+
+    (SS_DATA_DIR / f"{name}.json").write_text(_j.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _cdp_collect(name: str, args: dict) -> dict:
     """CDP 브라우저로 지정 데이터를 수집해 캐시에 저장합니다."""
     import time as _t
+
     method_name, default_limit = _SS_COLLECT_METHODS.get(name, (None, None))
     if not method_name:
         return {"ok": False, "error": f"알 수 없는 수집 대상: {name}"}
@@ -507,16 +495,21 @@ def _cdp_collect(name: str, args: dict) -> dict:
     t0 = _t.monotonic()
     try:
         from playwright.sync_api import sync_playwright
+
         with sync_playwright() as pw:
             browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
             page = browser.contexts[0].pages[0]
             from scripts.naver.smartstore import NaverSmartStore
+
             ss = NaverSmartStore(page)
             method = getattr(ss, method_name)
             result = method(limit=limit) if limit is not None else method()
     except Exception as e:
-        result = {"ok": False, "error": str(e),
-                  "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)"}
+        result = {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
 
     result["collected_at"] = datetime.datetime.now().isoformat(timespec="seconds")
     result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
@@ -528,13 +521,13 @@ def _cdp_collect(name: str, args: dict) -> dict:
 # ── 셀러센터 페이지 열기 ──────────────────────────────────────────────────────
 
 _SELLER_CENTER_URLS = {
-    "register":   "https://sell.smartstore.naver.com/#/products/new",
-    "list":       "https://sell.smartstore.naver.com/#/products/list",
-    "dashboard":  "https://sell.smartstore.naver.com/#/home/dashboard",
-    "orders":     "https://sell.smartstore.naver.com/#/order/list",
+    "register": "https://sell.smartstore.naver.com/#/products/new",
+    "list": "https://sell.smartstore.naver.com/#/products/list",
+    "dashboard": "https://sell.smartstore.naver.com/#/home/dashboard",
+    "orders": "https://sell.smartstore.naver.com/#/order/list",
     "settlement": "https://sell.smartstore.naver.com/#/settlement/main",
-    "reviews":    "https://sell.smartstore.naver.com/#/review/list",
-    "stats":      "https://sell.smartstore.naver.com/#/analytics/dashboard",
+    "reviews": "https://sell.smartstore.naver.com/#/review/list",
+    "stats": "https://sell.smartstore.naver.com/#/analytics/dashboard",
 }
 
 
@@ -542,26 +535,31 @@ def _open_seller_center(args: dict) -> dict:
     page_key = args.get("page_key", "dashboard")
     url = _SELLER_CENTER_URLS.get(page_key)
     if not url:
-        return {"ok": False, "error": f"알 수 없는 page_key: {page_key}",
-                "available": list(_SELLER_CENTER_URLS.keys())}
+        return {"ok": False, "error": f"알 수 없는 page_key: {page_key}", "available": list(_SELLER_CENTER_URLS.keys())}
     try:
         from playwright.sync_api import sync_playwright
+
         with sync_playwright() as pw:
             browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
             page = browser.contexts[0].pages[0]
             page.bring_to_front()
             page.goto(url, timeout=15000, wait_until="domcontentloaded")
     except Exception as e:
-        return {"ok": False, "error": str(e),
-                "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)"}
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
     return {"ok": True, "page_key": page_key, "url": url}
 
 
 # ── 상품 등록 / 수정 ──────────────────────────────────────────────────────────
 
+
 def _auto_register_product(args: dict) -> dict:
     """CDP 브라우저로 상품 등록 폼을 자동 채웁니다 (임시저장까지)."""
     import time as _t
+
     register_data = dict(args)
     register_data["save"] = False
     register_data["require_confirm"] = False
@@ -570,7 +568,9 @@ def _auto_register_product(args: dict) -> dict:
     t0 = _t.monotonic()
     try:
         from playwright.sync_api import sync_playwright
+
         from scripts.naver.smartstore.product.form_runner import ProductFormRunner
+
         with sync_playwright() as pw:
             browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
             ctx = browser.contexts[0]
@@ -587,8 +587,11 @@ def _auto_register_product(args: dict) -> dict:
             runner = ProductFormRunner(page)
             result = runner.run(register_data, skip_open=skip)
     except Exception as e:
-        return {"ok": False, "error": str(e),
-                "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)"}
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
 
     result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
     result["dry_run"] = True
@@ -598,6 +601,7 @@ def _auto_register_product(args: dict) -> dict:
 def _edit_product(args: dict) -> dict:
     """CDP 브라우저로 기존 상품을 수정합니다 (임시저장까지)."""
     import time as _t
+
     product_id = args.get("product_id")
     if not product_id:
         return {"ok": False, "error": "product_id 필수"}
@@ -608,7 +612,9 @@ def _edit_product(args: dict) -> dict:
     t0 = _t.monotonic()
     try:
         from playwright.sync_api import sync_playwright
+
         from scripts.naver.smartstore.product.form_runner import ProductFormRunner
+
         with sync_playwright() as pw:
             browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
             ctx = browser.contexts[0]
@@ -622,8 +628,11 @@ def _edit_product(args: dict) -> dict:
             runner = ProductFormRunner(page)
             result = runner.edit(product_id, edit_fields)
     except Exception as e:
-        return {"ok": False, "error": str(e),
-                "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)"}
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
 
     result["duration_ms"] = int((_t.monotonic() - t0) * 1000)
     result["dry_run"] = True
@@ -632,8 +641,10 @@ def _edit_product(args: dict) -> dict:
 
 # ── 진입점 ────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     import asyncio
+
     asyncio.run(mcp.server.stdio.stdio_server(app))
 
 

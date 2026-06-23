@@ -1,4 +1,5 @@
 """Explore pages available in the current EUM account menu."""
+
 from __future__ import annotations
 
 import json
@@ -8,7 +9,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 EUM_BASE = "https://eum.cw.or.kr"
 
 
@@ -59,10 +68,7 @@ def explore_accessible_pages(page, *, max_pages: int | None = None, partial_path
     from scripts.eum.navigation import extract_live_menu
 
     menu = extract_live_menu(page)
-    pages = [
-        row for row in menu
-        if str(row.get("urlAddr") or "").startswith("/web/")
-    ]
+    pages = [row for row in menu if str(row.get("urlAddr") or "").startswith("/web/")]
     if max_pages:
         pages = pages[:max_pages]
 
@@ -120,4 +126,6 @@ def print_summary(result: dict[str, Any], path: Path | None = None) -> None:
     if path:
         print(f"saved: {path}")
     for page in ok:
-        print(f"  - {page.get('menuNm')}: inputs={len(page.get('inputs', []))} buttons={len(page.get('buttons', []))} tables={len(page.get('tables', []))}")
+        print(
+            f"  - {page.get('menuNm')}: inputs={len(page.get('inputs', []))} buttons={len(page.get('buttons', []))} tables={len(page.get('tables', []))}"
+        )

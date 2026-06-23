@@ -1,4 +1,5 @@
 """Generic safe actions for EUM menu pages."""
+
 from __future__ import annotations
 
 import json
@@ -7,7 +8,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 EUM_BASE = "https://eum.cw.or.kr"
 
 _SUMMARY_JS = """
@@ -87,11 +96,7 @@ def open_menu_page(page, query: str) -> dict[str, Any]:
             "ok": False,
             "query": query,
             "error": "menu not found in current account",
-            "available": [
-                {"menuNm": m.get("menuNm"), "urlAddr": m.get("urlAddr")}
-                for m in menu
-                if m.get("urlAddr")
-            ],
+            "available": [{"menuNm": m.get("menuNm"), "urlAddr": m.get("urlAddr")} for m in menu if m.get("urlAddr")],
         }
     url_addr = str(row.get("urlAddr") or "")
     if not url_addr:

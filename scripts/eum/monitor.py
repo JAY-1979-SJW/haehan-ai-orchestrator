@@ -24,7 +24,14 @@ from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
-DATA_DIR = ROOT / "data"
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 DEVICES_FILE = DATA_DIR / "eum_all_devices_complete.json"
 
 # 미사용 임계값 (설치일수 기준)

@@ -17,16 +17,17 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ...app_llm import APP_LLM_MODEL
 from ...audit_logger import log_event
 from ...auth import require_role
+from ..tool_registry import register, to_openai_tools
 from ._helpers import ROOT
 
 _TEMP_IMAGE_DIR = ROOT / "data" / "temp_images"
 
 router = APIRouter()
 
-CLAUDE_MODEL = "claude-haiku-4-5-20251001"
-GPT_MODEL = "gpt-4o-mini"
+GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (ai_orchestrator.app_llm 단일 출처)
 WRITE_TOOLS = {"auto_register_product", "edit_product", "reply_reviews", "process_shipping", "delete_product"}
 
 # CDP가 필요한 도구 — 로컬 에이전트로 라우팅
@@ -131,8 +132,8 @@ def _tool_defs() -> list[dict]:
         },
         {
             "name": "generate_description",
-            "description": "Claude 또는 GPT로 상품 상세설명 HTML을 생성합니다.",
-            "params": {"data": {"type": "object"}, "model": {"type": "string", "enum": ["claude", "gpt"]}},
+            "description": "GPT로 상품 상세설명 HTML을 생성합니다.",
+            "params": {"data": {"type": "object"}, "model": {"type": "string", "enum": ["gpt"]}},
             "required": ["data"],
         },
         {
@@ -178,32 +179,8 @@ def _tool_defs() -> list[dict]:
     ]
 
 
-def _to_claude_tools(confirmed: bool) -> list:
-    import anthropic
-
-    result = []
-    for t in _tool_defs():
-        if not confirmed and t["name"] in WRITE_TOOLS:
-            continue
-        schema: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            schema["required"] = t["required"]
-        result.append(anthropic.types.ToolParam(name=t["name"], description=t["description"], input_schema=schema))
-    return result
-
-
-def _to_gpt_tools(confirmed: bool) -> list:
-    result = []
-    for t in _tool_defs():
-        if not confirmed and t["name"] in WRITE_TOOLS:
-            continue
-        params: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            params["required"] = t["required"]
-        result.append(
-            {"type": "function", "function": {"name": t["name"], "description": t["description"], "parameters": params}}
-        )
-    return result
+# 스마트스토어 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("smartstore", _tool_defs, WRITE_TOOLS)
 
 
 # ── 로컬 도구 실행 ─────────────────────────────────────────────────────────────
@@ -379,31 +356,19 @@ def _run_tool(name: str, inputs: dict, license_key: str | None = None, images: l
 
         if name == "generate_description":
             data = inputs.get("data", {})
-            # 사진 첨부 또는 model=gpt → GPT(이미지 지원). 그 외 Claude.
-            if images or inputs.get("model") == "gpt":
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    DEFAULT_MODEL as GPT_DEFAULT,
-                )
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    QUALITY_MODEL as GPT_QUALITY,
-                )
-                from scripts.naver.smartstore.product.gpt_description_writer import (
-                    GptDescriptionWriter,
-                )
-
-                return GptDescriptionWriter(model=GPT_QUALITY if images else GPT_DEFAULT).generate(
-                    data, images=images or None
-                )
-
-            from scripts.naver.smartstore.product.ai_description_writer import (
-                DEFAULT_MODEL,
-                QUALITY_MODEL,
-                AIDescriptionWriter,
+            # 앱 표준=GPT. 이미지 있거나 model=quality 면 고품질(vision) 모델 사용.
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                DEFAULT_MODEL as GPT_DEFAULT,
+            )
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                QUALITY_MODEL as GPT_QUALITY,
+            )
+            from scripts.naver.smartstore.product.gpt_description_writer import (
+                GptDescriptionWriter,
             )
 
-            return AIDescriptionWriter(
-                model=QUALITY_MODEL if inputs.get("model") == "quality" else DEFAULT_MODEL
-            ).generate(data)
+            use_model = GPT_QUALITY if (images or inputs.get("model") == "quality") else GPT_DEFAULT
+            return GptDescriptionWriter(model=use_model).generate(data, images=images or None)
 
         if name == "search_categories":
             from scripts.naver.smartstore.product.category_cache import load_cache
@@ -499,65 +464,6 @@ def _sse(event: str, data: dict) -> str:
 # ── Claude 루프 ───────────────────────────────────────────────────────────────
 
 
-def _run_claude(messages: list, confirmed: bool, license_key: str | None = None, images: list | None = None):
-    import anthropic
-
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not api_key:
-        yield _sse("error", {"message": "ANTHROPIC_API_KEY 미설정 — .env에 추가하세요"})
-        return
-
-    client = anthropic.Anthropic(api_key=api_key)
-    tools = _to_claude_tools(confirmed)
-    history = list(messages)
-    step = 0
-
-    while True:
-        res = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=2048,
-            system=SYSTEM_PROMPT,
-            tools=tools,
-            messages=history,
-        )
-        for b in res.content:
-            if b.type == "text" and b.text:
-                yield _sse("text", {"text": b.text})
-
-        if res.stop_reason != "tool_use":
-            break
-
-        tool_results = []
-        for b in res.content:
-            if b.type != "tool_use":
-                continue
-            is_write = b.name in WRITE_TOOLS
-            if is_write and not confirmed:
-                yield _sse(
-                    "confirm_required",
-                    {
-                        "tool": b.name,
-                        "inputs": b.input,
-                        "message": f"'{b.input.get('name', b.name)}' 작업에 승인이 필요합니다.",
-                    },
-                )
-                return
-            step += 1
-            yield _sse("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
-            result = _run_tool(b.name, dict(b.input), license_key, images)
-            yield _sse(
-                "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
-            )
-            tool_results.append(
-                {"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)}
-            )
-
-        history.append({"role": "assistant", "content": res.content})
-        history.append({"role": "user", "content": tool_results})
-
-    yield _sse("done", {"steps": step})
-
-
 # ── GPT 루프 ─────────────────────────────────────────────────────────────────
 
 
@@ -570,7 +476,7 @@ def _run_gpt(messages: list, confirmed: bool, license_key: str | None = None, im
         return
 
     client = OpenAI(api_key=api_key)
-    tools = _to_gpt_tools(confirmed)
+    tools = to_openai_tools(_tool_defs(), WRITE_TOOLS, confirmed)
     history = [{"role": "system", "content": SYSTEM_PROMPT}, *messages]
     step = 0
 
@@ -667,7 +573,7 @@ def api_chat(body: ChatRequest, user: dict = Depends(require_role("admin", "owne
 
     def generate():
         try:
-            runner = _run_gpt if body.provider == "gpt" else _run_claude
+            runner = _run_gpt  # 앱 표준=GPT (Claude 경로 제거)
             yield from runner(messages, body.confirmed, lic_key, images)
         except Exception as e:
             yield _sse("error", {"message": str(e)})

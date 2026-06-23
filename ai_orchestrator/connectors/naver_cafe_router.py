@@ -17,8 +17,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from ..app_llm import APP_LLM_MODEL
 from ..audit_logger import log_event
 from ..auth import require_role
+from .tool_registry import register, to_openai_tools
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +62,10 @@ def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> di
     try:
         _ensure_path()
         from scripts.naver.cafe.explorer import get_my_cafes, save_my_cafes
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        cafes = get_my_cafes(page)
+        # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
+        cafes = run_on_browser_thread(lambda: get_my_cafes(get_page()), timeout=120)
         save_my_cafes(cafes)
         log_event(
             "NAVER_CAFE_COLLECT_MY_CAFES",
@@ -93,15 +95,18 @@ def collect_cafe_articles(
         from scripts.naver.cafe.collector import collect_articles
         from scripts.naver.cafe.organizer import organize
         from scripts.naver.cafe.pipeline import run_pipeline
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        articles = collect_articles(
-            page,
-            cafe_url=cafe_url,
-            days=max(1, min(req.days, 365)),
-            max_detail=max(1, min(req.max_detail, 500)),
-            keyword=req.keyword.strip(),
+        # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
+        articles = run_on_browser_thread(
+            lambda: collect_articles(
+                get_page(),
+                cafe_url=cafe_url,
+                days=max(1, min(req.days, 365)),
+                max_detail=max(1, min(req.max_detail, 500)),
+                keyword=req.keyword.strip(),
+            ),
+            timeout=300,
         )
         run_pipeline()
         organize()
@@ -401,9 +406,10 @@ def api_summary(
 # ── 채팅 ─────────────────────────────────────────────────────────────────────
 
 _CAFE_SYSTEM_PROMPT = """당신은 네이버 카페 AI 에이전트입니다.
-사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
-- 글쓰기(write_cafe_post)는 confirmed=true일 때만 실제 발행합니다. 기본은 임시저장.
-- 수집/조회는 바로 실행합니다.
+사용자의 자연어 명령을 이해하고 적절한 도구를 즉시 호출하세요.
+- 수집(collect_cafe_posts)·조회(get_cafe_summary)는 묻지 말고 즉시 실행합니다.
+- 글 발행(write_cafe_post)은 내용을 먼저 보여주고 '발행할까요?' 한 번만 확인합니다.
+- '진행할까요?', '실행해도 될까요?' 등의 질문은 절대 하지 않습니다.
 - 결과는 한국어로 간결하게 요약합니다."""
 
 _CAFE_WRITE_TOOLS = {"write_cafe_post"}
@@ -500,68 +506,66 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def _run_cafe_claude(messages: list, confirmed: bool):
-    import anthropic
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# 카페 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("cafe", _cafe_tool_defs, _CAFE_WRITE_TOOLS)
+
+
+def _run_cafe_gpt(messages: list, confirmed: bool):
+    """자연어 명령 → GPT tool_use → 카페 수집/글쓰기 → SSE. (앱 표준=GPT)"""
+    from openai import OpenAI
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
-        yield _sse("error", {"message": "ANTHROPIC_API_KEY 미설정"})
+        yield _sse("error", {"message": "OPENAI_API_KEY 미설정 — .env에 추가하세요"})
         return
 
-    client = anthropic.Anthropic(api_key=api_key)
-    tools = []
-    for t in _cafe_tool_defs():
-        if not confirmed and t["name"] in _CAFE_WRITE_TOOLS:
-            continue
-        schema: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            schema["required"] = t["required"]
-        tools.append(anthropic.types.ToolParam(name=t["name"], description=t["description"], input_schema=schema))
-
-    history = list(messages)
+    client = OpenAI(api_key=api_key)
+    tools = to_openai_tools(_cafe_tool_defs(), _CAFE_WRITE_TOOLS, confirmed)
+    history = [{"role": "system", "content": _CAFE_SYSTEM_PROMPT}, *messages]
     step = 0
+
     while True:
-        res = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+        res = client.chat.completions.create(
+            model=_GPT_MODEL,
             max_tokens=2048,
-            system=_CAFE_SYSTEM_PROMPT,
             tools=tools,
+            tool_choice="auto",
             messages=history,
         )
-        for b in res.content:
-            if b.type == "text" and b.text:
-                yield _sse("text", {"text": b.text})
-
-        if res.stop_reason != "tool_use":
+        msg = res.choices[0].message
+        if msg.content:
+            yield _sse("text", {"text": msg.content})
+        if not msg.tool_calls:
             break
 
         tool_results = []
-        for b in res.content:
-            if b.type != "tool_use":
-                continue
-            is_write = b.name in _CAFE_WRITE_TOOLS
+        for tc in msg.tool_calls:
+            name = tc.function.name
+            inputs = json.loads(tc.function.arguments or "{}")
+            is_write = name in _CAFE_WRITE_TOOLS
             if is_write and not confirmed:
                 yield _sse(
                     "confirm_required",
                     {
-                        "tool": b.name,
-                        "inputs": b.input,
+                        "tool": name,
+                        "inputs": inputs,
                         "message": "글 발행에 승인이 필요합니다. confirmed=true로 재요청하세요.",
                     },
                 )
                 return
             step += 1
-            yield _sse("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
-            result = _run_cafe_tool(b.name, dict(b.input))
-            yield _sse(
-                "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
-            )
+            yield _sse("step_start", {"step": step, "tool": name, "inputs": inputs, "write": is_write})
+            result = _run_cafe_tool(name, inputs)
+            yield _sse("step_done", {"step": step, "tool": name, "ok": result.get("ok") is not False, "result": result})
             tool_results.append(
-                {"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)}
+                {"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)}
             )
 
-        history.append({"role": "assistant", "content": res.content})
-        history.append({"role": "user", "content": tool_results})
+        history.append(msg)
+        history.extend(tool_results)
 
     yield _sse("done", {"steps": step})
 
@@ -578,12 +582,12 @@ class CafeChatRequest(BaseModel):
 
 @naver_cafe_router.post("/chat")
 def api_cafe_chat(body: CafeChatRequest, user: dict = Depends(require_role("admin", "owner"))):
-    """자연어 명령 → Claude tool_use → 카페 글쓰기/수집 → SSE."""
+    """자연어 명령 → GPT tool_use → 카페 글쓰기/수집 → SSE."""
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
 
     def generate():
         try:
-            yield from _run_cafe_claude(messages, body.confirmed)
+            yield from _run_cafe_gpt(messages, body.confirmed)
         except Exception as e:
             yield _sse("error", {"message": str(e)})
 

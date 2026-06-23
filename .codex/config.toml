@@ -1,0 +1,10 @@
+[mcp_servers.haehan-orchestrator]
+command = "python"
+args = [
+    "-m",
+    "ai_orchestrator.mcp_server",
+]
+
+[mcp_servers.pc-inventory]
+command = "python"
+args = ["scripts/local/pc_inventory_mcp.py"]

@@ -12,7 +12,15 @@ from scripts.eum.menu_actions import open_menu_page
 from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 DOWNLOAD_DIR = DATA_DIR / "eum_downloads"
 DEFAULT_EXCEL_PASSWORD = "Haehan2026!"
 

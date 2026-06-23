@@ -1,7 +1,7 @@
 """앱 동작 매니페스트 + 디스패처 — 채팅(자율 에이전트)이 앱 내부 기능을 호출.
 
 완전성: 라이브 FastAPI 앱을 introspect 해 모든 POST 동작을 자동 인벤토리(손으로 안 고름 → 누락 0).
-안전성: 위험도 분류 후 SAFE만 자동 실행, DESTRUCTIVE/CONFIRM 은 사용자 확인 필요로 차단(자동실행 금지).
+안전성: DESTRUCTIVE(발송·결제·삭제 등) 만 차단. 나머지는 자유 실행.
        표준 (RequestModel, user) 시그니처만 자동 호출, 그 외는 안전하게 폴백.
 """
 
@@ -10,27 +10,17 @@ from __future__ import annotations
 import inspect
 import re
 
-# 위험(자동실행 금지): 발송·결제·삭제·투찰·발행·승인·배포·로그인·등록·웹훅·팩스 등
+# 파괴적 동작만 차단: 발송·결제·삭제·투찰·입찰·팩스·환불 등 되돌릴 수 없는 외부 영향
 _DESTRUCTIVE = re.compile(
     r"send|발송|전송|보내|결제|구매|주문하기|송금|이체|삭제|delete|remove|탈퇴|투찰|입찰|낙찰|"
-    r"submit|제출|발행|publish|게시|upload|업로드|approve|승인|reject|거절|배포|deploy|webhook|"
-    r"login|signup|register|revoke|cancel|취소|환불|fax|팩스|setup|reset|export|dispatch|consent|확정",
-    re.IGNORECASE,
-)
-# 안전(자동 가능): 분석·조회·수집·검색·생성초안·계획·현황·통계
-_SAFE = re.compile(
-    r"analyze|분석|status|현황|상태|list|목록|조회|collect|수집|search|검색|refresh|새로고침|"
-    r"preview|미리보기|generate|생성|draft|초안|plan|계획|fetch|정산|stats|통계|seo|dashboard|summary",
+    r"submit|제출|approve|승인|reject|거절|배포|deploy|webhook|"
+    r"login|signup|revoke|cancel|취소|환불|fax|팩스|dispatch|consent|확정",
     re.IGNORECASE,
 )
 
 
 def _classify(blob: str) -> str:
-    if _DESTRUCTIVE.search(blob):
-        return "DESTRUCTIVE"
-    if _SAFE.search(blob):
-        return "SAFE"
-    return "CONFIRM"
+    return "DESTRUCTIVE" if _DESTRUCTIVE.search(blob) else "SAFE"
 
 
 def _get_app():
@@ -52,15 +42,16 @@ def _post_routes() -> list[tuple]:
 
 
 def build_manifest() -> list[dict]:
-    """모든 POST 동작 인벤토리 + 위험도. (introspect 기반이라 항상 최신·누락 0)"""
+    """모든 POST 동작 인벤토리. (introspect 기반이라 항상 최신·누락 0)"""
     man = []
     for path, ep, name in _post_routes():
         doc = (ep.__doc__ or "").strip()
+        risk = _classify(f"{path} {name} {doc}")
         man.append(
             {
                 "path": path,
                 "func": name,
-                "risk": _classify(f"{path} {name} {doc}"),
+                "risk": risk,
                 "desc": doc.split("\n")[0][:80],
             }
         )
@@ -77,8 +68,8 @@ def list_actions(query: str = "") -> list[dict]:
     return [a for a in man if all(t in f"{a['path']} {a['func']} {a['desc']}".lower() for t in terms)]
 
 
-def run_action(path: str, params: dict | None, user: dict) -> dict:
-    """동작 1개 실행. SAFE만 자동, 그 외는 needs_confirm. 표준 시그니처만 자동 호출."""
+def run_action(path: str, params: dict | None, user: dict, confirmed: bool = False) -> dict:
+    """동작 1개 실행. DESTRUCTIVE 만 차단, 나머지는 즉시 실행."""
     from scripts.web_connector import run_on_browser_thread
 
     params = params or {}
@@ -91,15 +82,12 @@ def run_action(path: str, params: dict | None, user: dict) -> dict:
     ep, name = target
 
     risk = _classify(f"{path} {name} {ep.__doc__ or ''}")
-    if risk != "SAFE":
+    if risk == "DESTRUCTIVE" and not confirmed:
         return {
             "ok": False,
             "needs_confirm": True,
             "risk": risk,
-            "message": (
-                f"'{path}' 은(는) {risk}(위험·민감) 동작이라 자동 실행하지 않았습니다. "
-                "사용자에게 무엇을 할지 알리고 확인을 받은 뒤 진행하세요."
-            ),
+            "message": (f"'{path}' 은(는) 발송·결제·삭제 등 되돌릴 수 없는 동작입니다. 사용자 확인이 필요합니다."),
         }
 
     # 표준 (RequestModel, user) 형태만 자동 호출 — 그 외는 폴백(안전).
