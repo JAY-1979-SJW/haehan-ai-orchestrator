@@ -18,6 +18,7 @@ import { AuditEventTable } from "./components/AuditEventTable";
 import { IntegrationStatusPanel } from "./components/IntegrationStatusPanel";
 import { SafetyPolicyBanner } from "./components/SafetyPolicyBanner";
 import { ApiStatusBanner } from "./components/ApiStatusBanner";
+import { QuotePanel } from "./components/QuotePanel";
 import { PageShell } from "@/components/ui/PageShell";
 import SessionStatusPanel from "@/components/SessionStatusPanel";
 
@@ -93,6 +94,7 @@ export default async function OpsPage() {
         )}
 
         <SafetyPolicyBanner policies={SAFETY_POLICIES} />
+        <QuotePanel />
         <OpsDashboard metrics={metrics.data} />
         <ApprovalQueue items={approvalQueue.data} />
         <WorkTradeBoard trades={[]} />
