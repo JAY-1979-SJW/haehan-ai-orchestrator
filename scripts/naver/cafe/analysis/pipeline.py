@@ -18,7 +18,15 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-_DATA_DIR = ROOT / "data" / "cafe"
+
+
+def _cafe_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("cafe")
+
+
+_DATA_DIR = _cafe_dir()
 
 
 def _load_raw(input_path: str | None = None) -> list[dict]:

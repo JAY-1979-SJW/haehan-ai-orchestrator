@@ -6,6 +6,7 @@
     python scripts/eum/history.py                   # 전체 목록
     python scripts/eum/history.py --device 12345    # 특정 단말기
 """
+
 from __future__ import annotations
 
 import json
@@ -17,18 +18,27 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except ImportError:
     pass
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
 EUM_BASE = "https://eum.cw.or.kr"
 HISTORY_URL = f"{EUM_BASE}/web/man/WEBMAN400M00"
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 
 
 def _extract_history_table(page) -> list[dict]:
@@ -100,7 +110,9 @@ def _search_device(page, device_id: str) -> list[dict]:
         "input[placeholder*='단말기']",
         "input[placeholder*='번호']",
         "input[type='text']",
-        "#deviceId", "#terminalId", "#searchVal",
+        "#deviceId",
+        "#terminalId",
+        "#searchVal",
     ]
 
     input_sel = None
@@ -120,7 +132,8 @@ def _search_device(page, device_id: str) -> list[dict]:
             "button:has-text('검색')",
             "button[type='submit']",
             "input[type='submit']",
-            ".btn-search", "#btnSearch",
+            ".btn-search",
+            "#btnSearch",
         ]
         for sel in search_btn_selectors:
             try:
@@ -181,7 +194,7 @@ def fetch_history(page, device_id: str | None = None) -> list[dict]:
 
 def main(device_id: str | None = None) -> None:
     """CLI 실행."""
-    from scripts.eum.auth import login, is_logged_in
+    from scripts.eum.auth import is_logged_in, login
     from scripts.web_connector import get_page
 
     # CLI 인자 파싱
@@ -232,10 +245,7 @@ def main(device_id: str | None = None) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     suffix = f"_{device_id}" if device_id else "_all"
     out_path = DATA_DIR / f"eum_history{suffix}.json"
-    out_path.write_text(
-        json.dumps(rows, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    out_path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n저장 완료: {out_path}")
     print("=" * 60)
 

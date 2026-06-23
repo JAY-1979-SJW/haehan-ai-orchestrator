@@ -1,4 +1,5 @@
 """Excel report generation for Naver SEO and shopping workflows."""
+
 from __future__ import annotations
 
 import json
@@ -8,8 +9,14 @@ from pathlib import Path
 from typing import Any
 
 
-DATA_DIR = Path("data")
-REPORT_DIR = DATA_DIR / "naver_reports"
+def _search_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("naver_search")
+
+
+DATA_DIR = _search_dir()
+REPORT_DIR = DATA_DIR
 LATEST_XLSX = REPORT_DIR / "naver_work_report_latest.xlsx"
 
 DEFAULT_SOURCES = {
@@ -110,7 +117,9 @@ def _write_source_sheet(wb, name: str, data: Any) -> None:
             row += 1
             ws.cell(row=row, column=1, value="issues")
             _write_list(ws, data.get("issues", []), start_row=row + 1)
-        elif name in ("seo_ownership", "seo_submit_plan") and isinstance(data.get("methods") or data.get("submit_steps"), list):
+        elif name in ("seo_ownership", "seo_submit_plan") and isinstance(
+            data.get("methods") or data.get("submit_steps"), list
+        ):
             sequence_key = "methods" if "methods" in data else "submit_steps"
             summary = {k: v for k, v in data.items() if k != sequence_key}
             row = _write_mapping(ws, summary)
@@ -133,13 +142,15 @@ def _write_source_sheet(wb, name: str, data: Any) -> None:
             _write_mapping(ws, {k: v for k, v in data.items() if k != "features"})
             rows = []
             for feature_name, feature in data["features"].items():
-                rows.append({
-                    "feature": feature_name,
-                    "commands": ", ".join(feature.get("commands", [])),
-                    "read": ", ".join(feature.get("read", [])),
-                    "prepare": ", ".join(feature.get("prepare", [])),
-                    "submit": ", ".join(feature.get("submit", [])),
-                })
+                rows.append(
+                    {
+                        "feature": feature_name,
+                        "commands": ", ".join(feature.get("commands", [])),
+                        "read": ", ".join(feature.get("read", [])),
+                        "prepare": ", ".join(feature.get("prepare", [])),
+                        "submit": ", ".join(feature.get("submit", [])),
+                    }
+                )
             _write_list(ws, rows, start_row=6)
         else:
             _write_mapping(ws, data)
@@ -175,11 +186,13 @@ def build_excel_report(
         {"key": "source_count", "value": len(source_paths)},
     ]
     for name, path in source_paths.items():
-        summary_rows.append({
-            "key": f"source.{name}",
-            "value": str(path),
-            "exists": path.exists(),
-        })
+        summary_rows.append(
+            {
+                "key": f"source.{name}",
+                "value": str(path),
+                "exists": path.exists(),
+            }
+        )
     _write_list(summary, summary_rows)
     _autosize(summary)
 

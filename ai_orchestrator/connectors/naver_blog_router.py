@@ -13,8 +13,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+from ai_orchestrator.app_llm import APP_LLM_MODEL
 from ai_orchestrator.audit_logger import log_event
 from ai_orchestrator.auth import require_role
+from ai_orchestrator.connectors.tool_registry import register, to_openai_tools
 from scripts.realtime_audit import emit_event
 
 naver_blog_router = APIRouter(prefix="/naver/blog", tags=["naver-blog"])
@@ -313,9 +315,10 @@ def analyze_seo(
 # ── 채팅 ─────────────────────────────────────────────────────────────────────
 
 _BLOG_SYSTEM_PROMPT = """당신은 네이버 블로그 AI 에이전트입니다.
-사용자의 자연어 명령을 이해하고 적절한 도구를 호출하세요.
-- write_blog_post: publish=false면 임시저장, true면 즉시 발행 (발행은 confirmed=true 필요)
-- ai_generate_blog: 주제로 제목/본문/태그 초안 생성 (발행 없음)
+사용자의 자연어 명령을 이해하고 적절한 도구를 즉시 호출하세요.
+- 글 생성(ai_generate_blog)·초안 목록(list_blog_drafts)은 묻지 말고 즉시 실행합니다.
+- 글 발행(write_blog_post, publish=true)은 초안을 먼저 보여주고 '발행할까요?' 한 번만 확인합니다.
+- '진행할까요?', '실행해도 될까요?' 등의 질문은 절대 하지 않습니다.
 - 결과는 한국어로 간결하게 요약합니다."""
 
 _BLOG_WRITE_TOOLS = {"write_blog_post"}
@@ -434,68 +437,68 @@ def _sse_blog(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def _run_blog_claude(messages: list, confirmed: bool):
-    import anthropic
+_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# 블로그 도구를 중앙 레지스트리에 등록(단일 출처). OpenAI 변환은 to_openai_tools 사용.
+register("blog", _blog_tool_defs, _BLOG_WRITE_TOOLS)
+
+
+def _run_blog_gpt(messages: list, confirmed: bool):
+    """자연어 명령 → GPT tool_use → 블로그 글쓰기/초안 → SSE. (앱 표준=GPT)"""
+    from openai import OpenAI
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
     if not api_key:
-        yield _sse_blog("error", {"message": "ANTHROPIC_API_KEY 미설정"})
+        yield _sse_blog("error", {"message": "OPENAI_API_KEY 미설정 — .env에 추가하세요"})
         return
 
-    client = anthropic.Anthropic(api_key=api_key)
-    tools = []
-    for t in _blog_tool_defs():
-        if not confirmed and t["name"] in _BLOG_WRITE_TOOLS:
-            continue
-        schema: dict = {"type": "object", "properties": t["params"]}
-        if "required" in t:
-            schema["required"] = t["required"]
-        tools.append(anthropic.types.ToolParam(name=t["name"], description=t["description"], input_schema=schema))
-
-    history = list(messages)
+    client = OpenAI(api_key=api_key)
+    tools = to_openai_tools(_blog_tool_defs(), _BLOG_WRITE_TOOLS, confirmed)
+    history = [{"role": "system", "content": _BLOG_SYSTEM_PROMPT}, *messages]
     step = 0
+
     while True:
-        res = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+        res = client.chat.completions.create(
+            model=_GPT_MODEL,
             max_tokens=2048,
-            system=_BLOG_SYSTEM_PROMPT,
             tools=tools,
+            tool_choice="auto",
             messages=history,
         )
-        for b in res.content:
-            if b.type == "text" and b.text:
-                yield _sse_blog("text", {"text": b.text})
-
-        if res.stop_reason != "tool_use":
+        msg = res.choices[0].message
+        if msg.content:
+            yield _sse_blog("text", {"text": msg.content})
+        if not msg.tool_calls:
             break
 
         tool_results = []
-        for b in res.content:
-            if b.type != "tool_use":
-                continue
-            is_write = b.name in _BLOG_WRITE_TOOLS
+        for tc in msg.tool_calls:
+            name = tc.function.name
+            inputs = json.loads(tc.function.arguments or "{}")
+            is_write = name in _BLOG_WRITE_TOOLS
             if is_write and not confirmed:
                 yield _sse_blog(
                     "confirm_required",
                     {
-                        "tool": b.name,
-                        "inputs": b.input,
+                        "tool": name,
+                        "inputs": inputs,
                         "message": "블로그 발행에 승인이 필요합니다. confirmed=true로 재요청하세요.",
                     },
                 )
                 return
             step += 1
-            yield _sse_blog("step_start", {"step": step, "tool": b.name, "inputs": b.input, "write": is_write})
-            result = _run_blog_tool(b.name, dict(b.input), confirmed)
+            yield _sse_blog("step_start", {"step": step, "tool": name, "inputs": inputs, "write": is_write})
+            result = _run_blog_tool(name, inputs, confirmed)
             yield _sse_blog(
-                "step_done", {"step": step, "tool": b.name, "ok": result.get("ok") is not False, "result": result}
+                "step_done", {"step": step, "tool": name, "ok": result.get("ok") is not False, "result": result}
             )
             tool_results.append(
-                {"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(result, ensure_ascii=False)}
+                {"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)}
             )
 
-        history.append({"role": "assistant", "content": res.content})
-        history.append({"role": "user", "content": tool_results})
+        history.append(msg)
+        history.extend(tool_results)
 
     yield _sse_blog("done", {"steps": step})
 
@@ -512,12 +515,12 @@ class BlogChatRequest(BaseModel):
 
 @naver_blog_router.post("/chat")
 def api_blog_chat(body: BlogChatRequest, user: dict = Depends(require_role("admin", "owner"))):
-    """자연어 명령 → Claude tool_use → 블로그 글쓰기/초안 → SSE."""
+    """자연어 명령 → GPT tool_use → 블로그 글쓰기/초안 → SSE."""
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
 
     def generate():
         try:
-            yield from _run_blog_claude(messages, body.confirmed)
+            yield from _run_blog_gpt(messages, body.confirmed)
         except Exception as e:
             yield _sse_blog("error", {"message": str(e)})
 

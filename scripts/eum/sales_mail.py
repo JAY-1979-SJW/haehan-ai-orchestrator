@@ -3,19 +3,28 @@
 This module is intentionally preparation-only. It reads discovered install
 targets, ranks them, and writes draft files. It never sends mail.
 """
+
 from __future__ import annotations
 
 import json
+import json as _json_for_db
 import re
 import shutil
-import json as _json_for_db
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 DEFAULT_SOURCE = DATA_DIR / "eum_new_sites_install_targets.json"
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -63,6 +72,7 @@ def load_new_site_projects(source: str | Path = DEFAULT_SOURCE) -> list[dict[str
 
 def normalize_project(row: dict[str, Any]) -> dict[str, str]:
     """Normalize EUM project fields to stable internal names."""
+
     def pick(*names: str) -> str:
         for name in names:
             value = row.get(name)

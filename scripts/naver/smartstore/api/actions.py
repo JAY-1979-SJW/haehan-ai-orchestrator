@@ -13,8 +13,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[4]
-DATA_DIR = ROOT / "data"
 
+
+def _ss_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("smartstore")
+
+
+DATA_DIR = _ss_dir()
 LATEST_ACTION_CATALOG_PATH = DATA_DIR / "smartstore_action_catalog_latest.json"
 LATEST_PREPARE_PLAN_PATH = DATA_DIR / "smartstore_prepare_plan_latest.json"
 LATEST_SUBMIT_RECORD_PATH = DATA_DIR / "smartstore_submit_latest.json"

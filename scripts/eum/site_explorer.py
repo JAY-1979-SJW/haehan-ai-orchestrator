@@ -8,6 +8,7 @@
 사용:
     python scripts/eum/site_explorer.py
 """
+
 from __future__ import annotations
 
 import json
@@ -20,17 +21,26 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except ImportError:
     pass
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
 EUM_BASE = "https://eum.cw.or.kr"
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 
 # 탐색 대상 WEBMAN 페이지 목록
 WEBMAN_PAGES = [
@@ -219,15 +229,17 @@ def explore_site(page) -> dict:
                 page.wait_for_load_state("networkidle", timeout=15000)
             except Exception as e:
                 log.warning("페이지 이동 실패: url=%s err=%s", url, e)
-                result["webman_pages"].append({
-                    **page_info,
-                    "accessible": False,
-                    "error": str(e),
-                    "tables": [],
-                    "forms": [],
-                    "buttons": [],
-                    "selects": [],
-                })
+                result["webman_pages"].append(
+                    {
+                        **page_info,
+                        "accessible": False,
+                        "error": str(e),
+                        "tables": [],
+                        "forms": [],
+                        "buttons": [],
+                        "selects": [],
+                    }
+                )
                 continue
 
             structure = _extract_page_structure(page, url)
@@ -237,8 +249,7 @@ def explore_site(page) -> dict:
             accessible = structure.get("accessible", True)
             table_count = len(structure.get("tables", []))
             log.info(
-                "  %s: 접근=%s 테이블=%d개 버튼=%d개",
-                code, accessible, table_count, len(structure.get("buttons", []))
+                "  %s: 접근=%s 테이블=%d개 버튼=%d개", code, accessible, table_count, len(structure.get("buttons", []))
             )
 
     return result
@@ -246,7 +257,7 @@ def explore_site(page) -> dict:
 
 def main() -> None:
     """CLI 실행: 사이트 탐색 후 JSON 저장."""
-    from scripts.eum.auth import login, is_logged_in
+    from scripts.eum.auth import is_logged_in, login
     from scripts.web_connector import get_page
 
     print("=" * 60)
@@ -272,10 +283,7 @@ def main() -> None:
     # 저장
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out_path = DATA_DIR / "eum_site_map.json"
-    out_path.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # 요약 출력
     print(f"\n탐색 완료: {result['explored_at']}")

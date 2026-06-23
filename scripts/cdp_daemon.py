@@ -172,7 +172,8 @@ def _launch_chrome(port: int = CDP_PORT) -> subprocess.Popen:
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
         "--restore-last-session=false",
-        "--start-maximized",
+        "--window-position=100,50",
+        "--window-size=1280,900",
         "--force-device-scale-factor=1.5",
     ]
     log.info("[BROWSER] 종류=%s port=%d profile=%s", kind, port, PROFILE_DIR)

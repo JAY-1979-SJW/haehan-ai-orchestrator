@@ -9,25 +9,80 @@
     report = analyze(data)             # 분석 실행
     print(report["summary_text"])      # 텍스트 보고서 출력
 """
+
 from __future__ import annotations
 
 import json
 import re
 from collections import Counter, defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[5]
-_DATA_DIR = ROOT / "data" / "cafe"
+
+
+def _cafe_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("cafe")
+
+
+_DATA_DIR = _cafe_dir()
 
 # 분석에서 제외할 불용어 (제목 키워드 빈도에서)
 _STOPWORDS = {
-    "이", "가", "을", "를", "의", "에", "에서", "로", "으로", "과", "와", "도", "는", "은",
-    "한", "하는", "하고", "있는", "있어", "있습니다", "합니다", "했습니다", "됩니다",
-    "입니다", "되는", "것", "수", "더", "제", "그", "이번", "저", "좀", "어떻게",
-    "어디", "왜", "뭐", "누가", "언제", "어떤", "같은", "관련", "질문", "문의",
-    "부탁", "도움", "확인", "안녕하세요", "감사합니다", "감사", "안녕",
+    "이",
+    "가",
+    "을",
+    "를",
+    "의",
+    "에",
+    "에서",
+    "로",
+    "으로",
+    "과",
+    "와",
+    "도",
+    "는",
+    "은",
+    "한",
+    "하는",
+    "하고",
+    "있는",
+    "있어",
+    "있습니다",
+    "합니다",
+    "했습니다",
+    "됩니다",
+    "입니다",
+    "되는",
+    "것",
+    "수",
+    "더",
+    "제",
+    "그",
+    "이번",
+    "저",
+    "좀",
+    "어떻게",
+    "어디",
+    "왜",
+    "뭐",
+    "누가",
+    "언제",
+    "어떤",
+    "같은",
+    "관련",
+    "질문",
+    "문의",
+    "부탁",
+    "도움",
+    "확인",
+    "안녕하세요",
+    "감사합니다",
+    "감사",
+    "안녕",
 }
 
 
@@ -125,11 +180,18 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
     # ── TOP 게시글 ────────────────────────────────────────────────────
     def _top(key: str, n: int) -> list[dict]:
         return sorted(
-            [{"title": a.get("title", "")[:40], "value": _to_int(a.get(key, 0)),
-              "author": a.get("author", ""), "date": a.get("date", ""),
-              "href": a.get("href", "")}
-             for a in articles],
-            key=lambda x: x["value"], reverse=True
+            [
+                {
+                    "title": a.get("title", "")[:40],
+                    "value": _to_int(a.get(key, 0)),
+                    "author": a.get("author", ""),
+                    "date": a.get("date", ""),
+                    "href": a.get("href", ""),
+                }
+                for a in articles
+            ],
+            key=lambda x: x["value"],
+            reverse=True,
         )[:n]
 
     top_views = _top("view_count", top_n)
@@ -144,8 +206,7 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
         author_counter[author] += 1
         author_views[author] += _to_int(a.get("view_count", 0))
     top_authors = [
-        {"author": k, "count": v, "total_views": author_views[k]}
-        for k, v in author_counter.most_common(top_n)
+        {"author": k, "count": v, "total_views": author_views[k]} for k, v in author_counter.most_common(top_n)
     ]
 
     # ── 제목 키워드 ───────────────────────────────────────────────────
@@ -188,10 +249,7 @@ def analyze(articles: list[dict], top_n: int = 10) -> dict:
 
     lines.append("\n[2] 게시판별 현황")
     for board, st in list(by_board.items())[:15]:
-        lines.append(
-            f"  {board or '미분류':<25}  {st['count']:>5}건  "
-            f"조회 {st['views']:>6}  댓글 {st['comments']:>4}"
-        )
+        lines.append(f"  {board or '미분류':<25}  {st['count']:>5}건  조회 {st['views']:>6}  댓글 {st['comments']:>4}")
 
     lines.append("\n[3] 월별 게시글 추이")
     for month, cnt in by_month.items():

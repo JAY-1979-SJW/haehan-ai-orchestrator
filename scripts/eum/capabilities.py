@@ -1,4 +1,5 @@
 """Build a compact EUM capability catalog from accessible page exploration."""
+
 from __future__ import annotations
 
 import json
@@ -7,7 +8,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 ACCESSIBLE_PAGES = DATA_DIR / "eum_accessible_pages.json"
 CAPABILITIES_FILE = DATA_DIR / "eum_capabilities.json"
 
@@ -45,10 +54,7 @@ def _action_flags(buttons: list[dict[str, Any]]) -> dict[str, bool]:
         f"{button.get('text', '')} {button.get('onclick', '')} {button.get('id', '')} {button.get('className', '')}"
         for button in buttons
     ).lower()
-    return {
-        action: any(word.lower() in joined for word in words)
-        for action, words in ACTION_WORDS.items()
-    }
+    return {action: any(word.lower() in joined for word in words) for action, words in ACTION_WORDS.items()}
 
 
 def _classify_page(page: dict[str, Any]) -> str:
@@ -175,4 +181,6 @@ def print_summary(result: dict[str, Any], path: Path | None = None) -> None:
     for item in result.get("capabilities", []):
         if item.get("category") == "terminal":
             actions = ", ".join(k for k, v in item.get("actions", {}).items() if v)
-            print(f"  - {item.get('code') or '-'} {item.get('menu_name')} actions=[{actions}] tables={item.get('table_count')}")
+            print(
+                f"  - {item.get('code') or '-'} {item.get('menu_name')} actions=[{actions}] tables={item.get('table_count')}"
+            )

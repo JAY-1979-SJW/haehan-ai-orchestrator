@@ -6,6 +6,7 @@
     python scripts/eum/demolition.py          # 철거 현황 조회
     python scripts/eum/demolition.py --apply  # 철거 신청 (gate 차단됨)
 """
+
 from __future__ import annotations
 
 import json
@@ -17,19 +18,29 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except ImportError:
     pass
 
-from scripts.gate import check as gate_check, GateBlocked
-from scripts.logger import get_logger
-from scripts.op_log import op_context
+from scripts.gate import GateBlocked  # noqa: E402
+from scripts.gate import check as gate_check  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
 EUM_BASE = "https://eum.cw.or.kr"
 DEMOLITION_URL = f"{EUM_BASE}/web/man/WEBMAN382M00"
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 
 
 def _extract_demolition_table(page) -> list[dict]:
@@ -88,15 +99,21 @@ def _extract_page_info(page) -> dict:
     info = {"title": "", "buttons": [], "filters": []}
     try:
         info["title"] = page.title()
-        info["buttons"] = page.evaluate("""
+        info["buttons"] = (
+            page.evaluate("""
             () => Array.from(document.querySelectorAll('button, input[type="button"]'))
                        .map(b => b.innerText?.trim() || b.value || '')
                        .filter(t => t)
-        """) or []
-        info["filters"] = page.evaluate("""
+        """)
+            or []
+        )
+        info["filters"] = (
+            page.evaluate("""
             () => Array.from(document.querySelectorAll('select'))
                        .map(s => ({name: s.name || s.id, options: Array.from(s.options).map(o => o.text.trim())}))
-        """) or []
+        """)
+            or []
+        )
     except Exception:
         pass
     return info
@@ -207,7 +224,7 @@ def request_demolition(page, device_id: str) -> dict:
 
 def main(apply: bool = False, device_id: str | None = None) -> None:
     """CLI 실행."""
-    from scripts.eum.auth import login, is_logged_in
+    from scripts.eum.auth import is_logged_in, login
     from scripts.web_connector import get_page
 
     # CLI 인자 파싱
@@ -269,10 +286,7 @@ def main(apply: bool = False, device_id: str | None = None) -> None:
     # 저장
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     out_path = DATA_DIR / "eum_demolition_list.json"
-    out_path.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n저장 완료: {out_path}")
     print("=" * 60)
 

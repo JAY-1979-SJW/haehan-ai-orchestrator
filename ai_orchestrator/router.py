@@ -20,6 +20,7 @@ from .connectors.community_router import community_router
 from .connectors.eum_router import eum_router
 from .connectors.gabia_router import gabia_router
 from .connectors.gmail_router import gmail_router
+from .connectors.gonobi_router import gonobi_router
 from .connectors.google_router import google_router
 from .connectors.hanafax_router import hanafax_router
 from .connectors.hiworks_mail_router import hiworks_mail_router
@@ -104,6 +105,7 @@ router.include_router(smartstore_router)  # read-only smartstore catalog/history
 router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
 router.include_router(user_auth_router)  # user signup/login/mypage
 router.include_router(gabia_router)  # gabia dns/domain/login watch
+router.include_router(gonobi_router)  # gonobi 블로그 수집·분류·조회
 router.include_router(kakao_setup_router)  # 카카오 앱 등록 실시간 게이트
 router.include_router(session_status_router)  # 앱별 로그인 세션 현황
 router.include_router(hanafax_router)  # 하나팩스 팩스 발송

@@ -1,8 +1,12 @@
 """Local AI agent service.
 
+LLM 경계: 앱 표준 실행 = OpenAI(GPT). _run_with_openai_no_mcp 가 기본 경로이며
+claude 모델명이 와도 gpt 로 매핑한다. Claude Code CLI 는 OpenAI 미가용 시 폴백
+(=터미널 Claude Code 경계)에만 쓰인다. 앱 본 기능은 GPT 전용.
+
 Execution flow:
-  1. Run Anthropic SDK without direct cross-app MCP by default.
-  2. Fall back to Claude Code CLI when no SDK provider is available.
+  1. Run OpenAI(GPT) without direct cross-app MCP by default.
+  2. Fall back to Claude Code CLI when no OpenAI provider is available.
   3. Forward cross-app CAD work only through approved CAD bridge API requests.
 
 Security:
@@ -241,7 +245,7 @@ async def run_local_agent(req: dict) -> dict:
     Args:
         req: {
             "prompt": str,
-            "model": str (optional, 기본 claude-sonnet-4-5),
+            "model": str (optional, 기본 gpt-4o-mini),
             "use_mcp": bool (optional, default False; direct MCP is blocked),
         }
 
@@ -269,7 +273,7 @@ async def run_local_agent(req: dict) -> dict:
             next_actions=["실행할 작업 내용을 입력하세요."],
         )
 
-    model: str = req.get("model", "claude-sonnet-4-5")
+    model: str = req.get("model", "gpt-4o-mini")  # 앱 표준=GPT
     if _api_bridge_requested(req):
         return await _run_approved_api_bridge(req, model)
 

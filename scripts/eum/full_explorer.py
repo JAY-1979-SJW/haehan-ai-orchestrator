@@ -19,6 +19,7 @@
     python scripts/eum/full_explorer.py
     python scripts/cdp_client.py eum explore
 """
+
 from __future__ import annotations
 
 import json
@@ -33,20 +34,29 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except ImportError:
     pass
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context, log_op
-from scripts.popup_watcher import POPUP_MARKERS, install_watcher, poll_events
-from scripts.popup_classifier import classify
-from scripts.eum.access_handler import detect_and_handle, is_access_blocked
+from scripts.eum.access_handler import detect_and_handle, is_access_blocked  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import log_op, op_context  # noqa: E402
+from scripts.popup_classifier import classify  # noqa: E402
+from scripts.popup_watcher import install_watcher, poll_events  # noqa: E402
 
 log = get_logger(__name__)
 
 EUM_BASE = "https://eum.cw.or.kr"
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 
 # ── 탐색 대상 페이지 목록 ──────────────────────────────────────────────
 # 알려진 WEBMAN 코드 + 추정 코드까지 포함
@@ -281,6 +291,7 @@ _JS_WAIT_READY = """
 
 # ── 핵심 탐색 함수 ───────────────────────────────────────────────────
 
+
 def _safe_goto(page, url: str, timeout: int = 15000) -> bool:
     """URL 이동. 실패 시 False 반환."""
     try:
@@ -334,9 +345,17 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
         for event in events:
             marker = event.get("marker", "")
             # 비정상 접근 관련 마커 확인
-            if marker in ["비정상적인 접근", "자동화 프로그램", "자동 프로그램",
-                          "봇으로 판단", "접근 차단", "이용이 제한",
-                          "서비스 차단", "Abnormal access", "bot detected"]:
+            if marker in [
+                "비정상적인 접근",
+                "자동화 프로그램",
+                "자동 프로그램",
+                "봇으로 판단",
+                "접근 차단",
+                "이용이 제한",
+                "서비스 차단",
+                "Abnormal access",
+                "bot detected",
+            ]:
                 detected_keyword = marker
                 detected_snippet = event.get("snippet", "")
                 log.warning(f"[EUM] popup_watcher 감지: '{marker}' @ {url}")
@@ -346,9 +365,17 @@ def _extract_page(page, url: str, name: str) -> dict[str, Any]:
         if not detected_keyword:
             page_text = page.text_content().strip()
             abnormal_keywords = [
-                "비정상적인 접근", "자동 프로그램", "자동화", "봇으로 판단",
-                "접근 차단", "이용이 제한", "서비스 차단", "보안상의 이유",
-                "Abnormal access", "bot detected", "automated access",
+                "비정상적인 접근",
+                "자동 프로그램",
+                "자동화",
+                "봇으로 판단",
+                "접근 차단",
+                "이용이 제한",
+                "서비스 차단",
+                "보안상의 이유",
+                "Abnormal access",
+                "bot detected",
+                "automated access",
             ]
             for kw in abnormal_keywords:
                 if kw.lower() in page_text.lower():
@@ -437,7 +464,8 @@ def _explore_menu(page) -> dict[str, Any]:
             menu_result["main_page"] = data
             # 내부 링크만 분류
             menu_result["all_internal_links"] = [
-                lnk for lnk in data.get("all_links", [])
+                lnk
+                for lnk in data.get("all_links", [])
                 if EUM_BASE in lnk.get("href", "") or lnk.get("href", "").startswith("/")
             ]
         except Exception as e:
@@ -481,6 +509,7 @@ def _explore_extra_paths(page, extra_links: list[dict]) -> list[dict[str, Any]]:
 
 # ── 보고서 생성 ──────────────────────────────────────────────────────
 
+
 def _generate_report(result: dict[str, Any]) -> str:
     """탐색 결과를 사람이 읽기 쉬운 텍스트 보고서로 변환."""
     lines = []
@@ -502,7 +531,9 @@ def _generate_report(result: dict[str, Any]) -> str:
     accessible = [p for p in webman_pages if p.get("accessible")]
     denied = [p for p in webman_pages if not p.get("accessible")]
 
-    lines.append(f"\n[WEBMAN 페이지] 탐색 {len(webman_pages)}개 / 접근가능 {len(accessible)}개 / 접근제한 {len(denied)}개")
+    lines.append(
+        f"\n[WEBMAN 페이지] 탐색 {len(webman_pages)}개 / 접근가능 {len(accessible)}개 / 접근제한 {len(denied)}개"
+    )
 
     lines.append("\n  ── 접근 가능 페이지 ──")
     for p in accessible:
@@ -532,7 +563,7 @@ def _generate_report(result: dict[str, Any]) -> str:
             lines.append(f"    버튼: [{b.get('text', '')}] type={b.get('type', '')} id={b.get('id', '')}")
 
         if pagination.get("exists"):
-            lines.append(f"    페이지네이션: 존재")
+            lines.append("    페이지네이션: 존재")
 
         api_urls = p.get("api_urls", [])
         if api_urls:
@@ -561,6 +592,7 @@ def _generate_report(result: dict[str, Any]) -> str:
 
 
 # ── 메인 ────────────────────────────────────────────────────────────
+
 
 def explore_all(page) -> dict[str, Any]:
     """전체 탐색 실행. 결과 dict 반환."""
@@ -592,7 +624,7 @@ def explore_all(page) -> dict[str, Any]:
 
 def main() -> None:
     """CLI 실행."""
-    from scripts.eum.auth import login, is_logged_in
+    from scripts.eum.auth import is_logged_in, login
     from scripts.web_connector import get_page
 
     print("=" * 70)
@@ -620,10 +652,7 @@ def main() -> None:
     # JSON 저장
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     json_path = DATA_DIR / "eum_full_site_map.json"
-    json_path.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     log_op("eum_full_explore", ok=True, message=f"저장: {json_path}")
 
     # 텍스트 보고서 저장

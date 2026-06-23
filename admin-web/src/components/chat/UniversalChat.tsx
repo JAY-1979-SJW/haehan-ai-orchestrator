@@ -8,6 +8,7 @@ interface Msg {
   text: string;
   streaming?: boolean;
   actions?: ChatChip[];
+  confirmPayload?: { tool: string; inputs: Record<string, unknown>; message: string; prompt: string };
 }
 
 interface Props {
@@ -25,10 +26,17 @@ function chatEndpoint(domain: string): string {
   return "/api/chat";
 }
 
-// domain별 요청 body 포맷 (cafe/blog는 messages[], 나머지는 message 단일 문자열)
-function chatBody(domain: string, prompt: string, sessionId: string, confirmed: boolean): object {
+// domain별 요청 body 포맷
+function chatBody(
+  domain: string,
+  prompt: string,
+  sessionId: string,
+  confirmed: boolean,
+  history: { role: string; content: string }[] = [],
+): object {
   if (domain === "cafe" || domain === "blog") {
-    return { messages: [{ role: "user", content: prompt }], confirmed };
+    // 이전 대화 히스토리 + 현재 메시지를 함께 전달해 멀티턴 맥락 유지
+    return { messages: [...history, { role: "user", content: prompt }], confirmed };
   }
   return { message: prompt, domain, session_id: sessionId };
 }
@@ -70,49 +78,101 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
     setMsgs(prev => [...prev, { role: "ai", text: "⏱ 시간이 초과됐습니다 — 로그인 후 다시 명령해 주세요.", streaming: false }]);
   }, []);
 
-  const send = useCallback(async (prompt: string) => {
+  // cafe/blog 멀티턴 히스토리 (role:user/assistant 쌍만 추출)
+  const buildHistory = useCallback((msgs: Msg[]) =>
+    msgs
+      .filter(m => m.role === "user" || m.role === "ai")
+      .map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }))
+      .slice(-12), // 최근 12개 메시지(6턴)만 전달
+  []);
+
+  const send = useCallback(async (prompt: string, confirmed = false, confirmPrompt?: string) => {
     if (!prompt.trim() || running) return;
     setInput("");
     setRunning(true);
 
-    setMsgs(prev => [...prev, { role: "user", text: prompt }]);
+    const effectivePrompt = confirmPrompt ?? prompt;
+    if (!confirmed) setMsgs(prev => [...prev, { role: "user", text: prompt }]);
     setMsgs(prev => [...prev, { role: "ai", text: "", streaming: true }]);
 
     let fullText = "";
     try {
-      await stream(chatEndpoint(domain), chatBody(domain, prompt, sessionId.current, false), (event, data) => {
-        if (event === "text") {
-          const chunk = (data as { text: string }).text ?? "";
-          fullText += chunk;
-          setMsgs(prev => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            if (last?.role === "ai") next[next.length - 1] = { ...last, text: last.text + chunk };
-            return next;
-          });
-        } else if (event === "done") {
-          setMsgs(prev => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            if (last?.role === "ai") {
-              next[next.length - 1] = {
-                ...last,
-                streaming: false,
-                actions: detectActions(last.text),
-              };
-            }
-            return next;
-          });
-        } else if (event === "error") {
-          const msg = (data as { message: string }).message ?? "오류가 발생했습니다.";
-          setMsgs(prev => {
-            const next = [...prev];
-            const last = next[next.length - 1];
-            if (last?.role === "ai") next[next.length - 1] = { role: "ai", text: msg, streaming: false };
-            return next;
-          });
+      // 히스토리는 현재 msgs 스냅샷에서 구성 (새 메시지 추가 전 시점)
+      const history = buildHistory(confirmed
+        ? msgs.slice(0, -1) // confirm 재전송 시 마지막 AI 메시지(빈 것) 제외
+        : msgs
+      );
+
+      await stream(
+        chatEndpoint(domain),
+        chatBody(domain, effectivePrompt, sessionId.current, confirmed, history),
+        (event, data) => {
+          if (event === "text") {
+            const chunk = (data as { text: string }).text ?? "";
+            fullText += chunk;
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") next[next.length - 1] = { ...last, text: last.text + chunk };
+              return next;
+            });
+          } else if (event === "step_start") {
+            const tool = (data as { tool: string }).tool ?? "";
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") next[next.length - 1] = { ...last, text: (last.text || "") + `\n⚙ ${tool} 실행 중…` };
+              return next;
+            });
+          } else if (event === "step_done") {
+            const ok = (data as { ok: boolean }).ok;
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") {
+                next[next.length - 1] = { ...last, text: last.text.replace(/⚙ .+ 실행 중…$/, ok ? "" : "⚠ 실행 실패") };
+              }
+              return next;
+            });
+          } else if (event === "confirm_required") {
+            const d = data as { tool: string; inputs: Record<string, unknown>; message: string };
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") {
+                next[next.length - 1] = {
+                  ...last,
+                  streaming: false,
+                  text: d.message,
+                  confirmPayload: { tool: d.tool, inputs: d.inputs, message: d.message, prompt: effectivePrompt },
+                };
+              }
+              return next;
+            });
+          } else if (event === "done") {
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") {
+                next[next.length - 1] = {
+                  ...last,
+                  streaming: false,
+                  actions: detectActions(last.text),
+                };
+              }
+              return next;
+            });
+          } else if (event === "error") {
+            const msg = (data as { message: string }).message ?? "오류가 발생했습니다.";
+            setMsgs(prev => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last?.role === "ai") next[next.length - 1] = { role: "ai", text: msg, streaming: false };
+              return next;
+            });
+          }
         }
-      });
+      );
 
       // 비동기 브라우저 작업(job): 로그인 필요 시 마커가 옴 → 마커 제거 후 결과 폴링.
       const jm = fullText.match(/\[\[JOB:([A-Za-z0-9_-]+)\]\]/);
@@ -137,7 +197,7 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
       setRunning(false);
       inputRef.current?.focus();
     }
-  }, [domain, running, stream, pollJob]);
+  }, [domain, running, stream, pollJob, msgs, buildHistory]);
 
   return (
     <div className={`flex flex-col bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden ${className}`}>
@@ -182,8 +242,29 @@ export function UniversalChat({ domain = "default", presetChips, title, classNam
                 <span className="inline-block w-1.5 h-3.5 bg-[#9CA3AF] ml-0.5 animate-pulse rounded-sm" />
               )}
             </div>
-            {/* B. 후속 액션 버튼 */}
-            {m.role === "ai" && !m.streaming && m.actions && m.actions.length > 0 && (
+            {/* B. confirm_required — 승인/취소 버튼 */}
+            {m.role === "ai" && !m.streaming && m.confirmPayload && (
+              <div className="flex gap-2 mt-1 max-w-[85%]">
+                <button
+                  onClick={() => {
+                    const p = m.confirmPayload!;
+                    setMsgs(prev => prev.map(msg => msg === m ? { ...msg, confirmPayload: undefined } : msg));
+                    send(p.prompt, true, p.prompt);
+                  }}
+                  disabled={running}
+                  className="text-[10px] font-semibold px-3 py-1 rounded-full bg-[#F97316] text-white hover:bg-[#EA580C] disabled:opacity-40 transition-colors">
+                  승인하고 실행
+                </button>
+                <button
+                  onClick={() => setMsgs(prev => prev.map(msg => msg === m ? { ...msg, confirmPayload: undefined } : msg))}
+                  disabled={running}
+                  className="text-[10px] font-semibold px-3 py-1 rounded-full bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F3F4F6] disabled:opacity-40 transition-colors">
+                  취소
+                </button>
+              </div>
+            )}
+            {/* C. 후속 액션 버튼 */}
+            {m.role === "ai" && !m.streaming && !m.confirmPayload && m.actions && m.actions.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1 max-w-[85%]">
                 {m.actions.map((a) => (
                   <button key={a.label} onClick={() => send(a.prompt)} disabled={running}

@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ..audit_logger import log_event
@@ -31,6 +32,13 @@ _TARGETS_LATEST = _ROOT / "data" / "eum_sales_mail_targets_latest.json"
 def _ensure_root_on_path() -> None:
     if str(_ROOT) not in sys.path:
         sys.path.insert(0, str(_ROOT))
+
+
+class QuoteRequest(BaseModel):
+    recipient: str
+    quote_type: str  # 이동형_임대 | 벽부형_임대 | 벽부형_구매
+    quantity: int = 1
+    months: int | None = None
 
 
 class CollectRequest(BaseModel):
@@ -132,11 +140,15 @@ def send_one(
     try:
         _ensure_root_on_path()
         from scripts.hiworks.mail import fill_compose, send_mail
-        from scripts.web_connector import get_page
+        from scripts.web_connector import get_page, run_on_browser_thread
 
-        page = get_page()
-        fill_compose(page, to=req.to, subject=req.subject, body=req.body)
-        result = send_mail(page)
+        # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+        def _compose_and_send():
+            page = get_page()
+            fill_compose(page, to=req.to, subject=req.subject, body=req.body)
+            return send_mail(page)
+
+        result = run_on_browser_thread(_compose_and_send, timeout=180)
         ok = bool(result.get("success"))
         log_event(
             "EUM_SALES_MAIL_SEND",
@@ -154,3 +166,56 @@ def send_one(
     except Exception as e:
         logger.exception("eum send error")
         raise HTTPException(status_code=500, detail=f"발송 오류: {e}")
+
+
+@eum_router.post("/quote/generate")
+def generate_quote(
+    req: QuoteRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+):
+    """견적서 xlsx 생성 후 다운로드."""
+    allowed_types = {"이동형_임대", "벽부형_임대", "벽부형_구매"}
+    if req.quote_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"quote_type은 {allowed_types} 중 하나여야 합니다.")
+    if req.quantity < 1:
+        raise HTTPException(status_code=400, detail="수량은 1 이상이어야 합니다.")
+    if req.quote_type in ("이동형_임대", "벽부형_임대") and not req.months:
+        raise HTTPException(status_code=400, detail="임대 유형은 개월수(months)가 필요합니다.")
+
+    try:
+        _ensure_root_on_path()
+        from scripts.eum.quote_generator import generate_quote_xlsx
+
+        xlsx_bytes = generate_quote_xlsx(
+            recipient=req.recipient,
+            quote_type=req.quote_type,  # type: ignore[arg-type]
+            quantity=req.quantity,
+            months=req.months,
+        )
+
+        import io
+
+        safe_name = req.recipient.replace(" ", "_").replace("/", "_")[:30]
+        filename = f"견적서_{safe_name}_{req.quote_type}.xlsx"
+        from urllib.parse import quote as url_quote
+
+        encoded_name = url_quote(filename, safe="")
+
+        log_event(
+            "EUM_QUOTE_GENERATE",
+            task_id="-",
+            actor=user["actor"],
+            role=user["role"],
+            decision="ok",
+            note=f"recipient={req.recipient} type={req.quote_type} qty={req.quantity} months={req.months}",
+        )
+        return StreamingResponse(
+            io.BytesIO(xlsx_bytes),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_name}"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("quote generate error")
+        raise HTTPException(status_code=500, detail=f"견적서 생성 실패: {e}")

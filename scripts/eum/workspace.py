@@ -3,6 +3,7 @@
 This module turns the live EUM UI plus known WEBMAN targets into a compact
 business map. It does not click buttons or submit forms.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+
+
+def _eum_dir() -> Path:
+    from scripts.common.data_paths import get_app_dir
+
+    return get_app_dir("eum")
+
+
+DATA_DIR = _eum_dir()
 EUM_BASE = "https://eum.cw.or.kr"
 WEBMAN_RE = re.compile(r"WEBMAN\d{3}M\d{2}", re.IGNORECASE)
 
