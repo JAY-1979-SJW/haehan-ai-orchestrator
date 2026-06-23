@@ -1,7 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .config import AUDIT_LOG_PATH as _LOG_PATH
 
@@ -59,6 +58,9 @@ EVENT_TYPES = {
     # 로컬 에이전트 (Stage 11-7B — 취소)
     "LOCAL_AGENT_TASK_CANCEL_REQUESTED",
     "LOCAL_AGENT_TASK_CANCELLED",
+    # EUM 견적서
+    "EUM_QUOTE_GENERATE",
+    "EUM_QUOTE_SAVE_FAIL",
     # 개발자 등록 승인 게이트 (web_task_router 가 dev_reg_approval 재사용)
     "DEV_REG_TASK_CREATED",
     "DEV_REG_TELEGRAM_SENT",
@@ -76,8 +78,8 @@ def log_event(
     risk_level: str = "",
     action_type: str = "",
     target: str = "",
-    allowed: Optional[bool] = None,
-    requires_approval: Optional[bool] = None,
+    allowed: bool | None = None,
+    requires_approval: bool | None = None,
     decision: str = "",
     actor: str = "system",
     role: str = "",
@@ -85,7 +87,7 @@ def log_event(
     note: str = "",
 ) -> None:
     entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "event_type": event_type,
         "task_id": task_id,
         "risk_level": risk_level,
@@ -100,9 +102,15 @@ def log_event(
         "note": note,
     }
 
-    logger.info("[AUDIT] %s | task=%s | actor=%s | role=%s | decision=%s%s",
-                event_type, task_id, actor, role or "-", decision,
-                f" | {note}" if note else "")
+    logger.info(
+        "[AUDIT] %s | task=%s | actor=%s | role=%s | decision=%s%s",
+        event_type,
+        task_id,
+        actor,
+        role or "-",
+        decision,
+        f" | {note}" if note else "",
+    )
 
     try:
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -48,6 +48,16 @@
             "command": "python -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
           }
         ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\hook_check_a4.py\"",
+            "statusMessage": "A4 서식 자동 검사 + AI 품질 검증 중..."
+          }
+        ]
       }
     ]
   }
