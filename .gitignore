@@ -231,3 +231,12 @@ data/local/
 docs/app-extracted*/
 dist-installer/app-extracted*/
 dist-electron-new/
+
+# 수집 이미지 (대용량 바이너리 — 로컬 전용)
+data/gonobi_images/
+data/gonobi_images_v2/
+data/images/
+data/temp_images/
+data/recordings/
+data/video/
+data/cdp_chrome_tmp/
