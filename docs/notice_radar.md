@@ -12,6 +12,45 @@
 6. 신청자격, 제출서류, 마감, 기술노출 위험, 대표님 사업 적합도 분석
 7. `analysis.json`과 `summary.md` 생성
 
+## 현재 프로젝트 실행 API
+
+대시보드 Flask 앱에 `notice_router.py`가 등록되어 있으므로, 대시보드 실행 상태에서 바로 호출할 수 있습니다.
+
+```bash
+python dashboard.py
+```
+
+상태 확인:
+
+```bash
+curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
+  http://127.0.0.1:5050/api/v1/notices/health
+```
+
+공고 URL 직접 분석:
+
+```bash
+curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://www.k-startup.go.kr/...","source":"K-Startup","title":"정부 첫 실증·구매 프로젝트 스마트도시 창업기업 모집"}' \
+  http://127.0.0.1:5050/api/v1/notices/analyze-url
+```
+
+이미 다운로드한 첨부 폴더 분석:
+
+```bash
+curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"folder":"storage/notices/smart_city_project","title":"정부 첫 실증·구매 프로젝트 스마트도시 창업기업 모집","source":"K-Startup"}' \
+  http://127.0.0.1:5050/api/v1/notices/analyze-folder
+```
+
+보안상 로컬 폴더 분석은 아래 경로 안으로 제한합니다.
+
+- `storage/notices`
+- `storage/uploads`
+- `storage/inbox_attachments`
+
 ## 대표님 맞춤 판단 항목
 
 - 개인사업자 가능 여부
@@ -62,7 +101,7 @@ storage/notices/<공고명>/
 ## 테스트
 
 ```bash
-pytest tests/test_notice_radar.py
+pytest tests/test_notice_radar.py tests/test_notice_router.py
 ```
 
 ## 현재 한계
