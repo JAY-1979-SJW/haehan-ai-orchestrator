@@ -79,6 +79,8 @@ def analyze_current_browser_route():
             title=data.get("title") or None,
             output_root=output_root,
             target_url_contains=data.get("target_url_contains") or None,
+            click_downloads=bool(data.get("click_downloads", True)),
+            max_clicks=int(data.get("max_clicks", 20)),
         )
     except Exception as exc:
         return _error(f"current browser notice analysis failed: {type(exc).__name__}: {exc}", 500)
