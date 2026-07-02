@@ -1,6 +1,7 @@
 """
 정부공고 첨부파일 자동분석 실행 API
 
+GET  /api/v1/notices/daily-sites
 POST /api/v1/notices/analyze-current-browser
 POST /api/v1/notices/analyze-url
 POST /api/v1/notices/analyze-folder
@@ -14,6 +15,7 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request
 
 from notice_radar import analyze_current_browser_notice, analyze_notice_folder, analyze_notice_url
+from notice_radar.site_profiles import get_daily_briefing_sites, get_site_profile
 
 notice_bp = Blueprint("notices", __name__, url_prefix="/api/v1/notices")
 
@@ -68,17 +70,24 @@ def health():
     return _ok({"service": "notice_radar", "output_root": str(_DEFAULT_OUTPUT_ROOT), "cdp_url": _DEFAULT_CDP_URL})
 
 
+@notice_bp.route("/daily-sites", methods=["GET"])
+def daily_sites():
+    return _ok({"sites": get_daily_briefing_sites()})
+
+
 @notice_bp.route("/analyze-current-browser", methods=["POST"])
 def analyze_current_browser_route():
     data = request.get_json(silent=True) or {}
+    site_key = data.get("site_key") or ""
+    site = get_site_profile(site_key) if site_key else None
     try:
         output_root = _safe_output_root(data.get("output_root"))
         analysis = analyze_current_browser_notice(
             cdp_url=data.get("cdp_url") or _DEFAULT_CDP_URL,
-            source=data.get("source") or "current-browser",
+            source=data.get("source") or (site.name if site else "current-browser"),
             title=data.get("title") or None,
             output_root=output_root,
-            target_url_contains=data.get("target_url_contains") or None,
+            target_url_contains=data.get("target_url_contains") or (site.target_url_contains if site else None),
             click_downloads=bool(data.get("click_downloads", True)),
             max_clicks=int(data.get("max_clicks", 20)),
         )
