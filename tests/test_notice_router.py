@@ -23,6 +23,16 @@ def test_notice_health_route_is_registered(monkeypatch):
     data = resp.get_json()
     assert data["status"] == "ok"
     assert data["service"] == "notice_radar"
+    assert "cdp_url" in data
+
+
+def test_notice_current_browser_route_is_registered(monkeypatch):
+    monkeypatch.setenv("ORCH_DASHBOARD_USER", "admin")
+    monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "secret")
+    app = create_app()
+    rules = {str(rule) for rule in app.url_map.iter_rules()}
+
+    assert "/api/v1/notices/analyze-current-browser" in rules
 
 
 def test_notice_folder_route_runs_analysis(monkeypatch, tmp_path: Path):
