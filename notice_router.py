@@ -1,6 +1,7 @@
 """
 정부공고 첨부파일 자동분석 실행 API
 
+POST /api/v1/notices/analyze-current-browser
 POST /api/v1/notices/analyze-url
 POST /api/v1/notices/analyze-folder
 GET  /api/v1/notices/health
@@ -12,7 +13,7 @@ from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 
-from notice_radar import analyze_notice_folder, analyze_notice_url
+from notice_radar import analyze_current_browser_notice, analyze_notice_folder, analyze_notice_url
 
 notice_bp = Blueprint("notices", __name__, url_prefix="/api/v1/notices")
 
@@ -23,6 +24,7 @@ _ALLOWED_LOCAL_ROOTS = [
     _BASE_DIR / "storage" / "uploads",
     _BASE_DIR / "storage" / "inbox_attachments",
 ]
+_DEFAULT_CDP_URL = os.environ.get("NOTICE_RADAR_CDP_URL", "http://127.0.0.1:9222")
 
 
 def _ok(payload: dict, code: int = 200):
@@ -63,7 +65,25 @@ def _safe_local_folder(value: str) -> Path:
 
 @notice_bp.route("/health", methods=["GET"])
 def health():
-    return _ok({"service": "notice_radar", "output_root": str(_DEFAULT_OUTPUT_ROOT)})
+    return _ok({"service": "notice_radar", "output_root": str(_DEFAULT_OUTPUT_ROOT), "cdp_url": _DEFAULT_CDP_URL})
+
+
+@notice_bp.route("/analyze-current-browser", methods=["POST"])
+def analyze_current_browser_route():
+    data = request.get_json(silent=True) or {}
+    try:
+        output_root = _safe_output_root(data.get("output_root"))
+        analysis = analyze_current_browser_notice(
+            cdp_url=data.get("cdp_url") or _DEFAULT_CDP_URL,
+            source=data.get("source") or "current-browser",
+            title=data.get("title") or None,
+            output_root=output_root,
+            target_url_contains=data.get("target_url_contains") or None,
+        )
+    except Exception as exc:
+        return _error(f"current browser notice analysis failed: {type(exc).__name__}: {exc}", 500)
+
+    return _ok({"analysis": analysis.to_dict(), "summary_markdown": analysis.to_markdown()})
 
 
 @notice_bp.route("/analyze-url", methods=["POST"])
