@@ -13,6 +13,7 @@ psutil>=5.9.0
 playwright>=1.40.0
 cryptography>=42.0.0
 openpyxl>=3.1.0
+PyMuPDF>=1.24.0
 # Windows 로컬 Excel COM 제어 (B안 1단계 POC) — Windows 에서만 설치.
 # Linux/서버 환경에는 영향 없도록 환경 마커 분리.
 pywin32>=306; sys_platform == "win32"
