@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from .analyzer import analyze_document
+from .browser_collector import collect_current_browser_page, download_current_browser_attachments
 from .collector import collect_notice_page, download_attachments
 from .models import NoticeAnalysis, NoticeCandidate, NoticeDocument
 from .parsers import parse_attachment
@@ -28,16 +29,50 @@ def analyze_notice_url(
     )
 
     downloaded = download_attachments(candidate, notice_dir / "attachments")
-    parsed = []
-    for item in downloaded:
-        if item.path:
-            parsed_item = parse_attachment(item.path)
-            parsed_item.source_url = item.source_url
-            parsed_item.content_type = item.content_type
-            parsed_item.size_bytes = item.size_bytes
-            parsed.append(parsed_item)
-        else:
-            parsed.append(item)
+    parsed = _parse_downloaded(downloaded)
+
+    document = NoticeDocument(candidate=candidate, attachments=parsed)
+    analysis = analyze_document(document)
+    _write_outputs(notice_dir, analysis)
+    return analysis
+
+
+def analyze_current_browser_notice(
+    *,
+    cdp_url: str = "http://127.0.0.1:9222",
+    source: str = "current-browser",
+    title: str | None = None,
+    output_root: str | Path = "storage/notices",
+    target_url_contains: str | None = None,
+) -> NoticeAnalysis:
+    """Analyze the notice page currently open in the user's browser.
+
+    This is the workflow for the assistant app: the user opens a government
+    notice in Chrome/Edge, then asks the app to collect attachments and analyze
+    the currently focused tab through CDP.
+    """
+    candidate, page = collect_current_browser_page(
+        cdp_url=cdp_url,
+        title=title,
+        source=source,
+        target_url_contains=target_url_contains,
+    )
+    notice_dir = Path(output_root) / candidate.safe_folder_name()
+    notice_dir.mkdir(parents=True, exist_ok=True)
+    (notice_dir / "notice_page.txt").write_text(candidate.page_text, encoding="utf-8")
+    (notice_dir / "candidate.json").write_text(
+        json.dumps(candidate.__dict__, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    try:
+        downloaded = download_current_browser_attachments(candidate, page, notice_dir / "attachments")
+        parsed = _parse_downloaded(downloaded)
+    finally:
+        try:
+            page.context.browser.close()
+        except Exception:
+            pass
 
     document = NoticeDocument(candidate=candidate, attachments=parsed)
     analysis = analyze_document(document)
@@ -78,6 +113,20 @@ def analyze_notice_folder(
     analysis = analyze_document(document)
     _write_outputs(folder_path, analysis)
     return analysis
+
+
+def _parse_downloaded(downloaded):
+    parsed = []
+    for item in downloaded:
+        if item.path:
+            parsed_item = parse_attachment(item.path)
+            parsed_item.source_url = item.source_url
+            parsed_item.content_type = item.content_type
+            parsed_item.size_bytes = item.size_bytes
+            parsed.append(parsed_item)
+        else:
+            parsed.append(item)
+    return parsed
 
 
 def _write_outputs(notice_dir: Path, analysis: NoticeAnalysis) -> None:
