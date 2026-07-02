@@ -27,6 +27,7 @@ from log_analyzer import (
 )
 from logger import get_logger
 from logging_utils import mask_sensitive
+from notice_router import notice_bp
 from tasks_router import tasks_bp
 from webhooks_router import webhooks_bp
 
@@ -104,6 +105,7 @@ def create_app() -> Flask:
     app.register_blueprint(tasks_bp)
     app.register_blueprint(webhooks_bp)
     app.register_blueprint(cad_bp)
+    app.register_blueprint(notice_bp)
 
     @app.route("/dashboard")
     def dashboard():
@@ -258,8 +260,6 @@ def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, ac
         return {"error": f"role '{role}' cannot approve '{risk_level}' risk tasks"}, 403
 
     elapsed = time.time() - entry.get("issued_at", 0)
-    if elapsed > approval_manager.TOKEN_TTL_SECONDS:
-        return {"error": "token has expired"}, 410
 
     if entry.get("approved"):
         return {"error": "token already approved"}, 409
