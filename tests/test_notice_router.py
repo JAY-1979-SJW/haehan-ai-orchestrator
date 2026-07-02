@@ -26,6 +26,22 @@ def test_notice_health_route_is_registered(monkeypatch):
     assert "cdp_url" in data
 
 
+def test_notice_daily_sites_route(monkeypatch):
+    monkeypatch.setenv("ORCH_DASHBOARD_USER", "admin")
+    monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "secret")
+    app = create_app()
+    client = app.test_client()
+
+    resp = client.get("/api/v1/notices/daily-sites", headers=_auth_header())
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    keys = {site["key"] for site in data["sites"]}
+    assert "kstartup" in keys
+    assert "molit" in keys
+    assert "nfa" in keys
+
+
 def test_notice_current_browser_route_is_registered(monkeypatch):
     monkeypatch.setenv("ORCH_DASHBOARD_USER", "admin")
     monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "secret")
