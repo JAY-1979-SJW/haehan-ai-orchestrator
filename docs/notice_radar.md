@@ -4,13 +4,29 @@
 
 ## 처리 흐름
 
-1. 공고 상세 URL 접속
-2. Playwright 렌더링 우선, 실패 시 HTTP 조회
-3. PDF/HWP/HWPX/XLSX/ZIP 첨부 링크 탐색
-4. 첨부파일 다운로드
-5. PDF, HWPX, XLSX, ZIP 텍스트 추출
-6. 신청자격, 제출서류, 마감, 기술노출 위험, 대표님 사업 적합도 분석
-7. `analysis.json`과 `summary.md` 생성
+1. 대표님이 브라우저에서 공고 상세페이지를 직접 엽니다.
+2. 앱이 현재 브라우저 탭에 CDP로 연결합니다.
+3. 현재 탭의 본문, 제목, URL, 첨부 링크를 수집합니다.
+4. 현재 브라우저 쿠키/세션으로 첨부파일을 다운로드합니다.
+5. PDF, HWPX, XLSX, ZIP 텍스트를 추출합니다.
+6. 신청자격, 제출서류, 마감, 기술노출 위험, 대표님 사업 적합도 분석을 수행합니다.
+7. `analysis.json`과 `summary.md`를 생성합니다.
+
+## 브라우저 실행 조건
+
+현재 열린 탭을 읽으려면 Chrome 또는 Edge가 원격 디버깅 포트로 실행되어야 합니다.
+
+Windows 예시:
+
+```bash
+chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\\haehan-browser-profile"
+```
+
+환경변수로 포트를 바꿀 수 있습니다.
+
+```bash
+set NOTICE_RADAR_CDP_URL=http://127.0.0.1:9222
+```
 
 ## 현재 프로젝트 실행 API
 
@@ -27,7 +43,25 @@ curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
   http://127.0.0.1:5050/api/v1/notices/health
 ```
 
-공고 URL 직접 분석:
+현재 브라우저 탭 분석:
+
+```bash
+curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"source":"K-Startup","title":"정부 첫 실증·구매 프로젝트 스마트도시 창업기업 모집"}' \
+  http://127.0.0.1:5050/api/v1/notices/analyze-current-browser
+```
+
+여러 탭이 열려 있을 때 특정 사이트 탭을 지정하려면:
+
+```bash
+curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"target_url_contains":"k-startup.go.kr","source":"K-Startup"}' \
+  http://127.0.0.1:5050/api/v1/notices/analyze-current-browser
+```
+
+공고 URL 직접 분석도 유지합니다.
 
 ```bash
 curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
@@ -64,27 +98,15 @@ curl -u "$ORCH_DASHBOARD_USER:$ORCH_DASHBOARD_PASSWORD" \
 ## Python 사용 예시
 
 ```python
-from notice_radar import analyze_notice_url
+from notice_radar import analyze_current_browser_notice
 
-analysis = analyze_notice_url(
-    "https://www.k-startup.go.kr/...",
+analysis = analyze_current_browser_notice(
+    cdp_url="http://127.0.0.1:9222",
     source="K-Startup",
     title="정부 첫 실증·구매 프로젝트 스마트도시 창업기업 모집",
 )
 
 print(analysis.to_markdown())
-```
-
-이미 다운로드한 첨부 폴더만 분석할 수도 있습니다.
-
-```python
-from notice_radar import analyze_notice_folder
-
-analysis = analyze_notice_folder(
-    "storage/notices/smart_city_project",
-    title="정부 첫 실증·구매 프로젝트 스마트도시 창업기업 모집",
-    source="K-Startup",
-)
 ```
 
 ## 출력 파일
@@ -108,4 +130,4 @@ pytest tests/test_notice_radar.py tests/test_notice_router.py
 
 - HWP 바이너리는 직접 파싱하지 않고 HWPX 변환 후 분석하는 구조입니다.
 - 이미지 스캔 PDF는 OCR이 아니므로 텍스트 추출이 제한될 수 있습니다.
-- 사이트별 로그인·보안 다운로드는 별도 승인형 브라우저 작업으로 연결해야 합니다.
+- href 없이 자바스크립트 클릭만으로 내려받는 첨부는 사이트별 클릭 수집기를 추가해야 할 수 있습니다.
