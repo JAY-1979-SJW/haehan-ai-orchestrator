@@ -7,13 +7,14 @@ analysis for CAD/AI/construction/fire-safety business opportunities.
 """
 
 from .models import AttachmentResult, NoticeAnalysis, NoticeCandidate, NoticeDocument
-from .pipeline import analyze_notice_folder, analyze_notice_url
+from .pipeline import analyze_current_browser_notice, analyze_notice_folder, analyze_notice_url
 
 __all__ = [
     "AttachmentResult",
     "NoticeAnalysis",
     "NoticeCandidate",
     "NoticeDocument",
+    "analyze_current_browser_notice",
     "analyze_notice_folder",
     "analyze_notice_url",
 ]
