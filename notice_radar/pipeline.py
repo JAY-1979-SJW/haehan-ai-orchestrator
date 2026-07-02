@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 
 from .analyzer import analyze_document
-from .browser_collector import collect_current_browser_page, download_current_browser_attachments
+from .browser_collector import (
+    close_current_browser_collection,
+    collect_current_browser_page,
+    download_current_browser_attachments,
+)
 from .collector import collect_notice_page, download_attachments
 from .models import NoticeAnalysis, NoticeCandidate, NoticeDocument
 from .parsers import parse_attachment
@@ -44,6 +48,8 @@ def analyze_current_browser_notice(
     title: str | None = None,
     output_root: str | Path = "storage/notices",
     target_url_contains: str | None = None,
+    click_downloads: bool = True,
+    max_clicks: int = 20,
 ) -> NoticeAnalysis:
     """Analyze the notice page currently open in the user's browser.
 
@@ -66,13 +72,16 @@ def analyze_current_browser_notice(
     )
 
     try:
-        downloaded = download_current_browser_attachments(candidate, page, notice_dir / "attachments")
+        downloaded = download_current_browser_attachments(
+            candidate,
+            page,
+            notice_dir / "attachments",
+            click_downloads=click_downloads,
+            max_clicks=max_clicks,
+        )
         parsed = _parse_downloaded(downloaded)
     finally:
-        try:
-            page.context.browser.close()
-        except Exception:
-            pass
+        close_current_browser_collection(page)
 
     document = NoticeDocument(candidate=candidate, attachments=parsed)
     analysis = analyze_document(document)
