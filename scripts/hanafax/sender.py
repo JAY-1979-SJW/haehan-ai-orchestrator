@@ -28,11 +28,9 @@ _BASE_URL = "https://www.hanafax.com"
 _LOCK = threading.Lock()
 
 # 2026-07-30 고정: 영업팩스 공통 첨부파일 (무료수신거부 문구 반영본).
+# 경로는 .env 의 HANAFAX_DEFAULT_ATTACH_FILE 로 관리 (PC마다 OneDrive 경로가 다름).
 # 다른 파일로 바꾸려면 사용자가 명시적으로 새 경로를 지정할 것.
-DEFAULT_ATTACH_FILE = (
-    r"C:\Users\skyjw\OneDrive\01. PROJECT_FILE\영업팩스"
-    r"\해한AI엔지니어링_통합_MEP공사 산출 지원 포함_수신거부표기.pdf"
-)
+DEFAULT_ATTACH_FILE = os.environ.get("HANAFAX_DEFAULT_ATTACH_FILE", "")
 
 
 def send_fax(
@@ -105,6 +103,13 @@ def send_fax_bulk(
     from scripts.hanafax.auth import get_credentials
 
     attach_file = attach_file or DEFAULT_ATTACH_FILE
+    if not attach_file:
+        return {
+            "success": False,
+            "sent_faxes": [],
+            "job_id": None,
+            "message": "첨부파일 미지정. attach_file 인자 또는 .env HANAFAX_DEFAULT_ATTACH_FILE 설정 필요",
+        }
     uid, pwd = user_id or "", password or ""
     if not uid or not pwd:
         uid, pwd = get_credentials()
