@@ -61,7 +61,9 @@ def build_batch_plan(
             "receiver_fax": row["receiver_fax"],
             "receiver_name": row.get("receiver_name", ""),
             "subject": row["subject"],
+            "body": row.get("body", row["subject"]),
             "bid_name": row.get("bid_name", ""),
+            "attach_file": row.get("attach_file"),
             "delay_seconds": delay_seconds,
             "status": "planned",
         }
@@ -105,6 +107,7 @@ def execute_batch(plan: dict[str, Any]) -> dict[str, Any]:
                 body=item.get("body", item["subject"]),
                 receiver_name=item.get("receiver_name", ""),
                 bid_name=item.get("bid_name", ""),
+                attach_file=item.get("attach_file"),
             )
             result_item["sent"] = r.get("success", False)
             result_item["job_id"] = r.get("job_id")

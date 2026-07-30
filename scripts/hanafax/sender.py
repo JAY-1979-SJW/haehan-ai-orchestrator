@@ -9,6 +9,7 @@
   6. 팩스보내기 클릭
   7. submit_Result 확인 → 접수번호 추출
 """
+
 from __future__ import annotations
 
 import logging
@@ -26,6 +27,13 @@ _TEMPLATE_DOCX = ROOT / "data" / "hanafax_template.docx"
 _BASE_URL = "https://www.hanafax.com"
 _LOCK = threading.Lock()
 
+# 2026-07-30 고정: 영업팩스 공통 첨부파일 (무료수신거부 문구 반영본).
+# 다른 파일로 바꾸려면 사용자가 명시적으로 새 경로를 지정할 것.
+DEFAULT_ATTACH_FILE = (
+    r"C:\Users\skyjw\OneDrive\01. PROJECT_FILE\영업팩스"
+    r"\해한AI엔지니어링_통합_MEP공사 산출 지원 포함_수신거부표기.pdf"
+)
+
 
 def send_fax(
     receiver_fax: str,
@@ -35,8 +43,11 @@ def send_fax(
     bid_name: str = "",
     user_id: str | None = None,
     password: str | None = None,
+    attach_file: str | None = None,
 ) -> dict[str, Any]:
     """단건 팩스 전송.
+
+    attach_file: 지정 시 docx 템플릿 대신 해당 파일(PDF 등)을 그대로 첨부.
 
     Returns:
         {"success": bool, "job_id": str|None, "message": str, "simulated": bool}
@@ -47,22 +58,246 @@ def send_fax(
     if not uid or not pwd:
         uid, pwd = get_credentials()
     if not uid or not pwd:
-        return {"success": False, "simulated": True, "job_id": None,
-                "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax"}
+        return {
+            "success": False,
+            "simulated": True,
+            "job_id": None,
+            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+        }
 
     try:
         from playwright.sync_api import sync_playwright  # noqa
     except ImportError:
-        return {"success": False, "simulated": False, "job_id": None,
-                "message": "playwright 미설치. pip install playwright && playwright install chromium"}
+        return {
+            "success": False,
+            "simulated": False,
+            "job_id": None,
+            "message": "playwright 미설치. pip install playwright && playwright install chromium",
+        }
 
     fax_no = re.sub(r"[^0-9]", "", receiver_fax)
     if len(fax_no) < 8:
-        return {"success": False, "simulated": False, "job_id": None,
-                "message": f"팩스번호 오류: {receiver_fax}"}
+        return {"success": False, "simulated": False, "job_id": None, "message": f"팩스번호 오류: {receiver_fax}"}
+
+    if attach_file and not Path(attach_file).exists():
+        return {"success": False, "simulated": False, "job_id": None, "message": f"첨부파일 없음: {attach_file}"}
 
     with _LOCK:
-        return _run(uid, pwd, fax_no, subject, body, receiver_name, bid_name)
+        return _run(uid, pwd, fax_no, subject, body, receiver_name, bid_name, attach_file)
+
+
+def send_fax_bulk(
+    receivers: list[dict],
+    subject: str,
+    attach_file: str | None = None,
+    user_id: str | None = None,
+    password: str | None = None,
+) -> dict[str, Any]:
+    """단체발송: 로그인·업로드 1회로 여러 수신번호에 동일 파일을 한 번에 전송.
+
+    receivers: [{"receiver_fax": "02-...", "receiver_name": "..."}, ...]
+    attach_file: 첨부할 실제 파일 경로 (PDF 등, 그대로 첨부 — docx 템플릿 미생성).
+        생략 시 DEFAULT_ATTACH_FILE(영업팩스 공통 첨부) 사용.
+
+    Returns:
+        {"success": bool, "message": str, "sent_faxes": list[str], "job_id": str|None}
+    """
+    from scripts.hanafax.auth import get_credentials
+
+    attach_file = attach_file or DEFAULT_ATTACH_FILE
+    uid, pwd = user_id or "", password or ""
+    if not uid or not pwd:
+        uid, pwd = get_credentials()
+    if not uid or not pwd:
+        return {
+            "success": False,
+            "sent_faxes": [],
+            "job_id": None,
+            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+        }
+
+    try:
+        from playwright.sync_api import sync_playwright  # noqa
+    except ImportError:
+        return {
+            "success": False,
+            "sent_faxes": [],
+            "job_id": None,
+            "message": "playwright 미설치. pip install playwright && playwright install chromium",
+        }
+
+    if not Path(attach_file).exists():
+        return {"success": False, "sent_faxes": [], "job_id": None, "message": f"첨부파일 없음: {attach_file}"}
+
+    fax_nos = []
+    for r in receivers:
+        fax_no = re.sub(r"[^0-9]", "", r.get("receiver_fax", ""))
+        if len(fax_no) < 8:
+            return {
+                "success": False,
+                "sent_faxes": [],
+                "job_id": None,
+                "message": f"팩스번호 오류: {r.get('receiver_fax')}",
+            }
+        fax_nos.append(fax_no)
+
+    with _LOCK:
+        return _run_bulk(uid, pwd, fax_nos, subject, attach_file)
+
+
+def _run_bulk(uid: str, pwd: str, fax_nos: list[str], subject: str, attach_file: str) -> dict[str, Any]:
+    from playwright.sync_api import TimeoutError as PWTimeout
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        )
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120",
+            locale="ko-KR",
+        )
+        page = context.new_page()
+        dialogs: list[str] = []
+        page.on("dialog", lambda d: (dialogs.append(d.message), d.accept()))
+
+        try:
+            # STEP 1: 로그인
+            page.goto(_BASE_URL, wait_until="domcontentloaded", timeout=20_000)
+            page.fill('input[name="struid"]', uid)
+            page.fill('input[name="strpwd"]', pwd)
+            page.evaluate("document.querySelector('form').submit()")
+            page.wait_for_load_state("domcontentloaded", timeout=15_000)
+            page.wait_for_timeout(1_500)
+
+            if not any(c["name"] == "Login" for c in context.cookies()):
+                return {"success": False, "sent_faxes": [], "job_id": None, "message": f"로그인 실패. URL: {page.url}"}
+
+            # STEP 2: 팩스 전송 페이지
+            page.click('a[href*="tHanaFax_country"]')
+            page.wait_for_load_state("domcontentloaded", timeout=15_000)
+            page.wait_for_timeout(2_000)
+
+            if "tHanaFax_country" not in page.url:
+                return {
+                    "success": False,
+                    "sent_faxes": [],
+                    "job_id": None,
+                    "message": f"팩스 페이지 이동 실패: {page.url}",
+                }
+
+            # STEP 3: 수신번호 전체 추가 (단체발송)
+            for fax_no in fax_nos:
+                page.fill('input[name="inputfaxnumber"]', fax_no)
+                page.click('button[onclick*="addPhoneNumber"]')
+                page.wait_for_timeout(400)
+
+            fax_list = page.evaluate("""
+                () => Array.from(document.querySelector('select[name="faddList"]')?.options || [])
+                    .map(o => o.value).filter(v => v !== 'none')
+            """)
+            added = set(fax_list)
+            missing = [n for n in fax_nos if n not in added]
+            if not fax_list:
+                return {"success": False, "sent_faxes": [], "job_id": None, "message": "팩스번호 추가 실패 (0건 등록)"}
+
+            # STEP 4: 제목
+            page.fill('input[name="fax_title"]', subject[:80])
+
+            # STEP 5: 파일 업로드 + TIF 변환 대기
+            with page.expect_file_chooser(timeout=8_000) as fc_info:
+                page.click('button[onclick*="pop_addfile"]')
+            fc_info.value.set_files(attach_file)
+
+            tif_file = None
+            for _ in range(15):
+                page.wait_for_timeout(2_000)
+                tif_file = page.evaluate("""
+                    () => {
+                        const sel = document.getElementById('dropZone');
+                        if (!sel || sel.options.length < 2) return null;
+                        const val = sel.options[1].value;
+                        return val && val.toLowerCase().endsWith('.tif') ? val : null;
+                    }
+                """)
+                if tif_file:
+                    break
+
+            if not tif_file:
+                tif_file = page.evaluate("""
+                    () => { const sel = document.getElementById('dropZone');
+                            return sel?.options[1]?.value || null; }
+                """)
+                if not tif_file:
+                    return {"success": False, "sent_faxes": [], "job_id": None, "message": "TIF 변환 실패"}
+                page.wait_for_timeout(5_000)
+
+            # STEP 6: 팩스보내기 (변환중 다이얼로그 시 재시도)
+            dialogs.clear()
+            for retry in range(3):
+                page.click('button[onclick*="e_money_chk"]')
+                page.wait_for_timeout(3_000)
+                if dialogs and any("변환" in d for d in dialogs):
+                    dialogs.clear()
+                    page.wait_for_timeout(5_000)
+                    continue
+                break
+
+            if dialogs:
+                err_kw = ["잔액", "부족", "오류", "실패", "충전"]
+                if any(any(k in d for k in err_kw) for d in dialogs):
+                    return {
+                        "success": False,
+                        "sent_faxes": [],
+                        "job_id": None,
+                        "message": f"전송 경고: {'; '.join(dialogs)}",
+                    }
+
+            # STEP 7: 결과 확인
+            page.wait_for_load_state("domcontentloaded", timeout=30_000)
+            page.wait_for_timeout(2_000)
+            result_url = page.url
+
+            if "submit_Result" not in result_url:
+                body_txt = page.inner_text("body")[:200]
+                return {
+                    "success": False,
+                    "sent_faxes": [],
+                    "job_id": None,
+                    "message": f"결과 페이지 미도달: {result_url} / {body_txt}",
+                }
+
+            result_text = page.inner_text("body")
+            is_success = "팩스 전송 완료" in result_text
+
+            job_id = None
+            m = re.search(r"접수번호[\s:：]*([A-Z0-9\-]{5,})", result_text)
+            if m:
+                job_id = m.group(1)
+
+            log.info(
+                "단체발송 결과: success=%s job_id=%s 대상=%d건 미등록=%d건",
+                is_success,
+                job_id,
+                len(fax_list),
+                len(missing),
+            )
+            return {
+                "success": is_success,
+                "sent_faxes": fax_list,
+                "missing_faxes": missing,
+                "job_id": job_id,
+                "message": "팩스 전송 완료" if is_success else f"결과 불명확: {result_text[:200]}",
+            }
+
+        except PWTimeout as e:
+            return {"success": False, "sent_faxes": [], "job_id": None, "message": f"타임아웃: {e}"}
+        except Exception as e:
+            log.error("Playwright 오류(단체발송): %s", e, exc_info=True)
+            return {"success": False, "sent_faxes": [], "job_id": None, "message": str(e)}
+        finally:
+            browser.close()
 
 
 def _build_docx(subject: str, body: str, receiver_name: str, bid_name: str) -> str:
@@ -146,11 +381,21 @@ def _build_docx(subject: str, body: str, receiver_name: str, bid_name: str) -> s
         return txt_path
 
 
-def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
-         receiver_name: str, bid_name: str) -> dict[str, Any]:
-    from playwright.sync_api import TimeoutError as PWTimeout, sync_playwright
+def _run(
+    uid: str,
+    pwd: str,
+    fax_no: str,
+    subject: str,
+    body: str,
+    receiver_name: str,
+    bid_name: str,
+    attach_file: str | None = None,
+) -> dict[str, Any]:
+    from playwright.sync_api import TimeoutError as PWTimeout
+    from playwright.sync_api import sync_playwright
 
-    tmp_path = _build_docx(subject, body, receiver_name, bid_name)
+    using_external_file = bool(attach_file)
+    tmp_path = attach_file if using_external_file else _build_docx(subject, body, receiver_name, bid_name)
 
     try:
         with sync_playwright() as p:
@@ -176,8 +421,12 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
                 page.wait_for_timeout(1_500)
 
                 if not any(c["name"] == "Login" for c in context.cookies()):
-                    return {"success": False, "simulated": False, "job_id": None,
-                            "message": f"로그인 실패. URL: {page.url}"}
+                    return {
+                        "success": False,
+                        "simulated": False,
+                        "job_id": None,
+                        "message": f"로그인 실패. URL: {page.url}",
+                    }
 
                 # STEP 2: 팩스 전송 페이지
                 page.click('a[href*="tHanaFax_country"]')
@@ -185,8 +434,12 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
                 page.wait_for_timeout(2_000)
 
                 if "tHanaFax_country" not in page.url:
-                    return {"success": False, "simulated": False, "job_id": None,
-                            "message": f"팩스 페이지 이동 실패: {page.url}"}
+                    return {
+                        "success": False,
+                        "simulated": False,
+                        "job_id": None,
+                        "message": f"팩스 페이지 이동 실패: {page.url}",
+                    }
 
                 # STEP 3: 수신번호
                 page.fill('input[name="inputfaxnumber"]', fax_no)
@@ -198,8 +451,12 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
                         .map(o => o.value).filter(v => v !== 'none')
                 """)
                 if not fax_list:
-                    return {"success": False, "simulated": False, "job_id": None,
-                            "message": f"팩스번호 추가 실패: {fax_no}"}
+                    return {
+                        "success": False,
+                        "simulated": False,
+                        "job_id": None,
+                        "message": f"팩스번호 추가 실패: {fax_no}",
+                    }
 
                 # STEP 4: 제목
                 page.fill('input[name="fax_title"]', subject[:80])
@@ -229,8 +486,7 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
                                 return sel?.options[1]?.value || null; }
                     """)
                     if not tif_file:
-                        return {"success": False, "simulated": False, "job_id": None,
-                                "message": "TIF 변환 실패"}
+                        return {"success": False, "simulated": False, "job_id": None, "message": "TIF 변환 실패"}
                     page.wait_for_timeout(5_000)
 
                 # STEP 6: 팩스보내기 (변환중 다이얼로그 시 재시도)
@@ -247,8 +503,12 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
                 if dialogs:
                     err_kw = ["잔액", "부족", "오류", "실패", "충전"]
                     if any(any(k in d for k in err_kw) for d in dialogs):
-                        return {"success": False, "simulated": False, "job_id": None,
-                                "message": f"전송 경고: {'; '.join(dialogs)}"}
+                        return {
+                            "success": False,
+                            "simulated": False,
+                            "job_id": None,
+                            "message": f"전송 경고: {'; '.join(dialogs)}",
+                        }
 
                 # STEP 7: 결과 확인
                 page.wait_for_load_state("domcontentloaded", timeout=20_000)
@@ -257,18 +517,22 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
 
                 if "submit_Result" not in result_url:
                     body_txt = page.inner_text("body")[:200]
-                    return {"success": False, "simulated": False, "job_id": None,
-                            "message": f"결과 페이지 미도달: {result_url} / {body_txt}"}
+                    return {
+                        "success": False,
+                        "simulated": False,
+                        "job_id": None,
+                        "message": f"결과 페이지 미도달: {result_url} / {body_txt}",
+                    }
 
                 result_text = page.inner_text("body")
                 is_success = "팩스 전송 완료" in result_text
 
                 job_id = None
-                m = re.search(r'접수번호[\s:：]*([A-Z0-9\-]{5,})', result_text)
+                m = re.search(r"접수번호[\s:：]*([A-Z0-9\-]{5,})", result_text)
                 if m:
                     job_id = m.group(1)
                 else:
-                    nums = re.findall(r'\b(\d{8,})\b', result_text)
+                    nums = re.findall(r"\b(\d{8,})\b", result_text)
                     if nums:
                         job_id = nums[0]
 
@@ -288,7 +552,8 @@ def _run(uid: str, pwd: str, fax_no: str, subject: str, body: str,
             finally:
                 browser.close()
     finally:
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
+        if not using_external_file:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
