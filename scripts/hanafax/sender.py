@@ -32,6 +32,19 @@ _LOCK = threading.Lock()
 # 다른 파일로 바꾸려면 사용자가 명시적으로 새 경로를 지정할 것.
 DEFAULT_ATTACH_FILE = os.environ.get("HANAFAX_DEFAULT_ATTACH_FILE", "")
 
+# 팩스 첨부로 허용하는 확장자 — 임의 파일(설정/키 파일 등) 첨부 방지.
+_ALLOWED_ATTACH_EXT = {".pdf", ".docx", ".doc"}
+
+
+def _validate_attach_file(attach_file: str) -> str | None:
+    """첨부파일 경로 검증. 문제 있으면 오류 메시지, 정상이면 None."""
+    p = Path(attach_file).resolve()
+    if not p.is_file():
+        return f"첨부파일 없음: {attach_file}"
+    if p.suffix.lower() not in _ALLOWED_ATTACH_EXT:
+        return f"허용되지 않은 첨부파일 형식({p.suffix}): {attach_file}"
+    return None
+
 
 def send_fax(
     receiver_fax: str,
@@ -77,8 +90,10 @@ def send_fax(
     if len(fax_no) < 8:
         return {"success": False, "simulated": False, "job_id": None, "message": f"팩스번호 오류: {receiver_fax}"}
 
-    if attach_file and not Path(attach_file).exists():
-        return {"success": False, "simulated": False, "job_id": None, "message": f"첨부파일 없음: {attach_file}"}
+    if attach_file:
+        err = _validate_attach_file(attach_file)
+        if err:
+            return {"success": False, "simulated": False, "job_id": None, "message": err}
 
     with _LOCK:
         return _run(uid, pwd, fax_no, subject, body, receiver_name, bid_name, attach_file)
@@ -131,8 +146,9 @@ def send_fax_bulk(
             "message": "playwright 미설치. pip install playwright && playwright install chromium",
         }
 
-    if not Path(attach_file).exists():
-        return {"success": False, "sent_faxes": [], "job_id": None, "message": f"첨부파일 없음: {attach_file}"}
+    err = _validate_attach_file(attach_file)
+    if err:
+        return {"success": False, "sent_faxes": [], "job_id": None, "message": err}
 
     fax_nos = []
     for r in receivers:
