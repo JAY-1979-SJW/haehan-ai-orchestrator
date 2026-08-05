@@ -20,6 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "home", label: "AI 콘솔", shortLabel: "AI", href: "/", exact: true },
       { key: "ops",  label: "운영센터", shortLabel: "운영", href: "/ops" },
+      { key: "login-status", label: "로그인 현황", shortLabel: "로그인", href: "/login-status" },
       { key: "mypage", label: "설정", shortLabel: "설정", href: "/mypage" },
     ],
   },
@@ -27,6 +28,12 @@ export const NAV_GROUPS: NavGroup[] = [
     group: "스마트스토어",
     items: [
       { key: "ss-home", label: "스토어 AI 채팅", shortLabel: "스토어", href: "/naver/smartstore" },
+    ],
+  },
+  {
+    group: "콘텐츠",
+    items: [
+      { key: "blog", label: "블로그 AI", shortLabel: "블로그", href: "/naver/blog" },
     ],
   },
   {
@@ -54,6 +61,7 @@ export const NAV_GROUPS_ALL: NavGroup[] = [
       { key: "home",      label: "AI 콘솔",  shortLabel: "AI",  href: "/", exact: true },
       { key: "assistant", label: "AI 비서",  shortLabel: "비서", href: "/assistant" },
       { key: "ops",       label: "운영센터", shortLabel: "운영", href: "/ops" },
+      { key: "login-status", label: "로그인 현황", shortLabel: "로그인", href: "/login-status" },
       { key: "mypage",    label: "설정",     shortLabel: "설정", href: "/mypage" },
     ],
   },
