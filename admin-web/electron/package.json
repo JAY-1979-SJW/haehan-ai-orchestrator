@@ -20,6 +20,7 @@
       "main.js",
       "lib/**/*",
       "preload.js",
+      "webview_preload.js",
       "shell.html",
       "icon.png"
     ],

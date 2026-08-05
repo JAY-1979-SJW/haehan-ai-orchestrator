@@ -364,7 +364,7 @@ scripts/eum_business_dashboard.py   ← 업무 분석 + 홍보 메일 초안 생
 ├── generate_promo_email()  - 홍보 메일 초안
 └── main()                  - 종합 대시보드 출력 + 파일 저장
 
-scripts/eum_device_inventory_automation.py  ← 구 버전 (보존)
+scripts/archive/eum_legacy/eum_device_inventory_automation.py  ← 구 버전 (보존)
 ```
 
 ### 올바른 추출 로직
