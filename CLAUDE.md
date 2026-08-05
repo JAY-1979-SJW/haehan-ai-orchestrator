@@ -49,6 +49,18 @@ python scripts/ops/capability_check.py naver mail
 
 ---
 
+# 외부 유료 AI API 호출 승인제 (2026-07-28 추가)
+
+**GPT/OpenAI 등 외부 유료 AI API를 호출하는 작업은 반드시 사용자 사전 승인 후에만 실행한다.**
+
+- 대상: `ai_orchestrator/openai_proxy_caller.py`(`call_openai_agent`, `call_openai_chat`), `OPENAI_API_KEY` 사용, `api.openai.com` 직접 호출 등 모든 유료 외부 AI API 경로.
+- **자동 차단 훅**: `.claude/settings.json` → `hooks.PreToolUse` (matcher `Bash|PowerShell`) → `scripts/ops/guard_openai_call.py`. 위 키워드가 명령어에 포함되면 `bypassPermissions` 모드여도 강제로 사용자 확인(ask)을 받는다.
+- 사유: 이 프로젝트의 `permissions.defaultMode`는 `bypassPermissions`(자동 실행)라서, 승인 없이 유료 API를 호출하는 사고가 실제로 발생함(2026-07-28, KPI PDF 비전 파싱 작업 중 사용자 확인 없이 GPT 호출 시도).
+- 신규 기능에서 OpenAI/GPT 호출이 필요하면: 먼저 사용자에게 비용·목적을 설명하고 명시적 승인("진행해", "GPT 써도 돼" 등)을 받은 뒤에만 실행한다. 승인 없이 "일단 테스트해본다"는 금지.
+- 이 훅은 Bash/PowerShell 명령어 문자열 매칭 방식이라 완벽하지 않음(예: 변수로 우회한 코드는 못 잡음) — 최종 책임은 AI가 실행 전에 스스로 확인하는 것.
+
+---
+
 # 작업 원칙
 
 ## 수동 실행 요청 절대 금지
@@ -364,7 +376,7 @@ scripts/eum_business_dashboard.py   ← 업무 분석 + 홍보 메일 초안 생
 ├── generate_promo_email()  - 홍보 메일 초안
 └── main()                  - 종합 대시보드 출력 + 파일 저장
 
-scripts/eum_device_inventory_automation.py  ← 구 버전 (보존)
+scripts/archive/eum_legacy/eum_device_inventory_automation.py  ← 구 버전 (보존)
 ```
 
 ### 올바른 추출 로직
