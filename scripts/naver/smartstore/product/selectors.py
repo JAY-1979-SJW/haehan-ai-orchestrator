@@ -370,7 +370,20 @@ SEARCH_KEYWORD_ON = 'input[ng-model="vm.isSearchTagOn"][value="true"]'  # deprec
 SEARCH_KEYWORD_OFF = 'input[ng-model="vm.isSearchTagOn"][value="false"]'  # deprecated
 
 # 실측 확인된 검색설정 필드 (2026-08-15)
-SEARCH_TAG_INPUT = 'input[ng-model="vm.searchKeyword"]'  # 태그 직접 입력
+# ⚠ SEARCH_TAG_INPUT 은 태그 입력이 아니었다(2026-08-15 재실측).
+#   vm.searchKeyword 는 maxItems=1 인 **브랜드/제조사 자동완성**이다.
+#   이걸 태그로 알고 조작해서 다섯 번 헛짚었다.
+#   태그 조작은 scripts.naver.smartstore.product.tag_section.TagSection 을 쓴다.
+SEARCH_TAG_INPUT_DEPRECATED = 'input[ng-model="vm.searchKeyword"]'  # 쓰지 말 것 — 브랜드/제조사
+
+# 태그 위젯 본체는 <select> 이고 config 로 특정한다.
+# 전제조건: '검색설정' 섹션 펼침 + SEARCH_TAG_DIRECT_CHECKBOX 체크(ng-if)
+SEARCH_TAG_WIDGET_CONFIG = "::vm.config.directInputSelectizeConfig"
+SEARCH_TAG_DIRECT_CHECKBOX = 'input[ng-model="vm.viewData.isDirectInput"]'
+SEARCH_TAG_VALUE = 'input[ng-model="vm.product.detailAttribute.seoInfo.sellerTags"]'
+# 등록된 태그가 렌더링되는 곳 (.selectize-input .item 이 아니다)
+SEARCH_TAG_CHIPS = ".choice-tag .choice-label strong"
+
 SEO_PAGE_TITLE = 'input[ng-model="vm.product.detailAttribute.seoInfo.pageTitle"]'
 SEO_META_DESCRIPTION = 'input[ng-model="vm.product.detailAttribute.seoInfo.metaDescription"]'
 

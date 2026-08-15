@@ -85,6 +85,20 @@ def _dismiss_popups(page: Any) -> None:
     _expand_all_sections(page)
 
 
+def _enable_tag_direct_input(page: Any) -> bool:
+    """'태그 직접 입력' 체크박스를 켠다 — 태그 위젯은 ng-if 로 이때만 생성된다."""
+    try:
+        cb = page.locator('input[ng-model="vm.viewData.isDirectInput"]').first
+        if cb.count() == 0:
+            return False
+        if not cb.is_checked():
+            page.evaluate("() => document.querySelector('input[ng-model=\"vm.viewData.isDirectInput\"]').click()")
+            page.wait_for_timeout(1200)
+        return bool(cb.is_checked())
+    except Exception:
+        return False
+
+
 def _open_image_modal(page: Any) -> bool:
     """'내 사진 불러오기' 모달 열기 — file input 은 이 모달 안에만 생성된다.
 
@@ -275,11 +289,24 @@ CHECKS = [
         expect="present",
         note="Selectize 위젯 인스턴스가 붙는 요소. setValue() 폴백의 근거",
     ),
+    # ⚠ 거짓 통과였던 항목 (2026-08-15 재실측)
+    #   'SEARCH_TAG_INPUT' = input[ng-model="vm.searchKeyword"] 는 **존재는 하지만**
+    #   태그 입력이 아니라 브랜드/제조사 자동완성(maxItems=1)이다.
+    #   존재 검사만으로는 '맞는 요소인지'를 알 수 없어 OK 로 보고됐고,
+    #   그 오해로 태그 자동화가 다섯 번 실패했다.
+    #   → 실제 태그 위젯으로 교체한다.
     SelectorCheck(
-        "SEARCH_TAG_INPUT",
-        'input[ng-model="vm.searchKeyword"]',
+        "SEARCH_TAG_DIRECT_CHECKBOX",
+        'input[ng-model="vm.viewData.isDirectInput"]',
         expect="present",
-        note="검색 태그 입력. 구 vm.isSearchTagOn 라디오는 존재하지 않음",
+        note="'태그 직접 입력' 체크박스. 이걸 켜야 태그 위젯이 ng-if 로 생성된다",
+    ),
+    SelectorCheck(
+        "SEARCH_TAG_WIDGET",
+        'select[config="::vm.config.directInputSelectizeConfig"]',
+        expect="present",
+        requires="tag_direct_input",
+        note="태그 위젯 본체. settings.create 가 검증 함수라 addItem() 은 무효",
     ),
     SelectorCheck(
         "SEO_PAGE_TITLE",
@@ -341,6 +368,7 @@ SPEC = SiteSpec(
         "html_mode": _enter_html_mode,
         "default_mode": _enter_default_mode,
         "category_selected": _select_any_category,
+        "tag_direct_input": _enable_tag_direct_input,
     },
     setup=_dismiss_popups,
     settle_s=7.0,
