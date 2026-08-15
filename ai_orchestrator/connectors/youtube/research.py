@@ -44,16 +44,28 @@ def search_videos(
     query: str,
     max_results: int = 5,
     captions_only: bool = False,
+    order: str = "relevance",
+    published_after: str = "",
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
-    """공식 API로 YouTube 영상 검색."""
+    """공식 API로 YouTube 영상 검색.
+
+    order: relevance(기본) 또는 date(최신 등록일순).
+    published_after: ISO 8601 UTC (예: 2026-08-01T00:00:00Z) 이후 등록된 영상만.
+    """
     import urllib.error
 
     from fastapi import HTTPException
 
     t0 = time.monotonic()
     try:
-        result, path = _research_svc.search_videos(query, max_results=max_results, captions_only=captions_only)
+        result, path = _research_svc.search_videos(
+            query,
+            max_results=max_results,
+            captions_only=captions_only,
+            order=order,
+            published_after=published_after or None,
+        )
     except urllib.error.HTTPError as e:
         if e.code == 429:
             raise HTTPException(

@@ -86,19 +86,28 @@ def search_videos(
     oauth_token: str | None = None,
     token_file: str | Path | None = None,
     captions_only: bool = False,
+    order: str = "relevance",
+    published_after: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     """Search public YouTube videos through the official Data API.
 
     캐시: 동일 쿼리는 24시간 내 결과를 재사용해 API 유닛 소모를 절약한다.
     If no API key is configured, the result is blocked instead of falling back
     to scraping YouTube search pages.
+
+    order: "relevance"(기본) 또는 "date"(최신 등록일순). 정렬을 바꿔도 API
+    비용(unit)과 일일 검색 한도는 그대로다.
+    published_after: ISO 8601 UTC 문자열(예: "2026-08-01T00:00:00Z"). 이 시각
+    이후 등록된 영상만 반환한다.
     """
     key = _api_key(api_key)
     token = _oauth_token(oauth_token, token_file)
     max_results = max(1, min(int(max_results), 10))
+    order = order if order in {"relevance", "date"} else "relevance"
 
     # ── 캐시 조회 (API 유닛 절약) ──────────────────────────────────────────
-    ck = _cache_key(query, max_results, captions_only)
+    # order/published_after 가 다르면 결과가 달라지므로 캐시 키에 포함한다.
+    ck = _cache_key(f"{query}|{order}|{published_after or ''}", max_results, captions_only)
     cached = _cache_get(ck)
     if cached:
         cached["cache_hit"] = True
@@ -127,11 +136,14 @@ def search_videos(
         "type": "video",
         "maxResults": max_results,
         "safeSearch": "moderate",
+        "order": order,
     }
     if key:
         search_params["key"] = key
     if captions_only:
         search_params["videoCaption"] = "closedCaption"
+    if published_after:
+        search_params["publishedAfter"] = published_after
 
     search_data = (
         _get_json(YOUTUBE_SEARCH_URL, search_params)
@@ -201,6 +213,8 @@ def search_videos(
         "oauth_token_output": "redacted",
         "credential_source": "api_key" if key else "oauth",
         "captions_only": captions_only,
+        "order": order,
+        "published_after": published_after or "",
         "result_count": len(rows),
         "results": rows,
     }

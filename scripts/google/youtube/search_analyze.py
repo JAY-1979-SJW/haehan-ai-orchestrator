@@ -1,4 +1,5 @@
 """High-level analysis, market research pipeline, comment summary, and reporting."""
+
 from __future__ import annotations
 
 import json
@@ -6,7 +7,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.google.youtube.search_common import (
     LATEST_ANALYSIS,
     LATEST_MARKET_RESEARCH,
@@ -15,25 +15,26 @@ from scripts.google.youtube.search_common import (
     MARKET_RESEARCH_REPORT_DIR,
     TOPIC_ALIASES,
     TOPIC_KEYWORD_PRESETS,
-    _now,
-    _normalize_keywords,
     _int_value,
+    _normalize_keywords,
+    _now,
     _stamp,
     _top_keywords,
     _write_report,
     build_public_signal_model,
 )
-from scripts.google.youtube.search_search import (
-    search_videos,
-    _load_search_payload,
-)
-from scripts.google.youtube.search_transcript import collect_visible_transcript_summary
 from scripts.google.youtube.search_score import (
-    _score_video,
     _score_topic_market_video,
+    _score_video,
     _strategy_summary,
     _topic_strategy_summary,
 )
+from scripts.google.youtube.search_search import (
+    _load_search_payload,
+    search_videos,
+)
+from scripts.google.youtube.search_transcript import collect_visible_transcript_summary
+from security_utils import safe_preview
 
 
 def analyze_ranked_videos(
@@ -98,6 +99,8 @@ def analyze_keyword_topic_market(
     max_comment_pages: int = 1,
     include_comment_replies: bool = False,
     wait_seconds: float = 3.0,
+    order: str = "relevance",
+    published_after: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     """Analyze a YouTube topic across multiple keyword searches.
 
@@ -125,7 +128,14 @@ def analyze_keyword_topic_market(
     search_runs: list[dict[str, Any]] = []
     for keyword in normalized_keywords:
         try:
-            result, path = search_videos(keyword, max_results=per_keyword_limit, source=source, wait_seconds=wait_seconds)
+            result, path = search_videos(
+                keyword,
+                max_results=per_keyword_limit,
+                source=source,
+                wait_seconds=wait_seconds,
+                order=order,
+                published_after=published_after,
+            )
         except Exception as exc:
             result = {
                 "status": "blocked",
@@ -136,14 +146,16 @@ def analyze_keyword_topic_market(
                 "results": [],
             }
             path = LATEST_SEARCH
-        search_runs.append({
-            "keyword": keyword,
-            "status": result.get("status", ""),
-            "source": result.get("source", ""),
-            "reason": result.get("reason", ""),
-            "result_count": result.get("result_count", 0),
-            "report_path": str(path),
-        })
+        search_runs.append(
+            {
+                "keyword": keyword,
+                "status": result.get("status", ""),
+                "source": result.get("source", ""),
+                "reason": result.get("reason", ""),
+                "result_count": result.get("result_count", 0),
+                "report_path": str(path),
+            }
+        )
         for rank, item in enumerate(result.get("results", []), start=1):
             video_id = str(item.get("video_id") or "")
             if not video_id:
@@ -151,11 +163,13 @@ def analyze_keyword_topic_market(
             entry = videos.setdefault(video_id, {"video": item, "appearances": []})
             if not entry.get("video", {}).get("statistics") and item.get("statistics"):
                 entry["video"] = item
-            entry["appearances"].append({
-                "keyword": keyword,
-                "observed_rank": rank,
-                "source": result.get("source", ""),
-            })
+            entry["appearances"].append(
+                {
+                    "keyword": keyword,
+                    "observed_rank": rank,
+                    "source": result.get("source", ""),
+                }
+            )
 
     ordered_entries = sorted(
         videos.values(),
@@ -245,8 +259,14 @@ def run_market_research(
     max_comment_pages: int = 1,
     include_comment_replies: bool = False,
     wait_seconds: float = 3.0,
+    order: str = "relevance",
+    published_after: str | None = None,
 ) -> tuple[dict[str, Any], Path, Path]:
-    """Run the integrated YouTube market research pipeline."""
+    """Run the integrated YouTube market research pipeline.
+
+    order: "relevance"(기본) 또는 "date"(최신 등록일순).
+    published_after: ISO 8601 UTC(예: "2026-08-01T00:00:00Z") 이후 등록된 영상만.
+    """
     expanded_keywords: list[str] = []
     if topic:
         expanded_keywords.extend(expand_topic_keywords(topic, auto_keywords=auto_keywords))
@@ -263,6 +283,8 @@ def run_market_research(
         max_comment_pages=max_comment_pages,
         include_comment_replies=include_comment_replies,
         wait_seconds=wait_seconds,
+        order=order,
+        published_after=published_after,
     )
     payload = {
         "schema_version": 1,
@@ -275,6 +297,8 @@ def run_market_research(
         "state_change": False,
         "read_only": True,
         "source": source,
+        "order": order,
+        "published_after": published_after or "",
         "limits": {
             "per_keyword_limit": per_keyword_limit,
             "collect_transcripts": collect_transcripts,
@@ -376,15 +400,17 @@ def _topic_clusters(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         grouped.setdefault(topic, []).append(row)
     clusters = []
     for topic, items in grouped.items():
-        clusters.append({
-            "topic": topic,
-            "video_count": len(items),
-            "average_opportunity_score": round(
-                sum(item["scores"]["topic_opportunity_score"] for item in items) / max(1, len(items)),
-                2,
-            ),
-            "top_video_ids": [item["video_id"] for item in items[:5]],
-        })
+        clusters.append(
+            {
+                "topic": topic,
+                "video_count": len(items),
+                "average_opportunity_score": round(
+                    sum(item["scores"]["topic_opportunity_score"] for item in items) / max(1, len(items)),
+                    2,
+                ),
+                "top_video_ids": [item["video_id"] for item in items[:5]],
+            }
+        )
     clusters.sort(key=lambda row: (row["average_opportunity_score"], row["video_count"]), reverse=True)
     return clusters
 
