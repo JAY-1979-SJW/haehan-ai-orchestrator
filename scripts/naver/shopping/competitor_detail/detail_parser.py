@@ -50,6 +50,19 @@ def _extra_won(label: str) -> int:
     return sum(int(x.replace(",", "")) for x in _EXTRA.findall(label or ""))
 
 
+def _extra_won_opt(label: str) -> int | None:
+    """같은 값이지만 표기가 **아예 없으면 0 이 아니라 None**(=모름)을 반환한다.
+
+    스토어에 따라 1단 옵션의 가격차를 라벨에 표기하지 않는다(실측: 명정라이팅은
+    '1200mm 일자 40W' 처럼 금액이 없다). 이때 0 으로 단정하면 자기검증이
+    '산술 불일치' 를 오탐한다. 모르는 것은 모른다고 둬야 검증이 침묵한다.
+    """
+    found = _EXTRA.findall(label or "")
+    if not found:
+        return None
+    return sum(int(x.replace(",", "")) for x in found)
+
+
 _HEAD_JS = r"""
 () => {
   const t = document.body.innerText || '';
@@ -69,6 +82,9 @@ class CompetitorDetailParser:
 
     # 절대 클릭 금지 (실수로라도 주문이 발생하면 안 됨)
     FORBIDDEN_CLICK = ("구매하기", "장바구니", "선물하기", "바로구매", "결제")
+
+    # 옵션 단수 상한 — 무한 루프 방지용 안전장치
+    MAX_OPTION_DEPTH = 4
 
     def __init__(self, page: Any, shot_dir: str | Path):
         self.page = page
@@ -121,74 +137,132 @@ class CompetitorDetailParser:
                 pass
 
     # ── 옵션 ────────────────────────────────────────────────────
-    def _option_labels(self) -> list[str]:
-        """현재 열린 드롭다운의 옵션 라벨."""
+    # 실측(2026-08-15)으로 확정한 옵션 UI 구조:
+    #   트리거: <a role="button" aria-expanded="true|false">제품 선택</a>
+    #   항목  : <a role="option" data-shp-contents-type="제품 선택"
+    #                            data-shp-contents-id="1200mm 일자 40W">
+    # data-shp-contents-type 이 **소속 드롭다운**을 알려준다. 덕분에 좌측메뉴('전구')나
+    # 스펙표('형광색상 주광색')를 옵션으로 오인하던 문제가 원천적으로 사라진다.
+    # 트리거·항목은 PC/모바일 2벌이 DOM 에 있으므로 :visible 이 필수다.
+
+    _GROUPS_JS = r"""
+    () => {
+      const seen = [];
+      for (const a of document.querySelectorAll('a[role="option"][data-shp-contents-type]')) {
+        const g = a.getAttribute('data-shp-contents-type');
+        if (g && !seen.includes(g)) seen.push(g);
+      }
+      return seen;
+    }
+    """
+
+    _EXPANDED_JS = r"""
+    (name) => {
+      const a = [...document.querySelectorAll('a[role="button"]')]
+        .filter(x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+        .find(x => (x.innerText || '').trim().startsWith(name));
+      return a ? a.getAttribute('aria-expanded') : null;
+    }
+    """
+
+    def option_groups(self) -> list[str]:
+        """옵션 드롭다운 이름을 DOM 순서대로. 닫혀 있어도 읽을 수 있다."""
+        try:
+            return list(self.page.evaluate(self._GROUPS_JS) or [])
+        except Exception:
+            return []
+
+    def _is_open(self, group: str) -> bool:
+        try:
+            return self.page.evaluate(self._EXPANDED_JS, group) == "true"
+        except Exception:
+            return False
+
+    def _open_dropdown(self, group: str) -> bool:
+        """드롭다운을 연다. **이미 열려 있으면 누르지 않는다.**
+
+        1단을 선택하면 2단이 자동으로 열린다. 열린 것을 또 누르면 토글되어 닫히고,
+        그 뒤 항목 클릭이 'not visible' 로 조용히 실패한다. 총금액이 끝내 나오지
+        않던 진짜 원인이 이것이었다(2026-08-15 실측).
+        """
+        if self._is_open(group):
+            return True
+        try:
+            self.page.locator(f'a[role="button"]:has-text("{group}"):visible').first.click(timeout=5000)
+        except Exception:
+            return False
+        for _ in range(10):
+            time.sleep(0.4)
+            if self._is_open(group):
+                return True
+        return False
+
+    def _items(self, group: str) -> list[str]:
+        """해당 드롭다운의 항목 라벨(중복 제거). PC/모바일 2벌이라 중복이 난다."""
         try:
             got = self.page.evaluate(
-                r"""() => [...document.querySelectorAll('li')]
-                        .map(e => (e.innerText||'').trim().replace(/\s+/g,' '))
-                        .filter(t => t && t.length < 60)"""
+                r"""(g) => [...document.querySelectorAll(
+                        `a[role="option"][data-shp-contents-type="${g}"]`)]
+                     .map(a => (a.innerText || '').trim().replace(/\s+/g, ' '))
+                     .filter(Boolean)""",
+                group,
             )
         except Exception:
             return []
         return list(dict.fromkeys(got))
 
-    def _open_combo(self, label_hint: str, *, expect_in_page: str | None = None) -> bool:
-        """클릭 후 **반영 여부까지 확인**한다.
+    def _selected(self, group: str) -> bool:
+        """선택이 실제로 반영됐는지 확인. 반영 형태가 **두 가지**다(2026-08-15 실측).
 
-        클릭 성공(예외 없음)과 선택 반영은 다르다. 오늘 실제로 '불빛 선택' 클릭이
-        예외 없이 지나갔는데 값은 비어 있어 총금액이 끝내 안 나온 사고가 있었다.
-        expect_in_page 가 주어지면 그 문자열이 화면에 나타났는지로 검증한다.
+        1) 중간 단계 : 항목이 남고 aria-selected="true" 가 된다.
+        2) 마지막 단계: 항목이 **통째로 사라지고** '총 금액' 이 나타난다.
+           이때 트리거 라벨도 '제품 선택' 으로 되돌아가므로 라벨로는 확인할 수 없다.
+
+        2)번을 몰라서 '선택 실패' 로 오판했다. 항목이 있었는데 사라진 것은
+        실패가 아니라 **완료**다. (이 함수는 클릭 직후에만 호출된다)
         """
         try:
-            el = self.page.locator(f"text={label_hint}").first
-            el.scroll_into_view_if_needed(timeout=4000)
-            time.sleep(0.5)
-            el.click(timeout=4000)
-            time.sleep(2.0)
-        except Exception:
-            return False
-        if expect_in_page is None:
-            return True
-        try:
-            return expect_in_page in (self.page.inner_text("body") or "")
+            return bool(
+                self.page.evaluate(
+                    r"""(g) => {
+                        const opts = [...document.querySelectorAll(
+                            `a[role="option"][data-shp-contents-type="${g}"]`)];
+                        if (opts.some(a => a.getAttribute('aria-selected') === 'true')) return true;
+                        return opts.length === 0;
+                    }""",
+                    group,
+                )
+            )
         except Exception:
             return False
 
-    # 2단 옵션은 **드롭다운 안에서만** 찾아야 한다.
-    # 페이지 전역에서 '주광색' 을 찾으면 좌측 메뉴('전구')나 스펙표('형광색상 주광색')가
-    # 먼저 잡히고, 정작 옵션 항목은 보이지 않는 상태라 클릭이 실패한다(2026-08-15 실측).
-    _SUB_PICK_JS = r"""
-    () => {
-      const cands = [...document.querySelectorAll('li')].filter(e => {
-        const t = (e.innerText || '').trim();
-        const r = e.getBoundingClientRect();
-        if (!t || t.length > 60) return false;
-        // 옵션 항목의 특징: 색온도 표기 + (보이거나) 추가금 표기
-        return /(주광색|주백색|전구색)/.test(t) && /\d{3,4}\s*K|\+\s*[\d,]+\s*원/.test(t);
-      });
-      if (!cands.length) return null;
-      const el = cands[0];
-      el.scrollIntoView({block:'center'});
-      el.click();
-      return (el.innerText || '').trim().replace(/\s+/g, ' ');
-    }
-    """
-
-    def _select_sub_option(self, combo: OptionCombo) -> bool:
-        """2단 옵션(불빛/색온도 등) 선택. 총금액은 이게 끝나야 나타난다."""
-        if not self._open_combo("불빛 선택"):
-            return False
+    def _pick(self, group: str, label: str) -> str | None:
+        """드롭다운에서 항목을 고르고 **반영까지 확인**한다. 실패하면 None."""
+        if not self._open_dropdown(group):
+            return None
+        loc = self.page.locator(f'a[role="option"][data-shp-contents-type="{group}"]:visible')
         try:
-            picked = self.page.evaluate(self._SUB_PICK_JS)
+            n = loc.count()
         except Exception:
-            return False
-        if not picked:
-            return False
-        time.sleep(2.5)
-        combo.labels.append(picked)
-        combo.extra_won = (combo.extra_won or 0) + _extra_won(picked)
-        return True
+            return None
+        for i in range(n):
+            item = loc.nth(i)
+            try:
+                txt = re.sub(r"\s+", " ", (item.inner_text() or "").strip())
+            except Exception:
+                continue
+            if label not in txt and txt not in label:
+                continue
+            try:
+                item.click(timeout=5000)
+            except Exception:
+                return None
+            for _ in range(8):
+                time.sleep(0.4)
+                if self._selected(group):
+                    return txt
+            return None
+        return None
 
     def _read_total(self) -> int | None:
         """선택 완료 후 '총 금액'."""
@@ -234,43 +308,80 @@ class CompetitorDetailParser:
         스토어마다 옵션 UI 가 달라 실패할 수 있다. 실패하면 감추지 않고
         스크린샷을 남기고 needs_review 로 표시한다.
         """
-        if not self._open_combo("제품 선택"):
-            shot = self._shot(f"{prod.product_id}_option_fail")
-            prod.screenshots.append(shot)
-            prod.flag("옵션 드롭다운 열기 실패 — 스크린샷 확인 필요")
+        groups = self.option_groups()
+        if not groups:
+            prod.screenshots.append(self._shot(f"{prod.product_id}_no_options"))
+            prod.flag("옵션 드롭다운을 찾지 못함 — 스크린샷 확인 필요")
             return
 
-        labels = [t for t in self._option_labels() if re.search(r"\d{2,4}\s*mm|\d{1,3}\s*W", t)][:max_combos]
-
+        primary = groups[0]
+        labels = self._items(primary)[:max_combos]
         if not labels:
-            shot = self._shot(f"{prod.product_id}_no_options")
-            prod.screenshots.append(shot)
-            prod.flag("옵션 항목을 찾지 못함 — 스크린샷 확인 필요")
+            prod.screenshots.append(self._shot(f"{prod.product_id}_no_items"))
+            prod.flag(f"'{primary}' 항목을 찾지 못함 — 스크린샷 확인 필요")
             return
 
         for i, lab in enumerate(labels):
-            combo = OptionCombo(labels=[lab], extra_won=_extra_won(lab))
-            if not self._open_combo(lab):
+            if i:
+                # 조합마다 초기 상태에서 시작한다. 선택 해제 UI 는 스토어마다
+                # 다르지만 재로딩은 항상 같은 상태를 보장한다(느리지만 확실).
+                try:
+                    self.page.reload(wait_until="domcontentloaded", timeout=45000)
+                    self.page.wait_for_timeout(5000)
+                except Exception:
+                    pass
+
+            combo = OptionCombo(labels=[], extra_won=None)
+            picked = self._pick(primary, lab)
+            if picked is None:
+                combo.labels = [lab]
                 combo.needs_review = True
-                combo.review_reason = "옵션 선택 실패"
+                combo.review_reason = f"'{primary}' 선택 실패"
+                combo.screenshot = self._shot_price_area(f"{prod.product_id}_combo{i}")
                 prod.options.append(combo)
                 continue
+            combo.labels.append(picked)
+            e = _extra_won_opt(picked)
+            if e is not None:
+                combo.extra_won = (combo.extra_won or 0) + e
 
-            # 2단 옵션(불빛 등) — 이걸 끝내야 총금액이 나타난다.
-            # 선택이 실제로 반영될 때까지 기다린다. 반영 전에 캡처하면
-            # 총금액이 없는 화면을 찍어 비전 판독도 실패한다(2026-08-15 실측).
-            self._select_sub_option(combo)
-            for _ in range(8):
-                time.sleep(1.0)
-                try:
-                    if "총" in (self.page.inner_text("body") or ""):
+            # 하위 옵션(불빛/색온도 등)을 모두 골라야 총금액이 나타난다.
+            # 하위 드롭다운은 **상위를 고른 뒤에야 DOM 에 생성된다**(2026-08-15 실측).
+            # 그래서 처음 한 번 열거해 두면 안 되고 매 단계 다시 열거해야 한다.
+            # 이 방식이면 3단 이상 옵션도 그대로 처리된다.
+            done = {primary}
+            for _ in range(self.MAX_OPTION_DEPTH):
+                # 하위 드롭다운은 **비동기로 주입**된다. 즉시 열거하면 아직 없어서
+                # 옵션이 없는 것으로 오판하고, 추가금이 0 으로 남아 자기검증이
+                # '산술 불일치' 를 오탐한다(2026-08-15 실측).
+                remaining: list[str] = []
+                for _ in range(10):
+                    remaining = [g for g in self.option_groups() if g not in done]
+                    if remaining:
                         break
-                except Exception:
+                    time.sleep(0.5)
+                if not remaining:
                     break
+                g = remaining[0]
+                sub = self._items(g)
+                got = self._pick(g, sub[0]) if sub else None
+                if got is None:
+                    combo.needs_review = True
+                    combo.review_reason = f"'{g}' 선택 실패"
+                    break
+                combo.labels.append(got)
+                e = _extra_won_opt(got)
+                if e is not None:
+                    combo.extra_won = (combo.extra_won or 0) + e
+                done.add(g)
 
-            time.sleep(1.0)
-            combo.total_won = self._read_total()
-            if combo.total_won is None:
+            total = None
+            for _ in range(10):
+                total = self._read_total()
+                if total is not None:
+                    break
+                time.sleep(0.6)
+            if total is None:
                 # 폴백: 총금액 문구가 없으면 옵션 행의 금액이라도 읽는다.
                 # 단 기본가보다 작으면 배송비 등을 잘못 잡은 것이므로 버린다
                 # (실측: 배송비 4,000원을 총액으로 오인한 사례)
@@ -278,16 +389,13 @@ class CompetitorDetailParser:
                 base = prod.base_price.value
                 if fb is not None and base is not None and fb < base:
                     fb = None
-                combo.total_won = fb
+                total = fb
+            combo.total_won = total
+
+            if not combo.needs_review and prod.base_price.value is not None:
+                combo.verify(prod.base_price.value)
             combo.screenshot = self._shot_price_area(f"{prod.product_id}_combo{i}")
             prod.options.append(combo)
-
-            # 다음 조합을 위해 선택 해제
-            try:
-                self.page.locator('[class*="option"] button[class*="delete"], text=×').first.click(timeout=2000)
-                time.sleep(1.0)
-            except Exception:
-                pass
 
     # ── 비전 폴백 ────────────────────────────────────────────────
     # 스토어마다 옵션 UI 가 달라 DOM 파싱은 자주 깨진다(실측). 반면 화면은 사람이

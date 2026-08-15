@@ -20,6 +20,7 @@ from scripts.naver.shopping.competitor_detail import (
 from scripts.naver.shopping.competitor_detail.detail_parser import (
     CompetitorDetailParser,
     _extra_won,
+    _extra_won_opt,
     _won,
 )
 
@@ -63,13 +64,38 @@ def test_extra_won_parsing():
     assert _extra_won("600mm 일자 20W") == 0
 
 
+def test_extra_won_opt_distinguishes_zero_from_unknown():
+    """표기가 없으면 0 이 아니라 None — 이 구분이 오탐 유무를 가른다."""
+    assert _extra_won_opt("주광색 5700K (+8,000원)") == 8000
+    assert _extra_won_opt("1200mm 일자 40W") is None
+
+
 # ── 자기검증 ─────────────────────────────────────────────────────
-def test_option_verify_detects_arithmetic_mismatch():
-    """기본가 + 추가금 ≠ 총액이면 반드시 잡아내야 한다(배송비 오인 사고)."""
+def test_option_verify_detects_total_below_base():
+    """총액이 기본가보다 작을 수는 없다 — 배송비 4,000원을 총액으로 오인한 사고."""
     o = OptionCombo(labels=["600mm"], extra_won=0, total_won=4000)
     o.verify(base_price=25000)
     assert o.needs_review is True
+    assert "총액 불신" in o.review_reason
+
+
+def test_option_verify_detects_arithmetic_mismatch():
+    """추가금을 아는데 합이 안 맞으면 잡아낸다."""
+    o = OptionCombo(labels=["1200mm"], extra_won=8000, total_won=40000)
+    o.verify(base_price=25000)
+    assert o.needs_review is True
     assert "산술 불일치" in o.review_reason
+
+
+def test_unknown_extra_does_not_false_alarm():
+    """추가금 미표기 스토어(실측: 명정라이팅 1단 옵션)에서 거짓 경보를 내면 안 된다.
+
+    extra_won=None 은 '0 원' 이 아니라 '모름' 이다. 모르는 것을 0 으로 단정해
+    산술 불일치를 만들어내면 그 경보 자체가 오류다.
+    """
+    o = OptionCombo(labels=["1200mm 일자 40W"], extra_won=None, total_won=33000)
+    o.verify(base_price=25000)
+    assert o.needs_review is False, f"거짓 경보: {o.review_reason}"
 
 
 def test_option_verify_passes_when_consistent():

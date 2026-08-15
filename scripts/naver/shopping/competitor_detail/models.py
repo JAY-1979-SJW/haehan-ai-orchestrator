@@ -65,7 +65,18 @@ class OptionCombo:
             self.needs_review = True
             self.review_reason = "총금액 미확인"
             return
-        if base_price is None or self.extra_won is None:
+        if base_price is None:
+            return
+        if self.total_won < base_price:
+            # 실측 사고(2026-08-15): 폴백이 배송비 4,000원을 총액으로 오인했다.
+            # 총액이 기본가보다 작을 수는 없으므로 확실한 오류다.
+            self.needs_review = True
+            self.review_reason = f"총액 불신: 표시 {self.total_won:,} < 기본가 {base_price:,} — 배송비 등 오인 가능"
+            return
+        if self.extra_won is None:
+            # 추가금을 라벨에 표기하지 않는 스토어가 있다(실측: 명정라이팅의 1단 옵션).
+            # 이때 총액은 네이버가 계산한 값이므로 그대로 신뢰하고 침묵한다.
+            # 0 으로 단정해 '산술 불일치' 를 만들어내면 그것이 오히려 거짓 경보다.
             return
         expected = base_price + self.extra_won
         if expected != self.total_won:
