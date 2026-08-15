@@ -7,7 +7,20 @@ from scripts.naver.smartstore.product.models import (  # noqa
     RegisterResult,
 )
 from scripts.naver.smartstore.product.product import ProductRegister
+from scripts.naver.smartstore.product.category_resolver import (
+    CategoryMatch,
+    CategoryResolver,
+    get_resolver,
+)
 from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+from scripts.naver.smartstore.product.preflight import (
+    ERROR,
+    SALE_BLOCKER,
+    WARN,
+    Issue,
+    PreflightReport,
+    preflight,
+)
 from scripts.naver.smartstore.product.advanced import SmartEditorONE, PriceStockEditor, ProductOptionEditor
 from scripts.naver.smartstore.product.bulk import BulkRegister, get_register_history
 from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder  # noqa
@@ -59,6 +72,16 @@ __all__ = [  # noqa: RUF022
     # 등록 클래스 (기존)
     "ProductRegister",
     "GeneralProductRegister",
+    # 사전 검증 (브라우저 없이 로컬 판정)
+    "CategoryMatch",
+    "CategoryResolver",
+    "get_resolver",
+    "Issue",
+    "PreflightReport",
+    "preflight",
+    "ERROR",
+    "SALE_BLOCKER",
+    "WARN",
     "SmartEditorONE",
     "PriceStockEditor",
     "ProductOptionEditor",
