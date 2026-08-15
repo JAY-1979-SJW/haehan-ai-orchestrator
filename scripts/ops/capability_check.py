@@ -23,6 +23,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# 이 스크립트는 `python scripts/ops/capability_check.py` 로 직접 실행된다.
+# 그때는 저장소 루트가 sys.path 에 없어 scripts 패키지를 import 할 수 없다.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.ops.vendor_api_registry import cdp_warning as vendor_cdp_warning  # noqa: E402
+from scripts.ops.vendor_api_registry import find as find_vendor_apis  # noqa: E402
+from scripts.ops.vendor_api_registry import format_report as format_vendor_report  # noqa: E402
+
 
 def _search_terms(argv: list[str]) -> list[str]:
     terms = [t.lower() for t in argv[1:] if t]
@@ -169,6 +178,17 @@ def run(argv: list[str]) -> None:
     print(f"  capability_check  키워드: {label}")
     print(f"{'═' * 60}\n")
 
+    # 0. 벤더 공식 API — 저장소 안이 아니라 **밖**을 먼저 본다.
+    #    이 도구는 원래 '저장소 내 구현' 만 찾았다. 그래서 네이버 커머스API 가
+    #    무료로 제공하는 상품등록을 CDP 로 만들다 하루를 버렸다(2026-08-15).
+    #    "API가 있으면 API 호출, CDP는 최후 수단"(CLAUDE.md)을 실제로 지키려면
+    #    맨 앞에 있어야 한다.
+    vendors = find_vendor_apis(terms)
+    if vendors:
+        print(f"[0] 벤더 공식 API  ({len(vendors)}건)  ★ CDP 착수 전 필독")
+        print(_hr())
+        print(format_vendor_report(vendors))
+
     # 1. service_catalog
     catalog = _scan_catalog(terms)
     if catalog:
@@ -225,8 +245,18 @@ def run(argv: list[str]) -> None:
             print(f"  {f}")
         print()
 
+    warn = vendor_cdp_warning(vendors)
+    if warn:
+        print(_hr("═"))
+        print(warn)
+        print(_hr("═"))
+        print()
+
     if not catalog and not routers and not inits and not data_files:
-        print("  ⚠  기존 구현 없음 — 신규 작성 가능")
+        if vendors:
+            print("  ⚠  저장소 내 구현 없음 — 단, 위 벤더 API 를 먼저 검토하세요.")
+        else:
+            print("  ⚠  기존 구현 없음 — 신규 작성 가능")
     else:
         print("  ✅ 위 구현을 먼저 사용하세요. 없을 때만 신규 작성.")
     print()

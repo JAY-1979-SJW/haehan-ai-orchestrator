@@ -1,0 +1,111 @@
+{
+  "_doc": [
+    "벤더가 제공하는 공식 API 목록.",
+    "",
+    "왜 필요한가 (2026-08-15 실제 사고):",
+    "  스마트스토어 상품등록을 CDP 브라우저 자동화로 구현했다. 검색태그에 다섯 번,",
+    "  옵션 그리드에 여러 번 헛짚었고 접힌 섹션 때문에 네 번 오판했다.",
+    "  그런데 네이버 커머스API가 무료로 그 기능을 전부 제공하고 있었다.",
+    "  (태그·옵션·원산지·인증·배송·A/S 전부 지원. 스마트에디터 상세페이지만 예외)",
+    "",
+    "  capability_check 는 '저장소 안의 구현'을 찾는 도구라 이걸 잡지 못했다.",
+    "  CLAUDE.md 의 'API가 있으면 API 호출' 규칙을 지키려면 벤더 API 목록이 따로 필요하다.",
+    "",
+    "필드 설명:",
+    "  keywords          : capability_check 인자와 매칭할 단어",
+    "  supported         : API 로 가능한 것 (CDP 불필요)",
+    "  not_supported     : API 로 불가능한 것 (CDP 가 유일한 경로)",
+    "  caveats           : 알아두지 않으면 사고나는 것",
+    "  status            : available | registered | not_registered | unknown"
+  ],
+
+  "vendors": [
+    {
+      "name": "네이버 커머스API",
+      "keywords": ["smartstore", "스마트스토어", "상품등록", "커머스", "commerce", "판매자"],
+      "docs": "https://apicenter.commerce.naver.com",
+      "cost": "무료",
+      "status": "not_registered",
+      "auth": "판매자 본인 스토어용 type=SELF 발급 가능 (스토어당 앱 1개)",
+      "supported": [
+        "상품 등록/수정 (leafCategoryId, name, salePrice, stockQuantity, images)",
+        "검색태그 originProduct.detailAttribute.seoInfo.sellerTags",
+        "조합형 옵션 optionCombinationGroupNames + optionCombinations",
+        "원산지 detailAttribute.originAreaInfo",
+        "KC 인증 detailAttribute.productCertificationInfos",
+        "배송 deliveryInfo.deliveryFee",
+        "A/S detailAttribute.afterServiceInfo",
+        "상세설명 HTML detailContent",
+        "주문/재고 관리"
+      ],
+      "not_supported": [
+        "스마트에디터 ONE 상세페이지 — 센터에서만 작성 가능. API 는 HTML 방식만."
+      ],
+      "caveats": [
+        "⚠ 스마트에디터로 만든 상품을 API 로 수정할 때 detailContent 를 포함하면 상세페이지가 HTML 방식으로 전환되어 기존 콘텐츠가 파괴된다. 유지하려면 detailContent 를 요청에서 제외한다.",
+        "검색태그에 등록 불가 단어가 있다(카테고리·브랜드·판매처명 등). '추천 태그 조회 API' 로 사전 확인 권장.",
+        "인증 대상이 아닐 때만 certificationTargetExcludeContent.kcCertifiedProductExclusionYn=TRUE 사용. 전기용품 등 법정 인증 대상에 쓰면 안 된다."
+      ]
+    },
+    {
+      "name": "네이버 검색 OpenAPI",
+      "keywords": ["naver", "네이버", "검색", "블로그검색", "뉴스", "쇼핑검색"],
+      "docs": "https://developers.naver.com",
+      "cost": "무료 (25,000회/일)",
+      "status": "available",
+      "supported": [
+        "블로그 검색 GET /v1/search/blog.json",
+        "뉴스 검색 GET /v1/search/news.json"
+      ],
+      "not_supported": [
+        "쇼핑 검색 — 이 앱에 미등록(SE05). 개발자센터에서 추가 등록 필요.",
+        "블로그 글쓰기 — 쓰기 API 자체가 없음",
+        "카페 읽기/쓰기 — 이 앱에 미등록"
+      ],
+      "caveats": [
+        "정렬은 sim / date 만 허용",
+        "쇼핑 가격조사는 CDP 수집으로 대체 중이나 자동화 브라우저에 축소 응답(페이지당 5건)"
+      ]
+    },
+    {
+      "name": "YouTube Data API",
+      "keywords": ["youtube", "유튜브", "영상", "자막"],
+      "docs": "https://developers.google.com/youtube/v3",
+      "cost": "무료 (쿼터 제한)",
+      "status": "available",
+      "supported": ["영상 업로드", "자막 조회", "댓글 읽기", "채널 조회"],
+      "not_supported": [],
+      "caveats": ["public 공개 업로드는 별도 승인 필요. 기본 private."]
+    },
+    {
+      "name": "Unsplash API",
+      "keywords": ["unsplash", "사진", "이미지", "블로그이미지"],
+      "docs": "https://unsplash.com/documentation",
+      "cost": "무료",
+      "status": "available",
+      "supported": ["사진 검색", "다운로드"],
+      "not_supported": [],
+      "caveats": ["정책상 download_location 트리거 필요"]
+    },
+    {
+      "name": "(없음) EUM 건설근로자공제회",
+      "keywords": ["eum", "이음", "단말기", "공제회"],
+      "docs": "",
+      "cost": "",
+      "status": "unknown",
+      "supported": [],
+      "not_supported": ["공개 API 확인된 바 없음 — CDP 가 현실적 경로"],
+      "caveats": ["공공 사이트. API 제공 여부를 주기적으로 재확인할 것."]
+    },
+    {
+      "name": "(없음) 하나팩스",
+      "keywords": ["hanafax", "팩스", "fax"],
+      "docs": "",
+      "cost": "",
+      "status": "unknown",
+      "supported": [],
+      "not_supported": ["공개 API 확인된 바 없음"],
+      "caveats": []
+    }
+  ]
+}
