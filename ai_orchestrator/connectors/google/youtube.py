@@ -29,6 +29,8 @@ class MarketResearchRequest(BaseModel):
     max_comments: int = 50
     max_comment_pages: int = 3
     collect_comments: bool = True
+    order: str = "relevance"  # "relevance" 또는 "date"(최신 등록일순)
+    published_after: str = ""  # ISO 8601 UTC, 예: "2026-08-01T00:00:00Z"
 
 
 @router.post("/market-research")
@@ -53,6 +55,8 @@ def youtube_market_research(
             max_comments=max(1, min(req.max_comments, 100)),
             max_comment_pages=max(1, min(req.max_comment_pages, 5)),
             collect_transcripts=False,
+            order=req.order if req.order in {"relevance", "date"} else "relevance",
+            published_after=req.published_after or None,
         )
         log_event(
             "YOUTUBE_MARKET_RESEARCH",

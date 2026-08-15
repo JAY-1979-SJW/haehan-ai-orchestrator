@@ -31,6 +31,8 @@ def search_videos(
     source: str = "auto",
     api_key: str | None = None,
     wait_seconds: float = 3.0,
+    order: str = "relevance",
+    published_after: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     """Collect YouTube video search results.
 
@@ -38,6 +40,11 @@ def search_videos(
     - official: official YouTube Data API only.
     - browser: public search results page DOM only.
     - auto: official API when an API key is available, otherwise browser DOM.
+
+    order: "relevance" (기본) 또는 "date"(최신 등록일순). API 비용(unit)은
+    정렬 방식과 무관하게 동일하다 — 정렬을 바꿔도 일일 검색 한도는 늘지 않는다.
+    published_after: ISO 8601 UTC 문자열(예: "2026-08-01T00:00:00Z"). 이 시각
+    이후 등록된 영상만 반환한다. browser 소스는 지원하지 않는다.
     """
     normalized_source = (source or "auto").strip().lower()
     if normalized_source not in {"auto", "official", "browser"}:
@@ -59,7 +66,9 @@ def search_videos(
                 }
             )
             return _write_report(payload)
-        return search_videos_official(query, max_results=max_results, api_key=key)
+        return search_videos_official(
+            query, max_results=max_results, api_key=key, order=order, published_after=published_after
+        )
 
     return search_videos_browser(query, max_results=max_results, wait_seconds=wait_seconds)
 
@@ -69,10 +78,15 @@ def search_videos_official(
     *,
     max_results: int = 10,
     api_key: str | None = None,
+    order: str = "relevance",
+    published_after: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     key = _api_key(api_key)
     max_results = max(1, min(int(max_results), 25))
+    order = order if order in {"relevance", "date"} else "relevance"
     payload = _base_payload(query, "official", max_results)
+    payload["order"] = order
+    payload["published_after"] = published_after or ""
     if not key and not _oauth_access_token():
         payload.update(
             {
@@ -85,7 +99,8 @@ def search_videos_official(
         return _write_report(payload)
 
     # 캐시 조회 (Search Queries per day 쿼터 100회/일 절약)
-    cache_key = _search_cache_key(query, max_results)
+    # order/published_after 가 다르면 결과가 달라지므로 캐시 키에 포함한다.
+    cache_key = _search_cache_key(f"{query}|{order}|{published_after or ''}", max_results)
     cached = _search_cache_get(cache_key)
     if cached:
         cached["cache_hit"] = True
@@ -98,7 +113,10 @@ def search_videos_official(
         "type": "video",
         "maxResults": max_results,
         "safeSearch": "moderate",
+        "order": order,
     }
+    if published_after:
+        params["publishedAfter"] = published_after
     if key:
         params["key"] = key
 
