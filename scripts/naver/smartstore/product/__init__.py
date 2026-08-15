@@ -26,6 +26,13 @@ from scripts.naver.smartstore.product.tag_section import (
     tag_byte_len,
     validate_tags,
 )
+from scripts.naver.smartstore.product.postflight import (
+    MissingField,
+    PostflightReport,
+    SectionState,
+    expand_all_sections,
+    postflight,
+)
 from scripts.naver.smartstore.product.preflight import (
     ERROR,
     SALE_BLOCKER,
@@ -105,6 +112,12 @@ __all__ = [  # noqa: RUF022
     "dismiss_blocking_modals",
     "peek_modal",
     "assert_no_modal",
+    # 저장 직전 전수 점검
+    "postflight",
+    "PostflightReport",
+    "MissingField",
+    "SectionState",
+    "expand_all_sections",
     "SmartEditorONE",
     "PriceStockEditor",
     "ProductOptionEditor",
