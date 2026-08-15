@@ -30,6 +30,7 @@ from playwright.sync_api import Page
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.naver.smartstore.product.postflight import postflight
 from scripts.naver.smartstore.product.preflight import preflight
 from scripts.site_session_safety import assert_session_integrity
 
@@ -581,10 +582,31 @@ class GeneralProductRegister:
 
     # ── 저장 (사용자 명시 호출 필수) ─────────────────────────────────────
 
-    def save(self, require_confirm: bool = True) -> dict:
-        """등록 (★ 사용자 명시 호출 필수)."""
+    def save(self, require_confirm: bool = True, *, require_ready: bool = False) -> dict:
+        """등록 (★ 사용자 명시 호출 필수).
+
+        require_ready=True 면 저장 전에 postflight 를 돌려 **채울 수 있는 필수 항목이
+        남아 있거나 위험 설정이 켜져 있으면 저장하지 않는다.**
+
+        기본값이 False 인 이유는 기존 호출부의 동작을 바꾸지 않기 위해서다.
+        다만 점검 결과는 기본값에서도 항상 로그로 남긴다 — 조용히 지나가는 것이
+        가장 위험하다(실측: 예약구매가 켜진 줄 모르고 저장할 뻔했다).
+        """
         if not self._ensure_opened():
             return {"ok": False, "error": "open_failed"}
+
+        report = postflight(self.page)
+        for w in report.warnings:
+            _log.warning("[postflight] %s", w)
+        for m in report.actionable_missing:
+            _log.warning("[postflight] 필수 미입력: [%s] %s (%s)", m.section, m.label, m.ng)
+        if require_ready and not report.ready:
+            _log.error("[postflight] 저장 중단 — %s", report.summary())
+            return {
+                "ok": False,
+                "error": "postflight_not_ready",
+                "postflight": report.to_dict(),
+            }
 
         if require_confirm:
             try:
