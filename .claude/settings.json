@@ -37,6 +37,21 @@
             "statusMessage": "기존 구현 조회 중 (capability-gate)..."
           }
         ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_openai_call.py\"",
+            "statusMessage": "외부 유료 AI API 호출 여부 검사 중..."
+          },
+          {
+            "type": "command",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\guard_cdp_new_tab.py\"",
+            "statusMessage": "CDP 새 탭 생성 여부 검사 중..."
+          }
+        ]
       }
     ],
     "PostToolUse": [
