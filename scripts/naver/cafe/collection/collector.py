@@ -45,7 +45,10 @@ _LIST_URL = (
     "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page={page}&userDisplay=50"
 )
 _SEARCH_URL = "https://cafe.naver.com/ArticleSearchList.nhn?search.clubid={clubid}&search.searchBy=0&search.query={query}&search.page={page}&userDisplay=50"
-_ARTICLE_URL = "https://cafe.naver.com/f-e/cafes/{clubid}/articles/{article_id}"
+# 상세글은 PC용 신규 SPA(/f-e/cafes/.../articles/...)가 CDP 자동화에서 하이드레이션이
+# 안 되는 문제가 있어(2026-08-15 확인, 본문 이 늘 빈 값) 모바일 뷰로 방문한다.
+# 모바일 뷰는 서버에서 완성된 DOM을 내려줘 CDP 환경에서도 안정적으로 읽힌다.
+_ARTICLE_URL = "https://m.cafe.naver.com/ca-fe/web/cafes/{clubid}/articles/{article_id}"
 
 
 def _get_clubid(page: Page, cafe_url: str) -> str:
@@ -186,40 +189,52 @@ def _extract_list_page(page: Page, clubid: str, page_no: int) -> list[dict]:
 
 
 def _fetch_article_detail(page: Page, clubid: str, article_id: str) -> dict:
-    """글 상세 방문 → view_count, like_count, comment_count, board, tags, body 추출."""
+    """글 상세 방문 → view_count, like_count, comment_count, board, tags, body, comments 추출.
+
+    모바일 카페 뷰(m.cafe.naver.com) DOM 기준. 좋아요 수는 위젯이 비동기로 채워
+    넣어 클래스 셀렉터가 불안정하므로, 값이 확정적으로 붙는 인접 문구("좋아요한
+    사람 목록으로 이동")를 앵커로 정규식 추출한다. 댓글은 최초 로드된 페이지
+    분량만 수집한다(더보기 클릭 등 추가 조작 없음 — read-only 원칙).
+    """
     url = _ARTICLE_URL.format(clubid=clubid, article_id=article_id)
     try:
         page.goto(url, timeout=25000, wait_until="domcontentloaded")
-        time.sleep(2.5)
+        time.sleep(3.0)
         detail = page.evaluate("""
         () => {
             const board = (
-                document.querySelector('.menu-name, .board-name, [class*="board"] .name, .path .name')
-                ?.innerText || ''
-            ).trim();
+                document.querySelector('.tit_menu')?.innerText || ''
+            ).split('\\n')[0].trim();
             const view_count = (
-                document.querySelector('[class*="view-count"], .hit em, .article_info .count')
-                ?.innerText || ''
+                document.querySelector('.no.font_l')?.innerText || ''
             ).replace(/[^0-9]/g, '');
-            const like_count = (
-                document.querySelector('[class*="like"] .count, .good_count em, [class*="sympathy"] em')
-                ?.innerText || ''
-            ).replace(/[^0-9]/g, '');
-            const tags = Array.from(
-                document.querySelectorAll('.se-hash-tag, .tag-item, [class*="tag"] a')
-            ).map(el => el.innerText.trim().replace(/^#/, ''));
+            const bodyText = document.body.innerText || '';
+            const likeMatch = bodyText.match(/좋아요\\s*([\\d,]+)\\s*좋아요한 사람/);
+            const like_count = likeMatch ? likeMatch[1].replace(/,/g, '') : '';
+            const commentCountText = document.querySelector('.CafeCommentSort')?.innerText || '';
+            const commentMatch = commentCountText.match(/댓글\\s*([\\d,]+)/);
+            const comment_count = commentMatch ? commentMatch[1].replace(/,/g, '') : '0';
+            const tags = (document.querySelector('.tag_area')?.innerText || '')
+                .split('#').map(s => s.trim()).filter(Boolean);
             const body = (
-                document.querySelector('.se-main-container, .ContentRenderer, .article_viewer')
-                ?.innerText || ''
-            ).substring(0, 3000);
-            const comment_count = document.querySelectorAll(
-                '.comment_box, .CommentItem, [class*="comment-item"]'
-            ).length;
+                document.querySelector('.se-viewer, .ContentRenderer')?.innerText || ''
+            ).trim().substring(0, 3000);
             const written_at = (
-                document.querySelector('.article_info .date, .se_doc_header .date, [class*="date"]')
-                ?.innerText || ''
-            ).trim();
-            return { board, view_count, like_count, tags, body, comment_count, written_at };
+                document.querySelector('.date.font_l')?.innerText || ''
+            ).replace('작성일', '').trim();
+            const comments = Array.from(document.querySelectorAll('.comment_item')).map(el => {
+                const footer = el.querySelector('.comment_footer')?.innerText || '';
+                const dateMatch = footer.match(/\\d{4}\\.\\d{2}\\.\\d{2}\\.\\s*\\d{2}:\\d{2}/);
+                return {
+                    author: (el.querySelector('.nick_name')?.innerText || '').trim(),
+                    date: dateMatch ? dateMatch[0] : '',
+                    text: (el.querySelector('.comment_content')?.innerText || '').trim().substring(0, 500),
+                };
+            }).filter(c => c.text);
+            return {
+                board, view_count, like_count, tags, body, comment_count, written_at,
+                comments, comments_loaded_count: comments.length,
+            };
         }
         """)
         return detail or {}
@@ -332,6 +347,8 @@ def collect_articles(
                         "tags": detail.get("tags", []),
                         "body": detail.get("body", ""),
                         "written_at": detail.get("written_at", ""),
+                        "comments": detail.get("comments", []),
+                        "comments_loaded_count": detail.get("comments_loaded_count", 0),
                     }
                 )
             if i % 10 == 0:
