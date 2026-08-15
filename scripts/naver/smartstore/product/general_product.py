@@ -19,23 +19,22 @@ URL: 사이드바 '상품관리 > 상품 등록' 클릭으로 진입 (직접 URL
   pr.set_stock(100)
   pr.save()  # 사용자 명시 호출 필수
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups, close_popup_windows
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 
-DASHBOARD        = "https://sell.smartstore.naver.com/#/home/dashboard"
+DASHBOARD = "https://sell.smartstore.naver.com/#/home/dashboard"
 PRODUCTS_NEW_URL = "https://sell.smartstore.naver.com/#/products/new"
 
 # 폼 렌더링 확인용 셀렉터 (하나라도 나타나면 진입 성공)
@@ -53,6 +52,15 @@ _PRODUCT_TYPE_BTN = [
     "일반상품",
     "단일 상품",
 ]
+
+
+def _normalize_field_value(v: str) -> str:
+    """입력값 대조용 정규화 — 콤마·공백·통화기호 차이를 무시.
+
+    판매가는 화면에서 '55,000' 처럼 콤마가 붙어 되돌아오므로 그대로 비교하면
+    항상 불일치로 잡힌다.
+    """
+    return (v or "").replace(",", "").replace(" ", "").replace("원", "").strip()
 
 
 class GeneralProductRegister:
@@ -89,8 +97,7 @@ class GeneralProductRegister:
         try:
             from scripts.naver.smartstore.navigation.popup_handler import dismiss_all_popups
 
-            self.page.goto(PRODUCTS_NEW_URL,
-                           timeout=timeout_s * 1000, wait_until="domcontentloaded")
+            self.page.goto(PRODUCTS_NEW_URL, timeout=timeout_s * 1000, wait_until="domcontentloaded")
             time.sleep(3)
 
             # 팝업/공지 처리
@@ -177,7 +184,8 @@ class GeneralProductRegister:
 
     def _click_sidebar_text(self, text: str, x_max: int = 280) -> bool:
         """사이드바 메뉴 텍스트로 좌표 찾아 마우스 클릭."""
-        coords = self.page.evaluate(r"""
+        coords = self.page.evaluate(
+            r"""
         ({text, xMax}) => {
             for (const el of document.querySelectorAll('a, li, button, span')) {
                 const s = window.getComputedStyle(el);
@@ -192,7 +200,9 @@ class GeneralProductRegister:
             }
             return null;
         }
-        """, {"text": text, "xMax": x_max})
+        """,
+            {"text": text, "xMax": x_max},
+        )
         if not coords:
             return False
         self.page.mouse.move(coords["x"], coords["y"])
@@ -228,8 +238,22 @@ class GeneralProductRegister:
             }})();
             """)
             time.sleep(0.3)
+
+            # 입력 직후 실제 값 대조 — fill 이 성공해도 Angular 가 되돌리거나
+            # 마스킹/포맷팅으로 값이 달라질 수 있다. "ok:True 인데 실제로는 안 들어감"
+            # 을 막기 위해 반드시 읽어서 확인한다(2026-08-15 추가).
+            actual = el.input_value(timeout=3000)
+            if _normalize_field_value(actual) != _normalize_field_value(str(value)):
+                _log.error(
+                    "[gen-reg] %s 입력 검증 실패 — 요청 %r vs 실제 %r",
+                    label or selector,
+                    str(value),
+                    actual,
+                )
+                return {"ok": False, "error": "verify_mismatch", "requested": str(value), "actual": actual}
+
             _log.info("[gen-reg] %s: %s", label or selector, value)
-            return {"ok": True, "value": value}
+            return {"ok": True, "value": value, "actual": actual}
         except Exception as e:
             _log.error("[gen-reg] %s 입력 실패: %s", label, e)
             return {"ok": False, "error": str(e)[:80]}
@@ -257,10 +281,22 @@ class GeneralProductRegister:
         return self._fill_field('input[name="product.stockQuantity"]', str(stock), label="재고")
 
     def set_category(self, category_name: str) -> dict:
-        """카테고리 검색 + 첫 항목 선택."""
+        """카테고리 검색 + **원하는 항목 지정 선택** (첫 항목 맹목 클릭 금지).
+
+        2026-08-15 실측으로 확인한 함정:
+          - "인테리어조명" 검색 시 자동완성 1순위가 'LED모듈' 이다.
+            첫 항목을 무조건 클릭하면 엉뚱한 카테고리가 선택된다.
+          - 이전 검색의 잔상이 남아 있어 즉시 클릭하면 이전 결과를 고른다.
+            → 원하는 문자열이 후보에 나타날 때까지 폴링한 뒤 그 항목을 클릭한다.
+          - 선택된 경로는 `.info-result.text-info` 에 "선택한 카테고리 : <경로>" 로 표시된다.
+        """
         if not self._ensure_opened():
             return {"ok": False, "error": "open_failed"}
         try:
+            # 이전 동작에서 뜬 모달(KC인증 안내 등)이 남아 있으면 이후 클릭을 전부
+            # 가로챈다("intercepts pointer events"). 먼저 정리한다(2026-08-15).
+            self._dismiss_blocking_modals()
+
             sel = 'input[placeholder*="카테고리"]:not([type="radio"]):not([type="checkbox"])'
             self.page.evaluate(f"""
             (() => {{
@@ -280,51 +316,267 @@ class GeneralProductRegister:
                 }}
             }})();
             """)
-            time.sleep(2)
-            # 자동완성 첫 항목 선택
+            # 원하는 카테고리 경로가 뜰 때까지 폴링 (이전 검색 잔상 회피)
+            #
+            # ⚠ has_text=category_name 만 쓰면 안 된다. 드롭다운에는 카테고리 경로 외에
+            #   상품명 자동완성('헤이그 ... 인테리어조명(등 미포함)')도 섞여 나오고,
+            #   그게 먼저 잡히면 보이지도 않아 클릭이 타임아웃된다(2026-08-15 실측).
+            #   → '>' 로 시작하는 경로형이면서, 마지막 노드가 요청값인 것만 고른다.
+            target = None
+            for _ in range(12):
+                time.sleep(0.8)
+                try:
+                    opts = self.page.locator(".selectize-dropdown .option")
+                    n = min(opts.count(), 20)
+                    for i in range(n):
+                        o = opts.nth(i)
+                        if not o.is_visible(timeout=400):
+                            continue
+                        txt = (o.inner_text(timeout=400) or "").strip()
+                        if ">" not in txt:
+                            continue  # 상품명 자동완성 제외
+                        if txt.rsplit(">", 1)[-1].strip() == category_name:
+                            target = o
+                            break
+                    if target is not None:
+                        break
+                except Exception:
+                    continue
+
             try:
-                first = self.page.locator(
-                    '[class*="category-search-result"] li, [class*="autocomplete"] li, '
-                    '.ui-menu-item, [class*="suggestion"] li'
-                ).first
-                if first.is_visible(timeout=1500):
-                    first.click(timeout=3000, force=True)
+                if target is not None:
+                    target.click(timeout=3000, force=True)
                     time.sleep(0.8)
             except Exception:
                 self.page.keyboard.press("ArrowDown")
                 time.sleep(0.3)
                 self.page.keyboard.press("Enter")
                 time.sleep(0.8)
-            _log.info("[gen-reg] 카테고리: %s", category_name)
-            return {"ok": True, "category": category_name}
+            # 카테고리 선택 시 'KC인증 필수 카테고리' 모달이 뜬다 → 닫아야 다음 단계가 산다
+            self._dismiss_blocking_modals()
+
+            # 클릭 선택이 반영되지 않았으면 위젯 API 로 재시도 (확실한 경로)
+            if category_name not in self.get_selected_category():
+                w = self._set_category_via_widget(category_name)
+                if w.get("ok"):
+                    time.sleep(2.0)
+                    self._dismiss_blocking_modals()
+                    _log.info("[gen-reg] 카테고리 위젯 API 로 설정: %s (id=%s)", category_name, w.get("key"))
+
+            # 선택 결과 검증 — 자동완성 첫 항목을 무조건 클릭하는 구조라
+            # 엉뚱한 카테고리가 잡혀도 그대로 진행되던 문제를 막는다(2026-08-15 추가).
+            selected = self.get_selected_category()
+            if category_name not in selected:
+                _log.error(
+                    "[gen-reg] 카테고리 검증 실패 — 요청 %r 인데 선택된 값 %r",
+                    category_name,
+                    selected[:80],
+                )
+                return {
+                    "ok": False,
+                    "error": "category_mismatch",
+                    "requested": category_name,
+                    "selected": selected[:120],
+                }
+
+            _log.info("[gen-reg] 카테고리: %s (선택됨: %s)", category_name, selected[:60])
+            return {"ok": True, "category": category_name, "selected": selected[:120]}
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
 
+    _SELECTIZE_SET_JS = r"""
+    (wantText) => {
+      const inp = document.querySelector('input[placeholder*="카테고리"]:not([type=radio]):not([type=checkbox])');
+      const ctrl = inp ? inp.closest('.selectize-control') : null;
+      if (!ctrl) return {ok:false, why:'no_ctrl'};
+      const cands = [...ctrl.parentElement.querySelectorAll('input.selectized')].filter(e => e.selectize);
+      if (!cands.length) return {ok:false, why:'no_instance'};
+      const s = cands[0].selectize;
+      const entry = Object.entries(s.options).find(([k,v]) =>
+          String(v.text||v.name||v.label||'').trim() === wantText);
+      if (!entry) return {ok:false, why:'option_not_found'};
+      const [key] = entry;
+      if (typeof s.setValue === 'function') { s.setValue(key, false); return {ok:true, key:key}; }
+      return {ok:false, why:'no_setter'};
+    }
+    """
+
+    def _set_category_via_widget(self, category_name: str) -> dict:
+        """Selectize 위젯 인스턴스 API 로 카테고리 직접 설정.
+
+        DOM 클릭 방식이 통하지 않는 경우의 확실한 경로(2026-08-15 실측 확립).
+        배경: 카테고리 드롭다운의 `.option` 은 페이지 전역에서 204개가 잡히고
+        (상단 검색위젯 '수취인명', 상품명 자동완성 등이 섞임), 좁혀도 이전 검색
+        잔상 때문에 재검색이 트리거되지 않아 클릭 선택이 실패했다.
+        위젯 인스턴스(input.selectized 의 .selectize)의 setValue() 는 확실히 동작한다.
+        """
+        try:
+            return self.page.evaluate(self._SELECTIZE_SET_JS, category_name)
+        except Exception as e:
+            return {"ok": False, "why": type(e).__name__, "error": str(e)[:80]}
+
+    _SELECTIZE_GENERIC_JS = r"""
+    (args) => {
+      const el = document.querySelector(args.selector);
+      if (!el) return {ok:false, why:'no_element'};
+      if (!el.selectize) return {ok:false, why:'no_selectize_instance'};
+      const s = el.selectize;
+      if (args.byValue) { s.setValue(args.byValue, false); return {ok:true, set:args.byValue}; }
+      const entry = Object.entries(s.options).find(([k,v]) =>
+          String(v.text || v.name || v.label || '').trim() === args.byLabel);
+      if (!entry) return {ok:false, why:'label_not_found',
+                          have: Object.values(s.options).map(v=>String(v.text||v.name||'').slice(0,20)).slice(0,15)};
+      s.setValue(entry[0], false);
+      return {ok:true, set:entry[0]};
+    }
+    """
+
+    def set_selectize(self, selector: str, *, label: str | None = None, value: str | None = None) -> dict:
+        """Selectize 위젯 값 설정 (이 폼 드롭다운의 표준 조작 방법).
+
+        2026-08-15 실측으로 확립:
+          스마트스토어 상품등록 폼의 드롭다운(카테고리·원산지 등)은 전부 Selectize 위젯이다.
+          원본 <select> 는 화면 밖(x≈-9764)에 숨겨져 있어서 Playwright 의 select_option()
+          이나 클릭이 통하지 않는다. 반드시 위젯 인스턴스의 setValue() 를 써야 한다.
+
+        label: 화면에 보이는 텍스트(예: "국산")  /  value: 내부 코드(예: "LOCAL")
+        """
+        if not label and not value:
+            return {"ok": False, "why": "label_or_value_required"}
+        try:
+            return self.page.evaluate(
+                self._SELECTIZE_GENERIC_JS,
+                {"selector": selector, "byLabel": label, "byValue": value},
+            )
+        except Exception as e:
+            return {"ok": False, "why": type(e).__name__, "error": str(e)[:80]}
+
+    def _dismiss_blocking_modals(self, rounds: int = 4) -> int:
+        """클릭을 가로막는 모달/레이어 닫기.
+
+        스마트스토어는 카테고리 선택(KC인증 안내), 공지 등으로 모달을 자주 띄우고,
+        열려 있는 동안 다른 요소 클릭이 전부 실패한다("intercepts pointer events").
+        저장/발행 버튼은 절대 누르지 않고 닫기/확인만 클릭한다.
+        """
+        closed = 0
+        for _ in range(rounds):
+            hit = False
+            for sel in (
+                '[class*="modal"] button[class*="close"]',
+                '[class*="modal"] a[class*="close"]',
+                'button:has-text("닫기")',
+                'button:has-text("확인")',
+            ):
+                try:
+                    el = self.page.locator(sel).first
+                    if el.is_visible(timeout=700):
+                        el.click(timeout=2000)
+                        time.sleep(0.7)
+                        closed += 1
+                        hit = True
+                        break
+                except Exception:
+                    continue
+            if not hit:
+                break
+        return closed
+
+    def get_selected_category(self) -> str:
+        """현재 폼에 선택된 카테고리 경로 텍스트.
+
+        2026-08-15 실측: 경로는 하단 안내문 `.info-result.text-info strong` 에만
+        정확히 표시된다. body 전체 정규식이나 `.selectize-input .item` 은
+        페이지 검색위젯('수취인명' 등)까지 잡혀 오탐이 난다.
+        """
+        try:
+            loc = self.page.locator(".info-result.text-info").first
+            raw = (loc.inner_text(timeout=2500) or "").strip()
+        except Exception as e:
+            _log.debug("[gen-reg] 카테고리 조회 실패: %s", e)
+            return ""
+        # "선택한 카테고리 : 가구/인테리어>..." → 라벨 제거
+        if ":" in raw:
+            raw = raw.split(":", 1)[1]
+        return raw.strip()
+
     # ── 이미지 ──────────────────────────────────────────────────────────
 
+    def _open_image_modal(self) -> bool:
+        """'내 사진 불러오기' 모달 열기 — file input 은 이 모달 안에만 생성된다.
+
+        2026-08-15 실측: 상품등록 폼에는 input[type=file] 이 아예 없다.
+        `a.btn-add-img` 를 눌러야 모달과 함께 생성된다. 또한 **이미 이미지가 채워진
+        슬롯은 눌러도 모달이 안 열리므로** 빈 슬롯을 만날 때까지 순회해야 한다.
+        """
+
+        def _has_input() -> bool:
+            try:
+                return self.page.locator("input[type=file]").count() > 0
+            except Exception:
+                return False
+
+        if _has_input():
+            return True
+        try:
+            n = self.page.locator("a.btn-add-img").count()
+        except Exception:
+            return False
+        for i in range(min(n, 5)):
+            try:
+                btn = self.page.locator("a.btn-add-img").nth(i)
+                btn.scroll_into_view_if_needed(timeout=3000)
+                time.sleep(0.4)
+                btn.click(timeout=4000)
+            except Exception:
+                continue
+            time.sleep(2.0)
+            if _has_input():
+                return True
+        return False
+
     def upload_main_image(self, image_path: str) -> dict:
-        """대표 이미지 업로드."""
+        """대표 이미지 업로드 (모달 경유) + 업로드 반영 검증."""
         if not self._ensure_opened():
             return {"ok": False, "error": "open_failed"}
         if not Path(image_path).exists():
             return {"ok": False, "error": "file_not_found"}
+
+        before = self._uploaded_image_count()
+        if not self._open_image_modal():
+            _log.error("[gen-reg] 대표이미지 모달을 열 수 없음 — a.btn-add-img 확인 필요")
+            return {"ok": False, "error": "image_modal_not_opened"}
         try:
-            # 이미지 영역으로 스크롤
-            self.page.evaluate("""
-            (() => {
-                const el = document.querySelector('input[name*="uploaded"]');
-                if (el) el.scrollIntoView({block: 'center'});
-            })();
-            """)
-            time.sleep(1)
-            file_input = self.page.locator('input[type="file"]').first
-            file_input.set_input_files(image_path, timeout=10000)
-            time.sleep(3.5)
-            log_critical("FILE_UPLOAD", f"일반 상품 대표 이미지: {Path(image_path).name}",
-                         file=image_path, mode="general_product_image_main")
-            return {"ok": True, "file": image_path}
+            self.page.locator("input[type=file]").first.set_input_files(image_path, timeout=15000)
+            time.sleep(5.0)
+
+            after = self._uploaded_image_count()
+            if after <= before:
+                _log.error(
+                    "[gen-reg] 대표이미지 검증 실패 — 업로드 전 %d장, 후 %d장 (증가 없음)",
+                    before,
+                    after,
+                )
+                return {"ok": False, "error": "upload_not_reflected", "before": before, "after": after}
+
+            log_critical(
+                "FILE_UPLOAD",
+                f"일반 상품 대표 이미지: {Path(image_path).name}",
+                file=image_path,
+                mode="general_product_image_main",
+            )
+            return {"ok": True, "file": image_path, "before": before, "after": after}
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
+
+    def _uploaded_image_count(self) -> int:
+        """폼에 반영된 업로드 이미지 개수 (네이버 CDN 경로 기준)."""
+        try:
+            return self.page.evaluate(
+                """() => [...document.querySelectorAll('img')]
+                        .filter(e => /phinf|pstatic|blob:/.test(e.src || '')).length"""
+            )
+        except Exception:
+            return -1
 
     # ── 저장 (사용자 명시 호출 필수) ─────────────────────────────────────
 
@@ -355,8 +607,7 @@ class GeneralProductRegister:
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
 
-    def register_product(self, data: dict, save_after: bool = False,
-                         require_confirm: bool = True) -> dict:
+    def register_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
         """원샷 등록.
 
         data:
@@ -366,30 +617,52 @@ class GeneralProductRegister:
         if not self.open():
             return {"ok": False, "error": "open_failed"}
 
-        steps = []
-        def run(name, fn, *a, **kw):
+        steps: list[tuple[str, dict]] = []
+        failed_at: str | None = None
+
+        def run(name, fn, *a, **kw) -> bool:
+            """단계 실행. 실패하면 즉시 중단 신호를 반환한다.
+
+            이전에는 실패해도 계속 진행하고 마지막에 save 까지 했다. 그러면
+            상품명이나 카테고리가 안 들어간 채로 저장되는 사고가 난다.
+            → 첫 실패에서 멈추고, 실패 시 저장은 절대 하지 않는다(2026-08-15).
+            """
+            nonlocal failed_at
             r = fn(*a, **kw)
             steps.append((name, r))
-            return r
+            if not r.get("ok", False):
+                failed_at = name
+                _log.error("[gen-reg] '%s' 단계 실패 — 이후 단계와 저장을 중단: %s", name, str(r.get("error"))[:100])
+                return False
+            return True
 
+        ordered = []
         if data.get("category"):
-            run("category", self.set_category, data["category"])
+            ordered.append(("category", self.set_category, data["category"]))
         if data.get("name"):
-            run("name", self.set_product_name, data["name"])
+            ordered.append(("name", self.set_product_name, data["name"]))
         if data.get("price") is not None:
-            run("price", self.set_price, data["price"])
+            ordered.append(("price", self.set_price, data["price"]))
         if data.get("stock") is not None:
-            run("stock", self.set_stock, data["stock"])
+            ordered.append(("stock", self.set_stock, data["stock"]))
         if data.get("main_image"):
-            run("main_image", self.upload_main_image, data["main_image"])
+            ordered.append(("main_image", self.upload_main_image, data["main_image"]))
+
+        for name, fn, arg in ordered:
+            if not run(name, fn, arg):
+                break
 
         save_result = None
-        if save_after:
+        if save_after and failed_at is None:
             save_result = self.save(require_confirm=require_confirm)
             steps.append(("save", save_result))
+        elif save_after and failed_at:
+            _log.error("[gen-reg] '%s' 실패로 저장을 건너뜀", failed_at)
 
         return {
-            "ok": all(s[1].get("ok", False) for s in steps),
+            "ok": failed_at is None and all(s[1].get("ok", False) for s in steps),
+            "failed_at": failed_at,
+            "aborted": failed_at is not None,
             "steps": steps,
             "step_results": {n: r.get("ok", False) for n, r in steps},
             "saved": bool(save_result and save_result.get("ok")),

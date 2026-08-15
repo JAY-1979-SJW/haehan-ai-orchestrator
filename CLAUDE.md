@@ -455,16 +455,38 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 - Client ID / Secret 원문 로그 출력 금지
 - 일일 허용량 초과 자동 호출 금지
 
-### 허용 범위 (비로그인 검색 API)
-- 블로그 검색: `GET /v1/search/blog.json`
-- 쇼핑 검색 (경쟁사 조사): `GET /v1/search/shop.json`
-- 뉴스 검색: `GET /v1/search/news.json`
+### 허용 범위 (비로그인 검색 API) — 2026-08-14 실측 검증
+
+| 엔드포인트 | 실제 결과 |
+|---|---|
+| 블로그 `GET /v1/search/blog.json` | ✅ 정상 |
+| 뉴스 `GET /v1/search/news.json` | ✅ 정상 |
+| 쇼핑 `GET /v1/search/shop.json` | ❌ **404 `SE05` — 앱에 미등록** |
+
 - 정렬: `sim`(유사도) / `date`(날짜) 만 허용
+- ⚠️ **쇼핑 검색 API는 이 앱에 등록되어 있지 않다.** 같은 키로 블로그·뉴스는
+  정상 응답하는데 쇼핑만 `SE05 (존재하지 않는 검색 api)` 를 반환한다.
+  개발자센터에서 쇼핑 검색 API를 앱에 추가 등록하기 전까지 사용 불가.
+- 경쟁사 가격 조사는 `scripts/naver/shopping/crawl.py`(공개 검색결과 CDP 수집)를 사용.
+  단, 네이버가 자동화 브라우저에 축소된 결과를 주므로 **페이지당 5건**이 한계이고,
+  `max_pages=10` 으로 약 50건(광고 포함) 수집이 현실적 상한이다.
 
 ## 카페 API 미등록 확인
 
 사용자가 앱 등록 시 **카페 API를 선택하지 않음** — 검색 API만 등록됨.
 카페 자동화는 **CDP 브라우저 세션 방식**으로만 운영 (OpenAPI 미사용).
+
+## 네이버 블로그 이미지 첨부 — Unsplash API (2026-08-14 추가)
+
+네이버 블로그 글에 사진을 첨부할 때는 **Unsplash API**를 사용한다 (AI API 아님, 승인 절차 대상 아님, 상시 허용).
+
+- 환경변수: `UNSPLASH_ACCESS_KEY` (`.env` 참조, 원문 로그 출력 금지)
+- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog_router.py`
+  - 검색: `GET https://api.unsplash.com/search/photos` (쿼리 영어 3단어 이내, orientation=landscape)
+  - 로컬 캐시: `data/unsplash_images.json`
+  - 다운로드: `data/blog_uploads/unsplash_*.jpg` (Unsplash 정책상 `download_location` 트리거 필요)
+- 원본 출처: `C:\work\30. 해한 AI 홈페이지\haehan-ai\.env.local` 에서 최초 발급됨. 이 프로젝트 `.env`에도 동일 키 보관.
+- 사용자가 매번 "사진 API 써서" 지시하지 않아도, 네이버 블로그 사진 첨부 요청 시 기본으로 이 경로를 사용한다.
 
 ## CDP 강제 시작
 

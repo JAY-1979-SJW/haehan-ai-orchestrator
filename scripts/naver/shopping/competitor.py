@@ -1,14 +1,15 @@
 """경쟁사 조사 — 게이트 + 기존 CompetitorAnalysis 통합."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[3]  # repo root (2026-08-14: [4]는 저장소 밖 C:\work 를 가리켰음)
 sys.path.insert(0, str(ROOT))
 
-from .gate import gate_competitor
-from .search import search_shopping
+from .gate import gate_competitor  # noqa: E402  (sys.path 설정 후 import)
+from .search import search_shopping  # noqa: E402  (sys.path 설정 후 import)
 
 
 def analyze_competitor(keyword: str, display: int = 20) -> dict:
@@ -22,6 +23,7 @@ def price_summary(keyword: str) -> dict:
     """수집된 데이터에서 가격 통계 반환."""
     gate_competitor(keyword)
     from ai_orchestrator.connectors import naver_search_queries as q
+
     page = q.search_shopping_items(query=keyword, limit=100, offset=0)
     items = page.items
     prices = [i.get("lprice") for i in items if i.get("lprice")]

@@ -12,15 +12,15 @@
     python scripts/naver/shopping/cli.py crawl "인테리어 조명" --limit 40
     python scripts/naver/shopping/cli.py crawl-report "LED 무드등"
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[3]  # repo root (2026-08-14: [4]는 저장소 밖 C:\work 를 가리켰음)
 sys.path.insert(0, str(ROOT))
 
 # .env 로드
@@ -38,6 +38,7 @@ def _fmt(n) -> str:
 
 def cmd_search(args):
     from scripts.naver.shopping import search_shopping
+
     print(f"\n🔍 쇼핑 검색: {args.query} (display={args.display})")
     result = search_shopping(args.query, display=args.display)
     print(f"  status   : {result['status']}")
@@ -49,6 +50,7 @@ def cmd_search(args):
 
 def cmd_history(args):
     from scripts.naver.shopping import price_summary
+
     print(f"\n📊 가격 통계: {args.query}")
     r = price_summary(args.query)
     if not r.get("count"):
@@ -59,17 +61,18 @@ def cmd_history(args):
     print(f"  평균가  : {_fmt(r['avg_price'])}원")
     print(f"  최고가  : {_fmt(r['max_price'])}원")
     if r.get("items"):
-        print(f"\n  상위 상품:")
+        print("\n  상위 상품:")
         for item in r["items"][:10]:
             title = (item.get("title") or "")[:45]
             price = _fmt(item.get("lprice"))
-            mall  = item.get("mall_name", "-")
+            mall = item.get("mall_name", "-")
             brand = item.get("brand") or "-"
             print(f"    {title:<45} | {price:>8}원 | {mall} | {brand}")
 
 
 def cmd_summary(args):
     from ai_orchestrator.connectors import naver_search_queries as q
+
     page = q.search_shopping_items(limit=200, offset=0)
     if not page.total:
         print("수집 데이터 없음")
@@ -92,7 +95,7 @@ def cmd_summary(args):
     for kw, d in sorted(stats.items()):
         prices = d["prices"]
         if prices:
-            lo, avg, hi = min(prices), sum(prices)//len(prices), max(prices)
+            lo, avg, hi = min(prices), sum(prices) // len(prices), max(prices)
         else:
             lo = avg = hi = None
         print(f"  {kw:<23} {d['count']:>5} {_fmt(lo):>9} {_fmt(avg):>9} {_fmt(hi):>9}")
@@ -101,6 +104,7 @@ def cmd_summary(args):
 def cmd_crawl(args):
     from scripts.naver.shopping.crawl import crawl_shopping
     from scripts.naver.shopping.gate import gate_competitor
+
     gate_competitor(args.query)
     print(f"\n🕷️  CDP 크롤링: {args.query} (최대 {args.limit}개)")
     print("  브라우저 탐색 중...", end="", flush=True)
@@ -110,22 +114,29 @@ def cmd_crawl(args):
         return
     print(f"\n✅ 수집 완료: {r['count']}개\n")
     s = r["stats"]
-    print(f"  가격   최저 {_fmt(s['price'].get('min'))}원 / 평균 {_fmt(s['price'].get('avg'))}원 / 최고 {_fmt(s['price'].get('max'))}원")
-    print(f"  리뷰   최소 {_fmt(s['review'].get('min'))} / 평균 {_fmt(s['review'].get('avg'))} / 최대 {_fmt(s['review'].get('max'))} / 합계 {_fmt(s['review'].get('total'))}")
+    print(
+        f"  가격   최저 {_fmt(s['price'].get('min'))}원 / 평균 {_fmt(s['price'].get('avg'))}원 / 최고 {_fmt(s['price'].get('max'))}원"
+    )
+    print(
+        f"  리뷰   최소 {_fmt(s['review'].get('min'))} / 평균 {_fmt(s['review'].get('avg'))} / 최대 {_fmt(s['review'].get('max'))} / 합계 {_fmt(s['review'].get('total'))}"
+    )
     print(f"  별점   평균 {s['rating'].get('avg') or '-'} / 최고 {s['rating'].get('max') or '-'}")
     print(f"\n  {'순위':>3} {'상품명':<40} {'가격':>9} {'리뷰':>6} {'별점':>5} {'판매몰'}")
-    print("  " + "-"*85)
-    for p in r["products"][:args.limit]:
-        print(f"  {p.get('rank',''):>3} {(p.get('title') or '')[:40]:<40} "
-              f"{_fmt(p.get('price')):>9}원 "
-              f"{_fmt(p.get('review_count')):>6} "
-              f"{str(p.get('rating') or '-'):>5} "
-              f"{p.get('mall') or '-'}")
+    print("  " + "-" * 85)
+    for p in r["products"][: args.limit]:
+        print(
+            f"  {p.get('rank', ''):>3} {(p.get('title') or '')[:40]:<40} "
+            f"{_fmt(p.get('price')):>9}원 "
+            f"{_fmt(p.get('review_count')):>6} "
+            f"{p.get('rating') or '-'!s:>5} "
+            f"{p.get('mall') or '-'}"
+        )
 
 
 def cmd_crawl_report(args):
     from scripts.naver.shopping.crawl import full_summary
     from scripts.naver.shopping.gate import gate_competitor
+
     gate_competitor(args.query)
     print(f"\n📋 크롤링 보고서: {args.query}")
     r = full_summary(args.query)
@@ -134,19 +145,25 @@ def cmd_crawl_report(args):
         return
     print(f"  수집: {r['count']}건")
     if r.get("price"):
-        print(f"  가격: 최저 {_fmt(r['price']['min'])}원 / 평균 {_fmt(r['price']['avg'])}원 / 최고 {_fmt(r['price']['max'])}원")
+        print(
+            f"  가격: 최저 {_fmt(r['price']['min'])}원 / 평균 {_fmt(r['price']['avg'])}원 / 최고 {_fmt(r['price']['max'])}원"
+        )
     if r.get("review"):
-        print(f"  리뷰: 평균 {_fmt(r['review']['avg'])} / 최대 {_fmt(r['review']['max'])} / 총 {_fmt(r['review']['total'])}")
+        print(
+            f"  리뷰: 평균 {_fmt(r['review']['avg'])} / 최대 {_fmt(r['review']['max'])} / 총 {_fmt(r['review']['total'])}"
+        )
     if r.get("rating"):
         print(f"  별점: 평균 {r['rating']['avg']} / 최고 {r['rating']['max']}")
     print(f"\n  {'순위':>3} {'상품명':<40} {'가격':>9} {'리뷰':>7} {'별점':>5} {'판매몰'}")
-    print("  " + "-"*85)
+    print("  " + "-" * 85)
     for p in r.get("top10", []):
-        print(f"  {p.get('rank',''):>3} {(p.get('title') or '')[:40]:<40} "
-              f"{_fmt(p.get('price')):>9}원 "
-              f"{_fmt(p.get('review_count')):>7} "
-              f"{str(p.get('rating') or '-'):>5} "
-              f"{p.get('mall') or '-'}")
+        print(
+            f"  {p.get('rank', ''):>3} {(p.get('title') or '')[:40]:<40} "
+            f"{_fmt(p.get('price')):>9}원 "
+            f"{_fmt(p.get('review_count')):>7} "
+            f"{p.get('rating') or '-'!s:>5} "
+            f"{p.get('mall') or '-'}"
+        )
 
 
 def main():
@@ -175,10 +192,10 @@ def main():
 
     args = parser.parse_args()
     {
-        "search":       cmd_search,
-        "history":      cmd_history,
-        "summary":      cmd_summary,
-        "crawl":        cmd_crawl,
+        "search": cmd_search,
+        "history": cmd_history,
+        "summary": cmd_summary,
+        "crawl": cmd_crawl,
         "crawl-report": cmd_crawl_report,
     }[args.cmd](args)
 
