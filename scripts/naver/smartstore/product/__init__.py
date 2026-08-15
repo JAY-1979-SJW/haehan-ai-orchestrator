@@ -13,6 +13,19 @@ from scripts.naver.smartstore.product.category_resolver import (
     get_resolver,
 )
 from scripts.naver.smartstore.product.general_product import GeneralProductRegister
+from scripts.naver.smartstore.product.modal_guard import (
+    assert_no_modal,
+    dismiss_blocking_modals,
+    peek_modal,
+)
+from scripts.naver.smartstore.product.option_grid import OptionGrid
+from scripts.naver.smartstore.product.tag_section import (
+    MAX_TAG_BYTES,
+    MAX_TAGS,
+    TagSection,
+    tag_byte_len,
+    validate_tags,
+)
 from scripts.naver.smartstore.product.preflight import (
     ERROR,
     SALE_BLOCKER,
@@ -82,6 +95,16 @@ __all__ = [  # noqa: RUF022
     "ERROR",
     "SALE_BLOCKER",
     "WARN",
+    # 검색태그 / 옵션 그리드 / 모달 가드
+    "TagSection",
+    "validate_tags",
+    "tag_byte_len",
+    "MAX_TAG_BYTES",
+    "MAX_TAGS",
+    "OptionGrid",
+    "dismiss_blocking_modals",
+    "peek_modal",
+    "assert_no_modal",
     "SmartEditorONE",
     "PriceStockEditor",
     "ProductOptionEditor",
