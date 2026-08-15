@@ -3,21 +3,24 @@
 This module is the only shared leaf.  All other leaves may import from here;
 no leaf may import from another leaf.
 """
+
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
-import urllib.parse
+import sqlite3
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from security_utils import safe_preview
-
 
 ROOT = Path(__file__).resolve().parents[3]
 REPORT_DIR = ROOT / "data" / "google_youtube_search_reports"
@@ -58,7 +61,15 @@ TOPIC_RULES: dict[str, tuple[str, ...]] = {
     "agent_browser_automation": ("agent", "browser", "crawler", "scraping", "에이전트", "브라우저", "스크래핑"),
     "monetization_side_hustle": ("money", "profit", "side hustle", "수익", "부업", "돈"),
     "enterprise_productivity": ("enterprise", "productivity", "team", "기업", "생산성", "협업"),
-    "smartstore_seller": ("smartstore", "스마트스토어", "네이버스마트스토어", "쇼핑몰", "상품등록", "상세페이지", "위탁판매"),
+    "smartstore_seller": (
+        "smartstore",
+        "스마트스토어",
+        "네이버스마트스토어",
+        "쇼핑몰",
+        "상품등록",
+        "상세페이지",
+        "위탁판매",
+    ),
     "commerce_marketing": ("commerce", "marketing", "seo", "마케팅", "상위노출", "키워드", "광고", "전환"),
     "global_sourcing": ("sourcing", "dropshipping", "구매대행", "사입", "위탁", "알리", "타오바오"),
 }
@@ -154,7 +165,7 @@ def build_public_signal_model() -> dict[str, Any]:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -177,28 +188,41 @@ def _write_report(
 
 
 def _api_key(explicit: str | None = None) -> str:
-    return (explicit or os.environ.get("YOUTUBE_DATA_API_KEY", "")
-            or os.environ.get("YOUTUBE_API_KEY", "") or os.environ.get("GOOGLE_YOUTUBE_API_KEY", ""))
+    return (
+        explicit
+        or os.environ.get("YOUTUBE_DATA_API_KEY", "")
+        or os.environ.get("YOUTUBE_API_KEY", "")
+        or os.environ.get("GOOGLE_YOUTUBE_API_KEY", "")
+    )
 
 
 def _oauth_access_token() -> str | None:
     """저장된 OAuth 토큰을 갱신해서 반환. 없으면 None."""
     token_path = os.environ.get(
         "YOUTUBE_OAUTH_TOKEN_FILE",
-        str(Path(__file__).resolve().parents[3] / "ai_orchestrator" / "storage" / "secrets" / "youtube_oauth_authorized_user.json"),
+        str(
+            Path(__file__).resolve().parents[3]
+            / "ai_orchestrator"
+            / "storage"
+            / "secrets"
+            / "youtube_oauth_authorized_user.json"
+        ),
     )
     if not Path(token_path).exists():
         return None
     try:
         t = json.loads(Path(token_path).read_text(encoding="utf-8"))
-        data = urllib.parse.urlencode({
-            "client_id":     t["client_id"],
-            "client_secret": t["client_secret"],
-            "refresh_token": t["refresh_token"],
-            "grant_type":    "refresh_token",
-        }).encode()
+        data = urllib.parse.urlencode(
+            {
+                "client_id": t["client_id"],
+                "client_secret": t["client_secret"],
+                "refresh_token": t["refresh_token"],
+                "grant_type": "refresh_token",
+            }
+        ).encode()
         req = urllib.request.Request(
-            t.get("token_uri", "https://oauth2.googleapis.com/token"), data=data,
+            t.get("token_uri", "https://oauth2.googleapis.com/token"),
+            data=data,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         r = urllib.request.urlopen(req, timeout=10)
@@ -245,6 +269,51 @@ def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
     return dead_local_proxy and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
 
 
+# scripts/youtube/research_search.py 와 동일한 캐시 DB(파일)를 공유한다.
+# YouTube Search Queries per day 쿼터(100회/일)가 일반 쿼터(10,000회/일)보다
+# 훨씬 낮아, 같은 쿼리를 반복 검색하면 시장조사 1회 실행만으로도 쉽게
+# 소진된다. 두 검색 경로(단건 검색 / 시장조사 키워드 확장 검색)가 같은 DB를
+# 공유하면 어느 경로로 먼저 검색됐든 캐시가 재사용된다.
+_SEARCH_CACHE_DB = ROOT / "data" / "youtube_search_cache.db"
+_CACHE_TTL_SECONDS = 86_400  # 24시간
+
+
+def _search_cache_key(query: str, max_results: int, captions_only: bool = False) -> str:
+    raw = f"{query.strip().lower()}|{max_results}|{captions_only}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _search_cache_get(key: str) -> dict[str, Any] | None:
+    try:
+        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
+        row = con.execute("SELECT payload, cached_at FROM search_cache WHERE cache_key=?", (key,)).fetchone()
+        con.close()
+        if row and (time.time() - row[1]) < _CACHE_TTL_SECONDS:
+            return json.loads(row[0])
+    except Exception:
+        pass
+    return None
+
+
+def _search_cache_set(key: str, payload: dict[str, Any]) -> None:
+    try:
+        _SEARCH_CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(str(_SEARCH_CACHE_DB))
+        con.execute(
+            "CREATE TABLE IF NOT EXISTS search_cache (cache_key TEXT PRIMARY KEY, payload TEXT, cached_at REAL)"
+        )
+        con.execute(
+            "INSERT OR REPLACE INTO search_cache VALUES (?,?,?)",
+            (key, json.dumps(payload, ensure_ascii=False), time.time()),
+        )
+        con.execute("DELETE FROM search_cache WHERE cached_at < ?", (time.time() - 259200,))
+        con.commit()
+        con.close()
+    except Exception:
+        pass
+
+
 def build_search_url(query: str) -> str:
     return "https://www.youtube.com/results?search_query=" + urllib.parse.quote_plus(query)
 
@@ -279,6 +348,7 @@ def _int_value(value: Any) -> int:
 
 def _metadata_number(values: Any, marker: str) -> int:
     import re as _re
+
     if not isinstance(values, list):
         return 0
     for value in values:
