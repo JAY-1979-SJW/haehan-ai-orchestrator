@@ -1,23 +1,27 @@
 """Official API and browser DOM search collectors."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.cdp_console import connect
 from scripts.google.youtube.search_common import (
     LATEST_SEARCH,
+    ROOT,
     YOUTUBE_SEARCH_URL,
     YOUTUBE_VIDEOS_URL,
-    ROOT,
     _api_key,
-    _oauth_access_token,
-    _get_json,
     _base_payload,
+    _get_json,
+    _oauth_access_token,
+    _search_cache_get,
+    _search_cache_key,
+    _search_cache_set,
     _write_report,
     build_search_url,
 )
+from security_utils import safe_preview
 
 
 def search_videos(
@@ -46,12 +50,14 @@ def search_videos(
     if normalized_source == "official" or (normalized_source == "auto" and (key or has_oauth)):
         if not key and not has_oauth:
             payload = _base_payload(query, "official", max_results)
-            payload.update({
-                "ok": False,
-                "status": "blocked",
-                "reason": "youtube_data_api_key_required_for_official_source",
-                "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
-            })
+            payload.update(
+                {
+                    "ok": False,
+                    "status": "blocked",
+                    "reason": "youtube_data_api_key_required_for_official_source",
+                    "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
+                }
+            )
             return _write_report(payload)
         return search_videos_official(query, max_results=max_results, api_key=key)
 
@@ -68,13 +74,22 @@ def search_videos_official(
     max_results = max(1, min(int(max_results), 25))
     payload = _base_payload(query, "official", max_results)
     if not key and not _oauth_access_token():
-        payload.update({
-            "ok": False,
-            "status": "blocked",
-            "reason": "youtube_data_api_key_required_for_official_source",
-            "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
-        })
+        payload.update(
+            {
+                "ok": False,
+                "status": "blocked",
+                "reason": "youtube_data_api_key_required_for_official_source",
+                "next_step": "Set YOUTUBE_DATA_API_KEY or complete OAuth flow.",
+            }
+        )
         return _write_report(payload)
+
+    # 캐시 조회 (Search Queries per day 쿼터 100회/일 절약)
+    cache_key = _search_cache_key(query, max_results)
+    cached = _search_cache_get(cache_key)
+    if cached:
+        cached["cache_hit"] = True
+        return _write_report(cached)
 
     # API 키가 있으면 key 파라미터, OAuth면 _get_json이 Authorization 헤더 자동 추가
     params: dict[str, str | int] = {
@@ -90,13 +105,15 @@ def search_videos_official(
     try:
         search_data = _get_json(YOUTUBE_SEARCH_URL, params)
     except Exception as exc:
-        payload.update({
-            "ok": False,
-            "status": "blocked",
-            "reason": "youtube_data_api_request_failed",
-            "error": safe_preview(str(exc), limit=240),
-            "results": [],
-        })
+        payload.update(
+            {
+                "ok": False,
+                "status": "blocked",
+                "reason": "youtube_data_api_request_failed",
+                "error": safe_preview(str(exc), limit=240),
+                "results": [],
+            }
+        )
         return _write_report(payload)
     video_ids = [
         item.get("id", {}).get("videoId", "")
@@ -122,32 +139,38 @@ def search_videos_official(
         video_id = item.get("id", {}).get("videoId", "")
         snippet = item.get("snippet", {})
         detail = detail_by_id.get(video_id, {})
-        rows.append({
-            "video_id": video_id,
-            "url": f"https://www.youtube.com/watch?v={video_id}",
-            "title": safe_preview(snippet.get("title", ""), limit=180),
-            "channel_title": safe_preview(snippet.get("channelTitle", ""), limit=120),
-            "published_at": snippet.get("publishedAt", ""),
-            "description": safe_preview(snippet.get("description", ""), limit=500),
-            "duration": detail.get("contentDetails", {}).get("duration", ""),
-            "caption_available_hint": detail.get("contentDetails", {}).get("caption", ""),
-            "statistics": {
-                "view_count": detail.get("statistics", {}).get("viewCount", ""),
-                "like_count": detail.get("statistics", {}).get("likeCount", ""),
-                "comment_count": detail.get("statistics", {}).get("commentCount", ""),
-            },
-            "collection_source": "official_youtube_data_api",
-        })
+        rows.append(
+            {
+                "video_id": video_id,
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "title": safe_preview(snippet.get("title", ""), limit=180),
+                "channel_title": safe_preview(snippet.get("channelTitle", ""), limit=120),
+                "published_at": snippet.get("publishedAt", ""),
+                "description": safe_preview(snippet.get("description", ""), limit=500),
+                "duration": detail.get("contentDetails", {}).get("duration", ""),
+                "caption_available_hint": detail.get("contentDetails", {}).get("caption", ""),
+                "statistics": {
+                    "view_count": detail.get("statistics", {}).get("viewCount", ""),
+                    "like_count": detail.get("statistics", {}).get("likeCount", ""),
+                    "comment_count": detail.get("statistics", {}).get("commentCount", ""),
+                },
+                "collection_source": "official_youtube_data_api",
+            }
+        )
 
-    payload.update({
-        "ok": True,
-        "status": "ok",
-        "reason": "",
-        "credential_source": "api_key",
-        "api_key_output": "redacted",
-        "result_count": len(rows),
-        "results": rows,
-    })
+    payload.update(
+        {
+            "ok": True,
+            "status": "ok",
+            "reason": "",
+            "credential_source": "api_key",
+            "api_key_output": "redacted",
+            "result_count": len(rows),
+            "results": rows,
+            "cache_hit": False,
+        }
+    )
+    _search_cache_set(cache_key, payload)
     return _write_report(payload)
 
 
@@ -166,35 +189,41 @@ def search_videos_browser(
             session.wait(wait_seconds)
             snapshot = extract_browser_search_results(session, limit=max_results)
     except Exception as exc:
-        payload.update({
-            "ok": False,
-            "status": "blocked",
-            "reason": "youtube_browser_cdp_unavailable",
-            "error": safe_preview(str(exc), limit=240),
-            "results": [],
-        })
+        payload.update(
+            {
+                "ok": False,
+                "status": "blocked",
+                "reason": "youtube_browser_cdp_unavailable",
+                "error": safe_preview(str(exc), limit=240),
+                "results": [],
+            }
+        )
         return _write_report(payload)
 
     if snapshot.get("challenge_detected"):
-        payload.update({
-            "ok": False,
-            "status": "blocked",
-            "reason": "youtube_browser_challenge_detected",
-            "challenge_markers": snapshot.get("challenge_markers", []),
-            "results": [],
-        })
+        payload.update(
+            {
+                "ok": False,
+                "status": "blocked",
+                "reason": "youtube_browser_challenge_detected",
+                "challenge_markers": snapshot.get("challenge_markers", []),
+                "results": [],
+            }
+        )
         return _write_report(payload)
 
-    payload.update({
-        "ok": True,
-        "status": "ok",
-        "reason": "",
-        "final_url": safe_preview(snapshot.get("url", ""), limit=220),
-        "title": safe_preview(snapshot.get("title", ""), limit=160),
-        "result_count": len(snapshot.get("results", [])),
-        "results": snapshot.get("results", []),
-        "warnings": snapshot.get("warnings", []),
-    })
+    payload.update(
+        {
+            "ok": True,
+            "status": "ok",
+            "reason": "",
+            "final_url": safe_preview(snapshot.get("url", ""), limit=220),
+            "title": safe_preview(snapshot.get("title", ""), limit=160),
+            "result_count": len(snapshot.get("results", [])),
+            "results": snapshot.get("results", []),
+            "warnings": snapshot.get("warnings", []),
+        }
+    )
     return _write_report(payload)
 
 
@@ -260,7 +289,7 @@ def extract_browser_search_results(session: Any, *, limit: int = 10) -> dict[str
                 results: results,
                 warnings: results.length ? [] : ['no_visible_video_results_detected']
             }};
-        }})()"""  # noqa: E501
+        }})()"""
     )
     if err or not isinstance(data, dict):
         return {
@@ -286,21 +315,24 @@ def _sanitize_browser_snapshot(data: dict[str, Any]) -> dict[str, Any]:
     for item in data.get("results", []):
         if not isinstance(item, dict):
             continue
-        sanitized["results"].append({
-            "video_id": safe_preview(item.get("video_id", ""), limit=20),
-            "url": safe_preview(item.get("url", ""), limit=120),
-            "title": safe_preview(item.get("title", ""), limit=180),
-            "channel_title": safe_preview(item.get("channel_title", ""), limit=120),
-            "metadata_line": [safe_preview(value, limit=80) for value in item.get("metadata_line", [])[:4]],
-            "description": safe_preview(item.get("description", ""), limit=300),
-            "thumbnail_present": bool(item.get("thumbnail_present")),
-            "collection_source": "public_youtube_search_dom",
-        })
+        sanitized["results"].append(
+            {
+                "video_id": safe_preview(item.get("video_id", ""), limit=20),
+                "url": safe_preview(item.get("url", ""), limit=120),
+                "title": safe_preview(item.get("title", ""), limit=180),
+                "channel_title": safe_preview(item.get("channel_title", ""), limit=120),
+                "metadata_line": [safe_preview(value, limit=80) for value in item.get("metadata_line", [])[:4]],
+                "description": safe_preview(item.get("description", ""), limit=300),
+                "thumbnail_present": bool(item.get("thumbnail_present")),
+                "collection_source": "public_youtube_search_dom",
+            }
+        )
     return sanitized
 
 
 def _load_search_payload(search_report_path: str | Path | None) -> dict[str, Any]:
     import json
+
     path = Path(search_report_path) if search_report_path else LATEST_SEARCH
     if not path.is_absolute():
         path = ROOT / path
