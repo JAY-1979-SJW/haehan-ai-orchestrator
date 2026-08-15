@@ -197,10 +197,19 @@ def _fetch_article_detail(page: Page, clubid: str, article_id: str) -> dict:
     분량만 수집한다(더보기 클릭 등 추가 조작 없음 — read-only 원칙).
     """
     url = _ARTICLE_URL.format(clubid=clubid, article_id=article_id)
-    try:
-        page.goto(url, timeout=25000, wait_until="domcontentloaded")
-        time.sleep(3.0)
-        detail = page.evaluate("""
+    for attempt in range(2):
+        try:
+            return _fetch_article_detail_once(page, url)
+        except Exception as e:
+            _log.warning("[cafe-collect] 상세 추출 실패(시도 %d) %s: %s", attempt + 1, article_id, e)
+            time.sleep(2.0)
+    return {}
+
+
+def _fetch_article_detail_once(page: Page, url: str) -> dict:
+    page.goto(url, timeout=25000, wait_until="domcontentloaded")
+    time.sleep(3.0)
+    detail = page.evaluate("""
         () => {
             const board = (
                 document.querySelector('.tit_menu')?.innerText || ''
@@ -237,10 +246,7 @@ def _fetch_article_detail(page: Page, clubid: str, article_id: str) -> dict:
             };
         }
         """)
-        return detail or {}
-    except Exception as e:
-        _log.debug("[cafe-collect] 상세 추출 실패 %s: %s", article_id, e)
-        return {}
+    return detail or {}
 
 
 def collect_articles(
