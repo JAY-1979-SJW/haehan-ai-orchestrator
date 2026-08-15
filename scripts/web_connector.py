@@ -48,6 +48,13 @@ log = get_logger(__name__)
 # ── 브라우저 context 캐싱 ────────────────────────────────────────────
 _BROWSER_CONTEXT_CACHE = None
 _BROWSER_CACHE = None
+_PLAYWRIGHT_INSTANCE = None  # sync_playwright()를 전역 보관 — GC 수거 방지
+
+# get_page()가 매번 "마지막 탭"을 다시 고르면, 작업 도중 다른 탭이 새로 열릴 때마다
+# (오글링크 미리보기, 영상 업로더 팝업, 글감 검색 패널 등) 그 새 탭으로 갈아타 버려서
+# 사용자 눈에는 "다른 창이 갑자기 열린 것"처럼 보이는 문제가 있었다(2026-08-14).
+# 한 번 고른 탭을 핀 고정해 재사용하고, 그 탭이 닫혔을 때만 다시 고른다.
+_PINNED_PAGE = None
 
 # ── Playwright(sync) 전용 단일 스레드 ─────────────────────────────────
 # Playwright sync API 는 생성 스레드에서만 접근 가능. FastAPI sync 엔드포인트는
@@ -147,13 +154,22 @@ def _connect_browser():
     """
     global _BROWSER_CONTEXT_CACHE, _BROWSER_CACHE
 
-    # 캐시된 context가 있으면 재사용
+    # 캐시된 context가 있으면 살아있는지 확인 후 재사용
     if _BROWSER_CONTEXT_CACHE is not None:
-        return _BROWSER_CACHE, _BROWSER_CONTEXT_CACHE
+        try:
+            if _BROWSER_CACHE and _BROWSER_CACHE.is_connected():
+                return _BROWSER_CACHE, _BROWSER_CONTEXT_CACHE
+        except Exception:
+            pass
+        log.warning("[web_connector] 캐시된 브라우저 컨텍스트 스테일 — 재연결")
+        globals()["_BROWSER_CACHE"] = None
+        globals()["_BROWSER_CONTEXT_CACHE"] = None
+        globals()["_PLAYWRIGHT_INSTANCE"] = None
     port = _get_cdp_port()
     log.debug("CDP 연결 시도: port=%s", port)
 
     p = sync_playwright().start()
+    globals()["_PLAYWRIGHT_INSTANCE"] = p  # GC 수거 방지 — 전역 보관
     browser = p.chromium.connect_over_cdp(f"http://{_DEFAULT_CDP_HOST}:{port}")
 
     ctx = None
@@ -229,53 +245,38 @@ def fit_viewport(page: Page) -> None:
     except Exception as e:
         log.warning("[viewport] set_viewport_size 실패: %s", e)
 
-    # 창이 최소화됐거나 작으면 최대화 복원 (CDP Browser.setWindowBounds)
-    # 주의: minimized → maximized 직접 불가. normal 경유 필수.
+    # 창 위치·크기 고정 (매번 일정한 위치로 강제)
+    # Chrome은 마지막 위치를 Preferences에 기억하고 재시작 시 복원하므로
+    # setWindowBounds 로 연결마다 덮어써서 위치 고정.
+    _FIX_LEFT, _FIX_TOP, _FIX_W, _FIX_H = 100, 50, 1440, 900
     try:
         cdp = page.context.new_cdp_session(page)
         win = cdp.send("Browser.getWindowForTarget", {})
         wid = win["windowId"]
-        state = win.get("bounds", {}).get("windowState", "")
+        state = win.get("bounds", {}).get("windowState", "normal")
 
-        if state in ("maximized", "fullscreen"):
-            pass  # 이미 최대화
-        else:
-            if state == "minimized":
-                # minimized → normal 먼저
-                cdp.send(
-                    "Browser.setWindowBounds",
-                    {
-                        "windowId": wid,
-                        "bounds": {"windowState": "normal"},
-                    },
-                )
-                time.sleep(0.2)
-            else:
-                # normal 상태인데 화면 밖에 있으면 먼저 복귀 (Chrome이 기억한 off-screen 위치 방지)
-                bounds = win.get("bounds", {})
-                left = bounds.get("left", 0)
-                top = bounds.get("top", 0)
-                if left > 3000 or top > 3000 or left < -1000 or top < -1000:
-                    cdp.send(
-                        "Browser.setWindowBounds",
-                        {
-                            "windowId": wid,
-                            "bounds": {"windowState": "normal", "left": 0, "top": 0, "width": 1280, "height": 900},
-                        },
-                    )
-                    time.sleep(0.2)
-                    log.info("[viewport] 화면 밖 창 복귀: left=%s top=%s → (0,0)", left, top)
-            # normal → maximized
-            cdp.send(
-                "Browser.setWindowBounds",
-                {
-                    "windowId": wid,
-                    "bounds": {"windowState": "maximized"},
+        # minimized 상태면 먼저 normal로 복귀 (minimized → 다른 상태 직접 전환 불가)
+        if state == "minimized":
+            cdp.send("Browser.setWindowBounds", {"windowId": wid, "bounds": {"windowState": "normal"}})
+            time.sleep(0.2)
+
+        # 항상 고정 위치·크기로 설정 (off-screen·위치 어긋남 방지)
+        cdp.send(
+            "Browser.setWindowBounds",
+            {
+                "windowId": wid,
+                "bounds": {
+                    "windowState": "normal",
+                    "left": _FIX_LEFT,
+                    "top": _FIX_TOP,
+                    "width": _FIX_W,
+                    "height": _FIX_H,
                 },
-            )
-            log.info("[viewport] 창 최대화 복원 완료 (이전 상태: %s)", state)
+            },
+        )
+        log.debug("[viewport] 창 위치 고정: %dx%d@%d,%d (이전 상태: %s)", _FIX_W, _FIX_H, _FIX_LEFT, _FIX_TOP, state)
     except Exception as e:
-        log.debug("[viewport] 창 복원 생략: %s", e)
+        log.debug("[viewport] 창 위치 고정 생략: %s", e)
 
 
 def open_page(*, allow_new_tab: bool = False, reason: str | None = None) -> Page:
@@ -303,23 +304,55 @@ def get_page() -> Page:
 
     open_page()와 달리 매번 새 탭을 만들지 않는다.
     여러 단계에 걸쳐 같은 탭을 유지해야 할 때 사용.
+
+    한 번 고른 탭을 _PINNED_PAGE로 고정해 재사용한다 — 매번 "마지막 탭"을
+    다시 고르면 작업 도중 다른 탭이 새로 열릴 때(팝업/미리보기 등) 그쪽으로
+    갈아타 버려서 "다른 창이 열렸다"고 오인되는 문제가 있었다(2026-08-14).
     """
-    _, ctx = _connect_browser()
-    pages = ctx.pages
-    # about:blank 가 아닌 기존 탭 우선 재사용
-    active = [p for p in pages if p.url not in ("about:blank", "")]
-    if active:
-        page = active[-1]
-        mark_task_owned(page, BrowserTaskPolicy(task_id="get-page"), owned=False)
-        fit_viewport(page)
-        log.debug("기존 탭 재사용: %s", page.url)
-        return page
-    # 탭이 없거나 모두 blank면 새 탭 생성
-    page = ctx.new_page()
-    mark_task_owned(page, BrowserTaskPolicy(task_id="get-page-fallback"), owned=True)
-    fit_viewport(page)
-    log.debug("새 페이지 생성 완료")
-    return page
+    global _PINNED_PAGE
+    for _attempt in range(2):
+        try:
+            _, ctx = _connect_browser()
+
+            # 고정된 탭이 아직 살아있으면 그대로 재사용 (다른 탭이 새로 열려도 안 흔들림)
+            if _PINNED_PAGE is not None:
+                try:
+                    still_open = _PINNED_PAGE in ctx.pages
+                    _ = _PINNED_PAGE.url  # 닫힌 탭이면 여기서 예외
+                except Exception:
+                    still_open = False
+                if still_open:
+                    mark_task_owned(_PINNED_PAGE, BrowserTaskPolicy(task_id="get-page"), owned=False)
+                    fit_viewport(_PINNED_PAGE)
+                    log.debug("고정 탭 재사용: %s", _PINNED_PAGE.url)
+                    return _PINNED_PAGE
+                _PINNED_PAGE = None  # 닫혔음 — 아래에서 새로 고른다
+
+            pages = ctx.pages
+            # about:blank 가 아닌 기존 탭 우선 재사용
+            active = [p for p in pages if p.url not in ("about:blank", "")]
+            if active:
+                page = active[-1]
+                mark_task_owned(page, BrowserTaskPolicy(task_id="get-page"), owned=False)
+                fit_viewport(page)
+                log.debug("기존 탭 재사용: %s", page.url)
+                _PINNED_PAGE = page
+                return page
+            # 탭이 없거나 모두 blank면 새 탭 생성
+            page = ctx.new_page()
+            mark_task_owned(page, BrowserTaskPolicy(task_id="get-page-fallback"), owned=True)
+            fit_viewport(page)
+            log.debug("새 페이지 생성 완료")
+            _PINNED_PAGE = page
+            return page
+        except Exception as _e:
+            if _attempt == 0:
+                log.warning("[web_connector] get_page 실패 — 캐시 초기화 후 재시도: %s", _e)
+                globals()["_BROWSER_CACHE"] = None
+                globals()["_BROWSER_CONTEXT_CACHE"] = None
+                _PINNED_PAGE = None
+            else:
+                raise
 
 
 def get_page_by_url(*patterns: str, create_url: str | None = None) -> Page:
