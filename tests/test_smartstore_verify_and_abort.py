@@ -69,10 +69,15 @@ class _StubRegister(GeneralProductRegister):
 
 DATA = {"category": "인테리어조명", "name": "테스트상품", "price": 1000, "stock": 10, "main_image": "x.png"}
 
+# 이 파일은 **단계 진행 기계**(순서/중단/저장금지)를 검증한다.
+# 사전 검증(preflight)은 그보다 앞단의 별도 관문이며 tests/test_preflight.py 가 맡는다.
+# 여기서는 skip_preflight=True 로 우회해 검증 대상을 섞지 않는다.
+# (실존하지 않는 'x.png' 는 preflight 가 정당하게 막는다 — 그 동작 자체는 정상이다)
+
 
 def test_all_steps_run_when_no_failure():
     reg = _StubRegister()
-    r = reg.register_product(DATA, save_after=False)
+    r = reg.register_product(DATA, save_after=False, skip_preflight=True)
     assert r["ok"] is True
     assert r["aborted"] is False
     assert reg.calls == ["category", "name", "price", "stock", "main_image"]
@@ -81,7 +86,7 @@ def test_all_steps_run_when_no_failure():
 def test_aborts_on_first_failure():
     """실패 이후 단계는 실행되지 않아야 한다."""
     reg = _StubRegister(fail_on="name")
-    r = reg.register_product(DATA, save_after=False)
+    r = reg.register_product(DATA, save_after=False, skip_preflight=True)
     assert r["ok"] is False
     assert r["aborted"] is True
     assert r["failed_at"] == "name"
@@ -92,7 +97,7 @@ def test_aborts_on_first_failure():
 def test_never_saves_when_a_step_failed():
     """핵심: 앞 단계가 실패하면 저장을 절대 하지 않는다."""
     reg = _StubRegister(fail_on="category")
-    r = reg.register_product(DATA, save_after=True, require_confirm=False)
+    r = reg.register_product(DATA, save_after=True, require_confirm=False, skip_preflight=True)
     assert r["saved"] is False
     assert reg.saved is False, "실패했는데 저장이 실행됨 — 불완전 상품 등록 위험"
     assert "save" not in reg.calls
@@ -100,7 +105,7 @@ def test_never_saves_when_a_step_failed():
 
 def test_saves_only_when_all_steps_ok():
     reg = _StubRegister()
-    r = reg.register_product(DATA, save_after=True, require_confirm=False)
+    r = reg.register_product(DATA, save_after=True, require_confirm=False, skip_preflight=True)
     assert r["saved"] is True
     assert reg.saved is True
     assert reg.calls[-1] == "save"
@@ -108,7 +113,7 @@ def test_saves_only_when_all_steps_ok():
 
 def test_failed_at_is_none_on_success():
     reg = _StubRegister()
-    r = reg.register_product(DATA, save_after=False)
+    r = reg.register_product(DATA, save_after=False, skip_preflight=True)
     assert r["failed_at"] is None
 
 

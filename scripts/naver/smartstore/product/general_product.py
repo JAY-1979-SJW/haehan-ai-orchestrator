@@ -30,6 +30,7 @@ from playwright.sync_api import Page
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.naver.smartstore.product.preflight import preflight
 from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
@@ -607,13 +608,54 @@ class GeneralProductRegister:
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
 
-    def register_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
+    def register_product(
+        self,
+        data: dict,
+        save_after: bool = False,
+        require_confirm: bool = True,
+        publish: bool = False,
+        skip_preflight: bool = False,
+    ) -> dict:
         """원샷 등록.
 
         data:
             name (필수), price (필수), stock (필수),
             category, main_image
+            kc_cert / origin_area / delivery_fee_policy / as_phone (판매개시 시 필수)
+
+        publish=True 는 판매개시 의도를 뜻한다. 판매 필수값이 비어 있으면
+        브라우저를 열기 전에 거부한다.
         """
+        # ── 관문 0: 사전 검증 (브라우저 열기 전) ──────────────────────────
+        # 로컬에서 판정 가능한 실패로 60초짜리 브라우저 왕복을 낭비하지 않는다.
+        # 실패는 후보를 포함한 구조화된 형태로 돌려줘 스스로 고칠 수 있게 한다.
+        if not skip_preflight:
+            rep = preflight(data)
+            for issue in rep.issues:
+                _log.warning("[preflight] %s | %s | %s", issue.severity, issue.field, issue.message)
+            if not rep.can_fill:
+                _log.error("[preflight] 진행 불가 — 브라우저를 열지 않음: %s", rep.summary())
+                return {
+                    "ok": False,
+                    "aborted": True,
+                    "failed_at": "preflight",
+                    "issues": rep.as_dicts(),
+                    "steps": [],
+                    "step_results": {},
+                    "saved": False,
+                }
+            if publish and not rep.can_publish:
+                _log.error("[preflight] 판매개시 거부 — 필수값 누락: %s", rep.summary())
+                return {
+                    "ok": False,
+                    "aborted": True,
+                    "failed_at": "preflight_publish",
+                    "issues": rep.as_dicts(),
+                    "steps": [],
+                    "step_results": {},
+                    "saved": False,
+                }
+
         if not self.open():
             return {"ok": False, "error": "open_failed"}
 
