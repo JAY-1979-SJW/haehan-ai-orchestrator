@@ -214,6 +214,9 @@ def _fetch_article_detail_once(page: Page, url: str) -> dict:
             const board = (
                 document.querySelector('.tit_menu')?.innerText || ''
             ).split('\\n')[0].trim();
+            const author = (
+                document.querySelector('.end_user_nick, .writer_area .nick')?.innerText || ''
+            ).trim();
             const view_count = (
                 document.querySelector('.no.font_l')?.innerText || ''
             ).replace(/[^0-9]/g, '');
@@ -241,7 +244,7 @@ def _fetch_article_detail_once(page: Page, url: str) -> dict:
                 };
             }).filter(c => c.text);
             return {
-                board, view_count, like_count, tags, body, comment_count, written_at,
+                board, author, view_count, like_count, tags, body, comment_count, written_at,
                 comments, comments_loaded_count: comments.length,
             };
         }
@@ -347,6 +350,7 @@ def collect_articles(
                 art.update(
                     {
                         "board": detail.get("board") or art.get("board", ""),
+                        "author": detail.get("author") or art.get("author", ""),
                         "view_count": detail.get("view_count") or art.get("view_count", "0"),
                         "like_count": detail.get("like_count", "0"),
                         "comment_count": str(detail.get("comment_count") or art.get("comment_count", "0")),
