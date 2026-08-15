@@ -25,19 +25,24 @@ BOARDS = {
 
 _LIST_JS = r"""
 () => {
+  // 두 스킨을 모두 지원한다: 정보공유(tr 테이블) / 질문답변(div.article 카드).
   const rows = [];
-  const anchors = Array.from(document.querySelectorAll('a.mb_subject[title]'));
+  const anchors = Array.from(document.querySelectorAll('a[title][href]'))
+    .filter(a => /^\/?ab-\d+-\d+/.test(a.getAttribute('href') || ''));
+  const seen = new Set();
   for (const a of anchors) {
-    const tr = a.closest('tr');
-    if (!tr) continue;
     const href = a.getAttribute('href') || '';
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const container = a.closest('tr') || a.closest('div.article') || a.closest('li');
     const title = a.getAttribute('title') || '';
-    const category = (tr.querySelector('.tblabel')?.textContent || '').trim();
-    const author = (tr.querySelector('.mb_writer span')?.textContent || '').trim();
-    const dateEl = tr.querySelector('.DateTime');
+    if (!container) { rows.push({ href, title, category: '', author: '', date: '', views: '', votes: '' }); continue; }
+    const category = (container.querySelector('.tblabel, .category')?.textContent || '').trim();
+    const author = (container.querySelector('.mb_writer span, .user span[id^="ABP-btn"]')?.textContent || '').trim();
+    const dateEl = container.querySelector('.DateTime, .user label.bstip');
     const date = (dateEl?.getAttribute('data-tip') || dateEl?.textContent || '').trim();
-    const views = (tr.querySelector('.ViewCount')?.textContent || '').trim();
-    const votes = (tr.querySelector('.voteCount')?.textContent || '').trim();
+    const views = (container.querySelector('.ViewCount')?.textContent || '').trim();
+    const votes = (container.querySelector('.voteCount, .cmt i')?.textContent || '').trim();
     rows.push({ href, title, category, author, date, views, votes });
   }
   return rows;
@@ -59,9 +64,29 @@ def list_board(page: Any, board_url: str, *, wait_seconds: float = 4.0) -> list[
     return out
 
 
-_META_RE = re.compile(
-    r"(?P<author>\S+)\n\n(?P<date>\d{4}-\d{2}-\d{2})\n\n조회수\s*(?P<views>[\d,]+)\n\n좋아요\s*(?P<likes>[\d,]+)\n\n댓글\s*(?P<comments>[\d,]+)\n\n(?P<body>[\s\S]+)"
+# 두 스킨 모두 대응: 정보공유는 "작성자→날짜" 순서 + "좋아요/댓글" 라벨,
+# 질문답변은 "날짜→작성자" 순서 + "답변"(+채택률) 라벨을 쓴다.
+_META_RE_INFO = re.compile(
+    r"(?P<author>\S+)\n\n(?P<date>\d{4}[.\-]\d{2}[.\-]\d{2})[^\n]*\n\n조회수\s*(?P<views>[\d,]+)\n\n"
+    r"좋아요\s*(?P<likes>[\d,]+)\n\n댓글\s*(?P<comments>[\d,]+)"
+    r"\n(?P<body>[\s\S]+)"
 )
+_META_RE_QNA = re.compile(
+    r"(?P<date>\d{4}[.\-]\d{2}[.\-]\d{2})[^\n]*\n\n(?P<author>\S+)\n\n조회수\s*(?P<views>[\d,]+)\n\n"
+    r"답변\s*(?P<comments>[\d,]+)(?:\n\n채택률[\s\S]{0,20}%)?"
+    r"\n(?P<body>[\s\S]+)"
+)
+_BODY_STOP_MARKERS = ["아 맞다! 좋아요", "좋아요\n좋아요", "댓글 새로고침", "AI가 비슷한 글을 추천해요"]
+
+
+def _trim_body(body: str) -> str:
+    cut = len(body)
+    for marker in _BODY_STOP_MARKERS:
+        idx = body.find(marker)
+        if idx != -1:
+            cut = min(cut, idx)
+    return body[:cut].strip()[:3000]
+
 
 _COMMENT_ITEM_JS = r"""
 () => {
@@ -105,16 +130,17 @@ def fetch_post_detail(page: Any, url: str, *, wait_seconds: float = 3.0) -> dict
         "body": "",
         "comments_raw": [],
     }
-    match = _META_RE.search(block_text or "")
+    match = _META_RE_INFO.search(block_text or "") or _META_RE_QNA.search(block_text or "")
     if match:
+        groups = match.groupdict()
         result.update(
             {
-                "author": match.group("author").strip(),
-                "date": match.group("date").strip(),
-                "view_count": match.group("views").replace(",", ""),
-                "like_count": match.group("likes").replace(",", ""),
-                "comment_count": match.group("comments").replace(",", ""),
-                "body": match.group("body").strip()[:3000],
+                "author": groups.get("author", "").strip(),
+                "date": groups.get("date", "").strip(),
+                "view_count": groups.get("views", "").replace(",", ""),
+                "like_count": (groups.get("likes") or "").replace(",", ""),
+                "comment_count": (groups.get("comments") or "0").replace(",", ""),
+                "body": _trim_body(groups.get("body", "")),
             }
         )
 
