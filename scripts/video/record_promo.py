@@ -16,13 +16,22 @@ import argparse
 import asyncio
 import ctypes
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-NARR_DIR = ROOT / "data" / "video" / "narration"
-RAW_DIR = ROOT / "data" / "video" / "raw"
-FINAL = ROOT / "data" / "video" / "final_promo.mp4"
+sys.path.insert(0, str(ROOT))
+from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+
+
+def _video_dir():
+    return get_local_data_dir() / "video"
+
+
+NARR_DIR = get_local_data_dir() / "video" / "narration"
+RAW_DIR = get_local_data_dir() / "video" / "raw"
+FINAL = get_local_data_dir() / "video" / "final_promo.mp4"
 FFMPEG = (
     r"C:\Users\skyjw\AppData\Local\Microsoft\WinGet\Packages"
     r"\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe"
@@ -120,9 +129,11 @@ async def navigate_and_prepare(page, scene: dict) -> None:
 async def record_scene(scene: dict) -> Path:
     from playwright.async_api import async_playwright
 
+    narr_dir = get_local_data_dir() / "video" / "narration"
+    raw_dir = get_local_data_dir() / "video" / "raw"
     scene_id = scene["id"]
     name = scene["name"]
-    mp3 = NARR_DIR / f"scene_{scene_id:02d}_{name}.mp3"
+    mp3 = narr_dir / f"scene_{scene_id:02d}_{name}.mp3"
     if not mp3.exists():
         raise FileNotFoundError(f"나레이션 없음: {mp3}")
 
@@ -130,9 +141,9 @@ async def record_scene(scene: dict) -> Path:
     # 앞뒤 여유 추가
     record_duration = duration + 3.0
 
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
-    raw_video = RAW_DIR / f"scene_{scene_id:02d}_{name}_video.mp4"
-    out_mp4 = RAW_DIR / f"scene_{scene_id:02d}_{name}.mp4"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    raw_video = raw_dir / f"scene_{scene_id:02d}_{name}_video.mp4"
+    out_mp4 = raw_dir / f"scene_{scene_id:02d}_{name}.mp4"
 
     print(f"\n[장면 {scene_id}] {name} — 나레이션 {duration:.1f}초, 녹화 {record_duration:.1f}초")
     print(f"  URL: {scene['url']}")
@@ -239,10 +250,12 @@ def _merge_audio(video: Path, audio: Path, out: Path, audio_dur: float) -> None:
 
 def merge_all_scenes(scene_ids: list[int] | None = None) -> Path:
     """녹화된 장면들을 하나의 영상으로 합칩니다."""
+    raw_dir = get_local_data_dir() / "video" / "raw"
+    final = get_local_data_dir() / "video" / "final_promo.mp4"
     scenes = SCENES if scene_ids is None else [s for s in SCENES if s["id"] in scene_ids]
     files = []
     for s in scenes:
-        f = RAW_DIR / f"scene_{s['id']:02d}_{s['name']}.mp4"
+        f = raw_dir / f"scene_{s['id']:02d}_{s['name']}.mp4"
         if f.exists():
             files.append(f)
         else:
@@ -251,12 +264,11 @@ def merge_all_scenes(scene_ids: list[int] | None = None) -> Path:
     if not files:
         raise FileNotFoundError("합칠 영상 파일이 없습니다.")
 
-    # concat 파일 작성
-    concat_txt = RAW_DIR / "concat_list.txt"
+    concat_txt = raw_dir / "concat_list.txt"
     concat_txt.write_text("\n".join(f"file '{f}'" for f in files), encoding="utf-8")
 
     print(f"\n[합본] {len(files)}개 장면 합치는 중...")
-    FINAL.parent.mkdir(parents=True, exist_ok=True)
+    final.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [
             FFMPEG,
@@ -269,17 +281,16 @@ def merge_all_scenes(scene_ids: list[int] | None = None) -> Path:
             str(concat_txt),
             "-c",
             "copy",
-            str(FINAL),
+            str(final),
         ],
         check=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    print(f"✓ 최종 영상 → {FINAL}")
-    # 총 길이 출력
-    dur = get_audio_duration(FINAL)
+    print(f"✓ 최종 영상 → {final}")
+    dur = get_audio_duration(final)
     print(f"  총 재생 시간: {int(dur // 60)}분 {int(dur % 60)}초")
-    return FINAL
+    return final
 
 
 # ──────────────────────────────────────────────

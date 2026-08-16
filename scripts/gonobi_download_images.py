@@ -12,12 +12,17 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ai_orchestrator.config import get_local_data_dir
 from scripts.naver.blog.gonobi.db import open_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 logger = logging.getLogger(__name__)
 
-OUT_BASE = Path("data/gonobi_images")
+
+def get_out_base():
+    return get_local_data_dir() / "gonobi_images"
+
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Referer": "https://blog.naver.com/gonobi",
@@ -31,6 +36,7 @@ def safe_name(s: str) -> str:
 def download_images():
     session = requests.Session()
     session.headers.update(HEADERS)
+    out_base = get_out_base()
 
     with open_db() as conn:
         posts = conn.execute("SELECT log_no, title, our_category FROM gonobi_posts").fetchall()
@@ -50,7 +56,7 @@ def download_images():
             if not images:
                 continue
 
-            folder = OUT_BASE / safe_name(category)
+            folder = out_base / safe_name(category)
             folder.mkdir(parents=True, exist_ok=True)
 
             for n, img_row in enumerate(images, 1):
@@ -93,7 +99,7 @@ def download_images():
 
     # 폴더별 결과 출력
     print("\n=== 폴더별 이미지 수 ===")
-    for folder in sorted(OUT_BASE.iterdir()):
+    for folder in sorted(out_base.iterdir()):
         if folder.is_dir():
             cnt = len(list(folder.glob("*")))
             print(f"  {folder.name:15} {cnt}개")

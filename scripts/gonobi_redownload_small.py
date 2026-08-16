@@ -8,11 +8,10 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ai_orchestrator.config import get_local_data_dir
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 logger = logging.getLogger(__name__)
-
-BASE = Path("data/gonobi_images")
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Referer": "https://blog.naver.com/gonobi",
@@ -21,9 +20,10 @@ MIN_SIZE = 10_000  # 10KB
 
 
 def main():
+    base = get_local_data_dir() / "gonobi_images"
     # 작은 파일 목록 수집
     small_files = []
-    for folder in BASE.iterdir():
+    for folder in base.iterdir():
         if folder.is_dir():
             for f in folder.glob("*"):
                 if f.stat().st_size < MIN_SIZE:
@@ -84,7 +84,7 @@ def main():
     print("\n=== 최종 폴더별 현황 ===")
     total = 0
     still_small = 0
-    for folder in sorted(BASE.iterdir()):
+    for folder in sorted(base.iterdir()):
         if folder.is_dir():
             files = list(folder.glob("*"))
             s = sum(1 for f in files if f.stat().st_size < MIN_SIZE)

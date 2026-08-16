@@ -1,8 +1,12 @@
 """gonobi_images_v2 전체 이미지 HTML 갤러리 생성."""
 
+import sys
 from pathlib import Path
 
-BASE = Path("data/gonobi_images_v2")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ai_orchestrator.config import get_local_data_dir
+
+BASE = get_local_data_dir() / "gonobi_images_v2"
 OUT = Path("data/gonobi_gallery.html")
 
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}

@@ -7,10 +7,8 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ai_orchestrator.config import get_local_data_dir
 from scripts.naver.blog.gonobi.db import open_db
-
-BASE = Path("data/gonobi_images")
-NEW_BASE = Path("data/gonobi_images_v2")
 
 
 # 폴더명에 사용 불가 문자 제거
@@ -19,6 +17,8 @@ def safe_name(name: str) -> str:
 
 
 def main():
+    base = get_local_data_dir() / "gonobi_images"
+    new_base = get_local_data_dir() / "gonobi_images_v2"
     # DB에서 log_no → category_name 매핑
     with open_db() as conn:
         posts = conn.execute("SELECT log_no, category_name, title FROM gonobi_posts").fetchall()
@@ -30,7 +30,7 @@ def main():
 
     # 기존 이미지 파일 전체 수집
     all_files = []
-    for folder in BASE.iterdir():
+    for folder in base.iterdir():
         if folder.is_dir():
             for f in folder.glob("*"):
                 if f.is_file():
@@ -44,7 +44,7 @@ def main():
     no_match = 0
     by_cat = defaultdict(int)
 
-    NEW_BASE.mkdir(parents=True, exist_ok=True)
+    new_base.mkdir(parents=True, exist_ok=True)
 
     for f in all_files:
         # 파일명 첫 부분이 log_no
@@ -58,7 +58,7 @@ def main():
             cat_name = f.parent.name
             no_match += 1
 
-        dest_folder = NEW_BASE / safe_name(cat_name)
+        dest_folder = new_base / safe_name(cat_name)
         dest_folder.mkdir(parents=True, exist_ok=True)
         dest = dest_folder / f.name
 
@@ -78,7 +78,7 @@ def main():
     # 최종 검증
     print("\n=== 최종 폴더 현황 ===")
     total = 0
-    for folder in sorted(NEW_BASE.iterdir()):
+    for folder in sorted(new_base.iterdir()):
         if folder.is_dir():
             files = list(folder.glob("*"))
             sizes = [f.stat().st_size for f in files]

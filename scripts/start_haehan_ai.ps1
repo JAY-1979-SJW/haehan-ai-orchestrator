@@ -10,6 +10,20 @@ try {
     if ($consoleH -ne [System.IntPtr]::Zero) { [Hide.Win32]::ShowWindow($consoleH, 0) | Out-Null }  # 0 = SW_HIDE
 } catch {}
 
+# Windows 시작 시 자동실행 여부 — Electron 앱 트레이 메뉴("Windows 시작 시 자동 실행")가
+# 쓰는 %APPDATA%\Haehan AI\config.json 의 autoStart 값을 그대로 읽는다(단일 진실 소스).
+# 값이 없거나 false 면 전체 스택을 기동하지 않고 조용히 종료 — 데스크탑 아이콘을 직접
+# 클릭하면 이 설정과 무관하게 앱(+백엔드)이 바로 실행된다.
+$cfgPath = Join-Path $env:APPDATA "Haehan AI\config.json"
+$autoStart = $false
+if (Test-Path $cfgPath) {
+    try {
+        $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+        if ($cfg.autoStart -eq $true) { $autoStart = $true }
+    } catch {}
+}
+if (-not $autoStart) { exit 0 }
+
 $ROOT     = "C:\work\01. haehan-ai-orchestrator"
 $ELECTRON = "$ROOT\dist-installer\win-unpacked\Haehan AI.exe"
 $FASTAPI  = "$ROOT\dist-installer\win-unpacked\resources\server\haehan-server\haehan-server.exe"
@@ -110,8 +124,8 @@ if ($cdpAlive) {
             "--user-data-dir=`"$profileDir`"",
             "--no-first-run", "--no-default-browser-check",
             "--disable-background-timer-throttling",
-            "--window-position=9999,9999" `
-            -WindowStyle Minimized
+            "--window-position=100,50" `
+            -WindowStyle Normal
         # CDP는 빠르게 뜨므로 5초만 대기
         Start-Sleep -Seconds 5
         try {

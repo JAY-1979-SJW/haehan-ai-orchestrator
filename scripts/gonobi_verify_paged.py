@@ -5,13 +5,14 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ai_orchestrator.config import get_local_data_dir
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
 agent = BrowserAgent()
 agent.connect()
 page = agent._page
 
-BASE = Path("data/gonobi_images_v2")
+BASE = get_local_data_dir() / "gonobi_images_v2"
 OUT = Path("data/gonobi_verify_screenshots")
 OUT.mkdir(parents=True, exist_ok=True)
 
