@@ -74,9 +74,28 @@ python scripts/ops/capability_check.py naver mail
 - 신규 기능에서 OpenAI/GPT 호출이 필요하면: 먼저 사용자에게 비용·목적을 설명하고 명시적 승인("진행해", "GPT 써도 돼" 등)을 받은 뒤에만 실행한다. 승인 없이 "일단 테스트해본다"는 금지.
 - 이 훅은 Bash/PowerShell 명령어 문자열 매칭 방식이라 완벽하지 않음(예: 변수로 우회한 코드는 못 잡음) — 최종 책임은 AI가 실행 전에 스스로 확인하는 것.
 
+## MK 카탈로그 — GPT 비전 API 차단, Claude Code 직접 판독 (2026-08-16 추가)
+
+`scripts/mk_catalog/vision_extract.py`(GPT-4o vision)는 **코드 레벨에서 차단됨**(호출 시 `RuntimeError`).
+
+- 사유: 쿼터 초과로 다수 페이지 처리 실패 + 색상별 variant를 별도 제품으로 오분리하는 정확도 문제.
+- 남은 페이지는 **Claude Code가 이미지를 직접 Read 도구로 읽어** 제품을 판독하고,
+  `scripts/mk_catalog/append_rows.py` 에 JSON을 stdin으로 넘겨 `data/mk_catalog/products_manual.csv` 에 누적한다.
+- 진행 상황: `data/mk_catalog/remaining_pages.json` 에 미처리 페이지 목록, `data/mk_catalog/products.csv`(자동 처리분) + `products_manual.csv`(수동 처리분) 분리 관리.
+- `vision_extract.py` 재활성화는 신규 기능과 동일하게 사용자 사전 승인 필요.
+
 ---
 
 # 작업 원칙
+
+## 토큰 절약 — 필요시에만 사용 (2026-08-16 추가)
+
+불필요한 탐색적 조사·중복 확인·장황한 출력을 줄이고, 꼭 필요한 조사·실행만 간결하게 수행한다.
+
+- 이미 확인된 사실을 다시 조회하지 않는다 (같은 파일 재확인, 같은 셀렉터 재검증 등).
+- 탐색은 목적에 맞는 최소 범위로 — "혹시나" 하는 부가 확인을 반복하지 않는다.
+- 보고는 핵심만: 과정 서술보다 결과와 다음 액션 위주로 짧게.
+- 코드 작성 전 3단계(기준서→드라이런→승인) 등 필수 절차는 유지하되, 그 절차 안에서의 설명은 간결하게.
 
 ## 수동 실행 요청 절대 금지
 

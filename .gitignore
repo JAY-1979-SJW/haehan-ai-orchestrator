@@ -240,3 +240,6 @@ data/temp_images/
 data/recordings/
 data/video/
 data/cdp_chrome_tmp/
+data/mk_catalog/site/images/
+data/mk_catalog/crops/
+data/mk_catalog/detail/
