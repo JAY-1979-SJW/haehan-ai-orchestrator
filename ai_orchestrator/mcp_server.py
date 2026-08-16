@@ -39,9 +39,145 @@ except Exception:  # noqa: S110
 
 import mcp.server.stdio  # noqa: E402  (sys.path/.env 설정 후 import 필요)
 import mcp.types as types  # noqa: E402
+import requests  # noqa: E402
 from mcp.server import Server  # noqa: E402
 
 app = Server("haehan-ai-orchestrator")
+
+# ── 실행 중인 앱(FastAPI 8401) 실시간 연동 ────────────────────────────────────
+# 위 도구들(generate_description 등)은 코드를 직접 import해서 실행하지만,
+# 아래 registry는 "지금 떠 있는 서버 프로세스"의 API를 그대로 호출한다.
+# 허용목록 방식: 등록된 endpoint만 호출 가능 (임의 URL 호출 금지 — 보안 정책).
+API_BASE = "http://127.0.0.1:8401"
+
+API_REGISTRY: dict[str, dict[str, str]] = {
+    # 세션 상태
+    "sessions.status": {
+        "method": "GET",
+        "path": "/api/v1/sessions/status",
+        "desc": "전 사이트 로그인 세션 상태 조회 (read-only)",
+    },
+    "sessions.refresh": {
+        "method": "POST",
+        "path": "/api/v1/sessions/refresh",
+        "desc": "전 사이트 로그인 세션 상태 새로고침",
+    },
+    # 스마트스토어
+    "smartstore.products": {"method": "GET", "path": "/api/v1/smartstore/products", "desc": "상품 목록 조회(캐시)"},
+    "smartstore.products.collect": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/products/collect",
+        "desc": "상품 목록 CDP로 재수집",
+    },
+    "smartstore.product.get": {
+        "method": "GET",
+        "path": "/api/v1/smartstore/products/{product_id}",
+        "desc": "상품 상세 조회",
+    },
+    "smartstore.product.edit": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/products/{product_id}/edit",
+        "desc": "상품 수정(임시저장까지, 최종저장은 사용자)",
+    },
+    "smartstore.orders": {"method": "GET", "path": "/api/v1/smartstore/orders", "desc": "주문 목록 조회(캐시)"},
+    "smartstore.orders.collect": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/orders/collect",
+        "desc": "주문 목록 CDP로 재수집",
+    },
+    "smartstore.settlements": {"method": "GET", "path": "/api/v1/smartstore/settlements", "desc": "정산 조회(캐시)"},
+    "smartstore.reviews": {"method": "GET", "path": "/api/v1/smartstore/reviews", "desc": "리뷰 조회(캐시)"},
+    "smartstore.stats": {"method": "GET", "path": "/api/v1/smartstore/stats", "desc": "통계 조회(캐시)"},
+    "smartstore.description.templates": {
+        "method": "GET",
+        "path": "/api/v1/smartstore/description/templates",
+        "desc": "상세설명 템플릿 목록",
+    },
+    "smartstore.description.ai_generate": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/description/ai-generate",
+        "desc": "AI로 상세설명 생성",
+    },
+    "smartstore.popup.status": {
+        "method": "GET",
+        "path": "/api/v1/smartstore/popup/status",
+        "desc": "팝업 차단 상태 조회",
+    },
+    # 네이버 블로그
+    "blog.drafts": {"method": "GET", "path": "/api/v1/naver/blog/drafts", "desc": "블로그 임시저장 글 목록"},
+    "blog.compose": {"method": "POST", "path": "/api/v1/naver/blog/compose", "desc": "블로그 글 작성(초안 생성)"},
+    "blog.ai_generate": {"method": "POST", "path": "/api/v1/naver/blog/ai-generate", "desc": "AI로 블로그 글 생성"},
+    "blog.write_to_naver": {
+        "method": "POST",
+        "path": "/api/v1/naver/blog/write-to-naver",
+        "desc": "⚠️ 실제 네이버 블로그 발행 — 매번 재확인 필요",
+    },
+    # 네이버 카페
+    "cafe.my_cafes": {"method": "GET", "path": "/api/v1/naver-cafe/my-cafes", "desc": "가입 카페 목록"},
+    "cafe.collected": {"method": "GET", "path": "/api/v1/naver-cafe/collected", "desc": "수집된 카페 목록"},
+    "cafe.articles": {"method": "GET", "path": "/api/v1/naver-cafe/articles", "desc": "수집된 게시글 조회"},
+    "cafe.collect": {"method": "POST", "path": "/api/v1/naver-cafe/collect", "desc": "카페 게시글 수집"},
+    "cafe.report": {"method": "GET", "path": "/api/v1/naver-cafe/report", "desc": "카페 분석 리포트"},
+    # EUM(건설근로자공제회) 단말기 — 유통사 권한 조회 6종 (read-only)
+    "eum.devices": {"method": "GET", "path": "/api/v1/eum/devices", "desc": "단말기설치현황 전체 조회(WEBMAN390M00)"},
+    "eum.monitor": {
+        "method": "GET",
+        "path": "/api/v1/eum/monitor",
+        "desc": "통신단절/장기설치/준공임박 요약(캐시 기반, 브라우저 불필요)",
+    },
+    "eum.labor_test": {"method": "GET", "path": "/api/v1/eum/labor-test", "desc": "근로내역테스트 조회(WEBMAN460M00)"},
+    "eum.test_workers": {
+        "method": "GET",
+        "path": "/api/v1/eum/test-workers",
+        "desc": "테스트근로자등록 조회(WEBMAN470M00)",
+    },
+    "eum.site_devices": {
+        "method": "GET",
+        "path": "/api/v1/eum/site-devices",
+        "desc": "현장별단말기목록 조회(WEBMAN380M00, 필드명 미매핑 원본)",
+    },
+    "eum.install_targets": {
+        "method": "GET",
+        "path": "/api/v1/eum/install-targets",
+        "desc": "설치안내대상 전 페이지 조회(WEBMAN370M00)",
+    },
+    "eum.device_history": {
+        "method": "GET",
+        "path": "/api/v1/eum/device-history",
+        "desc": "단말기 이력 조회(WEBMAN400M00), device_id 쿼리파라미터로 특정 단말기 지정 가능",
+    },
+    # 네이버 메일 (발송은 매번 재확인 대상)
+    "mail.compose": {"method": "POST", "path": "/api/v1/naver-mail/compose", "desc": "메일 초안 작성"},
+    "mail.send": {"method": "POST", "path": "/api/v1/naver-mail/send", "desc": "⚠️ 실제 메일 발송 — 매번 재확인 필요"},
+}
+
+
+def _api_call(
+    endpoint: str, path_params: dict | None = None, query: dict | None = None, body: dict | None = None
+) -> dict:
+    spec = API_REGISTRY.get(endpoint)
+    if not spec:
+        return {
+            "ok": False,
+            "error": f"허용되지 않은 endpoint: {endpoint}",
+            "hint": "list_api_endpoints 로 사용 가능 목록 확인",
+        }
+    path = spec["path"]
+    for k, v in (path_params or {}).items():
+        path = path.replace(f"{{{k}}}", str(v))
+    if "{" in path:
+        return {"ok": False, "error": f"path_params 누락: {path}"}
+    url = f"{API_BASE}{path}"
+    try:
+        resp = requests.request(spec["method"], url, params=query, json=body, timeout=30)
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {"raw": resp.text[:2000]}
+        return {"ok": resp.ok, "status": resp.status_code, "data": data}
+    except requests.RequestException as e:
+        return {"ok": False, "error": str(e), "hint": "FastAPI 서버(8401)가 실행 중인지 확인하세요"}
+
 
 # ── 템플릿 저장소 ─────────────────────────────────────────────────────────────
 TMPL_DIR = ROOT / "data" / "smartstore" / "desc_templates"
@@ -267,74 +403,154 @@ async def list_tools() -> list[types.Tool]:
                 "required": ["product_id"],
             },
         ),
+        types.Tool(
+            name="list_cafe_boards",
+            description="네이버 카페의 현재 게시판(메뉴) 목록을 조회합니다.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cafe_url": {"type": "string", "description": "카페 URL (예: https://cafe.naver.com/haehan)"},
+                },
+                "required": ["cafe_url"],
+            },
+        ),
+        types.Tool(
+            name="add_cafe_board",
+            description="네이버 카페에 신규 게시판을 추가합니다 (CDP 자동화, 레거시 관리 화면 조작).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "cafe_url": {"type": "string", "description": "카페 URL"},
+                    "name": {"type": "string", "description": "새 게시판 이름"},
+                    "board_type": {
+                        "type": "string",
+                        "enum": ["통합게시판", "상품등록게시판", "스탭게시판", "메모게시판", "출석부", "카페북"],
+                        "description": "게시판 유형 (기본: 통합게시판)",
+                        "default": "통합게시판",
+                    },
+                },
+                "required": ["cafe_url", "name"],
+            },
+        ),
+        types.Tool(
+            name="list_api_endpoints",
+            description="지금 실행 중인 해한 AI 앱(FastAPI 8401)의 실시간 API 허용목록을 조회합니다.",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        types.Tool(
+            name="call_api",
+            description=(
+                "지금 실행 중인 해한 AI 앱(FastAPI 8401)의 API를 실시간으로 직접 호출합니다. "
+                "list_api_endpoints로 조회한 endpoint 키만 사용 가능 (허용목록 방식)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "endpoint": {
+                        "type": "string",
+                        "description": "list_api_endpoints에서 확인한 endpoint 키 (예: sessions.status)",
+                    },
+                    "path_params": {"type": "object", "description": "URL 경로 파라미터 (예: {product_id: '123'})"},
+                    "query": {"type": "object", "description": "쿼리스트링 파라미터"},
+                    "body": {"type": "object", "description": "요청 바디(JSON)"},
+                },
+                "required": ["endpoint"],
+            },
+        ),
     ]
 
 
 # ── 도구 실행 ─────────────────────────────────────────────────────────────────
 
 
+def _dispatch_sync(name: str, arguments: dict[str, Any]) -> dict:
+    """동기 도구 실행 (Playwright sync API 사용 — asyncio 루프 밖 스레드에서 실행 필요)."""
+
+    if name == "save_template":
+        return _save_template(arguments)
+
+    elif name == "list_templates":
+        return _list_templates()
+
+    elif name == "get_template":
+        return _get_template(arguments["id"])
+
+    elif name == "delete_template":
+        return _delete_template(arguments["id"])
+
+    elif name == "render_description":
+        return _render_description(arguments)
+
+    elif name == "list_products":
+        return _list_products()
+
+    elif name == "collect_products":
+        return _cdp_collect("products", arguments)
+
+    elif name == "list_orders":
+        return _load_ss_data("orders")
+
+    elif name == "collect_orders":
+        return _cdp_collect("orders", arguments)
+
+    elif name == "list_settlements":
+        return _load_ss_data("settlements")
+
+    elif name == "collect_settlements":
+        return _cdp_collect("settlements", arguments)
+
+    elif name == "list_reviews":
+        return _load_ss_data("reviews")
+
+    elif name == "collect_reviews":
+        return _cdp_collect("reviews", arguments)
+
+    elif name == "list_stats":
+        return _load_ss_data("stats")
+
+    elif name == "collect_stats":
+        return _cdp_collect("stats", arguments)
+
+    elif name == "open_seller_center":
+        return _open_seller_center(arguments)
+
+    elif name == "auto_register_product":
+        return _auto_register_product(arguments)
+
+    elif name == "edit_product":
+        return _edit_product(arguments)
+
+    elif name == "list_cafe_boards":
+        return _list_cafe_boards(arguments)
+
+    elif name == "add_cafe_board":
+        return _add_cafe_board(arguments)
+
+    elif name == "list_api_endpoints":
+        return {"ok": True, "base_url": API_BASE, "endpoints": API_REGISTRY}
+
+    elif name == "call_api":
+        return _api_call(
+            arguments["endpoint"],
+            arguments.get("path_params"),
+            arguments.get("query"),
+            arguments.get("body"),
+        )
+
+    else:
+        return {"ok": False, "error": f"알 수 없는 도구: {name}"}
+
+
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
+    import asyncio
 
     if name == "generate_description":
         result = await _generate_description(arguments)
-
-    elif name == "save_template":
-        result = _save_template(arguments)
-
-    elif name == "list_templates":
-        result = _list_templates()
-
-    elif name == "get_template":
-        result = _get_template(arguments["id"])
-
-    elif name == "delete_template":
-        result = _delete_template(arguments["id"])
-
-    elif name == "render_description":
-        result = _render_description(arguments)
-
-    elif name == "list_products":
-        result = _list_products()
-
-    elif name == "collect_products":
-        result = _cdp_collect("products", arguments)
-
-    elif name == "list_orders":
-        result = _load_ss_data("orders")
-
-    elif name == "collect_orders":
-        result = _cdp_collect("orders", arguments)
-
-    elif name == "list_settlements":
-        result = _load_ss_data("settlements")
-
-    elif name == "collect_settlements":
-        result = _cdp_collect("settlements", arguments)
-
-    elif name == "list_reviews":
-        result = _load_ss_data("reviews")
-
-    elif name == "collect_reviews":
-        result = _cdp_collect("reviews", arguments)
-
-    elif name == "list_stats":
-        result = _load_ss_data("stats")
-
-    elif name == "collect_stats":
-        result = _cdp_collect("stats", arguments)
-
-    elif name == "open_seller_center":
-        result = _open_seller_center(arguments)
-
-    elif name == "auto_register_product":
-        result = _auto_register_product(arguments)
-
-    elif name == "edit_product":
-        result = _edit_product(arguments)
-
     else:
-        result = {"ok": False, "error": f"알 수 없는 도구: {name}"}
+        # Playwright sync API는 실행 중인 asyncio 루프 안에서 호출하면 에러가 나므로
+        # 별도 스레드(자체 이벤트루프 없음)에서 실행한다.
+        result = await asyncio.to_thread(_dispatch_sync, name, arguments)
 
     return [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))]
 
@@ -553,6 +769,59 @@ def _open_seller_center(args: dict) -> dict:
     return {"ok": True, "page_key": page_key, "url": url}
 
 
+# ── 카페 게시판 관리 ──────────────────────────────────────────────────────────
+
+
+def _list_cafe_boards(args: dict) -> dict:
+    cafe_url = args.get("cafe_url", "")
+    if not cafe_url:
+        return {"ok": False, "error": "cafe_url 필요"}
+    try:
+        from playwright.sync_api import sync_playwright
+
+        from scripts.naver.cafe.management.board import list_boards
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
+            page = browser.contexts[0].new_page()
+            try:
+                return list_boards(page, cafe_url)
+            finally:
+                page.close()
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
+
+
+def _add_cafe_board(args: dict) -> dict:
+    cafe_url = args.get("cafe_url", "")
+    name = args.get("name", "")
+    board_type = args.get("board_type", "통합게시판")
+    if not cafe_url or not name:
+        return {"ok": False, "error": "cafe_url, name 필요"}
+    try:
+        from playwright.sync_api import sync_playwright
+
+        from scripts.naver.cafe.management.board import add_board
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
+            page = browser.contexts[0].new_page()
+            try:
+                return add_board(page, cafe_url, name, board_type=board_type)
+            finally:
+                page.close()
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요 (cdp_force_start.py start)",
+        }
+
+
 # ── 상품 등록 / 수정 ──────────────────────────────────────────────────────────
 
 
@@ -645,7 +914,11 @@ def _edit_product(args: dict) -> dict:
 def main() -> None:
     import asyncio
 
-    asyncio.run(mcp.server.stdio.stdio_server(app))
+    async def _run() -> None:
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            await app.run(read_stream, write_stream, app.create_initialization_options())
+
+    asyncio.run(_run())
 
 
 if __name__ == "__main__":
