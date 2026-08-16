@@ -78,6 +78,12 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
             _cmd_history(sub, args)
         case "demolition":
             _cmd_demolition(sub, args)
+        case "labor-test":
+            _cmd_labor_test()
+        case "test-workers":
+            _cmd_test_workers()
+        case "site-devices":
+            _cmd_site_devices()
         case "explore":
             _cmd_explore()
         case "explore-accessible" | "access-map":
@@ -240,6 +246,45 @@ def _cmd_monitor() -> None:
     from scripts.eum.monitor import main
 
     main()
+
+
+def _cmd_labor_test() -> None:
+    """근로내역테스트 조회 (WEBMAN460M00)."""
+    page = _get_page()
+    print("=" * 60)
+    print("EUM 근로내역테스트 조회")
+    print("=" * 60)
+    from scripts.eum.labor_test import fetch_labor_test, save_labor_test
+
+    records = fetch_labor_test(page)
+    path = save_labor_test(records)
+    print(f"근로내역테스트: {len(records)}건 조회 → {path}")
+
+
+def _cmd_test_workers() -> None:
+    """테스트근로자등록 조회 (WEBMAN470M00)."""
+    page = _get_page()
+    print("=" * 60)
+    print("EUM 테스트근로자등록 조회")
+    print("=" * 60)
+    from scripts.eum.test_workers import fetch_test_workers, save_test_workers
+
+    records = fetch_test_workers(page)
+    path = save_test_workers(records)
+    print(f"테스트근로자등록: {len(records)}건 조회 → {path}")
+
+
+def _cmd_site_devices() -> None:
+    """현장별단말기목록 조회 (WEBMAN380M00, 필드명 미매핑 원본 보존)."""
+    page = _get_page()
+    print("=" * 60)
+    print("EUM 현장별단말기목록 조회")
+    print("=" * 60)
+    from scripts.eum.site_devices import fetch_site_devices, save_site_devices
+
+    records = fetch_site_devices(page)
+    path = save_site_devices(records)
+    print(f"현장별단말기목록: {len(records)}건 조회 → {path}")
 
 
 def _cmd_history(sub: str | None, args: list[str]) -> None:
@@ -429,6 +474,12 @@ def _cmd_work(sub: str | None, args: list[str]) -> None:
             _cmd_demolition(None, [])
         elif key == "monitor":
             _cmd_monitor()
+        elif key == "labor_test":
+            _cmd_labor_test()
+        elif key == "test_workers":
+            _cmd_test_workers()
+        elif key == "site_devices":
+            _cmd_site_devices()
         else:
             print("No auto executor is registered for this workflow.")
 
