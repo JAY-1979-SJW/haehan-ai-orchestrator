@@ -19,7 +19,7 @@ const { app, ipcMain } = require("electron");
 const {
   loadConfig, saveConfig, isOwnerMode,
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
-  getAuthToken,
+  getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
@@ -61,17 +61,18 @@ bus.on(EVENTS.TOGGLE_SYSTEM_CHROME, () => {
   // 트레이 메뉴 체크 상태 갱신
   // 동적 require: tray → config → electron 경로로 인한 순환 의존성을 런타임 로드로 회피
   const { updateAutoLaunchCheck } = require("./lib/tray");
-  updateAutoLaunchCheck(app.getLoginItemSettings().openAtLogin);
+  updateAutoLaunchCheck(isAutoStartEnabled());
   const win = getMainWindow();
   if (win) win.webContents.send("notify", next
     ? "✅ 내 Chrome 세션 사용 ON — 다음 CDP 시작부터 적용됩니다"
     : "ℹ️ 내 Chrome 세션 사용 OFF — 앱 전용 프로필로 전환됩니다");
 });
-// 트레이 자동실행 토글
+// 트레이 자동실행 토글 — start_haehan_ai.ps1(시작프로그램 바로가기)이 읽는 config.json
+// autoStart 값을 직접 변경한다(electron 자체 로그인아이템 레지스트리는 사용 안 함 — ps1
+// 런처와 이중 등록되어 앱이 두 번 뜨는 문제 방지).
 bus.on(EVENTS.TOGGLE_AUTO_LAUNCH, () => {
-  const current = app.getLoginItemSettings().openAtLogin;
-  const next = !current;
-  app.setLoginItemSettings({ openAtLogin: next, openAsHidden: false });
+  const next = !isAutoStartEnabled();
+  setAutoStartEnabled(next);
   updateAutoLaunchCheck(next);
 });
 
@@ -86,10 +87,10 @@ if (!gotLock) {
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
     if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
 
-    // 자동시작 레지스트리 등록 비활성화(사용자 선택): 로그인 자동시작은 시작프로그램 폴더의
-    // start_haehan_ai.ps1(전체 스택 런처)이 단독 담당한다. 과거 여기서 setLoginItemSettings 로
-    // electron.app 레지스트리 Run 을 추가해, ps1 런처와 함께 앱이 이중 실행되던 문제 제거.
-    // 사용자가 원하면 트레이 메뉴(TOGGLE_AUTO_LAUNCH)로 직접 켤 수 있다.
+    // 자동실행 여부는 electron.app 로그인아이템 레지스트리가 아니라 config.json 의 autoStart
+    // 값으로 관리한다(isAutoStartEnabled/setAutoStartEnabled). 시작프로그램 폴더의
+    // start_haehan_ai.ps1(전체 스택 런처)이 같은 값을 읽어 꺼져 있으면 기동을 건너뛴다.
+    // 트레이 메뉴(TOGGLE_AUTO_LAUNCH)에서 켜고 끌 수 있다.
 
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
@@ -155,7 +156,7 @@ if (!gotLock) {
       const startHidden = process.argv.includes("--hidden");
       startAgent(key);
       createMainWindow(key, startHidden);
-      createTray(app.getLoginItemSettings().openAtLogin);
+      createTray(isAutoStartEnabled());
     } else {
       startLicenseFlow();
     }
@@ -169,7 +170,9 @@ if (!gotLock) {
 function startLicenseFlow() {
   const licWin = createLicenseWindow();
 
-  ipcMain.once("license-submit", async (_, key) => {
+  // on(반복 허용) — 첫 시도가 틀렸을 때도 사용자가 다시 제출할 수 있어야 하므로 once() 는 부적합.
+  // 성공 시에만 리스너를 해제한다(창이 닫히므로 이후 제출 불가).
+  const onSubmit = async (_, key) => {
     let ok = false;
     try {
       const res = await verifyLicense(key);
@@ -177,15 +180,17 @@ function startLicenseFlow() {
     } catch { ok = false; } // fail-close: verifyLicense 자체 예외 시 거부 (오프라인 허용은 verifyLicense 내부에서 담당)
 
     if (ok) {
+      ipcMain.removeListener("license-submit", onSubmit);
       saveConfig({ ...loadConfig(), license_key: key });
       licWin.close();
       startAgent(key);
       createMainWindow(key);
-      createTray(app.getLoginItemSettings().openAtLogin);
+      createTray(isAutoStartEnabled());
     } else {
       licWin.webContents.send("license-error");
     }
-  });
+  };
+  ipcMain.on("license-submit", onSubmit);
 }
 
 // ── 로컬 설정 브리지 (P1-3) — webview UI ↔ config.json ──────────────────────
@@ -219,7 +224,21 @@ ipcMain.on("youtube-connect", async () => {
 });
 
 // ── 종료 처리 ────────────────────────────────────────────────────────────────
-app.on("before-quit", () => { appQuitting = true; if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer); setQuiting(true); stopAgent(); stopFastAPIServer(); stopNextServer(); stopCdpBrowser(); });
+// stopFastAPIServer/stopNextServer 는 SIGTERM 후 3초 뒤 SIGKILL 폴백을 예약한다. before-quit 이
+// 동기로 끝나자마자 Electron 이 프로세스를 종료해버리면 그 타이머가 실행되기 전에 죽어 정리가
+// 안 되므로, 첫 호출에서 종료를 한 번 유예(preventDefault)하고 폴백 시간만큼 기다렸다가 quit().
+app.on("before-quit", (event) => {
+  if (appQuitting) return; // 유예 후 재호출된 두 번째 패스 — 그대로 종료 진행
+  event.preventDefault();
+  appQuitting = true;
+  if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer);
+  setQuiting(true);
+  stopAgent();
+  stopFastAPIServer();
+  stopNextServer();
+  stopCdpBrowser();
+  setTimeout(() => app.quit(), 3200);
+});
 
 // 트레이가 있으면 창을 닫아도 백그라운드 상주(트레이에서 다시 열기)
 app.on("window-all-closed", () => { if (!hasTray()) app.quit(); });

@@ -60,11 +60,16 @@ function openYouTubeOAuthPopup(authUrl, licenseKey, resolve) {
   youtubeOAuthWin.loadURL(authUrl);
 
   const CALLBACK_PREFIX = `${SERVER_URL}/api/v1/oauth/youtube/callback`;
+  // will-navigate 와 did-navigate 가 같은 콜백 URL 이동에 대해 둘 다 발화한다. 가드 없이 두 번
+  // 실행되면 두 번째 호출 시 youtubeOAuthWin 이 이미 null 이라 close() 에서 TypeError 로 크래시.
+  let handled = false;
   youtubeOAuthWin.webContents.on("will-navigate", (_, url) => handleCallback(url));
   youtubeOAuthWin.webContents.on("did-navigate", (_, url) => handleCallback(url));
 
   function handleCallback(url) {
+    if (handled) return;
     if (!url.startsWith(CALLBACK_PREFIX)) return;
+    handled = true;
     const code = new URL(url).searchParams.get("code");
     if (!code) { resolve(false); return; }
     youtubeOAuthWin.close();

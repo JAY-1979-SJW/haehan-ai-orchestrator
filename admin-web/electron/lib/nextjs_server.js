@@ -107,8 +107,11 @@ async function startNextServer() {
 function stopNextServer() {
   if (serverProc) {
     console.log("[nextjs] 서버 종료 요청");
-    serverProc.kill("SIGTERM");
-    setTimeout(() => { if (serverProc) serverProc.kill("SIGKILL"); }, 3000);
+    const proc = serverProc;
+    proc.kill("SIGTERM");
+    // exit 핸들러가 serverProc 을 null 로 정리하므로, 지연 SIGKILL 은 캡처해둔 proc 을 직접 검사한다
+    // (serverProc 을 여기서 바로 null 처리하면 타임아웃이 항상 false 로 평가돼 SIGKILL 이 안 나감).
+    setTimeout(() => { try { proc.kill("SIGKILL"); } catch {} }, 3000);
     serverProc = null;
   }
   _ready = false;
