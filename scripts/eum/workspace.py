@@ -99,6 +99,33 @@ WORKFLOWS: list[dict[str, Any]] = [
         "command": "python scripts/cdp_client.py eum monitor",
         "auto_execute": True,
     },
+    {
+        "key": "labor_test",
+        "aliases": ["labor-test", "laborTest", "WEBMAN460M00"],
+        "title": "Labor tag test record lookup",
+        "code": "WEBMAN460M00",
+        "risk": "read",
+        "command": "python scripts/cdp_client.py eum labor-test",
+        "auto_execute": True,
+    },
+    {
+        "key": "test_workers",
+        "aliases": ["test-workers", "testWorkers", "WEBMAN470M00"],
+        "title": "Registered test worker list",
+        "code": "WEBMAN470M00",
+        "risk": "read",
+        "command": "python scripts/cdp_client.py eum test-workers",
+        "auto_execute": True,
+    },
+    {
+        "key": "site_devices",
+        "aliases": ["site-devices", "siteDevices", "site-device-list"],
+        "title": "Per-site device list (raw cells, headers do not map 1:1)",
+        "code": "WEBMAN380M00",
+        "risk": "read",
+        "command": "python scripts/cdp_client.py eum site-devices",
+        "auto_execute": True,
+    },
 ]
 
 _APPROVAL_WORDS = (
