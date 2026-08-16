@@ -23,6 +23,10 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from dotenv import load_dotenv  # noqa: E402
+
+load_dotenv(_ROOT / ".env", encoding="utf-8")
+
 
 def _eum_dir() -> Path:
     from scripts.common.data_paths import get_app_dir
