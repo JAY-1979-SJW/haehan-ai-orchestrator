@@ -62,8 +62,11 @@ def _wait_cdp(timeout: int = 20) -> bool:
     return False
 
 
+_WIN_LEFT, _WIN_TOP, _WIN_W, _WIN_H = 100, 50, 1440, 900
+
+
 def _sanitize_prefs() -> None:
-    """비정상 종료 흔적 제거 (exit_type/exited_cleanly 정상화)."""
+    """Chrome Preferences 패치: 비정상 종료 흔적 제거 + 창 위치 고정."""
     prefs = PROFILE_DIR / "Default" / "Preferences"
     if not prefs.exists():
         return
@@ -77,9 +80,32 @@ def _sanitize_prefs() -> None:
         if p.get("exited_cleanly") is not True:
             p["exited_cleanly"] = True
             changed = True
+        # 창 위치 고정 — off-screen(9999 등)이거나 최대화 저장 시 리셋
+        browser = data.setdefault("browser", {})
+        placement = browser.get("window_placement", {})
+        need_fix = (
+            placement.get("left", 0) > 3000
+            or placement.get("top", 0) > 3000
+            or placement.get("left", 0) < -100
+            or placement.get("top", 0) < -100
+            or placement.get("maximized") is True
+        )
+        if need_fix:
+            browser["window_placement"] = {
+                "bottom": _WIN_TOP + _WIN_H,
+                "left": _WIN_LEFT,
+                "maximized": False,
+                "right": _WIN_LEFT + _WIN_W,
+                "top": _WIN_TOP,
+                "work_area_bottom": 1080,
+                "work_area_left": 0,
+                "work_area_right": 1920,
+                "work_area_top": 0,
+            }
+            changed = True
         if changed:
             prefs.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-            print("  [PREFS] 정상화 완료")
+            print(f"  [PREFS] 정상화 완료 (window={_WIN_W}x{_WIN_H}@{_WIN_LEFT},{_WIN_TOP})")
     except Exception as e:
         print(f"  [PREFS] 패치 실패 (무시): {e}")
 

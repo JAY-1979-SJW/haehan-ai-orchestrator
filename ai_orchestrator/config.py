@@ -91,3 +91,18 @@ except (ValueError, TypeError):
 JWT_SECRET = os.environ.get("JWT_SECRET", "").strip() or _secrets.token_hex(32)
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
+
+# ── 로컬 대용량 데이터 루트 ──────────────────────────────────────────────────
+# .env의 LOCAL_DATA_DIR을 매 호출마다 재읽어 경로 변경 시 재시작 불필요.
+# 설정 예) LOCAL_DATA_DIR=C:\Users\skyjw\OneDrive\_local_data
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+
+def get_local_data_dir() -> Path:
+    load_dotenv(override=True, encoding="utf-8")
+    v = os.environ.get("LOCAL_DATA_DIR", "").strip()
+    return Path(v) if v else _DEFAULT_DATA_DIR
+
+
+# 모듈 임포트 시 1회 평가 (하위 호환). 실시간이 필요한 곳은 get_local_data_dir() 직접 호출.
+LOCAL_DATA_DIR: Path = get_local_data_dir()

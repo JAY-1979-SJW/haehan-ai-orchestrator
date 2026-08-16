@@ -13,6 +13,7 @@ Backend selection:
   - code 원문은 메모리에서도 발급 후 즉시 폐기 (IssueResult로만 반환)
   - consume/revoke 시 DB 접근 최소화
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -24,14 +25,13 @@ import threading
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _now_iso() -> str:
@@ -69,9 +69,11 @@ CODE_LEN: int = 12
 
 # ── Data Models ──────────────────────────────────────────────────────────────
 
+
 @dataclass
 class RegistrationCode:
     """Registration code record (공통 데이터 구조)."""
+
     code_id: str
     label: str
     code_hash: str
@@ -89,7 +91,7 @@ class RegistrationCode:
     revoked_at: str = ""
     revoked_by: str = ""
 
-    def status(self, now: Optional[datetime] = None) -> str:
+    def status(self, now: datetime | None = None) -> str:
         """현재 code 상태 반환: revoked | used | expired | active."""
         if self.revoked_at:
             return "revoked"
@@ -127,11 +129,13 @@ class RegistrationCode:
 @dataclass
 class IssueResult:
     """Code 발급 결과 — registration_code 평문은 1회만 반환."""
+
     code: RegistrationCode
     registration_code: str  # 평문 — 호출자가 1회만 사용 후 폐기
 
 
 # ── Exceptions ───────────────────────────────────────────────────────────────
+
 
 class InvalidTTLError(ValueError):
     """TTL이 허용 범위를 벗어남."""
@@ -147,6 +151,7 @@ class CodeExchangeError(Exception):
 
 # ── Store Interface ──────────────────────────────────────────────────────────
 
+
 class RegistrationCodeStore(ABC):
     """Registration code store 추상 인터페이스."""
 
@@ -156,7 +161,7 @@ class RegistrationCodeStore(ABC):
         *,
         label: str,
         expires_in_minutes: int = DEFAULT_TTL_MINUTES,
-        allowed_actions: Optional[list[str]] = None,
+        allowed_actions: list[str] | None = None,
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
@@ -171,7 +176,7 @@ class RegistrationCodeStore(ABC):
         pass
 
     @abstractmethod
-    def get(self, code_id: str) -> Optional[RegistrationCode]:
+    def get(self, code_id: str) -> RegistrationCode | None:
         """code_id로 code record 조회."""
         pass
 
@@ -181,7 +186,7 @@ class RegistrationCodeStore(ABC):
         pass
 
     @abstractmethod
-    def revoke(self, code_id: str, *, actor: str) -> Optional[RegistrationCode]:
+    def revoke(self, code_id: str, *, actor: str) -> RegistrationCode | None:
         """Code revoke."""
         pass
 
@@ -198,6 +203,7 @@ class RegistrationCodeStore(ABC):
 
 # ── In-Memory Store (기본값) ────────────────────────────────────────────────────
 
+
 class InMemoryRegistrationCodeStore(RegistrationCodeStore):
     """Process-local in-memory store (기본값, 운영 migration 전까지)."""
 
@@ -210,7 +216,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
         *,
         label: str,
         expires_in_minutes: int = DEFAULT_TTL_MINUTES,
-        allowed_actions: Optional[list[str]] = None,
+        allowed_actions: list[str] | None = None,
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
@@ -256,7 +262,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
 
         now = _now()
         with self._lock:
-            target: Optional[RegistrationCode] = None
+            target: RegistrationCode | None = None
             for rec in self._codes.values():
                 cand = _hash_code(normalized, rec.code_salt)
                 if secrets.compare_digest(cand, rec.code_hash):
@@ -277,7 +283,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
             target.used_at = now.isoformat()
             return target
 
-    def get(self, code_id: str) -> Optional[RegistrationCode]:
+    def get(self, code_id: str) -> RegistrationCode | None:
         with self._lock:
             return self._codes.get(code_id)
 
@@ -287,7 +293,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
         items.sort(key=lambda r: r.created_at, reverse=True)
         return [r.to_safe() for r in items]
 
-    def revoke(self, code_id: str, *, actor: str) -> Optional[RegistrationCode]:
+    def revoke(self, code_id: str, *, actor: str) -> RegistrationCode | None:
         with self._lock:
             rec = self._codes.get(code_id)
             if rec is None:
@@ -313,6 +319,7 @@ class InMemoryRegistrationCodeStore(RegistrationCodeStore):
 
 # ── DB-Backed Store (Fake DB 기반 구현) ──────────────────────────────────────
 
+
 class _FakeDbTable:
     """테스트용 fake registration_codes 테이블 (in-memory SQL 시뮬레이션)."""
 
@@ -327,7 +334,7 @@ class _FakeDbTable:
                 raise ValueError(f"code_id already exists: {rec.code_id}")
             self._rows[rec.code_id] = rec
 
-    def select_by_id(self, code_id: str) -> Optional[RegistrationCode]:
+    def select_by_id(self, code_id: str) -> RegistrationCode | None:
         """SELECT * FROM registration_codes WHERE code_id = ?."""
         with self._lock:
             return self._rows.get(code_id)
@@ -364,6 +371,7 @@ class _FakeDbTable:
 
 # ── PostgreSQL Executor ──────────────────────────────────────────────────────
 
+
 class _PostgresDbExecutor:
     """PostgreSQL 연결 및 쿼리 실행 (connection-per-operation)."""
 
@@ -373,9 +381,7 @@ class _PostgresDbExecutor:
             import psycopg2
             import psycopg2.extras
         except ImportError:
-            raise RuntimeError(
-                "psycopg2 not installed. Install via: pip install psycopg2-binary>=2.9.0"
-            )
+            raise RuntimeError("psycopg2 not installed. Install via: pip install psycopg2-binary>=2.9.0")
 
         self.conn_str = connection_string
         self._lock = threading.Lock()
@@ -431,7 +437,7 @@ class _PostgresDbExecutor:
                 cur.close()
                 conn.close()
 
-    def select_by_id(self, code_id: str) -> Optional[RegistrationCode]:
+    def select_by_id(self, code_id: str) -> RegistrationCode | None:
         """SELECT * FROM registration_codes WHERE code_id = ?."""
         with self._lock:
             conn = self._get_connection()
@@ -473,7 +479,7 @@ class _PostgresDbExecutor:
                     (used_at, code_id),
                 )
                 conn.commit()
-            except Exception as e:
+            except Exception:
                 conn.rollback()
                 logger.error("UPDATE used_at failed")
             finally:
@@ -491,7 +497,7 @@ class _PostgresDbExecutor:
                     (revoked_at, revoked_by, code_id),
                 )
                 conn.commit()
-            except Exception as e:
+            except Exception:
                 conn.rollback()
                 logger.error("UPDATE revoked_at failed")
             finally:
@@ -509,7 +515,7 @@ class _PostgresDbExecutor:
                     (agent_id, code_id),
                 )
                 conn.commit()
-            except Exception as e:
+            except Exception:
                 conn.rollback()
                 logger.error("UPDATE used_by_agent_id failed")
             finally:
@@ -524,7 +530,7 @@ class _PostgresDbExecutor:
             try:
                 cur.execute("DELETE FROM registration_codes")
                 conn.commit()
-            except Exception as e:
+            except Exception:
                 conn.rollback()
                 logger.error("CLEAR failed")
             finally:
@@ -581,7 +587,7 @@ class _PostgresDbExecutor:
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             self._conn = None
 
@@ -611,7 +617,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
         *,
         label: str,
         expires_in_minutes: int = DEFAULT_TTL_MINUTES,
-        allowed_actions: Optional[list[str]] = None,
+        allowed_actions: list[str] | None = None,
         note: str = "",
         issued_by: str,
         issuer_role: str = "",
@@ -665,7 +671,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
         all_records = self._db.select_all()
 
         # hash 비교
-        target: Optional[RegistrationCode] = None
+        target: RegistrationCode | None = None
         for rec in all_records:
             cand = _hash_code(normalized, rec.code_salt)
             if secrets.compare_digest(cand, rec.code_hash):
@@ -695,7 +701,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
 
         return target
 
-    def get(self, code_id: str) -> Optional[RegistrationCode]:
+    def get(self, code_id: str) -> RegistrationCode | None:
         """DB에서 code 조회."""
         return self._db.select_by_id(code_id)
 
@@ -705,7 +711,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
         all_records.sort(key=lambda r: r.created_at, reverse=True)
         return [r.to_safe() for r in all_records]
 
-    def revoke(self, code_id: str, *, actor: str) -> Optional[RegistrationCode]:
+    def revoke(self, code_id: str, *, actor: str) -> RegistrationCode | None:
         """DB에서 code revoke."""
         rec = self._db.select_by_id(code_id)
         if rec is None:
@@ -733,7 +739,7 @@ class DbRegistrationCodeStore(RegistrationCodeStore):
 
 # ── Global Store Instance ────────────────────────────────────────────────────
 
-_store: Optional[RegistrationCodeStore] = None
+_store: RegistrationCodeStore | None = None
 
 
 def get_registration_code_store() -> RegistrationCodeStore:

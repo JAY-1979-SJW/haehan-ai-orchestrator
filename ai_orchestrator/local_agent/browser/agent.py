@@ -22,41 +22,49 @@ CLI
 ===
     python -m ai_orchestrator.local_agent.browser.agent
 """
+
 from __future__ import annotations
 
 import re
 import time
 import uuid
-from typing import Optional
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from playwright.sync_api import (
-    Browser, BrowserContext, Frame, Page,
-    sync_playwright, TimeoutError as PWTimeout,
+    Browser,
+    BrowserContext,
+    Frame,
+    Page,
+    sync_playwright,
 )
 
 _JS_DIR = Path(__file__).parent / "_js"
+
 
 def _js(name: str) -> str:
     """_js/ 디렉터리의 JS 파일을 읽어 반환."""
     return (_JS_DIR / name).read_text(encoding="utf-8")
 
+
 # ── 설정 ─────────────────────────────────────────────────────────────────────
 CDP_URL = "http://127.0.0.1:9222"
-DEFAULT_WAIT = 2.5          # 이동 후 기본 대기(초)
-RENDER_POLL  = 0.3          # 렌더링 폴링 간격
-RENDER_MAX   = 8.0          # 렌더링 최대 대기
+DEFAULT_WAIT = 2.5  # 이동 후 기본 대기(초)
+RENDER_POLL = 0.3  # 렌더링 폴링 간격
+RENDER_MAX = 8.0  # 렌더링 최대 대기
 
 _NOISE_WORDS = {
-    "새 창에서 열림", "로그인", "Copyright", "ⓒ", "NAVER",
-    "바로가기", "건너뛰기", "접근성",
+    "새 창에서 열림",
+    "로그인",
+    "Copyright",
+    "ⓒ",
+    "NAVER",
+    "바로가기",
+    "건너뛰기",
+    "접근성",
 }
-_NOISE_PATTERNS = re.compile(
-    r"^(\d{1,2}|\d{4}\.\d{2}\.\d{2}\.?|좋아요\s*\d*|댓글\s*\d*)$"
-)
+_NOISE_PATTERNS = re.compile(r"^(\d{1,2}|\d{4}\.\d{2}\.\d{2}\.?|좋아요\s*\d*|댓글\s*\d*)$")
 
 
 # ── 결과 타입 ─────────────────────────────────────────────────────────────────
@@ -66,20 +74,27 @@ class ActionResult:
     data: Any = None
     error: str = ""
 
-    def __bool__(self): return self.ok
+    def __bool__(self):
+        return self.ok
 
 
 @dataclass
 class PageInfo:
     url: str
     title: str
-    text: str                        # 정제된 본문 텍스트
+    text: str  # 정제된 본문 텍스트
     links: list[dict] = field(default_factory=list)
     forms: list[dict] = field(default_factory=list)
 
 
 # ── BrowserAgent ──────────────────────────────────────────────────────────────
-from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin
+from ai_orchestrator.local_agent.browser.mixins import (  # noqa: E402
+    BlogMixin,
+    CafeMixin,
+    CalendarMixin,
+    MailMixin,
+    MyBoxMixin,
+)
 
 
 class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
@@ -101,8 +116,9 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         self.close()
 
     def connect(self):
-        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp
         from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp
+
         self._session_id = str(uuid.uuid4())
         self._connect_t0 = time.time()
         ensure_cdp()
@@ -112,19 +128,26 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         self._page = self._ctx.pages[0]
         # 새탭 자동 흡수
         self._ctx.on("page", self._on_new_page)
-        L2("CDP_CONNECT", "browser_agent",
-           session_id=self._session_id,
-           contexts_count=len(self._browser.contexts),
-           pages_count=len(self._ctx.pages))
+        L2(
+            "CDP_CONNECT",
+            "browser_agent",
+            session_id=self._session_id,
+            contexts_count=len(self._browser.contexts),
+            pages_count=len(self._ctx.pages),
+        )
         return self
 
     def close(self):
         from ai_orchestrator.local_agent.browser.cdp_audit import L2
+
         if self._pw:
             self._pw.stop()
-        L2("CDP_DISCONNECT", "browser_agent",
-           session_id=getattr(self, "_session_id", ""),
-           duration_ms=int((time.time() - getattr(self, "_connect_t0", time.time())) * 1000))
+        L2(
+            "CDP_DISCONNECT",
+            "browser_agent",
+            session_id=getattr(self, "_session_id", ""),
+            duration_ms=int((time.time() - getattr(self, "_connect_t0", time.time())) * 1000),
+        )
 
     def _on_new_page(self, new_page: Page):
         """팝업/새탭이 열리면 현재 페이지로 교체."""
@@ -159,8 +182,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         except Exception as e:
             return ActionResult(ok=False, error=str(e))
 
-    def click_text(self, text: str, exact: bool = False,
-                   wait: float = DEFAULT_WAIT) -> ActionResult:
+    def click_text(self, text: str, exact: bool = False, wait: float = DEFAULT_WAIT) -> ActionResult:
         """텍스트로 요소 찾아 클릭. 없으면 링크 href 매칭 시도."""
         # 1. Playwright 텍스트 로케이터
         try:
@@ -168,7 +190,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             loc.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # 2. 링크 텍스트 포함 매칭
@@ -176,7 +198,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             self._page.locator(f"a:has-text('{text}')").first.click(timeout=5000)
             self._wait_render(wait)
             return ActionResult(ok=True)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # 3. 버튼 텍스트
@@ -187,8 +209,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         except Exception as e:
             return ActionResult(ok=False, error=f"'{text}' 요소를 찾을 수 없음: {e}")
 
-    def click_link(self, href_contains: str,
-                   wait: float = DEFAULT_WAIT) -> ActionResult:
+    def click_link(self, href_contains: str, wait: float = DEFAULT_WAIT) -> ActionResult:
         """href에 특정 문자열이 포함된 링크 클릭."""
         try:
             self._page.locator(f"a[href*='{href_contains}']").first.click(timeout=5000)
@@ -198,8 +219,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             return ActionResult(ok=False, error=str(e))
 
     # ── 입력 ─────────────────────────────────────────────────────────────────
-    def type(self, selector: str, text: str,
-             clear: bool = True) -> ActionResult:
+    def type(self, selector: str, text: str, clear: bool = True) -> ActionResult:
         """필드에 텍스트 입력."""
         try:
             el = self._page.locator(selector).first
@@ -256,17 +276,15 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         )
 
     # ── 데이터 추출 ───────────────────────────────────────────────────────────
-    def extract_links(self, filter_href: str = "",
-                      filter_text: str = "",
-                      frame: Frame | None = None) -> list[dict]:
+    def extract_links(self, filter_href: str = "", filter_text: str = "", frame: Frame | None = None) -> list[dict]:
         """페이지 링크 목록 추출. frame 지정 시 해당 프레임에서 추출."""
         target = frame or self._page
         links = target.evaluate(_js("extract_links.js"))
         if filter_href:
-            links = [l for l in links if filter_href in l["href"]]
+            links = [l for l in links if filter_href in l["href"]]  # noqa: E741
         if filter_text:
             ft = filter_text.lower()
-            links = [l for l in links if ft in l["text"].lower()]
+            links = [l for l in links if ft in l["text"].lower()]  # noqa: E741
         return links
 
     def extract_table(self, selector: str = "table") -> list[list[str]]:
@@ -305,12 +323,16 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             for loc in locs[:5]:
                 tag = loc.evaluate("el => el.tagName.toLowerCase()")
                 candidates.append(f"{tag}:has-text('{description}')")
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return candidates
 
-    def wait_for(self, selector: str = None, text: str = None,
-                 timeout: float = 10.0) -> bool:
+    def wait_for(
+        self,
+        selector: str = None,
+        text: str = None,  # noqa: RUF013
+        timeout: float = 10.0,
+    ) -> bool:
         """셀렉터 또는 텍스트가 나타날 때까지 대기."""
         deadline = time.time() + timeout
         while time.time() < deadline:
@@ -320,15 +342,15 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     return True
                 if text and text in self._page.inner_text("body"):
                     return True
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             time.sleep(RENDER_POLL)
         return False
 
     # ── 페이지네이션 ──────────────────────────────────────────────────────────
-    def collect_all_pages(self, item_selector: str,
-                          next_selector: str = "a:has-text('다음')",
-                          max_pages: int = 10) -> list[str]:
+    def collect_all_pages(
+        self, item_selector: str, next_selector: str = "a:has-text('다음')", max_pages: int = 10
+    ) -> list[str]:
         """다음 버튼을 클릭하며 모든 페이지의 아이템 텍스트 수집."""
         all_items = []
         for _ in range(max_pages):
@@ -346,7 +368,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         """SPA 렌더링 완료 대기: DOM 안정화 + 추가 대기."""
         try:
             self._page.wait_for_load_state("domcontentloaded", timeout=8000)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         # DOM 크기 안정화 확인
         prev_len = 0
@@ -378,7 +400,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         # 연속 중복 제거
         deduped = []
         prev = None
-        for l in lines:
+        for l in lines:  # noqa: E741
             if l != prev:
                 deduped.append(l)
             prev = l
@@ -431,9 +453,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
         # href는 카페 URL 규칙으로 생성
         return [{"text": n, "href": ""} for n in all_names]
 
-    def naver_cafe_posts(self, cafe_url: str,
-                         board: str = "전체글보기",
-                         max_posts: int = 30) -> list[dict]:
+    def naver_cafe_posts(self, cafe_url: str, board: str = "전체글보기", max_posts: int = 30) -> list[dict]:
         """네이버 카페 게시판 최신 글 목록 반환.
 
         새 카페 UI(f-e)와 구 UI(cafe.naver.com/xxx) 모두 지원.
@@ -457,21 +477,20 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     if p["href"] not in seen:
                         seen.add(p["href"])
                         all_posts.append(p)
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         # 폴백: 메인 프레임 일반 링크에서 articleid 포함 추출
         if not all_posts:
             links = self.extract_links()
-            for l in links:
+            for l in links:  # noqa: E741
                 if ("articleid" in l["href"] or "/articles/" in l["href"]) and l["href"] not in seen:
                     seen.add(l["href"])
                     all_posts.append({"title": l["text"], "href": l["href"]})
 
         return all_posts[:max_posts]
 
-    def download_attachment(self, file_url: str, save_dir: str = "data/downloads",
-                            filename: str = "") -> dict:
+    def download_attachment(self, file_url: str, save_dir: str = "data/downloads", filename: str = "") -> dict:
         """첨부파일 다운로드.
 
         1차: requests + 브라우저 쿠키 (네이버 카페 파일 호스트)
@@ -483,6 +502,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             error - 실패 시 오류 메시지
         """
         import requests
+
         save_path = Path(save_dir)
         save_path.mkdir(parents=True, exist_ok=True)
 
@@ -491,17 +511,17 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             cookies_raw = self._ctx.cookies()
             jar = requests.cookies.RequestsCookieJar()
             for c in cookies_raw:
-                jar.set(c["name"], c["value"],
-                        domain=c.get("domain", ""), path=c.get("path", "/"))
+                jar.set(c["name"], c["value"], domain=c.get("domain", ""), path=c.get("path", "/"))
 
             headers = {
-                "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                               "AppleWebKit/537.36 (KHTML, like Gecko) "
-                               "Chrome/124.0.0.0 Safari/537.36"),
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                ),
                 "Referer": "https://cafe.naver.com/",
             }
-            resp = requests.get(file_url, cookies=jar, headers=headers,
-                                stream=True, timeout=30, allow_redirects=True)
+            resp = requests.get(file_url, cookies=jar, headers=headers, stream=True, timeout=30, allow_redirects=True)
             resp.raise_for_status()
 
             # 파일명 결정: Content-Disposition 우선
@@ -509,6 +529,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             if not suggested:
                 cd = resp.headers.get("Content-Disposition", "")
                 import urllib.parse
+
                 fn_m = re.search(r'filename\*?=["\']?(?:UTF-8\'\')?([^"\';\r\n]+)', cd, re.IGNORECASE)
                 if fn_m:
                     raw_fn = fn_m.group(1).strip()
@@ -531,13 +552,13 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
 
             return {"ok": True, "path": str(dest), "error": ""}
 
-        except Exception as req_err:
+        except Exception:  # noqa: S110
             pass  # 2차 시도로 진행
 
         # ── 2차: Playwright download 이벤트 ─────────────────────────────────
         try:
             with self._page.expect_download(timeout=30000) as dl_info:
-                self._page.evaluate(f"window.location.href = {repr(file_url)}")
+                self._page.evaluate(f"window.location.href = {file_url!r}")
             download = dl_info.value
             suggested = filename or download.suggested_filename or Path(file_url.split("?")[0]).name or "file"
             dest = save_path / suggested
@@ -547,7 +568,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
             # 3차: 새 탭
             try:
                 with self._ctx.expect_page() as new_page_info:
-                    self._page.evaluate(f"window.open({repr(file_url)}, '_blank')")
+                    self._page.evaluate(f"window.open({file_url!r}, '_blank')")
                 new_page = new_page_info.value
                 try:
                     with new_page.expect_download(timeout=30000) as dl_info:
@@ -560,7 +581,7 @@ class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):
                     return {"ok": True, "path": str(dest), "error": ""}
                 except Exception:
                     new_page.close()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             return {"ok": False, "path": "", "error": str(pw_err)}
 
@@ -612,7 +633,7 @@ def _cli():
                 print(agent.read()[:2000])
             elif action == "links":
                 links = agent.extract_links(filter_href=arg)
-                for l in links[:30]:
+                for l in links[:30]:  # noqa: E741
                     print(f"  [{l['text'][:40]:40}] {l['href']}")
                 print(f"  총 {len(links)}개")
             elif action == "back":
@@ -648,15 +669,15 @@ def _cli():
                 board = parts2[1] if len(parts2) > 1 else "전체글보기"
                 posts = agent.cafe_posts(url, board)
                 for i, p in enumerate(posts, 1):
-                    cmt = f"[{p.get('comments','?')}]" if p.get('comments') else ""
-                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('date','')}")
+                    cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
+                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('date', '')}")
                 print(f"  총 {len(posts)}개")
             elif action == "popular":
                 url = arg or agent.page.url
                 posts = agent.cafe_popular(url)
                 for i, p in enumerate(posts, 1):
-                    cmt = f"[{p.get('comments','?')}]" if p.get('comments') else ""
-                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('views','')}조회")
+                    cmt = f"[{p.get('comments', '?')}]" if p.get("comments") else ""
+                    print(f"  {i:2}. {p['title'][:45]:45} {cmt} {p.get('views', '')}조회")
                 print(f"  총 {len(posts)}개")
             elif action == "search":
                 parts2 = arg.split(None, 1)
@@ -665,7 +686,7 @@ def _cli():
                 else:
                     posts = agent.cafe_search(parts2[0], parts2[1])
                     for i, p in enumerate(posts, 1):
-                        print(f"  {i:2}. {p['title'][:50]:50} {p.get('date','')}")
+                        print(f"  {i:2}. {p['title'][:50]:50} {p.get('date', '')}")
                     print(f"  총 {len(posts)}개")
             elif action == "article":
                 r = agent.read_article(arg or agent.page.url)

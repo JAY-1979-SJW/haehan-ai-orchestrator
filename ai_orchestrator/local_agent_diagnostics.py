@@ -7,8 +7,7 @@ allowlist field만 반환.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from . import local_agent_registry as _reg
 
@@ -67,7 +66,7 @@ def build_local_agent_diagnostics() -> dict:
 
         # 1. Agent 상태 집계
         agent_statuses = {}
-        for agent_id, agent in agents_dict.items():
+        for agent_id, agent in agents_dict.items():  # noqa: B007
             status = _reg.get_agent_status(agent_id)
             agent_statuses[agent_id] = status
 
@@ -143,7 +142,7 @@ def build_local_agent_diagnostics() -> dict:
             warnings.append("approval_backlog")
 
         # 4. 최종 응답 구성
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
         return {
             "status": status,
@@ -163,12 +162,12 @@ def build_local_agent_diagnostics() -> dict:
             "warnings": warnings,
         }
 
-    except Exception as e:
+    except Exception:
         # 예외 발생 시 상태는 error이지만 raw exception text 반환 금지
         return {
             "status": "error",
             "schema_version": 1,
-            "diagnostics_generated_at": datetime.now(timezone.utc).isoformat(),
+            "diagnostics_generated_at": datetime.now(UTC).isoformat(),
             "repo_boundary_status": "not_checked",
             "agents": {"total": 0, "online": 0, "offline": 0, "stale": 0},
             "tasks": {

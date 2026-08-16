@@ -131,8 +131,11 @@ def _find_browser(browser_type: str = "auto") -> tuple[str, str]:
         raise FileNotFoundError("Chrome 또는 Edge를 찾을 수 없습니다.")
 
 
+_WIN_LEFT, _WIN_TOP, _WIN_W, _WIN_H = 100, 50, 1440, 900
+
+
 def _sanitize_chrome_prefs() -> None:
-    """Chrome Preferences에서 비정상 종료 흔적을 정상으로 패치하여 복구 풍선 차단."""
+    """Chrome Preferences 패치: 비정상 종료 흔적 제거 + 창 위치 고정."""
     prefs = PROFILE_DIR / "Default" / "Preferences"
     if not prefs.exists():
         return
@@ -146,9 +149,39 @@ def _sanitize_chrome_prefs() -> None:
         if profile.get("exited_cleanly") is not True:
             profile["exited_cleanly"] = True
             changed = True
+        # 창 위치 고정 — Chrome은 마지막 위치를 Prefs에 저장하고 시작 시 복원.
+        # --window-position 플래그보다 이 값이 우선되므로 직접 패치.
+        browser = data.setdefault("browser", {})
+        placement = browser.get("window_placement", {})
+        need_fix = (
+            placement.get("left", 0) > 3000
+            or placement.get("top", 0) > 3000
+            or placement.get("left", 0) < -100
+            or placement.get("top", 0) < -100
+            or placement.get("maximized") is True
+        )
+        if need_fix:
+            browser["window_placement"] = {
+                "bottom": _WIN_TOP + _WIN_H,
+                "left": _WIN_LEFT,
+                "maximized": False,
+                "right": _WIN_LEFT + _WIN_W,
+                "top": _WIN_TOP,
+                "work_area_bottom": 1080,
+                "work_area_left": 0,
+                "work_area_right": 1920,
+                "work_area_top": 0,
+            }
+            changed = True
         if changed:
             prefs.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-            log.info("[BROWSER] Preferences 정상화 (exit_type=Normal)")
+            log.info(
+                "[BROWSER] Preferences 정상화 (exit_type=Normal, window=%dx%d@%d,%d)",
+                _WIN_W,
+                _WIN_H,
+                _WIN_LEFT,
+                _WIN_TOP,
+            )
     except Exception as e:
         log.warning("[BROWSER] Preferences 패치 실패 (무시): %s", e)
 

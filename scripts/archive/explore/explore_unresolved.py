@@ -9,6 +9,7 @@
 결과 저장 위치:
   data/reports/local_agent/explore_unresolved_<timestamp>.json
 """
+
 from __future__ import annotations
 
 import json
@@ -20,7 +21,6 @@ from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-
 
 HOOK_JS = """
 window.__cap = [];
@@ -99,7 +99,8 @@ def _reset_cap(page):
 
 def dump_elements(page, selector: str, limit: int = 20) -> list[dict]:
     """주어진 셀렉터 매칭 요소들의 정보 dump."""
-    return page.evaluate(f"""(sel) => {{
+    return page.evaluate(
+        f"""(sel) => {{
         const els = document.querySelectorAll(sel);
         return Array.from(els).slice(0, {limit}).map(el => ({{
             tag: el.tagName.toLowerCase(),
@@ -115,7 +116,9 @@ def dump_elements(page, selector: str, limit: int = 20) -> list[dict]:
             }})(),
             visible: el.offsetWidth > 0 && el.offsetHeight > 0,
         }}));
-    }}""", selector)
+    }}""",
+        selector,
+    )
 
 
 def explore_calendar(page, report: dict):
@@ -132,9 +135,16 @@ def explore_calendar(page, report: dict):
 
     # 2) 다음달/이전달 버튼 셀렉터 dump
     nav_selectors = [
-        '[aria-label*="다음"]', '[aria-label*="이전"]', '[aria-label*="next"]', '[aria-label*="prev"]',
-        '[class*="next"]', '[class*="prev"]', '[class*="Next"]', '[class*="Prev"]',
-        'button[class*="month"]', '[class*="navi"] button',
+        '[aria-label*="다음"]',
+        '[aria-label*="이전"]',
+        '[aria-label*="next"]',
+        '[aria-label*="prev"]',
+        '[class*="next"]',
+        '[class*="prev"]',
+        '[class*="Next"]',
+        '[class*="Prev"]',
+        'button[class*="month"]',
+        '[class*="navi"] button',
     ]
     nav_dump = {}
     for sel in nav_selectors:
@@ -164,7 +174,7 @@ def explore_calendar(page, report: dict):
                     report["calendar"]["after_click_apis"] = cap_after
                     clicked = True
                     break
-        except Exception as e:
+        except Exception:
             pass
     if not clicked:
         print("  ⚠ 네비게이션 클릭 실패 — 추가 분석 필요")
@@ -223,7 +233,9 @@ def explore_mail_search(page, report: dict):
         'input[placeholder*="검색"]',
         'input[type="search"]',
         '[class*="search"] input',
-        'input[name*="query"]', 'input[name*="search"]', 'input[name*="q"]',
+        'input[name*="query"]',
+        'input[name*="search"]',
+        'input[name*="q"]',
     ]
     triggered_sel = None
     for sel in input_selectors:
@@ -260,12 +272,20 @@ def explore_mybox(page, report: dict):
 
     # 1) 클릭 가능한 폴더/파일 요소 dump
     candidates_selectors = [
-        '[role="row"]', '[role="gridcell"]', '[role="button"]',
-        '[class*="file"]', '[class*="File"]',
-        '[class*="folder"]', '[class*="Folder"]',
-        '[class*="item"]', '[class*="Item"]',
-        '[class*="row"]', '[class*="Row"]',
-        'tr', 'li', '[data-id]',
+        '[role="row"]',
+        '[role="gridcell"]',
+        '[role="button"]',
+        '[class*="file"]',
+        '[class*="File"]',
+        '[class*="folder"]',
+        '[class*="Folder"]',
+        '[class*="item"]',
+        '[class*="Item"]',
+        '[class*="row"]',
+        '[class*="Row"]',
+        "tr",
+        "li",
+        "[data-id]",
     ]
     for sel in candidates_selectors:
         try:
@@ -282,7 +302,7 @@ def explore_mybox(page, report: dict):
         '[class*="tree"] [role="button"]',
         '[class*="sidebar"] li',
         '[class*="menu"] [role="button"]',
-        'nav a',
+        "nav a",
         '[class*="folder"]',
     ]
     triggered = False
@@ -305,7 +325,7 @@ def explore_mybox(page, report: dict):
     # 3) 메인 영역 첫 항목 클릭 시도
     if not triggered:
         _reset_cap(page)
-        main_selectors = ['[role="row"]', '[class*="file_item"]', '[class*="list_item"]', 'tr[data-id]']
+        main_selectors = ['[role="row"]', '[class*="file_item"]', '[class*="list_item"]', "tr[data-id]"]
         for sel in main_selectors:
             try:
                 el = page.query_selector(sel)
@@ -365,15 +385,18 @@ def main():
     # 요약 출력
     print("\n[요약]")
     cal = report["calendar"]
-    print(f"  캘린더: 초기 {len(cal.get('initial_apis', []))}개 API, "
-          f"네비 후보 {len(cal.get('nav_buttons', {}))}개, "
-          f"클릭 후 {len(cal.get('after_click_apis', []))}개 API")
+    print(
+        f"  캘린더: 초기 {len(cal.get('initial_apis', []))}개 API, "
+        f"네비 후보 {len(cal.get('nav_buttons', {}))}개, "
+        f"클릭 후 {len(cal.get('after_click_apis', []))}개 API"
+    )
     ms = report["mail_search"]
-    print(f"  메일검색: input {len(ms.get('all_inputs', []))}개, "
-          f"트리거 셀렉터: {ms.get('triggered_selector', '없음')}")
+    print(f"  메일검색: input {len(ms.get('all_inputs', []))}개, 트리거 셀렉터: {ms.get('triggered_selector', '없음')}")
     mb = report["mybox"]
-    print(f"  MyBox: 초기 {len(mb.get('initial_apis', []))}개 API, "
-          f"클릭 셀렉터: {mb.get('sidebar_click_selector') or mb.get('main_click_selector') or '없음'}")
+    print(
+        f"  MyBox: 초기 {len(mb.get('initial_apis', []))}개 API, "
+        f"클릭 셀렉터: {mb.get('sidebar_click_selector') or mb.get('main_click_selector') or '없음'}"
+    )
 
 
 if __name__ == "__main__":

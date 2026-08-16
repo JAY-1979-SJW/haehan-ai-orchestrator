@@ -4,23 +4,23 @@ APPROVE_STATUS_HTTP, REJECT_STATUS_HTTP 매핑과
 APPROVE_AUDIT_EVENT, REJECT_AUDIT_EVENT 매핑의 정합성,
 그리고 에러 응답 생성 함수의 동작을 검증한다.
 """
-import sys
+
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from ai_orchestrator.local_agent_audit_event_policy import (
-    APPROVE_STATUS_HTTP,
-    REJECT_STATUS_HTTP,
     APPROVE_AUDIT_EVENT,
+    APPROVE_STATUS_HTTP,
     REJECT_AUDIT_EVENT,
+    REJECT_STATUS_HTTP,
     make_approval_error_detail,
     make_rejection_error_detail,
 )
 
-
 # ── APPROVE_STATUS_HTTP snapshot ───────────────────────────────────────────
+
 
 def test_approve_status_http_snapshot():
     """승인 상태-HTTP 코드 매핑 값이 정확한지 검증."""
@@ -38,6 +38,7 @@ def test_approve_status_http_snapshot():
 
 # ── REJECT_STATUS_HTTP snapshot ───────────────────────────────────────────
 
+
 def test_reject_status_http_snapshot():
     """거절 상태-HTTP 코드 매핑 값이 정확한지 검증."""
     expected = {
@@ -53,6 +54,7 @@ def test_reject_status_http_snapshot():
 
 
 # ── APPROVE_AUDIT_EVENT snapshot ──────────────────────────────────────────
+
 
 def test_approve_audit_event_snapshot():
     """승인 상태-감사이벤트 타입 매핑 값이 정확한지 검증."""
@@ -70,6 +72,7 @@ def test_approve_audit_event_snapshot():
 
 # ── REJECT_AUDIT_EVENT snapshot ──────────────────────────────────────────
 
+
 def test_reject_audit_event_snapshot():
     """거절 상태-감사이벤트 타입 매핑 값이 정확한지 검증."""
     expected = {
@@ -85,6 +88,7 @@ def test_reject_audit_event_snapshot():
 
 
 # ── make_approval_error_detail() 동작 ────────────────────────────────────
+
 
 def test_make_approval_error_detail_approved():
     """승인 성공 상태 응답 생성."""
@@ -131,6 +135,7 @@ def test_make_approval_error_detail_custom_map():
 
 # ── make_rejection_error_detail() 동작 ────────────────────────────────────
 
+
 def test_make_rejection_error_detail_rejected():
     """거절 성공 상태 응답 생성."""
     code, detail = make_rejection_error_detail("rejected")
@@ -169,6 +174,7 @@ def test_make_rejection_error_detail_custom_map():
 
 # ── unknown status 처리 방식 ──────────────────────────────────────────────
 
+
 def test_make_approval_error_detail_unknown_status():
     """승인 미지 상태는 기본값 400으로 응답."""
     code, detail = make_approval_error_detail("unknown_status")
@@ -184,6 +190,7 @@ def test_make_rejection_error_detail_unknown_status():
 
 
 # ── token_id / approval_token / device_token 문자열 미포함 ──────────────────
+
 
 def test_approve_status_http_no_sensitive_strings():
     """승인 상태 코드 맵에 민감한 문자열 미포함."""
@@ -228,9 +235,11 @@ def test_error_detail_response_no_token_values():
 
 # ── policy 모듈 import 가능 ─────────────────────────────────────────────────
 
+
 def test_policy_module_importable():
     """정책 모듈이 정상적으로 임포트 가능한지 검증."""
     import ai_orchestrator.local_agent_audit_event_policy as policy_module
+
     assert hasattr(policy_module, "APPROVE_STATUS_HTTP")
     assert hasattr(policy_module, "REJECT_STATUS_HTTP")
     assert hasattr(policy_module, "APPROVE_AUDIT_EVENT")
@@ -241,14 +250,16 @@ def test_policy_module_importable():
 
 # ── router import와 순환 참조 없음 ───────────────────────────────────────
 
+
 def test_no_circular_import_with_router():
     """정책 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
         # router를 임포트하면 policy도 임포트되어야 함
         from ai_orchestrator.local_agent_router import LocalAgentRouter
+
         # 성공하면 순환 참조가 없음
         assert LocalAgentRouter is not None
-    except ImportError as e:
+    except ImportError:
         # router 모듈이 없거나 policy를 찾을 수 없는 경우는 pass
         # (router가 아직 작성되지 않았을 수 있음)
         pass

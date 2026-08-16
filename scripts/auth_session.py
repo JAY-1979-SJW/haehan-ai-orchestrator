@@ -19,6 +19,7 @@ CLI:
     python scripts/cdp_client.py session list
     python scripts/cdp_client.py session delete <site>
 """
+
 from __future__ import annotations
 
 import json
@@ -35,6 +36,7 @@ SESSIONS_DIR = ROOT / "data" / "sessions"
 
 def _fernet():
     from scripts.credentials import _fernet as f
+
     return f()
 
 
@@ -100,15 +102,25 @@ def save_session(host: str, page, *, host_filter: bool = True) -> Path:
 
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
     fp = SESSIONS_DIR / f"{host}.json"
-    fp.write_text(json.dumps({
-        "host": host, "saved_at": bundle["saved_at"],
-        "cookie_count": len(cookies),
-        "local_keys": len(storage.get("local", {})),
-        "session_keys": len(storage.get("session", {})),
-        "encrypted_bundle": payload,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
-    try: os.chmod(fp, 0o600)
-    except Exception: pass
+    fp.write_text(
+        json.dumps(
+            {
+                "host": host,
+                "saved_at": bundle["saved_at"],
+                "cookie_count": len(cookies),
+                "local_keys": len(storage.get("local", {})),
+                "session_keys": len(storage.get("session", {})),
+                "encrypted_bundle": payload,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    try:
+        os.chmod(fp, 0o600)
+    except Exception:
+        pass
     return fp
 
 
@@ -161,7 +173,7 @@ def restore_session(host: str, page) -> dict:
         # 같은 호스트에 있어야 storage 복원 가능
         if host in (page.url or ""):
             page.evaluate(js, [bundle.get("localStorage", {}), bundle.get("sessionStorage", {})])
-    except Exception as e:
+    except Exception:
         # storage 실패해도 쿠키만으로 로그인 유지될 수 있음
         pass
 
@@ -181,13 +193,15 @@ def list_sessions() -> list[dict]:
     for fp in sorted(SESSIONS_DIR.glob("*.json")):
         try:
             meta = json.loads(fp.read_text(encoding="utf-8"))
-            out.append({
-                "host": meta.get("host", fp.stem),
-                "saved_at": meta.get("saved_at"),
-                "cookie_count": meta.get("cookie_count", 0),
-                "local_keys": meta.get("local_keys", 0),
-                "session_keys": meta.get("session_keys", 0),
-            })
+            out.append(
+                {
+                    "host": meta.get("host", fp.stem),
+                    "saved_at": meta.get("saved_at"),
+                    "cookie_count": meta.get("cookie_count", 0),
+                    "local_keys": meta.get("local_keys", 0),
+                    "session_keys": meta.get("session_keys", 0),
+                }
+            )
         except Exception:
             continue
     return out
@@ -203,8 +217,10 @@ def delete_session(host: str) -> bool:
 
 # ── CLI 헬퍼 (cdp_client 에서 호출) ────────────────────────────────
 
+
 def cli_save(host: str) -> None:
     from scripts.web_connector import get_page
+
     page = get_page()
     fp = save_session(host, page)
     info = json.loads(fp.read_text(encoding="utf-8"))
@@ -214,16 +230,21 @@ def cli_save(host: str) -> None:
 
 def cli_load(host: str) -> None:
     from scripts.web_connector import get_page
+
     page = get_page()
     # 같은 호스트로 먼저 이동해야 storage 복원 가능
     if host not in (page.url or ""):
         page.goto(f"https://{host}/", timeout=15000)
-        try: page.wait_for_load_state("domcontentloaded", timeout=5000)
-        except: pass
+        try:
+            page.wait_for_load_state("domcontentloaded", timeout=5000)
+        except Exception:
+            pass
     r = restore_session(host, page)
     if r["ok"]:
         print(f"✔ 세션 복원 ({r['saved_at']} 저장본)")
-        print(f"  쿠키 {r['restored_cookies']}  localStorage {r['restored_local']}  sessionStorage {r['restored_session']}")
+        print(
+            f"  쿠키 {r['restored_cookies']}  localStorage {r['restored_local']}  sessionStorage {r['restored_session']}"
+        )
         page.reload()
     else:
         print(f"✘ 복원 실패: {r['reason']}")
@@ -236,7 +257,9 @@ def cli_list() -> None:
         return
     print(f"저장된 세션 {len(items)}개:")
     for it in items:
-        print(f"  {it['host']:<24} saved={it['saved_at']}  cookies={it['cookie_count']}  ls={it['local_keys']}  ss={it['session_keys']}")
+        print(
+            f"  {it['host']:<24} saved={it['saved_at']}  cookies={it['cookie_count']}  ls={it['local_keys']}  ss={it['session_keys']}"
+        )
 
 
 def cli_delete(host: str) -> None:
@@ -252,11 +275,16 @@ def main() -> None:
         return
     cmd = sys.argv[1]
     host = sys.argv[2] if len(sys.argv) > 2 else ""
-    if cmd == "save": cli_save(host)
-    elif cmd == "load": cli_load(host)
-    elif cmd == "list": cli_list()
-    elif cmd == "delete": cli_delete(host)
-    else: print(f"알 수 없는 명령: {cmd}")
+    if cmd == "save":
+        cli_save(host)
+    elif cmd == "load":
+        cli_load(host)
+    elif cmd == "list":
+        cli_list()
+    elif cmd == "delete":
+        cli_delete(host)
+    else:
+        print(f"알 수 없는 명령: {cmd}")
 
 
 if __name__ == "__main__":

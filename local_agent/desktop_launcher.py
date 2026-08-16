@@ -17,6 +17,7 @@ PII 정책:
   device_token / registration_code 원문은 stdout 에 절대 출력 금지.
   agent_id 는 마스킹 표시.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,8 +25,6 @@ import json
 import logging
 import os
 import sys
-import time
-from dataclasses import asdict
 
 from local_agent import connection_diagnostics as cd
 from local_agent import registration_client as rcli
@@ -43,8 +42,12 @@ def self_test() -> dict:
     result = {"checks": {}}
 
     # 1) 핵심 의존성
-    for mod in ("local_agent.token_store", "local_agent.registration_client",
-                "local_agent.websocket_client", "local_agent.connection_diagnostics"):
+    for mod in (
+        "local_agent.token_store",
+        "local_agent.registration_client",
+        "local_agent.websocket_client",
+        "local_agent.connection_diagnostics",
+    ):
         try:
             __import__(mod)
             result["checks"][mod] = "ok"
@@ -53,9 +56,7 @@ def self_test() -> dict:
 
     # 2) URL normalize
     try:
-        for base in ("https://haehan-ai.kr/orchestrator",
-                     "http://localhost:8400",
-                     "wss://example.com"):
+        for base in ("https://haehan-ai.kr/orchestrator", "http://localhost:8400", "wss://example.com"):
             url = cd.normalize_ws_url(base)
             result["checks"][f"ws_url:{base}"] = url
     except Exception as exc:
@@ -64,28 +65,23 @@ def self_test() -> dict:
     # 3) token_store backend
     try:
         available, name = ts.describe_backend()
-        result["checks"]["token_store_backend"] = (
-            f"available={available} name={name}"
-        )
+        result["checks"]["token_store_backend"] = f"available={available} name={name}"
     except Exception as exc:
         result["checks"]["token_store_backend"] = f"fail:{exc}"
 
     # 4) sample diagnostic render
     diag = cd.build_diagnostics(
-        server_base_url=DEFAULT_SERVER_URL, agent_id="la-self-test-0000",
+        server_base_url=DEFAULT_SERVER_URL,
+        agent_id="la-self-test-0000",
         state=cd.STATE_NOT_REGISTERED,
     )
     block = cd.render_user_block(diag)
     leaks = cd.find_token_leaks(block)
     result["checks"]["diagnostics_render_leaks"] = leaks
-    result["checks"]["diagnostics_render_ok"] = (not leaks
-                                                  and "agent_id" in block)
+    result["checks"]["diagnostics_render_ok"] = not leaks and "agent_id" in block
 
     ok = all(
-        (v == "ok" or "fail" not in str(v))
-        if not isinstance(v, list)
-        else (v == [])
-        for v in result["checks"].values()
+        (v == "ok" or "fail" not in str(v)) if not isinstance(v, list) else (v == []) for v in result["checks"].values()
     )
     result["ok"] = ok
     return result
@@ -101,11 +97,12 @@ def show_diagnostics(server_url: str) -> dict:
     effective_server = server_url
     try:
         from local_agent import desktop_config as dc
+
         cfg = dc.load_config()
         if not effective_server and cfg.server_url:
             effective_server = cfg.server_url
         cur_agent = cfg.agent_id or ""
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     token_present = False
@@ -162,7 +159,9 @@ def _redacted_log(msg: str) -> None:
 
 def register_flow(server_url: str, registration_code: str) -> dict:
     """register-with-code → device_token 저장 까지."""
-    import platform, socket
+    import platform
+    import socket
+
     _redacted_log("register-with-code 호출 시작")
     try:
         meta, device_token = rcli.register_with_code(
@@ -173,23 +172,26 @@ def register_flow(server_url: str, registration_code: str) -> dict:
             version="0.1.0",
         )
     except rcli.RegistrationError as exc:
-        return {"ok": False, "error_code": "REGISTRATION_ERROR",
-                "user_message": cd.explain_error("REG_CODE_INVALID")
-                                if "401" in str(exc) or "404" in str(exc)
-                                else cd.explain_error("SERVER_NOT_REACHABLE")}
+        return {
+            "ok": False,
+            "error_code": "REGISTRATION_ERROR",
+            "user_message": cd.explain_error("REG_CODE_INVALID")
+            if "401" in str(exc) or "404" in str(exc)
+            else cd.explain_error("SERVER_NOT_REACHABLE"),
+        }
     agent_id = meta.agent_id
     # 안전 저장
     try:
-        ts.save_device_token(server_url=server_url, agent_id=agent_id,
-                             token=device_token)
-    except ts.TokenStoreError as exc:
-        return {"ok": False, "error_code": "TOKEN_NOT_STORED",
-                "user_message": cd.explain_error("TOKEN_NOT_STORED")}
+        ts.save_device_token(server_url=server_url, agent_id=agent_id, token=device_token)
+    except ts.TokenStoreError:
+        return {"ok": False, "error_code": "TOKEN_NOT_STORED", "user_message": cd.explain_error("TOKEN_NOT_STORED")}
     # 원문 폐기
     device_token = ""
-    return {"ok": True, "agent_id_masked": cd.mask_agent_id(agent_id),
-            "registered_at_iso": getattr(meta, "registered_at",
-                                          getattr(meta, "registered_at_iso", ""))}
+    return {
+        "ok": True,
+        "agent_id_masked": cd.mask_agent_id(agent_id),
+        "registered_at_iso": getattr(meta, "registered_at", getattr(meta, "registered_at_iso", "")),
+    }
 
 
 # ── connect flow ─────────────────────────────────────────────────
@@ -200,13 +202,15 @@ def connect_flow(server_url: str, agent_id: str) -> int:
     token = ts.load_device_token(server_url=server_url, agent_id=agent_id)
     if not token:
         diag = cd.build_diagnostics(
-            server_base_url=server_url, agent_id=agent_id,
+            server_base_url=server_url,
+            agent_id=agent_id,
             state=cd.STATE_NOT_REGISTERED,
             last_error_code="TOKEN_NOT_STORED",
         )
         print(cd.render_user_block(diag))
         return 2
     from local_agent import websocket_client as ws
+
     try:
         ws.connect(agent_id=agent_id, device_token=token)
     finally:
@@ -219,30 +223,22 @@ def connect_flow(server_url: str, agent_id: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="haehan-agent")
-    ap.add_argument("--server", default=os.environ.get("HAEHAN_AGENT_SERVER",
-                                                         DEFAULT_SERVER_URL))
-    ap.add_argument("--diagnostics", action="store_true",
-                    help="진단 정보만 출력 후 종료")
-    ap.add_argument("--self-test", action="store_true",
-                    help="의존성/경로/URL normalize 검증")
-    ap.add_argument("--register", action="store_true",
-                    help="registration_code 입력하여 등록")
-    ap.add_argument("--agent-id", default="",
-                    help="기존 agent_id (재연결용)")
-    ap.add_argument("--registration-code-env", default="HAEHAN_AGENT_CODE",
-                    help="registration_code 환경변수명")
-    ap.add_argument("--reset", action="store_true",
-                    help="저장된 token 삭제 (server+agent_id 필요)")
-    ap.add_argument("--gui", action="store_true",
-                    help="GUI 모드 (tkinter + pystray tray) 실행")
+    ap.add_argument("--server", default=os.environ.get("HAEHAN_AGENT_SERVER", DEFAULT_SERVER_URL))
+    ap.add_argument("--diagnostics", action="store_true", help="진단 정보만 출력 후 종료")
+    ap.add_argument("--self-test", action="store_true", help="의존성/경로/URL normalize 검증")
+    ap.add_argument("--register", action="store_true", help="registration_code 입력하여 등록")
+    ap.add_argument("--agent-id", default="", help="기존 agent_id (재연결용)")
+    ap.add_argument("--registration-code-env", default="HAEHAN_AGENT_CODE", help="registration_code 환경변수명")
+    ap.add_argument("--reset", action="store_true", help="저장된 token 삭제 (server+agent_id 필요)")
+    ap.add_argument("--gui", action="store_true", help="GUI 모드 (tkinter + pystray tray) 실행")
     args = ap.parse_args(argv)
 
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     if args.gui:
         try:
             from . import gui_tray
+
             return gui_tray.run_tray_with_app(server_url=args.server)
         except Exception as exc:
             print(f"GUI 실행 실패: {type(exc).__name__}")
@@ -255,9 +251,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.diagnostics:
         r = show_diagnostics(args.server)
-        print(json.dumps({k: v for k, v in r.items()
-                          if k not in ("diagnostics_block", "recovery_block")},
-                         ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {k: v for k, v in r.items() if k not in ("diagnostics_block", "recovery_block")},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         print()
         print(r["diagnostics_block"])
         print()
@@ -281,13 +281,14 @@ def main(argv: list[str] | None = None) -> int:
         if r.get("ok"):
             print(f"등록 성공: agent_id={r['agent_id_masked']}")
             return 0
-        print(f"등록 실패: {r.get('user_message','')}")
+        print(f"등록 실패: {r.get('user_message', '')}")
         return 1
 
     if not args.agent_id:
         # 기본 동작 = GUI 실행 (인자 없이 더블클릭 / .exe 실행)
         try:
             from . import gui_tray
+
             return gui_tray.run_tray_with_app(server_url=args.server)
         except Exception as exc:
             print(f"GUI 실행 실패: {type(exc).__name__}: {exc}")
