@@ -1,0 +1,93 @@
+"""제품 이미지 원본화질 정리 — 서버 배포용.
+
+- C:/work/전등 이미지/gonobi_images_v2 의 원본 이미지를 코드별 폴더로 재구성
+- 압축은 웹 전송에 무리 없는 선에서만 (긴 변 1600px, quality 88) — base64 임베드 제약 없음
+- data/mk_catalog/site/images/{code}/01.jpg ... 로 저장
+- data/mk_catalog/site/products.json 에 상대경로 이미지 목록 포함한 최종 카탈로그 저장
+"""
+
+import json
+import os
+import re
+
+from PIL import Image
+
+ROOT = r"C:/work/전등 이미지/gonobi_images_v2"
+EXCLUDE_CATS = {"시공사례"}
+FNAME_RE = re.compile(r"^(\d+)_(\d+)_(.+)\.(png|jpg|jpeg|gif|webp)$", re.I)
+
+OUT_DIR = "data/mk_catalog/site"
+IMG_DIR = os.path.join(OUT_DIR, "images")
+MAX_SIDE = 1600
+QUALITY = 88
+
+os.makedirs(IMG_DIR, exist_ok=True)
+
+# 1) log_no -> 정렬된 원본 이미지 경로 목록
+posts_files = {}
+for cat in os.listdir(ROOT):
+    if cat in EXCLUDE_CATS:
+        continue
+    catdir = os.path.join(ROOT, cat)
+    if not os.path.isdir(catdir):
+        continue
+    for f in os.listdir(catdir):
+        m = FNAME_RE.match(f)
+        if not m:
+            continue
+        log_no, seq, name, ext = m.groups()
+        posts_files.setdefault(log_no, []).append((seq, os.path.join(catdir, f)))
+
+for k in posts_files:
+    posts_files[k].sort(key=lambda x: x[0])
+
+catalog = json.load(open("data/mk_catalog/products_web.json", encoding="utf-8"))
+
+
+def save_full(src_path, dst_path):
+    try:
+        with Image.open(src_path) as im:
+            im = im.convert("RGB")
+            w, h = im.size
+            longest = max(w, h)
+            if longest > MAX_SIDE:
+                scale = MAX_SIDE / longest
+                im = im.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+            im.save(dst_path, format="JPEG", quality=QUALITY)
+        return True
+    except Exception as e:
+        print("fail", src_path, e)
+        return False
+
+
+n_products_with_images = 0
+n_images_total = 0
+for c in catalog:
+    log_no = c.get("blogLogNo")
+    c.pop("img", None)
+    c.pop("gallery", None)
+    c.pop("imgBig", None)
+    if not log_no:
+        c["images"] = []
+        continue
+    files = posts_files.get(log_no)
+    if not files:
+        c["images"] = []
+        continue
+    code_dir = os.path.join(IMG_DIR, c["code"])
+    os.makedirs(code_dir, exist_ok=True)
+    rel_paths = []
+    for i, (seq, path) in enumerate(files, start=1):
+        dst = os.path.join(code_dir, f"{i:02d}.jpg")
+        if save_full(path, dst):
+            rel_paths.append(f"images/{c['code']}/{i:02d}.jpg")
+            n_images_total += 1
+    c["images"] = rel_paths
+    if rel_paths:
+        n_products_with_images += 1
+
+print("products with images:", n_products_with_images, "/", len(catalog))
+print("total image files written:", n_images_total)
+
+json.dump(catalog, open(os.path.join(OUT_DIR, "products.json"), "w", encoding="utf-8"), ensure_ascii=False)
+print("saved:", os.path.join(OUT_DIR, "products.json"))
