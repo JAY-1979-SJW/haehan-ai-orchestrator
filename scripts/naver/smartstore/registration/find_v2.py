@@ -4,6 +4,7 @@
 - 사이드바 hover로 '상품 관리' 메뉴 펼침 → 하위 클릭
 - 또는 메인 페이지 URL 직접 GET
 """
+
 from __future__ import annotations
 
 import json
@@ -14,9 +15,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 BASE = "https://sell.smartstore.naver.com"
 
@@ -126,9 +127,9 @@ def try_sidebar_hover(page) -> dict:
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  일반 상품 등록 페이지 재탐색 v2")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 재탐색 v2")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -182,14 +183,16 @@ def main():
 
     out = ROOT / "data" / "sitemap" / "smartstore_register_search_v2.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps({"hover_result": hover_r, "url_results": results},
-                              ensure_ascii=False, indent=2), encoding="utf-8")
+    out.write_text(
+        json.dumps({"hover_result": hover_r, "url_results": results}, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(f"\n  저장: {out.name}")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

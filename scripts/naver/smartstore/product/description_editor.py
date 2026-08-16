@@ -17,11 +17,11 @@ SmartEditor ONE (#/editor) 전체 기능 모듈화:
     ed.apply_html("<h2>특징</h2><p>...</p>")
     ed.submit()                        # 등록 버튼
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
@@ -33,68 +33,70 @@ EDITOR_URL = "https://sell.smartstore.naver.com/#/editor"
 
 # ── 에디터 툴바 셀렉터 ─────────────────────────────────────────────────────────
 
+
 class EditorSelectors:
     """SmartEditor ONE 툴바 버튼 셀렉터."""
 
     # ── 콘텐츠 블록 툴바 ────────────────────────────────────────────────────
-    BTN_IMAGE      = ".se-image-toolbar-button"
-    BTN_VIDEO      = ".se-video-toolbar-button"
-    BTN_QUOTE      = ".se-document-toolbar-icon-select-button"  # 인용구
-    BTN_DIVIDER    = "button[class*='se-document-toolbar-icon-select-button']:nth-of-type(3)"
-    BTN_LOCATION   = ".se-map-toolbar-button"
-    BTN_LINK       = ".se-oglink-toolbar-button"
-    BTN_TABLE      = ".se-table-toolbar-button"
-    BTN_HTML       = ".se-shopping-html-toolbar-button"
+    BTN_IMAGE = ".se-image-toolbar-button"
+    BTN_VIDEO = ".se-video-toolbar-button"
+    BTN_QUOTE = ".se-document-toolbar-icon-select-button"  # 인용구
+    BTN_DIVIDER = "button[class*='se-document-toolbar-icon-select-button']:nth-of-type(3)"
+    BTN_LOCATION = ".se-map-toolbar-button"
+    BTN_LINK = ".se-oglink-toolbar-button"
+    BTN_TABLE = ".se-table-toolbar-button"
+    BTN_HTML = ".se-shopping-html-toolbar-button"
 
     # ── 텍스트 서식 툴바 ────────────────────────────────────────────────────
-    BTN_BOLD        = ".se-bold-toolbar-button"
-    BTN_ITALIC      = ".se-italic-toolbar-button"
-    BTN_UNDERLINE   = ".se-underline-toolbar-button"
-    BTN_STRIKE      = ".se-strikethrough-toolbar-button"
-    BTN_TEXT_COLOR  = "button[class*='se-property-toolbar-color-picker-button']:first-of-type"
-    BTN_BG_COLOR    = "button[class*='se-property-toolbar-color-picker-button']:last-of-type"
-    BTN_ALIGN       = "button[class*='se-property-toolbar-drop-down-button']:first-of-type"
+    BTN_BOLD = ".se-bold-toolbar-button"
+    BTN_ITALIC = ".se-italic-toolbar-button"
+    BTN_UNDERLINE = ".se-underline-toolbar-button"
+    BTN_STRIKE = ".se-strikethrough-toolbar-button"
+    BTN_TEXT_COLOR = "button[class*='se-property-toolbar-color-picker-button']:first-of-type"
+    BTN_BG_COLOR = "button[class*='se-property-toolbar-color-picker-button']:last-of-type"
+    BTN_ALIGN = "button[class*='se-property-toolbar-drop-down-button']:first-of-type"
     BTN_LINE_HEIGHT = "button[class*='se-property-toolbar-drop-down-button']:nth-of-type(2)"
-    BTN_LIST        = "button[class*='se-property-toolbar-drop-down-button']:last-of-type"
-    BTN_SPECIAL     = ".se-special-letter-toolbar-button"
+    BTN_LIST = "button[class*='se-property-toolbar-drop-down-button']:last-of-type"
+    BTN_SPECIAL = ".se-special-letter-toolbar-button"
     BTN_INLINE_LINK = ".se-link-toolbar-button"
-    BTN_SPELL       = ".se-speller-toolbar-button"
-    BTN_FONT_SIZE   = ".se-font-size-code-toolbar-button"
-    BTN_FORMAT      = ".se-text-format-toolbar-button"
+    BTN_SPELL = ".se-speller-toolbar-button"
+    BTN_FONT_SIZE = ".se-font-size-code-toolbar-button"
+    BTN_FORMAT = ".se-text-format-toolbar-button"
 
     # ── 도구 ────────────────────────────────────────────────────────────────
-    BTN_SEARCH    = ".se-search-toolbar-button"       # 글감 검색
-    BTN_LIBRARY   = ".se-library-toolbar-button"      # 라이브러리
-    BTN_TEMPLATE  = ".se-template-toolbar-button"     # 템플릿
+    BTN_SEARCH = ".se-search-toolbar-button"  # 글감 검색
+    BTN_LIBRARY = ".se-library-toolbar-button"  # 라이브러리
+    BTN_TEMPLATE = ".se-template-toolbar-button"  # 템플릿
 
     # ── 저장 ────────────────────────────────────────────────────────────────
-    BTN_SUBMIT    = "button.btn-primary.progress-button"  # 등록
-    BTN_VIEW_MODE = ".se-util-button.__mode-button"       # PC/모바일 전환
+    BTN_SUBMIT = "button.btn-primary.progress-button"  # 등록
+    BTN_VIEW_MODE = ".se-util-button.__mode-button"  # PC/모바일 전환
 
     # ── 에디터 본문 ─────────────────────────────────────────────────────────
-    EDITOR_BODY   = ".se-main-container .se-component-content"
-    EDITOR_ROOT   = ".se-main-container"
-    CONTENT_AREA  = "[contenteditable='true']"
+    EDITOR_BODY = ".se-main-container .se-component-content"
+    EDITOR_ROOT = ".se-main-container"
+    CONTENT_AREA = "[contenteditable='true']"
 
     # ── HTML 붙여넣기 입력창 ────────────────────────────────────────────────
     HTML_TEXTAREA = "textarea[placeholder*='HTML']"
-    HTML_CONFIRM  = "button:has-text('확인')"
+    HTML_CONFIRM = "button:has-text('확인')"
 
     # ── 이미지 업로드 ─────────────────────────────────────────────────────
-    IMAGE_FILE_INPUT  = "input[type='file']"
-    IMAGE_URL_INPUT   = "input[placeholder*='URL']"
+    IMAGE_FILE_INPUT = "input[type='file']"
+    IMAGE_URL_INPUT = "input[placeholder*='URL']"
 
     # ── AI 작성 ────────────────────────────────────────────────────────────
-    AI_BTN            = "button:has-text('AI 상품설명 작성하기')"
-    AI_KEYWORD_INPUT  = "input[placeholder*='키워드'], textarea[placeholder*='키워드']"
-    AI_GENERATE_BTN   = "button:has-text('생성'), button:has-text('작성하기')"
-    AI_APPLY_BTN      = "button:has-text('적용'), button:has-text('사용하기')"
+    AI_BTN = "button:has-text('AI 상품설명 작성하기')"
+    AI_KEYWORD_INPUT = "input[placeholder*='키워드'], textarea[placeholder*='키워드']"
+    AI_GENERATE_BTN = "button:has-text('생성'), button:has-text('작성하기')"
+    AI_APPLY_BTN = "button:has-text('적용'), button:has-text('사용하기')"
 
 
 SEL = EditorSelectors()
 
 
 # ── 에디터 세션 ───────────────────────────────────────────────────────────────
+
 
 class SmartEditorSession:
     """SmartEditor ONE 전체 기능 통합 세션.
@@ -105,10 +107,10 @@ class SmartEditorSession:
 
     def __init__(self, page: Page):
         self.page = page
-        self.text    = TextToolbar(page)
-        self.block   = BlockToolbar(page)
-        self.tool    = ToolToolbar(page)
-        self.ai      = AIWriter(page)
+        self.text = TextToolbar(page)
+        self.block = BlockToolbar(page)
+        self.tool = ToolToolbar(page)
+        self.ai = AIWriter(page)
         self._opened = False
 
     # ── 진입 ─────────────────────────────────────────────────────────────────
@@ -223,6 +225,7 @@ class SmartEditorSession:
 
 # ── 텍스트 서식 툴바 ─────────────────────────────────────────────────────────
 
+
 class TextToolbar:
     """텍스트 서식 기능 모음."""
 
@@ -239,11 +242,20 @@ class TextToolbar:
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": f"{label or sel} 버튼 없음"}
 
-    def bold(self)       -> dict: return self._click(SEL.BTN_BOLD, "굵게")
-    def italic(self)     -> dict: return self._click(SEL.BTN_ITALIC, "기울이기")
-    def underline(self)  -> dict: return self._click(SEL.BTN_UNDERLINE, "밑줄")
-    def strikethrough(self) -> dict: return self._click(SEL.BTN_STRIKE, "취소선")
-    def spellcheck(self) -> dict: return self._click(SEL.BTN_SPELL, "맞춤법")
+    def bold(self) -> dict:
+        return self._click(SEL.BTN_BOLD, "굵게")
+
+    def italic(self) -> dict:
+        return self._click(SEL.BTN_ITALIC, "기울이기")
+
+    def underline(self) -> dict:
+        return self._click(SEL.BTN_UNDERLINE, "밑줄")
+
+    def strikethrough(self) -> dict:
+        return self._click(SEL.BTN_STRIKE, "취소선")
+
+    def spellcheck(self) -> dict:
+        return self._click(SEL.BTN_SPELL, "맞춤법")
 
     def font_size(self, size: int) -> dict:
         """글자 크기 변경."""
@@ -295,6 +307,7 @@ class TextToolbar:
 
 
 # ── 콘텐츠 블록 툴바 ─────────────────────────────────────────────────────────
+
 
 class BlockToolbar:
     """콘텐츠 블록 삽입 기능 모음."""
@@ -386,12 +399,11 @@ class BlockToolbar:
         time.sleep(0.5)
         # 표 크기 선택 (그리드 클릭) — 셀렉터가 동적이므로 좌표 기반
         try:
-            grid = self.page.locator(".se-table-grid-item").nth(
-                (rows - 1) * 10 + (cols - 1))
+            grid = self.page.locator(".se-table-grid-item").nth((rows - 1) * 10 + (cols - 1))
             if grid.count() > 0:
                 grid.click(timeout=3000)
                 return {"ok": True, "rows": rows, "cols": cols}
-        except Exception as e:
+        except Exception:
             pass
         return {"ok": True, "note": "표 크기 자동 선택 실패 — 직접 선택 필요"}
 
@@ -441,6 +453,7 @@ class BlockToolbar:
 
 
 # ── 도구 툴바 ─────────────────────────────────────────────────────────────────
+
 
 class ToolToolbar:
     """에디터 도구 모음 (템플릿, 글감검색, 라이브러리)."""
@@ -507,6 +520,7 @@ class ToolToolbar:
 
 
 # ── AI 상품설명 작성기 ────────────────────────────────────────────────────────
+
 
 class AIWriter:
     """네이버 AI 상품설명 작성하기 Beta.

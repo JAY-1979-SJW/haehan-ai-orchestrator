@@ -3,6 +3,7 @@
 그룹상품 외의 진짜 '상품 등록' 페이지를 찾기 위해 여러 URL 후보 시도.
 성공 시: 페이지 메타 + 가격/재고 필드 존재 여부 보고.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,9 +14,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 BASE = "https://sell.smartstore.naver.com"
 
@@ -73,10 +74,10 @@ def analyze_page(page) -> dict:
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  일반 상품 등록 페이지 URL 탐색")
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 URL 탐색")
     print(f"  후보 {len(CANDIDATES)}개")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -100,7 +101,7 @@ def main():
             results.append(info)
 
             if info.get("is_error") or "error" in info.get("url", "").lower():
-                print(f"  ✗ 오류 페이지")
+                print("  ✗ 오류 페이지")
             elif info.get("has_price") and info.get("has_stock"):
                 print(f"  ★ 가격+재고 발견! 필드 {info['field_count']}, h='{info['heading'][:30]}'")
                 success.append(info)
@@ -115,14 +116,21 @@ def main():
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps({
-        "candidates_tried": len(CANDIDATES),
-        "success_count": len(success),
-        "success_urls": [s["candidate"] for s in success],
-        "all_results": results,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    OUTPUT.write_text(
+        json.dumps(
+            {
+                "candidates_tried": len(CANDIDATES),
+                "success_count": len(success),
+                "success_urls": [s["candidate"] for s in success],
+                "all_results": results,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  결과: 성공 {len(success)}개")
     for s in success:
         print(f"    ★ {s['candidate']} → {s['url']}")
@@ -135,6 +143,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

@@ -7,6 +7,7 @@
   4. 저장하기 클릭 시 발생 에러 메시지 수집
   5. 가격/재고/배송 등 누락 필드 탐지
 """
+
 from __future__ import annotations
 
 import json
@@ -17,11 +18,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
-from scripts.naver.smartstore.product.product import ProductRegister, REGISTER_URL
-from scripts.logger import get_logger
+from scripts.logger import get_logger  # noqa: E402
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.naver.smartstore.product.product import REGISTER_URL, ProductRegister  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -148,9 +149,9 @@ DIAGNOSE_JS = r"""
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  상품 등록 페이지 문제 진단")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  상품 등록 페이지 문제 진단")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -179,33 +180,33 @@ def main():
 
     # 출력
     print(f"\n=== 필수 필드 ({len(diag['required_fields'])}개) ===")
-    for f in diag['required_fields'][:20]:
+    for f in diag["required_fields"][:20]:
         print(f"  {f['type']:<10} name={f['name'][:25]:<27} id={f['id'][:20]:<22} req={f['required_attr']}")
-        if f.get('near_text'):
+        if f.get("near_text"):
             print(f"     주변: {f['near_text'][:80]}")
 
     print(f"\n=== 이미지 업로드 file input ({len(diag['file_inputs'])}개) ===")
-    for fi in diag['file_inputs']:
-        v = '✓' if fi['visible'] else '✗'
+    for fi in diag["file_inputs"]:
+        v = "✓" if fi["visible"] else "✗"
         print(f"  [{fi['idx']}] {v} accept={fi['accept'][:30]:<32} multiple={fi['multiple']}")
         print(f"     id={fi['id']}, name={fi['name']}")
         print(f"     주변: {fi['near_text'][:100]}")
 
     print(f"\n=== iframe ({len(diag['iframes'])}개) ===")
-    for f in diag['iframes']:
+    for f in diag["iframes"]:
         print(f"  id={f['id']:<20} name={f['name']:<20} src={f['src'][:80]}")
 
     print(f"\n=== 현재 에러 메시지 ({len(diag['error_messages'])}개) ===")
-    for e in diag['error_messages'][:10]:
+    for e in diag["error_messages"][:10]:
         print(f"  - {e['text']}")
         print(f"    cls={e['cls']}")
 
     print(f"\n=== 페이지 라벨 ({len(diag['labels'])}개 — 60자 이내) ===")
-    for l in diag['labels'][:40]:
-        print(f"  y={l['y']:>5}  {l['text']}")
+    for lb in diag["labels"][:40]:
+        print(f"  y={lb['y']:>5}  {lb['text']}")
 
     # 저장 시도 → 에러 발생 시킨 후 추가 진단
-    print(f"\n[4] 저장하기 클릭으로 검증 에러 발생 시도 (실제 저장 X)")
+    print("\n[4] 저장하기 클릭으로 검증 에러 발생 시도 (실제 저장 X)")
     # fixed bar 보이게
     pr = ProductRegister(page)
     pr._show_fixed_bar()
@@ -228,6 +229,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

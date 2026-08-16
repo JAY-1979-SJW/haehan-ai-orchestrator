@@ -12,6 +12,7 @@
   - data/sitemap/smartstore_sellercenter_deep.json  (사이트맵)
   - data/logs/smartstore_explorer.log              (모든 클릭 로그)
 """
+
 from __future__ import annotations
 
 import json
@@ -23,11 +24,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.login_detector import is_logged_in_generic, get_logged_in_user
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.critical_logger import log_critical  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+from scripts.login_detector import get_logged_in_user, is_logged_in_generic  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -39,17 +40,19 @@ LOG_FILE = ROOT / "data" / "logs" / "smartstore_explorer.log"
 
 # ── 상세 클릭 로거 ──────────────────────────────────────────────────────────
 
+
 class ClickLogger:
     """모든 클릭/탐색 이벤트를 텍스트 파일 + 메모리에 기록."""
+
     def __init__(self, log_file: Path):
         self.events: list[dict] = []
         self.log_file = log_file
         log_file.parent.mkdir(parents=True, exist_ok=True)
         # 헤더
         with open(log_file, "a", encoding="utf-8") as f:
-            f.write(f"\n\n{'='*70}\n")
+            f.write(f"\n\n{'=' * 70}\n")
             f.write(f"  스마트스토어 탐색 시작: {datetime.now().isoformat(timespec='seconds')}\n")
-            f.write(f"{'='*70}\n")
+            f.write(f"{'=' * 70}\n")
 
     def log(self, event_type: str, **kwargs) -> None:
         ts = datetime.now().isoformat(timespec="seconds")
@@ -61,7 +64,9 @@ class ClickLogger:
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(line[:500] + "\n")
         # 콘솔에도 짧게
-        print(f"    LOG[{event_type}] " + " ".join(f"{k}={str(v)[:30]}" for k, v in list(kwargs.items())[:3]), flush=True)
+        print(
+            f"    LOG[{event_type}] " + " ".join(f"{k}={str(v)[:30]}" for k, v in list(kwargs.items())[:3]), flush=True
+        )
 
 
 # ── 사이드바 메뉴 추출 ──────────────────────────────────────────────────────
@@ -188,8 +193,8 @@ PAGE_META_JS = r"""
 
 # ── 클릭 (로그 포함) ────────────────────────────────────────────────────────
 
-def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
-                   reason: str = "") -> dict:
+
+def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5, reason: str = "") -> dict:
     """텍스트 메뉴 클릭 — 실제 마우스 이벤트 (Playwright 네이티브).
 
     동작:
@@ -204,7 +209,8 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
     clicker.log("click_start", target=text, before_url=before_url, reason=reason)
     try:
         # 1. 좌측 영역의 매칭 요소 좌표 + tag 추출
-        candidates = page.evaluate(r"""
+        candidates = page.evaluate(
+            r"""
         (text) => {
             const isVisible = (el) => {
                 const s = window.getComputedStyle(el);
@@ -237,16 +243,25 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
             });
             return out;
         }
-        """, text)
+        """,
+            text,
+        )
 
         if not candidates:
             clicker.log("click_failed", target=text, reason="not_found")
             return {"ok": False, "reason": "not_found"}
 
         target = candidates[0]
-        clicker.log("click_target_found", target=text, x=target["x"], y=target["y"],
-                    tag=target["tag"], cls=target["cls"][:30], has_onclick=target["has_onclick"],
-                    candidates=len(candidates))
+        clicker.log(
+            "click_target_found",
+            target=text,
+            x=target["x"],
+            y=target["y"],
+            tag=target["tag"],
+            cls=target["cls"][:30],
+            has_onclick=target["has_onclick"],
+            candidates=len(candidates),
+        )
 
         # 2. 실제 마우스 이동 + hover (사람처럼)
         page.mouse.move(target["x"], target["y"])
@@ -254,8 +269,7 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
 
         # 3. 실제 마우스 클릭
         page.mouse.click(target["x"], target["y"])
-        clicker.log("click_executed", target=text, x=target["x"], y=target["y"],
-                    method="mouse.click")
+        clicker.log("click_executed", target=text, x=target["x"], y=target["y"], method="mouse.click")
 
         # 4. URL 변화 대기 (또는 컨텐츠 변화)
         deadline = time.time() + wait_s
@@ -267,10 +281,8 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
             time.sleep(0.3)
         time.sleep(1.2)
 
-        clicker.log("click_result", target=text, url_changed=url_changed,
-                    after_url=page.url[:100])
-        return {"ok": True, "url_changed": url_changed, "after_url": page.url,
-                "x": target["x"], "y": target["y"]}
+        clicker.log("click_result", target=text, url_changed=url_changed, after_url=page.url[:100])
+        return {"ok": True, "url_changed": url_changed, "after_url": page.url, "x": target["x"], "y": target["y"]}
     except Exception as e:
         clicker.log("click_exception", target=text, error=str(e)[:80])
         return {"ok": False, "reason": str(e)[:80]}
@@ -278,12 +290,13 @@ def click_with_log(page, text: str, clicker: ClickLogger, wait_s: float = 2.5,
 
 # ── 메인 ────────────────────────────────────────────────────────────────────
 
+
 def main():
     clicker = ClickLogger(LOG_FILE)
-    print(f"\n{'='*70}")
-    print(f"  스마트스토어 사이트맵 (모든 클릭 로그)")
+    print(f"\n{'=' * 70}")
+    print("  스마트스토어 사이트맵 (모든 클릭 로그)")
     print(f"  로그 파일: {LOG_FILE.name}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     # 셀러센터 탭 찾기
     existing = get_page()
@@ -349,10 +362,14 @@ def main():
         # 메인 페이지 메타
         try:
             page_meta = page.evaluate(PAGE_META_JS)
-            clicker.log("page_meta", text=text, url=page_meta.get("url", "")[:80],
-                        fields=page_meta.get("field_count", 0),
-                        buttons=len(page_meta.get("buttons", [])),
-                        is_product_register=page_meta.get("is_product_register"))
+            clicker.log(
+                "page_meta",
+                text=text,
+                url=page_meta.get("url", "")[:80],
+                fields=page_meta.get("field_count", 0),
+                buttons=len(page_meta.get("buttons", [])),
+                is_product_register=page_meta.get("is_product_register"),
+            )
         except Exception as e:
             page_meta = {"error": str(e)[:80]}
             clicker.log("page_meta_error", error=str(e)[:80])
@@ -365,28 +382,26 @@ def main():
 
             # 자동 복구 2: 직전 부모와 동일한 submenu (부모 클릭 안 됨)
             if previous_submenu_names is not None and current_names == previous_submenu_names and current_names:
-                clicker.log("recover_attempt", reason="same_submenu_as_previous",
-                            text=text, action="reload_dashboard_and_retry")
+                clicker.log(
+                    "recover_attempt", reason="same_submenu_as_previous", text=text, action="reload_dashboard_and_retry"
+                )
                 page.goto(DASHBOARD_URL, timeout=15000, wait_until="domcontentloaded")
                 time.sleep(3)
-                retry_click = click_with_log(page, text, clicker, wait_s=3.5,
-                                              reason="recover_same_submenu")
+                retry_click = click_with_log(page, text, clicker, wait_s=3.5, reason="recover_same_submenu")
                 if retry_click["ok"]:
                     submenus = page.evaluate(SUBMENU_JS, parent_y)
                     submenus = [s for s in submenus if s["text"] != text]
                     new_names = {s["text"] for s in submenus}
                     if new_names == previous_submenu_names and new_names:
                         # 복구 실패 → 이 부모는 skip
-                        clicker.log("recover_failed", text=text, reason="still_same_submenu",
-                                    action="skip_submenus")
+                        clicker.log("recover_failed", text=text, reason="still_same_submenu", action="skip_submenus")
                         submenus = []
                         page_meta["error"] = "parent_click_no_effect"
                     else:
                         clicker.log("recover_success", text=text, new_submenu_count=len(new_names))
 
             previous_submenu_names = {s["text"] for s in submenus} if submenus else previous_submenu_names
-            clicker.log("submenu_extracted", parent=text, count=len(submenus),
-                        names=[s["text"] for s in submenus[:8]])
+            clicker.log("submenu_extracted", parent=text, count=len(submenus), names=[s["text"] for s in submenus[:8]])
         except Exception as e:
             submenus = []
             clicker.log("submenu_error", parent=text, error=str(e)[:80])
@@ -395,7 +410,7 @@ def main():
         sub_pages = []
         for j, s in enumerate(submenus[:8], 1):
             sub_text = s["text"]
-            print(f"      [{j}/{min(len(submenus),8)}] {sub_text}", end=" ", flush=True)
+            print(f"      [{j}/{min(len(submenus), 8)}] {sub_text}", end=" ", flush=True)
             # 부모 다시 클릭 (펼침)
             click_with_log(page, text, clicker, wait_s=1.5, reason="re_expand_parent")
             sub_click = click_with_log(page, sub_text, clicker, wait_s=2.5, reason="submenu")
@@ -407,15 +422,21 @@ def main():
                 sm["menu_text"] = sub_text
                 sub_pages.append(sm)
                 tag = "[상품등록]" if sm.get("is_product_register") else ("[폼]" if sm.get("is_form") else "")
-                print(f"✓ 필드:{sm.get('field_count',0)} 버튼:{len(sm.get('buttons',[]))} {tag}")
-                clicker.log("submenu_page_meta", parent=text, menu=sub_text,
-                            url=sm.get("url","")[:80], fields=sm.get("field_count",0))
+                print(f"✓ 필드:{sm.get('field_count', 0)} 버튼:{len(sm.get('buttons', []))} {tag}")
+                clicker.log(
+                    "submenu_page_meta",
+                    parent=text,
+                    menu=sub_text,
+                    url=sm.get("url", "")[:80],
+                    fields=sm.get("field_count", 0),
+                )
             except Exception as e:
                 print(f"메타실패 {str(e)[:30]}")
                 clicker.log("submenu_page_error", menu=sub_text, error=str(e)[:80])
 
-        full_tree.append({**m, "click_ok": True, "page_meta": page_meta,
-                          "submenus": submenus, "submenu_pages": sub_pages})
+        full_tree.append(
+            {**m, "click_ok": True, "page_meta": page_meta, "submenus": submenus, "submenu_pages": sub_pages}
+        )
 
     # 상품등록 후보 식별
     candidates = []
@@ -424,8 +445,7 @@ def main():
             candidates.append({"parent": t["text"], "from": "main", "page": t["page_meta"]})
         for sp in t.get("submenu_pages", []):
             if sp.get("is_product_register"):
-                candidates.append({"parent": t["text"], "from": "sub",
-                                   "menu": sp.get("menu_text"), "page": sp})
+                candidates.append({"parent": t["text"], "from": "sub", "menu": sp.get("menu_text"), "page": sp})
 
     output = {
         "domain": SELLER_HOST,
@@ -446,9 +466,15 @@ def main():
     print(f"     클릭 이벤트: {len(clicker.events)}")
     print(f"     상세 로그: {LOG_FILE}")
 
-    log_critical("OTHER", "스마트스토어 사이트맵 완료",
-                 user=user, menus=len(main_menus), pages=output["total_pages"],
-                 click_events=len(clicker.events), candidates=len(candidates))
+    log_critical(
+        "OTHER",
+        "스마트스토어 사이트맵 완료",
+        user=user,
+        menus=len(main_menus),
+        pages=output["total_pages"],
+        click_events=len(clicker.events),
+        candidates=len(candidates),
+    )
 
 
 if __name__ == "__main__":
@@ -456,7 +482,8 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n중단됨")
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

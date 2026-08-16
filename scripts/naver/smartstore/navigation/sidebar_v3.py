@@ -6,9 +6,9 @@
   3. 메뉴 발견 → 즉시 클릭 (재측정 없이)
   4. 클릭 후 URL 변화 확인
 """
+
 from __future__ import annotations
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -16,9 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 BASE = "https://sell.smartstore.naver.com"
 DASHBOARD = f"{BASE}/#/home/dashboard"
@@ -78,9 +78,9 @@ def check_sidebar_state(page) -> dict:
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  사이드바 v3 — 새로고침 + 검증 + 즉시 클릭")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  사이드바 v3 — 새로고침 + 검증 + 즉시 클릭")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -165,7 +165,6 @@ def main():
             print(f"  ✗ '{t}' 메뉴 없음")
             continue
         print(f"  '{t}' @ ({match['cx']}, {match['cy']}) 클릭", end=" ", flush=True)
-        before = page.url
         page.mouse.move(match["cx"], match["cy"])
         time.sleep(0.4)
         page.mouse.click(match["cx"], match["cy"])
@@ -181,7 +180,7 @@ def main():
         })
         """)
         if check["has_price"] and check["has_stock"]:
-            print(f"      ★ 가격+재고 input 발견!")
+            print("      ★ 가격+재고 input 발견!")
             found_url = after
             break
         elif not check["is_group"]:
@@ -196,12 +195,13 @@ def main():
     if found_url:
         print(f"\n  ★ 발견: {found_url}")
     else:
-        print(f"\n  ✗ 일반 상품 등록 페이지 못 찾음 — 모두 그룹상품 리다이렉트")
+        print("\n  ✗ 일반 상품 등록 페이지 못 찾음 — 모두 그룹상품 리다이렉트")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

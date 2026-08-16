@@ -7,6 +7,7 @@
   4. 하위 메뉴 전체 추출 + 각 메뉴 클릭으로 URL 발견
   5. 가격/재고 input 가진 페이지 자동 식별
 """
+
 from __future__ import annotations
 
 import json
@@ -17,9 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 BASE = "https://sell.smartstore.naver.com"
 DASHBOARD = f"{BASE}/#/home/dashboard"
@@ -32,7 +33,8 @@ def find_and_click_text(page, text: str, only_left: bool = True, wait_s: float =
     음수 좌표(화면 밖) 발견 시 scrollIntoView 후 좌표 재측정.
     """
     # 1단계: scrollIntoView로 요소를 화면 중앙으로
-    scrolled = page.evaluate(r"""
+    scrolled = page.evaluate(
+        r"""
     ({text, only_left}) => {
         const isVisible = (el) => {
             const s = window.getComputedStyle(el);
@@ -53,7 +55,9 @@ def find_and_click_text(page, text: str, only_left: bool = True, wait_s: float =
         }
         return false;
     }
-    """, {"text": text, "only_left": only_left})
+    """,
+        {"text": text, "only_left": only_left},
+    )
 
     if not scrolled:
         return {"ok": False, "reason": "not_found"}
@@ -61,7 +65,8 @@ def find_and_click_text(page, text: str, only_left: bool = True, wait_s: float =
     time.sleep(0.5)  # 스크롤 안정화 대기
 
     # 2단계: 화면 안에 위치한 좌표 재측정
-    candidates = page.evaluate(r"""
+    candidates = page.evaluate(
+        r"""
     ({text, only_left}) => {
         const isVisible = (el) => {
             const s = window.getComputedStyle(el);
@@ -91,7 +96,9 @@ def find_and_click_text(page, text: str, only_left: bool = True, wait_s: float =
         out.sort((a, b) => (b.in_view ? 1 : 0) - (a.in_view ? 1 : 0));
         return out;
     }
-    """, {"text": text, "only_left": only_left})
+    """,
+        {"text": text, "only_left": only_left},
+    )
 
     if not candidates:
         return {"ok": False, "reason": "not_found_after_scroll"}
@@ -109,7 +116,8 @@ def find_and_click_text(page, text: str, only_left: bool = True, wait_s: float =
 
 def extract_submenus_near(page, near_y: int, margin: int = 400) -> list[dict]:
     """특정 y 좌표 근처의 들여쓰기된 메뉴들 (펼쳐진 하위 메뉴)."""
-    return page.evaluate(r"""
+    return page.evaluate(
+        r"""
     ({nearY, margin}) => {
         const isVisible = (el) => {
             const s = window.getComputedStyle(el);
@@ -137,7 +145,9 @@ def extract_submenus_near(page, near_y: int, margin: int = 400) -> list[dict]:
         out.sort((a, b) => a.pos[1] - b.pos[1]);
         return out;
     }
-    """, {"nearY": near_y, "margin": margin})
+    """,
+        {"nearY": near_y, "margin": margin},
+    )
 
 
 def analyze_page(page) -> dict:
@@ -155,9 +165,9 @@ def analyze_page(page) -> dict:
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  사이드바 자동 펼침 + 일반 상품 메뉴 발견")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  사이드바 자동 펼침 + 일반 상품 메뉴 발견")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -255,9 +265,22 @@ def main():
     print("\n[4] 하위 메뉴 추출")
     submenus = extract_submenus_near(page, parent_y, margin=600)
     # '상품관리' 자기 자신 제외 + 명백한 다른 메뉴 제외
-    other_main_menus = ['검색하기','상품관리','판매관리','정산관리','문의/리뷰관리','스토어관리',
-                         '혜택/마케팅','N배송 관리','커머스솔루션','데이터분석','광고관리','프로모션 관리',
-                         '쇼핑 커넥트','판매자 정보']
+    other_main_menus = [
+        "검색하기",
+        "상품관리",
+        "판매관리",
+        "정산관리",
+        "문의/리뷰관리",
+        "스토어관리",
+        "혜택/마케팅",
+        "N배송 관리",
+        "커머스솔루션",
+        "데이터분석",
+        "광고관리",
+        "프로모션 관리",
+        "쇼핑 커넥트",
+        "판매자 정보",
+    ]
     submenus = [s for s in submenus if s["text"] not in other_main_menus]
     print(f"  발견: {len(submenus)}개")
     for s in submenus:
@@ -283,7 +306,7 @@ def main():
         info["menu_text"] = text
         page_results.append(info)
         if info["is_group"]:
-            print(f"  → 그룹상품")
+            print("  → 그룹상품")
         elif info["has_price_input"] and info["has_stock_input"]:
             print(f"  ★ 가격+재고 input! URL={info['url'][-60:]}")
         else:
@@ -297,17 +320,25 @@ def main():
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps({
-        "submenus": submenus,
-        "page_results": page_results,
-        "real_register_urls": [r["url"] for r in real_hits],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    OUTPUT.write_text(
+        json.dumps(
+            {
+                "submenus": submenus,
+                "page_results": page_results,
+                "real_register_urls": [r["url"] for r in real_hits],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(f"\n  저장: {OUTPUT.name}")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()
