@@ -194,6 +194,117 @@ def _write_summary_sheet(ws: Worksheet, articles: list[dict[str, Any]], cafe_lab
     ws.freeze_panes = "A5"
 
 
+CATEGORY_KEYWORDS = {
+    "서류/행정업무": [
+        "서류",
+        "양식",
+        "계약",
+        "적격심사",
+        "공정표",
+        "간접비",
+        "실비정산",
+        "기성",
+        "착공",
+        "준공",
+        "내역서",
+        "견적서",
+        "적산",
+        "수량산출",
+        "물량산출",
+        "단가",
+        "선금",
+    ],
+    "노무/급여/4대보험": ["4대보험", "급여", "연봉", "퇴사", "퇴직", "노무", "실업급여", "연금", "건강보험"],
+    "장비/자재/홍보성": ["임대", "판매", "업체", "전문회사", "시스템", "제품"],
+    "자격증/교육": ["자격증", "교육", "강의", "학원", "세미나", "zoom"],
+    "안전/품질": ["안전관리", "안전기사", "품질관리", "산업안전"],
+    "구인공고": ["구인", "모집", "채용"],
+    "엑셀/프로그램/자동화": ["엑셀", "프로그램", "매크로", "자동화"],
+    "EUM/전자카드/단말기": ["건설e음", "전자카드", "단말기", "퇴직공제"],
+    "법령/제도/행정": ["시행령", "법개정", "국토교통부", "시행규칙", "신고포상금", "법률"],
+    "구직": ["구직합니다", "구직 합니다", "구직희망"],
+}
+
+
+def _classify_categories(title: str, body: str) -> list[str]:
+    text = title + " " + (body or "")
+    hits = [c for c, kws in CATEGORY_KEYWORDS.items() if any(k in text for k in kws)]
+    return hits or ["기타"]
+
+
+def _write_category_sheet(ws: Worksheet, articles: list[dict[str, Any]]) -> None:
+    cat_data: dict[str, list[dict[str, Any]]] = {c: [] for c in [*list(CATEGORY_KEYWORDS), "기타"]}
+    for a in articles:
+        for c in _classify_categories(a.get("title", ""), a.get("body", "")):
+            cat_data[c].append(a)
+
+    ws.merge_cells("A1:F1")
+    ws["A1"] = "카테고리별 분석 (키워드 기반 분류, 중복 매칭 허용)"
+    ws["A1"].font = Font(bold=True, size=14, color="1F4E79")
+    ws.row_dimensions[1].height = 28
+
+    r = 3
+    _hdr(ws, r, ["카테고리", "건수", "비중", "평균조회", "평균댓글", "최고댓글"], H1_FILL, H1_FONT)
+    r += 1
+    ranked_cats = sorted(cat_data.items(), key=lambda x: -len(x[1]))
+    for cat, posts in ranked_cats:
+        if not posts:
+            continue
+        views = [_num(a.get("view_count")) for a in posts]
+        cmts = [_num(a.get("comment_count")) for a in posts]
+        vals = [
+            cat,
+            len(posts),
+            f"{len(posts) / len(articles) * 100:.1f}%",
+            round(sum(views) / len(views), 1),
+            round(sum(cmts) / len(cmts), 2),
+            max(cmts),
+        ]
+        for ci, val in enumerate(vals, 1):
+            c = ws.cell(row=r, column=ci, value=val)
+            c.border = BDR
+            c.font = BASE_FONT
+            c.alignment = Alignment(horizontal="center" if ci > 1 else "left", vertical="center")
+        r += 1
+    r += 1
+
+    for cat, posts in ranked_cats:
+        if not posts:
+            continue
+        ws.merge_cells(f"A{r}:F{r}")
+        ws.cell(row=r, column=1, value=f"▼ {cat} — 댓글수 TOP 5").font = Font(bold=True, size=11, color="C00000")
+        ws.row_dimensions[r].height = 20
+        r += 1
+        _hdr(ws, r, ["날짜", "제목", "조회수", "좋아요", "댓글수", "링크"], H2_FILL, H2_FONT)
+        r += 1
+        top5 = sorted(posts, key=lambda a: _num(a.get("comment_count")), reverse=True)[:5]
+        for a in top5:
+            href = a.get("href", "")
+            vals = [
+                a.get("date", ""),
+                a.get("title", ""),
+                _num(a.get("view_count")),
+                _num(a.get("like_count")),
+                _num(a.get("comment_count")),
+                "링크" if href else "",
+            ]
+            for ci, val in enumerate(vals, 1):
+                c = ws.cell(row=r, column=ci, value=val)
+                c.border = BDR
+                c.font = BASE_FONT
+                c.alignment = Alignment(vertical="center", wrap_text=(ci == 2))
+            if href:
+                lc = ws.cell(row=r, column=6, value="링크")
+                lc.hyperlink, lc.font = href, HLNK
+            r += 1
+        r += 1
+
+    widths = [16, 50, 10, 10, 10, 8]
+    for ci, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    ws.freeze_panes = "A4"
+
+
 def build_cafe_excel_report(
     articles: list[dict[str, Any]],
     out_path: str | Path,
@@ -211,6 +322,9 @@ def build_cafe_excel_report(
     ws_summary = wb.active
     ws_summary.title = "전체요약"
     _write_summary_sheet(ws_summary, articles, cafe_label)
+
+    ws_cat = wb.create_sheet("카테고리분석")
+    _write_category_sheet(ws_cat, articles)
 
     ws_list = wb.create_sheet("게시글목록")
     _write_article_list_sheet(ws_list, articles)
