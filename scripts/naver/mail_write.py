@@ -9,23 +9,24 @@
   compose 단계는 자동 진행 가능하나, '보내기' 클릭은 send=True 명시 + 추가
   확인 절차를 거친다.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import re
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from contextlib import contextmanager
-
-from .base import page_goto
-from scripts.web_connector import get_page
-from scripts.login_session import ensure_login
-from scripts.logger import get_logger
 from scripts import cdp_db
 from scripts.gate import check as gate_check
+from scripts.logger import get_logger
+from scripts.login_session import ensure_login
+from scripts.web_connector import get_page
+
+from .base import page_goto
 
 _log = get_logger(__name__)
 
@@ -130,7 +131,7 @@ def _parse_item(lines: list[str]) -> dict[str, str]:
         elif ln == "메일 제목" and i + 1 < len(lines):
             subject = lines[i + 1]
     for ln in reversed(lines):
-        if re.match(r'^(오전|오후|\d{2}\.\d{2}\.\d{2}|\d{4}\.\d{2}\.\d{2}|\d{1,2}:\d{2}|\d+분 전|어제|오늘)', ln):
+        if re.match(r"^(오전|오후|\d{2}\.\d{2}\.\d{2}|\d{4}\.\d{2}\.\d{2}|\d{1,2}:\d{2}|\d+분 전|어제|오늘)", ln):
             ts = ln
             break
     return {"sender": sender, "subject": subject, "time": ts}
@@ -193,7 +194,7 @@ def _task_inbox(args: list[str]) -> None:
         s = (m.get("sender") or "")[:28]
         t = (m.get("time") or "")[:10]
         sub = (m.get("subject") or "")[:55]
-        print(f"{i+1:>3} | {s:<28} | {t:<10} | {sub}")
+        print(f"{i + 1:>3} | {s:<28} | {t:<10} | {sub}")
 
 
 def compose(
@@ -282,9 +283,7 @@ def compose(
                 if f == main:
                     continue
                 try:
-                    has_ce = f.evaluate(
-                        "() => document.querySelectorAll('[contenteditable=\"true\"]').length"
-                    )
+                    has_ce = f.evaluate("() => document.querySelectorAll('[contenteditable=\"true\"]').length")
                     if has_ce:
                         editor_frame = f
                         break
@@ -505,7 +504,7 @@ def attach_files(page, file_paths: list[str | Path]) -> dict[str, Any]:
 
     selectors = [
         'input[type="file"]',
-        'input[accept]',
+        "input[accept]",
     ]
     last_error = ""
     for frame in page.frames:
@@ -520,7 +519,7 @@ def attach_files(page, file_paths: list[str | Path]) -> dict[str, Any]:
                     "files": [{"name": p.name, "size": p.stat().st_size} for p in paths],
                     "url": page.url,
                 }
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 last_error = str(exc)[:200]
                 continue
 
@@ -551,9 +550,9 @@ def attach_files(page, file_paths: list[str | Path]) -> dict[str, Any]:
                         "files": [{"name": p.name, "size": p.stat().st_size} for p in paths],
                         "url": page.url,
                     }
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     last_error = str(exc)[:200]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         last_error = str(exc)[:200]
 
     return {"ok": False, "error": "file_input_not_found", "detail": last_error}
@@ -596,6 +595,7 @@ def _task_attach(args: list[str]) -> None:
         return
 
     from scripts.gate import check as gate_check
+
     gate_check("browser.attach_file", risk="approve", force=approved, files=",".join(p.name for p in paths))
     page = get_page()
     result = attach_files(page, paths)
@@ -663,8 +663,6 @@ def _task_compose(args: list[str]) -> None:
 # 기존 inbox/compose 함수와 별도. 기존 코드 보존.
 # ════════════════════════════════════════════════════════════════════════
 
-import time as _time_v2
-
 try:
     from playwright.sync_api import Page as _Page_v2
 except Exception:
@@ -682,11 +680,12 @@ class NaverMail:
     def open(self) -> bool:
         from scripts.naver.auth import ensure_naver_login
         from scripts.popup_detector import handle_page_popups
+
         r = ensure_naver_login(self.page, return_url=self.MAIL_URL)
         if not r.get("ok"):
             return False
         self.page.goto(self.MAIL_URL, timeout=20000, wait_until="domcontentloaded")
-        _time_v2.sleep(2.5)
+        time.sleep(2.5)
         try:
             handle_page_popups(self.page, timeout_s=1.5)
         except Exception:
@@ -697,7 +696,8 @@ class NaverMail:
         if not self.open():
             return []
         try:
-            return self.page.evaluate("""
+            return self.page.evaluate(
+                """
             (limit) => {
                 const rows = document.querySelectorAll('.mail_list li, [class*="MailList"] li, .list_mail tr, tbody tr');
                 const out = [];
@@ -711,7 +711,9 @@ class NaverMail:
                 }
                 return out;
             }
-            """, limit)
+            """,
+                limit,
+            )
         except Exception:
             return []
 
@@ -721,7 +723,7 @@ class NaverMail:
         try:
             self.page.locator('input[type="search"], input[placeholder*="검색"]').first.fill(query, timeout=3000)
             self.page.keyboard.press("Enter")
-            _time_v2.sleep(2.5)
+            time.sleep(2.5)
             return self.list_inbox(limit=limit)
         except Exception:
             return []
@@ -729,29 +731,30 @@ class NaverMail:
     def compose(self, to: str, subject: str, body: str, send: bool = False) -> dict:
         """메일 작성 (기본 임시저장, send=True 시 발송)."""
         from scripts.critical_logger import log_critical
+
         if not self.open():
             return {"ok": False, "error": "open_failed"}
         try:
             self.page.locator('a:has-text("메일쓰기"), .btn_write').first.click(timeout=5000)
-            _time_v2.sleep(2)
+            time.sleep(2)
             self.page.locator('input[name="to"], input[placeholder*="받는사람"]').first.fill(to, timeout=3000)
-            _time_v2.sleep(0.3)
+            time.sleep(0.3)
             self.page.locator('input[name="subject"], input[placeholder*="제목"]').first.fill(subject, timeout=3000)
-            _time_v2.sleep(0.3)
+            time.sleep(0.3)
             body_el = self.page.locator('iframe.iframe_body, [contenteditable="true"]').first
             body_el.click(timeout=3000)
-            _time_v2.sleep(0.5)
+            time.sleep(0.5)
             self.page.keyboard.type(body, delay=10)
-            _time_v2.sleep(0.5)
+            time.sleep(0.5)
             if send:
                 gate_check("naver_mail_send")
                 self.page.locator('button:has-text("보내기"), .btn_send').first.click(timeout=3000)
-                _time_v2.sleep(3)
+                time.sleep(3)
                 log_critical("MAIL_SEND", f"네이버 메일 발송: {subject[:30]}", to=to)
                 return {"ok": True, "mode": "sent"}
             else:
                 self.page.locator('button:has-text("임시저장"), .btn_temp_save').first.click(timeout=3000)
-                _time_v2.sleep(2)
+                time.sleep(2)
                 return {"ok": True, "mode": "draft"}
         except Exception as e:
             return {"ok": False, "error": str(e)}

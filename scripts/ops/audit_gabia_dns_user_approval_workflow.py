@@ -23,6 +23,7 @@ ASSISTANT_GABIA_DNS_USER_APPROVAL_WORKFLOW_01
     python scripts/ops/audit_gabia_dns_user_approval_workflow.py
     python scripts/ops/audit_gabia_dns_user_approval_workflow.py --json
 """
+
 from __future__ import annotations
 
 import json
@@ -33,13 +34,49 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 GABIA_DNS_FLOW = [
-    {"step": 1, "actor": "AI",      "action": "DNS 변경 필요 감지 및 레코드 초안 준비",      "safe_to_prepare": True,  "final_gate": False},
-    {"step": 2, "actor": "USER",    "action": "최초 가비아 로그인 (USER_PRESENT_AUTH)",      "safe_to_prepare": False, "final_gate": False},
-    {"step": 3, "actor": "AI",      "action": "DNS 관리 화면까지 자동 진입 (신뢰 세션)",      "safe_to_prepare": True,  "final_gate": False},
-    {"step": 4, "actor": "AI",      "action": "레코드 값 입력 및 변경 전/후 미리보기 생성",   "safe_to_prepare": True,  "final_gate": False},
-    {"step": 5, "actor": "USER",    "action": "미리보기 확인 후 최종 승인 결정",               "safe_to_prepare": False, "final_gate": True},
-    {"step": 6, "actor": "USER",    "action": "저장/적용 버튼 직접 클릭",                     "safe_to_prepare": False, "final_gate": True},
-    {"step": 7, "actor": "AI",      "action": "적용 결과 검증 및 감사 로그 기록",             "safe_to_prepare": True,  "final_gate": False},
+    {
+        "step": 1,
+        "actor": "AI",
+        "action": "DNS 변경 필요 감지 및 레코드 초안 준비",
+        "safe_to_prepare": True,
+        "final_gate": False,
+    },
+    {
+        "step": 2,
+        "actor": "USER",
+        "action": "최초 가비아 로그인 (USER_PRESENT_AUTH)",
+        "safe_to_prepare": False,
+        "final_gate": False,
+    },
+    {
+        "step": 3,
+        "actor": "AI",
+        "action": "DNS 관리 화면까지 자동 진입 (신뢰 세션)",
+        "safe_to_prepare": True,
+        "final_gate": False,
+    },
+    {
+        "step": 4,
+        "actor": "AI",
+        "action": "레코드 값 입력 및 변경 전/후 미리보기 생성",
+        "safe_to_prepare": True,
+        "final_gate": False,
+    },
+    {
+        "step": 5,
+        "actor": "USER",
+        "action": "미리보기 확인 후 최종 승인 결정",
+        "safe_to_prepare": False,
+        "final_gate": True,
+    },
+    {"step": 6, "actor": "USER", "action": "저장/적용 버튼 직접 클릭", "safe_to_prepare": False, "final_gate": True},
+    {
+        "step": 7,
+        "actor": "AI",
+        "action": "적용 결과 검증 및 감사 로그 기록",
+        "safe_to_prepare": True,
+        "final_gate": False,
+    },
 ]
 
 SAFE_BOUNDARY = {
@@ -63,19 +100,21 @@ SAFE_BOUNDARY = {
 def _check_work_trade() -> bool:
     try:
         from ai_orchestrator.gabia.gabia_dns_work_registry import (
-            get_work_trade, GABIA_DNS_WORK_TRADE,
+            get_work_trade,
         )
+
         wt = get_work_trade("gabia_dns_management")
         assert wt is not None
         assert wt.execution_location == "LOCAL_AGENT_REQUIRED"
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
 def _check_external_works() -> tuple[bool, list[str]]:
     try:
         from ai_orchestrator.gabia.gabia_dns_work_registry import list_gabia_external_works
+
         works = list_gabia_external_works()
         ids = [w.external_work_id for w in works]
         required = {
@@ -93,12 +132,13 @@ def _check_policies() -> dict[str, bool]:
     result = {}
     try:
         from ai_orchestrator.safety_policy.safety_policy_registry import get_policy
-        result["USER_PRESENT_AUTH_REQUIRED"]         = get_policy("USER_PRESENT_AUTH_REQUIRED") is not None
-        result["TRUSTED_SESSION_REUSE_ALLOWED"]      = get_policy("TRUSTED_SESSION_REUSE_ALLOWED") is not None
+
+        result["USER_PRESENT_AUTH_REQUIRED"] = get_policy("USER_PRESENT_AUTH_REQUIRED") is not None
+        result["TRUSTED_SESSION_REUSE_ALLOWED"] = get_policy("TRUSTED_SESSION_REUSE_ALLOWED") is not None
         result["DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED"] = get_policy("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED") is not None
-        result["FINAL_APPROVAL_GATE_REQUIRED"]       = get_policy("FINAL_APPROVAL_GATE_REQUIRED") is not None
-        result["SECRET_STORAGE_FORBIDDEN"]           = get_policy("SECRET_STORAGE_FORBIDDEN") is not None
-        result["SERVER_SECURITY_LOGIN_BLOCKED"]      = get_policy("SERVER_SECURITY_LOGIN_BLOCKED") is not None
+        result["FINAL_APPROVAL_GATE_REQUIRED"] = get_policy("FINAL_APPROVAL_GATE_REQUIRED") is not None
+        result["SECRET_STORAGE_FORBIDDEN"] = get_policy("SECRET_STORAGE_FORBIDDEN") is not None
+        result["SERVER_SECURITY_LOGIN_BLOCKED"] = get_policy("SERVER_SECURITY_LOGIN_BLOCKED") is not None
     except Exception as e:
         for k in result:
             result[k] = False
@@ -110,6 +150,7 @@ def _check_policy_decisions() -> dict[str, bool]:
     result = {}
     try:
         from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
         svc = ExecutionPolicyService()
 
         login = svc.decide_gabia_login()
@@ -119,18 +160,18 @@ def _check_policy_decisions() -> dict[str, bool]:
         result["trusted_session_reuse_allowed"] = session.allowed_to_reuse_trusted_session is True
 
         prepare = svc.decide_gabia_dns_prepare()
-        result["dns_prepare_safe_to_prepare"]      = prepare.safe_to_prepare is True
-        result["dns_prepare_final_approval_req"]   = prepare.requires_final_approval is True
-        result["dns_prepare_final_btn_blocked"]    = prepare.safe_to_click_final_button is False
+        result["dns_prepare_safe_to_prepare"] = prepare.safe_to_prepare is True
+        result["dns_prepare_final_approval_req"] = prepare.requires_final_approval is True
+        result["dns_prepare_final_btn_blocked"] = prepare.safe_to_click_final_button is False
 
         save = svc.decide_gabia_dns_final_save()
-        result["dns_final_save_blocked"]           = save.safe_to_click_final_button is False
+        result["dns_final_save_blocked"] = save.safe_to_click_final_button is False
         result["dns_final_save_requires_approval"] = save.requires_final_approval is True
-        result["dns_final_save_user_direct"]       = save.requires_user_direct is True
+        result["dns_final_save_user_direct"] = save.requires_user_direct is True
 
         expired = svc.decide_gabia_session_expired()
-        result["session_expired_reauth_required"]  = expired.requires_reauth is True
-        result["session_expired_no_reuse"]         = expired.allowed_to_reuse_trusted_session is False
+        result["session_expired_reauth_required"] = expired.requires_reauth is True
+        result["session_expired_no_reuse"] = expired.allowed_to_reuse_trusted_session is False
     except Exception as e:
         result["[error]"] = str(e)
     return result
@@ -140,28 +181,27 @@ def _check_dns_models() -> dict[str, bool]:
     result = {}
     try:
         from ai_orchestrator.gabia.gabia_dns_models import (
-            GabiaDnsRecordDraft, GabiaDnsChangePreview,
-            GabiaDnsApprovalSummary, GabiaDnsRollbackPlan,
-            make_assistant_subdomain_drafts, make_default_rollback_plan,
+            make_assistant_subdomain_drafts,
+            make_default_rollback_plan,
         )
+
         result["GabiaDnsRecordDraft"] = True
         result["GabiaDnsChangePreview"] = True
         result["GabiaDnsApprovalSummary"] = True
         result["GabiaDnsRollbackPlan"] = True
 
         # draft 생성 테스트
-        d1, d2 = make_assistant_subdomain_drafts()
-        result["draft_safe_to_prepare"]           = d1.safe_to_prepare is True
-        result["draft_requires_final_approval"]   = d1.requires_final_approval is True
-        result["draft_no_secret_fields"]          = all(
-            not hasattr(d1, f) for f in
-            ("password", "otp", "cert_password", "token", "cookie", "session")
+        d1, _d2 = make_assistant_subdomain_drafts()
+        result["draft_safe_to_prepare"] = d1.safe_to_prepare is True
+        result["draft_requires_final_approval"] = d1.requires_final_approval is True
+        result["draft_no_secret_fields"] = all(
+            not hasattr(d1, f) for f in ("password", "otp", "cert_password", "token", "cookie", "session")
         )
 
         # rollback plan 테스트
         rb = make_default_rollback_plan()
         result["rollback_requires_user_approval"] = rb.requires_user_approval is True
-        result["rollback_steps_exist"]            = len(rb.rollback_steps) >= 4
+        result["rollback_steps_exist"] = len(rb.rollback_steps) >= 4
 
         # to_safe_dict에 secret 없는지 확인
         safe_d = d1.to_safe_dict()
@@ -176,6 +216,7 @@ def _check_dns_models() -> dict[str, bool]:
 def _check_audit_events() -> bool:
     try:
         from ai_orchestrator.services.execution_policy_service import AUDIT_EVENT_TYPES
+
         gabia_events = {
             "GABIA_DNS_WORKFLOW_PREPARED",
             "GABIA_DNS_RECORD_DRAFTED",
@@ -194,6 +235,7 @@ def _check_audit_events() -> bool:
 def _check_external_work_registry() -> bool:
     try:
         from ai_orchestrator.external_work_registry import get_external_work
+
         p = get_external_work("gabia", "dns_record_prepare")
         f = get_external_work("gabia", "dns_final_save")
         r = get_external_work("gabia", "dns_record_read")
@@ -212,26 +254,29 @@ def main() -> None:
     registry_ok = _check_external_work_registry()
 
     checklist = [
-        {"item": "Gabia DNS WorkTrade 정의 존재",          "ok": wt_ok},
-        {"item": "Gabia DNS ExternalWork 3개 존재",        "ok": ew_ok},
-        {"item": "external_work_registry gabia 항목",      "ok": registry_ok},
-        {"item": "USER_PRESENT_AUTH_REQUIRED 정책",        "ok": policies.get("USER_PRESENT_AUTH_REQUIRED", False)},
-        {"item": "TRUSTED_SESSION_REUSE_ALLOWED 정책",     "ok": policies.get("TRUSTED_SESSION_REUSE_ALLOWED", False)},
-        {"item": "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED 정책","ok": policies.get("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED", False)},
-        {"item": "FINAL_APPROVAL_GATE_REQUIRED 정책",      "ok": policies.get("FINAL_APPROVAL_GATE_REQUIRED", False)},
-        {"item": "SECRET_STORAGE_FORBIDDEN 정책",          "ok": policies.get("SECRET_STORAGE_FORBIDDEN", False)},
-        {"item": "로그인 requires_user_present_auth",       "ok": decisions.get("login_requires_user_present_auth", False)},
-        {"item": "신뢰 세션 재사용 허용",                   "ok": decisions.get("trusted_session_reuse_allowed", False)},
-        {"item": "DNS 준비 safe_to_prepare=True",          "ok": decisions.get("dns_prepare_safe_to_prepare", False)},
-        {"item": "DNS 준비 final_approval_required",       "ok": decisions.get("dns_prepare_final_approval_req", False)},
-        {"item": "DNS 최종 저장 버튼 AI 자동 클릭 차단",   "ok": decisions.get("dns_final_save_blocked", False)},
-        {"item": "세션 만료 reauth_required",              "ok": decisions.get("session_expired_reauth_required", False)},
-        {"item": "DNS draft 모델 safe_to_prepare",         "ok": models.get("draft_safe_to_prepare", False)},
+        {"item": "Gabia DNS WorkTrade 정의 존재", "ok": wt_ok},
+        {"item": "Gabia DNS ExternalWork 3개 존재", "ok": ew_ok},
+        {"item": "external_work_registry gabia 항목", "ok": registry_ok},
+        {"item": "USER_PRESENT_AUTH_REQUIRED 정책", "ok": policies.get("USER_PRESENT_AUTH_REQUIRED", False)},
+        {"item": "TRUSTED_SESSION_REUSE_ALLOWED 정책", "ok": policies.get("TRUSTED_SESSION_REUSE_ALLOWED", False)},
+        {
+            "item": "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED 정책",
+            "ok": policies.get("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED", False),
+        },
+        {"item": "FINAL_APPROVAL_GATE_REQUIRED 정책", "ok": policies.get("FINAL_APPROVAL_GATE_REQUIRED", False)},
+        {"item": "SECRET_STORAGE_FORBIDDEN 정책", "ok": policies.get("SECRET_STORAGE_FORBIDDEN", False)},
+        {"item": "로그인 requires_user_present_auth", "ok": decisions.get("login_requires_user_present_auth", False)},
+        {"item": "신뢰 세션 재사용 허용", "ok": decisions.get("trusted_session_reuse_allowed", False)},
+        {"item": "DNS 준비 safe_to_prepare=True", "ok": decisions.get("dns_prepare_safe_to_prepare", False)},
+        {"item": "DNS 준비 final_approval_required", "ok": decisions.get("dns_prepare_final_approval_req", False)},
+        {"item": "DNS 최종 저장 버튼 AI 자동 클릭 차단", "ok": decisions.get("dns_final_save_blocked", False)},
+        {"item": "세션 만료 reauth_required", "ok": decisions.get("session_expired_reauth_required", False)},
+        {"item": "DNS draft 모델 safe_to_prepare", "ok": models.get("draft_safe_to_prepare", False)},
         {"item": "DNS draft 모델 requires_final_approval", "ok": models.get("draft_requires_final_approval", False)},
-        {"item": "draft 모델 secret 필드 없음",             "ok": models.get("draft_no_secret_fields", False)},
-        {"item": "safe_dict secret 정보 없음",             "ok": models.get("safe_dict_no_secrets", False)},
-        {"item": "rollback plan 존재",                     "ok": models.get("rollback_requires_user_approval", False)},
-        {"item": "Gabia DNS AuditEvent 타입 8개",          "ok": audit_ok},
+        {"item": "draft 모델 secret 필드 없음", "ok": models.get("draft_no_secret_fields", False)},
+        {"item": "safe_dict secret 정보 없음", "ok": models.get("safe_dict_no_secrets", False)},
+        {"item": "rollback plan 존재", "ok": models.get("rollback_requires_user_approval", False)},
+        {"item": "Gabia DNS AuditEvent 타입 8개", "ok": audit_ok},
     ]
 
     all_pass = all(c["ok"] for c in checklist)

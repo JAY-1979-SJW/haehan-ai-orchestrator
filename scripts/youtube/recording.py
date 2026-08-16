@@ -1,10 +1,11 @@
 """Local screen recording workflow for YouTube-ready evidence videos."""
+
 from __future__ import annotations
 
 import json
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,7 @@ APPROVAL_PHRASE = "YOUTUBE_APPROVED_RECORD"
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -52,15 +53,19 @@ def build_ffmpeg_command(
     ]
     if include_audio:
         command.extend(["-f", "dshow", "-i", "audio=virtual-audio-capturer"])
-    command.extend([
-        "-t",
-        str(duration_seconds),
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-        str(output_path),
-    ])
+    command.extend(
+        [
+            "-t",
+            str(duration_seconds),
+            "-vf",
+            "crop=trunc(iw/2)*2:trunc(ih/2)*2",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
+            str(output_path),
+        ]
+    )
     return command
 
 
@@ -186,6 +191,10 @@ def execute_recording_plan(plan_path: str | Path, *, approved: bool, confirm: st
         status=result["status"],
         risk="local_screen_capture",
         artifact_path=str(path),
-        metadata={"state_change": result["state_change"], "output_path": result["output_path"], "reason": result["reason"]},
+        metadata={
+            "state_change": result["state_change"],
+            "output_path": result["output_path"],
+            "reason": result["reason"],
+        },
     )
     return result, path

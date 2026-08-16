@@ -16,7 +16,14 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT_DIR = ROOT / "data" / "video" / "narration"
+sys.path.insert(0, str(ROOT))
+from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+
+
+def _output_dir():
+    return get_local_data_dir() / "video" / "narration"
+
+
 VOICE = "ko-KR-InJoonNeural"
 
 # ──────────────────────────────────────────────
@@ -129,8 +136,9 @@ AI가 매일 정부24, 중소벤처기업부,
 async def generate_scene(scene: dict) -> Path:
     import edge_tts
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out = OUTPUT_DIR / f"scene_{scene['id']:02d}_{scene['name']}.mp3"
+    output_dir = _output_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out = output_dir / f"scene_{scene['id']:02d}_{scene['name']}.mp3"
 
     communicate = edge_tts.Communicate(text=scene["text"], voice=VOICE, rate="-5%")
     await communicate.save(str(out))
@@ -144,7 +152,7 @@ async def main(scene_ids: list[int] | None = None) -> None:
     print(f"[TTS] voice={VOICE}, 생성 장면={len(targets)}개\n")
     for s in targets:
         await generate_scene(s)
-    print(f"\n[TTS] 완료 → {OUTPUT_DIR}")
+    print(f"\n[TTS] 완료 → {_output_dir()}")
 
 
 if __name__ == "__main__":
