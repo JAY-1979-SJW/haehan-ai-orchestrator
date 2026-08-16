@@ -52,6 +52,134 @@ class SendRequest(BaseModel):
     confirmed: bool = False
 
 
+def _run_eum_query(query_fn, *, needs_login_hint: bool = True) -> dict:
+    """EUM 로그인된 브라우저 페이지에서 query_fn(page)를 실행하는 공통 래퍼.
+
+    CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
+    """
+    from scripts.site_access import LoginError
+    from scripts.site_watch import StepFailure
+    from scripts.web_connector import get_page, run_on_browser_thread
+
+    try:
+
+        def _run():
+            page = get_page()
+            return query_fn(page)
+
+        return run_on_browser_thread(_run, timeout=120)
+    except (LoginError, StepFailure) as e:
+        if needs_login_hint:
+            return {"ok": False, "needs_login": True, "error": "EUM 로그인이 필요합니다."}
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@eum_router.get("/devices")
+def get_devices(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """단말기설치현황 전체 조회 (WEBMAN390M00)."""
+    _ensure_root_on_path()
+    import time as _time
+
+    from scripts.archive.eum_legacy.eum_extract_all_devices import click_page, extract_page_devices, get_page_count
+
+    def _query(page):
+        page.goto("https://eum.cw.or.kr/web/man/WEBMAN390M00", timeout=30000)
+        page.wait_for_load_state("load", timeout=5000)
+        total_pages = get_page_count(page)
+        all_devices = []
+        for page_num in range(1, total_pages + 1):
+            if page_num > 1:
+                click_page(page, page_num)
+                _time.sleep(1.5)
+            all_devices.extend(extract_page_devices(page))
+        return {"ok": True, "count": len(all_devices), "devices": all_devices}
+
+    result = _run_eum_query(_query)
+    log_event(
+        "EUM_API_DEVICES",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok" if result.get("ok") else "error",
+        note=f"count={result.get('count', 0)}",
+    )
+    return result
+
+
+@eum_router.get("/monitor")
+def get_monitor(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """단말기 운용 모니터링 요약(통신단절/장기설치/준공임박) — 브라우저 불필요, 캐시된 조회 결과 기반."""
+    _ensure_root_on_path()
+    from scripts.eum.monitor import _load_devices, analyze
+
+    devices = _load_devices()
+    if not devices:
+        return {"ok": False, "error": "단말기 데이터가 없습니다. 먼저 /eum/devices 를 조회하세요."}
+    result = analyze(devices)
+    return {"ok": True, **result}
+
+
+@eum_router.get("/labor-test")
+def get_labor_test(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """근로내역테스트 조회 (WEBMAN460M00)."""
+    _ensure_root_on_path()
+    from scripts.eum.labor_test import fetch_labor_test
+
+    result = _run_eum_query(
+        lambda page: {"ok": True, "records": (records := fetch_labor_test(page)), "count": len(records)}
+    )
+    return result
+
+
+@eum_router.get("/test-workers")
+def get_test_workers(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """테스트근로자등록 조회 (WEBMAN470M00)."""
+    _ensure_root_on_path()
+    from scripts.eum.test_workers import fetch_test_workers
+
+    result = _run_eum_query(
+        lambda page: {"ok": True, "records": (records := fetch_test_workers(page)), "count": len(records)}
+    )
+    return result
+
+
+@eum_router.get("/site-devices")
+def get_site_devices(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """현장별단말기목록 조회 (WEBMAN380M00). 필드명 미매핑 — row1_cells/row2_cells 원본."""
+    _ensure_root_on_path()
+    from scripts.eum.site_devices import fetch_site_devices
+
+    result = _run_eum_query(
+        lambda page: {"ok": True, "records": (records := fetch_site_devices(page)), "count": len(records)}
+    )
+    return result
+
+
+@eum_router.get("/install-targets")
+def get_install_targets(user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """설치안내대상 전 페이지 조회 (WEBMAN370M00)."""
+    _ensure_root_on_path()
+    from scripts.eum.install_targets import collect_all_install_targets
+
+    result = _run_eum_query(lambda page: collect_all_install_targets(page))
+    return result
+
+
+@eum_router.get("/device-history")
+def get_device_history(
+    device_id: str | None = None,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """단말기 이력 조회 (WEBMAN400M00). device_id 미지정 시 전체 목록."""
+    _ensure_root_on_path()
+    from scripts.eum.history import fetch_history
+
+    result = _run_eum_query(
+        lambda page: {"ok": True, "records": (records := fetch_history(page, device_id)), "count": len(records)}
+    )
+    return result
+
+
 @eum_router.post("/sales-mail/collect")
 def collect_and_prepare(
     req: CollectRequest,
