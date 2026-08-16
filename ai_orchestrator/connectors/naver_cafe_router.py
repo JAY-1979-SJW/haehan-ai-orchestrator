@@ -61,7 +61,7 @@ def collect_my_cafes(user: dict = Depends(require_role("admin", "owner"))) -> di
     """내 가입 카페 목록을 CDP 로 수집해 저장."""
     try:
         _ensure_path()
-        from scripts.naver.cafe.explorer import get_my_cafes, save_my_cafes
+        from scripts.naver.cafe.collection.explorer import get_my_cafes, save_my_cafes
         from scripts.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 반드시 브라우저 전용 스레드에서 실행(playwright sync 스레드 경계).
@@ -568,6 +568,184 @@ def _run_cafe_gpt(messages: list, confirmed: bool):
         history.extend(tool_results)
 
     yield _sse("done", {"steps": step})
+
+
+# ── 카페 → 해한Ai 홈페이지 블로그 자동화 ─────────────────────────────────────
+
+
+class CafeToHaehanBlogRequest(BaseModel):
+    max_topics: int = 3  # 생성할 블로그 포스트 수 (최대 10)
+    days: int | None = None  # 최근 N일 게시글만 분석 (없으면 전체)
+    category: str | None = None  # 특정 카페 분류만 분석 (없으면 전체)
+    status: str = "draft"  # "draft" | "published"
+
+
+@naver_cafe_router.post("/cafe-to-haehan-blog")
+def cafe_to_haehan_blog(
+    body: CafeToHaehanBlogRequest,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """네이버 카페 수집 데이터 → AI 주제 추출 → 해한Ai 홈페이지 블로그 자동 생성·저장.
+
+    1. 최신 classified 파일에서 조회수 상위 게시글 읽기
+    2. AI로 인기 질문/주제 N개 추출
+    3. 각 주제를 해한Ai /api/admin/blog-generate 에 전송 (Claude + Unsplash)
+    4. 생성된 포스트를 /api/admin/blog 에 저장 (draft 또는 published)
+    """
+    import urllib.error
+    import urllib.request
+
+    t0 = time.monotonic()
+
+    # ── 환경 변수 ──────────────────────────────────────────────────────────────
+    haehan_url = os.environ.get("HAEHAN_BLOG_URL", "https://haehan-ai.kr").rstrip("/")
+    admin_secret = os.environ.get("HAEHAN_ADMIN_SECRET", "")
+    if not admin_secret:
+        raise HTTPException(status_code=500, detail="HAEHAN_ADMIN_SECRET 환경변수가 설정되지 않았습니다")
+
+    max_topics = max(1, min(body.max_topics, 10))
+    valid_statuses = {"draft", "published"}
+    post_status = body.status if body.status in valid_statuses else "draft"
+
+    # ── 1. 카페 게시글 로드 ────────────────────────────────────────────────────
+    path = _latest_file("classified_*.json")
+    if not path:
+        raise HTTPException(status_code=404, detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요")
+
+    articles = json.loads(path.read_text(encoding="utf-8"))
+
+    if body.category:
+        articles = [a for a in articles if a.get("category") == body.category]
+    if body.days and body.days > 0:
+        from datetime import datetime, timedelta
+
+        cutoff = (datetime.now() - timedelta(days=body.days)).strftime("%Y-%m-%d")
+        articles = [a for a in articles if str(a.get("date", "")) >= cutoff]
+
+    if not articles:
+        raise HTTPException(status_code=404, detail="조건에 맞는 게시글이 없습니다")
+
+    def _views(a: dict) -> int:
+        try:
+            return int(str(a.get("view_count", "0")).replace(",", "") or 0)
+        except (ValueError, TypeError):
+            return 0
+
+    top_articles = sorted(articles, key=_views, reverse=True)[:200]
+
+    # ── 2. AI로 블로그 주제 추출 ───────────────────────────────────────────────
+    _ensure_path()
+    from scripts.community.analyzer import analyze_posts
+
+    ctx = "네이버 카페 수집글 — 소방·건설 실무자 커뮤니티"
+    if body.category:
+        ctx += f" · 분류={body.category}"
+
+    posts_for_analysis = [
+        {"title": a.get("title", ""), "views": a.get("view_count", ""), "date": a.get("date", "")} for a in top_articles
+    ]
+    report = analyze_posts(posts_for_analysis, context=ctx)
+    if not report.get("ok"):
+        raise HTTPException(status_code=502, detail=f"AI 분석 실패: {report.get('error', '알 수 없음')}")
+
+    # topics 필드에서 주제 추출 (analyze_posts 반환 구조 활용)
+    raw_topics: list[str] = []
+    for t in report.get("topics", []):
+        if isinstance(t, dict):
+            raw_topics.append(t.get("title") or t.get("topic") or str(t))
+        elif isinstance(t, str):
+            raw_topics.append(t)
+    # topics 부족하면 opportunities, trends 에서 보완
+    for field in ("opportunities", "trends"):
+        for item in report.get(field, []):
+            label = item.get("title") or item.get("keyword") or str(item) if isinstance(item, dict) else str(item)
+            if label and label not in raw_topics:
+                raw_topics.append(label)
+
+    topics = [t for t in raw_topics if t.strip()][:max_topics]
+    if not topics:
+        raise HTTPException(status_code=502, detail="AI가 블로그 주제를 추출하지 못했습니다 — topics 필드 없음")
+
+    # ── 3 & 4. 주제별 블로그 생성 → 홈페이지 DB 저장 ─────────────────────────
+    results = []
+    headers_common = {
+        "Content-Type": "application/json",
+        "x-admin-key": admin_secret,
+    }
+
+    for topic in topics:
+        item: dict = {"topic": topic, "generate": None, "save": None, "error": None}
+        try:
+            # 3. blog-generate 호출 (Claude + Unsplash)
+            gen_payload = json.dumps({"topic": topic}, ensure_ascii=False).encode()
+            gen_req = urllib.request.Request(  # noqa: S310
+                f"{haehan_url}/api/admin/blog-generate",
+                data=gen_payload,
+                headers=headers_common,
+                method="POST",
+            )
+            with urllib.request.urlopen(gen_req, timeout=60) as resp:  # noqa: S310
+                generated = json.loads(resp.read().decode())
+            item["generate"] = {"ok": True, "title": generated.get("title"), "slug": generated.get("slug")}
+
+            # 4. blog 저장
+            save_payload = json.dumps(
+                {
+                    "slug": generated["slug"],
+                    "title": generated["title"],
+                    "summary": generated["summary"],
+                    "category": generated["category"],
+                    "published_at": generated.get("publishedAt"),
+                    "status": post_status,
+                    "featured": False,
+                    "thumbnail": generated.get("thumbnail"),
+                    "thumbnail_credit": generated.get("thumbnailCredit"),
+                    "thumbnail_credit_url": generated.get("thumbnailCreditUrl"),
+                    "tags": generated.get("tags", []),
+                    "content": generated.get("content", []),
+                },
+                ensure_ascii=False,
+            ).encode()
+            save_req = urllib.request.Request(  # noqa: S310
+                f"{haehan_url}/api/admin/blog",
+                data=save_payload,
+                headers=headers_common,
+                method="POST",
+            )
+            with urllib.request.urlopen(save_req, timeout=30) as resp:  # noqa: S310
+                saved = json.loads(resp.read().decode())
+            item["save"] = {"ok": True, "id": saved.get("post", {}).get("id"), "status": post_status}
+
+        except urllib.error.HTTPError as e:
+            body_text = e.read().decode(errors="replace")[:200]
+            item["error"] = f"HTTP {e.code}: {body_text}"
+        except Exception as exc:
+            item["error"] = str(exc)[:200]
+
+        results.append(item)
+
+    success = [r for r in results if r["error"] is None]
+    failed = [r for r in results if r["error"] is not None]
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log_event(
+        "CAFE_TO_HAEHAN_BLOG",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"topics={len(topics)} success={len(success)} failed={len(failed)} status={post_status} duration_ms={duration_ms}",
+    )
+    return {
+        "ok": len(success) > 0,
+        "topics_requested": len(topics),
+        "success_count": len(success),
+        "failed_count": len(failed),
+        "status": post_status,
+        "results": results,
+        "source_file": path.name,
+        "duration_ms": duration_ms,
+    }
 
 
 class CafeChatMessage(BaseModel):

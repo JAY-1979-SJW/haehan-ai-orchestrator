@@ -8,19 +8,20 @@
   복원: from scripts.auth_session import restore_session
         restore_session('naver.com', page)
 """
+
 from __future__ import annotations
 
 import json
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
+from scripts.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -46,6 +47,7 @@ NAVER_SUBDOMAINS = [
 
 # ── 공개 인터페이스 ──────────────────────────────────────────────────────────
 
+
 def load_session_status() -> dict:
     """저장된 세션 상태 메타를 반환합니다."""
     if not SESSION_STATUS_FILE.exists():
@@ -59,12 +61,14 @@ def load_session_status() -> dict:
 def has_saved_browser_session() -> bool:
     """auth_session 저장소에 naver.com 세션이 있는지 확인합니다."""
     from scripts.auth_session import list_sessions
+
     return any(s["host"] == NAVER_SESSION_HOST for s in list_sessions())
 
 
 def list_naver_sessions() -> list[dict]:
     """저장된 네이버 서브도메인 세션 목록을 반환합니다."""
     from scripts.auth_session import list_sessions
+
     saved = {s["host"]: s for s in list_sessions()}
     result = []
     for host in NAVER_SUBDOMAINS:
@@ -77,7 +81,7 @@ def list_naver_sessions() -> list[dict]:
     return result
 
 
-def run_naver_login_pipeline() -> dict:
+def run_naver_login_pipeline(naver_id: str | None = None) -> dict:
     """CDP 시작 → 로그인 → 브라우저 세션 저장 → 상태 저장.
 
     우선순위: 로그인 성공 직후 실제 쿠키/스토리지를 먼저 저장하고,
@@ -99,6 +103,7 @@ def run_naver_login_pipeline() -> dict:
     # ── Step 2: 브라우저 연결 ────────────────────────────────────────────────
     try:
         from playwright.sync_api import sync_playwright
+
         pw = sync_playwright().start()
         browser = pw.chromium.connect_over_cdp(f"http://{CDP_HOST}:{CDP_PORT}")
 
@@ -118,25 +123,32 @@ def run_naver_login_pipeline() -> dict:
     except Exception as e:
         return _fail(f"브라우저 연결 실패: {e}")
 
-    # ── Step 3: 현재 로그인 상태 확인 ────────────────────────────────────────
-    try:
-        from scripts.login_detector import detect_login_state
-        current = detect_login_state(page)
-        if current.get("logged_in"):
-            user = current.get("user")
-            log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
-            _save_browser_session(page)
-            _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
-            pw.stop()
-            return {"ok": True, "logged_in": True, "user": user,
-                    "message": f"이미 로그인됨: {user} — 세션 저장 완료"}
-    except Exception:
-        pass
+    # ── Step 3: 현재 로그인 상태 확인 (계정 전환 요청이면 건너뜀) ──────────────
+    if not naver_id:
+        try:
+            from scripts.login_detector import detect_login_state
+
+            current = detect_login_state(page)
+            if current.get("logged_in"):
+                user = current.get("user")
+                log.info("[naver_login_pipeline] 이미 로그인됨: %s — 세션 저장", user)
+                _save_browser_session(page)
+                _save_status({"logged_in": True, "user": user, "checked_at": _now(), "source": "existing"})
+                pw.stop()
+                return {
+                    "ok": True,
+                    "logged_in": True,
+                    "user": user,
+                    "message": f"이미 로그인됨: {user} — 세션 저장 완료",
+                }
+        except Exception:  # noqa: S110
+            pass
 
     # ── Step 4: 네이버 로그인 ────────────────────────────────────────────────
     try:
         from scripts.naver.auth import login_naver
-        result = login_naver(page)
+
+        result = login_naver(page, naver_id=naver_id)
     except Exception as e:
         pw.stop()
         return _fail(f"로그인 함수 오류: {e}")
@@ -148,8 +160,13 @@ def run_naver_login_pipeline() -> dict:
     if not logged_in and result and result.get("captcha_required"):
         _save_status({"logged_in": False, "user": None, "checked_at": _now(), "pending_captcha": True})
         pw.stop()
-        return {"ok": False, "logged_in": False, "user": None, "captcha": True,
-                "message": "CAPTCHA/2FA 감지 — 브라우저에서 직접 완료 후 다시 실행하세요"}
+        return {
+            "ok": False,
+            "logged_in": False,
+            "user": None,
+            "captcha": True,
+            "message": "CAPTCHA/2FA 감지 — 브라우저에서 직접 완료 후 다시 실행하세요",
+        }
 
     # ── Step 5: 세션 저장 (로그인 성공 시 최우선) ─────────────────────────────
     if logged_in:
@@ -184,11 +201,10 @@ def run_naver_login_pipeline() -> dict:
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
 
+
 def _is_cdp_alive(timeout: float = 2.0) -> bool:
     try:
-        with urllib.request.urlopen(
-            f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout
-        ) as r:
+        with urllib.request.urlopen(f"http://{CDP_HOST}:{CDP_PORT}/json/version", timeout=timeout) as r:
             return r.status == 200
     except Exception:
         return False
@@ -196,6 +212,7 @@ def _is_cdp_alive(timeout: float = 2.0) -> bool:
 
 def _start_cdp() -> None:
     from scripts.cdp_force_start import cmd_start
+
     if cmd_start() != 0:
         raise RuntimeError("CDP 브라우저 시작 실패")
 
@@ -228,9 +245,7 @@ def _save_browser_session(page) -> None:
 
 def _save_status(state: dict) -> None:
     SESSION_STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SESSION_STATUS_FILE.write_text(
-        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    SESSION_STATUS_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _fail(msg: str) -> dict:
@@ -240,4 +255,4 @@ def _fail(msg: str) -> dict:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
