@@ -202,6 +202,19 @@ data/**/*.jsonl
 data/**/*.png
 data/**/*.txt
 data/**/*.xlsx
+
+# 대용량 데이터 수집/변환 산출물 (로컬 전용, git 포함 금지)
+data/kpi_elib/
+data/kpi_elib_parsed/
+data/cmpi/
+data/cafe/
+data/temp_grant/
+data/youtube_recordings/
+data/blog_uploads/
+data/hanafax_sent_log.csv
+
+# 로컬 빌드 산출물
+dist-build-tmp/
 data/**/*.zip
 data/**/downloads/
 data/**/runs/
