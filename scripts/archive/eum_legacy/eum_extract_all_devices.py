@@ -27,7 +27,7 @@ from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 
-# 헤더 매핑 (행0: 14열, 행1: 13열)
+# 헤더 매핑 (2026-08-16 실측: 행0 15열, 행1 14열 — "지정일"/"만료일" 컬럼 추가됨)
 HEADER_ROW1 = [
     "NO",
     "고유번호",
@@ -38,6 +38,7 @@ HEADER_ROW1 = [
     "전자카드구분",
     "지정업체",
     "단말기유형",
+    "지정일",
     "운용상태",
     "설치일",
     "처리건수",
@@ -53,6 +54,7 @@ HEADER_ROW2 = [
     "설치예외",
     "유통업체",
     "지정단말기명",
+    "만료일",
     "통신상태",
     "철거일",
     "설치일수",
@@ -91,7 +93,7 @@ def extract_page_devices(page) -> list[dict]:
         r2 = raw_rows[i + 1]
 
         # 첫 번째 행이 14열, 두 번째가 13열인지 확인
-        if r1["td_count"] == 14 and r2["td_count"] == 13:
+        if r1["td_count"] == len(HEADER_ROW1) and r2["td_count"] == len(HEADER_ROW2):
             c1 = r1["cells"]
             c2 = r2["cells"]
 
