@@ -29,6 +29,10 @@
 
 ### 클래스 (하위 호환)
 - NaverCafe: open_my_cafes / list_posts / read_post / write_post
+
+### 게시판 관리 (management/)
+- list_boards(page, cafe_url)                  → 현재 게시판(메뉴) 목록 조회
+- add_board(page, cafe_url, name, board_type)  → 신규 게시판 추가 (BOARD_TYPES 참고)
 """
 
 from __future__ import annotations
@@ -46,6 +50,7 @@ from .analysis.organizer import organize
 from .analysis.pipeline import run_pipeline
 from .collection.collector import collect_articles
 from .collection.explorer import get_my_cafes, save_my_cafes
+from .management.board import BOARD_TYPES, add_board, list_boards
 from .writer import confirm_publish, write_post
 
 _log = get_logger(__name__)
@@ -188,6 +193,10 @@ __all__ = [  # noqa: RUF022
     # 글쓰기
     "write_post",
     "confirm_publish",
+    # 게시판 관리
+    "list_boards",
+    "add_board",
+    "BOARD_TYPES",
     # 클래스 (하위 호환)
     "NaverCafe",
 ]

@@ -4,6 +4,7 @@
   POST /api/v1/naver/session/login   — CDP 시작 + 로그인 파이프라인 실행
   GET  /api/v1/naver/session/status  — 저장된 세션 상태 조회
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,6 +29,10 @@ class SessionStatusResponse(BaseModel):
     error: str | None = None
 
 
+class LoginRequest(BaseModel):
+    username: str | None = None  # 계정 ID (없으면 기본 저장 계정 사용)
+
+
 class LoginResponse(BaseModel):
     ok: bool
     logged_in: bool
@@ -36,10 +41,16 @@ class LoginResponse(BaseModel):
     captcha: bool = False
 
 
+class AccountRequest(BaseModel):
+    username: str
+    password: str
+
+
 @router.get("/sessions")
 async def get_all_sessions(_: None = Depends(require_role("admin", "owner"))):
     """저장된 네이버 서브도메인 세션 목록을 반환합니다."""
     from ai_orchestrator.workflows.naver_login_pipeline import list_naver_sessions
+
     return {"sessions": list_naver_sessions()}
 
 
@@ -47,8 +58,10 @@ async def get_all_sessions(_: None = Depends(require_role("admin", "owner"))):
 async def get_session_status(_: None = Depends(require_role("admin", "owner"))):
     """저장된 네이버 세션 상태를 반환합니다."""
     from ai_orchestrator.workflows.naver_login_pipeline import load_session_status
+
     state = load_session_status()
     from ai_orchestrator.workflows.naver_login_pipeline import has_saved_browser_session
+
     return SessionStatusResponse(
         logged_in=state.get("logged_in", False),
         user=state.get("user"),
@@ -59,15 +72,45 @@ async def get_session_status(_: None = Depends(require_role("admin", "owner"))):
     )
 
 
+@router.get("/accounts")
+async def list_accounts(_: None = Depends(require_role("admin", "owner"))):
+    """저장된 네이버 계정 목록을 반환합니다."""
+    from scripts.credentials import get_cred, list_sites
+
+    accounts = []
+    for key in list_sites():
+        if key == "naver":
+            cred = get_cred("naver")
+            accounts.append({"key": key, "username": cred.get("id", "")})
+        elif key.startswith("naver:"):
+            uid = key.split(":", 1)[1]
+            accounts.append({"key": key, "username": uid})
+    return {"accounts": accounts}
+
+
+@router.post("/accounts")
+async def add_account(req: AccountRequest, _: None = Depends(require_role("admin", "owner"))):
+    """네이버 계정을 추가/갱신합니다."""
+    from scripts.credentials import set_cred
+
+    set_cred(f"naver:{req.username}", id=req.username, pw=req.password)
+    return {"ok": True, "message": f"계정 저장 완료: naver:{req.username}"}
+
+
 @router.post("/login", response_model=LoginResponse)
-async def trigger_login(_: None = Depends(require_role("admin", "owner"))):
+async def trigger_login(req: LoginRequest = LoginRequest(), _: None = Depends(require_role("admin", "owner"))):
     """CDP 브라우저를 시작하고 네이버 로그인 파이프라인을 실행합니다.
 
+    username 지정 시 해당 계정으로 로그인 전환. 없으면 기본 저장 계정 사용.
     동기 playwright 코드를 별도 스레드에서 실행합니다.
     """
+    from functools import partial
+
     from ai_orchestrator.workflows.naver_login_pipeline import run_naver_login_pipeline
+
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(_executor, run_naver_login_pipeline)
+    fn = partial(run_naver_login_pipeline, naver_id=req.username)
+    result = await loop.run_in_executor(_executor, fn)
     return LoginResponse(
         ok=result.get("ok", False),
         logged_in=result.get("logged_in", False),

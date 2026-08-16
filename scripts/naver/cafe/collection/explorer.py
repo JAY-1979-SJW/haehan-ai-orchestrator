@@ -40,7 +40,10 @@ def _fetch_joined_cafes_via_api(page: Page) -> list[dict]:
         raw = page.evaluate(
             """async (u) => {
                 try {
-                    const r = await fetch(u, {headers: {'Accept': 'application/json'}, credentials: 'include'});
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 25000);
+                    const r = await fetch(u, {headers: {'Accept': 'application/json'}, credentials: 'include', signal: ctrl.signal});
+                    clearTimeout(timer);
                     if (!r.ok) return '';
                     return await r.text();
                 } catch (e) { return ''; }

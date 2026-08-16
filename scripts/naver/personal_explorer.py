@@ -22,6 +22,7 @@
 
 결과: data/sitemap/naver_personal_summary.json
 """
+
 from __future__ import annotations
 
 import json
@@ -29,16 +30,15 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.login_detector import detect_login_state
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.critical_logger import log_critical  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+from scripts.login_detector import detect_login_state  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 SITEMAP_DIR = ROOT / "data" / "sitemap"
@@ -49,49 +49,49 @@ SITEMAP_DIR.mkdir(parents=True, exist_ok=True)
 
 PERSONAL_SERVICES = [
     # (이름, URL, 카테고리, 설명)
-    ("naver_main",        "https://www.naver.com/",                       "포털",   "네이버 메인"),
-    ("my_naver",          "https://naver.com/main",                       "포털",   "My네이버"),
-    ("nid_profile",       "https://nid.naver.com/user2/help/myInfoV2",    "계정",   "내 정보"),
-    ("nid_security",      "https://nid.naver.com/user2/help/secureV2",    "계정",   "보안 설정"),
+    ("naver_main", "https://www.naver.com/", "포털", "네이버 메인"),
+    ("my_naver", "https://naver.com/main", "포털", "My네이버"),
+    ("nid_profile", "https://nid.naver.com/user2/help/myInfoV2", "계정", "내 정보"),
+    ("nid_security", "https://nid.naver.com/user2/help/secureV2", "계정", "보안 설정"),
     # 콘텐츠
-    ("blog_admin",        "https://admin.blog.naver.com/",                "콘텐츠", "블로그 관리"),
-    ("blog_my",           "https://blog.naver.com/skyjwsin",              "콘텐츠", "내 블로그"),
-    ("blog_stats",        "https://blog.naver.com/PostWriteFormDocControl.naver?blogId=skyjwsin", "콘텐츠", "블로그 통계"),
-    ("influencer",        "https://in.naver.com/",                        "콘텐츠", "인플루언서 센터"),
-    ("series",            "https://series.naver.com/",                    "콘텐츠", "시리즈"),
-    ("moment",            "https://m.blog.naver.com/MomentFeed.naver",    "콘텐츠", "모먼트"),
+    ("blog_admin", "https://admin.blog.naver.com/", "콘텐츠", "블로그 관리"),
+    ("blog_my", "https://blog.naver.com/skyjwsin", "콘텐츠", "내 블로그"),
+    ("blog_stats", "https://blog.naver.com/PostWriteFormDocControl.naver?blogId=skyjwsin", "콘텐츠", "블로그 통계"),
+    ("influencer", "https://in.naver.com/", "콘텐츠", "인플루언서 센터"),
+    ("series", "https://series.naver.com/", "콘텐츠", "시리즈"),
+    ("moment", "https://m.blog.naver.com/MomentFeed.naver", "콘텐츠", "모먼트"),
     # 커뮤니티/소통
-    ("cafe_my",           "https://section.cafe.naver.com/ca-fe/home/recent-articles", "커뮤니티", "내 카페"),
-    ("cafe_admin",        "https://cafe.naver.com/ManageCafe.nhn",        "커뮤니티", "카페 관리"),
-    ("talk",              "https://talk.naver.com/",                      "커뮤니티", "톡톡"),
-    ("band",              "https://band.us/",                             "커뮤니티", "밴드"),
+    ("cafe_my", "https://section.cafe.naver.com/ca-fe/home/recent-articles", "커뮤니티", "내 카페"),
+    ("cafe_admin", "https://cafe.naver.com/ManageCafe.nhn", "커뮤니티", "카페 관리"),
+    ("talk", "https://talk.naver.com/", "커뮤니티", "톡톡"),
+    ("band", "https://band.us/", "커뮤니티", "밴드"),
     # 메일/일정
-    ("mail",              "https://mail.naver.com/",                      "메일",   "네이버 메일"),
-    ("calendar",          "https://calendar.naver.com/",                  "일정",   "네이버 캘린더"),
+    ("mail", "https://mail.naver.com/", "메일", "네이버 메일"),
+    ("calendar", "https://calendar.naver.com/", "일정", "네이버 캘린더"),
     # 클라우드/파일
-    ("mybox",             "https://mybox.naver.com/",                     "클라우드", "마이박스"),
+    ("mybox", "https://mybox.naver.com/", "클라우드", "마이박스"),
     # 결제/금융
-    ("pay",               "https://pay.naver.com/",                       "결제",   "네이버 페이"),
-    ("pay_history",       "https://order.pay.naver.com/home",             "결제",   "결제 내역"),
-    ("mybiz",             "https://mybiz.pay.naver.com/dashboard",        "결제",   "마이비즈"),
-    ("pay_point",         "https://nid.naver.com/user2/help/payV2",       "결제",   "포인트 관리"),
+    ("pay", "https://pay.naver.com/", "결제", "네이버 페이"),
+    ("pay_history", "https://order.pay.naver.com/home", "결제", "결제 내역"),
+    ("mybiz", "https://mybiz.pay.naver.com/dashboard", "결제", "마이비즈"),
+    ("pay_point", "https://nid.naver.com/user2/help/payV2", "결제", "포인트 관리"),
     # 커머스/사업
-    ("smartstore",        "https://sell.smartstore.naver.com/#/home/dashboard", "커머스", "스마트스토어 셀러센터"),
-    ("shopping_partner",  "https://center.shopping.naver.com/",           "커머스", "쇼핑파트너센터"),
-    ("commerce_solution", "https://solution.smartstore.naver.com/",       "커머스", "커머스솔루션마켓"),
-    ("ads",               "https://ads.naver.com/",                       "광고",   "광고주센터"),
-    ("ad_searchad",       "https://searchad.naver.com/",                  "광고",   "검색광고"),
-    ("ad_smartchannel",   "https://saedu.naver.com/",                     "광고",   "성과형 광고"),
+    ("smartstore", "https://sell.smartstore.naver.com/#/home/dashboard", "커머스", "스마트스토어 셀러센터"),
+    ("shopping_partner", "https://center.shopping.naver.com/", "커머스", "쇼핑파트너센터"),
+    ("commerce_solution", "https://solution.smartstore.naver.com/", "커머스", "커머스솔루션마켓"),
+    ("ads", "https://ads.naver.com/", "광고", "광고주센터"),
+    ("ad_searchad", "https://searchad.naver.com/", "광고", "검색광고"),
+    ("ad_smartchannel", "https://saedu.naver.com/", "광고", "성과형 광고"),
     # 부동산/지도/검색 도구
-    ("maps_my",           "https://map.naver.com/p/?c=My",                "도구",   "내 지도"),
-    ("place_owner",       "https://new.smartplace.naver.com/",            "도구",   "스마트플레이스"),
+    ("maps_my", "https://map.naver.com/p/?c=My", "도구", "내 지도"),
+    ("place_owner", "https://new.smartplace.naver.com/", "도구", "스마트플레이스"),
     # 클로바/AI
-    ("clova",             "https://clova.ai/ko",                          "AI",     "Clova"),
+    ("clova", "https://clova.ai/ko", "AI", "Clova"),
     # 콘텐츠 소비
-    ("webtoon",           "https://comic.naver.com/index",                "엔터",   "네이버 웹툰"),
-    ("vibe",              "https://vibe.naver.com/",                      "엔터",   "VIBE 음악"),
-    ("tv",                "https://tv.naver.com/",                        "엔터",   "네이버 TV"),
-    ("sports",            "https://sports.news.naver.com/",               "엔터",   "스포츠"),
+    ("webtoon", "https://comic.naver.com/index", "엔터", "네이버 웹툰"),
+    ("vibe", "https://vibe.naver.com/", "엔터", "VIBE 음악"),
+    ("tv", "https://tv.naver.com/", "엔터", "네이버 TV"),
+    ("sports", "https://sports.news.naver.com/", "엔터", "스포츠"),
 ]
 
 
@@ -173,6 +173,7 @@ EXTRACT_JS = r"""
 
 # ── 메인 ────────────────────────────────────────────────────────────────────
 
+
 def explore_service(page, svc: dict) -> dict:
     name, url, category, desc = svc["name"], svc["url"], svc["category"], svc["desc"]
     result = {
@@ -201,7 +202,6 @@ def explore_service(page, svc: dict) -> dict:
         result["access_denied"] = meta.get("access_denied")
 
         # 사이트맵 개별 저장
-        domain = urlparse(meta.get("url", url)).hostname or name
         out = SITEMAP_DIR / f"naver_{name}_auto.json"
         out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as e:
@@ -210,9 +210,9 @@ def explore_service(page, svc: dict) -> dict:
 
 
 def main():
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  네이버 개인 서비스 전체 탐색  |  {len(PERSONAL_SERVICES)}개")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     existing = get_page()
     ctx = existing.context
@@ -221,30 +221,29 @@ def main():
     print(f"  [신규 탭 생성] 총 {len(ctx.pages)}개 탭")
 
     # 로그인 상태 확인 (네이버 메인 진입)
-    print(f"\n  [로그인 상태 확인] naver.com 진입...")
+    print("\n  [로그인 상태 확인] naver.com 진입...")
     page.goto("https://www.naver.com/", timeout=15000, wait_until="domcontentloaded")
     time.sleep(2)
     state = detect_login_state(page)
     if state.get("logged_in"):
         print(f"  ✓ 로그인됨: {state.get('user')}")
-        log_critical("PORTAL_VISIT", "네이버 개인 서비스 탐색 시작",
-                     user=state.get("user"), services=len(PERSONAL_SERVICES))
+        log_critical(
+            "PORTAL_VISIT", "네이버 개인 서비스 탐색 시작", user=state.get("user"), services=len(PERSONAL_SERVICES)
+        )
     else:
-        print(f"  ⚠ 로그인 안됨 (탐색은 계속 — 일부 서비스 접근 제한 가능)")
+        print("  ⚠ 로그인 안됨 (탐색은 계속 — 일부 서비스 접근 제한 가능)")
 
     # 서비스 순회
-    print(f"\n  [서비스 탐색]")
+    print("\n  [서비스 탐색]")
     results = []
-    for i, (name, url, category, desc) in enumerate(
-        [(s[0], s[1], s[2], s[3]) for s in PERSONAL_SERVICES], 1
-    ):
+    for i, (name, url, category, desc) in enumerate([(s[0], s[1], s[2], s[3]) for s in PERSONAL_SERVICES], 1):
         svc = {"name": name, "url": url, "category": category, "desc": desc}
         print(f"    [{i:2}/{len(PERSONAL_SERVICES)}] [{category:<6}] {desc:<22}", end=" ", flush=True)
         r = explore_service(page, svc)
         results.append(r)
 
         if not r["ok"]:
-            print(f"✗  {r.get('error','')[:50]}")
+            print(f"✗  {r.get('error', '')[:50]}")
             continue
 
         marks = []
@@ -267,9 +266,9 @@ def main():
     for r in results:
         by_cat.setdefault(r["category"], []).append(r)
 
-    print(f"\n{'='*70}")
-    print(f"  카테고리별 요약")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("  카테고리별 요약")
+    print(f"{'=' * 70}")
     for cat in sorted(by_cat):
         items = by_cat[cat]
         ok = sum(1 for r in items if r["ok"])
@@ -290,11 +289,15 @@ def main():
     out = ROOT / "data" / "sitemap" / "naver_personal_summary.json"
     out.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n  ✓ 통합 저장: {out.name}")
-    print(f"  ✓ 개별 사이트맵: data/sitemap/naver_*_auto.json")
+    print("  ✓ 개별 사이트맵: data/sitemap/naver_*_auto.json")
 
-    log_critical("PORTAL_VISIT", "네이버 개인 서비스 탐색 완료",
-                 user=state.get("user"), success=summary["success"],
-                 logged_pages=summary["logged_in_pages"])
+    log_critical(
+        "PORTAL_VISIT",
+        "네이버 개인 서비스 탐색 완료",
+        user=state.get("user"),
+        success=summary["success"],
+        logged_pages=summary["logged_in_pages"],
+    )
 
 
 if __name__ == "__main__":
@@ -302,7 +305,8 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n중단됨")
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

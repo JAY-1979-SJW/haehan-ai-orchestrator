@@ -44,6 +44,13 @@ _OUT_DIR = _cafe_out_dir()
 _LIST_URL = (
     "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L&search.page={page}&userDisplay=50"
 )
+# 전체글보기(boardtype=L)는 네이버 카페 쪽 조회 페이지 상한(약 150p)에 걸려 오래된 글에
+# 못 닿는 경우가 있다(2026-08-16 확인). 게시판별(boardtype=M&menuid=)로 나눠 돌리면
+# 게시판마다 별도 상한이 적용돼 더 오래된 글까지 닿을 수 있다.
+_BOARD_LIST_URL = (
+    "https://cafe.naver.com/ArticleList.nhn?search.clubid={clubid}&search.boardtype=L"
+    "&search.menuid={menu_id}&search.page={page}&userDisplay=50"
+)
 _SEARCH_URL = "https://cafe.naver.com/ArticleSearchList.nhn?search.clubid={clubid}&search.searchBy=0&search.query={query}&search.page={page}&userDisplay=50"
 # 상세글은 PC용 신규 SPA(/f-e/cafes/.../articles/...)가 CDP 자동화에서 하이드레이션이
 # 안 되는 문제가 있어(2026-08-15 확인, 본문 이 늘 빈 값) 모바일 뷰로 방문한다.
@@ -140,9 +147,13 @@ def _extract_search_page(page: Page, clubid: str, query: str, page_no: int) -> l
     return []
 
 
-def _extract_list_page(page: Page, clubid: str, page_no: int) -> list[dict]:
-    """카페 전체글보기 목록 1페이지 추출."""
-    url = _LIST_URL.format(clubid=clubid, page=page_no)
+def _extract_list_page(page: Page, clubid: str, page_no: int, menu_id: str = "") -> list[dict]:
+    """카페 목록 1페이지 추출. menu_id 지정 시 해당 게시판만, 아니면 전체글보기."""
+    url = (
+        _BOARD_LIST_URL.format(clubid=clubid, menu_id=menu_id, page=page_no)
+        if menu_id
+        else _LIST_URL.format(clubid=clubid, page=page_no)
+    )
     page.goto(url, timeout=25000, wait_until="domcontentloaded")
     time.sleep(3)
 
@@ -260,6 +271,7 @@ def collect_articles(
     max_detail: int = 300,
     save_path: str | None = None,
     keyword: str = "",
+    menu_id: str = "",
 ) -> list[dict]:
     """카페 게시글 수집.
 
@@ -271,6 +283,7 @@ def collect_articles(
         max_detail: 상세 방문 최대 글 수. 0이면 목록 메타만 수집.
         save_path: JSON 저장 경로. None이면 data/cafe/ 자동 경로.
         keyword: 검색어. 지정 시 해당 키워드 검색 결과만 수집. 빈 문자열이면 전수 수집.
+        menu_id: 게시판 ID. 지정 시 해당 게시판만 수집(전체글보기 조회 상한 우회용).
 
     Returns:
         수집된 게시글 dict 목록.
@@ -292,7 +305,11 @@ def collect_articles(
     for page_no in range(1, max_pages + 1):
         if stop:
             break
-        items = _extract_search_page(page, clubid, kw, page_no) if kw else _extract_list_page(page, clubid, page_no)
+        items = (
+            _extract_search_page(page, clubid, kw, page_no)
+            if kw
+            else _extract_list_page(page, clubid, page_no, menu_id)
+        )
         if not items:
             _log.info("[cafe-collect] p%d: 결과 없음 — 수집 종료", page_no)
             break

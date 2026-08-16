@@ -50,14 +50,19 @@ def _load_credentials(
     nid = naver_id
     pw = naver_pw
 
-    # 1. 통합 저장소 (암호화)
-    if not nid or not pw:
+    # 1. 통합 저장소 (암호화) — 계정별 "naver:ID" 키 우선, 없으면 기본 "naver"
+    # 단, nid가 명시된 경우 기본 "naver" 계정으로 폴백하지 않음 (다른 계정 PW 혼용 방지)
+    if not pw:
         try:
             from scripts.credentials import get_cred
 
-            cred = get_cred("naver")
-            if not nid and cred.get("id"):
-                nid = cred["id"]
+            if nid:
+                cred = get_cred(f"naver:{nid}")
+                # 명시된 계정에 pw 없으면 기본 계정으로 폴백하지 않음
+            else:
+                cred = get_cred("naver")
+                if not nid and cred.get("id"):
+                    nid = cred["id"]
             if not pw and cred.get("pw"):
                 pw = cred["pw"]
         except Exception as e:
@@ -250,22 +255,38 @@ def _submit_login_form(page) -> dict:
 
 
 def _open_login_from_naver_main(page) -> dict:
-    """Start Naver login from www.naver.com, then wait for the login form."""
-    page.goto(NAVER_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
-    time.sleep(1.0)
+    """Start Naver login — 직접 로그인 폼 URL 이동 (실검증 2026-06-23).
 
+    www.naver.com 경유 클릭 방식은 MyView 리뉴얼로 불안정 → mode=form URL 직접 이동.
+    """
+    # 이미 로그인 폼에 있으면 바로 반환
     try:
         if page.locator("#id").first.is_visible(timeout=1000):
             return {"ok": True, "method": "already_on_login_form"}
     except Exception:
         pass
 
+    # 직접 로그인 폼 이동 (가장 안정적)
+    page.goto(
+        "https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/",
+        timeout=15000,
+        wait_until="domcontentloaded",
+    )
+    time.sleep(1.0)
+    try:
+        page.locator("#id").first.wait_for(state="visible", timeout=8000)
+        return {"ok": True, "method": "direct_form_url"}
+    except Exception:
+        pass
+
+    # fallback: www.naver.com 경유 클릭 (리뉴얼 UI)
+    page.goto(NAVER_LOGIN_URL, timeout=15000, wait_until="domcontentloaded")
+    time.sleep(1.0)
     selectors = (
-        "a[href*='nid.naver.com/nidlogin.login']",
         "a.MyView-module__link_login___HpHMW",
-        "a.link_login",
-        "#account a",
-        "#gnb_login_button",
+        "[class*='link_login']",
+        "a[href*='nidlogin.login?mode=form']",
+        "a[href*='nid.naver.com/nidlogin.login']",
     )
     for selector in selectors:
         try:
@@ -423,6 +444,35 @@ def login_naver(
     return {"ok": state.get("score", 0) >= 2, "user": state.get("user"), "reason": "ambiguous"}
 
 
+def _get_actual_naver_id(page) -> str:
+    """현재 로그인된 네이버 실제 ID 반환 (닉네임이 아닌 ID).
+
+    네이버 내정보 API에서 loginId를 추출. 실패 시 빈 문자열.
+    """
+    try:
+        resp = page.evaluate("""
+            fetch('https://nid.naver.com/user2/api/page/nmain', {credentials:'include'})
+              .then(r => r.text()).catch(() => '')
+        """)
+        m = __import__("re").search(r'"loginId"\s*:\s*"([^"]+)"', resp or "")
+        if m:
+            return m.group(1)
+        # 쿠키 기반 fallback: 블로그 접근 URL에서 ID 추출
+        cur = page.url
+        page.goto("https://blog.naver.com/MyBlog.naver", wait_until="domcontentloaded", timeout=8000)
+        import time as _t
+
+        _t.sleep(1)
+        redirected = page.url  # https://blog.naver.com/{id}
+        page.goto(cur, wait_until="domcontentloaded", timeout=8000)
+        m2 = __import__("re").search(r"blog\.naver\.com/([^/?#]+)", redirected)
+        if m2 and m2.group(1) not in ("", "MyBlog.naver"):
+            return m2.group(1)
+    except Exception:
+        pass
+    return ""
+
+
 def _naver_auth_cookies_present(page) -> bool:
     """네이버 인증 쿠키(NID_AUT + NID_SES)가 컨텍스트에 있으면 True.
 
@@ -457,7 +507,29 @@ def ensure_naver_login(
             pass
 
     state = detect_login_state(page)
+    current_user = (state.get("user") or "").strip().lower()
+    target_user = (naver_id or "").strip().lower()
+
     if state.get("logged_in"):
+        # 이미 로그인됐는데 다른 계정이 요청된 경우 → 재로그인 필요
+        # user는 닉네임일 수 있으므로 blog URL 접근으로 실제 ID 확인
+        if target_user and current_user and current_user != target_user:
+            actual_id = _get_actual_naver_id(page) or current_user
+            if actual_id.lower() == target_user:
+                return {"ok": True, "user": actual_id, "reason": "already_logged_in"}
+            _log.info("[naver-auth] 계정 전환 필요: %s → %s", actual_id, target_user)
+            # pw 자동 탐색 (naver:{id} 키 우선)
+            if not naver_pw:
+                try:
+                    from scripts.credentials import get_naver_cred
+
+                    cred = get_naver_cred(naver_id)
+                    naver_pw = cred.get("pw", "")
+                except Exception:
+                    pass
+            if naver_pw:
+                return login_naver(page, naver_id=naver_id, naver_pw=naver_pw, force_relogin=True)
+            return {"ok": False, "reason": f"{naver_id} 비밀번호를 찾을 수 없습니다"}
         return {"ok": True, "user": state.get("user"), "reason": "already_logged_in"}
 
     # 폴백: 범용 JS 감지 실패해도 네이버 인증 쿠키(NID_AUT+NID_SES)가 있으면 로그인으로 인정.
@@ -465,6 +537,16 @@ def ensure_naver_login(
     if _naver_auth_cookies_present(page):
         _log.info("[naver-auth] JS 감지 실패했으나 네이버 인증 쿠키 확인 → 로그인 인정")
         return {"ok": True, "user": state.get("user"), "reason": "naver_cookie"}
+
+    # pw 미전달 시 자격증명 자동 탐색
+    if naver_id and not naver_pw:
+        try:
+            from scripts.credentials import get_naver_cred
+
+            cred = get_naver_cred(naver_id)
+            naver_pw = cred.get("pw", "")
+        except Exception:
+            pass
 
     original_url = return_url or page.url
 
