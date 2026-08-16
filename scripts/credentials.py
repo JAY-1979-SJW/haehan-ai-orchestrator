@@ -18,6 +18,7 @@ CLI:
     python scripts/credentials.py delete <site>
     python scripts/credentials.py migrate    # .env_* 파일 흡수
 """
+
 from __future__ import annotations
 
 import json
@@ -31,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from security_utils import mask_identifier
+from security_utils import mask_identifier  # noqa: E402
 
 CRED_FILE = ROOT / "data" / "credentials.json"
 KEY_FILE = ROOT / "data" / ".cred.key"
@@ -133,7 +134,7 @@ def _normalize(data: dict) -> tuple[dict, bool]:
     for site, rec in list(data.items()):
         if not isinstance(rec, dict):
             continue
-        if "pw" in rec and rec["pw"]:
+        if rec.get("pw"):
             # 평문이 있으면 암호화로 옮김
             rec["pw_enc"] = _encrypt(rec["pw"])
             del rec["pw"]
@@ -196,6 +197,36 @@ def get_cred(site: str) -> dict:
     return out
 
 
+def get_naver_cred(naver_id: str) -> dict:
+    """네이버 계정 ID로 자격증명 조회.
+
+    탐색 순서: naver:{id} → naver_{id} → naver (기본 계정)
+    반환: {"id": ..., "pw": ...}  pw가 없으면 빈 문자열.
+    """
+    for key in (f"naver:{naver_id}", f"naver_{naver_id}", "naver"):
+        cred = get_cred(key)
+        if cred.get("pw"):
+            if key == "naver" and cred.get("id") and cred["id"] != naver_id:
+                continue  # 기본 계정 id가 요청 id와 다르면 건너뜀
+            return {"id": naver_id, "pw": cred["pw"]}
+    return {"id": naver_id, "pw": ""}
+
+
+def list_naver_accounts() -> list[str]:
+    """저장된 네이버 계정 ID 목록 반환."""
+    accounts = []
+    for key in list_sites():
+        if key == "naver":
+            cred = get_cred(key)
+            if cred.get("id"):
+                accounts.append(cred["id"])
+        elif key.startswith("naver:"):
+            accounts.append(key[len("naver:") :])
+        elif key.startswith("naver_"):
+            accounts.append(key[len("naver_") :])
+    return accounts
+
+
 def list_sites() -> list[str]:
     return [site for site in _load().keys() if not _is_password_login_disabled(site)]
 
@@ -228,8 +259,10 @@ def migrate_legacy() -> dict:
 
 # ── CLI ─────────────────────────────────────────────────────────────
 
+
 def _cmd_set(site: str) -> None:
     import getpass
+
     print(f"[{site}] 자격증명 입력")
     cred_id = input("  아이디: ").strip()
     cred_pw = getpass.getpass("  비밀번호: ").strip()
@@ -275,7 +308,7 @@ def _cmd_migrate() -> None:
     result = migrate_legacy()
     print(f"✔ 통합 저장소 사이트: {result['sites']}")
     if result["archived"]:
-        print(f"✔ 레거시 파일 아카이브:")
+        print("✔ 레거시 파일 아카이브:")
         for a in result["archived"]:
             print(f"    {a}")
     else:
@@ -298,17 +331,20 @@ def main() -> None:
     match cmd:
         case "set":
             if not site:
-                print("사용법: set <site>"); return
+                print("사용법: set <site>")
+                return
             _cmd_set(site)
         case "get":
             if not site:
-                print("사용법: get <site>"); return
+                print("사용법: get <site>")
+                return
             _cmd_get(site)
         case "list":
             _cmd_list()
         case "delete":
             if not site:
-                print("사용법: delete <site>"); return
+                print("사용법: delete <site>")
+                return
             _cmd_delete(site)
         case "migrate":
             _cmd_migrate()

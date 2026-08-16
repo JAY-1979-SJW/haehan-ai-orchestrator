@@ -1,11 +1,10 @@
 """롤백 매니페스트: 생성/저장 (자동 롤백 실행 금지)."""
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
-
 
 DEFAULT_ROLLBACK_DIR = Path.home() / "AppData/Local/HaehanAI/inventory"
 
@@ -49,7 +48,7 @@ def create_manifest(
     Returns:
         RollbackManifest
     """
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     entries = []
 
     succeeded = execution_result.get("succeeded", [])
@@ -74,9 +73,7 @@ def create_manifest(
     )
 
 
-def save_manifest(
-    manifest: RollbackManifest, rollback_dir: Path = DEFAULT_ROLLBACK_DIR
-) -> Path:
+def save_manifest(manifest: RollbackManifest, rollback_dir: Path = DEFAULT_ROLLBACK_DIR) -> Path:
     """
     롤백 매니페스트를 JSON 파일로 저장.
 
@@ -92,15 +89,15 @@ def save_manifest(
     manifest_file = rollback_dir / f"rollback_{manifest.run_id}.json"
 
     manifest_dict = asdict(manifest)
-    with open(manifest_file, "w", encoding="utf-8") as f:
+    tmp_file = manifest_file.with_suffix(manifest_file.suffix + ".tmp")
+    with open(tmp_file, "w", encoding="utf-8") as f:
         json.dump(manifest_dict, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_file, manifest_file)
 
     return manifest_file
 
 
-def load_manifest(
-    run_id: str, rollback_dir: Path = DEFAULT_ROLLBACK_DIR
-) -> Optional[dict]:
+def load_manifest(run_id: str, rollback_dir: Path = DEFAULT_ROLLBACK_DIR) -> dict | None:
     """
     롤백 매니페스트를 JSON 파일에서 로드.
 
@@ -117,7 +114,7 @@ def load_manifest(
         return None
 
     try:
-        with open(manifest_file, "r", encoding="utf-8") as f:
+        with open(manifest_file, encoding="utf-8") as f:
             return json.load(f)
     except json.JSONDecodeError:
         return None

@@ -8,14 +8,16 @@
 
 본 모듈은 실제 정책 enforcement 가 아니라 "기능 안정화" 가드다.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 # ── 고정값 (기존 cdp_daemon / config 와 일치) ───────────────────────────
 
@@ -46,6 +48,7 @@ WARN_ORPHANED_CDP_OR_PROFILE = "ORPHANED_CDP_OR_PROFILE"
 
 
 # ── 데이터 ───────────────────────────────────────────────────────────
+
 
 @dataclass
 class GuardPaths:
@@ -97,6 +100,7 @@ class BrowserStartDecision:
 
 # ── 경로 해석 ────────────────────────────────────────────────────────
 
+
 def resolve_paths(
     *,
     profile_dir: Path | str | None = None,
@@ -111,6 +115,7 @@ def resolve_paths(
 
 
 # ── Chrome 프로세스 enumerate (인젝션 가능) ─────────────────────────
+
 
 def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
     """OS 별 Chrome 프로세스 목록 (pid, cmdline) 을 반환한다.
@@ -128,10 +133,10 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
                     continue
                 cmd = " ".join(p.info.get("cmdline") or [])
                 out.append((int(p.info["pid"]), cmd))
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
         return out
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # Windows wmic fallback
@@ -140,10 +145,18 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
             import subprocess
 
             r = subprocess.run(
-                ["wmic", "process", "where",
-                 "name='chrome.exe' or name='msedge.exe'",
-                 "get", "ProcessId,CommandLine", "/format:csv"],
-                capture_output=True, text=True, timeout=5,
+                [
+                    "wmic",
+                    "process",
+                    "where",
+                    "name='chrome.exe' or name='msedge.exe'",
+                    "get",
+                    "ProcessId,CommandLine",
+                    "/format:csv",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             out: list[tuple[int, str]] = []
             for line in (r.stdout or "").splitlines():
@@ -164,7 +177,10 @@ def _enumerate_chrome_processes_default() -> list[tuple[int, str]]:
         import subprocess
 
         r = subprocess.run(
-            ["ps", "-eo", "pid,command"], capture_output=True, text=True, timeout=5,
+            ["ps", "-eo", "pid,command"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         out: list[tuple[int, str]] = []
         for line in (r.stdout or "").splitlines()[1:]:
@@ -201,6 +217,7 @@ def reset_process_enumerator() -> None:
 
 
 # ── 식별 ─────────────────────────────────────────────────────────────
+
 
 def _normalize_for_match(s: str) -> str:
     return s.replace("\\", "/").lower()
@@ -242,10 +259,14 @@ def list_automation_chrome_processes(paths: GuardPaths) -> list[AutomationProces
         # `--type=` 플래그를 기준으로 제외한다. browser 본체만 카운트.
         if _is_chrome_child_process(cmdline):
             continue
-        out.append(AutomationProcess(
-            pid=pid, cmdline=cmdline,
-            has_profile_match=has_profile, has_port_match=has_port,
-        ))
+        out.append(
+            AutomationProcess(
+                pid=pid,
+                cmdline=cmdline,
+                has_profile_match=has_profile,
+                has_port_match=has_port,
+            )
+        )
     return out
 
 
@@ -259,6 +280,7 @@ def count_automation_browsers(paths: GuardPaths) -> tuple[int, int, list[int]]:
 
 # ── PID / lock ───────────────────────────────────────────────────────
 
+
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
@@ -266,7 +288,7 @@ def _pid_alive(pid: int) -> bool:
         import psutil  # type: ignore
 
         return psutil.pid_exists(int(pid))
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     if os.name == "nt":
         try:
@@ -274,7 +296,9 @@ def _pid_alive(pid: int) -> bool:
 
             r = subprocess.run(
                 ["tasklist", "/FI", f"PID eq {pid}"],
-                capture_output=True, text=True, timeout=3,
+                capture_output=True,
+                text=True,
+                timeout=3,
             )
             return str(pid) in (r.stdout or "")
         except Exception:
@@ -319,7 +343,9 @@ def cleanup_stale_pid(paths: GuardPaths) -> tuple[int, bool]:
 
 def write_lock_file(paths: GuardPaths, owner_pid: int) -> None:
     payload = {"pid": int(owner_pid), "ts": time.time()}
-    paths.lock_file.write_text(json.dumps(payload), encoding="utf-8")
+    tmp = paths.lock_file.with_suffix(paths.lock_file.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload), encoding="utf-8")
+    os.replace(tmp, paths.lock_file)
 
 
 def read_lock_file(paths: GuardPaths) -> dict[str, Any]:
@@ -370,7 +396,8 @@ def check_cdp_alive(port: int, timeout: float = 1.0) -> bool:
         import urllib.request
 
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{int(port)}/json/version", timeout=timeout,
+            f"http://127.0.0.1:{int(port)}/json/version",
+            timeout=timeout,
         ) as resp:
             return 200 <= resp.status < 300
     except Exception:
@@ -378,6 +405,7 @@ def check_cdp_alive(port: int, timeout: float = 1.0) -> bool:
 
 
 # ── 의사결정 ─────────────────────────────────────────────────────────
+
 
 def decide_browser_start(paths: GuardPaths) -> BrowserStartDecision:
     """browser_start 전 안전 판정.
@@ -397,8 +425,7 @@ def decide_browser_start(paths: GuardPaths) -> BrowserStartDecision:
             matched_pids=matched_pids,
             error=ERROR_MULTIPLE_BROWSERS,
             message_ko=(
-                f"자동화 Chrome 이 {full_count}개 실행 중 입니다. "
-                f"새로 시작하지 않고 사용자 정리 후 재시도해 주세요."
+                f"자동화 Chrome 이 {full_count}개 실행 중 입니다. 새로 시작하지 않고 사용자 정리 후 재시도해 주세요."
             ),
         )
 
@@ -455,6 +482,7 @@ def decide_browser_start(paths: GuardPaths) -> BrowserStartDecision:
 
 # ── 종료 ─────────────────────────────────────────────────────────────
 
+
 def close_all_cdp_targets(cdp_port: int) -> list[str]:
     """CDP /json/list 의 모든 page 타입 target 을 /json/close 로 닫는다.
 
@@ -466,7 +494,8 @@ def close_all_cdp_targets(cdp_port: int) -> list[str]:
 
     try:
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{int(cdp_port)}/json/list", timeout=2.0,
+            f"http://127.0.0.1:{int(cdp_port)}/json/list",
+            timeout=2.0,
         ) as resp:
             rows = _json.loads(resp.read().decode("utf-8") or "[]")
     except Exception:
@@ -482,10 +511,11 @@ def close_all_cdp_targets(cdp_port: int) -> list[str]:
         try:
             quoted = urllib.parse.quote(tid, safe="")
             with urllib.request.urlopen(
-                f"http://127.0.0.1:{int(cdp_port)}/json/close/{quoted}", timeout=2.0,
+                f"http://127.0.0.1:{int(cdp_port)}/json/close/{quoted}",
+                timeout=2.0,
             ):
                 closed.append(tid)
-        except Exception:
+        except Exception:  # noqa: S112
             continue
     return closed
 
@@ -518,7 +548,7 @@ def quit_automation_browsers(
 
             psutil.Process(int(pid)).terminate()
             return True
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         if os.name == "nt":
             try:
@@ -526,7 +556,8 @@ def quit_automation_browsers(
 
                 r = subprocess.run(
                     ["taskkill", "/PID", str(int(pid)), "/F"],
-                    capture_output=True, timeout=5,
+                    capture_output=True,
+                    timeout=5,
                 )
                 return r.returncode == 0
             except Exception:
