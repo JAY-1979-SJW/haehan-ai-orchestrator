@@ -33,8 +33,16 @@ type Strategy = {
 
 type ContentPlanItem = { track?: string; title?: string; status?: string };
 
+type Methodology = {
+  recent_full?: { source?: string; period?: string; scope?: string };
+  long_term_keyword?: { source?: string; period?: string; scope?: string };
+  caveat?: string;
+};
+
 type MarketingData = {
   generated_note?: string;
+  cafe_coverage?: string;
+  methodology?: Methodology;
   cafe_top_posts?: CafePost[];
   cafe_keyword_posts?: CafePost[];
   youtube_benchmarks?: YoutubeBenchmark[];
@@ -178,8 +186,15 @@ function PostTable({ rows }: { rows: CafePost[] }) {
 }
 
 function ContentTab({ data }: { data: MarketingData }) {
+  const m = data.methodology;
   return (
     <div className="space-y-4">
+      {data.cafe_coverage && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+          <p className="font-medium">데이터 커버리지: {data.cafe_coverage}</p>
+          {m?.caveat && <p className="mt-1 text-blue-700">{m.caveat}</p>}
+        </div>
+      )}
       <Card title="콘텐츠 우선순위">
         <ul className="space-y-1 text-sm text-gray-700">
           {(data.content_plan || []).map((c, i) => (

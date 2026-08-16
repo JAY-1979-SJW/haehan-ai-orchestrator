@@ -5,7 +5,7 @@ import { useState } from "react";
 type QuoteType = "이동형_임대" | "벽부형_임대" | "벽부형_구매";
 
 const QUOTE_TYPES: { value: QuoteType; label: string; needsMonths: boolean }[] = [
-  { value: "이동형_임대", label: "이동형 임대 (130,000원/월)", needsMonths: true },
+  { value: "이동형_임대", label: "이동형 임대 (90,000원/월) — 안전 사이트 제공", needsMonths: true },
   { value: "벽부형_임대", label: "벽부형 임대 (70,000원/월)", needsMonths: true },
   { value: "벽부형_구매", label: "벽부형 구매 (1,200,000원/EA)", needsMonths: false },
 ];
@@ -21,7 +21,7 @@ export function QuotePanel() {
   const selected = QUOTE_TYPES.find((t) => t.value === quoteType)!;
 
   const unitPrice =
-    quoteType === "이동형_임대" ? 130_000 : quoteType === "벽부형_임대" ? 70_000 : 1_200_000;
+    quoteType === "이동형_임대" ? 90_000 : quoteType === "벽부형_임대" ? 70_000 : 1_200_000;
   const supplyAmount = selected.needsMonths
     ? unitPrice * quantity * months
     : unitPrice * quantity;

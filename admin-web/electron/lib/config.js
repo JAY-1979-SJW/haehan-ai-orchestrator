@@ -38,7 +38,9 @@ function loadConfig() {
 function saveConfig(cfg) {
   const p = configPath();
   fs.mkdirSync(path.dirname(p), { recursive: true });
-  fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
+  const tmp = p + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2));
+  fs.renameSync(tmp, p);
 }
 
 function patchConfig(patch) {
@@ -121,6 +123,18 @@ function setAuthToken(token) {
   return patchConfig({ auth_token: typeof token === "string" ? token : "" });
 }
 
+// ── Windows 시작 시 자동 실행 여부 ───────────────────────────────────────────
+// scripts/start_haehan_ai.ps1(시작프로그램 폴더 바로가기가 호출)이 같은 config.json 의
+// autoStart 값을 읽어 켜져 있을 때만 전체 스택을 기동한다. 값이 없으면(최초 실행) 기본 꺼짐 —
+// 데스크탑 아이콘을 직접 클릭하면 이 값과 무관하게 앱(+백엔드)이 바로 실행된다.
+function isAutoStartEnabled(cfg = loadConfig()) {
+  return cfg.autoStart === true;
+}
+
+function setAutoStartEnabled(enabled) {
+  return patchConfig({ autoStart: !!enabled });
+}
+
 module.exports = {
   SERVER_URL,
   FASTAPI_URL,
@@ -136,4 +150,6 @@ module.exports = {
   setEnabledSites,
   getSiteSettings,
   setSiteSettings,
+  isAutoStartEnabled,
+  setAutoStartEnabled,
 };

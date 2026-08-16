@@ -34,7 +34,7 @@ export function PageShell({ title, description, headerRight, children }: PageShe
   const visibleGroups = NAV_GROUPS.filter((g) => !g.adminOnly || isAdmin);
 
   return (
-    <div className={`flex min-h-dvh bg-[#F5F7FA] ${dockOpen ? "lg:pr-[360px]" : ""}`}>
+    <div className={`flex h-dvh overflow-hidden bg-[#F5F7FA] ${dockOpen ? "lg:pr-[360px]" : ""}`}>
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-[220px] h-dvh sticky top-0 bg-white shrink-0 overflow-hidden"
         style={{ borderRight: "1px solid #E5E7EB" }}>

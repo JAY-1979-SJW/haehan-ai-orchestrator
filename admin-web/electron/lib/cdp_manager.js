@@ -270,7 +270,17 @@ function minimizeCdpWindow(durationMs = 4000) {
 
 function stopCdpBrowser() {
   if (chromePid) {
-    try { process.kill(chromePid); } catch {}
+    try {
+      if (process.platform === "win32") {
+        // Windows: 자식 프로세스 트리까지 강제 종료 (process.kill() 은 트리 미정리 —
+        // agent.js 와 동일한 이유). 렌더러/GPU 자식이 고아로 남는 것 방지.
+        execSync(`taskkill /pid ${chromePid} /T /F`, { stdio: "ignore" });
+      } else {
+        process.kill(chromePid);
+      }
+    } catch {
+      try { process.kill(chromePid); } catch {}
+    }
     chromePid = null;
   }
 }
