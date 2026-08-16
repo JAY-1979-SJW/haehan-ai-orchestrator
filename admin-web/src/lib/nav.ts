@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
     group: "콘텐츠",
     items: [
       { key: "blog", label: "블로그 AI", shortLabel: "블로그", href: "/naver/blog" },
+      { key: "marketing", label: "마케팅 자료", shortLabel: "마케팅", href: "/marketing" },
     ],
   },
   {
