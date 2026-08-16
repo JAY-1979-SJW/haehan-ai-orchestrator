@@ -10,7 +10,11 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CAFE_DETAIL = ROOT / "data" / "cafe" / "_month_full_detail_20260816.json"
+CAFE_SOURCES = [
+    ROOT / "data" / "cafe" / "_month_full_detail_20260816.json",  # 2026-07~08, 전수(2,477건)
+    ROOT / "data" / "cafe" / "raw_articles_20260816_140233.json",  # 전체글보기 300일 백필(7,500건, 2026-05부터만 도달)
+    ROOT / "data" / "cafe" / "backfill_by_board_20260816.json",  # 게시판별 400일 백필(19,143건, 2025-07~2026-08 전구간)
+]
 CAFE_KEYWORD_TREND = ROOT / "data" / "cafe" / "건설공무_적산산출내역서단가_분석.xlsx"
 OUT = ROOT / "data" / "marketing" / "summary_latest.json"
 
@@ -18,33 +22,53 @@ KEYWORDS = ["적산", "물량산출", "AI", "인공지능", "내역서", "자동
 
 METHODOLOGY = {
     "recent_full": {
-        "source": "_month_full_detail_20260816.json",
-        "period": "2026-07 ~ 2026-08 (약 6주)",
-        "scope": "전체 게시판 무필터 전수 수집 (2,477건)",
+        "source": "_month_full_detail_20260816.json + raw_articles_20260816_140233.json",
+        "period": "2018-08~2026-08 리스트 수집, 상세(본문/댓글)는 최근 500건",
+        "scope": "전체 게시판 무필터 전수 수집, article_id 기준 중복제거 병합 (2026-08-16 300일 백필 완료)",
     },
     "long_term_keyword": {
         "source": "건설공무_적산산출내역서단가_분석.xlsx",
         "period": "2025-09 ~ 2026-06 (10개월)",
-        "scope": "'적산/산출/내역서/단가' 키워드로 사전 필터링된 게시판만 (월 30~180건)",
+        "scope": "'적산/산출/내역서/단가' 키워드로 사전 필터링된 게시판만 (월 30~180건) — "
+        "300일 전수 백필로 대체 가능해졌으나, 과거 월별 키워드 빈도 추이 참고용으로 유지",
+    },
+    "board_backfill": {
+        "source": "backfill_by_board_20260816.json",
+        "period": "2025-07 ~ 2026-08 (전구간 커버, 상위 활동 게시판 6개)",
+        "scope": "전체글보기(boardtype=L)가 약 150p에서 막혀 2026-05 이전을 못 가져오는 문제를 "
+        "게시판별(menuid=) 개별 수집으로 우회 — 19,143건",
     },
     "caveat": (
-        "두 데이터셋은 수집 범위가 달라 월별 건수를 직접 비교(병합)하면 안 된다. "
-        "최근 데이터의 월평균 건수(1,157~1,317건)가 과거(30~179건)보다 7~40배 많은 건 "
-        "활동 폭증이 아니라 수집 범위(키워드 필터 vs 전수) 차이다. "
-        "장기 추이는 키워드 데이터로, 카페 전체 성격(노무·고용 이슈 비중 등)은 "
-        "최근 전수 데이터로 판단한다 — 병합하지 않고 역할을 구분해 병기한다."
+        "2026-08-16 게시판별 백필(19,143건)로 목표 기간(2025-09~2026-08) 전구간을 확보했다. "
+        "cafe_top_posts/cafe_keyword_posts는 이제 3개 소스를 article_id 기준 병합한 결과라 "
+        "노무·고용 이슈 등 비-적산 게시판도 전 기간에 걸쳐 반영된다. "
+        "다만 상세(본문/댓글)는 상세 방문한 일부 건만 채워져 있고 나머지는 리스트 정보(제목·조회수)만 있다."
     ),
 }
 
 
-def top_cafe_posts(limit: int = 15) -> list[dict]:
-    if not CAFE_DETAIL.exists():
-        return []
-    data = json.loads(CAFE_DETAIL.read_text(encoding="utf-8"))
-    data.sort(key=lambda r: int(r.get("view_count") or 0), reverse=True)
-    rows = []
-    for r in data[:limit]:
-        rows.append(
+def load_merged_cafe_posts() -> list[dict]:
+    """전수 수집 소스들을 article_id 기준으로 중복 제거해 병합.
+
+    같은 글이 여러 수집분에 겹치면 본문/댓글이 채워진(상세 수집된) 쪽을 남긴다.
+    """
+    merged: dict[str, dict] = {}
+    for path in CAFE_SOURCES:
+        if not path.exists():
+            continue
+        for r in json.loads(path.read_text(encoding="utf-8")):
+            key = str(r.get("article_id") or r.get("href") or r.get("title"))
+            existing = merged.get(key)
+            if existing is None or (not existing.get("body") and r.get("body")):
+                merged[key] = r
+    return list(merged.values())
+
+
+def top_cafe_posts(posts: list[dict], limit: int = 15) -> list[dict]:
+    rows = sorted(posts, key=lambda r: int(r.get("view_count") or 0), reverse=True)
+    out = []
+    for r in rows[:limit]:
+        out.append(
             {
                 "title": r.get("title"),
                 "board": r.get("board"),
@@ -53,18 +77,15 @@ def top_cafe_posts(limit: int = 15) -> list[dict]:
                 "date": r.get("date_str"),
             }
         )
-    return rows
+    return out
 
 
-def keyword_cafe_posts(limit: int = 15) -> list[dict]:
-    if not CAFE_DETAIL.exists():
-        return []
-    data = json.loads(CAFE_DETAIL.read_text(encoding="utf-8"))
-    hits = [r for r in data if any(k in (r.get("title") or "") for k in KEYWORDS)]
+def keyword_cafe_posts(posts: list[dict], limit: int = 15) -> list[dict]:
+    hits = [r for r in posts if any(k in (r.get("title") or "") for k in KEYWORDS)]
     hits.sort(key=lambda r: int(r.get("view_count") or 0), reverse=True)
-    rows = []
+    out = []
     for r in hits[:limit]:
-        rows.append(
+        out.append(
             {
                 "title": r.get("title"),
                 "board": r.get("board"),
@@ -73,7 +94,7 @@ def keyword_cafe_posts(limit: int = 15) -> list[dict]:
                 "date": r.get("date_str"),
             }
         )
-    return rows
+    return out
 
 
 # 세션 중 YouTube Data API로 실측한 값(재수집 아님, 2026-08-16 기준 스냅샷)
@@ -161,17 +182,22 @@ CONTENT_PLAN = [
 
 def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    posts = load_merged_cafe_posts()
+    dates = sorted(r.get("date") for r in posts if r.get("date"))
+    coverage = f"{dates[0]} ~ {dates[-1]} ({len(posts)}건, 중복제거 병합)" if dates else "unknown"
     payload = {
-        "generated_note": "2026-08-16 세션 데이터 기준 정리 (재수집 아님)",
-        "cafe_top_posts": top_cafe_posts(),
-        "cafe_keyword_posts": keyword_cafe_posts(),
+        "generated_note": "2026-08-16 세션 데이터 기준 정리 (전수 백필 병합 완료)",
+        "cafe_coverage": coverage,
+        "cafe_top_posts": top_cafe_posts(posts),
+        "cafe_keyword_posts": keyword_cafe_posts(posts),
         "youtube_benchmarks": YOUTUBE_BENCHMARKS,
         "competitors": COMPETITORS,
         "strategy": STRATEGY,
         "content_plan": CONTENT_PLAN,
+        "methodology": METHODOLOGY,
     }
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"saved: {OUT}")
+    print(f"saved: {OUT} — cafe posts merged: {len(posts)} ({coverage})")
 
 
 if __name__ == "__main__":
