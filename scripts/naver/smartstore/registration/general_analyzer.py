@@ -4,6 +4,7 @@ URL: https://sell.smartstore.naver.com/#/products/edit-new
 
 목적: 가격/재고/판매옵션/배송 필드의 정확한 셀렉터 추출 → GeneralProductRegister 구축.
 """
+
 from __future__ import annotations
 
 import json
@@ -14,9 +15,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 URL = "https://sell.smartstore.naver.com/#/products/edit-new"
 OUTPUT = ROOT / "data" / "sitemap" / "smartstore_general_product_fields.json"
@@ -99,9 +100,9 @@ EXTRACT_JS = r"""
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  일반 상품 등록 페이지 (필드 248개) 정밀 분석")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 (필드 248개) 정밀 분석")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -117,7 +118,7 @@ def main():
         pass
 
     print(f"  ✓ 진입: {page.url}")
-    print(f"  페이지 스크롤하며 필드 수집...")
+    print("  페이지 스크롤하며 필드 수집...")
 
     # 페이지 전체 스크롤 (동적 필드 로드 보장)
     all_fields = {}
@@ -158,20 +159,29 @@ def main():
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps({
-        "url": URL,
-        "total_fields": len(all_fields),
-        "sections": sorted(all_sections.values(), key=lambda x: x["y"]),
-        "by_keyword": by_keyword,
-        "all_fields": sorted(all_fields.values(), key=lambda x: x["position"]["y"]),
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    OUTPUT.write_text(
+        json.dumps(
+            {
+                "url": URL,
+                "total_fields": len(all_fields),
+                "sections": sorted(all_sections.values(), key=lambda x: x["y"]),
+                "by_keyword": by_keyword,
+                "all_fields": sorted(all_fields.values(), key=lambda x: x["position"]["y"]),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     # 보고
-    print(f"\n  [핵심 필드 분류]")
+    print("\n  [핵심 필드 분류]")
     for kw, items in by_keyword.items():
         print(f"    {kw}: {len(items)}개")
         for f in items[:3]:
-            print(f"      - {f['type']:<10} name={f['name'][:25]:<27} placeholder='{f['placeholder'][:30]}' label='{f['context_label'][:30]}'")
+            print(
+                f"      - {f['type']:<10} name={f['name'][:25]:<27} placeholder='{f['placeholder'][:30]}' label='{f['context_label'][:30]}'"
+            )
 
     print(f"\n  [섹션 헤더 ({len(all_sections)}개)]")
     for s in sorted(all_sections.values(), key=lambda x: x["y"])[:40]:
@@ -183,6 +193,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

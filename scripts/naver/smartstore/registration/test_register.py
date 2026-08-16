@@ -8,6 +8,7 @@
 
 목적: 셀렉터 검증 + 자동화 가능 범위 파악
 """
+
 from __future__ import annotations
 
 import json
@@ -18,10 +19,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
-from scripts.logger import get_logger
+from scripts.logger import get_logger  # noqa: E402
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 STORE_URL = "https://smartstore.naver.com/bigsun2024"
@@ -141,14 +142,14 @@ def extract_product_detail(page, product_url: str) -> dict:
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  기존 상품 정보 추출 → 자동 등록 입력 테스트")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  기존 상품 정보 추출 → 자동 등록 입력 테스트")
+    print(f"{'=' * 70}\n")
 
     # 로그인 확인
     r = ensure_naver_login(page)
     if not r.get("ok"):
-        print(f"  ✗ 로그인 실패")
+        print("  ✗ 로그인 실패")
         return
 
     # 1. 스토어에서 첫 상품 추출
@@ -160,14 +161,14 @@ def main():
 
     # 2. 상세 정보 추출
     print(f"\n  [2] 상품 상세 추출: {first['url']}")
-    detail = extract_product_detail(page, first['url'])
+    detail = extract_product_detail(page, first["url"])
     print(f"     이름: {detail.get('name', '')[:60]}")
     print(f"     가격: {detail.get('price', '')}")
     print(f"     카테고리: {detail.get('category', '')}")
     print(f"     이미지: {len(detail.get('images', []))}개")
-    if detail.get('attributes'):
-        print(f"     속성:")
-        for k, v in list(detail['attributes'].items())[:10]:
+    if detail.get("attributes"):
+        print("     속성:")
+        for k, v in list(detail["attributes"].items())[:10]:
             print(f"       {k}: {v}")
 
     # 결과 저장
@@ -176,66 +177,68 @@ def main():
     print(f"\n  ✓ 저장: {out.name}")
 
     # 3. 자동 등록 입력 테스트
-    print(f"\n  [3] 자동 등록 페이지로 데이터 입력 (★ 저장 안 함)")
+    print("\n  [3] 자동 등록 페이지로 데이터 입력 (★ 저장 안 함)")
     from scripts.naver.smartstore.product import ProductRegister
+
     pr = ProductRegister(page)
 
     if not pr.open():
-        print(f"  ✗ 등록 페이지 열기 실패")
+        print("  ✗ 등록 페이지 열기 실패")
         return
-    print(f"     ✓ 등록 페이지 진입")
+    print("     ✓ 등록 페이지 진입")
 
     # 카테고리
-    if detail.get('category'):
-        cat = detail['category'].split('>')[-1].strip()
+    if detail.get("category"):
+        cat = detail["category"].split(">")[-1].strip()
         if cat:
             r = pr.set_category(cat)
-            mark = "✓" if r.get('ok') else "✗"
+            mark = "✓" if r.get("ok") else "✗"
             print(f"     [{mark}] 카테고리 '{cat}': {r}")
     else:
         # 카테고리 없으면 임의 카테고리로 테스트
         r = pr.set_category("디지털/가전")
-        mark = "✓" if r.get('ok') else "✗"
+        mark = "✓" if r.get("ok") else "✗"
         print(f"     [{mark}] 카테고리 '디지털/가전' (기본): {r}")
 
     # 상품명
-    name = (detail.get('name') or first.get('title') or 'Test Product').strip()
+    name = (detail.get("name") or first.get("title") or "Test Product").strip()
     if name:
         test_name = f"[자동입력테스트] {name[:50]}"
         r = pr.set_product_name(test_name)
-        mark = "✓" if r.get('ok') else "✗"
+        mark = "✓" if r.get("ok") else "✗"
         print(f"     [{mark}] 상품명: {r.get('ok')}")
 
     # 모델명
-    model = detail.get('attributes', {}).get('모델명') or detail.get('attributes', {}).get('모델') or 'TEST-MODEL-001'
+    model = detail.get("attributes", {}).get("모델명") or detail.get("attributes", {}).get("모델") or "TEST-MODEL-001"
     r = pr.set_model_name(model)
-    mark = "✓" if r.get('ok') else "✗"
+    mark = "✓" if r.get("ok") else "✗"
     print(f"     [{mark}] 모델명 '{model}': {r.get('ok')}")
 
     # 사은품
     r = pr.set_gift("[테스트] 무료 사은품 증정")
-    mark = "✓" if r.get('ok') else "✗"
+    mark = "✓" if r.get("ok") else "✗"
     print(f"     [{mark}] 사은품: {r.get('ok')}")
 
     # 이벤트 문구
     r = pr.set_event_text("[테스트] 20만원 이상 12개월 무이자 할부")
-    mark = "✓" if r.get('ok') else "✗"
+    mark = "✓" if r.get("ok") else "✗"
     print(f"     [{mark}] 이벤트 문구: {r.get('ok')}")
 
     # KC 인증 (선택)
     r = pr.set_kc_exemption("구매대행")
-    mark = "✓" if r.get('ok') else "✗"
+    mark = "✓" if r.get("ok") else "✗"
     print(f"     [{mark}] KC 인증 면제 '구매대행': {r.get('ok')}")
 
-    print(f"\n  [4] 입력 완료 (★ 저장 안 함, 사용자 확인 후 수동 저장 가능)")
-    print(f"     브라우저에서 입력 결과 확인 가능")
-    print(f"     성공한 셀렉터들이 검증되었습니다.")
+    print("\n  [4] 입력 완료 (★ 저장 안 함, 사용자 확인 후 수동 저장 가능)")
+    print("     브라우저에서 입력 결과 확인 가능")
+    print("     성공한 셀렉터들이 검증되었습니다.")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

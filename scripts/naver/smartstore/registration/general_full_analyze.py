@@ -5,6 +5,7 @@
   2. 페이지 전체 스크롤하며 모든 필드 수집
   3. 가격/재고/배송/판매옵션 핵심 필드 셀렉터 매핑
 """
+
 from __future__ import annotations
 
 import json
@@ -15,9 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 DASHBOARD = "https://sell.smartstore.naver.com/#/home/dashboard"
 OUTPUT = ROOT / "data" / "sitemap" / "smartstore_general_full_fields.json"
@@ -25,7 +26,8 @@ OUTPUT = ROOT / "data" / "sitemap" / "smartstore_general_full_fields.json"
 
 def click_text_by_coord(page, text: str, x_max: int = 280) -> bool:
     """텍스트로 메뉴 좌표 찾아 실제 마우스 클릭."""
-    coords = page.evaluate(r"""
+    coords = page.evaluate(
+        r"""
     ({text, xMax}) => {
         for (const el of document.querySelectorAll('a, li, button, span')) {
             const s = window.getComputedStyle(el);
@@ -40,7 +42,9 @@ def click_text_by_coord(page, text: str, x_max: int = 280) -> bool:
         }
         return null;
     }
-    """, {"text": text, "xMax": x_max})
+    """,
+        {"text": text, "xMax": x_max},
+    )
     if not coords:
         return False
     page.mouse.move(coords["x"], coords["y"])
@@ -108,9 +112,9 @@ EXTRACT_FIELDS_JS = r"""
 
 def main():
     page = get_page()
-    print(f"\n{'='*70}")
-    print(f"  일반 상품 등록 페이지 전체 필드 정밀 분석")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  일반 상품 등록 페이지 전체 필드 정밀 분석")
+    print(f"{'=' * 70}\n")
 
     r = ensure_naver_login(page)
     if not r.get("ok"):
@@ -182,22 +186,32 @@ def main():
             continue
         print(f"    {kw} ({len(items)}개):")
         for f in items[:5]:
-            print(f"      - {f['type']:<10} name={f['name'][:30]:<32} placeholder='{f['placeholder'][:25]}' label='{f['label'][:25]}'")
+            print(
+                f"      - {f['type']:<10} name={f['name'][:30]:<32} placeholder='{f['placeholder'][:25]}' label='{f['label'][:25]}'"
+            )
 
     # 저장
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps({
-        "url": page.url,
-        "field_count": len(all_fields),
-        "all_fields": sorted(all_fields.values(), key=lambda x: x["y"]),
-        "by_keyword": by_kw,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    OUTPUT.write_text(
+        json.dumps(
+            {
+                "url": page.url,
+                "field_count": len(all_fields),
+                "all_fields": sorted(all_fields.values(), key=lambda x: x["y"]),
+                "by_keyword": by_kw,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(f"\n  ✓ 저장: {OUTPUT.name}")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()

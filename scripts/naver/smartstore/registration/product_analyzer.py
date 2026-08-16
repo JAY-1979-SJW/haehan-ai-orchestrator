@@ -3,6 +3,7 @@
 ProductRegister 모듈 구축 전, 페이지의 모든 입력 필드/버튼/라디오/체크박스를
 스크롤하며 추출. 결과를 JSON으로 저장.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,11 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import get_page
-from scripts.popup_detector import handle_page_popups, close_popup_windows
-from scripts.login_detector import is_logged_in_generic
-from scripts.naver.auth import ensure_naver_login
-from scripts.logger import get_logger
+from scripts.logger import get_logger  # noqa: E402
+from scripts.login_detector import is_logged_in_generic  # noqa: E402
+from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -169,10 +170,13 @@ def scroll_and_collect(page, max_scrolls: int = 30, scroll_step: int = 600) -> d
         page_height = snapshot.get("page_height", 0)
         viewport_h = snapshot.get("viewport", {}).get("h", 800)
 
-        print(f"  [scroll {i+1}/{max_scrolls}] y={current_pos:>5} / {page_height} | 필드 {len(all_fields)} 버튼 {len(all_buttons)} 섹션 {len(all_sections)}", flush=True)
+        print(
+            f"  [scroll {i + 1}/{max_scrolls}] y={current_pos:>5} / {page_height} | 필드 {len(all_fields)} 버튼 {len(all_buttons)} 섹션 {len(all_sections)}",
+            flush=True,
+        )
 
         if current_pos + viewport_h >= page_height - 50:
-            print(f"  ✓ 페이지 끝 도달")
+            print("  ✓ 페이지 끝 도달")
             break
 
         # 스크롤
@@ -190,9 +194,9 @@ def scroll_and_collect(page, max_scrolls: int = 30, scroll_step: int = 600) -> d
 
 
 def main():
-    print(f"\n{'='*70}")
-    print(f"  상품 등록 페이지 전체 필드 정밀 분석")
-    print(f"{'='*70}\n")
+    print(f"\n{'=' * 70}")
+    print("  상품 등록 페이지 전체 필드 정밀 분석")
+    print(f"{'=' * 70}\n")
 
     page = get_page()
 
@@ -213,13 +217,13 @@ def main():
         pass
 
     if not is_logged_in_generic(page):
-        print(f"  ✗ 로그인 인증 실패")
+        print("  ✗ 로그인 인증 실패")
         sys.exit(1)
 
     print(f"  ✓ 진입 성공: {page.url}")
 
     # 스크롤하며 전체 수집
-    print(f"\n  [2] 페이지 스크롤하며 모든 필드 수집")
+    print("\n  [2] 페이지 스크롤하며 모든 필드 수집")
     page.evaluate("window.scrollTo(0, 0)")
     time.sleep(1)
     result = scroll_and_collect(page, max_scrolls=30, scroll_step=600)
@@ -228,14 +232,14 @@ def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"\n  [3] 최종 결과")
+    print("\n  [3] 최종 결과")
     print(f"     필드: {len(result['fields'])}개")
     print(f"     버튼: {len(result['buttons'])}개")
     print(f"     섹션: {len(result['sections'])}개")
     print(f"     저장: {OUTPUT.name}")
 
     # 섹션 출력
-    print(f"\n  [섹션 헤더]")
+    print("\n  [섹션 헤더]")
     for s in result["sections"][:30]:
         print(f"     y={s['y']:>5}  {s['text']}")
 
@@ -243,7 +247,8 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
