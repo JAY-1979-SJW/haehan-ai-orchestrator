@@ -1,6 +1,8 @@
 import json
 import logging
 
+from ai_orchestrator.openai_guard import assert_openai_allowed
+
 from .config import OPENAI_API_KEY
 from .models import ExecutionPlan, RiskAssessment, TaskRequest
 
@@ -19,6 +21,7 @@ def _get_client():
 
 
 def _call(system: str, user: str, fallback: str) -> str:
+    assert_openai_allowed("openai_client.py:_call")
     if _MOCK_MODE:
         return fallback
     try:

@@ -16,6 +16,7 @@ import os
 import urllib.request
 
 from ai_orchestrator.app_llm import APP_LLM_MODEL
+from ai_orchestrator.openai_guard import assert_openai_allowed
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -38,6 +39,7 @@ class AIResponder:
             self.endpoint = "https://api.openai.com/v1/chat/completions"
 
     def _call(self, system: str, user: str, max_tokens: int = 500) -> dict:
+        assert_openai_allowed("ai_responder.py:_call")
         if not self.api_key:
             return {"ok": False, "error": "no_api_key", "hint": f"환경변수 {self.provider.upper()}_API_KEY 설정 필요"}
 
