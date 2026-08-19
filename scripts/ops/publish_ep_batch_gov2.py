@@ -1,0 +1,90 @@
+"""정부점검 대비 AI 자체점검 20편 배치 발행 (publish_ep_batch.py와 동일 구조,
+data/marketing/ep_batch_full_gov2.json 을 읽어 발행)."""
+
+from __future__ import annotations
+
+import json
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from ai_orchestrator.connectors.naver_blog_router import _resolve_unsplash_images  # noqa: E402
+from scripts.gate import force_approved  # noqa: E402
+from scripts.naver.blog.core.writer import write_post  # noqa: E402
+from scripts.web_connector import get_page  # noqa: E402
+
+FULL_PATH = ROOT / "data" / "marketing" / "ep_batch_full_gov2.json"
+LOG_PATH = ROOT / "data" / "marketing" / "ep_batch_gov2_publish_log.jsonl"
+UPLOAD_DIR = ROOT / "data" / "blog_uploads"
+CATEGORY = "AI 업무자동화 연구소"
+
+
+def resolve_topic_image(title: str) -> str | None:
+    try:
+        names = _resolve_unsplash_images(title, [], count=1)
+    except Exception as e:
+        print(f"  대표사진 소싱 실패(무시): {e}")
+        return None
+    for n in names:
+        p = UPLOAD_DIR / n if not Path(n).is_absolute() else Path(n)
+        if p.exists():
+            return str(p)
+    return None
+
+
+def main() -> int:
+    skip_n = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    items = json.loads(FULL_PATH.read_text(encoding="utf-8"))
+    page = get_page()
+
+    for item in items:
+        i = item["index"]
+        if i <= skip_n:
+            continue
+        title = item["title"]
+        body = item["body"]
+        chart_path = UPLOAD_DIR / item["chart"]
+
+        if "[[CHART]]" not in body:
+            seg1, seg2 = body, ""
+        else:
+            seg1, seg2 = body.split("[[CHART]]", 1)
+
+        topic_img = resolve_topic_image(title)
+        images = [p for p in [topic_img, str(chart_path) if chart_path.exists() else None] if p]
+        body_segments = [seg1, seg2] if seg2 else [seg1]
+
+        print(f"[{i}/{len(items)}] 발행 시도: {title} (이미지 {len(images)}장)")
+        try:
+            with force_approved():
+                result = write_post(
+                    page,
+                    title=title,
+                    body=body,
+                    body_segments=body_segments,
+                    category=CATEGORY,
+                    tags=None,
+                    auto_tags=True,
+                    images=images or None,
+                    visibility="public",
+                    require_approval=False,
+                )
+        except Exception as e:
+            result = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+
+        record = {"index": i, "title": title, "result": result, "ts": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        with LOG_PATH.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        status = "OK" if result.get("ok") else "FAIL"
+        print(f"  -> {status}: {result.get('url') or result.get('error')}")
+        time.sleep(6)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

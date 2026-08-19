@@ -95,9 +95,14 @@ class BlogWriter:
         auto_login: bool = True,
         naver_id: str | None = None,
         naver_pw: str | None = None,
+        log_no: str | None = None,
     ) -> bool:
-        """편집기 페이지 열기 + 자동 로그인 + 편집기 준비 대기."""
-        _log.info("[blog-writer] 편집기 열기 (blog_id=%s)", blog_id)
+        """편집기 페이지 열기 + 자동 로그인 + 편집기 준비 대기.
+
+        log_no 지정 시 신규 글이 아니라 해당 기존 글을 수정 모드로 연다
+        (Naver PostWriteForm.naver 는 logNo 파라미터로 기존 글을 로드).
+        """
+        _log.info("[blog-writer] 편집기 열기 (blog_id=%s, log_no=%s)", blog_id, log_no)
 
         # blogId 없으면 로그인 사용자 ID 자동 감지
         if not blog_id:
@@ -108,6 +113,8 @@ class BlogWriter:
             return False
 
         url = f"{WRITE_URL}?blogId={blog_id}"
+        if log_no:
+            url += f"&logNo={log_no}"
         self.page.goto(url, timeout=timeout_ms, wait_until="domcontentloaded")
         time.sleep(3)
 
@@ -190,6 +197,34 @@ class BlogWriter:
             self._draft_handled = True
 
     # ── 제목/본문 ────────────────────────────────────────────────────────
+
+    def clear_title(self) -> bool:
+        """기존 글 수정 시 제목 필드의 기존 텍스트를 전체 선택 후 삭제."""
+        try:
+            self.page.locator(TITLE_SEL).first.click(timeout=3000)
+            time.sleep(0.2)
+            self.page.keyboard.press("Control+a")
+            time.sleep(0.1)
+            self.page.keyboard.press("Delete")
+            time.sleep(0.2)
+            return True
+        except Exception as e:
+            _log.error("[blog-writer] 제목 초기화 실패: %s", e)
+            return False
+
+    def clear_body(self) -> bool:
+        """기존 글 수정 시 본문 영역 전체(텍스트+이미지)를 선택 후 삭제."""
+        try:
+            self.page.locator(BODY_SEL).first.click(timeout=3000)
+            time.sleep(0.2)
+            self.page.keyboard.press("Control+a")
+            time.sleep(0.1)
+            self.page.keyboard.press("Delete")
+            time.sleep(0.3)
+            return True
+        except Exception as e:
+            _log.error("[blog-writer] 본문 초기화 실패: %s", e)
+            return False
 
     def set_title(self, text: str) -> bool:
         """제목 입력 + 즉시 실제 DOM과 대조 (단계별 체크)."""
@@ -1087,6 +1122,20 @@ def write_post(
     """
     import time as _t
 
+    # 명시적 dialog 핸들러 등록 — 미등록 상태로 두면 Playwright 드라이버가 자체
+    # 타이밍으로 자동 해제를 시도하다 "No dialog is showing" ProtocolError로
+    # Node 프로세스 전체가 죽는 경쟁 상태가 실측 확인됨(2026-08-17, 3번째 포스트
+    # 발행 중 크래시). 리스너를 걸어두면 Playwright가 우리 처리를 기다리므로
+    # 그 경쟁이 사라진다. 페이지 이동 중 뜨는 beforeunload 등은 무조건 dismiss
+    # (변경사항 저장 확인창에서 "취소" = 이동 유지) — 새 다이얼로그를 만들어내는
+    # 게 아니라 브라우저가 이미 띄운 것을 처리만 하므로 no-dialog 원칙과 무관.
+    if not getattr(page, "_haehan_dialog_handler_installed", False):
+        page.on("dialog", lambda d: d.dismiss())
+        try:
+            page._haehan_dialog_handler_installed = True
+        except Exception:
+            pass
+
     # Step 1: 로그인 확인
     from scripts.naver.auth import ensure_naver_login
 
@@ -1115,11 +1164,16 @@ def write_post(
 
     if body_segments and images:
         # 인터리브 삽입: 세그먼트1 → 이미지1 → 세그먼트2 → 이미지2 → ...
+        # write_mixed_content() 사용 — 개별 write_body(verify=True) 루프는 append
+        # 플래그 누락으로 커서가 매번 본문 맨 앞으로 돌아가고, 완성되지 않은
+        # 구간 텍스트를 전체 문서와 비교해 검증이 항상 실패하는 버그가 있었다.
+        blocks: list[dict[str, str]] = []
         for i, seg in enumerate(body_segments):
-            if not bw.write_body(seg):
-                return {"ok": False, "error": f"body_segment_{i}_failed"}
+            blocks.append({"type": "text", "value": seg})
             if i < len(images):
-                bw.insert_image(images[i])
+                blocks.append({"type": "image", "value": images[i]})
+        if not bw.write_mixed_content(blocks):
+            return {"ok": False, "error": "body_segments_failed"}
     elif images:
         # 기존 방식: 이미지 전부 앞에, 본문 뒤
         for img in images:
@@ -1186,6 +1240,74 @@ def write_post(
         }
 
     # 즉시 발행 (require_approval=False)
+    result = bw.publish()
+    result["tags_used"] = tags or []
+    return result
+
+
+def edit_post(
+    page: Page,
+    *,
+    blog_id: str,
+    log_no: str,
+    title: str,
+    body: str | list[str],
+    tags: list[str] | None = None,
+    images: list[str] | None = None,
+    body_segments: list[str] | None = None,
+    visibility: str = "public",
+) -> dict:
+    """이미 발행된 기존 글(log_no)을 새 제목/본문으로 덮어써 재발행.
+
+    write_post()와 달리 신규 글을 만들지 않고 PostWriteForm.naver?...&logNo=
+    로 기존 글을 로드한 뒤 제목/본문을 전체 삭제하고 새로 채운다. 발행 버튼은
+    write_post()와 동일 — Naver 에디터가 logNo 존재 여부로 자동으로
+    "수정 저장"인지 "신규 발행"인지 판단한다.
+    """
+    if not getattr(page, "_haehan_dialog_handler_installed", False):
+        page.on("dialog", lambda d: d.dismiss())
+        try:
+            page._haehan_dialog_handler_installed = True
+        except Exception:
+            pass
+
+    from scripts.naver.auth import ensure_naver_login
+
+    login_result = ensure_naver_login(page)
+    if not login_result.get("ok"):
+        return {"ok": False, "error": "login_failed", "reason": login_result.get("reason", "")}
+
+    bw = BlogWriter(page)
+    if not bw.open(blog_id=blog_id, log_no=log_no):
+        return {"ok": False, "error": "editor_open_failed"}
+
+    if not bw.clear_title():
+        return {"ok": False, "error": "clear_title_failed"}
+    if not bw.set_title(title):
+        return {"ok": False, "error": "title_failed"}
+
+    if not bw.clear_body():
+        return {"ok": False, "error": "clear_body_failed"}
+
+    if body_segments and images:
+        blocks: list[dict[str, str]] = []
+        for i, seg in enumerate(body_segments):
+            blocks.append({"type": "text", "value": seg})
+            if i < len(images):
+                blocks.append({"type": "image", "value": images[i]})
+        if not bw.write_mixed_content(blocks):
+            return {"ok": False, "error": "body_segments_failed"}
+    else:
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
+
+    page.get_by_role("button", name="발행", exact=True).click(timeout=5000)
+    time.sleep(1.5)
+
+    if tags:
+        bw.set_tags(tags)
+    bw.set_visibility(visibility)
+
     result = bw.publish()
     result["tags_used"] = tags or []
     return result

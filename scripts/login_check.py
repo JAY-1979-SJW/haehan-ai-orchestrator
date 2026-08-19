@@ -13,33 +13,37 @@
     if is_logged_in_by_cookie(page, "google"):
         ...
 """
+
 from __future__ import annotations
 
 from playwright.sync_api import Page
 
 # 사이트 별칭 → 도메인 매핑
 _SITE_DOMAIN: dict[str, str] = {
-    "google":   "google.com",
-    "gmail":    "google.com",
+    "google": "google.com",
+    "gmail": "google.com",
     "calendar": "google.com",
-    "drive":    "google.com",
-    "docs":     "google.com",
-    "sheets":   "google.com",
-    "youtube":  "youtube.com",
-    "naver":    "naver.com",
-    "blog":     "naver.com",
-    "cafe":     "naver.com",
-    "kakao":    "kakao.com",
-    "github":   "github.com",
+    "drive": "google.com",
+    "docs": "google.com",
+    "sheets": "google.com",
+    "youtube": "youtube.com",
+    "naver": "naver.com",
+    "blog": "naver.com",
+    "cafe": "naver.com",
+    "kakao": "kakao.com",
+    "github": "github.com",
+    "data.go.kr": "data.go.kr",
+    "공공데이터포털": "data.go.kr",
 }
 
 # 도메인 → 인증 쿠키 마커 (cdp_session_manager.LOGIN_MARKERS와 동일 규칙)
 _LOGIN_MARKERS: dict[str, list[str]] = {
-    "google.com":  ["SID", "HSID", "SSID", "APISID", "SAPISID"],
+    "google.com": ["SID", "HSID", "SSID", "APISID", "SAPISID"],
     "youtube.com": ["LOGIN_INFO", "SID"],
-    "naver.com":   ["NID_AUT", "NID_SES"],
-    "kakao.com":   ["_kawlt", "_kahai", "TIARA"],
-    "github.com":  ["user_session", "logged_in"],
+    "naver.com": ["NID_AUT", "NID_SES"],
+    "kakao.com": ["_kawlt", "_kahai", "TIARA"],
+    "github.com": ["user_session", "logged_in"],
+    "data.go.kr": ["data_username", "SSO_COOKIE"],
 }
 
 
@@ -60,11 +64,7 @@ def is_logged_in_by_cookie(page: Page, site: str) -> bool:
     except Exception:
         return False
 
-    found_names = {
-        c.get("name", "")
-        for c in cookies
-        if domain in (c.get("domain", "") or "")
-    }
+    found_names = {c.get("name", "") for c in cookies if domain in (c.get("domain", "") or "")}
 
     if not markers:
         # 마커 미등록 도메인 — 도메인 쿠키 1개 이상이면 로그인으로 간주
