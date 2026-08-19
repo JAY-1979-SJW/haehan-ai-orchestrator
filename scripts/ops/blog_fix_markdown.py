@@ -49,6 +49,9 @@ def convert_heading(text: str) -> str | None:
     m2 = re.match(r"^##\s+(.+)$", t)
     if m2:
         inner = m2.group(1).strip()
+        # CTA 블록(📌)은 소제목이 아니라 안내문이라 대괄호를 씌우지 않는다.
+        if inner.startswith("📌"):
+            return inner
         if inner.startswith("[") and inner.endswith("]"):
             return inner
         return f"[{inner}]"
@@ -102,26 +105,27 @@ def fix_one(page, log_no: str, apply: bool) -> dict:
     if not apply:
         return {"ok": True, "changed": 0, "preview": [f["text"] for f in found]}
 
+    # ⚠️ DOM textContent 직접 수정은 저장되지 않는다(2026-08-19 실측).
+    # 스마트에디터는 내부 모델로 문서를 관리해서, DOM만 바꾸면 발행 시
+    # 원본이 그대로 올라간다. 실제 클릭 + 키보드 입력으로 고쳐야 한다.
     changed = 0
     for item in found:
-        line = item["text"]
-        new = convert_heading(line)
+        new = convert_heading(item["text"])
         if not new:
             continue
-        done = frame.evaluate(
-            """([idx, newText]) => {
-            const els = document.querySelectorAll('.se-text-paragraph');
-            const el = els[idx];
-            if (!el) return false;
-            const span = el.querySelector('span') || el;
-            span.textContent = newText;
-            el.dispatchEvent(new Event('input', {bubbles: true}));
-            return true;
-        }""",
-            [item["i"], new],
-        )
-        if done:
+        try:
+            el = page.locator(".se-text-paragraph").nth(item["i"])
+            el.click(timeout=8000)
+            page.wait_for_timeout(250)
+            # 해당 줄만 선택해서 교체 (Home → Shift+End)
+            page.keyboard.press("Home")
+            page.keyboard.press("Shift+End")
+            page.wait_for_timeout(120)
+            page.keyboard.type(new, delay=15)
+            page.wait_for_timeout(220)
             changed += 1
+        except Exception as e:
+            _log.warning("[md-fix] 문단 %s 수정 실패: %s", item["i"], str(e)[:70])
 
     if changed:
         _save_post(page, frame)

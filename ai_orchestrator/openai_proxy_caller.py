@@ -20,6 +20,7 @@ import urllib.request
 from dataclasses import dataclass
 
 from ai_orchestrator.app_llm import APP_LLM_QUALITY_MODEL
+from ai_orchestrator.openai_guard import assert_openai_allowed
 
 logger = logging.getLogger("haehan_openai_proxy")
 
@@ -73,6 +74,7 @@ def call_openai_chat(
     _api_url: str = DEFAULT_API_URL,
 ) -> ProxyCallResult:
     """env OPENAI_API_KEY 사용. 변수는 함수 scope 안에서만."""
+    assert_openai_allowed("openai_proxy_caller.py:call_openai_chat")
     if not message or not message.strip():
         return ProxyCallResult(ok=False, error_code=ERR_RESPONSE_EMPTY)
     if len(message) > MAX_INPUT_CHARS:
@@ -149,6 +151,7 @@ def call_openai_agent(
     자율 도구호출 에이전트(free_agent)용. 기존 call_openai_chat은 보존.
     반환: {"ok": bool, "message": {...}|None, "error_code": str, "model": str}
     """
+    assert_openai_allowed("openai_proxy_caller.py:call_openai_agent")
     api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key or len(api_key) < 20:
         return {"ok": False, "error_code": ERR_API_KEY_NOT_SET}
