@@ -1,0 +1,295 @@
+# 네이버 블로그(skyjwsin) 작성 기준서
+
+작성일: 2026-08-17
+대상 블로그: `skyjwsin` (반딧불아뜰리에 / AI 업무자동화 연구소)
+관련 코드: `scripts/naver/blog_marketing/`, `scripts/ops/blog_ai_batch_20.py`,
+`scripts/ops/research_blog_topics.py`, `scripts/naver/blog/core/writer.py`
+
+이 문서는 "무엇을 왜 이렇게 쓰는지"의 기준이다. 코드가 이 기준과 어긋나면
+코드가 잘못된 것 — 코드를 고쳐 기준에 맞춘다.
+
+## 0. 소유권 원칙 — 지금은 내부 사용, 나중에 분리 판매 (2026-08-18 결정)
+
+지금은 haehan-ai-orchestrator 앱에 **부속**시켜 운영한다(CDP 세션·크레덴셜·
+capability_check·로깅 등 공용 인프라를 그대로 재사용하기 위함 — EUM/g2b/
+스마트스토어와 같은 패턴). 단, **나중에 독립 제품으로 분리 판매할 계획**이 
+있으므로, 이 모듈은 처음부터 "언제든 들어낼 수 있는 경계"를 유지한다.
+
+**분리 경계(향후 추출 시 이 파일들만 옮기면 됨)**:
+```
+scripts/naver/blog_marketing/            ← 마케팅 파이프라인 본체
+scripts/ops/blog_ai_batch_20.py          ← 신규 발행 CLI
+scripts/ops/research_blog_topics.py      ← 주제 리서치 CLI
+scripts/ops/blog_analytics_report.py     ← 성과 분석 CLI
+docs/specs/naver_blog_content_standard.md ← 이 기준서
+```
+
+**격리 규칙(위반 금지)**:
+- 위 파일들은 **다른 업무 도메인 모듈을 import하지 않는다** (EUM, g2b,
+  스마트스토어, 하이웍스, 카카오워크 등). 2026-08-18 실측: 현재 의존성은
+  전부 범용 인프라뿐(`scripts.logger`, `scripts.credentials`,
+  `scripts.naver.automation.ai_responder`, `scripts.naver.blog.core.writer`,
+  `scripts.naver.blog.management.analytics`, `scripts.naver.searchad`,
+  `ai_orchestrator.connectors.naver_kin_client`, `ai_orchestrator.config`) —
+  전부 "블로그/네이버 공용 엔진" 또는 "범용 유틸"이라 분리해도 안전함. 이
+  상태를 유지할 것 — 새 기능 추가 시 다른 도메인 코드를 절대 참조하지 말고,
+  필요하면 그 도메인의 범용 부분을 별도 공용 모듈로 뽑아서 참조.
+- `data/blog_topic_*.json`, `data/reports/blog_analytics_*.json` 등 데이터
+  파일도 이 모듈 전용 — 다른 도메인과 공유 스키마 쓰지 않는다.
+- 신용정보(`scripts/credentials.py`)는 계속 공용으로 재사용(중복 구현 금지
+  원칙 우선) — 분리 시점에 이 부분만 어댑터로 교체하면 됨.
+
+---
+
+## 1. 주제 선정 — 실제 수요 3중 검증
+
+**AI가 주제를 지어내지 않는다.** 아래 파이프라인(`scripts/ops/research_blog_topics.py`)의
+결과만 사용한다.
+
+1. **카페 빈도** — 건설공무카페 실제 게시글에서 반복 언급되는 키워드
+2. **네이버 검색광고(Search Ads) 실검색량** — `scripts/naver/searchad/keyword_tool.py`.
+   월 검색량 500 미만 키워드는 제외(`_MIN_SEARCH_VOLUME`)
+3. **지식iN 실제 질문** — `ai_orchestrator/connectors/naver_kin_client.py`.
+   그 키워드로 실제 사람들이 무엇을 물어봤는지 원문 그대로 확보
+   (`question_title`, `question_description`)
+
+결과: `data/blog_topic_research_latest.json` (30일 유효, 오래되면 재실행 필요).
+주제 목록이 부족할 때만 `topics.py`의 `FALLBACK_TOPIC_SEED`/AI 보충 생성 사용 —
+이 경우 인용 근거(source_description)가 없다는 걸 인지하고 써야 한다.
+
+**왜**: 예전 "AI 관련 주제"는 검색 수요가 없어 방문자 0이었다. 실제로 사람들이
+검색하고 지식iN에 물어보는 키워드만 다뤄야 유입이 생긴다.
+
+---
+
+## 2. 블로그 정체성 — "규정 설명"이 아니라 "AI 자동화 활용기"
+
+이 블로그의 존재 이유는 "AI로 건설 실무(적산·물량산출·내역서·행정신고)를
+자동화하는 프로그램을 만든다"는 걸 보여주는 것이다. 법령·절차를 친절하게
+설명하는 일반 정보성 블로그가 아니다.
+
+**흔한 실패(2026-08-17 실측)**: 프롬프트에 "AI 자동화 활용"을 요청해도
+모델이 "실전 처리 절차"(사람이 손으로 하는 단계)로 되돌아가는 경우가 있었다.
+9개 글이 이 상태로 발행됐다가 전면 재작성한 사고가 있었다 — 발행 전
+`seo_check()`의 `ai_ratio` 경고를 반드시 확인할 것.
+
+### 2.1 제목 규칙
+
+- **제목에 "AI"라는 단어가 반드시 포함되어야 한다** (2026-08-17 사용자 지시).
+  `content.py`의 `generate_post()`가 프롬프트로 요청하고, 없으면
+  `"{title} (AI 자동화 활용법)"`으로 코드 레벨 강제 부착.
+- 30~50자, 지식iN 질문 원문 어투를 살리되 자연스러운 블로그 제목으로 다듬기.
+
+### 2.2 본문 구조 — 5단 구성, AI 섹션이 본체
+
+```
+1. 도입부           — 실제 질문/상황 인용            (~7%,  TARGET_BODY_CHARS 기준)
+2. 핵심 개념·규정    — 딱 필요한 만큼만              (~10%)
+3. [AI 자동화 활용]  — 본체. 반드시 70% 목표          (실측 상한 60~69%가 현실적)
+4. 흔한 실수·주의사항 — AI 활용 시에도 사람이 확인할 점  (~8%)
+5. 마무리            — 요약 + "관할 기관/전문가 확인 권장" (~5%)
+```
+
+**3번 섹션(AI 자동화 활용) 필수 요소**:
+- 이 업무의 반복적·규칙적인 부분을 구체적으로 짚기(마감일 계산, 자동 판정,
+  서식 자동 채우기, 데이터 조회·대조, 이력 관리 등)
+- AI가 처리하는 실제 동작 순서를 최소 5단계, 번호를 매겨 각 2~3문장으로 서술
+- 서로 다른 실제 활용 시나리오 2개 — 수작업 대비 처리 시간을 구체적으로 비교
+- "저희 서비스를 이용하세요" 같은 직접 광고 문구 금지, 대신 AI 동작을
+  최대한 구체적·기술적으로 묘사
+
+**분량**: `TARGET_BODY_CHARS=3200`, `MIN_BODY_CHARS=2500` (2026-08-17 실측
+상한에 맞춰 하향 조정됨 — 애초 목표였던 "A4 3장/3600자"는 모델이 꾸준히
+2300~2900자로 수렴해 비현실적이었음). 분량보다 **AI 섹션 비중(60% 이상)**을
+우선 기준으로 삼는다.
+
+**확실하지 않은 수치·법령은 단정하지 말고 "확인이 필요합니다"로 표현.**
+친절하고 정확한 어조 유지.
+
+### 2.3 발행 전 SEO 체크 (`content.py::seo_check()`)
+
+자동 경고(차단은 아님, 사람이 최종 확인):
+- 제목 20~60자
+- 본문 `MIN_BODY_CHARS` 이상
+- 핵심 키워드가 제목에 포함, 본문에 2회 이상 출현
+- 소제목(`##`) 구조 존재
+- **`ai_ratio` ≥ 0.6** — `_ai_section_ratio()`가 계산.
+  `## [AI 자동화 활용]` 대제목부터 다음 **`## ` (H2만, `### ` H3 제외)**
+  대제목 전까지의 길이 / 전체 본문 길이. (2026-08-17: H3도 경계로 오인해
+  1%대로 오탐하던 버그를 고침 — `re.match(r"^##\s", ...)`로 H2만 매칭)
+
+---
+
+## 3. 이미지
+
+- Unsplash API (`images.py`) — 건설 실무 테마 12개 쿼리 × 5장 = 60장 풀
+- **A4 1장당 사진 1장** 원칙 → 본문 3구간(`split_body(parts=3)`)에 각 1장씩
+  인터리브 삽입 (`write_mixed_content`)
+- 포스트마다 다른 이미지 3장 배정(`pick_3_images`, 인덱스 기반 60장 순환)
+- Unsplash 정책 준수: 사용 시 `download_location` 트리거 호출 필수
+
+---
+
+## 4. CTA — 도입 문의
+
+모든 글 본문 끝에 고정 블록 삽입 (`content.py::_CTA_BLOCK`):
+
+```
+## 📌 AI 자동화 도입 문의
+
+이 글에서 소개한 것처럼, 반복적인 건설 실무를 AI로 자동화하는 프로그램을
+직접 만들어드립니다. 우리 현장·사무실에 맞는 자동화가 궁금하시다면
+아래 홈페이지에서 문의해주세요.
+
+👉 https://haehan-ai.kr
+```
+
+- **전화번호는 노출하지 않는다** (2026-08-17 사용자 결정 — 홈페이지 링크로 대체).
+- `HOMEPAGE_URL = "https://haehan-ai.kr"` 만 사용. 유튜브 링크는 넣지 않음
+  (사용자가 "홈페이지 주소만 크게" 로 확정).
+- 이미지 3장 인터리브 후 4번째 텍스트 블록(이미지 없음)으로 자연스럽게 붙음.
+- **참고**: 현재 자동화는 일반 텍스트로만 삽입한다. Naver SE3 에디터에서
+  폰트 크기를 실제로 키우는 자동화(텍스트 선택 → 폰트크기 UI 조작)는
+  아직 구현되어 있지 않음 — "크게 보이게"는 지금은 별도 문단 분리 +
+  이모지(📌 👉)로만 시각적 강조. 진짜 폰트 확대가 필요하면 별도 요청.
+
+---
+
+## 5. 발행/수정 파이프라인
+
+### 5.1 신규 발행
+`scripts/ops/blog_ai_batch_20.py` → `topics.py`(주제) → `images.py`(사진) →
+`content.py`(본문+SEO) → `publish.py::publish_one()` →
+`scripts/naver/blog/core/writer.py::write_post()`
+
+### 5.2 기존 글 수정(재발행)
+`publish.py::edit_one()` → `writer.py::edit_post()` — 2026-08-17 신규 추가.
+`PostWriteForm.naver?blogId=X&logNo=Y`로 기존 글을 로드 → 제목/본문 전체
+선택삭제(`clear_title`/`clear_body`) 후 재작성 → 같은 log_no로 재발행
+(새 글이 생기지 않음, URL 유지).
+
+**계정**: `TARGET_BLOG_ID = "skyjwsin"` 고정. 로그인 확인은 닉네임이 아니라
+`admin.blog.naver.com/{blogId}/` 링크의 실제 blogId로 판별
+(`connect_and_ensure_login()`).
+
+**중복 발행 주의**: 2026-08-17에 동일 주제가 2번 발행된 사고 확인됨
+(`is_duplicate()` 체크에도 불구, cache 저장 타이밍 문제로 추정). 배치 실행
+전 `data/blog_topic_cache.json`의 `posted[].title`을 반드시 확인.
+
+**포스트 간 대기**: 봇 감지 방지 위해 90초(`wait_between_posts`).
+
+### 5.3 성과 분석
+
+`python scripts/ops/blog_analytics_report.py` — `scripts/naver/blog/management/
+analytics.py::BlogAnalytics.full_report()`. 오늘 방문자, 유입경로(검색엔진별·
+검색어별), 글별 조회수 순위, 최근 14일 방문 추이, 기기별(모바일/PC)·성별·
+연령별 분포를 `admin.blog.naver.com/{blogId}/stat/*` 에서 CDP로 직접 읽어온다
+(공식 API 없음 — capability_check 확인됨). `data/reports/
+blog_analytics_{blogId}_{날짜}.json` 저장.
+
+`admin.blog.naver.com/skyjwsin` 전체 메뉴 조사(2026-08-17) 결과, 통계 외에도
+40여 개 설정 페이지가 있으나 대부분 스킨/디자인/이웃관리 등 콘텐츠 전략과
+무관 — 아래 두 가지만 마케팅에 실질적 영향이 있어 별도 기록:
+
+- **`config/bloginfo` (블로그 정보)**: 블로그명("AI 건설 · 조명 인테리어"),
+  별명("AI업무자동화"), 소개글은 이미 AI 자동화 정체성에 맞게 설정돼있음
+  (양호). **"내 블로그 주제"가 "인테리어·DIY"로 되어 있던 걸 "비즈니스·경제"로
+  변경 완료**(2026-08-17, 사용자 승인) — 네이버 검색/추천이 건설업 AI
+  자동화 방향으로 분류되도록. `#subject_btn` 드롭다운 선택 후 하단의
+  `input._btnConfirm`(라벨 "확인")을 눌러야 저장됨 — 드롭다운 선택만으로는
+  저장 안 되고 새로고침 시 원복되니 주의(2026-08-17 실측 함정).
+- **`config/tag` (태그 관리)**: "원문(20)", "판단(20)", "정리(20)", "반복(20)",
+  "사람(21)", "문서(20)", "확인(21)" 등 의미 없는 고빈도 단어가 태그로 반복
+  등록되어 있던 문제 확인. `scripts/naver/blog/seo/tag_suggester.py::
+  suggest_tags()`가 본문 최빈출 단어 top-10을 의미 필터 없이 태그로 채택하는
+  구조적 버그(`top_body = sorted(freq, key=lambda x: -freq[x])[:10]`) —
+  **`_STOPWORDS`에 해당 단어들을 추가해 수정 완료**(2026-08-17, 사용자 승인).
+  단 접미사 변형("정리된", "반복적" 등)까지는 못 잡음 — 형태소 분석기 수준
+  필터는 아니고 실측된 오염 단어의 원형만 차단. `blog_marketing/content.py`가
+  생성하는 새 글은 `tags`를 명시로 넘겨 애초에 `suggest_tags()`를 타지 않으므로
+  이 배치엔 영향 없었음 — `tags=None`으로 `write_post()`를 호출하는 다른
+  경로(예: 예전 수동 발행)를 위한 예방적 수정.
+
+**주의**: 통계 어드민이 같은 origin SPA라 `stat/A` 조회 직후 바로 `stat/B`를
+goto()하면 내부 iframe이 안 붙는 경우가 있었다(2026-08-17 실측) —
+`_read_stat_frame()`이 매번 `about:blank`를 거쳐 완전한 새 네비게이션을
+강제하고, 페이지별 완성 신호 문자열(`ready_marker`)이 뜰 때까지 폴링해서
+해결함. 이 함수 건드릴 때 재확인.
+
+이 분석 결과로 콘텐츠 전략 검증: 어떤 주제/제목이 실제 조회수·유입을
+만드는지 확인해서 `research_blog_topics.py`의 키워드 우선순위에 반영할 것.
+
+### 5.4 실측 사례 — 검색 유입 기반 후속 시리즈 (2026-08-17~18)
+
+`blog_analytics_report.py`의 유입경로에서 검색어 5개 전부가 **"제비율/
+원가계산서/DWG/물량산출/CAD" 계열**로 나온 걸 확인 → 기존 20개 배치
+(나라장터·국민연금·하도급지킴이)에는 이 키워드가 없었음. 대응:
+
+1. `get_keyword_stats()`를 **키워드 1개씩 개별 호출**해 검색량 재확인
+   (배치 호출로 5개 이상 한 번에 넘기면 관련키워드 확장이 섞여 완전히
+   엉뚱한 키워드가 반환되는 버그 확인됨 — `scripts/naver/searchad/
+   keyword_tool.py`, 원인 미수정. **여러 키워드 조사 시 반드시 1개씩
+   호출할 것**). 결과: 제비율 880, DWG 1,680, 원가계산서 680,
+   간접공사비 300 — "OO물량산출" 식 복합어는 거의 0(사람들은 짧은
+   일반 단어로 검색함).
+2. `search_kin_questions()`로 각 키워드의 실제 질문 확보 → 5개 주제를
+   `data/blog_topic_research_latest.json`의 `topics` 배열 앞쪽에 수동
+   병합(연구 파이프라인 재실행 대신 직접 삽입 — 카페 빈도 데이터에
+   이 키워드들이 아예 없어 정식 파이프라인으로는 못 뽑음. 카페수집이
+   행정/공무 게시판 위주라 설계·적산 카테고리는 구조적으로 커버 못함.
+   TODO: 카페 게시판 목록에 적산/도면 관련 게시판이 있으면 추가 검토).
+3. `blog_ai_batch_20.py --count 5`로 발행 → 5/5 성공(1건은 CDP 탭이
+   많이 쌓여있던 상태에서 로그인 판별이 실패해 재시도 필요했음 — 아래
+   "CDP 탭 정리" 참고).
+
+**CDP 탭 정리(운영 수칙)**: 여러 작업(블로그 발행, 통계 조회, 유튜브 스튜디오
+등)을 한 세션에서 이어서 하면 `browser.contexts[0].pages`에 탭이 계속
+쌓여(2026-08-17 실측 13개) `connect_over_cdp()` 자체가 멎을 정도로 느려짐.
+주기적으로 `ctx.pages[1:]`를 닫아 탭 1개만 유지할 것 — 특히 여러 페이지를
+연달아 열어야 하는 조사성 작업 전후에.
+
+### 5.5 유튜브 채널 교차 분석 (2026-08-17)
+
+`@해한AI` 채널(`UCKFXvJGIyNoRlHiJgBDdsXA`)을 YouTube Data API
+(`scripts/youtube/channel_analysis.py`, 공개 데이터: 구독자/조회수/영상목록)
++ **YouTube Studio를 CDP로 직접 조회**(비공개 데이터: 노출수, 클릭률,
+리텐션, 유입경로, 인구통계 — Data API로는 못 얻음, 로그인된 채널 소유자만
+Studio에서 확인 가능)로 교차 분석.
+
+- 조회수·리텐션 1위 영상("물량산출을 AI로 자동화")이 블로그 검색 유입
+  1위 키워드 클러스터와 **정확히 일치** — 콘텐츠 축이 검증됨.
+- 리텐션(0:30 시점 유지율): 물량산출 64% > BIM작도 55% > HWPX 46% >
+  3D인테리어 33%. 조회수는 3D인테리어가 2위인데 리텐션은 최하위 —
+  클릭은 되지만 내용에서 이탈 → 이 계열은 콘텐츠 구성 재점검 필요.
+- 유입경로: 외부 25%, 탐색기능(홈피드) 21.9%, YouTube검색 17%,
+  **YouTube광고 11.6%**(의도된 캠페인인지 확인 필요 — 사용자에게 물었으나
+  미확인 상태), 채널페이지 10%.
+- Studio URL 패턴: `studio.youtube.com/channel/{channelId}/analytics/
+  tab-{overview|content|build_audience}/period-default`. 요약 카드(개요)
+  탭에는 트래픽소스/리텐션이 없고 **`tab-content`** 탭에 다 있음 — 개요만
+  보고 끝내지 말 것.
+- 전략: 블로그와 유튜브 둘 다 "물량산출/제비율/CAD" 계열이 최우수 —
+  다음 콘텐츠는 이 축을 블로그 글 + 짧은 영상(1~2분) 세트로 동시 제작해
+  상호 검색 유입을 보강하는 방향을 검토.
+
+---
+
+## 6. 금지/주의 사항
+
+- CDP 세션 로그아웃/쿠키삭제 금지 (CLAUDE.md 공통 규칙)
+- 공개 발행은 매번 사용자 확인 원칙이나, 사용자가 이미 승인한 배치 흐름
+  ("20개 전부 바로 공개 발행" 등) 내에서는 sub-step마다 재확인하지 않음
+- OpenAI/GPT 등 유료 외부 AI API 호출 시 별도 승인 필요 — 이 파이프라인은
+  `ai_orchestrator/connectors`의 기존 `AIResponder`만 사용(Claude 계열),
+  해당 없음
+
+---
+
+## 7. 다음에 바꿀 때 체크리스트
+
+새 프롬프트/구조 변경 시:
+1. `python -m ruff check --config configs/ruff.toml scripts/naver/blog_marketing/`
+2. 리서치 결과 1~2개 주제로 `generate_post()` 직접 호출 → `seo['ai_ratio']`,
+   `body length`, 실제 본문 텍스트 눈으로 확인 (발행 전 필수)
+3. 라이브 발행/수정 1건만 먼저 실행 → `blog.naver.com/skyjwsin/{log_no}`
+   실제 페이지 열어 반영 확인 → 이상 없으면 나머지 배치 진행
