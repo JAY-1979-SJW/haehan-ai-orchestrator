@@ -1,0 +1,261 @@
+"""AI 본문/제목 생성 + 발행 전 SEO 점검.
+
+작성 원칙(요청 스펙):
+  - 친절하고 정확한 어조, 확실하지 않은 정보는 단정하지 않음
+  - 실제 지식iN 질문(topics.py의 source_description)을 인용해 근거로 삼음
+  - 분량 A4 3장(약 3,300자) 내외
+  - 이미지는 A4 1장당 1장(구간 3개로 분할 - images.py/publish.py에서 처리)
+"""
+
+from __future__ import annotations
+
+import re
+
+from scripts.logger import get_logger
+from scripts.naver.automation.ai_responder import AIResponder
+
+_log = get_logger(__name__)
+
+# A4 1장 ≈ 1,100자(한글 블로그 기준) — "A4 3장 분량" 요건을 글자수로 환산.
+# 2026-08-17 실측: AI 모델이 지시해도 3600자 목표 대비 2300~2900자로 수렴하는
+# 경향이 있음(5회 테스트 평균 약 2600자). 목표치를 실측 상한에 맞춰 하향하고
+# 대신 AI 자동화 섹션 비중(60% 이상)을 우선 기준으로 삼는다.
+TARGET_BODY_CHARS = 3200
+MIN_BODY_CHARS = 2500
+
+# 도입 문의 CTA — 홈페이지 주소를 크게 노출 (2026-08-17 추가)
+HOMEPAGE_URL = "https://haehan-ai.kr"
+_CTA_BLOCK = f"""
+
+📌 AI 자동화 도입 문의
+
+이 글에서 소개한 것처럼, 반복적인 건설 실무를 AI로 자동화하는 프로그램을
+직접 만들어드립니다. 우리 현장·사무실에 맞는 자동화가 궁금하시다면
+아래 홈페이지에서 문의해주세요.
+
+👉 {HOMEPAGE_URL}"""
+
+
+def generate_post(topic_info: dict, dry_run: bool = False) -> dict | None:
+    topic = topic_info["topic"]
+    keywords = topic_info.get("keywords", [])
+    angle = topic_info.get("angle", "실용 가이드")
+    source = topic_info.get("source_description", "")
+
+    if dry_run:
+        title = f"{topic} — 실무자를 위한 완전정리"
+        body = f"""실제로 많은 분들이 이런 질문을 합니다: "{topic}"
+
+## 무엇이 문제인가
+
+{source or (angle + " 관점에서 자주 발생하는 상황입니다.")}
+
+## 정확히 확인해야 할 것
+
+키워드: {", ".join(keywords)}
+
+관련 규정과 실무 절차를 순서대로 정리합니다.
+
+## 단계별 정리
+
+1. 우선 확인할 사항
+2. 실제 처리 절차
+3. 흔히 하는 실수와 주의사항
+
+## 마무리
+
+이 글이 실제로 도움이 되셨길 바랍니다. 정확한 판단이 필요한 사안은 관할 기관·전문가 확인을 권장드립니다.
+
+#{keywords[0] if keywords else "건설실무"}"""
+        return {"title": title, "body": body, "tags": keywords[:7]}
+
+    ai = AIResponder()
+
+    # 제목 — "AI"가 반드시 들어가야 함(블로그 정체성이 AI업무자동화이므로,
+    # 규정설명 글처럼 보이지 않게 제목에서부터 AI 활용임을 명시).
+    title_r = ai._call(
+        "한국 건설업 실무 블로그 SEO 전문가. 클릭률 높은 제목 1개만 출력.",
+        f"주제(실제 지식iN 질문): {topic}\n각도: {angle}\n키워드: {', '.join(keywords)}\n"
+        f"조건: 30~50자, 질문 원문 어투를 살리되 자연스러운 블로그 제목으로 다듬기\n"
+        f'조건: 제목에 반드시 "AI"라는 단어를 포함할 것 (예: "...AI로 자동화하는 법",'
+        f' "...AI가 처리하는 방법", "AI로 본 ..." 등 자연스럽게 녹여서)\n제목:',
+        max_tokens=80,
+    )
+    if not title_r.get("ok"):
+        return None
+    title = title_r["text"].split("\n")[0].strip().strip('"').strip("'")
+    if "AI" not in title:
+        title = f"{title} (AI 자동화 활용법)"
+
+    # 본문 — A4 3장(약 3,300자) 분량, 실제 질문(source)을 인용해 근거로 삼는다.
+    source_block = (
+        f"\n[실제 사용자 질문/상황 — 이 내용을 그대로 인용·요약해 도입부 근거로 사용]\n{source}\n" if source else ""
+    )
+    body_prompt = f"""주제: {topic}
+각도: {angle}
+키워드: {", ".join(keywords)}
+대상: 한국 건설업 실무자(공무·경리·현장관리)
+블로그 정체성: "AI업무자동화" — AI로 건설 실무(적산·물량산출·내역서·행정신고)를
+분석하고 자동화 프로그램으로 만드는 걸 전문으로 하는 블로그
+{source_block}
+이 글은 검색해서 들어온 실무자에게 **실제 답을 주는 글**입니다.
+네이버 D.I.A. 로직은 "검색자의 상황을 얼마나 구체적으로 해결하는가"를 봅니다.
+AI 자동화 소개는 답을 다 준 뒤에 덧붙이는 것이지, 글의 본체가 아닙니다.
+(2026-08-19 정정: 이전에는 AI 섹션을 70% 이상 쓰게 했는데, 정작 검색자가
+원하는 답이 10%뿐이라 체류시간이 떨어지는 구조였습니다.)
+
+아래 구조로 작성하세요 (총 {TARGET_BODY_CHARS}자 내외, 최소 {MIN_BODY_CHARS}자 이상):
+
+1. 도입부 — 실제 질문/상황을 인용하며 공감 형성. 3~4문장.
+2. 핵심 답변 — **이 글의 본체입니다. 전체의 55~65%를 여기에 씁니다.**
+   검색자가 알고 싶은 것을 끝까지 답하세요:
+   - 관련 규정·기준을 **구체적 수치와 함께** (요율 %, 기한 일수, 금액 기준 등)
+   - 실제 처리 절차를 **순서대로** (어느 사이트 → 어느 메뉴 → 무엇을 입력)
+   - 필요한 서류·서식 이름을 정확히
+   - 실무에서 막히는 지점과 해결법 (경험자 어투로)
+   ※ **수치·법령을 지어내지 마세요.** 요율(%)·금액·법령 조항·시행규칙 연도는
+    확실히 아는 것만 쓰고, 모르면 숫자를 만들어내지 말고 이렇게 쓰세요:
+    "조달청 고시 제비율표에서 해당 연도 기준을 확인해야 합니다"
+    틀린 수치 한 줄이 글 전체 신뢰를 무너뜨립니다. 모르면 안 쓰는 게 낫습니다.
+3. 흔한 실수·주의사항 — 실제로 자주 틀리는 지점 3가지 정도.
+4. AI로 자동화한다면 — **전체의 20~25%만.** 이 업무에서 반복되는 부분
+   (마감일 계산, 대상자 판정, 서식 자동 채우기, 이력 관리)을 AI가 어떻게
+   처리하는지 3~5단계로 간결하게. 수작업 대비 절감 시간도 한 줄로.
+5. 마무리 — 요약 2~3문장 + "정확한 판단은 관할 기관 확인 권장".
+
+작성 원칙:
+- 전체 분량은 반드시 {MIN_BODY_CHARS}자 이상.
+- **2번 핵심 답변이 가장 길어야 합니다.** 여기서 답을 못 주면 독자가 이탈합니다.
+- 구체적인 숫자·서식명·메뉴 경로를 최대한 넣을 것. 일반론("복잡할 수 있습니다",
+  "중요합니다")은 쓰지 말 것.
+- 확실하지 않은 수치·법령은 단정하지 말 것.
+- 실무자가 쓴 것처럼 자연스럽게. AI가 쓴 티가 나는 문장 금지.
+- **소제목은 마크다운(##)을 쓰지 말고 [ ] 대괄호로 표기할 것.**
+  네이버 블로그는 마크다운을 렌더링하지 않아 ##이 그대로 보입니다.
+  예: [핵심 답변], [흔한 실수], [AI로 자동화한다면]
+
+본문만 출력 (제목 제외):"""
+
+    body_r = ai._call(
+        "한국 건설업 실무 블로그 전문 작가. 친절하고 정확한 정보 전달이 최우선. "
+        f"분량 지시(최소 {MIN_BODY_CHARS}자)를 반드시 지킨다 — 짧게 끝내지 않는다.",
+        body_prompt,
+        max_tokens=5000,
+    )
+    if not body_r.get("ok"):
+        return None
+
+    body = body_r["text"].strip()
+    tags = keywords[:7] if keywords else ["건설실무", "건설업"]
+
+    seo = seo_check(title=title, body=body, keywords=keywords)
+    if seo["warnings"]:
+        _log.warning("[SEO] %s — %s", title[:30], "; ".join(seo["warnings"]))
+
+    segments = split_body(body, parts=3)
+    body_with_cta = body + _CTA_BLOCK
+    segments_with_cta = [*segments, _CTA_BLOCK.strip()]
+
+    return {
+        "title": title,
+        "body": body_with_cta,
+        "body_segments": segments_with_cta,
+        "tags": tags,
+        "seo": seo,
+    }
+
+
+def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
+    """발행 전 최소 SEO 점검. 차단하지 않고 경고만 남긴다(사람이 최종 확인)."""
+    warnings = []
+    if not (20 <= len(title) <= 60):
+        warnings.append(f"제목 길이 {len(title)}자 (권장 20~60자)")
+    if len(body) < MIN_BODY_CHARS:
+        warnings.append(f"본문 {len(body)}자 (A4 3장 기준 최소 {MIN_BODY_CHARS}자 미달)")
+    main_kw = keywords[0] if keywords else ""
+    if main_kw and main_kw not in title:
+        warnings.append(f"핵심 키워드 '{main_kw}'가 제목에 없음")
+    if main_kw and body.count(main_kw) < 2:
+        warnings.append(f"핵심 키워드 '{main_kw}' 본문 출현 {body.count(main_kw)}회 (권장 2회 이상)")
+    if "##" in body:
+        warnings.append("마크다운 소제목(##) 잔존 — 네이버는 렌더링하지 않음")
+    if "[" not in body:
+        warnings.append("소제목([ ]) 구조 없음")
+
+    risky = _risky_claims(body)
+    if risky:
+        warnings.append(f"검증 필요 수치 {len(risky)}건: {', '.join(risky[:3])}")
+
+    ai_ratio = _ai_section_ratio(body)
+    if ai_ratio > 0.35:
+        warnings.append(f"AI 섹션 비중 {ai_ratio:.0%} (권장 20~25%, 실무 답변이 본체여야 함)")
+    return {"ok": not warnings, "warnings": warnings, "ai_ratio": ai_ratio}
+
+
+def _risky_claims(body: str) -> list[str]:
+    """AI가 지어내기 쉬운 단정적 수치·법령 표현을 찾아 경고 목록으로 돌려준다.
+
+    2026-08-19 실측: 프롬프트로 "지어내지 말라"고 해도 "2022년 시행규칙",
+    "총 공사비의 20~30%", "최저임금 10,000원" 같은 미검증 수치가 섞여 나왔다.
+    틀린 수치는 마크다운 노출보다 신뢰 손상이 크므로 발행 전 사람이 확인한다.
+    """
+    pats = [
+        (r"\d{4}년\s*[가-힣]*법", "법령 연도"),
+        (r"제?\s*\d+조", "법 조항"),
+        (r"\d+(\.\d+)?\s*%", "요율"),
+        (r"\d{1,3},\d{3}\s*원", "금액"),
+    ]
+    hits: list[str] = []
+    for pat, label in pats:
+        for m in re.finditer(pat, body):
+            frag = m.group(0)
+            if label == "요율" and frag.strip() in {"100%", "0%"}:
+                continue
+            hits.append(f"{label}({frag})")
+    return list(dict.fromkeys(hits))
+
+
+def _ai_section_ratio(body: str) -> float:
+    """'AI' 소제목 아래 섹션이 전체 본문에서 차지하는 비중.
+
+    소제목 표기는 대괄호([핵심 답변])를 쓴다 — 네이버는 마크다운을 렌더링하지
+    않아 '##'가 독자 화면에 그대로 보이기 때문이다(2026-08-19 실측·정정).
+    과거 마크다운으로 쓰던 글도 있으므로 '## ' 형식도 함께 인식한다.
+
+    이 값은 이제 "최소 60%"가 아니라 "최대 35%" 기준으로 쓴다. 검색자가 원하는
+    실무 답변이 본체여야 체류시간이 유지되기 때문이다.
+    """
+    lines = body.split("\n")
+    h2_idx = [
+        i
+        for i, ln in enumerate(lines)
+        if re.match(r"^##\s", ln.strip()) or re.match(r"^\[[^\]]{2,30}\]\s*$", ln.strip())
+    ]
+    ai_headings = [i for i in h2_idx if "AI" in lines[i]]
+    if not ai_headings or len(body) == 0:
+        return 0.0
+    start = ai_headings[0]
+    later = [i for i in h2_idx if i > start]
+    end = later[0] if later else len(lines)
+    section_text = "\n".join(lines[start:end])
+    return len(section_text) / len(body)
+
+
+def split_body(body: str, parts: int = 3) -> list[str]:
+    """본문을 단락(빈 줄) 기준으로 parts 등분.
+
+    이미지를 글 중간에 끼우기 위해 사용.
+    단락이 부족하면 글자 수 기준으로 균등 분할.
+    """
+    paragraphs = [p.strip() for p in body.split("\n\n") if p.strip()]
+    if len(paragraphs) < parts:
+        chunk = max(1, len(body) // parts)
+        return [body[i * chunk : (i + 1) * chunk].strip() for i in range(parts)]
+
+    per = len(paragraphs) // parts
+    segments = []
+    for i in range(parts):
+        start = i * per
+        end = (i + 1) * per if i < parts - 1 else len(paragraphs)
+        segments.append("\n\n".join(paragraphs[start:end]))
+    return segments
