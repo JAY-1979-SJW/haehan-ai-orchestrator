@@ -16,12 +16,16 @@ from scripts.naver.automation.ai_responder import AIResponder
 
 _log = get_logger(__name__)
 
-# A4 1장 ≈ 1,100자(한글 블로그 기준) — "A4 3장 분량" 요건을 글자수로 환산.
-# 2026-08-17 실측: AI 모델이 지시해도 3600자 목표 대비 2300~2900자로 수렴하는
-# 경향이 있음(5회 테스트 평균 약 2600자). 목표치를 실측 상한에 맞춰 하향하고
-# 대신 AI 자동화 섹션 비중(60% 이상)을 우선 기준으로 삼는다.
-TARGET_BODY_CHARS = 3200
-MIN_BODY_CHARS = 2500
+# 분량 기준 (2026-08-19 변경 — 사업자 결정)
+#
+# 이전에는 "A4 3장(2,500자 이상)"을 요건으로 뒀는데, 분량을 채우려고 일반론
+# ("복잡할 수 있습니다", "중요합니다")을 늘어놓는 부작용이 컸다. 네이버 D.I.A.는
+# 글자수가 아니라 "검색자의 문제를 얼마나 해결하는가"를 본다. 답이 다 들어있으면
+# 1,300자여도 충분하고, 답이 없으면 3,000자여도 이탈한다.
+#
+# → 최소 기준을 1,200자로 낮추고, 대신 결론 유무·일반론·미검증 수치를 본다.
+TARGET_BODY_CHARS = 2000
+MIN_BODY_CHARS = 1200
 
 # 도입 문의 CTA — 홈페이지 주소를 크게 노출 (2026-08-17 추가)
 HOMEPAGE_URL = "https://haehan-ai.kr"
@@ -180,7 +184,7 @@ def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
     if not (20 <= len(title) <= 60):
         warnings.append(f"제목 길이 {len(title)}자 (권장 20~60자)")
     if len(body) < MIN_BODY_CHARS:
-        warnings.append(f"본문 {len(body)}자 (A4 3장 기준 최소 {MIN_BODY_CHARS}자 미달)")
+        warnings.append(f"본문 {len(body)}자 (최소 {MIN_BODY_CHARS}자 미달 — 답이 덜 담겼을 수 있음)")
     main_kw = keywords[0] if keywords else ""
     if main_kw and main_kw not in title:
         warnings.append(f"핵심 키워드 '{main_kw}'가 제목에 없음")
@@ -244,7 +248,8 @@ def _risky_claims(body: str) -> list[str]:
     for pat, label in pats:
         for m in re.finditer(pat, body):
             frag = m.group(0)
-            if label == "요율" and frag.strip() in {"100%", "0%"}:
+            # 상식 수준으로 고정된 값은 오탐이므로 제외(부가세 10% 등)
+            if label == "요율" and frag.strip().replace(" ", "") in {"100%", "0%", "10%", "50%"}:
                 continue
             hits.append(f"{label}({frag})")
     return list(dict.fromkeys(hits))
