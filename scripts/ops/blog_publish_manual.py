@@ -68,11 +68,32 @@ def review(draft: dict) -> dict:
     return seo
 
 
-def publish(draft: dict) -> dict:
+def collect_images(draft: dict, count: int = 3) -> list[str]:
+    """원고에 이미지가 없으면 Unsplash에서 자동 수집한다.
+
+    기존 구현(scripts/naver/blog_marketing/images.py)을 그대로 쓴다 — Unsplash
+    정책상 download_location 트리거까지 처리해준다(CLAUDE.md 참조).
+    """
+    given = [str(p) for p in draft.get("images", []) if Path(p).exists()]
+    if given:
+        return given
+
+    from scripts.naver.blog_marketing.images import fetch_unsplash_images, pick_3_images
+
+    pool = fetch_unsplash_images(count_per_query=3)
+    if not pool:
+        _log.warning("[manual] Unsplash 이미지 수집 실패 — 이미지 없이 발행")
+        return []
+    # 제목 해시로 인덱스를 잡아 글마다 다른 이미지가 붙게 한다.
+    idx = abs(hash(draft["title"])) % max(1, len(pool) // 3 or 1)
+    return pick_3_images(pool, idx)[:count]
+
+
+def publish(draft: dict, auto_images: bool = True) -> dict:
     from scripts.naver.blog_marketing.publish import connect_and_ensure_login, publish_one
 
     body = draft["body"]
-    images = [str(p) for p in draft.get("images", []) if Path(p).exists()]
+    images = collect_images(draft) if auto_images else [str(p) for p in draft.get("images", []) if Path(p).exists()]
     post = {
         "title": draft["title"],
         "body": body,
@@ -94,6 +115,7 @@ def main() -> None:
     ap.add_argument("draft", help="원고 JSON 경로")
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")
+    ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
     args = ap.parse_args()
 
     draft = load_draft(Path(args.draft))
@@ -105,7 +127,7 @@ def main() -> None:
 
     if seo["warnings"]:
         print("\n경고가 있는 상태로 발행합니다 (사람이 확인함).")
-    result = publish(draft)
+    result = publish(draft, auto_images=not args.no_images)
     print(f"\n{'✅ 발행 완료' if result.get('ok') else '❌ 발행 실패'}  log_no={result.get('log_no', '')}")
 
 
