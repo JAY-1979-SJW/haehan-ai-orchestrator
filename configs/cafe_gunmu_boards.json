@@ -1,0 +1,189 @@
+{
+  "cafe_id": "0moo",
+  "cafe_name": "건설공무카페",
+  "club_id": "10445200",
+  "cafe_url": "https://cafe.naver.com/0moo",
+  "fetched_at": "2026-08-17",
+  "boards": [
+    {
+      "menu_id": "96",
+      "name": "카페 공지 사항",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "106",
+      "name": "카페정기모임 공지/후..",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "186",
+      "name": "봉사 활동 소모임",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "187",
+      "name": "바다 낚시 소모임",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "188",
+      "name": "등산 소모임",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "189",
+      "name": "부울경 지역 소모임",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "190",
+      "name": "기타 지역 소모임",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "193",
+      "name": "류보현기술사 건설컨설팅",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "194",
+      "name": "이무영 건설노무&4대보험",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "195",
+      "name": "이용희 건설노무&4대보험",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "196",
+      "name": "신윤석 건설노무&4대보험",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "197",
+      "name": "홍종철 기술사자격증취득",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "148",
+      "name": "김현우변호사 건설분쟁",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "199",
+      "name": "최승준변호사 건설분쟁",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "142",
+      "name": "김복희 엑셀, 시스템개발",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "145",
+      "name": "건설질문&경험자의견",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "134",
+      "name": "건 설 인 수 다 방",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "72",
+      "name": "건 설 구 인 구 직",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "128",
+      "name": "기업홍보/기업자료",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "147",
+      "name": "건설 시공 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "138",
+      "name": "건설 노무 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "136",
+      "name": "건설 법무 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "143",
+      "name": "건설 세무 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "135",
+      "name": "건설 교육 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "202",
+      "name": "건설 공무 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "141",
+      "name": "건설회사관리관련업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "203",
+      "name": "건축 설계 관련 업무",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "10",
+      "name": "건설 자유 게시판",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "205",
+      "name": "건설인맛집/여행지추천",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "85",
+      "name": "건설시공사진자료실",
+      "board_type": "I"
+    },
+    {
+      "menu_id": "90",
+      "name": "기사 전문 자료실",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "99",
+      "name": "대리 전문 자료실",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "209",
+      "name": "과장 전문 자료실",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "107",
+      "name": "부장 전문 자료실",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "210",
+      "name": "이사 전문 자료실",
+      "board_type": "L"
+    },
+    {
+      "menu_id": "84",
+      "name": "카페운영협조요청",
+      "board_type": "L"
+    }
+  ]
+}
