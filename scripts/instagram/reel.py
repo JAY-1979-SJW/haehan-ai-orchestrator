@@ -97,3 +97,79 @@ def build_slideshow(
         raise RuntimeError(f"ffmpeg 실패 (exit {proc.returncode})")
 
     return out_path
+
+
+def build_slideshow_from_frames(
+    frames: list[Path],
+    bgm_path: Path,
+    out_path: Path,
+    seconds_per_image: float = 1.8,
+    fade_seconds: float = 0.5,
+    bgm_volume: float = 0.5,
+) -> Path:
+    """이미 자막이 합성된 프레임들(reel_overlay.render_reel_slide 결과물)을
+    배경음악과 함께 이어붙인다. 무음 anullsrc 대신 실제 bgm mp3를 믹싱한다.
+    """
+    if not frames:
+        raise ValueError("프레임이 없습니다")
+
+    n = len(frames)
+    inputs: list[str] = []
+    for f in frames:
+        inputs += ["-loop", "1", "-t", str(seconds_per_image + fade_seconds), "-i", str(f)]
+
+    scale_filters = [
+        f"[{i}:v]scale={W}:{H}:force_original_aspect_ratio=decrease,"
+        f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v{i}]"
+        for i in range(n)
+    ]
+
+    xfade_parts = []
+    cur = "v0"
+    offset = seconds_per_image
+    for i in range(1, n):
+        nxt = f"x{i}"
+        xfade_parts.append(f"[{cur}][v{i}]xfade=transition=fade:duration={fade_seconds}:offset={offset:.2f}[{nxt}]")
+        cur = nxt
+        offset += seconds_per_image
+
+    filter_complex = ";".join(scale_filters + xfade_parts)
+    total = seconds_per_image * n
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        *inputs,
+        "-i",
+        str(bgm_path),
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        f"[{cur}]",
+        "-map",
+        f"{n}:a",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-r",
+        "30",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-af",
+        f"afade=t=out:st={total - 1:.2f}:d=1,volume={bgm_volume}",
+        "-t",
+        str(total),
+        "-shortest",
+        str(out_path),
+    ]
+    _log.info(f"[ig-reel] bgm 합성 슬라이드 생성: {out_path.name} ({n}장)")
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        _log.error(f"[ig-reel] ffmpeg 실패: {proc.stderr[-2000:]}")
+        raise RuntimeError(f"ffmpeg 실패 (exit {proc.returncode})")
+
+    return out_path
