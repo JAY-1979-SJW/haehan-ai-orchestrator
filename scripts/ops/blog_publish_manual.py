@@ -31,6 +31,7 @@ import argparse
 import hashlib
 import json
 import sys
+import time
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +42,56 @@ from scripts.logger import get_logger  # noqa: E402
 from scripts.naver.blog_marketing.content import seo_check, split_body  # noqa: E402
 
 _log = get_logger("scripts.ops.blog_publish_manual")
+
+
+def verify_login(port: int = 9222) -> dict:
+    """발행 전 네이버 로그인 상태를 **미리** 확인한다.
+
+    2026-08-24 사고: 세션이 만료돼 로그아웃된 걸 모르고 발행을 걸었더니
+    `connect_and_ensure_login()`이 자동 재로그인을 시도하다 **캡차**에 막혀
+    실패했다(`captcha_timeout`). 이미지 업로드까지 다 한 뒤에야 실패를
+    알게 돼 시간이 버려졌다.
+
+    그래서 **발행을 시작하기 전에 먼저 확인**하고, 로그아웃 상태면 곧바로
+    멈춘다. **자동 재로그인은 시도하지 않는다** — 캡차는 사람만 풀 수 있고
+    (CLAUDE.md), 반복 시도는 계정 잠금 위험만 키운다.
+
+    반환: {"ok": bool, "blog_id": str, "reason": str}
+    """
+    from scripts.cdp_helper import CDP
+    from scripts.naver.blog_marketing import TARGET_BLOG_ID
+
+    # CDP 연결 자체도 try 안에서 한다 — 브라우저가 안 떠 있으면 여기서
+    # URLError가 나는데, 밖에 두면 깔끔한 실패 대신 트레이스백이 터진다.
+    cdp = None
+    try:
+        cdp = CDP(port=port)
+        cdp.navigate("https://section.blog.naver.com/BlogHome.naver", wait=3)
+        time.sleep(1.5)
+        raw = cdp.js(
+            """(function(){
+              var a = document.querySelector('a[href*="admin.blog.naver.com/"]');
+              var m = a ? a.href.match(/admin\\.blog\\.naver\\.com\\/([a-zA-Z0-9_]+)\\//) : null;
+              var t = document.body ? document.body.innerText : '';
+              return JSON.stringify({
+                blogId: m ? m[1] : '',
+                loggedOut: t.indexOf('로그아웃 상태입니다') > -1
+              });
+            })()"""
+        )
+        info = json.loads(raw) if raw else {}
+    except Exception as e:
+        return {"ok": False, "blog_id": "", "reason": f"브라우저/상태 확인 실패: {e}"}
+    finally:
+        if cdp is not None:
+            cdp.close()
+
+    blog_id = info.get("blogId", "")
+    if info.get("loggedOut") or not blog_id:
+        return {"ok": False, "blog_id": "", "reason": "네이버 로그아웃 상태"}
+    if blog_id != TARGET_BLOG_ID:
+        return {"ok": False, "blog_id": blog_id, "reason": f"다른 계정 로그인됨({blog_id})"}
+    return {"ok": True, "blog_id": blog_id, "reason": ""}
 
 
 def load_draft(path: Path) -> dict:
@@ -175,6 +226,7 @@ def main() -> None:
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")
     ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
+    ap.add_argument("--port", type=int, default=9222, help="CDP 포트")
     args = ap.parse_args()
 
     draft_path = Path(args.draft)
@@ -185,6 +237,16 @@ def main() -> None:
     if not args.publish:
         print("\n※ 실제 발행하려면 --publish")
         return
+
+    # 발행 직전 로그인 확인 — 이미지 업로드까지 다 해놓고 캡차로 실패하는
+    # 낭비를 막는다(2026-08-24 사고). 실패 시 자동 재로그인 없이 멈춘다.
+    login = verify_login(port=args.port)
+    if not login["ok"]:
+        print(f"\n❌ 발행 중단 — {login['reason']}")
+        print("   브라우저에서 skyjwsin 계정으로 직접 로그인한 뒤 다시 실행하세요.")
+        print("   (캡차·OTP는 자동 처리 불가 — 반복 시도 시 계정 잠금 위험)")
+        sys.exit(2)
+    print(f"\n[로그인 확인] {login['blog_id']} ✅")
 
     if seo["warnings"]:
         print("\n경고가 있는 상태로 발행합니다 (사람이 확인함).")
