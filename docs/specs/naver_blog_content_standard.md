@@ -15,14 +15,47 @@ capability_check·로깅 등 공용 인프라를 그대로 재사용하기 위�
 스마트스토어와 같은 패턴). 단, **나중에 독립 제품으로 분리 판매할 계획**이 
 있으므로, 이 모듈은 처음부터 "언제든 들어낼 수 있는 경계"를 유지한다.
 
-**분리 경계(향후 추출 시 이 파일들만 옮기면 됨)**:
+**분리 경계(향후 추출 시 이 파일들만 옮기면 됨)** — 2026-08-24 실측 갱신:
 ```
-scripts/naver/blog_marketing/            ← 마케팅 파이프라인 본체
-scripts/ops/blog_ai_batch_20.py          ← 신규 발행 CLI
-scripts/ops/research_blog_topics.py      ← 주제 리서치 CLI
-scripts/ops/blog_analytics_report.py     ← 성과 분석 CLI
-docs/specs/naver_blog_content_standard.md ← 이 기준서
+[본체]
+scripts/naver/blog_marketing/               ← 파이프라인 본체
+   ├ topics.py         주제 선정(3중 검증)
+   ├ competitor.py     경쟁 글 자동 조사      (2026-08-23 추가)
+   ├ gpt_writer.py     GPT 초안 생성          (2026-08-23 추가)
+   ├ gpt_images.py     GPT 이미지 생성        (2026-08-23 추가)
+   ├ images.py         Unsplash 이미지
+   ├ content.py        기준·seo_check
+   ├ publish.py        발행 저수준
+   └ multichannel.py
+scripts/naver/blog/core/writer.py           ← 네이버 에디터 자동화 본체(필수)
+scripts/naver/blog/management/post_cache.py ← 발행글 캐시 (2026-08-23 추가)
+scripts/naver/blog/management/analytics.py  ← 방문자 통계
+
+[CLI]
+scripts/ops/blog_publish_manual.py    ← **현재 주 발행 경로**
+scripts/ops/research_blog_topics.py   ← 주제 리서치
+scripts/ops/blog_analytics_report.py  ← 성과 분석
+scripts/ops/blog_ai_batch_20.py       ← ⚠️ GPT API 차단으로 현재 사용 불가
+
+[문서·스킬]
+docs/specs/naver_blog_content_standard.md
+.claude/skills/naver-blog-publish/
+.claude/skills/blog-gpt-write-publish/
+.claude/skills/blog-gpt-images/
+.claude/skills/blog-post-cache-analysis/
+
+[함께 복사할 공용 인프라 — 블로그 전용이 아니므로 중복 구현하지 않는다]
+scripts/cdp_helper.py, scripts/logger.py, scripts/credentials.py
+scripts/naver/auth.py, scripts/naver/searchad/
+ai_orchestrator/connectors/naver_kin_client.py  ← 지식iN 검색(84줄, 범용 커넥터)
 ```
+
+**앱 본체(`ai_orchestrator`) 의존 현황 (2026-08-24 실측)**:
+- `images.py`가 쓰던 `ai_orchestrator.config.get_local_data_dir` → **제거 완료**
+  (자체 구현으로 대체, 동작 동일 확인). 
+- 남은 것은 `research_blog_topics.py` → `naver_kin_client` 하나뿐이며,
+  이건 범용 네이버 API 커넥터라 **함께 복사**하면 된다.
+- **타 업무 도메인(EUM·g2b·스마트스토어·하이웍스) import는 0건** — 실측 확인.
 
 **격리 규칙(위반 금지)**:
 - 위 파일들은 **다른 업무 도메인 모듈을 import하지 않는다** (EUM, g2b,
