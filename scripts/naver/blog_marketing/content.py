@@ -27,6 +27,12 @@ _log = get_logger(__name__)
 TARGET_BODY_CHARS = 2000
 MIN_BODY_CHARS = 1200
 
+# 태그 최소 개수 (2026-08-23 확정 — 사업자 결정)
+# 30개까지 채우는 게 유리하다는 근거는 못 찾았고, 무의미한 태그 남발은
+# "키워드 남용 금지" 원칙과도 충돌한다. 대신 태그가 아예 부실(1~2개)한
+# 것도 막는다 — 최소한 주제의 동의어·관련어를 5개 이상은 채운다.
+MIN_TAG_COUNT = 5
+
 # 도입 문의 CTA — 홈페이지 주소를 크게 노출 (2026-08-17 추가)
 HOMEPAGE_URL = "https://haehan-ai.kr"
 # 광고가 아니라 "증명"으로 끝내기 위한 실물 자료(2026-08-20).
@@ -204,6 +210,8 @@ def seo_check(*, title: str, body: str, keywords: list[str]) -> dict:
         warnings.append(f"핵심 키워드 '{main_kw}'가 제목에 없음")
     if main_kw and body.count(main_kw) < 2:
         warnings.append(f"핵심 키워드 '{main_kw}' 본문 출현 {body.count(main_kw)}회 (권장 2회 이상)")
+    if len(keywords) < MIN_TAG_COUNT:
+        warnings.append(f"태그 {len(keywords)}개 (최소 {MIN_TAG_COUNT}개 권장 — 무의미한 채우기 말고 관련 키워드로)")
     if "##" in body:
         warnings.append("마크다운 소제목(##) 잔존 — 네이버는 렌더링하지 않음")
     if "[" not in body:
