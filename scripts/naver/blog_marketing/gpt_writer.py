@@ -47,6 +47,7 @@ from pathlib import Path
 
 from scripts.cdp_helper import CDP
 from scripts.logger import get_logger
+from scripts.naver.blog_marketing.competitor import research_competitors, summarize_for_prompt
 from scripts.naver.blog_marketing.content import (
     MIN_BODY_CHARS,
     MIN_TAG_COUNT,
@@ -57,7 +58,38 @@ from scripts.naver.blog_marketing.content import (
 
 _log = get_logger(__name__)
 
-CHATGPT_URL = "https://chatgpt.com/"
+# ── 상시 고정 프로젝트 (2026-08-24 사용자 지정) ────────────────────────────
+# 블로그 초안은 **항상 "건설전문 ai" 프로젝트 안에서** 생성한다. 프로젝트에
+# 건설 도메인 커스텀 지시가 걸려 있어 빈 대화창보다 맥락이 좋기 때문이다.
+#
+# ⚠️ 그냥 URL로 이동만 하면 **실패해도 조용히 빈 대화창에서 생성**되어
+# 품질이 떨어진 걸 눈치채기 어렵다. 그래서 `ensure_project()`로 실제로
+# 프로젝트 안에 있는지 확인하고, 아니면 **에러를 내고 멈춘다.**
+#
+# 프로젝트 안에서 새 대화를 시작하면 URL이 `/g/{PROJECT_ID}/c/{대화ID}` 가
+# 되므로, PROJECT_ID 포함 여부로 프로젝트 소속을 판정할 수 있다.
+PROJECT_ID = "g-p-6a8b0a1b7ef881919d1b00bb5f6b481c-geonseoljeonmun-ai"
+PROJECT_URL = f"https://chatgpt.com/g/{PROJECT_ID}/project"
+CHATGPT_URL = PROJECT_URL  # 하위호환용 별칭
+
+
+def in_project(cdp: CDP) -> bool:
+    """현재 열린 탭이 '건설전문 ai' 프로젝트(또는 그 안의 대화)인지."""
+    return PROJECT_ID in (cdp.js("location.href") or "")
+
+
+def ensure_project(cdp: CDP, wait: float = 3.5, retries: int = 2) -> bool:
+    """프로젝트 안으로 이동시키고, 실제로 들어갔는지 확인한다."""
+    for attempt in range(retries + 1):
+        if in_project(cdp):
+            return True
+        cdp.js(f"location.href = '{PROJECT_URL}';")
+        time.sleep(wait)
+        if in_project(cdp):
+            return True
+        _log.warning("[gpt-writer] 프로젝트 진입 재시도 %d/%d", attempt + 1, retries)
+    return False
+
 
 # 기준서(docs/specs/naver_blog_content_standard.md)를 프롬프트로 옮긴 것.
 # 기준서가 바뀌면 여기도 같이 고친다.
@@ -66,6 +98,15 @@ _PROMPT_TEMPLATE = """당신은 한국 건설 실무 블로그 작가입니다. 
 [주제] {topic}
 [검색자의 실제 질문] {source}
 [핵심 키워드] {keywords}
+
+## 먼저 할 일 — 근거 조사 (건너뛰지 마세요)
+글을 쓰기 전에 **웹 검색으로 실제 근거를 찾으세요.** 관련 법령·계약예규·
+고시·발주기관 공고 원문을 확인하고, 본문에서 **출처를 문장 안에 밝히세요**
+(예: "재정경제부 계약예규 「공사계약일반조건」 제20조는 ~하도록 정하고 있습니다").
+검색해도 확인이 안 되는 수치는 **쓰지 말고** "어디서 확인하는지"를 안내하세요.
+추측으로 조항 번호·요율·연도를 만들어내면 안 됩니다.
+
+{competitor_block}
 
 ## 필수 구조 — 대괄호 소제목을 그대로 쓰세요
 [핵심 답변]
@@ -145,8 +186,8 @@ def _send_prompt(cdp: CDP, prompt: str) -> str:
 
 def _wait_for_response(
     cdp: CDP,
-    timeout: float = 300.0,
-    poll: float = 3.0,
+    timeout: float = 720.0,
+    poll: float = 4.0,
     stable_polls: int = 4,
     min_len: int = 800,
 ) -> str:
@@ -155,11 +196,14 @@ def _wait_for_response(
     "생성 중" 버튼 셀렉터로 판정하려다 실패해서(2026-08-23) **텍스트 길이가
     연속 N회 그대로면 완료**로 본다.
 
-    ⚠️ `min_len`이 핵심이다. GPT가 웹검색을 하면 **1분 넘게 텍스트가 안
-    자라는 구간**이 생기는데(실측: "1m 6s 동안 처리함"), 길이만 보면 그때를
-    완료로 오판한다. 실제로 `{"title":"`(102자)에서 멈춘 걸 완성으로 읽어
-    파싱에 실패했다. 그래서 **min_len 미만이면 안정돼 보여도 계속 기다린다.**
-    본문 {min_chars}자 이상을 요구하므로 정상 응답은 훨씬 길다.
+    ⚠️ `min_len`이 핵심이다. GPT가 웹검색을 하면 **수 분간 텍스트가 안
+    자라는 구간**이 생기는데(실측: "1m 6s", "3m 39s 동안 처리함"), 길이만
+    보면 그때를 완료로 오판한다. 그래서 min_len 미만이면 안정돼 보여도 계속
+    기다린다.
+
+    ⚠️ `timeout`도 넉넉해야 한다. 처음 300초로 뒀다가 GPT가 3분 39초를
+    검색에 쓰는 바람에 14자(`{"title":"공사원가`)만 받고 타임아웃한 적이
+    있다(2026-08-24). 웹검색을 시키면 **5~7분**까지 걸리므로 720초로 잡았다.
     """
     prev_len, stable = -1, 0
     deadline = time.time() + timeout
@@ -236,35 +280,72 @@ def generate_draft(
     topic_info: dict,
     out_path: str | None = None,
     new_chat: bool = True,
+    research_competitors_first: bool = True,
 ) -> dict:
     """GPT에게 초안을 요청해 받아오고 자동 점검까지 수행한다.
 
-    반환: {"draft": {...} | None, "review": {...}, "raw": "..."}
+    `research_competitors_first=True`(기본)면 같은 주제로 이미 상위 노출된
+    경쟁 글을 먼저 조사해 그 실측치를 프롬프트에 넣는다 — 주제마다 경쟁
+    강도가 크게 다르기 때문이다(2026-08-23 실측: "하도급대금 직접지급"은
+    1위가 5,409자/태그30개인데 "일위대가 작성 방법"은 평균 1,336자/태그4개).
+
+    반환: {"draft": {...} | None, "review": {...}, "raw": "...", "competitors": {...}}
     **이 결과를 그대로 발행하면 안 된다** — review["must_verify"]의 수치를
     Claude가 출처 확인한 뒤, CTA를 붙여서 발행한다.
     """
+    competitors = {}
+    competitor_block = ""
+    if research_competitors_first:
+        try:
+            query = topic_info.get("competitor_query") or topic_info.get("topic", "")
+            competitors = research_competitors(cdp, query)
+            competitor_block = summarize_for_prompt(competitors)
+        except Exception as e:
+            _log.warning("[gpt-writer] 경쟁 글 조사 실패(무시하고 진행): %s", e)
+
     prompt = _PROMPT_TEMPLATE.format(
         topic=topic_info.get("topic", ""),
         source=topic_info.get("source", "(없음)"),
         keywords=", ".join(topic_info.get("keywords", [])),
+        competitor_block=competitor_block,
         min_chars=MIN_BODY_CHARS,
         target_chars=TARGET_BODY_CHARS,
         min_tags=MIN_TAG_COUNT,
         target_tags=TARGET_TAG_COUNT,
     )
 
-    if new_chat:
-        cdp.js(f"location.href = '{CHATGPT_URL}';")
-        time.sleep(3)
+    # 상시 고정: 반드시 "건설전문 ai" 프로젝트 안에서 생성한다.
+    # 진입 실패 시 **조용히 빈 대화창에서 쓰지 않고 멈춘다** — 프로젝트 커스텀
+    # 지시가 빠진 채 생성되면 품질이 떨어지는데 결과만 봐선 알기 어렵기 때문.
+    if new_chat and not ensure_project(cdp):
+        return {
+            "draft": None,
+            "review": {
+                "ok": False,
+                "problems": [f"'건설전문 ai' 프로젝트 진입 실패 — 현재 URL: {cdp.js('location.href')}"],
+            },
+            "raw": "",
+            "competitors": competitors,
+        }
 
     sent = _send_prompt(cdp, prompt)
     if sent != "clicked":
-        return {"draft": None, "review": {"ok": False, "problems": [f"전송 실패: {sent}"]}, "raw": ""}
+        return {
+            "draft": None,
+            "review": {"ok": False, "problems": [f"전송 실패: {sent}"]},
+            "raw": "",
+            "competitors": competitors,
+        }
 
     raw = _wait_for_response(cdp)
     draft = parse_draft(raw)
     if not draft:
-        return {"draft": None, "review": {"ok": False, "problems": ["응답 파싱 실패"]}, "raw": raw}
+        return {
+            "draft": None,
+            "review": {"ok": False, "problems": ["응답 파싱 실패"]},
+            "raw": raw,
+            "competitors": competitors,
+        }
 
     draft["topic"] = topic_info.get("topic", "")
     draft.setdefault("images", [])
@@ -276,4 +357,4 @@ def generate_draft(
         p.write_text(json.dumps(draft, ensure_ascii=False, indent=2), encoding="utf-8")
         _log.info("[gpt-writer] 초안 저장: %s (%d자, 태그 %d개)", p, review["char_count"], review["tag_count"])
 
-    return {"draft": draft, "review": review, "raw": raw}
+    return {"draft": draft, "review": review, "raw": raw, "competitors": competitors}

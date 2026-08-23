@@ -28,6 +28,7 @@ OpenAI 호출을 차단했고(ai_orchestrator/openai_guard.py), 글은 Claude Co
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -105,9 +106,32 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
     if not pool:
         _log.warning("[manual] Unsplash 이미지 수집 실패 — 이미지 없이 발행")
         return []
-    # 제목 해시로 인덱스를 잡아 글마다 다른 이미지가 붙게 한다.
-    idx = abs(hash(draft["title"])) % max(1, len(pool) // 3 or 1)
-    return pick_3_images(pool, idx)[:count]
+
+    # 글마다 다른 이미지가 붙게 인덱스를 잡는다.
+    #
+    # 2026-08-24 수정: 기존엔 `abs(hash(title)) % (len(pool)//3)` 이었는데
+    # ① 파이썬 `hash()`는 프로세스마다 시드가 달라 재현이 안 되고
+    # ② 나눗셈 때문에 후보 구간이 좁아 **서로 다른 두 글에 완전히 같은
+    #    사진 3장이 붙는 사고**가 실제로 났다(draft_03 == draft_04).
+    # 기준서 4.2 "콘텐츠 고유성" 위반이므로 **안정 해시(md5) + 이미 쓴
+    # 이미지 회피**로 바꾼다.
+    used: set[str] = set()
+    try:
+        from scripts.naver.blog_marketing.topics import load_cache
+
+        for p in load_cache().get("posted", []):
+            for path in p.get("img_paths", []) or []:
+                used.add(str(path))
+    except Exception as e:
+        _log.debug("[manual] 사용 이미지 이력 로드 실패(무시): %s", e)
+
+    slots = max(1, len(pool) // 3)
+    base = int(hashlib.md5(draft["title"].encode("utf-8")).hexdigest()[:8], 16) % slots
+    for offset in range(slots):  # 이미 쓴 조합이면 다음 구간으로 밀어서 재시도
+        picked = pick_3_images(pool, (base + offset) % slots)[:count]
+        if not picked or not used.intersection(str(p) for p in picked):
+            return picked
+    return pick_3_images(pool, base)[:count]  # 전부 겹치면 어쩔 수 없이 반환
 
 
 def publish(draft: dict, auto_images: bool = True) -> dict:
