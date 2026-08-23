@@ -130,7 +130,9 @@ def main():
                 last_href, last_digest, last_text = href, digest, text
                 counts_reported_for = None
             elif digest != last_digest:
-                print(f"[watch:change] category={category} url={href} digest={digest}", flush=True)
+                # 같은 화면 안에서의 텍스트 변화는 스피너/배너 깜빡임 등
+                # 무해한 노이즈가 대부분이라(2026-08-23 실측) 이벤트로 보고하지
+                # 않는다. digest는 카운트 재추출 판단용으로만 갱신한다.
                 last_digest, last_text = digest, text
 
             # SPA 화면 전환/리렌더 타이밍이 들쭉날쭉해 navigate 시점 배지 텍스트가
