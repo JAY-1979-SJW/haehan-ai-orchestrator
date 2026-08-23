@@ -1,0 +1,137 @@
+"""CDP 상시 클릭 감시 — 사용자가 브라우저에서 클릭/이동할 때마다 변화를 stdout으로 알린다.
+
+Monitor 도구로 stdout을 스트리밍하면, URL이나 화면 텍스트가 바뀔 때마다
+한 줄씩 이벤트가 찍혀 AI가 실시간으로 따라가며 처리할 수 있다.
+
+사용법:
+    python scripts/ops/cdp_click_watch.py [--interval 1.5]
+"""
+
+import argparse
+import hashlib
+import re
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from scripts.cdp_helper import CDP
+
+CATEGORY_RULES = [
+    ("고객문의", ("문의", "qna", "inquiry"), ("미답변", "고객문의", "1:1문의")),
+    ("리뷰관리", ("review",), ("리뷰관리", "리뷰 답글")),
+    ("주문관리", ("order", "delivery", "claim"), ("발주확인", "배송준비", "취소", "교환", "반품")),
+    ("정산", ("settle",), ("정산", "지급대상")),
+    ("상품관리", ("product", "goods"), ("상품관리", "상품등록", "판매중지")),
+    ("알림", ("notification",), ("알림", "공지사항")),
+    ("대시보드", ("dashboard", "home"), ("판매실적", "오늘의 통계")),
+]
+
+
+def classify(href: str, text: str) -> str:
+    href_l = href.lower()
+    for category, url_keys, text_keys in CATEGORY_RULES:
+        if any(k in href_l for k in url_keys):
+            return category
+    for category, _url_keys, text_keys in CATEGORY_RULES:
+        if any(k in text for k in text_keys):
+            return category
+    return "기타"
+
+
+_COUNT_LINE_RE = re.compile(r"^([0-9,]+)\s*건$")
+_NOISE_LINES = {"도움말", "배송중 목록보기"}
+
+# 카테고리별로 의미있는 라벨만 추출 (화면 잡음 텍스트 제외)
+COUNT_LABELS = {
+    "고객문의": {"미답변", "답변대기", "답변완료", "문의종료", "전체"},
+    "주문관리": {
+        "신규주문(발주 전)",
+        "신규주문(발주 후)",
+        "발송기한 초과",
+        "자동처리 예정",
+        "발송전 취소요청",
+        "발송전 배송지 변경",
+        "발송마감 D-1",
+        "발송마감 D-day",
+    },
+}
+
+
+_INNER_TEXT_JS = """(function(){
+  var parts = [document.body ? document.body.innerText : ''];
+  var frames = document.querySelectorAll('iframe');
+  for (var i=0;i<frames.length;i++){
+    try {
+      var doc = frames[i].contentDocument || frames[i].contentWindow.document;
+      if (doc && doc.body) parts.push(doc.body.innerText);
+    } catch (e) {}
+  }
+  return parts.join('\\n');
+})()"""
+
+
+def extract_counts(cdp: CDP, category: str) -> dict:
+    labels = COUNT_LABELS.get(category)
+    if not labels:
+        return {}
+    text = cdp.js(_INNER_TEXT_JS) or ""
+    lines = [ln.strip() for ln in text.splitlines()]
+    found = {}
+    for i, line in enumerate(lines):
+        if line not in labels or line in found:
+            continue
+        for look in lines[i + 1 : i + 5]:
+            if look in _NOISE_LINES or look == "":
+                continue
+            m = _COUNT_LINE_RE.match(look)
+            if m:
+                found[line] = int(m.group(1).replace(",", ""))
+            break
+    return found
+
+
+def _fingerprint(cdp: CDP) -> tuple[str, str, str]:
+    href = cdp.js("location.href") or ""
+    text = (cdp.js(_INNER_TEXT_JS) or "")[:4000]
+    digest = hashlib.sha1(text.encode("utf-8", "ignore")).hexdigest()[:12]
+    return href, digest, text
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--interval", type=float, default=1.5)
+    args = ap.parse_args()
+
+    cdp = CDP(port=9222)
+    last_href, last_digest, last_text = _fingerprint(cdp)
+    print(f"[watch:start] category={classify(last_href, last_text)} url={last_href}", flush=True)
+
+    try:
+        while True:
+            time.sleep(args.interval)
+            try:
+                href, digest, text = _fingerprint(cdp)
+            except Exception as e:
+                print(f"[watch:error] {e}", flush=True)
+                continue
+            category = classify(href, text)
+            if href != last_href:
+                print(f"[watch:navigate] category={category} {last_href} -> {href}", flush=True)
+                last_href, last_digest, last_text = href, digest, text
+                counts = extract_counts(cdp, category)
+                if counts:
+                    kv = " ".join(f"{k}={v}" for k, v in counts.items())
+                    print(f"[watch:counts] category={category} {kv}", flush=True)
+            elif digest != last_digest:
+                print(f"[watch:change] category={category} url={href} digest={digest}", flush=True)
+                last_digest, last_text = digest, text
+    except KeyboardInterrupt:
+        pass
+    finally:
+        cdp.close()
+
+
+if __name__ == "__main__":
+    main()
