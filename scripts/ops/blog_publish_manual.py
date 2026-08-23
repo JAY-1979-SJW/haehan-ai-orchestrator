@@ -58,7 +58,10 @@ def review(draft: dict) -> dict:
     seo = seo_check(title=draft["title"], body=draft["body"], keywords=draft.get("tags", []))
     print(f"제목: {draft['title']}  ({len(draft['title'])}자)")
     print(f"본문: {len(draft['body'])}자  |  태그: {', '.join(draft.get('tags', [])) or '없음'}")
-    print(f"이미지: {len(draft.get('images', []))}장")
+    images = draft.get("images", [])
+    print(f"이미지: {len(images)}장")
+    for img in images:
+        print(f"  · {img}")
     if seo["warnings"]:
         print("\n⚠️ 점검 결과")
         for w in seo["warnings"]:
@@ -66,6 +69,24 @@ def review(draft: dict) -> dict:
     else:
         print("\n✅ 점검 통과")
     return seo
+
+
+def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True) -> list[str]:
+    """--check 단계에서 이미지를 미리 확보해 원고 파일에 확정 저장한다.
+
+    발행 승인은 이미지 포함 상태를 보고 이뤄져야 하므로(2026-08-23 사용자
+    요청), --publish 시점에 처음 수집하던 것을 --check 시점으로 당긴다.
+    이미 draft["images"]가 채워져 있으면(이전 --check에서 확정됨) 그대로
+    재사용하고, Unsplash를 다시 호출하지 않는다.
+    """
+    if draft.get("images") or not auto_images:
+        return draft.get("images", [])
+    images = collect_images(draft)
+    if images:
+        draft["images"] = images
+        draft_path.write_text(json.dumps(draft, ensure_ascii=False, indent=2), encoding="utf-8")
+        _log.info("[manual] 이미지 %d장 확보 후 원고에 저장: %s", len(images), draft_path)
+    return images
 
 
 def collect_images(draft: dict, count: int = 3) -> list[str]:
@@ -90,7 +111,8 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
 
 
 def publish(draft: dict, auto_images: bool = True) -> dict:
-    from scripts.naver.blog_marketing.publish import connect_and_ensure_login, publish_one
+    from scripts.naver.blog_marketing.publish import connect_and_ensure_login, publish_one, record_success
+    from scripts.naver.blog_marketing.topics import load_cache
 
     body = draft["body"]
     images = collect_images(draft) if auto_images else [str(p) for p in draft.get("images", []) if Path(p).exists()]
@@ -102,12 +124,25 @@ def publish(draft: dict, auto_images: bool = True) -> dict:
     }
     pw, _browser, page = connect_and_ensure_login()
     try:
-        return publish_one(page, post=post, img_paths=images)
+        result = publish_one(page, post=post, img_paths=images)
     finally:
         try:
             pw.stop()
         except Exception:
             pass
+
+    # 2026-08-19 GPT 차단 이후 이 수동 경로가 기본이 됐는데, 캐시 기록이
+    # 빠져 있어서 중복 발행 방지가 무력화돼 있었다(2026-08-22 발견).
+    if result.get("ok") and result.get("log_no"):
+        cache = load_cache()
+        record_success(
+            cache,
+            topic=draft.get("topic", draft["title"]),
+            post=post,
+            log_no=result["log_no"],
+            img_paths=images,
+        )
+    return result
 
 
 def main() -> None:
@@ -118,7 +153,9 @@ def main() -> None:
     ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
     args = ap.parse_args()
 
-    draft = load_draft(Path(args.draft))
+    draft_path = Path(args.draft)
+    draft = load_draft(draft_path)
+    ensure_images(draft, draft_path, auto_images=not args.no_images)
     seo = review(draft)
 
     if not args.publish:
