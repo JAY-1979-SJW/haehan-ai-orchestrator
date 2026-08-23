@@ -63,10 +63,13 @@ LIST_API = (
 _POST_JS = """(function(){
   function pick(doc){
     if (!doc) return null;
-    var main = doc.querySelector('.se-main-container');
+    // 스마트에디터 ONE(신) → 구 에디터 순으로 폴백.
+    // 2026-08-23 실측: logNo 100xxx대 옛 글은 .se-main-container가 없고
+    // #postViewArea를 쓴다. 이걸 빼먹어 103편 중 29편이 통째로 누락됐었다.
+    var main = doc.querySelector('.se-main-container') || doc.querySelector('#postViewArea');
     if (!main) return null;
-    var titleEl = doc.querySelector('.se-title-text');
-    var dateEl = doc.querySelector('.se_publishDate');
+    var titleEl = doc.querySelector('.se-title-text, .htitle, .pcol1 .title');
+    var dateEl = doc.querySelector('.se_publishDate, .date');
     var tags = Array.from(doc.querySelectorAll('a'))
       .map(function(a){ return (a.innerText || '').trim(); })
       .filter(function(t){ return t.indexOf('#') === 0 && t.length > 1; });
