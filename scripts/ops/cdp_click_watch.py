@@ -40,10 +40,13 @@ def classify(href: str, text: str) -> str:
     return "기타"
 
 
-_COUNT_LINE_RE = re.compile(r"^([0-9,]+)\s*건$")
+_COUNT_LINE_RE = re.compile(r"^([0-9,]+)\s*(건|원)$")
 _NOISE_LINES = {"도움말", "배송중 목록보기"}
 
 # 카테고리별로 의미있는 라벨만 추출 (화면 잡음 텍스트 제외)
+# 주의: 상품관리 화면은 배지 라벨이 CSS 의사요소(pseudo-content)로 렌더링돼
+# innerText로 읽히지 않는다(2026-08-23 실측, textContent엔 CSS 텍스트까지
+# 섞여 오염됨) — 카운트 추출 대상에서 제외, classify()의 화면 분류만 적용.
 COUNT_LABELS = {
     "고객문의": {"미답변", "답변대기", "답변완료", "문의종료", "전체"},
     "주문관리": {
@@ -56,6 +59,10 @@ COUNT_LABELS = {
         "발송마감 D-1",
         "발송마감 D-day",
     },
+    # 오늘정산/정산예정 배지는 정산 상세 화면이 아니라 대시보드 위젯에 있다
+    # (2026-08-23 실측) — 두 카테고리 모두에 등록해 어느 진입 경로든 잡는다.
+    "정산": {"오늘정산", "정산예정"},
+    "대시보드": {"오늘정산", "정산예정"},
 }
 
 
@@ -107,6 +114,7 @@ def main():
     cdp = CDP(port=9222)
     last_href, last_digest, last_text = _fingerprint(cdp)
     print(f"[watch:start] category={classify(last_href, last_text)} url={last_href}", flush=True)
+    counts_reported_for = None  # SPA 리렌더가 늦게 끝나는 화면 대비, href당 1회만 카운트 보고
 
     try:
         while True:
@@ -120,13 +128,19 @@ def main():
             if href != last_href:
                 print(f"[watch:navigate] category={category} {last_href} -> {href}", flush=True)
                 last_href, last_digest, last_text = href, digest, text
+                counts_reported_for = None
+            elif digest != last_digest:
+                print(f"[watch:change] category={category} url={href} digest={digest}", flush=True)
+                last_digest, last_text = digest, text
+
+            # SPA 화면 전환/리렌더 타이밍이 들쭉날쭉해 navigate 시점 배지 텍스트가
+            # 비어있을 수 있다(2026-08-23 실측) — href가 바뀌지 않는 한 계속 재시도.
+            if counts_reported_for != href:
                 counts = extract_counts(cdp, category)
                 if counts:
                     kv = " ".join(f"{k}={v}" for k, v in counts.items())
                     print(f"[watch:counts] category={category} {kv}", flush=True)
-            elif digest != last_digest:
-                print(f"[watch:change] category={category} url={href} digest={digest}", flush=True)
-                last_digest, last_text = digest, text
+                    counts_reported_for = href
     except KeyboardInterrupt:
         pass
     finally:
