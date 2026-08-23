@@ -1,18 +1,32 @@
-"""스마트스토어 고객문의 답변창 자동 입력 로직 (L5 Site Module).
+"""스마트스토어 고객문의 답변 자동 입력/제출 로직 (L5 Site Module).
 
 CDP로 열려있는 스마트스토어센터 고객문의 상세 화면(#/naverpay/qnas 상세)에서
-답변 textarea를 찾아 초안을 채운다. 실제 전송("답변하기" 클릭)은 포함하지
-않는다 — CLAUDE.md 정책상 고객 노출 메시지 전송은 매번 사용자 승인 필요.
+답변을 채우고 제출한다.
+
+- fill_reply_draft(): 답변 textarea에 초안만 채운다 (read-only 성격, 승인 불필요).
+- submit_reply(): 실제 "답변하기" 클릭까지 수행 — 고객 노출 메시지 전송이므로
+  CLAUDE.md 정책상 사용자가 매번 명시적으로 승인한 뒤에만 호출한다.
+
+배경(2026-08-23 실측): 이 페이지는 답변 textarea에 실제 키보드로 타이핑하면
+자동으로 "문의유형=직접입력, 답변템플릿=답변직접입력(제목없음)"으로 전환되는데,
+JS로 값만 주입하면 이 전환이 발생하지 않아 제출 시 "제목을 선택해 주세요"
+alert로 막힌다. submit_reply()는 페이지의 $Form/$Element 프레임워크 함수를
+직접 호출해 이 전환을 재현한 뒤 제출한다. 문의유형 select를 사람이 직접
+바꾸면 프레임워크가 답변 내용을 지우는 부작용이 있으므로, fill 이후에만
+호출해야 한다.
 
 사용법:
     from scripts.cdp_helper import CDP
-    from scripts.naver.smartstore.inquiry_reply import fill_reply_draft
+    from scripts.naver.smartstore.inquiry_reply import fill_reply_draft, submit_reply
 
     cdp = CDP(port=9222)
     fill_reply_draft(cdp, "답변 내용")
+    # 사용자 승인 후에만:
+    message = submit_reply(cdp)  # "답변처리가 완료되었습니다." 등 결과 alert 메시지 반환
 """
 
 import json
+import time
 
 from scripts.cdp_helper import CDP
 
@@ -34,8 +48,63 @@ _FILL_JS_TEMPLATE = """(function(){{
   return 'ok len=' + ta.value.length;
 }})()"""
 
+_SET_DIRECT_INPUT_JS = """(function(){
+  var f = document.querySelector('iframe');
+  var w = f.contentWindow;
+  w.$Form('answerForm').value('inquiryAnswerTempleteType','NONE_SELECTED');
+  w.$Element('inquiryAnswerTempleteNo').empty();
+  w.$Element('inquiryAnswerTempleteNo').appendHTML('<option value="NONE_SELECTED">답변직접입력(제목없음)</option>');
+  w.$Element('inquiryAnswerTempleteNo').attr('disabled', true);
+  w.$Element('inquiryAnswerTempleteNo').attr('disabled', false);
+  return 'templateType=' + w.$Form('answerForm').value('inquiryAnswerTempleteType')
+    + ' templateNo=' + w.$Form('answerForm').value('inquiryAnswerTempleteNo')
+    + ' content_len=' + w.$Form('answerForm').value('content').length;
+})()"""
+
+_CLICK_SUBMIT_JS = """(function(){
+  var f = document.querySelector('iframe');
+  var d = f.contentDocument || f.contentWindow.document;
+  var links = Array.from(d.querySelectorAll('a'));
+  var link = links.find(a => a.textContent.trim() === '답변하기' || a.textContent.trim() === '답변수정');
+  if (!link) return 'not found';
+  link.click();
+  return 'clicked';
+})()"""
+
 
 def fill_reply_draft(cdp: CDP, text: str) -> str:
     """답변 textarea(화면에 실제 렌더된 것)에 초안을 채운다. 결과 메시지 문자열 반환."""
     js = _FILL_JS_TEMPLATE.format(text_json=json.dumps(text, ensure_ascii=False))
     return cdp.js(js)
+
+
+def submit_reply(cdp: CDP, timeout: float = 5.0) -> str:
+    """채워진 답변을 실제로 전송한다 ("답변하기" 클릭). 고객 노출 액션 — 매번 사용자 승인 후 호출.
+
+    반환값: 결과 alert 메시지 (성공 시 "답변처리가 완료되었습니다.", 검증 실패 시
+    "제목을 선택해 주세요." 등). alert가 없으면 마지막 JS 반환값을 그대로 준다.
+    """
+    cdp.send("Page.enable")
+    dialog_info: dict = {}
+
+    def on_dialog(params):
+        dialog_info.update(params)
+
+    cdp.on("Page.javascriptDialogOpening", on_dialog)
+    try:
+        setup_result = cdp.js(_SET_DIRECT_INPUT_JS)
+        click_result = cdp.js(_CLICK_SUBMIT_JS)
+        if click_result != "clicked":
+            return f"setup={setup_result} click={click_result}"
+
+        waited = 0.0
+        while not dialog_info and waited < timeout:
+            time.sleep(0.5)
+            waited += 0.5
+
+        if dialog_info:
+            cdp.send("Page.handleJavaScriptDialog", {"accept": True})
+            return dialog_info.get("message", "")
+        return "no dialog (timeout)"
+    finally:
+        cdp.off("Page.javascriptDialogOpening")
