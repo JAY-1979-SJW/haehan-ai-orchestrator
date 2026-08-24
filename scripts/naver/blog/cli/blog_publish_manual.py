@@ -44,7 +44,7 @@ from scripts.naver.blog.marketing.content import seo_check, split_body  # noqa: 
 _log = get_logger("scripts.naver.blog.cli.blog_publish_manual")
 
 
-def verify_login(port: int = 9222) -> dict:
+def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
     """발행 전 네이버 로그인 상태를 **미리** 확인한다.
 
     2026-08-24 사고: 세션이 만료돼 로그아웃된 걸 모르고 발행을 걸었더니
@@ -59,7 +59,9 @@ def verify_login(port: int = 9222) -> dict:
     반환: {"ok": bool, "blog_id": str, "reason": str}
     """
     from scripts.cdp_helper import CDP
-    from scripts.naver.blog.marketing import TARGET_BLOG_ID
+    from scripts.naver.blog.accounts import get_account
+
+    target_blog_id = blog_id or get_account()["blog_id"]
 
     # CDP 연결 자체도 try 안에서 한다 — 브라우저가 안 떠 있으면 여기서
     # URLError가 나는데, 밖에 두면 깔끔한 실패 대신 트레이스백이 터진다.
@@ -89,8 +91,8 @@ def verify_login(port: int = 9222) -> dict:
     blog_id = info.get("blogId", "")
     if info.get("loggedOut") or not blog_id:
         return {"ok": False, "blog_id": "", "reason": "네이버 로그아웃 상태"}
-    if blog_id != TARGET_BLOG_ID:
-        return {"ok": False, "blog_id": blog_id, "reason": f"다른 계정 로그인됨({blog_id})"}
+    if blog_id != target_blog_id:
+        return {"ok": False, "blog_id": blog_id, "reason": f"다른 계정 로그인됨({blog_id}, 기대: {target_blog_id})"}
     return {"ok": True, "blog_id": blog_id, "reason": ""}
 
 
@@ -123,7 +125,7 @@ def review(draft: dict) -> dict:
     return seo
 
 
-def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True) -> list[str]:
+def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True, blog_id: str | None = None) -> list[str]:
     """--check 단계에서 이미지를 미리 확보해 원고 파일에 확정 저장한다.
 
     발행 승인은 이미지 포함 상태를 보고 이뤄져야 하므로(2026-08-23 사용자
@@ -133,7 +135,7 @@ def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True) -> li
     """
     if draft.get("images") or not auto_images:
         return draft.get("images", [])
-    images = collect_images(draft)
+    images = collect_images(draft, blog_id=blog_id)
     if images:
         draft["images"] = images
         draft_path.write_text(json.dumps(draft, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -141,7 +143,7 @@ def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True) -> li
     return images
 
 
-def collect_images(draft: dict, count: int = 3) -> list[str]:
+def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> list[str]:
     """원고에 이미지가 없으면 Unsplash에서 자동 수집한다.
 
     기존 구현(scripts/naver/blog/marketing/images.py)을 그대로 쓴다 — Unsplash
@@ -170,7 +172,7 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
     try:
         from scripts.naver.blog.marketing.topics import load_cache
 
-        for p in load_cache().get("posted", []):
+        for p in load_cache(blog_id).get("posted", []):
             for path in p.get("img_paths", []) or []:
                 used.add(str(path))
     except Exception as e:
@@ -185,19 +187,25 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
     return pick_3_images(pool, base)[:count]  # 전부 겹치면 어쩔 수 없이 반환
 
 
-def publish(draft: dict, auto_images: bool = True) -> dict:
+def publish(draft: dict, auto_images: bool = True, blog_id: str | None = None) -> dict:
+    from scripts.naver.blog.accounts import get_account
     from scripts.naver.blog.marketing.publish import connect_and_ensure_login, publish_one, record_success
     from scripts.naver.blog.marketing.topics import load_cache
 
+    target_blog_id = blog_id or get_account()["blog_id"]
     body = draft["body"]
-    images = collect_images(draft) if auto_images else [str(p) for p in draft.get("images", []) if Path(p).exists()]
+    images = (
+        collect_images(draft, blog_id=target_blog_id)
+        if auto_images
+        else [str(p) for p in draft.get("images", []) if Path(p).exists()]
+    )
     post = {
         "title": draft["title"],
         "body": body,
         "body_segments": split_body(body, parts=max(1, len(images))) if images else None,
         "tags": draft.get("tags", []),
     }
-    pw, _browser, page = connect_and_ensure_login()
+    pw, _browser, page = connect_and_ensure_login(blog_id=target_blog_id)
     try:
         result = publish_one(page, post=post, img_paths=images)
     finally:
@@ -209,13 +217,14 @@ def publish(draft: dict, auto_images: bool = True) -> dict:
     # 2026-08-19 GPT 차단 이후 이 수동 경로가 기본이 됐는데, 캐시 기록이
     # 빠져 있어서 중복 발행 방지가 무력화돼 있었다(2026-08-22 발견).
     if result.get("ok") and result.get("log_no"):
-        cache = load_cache()
+        cache = load_cache(target_blog_id)
         record_success(
             cache,
             topic=draft.get("topic", draft["title"]),
             post=post,
             log_no=result["log_no"],
             img_paths=images,
+            blog_id=target_blog_id,
         )
     return result
 
@@ -223,15 +232,22 @@ def publish(draft: dict, auto_images: bool = True) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("draft", help="원고 JSON 경로")
+    ap.add_argument(
+        "--account", choices=["skyjwsin", "skyjwshin"], default=None, help="대상 블로그 계정 (기본: skyjwsin)"
+    )
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")
     ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
     ap.add_argument("--port", type=int, default=9222, help="CDP 포트")
     args = ap.parse_args()
 
+    from scripts.naver.blog.accounts import get_account
+
+    blog_id = get_account(args.account)["blog_id"]
+
     draft_path = Path(args.draft)
     draft = load_draft(draft_path)
-    ensure_images(draft, draft_path, auto_images=not args.no_images)
+    ensure_images(draft, draft_path, auto_images=not args.no_images, blog_id=blog_id)
     seo = review(draft)
 
     if not args.publish:
@@ -240,17 +256,17 @@ def main() -> None:
 
     # 발행 직전 로그인 확인 — 이미지 업로드까지 다 해놓고 캡차로 실패하는
     # 낭비를 막는다(2026-08-24 사고). 실패 시 자동 재로그인 없이 멈춘다.
-    login = verify_login(port=args.port)
+    login = verify_login(port=args.port, blog_id=blog_id)
     if not login["ok"]:
         print(f"\n❌ 발행 중단 — {login['reason']}")
-        print("   브라우저에서 skyjwsin 계정으로 직접 로그인한 뒤 다시 실행하세요.")
+        print(f"   브라우저에서 {blog_id} 계정으로 직접 로그인한 뒤 다시 실행하세요.")
         print("   (캡차·OTP는 자동 처리 불가 — 반복 시도 시 계정 잠금 위험)")
         sys.exit(2)
     print(f"\n[로그인 확인] {login['blog_id']} ✅")
 
     if seo["warnings"]:
         print("\n경고가 있는 상태로 발행합니다 (사람이 확인함).")
-    result = publish(draft, auto_images=not args.no_images)
+    result = publish(draft, auto_images=not args.no_images, blog_id=blog_id)
     print(f"\n{'✅ 발행 완료' if result.get('ok') else '❌ 발행 실패'}  log_no={result.get('log_no', '')}")
 
 

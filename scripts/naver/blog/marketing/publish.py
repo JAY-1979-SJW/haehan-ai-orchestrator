@@ -23,8 +23,8 @@ from scripts.naver.blog.marketing.topics import save_cache, topic_key
 _log = get_logger(__name__)
 
 
-def connect_and_ensure_login(cdp_url: str = "http://localhost:9222"):
-    """CDP 연결 + 대상 블로그 계정(TARGET_BLOG_ID) 로그인 보장.
+def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: str = TARGET_BLOG_ID):
+    """CDP 연결 + 대상 블로그 계정(blog_id) 로그인 보장.
 
     Returns: (playwright, browser, page)
     """
@@ -47,12 +47,12 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222"):
     )
     print(f"[로그인] 현재 블로그 ID: {detected_blog_id}")
 
-    if detected_blog_id != TARGET_BLOG_ID:
-        print(f"  → {TARGET_BLOG_ID} 재로그인 필요 (현재: {detected_blog_id})")
+    if detected_blog_id != blog_id:
+        print(f"  → {blog_id} 재로그인 필요 (현재: {detected_blog_id})")
         from scripts.credentials import get_naver_cred
         from scripts.naver.auth import login_naver
 
-        cred = get_naver_cred(TARGET_BLOG_ID)
+        cred = get_naver_cred(blog_id)
         if detected_blog_id:
             print("  → 현재 사용자 로그아웃 중...")
             page.goto(
@@ -63,7 +63,7 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222"):
             time.sleep(3)
             page.goto("https://www.naver.com", wait_until="domcontentloaded", timeout=15000)
             time.sleep(2)
-        r = login_naver(page, naver_id=TARGET_BLOG_ID, naver_pw=cred.get("pw", ""), force_relogin=True)
+        r = login_naver(page, naver_id=blog_id, naver_pw=cred.get("pw", ""), force_relogin=True)
         if not r.get("ok"):
             print(f"  로그인 실패: {r}")
             browser.close()
@@ -101,7 +101,7 @@ def publish_one(page, *, post: dict, img_paths: list[str]) -> dict:
     return {"ok": ok, "log_no": log_no}
 
 
-def edit_one(page, *, log_no: str, post: dict, img_paths: list[str]) -> dict:
+def edit_one(page, *, log_no: str, post: dict, img_paths: list[str], blog_id: str = TARGET_BLOG_ID) -> dict:
     """기존 발행 글(log_no)을 새 제목/본문(AI 자동화 섹션 포함)으로 덮어쓴다."""
     from scripts.naver.blog.core.writer import edit_post
 
@@ -109,7 +109,7 @@ def edit_one(page, *, log_no: str, post: dict, img_paths: list[str]) -> dict:
     try:
         result = edit_post(
             page,
-            blog_id=TARGET_BLOG_ID,
+            blog_id=blog_id,
             log_no=log_no,
             title=post["title"],
             body=post["body"],
@@ -129,7 +129,9 @@ def edit_one(page, *, log_no: str, post: dict, img_paths: list[str]) -> dict:
     return {"ok": ok, "log_no": new_log_no}
 
 
-def record_success(cache: dict, *, topic: str, post: dict, log_no: str, img_paths: list[str]) -> None:
+def record_success(
+    cache: dict, *, topic: str, post: dict, log_no: str, img_paths: list[str], blog_id: str = TARGET_BLOG_ID
+) -> None:
     entry = {
         "key": topic_key(post["title"]),
         "topic": topic,
@@ -139,8 +141,8 @@ def record_success(cache: dict, *, topic: str, post: dict, log_no: str, img_path
         "posted_at": datetime.now().isoformat(),
     }
     cache.setdefault("posted", []).append(entry)
-    save_cache(cache)
-    print(f"  캐시 저장 ({len(cache['posted'])}개 누적)")
+    save_cache(cache, blog_id)
+    print(f"  캐시 저장 ({len(cache['posted'])}개 누적, 계정: {blog_id})")
 
 
 def wait_between_posts(seconds: int = 90) -> None:

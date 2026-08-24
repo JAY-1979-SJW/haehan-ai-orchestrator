@@ -23,12 +23,23 @@ from scripts.naver.blog.management.analytics import BlogAnalytics
 _log = get_logger(__name__)
 
 
-def run(blog_id: str = "skyjwsin") -> dict:
+def run(blog_id: str = "skyjwsin", ensure_login: bool = False) -> dict:
+    """blog_id 리포트 1건. ensure_login=True면 다른 계정이 로그인돼 있어도
+    이 계정으로 전환한 뒤 조회한다(--compare에서 계정을 오갈 때 필요)."""
     from playwright.sync_api import sync_playwright
 
     pw = sync_playwright().start()
     browser = pw.chromium.connect_over_cdp("http://localhost:9222")
     page = browser.contexts[0].pages[0]
+
+    if ensure_login:
+        from scripts.naver.blog.marketing.publish import connect_and_ensure_login
+
+        pw.stop()
+        pw, browser, page = connect_and_ensure_login(blog_id=blog_id)
+        if page is None:
+            pw.stop()
+            raise RuntimeError(f"{blog_id} 로그인 실패 — 브라우저에서 직접 로그인 후 재시도하세요")
 
     ba = BlogAnalytics(page, blog_id)
     report = ba.full_report()
@@ -38,6 +49,30 @@ def run(blog_id: str = "skyjwsin") -> dict:
 
     _print_summary(report)
     return report
+
+
+def run_compare(blog_ids: list[str]) -> dict:
+    """계정별 리포트를 순서대로 조회해 나란히 비교한다.
+
+    같은 CDP 세션을 계정만 바꿔가며 재사용한다 — 계정마다 프로필을 새로
+    띄우지 않는다(로그인 세션 보존 원칙, CLAUDE.md).
+    """
+    reports = {}
+    for i, bid in enumerate(blog_ids):
+        reports[bid] = run(blog_id=bid, ensure_login=(i > 0))  # 첫 계정은 이미 로그인돼 있다고 가정
+
+    print(f"\n{'=' * 60}")
+    print("  계정별 비교")
+    print(f"{'=' * 60}")
+    print(f"{'계정':<12} {'오늘 방문':>10} {'누적 방문':>10} {'PV 상위 1위':>14}")
+    for bid, r in reports.items():
+        today = r.get("today", {})
+        top = (r.get("rank_pv", {}).get("posts") or [{}])[0]
+        print(
+            f"{bid:<12} {today.get('visitors_today', '-')!s:>10} "
+            f"{today.get('visitors_total', '-')!s:>10} {top.get('pv', '-')!s:>14}"
+        )
+    return reports
 
 
 def _print_summary(report: dict) -> None:
@@ -93,5 +128,9 @@ def _print_summary(report: dict) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--blog-id", default="skyjwsin")
+    parser.add_argument("--compare", action="store_true", help="skyjwsin·skyjwshin 두 계정을 순서대로 조회해 비교")
     args = parser.parse_args()
-    run(blog_id=args.blog_id)
+    if args.compare:
+        run_compare(["skyjwsin", "skyjwshin"])
+    else:
+        run(blog_id=args.blog_id)

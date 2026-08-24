@@ -43,21 +43,34 @@ if str(_ROOT) not in sys.path:
 
 from scripts.cdp_helper import CDP  # noqa: E402
 from scripts.logger import get_logger  # noqa: E402
+from scripts.naver.blog.accounts import DEFAULT_ACCOUNT  # noqa: E402
 
 _log = get_logger(__name__)
 
-BLOG_ID = "skyjwsin"
-CACHE_PATH = _ROOT / "data" / "blog_posts_cache.json"
+# 2026-08-24: 계정이 skyjwsin 하나였을 때의 고정 상수. 함수들은 이제
+# blog_id 인자를 받지만, 인자 없이 부르는 기존 호출부의 기본값으로 유지한다.
+BLOG_ID = DEFAULT_ACCOUNT
+CACHE_PATH = _ROOT / "data" / "blog_posts_cache.json"  # skyjwsin 기본 캐시
 
-# 목록은 네이버 내부 JSON API를 쓴다(2026-08-23 확정).
-# 처음엔 PostList.naver 화면을 긁었는데 `currentPage`가 먹지 않아 11건에서
-# 멈췄다(전체 103편). 이 API는 페이지네이션이 정상 동작하고 조회수·카테고리·
-# 공개여부(openType)까지 한 번에 준다.
-LIST_API = (
-    "https://blog.naver.com/PostTitleListAsync.naver"
-    f"?blogId={BLOG_ID}&viewdate=&currentPage={{page}}"
-    "&categoryNo=0&parentCategoryNo=&countPerPage={per_page}"
-)
+
+def cache_path_for(blog_id: str) -> Path:
+    """계정별 콘텐츠 캐시 경로. 기본 계정은 기존 CACHE_PATH 그대로(하위호환)."""
+    if blog_id == DEFAULT_ACCOUNT:
+        return CACHE_PATH
+    return _ROOT / "data" / f"blog_posts_cache_{blog_id}.json"
+
+
+def list_api_for(blog_id: str) -> str:
+    # 목록은 네이버 내부 JSON API를 쓴다(2026-08-23 확정).
+    # 처음엔 PostList.naver 화면을 긁었는데 `currentPage`가 먹지 않아 11건에서
+    # 멈췄다(전체 103편). 이 API는 페이지네이션이 정상 동작하고 조회수·카테고리·
+    # 공개여부(openType)까지 한 번에 준다.
+    return (
+        "https://blog.naver.com/PostTitleListAsync.naver"
+        f"?blogId={blog_id}&viewdate=&currentPage={{page}}"
+        "&categoryNo=0&parentCategoryNo=&countPerPage={per_page}"
+    )
+
 
 # 글 본문 추출 — 위 docstring의 "검증된 셀렉터" 참고
 _POST_JS = """(function(){
@@ -96,25 +109,28 @@ _POST_JS = """(function(){
 })()"""
 
 
-def load_cache() -> dict:
-    if CACHE_PATH.exists():
+def load_cache(blog_id: str = BLOG_ID) -> dict:
+    path = cache_path_for(blog_id)
+    if path.exists():
         try:
-            return json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8"))
         except Exception as e:
             _log.warning("[post-cache] 캐시 로드 실패, 새로 시작: %s", e)
     return {"posts": []}
 
 
-def save_cache(cache: dict) -> None:
-    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+def save_cache(cache: dict, blog_id: str = BLOG_ID) -> None:
+    path = cache_path_for(blog_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def collect_log_nos(cdp: CDP, max_pages: int = 30, per_page: int = 30) -> list[dict]:
+def collect_log_nos(cdp: CDP, blog_id: str = BLOG_ID, max_pages: int = 30, per_page: int = 30) -> list[dict]:
     """목록 API를 순회해 글 메타(logNo/제목/카테고리/조회수/공개여부)를 모은다."""
     found: dict[str, dict] = {}
+    list_api = list_api_for(blog_id)
     for page in range(1, max_pages + 1):
-        cdp.navigate(LIST_API.format(page=page, per_page=per_page), wait=2.5)
+        cdp.navigate(list_api.format(page=page, per_page=per_page), wait=2.5)
         time.sleep(1.0)
         raw = cdp.js("document.body ? document.body.innerText : ''")
         if not raw:
@@ -147,9 +163,9 @@ def collect_log_nos(cdp: CDP, max_pages: int = 30, per_page: int = 30) -> list[d
     return list(found.values())
 
 
-def extract_post(cdp: CDP, log_no: str) -> dict | None:
+def extract_post(cdp: CDP, log_no: str, blog_id: str = BLOG_ID) -> dict | None:
     """글 1편을 열어 제목·본문·태그·작성일을 추출."""
-    cdp.navigate(f"https://blog.naver.com/{BLOG_ID}/{log_no}", wait=3)
+    cdp.navigate(f"https://blog.naver.com/{blog_id}/{log_no}", wait=3)
     time.sleep(1.5)
     raw = cdp.js(_POST_JS)
     if not raw:
@@ -165,27 +181,27 @@ def extract_post(cdp: CDP, log_no: str) -> dict | None:
     return data
 
 
-def build_cache(limit: int | None = None, port: int = 9222) -> dict:
+def build_cache(blog_id: str = BLOG_ID, limit: int | None = None, port: int = 9222) -> dict:
     """증분 수집: 이미 캐시에 있는 logNo는 건너뛴다."""
-    cache = load_cache()
+    cache = load_cache(blog_id)
     cached = {p["logNo"] for p in cache.get("posts", [])}
 
     cdp = CDP(port=port)
     try:
-        listing = collect_log_nos(cdp)
+        listing = collect_log_nos(cdp, blog_id=blog_id)
         todo = [x for x in listing if x["logNo"] not in cached]
         if limit:
             todo = todo[:limit]
         _log.info("[post-cache] 전체 %d건 / 신규 %d건 수집 시작", len(listing), len(todo))
 
         for i, item in enumerate(todo, 1):
-            post = extract_post(cdp, item["logNo"])
+            post = extract_post(cdp, item["logNo"], blog_id=blog_id)
             if post:
                 # 목록 API가 준 메타(조회수/카테고리/공개여부)를 함께 보존
                 for k in ("categoryNo", "read_count", "open_type", "list_date"):
                     post[k] = item.get(k, "")
                 cache.setdefault("posts", []).append(post)
-                save_cache(cache)  # 중간에 끊겨도 진행분 보존
+                save_cache(cache, blog_id)  # 중간에 끊겨도 진행분 보존
                 _log.info(
                     "[post-cache] (%d/%d) %s — %d자, 태그 %d개",
                     i,
@@ -201,13 +217,14 @@ def build_cache(limit: int | None = None, port: int = 9222) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--account", default=BLOG_ID, choices=["skyjwsin", "skyjwshin"], help="대상 블로그 계정")
     ap.add_argument("--limit", type=int, default=None, help="이번 실행에서 수집할 최대 글 수")
     ap.add_argument("--port", type=int, default=9222)
     args = ap.parse_args()
 
-    cache = build_cache(limit=args.limit, port=args.port)
+    cache = build_cache(blog_id=args.account, limit=args.limit, port=args.port)
     posts = cache.get("posts", [])
-    print(f"\n캐시 총 {len(posts)}건 → {CACHE_PATH}")
+    print(f"\n캐시 총 {len(posts)}건 → {cache_path_for(args.account)}")
     for p in posts[-5:]:
         print(f"  · [{p['posted_at']}] {p['title'][:40]} ({p['char_count']}자, 태그{len(p['tags'])})")
 
