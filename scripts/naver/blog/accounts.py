@@ -25,6 +25,9 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         "domain": "건설공무",
         "label": "AI 업무자동화 연구소",
         "cache_file": "data/blog_topic_cache_skyjwsin.json",
+        # 커스텀 공개 주소 없음 — admin.blog.naver.com 링크에도 로그인 ID
+        # 그대로 나온다. skyjwshin과 대비해 명시적으로 채워둔다.
+        "public_alias": "skyjwsin",
     },
     "skyjwshin": {
         "blog_id": "skyjwshin",
@@ -34,7 +37,14 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         # 2026-08-22 이 계정에서 blog.naver.com/beautiful-light 로 주소를 직접
         # 바꿨다(네이버 정책상 1회성, 되돌릴 수 없음) — blog_id(로그인 계정)와
         # 공개 주소가 다르니 혼동하지 않는다.
+        #
+        # 2026-08-24 사고: admin.blog.naver.com/{alias}/... 링크의 {alias}가
+        # 로그인 ID가 아니라 이 공개 주소(하이픈 포함 "beautiful-light")로
+        # 나온다는 걸 모르고 verify_login()이 "skyjwshin"과 비교하다가
+        # 실제로는 정상 로그인 상태인데 "로그아웃"으로 오판했다. 이 필드로
+        # 어느 쪽이 admin 링크에 나오는지 명시한다.
         "public_url": "https://blog.naver.com/beautiful-light",
+        "public_alias": "beautiful-light",
         # 2026-08-24: 오늘의집 커뮤니티 기반 3중 검증(오늘의집 빈도+검색광고+
         # 지식iN) 1차 리서치 완료 — research_blog_topics_lighting.py 참조.
         # data/blog_topic_research_lighting_latest.json 에 주제 68개 확보.

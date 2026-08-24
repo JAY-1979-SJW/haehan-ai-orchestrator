@@ -27,8 +27,19 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: st
     """CDP 연결 + 대상 블로그 계정(blog_id) 로그인 보장.
 
     Returns: (playwright, browser, page)
+
+    2026-08-24 사고: admin.blog.naver.com/{alias}/ 의 {alias}는 로그인 ID가
+    아니라 **공개 주소**다(skyjwshin은 커스텀 설정으로 "beautiful-light",
+    하이픈 포함). 정규식이 하이픈을 못 잡고, 비교도 로그인 ID 기준이라
+    **정상 로그인 상태를 오판해 세션을 강제 로그아웃 후 재로그인 시도**할
+    뻔했다(로그인 세션 보존 원칙 위반 위험, CLAUDE.md). 정규식에 하이픈을
+    추가하고, 비교 대상을 accounts.py::public_alias로 바꿨다.
     """
     from playwright.sync_api import sync_playwright
+
+    from scripts.naver.blog.accounts import get_account
+
+    target_alias = get_account(blog_id).get("public_alias") or blog_id
 
     pw = sync_playwright().start()
     browser = pw.chromium.connect_over_cdp(cdp_url)
@@ -37,23 +48,23 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: st
 
     page.goto("https://section.blog.naver.com/BlogHome.naver", wait_until="domcontentloaded", timeout=15000)
     time.sleep(2)
-    detected_blog_id = page.evaluate(
+    detected_alias = page.evaluate(
         """() => {
             const a = document.querySelector('a[href*="admin.blog.naver.com/"]');
             if (!a) return null;
-            const m = a.href.match(/admin\\.blog\\.naver\\.com\\/([a-zA-Z0-9_]+)\\//);
+            const m = a.href.match(/admin\\.blog\\.naver\\.com\\/([a-zA-Z0-9_-]+)\\//);
             return m ? m[1] : null;
         }"""
     )
-    print(f"[로그인] 현재 블로그 ID: {detected_blog_id}")
+    print(f"[로그인] 현재 블로그 주소: {detected_alias}")
 
-    if detected_blog_id != blog_id:
-        print(f"  → {blog_id} 재로그인 필요 (현재: {detected_blog_id})")
+    if detected_alias != target_alias:
+        print(f"  → {blog_id} 재로그인 필요 (현재: {detected_alias}, 기대: {target_alias})")
         from scripts.credentials import get_naver_cred
         from scripts.naver.auth import login_naver
 
         cred = get_naver_cred(blog_id)
-        if detected_blog_id:
+        if detected_alias:
             print("  → 현재 사용자 로그아웃 중...")
             page.goto(
                 "https://nid.naver.com/nidlogin.logout",  # session-ok
