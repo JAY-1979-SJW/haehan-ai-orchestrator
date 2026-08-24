@@ -17,8 +17,8 @@ from datetime import datetime
 from pathlib import Path
 
 from scripts.logger import get_logger
-from scripts.naver.blog_marketing import TARGET_BLOG_ID
-from scripts.naver.blog_marketing.topics import save_cache, topic_key
+from scripts.naver.blog.marketing import TARGET_BLOG_ID
+from scripts.naver.blog.marketing.topics import save_cache, topic_key
 
 _log = get_logger(__name__)
 

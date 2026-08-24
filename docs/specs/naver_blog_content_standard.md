@@ -2,8 +2,8 @@
 
 작성일: 2026-08-17
 대상 블로그: `skyjwsin` (반딧불아뜰리에 / AI 업무자동화 연구소)
-관련 코드: `scripts/naver/blog_marketing/`, `scripts/ops/blog_ai_batch_20.py`,
-`scripts/ops/research_blog_topics.py`, `scripts/naver/blog/core/writer.py`
+관련 코드: `scripts/naver/blog/marketing/`, `scripts/naver/blog/cli/blog_ai_batch_20.py`,
+`scripts/naver/blog/cli/research_blog_topics.py`, `scripts/naver/blog/core/writer.py`
 
 이 문서는 "무엇을 왜 이렇게 쓰는지"의 기준이다. 코드가 이 기준과 어긋나면
 코드가 잘못된 것 — 코드를 고쳐 기준에 맞춘다.
@@ -18,7 +18,7 @@ capability_check·로깅 등 공용 인프라를 그대로 재사용하기 위�
 **분리 경계(향후 추출 시 이 파일들만 옮기면 됨)** — 2026-08-24 실측 갱신:
 ```
 [본체]
-scripts/naver/blog_marketing/               ← 파이프라인 본체
+scripts/naver/blog/marketing/               ← 파이프라인 본체
    ├ topics.py         주제 선정(3중 검증)
    ├ competitor.py     경쟁 글 자동 조사      (2026-08-23 추가)
    ├ gpt_writer.py     GPT 초안 생성          (2026-08-23 추가)
@@ -32,10 +32,10 @@ scripts/naver/blog/management/post_cache.py ← 발행글 캐시 (2026-08-23 추
 scripts/naver/blog/management/analytics.py  ← 방문자 통계
 
 [CLI]
-scripts/ops/blog_publish_manual.py    ← **현재 주 발행 경로**
-scripts/ops/research_blog_topics.py   ← 주제 리서치
-scripts/ops/blog_analytics_report.py  ← 성과 분석
-scripts/ops/blog_ai_batch_20.py       ← ⚠️ GPT API 차단으로 현재 사용 불가
+scripts/naver/blog/cli/blog_publish_manual.py    ← **현재 주 발행 경로**
+scripts/naver/blog/cli/research_blog_topics.py   ← 주제 리서치
+scripts/naver/blog/cli/blog_analytics_report.py  ← 성과 분석
+scripts/naver/blog/cli/blog_ai_batch_20.py       ← ⚠️ GPT API 차단으로 현재 사용 불가
 
 [문서·스킬]
 docs/specs/naver_blog_content_standard.md
@@ -76,7 +76,7 @@ ai_orchestrator/connectors/naver_kin_client.py  ← 지식iN 검색(84줄, 범�
 
 ## 1. 주제 선정 — 실제 수요 3중 검증
 
-**AI가 주제를 지어내지 않는다.** 아래 파이프라인(`scripts/ops/research_blog_topics.py`)의
+**AI가 주제를 지어내지 않는다.** 아래 파이프라인(`scripts/naver/blog/cli/research_blog_topics.py`)의
 결과만 사용한다.
 
 1. **카페 빈도** — 건설공무카페 실제 게시글에서 반복 언급되는 키워드
@@ -391,7 +391,7 @@ AI 활용법이 아니라 **실제 문제 해결법**이라는 게 2026-08-19 �
 ## 5. 발행/수정 파이프라인
 
 ### 5.1 신규 발행
-`scripts/ops/blog_ai_batch_20.py` → `topics.py`(주제) → `images.py`(사진) →
+`scripts/naver/blog/cli/blog_ai_batch_20.py` → `topics.py`(주제) → `images.py`(사진) →
 `content.py`(본문+SEO) → `publish.py::publish_one()` →
 `scripts/naver/blog/core/writer.py::write_post()`
 
@@ -413,7 +413,7 @@ AI 활용법이 아니라 **실제 문제 해결법**이라는 게 2026-08-19 �
 
 ### 5.3 성과 분석
 
-`python scripts/ops/blog_analytics_report.py` — `scripts/naver/blog/management/
+`python scripts/naver/blog/cli/blog_analytics_report.py` — `scripts/naver/blog/management/
 analytics.py::BlogAnalytics.full_report()`. 오늘 방문자, 유입경로(검색엔진별·
 검색어별), 글별 조회수 순위, 최근 14일 방문 추이, 기기별(모바일/PC)·성별·
 연령별 분포를 `admin.blog.naver.com/{blogId}/stat/*` 에서 CDP로 직접 읽어온다
@@ -438,7 +438,7 @@ blog_analytics_{blogId}_{날짜}.json` 저장.
   구조적 버그(`top_body = sorted(freq, key=lambda x: -freq[x])[:10]`) —
   **`_STOPWORDS`에 해당 단어들을 추가해 수정 완료**(2026-08-17, 사용자 승인).
   단 접미사 변형("정리된", "반복적" 등)까지는 못 잡음 — 형태소 분석기 수준
-  필터는 아니고 실측된 오염 단어의 원형만 차단. `blog_marketing/content.py`가
+  필터는 아니고 실측된 오염 단어의 원형만 차단. `blog/marketing/content.py`가
   생성하는 새 글은 `tags`를 명시로 넘겨 애초에 `suggest_tags()`를 타지 않으므로
   이 배치엔 영향 없었음 — `tags=None`으로 `write_post()`를 호출하는 다른
   경로(예: 예전 수동 발행)를 위한 예방적 수정.
@@ -521,7 +521,7 @@ Studio에서 확인 가능)로 교차 분석.
 ## 7. 다음에 바꿀 때 체크리스트
 
 새 프롬프트/구조 변경 시:
-1. `python -m ruff check --config configs/ruff.toml scripts/naver/blog_marketing/`
+1. `python -m ruff check --config configs/ruff.toml scripts/naver/blog/marketing/`
 2. 리서치 결과 1~2개 주제로 `generate_post()` 직접 호출 → `seo['ai_ratio']`,
    `body length`, 실제 본문 텍스트 눈으로 확인 (발행 전 필수)
 3. 라이브 발행/수정 1건만 먼저 실행 → `blog.naver.com/skyjwsin/{log_no}`

@@ -21,8 +21,8 @@ OpenAI 호출을 차단했고(ai_orchestrator/openai_guard.py), 글은 Claude Co
   · 수치·법령은 확인된 것만. 모르면 "어디서 확인하는지"를 알려준다
 
 사용:
-    python -m scripts.ops.blog_publish_manual draft.json --check     # 점검만
-    python -m scripts.ops.blog_publish_manual draft.json --publish   # 실제 발행
+    python -m scripts.naver.blog.cli.blog_publish_manual draft.json --check     # 점검만
+    python -m scripts.naver.blog.cli.blog_publish_manual draft.json --publish   # 실제 발행
 """
 
 from __future__ import annotations
@@ -34,14 +34,14 @@ import sys
 import time
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.logger import get_logger  # noqa: E402
-from scripts.naver.blog_marketing.content import seo_check, split_body  # noqa: E402
+from scripts.naver.blog.marketing.content import seo_check, split_body  # noqa: E402
 
-_log = get_logger("scripts.ops.blog_publish_manual")
+_log = get_logger("scripts.naver.blog.cli.blog_publish_manual")
 
 
 def verify_login(port: int = 9222) -> dict:
@@ -59,7 +59,7 @@ def verify_login(port: int = 9222) -> dict:
     반환: {"ok": bool, "blog_id": str, "reason": str}
     """
     from scripts.cdp_helper import CDP
-    from scripts.naver.blog_marketing import TARGET_BLOG_ID
+    from scripts.naver.blog.marketing import TARGET_BLOG_ID
 
     # CDP 연결 자체도 try 안에서 한다 — 브라우저가 안 떠 있으면 여기서
     # URLError가 나는데, 밖에 두면 깔끔한 실패 대신 트레이스백이 터진다.
@@ -144,14 +144,14 @@ def ensure_images(draft: dict, draft_path: Path, auto_images: bool = True) -> li
 def collect_images(draft: dict, count: int = 3) -> list[str]:
     """원고에 이미지가 없으면 Unsplash에서 자동 수집한다.
 
-    기존 구현(scripts/naver/blog_marketing/images.py)을 그대로 쓴다 — Unsplash
+    기존 구현(scripts/naver/blog/marketing/images.py)을 그대로 쓴다 — Unsplash
     정책상 download_location 트리거까지 처리해준다(CLAUDE.md 참조).
     """
     given = [str(p) for p in draft.get("images", []) if Path(p).exists()]
     if given:
         return given
 
-    from scripts.naver.blog_marketing.images import fetch_unsplash_images, pick_3_images
+    from scripts.naver.blog.marketing.images import fetch_unsplash_images, pick_3_images
 
     pool = fetch_unsplash_images(count_per_query=3)
     if not pool:
@@ -168,7 +168,7 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
     # 이미지 회피**로 바꾼다.
     used: set[str] = set()
     try:
-        from scripts.naver.blog_marketing.topics import load_cache
+        from scripts.naver.blog.marketing.topics import load_cache
 
         for p in load_cache().get("posted", []):
             for path in p.get("img_paths", []) or []:
@@ -186,8 +186,8 @@ def collect_images(draft: dict, count: int = 3) -> list[str]:
 
 
 def publish(draft: dict, auto_images: bool = True) -> dict:
-    from scripts.naver.blog_marketing.publish import connect_and_ensure_login, publish_one, record_success
-    from scripts.naver.blog_marketing.topics import load_cache
+    from scripts.naver.blog.marketing.publish import connect_and_ensure_login, publish_one, record_success
+    from scripts.naver.blog.marketing.topics import load_cache
 
     body = draft["body"]
     images = collect_images(draft) if auto_images else [str(p) for p in draft.get("images", []) if Path(p).exists()]

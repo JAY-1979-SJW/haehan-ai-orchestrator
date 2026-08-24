@@ -1,7 +1,7 @@
 """CAD 물량산출 블로그 20편 임시저장 자동화.
 
 실행:
-    python scripts/ops/blog_cad_draft_posts.py
+    python scripts/naver/blog/cli/blog_cad_draft_posts.py
 
 동작:
     네이버 블로그에 CAD 물량산출 시리즈 20편을 임시저장으로 생성.
@@ -1506,4 +1506,12 @@ async def main():
             print(f"  {ed}: {dt} 08:00")
 
 
-asyncio.run(main())
+# 2026-08-24: `asyncio.run(main())` 이 가드 없이 모듈 최상단에 있었다.
+# 그래서 이 모듈을 **import 하기만 해도 블로그 글 19편 임시저장이 실제로
+# 시작**됐다(모듈 이동 후 import 검증 중 발견 — 브라우저 연결이 끊겨 실제
+# 저장분은 0편이었지만, 브라우저가 살아 있었다면 원치 않는 글 19편이
+# 그대로 만들어졌을 상황이다).
+#
+# 외부 공개 채널에 쓰는 스크립트는 **import ≠ 실행**이 반드시 보장돼야 한다.
+if __name__ == "__main__":
+    asyncio.run(main())

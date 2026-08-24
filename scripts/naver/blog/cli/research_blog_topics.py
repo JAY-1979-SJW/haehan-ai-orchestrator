@@ -13,11 +13,11 @@
 출력: data/blog_topic_research_latest.json
       {"generated_at", "keywords": [...], "topics": [...]}
 
-scripts/ops/blog_ai_batch_20.py 는 이 파일이 있으면(30일 이내) TOPIC_SEED
+scripts/naver/blog/cli/blog_ai_batch_20.py 는 이 파일이 있으면(30일 이내) TOPIC_SEED
 대신 이 결과를 우선 사용한다.
 
 사용:
-    python -m scripts.ops.research_blog_topics
+    python -m scripts.naver.blog.cli.research_blog_topics
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 

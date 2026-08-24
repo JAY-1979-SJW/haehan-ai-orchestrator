@@ -1,12 +1,12 @@
 """원본 1개 주제 → 채널별 콘텐츠 패키지 생성 (마케팅 운영실 v1).
 
-blog_marketing 파이프라인(topics.py/content.py)이 만드는 블로그 글을
+blog/marketing 파이프라인(topics.py/content.py)이 만드는 블로그 글을
 "원본"으로 삼고, 같은 주제를 유튜브 대본·쇼츠 대본·인스타 캡션·커뮤니티
 답변 초안으로 재가공한다. 실제 게시는 하지 않음 — 전부 초안 생성까지만
 (기준서 원칙: 미리보기 → 사람 승인 → 게시).
 
 사용:
-    from scripts.naver.blog_marketing.multichannel import generate_content_package
+    from scripts.naver.blog.marketing.multichannel import generate_content_package
     pkg = generate_content_package("벽등 하나 달았는데 왜 집이 호텔처럼 보일까?")
 """
 

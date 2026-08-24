@@ -5,7 +5,7 @@
 추가한 것 — 신규 모듈 아님).
 
 실행:
-  python scripts/ops/blog_analytics_report.py [--blog-id skyjwsin]
+  python scripts/naver/blog/cli/blog_analytics_report.py [--blog-id skyjwsin]
 
 출력: data/reports/blog_analytics_{blog_id}_{날짜}.json 저장 + 콘솔 요약.
 """

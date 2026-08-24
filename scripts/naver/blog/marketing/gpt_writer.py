@@ -28,7 +28,7 @@ ChatGPT 웹은 검색 기능이 있고, 무엇보다 **출력물을 Claude가 �
 
 사용:
     from scripts.cdp_helper import CDP
-    from scripts.naver.blog_marketing.gpt_writer import generate_draft
+    from scripts.naver.blog.marketing.gpt_writer import generate_draft
 
     cdp = CDP(port=9222)
     draft = generate_draft(cdp, {
@@ -47,8 +47,8 @@ from pathlib import Path
 
 from scripts.cdp_helper import CDP
 from scripts.logger import get_logger
-from scripts.naver.blog_marketing.competitor import research_competitors, summarize_for_prompt
-from scripts.naver.blog_marketing.content import (
+from scripts.naver.blog.marketing.competitor import research_competitors, summarize_for_prompt
+from scripts.naver.blog.marketing.content import (
     MIN_BODY_CHARS,
     MIN_TAG_COUNT,
     TARGET_BODY_CHARS,

@@ -5,8 +5,8 @@
   content.py  - AI 본문/제목 생성, SEO 점검
   publish.py  - CDP 로그인 + 발행 루프 (실제 네이버 블로그에 쓰는 유일한 지점)
 
-리서치 원본: scripts/ops/research_blog_topics.py
-커맨드라인 진입점: scripts/ops/blog_ai_batch_20.py (--dry-run, --count)
+리서치 원본: scripts/naver/blog/cli/research_blog_topics.py
+커맨드라인 진입점: scripts/naver/blog/cli/blog_ai_batch_20.py (--dry-run, --count)
 """
 
 from __future__ import annotations

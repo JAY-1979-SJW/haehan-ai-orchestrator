@@ -15,8 +15,8 @@ writer, post_cache), 반대로 목록에 있던 `blog_ai_batch_20.py`는 GPT 차
 3. 분리 대상 파일 존재 여부
 
 사용:
-    python -m scripts.ops.check_blog_separability          # 사람이 읽는 리포트
-    python -m scripts.ops.check_blog_separability --strict # 위반 시 exit 1 (CI용)
+    python -m scripts.naver.blog.cli.check_blog_separability          # 사람이 읽는 리포트
+    python -m scripts.naver.blog.cli.check_blog_separability --strict # 위반 시 exit 1 (CI용)
 """
 
 from __future__ import annotations
@@ -26,19 +26,19 @@ import re
 import sys
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-# 분리 대상 — 기준서 0절과 같은 목록. 새 파일을 추가하면 여기에도 넣는다.
+# 분리 대상 — 2026-08-24 모듈 통합 이후로는 **폴더 하나**다.
+#
+# 이전엔 파일 7개를 손으로 나열했는데, 그 목록이 6일 만에 낡아서 이 도구를
+# 만들게 됐다(위 docstring 참조). 통합 후에는 나열할 게 없다 —
+# `scripts/naver/blog/` 전체가 블로그 모듈이고, 새 파일을 이 폴더 어디에
+# 만들든 자동으로 검사 대상이 된다. **목록이 낡을 수가 없는 구조**이고,
+# 이것이 흩어진 4곳을 한 폴더로 모은 실질적 이유다.
 BLOG_PATHS = [
-    "scripts/naver/blog_marketing",
-    "scripts/naver/blog/core/writer.py",
-    "scripts/naver/blog/management/post_cache.py",
-    "scripts/naver/blog/management/analytics.py",
-    "scripts/ops/blog_publish_manual.py",
-    "scripts/ops/research_blog_topics.py",
-    "scripts/ops/blog_analytics_report.py",
+    "scripts/naver/blog",
 ]
 
 # 절대 참조하면 안 되는 타 업무 도메인 (기준서 "격리 규칙")
