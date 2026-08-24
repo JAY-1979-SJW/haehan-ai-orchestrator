@@ -12,11 +12,13 @@
 | 계정 | 도메인 | 주소 | 상태 |
 |---|---|---|---|
 | `skyjwsin` (기본) | 건설공무 | blog.naver.com/skyjwsin | 리서치·발행 파이프라인 완성 |
-| `skyjwshin` | 조명인테리어 | blog.naver.com/beautiful-light | 계정만 등록, **주제 리서치 미착수** |
+| `skyjwshin` | 조명인테리어 | blog.naver.com/beautiful-light | 리서치 1차 완료(오늘의집 기반), 발행 전 사람 검수 필요 |
 
-`skyjwshin`으로 발행하려면 먼저 조명 도메인 리서치(카페/검색량/실질문
-3중 검증 — `research_blog_topics.py`가 건설용으로 하는 것과 같은 과정)가
-필요하다. 검증 안 된 조명 키워드를 지어내 자동 분류하지 않는다
+`skyjwshin`은 카페가 없어(사용자 소유 카페뿐이라 편향 위험) 오늘의집
+커뮤니티(`scripts/community/sites/ohou.py`)+검색광고+지식iN 3중 검증으로
+리서치했다 — `cli/research_blog_topics_lighting.py` 참조,
+`data/blog_topic_research_lighting_latest.json`에 결과 저장.
+검증 안 된 조명 키워드를 지어내 자동 분류하지 않는다
 (`topics.py::classify_account()` 참조 — 매칭 안 되면 사람 판단으로 넘긴다).
 
 CLI 대부분은 `--account skyjwsin|skyjwshin` 인자를 받는다(기본값 skyjwsin).

@@ -35,11 +35,14 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         # 바꿨다(네이버 정책상 1회성, 되돌릴 수 없음) — blog_id(로그인 계정)와
         # 공개 주소가 다르니 혼동하지 않는다.
         "public_url": "https://blog.naver.com/beautiful-light",
-        # 2026-08-24 시점: 조명 주제 리서치가 아직 없다. 건설 블로그처럼
-        # 카페 빈도+검색광고+지식iN 3중 검증을 거친 주제 풀이 없으므로,
-        # 이 계정으로 자동 주제 생성/발행을 돌리면 안 된다 — 먼저 리서치가
-        # 필요하다(naver_blog_content_standard.md 1절과 같은 과정).
-        "topic_research_ready": False,
+        # 2026-08-24: 오늘의집 커뮤니티 기반 3중 검증(오늘의집 빈도+검색광고+
+        # 지식iN) 1차 리서치 완료 — research_blog_topics_lighting.py 참조.
+        # data/blog_topic_research_lighting_latest.json 에 주제 68개 확보.
+        # 다만 아직 사람이 직접 골라 쓴 적은 없다 — 자동 발행 파이프라인
+        # (blog_publish_manual.py --account skyjwshin)에 그대로 물리기 전에
+        # 주제 품질을 한 번 검수할 것.
+        "topic_research_ready": True,
+        "topic_research_file": "data/blog_topic_research_lighting_latest.json",
     },
 }
 
