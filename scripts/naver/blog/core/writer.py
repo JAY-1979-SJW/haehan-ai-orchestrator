@@ -1300,6 +1300,16 @@ def edit_post(
                 blocks.append({"type": "image", "value": images[i]})
         if not bw.write_mixed_content(blocks):
             return {"ok": False, "error": "body_segments_failed"}
+    elif images:
+        # 2026-08-24 버그: body_segments 없이 images만 넘기면(호출부가
+        # body_segments를 안 채운 경우) 이 분기가 없어서 images가 통째로
+        # 버려졌다 — 발행 자체는 성공으로 보고돼 눈치채기 어려웠다
+        # (skyjwshin 첫 수정발행에서 사진 3장+작성자 사진 1장이 전부 사라짐).
+        # write_post()의 같은 폴백(이미지 전부 앞에, 본문 뒤)을 그대로 맞춘다.
+        for img in images:
+            bw.insert_image(img)
+        if not bw.write_body(body):
+            return {"ok": False, "error": "body_failed"}
     else:
         if not bw.write_body(body):
             return {"ok": False, "error": "body_failed"}
