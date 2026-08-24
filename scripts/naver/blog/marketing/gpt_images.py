@@ -22,7 +22,7 @@ CDP로 열어 프롬프트로 이미지를 생성시키고 로컬에 저장한�
 
 사용법:
     from scripts.cdp_helper import CDP
-    from scripts.naver.blog_marketing.gpt_images import generate_image
+    from scripts.naver.blog.marketing.gpt_images import generate_image
 
     cdp = CDP(port=9222)
     path = generate_image(cdp, "건설 현장에서 서류를 검토하는 실무자, 사진 같은 느낌, 텍스트 없음",

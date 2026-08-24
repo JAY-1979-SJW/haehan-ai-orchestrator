@@ -1,6 +1,6 @@
 """AI 블로그 일괄 작성 커맨드라인 진입점 (대상 계정: skyjwsin).
 
-실제 로직은 scripts/naver/blog_marketing/ 패키지에 섹션별로 분리되어 있다:
+실제 로직은 scripts/naver/blog/marketing/ 패키지에 섹션별로 분리되어 있다:
   topics.py   - 주제 선정 (리서치 결과 우선, 부족분만 AI 보충)
   images.py   - Unsplash 이미지 수집/배분
   content.py  - AI 본문/제목 생성 + SEO 점검
@@ -14,7 +14,7 @@
   5. 발행 성공 시 캐시 업데이트
 
 실행:
-  python scripts/ops/blog_ai_batch_20.py [--dry-run] [--count N]
+  python scripts/naver/blog/cli/blog_ai_batch_20.py [--dry-run] [--count N]
 """
 
 from __future__ import annotations
@@ -27,17 +27,17 @@ from pathlib import Path
 sys.path.insert(0, ".")
 
 from scripts.logger import get_logger
-from scripts.naver.blog_marketing import TARGET_BLOG_ID
-from scripts.naver.blog_marketing.content import generate_post
-from scripts.naver.blog_marketing.images import fetch_unsplash_images, pick_3_images
-from scripts.naver.blog_marketing.publish import (
+from scripts.naver.blog.marketing import TARGET_BLOG_ID
+from scripts.naver.blog.marketing.content import generate_post
+from scripts.naver.blog.marketing.images import fetch_unsplash_images, pick_3_images
+from scripts.naver.blog.marketing.publish import (
     connect_and_ensure_login,
     existing_unsplash_fallback,
     publish_one,
     record_success,
     wait_between_posts,
 )
-from scripts.naver.blog_marketing.topics import generate_topics, load_cache
+from scripts.naver.blog.marketing.topics import generate_topics, load_cache
 
 _log = get_logger(__name__)
 

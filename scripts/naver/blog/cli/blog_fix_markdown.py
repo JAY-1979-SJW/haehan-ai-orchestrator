@@ -12,9 +12,9 @@
   "## [AI 자동화 활용]" → "[AI 자동화 활용]"
 
 사용:
-    python -m scripts.ops.blog_fix_markdown --limit 1        # 1건만(테스트)
-    python -m scripts.ops.blog_fix_markdown --limit 1 --apply # 실제 저장
-    python -m scripts.ops.blog_fix_markdown --all --apply     # 전체
+    python -m scripts.naver.blog.cli.blog_fix_markdown --limit 1        # 1건만(테스트)
+    python -m scripts.naver.blog.cli.blog_fix_markdown --limit 1 --apply # 실제 저장
+    python -m scripts.naver.blog.cli.blog_fix_markdown --all --apply     # 전체
 """
 
 from __future__ import annotations
@@ -26,13 +26,13 @@ import sys
 import time
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.logger import get_logger  # noqa: E402
 
-_log = get_logger("scripts.ops.blog_fix_markdown")
+_log = get_logger("scripts.naver.blog.cli.blog_fix_markdown")
 
 BLOG_ID = "skyjwsin"
 CDP_URL = "http://127.0.0.1:9222"

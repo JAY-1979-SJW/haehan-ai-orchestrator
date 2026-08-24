@@ -1,6 +1,6 @@
 """주제 선정 - 리서치 결과 로드, 발행 캐시, AI 보충 생성.
 
-scripts/ops/research_blog_topics.py 가 만드는 data/blog_topic_research_latest.json
+scripts/naver/blog/cli/research_blog_topics.py 가 만드는 data/blog_topic_research_latest.json
 (카페 빈도 + 네이버 검색광고 실검색량 + 지식iN 실제 질문 3중 검증)을 우선 사용한다.
 AI는 주제를 새로 지어내지 않고 실제 질문을 그대로 쓰는 것이 원칙 - 리서치 풀이
 부족할 때만 나머지를 AI로 보충 생성한다(이 보충분은 인용 근거가 없음).
