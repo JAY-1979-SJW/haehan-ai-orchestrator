@@ -53,6 +53,19 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         # 주제 품질을 한 번 검수할 것.
         "topic_research_ready": True,
         "topic_research_file": "data/blog_topic_research_lighting_latest.json",
+        # 2026-08-24 사용자 요청: 작성자 정보를 모든 글 하단에 상시 노출.
+        # 실제 자격증·경력(회사소개서.pdf, 승민전력 신재우 대표 이력서)에서
+        # 가져온 것 — 지어낸 스펙 아님. CTA(제품/서비스 안내, 주제마다
+        # Claude가 직접 작성)와는 별개로, 이건 글 내용과 무관하게 항상
+        # 똑같이 붙는 "글쓴이 소개"라서 CTA 정직성 원칙(주제마다 재작성)
+        # 대상이 아니다 — 고정 서명이 맞다.
+        "author_signature": (
+            "\n\n[글쓴이]\n"
+            "신재우 (반딧불 조명 스튜디오 · 승민전력 대표)\n"
+            "전기공사산업기사 · 소방전기기사 보유\n"
+            "판교 R&D센터, 위례 오벨리스크, 동탄 골든아이타워 등 대형현장 전기·소방 시공 20년 이상"
+        ),
+        "author_photo": r"C:\Users\skyjw\OneDrive\전등 이미지\images\blog_ai_batch\author_shinjaewoo.jpg",
     },
 }
 
