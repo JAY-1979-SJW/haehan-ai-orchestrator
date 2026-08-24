@@ -1,7 +1,25 @@
 # 블로그 모듈 (`scripts/naver/blog/`)
 
-네이버 블로그(`skyjwsin`) 마케팅 관련 코드는 **전부 이 폴더 안에** 있다.
+네이버 블로그 마케팅 관련 코드는 **전부 이 폴더 안에** 있다.
 2026-08-24에 4곳에 흩어져 있던 것을 여기로 모았다.
+
+## 계정 (2026-08-24 다중화)
+
+`accounts.py`에 등록된 계정 2개를 관리한다. 계정마다 발행 이력 캐시가
+**분리**돼 있다(`data/blog_topic_cache_{계정}.json`) — 섞으면 중복 발행
+방지 로직이 오작동한다.
+
+| 계정 | 도메인 | 주소 | 상태 |
+|---|---|---|---|
+| `skyjwsin` (기본) | 건설공무 | blog.naver.com/skyjwsin | 리서치·발행 파이프라인 완성 |
+| `skyjwshin` | 조명인테리어 | blog.naver.com/beautiful-light | 계정만 등록, **주제 리서치 미착수** |
+
+`skyjwshin`으로 발행하려면 먼저 조명 도메인 리서치(카페/검색량/실질문
+3중 검증 — `research_blog_topics.py`가 건설용으로 하는 것과 같은 과정)가
+필요하다. 검증 안 된 조명 키워드를 지어내 자동 분류하지 않는다
+(`topics.py::classify_account()` 참조 — 매칭 안 되면 사람 판단으로 넘긴다).
+
+CLI 대부분은 `--account skyjwsin|skyjwshin` 인자를 받는다(기본값 skyjwsin).
 
 ## 구조
 

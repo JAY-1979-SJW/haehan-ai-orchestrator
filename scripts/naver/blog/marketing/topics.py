@@ -15,10 +15,14 @@ from pathlib import Path
 
 from scripts.logger import get_logger
 from scripts.naver.automation.ai_responder import AIResponder
+from scripts.naver.blog.accounts import cache_file_for
 
 _log = get_logger(__name__)
 
-CACHE_FILE = Path("data/blog_topic_cache.json")
+# 2026-08-24: 계정이 skyjwsin 하나뿐일 때 쓰던 고정 경로. 이제 계정별로
+# 분리됐지만(accounts.cache_file_for), 이 상수는 blog_id 인자 없이 부르는
+# 기존 호출부(load_cache()/save_cache())의 기본 대상으로 계속 쓴다.
+CACHE_FILE = Path(cache_file_for())  # 기본 계정(skyjwsin)
 RESEARCH_FILE = Path("data/blog_topic_research_latest.json")
 _RESEARCH_MAX_AGE_DAYS = 30
 
@@ -65,18 +69,22 @@ FALLBACK_TOPIC_SEED = [
 # ── 캐시 관리 ─────────────────────────────────────────────────────────────
 
 
-def load_cache() -> dict:
-    if CACHE_FILE.exists():
+def load_cache(blog_id: str | None = None) -> dict:
+    """blog_id 생략 시 기본 계정(skyjwsin) 캐시. 계정별로 파일이 분리돼 있어
+    한 계정의 발행 이력이 다른 계정의 중복 검사에 섞이지 않는다."""
+    path = Path(cache_file_for(blog_id)) if blog_id else CACHE_FILE
+    if path.exists():
         try:
-            return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8"))
         except Exception:
             pass
     return {"topics": [], "posted": []}
 
 
-def save_cache(cache: dict) -> None:
-    CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+def save_cache(cache: dict, blog_id: str | None = None) -> None:
+    path = Path(cache_file_for(blog_id)) if blog_id else CACHE_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def topic_key(title: str) -> str:
@@ -220,6 +228,21 @@ def get_researched_topics(product_only: bool = True) -> list[dict]:
     except Exception as e:
         _log.warning("[topic-seed] 리서치 파일 로드 실패, 폴백 사용: %s", e)
     return []
+
+
+def classify_account(topic_text: str) -> str | None:
+    """주제 텍스트로 어느 계정에 발행할지 자동 판정.
+
+    지금은 skyjwsin(건설) 쪽만 검증된 키워드(PRODUCT_KEYWORDS)가 있다.
+    skyjwshin(조명)은 아직 리서치가 없어서(accounts.py 참조) 키워드를
+    지어내지 않는다 — 기준서 원칙(수치·근거 없는 것은 만들지 않는다)과
+    같은 이유. 매칭이 안 되면 None을 반환해 **사람이 판단**하게 한다.
+    자동 오분류로 엉뚱한 계정에 발행되는 것보다 이게 안전하다.
+    """
+    text = topic_text or ""
+    if any(k in text for k in PRODUCT_KEYWORDS) and not any(k in text for k in EXCLUDE_KEYWORDS):
+        return "skyjwsin"
+    return None
 
 
 def get_topic_seed() -> list[str]:
