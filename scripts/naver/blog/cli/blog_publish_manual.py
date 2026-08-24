@@ -47,7 +47,7 @@ _log = get_logger("scripts.naver.blog.cli.blog_publish_manual")
 def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
     """발행 전 네이버 로그인 상태를 **미리** 확인한다.
 
-    2026-08-24 사고: 세션이 만료돼 로그아웃된 걸 모르고 발행을 걸었더니
+    2026-08-24 사고 ①: 세션이 만료돼 로그아웃된 걸 모르고 발행을 걸었더니
     `connect_and_ensure_login()`이 자동 재로그인을 시도하다 **캡차**에 막혀
     실패했다(`captcha_timeout`). 이미지 업로드까지 다 한 뒤에야 실패를
     알게 돼 시간이 버려졌다.
@@ -56,12 +56,21 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
     멈춘다. **자동 재로그인은 시도하지 않는다** — 캡차는 사람만 풀 수 있고
     (CLAUDE.md), 반복 시도는 계정 잠금 위험만 키운다.
 
+    2026-08-24 사고 ②: skyjwshin 첫 실전 발행에서 **정상 로그인 상태인데
+    "로그아웃"으로 오판**했다. admin.blog.naver.com/{alias}/ 의 {alias}는
+    로그인 ID가 아니라 **공개 주소**(커스텀 설정 시 하이픈 포함,
+    "beautiful-light")인데, 정규식이 `[a-zA-Z0-9_]+`라 하이픈을 못 잡아
+    매칭 자체가 실패했고, blogId가 비어 "로그아웃"으로 처리됐다. 정규식에
+    하이픈을 추가하고, 비교 대상도 로그인 ID가 아니라
+    `accounts.py::public_alias`(계정별 실제 공개 주소)로 바꿨다.
+
     반환: {"ok": bool, "blog_id": str, "reason": str}
     """
     from scripts.cdp_helper import CDP
     from scripts.naver.blog.accounts import get_account
 
-    target_blog_id = blog_id or get_account()["blog_id"]
+    account = get_account(blog_id)
+    target_alias = account.get("public_alias") or account["blog_id"]
 
     # CDP 연결 자체도 try 안에서 한다 — 브라우저가 안 떠 있으면 여기서
     # URLError가 나는데, 밖에 두면 깔끔한 실패 대신 트레이스백이 터진다.
@@ -73,7 +82,7 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
         raw = cdp.js(
             """(function(){
               var a = document.querySelector('a[href*="admin.blog.naver.com/"]');
-              var m = a ? a.href.match(/admin\\.blog\\.naver\\.com\\/([a-zA-Z0-9_]+)\\//) : null;
+              var m = a ? a.href.match(/admin\\.blog\\.naver\\.com\\/([a-zA-Z0-9_-]+)\\//) : null;
               var t = document.body ? document.body.innerText : '';
               return JSON.stringify({
                 blogId: m ? m[1] : '',
@@ -88,12 +97,16 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
         if cdp is not None:
             cdp.close()
 
-    blog_id = info.get("blogId", "")
-    if info.get("loggedOut") or not blog_id:
+    detected_alias = info.get("blogId", "")
+    if info.get("loggedOut") or not detected_alias:
         return {"ok": False, "blog_id": "", "reason": "네이버 로그아웃 상태"}
-    if blog_id != target_blog_id:
-        return {"ok": False, "blog_id": blog_id, "reason": f"다른 계정 로그인됨({blog_id}, 기대: {target_blog_id})"}
-    return {"ok": True, "blog_id": blog_id, "reason": ""}
+    if detected_alias != target_alias:
+        return {
+            "ok": False,
+            "blog_id": detected_alias,
+            "reason": f"다른 계정 로그인됨({detected_alias}, 기대: {target_alias})",
+        }
+    return {"ok": True, "blog_id": detected_alias, "reason": ""}
 
 
 def load_draft(path: Path) -> dict:
