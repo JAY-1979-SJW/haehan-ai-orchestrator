@@ -159,7 +159,10 @@ class BlogWriter:
                 return a ? a.href : null;
             }""")
             if href:
-                m = re.search(r"admin\.blog\.naver\.com/([a-zA-Z0-9_]+)", href)
+                # 2026-08-24: 하이픈 있는 커스텀 공개 주소("beautiful-light")를
+                # "beautiful"까지만 잘라 감지해 존재하지 않는 blogId로 편집기를
+                # 열려다 타임아웃 난 사고 — 문자 클래스에 하이픈 추가.
+                m = re.search(r"admin\.blog\.naver\.com/([a-zA-Z0-9_-]+)", href)
                 if m:
                     _id = m.group(1)
                     if _id not in ("stat", "category", "manage"):
