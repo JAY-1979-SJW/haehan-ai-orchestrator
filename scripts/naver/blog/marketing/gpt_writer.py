@@ -58,9 +58,9 @@ from scripts.naver.blog.marketing.content import (
 
 _log = get_logger(__name__)
 
-# ── 상시 고정 프로젝트 (2026-08-24 사용자 지정) ────────────────────────────
-# 블로그 초안은 **항상 "건설전문 ai" 프로젝트 안에서** 생성한다. 프로젝트에
-# 건설 도메인 커스텀 지시가 걸려 있어 빈 대화창보다 맥락이 좋기 때문이다.
+# ── 상시 고정 프로젝트 (계정별, 2026-08-24 확장) ────────────────────────────
+# 블로그 초안은 **항상 계정 전용 ChatGPT 프로젝트 안에서** 생성한다. 프로젝트에
+# 도메인 커스텀 지시가 걸려 있어 빈 대화창보다 맥락이 좋기 때문이다.
 #
 # ⚠️ 그냥 URL로 이동만 하면 **실패해도 조용히 빈 대화창에서 생성**되어
 # 품질이 떨어진 걸 눈치채기 어렵다. 그래서 `ensure_project()`로 실제로
@@ -68,24 +68,37 @@ _log = get_logger(__name__)
 #
 # 프로젝트 안에서 새 대화를 시작하면 URL이 `/g/{PROJECT_ID}/c/{대화ID}` 가
 # 되므로, PROJECT_ID 포함 여부로 프로젝트 소속을 판정할 수 있다.
-PROJECT_ID = "g-p-6a8b0a1b7ef881919d1b00bb5f6b481c-geonseoljeonmun-ai"
+PROJECT_IDS = {
+    "skyjwsin": "g-p-6a8b0a1b7ef881919d1b00bb5f6b481c-geonseoljeonmun-ai",  # 건설전문 ai
+    "skyjwshin": "g-p-6a8910f9c8088191b3f3f8098f0c6959-bandisbul-jeonpasa",  # 반딧불 전파사 (2026-08-24 추가)
+}
+
+# 하위호환 — blog_id 인자 없이 부르는 기존 호출부는 skyjwsin(건설) 프로젝트.
+PROJECT_ID = PROJECT_IDS["skyjwsin"]
 PROJECT_URL = f"https://chatgpt.com/g/{PROJECT_ID}/project"
 CHATGPT_URL = PROJECT_URL  # 하위호환용 별칭
 
 
-def in_project(cdp: CDP) -> bool:
-    """현재 열린 탭이 '건설전문 ai' 프로젝트(또는 그 안의 대화)인지."""
-    return PROJECT_ID in (cdp.js("location.href") or "")
+def project_url(blog_id: str | None = None) -> str:
+    pid = PROJECT_IDS.get(blog_id or "skyjwsin", PROJECT_ID)
+    return f"https://chatgpt.com/g/{pid}/project"
 
 
-def ensure_project(cdp: CDP, wait: float = 3.5, retries: int = 2) -> bool:
+def in_project(cdp: CDP, blog_id: str | None = None) -> bool:
+    """현재 열린 탭이 해당 계정 전용 프로젝트(또는 그 안의 대화)인지."""
+    pid = PROJECT_IDS.get(blog_id or "skyjwsin", PROJECT_ID)
+    return pid in (cdp.js("location.href") or "")
+
+
+def ensure_project(cdp: CDP, wait: float = 3.5, retries: int = 2, blog_id: str | None = None) -> bool:
     """프로젝트 안으로 이동시키고, 실제로 들어갔는지 확인한다."""
+    url = project_url(blog_id)
     for attempt in range(retries + 1):
-        if in_project(cdp):
+        if in_project(cdp, blog_id):
             return True
-        cdp.js(f"location.href = '{PROJECT_URL}';")
+        cdp.js(f"location.href = '{url}';")
         time.sleep(wait)
-        if in_project(cdp):
+        if in_project(cdp, blog_id):
             return True
         _log.warning("[gpt-writer] 프로젝트 진입 재시도 %d/%d", attempt + 1, retries)
     return False
@@ -149,6 +162,72 @@ _PROMPT_TEMPLATE = """당신은 한국 건설 실무 블로그 작가입니다. 
 - tags: {min_tags}~{target_tags}개. 법령명·기관명·핵심개념·업종명·유의어
 - body: 위 구조대로 쓴 본문 전체. 줄바꿈은 \\n 으로
 """
+
+# skyjwshin(조명·인테리어) 전용 프롬프트 (2026-08-24 추가). 건설과 달리
+# 법령·계약예규 근거가 아니라 **실제 시공 경험/제품 스펙**이 신뢰의 근거다.
+# 지어내면 안 되는 대상도 다르다 — "법 조항"이 아니라 "구체적 규격·전압·
+# 가격대" 같은 확인 안 된 수치.
+_LIGHTING_PROMPT_TEMPLATE = """당신은 한국 조명·인테리어 실무 블로그 작가입니다. 아래 규칙을 정확히 지켜 글 1편을 써주세요.
+
+[주제] {topic}
+[검색자의 실제 질문] {source}
+[핵심 키워드] {keywords}
+
+## 먼저 할 일 — 근거 조사 (건너뛰지 마세요)
+글을 쓰기 전에 **웹 검색으로 실제 근거를 찾으세요.** 제품 규격·전압·설치
+방식·업계에서 통용되는 시공 방법을 확인하고, 확실하지 않은 가격대·정확한
+규격 수치는 **쓰지 말고** "정확한 사양은 구매 전 확인하시라"고 안내하세요.
+추측으로 가격·전력소비량·수명(시간)을 만들어내면 안 됩니다.
+
+{competitor_block}
+
+## 필수 구조 — 대괄호 소제목을 그대로 쓰세요
+[핵심 답변]
+2~3문장으로 결론부터. 스크롤하지 않아도 답이 보여야 합니다.
+
+[이런 상황이시죠]
+검색자가 막힌 지점을 구체적으로 짚습니다. 질문을 그대로 반복하지 마세요.
+
+[왜 헷갈리나]
+쟁점이 무엇인지, 어디서 판단이 갈리는지(예: 제품마다 규격이 달라서/직접
+시공이 위험해서 등).
+
+[이렇게 하시면 됩니다]
+이 글의 본체입니다(전체 분량의 50~60%). 순서·판단기준을 번호를 매겨
+구체적으로 씁니다. 체크리스트가 있으면 · 로 나열하세요. 전문 시공이
+필요한 경우(누전 위험, 매입등 배선 작업 등)와 직접 해도 되는 경우를
+분명히 구분해주세요.
+
+[정리하면]
+결론을 다시 못박습니다. 이 문단만 읽어도 뭘 해야 할지 알 수 있어야 합니다.
+
+## 분량·문체
+- 본문 {min_chars}자 이상(공백 포함), {target_chars}자 목표
+- 문단은 2~3줄. 모바일에서 글자 벽처럼 보이면 안 됩니다
+- 짧은 문장. 한 문장에 한 가지만. 만연체 금지
+- "~합니다" 기본, 가끔 "~예요"로 힘 빼기. 딱딱한 문어체 금지
+- 전문용어는 첫 등장에 풀어쓰기(예: "다운라이트(매입등)")
+
+## 절대 금지
+- 마크다운 기호(##, **, -) 사용 금지. 네이버는 렌더링하지 않아 그대로 노출됩니다
+- **지어낸 가격·전력소비량·제품 스펙 절대 금지.** 확실하지 않으면 숫자를
+  쓰지 말고 "정확한 사양은 구매/시공 전 확인하시라"고 안내하세요.
+- 내용 없는 문장 금지: "복잡할 수 있습니다", "중요합니다", "주의가 필요합니다"
+- 제품·서비스 홍보 문구를 넣지 마세요. 광고는 별도로 붙입니다
+
+## 출력 형식
+다른 설명 없이 아래 JSON만 출력하세요.
+{{"title": "...", "tags": ["...", "..."], "body": "..."}}
+
+- title: 30~50자. 검색자가 실제로 입력할 키워드를 앞쪽에 배치
+- tags: {min_tags}~{target_tags}개. 제품유형·공간유형·핵심개념·유의어
+- body: 위 구조대로 쓴 본문 전체. 줄바꿈은 \\n 으로
+"""
+
+_PROMPT_TEMPLATES = {
+    "skyjwsin": _PROMPT_TEMPLATE,
+    "skyjwshin": _LIGHTING_PROMPT_TEMPLATE,
+}
 
 # 응답 텍스트를 읽되 **인용 칩을 제거**하고 읽는다.
 # ChatGPT가 웹검색을 하면 본문 중간에 출처 칩(`a[href^=http]`, 예: "법률정보
@@ -281,6 +360,7 @@ def generate_draft(
     out_path: str | None = None,
     new_chat: bool = True,
     research_competitors_first: bool = True,
+    blog_id: str | None = None,
 ) -> dict:
     """GPT에게 초안을 요청해 받아오고 자동 점검까지 수행한다.
 
@@ -303,7 +383,8 @@ def generate_draft(
         except Exception as e:
             _log.warning("[gpt-writer] 경쟁 글 조사 실패(무시하고 진행): %s", e)
 
-    prompt = _PROMPT_TEMPLATE.format(
+    template = _PROMPT_TEMPLATES.get(blog_id or "skyjwsin", _PROMPT_TEMPLATE)
+    prompt = template.format(
         topic=topic_info.get("topic", ""),
         source=topic_info.get("source", "(없음)"),
         keywords=", ".join(topic_info.get("keywords", [])),
@@ -314,15 +395,15 @@ def generate_draft(
         target_tags=TARGET_TAG_COUNT,
     )
 
-    # 상시 고정: 반드시 "건설전문 ai" 프로젝트 안에서 생성한다.
+    # 상시 고정: 반드시 계정 전용 프로젝트 안에서 생성한다.
     # 진입 실패 시 **조용히 빈 대화창에서 쓰지 않고 멈춘다** — 프로젝트 커스텀
     # 지시가 빠진 채 생성되면 품질이 떨어지는데 결과만 봐선 알기 어렵기 때문.
-    if new_chat and not ensure_project(cdp):
+    if new_chat and not ensure_project(cdp, blog_id=blog_id):
         return {
             "draft": None,
             "review": {
                 "ok": False,
-                "problems": [f"'건설전문 ai' 프로젝트 진입 실패 — 현재 URL: {cdp.js('location.href')}"],
+                "problems": [f"프로젝트 진입 실패({blog_id}) — 현재 URL: {cdp.js('location.href')}"],
             },
             "raw": "",
             "competitors": competitors,
