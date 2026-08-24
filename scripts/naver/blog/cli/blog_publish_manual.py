@@ -120,6 +120,30 @@ def load_draft(path: Path) -> dict:
     return draft
 
 
+def apply_author_signature(draft: dict, blog_id: str | None) -> dict:
+    """계정에 고정 작성자 서명(accounts.py::author_signature/author_photo)이
+    등록돼 있으면 본문 끝에 자동으로 붙인다.
+
+    2026-08-24 사용자 요청 — skyjwshin 첫 글에서 수동으로 붙였던 걸(신재우
+    자격증·경력 소개 + 증명사진) 앞으로는 매 글 자동으로 붙게 만들었다.
+    CTA(주제마다 Claude가 새로 쓰는 것)와 달리 이건 글 내용과 무관하게
+    항상 동일한 고정 텍스트라 재작성 대상이 아니다. 이미 붙어 있으면
+    중복 삽입하지 않는다(재실행 안전).
+    """
+    from scripts.naver.blog.accounts import get_account
+
+    account = get_account(blog_id)
+    sig = account.get("author_signature")
+    if sig and sig.strip() not in draft["body"]:
+        draft["body"] = draft["body"].rstrip() + sig
+
+    photo = account.get("author_photo")
+    if photo and Path(photo).exists() and photo not in draft.get("images", []):
+        draft.setdefault("images", []).append(photo)
+
+    return draft
+
+
 def review(draft: dict) -> dict:
     """발행 전 점검. content.py 와 같은 기준을 쓴다."""
     seo = seo_check(title=draft["title"], body=draft["body"], keywords=draft.get("tags", []))
@@ -260,7 +284,15 @@ def main() -> None:
 
     draft_path = Path(args.draft)
     draft = load_draft(draft_path)
+    # 순서 중요: ensure_images()는 draft["images"]가 이미 채워져 있으면
+    # 아예 수집을 건너뛴다. author_signature를 먼저 붙이면 작성자 사진
+    # 하나만 들어간 상태로 "이미 채워짐" 취급돼 본문 사진 수집이 통째로
+    # 스킵된다 — 반드시 본문 사진부터 모으고 나서 서명을 붙인다.
     ensure_images(draft, draft_path, auto_images=not args.no_images, blog_id=blog_id)
+    before = json.dumps(draft, ensure_ascii=False, sort_keys=True)
+    draft = apply_author_signature(draft, blog_id)
+    if json.dumps(draft, ensure_ascii=False, sort_keys=True) != before:
+        draft_path.write_text(json.dumps(draft, ensure_ascii=False, indent=2), encoding="utf-8")
     seo = review(draft)
 
     if not args.publish:
