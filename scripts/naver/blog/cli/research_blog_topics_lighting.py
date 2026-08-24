@@ -119,6 +119,70 @@ _GENERIC_WORDS = {
     # 불용어에서 제외했다 — 지금은 유효한 주제 후보다.
 }
 
+# 2026-08-24 4차 — 오늘의집 단독 분석(검색광고 필터 없이 순수 빈도표)에서
+# "있는","너무","제가","도와주세요" 같은 조사/부사/서술어가 상위권에 그대로
+# 남는 걸 확인했다. 하나씩 리스트에 추가하는 건 밑 빠진 독이라(다음 도메인
+# 리서치를 만들 때마다 반복될 문제), **어미 패턴으로 걸러내는 규칙**을
+# 추가한다 — "~습니다/해요/네요/까요/거나" 등으로 끝나는 토큰은 거의 항상
+# 서술어/부사이지 콘텐츠 키워드(명사)가 아니다.
+_PREDICATE_SUFFIX_RE = re.compile(
+    r"(습니다|합니다|했어요|해요|네요|까요|어요|아요|세요|거나|는데|은데|더라구요|"
+    r"드려요|드립니다|였어요|이에요|예요|이네요|있어요|있나요|이나요|고요|지요|죠)$"
+)
+# 순수 대명사/부사 — 어미 규칙으로 안 걸러지는 짧은 기능어.
+_PRONOUN_ADVERB_WORDS = {
+    "제가",
+    "저는",
+    "저희",
+    "우리",
+    "너무",
+    "정말",
+    "많이",
+    "이거",
+    "저거",
+    "그거",
+    "이건",
+    "저건",
+    "그건",
+    "이게",
+    "저게",
+    "그게",
+    "그리고",
+    "하지만",
+    "그런데",
+    "특히",
+    "직접",
+    "훨씬",
+    "따로",
+}
+# 존재/소유 동사(있다·없다) 활용형 — "는/어/고/음" 등 어미가 짧고 다양해
+# 정규식 한 줄로 못 잡는다. 콘텐츠 각도가 전혀 없는 말이라 통째로 막는다.
+_EXISTENTIAL_VERB_FORMS = {
+    "있는",
+    "있어",
+    "있고",
+    "있음",
+    "있지",
+    "있을",
+    "있게",
+    "있던",
+    "없는",
+    "없어",
+    "없고",
+    "없음",
+    "없지",
+}
+
+
+def _is_stopword(tok: str) -> bool:
+    return (
+        tok in _GENERIC_WORDS
+        or tok in _PRONOUN_ADVERB_WORDS
+        or tok in _EXISTENTIAL_VERB_FORMS
+        or bool(_PREDICATE_SUFFIX_RE.search(tok))
+    )
+
+
 _MIN_SEARCH_VOLUME = 500
 _TOP_KEYWORD_COUNT = 15
 _KIN_DISPLAY = 10
@@ -149,7 +213,7 @@ def _top_keyword_candidates(posts: list[dict], top_n: int = 40) -> list[tuple[st
     for p in posts:
         text = p.get("title", "") + " " + p.get("snippet", "")
         for tok in re.findall(r"[가-힣]{2,}", text):
-            if tok not in _GENERIC_WORDS:
+            if not _is_stopword(tok):
                 counter[tok] += 1
     return counter.most_common(top_n)
 
