@@ -155,7 +155,7 @@ def collect_images(draft: dict, count: int = 3, blog_id: str | None = None) -> l
 
     from scripts.naver.blog.marketing.images import fetch_unsplash_images, pick_3_images
 
-    pool = fetch_unsplash_images(count_per_query=3)
+    pool = fetch_unsplash_images(count_per_query=3, blog_id=blog_id)
     if not pool:
         _log.warning("[manual] Unsplash 이미지 수집 실패 — 이미지 없이 발행")
         return []

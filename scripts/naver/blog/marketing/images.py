@@ -50,18 +50,52 @@ UNSPLASH_QUERIES = [
     ("construction worker tools", "건설 도구"),
 ]
 
+# 조명·인테리어(skyjwshin) 검색 쿼리. 2026-08-24 추가 — 이전엔 계정과
+# 무관하게 UNSPLASH_QUERIES(건설 전용)만 있어서 조명 발행 시도에도 건설
+# 현장 사진이 나올 뻔했다(실제로는 401로 먼저 걸림, _unsplash_key() 버그
+# 참조). 계정 인자로 검색어 세트를 고르도록 분리한다.
+LIGHTING_UNSPLASH_QUERIES = [
+    ("pendant light interior", "펜던트 조명"),
+    ("ceiling light living room", "거실 천장등"),
+    ("floor lamp cozy room", "플로어 스탠드"),
+    ("led strip light interior", "LED 라인조명"),
+    ("bedside lamp warm light", "침실 무드등"),
+    ("kitchen island lighting", "주방 조명"),
+    ("minimal apartment interior", "미니멀 인테리어"),
+    ("studio apartment cozy", "원룸 인테리어"),
+    ("home renovation interior", "셀프 인테리어"),
+    ("electrician installing light", "전기 시공"),
+    ("modern living room lamp", "모던 거실 조명"),
+    ("wall sconce light", "벽등"),
+]
+
+_QUERY_SETS = {
+    "skyjwsin": UNSPLASH_QUERIES,
+    "skyjwshin": LIGHTING_UNSPLASH_QUERIES,
+}
+
+
+def queries_for(blog_id: str | None = None) -> list[tuple[str, str]]:
+    return _QUERY_SETS.get(blog_id or "skyjwsin", UNSPLASH_QUERIES)
+
 
 def _img_dir():
     return get_local_data_dir() / "images" / "blog_ai_batch"
 
 
 def _unsplash_key() -> str:
+    # 2026-08-24 실측: fetch_unsplash_images()가 이 함수를 _img_dir()보다
+    # 먼저 호출하는데, load_dotenv()는 _img_dir()->get_local_data_dir()
+    # 안에만 있었다. 그래서 첫 실행 시 키가 아직 안 읽혀 12개 쿼리 전부
+    # 401이 나고("이미지 없이 발행"), 그제서야 뒤늦게 dotenv가 로드돼도
+    # 이미 pool이 비어 소용없었다. 여기서도 로드해 순서 의존성을 없앤다.
+    load_dotenv(override=True, encoding="utf-8")
     return os.environ.get("UNSPLASH_ACCESS_KEY", "")
 
 
-def fetch_unsplash_images(count_per_query: int = 5) -> list[dict]:
+def fetch_unsplash_images(count_per_query: int = 5, blog_id: str | None = None) -> list[dict]:
     images = []
-    for q_en, q_ko in UNSPLASH_QUERIES:
+    for q_en, q_ko in queries_for(blog_id):
         try:
             r = requests.get(
                 "https://api.unsplash.com/search/photos",
