@@ -86,10 +86,14 @@ async def upload_public_media(
     }
 
 
-@public_media_router.get("/{token}")
+@public_media_router.api_route("/{token}", methods=["GET", "HEAD"])
 def get_public_media(token: str) -> FileResponse:
     """인증 없이 서빙 — 외부 플랫폼(Meta 등)의 다운로드 요청용. 토큰 패턴이
-    맞지 않거나 파일이 없으면 404 (경로주입·리스팅 차단)."""
+    맞지 않거나 파일이 없으면 404 (경로주입·리스팅 차단).
+
+    HEAD도 명시적으로 받는다 — Instagram Graph API의 비디오 수집기가 GET 전에
+    HEAD로 존재/Content-Length를 먼저 확인하는데, HEAD가 405면 컨테이너
+    처리 자체가 ERROR로 실패한다(2026-08-25 실측)."""
     if not _TOKEN_RE.match(token):
         raise HTTPException(status_code=404, detail="not found")
     path = MEDIA_DIR / token

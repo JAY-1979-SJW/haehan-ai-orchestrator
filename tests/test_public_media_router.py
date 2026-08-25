@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from ai_orchestrator.connectors.public_media_router import _ALLOWED_EXT, _TOKEN_RE
+from ai_orchestrator.connectors.public_media_router import _ALLOWED_EXT, _TOKEN_RE, public_media_router
+
+
+def test_media_route_accepts_get_and_head():
+    """Instagram Graph API의 비디오 수집기는 GET 전에 HEAD로 먼저 확인한다 —
+    HEAD가 405면 컨테이너 처리가 ERROR로 실패한다(2026-08-25 실측)."""
+    route = next(r for r in public_media_router.routes if r.path == "/public-media/{token}")
+    assert "GET" in route.methods
+    assert "HEAD" in route.methods
 
 
 def test_token_pattern_accepts_valid_hex_token():
