@@ -32,6 +32,7 @@ from .connectors.naver_mail_router import naver_mail_router
 from .connectors.naver_news_router import naver_news_router
 from .connectors.naver_search_router import naver_search_router
 from .connectors.naver_session_router import router as naver_session_router
+from .connectors.public_media_router import public_media_router
 from .connectors.session_status_router import session_status_router
 from .connectors.smartstore_router import smartstore_router
 from .connectors.user_auth_router import get_jwt_user, user_auth_router
@@ -103,6 +104,7 @@ router.include_router(youtube_router)
 router.include_router(google_router)
 router.include_router(smartstore_router)  # read-only smartstore catalog/history/form-fields
 router.include_router(naver_blog_router)  # naver blog compose/drafts/seo
+router.include_router(public_media_router)  # 외부 플랫폼(IG Graph API 등) 공개 미디어 서빙
 router.include_router(user_auth_router)  # user signup/login/mypage
 router.include_router(gabia_router)  # gabia dns/domain/login watch
 router.include_router(gonobi_router)  # gonobi 블로그 수집·분류·조회
