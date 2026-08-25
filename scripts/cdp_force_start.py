@@ -141,17 +141,33 @@ def cmd_start(url: str = "") -> int:
     if url:
         args.append(url)
 
-    flags = 0
+    # DETACHED_PROCESS만으로는 샌드박스 Job Object에 묶여 부모(Claude Code 세션)가
+    # 끝나면 크롬도 같이 죽을 수 있다(2026-08-22). CREATE_BREAKAWAY_FROM_JOB로 탈출을
+    # 시도하고, Job이 막으면(WinError 5) 플래그 없이 재시도한다.
+    broke_away = False
     if sys.platform == "win32":
-        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
-
-    proc = subprocess.Popen(
-        args,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=flags,
-    )
-    PID_FILE.write_text(json.dumps({"pid": proc.pid, "chrome": chrome}), encoding="utf-8")
+        try:
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.DETACHED_PROCESS
+                | subprocess.CREATE_NEW_PROCESS_GROUP
+                | subprocess.CREATE_BREAKAWAY_FROM_JOB,
+            )
+            broke_away = True
+        except OSError as e:
+            print(f"  [경고] Job 탈출 실패({e}) — 일반 DETACHED_PROCESS로 재시도")
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+            )
+    else:
+        proc = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    print(f"  Job 탈출: {'성공' if broke_away else '실패'}")
+    PID_FILE.write_text(json.dumps({"pid": proc.pid, "chrome": chrome, "broke_away": broke_away}), encoding="utf-8")
     print(f"  Chrome 시작 PID={proc.pid}")
 
     print(f"  CDP 포트 {CDP_PORT} 응답 대기...", end="", flush=True)
