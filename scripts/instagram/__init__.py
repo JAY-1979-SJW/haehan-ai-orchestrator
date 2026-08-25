@@ -1,6 +1,6 @@
 """인스타그램 마케팅 파이프라인 — big.sun2024(반딧불 전파사) 계정 전용.
 
-네이버 블로그 스킬(scripts/naver/blog_marketing/)과 동일한 3분리 구조:
+네이버 블로그 스킬(scripts/naver/blog/marketing/)과 동일한 3분리 구조:
   cases.py    — 이미지 소스에서 시공사례 그룹핑 + 중복 발행 방지
   caption.py  — 캡션 생성 (제품 + 대표 경력/자격 + 연락처 + 위치 + 해시태그)
   publish.py  — CDP 업로드 + 발행 (항상 사용자 확인 후 confirmed=True로만 실제 발행)

@@ -1,4 +1,4 @@
-"""마케팅 운영실 API — scripts/naver/blog_marketing/ 파이프라인을 웹에서 조회/승인/발행.
+"""마케팅 운영실 API — scripts/naver/blog/marketing/ 파이프라인을 웹에서 조회/승인/발행.
 
 기존 파이프라인(주제 리서치·콘텐츠 생성·발행)을 그대로 호출만 한다 — 로직
 중복 구현 없음. CDP 접속은 scripts.web_connector(get_page/run_on_browser_thread)
@@ -117,8 +117,8 @@ def generate_package(
     req: GeneratePackageRequest, user: dict = Depends(require_role("admin", "owner"))
 ) -> dict[str, Any]:
     """주제 1개 → 블로그 글(원본) + 유튜브 대본 + 쇼츠 3편 + 인스타 캡션. 발행 안 함(미리보기 전용)."""
-    from scripts.naver.blog_marketing.content import generate_post
-    from scripts.naver.blog_marketing.multichannel import generate_content_package
+    from scripts.naver.blog.marketing.content import generate_post
+    from scripts.naver.blog.marketing.multichannel import generate_content_package
 
     topic_info = {
         "topic": req.topic,
@@ -185,10 +185,10 @@ def publish_blog(req: PublishBlogRequest, user: dict = Depends(require_role("adm
     if not package:
         return {"ok": False, "error": "패키지를 찾을 수 없습니다"}
 
-    from scripts.naver.blog_marketing import TARGET_BLOG_ID
-    from scripts.naver.blog_marketing.images import pick_3_images
-    from scripts.naver.blog_marketing.publish import existing_unsplash_fallback, record_success
-    from scripts.naver.blog_marketing.topics import load_cache
+    from scripts.naver.blog.marketing import TARGET_BLOG_ID
+    from scripts.naver.blog.marketing.images import pick_3_images
+    from scripts.naver.blog.marketing.publish import existing_unsplash_fallback, record_success
+    from scripts.naver.blog.marketing.topics import load_cache
     from scripts.web_connector import get_page, run_on_browser_thread
 
     blog = package["blog"]
@@ -275,7 +275,7 @@ def get_neighbors(user: dict = Depends(require_role("admin", "owner"))) -> dict[
 def refresh_neighbors(user: dict = Depends(require_role("admin", "owner"))) -> dict[str, Any]:
     """CDP로 실제 이웃 목록을 다시 조회해 캐시 갱신 (107명 기준 약 10~20초 소요)."""
     from scripts.naver.blog.community.neighbor_manager import BlogNeighborManager
-    from scripts.naver.blog_marketing import TARGET_BLOG_ID
+    from scripts.naver.blog.marketing import TARGET_BLOG_ID
     from scripts.web_connector import get_page, run_on_browser_thread
 
     def _do() -> dict:
