@@ -282,6 +282,283 @@ class GeneralProductRegister:
             return {"ok": False, "error": "open_failed"}
         return self._fill_field('input[name="product.stockQuantity"]', str(stock), label="재고")
 
+    def set_origin(
+        self,
+        origin_type: str,
+        continent: str | None = None,
+        country: str | None = None,
+        importer: str | None = None,
+    ) -> dict:
+        """원산지 설정.
+
+        2026-08-26 실측 확정: 기본값이 항상 "국산"으로 미리 선택돼 있어서
+        수입산 제품인데 그대로 등록하면 원산지 오표기가 된다. 반드시 실제
+        제품정보(예: 상품정보제공고시)와 대조해서 명시적으로 채운다.
+
+        Args:
+            origin_type: "국산" | "수입산" | "기타"
+            continent: origin_type="수입산"일 때만 필요. 예: "아시아"
+            country: origin_type="수입산"일 때만 필요. 예: "중국"
+            importer: origin_type="수입산"일 때 postflight 필수 항목
+                (`vm.viewData.originAreaInfo.importer`). 예: "메종드컨셉(주)"
+
+        드롭다운은 "상품 주요정보" 섹션이 접혀 있으면 안 보이므로, 접혀있으면
+        먼저 펼친다. 각 단계는 클릭 직후 "선택한 값이 화면 텍스트에 반영됐는지"로
+        검증한다(맹목 클릭 금지 — set_category 와 동일 원칙).
+        """
+        if not self._ensure_opened():
+            return {"ok": False, "error": "open_failed"}
+
+        # "상품 주요정보" 섹션이 접혀 있으면 펼친다.
+        # ⚠ 헤더 클릭은 토글이라, 이미 펼쳐진 상태에서 또 누르면 도로 접힌다.
+        # 반드시 "원산지" 레이블이 실제로 DOM에 있는지 먼저 확인하고, 없을 때만 클릭한다.
+        try:
+            has_origin_label = self.page.evaluate("""
+                () => !!Array.from(document.querySelectorAll('label,div,span')).find(e =>
+                    e.innerText && e.innerText.trim() === '원산지'
+                )
+            """)
+            if not has_origin_label:
+                self.page.get_by_text("상품 주요정보", exact=True).first.click(timeout=3000)
+                time.sleep(0.8)
+        except Exception:
+            pass
+
+        try:
+            # 1) 원산지 유형(국산/수입산/기타) 드롭다운.
+            # 기본값이 "국산"이지만 재호출 시 이미 다른 값일 수 있으므로 텍스트를
+            # 하드코딩하지 않고, "원산지" 레이블 뒤 첫 드롭다운을 좌표로 특정한다.
+            trigger = self.page.evaluate("""
+                () => {
+                    const label = Array.from(document.querySelectorAll('label,div,span')).find(e =>
+                        e.innerText && e.innerText.trim() === '원산지'
+                    );
+                    if (!label) return null;
+                    label.scrollIntoView({block: 'center'});
+                    const lr = label.getBoundingClientRect();
+                    // "원산지" 레이블과 같은 가로줄(±20px) 안에서, 오른쪽에 있고
+                    // 값이 국산/수입산/기타 중 하나인 후보를 x좌표 기준 가장 가까운 것으로 선택
+                    const candidates = Array.from(document.querySelectorAll('*')).filter(e =>
+                        e.children.length === 0 && ['국산', '수입산', '기타'].includes((e.innerText || '').trim())
+                    ).map(e => {
+                        const r = e.getBoundingClientRect();
+                        return {el: e, x: r.x, y: r.y, w: r.width, h: r.height};
+                    }).filter(c => c.w > 0 && Math.abs((c.y + c.h/2) - (lr.y + lr.height/2)) < 20 && c.x > lr.x);
+                    if (!candidates.length) return null;
+                    candidates.sort((a, b) => a.x - b.x);
+                    const c = candidates[0];
+                    return {x: c.x + c.w/2, y: c.y + c.h/2, rowY: lr.y + lr.height/2};
+                }
+            """)
+            if not trigger:
+                return {"ok": False, "error": "원산지 유형 드롭다운 트리거 못찾음"}
+            self.page.mouse.click(trigger["x"], trigger["y"])
+            time.sleep(0.5)
+            self.page.get_by_text(origin_type, exact=True).first.click(timeout=5000)
+            time.sleep(0.7)
+        except Exception as e:
+            return {"ok": False, "error": f"origin_type 선택 실패: {str(e)[:100]}"}
+
+        if origin_type == "수입산":
+            if not continent or not country:
+                return {"ok": False, "error": "수입산은 continent/country 필수"}
+
+            def _find_row_select_coords() -> list[dict]:
+                """원산지 라벨과 같은 가로줄(±20px)에 있는 "선택" 드롭다운 좌표.
+                인증선택/인증정보 등 다른 "선택" 드롭다운과 섞이지 않게 걸러낸다.
+
+                ⚠ row_y 를 한 번 계산해서 재사용하면 안 된다 — 드롭다운 옵션을
+                클릭할 때마다(scrollIntoView 부작용으로) 페이지 스크롤 위치가
+                바뀌어서 라벨의 화면상 y좌표도 매번 달라진다(2026-08-26 실측:
+                대륙 선택 후 국가 드롭다운을 못 찾던 원인). **매 호출마다
+                라벨 위치를 새로 조회**한다."""
+                coords = self.page.evaluate(
+                    """
+                    () => {
+                        const label = Array.from(document.querySelectorAll('label,div,span')).find(e =>
+                            e.innerText && e.innerText.trim() === '원산지'
+                        );
+                        if (!label) return [];
+                        const lr = label.getBoundingClientRect();
+                        const rowY = lr.y + lr.height / 2;
+                        const els = Array.from(document.querySelectorAll('*')).filter(e =>
+                            e.children.length === 0 && e.innerText && e.innerText.trim() === '선택'
+                        );
+                        return els.map(e => {
+                            const r = e.getBoundingClientRect();
+                            return {x: r.x + r.width/2, y: r.y + r.height/2, w: r.width};
+                        }).filter(c => c.w > 0 && Math.abs(c.y - rowY) < 20);
+                    }
+                    """
+                )
+                coords.sort(key=lambda c: c["x"])
+                return coords
+
+            def _click_dropdown_option(value: str) -> bool:
+                """열린 드롭다운에서 정확한 텍스트의 옵션을 클릭.
+
+                2026-08-26 실측 함정 2가지:
+                1. `get_by_text(value, exact=True)`가 실제 리스트 항목보다
+                   검색어 하이라이트용 `<strong>value</strong>`(화면에 안 보임)를
+                   먼저 잡아 timeout 난다 — 반드시 `div.option`으로 좁힌다.
+                2. 국가처럼 목록이 길면 항목이 뷰포트 밖(y가 window.innerHeight보다
+                   훨씬 큼)에 있다 — 클릭 전 `scrollIntoView({block:'center'})` 필수,
+                   안 하면 좌표만 유효해 보이고 클릭이 조용히 실패한다.
+                """
+                coords = self.page.evaluate(
+                    """
+                    (value) => {
+                        const els = Array.from(document.querySelectorAll('div.option')).filter(e =>
+                            e.innerText && e.innerText.trim() === value
+                        );
+                        if (!els.length) return null;
+                        els[0].scrollIntoView({block: 'center'});
+                        const r = els[0].getBoundingClientRect();
+                        return {x: r.x + r.width/2, y: r.y + r.height/2};
+                    }
+                    """,
+                    value,
+                )
+                if not coords:
+                    return False
+                self.page.mouse.click(coords["x"], coords["y"])
+                return True
+
+            try:
+                # 2) 대륙 드롭다운
+                coords = _find_row_select_coords()
+                if len(coords) < 2:
+                    return {"ok": False, "error": f"원산지 대륙/국가 드롭다운 못찾음 (같은 줄 후보 {len(coords)}개)"}
+                self.page.mouse.click(coords[0]["x"], coords[0]["y"])
+                time.sleep(0.6)
+                if not _click_dropdown_option(continent):
+                    return {"ok": False, "error": f"대륙 옵션 못찾음: {continent}"}
+                time.sleep(0.6)
+
+                # 3) 국가 드롭다운 — 대륙 선택 후 좌표 재조회(레이아웃 변동)
+                coords2 = _find_row_select_coords()
+                if not coords2:
+                    return {"ok": False, "error": "원산지 국가 드롭다운 못찾음"}
+                self.page.mouse.click(coords2[0]["x"], coords2[0]["y"])
+                time.sleep(0.6)
+                if not _click_dropdown_option(country):
+                    return {"ok": False, "error": f"국가 옵션 못찾음: {country}"}
+                time.sleep(0.6)
+            except Exception as e:
+                return {"ok": False, "error": f"대륙/국가 선택 실패: {str(e)[:100]}"}
+
+            if importer:
+                try:
+                    imp_loc = self.page.locator('input[placeholder="수입사입력"]')
+                    if imp_loc.count() > 0:
+                        imp_loc.first.fill(importer)
+                        time.sleep(0.3)
+                except Exception as e:
+                    return {"ok": False, "error": f"수입사 입력 실패: {str(e)[:100]}"}
+
+        # 검증
+        final_txt = self.page.evaluate("document.body.innerText")
+        idx = final_txt.find("원산지")
+        segment = final_txt[idx : idx + 120] if idx >= 0 else ""
+        ok = origin_type in segment and (origin_type != "수입산" or (continent in segment and country in segment))
+        if not ok:
+            return {"ok": False, "error": "검증 실패", "segment": segment}
+        _log.info("[gen-reg] 원산지: %s %s %s", origin_type, continent or "", country or "")
+        return {"ok": True, "origin_type": origin_type, "continent": continent, "country": country}
+
+    def set_manufacturer(self, name: str) -> dict:
+        """제조자(사) 설정 — selectize 자동완성 입력.
+
+        함정: `input[placeholder='제조자(사)를 입력해주세요.']` 에 그냥 fill()
+        하면 값이 안 붙는다(selectize가 실제 폼 상태를 별도 hidden 값으로
+        관리). 반드시 클릭 → 키보드 타이핑 → Enter(옵션 리스트 생성 트리거)
+        → `div.create.active`("직접입력: {name}") 클릭까지 해야 실제
+        "선택된 제조자(사) : {name}" 문구로 반영된다.
+        """
+        if not self._ensure_opened():
+            return {"ok": False, "error": "open_failed"}
+
+        try:
+            loc = self.page.locator('input[placeholder="제조자(사)를 입력해주세요."]')
+            if loc.count() == 0:
+                return {"ok": False, "error": "제조자(사) 입력창 못찾음"}
+            loc.first.click(timeout=3000)
+            time.sleep(0.3)
+            self.page.keyboard.type(name, delay=60)
+            time.sleep(0.6)
+            self.page.keyboard.press("Enter")
+            time.sleep(0.6)
+
+            coords = self.page.evaluate("""
+                () => {
+                    const el = document.querySelector('div.create.active');
+                    if (!el) return null;
+                    el.scrollIntoView({block: 'center'});
+                    const r = el.getBoundingClientRect();
+                    return {x: r.x + r.width/2, y: r.y + r.height/2};
+                }
+            """)
+            if not coords:
+                return {"ok": False, "error": "제조자(사) 자동완성 옵션 못찾음"}
+            self.page.mouse.click(coords["x"], coords["y"])
+            time.sleep(0.6)
+        except Exception as e:
+            return {"ok": False, "error": f"제조자(사) 입력 실패: {str(e)[:100]}"}
+
+        final_txt = self.page.evaluate("document.body.innerText")
+        idx = final_txt.find("선택된 제조자(사)")
+        segment = final_txt[idx : idx + 60] if idx >= 0 else ""
+        if name not in segment:
+            return {"ok": False, "error": "검증 실패", "segment": segment}
+        _log.info("[gen-reg] 제조자(사): %s", name)
+        return {"ok": True, "manufacturer": name}
+
+    def set_customer_service_phone(self, phone: str) -> dict:
+        """A/S 책임자 또는 소비자 상담 관련 전화번호 입력.
+
+        라디오 2개("A/S 책임자" / "소비자 상담 관련 전화번호") 중 하나가
+        기본 선택돼 있고, 그 아래 공용 텍스트 입력창 하나에 번호를 채우면
+        된다(라디오 값에 따라 문구만 바뀌고 입력창은 공유).
+        """
+        if not self._ensure_opened():
+            return {"ok": False, "error": "open_failed"}
+
+        try:
+            coords = self.page.evaluate("""
+                () => {
+                    const label = Array.from(document.querySelectorAll('*')).find(e =>
+                        e.innerText && e.innerText.trim().startsWith('A/S 책임자 또는 소비자')
+                    );
+                    if (!label) return null;
+                    const lr = label.getBoundingClientRect();
+                    const inp = Array.from(document.querySelectorAll('input[type=text]')).map(i => {
+                        const r = i.getBoundingClientRect();
+                        return {x: r.x + r.width/2, y: r.y + r.height/2, dy: r.y - lr.y, w: r.width};
+                    }).filter(i => i.dy > 0 && i.dy < 60 && i.w > 0);
+                    return inp.length ? inp[0] : null;
+                }
+            """)
+            if not coords:
+                return {"ok": False, "error": "A/S 전화번호 입력창 못찾음"}
+            self.page.mouse.click(coords["x"], coords["y"])
+            time.sleep(0.3)
+            self.page.keyboard.type(phone, delay=40)
+            time.sleep(0.4)
+        except Exception as e:
+            return {"ok": False, "error": f"A/S 전화번호 입력 실패: {str(e)[:100]}"}
+
+        actual = self.page.evaluate(
+            """(c) => {
+                const el = document.elementFromPoint(c.x, c.y);
+                return el && 'value' in el ? el.value : null;
+            }""",
+            coords,
+        )
+        if not actual or phone not in actual:
+            return {"ok": False, "error": "검증 실패", "value": actual}
+        _log.info("[gen-reg] A/S 전화번호: %s", phone)
+        return {"ok": True, "phone": phone}
+
     def set_category(self, category_name: str) -> dict:
         """카테고리 검색 + **원하는 항목 지정 선택** (첫 항목 맹목 클릭 금지).
 
