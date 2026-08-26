@@ -78,8 +78,8 @@ class EditorSelectors:
     CONTENT_AREA = "[contenteditable='true']"
 
     # ── HTML 붙여넣기 입력창 ────────────────────────────────────────────────
-    HTML_TEXTAREA = "textarea[placeholder*='HTML']"
-    HTML_CONFIRM = "button:has-text('확인')"
+    HTML_TEXTAREA = "textarea[placeholder*='입력해주세요']"
+    HTML_CONFIRM = "button:has-text('변환')"
 
     # ── 이미지 업로드 ─────────────────────────────────────────────────────
     IMAGE_FILE_INPUT = "input[type='file']"
@@ -131,12 +131,23 @@ class SmartEditorSession:
         return False
 
     def _click_editor_btn(self) -> bool:
-        """등록 폼에서 '스마트 에디터 ONE 으로 작성' 클릭."""
+        """등록 폼에서 '스마트 에디터 ONE 으로 작성' 클릭.
+
+        2026-08-26 실측 확정: 이 버튼은 **같은 탭에서 라우트 전환되지 않고
+        새 탭(팝업)을 연다.** 예전 코드는 `self.page.url`이 바뀌길 폴링했는데,
+        실제 전환은 원래 탭이 아니라 새로 열린 탭에서 일어나므로 항상
+        "에디터 URL 전환 타임아웃"으로 실패했다(원본 폼 탭과 에디터 탭이
+        서로 다른 탭으로 쪼개져 이후 "등록" 시 "화면이 종료됨" 에러로 이어짐).
+
+        `context.expect_page()`로 새 탭을 확실히 캡처하고, 이 세션이 다루는
+        `self.page`/toolbar 들을 **새 탭으로 교체**한다.
+        """
         coords = self.page.evaluate("""
         () => {
             for (const el of document.querySelectorAll("button")) {
                 const txt = (el.innerText||"").trim();
                 if (txt.includes("스마트 에디터") || txt.includes("스마트에디터")) {
+                    el.scrollIntoView({block: 'center'});
                     const r = el.getBoundingClientRect();
                     if (r.width > 0)
                         return { x: Math.round(r.x + r.width/2),
@@ -150,15 +161,28 @@ class SmartEditorSession:
             _log.error("[editor] 스마트에디터 버튼 없음")
             return False
 
-        self.page.mouse.click(coords["x"], coords["y"])
+        try:
+            with self.page.context.expect_page(timeout=10000) as new_page_info:
+                self.page.mouse.click(coords["x"], coords["y"])
+            new_page = new_page_info.value
+            new_page.wait_for_load_state()
+        except Exception as e:
+            _log.error("[editor] 새 탭 캡처 실패: %s", str(e)[:120])
+            return False
+
         deadline = time.time() + 10
         while time.time() < deadline:
-            if "#/editor" in self.page.url:
-                _log.info("[editor] 에디터 진입 완료")
+            if "#/editor" in new_page.url:
+                self.page = new_page
+                self.text = TextToolbar(new_page)
+                self.block = BlockToolbar(new_page)
+                self.tool = ToolToolbar(new_page)
+                self.ai = AIWriter(new_page)
+                _log.info("[editor] 에디터 진입 완료 (새 탭으로 전환됨)")
                 self._opened = True
                 return True
             time.sleep(0.5)
-        _log.error("[editor] 에디터 URL 전환 타임아웃")
+        _log.error("[editor] 새 탭은 열렸으나 #/editor 전환 타임아웃: %s", new_page.url)
         return False
 
     def _ensure_open(self) -> bool:
