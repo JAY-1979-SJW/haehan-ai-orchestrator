@@ -145,8 +145,9 @@ data/naver_shopping_search.json
 
 # Action approval/evidence audit JSONL (운영·테스트 산출물, git 포함 금지)
 data/audit/
-.claude/
+.claude/*
 !.claude/settings.json
+!.claude/skills/
 tmp/
 data/browser_sessions/
 data/sessions/
