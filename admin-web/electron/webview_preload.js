@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld("haehanLocal", {
   setSiteSettings: (siteId, settings) => ipcRenderer.invoke("local-config:set-site-settings", siteId, settings),
   // 사진 선택: 네이티브 파일 탐색기 → 고른 이미지의 로컬 경로 배열
   pickImages: () => ipcRenderer.invoke("local-file:pick-images"),
+  // 외부 API 키(userData/.env) — 조회는 마스킹된 값만 반환, 저장은 마스킹 아닌 실값만 반영
+  getEnvKeys: () => ipcRenderer.invoke("local-config:get-env-keys"),
+  setEnvKeys: (patch) => ipcRenderer.invoke("local-config:set-env-keys", patch),
+  // Claude Desktop 의 claude_desktop_config.json 에 번들 MCP 서버(haehan-mcp.exe) 등록
+  connectClaudeDesktop: () => ipcRenderer.invoke("local-config:connect-claude-desktop"),
 });
 
 // ── 상시 로그인: 저장된 세션 토큰을 localStorage 에 항상 동기화 ────────────────────

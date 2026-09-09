@@ -41,6 +41,10 @@
         "to": "local-agent"
       },
       {
+        "from": "../../dist/haehan-mcp",
+        "to": "mcp/haehan-mcp"
+      },
+      {
         "from": "../.next/standalone",
         "to": "nextjs",
         "filter": ["**/*"]
