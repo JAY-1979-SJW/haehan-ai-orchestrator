@@ -163,6 +163,7 @@ _USER_MSG = {
     "RESPONSE_EMPTY": "응답이 비어 있습니다.",
     "EMPTY_OR_TOO_LONG": "메시지가 비어 있거나 너무 깁니다.",
     "RATE_LIMITED_AGENT": "이 에이전트의 요청 한도(분당)를 초과했습니다.",
+    "OPENAI_DISABLED": "이 채팅창은 현재 GPT 호출이 비활성화되어 있습니다. Claude Desktop(MCP 연동)에서 이용해주세요.",
 }
 
 
