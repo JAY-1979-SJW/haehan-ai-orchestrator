@@ -20,6 +20,7 @@ const {
   loadConfig, saveConfig, isOwnerMode,
   getEnabledSites, setEnabledSites, getSiteSettings, setSiteSettings,
   getAuthToken, isAutoStartEnabled, setAutoStartEnabled,
+  ENV_KEYS, saveUserEnv, maskedUserEnv, connectClaudeDesktop,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
 const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
@@ -204,6 +205,23 @@ ipcMain.handle("local-config:set-site-settings", (_e, siteId, settings) => {
   setSiteSettings(siteId, settings);
   return getSiteSettings(siteId);
 });
+
+// API 키 설정: userData/.env 에 저장. 조회는 마스킹된 값만 반환(원문 재노출 금지).
+// 저장 시 마스킹 값("****abcd")이 그대로 들어오면 변경 없는 항목으로 간주해 건너뜀.
+ipcMain.handle("local-config:get-env-keys", () => ({ keys: ENV_KEYS, values: maskedUserEnv() }));
+ipcMain.handle("local-config:set-env-keys", (_e, patch) => {
+  const clean = {};
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (!ENV_KEYS.includes(k)) continue;
+    if (typeof v !== "string" || v === "" || v.startsWith("*")) continue;
+    clean[k] = v.trim();
+  }
+  saveUserEnv(clean);
+  return { ok: true, values: maskedUserEnv() };
+});
+
+// Claude Desktop MCP 연동: claude_desktop_config.json 에 번들 MCP 서버 등록
+ipcMain.handle("local-config:connect-claude-desktop", () => connectClaudeDesktop());
 
 // 사진 선택: 네이티브 파일 탐색기로 이미지를 고르면 로컬 경로 배열 반환.
 // (사용자가 경로를 직접 타이핑하지 않게 — 백엔드는 로컬 경로를 직접 읽어 base64 처리)

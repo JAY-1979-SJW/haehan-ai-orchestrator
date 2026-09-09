@@ -30,6 +30,7 @@ from .connectors.naver_blog_router import naver_blog_router
 from .connectors.naver_cafe_router import naver_cafe_router
 from .connectors.naver_mail_router import naver_mail_router
 from .connectors.naver_news_router import naver_news_router
+from .connectors.naver_openapi_setup_router import naver_openapi_setup_router
 from .connectors.naver_search_router import naver_search_router
 from .connectors.naver_session_router import router as naver_session_router
 from .connectors.public_media_router import public_media_router
@@ -84,6 +85,7 @@ router.include_router(admin_ui_router)
 router.include_router(approval_record_router)
 router.include_router(action_router)
 router.include_router(naver_search_router)  # read-only naver search endpoints
+router.include_router(naver_openapi_setup_router)  # 등록된 앱 Client ID/Secret 조회(설정화면 자동입력)
 router.include_router(naver_news_router)  # read-only naver news scraping endpoints
 router.include_router(naver_cafe_router)  # read-only naver cafe collection endpoints
 router.include_router(community_router)  # 범용 커뮤니티 게시글 추출(휴리스틱→GPT)

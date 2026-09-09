@@ -11,7 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const http = require("http");
-const { getOrCreateJwtSecret } = require("./config");
+const { getOrCreateJwtSecret, loadUserEnv } = require("./config");
 
 const FASTAPI_PORT = parseInt(process.env.HAEHAN_PORT || "8401", 10);
 const HEALTH_URL = `http://127.0.0.1:${FASTAPI_PORT}/api/v1/health`;
@@ -26,6 +26,38 @@ function resolveServerExe() {
   if (!app.isPackaged) return null; // 개발 모드: 외부 uvicorn 사용
   const exePath = path.join(process.resourcesPath, "server", "haehan-server", "haehan-server.exe");
   return fs.existsSync(exePath) ? exePath : null;
+}
+
+// ── Gmail credentials 최초 1회 시드 (userData/secrets 가 비어있을 때만) ──────────
+function seedGmailSecrets() {
+  const destDir = path.join(app.getPath("userData"), "secrets");
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const name of ["gmail_credentials.json", "gmail_token.json"]) {
+    const dest = path.join(destDir, name);
+    if (fs.existsSync(dest)) continue;
+    // 개발 repo 소스 경로 (있으면 최초 1회만 복사, 없으면 건너뜀 — OAuth 화면에서 재인가)
+    // resourcesPath = <repo>/dist-electron-new/win-unpacked/resources → 3단계 위가 repo root
+    const src = path.join(process.resourcesPath, "..", "..", "..", "ai_orchestrator", "storage", "secrets", name);
+    if (fs.existsSync(src)) fs.copyFileSync(src, dest);
+  }
+}
+
+// ── 영속 데이터(licenses.json, grant_radar/) 최초 1회 시드 ─────────────────────
+function seedDataDir() {
+  const destDir = path.join(app.getPath("userData"), "data");
+  fs.mkdirSync(destDir, { recursive: true });
+  // 개발 repo 소스 경로 (있으면 최초 1회만 복사, 없으면 건너뜀 — 새 설치는 빈 상태로 시작)
+  const srcRoot = path.join(process.resourcesPath, "..", "..", "..", "data");
+  const destLicenses = path.join(destDir, "licenses.json");
+  const srcLicenses = path.join(srcRoot, "licenses.json");
+  if (!fs.existsSync(destLicenses) && fs.existsSync(srcLicenses)) {
+    fs.copyFileSync(srcLicenses, destLicenses);
+  }
+  const destGrant = path.join(destDir, "grant_radar");
+  const srcGrant = path.join(srcRoot, "grant_radar");
+  if (!fs.existsSync(destGrant) && fs.existsSync(srcGrant)) {
+    fs.cpSync(srcGrant, destGrant, { recursive: true });
+  }
 }
 
 // ── 헬스체크 ─────────────────────────────────────────────────────────────────
@@ -72,6 +104,8 @@ async function startFastAPIServer() {
   }
 
   // 3. 번들 EXE 실행
+  seedGmailSecrets();
+  seedDataDir();
   console.log("[fastapi] 번들 서버 시작:", exePath);
   const logDir = path.join(app.getPath("userData"), "logs");
   fs.mkdirSync(logDir, { recursive: true });
@@ -84,18 +118,19 @@ async function startFastAPIServer() {
     stdio: ["ignore", "pipe", "pipe"],
     env: {
       ...process.env,
+      ...loadUserEnv(), // 설정화면에서 저장한 API 키(userData/.env) — 아래 앱 고정값이 항상 우선
       HAEHAN_PORT: String(FASTAPI_PORT),
       HAEHAN_HOST: "127.0.0.1",
-      // 프로젝트 data/ 경로 — licenses.json, grant_radar 등 영속 데이터 공유
-      HAEHAN_DATA_DIR: path.join(process.resourcesPath, "..", "..", "..", "data"),
+      // 영속 데이터 경로 — userData 기준 (설치 위치와 무관), 최초 1회 seedDataDir()로 시드
+      HAEHAN_DATA_DIR: path.join(app.getPath("userData"), "data"),
       // self-contained 데스크톱: 127.0.0.1 loopback 전용 + 외부 접근 차단(BrowserGate/CORS)
       // 하에서 로컬 앱을 신뢰 → Basic 인증 생략. 외부/타앱은 네트워크 계층에서 차단됨.
       AUTH_ENABLED: "false",
       // JWT_SECRET 고정 — 재시작에도 사용자 세션 토큰 유효(상시 로그인). userData 에 1회 생성·저장.
       JWT_SECRET: getOrCreateJwtSecret(),
-      // Gmail OAuth2 credentials — 소스 repo 경로 고정 (frozen exe 내 config.py 기본경로 우선)
-      GMAIL_CREDENTIALS_PATH: path.join(process.resourcesPath, "..", "..", "..", "..", "ai_orchestrator", "storage", "secrets", "gmail_credentials.json"),
-      GMAIL_TOKEN_PATH: path.join(process.resourcesPath, "..", "..", "..", "..", "ai_orchestrator", "storage", "secrets", "gmail_token.json"),
+      // Gmail OAuth2 credentials — userData 기준 (설치 위치와 무관하게 항상 유효)
+      GMAIL_CREDENTIALS_PATH: path.join(app.getPath("userData"), "secrets", "gmail_credentials.json"),
+      GMAIL_TOKEN_PATH: path.join(app.getPath("userData"), "secrets", "gmail_token.json"),
     },
   });
 

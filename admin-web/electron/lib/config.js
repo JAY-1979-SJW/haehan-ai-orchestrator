@@ -135,6 +135,97 @@ function setAutoStartEnabled(enabled) {
   return patchConfig({ autoStart: !!enabled });
 }
 
+// ── 사용자 API 키 (userData/.env, config.json과 별도 파일) ───────────────────────
+// config.json 은 _stripSensitive() 로 민감값 저장을 금지하므로, 사용자가 설정화면에서
+// 입력하는 외부 API 키는 별도 .env 파일에 dotenv 포맷 그대로 저장한다.
+// FastAPI 번들 서버 spawn 시 이 값들을 env로 주입한다 (lib/fastapi_server.js).
+const ENV_KEYS = [
+  "NAVER_OPENAPI_CLIENT_ID",
+  "NAVER_OPENAPI_CLIENT_SECRET",
+  "YOUTUBE_DATA_API_KEY",
+  "OPENAI_API_KEY",
+  "UNSPLASH_ACCESS_KEY",
+];
+
+function userEnvPath() {
+  return path.join(app.getPath("userData"), ".env");
+}
+
+function loadUserEnv() {
+  const p = userEnvPath();
+  if (!fs.existsSync(p)) return {};
+  const out = {};
+  for (const line of fs.readFileSync(p, "utf-8").split("\n")) {
+    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
+function saveUserEnv(patch) {
+  const cur = loadUserEnv();
+  const next = { ...cur, ...patch };
+  const body = Object.entries(next)
+    .filter(([, v]) => typeof v === "string" && v !== "")
+    .map(([k, v]) => `${k}=${v}`)
+    .join("\n");
+  fs.mkdirSync(path.dirname(userEnvPath()), { recursive: true });
+  fs.writeFileSync(userEnvPath(), body, "utf-8");
+  return next;
+}
+
+/** 설정화면 표시용 — 값을 마스킹해 반환 (원문 노출 금지). */
+function maskedUserEnv() {
+  const cur = loadUserEnv();
+  const out = {};
+  for (const k of ENV_KEYS) {
+    const v = cur[k] || "";
+    out[k] = v ? `${"*".repeat(Math.max(0, v.length - 4))}${v.slice(-4)}` : "";
+  }
+  return out;
+}
+
+// ── Claude Desktop MCP 연동 ───────────────────────────────────────────────────
+// Claude Desktop 의 claude_desktop_config.json 에 이 앱의 번들 MCP 서버(haehan-mcp.exe)를
+// 등록한다. 다른 직원 PC에서도 python 환경 없이 바로 연결되도록 exe 그대로 가리킨다.
+
+function claudeDesktopConfigPath() {
+  return path.join(app.getPath("appData"), "Claude", "claude_desktop_config.json");
+}
+
+function connectClaudeDesktop() {
+  if (!app.isPackaged) {
+    return { ok: false, error: "dev_mode_unsupported", hint: "패키징된 앱에서만 지원합니다" };
+  }
+  const cfgPath = claudeDesktopConfigPath();
+  if (!fs.existsSync(cfgPath)) {
+    return { ok: false, error: "claude_desktop_not_found", hint: "Claude Desktop을 먼저 설치·실행하세요" };
+  }
+
+  let cfg;
+  try {
+    const raw = fs.readFileSync(cfgPath, "utf-8").replace(/^﻿/, "");
+    cfg = JSON.parse(raw);
+  } catch (e) {
+    return { ok: false, error: "config_parse_failed", hint: String(e) };
+  }
+
+  const mcpExe = path.join(process.resourcesPath, "mcp", "haehan-mcp", "haehan-mcp.exe");
+  if (!fs.existsSync(mcpExe)) {
+    return { ok: false, error: "mcp_exe_missing", hint: mcpExe };
+  }
+
+  cfg.mcpServers = cfg.mcpServers || {};
+  cfg.mcpServers["haehan-orchestrator"] = {
+    command: mcpExe,
+    args: [],
+    env: { HAEHAN_DATA_DIR: path.join(app.getPath("userData"), "data") },
+  };
+
+  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 4), "utf-8");
+  return { ok: true, hint: "Claude Desktop을 재시작하면 적용됩니다" };
+}
+
 module.exports = {
   SERVER_URL,
   FASTAPI_URL,
@@ -152,4 +243,9 @@ module.exports = {
   setSiteSettings,
   isAutoStartEnabled,
   setAutoStartEnabled,
+  ENV_KEYS,
+  loadUserEnv,
+  saveUserEnv,
+  maskedUserEnv,
+  connectClaudeDesktop,
 };
