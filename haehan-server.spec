@@ -158,13 +158,12 @@ datas = [
     (str(Path(sys.executable).parent / 'Lib' / 'site-packages' / 'playwright' / 'driver'), 'playwright/driver'),
 ]
 
-# ── Playwright Chromium 번들 ─────────────────────────────────────────────────
-PLAYWRIGHT_CHROMIUM = Path(os.environ.get('LOCALAPPDATA', '')) / 'ms-playwright' / 'chromium-1223' / 'chrome-win64'
-if PLAYWRIGHT_CHROMIUM.exists():
-    datas.append((str(PLAYWRIGHT_CHROMIUM), 'chromium/chrome-win64'))
-    print(f"[spec] Chromium 번들 포함: {PLAYWRIGHT_CHROMIUM}")
-else:
-    print(f"[spec] WARNING: Playwright Chromium 없음 — Chrome이 대상 PC에 설치되어야 함")
+# ── Playwright Chromium 번들 제외 (2026-09-09) ────────────────────────────────
+# 예전엔 대상 PC에 Chrome 미설치 시에도 동작하도록 425MB 짜리 Chromium을 통째로
+# 번들했으나, 설치 파일이 너무 커져(15,000+ 파일, 2.2GB) 배포/설치 시간이 과도해짐.
+# 대상 PC에 Google Chrome 설치를 전제로 바꾸고 번들을 뺀다(admin-web/electron/
+# lib/cdp_manager.js 가 Chrome 미탐지 시 설치 안내 다이얼로그를 띄움).
+print("[spec] Chromium 번들 제외 — 대상 PC에 Google Chrome 설치 필요(cdp_manager.js가 안내)")
 
 # ── Analysis ─────────────────────────────────────────────────────────────────
 a = Analysis(

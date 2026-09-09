@@ -12,11 +12,13 @@
  *
  * L3 Connectors 계층. 업무 로직 없음.
  */
-const { app } = require("electron");
+const { app, dialog, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn, execFile, execSync } = require("child_process");
 const http = require("http");
+
+let _chromeMissingWarned = false;
 
 const CDP_PORT = 9222;
 const CDP_HOST = "127.0.0.1";
@@ -163,11 +165,31 @@ async function startCdpBrowser() {
   }
 }
 
+// 번들 Chromium을 뺀 뒤(2026-09-09, 설치 용량 절감) 이 앱은 시스템 Google Chrome이
+// 반드시 설치되어 있어야 CDP 자동화가 동작한다. 못 찾으면 1회만 안내 다이얼로그.
+function warnChromeMissing() {
+  if (_chromeMissingWarned) return;
+  _chromeMissingWarned = true;
+  dialog
+    .showMessageBox({
+      type: "warning",
+      title: "Google Chrome 필요",
+      message: "이 앱의 자동화 기능을 쓰려면 Google Chrome이 설치되어 있어야 합니다.",
+      detail: "Chrome을 설치한 뒤 앱을 다시 시작해주세요.",
+      buttons: ["Chrome 다운로드 페이지 열기", "닫기"],
+      defaultId: 0,
+    })
+    .then((r) => {
+      if (r.response === 0) shell.openExternal("https://www.google.com/chrome/");
+    });
+}
+
 async function _doStartCdp() {
   const { dir: profileDir, isSystem } = resolveProfileDir();
   const chromeExe = resolveChromeExe(isSystem);
   if (!chromeExe) {
     console.warn("[cdp] Chrome 실행 파일 없음 — CDP 브라우저 수동 실행 필요");
+    warnChromeMissing();
     return false;
   }
 
