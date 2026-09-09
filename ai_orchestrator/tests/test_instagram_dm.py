@@ -2,11 +2,36 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
+
 import pytest
 
 from ai_orchestrator.connectors import instagram_dm_db as db
 from ai_orchestrator.connectors import instagram_dm_rule_engine as rule_engine
 from ai_orchestrator.connectors import instagram_dm_service as service
+
+
+def test_token_store_uses_file_encryption_on_non_windows(tmp_path, monkeypatch):
+    """서버(non-Windows) 배포 시 keyring 대신 Fernet 파일 저장으로 분기되는지 확인."""
+    from cryptography.fernet import Fernet
+
+    real_platform = sys.platform
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setenv("TOKEN_ENCRYPTION_KEY", Fernet.generate_key().decode())
+    ts = importlib.reload(importlib.import_module("ai_orchestrator.connectors.instagram_dm_token_store"))
+    try:
+        assert ts._USE_KEYRING is False
+        monkeypatch.setattr(ts, "_STORE_PATH", tmp_path / "tokens.enc.json")
+
+        ts.save_token("ig999", "secret-token-value")
+        assert ts.load_token("ig999") == "secret-token-value"
+
+        ts.delete_token("ig999")
+        assert ts.load_token("ig999") is None
+    finally:
+        sys.platform = real_platform  # 재로드 전 원래 플랫폼으로 복원(win32 분기 회복)
+        importlib.reload(ts)
 
 
 @pytest.fixture()
