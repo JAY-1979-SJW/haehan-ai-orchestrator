@@ -884,6 +884,18 @@ class BlogWriter:
         try:
             tag_input = self.page.locator('input[placeholder*="태그"]').first
             tag_input.click(timeout=2000)
+
+            # 수정 발행 시 기존 태그가 남아있으면 재입력과 뒤섞여 태그가
+            # 이어붙는 사고가 났다(2026-09-10 실측). 입력 전 기존 태그를
+            # 전부 지운다 — 빈 입력에서 Backspace는 바로 앞 태그 pill을 지움.
+            existing = self.get_tags_text()
+            if existing.strip():
+                for _ in range(40):
+                    self.page.keyboard.press("Backspace")
+                    time.sleep(0.05)
+                    if not self.get_tags_text().strip():
+                        break
+
             for t in tags:
                 self.page.keyboard.type(t, delay=20)
                 self.page.keyboard.press("Enter")
