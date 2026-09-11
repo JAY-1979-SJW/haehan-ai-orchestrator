@@ -51,10 +51,12 @@ LIKE_BUTTON = "a.u_likeit_list_button._button"
 # PostView — 댓글  — 실검증 2026-06-23
 # ══════════════════════════════════════════════════════════════════════════════
 
-# 댓글쓰기 진입 버튼 (클릭 후 u_cbox_input 동적 로드)
+# 댓글 목록/쓰기 영역 토글 ("댓글 N개" 링크) — 이걸 먼저 열어야 댓글쓰기 버튼이 노출됨
+COMMENT_LIST_TOGGLE = "a._cmtList"
+# 댓글쓰기 진입 버튼 (클릭 후 u_cbox_text 동적 로드) — COMMENT_LIST_TOGGLE 클릭 후에만 보임
 COMMENT_WRITE_BTN = ".btn_write_comment"
-# 댓글 입력창 / 제출 버튼 (naverComment 시스템, 동적 로드)
-COMMENT_INPUT = ".u_cbox_input"
+# 댓글 입력창(contenteditable div, <input> 아님) / 제출 버튼 (naverComment 시스템, 동적 로드)
+COMMENT_INPUT = ".u_cbox_text"
 COMMENT_SUBMIT = ".u_cbox_btn_upload"
 COMMENT_DELETE = ".u_cbox_btn_delete"
 

@@ -46,12 +46,15 @@ def plan(query: str, agent: BrowserAgent, max_targets: int = 8, exclude_blog_ids
 
     targets = []
     for r in results:
-        url = r.get("href") or r.get("url") or r.get("link") or ""
-        if not url or "blog.naver.com" not in url:
+        blog_id = r.get("blog_id", "")
+        log_no = r.get("log_no", "")
+        if not blog_id or not log_no:
             continue
-        blog_id = r.get("blog_id") or url.split("blog.naver.com/")[-1].split("/")[0]
         if blog_id in exclude:
             continue
+        # PostView.naver 직접 URL — 짧은 형식(blog.naver.com/{id}/{logNo})은
+        # iframe으로 감싸져 셀렉터 탐색이 불안정하다(2026-09-11 실측).
+        url = f"https://blog.naver.com/PostView.naver?blogId={blog_id}&logNo={log_no}"
         title = r.get("title", "")
         comment = random.choice(COMMENT_TEMPLATES)
         targets.append(
