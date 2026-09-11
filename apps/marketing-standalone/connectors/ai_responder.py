@@ -16,9 +16,17 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.request
 
 _DEFAULT_MODEL = "gpt-4o-mini"
+
+# 예외 메시지에 API 키가 실려 화면(고객 콘솔)에 출력되는 걸 막는다(2026-09-12 보안 재검토).
+_SECRET_PATTERN = re.compile(r"(sk-[a-zA-Z0-9_-]{10,}|Bearer\s+[a-zA-Z0-9._-]{10,})")
+
+
+def _redact(text: str) -> str:
+    return _SECRET_PATTERN.sub("[REDACTED]", text)
 
 
 class AIResponder:
@@ -50,7 +58,7 @@ class AIResponder:
             text = data["choices"][0]["message"]["content"]
             return {"ok": True, "text": text.strip(), "model": self.model}
         except Exception as e:
-            return {"ok": False, "error": str(e)[:200]}
+            return {"ok": False, "error": _redact(str(e))[:200]}
 
     def draft_blog_post(self, topic: str, keywords: list[str] | None = None, length: str = "medium") -> dict:
         length_map = {"short": 500, "medium": 1500, "long": 3000}

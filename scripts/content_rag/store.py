@@ -92,8 +92,16 @@ def rebuild_index() -> None:
 
 
 def import_from_json(path: str, *, category: str = "") -> int:
-    """기존 조사 결과(JSON 배열, {title,channel,views,...} 형태)를 일괄 저장."""
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    """기존 조사 결과(JSON 배열, {title,channel,views,...} 형태)를 일괄 저장.
+
+    path는 반드시 이 프로젝트 저장소(ROOT) 내부 파일이어야 한다(경로 이탈 방지).
+    """
+    resolved = Path(path).resolve()
+    if ROOT not in resolved.parents and resolved != ROOT:
+        raise ValueError(f"허용되지 않은 경로입니다(프로젝트 외부): {resolved}")
+    if not resolved.is_file():
+        raise FileNotFoundError(resolved)
+    data = json.loads(resolved.read_text(encoding="utf-8"))
     records = load_records()
     existing_titles = {r["title"] for r in records}
     added = 0
