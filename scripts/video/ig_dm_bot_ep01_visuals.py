@@ -184,116 +184,119 @@ def render_frames() -> list[tuple[Path, float]]:
 
     frames: list[tuple[Path, float]] = []
 
-    # scene 0: hook — 질문만 먼저 던지고, 답(훅 문구)이 뒤이어 등장하도록 2단계로 쪼갠다.
+    def _spread(total: float, weights: list[float]) -> list[float]:
+        s = sum(weights)
+        return [total * w / s for w in weights]
+
+    # scene 0: hook — 정지 화면이 너무 길지 않도록 5단계로 잘게 쪼개 계속 바뀌게 한다.
     hook_total = durations["hook"]
-    p0a = FRAME_DIR / "s0_hook_a.png"
-    _title_card(["인스타 팔로우·DM,", "자동으로 될까?"]).save(p0a)
-    frames.append((p0a, hook_total * 0.45))
-    p0b = FRAME_DIR / "s0_hook_b.png"
-    _title_card(["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다").save(
-        p0b
-    )
-    frames.append((p0b, hook_total * 0.55))
+    hook_states = [
+        (["인스타 팔로우·DM,"], ""),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], ""),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "❌ 팔로우·좋아요·댓글 자동화는 안 됩니다"),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "✅ 댓글→DM 자동발송은 공식 지원됩니다"),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다"),
+    ]
+    for i, (dur, (lines, sub)) in enumerate(zip(_spread(hook_total, [1, 1, 1.2, 1.2, 1.3]), hook_states)):
+        p = FRAME_DIR / f"s0_hook_{i}.png"
+        _title_card(lines, sub).save(p)
+        frames.append((p, dur))
 
     # scene 1: architecture — 다이어그램은 화면에 고정, 진행 박스만 누적 강조.
-    # 2·4단계는 실제 캡처를 인서트해 추상 설명과 실제 화면을 교차 노출한다.
+    # 각 단계를 (박스 강조만) → (+설명 텍스트) → (+실제 캡처, 있으면) 3단계로 쪼개
+    # 한 화면이 오래 머물지 않게 한다.
     arch_total = durations["architecture"]
-    per_step = arch_total / len(STEPS)
+    per_step_total = arch_total / len(STEPS)
     for no, desc, inset_path, inset_caption in STEPS:
-        p = FRAME_DIR / f"s1_step{no}.png"
-        _diagram_card(no, desc, inset_path, inset_caption).save(p)
-        frames.append((p, per_step))
+        sub_states: list[tuple[str, Path | None, str]] = [("", None, "")]
+        sub_states.append((desc, None, ""))
+        if inset_path:
+            sub_states.append((desc, inset_path, inset_caption))
+        weights = [0.8] + [1.2] * (len(sub_states) - 1)
+        for j, (dur, (d, ip, ic)) in enumerate(zip(_spread(per_step_total, weights), sub_states)):
+            p = FRAME_DIR / f"s1_step{no}_{j}.png"
+            _diagram_card(no, d, ip, ic).save(p)
+            frames.append((p, dur))
 
-    # scene 2: demo — 실제 캡처 2장
+    # scene 2: demo — 실제 캡처 2장, 각각 (이미지만) → (+캡션)으로 쪼갠다.
     demo_total = durations["demo"]
     shots = [
         (DEMO_DIR / "01_comment_posted.png", '① 댓글 게시 — "가격이 얼마에요?"'),
         (DEMO_DIR / "02_dm_received.png", "② 1분 만에 자동 DM 도착"),
     ]
+    per_shot_total = demo_total / len(shots)
     for shot_path, cap in shots:
-        p = FRAME_DIR / f"s2_{shot_path.stem}.png"
-        _demo_card(shot_path, cap).save(p)
-        frames.append((p, demo_total / len(shots)))
+        p_a = FRAME_DIR / f"s2_{shot_path.stem}_a.png"
+        _demo_card(shot_path, "").save(p_a)
+        p_b = FRAME_DIR / f"s2_{shot_path.stem}_b.png"
+        _demo_card(shot_path, cap).save(p_b)
+        for dur, p in zip(_spread(per_shot_total, [0.8, 1.2]), [p_a, p_b]):
+            frames.append((p, dur))
 
-    # scene 3: cta — 마찬가지로 2단계 등장(문구 → 문구+안내)으로 정지감을 줄인다.
+    # scene 3: cta — 4단계로 나눠 정지감을 줄인다.
     cta_total = durations["cta"]
-    p3a = FRAME_DIR / "s3_cta_a.png"
-    _cta_card(["직접 만들어보세요"]).save(p3a)
-    frames.append((p3a, cta_total * 0.45))
-    p3b = FRAME_DIR / "s3_cta_b.png"
-    _cta_card(["직접 만들어보세요"], "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서").save(p3b)
-    frames.append((p3b, cta_total * 0.55))
+    cta_states = [
+        ("직접 만들어보세요", ""),
+        ("직접 만들어보세요", "구축 문의는 채널 링크로"),
+        ("직접 만들어보세요", "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서"),
+        ("직접 만들어보세요", "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서 · 구독하기 🔔"),
+    ]
+    for i, (dur, (line, sub)) in enumerate(zip(_spread(cta_total, [1, 1, 1, 1.2]), cta_states)):
+        p = FRAME_DIR / f"s3_cta_{i}.png"
+        _cta_card([line], sub).save(p)
+        frames.append((p, dur))
 
     return frames
 
 
-def build_video(frames: list[tuple[Path, float]], out_path: Path, fade: float = 0.4) -> Path:
-    """정지 카드를 xfade로 잇는다.
+def _kenburns_clip(path: Path, duration: float, zoom_in: bool, k: float = 0.12):
+    """정지 이미지에 실제로 동작하는 줌 효과를 입힌 moviepy 클립.
 
-    NOTE(2026-09-11): zoompan/time-crop 기반 Ken Burns 효과를 시도했으나 이 ffmpeg
-    빌드(8.1)에서 실제로는 전혀 줌이 진행되지 않는 것을 여러 방식으로 실측 확인함
-    (누적 zoom 표현식이 매 프레임 리셋되는 것으로 추정). 검증 안 되는 효과에 시간을
-    더 쓰지 않고, 확실히 작동하는 xfade+프레임 수 증가(텍스트 단계적 등장 등)로
-    생동감을 준다 — render_frames()에서 카드당 프레임 수를 늘려서 해결.
+    NOTE(2026-09-11): ffmpeg zoompan/time-crop 필터로 먼저 시도했으나 이 환경
+    ffmpeg(8.1)에서 누적 zoom이 매 프레임 리셋되는 버그로 실제로는 전혀 줌이
+    진행되지 않음을 여러 방식으로 실측 확인함. moviepy(파이썬에서 프레임 단위로
+    직접 리사이즈)는 같은 조건에서 실제 줌이 프레임마다 진행되는 것을 확인했다
+    (frame shape이 시간에 따라 실제로 커짐) — 이후 이 효과가 필요하면 ffmpeg
+    zoompan을 다시 시도하지 말고 바로 moviepy를 쓸 것.
     """
-    paths = [f for f, _ in frames]
-    durations = [d for _, d in frames]
-    n = len(paths)
-    inputs: list[str] = []
-    for f, d in zip(paths, durations):
-        inputs += ["-loop", "1", "-t", str(d + fade), "-i", str(f)]
+    from moviepy import ImageClip
 
-    scale_filters = [
-        f"[{i}:v]scale={W}:{H}:force_original_aspect_ratio=decrease,"
-        f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v{i}]"
-        for i in range(n)
-    ]
-    xfade_parts = []
-    cur = "v0"
-    offset = durations[0]
-    for i in range(1, n):
-        nxt = f"x{i}"
-        xfade_parts.append(f"[{cur}][v{i}]xfade=transition=fade:duration={fade}:offset={offset:.2f}[{nxt}]")
-        cur = nxt
-        offset += durations[i]
+    clip = ImageClip(str(path)).with_duration(duration)
 
-    filter_complex = ";".join(scale_filters + xfade_parts)
-    total = sum(durations)
+    def zoom(t: float) -> float:
+        frac = min(t / duration, 1) if duration > 0 else 1
+        return 1 + k * frac if zoom_in else 1 + k * (1 - frac)
 
+    clip = clip.resized(zoom)
+
+    def crop_center(get_frame, t):
+        frame = get_frame(t)
+        h, w = frame.shape[0], frame.shape[1]
+        x0 = max(0, (w - W) // 2)
+        y0 = max(0, (h - H) // 2)
+        return frame[y0 : y0 + H, x0 : x0 + W]
+
+    return clip.transform(crop_center)
+
+
+def build_video(frames: list[tuple[Path, float]], out_path: Path, fade: float = 0.4) -> Path:
+    """카드마다 Ken Burns 줌(moviepy) + xfade로 잇는다. 짝/홀 인덱스로 줌 방향을 번갈아 단조로움을 줄인다."""
+    from moviepy import concatenate_videoclips, vfx
+
+    n = len(frames)
+    clips = [_kenburns_clip(p, d + fade, i % 2 == 0) for i, (p, d) in enumerate(frames)]
+    faded = []
+    for i, c in enumerate(clips):
+        effects = []
+        if i > 0:
+            effects.append(vfx.CrossFadeIn(fade))
+        if i < n - 1:
+            effects.append(vfx.CrossFadeOut(fade))
+        faded.append(c.with_effects(effects) if effects else c)
+
+    final = concatenate_videoclips(faded, method="compose", padding=-fade)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        "ffmpeg",
-        "-y",
-        *inputs,
-        "-f",
-        "lavfi",
-        "-t",
-        f"{total:.2f}",
-        "-i",
-        "anullsrc=channel_layout=stereo:sample_rate=44100",
-        "-filter_complex",
-        filter_complex,
-        "-map",
-        f"[{cur}]",
-        "-map",
-        f"{n}:a",
-        "-c:v",
-        "libx264",
-        "-pix_fmt",
-        "yuv420p",
-        "-r",
-        "30",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "-t",
-        f"{total:.2f}",
-        str(out_path),
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"ffmpeg 실패: {proc.stderr[-3000:]}")
+    final.write_videofile(str(out_path), fps=30, codec="libx264", audio=False, logger=None)
     return out_path
 
 
