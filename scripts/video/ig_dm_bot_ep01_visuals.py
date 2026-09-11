@@ -176,8 +176,12 @@ STEPS = [
 ]
 
 
-def render_frames() -> list[tuple[Path, float]]:
-    """(프레임경로, 노출시간초) 리스트. 노출시간은 나레이션 길이에서 역산."""
+def render_frames() -> tuple[list[tuple[Path, float]], int]:
+    """(프레임경로, 노출시간초) 리스트 + hook 프레임 개수(그 뒤에 Manim 아키텍처 클립을 끼워넣을 위치).
+
+    아키텍처 장면은 정지 카드가 아니라 별도 렌더링된 Manim 애니메이션(DiagramScene.mp4)을
+    쓰므로 이 리스트에는 포함되지 않는다 — build_video()에서 hook 다음, demo 앞에 splice한다.
+    """
     import json
 
     durations = json.loads((OUT_DIR / "scene_durations.json").read_text(encoding="utf-8"))
@@ -201,22 +205,10 @@ def render_frames() -> list[tuple[Path, float]]:
         p = FRAME_DIR / f"s0_hook_{i}.png"
         _title_card(lines, sub).save(p)
         frames.append((p, dur))
+    hook_frame_count = len(frames)
 
-    # scene 1: architecture — 다이어그램은 화면에 고정, 진행 박스만 누적 강조.
-    # 각 단계를 (박스 강조만) → (+설명 텍스트) → (+실제 캡처, 있으면) 3단계로 쪼개
-    # 한 화면이 오래 머물지 않게 한다.
-    arch_total = durations["architecture"]
-    per_step_total = arch_total / len(STEPS)
-    for no, desc, inset_path, inset_caption in STEPS:
-        sub_states: list[tuple[str, Path | None, str]] = [("", None, "")]
-        sub_states.append((desc, None, ""))
-        if inset_path:
-            sub_states.append((desc, inset_path, inset_caption))
-        weights = [0.8] + [1.2] * (len(sub_states) - 1)
-        for j, (dur, (d, ip, ic)) in enumerate(zip(_spread(per_step_total, weights), sub_states)):
-            p = FRAME_DIR / f"s1_step{no}_{j}.png"
-            _diagram_card(no, d, ip, ic).save(p)
-            frames.append((p, dur))
+    # scene 1: architecture — 정지 카드가 아니라 진짜 애니메이션(Manim)으로 별도 렌더링됨.
+    # scripts/video/manim_diagram_scene.py 참조. hook_frame_count 뒤에 build_video()가 끼워넣는다.
 
     # scene 2: demo — 실제 캡처 2장, 각각 (이미지만) → (+캡션)으로 쪼갠다.
     demo_total = durations["demo"]
@@ -246,57 +238,137 @@ def render_frames() -> list[tuple[Path, float]]:
         _cta_card([line], sub).save(p)
         frames.append((p, dur))
 
-    return frames
+    return frames, hook_frame_count
 
 
-def _kenburns_clip(path: Path, duration: float, zoom_in: bool, k: float = 0.12):
-    """정지 이미지에 실제로 동작하는 줌 효과를 입힌 moviepy 클립.
+MELT_EXE = Path.home() / "AppData" / "Local" / "Programs" / "Shotcut" / "melt.exe"
+MELT_PROFILE = "atsc_1080p_30"
+_MELT_CACHE_DIR = FRAME_DIR / "_melt_cache"
+_MELT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    NOTE(2026-09-11): ffmpeg zoompan/time-crop 필터로 먼저 시도했으나 이 환경
-    ffmpeg(8.1)에서 누적 zoom이 매 프레임 리셋되는 버그로 실제로는 전혀 줌이
-    진행되지 않음을 여러 방식으로 실측 확인함. moviepy(파이썬에서 프레임 단위로
-    직접 리사이즈)는 같은 조건에서 실제 줌이 프레임마다 진행되는 것을 확인했다
-    (frame shape이 시간에 따라 실제로 커짐) — 이후 이 효과가 필요하면 ffmpeg
-    zoompan을 다시 시도하지 말고 바로 moviepy를 쓸 것.
+
+def _melt_kenburns_render(path: Path, duration: float, zoom_in: bool, k: float = 0.12) -> Path:
+    """MLT(melt.exe)의 affine 필터로 실제 Ken Burns 줌을 렌더링한다.
+
+    NOTE(2026-09-11): ffmpeg zoompan은 이 환경에서 누적 zoom이 매 프레임 리셋되는
+    버그로 전혀 줌이 진행되지 않음을 확인(실측). moviepy(파이썬 프레임 단위
+    resize)는 실제로 줌이 되지만 ImageClip의 "고정 크기" 최적화 경로를 못 타서
+    매 프레임 풀HD 리사이즈를 반복 — 240초 분량에 20분+ 소요로 비현실적.
+    MLT(melt.exe, C++ 엔진, Shotcut 번들)의 affine 트랜지션은 같은 4초 분량을
+    3.5초에 렌더링(실측) — 이후 Ken Burns 필요하면 항상 이걸 쓸 것, 위 두 가지
+    재시도 금지.
     """
-    from moviepy import ImageClip
+    fps = 30
+    out_frames = max(1, round(duration * fps))
+    out_path = _MELT_CACHE_DIR / f"{path.stem}_{'in' if zoom_in else 'out'}_{out_frames}.mp4"
+    if out_path.exists():
+        return out_path
+    if zoom_in:
+        rect = f"0=0%/0%:100%x100%;{out_frames - 1}=-{k * 100:.0f}%/-{k * 100:.0f}%:{100 + k * 100:.0f}%x{100 + k * 100:.0f}%"
+    else:
+        rect = f"0=-{k * 100:.0f}%/-{k * 100:.0f}%:{100 + k * 100:.0f}%x{100 + k * 100:.0f}%;{out_frames - 1}=0%/0%:100%x100%"
+    cmd = [
+        str(MELT_EXE),
+        "-profile",
+        MELT_PROFILE,
+        str(path),
+        "in=0",
+        f"out={out_frames - 1}",
+        "-attach",
+        "affine",
+        f"transition.rect={rect}",
+        "transition.valign=middle",
+        "transition.halign=middle",
+        "-consumer",
+        f"avformat:{out_path}",
+        "width=1920",
+        "height=1080",
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0 or not out_path.exists():
+        raise RuntimeError(f"melt 렌더 실패: {proc.stderr[-2000:]}")
+    return out_path
 
-    clip = ImageClip(str(path)).with_duration(duration)
 
-    def zoom(t: float) -> float:
-        frac = min(t / duration, 1) if duration > 0 else 1
-        return 1 + k * frac if zoom_in else 1 + k * (1 - frac)
+def build_video(
+    frames: list[tuple[Path, float]],
+    hook_frame_count: int,
+    manim_path: Path,
+    out_path: Path,
+    fade: float = 0.4,
+) -> Path:
+    """hook(정지카드+Ken Burns) → architecture(Manim 실애니메이션) → demo/cta(정지카드+Ken Burns) 순으로 이어붙인다.
 
-    clip = clip.resized(zoom)
+    NOTE(2026-09-11): moviepy의 concatenate_videoclips(method="compose")+write_videofile은
+    소스가 이미 렌더링된 mp4여도 프레임 단위로 재합성하느라 5개 클립(41초)에만 2분+ 소요돼
+    비현실적임을 실측 확인(120초 타임아웃 내 완료 못함). ffmpeg xfade(비디오 대 비디오)로
+    직접 이어붙이면 스트림 레벨 처리라 훨씬 빠름 — 카드 조립은 항상 이 방식을 쓸 것.
+    """
+    hook_frames = frames[:hook_frame_count]
+    rest_frames = frames[hook_frame_count:]
 
-    def crop_center(get_frame, t):
-        frame = get_frame(t)
-        h, w = frame.shape[0], frame.shape[1]
-        x0 = max(0, (w - W) // 2)
-        y0 = max(0, (h - H) // 2)
-        return frame[y0 : y0 + H, x0 : x0 + W]
+    def _card_paths(sub_frames: list[tuple[Path, float]], start_idx: int) -> list[tuple[Path, float]]:
+        out = []
+        for i, (p, d) in enumerate(sub_frames):
+            mp4 = _melt_kenburns_render(p, d + fade, (start_idx + i) % 2 == 0)
+            out.append((mp4, d + fade))
+        return out
 
-    return clip.transform(crop_center)
+    # (클립경로, xfade용 클립 자체 길이) — melt 카드는 d+fade로 렌더됐고, manim은 자연 길이 그대로.
+    clip_list = _card_paths(hook_frames, 0)
+    manim_duration = float(
+        subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(manim_path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    )
+    clip_list.append((manim_path, manim_duration))
+    clip_list += _card_paths(rest_frames, len(hook_frames) + 1)
 
+    n = len(clip_list)
+    inputs: list[str] = []
+    for p, _ in clip_list:
+        inputs += ["-i", str(p)]
 
-def build_video(frames: list[tuple[Path, float]], out_path: Path, fade: float = 0.4) -> Path:
-    """카드마다 Ken Burns 줌(moviepy) + xfade로 잇는다. 짝/홀 인덱스로 줌 방향을 번갈아 단조로움을 줄인다."""
-    from moviepy import concatenate_videoclips, vfx
+    # xfade offset은 "겹치기 전 화면에 온전히 보이는 시간" 기준이라 fade만큼 뺀 길이를 누적한다.
+    visible = [d - fade for _, d in clip_list]
+    scale_filters = [f"[{i}:v]scale={W}:{H},fps=30,setsar=1[v{i}]" for i in range(n)]
+    xfade_parts = []
+    cur = "v0"
+    offset = visible[0]
+    for i in range(1, n):
+        nxt = f"x{i}"
+        xfade_parts.append(f"[{cur}][v{i}]xfade=transition=fade:duration={fade}:offset={offset:.2f}[{nxt}]")
+        cur = nxt
+        offset += visible[i]
 
-    n = len(frames)
-    clips = [_kenburns_clip(p, d + fade, i % 2 == 0) for i, (p, d) in enumerate(frames)]
-    faded = []
-    for i, c in enumerate(clips):
-        effects = []
-        if i > 0:
-            effects.append(vfx.CrossFadeIn(fade))
-        if i < n - 1:
-            effects.append(vfx.CrossFadeOut(fade))
-        faded.append(c.with_effects(effects) if effects else c)
+    filter_complex = ";".join(scale_filters + xfade_parts)
+    total = sum(visible) + fade  # 마지막 클립은 겹치지 않은 꼬리까지 포함
 
-    final = concatenate_videoclips(faded, method="compose", padding=-fade)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    final.write_videofile(str(out_path), fps=30, codec="libx264", audio=False, logger=None)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        *inputs,
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        f"[{cur}]",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-r",
+        "30",
+        "-t",
+        f"{total:.2f}",
+        str(out_path),
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg xfade 조립 실패: {proc.stderr[-3000:]}")
     return out_path
 
 
@@ -341,12 +413,22 @@ def mux(video_no_audio: Path, narration: Path, out_path: Path) -> Path:
     return out_path
 
 
+MANIM_ARCHITECTURE_MP4 = ROOT / "media" / "videos" / "manim_diagram_scene" / "1080p30" / "DiagramScene_trimmed.mp4"
+
+
 def main() -> None:
-    frames = render_frames()
-    print(f"프레임 {len(frames)}개 생성 완료, 총 {sum(d for _, d in frames):.1f}초")
+    frames, hook_frame_count = render_frames()
+    print(f"프레임 {len(frames)}개 생성 완료 (hook {hook_frame_count}개 + demo/cta {len(frames) - hook_frame_count}개)")
+    if not MANIM_ARCHITECTURE_MP4.exists():
+        raise FileNotFoundError(
+            f"Manim 아키텍처 애니메이션이 없습니다: {MANIM_ARCHITECTURE_MP4}\n"
+            "먼저 렌더링하세요: python -m manim -qh --fps 30 -r 1920,1080 "
+            "scripts/video/manim_diagram_scene.py DiagramScene "
+            "(VS Build Tools 설치된 PowerShell 개발자 셸에서 실행)"
+        )
 
     silent = OUT_DIR / "silent.mp4"
-    build_video(frames, silent)
+    build_video(frames, hook_frame_count, MANIM_ARCHITECTURE_MP4, silent)
     print(f"무음 비디오 조립 완료: {silent}")
 
     narration = OUT_DIR / "narration_full.mp3"
