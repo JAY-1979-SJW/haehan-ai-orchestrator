@@ -42,12 +42,23 @@ _LIST_JS = r"""
 
 
 def list_board(page: Any, url: str, *, wait_seconds: float = 6.0) -> list[dict[str, Any]]:
-    """게시판 URL(cafe.naver.com/f-e/cafes/{clubid}/menus/{menuid}?viewType=L) → 게시글 목록."""
+    """게시판 URL(cafe.naver.com/f-e/cafes/{clubid}/menus/{menuid}?viewType=L) → 게시글 목록.
+
+    이 어댑터는 네이버 카페 전용이라 다른 도메인으로 임의 이동시키지 않는다
+    (SSRF 방지 — url이 cafe.naver.com이 아니면 거부).
+    """
+    if not url.startswith("https://cafe.naver.com/"):
+        raise ValueError(f"cafe.naver.com URL만 허용됩니다: {url!r}")
+
     page.goto(url, timeout=30000, wait_until="domcontentloaded")
     page.wait_for_timeout(int(wait_seconds * 1000))
     rows = page.evaluate(_LIST_JS)
+    if not isinstance(rows, list):
+        return []
     out = []
     for r in rows:
+        if not isinstance(r, dict):
+            continue
         title = (r.get("title") or "").strip()
         if not title or title in {"댓글수"}:
             continue
