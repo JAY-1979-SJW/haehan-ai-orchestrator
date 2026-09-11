@@ -18,11 +18,17 @@
     "  caveats           : 알아두지 않으면 사고나는 것",
     "  status            : available | registered | not_registered | unknown"
   ],
-
   "vendors": [
     {
       "name": "네이버 커머스API",
-      "keywords": ["smartstore", "스마트스토어", "상품등록", "커머스", "commerce", "판매자"],
+      "keywords": [
+        "smartstore",
+        "스마트스토어",
+        "상품등록",
+        "커머스",
+        "commerce",
+        "판매자"
+      ],
       "docs": "https://apicenter.commerce.naver.com",
       "cost": "무료",
       "status": "not_registered",
@@ -49,7 +55,14 @@
     },
     {
       "name": "네이버 검색 OpenAPI",
-      "keywords": ["naver", "네이버", "검색", "블로그검색", "뉴스", "쇼핑검색"],
+      "keywords": [
+        "naver",
+        "네이버",
+        "검색",
+        "블로그검색",
+        "뉴스",
+        "쇼핑검색"
+      ],
       "docs": "https://developers.naver.com",
       "cost": "무료 (25,000회/일)",
       "status": "available",
@@ -69,43 +82,120 @@
     },
     {
       "name": "YouTube Data API",
-      "keywords": ["youtube", "유튜브", "영상", "자막"],
+      "keywords": [
+        "youtube",
+        "유튜브",
+        "영상",
+        "자막"
+      ],
       "docs": "https://developers.google.com/youtube/v3",
       "cost": "무료 (쿼터 제한)",
       "status": "available",
-      "supported": ["영상 업로드", "자막 조회", "댓글 읽기", "채널 조회"],
+      "supported": [
+        "영상 업로드",
+        "자막 조회",
+        "댓글 읽기",
+        "채널 조회"
+      ],
       "not_supported": [],
-      "caveats": ["public 공개 업로드는 별도 승인 필요. 기본 private."]
+      "caveats": [
+        "public 공개 업로드는 별도 승인 필요. 기본 private."
+      ]
     },
     {
       "name": "Unsplash API",
-      "keywords": ["unsplash", "사진", "이미지", "블로그이미지"],
+      "keywords": [
+        "unsplash",
+        "사진",
+        "이미지",
+        "블로그이미지"
+      ],
       "docs": "https://unsplash.com/documentation",
       "cost": "무료",
       "status": "available",
-      "supported": ["사진 검색", "다운로드"],
+      "supported": [
+        "사진 검색",
+        "다운로드"
+      ],
       "not_supported": [],
-      "caveats": ["정책상 download_location 트리거 필요"]
+      "caveats": [
+        "정책상 download_location 트리거 필요"
+      ]
     },
     {
       "name": "(없음) EUM 건설근로자공제회",
-      "keywords": ["eum", "이음", "단말기", "공제회"],
+      "keywords": [
+        "eum",
+        "이음",
+        "단말기",
+        "공제회"
+      ],
       "docs": "",
       "cost": "",
       "status": "unknown",
       "supported": [],
-      "not_supported": ["공개 API 확인된 바 없음 — CDP 가 현실적 경로"],
-      "caveats": ["공공 사이트. API 제공 여부를 주기적으로 재확인할 것."]
+      "not_supported": [
+        "공개 API 확인된 바 없음 — CDP 가 현실적 경로"
+      ],
+      "caveats": [
+        "공공 사이트. API 제공 여부를 주기적으로 재확인할 것."
+      ]
     },
     {
       "name": "(없음) 하나팩스",
-      "keywords": ["hanafax", "팩스", "fax"],
+      "keywords": [
+        "hanafax",
+        "팩스",
+        "fax"
+      ],
       "docs": "",
       "cost": "",
       "status": "unknown",
       "supported": [],
-      "not_supported": ["공개 API 확인된 바 없음"],
+      "not_supported": [
+        "공개 API 확인된 바 없음"
+      ],
       "caveats": []
+    },
+    {
+      "name": "Instagram Graph API (Meta)",
+      "keywords": [
+        "instagram",
+        "인스타",
+        "인스타그램",
+        "친추",
+        "팔로우",
+        "follow",
+        "meta"
+      ],
+      "docs": "https://developers.facebook.com/docs/instagram-platform",
+      "cost": "무료",
+      "status": "registered",
+      "auth": "Meta 앱(Banditbul Publisher) 생성 완료, Business/Creator 계정 연결 + 장기 액세스 토큰 발급 완료 (2026-09-11 기준 DM 자동화 end-to-end 검증됨)",
+      "supported": [
+        "콘텐츠 발행 — 이미지/캐러셀/릴스 (media_type=IMAGE|CAROUSEL|REELS, container 생성 후 publish), 공개 호스팅 URL만 받음(로컬 파일 불가)",
+        "스토리 발행 (media_type=STORIES, API v18+)",
+        "내 게시물 댓글 읽기/답글/숨김/삭제 (자기 미디어에 한함)",
+        "멘션된 게시물/댓글 조회·답글",
+        "인사이트 — 미디어별(reach, impressions, engagement) 및 계정 단위 통계",
+        "해시태그 검색 — 태그로 top/recent 미디어 조회 (주당 30개 태그 쿼리 한도)",
+        "Business Discovery — 다른 비즈니스/크리에이터 계정의 공개 프로필·미디어 통계 읽기(읽기 전용, biz-to-biz)",
+        "DM — Instagram Messaging API로 발신/수신, 댓글 트리거 프라이빗 리플라이(24시간 세션 정책 내) — 이 프로젝트에 이미 구현·검증됨(instagram_dm_router.py)",
+        "웹훅 — comments, mentions, messages, story_insights 이벤트 수신"
+      ],
+      "not_supported": [
+        "친구추가/팔로우·언팔로우 — Graph API에 해당 엔드포인트 자체가 존재하지 않음(정책상 미지원이 아니라 애초에 기능이 없음). 자동 팔로우가 필요하면 비공식 사설 API/CDP뿐이며 Meta ToS 위반으로 계정 정지 위험이 커서 권장하지 않음.",
+        "다른 사람 게시물에 댓글 작성 — 댓글 API는 내 미디어에만 적용된다. 남의 게시물에 댓글 다는 기능 없음(블로그처럼 타인 게시물 댓글은 API로 불가).",
+        "다른 사람 게시물에 좋아요(like) — API 없음.",
+        "팔로워/팔로잉 목록 조회 — 내 계정 포함 팔로워 리스트를 가져오는 공개 엔드포인트 없음.",
+        "임의 사용자 검색/탐색 — 공개된 사용자 검색 API 없음(Business Discovery는 상대 계정의 정확한 username을 이미 알아야 조회 가능).",
+        "24시간 세션 밖 임의 사용자에게 선제 DM 발송 — 댓글/메시지로 먼저 접촉한 사용자에게만, 그마저도 24시간 창 내에서만 가능(휴먼에이전트 태그 등 예외 제한적)."
+      ],
+      "caveats": [
+        "친추에 해당하는 팔로우 자동화는 이 벤더 API로 원천 불가 — 네이버 블로그 이웃추가와 근본적으로 다른 상황이다(네이버는 CDP가 최후수단, 인스타는 CDP조차 계정정지 리스크 때문에 권장 안 함).",
+        "콘텐츠 발행은 로컬 파일 업로드가 안 되고 반드시 공개 접근 가능한 URL(HTTPS)이 필요 — haehan-ai.kr 정적 호스팅에 올린 뒤 URL로 넘기는 기존 파이프라인(scripts/instagram/api_publish.py) 재사용.",
+        "일일 발행 한도 100개(기술 한도)이지만 실전에서는 하루 1개가 도달률에 최적(instagram-marketing 스킬 참조)."
+      ]
     }
   ]
 }

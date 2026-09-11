@@ -153,3 +153,86 @@ def publish_carousel(image_urls: list[str], caption: str, confirmed: bool = Fals
 def whoami() -> dict:
     _, uid = _creds()
     return _get(uid, {"fields": "id,username,account_type"})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 스토리 발행 (media_type=STORIES) — caption 미지원, image_url 또는 video_url만
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def create_story_container(*, image_url: str = "", video_url: str = "") -> str:
+    if bool(image_url) == bool(video_url):
+        raise ValueError("image_url 또는 video_url 중 하나만 지정해야 합니다")
+    _, uid = _creds()
+    params: dict = {"media_type": "STORIES"}
+    params["image_url" if image_url else "video_url"] = image_url or video_url
+    res = _post(f"{uid}/media", params)
+    cid = res.get("id")
+    if not cid:
+        raise RuntimeError(f"스토리 컨테이너 생성 실패: {res}")
+    _log.info(f"[ig-api] 스토리 컨테이너 생성: {cid}")
+    return cid
+
+
+def publish_story(*, image_url: str = "", video_url: str = "", confirmed: bool = False) -> dict:
+    """스토리 발행. confirmed=True 일 때만 실제 게시한다."""
+    cid = create_story_container(image_url=image_url, video_url=video_url)
+    if video_url:
+        wait_ready(cid)
+    if not confirmed:
+        _log.info("[ig-api] confirmed=False — 컨테이너까지만 생성, 게시 안 함")
+        return {"container_id": cid, "published": False}
+    res = publish(cid)
+    return {"container_id": cid, "published": True, **res}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 인사이트 (읽기 전용)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# 미디어 타입별 지원 메트릭이 달라 media_type 인자로 분기한다(Graph API 제약).
+_MEDIA_INSIGHT_METRICS = {
+    "REELS": "reach,likes,comments,saved,shares,plays,total_interactions",
+    "IMAGE": "reach,likes,comments,saved,shares,total_interactions",
+    "CAROUSEL": "reach,likes,comments,saved,shares,total_interactions",
+}
+
+
+def get_media_insights(media_id: str, media_type: str = "IMAGE") -> dict:
+    """게시물 하나의 인사이트(도달·참여 등). media_type: REELS | IMAGE | CAROUSEL."""
+    metrics = _MEDIA_INSIGHT_METRICS.get(media_type.upper(), _MEDIA_INSIGHT_METRICS["IMAGE"])
+    res = _get(f"{media_id}/insights", {"metric": metrics})
+    return {row["name"]: row.get("values", [{}])[0].get("value") for row in res.get("data", [])}
+
+
+def get_account_insights(metrics: str = "reach,profile_views,website_clicks", period: str = "day") -> dict:
+    """계정 단위 인사이트. period: day | week | days_28."""
+    _, uid = _creds()
+    res = _get(f"{uid}/insights", {"metric": metrics, "period": period})
+    return {row["name"]: row.get("values", []) for row in res.get("data", [])}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 해시태그 검색 (읽기 전용) — 주당 신규 해시태그 조회 30개 한도
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def search_hashtag_id(name: str) -> str:
+    """해시태그 이름(# 제외) → hashtag_id. 이후 top/recent_media 조회에 사용."""
+    _, uid = _creds()
+    res = _get("ig_hashtag_search", {"user_id": uid, "q": name})
+    data = res.get("data") or []
+    if not data:
+        raise RuntimeError(f"해시태그를 찾을 수 없습니다: {name}")
+    return data[0]["id"]
+
+
+def get_hashtag_media(hashtag_id: str, kind: str = "top", limit: int = 20) -> list[dict]:
+    """kind: top | recent. caption/permalink/like_count/comments_count 반환."""
+    _, uid = _creds()
+    edge = "top_media" if kind == "top" else "recent_media"
+    res = _get(
+        f"{hashtag_id}/{edge}",
+        {"user_id": uid, "fields": "id,caption,permalink,like_count,comments_count,timestamp", "limit": limit},
+    )
+    return res.get("data", [])
