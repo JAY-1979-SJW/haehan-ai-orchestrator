@@ -21,14 +21,26 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import os
 import platform
 import subprocess
 import sys
 
-# ⚠️ 실제 배포 전 반드시 교체할 것 — 이 값이 노출되면 키 생성기를 복제당한다.
-# (환경변수로 오버라이드 가능하게 해서, 배포 빌드마다 다른 값을 주입할 수 있게 함)
-_SECRET = os.environ.get("LICENSE_SIGNING_SECRET", "haehan-ai-blog-autopost-CHANGE-ME-BEFORE-SHIP")
+_log = logging.getLogger(__name__)
+
+# 보안 리뷰 지적사항(2026-09-12) 반영: 소스에 실사용 가능한 기본 시크릿을 절대
+# 두지 않는다(하드코딩된 기본값은 리포를 본 사람이 그대로 키 생성기를 복제할
+# 수 있다). LICENSE_SIGNING_SECRET 환경변수가 없으면 "동작하는 대체값"으로
+# 넘어가지 않고 항상 실패(fail-closed)한다 — 배포 패키징 시에만 이 환경변수를
+# 주입하고, 그 실제 값은 절대 커밋하지 않는다.
+_SECRET = os.environ.get("LICENSE_SIGNING_SECRET") or None
+if _SECRET is None:
+    _log.warning(
+        "LICENSE_SIGNING_SECRET 환경변수가 없습니다 — 라이선스 발급/검증이 "
+        "전부 실패로 처리됩니다(fail-closed, 의도된 동작). 실제 배포 패키징 "
+        "시 이 환경변수를 반드시 주입하세요."
+    )
 
 
 def get_machine_id() -> str:
@@ -55,13 +67,22 @@ def get_machine_id() -> str:
 
 
 def generate_license_key(machine_id: str, secret: str | None = None) -> str:
-    """판매자 전용 — 고객의 machine_id로 라이선스 키를 발급한다."""
-    sig = hmac.new((secret or _SECRET).encode("utf-8"), machine_id.encode("utf-8"), hashlib.sha256).hexdigest()[:20]
+    """판매자 전용 — 고객의 machine_id로 라이선스 키를 발급한다.
+
+    secret 인자도 없고 LICENSE_SIGNING_SECRET 환경변수도 없으면 발급 자체를
+    거부한다(RuntimeError) — 대체 시크릿으로 조용히 동작하지 않는다.
+    """
+    real_secret = secret or _SECRET
+    if not real_secret:
+        raise RuntimeError("LICENSE_SIGNING_SECRET 환경변수가 없어 라이선스를 발급할 수 없습니다.")
+    sig = hmac.new(real_secret.encode("utf-8"), machine_id.encode("utf-8"), hashlib.sha256).hexdigest()[:20]
     return f"{machine_id}-{sig}"
 
 
 def verify_license(license_key: str, secret: str | None = None) -> bool:
-    """이 PC에서 이 라이선스 키가 유효한지 확인."""
+    """이 PC에서 이 라이선스 키가 유효한지 확인. 시크릿 미설정이면 항상 False(fail-closed)."""
+    if not (secret or _SECRET):
+        return False
     if not license_key or "-" not in license_key:
         return False
     machine_id, _, sig = license_key.rpartition("-")
