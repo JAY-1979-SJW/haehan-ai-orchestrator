@@ -83,6 +83,7 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
     app_secret = _app_secret()
 
     signature_valid = False
+    expected_sig = ""
     if app_secret and signature_header.startswith("sha256="):
         expected_sig = hmac.new(app_secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
         signature_valid = hmac.compare_digest(expected_sig, signature_header[len("sha256=") :])
@@ -90,6 +91,16 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
     payload_hash = hashlib.sha256(raw_body).hexdigest()
 
     if not signature_valid:
+        # 진단용: 해시값만 로깅(비밀키 자체는 노출 안 됨) — 원인 파악 후 제거 예정
+        logger.warning(
+            "instagram_dm webhook 서명 불일치 | app_secret_set=%s received_header=%r "
+            "expected_sig=%s received_sig=%s body_len=%d",
+            bool(app_secret),
+            signature_header[:15] + "..." if signature_header else "(없음)",
+            expected_sig,
+            signature_header[len("sha256=") :] if signature_header.startswith("sha256=") else signature_header,
+            len(raw_body),
+        )
         try:
             payload = json.loads(raw_body or b"{}")
         except json.JSONDecodeError:
