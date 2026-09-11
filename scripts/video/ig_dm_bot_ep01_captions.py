@@ -42,7 +42,7 @@ def _srt_timestamp(sec: float) -> str:
 
 def build_srt() -> Path:
     durations = json.loads((OUT_DIR / "scene_durations.json").read_text(encoding="utf-8"))
-    scene_order = ["hook", "architecture", "demo", "cta"]
+    scene_order = ["teaser", "hook", "architecture", "demo", "cta"]
 
     cues: list[tuple[float, float, str]] = []
     cursor = 0.0
