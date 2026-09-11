@@ -1,9 +1,13 @@
 "use client";
 /** 메일함 — 상세 */
 import type { InboxItem } from "@/lib/assistant/api";
-import { SOURCE_LABEL } from "./inboxShared";
+import { CATEGORY_LABEL, SOURCE_LABEL } from "./inboxShared";
 
 export function InboxDetail({ item }: { item: InboxItem }) {
+  const classification = item.metadata?.classification as
+    | { category?: string; priority?: string; needs_review?: boolean }
+    | undefined;
+
   return (
     <div className="p-5 h-full overflow-y-auto">
       <div className="mb-4">
@@ -25,6 +29,19 @@ export function InboxDetail({ item }: { item: InboxItem }) {
             <span className="font-medium">수신:</span>{" "}
             {item.received_at?.replace("T", " ").slice(0, 16) ?? "-"}
           </span>
+          {classification?.category && (
+            <>
+              <span>·</span>
+              <span className="px-1.5 py-0.5 rounded border border-[#DBEAFE] bg-[#EFF6FF] text-[#1D4ED8] font-medium">
+                {CATEGORY_LABEL[classification.category] ?? classification.category}
+              </span>
+            </>
+          )}
+          {classification?.priority === "high" && (
+            <span className="px-1.5 py-0.5 rounded border border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C] font-medium">
+              긴급
+            </span>
+          )}
         </div>
       </div>
 
