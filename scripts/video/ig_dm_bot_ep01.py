@@ -177,12 +177,19 @@ def _mp3_duration_sec(path: Path) -> float:
 async def generate_all(only_scene: int | None = None) -> None:
     targets = [s for s in SCENES if only_scene is None or s["id"] == only_scene]
     total = 0.0
+    durations: dict[str, float] = {}
     for s in targets:
         path = await _gen_one(s)
         dur = _mp3_duration_sec(path)
+        durations[s["name"]] = dur
         total += dur
         print(f"[{s['id']}] {s['name']}: {dur:.1f}초 → {path}")
     if only_scene is None:
+        import json
+
+        (_output_dir().parent / "scene_durations.json").write_text(
+            json.dumps(durations, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         print(f"\n총 나레이션 길이: {total:.1f}초 ({total / 60:.1f}분)")
         print("목표: 4~5분 (240~300초)")
         if total < 200:
