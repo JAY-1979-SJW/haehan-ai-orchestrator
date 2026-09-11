@@ -41,7 +41,7 @@ GOLD = (196, 164, 108)
 BLUE = (90, 140, 210)
 
 
-def _title_card(lines: list[str], sub: str = "") -> Image.Image:
+def _title_card(lines: list[str], sub: str = "", bubble: str = "") -> Image.Image:
     img = Image.new("RGB", (W, H), INK)
     draw = ImageDraw.Draw(img, "RGBA")
     _gradient_band(img, int(H * 0.30), int(H * 0.70), from_alpha=0, to_alpha=45, color=(60, 55, 48))
@@ -57,6 +57,11 @@ def _title_card(lines: list[str], sub: str = "") -> Image.Image:
         y += 16
         tw = draw.textlength(sub, font=f_sub)
         draw.text(((W - tw) / 2, y), sub, font=f_sub, fill=(200, 194, 185))
+    if bubble:
+        bubble_top = 120
+        _speech_bubble(
+            draw, bubble, center_x=W - 380, top_y=bubble_top, tail_x=W - 480, tail_y=bubble_top + 190, fill=GOLD
+        )
     return img
 
 
@@ -141,8 +146,48 @@ def _diagram_card(active: int, desc: str, inset_path: Path | None = None, inset_
     return img
 
 
-def _demo_card(shot_path: Path, caption: str) -> Image.Image:
-    """실제 캡처 스크린샷을 카드에 합성."""
+def _speech_bubble(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    center_x: int,
+    top_y: int,
+    tail_x: int,
+    tail_y: int,
+    font_size: int = 34,
+    fill=WHITE,
+    text_color=INK,
+    max_width: int = 520,
+) -> None:
+    """만화풍 말풍선 — (center_x, top_y) 근처에 텍스트를 담은 풍선을 그리고 (tail_x, tail_y)를 가리키는 꼬리를 단다."""
+    font = _font(FONT_BOLD, font_size)
+    lines = _wrap(draw, text, font, max_width - 60)
+    line_h = font_size + 14
+    box_w = min(max_width, max(draw.textlength(ln, font=font) for ln in lines) + 60)
+    box_h = len(lines) * line_h + 40
+    x0 = center_x - box_w / 2
+    y0 = top_y
+    x1 = center_x + box_w / 2
+    y1 = top_y + box_h
+
+    draw.rounded_rectangle([x0, y0, x1, y1], radius=22, fill=fill, outline=INK, width=3)
+    tail_base_x = min(max(tail_x, x0 + 30), x1 - 30)
+    draw.polygon(
+        [(tail_base_x - 18, y1 - 2), (tail_base_x + 18, y1 - 2), (tail_x, tail_y)],
+        fill=fill,
+        outline=INK,
+    )
+    draw.line([(tail_base_x - 18, y1 - 2), (tail_x, tail_y)], fill=INK, width=3)
+    draw.line([(tail_base_x + 18, y1 - 2), (tail_x, tail_y)], fill=INK, width=3)
+
+    ty = y0 + 20
+    for ln in lines:
+        tw = draw.textlength(ln, font=font)
+        draw.text((center_x - tw / 2, ty), ln, font=font, fill=text_color)
+        ty += line_h
+
+
+def _demo_card(shot_path: Path, caption: str, bubble: str = "") -> Image.Image:
+    """실제 캡처 스크린샷을 카드에 합성 + 재미 요소로 말풍선을 얹는다."""
     img = Image.new("RGB", (W, H), INK)
     draw = ImageDraw.Draw(img, "RGBA")
     shot = Image.open(shot_path).convert("RGB")
@@ -151,6 +196,8 @@ def _demo_card(shot_path: Path, caption: str) -> Image.Image:
     f_cap = _font(FONT_BOLD, 44)
     tw = draw.textlength(caption, font=f_cap)
     draw.text(((W - tw) / 2, H - 110), caption, font=f_cap, fill=GOLD)
+    if bubble:
+        _speech_bubble(draw, bubble, center_x=W - 420, top_y=90, tail_x=W - 560, tail_y=300, fill=GOLD)
     return img
 
 
@@ -195,15 +242,15 @@ def render_frames() -> tuple[list[tuple[Path, float]], int]:
     # scene 0: hook — 정지 화면이 너무 길지 않도록 5단계로 잘게 쪼개 계속 바뀌게 한다.
     hook_total = durations["hook"]
     hook_states = [
-        (["인스타 팔로우·DM,"], ""),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], ""),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "❌ 팔로우·좋아요·댓글 자동화는 안 됩니다"),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "✅ 댓글→DM 자동발송은 공식 지원됩니다"),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다"),
+        (["인스타 팔로우·DM,"], "", ""),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "", "음... 되려나?"),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "X  팔로우·좋아요·댓글 자동화는 안 됩니다", "역시 안 되는구나"),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "O  댓글→DM 자동발송은 공식 지원됩니다", "어? 이건 되네?"),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다", ""),
     ]
-    for i, (dur, (lines, sub)) in enumerate(zip(_spread(hook_total, [1, 1, 1.2, 1.2, 1.3]), hook_states)):
+    for i, (dur, (lines, sub, bubble)) in enumerate(zip(_spread(hook_total, [1, 1, 1.2, 1.2, 1.3]), hook_states)):
         p = FRAME_DIR / f"s0_hook_{i}.png"
-        _title_card(lines, sub).save(p)
+        _title_card(lines, sub, bubble).save(p)
         frames.append((p, dur))
     hook_frame_count = len(frames)
 
@@ -213,15 +260,15 @@ def render_frames() -> tuple[list[tuple[Path, float]], int]:
     # scene 2: demo — 실제 캡처 2장, 각각 (이미지만) → (+캡션)으로 쪼갠다.
     demo_total = durations["demo"]
     shots = [
-        (DEMO_DIR / "01_comment_posted.png", '① 댓글 게시 — "가격이 얼마에요?"'),
-        (DEMO_DIR / "02_dm_received.png", "② 1분 만에 자동 DM 도착"),
+        (DEMO_DIR / "01_comment_posted.png", '① 댓글 게시 — "가격이 얼마에요?"', "저요 저요! 궁금해요~"),
+        (DEMO_DIR / "02_dm_received.png", "② 1분 만에 자동 DM 도착", "어? 벌써 답장이 왔네?"),
     ]
     per_shot_total = demo_total / len(shots)
-    for shot_path, cap in shots:
+    for shot_path, cap, bubble in shots:
         p_a = FRAME_DIR / f"s2_{shot_path.stem}_a.png"
-        _demo_card(shot_path, "").save(p_a)
+        _demo_card(shot_path, "", bubble).save(p_a)
         p_b = FRAME_DIR / f"s2_{shot_path.stem}_b.png"
-        _demo_card(shot_path, cap).save(p_b)
+        _demo_card(shot_path, cap, bubble).save(p_b)
         for dur, p in zip(_spread(per_shot_total, [0.8, 1.2]), [p_a, p_b]):
             frames.append((p, dur))
 
