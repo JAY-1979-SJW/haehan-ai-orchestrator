@@ -1,7 +1,7 @@
 "use client";
 /** 메일함 — 목록 행 */
 import type { InboxItem } from "@/lib/assistant/api";
-import { SOURCE_LABEL, STATUS_LABEL, STATUS_STYLE, timeAgo } from "./inboxShared";
+import { CATEGORY_LABEL, SOURCE_LABEL, STATUS_LABEL, STATUS_STYLE, timeAgo } from "./inboxShared";
 
 export function InboxRow({
   item,
@@ -14,6 +14,10 @@ export function InboxRow({
 }) {
   const statusStyle = STATUS_STYLE[item.status ?? "new"] ?? STATUS_STYLE["new"];
   const sourceLabel = SOURCE_LABEL[item.source_type ?? ""] ?? item.source_type ?? "-";
+  const classification = item.metadata?.classification as { category?: string } | undefined;
+  const categoryLabel = classification?.category
+    ? CATEGORY_LABEL[classification.category] ?? classification.category
+    : null;
 
   return (
     <button
@@ -33,6 +37,11 @@ export function InboxRow({
             >
               {STATUS_LABEL[item.status ?? "new"] ?? item.status}
             </span>
+            {categoryLabel && (
+              <span className="text-xs px-1.5 py-0.5 rounded border font-medium bg-[#EFF6FF] text-[#1D4ED8] border-[#DBEAFE]">
+                {categoryLabel}
+              </span>
+            )}
             <span className="text-xs text-[#9CA3AF] ml-auto">
               {timeAgo(item.received_at ?? "")}
             </span>

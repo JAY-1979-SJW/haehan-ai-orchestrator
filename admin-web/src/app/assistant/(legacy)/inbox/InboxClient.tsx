@@ -41,12 +41,12 @@ export function InboxClient() {
     filter === "all" ? items : items.filter((i) => i.status === filter);
 
   return (
-    <PageShell title="메일 Inbox" description="수신 메일 · 메일 작성" chatDomain="inbox">
+    <PageShell title="문의함" description="이메일 · 카카오톡 등 전 채널 문의 통합" chatDomain="inbox">
     <div className="flex flex-col h-full">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-[#E5E7EB] bg-white">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-[#111827]">메일 inbox</span>
+          <span className="text-sm font-bold text-[#111827]">문의함</span>
           {!loading && (
             <span className="text-xs text-[#6B7280]">
               총 {items.length}건

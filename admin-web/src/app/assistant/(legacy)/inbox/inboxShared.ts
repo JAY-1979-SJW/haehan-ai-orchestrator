@@ -7,6 +7,18 @@ export const SOURCE_LABEL: Record<string, string> = {
   naver_mail: "네이버",
   hiworks: "하이웍스",
   manual: "수동",
+  kakaotalk_channel: "카카오톡",
+  kakaowork: "카카오워크",
+};
+
+export const CATEGORY_LABEL: Record<string, string> = {
+  support: "문의",
+  sales: "영업/견적",
+  bidding: "입찰/조달",
+  accounting: "정산/청구",
+  development: "개발/기술",
+  operations: "운영/장애",
+  general: "일반",
 };
 
 export const STATUS_STYLE: Record<string, string> = {
