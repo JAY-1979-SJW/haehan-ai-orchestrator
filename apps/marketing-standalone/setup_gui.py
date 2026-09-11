@@ -25,10 +25,72 @@ from tkinter import LEFT, Button, Entry, Frame, Label, StringVar, Tk, X, message
 _APP_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(_APP_ROOT))
 
+from core.license_check import get_machine_id, verify_license  # noqa: E402
+
 CONFIG_DIR = _APP_ROOT / "config"
 SETTINGS_PATH = CONFIG_DIR / "settings.json"
 ACCOUNTS_PATH = CONFIG_DIR / "accounts.json"
+LICENSE_PATH = CONFIG_DIR / "license.txt"
 ENV_PATH = _APP_ROOT / ".env"
+
+
+def _load_license() -> str:
+    if LICENSE_PATH.exists():
+        return LICENSE_PATH.read_text(encoding="utf-8").strip()
+    return ""
+
+
+def _save_license(key: str) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    LICENSE_PATH.write_text(key.strip(), encoding="utf-8")
+
+
+def ensure_licensed() -> bool:
+    """저장된 라이선스가 유효하면 True. 없거나 무효면 입력 창을 띄우고 결과를 반환."""
+    existing = _load_license()
+    if existing and verify_license(existing):
+        return True
+
+    result = {"ok": False}
+    win = Tk()
+    win.title("라이선스 인증")
+    win.geometry("480x260")
+
+    mid = get_machine_id()
+    Label(win, text="라이선스 인증이 필요합니다", font=("Malgun Gothic", 13, "bold")).pack(pady=(16, 6))
+    Label(
+        win,
+        text="아래 PC 코드를 판매자에게 보내 라이선스 키를 발급받아 입력해주세요.",
+        font=("Malgun Gothic", 9),
+        fg="#555",
+        wraplength=440,
+    ).pack(pady=(0, 10))
+
+    code_frame = Frame(win)
+    code_frame.pack(fill=X, padx=16, pady=4)
+    Label(code_frame, text="PC 코드", width=10, anchor="w").pack(side=LEFT)
+    mid_var = StringVar(value=mid)
+    mid_entry = Entry(code_frame, textvariable=mid_var, state="readonly")
+    mid_entry.pack(side=LEFT, fill=X, expand=True)
+
+    key_frame = Frame(win)
+    key_frame.pack(fill=X, padx=16, pady=10)
+    Label(key_frame, text="라이선스 키", width=10, anchor="w").pack(side=LEFT)
+    key_var = StringVar()
+    Entry(key_frame, textvariable=key_var).pack(side=LEFT, fill=X, expand=True)
+
+    def on_activate():
+        key = key_var.get().strip()
+        if verify_license(key):
+            _save_license(key)
+            result["ok"] = True
+            win.destroy()
+        else:
+            messagebox.showerror("인증 실패", "라이선스 키가 이 PC와 맞지 않습니다. 판매자에게 문의해주세요.")
+
+    Button(win, text="인증", command=on_activate, bg="#03C75A", fg="white", width=16).pack(pady=8)
+    win.mainloop()
+    return result["ok"]
 
 
 def _load_existing() -> dict:
@@ -92,6 +154,9 @@ def open_naver_login() -> None:
 
 
 def main() -> None:
+    if not ensure_licensed():
+        return
+
     existing = _load_existing()
     existing_key = _load_api_key()
 
