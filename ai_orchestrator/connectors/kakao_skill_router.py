@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from .. import telegram_sender
 from ..inbox import create_inbox_item, exists_by_external_id
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +54,22 @@ _CATEGORY_REPLIES: dict[str, str] = {
 
 def _reply_for_category(category: str) -> str:
     return _CATEGORY_REPLIES.get(category, _FIXED_REPLY)
+
+
+def _notify_new_inquiry(category: str, title: str) -> None:
+    """새 카톡 문의를 텔레그램으로 알림 (best-effort, 실패해도 스킬 응답은 계속 진행).
+
+    챗봇이 카카오 스킬로 자동응답하면 카카오는 "이미 응답 완료"로 처리해
+    채널 관리자 앱에 모바일 푸시를 보내지 않는다 — 그 공백을 메우기 위한 알림.
+    """
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID") or os.environ.get("TELEGRAM_APPROVER_CHAT_ID")
+    if not chat_id:
+        return
+    text = f"[카카오톡 문의] 카테고리: {category}\n{title}"
+    try:
+        telegram_sender.send_message(text, chat_id=chat_id)
+    except Exception as e:  # 알림 실패가 스킬 응답을 막으면 안 됨
+        logger.warning("kakaotalk-skill telegram 알림 실패: %s", e)
 
 
 def _skill_response(text: str) -> dict:
@@ -152,5 +170,6 @@ async def receive_kakaotalk_skill(request: Request):
             msg["external_id"][:24],
             category,
         )
+        _notify_new_inquiry(category, msg["title"])
 
     return JSONResponse(_skill_response(reply_text))
