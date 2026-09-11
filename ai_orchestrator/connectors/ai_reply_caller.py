@@ -15,8 +15,19 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
+
+# API 키 패턴이 예외 메시지에 실려 로그로 유출되는 걸 막는다(2026-09-12,
+# 보안 재검토 계기 — SDK/urllib 예외가 헤더까지 str(e)에 포함하는지 100%
+# 보장 못 하므로 로깅 직전에 항상 마스킹).
+_SECRET_PATTERN = re.compile(r"(sk-ant-[a-zA-Z0-9_-]{10,}|sk-[a-zA-Z0-9_-]{10,}|Bearer\s+[a-zA-Z0-9._-]{10,})")
+
+
+def _redact(text: str) -> str:
+    return _SECRET_PATTERN.sub("[REDACTED]", text)
+
 
 _DEFAULT_TIMEOUT = 3.5
 _MODEL = "claude-haiku-4-5-20251001"
@@ -55,5 +66,5 @@ def generate_reply(inquiry_text: str, category: str = "general", timeout: float 
         text = "".join(block.text for block in resp.content if getattr(block, "type", "") == "text").strip()
         return text or None
     except Exception as e:  # 타임아웃 포함 모든 실패는 폴백으로 처리
-        logger.warning("ai_reply_caller: 호출 실패(%s) — 폴백", e)
+        logger.warning("ai_reply_caller: 호출 실패(%s) — 폴백", _redact(str(e)))
         return None
