@@ -25,8 +25,17 @@ from _bootstrap import get_logger  # noqa: E402
 from connectors.blog_accounts import DEFAULT_ACCOUNT, get_account  # noqa: E402
 from core import ai_writer  # noqa: E402
 from core.content_rules import seo_check, split_body  # noqa: E402
+from core.license_check import verify_license  # noqa: E402
 
 _log = get_logger(__name__)
+
+_LICENSE_PATH = _APP_ROOT / "config" / "license.txt"
+
+
+def _check_license() -> bool:
+    if not _LICENSE_PATH.exists():
+        return False
+    return verify_license(_LICENSE_PATH.read_text(encoding="utf-8").strip())
 
 
 def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
@@ -75,6 +84,10 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
 
 
 def load_draft(path: Path) -> dict:
+    if path.suffix.lower() != ".json":
+        raise ValueError(f"원고 파일은 .json이어야 합니다: {path}")
+    if not path.is_file():
+        raise ValueError(f"원고 파일을 찾을 수 없습니다: {path}")
     raw = path.read_text(encoding="utf-8")
     draft = json.loads(raw)
     for key in ("title", "body"):
@@ -188,6 +201,10 @@ def generate_draft(topic: str, keywords: list[str] | None = None, length: str = 
 
 
 def main() -> None:
+    if not _check_license():
+        print("❌ 라이선스가 등록되지 않았습니다. setup_gui.py를 먼저 실행해 라이선스를 인증해주세요.")
+        return
+
     ap = argparse.ArgumentParser()
     ap.add_argument("draft", nargs="?", help="원고 JSON 경로 (--topic 사용 시 생략 가능)")
     ap.add_argument("--topic", default=None, help="AI로 초안을 새로 생성할 주제 (draft.json 대신 사용)")
