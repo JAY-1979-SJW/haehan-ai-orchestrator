@@ -3,22 +3,31 @@
 POST /kakao/skill/kakaotalk-skill — 카카오 챗봇 관리자센터의 스킬 URL에 등록하는 실제 응답 엔드포인트.
 
 정책:
-  - 자유 생성형 AI 자동 답변 아님 — 고정 안내 문구로 즉시 응답한다.
+  - 자유 생성형 AI 자동 답변 아님 — 기존 규칙기반 분류기(message_classifier, AI 미사용)로
+    카테고리를 판정해 카테고리별 고정 안내 문구로 즉시 응답한다. 외부 유료 API 미사용.
   - 실제 문의 내용은 inbox에 저장되어 사람이 이어서 응대한다.
   - 이 라우터는 카카오가 호출하는 외부 webhook이므로 JWT 인증 대상이 아니다
-    (instagram_dm_router 등 다른 webhook 커넥터와 동일 컨벤션).
+    (instagram_dm_router 등 다른 웹훅 커넥터와 동일 컨벤션).
 """
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ..inbox import create_inbox_item, exists_by_external_id
+
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from message_classifier import classify_message  # noqa: E402  (root 모듈, 규칙기반·AI 미사용)
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +35,24 @@ kakao_skill_router = APIRouter(prefix="/kakao/skill", tags=["kakao-skill"])
 
 _MAX_UTTERANCE_LEN = 4096
 
-_FIXED_REPLY = (
-    "문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다. 급하신 내용은 010-7378-6635로 문자 남겨주세요."
-)
+_CONTACT_LINE = "급하신 내용은 010-7378-6635로 문자 남겨주세요."
+
+_FIXED_REPLY = f"문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다. {_CONTACT_LINE}"
+
+# 카테고리별 안내 문구 — message_classifier.classify_message()의 category 값에 대응.
+# AI 생성 아님, 고정 템플릿. general/미분류는 _FIXED_REPLY로 폴백.
+_CATEGORY_REPLIES: dict[str, str] = {
+    "support": f"문의 주셔서 감사합니다. 담당자가 확인 후 빠르게 안내드리겠습니다. {_CONTACT_LINE}",
+    "sales": f"견적/영업 문의 감사합니다. 담당자가 확인 후 견적 및 상담 내용을 안내드리겠습니다. {_CONTACT_LINE}",
+    "bidding": f"입찰/조달 관련 문의 감사합니다. 담당자가 확인 후 회신드리겠습니다. {_CONTACT_LINE}",
+    "accounting": f"정산/청구 관련 문의 감사합니다. 담당 부서에서 확인 후 답변드리겠습니다. {_CONTACT_LINE}",
+    "development": f"기술/개발 관련 문의 감사합니다. 담당자가 확인 후 답변드리겠습니다. {_CONTACT_LINE}",
+    "operations": f"문의 내용 확인했습니다. 담당자가 최대한 빠르게 확인해 드리겠습니다. {_CONTACT_LINE}",
+}
+
+
+def _reply_for_category(category: str) -> str:
+    return _CATEGORY_REPLIES.get(category, _FIXED_REPLY)
 
 
 def _skill_response(text: str) -> dict:
@@ -101,6 +125,17 @@ async def receive_kakaotalk_skill(request: Request):
         logger.warning("kakaotalk-skill webhook: payload invalid: %s", e)
         return JSONResponse(_skill_response(_FIXED_REPLY))
 
+    classification = classify_message(
+        {
+            "source_type": "kakaotalk_channel",
+            "title": msg["title"],
+            "body_raw": msg["body_raw"],
+            "sender": msg["sender"],
+        }
+    )
+    category = classification.get("category", "general")
+    reply_text = _reply_for_category(category)
+
     if exists_by_external_id(msg["external_id"], source_type="kakaotalk_channel"):
         logger.info("kakaotalk-skill message duplicate: external_id=%s", msg["external_id"][:24])
     else:
@@ -111,8 +146,12 @@ async def receive_kakaotalk_skill(request: Request):
             sender=msg["sender"],
             title=msg["title"],
             body_raw=msg["body_raw"],
-            metadata=msg["metadata"],
+            metadata={**msg["metadata"], "classification": classification},
         )
-        logger.info("kakaotalk-skill message saved: external_id=%s", msg["external_id"][:24])
+        logger.info(
+            "kakaotalk-skill message saved: external_id=%s category=%s",
+            msg["external_id"][:24],
+            category,
+        )
 
-    return JSONResponse(_skill_response(_FIXED_REPLY))
+    return JSONResponse(_skill_response(reply_text))
