@@ -60,40 +60,84 @@ def _title_card(lines: list[str], sub: str = "") -> Image.Image:
     return img
 
 
-def _step_card(step_no: int, total: int, title: str, desc: str) -> Image.Image:
-    """아키텍처 단계 카드 — 좌측 큰 숫자 + 우측 설명."""
+DIAGRAM_STEPS = [
+    (1, "웹훅"),
+    (2, "댓글 감지"),
+    (3, "규칙 매칭"),
+    (4, "프라이빗 리플라이"),
+]
+
+
+def _draw_diagram(draw: ImageDraw.ImageDraw, active: int, top: int = 90) -> None:
+    """상단 고정 화이트보드 다이어그램 — 4개 박스 + 화살표, active까지 누적 강조."""
+    n = len(DIAGRAM_STEPS)
+    box_w, box_h = 380, 200
+    gap = 76
+    total_w = n * box_w + (n - 1) * gap
+    x0 = (W - total_w) // 2
+    f_no = _font(FONT_BOLD, 56)
+    f_label = _font(FONT_REG, 32)
+
+    for i, (no, label) in enumerate(DIAGRAM_STEPS):
+        bx = x0 + i * (box_w + gap)
+        by = top
+        done = no < active
+        cur = no == active
+        if cur:
+            fill, edge, txt_color = GOLD, GOLD, INK
+        elif done:
+            fill, edge, txt_color = (60, 56, 50), (120, 112, 100), WHITE
+        else:
+            fill, edge, txt_color = CREAM, (200, 194, 184), (150, 144, 134)
+        draw.rounded_rectangle([bx, by, bx + box_w, by + box_h], radius=18, fill=fill, outline=edge, width=4)
+        tw = draw.textlength(str(no), font=f_no)
+        draw.text((bx + box_w / 2 - tw / 2, by + 36), str(no), font=f_no, fill=txt_color)
+        lw = draw.textlength(label, font=f_label)
+        draw.text((bx + box_w / 2 - lw / 2, by + 130), label, font=f_label, fill=txt_color)
+
+        if i < n - 1:
+            ax0 = bx + box_w + 10
+            ax1 = ax0 + gap - 20
+            ay = by + box_h / 2
+            arrow_color = GOLD if no < active else (170, 164, 154)
+            draw.line([ax0, ay, ax1, ay], fill=arrow_color, width=5)
+            draw.polygon([(ax1 + 14, ay), (ax1 - 6, ay - 12), (ax1 - 6, ay + 12)], fill=arrow_color)
+
+
+def _diagram_card(active: int, desc: str, inset_path: Path | None = None, inset_caption: str = "") -> Image.Image:
+    """전체 다이어그램(상단 고정) + 하단에 설명 텍스트 또는 실제 캡처 인서트."""
     img = Image.new("RGB", (W, H), CREAM)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # 좌측 패널
-    panel_w = int(W * 0.32)
-    draw.rectangle([0, 0, panel_w, H], fill=INK)
-    f_step = _font(FONT_REG, 36)
-    f_no = _font(FONT_BOLD, 220)
-    step_txt = f"STEP {step_no}/{total}"
-    draw.text((80, 120), step_txt, font=f_step, fill=GOLD)
-    draw.text((80, 190), str(step_no), font=f_no, fill=WHITE)
+    f_title = _font(FONT_BOLD, 46)
+    title = "핵심 구조 — 댓글이 DM이 되기까지"
+    tw = draw.textlength(title, font=f_title)
+    draw.text(((W - tw) / 2, 24), title, font=f_title, fill=INK)
 
-    # 진행 바 (하단)
-    bar_y = H - 100
-    seg_w = (panel_w - 160) / total
-    for i in range(total):
-        x0 = 80 + i * seg_w
-        color = GOLD if i < step_no else (80, 76, 70)
-        draw.rectangle([x0, bar_y, x0 + seg_w - 12, bar_y + 10], fill=color)
+    _draw_diagram(draw, active)
 
-    # 우측 텍스트
-    f_title = _font(FONT_BOLD, 64)
-    f_desc = _font(FONT_REG, 38)
-    tx = panel_w + 100
-    ty = 300
-    for ln in _wrap(draw, title, f_title, W - tx - 100):
-        draw.text((tx, ty), ln, font=f_title, fill=INK)
-        ty += 84
-    ty += 30
-    for ln in _wrap(draw, desc, f_desc, W - tx - 100):
-        draw.text((tx, ty), ln, font=f_desc, fill=(70, 66, 60))
-        ty += 58
+    bottom_y = 90 + 200 + 70  # 다이어그램 하단 여백
+
+    if inset_path and inset_path.exists():
+        # 실제 화면 캡처를 우측에, 설명 텍스트를 좌측에 배치
+        inset_w, inset_h = 760, H - bottom_y - 60
+        shot = Image.open(inset_path).convert("RGB")
+        inner = _letterbox(shot, inset_w, inset_h, bg=(235, 230, 220))
+        ix = W - inset_w - 120
+        img.paste(inner, (ix, bottom_y))
+        draw.rectangle([ix, bottom_y, ix + inset_w, bottom_y + inset_h], outline=(210, 204, 192), width=3)
+        f_cap = _font(FONT_BOLD, 30)
+        cw = draw.textlength(inset_caption, font=f_cap)
+        draw.text((ix + inset_w / 2 - cw / 2, bottom_y + inset_h + 14), inset_caption, font=f_cap, fill=GOLD)
+        desc_w = ix - 160
+    else:
+        desc_w = W - 240
+
+    f_desc = _font(FONT_BOLD, 48)
+    ty = bottom_y + 30
+    for ln in _wrap(draw, desc, f_desc, desc_w):
+        draw.text((120, ty), ln, font=f_desc, fill=(60, 56, 50))
+        ty += 68
     return img
 
 
@@ -115,10 +159,20 @@ def _cta_card(lines: list[str], sub: str = "") -> Image.Image:
 
 
 STEPS = [
-    (1, "웹훅", "댓글이 달리면 메타 서버가\n우리 서버로 실시간 전달"),
-    (2, "댓글 감지", "가격, 문의 같은 반응 키워드가\n있는지 확인"),
-    (3, "규칙 매칭", "계정·게시물별로 정해둔\n규칙과 대조"),
-    (4, "프라이빗 리플라이", "매칭된 메시지를\nDM으로 자동 발송"),
+    (1, "댓글이 달리면 메타 서버가 우리 서버로 실시간 전달합니다.", None, ""),
+    (
+        2,
+        "가격, 문의 같은 반응 키워드가 있는지 확인합니다.",
+        DEMO_DIR / "01_comment_posted.png",
+        '실제 화면 — "가격이 얼마에요?" 댓글',
+    ),
+    (3, "계정·게시물별로 정해둔 규칙과 대조합니다.", None, ""),
+    (
+        4,
+        "매칭된 메시지를 DM으로 자동 발송합니다.",
+        DEMO_DIR / "02_dm_received.png",
+        "실제 화면 — 1분 만에 도착한 자동 DM",
+    ),
 ]
 
 
@@ -130,17 +184,24 @@ def render_frames() -> list[tuple[Path, float]]:
 
     frames: list[tuple[Path, float]] = []
 
-    # scene 0: hook
-    p = FRAME_DIR / "s0_hook.png"
-    _title_card(["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다").save(p)
-    frames.append((p, durations["hook"]))
+    # scene 0: hook — 질문만 먼저 던지고, 답(훅 문구)이 뒤이어 등장하도록 2단계로 쪼갠다.
+    hook_total = durations["hook"]
+    p0a = FRAME_DIR / "s0_hook_a.png"
+    _title_card(["인스타 팔로우·DM,", "자동으로 될까?"]).save(p0a)
+    frames.append((p0a, hook_total * 0.45))
+    p0b = FRAME_DIR / "s0_hook_b.png"
+    _title_card(["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다").save(
+        p0b
+    )
+    frames.append((p0b, hook_total * 0.55))
 
-    # scene 1: architecture — 4단계를 나레이션 길이 안에서 균등 분할
+    # scene 1: architecture — 다이어그램은 화면에 고정, 진행 박스만 누적 강조.
+    # 2·4단계는 실제 캡처를 인서트해 추상 설명과 실제 화면을 교차 노출한다.
     arch_total = durations["architecture"]
     per_step = arch_total / len(STEPS)
-    for no, title, desc in STEPS:
+    for no, desc, inset_path, inset_caption in STEPS:
         p = FRAME_DIR / f"s1_step{no}.png"
-        _step_card(no, len(STEPS), title, desc).save(p)
+        _diagram_card(no, desc, inset_path, inset_caption).save(p)
         frames.append((p, per_step))
 
     # scene 2: demo — 실제 캡처 2장
@@ -154,15 +215,27 @@ def render_frames() -> list[tuple[Path, float]]:
         _demo_card(shot_path, cap).save(p)
         frames.append((p, demo_total / len(shots)))
 
-    # scene 3: cta
-    p = FRAME_DIR / "s3_cta.png"
-    _cta_card(["직접 만들어보세요"], "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서").save(p)
-    frames.append((p, durations["cta"]))
+    # scene 3: cta — 마찬가지로 2단계 등장(문구 → 문구+안내)으로 정지감을 줄인다.
+    cta_total = durations["cta"]
+    p3a = FRAME_DIR / "s3_cta_a.png"
+    _cta_card(["직접 만들어보세요"]).save(p3a)
+    frames.append((p3a, cta_total * 0.45))
+    p3b = FRAME_DIR / "s3_cta_b.png"
+    _cta_card(["직접 만들어보세요"], "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서").save(p3b)
+    frames.append((p3b, cta_total * 0.55))
 
     return frames
 
 
 def build_video(frames: list[tuple[Path, float]], out_path: Path, fade: float = 0.4) -> Path:
+    """정지 카드를 xfade로 잇는다.
+
+    NOTE(2026-09-11): zoompan/time-crop 기반 Ken Burns 효과를 시도했으나 이 ffmpeg
+    빌드(8.1)에서 실제로는 전혀 줌이 진행되지 않는 것을 여러 방식으로 실측 확인함
+    (누적 zoom 표현식이 매 프레임 리셋되는 것으로 추정). 검증 안 되는 효과에 시간을
+    더 쓰지 않고, 확실히 작동하는 xfade+프레임 수 증가(텍스트 단계적 등장 등)로
+    생동감을 준다 — render_frames()에서 카드당 프레임 수를 늘려서 해결.
+    """
     paths = [f for f, _ in frames]
     durations = [d for _, d in frames]
     n = len(paths)
