@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from ai_orchestrator.config import get_local_data_dir  # noqa: E402
-from scripts.instagram.kotara_ctc_reel import _font, _gradient_band, _letterbox, _wrap  # noqa: E402
+from scripts.instagram.kotara_ctc_reel import _cover, _font, _gradient_band, _letterbox, _wrap  # noqa: E402
 
 OUT_DIR = get_local_data_dir() / "video" / "ig_dm_bot_ep01"
 NARRATION_DIR = OUT_DIR / "narration"
@@ -41,8 +41,15 @@ GOLD = (196, 164, 108)
 BLUE = (90, 140, 210)
 
 
-def _title_card(lines: list[str], sub: str = "", bubble: str = "") -> Image.Image:
-    img = Image.new("RGB", (W, H), INK)
+def _title_card(lines: list[str], sub: str = "", bubble: str = "", bg_photo: Path | None = None) -> Image.Image:
+    """검은 배경만으로는 지루하다는 피드백 반영 — bg_photo가 있으면 실제 사진을 어둡게 깔고 그 위에 텍스트."""
+    if bg_photo and bg_photo.exists():
+        photo = Image.open(bg_photo).convert("RGB")
+        img = _cover(photo, W, H, focus_y=0.35)
+        overlay = Image.new("RGBA", (W, H), (10, 9, 8, 175))
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    else:
+        img = Image.new("RGB", (W, H), INK)
     draw = ImageDraw.Draw(img, "RGBA")
     _gradient_band(img, int(H * 0.30), int(H * 0.70), from_alpha=0, to_alpha=45, color=(60, 55, 48))
     f_title = _font(FONT_BOLD, 84)
@@ -241,16 +248,23 @@ def render_frames() -> tuple[list[tuple[Path, float]], int]:
 
     # scene 0: hook — 정지 화면이 너무 길지 않도록 5단계로 잘게 쪼개 계속 바뀌게 한다.
     hook_total = durations["hook"]
+    bg_manychat = OUT_DIR / "bg_manychat_pricing.png"
+    bg_meta = OUT_DIR / "bg_meta_docs.png"
     hook_states = [
-        (["인스타 팔로우·DM,"], "", ""),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "", "음... 되려나?"),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "X  팔로우·좋아요·댓글 자동화는 안 됩니다", "역시 안 되는구나"),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "O  댓글→DM 자동발송은 공식 지원됩니다", "어? 이건 되네?"),
-        (["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다", ""),
+        (["인스타 팔로우·DM,"], "", "", bg_manychat),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "", "음... 되려나?", bg_manychat),
+        (
+            ["인스타 팔로우·DM,", "자동으로 될까?"],
+            "X  팔로우·좋아요·댓글 자동화는 안 됩니다",
+            "역시 안 되는구나",
+            bg_meta,
+        ),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "O  댓글→DM 자동발송은 공식 지원됩니다", "어? 이건 되네?", bg_meta),
+        (["인스타 팔로우·DM,", "자동으로 될까?"], "댓글 하나로 DM 자동발송 — 툴 없이 직접 만들었습니다", "", None),
     ]
-    for i, (dur, (lines, sub, bubble)) in enumerate(zip(_spread(hook_total, [1, 1, 1.2, 1.2, 1.3]), hook_states)):
+    for i, (dur, (lines, sub, bubble, bg)) in enumerate(zip(_spread(hook_total, [1, 1, 1.2, 1.2, 1.3]), hook_states)):
         p = FRAME_DIR / f"s0_hook_{i}.png"
-        _title_card(lines, sub, bubble).save(p)
+        _title_card(lines, sub, bubble, bg_photo=bg).save(p)
         frames.append((p, dur))
     hook_frame_count = len(frames)
 
