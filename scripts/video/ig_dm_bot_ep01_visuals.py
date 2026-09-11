@@ -208,8 +208,8 @@ def _demo_card(shot_path: Path, caption: str, bubble: str = "") -> Image.Image:
     return img
 
 
-def _cta_card(lines: list[str], sub: str = "") -> Image.Image:
-    return _title_card(lines, sub)
+def _cta_card(lines: list[str], sub: str = "", bg_photo: Path | None = None) -> Image.Image:
+    return _title_card(lines, sub, bg_photo=bg_photo)
 
 
 STEPS = [
@@ -288,15 +288,16 @@ def render_frames() -> tuple[list[tuple[Path, float]], int]:
 
     # scene 3: cta — 4단계로 나눠 정지감을 줄인다.
     cta_total = durations["cta"]
+    cta_bg = DEMO_DIR / "02_dm_received.png"
     cta_states = [
         ("직접 만들어보세요", ""),
         ("직접 만들어보세요", "구축 문의는 채널 링크로"),
         ("직접 만들어보세요", "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서"),
-        ("직접 만들어보세요", "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서 · 구독하기 🔔"),
+        ("직접 만들어보세요", "구축 문의는 채널 링크로 · 세부 구현은 다음 영상에서 · 구독하기"),
     ]
     for i, (dur, (line, sub)) in enumerate(zip(_spread(cta_total, [1, 1, 1, 1.2]), cta_states)):
         p = FRAME_DIR / f"s3_cta_{i}.png"
-        _cta_card([line], sub).save(p)
+        _cta_card([line], sub, bg_photo=cta_bg).save(p)
         frames.append((p, dur))
 
     return frames, hook_frame_count
