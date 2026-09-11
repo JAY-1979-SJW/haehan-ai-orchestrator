@@ -192,7 +192,7 @@ def publish_story(*, image_url: str = "", video_url: str = "", confirmed: bool =
 
 # 미디어 타입별 지원 메트릭이 달라 media_type 인자로 분기한다(Graph API 제약).
 _MEDIA_INSIGHT_METRICS = {
-    "REELS": "reach,likes,comments,saved,shares,plays,total_interactions",
+    "REELS": "reach,likes,comments,saved,shares,views,total_interactions",
     "IMAGE": "reach,likes,comments,saved,shares,total_interactions",
     "CAROUSEL": "reach,likes,comments,saved,shares,total_interactions",
 }
@@ -214,11 +214,22 @@ def get_account_insights(metrics: str = "reach,profile_views,website_clicks", pe
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 해시태그 검색 (읽기 전용) — 주당 신규 해시태그 조회 30개 한도
+#
+# ⚠ 2026-09-11 실측: 이 프로젝트 앱(Instagram 로그인 방식, Banditbul Publisher)에서는
+#   "Object with ID 'ig_hashtag_search' does not exist, cannot be loaded due to
+#   missing permissions" 400 에러로 항상 실패한다. Meta 공식 문서상 해시태그 검색은
+#   Facebook 로그인 방식 + Instagram Public Content Access 심사 승인이 있어야만
+#   동작한다 — 현재 앱 구조로는 승인 전까지 사용 불가. business_discovery(경쟁사
+#   공개 프로필 조회)도 동일한 이유로 이 앱에서는 필드 자체가 없다고 뜬다.
 # ══════════════════════════════════════════════════════════════════════════════
 
 
 def search_hashtag_id(name: str) -> str:
-    """해시태그 이름(# 제외) → hashtag_id. 이후 top/recent_media 조회에 사용."""
+    """해시태그 이름(# 제외) → hashtag_id. 이후 top/recent_media 조회에 사용.
+
+    현재 앱 권한으로는 동작하지 않음(위 경고 참고) — Facebook 로그인 전환 +
+    앱 심사 승인 전까지는 호출하면 항상 HTTPError(400).
+    """
     _, uid = _creds()
     res = _get("ig_hashtag_search", {"user_id": uid, "q": name})
     data = res.get("data") or []
@@ -236,3 +247,37 @@ def get_hashtag_media(hashtag_id: str, kind: str = "top", limit: int = 20) -> li
         {"user_id": uid, "fields": "id,caption,permalink,like_count,comments_count,timestamp", "limit": limit},
     )
     return res.get("data", [])
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 댓글 모니터링/답글 (내 게시물에 한함) — 2026-09-11 실측 동작 확인
+#
+# big.sun2024 실계정에서 조회해보니 "가격이 얼마에요?" 같은 실제 구매문의 댓글이
+# 미답변 상태로 쌓여 있었다 — 이 기능이 바로 실사용 가치가 있다.
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def get_media_comments(media_id: str, limit: int = 50) -> list[dict]:
+    """게시물의 댓글 목록. id/text/username/timestamp/like_count 반환."""
+    res = _get(f"{media_id}/comments", {"fields": "id,text,username,timestamp,like_count", "limit": limit})
+    return res.get("data", [])
+
+
+def reply_to_comment(comment_id: str, text: str) -> dict:
+    """댓글에 답글(공개 댓글로 달림, DM 아님)."""
+    res = _post(f"{comment_id}/replies", {"message": text})
+    _log.info(f"[ig-api] 댓글 답글 완료: {comment_id}")
+    return res
+
+
+def hide_comment(comment_id: str, hide: bool = True) -> dict:
+    """댓글 숨김/숨김해제 (삭제 아님, 작성자에게는 그대로 보임)."""
+    return _post(comment_id, {"hide": "true" if hide else "false"})
+
+
+def get_content_publishing_limit() -> dict:
+    """일일 발행 쿼터 사용량. quota_total=100(24시간), quota_usage=현재 사용량."""
+    _, uid = _creds()
+    res = _get(f"{uid}/content_publishing_limit", {"fields": "config,quota_usage"})
+    data = (res.get("data") or [{}])[0]
+    return {"quota_total": data.get("config", {}).get("quota_total"), "quota_usage": data.get("quota_usage")}
