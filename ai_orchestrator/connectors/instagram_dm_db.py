@@ -68,6 +68,15 @@ def init_db() -> None:
                 updated_at TEXT NOT NULL
             )
         """)
+        # 마이그레이션: legacy_instagram_user_id (2026-09-11 추가)
+        # Meta 계정 연결(OAuth)은 graph.instagram.com 기준 ID를 instagram_user_id에 저장하지만,
+        # 일부 계정(과거 Facebook 로그인 연동 이력이 있는 경우)의 webhook entry.id는
+        # 구버전 graph.facebook.com 계열 ID로 온다. 두 ID가 달라 계정 매칭이 실패하는 걸 막기 위해
+        # 별도 컬럼에 보조 ID를 저장하고 조회 시 OR로 매칭한다.
+        try:
+            con.execute("ALTER TABLE instagram_accounts ADD COLUMN legacy_instagram_user_id TEXT")
+        except sqlite3.OperationalError:
+            pass  # 컬럼이 이미 있음
         con.execute("""
             CREATE TABLE IF NOT EXISTS automation_rules (
                 id TEXT PRIMARY KEY,
@@ -215,10 +224,22 @@ def get_account(account_id: str) -> sqlite3.Row | None:
 
 
 def get_account_by_ig_user_id(instagram_user_id: str) -> sqlite3.Row | None:
+    """webhook entry.id로 계정을 찾는다. graph.instagram.com ID(instagram_user_id)와
+    구버전 graph.facebook.com 계열 ID(legacy_instagram_user_id) 둘 다 매칭 대상."""
     with _conn() as con:
         return con.execute(
-            "SELECT * FROM instagram_accounts WHERE instagram_user_id = ?", (instagram_user_id,)
+            "SELECT * FROM instagram_accounts WHERE instagram_user_id = ? OR legacy_instagram_user_id = ?",
+            (instagram_user_id, instagram_user_id),
         ).fetchone()
+
+
+def set_legacy_ig_user_id(account_id: str, legacy_instagram_user_id: str) -> None:
+    with _conn() as con:
+        con.execute(
+            "UPDATE instagram_accounts SET legacy_instagram_user_id=?, updated_at=? WHERE id=?",
+            (legacy_instagram_user_id, _now(), account_id),
+        )
+        con.commit()
 
 
 def list_accounts() -> list[sqlite3.Row]:
