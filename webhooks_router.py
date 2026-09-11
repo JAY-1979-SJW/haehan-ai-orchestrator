@@ -2,19 +2,20 @@
 외부 서비스 Webhook 수신 라우트 (Flask Blueprint)
 
 POST /api/v1/webhooks/kakaowork          — 카카오워크 Bot webhook 수신 → inbox 저장
-POST /api/v1/webhooks/kakaotalk-channel  — 카카오톡 채널 webhook 수신 → inbox 저장 (뼈대)
+POST /api/v1/webhooks/kakaotalk-channel  — 카카오톡 채널 범용 webhook 수신 → inbox 저장 (자동 회신 없음)
+POST /api/v1/webhooks/kakaotalk-skill    — 카카오 챗봇 "스킬" 서버 (오픈빌더 연동) → 즉시 스킬 응답 반환
 
 정책:
-  - 자동 실행 없음
-  - 자동 회신 없음 (카카오워크/카카오톡 API에 회신 요청 금지)
-  - 수집 후 inbox 저장만 수행
+  - 카카오워크 / 카카오톡 채널(범용 webhook): 자동 실행·자동 회신 없음, inbox 저장만 수행
+  - 카카오톡 스킬(오픈빌더): 사용자가 명시 승인한 채널 챗봇 전용 경로이므로, 고정 안내 문구로만
+    즉시 응답한다 (AI 생성 답변 아님). 자유 생성형 자동회신은 여전히 금지.
   - 기존 approval/executor 파이프라인 미연결
 """
+
 import hashlib
 import hmac
 import os
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from flask import Blueprint, jsonify, request
 
@@ -48,6 +49,7 @@ def _verify_kakaowork_signature(bot_key: str, req) -> tuple[bool, str]:
 
 
 # ── 카카오워크 Bot webhook ─────────────────────────────────────────────────────
+
 
 @webhooks_bp.route("/kakaowork", methods=["POST"])
 def receive_kakaowork():
@@ -131,6 +133,7 @@ def receive_kakaowork():
 
 # ── 카카오톡 채널 webhook (뼈대) ───────────────────────────────────────────────
 
+
 @webhooks_bp.route("/kakaotalk-channel", methods=["POST"])
 def receive_kakaotalk_channel():
     """
@@ -192,6 +195,74 @@ def receive_kakaotalk_channel():
     return jsonify({"status": result["status"]}), 200
 
 
+# ── 카카오톡 스킬(오픈빌더) webhook ───────────────────────────────────────────
+
+_KAKAOTALK_SKILL_FIXED_REPLY = (
+    "문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다. 급하신 내용은 010-7378-6635로 문자 남겨주세요."
+)
+
+
+def _kakao_skill_text_response(text: str) -> dict:
+    """카카오 오픈빌더 스킬 응답 규격(version 2.0, simpleText)으로 감싼다."""
+    return {
+        "version": "2.0",
+        "template": {"outputs": [{"simpleText": {"text": text}}]},
+    }
+
+
+@webhooks_bp.route("/kakaotalk-skill", methods=["POST"])
+def receive_kakaotalk_skill():
+    """
+    카카오 챗봇 관리자센터 "스킬"에 등록하는 실제 응답 엔드포인트.
+    payload 파싱 → inbox 저장(기존 로직 재사용) → 고정 안내 문구로 즉시 스킬 응답.
+    AI 생성형 자동 답변 아님 — 실제 문의 내용은 inbox에 남아 사람이 이어서 응대한다.
+    """
+    payload = request.get_json(silent=True)
+
+    if not payload:
+        audit_logger.record(
+            "KAKAOTALK_CHANNEL_PAYLOAD_INVALID",
+            actor="webhook",
+            source_type="kakaotalk_channel",
+            reason="empty or invalid JSON payload",
+        )
+        log.warning("kakaotalk-skill webhook: empty payload")
+        return jsonify(_kakao_skill_text_response(_KAKAOTALK_SKILL_FIXED_REPLY)), 200
+
+    try:
+        msg = _parse_kakaotalk_channel_payload(payload)
+    except ValueError as e:
+        audit_logger.record(
+            "KAKAOTALK_CHANNEL_PAYLOAD_INVALID",
+            actor="webhook",
+            source_type="kakaotalk_channel",
+            reason=str(e),
+        )
+        log.warning("kakaotalk-skill webhook: payload invalid: %s", e)
+        # 스킬 서버는 항상 200 + 정상 응답 포맷을 돌려줘야 카카오톡에 에러가 안 뜬다.
+        return jsonify(_kakao_skill_text_response(_KAKAOTALK_SKILL_FIXED_REPLY)), 200
+
+    result = inbox_store.save_message(
+        source_type="kakaotalk_channel",
+        external_id=msg["external_id"],
+        source_account=msg["source_account"],
+        sender=msg["sender"],
+        title=msg["title"],
+        body_raw=msg["body_raw"],
+        received_at=msg["received_at"],
+        metadata=msg.get("metadata"),
+    )
+
+    audit_logger.record(
+        "KAKAOTALK_CHANNEL_MESSAGE_RECEIVED" if result["status"] == "saved" else "KAKAOTALK_CHANNEL_MESSAGE_DUPLICATE",
+        actor="webhook",
+        note=f"skill:{result['status']} external_id={msg['external_id'][:20]}",
+    )
+    log.info("kakaotalk-skill message %s: external_id=%s", result["status"], msg["external_id"][:20])
+
+    return jsonify(_kakao_skill_text_response(_KAKAOTALK_SKILL_FIXED_REPLY)), 200
+
+
 def _parse_kakaotalk_channel_payload(payload: dict) -> dict:
     """
     카카오톡 채널 webhook payload 파싱.
@@ -231,7 +302,7 @@ def _parse_kakaotalk_channel_payload(payload: dict) -> dict:
     bot = payload.get("bot") or {}
     bot_id = str(bot.get("id") or _KAKAOTALK_CHANNEL_ACCOUNT)
 
-    now_dt = datetime.now(timezone.utc)
+    now_dt = datetime.now(UTC)
     now = now_dt.strftime("%Y-%m-%dT%H:%M:%S")
     # 충돌 위험 감소: hash raw에 마이크로초 포함
     raw = f"kakaotalk:{user_id}:{utterance[:30]}:{now_dt.isoformat()}"

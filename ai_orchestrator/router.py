@@ -27,6 +27,7 @@ from .connectors.hiworks_mail_router import hiworks_mail_router
 from .connectors.inquiry_router import inquiry_router
 from .connectors.instagram_dm_router import instagram_dm_router
 from .connectors.kakao_setup_router import kakao_setup_router
+from .connectors.kakao_skill_router import kakao_skill_router
 from .connectors.naver_blog_router import naver_blog_router
 from .connectors.naver_cafe_router import naver_cafe_router
 from .connectors.naver_mail_router import naver_mail_router
@@ -112,6 +113,7 @@ router.include_router(user_auth_router)  # user signup/login/mypage
 router.include_router(gabia_router)  # gabia dns/domain/login watch
 router.include_router(gonobi_router)  # gonobi 블로그 수집·분류·조회
 router.include_router(kakao_setup_router)  # 카카오 앱 등록 실시간 게이트
+router.include_router(kakao_skill_router)  # 카카오 챗봇 스킬(오픈빌더) 응답 webhook
 router.include_router(session_status_router)  # 앱별 로그인 세션 현황
 router.include_router(hanafax_router)  # 하나팩스 팩스 발송
 router.include_router(instagram_dm_router)  # 인스타그램 댓글->키워드->비공개DM 자동화
