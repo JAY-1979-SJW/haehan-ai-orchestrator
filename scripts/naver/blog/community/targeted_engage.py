@@ -103,6 +103,15 @@ def execute(
                     row["error"] = nb_r.get("error", "")
         except Exception as e:
             row["error"] = str(e)
+            # 팝업/새탭이 뜨는 순간 BrowserAgent._on_new_page가 그 탭으로
+            # self._page를 갈아치우는데, 그 탭이 곧 닫히면 이후 모든 대상이
+            # "Target page ... has been closed"로 연쇄 실패한다.
+            # 재연결해서 다음 타겟은 정상 탭으로 진행되게 한다.
+            if "closed" in str(e).lower():
+                try:
+                    agent.connect()
+                except Exception:
+                    pass
         results.append(row)
         time.sleep(delay_seconds)
 
