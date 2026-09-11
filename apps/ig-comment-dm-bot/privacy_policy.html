@@ -1,0 +1,442 @@
+<title>반딧불 전파사 개인정보처리방침</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root {
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --ink: #211d16;
+    --muted: #6f6a5c;
+    --faint: #a49d8b;
+    --accent: #b9711f;
+    --accent-ink: #6b4113;
+    --line: #e6e0d2;
+    --line-strong: #d3cab5;
+    --code-bg: #f1ece0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17150f;
+      --surface: #1e1b13;
+      --ink: #ede7d8;
+      --muted: #a89f8b;
+      --faint: #756c58;
+      --accent: #e2a34c;
+      --accent-ink: #f3caa0;
+      --line: #34301f;
+      --line-strong: #453f28;
+      --code-bg: #23200a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17150f;
+    --surface: #1e1b13;
+    --ink: #ede7d8;
+    --muted: #a89f8b;
+    --faint: #756c58;
+    --accent: #e2a34c;
+    --accent-ink: #f3caa0;
+    --line: #34301f;
+    --line-strong: #453f28;
+    --code-bg: #23200a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans KR', -apple-system, sans-serif;
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px 24px 120px;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin-bottom: 20px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 14px;
+    color: var(--ink);
+  }
+
+  .lede {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 58ch;
+    margin: 0 0 40px;
+  }
+
+  .meta-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 22px 26px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 24px;
+    font-size: 14.5px;
+    margin-bottom: 56px;
+  }
+  .meta-card dt {
+    color: var(--faint);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding-top: 2px;
+  }
+  .meta-card dd {
+    margin: 0;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  nav.toc {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 0;
+    margin-bottom: 56px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+  }
+  nav.toc a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  nav.toc a:hover { color: var(--accent-ink); }
+  nav.toc .n {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--faint);
+    font-size: 12px;
+  }
+
+  section {
+    margin-bottom: 52px;
+    scroll-margin-top: 24px;
+  }
+
+  section h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 23px;
+    font-weight: 600;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  section h2 .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent);
+    border: 1px solid var(--line-strong);
+    border-radius: 5px;
+    padding: 2px 7px;
+  }
+
+  section p { margin: 0 0 14px; max-width: 66ch; }
+  section p.tight { margin-bottom: 6px; }
+
+  ul.list, ol.list {
+    margin: 0 0 14px;
+    padding-left: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+  }
+  ul.list li, ol.list li {
+    position: relative;
+    padding-left: 20px;
+    max-width: 64ch;
+  }
+  ul.list li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--faint);
+  }
+  ol.list { counter-reset: item; }
+  ol.list li { counter-increment: item; }
+  ol.list li::before {
+    content: counter(item) ".";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  table.datamap {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    margin: 4px 0 8px;
+  }
+  table.datamap th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-weight: 500;
+    padding: 0 14px 10px 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  table.datamap td {
+    padding: 12px 14px 12px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--ink);
+  }
+  table.datamap tr:last-child td { border-bottom: none; }
+  table.datamap td.label { white-space: nowrap; color: var(--muted); font-size: 13.5px; }
+  .scrollx { overflow-x: auto; }
+
+  code, .inline-code {
+    font-family: 'IBM Plex Mono', monospace;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.88em;
+    color: var(--accent-ink);
+  }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--code-bg);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    font-size: 14.5px;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+  .callout strong { color: var(--ink); }
+
+  .contact-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 24px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 40px;
+  }
+  .contact-item .k {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 4px;
+  }
+  .contact-item .v { font-size: 15.5px; color: var(--ink); }
+  .contact-item a { color: var(--accent-ink); text-decoration: none; }
+  .contact-item a:hover { text-decoration: underline; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">개인정보처리방침 · Privacy Policy</div>
+  <h1>반딧불 전파사 Instagram 자동응답 프로그램<br>개인정보처리방침</h1>
+  <p class="lede">
+    이 문서는 반딧불 전파사가 운영하는 Instagram 비즈니스 계정(@big.sun2024)의 댓글에
+    자동으로 비공개 답장(DM)을 보내는 로컬 프로그램이 어떤 정보를 다루는지 설명합니다.
+  </p>
+
+  <dl class="meta-card">
+    <dt>운영자</dt><dd>반딧불 전파사 · 신재우</dd>
+    <dt>대상 서비스</dt><dd>Instagram 댓글 → DM 자동발송 프로그램 (Meta 앱: Banditbul Publisher)</dd>
+    <dt>시행일</dt><dd>2026년 9월 9일</dd>
+    <dt>문의</dt><dd>010-7387-6635 · skyjwsin@naver.com</dd>
+  </dl>
+
+  <nav class="toc">
+    <a href="#collect"><span class="n">01</span>수집하는 정보</a>
+    <a href="#purpose"><span class="n">02</span>이용 목적</a>
+    <a href="#storage"><span class="n">03</span>저장 방식과 위치</a>
+    <a href="#retention"><span class="n">04</span>보관 기간</a>
+    <a href="#sharing"><span class="n">05</span>제3자 제공</a>
+    <a href="#rights"><span class="n">06</span>이용자 권리와 삭제 요청</a>
+    <a href="#security"><span class="n">07</span>보안 조치</a>
+    <a href="#contact"><span class="n">08</span>문의처</a>
+  </nav>
+
+  <section id="collect">
+    <h2><span class="num">01</span>수집하는 정보</h2>
+    <p>
+      이 프로그램은 <strong>Instagram Graph API(graph.instagram.com)</strong>를 통해
+      반딧불 전파사 계정이 소유한 게시물에 달린 댓글만 조회합니다. 다른 계정의 게시물이나
+      Instagram 외부의 정보는 전혀 수집하지 않습니다.
+    </p>
+    <div class="scrollx">
+      <table class="datamap">
+        <tr><th>항목</th><th>내용</th><th>출처</th></tr>
+        <tr>
+          <td class="label">댓글 텍스트</td>
+          <td>키워드 일치 여부를 판단하기 위해 일시적으로 확인</td>
+          <td>Instagram Graph API</td>
+        </tr>
+        <tr>
+          <td class="label">댓글 작성자 사용자명</td>
+          <td>발송 로그 표시용으로 화면에만 표시, 별도 저장 안 함</td>
+          <td>Instagram Graph API</td>
+        </tr>
+        <tr>
+          <td class="label">댓글 ID</td>
+          <td>중복 DM 발송을 막기 위해 로컬에 기록</td>
+          <td>Instagram Graph API</td>
+        </tr>
+        <tr>
+          <td class="label">Instagram 액세스 토큰</td>
+          <td>API 인증용, 운영자 PC에 암호화 저장</td>
+          <td>운영자가 Meta 개발자센터에서 직접 발급</td>
+        </tr>
+      </table>
+    </div>
+    <p class="callout">
+      <strong>수집하지 않는 것:</strong> 이름, 전화번호, 주소, 위치정보, 결제정보 등 민감정보는
+      일절 수집하지 않습니다. 댓글 본문 내용 자체도 서버나 파일에 저장하지 않고, 키워드 매칭
+      직후 메모리에서만 처리한 뒤 버려집니다.
+    </p>
+  </section>
+
+  <section id="purpose">
+    <h2><span class="num">02</span>이용 목적</h2>
+    <ol class="list">
+      <li>댓글에 특정 키워드(예: "문의", "가격")가 포함되어 있는지 자동으로 확인합니다.</li>
+      <li>키워드가 일치하면 Instagram 공식 <span class="inline-code">Private Reply</span> 기능으로
+        해당 댓글 작성자에게만 비공개 답장(DM)을 1회 발송합니다.</li>
+      <li>동일한 댓글에 중복으로 DM이 발송되지 않도록 처리 이력을 관리합니다.</li>
+    </ol>
+    <p>그 외의 목적(광고, 프로파일링, 통계 분석, 재판매 등)으로는 어떠한 정보도 이용하지 않습니다.</p>
+  </section>
+
+  <section id="storage">
+    <h2><span class="num">03</span>저장 방식과 위치</h2>
+    <p>
+      이 프로그램은 <strong>서버를 운영하지 않는 로컬 데스크톱 프로그램</strong>입니다. 모든 데이터는
+      운영자(반딧불 전파사)의 PC 안에서만 처리·저장되며, 외부 서버로 전송되지 않습니다.
+    </p>
+    <ul class="list">
+      <li>Instagram 액세스 토큰 — OS 자격증명 저장소(Windows 자격 증명 관리자)에 암호화 저장</li>
+      <li>처리한 댓글 ID 목록 — 로컬 SQLite 파일(<span class="inline-code">processed_comments.db</span>)에
+        댓글 ID와 매칭된 키워드만 기록, 댓글 본문은 저장하지 않음</li>
+    </ul>
+  </section>
+
+  <section id="retention">
+    <h2><span class="num">04</span>보관 기간</h2>
+    <p>
+      댓글 ID는 중복 발송 방지라는 목적이 달성된 이후에도 재확인용으로 로컬에 남아있을 수 있으며,
+      운영자가 프로그램을 삭제하거나 로컬 데이터 파일을 삭제하면 즉시 전체 삭제됩니다.
+      Instagram 액세스 토큰은 운영자가 직접 앱 연결을 해제하거나 재설정할 때까지 보관됩니다.
+    </p>
+  </section>
+
+  <section id="sharing">
+    <h2><span class="num">05</span>제3자 제공</h2>
+    <p>
+      수집한 정보를 광고주, 데이터 브로커, 분석 업체 등 어떠한 제3자에게도 판매·공유·양도하지
+      않습니다. 정보는 오직 Instagram Graph API 호출(댓글 조회, DM 발송)에만 사용됩니다.
+    </p>
+  </section>
+
+  <section id="rights">
+    <h2><span class="num">06</span>이용자 권리와 삭제 요청</h2>
+    <p>
+      댓글을 남긴 Instagram 이용자는 아래 문의처로 연락해 본인의 댓글과 관련해 로컬에 저장된
+      기록(댓글 ID)의 삭제를 요청할 수 있습니다. 요청 확인 후 <strong>영업일 기준 7일 이내</strong>에
+      해당 기록을 삭제하고 결과를 안내해 드립니다.
+    </p>
+    <p class="tight">삭제 요청은 다음 정보를 포함해 연락 주시면 처리됩니다.</p>
+    <ul class="list">
+      <li>댓글을 남긴 게시물 링크 또는 대략적인 시점</li>
+      <li>연락 가능한 이메일 또는 전화번호(확인용, 저장하지 않음)</li>
+    </ul>
+  </section>
+
+  <section id="security">
+    <h2><span class="num">07</span>보안 조치</h2>
+    <ul class="list">
+      <li>액세스 토큰은 평문 파일이 아닌 OS 레벨 암호화 저장소에만 보관됩니다.</li>
+      <li>프로그램은 인터넷상 어떤 원격 서버로도 데이터를 전송하지 않으며, Instagram 공식 API
+        엔드포인트(graph.instagram.com)와만 통신합니다.</li>
+      <li>소스 코드는 비공개로 관리되며 운영자 본인만 접근·수정합니다.</li>
+    </ul>
+  </section>
+
+  <section id="contact">
+    <h2><span class="num">08</span>문의처</h2>
+    <div class="contact-card">
+      <div class="contact-item">
+        <div class="k">운영자</div>
+        <div class="v">반딧불 전파사 · 신재우</div>
+      </div>
+      <div class="contact-item">
+        <div class="k">전화</div>
+        <div class="v"><a href="tel:01073876635">010-7387-6635</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="k">이메일</div>
+        <div class="v"><a href="mailto:skyjwsin@naver.com">skyjwsin@naver.com</a></div>
+      </div>
+      <div class="contact-item">
+        <div class="k">Instagram</div>
+        <div class="v"><a href="https://www.instagram.com/big.sun2024/" target="_blank" rel="noopener">@big.sun2024</a></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 반딧불 전파사</span>
+    <span>최종 수정일 2026-09-09</span>
+  </footer>
+</div>
