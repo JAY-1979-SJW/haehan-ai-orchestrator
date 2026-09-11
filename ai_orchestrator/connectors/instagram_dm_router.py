@@ -46,7 +46,10 @@ _oauth_states: dict[str, bool] = {}  # 단일 프로세스 CSRF state — 데스
 
 
 def _app_id() -> str:
-    return os.environ.get("META_APP_ID", os.environ.get("IG_APP_ID", "")).strip()
+    # Instagram Login OAuth(인가 URL·코드 교환)는 Meta 앱 ID가 아니라
+    # Instagram 전용 앱 ID로 발급된 code만 받아들인다 — 두 값이 다르면
+    # 코드 교환 시 "Invalid platform app"으로 실패한다(2026-09-11 확인).
+    return os.environ.get("IG_APP_ID", os.environ.get("META_APP_ID", "")).strip()
 
 
 def _app_secret() -> str:
