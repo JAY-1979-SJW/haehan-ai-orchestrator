@@ -197,9 +197,7 @@ def receive_kakaotalk_channel():
 
 # ── 카카오톡 스킬(오픈빌더) webhook ───────────────────────────────────────────
 
-_KAKAOTALK_SKILL_FIXED_REPLY = (
-    "문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다. 급하신 내용은 010-7378-6635로 문자 남겨주세요."
-)
+_KAKAOTALK_SKILL_FIXED_REPLY = "문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다."
 
 
 def _kakao_skill_text_response(text: str) -> dict:

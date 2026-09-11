@@ -35,19 +35,18 @@ kakao_skill_router = APIRouter(prefix="/kakao/skill", tags=["kakao-skill"])
 
 _MAX_UTTERANCE_LEN = 4096
 
-_CONTACT_LINE = "급하신 내용은 010-7378-6635로 문자 남겨주세요."
-
-_FIXED_REPLY = f"문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다. {_CONTACT_LINE}"
+_FIXED_REPLY = "문의 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다."
 
 # 카테고리별 안내 문구 — message_classifier.classify_message()의 category 값에 대응.
 # AI 생성 아님, 고정 템플릿. general/미분류는 _FIXED_REPLY로 폴백.
+# 전화번호 등 개인 연락처는 노출하지 않는다.
 _CATEGORY_REPLIES: dict[str, str] = {
-    "support": f"문의 주셔서 감사합니다. 담당자가 확인 후 빠르게 안내드리겠습니다. {_CONTACT_LINE}",
-    "sales": f"견적/영업 문의 감사합니다. 담당자가 확인 후 견적 및 상담 내용을 안내드리겠습니다. {_CONTACT_LINE}",
-    "bidding": f"입찰/조달 관련 문의 감사합니다. 담당자가 확인 후 회신드리겠습니다. {_CONTACT_LINE}",
-    "accounting": f"정산/청구 관련 문의 감사합니다. 담당 부서에서 확인 후 답변드리겠습니다. {_CONTACT_LINE}",
-    "development": f"기술/개발 관련 문의 감사합니다. 담당자가 확인 후 답변드리겠습니다. {_CONTACT_LINE}",
-    "operations": f"문의 내용 확인했습니다. 담당자가 최대한 빠르게 확인해 드리겠습니다. {_CONTACT_LINE}",
+    "support": "문의 주셔서 감사합니다. 담당자가 확인 후 빠르게 안내드리겠습니다.",
+    "sales": "견적/영업 문의 감사합니다. 담당자가 확인 후 견적 및 상담 내용을 안내드리겠습니다.",
+    "bidding": "입찰/조달 관련 문의 감사합니다. 담당자가 확인 후 회신드리겠습니다.",
+    "accounting": "정산/청구 관련 문의 감사합니다. 담당 부서에서 확인 후 답변드리겠습니다.",
+    "development": "기술/개발 관련 문의 감사합니다. 담당자가 확인 후 답변드리겠습니다.",
+    "operations": "문의 내용 확인했습니다. 담당자가 최대한 빠르게 확인해 드리겠습니다.",
 }
 
 
