@@ -75,7 +75,7 @@ STEPS = [
     ),
 ]
 
-TOTAL = 137.664
+TOTAL = 145.848
 OVERVIEW_DUR = 16.0
 WEIGHTS = [0.9, 1.2, 0.9, 1.2]
 _w_sum = sum(WEIGHTS)

@@ -246,6 +246,18 @@ def render_frames() -> tuple[list[tuple[Path, float]], int]:
         s = sum(weights)
         return [total * w / s for w in weights]
 
+    # scene -1: teaser — "진짜 되나?"부터 콜드오픈으로 맨 앞에 배치(피드백 반영, 2026-09-11).
+    teaser_total = durations["teaser"]
+    teaser_states = [
+        (DEMO_DIR / "01_comment_posted.png", '"가격이 얼마에요?" 라고 댓글을 달아봅니다', ""),
+        (DEMO_DIR / "02_dm_received.png", "몇 초 뒤 — 자동으로 DM이 도착했습니다", "저는 아무것도 안 했어요"),
+        (DEMO_DIR / "02_dm_received.png", "이걸, AI 에이전트로 직접 만들었습니다", ""),
+    ]
+    for i, (dur, (shot, cap, bubble)) in enumerate(zip(_spread(teaser_total, [1, 1, 1]), teaser_states)):
+        p = FRAME_DIR / f"sT_teaser_{i}.png"
+        _demo_card(shot, cap, bubble).save(p)
+        frames.append((p, dur))
+
     # scene 0: hook — 정지 화면이 너무 길지 않도록 5단계로 잘게 쪼개 계속 바뀌게 한다.
     hook_total = durations["hook"]
     bg_manychat = OUT_DIR / "bg_manychat_pricing.png"
@@ -436,7 +448,13 @@ def build_video(
 
 def concat_narration(out_path: Path) -> Path:
     """4개 나레이션 mp3를 하나로 이어붙인다(장면 순서대로)."""
-    names = ["scene_00_hook.mp3", "scene_01_architecture.mp3", "scene_02_demo.mp3", "scene_03_cta.mp3"]
+    names = [
+        "scene_04_teaser.mp3",
+        "scene_00_hook.mp3",
+        "scene_01_architecture.mp3",
+        "scene_02_demo.mp3",
+        "scene_03_cta.mp3",
+    ]
     list_file = OUT_DIR / "narration_concat.txt"
     list_file.write_text("\n".join(f"file '{(NARRATION_DIR / n).as_posix()}'" for n in names), encoding="utf-8")
     cmd = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file), "-c", "copy", str(out_path)]
