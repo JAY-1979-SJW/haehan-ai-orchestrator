@@ -21,6 +21,7 @@ import time
 from scripts.naver.blog.selectors import (
     COMMENT_DELETE,
     COMMENT_INPUT,
+    COMMENT_LIST_TOGGLE,
     COMMENT_SUBMIT,
     COMMENT_WRITE_BTN,
     DELETE_CONFIRM,
@@ -138,10 +139,15 @@ class BlogWriteMixin:
     def blog_write_comment(self, post_url: str, text: str) -> dict:
         """댓글 작성.
 
-        실 DOM 확인(2026-06):
-          - 댓글 입력창은 _naverCommentWriteBtn 클릭 후 동적 로드됨.
-          - 입력창 class: u_cbox_input (mainFrame iframe 내부)
-          - 제출 버튼 class: u_cbox_btn_upload
+        실 DOM 확인(2026-09-11):
+          - .commentbox_header(댓글쓰기 버튼을 담은 영역)는 기본 display:none —
+            COMMENT_LIST_TOGGLE(._cmtList, "댓글 N개" 링크)을 먼저 클릭해야 열린다.
+          - 댓글 입력창은 그 후 COMMENT_WRITE_BTN 클릭으로 동적 로드됨.
+          - 입력창은 <input>이 아니라 contenteditable div — class: u_cbox_text
+            (구 COMMENT_INPUT=".u_cbox_input" 는 이 위젯에 존재하지 않아 항상 timeout 났음).
+          - placeholder 안내문(.u_cbox_guide)이 입력창 위에 겹쳐 pointer 이벤트를
+            가로채므로 일반 click()은 실패 — dispatchEvent 방식 사용.
+          - 제출 버튼 class: u_cbox_btn_upload (동일하게 overlay 이슈 있어 dispatch 사용).
         """
         self.go(post_url)
         time.sleep(3)
@@ -153,18 +159,24 @@ class BlogWriteMixin:
             time.sleep(1)
 
             fr.evaluate(
-                f"() => {{ const b = document.querySelector('{COMMENT_WRITE_BTN}'); "
-                "if (b) b.dispatchEvent(new MouseEvent('click', {bubbles:true})); }"
+                f"() => {{ const l = document.querySelector('{COMMENT_LIST_TOGGLE}'); "
+                "if (l) l.dispatchEvent(new MouseEvent('click', {bubbles:true})); }"
             )
             time.sleep(2)
 
+            fr.evaluate(
+                f"() => {{ const b = document.querySelector('{COMMENT_WRITE_BTN}'); "
+                "if (b) b.dispatchEvent(new MouseEvent('click', {bubbles:true})); }"
+            )
+            time.sleep(1.5)
+
             comment_input = fr.locator(COMMENT_INPUT).first
             comment_input.wait_for(state="visible", timeout=8000)
-            comment_input.click()
-            comment_input.fill(text)
+            comment_input.click(force=True)
+            comment_input.type(text, delay=25)
             time.sleep(0.5)
 
-            fr.locator(COMMENT_SUBMIT).first.click()
+            fr.locator(COMMENT_SUBMIT).first.click(force=True)
             time.sleep(1.5)
 
             return {"ok": True, "error": ""}
