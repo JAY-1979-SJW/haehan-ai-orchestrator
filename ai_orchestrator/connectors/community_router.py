@@ -134,7 +134,7 @@ def remove_site(site_id: str, user: dict = Depends(require_role("admin", "owner"
 def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict:
     """URL 추출 또는 제공된 게시글 → AI 트렌드·수익 분석."""
     _ensure_path()
-    from scripts.community.analyzer import analyze_posts
+    from scripts.community.analyzer import prepare_posts_for_review
 
     posts = req.posts or []
     context = req.context or ""
@@ -165,7 +165,7 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
         raise HTTPException(status_code=400, detail="분석할 게시글(url 또는 posts)이 필요합니다")
 
     try:
-        report = analyze_posts(posts, context=context)
+        report = prepare_posts_for_review(posts, context=context)
     except Exception as e:
         logger.exception("analyze error")
         raise HTTPException(status_code=500, detail=f"분석 실패: {e}")

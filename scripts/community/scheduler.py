@@ -35,7 +35,7 @@ def _save_state(state: dict) -> None:
 
 def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]:
     """등록된 모든 사이트를 수집→분석하고 리포트 파일로 저장."""
-    from scripts.community.analyzer import analyze_posts
+    from scripts.community.analyzer import prepare_posts_for_review
     from scripts.community.registry import list_sites
     from scripts.community.universal_extractor import extract_posts
     from scripts.web_connector import get_page
@@ -50,18 +50,17 @@ def run_all_sites(reason: str = "manual", max_posts: int = 40) -> dict[str, Any]
             if not ex.get("ok"):
                 site_reports.append({"site": name, "url": url, "ok": False, "error": ex.get("error")})
                 continue
-            rep = analyze_posts(ex.get("posts", []), context=name)
+            rep = prepare_posts_for_review(ex.get("posts", []), context=name)
             site_reports.append(
                 {
                     "site": name,
                     "url": url,
                     "ok": bool(rep.get("ok")),
-                    "analyzed_count": rep.get("analyzed_count", 0),
-                    "summary": rep.get("summary", ""),
-                    "trends": rep.get("trends", []),
-                    "opportunities": rep.get("opportunities", []),
-                    "topics": rep.get("topics", []),
-                    "actions": rep.get("actions", []),
+                    "post_count": rep.get("post_count", 0),
+                    # AI 자동분석(trends/opportunities 등)은 더 이상 여기서 하지 않는다
+                    # (2026-09-12, 유료 API 제거) — formatted_text를 Claude Code가
+                    # 나중에 직접 읽고 분석한다.
+                    "formatted_text": rep.get("formatted_text", ""),
                     "error": rep.get("error"),
                 }
             )
