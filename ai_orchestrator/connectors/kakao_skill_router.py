@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse
 
 from .. import telegram_sender
 from ..inbox import create_inbox_item, exists_by_external_id
+from .ai_reply_caller import generate_reply
 
 _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
@@ -151,7 +152,8 @@ async def receive_kakaotalk_skill(request: Request):
         }
     )
     category = classification.get("category", "general")
-    reply_text = _reply_for_category(category)
+    ai_reply = generate_reply(msg["body_raw"], category=category)
+    reply_text = ai_reply or _reply_for_category(category)
 
     if exists_by_external_id(msg["external_id"], source_type="kakaotalk_channel"):
         logger.info("kakaotalk-skill message duplicate: external_id=%s", msg["external_id"][:24])
