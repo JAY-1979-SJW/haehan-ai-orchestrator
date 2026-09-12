@@ -19,6 +19,10 @@ REVIEWED_BLOG_PATHS = [
     "scripts/naver/",
     "ai_orchestrator/connectors/",
     "tests/",
+    # 2026-09-12: 고객 판매용 독립 제품(marketing_app_modularization_20260908.md
+    # 기준서에 따라 원본 사본을 이식하는 리뷰된 작업 위치). 스크래치패드/임시
+    # 스크립트가 아니라 이 경로 자체가 정식 제품 코드 위치다.
+    "apps/marketing-standalone/",
 ]
 
 # 문자열 결합: 이 게이트 정의 파일 자체가 스스로의 검사에 걸리지 않도록
