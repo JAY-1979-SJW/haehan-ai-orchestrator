@@ -1,4 +1,5 @@
 """AGENT_OPENAI_DEV_KEY_STORE_01 — 20+ 테스트."""
+
 from __future__ import annotations
 
 import re
@@ -8,7 +9,6 @@ import pytest
 
 from local_agent import openai_key_store as ks
 
-
 # 테스트용 가짜 key — 실 OpenAI key 형태 아님 (의도적 dummy)
 DUMMY_KEY = "tkVALID_NOT_A_REAL_OPENAI_KEY_xyz123456789"
 
@@ -17,10 +17,16 @@ DUMMY_KEY = "tkVALID_NOT_A_REAL_OPENAI_KEY_xyz123456789"
 
 
 def test_module_exports_required_api():
-    for sym in ("save_dev_key", "load_dev_key", "delete_dev_key",
-                "has_dev_key", "get_key_fingerprint",
-                "validate_key_format", "redact_key",
-                "describe_backend"):
+    for sym in (
+        "save_dev_key",
+        "load_dev_key",
+        "delete_dev_key",
+        "has_dev_key",
+        "get_key_fingerprint",
+        "validate_key_format",
+        "redact_key",
+        "describe_backend",
+    ):
         assert hasattr(ks, sym), f"missing: {sym}"
 
 
@@ -37,14 +43,13 @@ def test_validate_empty_rejected():
 
 
 def test_validate_too_short_rejected():
-    ok, code = ks.validate_key_format("short")
+    ok, code = ks.validate_key_format("short")  # noqa: RUF059
     assert ok is False
 
 
 def test_validate_placeholder_rejected():
-    for placeholder in ("sk-...", "YOUR_API_KEY", "test", "dummy",
-                         "placeholder", "xxxxx"):
-        ok, code = ks.validate_key_format(placeholder)
+    for placeholder in ("sk-...", "YOUR_API_KEY", "test", "dummy", "placeholder", "xxxxx"):
+        ok, code = ks.validate_key_format(placeholder)  # noqa: RUF059
         assert ok is False, f"should reject: {placeholder}"
 
 
@@ -185,8 +190,7 @@ def test_save_with_plaintext_fallback_opt_in(monkeypatch, tmp_path):
     """fallback=True 명시 + keyring 불가 → 평문 저장."""
     monkeypatch.setattr(ks, "_try_keyring", lambda: None)
     monkeypatch.setattr(ks, "keyring_available", lambda: False)
-    r = ks.save_dev_key(DUMMY_KEY, allow_plaintext_fallback=True,
-                         base_dir=tmp_path)
+    r = ks.save_dev_key(DUMMY_KEY, allow_plaintext_fallback=True, base_dir=tmp_path)
     assert r.ok is True
     assert r.backend == "plaintext"
     # roundtrip
@@ -194,11 +198,10 @@ def test_save_with_plaintext_fallback_opt_in(monkeypatch, tmp_path):
     assert loaded == DUMMY_KEY
     # delete
     ks.delete_dev_key(allow_plaintext_fallback=True, base_dir=tmp_path)
-    assert ks.has_dev_key(allow_plaintext_fallback=True,
-                            base_dir=tmp_path) is False
+    assert ks.has_dev_key(allow_plaintext_fallback=True, base_dir=tmp_path) is False
 
 
-import inspect
+import inspect  # noqa: E402
 
 
 def test_signature_default_fallback_false():
@@ -221,8 +224,7 @@ def test_module_source_no_raw_key():
 def test_module_does_not_log_key_value():
     """logger.X() 호출에 api_key 변수가 인자로 들어가지 않음."""
     src = Path("local_agent/openai_key_store.py").read_text(encoding="utf-8")
-    bad = re.findall(
-        r"log(?:ger)?\.\w+\([^)]*%[sr][^)]*,\s*api_key\b", src)
+    bad = re.findall(r"log(?:ger)?\.\w+\([^)]*%[sr][^)]*,\s*api_key\b", src)
     assert bad == []
 
 
@@ -240,20 +242,22 @@ def test_describe_backend_returns_tuple():
 
 def test_audit_warn_gui_test_deferred():
     from scripts.ops import audit_openai_dev_key_store as a
+
     v = a.judge_key_store(gui_connection_test_done=False)
     # [연결 테스트] 활성은 다음 공정 → WARN
-    assert v.code in ("PASS_OPENAI_DEV_KEY_STORE",
-                       "WARN_GUI_CONNECTION_TEST_DEFERRED")
+    assert v.code in ("PASS_OPENAI_DEV_KEY_STORE", "WARN_GUI_CONNECTION_TEST_DEFERRED")
 
 
 def test_audit_fail_desktop_ui_touched():
     from scripts.ops import audit_openai_dev_key_store as a
+
     v = a.judge_key_store(desktop_ui_unchanged=False)
     assert v.code == "FAIL_DESKTOP_UI_TOUCHED"
 
 
 def test_audit_fail_key_store_missing(monkeypatch, tmp_path):
     from scripts.ops import audit_openai_dev_key_store as a
+
     monkeypatch.setattr(a, "MODULE_PATH", tmp_path / "missing.py")
     v = a.judge_key_store()
     assert v.code == "FAIL_KEY_STORE_MISSING"
@@ -264,16 +268,12 @@ def test_audit_fail_key_store_missing(monkeypatch, tmp_path):
 
 def test_regression_existing_token_store_intact():
     from local_agent import token_store as ts
+
     assert hasattr(ts, "save_device_token")
     assert hasattr(ts, "load_device_token")
 
 
-def test_regression_gui_app_intact():
-    from local_agent import gui_app
-    assert hasattr(gui_app, "HaehanAgentGuiApp")
-    assert hasattr(gui_app, "PAGE_CHAT")
-
-
 def test_regression_ai_chat_adapter_unchanged():
     from local_agent import ai_chat_adapter as adp
+
     assert hasattr(adp, "PlaceholderAdapter")

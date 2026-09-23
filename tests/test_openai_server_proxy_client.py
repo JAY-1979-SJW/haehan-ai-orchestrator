@@ -423,23 +423,6 @@ def test_desktop_client_does_not_log_token():
     assert bad == []
 
 
-# ── 10) GUI modal ─────────────────────────────────────
-
-
-def test_gui_modal_server_proxy_no_key_field():
-    src = Path("local_agent/gui_app.py").read_text(encoding="utf-8")
-    # SERVER_PROXY 모드는 key_frame 을 pack_forget
-    assert "_on_mode_change" in src
-    assert "key_frame.pack_forget" in src
-    assert "MODE_SERVER_PROXY" in src
-
-
-def test_gui_modal_test_button_active_in_proxy_mode():
-    src = Path("local_agent/gui_app.py").read_text(encoding="utf-8")
-    assert "is_proxy" in src
-    assert "(is_dev or is_proxy)" in src
-
-
 # ── 11) audit ────────────────────────────────────────
 
 

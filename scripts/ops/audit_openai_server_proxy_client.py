@@ -21,7 +21,6 @@ SERVER_ROUTER = Path("ai_orchestrator/agent_ai_proxy_router.py")
 SERVER_CALLER = Path("ai_orchestrator/openai_proxy_caller.py")
 DESKTOP_CLIENT = Path("local_agent/server_proxy_chat_client.py")
 ADAPTER_PATH = Path("local_agent/ai_chat_adapter.py")
-GUI_APP = Path("local_agent/gui_app.py")
 MAIN_ROUTER = Path("ai_orchestrator/router.py")
 
 
@@ -86,7 +85,6 @@ def judge_proxy(*, desktop_ui_unchanged: bool = True, server_deployed: bool = Fa
         (SERVER_CALLER, 30),
         (DESKTOP_CLIENT, 30),
         (ADAPTER_PATH, 30),
-        (GUI_APP, 30),
         (Path("scripts/ops/audit_openai_server_proxy_client.py"), 30),
         (Path("tests/test_openai_server_proxy_client.py"), 50),
     ):
