@@ -271,6 +271,11 @@ def get_ops_external_work(
 
 
 # ─── 연동 현황 ───────────────────────────────────────────────────────────────
+# 참고: 이 목록은 domain/integrations_static.py 에도 동일하게 유지된다
+# (domain/model_adapters.py 가 참조하는 L1 공유 사본).
+# ops_router.py 자체는 test_ops_router_read_only_20260516.py 가 소스 텍스트에서
+# "cad-app" 리터럴 존재를 직접 검사하므로, 여기 원본도 그대로 유지한다
+# (레이어 위반 domain/model_adapters.py -> ops_router.py 는 미해결로 남김 — 결정 로그 참조).
 
 _STATIC_INTEGRATIONS = [
     {

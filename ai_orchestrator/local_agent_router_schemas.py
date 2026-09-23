@@ -1,9 +1,10 @@
-"""local_agent_router 요청 스키마 (공유 계약, L1).
+"""local_agent_router 요청 스키마 (공유 계약).
 
-local_agent_router.py(컴포지션 루트)에서 분리한 Pydantic 요청 모델군.
+local_agent_router 모듈(컴포지션 루트)에서 분리한 Pydantic 요청 모델군.
 라우트 핸들러들이 공유하는 입력 계약만 둔다. 업무 로직/IO 없음.
 [MODULE_SEPARATION_STANDARD] 참조: docs/module_separation_standard.md
 """
+
 from __future__ import annotations
 
 from pydantic import BaseModel
@@ -65,6 +66,7 @@ class CaptureScreenshotRequest(BaseModel):
     - dry_run=False 는 명시적으로 false 를 전달한 경우에만 적용.
     - reason/note 는 감사 메모용 텍스트 (민감값 제거 로직을 거친 뒤 저장).
     """
+
     dry_run: bool = True
     reason: str = ""
     note: str = ""

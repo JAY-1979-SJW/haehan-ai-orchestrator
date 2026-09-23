@@ -5,7 +5,7 @@
 
 이 모듈은 로컬 에이전트 task risk 평가 및 approval gate를 위한
 정책만 포함한다. 웹 브라우징 액션의 requires_approval는
-agent/action_registry.py에서 별도로 관리된다.
+agent 패키지의 action_registry 모듈에서 별도로 관리된다.
 
 risk_level 분류:
   - low: 즉시 실행 가능, 승인 불필요
@@ -18,37 +18,37 @@ risk_level 분류:
 
 # 액션 → risk_level 매핑
 ACTION_RISK: dict[str, str] = {
-    "ping":               "low",
-    "system_info":        "low",
-    "list_allowed_apps":  "low",
-    "open_url":           "low",
+    "ping": "low",
+    "system_info": "low",
+    "list_allowed_apps": "low",
+    "open_url": "low",
     "web_open_url_readonly": "low",
-    "open_url_execute":   "high",
+    "open_url_execute": "high",
     "list_files_readonly": "medium",
     "capture_screenshot": "high",
-    "ws_noop":            "low",
-    "safe_echo":          "low",
+    "ws_noop": "low",
+    "safe_echo": "low",
     "safe_desktop_capability": "low",
     "safe_app_presence_known_paths": "low",
     "safe_app_capability_matrix": "low",
     # ── CAD 읽기 액션 (local_worker / AutoCAD COM) ────────────────────
-    "detect_cad_apps":              "low",
-    "check_cad_app_status":         "low",
-    "search_drawings":              "low",
-    "read_layers":                  "low",
-    "read_blocks":                  "low",
-    "read_block_references":        "low",
-    "read_entities":                "low",
-    "read_texts":                   "low",
-    "read_geometry":                "low",
-    "read_dimensions":              "low",
-    "read_modelspace":              "low",
-    "cad_inventory_collect":        "medium",
+    "detect_cad_apps": "low",
+    "check_cad_app_status": "low",
+    "search_drawings": "low",
+    "read_layers": "low",
+    "read_blocks": "low",
+    "read_block_references": "low",
+    "read_entities": "low",
+    "read_texts": "low",
+    "read_geometry": "low",
+    "read_dimensions": "low",
+    "read_modelspace": "low",
+    "cad_inventory_collect": "medium",
     "cad_inventory_collect_and_push": "medium",
     # browser automation actions (BROWSER-4E)
-    "browser.inspect":    "low",
+    "browser.inspect": "low",
     "browser.plan_click": "low",
-    "browser.plan_type":  "low",
+    "browser.plan_type": "low",
     "browser.plan_submit": "low",
     "browser.plan_open_url": "low",
     "browser.execute_click": "medium",
@@ -59,9 +59,13 @@ ACTION_RISK: dict[str, str] = {
 }
 
 # 서버가 즉시 응답 가능한 액션 (PC 의존 없음)
-_SERVER_AUTO_COMPLETE: frozenset[str] = frozenset({
-    "ping", "system_info", "list_allowed_apps",
-})
+_SERVER_AUTO_COMPLETE: frozenset[str] = frozenset(
+    {
+        "ping",
+        "system_info",
+        "list_allowed_apps",
+    }
+)
 
 # 허용된 PC 측 앱 (실제 실행은 browser/open_url 만 가능)
 ALLOWED_APPS: list[str] = ["browser", "excel", "hwp", "cad"]

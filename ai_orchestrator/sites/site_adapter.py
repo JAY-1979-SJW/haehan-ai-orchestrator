@@ -1,6 +1,6 @@
 """사이트 어댑터 베이스 (세션 유지 + 로그인 판정 + 재인증 대기).
 
-`SiteConnector` (connector.py) 는 orchestrator/오케스트레이터 간 action dispatch 인터페이스를
+`SiteConnector` (connector 모듈) 는 orchestrator/오케스트레이터 간 action dispatch 인터페이스를
 정의한다. 이 모듈의 `SiteAdapter` 는 그 아래 계층으로, **브라우저 세션 + 로그인 여부 + 재인증 대기**
 에 집중한다. 두 인터페이스가 겹치지 않도록 의도적으로 분리한다.
 
@@ -10,6 +10,7 @@
 - Playwright 가 설치되어 있지 않거나 브라우저를 띄우지 못하는 환경(CI, 서버 헤드리스)에서도
   import/테스트가 깨지지 않아야 한다. Page 타입은 `Any` 로 느슨하게 둔다.
 """
+
 from __future__ import annotations
 
 import logging
@@ -34,6 +35,7 @@ class LoginCheckResult:
     - detected_url: 판정 시점의 최종 URL (redirect 결과 포함 가능).
     - matched_signals: 판정에 사용한 셀렉터/신호 식별자 목록 (예: "has_logout_button").
     """
+
     is_logged_in: bool
     reason: LoginReasonCode = ""
     detected_url: str = ""
@@ -58,6 +60,7 @@ class ReauthWaitResult:
     - timed_out: 타임아웃으로 종료됐는지
     - last_check: 마지막 LoginCheckResult (있으면)
     """
+
     succeeded: bool
     elapsed_sec: float = 0.0
     timed_out: bool = False
@@ -130,11 +133,7 @@ class SiteAdapter(ABC):
         import time as _time
 
         timeout = int(timeout_sec if timeout_sec is not None else self.default_reauth_timeout_sec)
-        interval = float(
-            poll_interval_sec
-            if poll_interval_sec is not None
-            else self.default_reauth_poll_interval_sec
-        )
+        interval = float(poll_interval_sec if poll_interval_sec is not None else self.default_reauth_poll_interval_sec)
         _sleep = sleeper if sleeper is not None else _time.sleep
         _now = clock if clock is not None else _time.monotonic
 
@@ -146,16 +145,24 @@ class SiteAdapter(ABC):
             if last.is_logged_in:
                 logger.info(
                     "[REAUTH-SUCCESS] site=%s elapsed_sec=%.1f signals=%s",
-                    self.site_id, elapsed, last.matched_signals,
+                    self.site_id,
+                    elapsed,
+                    last.matched_signals,
                 )
                 return ReauthWaitResult(succeeded=True, elapsed_sec=elapsed, last_check=last)
             if elapsed >= timeout:
                 logger.warning(
                     "[REAUTH-TIMEOUT] site=%s elapsed_sec=%.1f timeout_sec=%d reason=%s",
-                    self.site_id, elapsed, timeout, last.reason,
+                    self.site_id,
+                    elapsed,
+                    timeout,
+                    last.reason,
                 )
                 return ReauthWaitResult(
-                    succeeded=False, elapsed_sec=elapsed, timed_out=True, last_check=last,
+                    succeeded=False,
+                    elapsed_sec=elapsed,
+                    timed_out=True,
+                    last_check=last,
                 )
             _sleep(interval)
 
@@ -169,8 +176,8 @@ class SiteAdapter(ABC):
 
 
 __all__ = [
-    "SiteAdapter",
     "LoginCheckResult",
-    "ReauthWaitResult",
     "LoginReasonCode",
+    "ReauthWaitResult",
+    "SiteAdapter",
 ]

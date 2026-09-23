@@ -1,7 +1,7 @@
 """외부 웹 업무 레지스트리 — 실행 위치·인증 방식·범위 분류.
 
 비서앱이 현재 또는 향후 지원할 외부 웹 업무를 한 곳에 명시한다.
-실제 실행이 가능한 항목은 web_task_registry.py에 등록된다.
+실제 실행이 가능한 항목은 web_task_registry 모듈에 등록된다.
 여기에 있는 항목은 정책·위치·인증 분류 기준만 제공한다.
 
 분류값:
@@ -9,7 +9,7 @@
   OFFICIAL_API_OR_OAUTH_REQUIRED — 공식 API/OAuth 설정 완료 후 실행 가능
   LOCAL_AGENT_REQUIRED        — 사용자 PC 로컬 에이전트 필요
   USER_DIRECT_REQUIRED        — 사용자 직접 조작 필요 (비밀번호/OTP/전자서명 등)
-  WEB_TASK_REGISTRY           — web_task_registry.py에 이미 등록됨 (approval gate 완비)
+  WEB_TASK_REGISTRY           — web_task_registry 모듈에 이미 등록됨 (approval gate 완비)
   QUARANTINE_OR_HOLD          — 현재 차단/보류 상태 (보안 검토 전)
 
 실행 위치:
@@ -41,7 +41,7 @@ class ExternalWorkEntry:
     requires_approval: bool
     requires_auth: bool  # 계정 인증 필요 여부
     auth_method: str  # none / oauth / browser_session / user_direct
-    registered_in_web_task: bool  # web_task_registry.py에 등록 여부
+    registered_in_web_task: bool  # web_task_registry 모듈에 등록 여부
     notes: str = ""
 
 
@@ -117,7 +117,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="서버 브라우저 금지. local_agent/browser/mixins/blog_mixin.py 구현 있음. "
+        notes="서버 브라우저 금지. local_agent/browser/mixins 의 blog_mixin 구현 있음. "
         "실제 게시는 사용자 승인 후 로컬 에이전트가 수행.",
     ),
     ExternalWorkEntry(
@@ -132,7 +132,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="서버 브라우저 금지. local_agent/browser/mixins/cafe_mixin.py 구현 있음.",
+        notes="서버 브라우저 금지. local_agent/browser/mixins 의 cafe_mixin 구현 있음.",
     ),
     ExternalWorkEntry(
         work_key="naver/mail_send",
@@ -146,7 +146,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="browser_session",
         registered_in_web_task=False,
-        notes="메일 발송은 사용자가 직접 확인 후 실행. local_agent/browser/mixins/mail_mixin.py.",
+        notes="메일 발송은 사용자가 직접 확인 후 실행. local_agent/browser/mixins 의 mail_mixin 모듈.",
     ),
     # ── Google: 공식 API/OAuth 계열 ──────────────────────────────────────────
     ExternalWorkEntry(
@@ -175,7 +175,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="oauth",
         registered_in_web_task=False,
-        notes="gmail_reader.py 구현 있음. credentials.json + token.json 설정 필요. "
+        notes="gmail_reader 모듈 구현 있음. credentials.json + token.json 설정 필요. "
         "server /api/v1/inbox/email/fetch 엔드포인트로 제공.",
     ),
     ExternalWorkEntry(
@@ -190,7 +190,7 @@ _ENTRIES: list[ExternalWorkEntry] = [
         requires_auth=True,
         auth_method="oauth",
         registered_in_web_task=False,
-        notes="calendar_mixin.py 로컬 에이전트 참조 있음. 공식 API client 미구현. FUTURE_INTEGRATION.",
+        notes="calendar_mixin 모듈 로컬 에이전트 참조 있음. 공식 API client 미구현. FUTURE_INTEGRATION.",
     ),
     ExternalWorkEntry(
         work_key="google/drive_read",
