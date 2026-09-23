@@ -56,7 +56,15 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
             "seo diagnose",
             "seo submit",
         ],
-        "read": ["entrypoints", "plan", "assets", "exposure", "monitor", "diagnose", "full"],
+        "read": [
+            "entrypoints",
+            "plan",
+            "assets",
+            "exposure",
+            "monitor",
+            "diagnose",
+            "full",
+        ],
         "prepare": ["ownership", "submit-plan", "searchadvisor prepare"],
         "submit": ["searchadvisor submit"],
     },
@@ -81,7 +89,14 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
             "keyword-tools searchad-plan",
             "keyword-tools paid-blocks",
         ],
-        "read": ["catalog", "plan", "datalab", "shopping", "searchad-plan", "paid-blocks"],
+        "read": [
+            "catalog",
+            "plan",
+            "datalab",
+            "shopping",
+            "searchad-plan",
+            "paid-blocks",
+        ],
         "prepare": [],
         "submit": [],
         "policy": "free-only; paid Naver API, ad campaign, budget, payment, and publish actions are blocked",
@@ -118,7 +133,7 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
             "GET /naver-cafe/kb": "구조화 지식베이스",
             "GET /naver-cafe/report": "분류 보고서 텍스트",
         },
-        "python_entry": "from scripts.naver.cafe import collect_articles, get_my_cafes, run_pipeline, organize, analyze_posts",
+        "python_entry": "from scripts.naver.cafe import collect_articles, get_my_cafes, run_pipeline, organize, prepare_posts_for_review",
         "data_files": "data/cafe/raw_articles_*.json → classified_*.json → organized_kb_*.json",
         "policy": "collect supports keyword filter; topic-search uses Naver search API; join-request is prepare-only; join-submit and publish are approval-gated",
     },
@@ -154,10 +169,19 @@ FEATURE_CATALOG: dict[str, dict[str, Any]] = {
         "submit": [],
     },
     "smartstore": {
-        "commands": ["smartstore actions", "smartstore product list", "smartstore submit"],
+        "commands": [
+            "smartstore actions",
+            "smartstore product list",
+            "smartstore submit",
+        ],
         "read": ["actions", "product list", "review list", "inquiry list"],
         "prepare": ["prepare product", "customer reply draft"],
-        "submit": ["submit product", "review reply send", "inquiry reply send", "talk message send"],
+        "submit": [
+            "submit product",
+            "review reply send",
+            "inquiry reply send",
+            "talk message send",
+        ],
         "policy": "Product save and customer-visible replies/messages are approval-gated; AI drafting and classification are prepare-only",
     },
 }
@@ -179,7 +203,10 @@ def build_catalog() -> dict[str, Any]:
 def save_catalog(catalog: dict[str, Any] | None = None, output: str | Path | None = None) -> Path:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     path = Path(output) if output else LATEST_PATH
-    path.write_text(json.dumps(catalog or build_catalog(), ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(
+        json.dumps(catalog or build_catalog(), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return path
 
 

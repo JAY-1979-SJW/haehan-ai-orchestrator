@@ -12,7 +12,7 @@
 ### 분류/분석 (analysis/)
 - run_pipeline(input_path)    → 3단계 분류 (규칙→형태소→TF-IDF) → classified_*.json
 - organize(input_path)        → 군집화·중복제거·KB 구조화 → organized_kb_*.json
-- analyze_posts(posts, ctx)   → AI 트렌드·수익기회 분석
+- prepare_posts_for_review(posts, context) → 게시글 정리(무료) — Claude Code가 직접 분석
 
 ### 글쓰기 (write/)
 - write_post(page, cafe_url, board_name, title, body, ...)
@@ -41,7 +41,7 @@ import time
 
 from playwright.sync_api import Page
 
-from scripts.community.analyzer import analyze_posts
+from scripts.community.analyzer import prepare_posts_for_review
 from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 from scripts.popup_detector import handle_page_popups
@@ -189,7 +189,7 @@ __all__ = [  # noqa: RUF022
     # 분석
     "run_pipeline",
     "organize",
-    "analyze_posts",
+    "prepare_posts_for_review",
     # 글쓰기
     "write_post",
     "confirm_publish",
