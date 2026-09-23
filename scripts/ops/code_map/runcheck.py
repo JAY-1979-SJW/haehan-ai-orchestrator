@@ -60,31 +60,38 @@ CHILD_ENV = {
     "HAEHAN_RUNCHECK": "1",  # 코드가 원하면 점검 모드를 감지할 수 있게
 }
 IMPORT_CHILD = r"""
-import importlib.util, json, sys, time, warnings, traceback
+import importlib.util, json, sys, time, warnings
 warnings.simplefilter("ignore")
-root = sys.argv[1]
-sys.path.insert(0, root)
-out = {}
-for rel in json.loads(sys.argv[2]):
-    t = time.time()
-    try:
-        p = root + "/" + rel
-        parts = rel[:-3].split("/")
-        if parts[-1] == "__init__":
-            parts = parts[:-1]
-        mod = ".".join(parts)
-        if "-" in mod:  # apps/<hyphen-name>/... : 앱 폴더 기준으로 경로 로드
-            app_root = root + "/" + "/".join(rel.split("/")[:2])
-            if app_root not in sys.path:
-                sys.path.insert(0, app_root)
-            spec = importlib.util.spec_from_file_location("rc_" + str(abs(hash(rel))), p)
-            m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-        else:
-            importlib.import_module(mod)
-        out[rel] = ["OK", round(time.time() - t, 2), ""]
-    except BaseException as e:
-        out[rel] = ["FAIL", round(time.time() - t, 2), (type(e).__name__ + ": " + str(e))[:300]]
-print("@@RC@@" + json.dumps(out))
+root, rel = sys.argv[1], sys.argv[2]
+t = time.time()
+try:
+    parts = rel[:-3].split("/")
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    if parts[0] == "apps" and len(parts) > 2:  # apps/<앱>/... : 앱 폴더를 루트로 모듈 이름 import
+        sys.path.insert(0, root + "/" + "/".join(parts[:2]))
+        importlib.import_module(".".join(parts[2:]) or "__main__")
+    elif parts[0].startswith("."):  # .githooks 등 점 폴더: 경로로 로드
+        name = "rc_" + parts[-1]
+        spec = importlib.util.spec_from_file_location(name, root + "/" + rel)
+        m = importlib.util.module_from_spec(spec); sys.modules[name] = m; spec.loader.exec_module(m)
+    else:
+        sys.path.insert(0, root)
+        try:
+            importlib.import_module(".".join(parts))
+        except ModuleNotFoundError as e:  # 옆 파일을 스크립트식으로 부르는 경우에만 자기 폴더 추가 후 재시도
+            import os
+            here = root + "/" + "/".join(parts[:-1])
+            if not (e.name and os.path.exists(here + "/" + e.name.split(".")[0] + ".py")):
+                raise
+            for k in [k for k in sys.modules if k == ".".join(parts) or k.startswith(".".join(parts) + ".")]:
+                sys.modules.pop(k, None)
+            sys.path.append(here)  # 뒤에 추가 — 표준 라이브러리를 가리지 않게
+            importlib.import_module(".".join(parts))
+    r = ["OK", ""]
+except BaseException as e:
+    r = ["FAIL", (type(e).__name__ + ": " + str(e))[:300]]
+print("@@RC@@" + json.dumps([r[0], round(time.time() - t, 2), r[1]]))
 """
 
 
@@ -143,7 +150,7 @@ def _help_safe(tree: ast.Module) -> tuple[bool, str]:
     return False, "parse_args not found in entry"
 
 
-def run_r0(m: dict, workers: int = 4, chunk: int = 25) -> dict[str, dict]:
+def run_r0(m: dict, workers: int = 8) -> dict[str, dict]:
     targets, res = [], {}
     for rel, info in sorted(m["files"].items()):
         if not rel.endswith(".py") or info["class"] not in ("LIVE", "CLI") or scan.is_test(rel):
@@ -156,36 +163,38 @@ def run_r0(m: dict, workers: int = 4, chunk: int = 25) -> dict[str, dict]:
         else:
             targets.append(rel)
 
-    def run_chunk(items: list[str], timeout: int) -> dict[str, list]:
+    def one(rel: str) -> tuple[str, dict]:
         try:
             r = subprocess.run(
-                [sys.executable, "-c", IMPORT_CHILD, str(ROOT).replace("\\", "/"), json.dumps(items)],
+                [sys.executable, "-c", IMPORT_CHILD, str(ROOT).replace("\\", "/"), rel],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=timeout,
+                timeout=60,
                 cwd=ROOT,
                 env=CHILD_ENV,
             )
             line = next((ln for ln in r.stdout.splitlines() if ln.startswith("@@RC@@")), None)
             if line:
-                return json.loads(line[6:])
-            return {i: ["FAIL", 0, "no result: " + (r.stderr or r.stdout)[-200:]] for i in items}
+                st, sec, err = json.loads(line[6:])
+                return rel, {"status": st, "sec": sec, "err": err}
+            return rel, {"status": "FAIL", "sec": 0, "err": "no result: " + (r.stderr or r.stdout)[-200:]}
         except subprocess.TimeoutExpired:
-            if len(items) == 1:
-                return {items[0]: ["FAIL", timeout, "TIMEOUT (import hangs)"]}
-            out = {}
-            for it in items:  # 묶음 시간초과 → 하나씩 재시도
-                out.update(run_chunk([it], 60))
-            return out
+            return rel, {"status": "FAIL", "sec": 60, "err": "TIMEOUT (import hangs)"}
 
-    chunks = [targets[i : i + chunk] for i in range(0, len(targets), chunk)]
-    with ThreadPoolExecutor(workers) as ex:
-        for part in ex.map(lambda c: run_chunk(c, 180), chunks):
-            for rel, (st, sec, err) in part.items():
-                res[rel] = {"status": st, "sec": sec, "err": err}
+    with ThreadPoolExecutor(workers) as ex:  # 모듈마다 별도 프로세스 — sys.path·sys.modules 오염 방지
+        for rel, r in ex.map(one, targets):
+            res[rel] = r
     return res
+
+
+def _help_cmd(rel: str) -> list[str]:
+    """저장소 루트에서 -m 으로(패키지·네임스페이스 모두), 앱·점 폴더·식별자 아닌 경로는 파일로."""
+    parts = rel[:-3].split("/")
+    if not rel.startswith(("apps/", ".")) and all(x.isidentifier() for x in parts):
+        return [sys.executable, "-m", ".".join(parts), "--help"]
+    return [sys.executable, rel, "--help"]
 
 
 def run_r1(m: dict, workers: int = 4) -> dict[str, dict]:
@@ -210,7 +219,7 @@ def run_r1(m: dict, workers: int = 4) -> dict[str, dict]:
         t = time.time()
         try:
             r = subprocess.run(
-                [sys.executable, rel, "--help"],
+                _help_cmd(rel),
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
