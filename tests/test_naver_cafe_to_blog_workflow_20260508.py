@@ -1,16 +1,20 @@
 """
 네이버 카페→블로그 통합 workflow 테스트
 """
+
 import pytest
-from ai_orchestrator.local_agent.naver_content_workflow_runner import (
-    run_cafe_to_blog_workflow,
-    WORKFLOW_PASS, WORKFLOW_WARN_AUTH, WORKFLOW_WARN_PERMISSION, WORKFLOW_FAIL,
-)
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
-)
+
 from ai_orchestrator.local_agent.delegated_action_executor import EXEC_ALLOWED
+from ai_orchestrator.local_agent.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
+)
 from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
+from ai_orchestrator.local_agent.naver_content_workflow_runner import (
+    WORKFLOW_WARN_PERMISSION,
+    run_cafe_to_blog_workflow,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -104,4 +108,5 @@ class TestWorkflowWithPermission:
         pub = result.get("publish_result")
         if pub:
             from ai_orchestrator.local_agent.delegated_action_executor import EXEC_NEED_PERMISSION
+
             assert pub["status"] == EXEC_NEED_PERMISSION

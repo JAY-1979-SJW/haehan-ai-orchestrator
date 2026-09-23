@@ -1,14 +1,12 @@
 """자동 감지 및 초기화 — 네이버 로그인 확인 → Mixin 생성 → 검증."""
+
 from __future__ import annotations
 
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 from ai_orchestrator.local_agent.browser.cdp_session_manager import (
-    get_logged_in_sites,
-    is_session_initialized,
     is_logged_in,
 )
 
@@ -33,7 +31,7 @@ def check_cdp_connection() -> bool:
     """CDP 연결 상태 확인."""
     print_step("CDP 연결 확인", "🔍")
     try:
-        from ai_orchestrator.local_agent.browser.cdp_launcher import probe_cdp, ensure_cdp
+        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp, probe_cdp
 
         if probe_cdp():
             print_ok("Chrome/CDP 실행 중 (127.0.0.1:9222)")
@@ -185,11 +183,11 @@ def update_mixins_init() -> bool:
         if "MailMixin" not in content:
             content = content.replace(
                 "from .blog_mixin import BlogMixin",
-                "from .blog_mixin import BlogMixin\nfrom .mail_mixin import MailMixin\nfrom .calendar_mixin import CalendarMixin\nfrom .mybox_mixin import MyBoxMixin"
+                "from .blog_mixin import BlogMixin\nfrom .mail_mixin import MailMixin\nfrom .calendar_mixin import CalendarMixin\nfrom .mybox_mixin import MyBoxMixin",
             )
             content = content.replace(
                 '__all__ = ["CafeMixin", "BlogMixin"]',
-                '__all__ = ["CafeMixin", "BlogMixin", "MailMixin", "CalendarMixin", "MyBoxMixin"]'
+                '__all__ = ["CafeMixin", "BlogMixin", "MailMixin", "CalendarMixin", "MyBoxMixin"]',
             )
             init_file.write_text(content, encoding="utf-8")
             print_ok("Import 추가됨")
@@ -215,12 +213,12 @@ def update_browser_agent() -> bool:
             # Import 줄 수정
             content = content.replace(
                 "from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin",
-                "from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin"
+                "from ai_orchestrator.local_agent.browser.mixins import CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin",
             )
             # 클래스 정의 수정
             content = content.replace(
                 "class BrowserAgent(CafeMixin, BlogMixin):",
-                "class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):"
+                "class BrowserAgent(CafeMixin, BlogMixin, MailMixin, CalendarMixin, MyBoxMixin):",
             )
             agent_file.write_text(content, encoding="utf-8")
             print_ok("Mixin 상속 추가됨")
@@ -238,12 +236,13 @@ def verify_import() -> bool:
 
     try:
         from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+
         print_ok("BrowserAgent import 성공")
 
         # Mixin 메서드 확인
-        has_mail = hasattr(BrowserAgent, 'mail_inbox')
-        has_calendar = hasattr(BrowserAgent, 'calendar_events')
-        has_mybox = hasattr(BrowserAgent, 'mybox_files')
+        has_mail = hasattr(BrowserAgent, "mail_inbox")
+        has_calendar = hasattr(BrowserAgent, "calendar_events")
+        has_mybox = hasattr(BrowserAgent, "mybox_files")
 
         print(f"  mail_inbox 메서드: {'예정' if not has_mail else '추가됨'}")
         print(f"  calendar_events 메서드: {'예정' if not has_calendar else '추가됨'}")
@@ -257,9 +256,9 @@ def verify_import() -> bool:
 
 def main():
     """자동 감지 및 초기화 실행."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  네이버 서비스 자동 감지 및 초기화")
-    print("="*60)
+    print("=" * 60)
 
     # 1. CDP 연결 확인
     if not check_cdp_connection():
@@ -316,18 +315,18 @@ def main():
         return False
 
     # 5. 요약
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  초기화 완료 요약")
-    print("="*60)
-    print(f"  ✓ CDP 연결: OK")
-    print(f"  ✓ 네이버 기본 로그인: OK (메일/캘린더/MyBox 통합 접근 가능)")
-    print(f"  ✓ Mixin 생성: OK")
-    print(f"  ✓ Import 검증: OK")
+    print("=" * 60)
+    print("  ✓ CDP 연결: OK")
+    print("  ✓ 네이버 기본 로그인: OK (메일/캘린더/MyBox 통합 접근 가능)")
+    print("  ✓ Mixin 생성: OK")
+    print("  ✓ Import 검증: OK")
 
     print("\n  ✅ 모든 준비 완료!")
     print("  다음: Haiku 세션에서 Phase 1.1 (mail_inbox) 실행")
 
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     return True
 

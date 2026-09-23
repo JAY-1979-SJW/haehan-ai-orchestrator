@@ -7,24 +7,23 @@ is safely serialized.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional
 import logging
 
 from .browser_action_contract import (
-    ServerApprovalAction,
     ExecutionResult,
+    ServerApprovalAction,
     assess_action_risk,
     validate_execution_result,
 )
-from .browser_controller import BrowserController
 from .browser_approval_verifier import BrowserApprovalVerifier
+from .browser_controller import BrowserController
 
 logger = logging.getLogger(__name__)
 
 
 class ServerActionAdapterError(Exception):
     """Server action adapter error."""
+
     pass
 
 
@@ -34,7 +33,7 @@ class ServerActionAdapter:
     def __init__(
         self,
         browser_controller: BrowserController,
-        approval_verifier: Optional[BrowserApprovalVerifier] = None,
+        approval_verifier: BrowserApprovalVerifier | None = None,
     ):
         """Initialize adapter with a BrowserController instance.
 
@@ -84,7 +83,9 @@ class ServerActionAdapter:
                     risk_level="high",
                     final_approval_required=False,
                     result=verification.error_code or "approval_invalid",
-                    target_url_domain=self.controller._extract_domain(self.controller.page.url) if self.controller.page else "",
+                    target_url_domain=self.controller._extract_domain(self.controller.page.url)
+                    if self.controller.page
+                    else "",
                 )
 
         # Route to appropriate handler

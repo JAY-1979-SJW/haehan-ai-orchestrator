@@ -3,17 +3,16 @@
 URL: https://pay.naver.com/
 주의: 실제 결제는 자동화 금지. 조회만.
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
 from scripts.logger import get_logger
-from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 
@@ -47,7 +46,8 @@ class NaverPay:
             pass
 
         try:
-            orders = self.page.evaluate("""
+            orders = self.page.evaluate(
+                """
             (limit) => {
                 const out = [];
                 document.querySelectorAll('[class*="order-item"], [class*="OrderItem"], .order-list li, .item-row').forEach((el, i) => {
@@ -61,7 +61,9 @@ class NaverPay:
                 });
                 return out;
             }
-            """, limit)
+            """,
+                limit,
+            )
             _log.info("[naver-pay] 결제 내역 %d건", len(orders))
             return orders
         except Exception as e:

@@ -15,12 +15,12 @@ executor 또는 router) 가 수행한다. 신규 모듈 — 기존 코드 무단
   - desktop.local_server._handle_browser_action — navigate 전 정책 적용
   - scripts.naver.router 외 site router — 호출 시점 정책 확인
 """
+
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from typing import Any, Iterable
-
+from dataclasses import dataclass
+from typing import Any
 
 # ── 상수 ─────────────────────────────────────────────────────────────
 
@@ -42,6 +42,7 @@ FORBIDDEN_LOGIN_URL_PATTERNS: tuple[re.Pattern[str], ...] = (
 
 
 # ── 데이터 ───────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class SiteEntryPolicy:
@@ -93,65 +94,82 @@ def all_policies() -> list[SiteEntryPolicy]:
 _NAVER_LOGGED_IN = ("has_logout", "has_mypage_link", "has_user_menu")
 _NAVER_LOGIN_REQ = ("has_id_form", "has_pw_form")
 
-register(SiteEntryPolicy(
-    site_key="naver",
-    main_url="https://www.naver.com/",
-    work_url_default="https://www.naver.com/",
-    logged_in_signals=_NAVER_LOGGED_IN,
-    login_required_signals=_NAVER_LOGIN_REQ,
-))
-register(SiteEntryPolicy(
-    site_key="naver_blog",
-    main_url="https://section.blog.naver.com/BlogHome.naver",
-    work_url_default="https://section.blog.naver.com/BlogHome.naver",
-    logged_in_signals=_NAVER_LOGGED_IN,
-    login_required_signals=_NAVER_LOGIN_REQ,
-))
-register(SiteEntryPolicy(
-    site_key="naver_cafe",
-    main_url="https://section.cafe.naver.com/",
-    work_url_default="https://section.cafe.naver.com/",
-    logged_in_signals=_NAVER_LOGGED_IN,
-    login_required_signals=_NAVER_LOGIN_REQ,
-))
-register(SiteEntryPolicy(
-    site_key="google",
-    main_url="https://www.google.com/",
-    work_url_default="https://www.google.com/",
-    logged_in_signals=("has_user_menu", "has_mypage_link"),
-    login_required_signals=("has_login_btn",),
-))
-register(SiteEntryPolicy(
-    site_key="youtube",
-    main_url="https://www.youtube.com/",
-    work_url_default="https://www.youtube.com/",
-    logged_in_signals=("has_user_menu",),
-    login_required_signals=("has_login_btn",),
-))
-register(SiteEntryPolicy(
-    site_key="kakao",
-    main_url="https://www.kakao.com/",
-    work_url_default="https://www.kakao.com/",
-    logged_in_signals=("has_logout", "has_user_menu"),
-    login_required_signals=("has_login_btn",),
-))
-register(SiteEntryPolicy(
-    site_key="daum",
-    main_url="https://www.daum.net/",
-    work_url_default="https://www.daum.net/",
-    logged_in_signals=("has_logout", "has_user_menu"),
-    login_required_signals=("has_login_btn",),
-))
-register(SiteEntryPolicy(
-    site_key="eum",
-    main_url="https://eum.cw.or.kr/",
-    work_url_default="https://eum.cw.or.kr/main",
-    logged_in_signals=("has_logout", "has_mypage_link"),
-    login_required_signals=("has_id_form", "has_pw_form"),
-))
+register(
+    SiteEntryPolicy(
+        site_key="naver",
+        main_url="https://www.naver.com/",
+        work_url_default="https://www.naver.com/",
+        logged_in_signals=_NAVER_LOGGED_IN,
+        login_required_signals=_NAVER_LOGIN_REQ,
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="naver_blog",
+        main_url="https://section.blog.naver.com/BlogHome.naver",
+        work_url_default="https://section.blog.naver.com/BlogHome.naver",
+        logged_in_signals=_NAVER_LOGGED_IN,
+        login_required_signals=_NAVER_LOGIN_REQ,
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="naver_cafe",
+        main_url="https://section.cafe.naver.com/",
+        work_url_default="https://section.cafe.naver.com/",
+        logged_in_signals=_NAVER_LOGGED_IN,
+        login_required_signals=_NAVER_LOGIN_REQ,
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="google",
+        main_url="https://www.google.com/",
+        work_url_default="https://www.google.com/",
+        logged_in_signals=("has_user_menu", "has_mypage_link"),
+        login_required_signals=("has_login_btn",),
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="youtube",
+        main_url="https://www.youtube.com/",
+        work_url_default="https://www.youtube.com/",
+        logged_in_signals=("has_user_menu",),
+        login_required_signals=("has_login_btn",),
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="kakao",
+        main_url="https://www.kakao.com/",
+        work_url_default="https://www.kakao.com/",
+        logged_in_signals=("has_logout", "has_user_menu"),
+        login_required_signals=("has_login_btn",),
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="daum",
+        main_url="https://www.daum.net/",
+        work_url_default="https://www.daum.net/",
+        logged_in_signals=("has_logout", "has_user_menu"),
+        login_required_signals=("has_login_btn",),
+    )
+)
+register(
+    SiteEntryPolicy(
+        site_key="eum",
+        main_url="https://eum.cw.or.kr/",
+        work_url_default="https://eum.cw.or.kr/main",
+        logged_in_signals=("has_logout", "has_mypage_link"),
+        login_required_signals=("has_id_form", "has_pw_form"),
+    )
+)
 
 
 # ── helper ──────────────────────────────────────────────────────────
+
 
 def is_login_url_forbidden(url: str) -> bool:
     """로그인 전용 URL 직접 진입 금지 대상인지."""

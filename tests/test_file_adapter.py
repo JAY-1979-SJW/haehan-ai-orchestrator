@@ -1,11 +1,10 @@
-import sys
 import os
+import sys
 import tempfile
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from adapters.file_adapter import read_file, list_dir, file_exists, preview_patch
+from adapters.file_adapter import file_exists, list_dir, preview_patch, read_file
 
 _TMPDIR = tempfile.gettempdir()
 _ALLOWED = [_TMPDIR]

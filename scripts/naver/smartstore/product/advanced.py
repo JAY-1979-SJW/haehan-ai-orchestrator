@@ -24,21 +24,22 @@ ProductRegister 확장 모듈:
   ps.set_stock(100)
   ps.set_discount(rate=10, period_days=7)
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
 
 # ── SmartEditor ONE 상세설명 ──────────────────────────────────────────────
+
 
 class SmartEditorONE:
     """네이버 SmartEditor ONE 자동 입력 모듈."""
@@ -58,7 +59,7 @@ class SmartEditorONE:
             time.sleep(1)
             # 버튼 클릭
             try:
-                self.page.locator('text=스마트 에디터 ONE').first.click(timeout=3000, force=True)
+                self.page.locator("text=스마트 에디터 ONE").first.click(timeout=3000, force=True)
                 time.sleep(4)
             except Exception as e:
                 _log.debug("[smart-editor] 버튼 클릭 무시 (이미 열림 가능): %s", e)
@@ -121,14 +122,16 @@ class SmartEditorONE:
             file_input = self.frame.locator('input[type="file"]').first
             file_input.set_input_files(image_path, timeout=5000)
             time.sleep(3)
-            log_critical("FILE_UPLOAD", f"SmartEditor 이미지: {Path(image_path).name}",
-                         file=image_path, mode="smarteditor_image")
+            log_critical(
+                "FILE_UPLOAD", f"SmartEditor 이미지: {Path(image_path).name}", file=image_path, mode="smarteditor_image"
+            )
             return {"ok": True, "file": image_path}
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
 
 
 # ── 가격/재고/할인 (일반 상품 등록 페이지용) ─────────────────────────────
+
 
 class PriceStockEditor:
     """가격/재고/할인/배송비 입력. 일반 상품 등록 페이지에서 사용."""
@@ -140,7 +143,9 @@ class PriceStockEditor:
         """라벨 텍스트로 input 찾아 fill."""
         try:
             # 라벨 옆 input 찾기
-            input_loc = self.page.locator(f'label:has-text("{label}") + * input, label:has-text("{label}") ~ * input').first
+            input_loc = self.page.locator(
+                f'label:has-text("{label}") + * input, label:has-text("{label}") ~ * input'
+            ).first
             if input_loc.count() == 0:
                 # placeholder/aria로 시도
                 input_loc = self.page.locator(f'input[placeholder*="{label}"], input[aria-label*="{label}"]').first
@@ -193,6 +198,7 @@ class PriceStockEditor:
 
 
 # ── 판매옵션 (사이즈/색상 등) ──────────────────────────────────────────────
+
 
 class ProductOptionEditor:
     """판매옵션 (옵션별 가격/재고)."""

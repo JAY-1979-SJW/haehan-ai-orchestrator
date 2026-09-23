@@ -12,11 +12,12 @@ fill_form / submit_form / abort_form 을 구현한다.
   app_name, company_name, service_url, redirect_uri,
   contact_email, purpose, requested_scopes
 """
+
 from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -24,28 +25,32 @@ logger = logging.getLogger(__name__)
 
 # ── 표준 에러 코드 ────────────────────────────────────────────────────────────
 
+
 class ErrorCode:
     """fill_form / submit_form 실패 시 error_code 에 기록되는 코드."""
 
-    PAGE_LOAD_FAILED        = "PAGE_LOAD_FAILED"
-    LOGIN_REQUIRED          = "LOGIN_REQUIRED"
-    CAPTCHA_REQUIRED        = "CAPTCHA_REQUIRED"
-    FORM_FIELD_MISSING      = "FORM_FIELD_MISSING"
+    PAGE_LOAD_FAILED = "PAGE_LOAD_FAILED"
+    LOGIN_REQUIRED = "LOGIN_REQUIRED"
+    CAPTCHA_REQUIRED = "CAPTCHA_REQUIRED"
+    FORM_FIELD_MISSING = "FORM_FIELD_MISSING"
     SUBMIT_BUTTON_NOT_FOUND = "SUBMIT_BUTTON_NOT_FOUND"
-    APPROVAL_REQUIRED       = "APPROVAL_REQUIRED"
+    APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
     PROVIDER_LAYOUT_CHANGED = "PROVIDER_LAYOUT_CHANGED"
+
 
 # summary 에 포함 가능한 안전 필드 (값이 그대로 노출돼도 무방한 필드)
 # password/cookie/session/token/client_secret 은 포함 금지
-_SAFE_SUMMARY_FIELDS: frozenset[str] = frozenset({
-    "app_name",
-    "company_name",
-    "service_url",
-    "redirect_uri",
-    "contact_email",   # 부분 마스킹 적용
-    "purpose",
-    "requested_scopes",
-})
+_SAFE_SUMMARY_FIELDS: frozenset[str] = frozenset(
+    {
+        "app_name",
+        "company_name",
+        "service_url",
+        "redirect_uri",
+        "contact_email",  # 부분 마스킹 적용
+        "purpose",
+        "requested_scopes",
+    }
+)
 
 # dry_run 포함 공통 파라미터 전체 목록
 KNOWN_PARAM_KEYS: frozenset[str] = _SAFE_SUMMARY_FIELDS | frozenset({"dry_run"})
@@ -54,11 +59,11 @@ KNOWN_PARAM_KEYS: frozenset[str] = _SAFE_SUMMARY_FIELDS | frozenset({"dry_run"})
 @dataclass
 class FormFillResult:
     success: bool
-    summary: str         # 입력 필드 요약 (사람이 읽을 수 있는 텍스트, 민감 원문 금지)
-    field_names: list    # 입력된 필드명 목록 (값은 포함하지 않음)
-    target_url: str      # 신청 페이지 현재 URL
+    summary: str  # 입력 필드 요약 (사람이 읽을 수 있는 텍스트, 민감 원문 금지)
+    field_names: list  # 입력된 필드명 목록 (값은 포함하지 않음)
+    target_url: str  # 신청 페이지 현재 URL
     error: str = ""
-    error_code: str = "" # ErrorCode 상수 (실패 시에만 설정)
+    error_code: str = ""  # ErrorCode 상수 (실패 시에만 설정)
 
 
 @dataclass
@@ -66,10 +71,11 @@ class SubmitResult:
     success: bool
     result_summary: str  # 제출 후 결과 요약 (성공/반려/오류 메시지)
     error: str = ""
-    error_code: str = "" # ErrorCode 상수 (실패 시에만 설정)
+    error_code: str = ""  # ErrorCode 상수 (실패 시에만 설정)
 
 
 # ── 공통 유틸리티 ────────────────────────────────────────────────────────────
+
 
 def _has_element(page, selector: str) -> bool:
     """selector 에 해당하는 요소가 DOM 에 존재하면 True.
@@ -104,7 +110,7 @@ def _mask_email(email: str) -> str:
     at = email.find("@")
     if at < 0:
         return email[:3] + "***"
-    prefix = email[:min(3, at)]  # @ 위치보다 앞까지만
+    prefix = email[: min(3, at)]  # @ 위치보다 앞까지만
     return prefix + "***" + email[at:]
 
 
@@ -132,12 +138,13 @@ def _build_safe_summary(provider: str, params: dict, filled: list[str]) -> str:
 
 # ── 추상 기반 클래스 ─────────────────────────────────────────────────────────
 
+
 class DevRegAdapterBase(ABC):
     """개발자 등록 신청 사이트 어댑터 추상 기반."""
 
-    provider: str       # "hiworks" / "naver" / "google"
-    action_type: str    # "developer_apply" / "app_register" / "oauth_submit"
-    risk_level: str     # "medium" / "high"
+    provider: str  # "hiworks" / "naver" / "google"
+    action_type: str  # "developer_apply" / "app_register" / "oauth_submit"
+    risk_level: str  # "medium" / "high"
 
     @abstractmethod
     def fill_form(self, page, params: dict) -> FormFillResult:

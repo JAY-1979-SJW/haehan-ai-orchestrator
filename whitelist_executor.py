@@ -2,17 +2,17 @@
 화이트리스트 실행기 — 최종 게이트
 policy + risk + approval + adapter capability 모두 검사 후 실행
 """
+
 import json
 import logging
 import os
 import time
-from typing import Optional
 
-from models import TaskRequest, RiskAssessment, ExecutionPlan
-from adapters import file_adapter, command_adapter
-from logger import get_logger, log_event
 import audit_logger
+from adapters import command_adapter, file_adapter
+from logger import get_logger, log_event
 from logging_utils import truncate_large_text
+from models import ExecutionPlan, RiskAssessment, TaskRequest
 
 log = get_logger("executor")
 
@@ -22,14 +22,14 @@ _EXECUTABLE_LOW_ACTIONS = {"read_file", "list_dir", "inspect_logs", "status_chec
 _BLOCKED_LEVELS = {"high", "critical"}
 
 _ADAPTER_MAP = {
-    "read_file":    "file",
-    "list_dir":     "file",
+    "read_file": "file",
+    "list_dir": "file",
     "inspect_logs": "command",
     "status_check": "command",
-    "edit_config":  "file",
-    "write_file":   "file",
+    "edit_config": "file",
+    "write_file": "file",
     "create_patch": "file",
-    "run_shell":    "command",
+    "run_shell": "command",
 }
 
 
@@ -78,8 +78,7 @@ def can_execute(
     if level == "low":
         if task.action_type not in _EXECUTABLE_LOW_ACTIONS:
             reasons.append(
-                f"low action '{task.action_type}' is not in executable set "
-                "(may be AI-only like summarize_text)"
+                f"low action '{task.action_type}' is not in executable set (may be AI-only like summarize_text)"
             )
             return False, reasons
         if os.path.sep in task.target or "/" in task.target:
@@ -116,11 +115,11 @@ def execute_allowed(
     level = risk.risk_level
 
     base = {
-        "task_id":       task.task_id,
-        "action_type":   task.action_type,
-        "target":        task.target,
-        "risk_level":    level,
-        "preview_only":  False,
+        "task_id": task.task_id,
+        "action_type": task.action_type,
+        "target": task.target,
+        "risk_level": level,
+        "preview_only": False,
         "blocked_reasons": block_reasons,
     }
 
@@ -130,7 +129,8 @@ def execute_allowed(
     # ── BLOCKED ──────────────────────────────────────────────
     if level in _BLOCKED_LEVELS or not ok:
         log_event(
-            log, logging.WARNING,
+            log,
+            logging.WARNING,
             f"execution blocked: {'; '.join(block_reasons)}",
             event_type="EXECUTION_BLOCKED",
             task_id=task.task_id,
@@ -161,7 +161,8 @@ def execute_allowed(
     # ── MEDIUM → PREVIEW_ONLY ─────────────────────────────────
     if level == "medium":
         log_event(
-            log, logging.INFO,
+            log,
+            logging.INFO,
             "preview_only — no actual write",
             event_type="EXECUTION_PREVIEW",
             task_id=task.task_id,
@@ -179,27 +180,28 @@ def execute_allowed(
         adapter_result = {}
         if task.action_type in {"edit_config", "write_file", "create_patch"}:
             new_content = task.payload.get("new_content", "")
-            adapter_result = file_adapter.preview_patch(
-                task.target, new_content, allowed_paths, blocked_paths
-            )
-        _append_history({
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "task_id": task.task_id,
-            "adapter": "file",
-            "action_type": task.action_type,
-            "target": task.target,
-            "execution_status": "PREVIEW_ONLY",
-            "exit_code": None,
-            "preview_only": True,
-            "actor": actor,
-            "note": "medium action — preview only, no actual write",
-        })
+            adapter_result = file_adapter.preview_patch(task.target, new_content, allowed_paths, blocked_paths)
+        _append_history(
+            {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "task_id": task.task_id,
+                "adapter": "file",
+                "action_type": task.action_type,
+                "target": task.target,
+                "execution_status": "PREVIEW_ONLY",
+                "exit_code": None,
+                "preview_only": True,
+                "actor": actor,
+                "note": "medium action — preview only, no actual write",
+            }
+        )
         return {**base, "status": "PREVIEW_ONLY", "preview_only": True, "adapter_result": adapter_result}
 
     # ── LOW → EXECUTE ─────────────────────────────────────────
     adapter = _ADAPTER_MAP.get(task.action_type, "none")
     log_event(
-        log, logging.INFO,
+        log,
+        logging.INFO,
         f"attempting execution via adapter={adapter}",
         event_type="EXECUTION_ALLOWED",
         task_id=task.task_id,
@@ -228,7 +230,8 @@ def execute_allowed(
             adapter_result = {"status": "BLOCKED", "reason": f"no adapter for '{task.action_type}'"}
     except Exception as e:
         log_event(
-            log, logging.ERROR,
+            log,
+            logging.ERROR,
             f"unexpected exception: {e}",
             event_type="EXECUTION_FAILED",
             task_id=task.task_id,
@@ -249,7 +252,8 @@ def execute_allowed(
 
     if exec_status == "EXECUTED":
         log_event(
-            log, logging.INFO,
+            log,
+            logging.INFO,
             f"execution completed exit_code={exit_code}",
             event_type="EXECUTION_COMPLETED",
             task_id=task.task_id,
@@ -268,7 +272,8 @@ def execute_allowed(
     else:
         reason = truncate_large_text(adapter_result.get("reason", ""), max_len=200)
         log_event(
-            log, logging.ERROR,
+            log,
+            logging.ERROR,
             f"execution failed: {reason}",
             event_type="EXECUTION_FAILED",
             task_id=task.task_id,
@@ -283,16 +288,18 @@ def execute_allowed(
             note=reason,
         )
 
-    _append_history({
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "task_id": task.task_id,
-        "adapter": adapter,
-        "action_type": task.action_type,
-        "target": task.target,
-        "execution_status": exec_status,
-        "exit_code": exit_code,
-        "preview_only": False,
-        "actor": actor,
-        "note": adapter_result.get("reason", ""),
-    })
+    _append_history(
+        {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "task_id": task.task_id,
+            "adapter": adapter,
+            "action_type": task.action_type,
+            "target": task.target,
+            "execution_status": exec_status,
+            "exit_code": exit_code,
+            "preview_only": False,
+            "actor": actor,
+            "note": adapter_result.get("reason", ""),
+        }
+    )
     return {**base, "status": exec_status, "adapter_result": adapter_result}

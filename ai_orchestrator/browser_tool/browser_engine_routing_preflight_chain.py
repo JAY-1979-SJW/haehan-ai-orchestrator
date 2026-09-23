@@ -15,36 +15,28 @@ from __future__ import annotations
 
 from typing import Any
 
+from ai_orchestrator.browser_tool.action_registry_preflight import (
+    evaluate_action_registry_preflight,
+)
+from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight
 from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED,
     ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
     ENGINE_NEEDS_MANUAL_REVIEW,
-    ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
     classify_browser_engine_capability,
 )
 from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
-    ROUTING_API_CONNECTOR,
-    ROUTING_BLOCK,
-    ROUTING_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-    ROUTING_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
-    ROUTING_MANUAL_REVIEW,
-    ROUTING_SERVER_PLAYWRIGHT_READONLY,
     evaluate_browser_engine_routing,
-    should_fallback_to_local_agent,
-)
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
-from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
-    evaluate_server_browser_allowed,
-)
-from ai_orchestrator.browser_tool.action_registry_preflight import (
-    evaluate_action_registry_preflight,
 )
 from ai_orchestrator.browser_tool.gate_approval_preflight import (
     evaluate_gate_approval_preflight,
 )
-from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight
+from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+    evaluate_server_browser_allowed,
+)
+from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
 
 # ── next_step 허용값 ──────────────────────────────────────────────────────────
 
@@ -69,21 +61,40 @@ CHAIN_MANUAL_REVIEW_REQUIRED = "MANUAL_REVIEW_REQUIRED"
 
 # ── type/submit operation 자동 실행 금지 ──────────────────────────────────────
 
-_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "type", "submit", "fill", "click_submit", "auto_login",
-    "execute_type", "execute_submit", "plan_type", "plan_submit",
-})
+_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "type",
+        "submit",
+        "fill",
+        "click_submit",
+        "auto_login",
+        "execute_type",
+        "execute_submit",
+        "plan_type",
+        "plan_submit",
+    }
+)
 
 # ── fallback 허용 failure_reason ─────────────────────────────────────────────
 
-_FALLBACK_ALLOWED_REASONS: frozenset[str] = frozenset({
-    "runtime_error", "network_timeout", "browser_not_available",
-})
+_FALLBACK_ALLOWED_REASONS: frozenset[str] = frozenset(
+    {
+        "runtime_error",
+        "network_timeout",
+        "browser_not_available",
+    }
+)
 
-_FALLBACK_BLOCKED_REASONS: frozenset[str] = frozenset({
-    "policy_blocked", "domain_blocked", "auth_required",
-    "otp_required", "certificate_required", "captcha_required",
-})
+_FALLBACK_BLOCKED_REASONS: frozenset[str] = frozenset(
+    {
+        "policy_blocked",
+        "domain_blocked",
+        "auth_required",
+        "otp_required",
+        "certificate_required",
+        "captcha_required",
+    }
+)
 
 
 def build_routing_preflight_chain_context(payload: dict[str, Any]) -> dict[str, Any]:
@@ -239,22 +250,22 @@ def evaluate_browser_engine_routing_preflight_chain(
     # about:blank / data: URL처럼 도메인이 없는 허용 URL은 site_compliance 건너뜀
     target_domain = ctx["target_domain"]
     target_url = ctx["target_url"]
-    _skip_compliance = (
-        not target_domain
-        and (not target_url or target_url == "about:blank"
-             or target_url.startswith("data:"))
+    _skip_compliance = not target_domain and (
+        not target_url or target_url == "about:blank" or target_url.startswith("data:")
     )
 
     if _skip_compliance:
         compliance_decision = "ALLOW_BROWSER_READONLY"
         compliance_result: dict[str, Any] = {"compliance_decision": compliance_decision}
     else:
-        compliance_result = evaluate_site_compliance({
-            "target_domain": target_domain,
-            "target_url": target_url,
-            "operation_type": ctx["operation_type"],
-            "production_mode": ctx["production_mode"],
-        })
+        compliance_result = evaluate_site_compliance(
+            {
+                "target_domain": target_domain,
+                "target_url": target_url,
+                "operation_type": ctx["operation_type"],
+                "production_mode": ctx["production_mode"],
+            }
+        )
         compliance_decision = compliance_result.get("compliance_decision", "BLOCK")
 
     if compliance_decision == "REQUIRE_API_CONNECTOR":
@@ -298,10 +309,8 @@ def evaluate_browser_engine_routing_preflight_chain(
 
     # 4b. server_browser_boundary_policy
     # about:blank / data: URL은 engine capability 분류에서 이미 허용 판정받음 → 건너뜀
-    _skip_boundary = (
-        not target_domain
-        and (not target_url or target_url == "about:blank"
-             or target_url.startswith("data:"))
+    _skip_boundary = not target_domain and (
+        not target_url or target_url == "about:blank" or target_url.startswith("data:")
     )
     if _skip_boundary:
         boundary_decision = "SERVER_BROWSER_ALLOWED_READONLY"
@@ -316,6 +325,7 @@ def evaluate_browser_engine_routing_preflight_chain(
         # SERVER_PLAYWRIGHT_READONLY_ALLOWED인 경우 URL 기반 정책으로 확인
         # (category 기반 classify는 미분류 허용 URL을 차단하므로 URL 정책 우선 사용)
         from browser_worker.policy import evaluate_server_browser_url_policy  # lazy import
+
         url_policy = evaluate_server_browser_url_policy(
             target_url,
             metadata={"production_mode": ctx["production_mode"]},
@@ -331,14 +341,16 @@ def evaluate_browser_engine_routing_preflight_chain(
             }
         else:
             # URL 정책에서 차단 → category 기반으로 추가 확인
-            boundary_result = evaluate_server_browser_allowed({
-                "site_category": ctx["site_category"],
-                "target_domain": target_domain,
-                "target_url": target_url,
-                "execution_location": "server_browser",
-                "requested_runtime": "server_playwright",
-                "production_mode": ctx["production_mode"],
-            })
+            boundary_result = evaluate_server_browser_allowed(
+                {
+                    "site_category": ctx["site_category"],
+                    "target_domain": target_domain,
+                    "target_url": target_url,
+                    "execution_location": "server_browser",
+                    "requested_runtime": "server_playwright",
+                    "production_mode": ctx["production_mode"],
+                }
+            )
             boundary_decision = boundary_result.get("server_browser_decision", "BLOCK")
             boundary_allowed = boundary_result.get("server_browser_allowed", False)
 
@@ -381,20 +393,22 @@ def evaluate_browser_engine_routing_preflight_chain(
         )
 
     # 4c. action_registry_preflight
-    action_result = evaluate_action_registry_preflight({
-        "workflow_run_id": ctx["workflow_run_id"],
-        "workflow_id": ctx["workflow_id"],
-        "action_name": ctx["action_name"] or "browser.inspect",
-        "operation_type": ctx["operation_type"] or "read",
-        "approval_required": ctx["approval_required"],
-        "approval_id": ctx["approval_id"],
-        "tenant_id": ctx["tenant_id"],
-        "user_id": ctx["user_id"],
-        "site_id": ctx["site_id"],
-        "target_domain": ctx["target_domain"],
-        "production_mode": ctx["production_mode"],
-        "dry_run": ctx["dry_run"],
-    })
+    action_result = evaluate_action_registry_preflight(
+        {
+            "workflow_run_id": ctx["workflow_run_id"],
+            "workflow_id": ctx["workflow_id"],
+            "action_name": ctx["action_name"] or "browser.inspect",
+            "operation_type": ctx["operation_type"] or "read",
+            "approval_required": ctx["approval_required"],
+            "approval_id": ctx["approval_id"],
+            "tenant_id": ctx["tenant_id"],
+            "user_id": ctx["user_id"],
+            "site_id": ctx["site_id"],
+            "target_domain": ctx["target_domain"],
+            "production_mode": ctx["production_mode"],
+            "dry_run": ctx["dry_run"],
+        }
+    )
     action_decision = action_result.get("preflight_decision", "BLOCK")
 
     if action_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
@@ -443,20 +457,22 @@ def evaluate_browser_engine_routing_preflight_chain(
         )
 
     # 4d. gate_approval_preflight
-    gate_result = evaluate_gate_approval_preflight({
-        "workflow_run_id": ctx["workflow_run_id"],
-        "workflow_id": ctx["workflow_id"],
-        "action_name": ctx["action_name"] or "browser.inspect",
-        "operation_type": ctx["operation_type"] or "read",
-        "approval_required": ctx["approval_required"],
-        "approval_id": ctx["approval_id"],
-        "tenant_id": ctx["tenant_id"],
-        "user_id": ctx["user_id"],
-        "site_id": ctx["site_id"],
-        "target_domain": ctx["target_domain"],
-        "production_mode": ctx["production_mode"],
-        "dry_run": ctx["dry_run"],
-    })
+    gate_result = evaluate_gate_approval_preflight(
+        {
+            "workflow_run_id": ctx["workflow_run_id"],
+            "workflow_id": ctx["workflow_id"],
+            "action_name": ctx["action_name"] or "browser.inspect",
+            "operation_type": ctx["operation_type"] or "read",
+            "approval_required": ctx["approval_required"],
+            "approval_id": ctx["approval_id"],
+            "tenant_id": ctx["tenant_id"],
+            "user_id": ctx["user_id"],
+            "site_id": ctx["site_id"],
+            "target_domain": ctx["target_domain"],
+            "production_mode": ctx["production_mode"],
+            "dry_run": ctx["dry_run"],
+        }
+    )
     gate_decision = gate_result.get("preflight_decision", "BLOCK")
 
     if gate_decision in ("REQUIRE_APPROVAL", "BLOCK", "DENY_BY_DEFAULT"):
@@ -491,18 +507,20 @@ def evaluate_browser_engine_routing_preflight_chain(
         )
 
     # 4e. allowlist_preflight
-    allowlist_result = evaluate_allowlist_preflight({
-        "workflow_run_id": ctx["workflow_run_id"],
-        "workflow_id": ctx["workflow_id"],
-        "action_name": ctx["action_name"] or "browser.inspect",
-        "operation_type": ctx["operation_type"] or "read",
-        "target_url": ctx["target_url"],
-        "target_domain": ctx["target_domain"],
-        "production_mode": ctx["production_mode"],
-        "dry_run": ctx["dry_run"],
-        "action_registry_preflight_decision": action_decision,
-        "gate_preflight_decision": gate_decision,
-    })
+    allowlist_result = evaluate_allowlist_preflight(
+        {
+            "workflow_run_id": ctx["workflow_run_id"],
+            "workflow_id": ctx["workflow_id"],
+            "action_name": ctx["action_name"] or "browser.inspect",
+            "operation_type": ctx["operation_type"] or "read",
+            "target_url": ctx["target_url"],
+            "target_domain": ctx["target_domain"],
+            "production_mode": ctx["production_mode"],
+            "dry_run": ctx["dry_run"],
+            "action_registry_preflight_decision": action_decision,
+            "gate_preflight_decision": gate_decision,
+        }
+    )
     allowlist_decision = allowlist_result.get("allowlist_decision", "BLOCK")
 
     if allowlist_decision == "BLOCK":
@@ -567,12 +585,22 @@ def validate_routing_preflight_chain_result(result: dict[str, Any]) -> list[str]
     errors: list[str] = []
 
     required_fields = [
-        "chain_decision", "engine_capability", "routing_decision", "selected_engine",
-        "site_compliance_decision", "server_boundary_decision",
-        "action_preflight_decision", "gate_preflight_decision", "allowlist_decision",
-        "next_step", "next_step_instruction",
-        "safe_to_dispatch", "safe_to_execute",
-        "should_write_audit", "block_reason", "message_ko",
+        "chain_decision",
+        "engine_capability",
+        "routing_decision",
+        "selected_engine",
+        "site_compliance_decision",
+        "server_boundary_decision",
+        "action_preflight_decision",
+        "gate_preflight_decision",
+        "allowlist_decision",
+        "next_step",
+        "next_step_instruction",
+        "safe_to_dispatch",
+        "safe_to_execute",
+        "should_write_audit",
+        "block_reason",
+        "message_ko",
     ]
     for field in required_fields:
         if field not in result:
@@ -595,9 +623,13 @@ def validate_routing_preflight_chain_result(result: dict[str, Any]) -> list[str]
         errors.append(f"유효하지 않은 next_step: {result.get('next_step')}")
 
     valid_chain_decisions = {
-        CHAIN_PROCEED, CHAIN_ROUTE_API_CONNECTOR, CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
-        CHAIN_BLOCK, CHAIN_APPROVAL_REQUIRED,
-        CHAIN_DOMAIN_VERIFICATION_REQUIRED, CHAIN_MANUAL_REVIEW_REQUIRED,
+        CHAIN_PROCEED,
+        CHAIN_ROUTE_API_CONNECTOR,
+        CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
+        CHAIN_BLOCK,
+        CHAIN_APPROVAL_REQUIRED,
+        CHAIN_DOMAIN_VERIFICATION_REQUIRED,
+        CHAIN_MANUAL_REVIEW_REQUIRED,
     }
     if result.get("chain_decision") not in valid_chain_decisions:
         errors.append(f"유효하지 않은 chain_decision: {result.get('chain_decision')}")
@@ -620,10 +652,7 @@ def _make_chain_result(
     message_ko: str = "",
     should_write_audit: bool = False,
 ) -> dict[str, Any]:
-    safe_to_dispatch = (
-        chain_decision == CHAIN_PROCEED
-        and next_step == NEXT_SERVER_PLAYWRIGHT_READONLY_PREFLIGHT
-    )
+    safe_to_dispatch = chain_decision == CHAIN_PROCEED and next_step == NEXT_SERVER_PLAYWRIGHT_READONLY_PREFLIGHT
     result: dict[str, Any] = {
         "chain_decision": chain_decision,
         "engine_capability": engine_capability,

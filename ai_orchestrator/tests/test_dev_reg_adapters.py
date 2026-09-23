@@ -9,28 +9,29 @@
   6. 민감정보 미노출 (summary/field_names 에 password/cookie/token 미포함)
   7. 기존 승인 게이트 회귀 유지
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator.sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter  # noqa: E402
-from ai_orchestrator.sites.adapters.naver_dev_reg import NaverDevRegAdapter       # noqa: E402
-from ai_orchestrator.sites.adapters.google_dev_reg import GoogleDevRegAdapter     # noqa: E402
-from ai_orchestrator.sites.adapters.dev_reg_base import (                         # noqa: E402
+from ai_orchestrator.sites.adapters.dev_reg_base import (  # noqa: E402
     _build_safe_summary,
-    validate_params,
     _mask_email,
+    validate_params,
 )
-
+from ai_orchestrator.sites.adapters.google_dev_reg import GoogleDevRegAdapter  # noqa: E402
+from ai_orchestrator.sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter  # noqa: E402
+from ai_orchestrator.sites.adapters.naver_dev_reg import NaverDevRegAdapter  # noqa: E402
 
 # ── 공통 파라미터 픽스처 ─────────────────────────────────────────────────────
+
 
 def _base_params(**overrides) -> dict:
     base = {
@@ -54,6 +55,7 @@ def _mock_page(inner_text: str = "등록 완료") -> MagicMock:
 
 
 # ── 1. Hiworks fill_form dry_run ────────────────────────────────────────────
+
 
 class TestHiworksDryRun:
     def test_returns_success(self):
@@ -89,6 +91,7 @@ class TestHiworksDryRun:
 
 # ── 2. Naver fill_form dry_run ──────────────────────────────────────────────
 
+
 class TestNaverDryRun:
     def test_returns_success(self):
         adapter = NaverDevRegAdapter()
@@ -110,8 +113,7 @@ class TestNaverDryRun:
 
     def test_scopes_in_field_names(self):
         adapter = NaverDevRegAdapter()
-        result = adapter.fill_form(None, _base_params(dry_run=True,
-                                                      requested_scopes=["blog", "cafe"]))
+        result = adapter.fill_form(None, _base_params(dry_run=True, requested_scopes=["blog", "cafe"]))
         assert "scope:blog" in result.field_names
         assert "scope:cafe" in result.field_names
 
@@ -122,6 +124,7 @@ class TestNaverDryRun:
 
 
 # ── 3. Google fill_form dry_run ─────────────────────────────────────────────
+
 
 class TestGoogleDryRun:
     def test_returns_success(self):
@@ -156,14 +159,18 @@ class TestGoogleDryRun:
 
 # ── 4. 승인 전 submit 방지 ───────────────────────────────────────────────────
 
+
 class TestNoAutoSubmit:
     """fill_form 이 submit 버튼을 자동으로 클릭하지 않음을 검증한다."""
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter,
-        NaverDevRegAdapter,
-        GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_fill_does_not_click_submit(self, AdapterCls):
         adapter = AdapterCls()
         page = MagicMock()
@@ -171,11 +178,14 @@ class TestNoAutoSubmit:
         # click() 이 호출되면 안 됨 (dry_run 이라 goto/fill 도 없음)
         page.click.assert_not_called()
 
-    @pytest.mark.parametrize("AdapterCls,submit_text", [
-        (HiworksDevRegAdapter, "완료"),
-        (NaverDevRegAdapter, "등록 완료"),
-        (GoogleDevRegAdapter, "saved"),
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls,submit_text",
+        [
+            (HiworksDevRegAdapter, "완료"),
+            (NaverDevRegAdapter, "등록 완료"),
+            (GoogleDevRegAdapter, "saved"),
+        ],
+    )
     def test_fill_without_dry_run_no_submit_click(self, AdapterCls, submit_text):
         """실제 모드에서도 fill_form 은 submit 클릭 안 함."""
         adapter = AdapterCls()
@@ -191,6 +201,7 @@ class TestNoAutoSubmit:
 
 
 # ── 5. 승인 후 submit 가능 ───────────────────────────────────────────────────
+
 
 class TestSubmitAfterApproval:
     """submit_form 을 명시적으로 호출(승인 후 runner 가 호출)하면 정상 동작."""
@@ -227,6 +238,7 @@ class TestSubmitAfterApproval:
 
 # ── 6. 민감정보 미노출 ───────────────────────────────────────────────────────
 
+
 class TestSensitiveDataExclusion:
     """summary, field_names 에 password/cookie/token 미포함."""
 
@@ -244,11 +256,14 @@ class TestSensitiveDataExclusion:
         "dry_run": True,
     }
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter,
-        NaverDevRegAdapter,
-        GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_sensitive_not_in_summary(self, AdapterCls):
         adapter = AdapterCls()
         result = adapter.fill_form(None, self._SENSITIVE_PARAMS)
@@ -257,11 +272,14 @@ class TestSensitiveDataExclusion:
         assert "client_secret_xyz" not in result.summary
         assert "session_cookie_abc" not in result.summary
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter,
-        NaverDevRegAdapter,
-        GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_sensitive_not_in_field_names(self, AdapterCls):
         adapter = AdapterCls()
         result = adapter.fill_form(None, self._SENSITIVE_PARAMS)
@@ -272,8 +290,7 @@ class TestSensitiveDataExclusion:
 
     def test_email_masked_in_summary(self):
         adapter = HiworksDevRegAdapter()
-        result = adapter.fill_form(None, _base_params(dry_run=True,
-                                                      contact_email="developer@example.com"))
+        result = adapter.fill_form(None, _base_params(dry_run=True, contact_email="developer@example.com"))
         # 'dev***@example.com' 형태여야 함 (원문 그대로 노출 금지)
         assert "developer@example.com" not in result.summary
         assert "dev***" in result.summary
@@ -296,12 +313,14 @@ class TestSensitiveDataExclusion:
 
 # ── 7. 기존 승인 게이트 회귀 유지 ───────────────────────────────────────────
 
+
 class TestApprovalGateRegression:
     """어댑터 변경이 기존 승인 게이트 데이터 구조를 깨뜨리지 않음."""
 
     def test_form_fill_result_fields(self):
         """FormFillResult 필드가 runner 가 기대하는 구조 그대로."""
-        from ai_orchestrator.sites.adapters.dev_reg_base import FormFillResult, SubmitResult
+        from ai_orchestrator.sites.adapters.dev_reg_base import FormFillResult
+
         r = FormFillResult(success=True, summary="요약", field_names=["app_name"], target_url="https://x.com")
         assert hasattr(r, "success")
         assert hasattr(r, "summary")
@@ -311,6 +330,7 @@ class TestApprovalGateRegression:
 
     def test_submit_result_fields(self):
         from ai_orchestrator.sites.adapters.dev_reg_base import SubmitResult
+
         r = SubmitResult(success=True, result_summary="완료")
         assert hasattr(r, "success")
         assert hasattr(r, "result_summary")
@@ -320,8 +340,8 @@ class TestApprovalGateRegression:
         """provider/action_type/risk_level 속성이 존재하고 유효한 값."""
         for AdapterCls, expected_provider, expected_action in [
             (HiworksDevRegAdapter, "hiworks", "developer_apply"),
-            (NaverDevRegAdapter,   "naver",   "app_register"),
-            (GoogleDevRegAdapter,  "google",  "oauth_submit"),
+            (NaverDevRegAdapter, "naver", "app_register"),
+            (GoogleDevRegAdapter, "google", "oauth_submit"),
         ]:
             adapter = AdapterCls()
             assert adapter.provider == expected_provider

@@ -22,7 +22,6 @@ from typing import Any
 from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
     ALLOWED_OPERATIONS,
     FORBIDDEN_OPERATIONS,
-    VERDICT_ALLOWED,
     VERDICT_BLOCKED,
     VERDICT_NEEDS_VERIFICATION,
     build_g2b_public_notice_workflow,
@@ -37,12 +36,28 @@ ADAPTER_G2B_NEEDS_VERIFICATION = "G2B_DRYRUN_NEEDS_VERIFICATION"
 
 # ── 금지 operation ────────────────────────────────────────────────────────────
 
-_ADAPTER_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "click", "type", "fill", "submit", "click_submit",
-    "download", "upload", "post", "write", "delete",
-    "update", "login", "cert", "payment", "contract",
-    "bid_submit", "auto_login", "contract_submit",
-})
+_ADAPTER_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "click",
+        "type",
+        "fill",
+        "submit",
+        "click_submit",
+        "download",
+        "upload",
+        "post",
+        "write",
+        "delete",
+        "update",
+        "login",
+        "cert",
+        "payment",
+        "contract",
+        "bid_submit",
+        "auto_login",
+        "contract_submit",
+    }
+)
 
 
 def evaluate_g2b_public_notice_dryrun(
@@ -164,11 +179,22 @@ def validate_g2b_dryrun_adapter_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "action_type", "dry_run", "input_url", "canonical_url",
-        "operation", "policy_verdict", "adapter_decision",
-        "workflow_steps", "blocked_reason", "allowed_operations",
-        "forbidden_operations", "execution_planned", "execution_dispatched",
-        "live_browser_worker_called", "download_auto_allowed", "safe_to_execute",
+        "action_type",
+        "dry_run",
+        "input_url",
+        "canonical_url",
+        "operation",
+        "policy_verdict",
+        "adapter_decision",
+        "workflow_steps",
+        "blocked_reason",
+        "allowed_operations",
+        "forbidden_operations",
+        "execution_planned",
+        "execution_dispatched",
+        "live_browser_worker_called",
+        "download_auto_allowed",
+        "safe_to_execute",
     ]
     for field in required_fields:
         if field not in result:
@@ -207,9 +233,9 @@ def validate_g2b_dryrun_adapter_result(result: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
+    "ADAPTER_G2B_BLOCKED",
+    "ADAPTER_G2B_DRYRUN_READY",
+    "ADAPTER_G2B_NEEDS_VERIFICATION",
     "evaluate_g2b_public_notice_dryrun",
     "validate_g2b_dryrun_adapter_result",
-    "ADAPTER_G2B_DRYRUN_READY",
-    "ADAPTER_G2B_BLOCKED",
-    "ADAPTER_G2B_NEEDS_VERIFICATION",
 ]

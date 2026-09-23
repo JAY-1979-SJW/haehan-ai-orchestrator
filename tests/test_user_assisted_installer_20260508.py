@@ -1,16 +1,24 @@
 """tests/test_user_assisted_installer_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.user_assisted_installer import (
-    prepare_user_install, confirm_user_completed, get_status_grade,
-    STATUS_WAITING_USER_INSTALL_CLICK, STATUS_USER_INSTALL_IN_PROGRESS,
-    STATUS_WAITING_USER_UAC, STATUS_INSTALL_COMPLETED_DETECTED,
+    STATUS_INSTALL_COMPLETED_DETECTED,
     STATUS_RETRY_ORIGINAL_TASK_READY,
+    STATUS_USER_INSTALL_IN_PROGRESS,
+    STATUS_WAITING_USER_INSTALL_CLICK,
+    STATUS_WAITING_USER_UAC,
+    confirm_user_completed,
+    get_status_grade,
+    prepare_user_install,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 

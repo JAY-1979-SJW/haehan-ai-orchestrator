@@ -6,11 +6,11 @@
   - 추천 키워드 자동 생성
   - 제목 길이/구조 최적화 (40자 권장)
 """
+
 from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Any
 
 from playwright.sync_api import Page
 
@@ -36,8 +36,7 @@ class SEOOptimizer:
     def __init__(self, page: Page):
         self.page = page
 
-    def analyze_product_name(self, name: str, brand: str | None = None,
-                              category: str | None = None) -> dict:
+    def analyze_product_name(self, name: str, brand: str | None = None, category: str | None = None) -> dict:
         """상품명 SEO 분석."""
         issues = []
         score = 100
@@ -95,6 +94,7 @@ class SEOOptimizer:
         try:
             self.page.goto(url, timeout=15000, wait_until="domcontentloaded")
             import time
+
             time.sleep(2)
             titles = self.page.evaluate("""
             () => {
@@ -131,9 +131,7 @@ class SEOOptimizer:
     def optimize(self, product: dict) -> dict:
         """상품 정보 종합 SEO 최적화 추천."""
         name = product.get("name", "")
-        analysis = self.analyze_product_name(
-            name, brand=product.get("brand"), category=product.get("category")
-        )
+        analysis = self.analyze_product_name(name, brand=product.get("brand"), category=product.get("category"))
 
         suggestions = []
         if analysis["score"] < 70:

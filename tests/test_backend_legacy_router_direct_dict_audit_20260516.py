@@ -8,34 +8,39 @@
 
 DB/서버/브라우저 실행 없음.
 """
+
 from __future__ import annotations
 
 import pathlib
-import pytest
-
 
 # ===========================================================================
 # SECTION 1: naver_search_router 미등록 현황
 # ===========================================================================
 
+
 def test_naver_search_router_importable():
     """naver_search_router 모듈이 import error 없이 로드된다."""
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
     assert naver_search_router is not None
 
 
 def test_naver_search_router_has_3_source_endpoints():
     """naver_search_router source-level에 3개 HTTP endpoint가 정의되어 있다."""
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
     from fastapi.routing import APIRoute
+
+    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
     assert len(routes) == 3, f"naver_search_router source endpoint 수={len(routes)}, 기준=3"
 
 
 def test_naver_search_router_endpoint_paths():
     """naver_search_router의 3개 endpoint path가 /external/naver/* 패턴이다."""
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
     from fastapi.routing import APIRoute
+
+    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
     paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
     assert "/external/naver/blog-search" in paths
     assert "/external/naver/shopping-search" in paths
@@ -49,6 +54,7 @@ def test_naver_search_router_not_registered_in_main_app():
     근거: prefix=/external/naver, require_role 보안 의존성 적용 상태로 등록.
     """
     from ai_orchestrator.server import app
+
     registered_paths = {r.path for r in app.routes}
     naver_paths = [
         "/api/v1/external/naver/blog-search",
@@ -56,9 +62,7 @@ def test_naver_search_router_not_registered_in_main_app():
         "/api/v1/external/naver/search-status",
     ]
     for p in naver_paths:
-        assert p in registered_paths, (
-            f"naver_search_router가 main app에 미등록 상태: {p}"
-        )
+        assert p in registered_paths, f"naver_search_router가 main app에 미등록 상태: {p}"
 
 
 def test_naver_search_router_all_endpoints_require_admin_or_owner():
@@ -68,17 +72,17 @@ def test_naver_search_router_all_endpoints_require_admin_or_owner():
     이번 공정에서 등록하지 않고 QUARANTINE_OR_HOLD 상태로 유지한다.
     """
     import inspect
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
     from fastapi.routing import APIRoute
+
+    from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
     assert len(routes) == 3, f"endpoint 수 불일치: {len(routes)}"
 
     for route in routes:
         source = inspect.getsource(route.endpoint)
-        assert "require_role" in source, (
-            f"{route.path} — require_role 적용 누락"
-        )
+        assert "require_role" in source, f"{route.path} — require_role 적용 누락"
 
 
 def test_naver_search_router_quarantine_hold_status():
@@ -87,18 +91,17 @@ def test_naver_search_router_quarantine_hold_status():
     cf69c5c 공정에서 router.py에 include_router 추가됨.
     require_role('admin','owner') 보안 의존성 적용 상태로 등록 확정.
     """
+    from fastapi.routing import APIRoute
+
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
     from ai_orchestrator.server import app
-    from fastapi.routing import APIRoute
 
     naver_source_paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
     registered_paths = {r.path for r in app.routes}
 
     for p in naver_source_paths:
         full = f"/api/v1{p}"
-        assert full in registered_paths, (
-            f"naver_search_router 등록 누락: {full}"
-        )
+        assert full in registered_paths, f"naver_search_router 등록 누락: {full}"
 
 
 # ===========================================================================
@@ -125,43 +128,138 @@ def test_naver_search_router_quarantine_hold_status():
 
 LEGACY_DIRECT_DICT_INVENTORY = [
     # ── router.py 직접 정의 (4) ──
-    {"method": "GET",  "path": "/api/v1/inbox",             "handler": "get_inbox_list",            "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/inbox/{item_id}",   "handler": "get_inbox_item_endpoint",    "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/inbox/email/fetch", "handler": "fetch_email_inbox",          "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/logs",              "handler": "get_logs",                   "sub": "INTERNAL_SAFE_DICT_KEEP"},
-
+    {"method": "GET", "path": "/api/v1/inbox", "handler": "get_inbox_list", "sub": "INTERNAL_SAFE_DICT_KEEP"},
+    {
+        "method": "GET",
+        "path": "/api/v1/inbox/{item_id}",
+        "handler": "get_inbox_item_endpoint",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/inbox/email/fetch",
+        "handler": "fetch_email_inbox",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {"method": "GET", "path": "/api/v1/logs", "handler": "get_logs", "sub": "INTERNAL_SAFE_DICT_KEEP"},
     # ── telegram webhook (1) — ERROR_ONLY_BOUNDARY 겸용 ──
-    {"method": "POST", "path": "/api/v1/webhooks/telegram", "handler": "telegram_webhook",           "sub": "NEEDS_MANUAL_DESIGN_REVIEW"},
-
+    {
+        "method": "POST",
+        "path": "/api/v1/webhooks/telegram",
+        "handler": "telegram_webhook",
+        "sub": "NEEDS_MANUAL_DESIGN_REVIEW",
+    },
     # ── sites/router.py (4) ──
-    {"method": "GET",  "path": "/api/v1/connectors",               "handler": "list_connectors",      "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/site-health",              "handler": "site_health_all",      "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/site-health/{site_name}",  "handler": "site_health_one",      "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/site-tasks/dry-run",       "handler": "site_task_dry_run",    "sub": "NEEDS_ENVELOPE_REVIEW"},
-
+    {"method": "GET", "path": "/api/v1/connectors", "handler": "list_connectors", "sub": "INTERNAL_SAFE_DICT_KEEP"},
+    {"method": "GET", "path": "/api/v1/site-health", "handler": "site_health_all", "sub": "INTERNAL_SAFE_DICT_KEEP"},
+    {
+        "method": "GET",
+        "path": "/api/v1/site-health/{site_name}",
+        "handler": "site_health_one",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/site-tasks/dry-run",
+        "handler": "site_task_dry_run",
+        "sub": "NEEDS_ENVELOPE_REVIEW",
+    },
     # ── cad_ai_router.py (2) ──
-    {"method": "GET",  "path": "/api/v1/cad-ai/actions", "handler": "list_cad_actions", "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/cad-ai/chat",    "handler": "cad_ai_chat",      "sub": "NEEDS_MANUAL_DESIGN_REVIEW"},
-
+    {
+        "method": "GET",
+        "path": "/api/v1/cad-ai/actions",
+        "handler": "list_cad_actions",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {"method": "POST", "path": "/api/v1/cad-ai/chat", "handler": "cad_ai_chat", "sub": "NEEDS_MANUAL_DESIGN_REVIEW"},
     # ── web_task_router.py (4) ──
-    {"method": "GET",  "path": "/api/v1/web-tasks/registry",          "handler": "list_registry",       "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/web-tasks/run",               "handler": "run_web_task",         "sub": "NEEDS_ENVELOPE_REVIEW"},
-    {"method": "GET",  "path": "/api/v1/web-tasks/templates",         "handler": "list_templates",       "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/web-tasks/run-from-template", "handler": "run_from_template",    "sub": "NEEDS_ENVELOPE_REVIEW"},
-
+    {
+        "method": "GET",
+        "path": "/api/v1/web-tasks/registry",
+        "handler": "list_registry",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {"method": "POST", "path": "/api/v1/web-tasks/run", "handler": "run_web_task", "sub": "NEEDS_ENVELOPE_REVIEW"},
+    {
+        "method": "GET",
+        "path": "/api/v1/web-tasks/templates",
+        "handler": "list_templates",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/web-tasks/run-from-template",
+        "handler": "run_from_template",
+        "sub": "NEEDS_ENVELOPE_REVIEW",
+    },
     # ── local_agent_router.py 관리 계열 (12) ──
-    {"method": "POST", "path": "/api/v1/local-agents/register",                             "handler": "register_local_agent",     "sub": "COMPAT_RESPONSE_KEEP"},
-    {"method": "POST", "path": "/api/v1/local-agents/registration-codes",                   "handler": "create_registration_code", "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents/registration-codes",                   "handler": "list_registration_codes",  "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/local-agents/registration-codes/{code_id}/revoke",  "handler": "revoke_registration_code", "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/local-agents/register-with-code",                   "handler": "register_with_code",       "sub": "COMPAT_RESPONSE_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents",                                      "handler": "list_agents",              "sub": "COMPAT_RESPONSE_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents/diagnostics",                          "handler": "get_diagnostics",          "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",    "handler": "cancel_agent_task",        "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents/user-present-status/{workflow_run_id}","handler": "get_user_present_status",  "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents/{agent_id}/user-present-statuses",     "handler": "get_agent_user_present_statuses", "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "POST", "path": "/api/v1/local-agents/{agent_id}/user-present-dispatch",     "handler": "dispatch_user_present",    "sub": "INTERNAL_SAFE_DICT_KEEP"},
-    {"method": "GET",  "path": "/api/v1/local-agents/{agent_id}/tasks",                     "handler": "get_agent_tasks",          "sub": "COMPAT_RESPONSE_KEEP"},
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/register",
+        "handler": "register_local_agent",
+        "sub": "COMPAT_RESPONSE_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/registration-codes",
+        "handler": "create_registration_code",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "GET",
+        "path": "/api/v1/local-agents/registration-codes",
+        "handler": "list_registration_codes",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/registration-codes/{code_id}/revoke",
+        "handler": "revoke_registration_code",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/register-with-code",
+        "handler": "register_with_code",
+        "sub": "COMPAT_RESPONSE_KEEP",
+    },
+    {"method": "GET", "path": "/api/v1/local-agents", "handler": "list_agents", "sub": "COMPAT_RESPONSE_KEEP"},
+    {
+        "method": "GET",
+        "path": "/api/v1/local-agents/diagnostics",
+        "handler": "get_diagnostics",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel",
+        "handler": "cancel_agent_task",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "GET",
+        "path": "/api/v1/local-agents/user-present-status/{workflow_run_id}",
+        "handler": "get_user_present_status",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "GET",
+        "path": "/api/v1/local-agents/{agent_id}/user-present-statuses",
+        "handler": "get_agent_user_present_statuses",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "POST",
+        "path": "/api/v1/local-agents/{agent_id}/user-present-dispatch",
+        "handler": "dispatch_user_present",
+        "sub": "INTERNAL_SAFE_DICT_KEEP",
+    },
+    {
+        "method": "GET",
+        "path": "/api/v1/local-agents/{agent_id}/tasks",
+        "handler": "get_agent_tasks",
+        "sub": "COMPAT_RESPONSE_KEEP",
+    },
 ]
 
 LEGACY_DIRECT_DICT_TOTAL = 27
@@ -177,6 +275,7 @@ def test_legacy_direct_dict_inventory_count():
 def test_legacy_direct_dict_sub_classification_sum():
     """세부 분류 합계가 27과 일치한다."""
     from collections import Counter
+
     counts = Counter(item["sub"] for item in LEGACY_DIRECT_DICT_INVENTORY)
     total = sum(counts.values())
     assert total == LEGACY_DIRECT_DICT_TOTAL, (
@@ -187,6 +286,7 @@ def test_legacy_direct_dict_sub_classification_sum():
 def test_legacy_direct_dict_sub_classification_values():
     """각 세부 분류 수량이 예상값과 일치한다."""
     from collections import Counter
+
     counts = Counter(item["sub"] for item in LEGACY_DIRECT_DICT_INVENTORY)
     # COMPAT_RESPONSE_KEEP: register, register-with-code, list_agents, get_agent_tasks = 4
     assert counts["COMPAT_RESPONSE_KEEP"] == 4
@@ -225,9 +325,7 @@ def test_next_phase_envelope_review_candidates_locked():
     """
     review_items = [i for i in LEGACY_DIRECT_DICT_INVENTORY if i["sub"] == "NEEDS_ENVELOPE_REVIEW"]
     paths = {i["path"] for i in review_items}
-    assert paths == NEXT_PHASE_ENVELOPE_REVIEW_PATHS, (
-        f"NEEDS_ENVELOPE_REVIEW 경로 변경 감지: {paths}"
-    )
+    assert paths == NEXT_PHASE_ENVELOPE_REVIEW_PATHS, f"NEEDS_ENVELOPE_REVIEW 경로 변경 감지: {paths}"
 
 
 def test_next_phase_manual_review_candidates_locked():
@@ -237,78 +335,80 @@ def test_next_phase_manual_review_candidates_locked():
     """
     review_items = [i for i in LEGACY_DIRECT_DICT_INVENTORY if i["sub"] == "NEEDS_MANUAL_DESIGN_REVIEW"]
     paths = {i["path"] for i in review_items}
-    assert paths == NEXT_PHASE_MANUAL_REVIEW_PATHS, (
-        f"NEEDS_MANUAL_DESIGN_REVIEW 경로 변경 감지: {paths}"
-    )
+    assert paths == NEXT_PHASE_MANUAL_REVIEW_PATHS, f"NEEDS_MANUAL_DESIGN_REVIEW 경로 변경 감지: {paths}"
 
 
 # ===========================================================================
 # SECTION 3: endpoint inventory 4종 수치 고정
 # ===========================================================================
 
-RUNTIME_HTTP_ENDPOINT_COUNT   = 62   # 49 base + naver(3) + ops_router(7) + app_status_router(3) read-only GET
-RUNTIME_WEBSOCKET_COUNT       = 1
-SOURCE_ROUTER_HTTP_ENDPOINT_COUNT  = 59   # naver 3 + ops_router 7 포함
-UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0   # naver_search_router 등록 완료
+RUNTIME_HTTP_ENDPOINT_COUNT = 62  # 49 base + naver(3) + ops_router(7) + app_status_router(3) read-only GET
+RUNTIME_WEBSOCKET_COUNT = 1
+SOURCE_ROUTER_HTTP_ENDPOINT_COUNT = 59  # naver 3 + ops_router 7 포함
+UNREGISTERED_ROUTER_ENDPOINT_COUNT = 0  # naver_search_router 등록 완료
 
 
 def test_runtime_http_endpoint_count():
-    from ai_orchestrator.server import app
     from fastapi.routing import APIRoute
+
+    from ai_orchestrator.server import app
+
     http = [r for r in app.routes if isinstance(r, APIRoute)]
-    assert len(http) == RUNTIME_HTTP_ENDPOINT_COUNT, (
-        f"runtime HTTP={len(http)}, 기준={RUNTIME_HTTP_ENDPOINT_COUNT}"
-    )
+    assert len(http) == RUNTIME_HTTP_ENDPOINT_COUNT, f"runtime HTTP={len(http)}, 기준={RUNTIME_HTTP_ENDPOINT_COUNT}"
 
 
 def test_runtime_websocket_count():
-    from ai_orchestrator.server import app
     from fastapi.routing import APIWebSocketRoute
+
+    from ai_orchestrator.server import app
+
     ws = [r for r in app.routes if isinstance(r, APIWebSocketRoute)]
-    assert len(ws) == RUNTIME_WEBSOCKET_COUNT, (
-        f"runtime WS={len(ws)}, 기준={RUNTIME_WEBSOCKET_COUNT}"
-    )
+    assert len(ws) == RUNTIME_WEBSOCKET_COUNT, f"runtime WS={len(ws)}, 기준={RUNTIME_WEBSOCKET_COUNT}"
 
 
 def test_source_router_http_endpoint_count():
     """source-level(naver + ops 포함) HTTP+WS endpoint 합계가 60개이다."""
-    from fastapi.routing import APIRoute, APIWebSocketRoute
-    from ai_orchestrator.sites.router import sites_router
     from ai_orchestrator.cad.router import cad_router
-    from ai_orchestrator.web_task_router import web_task_router
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.cad_ai_router import cad_ai_router
+    from fastapi.routing import APIRoute, APIWebSocketRoute
+
+    from ai_orchestrator.action_router import action_router
     from ai_orchestrator.admin_ui_router import admin_ui_router
     from ai_orchestrator.auth_router import auth_router
     from ai_orchestrator.browser_tool.approval_record_router import approval_record_router
-    from ai_orchestrator.action_router import action_router
-    from ai_orchestrator.cad_ai_router import cad_ai_router
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.local_agent_router import local_agent_router
     from ai_orchestrator.ops_router import ops_router
+    from ai_orchestrator.sites.router import sites_router
+    from ai_orchestrator.web_task_router import web_task_router
 
     sub_routers = [
-        auth_router, sites_router, cad_router, cad_ai_router,
-        web_task_router, local_agent_router, admin_ui_router,
-        approval_record_router, action_router, naver_search_router, ops_router,
+        auth_router,
+        sites_router,
+        cad_router,
+        cad_ai_router,
+        web_task_router,
+        local_agent_router,
+        admin_ui_router,
+        approval_record_router,
+        action_router,
+        naver_search_router,
+        ops_router,
     ]
-    sub_total = sum(
-        len([r for r in sr.routes if isinstance(r, (APIRoute, APIWebSocketRoute))])
-        for sr in sub_routers
-    )
+    sub_total = sum(len([r for r in sr.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]) for sr in sub_routers)
     core_total = 9  # router.py 직접 정의
     total = core_total + sub_total
-    assert total == 60, (
-        f"source-level 총계={total}, 기준=60 (naver 3 + ops_router 7 포함)"
-    )
+    assert total == 60, f"source-level 총계={total}, 기준=60 (naver 3 + ops_router 7 포함)"
 
 
 def test_unregistered_router_endpoint_count():
     """naver_search_router source-level 3개 endpoint가 존재한다 (등록 완료)."""
     from fastapi.routing import APIRoute
+
     from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
     naver_routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
-    assert len(naver_routes) == 3, (
-        f"naver_search_router source endpoint={len(naver_routes)}, 기준=3"
-    )
+    assert len(naver_routes) == 3, f"naver_search_router source endpoint={len(naver_routes)}, 기준=3"
 
 
 def test_runtime_plus_unregistered_equals_source_minus_core():
@@ -320,7 +420,7 @@ def test_runtime_plus_unregistered_equals_source_minus_core():
     source_total = 63  # 60 + app_status_router 3 read-only GET
     assert runtime_total + unregistered == source_total, (
         f"runtime({runtime_total}) + unregistered({unregistered}) "
-        f"= {runtime_total+unregistered}, source={source_total}"
+        f"= {runtime_total + unregistered}, source={source_total}"
     )
 
 
@@ -329,15 +429,15 @@ def test_runtime_plus_unregistered_equals_source_minus_core():
 # ===========================================================================
 
 FULL_CLASSIFICATION = {
-    "HEALTH_OR_STATUS":    1,
+    "HEALTH_OR_STATUS": 1,
     "LEGACY_UI_DEPENDENT": 18,
-    "LEGACY_DIRECT_DICT":  27,
-    "STREAM_OR_FILE":       3,   # admin HTML + WS + cad proxy
-    "ERROR_ONLY_BOUNDARY":  1,   # telegram webhook (LEGACY_DIRECT_DICT와 중첩 있으나 단일 분류)
-    "SAFE_TO_ENVELOPE":     0,
-    "OPS_READONLY":         7,   # ops_router 7개 GET-only (202fe85)
-    "EXTERNAL_API_REGISTERED": 3,   # naver_search_router 3개 (cf69c5c 등록 완료)
-    "APP_STATUS_READONLY":  3,   # app_status_router 3개 GET-only (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
+    "LEGACY_DIRECT_DICT": 27,
+    "STREAM_OR_FILE": 3,  # admin HTML + WS + cad proxy
+    "ERROR_ONLY_BOUNDARY": 1,  # telegram webhook (LEGACY_DIRECT_DICT와 중첩 있으나 단일 분류)
+    "SAFE_TO_ENVELOPE": 0,
+    "OPS_READONLY": 7,  # ops_router 7개 GET-only (202fe85)
+    "EXTERNAL_API_REGISTERED": 3,  # naver_search_router 3개 (cf69c5c 등록 완료)
+    "APP_STATUS_READONLY": 3,  # app_status_router 3개 GET-only (APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01)
 }
 
 
@@ -351,25 +451,27 @@ def test_full_classification_sum_equals_runtime_total():
     """
     total = sum(FULL_CLASSIFICATION.values())
     runtime = RUNTIME_HTTP_ENDPOINT_COUNT + RUNTIME_WEBSOCKET_COUNT
-    assert total == runtime, (
-        f"분류 합계={total}, runtime={runtime}"
-    )
+    assert total == runtime, f"분류 합계={total}, runtime={runtime}"
 
 
 # ===========================================================================
 # SECTION 5: 기존 회귀 검증
 # ===========================================================================
 
+
 def test_router_direct_import_still_no_cycle():
     """순환 import 해소 상태가 유지된다."""
     import sys
+
     # 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
     _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
     for k in list(_snapshot):
         sys.modules.pop(k, None)
     try:
-        import ai_orchestrator.router as r
         from fastapi import APIRouter
+
+        import ai_orchestrator.router as r
+
         assert isinstance(r.router, APIRouter)
     finally:
         for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
@@ -379,7 +481,9 @@ def test_router_direct_import_still_no_cycle():
 
 def test_health_endpoint_still_unchanged():
     from fastapi.testclient import TestClient
+
     from ai_orchestrator.server import app
+
     client = TestClient(app, raise_server_exceptions=False)
     r = client.get("/api/v1/health")
     assert r.status_code == 200
@@ -392,6 +496,7 @@ def test_health_endpoint_still_unchanged():
 def test_domain_enums_stable():
     from ai_orchestrator.domain.enums import RiskLevel, TaskStatus, Verdict
     from ai_orchestrator.domain.response_envelope import api_success
+
     assert RiskLevel.LOW == "low"
     assert TaskStatus.PENDING == "pending"
     assert Verdict.PASS == "PASS"

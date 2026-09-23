@@ -4,24 +4,27 @@ FastAPI router for approval request/decision endpoints using approval_record_sto
 Provides REST API for browser workflow approval management.
 Test-only implementation (no DB write, JSONL-based append-only storage).
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Optional, Any
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
-from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from ai_orchestrator import config
-from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
 from ai_orchestrator.auth import require_role
+from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+
 from .approval_record_store import (
-    build_approval_request,
-    build_approval_decision,
     append_approval_record,
-    read_approval_records,
-    get_approval_history as get_approval_history_records,
+    build_approval_decision,
+    build_approval_request,
     get_latest_approval_status,
+    read_approval_records,
+)
+from .approval_record_store import (
+    get_approval_history as get_approval_history_records,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +40,7 @@ approval_record_router = APIRouter(
 
 class ApprovalRequestCreate(BaseModel):
     """Create approval request."""
+
     workflow_run_id: str
     workflow_id: str
     action_name: str
@@ -55,10 +59,11 @@ class ApprovalRequestCreate(BaseModel):
 
 class ApprovalDecisionCreate(BaseModel):
     """Create approval decision (GRANTED, REJECTED, EXPIRED, REVOKED)."""
+
     decided_by: str
     decided_role: str
     decision_reason: str = ""
-    approval_event_type: Optional[str] = None  # Inferred from endpoint, optional in request
+    approval_event_type: str | None = None  # Inferred from endpoint, optional in request
 
 
 # ── Response Models ───────────────────────────────────────────────────
@@ -66,6 +71,7 @@ class ApprovalDecisionCreate(BaseModel):
 
 class ApprovalRecordResponse(BaseModel):
     """Approval record response (public contract)."""
+
     approval_event_id: str
     approval_id: str
     workflow_run_id: str
@@ -76,26 +82,28 @@ class ApprovalRecordResponse(BaseModel):
     target_url_hash: str
     safe_to_execute: bool = False  # Always false
     approval_required: bool
-    decided_by: Optional[str] = None
-    decision_reason: Optional[str] = None
-    expires_at: Optional[str] = None
+    decided_by: str | None = None
+    decision_reason: str | None = None
+    expires_at: str | None = None
 
 
 class ApprovalListResponse(BaseModel):
     """List of approval records."""
+
     ok: bool
     approvals: list[ApprovalRecordResponse]
     count: int
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ApprovalHistoryResponse(BaseModel):
     """Approval history for a specific approval_id."""
+
     ok: bool
     approval_id: str
     events: list[dict]
     count: int
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # ── Helper Functions ──────────────────────────────────────────────────
@@ -125,8 +133,8 @@ def _to_approval_response(record: dict) -> ApprovalRecordResponse:
 
 @approval_record_router.get("/requests", response_model=ApprovalListResponse)
 async def list_approvals(
-    status: Optional[str] = None,
-    approval_id: Optional[str] = None,
+    status: str | None = None,
+    approval_id: str | None = None,
     _user: dict = Depends(require_role("admin", "owner")),
 ) -> ApprovalListResponse:
     """List approval requests.
@@ -149,15 +157,14 @@ async def list_approvals(
             ok=False,
             approvals=[],
             count=0,
-            error=f"Failed to read approval records: {str(e)}",
+            error=f"Failed to read approval records: {e!s}",
         )
 
     # Filter to latest status per approval_id
     latest_by_id: dict[str, dict] = {}
     for record in records:
         aid = record.get("approval_id", "")
-        if aid and (aid not in latest_by_id or
-                    record.get("created_at", "") >= latest_by_id[aid].get("created_at", "")):
+        if aid and (aid not in latest_by_id or record.get("created_at", "") >= latest_by_id[aid].get("created_at", "")):
             latest_by_id[aid] = record
 
     # Apply filters

@@ -18,11 +18,11 @@ cdp_console로 DOM 구조 탐색 후 작성.
     # 기사 본문
     body = fetch_article("https://n.news.naver.com/article/...")
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[2]
 # scripts/naver/calendar.py 가 표준 라이브러리 calendar 를 가리는 문제 방지
@@ -44,6 +44,7 @@ def fetch_news(url: str = "https://news.naver.com") -> list[dict]:
         ]
     """
     import importlib
+
     connect = importlib.import_module("scripts.cdp_console").connect
 
     with connect() as s:
@@ -92,6 +93,7 @@ def fetch_article(article_url: str) -> dict:
         }
     """
     import importlib
+
     connect = importlib.import_module("scripts.cdp_console").connect
 
     with connect() as s:
@@ -146,10 +148,10 @@ def fetch_search(query: str, page: int = 1) -> list[dict]:
         [{"title": str, "url": str, "press": str, "datetime": str, "summary": str}, ...]
     """
     import importlib
+
     connect = importlib.import_module("scripts.cdp_console").connect
 
-    search_url = (f"https://search.naver.com/search.naver"
-                  f"?where=news&query={query}&start={(page-1)*10+1}")
+    search_url = f"https://search.naver.com/search.naver?where=news&query={query}&start={(page - 1) * 10 + 1}"
 
     with connect() as s:
         s.goto(search_url)
@@ -215,32 +217,30 @@ def fetch_search(query: str, page: int = 1) -> list[dict]:
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import json
-
     cmd = sys.argv[1] if len(sys.argv) > 1 else "main"
 
     if cmd == "main":
-        print("네이버 뉴스 메인 스크래핑\n" + "="*60)
+        print("네이버 뉴스 메인 스크래핑\n" + "=" * 60)
         blocks = fetch_news()
         print(f"언론사 블록: {len(blocks)}개\n")
         for b in blocks[:5]:
             print(f"[{b['press']}] {b['updated']}")
-            for a in b['articles'][:3]:
+            for a in b["articles"][:3]:
                 print(f"  · {a['title'][:60]}")
             print()
 
     elif cmd == "article" and len(sys.argv) > 2:
-        print("기사 본문 스크래핑\n" + "="*60)
+        print("기사 본문 스크래핑\n" + "=" * 60)
         art = fetch_article(sys.argv[2])
-        print(f"제목: {art.get('title','')}")
-        print(f"언론사: {art.get('press','')}")
-        print(f"일시: {art.get('datetime','')}")
-        print(f"요약: {art.get('summary','')}")
-        print(f"본문({len(art.get('body',''))}자): {art.get('body','')[:200]}...")
+        print(f"제목: {art.get('title', '')}")
+        print(f"언론사: {art.get('press', '')}")
+        print(f"일시: {art.get('datetime', '')}")
+        print(f"요약: {art.get('summary', '')}")
+        print(f"본문({len(art.get('body', ''))}자): {art.get('body', '')[:200]}...")
 
     elif cmd == "search" and len(sys.argv) > 2:
         q = " ".join(sys.argv[2:])
-        print(f"뉴스 검색: {q!r}\n" + "="*60)
+        print(f"뉴스 검색: {q!r}\n" + "=" * 60)
         results = fetch_search(q)
         print(f"결과: {len(results)}건\n")
         for r in results[:5]:

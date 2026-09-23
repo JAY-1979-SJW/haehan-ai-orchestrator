@@ -11,23 +11,24 @@ Tests cover:
 
 Tests are read-only (test-only JSONL store, no DB write).
 """
+
 import json
+
 import pytest
-from pathlib import Path
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.server import app
-from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
 from ai_orchestrator.browser_tool.approval_record_store import (
     read_approval_records,
-    get_approval_history,
 )
+from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+from ai_orchestrator.server import app
 
 
 @pytest.fixture
 def client(monkeypatch):
     """FastAPI test client."""
     import ai_orchestrator.config as config
+
     monkeypatch.setattr(config, "AUTH_ENABLED", False)
     return TestClient(app)
 
@@ -122,9 +123,7 @@ class TestApprovalListEndpoint:
         assert approve_response.status_code == 200
 
         # Filter by APPROVED status
-        list_response = client.get(
-            "/api/v1/browser-approvals/requests?status=APPROVED"
-        )
+        list_response = client.get("/api/v1/browser-approvals/requests?status=APPROVED")
         data = list_response.json()
         assert data["count"] == 1
         assert data["approvals"][0]["approval_status"] == "APPROVED"
@@ -186,7 +185,7 @@ class TestCreateApprovalEndpoint:
 
         # Check URL is redacted (either literal or URL-encoded brackets)
         url_redacted = data["target_url_redacted"]
-        assert ("REDACTED" in url_redacted), f"Expected REDACTED in {url_redacted}"
+        assert "REDACTED" in url_redacted, f"Expected REDACTED in {url_redacted}"
         assert "secret123" not in url_redacted
         assert "abc123xyz" not in url_redacted
 
@@ -397,9 +396,7 @@ class TestHistoryEndpoint:
         approval_id = create_response.json()["approval_id"]
 
         # Get history
-        history_response = client.get(
-            f"/api/v1/browser-approvals/requests/{approval_id}/history"
-        )
+        history_response = client.get(f"/api/v1/browser-approvals/requests/{approval_id}/history")
         assert history_response.status_code == 200
         data = history_response.json()
         assert data["ok"] is True
@@ -441,9 +438,7 @@ class TestHistoryEndpoint:
         )
 
         # Get history
-        history_response = client.get(
-            f"/api/v1/browser-approvals/requests/{approval_id}/history"
-        )
+        history_response = client.get(f"/api/v1/browser-approvals/requests/{approval_id}/history")
         data = history_response.json()
         assert data["count"] == 2
         assert len(data["events"]) == 2
@@ -547,12 +542,15 @@ class TestApprovalAuthGate:
 
     def test_list_requires_auth_when_enabled(self, monkeypatch, tmp_path):
         import ai_orchestrator.config as config
+
         monkeypatch.setattr(config, "AUTH_ENABLED", True)
         monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")
         config.HTTP_USERS_PATH.write_text(
-            json.dumps([
-                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
-            ]),
+            json.dumps(
+                [
+                    {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+                ]
+            ),
             encoding="utf-8",
         )
         secure_client = TestClient(app)
@@ -561,12 +559,15 @@ class TestApprovalAuthGate:
 
     def test_viewer_blocked_when_enabled(self, monkeypatch, tmp_path):
         import ai_orchestrator.config as config
+
         monkeypatch.setattr(config, "AUTH_ENABLED", True)
         monkeypatch.setattr(config, "HTTP_USERS_PATH", tmp_path / "http_users.json")
         config.HTTP_USERS_PATH.write_text(
-            json.dumps([
-                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
-            ]),
+            json.dumps(
+                [
+                    {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+                ]
+            ),
             encoding="utf-8",
         )
         secure_client = TestClient(app)

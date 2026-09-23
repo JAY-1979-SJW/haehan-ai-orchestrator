@@ -2,9 +2,9 @@
 
 ASSISTANT_TRUSTED_SESSION_AND_USER_APPROVAL_POLICY_REDESIGN_01
 """
+
 from __future__ import annotations
 
-import importlib
 import sys
 from pathlib import Path
 
@@ -18,22 +18,27 @@ sys.path.insert(0, str(ROOT))
 # 모듈 임포트 헬퍼
 # ---------------------------------------------------------------------------
 
+
 def _registry():
     from ai_orchestrator.safety_policy import safety_policy_registry as r
+
     return r
 
 
 def _service():
     from ai_orchestrator.services.execution_policy_service import (
-        ExecutionPolicyService, get_execution_policy_service,
         AUDIT_EVENT_TYPES,
+        ExecutionPolicyService,
+        get_execution_policy_service,
     )
+
     return ExecutionPolicyService(), get_execution_policy_service, AUDIT_EVENT_TYPES
 
 
 # ---------------------------------------------------------------------------
 # STEP 3: 신규 상수 존재 확인
 # ---------------------------------------------------------------------------
+
 
 def test_auth_mode_constants_exist():
     r = _registry()
@@ -52,9 +57,14 @@ def test_session_trust_level_constants_exist():
 def test_final_action_types_complete():
     r = _registry()
     required = {
-        r.FINAL_ACTION_SAVE, r.FINAL_ACTION_SUBMIT, r.FINAL_ACTION_PAY,
-        r.FINAL_ACTION_SIGN, r.FINAL_ACTION_DOMAIN_CHANGE, r.FINAL_ACTION_SEND,
-        r.FINAL_ACTION_BID, r.FINAL_ACTION_TRANSFER,
+        r.FINAL_ACTION_SAVE,
+        r.FINAL_ACTION_SUBMIT,
+        r.FINAL_ACTION_PAY,
+        r.FINAL_ACTION_SIGN,
+        r.FINAL_ACTION_DOMAIN_CHANGE,
+        r.FINAL_ACTION_SEND,
+        r.FINAL_ACTION_BID,
+        r.FINAL_ACTION_TRANSFER,
     }
     assert required <= r.FINAL_ACTION_TYPES
 
@@ -71,41 +81,51 @@ def test_approval_gate_constants_exist():
 # STEP 4: 10개 신규 정책 등록 확인
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("policy_id", [
-    "USER_PRESENT_AUTH_REQUIRED",
-    "TRUSTED_SESSION_REUSE_ALLOWED",
-    "SECRET_STORAGE_FORBIDDEN",
-    "SERVER_SECURITY_LOGIN_BLOCKED",
-    "LOCAL_AGENT_SECURE_LOGIN_REQUIRED",
-    "FINAL_APPROVAL_GATE_REQUIRED",
-    "CERTIFICATE_PASSWORD_NEVER_STORED",
-    "OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY",
-    "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED",
-    "TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED",
-])
+
+@pytest.mark.parametrize(
+    "policy_id",
+    [
+        "USER_PRESENT_AUTH_REQUIRED",
+        "TRUSTED_SESSION_REUSE_ALLOWED",
+        "SECRET_STORAGE_FORBIDDEN",
+        "SERVER_SECURITY_LOGIN_BLOCKED",
+        "LOCAL_AGENT_SECURE_LOGIN_REQUIRED",
+        "FINAL_APPROVAL_GATE_REQUIRED",
+        "CERTIFICATE_PASSWORD_NEVER_STORED",
+        "OAUTH_REFRESH_TOKEN_SECURE_STORE_ONLY",
+        "DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED",
+        "TRUSTED_SESSION_EXPIRE_REAUTH_REQUIRED",
+    ],
+)
 def test_new_policy_registered(policy_id):
     from ai_orchestrator.safety_policy.safety_policy_registry import get_policy
+
     policy = get_policy(policy_id)
     assert policy is not None, f"정책 미등록: {policy_id}"
 
 
 def test_total_policy_count_at_least_18():
     from ai_orchestrator.safety_policy.safety_policy_registry import list_all_policies
+
     assert len(list_all_policies()) >= 18
 
 
 def test_final_approval_gate_decision_is_require_approval():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_REQUIRE_APPROVAL,
+        DECISION_REQUIRE_APPROVAL,
+        get_policy,
     )
+
     p = get_policy("FINAL_APPROVAL_GATE_REQUIRED")
     assert p.decision == DECISION_REQUIRE_APPROVAL
 
 
 def test_secret_storage_forbidden_decision_is_block():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_BLOCK,
+        DECISION_BLOCK,
+        get_policy,
     )
+
     p = get_policy("SECRET_STORAGE_FORBIDDEN")
     assert p.decision == DECISION_BLOCK
     assert p.safe_to_execute_on_server is False
@@ -113,24 +133,30 @@ def test_secret_storage_forbidden_decision_is_block():
 
 def test_user_present_auth_decision_is_require_user():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_REQUIRE_USER,
+        DECISION_REQUIRE_USER,
+        get_policy,
     )
+
     p = get_policy("USER_PRESENT_AUTH_REQUIRED")
     assert p.decision == DECISION_REQUIRE_USER
 
 
 def test_trusted_session_reuse_decision_is_allow():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_ALLOW,
+        DECISION_ALLOW,
+        get_policy,
     )
+
     p = get_policy("TRUSTED_SESSION_REUSE_ALLOWED")
     assert p.decision == DECISION_ALLOW
 
 
 def test_domain_dns_change_severity_critical():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, SEV_CRITICAL,
+        SEV_CRITICAL,
+        get_policy,
     )
+
     p = get_policy("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED")
     assert p.severity == SEV_CRITICAL
 
@@ -139,8 +165,10 @@ def test_domain_dns_change_severity_critical():
 # STEP 5: PolicyDecision 신규 필드
 # ---------------------------------------------------------------------------
 
+
 def test_policy_decision_has_new_fields():
     from ai_orchestrator.services.execution_policy_service import PolicyDecision
+
     d = PolicyDecision(
         execution_location="LOCAL_AGENT_REQUIRED",
         server_executable=False,
@@ -162,6 +190,7 @@ def test_policy_decision_has_new_fields():
 
 def test_policy_decision_defaults():
     from ai_orchestrator.services.execution_policy_service import PolicyDecision
+
     d = PolicyDecision(
         execution_location="SERVER_INTERNAL_ONLY",
         server_executable=True,
@@ -180,6 +209,7 @@ def test_policy_decision_defaults():
 
 def test_policy_decision_to_dict_contains_new_fields():
     from ai_orchestrator.services.execution_policy_service import PolicyDecision
+
     d = PolicyDecision(
         execution_location="LOCAL_AGENT_REQUIRED",
         server_executable=False,
@@ -204,8 +234,10 @@ def test_policy_decision_to_dict_contains_new_fields():
 # STEP 6: 사이트별 액션 정책 판정
 # ---------------------------------------------------------------------------
 
+
 def test_gabia_dns_requires_final_approval():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     dec = svc.decide_for_site_action("gabia", "gabia_dns_apply")
     assert dec.requires_final_approval is True
@@ -215,6 +247,7 @@ def test_gabia_dns_requires_final_approval():
 
 def test_g2b_requires_user_present_auth():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     dec = svc.decide_for_site_action("g2b", "navigate_to_work_screen")
     assert dec.requires_user_present_auth is True
@@ -222,6 +255,7 @@ def test_g2b_requires_user_present_auth():
 
 def test_naver_safe_to_prepare():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     dec = svc.decide_for_site_action("naver", "fill_form")
     assert dec.safe_to_prepare is True
@@ -230,6 +264,7 @@ def test_naver_safe_to_prepare():
 
 def test_is_final_action_save():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     assert svc.is_final_action("SAVE") is True
     assert svc.is_final_action("click_save_button") is True
@@ -238,6 +273,7 @@ def test_is_final_action_save():
 
 def test_is_domain_change_approval_required():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     assert svc.is_domain_change_approval_required("gabia_dns_apply") is True
     assert svc.is_domain_change_approval_required("fill_form") is False
@@ -245,6 +281,7 @@ def test_is_domain_change_approval_required():
 
 def test_is_secret_storage_forbidden():
     from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
     svc = ExecutionPolicyService()
     assert svc.is_secret_storage_forbidden("store_password") is True
     assert svc.is_secret_storage_forbidden("dump_cookie") is True
@@ -255,8 +292,10 @@ def test_is_secret_storage_forbidden():
 # STEP 7: AuditEvent 타입 확인
 # ---------------------------------------------------------------------------
 
+
 def test_audit_event_types_complete():
     from ai_orchestrator.services.execution_policy_service import AUDIT_EVENT_TYPES
+
     required = {
         "USER_PRESENT_AUTH_REQUIRED",
         "TRUSTED_SESSION_REUSED",
@@ -274,4 +313,5 @@ def test_audit_event_types_complete():
 
 def test_audit_event_types_count():
     from ai_orchestrator.services.execution_policy_service import AUDIT_EVENT_TYPES
+
     assert len(AUDIT_EVENT_TYPES) >= 10

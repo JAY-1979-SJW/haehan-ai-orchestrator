@@ -36,9 +36,9 @@
     # 파일 저장
     builder.save(html, "data/smartstore/description_preview.html")
 """
+
 from __future__ import annotations
 
-import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -50,22 +50,38 @@ ROOT = Path(__file__).resolve().parents[4]
 # ══════════════════════════════════════════════════════════════════════════════
 
 SECTION_REGISTRY = {
-    "hero":     {"label": "Hero — 헤드라인",         "required": True,  "data_keys": ["name", "price", "hero_tag", "sub"]},
-    "trust":    {"label": "신뢰 뱃지 4개",            "required": False, "data_keys": ["trust_badges"]},
-    "features": {"label": "핵심 특징 카드",           "required": False, "data_keys": ["features"]},
-    "price":    {"label": "가격 경쟁력",              "required": False, "data_keys": ["price_reasons", "price_guarantee"]},
-    "detail":   {"label": "상품 소개 본문",           "required": False, "data_keys": ["detail_paragraphs"]},
-    "quality":  {"label": "품질·내구성 그리드",       "required": False, "data_keys": ["quality_items"]},
-    "origin":   {"label": "원산지·유통 경로",         "required": False, "data_keys": ["origin", "distributor", "distribution_channel"]},
-    "spec":     {"label": "스펙 테이블",              "required": False, "data_keys": ["specs"]},
-    "howto":    {"label": "사용 방법",                "required": False, "data_keys": ["howto"]},
-    "as":       {"label": "AS·보증 안내",             "required": False, "data_keys": ["as_warranty", "as_contact"]},
-    "notice":   {"label": "주의 사항",                "required": False, "data_keys": ["notice_items"]},
-    "delivery": {"label": "배송·교환·반품",           "required": True,  "data_keys": ["delivery_items"]},
+    "hero": {"label": "Hero — 헤드라인", "required": True, "data_keys": ["name", "price", "hero_tag", "sub"]},
+    "trust": {"label": "신뢰 뱃지 4개", "required": False, "data_keys": ["trust_badges"]},
+    "features": {"label": "핵심 특징 카드", "required": False, "data_keys": ["features"]},
+    "price": {"label": "가격 경쟁력", "required": False, "data_keys": ["price_reasons", "price_guarantee"]},
+    "detail": {"label": "상품 소개 본문", "required": False, "data_keys": ["detail_paragraphs"]},
+    "quality": {"label": "품질·내구성 그리드", "required": False, "data_keys": ["quality_items"]},
+    "origin": {
+        "label": "원산지·유통 경로",
+        "required": False,
+        "data_keys": ["origin", "distributor", "distribution_channel"],
+    },
+    "spec": {"label": "스펙 테이블", "required": False, "data_keys": ["specs"]},
+    "howto": {"label": "사용 방법", "required": False, "data_keys": ["howto"]},
+    "as": {"label": "AS·보증 안내", "required": False, "data_keys": ["as_warranty", "as_contact"]},
+    "notice": {"label": "주의 사항", "required": False, "data_keys": ["notice_items"]},
+    "delivery": {"label": "배송·교환·반품", "required": True, "data_keys": ["delivery_items"]},
 }
 
-DEFAULT_SECTIONS = ["hero", "trust", "features", "price", "detail",
-                    "quality", "origin", "spec", "howto", "as", "notice", "delivery"]
+DEFAULT_SECTIONS = [
+    "hero",
+    "trust",
+    "features",
+    "price",
+    "detail",
+    "quality",
+    "origin",
+    "spec",
+    "howto",
+    "as",
+    "notice",
+    "delivery",
+]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -231,15 +247,16 @@ CSS = """
 # 섹션 렌더러 — 각 섹션 독립 함수
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def _e(text: Any) -> str:
     """HTML 이스케이프."""
-    return str(text).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"','&quot;')
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
 def render_hero(d: dict) -> str:
-    tag   = _e(d.get("hero_tag", "전국 공식 총판"))
-    name  = _e(d.get("name", "상품명"))
-    sub   = _e(d.get("sub", ""))
+    tag = _e(d.get("hero_tag", "전국 공식 총판"))
+    name = _e(d.get("name", "상품명"))
+    sub = _e(d.get("sub", ""))
     price = f"{int(d.get('price', 0)):,}"
     badge = _e(d.get("price_badge", "최저가 보장"))
     return f"""
@@ -256,17 +273,23 @@ def render_hero(d: dict) -> str:
 
 
 def render_trust(d: dict) -> str:
-    badges = d.get("trust_badges", [
-        {"cls": "price",   "icon": "💰", "title": "최저가 보장",  "desc": "차액 200% 환불"},
-        {"cls": "as",      "icon": "🛡️", "title": "1년 무상 AS",  "desc": "불량 시 무상 교환"},
-        {"cls": "quality", "icon": "✅", "title": "KC 안전인증",   "desc": "국내 안전인증 완료"},
-        {"cls": "origin",  "icon": "🏭", "title": "공식 총판",    "desc": "정식 수입 통관"},
-    ])
-    items = "\n".join(f"""  <div class="pd-trust-badge {_e(b.get('cls',''))}">
-    <span class="pd-trust-icon">{b.get('icon','')}</span>
-    <div class="pd-trust-title">{_e(b.get('title',''))}</div>
-    <div class="pd-trust-desc">{_e(b.get('desc',''))}</div>
-  </div>""" for b in badges)
+    badges = d.get(
+        "trust_badges",
+        [
+            {"cls": "price", "icon": "💰", "title": "최저가 보장", "desc": "차액 200% 환불"},
+            {"cls": "as", "icon": "🛡️", "title": "1년 무상 AS", "desc": "불량 시 무상 교환"},
+            {"cls": "quality", "icon": "✅", "title": "KC 안전인증", "desc": "국내 안전인증 완료"},
+            {"cls": "origin", "icon": "🏭", "title": "공식 총판", "desc": "정식 수입 통관"},
+        ],
+    )
+    items = "\n".join(
+        f"""  <div class="pd-trust-badge {_e(b.get("cls", ""))}">
+    <span class="pd-trust-icon">{b.get("icon", "")}</span>
+    <div class="pd-trust-title">{_e(b.get("title", ""))}</div>
+    <div class="pd-trust-desc">{_e(b.get("desc", ""))}</div>
+  </div>"""
+        for b in badges
+    )
     return f'<div class="pd-trust">\n{items}\n</div>'
 
 
@@ -274,21 +297,27 @@ def render_features(d: dict) -> str:
     feats = d.get("features", [])
     if not feats:
         return ""
-    items = "\n".join(f"""  <div class="pd-feat">
-    <span class="pd-feat-icon">{f.get('icon','⭐')}</span>
-    <div class="pd-feat-title">{_e(f.get('title',''))}</div>
-    <div class="pd-feat-desc">{_e(f.get('desc',''))}</div>
-  </div>""" for f in feats)
+    items = "\n".join(
+        f"""  <div class="pd-feat">
+    <span class="pd-feat-icon">{f.get("icon", "⭐")}</span>
+    <div class="pd-feat-title">{_e(f.get("title", ""))}</div>
+    <div class="pd-feat-desc">{_e(f.get("desc", ""))}</div>
+  </div>"""
+        for f in feats
+    )
     return f'<div class="pd-features">\n{items}\n</div>'
 
 
 def render_price(d: dict) -> str:
     reasons = d.get("price_reasons", [])
     guarantee = _e(d.get("price_guarantee", "동일 제품 타 판매처보다 비싸면 차액의 200% 환불"))
-    reason_html = "\n".join(f"""    <div class="pd-price-reason">
+    reason_html = "\n".join(
+        f"""    <div class="pd-price-reason">
       <div class="pd-price-check">✓</div>
-      <div class="pd-price-text"><strong>{_e(r.get('title',''))}</strong>{_e(r.get('desc',''))}</div>
-    </div>""" for r in reasons)
+      <div class="pd-price-text"><strong>{_e(r.get("title", ""))}</strong>{_e(r.get("desc", ""))}</div>
+    </div>"""
+        for r in reasons
+    )
     return f"""
 <div class="pd-sec pd-price">
   <div class="pd-sec-eyebrow">Price Advantage</div>
@@ -320,10 +349,13 @@ def render_quality(d: dict) -> str:
     items = d.get("quality_items", [])
     if not items:
         return ""
-    grid = "\n".join(f"""  <div class="pd-quality-item">
-    <div class="pd-quality-label">{_e(item.get('label',''))}</div>
-    <div class="pd-quality-value">{_e(item.get('value',''))}</div>
-  </div>""" for item in items)
+    grid = "\n".join(
+        f"""  <div class="pd-quality-item">
+    <div class="pd-quality-label">{_e(item.get("label", ""))}</div>
+    <div class="pd-quality-value">{_e(item.get("value", ""))}</div>
+  </div>"""
+        for item in items
+    )
     return f"""
 <div class="pd-sec">
   <div class="pd-sec-eyebrow">Quality</div>
@@ -337,21 +369,24 @@ def render_quality(d: dict) -> str:
 def render_origin(d: dict) -> str:
     rows = []
     if d.get("origin"):
-        rows.append({"label": "생산지",    "value": d["origin"]})
+        rows.append({"label": "생산지", "value": d["origin"]})
     if d.get("distributor"):
         rows.append({"label": "수입·유통", "value": d["distributor"]})
     if d.get("distribution_channel"):
         rows.append({"label": "공급 경로", "value": d["distribution_channel"]})
     if d.get("certifications"):
-        rows.append({"label": "인증",      "value": ", ".join(d["certifications"])})
+        rows.append({"label": "인증", "value": ", ".join(d["certifications"])})
     if d.get("origin_reason"):
         rows.append({"label": "원산지 이유", "value": d["origin_reason"]})
     if not rows:
         return ""
-    row_html = "\n".join(f"""    <div class="pd-origin-row">
-      <div class="pd-origin-label">{_e(r['label'])}</div>
-      <div class="pd-origin-value">{_e(r['value'])}</div>
-    </div>""" for r in rows)
+    row_html = "\n".join(
+        f"""    <div class="pd-origin-row">
+      <div class="pd-origin-label">{_e(r["label"])}</div>
+      <div class="pd-origin-value">{_e(r["value"])}</div>
+    </div>"""
+        for r in rows
+    )
     header_title = _e(d.get("origin_header", "공급망 투명 공개 — 숨기는 것 없이 모두 알려드립니다"))
     return f"""
 <div class="pd-sec pd-origin">
@@ -386,15 +421,18 @@ def render_howto(d: dict) -> str:
     steps = d.get("howto", [])
     if not steps:
         return ""
-    items = "\n".join(f"""  <li class="pd-howto-item">
+    items = "\n".join(
+        f"""  <li class="pd-howto-item">
     <div class="pd-howto-left">
-      <div class="pd-howto-num">{i+1}</div>
+      <div class="pd-howto-num">{i + 1}</div>
       <div class="pd-howto-line"></div>
     </div>
     <div class="pd-howto-content">
-      <strong>{_e(s.get('title',''))}</strong>{_e(s.get('desc',''))}
+      <strong>{_e(s.get("title", ""))}</strong>{_e(s.get("desc", ""))}
     </div>
-  </li>""" for i, s in enumerate(steps))
+  </li>"""
+        for i, s in enumerate(steps)
+    )
     return f"""
 <div class="pd-sec">
   <div class="pd-sec-eyebrow">How to Use</div>
@@ -411,27 +449,30 @@ def render_as(d: dict) -> str:
         # 기본 항목 구성
         items = []
         if d.get("as_warranty"):
-            items.append({"icon": "📅", "label": "보증 기간",  "value": d["as_warranty"]})
+            items.append({"icon": "📅", "label": "보증 기간", "value": d["as_warranty"]})
         if d.get("as_exchange"):
-            items.append({"icon": "🔄", "label": "무상 교환",  "value": d["as_exchange"]})
+            items.append({"icon": "🔄", "label": "무상 교환", "value": d["as_exchange"]})
         if d.get("as_contact"):
-            items.append({"icon": "💬", "label": "AS 방법",    "value": d["as_contact"]})
+            items.append({"icon": "💬", "label": "AS 방법", "value": d["as_contact"]})
         if d.get("as_scope"):
-            items.append({"icon": "⚖️", "label": "AS 범위",    "value": d["as_scope"]})
+            items.append({"icon": "⚖️", "label": "AS 범위", "value": d["as_scope"]})
         if not items:
             items = [
-                {"icon": "📅", "label": "보증 기간",  "value": "구매일로부터 1년"},
-                {"icon": "🔄", "label": "무상 교환",  "value": "불량 수령 7일 이내"},
-                {"icon": "💬", "label": "AS 방법",    "value": "스마트스토어 문의"},
+                {"icon": "📅", "label": "보증 기간", "value": "구매일로부터 1년"},
+                {"icon": "🔄", "label": "무상 교환", "value": "불량 수령 7일 이내"},
+                {"icon": "💬", "label": "AS 방법", "value": "스마트스토어 문의"},
                 {"icon": "⚖️", "label": "소비자 보호", "value": "전자상거래법 준수"},
             ]
-    grid = "\n".join(f"""  <div class="pd-as-item">
-    <span class="pd-as-icon">{item.get('icon','📋')}</span>
+    grid = "\n".join(
+        f"""  <div class="pd-as-item">
+    <span class="pd-as-icon">{item.get("icon", "📋")}</span>
     <div>
-      <div class="pd-as-label">{_e(item.get('label',''))}</div>
-      <div class="pd-as-value">{_e(item.get('value',''))}</div>
+      <div class="pd-as-label">{_e(item.get("label", ""))}</div>
+      <div class="pd-as-value">{_e(item.get("value", ""))}</div>
     </div>
-  </div>""" for item in items)
+  </div>"""
+        for item in items
+    )
     return f"""
 <div class="pd-sec pd-as">
   <div class="pd-sec-eyebrow">After Service</div>
@@ -461,21 +502,27 @@ def render_notice(d: dict) -> str:
 
 
 def render_delivery(d: dict) -> str:
-    items = d.get("delivery_items", [
-        {"emoji": "📦", "label": "배송비",    "desc": "무료 (CJ대한통운 · 롯데택배)"},
-        {"emoji": "🚀", "label": "출고 기준", "desc": "평일 오후 2시 이전 결제 → 당일 출고"},
-        {"emoji": "⏱️", "label": "배송 기간", "desc": "출고 후 1~3 영업일 수령"},
-        {"emoji": "🏝️", "label": "도서산간",  "desc": "제주·도서산간 추가 3,000원"},
-        {"emoji": "🔄", "label": "교환·반품", "desc": "수령 후 7일 이내 (단순 변심 왕복 배송비 구매자 부담)"},
-        {"emoji": "✅", "label": "불량·오배송","desc": "판매자 전액 부담 처리"},
-    ])
-    grid = "\n".join(f"""  <div class="pd-delivery-item">
-    <span class="pd-delivery-emoji">{item.get('emoji','📦')}</span>
+    items = d.get(
+        "delivery_items",
+        [
+            {"emoji": "📦", "label": "배송비", "desc": "무료 (CJ대한통운 · 롯데택배)"},
+            {"emoji": "🚀", "label": "출고 기준", "desc": "평일 오후 2시 이전 결제 → 당일 출고"},
+            {"emoji": "⏱️", "label": "배송 기간", "desc": "출고 후 1~3 영업일 수령"},
+            {"emoji": "🏝️", "label": "도서산간", "desc": "제주·도서산간 추가 3,000원"},
+            {"emoji": "🔄", "label": "교환·반품", "desc": "수령 후 7일 이내 (단순 변심 왕복 배송비 구매자 부담)"},
+            {"emoji": "✅", "label": "불량·오배송", "desc": "판매자 전액 부담 처리"},
+        ],
+    )
+    grid = "\n".join(
+        f"""  <div class="pd-delivery-item">
+    <span class="pd-delivery-emoji">{item.get("emoji", "📦")}</span>
     <div>
-      <div class="pd-delivery-label">{_e(item.get('label',''))}</div>
-      <div class="pd-delivery-desc">{_e(item.get('desc',''))}</div>
+      <div class="pd-delivery-label">{_e(item.get("label", ""))}</div>
+      <div class="pd-delivery-desc">{_e(item.get("desc", ""))}</div>
     </div>
-  </div>""" for item in items)
+  </div>"""
+        for item in items
+    )
     return f"""
 <div class="pd-sec">
   <div class="pd-sec-eyebrow">Delivery</div>
@@ -491,17 +538,17 @@ def render_delivery(d: dict) -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 
 RENDERERS = {
-    "hero":     render_hero,
-    "trust":    render_trust,
+    "hero": render_hero,
+    "trust": render_trust,
     "features": render_features,
-    "price":    render_price,
-    "detail":   render_detail,
-    "quality":  render_quality,
-    "origin":   render_origin,
-    "spec":     render_spec,
-    "howto":    render_howto,
-    "as":       render_as,
-    "notice":   render_notice,
+    "price": render_price,
+    "detail": render_detail,
+    "quality": render_quality,
+    "origin": render_origin,
+    "spec": render_spec,
+    "howto": render_howto,
+    "as": render_as,
+    "notice": render_notice,
     "delivery": render_delivery,
 }
 
@@ -511,6 +558,7 @@ DIVIDER = '\n<div class="pd-divider"></div>\n'
 # ══════════════════════════════════════════════════════════════════════════════
 # ProductPageBuilder — 메인 클래스
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class ProductPageBuilder:
     """섹션을 선택해 상품 상세페이지를 조합하는 빌더.
@@ -527,7 +575,7 @@ class ProductPageBuilder:
 
     # ── 섹션 선택 ────────────────────────────────────────────────────────────
 
-    def select(self, sections: list[str]) -> "ProductPageBuilder":
+    def select(self, sections: list[str]) -> ProductPageBuilder:
         """렌더링할 섹션 목록 지정 (순서 유지)."""
         unknown = [s for s in sections if s not in SECTION_REGISTRY]
         if unknown:
@@ -541,13 +589,13 @@ class ProductPageBuilder:
         self._sections = merged
         return self
 
-    def add(self, section: str) -> "ProductPageBuilder":
+    def add(self, section: str) -> ProductPageBuilder:
         """섹션 추가."""
         if section not in self._sections:
             self._sections.append(section)
         return self
 
-    def remove(self, section: str) -> "ProductPageBuilder":
+    def remove(self, section: str) -> ProductPageBuilder:
         """섹션 제거 (필수 섹션은 제거 불가)."""
         meta = SECTION_REGISTRY.get(section, {})
         if meta.get("required"):
@@ -555,7 +603,7 @@ class ProductPageBuilder:
         self._sections = [s for s in self._sections if s != section]
         return self
 
-    def reset(self) -> "ProductPageBuilder":
+    def reset(self) -> ProductPageBuilder:
         """기본 섹션으로 초기화."""
         self._sections = list(DEFAULT_SECTIONS)
         return self

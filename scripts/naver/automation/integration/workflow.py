@@ -6,16 +6,15 @@
   - 캘린더 일정 → 톡톡 메시지 예약
   - 마이박스 신규 파일 → 메일 알림
 """
+
 from __future__ import annotations
 
 import time
-from datetime import datetime
-from typing import Any, Callable
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -26,13 +25,14 @@ class Workflow:
     def __init__(self, page: Page):
         self.page = page
         from scripts.naver import NaverServices
+
         self.n = NaverServices(page)
 
     # ── 블로그 → SNS / 톡톡 ─────────────────────────────────────────────
 
-    def blog_publish_and_notify(self, blog_data: dict,
-                                notify_targets: list[str] | None = None,
-                                send_notify: bool = False) -> dict:
+    def blog_publish_and_notify(
+        self, blog_data: dict, notify_targets: list[str] | None = None, send_notify: bool = False
+    ) -> dict:
         """블로그 글 발행 + 발행 후 톡톡/메일 공지.
 
         blog_data: BlogWriter.write_post 매개변수
@@ -62,9 +62,13 @@ class Workflow:
                 notify_results.append({"target": target, "result": r})
                 time.sleep(2)
 
-        log_critical("OTHER", f"블로그+톡톡 워크플로우: {blog_data['title'][:30]}",
-                     notify_count=len(notify_targets or []),
-                     send_notify=send_notify, mode="blog_workflow")
+        log_critical(
+            "OTHER",
+            f"블로그+톡톡 워크플로우: {blog_data['title'][:30]}",
+            notify_count=len(notify_targets or []),
+            send_notify=send_notify,
+            mode="blog_workflow",
+        )
         return {
             "ok": True,
             "blog": publish_result,
@@ -73,12 +77,16 @@ class Workflow:
 
     # ── 스토어 주문 → 알림 ─────────────────────────────────────────────
 
-    def new_orders_to_alerts(self, mail_recipient: str | None = None,
-                              cafe_url: str | None = None,
-                              cafe_board: int | str = "",
-                              send_alerts: bool = False) -> dict:
+    def new_orders_to_alerts(
+        self,
+        mail_recipient: str | None = None,
+        cafe_url: str | None = None,
+        cafe_board: int | str = "",
+        send_alerts: bool = False,
+    ) -> dict:
         """스토어 신규 주문 → 메일/카페 공지."""
         from scripts.naver.automation.order_automation import OrderAutomation
+
         oa = OrderAutomation(self.page)
         orders = oa.fetch_new_orders()
         if not orders.get("ok"):
@@ -104,28 +112,28 @@ class Workflow:
             r = self.n.cafe.write_post(cafe_url, cafe_board, title, body, send=send_alerts)
             alerts.append({"type": "cafe", "result": r})
 
-        log_critical("OTHER", f"신규 주문 알림 워크플로우: {new_count}건",
-                     new_count=new_count, alerts=len(alerts),
-                     send=send_alerts, mode="order_alert_workflow")
+        log_critical(
+            "OTHER",
+            f"신규 주문 알림 워크플로우: {new_count}건",
+            new_count=new_count,
+            alerts=len(alerts),
+            send=send_alerts,
+            mode="order_alert_workflow",
+        )
         return {"ok": True, "new_count": new_count, "alerts": alerts}
 
     # ── 일정 → 메시지 예약 ────────────────────────────────────────────
 
-    def calendar_to_talk(self, days_ahead: int = 1,
-                        notify_partner: str | None = None,
-                        send: bool = False) -> dict:
+    def calendar_to_talk(self, days_ahead: int = 1, notify_partner: str | None = None, send: bool = False) -> dict:
         """다음 N일 일정을 톡톡으로 알림."""
         events = self.n.calendar.list_events()
         if not events:
             return {"ok": True, "events": 0, "sent": False}
 
-        message = "📅 예정 일정:\n" + "\n".join(
-            f"• {e.get('title', '')} {e.get('time', '')}" for e in events[:10]
-        )
+        message = "📅 예정 일정:\n" + "\n".join(f"• {e.get('title', '')} {e.get('time', '')}" for e in events[:10])
         if notify_partner:
             r = self.n.talk.send_message(notify_partner, message, confirm=send)
-            log_critical("OTHER", f"일정 알림: {len(events)}개",
-                         to=notify_partner, send=send, mode="calendar_alert")
+            log_critical("OTHER", f"일정 알림: {len(events)}개", to=notify_partner, send=send, mode="calendar_alert")
             return {"ok": True, "events": len(events), "talk": r}
         return {"ok": True, "events": len(events), "message_preview": message[:200]}
 

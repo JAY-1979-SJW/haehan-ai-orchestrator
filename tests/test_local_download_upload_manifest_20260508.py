@@ -1,15 +1,15 @@
 """
 download_upload_manifest + server upload policy 통합 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.download_upload_manifest import (
     build_manifest,
-    validate_manifest,
     is_safe_manifest,
+    validate_manifest,
 )
 from ai_orchestrator.server.local_agent_file_upload_policy import (
-    validate_upload_manifest,
     get_server_upload_policy_summary,
+    validate_upload_manifest,
 )
 
 TASK_ID = "manifest-task-001"
@@ -64,9 +64,7 @@ class TestBuildManifest:
     def test_npki_path_blocked(self):
         manifest = build_manifest(
             TASK_ID,
-            [{"filename": "signCert.der",
-              "size_bytes": 512,
-              "file_path": "C:/NPKI/signCert.der"}],
+            [{"filename": "signCert.der", "size_bytes": 512, "file_path": "C:/NPKI/signCert.der"}],
             task_downloaded_filenames=["signCert.der"],
         )
         assert manifest["files"][0]["upload_allowed"] is False
@@ -89,6 +87,7 @@ class TestBuildManifest:
 
     def test_oversized_file_blocked(self):
         from ai_orchestrator.local_agent.download_policy import MAX_FILE_SIZE_BYTES
+
         manifest = build_manifest(
             TASK_ID,
             [{"filename": "big.pdf", "size_bytes": MAX_FILE_SIZE_BYTES + 1}],
@@ -107,9 +106,7 @@ class TestBuildManifest:
     def test_manifest_no_local_path(self):
         manifest = build_manifest(
             TASK_ID,
-            [{"filename": "notice.pdf",
-              "size_bytes": 1024,
-              "file_path": "C:/Users/secret/Downloads/notice.pdf"}],
+            [{"filename": "notice.pdf", "size_bytes": 1024, "file_path": "C:/Users/secret/Downloads/notice.pdf"}],
             task_downloaded_filenames=["notice.pdf"],
         )
         for entry in manifest["files"]:
@@ -134,7 +131,8 @@ class TestBuildManifest:
             {"filename": "cert.pfx", "size_bytes": 512},
         ]
         manifest = build_manifest(
-            TASK_ID, files,
+            TASK_ID,
+            files,
             task_downloaded_filenames=["notice.pdf", "cert.pfx"],
         )
         assert manifest["total_files"] == 2
@@ -170,7 +168,8 @@ class TestValidateManifest:
 class TestServerUploadPolicy:
     def _make_manifest(self, files_info):
         return build_manifest(
-            TASK_ID, files_info,
+            TASK_ID,
+            files_info,
             task_downloaded_filenames=[f["filename"] for f in files_info],
         )
 
@@ -209,22 +208,27 @@ class TestServerUploadPolicy:
 class TestSmoke:
     def test_playwright_runner_import_ok(self):
         from ai_orchestrator.local_agent import playwright_runner
+
         assert hasattr(playwright_runner, "run_task")
 
     def test_auth_wait_import_ok(self):
         from ai_orchestrator.local_agent.auth_wait_controller import enter_auth_wait
+
         assert callable(enter_auth_wait)
 
     def test_auto_resume_import_ok(self):
         from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False
 
     def test_notification_adapter_import_ok(self):
         from ai_orchestrator.local_agent.user_notification_adapter import send_notification
+
         assert callable(send_notification)
 
     def test_browser_foreground_import_ok(self):
         from ai_orchestrator.local_agent.browser_foreground_adapter import request_foreground
+
         result = request_foreground(is_headed=False)
         assert result["sensitive_data_read"] is False

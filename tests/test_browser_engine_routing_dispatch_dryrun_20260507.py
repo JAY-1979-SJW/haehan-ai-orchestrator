@@ -8,6 +8,7 @@ dry_run: 항상 True.
 
 import json
 import os
+
 import pytest
 
 from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
@@ -20,7 +21,6 @@ from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import 
     DISPATCH_MANUAL_REVIEW_REQUIRED,
     DISPATCH_SERVER_PLAYWRIGHT_READONLY_READY,
     build_dryrun_dispatch_context,
-    build_dryrun_dispatch_response,
     evaluate_browser_engine_routing_dispatch_dryrun,
     validate_dryrun_dispatch_result,
 )
@@ -39,6 +39,7 @@ def fixture_cases():
 
 
 # ── fixture 케이스 기반 테스트 ────────────────────────────────────────────────
+
 
 class TestFixtureCases:
     def test_about_blank_server_readonly_ready(self, fixture_cases):
@@ -165,6 +166,7 @@ class TestFixtureCases:
 
 # ── dry_run / safe_to_execute 불변 속성 테스트 ─────────────────────────────────
 
+
 class TestInvariantProperties:
     def test_dry_run_always_true(self):
         result = evaluate_browser_engine_routing_dispatch_dryrun(
@@ -180,8 +182,13 @@ class TestInvariantProperties:
 
     def test_safe_to_execute_false_on_blocked(self):
         result = evaluate_browser_engine_routing_dispatch_dryrun(
-            {"site_category": "bank", "target_domain": "kbstar.com", "operation_type": "read",
-             "requires_certificate": True, "production_mode": False}
+            {
+                "site_category": "bank",
+                "target_domain": "kbstar.com",
+                "operation_type": "read",
+                "requires_certificate": True,
+                "production_mode": False,
+            }
         )
         assert result["safe_to_execute"] is False
 
@@ -193,8 +200,13 @@ class TestInvariantProperties:
 
     def test_ok_false_on_non_server_playwright(self):
         result = evaluate_browser_engine_routing_dispatch_dryrun(
-            {"site_category": "gmail", "target_domain": "mail.google.com",
-             "target_url": "https://mail.google.com/", "operation_type": "read", "production_mode": False}
+            {
+                "site_category": "gmail",
+                "target_domain": "mail.google.com",
+                "target_url": "https://mail.google.com/",
+                "operation_type": "read",
+                "production_mode": False,
+            }
         )
         assert result["ok"] is False
 
@@ -208,6 +220,7 @@ class TestInvariantProperties:
 
 # ── dispatch_decision enum 유효성 테스트 ──────────────────────────────────────
 
+
 class TestDispatchDecisionEnum:
     def test_server_playwright_ready_enum(self):
         assert DISPATCH_SERVER_PLAYWRIGHT_READONLY_READY == "DRYRUN_SERVER_PLAYWRIGHT_READONLY_READY"
@@ -216,7 +229,9 @@ class TestDispatchDecisionEnum:
         assert DISPATCH_LOCAL_AGENT_PLAYWRIGHT_READY == "DRYRUN_LOCAL_AGENT_PLAYWRIGHT_READY"
 
     def test_local_system_browser_enum(self):
-        assert DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED == "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        assert (
+            DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED == "DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED"
+        )
 
     def test_api_connector_enum(self):
         assert DISPATCH_API_CONNECTOR_REQUIRED == "DRYRUN_API_CONNECTOR_REQUIRED"
@@ -235,6 +250,7 @@ class TestDispatchDecisionEnum:
 
 
 # ── validate_dryrun_dispatch_result 테스트 ─────────────────────────────────────
+
 
 class TestValidateResult:
     def test_valid_result_no_errors(self):
@@ -267,6 +283,7 @@ class TestValidateResult:
 
 # ── build_dryrun_dispatch_context 테스트 ──────────────────────────────────────
 
+
 class TestBuildContext:
     def test_context_contains_chain_result(self):
         ctx = build_dryrun_dispatch_context(
@@ -284,10 +301,13 @@ class TestBuildContext:
 
 # ── 보안 원칙 준수 테스트 ─────────────────────────────────────────────────────
 
+
 class TestSecurityPrinciples:
     def test_no_actual_browser_execution_in_source(self):
         import inspect
+
         import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+
         src = inspect.getsource(mod)
         forbidden = ["playwright.chromium.launch", "page.goto(", "page.click(", "page.fill("]
         for token in forbidden:
@@ -295,7 +315,9 @@ class TestSecurityPrinciples:
 
     def test_no_cookie_session_extraction_in_source(self):
         import inspect
+
         import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+
         src = inspect.getsource(mod)
         forbidden = ["cookies()", "storage_state(", "session_token"]
         for token in forbidden:
@@ -303,7 +325,9 @@ class TestSecurityPrinciples:
 
     def test_no_task_executor_in_source(self):
         import inspect
+
         import ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun as mod
+
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src
 

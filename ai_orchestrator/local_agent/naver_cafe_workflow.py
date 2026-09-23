@@ -6,26 +6,22 @@
 탐색/읽기: AUTO_ALLOWED (권한 불필요)
 글쓰기/댓글: USER_DELEGATED_PERMISSION_REQUIRED
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.content_workflow_policy import (
-    CAFE_READ_ACTIONS, CAFE_WRITE_ACTIONS,
-    NAVER_CAFE_DOMAINS, requires_permission,
-)
 from ai_orchestrator.local_agent.delegated_action_executor import (
     execute_delegated_action,
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION, EXEC_BLOCKED, EXEC_USER_DIRECT,
 )
 from ai_orchestrator.local_agent.naver_content_safe_result import (
-    build_cafe_read_result, build_publish_result, sanitize_naver_result,
+    build_cafe_read_result,
+    sanitize_naver_result,
 )
 from ai_orchestrator.local_agent.task_protocol import (
-    build_task, STATUS_WAITING_USER_AUTH, STATUS_USER_ACTION_REQUIRED,
-    STATUS_COMPLETED, STATUS_FAILED,
-    EXEC_MODE_LOCAL_PLAYWRIGHT,
+    build_task,
 )
 
 # ── 카페 workflow 상태 상수 ───────────────────────────────────────────────────
@@ -137,6 +133,7 @@ def generate_blog_material_from_post(post_result: dict[str, Any]) -> dict[str, A
         "message_ko": "블로그 소재 후보 생성 완료.",
     }
     from ai_orchestrator.local_agent.naver_content_safe_result import _FIXED_SAFE_FIELDS
+
     result.update(_FIXED_SAFE_FIELDS)
     return result
 
@@ -192,4 +189,5 @@ def write_cafe_comment(
 def get_cafe_workflow_grade(step: str) -> str:
     """카페 workflow 단계의 실행 등급 반환."""
     from ai_orchestrator.local_agent.content_workflow_policy import get_workflow_grade
+
     return get_workflow_grade(step)

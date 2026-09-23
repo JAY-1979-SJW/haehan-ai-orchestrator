@@ -5,18 +5,31 @@
 모든 외부 사이트의 로그인 정책, 자동화 범위, 위험도를 단일 소스로 관리한다.
 DNS 저장/변경 없음. 실제 사이트 접속 없음. 쿠키 저장 없음.
 """
+
 from __future__ import annotations
 
 from ai_orchestrator.external_sites.provider_models import (
-    SiteProviderEntry,
-    RISK_CRITICAL, RISK_HIGH,
-    STATUS_CURRENT, STATUS_PLANNED,
-    CAT_DOMAIN_DNS, CAT_SOCIAL_LOGIN, CAT_PORTAL_LOGIN,
-    CAT_COMMERCE, CAT_OFFICIAL_API, CAT_GROUPWARE,
-    CAT_PUBLIC_BID, CAT_PUBLIC_ADMIN, CAT_EMAIL, CAT_BANK,
-    AUTOMATION_PLANNED, AUTOMATION_PLANNED_USER, AUTOMATION_PLANNED_CERT,
-    AUTOMATION_PLANNED_API, AUTOMATION_RECOVERED, AUTOMATION_LOGIN_ONLY,
     AUTOMATION_LOGIN_GABIA,
+    AUTOMATION_PLANNED,
+    AUTOMATION_PLANNED_API,
+    AUTOMATION_PLANNED_CERT,
+    AUTOMATION_PLANNED_USER,
+    AUTOMATION_RECOVERED,
+    CAT_BANK,
+    CAT_COMMERCE,
+    CAT_DOMAIN_DNS,
+    CAT_EMAIL,
+    CAT_GROUPWARE,
+    CAT_OFFICIAL_API,
+    CAT_PORTAL_LOGIN,
+    CAT_PUBLIC_ADMIN,
+    CAT_PUBLIC_BID,
+    CAT_SOCIAL_LOGIN,
+    RISK_CRITICAL,
+    RISK_HIGH,
+    STATUS_CURRENT,
+    STATUS_PLANNED,
+    SiteProviderEntry,
 )
 
 # ---------------------------------------------------------------------------
@@ -44,8 +57,11 @@ _GABIA = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=False,
     high_risk_actions=(
-        "DNS_RECORD_SAVE", "DOMAIN_TRANSFER",
-        "NAMESERVER_CHANGE", "PAYMENT", "ACCOUNT_CHANGE",
+        "DNS_RECORD_SAVE",
+        "DOMAIN_TRANSFER",
+        "NAMESERVER_CHANGE",
+        "PAYMENT",
+        "ACCOUNT_CHANGE",
     ),
     allowed_automation_scope=(
         "open login page",
@@ -128,7 +144,10 @@ _NAVER = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=False,
     high_risk_actions=(
-        "BLOG_PUBLISH", "SMARTSTORE_CHANGE", "PAYMENT", "ACCOUNT_CHANGE",
+        "BLOG_PUBLISH",
+        "SMARTSTORE_CHANGE",
+        "PAYMENT",
+        "ACCOUNT_CHANGE",
     ),
     allowed_automation_scope=(
         "navigate portal",
@@ -170,8 +189,11 @@ _NAVER_SMARTSTORE = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=False,
     high_risk_actions=(
-        "PRODUCT_CREATE", "PRODUCT_UPDATE", "ORDER_ACTION",
-        "SETTLEMENT_ACTION", "PAYMENT_ACTION",
+        "PRODUCT_CREATE",
+        "PRODUCT_UPDATE",
+        "ORDER_ACTION",
+        "SETTLEMENT_ACTION",
+        "PAYMENT_ACTION",
     ),
     allowed_automation_scope=(
         "navigate",
@@ -292,7 +314,10 @@ _G2B_NARA = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=True,
     high_risk_actions=(
-        "BID_SUBMIT", "CERTIFICATE_SIGN", "DOCUMENT_SUBMIT", "PAYMENT",
+        "BID_SUBMIT",
+        "CERTIFICATE_SIGN",
+        "DOCUMENT_SUBMIT",
+        "PAYMENT",
     ),
     allowed_automation_scope=(
         "notice search",
@@ -335,7 +360,10 @@ _HOMETAX = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=True,
     high_risk_actions=(
-        "TAX_SUBMIT", "CERTIFICATE_SIGN", "PAYMENT", "DOCUMENT_ISSUE",
+        "TAX_SUBMIT",
+        "CERTIFICATE_SIGN",
+        "PAYMENT",
+        "DOCUMENT_ISSUE",
     ),
     allowed_automation_scope=(
         "navigate",
@@ -377,10 +405,14 @@ _WETAX = SiteProviderEntry(
     certificate_login_required=True,
     high_risk_actions=("TAX_SUBMIT", "CERTIFICATE_SIGN", "PAYMENT", "DOCUMENT_ISSUE"),
     allowed_automation_scope=(
-        "navigate", "read tax data", "prepare form", "stop before submit",
+        "navigate",
+        "read tax data",
+        "prepare form",
+        "stop before submit",
     ),
     forbidden_automation_scope=(
-        "tax submit without approval", "certificate signing without user",
+        "tax submit without approval",
+        "certificate signing without user",
     ),
     navigation_status=AUTOMATION_PLANNED,
     automation_status=AUTOMATION_PLANNED_CERT,
@@ -410,13 +442,19 @@ _GOVERNMENT24 = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=True,
     high_risk_actions=(
-        "DOCUMENT_ISSUE", "CERTIFICATE_SIGN", "DOCUMENT_FINAL_SUBMIT",
+        "DOCUMENT_ISSUE",
+        "CERTIFICATE_SIGN",
+        "DOCUMENT_FINAL_SUBMIT",
     ),
     allowed_automation_scope=(
-        "navigate", "search service", "prepare form", "stop before submit",
+        "navigate",
+        "search service",
+        "prepare form",
+        "stop before submit",
     ),
     forbidden_automation_scope=(
-        "document issue without approval", "certificate signing without user",
+        "document issue without approval",
+        "certificate signing without user",
     ),
     navigation_status=AUTOMATION_PLANNED,
     automation_status=AUTOMATION_PLANNED_CERT,
@@ -484,7 +522,10 @@ _BANK_GENERIC = SiteProviderEntry(
     approval_gate_required=True,
     certificate_login_required=True,
     high_risk_actions=(
-        "PAYMENT", "TRANSFER", "CERTIFICATE_SIGN", "ACCOUNT_CHANGE",
+        "PAYMENT",
+        "TRANSFER",
+        "CERTIFICATE_SIGN",
+        "ACCOUNT_CHANGE",
     ),
     allowed_automation_scope=("read balance via approved API",),
     forbidden_automation_scope=(
@@ -505,10 +546,18 @@ _BANK_GENERIC = SiteProviderEntry(
 # ---------------------------------------------------------------------------
 
 PROVIDER_REGISTRY: tuple[SiteProviderEntry, ...] = (
-    _GABIA, _KAKAO, _NAVER, _NAVER_SMARTSTORE,
-    _GOOGLE, _HIWORKS, _G2B_NARA,
-    _HOMETAX, _WETAX, _GOVERNMENT24,
-    _EMAIL_GENERIC, _BANK_GENERIC,
+    _GABIA,
+    _KAKAO,
+    _NAVER,
+    _NAVER_SMARTSTORE,
+    _GOOGLE,
+    _HIWORKS,
+    _G2B_NARA,
+    _HOMETAX,
+    _WETAX,
+    _GOVERNMENT24,
+    _EMAIL_GENERIC,
+    _BANK_GENERIC,
 )
 
 _INDEX: dict[str, SiteProviderEntry] = {p.provider_id: p for p in PROVIDER_REGISTRY}

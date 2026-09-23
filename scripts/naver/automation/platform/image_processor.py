@@ -11,13 +11,13 @@
 
 요구: pip install Pillow
 """
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -28,6 +28,7 @@ class ImageProcessor:
     def __init__(self):
         try:
             from PIL import Image
+
             self._PIL = Image
         except ImportError:
             self._PIL = None
@@ -38,8 +39,7 @@ class ImageProcessor:
             return False
         return True
 
-    def resize(self, src: str, dst: str, max_side: int = 1000,
-               square: bool = True, quality: int = 90) -> dict:
+    def resize(self, src: str, dst: str, max_side: int = 1000, square: bool = True, quality: int = 90) -> dict:
         """이미지 리사이즈 + 정사각 패딩."""
         if not self._ensure_pil():
             return {"ok": False, "error": "pillow_not_installed"}
@@ -65,19 +65,19 @@ class ImageProcessor:
             img.save(dst_path, "JPEG", quality=quality, optimize=True)
 
             size_kb = dst_path.stat().st_size // 1024
-            return {"ok": True, "src": src, "dst": dst, "size_kb": size_kb,
-                    "dimensions": [img.width, img.height]}
+            return {"ok": True, "src": src, "dst": dst, "size_kb": size_kb, "dimensions": [img.width, img.height]}
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
 
-    def add_watermark(self, src: str, dst: str, text: str,
-                      position: str = "bottom-right",
-                      opacity: float = 0.5, font_size: int = 24) -> dict:
+    def add_watermark(
+        self, src: str, dst: str, text: str, position: str = "bottom-right", opacity: float = 0.5, font_size: int = 24
+    ) -> dict:
         """텍스트 워터마크 추가."""
         if not self._ensure_pil():
             return {"ok": False, "error": "pillow_not_installed"}
         try:
             from PIL import ImageDraw, ImageFont
+
             img = self._PIL.open(src).convert("RGBA")
             overlay = self._PIL.new("RGBA", img.size, (255, 255, 255, 0))
             draw = ImageDraw.Draw(overlay)
@@ -106,9 +106,9 @@ class ImageProcessor:
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
 
-    def batch_process(self, src_dir: str, dst_dir: str,
-                      max_side: int = 1000, square: bool = True,
-                      watermark: str | None = None) -> dict:
+    def batch_process(
+        self, src_dir: str, dst_dir: str, max_side: int = 1000, square: bool = True, watermark: str | None = None
+    ) -> dict:
         """디렉토리 일괄 처리."""
         if not self._ensure_pil():
             return {"ok": False, "error": "pillow_not_installed"}
@@ -128,7 +128,7 @@ class ImageProcessor:
                 r1["watermark"] = r2
             results.append({"src": str(f), "result": r1})
         ok = sum(1 for r in results if r["result"].get("ok"))
-        log_critical("OTHER", f"이미지 일괄 처리: {ok}/{len(files)}",
-                     src_dir=src_dir, dst_dir=dst_dir, mode="image_batch")
-        return {"ok": ok == len(files), "total": len(files), "success": ok,
-                "results": results}
+        log_critical(
+            "OTHER", f"이미지 일괄 처리: {ok}/{len(files)}", src_dir=src_dir, dst_dir=dst_dir, mode="image_batch"
+        )
+        return {"ok": ok == len(files), "total": len(files), "success": ok, "results": results}

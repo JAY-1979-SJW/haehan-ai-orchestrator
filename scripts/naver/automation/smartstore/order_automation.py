@@ -7,16 +7,15 @@
   - 취소/반품 자동 알림
   - CS 응답 템플릿
 """
+
 from __future__ import annotations
 
-import re
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -27,6 +26,7 @@ class OrderAutomation:
     def __init__(self, page: Page):
         self.page = page
         from scripts.naver.smartstore import NaverSmartStore
+
         self.store = NaverSmartStore(page)
 
     # ── 신규 주문 자동 조회 ──────────────────────────────────────────────
@@ -42,24 +42,33 @@ class OrderAutomation:
         status_idx = next((i for i, h in enumerate(headers) if "상태" in h or "처리" in h), None)
         if status_idx is None:
             return {"ok": True, "all_rows": rows, "new_count": None}
-        new_orders = [row for row in rows if status_idx < len(row) and
-                      ("발송" in row[status_idx] or "신규" in row[status_idx])]
-        log_critical("OTHER", f"신규 주문 조회: {len(new_orders)}건",
-                     total=len(rows), new=len(new_orders), mode="order_fetch")
-        return {"ok": True, "total": len(rows), "new_count": len(new_orders),
-                "new_orders": new_orders, "headers": headers}
+        new_orders = [
+            row for row in rows if status_idx < len(row) and ("발송" in row[status_idx] or "신규" in row[status_idx])
+        ]
+        log_critical(
+            "OTHER", f"신규 주문 조회: {len(new_orders)}건", total=len(rows), new=len(new_orders), mode="order_fetch"
+        )
+        return {
+            "ok": True,
+            "total": len(rows),
+            "new_count": len(new_orders),
+            "new_orders": new_orders,
+            "headers": headers,
+        }
 
     # ── 발송 처리 (운송장 등록) ──────────────────────────────────────────
 
-    def register_tracking(self, order_id: str, courier: str, tracking_no: str,
-                          confirm: bool = False) -> dict:
+    def register_tracking(self, order_id: str, courier: str, tracking_no: str, confirm: bool = False) -> dict:
         """운송장 번호 등록 (★ confirm=True 시에만 실제 등록)."""
         if not confirm:
-            return {"ok": False, "dry_run": True, "reason": "confirm=False (안전)",
-                    "would_register": {"order": order_id, "courier": courier, "no": tracking_no}}
+            return {
+                "ok": False,
+                "dry_run": True,
+                "reason": "confirm=False (안전)",
+                "would_register": {"order": order_id, "courier": courier, "no": tracking_no},
+            }
 
         # 발송 관리 페이지로
-        from scripts.naver.smartstore import MENU_LABELS
         if not self.store._ensure_section("orders"):
             return {"ok": False, "error": "section_open_failed"}
 
@@ -84,9 +93,14 @@ class OrderAutomation:
             self.page.locator('button:has-text("등록"), button:has-text("발송")').first.click(timeout=3000, force=True)
             time.sleep(3)
 
-            log_critical("OTHER", f"운송장 등록: {order_id}",
-                         order_id=order_id, courier=courier, tracking_no=tracking_no,
-                         mode="tracking_register")
+            log_critical(
+                "OTHER",
+                f"운송장 등록: {order_id}",
+                order_id=order_id,
+                courier=courier,
+                tracking_no=tracking_no,
+                mode="tracking_register",
+            )
             return {"ok": True, "order_id": order_id, "tracking_no": tracking_no}
         except Exception as e:
             return {"ok": False, "error": str(e)[:80]}
@@ -101,7 +115,9 @@ class OrderAutomation:
         results = []
         for item in items:
             r = self.register_tracking(
-                item["order_id"], item.get("courier", ""), item["tracking_no"],
+                item["order_id"],
+                item.get("courier", ""),
+                item["tracking_no"],
                 confirm=confirm,
             )
             results.append({"order_id": item["order_id"], **r})
@@ -115,6 +131,7 @@ class OrderAutomation:
         """취소/반품 요청 모니터링."""
         # 취소 관리 페이지
         from scripts.naver.smartstore.bulk import _init_db
+
         _init_db()  # DB 활성화 (필요시)
         # 추후 구현: 취소 요청 자동 알림 / DB 기록
         return {"ok": True, "note": "취소 관리 페이지 진입 + 추출 로직 보강 예정"}

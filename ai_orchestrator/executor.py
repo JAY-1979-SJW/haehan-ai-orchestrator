@@ -1,17 +1,18 @@
 import json
 import logging
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from .models import ExecutionPlan, TaskRequest
+from .connectors import playwright_connector, system_connector
 from .execution_limits import (
-    check_rate_limits, check_execution_policy,
-    record_execution, run_with_timeout,
-    BLOCK_RATE_ACTION, BLOCK_RATE_USER, BLOCK_TIMEOUT,
-    BLOCK_TASK_COOLDOWN, BLOCK_USER_5MIN, BLOCK_NIGHT,
+    BLOCK_TIMEOUT,
     EXEC_TIMEOUT_SEC,
+    check_execution_policy,
+    check_rate_limits,
+    record_execution,
+    run_with_timeout,
 )
-from .connectors import system_connector, playwright_connector
+from .models import ExecutionPlan, TaskRequest
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def _fetch_web_page_audit_extras(action_type: str, result: str) -> str:
     if action_type != "fetch_web_page":
         return ""
     if result.startswith("BLOCKED:"):
-        return f" blocked_reason={result[len('BLOCKED:'):]}"
+        return f" blocked_reason={result[len('BLOCKED:') :]}"
     try:
         parsed = json.loads(result)
     except (json.JSONDecodeError, ValueError):
@@ -69,10 +70,10 @@ def _dispatch_allowed_action(req: TaskRequest) -> str:
 
 def execute(
     plan: ExecutionPlan,
-    req: Optional[TaskRequest] = None,
+    req: TaskRequest | None = None,
     risk_level: str = "",
-    worker: Optional[Callable[[TaskRequest], str]] = None,
-    timeout_sec: Optional[int] = None,
+    worker: Callable[[TaskRequest], str] | None = None,
+    timeout_sec: int | None = None,
 ) -> str:
     """실행 디스패치. req/risk_level 을 전달하면 low 경로에 rate+timeout 적용.
 
@@ -98,9 +99,14 @@ def execute(
     allowed, reason = check_rate_limits(req)
     if not allowed:
         status = f"BLOCKED:{reason}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         note=f"limit_hit={reason}")
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            note=f"limit_hit={reason}",
+        )
         logger.warning("실행 리밋 차단 | task=%s | reason=%s", req.task_id, reason)
         return status
 
@@ -111,18 +117,28 @@ def execute(
     try:
         result = run_with_timeout(lambda: w(req), t)
         duration_ms = int((time.time() - t0) * 1000)
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=result, risk_level=risk_level,
-                         duration_ms=duration_ms)
-        logger.info("low 실행 완료 | task=%s | %dms | %s",
-                    req.task_id, duration_ms, result)
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=result,
+            risk_level=risk_level,
+            duration_ms=duration_ms,
+        )
+        logger.info("low 실행 완료 | task=%s | %dms | %s", req.task_id, duration_ms, result)
         return result
     except TimeoutError:
         duration_ms = int((time.time() - t0) * 1000)
         status = f"BLOCKED:{BLOCK_TIMEOUT}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         duration_ms=duration_ms, note=f"timeout={t}s")
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            duration_ms=duration_ms,
+            note=f"timeout={t}s",
+        )
         logger.warning("low 실행 타임아웃 | task=%s | limit=%ds", req.task_id, t)
         return status
 
@@ -131,8 +147,8 @@ def execute_task(
     req: TaskRequest,
     risk_level: str,
     *,
-    worker: Optional[Callable[[TaskRequest], str]] = None,
-    timeout_sec: Optional[int] = None,
+    worker: Callable[[TaskRequest], str] | None = None,
+    timeout_sec: int | None = None,
 ) -> str:
     """승인형 실제 실행 경로.
 
@@ -146,9 +162,14 @@ def execute_task(
     """
     if risk_level in ("high", "critical"):
         status = f"BLOCKED:{risk_level}_not_allowed"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         note="high/critical 실행 금지")
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            note="high/critical 실행 금지",
+        )
         logger.warning("execute_task 차단 | task=%s | risk=%s", req.task_id, risk_level)
         return status
 
@@ -156,31 +177,44 @@ def execute_task(
     allowed, reason = check_rate_limits(req)
     if not allowed:
         status = f"BLOCKED:{reason}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         note=f"limit_hit={reason}")
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            note=f"limit_hit={reason}",
+        )
         return status
 
     # 신규 승인형 정책 (task cooldown / user 5min / night)
     allowed, reason = check_execution_policy(req)
     if not allowed:
         status = f"BLOCKED:{reason}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         note=f"policy_hit={reason}")
-        logger.warning("execute_task 정책 차단 | task=%s | reason=%s",
-                       req.task_id, reason)
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            note=f"policy_hit={reason}",
+        )
+        logger.warning("execute_task 정책 차단 | task=%s | reason=%s", req.task_id, reason)
         return status
 
     # whitelist 검사: 지정된 read-only action 만 실행 허용.
     # 외부에서 worker 를 명시적으로 주입한 경우(테스트/예외 루트)는 통과.
     if worker is None and req.action_type not in ALLOWED_ACTIONS:
         status = f"BLOCKED:{BLOCK_NOT_ALLOWED}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         note=f"action_not_whitelisted={req.action_type}")
-        logger.warning("execute_task whitelist 차단 | task=%s | action=%s",
-                       req.task_id, req.action_type)
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            note=f"action_not_whitelisted={req.action_type}",
+        )
+        logger.warning("execute_task whitelist 차단 | task=%s | action=%s", req.task_id, req.action_type)
         return status
 
     t = timeout_sec if timeout_sec is not None else EXEC_TIMEOUT_SEC
@@ -190,22 +224,29 @@ def execute_task(
         result = run_with_timeout(lambda: w(req), t)
         duration_ms = int((time.time() - t0) * 1000)
         record_execution(
-            req.task_id, req.action_type, req.requested_by,
-            status=result, risk_level=risk_level,
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=result,
+            risk_level=risk_level,
             duration_ms=duration_ms,
             note=(
                 f"approved_execution execution_type=REAL "
-                f"action={req.action_type} target={req.target}"
-                + _fetch_web_page_audit_extras(req.action_type, result)
+                f"action={req.action_type} target={req.target}" + _fetch_web_page_audit_extras(req.action_type, result)
             ),
         )
-        logger.info("execute_task 완료 | task=%s | %dms | %s",
-                    req.task_id, duration_ms, result)
+        logger.info("execute_task 완료 | task=%s | %dms | %s", req.task_id, duration_ms, result)
         return result
     except TimeoutError:
         duration_ms = int((time.time() - t0) * 1000)
         status = f"BLOCKED:{BLOCK_TIMEOUT}"
-        record_execution(req.task_id, req.action_type, req.requested_by,
-                         status=status, risk_level=risk_level,
-                         duration_ms=duration_ms, note=f"timeout={t}s")
+        record_execution(
+            req.task_id,
+            req.action_type,
+            req.requested_by,
+            status=status,
+            risk_level=risk_level,
+            duration_ms=duration_ms,
+            note=f"timeout={t}s",
+        )
         return status

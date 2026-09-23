@@ -1,16 +1,23 @@
 """
 네이버 도메인 프로필 테스트
 """
+
 import pytest
+
 from ai_orchestrator.browser_tool.domain_profile_registry import (
-    get_domain_profile, is_domain_registered, get_login_execution,
+    get_domain_profile,
     is_action_blocked_for_domain,
+    is_domain_registered,
 )
 
 NAVER_DOMAINS = [
-    "naver.com", "www.naver.com", "nid.naver.com",
-    "cafe.naver.com", "m.cafe.naver.com",
-    "blog.naver.com", "m.blog.naver.com",
+    "naver.com",
+    "www.naver.com",
+    "nid.naver.com",
+    "cafe.naver.com",
+    "m.cafe.naver.com",
+    "blog.naver.com",
+    "m.blog.naver.com",
 ]
 
 
@@ -62,8 +69,7 @@ class TestNaverCafeProfile:
 
     def test_cafe_bulk_spam_blocked(self):
         profile = get_domain_profile("cafe.naver.com")
-        assert "bulk_spam_post" in profile["blocked_actions"] or \
-               "bulk_spam_comment" in profile["blocked_actions"]
+        assert "bulk_spam_post" in profile["blocked_actions"] or "bulk_spam_comment" in profile["blocked_actions"]
 
     def test_cafe_cookie_export_blocked(self):
         assert is_action_blocked_for_domain("cafe.naver.com", "cookie_export")

@@ -17,22 +17,20 @@
   - 1회 사용 후 status=used 로 잠긴다. 만료/폐기/사용 모두 일관 generic
     "invalid_registration_code" 결과로 처리해 외부에서 상태를 구분하지 못하게 한다.
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 # Store 구조 import (REGCODE-2)
 from .registration_code_store import (
-    RegistrationCode,
-    IssueResult,
-    InvalidTTLError,
-    CodeExchangeError,
     DEFAULT_TTL_MINUTES,
-    MAX_TTL_MINUTES,
     INVALID_CODE_MESSAGE,
-    get_registration_code_store,
-    reset_store_for_tests,
+    MAX_TTL_MINUTES,
+    CodeExchangeError,
+    InvalidTTLError,
+    IssueResult,
+    RegistrationCode,
     _now,
+    get_registration_code_store,
 )
 
 # Public API 래퍼 (기존 호출처 호환성 유지)
@@ -42,7 +40,7 @@ def issue_code(
     *,
     label: str,
     expires_in_minutes: int = DEFAULT_TTL_MINUTES,
-    allowed_actions: Optional[list[str]] = None,
+    allowed_actions: list[str] | None = None,
     note: str = "",
     issued_by: str,
     issuer_role: str = "",
@@ -67,7 +65,7 @@ def consume_code(raw_code: str) -> RegistrationCode:
     return store.consume(raw_code)
 
 
-def get_code(code_id: str) -> Optional[RegistrationCode]:
+def get_code(code_id: str) -> RegistrationCode | None:
     """code_id로 code 조회."""
     store = get_registration_code_store()
     return store.get(code_id)
@@ -79,7 +77,7 @@ def list_codes() -> list[dict]:
     return store.list()
 
 
-def revoke_code(code_id: str, *, actor: str) -> Optional[RegistrationCode]:
+def revoke_code(code_id: str, *, actor: str) -> RegistrationCode | None:
     """code 폐기."""
     store = get_registration_code_store()
     return store.revoke(code_id, actor=actor)
@@ -99,19 +97,19 @@ def clear() -> None:
 
 # Public exports (기존 호환성)
 __all__ = [
-    "RegistrationCode",
-    "IssueResult",
-    "InvalidTTLError",
-    "CodeExchangeError",
     "DEFAULT_TTL_MINUTES",
-    "MAX_TTL_MINUTES",
     "INVALID_CODE_MESSAGE",
-    "issue_code",
-    "consume_code",
-    "get_code",
-    "list_codes",
-    "revoke_code",
+    "MAX_TTL_MINUTES",
+    "CodeExchangeError",
+    "InvalidTTLError",
+    "IssueResult",
+    "RegistrationCode",
+    "_now",
     "attach_used_agent",
     "clear",
-    "_now",
+    "consume_code",
+    "get_code",
+    "issue_code",
+    "list_codes",
+    "revoke_code",
 ]

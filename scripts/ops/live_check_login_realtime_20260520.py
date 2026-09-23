@@ -10,11 +10,11 @@ C: 로그인 페이지 Runtime.evaluate 폴링 — 로그인 진행/실패/추�
 - 쿠키/토큰/PW/OTP 원문 절대 출력 금지
 - 세션 추정은 'has_session_cookie: bool' 만
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
-import time
 import urllib.request
 
 import websockets
@@ -23,31 +23,59 @@ CDP_PORT = 9222
 WS_URL = "ws://127.0.0.1:8765/ws/ui"
 
 WS_TYPES = {
-    "browser_start_result", "browser_status",
-    "tab_list", "tab_added", "tab_removed", "tab_updated",
-    "browser_action_started", "browser_action_completed", "browser_action_result",
-    "login_state_change", "login_state_changed",
-    "login_action_started", "login_target_selected",
-    "logged_in_detected", "command_auto_resumed",
-    "popup_detected", "popup_closed", "auth_popup_detected", "challenge_required",
+    "browser_start_result",
+    "browser_status",
+    "tab_list",
+    "tab_added",
+    "tab_removed",
+    "tab_updated",
+    "browser_action_started",
+    "browser_action_completed",
+    "browser_action_result",
+    "login_state_change",
+    "login_state_changed",
+    "login_action_started",
+    "login_target_selected",
+    "logged_in_detected",
+    "command_auto_resumed",
+    "popup_detected",
+    "popup_closed",
+    "auth_popup_detected",
+    "challenge_required",
 }
 
 # 로그인 완료 신호 (URL/HTML 패턴)
 LOGGED_IN_URL_HINT = ("www.naver.com", "/main", "mypage", "section.blog")
 ERR_PHRASES = (
-    "비밀번호", "아이디", "확인", "재시도", "잠금", "보안",
-    "캡차", "captcha", "차단", "오류", "다시 시도",
+    "비밀번호",
+    "아이디",
+    "확인",
+    "재시도",
+    "잠금",
+    "보안",
+    "캡차",
+    "captcha",
+    "차단",
+    "오류",
+    "다시 시도",
 )
 CHALLENGE_PHRASES = (
-    "SMS", "휴대전화", "추가 인증", "본인 확인", "보안 인증",
-    "QR", "이메일 인증", "OTP",
+    "SMS",
+    "휴대전화",
+    "추가 인증",
+    "본인 확인",
+    "보안 인증",
+    "QR",
+    "이메일 인증",
+    "OTP",
 )
 
 
 def fetch_targets() -> list[dict]:
     try:
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{CDP_PORT}/json/list", timeout=1.0,
+            f"http://127.0.0.1:{CDP_PORT}/json/list",
+            timeout=1.0,
         ) as r:
             data = json.loads(r.read().decode("utf-8") or "[]")
     except Exception:
@@ -58,7 +86,8 @@ def fetch_targets() -> list[dict]:
 def activate_target(target_id: str) -> bool:
     try:
         with urllib.request.urlopen(
-            f"http://127.0.0.1:{CDP_PORT}/json/activate/{target_id}", timeout=1.0,
+            f"http://127.0.0.1:{CDP_PORT}/json/activate/{target_id}",
+            timeout=1.0,
         ):
             return True
     except Exception:
@@ -67,12 +96,18 @@ def activate_target(target_id: str) -> bool:
 
 async def _eval_on_target(ws_url: str, expr: str) -> dict | None:
     import websockets as _ws
+
     try:
         async with _ws.connect(ws_url, max_size=4 * 1024 * 1024) as conn:
-            await conn.send(json.dumps({
-                "id": 1, "method": "Runtime.evaluate",
-                "params": {"expression": expr, "returnByValue": True},
-            }))
+            await conn.send(
+                json.dumps(
+                    {
+                        "id": 1,
+                        "method": "Runtime.evaluate",
+                        "params": {"expression": expr, "returnByValue": True},
+                    }
+                )
+            )
             raw = await asyncio.wait_for(conn.recv(), timeout=3.0)
             r = json.loads(raw)
             return r.get("result", {}).get("result", {}).get("value")
@@ -205,7 +240,7 @@ async def page_poll() -> None:
         except Exception:
             data = {"raw": str(val)[:200]}
         sig = (
-            f"{data.get('href','')}|{data.get('title','')}|"
+            f"{data.get('href', '')}|{data.get('title', '')}|"
             f"{int(bool(data.get('has_logout')))}|{int(bool(data.get('has_naver_session_cookie')))}|"
             f"{','.join(data.get('err_hits') or [])}|{','.join(data.get('challenge_hits') or [])}"
         )
@@ -219,7 +254,7 @@ async def page_poll() -> None:
             elif data.get("err_hits"):
                 label = "LOGIN_ERROR_SHOWN"
             print(
-                f"[C] {label} href={data.get('href','')[:120]} title={data.get('title','')[:60]} "
+                f"[C] {label} href={data.get('href', '')[:120]} title={data.get('title', '')[:60]} "
                 f"id_form={data.get('has_id_form')} pw_form={data.get('has_pw_form')} "
                 f"logout={data.get('has_logout')} mypage={data.get('has_mypage')} "
                 f"session_cookie={data.get('has_naver_session_cookie')} "

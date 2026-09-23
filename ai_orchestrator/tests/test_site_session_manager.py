@@ -1,8 +1,6 @@
 """session_manager 및 profile path 분리 검증."""
-from __future__ import annotations
 
-import os
-from pathlib import Path
+from __future__ import annotations
 
 import pytest
 
@@ -59,7 +57,8 @@ def test_meta_roundtrip_and_update():
     assert m1.detected_url.endswith("/login")
 
     session_manager.mark_reauth_success(
-        "example_portal", detected_url="https://example.test/",
+        "example_portal",
+        detected_url="https://example.test/",
     )
     m2 = session_manager.get_meta("example_portal")
     assert m2.status == "ACTIVE"
@@ -71,6 +70,7 @@ def test_meta_roundtrip_and_update():
 def test_meta_does_not_leak_to_stdout(caplog):
     """메타 갱신 로그에는 민감 원문이 남지 않아야 한다."""
     import logging
+
     caplog.set_level(logging.INFO, logger="ai_orchestrator.sites.session_manager")
     session_manager.mark_active(
         "example_portal",

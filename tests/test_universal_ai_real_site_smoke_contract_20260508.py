@@ -1,8 +1,10 @@
 """tests/test_universal_ai_real_site_smoke_contract_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.real_site_smoke_runner import (
-    run_all_smoke_scenarios, run_smoke_scenario, is_safe_readonly_target,
     _SMOKE_SCENARIOS,
+    is_safe_readonly_target,
+    run_all_smoke_scenarios,
+    run_smoke_scenario,
 )
 
 

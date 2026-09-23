@@ -11,9 +11,10 @@ DNS 저장/변경 없음. 서버 반영 없음. 쿠키 저장 없음.
     HOLD     — 보류. 후보로 남겨 두되 현재 작업 범위 외
     LEGACY   — 기존 병행 경로. 신규 연결 없이 유지만
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -22,12 +23,13 @@ from typing import Any
 
 STATUS_CURRENT = "CURRENT"
 STATUS_PLANNED = "PLANNED"
-STATUS_HOLD    = "HOLD"
-STATUS_LEGACY  = "LEGACY"
+STATUS_HOLD = "HOLD"
+STATUS_LEGACY = "LEGACY"
 
 # ---------------------------------------------------------------------------
 # SiteSettingsEntry — 개별 도메인/경로 설정 항목
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class SiteSettingsEntry:
@@ -60,7 +62,6 @@ class SiteSettingsEntry:
 # ---------------------------------------------------------------------------
 
 CANONICAL_SITE_SETTINGS: tuple[SiteSettingsEntry, ...] = (
-
     # ── CURRENT: 대표 AI 자동업무 본관 ───────────────────────────────────────
     SiteSettingsEntry(
         entry_id="autowork_haehan_ai_kr",
@@ -73,7 +74,6 @@ CANONICAL_SITE_SETTINGS: tuple[SiteSettingsEntry, ...] = (
         purpose="AI 자동업무 본관 — 대표 서브도메인",
         notes="DNS A 레코드 등록 완료. SSL 발급 완료. nginx 활성.",
     ),
-
     # ── LEGACY: 기존 병행 경로 ────────────────────────────────────────────────
     SiteSettingsEntry(
         entry_id="orchestrator_path",
@@ -97,7 +97,6 @@ CANONICAL_SITE_SETTINGS: tuple[SiteSettingsEntry, ...] = (
         purpose="기존 orchestrator API 경로 (레거시 병행)",
         notes="autowork 전환 후에도 레거시 경로 병행 운영 중.",
     ),
-
     # ── PLANNED / HOLD: 후보 서브도메인 ──────────────────────────────────────
     SiteSettingsEntry(
         entry_id="assistant_haehan_ai_kr",
@@ -147,13 +146,13 @@ def get_canonical_primary() -> SiteSettingsEntry:
 
 
 __all__ = [
-    "SiteSettingsEntry",
     "CANONICAL_SITE_SETTINGS",
     "STATUS_CURRENT",
-    "STATUS_PLANNED",
     "STATUS_HOLD",
     "STATUS_LEGACY",
+    "STATUS_PLANNED",
+    "SiteSettingsEntry",
+    "get_canonical_primary",
     "get_entry",
     "list_by_status",
-    "get_canonical_primary",
 ]

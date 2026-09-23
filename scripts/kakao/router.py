@@ -1,15 +1,17 @@
 """카카오 서비스 라우터"""
+
 from __future__ import annotations
+
+from scripts.gate import check as gate_check
 
 from . import dev_console
 from .base import check_session
-from scripts.gate import check as gate_check
 
 __status__ = {
     "tasks": {
         "session-check": "done",
-        "login":         "done",
-        "dev console":   "partial",
+        "login": "done",
+        "dev console": "partial",
     },
     "note": "로그인·세션 확인 완성, 개발콘솔은 기본 연결만 구현",
 }
@@ -50,7 +52,7 @@ def _cmd_session_check() -> None:
 
 
 def _cmd_login() -> None:
-    from scripts.kakao.auth import login, is_logged_in as _is_logged_in
+    from scripts.kakao.auth import login
     from scripts.web_connector import browser_session
 
     print("=" * 60)
@@ -64,6 +66,7 @@ def _cmd_login() -> None:
         else:
             print("\n브라우저에서 카카오 계정으로 로그인하세요 (최대 5분 대기)")
             from scripts.login_detector import monitor_for_login
+
             detected = monitor_for_login(page, check_interval=2, timeout_s=300)
             if detected.get("detected"):
                 print(f"✓ 로그인 감지 완료 — {detected.get('elapsed_s', 0):.0f}초")

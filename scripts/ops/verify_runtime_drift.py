@@ -8,17 +8,16 @@ This check is read-only. It compares:
 The container normally has no .git directory, so the script fingerprints the
 runtime source tree inside the container and compares it with the server repo.
 """
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SERVER = "haehan-app"
@@ -406,14 +405,12 @@ def evaluate(local: dict[str, Any], server: dict[str, Any]) -> dict[str, Any]:
         },
         {
             "id": "server_runtime_matches_container_runtime",
-            "ok": server.get("fingerprint", {}).get("sha256")
-            == server.get("container_fingerprint", {}).get("sha256"),
+            "ok": server.get("fingerprint", {}).get("sha256") == server.get("container_fingerprint", {}).get("sha256"),
             "detail": "server runtime source fingerprint must equal container source fingerprint",
         },
         {
             "id": "local_runtime_matches_container_runtime",
-            "ok": local.get("fingerprint", {}).get("sha256")
-            == server.get("container_fingerprint", {}).get("sha256"),
+            "ok": local.get("fingerprint", {}).get("sha256") == server.get("container_fingerprint", {}).get("sha256"),
             "detail": "local runtime source fingerprint must equal container source fingerprint",
         },
         {

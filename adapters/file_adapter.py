@@ -1,16 +1,35 @@
 """
 파일 어댑터 — 읽기/조회/preview만 허용, 실제 쓰기/삭제 금지
 """
-import os
+
 import difflib
-from typing import Union
+import os
 
 MAX_FILE_SIZE = 1 * 1024 * 1024  # 1 MB
 BINARY_EXTENSIONS = {
-    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".svg",
-    ".pdf", ".zip", ".tar", ".gz", ".exe", ".dll", ".so", ".bin",
-    ".mp3", ".mp4", ".wav", ".avi", ".mov",
-    ".pyc", ".pyo", ".pyd",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".ico",
+    ".svg",
+    ".pdf",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".exe",
+    ".dll",
+    ".so",
+    ".bin",
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".avi",
+    ".mov",
+    ".pyc",
+    ".pyo",
+    ".pyd",
 }
 
 
@@ -81,11 +100,13 @@ def list_dir(path: str, allowed_paths: list, blocked_paths: list) -> dict:
         entries = []
         for name in sorted(os.listdir(path)):
             full = os.path.join(path, name)
-            entries.append({
-                "name": name,
-                "type": "dir" if os.path.isdir(full) else "file",
-                "size": os.path.getsize(full) if os.path.isfile(full) else None,
-            })
+            entries.append(
+                {
+                    "name": name,
+                    "type": "dir" if os.path.isdir(full) else "file",
+                    "size": os.path.getsize(full) if os.path.isfile(full) else None,
+                }
+            )
         return {"status": "OK", "path": path, "entries": entries, "count": len(entries)}
     except OSError as e:
         return {"status": "ERROR", "reason": str(e)}
@@ -114,12 +135,14 @@ def preview_patch(path: str, new_content: str, allowed_paths: list, blocked_path
     else:
         original = ""
 
-    diff = list(difflib.unified_diff(
-        original.splitlines(keepends=True),
-        new_content.splitlines(keepends=True),
-        fromfile=f"a/{os.path.basename(path)}",
-        tofile=f"b/{os.path.basename(path)}",
-    ))
+    diff = list(
+        difflib.unified_diff(
+            original.splitlines(keepends=True),
+            new_content.splitlines(keepends=True),
+            fromfile=f"a/{os.path.basename(path)}",
+            tofile=f"b/{os.path.basename(path)}",
+        )
+    )
     return {
         "status": "PREVIEW_ONLY",
         "path": path,

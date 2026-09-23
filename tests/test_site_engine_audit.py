@@ -1,5 +1,4 @@
 """Unit tests for scripts.site_engine.audit."""
-import pytest
 
 from scripts.site_engine.audit import (
     SiteEngineAuditEvent,

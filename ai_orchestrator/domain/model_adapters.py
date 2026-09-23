@@ -12,26 +12,25 @@
 - DB write 금지
 - secret/token/password 포함 금지
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from .models import (
-    ExternalWork,
     ExternalAppBridge,
-    Integration,
-    SafetyPolicy,
-    WorkTrade,
-    WorkTradeScope,
-    IntegrationStatus,
+    ExternalWork,
     HandoffMode,
+    Integration,
+    IntegrationStatus,
     SafetyDecision,
+    SafetyPolicy,
 )
-
 
 # ===========================================================================
 # ExternalWork adapter
 # ===========================================================================
+
 
 def adapt_external_work_entry(entry: Any) -> ExternalWork:
     """ExternalWorkEntry (기존 registry frozen dataclass) → ExternalWork 변환.
@@ -95,6 +94,7 @@ def list_external_works_as_models() -> list[ExternalWork]:
     """기존 external_work_registry 전체를 ExternalWork 모델 목록으로 반환."""
     try:
         from ai_orchestrator.external_work_registry import list_external_works
+
         entries = list_external_works()
         return [adapt_external_work_entry(e) for e in entries]
     except Exception:
@@ -165,6 +165,7 @@ def list_integrations_as_models() -> list[Integration]:
     """ops_router._STATIC_INTEGRATIONS 전체를 Integration 모델 목록으로 반환."""
     try:
         from ai_orchestrator.ops_router import _STATIC_INTEGRATIONS
+
         return [adapt_static_integration(raw) for raw in _STATIC_INTEGRATIONS]
     except Exception:
         return []
@@ -208,8 +209,7 @@ _BRIDGE_REGISTRY: dict[str, dict[str, Any]] = {
         "capability": ("나라장터_입찰", "전자입찰_보조", "입찰_현황_조회"),
         "handoff_mode": HandoffMode.USER_HANDOFF,
         "execution_location": "USER_DIRECT_REQUIRED",
-        "safety_policy_ids": ("pol-no-bid-auto-execute", "pol-user-direct-only",
-                               "pol-no-credential-store"),
+        "safety_policy_ids": ("pol-no-bid-auto-execute", "pol-user-direct-only", "pol-no-credential-store"),
     },
     "doc-auto-bridge": {
         "app_type": "DOCUMENT_AUTOMATION",
@@ -225,20 +225,22 @@ def get_all_bridges() -> list[ExternalAppBridge]:
     """ExternalAppBridge 전체 목록을 반환 (FUTURE_INTEGRATION 상태)."""
     result = []
     for bridge_id, info in _BRIDGE_REGISTRY.items():
-        result.append(ExternalAppBridge(
-            bridge_id=bridge_id,
-            app_type=info["app_type"],
-            capability=info["capability"],
-            handoff_mode=info["handoff_mode"],
-            execution_location=info["execution_location"],
-            approval_required=True,
-            safety_policy_ids=info.get("safety_policy_ids", ()),
-            status="FUTURE_INTEGRATION",
-        ))
+        result.append(
+            ExternalAppBridge(
+                bridge_id=bridge_id,
+                app_type=info["app_type"],
+                capability=info["capability"],
+                handoff_mode=info["handoff_mode"],
+                execution_location=info["execution_location"],
+                approval_required=True,
+                safety_policy_ids=info.get("safety_policy_ids", ()),
+                status="FUTURE_INTEGRATION",
+            )
+        )
     return result
 
 
-def get_bridge(bridge_id: str) -> Optional[ExternalAppBridge]:
+def get_bridge(bridge_id: str) -> ExternalAppBridge | None:
     """특정 bridge_id의 ExternalAppBridge 반환."""
     info = _BRIDGE_REGISTRY.get(bridge_id)
     if not info:
@@ -309,8 +311,7 @@ _SAFETY_POLICY_SUMMARY: list[dict[str, Any]] = [
         "name": "외부 전문 앱 보류 정책",
         "category": "hold",
         "severity": "warn",
-        "applies_to": ("app_type:CAD", "app_type:HWPX", "app_type:OFFICE",
-                        "app_type:TAX", "app_type:BID"),
+        "applies_to": ("app_type:CAD", "app_type:HWPX", "app_type:OFFICE", "app_type:TAX", "app_type:BID"),
         "decision": SafetyDecision.HOLD,
         "reason": "전문 앱 기능은 외부 앱 브릿지 계약 완료 후 실행 가능",
         "required_execution_location": None,
@@ -334,25 +335,27 @@ def list_safety_policies() -> list[SafetyPolicy]:
     """현재 구현된 SafetyPolicy 요약 목록을 반환."""
     result = []
     for info in _SAFETY_POLICY_SUMMARY:
-        result.append(SafetyPolicy(
-            policy_id=info["policy_id"],
-            name=info["name"],
-            category=info["category"],
-            severity=info["severity"],
-            applies_to=info["applies_to"],
-            decision=info["decision"],
-            reason=info["reason"],
-            required_execution_location=info.get("required_execution_location"),
-        ))
+        result.append(
+            SafetyPolicy(
+                policy_id=info["policy_id"],
+                name=info["name"],
+                category=info["category"],
+                severity=info["severity"],
+                applies_to=info["applies_to"],
+                decision=info["decision"],
+                reason=info["reason"],
+                required_execution_location=info.get("required_execution_location"),
+            )
+        )
     return result
 
 
 __all__ = [
     "adapt_external_work_entry",
-    "list_external_works_as_models",
     "adapt_static_integration",
-    "list_integrations_as_models",
     "get_all_bridges",
     "get_bridge",
+    "list_external_works_as_models",
+    "list_integrations_as_models",
     "list_safety_policies",
 ]

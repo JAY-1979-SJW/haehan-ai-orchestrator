@@ -6,18 +6,18 @@
   - HTML 대시보드 자동 생성
   - DB 기반 시계열
 """
+
 from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
@@ -53,6 +53,7 @@ class AnalyticsDashboard:
     def collect_today(self) -> dict:
         """오늘의 매출/방문/주문 자동 수집 + DB 저장."""
         from scripts.naver.smartstore import NaverSmartStore
+
         store = NaverSmartStore(self.page)
         stats = store.stats()
         if not stats.get("ok"):
@@ -68,10 +69,16 @@ class AnalyticsDashboard:
                (ts, date_key, sales_today, sales_week, sales_month,
                 visitors_today, orders_today, raw_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (now, today,
-             stats.get("sales_today"), stats.get("sales_week"), stats.get("sales_month"),
-             stats.get("visitors_today"), stats.get("orders_today"),
-             json.dumps(stats, ensure_ascii=False)),
+            (
+                now,
+                today,
+                stats.get("sales_today"),
+                stats.get("sales_week"),
+                stats.get("sales_month"),
+                stats.get("visitors_today"),
+                stats.get("orders_today"),
+                json.dumps(stats, ensure_ascii=False),
+            ),
         )
         conn.commit()
         conn.close()
@@ -83,14 +90,11 @@ class AnalyticsDashboard:
         _init_db()
         conn = sqlite3.connect(str(DB_PATH))
         conn.row_factory = sqlite3.Row
-        rows = conn.execute(
-            "SELECT * FROM smartstore_metrics_log ORDER BY id DESC LIMIT ?", (days,)
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM smartstore_metrics_log ORDER BY id DESC LIMIT ?", (days,)).fetchall()
         conn.close()
         return [dict(r) for r in rows]
 
-    def generate_html(self, out_path: str = "data/smartstore_dashboard.html",
-                      days: int = 30) -> dict:
+    def generate_html(self, out_path: str = "data/smartstore_dashboard.html", days: int = 30) -> dict:
         """HTML 대시보드 자동 생성."""
         history = self.get_history(days=days)
         if not history:
@@ -120,14 +124,14 @@ class AnalyticsDashboard:
 </style></head>
 <body>
 <h1>📊 스마트스토어 분석 대시보드</h1>
-<p>생성: {datetime.now().strftime('%Y-%m-%d %H:%M')} | 최근 데이터: {latest.get('date_key', '')}</p>
+<p>생성: {datetime.now().strftime("%Y-%m-%d %H:%M")} | 최근 데이터: {latest.get("date_key", "")}</p>
 
 <div class="kpi-row">
-  <div class="kpi"><div class="num">{latest.get('sales_today') or '-'}</div><div class="label">오늘 매출 (원)</div></div>
-  <div class="kpi"><div class="num">{latest.get('sales_week') or '-'}</div><div class="label">주간 매출</div></div>
-  <div class="kpi"><div class="num">{latest.get('sales_month') or '-'}</div><div class="label">월간 매출</div></div>
-  <div class="kpi"><div class="num">{latest.get('orders_today') or '-'}</div><div class="label">오늘 주문</div></div>
-  <div class="kpi"><div class="num">{latest.get('visitors_today') or '-'}</div><div class="label">오늘 방문</div></div>
+  <div class="kpi"><div class="num">{latest.get("sales_today") or "-"}</div><div class="label">오늘 매출 (원)</div></div>
+  <div class="kpi"><div class="num">{latest.get("sales_week") or "-"}</div><div class="label">주간 매출</div></div>
+  <div class="kpi"><div class="num">{latest.get("sales_month") or "-"}</div><div class="label">월간 매출</div></div>
+  <div class="kpi"><div class="num">{latest.get("orders_today") or "-"}</div><div class="label">오늘 주문</div></div>
+  <div class="kpi"><div class="num">{latest.get("visitors_today") or "-"}</div><div class="label">오늘 방문</div></div>
 </div>
 
 <h2>일자별 매출 ({days}일)</h2>
@@ -144,6 +148,5 @@ class AnalyticsDashboard:
         out = Path(out_path)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(html, encoding="utf-8")
-        log_critical("OTHER", f"대시보드 HTML 생성: {out.name}",
-                     days=days, file=str(out), mode="analytics_html")
+        log_critical("OTHER", f"대시보드 HTML 생성: {out.name}", days=days, file=str(out), mode="analytics_html")
         return {"ok": True, "file": str(out), "data_days": len(history)}

@@ -3,21 +3,22 @@
 실제 React 렌더링, 외부 API 호출, DB 접근 없음.
 파일 존재 및 내용 검증 중심.
 """
+
 from __future__ import annotations
 
 import pathlib
 import subprocess
 import sys
 
-import pytest
-
 TARGET = pathlib.Path("admin-web/src/standard-ui")
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────
 
+
 def read(path: pathlib.Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
+
 
 def all_tsx_ts():
     return list(TARGET.rglob("*.ts")) + list(TARGET.rglob("*.tsx"))
@@ -25,11 +26,13 @@ def all_tsx_ts():
 
 # ── 1. 폴더 존재 ──────────────────────────────────────────────────────
 
+
 def test_standard_ui_dir_exists():
     assert TARGET.is_dir(), f"표준 UI 폴더 없음: {TARGET}"
 
 
 # ── 2. tokens 파일 ────────────────────────────────────────────────────
+
 
 def test_tokens_dir_exists():
     assert (TARGET / "tokens").is_dir()
@@ -57,6 +60,7 @@ def test_shadows_ts_exists():
 
 # ── 3. 필수 색상 존재 ─────────────────────────────────────────────────
 
+
 def test_primary_orange_token():
     src = read(TARGET / "tokens/colors.ts")
     assert "#F97316" in src, "primaryOrange #F97316 없음"
@@ -75,6 +79,7 @@ def test_status_colors_exist():
 
 # ── 4. TopAccentLine ──────────────────────────────────────────────────
 
+
 def test_top_accent_line_exists():
     assert (TARGET / "components/layout/TopAccentLine.tsx").is_file()
 
@@ -85,6 +90,7 @@ def test_top_accent_line_is_4px_orange():
 
 
 # ── 5. AppShell ───────────────────────────────────────────────────────
+
 
 def test_app_shell_exists():
     assert (TARGET / "components/layout/AppShell.tsx").is_file()
@@ -97,6 +103,7 @@ def test_app_shell_uses_top_accent_line():
 
 # ── 6. StatusBadge ────────────────────────────────────────────────────
 
+
 def test_status_badge_exists():
     assert (TARGET / "components/status/StatusBadge.tsx").is_file()
 
@@ -108,11 +115,13 @@ def test_status_badge_uses_status_colors():
 
 # ── 7. MetricCard ─────────────────────────────────────────────────────
 
+
 def test_metric_card_exists():
     assert (TARGET / "components/cards/MetricCard.tsx").is_file()
 
 
 # ── 8. DomainUnitCard ─────────────────────────────────────────────────
+
 
 def test_domain_unit_card_exists():
     assert (TARGET / "components/cards/DomainUnitCard.tsx").is_file()
@@ -120,11 +129,13 @@ def test_domain_unit_card_exists():
 
 # ── 9. GateStatusCard ─────────────────────────────────────────────────
 
+
 def test_gate_status_card_exists():
     assert (TARGET / "components/cards/GateStatusCard.tsx").is_file()
 
 
 # ── 10. ConstructionPhaseTable ────────────────────────────────────────
+
 
 def test_construction_phase_table_exists():
     assert (TARGET / "components/tables/ConstructionPhaseTable.tsx").is_file()
@@ -132,11 +143,13 @@ def test_construction_phase_table_exists():
 
 # ── 11. ReportList ────────────────────────────────────────────────────
 
+
 def test_report_list_exists():
     assert (TARGET / "components/lists/ReportList.tsx").is_file()
 
 
 # ── 12. WarehouseCard ─────────────────────────────────────────────────
+
 
 def test_warehouse_card_exists():
     assert (TARGET / "components/cards/WarehouseCard.tsx").is_file()
@@ -144,19 +157,29 @@ def test_warehouse_card_exists():
 
 # ── 13. index.ts export ───────────────────────────────────────────────
 
+
 def test_index_ts_exists():
     assert (TARGET / "index.ts").is_file()
 
 
 def test_index_exports_key_components():
     src = read(TARGET / "index.ts")
-    for name in ("TopAccentLine", "AppShell", "StatusBadge", "MetricCard",
-                 "DomainUnitCard", "GateStatusCard", "ConstructionPhaseTable",
-                 "ReportList", "WarehouseCard"):
+    for name in (
+        "TopAccentLine",
+        "AppShell",
+        "StatusBadge",
+        "MetricCard",
+        "DomainUnitCard",
+        "GateStatusCard",
+        "ConstructionPhaseTable",
+        "ReportList",
+        "WarehouseCard",
+    ):
         assert name in src, f"index.ts에 {name} export 없음"
 
 
 # ── 14. docs 존재 ─────────────────────────────────────────────────────
+
 
 def test_docs_design_system():
     assert (TARGET / "docs/design-system.md").is_file()
@@ -175,6 +198,7 @@ def test_docs_migration_guide():
 
 
 # ── 15. patterns 존재 ─────────────────────────────────────────────────
+
 
 def test_patterns_dashboard():
     assert (TARGET / "patterns/dashboard.md").is_file()
@@ -204,6 +228,7 @@ def test_patterns_warehouse():
 
 _SECRET_PATTERNS = ["localStorage", "sessionStorage", ".cookie", "getItem('g2b", "token"]
 
+
 def test_no_secret_session_in_components():
     sensitive = ["localStorage", "sessionStorage", "document.cookie", "access_token", "getItem('g2b"]
     for f in all_tsx_ts():
@@ -213,6 +238,7 @@ def test_no_secret_session_in_components():
 
 
 # ── 17. 외부 API 호출 없음 ────────────────────────────────────────────
+
 
 def test_no_api_calls():
     api_pats = ["fetch(", "axios.", "G2B_API_BASE", "api_client"]
@@ -224,6 +250,7 @@ def test_no_api_calls():
 
 # ── 18. DB 접근 없음 ─────────────────────────────────────────────────
 
+
 def test_no_db_access():
     db_pats = ["import sqlite3", "sqlalchemy", "from scripts.db", "from scripts.models"]
     for f in all_tsx_ts():
@@ -234,9 +261,9 @@ def test_no_db_access():
 
 # ── 19. audit script PASS ────────────────────────────────────────────
 
+
 def test_audit_script_passes():
     result = subprocess.run(
-        [sys.executable, "scripts/ops/audit_standard_ui_package.py"],
-        capture_output=True, text=True
+        [sys.executable, "scripts/ops/audit_standard_ui_package.py"], capture_output=True, text=True
     )
     assert result.returncode == 0, f"audit script 실패:\n{result.stdout}\n{result.stderr}"

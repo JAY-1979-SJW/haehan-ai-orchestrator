@@ -5,20 +5,18 @@
   - 내 상품 vs 경쟁사 가격/리뷰 비교
   - 가격 변동 시계열 추적 (DB)
 """
+
 from __future__ import annotations
 
-import json
-import re
 import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
@@ -57,7 +55,8 @@ class CompetitorAnalysis:
         self.page.goto(url, timeout=20000, wait_until="domcontentloaded")
         time.sleep(3)
 
-        products = self.page.evaluate("""
+        products = self.page.evaluate(
+            """
         (limit) => {
             const out = [];
             document.querySelectorAll('[class*="product_item"], li[class*="basicList_item"], [class*="search_item"]').forEach((el, i) => {
@@ -78,7 +77,9 @@ class CompetitorAnalysis:
             });
             return out;
         }
-        """, limit)
+        """,
+            limit,
+        )
         return products
 
     def track_competitors(self, keyword: str, limit: int = 20) -> dict:
@@ -95,16 +96,29 @@ class CompetitorAnalysis:
                 """INSERT INTO competitor_prices
                    (ts, keyword, seller, product_name, price, review_count, rating, url)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (now, keyword, p.get("seller", ""), p.get("name", ""),
-                 p.get("price"), p.get("reviews"), p.get("rating"), p.get("url", "")),
+                (
+                    now,
+                    keyword,
+                    p.get("seller", ""),
+                    p.get("name", ""),
+                    p.get("price"),
+                    p.get("reviews"),
+                    p.get("rating"),
+                    p.get("url", ""),
+                ),
             )
         conn.commit()
         conn.close()
 
         # 통계
         prices = [p["price"] for p in products if p.get("price")]
-        log_critical("OTHER", f"경쟁사 가격 추적: '{keyword}' {len(products)}건",
-                     keyword=keyword, count=len(products), mode="competitor_track")
+        log_critical(
+            "OTHER",
+            f"경쟁사 가격 추적: '{keyword}' {len(products)}건",
+            keyword=keyword,
+            count=len(products),
+            mode="competitor_track",
+        )
 
         return {
             "ok": True,
@@ -149,7 +163,6 @@ class CompetitorAnalysis:
             "rank": ranking,  # 가격 순위 (낮을수록 저렴)
             "diff_from_avg": diff_avg,
             "recommendation": (
-                "가격 경쟁력 양호" if diff_avg < 0 else
-                "평균보다 비쌈 - 인하 검토" if diff_avg > 0 else "평균 수준"
+                "가격 경쟁력 양호" if diff_avg < 0 else "평균보다 비쌈 - 인하 검토" if diff_avg > 0 else "평균 수준"
             ),
         }

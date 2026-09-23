@@ -6,16 +6,16 @@
   - 템플릿 또는 AI 자동 답글
   - 일괄 답글 (★ confirm 필수)
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -31,8 +31,7 @@ DEFAULT_TEMPLATES = {
 class BlogCommentResponder:
     """블로그 댓글 자동 응답."""
 
-    def __init__(self, page: Page, blog_id: str, templates: dict | None = None,
-                 ai_enabled: bool = False):
+    def __init__(self, page: Page, blog_id: str, templates: dict | None = None, ai_enabled: bool = False):
         self.page = page
         self.blog_id = blog_id
         self.templates = templates or DEFAULT_TEMPLATES
@@ -55,7 +54,8 @@ class BlogCommentResponder:
         time.sleep(2)
         for f in self.page.frames:
             try:
-                items = f.evaluate("""
+                items = f.evaluate(
+                    """
                 (limit) => {
                     const out = [];
                     document.querySelectorAll('.u_cbox_comment, .CommentItem, [class*="comment"]').forEach((el, i) => {
@@ -69,15 +69,16 @@ class BlogCommentResponder:
                     });
                     return out;
                 }
-                """, limit)
+                """,
+                    limit,
+                )
                 if items:
                     return [c for c in items if not c.get("replied")]
             except Exception:
                 continue
         return []
 
-    def auto_respond(self, post_url: str, send: bool = False,
-                     use_ai: bool | None = None) -> dict:
+    def auto_respond(self, post_url: str, send: bool = False, use_ai: bool | None = None) -> dict:
         """포스트의 미답글 댓글에 자동 답글 생성/발송."""
         use_ai = use_ai if use_ai is not None else self.ai_enabled
         unreplied = self.fetch_unreplied(post_url)
@@ -93,6 +94,7 @@ class BlogCommentResponder:
             if use_ai:
                 try:
                     from scripts.naver.automation.ai_responder import AIResponder
+
                     ai = AIResponder()
                     r = ai._call(
                         "당신은 블로그 운영자입니다. 댓글에 친절하게 답글 100자 이내로.",
@@ -113,7 +115,7 @@ class BlogCommentResponder:
             return {"ok": True, "dry_run": True, "plans": plans}
 
         # 실제 답글 (UI 분석 후 구현)
-        log_critical("OTHER", f"댓글 자동 답글: {len(plans)}건",
-                     post=post_url, count=len(plans), mode="comment_auto_reply")
-        return {"ok": True, "plans": plans,
-                "note": "실제 답글 UI는 댓글별 진입 + 답글 폼 클릭 필요"}
+        log_critical(
+            "OTHER", f"댓글 자동 답글: {len(plans)}건", post=post_url, count=len(plans), mode="comment_auto_reply"
+        )
+        return {"ok": True, "plans": plans, "note": "실제 답글 UI는 댓글별 진입 + 답글 폼 클릭 필요"}

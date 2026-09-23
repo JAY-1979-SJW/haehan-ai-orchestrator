@@ -15,17 +15,15 @@
 
 보안: 127.0.0.1 바인딩 (로컬 전용), 외부 노출 없음.
 """
+
 from __future__ import annotations
 
-import json
 import time
-from pathlib import Path
 from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-
 from pc_inventory import SECTIONS, collect_all, save
 
 app = FastAPI(title="PC Inventory", version="1.0.0")
@@ -54,12 +52,14 @@ def get_section(section: str) -> JSONResponse:
     if section not in SECTIONS:
         raise HTTPException(status_code=404, detail=f"unknown section: {section}")
     data = _get_cache()
-    return JSONResponse({
-        "section": section,
-        "collected_at": data.get("collected_at"),
-        "data": data.get(section),
-        "secret_values_output": False,
-    })
+    return JSONResponse(
+        {
+            "section": section,
+            "collected_at": data.get("collected_at"),
+            "data": data.get(section),
+            "secret_values_output": False,
+        }
+    )
 
 
 @app.post("/inventory/refresh")

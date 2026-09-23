@@ -1,25 +1,33 @@
 """Universal Agent Session — 연속 지시 세션을 관리한다."""
+
 from __future__ import annotations
 
 import threading
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
-from ai_orchestrator.local_agent.natural_language_task_api import (
-    execute_natural_language_task, check_result_safety,
-)
 from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, get_permission, revoke,
+    get_permission,
+    grant_permission,
+    revoke,
 )
 from ai_orchestrator.local_agent.learned_site_profile_store import (
-    get_learned_profile, has_learned_profile,
+    has_learned_profile,
+)
+from ai_orchestrator.local_agent.natural_language_task_api import (
+    execute_natural_language_task,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 _SESSIONS: dict[str, dict[str, Any]] = {}
@@ -36,7 +44,7 @@ def create_session(
         "session_id": session_id,
         "host": host or "unknown",
         "user_id": user_id or "anonymous",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "task_history": [],
         "granted_permissions": [],
         "learned_profile_loaded": has_learned_profile(host or "") if host else False,
@@ -103,7 +111,7 @@ def run_task_in_session(
         "instruction": instruction,
         "intent": result.get("intent", "UNKNOWN"),
         "status": result.get("status"),
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
     }
     with _LOCK:
         if session_id in _SESSIONS:

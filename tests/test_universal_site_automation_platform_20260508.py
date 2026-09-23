@@ -1,35 +1,56 @@
 """tests/test_universal_site_automation_platform_20260508.py - 플랫폼 통합 테스트"""
-import pytest
-from ai_orchestrator.local_agent.site_profile_registry import (
-    get_site_profile, _REGISTRY, _COMMON_BLOCKED,
+
+from ai_orchestrator.local_agent.selector_pack_registry import (
+    _FORBIDDEN_SELECTOR_KEYS,
+    _PACKS,
 )
 from ai_orchestrator.local_agent.site_capability_matrix import (
-    _CAPABILITY_GRADE, GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED,
-    GRADE_USER_DIRECT, GRADE_BLOCKED,
+    _CAPABILITY_GRADE,
+    GRADE_BLOCKED,
 )
-from ai_orchestrator.local_agent.workflow_template_engine import _TEMPLATES
-from ai_orchestrator.local_agent.selector_pack_registry import (
-    _PACKS, _FORBIDDEN_SELECTOR_KEYS,
+from ai_orchestrator.local_agent.site_profile_registry import (
+    _COMMON_BLOCKED,
+    _REGISTRY,
 )
 from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result, validate_universal_result, STATUS_COMPLETED,
+    STATUS_COMPLETED,
+    build_universal_result,
+    validate_universal_result,
 )
 from ai_orchestrator.local_agent.universal_workflow_runner import (
-    run_workflow, run_single_action,
+    run_single_action,
+    run_workflow,
 )
+from ai_orchestrator.local_agent.workflow_template_engine import _TEMPLATES
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported",
-    "password_collected", "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
-_FORBIDDEN_ACTIONS = frozenset([
-    "password_save", "otp_save", "cert_password_save",
-    "cookie_export", "session_export", "token_export", "storage_state_export",
-    "cert_file_access", "npki_access", "captcha_bypass",
-    "auto_payment", "auto_transfer", "auto_bid_submit", "auto_esign",
-])
+_FORBIDDEN_ACTIONS = frozenset(
+    [
+        "password_save",
+        "otp_save",
+        "cert_password_save",
+        "cookie_export",
+        "session_export",
+        "token_export",
+        "storage_state_export",
+        "cert_file_access",
+        "npki_access",
+        "captcha_bypass",
+        "auto_payment",
+        "auto_transfer",
+        "auto_bid_submit",
+        "auto_esign",
+    ]
+)
 
 
 def _dummy_runner(action, domain, **kwargs):
@@ -37,6 +58,7 @@ def _dummy_runner(action, domain, **kwargs):
 
 
 # === 1. 정책 일관성 ===
+
 
 class TestPolicyConsistency:
     def test_all_profiles_have_common_blocked(self):
@@ -78,14 +100,21 @@ class TestPolicyConsistency:
 
 # === 2. safe result 불변 ===
 
+
 class TestSafeResultInvariant:
     def _make_result(self, **kwargs):
         defaults = dict(
-            task_id="t-inv", site_id="naver", workflow_id="readonly_site_explore",
-            status=STATUS_COMPLETED, execution_used=1,
-            actions_executed=[], actions_pending_permission=[],
-            actions_user_direct_required=[], blocked_actions=[],
-            safe_outputs={}, audit_log_ids=[],
+            task_id="t-inv",
+            site_id="naver",
+            workflow_id="readonly_site_explore",
+            status=STATUS_COMPLETED,
+            execution_used=1,
+            actions_executed=[],
+            actions_pending_permission=[],
+            actions_user_direct_required=[],
+            blocked_actions=[],
+            safe_outputs={},
+            audit_log_ids=[],
         )
         defaults.update(kwargs)
         return build_universal_result(**defaults)
@@ -104,38 +133,35 @@ class TestSafeResultInvariant:
 
 # === 3. 워크플로우 실행 ===
 
+
 class TestWorkflowExecution:
     def test_government_readonly_safe(self):
-        r = run_workflow("g2b_public", "government_readonly_status_check",
-                         runner_fn=_dummy_runner)
+        r = run_workflow("g2b_public", "government_readonly_status_check", runner_fn=_dummy_runner)
         for f in _SAFE_FIELDS:
             assert r.get(f) is False
 
     def test_financial_readonly_safe(self):
-        r = run_workflow("generic_financial_site", "financial_readonly_statement_download",
-                         runner_fn=_dummy_runner)
+        r = run_workflow("generic_financial_site", "financial_readonly_statement_download", runner_fn=_dummy_runner)
         for f in _SAFE_FIELDS:
             assert r.get(f) is False
 
     def test_ecommerce_readonly_safe(self):
-        r = run_workflow("generic_ecommerce_site", "ecommerce_order_status_readonly",
-                         runner_fn=_dummy_runner)
+        r = run_workflow("generic_ecommerce_site", "ecommerce_order_status_readonly", runner_fn=_dummy_runner)
         for f in _SAFE_FIELDS:
             assert r.get(f) is False
 
     def test_blocked_action_returns_blocked_status(self):
-        r = run_single_action("naver", "auto_bid_submit",
-                              domain="naver.com", runner_fn=_dummy_runner)
+        r = run_single_action("naver", "auto_bid_submit", domain="naver.com", runner_fn=_dummy_runner)
         assert r["status"] in ("BLOCKED", "STATUS_BLOCKED")
 
     def test_dry_run_no_sensitive_data(self):
-        r = run_workflow("naver_blog", "blog_publish_with_permission",
-                         runner_fn=_dummy_runner, dry_run=True)
+        r = run_workflow("naver_blog", "blog_publish_with_permission", runner_fn=_dummy_runner, dry_run=True)
         for f in _SAFE_FIELDS:
             assert r.get(f) is False
 
 
 # === 4. 플랫폼 규모 ===
+
 
 class TestPlatformScale:
     def test_minimum_site_profiles(self):

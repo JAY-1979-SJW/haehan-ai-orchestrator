@@ -5,9 +5,10 @@ In the MVP stage (BROWSER-WORKER-1), it uses the worker service directly without
 network calls. In future stages (BROWSER-WORKER-3+), it will make HTTP requests
 to a separate browser-worker service.
 """
-import os
+
 import json
-from typing import Optional, Any, Callable
+import os
+from collections.abc import Callable
 
 import httpx
 
@@ -24,9 +25,9 @@ class BrowserWorkerClient:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
+        base_url: str | None = None,
         timeout: int = 30,
-        transport_fn: Optional[Callable[[str, dict, int], WorkerBrowserResponse]] = None,
+        transport_fn: Callable[[str, dict, int], WorkerBrowserResponse] | None = None,
     ):
         """Initialize HTTP client for browser worker.
 
@@ -166,13 +167,13 @@ class BrowserWorkerClient:
 class BrowserWorkerBackend:
     """Backend that interfaces with Browser Worker."""
 
-    def __init__(self, worker_client: Optional[BrowserWorkerClient] = None):
+    def __init__(self, worker_client: BrowserWorkerClient | None = None):
         """Initialize worker backend.
 
         Args:
             worker_client: Optional custom worker client (for testing)
         """
-        self.worker_url: Optional[str] = None  # Deprecated, use worker_client
+        self.worker_url: str | None = None  # Deprecated, use worker_client
         # MVP: default to local service, allow HTTP mode via env var BROWSER_WORKER_USE_HTTP
         use_http = os.getenv("BROWSER_WORKER_USE_HTTP", "false").lower() == "true"
         self.use_local_service = not use_http

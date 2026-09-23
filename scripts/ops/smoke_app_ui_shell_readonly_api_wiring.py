@@ -2,11 +2,10 @@
 
 API client + 화면 연결 상태를 정적 분석으로 검증한다.
 """
+
 from __future__ import annotations
 
 import json
-import re
-from datetime import datetime, timezone
 from pathlib import Path
 
 import scripts.ops.audit_app_ui_shell_readonly_api_wiring as audit_mod

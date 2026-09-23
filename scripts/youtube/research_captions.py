@@ -1,32 +1,32 @@
 """YouTube caption listing, download, transcript storage, and script collection."""
+
 from __future__ import annotations
 
 import urllib.parse
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.youtube.research_common import (
-    _now,
-    _stamp,
-    _write_report,
-    _oauth_token,
-    _resolve_repo_path,
+    CAPTION_DOWNLOAD_FORMATS,
+    LATEST_CAPTION_DOWNLOAD,
+    LATEST_CAPTION_LIST,
+    LATEST_FULL_TRANSCRIPT_STORE,
+    LATEST_SCRIPT_COLLECT,
+    LATEST_TRANSCRIPT_PLAN,
+    REPORT_DIR,
+    SENSITIVE_WORDS,
+    TRANSCRIPT_SOURCE_POLICY,
+    WORD_RE,
+    YOUTUBE_CAPTIONS_URL,
     _get_json_oauth,
     _get_text_oauth,
-    SENSITIVE_WORDS,
-    WORD_RE,
-    REPORT_DIR,
-    ROOT,
-    LATEST_TRANSCRIPT_PLAN,
-    LATEST_CAPTION_LIST,
-    LATEST_CAPTION_DOWNLOAD,
-    LATEST_SCRIPT_COLLECT,
-    LATEST_FULL_TRANSCRIPT_STORE,
-    YOUTUBE_CAPTIONS_URL,
-    CAPTION_DOWNLOAD_FORMATS,
-    TRANSCRIPT_SOURCE_POLICY,
+    _now,
+    _oauth_token,
+    _resolve_repo_path,
+    _stamp,
+    _write_report,
 )
+from security_utils import safe_preview
 
 
 def build_transcript_collection_plan(video_id: str, *, owned: bool = False) -> tuple[dict[str, Any], Path]:
@@ -188,7 +188,9 @@ def download_caption(
         return payload, _write_report(payload, LATEST_CAPTION_DOWNLOAD, "youtube_caption_download")
     sanitized = SENSITIVE_WORDS.sub("[redacted-sensitive]", text)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    transcript_path = _resolve_repo_path(output) if output else REPORT_DIR / f"youtube_caption_download_{_stamp()}.{tfmt}"
+    transcript_path = (
+        _resolve_repo_path(output) if output else REPORT_DIR / f"youtube_caption_download_{_stamp()}.{tfmt}"
+    )
     transcript_path.parent.mkdir(parents=True, exist_ok=True)
     transcript_path.write_text(sanitized, encoding="utf-8")
     payload = {
@@ -298,8 +300,8 @@ def collect_script_from_url(
     analyze: bool = False,
 ) -> tuple[dict[str, Any], Path]:
     """Collect a transcript from a YouTube URL through approved sources only."""
-    from scripts.youtube.research_common import parse_youtube_video_id
     from scripts.youtube.research_analysis import analyze_transcript
+    from scripts.youtube.research_common import parse_youtube_video_id
 
     video_id = parse_youtube_video_id(url_or_video_id)
     if not video_id:
@@ -338,7 +340,8 @@ def collect_script_from_url(
             "caption_list_report": str(caption_list_path),
             "allowed_next_steps": plan["allowed_next_steps"],
             "blocked_next_steps": plan["blocked_next_steps"],
-            "next_step": caption_list.get("next_step") or "Provide approved OAuth credentials or a user-exported transcript file.",
+            "next_step": caption_list.get("next_step")
+            or "Provide approved OAuth credentials or a user-exported transcript file.",
         }
         return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
 
@@ -394,7 +397,8 @@ def collect_script_from_url(
             "selected_caption": selected,
             "allowed_next_steps": plan["allowed_next_steps"],
             "blocked_next_steps": plan["blocked_next_steps"],
-            "next_step": download.get("next_step") or "Use an owned/authorized video with downloadable captions, or provide a user-exported transcript file.",
+            "next_step": download.get("next_step")
+            or "Use an owned/authorized video with downloadable captions, or provide a user-exported transcript file.",
         }
         return payload, _write_report(payload, LATEST_SCRIPT_COLLECT, "youtube_script_collect")
 

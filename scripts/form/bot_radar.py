@@ -22,10 +22,10 @@ severity: low(0.1) | medium(0.4) | high(0.8) | critical(1.0)
     if r["flagged"]:
         raise BotDetected(r)
 """
+
 from __future__ import annotations
 
 import re
-from typing import Any
 
 from scripts.logger import get_logger
 
@@ -37,7 +37,7 @@ class BotDetected(RuntimeError):
         self.report = report
         super().__init__(
             f"봇 감지: level={report['level']} confidence={report['confidence']:.2f} "
-            f"vendors={report.get('vendors',[])}"
+            f"vendors={report.get('vendors', [])}"
         )
 
 
@@ -137,10 +137,14 @@ def _scan_cookies(page) -> tuple[list[str], list[dict]]:
                 if pat in cname:
                     if vendor not in vendors_found:
                         vendors_found.append(vendor)
-                    signals.append({
-                        "kind": "vendor_cookie", "vendor": vendor,
-                        "detail": cname, "severity": "medium",
-                    })
+                    signals.append(
+                        {
+                            "kind": "vendor_cookie",
+                            "vendor": vendor,
+                            "detail": cname,
+                            "severity": "medium",
+                        }
+                    )
                     break
     return vendors_found, signals
 
@@ -178,10 +182,14 @@ def _scan_dom(page) -> tuple[list[str], list[dict]]:
                 if pat in src:
                     if vendor not in vendors_found:
                         vendors_found.append(vendor)
-                    signals.append({
-                        "kind": "vendor_script", "vendor": vendor,
-                        "detail": src[:200], "severity": "medium",
-                    })
+                    signals.append(
+                        {
+                            "kind": "vendor_script",
+                            "vendor": vendor,
+                            "detail": src[:200],
+                            "severity": "medium",
+                        }
+                    )
                     break
         # HTML 내 마커
         html = data.get("html_snippet", "")
@@ -189,33 +197,49 @@ def _scan_dom(page) -> tuple[list[str], list[dict]]:
             if pat in html:
                 if vendor not in vendors_found:
                     vendors_found.append(vendor)
-                signals.append({
-                    "kind": "vendor_html", "vendor": vendor,
-                    "detail": pat, "severity": "low",
-                })
+                signals.append(
+                    {
+                        "kind": "vendor_html",
+                        "vendor": vendor,
+                        "detail": pat,
+                        "severity": "low",
+                    }
+                )
 
     # CAPTCHA 위젯
     for w in data.get("widgets", []):
-        signals.append({
-            "kind": "captcha_widget", "detail": w, "severity": "critical",
-        })
+        signals.append(
+            {
+                "kind": "captcha_widget",
+                "detail": w,
+                "severity": "critical",
+            }
+        )
 
     # 차단 텍스트
     text = data.get("text", "")
     for pat, sev in _BLOCK_TEXT_PATTERNS:
         m = re.search(pat, text, re.IGNORECASE)
         if m:
-            signals.append({
-                "kind": "block_text", "detail": m.group(0)[:120], "severity": sev,
-            })
+            signals.append(
+                {
+                    "kind": "block_text",
+                    "detail": m.group(0)[:120],
+                    "severity": sev,
+                }
+            )
 
     # URL 패턴
     url = data.get("url", "")
     for pat, sev in _BLOCK_URL_PATTERNS:
         if re.search(pat, url, re.IGNORECASE):
-            signals.append({
-                "kind": "block_url", "detail": url[:200], "severity": sev,
-            })
+            signals.append(
+                {
+                    "kind": "block_url",
+                    "detail": url[:200],
+                    "severity": sev,
+                }
+            )
 
     return vendors_found, signals
 
@@ -226,14 +250,17 @@ _SEVERITY_WEIGHT = {"low": 0.1, "medium": 0.4, "high": 0.8, "critical": 1.0}
 def _summarize(vendors: list[str], signals: list[dict]) -> dict:
     if not signals:
         return {
-            "flagged": False, "confidence": 0.0, "level": "clean",
-            "vendors": vendors, "signals": [],
+            "flagged": False,
+            "confidence": 0.0,
+            "level": "clean",
+            "vendors": vendors,
+            "signals": [],
         }
     # confidence = 1 - product(1 - w) (보수적 OR)
     p_clean = 1.0
     for s in signals:
         w = _SEVERITY_WEIGHT.get(s.get("severity", "low"), 0.1)
-        p_clean *= (1 - w)
+        p_clean *= 1 - w
     confidence = round(1 - p_clean, 3)
 
     has_critical = any(s.get("severity") == "critical" for s in signals)
@@ -260,6 +287,7 @@ def _summarize(vendors: list[str], signals: list[dict]) -> dict:
 
 # ── 공개 API ───────────────────────────────────────────────────────
 
+
 def scan(page) -> dict:
     """현재 페이지 1회 스캔. 봇 감지 상태 보고."""
     vendors_a, signals_a = _scan_cookies(page)
@@ -267,8 +295,13 @@ def scan(page) -> dict:
     vendors = list(dict.fromkeys(vendors_a + vendors_b))
     signals = signals_a + signals_b
     result = _summarize(vendors, signals)
-    log.info("[bot-radar] level=%s confidence=%.2f vendors=%s signals=%d",
-             result["level"], result["confidence"], vendors, len(signals))
+    log.info(
+        "[bot-radar] level=%s confidence=%.2f vendors=%s signals=%d",
+        result["level"],
+        result["confidence"],
+        vendors,
+        len(signals),
+    )
     return result
 
 
@@ -289,6 +322,7 @@ class BotRadar:
         ... 작업 ...
         report = radar.report()
     """
+
     def __init__(self, page):
         self.page = page
         self.responses: list[dict] = []
@@ -310,10 +344,14 @@ class BotRadar:
             status = resp.status
             url = resp.url
             if status in (403, 429, 503):
-                self.responses.append({
-                    "kind": "http_block", "status": status, "url": url[:200],
-                    "severity": "high" if status == 429 else "medium",
-                })
+                self.responses.append(
+                    {
+                        "kind": "http_block",
+                        "status": status,
+                        "url": url[:200],
+                        "severity": "high" if status == 429 else "medium",
+                    }
+                )
             # 헤더 기반 vendor 식별
             try:
                 headers = resp.headers
@@ -328,21 +366,27 @@ class BotRadar:
             ]:
                 for h in pats:
                     if any(h.lower() in (k or "").lower() for k in headers.keys()):
-                        self.responses.append({
-                            "kind": "vendor_header", "vendor": vendor,
-                            "detail": h, "severity": "low",
-                        })
+                        self.responses.append(
+                            {
+                                "kind": "vendor_header",
+                                "vendor": vendor,
+                                "detail": h,
+                                "severity": "low",
+                            }
+                        )
                         break
         except Exception:
             pass
 
     def _on_request_failed(self, req) -> None:
         try:
-            self.requests.append({
-                "kind": "request_failed",
-                "url": req.url[:200],
-                "severity": "low",
-            })
+            self.requests.append(
+                {
+                    "kind": "request_failed",
+                    "url": req.url[:200],
+                    "severity": "low",
+                }
+            )
         except Exception:
             pass
 
@@ -350,7 +394,5 @@ class BotRadar:
         # DOM/cookie 스캔 + 누적 이벤트 합산
         live = scan(self.page)
         all_signals = list(live["signals"]) + self.responses + self.requests
-        vendors = list(dict.fromkeys(live["vendors"] + [
-            s.get("vendor") for s in self.responses if s.get("vendor")
-        ]))
+        vendors = list(dict.fromkeys(live["vendors"] + [s.get("vendor") for s in self.responses if s.get("vendor")]))
         return _summarize(vendors, all_signals)

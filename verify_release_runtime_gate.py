@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 from local_agent.network_bypass import direct_child_env
-
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -103,11 +101,7 @@ def classify_local_runtime_live(output: str, returncode: int) -> tuple[str, str]
         return "FAIL", result or f"exit_code={returncode}"
     warn_lines = _warn_lines(output)
     blocking_warns = [
-        line for line in warn_lines
-        if not (
-            "desktop exe - not found" in line
-            or "desktop shortcut" in line
-        )
+        line for line in warn_lines if not ("desktop exe - not found" in line or "desktop shortcut" in line)
     ]
     if blocking_warns:
         return "FAIL", "blocking runtime warning: " + "; ".join(blocking_warns[:3])

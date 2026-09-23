@@ -16,22 +16,25 @@
   - secret/token/password/session/cookie 노출 금지
   - 서버 브라우저 Google 로그인 자동화 금지
 """
+
 from __future__ import annotations
 
 import pathlib
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 REPO_ROOT = pathlib.Path(__file__).parent.parent
 
 
 # ── Naver 분류 계약 ─────────────────────────────────────────────────────────
 
+
 class TestNaverClassificationContract:
     """Naver 업무 분류가 외부 웹 업무 레지스트리에 올바르게 선언되어 있다."""
 
     def _registry(self):
         from ai_orchestrator.external_work_registry import list_external_works
+
         return {e["work_key"]: e for e in list_external_works(provider="naver")}
 
     def test_naver_blog_search_is_server_readonly(self):
@@ -79,26 +82,24 @@ class TestNaverClassificationContract:
         """naver read-only 3개는 승인 불필요이다."""
         reg = self._registry()
         for key in ["naver/blog_search", "naver/shopping_search", "naver/search_status"]:
-            assert reg[key]["requires_approval"] is False, (
-                f"{key}: read-only인데 approval required 설정됨"
-            )
+            assert reg[key]["requires_approval"] is False, f"{key}: read-only인데 approval required 설정됨"
 
     def test_naver_write_ops_all_require_approval(self):
         """Naver 쓰기 작업(blog_write, cafe_post, mail_send, app_register)은 모두 승인 필요."""
         reg = self._registry()
         for key in ["naver/blog_write", "naver/cafe_post", "naver/mail_send", "naver/app_register"]:
-            assert reg[key]["requires_approval"] is True, (
-                f"{key}: 쓰기 작업인데 approval required 미설정"
-            )
+            assert reg[key]["requires_approval"] is True, f"{key}: 쓰기 작업인데 approval required 미설정"
 
 
 # ── Google 분류 계약 ────────────────────────────────────────────────────────
+
 
 class TestGoogleClassificationContract:
     """Google 업무 분류가 외부 웹 업무 레지스트리에 올바르게 선언되어 있다."""
 
     def _registry(self):
         from ai_orchestrator.external_work_registry import list_external_works
+
         return {e["work_key"]: e for e in list_external_works(provider="google")}
 
     def test_google_oauth_submit_is_web_task_registry(self):
@@ -132,12 +133,11 @@ class TestGoogleClassificationContract:
         """Google 계정 기반 작업은 모두 requires_auth=True이다."""
         reg = self._registry()
         for key, entry in reg.items():
-            assert entry["requires_auth"] is True, (
-                f"{key}: Google 계정 작업인데 requires_auth 미설정"
-            )
+            assert entry["requires_auth"] is True, f"{key}: Google 계정 작업인데 requires_auth 미설정"
 
 
 # ── 서버 브라우저 금지 경계 ──────────────────────────────────────────────────
+
 
 class TestServerBrowserProhibitionBoundary:
     """서버에서 Naver/Google 계정 로그인을 직접 브라우저로 자동화하지 않는다."""
@@ -145,6 +145,7 @@ class TestServerBrowserProhibitionBoundary:
     def test_google_browser_login_classified_as_quarantine(self):
         """google/browser_login이 QUARANTINE_OR_HOLD로 분류됨을 확인."""
         from ai_orchestrator.external_work_registry import get_external_work
+
         entry = get_external_work("google", "browser_login")
         assert entry is not None
         assert entry.classification == "QUARANTINE_OR_HOLD"
@@ -152,14 +153,14 @@ class TestServerBrowserProhibitionBoundary:
     def test_naver_write_ops_not_server_classified(self):
         """Naver 쓰기 작업은 SERVER 위치로 분류되지 않는다."""
         from ai_orchestrator.external_work_registry import list_external_works
+
         writes = [
-            e for e in list_external_works(provider="naver")
+            e
+            for e in list_external_works(provider="naver")
             if e["work_type"] in ("blog_write", "cafe_post", "mail_send")
         ]
         for entry in writes:
-            assert entry["execution_location"] != "SERVER", (
-                f"{entry['work_key']}: 쓰기 작업인데 SERVER 위치로 설정됨"
-            )
+            assert entry["execution_location"] != "SERVER", f"{entry['work_key']}: 쓰기 작업인데 SERVER 위치로 설정됨"
 
     def test_server_egress_policy_exists(self):
         """server/server_egress_policy.py 서버 외부 접속 정책 파일 존재."""
@@ -172,6 +173,7 @@ class TestServerBrowserProhibitionBoundary:
 
 # ── secret/token 비노출 경계 ────────────────────────────────────────────────
 
+
 class TestSecretNonExposureBoundary:
     """응답/레지스트리에 secret/token/password/session/cookie가 노출되지 않는다."""
 
@@ -179,8 +181,10 @@ class TestSecretNonExposureBoundary:
         """external_work_registry의 list_external_works 응답에 실제 민감값 없음.
         notes 필드는 문서 참조 문자열 허용 (예: token.json 파일명), 실제 credential 값은 금지.
         """
-        from ai_orchestrator.external_work_registry import list_external_works
         import re
+
+        from ai_orchestrator.external_work_registry import list_external_works
+
         entries = list_external_works()
         # 실제 credential 값 패턴만 검사 (key=value 형태의 하드코딩 시크릿)
         # 파일명 참조(token.json, credentials.json)나 policy 설명 텍스트는 허용
@@ -190,39 +194,35 @@ class TestSecretNonExposureBoundary:
                 # auth_method 값은 정해진 목록만 허용
                 if field_key == "auth_method":
                     allowed = {"none", "oauth", "browser_session", "user_direct"}
-                    assert val in allowed, (
-                        f"{entry['work_key']}.auth_method 값 '{val}'이 허용 목록 밖"
-                    )
+                    assert val in allowed, f"{entry['work_key']}.auth_method 값 '{val}'이 허용 목록 밖"
             # 실제 secret 값(따옴표 안 긴 문자열)이 있으면 안 됨 — notes 포함
             notes_blob = str(entry.get("notes", ""))
             bad_patterns = re.findall(
-                r'(?:password|client_secret|api_key)\s*[:=]\s*["\'][^"\']{8,}["\']',
-                notes_blob, re.I
+                r'(?:password|client_secret|api_key)\s*[:=]\s*["\'][^"\']{8,}["\']', notes_blob, re.I
             )
-            assert not bad_patterns, (
-                f"{entry['work_key']}: notes에 민감값 패턴 발견 {bad_patterns}"
-            )
+            assert not bad_patterns, f"{entry['work_key']}: notes에 민감값 패턴 발견 {bad_patterns}"
 
     def test_web_task_registry_no_secret_values(self):
         """web_task_registry의 list_entries 응답에 민감값 없음."""
         from ai_orchestrator.web_task_registry import list_entries
+
         entries = list_entries()
         blob = str(entries).lower()
         for kw in ("password", "secret", "token", "cookie", "session"):
-            assert kw not in blob, (
-                f"web_task_registry 응답에 민감 키워드 '{kw}' 포함"
-            )
+            assert kw not in blob, f"web_task_registry 응답에 민감 키워드 '{kw}' 포함"
 
     def test_gmail_reader_source_has_no_hardcoded_secrets(self):
         """gmail_reader.py에 하드코딩 secret/token 없음."""
         src = (REPO_ROOT / "ai_orchestrator" / "gmail_reader.py").read_text(encoding="utf-8")
         # 변수 선언이 아닌 실제 값 하드코딩 여부 확인 (따옴표 안에 실제 값이 있으면 안 됨)
         import re
+
         hard_coded = re.findall(r'(?:password|secret|token)\s*=\s*["\'][^"\']{8,}["\']', src, re.I)
         assert not hard_coded, f"gmail_reader.py에 하드코딩 민감값: {hard_coded}"
 
 
 # ── naver_search_router 등록 확인 ────────────────────────────────────────────
+
 
 class TestNaverSearchRouterRegistration:
     """naver_search_router가 메인 API 라우터에 등록되어 있다."""
@@ -230,21 +230,19 @@ class TestNaverSearchRouterRegistration:
     def test_naver_search_router_in_router_py(self):
         """router.py에 naver_search_router import 및 include 확인."""
         src = (REPO_ROOT / "ai_orchestrator" / "router.py").read_text(encoding="utf-8")
-        assert "naver_search_router" in src, (
-            "router.py에 naver_search_router가 없음"
-        )
-        assert "include_router(naver_search_router)" in src, (
-            "router.py에 include_router(naver_search_router) 없음"
-        )
+        assert "naver_search_router" in src, "router.py에 naver_search_router가 없음"
+        assert "include_router(naver_search_router)" in src, "router.py에 include_router(naver_search_router) 없음"
 
     def test_naver_search_router_importable(self):
         """naver_search_router가 임포트 가능하다."""
         from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
         assert naver_search_router is not None
 
     def test_naver_search_router_has_three_endpoints(self):
         """naver_search_router에 blog-search, shopping-search, status 3개 endpoint 존재."""
         from ai_orchestrator.connectors.naver_search_router import naver_search_router
+
         routes = [r.path for r in naver_search_router.routes]
         assert any("blog-search" in r for r in routes), "blog-search endpoint 없음"
         assert any("shopping-search" in r for r in routes), "shopping-search endpoint 없음"
@@ -253,19 +251,16 @@ class TestNaverSearchRouterRegistration:
     def test_naver_search_router_is_read_only(self):
         """naver_search_router 소스에 write/delete/update 없음 (read-only 확인)."""
         src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search_router.py").read_text(encoding="utf-8")
-        assert "쓰기 API 없음" in src or "read-only" in src.lower(), (
-            "naver_search_router에 read-only 명시 없음"
-        )
+        assert "쓰기 API 없음" in src or "read-only" in src.lower(), "naver_search_router에 read-only 명시 없음"
 
     def test_naver_search_router_requires_admin_or_owner(self):
         """naver_search_router가 require_role 인증을 사용한다."""
         src = (REPO_ROOT / "ai_orchestrator" / "connectors" / "naver_search_router.py").read_text(encoding="utf-8")
-        assert "require_role" in src, (
-            "naver_search_router에 인증(require_role) 없음"
-        )
+        assert "require_role" in src, "naver_search_router에 인증(require_role) 없음"
 
 
 # ── web_task_registry Naver/Google 등록 확인 ─────────────────────────────────
+
 
 class TestWebTaskRegistryNaVerGoogle:
     """web_task_registry에 Naver/Google 항목이 등록되어 있다."""
@@ -273,6 +268,7 @@ class TestWebTaskRegistryNaVerGoogle:
     def test_naver_app_register_in_registry(self):
         """naver/app_register가 web_task_registry에 등록되어 있다."""
         from ai_orchestrator.web_task_registry import get_entry
+
         entry = get_entry("naver", "app_register")
         assert entry is not None
         assert entry.risk_level == "high"
@@ -281,6 +277,7 @@ class TestWebTaskRegistryNaVerGoogle:
     def test_google_oauth_submit_in_registry(self):
         """google/oauth_submit이 web_task_registry에 등록되어 있다."""
         from ai_orchestrator.web_task_registry import get_entry
+
         entry = get_entry("google", "oauth_submit")
         assert entry is not None
         assert entry.risk_level == "high"
@@ -289,11 +286,13 @@ class TestWebTaskRegistryNaVerGoogle:
     def test_registry_does_not_expose_adapter_class(self):
         """list_entries()에 adapter_class가 포함되지 않는다."""
         from ai_orchestrator.web_task_registry import list_entries
+
         for entry in list_entries():
             assert "adapter_class" not in entry
 
 
 # ── external_work_registry 임포트 및 구조 확인 ───────────────────────────────
+
 
 class TestExternalWorkRegistryStructure:
     """external_work_registry.py 모듈 구조 확인."""
@@ -301,11 +300,13 @@ class TestExternalWorkRegistryStructure:
     def test_module_importable(self):
         """external_work_registry 모듈이 임포트 가능하다."""
         from ai_orchestrator import external_work_registry
+
         assert external_work_registry is not None
 
     def test_list_external_works_returns_list(self):
         """list_external_works()가 list를 반환한다."""
         from ai_orchestrator.external_work_registry import list_external_works
+
         result = list_external_works()
         assert isinstance(result, list)
         assert len(result) > 0
@@ -313,10 +314,18 @@ class TestExternalWorkRegistryStructure:
     def test_all_entries_have_required_fields(self):
         """모든 항목이 필수 필드를 갖는다."""
         from ai_orchestrator.external_work_registry import list_external_works
+
         required_fields = {
-            "work_key", "provider", "work_type", "description",
-            "classification", "execution_location", "risk_level",
-            "requires_approval", "requires_auth", "auth_method",
+            "work_key",
+            "provider",
+            "work_type",
+            "description",
+            "classification",
+            "execution_location",
+            "risk_level",
+            "requires_approval",
+            "requires_auth",
+            "auth_method",
             "registered_in_web_task",
         }
         for entry in list_external_works():
@@ -326,17 +335,20 @@ class TestExternalWorkRegistryStructure:
     def test_provider_filter_works(self):
         """provider 필터가 정상 동작한다."""
         from ai_orchestrator.external_work_registry import list_external_works
+
         naver_only = list_external_works(provider="naver")
         assert all(e["provider"] == "naver" for e in naver_only)
 
     def test_classification_filter_works(self):
         """classification 필터가 정상 동작한다."""
         from ai_orchestrator.external_work_registry import list_external_works
+
         readonly = list_external_works(classification="SERVER_READONLY_ALLOWED")
         assert all(e["classification"] == "SERVER_READONLY_ALLOWED" for e in readonly)
 
 
 # ── 기존 준공 범위 테스트 PASS 유지 확인 ────────────────────────────────────
+
 
 class TestExistingCloseoutTestsUnchanged:
     """기존 준공 범위 테스트 파일이 변경되지 않았다."""

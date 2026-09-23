@@ -8,13 +8,9 @@ Verifies:
 5. Forbidden field protection
 """
 
-import pytest
-from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
-from local_agent.server_action_adapter import ServerActionAdapter
-from local_agent.browser_controller import BrowserController, ExecuteClickResult
 from ai_orchestrator import local_agent_registry as _reg
+from local_agent.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
+from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
 
 
 class TestBrowserActionRegistration:

@@ -2,7 +2,7 @@
 """네이버 블로그 도구 테스트."""
 
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-import json
+
 
 def test_blog_exploration():
     """블로그 탐색 기능 테스트."""
@@ -63,7 +63,9 @@ def test_blog_exploration():
     except Exception as e:
         print(f"\n✗ 오류 발생: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     test_blog_exploration()

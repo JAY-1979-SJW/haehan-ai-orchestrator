@@ -1,7 +1,7 @@
 """PYINSTALLER_BUILD_EXEC_V2_01 — 12+ 테스트."""
+
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -12,13 +12,11 @@ DIST_DIR = Path("dist/HaehanAI-Agent")
 EXE = DIST_DIR / "HaehanAI-Agent.exe"
 BUILD_REPORT = Path("data/inspection/local_agent_installer_package/build_report.json")
 
-_REQUIRES_EXE = pytest.mark.skipif(
-    not EXE.exists(), reason=f"exe not built: {EXE}")
+_REQUIRES_EXE = pytest.mark.skipif(not EXE.exists(), reason=f"exe not built: {EXE}")
 
 
 def _run_exe(args, timeout=30):
-    return subprocess.run([str(EXE), *args], capture_output=True,
-                          text=True, timeout=timeout, errors="replace")
+    return subprocess.run([str(EXE), *args], capture_output=True, text=True, timeout=timeout, errors="replace")
 
 
 # ── 1) build report — GUI hidden imports ─────────────────────────
@@ -52,6 +50,7 @@ def test_exe_size_within_range_after_gui_imports():
 @_REQUIRES_EXE
 def test_exe_sha256_64_hex():
     import hashlib
+
     h = hashlib.sha256()
     with open(EXE, "rb") as f:
         for c in iter(lambda: f.read(65536), b""):
@@ -92,6 +91,7 @@ def test_self_test_output_no_token_leak():
     r = _run_exe(["--self-test"], timeout=30)
     out = r.stdout + r.stderr
     import re
+
     assert not re.search(r'"device_token"\s*:\s*"[A-Za-z0-9._\-]{8,}"', out)
     assert not re.search(r'"registration_code"\s*:\s*"[A-Za-z0-9._\-]{8,}"', out)
 
@@ -101,6 +101,7 @@ def test_diagnostics_output_no_token_leak():
     r = _run_exe(["--diagnostics"], timeout=15)
     out = r.stdout + r.stderr
     import re
+
     assert not re.search(r'"device_token"\s*:\s*"[A-Za-z0-9._\-]{8,}"', out)
 
 
@@ -109,12 +110,14 @@ def test_diagnostics_output_no_token_leak():
 
 def test_audit_module_imports():
     from scripts.ops import audit_pyinstaller_gui_build_exec_v2 as a
+
     assert hasattr(a, "judge_gui_build")
     assert hasattr(a, "_gui_launch_smoke")
 
 
 def test_audit_fail_dist_missing(monkeypatch, tmp_path):
     from scripts.ops import audit_pyinstaller_gui_build_exec_v2 as a
+
     monkeypatch.setattr(a, "EXE", tmp_path / "missing.exe")
     v = a.judge_gui_build(gui_smoke_ok=True)
     assert v.code == "FAIL_DIST_MISSING"
@@ -122,6 +125,7 @@ def test_audit_fail_dist_missing(monkeypatch, tmp_path):
 
 def test_audit_fail_cli_regression_signal():
     from scripts.ops import audit_pyinstaller_gui_build_exec_v2 as a
+
     # exe 존재 가정 — gui_smoke_ok True 로 GUI 부분 skip, cli_regression False
     if not EXE.exists():
         pytest.skip("exe not built")
@@ -132,10 +136,10 @@ def test_audit_fail_cli_regression_signal():
 @_REQUIRES_EXE
 def test_audit_warn_unsigned_when_all_pass():
     from scripts.ops import audit_pyinstaller_gui_build_exec_v2 as a
+
     # GUI smoke 외부 신호로 True 주입 (실 5초 launch smoke 건너뜀)
     v = a.judge_gui_build(gui_smoke_ok=True, cli_regression_ok=True)
-    assert v.code in ("PASS_PYINSTALLER_GUI_BUILD_EXEC_V2",
-                       "WARN_UNSIGNED_BINARY")
+    assert v.code in ("PASS_PYINSTALLER_GUI_BUILD_EXEC_V2", "WARN_UNSIGNED_BINARY")
 
 
 # ── 6) GUI 코드 회귀 가드 ───────────────────────────────────
@@ -143,19 +147,21 @@ def test_audit_warn_unsigned_when_all_pass():
 
 def test_regression_gui_state_intact():
     from local_agent import gui_state as gs
+
     assert hasattr(gs, "GuiController")
     assert hasattr(gs, "transition")
 
 
 def test_regression_gui_app_intact():
     from local_agent import gui_app
-    for m in ("on_register", "on_connect", "on_diagnostics",
-              "on_reset", "on_quit"):
+
+    for m in ("on_register", "on_connect", "on_diagnostics", "on_reset", "on_quit"):
         assert hasattr(gui_app.HaehanAgentGuiApp, m)
 
 
 def test_regression_gui_tray_intact():
     from local_agent import gui_tray
+
     assert hasattr(gui_tray, "run_tray_with_app")
 
 

@@ -3,21 +3,28 @@
 
 게이트 검증 → 콘텐츠 guard → 실행 → audit log → safe result 반환.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.delegated_permission_gate import (
-    evaluate_gate, GATE_PASS, GATE_BLOCKED, GATE_USER_DIRECT, GATE_NEED_PERMISSION,
+from ai_orchestrator.local_agent.approval_audit_log import (
+    log_execution_blocked,
+    log_execution_completed,
+    log_execution_started,
 )
 from ai_orchestrator.local_agent.content_publish_guard import validate_publish_request
-from ai_orchestrator.local_agent.safe_write_result_sanitizer import (
-    sanitize_write_result, build_write_result,
+from ai_orchestrator.local_agent.delegated_permission_gate import (
+    GATE_BLOCKED,
+    GATE_NEED_PERMISSION,
+    GATE_USER_DIRECT,
+    evaluate_gate,
 )
-from ai_orchestrator.local_agent.approval_audit_log import (
-    log_execution_started, log_execution_completed, log_execution_blocked,
+from ai_orchestrator.local_agent.safe_write_result_sanitizer import (
+    build_write_result,
+    sanitize_write_result,
 )
 
 # ── 실행 결과 상수 ──────────────────────────────────────────────────────────────
@@ -29,12 +36,18 @@ EXEC_USER_DIRECT = "USER_DIRECT_REQUIRED"
 EXEC_CONTENT_REJECTED = "CONTENT_REJECTED"
 
 # write action 목록 (콘텐츠 guard 적용 대상)
-_WRITE_ACTIONS = frozenset({
-    "blog_publish", "blog_schedule_publish", "blog_edit",
-    "cafe_post_write", "cafe_post_edit",
-    "cafe_comment_write", "cafe_comment_edit",
-    "publish_with_attachment",
-})
+_WRITE_ACTIONS = frozenset(
+    {
+        "blog_publish",
+        "blog_schedule_publish",
+        "blog_edit",
+        "cafe_post_write",
+        "cafe_post_edit",
+        "cafe_comment_write",
+        "cafe_comment_edit",
+        "publish_with_attachment",
+    }
+)
 
 
 def execute_delegated_action(
@@ -64,7 +77,10 @@ def execute_delegated_action(
             "ok": False,
             "gate": gate,
             "result": build_write_result(
-                task_id=_task_id, action=action, ok=False, domain=domain,
+                task_id=_task_id,
+                action=action,
+                ok=False,
+                domain=domain,
                 message_ko=gate["reason"],
             ),
         }
@@ -76,7 +92,10 @@ def execute_delegated_action(
             "ok": False,
             "gate": gate,
             "result": build_write_result(
-                task_id=_task_id, action=action, ok=False, domain=domain,
+                task_id=_task_id,
+                action=action,
+                ok=False,
+                domain=domain,
                 message_ko=gate["reason"],
             ),
         }
@@ -88,7 +107,10 @@ def execute_delegated_action(
             "ok": False,
             "gate": gate,
             "result": build_write_result(
-                task_id=_task_id, action=action, ok=False, domain=domain,
+                task_id=_task_id,
+                action=action,
+                ok=False,
+                domain=domain,
                 message_ko=gate["reason"],
             ),
         }
@@ -97,7 +119,9 @@ def execute_delegated_action(
     # 쓰기 action 콘텐츠 guard
     if action in _WRITE_ACTIONS and content:
         pub_check = validate_publish_request(
-            action=action, domain=domain, content=content,
+            action=action,
+            domain=domain,
+            content=content,
             approved_preview=approved_preview,
         )
         if not pub_check["allowed"]:
@@ -107,7 +131,10 @@ def execute_delegated_action(
                 "ok": False,
                 "gate": gate,
                 "result": build_write_result(
-                    task_id=_task_id, action=action, ok=False, domain=domain,
+                    task_id=_task_id,
+                    action=action,
+                    ok=False,
+                    domain=domain,
                     message_ko=pub_check["reason"],
                 ),
             }
@@ -115,15 +142,23 @@ def execute_delegated_action(
     log_execution_started(permission_id or "", action, domain, _task_id, approved_preview)
 
     if runner_fn is not None:
-        raw = runner_fn({
-            "task_id": _task_id, "action": action, "domain": domain,
-            "content": content, "permission_id": permission_id,
-        })
+        raw = runner_fn(
+            {
+                "task_id": _task_id,
+                "action": action,
+                "domain": domain,
+                "content": content,
+                "permission_id": permission_id,
+            }
+        )
         safe_result = sanitize_write_result(raw)
         ok = raw.get("ok", True)
     else:
         safe_result = build_write_result(
-            task_id=_task_id, action=action, ok=True, domain=domain,
+            task_id=_task_id,
+            action=action,
+            ok=True,
+            domain=domain,
             permission_id=permission_id or "",
             message_ko=f"{action} 실행 완료 (dry-run)",
         )

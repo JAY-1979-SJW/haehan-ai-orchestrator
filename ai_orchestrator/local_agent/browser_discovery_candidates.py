@@ -5,11 +5,12 @@ LOCAL_BROWSER_POLICY_SAFE_EXPANSION_A1 STEP 3.
 raw HTML/screenshot/HAR/cookie 저장 절대 금지.
 visible_label, role, normalized_text 등 안전 필드만.
 """
+
 from __future__ import annotations
 
 import hashlib
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 CANDIDATE_MENU = "menu_candidate"
@@ -23,9 +24,14 @@ CANDIDATE_SUBMIT_BUTTON = "submit_button_candidate"
 CANDIDATE_DESTRUCTIVE_BUTTON = "destructive_button_candidate"
 
 ALL_CANDIDATE_TYPES = (
-    CANDIDATE_MENU, CANDIDATE_PAGE_TITLE, CANDIDATE_FIELD,
-    CANDIDATE_TABLE_HEADER, CANDIDATE_BUTTON, CANDIDATE_FILE_INPUT,
-    CANDIDATE_DOWNLOAD_LINK, CANDIDATE_SUBMIT_BUTTON,
+    CANDIDATE_MENU,
+    CANDIDATE_PAGE_TITLE,
+    CANDIDATE_FIELD,
+    CANDIDATE_TABLE_HEADER,
+    CANDIDATE_BUTTON,
+    CANDIDATE_FILE_INPUT,
+    CANDIDATE_DOWNLOAD_LINK,
+    CANDIDATE_SUBMIT_BUTTON,
     CANDIDATE_DESTRUCTIVE_BUTTON,
 )
 
@@ -35,20 +41,43 @@ RISK_HIGH = "HIGH"
 
 # 위험 키워드 (label/text에 포함되면 HIGH로 분류)
 _DESTRUCTIVE_KEYWORDS = (
-    "삭제", "delete", "remove", "drop",
-    "결제", "payment", "송금", "transfer", "이체",
-    "투찰", "bid", "전자서명", "sign", "서명",
-    "상신", "approve", "결재",
-    "제출", "submit",
-    "저장", "save",
-    "출금", "withdraw",
-    "확정", "confirm",
+    "삭제",
+    "delete",
+    "remove",
+    "drop",
+    "결제",
+    "payment",
+    "송금",
+    "transfer",
+    "이체",
+    "투찰",
+    "bid",
+    "전자서명",
+    "sign",
+    "서명",
+    "상신",
+    "approve",
+    "결재",
+    "제출",
+    "submit",
+    "저장",
+    "save",
+    "출금",
+    "withdraw",
+    "확정",
+    "confirm",
 )
 
 _FORBIDDEN_LABEL_KEYWORDS = (
-    "password", "비밀번호", "otp", "인증번호",
-    "주민번호", "주민등록번호", "계좌번호",
-    "cert_password", "private_key",
+    "password",
+    "비밀번호",
+    "otp",
+    "인증번호",
+    "주민번호",
+    "주민등록번호",
+    "계좌번호",
+    "cert_password",
+    "private_key",
 )
 
 
@@ -88,9 +117,13 @@ def classify_risk(candidate_type: str, visible_label: str) -> str:
             return RISK_HIGH
     if candidate_type in (CANDIDATE_FIELD, CANDIDATE_FILE_INPUT):
         return RISK_MEDIUM
-    if candidate_type in (CANDIDATE_MENU, CANDIDATE_PAGE_TITLE,
-                          CANDIDATE_TABLE_HEADER, CANDIDATE_DOWNLOAD_LINK,
-                          CANDIDATE_BUTTON):
+    if candidate_type in (
+        CANDIDATE_MENU,
+        CANDIDATE_PAGE_TITLE,
+        CANDIDATE_TABLE_HEADER,
+        CANDIDATE_DOWNLOAD_LINK,
+        CANDIDATE_BUTTON,
+    ):
         return RISK_LOW
     return RISK_MEDIUM
 
@@ -120,7 +153,8 @@ def build_candidate(
         return {"ok": False, "verdict": "UNKNOWN_CANDIDATE_TYPE"}
     if is_forbidden_label(visible_label):
         return {
-            "ok": False, "verdict": "FORBIDDEN_LABEL_BLOCKED",
+            "ok": False,
+            "verdict": "FORBIDDEN_LABEL_BLOCKED",
             "blocked_reason": "민감 라벨 — credential 후보 차단",
         }
     candidate = DiscoveryCandidate(
@@ -154,10 +188,20 @@ def build_candidate(
 def validate_candidate_safety(candidate: dict[str, Any]) -> dict[str, Any]:
     """후보 dict의 보안 정책 위반 여부 검증."""
     forbidden_keys = {
-        "raw_html", "raw_selector", "screenshot", "har",
-        "cookie", "session", "storage_state", "localStorage",
-        "password", "otp", "private_key", "cert_password",
-        "outer_html", "inner_html",
+        "raw_html",
+        "raw_selector",
+        "screenshot",
+        "har",
+        "cookie",
+        "session",
+        "storage_state",
+        "localStorage",
+        "password",
+        "otp",
+        "private_key",
+        "cert_password",
+        "outer_html",
+        "inner_html",
     }
     for key in candidate.keys():
         kl = key.lower()

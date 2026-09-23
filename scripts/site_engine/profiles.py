@@ -3,10 +3,10 @@
 기존 scripts/site_registry.py의 SiteSpec을 대체하지 않는다.
 이 모듈은 신규 site_engine 구조를 위한 profile 기반만 제공한다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from scripts.site_engine.types import (
     ExecutionLocation,
@@ -51,10 +51,7 @@ class SiteProfile:
         return GateDecision.READ_ONLY_ALLOWED
 
     def is_capability_allowed(self, capability: SiteCapability) -> bool:
-        return (
-            capability in self.allowed_capabilities
-            and capability not in self.blocked_capabilities
-        )
+        return capability in self.allowed_capabilities and capability not in self.blocked_capabilities
 
 
 def _validate_profile(profile: SiteProfile) -> None:
@@ -68,6 +65,4 @@ def _validate_profile(profile: SiteProfile) -> None:
         raise ValueError("SiteProfile.allowed_capabilities must not be empty")
     for cap in profile.blocked_capabilities:
         if cap in profile.allowed_capabilities:
-            raise ValueError(
-                f"Capability {cap} appears in both allowed and blocked for profile {profile.key!r}"
-            )
+            raise ValueError(f"Capability {cap} appears in both allowed and blocked for profile {profile.key!r}")

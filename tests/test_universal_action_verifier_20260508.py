@@ -1,23 +1,33 @@
 """tests/test_universal_action_verifier_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.universal_action_verifier import (
-    verify_action_result, verify_no_sensitive_data, verify_plan_execution,
+    verify_action_result,
+    verify_no_sensitive_data,
+    verify_plan_execution,
 )
 from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result, STATUS_COMPLETED,
+    STATUS_COMPLETED,
+    build_universal_result,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 
 def _clean_result(**kwargs):
     defaults = dict(
-        task_id="t1", site_id="test", workflow_id="w1",
-        status=STATUS_COMPLETED, actions_executed=["test_action"],
+        task_id="t1",
+        site_id="test",
+        workflow_id="w1",
+        status=STATUS_COMPLETED,
+        actions_executed=["test_action"],
         audit_log_ids=["log1"],
     )
     defaults.update(kwargs)
@@ -88,16 +98,24 @@ def test_verify_no_sensitive_data_with_violation():
 
 
 def test_verify_plan_execution():
-    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
     from ai_orchestrator.local_agent.universal_task_planner import create_plan
+    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+
     intent_result = parse_intent("공지사항 찾아줘")
-    plan = create_plan(intent_result, {
-        "host": "test.com", "risk_signals": [],
-        "page_type_candidates": [], "visible_actions": [],
-        "buttons_observed": [], "auth_signals": [], "forms_detected": False,
-        "download_candidates": [],
-    }, {"site_type": "unknown", "confidence": "low",
-        "matched_profile_id": None, "is_known_site": False})
+    plan = create_plan(
+        intent_result,
+        {
+            "host": "test.com",
+            "risk_signals": [],
+            "page_type_candidates": [],
+            "visible_actions": [],
+            "buttons_observed": [],
+            "auth_signals": [],
+            "forms_detected": False,
+            "download_candidates": [],
+        },
+        {"site_type": "unknown", "confidence": "low", "matched_profile_id": None, "is_known_site": False},
+    )
 
     executed = ["open_url", "find_notice", "extract_text"]
     results = [_clean_result() for _ in executed]
@@ -106,16 +124,24 @@ def test_verify_plan_execution():
 
 
 def test_verify_plan_blocked_action_detected():
-    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
     from ai_orchestrator.local_agent.universal_task_planner import create_plan
+    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+
     intent_result = parse_intent("공지사항 찾아줘")
-    plan = create_plan(intent_result, {
-        "host": "test.com", "risk_signals": [],
-        "page_type_candidates": [], "visible_actions": [],
-        "buttons_observed": [], "auth_signals": [], "forms_detected": False,
-        "download_candidates": [],
-    }, {"site_type": "unknown", "confidence": "low",
-        "matched_profile_id": None, "is_known_site": False})
+    plan = create_plan(
+        intent_result,
+        {
+            "host": "test.com",
+            "risk_signals": [],
+            "page_type_candidates": [],
+            "visible_actions": [],
+            "buttons_observed": [],
+            "auth_signals": [],
+            "forms_detected": False,
+            "download_candidates": [],
+        },
+        {"site_type": "unknown", "confidence": "low", "matched_profile_id": None, "is_known_site": False},
+    )
 
     executed = ["open_url", "password_save"]  # BLOCKED action 실행됨
     results = [_clean_result(), _clean_result()]

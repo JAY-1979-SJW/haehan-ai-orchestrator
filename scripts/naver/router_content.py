@@ -1,22 +1,20 @@
 """네이버 콘텐츠/SEO/검색/키워드 명령 핸들러"""
-from __future__ import annotations
 
-import json
+from __future__ import annotations
 
 from scripts.gate import check as gate_check
 
 from .router_common import (
-    _option_value,
-    _option_phrase,
     _flag,
     _int_option,
-    _save_latest,
+    _option_phrase,
+    _option_value,
     _print_saved,
+    _save_latest,
 )
 
 
 def _cmd_content(sub: str, args: list[str]) -> None:
-    from scripts.web_connector import get_page
     from scripts.naver.content import (
         build_action_catalog,
         print_action_summary,
@@ -27,6 +25,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         select_targets,
     )
     from scripts.naver.live_safety import before_live_navigation
+    from scripts.web_connector import get_page
 
     name = args[0] if args and not str(args[0]).startswith("--") else "all"
     limit = int(_option_value(args, "--limit=") or "80")
@@ -53,7 +52,9 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         path = save_action_catalog(catalog)
         print_action_summary(catalog, path)
     else:
-        print("usage: python scripts/cdp_client.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]")
+        print(
+            "usage: python scripts/cdp_client.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]"
+        )
 
 
 def _cmd_seo(sub: str, args: list[str]) -> None:
@@ -62,9 +63,9 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
     from scripts.naver.company_seo import (
         analyze_html,
         audit_site_assets,
-        build_exposure_plan,
         build_company_seo_plan,
         build_entrypoints,
+        build_exposure_plan,
         build_monitor_report,
         build_ownership_plan,
         build_submit_plan,
@@ -203,7 +204,9 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
         _print_saved(record, _save_latest("naver_company_seo_submit_latest.json", record))
         return
 
-    print("usage: python scripts/cdp_client.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr")
+    print(
+        "usage: python scripts/cdp_client.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr"
+    )
 
 
 def _cmd_developers(sub: str, args: list[str]) -> None:
@@ -261,7 +264,9 @@ def _cmd_shopping(sub: str, args: list[str]) -> None:
         return
 
     if sub not in ("competitors", "competitor", "search"):
-        print("usage: python scripts/cdp_client.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]")
+        print(
+            "usage: python scripts/cdp_client.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]"
+        )
         return
 
     gate_check("scan_page")
@@ -317,4 +322,6 @@ def _cmd_keyword_tools(sub: str, args: list[str]) -> None:
         keyword_tools.print_summary(payload, path)
         return
 
-    print("usage: python scripts/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=...")
+    print(
+        "usage: python scripts/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=..."
+    )

@@ -1,20 +1,20 @@
 """
 user_notification_adapter 테스트
 """
-import pytest
-from unittest.mock import patch, MagicMock
+
+from unittest.mock import MagicMock, patch
 
 from ai_orchestrator.local_agent.user_notification_adapter import (
-    send_notification,
-    notify_auth_required,
-    get_fallback_message,
+    _SAFE_BODY,
+    _SAFE_TITLE,
+    FALLBACK_MESSAGE_ONLY,
+    NOTIFICATION_FAILED,
     NOTIFICATION_SENT,
     NOTIFICATION_UNAVAILABLE,
-    NOTIFICATION_FAILED,
-    FALLBACK_MESSAGE_ONLY,
     _is_safe_message,
-    _SAFE_TITLE,
-    _SAFE_BODY,
+    get_fallback_message,
+    notify_auth_required,
+    send_notification,
 )
 
 
@@ -58,8 +58,10 @@ class TestSendNotification:
     def test_status_is_valid_value(self):
         result = send_notification()
         assert result["status"] in {
-            NOTIFICATION_SENT, NOTIFICATION_UNAVAILABLE,
-            NOTIFICATION_FAILED, FALLBACK_MESSAGE_ONLY,
+            NOTIFICATION_SENT,
+            NOTIFICATION_UNAVAILABLE,
+            NOTIFICATION_FAILED,
+            FALLBACK_MESSAGE_ONLY,
         }
 
     def test_plyer_success_returns_sent(self):
@@ -71,13 +73,13 @@ class TestSendNotification:
 
     def test_all_libs_unavailable_returns_unavailable(self):
         with patch("sys.platform", "win32"):
-            with patch.dict("sys.modules", {
-                "plyer": None, "win10toast": None, "winotify": None
-            }):
+            with patch.dict("sys.modules", {"plyer": None, "win10toast": None, "winotify": None}):
                 result = send_notification()
         assert result["status"] in {
-            NOTIFICATION_UNAVAILABLE, NOTIFICATION_FAILED,
-            NOTIFICATION_SENT, FALLBACK_MESSAGE_ONLY,
+            NOTIFICATION_UNAVAILABLE,
+            NOTIFICATION_FAILED,
+            NOTIFICATION_SENT,
+            FALLBACK_MESSAGE_ONLY,
         }
         assert result["sensitive_data_included"] is False
 
@@ -93,8 +95,12 @@ class TestNotifyAuthRequired:
             return_value=NOTIFICATION_UNAVAILABLE,
         ):
             result = notify_auth_required()
-        assert result["status"] in {FALLBACK_MESSAGE_ONLY, NOTIFICATION_SENT,
-                                     NOTIFICATION_UNAVAILABLE, NOTIFICATION_FAILED}
+        assert result["status"] in {
+            FALLBACK_MESSAGE_ONLY,
+            NOTIFICATION_SENT,
+            NOTIFICATION_UNAVAILABLE,
+            NOTIFICATION_FAILED,
+        }
         assert result["sensitive_data_included"] is False
 
     def test_fallback_message_present_when_unavailable(self):

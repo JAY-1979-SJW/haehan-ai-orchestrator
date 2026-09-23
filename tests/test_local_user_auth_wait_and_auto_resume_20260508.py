@@ -3,40 +3,32 @@ LOCAL_USER_AUTH_WAIT_AND_AUTO_RESUME 통합 테스트
 
 인증 대기 → 완료 감지 → 자동 재개 전체 흐름을 검증한다.
 """
-import pytest
-from ai_orchestrator.local_agent.auth_wait_controller import (
-    enter_auth_wait,
-    build_auth_completed_result,
-    AUTH_SIGNAL_LOGIN,
-    AUTH_SIGNAL_CERT,
-    AUTH_SIGNAL_OTP,
-)
+
 from ai_orchestrator.local_agent.auth_completion_detector import (
     check_auth_completed_from_page_state,
 )
+from ai_orchestrator.local_agent.auth_wait_controller import (
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_OTP,
+    enter_auth_wait,
+)
 from ai_orchestrator.local_agent.auto_resume_after_auth import (
     resume_after_auth,
-    can_auto_resume,
 )
 from ai_orchestrator.local_agent.local_session_boundary import (
-    enforce_session_boundary,
-    validate_session_boundary,
     is_safe_for_export,
+)
+from ai_orchestrator.local_agent.task_protocol import (
+    STATUS_COMPLETED,
+    STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
 )
 from ai_orchestrator.local_agent.user_attention_notifier import (
     build_auth_attention_notice,
-    request_browser_foreground,
     get_notifier_status,
+    request_browser_foreground,
 )
-from ai_orchestrator.local_agent.task_protocol import (
-    STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
-    STATUS_AUTH_COMPLETED,
-    STATUS_AUTH_TIMEOUT,
-    STATUS_AUTH_CANCELLED,
-    STATUS_COMPLETED,
-)
-
 
 TASK_ID = "integration-task-001"
 
@@ -214,19 +206,29 @@ class TestSmoke:
 
     def test_allowed_actions_unchanged(self):
         from ai_orchestrator.local_agent.task_protocol import ALLOWED_TASK_ACTIONS
+
         expected = {
-            "open_url", "read_page", "search", "download_file",
-            "capture_screenshot", "extract_text", "extract_table",
-            "wait_for_user_auth", "detect_login_status",
+            "open_url",
+            "read_page",
+            "search",
+            "download_file",
+            "capture_screenshot",
+            "extract_text",
+            "extract_table",
+            "wait_for_user_auth",
+            "detect_login_status",
         }
         assert expected == set(ALLOWED_TASK_ACTIONS)
 
     def test_status_constants_include_new(self):
         from ai_orchestrator.local_agent.task_protocol import (
-            STATUS_AUTH_COMPLETED, STATUS_AUTH_TIMEOUT,
-            STATUS_AUTH_CANCELLED, STATUS_AUTH_FAILED,
+            STATUS_AUTH_CANCELLED,
+            STATUS_AUTH_COMPLETED,
+            STATUS_AUTH_FAILED,
+            STATUS_AUTH_TIMEOUT,
             STATUS_AUTO_RESUME_READY,
         )
+
         assert STATUS_AUTH_COMPLETED == "AUTH_COMPLETED"
         assert STATUS_AUTH_TIMEOUT == "AUTH_TIMEOUT"
         assert STATUS_AUTH_CANCELLED == "AUTH_CANCELLED"
@@ -234,7 +236,8 @@ class TestSmoke:
         assert STATUS_AUTO_RESUME_READY == "AUTO_RESUME_READY"
 
     def test_build_result_accepts_new_statuses(self):
-        from ai_orchestrator.local_agent.task_protocol import build_result, STATUS_AUTH_COMPLETED
+        from ai_orchestrator.local_agent.task_protocol import STATUS_AUTH_COMPLETED, build_result
+
         result = build_result(
             task_id="t1",
             ok=True,

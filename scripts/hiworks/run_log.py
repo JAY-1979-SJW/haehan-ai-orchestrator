@@ -1,13 +1,14 @@
 """Small JSON run logger for Hiworks work commands."""
+
 from __future__ import annotations
 
 import json
 import traceback
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
 from time import perf_counter
-from typing import Any, Iterator
+from typing import Any
 
 from scripts.hiworks.schemas import DATA_DIR
 

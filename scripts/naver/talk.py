@@ -2,17 +2,17 @@
 
 URL: https://talk.naver.com/
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 TALK_URL = "https://talk.naver.com/"
@@ -40,7 +40,8 @@ class NaverTalk:
         if not self.open():
             return []
         try:
-            chats = self.page.evaluate("""
+            chats = self.page.evaluate(
+                """
             (limit) => {
                 const out = [];
                 document.querySelectorAll('[class*="ChatList"] li, .chat_list li, .talk-item').forEach((el, i) => {
@@ -53,7 +54,9 @@ class NaverTalk:
                 });
                 return out;
             }
-            """, limit)
+            """,
+                limit,
+            )
             return chats
         except Exception as e:
             _log.error("[naver-talk] list_chats 실패: %s", e)
@@ -84,8 +87,7 @@ class NaverTalk:
                     }
                 self.page.locator('button:has-text("전송"), .btn_send').first.click(timeout=3000)
                 time.sleep(2)
-                log_critical("OTHER", f"네이버 톡톡 발송: {partner_name}",
-                             partner=partner_name, mode="talk_send")
+                log_critical("OTHER", f"네이버 톡톡 발송: {partner_name}", partner=partner_name, mode="talk_send")
                 return {"ok": True, "mode": "sent"}
             return {"ok": True, "mode": "filled_not_sent"}
         except Exception as e:

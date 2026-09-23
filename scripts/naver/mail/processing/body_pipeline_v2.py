@@ -13,9 +13,9 @@
   unread_state_audit.json
   body_pipeline_summary.md
 """
+
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import time
@@ -26,9 +26,10 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from scripts.naver.mail.utilities import pii_mask
+from scripts.naver.mail_read import body_reader
+
 from . import read_state_guard as rsg
 from . import unread_audit as ua
-from scripts.naver.mail_read import body_reader
 
 KST = timezone(timedelta(hours=9))
 
@@ -39,8 +40,12 @@ SCHEMA_VERSION = "v2.0"
 
 # 외부 AI/HTTP 차단 호스트 (탐지 목적 — 실제 호출 안 함을 자기검증)
 FORBIDDEN_HOSTS = (
-    "api.anthropic.com", "api.openai.com", "generativelanguage.googleapis.com",
-    "api.deepl.com", "translate.googleapis.com", "claude.ai",
+    "api.anthropic.com",
+    "api.openai.com",
+    "generativelanguage.googleapis.com",
+    "api.deepl.com",
+    "translate.googleapis.com",
+    "claude.ai",
 )
 
 
@@ -74,7 +79,9 @@ def _redact_url(url: str) -> str:
     """민감 query 제거 (token, auth, secret, session)."""
     return re.sub(
         r"([?&])(token|auth|secret|session|sid|sess|sid_token|key)=[^&]*",
-        r"\1\2=[REDACTED]", url, flags=re.IGNORECASE,
+        r"\1\2=[REDACTED]",
+        url,
+        flags=re.IGNORECASE,
     )
 
 
@@ -120,11 +127,14 @@ class TargetMail:
     folder_name: str
 
 
-def run(actions: Actions, targets: list[TargetMail],
-        *, mode: str = MODE_DRY_RUN,
-        max_bodies: int = 2,
-        inter_mail_sleep_s: float = 0.2
-        ) -> PipelineReport:
+def run(
+    actions: Actions,
+    targets: list[TargetMail],
+    *,
+    mode: str = MODE_DRY_RUN,
+    max_bodies: int = 2,
+    inter_mail_sleep_s: float = 0.2,
+) -> PipelineReport:
     """본문 진입 파이프라인 실행.
 
     DRY_RUN: 본문 진입 없음. PII 마스킹/감사 인프라 검증만.
@@ -151,13 +161,18 @@ def run(actions: Actions, targets: list[TargetMail],
                 snap = ua.open_body_and_audit_state(actions, snap, folder_id=t.folder_id)
                 # 3) extract body
                 payload = actions.evaluate(body_reader.BODY_EXPR) or {}
-                mb = body_reader.parse_body_payload(t.sn, payload) \
-                    if isinstance(payload, dict) else body_reader.MailBody(sn=t.sn)
+                mb = (
+                    body_reader.parse_body_payload(t.sn, payload)
+                    if isinstance(payload, dict)
+                    else body_reader.MailBody(sn=t.sn)
+                )
                 # 4) PII 마스킹 — body_reader.parse_body_payload 가 이미 redact()
                 # 한 번 더 pii_mask.mask 로 통계 수집
                 mask_res = pii_mask.mask(mb.body_redacted or "")
                 br = BodyRecord(
-                    sn=t.sn, folder_id=t.folder_id, folder_name=t.folder_name,
+                    sn=t.sn,
+                    folder_id=t.folder_id,
+                    folder_name=t.folder_name,
                     subject_masked=pii_mask.mask(mb.subject or "").masked_text,
                     sender_masked=mb.sender_addr_redacted,
                     date_text=mb.date_text,
@@ -181,10 +196,15 @@ def run(actions: Actions, targets: list[TargetMail],
                 report.success_count += 1
             except Exception as exc:
                 report.failure_count += 1
-                report.bodies.append(BodyRecord(
-                    sn=t.sn, folder_id=t.folder_id, folder_name=t.folder_name,
-                    open_ok=False, error=str(exc)[:200],
-                ))
+                report.bodies.append(
+                    BodyRecord(
+                        sn=t.sn,
+                        folder_id=t.folder_id,
+                        folder_name=t.folder_name,
+                        open_ok=False,
+                        error=str(exc)[:200],
+                    )
+                )
             time.sleep(inter_mail_sleep_s)
 
     # DRY_RUN: 인프라만 검증 (실제 진입 안 함)
@@ -193,8 +213,7 @@ def run(actions: Actions, targets: list[TargetMail],
     # body_redacted 만 저장 — 별도 raw 필드 부재
     report.raw_body_leak_check = {
         "raw_body_field_present_in_records": any(
-            "body_raw" in b.to_dict() or "raw_body" in b.to_dict()
-            for b in report.bodies
+            "body_raw" in b.to_dict() or "raw_body" in b.to_dict() for b in report.bodies
         ),
         "checked_records": len(report.bodies),
     }
@@ -219,28 +238,29 @@ def write_outputs(report: PipelineReport, out_dir: Path) -> dict[str, Path]:
     paths["report"] = p1
     # pii_masking_samples.json — 본문 마스킹 결과 샘플 (hash + types 만)
     samples = [
-        {"sn": b.sn, "folder_name": b.folder_name,
-         "masked_text_hash": b.masked_text_hash,
-         "pii_detected_count": b.pii_detected_count,
-         "pii_types": b.pii_types,
-         "body_redacted_first_160": b.body_redacted_short,
-         "link_domain_counts": b.link_domain_counts}
+        {
+            "sn": b.sn,
+            "folder_name": b.folder_name,
+            "masked_text_hash": b.masked_text_hash,
+            "pii_detected_count": b.pii_detected_count,
+            "pii_types": b.pii_types,
+            "body_redacted_first_160": b.body_redacted_short,
+            "link_domain_counts": b.link_domain_counts,
+        }
         for b in report.bodies
     ]
     p2 = out_dir / "pii_masking_samples.json"
-    p2.write_text(json.dumps(samples, ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p2.write_text(json.dumps(samples, ensure_ascii=False, indent=2), encoding="utf-8")
     paths["pii"] = p2
     # unread_state_audit.json
     p3 = out_dir / "unread_state_audit.json"
-    p3.write_text(json.dumps(report.unread_audit, ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p3.write_text(json.dumps(report.unread_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     paths["unread"] = p3
     # body_pipeline_summary.md
     p4 = out_dir / "body_pipeline_summary.md"
     md = [
         f"# Body Pipeline V2 — run {report.run_id}",
-        f"",
+        "",
         f"- mode: `{report.mode}`",
         f"- started_at: {report.started_at_iso}",
         f"- ended_at: {report.ended_at_iso}",
@@ -252,8 +272,8 @@ def write_outputs(report: PipelineReport, out_dir: Path) -> dict[str, Path]:
         f"- attachment_download_count: {report.attachment_download_count}",
         f"- external_ai_call_count: {report.external_ai_call_count}",
         f"- verdict: **{report.verdict}**",
-        f"",
-        f"## Bodies",
+        "",
+        "## Bodies",
     ]
     for b in report.bodies:
         md.append(

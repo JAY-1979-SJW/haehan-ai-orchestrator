@@ -4,15 +4,14 @@ Tests validate controlled_submit module for safe internal submission.
 No actual submit, no browser, no network, no DB.
 Pure controlled submit decision validation only.
 """
+
 import pytest
-from datetime import datetime
 
 from ai_orchestrator.browser_tool.controlled_submit import (
-    ControlledSubmitInput,
     ControlledSubmitResult,
-    is_controlled_internal_origin,
-    get_blocking_reason,
     build_controlled_submit_result,
+    get_blocking_reason,
+    is_controlled_internal_origin,
 )
 
 
@@ -71,15 +70,11 @@ class TestControlledInternalOrigin:
 
     def test_data_url_allowed(self):
         """data: URL should be allowed."""
-        assert (
-            is_controlled_internal_origin("data:text/html,<form>test</form>") is True
-        )
+        assert is_controlled_internal_origin("data:text/html,<form>test</form>") is True
 
     def test_external_url_blocked(self):
         """External URL should be blocked."""
-        assert (
-            is_controlled_internal_origin("https://external.example.com/form") is False
-        )
+        assert is_controlled_internal_origin("https://external.example.com/form") is False
 
     def test_empty_url_blocked(self):
         """Empty URL should be blocked."""
@@ -87,21 +82,11 @@ class TestControlledInternalOrigin:
 
     def test_can_disable_internal_mock(self):
         """Should respect allow_internal_mock=False."""
-        assert (
-            is_controlled_internal_origin(
-                "https://internal.mock/form", allow_internal_mock=False
-            )
-            is False
-        )
+        assert is_controlled_internal_origin("https://internal.mock/form", allow_internal_mock=False) is False
 
     def test_can_disable_localhost(self):
         """Should respect allow_localhost=False."""
-        assert (
-            is_controlled_internal_origin(
-                "http://localhost/form", allow_localhost=False
-            )
-            is False
-        )
+        assert is_controlled_internal_origin("http://localhost/form", allow_localhost=False) is False
 
 
 class TestBlockingReasons:
@@ -136,27 +121,21 @@ class TestBlockingReasons:
 
     def test_조달_keyword_blocks(self, mock_preview_bundle):
         """조달 keyword should block."""
-        mock_preview_bundle.audit.redacted_payload["fields"] = [
-            {"name": "site", "value": "조달청"}
-        ]
+        mock_preview_bundle.audit.redacted_payload["fields"] = [{"name": "site", "value": "조달청"}]
         should_block, reason = get_blocking_reason(mock_preview_bundle, True)
         assert should_block is True
         assert "조달" in reason or "blocked" in reason.lower()
 
     def test_g2b_keyword_blocks(self, mock_preview_bundle):
         """G2B keyword should block."""
-        mock_preview_bundle.audit.redacted_payload["fields"] = [
-            {"name": "site", "value": "G2B 시스템"}
-        ]
+        mock_preview_bundle.audit.redacted_payload["fields"] = [{"name": "site", "value": "G2B 시스템"}]
         should_block, reason = get_blocking_reason(mock_preview_bundle, True)
         assert should_block is True
         assert "g2b" in reason.lower() or "blocked" in reason.lower()
 
     def test_payment_keyword_blocks(self, mock_preview_bundle):
         """결제 (payment) keyword should block."""
-        mock_preview_bundle.audit.redacted_payload["fields"] = [
-            {"name": "action", "value": "결제"}
-        ]
+        mock_preview_bundle.audit.redacted_payload["fields"] = [{"name": "action", "value": "결제"}]
         should_block, reason = get_blocking_reason(mock_preview_bundle, True)
         assert should_block is True
         assert "결제" in reason or "blocked" in reason.lower()
@@ -227,9 +206,7 @@ class TestControlledSubmitResult:
 
     def test_user_id_in_audit(self, mock_preview_bundle):
         """User ID should be included in audit."""
-        result = build_controlled_submit_result(
-            mock_preview_bundle, True, user_id="user_456"
-        )
+        result = build_controlled_submit_result(mock_preview_bundle, True, user_id="user_456")
 
         assert result.audit_record["user_id"] == "user_456"
 

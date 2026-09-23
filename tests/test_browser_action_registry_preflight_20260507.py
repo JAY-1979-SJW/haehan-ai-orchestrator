@@ -1,20 +1,19 @@
 """Tests for Browser Action Registry Preflight Module."""
+
 import json
-import pytest
 from pathlib import Path
 
 from ai_orchestrator.browser_tool.action_registry_preflight import (
     build_action_preflight_context,
     evaluate_action_registry_preflight,
-    validate_action_preflight_result,
     get_browser_action_policy,
+    validate_action_preflight_result,
 )
 from ai_orchestrator.browser_tool.approval_record_store import (
-    build_approval_request,
-    build_approval_decision,
     append_approval_record,
+    build_approval_decision,
+    build_approval_request,
 )
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_action_registry_preflight_20260507.json"
 

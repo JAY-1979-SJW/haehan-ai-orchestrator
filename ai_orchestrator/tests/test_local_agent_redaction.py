@@ -5,8 +5,6 @@ _RESULT_DATA_ALLOWED_KEYS, _sanitize_url_for_storage, _strip_result_data
 를 올바르게 정의하고, 기존 registry behavior를 유지함을 검증한다.
 """
 
-import pytest
-
 
 def test_sensitive_keys_defined():
     """_SENSITIVE_KEYS가 정의되어 있고 필수 키를 포함한다."""
@@ -17,12 +15,26 @@ def test_sensitive_keys_defined():
 
     # 필수 민감 키들
     required_keys = {
-        "password", "passwd", "pwd",
-        "token", "access_token", "refresh_token", "session_token",
-        "device_token", "approval_token", "final_approval_token", "token_hash",
-        "cookie", "cookies", "session",
-        "client_secret", "secret", "api_secret", "api_key",
-        "auth", "authorization",
+        "password",
+        "passwd",
+        "pwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "session_token",
+        "device_token",
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "cookie",
+        "cookies",
+        "session",
+        "client_secret",
+        "secret",
+        "api_secret",
+        "api_key",
+        "auth",
+        "authorization",
     }
     assert required_keys.issubset(_SENSITIVE_KEYS)
 
@@ -83,9 +95,18 @@ def test_result_data_allowed_keys_defined():
 
     # 필수 허용 키들
     required_keys = {
-        "action", "dry_run", "normalized_url", "url_scheme", "url_host",
-        "would_open_browser", "external_network_call", "requires_approval",
-        "policy_decision", "message", "reason", "error_code",
+        "action",
+        "dry_run",
+        "normalized_url",
+        "url_scheme",
+        "url_host",
+        "would_open_browser",
+        "external_network_call",
+        "requires_approval",
+        "policy_decision",
+        "message",
+        "reason",
+        "error_code",
     }
     assert required_keys.issubset(_RESULT_DATA_ALLOWED_KEYS)
 
@@ -216,7 +237,11 @@ def test_registry_uses_strip_sensitive():
 def test_registry_uses_strip_result_data():
     """registry의 apply_result가 _strip_result_data를 사용한다."""
     from ai_orchestrator.local_agent_registry import (
-        enqueue_task, mark_delivered, mark_running, apply_result, mark_approved
+        apply_result,
+        enqueue_task,
+        mark_approved,
+        mark_delivered,
+        mark_running,
     )
 
     task = enqueue_task(
@@ -248,6 +273,7 @@ def test_registry_uses_strip_result_data():
 
     # task.result_data에 password가 없어야 함
     from ai_orchestrator.local_agent_registry import get_task
+
     updated_task = get_task(task.agent_id, task.task_id)
     assert updated_task is not None
     assert updated_task.result_data is not None
@@ -629,6 +655,7 @@ def test_strip_result_data_removes_empty_apps():
 
 
 # ── browser.inspect redaction tests ───────────────────────────────────────────
+
 
 def test_strip_result_data_preserves_browser_inspect():
     """_strip_result_data가 browser.inspect 결과를 보존한다."""

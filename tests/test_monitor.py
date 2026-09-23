@@ -6,22 +6,20 @@ monitor.py 단위 테스트
 - RetryEngine: 스케줄, due 반환, 최대 초과
 - _parse_ops / _parse_audit: 파서 정상/비정상 입력
 """
+
 import json
 import os
 import sys
 import time
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import monitor as mon
 
-
 # ── FileTailer ────────────────────────────────────────────────────────────────
 
-class TestFileTailer:
 
+class TestFileTailer:
     def test_reads_only_new_lines(self, tmp_path):
         f = tmp_path / "ops.log"
         f.write_text("old line\n", encoding="utf-8")
@@ -66,8 +64,8 @@ class TestFileTailer:
 
 # ── Parsers ───────────────────────────────────────────────────────────────────
 
-class TestParsers:
 
+class TestParsers:
     def test_parse_ops_error(self):
         line = (
             "2026-04-19 10:00:00 [ERROR   ] orchestrator.executor "
@@ -103,8 +101,8 @@ class TestParsers:
 
 # ── AlertThrottle ─────────────────────────────────────────────────────────────
 
-class TestAlertThrottle:
 
+class TestAlertThrottle:
     def test_first_call_allowed(self):
         t = mon.AlertThrottle(cooldown=60)
         assert t.allow("key1") is True
@@ -134,8 +132,8 @@ class TestAlertThrottle:
 
 # ── ApprovalWatcher ───────────────────────────────────────────────────────────
 
-class TestApprovalWatcher:
 
+class TestApprovalWatcher:
     def _throttle(self):
         return mon.AlertThrottle(cooldown=0)  # 억제 없이 테스트
 
@@ -181,8 +179,8 @@ class TestApprovalWatcher:
 
 # ── RetryEngine ───────────────────────────────────────────────────────────────
 
-class TestRetryEngine:
 
+class TestRetryEngine:
     def test_schedule_returns_true_under_max(self):
         r = mon.RetryEngine(max_retry=3)
         assert r.schedule("t1") is True
@@ -216,8 +214,8 @@ class TestRetryEngine:
 
 # ── Monitor._on_exec_failed (알림 측 통합) ────────────────────────────────────
 
-class TestMonitorAlerts:
 
+class TestMonitorAlerts:
     def test_exec_failed_schedules_retry(self, monkeypatch):
         sent = []
         monkeypatch.setattr(mon, "send_status_message", lambda t: sent.append(t))

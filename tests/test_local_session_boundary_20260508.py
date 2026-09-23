@@ -1,12 +1,12 @@
 """
 local_session_boundary 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.local_session_boundary import (
     enforce_session_boundary,
-    validate_session_boundary,
     get_boundary_safe_defaults,
     is_safe_for_export,
+    validate_session_boundary,
 )
 
 
@@ -51,18 +51,22 @@ class TestEnforceSessionBoundary:
         assert "certificate_password" not in result or result.get("certificate_password") in (None, False, "")
 
     def test_extracted_data_cleaned(self):
-        result = enforce_session_boundary({
-            "ok": True,
-            "extracted_data": {"body_text": "ok", "cookie": "abc"},
-        })
+        result = enforce_session_boundary(
+            {
+                "ok": True,
+                "extracted_data": {"body_text": "ok", "cookie": "abc"},
+            }
+        )
         assert "cookie" not in result["extracted_data"]
         assert result["extracted_data"]["body_text"] == "ok"
 
     def test_safe_fields_not_overrideable(self):
-        result = enforce_session_boundary({
-            "ok": True,
-            "sensitive_data_collected": True,  # 강제 덮어쓰기
-        })
+        result = enforce_session_boundary(
+            {
+                "ok": True,
+                "sensitive_data_collected": True,  # 강제 덮어쓰기
+            }
+        )
         assert result["sensitive_data_collected"] is False
 
 

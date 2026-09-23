@@ -1,32 +1,50 @@
 """Real Site Smoke Runner — 실제 외부 사이트 read-only smoke를 실행한다."""
+
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from urllib.parse import urlparse
 
 from ai_orchestrator.local_agent.natural_language_task_api import (
-    execute_natural_language_task, check_result_safety,
+    check_result_safety,
+    execute_natural_language_task,
 )
 from ai_orchestrator.local_agent.universal_safe_result import (
-    STATUS_COMPLETED, STATUS_FAILED, STATUS_WARN_PERMISSION, STATUS_WARN_AUTH,
+    STATUS_COMPLETED,
+    STATUS_WARN_AUTH,
+    STATUS_WARN_PERMISSION,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 # read-only smoke 허용 대상 — 로그인/결제/정부/금융 제외
 _ALLOWED_READONLY_PATTERNS = (
-    "example.com", "httpbin.org", "jsonplaceholder.typicode.com",
-    "quotes.toscrape.com", "books.toscrape.com",
+    "example.com",
+    "httpbin.org",
+    "jsonplaceholder.typicode.com",
+    "quotes.toscrape.com",
+    "books.toscrape.com",
 )
 
 # 항상 차단되는 패턴
 _BLOCKED_PATTERNS = (
-    "go.kr", "gov.kr", "hometax", "g2b", "bank", "card",
-    "naver.com/login", "kakao.com/login",
+    "go.kr",
+    "gov.kr",
+    "hometax",
+    "g2b",
+    "bank",
+    "card",
+    "naver.com/login",
+    "kakao.com/login",
 )
 
 _SMOKE_SCENARIOS: list[dict[str, Any]] = [

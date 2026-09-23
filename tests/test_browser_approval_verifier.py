@@ -4,13 +4,14 @@ Tests approval verification, token hashing, and one-time use enforcement.
 """
 
 import asyncio
-import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 
 try:
     from playwright.async_api import async_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -330,13 +331,13 @@ class TestServerActionAdapterWithApprovalVerifier:
     """Test ServerActionAdapter with approval verifier."""
 
     def test_execute_click_with_valid_approval(self):
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -375,13 +376,13 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_execute_click_with_invalid_token_blocked(self):
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -421,13 +422,13 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_approval_marked_used_after_execution(self):
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -468,13 +469,13 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_reuse_blocked_after_first_execution(self):
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -522,9 +523,9 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_adapter_without_verifier_still_works(self):
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
-        from local_agent.browser_action_contract import ServerApprovalAction
 
         async def run_test():
             async with async_playwright() as p:
@@ -550,13 +551,13 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_approval_token_not_in_result_data(self):
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:

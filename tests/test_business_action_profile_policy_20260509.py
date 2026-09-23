@@ -8,19 +8,32 @@
 - approval_scope_fields에 business_profile 포함
 - build_approval_scope() / build_evidence_policy() 동작
 """
+
 from __future__ import annotations
 
 import pytest
+
 from ai_orchestrator.local_agent.business_action_profiles import (
-    get_profile, list_profiles, validate_summary_fields, build_approval_scope,
-    build_evidence_policy, COMMON_FORBIDDEN_FIELDS, BusinessProfile,
+    COMMON_FORBIDDEN_FIELDS,
+    build_approval_scope,
+    build_evidence_policy,
+    get_profile,
+    list_profiles,
+    validate_summary_fields,
 )
 
 
 def test_all_profiles_registered():
     """6개 profile 모두 등록."""
     profiles = list_profiles()
-    expected = {"bid_submission", "erp_save", "erp_submit_approval", "document_submission", "public_agency_upload", "esign_request"}
+    expected = {
+        "bid_submission",
+        "erp_save",
+        "erp_submit_approval",
+        "document_submission",
+        "public_agency_upload",
+        "esign_request",
+    }
     assert expected == set(profiles)
 
 

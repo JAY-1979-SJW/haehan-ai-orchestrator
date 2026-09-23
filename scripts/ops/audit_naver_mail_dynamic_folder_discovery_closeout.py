@@ -6,11 +6,11 @@
   WARN_LNB_COUNT_RECONCILIATION_REMAINS
   FAIL_SIDE_EFFECT_OCCURRED
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from scripts.naver.mail import folder_policy as fp
 from scripts.naver.mail import folder_profile as fpr
 
 
@@ -22,19 +22,24 @@ class CloseoutVerdict:
     metrics: dict = field(default_factory=dict)
 
 
-_FORBIDDEN = ("popup/read", "captureScreenshot",
-              "send", "delete", "trash_action", "spam_action", "download",
-              "submit", "label_change")
+_FORBIDDEN = (
+    "popup/read",
+    "captureScreenshot",
+    "send",
+    "delete",
+    "trash_action",
+    "spam_action",
+    "download",
+    "submit",
+    "label_change",
+)
 
 
-def judge_closeout(snap: "fpr.FolderProfileSnapshot",
-                   *, side_effect_log: list[str] | None = None
-                   ) -> CloseoutVerdict:
+def judge_closeout(snap: fpr.FolderProfileSnapshot, *, side_effect_log: list[str] | None = None) -> CloseoutVerdict:
     side_effect_log = side_effect_log or []
     hits = [e for e in side_effect_log if any(b in e for b in _FORBIDDEN)]
     if hits:
-        return CloseoutVerdict(False, "FAIL_SIDE_EFFECT_OCCURRED",
-                               reasons=[f"side_effect:{hits[:3]}"])
+        return CloseoutVerdict(False, "FAIL_SIDE_EFFECT_OCCURRED", reasons=[f"side_effect:{hits[:3]}"])
 
     metrics = {
         "folder_count": len(snap.folders),
@@ -51,7 +56,8 @@ def judge_closeout(snap: "fpr.FolderProfileSnapshot",
     # 1) unknown_folders 0 인지
     if snap.unknown_folders:
         return CloseoutVerdict(
-            False, "WARN_LNB_COUNT_RECONCILIATION_REMAINS"
+            False,
+            "WARN_LNB_COUNT_RECONCILIATION_REMAINS"
             if (snap.reconciliation and not snap.reconciliation.get("explained"))
             else "WARN_FOLDER_POLICY_EXCLUDED",
             reasons=[f"unknown_present:{snap.unknown_folders}"],
@@ -60,21 +66,28 @@ def judge_closeout(snap: "fpr.FolderProfileSnapshot",
 
     # 2) reconciliation 미설명 시
     if snap.reconciliation and not snap.reconciliation.get("explained"):
-        return CloseoutVerdict(False, "WARN_LNB_COUNT_RECONCILIATION_REMAINS",
-                               reasons=[f"formula:{snap.reconciliation.get('formula')}"],
-                               metrics=metrics)
+        return CloseoutVerdict(
+            False,
+            "WARN_LNB_COUNT_RECONCILIATION_REMAINS",
+            reasons=[f"formula:{snap.reconciliation.get('formula')}"],
+            metrics=metrics,
+        )
 
     # 3) 정책 제외된 실제 폴더가 있더라도 안전한 처리이면 PASS 가능
     # 단, 단순 excluded 갯수만으로 WARN 처리하지는 않음 (정상)
     return CloseoutVerdict(
-        True, "PASS_NAVER_MAIL_DYNAMIC_FOLDER_DISCOVERY_CLOSEOUT",
-        reasons=[], metrics=metrics,
+        True,
+        "PASS_NAVER_MAIL_DYNAMIC_FOLDER_DISCOVERY_CLOSEOUT",
+        reasons=[],
+        metrics=metrics,
     )
 
 
 def main(argv=None) -> int:
-    import argparse, json
+    import argparse
+    import json
     from pathlib import Path
+
     ap = argparse.ArgumentParser()
     ap.add_argument("snapshot_json", type=Path)
     args = ap.parse_args(argv)
@@ -97,12 +110,17 @@ def main(argv=None) -> int:
         reconciliation=d.get("reconciliation", {}),
     )
     v = judge_closeout(snap)
-    print(json.dumps({"verdict": v.code, "passed": v.passed,
-                      "reasons": v.reasons, "metrics": v.metrics},
-                     ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            {"verdict": v.code, "passed": v.passed, "reasons": v.reasons, "metrics": v.metrics},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0 if v.passed else 1
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

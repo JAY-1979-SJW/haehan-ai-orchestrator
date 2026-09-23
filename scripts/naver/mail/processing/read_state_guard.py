@@ -9,11 +9,12 @@
   send/delete/move/spam/star/label_change/download.
 본 모듈은 차단 API 만 제공 — 실제 enforce 는 caller (collector) 가 사용한다.
 """
+
 from __future__ import annotations
 
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from scripts.gate import check as gate_check
 
@@ -24,10 +25,20 @@ MODE_FULL_READ = "FULL_READ"
 MODE_ALL = "ALL"
 
 # 절대 호출 금지 동작 (collector 가 호출 시 RuntimeError)
-ALLOWED_ACTIONS = frozenset({
-    "read", "list", "search", "open_body", "compose", "draft",
-    "reply", "reply_all", "forward", "edit_draft",
-})
+ALLOWED_ACTIONS = frozenset(
+    {
+        "read",
+        "list",
+        "search",
+        "open_body",
+        "compose",
+        "draft",
+        "reply",
+        "reply_all",
+        "forward",
+        "edit_draft",
+    }
+)
 
 APPROVAL_GATED_ACTIONS: dict[str, str] = {
     "send": "naver_mail_send",
@@ -42,10 +53,13 @@ APPROVAL_GATED_ACTIONS: dict[str, str] = {
     "unlabel": "naver_mail_move",
 }
 
-FORBIDDEN_ACTIONS = frozenset({
-    "download_attachment", "open_attachment",
-    "screenshot_body",
-})
+FORBIDDEN_ACTIONS = frozenset(
+    {
+        "download_attachment",
+        "open_attachment",
+        "screenshot_body",
+    }
+)
 
 
 class ForbiddenActionError(RuntimeError):
@@ -60,9 +74,7 @@ def assert_action_allowed(action: str, *, force: bool = False, **metadata: Any) 
         gate_check(gate_name, force=force, mail_action=action, **metadata)
         return
     if action in FORBIDDEN_ACTIONS:
-        raise ForbiddenActionError(
-            f"FORBIDDEN_ACTION_BLOCKED: {action!r} — 정책상 금지된 동작입니다."
-        )
+        raise ForbiddenActionError(f"FORBIDDEN_ACTION_BLOCKED: {action!r} — 정책상 금지된 동작입니다.")
 
 
 def assert_mode_valid(mode: str) -> None:
@@ -72,15 +84,13 @@ def assert_mode_valid(mode: str) -> None:
 
 def list_only_assert_no_body_eval(callable_log: list[str]) -> None:
     """LIST_ONLY 모드 검증 — caller 가 호출 로그를 넘기면 본문 열람 호출이 있는지 확인."""
-    body_calls = [c for c in callable_log
-                  if "read_body" in c or "popup/read" in c or "Page.captureScreenshot" in c]
+    body_calls = [c for c in callable_log if "read_body" in c or "popup/read" in c or "Page.captureScreenshot" in c]
     if body_calls:
-        raise ForbiddenActionError(
-            f"LIST_ONLY_MODE_VIOLATED: body 열람 호출 {len(body_calls)}건: {body_calls[:3]}"
-        )
+        raise ForbiddenActionError(f"LIST_ONLY_MODE_VIOLATED: body 열람 호출 {len(body_calls)}건: {body_calls[:3]}")
 
 
 # ── FULL_READ 안읽음 복구 계획 ───────────────────────────────────────
+
 
 @dataclass
 class RestoreTarget:
@@ -150,6 +160,7 @@ def attempt_restore_unread(
 
 
 # ── 안읽은 건수 전/후 비교 ───────────────────────────────────────────
+
 
 @dataclass
 class UnreadCountSnapshot:

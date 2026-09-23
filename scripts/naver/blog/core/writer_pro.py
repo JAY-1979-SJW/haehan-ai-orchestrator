@@ -32,19 +32,18 @@
         dry_run=False,
     )
 """
+
 from __future__ import annotations
 
 import json
 import re
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 from scripts.naver.blog.core.writer import BlogWriter
 
 _log = get_logger(__name__)
@@ -68,8 +67,13 @@ OUTRO_TEMPLATES = {
 
 # 광고성/금칙어 (네이버 SEO 페널티 위험)
 BLOCKED_PATTERNS = [
-    r"100%\s*보장", r"무조건\s*최고", r"전국\s*1위", r"최저가\s*보장",
-    r"환불\s*불가", r"불법", r"도박",
+    r"100%\s*보장",
+    r"무조건\s*최고",
+    r"전국\s*1위",
+    r"최저가\s*보장",
+    r"환불\s*불가",
+    r"불법",
+    r"도박",
 ]
 
 
@@ -114,8 +118,7 @@ class BlogWriterPro:
 
     # ── 인트로/아웃트로 자동 삽입 ────────────────────────────────────────
 
-    def apply_templates(self, body: str, topic: str,
-                        intro: str | None = None, outro: str | None = None) -> str:
+    def apply_templates(self, body: str, topic: str, intro: str | None = None, outro: str | None = None) -> str:
         """인트로/아웃트로 템플릿을 본문 앞뒤에 삽입."""
         out = body
         if intro and intro in INTRO_TEMPLATES:
@@ -126,17 +129,21 @@ class BlogWriterPro:
 
     # ── AI 보강 (제목 개선 / 태그 자동) ──────────────────────────────────
 
-    def ai_enhance(self, title: str, body: str,
-                   keywords: list[str] | None = None) -> dict:
+    def ai_enhance(self, title: str, body: str, keywords: list[str] | None = None) -> dict:
         """AI로 제목 개선안 + 자동 태그 + SEO 점수."""
         from scripts.naver.blog.seo import BlogSEO
+
         seo = BlogSEO(self.page)
         try:
             seo_result = seo.full_optimize(title, body, keywords or [])
         except Exception as e:
             _log.warning("[blog-pro] SEO 분석 실패 (skip): %s", e)
-            seo_result = {"overall_score": 50, "final_score": 50,
-                          "suggested_tags": [], "keyword_stuffing": {"stuffed_keywords": []}}
+            seo_result = {
+                "overall_score": 50,
+                "final_score": 50,
+                "suggested_tags": [],
+                "keyword_stuffing": {"stuffed_keywords": []},
+            }
         return seo_result
 
     # ── 백업 (발행 전 JSON 스냅샷) ───────────────────────────────────────
@@ -147,12 +154,19 @@ class BlogWriterPro:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe = re.sub(r"[^\w가-힣]", "_", title)[:30]
         path = DRAFT_DIR / f"{ts}_{safe}.json"
-        path.write_text(json.dumps({
-            "saved_at": datetime.now().isoformat(timespec="seconds"),
-            "title": title,
-            "body": body,
-            "meta": meta or {},
-        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        path.write_text(
+            json.dumps(
+                {
+                    "saved_at": datetime.now().isoformat(timespec="seconds"),
+                    "title": title,
+                    "body": body,
+                    "meta": meta or {},
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
         self._last_draft_path = path
         _log.info("[blog-pro] 백업 저장: %s", path.name)
         return path
@@ -171,19 +185,18 @@ class BlogWriterPro:
         for f in files[:limit]:
             try:
                 d = json.loads(f.read_text(encoding="utf-8"))
-                out.append({"file": f.name, "saved_at": d.get("saved_at"),
-                            "title": d.get("title", "")[:50]})
+                out.append({"file": f.name, "saved_at": d.get("saved_at"), "title": d.get("title", "")[:50]})
             except Exception:
                 continue
         return out
 
     # ── 이미지 ALT 자동 생성 + 적용 ─────────────────────────────────────
 
-    def prepare_images_with_alt(self, images: list[str],
-                                  topic: str) -> list[dict]:
+    def prepare_images_with_alt(self, images: list[str], topic: str) -> list[dict]:
         """이미지 경로 + AI ALT 텍스트 매핑."""
         try:
             from scripts.naver.blog.seo import BlogSEO
+
             seo = BlogSEO(self.page)
         except Exception:
             seo = None
@@ -192,7 +205,7 @@ class BlogWriterPro:
             alt = ""
             if seo:
                 try:
-                    r = seo.generate_image_alt(f"{topic} 이미지 #{i+1}", product_name=topic)
+                    r = seo.generate_image_alt(f"{topic} 이미지 #{i + 1}", product_name=topic)
                     alt = (r.get("text") or "").strip()[:80]
                 except Exception:
                     pass
@@ -201,21 +214,24 @@ class BlogWriterPro:
 
     # ── 메인 워크플로우: smart_publish ───────────────────────────────────
 
-    def smart_publish(self, *,
-                      title: str,
-                      body: str,
-                      keywords: list[str] | None = None,
-                      images: list[str] | None = None,
-                      category: str | None = None,
-                      tags: list[str] | None = None,
-                      visibility: str = "public",
-                      intro_template: str | None = None,
-                      outro_template: str | None = None,
-                      auto_paragraphize: bool = True,
-                      min_seo_score: int = 60,
-                      auto_schedule: bool = False,
-                      save_draft_only: bool = False,
-                      dry_run: bool = False) -> dict:
+    def smart_publish(
+        self,
+        *,
+        title: str,
+        body: str,
+        keywords: list[str] | None = None,
+        images: list[str] | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        visibility: str = "public",
+        intro_template: str | None = None,
+        outro_template: str | None = None,
+        auto_paragraphize: bool = True,
+        min_seo_score: int = 60,
+        auto_schedule: bool = False,
+        save_draft_only: bool = False,
+        dry_run: bool = False,
+    ) -> dict:
         """원샷 고도화 발행.
 
         Returns:
@@ -233,8 +249,7 @@ class BlogWriterPro:
         body_with_tpl = self.apply_templates(body, topic, intro_template, outro_template)
 
         # 3) 가독성 단락 분리
-        paragraphs = (self.auto_paragraphize(body_with_tpl)
-                      if auto_paragraphize else [body_with_tpl])
+        paragraphs = self.auto_paragraphize(body_with_tpl) if auto_paragraphize else [body_with_tpl]
 
         # 4) SEO 분석 + AI 태그
         seo = self.ai_enhance(title, body_with_tpl, keywords)
@@ -244,21 +259,33 @@ class BlogWriterPro:
 
         if seo_score < min_seo_score and not dry_run:
             _log.warning("[blog-pro] SEO 점수 %d < %d — 발행 보류", seo_score, min_seo_score)
-            return {"ok": False, "stage": "seo", "seo_score": seo_score,
-                    "suggested_tags": suggested_tags,
-                    "stuffed": seo.get("keyword_stuffing", {}).get("stuffed_keywords", []),
-                    "hint": "min_seo_score를 낮추거나 본문/제목을 개선하세요"}
+            return {
+                "ok": False,
+                "stage": "seo",
+                "seo_score": seo_score,
+                "suggested_tags": suggested_tags,
+                "stuffed": seo.get("keyword_stuffing", {}).get("stuffed_keywords", []),
+                "hint": "min_seo_score를 낮추거나 본문/제목을 개선하세요",
+            }
 
         # 5) 백업
-        draft_path = self.backup_draft(title, body_with_tpl, meta={
-            "keywords": keywords, "tags": final_tags, "category": category,
-            "seo_score": seo_score, "images": images,
-        })
+        draft_path = self.backup_draft(
+            title,
+            body_with_tpl,
+            meta={
+                "keywords": keywords,
+                "tags": final_tags,
+                "category": category,
+                "seo_score": seo_score,
+                "images": images,
+            },
+        )
 
         # 6) dry_run: 발행 안 함, 분석 결과만 반환
         if dry_run:
             return {
-                "ok": True, "mode": "dry_run",
+                "ok": True,
+                "mode": "dry_run",
                 "seo_score": seo_score,
                 "suggested_tags": final_tags,
                 "paragraph_count": len(paragraphs),
@@ -272,6 +299,7 @@ class BlogWriterPro:
         if auto_schedule:
             try:
                 from scripts.naver.blog.seo import BlogSEO
+
                 bt = BlogSEO(self.page).best_publish_time()
                 today = datetime.now()
                 hour = bt["best_today"]
@@ -314,20 +342,28 @@ class BlogWriterPro:
             result = self.writer.publish()
 
         # 10) 통계 + 로그
-        result.update({
-            "seo_score": seo_score,
-            "final_tags": final_tags,
-            "draft_path": str(draft_path),
-            "paragraph_count": len(paragraphs),
-            "scheduled_at": schedule_at.isoformat() if schedule_at else None,
-        })
-        log_critical("OTHER", f"블로그 Pro 발행: {title[:30]}",
-                     seo_score=seo_score, mode="blog_pro_publish",
-                     scheduled=bool(schedule_at), ok=result.get("ok"))
+        result.update(
+            {
+                "seo_score": seo_score,
+                "final_tags": final_tags,
+                "draft_path": str(draft_path),
+                "paragraph_count": len(paragraphs),
+                "scheduled_at": schedule_at.isoformat() if schedule_at else None,
+            }
+        )
+        log_critical(
+            "OTHER",
+            f"블로그 Pro 발행: {title[:30]}",
+            seo_score=seo_score,
+            mode="blog_pro_publish",
+            scheduled=bool(schedule_at),
+            ok=result.get("ok"),
+        )
         return result
 
 
 # ── 편의 함수 ────────────────────────────────────────────────────────────
+
 
 def smart_publish(page: Page, **kwargs) -> dict:
     """원샷 호출."""

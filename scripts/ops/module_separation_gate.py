@@ -12,13 +12,13 @@ docs/module_separation_standard.md 기준을 강제한다. 분리한 모듈을 �
     python scripts/ops/module_separation_gate.py
     python scripts/ops/module_separation_gate.py --json
 """
+
 from __future__ import annotations
 
 import argparse
 import glob
 import json
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -121,7 +121,7 @@ SEPARATED_MODULES: list[dict] = [
 
 @dataclass
 class Finding:
-    category: str   # ROOT_TOO_LARGE | LEAF_COUPLING | MISSING
+    category: str  # ROOT_TOO_LARGE | LEAF_COUPLING | MISSING
     detail: str
 
 
@@ -151,11 +151,10 @@ def _leaf_key(path: Path, root_stem: str) -> str:
     """local_agent_router_schemas.py → 'schemas' (root stem 이후 suffix)."""
     name = path.stem  # local_agent_router_schemas
     prefix = root_stem + "_"
-    return name[len(prefix):] if name.startswith(prefix) else name
+    return name[len(prefix) :] if name.startswith(prefix) else name
 
 
-_IMPORT_RE = re.compile(
-    r"""(?:from|import)\s+(?:\.|[\w.]*\.)?([A-Za-z_][\w]*)""")
+_IMPORT_RE = re.compile(r"""(?:from|import)\s+(?:\.|[\w.]*\.)?([A-Za-z_][\w]*)""")
 
 
 def run_gate() -> GateResult:
@@ -172,8 +171,7 @@ def run_gate() -> GateResult:
         if loc > mod["max_root_loc"]:
             result.add(
                 "ROOT_TOO_LARGE",
-                f"{mod['name']}: 루트 {mod['root']} {loc} LOC > 상한 {mod['max_root_loc']} "
-                f"(분리 진행 필요)",
+                f"{mod['name']}: 루트 {mod['root']} {loc} LOC > 상한 {mod['max_root_loc']} (분리 진행 필요)",
             )
 
         # 2) leaf 간 직접 import 금지
@@ -208,11 +206,17 @@ def main() -> int:
     counts = {c: result.count(c) for c in cats}
 
     if args.json:
-        print(json.dumps({
-            "pass": not result.failed,
-            "counts": counts,
-            "findings": [{"category": f.category, "detail": f.detail} for f in result.findings],
-        }, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {
+                    "pass": not result.failed,
+                    "counts": counts,
+                    "findings": [{"category": f.category, "detail": f.detail} for f in result.findings],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         print("=== 모듈 분리 게이트 ===")
         for c in cats:

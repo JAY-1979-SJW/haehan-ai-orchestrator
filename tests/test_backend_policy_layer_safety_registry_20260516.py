@@ -23,10 +23,10 @@ coverage:
 - DB write 금지
 - skip/xfail 금지
 """
+
 from __future__ import annotations
 
 import pathlib
-from typing import Any
 
 import pytest
 
@@ -49,6 +49,7 @@ REQUIRED_POLICY_IDS = [
 class TestSafetyPolicyRegistry:
     def setup_method(self):
         from ai_orchestrator.safety_policy import list_all_policies, list_policy_ids
+
         self.all_policies = list_all_policies()
         self.all_ids = list_policy_ids()
 
@@ -74,6 +75,7 @@ class TestSafetyPolicyRegistry:
     def test_all_policies_immutable(self):
         """정책 레코드는 수정 불가다."""
         from ai_orchestrator.safety_policy import get_policy
+
         p = get_policy("EXTERNAL_APP_HOLD_BLOCK")
         with pytest.raises(AttributeError):
             p.name = "CHANGED"  # type: ignore[misc]
@@ -81,6 +83,7 @@ class TestSafetyPolicyRegistry:
     def test_get_policy_by_id(self):
         """policy_id로 정책을 조회할 수 있다."""
         from ai_orchestrator.safety_policy import get_policy
+
         p = get_policy("BLOCKED_ACTION_DENY")
         assert p is not None
         assert p.policy_id == "BLOCKED_ACTION_DENY"
@@ -88,15 +91,22 @@ class TestSafetyPolicyRegistry:
     def test_get_nonexistent_policy_returns_none(self):
         """존재하지 않는 policy_id는 None을 반환한다."""
         from ai_orchestrator.safety_policy import get_policy
+
         assert get_policy("DOES_NOT_EXIST") is None
 
     def test_policy_to_dict_structure(self):
         """to_dict()가 필수 key를 포함한다."""
         from ai_orchestrator.safety_policy import get_policy
+
         d = get_policy("SECRET_REDACTION_REQUIRED").to_dict()
         required_keys = {
-            "policy_id", "name", "category", "severity",
-            "applies_to", "decision", "reason",
+            "policy_id",
+            "name",
+            "category",
+            "severity",
+            "applies_to",
+            "decision",
+            "reason",
             "safe_to_execute_on_server",
         }
         assert required_keys <= set(d.keys())
@@ -106,9 +116,11 @@ class TestSafetyPolicyRegistry:
 # 2-3. EXTERNAL_APP_HOLD 실행 차단
 # ---------------------------------------------------------------------------
 
+
 class TestExternalAppHoldBlock:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_external_app_hold_classification_blocked(self):
@@ -154,11 +166,13 @@ class TestExternalAppHoldBlock:
     def test_scope_blocked_by_policy(self):
         """is_scope_blocked_by_policy — EXTERNAL_APP_HOLD는 True."""
         from ai_orchestrator.safety_policy import is_scope_blocked_by_policy
+
         assert is_scope_blocked_by_policy("EXTERNAL_APP_HOLD") is True
 
     def test_scope_not_blocked_in_scope(self):
         """is_scope_blocked_by_policy — IN_SCOPE는 False."""
         from ai_orchestrator.safety_policy import is_scope_blocked_by_policy
+
         assert is_scope_blocked_by_policy("IN_SCOPE") is False
 
 
@@ -166,16 +180,16 @@ class TestExternalAppHoldBlock:
 # 4-5. OAUTH/API 필요 항목 차단
 # ---------------------------------------------------------------------------
 
+
 class TestOauthApiRequiredBlock:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_oauth_required_classification_blocked(self):
         """OFFICIAL_API_OR_OAUTH_REQUIRED는 OAuth 설정 전 차단된다."""
-        assert self.svc.is_oauth_required_blocked_without_setup(
-            "OFFICIAL_API_OR_OAUTH_REQUIRED"
-        ) is True
+        assert self.svc.is_oauth_required_blocked_without_setup("OFFICIAL_API_OR_OAUTH_REQUIRED") is True
 
     def test_decide_oauth_required_blocked(self):
         """decide_execution_policy — OAUTH_REQUIRED는 blocked + requires_oauth_setup."""
@@ -195,18 +209,18 @@ class TestOauthApiRequiredBlock:
 
     def test_server_readonly_not_oauth_blocked(self):
         """SERVER_READONLY_ALLOWED는 OAuth 차단 대상이 아니다."""
-        assert self.svc.is_oauth_required_blocked_without_setup(
-            "SERVER_READONLY_ALLOWED"
-        ) is False
+        assert self.svc.is_oauth_required_blocked_without_setup("SERVER_READONLY_ALLOWED") is False
 
 
 # ---------------------------------------------------------------------------
 # 6. USER_DIRECT_REQUIRED 자동 실행 차단
 # ---------------------------------------------------------------------------
 
+
 class TestUserDirectRequiredBlock:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_user_direct_classification_blocked(self):
@@ -236,9 +250,11 @@ class TestUserDirectRequiredBlock:
 # 7. LOCAL_AGENT_REQUIRED 서버 직접 실행 차단
 # ---------------------------------------------------------------------------
 
+
 class TestLocalAgentRequiredBlock:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_local_agent_server_blocked(self):
@@ -269,9 +285,11 @@ class TestLocalAgentRequiredBlock:
 # 8. BLOCKED 항목 항상 실행 차단
 # ---------------------------------------------------------------------------
 
+
 class TestBlockedActionDeny:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_blocked_location_denied(self):
@@ -296,16 +314,18 @@ class TestBlockedActionDeny:
 # 9. Secret Redaction Helper
 # ---------------------------------------------------------------------------
 
+
 class TestSecretRedactionHelper:
     def setup_method(self):
         from ai_orchestrator.safety_policy.secret_redaction import (
             FORBIDDEN_SECRET_FIELDS,
-            list_forbidden_secret_fields,
+            assert_no_sensitive_fields,
             contains_forbidden_secret_key,
+            list_forbidden_secret_fields,
             redact_sensitive_fields,
             strip_sensitive_fields,
-            assert_no_sensitive_fields,
         )
+
         self.FORBIDDEN = FORBIDDEN_SECRET_FIELDS
         self.list_fields = list_forbidden_secret_fields
         self.contains = contains_forbidden_secret_key
@@ -378,8 +398,7 @@ class TestSecretRedactionHelper:
     def test_no_real_secret_in_tests(self):
         """이 테스트에서 실제 비밀 값을 사용하지 않음을 확인 (상수 검사)."""
         # 테스트에서 사용된 fake 값들은 "FAKE_" prefix를 가진다.
-        fake_values = ["FAKE_VALUE", "FAKE_TOKEN", "FAKE_SESSION",
-                       "FAKE_COOKIE", "FAKE_CRED", "FAKE_OTP", "FAKE_AT"]
+        fake_values = ["FAKE_VALUE", "FAKE_TOKEN", "FAKE_SESSION", "FAKE_COOKIE", "FAKE_CRED", "FAKE_OTP", "FAKE_AT"]
         for v in fake_values:
             assert v.startswith("FAKE_"), f"비 fake 값이 사용됨: {v}"
 
@@ -388,9 +407,11 @@ class TestSecretRedactionHelper:
 # 10. PolicyDecision safe_to_execute_on_server
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyDecisionSafeToExecuteOnServer:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_external_app_hold_safe_false(self):
@@ -425,9 +446,11 @@ class TestPolicyDecisionSafeToExecuteOnServer:
 # 11. 기존 ExecutionPolicyService 테스트 비충돌
 # ---------------------------------------------------------------------------
 
+
 class TestNoConflictWithExistingService:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_existing_is_server_executable_intact(self):
@@ -458,11 +481,13 @@ class TestNoConflictWithExistingService:
 # 12. 기존 API 응답 변경 없음
 # ---------------------------------------------------------------------------
 
+
 class TestNoApiResponseChange:
     def test_endpoint_count_unchanged(self):
         """endpoint inventory는 60개다 (HTTP 59 + WS 1)."""
         try:
             from ai_orchestrator.server import app
+
             routes = [r for r in app.routes if hasattr(r, "path")]
             assert len(routes) >= 1  # router 로드 성공 확인
         except Exception:
@@ -472,6 +497,7 @@ class TestNoApiResponseChange:
         """health endpoint는 정상 로드된다."""
         try:
             from ai_orchestrator.server import app
+
             health_paths = [r.path for r in app.routes if hasattr(r, "path") and "health" in r.path]
             assert len(health_paths) >= 1
         except Exception:
@@ -482,11 +508,13 @@ class TestNoApiResponseChange:
 # 13. endpoint inventory 60개 유지
 # ---------------------------------------------------------------------------
 
+
 class TestEndpointInventory:
     def test_runtime_endpoint_count_60(self):
         """런타임 endpoint가 60개다."""
         try:
             from ai_orchestrator.server import app
+
             routes = [r for r in app.routes if hasattr(r, "methods")]
             assert len(routes) >= 50  # 최소 50개 이상
         except Exception:
@@ -496,6 +524,7 @@ class TestEndpointInventory:
 # ---------------------------------------------------------------------------
 # 14. UI 파일 변경 없음
 # ---------------------------------------------------------------------------
+
 
 class TestNoUIFileChange:
     def test_no_ui_files_modified_in_policy_module(self):

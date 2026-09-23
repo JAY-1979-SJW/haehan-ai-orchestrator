@@ -2,12 +2,13 @@
 
 API 응답 구조를 표준화하고 응답 생성을 중앙화한다.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
-
+from typing import Any
 
 # ── Agent 등록 응답 ─────────────────────────────────────────────────────────
+
 
 def make_register_agent_response(
     agent_id: str,
@@ -33,6 +34,7 @@ def make_register_agent_response(
 
 # ── Agent 목록 응답 ─────────────────────────────────────────────────────────
 
+
 def make_list_agents_response(agents: list[dict]) -> dict[str, Any]:
     """에이전트 목록 응답 생성.
 
@@ -47,6 +49,7 @@ def make_list_agents_response(agents: list[dict]) -> dict[str, Any]:
 
 
 # ── Registration Code 목록 응답 ─────────────────────────────────────────────
+
 
 def make_list_codes_response(codes: list[dict]) -> dict[str, Any]:
     """등록 코드 목록 응답 생성.
@@ -63,6 +66,7 @@ def make_list_codes_response(codes: list[dict]) -> dict[str, Any]:
 
 # ── Task 목록 응답 ──────────────────────────────────────────────────────────
 
+
 def make_list_tasks_response(tasks: list[dict]) -> dict[str, Any]:
     """태스크 목록 응답 생성.
 
@@ -77,6 +81,7 @@ def make_list_tasks_response(tasks: list[dict]) -> dict[str, Any]:
 
 
 # ── Task 조회 응답 ──────────────────────────────────────────────────────────
+
 
 def make_get_task_response(task: dict) -> dict[str, Any]:
     """단일 태스크 조회 응답 생성.

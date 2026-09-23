@@ -2,12 +2,11 @@
 
 진단 정보 수집 및 집계 함수들을 중앙화한다.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
-
-
 # ── Agent 상태 집계 ──────────────────────────────────────────────────────────
+
 
 def count_agents_by_status(agent_statuses: dict[str, str]) -> dict[str, int]:
     """에이전트 상태별 카운트 집계.
@@ -33,6 +32,7 @@ def count_agents_by_status(agent_statuses: dict[str, str]) -> dict[str, int]:
 
 
 # ── Task 상태 집계 ──────────────────────────────────────────────────────────
+
 
 def count_tasks_by_status(tasks: list[dict]) -> dict[str, int]:
     """태스크 상태별 카운트 집계.
@@ -77,6 +77,7 @@ def count_tasks_by_status(tasks: list[dict]) -> dict[str, int]:
 
 # ── Task Summary 집계 ────────────────────────────────────────────────────────
 
+
 def count_task_summaries(tasks: list[dict]) -> dict[str, int]:
     """태스크 summary 포함 여부 집계.
 
@@ -109,10 +110,8 @@ def count_task_summaries(tasks: list[dict]) -> dict[str, int]:
 
 # ── 진단 상태 판정 ──────────────────────────────────────────────────────────
 
-def determine_diagnostics_status(
-    agent_counts: dict[str, int],
-    task_counts: dict[str, int]
-) -> tuple[str, list[str]]:
+
+def determine_diagnostics_status(agent_counts: dict[str, int], task_counts: dict[str, int]) -> tuple[str, list[str]]:
     """진단 상태와 경고 메시지 판정.
 
     Args:

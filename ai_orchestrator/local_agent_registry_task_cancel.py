@@ -1,13 +1,14 @@
 """Task cancellation engine."""
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .local_agent_models import LocalAgentTask
 from .local_agent_registry_common import (
-    _lock, _tasks, _ensure_task_transition,
-    InvalidTaskTransitionError,
+    _ensure_task_transition,
+    _lock,
+    _tasks,
 )
 
 
@@ -15,9 +16,14 @@ class CancelNotAllowedError(ValueError):
     """이미 종결된 또는 재취소 불가 상태에서 취소를 시도할 때."""
 
 
-_CANCEL_TERMINAL_STATUSES: frozenset[str] = frozenset({
-    "completed", "failed", "rejected", "cancelled",
-})
+_CANCEL_TERMINAL_STATUSES: frozenset[str] = frozenset(
+    {
+        "completed",
+        "failed",
+        "rejected",
+        "cancelled",
+    }
+)
 
 _CANCEL_REASON_MAX_LEN = 200
 
@@ -28,8 +34,8 @@ def cancel_task(
     *,
     actor: str = "",
     reason: str = "",
-    now: Optional[datetime] = None,
-) -> tuple["LocalAgentTask", str]:
+    now: datetime | None = None,
+) -> tuple[LocalAgentTask, str]:
     """task 취소 엔진. 상태에 따라 즉시 cancelled 또는 cancel_requested 로 전환.
 
     반환: (task, action_str)
@@ -41,11 +47,9 @@ def cancel_task(
       - CancelNotAllowedError: terminal 상태 또는 cancel_requested 재취소
     """
     if reason and len(reason) > _CANCEL_REASON_MAX_LEN:
-        raise ValueError(
-            f"reason 이 최대 길이({_CANCEL_REASON_MAX_LEN}자)를 초과합니다"
-        )
+        raise ValueError(f"reason 이 최대 길이({_CANCEL_REASON_MAX_LEN}자)를 초과합니다")
 
-    now_dt = now if now is not None else datetime.now(timezone.utc)
+    now_dt = now if now is not None else datetime.now(UTC)
     now_iso = now_dt.isoformat()
     safe_reason = (reason or "")[:_CANCEL_REASON_MAX_LEN]
     safe_actor = (actor or "")[:80]
@@ -56,14 +60,10 @@ def cancel_task(
             raise ValueError(f"task 없음 또는 agent_id 불일치: {agent_id}/{task_id}")
 
         if t.status in _CANCEL_TERMINAL_STATUSES:
-            raise CancelNotAllowedError(
-                f"취소 불가 — 이미 종결된 상태: {t.status!r} (task_id={task_id})"
-            )
+            raise CancelNotAllowedError(f"취소 불가 — 이미 종결된 상태: {t.status!r} (task_id={task_id})")
 
         if t.status == "cancel_requested":
-            raise CancelNotAllowedError(
-                f"취소 불가 — 이미 cancel_requested 상태 (task_id={task_id})"
-            )
+            raise CancelNotAllowedError(f"취소 불가 — 이미 cancel_requested 상태 (task_id={task_id})")
 
         if t.status in ("queued", "waiting_approval"):
             # agent에 아직 전달되지 않음 → 즉시 cancelled
@@ -86,9 +86,7 @@ def cancel_task(
             t.updated_at = now_iso
             return t, "cancel_requested"
 
-        raise CancelNotAllowedError(
-            f"취소 불가 — 처리되지 않은 상태: {t.status!r} (task_id={task_id})"
-        )
+        raise CancelNotAllowedError(f"취소 불가 — 처리되지 않은 상태: {t.status!r} (task_id={task_id})")
 
 
 __all__ = ["CancelNotAllowedError", "cancel_task"]

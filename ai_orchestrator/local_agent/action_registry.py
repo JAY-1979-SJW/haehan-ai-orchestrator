@@ -1,13 +1,13 @@
 """Action Registry — 등록된 액션 스펙 + 실행 핸들러 매핑."""
+
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ai_orchestrator.local_agent.action_schemas import (
-    ActionSpec, all_specs,
-)
-from ai_orchestrator.local_agent.action_risk_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    ActionSpec,
+    all_specs,
 )
 
 # 실행 핸들러는 actions/ 모듈에서 등록

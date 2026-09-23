@@ -3,10 +3,9 @@
 [ASSISTANT_EXTERNAL_SITE_MANAGEMENT_CANONICAL_REGISTRY_01]
 실제 사이트 접속 없음. DNS 변경 없음. 쿠키 저장 없음.
 """
+
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -14,35 +13,42 @@ sys.path.insert(0, str(REPO_ROOT))
 
 def reg():
     import ai_orchestrator.external_sites.provider_registry as m
+
     return m
 
 
 def models():
     import ai_orchestrator.external_sites.provider_models as m
+
     return m
 
 
 def playbook():
     import ai_orchestrator.external_sites.navigation_playbook as m
+
     return m
 
 
 def auth():
     import ai_orchestrator.external_sites.auth_policy_registry as m
+
     return m
 
 
 def gates():
     import ai_orchestrator.external_sites.approval_gate_registry as m
+
     return m
 
 
 def audit():
     import scripts.ops.audit_external_site_canonical_registry as m
+
     return m
 
 
 # ── 1~4. import / provider 수 / 필수 provider / unique ───────────────────────
+
 
 def test_01_provider_registry_importable():
     assert reg() is not None
@@ -54,9 +60,20 @@ def test_02_provider_count_gte_12():
 
 def test_03_required_providers_exist():
     r = reg()
-    for pid in ["GABIA","KAKAO","NAVER","NAVER_SMARTSTORE","GOOGLE",
-                "HIWORKS","G2B_NARA","HOMETAX","WETAX","GOVERNMENT24",
-                "EMAIL_GENERIC","BANK_GENERIC"]:
+    for pid in [
+        "GABIA",
+        "KAKAO",
+        "NAVER",
+        "NAVER_SMARTSTORE",
+        "GOOGLE",
+        "HIWORKS",
+        "G2B_NARA",
+        "HOMETAX",
+        "WETAX",
+        "GOVERNMENT24",
+        "EMAIL_GENERIC",
+        "BANK_GENERIC",
+    ]:
         assert r.get_provider(pid) is not None, f"{pid} 없음"
 
 
@@ -67,6 +84,7 @@ def test_04_provider_ids_unique():
 
 
 # ── 5~9. GABIA ────────────────────────────────────────────────────────────────
+
 
 def test_05_gabia_status_current():
     p = reg().get_provider("GABIA")
@@ -95,6 +113,7 @@ def test_09_gabia_desktop_app_required():
 
 # ── 10~11. KAKAO ──────────────────────────────────────────────────────────────
 
+
 def test_10_kakao_category_social_login():
     p = reg().get_provider("KAKAO")
     assert p.category == models().CAT_SOCIAL_LOGIN
@@ -107,6 +126,7 @@ def test_11_kakao_server_remote_login_false():
 
 # ── 12~13. NAVER / SMARTSTORE ────────────────────────────────────────────────
 
+
 def test_12_naver_exists():
     assert reg().get_provider("NAVER") is not None
 
@@ -117,12 +137,14 @@ def test_13_naver_smartstore_exists():
 
 # ── 14. GOOGLE ───────────────────────────────────────────────────────────────
 
+
 def test_14_google_official_api_preferred():
     p = reg().get_provider("GOOGLE")
     assert p.official_api_preferred is True
 
 
 # ── 15~19. HIWORKS / G2B / 공공행정 ─────────────────────────────────────────
+
 
 def test_15_hiworks_exists():
     assert reg().get_provider("HIWORKS") is not None
@@ -147,6 +169,7 @@ def test_19_government24_exists():
 
 # ── 20~22. 전체 provider 공통 정책 ───────────────────────────────────────────
 
+
 def test_20_all_providers_cookie_storage_false():
     r = reg()
     for p in r.PROVIDER_REGISTRY:
@@ -169,6 +192,7 @@ def test_22_critical_providers_approval_gate_required():
 
 # ── 23~25. navigation playbook ───────────────────────────────────────────────
 
+
 def test_23_navigation_playbook_importable():
     assert playbook() is not None
 
@@ -186,11 +210,13 @@ def test_25_gabia_playbook_success_markers_exist():
 
 # ── 26. auth policy ──────────────────────────────────────────────────────────
 
+
 def test_26_auth_policy_registry_importable():
     assert auth() is not None
 
 
 # ── 27~31. approval gates ────────────────────────────────────────────────────
+
 
 def test_27_approval_gate_registry_importable():
     assert gates() is not None
@@ -214,6 +240,7 @@ def test_31_payment_gate_exists():
 
 # ── 32. critical gate auto_execute=False ────────────────────────────────────
 
+
 def test_32_all_critical_gates_auto_execute_false():
     g = gates()
     violations = g.assert_all_critical_gates_blocked()
@@ -221,6 +248,7 @@ def test_32_all_critical_gates_auto_execute_false():
 
 
 # ── 33~35. 전역 정책 검사 ────────────────────────────────────────────────────
+
 
 def test_33_no_github_actions_dependency():
     src_files = [
@@ -247,6 +275,7 @@ def test_35_no_server_remote_login_allowed_provider():
 
 
 # ── 36. audit 최종 verdict ───────────────────────────────────────────────────
+
 
 def test_36_audit_verdict_ready():
     a = audit()

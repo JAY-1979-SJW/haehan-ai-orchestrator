@@ -2,13 +2,15 @@
 
 실제 브라우저 launch 없이 경로/검증 로직만 확인.
 """
+
 from __future__ import annotations
 
 import pytest
-from pathlib import Path
 
 from ai_orchestrator.local_agent.browser.browser_session import (
-    get_session_dir, list_profiles, _DEFAULT_SESSION_ROOT,
+    _DEFAULT_SESSION_ROOT,
+    get_session_dir,
+    list_profiles,
 )
 
 

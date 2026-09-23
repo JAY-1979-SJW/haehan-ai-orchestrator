@@ -1,14 +1,11 @@
 """Unit tests for scripts.site_engine.execution_gate."""
-import pytest
 
 from scripts.site_engine.execution_gate import (
-    ActionSensitivity,
     ExecutionDecision,
     ExecutionGateInput,
     ExecutionGateResult,
     GateReason,
     block_for_sensitive_credential_action,
-    classify_action_sensitivity,
     evaluate_execution_gate,
     require_approval_for_action,
     resolve_execution_location,
@@ -20,8 +17,8 @@ from scripts.site_engine.types import (
     SiteCapability,
 )
 
-
 # ── helpers ──────────────────────────────────────────────────────────
+
 
 def _make_profile(
     key: str = "test",
@@ -63,6 +60,7 @@ def _gate(
 
 # ── 1. read-only action 허용 ─────────────────────────────────────────
 
+
 def test_read_action_allowed():
     result = _gate(SiteCapability.READ, "list_items")
     assert result.decision == ExecutionDecision.ALLOWED
@@ -75,6 +73,7 @@ def test_search_action_allowed():
 
 
 # ── 2. submit action → approval required ────────────────────────────
+
 
 def test_submit_requires_approval():
     result = _gate(SiteCapability.SUBMIT, "submit_form")
@@ -89,6 +88,7 @@ def test_submit_with_force_approved_allowed():
 
 
 # ── 3. publish/send/upload/delete approval required ─────────────────
+
 
 def test_publish_requires_approval():
     result = _gate(SiteCapability.PUBLISH, "publish_post")
@@ -116,6 +116,7 @@ def test_sign_requires_approval():
 
 
 # ── 4. password/otp/certificate → blocked or user_direct ────────────
+
 
 def test_password_extract_blocked():
     result = _gate(SiteCapability.READ, "extract_password")
@@ -147,6 +148,7 @@ def test_password_action_user_direct():
 
 # ── 5. cookie/session extraction → blocked ──────────────────────────
 
+
 def test_cookie_extraction_blocked():
     result = _gate(SiteCapability.READ, "extract_cookie")
     assert result.decision == ExecutionDecision.BLOCKED
@@ -158,6 +160,7 @@ def test_session_dump_blocked():
 
 
 # ── 6. profile local-agent/user-direct ──────────────────────────────
+
 
 def test_profile_local_agent_required():
     policy = SiteActionPolicy(
@@ -186,6 +189,7 @@ def test_profile_user_direct_required():
 
 # ── 7. server forbidden site → blocked ──────────────────────────────
 
+
 def test_server_forbidden_site_blocked():
     result = _gate(SiteCapability.READ, "goto_bank", is_server_forbidden=True)
     assert result.decision == ExecutionDecision.BLOCKED
@@ -193,6 +197,7 @@ def test_server_forbidden_site_blocked():
 
 
 # ── 8. unknown / not-in-allowed blocked ─────────────────────────────
+
 
 def test_capability_not_in_profile_blocked():
     profile = _make_profile(allowed=(SiteCapability.READ,))
@@ -202,6 +207,7 @@ def test_capability_not_in_profile_blocked():
 
 
 # ── 9. gate result에 reason 포함 ────────────────────────────────────
+
 
 def test_result_has_reason():
     result = _gate(SiteCapability.SUBMIT, "submit_form")
@@ -216,6 +222,7 @@ def test_result_has_detail():
 
 # ── 10. 민감값이 result에 포함되지 않음 ─────────────────────────────
 
+
 def test_no_sensitive_value_in_result():
     result = _gate(SiteCapability.READ, "extract_password")
     combined = f"{result.decision}{result.reason}{result.detail}"
@@ -225,14 +232,18 @@ def test_no_sensitive_value_in_result():
 
 # ── 11. 기존 site_engine types와 충돌 없음 ──────────────────────────
 
+
 def test_types_import_no_conflict():
-    from scripts.site_engine.types import GateDecision as GD, SiteCapability as SC
     from scripts.site_engine.execution_gate import ExecutionDecision as ED
+    from scripts.site_engine.types import GateDecision as GD
+    from scripts.site_engine.types import SiteCapability as SC
+
     assert GD.BLOCKED != ED.BLOCKED or True  # 다른 enum, 값 충돌 없음
     assert SC.READ is not None
 
 
 # ── require_approval_for_action / block_for_sensitive_credential ─────
+
 
 def test_require_approval_for_submit():
     assert require_approval_for_action("submit_form", SiteCapability.SUBMIT)
@@ -254,6 +265,7 @@ def test_block_for_sensitive_credential_false():
 
 
 # ── resolve_execution_location ───────────────────────────────────────
+
 
 def test_resolve_location_no_profile_defaults_server():
     loc = resolve_execution_location(profile=None)

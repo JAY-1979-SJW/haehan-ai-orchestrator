@@ -2,12 +2,12 @@
 
 실제 네이버 접속 없음. FakePage / FakeRow 로 어댑터 목록 파싱을 흉내낸다.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import pytest
 
@@ -78,6 +78,7 @@ def _isolated(tmp_path, monkeypatch):
 def _fake_sleeper():
     def _sleep(_secs: float) -> None:
         return None
+
     return _sleep
 
 
@@ -87,6 +88,7 @@ def _counting_clock():
     def clock() -> float:
         n["v"] += 1
         return float(n["v"])
+
     return clock
 
 
@@ -132,12 +134,10 @@ def test_post_id_parsing_modern_and_legacy():
     adapter = NaverCafeAdapter()
     rows = [
         _row("101", "모던", "a", "2026.04.23.", href="/some_cafe/articles/101"),
-        _row("202", "레거시", "b", "2026.04.22.",
-             href="/ArticleRead.nhn?clubid=111&articleid=202"),
+        _row("202", "레거시", "b", "2026.04.22.", href="/ArticleRead.nhn?clubid=111&articleid=202"),
     ]
     page = _logged_in_page(rows)
-    result = adapter.collect_list(page, cursor="https://cafe.naver.com/some_cafe",
-                                  page_num=1, max_pages=1)
+    result = adapter.collect_list(page, cursor="https://cafe.naver.com/some_cafe", page_num=1, max_pages=1)
     ids = {it["post_id"] for it in result["items"]}
     assert ids == {"101", "202"}
 
@@ -185,10 +185,8 @@ def test_save_load_merge_roundtrip(tmp_path):
     assert rec0["posts"] == []
 
     batch1 = [
-        {"post_id": "1", "title": "첫", "author": "a", "date": "2026.04.23.",
-         "url": "u1"},
-        {"post_id": "2", "title": "두", "author": "b", "date": "2026.04.22.",
-         "url": "u2"},
+        {"post_id": "1", "title": "첫", "author": "a", "date": "2026.04.23.", "url": "u1"},
+        {"post_id": "2", "title": "두", "author": "b", "date": "2026.04.22.", "url": "u2"},
     ]
     new1, _ = nc.filter_new_posts(batch1, existing=set())
     rec1 = nc.merge_record(rec0, new1, club_id="111", menu_id="22")
@@ -230,11 +228,14 @@ def test_active_session_collects_and_persists(tmp_path):
     store = tmp_path / "data" / "naver_cafe_posts.json"
 
     msg = nc.run_naver_cafe_collect_job(
-        adapter, page,
+        adapter,
+        page,
         job_id="nc-collect-1",
-        club_id="111", menu_id="22",
+        club_id="111",
+        menu_id="22",
         store_path=store,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg == "JOB_DONE"
     rec = json.loads(store.read_text(encoding="utf-8"))
@@ -242,15 +243,18 @@ def test_active_session_collects_and_persists(tmp_path):
     assert ids == {"10", "11"}
     # 두 번째 실행 — 신규 0건 (중복 제거 확인)
     msg2 = nc.run_naver_cafe_collect_job(
-        adapter, FakePage(
+        adapter,
+        FakePage(
             url="https://cafe.naver.com/some_cafe",
             visible_selectors={"a#gnb_logout_button"},
             rows=rows,
         ),
         job_id="nc-collect-2",
-        club_id="111", menu_id="22",
+        club_id="111",
+        menu_id="22",
         store_path=store,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg2 == "JOB_DONE"
     rec2 = json.loads(store.read_text(encoding="utf-8"))
@@ -269,16 +273,20 @@ def test_expired_session_pauses(tmp_path):
     def goto(target: str):
         original_goto(target)
         page.url = "https://nid.naver.com/nidlogin.login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     store = tmp_path / "data" / "posts.json"
     msg = nc.run_naver_cafe_collect_job(
-        adapter, page,
+        adapter,
+        page,
         job_id="nc-expired",
-        club_id="111", menu_id="22",
+        club_id="111",
+        menu_id="22",
         store_path=store,
         auto_reauth=False,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg == runner.MSG_SESSION_EXPIRED
     rec = job_state.get("nc-expired")
@@ -295,9 +303,12 @@ def test_resume_after_reauth_collects(tmp_path):
 
     # 최초 goto 에서는 로그인 페이지로 리다이렉트 → PAUSED.
     page = FakePage()
-    state = {"logged_in": False, "rows": [
-        _row("30", "X", "a", "2026.04.23."),
-    ]}
+    state = {
+        "logged_in": False,
+        "rows": [
+            _row("30", "X", "a", "2026.04.23."),
+        ],
+    }
     original_goto = page.goto
 
     def goto(target: str):
@@ -308,16 +319,20 @@ def test_resume_after_reauth_collects(tmp_path):
             page.rows = list(state["rows"])
         else:
             page.url = "https://nid.naver.com/nidlogin.login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     store = tmp_path / "data" / "posts.json"
     msg1 = nc.run_naver_cafe_collect_job(
-        adapter, page,
+        adapter,
+        page,
         job_id="nc-resume",
-        club_id="111", menu_id="22",
+        club_id="111",
+        menu_id="22",
         store_path=store,
         auto_reauth=False,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg1 == runner.MSG_SESSION_EXPIRED
     assert job_state.get("nc-resume").status == "PAUSED_FOR_REAUTH"
@@ -328,22 +343,28 @@ def test_resume_after_reauth_collects(tmp_path):
     def _work_resume(p):
         record = nc.load_stored(store)
         outcome = nc.collect_new_posts(
-            adapter, p, nc.existing_ids(record),
-            club_id="111", menu_id="22",
-            page_num=1, max_pages=1,
+            adapter,
+            p,
+            nc.existing_ids(record),
+            club_id="111",
+            menu_id="22",
+            page_num=1,
+            max_pages=1,
         )
         if outcome["new_posts"]:
             nc.save_stored(
                 store,
-                nc.merge_record(record, outcome["new_posts"],
-                                club_id="111", menu_id="22"),
+                nc.merge_record(record, outcome["new_posts"], club_id="111", menu_id="22"),
             )
         return f"resumed new={len(outcome['new_posts'])}"
 
     msg2 = runner.resume_job(
-        adapter, page, job_id="nc-resume",
+        adapter,
+        page,
+        job_id="nc-resume",
         work=_work_resume,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg2 == "JOB_DONE"
     rec = json.loads(store.read_text(encoding="utf-8"))
@@ -361,15 +382,17 @@ def test_logs_do_not_leak_sensitive_tokens(caplog, tmp_path):
     store = tmp_path / "data" / "posts.json"
 
     nc.run_naver_cafe_collect_job(
-        adapter, page,
+        adapter,
+        page,
         job_id="nc-log-check",
-        club_id="111", menu_id="22",
+        club_id="111",
+        menu_id="22",
         store_path=store,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     text = " ".join(r.getMessage() for r in caplog.records).lower()
-    for forbidden in ("cookie:", "session=", "token=", "authorization:",
-                      "password", "otp"):
+    for forbidden in ("cookie:", "session=", "token=", "authorization:", "password", "otp"):
         assert forbidden not in text, f"로그에 민감 패턴 노출: {forbidden}"
 
 

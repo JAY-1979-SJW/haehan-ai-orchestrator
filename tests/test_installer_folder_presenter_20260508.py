@@ -1,17 +1,24 @@
 """tests/test_installer_folder_presenter_20260508.py"""
-import os
+
 import sys
+
 import pytest
-import tempfile
+
 from ai_orchestrator.local_agent.installer_folder_presenter import (
-    build_explorer_command, present_installer_in_explorer,
-    PRESENT_OPENED, PRESENT_FAILED, PRESENT_NOT_SUPPORTED,
+    PRESENT_FAILED,
+    PRESENT_NOT_SUPPORTED,
+    build_explorer_command,
+    present_installer_in_explorer,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 

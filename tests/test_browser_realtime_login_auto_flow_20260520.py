@@ -2,12 +2,11 @@
 
 실제 Chrome/CDP/Playwright 미사용. 모든 함수는 pure 단위로 검증한다.
 """
+
 from __future__ import annotations
 
-import pytest
-
-from local_agent import login_state_detector as det
 from local_agent import browser_realtime_watcher as rw
+from local_agent import login_state_detector as det
 from local_agent.login_auto_flow import (
     EVT_ACCOUNT_PICKER_DETECTED,
     EVT_AUTO_RESUME_PLANNED,
@@ -24,8 +23,8 @@ from local_agent.login_auto_flow import (
     PendingCommand,
 )
 
-
 # ── login_state_detector ───────────────────────────────────────────
+
 
 def test_login_required_when_on_signin_url():
     r = det.classify("https://example.com/login", title="로그인")
@@ -100,6 +99,7 @@ def test_mask_email_partially():
 
 # ── browser_realtime_watcher ───────────────────────────────────────
 
+
 def _snap(tid, url="", title="", t=0.0):
     return rw.TargetSnapshot(target_id=tid, url=url, title=title, seen_at=t)
 
@@ -171,6 +171,7 @@ def test_login_state_change_events_only_on_diff():
 
 
 # ── login_auto_flow ────────────────────────────────────────────────
+
 
 def test_login_required_triggers_immediate_login_action():
     eng = LoginAutoFlowEngine()

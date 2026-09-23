@@ -2,6 +2,7 @@
 
 Priority 1 read-only endpoint 3개 smoke 검증.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -12,14 +13,24 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 _FORBIDDEN_FIELDS = [
-    "raw_token", "access_token", "refresh_token",
-    "cookie_value", "session_secret", "password",
-    "approval_token_raw", "private_key", "certificate_password",
-    "secret_value", "execute_url", "deploy_url", "restart_url",
+    "raw_token",
+    "access_token",
+    "refresh_token",
+    "cookie_value",
+    "session_secret",
+    "password",
+    "approval_token_raw",
+    "private_key",
+    "certificate_password",
+    "secret_value",
+    "execute_url",
+    "deploy_url",
+    "restart_url",
 ]
 
 
 # ── import 가능 여부 ──────────────────────────────────────────────────────────
+
 
 def test_smoke_script_import():
     import scripts.ops.smoke_app_api_readonly_endpoints  # noqa
@@ -31,41 +42,50 @@ def test_audit_script_import():
 
 # ── smoke 메타 ────────────────────────────────────────────────────────────────
 
+
 def test_smoke_endpoint_list():
     from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+
     assert len(ENDPOINTS) == 3
 
 
 def test_smoke_health_summary_in_endpoints():
     from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+
     assert "/api/v1/app/health/summary" in ENDPOINTS
 
 
 def test_smoke_providers_in_endpoints():
     from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+
     assert "/api/v1/app/providers" in ENDPOINTS
 
 
 def test_smoke_storage_in_endpoints():
     from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS
+
     assert "/api/v1/app/storage/status" in ENDPOINTS
 
 
 def test_smoke_id():
     from scripts.ops.smoke_app_api_readonly_endpoints import SMOKE_ID
+
     assert SMOKE_ID == "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE"
 
 
 def test_smoke_phase():
     from scripts.ops.smoke_app_api_readonly_endpoints import SMOKE_PHASE
+
     assert SMOKE_PHASE == "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_01"
 
 
 # ── smoke 실행 결과 ───────────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def smoke_report():
     from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke
+
     return run_smoke()
 
 
@@ -95,6 +115,7 @@ def test_redaction_violations_zero(smoke_report):
 
 # ── health endpoint 검증 ──────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def health_result(smoke_report):
     return next(r for r in smoke_report.results if "health" in r.path)
@@ -110,6 +131,7 @@ def test_health_schema_ok(health_result):
 
 def test_health_post_tasks_dry_run_enabled(health_result):
     from ai_orchestrator.app_status_router import get_health_summary
+
     result = get_health_summary()
     assert result["data"]["post_tasks_dry_run_enabled"] is True
 
@@ -123,6 +145,7 @@ def test_health_read_only(health_result):
 
 
 # ── providers endpoint 검증 ───────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def providers_result(smoke_report):
@@ -139,18 +162,21 @@ def test_providers_schema_ok(providers_result):
 
 def test_providers_count_12():
     from ai_orchestrator.app_status_router import get_providers
+
     result = get_providers()
     assert result["meta"]["provider_count"] == 12
 
 
 def test_providers_cookie_storage_all_false():
     from ai_orchestrator.app_status_router import get_providers
+
     for p in get_providers()["data"]["providers"]:
         assert p["cookie_storage_allowed"] is False
 
 
 def test_providers_token_storage_all_false():
     from ai_orchestrator.app_status_router import get_providers
+
     for p in get_providers()["data"]["providers"]:
         assert p["token_storage_allowed"] is False
 
@@ -160,6 +186,7 @@ def test_providers_read_only(providers_result):
 
 
 # ── storage endpoint 검증 ─────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def storage_result(smoke_report):
@@ -172,20 +199,24 @@ def test_storage_http_200(storage_result):
 
 def test_storage_named_volume_policy():
     from ai_orchestrator.app_status_router import get_storage_status
+
     assert "named_volume_status" in get_storage_status()["data"]
 
 
 def test_storage_app_logs_bind_mount_policy():
     from ai_orchestrator.app_status_router import get_storage_status
+
     assert "app_logs_bind_mount_status" in get_storage_status()["data"]
 
 
 def test_storage_approval_token_policy():
     from ai_orchestrator.app_status_router import get_storage_status
+
     assert "approval_token_policy" in get_storage_status()["data"]
 
 
 # ── redaction 금지 ────────────────────────────────────────────────────────────
+
 
 def _check_no_forbidden(data: dict, label: str):
     serialized = json.dumps(data)
@@ -195,35 +226,42 @@ def _check_no_forbidden(data: dict, label: str):
 
 def test_health_no_forbidden_fields():
     from ai_orchestrator.app_status_router import get_health_summary
+
     _check_no_forbidden(get_health_summary(), "health_summary")
 
 
 def test_providers_no_forbidden_fields():
     from ai_orchestrator.app_status_router import get_providers
+
     _check_no_forbidden(get_providers(), "providers")
 
 
 def test_storage_no_forbidden_fields():
     from ai_orchestrator.app_status_router import get_storage_status
+
     _check_no_forbidden(get_storage_status(), "storage_status")
 
 
 # ── POST/approve/reject/execute 없음 ─────────────────────────────────────────
 
+
 def test_no_post_route_in_status_router():
     from ai_orchestrator.app_status_router import app_status_router
+
     for r in app_status_router.routes:
         assert "POST" not in list(r.methods), f"POST route 발견: {r.path}"
 
 
 def test_no_approve_reject_execute_in_status_router():
     from ai_orchestrator import app_status_router as m
+
     src = Path(m.__file__).read_text(encoding="utf-8")
     for forbidden in ("approve_token", "reject_token", "execute("):
         assert forbidden not in src, f"금지 함수 발견: {forbidden}"
 
 
 # ── 충돌 없음 ─────────────────────────────────────────────────────────────────
+
 
 def test_no_conflict_with_implementation():
     import tests.test_app_api_readonly_endpoints_implementation_20260518  # noqa
@@ -239,8 +277,10 @@ def test_no_conflict_with_prep():
 
 # ── audit verdict ─────────────────────────────────────────────────────────────
 
+
 def test_audit_verdict():
-    from scripts.ops.audit_app_api_readonly_endpoints_browser_smoke import run_audit, checks, print_report
+    from scripts.ops.audit_app_api_readonly_endpoints_browser_smoke import print_report, run_audit
+
     run_audit()
     verdict = print_report()
     assert "BLOCKED" not in verdict, f"audit BLOCKED: {verdict}"

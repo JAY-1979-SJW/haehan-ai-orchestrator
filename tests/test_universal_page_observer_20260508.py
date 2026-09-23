@@ -1,12 +1,17 @@
 """tests/test_universal_page_observer_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.universal_page_observer import (
-    observe_page_from_dict, observe_page_mock,
+    observe_page_from_dict,
+    observe_page_mock,
 )
 
 _SAFE_MARKER_FIELDS = [
-    "password_value_read", "otp_value_read", "cookie_read",
-    "session_read", "storage_state_read", "server_browser_used",
+    "password_value_read",
+    "otp_value_read",
+    "cookie_read",
+    "session_read",
+    "storage_state_read",
+    "server_browser_used",
 ]
 
 
@@ -110,16 +115,18 @@ def test_download_candidates_from_links():
 
 
 def test_forms_detected():
-    obs = observe_page_from_dict({
-        "url": "https://apply.com",
-        "title": "신청",
-        "text_content": "",
-        "buttons": ["제출"],
-        "links": [],
-        "form_labels": ["이름", "연락처"],
-        "has_file_inputs": False,
-        "heading_texts": [],
-    })
+    obs = observe_page_from_dict(
+        {
+            "url": "https://apply.com",
+            "title": "신청",
+            "text_content": "",
+            "buttons": ["제출"],
+            "links": [],
+            "form_labels": ["이름", "연락처"],
+            "has_file_inputs": False,
+            "heading_texts": [],
+        }
+    )
     assert obs["forms_detected"] is True
 
 

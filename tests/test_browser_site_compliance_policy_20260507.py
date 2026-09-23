@@ -1,14 +1,13 @@
 """Tests for Browser Site Compliance Policy Module."""
+
 import json
-import pytest
 from pathlib import Path
 
 from ai_orchestrator.browser_tool.site_compliance_policy import (
-    get_site_compliance_policy,
     evaluate_site_compliance,
+    get_site_compliance_policy,
     validate_site_compliance_result,
 )
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_site_compliance_policy_20260507.json"
 

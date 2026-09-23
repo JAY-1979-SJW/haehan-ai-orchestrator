@@ -5,10 +5,10 @@ smoke_app_ui_shell_browser.run_smoke() 결과를 받아 최종 verdict 판정.
 - BROWSER_SMOKE_WARN: WARN 있음, FAIL 없음
 - BROWSER_SMOKE_FAIL: FAIL 1개 이상
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 import scripts.ops.smoke_app_ui_shell_browser as smoke_mod

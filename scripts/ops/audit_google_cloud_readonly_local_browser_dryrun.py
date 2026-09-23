@@ -1,10 +1,9 @@
 """Dry-run audit for Google Cloud read-only local browser task conversion."""
+
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -129,11 +128,14 @@ def main() -> int:
         print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
     print(
         "RESULT="
-        + ("PASS_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN" if ok else "FAIL_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN")
+        + (
+            "PASS_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN"
+            if ok
+            else "FAIL_GOOGLE_CLOUD_READONLY_LOCAL_BROWSER_DRYRUN"
+        )
     )
     return 0 if ok else 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

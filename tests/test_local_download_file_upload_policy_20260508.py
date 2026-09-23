@@ -1,15 +1,12 @@
 """
 download_policy 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.download_policy import (
+    MAX_FILE_SIZE_BYTES,
     check_file,
     check_files,
-    ALLOWED_EXTENSIONS,
-    BLOCKED_EXTENSIONS,
-    MAX_FILE_SIZE_BYTES,
 )
-
 
 TASK_FILES = ["notice.pdf", "attachment_1.hwpx", "data.xlsx", "report.csv"]
 

@@ -12,39 +12,54 @@ USER_PRESENT_STATUS 메시지를 WebSocket으로 자동 전송한다.
 - 별도 background thread 없음 — 호출자(heartbeat)가 주기적으로 실행
 - 중복 전송 방지: workflow_run_id+status 기준 sent marker
 """
+
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any
 
 from .user_present_state_store import (
+    STATE_BLOCKED,
+    STATE_CANCELLED,
+    STATE_FAILED,
+    STATE_USER_CONFIRMED,
     UserPresentStateStore,
     default_store,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
-    STATE_BLOCKED,
-    STATE_FAILED,
 )
 from .user_present_ws_adapter import build_ws_status_event_from_local_task
 
 logger = logging.getLogger(__name__)
 
 # 전송 대상 FINAL 상태
-_SEND_TARGET_STATES: frozenset[str] = frozenset({
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
-    STATE_BLOCKED,
-    STATE_FAILED,
-})
+_SEND_TARGET_STATES: frozenset[str] = frozenset(
+    {
+        STATE_USER_CONFIRMED,
+        STATE_CANCELLED,
+        STATE_BLOCKED,
+        STATE_FAILED,
+    }
+)
 
 # 민감정보 금지 필드 — event 포함 시 전송 거부
-_FORBIDDEN_EVENT_FIELDS: frozenset[str] = frozenset({
-    "password", "otp", "certificate_password", "financial_certificate_password",
-    "token", "access_token", "refresh_token", "api_key", "device_token",
-    "cookie", "session", "localStorage", "sessionStorage",
-    "secret", "target_url",
-})
+_FORBIDDEN_EVENT_FIELDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "certificate_password",
+        "financial_certificate_password",
+        "token",
+        "access_token",
+        "refresh_token",
+        "api_key",
+        "device_token",
+        "cookie",
+        "session",
+        "localStorage",
+        "sessionStorage",
+        "secret",
+        "target_url",
+    }
+)
 
 # 중복 전송 방지 — {workflow_run_id: last_sent_status}
 # in-memory: 프로세스 재시작 시 초기화(재전송 허용)
@@ -131,6 +146,7 @@ async def send_user_present_status_event(
     status = event.get("status", "")
 
     import json
+
     # 서버 WS 핸들러는 msg.get("type") == "user_present_status" 로 분기,
     # 이후 msg 전체를 handler에 전달 — event 필드를 flat하게 포함해야 함
     payload = {"type": "user_present_status", **event}
@@ -181,7 +197,7 @@ def reset_sent_statuses_for_testing() -> None:
 __all__ = [
     "collect_pending_user_present_status_events",
     "mark_user_present_status_sent",
-    "send_user_present_status_event",
-    "run_user_present_status_send_once",
     "reset_sent_statuses_for_testing",
+    "run_user_present_status_send_once",
+    "send_user_present_status_event",
 ]

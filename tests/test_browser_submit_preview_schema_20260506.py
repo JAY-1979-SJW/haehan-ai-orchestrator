@@ -4,23 +4,22 @@ Tests validate submit_preview module against design specification.
 No actual submit, no browser, no network, no DB.
 Pure preview generation validation only.
 """
-import hashlib
+
 import json
-from datetime import datetime
 
 import pytest
 
 from ai_orchestrator.browser_tool.submit_preview import (
-    SubmitPreviewInput,
-    UserPreviewSummary,
-    UserPreviewDetails,
     AuditPreviewRecord,
     SubmitPreviewBundle,
-    mask_field_value,
-    redact_fields,
+    SubmitPreviewInput,
+    UserPreviewDetails,
+    UserPreviewSummary,
+    build_submit_preview,
     canonical_preview_payload,
     compute_preview_hash,
-    build_submit_preview,
+    mask_field_value,
+    redact_fields,
 )
 
 

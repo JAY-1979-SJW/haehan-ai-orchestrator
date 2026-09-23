@@ -3,21 +3,35 @@
 
 모든 결과에서 민감값 제거. safe 필드 강제.
 """
+
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
 from typing import Any
 
-_REMOVE_FIELDS: frozenset[str] = frozenset({
-    "password", "otp", "cookie", "cookies", "session",
-    "token", "access_token", "refresh_token",
-    "certificate_password", "cert_password",
-    "npki", "npki_data", "private_key",
-    "auth_header", "Authorization",
-    "localStorage", "sessionStorage", "storage_state",
-    "naver_id", "naver_password",
-})
+_REMOVE_FIELDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "cookie",
+        "cookies",
+        "session",
+        "token",
+        "access_token",
+        "refresh_token",
+        "certificate_password",
+        "cert_password",
+        "npki",
+        "npki_data",
+        "private_key",
+        "auth_header",
+        "Authorization",
+        "localStorage",
+        "sessionStorage",
+        "storage_state",
+        "naver_id",
+        "naver_password",
+    }
+)
 
 _FIXED_SAFE_FIELDS: dict[str, Any] = {
     "sensitive_data_collected": False,

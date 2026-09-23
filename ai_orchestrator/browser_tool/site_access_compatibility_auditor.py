@@ -4,10 +4,11 @@ Read-only auditing of site access policies, authentication methods,
 remote access restrictions, and automation capability.
 No execution, no credential input, no data modification.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ def classify_remote_access_restriction(page_text: str) -> dict:
     if "원격접속" in text_lower and "차단" in text_lower:
         restrictions.append("원격접속차단")
         blocks_remote = True
-    elif "remote access blocked" in text_lower or "remote access" in text_lower and "blocked" in text_lower:
+    elif "remote access blocked" in text_lower or ("remote access" in text_lower and "blocked" in text_lower):
         restrictions.append("원격접속차단")
         blocks_remote = True
 
@@ -183,7 +184,7 @@ def evaluate_site_access_policy(payload: dict) -> dict:
         result["notes"] = "구글 서비스는 OAuth/API 필수"
         return result
 
-    if "certificate" in category or "auth" in category and "인증서" in payload.get("site_name", ""):
+    if "certificate" in category or ("auth" in category and "인증서" in payload.get("site_name", "")):
         result["requires_certificate"] = True
         result["automation_capability"] = "USER_PRESENT_LOCAL_ONLY"
         result["final_verdict"] = "USER_PRESENT_REQUIRED"
@@ -287,6 +288,6 @@ def validate_site_access_audit_result(result: dict) -> list[str]:
         "NEEDS_MANUAL_REVIEW",
     }
     if result.get("automation_capability") not in valid_capabilities:
-        errors.append(f"automation_capability must be valid")
+        errors.append("automation_capability must be valid")
 
     return errors

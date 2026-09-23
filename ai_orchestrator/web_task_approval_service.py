@@ -10,16 +10,16 @@
 approval.py / dev_reg_approval.py / telegram_sender.py 의 책임을 이동하지 않는다.
 응답 계약 (response key / status code / path) 은 web_task_router.py 가 유지한다.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
-from .approval import issue_token_for_dev_reg
 from . import dev_reg_approval as _dra
-from .telegram_notifier import build_dev_reg_message
 from . import telegram_sender as _ts
+from .approval import issue_token_for_dev_reg
+from .telegram_notifier import build_dev_reg_message
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class PendingApprovalResult:
     응답 dict에 필요한 값만 노출한다.
     token 원문 / approval_token_hash / screenshot_path 는 포함하지 않는다.
     """
+
     task_id: str
     expires_at: str
     risk_level: str

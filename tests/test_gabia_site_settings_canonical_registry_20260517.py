@@ -3,10 +3,9 @@
 [GABIA_SITE_SETTINGS_CANONICAL_REGISTRY_AUDIT_01]
 DNS 저장/변경 없음. 서버 접속 없음. 쿠키 저장 없음.
 """
+
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -14,15 +13,18 @@ sys.path.insert(0, str(REPO_ROOT))
 
 def load_registry():
     import ai_orchestrator.gabia.site_settings_registry as m
+
     return m
 
 
 def load_audit():
     import scripts.ops.audit_gabia_site_settings_canonical_registry as m
+
     return m
 
 
 # ── 1~3. import ──────────────────────────────────────────────────────────────
+
 
 def test_01_registry_importable():
     assert load_registry() is not None
@@ -38,6 +40,7 @@ def test_03_canonical_site_settings_not_empty():
 
 
 # ── 4~9. canonical primary (autowork) ────────────────────────────────────────
+
 
 def test_04_primary_fqdn():
     m = load_registry()
@@ -77,6 +80,7 @@ def test_09_primary_no_pending_ip():
 
 # ── 10~15. HOLD 항목 (assistant / assistant-api) ──────────────────────────────
 
+
 def test_10_assistant_entry_exists():
     m = load_registry()
     assert m.get_entry("assistant_haehan_ai_kr") is not None
@@ -113,6 +117,7 @@ def test_15_assistant_api_ssl_not_issued():
 
 # ── 16~19. LEGACY 항목 (/orchestrator 경로) ───────────────────────────────────
 
+
 def test_16_orchestrator_path_exists():
     m = load_registry()
     assert m.get_entry("orchestrator_path") is not None
@@ -137,6 +142,7 @@ def test_19_orchestrator_api_path_status_legacy():
 
 # ── 20~22. PENDING 잔존 없음 (CURRENT 항목 기준) ─────────────────────────────
 
+
 def test_20_no_pending_in_current_entries():
     m = load_registry()
     for e in m.list_by_status(m.STATUS_CURRENT):
@@ -157,8 +163,10 @@ def test_22_list_by_status_current_not_empty():
 
 # ── 23~25. 기존 가비아 모듈 무결성 유지 ───────────────────────────────────────
 
+
 def test_23_gabia_dns_models_intact():
-    from ai_orchestrator.gabia.gabia_dns_models import GabiaDnsRecordDraft, make_assistant_subdomain_drafts
+    from ai_orchestrator.gabia.gabia_dns_models import make_assistant_subdomain_drafts
+
     d1, d2 = make_assistant_subdomain_drafts("1.2.3.4")
     assert d1.host == "assistant"
     assert d2.host == "assistant-api"
@@ -166,17 +174,20 @@ def test_23_gabia_dns_models_intact():
 
 def test_24_gabia_browser_task_intact():
     from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+
     t = make_autowork_dns_task()
     assert t.target_domain == "haehan-ai.kr"
     assert t.safe_to_click_final_button is False
 
 
 def test_25_gabia_work_registry_intact():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import GABIA_DNS_WORK_TRADE, GABIA_DNS_FINAL_SAVE
+    from ai_orchestrator.gabia.gabia_dns_work_registry import GABIA_DNS_FINAL_SAVE
+
     assert GABIA_DNS_FINAL_SAVE.approval_required is True
 
 
 # ── 26~28. audit 스크립트 통과 ───────────────────────────────────────────────
+
 
 def test_26_audit_import_check_pass():
     m = load_audit()

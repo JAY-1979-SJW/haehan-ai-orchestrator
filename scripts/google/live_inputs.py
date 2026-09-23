@@ -1,54 +1,57 @@
 """Live no-final-submit input adapters for Google workflows."""
+
 from __future__ import annotations
 
 import json
-import os
-import requests
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import urlencode
 
 from . import workflows
 
+# CDP 세션/연결은 live_inputs_cdp(공유 leaf)로 분리. 재노출(파사드+내부용).
+from .live_inputs_cdp import (  # noqa: F401
+    _CDPSessionManager,
+    _connect_live_input_cdp,
+    _live_input_target_url,
+    _new_cdp_target_session,
+    _record_direct_cdp_incomplete,
+    _safe_cdp_identity,
+)
+
 # 설정/상수/env 헬퍼는 live_inputs_config(공유 leaf)로 분리. 전체 재노출(파사드+내부용).
-from .live_inputs_config import (  # noqa: F401,E402
-    ROOT,
-    LIVE_INPUT_DIR,
-    LATEST_LIVE_INPUT,
-    LIVE_INPUT_MANIFEST_DIR,
-    LATEST_LIVE_INPUT_MANIFEST,
-    LIVE_INPUT_COVERAGE_DIR,
-    LATEST_LIVE_INPUT_COVERAGE,
-    LIVE_INPUT_ADAPTERS,
+from .live_inputs_config import (  # noqa: F401
     DOMAIN_SPECIFIC_PREFILL_MODES,
-    GENERIC_HANDOFF_MODES,
-    PARTIAL_HANDOFF_MODES,
     FINAL_CONTROL_LABELS,
-    _env_int,
-    _env_float,
-    _page_timeout,
-    _page_wait,
-    _locator_timeout,
+    GENERIC_HANDOFF_MODES,
+    LATEST_LIVE_INPUT,
+    LATEST_LIVE_INPUT_COVERAGE,
+    LATEST_LIVE_INPUT_MANIFEST,
+    LIVE_INPUT_ADAPTERS,
+    LIVE_INPUT_COVERAGE_DIR,
+    LIVE_INPUT_DIR,
+    LIVE_INPUT_MANIFEST_DIR,
+    PARTIAL_HANDOFF_MODES,
+    ROOT,
     _cdp_wait,
     _cdp_websocket_timeout,
     _direct_cdp_first,
+    _env_float,
+    _env_int,
+    _locator_timeout,
+    _page_timeout,
+    _page_wait,
 )
-# CDP 세션/연결은 live_inputs_cdp(공유 leaf)로 분리. 재노출(파사드+내부용).
-from .live_inputs_cdp import (  # noqa: F401,E402
-    _CDPSessionManager,
-    _new_cdp_target_session,
-    _live_input_target_url,
-    _connect_live_input_cdp,
-    _safe_cdp_identity,
-    _record_direct_cdp_incomplete,
-)
+
 # 커버리지 리포트는 live_inputs_coverage(leaf)로 분리. 재노출(파사드).
-from .live_inputs_coverage import (  # noqa: F401,E402
+from .live_inputs_coverage import (  # noqa: F401
     build_live_input_coverage,
-    save_live_input_coverage,
     print_live_input_coverage,
+    save_live_input_coverage,
 )
+
+
 def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tuple[dict, Path]:
     """Open the target workflow and fill available inputs without final submit."""
     path = Path(plan_path)
@@ -58,7 +61,7 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
     result = {
         "site_id": "google",
         "action_key": action["key"],
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
         "plan_path": str(path),
         "no_final_submit": no_final_submit,
         "state_change_final_button_clicked": False,
@@ -90,7 +93,9 @@ def run_live_input(plan_path: str | Path, *, no_final_submit: bool = True) -> tu
         page = get_page()
         _dispatch_live_input(page, action, values, result)
         if _needs_direct_cdp_retry(action, result):
-            result["warnings"].append("Playwright path did not verify upload input; retrying direct CDP read-only detection.")
+            result["warnings"].append(
+                "Playwright path did not verify upload input; retrying direct CDP read-only detection."
+            )
             _dispatch_live_input_direct_cdp(action, values, result)
         result["final_control_policy"] = {
             "mode": "no_final_submit",
@@ -128,7 +133,7 @@ def run_live_input_manifest(
     summary = {
         "site_id": "google",
         "manifest_path": str(path),
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
         "no_final_submit": no_final_submit,
         "state_change_final_button_clicked": False,
         "items": [],
@@ -180,6 +185,8 @@ from .live_inputs_report import (  # noqa: F401,E402
     print_live_input_summary,
     print_live_manifest_summary,
 )
+
+
 def _dispatch_live_input(page: Any, action: dict, values: dict, result: dict) -> None:
     key = action["key"]
     mode = LIVE_INPUT_ADAPTERS.get(key, "")
@@ -242,48 +249,84 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
             _cdp_click_text(session, ["Create", "Upload videos", "만들기", "업로드"], result, "youtube_upload_open")
             _cdp_wait(session, 2.0)
             _cdp_detect_file_input(session, values.get("video_path", ""), "video_path", result)
-            _cdp_fill_first(session, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result)
-            _cdp_fill_first(session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result)
+            _cdp_fill_first(
+                session,
+                ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'],
+                values.get("title", ""),
+                "title",
+                result,
+            )
+            _cdp_fill_first(
+                session, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result
+            )
             result["warnings"].append("CDP fallback verified upload controls but did not publish.")
         elif key == "youtube_studio_edit_video_metadata":
-            _cdp_fill_first(session, [
-                'input[aria-label*="Search"]',
-                'input[placeholder*="Search"]',
-                'input[type="search"]',
-            ], values.get("video_id_or_url", "") or values.get("video_id", ""), "video_lookup", result, press_enter=True)
+            _cdp_fill_first(
+                session,
+                [
+                    'input[aria-label*="Search"]',
+                    'input[placeholder*="Search"]',
+                    'input[type="search"]',
+                ],
+                values.get("video_id_or_url", "") or values.get("video_id", ""),
+                "video_lookup",
+                result,
+                press_enter=True,
+            )
             for field in ("title", "description", "visibility"):
                 if values.get(field):
                     result["skipped_fields"].append(field)
             result["warnings"].append("CDP fallback performed lookup only; metadata save was not clicked.")
         elif key in ("search_console_submit_indexing", "search_console_submit_sitemap"):
             field = "url" if key == "search_console_submit_indexing" else "sitemap_url"
-            _cdp_fill_first(session, [
-                'input[aria-label*="URL"]',
-                'input[aria-label*="Sitemap"]',
-                'input[placeholder*="sitemap"]',
-                'input[type="url"]',
-                'input[type="text"]',
-            ], values.get(field, ""), field, result, press_enter=False)
+            _cdp_fill_first(
+                session,
+                [
+                    'input[aria-label*="URL"]',
+                    'input[aria-label*="Sitemap"]',
+                    'input[placeholder*="sitemap"]',
+                    'input[type="url"]',
+                    'input[type="text"]',
+                ],
+                values.get(field, ""),
+                field,
+                result,
+                press_enter=False,
+            )
             if values.get("property"):
                 result["filled_fields"].append("property")
             result["warnings"].append("CDP fallback did not click Request indexing/Submit.")
         elif key == "cloud_iam_change_role":
-            opened_panel = _cdp_click_first_selector(session, [
-                'button[instrumentationid="iam-add-member"]',
-                'iam-add-member-action button',
-                'button[aria-label*="Grant access"]',
-                'button[aria-label*="권한"]',
-            ], result, "grant_access_panel")
+            opened_panel = _cdp_click_first_selector(
+                session,
+                [
+                    'button[instrumentationid="iam-add-member"]',
+                    "iam-add-member-action button",
+                    'button[aria-label*="Grant access"]',
+                    'button[aria-label*="권한"]',
+                ],
+                result,
+                "grant_access_panel",
+            )
             if not opened_panel:
-                opened_panel = _cdp_click_text(session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel")
+                opened_panel = _cdp_click_text(
+                    session, ["Grant access", "권한 부여", "Add"], result, "grant_access_panel"
+                )
             _cdp_wait(session, 2.0)
-            principal_filled = _cdp_fill_first(session, [
-                'input[aria-label*="principal"]',
-                'input[aria-label*="Principal"]',
-                'input[id*="add-member-bar-input"]',
-                'input[type="email"]',
-                'input[type="text"]',
-            ], values.get("principal", ""), "principal", result, press_enter=True)
+            principal_filled = _cdp_fill_first(
+                session,
+                [
+                    'input[aria-label*="principal"]',
+                    'input[aria-label*="Principal"]',
+                    'input[id*="add-member-bar-input"]',
+                    'input[type="email"]',
+                    'input[type="text"]',
+                ],
+                values.get("principal", ""),
+                "principal",
+                result,
+                press_enter=True,
+            )
             if values.get("project"):
                 result["filled_fields"].append("project")
             if not opened_panel:
@@ -307,14 +350,20 @@ def _dispatch_live_input_direct_cdp(action: dict, values: dict, result: dict) ->
                 if not value:
                     result["skipped_fields"].append(field)
                     continue
-                _cdp_fill_first(session, [
-                    'input[aria-label*="Search"]',
-                    'input[placeholder*="Search"]',
-                    'input[aria-label*="project"]',
-                    'input[aria-label*="Project"]',
-                    'input[type="search"]',
-                    'input[type="text"]',
-                ], str(value), field, result)
+                _cdp_fill_first(
+                    session,
+                    [
+                        'input[aria-label*="Search"]',
+                        'input[placeholder*="Search"]',
+                        'input[aria-label*="project"]',
+                        'input[aria-label*="Project"]',
+                        'input[type="search"]',
+                        'input[type="text"]',
+                    ],
+                    str(value),
+                    field,
+                    result,
+                )
             result["warnings"].append("CDP fallback did not click Create/Get key/Release.")
         elif LIVE_INPUT_ADAPTERS.get(key) in DOMAIN_SPECIFIC_PREFILL_MODES:
             _cdp_fill_domain_specific_input_handoff(session, action, values, result)
@@ -345,45 +394,45 @@ def _needs_direct_cdp_retry(action: dict, result: dict) -> bool:
 
 
 # CDP fill 프리미티브는 live_inputs_fill(공유 leaf)로 분리. 재노출(파사드+내부용).
-from .live_inputs_fill import (  # noqa: F401,E402
-    _safe_to_generic_fill,
-    _generic_selectors,
-    _domain_prefill_selectors,
-    _cdp_fill_first,
-    _cdp_click_first_selector,
-    _cdp_click_text,
-    _cdp_fill_generic_input_handoff,
-    _cdp_fill_domain_specific_input_handoff,
-    _cdp_detect_file_input,
-    _cdp_verify_gmail_compose_values,
-    _detect_final_controls_cdp,
-)
 # 도메인별 fill 핸들러는 live_inputs_domain_fillers(leaf)로 분리. 재노출(파사드+내부용).
 from .live_inputs_domain_fillers import (  # noqa: F401,E402
-    _fill_gmail_send,
-    _fill_gmail_send_v2,
+    _attach_file_input,
+    _click_first_selector,
+    _click_text,
+    _detect_final_controls,
     _ensure_gmail_compose_open,
-    _gmail_compose_visible,
-    _fill_cloud_iam_change,
-    _fill_search_console_url_inspection,
-    _fill_search_console_sitemap,
-    _fill_youtube_studio_upload,
-    _fill_youtube_studio_upload_v2,
-    _fill_youtube_studio_metadata,
     _fill_ai_studio_api_key,
     _fill_cloud_api_credential,
-    _fill_play_console_release_handoff,
-    _fill_domain_specific_input_handoff,
-    _fill_generic_input_handoff,
-    _open_only,
-    _fill_first,
+    _fill_cloud_iam_change,
     _fill_contenteditable,
-    _click_text,
-    _click_first_selector,
-    _save_result,
-    _save_manifest_result,
-    _detect_final_controls,
-    _fill_visible_input_js,
+    _fill_domain_specific_input_handoff,
+    _fill_first,
+    _fill_generic_input_handoff,
     _fill_gmail_recipient_js,
-    _attach_file_input,
+    _fill_gmail_send,
+    _fill_gmail_send_v2,
+    _fill_play_console_release_handoff,
+    _fill_search_console_sitemap,
+    _fill_search_console_url_inspection,
+    _fill_visible_input_js,
+    _fill_youtube_studio_metadata,
+    _fill_youtube_studio_upload,
+    _fill_youtube_studio_upload_v2,
+    _gmail_compose_visible,
+    _open_only,
+    _save_manifest_result,
+    _save_result,
+)
+from .live_inputs_fill import (  # noqa: F401,E402
+    _cdp_click_first_selector,
+    _cdp_click_text,
+    _cdp_detect_file_input,
+    _cdp_fill_domain_specific_input_handoff,
+    _cdp_fill_first,
+    _cdp_fill_generic_input_handoff,
+    _cdp_verify_gmail_compose_values,
+    _detect_final_controls_cdp,
+    _domain_prefill_selectors,
+    _generic_selectors,
+    _safe_to_generic_fill,
 )

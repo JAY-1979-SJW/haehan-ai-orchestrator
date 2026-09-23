@@ -1,17 +1,19 @@
 """NAVER-MAIL-BODY-PIPELINE-V2-01 — 필수 10+ 테스트."""
+
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
-
-import pytest
 
 from scripts.naver.mail import (
-    pii_mask, unread_audit as ua,
     body_pipeline_v2 as bp,
 )
+from scripts.naver.mail import (
+    pii_mask,
+)
+from scripts.naver.mail import (
+    unread_audit as ua,
+)
 from scripts.ops import audit_naver_mail_body_pipeline_v2 as audit
-
 
 # ── PII 마스킹 ──────────────────────────────────────────────────────
 
@@ -24,8 +26,7 @@ def test_pii_mask_email_localpart():
 
 
 def test_pii_mask_card_phone_rrn_biz():
-    text = ("카드 1234 5678 9012 3456, 전화 010-1234-5678, "
-            "주민 123456-1234567, 사업자 123-45-67890")
+    text = "카드 1234 5678 9012 3456, 전화 010-1234-5678, 주민 123456-1234567, 사업자 123-45-67890"
     r = pii_mask.mask(text)
     # 카드는 양쪽 4자리만 노출
     assert "5678 9012" not in r.masked_text
@@ -38,8 +39,7 @@ def test_pii_mask_card_phone_rrn_biz():
 def test_pii_mask_long_number_account():
     r = pii_mask.mask("주문번호 1234567890123 / 계좌 110-123-456789")
     assert "1234567890123" not in r.masked_text
-    assert ("[NUMBER_MASKED]" in r.masked_text
-            or "[ACCOUNT_MASKED]" in r.masked_text)
+    assert "[NUMBER_MASKED]" in r.masked_text or "[ACCOUNT_MASKED]" in r.masked_text
 
 
 def test_pii_mask_address_korean():
@@ -72,9 +72,7 @@ def test_pii_mask_assert_no_raw_leak():
     raw_phone = "010-1234-5678"
     text = f"안녕 {raw_email} {raw_phone}"
     r = pii_mask.mask(text)
-    leaks = pii_mask.assert_no_raw_pii(
-        r.masked_text, original_samples=[raw_email, raw_phone]
-    )
+    leaks = pii_mask.assert_no_raw_pii(r.masked_text, original_samples=[raw_email, raw_phone])
     assert leaks == []
 
 
@@ -99,6 +97,7 @@ class _FakeUnreadActions:
         # state lookup
         if "li.mail-" in expr and "aria-pressed" in expr:
             import re
+
             m = re.search(r"li\.mail-(\d+)", expr)
             if m:
                 sn = m.group(1)
@@ -115,18 +114,24 @@ class _FakeUnreadActions:
             return "no_button"
         # body extraction
         if "JSON.stringify" in expr and "header" in expr and "body" in expr:
-            return {"href": "", "title": "T",
-                    "header": {"subject": "s", "sender_name": "n",
-                               "sender_addr": "", "date": "d"},
-                    "body": "본문 010-1111-2222", "body_len": 12,
-                    "links": [], "img_count": 0,
-                    "has_attach": False, "attach_names": []}
+            return {
+                "href": "",
+                "title": "T",
+                "header": {"subject": "s", "sender_name": "n", "sender_addr": "", "date": "d"},
+                "body": "본문 010-1111-2222",
+                "body_len": 12,
+                "links": [],
+                "img_count": 0,
+                "has_attach": False,
+                "attach_names": [],
+            }
         return None
 
     def navigate(self, url):
         self.last_navigated = url
         # opening body view marks as read
         import re
+
         m = re.search(r"/popup/read/\d+/(\d+)", url)
         if m:
             sn = m.group(1)
@@ -203,8 +208,8 @@ def test_pipeline_report_has_no_raw_body_field():
     # 원본 본문 leak 없음
     assert "010-1111-2222" not in j
     # raw_body / body_raw 키 없음
-    assert "\"raw_body\"" not in j
-    assert "\"body_raw\"" not in j
+    assert '"raw_body"' not in j
+    assert '"body_raw"' not in j
 
 
 def test_pipeline_attachment_download_count_zero():
@@ -234,7 +239,10 @@ def test_audit_pass_when_clean():
 
 def test_audit_fail_raw_body_leak():
     rpt = bp.PipelineReport(
-        run_id="x", started_at_iso="", ended_at_iso="", mode="FULL_READ",
+        run_id="x",
+        started_at_iso="",
+        ended_at_iso="",
+        mode="FULL_READ",
         raw_body_leak_check={"raw_body_field_present_in_records": True},
     )
     v = audit.judge(rpt)
@@ -243,7 +251,10 @@ def test_audit_fail_raw_body_leak():
 
 def test_audit_fail_attachment_downloaded():
     rpt = bp.PipelineReport(
-        run_id="x", started_at_iso="", ended_at_iso="", mode="FULL_READ",
+        run_id="x",
+        started_at_iso="",
+        ended_at_iso="",
+        mode="FULL_READ",
         attachment_download_count=2,
     )
     v = audit.judge(rpt)
@@ -252,7 +263,10 @@ def test_audit_fail_attachment_downloaded():
 
 def test_audit_fail_external_ai_call_via_network_log():
     rpt = bp.PipelineReport(
-        run_id="x", started_at_iso="", ended_at_iso="", mode="FULL_READ",
+        run_id="x",
+        started_at_iso="",
+        ended_at_iso="",
+        mode="FULL_READ",
     )
     v = audit.judge(rpt, network_log=["POST https://api.anthropic.com/v1/messages"])
     assert v.code == "FAIL_EXTERNAL_AI_CALL_USED"
@@ -260,9 +274,11 @@ def test_audit_fail_external_ai_call_via_network_log():
 
 def test_audit_warn_unread_restore_unverified():
     rpt = bp.PipelineReport(
-        run_id="x", started_at_iso="", ended_at_iso="", mode="FULL_READ",
-        unread_audit={"state_changed": 1, "restore_attempted": 1,
-                      "restore_succeeded": 0, "restore_failed": 1},
+        run_id="x",
+        started_at_iso="",
+        ended_at_iso="",
+        mode="FULL_READ",
+        unread_audit={"state_changed": 1, "restore_attempted": 1, "restore_succeeded": 0, "restore_failed": 1},
     )
     v = audit.judge(rpt)
     assert v.code == "WARN_UNREAD_RESTORE_UNVERIFIED"
@@ -270,10 +286,14 @@ def test_audit_warn_unread_restore_unverified():
 
 def test_audit_warn_partial_body_read():
     rpt = bp.PipelineReport(
-        run_id="x", started_at_iso="", ended_at_iso="", mode="FULL_READ",
-        attempt_count=3, success_count=2, failure_count=1,
-        unread_audit={"state_changed": 0, "restore_succeeded": 0,
-                      "restore_attempted": 0, "restore_failed": 0},
+        run_id="x",
+        started_at_iso="",
+        ended_at_iso="",
+        mode="FULL_READ",
+        attempt_count=3,
+        success_count=2,
+        failure_count=1,
+        unread_audit={"state_changed": 0, "restore_succeeded": 0, "restore_attempted": 0, "restore_failed": 0},
     )
     v = audit.judge(rpt)
     assert v.code == "WARN_PARTIAL_BODY_READ"
@@ -285,11 +305,13 @@ def test_audit_warn_partial_body_read():
 def test_regression_smart_folder_coverage_still_imports():
     """smart_folder_collector import 가 깨지지 않음 — 회귀 가드."""
     from scripts.naver.mail import smart_folder_collector as sfc
+
     assert hasattr(sfc, "collect_all")
 
 
 def test_regression_dynamic_folder_discovery_imports():
     from scripts.naver.mail import folder_discovery as fd
     from scripts.naver.mail import folder_profile as fpr
+
     assert hasattr(fd, "discover_folders")
     assert hasattr(fpr, "build_snapshot")

@@ -10,17 +10,17 @@
   c.read_post(post_url=)
   c.write_post(cafe_url=, title=, body=, send=False)  # 임시저장 기본
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 
@@ -76,7 +76,11 @@ class NaverCafe:
         """카페 게시판 글 목록."""
         if not self._ensure_login():
             return []
-        url = cafe_url if not board_no else f"{cafe_url}?iframe_url=/ArticleList.nhn?search.clubid=&search.menuid={board_no}"
+        url = (
+            cafe_url
+            if not board_no
+            else f"{cafe_url}?iframe_url=/ArticleList.nhn?search.clubid=&search.menuid={board_no}"
+        )
         self.page.goto(url, timeout=20000, wait_until="domcontentloaded")
         time.sleep(2.5)
 
@@ -84,7 +88,8 @@ class NaverCafe:
         for f in self.page.frames:
             if "ArticleList" in f.url or "cafe.naver.com" in f.url:
                 try:
-                    posts = f.evaluate("""
+                    posts = f.evaluate(
+                        """
                     (limit) => {
                         const out = [];
                         document.querySelectorAll('.article-board tbody tr, .board-list li').forEach((row, i) => {
@@ -97,7 +102,9 @@ class NaverCafe:
                         });
                         return out;
                     }
-                    """, limit)
+                    """,
+                        limit,
+                    )
                     if posts:
                         return posts
                 except Exception:
@@ -127,8 +134,7 @@ class NaverCafe:
                     continue
         return {"error": "iframe_not_found"}
 
-    def write_post(self, cafe_url: str, board_no: int | str,
-                   title: str, body: str, send: bool = False) -> dict:
+    def write_post(self, cafe_url: str, board_no: int | str, title: str, body: str, send: bool = False) -> dict:
         """카페 글쓰기. send=False (기본): 임시저장만. send=True: 사용자 명시 시 발행."""
         if not self._ensure_login():
             return {"ok": False, "error": "login_failed"}

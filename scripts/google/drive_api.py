@@ -8,17 +8,16 @@
     d.share_link(file_index=0, role="viewer")
     d.create_folder("프로젝트A")
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.config import GOOGLE_URLS
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -54,8 +53,9 @@ class DriveAPI:
 
     def _extract_files(self, limit: int) -> list[dict]:
         try:
-            return self.page.evaluate(
-                """(limit) => {
+            return (
+                self.page.evaluate(
+                    """(limit) => {
                     const out = [];
                     document.querySelectorAll('[data-id], [role="row"]').forEach(el => {
                         if (out.length >= limit) return;
@@ -67,8 +67,10 @@ class DriveAPI:
                     });
                     return out;
                 }""",
-                limit,
-            ) or []
+                    limit,
+                )
+                or []
+            )
         except Exception:
             return []
 
@@ -89,8 +91,7 @@ class DriveAPI:
             file_input = self.page.locator('input[type="file"]').first
             file_input.set_input_files(str(p), timeout=10000)
             time.sleep(5)  # 업로드 대기
-            log_critical("FILE_UPLOAD", f"Drive 업로드: {p.name}",
-                         path=str(p), mode="drive_upload")
+            log_critical("FILE_UPLOAD", f"Drive 업로드: {p.name}", path=str(p), mode="drive_upload")
             return {"ok": True, "name": p.name, "size": p.stat().st_size}
         except Exception as e:
             return {"ok": False, "error": str(e)[:100]}
@@ -111,9 +112,7 @@ class DriveAPI:
             self.page.locator(
                 'input[aria-label="새 폴더"], input[aria-label*="New folder"], [role="dialog"] input[type="text"]:not([placeholder])'
             ).first.fill(name, timeout=3000)
-            self.page.locator(
-                'button:has-text("만들기"), button:has-text("Create")'
-            ).first.click(timeout=3000)
+            self.page.locator('button:has-text("만들기"), button:has-text("Create")').first.click(timeout=3000)
             time.sleep(2)
             log_critical("OTHER", f"Drive 폴더 생성: {name}", mode="drive_folder")
             return {"ok": True, "name": name}
@@ -135,9 +134,7 @@ class DriveAPI:
             ).first.click(timeout=3000)
             time.sleep(2)
             # 링크 복사 버튼
-            self.page.locator(
-                'button:has-text("링크 복사"), button:has-text("Copy link")'
-            ).first.click(timeout=3000)
+            self.page.locator('button:has-text("링크 복사"), button:has-text("Copy link")').first.click(timeout=3000)
             time.sleep(1)
             log_critical("OTHER", f"Drive 공유 링크: idx={file_index}", role=role, mode="drive_share")
             return {"ok": True, "file": files[file_index], "role": role}

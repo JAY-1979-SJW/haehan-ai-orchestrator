@@ -13,25 +13,24 @@
   - 쿠키/토큰 저장 또는 재사용 — 본 모듈 미관여.
   - 사이트별 로그인 자동화 깊이 — 본 모듈은 "로그인 버튼 1회 클릭" 까지만 계획.
 """
+
 from __future__ import annotations
 
-import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from local_agent.login_state_detector import (
     CHALLENGE_REQUIRED,
     CONSENT_REQUIRED,
-    DetectionResult,
     LOGGED_IN,
-    LOGIN_ACTION_STARTED,
     LOGIN_FAILED,
     LOGIN_IN_PROGRESS,
     LOGIN_REQUIRED,
     SESSION_EXPIRED,
+    DetectionResult,
     mask_email,
 )
-
 
 # ── 이벤트 type 상수 ─────────────────────────────────────────────────
 
@@ -76,6 +75,7 @@ LOGIN_BUTTON_CANDIDATES = [
 
 # ── 데이터 ───────────────────────────────────────────────────────────
 
+
 @dataclass
 class Event:
     type: str
@@ -100,6 +100,7 @@ class PendingCommand:
 
 
 # ── 엔진 ─────────────────────────────────────────────────────────────
+
 
 class LoginAutoFlowEngine:
     """target 단위 로그인 상태 추적 + 자동 흐름 트리거.
@@ -163,29 +164,35 @@ class LoginAutoFlowEngine:
 
         # account picker 는 어느 상태에서든 즉시 보고
         if detection.is_account_picker:
-            events.append(Event(
-                type=EVT_ACCOUNT_PICKER_DETECTED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-            ))
+            events.append(
+                Event(
+                    type=EVT_ACCOUNT_PICKER_DETECTED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                )
+            )
 
         if state == LOGIN_REQUIRED and not self._login_flow_active:
             self._login_flow_active = True
             self._login_target_id = target_id
-            events.append(Event(
-                type=EVT_LOGIN_TARGET_SELECTED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-                extra={"reason": detection.reason},
-            ))
-            events.append(Event(
-                type=EVT_LOGIN_ACTION_STARTED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-            ))
+            events.append(
+                Event(
+                    type=EVT_LOGIN_TARGET_SELECTED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                    extra={"reason": detection.reason},
+                )
+            )
+            events.append(
+                Event(
+                    type=EVT_LOGIN_ACTION_STARTED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                )
+            )
             events.append(self._plan_or_click_login_button(target_id, detection))
             return events
 
@@ -194,53 +201,63 @@ class LoginAutoFlowEngine:
             return events
 
         if state == CHALLENGE_REQUIRED:
-            events.append(Event(
-                type=EVT_CHALLENGE_REQUIRED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-                extra={"reason": detection.reason},
-            ))
+            events.append(
+                Event(
+                    type=EVT_CHALLENGE_REQUIRED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                    extra={"reason": detection.reason},
+                )
+            )
             return events
 
         if state == CONSENT_REQUIRED:
-            events.append(Event(
-                type=EVT_CONSENT_REQUIRED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-                extra={"reason": detection.reason},
-            ))
+            events.append(
+                Event(
+                    type=EVT_CONSENT_REQUIRED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                    extra={"reason": detection.reason},
+                )
+            )
             return events
 
         if state == LOGIN_FAILED:
-            events.append(Event(
-                type=EVT_LOGIN_FAILED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-            ))
+            events.append(
+                Event(
+                    type=EVT_LOGIN_FAILED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                )
+            )
             return events
 
         if state == SESSION_EXPIRED:
-            events.append(Event(
-                type=EVT_SESSION_EXPIRED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-            ))
+            events.append(
+                Event(
+                    type=EVT_SESSION_EXPIRED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                )
+            )
             # 만료 — 로그인 흐름 재진입 허용
             self._login_flow_active = False
             return events
 
         if state == LOGGED_IN:
-            events.append(Event(
-                type=EVT_LOGGED_IN_DETECTED,
-                target_id=target_id,
-                sanitized_url=detection.sanitized_url,
-                title=detection.title,
-                extra={"user_hint": mask_email(detection.detected_user_hint or "")},
-            ))
+            events.append(
+                Event(
+                    type=EVT_LOGGED_IN_DETECTED,
+                    target_id=target_id,
+                    sanitized_url=detection.sanitized_url,
+                    title=detection.title,
+                    extra={"user_hint": mask_email(detection.detected_user_hint or "")},
+                )
+            )
             # 로그인 흐름 종료 + 작업 재개 처리
             self._login_flow_active = False
             if self._pending is not None:

@@ -4,10 +4,11 @@ plan.allowed / requires_approval / rate_limits / execution_policy / whitelist / 
 각 게이트에서 mock 기반으로 정책 강제를 검증한다.
 실제 worker 호출은 발생하지 않고, 모든 차단/승인/실행 로직은 mock으로 확인한다.
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from ai_orchestrator.models import ExecutionPlan, TaskRequest
+
+from unittest.mock import Mock, patch
+
 from ai_orchestrator import executor
+from ai_orchestrator.models import ExecutionPlan, TaskRequest
 
 
 def _req(task_id="task-1", action="test_action", **kwargs):
@@ -90,9 +91,7 @@ class TestExecutorPolicyHighCriticalRisk:
         req = _req(task_id="task-4", action="critical_action")
         worker = Mock(return_value="SHOULD_NOT_CALL")
 
-        result = executor.execute_task(
-            req, risk_level="critical", worker=worker
-        )
+        result = executor.execute_task(req, risk_level="critical", worker=worker)
 
         assert "BLOCKED:" in result
         assert "critical_not_allowed" in result
@@ -103,9 +102,7 @@ class TestExecutorPolicyHighCriticalRisk:
         req = _req(task_id="task-5", action="high_action")
         worker = Mock(return_value="SHOULD_NOT_CALL")
 
-        result = executor.execute_task(
-            req, risk_level="high", worker=worker
-        )
+        result = executor.execute_task(req, risk_level="high", worker=worker)
 
         assert "BLOCKED:" in result
         assert "high_not_allowed" in result
@@ -123,9 +120,7 @@ class TestExecutorPolicyRateLimit:
         with patch("ai_orchestrator.executor.check_rate_limits") as mock_check:
             mock_check.return_value = (False, "rate_limited_action")
 
-            result = executor.execute_task(
-                req, risk_level="low", worker=worker
-            )
+            result = executor.execute_task(req, risk_level="low", worker=worker)
 
             assert "BLOCKED:" in result
             assert "rate_limited_action" in result
@@ -135,8 +130,10 @@ class TestExecutorPolicyRateLimit:
         """rate limit 차단 시 record_execution 호출"""
         req = _req(task_id="task-7")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_check, \
-             patch("ai_orchestrator.executor.record_execution") as mock_record:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_check,
+            patch("ai_orchestrator.executor.record_execution") as mock_record,
+        ):
             mock_check.return_value = (False, "rate_limited_user")
 
             executor.execute_task(req, risk_level="low")
@@ -154,14 +151,14 @@ class TestExecutorPolicyExecutionPolicy:
         req = _req(task_id="task-8")
         worker = Mock(return_value="SHOULD_NOT_CALL")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (False, "task_cooldown")
 
-            result = executor.execute_task(
-                req, risk_level="medium", worker=worker
-            )
+            result = executor.execute_task(req, risk_level="medium", worker=worker)
 
             assert "BLOCKED:" in result
             assert "task_cooldown" in result
@@ -171,8 +168,10 @@ class TestExecutorPolicyExecutionPolicy:
         """야간 차단이 작동"""
         req = _req(task_id="task-9")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (False, "night_blocked")
 
@@ -188,8 +187,10 @@ class TestExecutorPolicyWhitelist:
         """whitelist 미등록 action은 worker 미제공 시 차단"""
         req = _req(task_id="task-10", action="unknown_action")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (True, "")
 
@@ -203,9 +204,11 @@ class TestExecutorPolicyWhitelist:
         req = _req(task_id="task-11", action="get_server_status")
         mock_worker = Mock(return_value="mock_result")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy, \
-             patch("ai_orchestrator.executor.run_with_timeout") as mock_timeout:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+            patch("ai_orchestrator.executor.run_with_timeout") as mock_timeout,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (True, "")
             mock_timeout.return_value = "mock_result"
@@ -219,9 +222,11 @@ class TestExecutorPolicyWhitelist:
         req = _req(task_id="task-12", action="unknown_action")
         mock_worker = Mock(return_value="custom_result")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy, \
-             patch("ai_orchestrator.executor.run_with_timeout") as mock_timeout:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+            patch("ai_orchestrator.executor.run_with_timeout") as mock_timeout,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (True, "")
             mock_timeout.return_value = "custom_result"
@@ -241,14 +246,14 @@ class TestExecutorPolicyTimeout:
         def slow_worker(req):
             raise TimeoutError("exceeded timeout")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (True, "")
 
-            result = executor.execute_task(
-                req, risk_level="low", worker=slow_worker
-            )
+            result = executor.execute_task(req, risk_level="low", worker=slow_worker)
 
             assert "BLOCKED:" in result
             assert "execution_timeout" in result
@@ -260,9 +265,11 @@ class TestExecutorPolicyTimeout:
         def timeout_worker(req):
             raise TimeoutError("timeout")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy, \
-             patch("ai_orchestrator.executor.record_execution") as mock_record:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+            patch("ai_orchestrator.executor.record_execution") as mock_record,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (True, "")
 
@@ -280,8 +287,10 @@ class TestExecutorPolicyFlow:
         """rate_limit이 whitelist 검사보다 먼저 실행"""
         req = _req(task_id="task-16", action="unknown_action")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (False, "rate_limited_action")
             mock_policy.return_value = (True, "")
 
@@ -293,8 +302,10 @@ class TestExecutorPolicyFlow:
         """execution_policy가 whitelist 검사보다 먼저 실행"""
         req = _req(task_id="task-17", action="unknown_action")
 
-        with patch("ai_orchestrator.executor.check_rate_limits") as mock_rate, \
-             patch("ai_orchestrator.executor.check_execution_policy") as mock_policy:
+        with (
+            patch("ai_orchestrator.executor.check_rate_limits") as mock_rate,
+            patch("ai_orchestrator.executor.check_execution_policy") as mock_policy,
+        ):
             mock_rate.return_value = (True, "")
             mock_policy.return_value = (False, "task_cooldown")
 

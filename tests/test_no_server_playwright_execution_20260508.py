@@ -5,7 +5,7 @@ import 또는 browser launch 호출이 없는지 검증한다.
 
 문서/주석/금지 메시지 텍스트는 허용 — 실제 실행 코드만 검사.
 """
-import os
+
 import re
 from pathlib import Path
 
@@ -64,7 +64,7 @@ def _read_lines_excluding_strings_comments(path: Path) -> list[tuple[int, str]]:
         if not in_docstring:
             for q in ('"""', "'''"):
                 if stripped.startswith(q):
-                    rest = stripped[len(q):]
+                    rest = stripped[len(q) :]
                     if rest.endswith(q) and len(rest) >= len(q):
                         # 한 줄 docstring
                         break

@@ -1,17 +1,24 @@
 """tests/test_security_program_auto_resume_20260508.py"""
-import pytest
-from ai_orchestrator.local_agent.security_program_auto_resume import (
-    run_security_install_flow,
-    FLOW_AWAIT_PERMISSION, FLOW_AWAIT_UAC, FLOW_INSTALL_COMPLETE, FLOW_BLOCKED,
-)
+
 from ai_orchestrator.local_agent.local_security_installer_runner import (
-    STATUS_INSTALL_PERMISSION_REQUIRED, STATUS_WAITING_USER_UAC,
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_WAITING_USER_UAC,
+)
+from ai_orchestrator.local_agent.security_program_auto_resume import (
+    FLOW_AWAIT_PERMISSION,
+    FLOW_AWAIT_UAC,
+    FLOW_INSTALL_COMPLETE,
+    run_security_install_flow,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 _SECURITY_PAGE = {
@@ -52,7 +59,9 @@ def _assert_safe(result):
 
 def test_no_security_required_returns_no_required():
     r = run_security_install_flow(
-        _NO_SECURITY_PAGE, "공지 읽어줘", dry_run=True,
+        _NO_SECURITY_PAGE,
+        "공지 읽어줘",
+        dry_run=True,
     )
     assert r["status"] == "NO_SECURITY_PROGRAM_REQUIRED"
     _assert_safe(r)
@@ -60,7 +69,10 @@ def test_no_security_required_returns_no_required():
 
 def test_security_detected_no_permission_await_permission():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=False, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=False,
+        dry_run=True,
     )
     assert r["status"] == STATUS_INSTALL_PERMISSION_REQUIRED
     assert r["flow"] == FLOW_AWAIT_PERMISSION
@@ -69,7 +81,10 @@ def test_security_detected_no_permission_await_permission():
 
 def test_security_with_permission_dry_run_verified():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     # exe 설치 파일은 UAC 필요 → WAITING_USER_UAC 또는 INSTALLER_VERIFIED
     assert r["status"] in ("INSTALLER_VERIFIED", STATUS_WAITING_USER_UAC)
@@ -79,7 +94,10 @@ def test_security_with_permission_dry_run_verified():
 
 def test_retry_ready_after_verified():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     # UAC 대기 중이거나 설치 준비 완료 상태 중 하나
     assert r["status"] in ("INSTALLER_VERIFIED", STATUS_WAITING_USER_UAC)
@@ -87,28 +105,39 @@ def test_retry_ready_after_verified():
 
 def test_safe_fields_always_false_no_permission():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=False, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=False,
+        dry_run=True,
     )
     _assert_safe(r)
 
 
 def test_safe_fields_always_false_with_permission():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     _assert_safe(r)
 
 
 def test_server_browser_used_always_false():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        dry_run=True,
     )
     assert r["server_browser_used"] is False
 
 
 def test_no_local_path_in_result():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     assert "local_path" not in r
     assert "full_path" not in r
@@ -116,7 +145,10 @@ def test_no_local_path_in_result():
 
 def test_no_sensitive_data_in_result():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     sensitive_keys = ["password", "otp", "cookie", "session", "token", "cert_password"]
     for key in r:
@@ -126,7 +158,10 @@ def test_no_sensitive_data_in_result():
 
 def test_result_has_domain():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", has_install_permission=True, dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        has_install_permission=True,
+        dry_run=True,
     )
     assert "domain" in r
     assert r["domain"] == "bank.example.com"
@@ -134,6 +169,8 @@ def test_result_has_domain():
 
 def test_result_has_status():
     r = run_security_install_flow(
-        _SECURITY_PAGE, "로그인", dry_run=True,
+        _SECURITY_PAGE,
+        "로그인",
+        dry_run=True,
     )
     assert "status" in r

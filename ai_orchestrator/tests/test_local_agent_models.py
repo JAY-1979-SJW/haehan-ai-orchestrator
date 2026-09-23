@@ -5,10 +5,8 @@ LocalAgent, LocalAgentTask, RegisterResult 모델의 필드, 기본값, 응답 s
 """
 
 import pytest
-from ai_orchestrator.local_agent_registry import (
-    LocalAgent, LocalAgentTask, RegisterResult,
-    register_agent, enqueue_task, clear
-)
+
+from ai_orchestrator.local_agent_registry import LocalAgent, clear, enqueue_task, register_agent
 
 
 @pytest.fixture(autouse=True)
@@ -20,6 +18,7 @@ def cleanup():
 
 
 # LocalAgent 테스트
+
 
 def test_local_agent_fields():
     """LocalAgent 필드가 기존과 동일하다."""
@@ -55,10 +54,22 @@ def test_local_agent_to_safe_shape():
     safe = result.agent.to_safe()
 
     expected_keys = {
-        "agent_id", "host", "os_name", "version", "registered_at",
-        "requested_by", "agent_status", "connected_at", "last_seen_at",
-        "disconnected_at", "active_task_count", "current_task_id",
-        "task_count", "completed_task_count", "failed_task_count", "smoke_test",
+        "agent_id",
+        "host",
+        "os_name",
+        "version",
+        "registered_at",
+        "requested_by",
+        "agent_status",
+        "connected_at",
+        "last_seen_at",
+        "disconnected_at",
+        "active_task_count",
+        "current_task_id",
+        "task_count",
+        "completed_task_count",
+        "failed_task_count",
+        "smoke_test",
     }
     assert set(safe.keys()) == expected_keys
 
@@ -93,6 +104,7 @@ def test_register_result_fields():
 
 
 # LocalAgentTask 테스트
+
 
 def test_local_agent_task_fields():
     """LocalAgentTask 필드가 기존과 동일하다."""
@@ -141,14 +153,36 @@ def test_local_agent_task_to_safe_shape():
     safe = task.to_safe()
 
     expected_keys = {
-        "task_id", "agent_id", "action", "params", "risk_level",
-        "status", "requested_by", "created_at", "updated_at",
-        "token_id", "approval_id", "approval_public_id", "result_summary",
-        "delivered_at", "started_at", "completed_at", "error_summary",
-        "approved_at", "approved_by", "rejected_at", "reject_reason",
-        "failure_reason", "timed_out_at", "cancel_reason",
-        "cancel_requested_at", "cancel_requested_by", "cancelled_at",
-        "observe_summary", "audit_summary", "result_data",
+        "task_id",
+        "agent_id",
+        "action",
+        "params",
+        "risk_level",
+        "status",
+        "requested_by",
+        "created_at",
+        "updated_at",
+        "token_id",
+        "approval_id",
+        "approval_public_id",
+        "result_summary",
+        "delivered_at",
+        "started_at",
+        "completed_at",
+        "error_summary",
+        "approved_at",
+        "approved_by",
+        "rejected_at",
+        "reject_reason",
+        "failure_reason",
+        "timed_out_at",
+        "cancel_reason",
+        "cancel_requested_at",
+        "cancel_requested_by",
+        "cancelled_at",
+        "observe_summary",
+        "audit_summary",
+        "result_data",
     }
     assert set(safe.keys()) == expected_keys
 
@@ -164,11 +198,25 @@ def test_local_agent_task_to_list_safe_shape():
     list_safe = task.to_list_safe()
 
     expected_keys = {
-        "task_id", "agent_id", "action", "risk_level", "status",
-        "requested_by", "created_at", "updated_at", "delivered_at",
-        "started_at", "completed_at", "failure_reason", "timed_out_at",
-        "error_summary", "result_summary", "cancel_reason",
-        "cancel_requested_at", "cancel_requested_by", "cancelled_at",
+        "task_id",
+        "agent_id",
+        "action",
+        "risk_level",
+        "status",
+        "requested_by",
+        "created_at",
+        "updated_at",
+        "delivered_at",
+        "started_at",
+        "completed_at",
+        "failure_reason",
+        "timed_out_at",
+        "error_summary",
+        "result_summary",
+        "cancel_reason",
+        "cancel_requested_at",
+        "cancel_requested_by",
+        "cancelled_at",
     }
     assert set(list_safe.keys()) == expected_keys
 

@@ -5,18 +5,19 @@ low 위험 인라인 실행에만 적용. medium/high/critical 기존 정책은 
 
 import json
 import logging
-import threading
-import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
-from datetime import datetime, timezone
-from typing import Callable, Optional
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from datetime import UTC, datetime
 
 from .config import (
-    EXECUTION_HISTORY_PATH as _HIST_PATH,
-    EXEC_RATE_LIMIT_WINDOW_SEC,
     EXEC_RATE_LIMIT_ACTION_MAX,
     EXEC_RATE_LIMIT_USER_MAX,
+    EXEC_RATE_LIMIT_WINDOW_SEC,
     EXEC_TIMEOUT_SEC,
+)
+from .config import (
+    EXECUTION_HISTORY_PATH as _HIST_PATH,
 )
 from .models import TaskRequest
 
@@ -32,16 +33,16 @@ BLOCK_USER_5MIN = "rate_limited_user_5min"
 BLOCK_NIGHT = "night_blocked"
 
 # 신규 제한 파라미터 (기본값 고정. 필요 시 후속 단계에서 config.py 로 이관)
-TASK_COOLDOWN_SEC = 60      # 동일 task 1분 내 1회
+TASK_COOLDOWN_SEC = 60  # 동일 task 1분 내 1회
 USER_5MIN_WINDOW_SEC = 300  # 5분 창
-USER_5MIN_MAX = 5           # 5분 내 5회
-NIGHT_START_HOUR = 0        # KST 00시
-NIGHT_END_HOUR = 6          # KST 06시 (end exclusive)
-KST_OFFSET_HOURS = 9        # 서버 UTC → KST
+USER_5MIN_MAX = 5  # 5분 내 5회
+NIGHT_START_HOUR = 0  # KST 00시
+NIGHT_END_HOUR = 6  # KST 06시 (end exclusive)
+KST_OFFSET_HOURS = 9  # 서버 UTC → KST
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def record_execution(
@@ -79,7 +80,7 @@ def _read_recent(window_sec: int) -> list[dict]:
     threshold = _now().timestamp() - window_sec
     out: list[dict] = []
     try:
-        with open(_HIST_PATH, "r", encoding="utf-8") as f:
+        with open(_HIST_PATH, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -185,9 +186,9 @@ def check_user_5min_window(
     return True, ""
 
 
-def _is_night_kst(dt_utc: Optional[datetime] = None,
-                  start_hour: int = NIGHT_START_HOUR,
-                  end_hour: int = NIGHT_END_HOUR) -> bool:
+def _is_night_kst(
+    dt_utc: datetime | None = None, start_hour: int = NIGHT_START_HOUR, end_hour: int = NIGHT_END_HOUR
+) -> bool:
     """KST 기준 야간 시간대 여부. end_hour 는 exclusive."""
     base = dt_utc or _now()
     # UTC → KST 오프셋
@@ -198,7 +199,7 @@ def _is_night_kst(dt_utc: Optional[datetime] = None,
     return kst_hour >= start_hour or kst_hour < end_hour
 
 
-def check_night_block(now_utc: Optional[datetime] = None) -> tuple[bool, str]:
+def check_night_block(now_utc: datetime | None = None) -> tuple[bool, str]:
     """KST 00:00~06:00 사이면 실행 차단."""
     if _is_night_kst(now_utc):
         return False, BLOCK_NIGHT

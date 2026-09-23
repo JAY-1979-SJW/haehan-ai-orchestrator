@@ -3,14 +3,16 @@
 
 권한 객체 구조 정의, 유효성 검증, 범위 초과 판별.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ai_orchestrator.local_agent.action_risk_policy import (
-    is_blocked, is_delegatable, GRADE_BLOCKED,
+    is_blocked,
+    is_delegatable,
 )
 
 # ── 권한 상태 상수 ─────────────────────────────────────────────────────────────
@@ -62,7 +64,7 @@ def build_permission(
     if max_executions > MAX_BULK_LIMIT:
         raise ValueError(f"max_executions {max_executions}는 최대 허용({MAX_BULK_LIMIT})을 초과합니다.")
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     return {
         "permission_id": permission_id or str(uuid.uuid4()),
         "action": action,
@@ -109,20 +111,26 @@ def check_permission(
     if expires_at_str:
         try:
             expires_at = datetime.fromisoformat(expires_at_str)
-            if datetime.now(tz=timezone.utc) > expires_at:
+            if datetime.now(tz=UTC) > expires_at:
                 return {"result": CHECK_EXPIRED, "reason": "권한 만료됨"}
         except ValueError:
             pass
 
     # scope 검사
     if permission.get("action") != action:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": f"action 불일치: 권한={permission.get('action')!r}, 요청={action!r}"}
+        return {
+            "result": CHECK_SCOPE_EXCEEDED,
+            "reason": f"action 불일치: 권한={permission.get('action')!r}, 요청={action!r}",
+        }
     if permission.get("domain") and permission["domain"] != domain:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": f"domain 불일치: 권한={permission['domain']!r}, 요청={domain!r}"}
+        return {
+            "result": CHECK_SCOPE_EXCEEDED,
+            "reason": f"domain 불일치: 권한={permission['domain']!r}, 요청={domain!r}",
+        }
     if permission.get("account") and account and permission["account"] != account:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": f"account 불일치"}
+        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "account 불일치"}
     if permission.get("task_scope") and task_scope and permission["task_scope"] != task_scope:
-        return {"result": CHECK_SCOPE_EXCEEDED, "reason": f"task_scope 불일치"}
+        return {"result": CHECK_SCOPE_EXCEEDED, "reason": "task_scope 불일치"}
 
     # 횟수 검사
     max_exec = permission.get("max_executions", DEFAULT_MAX_EXECUTIONS)
@@ -136,7 +144,7 @@ def check_permission(
 def revoke_permission(permission: dict[str, Any]) -> dict[str, Any]:
     """권한을 철회 처리한다. (원본 dict를 수정하고 반환)"""
     permission["status"] = PERM_REVOKED
-    permission["revoked_at"] = datetime.now(tz=timezone.utc).isoformat()
+    permission["revoked_at"] = datetime.now(tz=UTC).isoformat()
     return permission
 
 

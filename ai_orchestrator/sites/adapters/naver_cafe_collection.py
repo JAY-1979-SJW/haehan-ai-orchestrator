@@ -13,13 +13,15 @@ NaverCafeAdapter.collect_list 를 1페이지 기준으로 호출만 한다.
     - 쿠키, 세션, 헤더, 토큰 원문 금지.
     - 로그에 남기는 건 site_id / club_id / menu_id / 카운트 / 페이지 번호.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional
+from typing import Any
 from urllib.parse import urlencode
 
 from .. import runner
@@ -66,12 +68,14 @@ def build_board_url(club_id: str, menu_id: str, *, page: int = 1) -> str:
     """
     if not club_id or not menu_id:
         raise ValueError("club_id / menu_id 가 비어 있다 — NAVER_CAFE_TARGET 확인")
-    qs = urlencode({
-        "search.clubid": club_id,
-        "search.menuid": menu_id,
-        "search.boardtype": "L",
-        "search.page": max(1, int(page)),
-    })
+    qs = urlencode(
+        {
+            "search.clubid": club_id,
+            "search.menuid": menu_id,
+            "search.boardtype": "L",
+            "search.page": max(1, int(page)),
+        }
+    )
     return f"https://cafe.naver.com/ArticleList.nhn?{qs}"
 
 
@@ -88,7 +92,7 @@ def _empty_record(club_id: str, menu_id: str) -> dict[str, Any]:
 def load_stored(path: Path) -> dict[str, Any]:
     """저장 파일 로드. 없으면 빈 레코드 반환. 파손 시 빈 레코드로 fallback."""
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
         return _empty_record("", "")
@@ -219,7 +223,10 @@ def collect_new_posts(
     """
     board_url = build_board_url(club_id, menu_id, page=page_num)
     result = adapter.collect_list(
-        page, cursor=board_url, page_num=page_num, max_pages=max_pages,
+        page,
+        cursor=board_url,
+        page_num=page_num,
+        max_pages=max_pages,
     )
     if not result.get("done"):
         return {
@@ -249,11 +256,11 @@ def run_naver_cafe_collect_job(
     job_id: str,
     club_id: str = "",
     menu_id: str = "",
-    store_path: Optional[Path] = None,
+    store_path: Path | None = None,
     page_num: int = 1,
     max_pages: int = 1,
     auto_reauth: bool = True,
-    reauth_timeout_sec: Optional[int] = None,
+    reauth_timeout_sec: int | None = None,
     sleeper: Any = None,
     clock: Any = None,
 ) -> str:
@@ -276,9 +283,13 @@ def run_naver_cafe_collect_job(
         record = load_stored(path)
         existing = existing_ids(record)
         outcome = collect_new_posts(
-            adapter, p, existing,
-            club_id=cid, menu_id=mid,
-            page_num=page_num, max_pages=max_pages,
+            adapter,
+            p,
+            existing,
+            club_id=cid,
+            menu_id=mid,
+            page_num=page_num,
+            max_pages=max_pages,
         )
         new_posts = outcome["new_posts"]
         skipped = outcome["skipped_count"]
@@ -297,38 +308,42 @@ def run_naver_cafe_collect_job(
 
         logger.info(
             "[NAVER-CAFE-COLLECT] site=%s page=%d new=%d skipped=%d status=%s",
-            SITE_ID, page_num, len(new_posts), skipped, outcome["status"],
+            SITE_ID,
+            page_num,
+            len(new_posts),
+            skipped,
+            outcome["status"],
         )
-        return (
-            f"status={outcome['status']} new={len(new_posts)} "
-            f"skipped={skipped} page={page_num}"
-        )
+        return f"status={outcome['status']} new={len(new_posts)} skipped={skipped} page={page_num}"
 
     return runner.run_with_session(
-        adapter, page,
-        job_id=job_id, site_id=SITE_ID,
+        adapter,
+        page,
+        job_id=job_id,
+        site_id=SITE_ID,
         work=_work,
         current_step="collect",
         params={"club_id": cid, "menu_id": mid, "page_num": page_num},
         auto_reauth=auto_reauth,
         reauth_timeout_sec=reauth_timeout_sec,
-        sleeper=sleeper, clock=clock,
+        sleeper=sleeper,
+        clock=clock,
     )
 
 
 __all__ = [
-    "SITE_ID",
     "NAVER_CAFE_TARGET",
+    "SITE_ID",
+    "STATUS_BLOCKED_NOT_LOGGED_IN",
     "STATUS_COLLECTED",
     "STATUS_NO_NEW",
-    "STATUS_BLOCKED_NOT_LOGGED_IN",
     "build_board_url",
+    "collect_new_posts",
     "default_store_path",
-    "load_stored",
-    "save_stored",
     "existing_ids",
     "filter_new_posts",
+    "load_stored",
     "merge_record",
-    "collect_new_posts",
     "run_naver_cafe_collect_job",
+    "save_stored",
 ]

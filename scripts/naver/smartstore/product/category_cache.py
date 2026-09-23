@@ -16,24 +16,25 @@
     # 3. Selectize에 ID 직접 주입 (검색 불필요)
     ok = set_by_id(page, category_id)
 """
+
 from __future__ import annotations
 
 import json
 import time
 from pathlib import Path
-from typing import Optional
 
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
-ROOT      = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[4]
 CACHE_PATH = ROOT / "data" / "smartstore" / "categories.json"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 캐시 구축
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def build_cache(page) -> dict:
     """CDP 브라우저에서 전체 카테고리를 추출해 캐시 파일로 저장.
@@ -86,10 +87,10 @@ def build_cache(page) -> dict:
 
         CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         cache = {
-            "ok":         True,
-            "count":      len(cats),
+            "ok": True,
+            "count": len(cats),
             "categories": cats,
-            "built_at":   __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+            "built_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
         }
         CACHE_PATH.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
         _log.info("[cat-cache] 캐시 구축 완료: %d개 → %s", len(cats), CACHE_PATH)
@@ -128,7 +129,7 @@ def _fetch_via_angular(page) -> list | None:
             }})()
             """)
             time.sleep(0.3)
-            for c in (batch or []):
+            for c in batch or []:
                 if c["id"] not in seen_ids:
                     seen_ids.add(c["id"])
                     results.append(c)
@@ -141,6 +142,7 @@ def _fetch_via_angular(page) -> list | None:
 # ══════════════════════════════════════════════════════════════════════════════
 # 캐시 조회
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def load_cache() -> list[dict]:
     """캐시 파일에서 카테고리 목록 반환. 없으면 빈 리스트."""
@@ -201,10 +203,10 @@ def cache_info() -> dict:
     try:
         data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
         return {
-            "exists":   True,
-            "count":    data.get("count", 0),
+            "exists": True,
+            "count": data.get("count", 0),
             "built_at": data.get("built_at"),
-            "path":     str(CACHE_PATH),
+            "path": str(CACHE_PATH),
         }
     except Exception:
         return {"exists": False, "count": 0, "built_at": None}
@@ -213,6 +215,7 @@ def cache_info() -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 # Selectize ID 직접 주입
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def set_by_id(page, category_id: str) -> bool:
     """Selectize에 카테고리 ID를 직접 주입. 검색 과정 생략.

@@ -1,10 +1,10 @@
 """
 auth_completion_detector 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.auth_completion_detector import (
-    check_auth_completed_from_page_state,
     check_auth_completed_from_dict,
+    check_auth_completed_from_page_state,
 )
 
 
@@ -84,32 +84,38 @@ class TestCheckAuthCompletedFromPageState:
 
 class TestCheckAuthCompletedFromDict:
     def test_dict_interface_login_not_completed(self):
-        result = check_auth_completed_from_dict({
-            "title": "로그인",
-            "url": "https://example.com/login",
-            "body_text": "로그인이 필요합니다",
-        })
+        result = check_auth_completed_from_dict(
+            {
+                "title": "로그인",
+                "url": "https://example.com/login",
+                "body_text": "로그인이 필요합니다",
+            }
+        )
         assert result["auth_completed"] is False
 
     def test_dict_interface_completed(self):
-        result = check_auth_completed_from_dict({
-            "title": "대시보드",
-            "url": "https://example.com/main",
-            "body_text": "로그아웃",
-            "prev_title": "로그인",
-            "prev_url": "https://example.com/login",
-        })
+        result = check_auth_completed_from_dict(
+            {
+                "title": "대시보드",
+                "url": "https://example.com/main",
+                "body_text": "로그아웃",
+                "prev_title": "로그인",
+                "prev_url": "https://example.com/login",
+            }
+        )
         assert result["auth_completed"] is True
         assert result["sensitive_data_collected"] is False
 
     def test_storage_state_not_accessed(self):
-        result = check_auth_completed_from_dict({
-            "title": "홈",
-            "url": "https://example.com/home",
-            "body_text": "마이페이지",
-            "prev_title": "로그인",
-            "prev_url": "https://example.com/login",
-        })
+        result = check_auth_completed_from_dict(
+            {
+                "title": "홈",
+                "url": "https://example.com/home",
+                "body_text": "마이페이지",
+                "prev_title": "로그인",
+                "prev_url": "https://example.com/login",
+            }
+        )
         assert "localStorage" not in result
         assert "sessionStorage" not in result
         assert "storage_state" not in result

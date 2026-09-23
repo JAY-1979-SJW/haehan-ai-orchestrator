@@ -1,16 +1,13 @@
 """Shared in-memory store, constants, and transition validator for local_agent_registry."""
+
 from __future__ import annotations
 
 import threading
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from .local_agent_actions import AUTO_EXECUTE_VIA_AGENT
-from .local_agent_risk_policy import (
-    ACTION_RISK, _SERVER_AUTO_COMPLETE, ALLOWED_APPS
-)
 from .local_agent_models import LocalAgent, LocalAgentTask, RegisterResult
-
+from .local_agent_risk_policy import _SERVER_AUTO_COMPLETE, ACTION_RISK, ALLOWED_APPS
 
 # ── timeout 상수 ────────────────────────────────────────────────────────
 
@@ -30,20 +27,28 @@ ACTIVE_TASK_STATUSES: frozenset[str] = frozenset({"delivered", "running", "cance
 # ── 상태 전이 매트릭스 ───────────────────────────────────────────────────
 
 VALID_TASK_TRANSITIONS: dict[str, set[str]] = {
-    "queued":           {"delivered", "failed", "cancelled"},
-    "delivered":        {"running", "failed", "cancel_requested"},
-    "running":          {"completed", "failed", "cancel_requested"},
+    "queued": {"delivered", "failed", "cancelled"},
+    "delivered": {"running", "failed", "cancel_requested"},
+    "running": {"completed", "failed", "cancel_requested"},
     "cancel_requested": {"cancelled", "failed", "completed"},
-    "completed":        set(),
-    "failed":           set(),
-    "cancelled":        set(),
+    "completed": set(),
+    "failed": set(),
+    "cancelled": set(),
 }
 
-KNOWN_TASK_STATUSES: frozenset[str] = frozenset({
-    "queued", "delivered", "running",
-    "waiting_approval", "completed", "failed", "rejected",
-    "cancel_requested", "cancelled",
-})
+KNOWN_TASK_STATUSES: frozenset[str] = frozenset(
+    {
+        "queued",
+        "delivered",
+        "running",
+        "waiting_approval",
+        "completed",
+        "failed",
+        "rejected",
+        "cancel_requested",
+        "cancelled",
+    }
+)
 
 
 class InvalidTaskTransitionError(ValueError):
@@ -63,11 +68,13 @@ _tasks: dict[str, LocalAgentTask] = {}
 
 # ── 시간 helper ───────────────────────────────────────────────────────────
 
+
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── 전이 검증 ─────────────────────────────────────────────────────────────
+
 
 def _ensure_task_transition(task: LocalAgentTask, next_status: str) -> None:
     """task 의 현재 status → next_status 전이가 허용되는지 검증.
@@ -78,12 +85,12 @@ def _ensure_task_transition(task: LocalAgentTask, next_status: str) -> None:
     allowed = VALID_TASK_TRANSITIONS.get(task.status, set())
     if next_status not in allowed:
         raise InvalidTaskTransitionError(
-            f"invalid transition: {task.status!r} -> {next_status!r} "
-            f"(task_id={task.task_id})"
+            f"invalid transition: {task.status!r} -> {next_status!r} (task_id={task.task_id})"
         )
 
 
 # ── 저장소 초기화 (테스트 전용) ──────────────────────────────────────────
+
 
 def clear() -> None:
     """테스트 전용: 메모리 저장소 초기화."""
@@ -93,13 +100,25 @@ def clear() -> None:
 
 
 __all__ = [
+    "ACTION_RISK",
+    "ACTIVE_TASK_STATUSES",
+    "ALLOWED_APPS",
     "AUTO_EXECUTE_VIA_AGENT",
-    "ACTION_RISK", "_SERVER_AUTO_COMPLETE", "ALLOWED_APPS",
-    "LocalAgent", "LocalAgentTask", "RegisterResult",
-    "DELIVERED_TIMEOUT_SECONDS", "RUNNING_TIMEOUT_SECONDS",
-    "HEARTBEAT_STALE_SECONDS", "ACTIVE_TASK_STATUSES",
-    "VALID_TASK_TRANSITIONS", "KNOWN_TASK_STATUSES",
-    "InvalidTaskTransitionError", "UnknownActionError",
-    "_lock", "_agents", "_tasks",
-    "_now_iso", "_ensure_task_transition", "clear",
+    "DELIVERED_TIMEOUT_SECONDS",
+    "HEARTBEAT_STALE_SECONDS",
+    "KNOWN_TASK_STATUSES",
+    "RUNNING_TIMEOUT_SECONDS",
+    "VALID_TASK_TRANSITIONS",
+    "_SERVER_AUTO_COMPLETE",
+    "InvalidTaskTransitionError",
+    "LocalAgent",
+    "LocalAgentTask",
+    "RegisterResult",
+    "UnknownActionError",
+    "_agents",
+    "_ensure_task_transition",
+    "_lock",
+    "_now_iso",
+    "_tasks",
+    "clear",
 ]

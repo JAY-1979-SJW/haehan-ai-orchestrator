@@ -7,15 +7,15 @@
     docs.append_text(doc_url, "추가 내용")
     docs.get_text(doc_url)
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -33,8 +33,9 @@ class DocsAPI:
         self.page.goto(self.DOCS_HOME, timeout=20000)
         time.sleep(3)
         try:
-            return self.page.evaluate(
-                """(limit) => {
+            return (
+                self.page.evaluate(
+                    """(limit) => {
                     const out = [];
                     document.querySelectorAll('[data-id]').forEach(el => {
                         if (out.length >= limit) return;
@@ -46,8 +47,10 @@ class DocsAPI:
                     });
                     return out;
                 }""",
-                limit,
-            ) or []
+                    limit,
+                )
+                or []
+            )
         except Exception:
             return []
 
@@ -73,10 +76,8 @@ class DocsAPI:
                 self.page.keyboard.type(content, delay=10)
                 time.sleep(2)
 
-            log_critical("OTHER", f"Docs 새 문서: {title[:30]}",
-                         url=url_after, mode="docs_new")
-            return {"ok": True, "title": title, "url": url_after,
-                    "content_len": len(content)}
+            log_critical("OTHER", f"Docs 새 문서: {title[:30]}", url=url_after, mode="docs_new")
+            return {"ok": True, "title": title, "url": url_after, "content_len": len(content)}
         except Exception as e:
             return {"ok": False, "error": str(e)[:100], "url": url_after}
 

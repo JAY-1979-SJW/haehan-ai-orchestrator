@@ -1,20 +1,20 @@
 """
 나라장터 read-only safe result 검증 테스트
 """
-import pytest
+
+from ai_orchestrator.local_agent.local_session_boundary import (
+    enforce_session_boundary,
+    is_safe_for_export,
+    validate_session_boundary,
+)
 from ai_orchestrator.local_agent.result_sanitizer import (
     sanitize_result,
     validate_sanitized_result,
 )
-from ai_orchestrator.local_agent.local_session_boundary import (
-    enforce_session_boundary,
-    validate_session_boundary,
-    is_safe_for_export,
-)
 from ai_orchestrator.local_agent.task_protocol import (
     STATUS_COMPLETED,
-    STATUS_WAITING_USER_AUTH,
     STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
     build_result,
 )
 

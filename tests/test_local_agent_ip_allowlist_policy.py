@@ -1,12 +1,10 @@
 """IP_ALLOWLIST_USER_DESKTOP_POLICY_01 — 12+ 테스트."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from scripts.ops import audit_local_agent_ip_allowlist_policy as audit
-
 
 POLICY_DOC = Path("docs/ops/local_agent_ip_allowlist_policy.md")
 NGINX_PLAN = Path("docs/ops/local_agent_public_ws_nginx_plan.md")
@@ -51,6 +49,7 @@ def test_admin_endpoints_not_in_public_section():
     text = POLICY_DOC.read_text(encoding="utf-8")
     # 공개 허용 후보 섹션 추출
     import re
+
     m = re.search(r"## 5\. 공개 허용 후보.+?(?=## )", text, re.DOTALL)
     assert m, "공개 허용 후보 섹션 없음"
     public_section = m.group(0)
@@ -70,6 +69,7 @@ def test_registration_codes_endpoint_protected():
     text = POLICY_DOC.read_text(encoding="utf-8")
     # allowlist 유지 섹션에 명시
     import re
+
     m = re.search(r"## 6\. allowlist 유지.+?(?=## )", text, re.DOTALL)
     assert m, "allowlist 유지 섹션 없음"
     protected = m.group(0)
@@ -84,6 +84,7 @@ def test_register_with_code_in_public_candidate():
     assert "/orchestrator/api/v1/local-agents/register-with-code" in text
     # 공개 허용 섹션에 들어있어야 함
     import re
+
     m = re.search(r"## 5\. 공개 허용 후보.+?(?=## )", text, re.DOTALL)
     public_section = m.group(0) if m else ""
     assert "/register-with-code" in public_section
@@ -95,6 +96,7 @@ def test_register_with_code_in_public_candidate():
 def test_ws_endpoint_in_public_candidate():
     text = POLICY_DOC.read_text(encoding="utf-8")
     import re
+
     m = re.search(r"## 5\. 공개 허용 후보.+?(?=## )", text, re.DOTALL)
     public_section = m.group(0) if m else ""
     assert "/orchestrator/api/v1/local-agents/ws" in public_section
@@ -136,8 +138,8 @@ def test_nginx_plan_preserves_websocket_upgrade_headers():
     text = NGINX_PLAN.read_text(encoding="utf-8")
     assert "Upgrade" in text and "$http_upgrade" in text
     import re
-    assert re.search(r"Connection\s+\"upgrade\"", text), \
-        "Connection upgrade 헤더 명시 없음"
+
+    assert re.search(r"Connection\s+\"upgrade\"", text), "Connection upgrade 헤더 명시 없음"
     assert "proxy_read_timeout" in text
 
 
@@ -165,8 +167,7 @@ def test_audit_fail_recommendation_missing(tmp_path):
     p = tmp_path / "policy.md"
     p.write_text("## 정책\n내용만 있고 권장안 없음", encoding="utf-8")
     n = tmp_path / "plan.md"
-    n.write_text("rollback Upgrade $http_upgrade Connection \"upgrade\" proxy_read_timeout",
-                 encoding="utf-8")
+    n.write_text('rollback Upgrade $http_upgrade Connection "upgrade" proxy_read_timeout', encoding="utf-8")
     v = audit.judge_policy(policy_doc_path=p, nginx_plan_path=n)
     assert v.code == "FAIL_RECOMMENDATION_MISSING"
 
@@ -184,8 +185,7 @@ def test_audit_fail_admin_endpoint_public(tmp_path):
         encoding="utf-8",
     )
     n = tmp_path / "plan.md"
-    n.write_text("Upgrade $http_upgrade Connection \"upgrade\" rollback "
-                 "proxy_read_timeout", encoding="utf-8")
+    n.write_text('Upgrade $http_upgrade Connection "upgrade" rollback proxy_read_timeout', encoding="utf-8")
     v = audit.judge_policy(policy_doc_path=p, nginx_plan_path=n)
     assert v.code == "FAIL_ADMIN_ENDPOINT_PUBLIC"
 
@@ -200,12 +200,10 @@ def test_audit_fail_registration_code_issue_public(tmp_path):
         encoding="utf-8",
     )
     n = tmp_path / "plan.md"
-    n.write_text("Upgrade $http_upgrade Connection \"upgrade\" rollback "
-                 "proxy_read_timeout", encoding="utf-8")
+    n.write_text('Upgrade $http_upgrade Connection "upgrade" rollback proxy_read_timeout', encoding="utf-8")
     v = audit.judge_policy(policy_doc_path=p, nginx_plan_path=n)
     # admin endpoint check 가 먼저 fail 또는 registration-codes public 이 둘 다 잡음
-    assert v.code in ("FAIL_REGISTRATION_CODE_ISSUE_PUBLIC",
-                      "FAIL_ADMIN_ENDPOINT_PUBLIC")
+    assert v.code in ("FAIL_REGISTRATION_CODE_ISSUE_PUBLIC", "FAIL_ADMIN_ENDPOINT_PUBLIC")
 
 
 def test_audit_fail_rollback_missing(tmp_path):
@@ -218,8 +216,7 @@ def test_audit_fail_rollback_missing(tmp_path):
         encoding="utf-8",
     )
     n = tmp_path / "plan.md"
-    n.write_text("Upgrade $http_upgrade Connection \"upgrade\" proxy_read_timeout",
-                 encoding="utf-8")
+    n.write_text('Upgrade $http_upgrade Connection "upgrade" proxy_read_timeout', encoding="utf-8")
     v = audit.judge_policy(policy_doc_path=p, nginx_plan_path=n)
     assert v.code == "FAIL_ROLLBACK_PLAN_MISSING"
 
@@ -229,6 +226,7 @@ def test_audit_fail_rollback_missing(tmp_path):
 
 def test_regression_connection_diagnostics_imports():
     from local_agent import connection_diagnostics as cd
+
     assert hasattr(cd, "normalize_ws_url")
     assert hasattr(cd, "build_diagnostics")
 
@@ -241,5 +239,6 @@ def test_regression_proxy_checklist_doc_exists():
 
 def test_regression_local_agent_router_imports():
     from ai_orchestrator import local_agent_router as r
+
     assert hasattr(r, "local_agent_router")
     assert hasattr(r, "register_with_code")

@@ -3,8 +3,8 @@
 fixture/schema만 검증한다.
 실제 브라우저 실행, dispatcher import, task_executor import 금지.
 """
+
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -50,6 +50,7 @@ def _case(data, case_id):
 
 # ── fixture schema 검증 ────────────────────────────────────────────────────
 
+
 def test_fixture_schema_required_fields():
     """fixture schema 필수 필드 검증."""
     data = load_fixture()
@@ -87,6 +88,7 @@ def test_fixture_task_executor_not_connected():
 
 # ── audit_event_stages 검증 ───────────────────────────────────────────────
 
+
 def test_audit_event_stages_enum():
     """audit_event_stages 목록이 허용 enum과 일치."""
     data = load_fixture()
@@ -100,9 +102,7 @@ def test_all_case_event_stages_valid():
         exp = c["expected"]
         if "event_stage" in exp:
             es = exp["event_stage"]
-            assert es in ALLOWED_EVENT_STAGES, (
-                f"{c['case_id']}: invalid event_stage={es!r}"
-            )
+            assert es in ALLOWED_EVENT_STAGES, f"{c['case_id']}: invalid event_stage={es!r}"
 
 
 def test_all_case_event_stages_order_valid():
@@ -110,12 +110,11 @@ def test_all_case_event_stages_order_valid():
     data = load_fixture()
     for c in data["cases"]:
         for es in c["expected"].get("event_stages_order", []):
-            assert es in ALLOWED_EVENT_STAGES, (
-                f"{c['case_id']}: invalid stage in order={es!r}"
-            )
+            assert es in ALLOWED_EVENT_STAGES, f"{c['case_id']}: invalid stage in order={es!r}"
 
 
 # ── operation_audit_requirements 검증 ────────────────────────────────────
+
 
 def test_click_audit_required():
     """click은 audit_required=true."""
@@ -152,12 +151,11 @@ def test_click_type_submit_approval_required():
     data = load_fixture()
     req = data["operation_audit_requirements"]
     for op in ["click", "type", "submit"]:
-        assert req[op]["approval_required"] is True, (
-            f"{op}: approval_required must be True"
-        )
+        assert req[op]["approval_required"] is True, f"{op}: approval_required must be True"
 
 
 # ── 차단 케이스 검증 ──────────────────────────────────────────────────────
+
 
 def test_submit_deny_by_default_blocked():
     """gate_decision=DENY_BY_DEFAULT → dispatch_blocked=true."""
@@ -226,6 +224,7 @@ def test_gate_decision_block_blocked():
 
 # ── 통과 케이스 검증 ──────────────────────────────────────────────────────
 
+
 def test_click_full_pass_dispatch_allowed():
     """click 전체 통과 → DISPATCH_ALLOWED_DRY_RUN."""
     data = load_fixture()
@@ -265,6 +264,7 @@ def test_sensitive_redacted_pass():
 
 # ── safe_to_execute 항상 false ────────────────────────────────────────────
 
+
 def test_safe_to_execute_never_true_in_any_case():
     """이번 단계 어떤 케이스에서도 safe_to_execute=true이면 FAIL."""
     data = load_fixture()
@@ -281,6 +281,7 @@ def test_safe_to_execute_policy_not_allowed():
 
 
 # ── event_stages_order 검증 ───────────────────────────────────────────────
+
 
 def test_event_stages_order_click_full_pass():
     """click full pass 케이스 event_stages_order에 최소 4개 단계 포함."""
@@ -309,6 +310,7 @@ def test_event_stages_order_contains_audit_ready():
 
 # ── sensitive_field_block_patterns 검증 ──────────────────────────────────
 
+
 def test_sensitive_field_patterns_include_password():
     """sensitive_field_block_patterns에 password 포함."""
     data = load_fixture()
@@ -329,24 +331,22 @@ def test_sensitive_field_patterns_include_secret():
 
 # ── block_reason 허용값 검증 ──────────────────────────────────────────────
 
+
 def test_all_case_block_reasons_valid():
     """모든 케이스의 block_reason이 허용 enum 안에 있다."""
     data = load_fixture()
     for c in data["cases"]:
         br = c["expected"].get("block_reason")
         if br is not None:
-            assert br in ALLOWED_BLOCK_REASONS, (
-                f"{c['case_id']}: invalid block_reason={br!r}"
-            )
+            assert br in ALLOWED_BLOCK_REASONS, f"{c['case_id']}: invalid block_reason={br!r}"
 
 
 # ── 기존 gate/allowlist fixture와의 연계 검증 ─────────────────────────────
 
+
 def test_gate_fixture_gate_decisions_compatible():
     """기존 gate fixture의 gate_decisions가 audit 설계와 호환된다."""
-    gate_fixture = (
-        Path(__file__).parent / "fixtures" / "browser_gate_module_design_20260506.json"
-    )
+    gate_fixture = Path(__file__).parent / "fixtures" / "browser_gate_module_design_20260506.json"
     assert gate_fixture.exists(), "gate module fixture not found"
     with open(gate_fixture, encoding="utf-8") as f:
         g = json.load(f)
@@ -355,9 +355,7 @@ def test_gate_fixture_gate_decisions_compatible():
 
 def test_allowlist_fixture_submit_deny_by_default():
     """기존 allowlist fixture의 submit=DENY_BY_DEFAULT 유지."""
-    allowlist = (
-        Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
-    )
+    allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
     assert allowlist.exists(), "allowlist fixture not found"
     with open(allowlist, encoding="utf-8") as f:
         a = json.load(f)
@@ -374,9 +372,11 @@ def test_untracked_preflight_md_not_deleted():
 
 # ── 실제 브라우저/dispatcher import 없음 ─────────────────────────────────
 
+
 def test_no_browser_import_in_this_module():
     """이 테스트 파일 자체가 실제 브라우저/dispatcher를 직접 import하지 않는다."""
     import ast
+
     src = Path(__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
     blocked = {"playwright", "browser_worker", "dispatcher", "task_executor"}
@@ -392,6 +392,7 @@ def test_no_browser_import_in_this_module():
 def test_no_task_executor_import():
     """이 테스트 파일 자체가 task_executor / browser_worker를 직접 import하지 않는다."""
     import ast
+
     src = Path(__file__).read_text(encoding="utf-8")
     tree = ast.parse(src)
     blocked = {"task_executor", "browser_worker"}
@@ -406,12 +407,11 @@ def test_no_task_executor_import():
 
 # ── 최소 케이스 수 검증 ───────────────────────────────────────────────────
 
+
 def test_fixture_min_case_count():
     """fixture에 최소 10개 이상의 케이스가 있다."""
     data = load_fixture()
-    assert len(data["cases"]) >= 10, (
-        f"Expected at least 10 cases, got {len(data['cases'])}"
-    )
+    assert len(data["cases"]) >= 10, f"Expected at least 10 cases, got {len(data['cases'])}"
 
 
 def test_all_cases_have_action_name():
@@ -428,9 +428,7 @@ def test_all_cases_have_operation_type():
     allowed_ops = {"read", "navigate", "open_url", "click", "type", "submit"}
     for c in data["cases"]:
         ot = c["input"].get("operation_type")
-        assert ot in allowed_ops, (
-            f"{c['case_id']}: invalid operation_type={ot!r}"
-        )
+        assert ot in allowed_ops, f"{c['case_id']}: invalid operation_type={ot!r}"
 
 
 def test_all_cases_have_gate_decision_input():
@@ -438,6 +436,4 @@ def test_all_cases_have_gate_decision_input():
     data = load_fixture()
     for c in data["cases"]:
         gd = c["input"].get("gate_decision")
-        assert gd in ALLOWED_GATE_DECISIONS, (
-            f"{c['case_id']}: invalid input gate_decision={gd!r}"
-        )
+        assert gd in ALLOWED_GATE_DECISIONS, f"{c['case_id']}: invalid input gate_decision={gd!r}"

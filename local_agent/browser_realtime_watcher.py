@@ -8,22 +8,22 @@
 
 본 모듈은 pure 함수 위주이며, 실제 polling 루프는 desktop/local_server 에서 구동.
 """
+
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from local_agent.login_state_detector import (
-    DetectionResult,
     GOOGLE_AUTH_HOSTS,
-    LOGGED_IN,
     LOGIN_REQUIRED,
+    DetectionResult,
     classify,
     mask_email,
     sanitize_url,
 )
-
 
 # ── 이벤트 type 상수 ─────────────────────────────────────────────────
 
@@ -58,6 +58,7 @@ class WatcherEvent:
 
 # ── 입력 변환 ────────────────────────────────────────────────────────
 
+
 def from_cdp_targets(rows: list[dict[str, Any]]) -> list[TargetSnapshot]:
     """CDP /json/list 응답을 TargetSnapshot 목록으로 변환."""
     now = time.time()
@@ -70,16 +71,19 @@ def from_cdp_targets(rows: list[dict[str, Any]]) -> list[TargetSnapshot]:
         tid = str(row.get("id", "") or "")
         if not tid:
             continue
-        out.append(TargetSnapshot(
-            target_id=tid,
-            url=str(row.get("url", "") or ""),
-            title=str(row.get("title", "") or ""),
-            seen_at=now,
-        ))
+        out.append(
+            TargetSnapshot(
+                target_id=tid,
+                url=str(row.get("url", "") or ""),
+                title=str(row.get("title", "") or ""),
+                seen_at=now,
+            )
+        )
     return out
 
 
 # ── diff ─────────────────────────────────────────────────────────────
+
 
 def compute_events(
     prev: list[TargetSnapshot],
@@ -102,41 +106,49 @@ def compute_events(
             )
             events.append(evt)
             if any(h in host for h in GOOGLE_AUTH_HOSTS) or "accounts." in host:
-                events.append(WatcherEvent(
-                    event_type=EVT_AUTH_POPUP_DETECTED,
-                    target_id=tid,
-                    sanitized_url=s.sanitized_url,
-                    title=mask_email(s.title),
-                    extra={"host": host},
-                ))
+                events.append(
+                    WatcherEvent(
+                        event_type=EVT_AUTH_POPUP_DETECTED,
+                        target_id=tid,
+                        sanitized_url=s.sanitized_url,
+                        title=mask_email(s.title),
+                        extra={"host": host},
+                    )
+                )
             continue
         prev_s = prev_map[tid]
         if prev_s.url != s.url:
-            events.append(WatcherEvent(
-                event_type=EVT_TARGET_URL_CHANGED,
-                target_id=tid,
-                sanitized_url=s.sanitized_url,
-                title=mask_email(s.title),
-                extra={
-                    "prev_sanitized_url": sanitize_url(prev_s.url),
-                },
-            ))
+            events.append(
+                WatcherEvent(
+                    event_type=EVT_TARGET_URL_CHANGED,
+                    target_id=tid,
+                    sanitized_url=s.sanitized_url,
+                    title=mask_email(s.title),
+                    extra={
+                        "prev_sanitized_url": sanitize_url(prev_s.url),
+                    },
+                )
+            )
         if prev_s.title != s.title:
-            events.append(WatcherEvent(
-                event_type=EVT_TARGET_TITLE_CHANGED,
-                target_id=tid,
-                sanitized_url=s.sanitized_url,
-                title=mask_email(s.title),
-            ))
+            events.append(
+                WatcherEvent(
+                    event_type=EVT_TARGET_TITLE_CHANGED,
+                    target_id=tid,
+                    sanitized_url=s.sanitized_url,
+                    title=mask_email(s.title),
+                )
+            )
 
     for tid in prev_map:
         if tid not in curr_map:
-            events.append(WatcherEvent(
-                event_type=EVT_TARGET_CLOSED,
-                target_id=tid,
-                sanitized_url=prev_map[tid].sanitized_url,
-                title=mask_email(prev_map[tid].title),
-            ))
+            events.append(
+                WatcherEvent(
+                    event_type=EVT_TARGET_CLOSED,
+                    target_id=tid,
+                    sanitized_url=prev_map[tid].sanitized_url,
+                    title=mask_email(prev_map[tid].title),
+                )
+            )
     return events
 
 
@@ -153,6 +165,7 @@ def _host_only(url: str) -> str:
 
 
 # ── login state 합성 ────────────────────────────────────────────────
+
 
 def detect_login_states(
     snapshots: list[TargetSnapshot],
@@ -192,23 +205,26 @@ def login_state_change_events(
         prev = prev_states.get(tid, "")
         if det.state == prev:
             continue
-        events.append(WatcherEvent(
-            event_type=EVT_LOGIN_STATE_CHANGED,
-            target_id=tid,
-            sanitized_url=det.sanitized_url,
-            title=det.title,
-            extra={
-                "prev_state": prev,
-                "state": det.state,
-                "reason": det.reason,
-                "is_account_picker": det.is_account_picker,
-                "user_hint": det.detected_user_hint,
-            },
-        ))
+        events.append(
+            WatcherEvent(
+                event_type=EVT_LOGIN_STATE_CHANGED,
+                target_id=tid,
+                sanitized_url=det.sanitized_url,
+                title=det.title,
+                extra={
+                    "prev_state": prev,
+                    "state": det.state,
+                    "reason": det.reason,
+                    "is_account_picker": det.is_account_picker,
+                    "user_hint": det.detected_user_hint,
+                },
+            )
+        )
     return events
 
 
 # ── target 선택 (우선순위) ───────────────────────────────────────────
+
 
 def choose_login_target(
     snapshots: list[TargetSnapshot],

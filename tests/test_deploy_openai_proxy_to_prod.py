@@ -1,12 +1,10 @@
 """DEPLOY_OPENAI_PROXY_TO_PROD_01 audit + report 검증 (offline)."""
+
 from __future__ import annotations
 
 import json
 import re
 from pathlib import Path
-
-import pytest
-
 
 REPORT = Path("data/inspection/deploy_openai_proxy_to_prod/deploy_report.json")
 AUDIT_MOD = "scripts.ops.audit_deploy_openai_proxy_to_prod"
@@ -25,13 +23,20 @@ def test_report_is_json():
 
 def test_report_required_keys():
     d = json.loads(REPORT.read_text(encoding="utf-8"))
-    for k in ("server_head_matches_local", "container_rebuilt",
-              "health_status", "agent_ai_routes_present",
-              "openai_key_in_env", "agent_ai_health_ok",
-              "bad_token_rejected", "live_chat_ok",
-              "live_chat_external_call_count",
-              "api_key_leak", "device_token_leak",
-              "raw_chat_history_saved"):
+    for k in (
+        "server_head_matches_local",
+        "container_rebuilt",
+        "health_status",
+        "agent_ai_routes_present",
+        "openai_key_in_env",
+        "agent_ai_health_ok",
+        "bad_token_rejected",
+        "live_chat_ok",
+        "live_chat_external_call_count",
+        "api_key_leak",
+        "device_token_leak",
+        "raw_chat_history_saved",
+    ):
         assert k in d, f"missing: {k}"
 
 
@@ -131,6 +136,7 @@ def test_compose_override_gitignored():
 def test_audit_pass_with_report_metrics():
     """보고서의 metrics 를 audit 에 입력해 PASS 확인."""
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     d = json.loads(REPORT.read_text(encoding="utf-8"))
     v = a.judge_deploy(
@@ -152,6 +158,7 @@ def test_audit_pass_with_report_metrics():
 
 def test_audit_fail_api_key_leak():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(api_key_leak=True)
     assert v.code == "FAIL_OPENAI_KEY_LEAK"
@@ -159,6 +166,7 @@ def test_audit_fail_api_key_leak():
 
 def test_audit_fail_device_token_leak():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(device_token_leak=True)
     assert v.code == "FAIL_DEVICE_TOKEN_LEAK"
@@ -166,6 +174,7 @@ def test_audit_fail_device_token_leak():
 
 def test_audit_fail_raw_chat_history():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(raw_chat_history_saved=True)
     assert v.code == "FAIL_RAW_CHAT_HISTORY_SAVED"
@@ -173,6 +182,7 @@ def test_audit_fail_raw_chat_history():
 
 def test_audit_fail_openai_key_missing():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(openai_key_in_env=False)
     assert v.code == "FAIL_OPENAI_API_KEY_MISSING"
@@ -180,6 +190,7 @@ def test_audit_fail_openai_key_missing():
 
 def test_audit_fail_server_not_updated():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(server_head_matches_local=False)
     assert v.code == "FAIL_SERVER_NOT_UPDATED"
@@ -187,6 +198,7 @@ def test_audit_fail_server_not_updated():
 
 def test_audit_fail_route_missing():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(agent_ai_routes_present=False)
     assert v.code == "FAIL_AGENT_AI_ROUTE_MISSING"
@@ -194,6 +206,7 @@ def test_audit_fail_route_missing():
 
 def test_audit_fail_bad_token_not_rejected():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(bad_token_rejected=False)
     assert v.code == "FAIL_AGENT_AUTH_BROKEN"
@@ -201,6 +214,7 @@ def test_audit_fail_bad_token_not_rejected():
 
 def test_audit_fail_live_chat_failed():
     import importlib
+
     a = importlib.import_module(AUDIT_MOD)
     v = a.judge_deploy(live_chat_ok=False)
     assert v.code == "FAIL_OPENAI_PROXY_LIVE_CALL_FAILED"
@@ -211,16 +225,19 @@ def test_audit_fail_live_chat_failed():
 
 def test_regression_proxy_router_intact():
     from ai_orchestrator import agent_ai_proxy_router as r
+
     assert hasattr(r, "agent_ai_proxy_router")
     assert hasattr(r, "ChatResponse")
 
 
 def test_regression_caller_intact():
     from ai_orchestrator import openai_proxy_caller as c
+
     assert hasattr(c, "call_openai_chat")
     assert hasattr(c, "has_server_openai_key")
 
 
 def test_regression_desktop_client_intact():
     from local_agent import server_proxy_chat_client as s
+
     assert hasattr(s, "ServerProxyChatClient")

@@ -3,20 +3,35 @@
 실제 파일/DB write는 수행하지 않는다.
 이벤트 객체 생성과 민감값 masking만 담당한다.
 """
+
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from scripts.site_engine.types import GateDecision, SiteCapability
 
-_SENSITIVE_KEYS = frozenset({
-    "password", "passwd", "token", "secret", "cookie", "session",
-    "credential", "api_key", "apikey", "private_key",
-    "비밀번호", "토큰", "쿠키", "세션", "시크릿", "인증서",
-})
+_SENSITIVE_KEYS = frozenset(
+    {
+        "password",
+        "passwd",
+        "token",
+        "secret",
+        "cookie",
+        "session",
+        "credential",
+        "api_key",
+        "apikey",
+        "private_key",
+        "비밀번호",
+        "토큰",
+        "쿠키",
+        "세션",
+        "시크릿",
+        "인증서",
+    }
+)
 
 _MASK = "***REDACTED***"
 
@@ -28,13 +43,11 @@ class SiteEngineAuditEvent:
     gate_decision: GateDecision
     action: str
     actor: str = "system"
-    approved_by: Optional[str] = None
+    approved_by: str | None = None
     result: str = "pending"
     reason: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 def mask_sensitive(data: dict[str, Any]) -> dict[str, Any]:
@@ -62,10 +75,10 @@ def build_audit_event(
     gate_decision: GateDecision,
     action: str,
     actor: str = "system",
-    approved_by: Optional[str] = None,
+    approved_by: str | None = None,
     result: str = "pending",
     reason: str = "",
-    metadata: Optional[dict[str, Any]] = None,
+    metadata: dict[str, Any] | None = None,
 ) -> SiteEngineAuditEvent:
     safe_metadata = mask_sensitive(metadata or {})
     return SiteEngineAuditEvent(

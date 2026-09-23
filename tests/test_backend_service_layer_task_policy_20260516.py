@@ -8,26 +8,27 @@ coverage:
 - 싱글턴 패턴
 - security: forbidden field 차단 확인
 """
-from __future__ import annotations
 
-import pytest
-from typing import Any
+from __future__ import annotations
 
 # ---------------------------------------------------------------------------
 # Import guards
 # ---------------------------------------------------------------------------
 
+
 def test_services_package_importable():
     from ai_orchestrator.services import (
-        TaskQueueService, get_task_queue_service,
-        ExecutionPolicyService, get_execution_policy_service,
+        ExecutionPolicyService,
+        TaskQueueService,
     )
+
     assert TaskQueueService is not None
     assert ExecutionPolicyService is not None
 
 
 def test_task_queue_service_singleton():
     from ai_orchestrator.services import get_task_queue_service
+
     a = get_task_queue_service()
     b = get_task_queue_service()
     assert a is b
@@ -35,6 +36,7 @@ def test_task_queue_service_singleton():
 
 def test_execution_policy_service_singleton():
     from ai_orchestrator.services import get_execution_policy_service
+
     a = get_execution_policy_service()
     b = get_execution_policy_service()
     assert a is b
@@ -44,9 +46,11 @@ def test_execution_policy_service_singleton():
 # _FORBIDDEN_FIELDS strip
 # ---------------------------------------------------------------------------
 
+
 class TestForbiddenFieldStrip:
     def setup_method(self):
         from ai_orchestrator.services import get_task_queue_service
+
         self.svc = get_task_queue_service()
 
     def test_validate_clean_task_has_no_violations(self):
@@ -71,6 +75,7 @@ class TestForbiddenFieldStrip:
 
     def test_strip_removes_cookie(self):
         from ai_orchestrator.services.task_queue_service import _strip_forbidden
+
         raw = {"task_id": "t1", "cookie": "sess=abc", "title": "test"}
         result = _strip_forbidden(raw)
         assert "cookie" not in result
@@ -78,6 +83,7 @@ class TestForbiddenFieldStrip:
 
     def test_strip_removes_nested_secret(self):
         from ai_orchestrator.services.task_queue_service import _strip_forbidden
+
         raw = {"task_id": "t1", "payload": {"access_token": "tok", "action": "read"}}
         result = _strip_forbidden(raw)
         assert "access_token" not in result["payload"]
@@ -88,29 +94,36 @@ class TestForbiddenFieldStrip:
 # TaskQueueSummary
 # ---------------------------------------------------------------------------
 
+
 class TestTaskQueueSummary:
     def test_to_dict_keys(self):
         from ai_orchestrator.services.task_queue_service import TaskQueueSummary
-        s = TaskQueueSummary(total_pending=5, server_internal_count=3,
-                             local_agent_count=1, user_direct_count=1)
+
+        s = TaskQueueSummary(total_pending=5, server_internal_count=3, local_agent_count=1, user_direct_count=1)
         d = s.to_dict()
         assert set(d.keys()) == {
-            "total_pending", "server_internal_count",
-            "local_agent_count", "user_direct_count", "blocked_count",
+            "total_pending",
+            "server_internal_count",
+            "local_agent_count",
+            "user_direct_count",
+            "blocked_count",
         }
 
     def test_tray_label_empty(self):
         from ai_orchestrator.services.task_queue_service import TaskQueueSummary
+
         s = TaskQueueSummary()
         assert s.tray_label() == "수신 작업: 대기 없음"
 
     def test_tray_label_with_agent(self):
         from ai_orchestrator.services.task_queue_service import TaskQueueSummary
+
         s = TaskQueueSummary(local_agent_count=2)
         assert "에이전트 2건" in s.tray_label()
 
     def test_tray_label_with_blocked(self):
         from ai_orchestrator.services.task_queue_service import TaskQueueSummary
+
         s = TaskQueueSummary(blocked_count=1)
         assert "차단 1건" in s.tray_label()
 
@@ -119,9 +132,11 @@ class TestTaskQueueSummary:
 # PolicyDecision
 # ---------------------------------------------------------------------------
 
+
 class TestPolicyDecision:
     def test_to_dict_has_required_keys(self):
         from ai_orchestrator.services.execution_policy_service import PolicyDecision
+
         d = PolicyDecision(
             execution_location="SERVER_INTERNAL_ONLY",
             server_executable=True,
@@ -134,10 +149,17 @@ class TestPolicyDecision:
             reason="test",
         ).to_dict()
         required = {
-            "execution_location", "server_executable", "requires_local_agent",
-            "requires_user_direct", "requires_oauth_setup", "is_external_app_hold",
-            "is_blocked", "requires_secret_redaction", "reason",
-            "classification", "risk_level",
+            "execution_location",
+            "server_executable",
+            "requires_local_agent",
+            "requires_user_direct",
+            "requires_oauth_setup",
+            "is_external_app_hold",
+            "is_blocked",
+            "requires_secret_redaction",
+            "reason",
+            "classification",
+            "risk_level",
         }
         assert required <= set(d.keys())
 
@@ -146,9 +168,11 @@ class TestPolicyDecision:
 # ExecutionPolicyService — classification helpers
 # ---------------------------------------------------------------------------
 
+
 class TestExecutionPolicyClassificationHelpers:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_server_readonly_is_server_executable(self):
@@ -187,9 +211,11 @@ class TestExecutionPolicyClassificationHelpers:
 # ExecutionPolicyService — classification_to_decision
 # ---------------------------------------------------------------------------
 
+
 class TestClassificationToDecision:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def _decide(self, cls):
@@ -240,9 +266,11 @@ class TestClassificationToDecision:
 # decide_full — explicit execution_location path
 # ---------------------------------------------------------------------------
 
+
 class TestDecideFull:
     def setup_method(self):
         from ai_orchestrator.services import get_execution_policy_service
+
         self.svc = get_execution_policy_service()
 
     def test_explicit_server_internal(self):
@@ -267,6 +295,8 @@ class TestDecideFull:
         d = self.svc.decide_full(task)
         # guard 미설정 환경에서 기본 SERVER_INTERNAL_ONLY 반환
         assert d.execution_location in (
-            "SERVER_INTERNAL_ONLY", "LOCAL_AGENT_REQUIRED",
-            "USER_DIRECT_REQUIRED", "BLOCKED",
+            "SERVER_INTERNAL_ONLY",
+            "LOCAL_AGENT_REQUIRED",
+            "USER_DIRECT_REQUIRED",
+            "BLOCKED",
         )

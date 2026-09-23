@@ -11,15 +11,15 @@
   SLACK_WEBHOOK_URL
   DISCORD_WEBHOOK_URL
 """
+
 from __future__ import annotations
 
 import json
 import os
 import urllib.request
-from typing import Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -34,8 +34,7 @@ class NotificationHub:
 
     # ── 슬랙 ──────────────────────────────────────────────────────────
 
-    def send_slack(self, message: str, channel: str | None = None,
-                   webhook_url: str | None = None) -> dict:
+    def send_slack(self, message: str, channel: str | None = None, webhook_url: str | None = None) -> dict:
         url = webhook_url or self.slack_url
         if not url:
             return {"ok": False, "error": "no_slack_webhook"}
@@ -44,8 +43,10 @@ class NotificationHub:
             payload["channel"] = channel
         try:
             req = urllib.request.Request(
-                url, data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"}, method="POST",
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=10):
                 pass
@@ -56,8 +57,7 @@ class NotificationHub:
 
     # ── 디스코드 ──────────────────────────────────────────────────────
 
-    def send_discord(self, message: str, username: str | None = None,
-                     webhook_url: str | None = None) -> dict:
+    def send_discord(self, message: str, username: str | None = None, webhook_url: str | None = None) -> dict:
         url = webhook_url or self.discord_url
         if not url:
             return {"ok": False, "error": "no_discord_webhook"}
@@ -66,8 +66,10 @@ class NotificationHub:
             payload["username"] = username
         try:
             req = urllib.request.Request(
-                url, data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"}, method="POST",
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
             )
             with urllib.request.urlopen(req, timeout=10):
                 pass
@@ -82,6 +84,7 @@ class NotificationHub:
         if not self.page:
             return {"ok": False, "error": "page_required"}
         from scripts.naver.mail import NaverMail
+
         mail = NaverMail(self.page)
         return mail.compose(to, subject, body, send=True)
 
@@ -91,21 +94,19 @@ class NotificationHub:
         if not self.page:
             return {"ok": False, "error": "page_required"}
         from scripts.naver.talk import NaverTalk
+
         talk = NaverTalk(self.page)
         return talk.send_message(partner, message, confirm=True)
 
     # ── 콘솔/로컬 ────────────────────────────────────────────────────
 
     def send_console(self, message: str, level: str = "info") -> dict:
-        getattr(_log, level if level in ("debug", "info", "warning", "error") else "info")(
-            "[notify] %s", message
-        )
+        getattr(_log, level if level in ("debug", "info", "warning", "error") else "info")("[notify] %s", message)
         return {"ok": True}
 
     # ── 통합 발송 ────────────────────────────────────────────────────
 
-    def notify(self, message: str, channels: list[str] | None = None,
-               level: str = "info", **kwargs) -> dict:
+    def notify(self, message: str, channels: list[str] | None = None, level: str = "info", **kwargs) -> dict:
         """다중 채널 동시 발송.
 
         channels: ["slack", "discord", "console", "email", "talk"]
@@ -130,6 +131,7 @@ class NotificationHub:
                 if partner:
                     results["talk"] = self.send_talk(partner, message)
         ok = all(r.get("ok") for r in results.values())
-        log_critical("OTHER", f"다중채널 알림: {list(results.keys())}",
-                     channels=list(results.keys()), ok=ok, mode="notify_multi")
+        log_critical(
+            "OTHER", f"다중채널 알림: {list(results.keys())}", channels=list(results.keys()), ok=ok, mode="notify_multi"
+        )
         return {"ok": ok, "results": results}

@@ -14,12 +14,12 @@
     python scripts/ops/desktop_version_separation_gate.py
     python scripts/ops/desktop_version_separation_gate.py --json
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -80,7 +80,7 @@ MONOLITHIC_MAIN_MARKERS = [
 
 @dataclass
 class Finding:
-    category: str   # FORBIDDEN_OLD_ARTIFACT | MISSING_MODULE | NON_MODULAR
+    category: str  # FORBIDDEN_OLD_ARTIFACT | MISSING_MODULE | NON_MODULAR
     detail: str
 
 
@@ -160,8 +160,7 @@ def run_gate() -> GateResult:
             if dep in LEAF_LIB_MODULES and dep != leaf:
                 result.add(
                     "LEAF_COUPLING",
-                    f"lib/{leaf}.js 가 sibling leaf 모듈 './{dep}' 를 직접 import "
-                    f"(bus 이벤트/주입으로 통신해야 함)",
+                    f"lib/{leaf}.js 가 sibling leaf 모듈 './{dep}' 를 직접 import (bus 이벤트/주입으로 통신해야 함)",
                 )
 
     return result
@@ -177,11 +176,17 @@ def main() -> int:
     counts = {c: result.count(c) for c in categories}
 
     if args.json:
-        print(json.dumps({
-            "pass": not result.failed,
-            "counts": counts,
-            "findings": [{"category": f.category, "detail": f.detail} for f in result.findings],
-        }, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {
+                    "pass": not result.failed,
+                    "counts": counts,
+                    "findings": [{"category": f.category, "detail": f.detail} for f in result.findings],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         print("=== 데스크톱 구버전/신버전 분리 게이트 ===")
         for c in categories:

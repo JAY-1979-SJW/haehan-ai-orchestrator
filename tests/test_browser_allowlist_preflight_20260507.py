@@ -1,15 +1,14 @@
 """Tests for Browser Allowlist Preflight Module."""
+
 import json
-import pytest
 from pathlib import Path
 
 from ai_orchestrator.browser_tool.allowlist_preflight import (
-    normalize_url_for_policy,
     build_allowlist_context,
     evaluate_allowlist_preflight,
+    normalize_url_for_policy,
     validate_allowlist_result,
 )
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_allowlist_preflight_20260507.json"
 

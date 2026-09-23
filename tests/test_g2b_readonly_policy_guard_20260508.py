@@ -5,32 +5,30 @@
 위험 action 차단.
 민감정보 수집 없음.
 """
+
 import pytest
-from ai_orchestrator.local_agent.security_guard import (
-    validate_task_before_run,
-    block_forbidden_action,
-    detect_user_direct_required,
-)
-from ai_orchestrator.local_agent.task_protocol import (
-    build_task,
-    STATUS_BLOCKED,
-    STATUS_USER_ACTION_REQUIRED,
-    STATUS_WAITING_USER_AUTH,
-    EXEC_MODE_LOCAL_PLAYWRIGHT,
+
+from ai_orchestrator.browser_tool.security_signal_detector import (
+    SIG_BID_SUBMIT,
+    SIG_CERT_AUTH,
+    SIG_CONTRACT_SUBMIT,
+    SIG_E_SIGNATURE,
+    SIG_LOGIN_REQUIRED,
+    SIG_OTP,
+    SIG_PAYMENT_OR_TRANSFER,
+    detect_from_page_text,
 )
 from ai_orchestrator.local_agent.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
 )
-from ai_orchestrator.browser_tool.security_signal_detector import (
-    detect_from_page_text,
-    SIG_LOGIN_REQUIRED,
-    SIG_CERT_AUTH,
-    SIG_OTP,
-    SIG_E_SIGNATURE,
-    SIG_BID_SUBMIT,
-    SIG_PAYMENT_OR_TRANSFER,
-    SIG_CONTRACT_SUBMIT,
+from ai_orchestrator.local_agent.security_guard import (
+    block_forbidden_action,
+    validate_task_before_run,
+)
+from ai_orchestrator.local_agent.task_protocol import (
+    EXEC_MODE_LOCAL_PLAYWRIGHT,
+    build_task,
 )
 
 G2B_HOST = "www.g2b.go.kr"
@@ -184,14 +182,19 @@ class TestSecuritySignalDetector:
 
 class TestAutoResumePolicy:
     def test_readonly_actions_eligible_after_auth(self):
-        for action in ("read_page", "extract_text", "extract_table",
-                       "detect_login_status", "capture_screenshot",
-                       "download_file", "search"):
+        for action in (
+            "read_page",
+            "extract_text",
+            "extract_table",
+            "detect_login_status",
+            "capture_screenshot",
+            "download_file",
+            "search",
+        ):
             assert can_auto_resume(action) is True, f"{action} should be auto-resumable"
 
     def test_dangerous_actions_not_eligible_after_auth(self):
-        for action in ("submit", "sign", "payment", "bid_submit",
-                       "final_submit", "transfer", "contract_submit"):
+        for action in ("submit", "sign", "payment", "bid_submit", "final_submit", "transfer", "contract_submit"):
             eligibility = classify_resume_eligibility(action)
             assert eligibility["eligible"] is False, f"{action} should NOT be auto-resumable"
             assert "사용자 직접" in eligibility["reason"]

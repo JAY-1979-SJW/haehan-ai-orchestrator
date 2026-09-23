@@ -27,18 +27,18 @@ URL: https://sell.smartstore.naver.com/#/products/standard-group-product/create
   # 마지막에 사용자 명시 호출 필요
   pr.save()  # 또는 pr.cancel()
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups, close_popup_windows
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import close_popup_windows, handle_page_popups
 from scripts.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
@@ -197,17 +197,21 @@ class ProductRegister:
         try:
             sel = 'input[name="product.name"]'
             # JS로 직접 scrollIntoView (Playwright scroll_into_view_if_needed 우회)
-            self.page.evaluate("""
+            self.page.evaluate(
+                """
             (sel) => {
                 const el = document.querySelector(sel);
                 if (el) el.scrollIntoView({block: 'center', behavior: 'instant'});
             }
-            """, sel)
+            """,
+                sel,
+            )
             time.sleep(0.5)
             el = self.page.locator(sel).first
             # fill로 직접 (force=True로 visibility 체크 우회)
             el.fill(name, timeout=5000, force=True)
-            self.page.evaluate("""
+            self.page.evaluate(
+                """
             (sel) => {
                 const el = document.querySelector(sel);
                 if (el) {
@@ -216,7 +220,9 @@ class ProductRegister:
                     el.dispatchEvent(new Event('blur', {bubbles: true}));
                 }
             }
-            """, sel)
+            """,
+                sel,
+            )
             time.sleep(0.5)
             _log.info("[product-reg] 상품명: %s", name)
             return {"ok": True, "name": name}
@@ -348,9 +354,13 @@ class ProductRegister:
             file_inputs.first.set_input_files(image_path, timeout=10000)
             time.sleep(3.5)
 
-            log_critical("FILE_UPLOAD", f"상품 대표 이미지: {Path(image_path).name}",
-                         file=image_path, size=Path(image_path).stat().st_size,
-                         mode="product_image_main")
+            log_critical(
+                "FILE_UPLOAD",
+                f"상품 대표 이미지: {Path(image_path).name}",
+                file=image_path,
+                size=Path(image_path).stat().st_size,
+                mode="product_image_main",
+            )
             _log.info("[product-reg] 대표 이미지: %s (file_inputs=%d)", image_path, n)
             return {"ok": True, "file": image_path, "file_inputs_found": n}
         except Exception as e:
@@ -373,8 +383,9 @@ class ProductRegister:
                 file_inputs.nth(idx).set_input_files(path, timeout=10000)
                 time.sleep(2.5)
                 results.append({"file": path, "ok": True})
-                log_critical("FILE_UPLOAD", f"상품 추가 이미지: {Path(path).name}",
-                             file=path, mode="product_image_additional")
+                log_critical(
+                    "FILE_UPLOAD", f"상품 추가 이미지: {Path(path).name}", file=path, mode="product_image_additional"
+                )
             except Exception as e:
                 results.append({"file": path, "ok": False, "error": str(e)[:60]})
         return {"ok": True, "results": results}
@@ -395,7 +406,7 @@ class ProductRegister:
 
             # "스마트 에디터 ONE으로 작성" 버튼 클릭
             try:
-                self.page.locator('text=스마트 에디터 ONE').first.click(timeout=3000)
+                self.page.locator("text=스마트 에디터 ONE").first.click(timeout=3000)
                 time.sleep(3)  # 에디터 로딩 대기
             except Exception as e:
                 _log.debug("[product-reg] 에디터 버튼 클릭 실패 (이미 열림 가능): %s", e)
@@ -572,8 +583,7 @@ class ProductRegister:
 
             # 발행 성공/실패 감지
             url = self.page.url
-            log_critical("OTHER", "상품 등록 저장 완료",
-                         url=url, mode="product_register_save")
+            log_critical("OTHER", "상품 등록 저장 완료", url=url, mode="product_register_save")
             _log.info("[product-reg] 저장 완료: %s", url)
             return {"ok": True, "url": url}
         except Exception as e:
@@ -591,8 +601,7 @@ class ProductRegister:
 
     # ── 통합 원샷 등록 ───────────────────────────────────────────────────
 
-    def register_product(self, data: dict, save_after: bool = False,
-                         require_confirm: bool = True) -> dict:
+    def register_product(self, data: dict, save_after: bool = False, require_confirm: bool = True) -> dict:
         """상품 정보 dict → 자동 등록 (전체 필드 통합).
 
         지원 필드 (모두 선택):

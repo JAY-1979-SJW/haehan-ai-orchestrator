@@ -9,15 +9,13 @@
 dict 를 만드는지, 민감정보가 차단되는지, 특정 도메인 키워드가 엔진 기본값에
 하드코딩되어 있지 않은지 검증한다.
 """
+
 from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
-
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -36,32 +34,22 @@ def _sample_table_observation() -> dict:
         "page_structure": {
             "page_title": "Sample List View",
             "links": [
-                {"text": "목록", "href": "/list",
-                 "risk_hint": "safe_read", "keyword_score": 0},
-                {"text": "상세", "href": "/detail/1",
-                 "risk_hint": "safe_read", "keyword_score": 0},
-                {"text": "조회", "href": "/query",
-                 "risk_hint": "safe_read", "keyword_score": 0},
-                {"text": "삭제", "href": "/admin/delete?id=1",
-                 "risk_hint": "danger_write", "keyword_score": 0},
+                {"text": "목록", "href": "/list", "risk_hint": "safe_read", "keyword_score": 0},
+                {"text": "상세", "href": "/detail/1", "risk_hint": "safe_read", "keyword_score": 0},
+                {"text": "조회", "href": "/query", "risk_hint": "safe_read", "keyword_score": 0},
+                {"text": "삭제", "href": "/admin/delete?id=1", "risk_hint": "danger_write", "keyword_score": 0},
             ],
             "buttons": [
-                {"text": "검색", "type": "button",
-                 "risk_level": "safe_read", "reason": "keyword:검색"},
-                {"text": "저장", "type": "submit",
-                 "risk_level": "danger_write", "reason": "keyword:저장"},
-                {"text": "제출", "type": "submit",
-                 "risk_level": "danger_write", "reason": "type:submit"},
-                {"text": "삭제", "type": "button",
-                 "risk_level": "danger_write", "reason": "keyword:삭제"},
+                {"text": "검색", "type": "button", "risk_level": "safe_read", "reason": "keyword:검색"},
+                {"text": "저장", "type": "submit", "risk_level": "danger_write", "reason": "keyword:저장"},
+                {"text": "제출", "type": "submit", "risk_level": "danger_write", "reason": "type:submit"},
+                {"text": "삭제", "type": "button", "risk_level": "danger_write", "reason": "keyword:삭제"},
             ],
             "forms": [],
             "inputs": [],
             "tables": [
-                {"headers": ["번호", "상태"], "row_count": 5,
-                 "column_count": 2},
-                {"headers": ["코드", "이름"], "row_count": 3,
-                 "column_count": 2},
+                {"headers": ["번호", "상태"], "row_count": 5, "column_count": 2},
+                {"headers": ["코드", "이름"], "row_count": 3, "column_count": 2},
             ],
         },
     }
@@ -70,21 +58,16 @@ def _sample_table_observation() -> dict:
 def _sample_form_observation(with_password: bool = True) -> dict:
     """form / input 위주 페이지 관찰 결과."""
     inputs = [
-        {"name": "q", "type": "text", "placeholder": "검색어",
-         "label": "검색어"},
-        {"name": "category", "type": "text", "placeholder": "",
-         "label": ""},
-        {"name": "memo", "type": "text", "placeholder": "",
-         "label": ""},
+        {"name": "q", "type": "text", "placeholder": "검색어", "label": "검색어"},
+        {"name": "category", "type": "text", "placeholder": "", "label": ""},
+        {"name": "memo", "type": "text", "placeholder": "", "label": ""},
     ]
     if with_password:
         inputs.append(
-            {"name": "password", "type": "password",
-             "placeholder": "", "label": ""},
+            {"name": "password", "type": "password", "placeholder": "", "label": ""},
         )
     inputs.append(
-        {"name": "csrf_token", "type": "hidden",
-         "placeholder": "", "label": ""},
+        {"name": "csrf_token", "type": "hidden", "placeholder": "", "label": ""},
     )
     return {
         "url": "https://example.com/login",
@@ -96,15 +79,18 @@ def _sample_form_observation(with_password: bool = True) -> dict:
             "page_title": "Sign in",
             "links": [],
             "buttons": [
-                {"text": "Sign in", "type": "submit",
-                 "risk_level": "danger_write", "reason": "type:submit"},
+                {"text": "Sign in", "type": "submit", "risk_level": "danger_write", "reason": "type:submit"},
             ],
-            "forms": [{
-                "method": "post", "action": "/auth/login",
-                "field_count": len(inputs),
-                "has_password": with_password, "has_hidden": True,
-                "risk_level": "danger_write",
-            }],
+            "forms": [
+                {
+                    "method": "post",
+                    "action": "/auth/login",
+                    "field_count": len(inputs),
+                    "has_password": with_password,
+                    "has_hidden": True,
+                    "risk_level": "danger_write",
+                }
+            ],
             "inputs": inputs,
             "tables": [],
         },
@@ -122,14 +108,12 @@ def _sample_menu_observation() -> dict:
         "page_structure": {
             "page_title": "Main Menu",
             "links": [
-                {"text": f"메뉴 {i}", "href": f"/menu/{i}",
-                 "risk_hint": "safe_read", "keyword_score": 0}
+                {"text": f"메뉴 {i}", "href": f"/menu/{i}", "risk_hint": "safe_read", "keyword_score": 0}
                 for i in range(1, 9)
-            ] + [
-                {"text": "조회", "href": "/query",
-                 "risk_hint": "safe_read", "keyword_score": 0},
-                {"text": "상세", "href": "/detail/1",
-                 "risk_hint": "safe_read", "keyword_score": 0},
+            ]
+            + [
+                {"text": "조회", "href": "/query", "risk_hint": "safe_read", "keyword_score": 0},
+                {"text": "상세", "href": "/detail/1", "risk_hint": "safe_read", "keyword_score": 0},
             ],
             "buttons": [],
             "forms": [],
@@ -178,10 +162,7 @@ def test_table_observation_produces_table_and_list_roles() -> None:
     from local_agent.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
-    role_names = {
-        r["role"]
-        for r in payload["heuristic_candidates"]["page_role_candidates"]
-    }
+    role_names = {r["role"] for r in payload["heuristic_candidates"]["page_role_candidates"]}
     assert "table_page" in role_names
     assert "list_page" in role_names
 
@@ -194,14 +175,10 @@ def test_form_observation_produces_form_and_search_roles() -> None:
 
     obs = _sample_form_observation(with_password=False)
     obs["page_structure"]["buttons"].append(
-        {"text": "검색", "type": "button",
-         "risk_level": "safe_read", "reason": "keyword:검색"},
+        {"text": "검색", "type": "button", "risk_level": "safe_read", "reason": "keyword:검색"},
     )
     payload = build_site_map_prompt_payload(obs)
-    role_names = {
-        r["role"]
-        for r in payload["heuristic_candidates"]["page_role_candidates"]
-    }
+    role_names = {r["role"] for r in payload["heuristic_candidates"]["page_role_candidates"]}
     assert "form_page" in role_names
     assert "search_page" in role_names
 
@@ -233,7 +210,8 @@ def test_domain_profile_matches_populate_only_when_profile_given() -> None:
     assert no_profile["heuristic_candidates"]["domain_profile_matches"] == []
 
     with_profile = build_site_map_prompt_payload(
-        obs, domain_profile=_sample_domain_profile(),
+        obs,
+        domain_profile=_sample_domain_profile(),
     )
     matches = with_profile["heuristic_candidates"]["domain_profile_matches"]
     assert len(matches) == 1
@@ -246,20 +224,15 @@ def test_domain_profile_matches_populate_only_when_profile_given() -> None:
 
 def test_no_specific_tasks_without_domain_profile() -> None:
     from local_agent.site_mapper import (
-        build_site_map_prompt_payload,
         GENERIC_TASK_POOL,
+        build_site_map_prompt_payload,
     )
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
-    task_names = {
-        c["task"]
-        for c in payload["heuristic_candidates"]["task_candidates"]
-    }
+    task_names = {c["task"] for c in payload["heuristic_candidates"]["task_candidates"]}
     allowed = set(GENERIC_TASK_POOL)
     unknown = task_names - allowed
-    assert not unknown, (
-        f"엔진이 도메인 없이 특정 업무 task 를 만들었다: {unknown}"
-    )
+    assert not unknown, f"엔진이 도메인 없이 특정 업무 task 를 만들었다: {unknown}"
 
 
 def test_domain_profile_task_candidate_picked_up() -> None:
@@ -269,12 +242,10 @@ def test_domain_profile_task_candidate_picked_up() -> None:
     obs["title"] = "샘플업무 진입"
     obs["page_structure"]["page_title"] = "샘플업무 진입"
     payload = build_site_map_prompt_payload(
-        obs, domain_profile=_sample_domain_profile(),
+        obs,
+        domain_profile=_sample_domain_profile(),
     )
-    names = {
-        c["task"]
-        for c in payload["heuristic_candidates"]["task_candidates"]
-    }
+    names = {c["task"] for c in payload["heuristic_candidates"]["task_candidates"]}
     assert "sample_task" in names
 
 
@@ -300,9 +271,7 @@ def test_user_goal_boosts_task_confidence() -> None:
     assert _conf(boosted, "inspect_table") >= _conf(base, "inspect_table")
     assert _conf(boosted, "inspect_table") > 0.0
     # goal 이 있으면 ask_user_to_identify_goal 이 제거됨
-    boosted_names = {
-        c["task"] for c in boosted["heuristic_candidates"]["task_candidates"]
-    }
+    boosted_names = {c["task"] for c in boosted["heuristic_candidates"]["task_candidates"]}
     assert "ask_user_to_identify_goal" not in boosted_names
 
 
@@ -314,8 +283,7 @@ def test_keyword_hints_boost_safe_navigation_score() -> None:
 
     obs = _sample_table_observation()
     obs["page_structure"]["links"].append(
-        {"text": "샘플관리", "href": "/sample",
-         "risk_hint": "safe_read", "keyword_score": 0},
+        {"text": "샘플관리", "href": "/sample", "risk_hint": "safe_read", "keyword_score": 0},
     )
 
     no_hint = build_site_map_prompt_payload(obs)
@@ -337,10 +305,7 @@ def test_write_buttons_collected_as_danger_elements() -> None:
     from local_agent.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
-    texts = {
-        e["text"]
-        for e in payload["heuristic_candidates"]["danger_elements"]
-    }
+    texts = {e["text"] for e in payload["heuristic_candidates"]["danger_elements"]}
     assert {"저장", "제출", "삭제"}.issubset(texts)
 
 
@@ -363,10 +328,7 @@ def test_danger_items_not_in_safe_navigation() -> None:
     from local_agent.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
-    safe_texts = {
-        c["text"]
-        for c in payload["heuristic_candidates"]["safe_navigation_candidates"]
-    }
+    safe_texts = {c["text"] for c in payload["heuristic_candidates"]["safe_navigation_candidates"]}
     for bad in ("저장", "제출", "삭제"):
         assert bad not in safe_texts
 
@@ -380,21 +342,20 @@ def test_sensitive_values_redacted_in_payload() -> None:
     obs = _sample_form_observation(with_password=True)
     # 일부러 raw value / 민감 href 주입 (실제 web_reader 는 주지 않지만 방어 검증)
     obs["page_structure"]["links"] = [
-        {"text": "check", "href": "/x?token=VERY_SECRET_TOKEN_1",
-         "risk_hint": "safe_read"},
-        {"text": "session", "href": "/x?session_id=SESSION_XYZ_2",
-         "risk_hint": "safe_read"},
+        {"text": "check", "href": "/x?token=VERY_SECRET_TOKEN_1", "risk_hint": "safe_read"},
+        {"text": "session", "href": "/x?session_id=SESSION_XYZ_2", "risk_hint": "safe_read"},
     ]
     obs["page_structure"]["inputs"] = obs["page_structure"]["inputs"] + [
-        {"name": "authorization", "type": "text",
-         "placeholder": "bearer ey.REAL_JWT_3"},
+        {"name": "authorization", "type": "text", "placeholder": "bearer ey.REAL_JWT_3"},
         {"name": "cookie", "type": "text", "placeholder": ""},
     ]
 
     payload = build_site_map_prompt_payload(obs)
     serialized = json.dumps(payload, ensure_ascii=False)
     for leaked in (
-        "VERY_SECRET_TOKEN_1", "SESSION_XYZ_2", "REAL_JWT_3",
+        "VERY_SECRET_TOKEN_1",
+        "SESSION_XYZ_2",
+        "REAL_JWT_3",
     ):
         assert leaked not in serialized, f"민감값 누출: {leaked}"
 
@@ -428,14 +389,23 @@ def test_expected_json_schema_has_required_fields() -> None:
     payload = build_site_map_prompt_payload(_sample_table_observation())
     schema = payload["expected_json_schema"]
     for key in (
-        "site_type", "confidence", "page_role", "candidate_tasks",
-        "safe_next_actions", "danger_elements",
-        "questions_for_user", "do_not_execute",
+        "site_type",
+        "confidence",
+        "page_role",
+        "candidate_tasks",
+        "safe_next_actions",
+        "danger_elements",
+        "questions_for_user",
+        "do_not_execute",
     ):
         assert key in schema, f"schema missing required field: {key}"
     # page_role 에 필수 역할 값이 모두 기술되어 있음.
     for role in (
-        "login_page", "form_page", "table_page", "menu_page", "unknown",
+        "login_page",
+        "form_page",
+        "table_page",
+        "menu_page",
+        "unknown",
     ):
         assert role in schema["page_role"]
 
@@ -461,25 +431,24 @@ def test_max_items_limit_applied() -> None:
     from local_agent.site_mapper import build_site_map_prompt_payload
 
     many_links = [
-        {"text": f"조회 {i}", "href": f"/q/{i}",
-         "risk_hint": "safe_read", "keyword_score": 0}
-        for i in range(200)
+        {"text": f"조회 {i}", "href": f"/q/{i}", "risk_hint": "safe_read", "keyword_score": 0} for i in range(200)
     ]
     obs = {
         "url": "https://example.com/",
         "current_url": "https://example.com/",
         "title": "many",
         "page_structure": {
-            "page_title": "many", "links": many_links,
-            "buttons": [], "forms": [], "inputs": [], "tables": [],
+            "page_title": "many",
+            "links": many_links,
+            "buttons": [],
+            "forms": [],
+            "inputs": [],
+            "tables": [],
         },
     }
     payload = build_site_map_prompt_payload(obs, max_items=10)
     assert len(payload["sanitized_observation"]["links"]) == 10
-    assert (
-        len(payload["heuristic_candidates"]["safe_navigation_candidates"])
-        <= 10
-    )
+    assert len(payload["heuristic_candidates"]["safe_navigation_candidates"]) <= 10
 
 
 # ─── 17. 빈 observation 도 ok=true 또는 안전한 warning 으로 처리 ─────────
@@ -512,11 +481,14 @@ def test_non_dict_observation_returns_ok_with_warning() -> None:
 def test_action_web_build_site_map_prompt_returns_ok() -> None:
     from local_agent.actions import execute_action
 
-    result = execute_action("web_build_site_map_prompt", {
-        "page_observation": _sample_table_observation(),
-        "user_goal": "table 조회",
-        "max_items": 50,
-    })
+    result = execute_action(
+        "web_build_site_map_prompt",
+        {
+            "page_observation": _sample_table_observation(),
+            "user_goal": "table 조회",
+            "max_items": 50,
+        },
+    )
     assert result.success is True
     payload = result.data["site_map_prompt_payload"]
     assert payload["ok"] is True
@@ -535,10 +507,13 @@ def test_action_web_build_site_map_prompt_missing_observation() -> None:
 def test_action_web_build_site_map_prompt_invalid_goal_type() -> None:
     from local_agent.actions import execute_action
 
-    result = execute_action("web_build_site_map_prompt", {
-        "page_observation": _sample_table_observation(),
-        "user_goal": 12345,
-    })
+    result = execute_action(
+        "web_build_site_map_prompt",
+        {
+            "page_observation": _sample_table_observation(),
+            "user_goal": 12345,
+        },
+    )
     assert result.success is False
     assert result.error_code == "INVALID_USER_GOAL"
 
@@ -555,15 +530,23 @@ def test_production_site_mapper_has_no_domain_keywords() -> None:
     # grep 검사와 동일한 대안목록. 테스트 자신은 아래 목록을 문자열로 가진다
     # (production 코드가 아니므로 허용).
     forbidden_patterns = [
-        "기성", "청구", "정산", "계약", "현장",
-        "배민", "카페", "유튜브", "YouTube", "youtube",
-        "API 신청", "OAuth", "리뷰", "댓글",
+        "기성",
+        "청구",
+        "정산",
+        "계약",
+        "현장",
+        "배민",
+        "카페",
+        "유튜브",
+        "YouTube",
+        "youtube",
+        "API 신청",
+        "OAuth",
+        "리뷰",
+        "댓글",
     ]
     hits = [p for p in forbidden_patterns if p in text]
-    assert not hits, (
-        "production site_mapper.py 에 특정 도메인 키워드가 하드코딩됨: "
-        f"{hits}"
-    )
+    assert not hits, f"production site_mapper.py 에 특정 도메인 키워드가 하드코딩됨: {hits}"
 
 
 def test_production_site_mapper_has_no_network_or_llm_calls() -> None:
@@ -572,18 +555,22 @@ def test_production_site_mapper_has_no_network_or_llm_calls() -> None:
     src_path = Path(sm.__file__)
     text = src_path.read_text(encoding="utf-8")
     banned = [
-        "import openai", "from openai",
-        "requests.post", "requests.get",
-        "httpx.post", "httpx.get",
-        "urllib.request", "urlopen",
-        "chat.completions", "responses.create",
-        ".click(", ".fill(", ".type(",
+        "import openai",
+        "from openai",
+        "requests.post",
+        "requests.get",
+        "httpx.post",
+        "httpx.get",
+        "urllib.request",
+        "urlopen",
+        "chat.completions",
+        "responses.create",
+        ".click(",
+        ".fill(",
+        ".type(",
     ]
     hits = [p for p in banned if p in text]
-    assert not hits, (
-        "production site_mapper.py 에 금지된 호출 패턴이 포함됨: "
-        f"{hits}"
-    )
+    assert not hits, f"production site_mapper.py 에 금지된 호출 패턴이 포함됨: {hits}"
 
 
 # ─── 20. universal danger/safe terms 존재 확인 ───────────────────────────
@@ -594,6 +581,7 @@ def test_universal_terms_present_and_generic() -> None:
         UNIVERSAL_DANGER_WRITE_TERMS,
         UNIVERSAL_SAFE_READ_TERMS,
     )
+
     # universal danger 는 안전 정책 수준으로 모두 포함되어야 함.
     for t in ("저장", "제출", "삭제", "save", "submit", "delete"):
         assert t in UNIVERSAL_DANGER_WRITE_TERMS, f"missing danger term {t!r}"
@@ -602,14 +590,20 @@ def test_universal_terms_present_and_generic() -> None:
 
     # universal 목록에 특정 업무 단어가 없는지 (= 안전 정책 범주만) 확인.
     banned_in_engine_defaults = [
-        "기성", "청구", "정산", "계약", "배민", "카페",
-        "유튜브", "YouTube", "리뷰", "댓글",
+        "기성",
+        "청구",
+        "정산",
+        "계약",
+        "배민",
+        "카페",
+        "유튜브",
+        "YouTube",
+        "리뷰",
+        "댓글",
     ]
     combined = UNIVERSAL_SAFE_READ_TERMS + UNIVERSAL_DANGER_WRITE_TERMS
     for w in banned_in_engine_defaults:
-        assert w not in combined, (
-            f"universal term 목록이 도메인 키워드로 오염됨: {w!r}"
-        )
+        assert w not in combined, f"universal term 목록이 도메인 키워드로 오염됨: {w!r}"
 
 
 # ─── 추가: GPT instruction 문자열이 비-LLM 결정적으로 생성되는지 ─────────
@@ -632,27 +626,25 @@ def test_domain_profile_danger_terms_extend_classification() -> None:
     from local_agent.site_mapper import build_site_map_prompt_payload
 
     obs = {
-        "url": "https://example.com/", "current_url": "https://example.com/",
+        "url": "https://example.com/",
+        "current_url": "https://example.com/",
         "title": "x",
         "page_structure": {
             "page_title": "x",
             "links": [
-                {"text": "샘플삭제", "href": "/x",
-                 "risk_hint": "safe_read", "keyword_score": 0},
+                {"text": "샘플삭제", "href": "/x", "risk_hint": "safe_read", "keyword_score": 0},
             ],
-            "buttons": [], "forms": [], "inputs": [], "tables": [],
+            "buttons": [],
+            "forms": [],
+            "inputs": [],
+            "tables": [],
         },
     }
     payload = build_site_map_prompt_payload(
-        obs, domain_profile=_sample_domain_profile(),
+        obs,
+        domain_profile=_sample_domain_profile(),
     )
-    danger_texts = {
-        e["text"]
-        for e in payload["heuristic_candidates"]["danger_elements"]
-    }
-    safe_texts = {
-        c["text"]
-        for c in payload["heuristic_candidates"]["safe_navigation_candidates"]
-    }
+    danger_texts = {e["text"] for e in payload["heuristic_candidates"]["danger_elements"]}
+    safe_texts = {c["text"] for c in payload["heuristic_candidates"]["safe_navigation_candidates"]}
     assert "샘플삭제" in danger_texts
     assert "샘플삭제" not in safe_texts

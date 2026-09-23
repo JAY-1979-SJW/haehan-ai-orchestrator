@@ -1,14 +1,18 @@
 """tests/test_site_onboarding_tool_20260508.py - site onboarding 도구 단위 테스트"""
-import pytest
-from scripts.local_agent.create_site_profile import create_site_profile
-from scripts.local_agent.validate_site_profile import validate_profile, validate_all_registered
-from ai_orchestrator.local_agent.site_profile_registry import (
-    is_site_registered, _COMMON_BLOCKED,
-    CAT_FORUM, CAT_GENERIC, LOGIN_WAITING_AUTH,
-)
+
 from ai_orchestrator.local_agent.selector_pack_registry import (
-    get_selector_pack, _FORBIDDEN_SELECTOR_KEYS,
+    _FORBIDDEN_SELECTOR_KEYS,
+    get_selector_pack,
 )
+from ai_orchestrator.local_agent.site_profile_registry import (
+    _COMMON_BLOCKED,
+    CAT_FORUM,
+    CAT_GENERIC,
+    LOGIN_WAITING_AUTH,
+    is_site_registered,
+)
+from scripts.local_agent.create_site_profile import create_site_profile
+from scripts.local_agent.validate_site_profile import validate_all_registered, validate_profile
 
 
 def test_create_site_profile_basic():

@@ -1,15 +1,18 @@
 """범용 업무 실행 핸들러 — 사용자 승인 후 local agent handoff 생성."""
+
 from __future__ import annotations
 
-import os
-from datetime import datetime, timezone
-from urllib.parse import urlparse
+from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
+
 from ai_orchestrator.local_agent.action_registry import register_handler
-from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token, sanitize_params
 from ai_orchestrator.local_agent.business_action_profiles import (
-    get_profile, build_evidence_policy, COMMON_FORBIDDEN_FIELDS,
+    COMMON_FORBIDDEN_FIELDS,
+    build_evidence_policy,
+    get_profile,
 )
+from ai_orchestrator.local_agent.user_approval_gate import sanitize_params, verify_and_consume_token
 
 ACTION_NAME = "business.execute_with_user_approval"
 
@@ -66,7 +69,9 @@ def execute(**kwargs) -> dict[str, Any]:
 
     profile = get_profile(business_profile)
     if not profile:
-        available = "bid_submission, erp_save, erp_submit_approval, document_submission, public_agency_upload, esign_request"
+        available = (
+            "bid_submission, erp_save, erp_submit_approval, document_submission, public_agency_upload, esign_request"
+        )
         return {
             "ok": False,
             "verdict": "ERROR",
@@ -126,10 +131,10 @@ def execute(**kwargs) -> dict[str, Any]:
         "evidence_policy": evidence_policy,
         "timeout_seconds": kwargs.get("timeout_seconds", 300),
         "headless": kwargs.get("headless", True),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
-    executed_at = datetime.now(timezone.utc).isoformat()
+    executed_at = datetime.now(UTC).isoformat()
 
     return {
         "ok": True,

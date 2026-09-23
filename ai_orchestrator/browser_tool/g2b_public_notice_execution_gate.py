@@ -17,18 +17,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
-    ALLOWED_OPERATIONS,
-    FORBIDDEN_OPERATIONS,
-    VERDICT_ALLOWED,
-    VERDICT_BLOCKED,
-    VERDICT_NEEDS_VERIFICATION,
-)
 from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (
     ADAPTER_G2B_BLOCKED,
     ADAPTER_G2B_DRYRUN_READY,
     ADAPTER_G2B_NEEDS_VERIFICATION,
     evaluate_g2b_public_notice_dryrun,
+)
+from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
+    VERDICT_ALLOWED,
+    VERDICT_BLOCKED,
+    VERDICT_NEEDS_VERIFICATION,
 )
 
 # ── gate_verdict 값 ───────────────────────────────────────────────────────────
@@ -40,18 +38,38 @@ GATE_DRYRUN_INVALID = "GATE_DRYRUN_INVALID"
 
 # ── 금지 operation (gate 레벨) ────────────────────────────────────────────────
 
-_GATE_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "click", "type", "fill", "submit", "click_submit",
-    "download", "upload", "post", "write", "delete",
-    "update", "login", "cert", "payment", "contract",
-    "bid_submit", "auto_login", "contract_submit",
-})
+_GATE_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "click",
+        "type",
+        "fill",
+        "submit",
+        "click_submit",
+        "download",
+        "upload",
+        "post",
+        "write",
+        "delete",
+        "update",
+        "login",
+        "cert",
+        "payment",
+        "contract",
+        "bid_submit",
+        "auto_login",
+        "contract_submit",
+    }
+)
 
 # ── 허용 operation ────────────────────────────────────────────────────────────
 
-_GATE_ALLOWED_OPERATIONS: frozenset[str] = frozenset({
-    "read", "navigate", "open_url",
-})
+_GATE_ALLOWED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "read",
+        "navigate",
+        "open_url",
+    }
+)
 
 
 def build_g2b_readonly_execution_candidate(
@@ -170,9 +188,15 @@ def validate_g2b_execution_gate_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "input_url", "canonical_url", "operation", "gate_verdict",
-        "execution_allowed", "execution_dispatched", "server_browser_used",
-        "download_auto_allowed", "local_agent_required",
+        "input_url",
+        "canonical_url",
+        "operation",
+        "gate_verdict",
+        "execution_allowed",
+        "execution_dispatched",
+        "server_browser_used",
+        "download_auto_allowed",
+        "local_agent_required",
     ]
     for field in required_fields:
         if field not in result:
@@ -206,11 +230,11 @@ def validate_g2b_execution_gate_result(result: dict[str, Any]) -> list[str]:
 
 
 __all__ = [
+    "GATE_BLOCKED",
+    "GATE_DRYRUN_INVALID",
+    "GATE_NEEDS_VERIFICATION",
+    "GATE_READONLY_EXECUTION_CANDIDATE",
     "build_g2b_readonly_execution_candidate",
     "evaluate_g2b_public_notice_execution_gate",
     "validate_g2b_execution_gate_result",
-    "GATE_READONLY_EXECUTION_CANDIDATE",
-    "GATE_BLOCKED",
-    "GATE_NEEDS_VERIFICATION",
-    "GATE_DRYRUN_INVALID",
 ]

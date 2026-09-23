@@ -4,25 +4,23 @@ leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 
 공유 leaf(validation/up_queue) + 계약(schemas)만 사용, sibling 직접 결합 없음.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
-from urllib.parse import urlparse
-
 from fastapi import APIRouter, Body, Depends, HTTPException
-
 from pydantic import BaseModel
 
-from .auth import require_role
-from .audit_logger import log_event
-from .approval import issue_token_for_dev_reg
 from . import local_agent_registry as _reg
-from .local_agent_router_validation import (
-    _validate_readonly_browser_instruction,
-    _capture_approval_note,
-)
+from .approval import issue_token_for_dev_reg
+from .audit_logger import log_event
+from .auth import require_role
 from .local_agent_router_schemas import (
     BrowserReadonlyInstructionRequest,
     CaptureScreenshotRequest,
+)
+from .local_agent_router_validation import (
+    _capture_approval_note,
+    _validate_readonly_browser_instruction,
 )
 
 browser_router = APIRouter()
@@ -49,8 +47,7 @@ def submit_browser_readonly_instruction(
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "AGENT_NOT_FOUND",
-                    "message": f"unknown local agent: {agent_id}"},
+            detail={"error": "AGENT_NOT_FOUND", "message": f"unknown local agent: {agent_id}"},
         )
 
     instruction, url, host, timeout_ms, max_html_chars, keep_open_ms, browser_channel = (
@@ -149,14 +146,16 @@ def create_capture_screenshot_request(
 
     if _reg.get_agent(agent_id) is None:
         log_event(
-            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
-            action_type="capture_screenshot", actor=actor, role=role,
+            "LOCAL_AGENT_TASK_REJECTED",
+            "local-agent",
+            action_type="capture_screenshot",
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "AGENT_NOT_FOUND",
-                    "message": f"미등록 에이전트: {agent_id}"},
+            detail={"error": "AGENT_NOT_FOUND", "message": f"미등록 에이전트: {agent_id}"},
         )
 
     # reason/note 는 메모용 텍스트로만 보관. 길이를 제한해 로그 비대화를 방지.
@@ -169,19 +168,20 @@ def create_capture_screenshot_request(
     task = _reg.enqueue_task(
         agent_id=agent_id,
         action="capture_screenshot",
-        params=params,           # _strip_sensitive 는 enqueue_task 내부에서 적용
+        params=params,  # _strip_sensitive 는 enqueue_task 내부에서 적용
         requested_by=actor,
     )
 
     # 운영자 요청임을 명시하는 감사 이벤트 — approval token 원문/전체 경로/파일명
     # 어느 것도 기록하지 않는다.
     log_event(
-        "CAPTURE_SCREENSHOT_REQUEST_CREATED", task.task_id,
+        "CAPTURE_SCREENSHOT_REQUEST_CREATED",
+        task.task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
-        note=(f"agent_id={agent_id} dry_run={dry_run}"
-              + (f" reason={req.reason[:100]}" if req.reason else "")),
+        actor=actor,
+        role=role,
+        note=(f"agent_id={agent_id} dry_run={dry_run}" + (f" reason={req.reason[:100]}" if req.reason else "")),
     )
 
     # 기존 승인 흐름 재사용 — 토큰 발행 + 기존 감사 이벤트(두 종) 그대로.
@@ -193,18 +193,22 @@ def create_capture_screenshot_request(
     )
     _reg.attach_token(task.task_id, token.token_id, token.public_id)
     log_event(
-        "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
+        "LOCAL_AGENT_TASK_WAITING_APPROVAL",
+        task.task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         token_id=token.token_id,
         note=f"agent_id={agent_id}",
     )
     log_event(
-        "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED", task.task_id,
+        "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED",
+        task.task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         token_id=token.token_id,
         note=_capture_approval_note(task, agent_id, dry_run),
     )
@@ -227,6 +231,7 @@ class OpenUrlExecuteRequest(BaseModel):
     dry_run=false 직접 open_url 요청은 별도 endpoint 로 거부된다.
     이 endpoint 를 통해서만 open_url_execute task 가 생성된다.
     """
+
     url: str
     reason: str = ""
 
@@ -299,21 +304,24 @@ def create_open_url_execute_request(
     _reg.attach_token(task.task_id, token.token_id, token.public_id)
 
     log_event(
-        "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
+        "LOCAL_AGENT_TASK_WAITING_APPROVAL",
+        task.task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         token_id=token.token_id,
         note=(
-            f"agent_id={agent_id} url_host={parsed.netloc}"
-            + (f" reason={body.reason[:100]}" if body.reason else "")
+            f"agent_id={agent_id} url_host={parsed.netloc}" + (f" reason={body.reason[:100]}" if body.reason else "")
         ),
     )
     log_event(
-        "OPEN_URL_EXECUTE_APPROVAL_REQUESTED", task.task_id,
+        "OPEN_URL_EXECUTE_APPROVAL_REQUESTED",
+        task.task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         token_id=token.token_id,
         note=f"agent_id={agent_id} url_host={parsed.netloc} normalized_url={normalized_url}",
     )

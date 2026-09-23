@@ -1,16 +1,18 @@
 import os
 import sys
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import ai_orchestrator.gmail_reader as gr
-from ai_orchestrator.inbox import get_inbox_item, exists_by_external_id
+from ai_orchestrator.inbox import exists_by_external_id
 
 
 def _fake_msg(message_id: str, subject: str = "테스트 메일", body: str = "본문 내용") -> dict:
     """Gmail API 응답 형태의 가짜 메시지."""
     import base64
+
     body_b64 = base64.urlsafe_b64encode(body.encode()).decode().rstrip("=")
     return {
         "id": message_id,
@@ -33,9 +35,7 @@ def test_collect_saves_email_to_inbox():
     fake_msg = _fake_msg(msg_id, subject="저장 테스트")
 
     mock_service = MagicMock()
-    mock_service.users().messages().list().execute.return_value = {
-        "messages": [{"id": msg_id}]
-    }
+    mock_service.users().messages().list().execute.return_value = {"messages": [{"id": msg_id}]}
     mock_service.users().messages().get().execute.return_value = fake_msg
 
     with patch.object(gr, "_get_service", return_value=mock_service):
@@ -52,9 +52,7 @@ def test_collect_skips_duplicate_message_id():
     fake_msg = _fake_msg(msg_id, subject="중복 방지 테스트")
 
     mock_service = MagicMock()
-    mock_service.users().messages().list().execute.return_value = {
-        "messages": [{"id": msg_id}]
-    }
+    mock_service.users().messages().list().execute.return_value = {"messages": [{"id": msg_id}]}
     mock_service.users().messages().get().execute.return_value = fake_msg
 
     with patch.object(gr, "_get_service", return_value=mock_service):
@@ -105,6 +103,7 @@ def test_parse_message_no_id_returns_none():
 # ── 7. _extract_body — multipart 재귀 추출 ───────────────────────────
 def test_extract_body_multipart():
     import base64
+
     body_text = "멀티파트 본문"
     body_b64 = base64.urlsafe_b64encode(body_text.encode()).decode().rstrip("=")
     payload = {

@@ -9,11 +9,12 @@
 본 모듈은 device_token 원문을 절대 받지 않는다. 호출자가 token_store 에서
 직접 로드해 websocket_client 에 전달하고, 본 모듈은 hash/maskedAgentId 만 처리.
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 
 KST = timezone(timedelta(hours=9))
 
@@ -23,53 +24,45 @@ KST = timezone(timedelta(hours=9))
 STATE_NOT_REGISTERED = "NOT_REGISTERED"
 STATE_CONNECTING = "CONNECTING"
 STATE_AUTHENTICATING = "AUTHENTICATING"
-STATE_CONNECTED = "CONNECTED"        # auth_ok 수신 직후
-STATE_IDLE = "IDLE"                  # 작업 대기
-STATE_BUSY = "BUSY"                  # 작업 처리 중
+STATE_CONNECTED = "CONNECTED"  # auth_ok 수신 직후
+STATE_IDLE = "IDLE"  # 작업 대기
+STATE_BUSY = "BUSY"  # 작업 처리 중
 STATE_DISCONNECTED = "DISCONNECTED"
-STATE_AUTH_FAILED = "AUTH_FAILED"    # 4401 발생
+STATE_AUTH_FAILED = "AUTH_FAILED"  # 4401 발생
 STATE_SERVER_UNREACHABLE = "SERVER_UNREACHABLE"
 STATE_NETWORK_BLOCKED = "NETWORK_BLOCKED"
 
 ALL_STATES = (
-    STATE_NOT_REGISTERED, STATE_CONNECTING, STATE_AUTHENTICATING,
-    STATE_CONNECTED, STATE_IDLE, STATE_BUSY, STATE_DISCONNECTED,
-    STATE_AUTH_FAILED, STATE_SERVER_UNREACHABLE, STATE_NETWORK_BLOCKED,
+    STATE_NOT_REGISTERED,
+    STATE_CONNECTING,
+    STATE_AUTHENTICATING,
+    STATE_CONNECTED,
+    STATE_IDLE,
+    STATE_BUSY,
+    STATE_DISCONNECTED,
+    STATE_AUTH_FAILED,
+    STATE_SERVER_UNREACHABLE,
+    STATE_NETWORK_BLOCKED,
 )
 
 
 # ── 오류 코드 → 사용자 메시지 ─────────────────────────────────────
 
 _USER_GUIDANCE = {
-    "REG_CODE_EXPIRED": (
-        "등록코드가 만료되었습니다. 관리자에게 새 등록코드를 요청하세요."
-    ),
-    "REG_CODE_INVALID": (
-        "등록코드가 유효하지 않습니다. 코드 입력을 다시 확인하세요."
-    ),
-    "REG_CODE_ALREADY_USED": (
-        "이 등록코드는 이미 사용되었습니다. 새 등록코드를 요청하세요."
-    ),
+    "REG_CODE_EXPIRED": ("등록코드가 만료되었습니다. 관리자에게 새 등록코드를 요청하세요."),
+    "REG_CODE_INVALID": ("등록코드가 유효하지 않습니다. 코드 입력을 다시 확인하세요."),
+    "REG_CODE_ALREADY_USED": ("이 등록코드는 이미 사용되었습니다. 새 등록코드를 요청하세요."),
     "AUTH_FAILED_4401": (
-        "장치 인증 실패(4401). device_token 이 변경되었거나 폐기됐을 수 있습니다. "
-        "데스크앱 재등록을 진행하세요."
+        "장치 인증 실패(4401). device_token 이 변경되었거나 폐기됐을 수 있습니다. 데스크앱 재등록을 진행하세요."
     ),
-    "AUTH_TIMEOUT": (
-        "서버 인증 응답 시간 초과. 서버 주소 또는 네트워크를 확인하세요."
-    ),
-    "SERVER_NOT_REACHABLE": (
-        "서버에 접속할 수 없습니다. 서버 URL과 네트워크를 확인하세요."
-    ),
+    "AUTH_TIMEOUT": ("서버 인증 응답 시간 초과. 서버 주소 또는 네트워크를 확인하세요."),
+    "SERVER_NOT_REACHABLE": ("서버에 접속할 수 없습니다. 서버 URL과 네트워크를 확인하세요."),
     "NETWORK_BLOCKED_PROXY": (
         "WebSocket 이 차단된 것으로 보입니다. 프록시/방화벽 설정을 확인하세요. "
         "관리자에게 nginx proxy 설정(Upgrade/Connection) 확인을 요청하세요."
     ),
-    "HEARTBEAT_LOST": (
-        "heartbeat 응답이 없어 재연결합니다. 잠시 기다려 주세요."
-    ),
-    "TOKEN_NOT_STORED": (
-        "device_token 이 안전 저장소에 없습니다. 데스크앱을 다시 등록하세요."
-    ),
+    "HEARTBEAT_LOST": ("heartbeat 응답이 없어 재연결합니다. 잠시 기다려 주세요."),
+    "TOKEN_NOT_STORED": ("device_token 이 안전 저장소에 없습니다. 데스크앱을 다시 등록하세요."),
 }
 
 
@@ -78,6 +71,7 @@ def explain_error(code: str) -> str:
 
 
 # ── 서버 URL 정규화 ──────────────────────────────────────────────
+
 
 def _safe_user_message(message: str) -> str:
     return str(message or "").replace("device_token", "device credential")
@@ -96,9 +90,9 @@ def normalize_ws_url(server_base_url: str) -> str:
         raise ValueError("server_base_url empty")
     url = server_base_url.strip().rstrip("/")
     if url.startswith("https://"):
-        ws_url = "wss://" + url[len("https://"):]
+        ws_url = "wss://" + url[len("https://") :]
     elif url.startswith("http://"):
-        ws_url = "ws://" + url[len("http://"):]
+        ws_url = "ws://" + url[len("http://") :]
     elif url.startswith(("ws://", "wss://")):
         ws_url = url
     else:
@@ -172,14 +166,20 @@ def _strip_secrets_from_url(url: str) -> str:
     url = re.sub(
         r"([?&])(device_token|registration_code|token|auth|secret|"
         r"session|sid|sess|key|password|pwd|jwt|bearer|api_key)=[^&]*",
-        r"\1credential=[REDACTED]", url, flags=re.IGNORECASE,
+        r"\1credential=[REDACTED]",
+        url,
+        flags=re.IGNORECASE,
     )
     return url
 
 
 def build_diagnostics(
-    *, server_base_url: str, agent_id: str, state: str,
-    last_heartbeat_iso: str = "", last_error_code: str = "",
+    *,
+    server_base_url: str,
+    agent_id: str,
+    state: str,
+    last_heartbeat_iso: str = "",
+    last_error_code: str = "",
     reconnect_count: int = 0,
 ) -> ConnectionDiagnostics:
     try:
@@ -355,8 +355,7 @@ def render_recovery_block(plan: RecoveryPlan) -> str:
     return "\n".join(lines)
 
 
-_LEAK_KEYS = ("token", "secret", "device_token", "password",
-              "cookie", "authorization", "session=", "x-api-key")
+_LEAK_KEYS = ("token", "secret", "device_token", "password", "cookie", "authorization", "session=", "x-api-key")
 
 
 def find_token_leaks(text: str) -> list[str]:

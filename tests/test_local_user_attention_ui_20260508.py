@@ -3,33 +3,22 @@ user attention UI 통합 테스트
 
 인증 필요 → 알림 발송 → 브라우저 포그라운드 → WAITING_USER_AUTH 반환 흐름 검증
 """
-import pytest
+
 from unittest.mock import patch
 
-from ai_orchestrator.local_agent.user_attention_notifier import (
-    build_auth_attention_notice,
-    build_timeout_notice,
-    build_cancel_notice,
-    notify_auth_required,
-    request_browser_foreground,
-    get_notifier_status,
-)
-from ai_orchestrator.local_agent.user_notification_adapter import (
-    NOTIFICATION_SENT,
-    NOTIFICATION_UNAVAILABLE,
-    FALLBACK_MESSAGE_ONLY,
-    send_notification,
+from ai_orchestrator.local_agent.auth_wait_controller import (
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_OTP,
 )
 from ai_orchestrator.local_agent.browser_foreground_adapter import (
-    BROWSER_FOREGROUND_REQUESTED,
     HEADED_BROWSER_REQUIRED,
-    USER_MANUAL_FOCUS_REQUIRED,
-    request_foreground,
 )
-from ai_orchestrator.local_agent.auth_wait_controller import (
-    AUTH_SIGNAL_LOGIN,
-    AUTH_SIGNAL_CERT,
-    AUTH_SIGNAL_OTP,
+from ai_orchestrator.local_agent.user_attention_notifier import (
+    build_auth_attention_notice,
+    get_notifier_status,
+    notify_auth_required,
+    request_browser_foreground,
 )
 
 
@@ -176,20 +165,24 @@ class TestNotifierStatus:
 class TestSmoke:
     def test_auth_wait_controller_import_ok(self):
         from ai_orchestrator.local_agent.auth_wait_controller import enter_auth_wait
+
         result = enter_auth_wait("smoke-task", AUTH_SIGNAL_LOGIN)
         assert result["status"] in {"WAITING_USER_AUTH", "USER_ACTION_REQUIRED"}
 
     def test_auto_resume_import_ok(self):
         from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False
 
     def test_session_boundary_import_ok(self):
-        from ai_orchestrator.local_agent.local_session_boundary import is_safe_for_export, get_boundary_safe_defaults
+        from ai_orchestrator.local_agent.local_session_boundary import get_boundary_safe_defaults, is_safe_for_export
+
         result = get_boundary_safe_defaults()
         result["ok"] = True
         assert is_safe_for_export(result) is True
 
     def test_playwright_runner_imports_ok(self):
         from ai_orchestrator.local_agent import playwright_runner
+
         assert hasattr(playwright_runner, "run_task")
