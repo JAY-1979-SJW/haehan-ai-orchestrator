@@ -124,6 +124,7 @@ session*
 !test_session_manager.py
 !session_status_router.py
 !session_probe.py
+!session_tracker.py
 !session_probe_fix.md
 storage_state*
 
