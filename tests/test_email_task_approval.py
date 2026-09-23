@@ -7,6 +7,7 @@ email task → approval request 테스트
 5. 기존 approval 구조와 충돌 없음
 6. 앱 부팅 가능 여부
 """
+
 import json
 import os
 import sys
@@ -18,8 +19,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import email_task_approval
 import email_task_store
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def task_path(tmp_path):
@@ -54,6 +55,7 @@ def _seed_task(task_path: str, task_id: str = "etask-test001") -> dict:
 
 # ── 1. email task 1건 approval 요청 성공 ──────────────────────────────────────
 
+
 def test_approval_request_success(task_path, token_path):
     _seed_task(task_path)
 
@@ -83,15 +85,12 @@ def test_approval_status_is_pending_only(task_path, token_path):
 
 # ── 2. 동일 task 중복 approval 요청 방지 ──────────────────────────────────────
 
+
 def test_duplicate_approval_request(task_path, token_path):
     _seed_task(task_path)
 
-    r1 = email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
-    r2 = email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
+    r1 = email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
+    r2 = email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     assert r1["status"] == "created"
     assert r2["status"] == "duplicate"
@@ -104,6 +103,7 @@ def test_duplicate_approval_request(task_path, token_path):
 
 
 # ── 3. 없는 task 거절 ─────────────────────────────────────────────────────────
+
 
 def test_not_found_task(task_path, token_path):
     result = email_task_approval.request_approval(
@@ -120,13 +120,12 @@ def test_not_found_task(task_path, token_path):
 
 # ── 4. approval_token_id 연결 검증 ────────────────────────────────────────────
 
+
 def test_approval_token_id_linked_to_task(task_path, token_path):
     """email task에 approval_token_id 필드가 기록되는지 확인."""
     _seed_task(task_path)
 
-    result = email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
+    result = email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     task = email_task_store.get_email_task("etask-test001", path=task_path)
     assert task is not None
@@ -138,9 +137,7 @@ def test_approval_token_id_linked_to_task(task_path, token_path):
 def test_get_approval_for_task(task_path, token_path):
     """get_approval_for_task 가 token을 반환하는지 확인."""
     _seed_task(task_path)
-    result = email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
+    result = email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     token = email_task_approval.get_approval_for_task("etask-test001", token_path=token_path)
     assert token is not None
@@ -157,6 +154,7 @@ def test_get_approval_not_found(token_path):
 
 # ── 5. 기존 approval 구조와 충돌 없음 ─────────────────────────────────────────
 
+
 def test_no_conflict_with_existing_approval(task_path, token_path):
     """기존 approval_manager / task_store가 변경되지 않는지 확인."""
     import approval_manager
@@ -166,9 +164,7 @@ def test_no_conflict_with_existing_approval(task_path, token_path):
     before_approval_store = dict(approval_manager._store)
 
     _seed_task(task_path)
-    email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
+    email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     assert task_store._store == before_task_store
     assert approval_manager._store == before_approval_store
@@ -177,30 +173,29 @@ def test_no_conflict_with_existing_approval(task_path, token_path):
 def test_email_approval_token_separate_from_main_tokens(task_path, token_path):
     """email approval token이 별도 파일에 저장되는지 확인."""
     _seed_task(task_path)
-    email_task_approval.request_approval(
-        "etask-test001", token_path=token_path, task_path=task_path
-    )
+    email_task_approval.request_approval("etask-test001", token_path=token_path, task_path=task_path)
 
     # 지정한 token_path에만 저장됨
     assert os.path.exists(token_path)
 
     # 메인 approval_tokens.json 파일 경로 확인 (ai_orchestrator/storage/ 아님)
-    main_token_path = os.path.join(
-        os.path.dirname(os.path.dirname(token_path)), "email_approval_tokens.json"
-    )
+    os.path.join(os.path.dirname(os.path.dirname(token_path)), "email_approval_tokens.json")
     # 테스트 token_path가 tmp_path이므로 메인 경로와 다름
     assert os.path.abspath(token_path) != email_task_approval._DEFAULT_TOKEN_PATH
 
 
 # ── 6. 앱 부팅 가능 여부 ──────────────────────────────────────────────────────
 
+
 def test_app_boot_with_approval_routes():
     """앱 부팅 시 신규 approval 라우트가 등록되는지 확인."""
     import os as _os
+
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
     from dashboard import create_app
+
     app = create_app()
     rules = {r.rule for r in app.url_map.iter_rules()}
 

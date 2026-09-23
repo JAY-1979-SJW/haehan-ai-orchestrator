@@ -5,11 +5,12 @@
 
 이 스크립트는 실제 앱 구현 파일을 수정하지 않는다. 설계/감리 전용.
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -348,18 +349,93 @@ KNOWN_BACKLOG = [
 # ── Provider Registry ─────────────────────────────────────────────────────────
 
 PROVIDERS = [
-    {"id": "GABIA", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "KAKAO", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "NAVER", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "NAVER_SMARTSTORE", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True, "risk_level": "critical"},
-    {"id": "GOOGLE", "user_present_required": True, "desktop_required": False, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "HIWORKS", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "G2B_NARA", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True, "certificate_required": True},
-    {"id": "HOMETAX", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "WETAX", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "GOVERNMENT24", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "EMAIL_GENERIC", "user_present_required": True, "desktop_required": False, "cookie_storage_forbidden": True, "approval_gate_required": True},
-    {"id": "BANK_GENERIC", "user_present_required": True, "desktop_required": True, "cookie_storage_forbidden": True, "approval_gate_required": True, "risk_level": "critical"},
+    {
+        "id": "GABIA",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "KAKAO",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "NAVER",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "NAVER_SMARTSTORE",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+        "risk_level": "critical",
+    },
+    {
+        "id": "GOOGLE",
+        "user_present_required": True,
+        "desktop_required": False,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "HIWORKS",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "G2B_NARA",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+        "certificate_required": True,
+    },
+    {
+        "id": "HOMETAX",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "WETAX",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "GOVERNMENT24",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "EMAIL_GENERIC",
+        "user_present_required": True,
+        "desktop_required": False,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+    },
+    {
+        "id": "BANK_GENERIC",
+        "user_present_required": True,
+        "desktop_required": True,
+        "cookie_storage_forbidden": True,
+        "approval_gate_required": True,
+        "risk_level": "critical",
+    },
 ]
 
 # ── Storage Matrix ────────────────────────────────────────────────────────────
@@ -410,6 +486,7 @@ DEPLOYMENT_SOP = {
 
 # ── Audit 검사 함수 ───────────────────────────────────────────────────────────
 
+
 @dataclass
 class CheckResult:
     name: str
@@ -450,19 +527,25 @@ def check_screens(report: AuditReport) -> None:
     else:
         report.add("mvp_screens_count", "FAIL", f"화면 {count}개 < 8개 필수")
 
-    required_ids = {"dashboard", "task_queue", "task_detail", "approval_gate",
-                    "external_sites", "logs_audit", "storage_status", "deployment_status"}
+    required_ids = {
+        "dashboard",
+        "task_queue",
+        "task_detail",
+        "approval_gate",
+        "external_sites",
+        "logs_audit",
+        "storage_status",
+        "deployment_status",
+    }
     defined_ids = {s["id"] for s in MVP_SCREENS}
     missing = required_ids - defined_ids
     if not missing:
-        report.add("mvp_screens_required_ids", "PASS", f"필수 8개 화면 ID 모두 존재")
+        report.add("mvp_screens_required_ids", "PASS", "필수 8개 화면 ID 모두 존재")
     else:
         report.add("mvp_screens_required_ids", "FAIL", f"누락 화면: {missing}")
 
 
 def check_api_contract(report: AuditReport) -> None:
-    classifications = {a["endpoint"]: a["classification"] for a in API_CONTRACT}
-
     post_tasks = next((a for a in API_CONTRACT if a["endpoint"] == "POST /api/v1/tasks"), None)
     if post_tasks and post_tasks["classification"] == "DRY_RUN_ALLOWED":
         report.add("api_post_tasks_dry_run_only", "PASS", "POST /tasks = DRY_RUN_ALLOWED")
@@ -472,8 +555,11 @@ def check_api_contract(report: AuditReport) -> None:
     for ep in ["POST /api/v1/tasks/{id}/approve", "POST /api/v1/tasks/{id}/reject"]:
         a = next((x for x in API_CONTRACT if x["endpoint"] == ep), None)
         if a and a["classification"] in ("APPROVAL_DISPLAY_ONLY", "BLOCKED"):
-            report.add(f"api_{ep.replace('/', '_').replace('{', '').replace('}', '')}_display_only", "PASS",
-                       f"{ep} = {a['classification']}")
+            report.add(
+                f"api_{ep.replace('/', '_').replace('{', '').replace('}', '')}_display_only",
+                "PASS",
+                f"{ep} = {a['classification']}",
+            )
         else:
             report.add(f"api_{ep}_display_only", "FAIL", f"{ep} 분류 오류")
 
@@ -515,9 +601,14 @@ def check_forbidden_buttons(report: AuditReport) -> None:
 def check_approval_gates(report: AuditReport) -> None:
     gate_ids = {g["gate_id"] for g in APPROVAL_GATE_MATRIX}
     required_gates = {
-        "POST_TASKS_DRY_RUN_DISABLE", "APPROVE_EXECUTE_CONNECT",
-        "SERVER_RESTART", "DOCKER_COMPOSE_ACTION", "PAYMENT", "DNS_RECORD_SAVE",
-        "BID_SUBMIT", "CERTIFICATE_SIGN",
+        "POST_TASKS_DRY_RUN_DISABLE",
+        "APPROVE_EXECUTE_CONNECT",
+        "SERVER_RESTART",
+        "DOCKER_COMPOSE_ACTION",
+        "PAYMENT",
+        "DNS_RECORD_SAVE",
+        "BID_SUBMIT",
+        "CERTIFICATE_SIGN",
     }
     missing = required_gates - gate_ids
     if not missing:
@@ -529,7 +620,11 @@ def check_approval_gates(report: AuditReport) -> None:
     if not bad:
         report.add("approval_gate_auto_execute_false", "PASS", "전체 gate auto_execute_allowed=False")
     else:
-        report.add("approval_gate_auto_execute_false", "FAIL", f"auto_execute_allowed=True gate 존재: {[g['gate_id'] for g in bad]}")
+        report.add(
+            "approval_gate_auto_execute_false",
+            "FAIL",
+            f"auto_execute_allowed=True gate 존재: {[g['gate_id'] for g in bad]}",
+        )
 
     hidden_gates = {"POST_TASKS_DRY_RUN_DISABLE", "APPROVE_EXECUTE_CONNECT", "SERVER_RESTART", "DOCKER_COMPOSE_ACTION"}
     for gate_id in hidden_gates:
@@ -541,18 +636,32 @@ def check_approval_gates(report: AuditReport) -> None:
 
 
 def check_providers(report: AuditReport) -> None:
-    required = ["GABIA", "KAKAO", "NAVER", "NAVER_SMARTSTORE", "GOOGLE", "HIWORKS",
-                "G2B_NARA", "HOMETAX", "WETAX", "GOVERNMENT24", "EMAIL_GENERIC", "BANK_GENERIC"]
+    required = [
+        "GABIA",
+        "KAKAO",
+        "NAVER",
+        "NAVER_SMARTSTORE",
+        "GOOGLE",
+        "HIWORKS",
+        "G2B_NARA",
+        "HOMETAX",
+        "WETAX",
+        "GOVERNMENT24",
+        "EMAIL_GENERIC",
+        "BANK_GENERIC",
+    ]
     defined = {p["id"] for p in PROVIDERS}
     missing = set(required) - defined
     if not missing:
-        report.add("providers_12_defined", "PASS", f"12개 provider 모두 정의됨")
+        report.add("providers_12_defined", "PASS", "12개 provider 모두 정의됨")
     else:
         report.add("providers_12_defined", "FAIL", f"누락 provider: {missing}")
 
     gabia = next((p for p in PROVIDERS if p["id"] == "GABIA"), None)
     if gabia and gabia.get("user_present_required") and gabia.get("cookie_storage_forbidden"):
-        report.add("provider_gabia_user_present", "PASS", "GABIA user_present_required=True, cookie_storage_forbidden=True")
+        report.add(
+            "provider_gabia_user_present", "PASS", "GABIA user_present_required=True, cookie_storage_forbidden=True"
+        )
     else:
         report.add("provider_gabia_user_present", "FAIL", "GABIA 정책 미설정")
 
@@ -606,7 +715,11 @@ def check_storage(report: AuditReport) -> None:
 
     runtime = STORAGE_MATRIX.get("runtime_cache", {})
     if runtime.get("git_modified") and runtime.get("classification") == "RUNTIME_CACHE_DISPOSABLE":
-        report.add("storage_runtime_cache_classified", "PASS", "chrome_ui_monitor_state.json = RUNTIME_CACHE_DISPOSABLE (KW-1 반영)")
+        report.add(
+            "storage_runtime_cache_classified",
+            "PASS",
+            "chrome_ui_monitor_state.json = RUNTIME_CACHE_DISPOSABLE (KW-1 반영)",
+        )
     else:
         report.add("storage_runtime_cache_classified", "WARN", "runtime cache 분류 확인 필요")
 
@@ -625,11 +738,13 @@ def check_deployment_sop(report: AuditReport) -> None:
 
 def check_pytest_baseline(report: AuditReport) -> None:
     if PYTEST_BASELINE["total_failed"] == 0:
-        report.add("pytest_baseline_zero_failed", "PASS",
-                   f"{PYTEST_BASELINE['total_passed']} passed / 0 failed / {PYTEST_BASELINE['total_deselected']} deselected")
+        report.add(
+            "pytest_baseline_zero_failed",
+            "PASS",
+            f"{PYTEST_BASELINE['total_passed']} passed / 0 failed / {PYTEST_BASELINE['total_deselected']} deselected",
+        )
     else:
-        report.add("pytest_baseline_zero_failed", "FAIL",
-                   f"baseline failed={PYTEST_BASELINE['total_failed']} > 0")
+        report.add("pytest_baseline_zero_failed", "FAIL", f"baseline failed={PYTEST_BASELINE['total_failed']} > 0")
 
     if PYTEST_BASELINE.get("baseline_tag") == "TEST_BASELINE_CLEANED":
         report.add("pytest_baseline_tag", "PASS", "TEST_BASELINE_CLEANED 태그 반영됨")
@@ -651,7 +766,7 @@ def check_token_cookie_forbidden(report: AuditReport) -> None:
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_screens(report)
     check_api_contract(report)
     check_forbidden_buttons(report)

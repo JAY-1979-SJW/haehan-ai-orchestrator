@@ -69,8 +69,7 @@ def save_csv(data: list[dict], path: Path):
     if not data:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    fields = ["log_no", "title", "author", "date", "comment_count", "href",
-              "body", "tags", "images", "comments"]
+    fields = ["log_no", "title", "author", "date", "comment_count", "href", "body", "tags", "images", "comments"]
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -128,8 +127,7 @@ def main():
 
             for page in range(1, args.pages + 1):
                 print(f"[{page}/{args.pages}] 수집 중...")
-                posts = agent.blog_posts(args.blog, category_no=args.category,
-                                       page=page, max_posts=args.max)
+                posts = agent.blog_posts(args.blog, category_no=args.category, page=page, max_posts=args.max)
 
                 if not posts:
                     print("  포스트 없음, 종료")
@@ -143,13 +141,15 @@ def main():
 
                     if args.full and post.get("href"):
                         detail = agent.blog_read_post(post["href"])
-                        post.update({
-                            "body": detail.get("body", ""),
-                            "tags": detail.get("tags", []),
-                            "images": detail.get("images", []),
-                            "comment_count": detail.get("comment_count", 0),
-                            "comments": detail.get("comments", []),
-                        })
+                        post.update(
+                            {
+                                "body": detail.get("body", ""),
+                                "tags": detail.get("tags", []),
+                                "images": detail.get("images", []),
+                                "comment_count": detail.get("comment_count", 0),
+                                "comments": detail.get("comments", []),
+                            }
+                        )
 
                     seen_ids.add(log_no)
                     all_posts.append(post)
@@ -173,10 +173,13 @@ def main():
             out_path = Path(args.out) if args.out else Path(f"data/scrape/blogs_bulk_{timestamp}.json")
 
             print(f"\n여러 블로그 수집: {len(blog_urls)}개")
-            all_data = agent.blog_bulk_collect(blog_urls, include_posts=True,
-                                             include_comments=args.full,
-                                             include_images=args.full,
-                                             max_posts_each=args.max)
+            all_data = agent.blog_bulk_collect(
+                blog_urls,
+                include_posts=True,
+                include_comments=args.full,
+                include_images=args.full,
+                max_posts_each=args.max,
+            )
 
             save_json(all_data, out_path)
             print(f"저장 완료: {out_path}")
@@ -197,8 +200,7 @@ def main():
             out_path = Path(args.out) if args.out else Path(f"data/scrape/search_{args.search}_{timestamp}.json")
 
             print(f"\n검색 결과 수집: '{args.search}'")
-            results = agent.blog_search_bulk(args.search, max_pages=args.pages,
-                                            collect_post=args.full)
+            results = agent.blog_search_bulk(args.search, max_pages=args.pages, collect_post=args.full)
 
             save_json(results, out_path)
             print(f"저장 완료: {out_path} ({len(results)}개)")
@@ -208,7 +210,7 @@ def main():
             out_path = Path(args.out) if args.out else Path(f"data/scrape/track_{datetime.now().isoformat()}.json")
 
             print(f"\n블로거 추적: {args.track}")
-            snapshot = agent.blog_track_blogger(args.track, save_path=str(out_path))
+            agent.blog_track_blogger(args.track, save_path=str(out_path))
             print(f"저장 완료: {out_path}")
 
         else:

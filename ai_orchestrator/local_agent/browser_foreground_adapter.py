@@ -10,6 +10,7 @@
 - 브라우저 프로필 삭제/초기화
 - headless → headed 강제 전환 (실행 환경 변경 금지)
 """
+
 from __future__ import annotations
 
 import sys
@@ -97,9 +98,7 @@ def _foreground_windows(pid: int | None) -> str:
 
         hwnds: list[int] = []
 
-        EnumWindowsProc = ctypes.WINFUNCTYPE(
-            ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM
-        )
+        EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
 
         def _enum_callback(hwnd: int, _: int) -> bool:
             wnd_pid = ctypes.wintypes.DWORD()
@@ -116,7 +115,7 @@ def _foreground_windows(pid: int | None) -> str:
             user32.ShowWindow(hwnd, SW_RESTORE)
             user32.SetForegroundWindow(hwnd)
             return BROWSER_FOREGROUND_REQUESTED
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return USER_MANUAL_FOCUS_REQUIRED
@@ -126,16 +125,16 @@ def _foreground_macos() -> str:
     """macOS에서 브라우저 앱을 포그라운드로 전환한다."""
     try:
         import subprocess
+
         result = subprocess.run(
-            ["osascript", "-e",
-             'tell application "Chromium" to activate'],
+            ["osascript", "-e", 'tell application "Chromium" to activate'],
             timeout=3,
             check=False,
             capture_output=True,
         )
         if result.returncode == 0:
             return BROWSER_FOREGROUND_REQUESTED
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return USER_MANUAL_FOCUS_REQUIRED
@@ -148,7 +147,7 @@ def check_headed_mode(playwright_page: Any) -> bool:
     """
     try:
         context = playwright_page.context
-        browser = context.browser
+        context.browser  # noqa: B018
         # Playwright browser가 headless인지는 공개 API로 직접 확인 불가.
         # browser 객체에 _impl_obj를 통해 접근할 수 있으나 내부 API이므로
         # 안전한 fallback으로 True를 반환한다.

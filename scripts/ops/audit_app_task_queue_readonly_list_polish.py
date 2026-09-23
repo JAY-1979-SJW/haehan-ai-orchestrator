@@ -2,6 +2,7 @@
 
 Task Queue UI polish가 read-only 계약과 보안경계를 지키는지 검증한다.
 """
+
 import sys
 from pathlib import Path
 
@@ -34,7 +35,7 @@ def run_audit() -> None:
     page = _src(TASKS_PAGE)
     table = _src(TASK_TABLE)
     mock = _src(MOCK_FILE)
-    types = _src(TYPES_FILE)
+    _src(TYPES_FILE)
 
     # 1. Task Queue 화면 존재
     _add("Task Queue 페이지 존재", TASKS_PAGE.exists())
@@ -56,7 +57,6 @@ def run_audit() -> None:
     _add("approval_token_id redacted 정책", "redacted" in table)
 
     # 8–9. 금지 버튼 없음
-    forbidden_buttons = ["execute(", "approve(", "reject(", "submit("]
     _add("execute button 없음", not any(b in table for b in ["onClick.*execute", ">실행<", "execute_btn"]))
     _add("approve/reject button 없음", "approve_btn" not in table and "reject_btn" not in table)
 
@@ -106,7 +106,12 @@ def run_audit() -> None:
     for label, src in [("mock", mock), ("page", page), ("table", table)]:
         _add(f"{label} approval_token_raw 없음", "approval_token_raw" not in src)
         _add(f"{label} cookie_value 없음", "cookie_value" not in src)
-        _add(f"{label} password raw 없음", '"password"' not in src or "password" not in src.split('"password"')[1][:20] if '"password"' in src else True)
+        _add(
+            f"{label} password raw 없음",
+            '"password"' not in src or "password" not in src.split('"password"')[1][:20]
+            if '"password"' in src
+            else True,
+        )
 
 
 def print_report() -> str:

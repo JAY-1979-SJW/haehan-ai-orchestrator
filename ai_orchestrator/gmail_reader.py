@@ -1,8 +1,7 @@
 import base64
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
-from typing import Optional
 
 from .config import GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH
 
@@ -17,7 +16,6 @@ def _get_service():
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
 
     creds = None
     if GMAIL_TOKEN_PATH.exists():
@@ -37,6 +35,7 @@ def _get_service():
         GMAIL_TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
 
     from googleapiclient.discovery import build
+
     return build("gmail", "v1", credentials=creds)
 
 
@@ -61,13 +60,10 @@ def _extract_body(payload: dict) -> str:
     return ""
 
 
-def _parse_message(msg: dict) -> Optional[dict]:
+def _parse_message(msg: dict) -> dict | None:
     """Gmail 메시지 dict → 내부 포맷으로 변환."""
     try:
-        headers = {
-            h["name"].lower(): h["value"]
-            for h in msg.get("payload", {}).get("headers", [])
-        }
+        headers = {h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])}
         message_id = msg.get("id", "")
         if not message_id:
             return None
@@ -79,7 +75,7 @@ def _parse_message(msg: dict) -> Optional[dict]:
         try:
             received_at = parsedate_to_datetime(date_str).isoformat() if date_str else ""
         except Exception:
-            received_at = datetime.now(timezone.utc).isoformat()
+            received_at = datetime.now(UTC).isoformat()
 
         body = _extract_body(msg.get("payload", {}))
         body_summary = body[:200].strip()
@@ -101,17 +97,13 @@ def fetch_recent_emails(max_results: int = 50, hours: int = 24) -> list[dict]:
     """Gmail에서 최근 메일 가져오기. 인증 실패 시 빈 리스트 반환."""
     try:
         service = _get_service()
-        after_ts = int((datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp())
-        response = service.users().messages().list(
-            userId="me", q=f"after:{after_ts}", maxResults=max_results
-        ).execute()
+        after_ts = int((datetime.now(UTC) - timedelta(hours=hours)).timestamp())
+        response = service.users().messages().list(userId="me", q=f"after:{after_ts}", maxResults=max_results).execute()
 
         msg_refs = response.get("messages", [])
         result = []
         for ref in msg_refs:
-            msg = service.users().messages().get(
-                userId="me", id=ref["id"], format="full"
-            ).execute()
+            msg = service.users().messages().get(userId="me", id=ref["id"], format="full").execute()
             parsed = _parse_message(msg)
             if parsed:
                 result.append(parsed)

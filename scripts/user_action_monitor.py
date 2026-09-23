@@ -16,6 +16,7 @@
   python scripts/user_action_monitor.py
   python scripts/user_action_monitor.py --timeout 600 --host gabia
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,8 +29,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
-from scripts import cdp_db
+from scripts import cdp_db  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -138,27 +139,28 @@ def _collect(page) -> list[dict]:
 
 def _get_page():
     from scripts.web_connector import get_page
+
     return get_page()
 
 
 def _format_event(ev: dict) -> str:
     t = ev.get("type", "?")
-    url = ev.get("url", "")
+    ev.get("url", "")
     detail = ev.get("detail", {})
-    ts = ev.get("ts", 0)
+    ev.get("ts", 0)
 
     if t == "click":
-        return f"[클릭]  {detail.get('text','?')}  ({detail.get('tag','?')})"
+        return f"[클릭]  {detail.get('text', '?')}  ({detail.get('tag', '?')})"
     elif t == "xhr":
-        return f"[XHR]   {detail.get('method','?')} {detail.get('url','?')}  → HTTP {detail.get('status','?')}"
+        return f"[XHR]   {detail.get('method', '?')} {detail.get('url', '?')}  → HTTP {detail.get('status', '?')}"
     elif t == "fetch":
-        return f"[FETCH] {detail.get('method','?')} {detail.get('url','?')}  → HTTP {detail.get('status','?')}"
+        return f"[FETCH] {detail.get('method', '?')} {detail.get('url', '?')}  → HTTP {detail.get('status', '?')}"
     elif t == "dom_change":
         kws = ", ".join(detail.get("keywords", []))
         diff = detail.get("lenDiff", 0)
         return f"[DOM]   키워드={kws}  (크기변화:{diff:+d})"
     elif t == "url_change":
-        return f"[URL]   {detail.get('from','?')}  →  {detail.get('to','?')}"
+        return f"[URL]   {detail.get('from', '?')}  →  {detail.get('to', '?')}"
     else:
         return f"[{t}]  {json.dumps(detail, ensure_ascii=False)[:80]}"
 
@@ -274,13 +276,11 @@ def watch_user_actions(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="사용자 수동 조작 실시간 감지")
-    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S,
-                        help="최대 대기 초 (0=무한)")
-    parser.add_argument("--host", type=str, default=None,
-                        help="특정 호스트만 감시 (예: gabia.com)")
+    parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="최대 대기 초 (0=무한)")
+    parser.add_argument("--host", type=str, default=None, help="특정 호스트만 감시 (예: gabia.com)")
     args = parser.parse_args()
 
-    events = watch_user_actions(timeout_s=args.timeout, host_filter=args.host)
+    watch_user_actions(timeout_s=args.timeout, host_filter=args.host)
     sys.exit(0)
 
 

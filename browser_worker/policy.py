@@ -1,34 +1,43 @@
 """Browser Worker execution policy."""
+
 import os
 from urllib.parse import urlparse
 
 # Allowed actions in dry_run mode only
-ALLOWED_ACTIONS_DRY_RUN = frozenset({
-    "browser.inspect",
-})
+ALLOWED_ACTIONS_DRY_RUN = frozenset(
+    {
+        "browser.inspect",
+    }
+)
 
 # Allowed actions in actual execution mode (gated by BROWSER_EXECUTION_ENABLED)
-ALLOWED_ACTIONS_ACTUAL_EXECUTION = frozenset({
-    "browser.inspect",
-    "browser.open_url_controlled",
-    "browser.open_click_close_controlled",
-})
+ALLOWED_ACTIONS_ACTUAL_EXECUTION = frozenset(
+    {
+        "browser.inspect",
+        "browser.open_url_controlled",
+        "browser.open_click_close_controlled",
+    }
+)
 
 # Allowed URLs in actual execution mode
-ALLOWED_URLS_ACTUAL_EXECUTION = frozenset({
-    "about:blank",
-    "https://example.com/",
-})
+ALLOWED_URLS_ACTUAL_EXECUTION = frozenset(
+    {
+        "about:blank",
+        "https://example.com/",
+    }
+)
 
 # Actions disabled in actual execution mode
-DISABLED_ACTIONS_ACTUAL = frozenset({
-    "browser.inspect",
-    "browser.plan_click",
-    "browser.plan_type",
-    "browser.plan_submit",
-    "browser.execute_click",
-    "browser.execute_type",
-})
+DISABLED_ACTIONS_ACTUAL = frozenset(
+    {
+        "browser.inspect",
+        "browser.plan_click",
+        "browser.plan_type",
+        "browser.plan_submit",
+        "browser.execute_click",
+        "browser.execute_type",
+    }
+)
 
 
 # ── 서버 브라우저 URL 경계 정책 ───────────────────────────────────────────────
@@ -42,11 +51,13 @@ DECISION_REQUIRE_USER_PRESENT = "REQUIRE_USER_PRESENT"
 DECISION_BLOCK = "BLOCK"
 
 # 서버 브라우저에서 허용되는 URL (완전 일치 또는 안전 prefix)
-_ALLOWED_SERVER_BROWSER_URLS: frozenset[str] = frozenset({
-    "about:blank",
-    "https://example.com/",
-    "https://example.com",
-})
+_ALLOWED_SERVER_BROWSER_URLS: frozenset[str] = frozenset(
+    {
+        "about:blank",
+        "https://example.com/",
+        "https://example.com",
+    }
+)
 
 # 허용 URL prefix (data: 테스트 페이지)
 _ALLOWED_URL_PREFIXES: tuple[str, ...] = ("data:text/html",)
@@ -54,24 +65,60 @@ _ALLOWED_URL_PREFIXES: tuple[str, ...] = ("data:text/html",)
 # 서버 브라우저 금지 도메인 키워드
 _FORBIDDEN_DOMAIN_KEYWORDS: tuple[str, ...] = (
     # 은행
-    "kbstar", "shinhan", "wooribank", "hanabank", "ibk", "nonghy", "kakaobank",
-    "tossbank", "sc.com", "citi", "bnk", "dgb", "kjb", "jb.co.kr",
+    "kbstar",
+    "shinhan",
+    "wooribank",
+    "hanabank",
+    "ibk",
+    "nonghy",
+    "kakaobank",
+    "tossbank",
+    "sc.com",
+    "citi",
+    "bnk",
+    "dgb",
+    "kjb",
+    "jb.co.kr",
     # 카드
-    "card.kb", "shinhancard", "hyundaicard", "samsungcard", "lottec", "bccard",
-    "hanacard", "wooricard", "citicard",
+    "card.kb",
+    "shinhancard",
+    "hyundaicard",
+    "samsungcard",
+    "lottec",
+    "bccard",
+    "hanacard",
+    "wooricard",
+    "citicard",
     # 세무
-    "hometax.go.kr", "sontax", "etax.seoul",
+    "hometax.go.kr",
+    "sontax",
+    "etax.seoul",
     # 정부/민원
-    "gov.kr", "mois.go.kr", "minwon", "egov", "g4c",
+    "gov.kr",
+    "mois.go.kr",
+    "minwon",
+    "egov",
+    "g4c",
     # 4대보험
-    "4insure", "nhis.or.kr", "nps.or.kr", "kcomwel", "ei.go.kr",
+    "4insure",
+    "nhis.or.kr",
+    "nps.or.kr",
+    "kcomwel",
+    "ei.go.kr",
     # 인증서 포털
-    "yessign", "signgate", "crosscert", "tradesign", "npki",
+    "yessign",
+    "signgate",
+    "crosscert",
+    "tradesign",
+    "npki",
     # Google 계정 로그인
     "accounts.google.com",
     # 이메일/드라이브 (API 전용)
-    "mail.google.com", "drive.google.com", "calendar.google.com",
-    "docs.google.com", "sheets.google.com",
+    "mail.google.com",
+    "drive.google.com",
+    "calendar.google.com",
+    "docs.google.com",
+    "sheets.google.com",
 )
 
 # 서버 브라우저 금지 메타데이터 플래그
@@ -107,21 +154,22 @@ def evaluate_server_browser_url_policy(
 
     # 1. production_mode 강제 차단
     if meta.get("production_mode") is True:
-        return _block("PRODUCTION_MODE_SERVER_BROWSER_BLOCKED",
-                      "production_mode=true: 서버 브라우저 실행 차단.")
+        return _block("PRODUCTION_MODE_SERVER_BROWSER_BLOCKED", "production_mode=true: 서버 브라우저 실행 차단.")
 
     # 2. 메타데이터 플래그 기반 차단 (page.goto 이전 단계)
     for flag in _FORBIDDEN_METADATA_FLAGS:
         if meta.get(flag) is True:
             if flag == "requires_captcha":
-                return _block(DECISION_BLOCK,
-                              f"{flag}: CAPTCHA 요구 사이트. 서버 브라우저 금지.")
-            if flag in ("requires_certificate", "requires_financial_certificate",
-                        "requires_otp", "requires_password", "user_present_required"):
-                return _block(DECISION_REQUIRE_USER_PRESENT,
-                              f"{flag}: 사용자 직접 인증 필요. 서버 브라우저 금지.")
-            return _block(DECISION_REQUIRE_LOCAL_AGENT,
-                          f"{flag}: 로컬 Agent 필요. 서버 브라우저 금지.")
+                return _block(DECISION_BLOCK, f"{flag}: CAPTCHA 요구 사이트. 서버 브라우저 금지.")
+            if flag in (
+                "requires_certificate",
+                "requires_financial_certificate",
+                "requires_otp",
+                "requires_password",
+                "user_present_required",
+            ):
+                return _block(DECISION_REQUIRE_USER_PRESENT, f"{flag}: 사용자 직접 인증 필요. 서버 브라우저 금지.")
+            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"{flag}: 로컬 Agent 필요. 서버 브라우저 금지.")
 
     # 3. 빈 URL은 about:blank로 간주 허용
     if not url_clean or url_clean == "about:blank":
@@ -140,28 +188,22 @@ def evaluate_server_browser_url_policy(
     try:
         parsed = urlparse(url_clean)
         host = (parsed.netloc or "").lower()
-        path = (parsed.path or "").lower()
-        full = host + path
     except Exception:
         host = url_clean.lower()
-        full = host
 
     for kw in _FORBIDDEN_DOMAIN_KEYWORDS:
         if kw in host:
             if "accounts.google.com" in host:
-                return _block(DECISION_BLOCK,
-                              "Google 계정 로그인 페이지. 서버 브라우저 금지.")
-            if any(g in host for g in ("mail.google", "drive.google", "calendar.google",
-                                        "docs.google", "sheets.google")):
-                return _block(DECISION_REQUIRE_API_CONNECTOR,
-                              "Google 서비스. 공식 API/OAuth만 허용.")
-            return _block(DECISION_REQUIRE_LOCAL_AGENT,
-                          f"제한 도메인({kw}). 서버 브라우저 금지.")
+                return _block(DECISION_BLOCK, "Google 계정 로그인 페이지. 서버 브라우저 금지.")
+            if any(
+                g in host for g in ("mail.google", "drive.google", "calendar.google", "docs.google", "sheets.google")
+            ):
+                return _block(DECISION_REQUIRE_API_CONNECTOR, "Google 서비스. 공식 API/OAuth만 허용.")
+            return _block(DECISION_REQUIRE_LOCAL_AGENT, f"제한 도메인({kw}). 서버 브라우저 금지.")
 
     # 7. 알 수 없는 외부 도메인 → 기본 차단
     if host and host not in ("example.com", "www.example.com"):
-        return _block(DECISION_REQUIRE_LOCAL_AGENT,
-                      f"미분류 외부 도메인({host}). 서버 브라우저 기본 차단.")
+        return _block(DECISION_REQUIRE_LOCAL_AGENT, f"미분류 외부 도메인({host}). 서버 브라우저 기본 차단.")
 
     return _allow()
 

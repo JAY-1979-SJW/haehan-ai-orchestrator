@@ -5,11 +5,13 @@ tests/test_post_tasks_dry_run_flag_implementation_20260518.py
 POST_TASKS_DRY_RUN_ENABLED=True 플래그 및 submit_task 분기 구현 검증.
 실제 token 발행 / execute_task 호출 / DB write / 서버 반영 전면 금지.
 """
+
 import ast
 import importlib.util
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -57,6 +59,7 @@ def router_content():
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
 
+
 def test_01_audit_script_importable(audit_mod):
     assert audit_mod is not None
 
@@ -66,6 +69,7 @@ def test_02_run_audit_function_exists(audit_mod):
 
 
 # ── 3~6. 운영 안전 플래그 ────────────────────────────────────────────────────
+
 
 def test_03_approval_token_not_allowed(audit_mod):
     assert audit_mod.APPROVAL_TOKEN_ISSUE_ALLOWED is False
@@ -85,15 +89,16 @@ def test_06_server_deploy_not_allowed(audit_mod):
 
 # ── 7~16. router.py 구현 검증 ────────────────────────────────────────────────
 
+
 def test_07_dry_run_flag_present(router_content):
     assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content
 
 
 def test_08_dry_run_flag_in_feature_flag_section(router_content):
     lines = router_content.splitlines()
-    flag_line = next((i for i, l in enumerate(lines) if "POST_TASKS_DRY_RUN_ENABLED = True" in l), None)
+    flag_line = next((i for i, l in enumerate(lines) if "POST_TASKS_DRY_RUN_ENABLED = True" in l), None)  # noqa: E741
     assert flag_line is not None
-    context = "\n".join(lines[max(0, flag_line - 10):flag_line])
+    context = "\n".join(lines[max(0, flag_line - 10) : flag_line])
     assert "Phase 1-R" in context or "LEGACY_5050" in context
 
 
@@ -138,10 +143,12 @@ def test_16_touch_phase_1r_preserved(router_content):
 
 # ── 17~24. submit_task 동작 unit test (mock 기반) ─────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def router_mod():
     """router 모듈 import — DB/외부 호출 없이 구조만."""
     import sys
+
     mock_names = [
         "ai_orchestrator.planner",
         "ai_orchestrator.executor",
@@ -189,6 +196,7 @@ def router_mod():
         sys.modules[mod_name] = mock
     try:
         import importlib.util as ilu
+
         spec = ilu.spec_from_file_location(
             "ai_orchestrator.router",
             REPO_ROOT / "ai_orchestrator/router.py",
@@ -224,16 +232,22 @@ def test_18_medium_path_returns_dry_run_status(router_mod):
     mock_req = MagicMock(task_id="t1", action_type="write_file", target="/tmp/x", requested_by="actor1")
     mock_user = {"actor": "actor1", "role": "operator"}
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute") as mock_execute,
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         body = MagicMock()
         body.model_dump.return_value = {
-            "task_id": "t1", "source": "test", "action_type": "write_file",
-            "target": "/tmp/x", "description": "test", "payload": {}, "requested_by": None,
+            "task_id": "t1",
+            "source": "test",
+            "action_type": "write_file",
+            "target": "/tmp/x",
+            "description": "test",
+            "payload": {},
+            "requested_by": None,
         }
 
         result = router_mod.submit_task(body, mock_user)
@@ -258,16 +272,22 @@ def test_19_low_path_unaffected_by_dry_run(router_mod):
     mock_req = MagicMock(task_id="t2", action_type="get_server_status", target="server", requested_by="actor1")
     mock_user = {"actor": "actor1", "role": "operator"}
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute", return_value="DRY_RUN_ONLY") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute", return_value="DRY_RUN_ONLY") as mock_execute,
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         body = MagicMock()
         body.model_dump.return_value = {
-            "task_id": "t2", "source": "test", "action_type": "get_server_status",
-            "target": "server", "description": "test", "payload": {}, "requested_by": None,
+            "task_id": "t2",
+            "source": "test",
+            "action_type": "get_server_status",
+            "target": "server",
+            "description": "test",
+            "payload": {},
+            "requested_by": None,
         }
 
         result = router_mod.submit_task(body, mock_user)
@@ -287,16 +307,22 @@ def test_20_blocked_path_unaffected_by_dry_run(router_mod):
     mock_req = MagicMock(task_id="t3", action_type="shell", target="/", requested_by="actor1")
     mock_user = {"actor": "actor1", "role": "operator"}
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute", return_value="BLOCKED: 차단 경로") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute", return_value="BLOCKED: 차단 경로"),
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         body = MagicMock()
         body.model_dump.return_value = {
-            "task_id": "t3", "source": "test", "action_type": "shell",
-            "target": "/", "description": "test", "payload": {}, "requested_by": None,
+            "task_id": "t3",
+            "source": "test",
+            "action_type": "shell",
+            "target": "/",
+            "description": "test",
+            "payload": {},
+            "requested_by": None,
         }
 
         result = router_mod.submit_task(body, mock_user)
@@ -315,27 +341,43 @@ def test_21_dry_run_response_structure(router_mod):
     mock_req = MagicMock(task_id="t4", action_type="write_file", target="/tmp", requested_by="actor1")
     mock_user = {"actor": "actor1", "role": "operator"}
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token"), \
-         patch.object(router_mod, "execute"), \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token"),
+        patch.object(router_mod, "execute"),
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         body = MagicMock()
         body.model_dump.return_value = {
-            "task_id": "t4", "source": "test", "action_type": "write_file",
-            "target": "/tmp", "description": "test", "payload": {}, "requested_by": None,
+            "task_id": "t4",
+            "source": "test",
+            "action_type": "write_file",
+            "target": "/tmp",
+            "description": "test",
+            "payload": {},
+            "requested_by": None,
         }
 
         result = router_mod.submit_task(body, mock_user)
 
-    required_fields = ["task_id", "risk_level", "allowed", "requires_approval",
-                       "approval_token_id", "status", "steps", "blocked_reasons", "dry_run"]
+    required_fields = [
+        "task_id",
+        "risk_level",
+        "allowed",
+        "requires_approval",
+        "approval_token_id",
+        "status",
+        "steps",
+        "blocked_reasons",
+        "dry_run",
+    ]
     for field in required_fields:
         assert field in result, f"응답에 {field} 필드 없음"
 
 
 # ── 22~25. 경로 영향 분석 검증 ───────────────────────────────────────────────
+
 
 def test_22_medium_path_no_token(path_impact):
     medium = path_impact["medium_requires_approval_True_allowed_True"]
@@ -360,6 +402,7 @@ def test_25_high_critical_unchanged(path_impact):
 
 # ── 26~28. 다음 Phase ────────────────────────────────────────────────────────
 
+
 def test_26_next_phase_isolation_smoke(next_phase):
     assert "ISOLATION_SMOKE" in next_phase["phase"] or "SMOKE" in next_phase["phase"]
 
@@ -375,10 +418,11 @@ def test_28_next_phase_requires_representative_approval(next_phase):
 
 # ── 29. no HTTP import ───────────────────────────────────────────────────────
 
+
 def test_29_no_http_import_in_audit_script():
-    content = (
-        REPO_ROOT / "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py"
-    ).read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
     try:
         tree = ast.parse(content)
     except SyntaxError:
@@ -397,6 +441,7 @@ def test_29_no_http_import_in_audit_script():
 
 
 # ── 30~33. audit verdict ─────────────────────────────────────────────────────
+
 
 def test_30_audit_verdict_ready(audit_result):
     assert audit_result["verdict"] in (
