@@ -1,0 +1,257 @@
+# module_category: audit
+# primary_trade: common
+"""변경 검증(로컬 CI) — 작업 트리의 변경을 기준 커밋과 같은 방식으로 재서 PASS/FAIL 판정.
+
+판정 항목(모두 기준 대비 '나빠지지 않을 것')
+  1 pytest 수집 오류   2 LIVE 모듈 import 실패   3 서버 라우트 수
+  4 영향 테스트 실패(코드맵 역방향으로 바뀐 파일에 닿는 테스트만)   5 층간 위반 수   6 모듈 순환 수
+  7 바뀐 파이썬 파일 ruff 0
+기준값은 기준 커밋을 임시 폴더(git worktree)에 꺼내 같은 명령으로 잰다.
+저장소별 설정은 configs/verify_change.json(없으면 기본값) — 다른 저장소에서도 그대로 쓰기 위함.
+
+사용:
+    python scripts/ops/verify_change.py --base master            # 현재 작업트리 vs master
+    python scripts/ops/verify_change.py --base master --head stage/x   # 커밋끼리(미커밋 WIP 제외, 권장)
+    python scripts/ops/verify_change.py --base master --json out.json
+종료코드 0 = PASS, 1 = FAIL, 2 = 기준 트리 생성 실패. 결과표는 커밋 메시지에 붙일 수 있게 markdown 으로 출력.
+"""
+
+from __future__ import annotations
+
+import argparse
+import contextlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+PY = sys.executable
+ENV = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONIOENCODING": "utf-8", "AUTH_ENABLED": "false"}
+CONFIG = ROOT / "configs" / "verify_change.json"
+CFG = {"route_check": None, "ruff_config": None, "test_timeout": 120}
+if CONFIG.exists():
+    CFG.update(json.loads(CONFIG.read_text(encoding="utf-8")))
+TEST_TIMEOUT = int(CFG["test_timeout"])  # 테스트 파일 하나당 상한(멈추는 테스트 차단)
+CHUNK = int(CFG.get("test_chunk", 25))  # 한 pytest 프로세스에 묶는 테스트 파일 수
+
+
+def run(cmd: list[str], cwd: Path, timeout: int = 900) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, env=ENV
+    )
+
+
+def changed_files(base: str, head: str | None) -> list[str]:
+    if head:  # 커밋끼리 비교 — 작업트리의 다른 작업분(미커밋 WIP)이 섞이지 않는다
+        return sorted(set(run(["git", "diff", "--name-only", f"{base}...{head}"], ROOT).stdout.split()))
+    out = run(["git", "diff", "--name-only", base], ROOT).stdout.split()
+    out += run(["git", "ls-files", "--others", "--exclude-standard"], ROOT).stdout.split()
+    return sorted(set(out))
+
+
+def _checkout(ref: str, dest: Path) -> bool:
+    """ref 를 임시 worktree 로 꺼내고 현재의 측정 도구를 넣는다(같은 잣대로 재기 위함)."""
+    if run(["git", "worktree", "add", "--detach", str(dest), ref], ROOT).returncode != 0:
+        return False
+    shutil.copytree(ROOT / "scripts/ops/code_map", dest / "scripts/ops/code_map", dirs_exist_ok=True)
+    return True
+
+
+def measure(tree: Path, tests: list[str]) -> dict:
+    """한 작업트리에서 판정 항목을 잰다."""
+    r: dict = {}
+    col = run([PY, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"], tree)
+    r["collect_errors"] = sorted(ln.split()[1] for ln in col.stdout.splitlines() if ln.startswith("ERROR "))
+    run([PY, "scripts/ops/code_map/build.py"], tree)
+    if (tree / "scripts/ops/code_map/classify.py").exists():
+        run([PY, "scripts/ops/code_map/classify.py"], tree)
+    run([PY, "scripts/ops/code_map/runcheck.py", "--levels", "R0"], tree, timeout=1800)
+    led_p = tree / "data/code_map/run_ledger.json"
+    led = json.loads(led_p.read_text(encoding="utf-8"))["nodes"] if led_p.exists() else {}
+    m = json.loads((tree / "data/code_map/map.json").read_text(encoding="utf-8"))
+    r["import_fail"] = sorted(p for p, v in led.items() if v.get("R0", {}).get("status") == "FAIL")
+    if CFG["route_check"]:  # 서버 앱의 라우트 수를 출력하는 파이썬 한 줄
+        routes = run([PY, "-c", CFG["route_check"]], tree)
+        r["routes"] = (routes.stdout.strip().splitlines() or ["?"])[-1]
+    else:
+        r["routes"] = "-"
+    # 층간 위반 — configs/module_registry.json 의 allowed_deps 기준
+    reg_p = tree / "configs/module_registry.json"
+    viol = set()
+    if reg_p.exists():
+        reg = json.loads(reg_p.read_text(encoding="utf-8"))
+        files, allowed = reg["files"], reg.get("allowed_deps", {})
+        for s, ts in m["all_edges"].items():
+            if s in files and not s.endswith("__init__.py") and files[s]["layer"] in allowed:
+                for t in ts:
+                    if t in files and not t.endswith("__init__.py"):
+                        lt = files[t]["layer"]
+                        if lt in allowed and lt not in allowed[files[s]["layer"]]:
+                            viol.add(f"{s} -> {t}")
+    r["violations"] = sorted(viol)
+    # 모듈 순환
+    if (tree / "scripts/ops/code_map/modules.py").exists():
+        run([PY, "scripts/ops/code_map/modules.py"], tree)
+        mj = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))
+        r["cycles"] = [" <-> ".join(c) for c in mj["crosscheck"]["module_cycles"]]
+    else:
+        r["cycles"] = []
+    # 영향 테스트 — CHUNK 파일씩 묶어 한 프로세스로(속도), 묶음이 시간 상한을 넘으면 그 묶음만 파일별로 재실행(멈춤 차단)
+    present = [t for t in tests if (tree / t).exists()]
+    fails, timeouts = [], []
+    for i in range(0, len(present), CHUNK):
+        chunk = present[i : i + CHUNK]
+        try:
+            fails += _pytest(tree, chunk, TEST_TIMEOUT * len(chunk) // 2 + TEST_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            for t in chunk:
+                try:
+                    fails += _pytest(tree, [t], TEST_TIMEOUT)
+                except subprocess.TimeoutExpired:
+                    timeouts.append(t)
+    r["test_failures"] = sorted(set(fails))
+    r["test_timeouts"] = timeouts
+    return r
+
+
+def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
+    """테스트 파일 묶음 실행 → 실패 id 목록. 수집 오류가 나도 나머지는 계속 돈다."""
+    p = run(
+        [PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfE", "--continue-on-collection-errors", *files],
+        tree,
+        timeout=timeout,
+    )
+    out = [
+        ln.split()[1] for ln in p.stdout.splitlines() if ln.startswith(("FAILED ", "ERROR ")) and len(ln.split()) > 1
+    ]
+    if p.returncode not in (0, 1, 5) and not out:
+        out.append(f"{files[0]}..(+{len(files) - 1})::<rc={p.returncode}>")
+    return out
+
+
+def affected_tests(changed: list[str]) -> list[str]:
+    """코드맵 역방향 BFS — 바뀐 파일에 (간접적으로라도) 닿는 테스트 파일."""
+    m = json.loads((ROOT / "data/code_map/map.json").read_text(encoding="utf-8"))
+    rev: dict[str, set[str]] = {}
+    for s, ts in m["all_edges"].items():
+        for t in ts:
+            rev.setdefault(t, set()).add(s)
+    seen, q = set(changed), deque(changed)
+    while q:
+        cur = q.popleft()
+        for s in rev.get(cur, ()):
+            if s not in seen:
+                seen.add(s)
+                q.append(s)
+
+    def is_test(p: str) -> bool:
+        n = p.rsplit("/", 1)[-1]
+        return p.endswith(".py") and (p.startswith("tests/") or "/tests/" in p) and n.startswith("test_")
+
+    return sorted(p for p in seen if is_test(p))
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--base", default="master", help="비교 기준 커밋/브랜치")
+    ap.add_argument("--head", help="비교 대상 커밋/브랜치(생략 = 현재 작업트리). 지정하면 미커밋 WIP 가 섞이지 않음")
+    ap.add_argument("--json", help="결과 JSON 저장 경로")
+    a = ap.parse_args()
+    with contextlib.suppress(AttributeError, ValueError):
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    changed = changed_files(a.base, a.head)
+    run([PY, "scripts/ops/code_map/build.py"], ROOT)
+    tests = affected_tests(changed)
+    tmp = Path(tempfile.mkdtemp(prefix="verify_base_"))
+    trees = [tmp / "base"] + ([tmp / "head"] if a.head else [])
+    try:
+        for ref, dest in zip([a.base, a.head], trees, strict=False):
+            if not _checkout(ref, dest):
+                print(f"[verify] 트리 생성 실패: {ref}")
+                return 2
+        head_tree = trees[1] if a.head else ROOT
+        # 기준·변경 후는 서로 다른 폴더라 동시에 잰다(대기 시간 절반)
+        with ThreadPoolExecutor(2) as ex:
+            fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
+            before, after = fb.result(), fa.result()
+        py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
+        ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
+        ruff = (
+            run(
+                [PY, "-m", "ruff", "check", *ruff_cfg, "--no-cache", "--output-format", "concise", *py_changed],
+                head_tree,
+            )
+            if py_changed
+            else None
+        )
+    finally:
+        for dest in trees:
+            run(["git", "worktree", "remove", "--force", str(dest)], ROOT)
+        shutil.rmtree(tmp, ignore_errors=True)
+    ruff_errors = [
+        ln
+        for ln in (ruff.stdout.splitlines() if ruff else [])
+        if ":" in ln and not ln.startswith(("Found", "All checks", "No fixes", "["))
+    ]
+
+    def new(key: str) -> list[str]:
+        return sorted(set(after[key]) - set(before[key]))
+
+    new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
+    route_diff = [] if before["routes"] == after["routes"] else ["라우트 수 변경"]
+    checks = [
+        ("pytest 수집 오류", len(before["collect_errors"]), len(after["collect_errors"]), new("collect_errors")),
+        ("LIVE import 실패", len(before["import_fail"]), len(after["import_fail"]), new("import_fail")),
+        ("서버 라우트", before["routes"], after["routes"], route_diff),
+        (
+            f"영향 테스트 실패({len(tests)}파일)",
+            len(before["test_failures"]),
+            len(after["test_failures"]),
+            new("test_failures") + new_timeouts,
+        ),
+        ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
+        ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
+        ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
+    ]
+    ok = all(not c[3] for c in checks)
+    lines = [
+        f"## 변경 검증: {'PASS' if ok else 'FAIL'} (기준 {a.base} → {a.head or '작업트리'}, 바뀐 파일 {len(changed)})",
+        "",
+        "| 항목 | 기준 | 변경 후 | 새로 생긴 문제 |",
+        "|---|---|---|---|",
+    ]
+    for name, b, af, nw in checks:
+        lines.append(f"| {name} | {b} | {af} | {len(nw)} |")
+    for name, _, _, nw in checks:
+        if nw:
+            lines += ["", f"### {name} — 새 문제", *[f"- {x}" for x in nw[:30]]]
+    report = "\n".join(lines)
+    print(report)
+    if a.json:
+        Path(a.json).write_text(
+            json.dumps(
+                {
+                    "ok": ok,
+                    "changed": changed,
+                    "tests": tests,
+                    "before": before,
+                    "after": after,
+                    "ruff": ruff_errors,
+                    "report": report,
+                },
+                ensure_ascii=False,
+                indent=1,
+            ),
+            encoding="utf-8",
+        )
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
