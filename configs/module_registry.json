@@ -14417,6 +14417,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/ops/verify_change.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/ops/verify_naver_main_first_live_20260520.py": {
    "layer": "L12",
    "role": "ops_tool",
