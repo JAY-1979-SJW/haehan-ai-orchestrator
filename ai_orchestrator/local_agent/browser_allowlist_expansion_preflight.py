@@ -7,21 +7,28 @@ verdict:
 - REVIEW_REQUIRED : 사용자 검토/승인 필요
 - BLOCKED       : 정책 위반으로 영구 차단
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.local_agent.browser_site_registry import (
-    get_site, validate_raw_url,
-    EXECUTION_LOCAL_AGENT_REQUIRED,
-    LOGIN_PUBLIC_READONLY, LOGIN_USER_PRESENT_AFTER_LOGIN,
-)
 from ai_orchestrator.local_agent.browser_discovery_candidates import (
-    validate_candidate_safety, RISK_LOW, RISK_MEDIUM, RISK_HIGH,
-    CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON,
-    CANDIDATE_MENU, CANDIDATE_PAGE_TITLE, CANDIDATE_TABLE_HEADER,
-    CANDIDATE_DOWNLOAD_LINK, CANDIDATE_BUTTON,
+    CANDIDATE_DESTRUCTIVE_BUTTON,
+    CANDIDATE_DOWNLOAD_LINK,
+    CANDIDATE_MENU,
+    CANDIDATE_PAGE_TITLE,
+    CANDIDATE_SUBMIT_BUTTON,
+    CANDIDATE_TABLE_HEADER,
+    RISK_HIGH,
+    RISK_LOW,
+    RISK_MEDIUM,
     is_forbidden_label,
+    validate_candidate_safety,
+)
+from ai_orchestrator.local_agent.browser_site_registry import (
+    EXECUTION_LOCAL_AGENT_REQUIRED,
+    get_site,
+    validate_raw_url,
 )
 from ai_orchestrator.local_agent.browser_value_registry import (
     is_forbidden_value,
@@ -31,22 +38,55 @@ VERDICT_ALLOW = "ALLOW_REGISTER"
 VERDICT_REVIEW = "REVIEW_REQUIRED"
 VERDICT_BLOCKED = "BLOCKED"
 
-_AUTO_REGISTERABLE_TYPES = frozenset((
-    CANDIDATE_MENU, CANDIDATE_PAGE_TITLE, CANDIDATE_TABLE_HEADER,
-    CANDIDATE_DOWNLOAD_LINK,
-))
+_AUTO_REGISTERABLE_TYPES = frozenset(
+    (
+        CANDIDATE_MENU,
+        CANDIDATE_PAGE_TITLE,
+        CANDIDATE_TABLE_HEADER,
+        CANDIDATE_DOWNLOAD_LINK,
+    )
+)
 
-_DESTRUCTIVE_ACTIONS = frozenset((
-    "submit", "save", "sign", "delete", "payment", "bid", "transfer",
-    "withdraw", "approve", "confirm", "제출", "저장", "삭제",
-    "전자서명", "투찰", "결제", "송금", "이체", "출금", "확정", "상신",
-))
+_DESTRUCTIVE_ACTIONS = frozenset(
+    (
+        "submit",
+        "save",
+        "sign",
+        "delete",
+        "payment",
+        "bid",
+        "transfer",
+        "withdraw",
+        "approve",
+        "confirm",
+        "제출",
+        "저장",
+        "삭제",
+        "전자서명",
+        "투찰",
+        "결제",
+        "송금",
+        "이체",
+        "출금",
+        "확정",
+        "상신",
+    )
+)
 
-_FORBIDDEN_PURPOSE_KEYWORDS = frozenset((
-    "credential", "login_automation", "cookie", "session",
-    "storage_state", "screenshot", "har", "certificate",
-    "password", "otp",
-))
+_FORBIDDEN_PURPOSE_KEYWORDS = frozenset(
+    (
+        "credential",
+        "login_automation",
+        "cookie",
+        "session",
+        "storage_state",
+        "screenshot",
+        "har",
+        "certificate",
+        "password",
+        "otp",
+    )
+)
 
 
 def _block(reason: str, **extra) -> dict[str, Any]:
@@ -62,8 +102,9 @@ def _block(reason: str, **extra) -> dict[str, Any]:
     }
 
 
-def _review(reason: str, risk: str = RISK_MEDIUM, patch: dict | None = None,
-            warnings: list[str] | None = None) -> dict[str, Any]:
+def _review(
+    reason: str, risk: str = RISK_MEDIUM, patch: dict | None = None, warnings: list[str] | None = None
+) -> dict[str, Any]:
     return {
         "verdict": VERDICT_REVIEW,
         "reason": reason,
@@ -121,10 +162,12 @@ def preflight_expansion(
         for kw in _DESTRUCTIVE_ACTIONS:
             if kw in act_low:
                 # destructive action은 자동 승인 불가, 검토 필요
-                return _review(f"파괴/제출 action 후보: {action_candidate}",
-                               risk=RISK_HIGH,
-                               patch=None,
-                               warnings=[f"{action_candidate} 자동 실행 불가"])
+                return _review(
+                    f"파괴/제출 action 후보: {action_candidate}",
+                    risk=RISK_HIGH,
+                    patch=None,
+                    warnings=[f"{action_candidate} 자동 실행 불가"],
+                )
 
     # 2. value 후보 검증
     if value_candidate:
@@ -142,21 +185,23 @@ def preflight_expansion(
         # destructive/submit 후보는 review
         ctype = selector_candidate.get("candidate_type", "")
         if ctype in (CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON):
-            return _review(f"{ctype} — HIGH risk, 자동 등록 불가",
-                           risk=RISK_HIGH,
-                           patch={"selector_candidate": selector_candidate},
-                           warnings=["destructive/submit 후보"])
+            return _review(
+                f"{ctype} — HIGH risk, 자동 등록 불가",
+                risk=RISK_HIGH,
+                patch={"selector_candidate": selector_candidate},
+                warnings=["destructive/submit 후보"],
+            )
         risk_hint = selector_candidate.get("risk_hint", RISK_MEDIUM)
         if risk_hint == RISK_HIGH:
-            return _review("HIGH risk hint", risk=RISK_HIGH,
-                           patch={"selector_candidate": selector_candidate})
+            return _review("HIGH risk hint", risk=RISK_HIGH, patch={"selector_candidate": selector_candidate})
         label = selector_candidate.get("visible_label", "")
         if is_forbidden_label(label):
             return _block(f"민감 라벨: {label}")
         confidence = selector_candidate.get("confidence", "MEDIUM")
         if confidence == "LOW":
-            return _review("confidence 낮음 — 검토 필요", risk=RISK_MEDIUM,
-                           patch={"selector_candidate": selector_candidate})
+            return _review(
+                "confidence 낮음 — 검토 필요", risk=RISK_MEDIUM, patch={"selector_candidate": selector_candidate}
+            )
 
     # 4. site 후보 검증
     if site_candidate:
@@ -175,18 +220,22 @@ def preflight_expansion(
         if ctype in _AUTO_REGISTERABLE_TYPES and risk_hint == RISK_LOW:
             return _allow(
                 "read-only 후보 자동 등록 가능",
-                patch={"selector_candidate": selector_candidate,
-                       "register_as": "selector_key_low_risk"},
+                patch={"selector_candidate": selector_candidate, "register_as": "selector_key_low_risk"},
             )
 
     # 6. 기본값 — 명시적 후보 없으면 review
     if not any([site_candidate, selector_candidate, value_candidate, action_candidate]):
         return _block("후보 없음 — preflight 입력 부족")
 
-    return _review("기본 정책 — 사용자 검토 권장", risk=RISK_MEDIUM,
-                   patch={"site_candidate": site_candidate,
-                          "selector_candidate": selector_candidate,
-                          "value_candidate": value_candidate})
+    return _review(
+        "기본 정책 — 사용자 검토 권장",
+        risk=RISK_MEDIUM,
+        patch={
+            "site_candidate": site_candidate,
+            "selector_candidate": selector_candidate,
+            "value_candidate": value_candidate,
+        },
+    )
 
 
 def can_auto_approve(verdict_result: dict[str, Any]) -> bool:

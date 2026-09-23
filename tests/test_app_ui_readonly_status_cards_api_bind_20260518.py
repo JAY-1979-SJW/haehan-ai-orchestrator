@@ -2,10 +2,9 @@
 
 프론트 상태 카드 3개가 실제 read-only API에 연결됐는지 검증.
 """
+
 import sys
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -22,11 +21,13 @@ def _read(path: Path) -> str:
 
 # ── import 가능 여부 ──────────────────────────────────────────────────────────
 
+
 def test_audit_script_import():
     import scripts.ops.audit_app_ui_readonly_status_cards_api_bind  # noqa
 
 
 # ── api.ts 신규 함수 ──────────────────────────────────────────────────────────
+
 
 def test_api_file_exists():
     assert API_FILE.exists()
@@ -75,6 +76,7 @@ def test_api_no_post():
 
 # ── Dashboard 연결 ────────────────────────────────────────────────────────────
 
+
 def test_dashboard_uses_get_app_health_summary():
     assert "getAppHealthSummary" in _read(DASHBOARD_FILE)
 
@@ -95,6 +97,7 @@ def test_dashboard_no_raw_token():
 
 
 # ── External Sites 연결 ──────────────────────────────────────────────────────
+
 
 def test_external_uses_get_app_providers():
     assert "getAppProviders" in _read(EXTERNAL_FILE)
@@ -119,6 +122,7 @@ def test_external_no_raw_token():
 
 # ── Storage 연결 ─────────────────────────────────────────────────────────────
 
+
 def test_storage_uses_get_app_storage_status():
     assert "getAppStorageStatus" in _read(STORAGE_FILE)
 
@@ -138,6 +142,7 @@ def test_storage_no_raw_token():
 
 # ── 충돌 없음 ─────────────────────────────────────────────────────────────────
 
+
 def test_no_conflict_with_implementation():
     import tests.test_app_api_readonly_endpoints_implementation_20260518  # noqa
 
@@ -152,8 +157,10 @@ def test_no_conflict_with_plan():
 
 # ── backend smoke 여전히 PASS ─────────────────────────────────────────────────
 
+
 def test_backend_smoke_still_passes():
     from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke
+
     report = run_smoke()
     assert report.verdict != "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED"
     assert len(report.failed_endpoints) == 0
@@ -161,8 +168,10 @@ def test_backend_smoke_still_passes():
 
 # ── audit verdict ─────────────────────────────────────────────────────────────
 
+
 def test_audit_verdict():
-    from scripts.ops.audit_app_ui_readonly_status_cards_api_bind import run_audit, checks, print_report
+    from scripts.ops.audit_app_ui_readonly_status_cards_api_bind import print_report, run_audit
+
     run_audit()
     verdict = print_report()
     assert "BLOCKED" not in verdict, f"audit BLOCKED: {verdict}"

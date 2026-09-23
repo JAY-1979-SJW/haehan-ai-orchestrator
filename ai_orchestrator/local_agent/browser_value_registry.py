@@ -2,10 +2,11 @@
 
 LOCAL_BROWSER_POLICY_SAFE_EXPANSION_A1 STEP 5.
 """
+
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 VTYPE_SAMPLE_TEXT = "sample_text"
@@ -24,9 +25,19 @@ RISK_MEDIUM = "MEDIUM"
 RISK_HIGH = "HIGH"
 
 _FORBIDDEN_VALUE_KEYWORDS = (
-    "password", "비밀번호", "otp", "cert_password", "private_key",
-    "cookie", "session", "storage_state", "localStorage", "sessionStorage",
-    "access_token", "refresh_token", "npki",
+    "password",
+    "비밀번호",
+    "otp",
+    "cert_password",
+    "private_key",
+    "cookie",
+    "session",
+    "storage_state",
+    "localStorage",
+    "sessionStorage",
+    "access_token",
+    "refresh_token",
+    "npki",
 )
 
 # 패턴 차단 — 주민번호/계좌번호 원문
@@ -76,8 +87,12 @@ def register_value(policy: ValuePolicy) -> dict[str, Any]:
     if forbidden:
         return {"ok": False, "verdict": "VALUE_BLOCKED", "blocked_reason": reason}
     if policy.value_type not in (
-        VTYPE_SAMPLE_TEXT, VTYPE_SAMPLE_NUMBER, VTYPE_SAMPLE_DATE,
-        VTYPE_SAMPLE_EMAIL, VTYPE_SAFE_MASKED, VTYPE_USER_APPROVED_NONSENSITIVE,
+        VTYPE_SAMPLE_TEXT,
+        VTYPE_SAMPLE_NUMBER,
+        VTYPE_SAMPLE_DATE,
+        VTYPE_SAMPLE_EMAIL,
+        VTYPE_SAFE_MASKED,
+        VTYPE_USER_APPROVED_NONSENSITIVE,
     ):
         return {"ok": False, "verdict": "UNSUPPORTED_VALUE_TYPE"}
     _REGISTRY[policy.value_key] = policy
@@ -112,8 +127,11 @@ def validate_raw_input(raw: str, key: str = "") -> dict[str, Any]:
     forbidden, reason = is_forbidden_value(raw, key)
     if forbidden:
         return {"ok": False, "verdict": "RAW_INPUT_BLOCKED", "blocked_reason": reason}
-    return {"ok": False, "verdict": "RAW_INPUT_NOT_PERMITTED",
-            "blocked_reason": "raw text 입력 직접 실행 금지 — value_key 사용 필요"}
+    return {
+        "ok": False,
+        "verdict": "RAW_INPUT_NOT_PERMITTED",
+        "blocked_reason": "raw text 입력 직접 실행 금지 — value_key 사용 필요",
+    }
 
 
 def list_values() -> list[str]:

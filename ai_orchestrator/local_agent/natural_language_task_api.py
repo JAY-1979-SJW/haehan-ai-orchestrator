@@ -1,20 +1,25 @@
 """Natural Language Task API — 자연어 지시를 agent 실행으로 연결한다."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.user_intent_parser import parse_intent
 from ai_orchestrator.local_agent.universal_ai_site_agent import run_agent
 from ai_orchestrator.local_agent.universal_safe_result import (
-    STATUS_COMPLETED, STATUS_FAILED,
-    STATUS_WARN_PERMISSION, STATUS_WARN_AUTH,
+    STATUS_FAILED,
 )
+from ai_orchestrator.local_agent.user_intent_parser import parse_intent
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 
@@ -27,6 +32,7 @@ def _build_page_data_from_url(url: str, fetch_fn: Callable | None = None) -> dic
         return fetch_fn(url)
 
     from urllib.parse import urlparse
+
     host = urlparse(url).hostname or ""
     return {
         "url": url,

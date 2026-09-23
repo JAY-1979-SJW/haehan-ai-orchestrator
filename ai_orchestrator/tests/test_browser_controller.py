@@ -8,17 +8,16 @@ Tests cover:
 - Redaction of sensitive data
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from local_agent.browser_controller import (
     BrowserController,
     BrowserControllerError,
     InspectResult,
     PlanClickResult,
-    PlanTypeResult,
     PlanSubmitResult,
+    PlanTypeResult,
 )
 
 
@@ -129,35 +128,19 @@ def test_login_detection_heuristics():
     controller = BrowserController("test_agent")
 
     # Test with login in URL
-    result = controller._detect_login_required(
-        "http://example.com/login",
-        "Home",
-        []
-    )
+    result = controller._detect_login_required("http://example.com/login", "Home", [])
     assert result is True
 
     # Test with login in title
-    result = controller._detect_login_required(
-        "http://example.com/auth",
-        "Sign In",
-        []
-    )
+    result = controller._detect_login_required("http://example.com/auth", "Sign In", [])
     assert result is True
 
     # Test with password field
-    result = controller._detect_login_required(
-        "http://example.com",
-        "Home",
-        [{"type": "password", "name": "pwd"}]
-    )
+    result = controller._detect_login_required("http://example.com", "Home", [{"type": "password", "name": "pwd"}])
     assert result is True
 
     # Test normal page
-    result = controller._detect_login_required(
-        "http://example.com",
-        "Home",
-        [{"type": "text", "name": "search"}]
-    )
+    result = controller._detect_login_required("http://example.com", "Home", [{"type": "text", "name": "search"}])
     assert result is False
 
 

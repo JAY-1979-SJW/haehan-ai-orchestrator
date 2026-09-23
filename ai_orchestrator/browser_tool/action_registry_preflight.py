@@ -5,15 +5,15 @@ Evaluates action metadata, operation type, approval status, and gates
 before dispatch without executing.
 Test-only implementation (read-only, no execution, no DB write).
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from agent.action_registry import get_meta, is_known_action
+
 from .gate_approval_preflight import evaluate_gate_approval_preflight
-from .approval_record_store import get_latest_approval_status
 
 logger = logging.getLogger(__name__)
 

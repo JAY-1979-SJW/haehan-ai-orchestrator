@@ -1,43 +1,62 @@
 """tests/test_security_program_install_completion_detector_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.security_program_install_completion_detector import (
-    detect_install_completion, is_retry_ready,
-    DETECTION_INSTALL_COMPLETED, DETECTION_INSTALL_NOT_DETECTED,
-    DETECTION_PARTIAL_RESOLVED, DETECTION_HEADLESS_REQUIRES_HEADED,
+    DETECTION_HEADLESS_REQUIRES_HEADED,
+    DETECTION_INSTALL_COMPLETED,
+    DETECTION_INSTALL_NOT_DETECTED,
+    DETECTION_PARTIAL_RESOLVED,
+    detect_install_completion,
+    is_retry_ready,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 _BEFORE = {
     "url": "https://bank.example.com/",
     "title": "보안프로그램 설치 안내",
     "text_content": "보안프로그램 설치가 필요합니다. 키보드보안 설치하세요.",
-    "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+    "buttons": [],
+    "links": [],
+    "form_labels": [],
+    "heading_texts": [],
 }
 
 _AFTER_CLEAN = {
     "url": "https://bank.example.com/",
     "title": "정상 페이지",
     "text_content": "환영합니다",
-    "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+    "buttons": [],
+    "links": [],
+    "form_labels": [],
+    "heading_texts": [],
 }
 
 _AFTER_PARTIAL = {
     "url": "https://bank.example.com/",
     "title": "보안프로그램",
     "text_content": "키보드보안 프로그램을 설치하세요.",
-    "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+    "buttons": [],
+    "links": [],
+    "form_labels": [],
+    "heading_texts": [],
 }
 
 _AFTER_SAME = {
     "url": "https://bank.example.com/",
     "title": "보안프로그램 설치 안내",
     "text_content": "보안프로그램 설치가 필요합니다. 키보드보안 설치하세요.",
-    "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+    "buttons": [],
+    "links": [],
+    "form_labels": [],
+    "heading_texts": [],
 }
 
 

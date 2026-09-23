@@ -4,48 +4,80 @@
 네이버 카페/블로그 workflow에서 사용하는 action 분류 및 정책.
 delegated_permission 모델에 따른 실행 등급 정의.
 """
+
 from __future__ import annotations
 
 from ai_orchestrator.local_agent.action_risk_policy import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
     classify_action,
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
 )
 
 # ── 카페 workflow action 목록 ─────────────────────────────────────────────────
 
-CAFE_READ_ACTIONS: frozenset[str] = frozenset({
-    "search", "read_page", "extract_text", "extract_table",
-    "extract_list", "extract_metadata", "capture_screenshot",
-    "detect_login_status",
-})
+CAFE_READ_ACTIONS: frozenset[str] = frozenset(
+    {
+        "search",
+        "read_page",
+        "extract_text",
+        "extract_table",
+        "extract_list",
+        "extract_metadata",
+        "capture_screenshot",
+        "detect_login_status",
+    }
+)
 
-CAFE_WRITE_ACTIONS: frozenset[str] = frozenset({
-    "cafe_post_write", "cafe_comment_write",
-    "cafe_post_edit", "cafe_comment_edit",
-    "cafe_post_delete", "cafe_comment_delete",
-})
+CAFE_WRITE_ACTIONS: frozenset[str] = frozenset(
+    {
+        "cafe_post_write",
+        "cafe_comment_write",
+        "cafe_post_edit",
+        "cafe_comment_edit",
+        "cafe_post_delete",
+        "cafe_comment_delete",
+    }
+)
 
-CAFE_DRAFT_ACTIONS: frozenset[str] = frozenset({
-    "save_draft", "preview",
-})
+CAFE_DRAFT_ACTIONS: frozenset[str] = frozenset(
+    {
+        "save_draft",
+        "preview",
+    }
+)
 
 # ── 블로그 workflow action 목록 ───────────────────────────────────────────────
 
-BLOG_READ_ACTIONS: frozenset[str] = frozenset({
-    "read_page", "extract_text", "extract_table",
-    "capture_screenshot", "detect_login_status", "search",
-})
+BLOG_READ_ACTIONS: frozenset[str] = frozenset(
+    {
+        "read_page",
+        "extract_text",
+        "extract_table",
+        "capture_screenshot",
+        "detect_login_status",
+        "search",
+    }
+)
 
-BLOG_DRAFT_ACTIONS: frozenset[str] = frozenset({
-    "save_draft", "preview",
-})
+BLOG_DRAFT_ACTIONS: frozenset[str] = frozenset(
+    {
+        "save_draft",
+        "preview",
+    }
+)
 
-BLOG_PUBLISH_ACTIONS: frozenset[str] = frozenset({
-    "blog_publish", "blog_schedule_publish",
-    "blog_edit", "blog_delete",
-    "blog_set_visibility", "set_visibility",
-    "publish_with_attachment",
-})
+BLOG_PUBLISH_ACTIONS: frozenset[str] = frozenset(
+    {
+        "blog_publish",
+        "blog_schedule_publish",
+        "blog_edit",
+        "blog_delete",
+        "blog_set_visibility",
+        "set_visibility",
+        "publish_with_attachment",
+    }
+)
 
 # ── workflow 단계별 필요 grade ─────────────────────────────────────────────────
 
@@ -102,18 +134,30 @@ def is_workflow_auto_allowed(step: str) -> bool:
 
 # ── 네이버 도메인 상수 ────────────────────────────────────────────────────────
 
-NAVER_DOMAINS: frozenset[str] = frozenset({
-    "naver.com", "www.naver.com", "nid.naver.com",
-    "cafe.naver.com", "m.cafe.naver.com",
-    "blog.naver.com", "m.blog.naver.com",
-})
+NAVER_DOMAINS: frozenset[str] = frozenset(
+    {
+        "naver.com",
+        "www.naver.com",
+        "nid.naver.com",
+        "cafe.naver.com",
+        "m.cafe.naver.com",
+        "blog.naver.com",
+        "m.blog.naver.com",
+    }
+)
 
-NAVER_CAFE_DOMAINS: frozenset[str] = frozenset({
-    "cafe.naver.com", "m.cafe.naver.com",
-})
+NAVER_CAFE_DOMAINS: frozenset[str] = frozenset(
+    {
+        "cafe.naver.com",
+        "m.cafe.naver.com",
+    }
+)
 
-NAVER_BLOG_DOMAINS: frozenset[str] = frozenset({
-    "blog.naver.com", "m.blog.naver.com",
-})
+NAVER_BLOG_DOMAINS: frozenset[str] = frozenset(
+    {
+        "blog.naver.com",
+        "m.blog.naver.com",
+    }
+)
 
 NAVER_LOGIN_DOMAIN = "www.naver.com"

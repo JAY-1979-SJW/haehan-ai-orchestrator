@@ -13,10 +13,12 @@ from pathlib import Path
 
 import pytest
 
+from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+    should_fallback_to_local_agent,
+)
 from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import (
     CHAIN_APPROVAL_REQUIRED,
     CHAIN_BLOCK,
-    CHAIN_DOMAIN_VERIFICATION_REQUIRED,
     CHAIN_MANUAL_REVIEW_REQUIRED,
     CHAIN_PROCEED,
     CHAIN_ROUTE_API_CONNECTOR,
@@ -24,28 +26,17 @@ from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import 
     NEXT_API_CONNECTOR,
     NEXT_APPROVAL_REQUIRED,
     NEXT_BLOCKED,
-    NEXT_DOMAIN_VERIFICATION_REQUIRED,
-    NEXT_LOCAL_AGENT_PLAYWRIGHT_READONLY,
     NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
     NEXT_MANUAL_REVIEW_REQUIRED,
     NEXT_SERVER_PLAYWRIGHT_READONLY_PREFLIGHT,
     build_next_step_instruction,
-    build_routing_preflight_chain_context,
     evaluate_browser_engine_routing_preflight_chain,
     validate_routing_preflight_chain_result,
 )
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
-    should_fallback_to_local_agent,
-)
 
-FIXTURE_PATH = (
-    Path(__file__).parent / "fixtures" / "browser_engine_routing_preflight_chain_20260507.json"
-)
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "browser_engine_routing_preflight_chain_20260507.json"
 MODULE_PATH = (
-    Path(__file__).parent.parent
-    / "ai_orchestrator"
-    / "browser_tool"
-    / "browser_engine_routing_preflight_chain.py"
+    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_preflight_chain.py"
 )
 
 
@@ -62,6 +53,7 @@ def fixture_cases(fixture_data):
 
 # ── 1. fixture JSON 로드 가능 ─────────────────────────────────────────────────
 
+
 def test_fixture_loads(fixture_data):
     assert "cases" in fixture_data
     assert len(fixture_data["cases"]) >= 22
@@ -69,15 +61,23 @@ def test_fixture_loads(fixture_data):
 
 # ── 2. 모든 케이스 필수 section 존재 ─────────────────────────────────────────
 
+
 def test_all_cases_have_required_sections(fixture_cases):
-    required = ["id", "input", "expected_classification", "expected_routing",
-                "expected_fallback_policy", "expected_security_policy"]
+    required = [
+        "id",
+        "input",
+        "expected_classification",
+        "expected_routing",
+        "expected_fallback_policy",
+        "expected_security_policy",
+    ]
     for case_id, case in fixture_cases.items():
         for field in required:
             assert field in case, f"케이스 {case_id}에 필수 필드 없음: {field}"
 
 
 # ── 3. about:blank → server readonly preflight 후보 ──────────────────────────
+
 
 def test_about_blank_server_readonly_chain(fixture_cases):
     case = fixture_cases["about_blank_server_readonly_chain"]
@@ -88,6 +88,7 @@ def test_about_blank_server_readonly_chain(fixture_cases):
 
 # ── 4. example.com → server readonly preflight 후보 ──────────────────────────
 
+
 def test_example_com_server_readonly_chain(fixture_cases):
     case = fixture_cases["example_com_server_readonly_chain"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -96,6 +97,7 @@ def test_example_com_server_readonly_chain(fixture_cases):
 
 # ── 5. G2B 공개 → server/API 후보 ────────────────────────────────────────────
 
+
 def test_g2b_public_notice_chain(fixture_cases):
     case = fixture_cases["g2b_public_notice_server_readonly_or_api_chain"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -103,6 +105,7 @@ def test_g2b_public_notice_chain(fixture_cases):
 
 
 # ── 6. 은행 → 서버 브라우저 체인 진입 없이 user-present ──────────────────────
+
 
 def test_bank_routes_directly_user_present(fixture_cases):
     case = fixture_cases["bank_routes_directly_local_system_browser_user_present"]
@@ -116,6 +119,7 @@ def test_bank_routes_directly_user_present(fixture_cases):
 
 # ── 7. 카드사 → user-present ──────────────────────────────────────────────────
 
+
 def test_card_routes_directly_user_present(fixture_cases):
     case = fixture_cases["card_routes_directly_local_system_browser_user_present"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -124,6 +128,7 @@ def test_card_routes_directly_user_present(fixture_cases):
 
 
 # ── 8. 홈택스 → user-present ──────────────────────────────────────────────────
+
 
 def test_hometax_routes_directly_user_present(fixture_cases):
     case = fixture_cases["hometax_routes_directly_local_system_browser_user_present"]
@@ -134,6 +139,7 @@ def test_hometax_routes_directly_user_present(fixture_cases):
 
 # ── 9. 정부24 → user-present ──────────────────────────────────────────────────
 
+
 def test_gov24_routes_directly_user_present(fixture_cases):
     case = fixture_cases["gov24_routes_directly_local_system_browser_user_present"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -141,6 +147,7 @@ def test_gov24_routes_directly_user_present(fixture_cases):
 
 
 # ── 10. 4대보험 → user-present ────────────────────────────────────────────────
+
 
 def test_four_insurance_routes_directly_user_present(fixture_cases):
     case = fixture_cases["four_insurance_routes_directly_local_system_browser_user_present"]
@@ -150,6 +157,7 @@ def test_four_insurance_routes_directly_user_present(fixture_cases):
 
 # ── 11. 인증서 사이트 → user-present ─────────────────────────────────────────
 
+
 def test_certificate_routes_directly_user_present(fixture_cases):
     case = fixture_cases["certificate_routes_directly_user_present"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -157,6 +165,7 @@ def test_certificate_routes_directly_user_present(fixture_cases):
 
 
 # ── 12. Google accounts → server Playwright로 가지 않음 ──────────────────────
+
 
 def test_google_accounts_no_server_playwright_chain(fixture_cases):
     case = fixture_cases["google_accounts_block_or_api_no_server_playwright"]
@@ -168,6 +177,7 @@ def test_google_accounts_no_server_playwright_chain(fixture_cases):
 
 # ── 13. Gmail → API_CONNECTOR ────────────────────────────────────────────────
 
+
 def test_gmail_routes_api_connector_chain(fixture_cases):
     case = fixture_cases["gmail_routes_api_connector"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -177,6 +187,7 @@ def test_gmail_routes_api_connector_chain(fixture_cases):
 
 # ── 14. Drive → API_CONNECTOR ────────────────────────────────────────────────
 
+
 def test_drive_routes_api_connector_chain(fixture_cases):
     case = fixture_cases["drive_routes_api_connector"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -184,6 +195,7 @@ def test_drive_routes_api_connector_chain(fixture_cases):
 
 
 # ── 15. CAPTCHA → BLOCKED ────────────────────────────────────────────────────
+
 
 def test_captcha_routes_blocked_chain(fixture_cases):
     case = fixture_cases["captcha_routes_block"]
@@ -194,6 +206,7 @@ def test_captcha_routes_blocked_chain(fixture_cases):
 
 # ── 16. unknown site → MANUAL_REVIEW_REQUIRED ────────────────────────────────
 
+
 def test_unknown_site_manual_review_chain(fixture_cases):
     case = fixture_cases["unknown_site_manual_review"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -203,6 +216,7 @@ def test_unknown_site_manual_review_chain(fixture_cases):
 
 # ── 17. production_mode=true → BLOCKED ───────────────────────────────────────
 
+
 def test_production_mode_blocked_chain(fixture_cases):
     case = fixture_cases["production_mode_block"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -210,6 +224,7 @@ def test_production_mode_blocked_chain(fixture_cases):
 
 
 # ── 18. type operation → BLOCKED ─────────────────────────────────────────────
+
 
 def test_type_operation_blocked_chain(fixture_cases):
     case = fixture_cases["type_operation_block"]
@@ -220,6 +235,7 @@ def test_type_operation_blocked_chain(fixture_cases):
 
 # ── 19. submit operation → BLOCKED ───────────────────────────────────────────
 
+
 def test_submit_operation_blocked_chain(fixture_cases):
     case = fixture_cases["submit_operation_block"]
     result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -228,6 +244,7 @@ def test_submit_operation_blocked_chain(fixture_cases):
 
 
 # ── 20. approval_required → APPROVAL_REQUIRED에서 chain 멈춤 ─────────────────
+
 
 def test_approval_required_chain_stops(fixture_cases):
     case = fixture_cases["approval_required_chain_stops_before_dispatch"]
@@ -239,9 +256,14 @@ def test_approval_required_chain_stops(fixture_cases):
 
 # ── 21. API connector route → Playwright preflight 진입 안 함 ────────────────
 
+
 def test_api_connector_no_playwright_preflight():
-    payload = {"site_category": "gmail", "target_domain": "mail.google.com",
-               "target_url": "https://mail.google.com/", "operation_type": "read"}
+    payload = {
+        "site_category": "gmail",
+        "target_domain": "mail.google.com",
+        "target_url": "https://mail.google.com/",
+        "operation_type": "read",
+    }
     result = evaluate_browser_engine_routing_preflight_chain(payload)
     assert result["next_step"] == NEXT_API_CONNECTOR
     # site compliance, server boundary 단계 건너뜀
@@ -250,6 +272,7 @@ def test_api_connector_no_playwright_preflight():
 
 
 # ── 22. policy_blocked → fallback 불가 ───────────────────────────────────────
+
 
 def test_policy_blocked_no_fallback(fixture_cases):
     case = fixture_cases["policy_blocked_no_fallback"]
@@ -260,6 +283,7 @@ def test_policy_blocked_no_fallback(fixture_cases):
 
 
 # ── 23. runtime failure fallback → 허용 사이트만 가능 ────────────────────────
+
 
 def test_runtime_failure_fallback_only_for_allowed_site(fixture_cases):
     case = fixture_cases["runtime_failure_allowed_fallback_only_for_allowed_site"]
@@ -272,6 +296,7 @@ def test_runtime_failure_fallback_only_for_allowed_site(fixture_cases):
 
 # ── 24. safe_to_execute 모든 케이스 False ────────────────────────────────────
 
+
 def test_safe_to_execute_always_false(fixture_cases):
     for case_id, case in fixture_cases.items():
         result = evaluate_browser_engine_routing_preflight_chain(case["input"])
@@ -280,64 +305,84 @@ def test_safe_to_execute_always_false(fixture_cases):
 
 # ── 25. next_step_instruction에 secret/token/cookie/session 없음 ─────────────
 
+
 def test_next_step_instruction_no_sensitive_data(fixture_cases):
-    forbidden = ["secret", "token", "cookie", "session", "password", "otp",
-                 "certificate_password"]
+    forbidden = ["secret", "token", "cookie", "session", "password", "otp", "certificate_password"]
     for case_id, case in fixture_cases.items():
         result = evaluate_browser_engine_routing_preflight_chain(case["input"])
         instruction = result.get("next_step_instruction", {})
         instruction_str = str(instruction).lower()
         for keyword in forbidden:
-            assert keyword not in instruction_str, \
+            assert keyword not in instruction_str, (
                 f"케이스 {case_id} next_step_instruction에 금지된 키워드 발견: {keyword}"
+            )
 
 
 # ── 26. cookie/session/token 추출 코드 없음 ──────────────────────────────────
 
+
 def test_no_cookie_session_token_extraction():
     source = MODULE_PATH.read_text(encoding="utf-8")
-    forbidden = ["cookies()", "storage_state()", "localStorage", "sessionStorage",
-                 "document.cookie", "get_cookies", "extract_cookie"]
+    forbidden = [
+        "cookies()",
+        "storage_state()",
+        "localStorage",
+        "sessionStorage",
+        "document.cookie",
+        "get_cookies",
+        "extract_cookie",
+    ]
     for keyword in forbidden:
         assert keyword not in source, f"모듈에 금지된 코드 발견: {keyword}"
 
 
 # ── 27. password/otp/certificate_password 입력 코드 없음 ─────────────────────
 
+
 def test_no_credential_input_code():
     source = MODULE_PATH.read_text(encoding="utf-8")
-    forbidden = ["fill(", ".type(", "keyboard.type", "certificate_password",
-                 "otp_input", "password_input"]
+    forbidden = ["fill(", ".type(", "keyboard.type", "certificate_password", "otp_input", "password_input"]
     for keyword in forbidden:
         assert keyword not in source, f"모듈에 금지된 코드 발견: {keyword}"
 
 
 # ── 28. click/type/fill/submit 호출 없음 ─────────────────────────────────────
 
+
 def test_no_browser_action_calls():
     source = MODULE_PATH.read_text(encoding="utf-8")
-    forbidden = ["page.click(", "page.type(", "page.fill(", "page.submit(",
-                 "locator.click", "locator.fill"]
+    forbidden = ["page.click(", "page.type(", "page.fill(", "page.submit(", "locator.click", "locator.fill"]
     for keyword in forbidden:
         assert keyword not in source, f"모듈에 금지된 코드 발견: {keyword}"
 
 
 # ── 29. DB write 코드 없음 ────────────────────────────────────────────────────
 
+
 def test_no_db_write_code():
     source = MODULE_PATH.read_text(encoding="utf-8")
-    forbidden = ["INSERT INTO", "UPDATE ", "DELETE FROM", "session.add(",
-                 "session.commit(", ".save(", "db.write", "jsonlines.open"]
+    forbidden = [
+        "INSERT INTO",
+        "UPDATE ",
+        "DELETE FROM",
+        "session.add(",
+        "session.commit(",
+        ".save(",
+        "db.write",
+        "jsonlines.open",
+    ]
     for keyword in forbidden:
         assert keyword not in source, f"모듈에 금지된 DB write 코드 발견: {keyword}"
 
 
 # ── 30. 기존 classifier와 호환 ───────────────────────────────────────────────
 
+
 def test_compatible_with_capability_classifier():
     from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
         classify_browser_engine_capability,
     )
+
     payload = {"target_url": "about:blank", "operation_type": "read"}
     cls = classify_browser_engine_capability(payload)
     chain = evaluate_browser_engine_routing_preflight_chain(payload)
@@ -348,10 +393,12 @@ def test_compatible_with_capability_classifier():
 
 # ── 31. 기존 routing policy와 호환 ───────────────────────────────────────────
 
+
 def test_compatible_with_routing_policy():
     from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
         evaluate_browser_engine_routing,
     )
+
     payload = {"site_category": "bank", "requires_certificate": True, "operation_type": "read"}
     routing = evaluate_browser_engine_routing(payload)
     chain = evaluate_browser_engine_routing_preflight_chain(payload)
@@ -362,10 +409,12 @@ def test_compatible_with_routing_policy():
 
 # ── 32. 기존 server_boundary_policy와 충돌 없음 ──────────────────────────────
 
+
 def test_no_conflict_with_server_boundary_policy():
     from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
         classify_restricted_site_for_server_browser,
     )
+
     result = classify_restricted_site_for_server_browser({"site_category": "bank"})
     assert result["server_browser_allowed"] is False
     assert result["safe_to_execute"] is False
@@ -373,24 +422,28 @@ def test_no_conflict_with_server_boundary_policy():
 
 # ── 33. 기존 site_compliance_policy와 충돌 없음 ──────────────────────────────
 
+
 def test_no_conflict_with_site_compliance_policy():
     from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
-    result = evaluate_site_compliance({"target_domain": "mail.google.com",
-                                       "operation_type": "read"})
+
+    result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "read"})
     assert result["compliance_decision"] == "REQUIRE_API_CONNECTOR"
     assert result["safe_to_execute"] is False
 
 
 # ── 34. local_agent_user_present_flow와 충돌 없음 ────────────────────────────
 
+
 def test_no_conflict_with_local_agent_user_present_flow():
     from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
         DECISION_REQUIRE_USER_PRESENT,
     )
+
     assert DECISION_REQUIRE_USER_PRESENT == "REQUIRE_USER_PRESENT"
 
 
 # ── 35. validate_routing_preflight_chain_result 검증 ─────────────────────────
+
 
 def test_validate_result_passes_for_all_fixture_cases(fixture_cases):
     for case_id, case in fixture_cases.items():
@@ -400,6 +453,7 @@ def test_validate_result_passes_for_all_fixture_cases(fixture_cases):
 
 
 # ── 36. build_next_step_instruction 반환값 검증 ──────────────────────────────
+
 
 def test_build_next_step_instruction_safe_to_execute_false():
     payload = {"target_url": "about:blank", "operation_type": "read"}
@@ -411,6 +465,7 @@ def test_build_next_step_instruction_safe_to_execute_false():
 
 
 # ── 37. 허용 사이트에서만 safe_to_dispatch=True 가능 ─────────────────────────
+
 
 def test_safe_to_dispatch_only_for_chain_proceed():
     # 통과한 경우
@@ -427,25 +482,28 @@ def test_safe_to_dispatch_only_for_chain_proceed():
 
 # ── 38. OTP 필요 → user-present ──────────────────────────────────────────────
 
+
 def test_otp_required_routes_user_present():
-    result = evaluate_browser_engine_routing_preflight_chain({
-        "requires_otp": True, "operation_type": "read", "production_mode": False
-    })
+    result = evaluate_browser_engine_routing_preflight_chain(
+        {"requires_otp": True, "operation_type": "read", "production_mode": False}
+    )
     assert result["next_step"] == NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT
     assert result["safe_to_execute"] is False
 
 
 # ── 39. password 필요 → user-present ─────────────────────────────────────────
 
+
 def test_password_required_routes_user_present():
-    result = evaluate_browser_engine_routing_preflight_chain({
-        "requires_password": True, "operation_type": "read", "production_mode": False
-    })
+    result = evaluate_browser_engine_routing_preflight_chain(
+        {"requires_password": True, "operation_type": "read", "production_mode": False}
+    )
     assert result["next_step"] == NEXT_LOCAL_SYSTEM_BROWSER_USER_PRESENT
     assert result["safe_to_execute"] is False
 
 
 # ── 40. dispatcher 연결 코드 없음 ────────────────────────────────────────────
+
 
 def test_no_dispatcher_connection_code():
     source = MODULE_PATH.read_text(encoding="utf-8")

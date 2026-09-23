@@ -19,17 +19,19 @@ business.prepare_action
 - evidence forbidden field 차단
 - mock local agent 외부 접속 없음
 """
+
 from __future__ import annotations
 
 import pytest
-import json
-from ai_orchestrator.local_agent.actions import business_prepare_action
-from ai_orchestrator.local_agent.actions import business_execute_with_user_approval
-from ai_orchestrator.local_agent.user_approval_gate import (
-    create_approval_request, approve_request, clear_all,
-)
+
+from ai_orchestrator.local_agent.actions import business_execute_with_user_approval, business_prepare_action
 from ai_orchestrator.local_agent.business_local_agent_mock_runner import (
     run_mock_business_local_agent,
+)
+from ai_orchestrator.local_agent.user_approval_gate import (
+    approve_request,
+    clear_all,
+    create_approval_request,
 )
 from ai_orchestrator.server.action_task_api import api_receive_evidence
 
@@ -340,8 +342,15 @@ class TestHandoffSecurityPolicies:
 
         payload = res["handoff_payload"]
         forbidden_keys = {
-            "password", "otp", "cert_password", "cookie", "session",
-            "storage_state", "private_key", "access_token", "refresh_token",
+            "password",
+            "otp",
+            "cert_password",
+            "cookie",
+            "session",
+            "storage_state",
+            "private_key",
+            "access_token",
+            "refresh_token",
         }
         for key in payload.keys():
             if key == "approval_token":
@@ -425,9 +434,15 @@ class TestMockRunnerSecurityNone:
             result_fields = res.get("result_fields_safe", {})
 
             forbidden_keys = {
-                "password", "cookie", "session", "storage_state",
-                "private_key", "access_token", "refresh_token",
-                "otp", "cert_password",
+                "password",
+                "cookie",
+                "session",
+                "storage_state",
+                "private_key",
+                "access_token",
+                "refresh_token",
+                "otp",
+                "cert_password",
             }
             for key in result_fields.keys():
                 for forbidden in forbidden_keys:

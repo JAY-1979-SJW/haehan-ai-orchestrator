@@ -1,16 +1,20 @@
 """Installer Folder Presenter — Windows 탐색기에서 설치파일 위치 표시."""
+
 from __future__ import annotations
 
 import os
-import shlex
 import subprocess
 import sys
 from typing import Any
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 # 결과 상태

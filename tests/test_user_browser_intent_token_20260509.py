@@ -1,16 +1,25 @@
 """user_browser_intent_token 단위 테스트."""
+
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
 
 from ai_orchestrator.local_agent.browser.intent_token import (
-    create_intent, validate_intent, is_origin_allowed,
-    increment_action, add_origin, save_intent, load_intent,
-    expire_intent, list_active_intents,
-    SCOPE_READ_ONLY, SCOPE_INTERACTION,
-    INTENT_OK, INTENT_EXPIRED, INTENT_EXCEEDED,
-    IntentToken,
+    INTENT_EXCEEDED,
+    INTENT_EXPIRED,
+    INTENT_OK,
+    SCOPE_INTERACTION,
+    add_origin,
+    create_intent,
+    expire_intent,
+    increment_action,
+    is_origin_allowed,
+    list_active_intents,
+    load_intent,
+    save_intent,
+    validate_intent,
 )
 
 
@@ -59,8 +68,7 @@ def test_create_intent_ttl_range():
     with pytest.raises(ValueError):
         create_intent(natural_language="x", allowed_origins=("a.com",), ttl_seconds=0)
     with pytest.raises(ValueError):
-        create_intent(natural_language="x", allowed_origins=("a.com",),
-                      ttl_seconds=99999999)
+        create_intent(natural_language="x", allowed_origins=("a.com",), ttl_seconds=99999999)
 
 
 def test_create_intent_rejects_password_in_natural_language():
@@ -90,15 +98,14 @@ def test_validate_intent_ok():
 def test_validate_intent_expired():
     intent = create_intent(natural_language="x", allowed_origins=("a.com",))
     # 미래 시각으로 검증 → 만료
-    future = datetime.now(timezone.utc) + timedelta(hours=2)
+    future = datetime.now(UTC) + timedelta(hours=2)
     res = validate_intent(intent, now=future)
     assert res["ok"] is False
     assert res["code"] == INTENT_EXPIRED
 
 
 def test_validate_intent_exceeded():
-    intent = create_intent(natural_language="x", allowed_origins=("a.com",),
-                           max_actions=2)
+    intent = create_intent(natural_language="x", allowed_origins=("a.com",), max_actions=2)
     intent = increment_action(intent)
     intent = increment_action(intent)
     res = validate_intent(intent)
@@ -107,21 +114,18 @@ def test_validate_intent_exceeded():
 
 
 def test_is_origin_allowed_match():
-    intent = create_intent(natural_language="x",
-                           allowed_origins=("developer.hancom.com",))
+    intent = create_intent(natural_language="x", allowed_origins=("developer.hancom.com",))
     assert is_origin_allowed(intent, "https://developer.hancom.com/docsmenu") is True
 
 
 def test_is_origin_allowed_subdomain_not_match():
     # 서브도메인은 명시적으로 등록해야만 통과
-    intent = create_intent(natural_language="x",
-                           allowed_origins=("developer.hancom.com",))
+    intent = create_intent(natural_language="x", allowed_origins=("developer.hancom.com",))
     assert is_origin_allowed(intent, "https://other.hancom.com/x") is False
 
 
 def test_is_origin_allowed_different_site_blocked():
-    intent = create_intent(natural_language="x",
-                           allowed_origins=("developer.hancom.com",))
+    intent = create_intent(natural_language="x", allowed_origins=("developer.hancom.com",))
     assert is_origin_allowed(intent, "https://google.com") is False
 
 
@@ -152,8 +156,7 @@ def test_add_origin_duplicate_no_op():
 
 
 def test_save_and_load_intent(tmp_path):
-    intent = create_intent(natural_language="저장 테스트",
-                           allowed_origins=("a.com", "b.com"))
+    intent = create_intent(natural_language="저장 테스트", allowed_origins=("a.com", "b.com"))
     save_intent(intent, intent_dir=tmp_path)
     loaded = load_intent(intent.intent_id, intent_dir=tmp_path)
     assert loaded is not None

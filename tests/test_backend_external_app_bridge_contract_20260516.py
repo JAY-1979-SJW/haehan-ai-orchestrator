@@ -9,22 +9,19 @@ ASSISTANT_BACKEND_PREMIUM_INTEGRATED_CLOSEOUT_01 STEP 7 검측.
 - DB write 금지
 - skip/xfail 금지
 """
+
 from __future__ import annotations
 
-import pytest
-
-from ai_orchestrator.domain.model_adapters import get_all_bridges, get_bridge
-from ai_orchestrator.domain.models import ExternalAppBridge, HandoffMode
 from ai_orchestrator.audit_evidence.adapters import build_external_app_handoff
+from ai_orchestrator.domain.model_adapters import get_all_bridges, get_bridge
 from ai_orchestrator.safety_policy.secret_redaction import (
     FORBIDDEN_SECRET_FIELDS,
-    assert_no_sensitive_fields,
 )
-
 
 # ---------------------------------------------------------------------------
 # 금지 필드 헬퍼
 # ---------------------------------------------------------------------------
+
 
 def _has_forbidden(d: dict) -> list[str]:
     found = []
@@ -39,6 +36,7 @@ def _has_forbidden(d: dict) -> list[str]:
 # ---------------------------------------------------------------------------
 # STEP 7.1 — bridge registry 6개 전문 앱 포함
 # ---------------------------------------------------------------------------
+
 
 class TestBridgeRegistry:
     """bridge registry 계약 검측."""
@@ -84,9 +82,7 @@ class TestBridgeRegistry:
     def test_all_bridges_status_future_or_hold(self):
         allowed_statuses = {"FUTURE_INTEGRATION", "EXTERNAL_APP_HOLD"}
         for b in get_all_bridges():
-            assert b.status in allowed_statuses, (
-                f"{b.bridge_id}: status={b.status} (is_implemented=True는 금지)"
-            )
+            assert b.status in allowed_statuses, f"{b.bridge_id}: status={b.status} (is_implemented=True는 금지)"
 
     def test_all_bridges_not_implemented(self):
         for b in get_all_bridges():
@@ -94,14 +90,13 @@ class TestBridgeRegistry:
 
     def test_no_forbidden_fields_in_safe_dict(self):
         for b in get_all_bridges():
-            assert _has_forbidden(b.to_safe_dict()) == [], (
-                f"{b.bridge_id}: 금지 필드 노출"
-            )
+            assert _has_forbidden(b.to_safe_dict()) == [], f"{b.bridge_id}: 금지 필드 노출"
 
 
 # ---------------------------------------------------------------------------
 # STEP 7.2 — ExternalAppHandoff 생성 가능, 실행 아님
 # ---------------------------------------------------------------------------
+
 
 class TestExternalAppHandoff:
     """handoff 기록 계약 — 실제 앱 실행 없음."""
@@ -204,6 +199,7 @@ class TestExternalAppHandoff:
 
     def test_handoff_input_artifact_refs_expressible(self):
         from ai_orchestrator.audit_evidence.models import ExternalAppHandoff
+
         hf = ExternalAppHandoff.create(
             task_id="t_art_001",
             bridge_id="cad-bridge",
@@ -234,11 +230,13 @@ class TestExternalAppHandoff:
 # STEP 7.3 — ExecutionPolicyService bridge 차단 확인
 # ---------------------------------------------------------------------------
 
+
 class TestExecutionPolicyBridgeBlock:
     """ExecutionPolicyService가 CAD/Tax/Bid를 서버에서 차단한다."""
 
     def test_cad_blocked_on_server(self):
         from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
         svc = ExecutionPolicyService()
         # provider="local_app", work_type="cad" → QUARANTINE/EXTERNAL_APP_HOLD 분류
         decision = svc.decide_for_external_work(provider="local_app", work_type="cad")
@@ -246,13 +244,14 @@ class TestExecutionPolicyBridgeBlock:
 
     def test_bid_blocked_user_direct(self):
         from ai_orchestrator.services.execution_policy_service import ExecutionPolicyService
+
         svc = ExecutionPolicyService()
         decision = svc.decide_for_external_work(provider="local_app", work_type="bid")
         assert not decision.server_executable, "BID는 서버 직접 실행 불가"
 
     def test_no_real_app_import(self):
         import sys
+
         # 실제 CAD/HWPX 앱 SDK가 import되지 않았음을 확인
-        cad_modules = [k for k in sys.modules if "autocad" in k.lower()
-                       or "zwcad" in k.lower() or "hwpx" in k.lower()]
+        cad_modules = [k for k in sys.modules if "autocad" in k.lower() or "zwcad" in k.lower() or "hwpx" in k.lower()]
         assert cad_modules == [], f"실제 앱 import 감지: {cad_modules}"

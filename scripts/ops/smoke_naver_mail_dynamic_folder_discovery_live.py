@@ -8,20 +8,21 @@
   5. 기존 244건 수집 회귀 검증 (smart_folder_collector.collect_all)
   6. LNB 전체 unread 합계 검산
 """
+
 from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict
 from pathlib import Path
 
+from scripts.naver.mail import folder_discovery as fd
+from scripts.naver.mail import folder_profile as fpr
+from scripts.naver.mail import smart_folder_collector as sfc
 from scripts.naver.mail_read import cdp
-from scripts.naver.mail import (folder_discovery as fd,
-                                folder_policy as fp,
-                                folder_profile as fpr,
-                                smart_folder_collector as sfc)
 from scripts.ops import (
     audit_naver_mail_dynamic_folder_discovery as audit_dd,
+)
+from scripts.ops import (
     audit_naver_mail_smart_folder_coverage as audit_sf,
 )
 
@@ -66,8 +67,7 @@ def main():
             break
 
     # 2) snapshot
-    snap = fpr.build_snapshot(folders, account_raw="",
-                              lnb_total_unread=lnb_total)
+    snap = fpr.build_snapshot(folders, account_raw="", lnb_total_unread=lnb_total)
     snap_path = fpr.write_snapshot(snap, out_dir)
     print(f"[2] snapshot → {snap_path}")
 
@@ -75,18 +75,22 @@ def main():
     dv = audit_dd.judge(snap)
     snap.verdict = dv.code
     (out_dir / "folder_discovery_audit.json").write_text(
-        json.dumps({"verdict": dv.code, "passed": dv.passed,
-                    "reasons": dv.reasons, "metrics": dv.metrics},
-                   ensure_ascii=False, indent=2),
+        json.dumps(
+            {"verdict": dv.code, "passed": dv.passed, "reasons": dv.reasons, "metrics": dv.metrics},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
 
     print("\n=== FOLDERS ===")
     for f in folders:
         flag = "✓" if f.is_collectable else " "
-        print(f"  [{flag}] {f.name:>14} kind={f.kind:>10} unread={f.unread_count:>4}"
-              f" fid={f.folder_id or '-':>4} adapter={f.adapter_selected:>20}"
-              f" policy={f.default_policy_state}")
+        print(
+            f"  [{flag}] {f.name:>14} kind={f.kind:>10} unread={f.unread_count:>4}"
+            f" fid={f.folder_id or '-':>4} adapter={f.adapter_selected:>20}"
+            f" policy={f.default_policy_state}"
+        )
 
     print(f"\n=== AUDIT (discovery) ===\n{dv.code} passed={dv.passed}  reasons={dv.reasons}")
 
@@ -104,13 +108,16 @@ def main():
 
     # 저장
     (out_dir / "regression_smart_folder_coverage.json").write_text(
-        json.dumps({"folder_collected_total": rd["folder_collected_total"],
-                    "unique_sn_total": rd["unique_sn_total"],
-                    "warnings": rd["warnings"],
-                    "audit": {"verdict": v_sf.code,
-                              "passed": v_sf.passed,
-                              "reasons": v_sf.reasons}},
-                   ensure_ascii=False, indent=2),
+        json.dumps(
+            {
+                "folder_collected_total": rd["folder_collected_total"],
+                "unique_sn_total": rd["unique_sn_total"],
+                "warnings": rd["warnings"],
+                "audit": {"verdict": v_sf.code, "passed": v_sf.passed, "reasons": v_sf.reasons},
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
 

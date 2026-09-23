@@ -1,5 +1,4 @@
 """Unit tests for scripts.site_engine.capability_detector."""
-import pytest
 
 from scripts.site_engine.capability_detector import (
     CapabilityDetectionInput,
@@ -70,9 +69,7 @@ def test_download_detected_by_button_label():
 
 
 def test_login_required_detected():
-    result = detect_capabilities_from_snapshot(
-        _inp(page_text_snippet="로그인 후 이용하실 수 있습니다")
-    )
+    result = detect_capabilities_from_snapshot(_inp(page_text_snippet="로그인 후 이용하실 수 있습니다"))
     assert result.login_required
 
 
@@ -112,4 +109,5 @@ def test_no_unknown_capabilities_without_evidence():
 def test_execution_gate_import_no_conflict():
     from scripts.site_engine.execution_gate import GateDecision as GD
     from scripts.site_engine.types import GateDecision as GD2
+
     assert GD is GD2

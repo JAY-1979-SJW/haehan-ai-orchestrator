@@ -7,9 +7,9 @@ ASSISTANT_AUTOWORK_FRONTDOOR_OPERATION_CHECKLIST_01
     UI 변경 금지 / 5050 중단 금지 / secret 출력 금지
     skip/xfail 금지
 """
+
 from __future__ import annotations
 
-import importlib
 import sys
 from pathlib import Path
 
@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 # 1. 감사 스크립트 존재
 # ---------------------------------------------------------------------------
 
+
 def test_audit_script_exists():
     p = ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py"
     assert p.exists(), f"audit script 없음: {p}"
@@ -28,6 +29,7 @@ def test_audit_script_exists():
 
 def test_audit_script_importable():
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
         ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
@@ -42,8 +44,10 @@ def test_audit_script_importable():
 # 2. FQDN 고정
 # ---------------------------------------------------------------------------
 
+
 def test_autowork_fqdn_is_primary():
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
         ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
@@ -55,6 +59,7 @@ def test_autowork_fqdn_is_primary():
 
 def test_autowork_dns_target_ip():
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
         ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
@@ -66,8 +71,10 @@ def test_autowork_dns_target_ip():
 
 # ── 이하 공통 mod 로딩 헬퍼 ──────────────────────────────────────────────────
 
+
 def _load_audit_mod():
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
         ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
@@ -80,6 +87,7 @@ def _load_audit_mod():
 # ---------------------------------------------------------------------------
 # 3. autowork는 대표 웹 주소
 # ---------------------------------------------------------------------------
+
 
 def test_autowork_is_primary_web_address():
     mod = _load_audit_mod()
@@ -95,6 +103,7 @@ def test_autowork_role_defined():
 # ---------------------------------------------------------------------------
 # 4. API base URL 단기 전략 고정
 # ---------------------------------------------------------------------------
+
 
 def test_api_short_term_uses_orchestrator_path():
     mod = _load_audit_mod()
@@ -115,6 +124,7 @@ def test_api_long_term_candidates_count():
 # 5. 5050 중단 금지 조건
 # ---------------------------------------------------------------------------
 
+
 def test_5050_stop_forbidden_in_routing():
     mod = _load_audit_mod()
     result = mod.run_audit()
@@ -129,6 +139,7 @@ def test_5050_stop_in_safe_boundary():
 # ---------------------------------------------------------------------------
 # 6. /orchestrator/api/ → 8400 조건
 # ---------------------------------------------------------------------------
+
 
 def test_orchestrator_api_8400_documented():
     mod = _load_audit_mod()
@@ -148,6 +159,7 @@ def test_orchestrator_api_8400_in_audit():
 # 7. /orchestrator/ → 5050 조건
 # ---------------------------------------------------------------------------
 
+
 def test_orchestrator_legacy_5050_documented():
     mod = _load_audit_mod()
     routes = mod.NGINX_ROUTING
@@ -164,6 +176,7 @@ def test_orchestrator_5050_in_audit():
 # ---------------------------------------------------------------------------
 # 8. SSL 인증서 경로 조건
 # ---------------------------------------------------------------------------
+
 
 def test_ssl_cert_path_is_autowork():
     mod = _load_audit_mod()
@@ -187,6 +200,7 @@ def test_ssl_cert_path_in_audit():
 # 9. 인증서 만료일 점검 조건
 # ---------------------------------------------------------------------------
 
+
 def test_ssl_expire_date_recorded():
     mod = _load_audit_mod()
     assert mod.SSL_EXPIRE_DATE == "2026-08-14"
@@ -206,6 +220,7 @@ def test_ssl_renew_deadline_in_audit():
 # ---------------------------------------------------------------------------
 # 10. rollback backup 파일명 조건
 # ---------------------------------------------------------------------------
+
 
 def test_rollback_nginx_backup_name():
     mod = _load_audit_mod()
@@ -239,6 +254,7 @@ def test_rollback_conditions_count():
 # ---------------------------------------------------------------------------
 # 11. smoke command가 HTTP/HTTPS/TLS/orchestrator 포함
 # ---------------------------------------------------------------------------
+
 
 def test_smoke_commands_http_301():
     mod = _load_audit_mod()
@@ -279,6 +295,7 @@ def test_smoke_commands_5050():
 # 12. certbot 실행 금지 조건
 # ---------------------------------------------------------------------------
 
+
 def test_certbot_exec_forbidden_in_boundary():
     mod = _load_audit_mod()
     assert mod.SAFE_BOUNDARY["certbot_execution"] is False
@@ -294,6 +311,7 @@ def test_certbot_forbidden_in_checklist():
 # 13. nginx reload 금지 조건
 # ---------------------------------------------------------------------------
 
+
 def test_nginx_reload_forbidden_in_boundary():
     mod = _load_audit_mod()
     assert mod.SAFE_BOUNDARY["nginx_reload"] is False
@@ -308,6 +326,7 @@ def test_nginx_reload_forbidden_in_checklist():
 # ---------------------------------------------------------------------------
 # 14. UI 인테리어 미착수 조건
 # ---------------------------------------------------------------------------
+
 
 def test_frontend_interior_not_started():
     mod = _load_audit_mod()
@@ -328,6 +347,7 @@ def test_ui_not_started_in_checklist():
 # ---------------------------------------------------------------------------
 # 15. 전체 audit PASS
 # ---------------------------------------------------------------------------
+
 
 def test_audit_all_ok():
     mod = _load_audit_mod()

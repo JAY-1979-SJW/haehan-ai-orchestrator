@@ -1,17 +1,14 @@
 """Tests for Site Access Compatibility Audit Module."""
+
 import json
-import pytest
 from pathlib import Path
 
 from ai_orchestrator.browser_tool.site_access_compatibility_auditor import (
-    build_site_access_audit_target,
     classify_auth_methods,
     classify_remote_access_restriction,
     evaluate_site_access_policy,
-    build_site_access_audit_result,
     validate_site_access_audit_result,
 )
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "site_access_compatibility_targets_20260507.json"
 

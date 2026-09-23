@@ -1,7 +1,7 @@
 """Tests for Browser Worker mock backend."""
-import pytest
-from browser_worker.schemas import WorkerBrowserRequest
+
 from browser_worker.backends.mock_playwright_backend import MockPlaywrightBackend
+from browser_worker.schemas import WorkerBrowserRequest
 
 
 class TestMockPlaywrightBackend:

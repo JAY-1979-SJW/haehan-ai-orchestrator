@@ -13,18 +13,17 @@
 PyInstaller 미설치 시:
   pip install pyinstaller
 """
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
-
 
 ENTRY_MODULE = "local_agent.desktop_launcher"
 APP_NAME = "HaehanAI-Agent"
@@ -34,8 +33,9 @@ BUILD_REPORT = Path("data/inspection/local_agent_installer_package")
 
 def _which_pyinstaller() -> str:
     try:
-        r = subprocess.run([sys.executable, "-m", "PyInstaller", "--version"],
-                           capture_output=True, text=True, timeout=10)
+        r = subprocess.run(
+            [sys.executable, "-m", "PyInstaller", "--version"], capture_output=True, text=True, timeout=10
+        )
         if r.returncode == 0:
             return r.stdout.strip()
     except Exception:
@@ -66,8 +66,9 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
     ver = _which_pyinstaller()
     report["pyinstaller_version"] = ver
     if not ver:
-        report["error"] = ("PyInstaller 미설치. `pip install pyinstaller` 후 재시도. "
-                            "본 공정에서는 빌드 스크립트/문서/테스트만 검증.")
+        report["error"] = (
+            "PyInstaller 미설치. `pip install pyinstaller` 후 재시도. 본 공정에서는 빌드 스크립트/문서/테스트만 검증."
+        )
         _save(report)
         return report
 
@@ -82,40 +83,56 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
                     p.unlink(missing_ok=True)
 
     cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", APP_NAME,
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--name",
+        APP_NAME,
         "--noconfirm",
         "--clean" if clean else "",
         "--onefile" if onefile else "--onedir",
-        "--console",   # 디버깅 용이 — 정식 배포에선 --windowed 검토
+        "--console",  # 디버깅 용이 — 정식 배포에선 --windowed 검토
         # 안 보이는 추가 import 보장
-        "--hidden-import", "websockets",
-        "--hidden-import", "keyring",
-        "--hidden-import", "keyring.backends.Windows",
+        "--hidden-import",
+        "websockets",
+        "--hidden-import",
+        "keyring",
+        "--hidden-import",
+        "keyring.backends.Windows",
         # GUI hidden imports (AGENT_GUI_TRAY_01)
-        "--hidden-import", "tkinter",
-        "--hidden-import", "tkinter.ttk",
-        "--hidden-import", "tkinter.messagebox",
-        "--hidden-import", "pystray",
-        "--hidden-import", "pystray._win32",
-        "--hidden-import", "PIL",
-        "--hidden-import", "PIL.Image",
-        "--hidden-import", "PIL.ImageDraw",
+        "--hidden-import",
+        "tkinter",
+        "--hidden-import",
+        "tkinter.ttk",
+        "--hidden-import",
+        "tkinter.messagebox",
+        "--hidden-import",
+        "pystray",
+        "--hidden-import",
+        "pystray._win32",
+        "--hidden-import",
+        "PIL",
+        "--hidden-import",
+        "PIL.Image",
+        "--hidden-import",
+        "PIL.ImageDraw",
         # customtkinter 모던 디자인
-        "--hidden-import", "customtkinter",
-        "--collect-data", "customtkinter",
-        "--collect-submodules", "local_agent",
+        "--hidden-import",
+        "customtkinter",
+        "--collect-data",
+        "customtkinter",
+        "--collect-submodules",
+        "local_agent",
         # 엔트리: 모듈 실행 wrapper
-        "-c", "import sys; from local_agent.desktop_launcher import main; sys.exit(main())",
+        "-c",
+        "import sys; from local_agent.desktop_launcher import main; sys.exit(main())",
     ]
     # -c 옵션은 PyInstaller 에 없음 — 별도 launcher 파일 필요
     # launcher 파일 생성:
     launcher = Path("build") / "agent_launcher.py"
     launcher.parent.mkdir(parents=True, exist_ok=True)
     launcher.write_text(
-        "import sys\n"
-        "from local_agent.desktop_launcher import main\n"
-        "sys.exit(main())\n",
+        "import sys\nfrom local_agent.desktop_launcher import main\nsys.exit(main())\n",
         encoding="utf-8",
     )
     cmd = [c for c in cmd if c]
@@ -139,8 +156,7 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
         return report
 
     # 산출물
-    target = (Path("dist") / APP_NAME / (APP_NAME + ".exe")) if not onefile \
-             else Path("dist") / (APP_NAME + ".exe")
+    target = (Path("dist") / APP_NAME / (APP_NAME + ".exe")) if not onefile else Path("dist") / (APP_NAME + ".exe")
     if not target.exists():
         # PyInstaller 가 다른 이름으로 만들었을 가능성 — fallback
         alt = list((Path("dist")).glob(f"{APP_NAME}*"))
@@ -163,12 +179,9 @@ def build(*, onefile: bool = False, clean: bool = False) -> dict:
 
 def _save(report: dict) -> None:
     path = BUILD_REPORT / "build_report.json"
-    path.write_text(json.dumps(report, ensure_ascii=False, indent=2),
-                    encoding="utf-8")
+    path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     csum = BUILD_REPORT / "checksums.json"
-    csum.write_text(json.dumps(report.get("checksums", {}),
-                                ensure_ascii=False, indent=2),
-                    encoding="utf-8")
+    csum.write_text(json.dumps(report.get("checksums", {}), ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:

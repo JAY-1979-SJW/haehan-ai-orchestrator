@@ -3,21 +3,16 @@
 The locked contracts and index builder live in smaller modules. This file keeps
 the public CLI/import surface stable for router, tests, and ops audits.
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from scripts.google import work_records
-from scripts.google.module_contracts import (
-    GOOGLE_TOP_MODULE,
-    SUBMODULE_OWNERS,
-    SURFACE_IMPLEMENTATION_MODULES,
-)
 from scripts.google.module_index_builder import build_google_module_index
-
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "google_module_checks"
@@ -28,7 +23,7 @@ def save_google_module_index(payload: dict[str, Any] | None = None, path: Path |
     payload = payload or build_google_module_index()
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     if path is None:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         path = REPORT_DIR / f"google_module_check_{timestamp}.json"
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     LATEST_REPORT.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

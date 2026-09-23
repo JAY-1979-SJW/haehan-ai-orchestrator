@@ -2,16 +2,16 @@
 
 URL: https://new.smartplace.naver.com/
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
 from scripts.logger import get_logger
-from scripts.popup_detector import handle_page_popups
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 PLACE_URL = "https://new.smartplace.naver.com/"
@@ -59,7 +59,8 @@ class NaverPlace:
         if not self.open():
             return []
         try:
-            return self.page.evaluate("""
+            return self.page.evaluate(
+                """
             (limit) => {
                 const out = [];
                 document.querySelectorAll('[class*="Review"], .review_item').forEach((el, i) => {
@@ -72,7 +73,9 @@ class NaverPlace:
                 });
                 return out;
             }
-            """, limit)
+            """,
+                limit,
+            )
         except Exception as e:
             _log.error("[naver-place] reviews 실패: %s", e)
             return []

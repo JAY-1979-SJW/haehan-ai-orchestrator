@@ -1,21 +1,24 @@
 """Security Program Auto Resume — 설치 후 원래 task를 자동 재개한다."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.security_program_detector import detect_security_signals
+from ai_orchestrator.local_agent.local_security_installer_runner import (
+    STATUS_INSTALL_COMPLETED,
+    STATUS_INSTALL_FAILED,
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_WAITING_USER_UAC,
+    check_install_completed,
+    prepare_install,
+)
 from ai_orchestrator.local_agent.security_installer_candidate_finder import find_installer_candidates
 from ai_orchestrator.local_agent.security_installer_policy import evaluate_installer
-from ai_orchestrator.local_agent.local_security_installer_runner import (
-    check_action_allowed, prepare_install, check_install_completed,
-    get_retry_ready_result,
-    STATUS_INSTALL_PERMISSION_REQUIRED, STATUS_WAITING_USER_UAC,
-    STATUS_INSTALL_COMPLETED, STATUS_RETRY_ORIGINAL_TASK_READY,
-    STATUS_INSTALL_FAILED,
-)
+from ai_orchestrator.local_agent.security_program_detector import detect_security_signals
 from ai_orchestrator.local_agent.security_program_install_result_sanitizer import (
-    build_safe_report, check_result_has_no_sensitive_data,
+    build_safe_report,
 )
 
 # 흐름 상태
@@ -59,16 +62,18 @@ def run_security_install_flow(
     # 1. 감지
     detection = detect_security_signals(page_data)
     if not detection["requires_security_program"]:
-        return _safe_result(task_id, domain, "NO_SECURITY_PROGRAM_REQUIRED",
-                            "보안프로그램 필요 신호가 감지되지 않았습니다.")
+        return _safe_result(
+            task_id, domain, "NO_SECURITY_PROGRAM_REQUIRED", "보안프로그램 필요 신호가 감지되지 않았습니다."
+        )
 
     # 2. 설치 후보 수집
     candidates_result = find_installer_candidates(page_data, source_host=domain)
     allowed = candidates_result["allowed"]
 
     if not allowed:
-        return _safe_result(task_id, domain, "NO_INSTALL_CANDIDATE",
-                            "공식 설치 후보를 찾을 수 없습니다. 수동 설치가 필요합니다.")
+        return _safe_result(
+            task_id, domain, "NO_INSTALL_CANDIDATE", "공식 설치 후보를 찾을 수 없습니다. 수동 설치가 필요합니다."
+        )
 
     candidate = allowed[0]
     filename = candidate.get("filename", "")
@@ -82,8 +87,7 @@ def run_security_install_flow(
     )
 
     if policy["policy"] == "POLICY_BLOCKED":
-        return _safe_result(task_id, domain, "INSTALL_BLOCKED",
-                            f"정책 위반: {policy['violations']}")
+        return _safe_result(task_id, domain, "INSTALL_BLOCKED", f"정책 위반: {policy['violations']}")
 
     # 4. 권한 확인
     install_state = prepare_install(
@@ -149,8 +153,9 @@ def run_security_install_flow(
         report["flow"] = FLOW_RESUME_ORIGINAL
         return report
 
-    return _safe_result(task_id, domain, STATUS_INSTALL_FAILED,
-                        "설치 완료를 확인할 수 없습니다. 설치 마법사를 확인해주세요.")
+    return _safe_result(
+        task_id, domain, STATUS_INSTALL_FAILED, "설치 완료를 확인할 수 없습니다. 설치 마법사를 확인해주세요."
+    )
 
 
 def _safe_result(task_id: str, domain: str, status: str, message: str) -> dict[str, Any]:
@@ -167,6 +172,7 @@ def _safe_result(task_id: str, domain: str, status: str, message: str) -> dict[s
 
 def _extract_domain(url: str) -> str:
     from urllib.parse import urlparse
+
     try:
         return urlparse(url).hostname or ""
     except Exception:

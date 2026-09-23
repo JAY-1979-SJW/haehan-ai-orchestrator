@@ -1,8 +1,9 @@
 """Google work action definitions (read + write) and lookup helpers."""
+
 from __future__ import annotations
 
 from . import surfaces
-from .workflows_common import GoogleWorkAction, APPROVAL_PHRASE
+from .workflows_common import GoogleWorkAction
 
 
 def _read_actions() -> tuple[GoogleWorkAction, ...]:

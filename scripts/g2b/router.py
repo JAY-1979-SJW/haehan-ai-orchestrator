@@ -3,6 +3,7 @@
 router 역할: command dispatch, validator 호출, gate 호출, response formatting만 담당.
 실제 G2B 접속, 로그인, 투찰, 전자서명 구현 없음.
 """
+
 from __future__ import annotations
 
 from scripts.gate import check as gate_check
@@ -12,11 +13,11 @@ __status__ = {
     "tasks": {
         "discover (공개공고 URL 탐색)": "partial",
         "download (첨부파일 다운로드)": "partial",
-        "suite (Read-Only 라이브)":     "partial",
-        "status (세대 상태 조회)":       "skeleton",
-        "gate (gate 판정)":              "skeleton",
+        "suite (Read-Only 라이브)": "partial",
+        "status (세대 상태 조회)": "skeleton",
+        "gate (gate 판정)": "skeleton",
         "analysis-draft (입찰분석 초안)": "skeleton",
-        "submit-draft (제출 초안)":       "skeleton",
+        "submit-draft (제출 초안)": "skeleton",
     },
     "note": "G2B 세대 골격 생성 완료. 실제 스크립트 검증은 다음 단계에서 수행.",
 }
@@ -77,7 +78,8 @@ def run_g2b(task: str | None, sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_status() -> None:
-    from scripts.g2b.profile import G2B_SITE_PROFILE, ROOM_GATE_POLICY
+    from scripts.g2b.profile import G2B_SITE_PROFILE
+
     result = _build_response(
         command="status",
         status="ok",
@@ -88,11 +90,13 @@ def _cmd_status() -> None:
         report_policy={"root": "docs/reports/", "prefix": "g2b_"},
     )
     import json
+
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 def _cmd_gate(args: list[str]) -> None:
     from scripts.g2b.gates import evaluate_g2b_action_gate
+
     action = args[0] if args else ""
     if not action:
         print("[G2B gate] action 인수 필요. 예: g2b gate search_notice")
@@ -107,12 +111,13 @@ def _cmd_gate(args: list[str]) -> None:
         report_policy=None,
     )
     import json
+
     print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
 def _cmd_analysis_draft(args: list[str]) -> None:
     from scripts.g2b.gates import evaluate_g2b_action_gate
-    from scripts.g2b.validators import validate_bid_analysis_draft_payload
+
     gate = evaluate_g2b_action_gate("create_bid_analysis_draft")
     response = _build_response(
         command="analysis-draft",
@@ -123,11 +128,13 @@ def _cmd_analysis_draft(args: list[str]) -> None:
         report_policy=None,
     )
     import json
+
     print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
 def _cmd_submit_draft(args: list[str]) -> None:
     from scripts.g2b.gates import evaluate_g2b_action_gate
+
     gate = evaluate_g2b_action_gate("create_submit_draft")
     response = _build_response(
         command="submit-draft",
@@ -138,6 +145,7 @@ def _cmd_submit_draft(args: list[str]) -> None:
         report_policy=None,
     )
     import json
+
     print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
@@ -158,17 +166,17 @@ def _build_response(
     **_: object,
 ) -> dict[str, object]:
     return {
-        "command":              command,
-        "status":               status,
-        "decision":             decision,
-        "reason":               reason,
+        "command": command,
+        "status": status,
+        "decision": decision,
+        "reason": reason,
         "user_direct_required": user_direct_required,
         "local_agent_required": local_agent_required,
-        "approval_required":    approval_required,
-        "blocked":              blocked,
-        "next_step":            next_step,
-        "evidence_policy":      evidence_policy,
-        "report_policy":        report_policy,
+        "approval_required": approval_required,
+        "blocked": blocked,
+        "next_step": next_step,
+        "evidence_policy": evidence_policy,
+        "report_policy": report_policy,
     }
 
 
@@ -176,6 +184,7 @@ def _cmd_discover(args: list[str]) -> None:
     gate_check("goto")
     print("[G2B] 공개 공고 유효 URL 탐색")
     from scripts.g2b.discover_valid_public_notice_urls import main
+
     main()
 
 
@@ -183,6 +192,7 @@ def _cmd_download(args: list[str]) -> None:
     gate_check("file_delete")  # 파일 다운로드 = notify
     print("[G2B] 첨부파일 배치 다운로드")
     from scripts.g2b.download_g2b_direct_attachment_urls import main
+
     main()
 
 
@@ -190,6 +200,7 @@ def _cmd_suite(args: list[str]) -> None:
     gate_check("goto")
     print("[G2B] 공개 공고 Read-Only 라이브 스위트 실행")
     from scripts.g2b.run_public_notice_readonly_live_suite import main
+
     main()
 
 

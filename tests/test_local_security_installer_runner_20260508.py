@@ -1,12 +1,18 @@
 """tests/test_local_security_installer_runner_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.local_security_installer_runner import (
-    check_action_allowed, prepare_install, check_install_completed,
-    get_retry_ready_result,
-    STATUS_INSTALL_PERMISSION_REQUIRED, STATUS_WAITING_USER_UAC,
-    STATUS_INSTALL_COMPLETED, STATUS_INSTALL_RUNNING, STATUS_INSTALL_FAILED,
-    STATUS_RETRY_ORIGINAL_TASK_READY, STATUS_RESTART_BROWSER_REQUIRED,
     GRADE_BLOCKED,
+    STATUS_INSTALL_COMPLETED,
+    STATUS_INSTALL_FAILED,
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_INSTALL_RUNNING,
+    STATUS_RESTART_BROWSER_REQUIRED,
+    STATUS_RETRY_ORIGINAL_TASK_READY,
+    STATUS_WAITING_USER_UAC,
+    check_action_allowed,
+    check_install_completed,
+    get_retry_ready_result,
+    prepare_install,
 )
 
 _CANDIDATE = {
@@ -96,7 +102,10 @@ def test_check_install_completed_true():
         "url": "https://bank.example.com/",
         "title": "완료",
         "text_content": "설치가 완료되었습니다.",
-        "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+        "buttons": [],
+        "links": [],
+        "form_labels": [],
+        "heading_texts": [],
     }
     r = check_install_completed(page)
     assert r["install_completed"] is True
@@ -108,7 +117,10 @@ def test_check_install_running():
         "url": "https://bank.example.com/",
         "title": "설치 중",
         "text_content": "설치 중입니다.",
-        "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+        "buttons": [],
+        "links": [],
+        "form_labels": [],
+        "heading_texts": [],
     }
     r = check_install_completed(page)
     assert r["install_completed"] is False
@@ -120,7 +132,10 @@ def test_restart_browser_required():
         "url": "https://bank.example.com/",
         "title": "완료",
         "text_content": "설치 완료 브라우저 재시작 후 이용해주세요.",
-        "buttons": [], "links": [], "form_labels": [], "heading_texts": [],
+        "buttons": [],
+        "links": [],
+        "form_labels": [],
+        "heading_texts": [],
     }
     r = check_install_completed(page)
     assert r["restart_browser_required"] is True

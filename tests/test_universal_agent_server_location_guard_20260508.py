@@ -1,20 +1,32 @@
 """tests/test_universal_agent_server_location_guard_20260508.py"""
+
 import pytest
+
+from ai_orchestrator.server.execution_location_guard import (
+    LOCAL_AGENT_REQUIRED,
+    SERVER_INTERNAL_ONLY,
+)
 from ai_orchestrator.server.universal_agent_models import (
-    UniversalAgentTask, build_task_from_input, validate_task_model,
+    build_task_from_input,
+    validate_task_model,
 )
 from ai_orchestrator.server.universal_agent_task_api import (
-    create_task, get_task, update_task_result,
-    list_pending_local_agent_tasks, reject_server_external_fetch, clear_all,
-)
-from ai_orchestrator.server.execution_location_guard import (
-    SERVER_INTERNAL_ONLY, LOCAL_AGENT_REQUIRED,
+    clear_all,
+    create_task,
+    get_task,
+    list_pending_local_agent_tasks,
+    reject_server_external_fetch,
+    update_task_result,
 )
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 
@@ -51,28 +63,34 @@ def test_create_task_no_url_server_internal():
 
 
 def test_validate_external_with_server_browser_used_true_rejected():
-    r = validate_task_model({
-        "target_url": "https://naver.com/",
-        "execution_location": SERVER_INTERNAL_ONLY,
-        "server_browser_used": True,
-    })
+    r = validate_task_model(
+        {
+            "target_url": "https://naver.com/",
+            "execution_location": SERVER_INTERNAL_ONLY,
+            "server_browser_used": True,
+        }
+    )
     assert r["valid"] is False
 
 
 def test_validate_external_local_agent_passes():
-    r = validate_task_model({
-        "target_url": "https://naver.com/",
-        "execution_location": LOCAL_AGENT_REQUIRED,
-        "server_browser_used": False,
-    })
+    r = validate_task_model(
+        {
+            "target_url": "https://naver.com/",
+            "execution_location": LOCAL_AGENT_REQUIRED,
+            "server_browser_used": False,
+        }
+    )
     assert r["valid"] is True
 
 
 def test_validate_external_server_internal_rejected():
-    r = validate_task_model({
-        "target_url": "https://naver.com/",
-        "execution_location": SERVER_INTERNAL_ONLY,
-    })
+    r = validate_task_model(
+        {
+            "target_url": "https://naver.com/",
+            "execution_location": SERVER_INTERNAL_ONLY,
+        }
+    )
     assert r["valid"] is False
 
 
@@ -92,7 +110,8 @@ def test_update_task_result_safe():
 def test_update_task_rejects_server_browser_used_true():
     created = create_task(action="open_url", target_url="https://example.com/")
     ok = update_task_result(
-        created["task_id"], "COMPLETED",
+        created["task_id"],
+        "COMPLETED",
         {"data": "ok", "server_browser_used": True},
     )
     assert ok is False

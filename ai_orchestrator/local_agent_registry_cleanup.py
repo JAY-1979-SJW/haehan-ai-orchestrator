@@ -1,10 +1,9 @@
 """Cleanup helpers for smoke-test agent and task removal."""
+
 from __future__ import annotations
 
-from typing import Optional
-
-from .local_agent_registry_common import _lock, _agents, _tasks
 from .local_agent_registry_agent import get_agent_status
+from .local_agent_registry_common import _agents, _lock, _tasks
 
 
 def get_agent_cleanup_preview(agent_id: str) -> dict:
@@ -133,4 +132,4 @@ def cleanup_agent_and_tasks(
         }
 
 
-__all__ = ["get_agent_cleanup_preview", "cleanup_agent_and_tasks"]
+__all__ = ["cleanup_agent_and_tasks", "get_agent_cleanup_preview"]

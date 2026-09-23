@@ -14,16 +14,17 @@ AUTO     : 그 외 탐색·읽기·스크린샷·클릭·스크롤·타이핑(�
 4. Intent가 있으면 origin 범위 검사 → 이탈 시 NOTIFY.
 5. 분류 결과는 side-effect 없이 dict 반환.
 """
+
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from ai_orchestrator.local_agent.browser.intent_token import (
-    IntentToken, validate_intent, is_origin_allowed,
+    IntentToken,
+    is_origin_allowed,
+    validate_intent,
 )
 
 # 분류 결과 코드
@@ -35,91 +36,183 @@ GATE_BLOCKED = "BLOCKED"
 # ── gate_policy.json 로드 ────────────────────────────────────────────────────
 _POLICY_PATH = Path(__file__).resolve().parents[3] / "data" / "gate_policy.json"
 
+
 def _load_policy() -> dict:
     try:
         return json.loads(_POLICY_PATH.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
+
 _policy = _load_policy()
+
 
 def _pt(key: str, fallback: tuple) -> tuple:
     """policy에서 key를 tuple로 반환, 없으면 fallback."""
     return tuple(_policy.get(key, list(fallback)))
 
+
 # APPROVE 카테고리 1: 돈 이동 (결제·입금·송금·투찰·입찰)
-_APPROVE_MONEY = _pt("approve_money", (
-    "결제", "payment", "pay", "checkout",
-    "송금", "transfer", "입금", "출금", "이체",
-    "투찰", "입찰", "낙찰", "bid",
-    "구매", "purchase", "buy",
-    "주문", "order", "cart",
-))
-
-# APPROVE 카테고리 2: 법적 효력 (전자서명·제출·신청·계약)
-_APPROVE_LEGAL = _pt("approve_legal", (
-    "전자서명", "esign", "e-sign", "서명",
-    "계약", "contract", "agreement",
-    "제출", "submit", "신청",
-    "날인", "stamp",
-    "공문", "공시",
-))
-
-# APPROVE 카테고리 3: 계정 변경 (탈퇴·비밀번호 변경·권한 변경)
-_APPROVE_ACCOUNT = _pt("approve_account", (
-    "탈퇴", "withdraw", "delete account", "회원탈퇴",
-    "비밀번호 변경", "password change", "reset password",
-    "권한", "permission", "role",
-    "2fa", "mfa", "인증 설정",
-))
-
-# APPROVE 카테고리 4: 외부 발송 (이메일·문자·알림 발송)
-_APPROVE_SEND = _pt("approve_send", (
-    "이메일 발송", "send email", "메일 보내기",
-    "문자 발송", "sms", "send message",
-    "알림 발송", "send notification",
-    "공유", "share",
-))
-
-# APPROVE 카테고리 5: 민감정보 제출 (주민번호·카드·여권 등)
-_APPROVE_SENSITIVE_SUBMIT = _pt("approve_sensitive_submit", (
-    "주민번호", "rrn", "ssn",
-    "카드번호", "card number",
-    "여권번호", "passport",
-    "공인인증", "npki",
-    "otp 입력", "otp submit",
-))
-
-_ALL_APPROVE_KEYWORDS = (
-    _APPROVE_MONEY + _APPROVE_LEGAL + _APPROVE_ACCOUNT
-    + _APPROVE_SEND + _APPROVE_SENSITIVE_SUBMIT
+_APPROVE_MONEY = _pt(
+    "approve_money",
+    (
+        "결제",
+        "payment",
+        "pay",
+        "checkout",
+        "송금",
+        "transfer",
+        "입금",
+        "출금",
+        "이체",
+        "투찰",
+        "입찰",
+        "낙찰",
+        "bid",
+        "구매",
+        "purchase",
+        "buy",
+        "주문",
+        "order",
+        "cart",
+    ),
 )
 
+# APPROVE 카테고리 2: 법적 효력 (전자서명·제출·신청·계약)
+_APPROVE_LEGAL = _pt(
+    "approve_legal",
+    (
+        "전자서명",
+        "esign",
+        "e-sign",
+        "서명",
+        "계약",
+        "contract",
+        "agreement",
+        "제출",
+        "submit",
+        "신청",
+        "날인",
+        "stamp",
+        "공문",
+        "공시",
+    ),
+)
+
+# APPROVE 카테고리 3: 계정 변경 (탈퇴·비밀번호 변경·권한 변경)
+_APPROVE_ACCOUNT = _pt(
+    "approve_account",
+    (
+        "탈퇴",
+        "withdraw",
+        "delete account",
+        "회원탈퇴",
+        "비밀번호 변경",
+        "password change",
+        "reset password",
+        "권한",
+        "permission",
+        "role",
+        "2fa",
+        "mfa",
+        "인증 설정",
+    ),
+)
+
+# APPROVE 카테고리 4: 외부 발송 (이메일·문자·알림 발송)
+_APPROVE_SEND = _pt(
+    "approve_send",
+    (
+        "이메일 발송",
+        "send email",
+        "메일 보내기",
+        "문자 발송",
+        "sms",
+        "send message",
+        "알림 발송",
+        "send notification",
+        "공유",
+        "share",
+    ),
+)
+
+# APPROVE 카테고리 5: 민감정보 제출 (주민번호·카드·여권 등)
+_APPROVE_SENSITIVE_SUBMIT = _pt(
+    "approve_sensitive_submit",
+    (
+        "주민번호",
+        "rrn",
+        "ssn",
+        "카드번호",
+        "card number",
+        "여권번호",
+        "passport",
+        "공인인증",
+        "npki",
+        "otp 입력",
+        "otp submit",
+    ),
+)
+
+_ALL_APPROVE_KEYWORDS = _APPROVE_MONEY + _APPROVE_LEGAL + _APPROVE_ACCOUNT + _APPROVE_SEND + _APPROVE_SENSITIVE_SUBMIT
+
 # APPROVE 카테고리 6: 자격증명 입력 (사용자 승인 후 AI 입력 가능)
-_CREDENTIAL_INPUT_KEYS = _pt("credential_keys", (
-    "password", "passwd", "pwd", "비밀번호",
-    "card_number", "cardnumber", "cvv", "cvc", "카드번호",
-    "rrn", "주민번호",
-    "otp", "auth_code", "인증번호", "verification_code",
-    "private_key", "npki",
-    "pin", "secret",
-))
+_CREDENTIAL_INPUT_KEYS = _pt(
+    "credential_keys",
+    (
+        "password",
+        "passwd",
+        "pwd",
+        "비밀번호",
+        "card_number",
+        "cardnumber",
+        "cvv",
+        "cvc",
+        "카드번호",
+        "rrn",
+        "주민번호",
+        "otp",
+        "auth_code",
+        "인증번호",
+        "verification_code",
+        "private_key",
+        "npki",
+        "pin",
+        "secret",
+    ),
+)
 
 # 자연어 label → 이미 APPROVE인지 판단하는 최종 키워드 체크
-_APPROVE_SUBMIT_ACTIONS = _pt("approve_submit_actions", (
-    "submit", "form_submit", "click_submit",
-    "form_confirm", "confirm_and_submit",
-    "sign", "esign",
-    "bid_submit", "payment_confirm",
-))
+_APPROVE_SUBMIT_ACTIONS = _pt(
+    "approve_submit_actions",
+    (
+        "submit",
+        "form_submit",
+        "click_submit",
+        "form_confirm",
+        "confirm_and_submit",
+        "sign",
+        "esign",
+        "bid_submit",
+        "payment_confirm",
+    ),
+)
 
 # NOTIFY 대상 액션 타입
-_NOTIFY_ACTION_TYPES = _pt("notify_action_types", (
-    "download", "file_download",
-    "file_upload", "upload",
-    "popup", "new_window", "new_tab",
-    "alert_accept", "dialog_confirm",
-))
+_NOTIFY_ACTION_TYPES = _pt(
+    "notify_action_types",
+    (
+        "download",
+        "file_download",
+        "file_upload",
+        "upload",
+        "popup",
+        "new_window",
+        "new_tab",
+        "alert_accept",
+        "dialog_confirm",
+    ),
+)
 
 
 def _text_contains_approve_keyword(text: str) -> tuple[bool, str]:
@@ -143,9 +236,9 @@ def _params_contain_credential_field(params: dict) -> tuple[bool, str]:
 
 @dataclass
 class GateResult:
-    verdict: str          # AUTO / NOTIFY / APPROVE / BLOCKED
+    verdict: str  # AUTO / NOTIFY / APPROVE / BLOCKED
     reason: str
-    category: str = ""    # approve 카테고리명 (MONEY / LEGAL / ACCOUNT / SEND / SENSITIVE)
+    category: str = ""  # approve 카테고리명 (MONEY / LEGAL / ACCOUNT / SEND / SENSITIVE)
     blocked_field: str = ""
     matched_keyword: str = ""
     intent_ok: bool = True

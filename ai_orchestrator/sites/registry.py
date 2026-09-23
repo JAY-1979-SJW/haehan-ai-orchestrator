@@ -4,11 +4,11 @@
 - 테스트/다른 런타임에서 register() / unregister() 로 동적 조작 가능.
 - 이름은 커넥터 name 속성을 기준으로 한다.
 """
+
 from __future__ import annotations
 
 import logging
 import threading
-from typing import Iterable
 
 from .connector import SiteConnector
 
@@ -72,10 +72,10 @@ _load_builtin()
 
 
 __all__ = [
-    "register",
-    "unregister",
-    "get",
     "all_connectors",
     "all_names",
     "clear",
+    "get",
+    "register",
+    "unregister",
 ]

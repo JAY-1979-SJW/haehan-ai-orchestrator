@@ -1,10 +1,17 @@
 """tests/test_universal_safe_result_20260508.py - universal_safe_result 단위 테스트"""
-import pytest
+
 from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result, sanitize_universal_result, validate_universal_result,
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PERMISSION_REQUIRED,
+    STATUS_WARN,
+    STATUS_WARN_AUTH,
+    STATUS_WARN_PERMISSION,
+    build_universal_result,
     merge_step_results,
-    STATUS_COMPLETED, STATUS_PERMISSION_REQUIRED, STATUS_BLOCKED, STATUS_FAILED,
-    STATUS_WARN, STATUS_WARN_AUTH, STATUS_WARN_PERMISSION,
+    sanitize_universal_result,
+    validate_universal_result,
 )
 
 _SAFE_FIELDS = [
@@ -96,6 +103,13 @@ def test_merge_step_results_blocked_propagates():
 
 
 def test_status_constants_distinct():
-    statuses = [STATUS_COMPLETED, STATUS_PERMISSION_REQUIRED, STATUS_BLOCKED,
-                STATUS_FAILED, STATUS_WARN, STATUS_WARN_AUTH, STATUS_WARN_PERMISSION]
+    statuses = [
+        STATUS_COMPLETED,
+        STATUS_PERMISSION_REQUIRED,
+        STATUS_BLOCKED,
+        STATUS_FAILED,
+        STATUS_WARN,
+        STATUS_WARN_AUTH,
+        STATUS_WARN_PERMISSION,
+    ]
     assert len(set(statuses)) == len(statuses)

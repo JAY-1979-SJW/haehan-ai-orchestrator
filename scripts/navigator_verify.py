@@ -1,10 +1,9 @@
 """navigator_verify — 입력 검증·상태 확인·팝업 처리."""
+
 from __future__ import annotations
 
-import time
-
-from scripts.web_connector import get_page
 from scripts.navigator_common import _normalize_text
+from scripts.web_connector import get_page
 
 
 def verify_input(text: str, timeout_s: float = 3.0, page=None) -> dict:
@@ -19,6 +18,7 @@ def verify_input(text: str, timeout_s: float = 3.0, page=None) -> dict:
     반환: {found, where, actual, elapsed_ms}
     """
     import time as _t
+
     if page is None:
         page = get_page()
     target_n = _normalize_text(text)
@@ -133,7 +133,7 @@ def verify_text(needle: str) -> list[dict]:
             print(f"  [경고] frame 스캔 실패: {e}")
             continue
         if res["matches"] or res["occurrences_in_innerText"]:
-            tag = f"[main]" if frame is page.main_frame else f"[iframe:{frame.name or frame.url[:40]}]"
+            tag = "[main]" if frame is page.main_frame else f"[iframe:{frame.name or frame.url[:40]}]"
             print(f"\n{tag}")
             print(f"  innerText 내 총 매칭: {res['occurrences_in_innerText']}회")
             total_occurrences += res["occurrences_in_innerText"]
@@ -167,6 +167,7 @@ def is_ready(checks: list[str], timeout_s: float = 2.0, page=None) -> dict:
     반환: {ok, elapsed_ms, results: [{check, passed, reason}]}
     """
     import time as _t
+
     if page is None:
         page = get_page()
     start = _t.time()
@@ -245,10 +246,7 @@ def is_ready(checks: list[str], timeout_s: float = 2.0, page=None) -> dict:
     return {
         "ok": ok,
         "elapsed_ms": elapsed_ms,
-        "results": [
-            {"check": spec, "passed": v[0], "reason": v[1]}
-            for spec, v in results.items()
-        ],
+        "results": [{"check": spec, "passed": v[0], "reason": v[1]} for spec, v in results.items()],
     }
 
 
@@ -264,6 +262,7 @@ def handle_draft_restore_popup(timeout_s: float = 5.0, page=None) -> dict:
     반환: {detected, action, elapsed_ms}
     """
     import time as _t
+
     if page is None:
         page = get_page()
     start = _t.time()

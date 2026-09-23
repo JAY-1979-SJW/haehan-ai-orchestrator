@@ -2,25 +2,26 @@
 
 Mock handshake flow validation without actual WebSocket connection.
 """
+
 import json
+
 import pytest
 
 from local_agent.browser_websocket_handshake import (
-    AgentHelloMessage,
     AgentHeartbeatMessage,
-    ServerPolicyMessage,
-    HandshakeMessageType,
-    HandshakeMode,
+    AgentHelloMessage,
     Capability,
+    HandshakeMode,
+    ServerPolicyMessage,
     safe_dict,
-    validate_agent_hello_message,
-    validate_server_policy_message,
     validate_agent_heartbeat_message,
+    validate_agent_hello_message,
     validate_handshake_message,
+    validate_server_policy_message,
 )
 
-
 # ── AgentHelloMessage Tests ──────────────────────────────────────────
+
 
 def test_agent_hello_message_validates():
     """agent.hello message should validate."""
@@ -85,6 +86,7 @@ def test_agent_hello_rejects_missing_agent_id():
 
 # ── ServerPolicyMessage Tests ────────────────────────────────────────
 
+
 def test_server_policy_read_only_validates():
     """server.policy read-only message should validate."""
     msg = ServerPolicyMessage()
@@ -141,6 +143,7 @@ def test_server_policy_rejects_approval_false():
 
 # ── AgentHeartbeatMessage Tests ──────────────────────────────────────
 
+
 def test_heartbeat_message_validates():
     """agent.heartbeat message should validate."""
     msg = AgentHeartbeatMessage(
@@ -192,6 +195,7 @@ def test_heartbeat_rejects_secret_in_error_message():
 
 
 # ── Forbidden Fields Tests ───────────────────────────────────────────
+
 
 def test_approval_token_rejected_from_handshake():
     """approval_token should be rejected from handshake."""
@@ -246,6 +250,7 @@ def test_cookie_session_storage_rejected_from_handshake():
 
 
 # ── Mock Handshake Flow Tests ────────────────────────────────────────
+
 
 def test_handshake_flow_mock_success():
     """Complete mock handshake flow should succeed."""
@@ -315,6 +320,7 @@ def test_unsupported_message_type_rejected():
 
 
 # ── Safe Dict Tests ──────────────────────────────────────────────────
+
 
 def test_safe_dict_removes_approval_token():
     """safe_dict should remove approval_token."""
@@ -406,6 +412,7 @@ def test_safe_dict_preserves_hash_values():
 
 
 # ── Message JSON Serialization ───────────────────────────────────────
+
 
 def test_agent_hello_to_json_str():
     """agent.hello should serialize to valid JSON."""

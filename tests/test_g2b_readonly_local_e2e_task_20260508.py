@@ -5,22 +5,22 @@
 g2b 전용 자동화 로직 없음.
 서버 외부 브라우저 실행 없음.
 """
+
 import json
 import pathlib
-import pytest
 
+from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
+from ai_orchestrator.local_agent.security_guard import validate_task_before_run
 from ai_orchestrator.local_agent.task_protocol import (
+    ALLOWED_TASK_ACTIONS,
+    EXEC_MODE_LOCAL_PLAYWRIGHT,
+    STATUS_COMPLETED,
+    STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
+    TASK_TYPE_BROWSER,
     build_task,
     validate_task,
-    EXEC_MODE_LOCAL_PLAYWRIGHT,
-    TASK_TYPE_BROWSER,
-    ALLOWED_TASK_ACTIONS,
-    STATUS_COMPLETED,
-    STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
 )
-from ai_orchestrator.local_agent.security_guard import validate_task_before_run
-from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile as get_profile
 
 _FIXTURE = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_local_e2e_task_20260508.json"
 _SAFE_RESULT = pathlib.Path(__file__).parent / "fixtures" / "g2b_readonly_expected_safe_result_20260508.json"
@@ -83,8 +83,7 @@ class TestG2bTaskProtocol:
             domain=G2B_HOST,
             readonly=True,
         )
-        forbidden = {"cookie", "session", "password", "otp", "certificate_password",
-                     "token", "npki", "auth_header"}
+        forbidden = {"cookie", "session", "password", "otp", "certificate_password", "token", "npki", "auth_header"}
         for field in forbidden:
             assert field not in task
 
@@ -133,8 +132,14 @@ class TestG2bTaskProtocol:
         assert "auto_bid_submit" in blocked or "bid_submit" in blocked or len(blocked) > 0
 
     def test_allowed_task_actions_cover_readonly(self):
-        readonly_actions = {"read_page", "extract_text", "extract_table",
-                            "detect_login_status", "capture_screenshot", "search"}
+        readonly_actions = {
+            "read_page",
+            "extract_text",
+            "extract_table",
+            "detect_login_status",
+            "capture_screenshot",
+            "search",
+        }
         assert readonly_actions.issubset(ALLOWED_TASK_ACTIONS)
 
 
@@ -158,32 +163,40 @@ class TestG2bAuthDetection:
                 "otp_collected": False,
                 "certificate_password_collected": False,
             }
+
         return mock_run
 
     def test_login_signal_returns_waiting_user_auth(self):
         from ai_orchestrator.local_agent.auth_wait_controller import (
-            enter_auth_wait, AUTH_SIGNAL_LOGIN,
+            AUTH_SIGNAL_LOGIN,
+            enter_auth_wait,
         )
+
         result = enter_auth_wait("g2b-task", AUTH_SIGNAL_LOGIN, G2B_HOST)
         assert result["status"] == STATUS_WAITING_USER_AUTH
         assert result["sensitive_data_collected"] is False
 
     def test_cert_signal_returns_waiting_user_auth(self):
         from ai_orchestrator.local_agent.auth_wait_controller import (
-            enter_auth_wait, AUTH_SIGNAL_CERT,
+            AUTH_SIGNAL_CERT,
+            enter_auth_wait,
         )
+
         result = enter_auth_wait("g2b-task", AUTH_SIGNAL_CERT, G2B_HOST)
         assert result["status"] == STATUS_WAITING_USER_AUTH
 
     def test_otp_signal_returns_user_action_required(self):
         from ai_orchestrator.local_agent.auth_wait_controller import (
-            enter_auth_wait, AUTH_SIGNAL_OTP,
+            AUTH_SIGNAL_OTP,
+            enter_auth_wait,
         )
+
         result = enter_auth_wait("g2b-task", AUTH_SIGNAL_OTP, G2B_HOST)
         assert result["status"] == STATUS_USER_ACTION_REQUIRED
 
     def test_auto_resume_allowed_for_read_page(self):
         from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("extract_text") is True
         assert can_auto_resume("extract_table") is True
@@ -191,6 +204,7 @@ class TestG2bAuthDetection:
 
     def test_auto_resume_blocked_for_dangerous_actions(self):
         from ai_orchestrator.local_agent.auto_resume_after_auth import can_auto_resume
+
         assert can_auto_resume("submit") is False
         assert can_auto_resume("sign") is False
         assert can_auto_resume("payment") is False

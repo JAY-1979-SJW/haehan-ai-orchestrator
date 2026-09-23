@@ -1,12 +1,14 @@
 """build_readonly_smoke_plan 스크립트 단위 테스트."""
+
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from build_readonly_smoke_plan import build_step, _SMOKE_ACTION_MAP
+from build_readonly_smoke_plan import build_step
+
 from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import VERDICT_ALLOW
 
 

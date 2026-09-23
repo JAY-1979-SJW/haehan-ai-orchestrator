@@ -5,23 +5,21 @@ All tests use temp files, no production paths.
 """
 
 import json
-import pytest
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
+
+import pytest
 
 from ai_orchestrator.browser_tool.approval_record_store import (
     ApprovalRecord,
-    build_approval_request,
-    build_approval_decision,
-    validate_approval_record,
     append_approval_record,
-    read_approval_records,
+    build_approval_decision,
+    build_approval_request,
+    build_audit_approval_context,
     get_approval_history,
     get_latest_approval_status,
-    build_audit_approval_context,
-    VALID_APPROVAL_EVENT_TYPES,
-    VALID_APPROVAL_STATUS,
-    EVENT_TYPE_TO_STATUS,
+    read_approval_records,
+    validate_approval_record,
 )
 
 
@@ -72,7 +70,7 @@ class TestBuildApprovalRequest:
         """expires_at should be in the future."""
         record = build_approval_request(workflow_run_id="wf_001", expires_in_hours=24)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires = datetime.fromisoformat(record.expires_at.replace("Z", "+00:00"))
 
         assert expires > now
@@ -260,14 +258,14 @@ class TestAppendApprovalRecord:
         req1 = build_approval_request(workflow_run_id="wf_001")
         append_approval_record(req1, jsonl_file)
 
-        with open(jsonl_file, "r") as f:
+        with open(jsonl_file) as f:
             original_content = f.read()
 
         # Write second record
         req2 = build_approval_request(workflow_run_id="wf_002")
         append_approval_record(req2, jsonl_file)
 
-        with open(jsonl_file, "r") as f:
+        with open(jsonl_file) as f:
             new_content = f.read()
 
         # Original content should be preserved
@@ -528,8 +526,9 @@ class TestNoImproperImports:
 
     def test_no_task_executor_import(self):
         """Should not import task_executor."""
-        import ai_orchestrator.browser_tool.approval_record_store as module
         import inspect
+
+        import ai_orchestrator.browser_tool.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "import task_executor" not in source
@@ -537,8 +536,9 @@ class TestNoImproperImports:
 
     def test_no_dispatcher_import(self):
         """Should not import dispatcher."""
-        import ai_orchestrator.browser_tool.approval_record_store as module
         import inspect
+
+        import ai_orchestrator.browser_tool.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "import dispatcher" not in source
@@ -546,8 +546,9 @@ class TestNoImproperImports:
 
     def test_no_browser_execution_import(self):
         """Should not import browser execution libraries."""
-        import ai_orchestrator.browser_tool.approval_record_store as module
         import inspect
+
+        import ai_orchestrator.browser_tool.approval_record_store as module
 
         source = inspect.getsource(module)
         assert "selenium" not in source.lower()
@@ -555,8 +556,9 @@ class TestNoImproperImports:
 
     def test_no_db_operations(self):
         """Should not have DB write operations."""
-        import ai_orchestrator.browser_tool.approval_record_store as module
         import inspect
+
+        import ai_orchestrator.browser_tool.approval_record_store as module
 
         source = inspect.getsource(module)
         assert ".execute(" not in source

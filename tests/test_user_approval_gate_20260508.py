@@ -1,11 +1,21 @@
 """tests/test_user_approval_gate_20260508.py"""
-import time
+
 import pytest
+
 from ai_orchestrator.local_agent.user_approval_gate import (
-    create_approval_request, approve_request, reject_request, revoke_approval,
-    verify_and_consume_token, get_request, list_pending, clear_all,
-    STATUS_PENDING, STATUS_APPROVED, STATUS_EXHAUSTED, STATUS_REVOKED, STATUS_REJECTED,
-    _params_hash, _sanitize_params,
+    STATUS_EXHAUSTED,
+    STATUS_PENDING,
+    STATUS_REJECTED,
+    _params_hash,
+    _sanitize_params,
+    approve_request,
+    clear_all,
+    create_approval_request,
+    get_request,
+    list_pending,
+    reject_request,
+    revoke_approval,
+    verify_and_consume_token,
 )
 
 
@@ -27,8 +37,7 @@ def test_create_returns_pending():
 
 
 def test_approve_returns_token():
-    r = create_approval_request("browser.attach_file",
-                                params={"x": 1}, summary={})
+    r = create_approval_request("browser.attach_file", params={"x": 1}, summary={})
     a = approve_request(r["request_id"], "user1")
     assert a["ok"] is True
     assert a["approval_token"]
@@ -53,11 +62,9 @@ def test_verify_rejects_wrong_action():
 
 def test_verify_rejects_wrong_params():
     """승인 범위(params) 이탈 차단."""
-    r = create_approval_request("browser.attach_file",
-                                params={"file_name": "a.pdf"}, summary={})
+    r = create_approval_request("browser.attach_file", params={"file_name": "a.pdf"}, summary={})
     a = approve_request(r["request_id"], "u1")
-    v = verify_and_consume_token(a["approval_token"], "browser.attach_file",
-                                 params={"file_name": "different.pdf"})
+    v = verify_and_consume_token(a["approval_token"], "browser.attach_file", params={"file_name": "different.pdf"})
     assert v["ok"] is False
     assert "params_hash" in v["reason"] or "범위" in v["reason"]
 
@@ -117,10 +124,15 @@ def test_sanitize_strips_password():
 
 
 def test_sanitize_strips_cookie_session_storage():
-    san = _sanitize_params({
-        "url": "x", "cookie_value": "c", "session_id": "s",
-        "storage_state": "ss", "auth_header": "Bearer xxx",
-    })
+    san = _sanitize_params(
+        {
+            "url": "x",
+            "cookie_value": "c",
+            "session_id": "s",
+            "storage_state": "ss",
+            "auth_header": "Bearer xxx",
+        }
+    )
     assert "url" in san
     assert "cookie_value" not in san
     assert "session_id" not in san

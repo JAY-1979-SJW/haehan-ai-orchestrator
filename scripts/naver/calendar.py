@@ -8,18 +8,18 @@ URL: https://calendar.naver.com/
   c.list_events(from_date, to_date)
   c.add_event(title, start, end, location, memo)
 """
+
 from __future__ import annotations
 
 import time
-from datetime import datetime, date
-from typing import Any
+from datetime import date, datetime
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 
@@ -68,8 +68,15 @@ class NaverCalendar:
             _log.error("[naver-calendar] list 실패: %s", e)
             return []
 
-    def add_event(self, title: str, start: datetime, end: datetime | None = None,
-                  location: str = "", memo: str = "", confirm: bool = False) -> dict:
+    def add_event(
+        self,
+        title: str,
+        start: datetime,
+        end: datetime | None = None,
+        location: str = "",
+        memo: str = "",
+        confirm: bool = False,
+    ) -> dict:
         """일정 추가. confirm=False (기본) 시 작성만, confirm=True 시 저장."""
         if not self.open():
             return {"ok": False, "error": "open_failed"}
@@ -110,8 +117,7 @@ class NaverCalendar:
             if confirm:
                 self.page.locator('button:has-text("저장"), .btn_save').first.click(timeout=3000)
                 time.sleep(2)
-                log_critical("OTHER", f"캘린더 일정 추가: {title}",
-                             start=start.isoformat(), mode="calendar_add")
+                log_critical("OTHER", f"캘린더 일정 추가: {title}", start=start.isoformat(), mode="calendar_add")
                 return {"ok": True, "mode": "saved"}
             return {"ok": True, "mode": "filled_not_saved"}
         except Exception as e:

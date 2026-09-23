@@ -1,14 +1,20 @@
 """tests/test_natural_language_task_api_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.natural_language_task_api import (
-    execute_natural_language_task, build_task_summary, check_result_safety,
+    build_task_summary,
+    check_result_safety,
+    execute_natural_language_task,
 )
-from ai_orchestrator.local_agent.universal_safe_result import STATUS_COMPLETED, STATUS_FAILED
+from ai_orchestrator.local_agent.universal_safe_result import STATUS_FAILED
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 _BASE_PAGE = {
@@ -43,8 +49,10 @@ def _assert_safe(result, label=""):
 
 def test_notice_intent_parsed():
     r = execute_natural_language_task(
-        "공지사항 찾아서 요약해줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "공지사항 찾아서 요약해줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     assert r.get("intent") in ("FIND_NOTICE", "SUMMARIZE_CONTENT", "SEARCH_SITE")
     _assert_safe(r, "notice_intent")
@@ -53,7 +61,9 @@ def test_notice_intent_parsed():
 def test_download_manifest_intent():
     r = execute_natural_language_task(
         "첨부파일 후보를 찾아서 다운로드 manifest 만들어줘",
-        page_data=_BASE_PAGE, runner_fn=_dummy, dry_run=True,
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "download_manifest")
     assert r.get("intent") == "DOWNLOAD_ATTACHMENTS"
@@ -62,18 +72,21 @@ def test_download_manifest_intent():
 def test_blog_draft_auto_allowed():
     r = execute_natural_language_task(
         "이 글을 블로그 초안으로 바꿔줘",
-        page_data=_BASE_PAGE, runner_fn=_dummy, dry_run=True,
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "blog_draft")
     assert r.get("intent_auto_allowed") is True
 
 
 def test_form_prepare_auto_allowed():
-    page = {**_BASE_PAGE, "url": "https://apply.com/form",
-            "title": "신청서", "form_labels": ["회사명"]}
+    page = {**_BASE_PAGE, "url": "https://apply.com/form", "title": "신청서", "form_labels": ["회사명"]}
     r = execute_natural_language_task(
         "이 폼은 제출 전까지 작성 준비만 해줘",
-        page_data=page, runner_fn=_dummy, dry_run=True,
+        page_data=page,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "form_prepare")
 
@@ -81,8 +94,10 @@ def test_form_prepare_auto_allowed():
 def test_publish_permission_required():
     r = execute_natural_language_task(
         "이 글을 발행해줘",
-        page_data=_BLOG_PAGE, permission_map={},
-        runner_fn=_dummy, dry_run=True,
+        page_data=_BLOG_PAGE,
+        permission_map={},
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "publish_perm")
     assert r["status"] in ("WARN_PERMISSION_REQUIRED", "WARN_AUTH_REQUIRED", "COMPLETED")
@@ -93,15 +108,18 @@ def test_publish_with_permission_executable():
         "이 글을 발행해줘",
         page_data=_BLOG_PAGE,
         permission_map={"publish_post": True},
-        runner_fn=_dummy, dry_run=True,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "publish_with_perm")
 
 
 def test_all_safe_fields_false():
     r = execute_natural_language_task(
-        "공지사항 요약해줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "공지사항 요약해줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     for f in _SAFE_FIELDS:
         assert r.get(f) is False, f"{f} != False"
@@ -109,8 +127,10 @@ def test_all_safe_fields_false():
 
 def test_server_browser_used_false():
     r = execute_natural_language_task(
-        "페이지 읽어줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "페이지 읽어줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     assert r.get("server_browser_used") is False
 
@@ -127,8 +147,10 @@ def test_no_page_data_and_no_url_returns_failed():
 
 def test_url_only_works():
     r = execute_natural_language_task(
-        "페이지 읽어줘", url="https://example.com",
-        runner_fn=_dummy, dry_run=True,
+        "페이지 읽어줘",
+        url="https://example.com",
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "url_only")
     assert "status" in r
@@ -136,16 +158,20 @@ def test_url_only_works():
 
 def test_raw_instruction_in_result():
     r = execute_natural_language_task(
-        "공지사항 찾아줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "공지사항 찾아줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     assert r.get("raw_instruction") == "공지사항 찾아줘"
 
 
 def test_build_task_summary():
     r = execute_natural_language_task(
-        "공지사항 요약해줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "공지사항 요약해줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     summary = build_task_summary(r)
     assert isinstance(summary, str)
@@ -154,8 +180,10 @@ def test_build_task_summary():
 
 def test_check_result_safety_clean():
     r = execute_natural_language_task(
-        "공지사항 요약해줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "공지사항 요약해줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     violations = check_result_safety(r)
     assert violations == []
@@ -163,8 +191,10 @@ def test_check_result_safety_clean():
 
 def test_check_result_safety_detects_violation():
     r = execute_natural_language_task(
-        "페이지 읽어줘", page_data=_BASE_PAGE,
-        runner_fn=_dummy, dry_run=True,
+        "페이지 읽어줘",
+        page_data=_BASE_PAGE,
+        runner_fn=_dummy,
+        dry_run=True,
     )
     r["cookie_exported"] = True
     violations = check_result_safety(r)
@@ -175,7 +205,9 @@ def test_write_comment_permission_required():
     r = execute_natural_language_task(
         "댓글 달아줘",
         page_data={**_BASE_PAGE, "url": "https://forum.example.com/post"},
-        permission_map={}, runner_fn=_dummy, dry_run=True,
+        permission_map={},
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "write_comment")
     assert r["status"] in ("WARN_PERMISSION_REQUIRED", "COMPLETED")
@@ -184,8 +216,10 @@ def test_write_comment_permission_required():
 def test_delete_post_permission_required():
     r = execute_natural_language_task(
         "이 게시글 삭제해줘",
-        page_data=_BLOG_PAGE, permission_map={},
-        runner_fn=_dummy, dry_run=True,
+        page_data=_BLOG_PAGE,
+        permission_map={},
+        runner_fn=_dummy,
+        dry_run=True,
     )
     _assert_safe(r, "delete_post")
     assert r["status"] in ("WARN_PERMISSION_REQUIRED", "COMPLETED")

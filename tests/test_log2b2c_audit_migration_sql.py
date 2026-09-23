@@ -3,9 +3,9 @@
 Validates that the PostgreSQL migration file correctly defines
 the append-only app_audit_log table with BROWSER-AUDIT-1 compatibility.
 """
+
 from __future__ import annotations
 
-import os
 import re
 import unittest
 from pathlib import Path
@@ -15,10 +15,10 @@ from local_agent.browser_audit_contract import (
     BrowserAuditEventType,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _read_migration_file(filename: str) -> str:
     """Read migration SQL file."""
@@ -35,6 +35,7 @@ def _read_rollback_file() -> str:
 # ---------------------------------------------------------------------------
 # File existence and structure
 # ---------------------------------------------------------------------------
+
 
 class TestMigrationFileExistence(unittest.TestCase):
     def test_migration_file_exists(self):
@@ -64,6 +65,7 @@ class TestTransactionStructure(unittest.TestCase):
 # Table definition
 # ---------------------------------------------------------------------------
 
+
 class TestTableDefinition(unittest.TestCase):
     def test_migration_creates_app_audit_log(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
@@ -73,8 +75,7 @@ class TestTableDefinition(unittest.TestCase):
     def test_migration_has_required_columns(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
         for col in REQUIRED_AUDIT_COLUMNS:
-            self.assertIn(col, content,
-                         f"required column {col} not in migration")
+            self.assertIn(col, content, f"required column {col} not in migration")
 
     def test_migration_has_organization_id(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
@@ -103,24 +104,24 @@ class TestTableDefinition(unittest.TestCase):
 # Enum definition
 # ---------------------------------------------------------------------------
 
+
 class TestEnumDefinition(unittest.TestCase):
     def test_migration_defines_status_enum_or_constraint(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
         has_enum = "CREATE TYPE app_audit_event_status AS ENUM" in content
         has_check = "CHECK" in content and ("PASS" in content or "status" in content)
-        self.assertTrue(has_enum or has_check,
-                       "migration must define status constraint or enum")
+        self.assertTrue(has_enum or has_check, "migration must define status constraint or enum")
 
     def test_status_enum_includes_required_values(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
         for status in ["PASS", "WARN", "FAIL", "SKIP", "ERROR"]:
-            self.assertIn(f"'{status}'", content,
-                         f"status {status} not in enum definition")
+            self.assertIn(f"'{status}'", content, f"status {status} not in enum definition")
 
 
 # ---------------------------------------------------------------------------
 # Append-only protection
 # ---------------------------------------------------------------------------
+
 
 class TestAppendOnlyProtection(unittest.TestCase):
     def test_migration_has_append_only_trigger(self):
@@ -140,6 +141,7 @@ class TestAppendOnlyProtection(unittest.TestCase):
 # Index definitions
 # ---------------------------------------------------------------------------
 
+
 class TestIndexes(unittest.TestCase):
     def test_migration_has_required_indexes(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
@@ -156,13 +158,13 @@ class TestIndexes(unittest.TestCase):
             "previous_event_hash",
         ]
         for idx in required_indexes:
-            self.assertIn(idx, content.lower(),
-                         f"index {idx} not defined")
+            self.assertIn(idx, content.lower(), f"index {idx} not defined")
 
 
 # ---------------------------------------------------------------------------
 # Safety checks: no dangerous SQL
 # ---------------------------------------------------------------------------
+
 
 class TestSafety(unittest.TestCase):
     def test_migration_has_no_drop_table(self):
@@ -190,13 +192,13 @@ class TestSafety(unittest.TestCase):
         for pattern in unwanted_patterns:
             # Count occurrences - migration should have 0, rollback has them
             count = content.count(pattern)
-            self.assertEqual(count, 0,
-                           f"migration must not contain {pattern}")
+            self.assertEqual(count, 0, f"migration must not contain {pattern}")
 
 
 # ---------------------------------------------------------------------------
 # Contract alignment
 # ---------------------------------------------------------------------------
+
 
 class TestBrowserAuditContractAlignment(unittest.TestCase):
     def test_browser_audit_contract_required_columns_match_migration(self):
@@ -205,8 +207,7 @@ class TestBrowserAuditContractAlignment(unittest.TestCase):
         for col in REQUIRED_AUDIT_COLUMNS:
             if col not in content:
                 missing.append(col)
-        self.assertEqual(len(missing), 0,
-                        f"missing required columns: {missing}")
+        self.assertEqual(len(missing), 0, f"missing required columns: {missing}")
 
     def test_all_status_values_from_contract_in_enum(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
@@ -221,6 +222,7 @@ class TestBrowserAuditContractAlignment(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Rollback validation
 # ---------------------------------------------------------------------------
+
 
 class TestRollback(unittest.TestCase):
     def test_rollback_is_separate_file(self):
@@ -242,6 +244,7 @@ class TestRollback(unittest.TestCase):
 # Secret scanning
 # ---------------------------------------------------------------------------
 
+
 class TestNoSecrets(unittest.TestCase):
     def test_no_secret_values_in_migration(self):
         content = _read_migration_file("log_2b_2c_app_audit_log.sql")
@@ -254,8 +257,7 @@ class TestNoSecrets(unittest.TestCase):
         ]
         for pattern in forbidden_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
-            self.assertEqual(len(matches), 0,
-                           f"potential secret found matching {pattern}")
+            self.assertEqual(len(matches), 0, f"potential secret found matching {pattern}")
 
     def test_no_secret_values_in_rollback(self):
         content = _read_rollback_file()

@@ -1,13 +1,18 @@
 """tests/test_workflow_template_engine_20260508.py - workflow_template_engine 단위 테스트"""
-import pytest
-from ai_orchestrator.local_agent.workflow_template_engine import (
-    get_template, get_delegated_steps, get_auto_steps, register_template,
-    is_template_registered, _TEMPLATES,
-)
-from ai_orchestrator.local_agent.site_capability_matrix import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
-)
 
+import pytest
+
+from ai_orchestrator.local_agent.site_capability_matrix import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+)
+from ai_orchestrator.local_agent.workflow_template_engine import (
+    get_auto_steps,
+    get_delegated_steps,
+    get_template,
+    is_template_registered,
+    register_template,
+)
 
 _EXPECTED_TEMPLATES = [
     "readonly_site_explore",
@@ -71,8 +76,13 @@ def test_register_custom_template():
         "workflow_id": "test_custom_template_engine",
         "display_name": "테스트 커스텀 템플릿",
         "steps": [
-            {"step_id": "s1", "action": "readonly_explore", "risk_level": GRADE_AUTO_ALLOWED,
-             "optional": False, "description": "탐색"},
+            {
+                "step_id": "s1",
+                "action": "readonly_explore",
+                "risk_level": GRADE_AUTO_ALLOWED,
+                "optional": False,
+                "description": "탐색",
+            },
         ],
     }
     register_template(custom_tmpl)

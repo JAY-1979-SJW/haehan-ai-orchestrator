@@ -5,19 +5,18 @@ All tests use temp files, no production paths.
 """
 
 import json
-import pytest
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 from ai_orchestrator.browser_tool.workflow_audit_writer import (
     WorkflowAuditRecord,
-    build_audit_record,
-    validate_audit_record,
-    redact_audit_payload,
     append_audit_record,
+    build_audit_record,
     read_audit_records,
-    VALID_EVENT_TYPES,
-    SENSITIVE_FIELD_NAMES,
+    redact_audit_payload,
+    validate_audit_record,
 )
 
 
@@ -290,7 +289,7 @@ class TestAppendAuditRecord:
         append_audit_record(record1, jsonl_file)
 
         # Read original content
-        with open(jsonl_file, "r") as f:
+        with open(jsonl_file) as f:
             original_content = f.read()
 
         # Write second record
@@ -305,7 +304,7 @@ class TestAppendAuditRecord:
         append_audit_record(record2, jsonl_file)
 
         # Read new content
-        with open(jsonl_file, "r") as f:
+        with open(jsonl_file) as f:
             new_content = f.read()
 
         # Original content should be preserved
@@ -482,8 +481,9 @@ class TestNoImproperImports:
 
     def test_no_task_executor_import(self):
         """Should not import task_executor."""
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
         import inspect
+
+        import ai_orchestrator.browser_tool.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "import task_executor" not in source
@@ -491,8 +491,9 @@ class TestNoImproperImports:
 
     def test_no_dispatcher_import(self):
         """Should not import dispatcher."""
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
         import inspect
+
+        import ai_orchestrator.browser_tool.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "import dispatcher" not in source
@@ -500,8 +501,9 @@ class TestNoImproperImports:
 
     def test_no_browser_execution_import(self):
         """Should not import browser execution libraries."""
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
         import inspect
+
+        import ai_orchestrator.browser_tool.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert "selenium" not in source.lower()
@@ -509,8 +511,9 @@ class TestNoImproperImports:
 
     def test_no_db_operations(self):
         """Should not have DB write operations."""
-        import ai_orchestrator.browser_tool.workflow_audit_writer as module
         import inspect
+
+        import ai_orchestrator.browser_tool.workflow_audit_writer as module
 
         source = inspect.getsource(module)
         assert ".execute(" not in source

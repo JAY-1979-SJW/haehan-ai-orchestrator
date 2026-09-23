@@ -4,20 +4,19 @@
 권한은 permission_id로 관리된다.
 비밀번호/OTP/cert_password/cookie/session/token은 저장하지 않는다.
 """
+
 from __future__ import annotations
 
 import threading
 from typing import Any
 
 from ai_orchestrator.local_agent.delegated_permission_policy import (
-    build_permission,
-    revoke_permission,
-    increment_execution,
-    check_permission,
     CHECK_ALLOWED,
     PERM_ACTIVE,
-    PERM_REVOKED,
-    PERM_EXHAUSTED,
+    build_permission,
+    check_permission,
+    increment_execution,
+    revoke_permission,
 )
 
 _lock = threading.Lock()
@@ -66,8 +65,9 @@ def revoke(permission_id: str) -> bool:
         return True
 
 
-def use_permission(permission_id: str, action: str, domain: str,
-                   account: str = "", task_scope: str = "") -> dict[str, Any]:
+def use_permission(
+    permission_id: str, action: str, domain: str, account: str = "", task_scope: str = ""
+) -> dict[str, Any]:
     """
     권한 유효성 검사 후 실행 횟수를 증가시킨다.
 

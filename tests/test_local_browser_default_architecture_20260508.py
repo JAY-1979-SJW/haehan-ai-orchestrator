@@ -3,25 +3,29 @@
 외부 웹 작업이 기본적으로 로컬 에이전트에서 처리되는지,
 서버가 외부 사이트 브라우저 접속을 시도하지 않는지 검증한다.
 """
+
 from __future__ import annotations
-import pytest
-from ai_orchestrator.browser_tool.execution_location_policy import (
-    LOCAL_BROWSER_DEFAULT, SERVER_ALLOWED, USER_DIRECT_ONLY, BLOCKED,
-    classify_execution_location,
-    is_local_browser_default, is_server_allowed,
-)
-from ai_orchestrator.browser_tool.unified_execution_router import (
-    route_browser_task, classify_task_only,
-)
+
 from ai_orchestrator.browser_tool.domain_profile_registry import (
     get_domain_profile,
+)
+from ai_orchestrator.browser_tool.execution_location_policy import (
+    BLOCKED,
+    LOCAL_BROWSER_DEFAULT,
+    SERVER_ALLOWED,
+    USER_DIRECT_ONLY,
+    classify_execution_location,
 )
 from ai_orchestrator.browser_tool.local_agent_handoff import (
     build_local_agent_handoff,
 )
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
-    STATUS_LOCAL_HANDOFF_CREATED, STATUS_BLOCKED, STATUS_SUCCESS,
-    EXEC_LOCAL_AGENT, EXEC_SERVER_BROWSER,
+    EXEC_LOCAL_AGENT,
+    EXEC_SERVER_BROWSER,
+    STATUS_LOCAL_HANDOFF_CREATED,
+)
+from ai_orchestrator.browser_tool.unified_execution_router import (
+    route_browser_task,
 )
 
 
@@ -37,16 +41,19 @@ def _task(**kw):
 
 # ── 1. 기본값 검증 ─────────────────────────────────────────────────────────────
 
+
 class TestLocalBrowserDefaultIsDefault:
     def test_g2b_is_local_browser_default(self):
         r = classify_execution_location(_task(site_category="government_procurement"))
         assert r["execution_location"] == LOCAL_BROWSER_DEFAULT
 
     def test_hometax_is_local_browser_default(self):
-        r = classify_execution_location(_task(
-            site_category="government_tax",
-            target_url="https://www.hometax.go.kr",
-        ))
+        r = classify_execution_location(
+            _task(
+                site_category="government_tax",
+                target_url="https://www.hometax.go.kr",
+            )
+        )
         assert r["execution_location"] == LOCAL_BROWSER_DEFAULT
 
     def test_bank_is_local_browser_default(self):
@@ -54,23 +61,28 @@ class TestLocalBrowserDefaultIsDefault:
         assert r["execution_location"] == LOCAL_BROWSER_DEFAULT
 
     def test_unknown_external_url_is_local_browser_default(self):
-        r = classify_execution_location({
-            "task_id": "t1",
-            "action": "open",
-            "target_url": "https://www.some-external-site.com",
-        })
+        r = classify_execution_location(
+            {
+                "task_id": "t1",
+                "action": "open",
+                "target_url": "https://www.some-external-site.com",
+            }
+        )
         assert r["execution_location"] == LOCAL_BROWSER_DEFAULT
 
     def test_no_category_external_url_is_local_browser_default(self):
-        r = classify_execution_location({
-            "task_id": "t1",
-            "action": "open",
-            "target_url": "https://www.association.or.kr",
-        })
+        r = classify_execution_location(
+            {
+                "task_id": "t1",
+                "action": "open",
+                "target_url": "https://www.association.or.kr",
+            }
+        )
         assert r["execution_location"] == LOCAL_BROWSER_DEFAULT
 
 
 # ── 2. SERVER_ALLOWED 범위 검증 ────────────────────────────────────────────────
+
 
 class TestServerAllowedScope:
     def test_report_generate_server_allowed(self):
@@ -91,6 +103,7 @@ class TestServerAllowedScope:
 
 
 # ── 3. USER_DIRECT_ONLY 범위 검증 ─────────────────────────────────────────────
+
 
 class TestUserDirectOnlyScope:
     def test_otp_input_user_direct(self):
@@ -115,6 +128,7 @@ class TestUserDirectOnlyScope:
 
 
 # ── 4. BLOCKED 범위 검증 ───────────────────────────────────────────────────────
+
 
 class TestBlockedScope:
     def test_cookie_export_blocked(self):
@@ -148,6 +162,7 @@ class TestBlockedScope:
 
 # ── 5. 라우터 - 서버 브라우저 외부 접속 금지 검증 ─────────────────────────────
 
+
 class TestRouterNoServerBrowserForExternalSites:
     def test_g2b_open_does_not_use_server_browser(self):
         r = route_browser_task(_task())
@@ -158,10 +173,12 @@ class TestRouterNoServerBrowserForExternalSites:
         assert r["execution_used"] != EXEC_SERVER_BROWSER
 
     def test_hometax_does_not_use_server_browser(self):
-        r = route_browser_task(_task(
-            action="open",
-            target_url="https://www.hometax.go.kr/notice",
-        ))
+        r = route_browser_task(
+            _task(
+                action="open",
+                target_url="https://www.hometax.go.kr/notice",
+            )
+        )
         assert r["execution_used"] != EXEC_SERVER_BROWSER
 
     def test_external_web_immediately_creates_handoff(self):
@@ -176,6 +193,7 @@ class TestRouterNoServerBrowserForExternalSites:
 
 
 # ── 6. domain profile LOCAL_BROWSER_DEFAULT 검증 ─────────────────────────────
+
 
 class TestDomainProfileLocalBrowserDefault:
     def test_g2b_default_execution(self):
@@ -196,6 +214,7 @@ class TestDomainProfileLocalBrowserDefault:
 
 
 # ── 7. handoff payload 검증 ───────────────────────────────────────────────────
+
 
 class TestHandoffPayload:
     def test_local_browser_default_flag(self):
@@ -221,16 +240,20 @@ class TestHandoffPayload:
 
 # ── 8. 기존 SERVER_FIRST 잔존 여부 확인 ───────────────────────────────────────
 
+
 class TestServerFirstLegacy:
     def test_server_first_is_alias_for_server_allowed(self):
-        from ai_orchestrator.browser_tool.execution_location_policy import SERVER_FIRST, SERVER_ALLOWED
+        from ai_orchestrator.browser_tool.execution_location_policy import SERVER_ALLOWED, SERVER_FIRST
+
         assert SERVER_FIRST == SERVER_ALLOWED
 
     def test_is_server_first_legacy_helper_works(self):
         from ai_orchestrator.browser_tool.execution_location_policy import is_server_first
+
         # report_generate → SERVER_ALLOWED → is_server_first True (레거시 호환)
         assert is_server_first(_task(action="report_generate"))
 
     def test_g2b_not_server_first(self):
         from ai_orchestrator.browser_tool.execution_location_policy import is_server_first
+
         assert not is_server_first(_task(action="open", site_category="government_procurement"))

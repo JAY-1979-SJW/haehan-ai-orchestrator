@@ -1,5 +1,5 @@
 """Tests for Browser Worker schemas."""
-import pytest
+
 from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 

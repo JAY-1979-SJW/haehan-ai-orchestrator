@@ -3,19 +3,19 @@
 모든 테스트는 실제 네이버에 접속하지 않는다. fake page/element 기반.
 자격증명은 픽스처에도 포함하지 않는다.
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 import pytest
 
 from ai_orchestrator.sites import job_state, runner, session_manager
 from ai_orchestrator.sites.adapters.naver_cafe_adapter import (
-    NaverCafeAdapter,
     STATUS_LIST_PARSE_OK,
     STATUS_LOGIN_CHECK_FAILED,
+    NaverCafeAdapter,
 )
 from ai_orchestrator.sites.site_adapter import LoginCheckResult
 
@@ -54,7 +54,7 @@ class FakeRow:
 class FakePage:
     url: str = ""
     visible_selectors: set = field(default_factory=set)
-    rows: list = field(default_factory=list)   # list[FakeRow]
+    rows: list = field(default_factory=list)  # list[FakeRow]
     history: list = field(default_factory=list)
 
     def goto(self, target: str) -> None:
@@ -83,6 +83,7 @@ def _isolated(tmp_path, monkeypatch):
 def _fake_sleeper():
     def _sleep(_secs: float) -> None:
         return None
+
     return _sleep
 
 
@@ -92,17 +93,21 @@ def _counting_clock():
     def clock() -> float:
         n["v"] += 1
         return float(n["v"])
+
     return clock
 
 
 # ──────────────────────────────────────────────────────────────────
 # 1) 로그인 페이지 감지 → is_logged_in=False (redirected_to_login)
 # ──────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize("url", [
-    "https://nid.naver.com/nidlogin.login",
-    "https://nid.naver.com/nidlogin.login?mode=form&url=https://cafe.naver.com/",
-    "https://nid.naver.com/login/",
-])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://nid.naver.com/nidlogin.login",
+        "https://nid.naver.com/nidlogin.login?mode=form&url=https://cafe.naver.com/",
+        "https://nid.naver.com/login/",
+    ],
+)
 def test_login_page_detected(url):
     adapter = NaverCafeAdapter()
     page = FakePage(url=url)
@@ -115,14 +120,17 @@ def test_login_page_detected(url):
 # ──────────────────────────────────────────────────────────────────
 # 2) 2차 인증/추가 확인 페이지 → REAUTH_REQUIRED (보수적)
 # ──────────────────────────────────────────────────────────────────
-@pytest.mark.parametrize("url", [
-    "https://nid.naver.com/login2/confirm",
-    "https://nid.naver.com/otp/input",
-    "https://nid.naver.com/user2/verify?returnUrl=https://cafe.naver.com/",
-    "https://nid.naver.com/push/nidlogin_otp",
-    "https://nid.naver.com/login/ext/device/confirm",
-    "https://nid.naver.com/ivp/check",
-])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://nid.naver.com/login2/confirm",
+        "https://nid.naver.com/otp/input",
+        "https://nid.naver.com/user2/verify?returnUrl=https://cafe.naver.com/",
+        "https://nid.naver.com/push/nidlogin_otp",
+        "https://nid.naver.com/login/ext/device/confirm",
+        "https://nid.naver.com/ivp/check",
+    ],
+)
 def test_reauth_page_detected_conservatively(url):
     adapter = NaverCafeAdapter()
     page = FakePage(url=url)
@@ -167,11 +175,8 @@ def test_logged_in_when_gnb_logout_visible():
 def test_active_session_bypasses_any_login_input():
     adapter = NaverCafeAdapter()
     # 어댑터 인터페이스에 자동 로그인 메서드가 존재하지 않아야 한다.
-    for forbidden in ("perform_login", "auto_login", "type_password",
-                      "enter_credentials", "submit_otp"):
-        assert not hasattr(adapter, forbidden), (
-            f"자동 로그인 메서드가 구현되어 있으면 안 된다: {forbidden}"
-        )
+    for forbidden in ("perform_login", "auto_login", "type_password", "enter_credentials", "submit_otp"):
+        assert not hasattr(adapter, forbidden), f"자동 로그인 메서드가 구현되어 있으면 안 된다: {forbidden}"
 
     page = FakePage(
         url="https://cafe.naver.com/some_cafe",
@@ -185,16 +190,21 @@ def test_active_session_bypasses_any_login_input():
     def spy_open_login(page):
         called["open_login_page"] += 1
         original(page)
+
     adapter.open_login_page = spy_open_login  # type: ignore[method-assign]
 
     def work(p):
         return "ok"
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="naver-active", site_id="naver_cafe",
-        work=work, auto_reauth=True,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        adapter,
+        page,
+        job_id="naver-active",
+        site_id="naver_cafe",
+        work=work,
+        auto_reauth=True,
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg == "JOB_DONE"
     assert called["open_login_page"] == 0, "세션 ACTIVE 에서는 로그인 페이지를 열면 안 된다"
@@ -217,15 +227,19 @@ def test_expired_session_pauses_job_without_auto_reauth():
         original_goto(target)
         if target == adapter.HOME_URL:
             page.url = "https://nid.naver.com/nidlogin.login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     def work(_p):
         pytest.fail("세션 없는데 work 가 호출되면 안 된다")
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="naver-expired", site_id="naver_cafe",
-        work=work, auto_reauth=False,
+        adapter,
+        page,
+        job_id="naver-expired",
+        site_id="naver_cafe",
+        work=work,
+        auto_reauth=False,
     )
     assert msg == runner.MSG_SESSION_EXPIRED
     rec = job_state.get("naver-expired")
@@ -257,17 +271,22 @@ def test_reauth_success_resumes_job():
             page.url = "https://cafe.naver.com/"
             page.visible_selectors.add("a#gnb_logout_button")
             state["logged_in"] = True
+
     page.goto = goto  # type: ignore[method-assign]
 
     def work(_p):
         return "resumed=ok"
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="naver-r", site_id="naver_cafe",
+        adapter,
+        page,
+        job_id="naver-r",
+        site_id="naver_cafe",
         work=work,
-        auto_reauth=True, reauth_timeout_sec=30,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        auto_reauth=True,
+        reauth_timeout_sec=30,
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg == "JOB_DONE"
     rec = job_state.get("naver-r")
@@ -295,17 +314,22 @@ def test_reauth_timeout_preserves_paused_not_failed():
             page.visible_selectors.add("a#gnb_logout_button")
         else:
             page.url = "https://nid.naver.com/nidlogin.login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     def work(_p):
         pytest.fail("재인증 실패했는데 work 가 호출되면 안 된다")
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="naver-timeout", site_id="naver_cafe",
+        adapter,
+        page,
+        job_id="naver-timeout",
+        site_id="naver_cafe",
         work=work,
-        auto_reauth=True, reauth_timeout_sec=1,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        auto_reauth=True,
+        reauth_timeout_sec=1,
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg == runner.MSG_REAUTH_TIMED_OUT
     rec = job_state.get("naver-timeout")
@@ -322,8 +346,12 @@ def test_reauth_timeout_preserves_paused_not_failed():
         return "resumed-later=ok"
 
     msg2 = runner.resume_job(
-        adapter, page, job_id="naver-timeout", work=work2,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        adapter,
+        page,
+        job_id="naver-timeout",
+        work=work2,
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg2 == "JOB_DONE"
     assert job_state.get("naver-timeout").status == "DONE"
@@ -337,14 +365,12 @@ def test_collect_list_parses_minimum_fields():
 
     rows = [
         FakeRow(
-            link=FakeEl(text="첫 번째 글",
-                        attrs={"href": "/some_cafe/articles/101"}),
+            link=FakeEl(text="첫 번째 글", attrs={"href": "/some_cafe/articles/101"}),
             author=FakeEl(text="nick_a"),
             date=FakeEl(text="2026.04.23."),
         ),
         FakeRow(
-            link=FakeEl(text="두 번째 글 (레거시)",
-                        attrs={"href": "/ArticleRead.nhn?clubid=111&articleid=202"}),
+            link=FakeEl(text="두 번째 글 (레거시)", attrs={"href": "/ArticleRead.nhn?clubid=111&articleid=202"}),
             author=FakeEl(text="nick_b"),
             date=FakeEl(text="2026.04.22."),
         ),
@@ -419,8 +445,7 @@ def test_no_sensitive_material_in_logs(caplog):
     adapter.collect_list(page2, cursor="https://cafe.naver.com/some_cafe")
 
     messages = " ".join(r.getMessage() for r in caplog.records).lower()
-    for forbidden in ("password", "passwd", "otp", "captcha",
-                      "authorization:", "cookie:", "session=", "token="):
+    for forbidden in ("password", "passwd", "otp", "captcha", "authorization:", "cookie:", "session=", "token="):
         assert forbidden not in messages, f"로그에 민감 패턴이 노출됐다: {forbidden}"
 
 

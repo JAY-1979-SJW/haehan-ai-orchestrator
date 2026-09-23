@@ -1,29 +1,26 @@
 """
 auth_wait_controller 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.auth_wait_controller import (
-    enter_auth_wait,
-    build_timeout_result,
-    build_cancel_result,
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_OTP,
+    AuthWaitState,
     build_auth_completed_result,
     build_auto_resume_ready_result,
-    AuthWaitState,
-    AUTH_SIGNAL_LOGIN,
-    AUTH_SIGNAL_CERT,
-    AUTH_SIGNAL_OTP,
-    AUTH_GUIDE_MESSAGE,
-    DEFAULT_AUTH_TIMEOUT_SEC,
+    build_cancel_result,
+    build_timeout_result,
+    enter_auth_wait,
 )
 from ai_orchestrator.local_agent.task_protocol import (
-    STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
+    STATUS_AUTH_CANCELLED,
     STATUS_AUTH_COMPLETED,
     STATUS_AUTH_TIMEOUT,
-    STATUS_AUTH_CANCELLED,
     STATUS_AUTO_RESUME_READY,
+    STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
 )
-
 
 TASK_ID = "test-task-001"
 
@@ -134,6 +131,7 @@ class TestAuthWaitState:
 class TestWaitForCompletion:
     def test_returns_cancel_result_when_cancelled(self):
         from ai_orchestrator.local_agent.auth_wait_controller import wait_for_completion
+
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=300)
         state.cancel()
         result = wait_for_completion(state, lambda: {"auth_completed": False})
@@ -141,12 +139,14 @@ class TestWaitForCompletion:
 
     def test_returns_timeout_result_when_timed_out(self):
         from ai_orchestrator.local_agent.auth_wait_controller import wait_for_completion
+
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=0)
         result = wait_for_completion(state, lambda: {"auth_completed": False})
         assert result["status"] == STATUS_AUTH_TIMEOUT
 
     def test_returns_completed_when_detector_signals(self):
         from ai_orchestrator.local_agent.auth_wait_controller import wait_for_completion
+
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=300)
         result = wait_for_completion(
             state,

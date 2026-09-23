@@ -4,21 +4,15 @@ Append-only JSONL approval event store for workflow lifecycle approval tracking.
 Handles redaction of sensitive data, validation, and append-only persistence.
 Test-only implementation (no production paths, no DB write).
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional, Any
-
-from ai_orchestrator.browser_tool.workflow_audit_writer import (
-    redact_audit_payload,
-    SENSITIVE_FIELD_NAMES,
-)
-
 
 # Valid approval event types
 VALID_APPROVAL_EVENT_TYPES = {
@@ -75,8 +69,8 @@ class ApprovalRecord:
     requested_role: str = ""
 
     # Required: Decision Context
-    decided_by: Optional[str] = None
-    decided_role: Optional[str] = None
+    decided_by: str | None = None
+    decided_role: str | None = None
 
     # Required: Business Context
     tenant_id: str = ""
@@ -88,10 +82,10 @@ class ApprovalRecord:
 
     # Required: Reason & Metadata
     request_reason: str = ""
-    decision_reason: Optional[str] = None
+    decision_reason: str | None = None
 
     # Required: Expiration
-    expires_at: Optional[str] = None
+    expires_at: str | None = None
 
     # Required: Timestamp
     created_at: str = ""
@@ -109,11 +103,11 @@ class ApprovalWriteResult:
     approval_id: str
     path: str
     event_count: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 def build_approval_request(
-    approval_id: Optional[str] = None,
+    approval_id: str | None = None,
     workflow_run_id: str = "",
     workflow_id: str = "",
     action_name: str = "",
@@ -128,7 +122,7 @@ def build_approval_request(
     target_url: str = "",
     request_reason: str = "",
     expires_in_hours: int = 24,
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
 ) -> ApprovalRecord:
     """Build approval request record.
 
@@ -154,10 +148,10 @@ def build_approval_request(
         ApprovalRecord with APPROVAL_REQUESTED event type
     """
     if not approval_id:
-        approval_id = f"appr_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+        approval_id = f"appr_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
-    approval_event_id = f"evt_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-    now = datetime.now(timezone.utc)
+    approval_event_id = f"evt_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    now = datetime.now(UTC)
     now_iso = now.isoformat().replace("+00:00", "Z")
     expires_at = (now + timedelta(hours=expires_in_hours)).isoformat().replace("+00:00", "Z")
 
@@ -199,7 +193,7 @@ def build_approval_decision(
     decided_by: str,
     decided_role: str,
     decision_reason: str = "",
-    metadata: Optional[dict] = None,
+    metadata: dict | None = None,
 ) -> ApprovalRecord:
     """Build approval decision record (GRANTED, REJECTED, EXPIRED, REVOKED).
 
@@ -223,8 +217,8 @@ def build_approval_decision(
     if approval_event_type not in ["APPROVAL_GRANTED", "APPROVAL_REJECTED", "APPROVAL_EXPIRED", "APPROVAL_REVOKED"]:
         raise ValueError(f"Decision event type must be GRANTED/REJECTED/EXPIRED/REVOKED, got {approval_event_type}")
 
-    approval_event_id = f"evt_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    approval_event_id = f"evt_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     status = EVENT_TYPE_TO_STATUS[approval_event_type]
 
     return ApprovalRecord(
@@ -258,7 +252,7 @@ def _redact_url(url: str) -> tuple[str, str]:
         return "", ""
 
     try:
-        from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
         parsed = urlparse(url)
         query_params = parse_qs(parsed.query, keep_blank_values=True)
@@ -266,7 +260,20 @@ def _redact_url(url: str) -> tuple[str, str]:
         # Redact sensitive params
         redacted_params = {}
         for key, values in query_params.items():
-            if key.lower() in {"password", "passwd", "pwd", "token", "access_token", "refresh_token", "secret", "api_key", "otp", "session", "cookie", "authorization"}:
+            if key.lower() in {
+                "password",
+                "passwd",
+                "pwd",
+                "token",
+                "access_token",
+                "refresh_token",
+                "secret",
+                "api_key",
+                "otp",
+                "session",
+                "cookie",
+                "authorization",
+            }:
                 redacted_params[key] = ["[REDACTED]"]
             else:
                 redacted_params[key] = values
@@ -304,7 +311,9 @@ def validate_approval_record(record: ApprovalRecord) -> list[str]:
     if not record.approval_event_type:
         errors.append("approval_event_type is required")
     elif record.approval_event_type not in VALID_APPROVAL_EVENT_TYPES:
-        errors.append(f"approval_event_type must be one of {VALID_APPROVAL_EVENT_TYPES}, got {record.approval_event_type}")
+        errors.append(
+            f"approval_event_type must be one of {VALID_APPROVAL_EVENT_TYPES}, got {record.approval_event_type}"
+        )
 
     if not record.approval_status:
         errors.append("approval_status is required")
@@ -318,7 +327,9 @@ def validate_approval_record(record: ApprovalRecord) -> list[str]:
     # Event type → Status mapping
     expected_status = EVENT_TYPE_TO_STATUS.get(record.approval_event_type)
     if expected_status and record.approval_status != expected_status:
-        errors.append(f"approval_event_type {record.approval_event_type} must have status {expected_status}, got {record.approval_status}")
+        errors.append(
+            f"approval_event_type {record.approval_event_type} must have status {expected_status}, got {record.approval_status}"
+        )
 
     # Decision fields validation
     if record.approval_event_type in ["APPROVAL_GRANTED", "APPROVAL_REJECTED", "APPROVAL_REVOKED"]:
@@ -355,7 +366,7 @@ def append_approval_record(
             approval_event_id=record.approval_event_id,
             approval_id=record.approval_id,
             path=str(jsonl_path),
-            error_message=f"Validation failed: {'; '.join(errors)}"
+            error_message=f"Validation failed: {'; '.join(errors)}",
         )
 
     try:
@@ -370,7 +381,7 @@ def append_approval_record(
         # Count events
         event_count = 0
         if jsonl_path.exists():
-            with open(jsonl_path, "r", encoding="utf-8") as f:
+            with open(jsonl_path, encoding="utf-8") as f:
                 event_count = sum(1 for line in f if line.strip())
 
         return ApprovalWriteResult(
@@ -382,13 +393,13 @@ def append_approval_record(
             error_message=None,
         )
 
-    except IOError as e:
+    except OSError as e:
         return ApprovalWriteResult(
             success=False,
             approval_event_id=record.approval_event_id,
             approval_id=record.approval_id,
             path=str(jsonl_path),
-            error_message=f"Write failed: {str(e)}"
+            error_message=f"Write failed: {e!s}",
         )
 
 
@@ -411,7 +422,7 @@ def read_approval_records(jsonl_path: Path | str) -> list[dict]:
         raise FileNotFoundError(f"Approval file not found: {jsonl_path}")
 
     records = []
-    with open(jsonl_path, "r", encoding="utf-8") as f:
+    with open(jsonl_path, encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:

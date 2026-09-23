@@ -1,10 +1,8 @@
 """AGENT_GUI_UX_DESIGN_SPEC_01 — 12+ 테스트."""
+
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
-
 
 SPEC = Path("docs/design/local_agent_gui_ux_design_spec_20260521.md")
 
@@ -37,9 +35,17 @@ def test_spec_defines_personas():
 
 def test_spec_has_user_flows():
     text = SPEC.read_text(encoding="utf-8")
-    for k in ("첫 실행", "등록코드", "wss 자동 연결", "재실행",
-              "재등록", "인증 실패", "서버 접속 실패",
-              "진단", "종료"):
+    for k in (
+        "첫 실행",
+        "등록코드",
+        "wss 자동 연결",
+        "재실행",
+        "재등록",
+        "인증 실패",
+        "서버 접속 실패",
+        "진단",
+        "종료",
+    ):
         assert k in text, f"missing flow: {k}"
 
 
@@ -48,8 +54,7 @@ def test_spec_has_user_flows():
 
 def test_spec_compares_four_options():
     text = SPEC.read_text(encoding="utf-8")
-    for opt in ("A. 현재 4탭", "B. 트레이 중심",
-                "C. 단일 창 2탭", "D. 첫 등록 wizard"):
+    for opt in ("A. 현재 4탭", "B. 트레이 중심", "C. 단일 창 2탭", "D. 첫 등록 wizard"):
         assert opt in text, f"missing option: {opt}"
 
 
@@ -60,9 +65,14 @@ def test_spec_states_final_recommendation():
     text = SPEC.read_text(encoding="utf-8")
     assert "권장 = " in text
     # 권장은 B / C / D 중 하나여야 함 (A 는 over-engineering 평가됨)
-    assert any(rec in text for rec in (
-        "권장 = **B", "권장 = **C", "권장 = **D",
-    ))
+    assert any(
+        rec in text
+        for rec in (
+            "권장 = **B",
+            "권장 = **C",
+            "권장 = **D",
+        )
+    )
 
 
 # ── 6) 화면별 설계 ─────────────────────────────────────────
@@ -70,9 +80,7 @@ def test_spec_states_final_recommendation():
 
 def test_spec_has_screen_designs():
     text = SPEC.read_text(encoding="utf-8")
-    for screen in ("Step 1", "Step 2", "Step 3",
-                   "진단 다이얼로그", "재등록 확인",
-                   "트레이 메뉴"):
+    for screen in ("Step 1", "Step 2", "Step 3", "진단 다이얼로그", "재등록 확인", "트레이 메뉴"):
         assert screen in text, f"missing screen: {screen}"
 
 
@@ -87,11 +95,16 @@ def test_spec_wizard_has_3_steps():
 
 def test_spec_covers_required_errors():
     text = SPEC.read_text(encoding="utf-8")
-    for code in ("REG_CODE_EXPIRED", "REG_CODE_INVALID",
-                 "REG_CODE_ALREADY_USED",
-                 "AUTH_FAILED_4401", "TOKEN_NOT_STORED",
-                 "SERVER_NOT_REACHABLE",
-                 "NETWORK_BLOCKED_PROXY", "HEARTBEAT_LOST"):
+    for code in (
+        "REG_CODE_EXPIRED",
+        "REG_CODE_INVALID",
+        "REG_CODE_ALREADY_USED",
+        "AUTH_FAILED_4401",
+        "TOKEN_NOT_STORED",
+        "SERVER_NOT_REACHABLE",
+        "NETWORK_BLOCKED_PROXY",
+        "HEARTBEAT_LOST",
+    ):
         assert code in text, f"missing error: {code}"
 
 
@@ -100,14 +113,14 @@ def test_spec_covers_required_errors():
 
 def test_spec_pii_policy_explicit():
     text = SPEC.read_text(encoding="utf-8")
-    for k in ("device_token", "registration_code", "agent_id",
-              "마스킹", "redact", "show='●'"):
+    for k in ("device_token", "registration_code", "agent_id", "마스킹", "redact", "show='●'"):
         assert k in text, f"missing PII rule: {k}"
 
 
 def test_spec_no_real_secret_values():
     """문서 안에 실제 token / code raw 값이 없는지."""
     import re
+
     text = SPEC.read_text(encoding="utf-8")
     matches = re.findall(r'"device_token"\s*:\s*"([^"]{20,})"', text)
     real = [m for m in matches if "<" not in m and m != "[REDACTED]"]
@@ -170,12 +183,14 @@ def test_spec_states_desktop_ui_unchanged():
 
 def test_audit_pass_on_real_spec():
     from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+
     v = a.judge_spec(desktop_ui_unchanged=True)
     assert v.code == "PASS_AGENT_GUI_UX_DESIGN_SPEC", v.reasons
 
 
 def test_audit_fail_user_flow_missing(tmp_path):
     from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+
     p = tmp_path / "minimal.md"
     p.write_text("# Spec\n내용 짧음", encoding="utf-8")
     v = a.judge_spec(spec_path=p)
@@ -184,6 +199,7 @@ def test_audit_fail_user_flow_missing(tmp_path):
 
 def test_audit_fail_desktop_ui_violation():
     from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+
     v = a.judge_spec(desktop_ui_unchanged=False)
     assert v.code == "FAIL_DESKTOP_UI_SCOPE_VIOLATION"
 
@@ -193,15 +209,18 @@ def test_audit_fail_desktop_ui_violation():
 
 def test_regression_gui_impl_audit_unchanged():
     from scripts.ops import audit_local_agent_gui_implementation as a
+
     assert hasattr(a, "judge_impl")
 
 
 def test_regression_field_test_audit_unchanged():
     from scripts.ops import audit_local_agent_user_field_test as a
+
     assert hasattr(a, "judge_field_test")
 
 
 def test_regression_gui_state_unchanged():
     from local_agent import gui_state as gs
+
     assert hasattr(gs, "GuiController")
     assert hasattr(gs, "transition")

@@ -22,11 +22,11 @@
 모든 테스트는 실제 외부 API(Telegram, OpenAI, 브라우저) 호출 없이 동작.
 DB write, schema 변경, secret 출력 없음.
 """
+
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 # ── HOLD 선언 상수 ────────────────────────────────────────────────────────────
 
@@ -46,11 +46,14 @@ HOLD_REASON_CAD_AI = (
 
 # ── 픽스처 ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def client():
     import ai_orchestrator.config as config
+
     config.AUTH_ENABLED = False
     from ai_orchestrator.server import app
+
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -60,6 +63,7 @@ def auth():
 
 
 # ── 1. HOLD gate: webhooks/telegram ──────────────────────────────────────────
+
 
 class TestTelegramWebhookHold:
     """HOLD: POST /api/v1/webhooks/telegram 응답 계약 고정."""
@@ -100,6 +104,7 @@ class TestTelegramWebhookHold:
     def test_callback_query_path_exists_in_source(self):
         """router.py에 callback_query 분기 코드가 존재한다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/router.py").read_text(encoding="utf-8")
         assert "callback_query" in src
         assert "handle_telegram_update" in src
@@ -107,14 +112,14 @@ class TestTelegramWebhookHold:
 
     def test_missing_fields_in_status(self, client):
         """누락 필드 감지 시 status=invalid_payload로 반환된다."""
-        r = client.post("/api/v1/webhooks/telegram",
-                        json={"action": "approve", "task_id": "t1"})
+        r = client.post("/api/v1/webhooks/telegram", json={"action": "approve", "task_id": "t1"})
         assert r.status_code == 400
         detail = r.json().get("detail", {})
         assert detail.get("status") == "invalid_payload"
 
 
 # ── 2. HOLD gate: cad-ai/chat ─────────────────────────────────────────────────
+
 
 class TestCadAiChatHold:
     """HOLD: POST /api/v1/cad-ai/chat 응답 계약 고정."""
@@ -125,56 +130,53 @@ class TestCadAiChatHold:
 
     def test_response_keys_locked(self, client, auth):
         """응답 필드 7개(reply/action/params/task_id/task_status/confidence/ai_used) 고정."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "agt-1", "message": "레이어 목록",
-                              "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat",
+            headers=auth,
+            json={"agent_id": "agt-1", "message": "레이어 목록", "conversation": []},
+        )
         assert r.status_code == 200
         body = r.json()
-        required_keys = {"reply", "action", "params", "task_id", "task_status",
-                         "confidence", "ai_used"}
-        assert required_keys.issubset(body.keys()), (
-            f"응답 키 누락: {required_keys - body.keys()}"
-        )
+        required_keys = {"reply", "action", "params", "task_id", "task_status", "confidence", "ai_used"}
+        assert required_keys.issubset(body.keys()), f"응답 키 누락: {required_keys - body.keys()}"
 
     def test_no_envelope_wrapper(self, client, auth):
         """응답 최상위에 ApiResponse 봉투(success/data)가 없다."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "agt-1", "message": "레이어 목록",
-                              "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat",
+            headers=auth,
+            json={"agent_id": "agt-1", "message": "레이어 목록", "conversation": []},
+        )
         body = r.json()
         assert "success" not in body, "봉투 미적용 — success 키 없어야 함"
         assert "data" not in body, "봉투 미적용 — data 래퍼 없어야 함"
 
     def test_empty_message_returns_400(self, client, auth):
         """빈 message → 400."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "agt-1", "message": "", "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "", "conversation": []}
+        )
         assert r.status_code == 400
 
     def test_empty_agent_id_returns_400(self, client, auth):
         """빈 agent_id → 400."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "", "message": "레이어", "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "", "message": "레이어", "conversation": []}
+        )
         assert r.status_code == 400
 
     def test_confidence_is_float(self, client, auth):
         """confidence 필드는 float 타입이다."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "agt-1", "message": "레이어",
-                              "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "레이어", "conversation": []}
+        )
         assert isinstance(r.json()["confidence"], float)
 
     def test_ai_used_is_bool(self, client, auth):
         """ai_used 필드는 bool 타입이다 (OPENAI_API_KEY 없으면 False)."""
-        r = client.post("/api/v1/cad-ai/chat",
-                        headers=auth,
-                        json={"agent_id": "agt-1", "message": "레이어",
-                              "conversation": []})
+        r = client.post(
+            "/api/v1/cad-ai/chat", headers=auth, json={"agent_id": "agt-1", "message": "레이어", "conversation": []}
+        )
         assert isinstance(r.json()["ai_used"], bool)
 
     def test_auth_behavior_recorded(self, client):
@@ -183,8 +185,7 @@ class TestCadAiChatHold:
         TestClient 환경에서 auth가 bypass되는 경우 200 반환.
         응답 구조 계약(reply/action/confidence/ai_used 키)은 별도 테스트로 고정.
         """
-        r = client.post("/api/v1/cad-ai/chat",
-                        json={"agent_id": "a", "message": "레이어", "conversation": []})
+        r = client.post("/api/v1/cad-ai/chat", json={"agent_id": "a", "message": "레이어", "conversation": []})
         # 인증 bypass(200) 또는 실제 인증 강제(401/403) — 어느 쪽이든 봉투 없음
         assert r.status_code in (200, 401, 403)
         if r.status_code == 200:
@@ -192,6 +193,7 @@ class TestCadAiChatHold:
 
 
 # ── 3. Characterization: site-tasks/dry-run ──────────────────────────────────
+
 
 class TestSiteTaskDryRunCharacterization:
     """POST /api/v1/site-tasks/dry-run 응답 계약 고정 (HOLD_FOR_NEXT_PHASE).
@@ -202,45 +204,67 @@ class TestSiteTaskDryRunCharacterization:
 
     def test_unknown_connector_returns_404(self, client, auth):
         """미등록 connector → 404, detail 문자열 포함."""
-        r = client.post("/api/v1/site-tasks/dry-run",
-                        headers=auth,
-                        json={"task_id": "t1", "target_site": "nonexistent",
-                              "action": "noop", "params": {},
-                              "risk_level": "low", "requires_approval": False})
+        r = client.post(
+            "/api/v1/site-tasks/dry-run",
+            headers=auth,
+            json={
+                "task_id": "t1",
+                "target_site": "nonexistent",
+                "action": "noop",
+                "params": {},
+                "risk_level": "low",
+                "requires_approval": False,
+            },
+        )
         assert r.status_code == 404
         assert "connector" in r.json().get("detail", "").lower()
 
     def test_no_envelope_on_404(self, client, auth):
         """404 응답에 ApiResponse 봉투가 없다."""
-        r = client.post("/api/v1/site-tasks/dry-run",
-                        headers=auth,
-                        json={"task_id": "t1", "target_site": "nonexistent",
-                              "action": "noop", "params": {},
-                              "risk_level": "low", "requires_approval": False})
+        r = client.post(
+            "/api/v1/site-tasks/dry-run",
+            headers=auth,
+            json={
+                "task_id": "t1",
+                "target_site": "nonexistent",
+                "action": "noop",
+                "params": {},
+                "risk_level": "low",
+                "requires_approval": False,
+            },
+        )
         body = r.json()
         assert "success" not in body
 
     def test_result_keys_come_from_site_execution_result(self):
         """SiteExecutionResult.to_dict() 키 목록이 변경되지 않았다."""
-        from ai_orchestrator.sites.models import SiteExecutionResult
         import dataclasses
+
+        from ai_orchestrator.sites.models import SiteExecutionResult
+
         fields = {f.name for f in dataclasses.fields(SiteExecutionResult)}
         expected = {
-            "task_id", "target_site", "action", "status",
-            "started_at", "finished_at", "summary", "artifacts",
-            "screenshots", "error_code", "error_message",
-            "health_snapshot", "duration_ms",
+            "task_id",
+            "target_site",
+            "action",
+            "status",
+            "started_at",
+            "finished_at",
+            "summary",
+            "artifacts",
+            "screenshots",
+            "error_code",
+            "error_message",
+            "health_snapshot",
+            "duration_ms",
         }
-        assert expected.issubset(fields), (
-            f"SiteExecutionResult 필드 누락: {expected - fields}"
-        )
+        assert expected.issubset(fields), f"SiteExecutionResult 필드 누락: {expected - fields}"
 
     def test_to_dict_returns_flat_dict(self):
         """to_dict()가 봉투 없는 평탄 dict를 반환한다."""
         from ai_orchestrator.sites.models import SiteExecutionResult
-        r = SiteExecutionResult(
-            task_id="t1", target_site="s1", action="noop", status="ok"
-        )
+
+        r = SiteExecutionResult(task_id="t1", target_site="s1", action="noop", status="ok")
         d = r.to_dict()
         assert isinstance(d, dict)
         assert "success" not in d, "봉투 미적용 — success 키 없어야 함"
@@ -249,10 +273,17 @@ class TestSiteTaskDryRunCharacterization:
 
     def test_auth_behavior_recorded(self, client):
         """테스트 환경 auth 동작 기록 — 인증 없이 404(connector 없음) 또는 401/403."""
-        r = client.post("/api/v1/site-tasks/dry-run",
-                        json={"task_id": "t1", "target_site": "s",
-                              "action": "noop", "params": {},
-                              "risk_level": "low", "requires_approval": False})
+        r = client.post(
+            "/api/v1/site-tasks/dry-run",
+            json={
+                "task_id": "t1",
+                "target_site": "s",
+                "action": "noop",
+                "params": {},
+                "risk_level": "low",
+                "requires_approval": False,
+            },
+        )
         assert r.status_code in (401, 403, 404)
         assert "success" not in r.json()
 
@@ -268,6 +299,7 @@ class TestSiteTaskDryRunCharacterization:
 
 # ── 4. Characterization: web-tasks/run ───────────────────────────────────────
 
+
 class TestWebTasksRunCharacterization:
     """POST /api/v1/web-tasks/run 응답 계약 고정 (HOLD_FOR_NEXT_PHASE).
 
@@ -279,10 +311,11 @@ class TestWebTasksRunCharacterization:
 
     def test_unknown_provider_returns_404(self, client, auth):
         """미등록 provider → 404, detail에 error/message 포함."""
-        r = client.post("/api/v1/web-tasks/run",
-                        headers=auth,
-                        json={"provider": "no-provider", "action_type": "noop",
-                              "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run",
+            headers=auth,
+            json={"provider": "no-provider", "action_type": "noop", "dry_run": True},
+        )
         assert r.status_code == 404
         detail = r.json().get("detail", {})
         assert "error" in detail
@@ -290,19 +323,20 @@ class TestWebTasksRunCharacterization:
 
     def test_404_error_key_is_unknown_task(self, client, auth):
         """미등록 provider → error='UNKNOWN_TASK'."""
-        r = client.post("/api/v1/web-tasks/run",
-                        headers=auth,
-                        json={"provider": "ghost", "action_type": "x", "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run", headers=auth, json={"provider": "ghost", "action_type": "x", "dry_run": True}
+        )
         assert r.json()["detail"]["error"] == "UNKNOWN_TASK"
 
     def test_validation_error_returns_422_with_keys(self, client, auth):
         """params 누락 → 422, detail에 error_code/missing_fields/invalid_fields."""
         # 이 테스트는 등록된 provider가 있을 때만 422에 도달.
         # registry가 비어 있으면 404 → 두 경우 모두 계약 고정.
-        r = client.post("/api/v1/web-tasks/run",
-                        headers=auth,
-                        json={"provider": "no-provider", "action_type": "noop",
-                              "params": {}, "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run",
+            headers=auth,
+            json={"provider": "no-provider", "action_type": "noop", "params": {}, "dry_run": True},
+        )
         # 404 또는 422 — 두 경우 모두 봉투 없음 확인
         assert r.status_code in (404, 422)
         body = r.json()
@@ -310,20 +344,29 @@ class TestWebTasksRunCharacterization:
 
     def test_no_envelope_on_404(self, client, auth):
         """404 응답 최상위에 봉투 없음."""
-        r = client.post("/api/v1/web-tasks/run",
-                        headers=auth,
-                        json={"provider": "ghost", "action_type": "x", "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run", headers=auth, json={"provider": "ghost", "action_type": "x", "dry_run": True}
+        )
         assert "success" not in r.json()
         assert "data" not in r.json()
 
     def test_dry_run_true_response_keys_locked(self):
         """dry_run=True 응답 키 목록 고정 (소스 기반)."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
         expected_keys = [
-            '"dry_run"', '"provider"', '"action_type"', '"risk_level"',
-            '"requires_approval"', '"success"', '"summary"',
-            '"field_names"', '"target_url"', '"error"', '"error_code"',
+            '"dry_run"',
+            '"provider"',
+            '"action_type"',
+            '"risk_level"',
+            '"requires_approval"',
+            '"success"',
+            '"summary"',
+            '"field_names"',
+            '"target_url"',
+            '"error"',
+            '"error_code"',
         ]
         for key in expected_keys:
             assert key in src, f"응답 키 {key} 가 소스에서 제거됨"
@@ -331,17 +374,20 @@ class TestWebTasksRunCharacterization:
     def test_real_run_response_keys_locked(self):
         """dry_run=False 응답 키 목록 고정 (소스 기반)."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
         expected_keys = [
-            '"status"', '"pending_approval"', '"task_id"', '"expires_at"',
+            '"status"',
+            '"pending_approval"',
+            '"task_id"',
+            '"expires_at"',
         ]
         for key in expected_keys:
             assert key in src, f"응답 키 {key} 가 소스에서 제거됨"
 
     def test_auth_behavior_recorded(self, client):
         """테스트 환경 auth 동작 기록 — 인증 없이 404(미등록 provider) 또는 401/403."""
-        r = client.post("/api/v1/web-tasks/run",
-                        json={"provider": "x", "action_type": "y", "dry_run": True})
+        r = client.post("/api/v1/web-tasks/run", json={"provider": "x", "action_type": "y", "dry_run": True})
         assert r.status_code in (401, 403, 404)
         assert "success" not in r.json()
 
@@ -357,6 +403,7 @@ class TestWebTasksRunCharacterization:
 
 # ── 5. Characterization: web-tasks/run-from-template ─────────────────────────
 
+
 class TestWebTasksRunFromTemplateCharacterization:
     """POST /api/v1/web-tasks/run-from-template 응답 계약 고정 (HOLD_FOR_NEXT_PHASE).
 
@@ -366,9 +413,9 @@ class TestWebTasksRunFromTemplateCharacterization:
 
     def test_unknown_template_returns_404(self, client, auth):
         """미등록 template_id → 404, detail에 error/message 포함."""
-        r = client.post("/api/v1/web-tasks/run-from-template",
-                        headers=auth,
-                        json={"template_id": "ghost-template", "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run-from-template", headers=auth, json={"template_id": "ghost-template", "dry_run": True}
+        )
         assert r.status_code == 404
         detail = r.json().get("detail", {})
         assert "error" in detail
@@ -376,22 +423,22 @@ class TestWebTasksRunFromTemplateCharacterization:
 
     def test_no_envelope_on_404(self, client, auth):
         """404 응답에 봉투 없음."""
-        r = client.post("/api/v1/web-tasks/run-from-template",
-                        headers=auth,
-                        json={"template_id": "ghost", "dry_run": True})
+        r = client.post(
+            "/api/v1/web-tasks/run-from-template", headers=auth, json={"template_id": "ghost", "dry_run": True}
+        )
         assert "success" not in r.json()
         assert "data" not in r.json()
 
     def test_template_id_added_to_response_in_source(self):
         """성공 응답에 template_id 키가 추가된다 (소스 기반)."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
         assert 'result["template_id"] = template.template_id' in src
 
     def test_auth_behavior_recorded(self, client):
         """테스트 환경 auth 동작 기록 — 인증 없이 404(미등록 template) 또는 401/403."""
-        r = client.post("/api/v1/web-tasks/run-from-template",
-                        json={"template_id": "x", "dry_run": True})
+        r = client.post("/api/v1/web-tasks/run-from-template", json={"template_id": "x", "dry_run": True})
         assert r.status_code in (401, 403, 404)
         assert "success" not in r.json()
 
@@ -405,6 +452,7 @@ class TestWebTasksRunFromTemplateCharacterization:
 
 
 # ── 6. 종합 HOLD 목록 고정 ────────────────────────────────────────────────────
+
 
 class TestDirectDictBoundaryHoldRegistry:
     """HOLD 목록 전체 고정 — 이 테스트가 실패하면 봉투 적용이 무단으로 진행된 것."""
@@ -422,8 +470,10 @@ class TestDirectDictBoundaryHoldRegistry:
 
     def test_all_hold_endpoints_registered_in_app(self, client):
         """HOLD 엔드포인트 5개가 FastAPI app에 등록되어 있다."""
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute
+
+        from ai_orchestrator.server import app
+
         paths = {r.path for r in app.routes if isinstance(r, APIRoute)}
         for ep in self.HOLD_ENDPOINTS:
             path = ep.split(" ", 1)[1]
@@ -433,25 +483,25 @@ class TestDirectDictBoundaryHoldRegistry:
         """HOLD 5개 중 어떤 것도 봉투(success+data) 최상위 구조를 반환하지 않는다."""
         probes = [
             ("POST", "/api/v1/webhooks/telegram", {}),
-            ("POST", "/api/v1/cad-ai/chat",
-             {"agent_id": "x", "message": "레이어", "conversation": []}),
-            ("POST", "/api/v1/site-tasks/dry-run",
-             {"task_id": "t", "target_site": "none", "action": "noop",
-              "params": {}, "risk_level": "low", "requires_approval": False}),
-            ("POST", "/api/v1/web-tasks/run",
-             {"provider": "ghost", "action_type": "x", "dry_run": True}),
-            ("POST", "/api/v1/web-tasks/run-from-template",
-             {"template_id": "ghost", "dry_run": True}),
+            ("POST", "/api/v1/cad-ai/chat", {"agent_id": "x", "message": "레이어", "conversation": []}),
+            (
+                "POST",
+                "/api/v1/site-tasks/dry-run",
+                {
+                    "task_id": "t",
+                    "target_site": "none",
+                    "action": "noop",
+                    "params": {},
+                    "risk_level": "low",
+                    "requires_approval": False,
+                },
+            ),
+            ("POST", "/api/v1/web-tasks/run", {"provider": "ghost", "action_type": "x", "dry_run": True}),
+            ("POST", "/api/v1/web-tasks/run-from-template", {"template_id": "ghost", "dry_run": True}),
         ]
         for method, path, body in probes:
             r = client.post(path, headers=auth, json=body)
             top = r.json()
             # 봉투 = {"success": bool, "data": ...} — 이 구조가 없어야 함
-            has_envelope = (
-                isinstance(top, dict)
-                and "success" in top
-                and "data" in top
-            )
-            assert not has_envelope, (
-                f"{path} 응답에 ApiResponse 봉투가 적용됨 — HOLD 위반"
-            )
+            has_envelope = isinstance(top, dict) and "success" in top and "data" in top
+            assert not has_envelope, f"{path} 응답에 ApiResponse 봉투가 적용됨 — HOLD 위반"

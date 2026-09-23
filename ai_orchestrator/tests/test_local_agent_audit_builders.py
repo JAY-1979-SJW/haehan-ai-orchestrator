@@ -5,8 +5,6 @@ local_agent_audit_builders 모듈이 audit note/payload 구성 helper를
 기존 router audit behavior를 유지함을 검증한다.
 """
 
-import pytest
-
 
 def test_build_approval_note_with_public_id():
     """approval note builder가 approval_public_id를 포함한다."""
@@ -183,8 +181,8 @@ def test_audit_builders_no_token_id_leak():
     from ai_orchestrator.local_agent_audit_builders import (
         build_approval_note,
         build_replay_note,
-        build_task_note,
         build_screenshot_approval_note,
+        build_task_note,
     )
 
     # token_id 패턴들

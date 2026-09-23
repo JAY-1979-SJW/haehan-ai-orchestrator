@@ -16,23 +16,26 @@ USER_PRESENT_STATUS Observability 테스트
 - DB write 없음
 - browser_worker/task_executor 호출 없음
 """
-import sys
+
 import os
+import sys
 import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from ai_orchestrator.browser_tool.local_agent_user_present_status_store import (
-    record_user_present_status,
-    get_user_present_status,
-    list_user_present_statuses,
-    validate_stored_user_present_status,
-    clear_store_for_testing,
+from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
+    clear_status_registry,
+    handle_user_present_status_event,
 )
 from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
-    handle_user_present_status_event,
     get_user_present_status as handler_get_status,
-    clear_status_registry,
+)
+from ai_orchestrator.browser_tool.local_agent_user_present_status_store import (
+    clear_store_for_testing,
+    get_user_present_status,
+    list_user_present_statuses,
+    record_user_present_status,
+    validate_stored_user_present_status,
 )
 
 
@@ -51,7 +54,6 @@ def _base_event(wf_id: str, status: str = "USER_CONFIRMED") -> dict:
 
 
 class TestStatusStore(unittest.TestCase):
-
     def setUp(self):
         clear_store_for_testing()
         clear_status_registry()
@@ -152,8 +154,14 @@ class TestStatusStore(unittest.TestCase):
         record_user_present_status(ev, agent_id="la-test-01")
         record = get_user_present_status("wf_obs_11")
         forbidden = [
-            "password", "otp", "certificate_password", "token",
-            "cookie", "session", "device_token", "target_url",
+            "password",
+            "otp",
+            "certificate_password",
+            "token",
+            "cookie",
+            "session",
+            "device_token",
+            "target_url",
         ]
         for field in forbidden:
             self.assertNotIn(field, record, f"{field} must not be in record")
@@ -194,20 +202,25 @@ class TestStatusStore(unittest.TestCase):
     # 15. DB write 없음 — sqlite/psycopg2/sqlalchemy 임포트 없음
     def test_15_no_db_write(self):
         import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+
         src = inspect.getsource(m)
         for mod in ["sqlite3", "psycopg2", "sqlalchemy", "pymongo", "motor"]:
             self.assertNotIn(f"import {mod}", src, f"{mod} import found in store")
 
     # 16. browser_worker/task_executor 호출 없음 (docstring 제외 실제 코드 검사)
     def test_16_no_browser_worker_task_executor(self):
-        import inspect, re
+        import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+
         src = inspect.getsource(m)
         # docstring/comment 제외 실제 import/call 라인만 검사
         code_lines = [
-            ln for ln in src.splitlines()
-            if not ln.strip().startswith('#') and not ln.strip().startswith('"""') and not ln.strip().startswith("'")
+            ln
+            for ln in src.splitlines()
+            if not ln.strip().startswith("#") and not ln.strip().startswith('"""') and not ln.strip().startswith("'")
         ]
         code = "\n".join(code_lines)
         self.assertNotIn("import browser_worker", code)
@@ -218,7 +231,9 @@ class TestStatusStore(unittest.TestCase):
     # 17. click/type/fill/submit 없음
     def test_17_no_automation_calls(self):
         import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_status_store as m
+
         src = inspect.getsource(m)
         for call in ["page.click", "page.type", "page.fill", "page.goto", ".submit("]:
             self.assertNotIn(call, src)

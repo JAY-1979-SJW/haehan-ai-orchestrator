@@ -2,21 +2,21 @@
 
 진단 정보를 집계하는 helper 함수들의 정합성을 검증한다.
 """
-import sys
+
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from ai_orchestrator.local_agent_diagnostics_helpers import (
     count_agents_by_status,
-    count_tasks_by_status,
     count_task_summaries,
+    count_tasks_by_status,
     determine_diagnostics_status,
 )
 
-
 # ── count_agents_by_status 함수 ──────────────────────────────────────────
+
 
 def test_count_agents_by_status_empty():
     """빈 에이전트 목록 집계."""
@@ -76,6 +76,7 @@ def test_count_agents_by_status_all_offline():
 
 # ── count_tasks_by_status 함수 ──────────────────────────────────────────
 
+
 def test_count_tasks_by_status_empty():
     """빈 태스크 목록 집계."""
     tasks = []
@@ -113,14 +114,21 @@ def test_count_tasks_by_status_all_statuses():
     counts = count_tasks_by_status(tasks)
 
     expected_keys = {
-        "total", "queued", "pending", "running",
-        "waiting_approval", "completed", "failed",
-        "rejected", "cancelled"
+        "total",
+        "queued",
+        "pending",
+        "running",
+        "waiting_approval",
+        "completed",
+        "failed",
+        "rejected",
+        "cancelled",
     }
     assert set(counts.keys()) == expected_keys
 
 
 # ── count_task_summaries 함수 ────────────────────────────────────────────
+
 
 def test_count_task_summaries_empty():
     """빈 태스크 목록의 summary 집계."""
@@ -148,6 +156,7 @@ def test_count_task_summaries_with_summaries():
 
 
 # ── determine_diagnostics_status 함수 ───────────────────────────────────
+
 
 def test_determine_diagnostics_status_ok():
     """정상 상태 판정."""
@@ -208,25 +217,29 @@ def test_determine_diagnostics_status_multiple_warnings():
 
 # ── 모듈 import 검증 ────────────────────────────────────────────────────────
 
+
 def test_diagnostics_helpers_module_importable():
     """진단 헬퍼 모듈이 정상적으로 임포트 가능한지 검증."""
     import ai_orchestrator.local_agent_diagnostics_helpers as helpers_module
-    assert hasattr(helpers_module, 'count_agents_by_status')
-    assert hasattr(helpers_module, 'count_tasks_by_status')
-    assert hasattr(helpers_module, 'count_task_summaries')
-    assert hasattr(helpers_module, 'determine_diagnostics_status')
+
+    assert hasattr(helpers_module, "count_agents_by_status")
+    assert hasattr(helpers_module, "count_tasks_by_status")
+    assert hasattr(helpers_module, "count_task_summaries")
+    assert hasattr(helpers_module, "determine_diagnostics_status")
 
 
 def test_no_circular_import_with_diagnostics():
     """진단 헬퍼 모듈과 진단 모듈 간 순환 참조 없음을 검증."""
     try:
         from ai_orchestrator.local_agent_diagnostics import build_local_agent_diagnostics
+
         assert build_local_agent_diagnostics is not None
     except ImportError:
         pass
 
 
 # ── 헬퍼 함수 형식 검증 ──────────────────────────────────────────────────
+
 
 def test_count_functions_return_dicts():
     """모든 count 함수가 dict를 반환하는지 검증."""
@@ -249,6 +262,7 @@ def test_status_function_returns_tuple():
 
 
 # ── 집계 일관성 검증 ────────────────────────────────────────────────────────
+
 
 def test_agent_count_totals_consistent():
     """에이전트 카운트 합계의 일관성."""
@@ -278,8 +292,13 @@ def test_task_count_includes_all_statuses():
 
     # total은 모든 상태의 합과 같아야 함
     status_counts = [
-        counts["queued"], counts["pending"], counts["running"],
-        counts["waiting_approval"], counts["completed"],
-        counts["failed"], counts["rejected"], counts["cancelled"]
+        counts["queued"],
+        counts["pending"],
+        counts["running"],
+        counts["waiting_approval"],
+        counts["completed"],
+        counts["failed"],
+        counts["rejected"],
+        counts["cancelled"],
     ]
     assert sum(status_counts) == counts["total"]

@@ -6,17 +6,17 @@
   - 예약 일정 시간 조정
   - DB 기반 예약 큐
 """
+
 from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
@@ -52,24 +52,42 @@ class BlogSchedule:
         self.page = page
         _init_db()
 
-    def queue(self, scheduled_at: datetime, title: str, body: str,
-              tags: list[str] | None = None, category: str | None = None,
-              visibility: str = "public") -> dict:
+    def queue(
+        self,
+        scheduled_at: datetime,
+        title: str,
+        body: str,
+        tags: list[str] | None = None,
+        category: str | None = None,
+        visibility: str = "public",
+    ) -> dict:
         """예약 등록."""
         import json
+
         conn = sqlite3.connect(str(DB_PATH))
         cur = conn.execute(
             """INSERT INTO blog_schedule
                (scheduled_at, title, body, tags, category, visibility)
                VALUES (?, ?, ?, ?, ?, ?)""",
-            (scheduled_at.isoformat(timespec="seconds"), title, body,
-             json.dumps(tags or [], ensure_ascii=False), category, visibility),
+            (
+                scheduled_at.isoformat(timespec="seconds"),
+                title,
+                body,
+                json.dumps(tags or [], ensure_ascii=False),
+                category,
+                visibility,
+            ),
         )
         conn.commit()
         sid = cur.lastrowid
         conn.close()
-        log_critical("OTHER", f"블로그 예약 등록: {title[:30]}",
-                     title=title, at=scheduled_at.isoformat(), mode="blog_schedule_queue")
+        log_critical(
+            "OTHER",
+            f"블로그 예약 등록: {title[:30]}",
+            title=title,
+            at=scheduled_at.isoformat(),
+            mode="blog_schedule_queue",
+        )
         return {"ok": True, "id": sid, "scheduled_at": scheduled_at.isoformat()}
 
     def list_pending(self, days_ahead: int = 30) -> list[dict]:
@@ -89,6 +107,7 @@ class BlogSchedule:
     def process_due(self) -> dict:
         """예약 시간 도래한 글 자동 발행."""
         import json
+
         now = datetime.now().isoformat(timespec="seconds")
         conn = sqlite3.connect(str(DB_PATH))
         conn.row_factory = sqlite3.Row
@@ -100,6 +119,7 @@ class BlogSchedule:
 
         results = []
         from scripts.naver.blog.writer import BlogWriter
+
         for row in rows:
             row = dict(row)
             bw = BlogWriter(self.page)
@@ -117,15 +137,23 @@ class BlogSchedule:
                     """UPDATE blog_schedule
                        SET status = ?, published_url = ?, published_at = ?
                        WHERE id = ?""",
-                    ("published" if pr.get("ok") else "failed",
-                     pr.get("url"), datetime.now().isoformat(timespec="seconds"),
-                     row["id"]),
+                    (
+                        "published" if pr.get("ok") else "failed",
+                        pr.get("url"),
+                        datetime.now().isoformat(timespec="seconds"),
+                        row["id"],
+                    ),
                 )
                 conn.commit()
                 conn.close()
                 r["result"] = pr
-                log_critical("OTHER", f"예약 발행: {row['title'][:30]}",
-                             id=row["id"], ok=pr.get("ok"), mode="blog_schedule_publish")
+                log_critical(
+                    "OTHER",
+                    f"예약 발행: {row['title'][:30]}",
+                    id=row["id"],
+                    ok=pr.get("ok"),
+                    mode="blog_schedule_publish",
+                )
             except Exception as e:
                 r["error"] = str(e)[:200]
             results.append(r)

@@ -1,7 +1,7 @@
 """
 download_result_sanitizer 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.download_result_sanitizer import (
     sanitize_download_result,
     validate_sanitized_download_result,
@@ -10,17 +10,21 @@ from ai_orchestrator.local_agent.download_result_sanitizer import (
 
 class TestSanitizeDownloadResult:
     def test_file_path_removed(self):
-        result = sanitize_download_result({
-            "task_id": "t1",
-            "file_path": "C:/Users/user/Downloads/notice.pdf",
-        })
+        result = sanitize_download_result(
+            {
+                "task_id": "t1",
+                "file_path": "C:/Users/user/Downloads/notice.pdf",
+            }
+        )
         assert "file_path" not in result or result.get("file_path") in (None, False, "")
 
     def test_local_path_removed(self):
-        result = sanitize_download_result({
-            "task_id": "t1",
-            "local_path": "/home/user/downloads/file.pdf",
-        })
+        result = sanitize_download_result(
+            {
+                "task_id": "t1",
+                "local_path": "/home/user/downloads/file.pdf",
+            }
+        )
         assert "local_path" not in result or result.get("local_path") in (None, False, "")
 
     def test_cookie_removed(self):
@@ -60,22 +64,24 @@ class TestSanitizeDownloadResult:
         assert result["local_path_exported"] is False
 
     def test_files_entries_sanitized(self):
-        result = sanitize_download_result({
-            "task_id": "t1",
-            "files": [
-                {
-                    "file_id": "f1",
-                    "safe_name": "notice.pdf",
-                    "extension": ".pdf",
-                    "size_bytes": 1024,
-                    "mime_type": "application/pdf",
-                    "upload_allowed": True,
-                    "blocked_reason": None,
-                    "file_path": "C:/sensitive/path/notice.pdf",  # 제거 대상
-                    "certificate_file_detected": False,
-                }
-            ],
-        })
+        result = sanitize_download_result(
+            {
+                "task_id": "t1",
+                "files": [
+                    {
+                        "file_id": "f1",
+                        "safe_name": "notice.pdf",
+                        "extension": ".pdf",
+                        "size_bytes": 1024,
+                        "mime_type": "application/pdf",
+                        "upload_allowed": True,
+                        "blocked_reason": None,
+                        "file_path": "C:/sensitive/path/notice.pdf",  # 제거 대상
+                        "certificate_file_detected": False,
+                    }
+                ],
+            }
+        )
         for entry in result.get("files", []):
             assert "file_path" not in entry
 
@@ -84,13 +90,22 @@ class TestSanitizeDownloadResult:
         assert result["task_id"] == "t1"
 
     def test_safe_name_preserved(self):
-        result = sanitize_download_result({
-            "files": [{"file_id": "f1", "safe_name": "notice.pdf",
-                       "extension": ".pdf", "size_bytes": 1024,
-                       "mime_type": "application/pdf",
-                       "upload_allowed": True, "blocked_reason": None,
-                       "certificate_file_detected": False}]
-        })
+        result = sanitize_download_result(
+            {
+                "files": [
+                    {
+                        "file_id": "f1",
+                        "safe_name": "notice.pdf",
+                        "extension": ".pdf",
+                        "size_bytes": 1024,
+                        "mime_type": "application/pdf",
+                        "upload_allowed": True,
+                        "blocked_reason": None,
+                        "certificate_file_detected": False,
+                    }
+                ]
+            }
+        )
         assert result["files"][0]["safe_name"] == "notice.pdf"
 
 

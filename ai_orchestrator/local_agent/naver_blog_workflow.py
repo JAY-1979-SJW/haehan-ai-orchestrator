@@ -6,24 +6,22 @@
 초안/임시저장: AUTO_ALLOWED
 발행/수정/삭제: USER_DELEGATED_PERMISSION_REQUIRED
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.content_workflow_policy import (
-    BLOG_READ_ACTIONS, BLOG_DRAFT_ACTIONS, BLOG_PUBLISH_ACTIONS,
-    NAVER_BLOG_DOMAINS,
-)
 from ai_orchestrator.local_agent.delegated_action_executor import (
     execute_delegated_action,
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION,
 )
 from ai_orchestrator.local_agent.naver_content_safe_result import (
-    build_blog_draft_result, sanitize_naver_result,
+    build_blog_draft_result,
+    sanitize_naver_result,
 )
 from ai_orchestrator.local_agent.task_protocol import (
-    build_task, EXEC_MODE_LOCAL_PLAYWRIGHT,
+    build_task,
 )
 
 # ── 블로그 workflow 단계 상수 ─────────────────────────────────────────────────
@@ -201,4 +199,5 @@ def read_blog_post(
 def get_blog_workflow_grade(step: str) -> str:
     """블로그 workflow 단계의 실행 등급 반환."""
     from ai_orchestrator.local_agent.content_workflow_policy import get_workflow_grade
+
     return get_workflow_grade(step)

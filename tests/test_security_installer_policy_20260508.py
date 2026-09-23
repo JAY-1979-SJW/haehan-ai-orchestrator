@@ -1,8 +1,13 @@
 """tests/test_security_installer_policy_20260508.py"""
-import pytest
+
 from ai_orchestrator.local_agent.security_installer_policy import (
-    evaluate_installer, check_silent_flags, record_installer_hash,
-    POLICY_ALLOWED, POLICY_BLOCKED, POLICY_NEEDS_PERMISSION, POLICY_NEEDS_USER_DIRECT,
+    POLICY_ALLOWED,
+    POLICY_BLOCKED,
+    POLICY_NEEDS_PERMISSION,
+    POLICY_NEEDS_USER_DIRECT,
+    check_silent_flags,
+    evaluate_installer,
+    record_installer_hash,
 )
 
 
@@ -14,62 +19,57 @@ def test_official_exe_without_permission_needs_permission():
 
 
 def test_official_exe_with_permission_allowed():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True)
+    r = evaluate_installer("setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True)
     assert r["policy"] == POLICY_ALLOWED
     assert r["executable"] is True
 
 
 def test_unofficial_source_needs_user_direct():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=False, has_user_permission=True)
+    r = evaluate_installer("setup.exe", "bank.example.com", is_official_source=False, has_user_permission=True)
     assert r["policy"] == POLICY_NEEDS_USER_DIRECT
 
 
 def test_bat_extension_blocked():
-    r = evaluate_installer("install.bat", "bank.example.com",
-                           is_official_source=True, has_user_permission=True)
+    r = evaluate_installer("install.bat", "bank.example.com", is_official_source=True, has_user_permission=True)
     assert r["policy"] == POLICY_BLOCKED
 
 
 def test_ps1_extension_blocked():
-    r = evaluate_installer("install.ps1", "bank.example.com",
-                           is_official_source=True, has_user_permission=True)
+    r = evaluate_installer("install.ps1", "bank.example.com", is_official_source=True, has_user_permission=True)
     assert r["policy"] == POLICY_BLOCKED
 
 
 def test_silent_flag_blocked():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True,
-                           install_args=["/silent"])
+    r = evaluate_installer(
+        "setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True, install_args=["/silent"]
+    )
     assert r["policy"] == POLICY_BLOCKED
     assert any("무인 설치" in v for v in r["violations"])
 
 
 def test_quiet_flag_blocked():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True,
-                           install_args=["/quiet"])
+    r = evaluate_installer(
+        "setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True, install_args=["/quiet"]
+    )
     assert r["policy"] == POLICY_BLOCKED
 
 
 def test_qn_flag_blocked():
-    r = evaluate_installer("setup.msi", "bank.example.com",
-                           is_official_source=True, has_user_permission=True,
-                           install_args=["/qn"])
+    r = evaluate_installer(
+        "setup.msi", "bank.example.com", is_official_source=True, has_user_permission=True, install_args=["/qn"]
+    )
     assert r["policy"] == POLICY_BLOCKED
 
 
 def test_normal_args_allowed():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True,
-                           install_args=["/lang=ko"])
+    r = evaluate_installer(
+        "setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True, install_args=["/lang=ko"]
+    )
     assert r["policy"] == POLICY_ALLOWED
 
 
 def test_exe_requires_uac():
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True)
+    r = evaluate_installer("setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True)
     assert r["requires_uac"] is True
 
 
@@ -88,7 +88,7 @@ def test_record_installer_hash():
 
 def test_file_size_limit():
     large = 600 * 1024 * 1024
-    r = evaluate_installer("setup.exe", "bank.example.com",
-                           is_official_source=True, has_user_permission=True,
-                           file_size_bytes=large)
+    r = evaluate_installer(
+        "setup.exe", "bank.example.com", is_official_source=True, has_user_permission=True, file_size_bytes=large
+    )
     assert r["policy"] != POLICY_ALLOWED

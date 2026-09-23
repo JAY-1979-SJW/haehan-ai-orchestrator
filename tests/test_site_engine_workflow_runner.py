@@ -1,11 +1,9 @@
 """Unit tests for scripts.site_engine.workflow_runner."""
-import pytest
 
-from scripts.site_engine.action_planner import ActionPlanStatus, build_action_plan
+from scripts.site_engine.action_planner import build_action_plan
 from scripts.site_engine.types import SiteCapability
 from scripts.site_engine.workflow_runner import (
     WorkflowDefinition,
-    WorkflowRunPlan,
     WorkflowStatus,
     WorkflowStep,
     attach_action_plan,
@@ -31,6 +29,7 @@ def _step(step_id: str, cap: SiteCapability, action: str) -> WorkflowStep:
 
 # ── workflow plan 생성 ────────────────────────────────────────────────
 
+
 def test_build_workflow_plan_ready():
     defn = _def(steps=[_step("s1", SiteCapability.READ, "list_items")])
     plan = build_workflow_plan(defn)
@@ -53,10 +52,12 @@ def test_build_workflow_plan_blocked():
 
 def test_build_workflow_plan_user_action():
     from scripts.site_engine.action_planner import build_action_plan
-    ap = build_action_plan("ap1", "test", [
-        {"capability": SiteCapability.FORM_FILL, "action": "input_pw",
-         "step_id": "a1", "field_name": "password"}
-    ])
+
+    ap = build_action_plan(
+        "ap1",
+        "test",
+        [{"capability": SiteCapability.FORM_FILL, "action": "input_pw", "step_id": "a1", "field_name": "password"}],
+    )
     step = WorkflowStep(step_id="s1", name="login", action_plan=ap)
     defn = _def(steps=[step])
     plan = build_workflow_plan(defn)
@@ -70,6 +71,7 @@ def test_workflow_needs_profile_when_no_site_key():
 
 
 # ── is_executable ────────────────────────────────────────────────────
+
 
 def test_workflow_not_executable_when_approval_required():
     defn = _def(steps=[_step("s1", SiteCapability.SUBMIT, "submit")])
@@ -85,6 +87,7 @@ def test_workflow_executable_when_all_ready():
 
 # ── attach_action_plan ───────────────────────────────────────────────
 
+
 def test_attach_action_plan_updates_status():
     empty_step = WorkflowStep(step_id="s1", name="step1")
     defn = _def(steps=[empty_step])
@@ -96,6 +99,7 @@ def test_attach_action_plan_updates_status():
 
 
 # ── validate_workflow_plan ───────────────────────────────────────────
+
 
 def test_validate_missing_site_key():
     defn = WorkflowDefinition(workflow_id="w", name="w", site_key="", profile_key="")
@@ -112,6 +116,7 @@ def test_validate_valid_workflow():
 
 
 # ── no browser/db/file exec ──────────────────────────────────────────
+
 
 def test_no_external_call_on_build():
     defn = _def(steps=[_step("s1", SiteCapability.SEND, "send_mail")])

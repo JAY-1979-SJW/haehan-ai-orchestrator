@@ -25,16 +25,16 @@
   - "○○○님" / "Hello ○○○" (+2)
   - aria-label/data 'logged in' (+2)
 """
+
 from __future__ import annotations
 
-import json
 import re
 import time
-from urllib.parse import urlparse
 from typing import Any
+from urllib.parse import urlparse
 
-from scripts.logger import get_logger
 from scripts import cdp_db
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -230,11 +230,7 @@ def save_detected_login(site: str, page=None) -> bool:
 
         cdp_db.init_db()
         cdp_db.upsert_session(
-            site_name=site,
-            display=site.title(),
-            logged_in=True,
-            session_file=session_file,
-            login_event=True
+            site_name=site, display=site.title(), logged_in=True, session_file=session_file, login_event=True
         )
         try:
             from scripts.realtime_audit import emit_event
@@ -304,8 +300,7 @@ def _inject_login_watcher(page) -> bool:
         return False
 
 
-def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300,
-                       stale_threshold: int = 5) -> dict[str, Any]:
+def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300, stale_threshold: int = 5) -> dict[str, Any]:
     """페이지에서 로그인을 모니터링하고 감지 시 자동 저장.
 
     Args:
@@ -338,19 +333,22 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300,
                 msg = str(ev_err)
                 if "has been closed" in msg or "Target page" in msg or "Target closed" in msg:
                     stale_count += 1
-                    _log.debug("[login-detector] page stale %d/%d (%s)",
-                               stale_count, stale_threshold, msg[:80])
+                    _log.debug("[login-detector] page stale %d/%d (%s)", stale_count, stale_threshold, msg[:80])
                     if stale_count >= stale_threshold:
                         # 새 활성 페이지 재획득 시도
                         try:
                             from scripts.web_connector import get_page
+
                             new_page = get_page()
                             if new_page and new_page is not page:
                                 page = new_page
                                 reacquired += 1
                                 stale_count = 0
-                                _log.info("[login-detector] 새 page 재획득 (%d회차) url=%s",
-                                          reacquired, getattr(page, "url", "?"))
+                                _log.info(
+                                    "[login-detector] 새 page 재획득 (%d회차) url=%s",
+                                    reacquired,
+                                    getattr(page, "url", "?"),
+                                )
                                 try:
                                     _inject_login_watcher(page)
                                 except Exception:
@@ -382,8 +380,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300,
                 detected_sites.add(site)
                 save_detected_login(site, page)
                 elapsed = int(time.time() - start_time)
-                _log.info("[login-detector] 로그인 감지 + 저장 완료 (%ds, 재획득=%d회)",
-                          elapsed, reacquired)
+                _log.info("[login-detector] 로그인 감지 + 저장 완료 (%ds, 재획득=%d회)", elapsed, reacquired)
                 return {
                     "detected": True,
                     "site": site,
@@ -412,6 +409,7 @@ def monitor_for_login(page, check_interval: int = 1, timeout_s: int = 300,
 # ════════════════════════════════════════════════════════════════════════
 # 신규: 사이트 무관 공통 로그인 탐지 (모든 사이트에 적용 가능)
 # ════════════════════════════════════════════════════════════════════════
+
 
 def _iter_context_pages(page) -> list[Any]:
     try:
@@ -618,8 +616,7 @@ def get_logged_in_user(page) -> str | None:
     return detect_login_state(page).get("user")
 
 
-def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3.0,
-                           on_progress=None) -> dict[str, Any]:
+def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3.0, on_progress=None) -> dict[str, Any]:
     """사이트 무관 로그인 성공까지 폴링 대기.
 
     Args:
@@ -636,8 +633,12 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
         if state.get("logged_in"):
             state["timeout"] = False
             state["elapsed_s"] = int(time.time() - start)
-            _log.info("[login-detector-generic] 로그인 감지: score=%d, %ds, user=%s",
-                      state["score"], state["elapsed_s"], state.get("user"))
+            _log.info(
+                "[login-detector-generic] 로그인 감지: score=%d, %ds, user=%s",
+                state["score"],
+                state["elapsed_s"],
+                state.get("user"),
+            )
             return state
 
         if on_progress and state.get("score", 0) != last_score:

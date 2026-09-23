@@ -3,11 +3,10 @@
 실제 프로세스 kill은 dry_run=False 명시 + 사용자 승인 필요.
 기본 동작은 dry_run=True (목록 보고만).
 """
+
 from __future__ import annotations
 
-import os
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from scripts.local_agent.status_store import (
@@ -39,7 +38,7 @@ def is_stale(idle_timeout_s: int = DEFAULT_IDLE_TIMEOUT_S) -> bool:
     if updated_at_str:
         try:
             updated_at = datetime.fromisoformat(updated_at_str)
-            elapsed = (datetime.now(timezone.utc) - updated_at).total_seconds()
+            elapsed = (datetime.now(UTC) - updated_at).total_seconds()
             eff_timeout = status.get("idle_timeout_s", idle_timeout_s)
             if elapsed > eff_timeout:
                 return True
@@ -68,21 +67,25 @@ def cleanup_stale_processes(dry_run: bool = True) -> dict[str, Any]:
     candidates = []
 
     if info["lock_exists"] and info["stale"]:
-        candidates.append({
-            "type":    "stale_lock",
-            "path":    str(_LOCK_FILE),
-            "task_id": info["lock_task_id"],
-        })
+        candidates.append(
+            {
+                "type": "stale_lock",
+                "path": str(_LOCK_FILE),
+                "task_id": info["lock_task_id"],
+            }
+        )
     if _STATUS_FILE.exists() and not info["status"].get("running"):
-        candidates.append({
-            "type": "stale_status_file",
-            "path": str(_STATUS_FILE),
-        })
+        candidates.append(
+            {
+                "type": "stale_status_file",
+                "path": str(_STATUS_FILE),
+            }
+        )
 
     result: dict[str, Any] = {
-        "dry_run":    dry_run,
+        "dry_run": dry_run,
         "candidates": candidates,
-        "cleaned":    [],
+        "cleaned": [],
     }
 
     if dry_run:

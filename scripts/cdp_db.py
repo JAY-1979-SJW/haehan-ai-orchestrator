@@ -6,19 +6,20 @@
 
 위치: data/cdp.db
 """
+
 from __future__ import annotations
 
 import sqlite3
-import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Generator
 
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "cdp.db"
 
 
 # ── 연결 ──────────────────────────────────────────────────────────
+
 
 @contextmanager
 def _conn() -> Generator[sqlite3.Connection, None, None]:
@@ -37,6 +38,7 @@ def _conn() -> Generator[sqlite3.Connection, None, None]:
 
 
 # ── 초기화 ────────────────────────────────────────────────────────
+
 
 def init_db() -> None:
     """테이블이 없으면 생성."""
@@ -152,6 +154,7 @@ def init_db() -> None:
 
 # ── 사용자 요청 사이트 ────────────────────────────────────────────
 
+
 def log_request(
     site_name: str,
     task_name: str = "",
@@ -160,13 +163,16 @@ def log_request(
 ) -> int:
     """사용자가 요청한 사이트/작업을 기록. request_id 반환."""
     import json
+
     now = _now()
     with _conn() as con:
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO site_requests (requested_at, site_name, task_name, task_args, source)
             VALUES (?, ?, ?, ?, ?)
-        """, (now, site_name, task_name,
-              json.dumps(task_args or [], ensure_ascii=False), source))
+        """,
+            (now, site_name, task_name, json.dumps(task_args or [], ensure_ascii=False), source),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
@@ -177,16 +183,22 @@ def get_site_requests(
     """요청 이력 조회."""
     with _conn() as con:
         if site_name:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM site_requests
                 WHERE site_name = ?
                 ORDER BY requested_at DESC LIMIT ?
-            """, (site_name, limit)).fetchall()
+            """,
+                (site_name, limit),
+            ).fetchall()
         else:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM site_requests
                 ORDER BY requested_at DESC LIMIT ?
-            """, (limit,)).fetchall()
+            """,
+                (limit,),
+            ).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -206,6 +218,7 @@ def get_request_summary() -> list[dict]:
 
 # ── 세션 ──────────────────────────────────────────────────────────
 
+
 def upsert_session(
     site_name: str,
     display: str,
@@ -216,12 +229,11 @@ def upsert_session(
     """세션 현황 갱신. login_event=True 이면 last_login도 업데이트."""
     now = _now()
     with _conn() as con:
-        existing = con.execute(
-            "SELECT last_login FROM sessions WHERE site_name = ?", (site_name,)
-        ).fetchone()
-        last_login = (now if login_event else (existing["last_login"] if existing else None))
+        existing = con.execute("SELECT last_login FROM sessions WHERE site_name = ?", (site_name,)).fetchone()
+        last_login = now if login_event else (existing["last_login"] if existing else None)
 
-        con.execute("""
+        con.execute(
+            """
             INSERT INTO sessions (site_name, display, logged_in, session_file,
                                   last_checked, last_login, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -232,57 +244,63 @@ def upsert_session(
                 last_checked  = excluded.last_checked,
                 last_login    = excluded.last_login,
                 updated_at    = excluded.updated_at
-        """, (site_name, display, int(logged_in), session_file, now, last_login, now))
+        """,
+            (site_name, display, int(logged_in), session_file, now, last_login, now),
+        )
 
 
 def get_sessions() -> list[dict]:
     """전체 세션 목록 반환."""
     with _conn() as con:
-        rows = con.execute(
-            "SELECT * FROM sessions ORDER BY site_name"
-        ).fetchall()
+        rows = con.execute("SELECT * FROM sessions ORDER BY site_name").fetchall()
     return [dict(r) for r in rows]
 
 
 # ── 작업 로그 ─────────────────────────────────────────────────────
 
+
 def log_start(site_name: str, task_name: str, task_args: list[str]) -> int:
     """작업 시작 기록. log_id 반환."""
     import json
+
     now = _now()
     with _conn() as con:
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO task_logs (started_at, site_name, task_name, task_args, status)
             VALUES (?, ?, ?, ?, 'running')
-        """, (now, site_name, task_name, json.dumps(task_args, ensure_ascii=False)))
+        """,
+            (now, site_name, task_name, json.dumps(task_args, ensure_ascii=False)),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
 def log_finish(
     log_id: int,
-    status: str,           # success / fail / timeout
+    status: str,  # success / fail / timeout
     error_msg: str = "",
     detail: str = "",
 ) -> None:
     """작업 완료 기록."""
     now = _now()
     with _conn() as con:
-        started = con.execute(
-            "SELECT started_at FROM task_logs WHERE id = ?", (log_id,)
-        ).fetchone()
+        started = con.execute("SELECT started_at FROM task_logs WHERE id = ?", (log_id,)).fetchone()
         duration = None
         if started:
             try:
                 t0 = datetime.fromisoformat(started["started_at"])
-                duration = (datetime.now(timezone.utc) - t0).total_seconds()
+                duration = (datetime.now(UTC) - t0).total_seconds()
             except Exception:
                 pass
-        con.execute("""
+        con.execute(
+            """
             UPDATE task_logs
             SET finished_at = ?, status = ?, duration_sec = ?,
                 error_msg = ?, detail = ?
             WHERE id = ?
-        """, (now, status, duration, error_msg or None, detail or None, log_id))
+        """,
+            (now, status, duration, error_msg or None, detail or None, log_id),
+        )
 
 
 def get_task_logs(
@@ -292,20 +310,27 @@ def get_task_logs(
     """작업 로그 조회. site_name 지정 시 해당 사이트만."""
     with _conn() as con:
         if site_name:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM task_logs
                 WHERE site_name = ?
                 ORDER BY started_at DESC LIMIT ?
-            """, (site_name, limit)).fetchall()
+            """,
+                (site_name, limit),
+            ).fetchall()
         else:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM task_logs
                 ORDER BY started_at DESC LIMIT ?
-            """, (limit,)).fetchall()
+            """,
+                (limit,),
+            ).fetchall()
     return [dict(r) for r in rows]
 
 
 # ── 메일 발송 로그 ──────────────────────────────────────────────────
+
 
 def log_mail_send(
     site_name: str,
@@ -321,12 +346,24 @@ def log_mail_send(
     now = _now()
     body_preview = body[:100] if body else ""
     with _conn() as con:
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO mail_sends (sent_at, site_name, recipient, cc, subject,
                                     body_preview, status, error_msg, detail)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (now, site_name, recipient, cc or None, subject or None,
-              body_preview or None, status, error_msg or None, detail or None))
+        """,
+            (
+                now,
+                site_name,
+                recipient,
+                cc or None,
+                subject or None,
+                body_preview or None,
+                status,
+                error_msg or None,
+                detail or None,
+            ),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
@@ -338,11 +375,14 @@ def update_mail_send(
 ) -> None:
     """메일 발송 상태 업데이트."""
     with _conn() as con:
-        con.execute("""
+        con.execute(
+            """
             UPDATE mail_sends
             SET status = ?, error_msg = ?, detail = ?
             WHERE id = ?
-        """, (status, error_msg or None, detail or None, mail_send_id))
+        """,
+            (status, error_msg or None, detail or None, mail_send_id),
+        )
 
 
 def get_mail_sends(
@@ -352,20 +392,27 @@ def get_mail_sends(
     """메일 발송 이력 조회."""
     with _conn() as con:
         if site_name:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM mail_sends
                 WHERE site_name = ?
                 ORDER BY sent_at DESC LIMIT ?
-            """, (site_name, limit)).fetchall()
+            """,
+                (site_name, limit),
+            ).fetchall()
         else:
-            rows = con.execute("""
+            rows = con.execute(
+                """
                 SELECT * FROM mail_sends
                 ORDER BY sent_at DESC LIMIT ?
-            """, (limit,)).fetchall()
+            """,
+                (limit,),
+            ).fetchall()
     return [dict(r) for r in rows]
 
 
 # ── CLI (python scripts/cdp_db.py) ───────────────────────────────
+
 
 def log_automation_run(
     module: str,
@@ -381,24 +428,42 @@ def log_automation_run(
 ) -> int:
     now = _now()
     with _conn() as con:
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO automation_runs
                 (created_at, module, workflow, command, status, risk_level,
                  input_ref, output_ref, detail, error_msg)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (now, module, workflow, command, status, risk_level,
-              input_ref or None, output_ref or None, detail or None, error_msg or None))
+        """,
+            (
+                now,
+                module,
+                workflow,
+                command,
+                status,
+                risk_level,
+                input_ref or None,
+                output_ref or None,
+                detail or None,
+                error_msg or None,
+            ),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
-def update_automation_run(run_id: int, *, status: str, output_ref: str = "", detail: str = "", error_msg: str = "") -> None:
+def update_automation_run(
+    run_id: int, *, status: str, output_ref: str = "", detail: str = "", error_msg: str = ""
+) -> None:
     with _conn() as con:
-        con.execute("""
+        con.execute(
+            """
             UPDATE automation_runs
             SET status = ?, output_ref = COALESCE(NULLIF(?, ''), output_ref),
                 detail = COALESCE(NULLIF(?, ''), detail), error_msg = ?
             WHERE id = ?
-        """, (status, output_ref, detail, error_msg or None, run_id))
+        """,
+            (status, output_ref, detail, error_msg or None, run_id),
+        )
 
 
 def upsert_mail_queue_item(
@@ -418,45 +483,73 @@ def upsert_mail_queue_item(
     body_preview = body[:100] if body else ""
     body_hash = hashlib.sha256(body.encode("utf-8")).hexdigest() if body else ""
     with _conn() as con:
-        existing = con.execute("""
+        existing = con.execute(
+            """
             SELECT id FROM mail_queue
             WHERE provider = ? AND recipient = ? AND subject = ? AND body_hash = ?
             ORDER BY id DESC LIMIT 1
-        """, (provider, recipient, subject, body_hash)).fetchone()
+        """,
+            (provider, recipient, subject, body_hash),
+        ).fetchone()
         if existing:
-            con.execute("""
+            con.execute(
+                """
                 UPDATE mail_queue
                 SET updated_at = ?, source = ?, status = ?, cc = ?,
                     body_preview = ?, metadata = COALESCE(NULLIF(?, ''), metadata),
                     error_msg = NULL
                 WHERE id = ?
-            """, (now, source, status, cc or None, body_preview or None, metadata or "", existing["id"]))
+            """,
+                (now, source, status, cc or None, body_preview or None, metadata or "", existing["id"]),
+            )
             return int(existing["id"])
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO mail_queue
                 (created_at, updated_at, provider, source, status, recipient, cc,
                  subject, body_preview, body_hash, metadata)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (now, now, provider, source, status, recipient, cc or None,
-              subject or None, body_preview or None, body_hash or None, metadata or None))
+        """,
+            (
+                now,
+                now,
+                provider,
+                source,
+                status,
+                recipient,
+                cc or None,
+                subject or None,
+                body_preview or None,
+                body_hash or None,
+                metadata or None,
+            ),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
-def mark_mail_queue_prepared(queue_id: int | None = None, *, provider: str = "", recipient: str = "", subject: str = "") -> None:
+def mark_mail_queue_prepared(
+    queue_id: int | None = None, *, provider: str = "", recipient: str = "", subject: str = ""
+) -> None:
     now = _now()
     with _conn() as con:
         if queue_id:
-            con.execute("""
+            con.execute(
+                """
                 UPDATE mail_queue
                 SET status = 'prepared', updated_at = ?, prepared_at = ?
                 WHERE id = ?
-            """, (now, now, queue_id))
+            """,
+                (now, now, queue_id),
+            )
         else:
-            con.execute("""
+            con.execute(
+                """
                 UPDATE mail_queue
                 SET status = 'prepared', updated_at = ?, prepared_at = ?
                 WHERE provider = ? AND recipient = ? AND subject = ?
-            """, (now, now, provider, recipient, subject))
+            """,
+                (now, now, provider, recipient, subject),
+            )
 
 
 def log_security_event(
@@ -470,16 +563,19 @@ def log_security_event(
 ) -> int:
     now = _now()
     with _conn() as con:
-        cur = con.execute("""
+        cur = con.execute(
+            """
             INSERT INTO security_events
                 (created_at, module, event_type, severity, action, safe_detail, ref)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (now, module, event_type, severity, action, safe_detail or None, ref or None))
+        """,
+            (now, module, event_type, severity, action, safe_detail or None, ref or None),
+        )
         return cur.lastrowid  # type: ignore[return-value]
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def print_sessions() -> None:
@@ -491,8 +587,10 @@ def print_sessions() -> None:
     print("  " + "-" * 80)
     for r in rows:
         logged = "✓ 됨" if r["logged_in"] else "✗ 안됨"
-        print(f"  {r['site_name']:<12} {r['display']:<20} {logged:<8} "
-              f"{(r['last_login'] or '-'):<25} {r['last_checked'] or '-'}")
+        print(
+            f"  {r['site_name']:<12} {r['display']:<20} {logged:<8} "
+            f"{(r['last_login'] or '-'):<25} {r['last_checked'] or '-'}"
+        )
 
 
 def print_site_requests(site_name: str | None = None, limit: int = 30) -> None:
@@ -506,11 +604,14 @@ def print_site_requests(site_name: str | None = None, limit: int = 30) -> None:
         args = r.get("task_args") or "[]"
         try:
             import json
+
             args = " ".join(json.loads(args)) or "-"
         except Exception:
             pass
-        print(f"  {r['id']:<5} {r['requested_at']:<22} {r['site_name']:<10} "
-              f"{r['task_name'] or '-':<12} {args[:20]:<20} {r['source']}")
+        print(
+            f"  {r['id']:<5} {r['requested_at']:<22} {r['site_name']:<10} "
+            f"{r['task_name'] or '-':<12} {args[:20]:<20} {r['source']}"
+        )
 
 
 def print_request_summary() -> None:
@@ -534,8 +635,10 @@ def print_task_logs(site_name: str | None = None, limit: int = 20) -> None:
     for r in rows:
         dur = f"{r['duration_sec']:.1f}s" if r["duration_sec"] is not None else "-"
         err = (r["error_msg"] or "")[:40]
-        print(f"  {r['id']:<5} {r['started_at']:<22} {r['site_name']:<10} "
-              f"{r['task_name']:<12} {r['status']:<10} {dur:<8} {err}")
+        print(
+            f"  {r['id']:<5} {r['started_at']:<22} {r['site_name']:<10} "
+            f"{r['task_name']:<12} {r['status']:<10} {dur:<8} {err}"
+        )
 
 
 def print_mail_sends(site_name: str | None = None, limit: int = 20) -> None:
@@ -549,12 +652,12 @@ def print_mail_sends(site_name: str | None = None, limit: int = 20) -> None:
         recipient = (r["recipient"] or "")[:25]
         subject = (r["subject"] or "")[:20]
         err = (r["error_msg"] or "")[:30]
-        print(f"  {r['id']:<5} {r['sent_at']:<22} {recipient:<25} "
-              f"{subject:<20} {r['status']:<10} {err}")
+        print(f"  {r['id']:<5} {r['sent_at']:<22} {recipient:<25} {subject:<20} {r['status']:<10} {err}")
 
 
 if __name__ == "__main__":
     import sys
+
     init_db()
     cmd = sys.argv[1] if len(sys.argv) > 1 else "sessions"
     if cmd == "sessions":

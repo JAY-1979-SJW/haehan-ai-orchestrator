@@ -3,11 +3,10 @@
 경로: storage/inbox.jsonl
 중복 방지: external_id + source_account 조합
 """
+
 import json
 import os
-import time
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _INBOX_PATH = os.path.join(_BASE_DIR, "storage", "inbox.jsonl")
@@ -21,7 +20,7 @@ def _load_all(path: str) -> list[dict]:
     if not os.path.exists(path):
         return []
     items = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -34,8 +33,7 @@ def _load_all(path: str) -> list[dict]:
 
 def _is_duplicate(external_id: str, source_account: str, path: str) -> bool:
     for item in _load_all(path):
-        if (item.get("external_id") == external_id
-                and item.get("source_account") == source_account):
+        if item.get("external_id") == external_id and item.get("source_account") == source_account:
             return True
     return False
 
@@ -48,8 +46,8 @@ def save_mail(
     body_raw: str,
     received_at: str,
     source_account: str,
-    body_summary: Optional[str] = None,
-    path: Optional[str] = None,
+    body_summary: str | None = None,
+    path: str | None = None,
 ) -> dict:
     """
     메일 1건을 inbox에 저장.
@@ -85,7 +83,7 @@ def save_mail(
         "body_raw": body_raw,
         "body_summary": body_summary,
         "received_at": received_at,
-        "saved_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        "saved_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S"),
         "status": "new",
         "linked_task_id": None,
     }
@@ -105,8 +103,8 @@ def save_message(
     title: str,
     body_raw: str,
     received_at: str,
-    metadata: Optional[dict] = None,
-    path: Optional[str] = None,
+    metadata: dict | None = None,
+    path: str | None = None,
 ) -> dict:
     """
     메시지 1건을 inbox에 저장 (source_type 파라미터로 다양한 소스 지원).
@@ -145,7 +143,7 @@ def save_message(
         "body_raw": body_raw,
         "body_summary": None,
         "received_at": received_at,
-        "saved_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+        "saved_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S"),
         "status": "new",
         "linked_task_id": None,
     }
@@ -159,9 +157,9 @@ def save_message(
 
 
 def list_inbox(
-    source_type: Optional[str] = None,
+    source_type: str | None = None,
     limit: int = 50,
-    path: Optional[str] = None,
+    path: str | None = None,
 ) -> list[dict]:
     """inbox 목록 반환. source_type으로 필터링 가능."""
     inbox_path = path or _inbox_path()

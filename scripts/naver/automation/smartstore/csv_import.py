@@ -13,31 +13,41 @@
   result = ci.import_csv("data/products.csv", save_after=False)
   result = ci.import_excel("data/products.xlsx")
 """
+
 from __future__ import annotations
 
 import csv
-import json
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
 
 COLUMN_ALIASES = {
     # 한글 → 영문
-    "상품명": "name", "판매가": "price", "가격": "price",
-    "재고": "stock", "재고수량": "stock", "수량": "stock",
-    "카테고리": "category", "브랜드": "brand",
-    "제조사": "manufacturer", "모델명": "model_name", "모델": "model_name",
-    "대표이미지": "main_image", "이미지": "main_image",
-    "상세설명": "description", "설명": "description",
-    "부가세": "vat_type", "상품상태": "product_status",
-    "미성년자": "minor_purchase", "사은품": "gift",
+    "상품명": "name",
+    "판매가": "price",
+    "가격": "price",
+    "재고": "stock",
+    "재고수량": "stock",
+    "수량": "stock",
+    "카테고리": "category",
+    "브랜드": "brand",
+    "제조사": "manufacturer",
+    "모델명": "model_name",
+    "모델": "model_name",
+    "대표이미지": "main_image",
+    "이미지": "main_image",
+    "상세설명": "description",
+    "설명": "description",
+    "부가세": "vat_type",
+    "상품상태": "product_status",
+    "미성년자": "minor_purchase",
+    "사은품": "gift",
     "이벤트문구": "event_text",
 }
 
@@ -110,9 +120,15 @@ class CSVImporter:
                 products.append(normalized)
         return products
 
-    def import_csv(self, csv_path: str, product_type: str = "general",
-                    save_after: bool = False, require_confirm: bool = False,
-                    max_retries: int = 2, dry_run: bool = False) -> dict:
+    def import_csv(
+        self,
+        csv_path: str,
+        product_type: str = "general",
+        save_after: bool = False,
+        require_confirm: bool = False,
+        max_retries: int = 2,
+        dry_run: bool = False,
+    ) -> dict:
         """CSV 파일 → 일괄 등록.
 
         dry_run=True: 파싱만 (등록 X)
@@ -121,19 +137,27 @@ class CSVImporter:
         if not products:
             return {"ok": False, "error": "empty_or_invalid_csv", "file": csv_path}
 
-        log_critical("DATA_IMPORT", f"CSV 일괄 등록 시작: {Path(csv_path).name}",
-                     file=csv_path, count=len(products), dry_run=dry_run,
-                     mode="csv_import_start")
+        log_critical(
+            "DATA_IMPORT",
+            f"CSV 일괄 등록 시작: {Path(csv_path).name}",
+            file=csv_path,
+            count=len(products),
+            dry_run=dry_run,
+            mode="csv_import_start",
+        )
 
         if dry_run:
-            return {"ok": True, "dry_run": True, "parsed": len(products),
-                    "preview": products[:3]}
+            return {"ok": True, "dry_run": True, "parsed": len(products), "preview": products[:3]}
 
         from scripts.naver.smartstore.bulk import BulkRegister
+
         br = BulkRegister(self.page)
         return br.register_all(
-            products, product_type=product_type, save_after=save_after,
-            require_confirm=require_confirm, max_retries=max_retries,
+            products,
+            product_type=product_type,
+            save_after=save_after,
+            require_confirm=require_confirm,
+            max_retries=max_retries,
         )
 
     def import_excel(self, xlsx_path: str, sheet: str | int = 0, **kwargs) -> dict:
@@ -143,9 +167,9 @@ class CSVImporter:
             return {"ok": False, "error": "empty_or_invalid_excel"}
 
         if kwargs.get("dry_run"):
-            return {"ok": True, "dry_run": True, "parsed": len(products),
-                    "preview": products[:3]}
+            return {"ok": True, "dry_run": True, "parsed": len(products), "preview": products[:3]}
 
         from scripts.naver.smartstore.bulk import BulkRegister
+
         br = BulkRegister(self.page)
         return br.register_all(products, **{k: v for k, v in kwargs.items() if k != "dry_run"})

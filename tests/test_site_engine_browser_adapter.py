@@ -1,9 +1,7 @@
 """Unit tests for scripts.site_engine.adapters.browser."""
-import pytest
 
 from scripts.site_engine.adapters.browser import (
     BrowserActionKind,
-    BrowserActionPlan,
     build_click_plan,
     build_download_plan,
     build_input_plan,
@@ -86,4 +84,5 @@ def test_plan_sensitive_reason_not_empty():
 def test_no_browser_execution_on_import():
     # import 시점에 브라우저가 실행되지 않음을 확인
     import scripts.site_engine.adapters.browser as m
+
     assert callable(m.build_readonly_navigation_plan)

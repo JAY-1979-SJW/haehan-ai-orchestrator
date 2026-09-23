@@ -1,15 +1,22 @@
-import sys, os, time
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.models import TaskRequest, RiskAssessment
-from ai_orchestrator.approval import issue_token, approve_token, validate_token, revoke_token
+from ai_orchestrator.approval import approve_token, issue_token, validate_token
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
 def make_req(task_id="T-APR-001"):
     return TaskRequest(
-        task_id=task_id, source="manual", action_type="edit_config",
-        target="/var/www/haehan/cfg.yaml", description="테스트", requested_by="test"
+        task_id=task_id,
+        source="manual",
+        action_type="edit_config",
+        target="/var/www/haehan/cfg.yaml",
+        description="테스트",
+        requested_by="test",
     )
+
 
 def make_risk():
     return RiskAssessment(risk_level="medium", reasons=["test"], requires_approval=True)

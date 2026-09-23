@@ -5,17 +5,16 @@
   - 매 본문 후 즉시 안읽음 복구 + 복구 검증
   - 실패 시 즉시 중단
 """
+
 from __future__ import annotations
 
 import json
 import time
 from pathlib import Path
 
+from scripts.naver.mail import body_pipeline_v2 as bp
+from scripts.naver.mail import inbox_collector as ic
 from scripts.naver.mail_read import cdp
-from scripts.naver.mail import (body_pipeline_v2 as bp,
-                                folder_discovery as fd,
-                                inbox_collector as ic,
-                                read_state_guard as rsg)
 from scripts.ops import audit_naver_mail_body_pipeline_v2 as audit
 
 
@@ -50,9 +49,7 @@ def main():
         print("[FAIL] unread mail list empty — abort")
         return
     targets = [
-        bp.TargetMail(sn=it.get("sn", ""), folder_id="0",
-                      folder_name="받은메일함")
-        for it in items if it.get("sn")
+        bp.TargetMail(sn=it.get("sn", ""), folder_id="0", folder_name="받은메일함") for it in items if it.get("sn")
     ][:2]
     print(f"[1] targets: {[t.sn for t in targets]}")
 
@@ -64,28 +61,34 @@ def main():
     # 3) 저장
     paths = bp.write_outputs(rpt, out_dir)
     (out_dir / "audit_result.json").write_text(
-        json.dumps({"verdict": v.code, "passed": v.passed,
-                    "reasons": v.reasons, "metrics": v.metrics},
-                   ensure_ascii=False, indent=2),
+        json.dumps(
+            {"verdict": v.code, "passed": v.passed, "reasons": v.reasons, "metrics": v.metrics},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
 
     # 4) 콘솔 보고
     print("\n=== BODY PIPELINE V2 ===")
     print(f"mode={rpt.mode}")
-    print(f"attempt={rpt.attempt_count} success={rpt.success_count} "
-          f"failure={rpt.failure_count}")
-    print(f"unread_audit: state_changed={rpt.unread_audit.get('state_changed')} "
-          f"restore_attempted={rpt.unread_audit.get('restore_attempted')} "
-          f"restore_succeeded={rpt.unread_audit.get('restore_succeeded')} "
-          f"restore_failed={rpt.unread_audit.get('restore_failed')}")
-    print(f"attachment_download_count={rpt.attachment_download_count} "
-          f"external_ai_call_count={rpt.external_ai_call_count}")
-    print(f"\nbodies:")
+    print(f"attempt={rpt.attempt_count} success={rpt.success_count} failure={rpt.failure_count}")
+    print(
+        f"unread_audit: state_changed={rpt.unread_audit.get('state_changed')} "
+        f"restore_attempted={rpt.unread_audit.get('restore_attempted')} "
+        f"restore_succeeded={rpt.unread_audit.get('restore_succeeded')} "
+        f"restore_failed={rpt.unread_audit.get('restore_failed')}"
+    )
+    print(
+        f"attachment_download_count={rpt.attachment_download_count} external_ai_call_count={rpt.external_ai_call_count}"
+    )
+    print("\nbodies:")
     for b in rpt.bodies:
-        print(f"  sn={b.sn} folder={b.folder_name} open_ok={b.open_ok} "
-              f"pii_n={b.pii_detected_count} hash={b.masked_text_hash} "
-              f"restore_ok={b.unread_audit.get('restore_ok')}")
+        print(
+            f"  sn={b.sn} folder={b.folder_name} open_ok={b.open_ok} "
+            f"pii_n={b.pii_detected_count} hash={b.masked_text_hash} "
+            f"restore_ok={b.unread_audit.get('restore_ok')}"
+        )
     print(f"\nverdict: {v.code}  passed={v.passed}")
     print(f"\nsaved → {paths['report']}")
 

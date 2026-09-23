@@ -2,17 +2,17 @@
 
 기본 NaverMail 위에 구축.
 """
+
 from __future__ import annotations
 
 import re
 import time
 from pathlib import Path
-from typing import Any, Callable
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -23,6 +23,7 @@ class MailAutomation:
     def __init__(self, page: Page):
         self.page = page
         from scripts.naver.mail import NaverMail
+
         self.mail = NaverMail(page)
 
     # ── 자동 답장 ──────────────────────────────────────────────────────
@@ -40,10 +41,12 @@ class MailAutomation:
         matched = []
         for mail in inbox:
             for rule in rules:
-                sender_ok = not rule.get("sender_pattern") or \
-                            re.search(rule["sender_pattern"], mail.get("sender", ""), re.I)
-                subject_ok = not rule.get("subject_pattern") or \
-                             re.search(rule["subject_pattern"], mail.get("subject", ""), re.I)
+                sender_ok = not rule.get("sender_pattern") or re.search(
+                    rule["sender_pattern"], mail.get("sender", ""), re.I
+                )
+                subject_ok = not rule.get("subject_pattern") or re.search(
+                    rule["subject_pattern"], mail.get("subject", ""), re.I
+                )
                 if sender_ok and subject_ok:
                     matched.append({"mail": mail, "rule": rule})
                     break
@@ -62,15 +65,18 @@ class MailAutomation:
             )
             if r.get("ok"):
                 sent += 1
-                log_critical("MAIL_SEND", f"자동 답장: {m['mail']['subject'][:30]}",
-                             to=m["mail"]["sender"], rule=m["rule"].get("template", "")[:50])
+                log_critical(
+                    "MAIL_SEND",
+                    f"자동 답장: {m['mail']['subject'][:30]}",
+                    to=m["mail"]["sender"],
+                    rule=m["rule"].get("template", "")[:50],
+                )
             time.sleep(2)
         return {"ok": True, "matched": len(matched), "sent": sent}
 
     # ── 첨부파일 자동 다운로드 ────────────────────────────────────────
 
-    def download_attachments(self, save_dir: str, sender_filter: str | None = None,
-                              days: int = 30) -> dict:
+    def download_attachments(self, save_dir: str, sender_filter: str | None = None, days: int = 30) -> dict:
         """받은편지함의 첨부파일 자동 다운로드.
 
         save_dir: 저장 폴더
@@ -101,12 +107,15 @@ class MailAutomation:
         """)
 
         if sender_filter:
-            attachment_mails = [m for m in attachment_mails
-                                if re.search(sender_filter, m.get("sender", ""), re.I)]
+            attachment_mails = [m for m in attachment_mails if re.search(sender_filter, m.get("sender", ""), re.I)]
 
         _log.info("[mail-auto] 첨부 메일 %d개", len(attachment_mails))
-        return {"ok": True, "candidates": len(attachment_mails), "items": attachment_mails,
-                "note": "실제 다운로드는 메일별 진입 + 다운로드 버튼 클릭 필요 (개별 구현)"}
+        return {
+            "ok": True,
+            "candidates": len(attachment_mails),
+            "items": attachment_mails,
+            "note": "실제 다운로드는 메일별 진입 + 다운로드 버튼 클릭 필요 (개별 구현)",
+        }
 
     # ── 일괄 분류 / 라벨 ──────────────────────────────────────────────
 

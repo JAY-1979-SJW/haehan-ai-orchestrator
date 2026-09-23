@@ -2,18 +2,16 @@
 
 Tests for the Browser Tool Protocol router and policy enforcement.
 """
+
 from __future__ import annotations
 
-import pytest
-
 from ai_orchestrator.browser_tool import (
-    BrowserActionName,
     BrowserResult,
     BrowserTask,
+    policy,
     route_browser_task,
     route_browser_task_with_params,
 )
-from ai_orchestrator.browser_tool import policy
 
 
 class TestBrowserTaskSchema:
@@ -225,7 +223,7 @@ class TestNoPlaywrightImport:
         source_file = router_module.__file__
         assert source_file is not None
 
-        with open(source_file, "r", encoding="utf-8") as f:
+        with open(source_file, encoding="utf-8") as f:
             source = f.read()
 
         assert "from playwright" not in source
@@ -238,7 +236,7 @@ class TestNoPlaywrightImport:
         source_file = mock_module.__file__
         assert source_file is not None
 
-        with open(source_file, "r", encoding="utf-8") as f:
+        with open(source_file, encoding="utf-8") as f:
             source = f.read()
 
         assert "from playwright" not in source

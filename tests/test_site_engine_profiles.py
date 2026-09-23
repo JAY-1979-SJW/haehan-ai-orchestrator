@@ -1,7 +1,8 @@
 """Unit tests for scripts.site_engine.profiles."""
+
 import pytest
 
-from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile, _validate_profile
+from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
 from scripts.site_engine.types import (
     ExecutionLocation,
     GateDecision,

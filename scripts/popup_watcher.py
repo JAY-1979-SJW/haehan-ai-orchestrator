@@ -3,10 +3,10 @@
 MutationObserver를 주입해 DOM 변화 감시하고,
 알려진 팝업이면 자동 처리, 모르는 팝업이면 보고.
 """
+
 from __future__ import annotations
 
 import json
-import time as _t
 from typing import TypedDict
 
 from scripts.logger import get_logger
@@ -73,6 +73,7 @@ def install_watcher(page=None) -> dict:
     """페이지에 MutationObserver JS 코드를 주입한다."""
     if page is None:
         from scripts.navigator import get_page
+
         page = get_page()
 
     js = build_watcher_js(POPUP_MARKERS)
@@ -93,14 +94,12 @@ def poll_events(page=None, since_ms: int = 0) -> list[PopupEvent]:
     """window.__hh_popup_state.events에서 since_ms 이후 이벤트를 읽어온다."""
     if page is None:
         from scripts.navigator import get_page
+
         page = get_page()
 
     for frame in page.frames:
         try:
-            events = frame.evaluate(
-                "(s) => (window.__hh_popup_state?.events||[]).filter(e => e.ts_ms > s)",
-                since_ms
-            )
+            events = frame.evaluate("(s) => (window.__hh_popup_state?.events||[]).filter(e => e.ts_ms > s)", since_ms)
             if events:
                 _log.debug("[popup_watcher] %d개 팝업 감지", len(events))
                 return events
@@ -114,6 +113,7 @@ def clear_events(page=None) -> None:
     """window.__hh_popup_state.events를 초기화한다."""
     if page is None:
         from scripts.navigator import get_page
+
         page = get_page()
 
     for frame in page.frames:
@@ -127,6 +127,7 @@ def auto_handle(page=None) -> dict:
     """poll_events → 각 이벤트 처리 → clear_events."""
     if page is None:
         from scripts.navigator import get_page
+
         page = get_page()
 
     handled = []
@@ -148,6 +149,7 @@ def auto_handle(page=None) -> dict:
             continue
         if spec["action"] == "click_button":
             from scripts.navigator import click_button
+
             _log.debug("[popup_watcher] 버튼 클릭 시도: %s", spec["target"])
             ok = click_button(spec["target"])
             handled.append({"event": ev, "clicked": ok})
@@ -159,6 +161,5 @@ def auto_handle(page=None) -> dict:
     if events:
         clear_events(page=page)
 
-    _log.info("[popup_watcher] 처리 완료: 처리=%d, 스킵=%d, 미지=%d",
-             len(handled), len(skipped), len(unknown))
+    _log.info("[popup_watcher] 처리 완료: 처리=%d, 스킵=%d, 미지=%d", len(handled), len(skipped), len(unknown))
     return {"handled": handled, "skipped": skipped, "unknown": unknown}

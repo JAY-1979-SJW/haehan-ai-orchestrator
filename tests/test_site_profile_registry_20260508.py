@@ -1,11 +1,16 @@
 """tests/test_site_profile_registry_20260508.py - site_profile_registry 단위 테스트"""
-import pytest
+
 from ai_orchestrator.local_agent.site_profile_registry import (
-    get_site_profile, get_profile_by_domain, is_site_registered,
-    is_action_blocked_for_site, is_action_delegated, is_action_direct_required,
-    register_site_profile, _COMMON_BLOCKED, _REGISTRY,
-    LOGIN_USER_DIRECT, LOGIN_WAITING_AUTH,
-    CAT_CONTENT_PLATFORM, CAT_GOVERNMENT, CAT_FINANCIAL, CAT_FORUM, CAT_ECOMMERCE, CAT_GENERIC,
+    _COMMON_BLOCKED,
+    _REGISTRY,
+    CAT_GENERIC,
+    LOGIN_WAITING_AUTH,
+    get_profile_by_domain,
+    get_site_profile,
+    is_action_blocked_for_site,
+    is_action_delegated,
+    is_site_registered,
+    register_site_profile,
 )
 
 

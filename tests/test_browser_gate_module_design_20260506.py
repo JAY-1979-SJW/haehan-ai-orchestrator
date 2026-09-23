@@ -3,6 +3,7 @@
 fixture/schema만 검증한다.
 실제 브라우저 실행, dispatcher import, task_executor import 금지.
 """
+
 import json
 from pathlib import Path
 
@@ -41,6 +42,7 @@ def _case(data, case_id):
 
 # ── fixture schema 검증 ────────────────────────────────────────────────────
 
+
 def test_fixture_schema_required_fields():
     """fixture schema 필수 필드 검증."""
     data = load_fixture()
@@ -77,6 +79,7 @@ def test_fixture_task_executor_not_connected():
 
 # ── gate_decision 허용값 검증 ────────────────────────────────────────────
 
+
 def test_gate_decisions_enum():
     """gate_decisions 목록이 허용 enum과 일치."""
     data = load_fixture()
@@ -88,12 +91,11 @@ def test_all_case_gate_decisions_valid():
     data = load_fixture()
     for c in data["cases"]:
         gd = c["expected"]["gate_decision"]
-        assert gd in ALLOWED_GATE_DECISIONS, (
-            f"{c['case_id']}: invalid gate_decision={gd!r}"
-        )
+        assert gd in ALLOWED_GATE_DECISIONS, f"{c['case_id']}: invalid gate_decision={gd!r}"
 
 
 # ── block_reason 허용값 검증 ─────────────────────────────────────────────
+
 
 def test_block_reasons_enum():
     """block_reasons 목록이 허용 enum을 포함한다."""
@@ -107,16 +109,13 @@ def test_all_case_block_reasons_valid():
     data = load_fixture()
     for c in data["cases"]:
         for br in c["expected"].get("block_reasons", []):
-            assert br in ALLOWED_BLOCK_REASONS, (
-                f"{c['case_id']}: invalid block_reason={br!r}"
-            )
+            assert br in ALLOWED_BLOCK_REASONS, f"{c['case_id']}: invalid block_reason={br!r}"
         for br in c["expected"].get("block_reasons_include", []):
-            assert br in ALLOWED_BLOCK_REASONS, (
-                f"{c['case_id']}: invalid block_reason_include={br!r}"
-            )
+            assert br in ALLOWED_BLOCK_REASONS, f"{c['case_id']}: invalid block_reason_include={br!r}"
 
 
 # ── submit operation DENY_BY_DEFAULT 검증 ────────────────────────────────
+
 
 def test_submit_deny_by_default():
     """operation_type=submit은 DENY_BY_DEFAULT."""
@@ -136,6 +135,7 @@ def test_submit_deny_safe_to_execute_false():
 
 # ── production_mode=true → safe_to_execute=false ─────────────────────────
 
+
 def test_production_mode_true_blocked():
     """production_mode=true이면 PRODUCTION_MODE_BLOCKED."""
     data = load_fixture()
@@ -148,6 +148,7 @@ def test_production_mode_true_blocked():
 
 # ── contains_sensitive_input=true + redaction 미완료 → 차단 ───────────────
 
+
 def test_sensitive_input_not_redacted_block():
     """contains_sensitive_input=true + redaction_complete=false → SENSITIVE_INPUT_NOT_REDACTED."""
     data = load_fixture()
@@ -159,6 +160,7 @@ def test_sensitive_input_not_redacted_block():
 
 
 # ── approval_required action에서 approval_id/status 누락 → 차단 ───────────
+
 
 def test_approval_id_missing_block():
     """approval_required=true + approval_id 비어 있음 → APPROVAL_ID_MISSING."""
@@ -180,6 +182,7 @@ def test_approval_not_approved_block():
 
 # ── audit_required action에서 audit_context 누락 → 차단 ───────────────────
 
+
 def test_audit_context_missing_block():
     """audit_required=true + audit_context 비어 있음 → AUDIT_CONTEXT_MISSING."""
     data = load_fixture()
@@ -191,6 +194,7 @@ def test_audit_context_missing_block():
 
 
 # ── safe_to_dispatch=true이면 gate_decision=ALLOW ────────────────────────
+
 
 def test_safe_to_dispatch_true_requires_allow():
     """safe_to_dispatch=true이면 gate_decision은 ALLOW여야 한다."""
@@ -211,6 +215,7 @@ def test_allow_click_safe_to_execute_always_false():
 
 # ── safe_to_execute=true는 이번 단계에서 허용하지 않음 ────────────────────
 
+
 def test_safe_to_execute_never_true_in_any_case():
     """이번 단계 어떤 케이스에서도 safe_to_execute=true이면 FAIL."""
     data = load_fixture()
@@ -228,6 +233,7 @@ def test_safe_to_execute_policy_not_allowed():
 
 # ── 실제 브라우저/dispatcher import 없음 ─────────────────────────────────
 
+
 def test_no_browser_import_in_this_module():
     """이 테스트 파일은 실제 브라우저/dispatcher import를 포함하지 않는다.
 
@@ -240,9 +246,7 @@ def test_no_browser_import_in_this_module():
         # import 구문으로 직접 참조하는 경우만 차단 (주석·문자열 내 단순 언급은 허용)
         import_patterns = [f"import {mod}", f"from {mod}"]
         for pattern in import_patterns:
-            assert pattern not in source, (
-                f"Unexpected import in this test file: {pattern}"
-            )
+            assert pattern not in source, f"Unexpected import in this test file: {pattern}"
 
 
 def test_no_task_executor_import():
@@ -252,7 +256,6 @@ def test_no_task_executor_import():
     task_executor / browser_worker를 직접 import하는 구문이 없음을 확인한다.
     sys.modules 전역 상태 검사가 아닌 소스 코드 검사로 순서 독립성을 보장한다.
     """
-    import ast
 
     files_to_check = [
         Path(__file__),
@@ -267,12 +270,11 @@ def test_no_task_executor_import():
         for mod in blocked:
             import_patterns = [f"import {mod}", f"from {mod}"]
             for pattern in import_patterns:
-                assert pattern not in source, (
-                    f"Unexpected import in {fpath.name}: {pattern}"
-                )
+                assert pattern not in source, f"Unexpected import in {fpath.name}: {pattern}"
 
 
 # ── operation_type 필드 검증 ─────────────────────────────────────────────
+
 
 def test_all_cases_have_action_name():
     """모든 케이스에 action_name이 있다."""
@@ -287,18 +289,15 @@ def test_all_cases_have_operation_type():
     data = load_fixture()
     for c in data["cases"]:
         ot = c["input"].get("operation_type")
-        assert ot in ALLOWED_OPERATION_TYPES, (
-            f"{c['case_id']}: invalid operation_type={ot!r}"
-        )
+        assert ot in ALLOWED_OPERATION_TYPES, f"{c['case_id']}: invalid operation_type={ot!r}"
 
 
 # ── 기존 관련 테스트와 충돌 없음 ──────────────────────────────────────────
 
+
 def test_existing_gate_fixture_still_valid():
     """기존 submit_execution_gate fixture의 핵심 구조가 유지된다."""
-    existing = (
-        Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
-    )
+    existing = Path(__file__).parent / "fixtures" / "browser_submit_execution_gate_fixture_20260506.json"
     if not existing.exists():
         pytest.skip("existing gate fixture not found")
     with open(existing, encoding="utf-8") as f:
@@ -310,9 +309,7 @@ def test_existing_gate_fixture_still_valid():
 
 def test_existing_allowlist_fixture_submit_deny():
     """기존 allowlist fixture의 submit DENY_BY_DEFAULT 유지 확인."""
-    allowlist = (
-        Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
-    )
+    allowlist = Path(__file__).parent / "fixtures" / "browser_allowlist_policy_20260506.json"
     with open(allowlist, encoding="utf-8") as f:
         d = json.load(f)
     assert d["default_verdicts"]["submit"] == "DENY_BY_DEFAULT"
@@ -328,12 +325,8 @@ def test_untracked_preflight_md_not_deleted():
 
 # ── 최소 케이스 수 검증 ───────────────────────────────────────────────────
 
+
 def test_fixture_min_case_count():
     """fixture에 최소 10개 이상의 케이스가 있다."""
     data = load_fixture()
-    assert len(data["cases"]) >= 10, (
-        f"Expected at least 10 cases, got {len(data['cases'])}"
-    )
-
-
-import sys
+    assert len(data["cases"]) >= 10, f"Expected at least 10 cases, got {len(data['cases'])}"

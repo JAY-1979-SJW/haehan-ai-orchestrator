@@ -1,11 +1,9 @@
 """USER_FIELD_TEST_01 — 12+ 테스트."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-
-import pytest
-
 
 REPORT = Path("data/inspection/local_agent_user_field_test/user_field_test_report.json")
 CHECKSUMS = Path("data/inspection/local_agent_user_field_test/checksums.json")
@@ -42,12 +40,21 @@ def test_report_is_valid_json():
 def test_report_has_required_steps():
     d = json.loads(REPORT.read_text(encoding="utf-8"))
     steps = d.get("steps", {})
-    for k in ("01_extract_zip_to_clean_folder", "02_self_test_python_free",
-              "03_diagnostics_python_free", "04_gui_launch",
-              "05_registration_with_code", "06_credential_manager_storage",
-              "07_wss_auth_ok", "08_heartbeat", "09_reexecute_auto_reconnect",
-              "10_error_token_not_stored", "11_error_register_no_env",
-              "12_smartscreen_antivirus", "13_user_feedback"):
+    for k in (
+        "01_extract_zip_to_clean_folder",
+        "02_self_test_python_free",
+        "03_diagnostics_python_free",
+        "04_gui_launch",
+        "05_registration_with_code",
+        "06_credential_manager_storage",
+        "07_wss_auth_ok",
+        "08_heartbeat",
+        "09_reexecute_auto_reconnect",
+        "10_error_token_not_stored",
+        "11_error_register_no_env",
+        "12_smartscreen_antivirus",
+        "13_user_feedback",
+    ):
         assert k in steps, f"missing step: {k}"
 
 
@@ -61,11 +68,17 @@ def test_report_artifacts_have_sha256():
 def test_report_required_steps_passed():
     d = json.loads(REPORT.read_text(encoding="utf-8"))
     steps = d["steps"]
-    for k in ("01_extract_zip_to_clean_folder", "02_self_test_python_free",
-              "03_diagnostics_python_free", "04_gui_launch",
-              "05_registration_with_code", "07_wss_auth_ok",
-              "09_reexecute_auto_reconnect",
-              "10_error_token_not_stored", "11_error_register_no_env"):
+    for k in (
+        "01_extract_zip_to_clean_folder",
+        "02_self_test_python_free",
+        "03_diagnostics_python_free",
+        "04_gui_launch",
+        "05_registration_with_code",
+        "07_wss_auth_ok",
+        "09_reexecute_auto_reconnect",
+        "10_error_token_not_stored",
+        "11_error_register_no_env",
+    ):
         assert steps[k]["ok"] is True, f"step {k} not ok"
 
 
@@ -74,25 +87,26 @@ def test_report_required_steps_passed():
 
 def test_no_token_leak_in_report():
     import re
+
     text = REPORT.read_text(encoding="utf-8")
     assert not re.search(r'"device_token"\s*:\s*"[A-Za-z0-9._\-]{8,}"', text)
-    assert not re.search(r'"registration_code"\s*:\s*"[A-Za-z0-9._\-]{8,}"',
-                          text)
+    assert not re.search(r'"registration_code"\s*:\s*"[A-Za-z0-9._\-]{8,}"', text)
 
 
 def test_no_token_leak_in_summary():
     import re
+
     text = SUMMARY.read_text(encoding="utf-8")
     assert not re.search(r'"device_token"\s*:\s*"[A-Za-z0-9._\-]{8,}"', text)
 
 
 def test_no_token_leak_in_runbook():
     import re
+
     text = RUNBOOK.read_text(encoding="utf-8")
     # 코드 예시의 "여기에-코드-붙여넣기" 같은 placeholder 만 허용
     matches = re.findall(r'"device_token"\s*:\s*"([^"]{8,})"', text)
-    real = [m for m in matches if "<" not in m and "여기" not in m
-            and m != "[REDACTED]"]
+    real = [m for m in matches if "<" not in m and "여기" not in m and m != "[REDACTED]"]
     assert real == []
 
 
@@ -104,7 +118,8 @@ def test_agent_id_masked_in_report():
     text = REPORT.read_text(encoding="utf-8")
     # la-XXX***YYYY 패턴은 OK, la-[a-f0-9]{12} 전체 raw 는 금지
     import re
-    raw = re.findall(r'la-[a-f0-9]{12}', text)
+
+    raw = re.findall(r"la-[a-f0-9]{12}", text)
     # 단, agent_id mask 안에는 4자리 hex 끝부분 허용 (예: 22df)
     # 정확 검증: 완전 12자 hex 가 노출되면 NG
     assert raw == [], f"raw agent_id leaked: {raw}"
@@ -135,10 +150,16 @@ def test_runbook_has_sha256_verification():
 
 def test_runbook_has_powershell_commands():
     text = RUNBOOK.read_text(encoding="utf-8")
-    for keyword in ("--self-test", "--diagnostics", "--register",
-                    "--agent-id", "--gui",
-                    "HAEHAN_AGENT_WS_ENABLED", "HAEHAN_AGENT_SERVER",
-                    "HAEHAN_AGENT_CODE"):
+    for keyword in (
+        "--self-test",
+        "--diagnostics",
+        "--register",
+        "--agent-id",
+        "--gui",
+        "HAEHAN_AGENT_WS_ENABLED",
+        "HAEHAN_AGENT_SERVER",
+        "HAEHAN_AGENT_CODE",
+    ):
         assert keyword in text, f"runbook missing: {keyword}"
 
 
@@ -157,25 +178,28 @@ def test_runbook_warns_against_secret_leak():
 
 def test_audit_module_imports():
     from scripts.ops import audit_local_agent_user_field_test as a
+
     assert hasattr(a, "judge_field_test")
 
 
 def test_audit_warn_same_machine():
     from scripts.ops import audit_local_agent_user_field_test as a
+
     v = a.judge_field_test(desktop_ui_unchanged_signal=True)
     # 본 환경 외부 PC 미사용 → WARN_SAME_MACHINE_TEST_ONLY 가 정상
-    assert v.code in ("PASS_USER_FIELD_TEST",
-                       "WARN_SAME_MACHINE_TEST_ONLY")
+    assert v.code in ("PASS_USER_FIELD_TEST", "WARN_SAME_MACHINE_TEST_ONLY")
 
 
 def test_audit_fail_desktop_ui_touched():
     from scripts.ops import audit_local_agent_user_field_test as a
+
     v = a.judge_field_test(desktop_ui_unchanged_signal=False)
     assert v.code == "FAIL_DESKTOP_UI_TOUCHED"
 
 
 def test_audit_fail_report_missing(tmp_path):
     from scripts.ops import audit_local_agent_user_field_test as a
+
     v = a.judge_field_test(report_path=tmp_path / "missing.json")
     assert v.code == "FAIL_REPORT_MISSING"
 
@@ -185,17 +209,19 @@ def test_audit_fail_report_missing(tmp_path):
 
 def test_regression_gui_impl_audit_imports():
     from scripts.ops import audit_local_agent_gui_implementation as a
+
     assert hasattr(a, "judge_impl")
 
 
 def test_regression_desktop_launcher_intact():
     from local_agent import desktop_launcher
+
     for sym in ("main", "self_test", "register_flow", "connect_flow"):
         assert hasattr(desktop_launcher, sym)
 
 
 def test_regression_gui_app_pages_intact():
     from local_agent import gui_app
-    for p in ("PAGE_DASHBOARD", "PAGE_REGISTRATION",
-              "PAGE_LOGS", "PAGE_SETTINGS"):
+
+    for p in ("PAGE_DASHBOARD", "PAGE_REGISTRATION", "PAGE_LOGS", "PAGE_SETTINGS"):
         assert hasattr(gui_app, p)

@@ -1,11 +1,10 @@
 """validate_site_policy_config 검증 테스트."""
+
 from __future__ import annotations
 
-import json
-import pytest
+import sys
 from pathlib import Path
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from validate_site_policy_config import validate_config

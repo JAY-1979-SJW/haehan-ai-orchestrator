@@ -7,7 +7,6 @@ AI는 민감정보(비밀번호, OTP, 인증서 비밀번호)를 입력/저장/�
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 # 실행 위치 코드
@@ -25,60 +24,64 @@ DECISION_READONLY = "READONLY_ALLOWED"
 DECISION_BLOCK = "BLOCK"
 
 # 사용자 화면에 절대 노출하면 안 되는 필드
-_USER_FORBIDDEN_KEYS = frozenset({
-    "internal_policy",
-    "full_policy",
-    "action_metadata",
-    "raw_validation_errors",
-    "system_trace",
-    "detailed_audit_event",
-    "raw_audit_log",
-    "audit_raw",
-    "token",
-    "access_token",
-    "refresh_token",
-    "cookie",
-    "session",
-    "secret",
-    "api_key",
-    "oauth_token",
-    "password",
-    "certificate_password",
-    "financial_certificate_password",
-    "otp",
-    "security_card",
-    "other_tenant_data",
-    "other_user_tasks",
-    "other_user_workflow_run_id",
-    "server_path",
-    "workflow_id",
-    "tenant_id",
-    "user_id",
-    "site_id",
-    "full_preflight_policy",
-    "action_registry_raw",
-    "cross_tenant_data",
-})
+_USER_FORBIDDEN_KEYS = frozenset(
+    {
+        "internal_policy",
+        "full_policy",
+        "action_metadata",
+        "raw_validation_errors",
+        "system_trace",
+        "detailed_audit_event",
+        "raw_audit_log",
+        "audit_raw",
+        "token",
+        "access_token",
+        "refresh_token",
+        "cookie",
+        "session",
+        "secret",
+        "api_key",
+        "oauth_token",
+        "password",
+        "certificate_password",
+        "financial_certificate_password",
+        "otp",
+        "security_card",
+        "other_tenant_data",
+        "other_user_tasks",
+        "other_user_workflow_run_id",
+        "server_path",
+        "workflow_id",
+        "tenant_id",
+        "user_id",
+        "site_id",
+        "full_preflight_policy",
+        "action_registry_raw",
+        "cross_tenant_data",
+    }
+)
 
 # 관리자 화면에도 노출하면 안 되는 필드 (raw sensitive)
-_ADMIN_FORBIDDEN_KEYS = frozenset({
-    "password",
-    "certificate_password",
-    "financial_certificate_password",
-    "otp",
-    "security_card",
-    "token",
-    "access_token",
-    "refresh_token",
-    "cookie",
-    "session",
-    "secret",
-    "api_key",
-    "oauth_token",
-    "raw_audit_log",
-    "system_trace",
-    "raw_validation_errors",
-})
+_ADMIN_FORBIDDEN_KEYS = frozenset(
+    {
+        "password",
+        "certificate_password",
+        "financial_certificate_password",
+        "otp",
+        "security_card",
+        "token",
+        "access_token",
+        "refresh_token",
+        "cookie",
+        "session",
+        "secret",
+        "api_key",
+        "oauth_token",
+        "raw_audit_log",
+        "system_trace",
+        "raw_validation_errors",
+    }
+)
 
 # AI 입력이 차단되는 민감항목
 _SENSITIVE_INPUT_TYPES = (
@@ -117,10 +120,7 @@ _USER_MESSAGES_KO = {
     ),
     DECISION_REQUIRE_API: "이 작업은 API를 통해 처리됩니다.",
     DECISION_READONLY: "이 작업은 읽기 전용으로 처리됩니다.",
-    DECISION_BLOCK: (
-        "이 작업은 자동화가 차단되었습니다. "
-        "CAPTCHA 또는 키보드 보안 등의 이유로 자동 실행이 불가합니다."
-    ),
+    DECISION_BLOCK: ("이 작업은 자동화가 차단되었습니다. CAPTCHA 또는 키보드 보안 등의 이유로 자동 실행이 불가합니다."),
 }
 
 
@@ -190,8 +190,17 @@ def _build_allowed_next_actions(decision: str) -> list[str]:
 
 
 def _build_blocked_next_actions(payload: dict[str, Any]) -> list[str]:
-    blocked = ["type", "submit", "fill_password", "fill_otp", "sign_certificate",
-               "extract_cookie", "extract_session", "extract_token", "extract_localStorage"]
+    blocked = [
+        "type",
+        "submit",
+        "fill_password",
+        "fill_otp",
+        "sign_certificate",
+        "extract_cookie",
+        "extract_session",
+        "extract_token",
+        "extract_localStorage",
+    ]
     if payload.get("requires_certificate") or payload.get("requires_financial_certificate"):
         blocked.append("fill_certificate_password")
         blocked.append("auto_sign_certificate")

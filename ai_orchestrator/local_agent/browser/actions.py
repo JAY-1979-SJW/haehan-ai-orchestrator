@@ -15,30 +15,30 @@ navigate, click, type_text, select_option, upload_file,
 screenshot, scroll, get_text, get_attribute, wait_for_selector,
 accept_dialog, fill_form
 """
+
 from __future__ import annotations
 
-import base64
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from ai_orchestrator.local_agent.browser.action_gate import (
-    classify_action, GATE_APPROVE, GATE_NOTIFY,
+    GATE_APPROVE,
     GateResult,
+    classify_action,
 )
 from ai_orchestrator.local_agent.browser.audit_log import log_action
 from ai_orchestrator.local_agent.browser.intent_token import IntentToken
 
-
 # ── 예외 ────────────────────────────────────────────────────────────────────
+
 
 class GateApprovalRequired(RuntimeError):
     """APPROVE 액션 — 사용자 확인 필요."""
+
     def __init__(self, gate: GateResult, action_type: str, label: str):
-        super().__init__(
-            f"[APPROVAL_REQUIRED] {action_type} '{label}' → {gate.reason}"
-        )
+        super().__init__(f"[APPROVAL_REQUIRED] {action_type} '{label}' → {gate.reason}")
         self.gate = gate
         self.action_type = action_type
         self.label = label
@@ -56,17 +56,19 @@ class GateApprovalRequired(RuntimeError):
 
 # ── 결과 ────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class ActionResult:
     action: str
     ok: bool
     verdict: str = "AUTO"
-    value: Any = None          # 텍스트 추출, screenshot bytes 등
+    value: Any = None  # 텍스트 추출, screenshot bytes 등
     error: str = ""
     extra: dict = field(default_factory=dict)
 
 
 # ── 내부 헬퍼 ───────────────────────────────────────────────────────────────
+
 
 def _gate_check(
     action_type: str,
@@ -78,8 +80,11 @@ def _gate_check(
 ) -> GateResult:
     """gate 분류 → APPROVE면 force 없을 때 GateApprovalRequired 예외."""
     gate = classify_action(
-        action_type=action_type, label=label, url=url,
-        intent=intent, params=params,
+        action_type=action_type,
+        label=label,
+        url=url,
+        intent=intent,
+        params=params,
     )
     if gate.verdict == GATE_APPROVE and not force:
         raise GateApprovalRequired(gate, action_type, label)
@@ -95,6 +100,7 @@ def _current_url(page) -> str:
 
 # ── 공개 액션 함수 ─────────────────────────────────────────────────────────
 
+
 def navigate(
     page,
     url: str,
@@ -109,12 +115,12 @@ def navigate(
     gate = _gate_check("navigate", "", url, intent, {}, force)
     try:
         page.goto(url, wait_until=wait_until, timeout=timeout_ms)
-        log_action("navigate", url=url, result="ok",
-                   risk_level=gate.verdict, audit_path=audit_path)
+        log_action("navigate", url=url, result="ok", risk_level=gate.verdict, audit_path=audit_path)
         return ActionResult("navigate", ok=True, verdict=gate.verdict, value=url)
     except Exception as e:
-        log_action("navigate", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "navigate", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("navigate", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -133,14 +139,26 @@ def click(
     gate = _gate_check("click", label, url, intent, {}, force)
     try:
         page.click(selector, timeout=timeout_ms)
-        log_action("click", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict,
-                   extra={"label": label}, audit_path=audit_path)
+        log_action(
+            "click",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"label": label},
+            audit_path=audit_path,
+        )
         return ActionResult("click", ok=True, verdict=gate.verdict)
     except Exception as e:
-        log_action("click", url=url, selector=selector[:200],
-                   result="error", error=str(e)[:300],
-                   risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "click",
+            url=url,
+            selector=selector[:200],
+            result="error",
+            error=str(e)[:300],
+            risk_level=gate.verdict,
+            audit_path=audit_path,
+        )
         return ActionResult("click", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -163,15 +181,26 @@ def type_text(
         if clear_first:
             page.fill(selector, "")
         page.type(selector, value, delay=delay_ms)
-        log_action("type", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict,
-                   params={"label": label, "length": len(value)},
-                   audit_path=audit_path)
+        log_action(
+            "type",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            params={"label": label, "length": len(value)},
+            audit_path=audit_path,
+        )
         return ActionResult("type", ok=True, verdict=gate.verdict)
     except Exception as e:
-        log_action("type", url=url, selector=selector[:200],
-                   result="error", error=str(e)[:300],
-                   risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "type",
+            url=url,
+            selector=selector[:200],
+            result="error",
+            error=str(e)[:300],
+            risk_level=gate.verdict,
+            audit_path=audit_path,
+        )
         return ActionResult("type", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -190,13 +219,20 @@ def select_option(
     gate = _gate_check("select", label, url, intent, {}, force)
     try:
         page.select_option(selector, value)
-        log_action("select", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict,
-                   extra={"value": value, "label": label}, audit_path=audit_path)
+        log_action(
+            "select",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"value": value, "label": label},
+            audit_path=audit_path,
+        )
         return ActionResult("select", ok=True, verdict=gate.verdict, value=value)
     except Exception as e:
-        log_action("select", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "select", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("select", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -220,15 +256,20 @@ def upload_file(
     gate = _gate_check("file_upload", label or fp.name, url, intent, {}, force)
     try:
         page.set_input_files(selector, str(fp))
-        log_action("file_upload", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict,
-                   extra={"filename": fp.name, "size_bytes": fp.stat().st_size if fp.exists() else -1},
-                   audit_path=audit_path)
-        return ActionResult("file_upload", ok=True, verdict=gate.verdict,
-                            value=str(fp))
+        log_action(
+            "file_upload",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"filename": fp.name, "size_bytes": fp.stat().st_size if fp.exists() else -1},
+            audit_path=audit_path,
+        )
+        return ActionResult("file_upload", ok=True, verdict=gate.verdict, value=str(fp))
     except Exception as e:
-        log_action("file_upload", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "file_upload", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("file_upload", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -247,14 +288,19 @@ def screenshot(
     try:
         save_path.parent.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(save_path), full_page=full_page)
-        log_action("screenshot", url=url, result="ok",
-                   risk_level=gate.verdict,
-                   extra={"path": str(save_path)}, audit_path=audit_path)
-        return ActionResult("screenshot", ok=True, verdict=gate.verdict,
-                            value=str(save_path))
+        log_action(
+            "screenshot",
+            url=url,
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"path": str(save_path)},
+            audit_path=audit_path,
+        )
+        return ActionResult("screenshot", ok=True, verdict=gate.verdict, value=str(save_path))
     except Exception as e:
-        log_action("screenshot", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "screenshot", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("screenshot", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -273,14 +319,19 @@ def scroll(
     try:
         dy = amount if direction == "down" else -amount
         page.evaluate(f"window.scrollBy(0, {dy})")
-        log_action("scroll", url=url, result="ok",
-                   risk_level=gate.verdict,
-                   extra={"direction": direction, "amount": amount},
-                   audit_path=audit_path)
+        log_action(
+            "scroll",
+            url=url,
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"direction": direction, "amount": amount},
+            audit_path=audit_path,
+        )
         return ActionResult("scroll", ok=True, verdict=gate.verdict)
     except Exception as e:
-        log_action("scroll", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "scroll", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("scroll", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -297,12 +348,14 @@ def get_text(
     gate = _gate_check("get_text", selector, url, intent, {}, force)
     try:
         text = page.inner_text(selector)
-        log_action("get_text", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "get_text", url=url, selector=selector[:200], result="ok", risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("get_text", ok=True, verdict=gate.verdict, value=text)
     except Exception as e:
-        log_action("get_text", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "get_text", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("get_text", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -320,13 +373,20 @@ def get_attribute(
     gate = _gate_check("get_text", selector, url, intent, {}, force)
     try:
         val = page.get_attribute(selector, attribute)
-        log_action("get_attribute", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict,
-                   extra={"attribute": attribute}, audit_path=audit_path)
+        log_action(
+            "get_attribute",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            extra={"attribute": attribute},
+            audit_path=audit_path,
+        )
         return ActionResult("get_attribute", ok=True, verdict=gate.verdict, value=val)
     except Exception as e:
-        log_action("get_attribute", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "get_attribute", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("get_attribute", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -345,12 +405,24 @@ def wait_for_selector(
     gate = _gate_check("wait", selector, url, intent, {}, force)
     try:
         page.wait_for_selector(selector, state=state, timeout=timeout_ms)
-        log_action("wait_for_selector", url=url, selector=selector[:200],
-                   result="ok", risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "wait_for_selector",
+            url=url,
+            selector=selector[:200],
+            result="ok",
+            risk_level=gate.verdict,
+            audit_path=audit_path,
+        )
         return ActionResult("wait_for_selector", ok=True, verdict=gate.verdict)
     except Exception as e:
-        log_action("wait_for_selector", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "wait_for_selector",
+            url=url,
+            result="error",
+            error=str(e)[:300],
+            risk_level=gate.verdict,
+            audit_path=audit_path,
+        )
         return ActionResult("wait_for_selector", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -366,12 +438,12 @@ def accept_dialog(
     gate = _gate_check("alert_accept", "dialog", url, intent, {}, force)
     try:
         page.on("dialog", lambda dialog: dialog.accept())
-        log_action("accept_dialog", url=url, result="ok",
-                   risk_level=gate.verdict, audit_path=audit_path)
+        log_action("accept_dialog", url=url, result="ok", risk_level=gate.verdict, audit_path=audit_path)
         return ActionResult("accept_dialog", ok=True, verdict=gate.verdict)
     except Exception as e:
-        log_action("accept_dialog", url=url, result="error",
-                   error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path)
+        log_action(
+            "accept_dialog", url=url, result="error", error=str(e)[:300], risk_level=gate.verdict, audit_path=audit_path
+        )
         return ActionResult("accept_dialog", ok=False, verdict=gate.verdict, error=str(e))
 
 
@@ -398,9 +470,9 @@ def fill_form(
         else:
             value = v
             label = selector
-        r = type_text(page, selector, value,
-                      label=label, intent=intent,
-                      audit_path=audit_path, delay_ms=delay_ms, force=force)
+        r = type_text(
+            page, selector, value, label=label, intent=intent, audit_path=audit_path, delay_ms=delay_ms, force=force
+        )
         results.append(r)
         if not r.ok:
             break

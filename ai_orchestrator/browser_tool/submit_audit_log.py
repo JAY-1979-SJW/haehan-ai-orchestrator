@@ -4,43 +4,69 @@ Append-only JSONL audit log for submit policy, preview, and result tracking.
 No DB write, no production paths, test-only file operations.
 Redacts sensitive data before storage.
 """
+
 from __future__ import annotations
 
 import json
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional, Any
-
 
 # Sensitive field names that must be redacted
 SENSITIVE_FIELD_NAMES = {
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "api_key", "apikey", "api-key",
-    "secret", "secrets",
-    "credential", "credentials",
-    "session", "sessionid", "session_id",
-    "cookie", "cookies",
-    "private_key", "private-key", "pkey",
-    "auth", "authorization",
+    "password",
+    "passwd",
+    "pwd",
+    "token",
+    "access_token",
+    "refresh_token",
+    "api_key",
+    "apikey",
+    "api-key",
+    "secret",
+    "secrets",
+    "credential",
+    "credentials",
+    "session",
+    "sessionid",
+    "session_id",
+    "cookie",
+    "cookies",
+    "private_key",
+    "private-key",
+    "pkey",
+    "auth",
+    "authorization",
     "bearer",
     "jwt",
     "signature",
-    "otp", "totp", "mfa", "2fa",
-    "card", "cc_number", "cvv", "cvc",
-    "ssn", "social_security",
-    "license_key", "license-key",
-    "encryption_key", "enc_key",
+    "otp",
+    "totp",
+    "mfa",
+    "2fa",
+    "card",
+    "cc_number",
+    "cvv",
+    "cvc",
+    "ssn",
+    "social_security",
+    "license_key",
+    "license-key",
+    "encryption_key",
+    "enc_key",
 }
 
 # Safe hidden fields that can preserve values (non-sensitive)
 SAFE_HIDDEN_FIELD_NAMES = {
-    "csrf_token", "csrf-token",
+    "csrf_token",
+    "csrf-token",
     "timestamp",
-    "form_version", "form-version",
+    "form_version",
+    "form-version",
     "nonce",
-    "request_id", "request-id",
+    "request_id",
+    "request-id",
 }
 
 
@@ -76,10 +102,10 @@ class SubmitAuditEvent:
     result_summary: str
 
     # Optional: Approval & Error
-    approved_by: Optional[str] = None
-    approved_at: Optional[str] = None
-    submit_timestamp: Optional[str] = None
-    error_reason: Optional[str] = None
+    approved_by: str | None = None
+    approved_at: str | None = None
+    submit_timestamp: str | None = None
+    error_reason: str | None = None
 
     # Optional: Metadata
     metadata: dict = field(default_factory=dict)
@@ -92,7 +118,7 @@ class SubmitAuditWriteResult:
     success: bool
     path: str
     event_count: int
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 def build_submit_audit_event(
@@ -110,10 +136,10 @@ def build_submit_audit_event(
     submit_result: str,
     redacted_payload: dict,
     result_summary: str,
-    approved_by: Optional[str] = None,
-    submit_timestamp: Optional[str] = None,
-    error_reason: Optional[str] = None,
-    metadata: Optional[dict] = None,
+    approved_by: str | None = None,
+    submit_timestamp: str | None = None,
+    error_reason: str | None = None,
+    metadata: dict | None = None,
 ) -> SubmitAuditEvent:
     """Build audit event from components.
 
@@ -140,8 +166,8 @@ def build_submit_audit_event(
     Returns:
         SubmitAuditEvent
     """
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    event_id = f"evt_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    event_id = f"evt_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
     return SubmitAuditEvent(
         schema_version="1.0",
@@ -172,8 +198,7 @@ def build_submit_audit_event(
 def _is_sensitive_field_name(field_name: str) -> bool:
     """Check if a field name is sensitive."""
     return field_name in SENSITIVE_FIELD_NAMES or any(
-        sensitive in field_name
-        for sensitive in ["password", "token", "secret", "key", "cookie"]
+        sensitive in field_name for sensitive in ["password", "token", "secret", "key", "cookie"]
     )
 
 
@@ -291,9 +316,7 @@ def validate_submit_audit_event(event: SubmitAuditEvent) -> list[str]:
     if not event.submit_result:
         errors.append("submit_result is required")
     if event.submit_result not in ["success", "blocked", "error", "pending"]:
-        errors.append(
-            f"submit_result must be success/blocked/error/pending (got {event.submit_result})"
-        )
+        errors.append(f"submit_result must be success/blocked/error/pending (got {event.submit_result})")
     if event.redacted_payload is None:
         errors.append("redacted_payload is required")
     if not event.result_summary:
@@ -349,10 +372,7 @@ def append_submit_audit_event(
     errors = validate_submit_audit_event(event)
     if errors:
         return SubmitAuditWriteResult(
-            success=False,
-            path=str(path),
-            event_count=0,
-            error_message=f"Event validation failed: {'; '.join(errors)}"
+            success=False, path=str(path), event_count=0, error_message=f"Event validation failed: {'; '.join(errors)}"
         )
 
     try:
@@ -366,7 +386,7 @@ def append_submit_audit_event(
         # Count events in file
         event_count = 0
         if path.exists():
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 event_count = sum(1 for line in f if line.strip())
 
         return SubmitAuditWriteResult(
@@ -376,12 +396,9 @@ def append_submit_audit_event(
             error_message=None,
         )
 
-    except IOError as e:
+    except OSError as e:
         return SubmitAuditWriteResult(
-            success=False,
-            path=str(path),
-            event_count=0,
-            error_message=f"Write failed: {str(e)}"
+            success=False, path=str(path), event_count=0, error_message=f"Write failed: {e!s}"
         )
 
 
@@ -404,7 +421,7 @@ def read_submit_audit_events(path: Path) -> list[dict]:
         raise FileNotFoundError(f"Audit log file not found: {path}")
 
     events = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -413,6 +430,6 @@ def read_submit_audit_events(path: Path) -> list[dict]:
                 event = json.loads(line)
                 events.append(event)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON at line {line_num}: {str(e)}")
+                raise ValueError(f"Invalid JSON at line {line_num}: {e!s}")
 
     return events

@@ -1,5 +1,4 @@
 """Unit tests for hiworks profile and validators."""
-import pytest
 
 from scripts.hiworks.profile import HIWORKS_PROFILE
 from scripts.hiworks.validators import (
@@ -7,8 +6,8 @@ from scripts.hiworks.validators import (
 )
 from scripts.site_engine.types import GateDecision, SiteCapability
 
-
 # ── profile ──────────────────────────────────────────────────────────
+
 
 def test_hiworks_profile_key():
     assert HIWORKS_PROFILE.key == "hiworks"
@@ -36,6 +35,7 @@ def test_hiworks_profile_no_blocked_capabilities():
 
 # ── validators ───────────────────────────────────────────────────────
 
+
 def test_no_plain_secret_clean():
     result = validate_hiworks_no_plain_secret({"to": "test@example.com", "subject": "test"})
     assert result.is_valid
@@ -53,9 +53,11 @@ def test_no_plain_secret_detects_token():
 
 # ── gates site_engine wrappers ────────────────────────────────────────
 
+
 def test_gate_result_read_allowed():
     from scripts.hiworks.gates import gate_result_read
     from scripts.site_engine.execution_gate import ExecutionDecision
+
     result = gate_result_read()
     assert result.decision == ExecutionDecision.ALLOWED
 
@@ -63,6 +65,7 @@ def test_gate_result_read_allowed():
 def test_gate_result_prepare_allowed():
     from scripts.hiworks.gates import gate_result_prepare
     from scripts.site_engine.execution_gate import ExecutionDecision
+
     result = gate_result_prepare()
     assert result.decision == ExecutionDecision.ALLOWED
 
@@ -70,5 +73,6 @@ def test_gate_result_prepare_allowed():
 def test_gate_result_send_approval_required():
     from scripts.hiworks.gates import gate_result_send
     from scripts.site_engine.execution_gate import ExecutionDecision
+
     result = gate_result_send()
     assert result.decision == ExecutionDecision.APPROVAL_REQUIRED

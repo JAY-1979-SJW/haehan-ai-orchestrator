@@ -1,5 +1,4 @@
 """Unit tests for scripts.site_engine.validators."""
-import pytest
 
 from scripts.site_engine.action_planner import ActionPlanStatus, build_action_plan
 from scripts.site_engine.execution_gate import (
@@ -7,7 +6,6 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     GateReason,
 )
-from scripts.site_engine.action_planner import append_gate_decision
 from scripts.site_engine.types import GateDecision, SiteCapability
 from scripts.site_engine.validators import (
     validate_action_plan_steps,
@@ -18,13 +16,11 @@ from scripts.site_engine.validators import (
 )
 from scripts.site_engine.workflow_runner import (
     WorkflowDefinition,
-    WorkflowRunPlan,
-    WorkflowStep,
     build_workflow_plan,
 )
 
-
 # ── validate_no_plain_secret ─────────────────────────────────────────
+
 
 def test_no_plain_secret_clean():
     result = validate_no_plain_secret({"username": "alice", "email": "a@b.com"})
@@ -49,19 +45,16 @@ def test_no_plain_secret_detects_cookie():
 
 # ── validate_no_executable_sensitive_step_without_gate ───────────────
 
+
 def test_submit_step_without_gate_fails():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}
-    ])
+    plan = build_action_plan("p1", "test", [{"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}])
     # gate 없이 GATE_REQUIRED → 검증 통과 (READY 아님)
     result = validate_no_executable_sensitive_step_without_gate(plan)
     assert result.is_valid  # GATE_REQUIRED 상태이므로 READY가 아님 → 통과
 
 
 def test_submit_step_forced_ready_without_gate_fails():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}
-    ])
+    plan = build_action_plan("p1", "test", [{"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}])
     # 강제로 READY 상태로 만들고 gate_result 없이 → 검증 실패
     plan.steps[0].status = ActionPlanStatus.READY
     plan.steps[0].gate_result = None
@@ -72,18 +65,19 @@ def test_submit_step_forced_ready_without_gate_fails():
 
 # ── validate_no_blocked_step_executable ──────────────────────────────
 
+
 def test_blocked_step_not_allowed_passes():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.READ, "action": "extract_cookie", "step_id": "s1"}
-    ])
+    plan = build_action_plan(
+        "p1", "test", [{"capability": SiteCapability.READ, "action": "extract_cookie", "step_id": "s1"}]
+    )
     result = validate_no_blocked_step_executable(plan)
     assert result.is_valid
 
 
 def test_blocked_step_with_allowed_gate_fails():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.READ, "action": "extract_cookie", "step_id": "s1"}
-    ])
+    plan = build_action_plan(
+        "p1", "test", [{"capability": SiteCapability.READ, "action": "extract_cookie", "step_id": "s1"}]
+    )
     # 강제로 allowed gate result 붙이기 → 검증 실패해야 함
     plan.steps[0].gate_result = ExecutionGateResult(
         decision=ExecutionDecision.ALLOWED,
@@ -96,6 +90,7 @@ def test_blocked_step_with_allowed_gate_fails():
 
 
 # ── validate_workflow_has_profile ────────────────────────────────────
+
 
 def test_workflow_with_site_key_valid():
     defn = WorkflowDefinition(workflow_id="w", name="w", site_key="eum")
@@ -114,18 +109,17 @@ def test_workflow_without_site_key_invalid():
 
 # ── validate_action_plan_steps ───────────────────────────────────────
 
+
 def test_action_plan_steps_all_ready_valid():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.READ, "action": "list", "step_id": "s1"}
-    ])
+    plan = build_action_plan("p1", "test", [{"capability": SiteCapability.READ, "action": "list", "step_id": "s1"}])
     result = validate_action_plan_steps(plan)
     assert result.is_valid
 
 
 def test_validators_detect_dangerous_steps():
-    plan = build_action_plan("p1", "test", [
-        {"capability": SiteCapability.READ, "action": "extract_password", "step_id": "s1"}
-    ])
+    plan = build_action_plan(
+        "p1", "test", [{"capability": SiteCapability.READ, "action": "extract_password", "step_id": "s1"}]
+    )
     assert plan.steps[0].status == ActionPlanStatus.BLOCKED
     r = validate_no_blocked_step_executable(plan)
     assert r.is_valid  # BLOCKED + gate_result=None → 통과 (실행 안 됨)
@@ -133,6 +127,8 @@ def test_validators_detect_dangerous_steps():
 
 # ── no external call ─────────────────────────────────────────────────
 
+
 def test_validators_no_external_call():
     from scripts.site_engine import validators
+
     assert callable(validators.validate_no_plain_secret)

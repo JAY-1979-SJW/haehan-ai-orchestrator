@@ -1,10 +1,10 @@
 """Validate the official site automation registry baseline."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +82,15 @@ def validate_registry(path: Path = REGISTRY_PATH) -> tuple[bool, list[str], dict
         if missing:
             errors.append(f"{site_id}: missing required fields {', '.join(missing)}")
 
-        for field in ("display_name", "category", "status", "execution_policy", "login_policy", "risk_level", "owner_module"):
+        for field in (
+            "display_name",
+            "category",
+            "status",
+            "execution_policy",
+            "login_policy",
+            "risk_level",
+            "owner_module",
+        ):
             if not isinstance(site.get(field), str) or not site.get(field):
                 errors.append(f"{site_id}: {field} must be a non-empty string")
 

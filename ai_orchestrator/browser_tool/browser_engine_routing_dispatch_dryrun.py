@@ -16,13 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import (
-    CHAIN_APPROVAL_REQUIRED,
     CHAIN_BLOCK,
-    CHAIN_DOMAIN_VERIFICATION_REQUIRED,
-    CHAIN_MANUAL_REVIEW_REQUIRED,
-    CHAIN_PROCEED,
-    CHAIN_ROUTE_API_CONNECTOR,
-    CHAIN_ROUTE_LOCAL_SYSTEM_BROWSER,
     NEXT_API_CONNECTOR,
     NEXT_APPROVAL_REQUIRED,
     NEXT_BLOCKED,
@@ -134,12 +128,22 @@ def validate_dryrun_dispatch_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "ok", "dry_run", "dispatch_decision", "chain_decision",
-        "engine_capability", "routing_decision", "selected_engine",
-        "next_step", "next_step_instruction",
-        "safe_to_dispatch", "safe_to_execute",
-        "should_write_audit", "block_reason",
-        "user_message_ko", "admin_message_ko", "result",
+        "ok",
+        "dry_run",
+        "dispatch_decision",
+        "chain_decision",
+        "engine_capability",
+        "routing_decision",
+        "selected_engine",
+        "next_step",
+        "next_step_instruction",
+        "safe_to_dispatch",
+        "safe_to_execute",
+        "should_write_audit",
+        "block_reason",
+        "user_message_ko",
+        "admin_message_ko",
+        "result",
     ]
     for field in required_fields:
         if field not in result:

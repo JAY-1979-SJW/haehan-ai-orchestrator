@@ -11,33 +11,48 @@ LOCAL_AGENT_EXTERNAL_WEB_EXECUTION_CONTROL_CLOSEOUT_1 단위 검증.
 
 mock/local fixture만 사용. 외부 사이트 실접속 0건.
 """
+
 import pytest
 
 from ai_orchestrator.local_agent.action_risk_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
     classify_action,
 )
-from ai_orchestrator.local_agent.site_type_classifier import (
-    classify_site, SITE_GOVERNMENT, SITE_FINANCIAL,
+from ai_orchestrator.local_agent.local_security_installer_runner import (
+    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
 )
 from ai_orchestrator.local_agent.local_security_installer_runner import (
-    STATUS_WAITING_USER_UAC, STATUS_INSTALL_PERMISSION_REQUIRED,
-    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_WAITING_USER_UAC,
     check_action_allowed,
 )
+from ai_orchestrator.local_agent.site_type_classifier import (
+    SITE_GOVERNMENT,
+    classify_site,
+)
 from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result, sanitize_universal_result, STATUS_COMPLETED,
+    STATUS_COMPLETED,
+    build_universal_result,
+    sanitize_universal_result,
 )
 from ai_orchestrator.server.execution_location_guard import (
-    classify_execution_location_for_server, LOCAL_AGENT_REQUIRED,
+    LOCAL_AGENT_REQUIRED,
     SERVER_INTERNAL_ONLY,
+    classify_execution_location_for_server,
 )
-from ai_orchestrator.server.universal_agent_task_api import create_task, clear_all
+from ai_orchestrator.server.universal_agent_task_api import clear_all, create_task
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 
@@ -55,22 +70,24 @@ def _assert_safe(r):
 
 # ── 1. 공개 조회 → AUTO_ALLOWED ──────────────────────────────────────────────
 
+
 def test_public_readonly_read_page_auto_allowed():
     grade = classify_action("read_page")
-    assert grade ==GRADE_AUTO_ALLOWED
+    assert grade == GRADE_AUTO_ALLOWED
 
 
 def test_public_search_auto_allowed():
     grade = classify_action("search")
-    assert grade ==GRADE_AUTO_ALLOWED
+    assert grade == GRADE_AUTO_ALLOWED
 
 
 def test_extract_text_auto_allowed():
     grade = classify_action("extract_text")
-    assert grade ==GRADE_AUTO_ALLOWED
+    assert grade == GRADE_AUTO_ALLOWED
 
 
 # ── 2. 은행/정부 도메인 분류 ──────────────────────────────────────────────────
+
 
 def test_government_g2b_classified():
     r = classify_site({"host": "www.g2b.go.kr"})
@@ -89,71 +106,75 @@ def test_government_gov_kr_classified():
 
 # ── 3. 비밀번호/OTP/인증서 자동 입력 → USER_DIRECT ───────────────────────────
 
+
 def test_login_password_input_user_direct():
     grade = classify_action("login_password_input")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_otp_input_user_direct():
     grade = classify_action("otp_input")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_cert_password_input_user_direct():
     grade = classify_action("cert_password_input")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 # ── 4. 결제/송금/투찰/전자서명 → USER_DIRECT or BLOCKED ──────────────────────
 
+
 def test_confirm_payment_user_direct():
     grade = classify_action("confirm_payment")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_confirm_transfer_user_direct():
     grade = classify_action("confirm_transfer")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_bid_final_submit_user_direct():
     grade = classify_action("bid_final_submit")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_e_sign_user_direct():
     grade = classify_action("e_sign")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 def test_government_final_submit_user_direct():
     grade = classify_action("government_final_submit")
-    assert grade ==GRADE_USER_DIRECT
+    assert grade == GRADE_USER_DIRECT
 
 
 # ── 5. credential 자동화 → BLOCKED ──────────────────────────────────────────
 
+
 def test_password_save_blocked():
     grade = classify_action("password_save")
-    assert grade ==GRADE_BLOCKED
+    assert grade == GRADE_BLOCKED
 
 
 def test_otp_save_blocked():
     grade = classify_action("otp_save")
-    assert grade ==GRADE_BLOCKED
+    assert grade == GRADE_BLOCKED
 
 
 def test_cert_password_save_blocked():
     grade = classify_action("cert_password_save")
-    assert grade ==GRADE_BLOCKED
+    assert grade == GRADE_BLOCKED
 
 
 def test_collect_password_blocked():
     grade = classify_action("collect_password")
-    assert grade ==GRADE_BLOCKED
+    assert grade == GRADE_BLOCKED
 
 
 # ── 6. cookie/session 추출 → BLOCKED ─────────────────────────────────────────
+
 
 def test_cookie_export_blocked():
     assert classify_action("cookie_export") == GRADE_BLOCKED
@@ -177,6 +198,7 @@ def test_localStorage_dump_blocked():
 
 # ── 7. 인증서/NPKI 파일 접근 → BLOCKED ──────────────────────────────────────
 
+
 def test_cert_file_access_blocked():
     assert classify_action("cert_file_access") == GRADE_BLOCKED
 
@@ -190,6 +212,7 @@ def test_read_certificate_file_blocked():
 
 
 # ── 8. 자동 결제/송금/투찰/서명 → BLOCKED ───────────────────────────────────
+
 
 def test_auto_sign_blocked():
     assert classify_action("auto_sign") == GRADE_BLOCKED
@@ -212,6 +235,7 @@ def test_transfer_money_blocked():
 
 
 # ── 9. 보안프로그램 / UAC 흐름 (local_security_installer_runner 기반) ───────
+
 
 def test_installer_uac_status_exists():
     """UAC 사용자 직접 승인 상태 존재."""
@@ -240,6 +264,7 @@ def test_installer_runner_blocks_silent_install_auto():
 
 
 # ── 10. 결과 redaction (sanitize_universal_result) ──────────────────────────
+
 
 def test_sanitize_strips_password():
     r = build_universal_result(task_id="t1", status=STATUS_COMPLETED)
@@ -278,19 +303,24 @@ def test_sanitize_safe_fields_always_false():
 
 # ── 11. server execution_location_guard handoff ────────────────────────────
 
+
 def test_naver_external_local_agent_required():
-    r = classify_execution_location_for_server({
-        "target_url": "https://naver.com/",
-        "action": "open_url",
-    })
+    r = classify_execution_location_for_server(
+        {
+            "target_url": "https://naver.com/",
+            "action": "open_url",
+        }
+    )
     assert r["execution_location"] == LOCAL_AGENT_REQUIRED
 
 
 def test_localhost_server_internal_only():
-    r = classify_execution_location_for_server({
-        "target_url": "http://localhost:8000/health",
-        "action": "open_url",
-    })
+    r = classify_execution_location_for_server(
+        {
+            "target_url": "http://localhost:8000/health",
+            "action": "open_url",
+        }
+    )
     assert r["execution_location"] == SERVER_INTERNAL_ONLY
 
 
@@ -309,35 +339,36 @@ def test_create_task_handoff_no_sensitive_fields():
     forbidden = ["password", "otp", "cert_password", "cookie_value", "session_value", "token", "npki"]
     for key in handoff:
         for f in forbidden:
-            assert f not in key.lower() or handoff[key] is False, \
-                f"민감 키 발견: {key} in handoff"
+            assert f not in key.lower() or handoff[key] is False, f"민감 키 발견: {key} in handoff"
     _assert_safe(handoff)
 
 
 # ── 12. 사용자 직접 조작 모드 분리 ──────────────────────────────────────────
 
+
 def test_form_submit_is_user_delegated_not_auto():
     """form_submit은 자동 실행 아님 — 사용자 권한 위임 후 실행."""
     grade = classify_action("form_submit")
-    assert grade ==GRADE_USER_DELEGATED
+    assert grade == GRADE_USER_DELEGATED
 
 
 def test_blog_publish_is_user_delegated():
     grade = classify_action("blog_publish")
-    assert grade ==GRADE_USER_DELEGATED
+    assert grade == GRADE_USER_DELEGATED
 
 
 def test_send_email_is_user_delegated():
     grade = classify_action("send_email")
-    assert grade ==GRADE_USER_DELEGATED
+    assert grade == GRADE_USER_DELEGATED
 
 
 def test_file_upload_is_user_delegated():
     grade = classify_action("file_upload")
-    assert grade ==GRADE_USER_DELEGATED
+    assert grade == GRADE_USER_DELEGATED
 
 
 # ── 13. 우회/스팸 → BLOCKED ────────────────────────────────────────────────
+
 
 def test_captcha_bypass_blocked():
     assert classify_action("captcha_bypass") == GRADE_BLOCKED
@@ -352,6 +383,7 @@ def test_bulk_spam_post_blocked():
 
 
 # ── 14. server_browser_used False 강제 ─────────────────────────────────────
+
 
 def test_universal_result_server_browser_used_false():
     r = build_universal_result(task_id="t1", status=STATUS_COMPLETED)

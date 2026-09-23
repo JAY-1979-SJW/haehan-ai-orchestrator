@@ -1,13 +1,14 @@
 """live_inputs 실행 결과 요약 출력 (leaf). [docs/module_separation_standard.md]"""
+
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from .live_inputs_config import (
     LATEST_LIVE_INPUT,
     LATEST_LIVE_INPUT_MANIFEST,
 )
+
 
 def print_live_input_summary(result: dict, path: Path) -> None:
     print("=" * 60)

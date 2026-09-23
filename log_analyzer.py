@@ -3,14 +3,13 @@
 audit.jsonl + execution_history.jsonl 읽어 집계 및 AI 운영 요약 생성.
 OpenAI 없으면 deterministic mock 요약 반환.
 """
+
 import json
-import logging
 import os
 import time
 from collections import Counter
 
 from logger import get_logger
-from logging_utils import mask_sensitive
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _AUDIT_PATH = os.path.join(_BASE_DIR, "logs", "audit.jsonl")
@@ -25,7 +24,7 @@ def _read_jsonl(path: str, limit: int = 0) -> list:
     if not os.path.exists(path):
         return []
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             raw_lines = f.readlines()
     except Exception as e:
         log.warning("Failed to read %s: %s", path, e)
@@ -56,28 +55,24 @@ def summarize_recent_activity(limit: int = 100) -> dict:
     blocked = sum(1 for h in history if h.get("execution_status") == "BLOCKED")
     failed = sum(1 for a in audit if a.get("event_type") == "EXECUTION_FAILED")
 
-    action_counter: Counter = Counter(
-        h.get("action_type", "unknown")
-        for h in history
-        if h.get("action_type")
-    )
+    action_counter: Counter = Counter(h.get("action_type", "unknown") for h in history if h.get("action_type"))
 
     reason_counter: Counter = Counter(
-        h["note"]
-        for h in history
-        if h.get("execution_status") == "BLOCKED" and h.get("note")
+        h["note"] for h in history if h.get("execution_status") == "BLOCKED" and h.get("note")
     )
 
     recent_tasks = []
     for h in reversed(history[-10:]):
-        recent_tasks.append({
-            "task_id": h.get("task_id"),
-            "action_type": h.get("action_type"),
-            "target": h.get("target"),
-            "status": h.get("execution_status"),
-            "timestamp": h.get("timestamp"),
-            "risk_level": h.get("risk_level", ""),
-        })
+        recent_tasks.append(
+            {
+                "task_id": h.get("task_id"),
+                "action_type": h.get("action_type"),
+                "target": h.get("target"),
+                "status": h.get("execution_status"),
+                "timestamp": h.get("timestamp"),
+                "risk_level": h.get("risk_level", ""),
+            }
+        )
 
     return {
         "total_tasks": len(history),
@@ -95,21 +90,20 @@ def summarize_failures(limit: int = 100) -> dict:
     """최근 에러/차단 이벤트 요약 — audit 기반."""
     audit = _read_jsonl(_AUDIT_PATH, limit=limit)
 
-    failed_events = [
-        a for a in audit
-        if a.get("event_type") in {"EXECUTION_FAILED", "EXECUTION_BLOCKED"}
-    ]
+    failed_events = [a for a in audit if a.get("event_type") in {"EXECUTION_FAILED", "EXECUTION_BLOCKED"}]
 
     recent_errors = []
     for e in reversed(failed_events[-20:]):
-        recent_errors.append({
-            "timestamp": e.get("timestamp"),
-            "task_id": e.get("task_id"),
-            "action_type": e.get("action_type"),
-            "event_type": e.get("event_type"),
-            "note": e.get("note", ""),
-            "risk_level": e.get("risk_level", ""),
-        })
+        recent_errors.append(
+            {
+                "timestamp": e.get("timestamp"),
+                "task_id": e.get("task_id"),
+                "action_type": e.get("action_type"),
+                "event_type": e.get("event_type"),
+                "note": e.get("note", ""),
+                "risk_level": e.get("risk_level", ""),
+            }
+        )
 
     return {
         "total_failures": len(failed_events),
@@ -139,13 +133,15 @@ def summarize_pending_approvals() -> dict:
     pending_list = []
     for tid in pending_task_ids:
         event = issued[tid]
-        pending_list.append({
-            "task_id": tid,
-            "action_type": event.get("action_type"),
-            "risk_level": event.get("risk_level"),
-            "timestamp": event.get("timestamp"),
-            "actor": event.get("actor"),
-        })
+        pending_list.append(
+            {
+                "task_id": tid,
+                "action_type": event.get("action_type"),
+                "risk_level": event.get("risk_level"),
+                "timestamp": event.get("timestamp"),
+                "actor": event.get("actor"),
+            }
+        )
 
     return {
         "pending_count": len(pending_list),
@@ -157,6 +153,7 @@ def generate_ai_ops_summary(summary_dict: dict) -> str:
     """운영 요약 생성. OpenAI 없으면 deterministic mock 반환."""
     try:
         import openai
+
         client = openai.OpenAI()
         prompt = (
             "다음은 AI 오케스트레이터의 최근 운영 현황입니다:\n"

@@ -14,22 +14,22 @@
     unread_restore_audit.json, pii_masking_summary.json,
     failure_records.json
 """
+
 from __future__ import annotations
 
 import json
 import random
 import time
 import uuid
-from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
-from . import body_pipeline_v2 as bp
 from scripts.naver.mail.utilities import pii_mask
-from . import unread_audit as ua
 from scripts.naver.mail_read import body_reader
+
+from . import unread_audit as ua
 
 KST = timezone(timedelta(hours=9))
 
@@ -48,15 +48,23 @@ MASKED_OK = "MASKED_OK"
 SKIPPED_ALREADY_DONE = "SKIPPED_ALREADY_DONE"
 
 # 성공으로 간주되는 terminal status
-SUCCESS_STATUSES = frozenset({
-    BODY_READ_OK, UNREAD_UNCHANGED, UNREAD_CHANGED_RESTORED, MASKED_OK,
-    SKIPPED_ALREADY_DONE,
-})
+SUCCESS_STATUSES = frozenset(
+    {
+        BODY_READ_OK,
+        UNREAD_UNCHANGED,
+        UNREAD_CHANGED_RESTORED,
+        MASKED_OK,
+        SKIPPED_ALREADY_DONE,
+    }
+)
 
 # 실패로 간주되는 terminal status
-FAILURE_STATUSES = frozenset({
-    BODY_READ_FAILED, UNREAD_CHANGED_RESTORE_FAILED,
-})
+FAILURE_STATUSES = frozenset(
+    {
+        BODY_READ_FAILED,
+        UNREAD_CHANGED_RESTORE_FAILED,
+    }
+)
 
 
 class Actions(Protocol):
@@ -113,7 +121,7 @@ class MailResult:
     subject_masked: str = ""
     sender_masked: str = ""
     date_text: str = ""
-    body_redacted_short: str = ""   # 첫 400자 (마스킹 적용 후)
+    body_redacted_short: str = ""  # 첫 400자 (마스킹 적용 후)
     link_domain_top: list[str] = field(default_factory=list)
     state_before: str = ""
     state_after_open: str = ""
@@ -171,17 +179,14 @@ class BatchReport:
 
 def load_checkpoint(path: Path) -> dict:
     if not path.exists():
-        return {"schema_version": SCHEMA_VERSION, "sn_to_status": {},
-                "run_id": ""}
+        return {"schema_version": SCHEMA_VERSION, "sn_to_status": {}, "run_id": ""}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        return {"schema_version": SCHEMA_VERSION, "sn_to_status": {},
-                "run_id": "broken"}
+        return {"schema_version": SCHEMA_VERSION, "sn_to_status": {}, "run_id": "broken"}
 
 
-def save_checkpoint(path: Path, run_id: str,
-                    sn_to_status: dict[str, dict]) -> None:
+def save_checkpoint(path: Path, run_id: str, sn_to_status: dict[str, dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     data = {
         "schema_version": SCHEMA_VERSION,
@@ -189,17 +194,22 @@ def save_checkpoint(path: Path, run_id: str,
         "saved_at_iso": datetime.now(KST).replace(microsecond=0).isoformat(),
         "sn_to_status": sn_to_status,
     }
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2),
-                    encoding="utf-8")
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 # ── 실행 ──────────────────────────────────────────────────────────
 
 
-def _process_one(actions: Actions, t: BatchTarget,
-                 *, body_read_fn=None, snapshot_fn=None,
-                 open_body_fn=None, restore_fn=None,
-                 sleep_fn=None) -> MailResult:
+def _process_one(
+    actions: Actions,
+    t: BatchTarget,
+    *,
+    body_read_fn=None,
+    snapshot_fn=None,
+    open_body_fn=None,
+    restore_fn=None,
+    sleep_fn=None,
+) -> MailResult:
     """본문 1건 처리 — DI 가능한 함수 주입으로 테스트 가능."""
     snapshot_fn = snapshot_fn or ua.snapshot_mail
     open_body_fn = open_body_fn or ua.open_body_and_audit_state
@@ -217,8 +227,11 @@ def _process_one(actions: Actions, t: BatchTarget,
         snap = open_body_fn(actions, snap, folder_id=t.folder_id)
         # 3) extract body
         payload = body_read_fn(actions)
-        mb = body_reader.parse_body_payload(t.sn, payload) \
-            if isinstance(payload, dict) else body_reader.MailBody(sn=t.sn)
+        mb = (
+            body_reader.parse_body_payload(t.sn, payload)
+            if isinstance(payload, dict)
+            else body_reader.MailBody(sn=t.sn)
+        )
         mask_res = pii_mask.mask(mb.body_redacted or "")
         # 제목/발신자도 추가 PII 마스킹 통과 (이미 redact 됐지만 한 번 더)
         subj_mask = pii_mask.mask(mb.subject or "")
@@ -261,15 +274,18 @@ def _process_one(actions: Actions, t: BatchTarget,
     return res
 
 
-def run_batch(actions: Actions, targets: list[BatchTarget],
-              *, limit: int = 0,
-              checkpoint_path: Path | None = None,
-              delay_s: float = DEFAULT_DELAY_S,
-              jitter_s: float = DEFAULT_JITTER_S,
-              continue_on_warn: bool = False,
-              sleep_fn=None,
-              process_fn=None,
-              ) -> BatchReport:
+def run_batch(
+    actions: Actions,
+    targets: list[BatchTarget],
+    *,
+    limit: int = 0,
+    checkpoint_path: Path | None = None,
+    delay_s: float = DEFAULT_DELAY_S,
+    jitter_s: float = DEFAULT_JITTER_S,
+    continue_on_warn: bool = False,
+    sleep_fn=None,
+    process_fn=None,
+) -> BatchReport:
     """대량 batch 실행. resume + halt-on-restore-failure + throttle."""
     sleep_fn = sleep_fn or time.sleep
     process_fn = process_fn or _process_one
@@ -286,18 +302,18 @@ def run_batch(actions: Actions, targets: list[BatchTarget],
     )
 
     # checkpoint 로드
-    ck = load_checkpoint(checkpoint_path) if checkpoint_path else \
-        {"sn_to_status": {}, "run_id": ""}
+    ck = load_checkpoint(checkpoint_path) if checkpoint_path else {"sn_to_status": {}, "run_id": ""}
     prior = ck.get("sn_to_status", {})
 
     t_start = time.time()
     for idx, t in enumerate(targets):
         # resume: 이미 성공한 항목은 skip
         prev = prior.get(t.sn)
-        if prev and prev.get("status") in SUCCESS_STATUSES \
-                and prev.get("status") != SKIPPED_ALREADY_DONE:
+        if prev and prev.get("status") in SUCCESS_STATUSES and prev.get("status") != SKIPPED_ALREADY_DONE:
             res = MailResult(
-                sn=t.sn, folder_id=t.folder_id, folder_name=t.folder_name,
+                sn=t.sn,
+                folder_id=t.folder_id,
+                folder_name=t.folder_name,
                 status=SKIPPED_ALREADY_DONE,
                 masked_text_hash=prev.get("masked_text_hash", ""),
                 pii_detected_count=prev.get("pii_detected_count", 0),
@@ -349,9 +365,7 @@ def run_batch(actions: Actions, targets: list[BatchTarget],
             sleep_fn(d)
 
     rep.elapsed_seconds = round(time.time() - t_start, 2)
-    rep.avg_seconds_per_message = (
-        round(rep.elapsed_seconds / max(rep.attempted, 1), 2)
-    )
+    rep.avg_seconds_per_message = round(rep.elapsed_seconds / max(rep.attempted, 1), 2)
     rep.ended_at_iso = datetime.now(KST).replace(microsecond=0).isoformat()
     return rep
 
@@ -363,39 +377,55 @@ def write_outputs(rep: BatchReport, out_dir: Path) -> dict[str, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = {}
     p1 = out_dir / "batch_report.json"
-    p1.write_text(json.dumps(rep.to_dict(), ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p1.write_text(json.dumps(rep.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     paths["report"] = p1
     p2 = out_dir / "unread_restore_audit.json"
-    p2.write_text(json.dumps({
-        "state_changed": rep.unread_state_changed,
-        "restore_attempted": rep.unread_restore_attempted,
-        "restore_succeeded": rep.unread_restore_succeeded,
-        "restore_failed": rep.unread_restore_failed,
-        "per_mail": [
-            {"sn": r.sn, "state_before": r.state_before,
-             "state_after_open": r.state_after_open,
-             "state_after_restore": r.state_after_restore,
-             "restore_ok": r.restore_ok, "restore_reason": r.restore_reason}
-            for r in rep.results
-        ],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    p2.write_text(
+        json.dumps(
+            {
+                "state_changed": rep.unread_state_changed,
+                "restore_attempted": rep.unread_restore_attempted,
+                "restore_succeeded": rep.unread_restore_succeeded,
+                "restore_failed": rep.unread_restore_failed,
+                "per_mail": [
+                    {
+                        "sn": r.sn,
+                        "state_before": r.state_before,
+                        "state_after_open": r.state_after_open,
+                        "state_after_restore": r.state_after_restore,
+                        "restore_ok": r.restore_ok,
+                        "restore_reason": r.restore_reason,
+                    }
+                    for r in rep.results
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     paths["unread"] = p2
     p3 = out_dir / "pii_masking_summary.json"
-    p3.write_text(json.dumps({
-        "pii_detected_total": rep.pii_detected_total,
-        "pii_types_summary": rep.pii_types_summary,
-        "per_mail_hashes": [
-            {"sn": r.sn, "masked_text_hash": r.masked_text_hash,
-             "pii_detected_count": r.pii_detected_count}
-            for r in rep.results if r.body_open_ok
-        ],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    p3.write_text(
+        json.dumps(
+            {
+                "pii_detected_total": rep.pii_detected_total,
+                "pii_types_summary": rep.pii_types_summary,
+                "per_mail_hashes": [
+                    {"sn": r.sn, "masked_text_hash": r.masked_text_hash, "pii_detected_count": r.pii_detected_count}
+                    for r in rep.results
+                    if r.body_open_ok
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     paths["pii"] = p3
     p4 = out_dir / "failure_records.json"
     failures = [r.to_dict() for r in rep.results if r.status in FAILURE_STATUSES]
-    p4.write_text(json.dumps(failures, ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    p4.write_text(json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8")
     paths["failures"] = p4
     md = [
         f"# Body Pipeline BATCH — run {rep.run_id}",
@@ -414,8 +444,7 @@ def write_outputs(rep: BatchReport, out_dir: Path) -> dict[str, Path]:
         f"- external_ai_call_count: {rep.external_ai_call_count}",
         f"- pii_detected_total: {rep.pii_detected_total}",
         f"- pii_types_summary: `{rep.pii_types_summary}`",
-        f"- elapsed: {rep.elapsed_seconds}s "
-        f"(avg {rep.avg_seconds_per_message}s/mail)",
+        f"- elapsed: {rep.elapsed_seconds}s (avg {rep.avg_seconds_per_message}s/mail)",
         f"- halted_early: {rep.halted_early} ({rep.halt_reason})",
         f"- **verdict: {rep.verdict}**",
     ]
@@ -435,27 +464,22 @@ def write_outputs(rep: BatchReport, out_dir: Path) -> dict[str, Path]:
 def _classify_priority(subj: str, sender: str) -> str:
     """제목/발신자로 액션 우선순위 분류 (단순 키워드 — 외부 AI 호출 X)."""
     s = (subj + " " + sender).lower()
-    if any(k in s for k in ("노출 정지", "휴면", "정지 안내", "확약서",
-                             "미답변", "복원")):
+    if any(k in s for k in ("노출 정지", "휴면", "정지 안내", "확약서", "미답변", "복원")):
         return "ACTION_REQUIRED"
-    if any(k in s for k in ("색인", "indexing", "수동 조치", "오류",
-                             "service down", "장애")):
+    if any(k in s for k in ("색인", "indexing", "수동 조치", "오류", "service down", "장애")):
         return "REVIEW"
-    if any(k in s for k in ("undelivered", "returned to sender", "반송",
-                             "전달 실패")):
+    if any(k in s for k in ("undelivered", "returned to sender", "반송", "전달 실패")):
         return "ATTENTION"
-    if any(k in s for k in ("보안 알림", "새로운 환경", "새로운 기기",
-                             "security alert", "비밀번호", "로그인",
-                             "간편 로그인")):
+    if any(
+        k in s
+        for k in ("보안 알림", "새로운 환경", "새로운 기기", "security alert", "비밀번호", "로그인", "간편 로그인")
+    ):
         return "SECURITY_NOTICE"
-    if any(k in s for k in ("약관", "개정", "수수료", "처리방침",
-                             "이용약관", "정책")):
+    if any(k in s for k in ("약관", "개정", "수수료", "처리방침", "이용약관", "정책")):
         return "POLICY_NOTICE"
-    if any(k in s for k in ("결제", "영수증", "매출실적", "포인트",
-                             "마일리지", "리볼빙")):
+    if any(k in s for k in ("결제", "영수증", "매출실적", "포인트", "마일리지", "리볼빙")):
         return "BILLING"
-    if any(k in s for k in ("뉴스레터", "newsletter", "광고", "이벤트",
-                             "할인", "프로모션", "안내")):
+    if any(k in s for k in ("뉴스레터", "newsletter", "광고", "이벤트", "할인", "프로모션", "안내")):
         return "PROMO"
     return "OTHER"
 
@@ -466,6 +490,7 @@ def _render_business_report(rep: BatchReport) -> str:
     by_folder: dict[str, int] = {}
     by_sender_domain: dict[str, int] = {}
     import re
+
     domain_re = re.compile(r"@([A-Za-z0-9.\-]+)")
     for r in rep.results:
         if not r.body_open_ok and r.status != SKIPPED_ALREADY_DONE:
@@ -479,9 +504,16 @@ def _render_business_report(rep: BatchReport) -> str:
         pri = _classify_priority(r.subject_masked, r.sender_masked)
         by_priority.setdefault(pri, []).append(r)
 
-    PRIORITY_ORDER = ("ACTION_REQUIRED", "ATTENTION", "REVIEW",
-                      "SECURITY_NOTICE", "BILLING", "POLICY_NOTICE",
-                      "PROMO", "OTHER")
+    PRIORITY_ORDER = (
+        "ACTION_REQUIRED",
+        "ATTENTION",
+        "REVIEW",
+        "SECURITY_NOTICE",
+        "BILLING",
+        "POLICY_NOTICE",
+        "PROMO",
+        "OTHER",
+    )
 
     md = [
         f"# 메일함 비즈니스 보고서 — run {rep.run_id}",
@@ -492,7 +524,7 @@ def _render_business_report(rep: BatchReport) -> str:
         f"- 종료: {rep.ended_at_iso}",
         f"- unread 토글/복구: {rep.unread_state_changed} → {rep.unread_restore_succeeded} "
         f"(실패 {rep.unread_restore_failed})",
-        f"- raw body leak: 0  attachment download: 0  external AI: 0",
+        "- raw body leak: 0  attachment download: 0  external AI: 0",
         f"- PII 검출 총 {rep.pii_detected_total}건 — types {rep.pii_types_summary}",
         "",
         "> 본 보고서는 **PII 마스킹된 제목/발신자/본문 첫 400자**만 사용합니다. 원문 0건 노출.",
@@ -503,8 +535,7 @@ def _render_business_report(rep: BatchReport) -> str:
         md.append(f"- {folder}: {n}건")
 
     md += ["", "## 발신자 도메인 분포 (상위 15)"]
-    for dom, n in sorted(by_sender_domain.items(),
-                         key=lambda x: -x[1])[:15]:
+    for dom, n in sorted(by_sender_domain.items(), key=lambda x: -x[1])[:15]:
         md.append(f"- `{dom}` — {n}건")
 
     md += ["", "## 우선순위 분류"]
@@ -518,8 +549,7 @@ def _render_business_report(rep: BatchReport) -> str:
             sender = r.sender_masked or "(발신자미상)"
             date = r.date_text or ""
             attach = " 📎" if r.has_attach else ""
-            pii = (f" pii={r.pii_detected_count}"
-                   if r.pii_detected_count > 0 else "")
+            pii = f" pii={r.pii_detected_count}" if r.pii_detected_count > 0 else ""
             md.append(
                 f"- **{subj[:70]}**{attach}{pii}  \n"
                 f"  발신: {sender[:60]}  |  날짜: {date[:30]}  "

@@ -2,22 +2,22 @@
 
 API 응답 구조와 응답 키 일관성을 검증한다.
 """
-import sys
+
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from ai_orchestrator.local_agent_response_builders import (
-    make_register_agent_response,
+    make_get_task_response,
     make_list_agents_response,
     make_list_codes_response,
     make_list_tasks_response,
-    make_get_task_response,
+    make_register_agent_response,
 )
 
-
 # ── register_agent 응답 ───────────────────────────────────────────────────
+
 
 def test_make_register_agent_response_structure():
     """register_agent 응답 구조 검증."""
@@ -60,6 +60,7 @@ def test_make_register_agent_response_values():
 
 # ── list_agents 응답 ──────────────────────────────────────────────────────
 
+
 def test_make_list_agents_response_structure():
     """list_agents 응답 구조 검증."""
     agents_list = [
@@ -95,6 +96,7 @@ def test_make_list_agents_response_with_agents():
 
 # ── list_codes 응답 ────────────────────────────────────────────────────
 
+
 def test_make_list_codes_response_structure():
     """list_codes 응답 구조 검증."""
     codes_list = [
@@ -117,6 +119,7 @@ def test_make_list_codes_response_empty():
 
 
 # ── list_tasks 응답 ─────────────────────────────────────────────────────
+
 
 def test_make_list_tasks_response_structure():
     """list_tasks 응답 구조 검증."""
@@ -141,6 +144,7 @@ def test_make_list_tasks_response_empty():
 
 # ── get_task 응답 ──────────────────────────────────────────────────────
 
+
 def test_make_get_task_response_structure():
     """get_task 응답 구조 검증."""
     task = {
@@ -157,6 +161,7 @@ def test_make_get_task_response_structure():
 
 # ── 토큰 미포함 검증 ────────────────────────────────────────────────────────
 
+
 def test_make_register_agent_response_contains_device_token():
     """register_agent 응답은 device_token을 포함해야 함 (1회 노출)."""
     response = make_register_agent_response(
@@ -172,6 +177,7 @@ def test_make_register_agent_response_contains_device_token():
 
 
 # ── 응답 키 일관성 검증 ────────────────────────────────────────────────────
+
 
 def test_response_key_consistency():
     """응답 키가 일관되는지 검증."""
@@ -190,20 +196,23 @@ def test_response_key_consistency():
 
 # ── 모듈 import 검증 ────────────────────────────────────────────────────────
 
+
 def test_response_builders_module_importable():
     """응답 빌더 모듈이 정상적으로 임포트 가능한지 검증."""
     import ai_orchestrator.local_agent_response_builders as response_builders_module
-    assert hasattr(response_builders_module, 'make_register_agent_response')
-    assert hasattr(response_builders_module, 'make_list_agents_response')
-    assert hasattr(response_builders_module, 'make_list_codes_response')
-    assert hasattr(response_builders_module, 'make_list_tasks_response')
-    assert hasattr(response_builders_module, 'make_get_task_response')
+
+    assert hasattr(response_builders_module, "make_register_agent_response")
+    assert hasattr(response_builders_module, "make_list_agents_response")
+    assert hasattr(response_builders_module, "make_list_codes_response")
+    assert hasattr(response_builders_module, "make_list_tasks_response")
+    assert hasattr(response_builders_module, "make_get_task_response")
 
 
 def test_no_circular_import_with_router():
     """응답 빌더 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
         from ai_orchestrator.local_agent_router import local_agent_router
+
         assert local_agent_router is not None
     except ImportError:
         pass
@@ -211,20 +220,12 @@ def test_no_circular_import_with_router():
 
 # ── 응답 형식 검증 ──────────────────────────────────────────────────────
 
+
 def test_response_is_dict():
     """모든 응답이 dict 타입인지 검증."""
-    assert isinstance(
-        make_list_agents_response([]),
-        dict
-    )
-    assert isinstance(
-        make_list_codes_response([]),
-        dict
-    )
-    assert isinstance(
-        make_list_tasks_response([]),
-        dict
-    )
+    assert isinstance(make_list_agents_response([]), dict)
+    assert isinstance(make_list_codes_response([]), dict)
+    assert isinstance(make_list_tasks_response([]), dict)
     assert isinstance(
         make_register_agent_response(
             agent_id="test",
@@ -234,7 +235,7 @@ def test_response_is_dict():
             version="1.0",
             registered_at="2026-05-04",
         ),
-        dict
+        dict,
     )
 
 

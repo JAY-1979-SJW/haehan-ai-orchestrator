@@ -12,17 +12,18 @@ ASSISTANT_GABIA_DNS_USER_APPROVAL_WORKFLOW_01
 포함 가능:
     record_type, host, value, ttl, domain, purpose 등 DNS 업무 데이터만
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 상수
 # ---------------------------------------------------------------------------
 
 APPROVAL_GATE_PREPARE_ALLOWED = "PREPARE_ALLOWED"
-APPROVAL_GATE_FINAL_BLOCKED   = "FINAL_BLOCKED"
+APPROVAL_GATE_FINAL_BLOCKED = "FINAL_BLOCKED"
 
 DNS_RECORD_TYPES = frozenset({"A", "CNAME", "MX", "TXT", "NS", "AAAA", "CAA"})
 
@@ -31,6 +32,7 @@ DNS_RECORD_TYPES = frozenset({"A", "CNAME", "MX", "TXT", "NS", "AAAA", "CAA"})
 # GabiaDnsRecordDraft — DNS 레코드 입력 초안
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GabiaDnsRecordDraft:
     """AI가 준비하는 DNS 레코드 입력 초안.
@@ -38,6 +40,7 @@ class GabiaDnsRecordDraft:
     safe_to_prepare=True: AI가 이 모델을 채울 수 있다.
     requires_final_approval=True: 실제 저장은 사용자 승인 후에만 가능.
     """
+
     record_id: str
     domain: str
     host: str
@@ -45,7 +48,7 @@ class GabiaDnsRecordDraft:
     value: str
     ttl: int
     purpose: str
-    created_by: str                         # "ai_assistant" 또는 "user"
+    created_by: str  # "ai_assistant" 또는 "user"
     safe_to_prepare: bool = True
     requires_final_approval: bool = True
 
@@ -68,6 +71,7 @@ class GabiaDnsRecordDraft:
 # GabiaDnsChangePreview — 변경 전/후 비교표
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GabiaDnsChangePreview:
     """DNS 변경 전/후 비교 미리보기.
@@ -75,6 +79,7 @@ class GabiaDnsChangePreview:
     approval_required=True: 이 미리보기를 기반으로 사용자 승인 요청.
     final_button_blocked=True: AI가 최종 적용 버튼 클릭 불가.
     """
+
     domain: str
     before_records: tuple[GabiaDnsRecordDraft, ...]
     after_records: tuple[GabiaDnsRecordDraft, ...]
@@ -103,6 +108,7 @@ class GabiaDnsChangePreview:
 # GabiaDnsApprovalSummary — 사용자 승인 요청 요약
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GabiaDnsApprovalSummary:
     """사용자에게 전달하는 DNS 변경 승인 요청 요약.
@@ -110,6 +116,7 @@ class GabiaDnsApprovalSummary:
     ai_may_prepare_only=True: AI는 준비만 했고 저장은 하지 않았음을 명시.
     user_must_click_final_save=True: 저장은 사용자가 직접 클릭해야 함을 명시.
     """
+
     action: str
     domain: str
     records_to_add: tuple[GabiaDnsRecordDraft, ...]
@@ -136,19 +143,20 @@ class GabiaDnsApprovalSummary:
 # GabiaDnsRollbackPlan — 롤백 계획
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GabiaDnsRollbackPlan:
     """DNS 변경 롤백 계획.
 
     requires_user_approval=True: 롤백도 사용자 승인 필요.
     """
+
     rollback_available: bool
-    previous_records_ref: str               # 이전 레코드 참조 ID (실제 값 아님)
+    previous_records_ref: str  # 이전 레코드 참조 ID (실제 값 아님)
     rollback_steps: tuple[str, ...]
     requires_user_approval: bool = True
     dns_propagation_notice: str = (
-        "DNS 변경은 전파에 최대 48시간이 소요됩니다. "
-        "롤백 후에도 즉시 반영되지 않을 수 있습니다."
+        "DNS 변경은 전파에 최대 48시간이 소요됩니다. 롤백 후에도 즉시 반영되지 않을 수 있습니다."
     )
 
     def to_safe_dict(self) -> dict[str, Any]:
@@ -164,6 +172,7 @@ class GabiaDnsRollbackPlan:
 # ---------------------------------------------------------------------------
 # 서브도메인 생성 기본 초안 (assistant.haehan-ai.kr, assistant-api.haehan-ai.kr)
 # ---------------------------------------------------------------------------
+
 
 def make_assistant_subdomain_drafts(
     server_ip: str = "PENDING_USER_CONFIRMATION",
@@ -216,13 +225,13 @@ def make_default_rollback_plan() -> GabiaDnsRollbackPlan:
 
 
 __all__ = [
-    "GabiaDnsRecordDraft",
-    "GabiaDnsChangePreview",
+    "APPROVAL_GATE_FINAL_BLOCKED",
+    "APPROVAL_GATE_PREPARE_ALLOWED",
+    "DNS_RECORD_TYPES",
     "GabiaDnsApprovalSummary",
+    "GabiaDnsChangePreview",
+    "GabiaDnsRecordDraft",
     "GabiaDnsRollbackPlan",
     "make_assistant_subdomain_drafts",
     "make_default_rollback_plan",
-    "DNS_RECORD_TYPES",
-    "APPROVAL_GATE_PREPARE_ALLOWED",
-    "APPROVAL_GATE_FINAL_BLOCKED",
 ]

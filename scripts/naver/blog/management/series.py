@@ -5,15 +5,15 @@
   - 시리즈 내 글 순서 관리
   - 시리즈 통계 자동 추출
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -49,23 +49,19 @@ class BlogSeries:
                 continue
         return []
 
-    def add_post_to_series(self, post_url: str, series_name: str,
-                            confirm: bool = False) -> dict:
+    def add_post_to_series(self, post_url: str, series_name: str, confirm: bool = False) -> dict:
         """기존 포스트를 시리즈에 추가 (수정 모드)."""
         if not confirm:
             return {"ok": False, "dry_run": True, "would_add": series_name}
         # 글 편집 페이지 → 시리즈 선택 (UI 분석 후 정확한 셀렉터 필요)
         self.page.goto(post_url, timeout=15000)
         time.sleep(2)
-        log_critical("OTHER", f"시리즈에 글 추가: {series_name}",
-                     post=post_url, series=series_name, mode="series_add")
+        log_critical("OTHER", f"시리즈에 글 추가: {series_name}", post=post_url, series=series_name, mode="series_add")
         return {"ok": True, "series": series_name, "note": "수정 UI 상세 구현 필요"}
 
-    def create_series(self, name: str, description: str = "",
-                       confirm: bool = False) -> dict:
+    def create_series(self, name: str, description: str = "", confirm: bool = False) -> dict:
         """새 시리즈 생성. confirm=True 시 실제 생성."""
         if not confirm:
             return {"ok": False, "dry_run": True, "would_create": name}
-        log_critical("OTHER", f"시리즈 생성: {name}",
-                     name=name, mode="series_create")
+        log_critical("OTHER", f"시리즈 생성: {name}", name=name, mode="series_create")
         return {"ok": True, "name": name, "note": "관리자 페이지 진입 + 폼 입력 필요"}

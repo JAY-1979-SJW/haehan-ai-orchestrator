@@ -1,11 +1,15 @@
 """user_browser_action_gate 단위 테스트."""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_orchestrator.local_agent.browser.action_gate import (
-    classify_action, is_auto, requires_approval, should_notify,
-    GATE_AUTO, GATE_NOTIFY, GATE_APPROVE,
+    GATE_APPROVE,
+    GATE_AUTO,
+    GATE_NOTIFY,
+    classify_action,
+    is_auto,
+    requires_approval,
+    should_notify,
 )
 from ai_orchestrator.local_agent.browser.intent_token import create_intent
 
@@ -15,6 +19,7 @@ def _make_intent(origins=("developer.hancom.com",)):
 
 
 # ── APPROVE — 자격증명 입력 (사용자 승인 후 AI 입력 가능) ───────────────────
+
 
 def test_credential_password_approve():
     r = classify_action(action_type="type", params={"password": "s3cret"})
@@ -49,6 +54,7 @@ def test_credential_npki_approve():
 
 # ── APPROVE — 돈 이동 ────────────────────────────────────────────────────────
 
+
 def test_approve_payment_label():
     r = classify_action(action_type="click", label="결제하기 버튼", url="https://shop.com")
     assert r.verdict == GATE_APPROVE
@@ -71,6 +77,7 @@ def test_approve_transfer_label():
 
 
 # ── APPROVE — 법적 효력 ──────────────────────────────────────────────────────
+
 
 def test_approve_esign_action_type():
     r = classify_action(action_type="esign", label="전자서명 완료")
@@ -98,6 +105,7 @@ def test_approve_contract_label():
 
 # ── APPROVE — 계정 변경 ──────────────────────────────────────────────────────
 
+
 def test_approve_withdraw_label():
     r = classify_action(action_type="click", label="회원탈퇴")
     assert r.verdict == GATE_APPROVE
@@ -105,12 +113,14 @@ def test_approve_withdraw_label():
 
 # ── APPROVE — 외부 발송 ──────────────────────────────────────────────────────
 
+
 def test_approve_send_email_label():
     r = classify_action(action_type="click", label="이메일 발송")
     assert r.verdict == GATE_APPROVE
 
 
 # ── NOTIFY ───────────────────────────────────────────────────────────────────
+
 
 def test_notify_no_intent():
     r = classify_action(action_type="navigate", url="https://developer.hancom.com/", intent=None)
@@ -120,8 +130,7 @@ def test_notify_no_intent():
 
 def test_notify_download_action():
     intent = _make_intent()
-    r = classify_action(action_type="download", url="https://developer.hancom.com/sdk.zip",
-                        intent=intent)
+    r = classify_action(action_type="download", url="https://developer.hancom.com/sdk.zip", intent=intent)
     assert r.verdict == GATE_NOTIFY
 
 
@@ -140,51 +149,54 @@ def test_notify_origin_out_of_scope():
 
 def test_notify_subdomain_not_allowed():
     intent = _make_intent(origins=("developer.hancom.com",))
-    r = classify_action(action_type="navigate",
-                        url="https://sub.developer.hancom.com/page", intent=intent)
+    r = classify_action(action_type="navigate", url="https://sub.developer.hancom.com/page", intent=intent)
     assert r.verdict == GATE_NOTIFY
 
 
 # ── AUTO ─────────────────────────────────────────────────────────────────────
 
+
 def test_auto_navigate_in_scope():
     intent = _make_intent()
-    r = classify_action(action_type="navigate",
-                        url="https://developer.hancom.com/sdk", intent=intent)
+    r = classify_action(action_type="navigate", url="https://developer.hancom.com/sdk", intent=intent)
     assert r.verdict == GATE_AUTO
     assert is_auto(r)
 
 
 def test_auto_click_in_scope():
     intent = _make_intent()
-    r = classify_action(action_type="click", label="SDK 다운로드 목록 보기",
-                        url="https://developer.hancom.com/list", intent=intent)
+    r = classify_action(
+        action_type="click", label="SDK 다운로드 목록 보기", url="https://developer.hancom.com/list", intent=intent
+    )
     assert r.verdict == GATE_AUTO
 
 
 def test_auto_screenshot_in_scope():
     intent = _make_intent()
-    r = classify_action(action_type="screenshot",
-                        url="https://developer.hancom.com/", intent=intent)
+    r = classify_action(action_type="screenshot", url="https://developer.hancom.com/", intent=intent)
     assert r.verdict == GATE_AUTO
 
 
 def test_auto_type_non_sensitive():
     intent = _make_intent()
-    r = classify_action(action_type="type", label="검색어 입력",
-                        url="https://developer.hancom.com/search",
-                        params={"query": "SDK"}, intent=intent)
+    r = classify_action(
+        action_type="type",
+        label="검색어 입력",
+        url="https://developer.hancom.com/search",
+        params={"query": "SDK"},
+        intent=intent,
+    )
     assert r.verdict == GATE_AUTO
 
 
 def test_auto_scroll_in_scope():
     intent = _make_intent()
-    r = classify_action(action_type="scroll",
-                        url="https://developer.hancom.com/docs", intent=intent)
+    r = classify_action(action_type="scroll", url="https://developer.hancom.com/docs", intent=intent)
     assert r.verdict == GATE_AUTO
 
 
 # ── helper functions ─────────────────────────────────────────────────────────
+
 
 def test_requires_approval_helper():
     r = classify_action(action_type="click", label="결제하기")
@@ -197,8 +209,7 @@ def test_should_notify_helper():
 
 
 def test_gate_result_to_dict_approve():
-    r = classify_action(action_type="click", label="투찰 제출",
-                        url="https://g2b.go.kr")
+    r = classify_action(action_type="click", label="투찰 제출", url="https://g2b.go.kr")
     d = r.to_dict()
     assert d["verdict"] == GATE_APPROVE
     assert "matched_keyword" in d
@@ -214,8 +225,7 @@ def test_gate_result_to_dict_credential():
 
 def test_gate_result_to_dict_auto_minimal():
     intent = _make_intent()
-    r = classify_action(action_type="navigate",
-                        url="https://developer.hancom.com/", intent=intent)
+    r = classify_action(action_type="navigate", url="https://developer.hancom.com/", intent=intent)
     d = r.to_dict()
     assert d["verdict"] == GATE_AUTO
     assert "blocked_field" not in d

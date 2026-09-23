@@ -5,6 +5,7 @@
 - DB 없음 상태에서도 status 엔드포인트가 WARN 으로 안전 응답하는지 확인.
 - 민감정보(client_id/secret) 노출 여부를 응답 전체에서 검증.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,10 +16,13 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.connectors import (
     naver_openapi_config as cfg_mod,
+)
+from ai_orchestrator.connectors import (
     naver_search_client,
     naver_search_jobs,
+)
+from ai_orchestrator.connectors import (
     naver_search_queries as q,
-    naver_search_state as state_mod,
 )
 from ai_orchestrator.connectors.naver_search_router import naver_search_router
 
@@ -29,6 +33,7 @@ def _disable_auth(monkeypatch):
     """모든 테스트 동안 AUTH_ENABLED=False 로 고정 → dummy owner 통과.
     다른 테스트에서 True 로 세팅한 잔존 상태를 무효화한다."""
     from ai_orchestrator import config as _config
+
     monkeypatch.setattr(_config, "AUTH_ENABLED", False, raising=False)
     yield
 
@@ -42,9 +47,12 @@ def client():
 
 def _clear_env(monkeypatch):
     for k in (
-        cfg_mod.ENV_BASE_URL, cfg_mod.ENV_CLIENT_ID,
-        cfg_mod.ENV_CLIENT_SECRET, cfg_mod.ENV_DRY_RUN,
-        "NAVER_SEARCH_DB_ENABLED", "NAVER_SEARCH_DB_PATH",
+        cfg_mod.ENV_BASE_URL,
+        cfg_mod.ENV_CLIENT_ID,
+        cfg_mod.ENV_CLIENT_SECRET,
+        cfg_mod.ENV_DRY_RUN,
+        "NAVER_SEARCH_DB_ENABLED",
+        "NAVER_SEARCH_DB_PATH",
         "NAVER_SEARCH_STATE_PATH",
     ):
         monkeypatch.delenv(k, raising=False)
@@ -61,29 +69,59 @@ def _live_env(monkeypatch, *, db_path, state_path):
 
 def _blog_items():
     return [
-        {"title": "<b>py</b>", "link": "https://b.example.invalid/1",
-         "description": "d1", "bloggername": "n1", "bloggerlink": "bl",
-         "postdate": "99991231"},
-        {"title": "py2", "link": "https://b.example.invalid/2",
-         "description": "d2", "bloggername": "n2", "bloggerlink": "bl",
-         "postdate": "99991230"},
+        {
+            "title": "<b>py</b>",
+            "link": "https://b.example.invalid/1",
+            "description": "d1",
+            "bloggername": "n1",
+            "bloggerlink": "bl",
+            "postdate": "99991231",
+        },
+        {
+            "title": "py2",
+            "link": "https://b.example.invalid/2",
+            "description": "d2",
+            "bloggername": "n2",
+            "bloggerlink": "bl",
+            "postdate": "99991230",
+        },
     ]
 
 
 def _shop_items():
     return [
-        {"title": "kbd A", "link": "u1", "image": "i1",
-         "lprice": "10000", "hprice": "", "mallName": "MallA",
-         "productId": "PID-A", "productType": "1",
-         "brand": "BrandX", "maker": "MakerY",
-         "category1": "디지털", "category2": "주변기기",
-         "category3": "키보드", "category4": ""},
-        {"title": "kbd B", "link": "u2", "image": "i2",
-         "lprice": "50000", "hprice": "60000", "mallName": "MallB",
-         "productId": "PID-B", "productType": "1",
-         "brand": "BrandZ", "maker": "",
-         "category1": "디지털", "category2": "주변기기",
-         "category3": "키보드", "category4": ""},
+        {
+            "title": "kbd A",
+            "link": "u1",
+            "image": "i1",
+            "lprice": "10000",
+            "hprice": "",
+            "mallName": "MallA",
+            "productId": "PID-A",
+            "productType": "1",
+            "brand": "BrandX",
+            "maker": "MakerY",
+            "category1": "디지털",
+            "category2": "주변기기",
+            "category3": "키보드",
+            "category4": "",
+        },
+        {
+            "title": "kbd B",
+            "link": "u2",
+            "image": "i2",
+            "lprice": "50000",
+            "hprice": "60000",
+            "mallName": "MallB",
+            "productId": "PID-B",
+            "productType": "1",
+            "brand": "BrandZ",
+            "maker": "",
+            "category1": "디지털",
+            "category2": "주변기기",
+            "category3": "키보드",
+            "category4": "",
+        },
     ]
 
 
@@ -102,14 +140,18 @@ def _seed_db(tmp_path, monkeypatch):
     client_blog = naver_search_client.NaverSearchClient(transport=blog_t)
     client_shop = naver_search_client.NaverSearchClient(transport=shop_t)
     naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client_blog,
+        "파이썬",
+        client=client_blog,
         store_path=tmp_path / "blog.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     naver_search_jobs.run_naver_shopping_search_job(
-        "키보드", client=client_shop,
+        "키보드",
+        client=client_shop,
         store_path=tmp_path / "shop.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     return db_path, state_path
 
@@ -133,8 +175,7 @@ def test_blog_search_returns_rows_and_filters(tmp_path, monkeypatch, client):
     # HTML 태그는 이미 정규화 단계에서 제거된 값이 DB 에 있다.
     assert "<b>" not in body["items"][0]["title"]
     # 응답 필드 키 존재
-    expected_keys = {"query", "title", "link", "blogger_name",
-                     "post_date", "collected_at", "source"}
+    expected_keys = {"query", "title", "link", "blogger_name", "post_date", "collected_at", "source"}
     assert expected_keys.issubset(body["items"][0].keys())
 
     # query 필터
@@ -190,9 +231,7 @@ def test_search_status_no_secret_and_has_counts(tmp_path, monkeypatch, client):
     body = r.json()
     blob = json.dumps(body, ensure_ascii=False)
     # 절대 섞이면 안 되는 값들
-    for forbidden in ("supersecret-cid", "supersecret-secret",
-                      "X-Naver-Client-Secret",
-                      str(db_path), str(state_path)):
+    for forbidden in ("supersecret-cid", "supersecret-secret", "X-Naver-Client-Secret", str(db_path), str(state_path)):
         assert forbidden not in blob, f"응답에 민감/원문 경로 노출: {forbidden}"
     assert body["status"] == "PASS"
     assert body["db_enabled"] is True
@@ -231,8 +270,7 @@ def test_search_status_warn_when_nothing_configured(tmp_path, monkeypatch, clien
     # blog/shopping 조회도 DB 없이 안전하게 total=0
     r2 = client.get("/api/v1/external/naver/blog-search")
     assert r2.status_code == 200
-    assert r2.json() == {**{"total": 0, "items": [], "limit": 50, "offset": 0,
-                            "duration_ms": r2.json()["duration_ms"]}}
+    assert r2.json() == {**{"total": 0, "items": [], "limit": 50, "offset": 0, "duration_ms": r2.json()["duration_ms"]}}
 
     r3 = client.get("/api/v1/external/naver/shopping-search")
     assert r3.status_code == 200
@@ -262,6 +300,7 @@ def test_audit_script_prints_result_line(tmp_path, monkeypatch, capsys):
 
     # 스크립트를 import 해서 audit() 를 직접 호출
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
         "_audit_script",
         str(tmp_path / "_s.py"),  # dummy name
@@ -286,6 +325,7 @@ def test_audit_script_warn_when_no_db(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("NAVER_SEARCH_STATE_PATH", str(tmp_path / "missing.json"))
 
     import importlib.util
+
     repo = __import__("pathlib").Path(__file__).resolve().parents[2]
     script_path = repo / "scripts" / "audit_naver_search_status.py"
     spec = importlib.util.spec_from_file_location("audit_mod_warn", str(script_path))

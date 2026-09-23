@@ -1,25 +1,27 @@
 """카카오 개발자 콘솔 앱 삭제 — 출퇴근, ERP, 입찰분석."""
-import sys, time
-sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parents[2]))
+
+import sys
+import time
+
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
 from scripts.web_connector import get_page
-from scripts.page_helper import page_goto
 
 page = get_page()
-BASE = 'https://developers.kakao.com/console/app'
+BASE = "https://developers.kakao.com/console/app"
 
 # 삭제 대상 (해한AI 1395337 제외)
 DELETE_APPS = [
-    {'id': '1413624', 'name': '해한메이아이출퇴근'},
-    {'id': '1309295', 'name': '해한 AI ERP'},
-    {'id': '1303517', 'name': '해한AI입찰분석'},
+    {"id": "1413624", "name": "해한메이아이출퇴근"},
+    {"id": "1309295", "name": "해한 AI ERP"},
+    {"id": "1303517", "name": "해한AI입찰분석"},
 ]
 
 for app in DELETE_APPS:
-    aid = app['id']
+    aid = app["id"]
     print(f"\n[삭제] {app['name']} (ID: {aid})")
 
     # page_goto 대신 직접 goto (팝업 자동처리 우회)
-    page.goto(f'{BASE}/{aid}/config', wait_until='networkidle', timeout=15000)
+    page.goto(f"{BASE}/{aid}/config", wait_until="networkidle", timeout=15000)
     time.sleep(2)
 
     # "앱 영구 삭제" 버튼 클릭
@@ -39,7 +41,7 @@ for app in DELETE_APPS:
             const inp = document.querySelector('input:not([type])');
             if (!inp) return 'no_input';
             const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-            nativeSetter.call(inp, '{app['name']}');
+            nativeSetter.call(inp, '{app["name"]}');
             inp.dispatchEvent(new Event('input', {{bubbles:true}}));
             inp.dispatchEvent(new Event('change', {{bubbles:true}}));
             return inp.value;
@@ -63,11 +65,11 @@ for app in DELETE_APPS:
             del_loc = page.locator('button:has-text("삭제")').last
         del_loc.click(timeout=5000)
 
-        page.wait_for_load_state('networkidle', timeout=10000)
+        page.wait_for_load_state("networkidle", timeout=10000)
         time.sleep(2)
 
         if aid not in page.url:
-            print(f"  ✓ 삭제 완료")
+            print("  ✓ 삭제 완료")
         else:
             print(f"  ? 현재 URL: {page.url}")
     except Exception as e:

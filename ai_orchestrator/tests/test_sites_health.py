@@ -3,9 +3,8 @@
 - credentials/session 파일 없음 상태에서 example_portal 은 unconfigured 이어야 한다.
 - connector 가 예외를 던져도 서비스는 unavailable 상태로 반환해야 한다.
 """
-from __future__ import annotations
 
-import os
+from __future__ import annotations
 
 from ai_orchestrator.sites import registry, secrets_policy
 from ai_orchestrator.sites.connector import SiteConnector

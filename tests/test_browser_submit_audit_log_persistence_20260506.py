@@ -3,20 +3,19 @@
 Unit tests for audit log JSONL writer (append-only, redaction, validation).
 Test-only file operations (tmp_path), no production paths.
 """
-import pytest
+
 import json
-from pathlib import Path
-from datetime import datetime, timezone
+
+import pytest
 
 from ai_orchestrator.browser_tool.submit_audit_log import (
     SubmitAuditEvent,
-    SubmitAuditWriteResult,
-    build_submit_audit_event,
-    redact_audit_payload,
-    validate_submit_audit_event,
-    serialize_audit_event,
     append_submit_audit_event,
+    build_submit_audit_event,
     read_submit_audit_events,
+    redact_audit_payload,
+    serialize_audit_event,
+    validate_submit_audit_event,
 )
 
 
@@ -649,6 +648,7 @@ class TestProductionSafeguards:
         # This is a code-level guarantee, but we verify by checking
         # that all functions are pure Python with no imports of network/DB libs
         import inspect
+
         from ai_orchestrator.browser_tool import submit_audit_log
 
         for name, func in inspect.getmembers(submit_audit_log, inspect.isfunction):

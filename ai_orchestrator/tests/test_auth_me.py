@@ -10,12 +10,11 @@
 실제 http_users.json secret/hash 값을 사용하지 않으며
 테스트 fixture에 실제 비밀번호가 없다. synthetic 값만 사용한다.
 """
+
 from __future__ import annotations
 
 import os
 import sys
-
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -34,8 +33,9 @@ _FORBIDDEN_FIELDS = {
 def _make_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from ai_orchestrator.auth_router import auth_router
+
     from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.auth_router import auth_router
 
     app = FastAPI()
     app.include_router(auth_router, prefix="/api/v1")
@@ -44,6 +44,7 @@ def _make_client(user_override: dict):
 
 
 # ── 1. actor/role만 반환 (AUTH_ENABLED=False 상당) ───────────────────────────
+
 
 def test_me_returns_actor_and_role_only():
     """응답 JSON에 actor, role 두 필드만 있어야 한다."""
@@ -58,6 +59,7 @@ def test_me_returns_actor_and_role_only():
 
 # ── 2. 금지 필드 없음 ────────────────────────────────────────────────────────
 
+
 def test_me_does_not_expose_sensitive_fields():
     """password·hash·token·session·cookie·secret 필드가 응답에 없다."""
     client = _make_client({"actor": "system", "role": "owner"})
@@ -69,6 +71,7 @@ def test_me_does_not_expose_sensitive_fields():
 
 
 # ── 3. viewer role 반환 ───────────────────────────────────────────────────────
+
 
 def test_me_viewer_role():
     """viewer 사용자는 role=viewer를 반환받는다."""
@@ -82,6 +85,7 @@ def test_me_viewer_role():
 
 # ── 4. admin role 반환 ────────────────────────────────────────────────────────
 
+
 def test_me_admin_role():
     """admin 사용자는 role=admin을 반환받는다."""
     client = _make_client({"actor": "admin_test", "role": "admin"})
@@ -94,6 +98,7 @@ def test_me_admin_role():
 
 # ── 5. owner role 반환 ────────────────────────────────────────────────────────
 
+
 def test_me_owner_role():
     """owner 사용자는 role=owner를 반환받는다."""
     client = _make_client({"actor": "owner_test", "role": "owner"})
@@ -105,6 +110,7 @@ def test_me_owner_role():
 
 # ── 6. AUTH_ENABLED=True 환경 인증 없으면 401 ─────────────────────────────────
 
+
 def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
     """AUTH_ENABLED=True일 때 인증 없이 호출하면 401을 반환한다."""
     import ai_orchestrator.config as _config
@@ -114,6 +120,7 @@ def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
 
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
     from ai_orchestrator.auth_router import auth_router
 
     app = FastAPI()
@@ -126,6 +133,7 @@ def test_me_returns_401_when_auth_enabled_and_no_credentials(monkeypatch):
 
 
 # ── 7. require_role 사용하지 않음 — 간접 확인 ────────────────────────────────
+
 
 def test_me_accessible_without_require_role():
     """viewer도 /auth/me에 접근 가능하다 (require_role 미사용 확인)."""

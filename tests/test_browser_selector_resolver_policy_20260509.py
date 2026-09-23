@@ -2,15 +2,21 @@
 
 기존 selector_pack_registry.py + 신규 browser_discovery_candidates.py 조합 검증.
 """
+
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.browser_discovery_candidates import (
-    build_candidate, fingerprint_selector,
-    CANDIDATE_MENU, CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON,
-    RISK_LOW, RISK_HIGH,
-)
 from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
-    preflight_expansion, VERDICT_ALLOW, VERDICT_REVIEW, VERDICT_BLOCKED,
+    VERDICT_ALLOW,
+    VERDICT_BLOCKED,
+    VERDICT_REVIEW,
+    preflight_expansion,
+)
+from ai_orchestrator.local_agent.browser_discovery_candidates import (
+    CANDIDATE_DESTRUCTIVE_BUTTON,
+    CANDIDATE_MENU,
+    CANDIDATE_SUBMIT_BUTTON,
+    RISK_HIGH,
+    build_candidate,
 )
 
 
@@ -60,7 +66,6 @@ def test_low_risk_readonly_auto_register():
 
 
 def test_low_confidence_review_required():
-    cand = build_candidate(CANDIDATE_MENU, "공고검색", "link", "g2b", "/",
-                           confidence="LOW")["candidate"]
+    cand = build_candidate(CANDIDATE_MENU, "공고검색", "link", "g2b", "/", confidence="LOW")["candidate"]
     res = preflight_expansion(selector_candidate=cand)
     assert res["verdict"] == VERDICT_REVIEW

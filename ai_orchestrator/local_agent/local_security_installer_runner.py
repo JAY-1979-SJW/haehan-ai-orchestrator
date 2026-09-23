@@ -1,8 +1,9 @@
 """Local Security Installer Runner — 사용자 승인 후 설치 파일 실행을 보조한다."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from typing import Any
 
 # 설치 상태 상수
 STATUS_INSTALL_PERMISSION_REQUIRED = "INSTALL_PERMISSION_REQUIRED"
@@ -19,32 +20,37 @@ STATUS_RETRY_ORIGINAL_TASK_READY = "RETRY_ORIGINAL_TASK_READY"
 GRADE_BLOCKED = "BLOCKED"
 
 # 금지 action 목록
-_BLOCKED_ACTIONS = frozenset((
-    "bypass_security_program",
-    "disable_security_module",
-    "kill_security_process",
-    "auto_uac_approval",
-    "bypass_uac",
-    "silent_install_auto",
-    "bypass_captcha",
-    "export_cookie",
-    "export_session",
-    "export_storage_state",
-    "save_password",
-    "save_otp",
-    "save_cert_password",
-    "access_npki",
-    "access_cert_file",
-    "auto_payment",
-    "auto_transfer",
-    "auto_bid",
-    "auto_sign",
-))
+_BLOCKED_ACTIONS = frozenset(
+    (
+        "bypass_security_program",
+        "disable_security_module",
+        "kill_security_process",
+        "auto_uac_approval",
+        "bypass_uac",
+        "silent_install_auto",
+        "bypass_captcha",
+        "export_cookie",
+        "export_session",
+        "export_storage_state",
+        "save_password",
+        "save_otp",
+        "save_cert_password",
+        "access_npki",
+        "access_cert_file",
+        "auto_payment",
+        "auto_transfer",
+        "auto_bid",
+        "auto_sign",
+    )
+)
 
 # 설치 완료 감지 프로세스 힌트 (실제 실행은 사용자가 직접)
 _INSTALL_COMPLETE_HINTS = (
-    "설치가 완료", "설치 완료", "installation complete",
-    "successfully installed", "설치되었습니다",
+    "설치가 완료",
+    "설치 완료",
+    "installation complete",
+    "successfully installed",
+    "설치되었습니다",
 )
 
 
@@ -107,8 +113,7 @@ def prepare_install(
             "source_host": source_host,
             "requires_uac": True,
             "user_message_ko": (
-                f"보안프로그램({filename}) 설치를 위해 사용자 승인이 필요합니다. "
-                "승인 후 설치를 진행하겠습니다."
+                f"보안프로그램({filename}) 설치를 위해 사용자 승인이 필요합니다. 승인 후 설치를 진행하겠습니다."
             ),
             "executable": False,
             "server_browser_used": False,

@@ -10,15 +10,15 @@
   - raw body / 원본 이메일 local-part 출력 금지 — input 이 이미 마스킹된 상태
   - 보고서 직렬화 후 자기검증 (assert_no_raw_pii)
 """
+
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, Iterable
 
 KST = timezone(timedelta(hours=9))
 SCHEMA_VERSION = "1.0"
@@ -39,10 +39,17 @@ CAT_LOW_PRIORITY = "LOW_PRIORITY"
 CAT_UNKNOWN_REVIEW_REQUIRED = "UNKNOWN_REVIEW_REQUIRED"
 
 ALL_CATEGORIES = (
-    CAT_ATTENTION, CAT_REVIEW, CAT_SECURITY_NOTICE, CAT_BILLING,
-    CAT_POLICY_NOTICE, CAT_PROMO, CAT_SPAM_OR_PHISHING_SUSPECTED,
-    CAT_DELIVERY_FAILURE, CAT_ACCOUNT_OR_SERVICE_NOTICE,
-    CAT_LOW_PRIORITY, CAT_UNKNOWN_REVIEW_REQUIRED,
+    CAT_ATTENTION,
+    CAT_REVIEW,
+    CAT_SECURITY_NOTICE,
+    CAT_BILLING,
+    CAT_POLICY_NOTICE,
+    CAT_PROMO,
+    CAT_SPAM_OR_PHISHING_SUSPECTED,
+    CAT_DELIVERY_FAILURE,
+    CAT_ACCOUNT_OR_SERVICE_NOTICE,
+    CAT_LOW_PRIORITY,
+    CAT_UNKNOWN_REVIEW_REQUIRED,
 )
 
 PRIORITY_HIGH = "HIGH"
@@ -97,26 +104,54 @@ _BRAND_DOMAIN_HINTS = {
 }
 
 # 의심 TLD
-_SUSPICIOUS_TLD_RE = re.compile(
-    r"\.(tk|gq|ml|ga|cf|top|xyz|click|loan|win|work|fit|rest)$"
-)
+_SUSPICIOUS_TLD_RE = re.compile(r"\.(tk|gq|ml|ga|cf|top|xyz|click|loan|win|work|fit|rest)$")
 
 # 신뢰 도메인 (사칭 의심 대상에서 제외)
-_TRUSTED_DOMAINS = frozenset({
-    "fedex.com", "dhl.com", "ups.com", "epost.go.kr",
-    "paypal.com", "apple.com", "icloud.com",
-    "microsoft.com", "outlook.com", "live.com",
-    "google.com", "accounts.google.com", "youtube.com",
-    "navercorp.com", "naver.com", "smartstore.naver.com",
-    "kbcard.com", "kbmail.kbcard.com", "hyundaicard.com",
-    "shinhancard.com", "lottecardmailcenter.net", "hanacard.co.kr",
-    "wooribank.com", "yes24.com", "miricanvas.co.kr",
-    "coupang.com", "facebookmail.com", "mail.instagram.com",
-    "nicepg.co.kr", "kcp.co.kr", "easypay.co.kr", "kgfinancial.co.kr",
-    "x.com", "twitter.com", "github.com",
-    "blackkiwi.net", "golfzon.com", "enclean.com", "style24.com",
-    "emart.com", "heatpipe.co.kr",
-})
+_TRUSTED_DOMAINS = frozenset(
+    {
+        "fedex.com",
+        "dhl.com",
+        "ups.com",
+        "epost.go.kr",
+        "paypal.com",
+        "apple.com",
+        "icloud.com",
+        "microsoft.com",
+        "outlook.com",
+        "live.com",
+        "google.com",
+        "accounts.google.com",
+        "youtube.com",
+        "navercorp.com",
+        "naver.com",
+        "smartstore.naver.com",
+        "kbcard.com",
+        "kbmail.kbcard.com",
+        "hyundaicard.com",
+        "shinhancard.com",
+        "lottecardmailcenter.net",
+        "hanacard.co.kr",
+        "wooribank.com",
+        "yes24.com",
+        "miricanvas.co.kr",
+        "coupang.com",
+        "facebookmail.com",
+        "mail.instagram.com",
+        "nicepg.co.kr",
+        "kcp.co.kr",
+        "easypay.co.kr",
+        "kgfinancial.co.kr",
+        "x.com",
+        "twitter.com",
+        "github.com",
+        "blackkiwi.net",
+        "golfzon.com",
+        "enclean.com",
+        "style24.com",
+        "emart.com",
+        "heatpipe.co.kr",
+    }
+)
 
 
 def _domain_of(sender_masked: str) -> str:
@@ -132,8 +167,7 @@ _SHIPPING_KEYWORD_RE = re.compile(
 )
 
 
-def _is_phishing_suspect(subject: str, sender_masked: str,
-                          link_domains: dict) -> tuple[bool, list[str]]:
+def _is_phishing_suspect(subject: str, sender_masked: str, link_domains: dict) -> tuple[bool, list[str]]:
     """발신 도메인 + 제목 키워드로 사칭 의심 판정."""
     dom = _domain_of(sender_masked)
     markers: list[str] = []
@@ -142,12 +176,9 @@ def _is_phishing_suspect(subject: str, sender_masked: str,
         # 1) 운송사/결제 브랜드 키워드 + untrusted 도메인
         for brand, trusted in _BRAND_DOMAIN_HINTS.items():
             if brand in subj_low and not any(t in dom for t in trusted):
-                markers.append(
-                    f"brand_keyword_in_subject_but_untrusted_domain:{brand}~{dom}"
-                )
+                markers.append(f"brand_keyword_in_subject_but_untrusted_domain:{brand}~{dom}")
         # 2) 운송 키워드 (shipping documents 등) + untrusted 도메인
-        if _SHIPPING_KEYWORD_RE.search(subject or "") and \
-                not any(t in dom for t in ("fedex", "dhl", "ups", "epost")):
+        if _SHIPPING_KEYWORD_RE.search(subject or "") and not any(t in dom for t in ("fedex", "dhl", "ups", "epost")):
             markers.append(f"shipping_keyword_untrusted_domain:{dom}")
         # 3) 의심 TLD
         if _SUSPICIOUS_TLD_RE.search(dom):
@@ -160,73 +191,113 @@ def _is_phishing_suspect(subject: str, sender_masked: str,
 # (카테고리, 키워드 정규식, 매칭 영역) — 영역: 'subject' | 'sender' | 'both'
 _RULES = [
     # 1) DELIVERY_FAILURE
-    (CAT_DELIVERY_FAILURE,
-     re.compile(r"undelivered|returned to sender|mail delivery system"
-                r"|반송|전달 실패|배달 실패", re.IGNORECASE),
-     "both"),
+    (
+        CAT_DELIVERY_FAILURE,
+        re.compile(
+            r"undelivered|returned to sender|mail delivery system"
+            r"|반송|전달 실패|배달 실패",
+            re.IGNORECASE,
+        ),
+        "both",
+    ),
     # 2) ATTENTION — 노출 정지, 휴면, 답변 지연, 확약서
-    (CAT_ATTENTION,
-     re.compile(r"노출 ?정지|미답변|답변지연|확약서|휴면 ?상태로 ?전환"
-                r"|계정 ?정지|복원\s*요청|상품 ?노출 ?재개"),
-     "subject"),
+    (
+        CAT_ATTENTION,
+        re.compile(
+            r"노출 ?정지|미답변|답변지연|확약서|휴면 ?상태로 ?전환"
+            r"|계정 ?정지|복원\s*요청|상품 ?노출 ?재개"
+        ),
+        "subject",
+    ),
     # 3) REVIEW — 색인 / 오류 / 권장 조치
-    (CAT_REVIEW,
-     re.compile(r"색인이 ?생성되지 ?않습니다|indexing|크롤링 오류"
-                r"|조치 ?권장|검토 ?필요|수동 ?조치"),
-     "subject"),
+    (
+        CAT_REVIEW,
+        re.compile(
+            r"색인이 ?생성되지 ?않습니다|indexing|크롤링 오류"
+            r"|조치 ?권장|검토 ?필요|수동 ?조치"
+        ),
+        "subject",
+    ),
     # 4) SECURITY_NOTICE
-    (CAT_SECURITY_NOTICE,
-     re.compile(r"보안 ?알림|중요 ?보안 ?알림"
-                r"|새로운 ?(환경|기기|위치)에서 ?로그인"
-                r"|알림 ?없이 ?로그인|새로운 ?기기로 ?로그인"
-                r"|간편 ?로그인 ?계정"
-                r"|security alert|new or unusual.*login"
-                r"|비밀번호 ?변경|2단계 ?인증"
-                r"|로그인 ?기능이 ?해제", re.IGNORECASE),
-     "subject"),
+    (
+        CAT_SECURITY_NOTICE,
+        re.compile(
+            r"보안 ?알림|중요 ?보안 ?알림"
+            r"|새로운 ?(환경|기기|위치)에서 ?로그인"
+            r"|알림 ?없이 ?로그인|새로운 ?기기로 ?로그인"
+            r"|간편 ?로그인 ?계정"
+            r"|security alert|new or unusual.*login"
+            r"|비밀번호 ?변경|2단계 ?인증"
+            r"|로그인 ?기능이 ?해제",
+            re.IGNORECASE,
+        ),
+        "subject",
+    ),
     # 5) BILLING
-    (CAT_BILLING,
-     re.compile(r"결제 ?내역|영수증|매출실적|포인트리"
-                r"|리볼빙|마일리지|payment|invoice"
-                r"|쿠팡.{0,8}결제|배송달력|출고일 ?자동 ?조정"
-                r"|google play.{0,8}주문|google play.{0,8}영수증"
-                r"|kcp|nicepg|easypay|kgfinancial",
-                re.IGNORECASE),
-     "both"),
+    (
+        CAT_BILLING,
+        re.compile(
+            r"결제 ?내역|영수증|매출실적|포인트리"
+            r"|리볼빙|마일리지|payment|invoice"
+            r"|쿠팡.{0,8}결제|배송달력|출고일 ?자동 ?조정"
+            r"|google play.{0,8}주문|google play.{0,8}영수증"
+            r"|kcp|nicepg|easypay|kgfinancial",
+            re.IGNORECASE,
+        ),
+        "both",
+    ),
     # 6) POLICY_NOTICE
-    (CAT_POLICY_NOTICE,
-     re.compile(r"약관 ?개정|이용약관|처리방침"
-                r"|수수료율 ?변경|할부수수료율|개인정보 ?처리방침"
-                r"|약관 ?변경"),
-     "subject"),
+    (
+        CAT_POLICY_NOTICE,
+        re.compile(
+            r"약관 ?개정|이용약관|처리방침"
+            r"|수수료율 ?변경|할부수수료율|개인정보 ?처리방침"
+            r"|약관 ?변경"
+        ),
+        "subject",
+    ),
     # 7) ACCOUNT_OR_SERVICE_NOTICE — 휴면/탈퇴/서비스 종료
-    (CAT_ACCOUNT_OR_SERVICE_NOTICE,
-     re.compile(r"서비스 ?종료|회원정보 ?삭제|휴면 ?정책"
-                r"|회원 ?탈퇴|계정 ?등록|본인 ?인증 ?완료"
-                r"|개인정보 ?이용내역|개인정보 ?수집"
-                r"|개인정보 ?이용제공|등록되었습니다"),
-     "subject"),
+    (
+        CAT_ACCOUNT_OR_SERVICE_NOTICE,
+        re.compile(
+            r"서비스 ?종료|회원정보 ?삭제|휴면 ?정책"
+            r"|회원 ?탈퇴|계정 ?등록|본인 ?인증 ?완료"
+            r"|개인정보 ?이용내역|개인정보 ?수집"
+            r"|개인정보 ?이용제공|등록되었습니다"
+        ),
+        "subject",
+    ),
     # 8) LOW_PRIORITY 먼저 — Instagram/FB/Google Play 자동 추천 (PROMO 패턴이 광범위해 LOW를 가림)
-    (CAT_LOW_PRIORITY,
-     re.compile(r"instagram\.com|facebookmail"
-                r"|google play.{0,10}추천|pc에서.{0,10}플레이"
-                r"|새로 ?올라온 ?소식|🎮", re.IGNORECASE),
-     "both"),
+    (
+        CAT_LOW_PRIORITY,
+        re.compile(
+            r"instagram\.com|facebookmail"
+            r"|google play.{0,10}추천|pc에서.{0,10}플레이"
+            r"|새로 ?올라온 ?소식|🎮",
+            re.IGNORECASE,
+        ),
+        "both",
+    ),
     # 9) PROMO — 광고/이벤트/할인
-    (CAT_PROMO,
-     re.compile(r"이벤트|할인|쿠폰|프로모션|newsletter|뉴스레터"
-                r"|특가|혜택|소식을 확인|업데이트를 전해드립니다"
-                r"|월간 ?업데이트|drop의 ?새로운 ?소식"
-                r"|출시할 ?준비|출시 ?여정|정책을 ?준비"
-                r"|ai ?인사이트|product update|cloud product",
-                re.IGNORECASE),
-     "both"),
+    (
+        CAT_PROMO,
+        re.compile(
+            r"이벤트|할인|쿠폰|프로모션|newsletter|뉴스레터"
+            r"|특가|혜택|소식을 확인|업데이트를 전해드립니다"
+            r"|월간 ?업데이트|drop의 ?새로운 ?소식"
+            r"|출시할 ?준비|출시 ?여정|정책을 ?준비"
+            r"|ai ?인사이트|product update|cloud product",
+            re.IGNORECASE,
+        ),
+        "both",
+    ),
 ]
 
 
 @dataclass
 class MailItem:
     """보고서 입력 — 모두 PII 마스킹된 데이터."""
+
     sn: str
     folder_name: str
     subject_masked: str
@@ -311,12 +382,10 @@ def classify_mail(item: MailItem) -> tuple[str, str, list[str]]:
             target = subj + " " + sender
         m = pat.search(target)
         if m:
-            return (cat, _DEFAULT_PRIORITY_BY_CATEGORY.get(cat, PRIORITY_LOW),
-                    [f"rule:{cat}:{m.group(0)[:40]}"])
+            return (cat, _DEFAULT_PRIORITY_BY_CATEGORY.get(cat, PRIORITY_LOW), [f"rule:{cat}:{m.group(0)[:40]}"])
 
     # 3) 미분류
-    return (CAT_UNKNOWN_REVIEW_REQUIRED, PRIORITY_LOW,
-            ["no_rule_matched"])
+    return (CAT_UNKNOWN_REVIEW_REQUIRED, PRIORITY_LOW, ["no_rule_matched"])
 
 
 def _make_action_id(sn: str, category: str) -> str:
@@ -324,17 +393,16 @@ def _make_action_id(sn: str, category: str) -> str:
     return f"act_{h}"
 
 
-def to_action_item(item: MailItem, *, category: str, priority: str,
-                   evidence: list[str]) -> ActionItem:
+def to_action_item(item: MailItem, *, category: str, priority: str, evidence: list[str]) -> ActionItem:
     return ActionItem(
         actionId=_make_action_id(item.sn, category),
-        category=category, priority=priority,
+        category=category,
+        priority=priority,
         title_redacted=(item.subject_masked or "")[:200],
         sender_domain=_domain_of(item.sender_masked),
         received_date=item.date_text or "",
         reason="; ".join(evidence)[:200],
-        recommended_action=_RECOMMENDED_ACTION_BY_CATEGORY.get(
-            category, "수동 확인 필요"),
+        recommended_action=_RECOMMENDED_ACTION_BY_CATEGORY.get(category, "수동 확인 필요"),
         evidence_markers=evidence,
         pii_masked=True,
         raw_body_saved=False,
@@ -344,14 +412,16 @@ def to_action_item(item: MailItem, *, category: str, priority: str,
 # ── 보고서 빌드 ────────────────────────────────────────────────────
 
 
-def build_report(mails: Iterable[MailItem],
-                 *, run_id: str = "",
-                 unread_restore_summary: dict | None = None,
-                 attachment_download_count: int = 0,
-                 external_ai_call_count: int = 0,
-                 pii_detected_total: int = 0,
-                 pii_types_summary: dict | None = None
-                 ) -> BusinessReport:
+def build_report(
+    mails: Iterable[MailItem],
+    *,
+    run_id: str = "",
+    unread_restore_summary: dict | None = None,
+    attachment_download_count: int = 0,
+    external_ai_call_count: int = 0,
+    pii_detected_total: int = 0,
+    pii_types_summary: dict | None = None,
+) -> BusinessReport:
     items = list(mails)
     rep = BusinessReport(
         run_id=run_id,
@@ -367,8 +437,7 @@ def build_report(mails: Iterable[MailItem],
     # 폴더 / 도메인 분포
     folder_c = Counter(it.folder_name for it in items)
     rep.folder_distribution = dict(folder_c)
-    dom_c = Counter(_domain_of(it.sender_masked) for it in items
-                    if _domain_of(it.sender_masked))
+    dom_c = Counter(_domain_of(it.sender_masked) for it in items if _domain_of(it.sender_masked))
     rep.sender_domain_top = dom_c.most_common(15)
 
     # 분류
@@ -383,13 +452,18 @@ def build_report(mails: Iterable[MailItem],
     for cat in ALL_CATEGORIES:
         lst = grouped.get(cat, [])
         cg = CategoryGroup(
-            category=cat, count=len(lst),
+            category=cat,
+            count=len(lst),
             items=[
-                {"sn": it.sn, "subject": it.subject_masked,
-                 "sender": it.sender_masked,
-                 "date": it.date_text, "folder": it.folder_name,
-                 "has_attach": it.has_attach,
-                 "pii_n": it.pii_detected_count}
+                {
+                    "sn": it.sn,
+                    "subject": it.subject_masked,
+                    "sender": it.sender_masked,
+                    "date": it.date_text,
+                    "folder": it.folder_name,
+                    "has_attach": it.has_attach,
+                    "pii_n": it.pii_detected_count,
+                }
                 for it in lst[:50]  # 카테고리당 최대 50건
             ],
         )
@@ -399,15 +473,15 @@ def build_report(mails: Iterable[MailItem],
     actions: list[ActionItem] = []
     for it, cat, pri, ev in classification_meta:
         if pri == PRIORITY_LOW and cat not in (
-                CAT_UNKNOWN_REVIEW_REQUIRED, CAT_DELIVERY_FAILURE,
-                CAT_SPAM_OR_PHISHING_SUSPECTED):
+            CAT_UNKNOWN_REVIEW_REQUIRED,
+            CAT_DELIVERY_FAILURE,
+            CAT_SPAM_OR_PHISHING_SUSPECTED,
+        ):
             continue
-        actions.append(to_action_item(it, category=cat, priority=pri,
-                                      evidence=ev))
+        actions.append(to_action_item(it, category=cat, priority=pri, evidence=ev))
     # 우선순위 정렬
     pri_order = {PRIORITY_HIGH: 0, PRIORITY_MEDIUM: 1, PRIORITY_LOW: 2}
-    actions.sort(key=lambda a: (pri_order.get(a.priority, 9),
-                                a.category, a.received_date))
+    actions.sort(key=lambda a: (pri_order.get(a.priority, 9), a.category, a.received_date))
     rep.action_items = actions
 
     # leak self-check 는 caller 에서 추가 (renderer 호출 후)
@@ -491,9 +565,12 @@ def render_markdown(rep: BusinessReport) -> str:
         if len(lst) > 30:
             lines.append(f"- … ({len(lst) - 30}건 더)")
 
-    lines += ["", "## 원문/PII 저장 여부",
-              f"- raw_body_saved: **{rep.raw_body_saved}**",
-              f"- PII unmasked leak self-check: `{rep.leak_self_check}`"]
+    lines += [
+        "",
+        "## 원문/PII 저장 여부",
+        f"- raw_body_saved: **{rep.raw_body_saved}**",
+        f"- PII unmasked leak self-check: `{rep.leak_self_check}`",
+    ]
     return "\n".join(lines)
 
 
@@ -504,9 +581,7 @@ def render_json(rep: BusinessReport) -> dict:
 # ── 자기검증 (PII leak) ─────────────────────────────────────────────
 
 
-_RAW_EMAIL_RE = re.compile(
-    r"\b[A-Za-z0-9_.+\-]{3,}@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"
-)
+_RAW_EMAIL_RE = re.compile(r"\b[A-Za-z0-9_.+\-]{3,}@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
 _RAW_PHONE_RE = re.compile(r"\b01[016789]-\d{3,4}-\d{4}\b")
 _RAW_RRN_RE = re.compile(r"\b\d{6}-[1-4]\d{6}\b")
 _RAW_CARD_4x4_RE = re.compile(r"\b\d{4}[ -]\d{4}[ -]\d{4}[ -]\d{4}\b")
@@ -522,16 +597,12 @@ def find_pii_leaks(text: str) -> dict:
     }
 
 
-def attach_leak_check(rep: BusinessReport, *, md_text: str,
-                      json_text: str) -> BusinessReport:
+def attach_leak_check(rep: BusinessReport, *, md_text: str, json_text: str) -> BusinessReport:
     md_leaks = find_pii_leaks(md_text)
     json_leaks = find_pii_leaks(json_text)
     rep.leak_self_check = {
         "md": {k: len(v) for k, v in md_leaks.items()},
         "json": {k: len(v) for k, v in json_leaks.items()},
-        "total_leak_count": (
-            sum(len(v) for v in md_leaks.values())
-            + sum(len(v) for v in json_leaks.values())
-        ),
+        "total_leak_count": (sum(len(v) for v in md_leaks.values()) + sum(len(v) for v in json_leaks.values())),
     }
     return rep

@@ -7,9 +7,9 @@
 - 민감 필드 차단
 - 필수 필드 누락 시 PREPARE_WARN
 """
+
 from __future__ import annotations
 
-import pytest
 from ai_orchestrator.local_agent.actions import business_prepare_action
 
 
@@ -184,8 +184,12 @@ def test_attached_files_basename_only():
 def test_all_business_profiles_available():
     """6개 프로필 모두 지원."""
     profiles = [
-        "bid_submission", "erp_save", "erp_submit_approval",
-        "document_submission", "public_agency_upload", "esign_request",
+        "bid_submission",
+        "erp_save",
+        "erp_submit_approval",
+        "document_submission",
+        "public_agency_upload",
+        "esign_request",
     ]
     for profile in profiles:
         res = business_prepare_action.execute(

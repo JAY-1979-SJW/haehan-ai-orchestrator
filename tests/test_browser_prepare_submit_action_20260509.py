@@ -1,7 +1,6 @@
 """
 browser.prepare_submit 핸들러 테스트
 """
-import pytest
 
 from ai_orchestrator.local_agent.actions.browser_prepare_submit import execute
 

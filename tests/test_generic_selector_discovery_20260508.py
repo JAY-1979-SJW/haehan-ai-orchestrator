@@ -1,7 +1,8 @@
 """tests/test_generic_selector_discovery_20260508.py"""
+
 from ai_orchestrator.local_agent.generic_selector_discovery import (
-    discover_selectors, has_risk_buttons, get_risk_button_types,
-    _FORBIDDEN_DISCOVERY_TARGETS,
+    discover_selectors,
+    has_risk_buttons,
 )
 
 

@@ -7,17 +7,17 @@
     cal.create_event(title="회의", when="2026-05-13 14:00", duration_min=60)
     cal.quick_add("내일 오후 3시 미용실 예약")
 """
+
 from __future__ import annotations
 
 import time
 from datetime import datetime, timedelta
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
-from scripts.critical_logger import log_critical
 from scripts.config import GOOGLE_URLS
+from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -30,21 +30,22 @@ class CalendarAPI:
 
     def list_today(self) -> list[dict]:
         """오늘 일정."""
-        self.page.goto(GOOGLE_URLS.get("calendar_day", "https://calendar.google.com/calendar/u/0/r/day"),
-                       timeout=20000)
+        self.page.goto(GOOGLE_URLS.get("calendar_day", "https://calendar.google.com/calendar/u/0/r/day"), timeout=20000)
         time.sleep(2.5)
         return self._extract_events()
 
     def list_week(self) -> list[dict]:
         """이번 주 일정."""
-        self.page.goto(GOOGLE_URLS.get("calendar_week", "https://calendar.google.com/calendar/u/0/r/week"),
-                       timeout=20000)
+        self.page.goto(
+            GOOGLE_URLS.get("calendar_week", "https://calendar.google.com/calendar/u/0/r/week"), timeout=20000
+        )
         time.sleep(2.5)
         return self._extract_events()
 
     def _extract_events(self) -> list[dict]:
         try:
-            return self.page.evaluate("""
+            return (
+                self.page.evaluate("""
             () => {
                 const out = [];
                 document.querySelectorAll('[role="button"][data-eventid], [data-eventchip]').forEach(el => {
@@ -54,13 +55,22 @@ class CalendarAPI:
                 });
                 return out.slice(0, 50);
             }
-            """) or []
+            """)
+                or []
+            )
         except Exception:
             return []
 
-    def create_event(self, *, title: str, when: str | datetime,
-                     duration_min: int = 60, location: str = "",
-                     description: str = "", attendees: list[str] | None = None) -> dict:
+    def create_event(
+        self,
+        *,
+        title: str,
+        when: str | datetime,
+        duration_min: int = 60,
+        location: str = "",
+        description: str = "",
+        attendees: list[str] | None = None,
+    ) -> dict:
         """이벤트 생성. when: 'YYYY-MM-DD HH:MM' 문자열 또는 datetime."""
         if isinstance(when, str):
             try:
@@ -102,7 +112,7 @@ class CalendarAPI:
                     time.sleep(0.5)
                     continue
                 time.sleep(1.2)
-                menu_count = self.page.evaluate('() => document.querySelectorAll(\'li[role="menuitem"]\').length')
+                menu_count = self.page.evaluate("() => document.querySelectorAll('li[role=\"menuitem\"]').length")
                 if menu_count > 0:
                     menu_open = True
                     break
@@ -125,28 +135,34 @@ class CalendarAPI:
             if not picked:
                 raise RuntimeError("'일정' 메뉴 못 찾음")
             # 다이얼로그 등장까지 명시적 대기
-            self.page.wait_for_selector(
-                '[role="dialog"] input[aria-label="제목 추가"]', timeout=10000, state="visible"
-            )
+            self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=10000, state="visible")
 
             # quick 다이얼로그 등장 대기
             self.page.wait_for_selector('[role="dialog"] input[aria-label="제목 추가"]', timeout=8000)
 
             # description/location 있으면 '옵션 더보기' → 풀 페이지로 (안정적 입력)
             if description or location:
-                self.page.locator('[role="dialog"] button:has-text("옵션 더보기"), [role="dialog"] button:has-text("More options")').first.click(timeout=4000)
+                self.page.locator(
+                    '[role="dialog"] button:has-text("옵션 더보기"), [role="dialog"] button:has-text("More options")'
+                ).first.click(timeout=4000)
                 time.sleep(3)
                 # 풀 페이지: 제목 input
-                self.page.locator('input[aria-label="제목 추가"], input[placeholder="제목 추가"]').first.fill(title, timeout=5000)
+                self.page.locator('input[aria-label="제목 추가"], input[placeholder="제목 추가"]').first.fill(
+                    title, timeout=5000
+                )
                 time.sleep(0.5)
                 if location:
                     try:
-                        self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(location, timeout=3000)
+                        self.page.locator('input[aria-label*="위치"], input[placeholder*="위치"]').first.fill(
+                            location, timeout=3000
+                        )
                     except Exception:
                         pass
                 if description:
                     try:
-                        desc_el = self.page.locator('[aria-label="설명 추가"], div[contenteditable="true"][aria-label*="설명"], textarea[aria-label*="설명"]').first
+                        desc_el = self.page.locator(
+                            '[aria-label="설명 추가"], div[contenteditable="true"][aria-label*="설명"], textarea[aria-label*="설명"]'
+                        ).first
                         desc_el.click(timeout=2000)
                         self.page.keyboard.type(description, delay=10)
                     except Exception:
@@ -183,10 +199,8 @@ class CalendarAPI:
                 if not saved:
                     raise RuntimeError("'저장' 버튼 못 찾음")
             time.sleep(3)
-            log_critical("OTHER", f"Calendar 이벤트: {title}",
-                         when=when_dt.isoformat(), mode="cal_create")
-            return {"ok": True, "title": title, "when": when_dt.isoformat(),
-                    "end": end_dt.isoformat()}
+            log_critical("OTHER", f"Calendar 이벤트: {title}", when=when_dt.isoformat(), mode="cal_create")
+            return {"ok": True, "title": title, "when": when_dt.isoformat(), "end": end_dt.isoformat()}
         except Exception as e:
             return {"ok": False, "error": str(e)[:100]}
 

@@ -8,7 +8,7 @@ STEP 14 — /ops 운영센터 페이지 백엔드 경계 테스트
   - secret/token/password 노출 없음
   - 외부 API 직접 호출 없음 (mock fallback 전용)
 """
-import os
+
 import re
 from pathlib import Path
 
@@ -169,7 +169,8 @@ class TestOpsSecretNonExposure:
         blob = self._all_ops_source()
         bad = re.findall(
             r'(?:password|client_secret|api_key)\s*[:=]\s*["\'][^"\']{8,}["\']',
-            blob, re.I,
+            blob,
+            re.I,
         )
         assert bad == [], f"credential 값 발견: {bad}"
 
@@ -177,7 +178,7 @@ class TestOpsSecretNonExposure:
         blob = self._all_ops_source()
         # admin-token 은 stub이지만 검사 대상 제외 (opsApiClient 에서만 허용)
         # 실제 비밀 토큰 형태 (40자 이상 hex/base64) 검사
-        bad = re.findall(r'Bearer\s+[A-Za-z0-9+/=_-]{40,}', blob)
+        bad = re.findall(r"Bearer\s+[A-Za-z0-9+/=_-]{40,}", blob)
         assert bad == [], f"실제 Bearer 토큰 발견: {bad}"
 
     def test_mock_data_no_real_passwords(self):
@@ -185,7 +186,8 @@ class TestOpsSecretNonExposure:
         # 정책 설명(한글 문자열)에 password 언급은 허용; 실제 할당 패턴만 금지
         bad = re.findall(
             r'(?:password|secret)\s*[:=]\s*["\'][^"\']{4,}["\']',
-            mock_src, re.I,
+            mock_src,
+            re.I,
         )
         assert bad == [], f"password 값 할당 발견: {bad}"
 

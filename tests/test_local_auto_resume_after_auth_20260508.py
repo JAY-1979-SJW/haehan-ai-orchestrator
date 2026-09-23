@@ -1,16 +1,15 @@
 """
 auto_resume_after_auth 테스트
 """
-import pytest
+
 from ai_orchestrator.local_agent.auto_resume_after_auth import (
     can_auto_resume,
-    resume_after_auth,
     classify_resume_eligibility,
+    resume_after_auth,
 )
 from ai_orchestrator.local_agent.task_protocol import (
-    STATUS_BLOCKED,
-    STATUS_USER_ACTION_REQUIRED,
     STATUS_COMPLETED,
+    STATUS_USER_ACTION_REQUIRED,
 )
 
 

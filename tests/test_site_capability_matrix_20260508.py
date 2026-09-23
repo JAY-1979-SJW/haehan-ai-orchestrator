@@ -1,11 +1,20 @@
 """tests/test_site_capability_matrix_20260508.py - site_capability_matrix 단위 테스트"""
-import pytest
+
 from ai_orchestrator.local_agent.site_capability_matrix import (
-    capability_allowed, get_required_risk_level, get_capability_for_action,
-    get_required_permission, reject_if_blocked,
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
-    CAP_READONLY_EXPLORE, CAP_PUBLISH_WITH_PERMISSION, CAP_PAYMENT_DIRECT_ONLY,
-    CAP_BID_DIRECT_ONLY, _CAPABILITY_GRADE,
+    _CAPABILITY_GRADE,
+    CAP_BID_DIRECT_ONLY,
+    CAP_PAYMENT_DIRECT_ONLY,
+    CAP_PUBLISH_WITH_PERMISSION,
+    CAP_READONLY_EXPLORE,
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
+    capability_allowed,
+    get_capability_for_action,
+    get_required_permission,
+    get_required_risk_level,
+    reject_if_blocked,
 )
 from ai_orchestrator.local_agent.site_profile_registry import get_site_profile
 
@@ -43,6 +52,7 @@ def test_get_required_risk_level_blog_publish():
 
 def test_get_required_risk_level_search():
     from ai_orchestrator.local_agent.site_capability_matrix import CAP_SEARCH
+
     level = get_required_risk_level("naver", CAP_SEARCH)
     assert level == GRADE_AUTO_ALLOWED
 

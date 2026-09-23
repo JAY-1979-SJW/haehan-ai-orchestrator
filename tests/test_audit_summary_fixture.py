@@ -3,7 +3,7 @@
 PC local audit.jsonl 원문은 절대 저장/반환하지 않는다.
 audit_summary는 allowlist 방식으로 필드를 필터링한다.
 """
-import pytest
+
 from ai_orchestrator import local_agent_registry as reg
 
 
@@ -15,12 +15,12 @@ class TestAuditSummaryBasic:
 
     def _setup_running_task(self):
         """running 상태의 task 생성"""
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -29,10 +29,7 @@ class TestAuditSummaryBasic:
     def test_task_without_audit_summary_completes(self):
         """audit_summary가 없으면 task가 정상 완료"""
         agent_id, task_id = self._setup_running_task()
-        result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok", audit_summary=None
-        )
+        result = reg.apply_result(agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary=None)
         assert result is not None
         assert result.status == "completed"
         assert result.audit_summary is None
@@ -46,8 +43,7 @@ class TestAuditSummaryBasic:
             "allowed_event_count": 4,
         }
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok", audit_summary=audit_data
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary=audit_data
         )
         assert result is not None
         assert result.audit_summary is not None
@@ -59,8 +55,7 @@ class TestAuditSummaryBasic:
         """audit_summary이 dict이 아니면 무시"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok", audit_summary="not_a_dict"
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary="not_a_dict"
         )
         assert result is not None
         assert result.audit_summary is None
@@ -70,8 +65,7 @@ class TestAuditSummaryBasic:
         agent_id, task_id = self._setup_running_task()
         audit_data = {"audit_event_count": 3, "error_event_count": 1}
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=False, error="timeout", audit_summary=audit_data
+            agent_id=agent_id, task_id=task_id, success=False, error="timeout", audit_summary=audit_data
         )
         assert result is not None
         assert result.status == "failed"
@@ -86,12 +80,12 @@ class TestAuditSummaryCountFields:
         reg.clear()
 
     def _setup_running_task(self):
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -101,9 +95,7 @@ class TestAuditSummaryCountFields:
         """Count 필드는 int 허용"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"audit_event_count": 42}
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary={"audit_event_count": 42}
         )
         assert result.audit_summary["audit_event_count"] == 42
 
@@ -111,9 +103,7 @@ class TestAuditSummaryCountFields:
         """음수 count는 0으로 변환"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"audit_event_count": -5}
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary={"audit_event_count": -5}
         )
         assert result.audit_summary["audit_event_count"] == 0
 
@@ -121,9 +111,7 @@ class TestAuditSummaryCountFields:
         """문자열 int 변환"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"audit_event_count": "42"}
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary={"audit_event_count": "42"}
         )
         assert result.audit_summary["audit_event_count"] == 42
 
@@ -131,9 +119,11 @@ class TestAuditSummaryCountFields:
         """변환 불가능한 문자열은 drop"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"audit_event_count": "invalid"}
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": "invalid"},
         )
         # 모든 필드가 drop되면 audit_summary는 None
         assert result.audit_summary is None or "audit_event_count" not in result.audit_summary
@@ -146,12 +136,12 @@ class TestAuditSummaryStringFields:
         reg.clear()
 
     def _setup_running_task(self):
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -161,9 +151,11 @@ class TestAuditSummaryStringFields:
         """String 필드 최대 길이 제한"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"last_event_category": "a" * 200}
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"last_event_category": "a" * 200},
         )
         assert len(result.audit_summary["last_event_category"]) == 80
 
@@ -171,9 +163,7 @@ class TestAuditSummaryStringFields:
         """Enum 문자열 저장"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"last_event_status": "ok"}
+            agent_id=agent_id, task_id=task_id, success=True, summary="ok", audit_summary={"last_event_status": "ok"}
         )
         assert result.audit_summary["last_event_status"] == "ok"
 
@@ -185,12 +175,12 @@ class TestAuditSummaryListFields:
         reg.clear()
 
     def _setup_running_task(self):
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -200,13 +190,11 @@ class TestAuditSummaryListFields:
         """audit_event_categories list 저장"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_categories": [
-                    "browser_open_requested", "browser_open_observed"
-                ]
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_categories": ["browser_open_requested", "browser_open_observed"]},
         )
         assert len(result.audit_summary["audit_event_categories"]) == 2
 
@@ -214,13 +202,11 @@ class TestAuditSummaryListFields:
         """중복 카테고리 제거"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_categories": [
-                    "browser_open_requested", "browser_open_requested"
-                ]
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_categories": ["browser_open_requested", "browser_open_requested"]},
         )
         assert len(result.audit_summary["audit_event_categories"]) == 1
 
@@ -228,9 +214,11 @@ class TestAuditSummaryListFields:
         """list가 아니면 drop"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"audit_event_categories": "not_a_list"}
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_categories": "not_a_list"},
         )
         assert result.audit_summary is None or "audit_event_categories" not in result.audit_summary
 
@@ -242,12 +230,12 @@ class TestAuditSummaryDictFields:
         reg.clear()
 
     def _setup_running_task(self):
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -257,11 +245,11 @@ class TestAuditSummaryDictFields:
         """Count dict 저장"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "policy_decision_counts": {"blocked": 2, "allowed": 3}
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"policy_decision_counts": {"blocked": 2, "allowed": 3}},
         )
         assert result.audit_summary["policy_decision_counts"]["blocked"] == 2
 
@@ -269,9 +257,11 @@ class TestAuditSummaryDictFields:
         """dict가 아니면 drop"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={"policy_decision_counts": "not_a_dict"}
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"policy_decision_counts": "not_a_dict"},
         )
         assert result.audit_summary is None or "policy_decision_counts" not in result.audit_summary
 
@@ -279,17 +269,13 @@ class TestAuditSummaryDictFields:
         """Nested dict는 허용 안 함"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "policy_decision_counts": {
-                    "category": {"nested": 1}
-                }
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"policy_decision_counts": {"category": {"nested": 1}}},
         )
-        assert result.audit_summary is None or "category" not in result.audit_summary.get(
-            "policy_decision_counts", {}
-        )
+        assert result.audit_summary is None or "category" not in result.audit_summary.get("policy_decision_counts", {})
 
 
 class TestAuditSummaryForbiddenFields:
@@ -299,12 +285,12 @@ class TestAuditSummaryForbiddenFields:
         reg.clear()
 
     def _setup_running_task(self):
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -314,12 +300,11 @@ class TestAuditSummaryForbiddenFields:
         """raw_events 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "raw_events": [{"event_type": "test"}]
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "raw_events": [{"event_type": "test"}]},
         )
         assert "raw_events" not in result.audit_summary
 
@@ -327,12 +312,11 @@ class TestAuditSummaryForbiddenFields:
         """current_url 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "current_url": "http://example.com"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "current_url": "http://example.com"},
         )
         assert "current_url" not in result.audit_summary
 
@@ -340,14 +324,16 @@ class TestAuditSummaryForbiddenFields:
         """url/query/fragment 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
             audit_summary={
                 "audit_event_count": 5,
                 "url": "http://example.com",
                 "query": "key=value",
-                "fragment": "section"
-            }
+                "fragment": "section",
+            },
         )
         assert "url" not in result.audit_summary
         assert "query" not in result.audit_summary
@@ -357,13 +343,11 @@ class TestAuditSummaryForbiddenFields:
         """html/body 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "html": "<html>content</html>",
-                "body": "page content"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "html": "<html>content</html>", "body": "page content"},
         )
         assert "html" not in result.audit_summary
         assert "body" not in result.audit_summary
@@ -372,13 +356,11 @@ class TestAuditSummaryForbiddenFields:
         """text/page_text 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "text": "page text",
-                "page_text": "full content"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "text": "page text", "page_text": "full content"},
         )
         assert "text" not in result.audit_summary
         assert "page_text" not in result.audit_summary
@@ -387,12 +369,11 @@ class TestAuditSummaryForbiddenFields:
         """selector 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "selector": ".button.submit"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "selector": ".button.submit"},
         )
         assert "selector" not in result.audit_summary
 
@@ -400,14 +381,11 @@ class TestAuditSummaryForbiddenFields:
         """cookie/session/token 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "cookie": "session=abc",
-                "session": "xyz789",
-                "token": "auth_token"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "cookie": "session=abc", "session": "xyz789", "token": "auth_token"},
         )
         assert "cookie" not in result.audit_summary
         assert "session" not in result.audit_summary
@@ -417,13 +395,11 @@ class TestAuditSummaryForbiddenFields:
         """password/authorization 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
-            audit_summary={
-                "audit_event_count": 5,
-                "password": "secret123",
-                "authorization": "Bearer xyz"
-            }
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5, "password": "secret123", "authorization": "Bearer xyz"},
         )
         assert "password" not in result.audit_summary
         assert "authorization" not in result.audit_summary
@@ -432,13 +408,15 @@ class TestAuditSummaryForbiddenFields:
         """path/local_file_path 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
             audit_summary={
                 "audit_event_count": 5,
                 "path": "/home/user/file.txt",
-                "local_file_path": "C:\\Users\\test\\audit.jsonl"
-            }
+                "local_file_path": "C:\\Users\\test\\audit.jsonl",
+            },
         )
         assert "path" not in result.audit_summary
         assert "local_file_path" not in result.audit_summary
@@ -447,14 +425,16 @@ class TestAuditSummaryForbiddenFields:
         """headers/request_body/response_body 필드 차단"""
         agent_id, task_id = self._setup_running_task()
         result = reg.apply_result(
-            agent_id=agent_id, task_id=task_id,
-            success=True, summary="ok",
+            agent_id=agent_id,
+            task_id=task_id,
+            success=True,
+            summary="ok",
             audit_summary={
                 "audit_event_count": 5,
                 "headers": {"Authorization": "Bearer token"},
-                "request_body": "{\"key\": \"value\"}",
-                "response_body": "response content"
-            }
+                "request_body": '{"key": "value"}',
+                "response_body": "response content",
+            },
         )
         assert "headers" not in result.audit_summary
         assert "request_body" not in result.audit_summary
@@ -469,19 +449,22 @@ class TestAuditSummaryTaskDetail:
 
     def test_task_detail_includes_audit_summary(self):
         """task detail to_safe()에 audit_summary 포함"""
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
 
         result = reg.apply_result(
-            agent_id=agent.agent.agent_id, task_id=task.task_id,
-            success=True, summary="ok", audit_summary={"audit_event_count": 5}
+            agent_id=agent.agent.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5},
         )
 
         safe_dict = result.to_safe()
@@ -490,19 +473,18 @@ class TestAuditSummaryTaskDetail:
 
     def test_task_detail_audit_summary_optional(self):
         """audit_summary 없으면 null 반환"""
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
 
         result = reg.apply_result(
-            agent_id=agent.agent.agent_id, task_id=task.task_id,
-            success=True, summary="ok", audit_summary=None
+            agent_id=agent.agent.agent_id, task_id=task.task_id, success=True, summary="ok", audit_summary=None
         )
 
         safe_dict = result.to_safe()
@@ -510,19 +492,22 @@ class TestAuditSummaryTaskDetail:
 
     def test_task_list_does_not_include_audit_summary(self):
         """task list to_list_safe()에 audit_summary 미포함"""
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
 
         result = reg.apply_result(
-            agent_id=agent.agent.agent_id, task_id=task.task_id,
-            success=True, summary="ok", audit_summary={"audit_event_count": 5}
+            agent_id=agent.agent.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
+            audit_summary={"audit_event_count": 5},
         )
 
         list_dict = result.to_list_safe()
@@ -537,12 +522,12 @@ class TestAuditSummaryObserveSummaryCoexistence:
 
     def test_both_audit_and_observe_stored(self):
         """audit_summary와 observe_summary 모두 저장 가능"""
-        agent = reg.register_agent(
-            host="test", os_name="Windows", version="1.0", requested_by="test"
-        )
+        agent = reg.register_agent(host="test", os_name="Windows", version="1.0", requested_by="test")
         task = reg.enqueue_task(
-            agent_id=agent.agent.agent_id, action="open_url",
-            params={"url": "http://127.0.0.1:8000"}, requested_by="test"
+            agent_id=agent.agent.agent_id,
+            action="open_url",
+            params={"url": "http://127.0.0.1:8000"},
+            requested_by="test",
         )
         reg.mark_delivered(agent.agent.agent_id, task.task_id)
         reg.mark_running(agent.agent.agent_id, task.task_id)
@@ -558,10 +543,12 @@ class TestAuditSummaryObserveSummaryCoexistence:
         }
 
         result = reg.apply_result(
-            agent_id=agent.agent.agent_id, task_id=task.task_id,
-            success=True, summary="ok",
+            agent_id=agent.agent.agent_id,
+            task_id=task.task_id,
+            success=True,
+            summary="ok",
             observe_summary=observe_data,
-            audit_summary=audit_data
+            audit_summary=audit_data,
         )
 
         assert result.observe_summary is not None
@@ -639,9 +626,20 @@ class TestLocalAgentAuditSummaryBuilder:
         result = actions._build_audit_summary("about_blank", "ok")
 
         forbidden = [
-            "raw_events", "events", "current_url", "url", "query",
-            "html", "text", "selector", "cookie", "session",
-            "token", "password", "authorization", "path"
+            "raw_events",
+            "events",
+            "current_url",
+            "url",
+            "query",
+            "html",
+            "text",
+            "selector",
+            "cookie",
+            "session",
+            "token",
+            "password",
+            "authorization",
+            "path",
         ]
 
         for field in forbidden:
@@ -659,7 +657,6 @@ class TestLocalAgentAuditSummaryBuilder:
     def test_audit_summary_timestamp_format(self):
         """Timestamp ISO 형식 확인"""
         from local_agent import actions
-        import re
 
         result = actions._build_audit_summary("about_blank", "ok")
         timestamp = result["audit_summary_generated_at"]
@@ -674,8 +671,9 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
 
     def test_action_result_includes_audit_summary(self):
         """ActionResult data에 audit_summary 포함"""
+        from unittest.mock import patch
+
         from local_agent import actions
-        from unittest.mock import Mock, patch
 
         with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {
@@ -700,8 +698,9 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
 
     def test_audit_summary_and_observe_summary_separate(self):
         """audit_summary와 observe_summary 분리 확인"""
-        from local_agent import actions
         from unittest.mock import patch
+
+        from local_agent import actions
 
         with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {

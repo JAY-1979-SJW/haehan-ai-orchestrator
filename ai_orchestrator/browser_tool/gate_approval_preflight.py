@@ -4,16 +4,15 @@ Pre-flight approval status check for browser workflow gate decision.
 Evaluates approval record state before dispatch, without executing.
 Test-only implementation (no DB write, read-only approval store).
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Any
 
 from .approval_record_store import (
-    get_latest_approval_status,
     build_audit_approval_context,
+    get_latest_approval_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +65,7 @@ def build_gate_approval_context(
 
     if approval_store_path is None:
         from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+
         approval_store_path = APPROVAL_RECORD_STORE_PATH
 
     try:
@@ -256,6 +256,7 @@ def evaluate_gate_approval_preflight(
     if result["approval_required"] and result["approval_id"]:
         if approval_store_path is None:
             from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+
             approval_store_path = APPROVAL_RECORD_STORE_PATH
 
         try:
@@ -317,7 +318,9 @@ def evaluate_gate_approval_preflight(
                     result["preflight_decision"] = "ALLOW_DRY_RUN_DISPATCH"
                     result["safe_to_dispatch"] = True
                     result["audit_event_type"] = "APPROVAL_CHECKED"
-                    result["message_ko"] = f"approval {result['approval_id']}: 승인됨, {operation_type} dry-run dispatch 허용"
+                    result["message_ko"] = (
+                        f"approval {result['approval_id']}: 승인됨, {operation_type} dry-run dispatch 허용"
+                    )
                     result["should_write_audit"] = True
                     return result
 
@@ -334,7 +337,7 @@ def evaluate_gate_approval_preflight(
             result["preflight_decision"] = "BLOCK"
             result["block_reason"] = "APPROVAL_NOT_FOUND"
             result["audit_event_type"] = "APPROVAL_CHECKED"
-            result["message_ko"] = f"approval 평가 오류: {str(e)}"
+            result["message_ko"] = f"approval 평가 오류: {e!s}"
             result["should_write_audit"] = True
             return result
 

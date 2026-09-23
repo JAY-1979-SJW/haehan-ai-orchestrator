@@ -1,15 +1,15 @@
 """
 Approval/Audit Store 테스트: 저장·금지 필드 차단·상태 기록
 """
+
 import pytest
 
 from ai_orchestrator.server.action_approval_audit_store import (
     STATUS_PENDING,
-    STATUS_CONSUMED,
+    clear_store,
+    get_approval_request,
     save_approval_request,
     update_approval_status,
-    get_approval_request,
-    clear_store,
 )
 
 

@@ -3,15 +3,21 @@
 1차 구현 액션 통합 검증.
 Playwright 실제 호출은 mock — 외부 사이트 접속 없음.
 """
+
 import os
+
 import pytest
-from unittest.mock import MagicMock, patch
-from ai_orchestrator.local_agent.actions import (
-    browser_download_file, browser_attach_file, future_action_stubs,
-)
+
 from ai_orchestrator.local_agent.action_registry import get_handler
+from ai_orchestrator.local_agent.actions import (
+    browser_attach_file,
+    browser_download_file,
+    future_action_stubs,
+)
 from ai_orchestrator.local_agent.user_approval_gate import (
-    create_approval_request, approve_request, clear_all,
+    approve_request,
+    clear_all,
+    create_approval_request,
 )
 
 
@@ -23,6 +29,7 @@ def _clear():
 
 
 # ── browser.download_file ────────────────────────────────────────────────
+
 
 def test_download_file_handler_registered():
     h = get_handler("browser.download_file")
@@ -78,6 +85,7 @@ def test_file_signature_missing():
 
 # ── browser.attach_file ──────────────────────────────────────────────────
 
+
 def test_attach_file_handler_registered():
     h = get_handler("browser.attach_file")
     assert h is not None
@@ -123,6 +131,7 @@ def test_attach_file_token_consumed_once(tmp_path):
 
     # 토큰 검증 함수 직접 호출 — 1회 사용 후 EXHAUSTED
     from ai_orchestrator.local_agent.user_approval_gate import verify_and_consume_token
+
     v1 = verify_and_consume_token(token, "browser.attach_file", params)
     assert v1["ok"] is True
     v2 = verify_and_consume_token(token, "browser.attach_file", params)
@@ -130,6 +139,7 @@ def test_attach_file_token_consumed_once(tmp_path):
 
 
 # ── future stubs ─────────────────────────────────────────────────────────
+
 
 def test_future_actions_have_no_handler():
     """미구현 액션은 핸들러 미등록."""
@@ -143,9 +153,15 @@ def test_stub_response_shape():
     assert r["verdict"] == "ACTION_NOT_IMPLEMENTED"
     assert r["implemented"] is False
     # safe field 모두 False
-    for f in ("cookie_exported", "session_exported", "password_collected",
-              "otp_collected", "certificate_password_collected",
-              "storage_state_exported", "server_browser_used"):
+    for f in (
+        "cookie_exported",
+        "session_exported",
+        "password_collected",
+        "otp_collected",
+        "certificate_password_collected",
+        "storage_state_exported",
+        "server_browser_used",
+    ):
         assert r[f] is False
 
 

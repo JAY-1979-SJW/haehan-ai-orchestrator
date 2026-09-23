@@ -3,18 +3,20 @@ Workflow Template Engine
 
 업무 시나리오를 사이트별 하드코딩 없이 template으로 실행한다.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 from ai_orchestrator.local_agent.action_risk_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
 )
 
 # ── Template Step 구조 ────────────────────────────────────────────────────────
 
-def _step(step_id: str, action: str, risk_level: str,
-          optional: bool = False, description: str = "") -> dict[str, Any]:
+
+def _step(step_id: str, action: str, risk_level: str, optional: bool = False, description: str = "") -> dict[str, Any]:
     return {
         "step_id": step_id,
         "action": action,
@@ -24,9 +26,13 @@ def _step(step_id: str, action: str, risk_level: str,
     }
 
 
-def _template(workflow_id: str, display_name: str,
-              steps: list[dict], applicable_categories: list[str] | None = None,
-              description: str = "") -> dict[str, Any]:
+def _template(
+    workflow_id: str,
+    display_name: str,
+    steps: list[dict],
+    applicable_categories: list[str] | None = None,
+    description: str = "",
+) -> dict[str, Any]:
     return {
         "workflow_id": workflow_id,
         "display_name": display_name,
@@ -39,7 +45,6 @@ def _template(workflow_id: str, display_name: str,
 # ── 등록된 Workflow Template ───────────────────────────────────────────────────
 
 _TEMPLATES: dict[str, dict[str, Any]] = {
-
     "readonly_site_explore": _template(
         workflow_id="readonly_site_explore",
         display_name="사이트 read-only 탐색",
@@ -51,7 +56,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="사이트 공개 페이지를 read-only로 탐색한다.",
     ),
-
     "download_documents": _template(
         workflow_id="download_documents",
         display_name="문서 다운로드",
@@ -63,7 +67,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="공개 문서를 다운로드한다.",
     ),
-
     "content_research_summary": _template(
         workflow_id="content_research_summary",
         display_name="콘텐츠 리서치 및 요약",
@@ -75,7 +78,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="여러 소스를 탐색하고 요약 및 초안을 생성한다.",
     ),
-
     "cafe_to_blog_draft": _template(
         workflow_id="cafe_to_blog_draft",
         display_name="카페→블로그 초안",
@@ -88,7 +90,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="카페 콘텐츠 탐색 후 블로그 초안 생성.",
     ),
-
     "blog_publish_with_permission": _template(
         workflow_id="blog_publish_with_permission",
         display_name="블로그 발행 (권한 필요)",
@@ -99,7 +100,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="사용자 위임 권한으로 블로그 발행.",
     ),
-
     "comment_with_permission": _template(
         workflow_id="comment_with_permission",
         display_name="댓글 작성 (권한 필요)",
@@ -109,7 +109,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="사용자 위임 권한으로 댓글 작성.",
     ),
-
     "generic_form_fill_preview": _template(
         workflow_id="generic_form_fill_preview",
         display_name="폼 작성 미리보기",
@@ -121,7 +120,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="비민감 폼 작성 및 제출.",
     ),
-
     "government_readonly_status_check": _template(
         workflow_id="government_readonly_status_check",
         display_name="정부 사이트 상태 조회",
@@ -133,7 +131,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="정부 사이트 공개 정보 read-only 조회.",
     ),
-
     "financial_readonly_statement_download": _template(
         workflow_id="financial_readonly_statement_download",
         display_name="금융 명세서 다운로드",
@@ -145,7 +142,6 @@ _TEMPLATES: dict[str, dict[str, Any]] = {
         ],
         description="금융 사이트 명세서 read-only 다운로드.",
     ),
-
     "ecommerce_order_status_readonly": _template(
         workflow_id="ecommerce_order_status_readonly",
         display_name="주문 상태 조회",

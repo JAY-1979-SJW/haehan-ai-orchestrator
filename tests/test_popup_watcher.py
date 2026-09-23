@@ -1,15 +1,11 @@
 """popup_watcher 단위 테스트"""
+
 from __future__ import annotations
 
-import json
-import time
 from unittest import mock
-
-import pytest
 
 from scripts.popup_watcher import (
     POPUP_MARKERS,
-    PopupEvent,
     auto_handle,
     build_watcher_js,
     clear_events,

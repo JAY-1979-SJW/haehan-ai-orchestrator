@@ -10,19 +10,18 @@ Tests the approval state JSONL persistence module:
 """
 
 import json
-from pathlib import Path
-from datetime import datetime
+
 import pytest
 
 from ai_orchestrator.browser_tool.submit_approval_state import (
-    create_approval_requested_event,
-    create_approval_decision_event,
-    append_approval_state_event,
-    read_approval_state_events,
-    latest_approval_state,
-    get_approval_status,
-    ValidationError,
     ApprovalStateError,
+    ValidationError,
+    append_approval_state_event,
+    create_approval_decision_event,
+    create_approval_requested_event,
+    get_approval_status,
+    latest_approval_state,
+    read_approval_state_events,
 )
 
 

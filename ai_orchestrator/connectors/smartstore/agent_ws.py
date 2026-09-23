@@ -5,16 +5,16 @@
   서버 chat.py  → call_local_tool(license_key, tool, inputs)
                → WS로 명령 전송 → 에이전트 실행 → 결과 반환
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
-from .license import verify, touch
+from .license import touch, verify
 
 router = APIRouter()
 
@@ -30,6 +30,7 @@ def get_connected_agents() -> list[str]:
 
 
 # ── WebSocket 엔드포인트 ──────────────────────────────────────────────────────
+
 
 @router.websocket("/agent/ws")
 async def agent_ws(ws: WebSocket, license: str = Query(...)):
@@ -51,7 +52,7 @@ async def agent_ws(ws: WebSocket, license: str = Query(...)):
             # 에이전트가 도구 실행 결과를 응답
             if msg.get("type") == "tool_result":
                 req_id = msg.get("request_id")
-                fut    = _pending.pop(req_id, None)
+                fut = _pending.pop(req_id, None)
                 if fut and not fut.done():
                     fut.set_result(msg.get("result", {}))
     except WebSocketDisconnect:
@@ -67,6 +68,7 @@ async def agent_ws(ws: WebSocket, license: str = Query(...)):
 
 # ── 서버→에이전트 도구 호출 ───────────────────────────────────────────────────
 
+
 async def call_local_tool(
     license_key: str,
     tool: str,
@@ -76,26 +78,31 @@ async def call_local_tool(
     """서버에서 로컬 에이전트의 CDP 도구를 호출하고 결과를 기다린다."""
     ws = _agents.get(license_key)
     if not ws:
-        return {"ok": False, "error": "local_agent_not_connected",
-                "hint": "로컬 에이전트가 연결되지 않았습니다. Haehan AI 앱을 실행하세요."}
+        return {
+            "ok": False,
+            "error": "local_agent_not_connected",
+            "hint": "로컬 에이전트가 연결되지 않았습니다. Haehan AI 앱을 실행하세요.",
+        }
 
     req_id = str(uuid.uuid4())
-    loop   = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
     fut: asyncio.Future = loop.create_future()
     _pending[req_id] = fut
 
-    await ws.send_json({
-        "type":       "tool_call",
-        "request_id": req_id,
-        "tool":       tool,
-        "inputs":     inputs,
-    })
+    await ws.send_json(
+        {
+            "type": "tool_call",
+            "request_id": req_id,
+            "tool": tool,
+            "inputs": inputs,
+        }
+    )
 
     try:
         result = await asyncio.wait_for(fut, timeout=timeout)
         touch(license_key)
         return result
-    except asyncio.TimeoutError:
+    except TimeoutError:
         _pending.pop(req_id, None)
         return {"ok": False, "error": "agent_timeout", "hint": "로컬 에이전트 응답 시간 초과"}
     except Exception as e:

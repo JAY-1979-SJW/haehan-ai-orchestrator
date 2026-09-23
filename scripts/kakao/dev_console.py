@@ -1,10 +1,10 @@
 """카카오 개발자 센터 자동화"""
+
 from __future__ import annotations
 
 import re
-from typing import Any
 
-from .base import task_context, page_goto, page_wait_visible, page_wait_click, page_wait_type, KAKAO_DEV_URL
+from .base import KAKAO_DEV_URL, page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
 
 _BASE = "https://developers.kakao.com"
 _APP_ID_RE = re.compile(r"/console/app/(\d+)")
@@ -98,11 +98,15 @@ def _task_register(args: list[str]) -> None:
 
     with task_context("dev-register", args) as page:
         page_goto(page, KAKAO_DEV_URL)
-        page_wait_visible(page, '[class*="btn_create"], button:has-text("애플리케이션 만들기"), '
-                                'a:has-text("애플리케이션 만들기")', timeout=20000)
+        page_wait_visible(
+            page,
+            '[class*="btn_create"], button:has-text("애플리케이션 만들기"), a:has-text("애플리케이션 만들기")',
+            timeout=20000,
+        )
 
-        if not page_wait_click(page, '[class*="btn_create"], button:has-text("애플리케이션 만들기"), '
-                                     'a:has-text("애플리케이션 만들기")'):
+        if not page_wait_click(
+            page, '[class*="btn_create"], button:has-text("애플리케이션 만들기"), a:has-text("애플리케이션 만들기")'
+        ):
             print("  ⚠  앱 만들기 버튼 못 찾음")
             return
 

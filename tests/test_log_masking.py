@@ -1,13 +1,12 @@
-import sys
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from logging_utils import mask_sensitive, safe_log_dict, truncate_large_text, safe_json
-
+from logging_utils import mask_sensitive, safe_json, safe_log_dict, truncate_large_text
 
 # ── mask_sensitive ─────────────────────────────────────────────
+
 
 def test_api_key_masked():
     data = {"api_key": "supersecretkey12345"}
@@ -65,6 +64,7 @@ def test_password_masked():
 
 # ── truncate_large_text ────────────────────────────────────────
 
+
 def test_short_text_not_truncated():
     text = "hello world"
     assert truncate_large_text(text, max_len=500) == text
@@ -85,6 +85,7 @@ def test_truncate_shows_cut_count():
 
 # ── safe_log_dict ──────────────────────────────────────────────
 
+
 def test_safe_log_dict_masks_token():
     result = safe_log_dict(task_id="t-001", token="mysecrettoken", action="read")
     assert "***" in result["token"]
@@ -98,7 +99,9 @@ def test_safe_log_dict_returns_dict():
 
 # ── safe_json ─────────────────────────────────────────────────
 
+
 def test_safe_json_handles_non_serializable():
     from datetime import datetime
+
     result = safe_json({"dt": datetime(2026, 1, 1)})
     assert "2026" in result

@@ -16,15 +16,16 @@
 라우터에 호스트별 site_key 매핑이 없어도 동작 (discovery 기반).
 site 인자는 자격증명/프로필 키로만 사용.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
+from scripts.form.bot_radar import scan as bot_scan
+from scripts.form.discovery import discover_form
+from scripts.form.events import wait_for_form, wait_submit_done, wait_validation
+from scripts.form.human import human_click, human_type
 from scripts.logger import get_logger
-from scripts.form.discovery import discover_form, FormDiscovery
-from scripts.form.human import human_type, human_click
-from scripts.form.events import wait_submit_done, wait_for_form, wait_validation
-from scripts.form.bot_radar import scan as bot_scan, BotDetected
 
 log = get_logger(__name__)
 
@@ -52,8 +53,13 @@ _FAIL_TEXT_HINTS = [
 ]
 
 _FAIL_SELECTORS = [
-    ".error", ".err", ".warning", ".alert-danger",
-    "[role='alert']", "[class*='error-msg']", "[class*='login-error']",
+    ".error",
+    ".err",
+    ".warning",
+    ".alert-danger",
+    "[role='alert']",
+    "[class*='error-msg']",
+    "[class*='login-error']",
 ]
 
 
@@ -62,6 +68,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
     # 1) credentials.json
     try:
         from scripts.credentials import get_cred
+
         c = get_cred(site)
         if c.get("id") and c.get("pw"):
             return c["id"], c["pw"]
@@ -71,6 +78,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
     # 2) profile (site override → base)
     try:
         from scripts.form.profile import get_value
+
         nid = get_value("default_id", site=site)
         pw = get_value("default_pw", site=site)
         if nid and pw:
@@ -81,9 +89,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
     return "", ""
 
 
-def universal_login(page, site: str, *,
-                    wait_form_ms: int = 8000,
-                    wait_submit_ms: int = 12000) -> dict:
+def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms: int = 12000) -> dict:
     """범용 로그인. 사이트별 selector 없이 discovery로 폼 찾고 휴먼 타이핑.
 
     Args:
@@ -104,22 +110,23 @@ def universal_login(page, site: str, *,
         }
     """
     result: dict[str, Any] = {
-        "ok": False, "user": "", "reason": "",
-        "intent": "unknown", "fields_used": [],
-        "bot_level": "clean", "needs_manual": False,
+        "ok": False,
+        "user": "",
+        "reason": "",
+        "intent": "unknown",
+        "fields_used": [],
+        "bot_level": "clean",
+        "needs_manual": False,
     }
 
     # 1) 자격증명 조회
     nid, pw = _resolve_credentials(site)
     if not nid or not pw:
-        result["reason"] = (
-            f"자격증명 없음. 입력: python scripts/credentials.py set {site}"
-        )
+        result["reason"] = f"자격증명 없음. 입력: python scripts/credentials.py set {site}"
         return result
 
     # 2) 폼 대기 (SPA 대응)
-    wait_for_form(page, role_hints=["id", "user", "login", "password", "email"],
-                  timeout_ms=wait_form_ms)
+    wait_for_form(page, role_hints=["id", "user", "login", "password", "email"], timeout_ms=wait_form_ms)
 
     # 3) 봇 사전 스캔
     pre = bot_scan(page)
@@ -143,9 +150,13 @@ def universal_login(page, site: str, *,
         )
         return result
 
-    log.info("[orchestrator] 폼 탐지 — id sel=%s score=%.2f / pw sel=%s score=%.2f",
-             id_field.selector, id_field.score,
-             pw_field.selector, pw_field.score)
+    log.info(
+        "[orchestrator] 폼 탐지 — id sel=%s score=%.2f / pw sel=%s score=%.2f",
+        id_field.selector,
+        id_field.score,
+        pw_field.selector,
+        pw_field.score,
+    )
 
     before_url = ""
     try:
@@ -156,7 +167,7 @@ def universal_login(page, site: str, *,
     # 5) ID 입력 (휴먼 타이핑)
     r_id = human_type(page, id_field.selector, nid, label="ID")
     if not r_id.get("ok"):
-        result["reason"] = f"ID 입력 실패: {r_id.get('reason','')}"
+        result["reason"] = f"ID 입력 실패: {r_id.get('reason', '')}"
         return result
     result["fields_used"].append("id")
 
@@ -168,10 +179,9 @@ def universal_login(page, site: str, *,
             log.warning("[orchestrator] ID 인라인 검증 경고: %s", vmsg["message"])
 
     # 6) PW 입력
-    r_pw = human_type(page, pw_field.selector, pw, label="PW",
-                      simulate_typo=False)
+    r_pw = human_type(page, pw_field.selector, pw, label="PW", simulate_typo=False)
     if not r_pw.get("ok"):
-        result["reason"] = f"PW 입력 실패: {r_pw.get('reason','')}"
+        result["reason"] = f"PW 입력 실패: {r_pw.get('reason', '')}"
         return result
     result["fields_used"].append("password")
 

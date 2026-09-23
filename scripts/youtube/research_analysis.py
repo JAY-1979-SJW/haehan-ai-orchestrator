@@ -1,24 +1,24 @@
 """YouTube video context analysis, strategy scoring, and transcript analysis."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.youtube.research_common import (
-    _now,
-    _write_report,
-    _int,
-    _bounded,
-    _top_keywords,
-    _sentences,
-    _read_transcript,
+    LATEST_ANALYSIS,
+    ROOT,
     SENSITIVE_WORDS,
     WORD_RE,
-    ROOT,
-    LATEST_ANALYSIS,
-    TRANSCRIPT_SOURCE_POLICY,
+    _bounded,
+    _int,
+    _now,
+    _read_transcript,
+    _sentences,
+    _top_keywords,
+    _write_report,
 )
+from security_utils import safe_preview
 
 
 def analyze_video_context(
@@ -89,7 +89,9 @@ def analyze_video_context(
             ],
         },
     }
-    return payload, _write_report(payload, ROOT / "data" / "youtube_video_context_analysis_latest.json", "youtube_video_context_analysis")
+    return payload, _write_report(
+        payload, ROOT / "data" / "youtube_video_context_analysis_latest.json", "youtube_video_context_analysis"
+    )
 
 
 def build_video_strategy_scorecard(
@@ -122,17 +124,21 @@ def build_video_strategy_scorecard(
     comment_count = max(len(comment_rows), comment_count_stat)
     title_len = len(str(video.get("title", "")))
     transcript_words = len(WORD_RE.findall(transcript_text))
-    question_comments = sum(1 for row in comment_rows if "?" in str(row.get("text", "")) or "어떻게" in str(row.get("text", "")))
+    question_comments = sum(
+        1 for row in comment_rows if "?" in str(row.get("text", "")) or "어떻게" in str(row.get("text", ""))
+    )
 
-    demand_score = _bounded(min(60, views ** 0.5 / 20) + min(25, comment_count * 2) + min(15, likes ** 0.5 / 10))
+    demand_score = _bounded(min(60, views**0.5 / 20) + min(25, comment_count * 2) + min(15, likes**0.5 / 10))
     comment_pain_score = _bounded((question_comments / max(1, len(comment_rows))) * 70 + min(30, comment_count * 1.5))
     topic_fit_score = 50
     if topic_words:
         overlap = len(topic_words & keyword_set)
         topic_fit_score = _bounded(35 + overlap * 20)
-    script_quality_score = _bounded(35 + min(35, transcript_words / 60) + (20 if video.get("caption_available_hint") == "true" else 0))
+    script_quality_score = _bounded(
+        35 + min(35, transcript_words / 60) + (20 if video.get("caption_available_hint") == "true" else 0)
+    )
     hook_score = _bounded(70 if 20 <= title_len <= 80 else 45)
-    competition_score = _bounded(80 - min(55, views ** 0.5 / 15))
+    competition_score = _bounded(80 - min(55, views**0.5 / 15))
     production_effort_score = _bounded(80 - min(50, transcript_words / 120))
     monetization_score = _bounded((topic_fit_score * 0.35) + (demand_score * 0.35) + (comment_pain_score * 0.3))
     opportunity_score = _bounded(
@@ -206,10 +212,14 @@ def build_video_strategy_scorecard(
             "Publishing, uploading, commenting, replying, liking, subscribing, hiding, deleting, or pinning requires final approval.",
         ],
     }
-    return payload, _write_report(payload, ROOT / "data" / "youtube_video_strategy_scorecard_latest.json", "youtube_video_strategy_scorecard")
+    return payload, _write_report(
+        payload, ROOT / "data" / "youtube_video_strategy_scorecard_latest.json", "youtube_video_strategy_scorecard"
+    )
 
 
-def analyze_transcript(transcript_file: str | Path, *, video_id: str = "", title: str = "") -> tuple[dict[str, Any], Path]:
+def analyze_transcript(
+    transcript_file: str | Path, *, video_id: str = "", title: str = ""
+) -> tuple[dict[str, Any], Path]:
     """Analyze a user-provided transcript/caption file without external AI calls."""
     text = _read_transcript(transcript_file)
     sentences = _sentences(text)

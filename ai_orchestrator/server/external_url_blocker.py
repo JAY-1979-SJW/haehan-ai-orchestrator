@@ -1,41 +1,61 @@
 """External URL Blocker — 서버 측 외부 URL 실행 강제 차단."""
+
 from __future__ import annotations
 
 from typing import Any
 
 from ai_orchestrator.server.execution_location_guard import (
-    LOCAL_AGENT_REQUIRED,
+    BLOCKED_SERVER_BROWSER_LAUNCH,
     BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
     BLOCKED_SERVER_PLAYWRIGHT_EXECUTION,
-    BLOCKED_SERVER_BROWSER_LAUNCH,
-    BLOCKED_EXTERNAL_URL_FROM_SERVER,
+    LOCAL_AGENT_REQUIRED,
 )
 from ai_orchestrator.server.server_egress_policy import (
-    is_external_url, sanitize_blocked_url_for_log,
+    is_external_url,
+    sanitize_blocked_url_for_log,
 )
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 _DEFAULT_MESSAGE_KO = "외부 웹사이트 작업은 사용자 PC 로컬 에이전트에서 실행해야 합니다."
 
 # 차단 대상 Playwright/Selenium 모듈 이름
-_BLOCKED_PLAYWRIGHT_MODULES = frozenset((
-    "playwright", "playwright.sync_api", "playwright.async_api",
-    "playwright.sync", "playwright.async", "selenium",
-    "selenium.webdriver", "pyppeteer",
-))
+_BLOCKED_PLAYWRIGHT_MODULES = frozenset(
+    (
+        "playwright",
+        "playwright.sync_api",
+        "playwright.async_api",
+        "playwright.sync",
+        "playwright.async",
+        "selenium",
+        "selenium.webdriver",
+        "pyppeteer",
+    )
+)
 
 # 차단 대상 호출 이름
-_BLOCKED_BROWSER_CALLS = frozenset((
-    "sync_playwright", "async_playwright",
-    "chromium.launch", "firefox.launch", "webkit.launch",
-    "Chrome", "Firefox", "WebKit",
-    "webdriver.Chrome", "webdriver.Firefox",
-))
+_BLOCKED_BROWSER_CALLS = frozenset(
+    (
+        "sync_playwright",
+        "async_playwright",
+        "chromium.launch",
+        "firefox.launch",
+        "webkit.launch",
+        "Chrome",
+        "Firefox",
+        "WebKit",
+        "webdriver.Chrome",
+        "webdriver.Firefox",
+    )
+)
 
 
 def block_external_fetch_from_server(url: str, purpose: str = "") -> dict[str, Any]:

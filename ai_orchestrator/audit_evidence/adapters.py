@@ -9,9 +9,10 @@ read-only 변환만 수행한다. 원본 데이터 수정 금지. DB write 금�
 - DB write 금지
 - secret/token/password/session/cookie 노출 금지
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ai_orchestrator.audit_evidence.models import (
     ArtifactEvidenceRef,
@@ -34,10 +35,22 @@ def audit_event_dict_to_standard(raw: dict[str, Any]) -> StandardAuditEvent:
         summary=str(safe.get("note", safe.get("action_type", ""))),
         safety_verdict=safe.get("allowed"),
         artifact_refs=(),
-        metadata={k: v for k, v in safe.items() if k not in {
-            "event_type", "task_id", "actor", "role", "decision",
-            "status", "note", "action_type", "allowed",
-        }},
+        metadata={
+            k: v
+            for k, v in safe.items()
+            if k
+            not in {
+                "event_type",
+                "task_id",
+                "actor",
+                "role",
+                "decision",
+                "status",
+                "note",
+                "action_type",
+                "allowed",
+            }
+        },
         redaction_applied=True,
     )
 
@@ -69,9 +82,7 @@ def policy_decision_to_safety_verdict(
     """policy decision dict → SafetyVerdict 변환."""
     safe = strip_sensitive_fields(decision_dict)
     blocked = bool(safe.get("is_blocked", False))
-    decision_str = "block" if blocked else (
-        "hold" if safe.get("is_external_app_hold") else "allow"
-    )
+    decision_str = "block" if blocked else ("hold" if safe.get("is_external_app_hold") else "allow")
     return SafetyVerdict.create(
         task_id=task_id,
         policy_id=policy_id,

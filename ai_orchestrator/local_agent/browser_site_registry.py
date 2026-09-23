@@ -2,9 +2,10 @@
 
 LOCAL_BROWSER_POLICY_SAFE_EXPANSION_A1 STEP 2.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
@@ -37,7 +38,13 @@ class SitePolicy:
     capture_policy: str = CAPTURE_NONE
     allowed_actions: tuple[str, ...] = ()
     blocked_actions: tuple[str, ...] = (
-        "submit", "save", "sign", "delete", "payment", "bid", "transfer",
+        "submit",
+        "save",
+        "sign",
+        "delete",
+        "payment",
+        "bid",
+        "transfer",
     )
     risk_level: str = RISK_MEDIUM
     requires_approval: bool = True

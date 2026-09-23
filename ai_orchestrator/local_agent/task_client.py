@@ -11,24 +11,23 @@ USER_DIRECT_REQUIRED / BLOCKED는 실행하지 않고 상태만 보고한다.
 - cookie/session 전송
 - 민감 필드 포함 결과 전송
 """
+
 from __future__ import annotations
 
 import time
 from typing import Any
 
+from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
+from ai_orchestrator.local_agent.security_guard import (
+    validate_task_before_run,
+)
 from ai_orchestrator.local_agent.task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
-    TASK_TYPE_BROWSER,
     STATUS_BLOCKED,
     STATUS_FAILED,
     build_result,
     validate_task,
 )
-from ai_orchestrator.local_agent.security_guard import (
-    validate_task_before_run,
-    block_forbidden_action,
-)
-from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
 from ai_orchestrator.server.local_agent_task_api import (
     get_pending_local_agent_task,
     mark_task_assigned,
@@ -94,6 +93,7 @@ def poll_and_run_once(runner_fn: Any) -> dict[str, Any] | None:
 
     if guard.get("user_direct_required"):
         from ai_orchestrator.local_agent.task_protocol import STATUS_USER_ACTION_REQUIRED
+
         result = build_result(
             task_id=task_id,
             ok=False,

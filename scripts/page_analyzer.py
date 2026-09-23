@@ -6,9 +6,9 @@
   - 메뉴 구조 자동 매핑
   - 페이지 계층 구조 분석
 """
+
 from __future__ import annotations
 
-import json
 import time
 from typing import Any
 
@@ -162,9 +162,11 @@ def detect_menu_structure(page) -> dict[str, Any]:
         })();
         """)
 
-        _log.info("[page-analyzer] 메뉴 감지: %d개 링크, 유형: %s",
-                 result["structure"]["links_count"],
-                 result["structure"]["type"])
+        _log.info(
+            "[page-analyzer] 메뉴 감지: %d개 링크, 유형: %s",
+            result["structure"]["links_count"],
+            result["structure"]["type"],
+        )
 
         return result
 
@@ -238,9 +240,7 @@ def extract_table_data(page) -> dict[str, Any]:
         })();
         """)
 
-        _log.info("[page-analyzer] 테이블 추출: %d개 (총 %d개)",
-                 result["extracted_count"],
-                 result["total_tables"])
+        _log.info("[page-analyzer] 테이블 추출: %d개 (총 %d개)", result["extracted_count"], result["total_tables"])
 
         return result
 
@@ -303,9 +303,7 @@ def analyze_page_completeness(page) -> dict[str, Any]:
 
         is_complete = result["score"] >= 70
 
-        _log.info("[page-analyzer] 완성도: %d%% %s",
-                 result["score"],
-                 "(완료)" if is_complete else "(진행 중)")
+        _log.info("[page-analyzer] 완성도: %d%% %s", result["score"], "(완료)" if is_complete else "(진행 중)")
 
         return {
             "is_complete": is_complete,
@@ -359,10 +357,12 @@ def full_page_analysis(page, wait_for_load: bool = True) -> dict[str, Any]:
         recommendations = results["completeness"].get("recommendations", [])
         results["recommendations"] = recommendations
 
-        _log.info("[page-analyzer] 분석 완료: 점수=%d%%, 메뉴=%d개, 테이블=%d개",
-                 results["completeness"]["completeness_score"],
-                 results["menu"]["structure"]["links_count"],
-                 results["tables"]["total_tables"])
+        _log.info(
+            "[page-analyzer] 분석 완료: 점수=%d%%, 메뉴=%d개, 테이블=%d개",
+            results["completeness"]["completeness_score"],
+            results["menu"]["structure"]["links_count"],
+            results["tables"]["total_tables"],
+        )
 
         return results
 

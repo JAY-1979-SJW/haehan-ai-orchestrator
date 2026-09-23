@@ -15,6 +15,7 @@ manifest에 포함하지 않는 정보:
 - 파일 바이너리/내용
 - cookie/session/token/password/OTP/cert password
 """
+
 from __future__ import annotations
 
 import uuid
@@ -22,8 +23,6 @@ from typing import Any
 
 from ai_orchestrator.local_agent.download_policy import (
     check_file,
-    ALLOWED_EXTENSIONS,
-    BLOCKED_EXTENSIONS,
 )
 from ai_orchestrator.local_agent.download_result_sanitizer import (
     sanitize_download_result,
@@ -76,7 +75,6 @@ def build_manifest(
             task_downloaded_files=task_downloaded_filenames,
         )
 
-        import os
         ext = policy["extension"]
         mime = _EXT_TO_MIME.get(ext, "application/octet-stream")
 

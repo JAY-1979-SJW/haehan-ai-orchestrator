@@ -7,9 +7,9 @@ business.prepare_action의 profile policy 연동 테스트 (2026-05-09).
 - forbidden field 차단
 - profile별 필드 누락 시 PREPARE_WARN
 """
+
 from __future__ import annotations
 
-import pytest
 from ai_orchestrator.local_agent.actions import business_prepare_action
 
 
@@ -278,18 +278,53 @@ def test_evidence_policy_execution_location():
 def test_all_profiles_validation():
     """6개 프로필 모두 검증."""
     profiles = [
-        ("bid_submission", {"notice_id": "1", "notice_title": "t", "organization_name": "o", "bid_amount": "1", "due_date": "d", "target_site": "s"}),
-        ("erp_save", {"erp_name": "e", "menu_path": "m", "record_type": "r", "record_title": "t", "changed_fields": ["f"]}),
-        ("erp_submit_approval", {"erp_name": "e", "menu_path": "m", "approval_title": "a", "attached_files": ["f"], "submit_button_text": "b"}),
-        ("document_submission", {"target_site": "s", "document_title": "d", "recipient_or_organization": "r", "submit_button_text": "b"}),
-        ("public_agency_upload", {"agency_name": "a", "service_name": "s", "application_title": "t", "attached_files": ["f"]}),
-        ("esign_request", {"document_title": "d", "signer_name": "s", "organization_name": "o", "signature_method": "m", "target_site": "s"}),
+        (
+            "bid_submission",
+            {
+                "notice_id": "1",
+                "notice_title": "t",
+                "organization_name": "o",
+                "bid_amount": "1",
+                "due_date": "d",
+                "target_site": "s",
+            },
+        ),
+        (
+            "erp_save",
+            {"erp_name": "e", "menu_path": "m", "record_type": "r", "record_title": "t", "changed_fields": ["f"]},
+        ),
+        (
+            "erp_submit_approval",
+            {
+                "erp_name": "e",
+                "menu_path": "m",
+                "approval_title": "a",
+                "attached_files": ["f"],
+                "submit_button_text": "b",
+            },
+        ),
+        (
+            "document_submission",
+            {"target_site": "s", "document_title": "d", "recipient_or_organization": "r", "submit_button_text": "b"},
+        ),
+        (
+            "public_agency_upload",
+            {"agency_name": "a", "service_name": "s", "application_title": "t", "attached_files": ["f"]},
+        ),
+        (
+            "esign_request",
+            {
+                "document_title": "d",
+                "signer_name": "s",
+                "organization_name": "o",
+                "signature_method": "m",
+                "target_site": "s",
+            },
+        ),
     ]
     for profile_name, required_params in profiles:
         res = business_prepare_action.execute(
-            page_url="https://example.com",
-            business_profile=profile_name,
-            **required_params
+            page_url="https://example.com", business_profile=profile_name, **required_params
         )
         assert res["ok"] is True, f"{profile_name} failed"
         assert res["verdict"] == "PREPARE_SUCCESS"

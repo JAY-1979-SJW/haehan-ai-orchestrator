@@ -1,16 +1,20 @@
 """tests/test_universal_task_planner_20260508.py"""
-import pytest
+
+from ai_orchestrator.local_agent.site_capability_matrix import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
+)
 from ai_orchestrator.local_agent.universal_task_planner import (
-    create_plan, get_auto_only_plan, plan_has_blocked, plan_needs_permission,
+    create_plan,
+    get_auto_only_plan,
+    plan_has_blocked,
+    plan_needs_permission,
 )
 from ai_orchestrator.local_agent.user_intent_parser import parse_intent
-from ai_orchestrator.local_agent.site_capability_matrix import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
-)
 
 
-def _make_plan(instruction, host="unknown.example.com", text="", buttons=None,
-               risk_signals=None, has_permissions=None):
+def _make_plan(instruction, host="unknown.example.com", text="", buttons=None, risk_signals=None, has_permissions=None):
     intent_result = parse_intent(instruction)
     observation = {
         "host": host,
@@ -23,10 +27,13 @@ def _make_plan(instruction, host="unknown.example.com", text="", buttons=None,
         "forms_detected": False,
         "download_candidates": [],
     }
-    site_classification = {"site_type": "unknown", "confidence": "low",
-                           "matched_profile_id": None, "is_known_site": False}
-    return create_plan(intent_result, observation, site_classification,
-                       has_permissions=has_permissions)
+    site_classification = {
+        "site_type": "unknown",
+        "confidence": "low",
+        "matched_profile_id": None,
+        "is_known_site": False,
+    }
+    return create_plan(intent_result, observation, site_classification, has_permissions=has_permissions)
 
 
 def test_notice_plan_auto_steps():
@@ -57,8 +64,7 @@ def test_publish_requires_permission():
 
 def test_publish_with_permission_executable():
     plan = _make_plan("이 글을 발행해줘", has_permissions={"publish_post": True})
-    perm_steps = [s for s in plan["steps"]
-                  if s["risk"] == GRADE_USER_DELEGATED and s["executable"]]
+    perm_steps = [s for s in plan["steps"] if s["risk"] == GRADE_USER_DELEGATED and s["executable"]]
     assert len(perm_steps) > 0
 
 
@@ -79,8 +85,7 @@ def test_payment_risk_signal_escalates_to_direct():
 def test_sign_risk_signal_escalates():
     plan = _make_plan("이 신청서를 제출해줘", risk_signals=["sign"])
     # risk signal 있으면 DELEGATED → DIRECT 격상
-    direct_or_delegated = [s for s in plan["steps"]
-                           if s["risk"] in (GRADE_USER_DIRECT, GRADE_USER_DELEGATED)]
+    direct_or_delegated = [s for s in plan["steps"] if s["risk"] in (GRADE_USER_DIRECT, GRADE_USER_DELEGATED)]
     assert len(direct_or_delegated) > 0
 
 

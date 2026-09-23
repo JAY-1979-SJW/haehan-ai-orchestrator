@@ -13,26 +13,25 @@ rollback 계획을 정의한다.
     - DB/schema 변경 금지
     - UI 수정 금지
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 from ai_orchestrator.gabia.gabia_dns_models import (
-    GabiaDnsRecordDraft,
-    GabiaDnsChangePreview,
     GabiaDnsApprovalSummary,
+    GabiaDnsChangePreview,
+    GabiaDnsRecordDraft,
     GabiaDnsRollbackPlan,
-    make_default_rollback_plan,
 )
 
 # ---------------------------------------------------------------------------
 # 대표 FQDN 상수
 # ---------------------------------------------------------------------------
 
-AUTOWORK_FQDN        = "autowork.haehan-ai.kr"
-AUTOWORK_SUBDOMAIN   = "autowork"
-BASE_DOMAIN          = "haehan-ai.kr"
+AUTOWORK_FQDN = "autowork.haehan-ai.kr"
+AUTOWORK_SUBDOMAIN = "autowork"
+BASE_DOMAIN = "haehan-ai.kr"
 VALUE_SOURCE_PENDING = "SERVER_PUBLIC_IP_PENDING_USER_CONFIRMATION"
 
 # ---------------------------------------------------------------------------
@@ -83,10 +82,18 @@ AUTOWORK_DNS_APPROVAL_SUMMARY = GabiaDnsApprovalSummary(
 
 # 현재 운영 중인 기존 구조 (변경 금지)
 EXISTING_NGINX_ROUTES: tuple[dict, ...] = (
-    {"location": "/orchestrator/api/v1/local-agents/ws", "backend": "haehan-ai-orchestrator-api:8400", "note": "WebSocket 전용"},
-    {"location": "/orchestrator/api/",                   "backend": "haehan-ai-orchestrator-api:8400",  "note": "FastAPI 신규 API 전체"},
-    {"location": "/orchestrator/admin-web/",             "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "Next.js admin-web"},
-    {"location": "/orchestrator/",                       "backend": "localhost:5050",                   "note": "Flask legacy. 5050 중단 금지."},
+    {
+        "location": "/orchestrator/api/v1/local-agents/ws",
+        "backend": "haehan-ai-orchestrator-api:8400",
+        "note": "WebSocket 전용",
+    },
+    {"location": "/orchestrator/api/", "backend": "haehan-ai-orchestrator-api:8400", "note": "FastAPI 신규 API 전체"},
+    {
+        "location": "/orchestrator/admin-web/",
+        "backend": "haehan-ai-orchestrator-admin-web:3000",
+        "note": "Next.js admin-web",
+    },
+    {"location": "/orchestrator/", "backend": "localhost:5050", "note": "Flask legacy. 5050 중단 금지."},
 )
 
 # 신규 nginx server block 후보 (실제 적용 금지 — 계획만)
@@ -95,8 +102,8 @@ NGINX_PLAN_CANDIDATE_1: dict[str, Any] = {
     "server_name": "autowork.haehan-ai.kr",
     "description": "autowork 전체를 admin-web + 전용 API로 연결",
     "routes": [
-        {"location": "/api/",  "backend": "haehan-ai-orchestrator-api:8400",         "note": "FastAPI 전용 API"},
-        {"location": "/",      "backend": "haehan-ai-orchestrator-admin-web:3000",   "note": "admin-web 루트"},
+        {"location": "/api/", "backend": "haehan-ai-orchestrator-api:8400", "note": "FastAPI 전용 API"},
+        {"location": "/", "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "admin-web 루트"},
     ],
     "pros": ["사용자 주소 단순", "서브도메인 독립"],
     "cons": ["nginx server block 추가 필요", "SSL 신규 발급 필요"],
@@ -111,7 +118,7 @@ NGINX_PLAN_CANDIDATE_2: dict[str, Any] = {
     "server_name": "autowork.haehan-ai.kr",
     "description": "autowork 웹만 연결, API는 기존 /orchestrator/api/ 유지",
     "routes": [
-        {"location": "/",  "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "admin-web 루트"},
+        {"location": "/", "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "admin-web 루트"},
     ],
     "api_base_url": "https://haehan-ai.kr/orchestrator/api/v1",
     "pros": ["변경 최소", "기존 API 구조 유지"],
@@ -127,7 +134,7 @@ NGINX_PLAN_CANDIDATE_3: dict[str, Any] = {
     "server_name": "autowork.haehan-ai.kr",
     "description": "autowork는 admin-web만, API는 haehan-ai.kr/orchestrator/api 유지",
     "routes": [
-        {"location": "/",  "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "admin-web 루트"},
+        {"location": "/", "backend": "haehan-ai-orchestrator-admin-web:3000", "note": "admin-web 루트"},
     ],
     "api_base_url": "https://haehan-ai.kr/orchestrator/api/v1",
     "pros": ["가장 안전", "기존 구조 변경 없음"],
@@ -173,16 +180,76 @@ SSL_PLAN: dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 SMOKE_CHECKLIST: tuple[dict[str, Any], ...] = (
-    {"id": "SM-01", "tier": "P0", "check": "DNS resolve autowork.haehan-ai.kr",           "cmd": "dig autowork.haehan-ai.kr",                                   "expected": "서버 공인 IP 응답"},
-    {"id": "SM-02", "tier": "P0", "check": "HTTP 80 reachability",                         "cmd": "curl -I http://autowork.haehan-ai.kr/",                        "expected": "200 또는 301"},
-    {"id": "SM-03", "tier": "P0", "check": "HTTPS 443 reachability",                       "cmd": "curl -I https://autowork.haehan-ai.kr/",                       "expected": "200"},
-    {"id": "SM-04", "tier": "P0", "check": "TLS certificate CN/SAN 확인",                  "cmd": "curl -vI https://autowork.haehan-ai.kr/ 2>&1 | grep subject",   "expected": "autowork.haehan-ai.kr 포함"},
-    {"id": "SM-05", "tier": "P1", "check": "GET https://autowork.haehan-ai.kr/",           "cmd": "curl -sk https://autowork.haehan-ai.kr/",                      "expected": "200"},
-    {"id": "SM-06", "tier": "P1", "check": "GET /api/v1/health (결정된 API path)",         "cmd": "curl -sk https://autowork.haehan-ai.kr/api/v1/health",         "expected": "200"},
-    {"id": "SM-07", "tier": "P1", "check": "GET /api/v1/ops/summary",                      "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/ops/summary", "expected": "200"},
-    {"id": "SM-08", "tier": "P0", "check": "기존 /orchestrator/api/ 유지",                 "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/health",      "expected": "200"},
-    {"id": "SM-09", "tier": "P0", "check": "기존 /orchestrator/ 5050 legacy 유지",        "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/",                    "expected": "200 또는 302"},
-    {"id": "SM-10", "tier": "P1", "check": "5050 Auth 401 유지 (보호 API)",               "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/tasks",        "expected": "401"},
+    {
+        "id": "SM-01",
+        "tier": "P0",
+        "check": "DNS resolve autowork.haehan-ai.kr",
+        "cmd": "dig autowork.haehan-ai.kr",
+        "expected": "서버 공인 IP 응답",
+    },
+    {
+        "id": "SM-02",
+        "tier": "P0",
+        "check": "HTTP 80 reachability",
+        "cmd": "curl -I http://autowork.haehan-ai.kr/",
+        "expected": "200 또는 301",
+    },
+    {
+        "id": "SM-03",
+        "tier": "P0",
+        "check": "HTTPS 443 reachability",
+        "cmd": "curl -I https://autowork.haehan-ai.kr/",
+        "expected": "200",
+    },
+    {
+        "id": "SM-04",
+        "tier": "P0",
+        "check": "TLS certificate CN/SAN 확인",
+        "cmd": "curl -vI https://autowork.haehan-ai.kr/ 2>&1 | grep subject",
+        "expected": "autowork.haehan-ai.kr 포함",
+    },
+    {
+        "id": "SM-05",
+        "tier": "P1",
+        "check": "GET https://autowork.haehan-ai.kr/",
+        "cmd": "curl -sk https://autowork.haehan-ai.kr/",
+        "expected": "200",
+    },
+    {
+        "id": "SM-06",
+        "tier": "P1",
+        "check": "GET /api/v1/health (결정된 API path)",
+        "cmd": "curl -sk https://autowork.haehan-ai.kr/api/v1/health",
+        "expected": "200",
+    },
+    {
+        "id": "SM-07",
+        "tier": "P1",
+        "check": "GET /api/v1/ops/summary",
+        "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/ops/summary",
+        "expected": "200",
+    },
+    {
+        "id": "SM-08",
+        "tier": "P0",
+        "check": "기존 /orchestrator/api/ 유지",
+        "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/health",
+        "expected": "200",
+    },
+    {
+        "id": "SM-09",
+        "tier": "P0",
+        "check": "기존 /orchestrator/ 5050 legacy 유지",
+        "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/",
+        "expected": "200 또는 302",
+    },
+    {
+        "id": "SM-10",
+        "tier": "P1",
+        "check": "5050 Auth 401 유지 (보호 API)",
+        "cmd": "curl -sk -H 'Host: haehan-ai.kr' https://haehan-ai.kr/orchestrator/api/v1/tasks",
+        "expected": "401",
+    },
 )
 
 # ---------------------------------------------------------------------------
@@ -275,23 +342,23 @@ def get_full_foundation_plan() -> dict[str, Any]:
 
 
 __all__ = [
-    "AUTOWORK_FQDN",
-    "AUTOWORK_SUBDOMAIN",
-    "BASE_DOMAIN",
-    "VALUE_SOURCE_PENDING",
-    "AUTOWORK_DNS_DRAFT",
-    "AUTOWORK_DNS_DRAFT_CNAME",
     "AUTOWORK_DNS_APPROVAL_SUMMARY",
     "AUTOWORK_DNS_CHANGE_PREVIEW",
+    "AUTOWORK_DNS_DRAFT",
+    "AUTOWORK_DNS_DRAFT_CNAME",
+    "AUTOWORK_FQDN",
     "AUTOWORK_ROLLBACK_PLAN",
+    "AUTOWORK_SUBDOMAIN",
+    "BASE_DOMAIN",
     "EXISTING_NGINX_ROUTES",
     "NGINX_PLAN_CANDIDATE_1",
     "NGINX_PLAN_CANDIDATE_2",
     "NGINX_PLAN_CANDIDATE_3",
     "NGINX_RECOMMENDED_PLAN",
     "NGINX_ROLLBACK_PLAN",
+    "SMOKE_CHECKLIST",
     "SSL_PLAN",
     "SSL_ROLLBACK_PLAN",
-    "SMOKE_CHECKLIST",
+    "VALUE_SOURCE_PENDING",
     "get_full_foundation_plan",
 ]

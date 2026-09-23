@@ -1,11 +1,23 @@
 """tests/test_user_intent_parser_20260508.py"""
+
 from ai_orchestrator.local_agent.user_intent_parser import (
-    parse_intent, is_auto_allowed_intent, requires_permission,
-    INTENT_READ_PAGE, INTENT_SEARCH_SITE, INTENT_FIND_NOTICE,
-    INTENT_DOWNLOAD_ATTACHMENTS, INTENT_SUMMARIZE_CONTENT, INTENT_EXTRACT_TABLE,
-    INTENT_GENERATE_BLOG_DRAFT, INTENT_PREPARE_FORM, INTENT_WRITE_POST,
-    INTENT_WRITE_COMMENT, INTENT_PUBLISH_POST, INTENT_UPDATE_POST,
-    INTENT_DELETE_POST, INTENT_SEND_MESSAGE, INTENT_SUBMIT_FORM, INTENT_UNKNOWN,
+    INTENT_DELETE_POST,
+    INTENT_DOWNLOAD_ATTACHMENTS,
+    INTENT_FIND_NOTICE,
+    INTENT_GENERATE_BLOG_DRAFT,
+    INTENT_PREPARE_FORM,
+    INTENT_PUBLISH_POST,
+    INTENT_READ_PAGE,
+    INTENT_SEARCH_SITE,
+    INTENT_SEND_MESSAGE,
+    INTENT_SUMMARIZE_CONTENT,
+    INTENT_UNKNOWN,
+    INTENT_UPDATE_POST,
+    INTENT_WRITE_COMMENT,
+    INTENT_WRITE_POST,
+    is_auto_allowed_intent,
+    parse_intent,
+    requires_permission,
 )
 
 
@@ -75,14 +87,25 @@ def test_empty_instruction():
 
 
 def test_auto_allowed_intents():
-    for intent in [INTENT_READ_PAGE, INTENT_FIND_NOTICE, INTENT_DOWNLOAD_ATTACHMENTS,
-                   INTENT_SUMMARIZE_CONTENT, INTENT_GENERATE_BLOG_DRAFT]:
+    for intent in [
+        INTENT_READ_PAGE,
+        INTENT_FIND_NOTICE,
+        INTENT_DOWNLOAD_ATTACHMENTS,
+        INTENT_SUMMARIZE_CONTENT,
+        INTENT_GENERATE_BLOG_DRAFT,
+    ]:
         assert is_auto_allowed_intent(intent), f"{intent}이 AUTO_ALLOWED가 아님"
 
 
 def test_permission_required_intents():
-    for intent in [INTENT_WRITE_POST, INTENT_WRITE_COMMENT, INTENT_PUBLISH_POST,
-                   INTENT_UPDATE_POST, INTENT_DELETE_POST, INTENT_SEND_MESSAGE]:
+    for intent in [
+        INTENT_WRITE_POST,
+        INTENT_WRITE_COMMENT,
+        INTENT_PUBLISH_POST,
+        INTENT_UPDATE_POST,
+        INTENT_DELETE_POST,
+        INTENT_SEND_MESSAGE,
+    ]:
         assert requires_permission(intent), f"{intent}이 permission required가 아님"
 
 

@@ -1,14 +1,24 @@
 """tests/test_learned_site_profile_store_20260508.py"""
+
 import pytest
+
 from ai_orchestrator.local_agent.learned_site_profile_store import (
-    save_learned_profile, get_learned_profile, update_learned_profile,
-    delete_learned_profile, list_learned_hosts, clear_all, has_learned_profile,
-    _FORBIDDEN_STORE_PREFIXES,
+    clear_all,
+    delete_learned_profile,
+    get_learned_profile,
+    has_learned_profile,
+    list_learned_hosts,
+    save_learned_profile,
+    update_learned_profile,
 )
 
 _SENSITIVE_FIELDS = [
-    "password_stored", "otp_stored", "cookie_stored",
-    "session_stored", "storage_state_stored", "cert_password_stored",
+    "password_stored",
+    "otp_stored",
+    "cookie_stored",
+    "session_stored",
+    "storage_state_stored",
+    "cert_password_stored",
 ]
 
 
@@ -48,6 +58,7 @@ def test_forbidden_key_raises():
     # password_value 같은 forbidden prefix가 있는 key는 _sanitize_entry에서 제거됨
     # validate_entry는 sanitize 후에 실행 — 직접 forbidden key로 entry 생성 시 테스트
     from ai_orchestrator.local_agent.learned_site_profile_store import _validate_entry
+
     errors = _validate_entry({"password_value": "secret"})
     assert len(errors) > 0
 

@@ -1,11 +1,10 @@
-import sys
 import os
+import sys
 import tempfile
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from models import TaskRequest, RiskAssessment, ExecutionPlan
+from models import ExecutionPlan, RiskAssessment, TaskRequest
 from policy_engine import load_policy
 from whitelist_executor import can_execute, execute_allowed
 
@@ -95,8 +94,12 @@ def test_high_restart_service_blocked():
         description="restart nginx",
     )
     risk = RiskAssessment(risk_level="high", requires_approval=True)
-    plan = ExecutionPlan(task_id=task.task_id, allowed=False, requires_approval=True,
-                         blocked_reasons=["high actions cannot be auto-executed"])
+    plan = ExecutionPlan(
+        task_id=task.task_id,
+        allowed=False,
+        requires_approval=True,
+        blocked_reasons=["high actions cannot be auto-executed"],
+    )
 
     ok, reasons = can_execute(task, risk, plan, policy, approval_valid=True)
     assert not ok

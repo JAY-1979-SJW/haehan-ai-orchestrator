@@ -3,15 +3,15 @@
 실제 G2B 접속, 로그인, 투찰, 전자서명 구현 없음.
 순수 판단 함수만 포함.
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from scripts.g2b.profile import (
-    ALL_KNOWN_ACTIONS,
     BLOCKED_ACTIONS,
-    DRAFT_ACTIONS,
     DOWNLOAD_ACTIONS,
+    DRAFT_ACTIONS,
     LOCAL_AGENT_REQUIRED_ACTIONS,
     READ_ONLY_ACTIONS,
     USER_DIRECT_REQUIRED_ACTIONS,
@@ -19,15 +19,16 @@ from scripts.g2b.profile import (
 
 # ── 결정 상수 ─────────────────────────────────────────────────────────
 
-DECISION_ALLOWED               = "ALLOWED"
-DECISION_READ_ONLY_ALLOWED     = "READ_ONLY_ALLOWED"
-DECISION_DRAFT_ALLOWED         = "DRAFT_ALLOWED"
-DECISION_APPROVAL_REQUIRED     = "APPROVAL_REQUIRED"
-DECISION_USER_DIRECT_REQUIRED  = "USER_DIRECT_REQUIRED"
-DECISION_LOCAL_AGENT_REQUIRED  = "LOCAL_AGENT_REQUIRED"
-DECISION_BLOCKED               = "BLOCKED"
+DECISION_ALLOWED = "ALLOWED"
+DECISION_READ_ONLY_ALLOWED = "READ_ONLY_ALLOWED"
+DECISION_DRAFT_ALLOWED = "DRAFT_ALLOWED"
+DECISION_APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
+DECISION_USER_DIRECT_REQUIRED = "USER_DIRECT_REQUIRED"
+DECISION_LOCAL_AGENT_REQUIRED = "LOCAL_AGENT_REQUIRED"
+DECISION_BLOCKED = "BLOCKED"
 
 # ── 판단 함수 ─────────────────────────────────────────────────────────
+
 
 def is_g2b_readonly_action(action: str) -> bool:
     return action in READ_ONLY_ACTIONS
@@ -60,9 +61,10 @@ def is_g2b_secret_session_action(action: str) -> bool:
 
 # ── 통합 게이트 ───────────────────────────────────────────────────────
 
+
 def evaluate_g2b_action_gate(
     action: str,
-    context: Optional[dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if is_g2b_blocked_action(action) or is_g2b_secret_session_action(action):
         return build_g2b_gate_result(
@@ -113,13 +115,13 @@ def build_g2b_gate_result(
     reason: str,
 ) -> dict[str, Any]:
     return {
-        "action":                action,
-        "decision":              decision,
-        "reason":                reason,
-        "user_direct_required":  decision == DECISION_USER_DIRECT_REQUIRED,
-        "local_agent_required":  decision == DECISION_LOCAL_AGENT_REQUIRED,
-        "approval_required":     decision == DECISION_APPROVAL_REQUIRED,
-        "blocked":               decision == DECISION_BLOCKED,
-        "draft_allowed":         decision == DECISION_DRAFT_ALLOWED,
-        "read_only_allowed":     decision == DECISION_READ_ONLY_ALLOWED,
+        "action": action,
+        "decision": decision,
+        "reason": reason,
+        "user_direct_required": decision == DECISION_USER_DIRECT_REQUIRED,
+        "local_agent_required": decision == DECISION_LOCAL_AGENT_REQUIRED,
+        "approval_required": decision == DECISION_APPROVAL_REQUIRED,
+        "blocked": decision == DECISION_BLOCKED,
+        "draft_allowed": decision == DECISION_DRAFT_ALLOWED,
+        "read_only_allowed": decision == DECISION_READ_ONLY_ALLOWED,
     }

@@ -7,19 +7,19 @@
   - 에러 DB 저장 + 통계
   - 임계치 초과 시 알림 발송
 """
+
 from __future__ import annotations
 
 import functools
-import json
 import sqlite3
 import time
 import traceback
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
@@ -71,8 +71,7 @@ class ErrorRecovery:
         self.notification_channels = notification_channels or ["console"]
         _init_db()
 
-    def log_error(self, func_name: str, exc: Exception, attempts: int,
-                  recovered: bool, args_repr: str = "") -> None:
+    def log_error(self, func_name: str, exc: Exception, attempts: int, recovered: bool, args_repr: str = "") -> None:
         category = categorize_error(exc)
         conn = sqlite3.connect(str(DB_PATH))
         conn.execute(
@@ -81,22 +80,36 @@ class ErrorRecovery:
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 datetime.now().isoformat(timespec="seconds"),
-                func_name, category, str(exc)[:300],
+                func_name,
+                category,
+                str(exc)[:300],
                 traceback.format_exc()[:2000],
-                attempts, 1 if recovered else 0,
+                attempts,
+                1 if recovered else 0,
                 args_repr[:300],
             ),
         )
         conn.commit()
         conn.close()
-        log_critical("OTHER", f"에러 기록: {func_name} ({category})",
-                     func=func_name, category=category, recovered=recovered,
-                     mode="error_logged")
+        log_critical(
+            "OTHER",
+            f"에러 기록: {func_name} ({category})",
+            func=func_name,
+            category=category,
+            recovered=recovered,
+            mode="error_logged",
+        )
 
-    def with_retry(self, func: Callable, max_attempts: int = 3,
-                   delay_s: float = 1.0, backoff: float = 1.5,
-                   recovery_action: Callable | None = None) -> Callable:
+    def with_retry(
+        self,
+        func: Callable,
+        max_attempts: int = 3,
+        delay_s: float = 1.0,
+        backoff: float = 1.5,
+        recovery_action: Callable | None = None,
+    ) -> Callable:
         """함수 데코레이터 — 에러 발생 시 자동 재시도 + 복구 액션."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             last_exc = None
@@ -111,14 +124,14 @@ class ErrorRecovery:
                 except Exception as e:
                     last_exc = e
                     category = categorize_error(e)
-                    _log.warning("[recovery] %s 실패 #%d (%s): %s",
-                                 func.__name__, attempt, category, str(e)[:80])
+                    _log.warning("[recovery] %s 실패 #%d (%s): %s", func.__name__, attempt, category, str(e)[:80])
 
                     if attempt < max_attempts:
                         # 카테고리별 복구 액션
                         if category == "auth" and self.page:
                             try:
                                 from scripts.naver.automation.session_manager import SessionManager
+
                                 sm = SessionManager(self.page)
                                 sm.check_and_recover(force=True)
                             except Exception:
@@ -131,10 +144,20 @@ class ErrorRecovery:
                         time.sleep(delay_s * (backoff ** (attempt - 1)))
 
             # 최종 실패
-            self.log_error(func.__name__, last_exc, attempt, recovered=False,
-                           args_repr=f"args={args}, kwargs={list(kwargs.keys())}")
-            return {"ok": False, "error": str(last_exc)[:200], "attempts": attempt,
-                    "category": categorize_error(last_exc)}
+            self.log_error(
+                func.__name__,
+                last_exc,
+                attempt,
+                recovered=False,
+                args_repr=f"args={args}, kwargs={list(kwargs.keys())}",
+            )
+            return {
+                "ok": False,
+                "error": str(last_exc)[:200],
+                "attempts": attempt,
+                "category": categorize_error(last_exc),
+            }
+
         return wrapper
 
     def stats(self, days: int = 7) -> dict:
@@ -170,15 +193,20 @@ class ErrorRecovery:
 
         if cnt >= max_errors_per_hour:
             from scripts.naver.automation.notification_hub import NotificationHub
+
             hub = NotificationHub(self.page)
             hub.notify(
                 f"⚠ 에러 발생 임계치 초과: 최근 1시간 {cnt}건",
                 channels=self.notification_channels,
                 level="error",
             )
-            log_critical("OTHER", f"에러 임계치 초과: {cnt}/{max_errors_per_hour}",
-                         count=cnt, threshold=max_errors_per_hour,
-                         mode="error_threshold_alert")
+            log_critical(
+                "OTHER",
+                f"에러 임계치 초과: {cnt}/{max_errors_per_hour}",
+                count=cnt,
+                threshold=max_errors_per_hour,
+                mode="error_threshold_alert",
+            )
             return {"ok": True, "alerted": True, "count": cnt}
         return {"ok": True, "alerted": False, "count": cnt}
 

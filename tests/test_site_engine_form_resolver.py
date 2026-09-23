@@ -1,5 +1,4 @@
 """Unit tests for scripts.site_engine.form_resolver."""
-import pytest
 
 from scripts.site_engine.form_resolver import (
     FormFieldKind,
@@ -14,11 +13,11 @@ _MASK = "***REDACTED***"
 
 
 def _raw(selector="#f", name="", id_="", type_="text", placeholder="", label=""):
-    return {"selector": selector, "name": name, "id": id_,
-            "type": type_, "placeholder": placeholder, "label": label}
+    return {"selector": selector, "name": name, "id": id_, "type": type_, "placeholder": placeholder, "label": label}
 
 
 # ── sensitivity classification ───────────────────────────────────────
+
 
 def test_password_kind_is_forbidden():
     assert classify_field_sensitivity(FormFieldKind.PASSWORD) == FormFieldSensitivity.FORBIDDEN
@@ -38,6 +37,7 @@ def test_name_kind_is_safe():
 
 # ── mask_field_value ─────────────────────────────────────────────────
 
+
 def test_mask_password_value():
     assert mask_field_value("hunter2", FormFieldKind.PASSWORD) == _MASK
 
@@ -51,6 +51,7 @@ def test_no_mask_safe_value():
 
 
 # ── resolve_form_fields ──────────────────────────────────────────────
+
 
 def test_resolve_detects_password_by_type():
     inp = FormResolutionInput(

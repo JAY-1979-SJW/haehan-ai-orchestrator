@@ -1,15 +1,19 @@
 """Task queue: enqueue, lookup, approval flow, and list helpers."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from .local_agent_models import LocalAgentTask
 from .local_agent_redaction import _strip_sensitive
 from .local_agent_registry_common import (
-    _lock, _tasks, _now_iso,
-    ACTION_RISK, _SERVER_AUTO_COMPLETE, ALLOWED_APPS,
-    UnknownActionError, KNOWN_TASK_STATUSES,
+    _SERVER_AUTO_COMPLETE,
+    ACTION_RISK,
+    ALLOWED_APPS,
+    UnknownActionError,
+    _lock,
+    _now_iso,
+    _tasks,
 )
 
 
@@ -17,7 +21,7 @@ def enqueue_task(
     *,
     agent_id: str,
     action: str,
-    params: Optional[dict],
+    params: dict | None,
     requested_by: str,
 ) -> LocalAgentTask:
     """작업을 큐에 등록.
@@ -77,19 +81,19 @@ def attach_token(task_id: str, token_id: str, public_id: str = "") -> None:
         t.updated_at = _now_iso()
 
 
-def get_task(agent_id: str, task_id: str) -> Optional[LocalAgentTask]:
+def get_task(agent_id: str, task_id: str) -> LocalAgentTask | None:
     t = _tasks.get(task_id)
     if t is None or t.agent_id != agent_id:
         return None
     return t
 
 
-def find_task_by_id(task_id: str) -> Optional[LocalAgentTask]:
+def find_task_by_id(task_id: str) -> LocalAgentTask | None:
     """agent_id 불필요한 내부 조회 (승인 훅 등). agent 범위 권한 검사는 호출자가 수행."""
     return _tasks.get(task_id)
 
 
-def find_task_by_token_id(token_id: str) -> Optional[LocalAgentTask]:
+def find_task_by_token_id(token_id: str) -> LocalAgentTask | None:
     """승인 토큰 → 대응 local agent task 역인덱스 (선형 탐색 — 요청 주기 낮음)."""
     if not token_id:
         return None
@@ -100,7 +104,7 @@ def find_task_by_token_id(token_id: str) -> Optional[LocalAgentTask]:
     return None
 
 
-def mark_approved(task_id: str, actor: str) -> Optional[LocalAgentTask]:
+def mark_approved(task_id: str, actor: str) -> LocalAgentTask | None:
     """waiting_approval → queued 로 전환. 이미 결정된 작업은 그대로 반환 (idempotent).
 
     - high risk 아닌 작업이 실수로 전달되면 no-op (상태 변경 없음).
@@ -123,8 +127,10 @@ def mark_approved(task_id: str, actor: str) -> Optional[LocalAgentTask]:
 
 
 def mark_rejected(
-    task_id: str, actor: str, reason: str = "",
-) -> Optional[LocalAgentTask]:
+    task_id: str,
+    actor: str,
+    reason: str = "",
+) -> LocalAgentTask | None:
     """waiting_approval → rejected 로 전환. idempotent."""
     with _lock:
         t = _tasks.get(task_id)
@@ -142,7 +148,7 @@ def mark_rejected(
         return t
 
 
-def mark_expired(task_id: str) -> Optional[LocalAgentTask]:
+def mark_expired(task_id: str) -> LocalAgentTask | None:
     """승인 토큰 만료 등으로 작업을 rejected 상태로 종결."""
     with _lock:
         t = _tasks.get(task_id)
@@ -161,7 +167,7 @@ def mark_expired(task_id: str) -> Optional[LocalAgentTask]:
 
 def list_tasks_for_agent(
     agent_id: str,
-    status: Optional[str] = None,
+    status: str | None = None,
     limit: int = 50,
 ) -> list[LocalAgentTask]:
     """agent_id 기준 task 목록 반환.
@@ -182,8 +188,7 @@ def list_tasks_for_agent(
 def list_pending_for_agent(agent_id: str) -> list[LocalAgentTask]:
     """해당 에이전트의 status=queued 작업 (오래된 것부터)."""
     with _lock:
-        out = [t for t in _tasks.values()
-               if t.agent_id == agent_id and t.status == "queued"]
+        out = [t for t in _tasks.values() if t.agent_id == agent_id and t.status == "queued"]
     out.sort(key=lambda t: t.created_at)
     return out
 
@@ -209,9 +214,15 @@ def _initial_result_summary(action: str, safe_params: dict) -> str:
 
 
 __all__ = [
-    "enqueue_task", "attach_token",
-    "get_task", "find_task_by_id", "find_task_by_token_id",
-    "mark_approved", "mark_rejected", "mark_expired",
-    "list_tasks_for_agent", "list_pending_for_agent",
     "_initial_result_summary",
+    "attach_token",
+    "enqueue_task",
+    "find_task_by_id",
+    "find_task_by_token_id",
+    "get_task",
+    "list_pending_for_agent",
+    "list_tasks_for_agent",
+    "mark_approved",
+    "mark_expired",
+    "mark_rejected",
 ]

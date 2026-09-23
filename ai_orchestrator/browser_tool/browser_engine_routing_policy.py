@@ -21,14 +21,7 @@ from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_AGENT_PLAYWRIGHT_READONLY_ALLOWED,
     ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-    ENGINE_NEEDS_MANUAL_REVIEW,
     ENGINE_SERVER_PLAYWRIGHT_READONLY_ALLOWED,
-    ROUTE_API_CONNECTOR,
-    ROUTE_BLOCK,
-    ROUTE_LOCAL_AGENT_PLAYWRIGHT_READONLY,
-    ROUTE_LOCAL_SYSTEM_BROWSER_USER_PRESENT,
-    ROUTE_MANUAL_REVIEW,
-    ROUTE_SERVER_PLAYWRIGHT_READONLY,
     classify_browser_engine_capability,
 )
 
@@ -51,29 +44,42 @@ ENGINE_SEL_NONE = "none"
 
 # ── fallback 허용 failure_reason ─────────────────────────────────────────────
 
-_FALLBACK_ALLOWED_FAILURE_REASONS: frozenset[str] = frozenset({
-    "runtime_error",
-    "network_timeout",
-    "browser_not_available",
-})
+_FALLBACK_ALLOWED_FAILURE_REASONS: frozenset[str] = frozenset(
+    {
+        "runtime_error",
+        "network_timeout",
+        "browser_not_available",
+    }
+)
 
 # ── fallback 금지 failure_reason ─────────────────────────────────────────────
 
-_FALLBACK_BLOCKED_FAILURE_REASONS: frozenset[str] = frozenset({
-    "policy_blocked",
-    "domain_blocked",
-    "auth_required",
-    "otp_required",
-    "certificate_required",
-    "captcha_required",
-})
+_FALLBACK_BLOCKED_FAILURE_REASONS: frozenset[str] = frozenset(
+    {
+        "policy_blocked",
+        "domain_blocked",
+        "auth_required",
+        "otp_required",
+        "certificate_required",
+        "captcha_required",
+    }
+)
 
 # ── type/submit operation 자동 실행 금지 ──────────────────────────────────────
 
-_BLOCKED_OPERATIONS: frozenset[str] = frozenset({
-    "type", "submit", "fill", "click_submit", "auto_login",
-    "execute_type", "execute_submit", "plan_type", "plan_submit",
-})
+_BLOCKED_OPERATIONS: frozenset[str] = frozenset(
+    {
+        "type",
+        "submit",
+        "fill",
+        "click_submit",
+        "auto_login",
+        "execute_type",
+        "execute_submit",
+        "plan_type",
+        "plan_submit",
+    }
+)
 
 
 def build_engine_routing_context(payload: dict[str, Any]) -> dict[str, Any]:
@@ -251,11 +257,17 @@ def validate_browser_engine_routing_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
 
     required_fields = [
-        "routing_decision", "selected_engine",
-        "server_playwright_first_allowed", "local_agent_fallback_allowed",
-        "api_connector_required", "user_present_required",
-        "manual_review_required", "automation_blocked",
-        "block_reason", "safe_to_dispatch", "safe_to_execute",
+        "routing_decision",
+        "selected_engine",
+        "server_playwright_first_allowed",
+        "local_agent_fallback_allowed",
+        "api_connector_required",
+        "user_present_required",
+        "manual_review_required",
+        "automation_blocked",
+        "block_reason",
+        "safe_to_dispatch",
+        "safe_to_execute",
         "message_ko",
     ]
     for field in required_fields:

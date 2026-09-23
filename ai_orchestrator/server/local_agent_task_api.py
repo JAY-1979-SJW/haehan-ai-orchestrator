@@ -6,19 +6,17 @@
 
 DB schema 변경 없음. in-memory adapter 수준.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 from ai_orchestrator.local_agent.task_protocol import (
     ALLOWED_TASK_ACTIONS,
-    EXEC_MODE_LOCAL_PLAYWRIGHT,
-    TASK_TYPE_BROWSER,
     build_task,
     validate_result,
 )
 from ai_orchestrator.server.task_queue_schema import (
-    TASK_STATE_PENDING,
     create_task_record,
     get_pending_tasks,
     get_task,

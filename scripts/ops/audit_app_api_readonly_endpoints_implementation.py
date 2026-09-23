@@ -2,7 +2,7 @@
 
 Priority 1 read-only endpoint 구현이 계약과 보안경계를 지키는지 검증한다.
 """
-import ast
+
 import sys
 from pathlib import Path
 
@@ -39,10 +39,12 @@ def run_audit() -> None:
     _add("POST route 없음", "@app_status_router.post" not in src)
 
     # 7. PUT/PATCH/DELETE route 없음
-    _add("PUT/PATCH/DELETE route 없음",
-         "@app_status_router.put" not in src
-         and "@app_status_router.patch" not in src
-         and "@app_status_router.delete" not in src)
+    _add(
+        "PUT/PATCH/DELETE route 없음",
+        "@app_status_router.put" not in src
+        and "@app_status_router.patch" not in src
+        and "@app_status_router.delete" not in src,
+    )
 
     # 8. mutation_allowed=false
     _add("MUTATION_ALLOWED=False 선언", "MUTATION_ALLOWED = False" in src)
@@ -61,12 +63,16 @@ def run_audit() -> None:
     # 14. provider 12개 반영
     try:
         from ai_orchestrator.external_sites.provider_registry import PROVIDER_REGISTRY
+
         _add("provider 12개 반영", len(PROVIDER_REGISTRY) == 12, f"실제: {len(PROVIDER_REGISTRY)}")
     except Exception as e:
         _add("provider 12개 반영", False, str(e))
 
     # 15. cookie_storage_allowed=False 전체
-    _add("cookie_storage_allowed=False 강제", '"cookie_storage_allowed": False' in src or "'cookie_storage_allowed': False" in src)
+    _add(
+        "cookie_storage_allowed=False 강제",
+        '"cookie_storage_allowed": False' in src or "'cookie_storage_allowed': False" in src,
+    )
 
     # 16. named_volume_status 반영
     _add("named_volume_status 반영", "named_volume_status" in src)

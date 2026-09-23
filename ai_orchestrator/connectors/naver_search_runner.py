@@ -6,17 +6,17 @@
 
 신규 스케줄러 프레임워크 없음 — asyncio.sleep 루프 + asyncio.to_thread 만 사용.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from .naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
-from .naver_search_run_log import append_run, default_run_log_path
+from .naver_search_run_log import append_run
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,10 @@ _MIN_INTERVAL_SEC = 60
 
 def _is_enabled() -> bool:
     return os.environ.get(ENV_SCHEDULE_ENABLED, "false").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
 
 
@@ -51,7 +54,7 @@ def _parse_queries(env_key: str) -> list:
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _determine_status(outcome) -> str:
@@ -60,59 +63,81 @@ def _determine_status(outcome) -> str:
     return "fail"
 
 
-def _run_blog_query(query: str, *, run_log_path: Optional[Path] = None) -> None:
+def _run_blog_query(query: str, *, run_log_path: Path | None = None) -> None:
     started = _utc_now_iso()
     try:
         outcome = run_naver_blog_search_job(query)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("[NAVER-SCHED-BLOG-ERR] query_len=%d type=%s", len(query), type(e).__name__)
-        append_run({
-            "job_type": "blog", "query": query,
-            "started_at": started, "finished_at": _utc_now_iso(),
-            "status": "fail", "error_summary": type(e).__name__,
-        }, path=run_log_path)
+        append_run(
+            {
+                "job_type": "blog",
+                "query": query,
+                "started_at": started,
+                "finished_at": _utc_now_iso(),
+                "status": "fail",
+                "error_summary": type(e).__name__,
+            },
+            path=run_log_path,
+        )
         return
-    append_run({
-        "job_type": "blog", "query": query,
-        "started_at": started, "finished_at": _utc_now_iso(),
-        "status": _determine_status(outcome),
-        "scanned_count": outcome.scanned_count,
-        "inserted_count": outcome.inserted_count,
-        "duplicate_count": outcome.duplicate_count,
-        "skipped_count": outcome.skipped_count,
-        "early_stop_reason": outcome.early_stop_reason,
-        "db_status": outcome.db_status,
-        "error_summary": outcome.error_code,
-    }, path=run_log_path)
+    append_run(
+        {
+            "job_type": "blog",
+            "query": query,
+            "started_at": started,
+            "finished_at": _utc_now_iso(),
+            "status": _determine_status(outcome),
+            "scanned_count": outcome.scanned_count,
+            "inserted_count": outcome.inserted_count,
+            "duplicate_count": outcome.duplicate_count,
+            "skipped_count": outcome.skipped_count,
+            "early_stop_reason": outcome.early_stop_reason,
+            "db_status": outcome.db_status,
+            "error_summary": outcome.error_code,
+        },
+        path=run_log_path,
+    )
 
 
-def _run_shop_query(query: str, *, run_log_path: Optional[Path] = None) -> None:
+def _run_shop_query(query: str, *, run_log_path: Path | None = None) -> None:
     started = _utc_now_iso()
     try:
         outcome = run_naver_shopping_search_job(query)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("[NAVER-SCHED-SHOP-ERR] query_len=%d type=%s", len(query), type(e).__name__)
-        append_run({
-            "job_type": "shopping", "query": query,
-            "started_at": started, "finished_at": _utc_now_iso(),
-            "status": "fail", "error_summary": type(e).__name__,
-        }, path=run_log_path)
+        append_run(
+            {
+                "job_type": "shopping",
+                "query": query,
+                "started_at": started,
+                "finished_at": _utc_now_iso(),
+                "status": "fail",
+                "error_summary": type(e).__name__,
+            },
+            path=run_log_path,
+        )
         return
-    append_run({
-        "job_type": "shopping", "query": query,
-        "started_at": started, "finished_at": _utc_now_iso(),
-        "status": _determine_status(outcome),
-        "scanned_count": outcome.scanned_count,
-        "inserted_count": outcome.inserted_count,
-        "duplicate_count": outcome.duplicate_count,
-        "skipped_count": outcome.skipped_count,
-        "early_stop_reason": outcome.early_stop_reason,
-        "db_status": outcome.db_status,
-        "error_summary": outcome.error_code,
-    }, path=run_log_path)
+    append_run(
+        {
+            "job_type": "shopping",
+            "query": query,
+            "started_at": started,
+            "finished_at": _utc_now_iso(),
+            "status": _determine_status(outcome),
+            "scanned_count": outcome.scanned_count,
+            "inserted_count": outcome.inserted_count,
+            "duplicate_count": outcome.duplicate_count,
+            "skipped_count": outcome.skipped_count,
+            "early_stop_reason": outcome.early_stop_reason,
+            "db_status": outcome.db_status,
+            "error_summary": outcome.error_code,
+        },
+        path=run_log_path,
+    )
 
 
-def run_scheduled_collection(*, run_log_path: Optional[Path] = None) -> None:
+def run_scheduled_collection(*, run_log_path: Path | None = None) -> None:
     """한 사이클 실행. 동기 함수 — asyncio.to_thread() 로 호출된다.
 
     NAVER_SEARCH_SCHEDULE_ENABLED=false 이면 즉시 return.
@@ -132,11 +157,17 @@ def run_scheduled_collection(*, run_log_path: Optional[Path] = None) -> None:
 
     if not blog_queries and not shop_queries:
         logger.warning("[NAVER-SCHED] 블로그/쇼핑 쿼리 모두 비어 있음 — 사이클 건너뜀")
-        append_run({
-            "job_type": "blog", "query": "",
-            "started_at": _utc_now_iso(), "finished_at": _utc_now_iso(),
-            "status": "skipped", "error_summary": "NO_QUERIES_CONFIGURED",
-        }, path=run_log_path)
+        append_run(
+            {
+                "job_type": "blog",
+                "query": "",
+                "started_at": _utc_now_iso(),
+                "finished_at": _utc_now_iso(),
+                "status": "skipped",
+                "error_summary": "NO_QUERIES_CONFIGURED",
+            },
+            path=run_log_path,
+        )
         return
 
     for query in blog_queries:
@@ -156,7 +187,7 @@ async def schedule_loop() -> None:
             await asyncio.to_thread(run_scheduled_collection)
         except asyncio.CancelledError:
             raise
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.exception("[NAVER-SCHED-LOOP-ERR] type=%s", type(e).__name__)
         interval = _interval_sec()
         logger.debug("[NAVER-SCHED] 다음 실행까지 %ds 대기", interval)
@@ -164,8 +195,8 @@ async def schedule_loop() -> None:
 
 
 __all__ = [
-    "ENV_SCHEDULE_ENABLED",
     "ENV_BLOG_QUERIES",
+    "ENV_SCHEDULE_ENABLED",
     "ENV_SHOP_QUERIES",
     "run_scheduled_collection",
     "schedule_loop",

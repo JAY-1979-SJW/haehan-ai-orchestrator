@@ -9,18 +9,18 @@ URL: https://mybox.naver.com/
   mb.upload(local_path="/path/to/file.pdf")
   mb.download(file_name="문서.pdf", save_dir="data/downloads")
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
-from scripts.popup_detector import handle_page_popups
+from scripts.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
+from scripts.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 
@@ -48,7 +48,8 @@ class NaverMyBox:
         if not self.open():
             return []
         try:
-            items = self.page.evaluate("""
+            items = self.page.evaluate(
+                """
             (limit) => {
                 const out = [];
                 document.querySelectorAll('[class*="file-item"], [class*="FileItem"], .file_list li, .item-row').forEach((el, i) => {
@@ -61,7 +62,9 @@ class NaverMyBox:
                 });
                 return out;
             }
-            """, limit)
+            """,
+                limit,
+            )
             _log.info("[naver-mybox] %d개 항목", len(items))
             return items
         except Exception as e:
@@ -79,8 +82,12 @@ class NaverMyBox:
             file_input = self.page.locator('input[type="file"]').first
             file_input.set_input_files(local_path, timeout=5000)
             time.sleep(3)
-            log_critical("FILE_UPLOAD", f"마이박스 업로드: {Path(local_path).name}",
-                         file=local_path, size=Path(local_path).stat().st_size)
+            log_critical(
+                "FILE_UPLOAD",
+                f"마이박스 업로드: {Path(local_path).name}",
+                file=local_path,
+                size=Path(local_path).stat().st_size,
+            )
             return {"ok": True, "file": Path(local_path).name}
         except Exception as e:
             _log.error("[naver-mybox] upload 실패: %s", e)

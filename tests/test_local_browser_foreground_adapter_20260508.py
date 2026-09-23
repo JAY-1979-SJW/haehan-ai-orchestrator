@@ -1,16 +1,16 @@
 """
 browser_foreground_adapter 테스트
 """
-import pytest
-from unittest.mock import patch, MagicMock
+
+from unittest.mock import patch
 
 from ai_orchestrator.local_agent.browser_foreground_adapter import (
-    request_foreground,
-    get_foreground_status,
     BROWSER_FOREGROUND_REQUESTED,
     BROWSER_FOREGROUND_UNAVAILABLE,
     HEADED_BROWSER_REQUIRED,
     USER_MANUAL_FOCUS_REQUIRED,
+    get_foreground_status,
+    request_foreground,
 )
 
 

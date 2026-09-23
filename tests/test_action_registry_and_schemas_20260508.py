@@ -1,29 +1,40 @@
 """tests/test_action_registry_and_schemas_20260508.py"""
+
 import pytest
-from ai_orchestrator.local_agent.action_schemas import all_specs, ActionSpec
+
 from ai_orchestrator.local_agent.action_registry import (
-    get_action_spec, list_action_names, list_actions_by_grade,
-    list_implemented_actions, list_pending_actions, list_pair_actions,
-    register_handler, get_handler, has_handler,
-    requires_user_approval, requires_pre_execution_summary,
+    get_action_spec,
+    has_handler,
+    list_implemented_actions,
+    list_pair_actions,
+    list_pending_actions,
+    register_handler,
+    requires_pre_execution_summary,
+    requires_user_approval,
 )
 from ai_orchestrator.local_agent.action_risk_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT,
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
 )
+from ai_orchestrator.local_agent.action_schemas import all_specs
+
 # 액션 모듈 import 트리거 (registry 등록)
-from ai_orchestrator.local_agent.actions import (
-    browser_download_file, browser_attach_file, future_action_stubs,
-)
 
 
 def test_all_specs_defined():
     specs = all_specs()
     expected = {
-        "browser.download_file", "browser.attach_file",
-        "browser.prepare_submit", "browser.submit_with_user_approval",
-        "bid.prepare_bid", "bid.submit_with_user_approval",
-        "esign.prepare_signature", "esign.execute_with_user_approval",
-        "business.prepare_action", "business.execute_with_user_approval",
+        "browser.download_file",
+        "browser.attach_file",
+        "browser.prepare_submit",
+        "browser.submit_with_user_approval",
+        "bid.prepare_bid",
+        "bid.submit_with_user_approval",
+        "esign.prepare_signature",
+        "esign.execute_with_user_approval",
+        "business.prepare_action",
+        "business.execute_with_user_approval",
     }
     assert expected.issubset(set(specs.keys()))
 
@@ -153,4 +164,6 @@ def test_evidence_fields_no_credential_keys():
 
 def test_phase1_count():
     impl = list_implemented_actions()
-    assert len(impl) == 6  # download_file + attach_file + prepare_submit + submit_with_user_approval + business_prepare + business_execute
+    assert (
+        len(impl) == 6
+    )  # download_file + attach_file + prepare_submit + submit_with_user_approval + business_prepare + business_execute

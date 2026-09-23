@@ -1,12 +1,15 @@
 """build_discovery_candidates_from_fixture 스크립트 단위 테스트."""
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from build_discovery_candidates_from_fixture import (
-    load_fixture, build_candidates, _BUILTIN_FIXTURES,
+    build_candidates,
+    load_fixture,
 )
 
 

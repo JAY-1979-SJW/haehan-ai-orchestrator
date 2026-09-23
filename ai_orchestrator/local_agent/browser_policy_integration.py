@@ -6,34 +6,61 @@ LOCAL_BROWSER_POLICY_SAFE_EXPANSION 후속 작업
 기본값(use_policy_registry=False)은 기존 액션 그대로 위임 — backward compatible.
 use_policy_registry=True일 때만 site/value/selector/preflight 정책 검증 수행.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
-from ai_orchestrator.local_agent.browser_site_registry import (
-    get_site, validate_raw_url, resolve_url,
-    EXECUTION_LOCAL_AGENT_REQUIRED,
-)
-from ai_orchestrator.local_agent.browser_value_registry import (
-    get_value, resolve_value_for_field, is_forbidden_value,
+from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
+    VERDICT_BLOCKED,
+    can_auto_approve,
+    preflight_expansion,
 )
 from ai_orchestrator.local_agent.browser_discovery_candidates import (
+    CANDIDATE_DESTRUCTIVE_BUTTON,
+    CANDIDATE_DOWNLOAD_LINK,
+    CANDIDATE_FILE_INPUT,
+    CANDIDATE_SUBMIT_BUTTON,
+    RISK_HIGH,
+    RISK_LOW,
+    RISK_MEDIUM,
     is_forbidden_label,
-    CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON,
-    CANDIDATE_DOWNLOAD_LINK, CANDIDATE_FILE_INPUT,
-    RISK_HIGH, RISK_LOW, RISK_MEDIUM,
 )
-from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
-    preflight_expansion, can_auto_approve,
-    VERDICT_ALLOW, VERDICT_REVIEW, VERDICT_BLOCKED,
+from ai_orchestrator.local_agent.browser_site_registry import (
+    EXECUTION_LOCAL_AGENT_REQUIRED,
+    get_site,
+    resolve_url,
+    validate_raw_url,
+)
+from ai_orchestrator.local_agent.browser_value_registry import (
+    is_forbidden_value,
+    resolve_value_for_field,
 )
 
 POLICY_FLAG = "use_policy_registry"
 
 _DESTRUCTIVE_KEYWORDS = (
-    "submit", "save", "sign", "delete", "payment", "bid",
-    "transfer", "withdraw", "approve", "confirm",
-    "제출", "저장", "삭제", "전자서명", "투찰", "결제", "송금", "이체", "출금", "확정", "상신",
+    "submit",
+    "save",
+    "sign",
+    "delete",
+    "payment",
+    "bid",
+    "transfer",
+    "withdraw",
+    "approve",
+    "confirm",
+    "제출",
+    "저장",
+    "삭제",
+    "전자서명",
+    "투찰",
+    "결제",
+    "송금",
+    "이체",
+    "출금",
+    "확정",
+    "상신",
 )
 
 
@@ -74,32 +101,26 @@ def open_with_policy(
     """
     opted_in, kwargs = _normalize_kwargs(kwargs)
     if not opted_in:
-        return _verdict(True, "LEGACY_BYPASS",
-                        "use_policy_registry=False — 기존 동작")
+        return _verdict(True, "LEGACY_BYPASS", "use_policy_registry=False — 기존 동작")
 
     if not site_id and not raw_url:
-        return _verdict(False, "BLOCKED",
-                        "site_id 또는 등록된 raw_url 필수")
+        return _verdict(False, "BLOCKED", "site_id 또는 등록된 raw_url 필수")
 
     if raw_url and not site_id:
         url_check = validate_raw_url(raw_url)
         if not url_check.get("ok"):
-            return _verdict(False, "BLOCKED",
-                            f"raw URL 차단: {url_check.get('error')}")
+            return _verdict(False, "BLOCKED", f"raw URL 차단: {url_check.get('error')}")
         site_id = url_check["site_id"]
 
     site = get_site(site_id)
     if site is None:
         return _verdict(False, "BLOCKED", f"site_id 미등록: {site_id}")
     if site.execution_location != EXECUTION_LOCAL_AGENT_REQUIRED:
-        return _verdict(False, "BLOCKED",
-                        "execution_location 정책 위반")
+        return _verdict(False, "BLOCKED", "execution_location 정책 위반")
 
     resolved = resolve_url(site_id, path_key)
     if not resolved.get("ok"):
-        return _verdict(False, "BLOCKED",
-                        resolved.get("error", "path 차단"),
-                        verdict_detail=resolved.get("verdict"))
+        return _verdict(False, "BLOCKED", resolved.get("error", "path 차단"), verdict_detail=resolved.get("verdict"))
 
     pre = preflight_expansion(
         site_candidate={"site_id": site_id},
@@ -108,10 +129,14 @@ def open_with_policy(
     if pre["verdict"] == VERDICT_BLOCKED:
         return _verdict(False, "BLOCKED", pre["reason"])
 
-    return _verdict(True, "ALLOWED",
-                    "site policy 검증 통과",
-                    site_id=site_id, path_key=path_key,
-                    execution_location=site.execution_location)
+    return _verdict(
+        True,
+        "ALLOWED",
+        "site policy 검증 통과",
+        site_id=site_id,
+        path_key=path_key,
+        execution_location=site.execution_location,
+    )
 
 
 def type_with_policy(
@@ -130,34 +155,32 @@ def type_with_policy(
     """
     opted_in, kwargs = _normalize_kwargs(kwargs)
     if not opted_in:
-        return _verdict(True, "LEGACY_BYPASS",
-                        "use_policy_registry=False — 기존 동작")
+        return _verdict(True, "LEGACY_BYPASS", "use_policy_registry=False — 기존 동작")
 
     if raw_text is not None:
         forbidden, reason = is_forbidden_value(str(raw_text), field_id)
         if forbidden:
-            return _verdict(False, "BLOCKED",
-                            f"raw text 차단: {reason}")
-        return _verdict(False, "BLOCKED",
-                        "raw text 입력 직접 실행 금지 — value_key 사용 필요")
+            return _verdict(False, "BLOCKED", f"raw text 차단: {reason}")
+        return _verdict(False, "BLOCKED", "raw text 입력 직접 실행 금지 — value_key 사용 필요")
 
     if not selector_key:
-        return _verdict(False, "BLOCKED",
-                        "selector_key 필수 — raw selector 차단")
+        return _verdict(False, "BLOCKED", "selector_key 필수 — raw selector 차단")
 
     if not value_key:
         return _verdict(False, "BLOCKED", "value_key 필수")
 
     val = resolve_value_for_field(value_key, field_id, business_profile)
     if not val.get("ok"):
-        return _verdict(False, "BLOCKED",
-                        f"value 정책 위반: {val.get('verdict')}")
+        return _verdict(False, "BLOCKED", f"value 정책 위반: {val.get('verdict')}")
 
-    return _verdict(True, "ALLOWED",
-                    "value policy 검증 통과",
-                    selector_key=selector_key,
-                    value_key=value_key,
-                    sample_safe_value=val["sample_safe_value"])
+    return _verdict(
+        True,
+        "ALLOWED",
+        "value policy 검증 통과",
+        selector_key=selector_key,
+        value_key=value_key,
+        sample_safe_value=val["sample_safe_value"],
+    )
 
 
 def submit_with_policy(
@@ -176,23 +199,23 @@ def submit_with_policy(
     """
     opted_in, kwargs = _normalize_kwargs(kwargs)
     if not opted_in:
-        return _verdict(True, "LEGACY_BYPASS",
-                        "use_policy_registry=False — 기존 동작")
+        return _verdict(True, "LEGACY_BYPASS", "use_policy_registry=False — 기존 동작")
 
     if not selector_key:
-        return _verdict(False, "BLOCKED",
-                        "selector_key 필수 — raw selector 차단")
+        return _verdict(False, "BLOCKED", "selector_key 필수 — raw selector 차단")
 
-    is_destructive = (
-        candidate_type in (CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON)
-        or _is_destructive_label(selector_label)
+    is_destructive = candidate_type in (CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON) or _is_destructive_label(
+        selector_label
     )
 
     if is_destructive and not approval_token:
-        return _verdict(False, "BLOCKED",
-                        "destructive/submit selector — approval_token 필수",
-                        risk_level=RISK_HIGH,
-                        required_approval=True)
+        return _verdict(
+            False,
+            "BLOCKED",
+            "destructive/submit selector — approval_token 필수",
+            risk_level=RISK_HIGH,
+            required_approval=True,
+        )
 
     selector_candidate = {
         "candidate_type": candidate_type,
@@ -209,12 +232,15 @@ def submit_with_policy(
     if pre["verdict"] == VERDICT_BLOCKED:
         return _verdict(False, "BLOCKED", pre["reason"])
 
-    return _verdict(True, "REVIEW_OR_HANDOFF" if is_destructive else "ALLOWED",
-                    pre["reason"],
-                    risk_level=pre["risk_level"],
-                    required_approval=pre["required_approval"],
-                    handoff_required=is_destructive,
-                    approval_status="APPROVED" if approval_token else "NONE")
+    return _verdict(
+        True,
+        "REVIEW_OR_HANDOFF" if is_destructive else "ALLOWED",
+        pre["reason"],
+        risk_level=pre["risk_level"],
+        required_approval=pre["required_approval"],
+        handoff_required=is_destructive,
+        approval_status="APPROVED" if approval_token else "NONE",
+    )
 
 
 def download_with_policy(
@@ -235,23 +261,19 @@ def download_with_policy(
     """
     opted_in, kwargs = _normalize_kwargs(kwargs)
     if not opted_in:
-        return _verdict(True, "LEGACY_BYPASS",
-                        "use_policy_registry=False — 기존 동작")
+        return _verdict(True, "LEGACY_BYPASS", "use_policy_registry=False — 기존 동작")
 
     if source_url and not site_id:
         url_check = validate_raw_url(source_url)
         if not url_check.get("ok"):
-            return _verdict(False, "BLOCKED",
-                            f"raw URL 차단: {url_check.get('error')}")
+            return _verdict(False, "BLOCKED", f"raw URL 차단: {url_check.get('error')}")
         site_id = url_check["site_id"]
 
     if not site_id:
-        return _verdict(False, "BLOCKED",
-                        "site_id 또는 등록된 source_url 필수")
+        return _verdict(False, "BLOCKED", "site_id 또는 등록된 source_url 필수")
 
     if is_forbidden_label(selector_label):
-        return _verdict(False, "BLOCKED",
-                        f"민감 라벨 차단: {selector_label}")
+        return _verdict(False, "BLOCKED", f"민감 라벨 차단: {selector_label}")
 
     selector_candidate = {
         "candidate_type": candidate_type,
@@ -268,11 +290,14 @@ def download_with_policy(
     if pre["verdict"] == VERDICT_BLOCKED:
         return _verdict(False, "BLOCKED", pre["reason"])
 
-    return _verdict(True, "ALLOWED",
-                    "read-only download 정책 통과",
-                    site_id=site_id,
-                    expected_extension=expected_extension,
-                    auto_approve=can_auto_approve(pre))
+    return _verdict(
+        True,
+        "ALLOWED",
+        "read-only download 정책 통과",
+        site_id=site_id,
+        expected_extension=expected_extension,
+        auto_approve=can_auto_approve(pre),
+    )
 
 
 def attach_with_policy(
@@ -292,8 +317,7 @@ def attach_with_policy(
     """
     opted_in, kwargs = _normalize_kwargs(kwargs)
     if not opted_in:
-        return _verdict(True, "LEGACY_BYPASS",
-                        "use_policy_registry=False — 기존 동작")
+        return _verdict(True, "LEGACY_BYPASS", "use_policy_registry=False — 기존 동작")
 
     if not site_id or not get_site(site_id):
         return _verdict(False, "BLOCKED", "site_id 미등록")
@@ -301,18 +325,15 @@ def attach_with_policy(
     if not file_basename:
         return _verdict(False, "BLOCKED", "file_basename 필수")
     if "/" in file_basename or "\\" in file_basename or ".." in file_basename:
-        return _verdict(False, "BLOCKED",
-                        "file path traversal 시도 — basename만 허용")
+        return _verdict(False, "BLOCKED", "file path traversal 시도 — basename만 허용")
 
     if submit_after_attach:
-        return _verdict(False, "BLOCKED",
-                        "submit_after_attach 차단 — attach와 submit은 분리 승인")
+        return _verdict(False, "BLOCKED", "submit_after_attach 차단 — attach와 submit은 분리 승인")
 
     if not approval_token:
-        return _verdict(False, "BLOCKED",
-                        "attach 실행 — approval_token 필수",
-                        risk_level=RISK_HIGH,
-                        required_approval=True)
+        return _verdict(
+            False, "BLOCKED", "attach 실행 — approval_token 필수", risk_level=RISK_HIGH, required_approval=True
+        )
 
     selector_candidate = {
         "candidate_type": CANDIDATE_FILE_INPUT,
@@ -326,8 +347,11 @@ def attach_with_policy(
     if pre["verdict"] == VERDICT_BLOCKED:
         return _verdict(False, "BLOCKED", pre["reason"])
 
-    return _verdict(True, "ALLOWED",
-                    "attach 정책 검증 통과 (approval 보유)",
-                    risk_level=RISK_MEDIUM,
-                    required_approval=True,
-                    file_basename=file_basename)
+    return _verdict(
+        True,
+        "ALLOWED",
+        "attach 정책 검증 통과 (approval 보유)",
+        risk_level=RISK_MEDIUM,
+        required_approval=True,
+        file_basename=file_basename,
+    )

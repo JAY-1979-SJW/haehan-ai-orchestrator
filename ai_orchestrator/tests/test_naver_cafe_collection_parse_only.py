@@ -1,16 +1,13 @@
 """naver_cafe_collection — HTML 샘플 없는 순수 파싱/로직 검증. 실제 접속 없음."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from ai_orchestrator.sites.adapters.naver_cafe_collection import (
-    STATUS_COLLECTED,
-    STATUS_NO_NEW,
-    STATUS_BLOCKED_NOT_LOGGED_IN,
     build_board_url,
     existing_ids,
     filter_new_posts,
@@ -43,8 +40,13 @@ class TestBuildBoardUrl:
 # ── filter_new_posts ──────────────────────────────────────────────
 class TestFilterNewPosts:
     def _item(self, pid: str, title: str = "t", author: str = "a", date: str = "2026-01-01") -> dict:
-        return {"post_id": pid, "title": title, "author": author, "date": date,
-                "url": f"https://cafe.naver.com/articles/{pid}"}
+        return {
+            "post_id": pid,
+            "title": title,
+            "author": author,
+            "date": date,
+            "url": f"https://cafe.naver.com/articles/{pid}",
+        }
 
     def test_new_items_included(self) -> None:
         items = [self._item("1"), self._item("2")]
@@ -79,8 +81,7 @@ class TestFilterNewPosts:
     def test_no_extra_fields_like_body_comments_likes(self) -> None:
         items = [self._item("10")]
         new, _ = filter_new_posts(items, existing=set())
-        for bad in ("body", "comment", "comments", "like", "likes",
-                    "view_count", "content", "html"):
+        for bad in ("body", "comment", "comments", "like", "likes", "view_count", "content", "html"):
             assert bad not in new[0], f"과수집 필드 발견: {bad}"
 
 
@@ -93,10 +94,20 @@ class TestStoreOperations:
 
     def test_save_and_load_roundtrip(self, tmp_path: Path) -> None:
         p = tmp_path / "posts.json"
-        record = {"site": "naver_cafe", "club_id": "c1", "menu_id": "m1", "posts": [
-            {"post_id": "1", "title": "t1", "author": "a1", "created_at": "2026-01-01",
-             "url": "https://cafe.naver.com/articles/1"}
-        ]}
+        record = {
+            "site": "naver_cafe",
+            "club_id": "c1",
+            "menu_id": "m1",
+            "posts": [
+                {
+                    "post_id": "1",
+                    "title": "t1",
+                    "author": "a1",
+                    "created_at": "2026-01-01",
+                    "url": "https://cafe.naver.com/articles/1",
+                }
+            ],
+        }
         save_stored(p, record)
         loaded = load_stored(p)
         assert loaded["club_id"] == "c1"
@@ -120,9 +131,7 @@ class TestStoreOperations:
 # ── existing_ids ──────────────────────────────────────────────────
 class TestExistingIds:
     def test_extracts_ids(self) -> None:
-        record = {"posts": [
-            {"post_id": "1"}, {"post_id": "2"}, {"post_id": ""}
-        ]}
+        record = {"posts": [{"post_id": "1"}, {"post_id": "2"}, {"post_id": ""}]}
         ids = existing_ids(record)
         assert ids == {"1", "2"}
 
@@ -133,21 +142,25 @@ class TestExistingIds:
 # ── merge_record ─────────────────────────────────────────────────
 class TestMergeRecord:
     def test_new_posts_appended(self) -> None:
-        record = {"site": "naver_cafe", "club_id": "c", "menu_id": "m",
-                  "posts": [{"post_id": "1", "title": "t1", "author": "a",
-                              "created_at": "2026-01-01", "url": "u1"}]}
-        new = [{"post_id": "2", "title": "t2", "author": "b",
-                "created_at": "2026-01-02", "url": "u2"}]
+        record = {
+            "site": "naver_cafe",
+            "club_id": "c",
+            "menu_id": "m",
+            "posts": [{"post_id": "1", "title": "t1", "author": "a", "created_at": "2026-01-01", "url": "u1"}],
+        }
+        new = [{"post_id": "2", "title": "t2", "author": "b", "created_at": "2026-01-02", "url": "u2"}]
         merged = merge_record(record, new, club_id="c", menu_id="m")
         ids = {p["post_id"] for p in merged["posts"]}
         assert ids == {"1", "2"}
 
     def test_duplicate_id_last_wins(self) -> None:
-        record = {"site": "naver_cafe", "club_id": "c", "menu_id": "m",
-                  "posts": [{"post_id": "1", "title": "old", "author": "a",
-                              "created_at": "2026-01-01", "url": "u1"}]}
-        new = [{"post_id": "1", "title": "new", "author": "b",
-                "created_at": "2026-01-02", "url": "u1"}]
+        record = {
+            "site": "naver_cafe",
+            "club_id": "c",
+            "menu_id": "m",
+            "posts": [{"post_id": "1", "title": "old", "author": "a", "created_at": "2026-01-01", "url": "u1"}],
+        }
+        new = [{"post_id": "1", "title": "new", "author": "b", "created_at": "2026-01-02", "url": "u1"}]
         merged = merge_record(record, new, club_id="c", menu_id="m")
         assert len(merged["posts"]) == 1
         assert merged["posts"][0]["title"] == "new"

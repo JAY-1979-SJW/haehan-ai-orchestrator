@@ -15,10 +15,10 @@
     - 스마트스토어 전용 패턴 먼저 시도
     - 실패 시 popup_detector.handle_page_popups() fallback
 """
+
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 from scripts.logger import get_logger
 
@@ -61,11 +61,12 @@ CLOSE_TEXTS = ["닫기", "확인", "×", "X", "✕", "Close"]
 
 # ── 공개 인터페이스 ───────────────────────────────────────────────────────────
 
+
 def detect_popups(page) -> dict:
     """현재 셀러센터 페이지의 팝업 감지."""
-    notice   = _detect_notice_popup(page)
-    general  = _detect_general_modals(page)
-    windows  = _count_popup_windows(page)
+    notice = _detect_notice_popup(page)
+    general = _detect_general_modals(page)
+    windows = _count_popup_windows(page)
 
     total = (1 if notice["detected"] else 0) + general["count"] + windows
     return {
@@ -120,6 +121,7 @@ def dismiss_all_popups(page, check_today_hide: bool = True) -> dict:
     if closed == 0:
         try:
             from scripts.popup_detector import handle_page_popups
+
             fb = handle_page_popups(page)
             closed += fb.get("popups_closed", 0)
         except Exception as e:
@@ -129,8 +131,7 @@ def dismiss_all_popups(page, check_today_hide: bool = True) -> dict:
     _cleanup_backdrop(page)
 
     final = detect_popups(page)
-    _log.info("[ss-popup] 처리 완료: closed=%d had=%s clean=%s",
-              closed, closed > 0, not final["detected"])
+    _log.info("[ss-popup] 처리 완료: closed=%d had=%s clean=%s", closed, closed > 0, not final["detected"])
     return {
         "closed": closed,
         "had_popup": closed > 0,
@@ -139,6 +140,7 @@ def dismiss_all_popups(page, check_today_hide: bool = True) -> dict:
 
 
 # ── 내부: 공지 팝업 ──────────────────────────────────────────────────────────
+
 
 def _detect_notice_popup(page) -> dict:
     for sel in NOTICE_POPUP_SELS:
@@ -208,6 +210,7 @@ def _close_notice_popup(page, check_today_hide: bool = True) -> bool:
 
 # ── 내부: 일반 모달 ──────────────────────────────────────────────────────────
 
+
 def _detect_general_modals(page) -> dict:
     count = 0
     found = []
@@ -273,9 +276,11 @@ def _close_general_modal(page) -> bool:
 
 # ── 내부: 별도 창 팝업 ───────────────────────────────────────────────────────
 
+
 def _count_popup_windows(page) -> int:
     try:
         from scripts.popup_detector import _looks_like_popup_window
+
         pages = page.context.pages
         return sum(1 for p in pages if p is not page and _looks_like_popup_window(p)[0])
     except Exception:
@@ -285,12 +290,14 @@ def _count_popup_windows(page) -> int:
 def _close_popup_windows(page) -> int:
     try:
         from scripts.popup_detector import close_popup_windows
+
         return close_popup_windows(page)
     except Exception:
         return 0
 
 
 # ── 내부: backdrop 정리 ──────────────────────────────────────────────────────
+
 
 def _cleanup_backdrop(page) -> None:
     try:

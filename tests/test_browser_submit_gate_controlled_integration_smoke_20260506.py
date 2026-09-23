@@ -13,48 +13,38 @@ Integration scope (no browser, no DB, no network, no file I/O except tmp_path):
   policy → preview → controlled_submit(mock) → audit_event → gate_evaluation
 """
 
-import json
 import pytest
-from pathlib import Path
 
-from ai_orchestrator.browser_tool.submit_policy import (
-    SubmitValidationRequest,
-    validate_submit_policy,
-)
-from ai_orchestrator.browser_tool.submit_preview import (
-    SubmitPreviewInput,
-    build_submit_preview,
-)
 from ai_orchestrator.browser_tool.controlled_submit import (
     build_controlled_submit_result,
 )
 from ai_orchestrator.browser_tool.submit_audit_log import (
-    build_submit_audit_event,
     append_submit_audit_event,
+    build_submit_audit_event,
     read_submit_audit_events,
 )
 from ai_orchestrator.browser_tool.submit_execution_gate import (
+    BlockReason,
     ExecutionGateInput,
     ExecutionGateResult,
     evaluate_execution_gate,
-    BlockReason,
 )
-
 
 # ---------------------------------------------------------------------------
 # STEP 0 상수 — git alignment (검증 시점: 2026-05-06)
 # ---------------------------------------------------------------------------
 
-STEP0_LOCAL_HEAD   = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
-STEP0_ORIGIN_HEAD  = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
-STEP0_SERVER_HEAD  = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
-STEP0_UNTRACKED    = ["BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"]
-STEP0_VERDICT      = "WARN_GATE_CONTROLLED_INTEGRATION_WITH_NONBLOCKING_UNTRACKED"
+STEP0_LOCAL_HEAD = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
+STEP0_ORIGIN_HEAD = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
+STEP0_SERVER_HEAD = "7460a15ff0b79c19c20f4eda0c43956880db28f2"
+STEP0_UNTRACKED = ["BROWSER_OPEN_TYPE_CLOSE_CONTROLLED_PREFLIGHT.md"]
+STEP0_VERDICT = "WARN_GATE_CONTROLLED_INTEGRATION_WITH_NONBLOCKING_UNTRACKED"
 
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_preview_bundle():
@@ -90,6 +80,7 @@ def mock_preview_bundle():
 # STEP 0 판정 검증
 # ---------------------------------------------------------------------------
 
+
 class TestStep0GitAlignment:
     """STEP 0: HEAD/origin/master/server HEAD 일치 여부."""
 
@@ -123,36 +114,44 @@ class TestStep0GitAlignment:
 # Module import smoke
 # ---------------------------------------------------------------------------
 
+
 class TestModuleImport:
     """필요한 모든 모듈이 import 가능한지 확인."""
 
     def test_submit_policy_importable(self):
         from ai_orchestrator.browser_tool.submit_policy import validate_submit_policy
+
         assert callable(validate_submit_policy)
 
     def test_submit_preview_importable(self):
         from ai_orchestrator.browser_tool.submit_preview import build_submit_preview
+
         assert callable(build_submit_preview)
 
     def test_controlled_submit_importable(self):
         from ai_orchestrator.browser_tool.controlled_submit import build_controlled_submit_result
+
         assert callable(build_controlled_submit_result)
 
     def test_submit_audit_log_importable(self):
         from ai_orchestrator.browser_tool.submit_audit_log import (
-            build_submit_audit_event, append_submit_audit_event,
+            append_submit_audit_event,
+            build_submit_audit_event,
         )
+
         assert callable(build_submit_audit_event)
         assert callable(append_submit_audit_event)
 
     def test_execution_gate_importable(self):
         from ai_orchestrator.browser_tool.submit_execution_gate import evaluate_execution_gate
+
         assert callable(evaluate_execution_gate)
 
 
 # ---------------------------------------------------------------------------
 # Controlled path integration: GATE_ALLOW_CONTROLLED
 # ---------------------------------------------------------------------------
+
 
 class TestGateAllowControlledIntegration:
     """
@@ -240,6 +239,7 @@ class TestGateAllowControlledIntegration:
 # Blocked path integration: GATE_BLOCK
 # ---------------------------------------------------------------------------
 
+
 class TestGateBlockIntegration:
     """
     차단 경로 통합 검증.
@@ -322,6 +322,7 @@ class TestGateBlockIntegration:
 # ---------------------------------------------------------------------------
 # Audit event integration
 # ---------------------------------------------------------------------------
+
 
 class TestAuditIntegration:
     """audit_event 생성 후 gate 연계 검증."""
@@ -424,6 +425,7 @@ class TestAuditIntegration:
 # ---------------------------------------------------------------------------
 # Production submit separation
 # ---------------------------------------------------------------------------
+
 
 class TestProductionSubmitSeparation:
     """production_submit_enabled 분리 원칙 integration 검증."""

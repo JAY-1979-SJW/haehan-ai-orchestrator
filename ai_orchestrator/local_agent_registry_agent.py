@@ -1,23 +1,31 @@
 """Agent registration, authentication, and connection-state helpers."""
+
 from __future__ import annotations
 
 import hashlib
 import secrets
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 from .local_agent_models import LocalAgent, RegisterResult
 from .local_agent_registry_common import (
-    _lock, _agents, _tasks,
-    _now_iso, HEARTBEAT_STALE_SECONDS, ACTIVE_TASK_STATUSES,
+    ACTIVE_TASK_STATUSES,
+    HEARTBEAT_STALE_SECONDS,
+    _agents,
+    _lock,
+    _now_iso,
+    _tasks,
 )
-
 
 # ── 등록 / 조회 ──────────────────────────────────────────────────────────
 
+
 def register_agent(
-    *, host: str, os_name: str, version: str, requested_by: str,
+    *,
+    host: str,
+    os_name: str,
+    version: str,
+    requested_by: str,
     smoke_test: bool = False,
 ) -> RegisterResult:
     """새 에이전트 등록. agent_id + device_token 발급, 서버는 토큰 해시만 저장.
@@ -48,7 +56,7 @@ def register_agent(
     return RegisterResult(agent=agent, device_token=device_token)
 
 
-def get_agent(agent_id: str) -> Optional[LocalAgent]:
+def get_agent(agent_id: str) -> LocalAgent | None:
     return _agents.get(agent_id)
 
 
@@ -56,7 +64,7 @@ def list_agents() -> list[dict]:
     return [a.to_safe() for a in _agents.values()]
 
 
-def authenticate_agent(agent_id: str, device_token: str) -> Optional[LocalAgent]:
+def authenticate_agent(agent_id: str, device_token: str) -> LocalAgent | None:
     """agent_id + device_token 원문을 검증. 성공 시 LocalAgent, 실패 시 None.
 
     - 타이밍 공격 방지: secrets.compare_digest 로 상수 시간 비교.
@@ -79,7 +87,8 @@ def authenticate_agent(agent_id: str, device_token: str) -> Optional[LocalAgent]
 
 # ── 연결 상태 helper ─────────────────────────────────────────────────────
 
-def set_agent_connected(agent_id: str, now: Optional[str] = None) -> None:
+
+def set_agent_connected(agent_id: str, now: str | None = None) -> None:
     with _lock:
         a = _agents.get(agent_id)
         if a is None:
@@ -90,7 +99,7 @@ def set_agent_connected(agent_id: str, now: Optional[str] = None) -> None:
         a.disconnected_at = ""
 
 
-def set_agent_last_seen(agent_id: str, now: Optional[str] = None) -> None:
+def set_agent_last_seen(agent_id: str, now: str | None = None) -> None:
     with _lock:
         a = _agents.get(agent_id)
         if a is None:
@@ -98,7 +107,7 @@ def set_agent_last_seen(agent_id: str, now: Optional[str] = None) -> None:
         a.last_seen_at = now if now is not None else _now_iso()
 
 
-def set_agent_disconnected(agent_id: str, now: Optional[str] = None) -> None:
+def set_agent_disconnected(agent_id: str, now: str | None = None) -> None:
     # last_seen_at은 기존 값 유지 (disconnect 시각은 별도 필드로만 기록)
     with _lock:
         a = _agents.get(agent_id)
@@ -109,19 +118,13 @@ def set_agent_disconnected(agent_id: str, now: Optional[str] = None) -> None:
 
 def get_active_task_count(agent_id: str) -> int:
     with _lock:
-        return sum(
-            1 for t in _tasks.values()
-            if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES
-        )
+        return sum(1 for t in _tasks.values() if t.agent_id == agent_id and t.status in ACTIVE_TASK_STATUSES)
 
 
 def get_current_task_id(agent_id: str) -> str:
     """running task 중 started_at 또는 updated_at 기준 최신 1개의 task_id."""
     with _lock:
-        running = [
-            t for t in _tasks.values()
-            if t.agent_id == agent_id and t.status == "running"
-        ]
+        running = [t for t in _tasks.values() if t.agent_id == agent_id and t.status == "running"]
     if not running:
         return ""
     best = max(running, key=lambda t: t.started_at or t.updated_at)
@@ -137,18 +140,18 @@ def get_task_count(agent_id: str) -> int:
 def get_completed_task_count(agent_id: str) -> int:
     """agent의 completed task 수."""
     with _lock:
-        return sum(1 for t in _tasks.values()
-                   if t.agent_id == agent_id and t.status == "completed")
+        return sum(1 for t in _tasks.values() if t.agent_id == agent_id and t.status == "completed")
 
 
 def get_failed_task_count(agent_id: str) -> int:
     """agent의 failed/error/cancelled task 수."""
     with _lock:
-        return sum(1 for t in _tasks.values()
-                   if t.agent_id == agent_id and t.status in ("failed", "error", "cancelled"))
+        return sum(
+            1 for t in _tasks.values() if t.agent_id == agent_id and t.status in ("failed", "error", "cancelled")
+        )
 
 
-def get_agent_status(agent_id: str, now: Optional[str] = None) -> str:
+def get_agent_status(agent_id: str, now: str | None = None) -> str:
     """agent_id 기준 상태 계산 (저장 필드 아님)."""
     a = _agents.get(agent_id)
     if a is None:
@@ -172,9 +175,17 @@ def get_agent_status(agent_id: str, now: Optional[str] = None) -> str:
 
 
 __all__ = [
-    "register_agent", "get_agent", "list_agents", "authenticate_agent",
-    "set_agent_connected", "set_agent_last_seen", "set_agent_disconnected",
-    "get_active_task_count", "get_current_task_id",
-    "get_task_count", "get_completed_task_count", "get_failed_task_count",
+    "authenticate_agent",
+    "get_active_task_count",
+    "get_agent",
     "get_agent_status",
+    "get_completed_task_count",
+    "get_current_task_id",
+    "get_failed_task_count",
+    "get_task_count",
+    "list_agents",
+    "register_agent",
+    "set_agent_connected",
+    "set_agent_disconnected",
+    "set_agent_last_seen",
 ]
