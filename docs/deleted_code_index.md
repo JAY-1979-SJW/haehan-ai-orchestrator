@@ -1,0 +1,902 @@
+# 삭제된 코드 목록 (2026-09-23 정리)
+
+정리 직전 상태 태그: `backup/pre-cleanup-20260923` (커밋 889e4003). 삭제 파일 653개.
+
+## 복원 방법
+
+```bash
+# 파일 하나 / 폴더 통째로 되살리기
+git checkout backup/pre-cleanup-20260923 -- scripts/naver/mail/
+# 삭제 당시 내용만 보기
+git show backup/pre-cleanup-20260923:<경로>
+```
+
+git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.zip` (삭제 파일 전체, 경로 유지 zip).
+
+삭제 근거·검증은 각 커밋 메시지와 `docs/specs/2026-09-23_other_app_code_removal.md` 참고.
+
+## 폴더별 목록
+
+<details><summary><code>admin-web/src</code> — 124개</summary>
+
+- `admin-web/src/app/(legacy)/admin/inquiries/InquiriesClient.tsx`
+- `admin-web/src/app/(legacy)/admin/inquiries/page.tsx`
+- `admin-web/src/app/(legacy)/admin/licenses/page.tsx`
+- `admin-web/src/app/(legacy)/admin/page.tsx`
+- `admin-web/src/app/(legacy)/admin/users/page.tsx`
+- `admin-web/src/app/(legacy)/agent/AgentClient.tsx`
+- `admin-web/src/app/(legacy)/agent/page.tsx`
+- `admin-web/src/app/(legacy)/bid/page.tsx`
+- `admin-web/src/app/(legacy)/browser-approvals/page.tsx`
+- `admin-web/src/app/(legacy)/community/CommunityClient.tsx`
+- `admin-web/src/app/(legacy)/community/communityShared.ts`
+- `admin-web/src/app/(legacy)/community/page.tsx`
+- `admin-web/src/app/(legacy)/community/sections/AutoReports.tsx`
+- `admin-web/src/app/(legacy)/community/sections/InstantAnalyze.tsx`
+- `admin-web/src/app/(legacy)/community/sections/MonitoredSites.tsx`
+- `admin-web/src/app/(legacy)/community/sections/ReportView.tsx`
+- `admin-web/src/app/(legacy)/community/sections/TelegramNotify.tsx`
+- `admin-web/src/app/(legacy)/dataportal/page.tsx`
+- `admin-web/src/app/(legacy)/eum/page.tsx`
+- `admin-web/src/app/(legacy)/external-tasks/externalTasksData.ts`
+- `admin-web/src/app/(legacy)/external-tasks/page.tsx`
+- `admin-web/src/app/(legacy)/file-map/page.tsx`
+- `admin-web/src/app/(legacy)/gabia/gabiaData.ts`
+- `admin-web/src/app/(legacy)/gabia/page.tsx`
+- `admin-web/src/app/(legacy)/google/GoogleChat.tsx`
+- `admin-web/src/app/(legacy)/google/GoogleClient.tsx`
+- `admin-web/src/app/(legacy)/google/ServiceGrid.tsx`
+- `admin-web/src/app/(legacy)/google/[service]/page.tsx`
+- `admin-web/src/app/(legacy)/google/[service]/serviceConfig.ts`
+- `admin-web/src/app/(legacy)/google/googleCatalog.ts`
+- `admin-web/src/app/(legacy)/google/page.tsx`
+- `admin-web/src/app/(legacy)/grant-radar/page.tsx`
+- `admin-web/src/app/(legacy)/hanafax/page.tsx`
+- `admin-web/src/app/(legacy)/local-agents/LocalAgentsClient.tsx`
+- `admin-web/src/app/(legacy)/local-agents/RegistrationCodesPanel.tsx`
+- `admin-web/src/app/(legacy)/local-agents/components/DetailSections.tsx`
+- `admin-web/src/app/(legacy)/local-agents/components/DiagnosticsSection.tsx`
+- `admin-web/src/app/(legacy)/local-agents/components/RoleBadge.tsx`
+- `admin-web/src/app/(legacy)/local-agents/components/TaskActionCell.tsx`
+- `admin-web/src/app/(legacy)/local-agents/components/helpers.ts`
+- `admin-web/src/app/(legacy)/local-agents/hooks/useAgentData.ts`
+- `admin-web/src/app/(legacy)/local-agents/hooks/useCurrentUser.ts`
+- `admin-web/src/app/(legacy)/local-agents/hooks/useModals.ts`
+- `admin-web/src/app/(legacy)/local-agents/hooks/usePolling.ts`
+- `admin-web/src/app/(legacy)/local-agents/hooks/useTaskData.ts`
+- `admin-web/src/app/(legacy)/local-agents/page.tsx`
+- `admin-web/src/app/(legacy)/local-agents/registrationCodesData.ts`
+- `admin-web/src/app/(legacy)/market-research/MarketResearchClient.tsx`
+- `admin-web/src/app/(legacy)/market-research/page.tsx`
+- `admin-web/src/app/(legacy)/marketing/MarketingClient.tsx`
+- `admin-web/src/app/(legacy)/marketing/MarketingOpsClient.tsx`
+- `admin-web/src/app/(legacy)/marketing/page.tsx`
+- `admin-web/src/app/(legacy)/server/ServerClient.tsx`
+- `admin-web/src/app/(legacy)/server/page.tsx`
+- `admin-web/src/app/(legacy)/settings/page.tsx`
+- `admin-web/src/app/(legacy)/settings/sites/page.tsx`
+- `admin-web/src/app/(legacy)/youtube/UploadCard.tsx`
+- `admin-web/src/app/(legacy)/youtube/YoutubeClient.tsx`
+- `admin-web/src/app/(legacy)/youtube/page.tsx`
+- `admin-web/src/app/(legacy)/youtube/youtubeShared.ts`
+- `admin-web/src/app/api/file-map/auth/clear/route.ts`
+- `admin-web/src/app/api/file-map/auth/mock-verify/route.ts`
+- `admin-web/src/app/api/file-map/auth/status/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-approval-request/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-audit/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-execute/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-execution-package/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-plan/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-preflight/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-preview/route.ts`
+- `admin-web/src/app/api/file-map/cleanup-rollback/route.ts`
+- `admin-web/src/app/api/file-map/report/route.ts`
+- `admin-web/src/components/app/AppInstallButton.tsx`
+- `admin-web/src/components/file-map/FileMapApprovalRequest.tsx`
+- `admin-web/src/components/file-map/FileMapAuditLog.tsx`
+- `admin-web/src/components/file-map/FileMapCleanupPlanViewer.tsx`
+- `admin-web/src/components/file-map/FileMapCleanupPreview.tsx`
+- `admin-web/src/components/file-map/FileMapExecute.tsx`
+- `admin-web/src/components/file-map/FileMapExecuteFlow.tsx`
+- `admin-web/src/components/file-map/FileMapExecuteResult.tsx`
+- `admin-web/src/components/file-map/FileMapExecutionPackage.tsx`
+- `admin-web/src/components/file-map/FileMapPreflight.tsx`
+- `admin-web/src/components/file-map/FileMapReportViewer.tsx`
+- `admin-web/src/components/file-map/approval/ApprovalChecklist.tsx`
+- `admin-web/src/components/file-map/approval/ApprovalGroupsList.tsx`
+- `admin-web/src/components/file-map/approval/ApprovalHeader.tsx`
+- `admin-web/src/components/file-map/approval/ApprovalPolicyNotice.tsx`
+- `admin-web/src/components/file-map/approval/ApprovalSummaryCards.tsx`
+- `admin-web/src/components/file-map/approval/ExcludedGroupsList.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionBlockedOperations.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionGroupSelector.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionHeader.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionOperationsList.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionPreflight.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionRollbackInfo.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionSecurityPolicy.tsx`
+- `admin-web/src/components/file-map/execution/ExecutionSummaryCards.tsx`
+- `admin-web/src/components/file-map/index.ts`
+- `admin-web/src/components/file-map/report/ReportContent.tsx`
+- `admin-web/src/components/file-map/report/ReportHeader.tsx`
+- `admin-web/src/components/file-map/report/ReportMaskingSettings.tsx`
+- `admin-web/src/components/file-map/report/ReportPolicyNotice.tsx`
+- `admin-web/src/components/ui/UsageHelp.tsx`
+- `admin-web/src/lib/auth-session.ts`
+- `admin-web/src/lib/file-map/__tests__/pythonExecutor.test.ts`
+- `admin-web/src/lib/file-map/approvalToken.ts`
+- `admin-web/src/lib/file-map/executePayload.ts`
+- `admin-web/src/lib/file-map/pythonExecutor.ts`
+- `admin-web/src/lib/fileMapApproval.ts`
+- `admin-web/src/lib/fileMapAudit.ts`
+- `admin-web/src/lib/fileMapCleanupPlan.ts`
+- `admin-web/src/lib/fileMapExecutor.ts`
+- `admin-web/src/lib/fileMapRollback.ts`
+- `admin-web/src/lib/fileMapSettings.ts`
+- `admin-web/src/lib/localConfig.ts`
+- `admin-web/src/lib/privacy.ts`
+- `admin-web/src/lib/sitesCatalog.ts`
+- `admin-web/src/server/file-map/approvalRequestBuilder.ts`
+- `admin-web/src/server/file-map/auditStore.ts`
+- `admin-web/src/server/file-map/cleanupPreviewBuilder.ts`
+- `admin-web/src/server/file-map/executionPackageBuilder.ts`
+- `admin-web/src/server/file-map/planCache.ts`
+- `admin-web/src/server/file-map/reportBuilder.ts`
+- `admin-web/src/server/file-map/rollbackStore.ts`
+
+</details>
+
+<details><summary><code>agent/tests</code> — 77개</summary>
+
+- `agent/tests/test_agent_readonly.py`
+- `agent/tests/test_api_client_unit.py`
+- `agent/tests/test_approval_policy_unit.py`
+- `agent/tests/test_cleanup_audit.py`
+- `agent/tests/test_cleanup_executor.py`
+- `agent/tests/test_cleanup_paths.py`
+- `agent/tests/test_cleanup_policy.py`
+- `agent/tests/test_cleanup_preflight.py`
+- `agent/tests/test_cleanup_rollback.py`
+- `agent/tests/test_excel_batch_executor.py`
+- `agent/tests/test_excel_cell_writer.py`
+- `agent/tests/test_excel_change_planner.py`
+- `agent/tests/test_excel_change_tracker.py`
+- `agent/tests/test_excel_column_writer.py`
+- `agent/tests/test_excel_com_connector_unit.py`
+- `agent/tests/test_excel_com_smoke.py`
+- `agent/tests/test_excel_connector.py`
+- `agent/tests/test_excel_copy_saver.py`
+- `agent/tests/test_excel_data_validator.py`
+- `agent/tests/test_excel_diff_reporter.py`
+- `agent/tests/test_excel_formula_scanner.py`
+- `agent/tests/test_excel_formula_validator.py`
+- `agent/tests/test_excel_formula_writer.py`
+- `agent/tests/test_excel_header_detector.py`
+- `agent/tests/test_excel_integrations.py`
+- `agent/tests/test_excel_original_save_policy.py`
+- `agent/tests/test_excel_pack_construction_estimate.py`
+- `agent/tests/test_excel_pdf_exporter.py`
+- `agent/tests/test_excel_reporter.py`
+- `agent/tests/test_excel_row_finder.py`
+- `agent/tests/test_excel_row_writer.py`
+- `agent/tests/test_excel_structure_analyzer.py`
+- `agent/tests/test_excel_style_copier.py`
+- `agent/tests/test_excel_summary_sheet_writer.py`
+- `agent/tests/test_excel_table_analyzer.py`
+- `agent/tests/test_excel_total_validator.py`
+- `agent/tests/test_excel_workflows.py`
+- `agent/tests/test_file_policy_edges.py`
+- `agent/tests/test_hancom_discovery.py`
+- `agent/tests/test_hancom_dll_resolver.py`
+- `agent/tests/test_hancom_hwp_com_smoke.py`
+- `agent/tests/test_hancom_hwp_path_policy.py`
+- `agent/tests/test_hancom_hwp_security_module.py`
+- `agent/tests/test_hancom_hwp_security_module_detailed.py`
+- `agent/tests/test_hancom_hwp_workflows.py`
+- `agent/tests/test_hancom_hwpx_package_validator.py`
+- `agent/tests/test_hwp_com_connector_unit.py`
+- `agent/tests/test_import_smoke.py`
+- `agent/tests/test_inspect_after_login.py`
+- `agent/tests/test_local_agent_client.py`
+- `agent/tests/test_local_agent_contract.py`
+- `agent/tests/test_local_agent_running_and_safe_actions.py`
+- `agent/tests/test_local_agent_server_router_gate.py`
+- `agent/tests/test_local_agent_unit.py`
+- `agent/tests/test_local_agent_ws_lifecycle.py`
+- `agent/tests/test_local_agent_ws_runner.py`
+- `agent/tests/test_local_agent_ws_smoke.py`
+- `agent/tests/test_local_file_map.py`
+- `agent/tests/test_local_file_map_cleanup_planner.py`
+- `agent/tests/test_local_file_map_folder_summarizer.py`
+- `agent/tests/test_local_file_map_report_privacy.py`
+- `agent/tests/test_local_inventory_app_map.py`
+- `agent/tests/test_local_inventory_smoke.py`
+- `agent/tests/test_local_software_docker_download.py`
+- `agent/tests/test_local_software_install_docker.py`
+- `agent/tests/test_local_software_install_executor.py`
+- `agent/tests/test_local_software_install_plan.py`
+- `agent/tests/test_local_software_integrated_download_install.py`
+- `agent/tests/test_local_software_manager.py`
+- `agent/tests/test_local_software_vscode_fix.py`
+- `agent/tests/test_local_software_windows_prereq.py`
+- `agent/tests/test_login_with_secret.py`
+- `agent/tests/test_result_spool_unit.py`
+- `agent/tests/test_secret_store.py`
+- `agent/tests/test_setup_hancom_security_module.py`
+- `agent/tests/test_task_executor_com_policy_flow.py`
+- `agent/tests/test_task_executor_unit.py`
+
+</details>
+
+<details><summary><code>scripts/ops</code> — 67개</summary>
+
+- `scripts/ops/audit_5050_phase1e_adapter_implementation_plan.py`
+- `scripts/ops/audit_5050_phase1f_adapter_skeleton_only.py`
+- `scripts/ops/audit_5050_phase1g_adapter_unit_implementation.py`
+- `scripts/ops/audit_5050_phase1h_route_wrapper_candidate_feature_flag_off.py`
+- `scripts/ops/audit_5050_phase1i_staging_dry_run_internal_smoke.py`
+- `scripts/ops/audit_5050_phase1j2_same_contract_response_schema_freeze.py`
+- `scripts/ops/audit_5050_phase1j3_caller_migration_plan.py`
+- `scripts/ops/audit_5050_phase1j4_caller_migration_dry_run.py`
+- `scripts/ops/audit_5050_phase1j5_get_inbox_caller_confirmation_and_migration_plan.py`
+- `scripts/ops/audit_5050_phase1j6_get_inbox_disable_readiness_review.py`
+- `scripts/ops/audit_5050_phase1j7_get_inbox_disable_plan_approval_gate.py`
+- `scripts/ops/audit_5050_phase1j8_get_inbox_disable_execution_after_approval.py`
+- `scripts/ops/audit_5050_phase1j_same_contract_disable_candidate_review.py`
+- `scripts/ops/audit_5050_phase1k_wrapper_route_integration_preflight.py`
+- `scripts/ops/audit_5050_phase1l_feature_flag_off_route_integration_skeleton.py`
+- `scripts/ops/audit_5050_phase1m_route_integration_skeleton_internal_smoke.py`
+- `scripts/ops/audit_5050_phase1n_route_integration_final_preflight.py`
+- `scripts/ops/audit_5050_phase1o_router_touch_design_only.py`
+- `scripts/ops/audit_5050_phase1p_router_integration_implementation_plan.py`
+- `scripts/ops/audit_5050_phase1q_closeout_router_touch_scope_pin.py`
+- `scripts/ops/audit_5050_phase1q_router_touch_approval_gate.py`
+- `scripts/ops/audit_5050_phase1r_actual_router_touch_feature_flag_off.py`
+- `scripts/ops/audit_5050_phase1s_disabled_router_guard_behavior.py`
+- `scripts/ops/audit_5050_phase1t_disabled_guard_expanded_smoke.py`
+- `scripts/ops/audit_app_approval_gate_readonly_polish.py`
+- `scripts/ops/audit_app_deployment_readonly_polish.py`
+- `scripts/ops/audit_app_external_sites_readonly_polish.py`
+- `scripts/ops/audit_app_logs_audit_readonly_view.py`
+- `scripts/ops/audit_app_nav_active_state_polish.py`
+- `scripts/ops/audit_app_storage_readonly_polish.py`
+- `scripts/ops/audit_app_task_detail_readonly_polish.py`
+- `scripts/ops/audit_backend_operation_stabilization_final.py`
+- `scripts/ops/audit_backend_pre_deploy_smoke_plan.py`
+- `scripts/ops/audit_desktop_agent_common_spec.py`
+- `scripts/ops/audit_desktop_agentrun_smoke_blocker.py`
+- `scripts/ops/audit_desktop_app_design.py`
+- `scripts/ops/audit_desktop_app_watchdog.py`
+- `scripts/ops/audit_desktop_ui_browser_screenshot_wiring.py`
+- `scripts/ops/audit_desktop_webview_browser_cdp_package_smoke.py`
+- `scripts/ops/audit_desktop_webview_local_e2e_smoke.py`
+- `scripts/ops/audit_desktop_webview_pyinstaller_package.py`
+- `scripts/ops/audit_desktop_webview_release_install.py`
+- `scripts/ops/audit_haehan_admin_mode_webview_lazy_load.py`
+- `scripts/ops/audit_haehan_consent_dialog.py`
+- `scripts/ops/audit_haehan_desktop_install_shortcut.py`
+- `scripts/ops/audit_haehan_desktop_release_baseline.py`
+- `scripts/ops/audit_haehan_desktop_user_run_baseline.py`
+- `scripts/ops/audit_haehan_legacy_entrypoint_guard.py`
+- `scripts/ops/audit_haehan_single_exe_build.py`
+- `scripts/ops/audit_haehan_single_exe_launcher_foundation.py`
+- `scripts/ops/audit_haehan_stash_safe_restore.py`
+- `scripts/ops/audit_haehan_tray_registration_merge.py`
+- `scripts/ops/audit_haehan_whoami_route.py`
+- `scripts/ops/audit_local_agent_exception_handler_p2.py`
+- `scripts/ops/audit_local_agent_ip_allowlist_relax_deploy.py`
+- `scripts/ops/audit_local_agent_preflight_p1.py`
+- `scripts/ops/audit_local_agent_provider_error_p3.py`
+- `scripts/ops/audit_local_desktop_agent_live_connection.py`
+- `scripts/ops/audit_public_local_agent_ws_from_user_ip.py`
+- `scripts/ops/audit_trusted_session_user_approval_policy.py`
+- `scripts/ops/live_check_login_flow_20260520.py`
+- `scripts/ops/setup_github_webhook.py`
+- `scripts/ops/smoke_5050_phase1i_staging_dry_run_internal.py`
+- `scripts/ops/smoke_5050_phase1j4_caller_migration_dry_run.py`
+- `scripts/ops/smoke_5050_phase1m_route_integration_skeleton_internal.py`
+- `scripts/ops/smoke_5050_phase1s_disabled_router_guard_behavior.py`
+- `scripts/ops/smoke_app_ui_readonly_backend_status_cards.py`
+
+</details>
+
+<details><summary><code>tests</code> — 62개</summary>
+
+- `tests/test_5050_phase1e_adapter_implementation_plan_20260517.py`
+- `tests/test_5050_phase1f_adapter_skeleton_only_20260517.py`
+- `tests/test_5050_phase1g_adapter_unit_implementation_20260517.py`
+- `tests/test_5050_phase1h_route_wrapper_candidate_feature_flag_off_20260517.py`
+- `tests/test_5050_phase1i_staging_dry_run_internal_smoke_20260517.py`
+- `tests/test_5050_phase1j2_same_contract_response_schema_freeze_20260517.py`
+- `tests/test_5050_phase1j3_caller_migration_plan_20260517.py`
+- `tests/test_5050_phase1j4_caller_migration_dry_run_20260517.py`
+- `tests/test_5050_phase1j5_get_inbox_caller_confirmation_and_migration_plan_20260517.py`
+- `tests/test_5050_phase1j6_get_inbox_disable_readiness_review_20260517.py`
+- `tests/test_5050_phase1j7_get_inbox_disable_plan_approval_gate_20260517.py`
+- `tests/test_5050_phase1j8_get_inbox_disable_execution_after_approval_20260517.py`
+- `tests/test_5050_phase1j_same_contract_disable_candidate_review_20260517.py`
+- `tests/test_5050_phase1k_wrapper_route_integration_preflight_20260517.py`
+- `tests/test_5050_phase1l_feature_flag_off_route_integration_skeleton_20260517.py`
+- `tests/test_5050_phase1m_route_integration_skeleton_internal_smoke_20260517.py`
+- `tests/test_5050_phase1n_route_integration_final_preflight_20260517.py`
+- `tests/test_5050_phase1o_router_touch_design_only_20260517.py`
+- `tests/test_5050_phase1p_router_integration_implementation_plan_20260517.py`
+- `tests/test_5050_phase1q_closeout_router_touch_scope_pin_20260517.py`
+- `tests/test_5050_phase1q_router_touch_approval_gate_20260517.py`
+- `tests/test_5050_phase1r_actual_router_touch_feature_flag_off_20260517.py`
+- `tests/test_5050_phase1s_disabled_router_guard_behavior_20260517.py`
+- `tests/test_5050_phase1t_disabled_guard_expanded_smoke_20260517.py`
+- `tests/test_backend_operation_stabilization_final_20260517.py`
+- `tests/test_backend_pre_deploy_smoke_plan_20260517.py`
+- `tests/test_browser_open_click_close_controlled.py`
+- `tests/test_build_discovery_candidates_script_20260509.py`
+- `tests/test_build_smoke_plan_script_20260509.py`
+- `tests/test_cross_app_api_approval_boundary.py`
+- `tests/test_desktop_common_spec_preflight.py`
+- `tests/test_desktop_legacy_ui_removal.py`
+- `tests/test_desktop_local_agent_daemon.py`
+- `tests/test_desktop_local_runner.py`
+- `tests/test_desktop_new_shell_phase1.py`
+- `tests/test_desktop_new_shell_phase2_ui_smoke.py`
+- `tests/test_desktop_status_provider.py`
+- `tests/test_desktop_task_receiver_20260516.py`
+- `tests/test_desktop_ui_browser_screenshot_wiring.py`
+- `tests/test_desktop_webview_browser_cdp_package_smoke.py`
+- `tests/test_desktop_webview_release_install.py`
+- `tests/test_file_map_executor_service.py`
+- `tests/test_haehan_admin_mode_webview_lazy_load.py`
+- `tests/test_haehan_consent_dialog.py`
+- `tests/test_haehan_desktop_install_shortcut.py`
+- `tests/test_haehan_legacy_entrypoint_guard.py`
+- `tests/test_haehan_single_exe_build_entrypoint.py`
+- `tests/test_haehan_single_exe_launcher_foundation.py`
+- `tests/test_haehan_tray_registration_merge.py`
+- `tests/test_haehan_whoami_route.py`
+- `tests/test_probe_local_agent_ws_readonly.py`
+- `tests/test_run_allowlist_preflight_script_20260509.py`
+- `tests/test_run_smoke_dryrun_script_20260509.py`
+- `tests/test_ui_residue_audit.py`
+- `tests/test_ui_residue_cleanup.py`
+- `tests/test_user_browser_action_gate_20260509.py`
+- `tests/test_user_browser_actions_20260509.py`
+- `tests/test_user_browser_audit_log_20260509.py`
+- `tests/test_user_browser_cdp_20260509.py`
+- `tests/test_user_browser_intent_token_20260509.py`
+- `tests/test_user_browser_secure_login_20260509.py`
+- `tests/test_user_browser_session_20260509.py`
+
+</details>
+
+<details><summary><code>agent/excel</code> — 53개</summary>
+
+- `agent/excel/__init__.py`
+- `agent/excel/analysis_workflows.py`
+- `agent/excel/approval_policy.py`
+- `agent/excel/backup_manager.py`
+- `agent/excel/batch_executor.py`
+- `agent/excel/cell_writer.py`
+- `agent/excel/change_log.py`
+- `agent/excel/change_planner.py`
+- `agent/excel/change_tracker.py`
+- `agent/excel/column_writer.py`
+- `agent/excel/copy_saver.py`
+- `agent/excel/data_validator.py`
+- `agent/excel/diff_reporter.py`
+- `agent/excel/execution_workflows.py`
+- `agent/excel/formula_scanner.py`
+- `agent/excel/formula_validator.py`
+- `agent/excel/formula_writer.py`
+- `agent/excel/header_detector.py`
+- `agent/excel/hidden_filter_detector.py`
+- `agent/excel/integrations/__init__.py`
+- `agent/excel/integrations/bid_analysis_adapter.py`
+- `agent/excel/integrations/material_db_adapter.py`
+- `agent/excel/merged_cell_detector.py`
+- `agent/excel/operation_executor.py`
+- `agent/excel/operation_normalizer.py`
+- `agent/excel/operation_schema.py`
+- `agent/excel/original_save_policy.py`
+- `agent/excel/packs/__init__.py`
+- `agent/excel/packs/construction_estimate.py`
+- `agent/excel/packs/estimate_workflows.py`
+- `agent/excel/packs/material_price_check.py`
+- `agent/excel/packs/price_check_workflows.py`
+- `agent/excel/packs/settlement_review.py`
+- `agent/excel/packs/settlement_workflows.py`
+- `agent/excel/pdf_exporter.py`
+- `agent/excel/pdf_workflows.py`
+- `agent/excel/planning_workflows.py`
+- `agent/excel/print_area_manager.py`
+- `agent/excel/report_table_builder.py`
+- `agent/excel/report_workflows.py`
+- `agent/excel/reporter.py`
+- `agent/excel/row_finder.py`
+- `agent/excel/row_writer.py`
+- `agent/excel/structure_analyzer.py`
+- `agent/excel/style_copier.py`
+- `agent/excel/summary_sheet_writer.py`
+- `agent/excel/table_analyzer.py`
+- `agent/excel/table_region_detector.py`
+- `agent/excel/total_validator.py`
+- `agent/excel/type_validator.py`
+- `agent/excel/validation_workflows.py`
+- `agent/excel/validator.py`
+- `agent/excel/workflows.py`
+
+</details>
+
+<details><summary><code>agent/local_inventory</code> — 43개</summary>
+
+- `agent/local_inventory/__init__.py`
+- `agent/local_inventory/app_detector.py`
+- `agent/local_inventory/app_map/__init__.py`
+- `agent/local_inventory/app_map/app_map_builder.py`
+- `agent/local_inventory/app_map/capability_mapper.py`
+- `agent/local_inventory/app_map/file_association_scanner.py`
+- `agent/local_inventory/app_map/portable_app_detector.py`
+- `agent/local_inventory/app_map/shortcut_scanner.py`
+- `agent/local_inventory/app_map/software_catalog.py`
+- `agent/local_inventory/change_watcher.py`
+- `agent/local_inventory/com_scanner.py`
+- `agent/local_inventory/consent_policy.py`
+- `agent/local_inventory/diagnostics.py`
+- `agent/local_inventory/dll_mapper.py`
+- `agent/local_inventory/file_map/__init__.py`
+- `agent/local_inventory/file_map/classifier.py`
+- `agent/local_inventory/file_map/cleanup_audit.py`
+- `agent/local_inventory/file_map/cleanup_executor.py`
+- `agent/local_inventory/file_map/cleanup_executor_api.py`
+- `agent/local_inventory/file_map/cleanup_paths.py`
+- `agent/local_inventory/file_map/cleanup_planner.py`
+- `agent/local_inventory/file_map/cleanup_policy.py`
+- `agent/local_inventory/file_map/cleanup_preflight.py`
+- `agent/local_inventory/file_map/cleanup_report_generator.py`
+- `agent/local_inventory/file_map/cleanup_rollback.py`
+- `agent/local_inventory/file_map/duplicate_detector.py`
+- `agent/local_inventory/file_map/folder_summarizer.py`
+- `agent/local_inventory/file_map/markdown_renderer.py`
+- `agent/local_inventory/file_map/models.py`
+- `agent/local_inventory/file_map/privacy.py`
+- `agent/local_inventory/file_map/report_builder.py`
+- `agent/local_inventory/file_map/scanner.py`
+- `agent/local_inventory/file_map/storage.py`
+- `agent/local_inventory/filesystem_scanner.py`
+- `agent/local_inventory/inventory.py`
+- `agent/local_inventory/inventory_store.py`
+- `agent/local_inventory/metadata.py`
+- `agent/local_inventory/policy.py`
+- `agent/local_inventory/privacy_filter.py`
+- `agent/local_inventory/registry_scanner.py`
+- `agent/local_inventory/scan_level.py`
+- `agent/local_inventory/scan_scope.py`
+- `agent/local_inventory/scanner.py`
+
+</details>
+
+<details><summary><code>desktop</code> — 26개</summary>
+
+- `desktop/DESIGN.md`
+- `desktop/LEGACY_UI_DEPRECATED.md`
+- `desktop/WEB_DESIGN.md`
+- `desktop/__init__.py`
+- `desktop/_broadcast.py`
+- `desktop/admin_webview.py`
+- `desktop/agent_runtime_boundary.py`
+- `desktop/app_config.py`
+- `desktop/audit_desktop.py`
+- `desktop/blog_cafe_actions.py`
+- `desktop/browser_routes.py`
+- `desktop/browser_runtime_boundary.py`
+- `desktop/consent.py`
+- `desktop/local_agent_daemon.py`
+- `desktop/local_agent_service.py`
+- `desktop/local_runner.py`
+- `desktop/local_server.py`
+- `desktop/login_watcher.py`
+- `desktop/main_launcher.py`
+- `desktop/remote_access.py`
+- `desktop/status_provider.py`
+- `desktop/task_receiver.py`
+- `desktop/tray_runtime.py`
+- `desktop/user_settings.py`
+- `desktop/ws_server.py`
+- `desktop/ws_ui.py`
+
+</details>
+
+<details><summary><code>ai_orchestrator/local_agent</code> — 20개</summary>
+
+- `ai_orchestrator/local_agent/browser/site_map_store.py`
+- `ai_orchestrator/local_agent/official_alternative_route_finder.py`
+- `ai_orchestrator/local_agent/scenarios/__init__.py`
+- `ai_orchestrator/local_agent/scenarios/cafe_to_blog.py`
+- `ai_orchestrator/local_agent/scenarios/content_research_to_blog.py`
+- `ai_orchestrator/local_agent/scenarios/document_download.py`
+- `ai_orchestrator/local_agent/scenarios/financial_readonly.py`
+- `ai_orchestrator/local_agent/scenarios/form_submit_with_permission.py`
+- `ai_orchestrator/local_agent/scenarios/government_readonly.py`
+- `ai_orchestrator/local_agent/scenarios/message_send_with_permission.py`
+- `ai_orchestrator/local_agent/security_program_trust_list.py`
+- `ai_orchestrator/local_agent/security_program_user_install_result_sanitizer.py`
+- `ai_orchestrator/local_agent/security_route_policy.py`
+- `ai_orchestrator/local_agent/user_browser_action_gate.py`
+- `ai_orchestrator/local_agent/user_browser_actions.py`
+- `ai_orchestrator/local_agent/user_browser_audit_log.py`
+- `ai_orchestrator/local_agent/user_browser_cdp.py`
+- `ai_orchestrator/local_agent/user_browser_intent_token.py`
+- `ai_orchestrator/local_agent/user_browser_secure_login.py`
+- `ai_orchestrator/local_agent/user_browser_session.py`
+
+</details>
+
+<details><summary><code>agent/hancom</code> — 15개</summary>
+
+- `agent/hancom/__init__.py`
+- `agent/hancom/discovery/__init__.py`
+- `agent/hancom/discovery/com.py`
+- `agent/hancom/discovery/diagnostics.py`
+- `agent/hancom/discovery/dll_resolver.py`
+- `agent/hancom/discovery/installation.py`
+- `agent/hancom/discovery/registry.py`
+- `agent/hancom/hwp/__init__.py`
+- `agent/hancom/hwp/automation_connector.py`
+- `agent/hancom/hwp/converter.py`
+- `agent/hancom/hwp/path_policy.py`
+- `agent/hancom/hwp/security_module.py`
+- `agent/hancom/hwp/workflows.py`
+- `agent/hancom/hwpx/__init__.py`
+- `agent/hancom/hwpx/package_validator.py`
+
+</details>
+
+<details><summary><code>agent/local_software_manager</code> — 15개</summary>
+
+- `agent/local_software_manager/__init__.py`
+- `agent/local_software_manager/catalog.py`
+- `agent/local_software_manager/detector.py`
+- `agent/local_software_manager/docker_download.py`
+- `agent/local_software_manager/docker_installer.py`
+- `agent/local_software_manager/download_provider.py`
+- `agent/local_software_manager/install_executor.py`
+- `agent/local_software_manager/install_plan.py`
+- `agent/local_software_manager/install_sources.py`
+- `agent/local_software_manager/install_validator.py`
+- `agent/local_software_manager/installer_verifier.py`
+- `agent/local_software_manager/models.py`
+- `agent/local_software_manager/post_install_verifier.py`
+- `agent/local_software_manager/report_builder.py`
+- `agent/local_software_manager/windows_feature_executor.py`
+
+</details>
+
+<details><summary><code>scripts</code> — 15개</summary>
+
+- `scripts/audit_naver_search_status.py`
+- `scripts/build_desktop_webview_app_windows.py`
+- `scripts/build_discovery_candidates_from_fixture.py`
+- `scripts/build_readonly_smoke_plan.py`
+- `scripts/cdp_event_monitor.py`
+- `scripts/chrome_ui_watcher.py`
+- `scripts/eum_business_dashboard.py`
+- `scripts/eum_task_runner.py`
+- `scripts/probe_local_agent_ws_readonly.py`
+- `scripts/run_allowlist_preflight.py`
+- `scripts/run_readonly_smoke_dryrun.py`
+- `scripts/setup_hancom_security_module.py`
+- `scripts/status_reporter.py`
+- `scripts/ui_residue_audit.py`
+- `scripts/ui_residue_cleanup.py`
+
+</details>
+
+<details><summary><code>scripts/naver_mail</code> — 15개</summary>
+
+- `scripts/naver_mail/__init__.py`
+- `scripts/naver_mail/action_item_dashboard.py`
+- `scripts/naver_mail/batch_runner.py`
+- `scripts/naver_mail/body_pipeline_v2.py`
+- `scripts/naver_mail/business_report.py`
+- `scripts/naver_mail/folder_discovery.py`
+- `scripts/naver_mail/folder_policy.py`
+- `scripts/naver_mail/folder_profile.py`
+- `scripts/naver_mail/inbox_collector.py`
+- `scripts/naver_mail/pii_mask.py`
+- `scripts/naver_mail/read_state_guard.py`
+- `scripts/naver_mail/smart_folder_collector.py`
+- `scripts/naver_mail/time_parser.py`
+- `scripts/naver_mail/unknown_classification_rules.py`
+- `scripts/naver_mail/unread_audit.py`
+
+</details>
+
+<details><summary><code>backend/compat</code> — 14개</summary>
+
+- `backend/compat/__init__.py`
+- `backend/compat/legacy_5050/__init__.py`
+- `backend/compat/legacy_5050/adapters/__init__.py`
+- `backend/compat/legacy_5050/adapters/common.py`
+- `backend/compat/legacy_5050/adapters/inbox_email_fetch_adapter.py`
+- `backend/compat/legacy_5050/adapters/task_approval_adapter.py`
+- `backend/compat/legacy_5050/route_integration/__init__.py`
+- `backend/compat/legacy_5050/route_integration/common.py`
+- `backend/compat/legacy_5050/route_integration/inbox_email_fetch_route_skeleton.py`
+- `backend/compat/legacy_5050/route_integration/task_approval_route_skeleton.py`
+- `backend/compat/legacy_5050/wrappers/__init__.py`
+- `backend/compat/legacy_5050/wrappers/common.py`
+- `backend/compat/legacy_5050/wrappers/inbox_email_fetch_wrapper_candidate.py`
+- `backend/compat/legacy_5050/wrappers/task_approval_wrapper_candidate.py`
+
+</details>
+
+<details><summary><code>scripts/naver</code> — 14개</summary>
+
+- `scripts/naver/blog/community/targeted_engage.py`
+- `scripts/naver/cafe/collection/excel_report.py`
+- `scripts/naver/mail_write.py`
+- `scripts/naver/smartstore/diagnose.py`
+- `scripts/naver/smartstore/find_register_url.py`
+- `scripts/naver/smartstore/find_v2.py`
+- `scripts/naver/smartstore/general_analyzer.py`
+- `scripts/naver/smartstore/general_full_analyze.py`
+- `scripts/naver/smartstore/models.py`
+- `scripts/naver/smartstore/product_analyzer.py`
+- `scripts/naver/smartstore/router.py`
+- `scripts/naver/smartstore/sidebar_expand.py`
+- `scripts/naver/smartstore/sidebar_v3.py`
+- `scripts/naver/smartstore/sitemap.py`
+
+</details>
+
+<details><summary><code>agent</code> — 13개</summary>
+
+- `agent/api_client.py`
+- `agent/app.py`
+- `agent/approval_policy.py`
+- `agent/config.py`
+- `agent/errors.py`
+- `agent/file_policy.py`
+- `agent/local_agent.py`
+- `agent/local_agent_client.py`
+- `agent/local_agent_ws_runner.py`
+- `agent/policy.py`
+- `agent/result_spool.py`
+- `agent/runner.py`
+- `agent/task_executor.py`
+
+</details>
+
+<details><summary><code>scripts/file-map</code> — 10개</summary>
+
+- `scripts/file-map/audit_component_lines.py`
+- `scripts/file-map/audit_modularization.py`
+- `scripts/file-map/audit_security_static.py`
+- `scripts/file-map/generate_file_map_ops_report.py`
+- `scripts/file-map/generate_file_map_status_report.py`
+- `scripts/file-map/ops_monitoring_snapshot.py`
+- `scripts/file-map/run_executor_service_2c_smoke_test.sh`
+- `scripts/file-map/smoke_cleanup_execute_api_dry_run.py`
+- `scripts/file-map/smoke_cleanup_execute_dry_run.py`
+- `scripts/file-map/verify_audit_rollback.py`
+
+</details>
+
+<details><summary><code>scripts/local_agent</code> — 8개</summary>
+
+- `scripts/local_agent/g2b/__init__.py`
+- `scripts/local_agent/naver/cafe_attachments.py`
+- `scripts/local_agent/naver/cafe_explore.py`
+- `scripts/local_agent/naver/cafe_explorer.py`
+- `scripts/local_agent/naver/cafe_list.py`
+- `scripts/local_agent/naver/cafe_scraper.py`
+- `scripts/local_agent/open_user_browser_session.py`
+- `scripts/local_agent/run_universal_ai_site_agent_smoke.py`
+
+</details>
+
+<details><summary><code>mcp_server</code> — 6개</summary>
+
+- `mcp_server/__init__.py`
+- `mcp_server/config.py`
+- `mcp_server/requirements.txt`
+- `mcp_server/server.py`
+- `mcp_server/upstream.py`
+- `mcp_server/write_guard.py`
+
+</details>
+
+<details><summary><code>scripts/archive</code> — 6개</summary>
+
+- `scripts/archive/explore/__init__.py`
+- `scripts/archive/misc/discover_onedrive_roots.py`
+- `scripts/archive/one_off/validate_discovery_candidates.py`
+- `scripts/archive/poc/__init__.py`
+- `scripts/archive/poc/excel_com_poc.py`
+- `scripts/archive/poc/hwp_com_poc.py`
+
+</details>
+
+<details><summary><code>desktop/ui_dist</code> — 5개</summary>
+
+- `desktop/ui_dist/assets/index-BQrtlMbv.css`
+- `desktop/ui_dist/assets/index-BSD2fCeD.js`
+- `desktop/ui_dist/favicon.svg`
+- `desktop/ui_dist/icons.svg`
+- `desktop/ui_dist/index.html`
+
+</details>
+
+<details><summary><code>services/file_map_executor</code> — 5개</summary>
+
+- `services/file_map_executor/__init__.py`
+- `services/file_map_executor/app.py`
+- `services/file_map_executor/schemas.py`
+- `services/file_map_executor/security.py`
+- `services/file_map_executor/service.py`
+
+</details>
+
+<details><summary><code>agent/connectors</code> — 4개</summary>
+
+- `agent/connectors/__init__.py`
+- `agent/connectors/excel_com_connector.py`
+- `agent/connectors/excel_connector.py`
+- `agent/connectors/hwp_com_connector.py`
+
+</details>
+
+<details><summary><code>desktop/routes</code> — 4개</summary>
+
+- `desktop/routes/__init__.py`
+- `desktop/routes/agent.py`
+- `desktop/routes/proxy.py`
+- `desktop/routes/system.py`
+
+</details>
+
+<details><summary><code>desktop/ui_new</code> — 4개</summary>
+
+- `desktop/ui_new/__init__.py`
+- `desktop/ui_new/api.py`
+- `desktop/ui_new/dashboard.py`
+- `desktop/ui_new/shell_html.py`
+
+</details>
+
+<details><summary><code>scripts/community</code> — 3개</summary>
+
+- `scripts/community/keyword_classifier.py`
+- `scripts/community/sites/mlbpark.py`
+- `scripts/community/sites/naver_cafe_new.py`
+
+</details>
+
+<details><summary><code>scripts/smartstore</code> — 3개</summary>
+
+- `scripts/smartstore/__init__.py`
+- `scripts/smartstore/actions.py`
+- `scripts/smartstore/router.py`
+
+</details>
+
+<details><summary><code>(root)</code> — 2개</summary>
+
+- `HaehanAI-Agent.spec`
+- `HaehanAI-Desktop.spec`
+
+</details>
+
+<details><summary><code>ai_orchestrator/tests</code> — 2개</summary>
+
+- `ai_orchestrator/tests/test_cad_mcp_split.py`
+- `ai_orchestrator/tests/test_cad_proxy.py`
+
+</details>
+
+<details><summary><code>mcp_server/tests</code> — 2개</summary>
+
+- `mcp_server/tests/__init__.py`
+- `mcp_server/tests/test_write_guard.py`
+
+</details>
+
+<details><summary><code>scripts/form</code> — 2개</summary>
+
+- `scripts/form/auto_resolver.py`
+- `scripts/form/state_scanner.py`
+
+</details>
+
+<details><summary><code>scripts/haehan</code> — 2개</summary>
+
+- `scripts/haehan/__init__.py`
+- `scripts/haehan/create_desktop_shortcut.py`
+
+</details>
+
+<details><summary><code>admin-web/scripts</code> — 1개</summary>
+
+- `admin-web/scripts/smoke_browser.py`
+
+</details>
+
+<details><summary><code>agent/docs</code> — 1개</summary>
+
+- `agent/docs/reports/local_software_docker_install_run_4b_bridged_elevation.md`
+
+</details>
+
+<details><summary><code>ai_orchestrator</code> — 1개</summary>
+
+- `ai_orchestrator/agent_ai_legacy_routing.py`
+
+</details>
+
+<details><summary><code>ai_orchestrator/connectors</code> — 1개</summary>
+
+- `ai_orchestrator/connectors/eum_notice_scheduler.py`
+
+</details>
+
+<details><summary><code>ai_orchestrator/external_sites</code> — 1개</summary>
+
+- `ai_orchestrator/external_sites/automation_capability_registry.py`
+
+</details>
+
+<details><summary><code>docker</code> — 1개</summary>
+
+- `docker/file-map-executor.Dockerfile`
+
+</details>
+
+<details><summary><code>notice_radar</code> — 1개</summary>
+
+- `notice_radar/runner.py`
+
+</details>
+
+<details><summary><code>scripts/eum</code> — 1개</summary>
+
+- `scripts/eum/auto_fix_a4.py`
+
+</details>
+
+<details><summary><code>scripts/local</code> — 1개</summary>
+
+- `scripts/local/__init__.py`
+
+</details>
+
+<details><summary><code>scripts/mk_catalog</code> — 1개</summary>
+
+- `scripts/mk_catalog/line_light_detail_page.py`
+
+</details>
+
+<details><summary><code>scripts/youtube</code> — 1개</summary>
+
+- `scripts/youtube/channel_analysis.py`
+
+</details>
+
+<details><summary><code>scripts/yt_upload</code> — 1개</summary>
+
+- `scripts/yt_upload/__init__.py`
+
+</details>
+
+## 관련 커밋
+
+- `d4a4421d` chore(cleanup): 최근 60일 사용 흔적 없는 직접 실행 스크립트 19개 삭제 [allow-delete]
+- `0c097029` docs(defect_index): #11 해결 표시(e9042657)
+- `9a2a59e0` docs(defect_index): 정리 루프 결과 반영 — #7~#10 해결, #27~#30 추가
+- `290f178b` refactor(lint): 쓰지 않는 지역변수·중복 정의 제거 5회차 (F841 47·F811 2)
+- `5973ebd2` chore(cleanup): 이름만 언급되던 미도달 파일 정리 4회차 [allow-delete]
+- `48a4aa4b` chore(cleanup): 끊어진 호환 shim·CAD 잔재 정리 3회차 — pytest 수집 오류 7→1 [allow-delete]
+- `20bec5cd` refactor(lint): 쓰지 않는 import 제거 2회차 — 기존 lint 오류 있던 파일 동작 보존 정리
+- `c3025ed1` refactor(lint): 쓰지 않는 import 제거 1회차 — lint 기존오류 없는 374 파일
+- `88272216` chore(cleanup): 타 앱 연결 2차 삭제 — mcp_server·desktop·backend/compat·agent 잔여 [allow-delete]
+- `ad187595` ﻿chore(cleanup): AI 에이전트 외 타 앱 연결 코드 삭제 — Excel·한컴·PC파일정리·legacy UI·CAD 잔재 [allow-delete]
+- `e9042657` fix(repo): import 되는 scripts/session_tracker.py 가 .gitignore session* 에 막혀 누락 (#11)
+- `b7323bb7` docs(defect_index): 골격 점검·코드맵 S1 결함 목차 26건
+- `43715ee2` chore(cleanup): 코드맵 S1 미도달 파일 22개 + scripts/smartstore shim 3개 삭제 [allow-delete]
