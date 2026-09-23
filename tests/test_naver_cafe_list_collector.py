@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 
@@ -6,12 +6,9 @@ import pytest
 
 from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
 from scripts.naver import router
-from scripts.naver.cafe import join_request
+from scripts.naver.cafe import join_request, main_page, member_collect, topic_search
 from scripts.naver.cafe import list_background_runner as runner
 from scripts.naver.cafe import list_collector as collector
-from scripts.naver.cafe import main_page
-from scripts.naver.cafe import member_collect
-from scripts.naver.cafe import topic_search
 
 
 def _api_payload(*, total: int = 1) -> dict:
@@ -93,7 +90,7 @@ def test_fetch_expression_uses_readonly_cafe_home_apis():
     expr = collector.build_fetch_expression(per_page=500)
 
     assert "fetch(" in expr
-    assert "credentials: \"include\"" in expr
+    assert 'credentials: "include"' in expr
     assert "/v1/cafes/${type}" in expr
     assert "perPage=${perPage}" in expr
     assert "POST" not in expr
@@ -215,38 +212,73 @@ def test_main_page_build_report_covers_home_sections_and_actions():
         "href": "https://section.cafe.naver.com/ca-fe/home",
         "title": "네이버 카페",
         "responses": {
-            "user": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {"loggedIn": True, "userId": "u"}}
-            }},
-            "home": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {
-                    "myCafe": {"cafes": _api_payload()["message"]["result"]["cafes"]}
-                }}
-            }},
-            "recommend": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {"themes": [{"themeId": 1, "themeName": "게임"}], "cafes": []}}
-            }},
-            "power_cafes": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {"cafes": _api_payload()["message"]["result"]["cafes"]}}
-            }},
-            "mynews": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {
-                    "myNewsCounts": {"totalCount": 1},
-                    "myNewsActivities": {"messages": [{
-                        "category": "CAFE_NOTICE",
-                        "messageKey": "m1",
-                        "view": {"header": "새 공지", "content": "본문", "cafeName": "건설공무", "writeTime": "방금", "unread": True},
-                        "direction": {"cafeId": 10445200, "articleId": 1},
-                        "webDirection": {"url": "https://cafe.naver.com/0moo/1"},
-                    }]},
-                }}
-            }},
-            "note_count": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": 0}
-            }},
-            "notices": {"ok": True, "httpStatus": 200, "payload": {
-                "message": {"status": "200", "result": {"notices": [{"noticeId": 1, "subject": "점검"}]}}
-            }},
+            "user": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {"message": {"status": "200", "result": {"loggedIn": True, "userId": "u"}}},
+            },
+            "home": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {
+                    "message": {
+                        "status": "200",
+                        "result": {"myCafe": {"cafes": _api_payload()["message"]["result"]["cafes"]}},
+                    }
+                },
+            },
+            "recommend": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {
+                    "message": {
+                        "status": "200",
+                        "result": {"themes": [{"themeId": 1, "themeName": "게임"}], "cafes": []},
+                    }
+                },
+            },
+            "power_cafes": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {
+                    "message": {"status": "200", "result": {"cafes": _api_payload()["message"]["result"]["cafes"]}}
+                },
+            },
+            "mynews": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {
+                    "message": {
+                        "status": "200",
+                        "result": {
+                            "myNewsCounts": {"totalCount": 1},
+                            "myNewsActivities": {
+                                "messages": [
+                                    {
+                                        "category": "CAFE_NOTICE",
+                                        "messageKey": "m1",
+                                        "view": {
+                                            "header": "새 공지",
+                                            "content": "본문",
+                                            "cafeName": "건설공무",
+                                            "writeTime": "방금",
+                                            "unread": True,
+                                        },
+                                        "direction": {"cafeId": 10445200, "articleId": 1},
+                                        "webDirection": {"url": "https://cafe.naver.com/0moo/1"},
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+            "note_count": {"ok": True, "httpStatus": 200, "payload": {"message": {"status": "200", "result": 0}}},
+            "notices": {
+                "ok": True,
+                "httpStatus": 200,
+                "payload": {"message": {"status": "200", "result": {"notices": [{"noticeId": 1, "subject": "점검"}]}}},
+            },
         },
     }
 
@@ -279,7 +311,9 @@ def test_main_page_execute_action_requires_approval():
 
 
 def test_background_runner_main_mode_returns_sections(monkeypatch):
-    sessions = [CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://section.cafe.naver.com/", title="Cafe")])]
+    sessions = [
+        CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://section.cafe.naver.com/", title="Cafe")])
+    ]
 
     class FakeReport:
         ok = True
@@ -293,9 +327,22 @@ def test_background_runner_main_mode_returns_sections(monkeypatch):
         action_plans = [main_page.prepare_main_action("favorite_toggle")]
         messages = ["ok"]
 
-    monkeypatch.setattr(runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions)))
-    monkeypatch.setattr(runner, "create_isolated_cafe_target", lambda *, port, work, cafe_url="": ("target", {"id": "target", "url": "https://section.cafe.naver.com/", "title": "Cafe"}))
-    monkeypatch.setattr(runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://section.cafe.naver.com/ca-fe/home", "title": "네이버 카페"}])
+    monkeypatch.setattr(
+        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+    )
+    monkeypatch.setattr(
+        runner,
+        "create_isolated_cafe_target",
+        lambda *, port, work, cafe_url="": (
+            "target",
+            {"id": "target", "url": "https://section.cafe.naver.com/", "title": "Cafe"},
+        ),
+    )
+    monkeypatch.setattr(
+        runner.cdp,
+        "list_pages",
+        lambda port: [{"id": "target", "url": "https://section.cafe.naver.com/ca-fe/home", "title": "네이버 카페"}],
+    )
     monkeypatch.setattr(main_page, "collect_main_from_target", lambda target_id, *, port: FakeReport())
 
     report = runner.collect_main_background(allow_mixed_readonly=True)
@@ -336,6 +383,7 @@ def test_router_cafe_home_uses_attach_only_main_collector(monkeypatch, tmp_path)
     assert payload["attach_only"] is True
     assert payload["browser_close"] is False
     assert payload["sections"]["my_cafes"][0]["name"] == "건설공무"
+
 
 def test_topic_search_builds_utf8_encoded_search_url():
     keyword = "\uc140\ud504 \uc778\ud14c\ub9ac\uc5b4"
@@ -397,7 +445,9 @@ def test_topic_search_build_report_counts_keywords_and_cafes():
 
 
 def test_background_runner_topic_search_mode_returns_attach_only_report(monkeypatch):
-    sessions = [CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://section.cafe.naver.com/", title="Cafe")])]
+    sessions = [
+        CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://section.cafe.naver.com/", title="Cafe")])
+    ]
     chatgpt = "\ucc57GPT"
 
     class FakeReport:
@@ -405,14 +455,29 @@ def test_background_runner_topic_search_mode_returns_attach_only_report(monkeypa
         code = "ok"
         keywords = [chatgpt]
         total_items = 1
-        items = [topic_search.CafeTopicSearchItem(keyword=chatgpt, rank=1, title="post", url="https://cafe.naver.com/a/1")]
+        items = [
+            topic_search.CafeTopicSearchItem(keyword=chatgpt, rank=1, title="post", url="https://cafe.naver.com/a/1")
+        ]
         keyword_counts = {chatgpt: 1}
         top_cafes = [{"cafe_name": "a", "count": 1}]
         messages = ["ok"]
 
-    monkeypatch.setattr(runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions)))
-    monkeypatch.setattr(runner, "create_isolated_cafe_target", lambda *, port, work, cafe_url="": ("target", {"id": "target", "url": "https://section.cafe.naver.com/", "title": "Cafe"}))
-    monkeypatch.setattr(runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://search.naver.com/search.naver", "title": "Search"}])
+    monkeypatch.setattr(
+        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+    )
+    monkeypatch.setattr(
+        runner,
+        "create_isolated_cafe_target",
+        lambda *, port, work, cafe_url="": (
+            "target",
+            {"id": "target", "url": "https://section.cafe.naver.com/", "title": "Cafe"},
+        ),
+    )
+    monkeypatch.setattr(
+        runner.cdp,
+        "list_pages",
+        lambda port: [{"id": "target", "url": "https://search.naver.com/search.naver", "title": "Search"}],
+    )
     monkeypatch.setattr(topic_search, "collect_topic_search_from_target", lambda target_id, **kwargs: FakeReport())
 
     report = runner.collect_topic_search_background(allow_mixed_readonly=True, keywords=chatgpt, limit_per_keyword=3)
@@ -439,7 +504,13 @@ def test_router_cafe_topic_search_uses_attach_only_collector(monkeypatch, tmp_pa
                 "code": "ok",
                 "keywords": [interior, automation],
                 "total_items": 1,
-                "items": [{"keyword": interior, "title": "\uc140\ud504 \uc778\ud14c\ub9ac\uc5b4", "url": "https://cafe.naver.com/a/1"}],
+                "items": [
+                    {
+                        "keyword": interior,
+                        "title": "\uc140\ud504 \uc778\ud14c\ub9ac\uc5b4",
+                        "url": "https://cafe.naver.com/a/1",
+                    }
+                ],
                 "keyword_counts": {interior: 1, automation: 0},
                 "top_cafes": [],
             }
@@ -471,7 +542,13 @@ def test_member_collect_filters_home_links_readonly():
     boards, articles = member_collect._filtered_links(links, terms=["smart", "SmartStore", "upload"])
 
     assert len(boards) == 2
-    assert articles == [{"text": "SmartStore upload help", "href": "https://cafe.naver.com/soho/1", "matched_terms": ["SmartStore", "upload"]}]
+    assert articles == [
+        {
+            "text": "SmartStore upload help",
+            "href": "https://cafe.naver.com/soho/1",
+            "matched_terms": ["SmartStore", "upload"],
+        }
+    ]
 
 
 def test_member_collect_soho_board_hints_are_registered():
@@ -523,7 +600,9 @@ def test_member_collect_board_urls_use_registered_club_id(monkeypatch):
         menu_id="67",
         board_type="L",
     )
-    report = member_collect.collect_boards_from_target("target", port=9222, cafe_url="royaltyserver", hints=[hint], wait_s=0)
+    report = member_collect.collect_boards_from_target(
+        "target", port=9222, cafe_url="royaltyserver", hints=[hint], wait_s=0
+    )
 
     assert report.ok is True
     assert "search.clubid%3D22417348" in navigated[0]
@@ -531,7 +610,9 @@ def test_member_collect_board_urls_use_registered_club_id(monkeypatch):
 
 
 def test_background_runner_joined_cafe_collect_returns_payload(monkeypatch):
-    sessions = [CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://cafe.naver.com/soho", title="Cafe")])]
+    sessions = [
+        CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://cafe.naver.com/soho", title="Cafe")])
+    ]
 
     class FakeReport:
         ok = True
@@ -541,9 +622,20 @@ def test_background_runner_joined_cafe_collect_returns_payload(monkeypatch):
         def to_dict(self):
             return {"ok": True, "cafe_url": "soho", "articles": [{"text": "SmartStore upload help"}]}
 
-    monkeypatch.setattr(runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions)))
-    monkeypatch.setattr(runner, "create_isolated_cafe_target", lambda *, port, work, cafe_url="": ("target", {"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"}))
-    monkeypatch.setattr(runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"}])
+    monkeypatch.setattr(
+        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+    )
+    monkeypatch.setattr(
+        runner,
+        "create_isolated_cafe_target",
+        lambda *, port, work, cafe_url="": (
+            "target",
+            {"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"},
+        ),
+    )
+    monkeypatch.setattr(
+        runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://cafe.naver.com/soho", "title": "Cafe"}]
+    )
     monkeypatch.setattr(member_collect, "collect_home_from_target", lambda target_id, **kwargs: FakeReport())
 
     report = runner.collect_joined_cafe_background(cafe_url="soho", mode="home", allow_mixed_readonly=True)
@@ -576,7 +668,11 @@ def test_join_request_build_plan_is_approval_gated():
 
 
 def test_background_runner_join_request_returns_payload(monkeypatch):
-    sessions = [CdpSession(host="127.0.0.1", port=9222, pages=[CdpPage(url="https://cafe.naver.com/royaltyserver", title="Cafe")])]
+    sessions = [
+        CdpSession(
+            host="127.0.0.1", port=9222, pages=[CdpPage(url="https://cafe.naver.com/royaltyserver", title="Cafe")]
+        )
+    ]
 
     class FakeReport:
         ok = True
@@ -586,9 +682,22 @@ def test_background_runner_join_request_returns_payload(monkeypatch):
         def to_dict(self):
             return {"ok": True, "cafe_url": "royaltyserver", "final_submit_blocked": True}
 
-    monkeypatch.setattr(runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions)))
-    monkeypatch.setattr(runner, "create_isolated_cafe_target", lambda *, port, work, cafe_url="": ("target", {"id": "target", "url": "https://cafe.naver.com/royaltyserver", "title": "Cafe"}))
-    monkeypatch.setattr(runner.cdp, "list_pages", lambda port: [{"id": "target", "url": "https://cafe.naver.com/royaltyserver", "title": "Cafe"}])
+    monkeypatch.setattr(
+        runner, "select_naver_session", lambda **kwargs: (sessions[0], runner.evaluate_sessions("naver", sessions))
+    )
+    monkeypatch.setattr(
+        runner,
+        "create_isolated_cafe_target",
+        lambda *, port, work, cafe_url="": (
+            "target",
+            {"id": "target", "url": "https://cafe.naver.com/royaltyserver", "title": "Cafe"},
+        ),
+    )
+    monkeypatch.setattr(
+        runner.cdp,
+        "list_pages",
+        lambda port: [{"id": "target", "url": "https://cafe.naver.com/royaltyserver", "title": "Cafe"}],
+    )
     monkeypatch.setattr(join_request, "inspect_join_request_from_target", lambda target_id, **kwargs: FakeReport())
 
     report = runner.collect_joined_cafe_background(
@@ -661,7 +770,9 @@ def test_router_cafe_join_request_saves_prepare_only_payload(monkeypatch, tmp_pa
             "answers": {},
         }
     ]
-    payload = json.loads((tmp_path / "data" / "naver_cafe_royaltyserver_join_request_latest.json").read_text(encoding="utf-8"))
+    payload = json.loads(
+        (tmp_path / "data" / "naver_cafe_royaltyserver_join_request_latest.json").read_text(encoding="utf-8")
+    )
     assert payload["prepare_only"] is True
     assert payload["final_submit_blocked"] is True
     assert payload["browser_launch"] is False
@@ -680,7 +791,9 @@ def test_router_cafe_join_submit_records_gate_pass(monkeypatch, tmp_path):
 
     router._cmd_cafe("join-submit", ["--cafe-url=royaltyserver", "--approved", "--confirm=NAVER_APPROVED_CAFE_JOIN"])
 
-    payload = json.loads((tmp_path / "data" / "naver_cafe_royaltyserver_join_submit_latest.json").read_text(encoding="utf-8"))
+    payload = json.loads(
+        (tmp_path / "data" / "naver_cafe_royaltyserver_join_submit_latest.json").read_text(encoding="utf-8")
+    )
     assert calls[0][0] == ("naver_cafe_join_submit",)
     assert calls[0][1]["force"] is True
     assert payload["browser_submit_executed"] is False

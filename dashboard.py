@@ -15,7 +15,6 @@ from flask import Flask, Response, jsonify, render_template, request
 
 import approval_manager
 import audit_logger
-from cad_router import cad_bp
 from inbox_router import inbox_bp
 from log_analyzer import (
     _read_jsonl,
@@ -104,7 +103,6 @@ def create_app() -> Flask:
     app.register_blueprint(inbox_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(webhooks_bp)
-    app.register_blueprint(cad_bp)
     app.register_blueprint(notice_bp)
 
     @app.route("/dashboard")
@@ -258,8 +256,6 @@ def _process_decision(token_id: str, task_id: str, user_id: str, reason: str, ac
     max_risk = _ROLE_MAX_RISK.get(role)
     if max_risk is None or _RISK_RANK.get(risk_level, 99) > _RISK_RANK.get(max_risk, 0):
         return {"error": f"role '{role}' cannot approve '{risk_level}' risk tasks"}, 403
-
-    elapsed = time.time() - entry.get("issued_at", 0)
 
     if entry.get("approved"):
         return {"error": "token already approved"}, 409
