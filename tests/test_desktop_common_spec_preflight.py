@@ -10,14 +10,14 @@ P4 공통 스펙 테스트 — /local-agent/preflight / exception handler / prov
 원칙:
   - 실제 Anthropic/Claude CLI 호출 없음 (monkeypatch)
   - 실제 API key 불필요
-  - CAD/CDP 실제 실행 없음
+  - CDP 실제 실행 없음
   - 서버 배포 없음
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -30,6 +30,7 @@ sys.path.insert(0, str(ROOT))
 
 
 # ── fixtures ─────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def _clean_modules():
@@ -46,20 +47,23 @@ def _clean_modules():
 @pytest.fixture()
 def local_server():
     from desktop import local_server as ls
+
     ls._remote_enabled = lambda: True
-    ls._verify_token   = lambda t: True
+    ls._verify_token = lambda t: True
     return ls
 
 
 @pytest.fixture()
 def svc():
     from desktop import local_agent_service as s
+
     return s
 
 
 @pytest.fixture()
 def client(local_server):
     from fastapi.testclient import TestClient
+
     return TestClient(local_server.app, raise_server_exceptions=False)
 
 
@@ -82,30 +86,43 @@ def mock_provider(svc, monkeypatch):
 
 
 @pytest.fixture()
-def cad_cdp_down(svc, monkeypatch, mock_provider):
-    """CAD/CDP down + provider 정상 환경."""
-    monkeypatch.setattr(
-        svc,
-        "_cad_bridge_status_summary",
-        lambda: {"available": False, "mode": "approved_api_bridge", "status": "STOPPED"},
-    )
+def cdp_down(svc, monkeypatch, mock_provider):
+    """CDP down + provider 정상 환경."""
     monkeypatch.setattr(svc, "_check_cdp_available", lambda: False)
     yield
 
 
 REQUIRED_SCHEMA_FIELDS = [
-    "schema_version", "ok", "can_run", "blocking_reasons",
-    "user_message", "next_actions", "provider_status",
-    "api_key_set", "claude_cli_available", "health",
-    "whoami", "consent", "optional_status", "warnings",
+    "schema_version",
+    "ok",
+    "can_run",
+    "blocking_reasons",
+    "user_message",
+    "next_actions",
+    "provider_status",
+    "api_key_set",
+    "claude_cli_available",
+    "health",
+    "whoami",
+    "consent",
+    "optional_status",
+    "warnings",
 ]
 
 EXISTING_RUN_KEYS = {"ok", "result", "provider", "model", "tool_calls"}
 
 FORBIDDEN_KEYS = {
-    "api_key", "apikey", "raw_api_key", "token", "bearer",
-    "cookie", "session", "authorization", "database_url",
-    "password", "secret",
+    "api_key",
+    "apikey",
+    "raw_api_key",
+    "token",
+    "bearer",
+    "cookie",
+    "session",
+    "authorization",
+    "database_url",
+    "password",
+    "secret",
 }
 
 SK_PATTERN = re.compile(r"sk-[a-z0-9\-_]{6,}", re.IGNORECASE)
@@ -116,8 +133,7 @@ def _assert_no_secret(body: str, label: str = "") -> None:
     for k in FORBIDDEN_KEYS:
         if k == "api_key":
             # api_key_set 오탐 방지
-            assert f'"{k}"' not in b or '"api_key_set"' in b, \
-                f"[{label}] 금지 필드 '{k}' 응답 노출"
+            assert f'"{k}"' not in b or '"api_key_set"' in b, f"[{label}] 금지 필드 '{k}' 응답 노출"
         else:
             assert f'"{k}"' not in b, f"[{label}] 금지 필드 '{k}' 응답 노출"
     assert not SK_PATTERN.search(b), f"[{label}] sk- raw key 응답 노출"
@@ -126,6 +142,7 @@ def _assert_no_secret(body: str, label: str = "") -> None:
 # ══════════════════════════════════════════════════════════════════════════════
 # P1 — /local-agent/preflight schema
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPreflightSchema:
     """테스트 1~3: 스키마 구조 및 기본 필드"""
@@ -193,22 +210,21 @@ class TestPreflightFieldNames:
 
 
 class TestPreflightOptionalNotBlocking:
-    """테스트 9: CAD/CDP down 이어도 core can_run 차단 금지"""
+    """테스트 9: CDP down 이어도 core can_run 차단 금지"""
 
-    def test_09_cad_cdp_down_does_not_block_can_run(self, client, cad_cdp_down):
-        """9. CAD/CDP down → optional_status false, can_run=true, warnings 에만 경고."""
+    def test_09_cdp_down_does_not_block_can_run(self, client, cdp_down):
+        """9. CDP down → optional_status false, can_run=true, warnings 에만 경고."""
         data = client.get("/local-agent/preflight").json()
-        assert data["optional_status"]["cad"]["available"] is False
         assert data["optional_status"]["cdp"]["available"] is False
         assert data["can_run"] is True
         warnings = data.get("warnings", [])
-        assert "CAD_API_BRIDGE_NOT_READY" in warnings
         assert "CDP_BROWSER_NOT_RUNNING" in warnings
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # P2 — exception handler status code 보존 + 500 마스킹
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class TestExceptionHandlerP2:
     """테스트 10~12: exception handler 동작 — 핸들러 함수 직접 호출."""
@@ -222,6 +238,7 @@ class TestExceptionHandlerP2:
     def test_10_http_exception_status_preserved(self, local_server):
         """10. HTTPException 404/403/401 status_code 보존."""
         from fastapi import HTTPException
+
         req = self._mock_req()
         for code in (404, 403, 401):
             r = asyncio.run(local_server._http_exception_handler(req, HTTPException(status_code=code)))
@@ -232,10 +249,9 @@ class TestExceptionHandlerP2:
     def test_11_validation_error_422_preserved(self, local_server):
         """11. RequestValidationError → 422 보존."""
         from fastapi.exceptions import RequestValidationError
+
         req = self._mock_req()
-        rve = RequestValidationError(
-            [{"loc": ("body",), "msg": "field required", "type": "missing"}]
-        )
+        rve = RequestValidationError([{"loc": ("body",), "msg": "field required", "type": "missing"}])
         r = asyncio.run(local_server._validation_exception_handler(req, rve))
         assert r.status_code == 422
         body = json.loads(r.body)
@@ -259,6 +275,7 @@ class TestExceptionHandlerP2:
 # P3 — provider 오류 응답 shape + 기존 키 보존
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProviderErrorResponseP3:
     """테스트 13~14: run_local_agent 오류 응답 shape."""
 
@@ -274,8 +291,7 @@ class TestProviderErrorResponseP3:
         for k in EXISTING_RUN_KEYS:
             assert k in data, f"기존 키 누락: {k}"
         # P3 추가 키
-        for k in ("error_code", "user_message", "next_actions",
-                  "provider_status", "can_retry", "safe_to_show"):
+        for k in ("error_code", "user_message", "next_actions", "provider_status", "can_retry", "safe_to_show"):
             assert k in data, f"추가 키 누락: {k}"
 
         assert data["ok"] is False
@@ -305,6 +321,7 @@ class TestProviderErrorResponseP3:
 # ══════════════════════════════════════════════════════════════════════════════
 # 공통 — secret scan / 외부 AI 호출 없음
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSecretScanAndNoExternalCall:
     """테스트 15~16: secret 미노출 + 외부 AI 호출 없음."""

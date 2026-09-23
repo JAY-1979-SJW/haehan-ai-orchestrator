@@ -5,67 +5,58 @@
   site_profiles 에 명시적으로 등록된 프로필이 있을 때만 수행된다.
   회원가입/추가 제출/다운로드/설정 변경은 이 단계에서도 금지된다.
 """
+
 from __future__ import annotations
 
 import ipaddress
 from urllib.parse import urlparse
 
-
-def _frozen_cad_api_action_names() -> frozenset[str]:
-    """``cad_api_spec`` 에 선언된 CAD API 액션 이름을 허용 집합에 편입.
-
-    action_registry 와 동일한 단일 소스를 참조하므로 스펙에 항목이 추가되면
-    whitelist 가 자동 확장된다. 지연 import 로 순환 방지.
-    """
-    from .cad_api_spec import action_names
-    return frozenset(action_names())
-
-
 # 이번 단계에서 허용되는 action 만 나열. 추가는 별도 단계의 승인이 필요.
-ALLOWED_ACTIONS: frozenset[str] = frozenset({
-    "ping",
-    "get_system_info",
-    "open_page_readonly",
-    "inspect_page",
-    "login_with_secret",
-    "inspect_after_login",
-    # Excel 1단계: 읽기 + 결과 복사본 저장.
-    "excel_read_sheet",
-    "excel_write_report_copy",
-    # Excel 2단계: 구조 요약 + 헤더 기반 표 읽기 (read-only).
-    "excel_describe_workbook",
-    "excel_read_table",
-    # Excel COM (B안 4단계): 데스크톱 Excel 제어. local_agent 가 분기.
-    "excel.run_poc",
-    "excel.read_cell",
-    "excel.write_cell",
-    "excel.save_as",
-    # CAD COM (2단계): 데스크톱 AutoCAD 제어. local_agent 가 분기.
-    # cad.add_text_save_as 만 write 성격 — 기존 medium/save_as 규칙을 그대로 사용.
-    "cad.health",
-    "cad.open_info",
-    "cad.add_text_save_as",
-    # local_agent 전용: 사용자 PC visible 브라우저 기동 (E단계).
-    "open_local_browser",
-    # local_agent 전용: Playwright dedicated 프로필 visible probe (E-2 단계).
-    "open_local_browser_probe",
-    # local_agent 전용: 공개 페이지 read-only observer (F-4B 단계).
-    "observe_public_browser_page",
-}) | _frozen_cad_api_action_names()
+ALLOWED_ACTIONS: frozenset[str] = frozenset(
+    {
+        "ping",
+        "get_system_info",
+        "open_page_readonly",
+        "inspect_page",
+        "login_with_secret",
+        "inspect_after_login",
+        # Excel 1단계: 읽기 + 결과 복사본 저장.
+        "excel_read_sheet",
+        "excel_write_report_copy",
+        # Excel 2단계: 구조 요약 + 헤더 기반 표 읽기 (read-only).
+        "excel_describe_workbook",
+        "excel_read_table",
+        # Excel COM (B안 4단계): 데스크톱 Excel 제어. local_agent 가 분기.
+        "excel.run_poc",
+        "excel.read_cell",
+        "excel.write_cell",
+        "excel.save_as",
+        # local_agent 전용: 사용자 PC visible 브라우저 기동 (E단계).
+        "open_local_browser",
+        # local_agent 전용: Playwright dedicated 프로필 visible probe (E-2 단계).
+        "open_local_browser_probe",
+        # local_agent 전용: 공개 페이지 read-only observer (F-4B 단계).
+        "observe_public_browser_page",
+    }
+)
 
 # BROWSER_ACTIONS 는 "URL 파라미터 기반" action 의 집합.
 # login_with_secret 는 site_key 기반이므로 여기에 포함하지 않는다.
-BROWSER_ACTIONS: frozenset[str] = frozenset({
-    "open_page_readonly",
-    "inspect_page",
-})
+BROWSER_ACTIONS: frozenset[str] = frozenset(
+    {
+        "open_page_readonly",
+        "inspect_page",
+    }
+)
 
-_BLOCKED_HOSTNAMES: frozenset[str] = frozenset({
-    "localhost",
-    "ip6-localhost",
-    "ip6-loopback",
-    "broadcasthost",
-})
+_BLOCKED_HOSTNAMES: frozenset[str] = frozenset(
+    {
+        "localhost",
+        "ip6-localhost",
+        "ip6-loopback",
+        "broadcasthost",
+    }
+)
 
 
 def is_allowed_action(action: str) -> bool:
@@ -81,14 +72,7 @@ def _is_private_ip(host: str) -> bool:
         ip = ipaddress.ip_address(host)
     except ValueError:
         return False
-    return (
-        ip.is_private
-        or ip.is_loopback
-        or ip.is_link_local
-        or ip.is_multicast
-        or ip.is_reserved
-        or ip.is_unspecified
-    )
+    return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified
 
 
 def validate_url(url: str) -> tuple[bool, str]:
