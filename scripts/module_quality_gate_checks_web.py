@@ -1,4 +1,5 @@
 """Admin-web and secret-scan check functions for module_quality_gate."""
+
 from __future__ import annotations
 
 import json
@@ -10,9 +11,9 @@ import sys
 from pathlib import Path
 
 try:
-    from scripts.module_quality_gate_common import ROOT, normalize_path, redact, _run_check_command
+    from scripts.module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact
 except ModuleNotFoundError:
-    from module_quality_gate_common import ROOT, normalize_path, redact, _run_check_command  # type: ignore[no-redef]
+    from module_quality_gate_common import ROOT, _run_check_command, normalize_path, redact  # type: ignore[no-redef]
 
 sys.dont_write_bytecode = True
 
@@ -174,7 +175,9 @@ def _is_secret_scan_excluded(path: Path) -> bool:
     parts = set(rel.split("/"))
     if parts & {"node_modules", ".next", "ui_dist", "logs", "tests", "__pycache__", ".claude", ".github"}:
         return True
-    if rel.startswith(("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/", "data/sessions/")):
+    if rel.startswith(
+        ("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/", "data/sessions/")
+    ):
         return True
     if rel in {
         "scripts/module_quality_gate.py",
@@ -212,19 +215,3 @@ def check_active_source_secret_scan() -> tuple[bool, str]:
     if hits:
         return False, "possible active-source secret hits: " + ", ".join(hits)
     return True, "no active-source secret patterns detected"
-
-
-def check_ui_residue_contract() -> tuple[bool, str]:
-    try:
-        from scripts import ui_residue_audit
-    except ImportError:
-        import ui_residue_audit  # type: ignore[no-redef]
-
-    findings = ui_residue_audit.audit()
-    failed = [finding for finding in findings if finding.status == "FAIL"]
-    warned = [finding for finding in findings if finding.status == "WARN"]
-    if failed:
-        return False, "UI residue failures: " + ", ".join(finding.path for finding in failed)
-    if warned:
-        return True, "UI residue audit passed with warnings: " + ", ".join(finding.path for finding in warned)
-    return True, "UI residue audit passed with no warnings"

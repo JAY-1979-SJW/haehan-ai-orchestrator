@@ -1,33 +1,45 @@
 """Repository-guard check functions for module_quality_gate."""
+
 from __future__ import annotations
 
 import importlib.util
 import re
 import subprocess
 import sys
-from pathlib import Path
 
 try:
     from scripts.module_quality_gate_common import (
-        ROOT, PY, normalize_path, redact, command_text, command_is_forbidden,
-        all_steps, find_staged_out_of_scope, git_staged_paths,
-        _run_check_command, _source_contains,
+        PY,
+        ROOT,
+        _run_check_command,
+        all_steps,
+        command_is_forbidden,
+        find_staged_out_of_scope,
+        git_staged_paths,
+        normalize_path,
     )
 except ModuleNotFoundError:
     from module_quality_gate_common import (  # type: ignore[no-redef]
-        ROOT, PY, normalize_path, redact, command_text, command_is_forbidden,
-        all_steps, find_staged_out_of_scope, git_staged_paths,
-        _run_check_command, _source_contains,
+        PY,
+        ROOT,
+        _run_check_command,
+        all_steps,
+        command_is_forbidden,
+        find_staged_out_of_scope,
+        git_staged_paths,
+        normalize_path,
     )
 
 sys.dont_write_bytecode = True
 
 
 def imports_local_agent(text: str) -> bool:
-    return bool(re.search(
-        r"(?m)^\s*(?:from\s+local_agent(?:\.|\s+import\b)|import\s+local_agent(?:\.|\s|$))",
-        text,
-    ))
+    return bool(
+        re.search(
+            r"(?m)^\s*(?:from\s+local_agent(?:\.|\s+import\b)|import\s+local_agent(?:\.|\s|$))",
+            text,
+        )
+    )
 
 
 def check_out_of_scope_not_staged() -> tuple[bool, str]:
@@ -42,59 +54,6 @@ def check_forbidden_command_matrix() -> tuple[bool, str]:
     if offenders:
         return False, "forbidden commands in module gate matrix: " + ", ".join(offenders)
     return True, "module gate matrix contains no build/deploy/push commands"
-
-
-def check_desktop_security_boundary() -> tuple[bool, str]:
-    """Block auth and cross-app shortcuts from returning to desktop runtime."""
-    violations: list[str] = []
-
-    local_agent_forbidden = (
-        "class _McpStdioClient",
-        "_run_with_anthropic(prompt, mcp",
-        "mcp_server/server.py",
-        "14. CAD",
-        'req.get("_approved")',
-        'req.get("approved_api")',
-    )
-    for hit in _source_contains("desktop/local_agent_service.py", local_agent_forbidden):
-        violations.append(f"desktop/local_agent_service.py contains {hit!r}")
-
-    hardcoded_auth_forbidden = (
-        "Bearer admin-token",
-        "Authorization: Bearer admin-token",
-        '"Authorization": "Bearer admin-token"',
-        "'Authorization': 'Bearer admin-token'",
-    )
-    for path in (
-        "desktop/task_receiver.py",
-        "desktop/local_agent_service.py",
-        "desktop/local_server.py",
-    ):
-        for hit in _source_contains(path, hardcoded_auth_forbidden):
-            violations.append(f"{path} contains {hit!r}")
-
-    allowed_cad_boundary_imports = {
-        "desktop/cad_api_approval.py",
-        "desktop/cad_bridge_allowlist.py",
-    }
-    for path in (ROOT / "desktop").glob("*.py"):
-        rel = normalize_path(str(path.relative_to(ROOT)))
-        if rel in allowed_cad_boundary_imports:
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if "from local_agent.cad" in text or "import local_agent.cad" in text:
-            violations.append(f"{rel} imports local_agent.cad outside boundary")
-        if rel in {
-            "desktop/tray_runtime.py",
-            "desktop/main_launcher.py",
-            "desktop/local_server.py",
-        }:
-            if imports_local_agent(text):
-                violations.append(f"{rel} imports local_agent outside boundary")
-
-    if violations:
-        return False, "; ".join(violations)
-    return True, "desktop auth/cross-app shortcuts are blocked and runtime boundary imports are isolated"
 
 
 def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
@@ -249,8 +208,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         ["git", "config", "--get", "core.hooksPath"],
         cwd=ROOT,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""

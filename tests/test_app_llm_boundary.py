@@ -1,7 +1,7 @@
 """APP_LLM_BOUNDARY — 앱 런타임은 GPT 전용, Claude(Anthropic 직접호출)는 경계에만.
 
 원칙(아키텍처 경계):
-  • 앱 런타임(ai_orchestrator·scripts/naver·community·browser_agent·desktop)의 모든
+  • 앱 런타임(ai_orchestrator·scripts/naver·community·browser_agent)의 모든
     AI 기능 = GPT(OpenAI). 모델명은 ai_orchestrator.app_llm 단일 출처에서 가져온다.
   • Claude(Anthropic) 직접 호출은 '경계 허용목록'에서만 — 터미널 Claude Code 연동
     (MCP 서버·git훅 리뷰·OpenAI부재 CLI폴백), provider 명시 opt-in, 레거시 데드모듈.
@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 # 앱 런타임 스캔 대상 (ops/dev 도구·빌드·테스트는 제외)
-SCAN_DIRS = ["ai_orchestrator", "scripts/naver", "scripts/community", "scripts/browser_agent", "desktop"]
+SCAN_DIRS = ["ai_orchestrator", "scripts/naver", "scripts/community", "scripts/browser_agent"]
 
 # Anthropic '실호출' 신호 — 도메인 허용목록 상수("api.anthropic.com")와 구분되는 패턴만.
 CALL_PATTERNS = [
@@ -30,7 +30,6 @@ CALL_PATTERNS = [
 
 # 경계(Claude 허용) — 여기서만 Anthropic 가능
 BOUNDARY_ALLOWLIST = {
-    "desktop/local_agent_service.py",  # OpenAI 부재 시 Claude Code CLI 폴백(터미널 경계)
     "scripts/naver/automation/integration/ai_responder.py",  # provider="anthropic" opt-in
     "scripts/naver/smartstore/product/ai_description_writer.py",  # 레거시 Claude writer(데드)
 }

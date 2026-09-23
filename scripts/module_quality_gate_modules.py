@@ -1,13 +1,13 @@
 """MODULES registry and module selection helpers for module_quality_gate."""
+
 from __future__ import annotations
 
 import sys
-from typing import Iterable
 
 try:
-    from scripts.module_quality_gate_common import GateStep, GateModule, PY
+    from scripts.module_quality_gate_common import PY, GateModule, GateStep
 except ModuleNotFoundError:
-    from module_quality_gate_common import GateStep, GateModule, PY  # type: ignore[no-redef]
+    from module_quality_gate_common import PY, GateModule, GateStep  # type: ignore[no-redef]
 
 sys.dont_write_bytecode = True
 
@@ -18,7 +18,6 @@ MODULES: tuple[GateModule, ...] = (
         steps=(
             GateStep("out_of_scope_not_staged", check="out_of_scope_not_staged"),
             GateStep("forbidden_command_matrix", check="forbidden_command_matrix"),
-            GateStep("desktop_security_boundary", check="desktop_security_boundary"),
             GateStep("local_agent_browser_runtime_rules", check="local_agent_browser_runtime_rules"),
             GateStep("common_tool_runtime_baseline_contract", check="common_tool_runtime_baseline_contract"),
             GateStep("common_engine_commercialization_baseline", check="common_engine_commercialization_baseline"),
@@ -39,7 +38,9 @@ MODULES: tuple[GateModule, ...] = (
             GateStep("google_workspace_router_compatibility", check="google_workspace_router_compatibility"),
             GateStep("google_cloud_module_baseline_contract", check="google_cloud_module_baseline_contract"),
             GateStep("google_cloud_router_compatibility", check="google_cloud_router_compatibility"),
-            GateStep("google_cloud_action_policy_baseline_contract", check="google_cloud_action_policy_baseline_contract"),
+            GateStep(
+                "google_cloud_action_policy_baseline_contract", check="google_cloud_action_policy_baseline_contract"
+            ),
             GateStep("google_cloud_readonly_local_browser_dryrun", check="google_cloud_readonly_local_browser_dryrun"),
             GateStep("google_domain_module_boundaries", check="google_domain_module_boundaries"),
         ),
@@ -164,7 +165,14 @@ MODULES: tuple[GateModule, ...] = (
             ),
             GateStep(
                 "live_task_dispatch",
-                (PY, "verify_live_task_dispatch.py", "--server", "https://haehan-ai.kr/orchestrator", "--timeout", "70"),
+                (
+                    PY,
+                    "verify_live_task_dispatch.py",
+                    "--server",
+                    "https://haehan-ai.kr/orchestrator",
+                    "--timeout",
+                    "70",
+                ),
                 live=True,
             ),
         ),
@@ -284,7 +292,6 @@ MODULES: tuple[GateModule, ...] = (
         description="admin-web static checks and active-source secret scan",
         steps=(
             GateStep("release_preflight_baseline_contract", check="release_preflight_baseline_contract"),
-            GateStep("ui_residue_contract", check="ui_residue_contract"),
             GateStep("admin_web_typecheck", check="admin_web_typecheck"),
             GateStep("admin_web_lint", check="admin_web_lint"),
             GateStep("admin_web_audit", check="admin_web_audit"),

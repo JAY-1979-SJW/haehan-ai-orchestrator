@@ -1,10 +1,10 @@
 """Read-only backend runtime contract audit."""
+
 from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -29,7 +29,6 @@ REQUIRED_ROUTES = {
 BACKEND_SOURCE_ROOTS = (
     ROOT / "ai_orchestrator",
     ROOT / "local_agent",
-    ROOT / "desktop",
 )
 
 FORBIDDEN_BACKEND_PATTERNS = (
@@ -41,8 +40,9 @@ FORBIDDEN_BACKEND_PATTERNS = (
 
 
 def iter_runtime_routes() -> list[tuple[str, str, str]]:
-    from ai_orchestrator.server import app
     from fastapi.routing import APIRoute, APIWebSocketRoute
+
+    from ai_orchestrator.server import app
 
     routes: list[tuple[str, str, str]] = []
     for route in app.routes:

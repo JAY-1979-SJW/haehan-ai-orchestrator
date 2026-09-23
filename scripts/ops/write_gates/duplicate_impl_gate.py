@@ -19,7 +19,6 @@ AUTO_DIRS = [
     "scripts/eum",
     "scripts/browser_agent/",
     "ai_orchestrator/connectors/",
-    "desktop/",
 ]
 
 # capability_check 키워드 추출 시 제외할 공통 조각

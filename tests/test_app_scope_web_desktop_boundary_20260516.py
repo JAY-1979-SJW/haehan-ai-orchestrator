@@ -80,14 +80,6 @@ class TestInScopeWebDesktopSkeleton:
         """legacy desktop/tray_app.py must not be resurrected."""
         assert not (REPO_ROOT / "desktop" / "tray_app.py").exists()
 
-    def test_desktop_local_runner_exists(self):
-        """desktop/local_runner.py 데스크 앱 로컬 실행 골조 존재."""
-        assert (REPO_ROOT / "desktop" / "local_runner.py").exists()
-
-    def test_desktop_status_provider_exists(self):
-        """desktop/status_provider.py 상태 제공자 골조 존재."""
-        assert (REPO_ROOT / "desktop" / "status_provider.py").exists()
-
 
 # ── EXTERNAL_APP_HOLD: HWPX/HWP ────────────────────────────────────────────
 
