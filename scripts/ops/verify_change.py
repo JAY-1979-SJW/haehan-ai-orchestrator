@@ -176,10 +176,17 @@ def main() -> int:
                 print(f"[verify] 트리 생성 실패: {ref}")
                 return 2
         head_tree = trees[1] if a.head else ROOT
+        # 작업트리를 잴 때 classify.py 가 추적 파일(분류 정본)을 다시 쓰므로 원본을 보관했다가 되돌린다
+        reg = ROOT / "configs/module_registry.json"
+        reg_bytes = reg.read_bytes() if head_tree == ROOT and reg.exists() else None
         # 기준·변경 후는 서로 다른 폴더라 동시에 잰다(대기 시간 절반)
-        with ThreadPoolExecutor(2) as ex:
-            fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
-            before, after = fb.result(), fa.result()
+        try:
+            with ThreadPoolExecutor(2) as ex:
+                fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
+                before, after = fb.result(), fa.result()
+        finally:
+            if reg_bytes is not None:
+                reg.write_bytes(reg_bytes)
         py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
         ruff_cfg = ["--config", str(ROOT / CFG["ruff_config"])] if CFG["ruff_config"] else []
         ruff = (
