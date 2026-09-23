@@ -45,6 +45,7 @@ NON_LAUNCHER_PREFIXES = (
     "memory/",
     "configs/codebase_layer_audit",
     "configs/module_boundaries",
+    "configs/root_legacy_scripts",  # 루트 스크립트 재고 목록(실행기 아님)
 )
 # 단어 언급(MENTIONED) 판정에서 제외할 경로
 MENTION_EXCLUDE_PREFIXES = ("docs/", "data/", "memory/")

@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map import reach, scan  # noqa: E402
+from scripts.ops.code_map import fullmap, reach, scan  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
 
@@ -53,9 +53,18 @@ def build() -> dict:
         "main_files": len(graph["has_main"]),
     }
     counts = Counter(v["class"] for v in classes.values())
+    full = fullmap.extend(graph, files, {})
+    all_counts = Counter(v["class"] for v in full["nodes"].values())
     return {
         "coverage": coverage,
         "class_counts": {c: counts.get(c, 0) for c in reach.CLASSES},
+        "all_class_counts": {c: all_counts.get(c, 0) for c in fullmap.PRIORITY},
+        "all_node_count": {"files": len(full["nodes"]), "dirs": len(full["dirs"])},
+        "all_edge_kinds": full["edge_kinds"],
+        "all_nodes": full["nodes"],
+        "all_dirs": full["dirs"],
+        "all_edges": full["edges"],
+        "all_roots": full["roots"],
         "files": classes,
         "edges": graph["edges"],
         "launcher_roots": graph["launcher_roots"],
@@ -99,6 +108,27 @@ def _summary(result: dict, meta: dict) -> str:
         "## 4. UNREACHED (삭제 후보 — 사람 확인 전 삭제 금지)",
         "",
         *[f"- {p}" for p, v in sorted(result["files"].items()) if v["class"] == "UNREACHED"],
+        "",
+        "## 5. 전체 파일·폴더 지도",
+        "",
+        f"노드: 파일 {result['all_node_count']['files']} · 폴더 {result['all_node_count']['dirs']}  "
+        f"엣지: {result['all_edge_kinds']}",
+        "",
+        "| 분류 | 파일 수 |",
+        "|---|---|",
+        *[f"| {k} | {v} |" for k, v in result["all_class_counts"].items()],
+        "",
+        "| 폴더(2단계) | 대표 | " + " | ".join(fullmap.PRIORITY) + " |",
+        "|---|---|" + "---|" * len(fullmap.PRIORITY),
+        *[
+            f"| {d} | {v['class']} | " + " | ".join(str(v["counts"].get(k, 0)) for k in fullmap.PRIORITY) + " |"
+            for d, v in sorted(result["all_dirs"].items())
+            if d.count("/") <= 1
+        ],
+        "",
+        "## 6. 전체 UNREACHED 파일(비코드 포함)",
+        "",
+        *[f"- {p}" for p, v in sorted(result["all_nodes"].items()) if v["class"] == "UNREACHED"],
         "",
     ]
     return "\n".join(lines)
