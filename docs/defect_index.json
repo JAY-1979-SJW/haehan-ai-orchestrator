@@ -172,7 +172,8 @@
       ],
       "evidence": "python -m pytest --collect-only: 12300 collected, 12 errors → 2026-09-23 정리 후 1건(test_naver_cafe_list_collector: analyze_posts 부재, #27)",
       "stage": "S1",
-      "status": "open"
+      "status": "fixed",
+      "fixed_in": "카페 재연결 커밋(2026-09-23)"
     },
     {
       "no": 13,
@@ -371,8 +372,9 @@
       ],
       "evidence": "모듈 최상단 import 로 패키지 전체 ImportError, LIVE import 실패 31건 대부분이 이 원인",
       "stage": "S1",
-      "status": "open",
-      "no": 27
+      "status": "fixed",
+      "no": 27,
+      "fixed_in": "카페 재연결 커밋(2026-09-23)"
     },
     {
       "id": "docs.claude_md_deleted_scripts",

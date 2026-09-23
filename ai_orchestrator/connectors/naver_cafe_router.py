@@ -243,7 +243,10 @@ def api_ai_analyze(
     t0 = time.monotonic()
     path = _latest_file("classified_*.json")
     if not path:
-        raise HTTPException(status_code=404, detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요")
+        raise HTTPException(
+            status_code=404,
+            detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요",
+        )
     articles = json.loads(path.read_text(encoding="utf-8"))
 
     if body.category:
@@ -280,14 +283,17 @@ def api_ai_analyze(
     total_collected = len(articles)
 
     _ensure_path()
-    from scripts.community.analyzer import analyze_posts
+    from scripts.community.analyzer import prepare_posts_for_review
 
     ctx = "네이버 카페 수집글"
     if body.category:
         ctx += f" · 분류={body.category}"
-    report = analyze_posts(posts, context=ctx)
+    report = prepare_posts_for_review(posts, context=ctx)
     if not report.get("ok"):
-        raise HTTPException(status_code=502, detail=f"AI 분석 실패: {report.get('error', '알 수 없음')}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"분석 준비 실패: {report.get('error', '알 수 없음')}",
+        )
 
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
@@ -299,7 +305,14 @@ def api_ai_analyze(
         note=f"posts={len(posts)} cat={body.category or '-'} days={body.days or '-'} duration_ms={duration_ms}",
     )
     return {
+        # 하위호환: 프론트엔드가 읽는 옛 필드는 빈 값으로 유지(UI 크래시 방지)
+        "summary": "",
+        "trends": [],
+        "topics": [],
+        "opportunities": [],
+        "actions": [],
         **report,
+        "analysis_mode": "claude_review",
         "source_file": path.name,
         "post_count": len(posts),
         "total_collected": total_collected,
@@ -422,12 +435,21 @@ def _cafe_tool_defs() -> list[dict]:
             "name": "write_cafe_post",
             "description": "네이버 카페에 글을 작성합니다. confirmed=false면 임시저장, true면 즉시 발행.",
             "params": {
-                "cafe_url": {"type": "string", "description": "카페 URL (예: https://cafe.naver.com/0moo)"},
-                "board_name": {"type": "string", "description": "게시판 이름 (예: 기업홍보/기업자료)"},
+                "cafe_url": {
+                    "type": "string",
+                    "description": "카페 URL (예: https://cafe.naver.com/0moo)",
+                },
+                "board_name": {
+                    "type": "string",
+                    "description": "게시판 이름 (예: 기업홍보/기업자료)",
+                },
                 "title": {"type": "string"},
                 "body": {"type": "string"},
                 "tags": {"type": "array", "items": {"type": "string"}},
-                "confirmed": {"type": "boolean", "description": "true면 즉시 발행, false면 임시저장"},
+                "confirmed": {
+                    "type": "boolean",
+                    "description": "true면 즉시 발행, false면 임시저장",
+                },
             },
             "required": ["cafe_url", "board_name", "title", "body"],
         },
@@ -499,7 +521,11 @@ def _run_cafe_tool(name: str, inputs: dict) -> dict:
 
         return {"ok": False, "error": f"알 수 없는 도구: {name}"}
     except Exception as e:
-        return {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
+        return {
+            "ok": False,
+            "error": str(e),
+            "hint": "CDP 브라우저가 실행 중인지 확인하세요",
+        }
 
 
 def _sse(event: str, data: dict) -> str:
@@ -557,11 +583,26 @@ def _run_cafe_gpt(messages: list, confirmed: bool):
                 )
                 return
             step += 1
-            yield _sse("step_start", {"step": step, "tool": name, "inputs": inputs, "write": is_write})
+            yield _sse(
+                "step_start",
+                {"step": step, "tool": name, "inputs": inputs, "write": is_write},
+            )
             result = _run_cafe_tool(name, inputs)
-            yield _sse("step_done", {"step": step, "tool": name, "ok": result.get("ok") is not False, "result": result})
+            yield _sse(
+                "step_done",
+                {
+                    "step": step,
+                    "tool": name,
+                    "ok": result.get("ok") is not False,
+                    "result": result,
+                },
+            )
             tool_results.append(
-                {"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)}
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps(result, ensure_ascii=False),
+                }
             )
 
         history.append(msg)
@@ -610,7 +651,10 @@ def cafe_to_haehan_blog(
     # ── 1. 카페 게시글 로드 ────────────────────────────────────────────────────
     path = _latest_file("classified_*.json")
     if not path:
-        raise HTTPException(status_code=404, detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요")
+        raise HTTPException(
+            status_code=404,
+            detail="수집된 게시글이 없습니다 — 먼저 [게시글 수집]을 실행하세요",
+        )
 
     articles = json.loads(path.read_text(encoding="utf-8"))
 
@@ -633,38 +677,25 @@ def cafe_to_haehan_blog(
 
     top_articles = sorted(articles, key=_views, reverse=True)[:200]
 
-    # ── 2. AI로 블로그 주제 추출 ───────────────────────────────────────────────
-    _ensure_path()
-    from scripts.community.analyzer import analyze_posts
-
-    ctx = "네이버 카페 수집글 — 소방·건설 실무자 커뮤니티"
-    if body.category:
-        ctx += f" · 분류={body.category}"
-
-    posts_for_analysis = [
-        {"title": a.get("title", ""), "views": a.get("view_count", ""), "date": a.get("date", "")} for a in top_articles
-    ]
-    report = analyze_posts(posts_for_analysis, context=ctx)
-    if not report.get("ok"):
-        raise HTTPException(status_code=502, detail=f"AI 분석 실패: {report.get('error', '알 수 없음')}")
-
-    # topics 필드에서 주제 추출 (analyze_posts 반환 구조 활용)
+    # ── 2. 블로그 주제 추출 (무료 결정론 규칙: 조회수 상위 제목을 그대로 사용) ──────
+    seen_norm: set[str] = set()
     raw_topics: list[str] = []
-    for t in report.get("topics", []):
-        if isinstance(t, dict):
-            raw_topics.append(t.get("title") or t.get("topic") or str(t))
-        elif isinstance(t, str):
-            raw_topics.append(t)
-    # topics 부족하면 opportunities, trends 에서 보완
-    for field in ("opportunities", "trends"):
-        for item in report.get(field, []):
-            label = item.get("title") or item.get("keyword") or str(item) if isinstance(item, dict) else str(item)
-            if label and label not in raw_topics:
-                raw_topics.append(label)
+    for a in top_articles:
+        title = (a.get("title") or "").strip()
+        if len(title) < 6:
+            continue
+        norm = " ".join(title.lower().split())
+        if norm in seen_norm:
+            continue
+        seen_norm.add(norm)
+        raw_topics.append(title)
 
-    topics = [t for t in raw_topics if t.strip()][:max_topics]
+    topics = raw_topics[:max_topics]
     if not topics:
-        raise HTTPException(status_code=502, detail="AI가 블로그 주제를 추출하지 못했습니다 — topics 필드 없음")
+        raise HTTPException(
+            status_code=502,
+            detail="블로그 주제로 쓸 만한 제목을 찾지 못했습니다 — 조건에 맞는 게시글 제목이 없음",
+        )
 
     # ── 3 & 4. 주제별 블로그 생성 → 홈페이지 DB 저장 ─────────────────────────
     results = []
@@ -686,7 +717,11 @@ def cafe_to_haehan_blog(
             )
             with urllib.request.urlopen(gen_req, timeout=60) as resp:  # noqa: S310
                 generated = json.loads(resp.read().decode())
-            item["generate"] = {"ok": True, "title": generated.get("title"), "slug": generated.get("slug")}
+            item["generate"] = {
+                "ok": True,
+                "title": generated.get("title"),
+                "slug": generated.get("slug"),
+            }
 
             # 4. blog 저장
             save_payload = json.dumps(
@@ -714,7 +749,11 @@ def cafe_to_haehan_blog(
             )
             with urllib.request.urlopen(save_req, timeout=30) as resp:  # noqa: S310
                 saved = json.loads(resp.read().decode())
-            item["save"] = {"ok": True, "id": saved.get("post", {}).get("id"), "status": post_status}
+            item["save"] = {
+                "ok": True,
+                "id": saved.get("post", {}).get("id"),
+                "status": post_status,
+            }
 
         except urllib.error.HTTPError as e:
             body_text = e.read().decode(errors="replace")[:200]
@@ -778,5 +817,7 @@ def api_cafe_chat(body: CafeChatRequest, user: dict = Depends(require_role("admi
         note=f"msgs={len(messages)} confirmed={body.confirmed}",
     )
     return StreamingResponse(
-        generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
