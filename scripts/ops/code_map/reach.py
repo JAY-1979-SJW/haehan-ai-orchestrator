@@ -120,8 +120,12 @@ class Resolver:
         if not options:
             return []
         if "/" not in cand:
+            # 파일명만 있는 문자열: 같은 폴더 우선, 없으면 저장소 전체에 그 이름이 하나뿐일 때만 연결
+            # (예: parents[2] / "hiworks_mail_reader.py"). app.py·__init__.py 같은 흔한 이름은 모호해서 연결 안 함.
             sib = "/".join(x for x in (str(PurePosixPath(rel).parent), name) if x and x != ".")
-            return [sib] if sib in self.py else []
+            if sib in self.py:
+                return [sib]
+            return list(options) if len(options) == 1 else []
         return [p for p in options if p == cand or cand.endswith("/" + p) or p.endswith("/" + cand)]
 
 
