@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]  # scripts/ops/ → repo root
 # core.hooksPath = .githooks (프로젝트 설정)
 HOOKS_DIR = ROOT / ".githooks"
+CHECKLIST_MARKER = "# commit-checklist-wrapper v1"  # install_commit_checklist.py MARKER 와 동일
 
 PRE_COMMIT = """\
 #!/usr/bin/env python3
@@ -185,7 +186,11 @@ def main() -> None:
     if not HOOKS_DIR.exists():
         print(f"[install_git_hooks] .git/hooks 디렉터리를 찾을 수 없습니다: {HOOKS_DIR}")
         sys.exit(1)
-    install("pre-commit", PRE_COMMIT)
+    # 커밋 전 체크리스트 래퍼(.githooks/install_commit_checklist.py)가 설치돼 있으면 래퍼를
+    # 덮어쓰지 않고 래퍼가 호출하는 pre-commit.orig 만 갱신한다(덮어쓰면 비밀키 검사가 빠짐).
+    pre = HOOKS_DIR / "pre-commit"
+    wrapped = pre.exists() and CHECKLIST_MARKER in pre.read_text(encoding="utf-8", errors="replace")
+    install("pre-commit.orig" if wrapped else "pre-commit", PRE_COMMIT)
     install("pre-push", PRE_PUSH)
     print("[install_git_hooks] 완료. pre-commit(ruff) + pre-push(AI 검수) 활성화됨.")
 
