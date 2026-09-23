@@ -5,7 +5,7 @@
 판정 항목(모두 기준 대비 '나빠지지 않을 것')
   1 pytest 수집 오류   2 LIVE 모듈 import 실패   3 서버 라우트 수
   4 영향 테스트 실패(코드맵 역방향으로 바뀐 파일에 닿는 테스트만)   5 층간 위반 수   6 모듈 순환 수
-  7 바뀐 파이썬 파일 ruff 0
+  7 바뀐 파이썬 파일 ruff 0   8 폴더 깊이가 바뀐 이동 파일의 위치의존 줄(__file__·상대 import) 미조정 0
 기준값은 기준 커밋을 임시 폴더(git worktree)에 꺼내 같은 명령으로 잰다.
 저장소별 설정은 configs/verify_change.json(없으면 기본값) — 다른 저장소에서도 그대로 쓰기 위함.
 
@@ -53,6 +53,35 @@ def changed_files(base: str, head: str | None) -> list[str]:
     out = run(["git", "diff", "--name-only", base], ROOT).stdout.split()
     out += run(["git", "ls-files", "--others", "--exclude-standard"], ROOT).stdout.split()
     return sorted(set(out))
+
+
+LOCATION_DEP = ("__file__", "from .", "import .")  # 파일 위치에 따라 뜻이 바뀌는 코드
+
+
+def moved_location_deps(base: str, head: str | None) -> list[str]:
+    """폴더 깊이가 바뀐 이동 파일에서, 위치 의존 줄(__file__ 경로·상대 import)이 손대지 않은 채 남은 곳.
+
+    실제 사례(허브 분리 1단계): import·테스트는 모두 통과했는데 users.db 경로가 한 칸 어긋나 가입·로그인이 깨질 뻔함.
+    줄이 고쳐졌으면(내용이 달라졌으면) 조정한 것으로 보고 넘긴다 — 남은 것은 사람이 확인할 후보.
+    """
+    diff = ["git", "diff", "-M", "--name-status", base] + ([head] if head else [])
+    out = []
+    for ln in run(diff, ROOT).stdout.splitlines():
+        parts = ln.split("\t")
+        if not parts[0].startswith("R") or len(parts) != 3 or not parts[2].endswith(".py"):
+            continue
+        old, new = parts[1], parts[2]
+        if old.count("/") == new.count("/"):
+            continue
+        old_lines = set(run(["git", "show", f"{base}:{old}"], ROOT).stdout.splitlines())
+        new_src = run(["git", "show", f"{head}:{new}"], ROOT).stdout if head else (ROOT / new).read_text("utf-8")
+        for i, line in enumerate(new_src.splitlines(), 1):
+            s = line.strip()
+            if s.startswith("#") or not any(k in s for k in LOCATION_DEP):
+                continue
+            if line in old_lines:
+                out.append(f"{new}:{i}: {s[:100]}")
+    return out
 
 
 def _checkout(ref: str, dest: Path) -> bool:
@@ -166,6 +195,7 @@ def main() -> int:
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
     changed = changed_files(a.base, a.head)
+    loc_deps = moved_location_deps(a.base, a.head)
     run([PY, "scripts/ops/code_map/build.py"], ROOT)
     tests = affected_tests(changed)
     tmp = Path(tempfile.mkdtemp(prefix="verify_base_"))
@@ -225,6 +255,7 @@ def main() -> int:
         ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
         ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
         ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
+        ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
     ]
     ok = all(not c[3] for c in checks)
     lines = [
