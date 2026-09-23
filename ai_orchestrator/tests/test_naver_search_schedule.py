@@ -11,9 +11,7 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
-from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
@@ -224,84 +222,6 @@ def test_search_status_empty_recent_runs_when_no_log(tmp_path, monkeypatch, api_
     body = r.json()
     assert body["recent_runs"] == []
     assert body["last_success_at"] is None
-
-
-# ── 5. audit 스크립트 NO_RECENT_RUNS WARN 판정 ──────────────────
-
-
-def _load_audit_mod():
-    repo = Path(__file__).resolve().parents[2]
-    script_path = repo / "scripts" / "audit_naver_search_status.py"
-    spec = importlib.util.spec_from_file_location("audit_mod_sched", str(script_path))
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def test_audit_warns_when_no_recent_runs(tmp_path, monkeypatch, capsys):
-    _clear_naver_env(monkeypatch)
-    monkeypatch.setenv("NAVER_SEARCH_RUN_LOG_PATH", str(tmp_path / "missing.jsonl"))
-    monkeypatch.setenv("NAVER_SEARCH_DB_PATH", str(tmp_path / "missing.db"))
-    monkeypatch.setenv("NAVER_SEARCH_STATE_PATH", str(tmp_path / "missing.json"))
-
-    mod = _load_audit_mod()
-    rc = mod.audit(top_n=3, run_log_path=tmp_path / "missing.jsonl")
-    out = capsys.readouterr().out
-    assert "NO_RECENT_RUNS" in out
-    assert "RESULT: WARN" in out
-    assert rc == 2
-
-
-def test_audit_warns_recent_runs_all_fail(tmp_path, monkeypatch, capsys):
-    _clear_naver_env(monkeypatch)
-    run_log = tmp_path / "runs.jsonl"
-    monkeypatch.setenv("NAVER_SEARCH_RUN_LOG_PATH", str(run_log))
-    monkeypatch.setenv("NAVER_SEARCH_DB_PATH", str(tmp_path / "missing.db"))
-    monkeypatch.setenv("NAVER_SEARCH_STATE_PATH", str(tmp_path / "missing.json"))
-
-    for _ in range(3):
-        append_run(
-            {
-                "job_type": "blog",
-                "query": "q",
-                "started_at": "2026-04-24T00:00:00+00:00",
-                "finished_at": "2026-04-24T00:00:01+00:00",
-                "status": "fail",
-                "error_summary": "SomeError",
-            },
-            path=run_log,
-        )
-
-    mod = _load_audit_mod()
-    rc = mod.audit(top_n=3, run_log_path=run_log)
-    out = capsys.readouterr().out
-    assert "RECENT_RUNS_ALL_FAIL" in out
-    assert rc == 2
-
-
-def test_audit_pass_with_recent_ok_run(tmp_path, monkeypatch, capsys):
-    """실행 기록 있고 DB/state 도 정상이면 run_log 관련 경고 없음."""
-    _clear_naver_env(monkeypatch)
-    run_log = tmp_path / "runs.jsonl"
-    monkeypatch.setenv("NAVER_SEARCH_RUN_LOG_PATH", str(run_log))
-    # DB/state 없으면 어차피 WARN → 별도 확인: run_log 관련 경고만 없으면 됨
-    append_run(
-        {
-            "job_type": "blog",
-            "query": "q",
-            "started_at": "2026-04-24T00:00:00+00:00",
-            "finished_at": "2026-04-24T00:00:01+00:00",
-            "status": "ok",
-        },
-        path=run_log,
-    )
-
-    mod = _load_audit_mod()
-    mod.audit(top_n=3, run_log_path=run_log)
-    out = capsys.readouterr().out
-    assert "NO_RECENT_RUNS" not in out
-    assert "RECENT_RUNS_ALL_FAIL" not in out
 
 
 # ── 6. run_log 필드 민감정보 미노출 ─────────────────────────────

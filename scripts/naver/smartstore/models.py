@@ -1,8 +1,0 @@
-"""product/ 서브모듈로 이동되었습니다. 기존 경로 호환 stub."""
-from scripts.naver.smartstore.product.models import *  # noqa
-from scripts.naver.smartstore.product.models import (  # noqa
-    ValidationError,
-    GeneralProductData,
-    GroupProductData,
-    RegisterResult,
-)

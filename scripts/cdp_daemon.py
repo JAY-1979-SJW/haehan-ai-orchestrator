@@ -569,15 +569,6 @@ def run_daemon() -> None:
     except Exception as e:
         log.warning("[chrome_ui_monitor] 시작 실패 (데몬은 계속): %s", e)
 
-    # CDP 이벤트 모니터 (탭 이동/로드/요청 상시 구독)
-    try:
-        from scripts.cdp_event_monitor import start_monitor as _start_event_mon
-
-        _start_event_mon()
-        log.info("✓ cdp_event_monitor 자동 시작 완료")
-    except Exception as e:
-        log.warning("cdp_event_monitor 시작 실패 (데몬은 계속): %s", e)
-
     log.info("✓ 데몬 상시 대기 중...")
     try:
         while not _stop_event.is_set():
