@@ -1,9 +1,10 @@
 """Build a domain/page precision verification report from Google evidence."""
+
 from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,11 +18,15 @@ LATEST_REPORT = ROOT / "data" / "google_precision_report_latest.json"
 
 
 def _utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _host_from_surface(surface: dict[str, Any]) -> str:
-    return surface.get("host") or surface.get("final_url", "").split("/")[2] if "://" in surface.get("final_url", "") else ""
+    return (
+        surface.get("host") or surface.get("final_url", "").split("/")[2]
+        if "://" in surface.get("final_url", "")
+        else ""
+    )
 
 
 def _load_manifest() -> dict[str, Any]:
@@ -56,10 +61,7 @@ LIVE_FILL_SAFE_NO_FINAL_STATUSES = {
 
 
 def _is_live_fill_safe_no_final(item: dict[str, Any]) -> bool:
-    return (
-        item.get("status") in LIVE_FILL_SAFE_NO_FINAL_STATUSES
-        and not item.get("state_change_final_button_clicked")
-    )
+    return item.get("status") in LIVE_FILL_SAFE_NO_FINAL_STATUSES and not item.get("state_change_final_button_clicked")
 
 
 def build_google_precision_report() -> dict[str, Any]:
@@ -67,7 +69,7 @@ def build_google_precision_report() -> dict[str, Any]:
     subdomain_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
     tab_catalog = tab_logic.build_all_tab_logic_catalog()
     action_catalog = workflows.build_action_catalog()
-    live_manifest = _load_manifest()
+    _load_manifest()
     live_input_results = _load_latest_live_input_results_by_action()
     live_input_coverage = live_inputs.build_live_input_coverage()
     ai_labels = build_google_ai_usage_labels()
@@ -143,7 +145,9 @@ def build_google_precision_report() -> dict[str, Any]:
             "risk_boundary": item.get("risk_boundary", ""),
             "read_action_count": len(item.get("read_actions", [])),
             "approval_action_count": len(item.get("approval_actions", [])),
-            "status": "pass" if host_surfaces and all(surface["status"] in {"pass", "warn"} for surface in host_surfaces) else "warn",
+            "status": "pass"
+            if host_surfaces and all(surface["status"] in {"pass", "warn"} for surface in host_surfaces)
+            else "warn",
             "surfaces": [surface["surface_key"] for surface in host_surfaces],
         }
 
@@ -165,7 +169,9 @@ def build_google_precision_report() -> dict[str, Any]:
             "live_fill_total": live_fill_total,
             "live_fill_completed": sum(1 for item in live_input_results.values() if _is_live_fill_safe_no_final(item)),
             "live_fill_failed": sum(1 for item in live_input_results.values() if item.get("status") == "failed"),
-            "final_clicked_count": sum(1 for item in live_input_results.values() if item.get("state_change_final_button_clicked")),
+            "final_clicked_count": sum(
+                1 for item in live_input_results.values() if item.get("state_change_final_button_clicked")
+            ),
         },
         "policy": {
             "read_only_surface_check": "direct_cdp_no_click_no_input",
@@ -190,7 +196,7 @@ def save_google_precision_report(report: dict[str, Any] | None = None) -> tuple[
     report = report or build_google_precision_report()
     DATA_REPORT_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     json_path = DATA_REPORT_DIR / f"google_precision_report_{timestamp}.json"
     md_path = REPORT_DIR / f"google_precision_report_{timestamp}.md"
     text = json.dumps(report, ensure_ascii=False, indent=2)
@@ -216,15 +222,17 @@ def _render_markdown(report: dict[str, Any]) -> str:
         "",
     ]
     for key, label in report["ai_usage_labels"]["labels"].items():
-        lines.extend([
-            f"### {label['service']}",
-            f"- Billing label: `{label['billing_label']}`",
-            f"- Free: {label['free_summary']}",
-            f"- Limits: {label['usage_limit_summary']}",
-            f"- Paid: {label['paid_summary']}",
-            f"- Approval required: {', '.join(label['approval_required_for'])}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"### {label['service']}",
+                f"- Billing label: `{label['billing_label']}`",
+                f"- Free: {label['free_summary']}",
+                f"- Limits: {label['usage_limit_summary']}",
+                f"- Paid: {label['paid_summary']}",
+                f"- Approval required: {', '.join(label['approval_required_for'])}",
+                "",
+            ]
+        )
     lines.extend(["## Host Summary", ""])
     for host, item in sorted(report["hosts"].items()):
         lines.append(

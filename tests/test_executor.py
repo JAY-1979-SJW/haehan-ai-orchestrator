@@ -7,9 +7,10 @@ executor.py 단위 테스트 (6단계)
 - task_store 미등록 → FAIL
 - 실패 시 logs/execution.jsonl 기록 확인
 """
-import sys
-import os
+
 import json
+import os
+import sys
 import tempfile
 import time
 
@@ -18,13 +19,13 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import approval_manager
-import task_store
 import executor as exec_mod
-from models import TaskRequest, RiskAssessment
+import task_store
+from models import RiskAssessment, TaskRequest
 from policy_engine import load_policy
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def clean_stores(tmp_path, monkeypatch):
@@ -74,11 +75,11 @@ def _register_task(task_id: str, action_type: str, risk_level: str, target: str 
 def _issue_and_approve(task_id: str, risk_level: str) -> str:
     token_id = f"tok-{task_id}"
     approval_manager._store[token_id] = {
-        "task_id":    task_id,
+        "task_id": task_id,
         "risk_level": risk_level,
-        "issued_at":  time.time(),
-        "approved":   True,
-        "rejected":   False,
+        "issued_at": time.time(),
+        "approved": True,
+        "rejected": False,
     }
     return token_id
 
@@ -88,22 +89,23 @@ def _read_exec_log(tmp_path) -> list:
     if not os.path.exists(path):
         return []
     with open(path, encoding="utf-8") as f:
-        return [json.loads(l) for l in f if l.strip()]
+        return [json.loads(l) for l in f if l.strip()]  # noqa: E741
 
 
 # ── Tests ────────────────────────────────────────────────────────────────────
 
+
 def test_low_task_executed(tmp_path):
-    task, risk, policy = _register_task("t-low-001", "read_file", "low")
+    _task, _risk, _policy = _register_task("t-low-001", "read_file", "low")
     result = exec_mod.execute_task("t-low-001")
 
     assert result["status"] == "EXECUTED", result
     logs = _read_exec_log(tmp_path)
-    assert any(l["task_id"] == "t-low-001" and l["status"] == "SUCCESS" for l in logs)
+    assert any(l["task_id"] == "t-low-001" and l["status"] == "SUCCESS" for l in logs)  # noqa: E741
 
 
 def test_medium_task_preview_only(tmp_path):
-    task, risk, policy = _register_task("t-med-001", "edit_config", "medium")
+    _task, _risk, _policy = _register_task("t-med-001", "edit_config", "medium")
     # 토큰 발급 + 승인
     _issue_and_approve("t-med-001", "medium")
 
@@ -111,11 +113,11 @@ def test_medium_task_preview_only(tmp_path):
 
     assert result["status"] == "PREVIEW_ONLY", result
     logs = _read_exec_log(tmp_path)
-    assert any(l["task_id"] == "t-med-001" and l["status"] == "PREVIEW_ONLY" for l in logs)
+    assert any(l["task_id"] == "t-med-001" and l["status"] == "PREVIEW_ONLY" for l in logs)  # noqa: E741
 
 
 def test_medium_task_without_approval_blocked(tmp_path):
-    task, risk, policy = _register_task("t-med-noapprove", "edit_config", "medium")
+    _task, _risk, _policy = _register_task("t-med-noapprove", "edit_config", "medium")
     # 토큰 없음 — approval_valid=False → plan.allowed=False → BLOCKED
 
     result = exec_mod.execute_task("t-med-noapprove")
@@ -124,7 +126,7 @@ def test_medium_task_without_approval_blocked(tmp_path):
 
 
 def test_high_task_blocked_even_if_approved(tmp_path):
-    task, risk, policy = _register_task("t-high-001", "restart_service", "high", target="nginx")
+    _task, _risk, _policy = _register_task("t-high-001", "restart_service", "high", target="nginx")
     _issue_and_approve("t-high-001", "high")
 
     result = exec_mod.execute_task("t-high-001")
@@ -132,11 +134,11 @@ def test_high_task_blocked_even_if_approved(tmp_path):
     assert result["status"] == "BLOCKED", result
     assert "high" in result.get("error", "").lower()
     logs = _read_exec_log(tmp_path)
-    assert any(l["task_id"] == "t-high-001" and l["status"] == "BLOCKED" for l in logs)
+    assert any(l["task_id"] == "t-high-001" and l["status"] == "BLOCKED" for l in logs)  # noqa: E741
 
 
 def test_critical_task_blocked(tmp_path):
-    task, risk, policy = _register_task("t-crit-001", "delete_file", "critical", target="/tmp/x.txt")
+    _task, _risk, _policy = _register_task("t-crit-001", "delete_file", "critical", target="/tmp/x.txt")
 
     result = exec_mod.execute_task("t-crit-001")
 
@@ -150,7 +152,7 @@ def test_task_not_in_store_returns_fail(tmp_path):
     assert result["status"] == "FAIL"
     assert "not found" in result.get("error", "")
     logs = _read_exec_log(tmp_path)
-    assert any(l["task_id"] == "nonexistent-task-xyz" and l["status"] == "FAIL" for l in logs)
+    assert any(l["task_id"] == "nonexistent-task-xyz" and l["status"] == "FAIL" for l in logs)  # noqa: E741
 
 
 def test_execution_log_contains_duration(tmp_path):
@@ -158,68 +160,75 @@ def test_execution_log_contains_duration(tmp_path):
     exec_mod.execute_task("t-dur-001")
 
     logs = _read_exec_log(tmp_path)
-    entry = next((l for l in logs if l["task_id"] == "t-dur-001"), None)
+    entry = next((l for l in logs if l["task_id"] == "t-dur-001"), None)  # noqa: E741
     assert entry is not None
     assert "duration_ms" in entry
     assert entry["duration_ms"] >= 0
 
 
 def test_execution_log_error_on_fail(tmp_path):
-    result = exec_mod.execute_task("missing-task")
+    exec_mod.execute_task("missing-task")
     logs = _read_exec_log(tmp_path)
-    entry = next((l for l in logs if l["task_id"] == "missing-task"), None)
+    entry = next((l for l in logs if l["task_id"] == "missing-task"), None)  # noqa: E741
     assert entry is not None
     assert entry["error"] is not None
 
 
 # ── Integration: dashboard approve → execute_task ─────────────────────────────
 
+
 def test_dashboard_approve_triggers_execution(tmp_path, monkeypatch):
     """dashboard POST /approve → execute_task 호출 → execution 결과 응답에 포함"""
-    import log_analyzer
-    import dashboard as dash_mod
     import audit_logger as al
+    import dashboard as dash_mod
+    import log_analyzer
 
-    monkeypatch.setattr(log_analyzer, "_AUDIT_PATH",   str(tmp_path / "audit.jsonl"))
+    monkeypatch.setattr(log_analyzer, "_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
     monkeypatch.setattr(log_analyzer, "_HISTORY_PATH", str(tmp_path / "history.jsonl"))
-    monkeypatch.setattr(log_analyzer, "_CACHE_PATH",   str(tmp_path / "cache.json"))
-    monkeypatch.setattr(dash_mod, "_DECISIONS_PATH",   str(tmp_path / "decisions.jsonl"))
-    monkeypatch.setattr(exec_mod, "_EXEC_LOG_PATH",    str(tmp_path / "execution.jsonl"))
+    monkeypatch.setattr(log_analyzer, "_CACHE_PATH", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(dash_mod, "_DECISIONS_PATH", str(tmp_path / "decisions.jsonl"))
+    monkeypatch.setattr(exec_mod, "_EXEC_LOG_PATH", str(tmp_path / "execution.jsonl"))
 
     tmp_logs = str(tmp_path / "logs")
     os.makedirs(tmp_logs, exist_ok=True)
-    monkeypatch.setattr(al, "_LOGS_DIR",   tmp_logs)
+    monkeypatch.setattr(al, "_LOGS_DIR", tmp_logs)
     monkeypatch.setattr(al, "_AUDIT_PATH", os.path.join(tmp_logs, "audit.jsonl"))
     al._logger = None
 
     # low task 등록
     _register_task("t-integ-low", "read_file", "low")
     # medium token 발급 (미승인 상태)
-    token_id = f"tok-t-integ-low"
+    token_id = "tok-t-integ-low"
     approval_manager._store[token_id] = {
-        "task_id":    "t-integ-low",
+        "task_id": "t-integ-low",
         "risk_level": "low",
-        "issued_at":  time.time(),
-        "approved":   False,
-        "rejected":   False,
+        "issued_at": time.time(),
+        "approved": False,
+        "rejected": False,
     }
 
-    monkeypatch.setenv("ORCH_DASHBOARD_USER",     "test")
+    monkeypatch.setenv("ORCH_DASHBOARD_USER", "test")
     monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "test")
 
     import base64
+
     _auth_hdr = {"Authorization": "Basic " + base64.b64encode(b"test:test").decode()}
 
     from dashboard import create_app
+
     app = create_app()
     app.config["TESTING"] = True
 
     with app.test_client() as c:
-        resp = c.post("/dashboard/approve", headers=_auth_hdr, json={
-            "token_id": token_id,
-            "task_id":  "t-integ-low",
-            "user_id":  "operator-1",
-        })
+        resp = c.post(
+            "/dashboard/approve",
+            headers=_auth_hdr,
+            json={
+                "token_id": token_id,
+                "task_id": "t-integ-low",
+                "user_id": "operator-1",
+            },
+        )
 
     assert resp.status_code == 200
     data = resp.get_json()
@@ -231,6 +240,7 @@ def test_dashboard_approve_triggers_execution(tmp_path, monkeypatch):
 
 
 # ── Rotation 검증 ─────────────────────────────────────────────────────────────
+
 
 def test_exec_logger_uses_rotating_handler(tmp_path, monkeypatch):
     """_get_exec_logger() 가 RotatingFileHandler 를 사용하는지 확인."""

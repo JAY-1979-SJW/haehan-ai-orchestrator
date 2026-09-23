@@ -5,13 +5,14 @@
 
 exit code: 0=PASS/PASS_WITH_KNOWN_WARN, 1=FAIL, 2=STOP_CONDITION
 """
+
 from __future__ import annotations
 
 import argparse
 import importlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,9 +24,17 @@ if str(ROOT) not in __import__("sys").path:
 AUDIT_NAME = "audit_evidence"
 
 STANDARD_AUDIT_EVENT_FIELDS = {
-    "event_id", "event_type", "task_id", "actor", "status",
-    "timestamp", "summary", "safety_verdict", "artifact_refs",
-    "metadata", "redaction_applied",
+    "event_id",
+    "event_type",
+    "task_id",
+    "actor",
+    "status",
+    "timestamp",
+    "summary",
+    "safety_verdict",
+    "artifact_refs",
+    "metadata",
+    "redaction_applied",
 }
 
 CHECKLIST = [
@@ -52,13 +61,21 @@ CHECKLIST = [
 ]
 
 FORBIDDEN_KEYS = {
-    "password", "token", "session", "cookie", "secret", "private_key",
-    "access_token", "refresh_token", "auth_token", "credential",
+    "password",
+    "token",
+    "session",
+    "cookie",
+    "secret",
+    "private_key",
+    "access_token",
+    "refresh_token",
+    "auth_token",
+    "credential",
 }
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _check_forbidden(d: dict) -> list[str]:
@@ -76,8 +93,14 @@ def run_audit() -> dict[str, Any]:
 
     def item(cid: str, status: str, evidence: str, details: dict | None = None) -> dict:
         meta = next(c for c in CHECKLIST if c["id"] == cid)
-        return {"id": cid, "title": meta["title"], "required": meta["required"],
-                "status": status, "evidence": evidence, "details": details or {}}
+        return {
+            "id": cid,
+            "title": meta["title"],
+            "required": meta["required"],
+            "status": status,
+            "evidence": evidence,
+            "details": details or {},
+        }
 
     # ae-01~03: 파일 존재
     files = {
@@ -105,8 +128,7 @@ def run_audit() -> dict[str, Any]:
             ("ae-08", "ArtifactEvidenceRef"),
         ]:
             obj = getattr(models_mod, name, None)
-            results.append(item(cid, "PASS" if obj else "FAIL",
-                                 f"{name}={'found' if obj else 'not found'}"))
+            results.append(item(cid, "PASS" if obj else "FAIL", f"{name}={'found' if obj else 'not found'}"))
 
     # ae-09: StandardAuditEvent 필드 11개
     if models_mod:
@@ -116,11 +138,15 @@ def run_audit() -> dict[str, Any]:
             safe = ev.to_safe_dict()
             actual_keys = set(safe.keys())
             missing = STANDARD_AUDIT_EVENT_FIELDS - actual_keys
-            extra = actual_keys - STANDARD_AUDIT_EVENT_FIELDS
             ok = len(actual_keys) == 11 and not missing
-            results.append(item("ae-09", "PASS" if ok else "FAIL",
-                                 f"필드={len(actual_keys)}/11, missing={missing}",
-                                 {"fields": sorted(actual_keys)}))
+            results.append(
+                item(
+                    "ae-09",
+                    "PASS" if ok else "FAIL",
+                    f"필드={len(actual_keys)}/11, missing={missing}",
+                    {"fields": sorted(actual_keys)},
+                )
+            )
         else:
             results.append(item("ae-09", "FAIL", "StandardAuditEvent 없음"))
 
@@ -128,12 +154,23 @@ def run_audit() -> dict[str, Any]:
     if models_mod:
         ea_cls = getattr(models_mod, "ExecutionAttempt", None)
         if ea_cls:
-            ea = ea_cls.create(task_id="t", execution_location="server", risk_level="low",
-                                status="ok", policy_decision="allow", safe_to_execute_on_server=True)
+            ea = ea_cls.create(
+                task_id="t",
+                execution_location="server",
+                risk_level="low",
+                status="ok",
+                policy_decision="allow",
+                safe_to_execute_on_server=True,
+            )
             d = ea.to_safe_dict()
             has_fields = all(f in d for f in ["execution_location", "policy_decision", "status"])
-            results.append(item("ae-10", "PASS" if has_fields else "FAIL",
-                                 f"필드 확인: execution_location={'execution_location' in d}"))
+            results.append(
+                item(
+                    "ae-10",
+                    "PASS" if has_fields else "FAIL",
+                    f"필드 확인: execution_location={'execution_location' in d}",
+                )
+            )
         else:
             results.append(item("ae-10", "FAIL", "ExecutionAttempt 없음"))
 
@@ -141,13 +178,25 @@ def run_audit() -> dict[str, Any]:
     if models_mod:
         sv_cls = getattr(models_mod, "SafetyVerdict", None)
         if sv_cls:
-            sv = sv_cls.create(task_id="t", policy_id="p", decision="block",
-                                reason="차단", required_execution_location="server",
-                                blocked=True, requires_user_direct=True, requires_oauth_setup=True)
+            sv = sv_cls.create(
+                task_id="t",
+                policy_id="p",
+                decision="block",
+                reason="차단",
+                required_execution_location="server",
+                blocked=True,
+                requires_user_direct=True,
+                requires_oauth_setup=True,
+            )
             d = sv.to_safe_dict()
             has_fields = all(f in d for f in ["blocked", "requires_user_direct", "requires_oauth_setup"])
-            results.append(item("ae-11", "PASS" if has_fields else "FAIL",
-                                 f"blocked={d.get('blocked')}, user_direct={d.get('requires_user_direct')}"))
+            results.append(
+                item(
+                    "ae-11",
+                    "PASS" if has_fields else "FAIL",
+                    f"blocked={d.get('blocked')}, user_direct={d.get('requires_user_direct')}",
+                )
+            )
         else:
             results.append(item("ae-11", "FAIL", "SafetyVerdict 없음"))
 
@@ -155,13 +204,24 @@ def run_audit() -> dict[str, Any]:
     if models_mod:
         hf_cls = getattr(models_mod, "ExternalAppHandoff", None)
         if hf_cls:
-            hf = hf_cls.create(task_id="t", bridge_id="b", app_type="CAD",
-                                handoff_mode="file_drop", status="handoff_recorded",
-                                approval_required=True, user_direct_required=False)
+            hf = hf_cls.create(
+                task_id="t",
+                bridge_id="b",
+                app_type="CAD",
+                handoff_mode="file_drop",
+                status="handoff_recorded",
+                approval_required=True,
+                user_direct_required=False,
+            )
             d = hf.to_safe_dict()
             has_fields = all(f in d for f in ["bridge_id", "handoff_mode", "status"])
-            results.append(item("ae-12", "PASS" if has_fields else "FAIL",
-                                 f"bridge_id={d.get('bridge_id')}, status={d.get('status')}"))
+            results.append(
+                item(
+                    "ae-12",
+                    "PASS" if has_fields else "FAIL",
+                    f"bridge_id={d.get('bridge_id')}, status={d.get('status')}",
+                )
+            )
         else:
             results.append(item("ae-12", "FAIL", "ExternalAppHandoff 없음"))
 
@@ -169,13 +229,19 @@ def run_audit() -> dict[str, Any]:
     if models_mod:
         ar_cls = getattr(models_mod, "ArtifactEvidenceRef", None)
         if ar_cls:
-            ar = ar_cls.create(artifact_type="log", content_type="text/plain",
-                                storage_ref="/tmp/x", safe_name="x", source_task_id="t")
+            ar = ar_cls.create(
+                artifact_type="log", content_type="text/plain", storage_ref="/tmp/x", safe_name="x", source_task_id="t"
+            )
             d = ar.to_safe_dict()
             no_binary = "file_content" not in d and "file_bytes" not in d and "base64" not in d
             has_ref = "storage_ref" in d
-            results.append(item("ae-13", "PASS" if (no_binary and has_ref) else "FAIL",
-                                 f"storage_ref={has_ref}, 바이너리 없음={no_binary}"))
+            results.append(
+                item(
+                    "ae-13",
+                    "PASS" if (no_binary and has_ref) else "FAIL",
+                    f"storage_ref={has_ref}, 바이너리 없음={no_binary}",
+                )
+            )
         else:
             results.append(item("ae-13", "FAIL", "ArtifactEvidenceRef 없음"))
 
@@ -183,15 +249,29 @@ def run_audit() -> dict[str, Any]:
     if models_mod:
         sae = getattr(models_mod, "StandardAuditEvent", None)
         if sae:
-            ev = sae.create(event_type="t", task_id="t", actor="a", status="ok", summary="s",
-                             metadata={"password": "FAKE", "inner": {"token": "FAKE_TOKEN"}})
+            ev = sae.create(
+                event_type="t",
+                task_id="t",
+                actor="a",
+                status="ok",
+                summary="s",
+                metadata={"password": "FAKE", "inner": {"token": "FAKE_TOKEN"}},
+            )
             d = ev.to_safe_dict()
             forbidden = _check_forbidden(d)
-            results.append(item("ae-14", "PASS" if not forbidden else "FAIL",
-                                 f"금지 필드: {forbidden}" if forbidden else "redaction 정상"))
+            results.append(
+                item(
+                    "ae-14",
+                    "PASS" if not forbidden else "FAIL",
+                    f"금지 필드: {forbidden}" if forbidden else "redaction 정상",
+                )
+            )
             nested_ok = "token" not in d.get("metadata", {}).get("inner", {})
-            results.append(item("ae-15", "PASS" if nested_ok else "FAIL",
-                                 f"nested token 제거={'없음' if nested_ok else '남아있음'}"))
+            results.append(
+                item(
+                    "ae-15", "PASS" if nested_ok else "FAIL", f"nested token 제거={'없음' if nested_ok else '남아있음'}"
+                )
+            )
         else:
             results.append(item("ae-14", "FAIL", "StandardAuditEvent 없음"))
             results.append(item("ae-15", "FAIL", "StandardAuditEvent 없음"))
@@ -212,14 +292,22 @@ def run_audit() -> dict[str, Any]:
             ("ae-19", "build_external_app_handoff"),
         ]:
             fn = getattr(adapter_mod, fn_name, None)
-            results.append(item(cid, "PASS" if fn else "FAIL",
-                                 f"{fn_name}={'found' if fn else 'not found'}"))
+            results.append(item(cid, "PASS" if fn else "FAIL", f"{fn_name}={'found' if fn else 'not found'}"))
 
     # ae-20: audit_logger 대체 없음
-    adapters_src = (ROOT / "ai_orchestrator/audit_evidence/adapters.py").read_text(encoding="utf-8") if (ROOT / "ai_orchestrator/audit_evidence/adapters.py").exists() else ""
+    adapters_src = (
+        (ROOT / "ai_orchestrator/audit_evidence/adapters.py").read_text(encoding="utf-8")
+        if (ROOT / "ai_orchestrator/audit_evidence/adapters.py").exists()
+        else ""
+    )
     replaces_logger = "audit_logger" in adapters_src and "def log_event" in adapters_src
-    results.append(item("ae-20", "PASS" if not replaces_logger else "FAIL",
-                         "audit_logger 대체 없음 확인" if not replaces_logger else "audit_logger 재정의 감지"))
+    results.append(
+        item(
+            "ae-20",
+            "PASS" if not replaces_logger else "FAIL",
+            "audit_logger 대체 없음 확인" if not replaces_logger else "audit_logger 재정의 감지",
+        )
+    )
 
     summary = {"pass": 0, "warn": 0, "fail": 0, "skip": 0}
     for r in results:
@@ -228,8 +316,13 @@ def run_audit() -> dict[str, Any]:
     required_fail = any(r["status"] == "FAIL" and r["required"] for r in results)
     verdict = "FAIL" if required_fail else ("PASS_WITH_KNOWN_WARN" if summary["warn"] > 0 else "PASS")
 
-    return {"audit_name": AUDIT_NAME, "verdict": verdict, "checked_at": _now(),
-            "checklist": results, "summary": summary}
+    return {
+        "audit_name": AUDIT_NAME,
+        "verdict": verdict,
+        "checked_at": _now(),
+        "checklist": results,
+        "summary": summary,
+    }
 
 
 def main() -> int:
@@ -240,8 +333,10 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"[{AUDIT_NAME}] verdict={result['verdict']} "
-              f"pass={result['summary']['pass']} warn={result['summary']['warn']} fail={result['summary']['fail']}")
+        print(
+            f"[{AUDIT_NAME}] verdict={result['verdict']} "
+            f"pass={result['summary']['pass']} warn={result['summary']['warn']} fail={result['summary']['fail']}"
+        )
         for r in result["checklist"]:
             icon = "✓" if r["status"] == "PASS" else ("△" if r["status"] == "WARN" else "✗")
             print(f"  {icon} [{r['id']}] {r['title']} — {r['evidence'][:80]}")

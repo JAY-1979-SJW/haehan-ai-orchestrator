@@ -4,43 +4,74 @@ Append-only JSONL audit writer for workflow lifecycle events.
 Handles redaction of sensitive data, validation, and append-only persistence.
 Test-only implementation (no production paths, no DB write).
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional, Any
-
+from typing import Any
 
 # Sensitive field names that must be redacted
 SENSITIVE_FIELD_NAMES = {
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token", "api_key", "apikey", "api-key",
-    "secret", "secrets",
-    "credential", "credentials",
-    "session", "sessionid", "session_id",
-    "cookie", "cookies",
-    "private_key", "private-key", "pkey",
-    "auth", "authorization",
+    "password",
+    "passwd",
+    "pwd",
+    "token",
+    "access_token",
+    "refresh_token",
+    "api_key",
+    "apikey",
+    "api-key",
+    "secret",
+    "secrets",
+    "credential",
+    "credentials",
+    "session",
+    "sessionid",
+    "session_id",
+    "cookie",
+    "cookies",
+    "private_key",
+    "private-key",
+    "pkey",
+    "auth",
+    "authorization",
     "bearer",
     "jwt",
     "signature",
-    "otp", "totp", "mfa", "2fa",
-    "card", "cc_number", "cvv", "cvc",
-    "ssn", "social_security",
-    "license_key", "license-key",
-    "encryption_key", "enc_key",
+    "otp",
+    "totp",
+    "mfa",
+    "2fa",
+    "card",
+    "cc_number",
+    "cvv",
+    "cvc",
+    "ssn",
+    "social_security",
+    "license_key",
+    "license-key",
+    "encryption_key",
+    "enc_key",
 }
 
 # Sensitive URL query parameters
 SENSITIVE_URL_PARAMS = {
-    "password", "passwd", "pwd",
-    "token", "access_token", "refresh_token",
-    "secret", "api_key",
-    "otp", "session", "cookie",
+    "password",
+    "passwd",
+    "pwd",
+    "token",
+    "access_token",
+    "refresh_token",
+    "secret",
+    "api_key",
+    "otp",
+    "session",
+    "cookie",
     "authorization",
 }
 
@@ -61,7 +92,7 @@ class WorkflowAuditRecord:
 
     # Required: Policy Decisions
     gate_decision: str
-    block_reason: Optional[str] = None
+    block_reason: str | None = None
 
     # Required: Context
     tenant_id: str = ""
@@ -76,7 +107,7 @@ class WorkflowAuditRecord:
     sensitive_input_detected: bool = False
 
     # Required: Approval
-    approval_id: Optional[str] = None
+    approval_id: str | None = None
     approval_status: str = "not_required"  # "not_required" | "pending" | "approved" | "rejected"
 
     # Required: Execution State
@@ -87,7 +118,7 @@ class WorkflowAuditRecord:
 
     # Required: Result
     result_status: str = "recorded"  # "recorded" | "blocked" | "allowed" | "error"
-    error_code: Optional[str] = None
+    error_code: str | None = None
 
     # Required: Timestamp
     created_at: str = ""  # ISO 8601 UTC
@@ -105,7 +136,7 @@ class WorkflowAuditWriteResult:
     path: str
     event_count: int = 0
     bytes_written: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 # Valid event types
@@ -126,8 +157,7 @@ def _is_sensitive_field_name(field_name: str) -> bool:
     """Check if a field name is sensitive."""
     field_lower = field_name.lower()
     return field_lower in SENSITIVE_FIELD_NAMES or any(
-        sensitive in field_lower
-        for sensitive in ["password", "token", "secret", "key", "cookie"]
+        sensitive in field_lower for sensitive in ["password", "token", "secret", "key", "cookie"]
     )
 
 
@@ -172,9 +202,7 @@ def redact_audit_payload(payload: Any) -> Any:
 
     elif isinstance(payload, str):
         # Check if string looks like a sensitive value
-        if len(payload) > 100 or any(
-            pattern in payload.lower() for pattern in ["-----BEGIN", "-----END", "0x"]
-        ):
+        if len(payload) > 100 or any(pattern in payload.lower() for pattern in ["-----BEGIN", "-----END", "0x"]):
             return "[REDACTED]"
         return payload
 
@@ -196,7 +224,7 @@ def _redact_url(url: str) -> tuple[str, str]:
 
     # Parse URL and redact sensitive query params
     try:
-        from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+        from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
         parsed = urlparse(url)
         query_params = parse_qs(parsed.query, keep_blank_values=True)
@@ -237,18 +265,18 @@ def build_audit_record(
     site_id: str = "",
     target_domain: str = "",
     target_url: str = "",
-    approval_id: Optional[str] = None,
+    approval_id: str | None = None,
     approval_status: str = "not_required",
     sensitive_input_detected: bool = False,
-    input_payload: Optional[dict] = None,
+    input_payload: dict | None = None,
     dry_run: bool = True,
     production_mode: bool = False,
     safe_to_dispatch: bool = False,
     safe_to_execute: bool = False,
     result_status: str = "recorded",
-    block_reason: Optional[str] = None,
-    error_code: Optional[str] = None,
-    metadata: Optional[dict] = None,
+    block_reason: str | None = None,
+    error_code: str | None = None,
+    metadata: dict | None = None,
 ) -> WorkflowAuditRecord:
     """Build audit record from components.
 
@@ -280,15 +308,15 @@ def build_audit_record(
     Returns:
         WorkflowAuditRecord
     """
-    audit_id = f"audit_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    audit_id = f"audit_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     # Redact URL
     target_url_redacted, target_url_hash = _redact_url(target_url)
 
     # Determine input redaction status
     if input_payload:
-        redacted_payload = redact_audit_payload(input_payload)
+        redact_audit_payload(input_payload)
         input_redaction_status = "full" if sensitive_input_detected else "partial"
     else:
         input_redaction_status = "not_redacted"
@@ -409,7 +437,7 @@ def append_audit_record(
             success=False,
             audit_id=record.audit_id,
             path=str(jsonl_path),
-            error_message=f"Validation failed: {'; '.join(errors)}"
+            error_message=f"Validation failed: {'; '.join(errors)}",
         )
 
     try:
@@ -424,7 +452,7 @@ def append_audit_record(
         # Count events in file
         event_count = 0
         if jsonl_path.exists():
-            with open(jsonl_path, "r", encoding="utf-8") as f:
+            with open(jsonl_path, encoding="utf-8") as f:
                 event_count = sum(1 for line in f if line.strip())
 
         return WorkflowAuditWriteResult(
@@ -436,12 +464,9 @@ def append_audit_record(
             error_message=None,
         )
 
-    except IOError as e:
+    except OSError as e:
         return WorkflowAuditWriteResult(
-            success=False,
-            audit_id=record.audit_id,
-            path=str(jsonl_path),
-            error_message=f"Write failed: {str(e)}"
+            success=False, audit_id=record.audit_id, path=str(jsonl_path), error_message=f"Write failed: {e!s}"
         )
 
 
@@ -464,7 +489,7 @@ def read_audit_records(jsonl_path: Path | str) -> list[dict]:
         raise FileNotFoundError(f"Audit file not found: {jsonl_path}")
 
     records = []
-    with open(jsonl_path, "r", encoding="utf-8") as f:
+    with open(jsonl_path, encoding="utf-8") as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:

@@ -6,9 +6,11 @@ Execution is gated by:
 2. Action allowlist (only browser.inspect)
 3. URL boundary policy (evaluate_server_browser_url_policy) — 제한 사이트 차단
 """
+
 import os
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+
 from browser_worker.policy import evaluate_server_browser_url_policy
+from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 try:
     from playwright.sync_api import sync_playwright
@@ -25,9 +27,7 @@ class RealPlaywrightBackend:
 
     def __init__(self):
         """Initialize backend and check feature gate."""
-        self.execution_enabled = (
-            os.environ.get(self.EXECUTION_ENABLED_ENV_VAR, "").lower() == "true"
-        )
+        self.execution_enabled = os.environ.get(self.EXECUTION_ENABLED_ENV_VAR, "").lower() == "true"
 
     def _validate_execution_enabled(self) -> tuple[bool, str]:
         """Check if actual execution is enabled.
@@ -61,9 +61,7 @@ class RealPlaywrightBackend:
             return False, "URL_NOT_ALLOWED_ACTUAL_EXECUTION"
         return True, ""
 
-    def handle_browser_action(
-        self, request: WorkerBrowserRequest
-    ) -> WorkerBrowserResponse:
+    def handle_browser_action(self, request: WorkerBrowserRequest) -> WorkerBrowserResponse:
         """Handle browser action with actual Playwright execution.
 
         Args:
@@ -115,7 +113,6 @@ class RealPlaywrightBackend:
         browser = None
         context = None
         page = None
-        cleanup_failed = False
 
         try:
             with sync_playwright() as p:
@@ -186,5 +183,5 @@ class RealPlaywrightBackend:
                     context.close()
                 if browser is not None:
                     browser.close()
-            except Exception:
-                cleanup_failed = True
+            except Exception:  # noqa: S110
+                pass

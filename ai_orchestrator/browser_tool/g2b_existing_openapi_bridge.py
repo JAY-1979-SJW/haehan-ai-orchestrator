@@ -42,10 +42,22 @@ _NEEDS_VERIFICATION_DOMAINS: frozenset[str] = frozenset({"shop.g2b.go.kr", "api.
 # ── 차단 경로 패턴 ─────────────────────────────────────────────────────────────
 
 _BLOCKED_URL_PATTERNS: tuple[str, ...] = (
-    "/login", "/cert", "/bid_submit", "/contract", "/payment",
-    "/download", "/upload", "egovuserreqstlogin", "usercert",
-    "ptb05001p", "ctb01001", "checkout", "ptb04001p",
-    "downloadfile", "filedown", "attachdown",
+    "/login",
+    "/cert",
+    "/bid_submit",
+    "/contract",
+    "/payment",
+    "/download",
+    "/upload",
+    "egovuserreqstlogin",
+    "usercert",
+    "ptb05001p",
+    "ctb01001",
+    "checkout",
+    "ptb04001p",
+    "downloadfile",
+    "filedown",
+    "attachdown",
 )
 
 # ── 필수 필드 ──────────────────────────────────────────────────────────────────
@@ -98,9 +110,15 @@ def normalize_existing_g2b_openapi_item(item: dict[str, Any]) -> dict[str, Any]:
 
     # 이미 snake_case 필드명인 경우 직접 복사
     for field in (
-        "bid_notice_no", "bid_notice_order", "notice_name",
-        "demand_org", "notice_org", "posted_at", "business_type",
-        "detail_url", "raw_detail_url_candidates",
+        "bid_notice_no",
+        "bid_notice_order",
+        "notice_name",
+        "demand_org",
+        "notice_org",
+        "posted_at",
+        "business_type",
+        "detail_url",
+        "raw_detail_url_candidates",
     ):
         if field in item and field not in normalized:
             normalized[field] = item[field]
@@ -152,11 +170,7 @@ def validate_g2b_notice_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         elif cls == "needs_verification":
             needs_v_extras.append(u)
 
-    valid = (
-        not missing
-        and not blocked_detail
-        and url_verdict in ("safe", "missing", "external")
-    )
+    valid = not missing and not blocked_detail and url_verdict in ("safe", "missing", "external")
 
     return {
         "valid": valid,
@@ -292,7 +306,6 @@ def classify_existing_source_bridge_result(result: dict[str, Any]) -> dict[str, 
     """
     safe = result.get("safe_detail_url_candidates", [])
     blocked = result.get("blocked_detail_url_candidates", [])
-    needs_v = result.get("needs_verification_candidates", [])
     missing = result.get("detail_url_missing_count", 0)
     item_count = result.get("item_count", 0)
 

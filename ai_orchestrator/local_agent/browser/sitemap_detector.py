@@ -1,22 +1,23 @@
 """사이트 맵 자동 탐지 — robots.txt, sitemap.xml, API 엔드포인트."""
+
 from __future__ import annotations
 
 import json
 import re
 import time
-import urllib.request
 import urllib.error
+import urllib.request
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
-from dataclasses import dataclass, asdict
 
 
 @dataclass
 class SitemapInfo:
     """사이트 맵 정보."""
+
     domain: str
-    robots_txt: Optional[str] = None
-    sitemap_url: Optional[str] = None
+    robots_txt: str | None = None
+    sitemap_url: str | None = None
     api_endpoints: list[str] = None
     page_structure: dict = None
     selectors: dict = None  # {element_type: [selectors]}
@@ -30,26 +31,26 @@ class SitemapInfo:
             self.selectors = {}
 
 
-def fetch_robots_txt(domain: str, timeout: float = 5.0) -> Optional[str]:
+def fetch_robots_txt(domain: str, timeout: float = 5.0) -> str | None:
     """robots.txt 다운로드."""
     try:
         url = f"https://{domain}/robots.txt"
-        with urllib.request.urlopen(url, timeout=timeout) as r:
+        with urllib.request.urlopen(url, timeout=timeout) as r:  # noqa: S310
             return r.read().decode("utf-8", errors="ignore")
     except Exception:
         return None
 
 
-def extract_sitemap_url(robots_txt: str) -> Optional[str]:
+def extract_sitemap_url(robots_txt: str) -> str | None:
     """robots.txt에서 sitemap URL 추출."""
     match = re.search(r"Sitemap:\s*(\S+)", robots_txt, re.IGNORECASE)
     return match.group(1) if match else None
 
 
-def fetch_sitemap_xml(sitemap_url: str, timeout: float = 5.0) -> Optional[str]:
+def fetch_sitemap_xml(sitemap_url: str, timeout: float = 5.0) -> str | None:
     """sitemap.xml 다운로드."""
     try:
-        with urllib.request.urlopen(sitemap_url, timeout=timeout) as r:
+        with urllib.request.urlopen(sitemap_url, timeout=timeout) as r:  # noqa: S310
             return r.read().decode("utf-8", errors="ignore")
     except Exception:
         return None
@@ -90,13 +91,11 @@ def detect_api_endpoints(page_html: str, domain: str) -> list[str]:
 
 def detect_selectors_by_network(page) -> dict[str, list[str]]:
     """Playwright 페이지에서 네트워크 요청 분석하여 API 엔드포인트 탐지."""
-    endpoints = set()
-
     try:
         # Network 요청 히스토리는 직접 접근 불가하므로
         # page.evaluate로 JavaScript에서 추출
         pass
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return {}
@@ -109,13 +108,13 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
     try:
         # 메일 아이템 셀렉터 탐지
         mail_selectors = [
-            'li[data-mailsn]',
-            'tr.mail_list',
-            '.mailListItem',
+            "li[data-mailsn]",
+            "tr.mail_list",
+            ".mailListItem",
             '[role="listitem"]',
-            'div[data-mail-id]',
+            "div[data-mail-id]",
             'a[href*="/read/"]',
-            '.mail_item',
+            ".mail_item",
             '[class*="mail"][class*="item"]',
         ]
 
@@ -125,7 +124,7 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     mail_found.append({"selector": sel, "count": count})
-            except:
+            except:  # noqa: E722, S110
                 pass
 
         if mail_found:
@@ -145,7 +144,7 @@ def detect_dom_selectors(page) -> dict[str, list[str]]:
                 count = len(page.query_selector_all(sel))
                 if count > 0:
                     folder_found.append({"selector": sel, "count": count})
-            except:
+            except:  # noqa: E722, S110
                 pass
 
         if folder_found:
@@ -244,7 +243,7 @@ def detect_sitemap(domain: str, page=None) -> SitemapInfo:
     return info
 
 
-def save_sitemap_cache(info: SitemapInfo, cache_dir: Path = None):
+def save_sitemap_cache(info: SitemapInfo, cache_dir: Path = None):  # noqa: RUF013
     """사이트 맵 캐시 저장."""
     if cache_dir is None:
         cache_dir = Path(__file__).parent / ".sitemap_cache"
@@ -272,9 +271,9 @@ def main():
         "mybox.naver.com",
     ]
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  사이트 맵 자동 탐지")
-    print("="*60)
+    print("=" * 60)
 
     for domain in domains:
         with BrowserAgent() as agent:
@@ -287,15 +286,15 @@ def main():
             save_sitemap_cache(info)
 
             # 결과 출력
-            print(f"\n  📊 결과:")
+            print("\n  📊 결과:")
             print(f"    - Sitemap URL: {info.sitemap_url or '없음'}")
             print(f"    - API 엔드포인트: {len(info.api_endpoints)}")
             print(f"    - DOM 셀렉터: {list(info.selectors.keys())}")
             print(f"    - 페이지 구조: {info.page_structure}")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  완료")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

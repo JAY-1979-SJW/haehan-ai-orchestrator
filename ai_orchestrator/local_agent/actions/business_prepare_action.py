@@ -1,14 +1,19 @@
 """범용 업무 실행 사전 검증 핸들러 — 업무 프로필별 필드 검증 + 안전 요약 생성."""
+
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
-from urllib.parse import urlparse
+from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
+
 from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.business_action_profiles import (
-    get_profile, validate_summary_fields, build_approval_scope, build_evidence_policy,
     COMMON_FORBIDDEN_FIELDS,
+    build_approval_scope,
+    build_evidence_policy,
+    get_profile,
+    validate_summary_fields,
 )
 
 ACTION_NAME = "business.prepare_action"
@@ -66,8 +71,6 @@ def execute(**kwargs) -> dict[str, Any]:
     - evidence: 감사 증거
     - warnings: 누락 필드 등
     """
-    ok = True
-
     # 필수 필드 검증
     page_url = kwargs.get("page_url", "").strip()
     if not page_url:
@@ -79,7 +82,16 @@ def execute(**kwargs) -> dict[str, Any]:
 
     profile = get_profile(business_profile)
     if not profile:
-        available = ", ".join(["bid_submission", "erp_save", "erp_submit_approval", "document_submission", "public_agency_upload", "esign_request"])
+        available = ", ".join(
+            [
+                "bid_submission",
+                "erp_save",
+                "erp_submit_approval",
+                "document_submission",
+                "public_agency_upload",
+                "esign_request",
+            ]
+        )
         return {
             "ok": False,
             "verdict": "ERROR",
@@ -122,7 +134,7 @@ def execute(**kwargs) -> dict[str, Any]:
     evidence_policy = build_evidence_policy(profile)
 
     # 응답 구성
-    prepared_at = datetime.now(timezone.utc).isoformat()
+    prepared_at = datetime.now(UTC).isoformat()
 
     result = {
         "ok": True,

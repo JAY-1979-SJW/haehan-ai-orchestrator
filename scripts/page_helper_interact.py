@@ -1,9 +1,11 @@
 """page_helper 인터랙션 헬퍼 — click / type / check_error."""
+
 from __future__ import annotations
 
 import re
 
 from playwright.sync_api import Page
+
 from scripts.logger import get_logger
 from scripts.page_helper_common import _ERROR_SELECTORS, _find_frame
 
@@ -45,7 +47,8 @@ def page_wait_click(page: Page, selector: str, timeout: int = 20000) -> bool:
                 clicked = None
                 for frame in page.frames:
                     try:
-                        clicked = frame.evaluate("""(texts) => {
+                        clicked = frame.evaluate(
+                            """(texts) => {
                             for (const text of texts) {
                                 const els = Array.from(document.querySelectorAll(
                                     'button, a, [role="button"], span, div'
@@ -57,7 +60,9 @@ def page_wait_click(page: Page, selector: str, timeout: int = 20000) -> bool:
                                 if (el) { el.click(); return text; }
                             }
                             return null;
-                        }""", texts)
+                        }""",
+                            texts,
+                        )
                         if clicked:
                             break
                     except Exception:
@@ -126,24 +131,26 @@ def page_wait_type(
     """
     log.debug("wait_type: %s ← '%s'", selector, text[:30])
     el = None
-    frame_used = page  # 실제 사용된 frame 추적
     try:
         el = page.wait_for_selector(selector, timeout=timeout, state="visible")
         try:
             el.fill(text)
         except Exception:
-            el.click(); el.click(); el.click()
+            el.click()
+            el.click()
+            el.click()
             el.type(text, delay=delay)
     except Exception:
         # iframe 탐색 fallback
-        found_frame, found_el = _find_frame(page, selector)
+        _found_frame, found_el = _find_frame(page, selector)
         if found_el:
             el = found_el
-            frame_used = found_frame
             try:
                 el.fill(text)
             except Exception:
-                el.click(); el.click(); el.click()
+                el.click()
+                el.click()
+                el.click()
                 el.type(text, delay=delay)
             log.debug("type OK (iframe): %s", selector)
         else:
@@ -166,7 +173,6 @@ def page_wait_type(
                 try:
                     result = frame.evaluate(js_fill, [selector, text])
                     if result is not None:
-                        frame_used = frame
                         break
                 except Exception:
                     pass

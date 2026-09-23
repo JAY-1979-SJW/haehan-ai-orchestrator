@@ -14,18 +14,18 @@
     (actions.execute_action 자체가 ACTION_FORBIDDEN 로 거절).
   - device_token 원문은 auth 메시지에만 쓰고 어느 로그에도 기록하지 않는다.
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import random
-import time
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from . import __version__, config
-from .actions import execute_action, FORBIDDEN_ACTIONS
+from .actions import FORBIDDEN_ACTIONS, execute_action
 from .audit import log_local_event
 from .network_bypass import websocket_connect_kwargs
 
@@ -37,18 +37,21 @@ class WebSocketDisabled(RuntimeError):
 class WebSocketDependencyMissing(RuntimeError):
     """`websockets` 패키지가 설치되지 않은 경우."""
 
+
 try:
     from .user_present_ws_adapter import (
         create_local_user_present_task_from_ws,
-        mark_local_user_confirmed_and_build_event,
-        mark_local_user_cancelled_and_build_event,
+        mark_local_user_cancelled_and_build_event,  # noqa: F401
+        mark_local_user_confirmed_and_build_event,  # noqa: F401
     )
+
     _USER_PRESENT_ADAPTER_AVAILABLE = True
 except ImportError:
     _USER_PRESENT_ADAPTER_AVAILABLE = False
 
 try:
     from .user_present_status_sender import run_user_present_status_send_once
+
     _STATUS_SENDER_AVAILABLE = True
 except ImportError:
     _STATUS_SENDER_AVAILABLE = False
@@ -58,29 +61,36 @@ try:
 except ImportError:
     # Fallback for environments where ai_orchestrator cannot be imported.
     # This maintains consistency with ai_orchestrator.local_agent_actions.
-    _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset({
-        "ping", "system_info", "list_allowed_apps",
-        "open_url", "list_files_readonly",
-        "capture_screenshot",
-        "ws_noop",
-        "open_url_execute",
-        # browser automation actions (BROWSER-4E)
-        "browser.inspect",
-        "browser.plan_click",
-        "browser.plan_type",
-        "browser.plan_submit",
-        "browser.execute_click",
-        "browser.execute_type",
-    })
+    _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset(
+        {
+            "ping",
+            "system_info",
+            "list_allowed_apps",
+            "open_url",
+            "list_files_readonly",
+            "capture_screenshot",
+            "ws_noop",
+            "open_url_execute",
+            # browser automation actions (BROWSER-4E)
+            "browser.inspect",
+            "browser.plan_click",
+            "browser.plan_type",
+            "browser.plan_submit",
+            "browser.execute_click",
+            "browser.execute_type",
+        }
+    )
 
 logger = logging.getLogger(__name__)
 
 # 승인 없이도 high risk 경로로 실행 가능한 액션 — 현재 없음.
 # 승인 후(approved=True) 에만 허용되는 액션 목록.
-_APPROVAL_REQUIRED_ACTIONS: frozenset[str] = frozenset({
-    "capture_screenshot",
-    "open_url_execute",
-})
+_APPROVAL_REQUIRED_ACTIONS: frozenset[str] = frozenset(
+    {
+        "capture_screenshot",
+        "open_url_execute",
+    }
+)
 
 
 def _server_ws_url() -> str:
@@ -94,10 +104,17 @@ def _server_ws_url() -> str:
     else:
         # 이미 ws/wss 로 지정된 경우 그대로 존중
         ws_scheme = scheme or "ws"
-    path = (parsed.path.rstrip("/") + "/api/v1/local-agents/ws")
-    return urlunparse((
-        ws_scheme, parsed.netloc, path, "", "", "",
-    ))
+    path = parsed.path.rstrip("/") + "/api/v1/local-agents/ws"
+    return urlunparse(
+        (
+            ws_scheme,
+            parsed.netloc,
+            path,
+            "",
+            "",
+            "",
+        )
+    )
 
 
 def _build_result_message(task: dict, result) -> dict:
@@ -149,8 +166,10 @@ def process_task(task: dict) -> dict:
     if action in FORBIDDEN_ACTIONS:
         log_local_event("ws_task_forbidden", task_id=task_id, action=action)
         return {
-            "type": "result", "task_id": task_id,
-            "success": False, "summary": f"{action} 거절",
+            "type": "result",
+            "task_id": task_id,
+            "success": False,
+            "summary": f"{action} 거절",
             "error_code": "ACTION_FORBIDDEN",
             "error": "금지 액션 (파일 수정/삭제/전송/shell)",
         }
@@ -159,21 +178,26 @@ def process_task(task: dict) -> dict:
         if not (approved and action in _APPROVAL_REQUIRED_ACTIONS):
             log_local_event(
                 "ws_task_high_risk_refused",
-                task_id=task_id, action=action, approved=approved,
+                task_id=task_id,
+                action=action,
+                approved=approved,
             )
             return {
-                "type": "result", "task_id": task_id,
-                "success": False, "summary": f"{action} 승인 필요",
+                "type": "result",
+                "task_id": task_id,
+                "success": False,
+                "summary": f"{action} 승인 필요",
                 "error_code": "NOT_IMPLEMENTED_STAGE2",
                 "error": "high risk 작업은 승인 게이트 통과 후에만 실행된다",
             }
 
     if action not in _AUTO_EXECUTE_VIA_AGENT:
-        log_local_event("ws_task_not_auto_executable",
-                        task_id=task_id, action=action)
+        log_local_event("ws_task_not_auto_executable", task_id=task_id, action=action)
         return {
-            "type": "result", "task_id": task_id,
-            "success": False, "summary": f"{action} 자동 실행 불가",
+            "type": "result",
+            "task_id": task_id,
+            "success": False,
+            "summary": f"{action} 자동 실행 불가",
             "error_code": "ACTION_NOT_AUTO_EXECUTABLE",
             "error": "본 에이전트에서 자동 실행 대상 액션이 아님",
         }
@@ -207,12 +231,14 @@ def process_task(task: dict) -> dict:
     if agent_id_inner:
         enriched_params["_agent_id"] = agent_id_inner
 
-    log_local_event("ws_task_execute", task_id=task_id, action=action,
-                    approved=approved)
+    log_local_event("ws_task_execute", task_id=task_id, action=action, approved=approved)
     result = execute_action(action, enriched_params)
     log_local_event(
-        "ws_task_result", task_id=task_id, action=action,
-        success=result.success, error_code=result.error_code,
+        "ws_task_result",
+        task_id=task_id,
+        action=action,
+        success=result.success,
+        error_code=result.error_code,
     )
     return _build_result_message(task, result)
 
@@ -264,15 +290,16 @@ def process_user_present_task(task_msg: dict) -> dict:
 
 # ── 연결 루프 ────────────────────────────────────────────────────────────
 
+
 def _load_websockets_module():
     """`websockets` 라이브러리를 지연 임포트. 미설치 시 명시적 에러."""
     try:
         import websockets  # type: ignore
+
         return websockets
     except ImportError as e:  # pragma: no cover
         raise WebSocketDependencyMissing(
-            "Stage 2 WebSocket 활성화에는 `websockets` 패키지가 필요하다. "
-            "`pip install websockets` 후 다시 실행하라."
+            "Stage 2 WebSocket 활성화에는 `websockets` 패키지가 필요하다. `pip install websockets` 후 다시 실행하라."
         ) from e
 
 
@@ -289,17 +316,21 @@ async def _run_session(agent_id: str, device_token: str) -> None:
         **websocket_connect_kwargs(config.SERVER_BASE_URL),
     ) as ws:
         # 1) 인증
-        await ws.send(json.dumps({
-            "type": "auth",
-            "agent_id": agent_id,
-            "device_token": device_token,
-            "version": __version__,
-        }))
+        await ws.send(
+            json.dumps(
+                {
+                    "type": "auth",
+                    "agent_id": agent_id,
+                    "device_token": device_token,
+                    "version": __version__,
+                }
+            )
+        )
 
         # 첫 응답 — auth_ok 또는 close
         try:
             raw = await asyncio.wait_for(ws.recv(), timeout=15.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("auth 응답 없음")
             return
 
@@ -319,19 +350,23 @@ async def _run_session(agent_id: str, device_token: str) -> None:
 
         # 2) 메시지 루프
         heartbeat_interval = max(5, getattr(config, "POLL_INTERVAL_SEC", 10))
-        last_heartbeat = time.monotonic()
 
         while True:
             try:
                 raw = await asyncio.wait_for(
-                    ws.recv(), timeout=heartbeat_interval,
+                    ws.recv(),
+                    timeout=heartbeat_interval,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # 주기적 heartbeat 로 서버에 pull 기회 부여
-                await ws.send(json.dumps({
-                    "type": "heartbeat", "agent_id": agent_id,
-                }))
-                last_heartbeat = time.monotonic()
+                await ws.send(
+                    json.dumps(
+                        {
+                            "type": "heartbeat",
+                            "agent_id": agent_id,
+                        }
+                    )
+                )
                 # pending USER_PRESENT_STATUS 자동 전송 (실패해도 agent 계속 실행)
                 if _STATUS_SENDER_AVAILABLE:
                     try:
@@ -357,11 +392,15 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                 # InvalidTaskTransitionError 를 일으키므로 반드시 대기한다.
                 run_ok = False
                 try:
-                    await ws.send(json.dumps({
-                        "type": "running",
-                        "agent_id": agent_id,
-                        "task_id": task_id_inner,
-                    }))
+                    await ws.send(
+                        json.dumps(
+                            {
+                                "type": "running",
+                                "agent_id": agent_id,
+                                "task_id": task_id_inner,
+                            }
+                        )
+                    )
                     try:
                         ack_raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
                         ack = json.loads(ack_raw)
@@ -369,9 +408,10 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                         if not run_ok:
                             logger.warning(
                                 "running_ack 대신 %s 수신 — 실행 포기 (task_id=%s)",
-                                ack.get("type"), task_id_inner,
+                                ack.get("type"),
+                                task_id_inner,
                             )
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         logger.warning(
                             "running_ack timeout — 실행 포기 (task_id=%s)",
                             task_id_inner,
@@ -383,7 +423,8 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                         )
                 except Exception:
                     logger.warning(
-                        "running 전송 실패 — 실행 포기 (task_id=%s)", task_id_inner,
+                        "running 전송 실패 — 실행 포기 (task_id=%s)",
+                        task_id_inner,
                     )
 
                 if not run_ok:
@@ -400,8 +441,7 @@ async def _run_session(agent_id: str, device_token: str) -> None:
                 ack = process_user_present_task(task_msg)
                 ack["agent_id"] = agent_id
                 await ws.send(json.dumps(ack))
-            elif mtype in ("idle", "heartbeat_ack", "result_ack",
-                           "running_ack", "auth_ok", "user_present_ack"):
+            elif mtype in ("idle", "heartbeat_ack", "result_ack", "running_ack", "auth_ok", "user_present_ack"):
                 # 제어 응답 — 별도 처리 없음
                 continue
             elif mtype == "error":
@@ -418,9 +458,7 @@ async def run_forever(agent_id: str, device_token: str) -> None:
     - Ctrl+C / asyncio.CancelledError 에서만 중단.
     """
     if not config.WEBSOCKET_ENABLED:
-        raise WebSocketDisabled(
-            "WebSocket 비활성 — config.WEBSOCKET_ENABLED=True 로 설정 후 실행"
-        )
+        raise WebSocketDisabled("WebSocket 비활성 — config.WEBSOCKET_ENABLED=True 로 설정 후 실행")
     if not agent_id or not device_token:
         raise ValueError("agent_id / device_token 이 필요합니다")
 
@@ -439,7 +477,7 @@ async def run_forever(agent_id: str, device_token: str) -> None:
         except Exception as e:
             logger.warning("WebSocket 세션 실패: %s | backoff=%.1fs", e, backoff)
             log_local_event("ws_session_error", error=str(e)[:200])
-            jitter = random.uniform(0.0, backoff * 0.1)
+            jitter = random.uniform(0.0, backoff * 0.1)  # noqa: S311
             await asyncio.sleep(backoff + jitter)
             backoff = min(max_backoff, backoff * 2)
 
@@ -448,9 +486,7 @@ def connect(agent_id: str, device_token: str) -> None:
     """sync 엔트리 — asyncio.run(run_forever(...)) 호출."""
     if not config.WEBSOCKET_ENABLED:
         logger.info("WebSocket 비활성 — config.WEBSOCKET_ENABLED=True 필요")
-        raise WebSocketDisabled(
-            "WebSocket 푸시가 비활성 상태. config.WEBSOCKET_ENABLED=True 후 재실행"
-        )
+        raise WebSocketDisabled("WebSocket 푸시가 비활성 상태. config.WEBSOCKET_ENABLED=True 후 재실행")
     try:
         asyncio.run(run_forever(agent_id, device_token))
     except KeyboardInterrupt:
@@ -458,6 +494,10 @@ def connect(agent_id: str, device_token: str) -> None:
 
 
 __all__ = [
-    "connect", "run_forever", "process_task", "process_user_present_task",
-    "WebSocketDisabled", "WebSocketDependencyMissing",
+    "WebSocketDependencyMissing",
+    "WebSocketDisabled",
+    "connect",
+    "process_task",
+    "process_user_present_task",
+    "run_forever",
 ]

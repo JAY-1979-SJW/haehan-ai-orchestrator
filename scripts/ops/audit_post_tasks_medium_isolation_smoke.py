@@ -7,22 +7,23 @@ medium 경로 격리 smoke 검증.
 DB write / 서버 반영 / 컨테이너 재시작 전면 금지.
 mock 기반 unit smoke만 수행.
 """
+
 import ast
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "POST_TASKS_MEDIUM_ISOLATION_SMOKE"
+AUDIT_ID = "POST_TASKS_MEDIUM_ISOLATION_SMOKE"
 AUDIT_DATE = "2026-05-18"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
-REAL_EXECUTE_ALLOWED          = False
-REAL_TOKEN_ISSUE_ALLOWED      = False
-EXECUTE_TASK_CONNECT_ALLOWED  = False
-DB_WRITE_ALLOWED              = False
-SERVER_DEPLOY_ALLOWED         = False
-CONTAINER_RESTART_ALLOWED     = False
-SMOKE_MOCK_ONLY               = True
+REAL_EXECUTE_ALLOWED = False
+REAL_TOKEN_ISSUE_ALLOWED = False
+EXECUTE_TASK_CONNECT_ALLOWED = False
+DB_WRITE_ALLOWED = False
+SERVER_DEPLOY_ALLOWED = False
+CONTAINER_RESTART_ALLOWED = False
+SMOKE_MOCK_ONLY = True
 
 # ── smoke 승인 기록 ───────────────────────────────────────────────────────────
 SMOKE_APPROVAL = {
@@ -164,9 +165,7 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _verify_router_state() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "dry_run_flag_true": "POST_TASKS_DRY_RUN_ENABLED = True" in content,
         "dry_run_branch_present": "POST_TASKS_DRY_RUN_ENABLED and ep.requires_approval" in content,
@@ -188,10 +187,7 @@ def _verify_router_state() -> dict:
 
 
 def _verify_executor_whitelist() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
-    whitelist = ["get_server_status", "fetch_web_page"]
+    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
     medium_actions = ["write_file", "edit_config", "create_patch", "generate_report"]
 
     # ALLOWED_ACTIONS 섹션 추출
@@ -210,20 +206,16 @@ def _verify_executor_whitelist() -> dict:
         "whitelist_has_get_server_status": '"get_server_status"' in allowed_section,
         "whitelist_has_fetch_web_page": '"fetch_web_page"' in allowed_section,
         "medium_actions_not_in_whitelist": all(
-            f'"{a}"' not in allowed_section and f"'{a}'" not in allowed_section
-            for a in medium_actions
+            f'"{a}"' not in allowed_section and f"'{a}'" not in allowed_section for a in medium_actions
         ),
         "high_critical_blocked_in_execute_task": (
-            'if risk_level in ("high", "critical")' in content
-            and "BLOCKED:" in content
+            'if risk_level in ("high", "critical")' in content and "BLOCKED:" in content
         ),
     }
 
 
 def _verify_approval_expiry() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/approval.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/approval.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "expiry_check_exists": "_now() > expires" in content or "expires_at" in content,
         "expired_status_set": '"expired"' in content,
@@ -352,6 +344,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== Medium Isolation Smoke: {result['verdict']} ===")

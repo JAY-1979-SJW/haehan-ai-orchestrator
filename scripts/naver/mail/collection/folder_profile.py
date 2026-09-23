@@ -3,6 +3,7 @@
 저장 위치: data/inspection/naver_mail_folder_discovery/
 민감정보: 계정 이메일 원문 저장 금지. account_hint_masked 만.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,9 +35,9 @@ class FolderProfileSnapshot:
     discovered_at_iso: str
     lnb_total_unread: int
     folders: list[dict]
-    groups: dict   # {group_name: [folder_name, ...]}
+    groups: dict  # {group_name: [folder_name, ...]}
     unknown_folders: list[str]
-    policy_excluded_folders: list[dict]   # [{name, reason}]
+    policy_excluded_folders: list[dict]  # [{name, reason}]
     collectable_folders: list[str]
     warnings: list[str] = field(default_factory=list)
     verdict: str = ""
@@ -46,11 +47,13 @@ class FolderProfileSnapshot:
     reconciliation: dict = field(default_factory=dict)
 
 
-def build_snapshot(folders: list[fd.FolderInfo],
-                   *, account_raw: str = "",
-                   lnb_total_unread: int = -1,
-                   warnings: list[str] | None = None
-                   ) -> FolderProfileSnapshot:
+def build_snapshot(
+    folders: list[fd.FolderInfo],
+    *,
+    account_raw: str = "",
+    lnb_total_unread: int = -1,
+    warnings: list[str] | None = None,
+) -> FolderProfileSnapshot:
     groups: dict[str, list[str]] = {}
     unknown: list[str] = []
     excluded: list[dict] = []
@@ -90,15 +93,17 @@ def build_snapshot(folders: list[fd.FolderInfo],
             collectable.append(f.name)
         elif f.kind not in (fp.KIND_NAV_ACTION, fp.KIND_SMART_GROUP_HEADER):
             # nav_action / 헤더는 excluded 목록에서 제외 (별도 분류)
-            excluded.append({
-                "name": f.name, "kind": f.kind,
-                "reason": f.default_policy_state or "unspecified",
-                "unread_count": f.unread_count,
-                "adapter_selected": f.adapter_selected,
-            })
+            excluded.append(
+                {
+                    "name": f.name,
+                    "kind": f.kind,
+                    "reason": f.default_policy_state or "unspecified",
+                    "unread_count": f.unread_count,
+                    "adapter_selected": f.adapter_selected,
+                }
+            )
 
     reconciled_real = raw_sum - header_dup
-    explained = (header_dup > 0) or (raw_sum == inbox_smart_active + spam_total + trash_total)
     reconciliation = {
         "raw_lnb_sum": raw_sum,
         "smart_group_header_duplicate_sum": header_dup,
@@ -111,9 +116,7 @@ def build_snapshot(folders: list[fd.FolderInfo],
             f"= reconciled({reconciled_real}) "
             f"= inbox+smart({inbox_smart_active}) + spam({spam_total}) + trash({trash_total})"
         ),
-        "explained": (
-            inbox_smart_active + spam_total + trash_total == reconciled_real
-        ),
+        "explained": (inbox_smart_active + spam_total + trash_total == reconciled_real),
         "lnb_total_unread_observed": lnb_total_unread,
     }
 
@@ -138,17 +141,27 @@ def build_snapshot(folders: list[fd.FolderInfo],
 def write_snapshot(snap: FolderProfileSnapshot, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "folder_profile_snapshot.json"
-    path.write_text(json.dumps(asdict(snap), ensure_ascii=False, indent=2),
-                    encoding="utf-8")
+    path.write_text(json.dumps(asdict(snap), ensure_ascii=False, indent=2), encoding="utf-8")
     return path
 
 
 # JSON 필수 필드 검증
 REQUIRED_TOP_FIELDS = (
-    "schema_version", "run_id", "account_hint_masked", "discovered_at_iso",
-    "lnb_total_unread", "folders", "groups", "unknown_folders",
-    "policy_excluded_folders", "collectable_folders", "warnings", "verdict",
-    "non_folder_menus", "smart_group_headers", "reconciliation",
+    "schema_version",
+    "run_id",
+    "account_hint_masked",
+    "discovered_at_iso",
+    "lnb_total_unread",
+    "folders",
+    "groups",
+    "unknown_folders",
+    "policy_excluded_folders",
+    "collectable_folders",
+    "warnings",
+    "verdict",
+    "non_folder_menus",
+    "smart_group_headers",
+    "reconciliation",
 )
 
 
