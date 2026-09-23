@@ -45,7 +45,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.auth as _auth
 
     importlib.reload(_auth)
-    import ai_orchestrator.web_task_router as _wtr
+    import ai_orchestrator.routers.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
@@ -93,7 +93,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.auth import get_current_user
-    from ai_orchestrator.web_task_router import web_task_router
+    from ai_orchestrator.routers.web_task_router import web_task_router
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")
@@ -245,7 +245,7 @@ def test_real_run_creates_pending_approval(admin_user):
     """dry_run=false 이면 pending approval 레코드가 생성된다."""
     import ai_orchestrator.dev_reg_approval as _dra
 
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -272,7 +272,7 @@ def test_real_run_creates_pending_approval(admin_user):
 
 def test_real_run_response_fields(admin_user):
     """dry_run=false 응답에 필수 필드가 포함된다."""
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -354,7 +354,7 @@ def test_sensitive_params_not_in_response(admin_user):
     """params 의 민감 필드(password, cookie 등)가 API 응답에 포함되지 않는다."""
     _SENSITIVE = "ultra_secret_password_xyz123"
 
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -379,7 +379,7 @@ def test_sensitive_params_not_in_audit_log(admin_user, tmp_path):
     """params 의 민감 필드가 감사 로그에 포함되지 않는다."""
     _SENSITIVE = "my_super_secret_token_98765"
 
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         client.post(
             "/api/v1/web-tasks/run",
@@ -478,7 +478,7 @@ def test_dev_reg_approval_imports_unchanged():
 
 def test_dev_reg_runner_imports_unchanged():
     """기존 dev_reg_runner 가 정상 임포트된다."""
-    from ai_orchestrator.dev_reg_runner import DevRegResult, run_dev_reg
+    from ai_orchestrator.services.dev_reg_runner import DevRegResult, run_dev_reg
 
     assert callable(run_dev_reg)
     assert DevRegResult is not None
@@ -499,7 +499,7 @@ def test_existing_adapter_imports_unchanged():
 
 def test_registry_does_not_break_existing_adapters():
     """web_task_registry 가 기존 어댑터와 정상 연동된다."""
-    from ai_orchestrator.web_task_registry import get_entry, list_entries
+    from ai_orchestrator.services.web_task_registry import get_entry, list_entries
 
     assert get_entry("hiworks", "developer_apply") is not None
     assert get_entry("naver", "app_register") is not None
@@ -531,7 +531,7 @@ def test_dry_run_audit_event_recorded(admin_user):
 
 def test_real_run_audit_events_recorded(admin_user):
     """dry_run=false 시 WEB_TASK_RUN_REQUESTED + WEB_TASK_PENDING_APPROVAL_CREATED 기록."""
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         client.post(
             "/api/v1/web-tasks/run",

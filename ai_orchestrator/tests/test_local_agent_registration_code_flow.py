@@ -118,7 +118,7 @@ def test_expired_code_fails(monkeypatch):
     """Expired codes are rejected."""
     from datetime import datetime
 
-    from ai_orchestrator import registration_code_store as store_module
+    from ai_orchestrator.persistence import registration_code_store as store_module
 
     # Issue code that expires in 1 minute
     code_result = regcodes.issue_code(

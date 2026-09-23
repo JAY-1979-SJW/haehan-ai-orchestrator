@@ -45,7 +45,7 @@ def api_inbox(
     t0 = time.monotonic()
     try:
         if source == "api":
-            from ai_orchestrator.gmail_reader import fetch_recent_emails
+            from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
 
             items = fetch_recent_emails(max_results=max_results, hours=hours)
         else:
@@ -79,7 +79,7 @@ def api_collect(
 ) -> dict:
     """Gmail 최근 메일을 내부 inbox에 저장."""
     try:
-        from ai_orchestrator.gmail_reader import collect_to_inbox
+        from ai_orchestrator.sites.gmail_reader import collect_to_inbox
 
         result = collect_to_inbox(max_results=max_results, hours=hours)
         log_event(

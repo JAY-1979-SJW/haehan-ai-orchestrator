@@ -150,10 +150,10 @@ def test_router_imports_clean():
     router.py 자체는 server.py와 순환 의존이 있으므로 직접 import하지 않는다.
     TestClient(app) 경로로 서버 전체 기동이 검증된다 (test_health_endpoint_unchanged).
     """
-    import ai_orchestrator.admin_ui_router as aur
-    import ai_orchestrator.auth_router as auth
     import ai_orchestrator.local_agent_router as lar
-    import ai_orchestrator.web_task_router as wtr
+    import ai_orchestrator.routers.admin_ui_router as aur
+    import ai_orchestrator.routers.auth_router as auth
+    import ai_orchestrator.routers.web_task_router as wtr
 
     assert lar.local_agent_router is not None
     assert aur.admin_ui_router is not None

@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 
 
 def _client(user: dict):
-    from ai_orchestrator.admin_ui_router import admin_ui_router
     from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 
     app = FastAPI()
     app.include_router(admin_ui_router, prefix="/api/v1")
@@ -13,7 +13,7 @@ def _client(user: dict):
 
 
 def test_legacy_admin_ui_fallback_disabled_by_default(monkeypatch):
-    from ai_orchestrator import admin_ui_router
+    from ai_orchestrator.routers import admin_ui_router
 
     monkeypatch.delenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", raising=False)
 

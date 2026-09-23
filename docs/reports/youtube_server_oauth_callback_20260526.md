@@ -32,4 +32,4 @@ https://haehan-ai.kr/orchestrator/api/v1/oauth/youtube/callback
 ## Verification
 
 - `python -m pytest tests\test_youtube_oauth.py tests\test_youtube_oauth_callback_route.py tests\test_youtube_research.py -q`
-- `python -m py_compile scripts\youtube\oauth.py ai_orchestrator\youtube_oauth_router.py ai_orchestrator\router.py`
+- `python -m py_compile scripts\youtube\oauth.py ai_orchestrator/routers/youtube_oauth_router.py ai_orchestrator\router.py`

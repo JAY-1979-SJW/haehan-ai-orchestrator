@@ -16,8 +16,9 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+from ai_orchestrator.clients import telegram_sender as _ts
+
 from . import dev_reg_approval as _dra
-from . import telegram_sender as _ts
 from .approval import issue_token_for_dev_reg
 from .telegram_notifier import build_dev_reg_message
 

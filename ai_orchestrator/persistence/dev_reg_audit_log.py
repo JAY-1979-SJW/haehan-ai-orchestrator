@@ -73,7 +73,7 @@ def load_recent_runs(n: int = 10, *, path: Path | None = None) -> list[dict]:
         return []
     records: list[dict] = []
     try:
-        with open(p, "r", encoding="utf-8") as f:
+        with open(p, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

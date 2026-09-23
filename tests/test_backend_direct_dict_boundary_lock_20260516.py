@@ -354,7 +354,7 @@ class TestWebTasksRunCharacterization:
         """dry_run=True 응답 키 목록 고정 (소스 기반)."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         expected_keys = [
             '"dry_run"',
             '"provider"',
@@ -375,7 +375,7 @@ class TestWebTasksRunCharacterization:
         """dry_run=False 응답 키 목록 고정 (소스 기반)."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         expected_keys = [
             '"status"',
             '"pending_approval"',
@@ -433,7 +433,7 @@ class TestWebTasksRunFromTemplateCharacterization:
         """성공 응답에 template_id 키가 추가된다 (소스 기반)."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         assert 'result["template_id"] = template.template_id' in src
 
     def test_auth_behavior_recorded(self, client):

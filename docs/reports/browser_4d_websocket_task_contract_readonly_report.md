@@ -60,7 +60,7 @@ pending → approved → rejected
 
 ---
 
-### 2.2 Web Task Router (ai_orchestrator/web_task_router.py)
+### 2.2 Web Task Router (ai_orchestrator/routers/web_task_router.py)
 
 **주요 엔드포인트**:
 - `POST /api/v1/web-tasks/run` - 작업 실행 요청
@@ -346,7 +346,7 @@ BrowserTaskHandler는 다음을 기대:
 ✓ local_agent/server_action_adapter.py - 컴파일 성공
 ✓ local_agent/browser_action_contract.py - 컴파일 성공
 ✓ ai_orchestrator/task_state.py - 컴파일 성공
-✓ ai_orchestrator/web_task_router.py - 컴파일 성공
+✓ ai_orchestrator/routers/web_task_router.py - 컴파일 성공
 ✓ ai_orchestrator/local_agent_registry.py - 컴파일 성공
 
 ### 5.2 테스트 실행

@@ -3,6 +3,7 @@
 현재 앱/백엔드 계약 기준으로 테스트 기준선이 동기화되었는지 검증한다.
 기능 구현 공정이 아니라 테스트 기대값 갱신 공정 감리.
 """
+
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
-APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "app_status_router.py"
+APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 DASHBOARD_PAGE = FRONTEND_SRC / "app" / "assistant" / "page.tsx"
 
 VERDICT_READY = "APP_TEST_BASELINE_CURRENT_CONTRACT_SYNC_READY"
@@ -56,7 +57,10 @@ def run_audit() -> None:
     _add("status_cards_test getAppHealthSummary 기대", "getAppHealthSummary" in status_cards_test)
     # 주석에 legacy 명칭이 남을 수 있으므로 assert 문 기준으로 확인
     _add("status_cards_test getAssistantHealth assert 없음", 'assert "getAssistantHealth"' not in status_cards_test)
-    _add("status_cards_test FutureEndpointNotice 전체 검색으로 갱신", "FRONTEND_ROOT.rglob" in status_cards_test or "rglob" in status_cards_test)
+    _add(
+        "status_cards_test FutureEndpointNotice 전체 검색으로 갱신",
+        "FRONTEND_ROOT.rglob" in status_cards_test or "rglob" in status_cards_test,
+    )
 
     # GROUP D — endpoint count +3 반영
     domain_test = _test_src("test_backend_domain_core_models_20260516.py")
@@ -73,7 +77,10 @@ def run_audit() -> None:
     _add("app/storage/status GET endpoint", "/storage/status" in app_status_src)
 
     # POST endpoint 증가 없음
-    _add("app_status_router POST 없음", "@app_status_router.post" not in app_status_src and 'method: "POST"' not in app_status_src)
+    _add(
+        "app_status_router POST 없음",
+        "@app_status_router.post" not in app_status_src and 'method: "POST"' not in app_status_src,
+    )
     _add("router.py task_queue 없음", "task_queue" not in router_src)
 
     # mutation endpoint 없음
@@ -87,7 +94,10 @@ def run_audit() -> None:
 
     # 안전 — token/cookie/password 원문 없음
     # approval_token_raw는 _FORBIDDEN_RESPONSE_FIELDS 보안 차단 목록에 포함됨 — 원문 반환이 아니라 차단 정책
-    _add("app_status_router approval_token_raw 반환 없음 (차단 목록 보유 허용)", "approval_token_raw" not in app_status_src or "_FORBIDDEN_RESPONSE_FIELDS" in app_status_src)
+    _add(
+        "app_status_router approval_token_raw 반환 없음 (차단 목록 보유 허용)",
+        "approval_token_raw" not in app_status_src or "_FORBIDDEN_RESPONSE_FIELDS" in app_status_src,
+    )
     _add("app_status_router cookie_value 없음", "cookie_value" not in app_status_src)
 
 

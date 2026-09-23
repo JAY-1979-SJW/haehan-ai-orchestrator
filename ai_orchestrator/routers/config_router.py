@@ -20,7 +20,7 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from .connectors.smartstore.license import verify as verify_license
+from ai_orchestrator.connectors.smartstore.license import verify as verify_license
 
 logger = logging.getLogger(__name__)
 

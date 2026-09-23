@@ -97,7 +97,7 @@ def get_gmail_inbox(
 
     # gmail_reader(OAuth) 우선 시도
     try:
-        from ai_orchestrator.gmail_reader import fetch_recent_emails
+        from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
 
         items = fetch_recent_emails(max_results=limit, hours=72)
         if items:

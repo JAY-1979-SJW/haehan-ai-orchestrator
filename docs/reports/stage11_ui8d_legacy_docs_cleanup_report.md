@@ -30,7 +30,7 @@ Stage 11-UI-8C에서 WARN으로 분류된 항목 중 **문서 혼선 요소만**
 | 항목 | 사유 |
 |---|---|
 | `ai_orchestrator/tests/test_admin_ui_capture_screenshot.py` | legacy route 직접 호출 테스트는 fallback route가 deprecated banner 문구·기존 보호 장치(권한·승인 게이트)를 유지하는지 확인하는 smoke 목적의 테스트로 볼 수 있음. 현 단계에서는 테스트 삭제/수정 대상 아님 |
-| `ai_orchestrator/admin_ui_router.py` | legacy route 본체 — 이번 단계는 코드 수정 금지 원칙에 따라 손대지 않음. deprecated banner는 이미 Stage 11-UI-7B에서 적용됨 |
+| `ai_orchestrator/routers/admin_ui_router.py` | legacy route 본체 — 이번 단계는 코드 수정 금지 원칙에 따라 손대지 않음. deprecated banner는 이미 Stage 11-UI-7B에서 적용됨 |
 | `admin-web/README.md`의 다른 legacy 참조 (line 260, 399, 494, 646~673) | 이미 `deprecated fallback`으로 충분히 명시되어 있어 추가 정리 불필요 |
 | `docs/ops/admin_web_ops_baseline.md`의 다른 legacy 참조 (line 309~326 등) | 이미 `deprecated fallback 상태`로 명확히 분류되어 있음 |
 

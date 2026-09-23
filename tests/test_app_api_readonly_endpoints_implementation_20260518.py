@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 
 def test_app_status_router_import():
-    import ai_orchestrator.app_status_router  # noqa
+    import ai_orchestrator.routers.app_status_router  # noqa
 
 
 def test_audit_script_import():
@@ -25,31 +25,31 @@ def test_audit_script_import():
 
 
 def test_phase_constant():
-    from ai_orchestrator.app_status_router import APP_STATUS_ROUTER_PHASE
+    from ai_orchestrator.routers.app_status_router import APP_STATUS_ROUTER_PHASE
 
     assert APP_STATUS_ROUTER_PHASE == "APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01"
 
 
 def test_read_only_enabled():
-    from ai_orchestrator.app_status_router import READ_ONLY_API_ENABLED
+    from ai_orchestrator.routers.app_status_router import READ_ONLY_API_ENABLED
 
     assert READ_ONLY_API_ENABLED is True
 
 
 def test_mutation_not_allowed():
-    from ai_orchestrator.app_status_router import MUTATION_ALLOWED
+    from ai_orchestrator.routers.app_status_router import MUTATION_ALLOWED
 
     assert MUTATION_ALLOWED is False
 
 
 def test_server_action_not_allowed():
-    from ai_orchestrator.app_status_router import SERVER_ACTION_ALLOWED
+    from ai_orchestrator.routers.app_status_router import SERVER_ACTION_ALLOWED
 
     assert SERVER_ACTION_ALLOWED is False
 
 
 def test_secret_output_not_allowed():
-    from ai_orchestrator.app_status_router import SECRET_VALUE_OUTPUT_ALLOWED
+    from ai_orchestrator.routers.app_status_router import SECRET_VALUE_OUTPUT_ALLOWED
 
     assert SECRET_VALUE_OUTPUT_ALLOWED is False
 
@@ -58,13 +58,13 @@ def test_secret_output_not_allowed():
 
 
 def _get_route_paths():
-    from ai_orchestrator.app_status_router import app_status_router
+    from ai_orchestrator.routers.app_status_router import app_status_router
 
     return [r.path for r in app_status_router.routes]
 
 
 def _get_route_methods():
-    from ai_orchestrator.app_status_router import app_status_router
+    from ai_orchestrator.routers.app_status_router import app_status_router
 
     return {r.path: list(r.methods) for r in app_status_router.routes}
 
@@ -101,7 +101,7 @@ def test_no_put_patch_delete_routes():
 
 
 def test_health_summary_response_schema():
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = get_health_summary()
     assert result["ok"] is True
@@ -114,14 +114,14 @@ def test_health_summary_response_schema():
 
 
 def test_health_summary_post_tasks_dry_run_enabled():
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = get_health_summary()
     assert result["data"]["post_tasks_dry_run_enabled"] is True
 
 
 def test_health_summary_mutation_not_allowed():
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = get_health_summary()
     assert result["meta"]["mutation_allowed"] is False
@@ -131,7 +131,7 @@ def test_health_summary_mutation_not_allowed():
 
 
 def test_providers_count_12():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     result = get_providers()
     assert result["meta"]["provider_count"] == 12
@@ -139,7 +139,7 @@ def test_providers_count_12():
 
 
 def test_providers_cookie_storage_all_false():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     result = get_providers()
     for p in result["data"]["providers"]:
@@ -147,7 +147,7 @@ def test_providers_cookie_storage_all_false():
 
 
 def test_providers_token_storage_all_false():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     result = get_providers()
     for p in result["data"]["providers"]:
@@ -158,21 +158,21 @@ def test_providers_token_storage_all_false():
 
 
 def test_storage_named_volume_status():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     result = get_storage_status()
     assert "named_volume_status" in result["data"]
 
 
 def test_storage_app_logs_bind_mount_status():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     result = get_storage_status()
     assert "app_logs_bind_mount_status" in result["data"]
 
 
 def test_storage_approval_token_policy():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     result = get_storage_status()
     assert "approval_token_policy" in result["data"]
@@ -181,7 +181,7 @@ def test_storage_approval_token_policy():
 def test_storage_no_log_raw_content():
     import json
 
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     result = get_storage_status()
     serialized = json.dumps(result)
@@ -217,19 +217,19 @@ def _check_no_forbidden(data: dict, label: str):
 
 
 def test_health_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     _check_no_forbidden(get_health_summary(), "health_summary")
 
 
 def test_providers_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     _check_no_forbidden(get_providers(), "providers")
 
 
 def test_storage_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     _check_no_forbidden(get_storage_status(), "storage_status")
 
@@ -237,7 +237,7 @@ def test_storage_no_forbidden_fields():
 def test_no_server_restart_field():
     import json
 
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = json.dumps(get_health_summary())
     assert "restart_url" not in result
@@ -247,7 +247,7 @@ def test_no_server_restart_field():
 def test_no_docker_compose_field():
     import json
 
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = json.dumps(get_health_summary())
     assert "docker_compose" not in result
@@ -290,7 +290,7 @@ def test_live_summary_route_defined():
 
 
 def test_live_summary_response_schema():
-    from ai_orchestrator.app_status_router import get_live_summary
+    from ai_orchestrator.routers.app_status_router import get_live_summary
 
     result = get_live_summary()
     assert result["ok"] is True
@@ -310,7 +310,7 @@ def test_live_summary_response_schema():
 
 
 def test_live_summary_read_only_and_no_mutation():
-    from ai_orchestrator.app_status_router import get_live_summary
+    from ai_orchestrator.routers.app_status_router import get_live_summary
 
     result = get_live_summary()
     assert result["data"]["read_only"] is True
@@ -322,7 +322,7 @@ def test_live_summary_read_only_and_no_mutation():
 def test_live_summary_no_secret_fields():
     import json
 
-    from ai_orchestrator.app_status_router import _FORBIDDEN_RESPONSE_FIELDS, get_live_summary
+    from ai_orchestrator.routers.app_status_router import _FORBIDDEN_RESPONSE_FIELDS, get_live_summary
 
     blob = json.dumps(get_live_summary())
     for field in _FORBIDDEN_RESPONSE_FIELDS:
@@ -338,7 +338,7 @@ def test_deployment_status_route_defined():
 
 
 def test_deployment_status_response_schema():
-    from ai_orchestrator.app_status_router import get_deployment_status
+    from ai_orchestrator.routers.app_status_router import get_deployment_status
 
     result = get_deployment_status()
     assert result["ok"] is True
@@ -349,7 +349,7 @@ def test_deployment_status_response_schema():
 
 
 def test_deployment_status_no_server_action():
-    from ai_orchestrator.app_status_router import get_deployment_status
+    from ai_orchestrator.routers.app_status_router import get_deployment_status
 
     result = get_deployment_status()
     assert result["data"]["deploy_action_allowed"] is False

@@ -24,8 +24,8 @@ from threading import Lock, Thread
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from . import local_agent_registry as _reg
-from . import openai_proxy_caller as _caller
+from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator import openai_proxy_caller as _caller
 
 # Web UI Basic Auth 우회용 자격증명 (환경변수 또는 기본값)
 _WEB_UI_USER = os.environ.get("NEXT_PUBLIC_API_USER", "owner")

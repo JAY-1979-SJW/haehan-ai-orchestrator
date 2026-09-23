@@ -2,6 +2,7 @@
 
 smoke script 존재 및 실행 결과가 보안·read-only 계약을 지키는지 검증한다.
 """
+
 import sys
 from pathlib import Path
 
@@ -9,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 SMOKE_SCRIPT = ROOT / "scripts" / "ops" / "smoke_app_api_readonly_endpoints.py"
-ROUTER_FILE = ROOT / "ai_orchestrator" / "app_status_router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 VERDICT_READY = "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_READY"
@@ -29,7 +30,8 @@ def run_audit() -> None:
 
     # 2–6. smoke 실행 및 결과 검증
     try:
-        from scripts.ops.smoke_app_api_readonly_endpoints import run_smoke, ENDPOINTS, SMOKE_ID
+        from scripts.ops.smoke_app_api_readonly_endpoints import ENDPOINTS, run_smoke
+
         report = run_smoke()
 
         _add("endpoint 3개 대상 확인", len(ENDPOINTS) == 3, f"실제: {len(ENDPOINTS)}")
@@ -72,8 +74,13 @@ def run_audit() -> None:
     # POST route 없음 (router 파일 기준)
     src = ROUTER_FILE.read_text(encoding="utf-8") if ROUTER_FILE.exists() else ""
     _add("app_status_router POST route 없음", "@app_status_router.post" not in src)
-    _add("approve/reject/execute route 없음 (status_router)",
-         "approve_token" not in src and "reject_token" not in src and "@app_status_router" in src and "execute(" not in src)
+    _add(
+        "approve/reject/execute route 없음 (status_router)",
+        "approve_token" not in src
+        and "reject_token" not in src
+        and "@app_status_router" in src
+        and "execute(" not in src,
+    )
 
     # docker-compose 변경 없음
     compose_src = COMPOSE_FILE.read_text(encoding="utf-8") if COMPOSE_FILE.exists() else ""

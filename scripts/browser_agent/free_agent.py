@@ -331,11 +331,11 @@ def run_free_agent(
             state["obs"] = obs
             return _fmt_obs(obs)
         if name == "session_status":
-            from ai_orchestrator.agent_ai_proxy_router import _op_session_status
+            from ai_orchestrator.routers.agent_ai_proxy_router import _op_session_status
 
             return _op_session_status()
         if name == "list_app_actions":
-            from ai_orchestrator import app_actions
+            from ai_orchestrator.routers import app_actions
 
             acts = app_actions.list_actions(args.get("query", ""))
             head = f"앱 동작 {len(acts)}개" + (" (상위 40)" if len(acts) > 40 else "") + ":\n"
@@ -344,7 +344,7 @@ def run_free_agent(
                 f"  {'⚠ ' if a['risk'] == 'DESTRUCTIVE' else ''}{a['path']} — {a['desc']}" for a in acts[:40]
             )
         if name == "run_app_action":
-            from ai_orchestrator import app_actions
+            from ai_orchestrator.routers import app_actions
 
             confirmed = bool(args.get("confirmed", False))
             rr = app_actions.run_action(args.get("path", ""), args.get("params") or {}, _OWNER, confirmed=confirmed)

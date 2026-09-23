@@ -189,7 +189,7 @@ btn_sel = next((s for s in _SUBMIT_BTN_SELECTORS if _has_element(page, s)), None
 
 ### 구조
 
-`ai_orchestrator/web_task_registry.py` 에 중앙 레지스트리를 정의한다.
+`ai_orchestrator/services/web_task_registry.py` 에 중앙 레지스트리를 정의한다.
 하드코딩은 허용하되 **이 파일 한 곳에만** 두어야 한다.
 
 ```

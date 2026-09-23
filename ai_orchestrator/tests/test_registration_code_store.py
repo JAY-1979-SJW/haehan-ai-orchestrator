@@ -24,7 +24,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.registration_code_store import (
+from ai_orchestrator.persistence.registration_code_store import (
     MAX_TTL_MINUTES,
     CodeExchangeError,
     InMemoryRegistrationCodeStore,
@@ -234,7 +234,7 @@ class TestDbStore:
     @pytest.fixture
     def store(self):
         """테스트용 db-backed store (fake DB)."""
-        from ai_orchestrator.registration_code_store import DbRegistrationCodeStore
+        from ai_orchestrator.persistence.registration_code_store import DbRegistrationCodeStore
 
         return DbRegistrationCodeStore("fake://not-used")
 
@@ -320,14 +320,14 @@ class TestBackendSelection:
 
     def test_default_backend_is_memory(self, monkeypatch):
         """기본값은 memory."""
-        from ai_orchestrator.registration_code_store import (
+        from ai_orchestrator.persistence.registration_code_store import (
             InMemoryRegistrationCodeStore,
             get_registration_code_store,
         )
 
         monkeypatch.delenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", raising=False)
         # global store reset
-        import ai_orchestrator.registration_code_store as store_module
+        import ai_orchestrator.persistence.registration_code_store as store_module
 
         store_module._store = None
 
@@ -336,13 +336,13 @@ class TestBackendSelection:
 
     def test_memory_backend_explicit(self, monkeypatch):
         """env=memory → InMemoryRegistrationCodeStore."""
-        from ai_orchestrator.registration_code_store import (
+        from ai_orchestrator.persistence.registration_code_store import (
             InMemoryRegistrationCodeStore,
             get_registration_code_store,
         )
 
         monkeypatch.setenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", "memory")
-        import ai_orchestrator.registration_code_store as store_module
+        import ai_orchestrator.persistence.registration_code_store as store_module
 
         store_module._store = None
 
@@ -351,11 +351,11 @@ class TestBackendSelection:
 
     def test_db_backend_requires_database_url(self, monkeypatch):
         """env=db이고 DATABASE_URL 없으면 에러."""
-        from ai_orchestrator.registration_code_store import get_registration_code_store
+        from ai_orchestrator.persistence.registration_code_store import get_registration_code_store
 
         monkeypatch.setenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", "db")
         monkeypatch.delenv("DATABASE_URL", raising=False)
-        import ai_orchestrator.registration_code_store as store_module
+        import ai_orchestrator.persistence.registration_code_store as store_module
 
         store_module._store = None
 

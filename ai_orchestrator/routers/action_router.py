@@ -24,8 +24,8 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from .auth import require_role
-from .server.action_task_api import (
+from ai_orchestrator.auth import require_role
+from ai_orchestrator.server.action_task_api import (
     api_prepare_action,
     api_receive_evidence,
 )

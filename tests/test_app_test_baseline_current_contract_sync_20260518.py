@@ -3,6 +3,7 @@
 테스트 기준선이 현재 read-only 계약과 동기화되었음을 검증한다.
 기능 구현 테스트가 아니라 기준선 동기화 감리 테스트.
 """
+
 import sys
 from pathlib import Path
 
@@ -14,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
-APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "app_status_router.py"
+APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 DASHBOARD_PAGE = FRONTEND_SRC / "app" / "assistant" / "page.tsx"
 
 TASK_QUEUE_POLISH_ALLOWLIST = [
@@ -80,6 +81,7 @@ class TestAuditScriptImportable:
 
     def test_audit_script_importable(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "audit_sync",
             ROOT / "scripts" / "ops" / "audit_app_test_baseline_current_contract_sync.py",
@@ -90,6 +92,7 @@ class TestAuditScriptImportable:
 
     def test_audit_verdict_ready(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "audit_sync2",
             ROOT / "scripts" / "ops" / "audit_app_test_baseline_current_contract_sync.py",
@@ -176,14 +179,18 @@ class TestGroupD_EndpointCount:
         assert "/storage/status" in app_status
 
     def test_runtime_endpoint_count_is_63(self):
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute, APIWebSocketRoute
+
+        from ai_orchestrator.server import app
+
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         assert len(routes) == 63
 
     def test_runtime_http_count_is_62(self):
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute
+
+        from ai_orchestrator.server import app
+
         http = [r for r in app.routes if isinstance(r, APIRoute)]
         assert len(http) == 62
 

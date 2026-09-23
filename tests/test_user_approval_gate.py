@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-import ai_orchestrator.user_db as udb
+import ai_orchestrator.persistence.user_db as udb
 
 
 @pytest.fixture()

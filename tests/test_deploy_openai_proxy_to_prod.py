@@ -224,7 +224,7 @@ def test_audit_fail_live_chat_failed():
 
 
 def test_regression_proxy_router_intact():
-    from ai_orchestrator import agent_ai_proxy_router as r
+    from ai_orchestrator.routers import agent_ai_proxy_router as r
 
     assert hasattr(r, "agent_ai_proxy_router")
     assert hasattr(r, "ChatResponse")

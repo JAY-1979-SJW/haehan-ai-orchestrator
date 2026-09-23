@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import agent_ai_proxy_router as proxy_router
 from ai_orchestrator import local_agent_registry as reg
 from ai_orchestrator import openai_proxy_caller as caller
+from ai_orchestrator.routers import agent_ai_proxy_router as proxy_router
 
 # ── helpers ────────────────────────────────────────────
 
@@ -398,14 +398,14 @@ def test_adapter_proxy_not_configured_without_token(monkeypatch):
 
 
 def test_server_router_no_raw_api_key():
-    src = Path("ai_orchestrator/agent_ai_proxy_router.py").read_text(encoding="utf-8")
+    src = Path("ai_orchestrator/routers/agent_ai_proxy_router.py").read_text(encoding="utf-8")
     matches = re.findall(r"\bsk-[A-Za-z0-9_]{30,}\b", src)
     real = [m for m in matches if "A-Za-z" not in m]
     assert real == []
 
 
 def test_server_router_no_file_write():
-    src = Path("ai_orchestrator/agent_ai_proxy_router.py").read_text(encoding="utf-8")
+    src = Path("ai_orchestrator/routers/agent_ai_proxy_router.py").read_text(encoding="utf-8")
     assert not re.search(r"open\s*\([^)]*['\"][wa]", src)
     assert ".write_text" not in src
 

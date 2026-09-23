@@ -19,7 +19,7 @@ action registry 수정, task_executor 수정, submit 연결, production submit�
 |---|---|
 | `ai_orchestrator/local_agent_risk_policy.py` | `ACTION_RISK` dict — action별 risk_level 정의 (실질적 action registry) |
 | `ai_orchestrator/local_agent_registry.py` | agent 등록/조회, `ACTION_RISK` import 후 risk_level 조회 |
-| `ai_orchestrator/web_task_registry.py` | web task 등록 (task_key / action_type / risk_level / requires_approval) |
+| `ai_orchestrator/services/web_task_registry.py` | web task 등록 (task_key / action_type / risk_level / requires_approval) |
 | `ai_orchestrator/browser_tool/policy.py` | browser action별 `BrowserTaskPolicy` (_ACTION_POLICIES dict) |
 | `ai_orchestrator/browser_tool/schemas.py` | `BrowserActionName` Literal 타입 — 허용 action 목록 |
 

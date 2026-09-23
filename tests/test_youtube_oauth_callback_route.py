@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.youtube_oauth_router import youtube_oauth_router
+from ai_orchestrator.routers.youtube_oauth_router import youtube_oauth_router
 
 
 def test_youtube_oauth_callback_route_redacts_code(monkeypatch):

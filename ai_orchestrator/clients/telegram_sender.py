@@ -11,7 +11,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import httpx
 
@@ -35,8 +34,8 @@ def _url(method: str) -> str:
 
 def send_message(
     text: str,
-    reply_markup: Optional[dict] = None,
-    chat_id: Optional[str] = None,
+    reply_markup: dict | None = None,
+    chat_id: str | None = None,
     parse_mode: str = "HTML",
 ) -> dict:
     """sendMessage API 호출. 성공 시 Telegram response dict 반환."""
@@ -63,8 +62,8 @@ def send_message(
 def send_photo(
     photo_path: Path,
     caption: str = "",
-    reply_markup: Optional[dict] = None,
-    chat_id: Optional[str] = None,
+    reply_markup: dict | None = None,
+    chat_id: str | None = None,
     parse_mode: str = "HTML",
 ) -> dict:
     """sendPhoto API 호출. 파일이 없으면 sendMessage fallback."""

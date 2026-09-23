@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.auth import get_current_user
-from ai_orchestrator.youtube_research_router import youtube_research_router
+from ai_orchestrator.routers.youtube_research_router import youtube_research_router
 
 
 def _client() -> TestClient:
@@ -31,6 +31,7 @@ def test_youtube_search_route_blocks_without_api_key(monkeypatch) -> None:
     monkeypatch.delenv("YOUTUBE_DATA_API_KEY", raising=False)
     monkeypatch.delenv("YOUTUBE_OAUTH_TOKEN_FILE", raising=False)
     import scripts.youtube.research as _r
+
     monkeypatch.setattr(_r, "_api_key", lambda explicit=None: "")
     monkeypatch.setattr(_r, "_oauth_token", lambda explicit=None, token_file=None: "")
 

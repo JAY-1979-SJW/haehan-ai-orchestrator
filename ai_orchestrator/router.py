@@ -4,16 +4,21 @@ from dataclasses import asdict as _asdict
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .action_router import action_router
-from .admin_ui_router import admin_ui_router
-from .agent_ai_proxy_router import agent_ai_proxy_router
-from .app_status_router import app_status_router
+from ai_orchestrator.routers.action_router import action_router
+from ai_orchestrator.routers.admin_ui_router import admin_ui_router
+from ai_orchestrator.routers.agent_ai_proxy_router import agent_ai_proxy_router
+from ai_orchestrator.routers.app_status_router import app_status_router
+from ai_orchestrator.routers.auth_router import auth_router
+from ai_orchestrator.routers.config_router import config_router
+from ai_orchestrator.routers.ops_router import ops_router
+from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
+from ai_orchestrator.routers.web_task_router import web_task_router
+from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
+
 from .approval import approve_token, issue_token, reject_token
 from .audit_logger import log_event, read_recent_logs
 from .auth import require_role
-from .auth_router import auth_router
 from .browser_tool.approval_record_router import approval_record_router
-from .config_router import config_router
 from .connectors.browser_agent_router import browser_agent_router
 from .connectors.cdp_screen_router import cdp_screen_router
 from .connectors.community_router import community_router
@@ -41,17 +46,13 @@ from .connectors.smartstore_router import smartstore_router
 from .connectors.user_auth_router import get_jwt_user, user_auth_router
 from .connectors.youtube_router import youtube_router
 from .executor import execute
-from .gmail_reader import collect_to_inbox as _collect_gmail
 from .inbox import get_inbox_item as _get_inbox_item
 from .inbox import read_recent_inbox
 from .local_agent_router import local_agent_router
 from .models import TaskRequest
-from .ops_router import ops_router
 from .planner import plan
 from .sites.router import sites_router
 from .telegram_webhook import handle_telegram_update, handle_telegram_webhook
-from .user_data_contribution_router import user_data_contribution_router
-from .web_task_router import web_task_router
 
 logger = logging.getLogger(__name__)
 
