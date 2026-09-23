@@ -29,7 +29,7 @@ class OpenAIDisabledError(RuntimeError):
 _MESSAGE = (
     "OpenAI(GPT) 호출이 차단되어 있습니다 (2026-08-19 사업자 결정).\n"
     "  · 글 작성은 Claude Code가 직접 수행합니다 — GPT 대신 사람이 검토한 원고를 발행하세요.\n"
-    "  · 블로그 발행: scripts/naver/blog/cli/blog_publish_manual.py 사용\n"
+    "  · 블로그 발행: scripts/naver/blog/cli 의 blog_publish_manual 모듈 사용\n"
     "  · 정말 필요하면 .env 의 OPENAI_DISABLED=false 로 바꾸되, 사업자 승인이 먼저입니다."
 )
 

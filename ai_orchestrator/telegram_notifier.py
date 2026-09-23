@@ -1,10 +1,8 @@
 """텔레그램 송신 포맷 모듈 (전송 자체는 수행하지 않음).
 
 버튼 callback_data 포맷 정의와 파싱/메시지 빌더만 담당.
-실제 Bot API HTTP 호출은 telegram_sender.py 에서 수행.
+실제 Bot API HTTP 호출은 telegram_sender 모듈에서 수행.
 """
-
-from typing import Optional
 
 # callback_data 포맷: "<action>|<task_id>|<token_id>"
 # Telegram 제한(64바이트) 내 유지하려면 task_id 는 짧게 유지 권장.
@@ -27,7 +25,7 @@ def build_callback_data(action: str, task_id: str, token_id: str) -> str:
     return data
 
 
-def parse_callback_data(data: str) -> Optional[dict]:
+def parse_callback_data(data: str) -> dict | None:
     """callback_data 문자열 → {action, task_id, token_id}. 형식 오류시 None."""
     if not data:
         return None
@@ -40,8 +38,7 @@ def parse_callback_data(data: str) -> Optional[dict]:
     return {"action": action, "task_id": task_id, "token_id": token_id}
 
 
-def build_approval_message(task_id: str, risk_level: str, token_id: str,
-                           description: str = "") -> dict:
+def build_approval_message(task_id: str, risk_level: str, token_id: str, description: str = "") -> dict:
     """승인 요청 메시지 구조(전송 전 포맷). 실제 sendMessage 에 그대로 넣을 수 있는 dict."""
     lines = [
         f"[승인 요청] task={task_id}",
@@ -52,10 +49,12 @@ def build_approval_message(task_id: str, risk_level: str, token_id: str,
     return {
         "text": "\n".join(lines),
         "reply_markup": {
-            "inline_keyboard": [[
-                {"text": "승인", "callback_data": build_callback_data("approve", task_id, token_id)},
-                {"text": "거절", "callback_data": build_callback_data("reject", task_id, token_id)},
-            ]],
+            "inline_keyboard": [
+                [
+                    {"text": "승인", "callback_data": build_callback_data("approve", task_id, token_id)},
+                    {"text": "거절", "callback_data": build_callback_data("reject", task_id, token_id)},
+                ]
+            ],
         },
     }
 
@@ -69,7 +68,7 @@ def build_dev_reg_callback_data(action: str, token_id: str) -> str:
     return data
 
 
-def parse_dev_reg_callback_data(data: str) -> Optional[dict]:
+def parse_dev_reg_callback_data(data: str) -> dict | None:
     """개발자 등록 callback_data 파싱 → {"action": "approve"/"reject", "token_id": str}. 실패 시 None."""
     if not data:
         return None
@@ -112,10 +111,12 @@ def build_dev_reg_message(
     return {
         "text": "\n".join(lines),
         "reply_markup": {
-            "inline_keyboard": [[
-                {"text": "✅ 승인", "callback_data": build_dev_reg_callback_data("approve", token_id)},
-                {"text": "❌ 거절", "callback_data": build_dev_reg_callback_data("reject", token_id)},
-            ]],
+            "inline_keyboard": [
+                [
+                    {"text": "✅ 승인", "callback_data": build_dev_reg_callback_data("approve", token_id)},
+                    {"text": "❌ 거절", "callback_data": build_dev_reg_callback_data("reject", token_id)},
+                ]
+            ],
         },
     }
 
@@ -131,10 +132,7 @@ def build_dev_reg_message(
 
 _CAP_RISK_LABEL = "HIGH"
 _CAP_DRY_GUIDANCE = "이미지 파일을 생성하지 않고 환경만 점검합니다."
-_CAP_REAL_GUIDANCE = (
-    "승인 시 로컬 PC에서 1회 화면 캡처가 실행되며, "
-    "서버에는 이미지가 업로드되지 않습니다."
-)
+_CAP_REAL_GUIDANCE = "승인 시 로컬 PC에서 1회 화면 캡처가 실행되며, 서버에는 이미지가 업로드되지 않습니다."
 
 
 def _truncate_memo(text: str, limit: int = 80) -> str:
@@ -199,12 +197,12 @@ def build_capture_screenshot_approval_message(
     return {
         "text": "\n".join(lines),
         "reply_markup": {
-            "inline_keyboard": [[
-                {"text": approve_label,
-                 "callback_data": build_callback_data("approve", task_id, token_id)},
-                {"text": "거절",
-                 "callback_data": build_callback_data("reject", task_id, token_id)},
-            ]],
+            "inline_keyboard": [
+                [
+                    {"text": approve_label, "callback_data": build_callback_data("approve", task_id, token_id)},
+                    {"text": "거절", "callback_data": build_callback_data("reject", task_id, token_id)},
+                ]
+            ],
         },
     }
 

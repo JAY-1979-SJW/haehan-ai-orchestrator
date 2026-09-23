@@ -8,7 +8,7 @@
 
 이 모듈은 얇은 조립 계층이다.
 approval.py / dev_reg_approval.py / telegram_sender.py 의 책임을 이동하지 않는다.
-응답 계약 (response key / status code / path) 은 web_task_router.py 가 유지한다.
+응답 계약 (response key / status code / path) 은 web_task_router 모듈이 유지한다.
 """
 
 from __future__ import annotations

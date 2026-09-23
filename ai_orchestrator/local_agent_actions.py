@@ -1,6 +1,6 @@
 """로컬 에이전트 액션 정의 — server/client 공통 상수.
 
-서버(ai_orchestrator.local_agent_registry)와 클라이언트(local_agent.websocket_client)가
+서버(ai_orchestrator.local_agent_registry)와 클라이언트(local_agent 패키지의 websocket_client 모듈)가
 동일한 AUTO_EXECUTE_VIA_AGENT 집합을 참조하기 위한 중앙 정의.
 
 이 모듈은 순수 상수만 포함하며, 다른 의존성을 가지지 않는다.

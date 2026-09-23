@@ -1,6 +1,6 @@
 """Task 상태 머신 (pending / approved / rejected / executed).
 
-기존 approval.py 의 토큰 상태와 별도로, task-level 상태를 최소로 추적한다.
+기존 approval 모듈의 토큰 상태와 별도로, task-level 상태를 최소로 추적한다.
 - pending   : medium 리스크로 승인 토큰이 발급된 상태
 - approved  : 승인되어 실행 대기 중
 - rejected  : 거절됨
@@ -9,14 +9,15 @@
 in-memory 가 기본(단일 프로세스 FastAPI 기준), JSONL 에 append-only 이벤트 저장
 (storage/task_states.jsonl) 으로 재시작 시 복구.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import threading
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from typing import Literal, Optional
+from datetime import UTC, datetime
+from typing import Literal
 
 from .config import LOG_DIR
 
@@ -37,7 +38,7 @@ _lock = threading.Lock()
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass
@@ -77,7 +78,7 @@ def _load() -> None:
     if not _STATE_PATH.exists():
         return
     try:
-        with open(_STATE_PATH, "r", encoding="utf-8") as f:
+        with open(_STATE_PATH, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -103,7 +104,7 @@ def clear() -> None:
         _store.clear()
 
 
-def get_record(task_id: str) -> Optional[TaskRecord]:
+def get_record(task_id: str) -> TaskRecord | None:
     with _lock:
         if not _store:
             _load()
@@ -113,7 +114,7 @@ def get_record(task_id: str) -> Optional[TaskRecord]:
     return TaskRecord(**rec)
 
 
-def get_state(task_id: str) -> Optional[TaskState]:
+def get_state(task_id: str) -> TaskState | None:
     rec = get_record(task_id)
     return rec.state if rec else None
 
@@ -143,19 +144,24 @@ def set_pending(
             return TaskRecord(**_store[task_id])
         now = _now().isoformat()
         rec = TaskRecord(
-            task_id=task_id, state="pending",
-            risk_level=risk_level, token_id=token_id,
-            requested_by=requested_by, actor_role=actor_role,
-            action_type=action_type, target=target,
+            task_id=task_id,
+            state="pending",
+            risk_level=risk_level,
+            token_id=token_id,
+            requested_by=requested_by,
+            actor_role=actor_role,
+            action_type=action_type,
+            target=target,
             task_snapshot=task_snapshot,
-            created_at=now, updated_at=now,
+            created_at=now,
+            updated_at=now,
         )
         _store[task_id] = asdict(rec)
         _append_event("TASK_PENDING", _store[task_id])
         return rec
 
 
-def mark_approved(task_id: str, actor: str, role: str) -> tuple[Optional[TaskRecord], str]:
+def mark_approved(task_id: str, actor: str, role: str) -> tuple[TaskRecord | None, str]:
     """pending → approved. 성공 시 (rec, 'approved'). 실패 시 (rec or None, reason)."""
     with _lock:
         if not _store:
@@ -173,7 +179,7 @@ def mark_approved(task_id: str, actor: str, role: str) -> tuple[Optional[TaskRec
         return TaskRecord(**rec), "approved"
 
 
-def mark_rejected(task_id: str, actor: str, role: str, reason: str = "") -> tuple[Optional[TaskRecord], str]:
+def mark_rejected(task_id: str, actor: str, role: str, reason: str = "") -> tuple[TaskRecord | None, str]:
     with _lock:
         if not _store:
             _load()
@@ -191,7 +197,7 @@ def mark_rejected(task_id: str, actor: str, role: str, reason: str = "") -> tupl
         return TaskRecord(**rec), "rejected"
 
 
-def mark_executed(task_id: str, result: str) -> tuple[Optional[TaskRecord], str]:
+def mark_executed(task_id: str, result: str) -> tuple[TaskRecord | None, str]:
     with _lock:
         if not _store:
             _load()
@@ -208,7 +214,13 @@ def mark_executed(task_id: str, result: str) -> tuple[Optional[TaskRecord], str]
 
 
 __all__ = [
-    "TaskState", "TaskRecord",
-    "set_pending", "mark_approved", "mark_rejected", "mark_executed",
-    "get_record", "get_state", "clear",
+    "TaskRecord",
+    "TaskState",
+    "clear",
+    "get_record",
+    "get_state",
+    "mark_approved",
+    "mark_executed",
+    "mark_rejected",
+    "set_pending",
 ]
