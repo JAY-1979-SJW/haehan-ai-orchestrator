@@ -7,7 +7,6 @@ claude 모델명이 와도 gpt 로 매핑한다. Claude Code CLI 는 OpenAI 미�
 Execution flow:
   1. Run OpenAI(GPT) without direct cross-app MCP by default.
   2. Fall back to Claude Code CLI when no OpenAI provider is available.
-  3. Forward cross-app CAD work only through approved CAD bridge API requests.
 
 Security:
   - Strip *_API_KEY and *_SECRET from subprocess env where possible.
@@ -18,15 +17,11 @@ Security:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any
-
-from . import cad_api_approval
 
 logger = logging.getLogger(__name__)
 
@@ -54,104 +49,11 @@ def _mask_api_key(text: str) -> str:
 
 # ── MCP 서버 경로 탐색 ────────────────────────────────────────────────────────
 def _find_mcp_server() -> Path | None:
-    """CAD MCP direct discovery is disabled.
+    """Direct MCP server discovery is disabled.
 
-    Cross-app CAD access must go through the approved CAD bridge HTTP API.
-    Do not auto-discover sibling repositories or legacy CAD path env here.
+    Do not auto-discover sibling repositories here.
     """
     return None
-
-
-def _cad_bridge_status_summary() -> dict[str, Any]:
-    """Return CAD bridge API status without exposing local repository paths."""
-    try:
-        from .cad_bridge_registry import check_status, load_default_config
-
-        status = check_status(load_default_config())
-        return {
-            "available": status.status == "RUNNING",
-            "mode": "approved_api_bridge",
-            "status": status.status,
-            "host": status.host,
-            "port": status.port,
-        }
-    except Exception as exc:
-        logger.debug("cad bridge status unavailable: %s", type(exc).__name__)
-        return {
-            "available": False,
-            "mode": "approved_api_bridge",
-            "status": "UNKNOWN",
-        }
-
-
-def _api_bridge_requested(req: dict) -> bool:
-    action = str(req.get("api_action") or req.get("action") or "").strip()
-    return bool(req.get("api_path") or action == "cad_bridge_api")
-
-
-async def _run_approved_api_bridge(req: dict, model: str) -> dict:
-    """Forward an approved cross-app request through the CAD bridge API proxy."""
-    path = str(req.get("api_path") or "").strip()
-    method = str(req.get("api_method") or "POST").strip().upper()
-    payload = req.get("api_payload", {})
-    if not path:
-        return _provider_error_response(
-            error_code="CAD_API_PATH_EMPTY",
-            user_message="Approved API path is empty.",
-            next_actions=["Use an allowlisted CAD bridge API path."],
-            provider="approved_api_bridge",
-            model=model,
-            can_retry=True,
-        )
-
-    if method not in {"GET", "POST"}:
-        return _provider_error_response(
-            error_code="CAD_API_METHOD_BLOCKED",
-            user_message="CAD bridge API method is not allowed.",
-            next_actions=["Use only GET or POST allowlisted paths."],
-            provider="approved_api_bridge",
-            model=model,
-            can_retry=False,
-        )
-
-    approval = cad_api_approval.consume_cad_api_approval_request(
-        req,
-        method=method,
-        path=path,
-    )
-    if not approval.ok:
-        return _provider_error_response(
-            error_code=approval.error_code or _CROSS_APP_APPROVAL_ERROR,
-            user_message="Cross-app calls require a valid one-time approval token.",
-            next_actions=["Create and approve a scoped CAD API request before retrying."],
-            provider="approved_api_bridge",
-            model=model,
-            can_retry=True,
-        )
-
-    from . import cad_bridge_proxy
-
-    body = None
-    headers = {"content-type": "application/json", "accept": "application/json"}
-    if method == "POST":
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-
-    resp = await cad_bridge_proxy.proxy_cad_bridge_request(
-        method,
-        path,
-        body=body,
-        headers=headers,
-    )
-    result = resp.body.decode("utf-8", errors="replace")
-    return {
-        "ok": 200 <= resp.status_code < 300,
-        "result": result,
-        "provider": "approved_api_bridge",
-        "model": model,
-        "tool_calls": 0,
-        "api_status": resp.status_code,
-        "approval_id": approval.approval_id,
-    }
 
 
 # ── OpenAI SDK 가용 여부 ─────────────────────────────────────────────────────
@@ -274,15 +176,12 @@ async def run_local_agent(req: dict) -> dict:
         )
 
     model: str = req.get("model", "gpt-4o-mini")  # 앱 표준=GPT
-    if _api_bridge_requested(req):
-        return await _run_approved_api_bridge(req, model)
-
     use_mcp: bool = req.get("use_mcp", False)
     if use_mcp:
         return _provider_error_response(
             error_code=_CROSS_APP_APPROVAL_ERROR,
-            user_message="Direct CAD MCP execution is disabled. Use an approved API bridge request.",
-            next_actions=["Route CAD work through the approval gate and CAD bridge API proxy."],
+            user_message="Direct MCP execution is disabled.",
+            next_actions=["Run without use_mcp."],
             provider="approved_api_bridge",
             model=model,
             can_retry=True,
@@ -376,7 +275,7 @@ def local_agent_preflight() -> dict:
     can_run 계산 기준:
       - provider_status (anthropic_sdk / claude_cli) 가용 여부만 반영
       - consent.agreed=False → CONSENT_REQUIRED blocking_reason 추가
-      - optional_status (cad / cdp) down은 can_run 에 영향 없음 → warnings 에만 기록
+      - optional_status (cdp) down은 can_run 에 영향 없음 → warnings 에만 기록
 
     보안:
       - api_key 원문 절대 미노출. api_key_set=boolean 만 허용.
@@ -445,24 +344,13 @@ def local_agent_preflight() -> dict:
     core_blocks = {"CONSENT_REQUIRED", "NO_PROVIDER_AVAILABLE"}
     can_run = not bool(core_blocks & set(blocking_reasons))
 
-    # ── optional_status (CAD / CDP) — down 이어도 can_run 불변 ───────────────
-    cad_status = _cad_bridge_status_summary()
-    cad_ok = bool(cad_status.get("available"))
+    # ── optional_status (CDP) — down 이어도 can_run 불변 ─────────────────────
     cdp_ok = _check_cdp_available()
 
-    if not cad_ok:
-        warnings_list.append("CAD_API_BRIDGE_NOT_READY")
     if not cdp_ok:
         warnings_list.append("CDP_BROWSER_NOT_RUNNING")
 
     optional_status = {
-        "cad": {
-            "available": cad_ok,
-            "mode": cad_status.get("mode"),
-            "status": cad_status.get("status"),
-            "host": cad_status.get("host"),
-            "port": cad_status.get("port"),
-        },
         "cdp": {
             "available": cdp_ok,
         },
@@ -507,7 +395,6 @@ def _safe_health_summary() -> dict:
             "api_key_set": h.get("api_key_set", False),
             "claude_cli": h.get("claude_cli", False),
             "mcp_server_found": h.get("mcp_server_found", False),
-            "cad_bridge": h.get("cad_bridge", {}),
         }
     except Exception:
         return {"available": False, "error": "health_check_failed"}
@@ -596,7 +483,6 @@ def local_agent_health() -> dict:
 
     has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
     has_claude_cli = bool(shutil.which("claude"))
-    cad_status = _cad_bridge_status_summary()
 
     available = (has_sdk and has_api_key) or has_claude_cli
 
@@ -607,5 +493,4 @@ def local_agent_health() -> dict:
         "claude_cli": has_claude_cli,
         "mcp_server_found": False,
         "mcp_server_path": None,
-        "cad_bridge": cad_status,
     }

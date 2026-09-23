@@ -2,24 +2,23 @@
 
 - 공통 인터페이스 (카테고리/리스크/요구자원) 를 등록해 app/log/감사 계층이 참조.
 - 이번 단계에서는 **기존 action 6종만** 등록한다 (기능 추가 없음).
-- 향후 excel / cad / mcp 카테고리 확장 지점이 된다.
+- 향후 excel / mcp 카테고리 확장 지점이 된다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 # ── 카테고리 / 리스크 상수 ──────────────────────────────────────────────
 CATEGORY_SYSTEM = "system"
 CATEGORY_WEB = "web"
-CATEGORY_SECRET = "secret"
+CATEGORY_SECRET = "secret"  # noqa: S105
 CATEGORY_UNKNOWN = "unknown"
 
 # 향후 확장 지점 (이번 단계에서는 값으로만 존재):
 CATEGORY_EXCEL = "excel"
 CATEGORY_EXCEL_COM = "excel_com"
 CATEGORY_HANCOM = "hancom"
-CATEGORY_CAD = "cad"
 CATEGORY_MCP = "mcp"
 # local_agent.browser_launcher.open_local_browser 전용. 서버측 Playwright
 # 경로와 분리해 visible 로컬 브라우저 기동만 다룬다.
@@ -30,12 +29,21 @@ CATEGORY_LOCAL_ENVIRONMENT = "local_environment"
 # server-side Playwright browser automation (read/navigate 계열)
 CATEGORY_BROWSER = "browser"
 
-KNOWN_CATEGORIES: frozenset[str] = frozenset({
-    CATEGORY_SYSTEM, CATEGORY_WEB, CATEGORY_SECRET,
-    CATEGORY_EXCEL, CATEGORY_EXCEL_COM, CATEGORY_HANCOM, CATEGORY_CAD, CATEGORY_MCP,
-    CATEGORY_LOCAL_BROWSER, CATEGORY_INVENTORY, CATEGORY_LOCAL_ENVIRONMENT,
-    CATEGORY_BROWSER,
-})
+KNOWN_CATEGORIES: frozenset[str] = frozenset(
+    {
+        CATEGORY_SYSTEM,
+        CATEGORY_WEB,
+        CATEGORY_SECRET,
+        CATEGORY_EXCEL,
+        CATEGORY_EXCEL_COM,
+        CATEGORY_HANCOM,
+        CATEGORY_MCP,
+        CATEGORY_LOCAL_BROWSER,
+        CATEGORY_INVENTORY,
+        CATEGORY_LOCAL_ENVIRONMENT,
+        CATEGORY_BROWSER,
+    }
+)
 
 RISK_LOW = "low"
 RISK_MEDIUM = "medium"
@@ -43,9 +51,14 @@ RISK_HIGH = "high"
 RISK_CRITICAL = "critical"
 RISK_UNKNOWN = "unknown"
 
-KNOWN_RISKS: frozenset[str] = frozenset({
-    RISK_LOW, RISK_MEDIUM, RISK_HIGH, RISK_CRITICAL,
-})
+KNOWN_RISKS: frozenset[str] = frozenset(
+    {
+        RISK_LOW,
+        RISK_MEDIUM,
+        RISK_HIGH,
+        RISK_CRITICAL,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -58,12 +71,12 @@ class ActionMeta:
     read_only: bool
     # approval_policy 에서 file_path 강제 여부. 대부분의 액션은 파일 기반이라
     # 기본 True 로 둬 기존 6종 웹/시크릿 + Excel 전체의 의미를 유지한다.
-    # cad.health 처럼 파일 없이 동작하는 health-check 류 액션만 False.
+    # 파일 없이 동작하는 health-check 류 액션만 False.
     requires_file_path: bool = True
     # approval_policy 에서 write 액션에 save_as 를 강제할지 여부. 대부분
-    # 로컬 쓰기 액션(excel_write_cell / cad.add_text_save_as 등)은 원본 보호를
+    # 로컬 쓰기 액션(excel_write_cell 등)은 원본 보호를
     # 위해 save_as 필수 — 기본 True 유지. 서버 리소스에 대한 HTTP 조작류
-    # CAD API write 액션(cad.create_project, cad.update_project, …) 만 False.
+    # 액션만 False.
     requires_save_as: bool = True
     # 액션 실행 시 사용자 승인 필수 여부. 기본값은 read_only=False 시 True,
     # read_only=True 시 False. 하지만 read_only이면서도 privacy 영향이 있는
@@ -74,15 +87,9 @@ class ActionMeta:
         if not isinstance(self.action, str) or not self.action:
             raise ValueError("action must be a non-empty string")
         if self.category not in KNOWN_CATEGORIES:
-            raise ValueError(
-                f"unknown category: {self.category!r} "
-                f"(expected one of {sorted(KNOWN_CATEGORIES)})"
-            )
+            raise ValueError(f"unknown category: {self.category!r} (expected one of {sorted(KNOWN_CATEGORIES)})")
         if self.risk_level not in KNOWN_RISKS:
-            raise ValueError(
-                f"unknown risk_level: {self.risk_level!r} "
-                f"(expected one of {sorted(KNOWN_RISKS)})"
-            )
+            raise ValueError(f"unknown risk_level: {self.risk_level!r} (expected one of {sorted(KNOWN_RISKS)})")
 
 
 # ── 레지스트리 (기본값) ────────────────────────────────────────────────
@@ -438,37 +445,6 @@ _REGISTRY: dict[str, ActionMeta] = {
         requires_save_as=True,  # SaveCopyAs 필수 (원본 보호)
         requires_approval=True,
     ),
-    # CAD COM 액션 편입 (2단계). POC 검증이 끝난 cad_com_connector 를 재사용.
-    # - cad.health           : 실제 파일 없이 AutoCAD 사용 가능 여부만 점검.
-    # - cad.open_info        : 원본 DWG 를 열고 기본 정보만 반환 (read-only).
-    # - cad.add_text_save_as : ModelSpace 에 테스트 텍스트 1개 추가 후 반드시
-    #                          save_as 로만 저장 (원본 overwrite 금지).
-    "cad.health": ActionMeta(
-        action="cad.health",
-        category=CATEGORY_CAD,
-        risk_level=RISK_LOW,
-        requires_secret=False,
-        requires_browser=False,
-        read_only=True,
-        requires_file_path=False,
-    ),
-    "cad.open_info": ActionMeta(
-        action="cad.open_info",
-        category=CATEGORY_CAD,
-        risk_level=RISK_LOW,
-        requires_secret=False,
-        requires_browser=False,
-        read_only=True,
-    ),
-    "cad.add_text_save_as": ActionMeta(
-        action="cad.add_text_save_as",
-        category=CATEGORY_CAD,
-        risk_level=RISK_MEDIUM,
-        requires_secret=False,
-        requires_browser=False,
-        read_only=False,
-        requires_approval=True,
-    ),
     # local_agent 전용. 사용자 PC 의 visible 브라우저(msedge/chrome/chromium)를
     # 전용 HaehanAI 프로필로 띄운다. 자동 입력/쿠키 수집/headless/디버깅 포트는
     # 일절 수행하지 않으며, 사용자가 화면을 보면서 직접 로그인하는 흐름이라
@@ -675,47 +651,8 @@ _REGISTRY: dict[str, ActionMeta] = {
 }
 
 
-# ──────────────────────────────────────────────────────────────────
-# CAD API 액션 편입 (3단계).
-# cad-quantity(cad-backend) REST API 42종을 로컬 agent action 으로 확장.
-# orchestrator 의 /api/v1/cad/* 프록시를 거쳐 호출되며, requires_file_path
-# 및 requires_save_as 는 기본 False (서버 리소스 조작이라 로컬 파일/경로
-# 불필요). upload_drawing 만 requires_file_path=True 의 예외.
-# ──────────────────────────────────────────────────────────────────
-def _register_cad_api_actions() -> None:
-    """cad_api_spec.CAD_API_ACTIONS 를 순회해 ActionMeta 로 등록."""
-    # 지연 import (module import 순환 방지 — cad_api_spec 는 순수 데이터).
-    from .cad_api_spec import CAD_API_ACTIONS
-
-    _RISK_MAP = {"low": RISK_LOW, "medium": RISK_MEDIUM}
-    for spec in CAD_API_ACTIONS:
-        if spec.action in _REGISTRY:
-            raise ValueError(f"cad_api action 이름 충돌: {spec.action!r}")
-        risk = _RISK_MAP.get(spec.risk_level)
-        if risk is None:
-            raise ValueError(
-                f"{spec.action}: 알 수 없는 risk_level {spec.risk_level!r}"
-            )
-        # RISK_MEDIUM + write 액션은 requires_approval=True
-        requires_approval = risk == RISK_MEDIUM and not spec.read_only
-        _REGISTRY[spec.action] = ActionMeta(
-            action=spec.action,
-            category=CATEGORY_CAD,
-            risk_level=risk,
-            requires_secret=False,
-            requires_browser=False,
-            read_only=spec.read_only,
-            requires_file_path=spec.requires_file_path,
-            requires_save_as=spec.requires_save_as,
-            requires_approval=requires_approval,
-        )
-
-
-_register_cad_api_actions()
-
-
 # ── 조회 API ───────────────────────────────────────────────────────────
-def get_meta(action: str) -> Optional[ActionMeta]:
+def get_meta(action: str) -> ActionMeta | None:
     if not isinstance(action, str):
         return None
     return _REGISTRY.get(action)
@@ -740,30 +677,29 @@ def risk_of(action: str) -> str:
 
 
 __all__ = [
-    "ActionMeta",
-    "CATEGORY_SYSTEM",
-    "CATEGORY_WEB",
-    "CATEGORY_SECRET",
-    "CATEGORY_UNKNOWN",
+    "CATEGORY_BROWSER",
     "CATEGORY_EXCEL",
     "CATEGORY_EXCEL_COM",
     "CATEGORY_HANCOM",
-    "CATEGORY_CAD",
-    "CATEGORY_MCP",
-    "CATEGORY_LOCAL_BROWSER",
     "CATEGORY_INVENTORY",
+    "CATEGORY_LOCAL_BROWSER",
     "CATEGORY_LOCAL_ENVIRONMENT",
-    "CATEGORY_BROWSER",
+    "CATEGORY_MCP",
+    "CATEGORY_SECRET",
+    "CATEGORY_SYSTEM",
+    "CATEGORY_UNKNOWN",
+    "CATEGORY_WEB",
     "KNOWN_CATEGORIES",
+    "KNOWN_RISKS",
+    "RISK_CRITICAL",
+    "RISK_HIGH",
     "RISK_LOW",
     "RISK_MEDIUM",
-    "RISK_HIGH",
-    "RISK_CRITICAL",
     "RISK_UNKNOWN",
-    "KNOWN_RISKS",
+    "ActionMeta",
+    "category_of",
     "get_meta",
     "is_known_action",
     "list_actions",
-    "category_of",
     "risk_of",
 ]

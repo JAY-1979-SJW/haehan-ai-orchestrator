@@ -11,17 +11,19 @@
   백엔드 준공 범위 = 웹 업무 실행 엔진 + 승인/감사 + 실행위치 정책 + 브라우저 안전정책
   CAD/HWPX/Excel 실패 = EXTERNAL_APP_HOLD (백엔드 준공 실패 아님)
 """
+
 from __future__ import annotations
 
-import pathlib
 import importlib
-import sys
+import pathlib
+
 import pytest
 
 REPO_ROOT = pathlib.Path(__file__).parent.parent
 
 
 # ── IN_SCOPE: 웹 업무 실행 엔진 ────────────────────────────────────────────
+
 
 class TestInScopeWebTaskEngine:
     """웹 업무 실행 핵심 파일이 존재하고 임포트 가능한지 확인."""
@@ -62,6 +64,7 @@ class TestInScopeWebTaskEngine:
 
 # ── IN_SCOPE: 비서앱 웹 페이지 + 데스크 앱 골조 ────────────────────────────
 
+
 class TestInScopeWebDesktopSkeleton:
     """웹 페이지 및 데스크 앱 골조 파일 존재 확인."""
 
@@ -86,50 +89,8 @@ class TestInScopeWebDesktopSkeleton:
         assert (REPO_ROOT / "desktop" / "status_provider.py").exists()
 
 
-# ── EXTERNAL_APP_HOLD: CAD ──────────────────────────────────────────────────
-
-class TestCadExternalAppHold:
-    """CAD 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
-
-    CAD_VERDICT = "CAD_EXTERNAL_APP_HOLD"
-    SCOPE = "FUTURE_INTEGRATION"
-
-    def test_cad_verdict_is_external_app_hold(self):
-        """CAD 설계 판정이 EXTERNAL_APP_HOLD로 선언된다."""
-        assert self.CAD_VERDICT == "CAD_EXTERNAL_APP_HOLD"
-
-    def test_cad_scope_is_future_integration(self):
-        """CAD 범위가 FUTURE_INTEGRATION으로 선언된다."""
-        assert self.SCOPE == "FUTURE_INTEGRATION"
-
-    def test_cad_local_agent_dir_is_local_app(self):
-        """local_agent/cad/ 는 별도 앱(CAD 플러그인) 의존 디렉터리이다."""
-        cad_dir = REPO_ROOT / "local_agent" / "cad"
-        assert cad_dir.is_dir(), "local_agent/cad/ 없음"
-        # 별도 앱 플러그인에 의존하는 코드임을 확인 (controller_loader.py 참조)
-        loader = cad_dir / "controller_loader.py"
-        assert loader.exists()
-        src = loader.read_text(encoding="utf-8")
-        assert "local_worker_plugins" in src, (
-            "controller_loader가 별도 플러그인에 의존하지 않음 — 분류 재검토 필요"
-        )
-
-    def test_cad_failure_not_in_web_task_scope(self):
-        """CAD 실패가 web_task_router 경로에 영향을 주지 않는다."""
-        from ai_orchestrator import web_task_router
-        # web_task_router가 CAD 관련 모듈을 import하지 않음
-        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
-        assert "cad" not in src.lower(), (
-            "web_task_router.py에 cad 참조가 존재함 — IN_SCOPE 오염 가능성"
-        )
-
-    def test_cad_mcp_module_isolated(self):
-        """mcp_server/local_cad_adapter_tools.py 는 별도 CAD 어댑터이다."""
-        mcp_cad = REPO_ROOT / "mcp_server" / "local_cad_adapter_tools.py"
-        assert mcp_cad.exists(), "mcp_server/local_cad_adapter_tools.py 없음"
-
-
 # ── EXTERNAL_APP_HOLD: HWPX/HWP ────────────────────────────────────────────
+
 
 class TestHwpxExternalAppHold:
     """HWPX/HWP 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
@@ -149,9 +110,7 @@ class TestHwpxExternalAppHold:
     def test_hwpx_not_in_web_task_router(self):
         """web_task_router.py에 hwp/hwpx 참조가 없다."""
         src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
-        assert "hwp" not in src.lower(), (
-            "web_task_router.py에 hwp 참조가 존재함 — IN_SCOPE 오염 가능성"
-        )
+        assert "hwp" not in src.lower(), "web_task_router.py에 hwp 참조가 존재함 — IN_SCOPE 오염 가능성"
 
     def test_hwpx_not_in_approval_service(self):
         """web_task_approval_service.py에 hwp/hwpx 참조가 없다."""
@@ -160,6 +119,7 @@ class TestHwpxExternalAppHold:
 
 
 # ── EXTERNAL_APP_HOLD: Excel/Office ────────────────────────────────────────
+
 
 class TestExcelOfficeExternalAppHold:
     """Excel/Office 전문 기능은 현재 비서앱 준공 범위가 아니라 EXTERNAL_APP_HOLD이다."""
@@ -187,6 +147,7 @@ class TestExcelOfficeExternalAppHold:
 
 # ── 백엔드 준공 경계: CAD/HWPX/Excel 실패는 closeout 실패 아님 ───────────────
 
+
 class TestBackendCloseoutBoundary:
     """CAD/HWPX/Excel 관련 테스트 실패가 백엔드 준공 실패로 계산되지 않는다."""
 
@@ -199,45 +160,32 @@ class TestBackendCloseoutBoundary:
         "ai_orchestrator/tests/test_web_task_router_policy_flow.py",
     ]
 
-    # 이 테스트들은 EXTERNAL_APP_HOLD이다.
-    EXTERNAL_APP_HOLD_TESTS = [
-        "tests/test_cad_local_agent_adapter_20260509.py",
-        "tests/test_mcp_local_cad_adapter_tools_20260509.py",
-        "tests/test_cad_http_agent_client_20260510.py",
-    ]
-
     @pytest.mark.parametrize("test_path", CLOSEOUT_IN_SCOPE_TESTS)
     def test_closeout_scope_test_exists(self, test_path):
         """백엔드 준공 IN_SCOPE 테스트 파일이 존재한다."""
-        assert (REPO_ROOT / test_path).exists(), (
-            f"준공 필수 테스트 없음: {test_path}"
-        )
-
-    @pytest.mark.parametrize("test_path", EXTERNAL_APP_HOLD_TESTS)
-    def test_external_app_hold_test_identified(self, test_path):
-        """EXTERNAL_APP_HOLD 테스트가 파일로 식별된다."""
-        assert (REPO_ROOT / test_path).exists(), (
-            f"EXTERNAL_APP_HOLD 테스트 파일 없음: {test_path} — 이미 삭제되었거나 경로 변경 필요"
-        )
-
-    def test_cad_hold_reason_is_missing_plugin(self):
-        """CAD HOLD 사유: local_worker_plugins 별도 앱 플러그인 미설치."""
-        loader = REPO_ROOT / "local_agent" / "cad" / "controller_loader.py"
-        src = loader.read_text(encoding="utf-8")
-        assert "local_worker_plugins" in src, (
-            "CAD HOLD 사유(별도 플러그인 의존)가 확인되지 않음"
-        )
+        assert (REPO_ROOT / test_path).exists(), f"준공 필수 테스트 없음: {test_path}"
 
     def test_web_task_closeout_passes_without_cad(self):
         """web_task_approval_service 는 CAD 없이 임포트 가능하다."""
         import ai_orchestrator.web_task_approval_service as svc
+
         assert hasattr(svc, "create_web_task_pending_approval")
 
     def test_approval_service_boundary(self):
         """web_task_approval_service의 응답 계약 키 존재."""
-        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
         import dataclasses
+
+        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+
         fields = {f.name for f in dataclasses.fields(PendingApprovalResult)}
-        required = {"task_id", "expires_at", "risk_level", "requires_approval",
-                    "provider", "action_type", "telegram_sent", "telegram_message_id"}
+        required = {
+            "task_id",
+            "expires_at",
+            "risk_level",
+            "requires_approval",
+            "provider",
+            "action_type",
+            "telegram_sent",
+            "telegram_message_id",
+        }
         assert required.issubset(fields), f"PendingApprovalResult 필드 누락: {required - fields}"

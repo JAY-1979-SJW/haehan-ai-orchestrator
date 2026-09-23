@@ -28,6 +28,7 @@ read-only 전용:
     python scripts/ops/audit_backend_operation_stabilization.py
     python scripts/ops/audit_backend_operation_stabilization.py --json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,10 +43,9 @@ ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_EXCLUDED = True
 
 CONTAINERS = {
-    "api":                "haehan-ai-orchestrator-api",
-    "admin_web":          "haehan-ai-orchestrator-admin-web",
-    "browser_worker":     "haehan-ai-orchestrator-browser-worker",
-    "file_map_executor":  "haehan-ai-orchestrator-file-map-executor",
+    "api": "haehan-ai-orchestrator-api",
+    "admin_web": "haehan-ai-orchestrator-admin-web",
+    "browser_worker": "haehan-ai-orchestrator-browser-worker",
 }
 
 # nginx 라우팅 구조 (Host: haehan-ai.kr 기준)
@@ -78,7 +78,9 @@ NGINX_ROUTING = [
 
 # Host 헤더 필수 조건
 HOST_HEADER_REQUIRED = "haehan-ai.kr"
-HOST_HEADER_NOTE = "localhost Host 미지정 시 404는 라우팅 실패 아님. nginx server_name haehan-ai.kr 블록만 /orchestrator/ 처리."
+HOST_HEADER_NOTE = (
+    "localhost Host 미지정 시 404는 라우팅 실패 아님. nginx server_name haehan-ai.kr 블록만 /orchestrator/ 처리."
+)
 
 # health 명령 (read-only)
 HEALTH_COMMANDS = [
@@ -116,15 +118,15 @@ HEALTH_COMMANDS = [
 
 # smoke 명령 목록 (GET only, read-only, 프론트엔드 제외)
 SMOKE_COMMANDS = [
-    {"path": "/orchestrator/api/v1/health",              "expected": 200, "tier": "P0"},
-    {"path": "/orchestrator/api/v1/ops/summary",         "expected": 200, "tier": "P0"},
-    {"path": "/orchestrator/api/v1/ops/approvals",       "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/ops/web-tasks",       "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/ops/agents",          "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/ops/integrations",    "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/ops/external-work",   "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/ops/audit-events",    "expected": 200, "tier": "P1"},
-    {"path": "/orchestrator/api/v1/web-tasks/registry",  "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/health", "expected": 200, "tier": "P0"},
+    {"path": "/orchestrator/api/v1/ops/summary", "expected": 200, "tier": "P0"},
+    {"path": "/orchestrator/api/v1/ops/approvals", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/ops/web-tasks", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/ops/agents", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/ops/integrations", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/ops/external-work", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/ops/audit-events", "expected": 200, "tier": "P1"},
+    {"path": "/orchestrator/api/v1/web-tasks/registry", "expected": 200, "tier": "P1"},
 ]
 
 SMOKE_FORBIDDEN = [
@@ -160,7 +162,7 @@ INCIDENT_LEVELS = {
         "description": "긴급 대응 — 일부 기능 불가",
         "conditions": [
             "ops API 일부 실패",
-            "browser-worker / file-map-executor unhealthy",
+            "browser-worker unhealthy",
             "endpoint inventory 심각 불일치",
         ],
         "actions": [
@@ -227,12 +229,12 @@ ROLLBACK_PROCEDURE = [
 
 # external app hold
 EXTERNAL_APP_HOLD_ITEMS = [
-    {"app": "CAD",         "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
-    {"app": "HWPX",        "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
-    {"app": "Excel/Office","status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
-    {"app": "Tax",         "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
-    {"app": "Bid",         "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
-    {"app": "Document",    "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "CAD", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "HWPX", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "Excel/Office", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "Tax", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "Bid", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
+    {"app": "Document", "status": "EXTERNAL_APP_HOLD", "auto_execute": False, "approval_required": True},
 ]
 
 EXTERNAL_APP_HOLD_NOTE = (
@@ -245,7 +247,6 @@ EXTERNAL_APP_HOLD_NOTE = (
 LOG_COMMANDS = [
     "docker logs haehan-ai-orchestrator-api --tail 50",
     "docker logs haehan-ai-orchestrator-browser-worker --tail 50",
-    "docker logs haehan-ai-orchestrator-file-map-executor --tail 50",
     "docker exec nginx cat /var/log/nginx/error.log | tail -30",
 ]
 
@@ -265,24 +266,29 @@ LOG_CHECK_ORDER = [
 
 # ── 검증 함수 ──────────────────────────────────────────────────────────────────
 
+
 def _check_script_files() -> list[dict]:
     results = []
 
     # vendor sync 스크립트 존재
     vendor_script = ROOT / "scripts" / "ops" / "audit_vendor_design_system_sync.py"
-    results.append({
-        "check": "vendor_sync_script_exists",
-        "ok": vendor_script.exists(),
-        "path": str(vendor_script.relative_to(ROOT)),
-    })
+    results.append(
+        {
+            "check": "vendor_sync_script_exists",
+            "ok": vendor_script.exists(),
+            "path": str(vendor_script.relative_to(ROOT)),
+        }
+    )
 
     # integrated runner 존재
     runner = ROOT / "scripts" / "ops" / "audit_backend_premium_integrated_runner.py"
-    results.append({
-        "check": "integrated_runner_exists",
-        "ok": runner.exists(),
-        "path": str(runner.relative_to(ROOT)),
-    })
+    results.append(
+        {
+            "check": "integrated_runner_exists",
+            "ok": runner.exists(),
+            "path": str(runner.relative_to(ROOT)),
+        }
+    )
 
     return results
 
@@ -316,16 +322,16 @@ def _build_report() -> dict:
     ext_hold_ok = _check_external_app_hold()
 
     checklist = [
-        {"item": "프론트엔드 제외",          "ok": FRONTEND_EXCLUDED},
-        {"item": "smoke GET only",            "ok": True},
-        {"item": "smoke frontend 미포함",     "ok": no_frontend_smoke},
-        {"item": "Host 헤더 필수 조건",       "ok": host_header_ok},
-        {"item": "5050 중단 금지 기준 존재",  "ok": True},
-        {"item": "nginx 라우팅 기준 존재",    "ok": len(NGINX_ROUTING) >= 3},
-        {"item": "rollback 조건 존재",        "ok": rollback_ok},
-        {"item": "external app hold 확인",    "ok": ext_hold_ok},
-        {"item": "secret 출력 금지 기준",     "ok": len(LOG_FORBIDDEN_OUTPUT) >= 1},
-        {"item": "스크립트 파일 존재",        "ok": all_files_ok},
+        {"item": "프론트엔드 제외", "ok": FRONTEND_EXCLUDED},
+        {"item": "smoke GET only", "ok": True},
+        {"item": "smoke frontend 미포함", "ok": no_frontend_smoke},
+        {"item": "Host 헤더 필수 조건", "ok": host_header_ok},
+        {"item": "5050 중단 금지 기준 존재", "ok": True},
+        {"item": "nginx 라우팅 기준 존재", "ok": len(NGINX_ROUTING) >= 3},
+        {"item": "rollback 조건 존재", "ok": rollback_ok},
+        {"item": "external app hold 확인", "ok": ext_hold_ok},
+        {"item": "secret 출력 금지 기준", "ok": len(LOG_FORBIDDEN_OUTPUT) >= 1},
+        {"item": "스크립트 파일 존재", "ok": all_files_ok},
     ]
 
     all_ok = all(c["ok"] for c in checklist)
@@ -349,7 +355,10 @@ def _build_report() -> dict:
         "smoke_commands": SMOKE_COMMANDS,
         "smoke_forbidden": SMOKE_FORBIDDEN,
         "smoke_base_cmd_template": SMOKE_BASE_CMD,
-        "incident_levels": {k: {"description": v["description"], "rollback_required": v["rollback_required"]} for k, v in INCIDENT_LEVELS.items()},
+        "incident_levels": {
+            k: {"description": v["description"], "rollback_required": v["rollback_required"]}
+            for k, v in INCIDENT_LEVELS.items()
+        },
         "rollback_conditions": ROLLBACK_CONDITIONS,
         "rollback_procedure": ROLLBACK_PROCEDURE,
         "rollback_forbidden_in_this_runbook": ROLLBACK_FORBIDDEN_IN_THIS_RUNBOOK,

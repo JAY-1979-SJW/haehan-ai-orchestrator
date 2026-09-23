@@ -80,14 +80,12 @@ IMPORT_SCAN_PREFIXES = {
 OPENAPI_APP_MODULES = (
     "browser_api.server",
     "browser_worker.app",
-    "services.file_map_executor.app",
     "ai_orchestrator.server",
 )
 
 PYDANTIC_SCHEMA_MODULES = (
     "scripts.schemas",
     "browser_worker.schemas",
-    "services.file_map_executor.schemas",
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
@@ -702,7 +700,6 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 
 # STORAGE_BOUNDARY known debt — 거버넌스 도입 전 존재한 파일, 신규 추가 금지
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
-    "agent/local_inventory/inventory.py",
     "ai_orchestrator/connectors/naver_search_db.py",
     "ai_orchestrator/connectors/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",

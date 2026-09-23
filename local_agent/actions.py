@@ -1298,65 +1298,6 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
-def action_cad_ping(_params: dict) -> ActionResult:
-    """Ping the local CAD adapter without opening or modifying drawings."""
-    from .cad_adapter import cad_ping
-
-    result = cad_ping()
-    return ActionResult(
-        success=bool(result.get("ok")),
-        summary="cad_ping_ok" if result.get("ok") else "cad_ping_failed",
-        data=result,
-        error=str(result.get("error", "")),
-        error_code="" if result.get("ok") else "CAD_ADAPTER_UNAVAILABLE",
-    )
-
-
-def action_cad_status(_params: dict) -> ActionResult:
-    """Return local CAD adapter module status without executing CAD commands."""
-    from .cad_adapter import cad_status
-
-    result = cad_status()
-    return ActionResult(
-        success=bool(result.get("ok")),
-        summary="cad_status_ok" if result.get("ok") else "cad_status_failed",
-        data=result,
-        error="; ".join(result.get("warnings", []))[:200] if not result.get("ok") else "",
-        error_code="" if result.get("ok") else "CAD_STATUS_FAILED",
-    )
-
-
-def action_cad_autocad_ping(params: dict) -> ActionResult:
-    """Ping AutoCAD itself with timeout isolation."""
-    from .cad import autocad_ping
-
-    timeout_seconds = int(params.get("timeout_seconds", 10) or 10)
-    result = autocad_ping(timeout_seconds=timeout_seconds)
-    return ActionResult(
-        success=bool(result.get("ok")),
-        summary="cad_autocad_ping_ok" if result.get("ok") else str(result.get("status", "cad_autocad_ping_failed")),
-        data=result,
-        error=str(result.get("message") or result.get("stderr") or ""),
-        error_code="" if result.get("ok") else str(result.get("error_code", "CAD_AUTOCAD_PING_FAILED")),
-    )
-
-
-def action_cad_execute(params: dict) -> ActionResult:
-    """Execute a read-only CAD tool through the local CAD adapter."""
-    from .cad_adapter import cad_execute
-
-    tool_id = str(params.get("tool_id", "")).strip()
-    args = params.get("args") if isinstance(params.get("args"), dict) else {}
-    result = cad_execute(tool_id, args)
-    return ActionResult(
-        success=bool(result.get("ok")),
-        summary=str(result.get("message") or result.get("status") or "cad_execute")[:300],
-        data=result,
-        error="; ".join(result.get("errors", []))[:200] if result.get("errors") else "",
-        error_code="" if result.get("ok") else str(result.get("error_code", "CAD_EXECUTE_FAILED")),
-    )
-
-
 # ── KRAS 서식 액션 ────────────────────────────────────────────────────────
 
 
@@ -1460,10 +1401,6 @@ _ACTIONS = {
     "web_probe_manual_login": action_web_probe_manual_login,
     "browser.inspect": action_browser_inspect,
     "cdp.run": action_cdp_run,
-    "cad.ping": action_cad_ping,
-    "cad.status": action_cad_status,
-    "cad.autocad_ping": action_cad_autocad_ping,
-    "cad.execute": action_cad_execute,
     # KRAS 서식 작성 연동 (kras_connector.py)
     "kras.form.create_session": action_kras_form_create_session,
     "kras.form.get_session": action_kras_form_get_session,
@@ -1609,10 +1546,6 @@ __all__ = [
     "FORBIDDEN_ACTIONS",
     "ActionResult",
     "action_browser_inspect",
-    "action_cad_autocad_ping",
-    "action_cad_execute",
-    "action_cad_ping",
-    "action_cad_status",
     "action_capture_screenshot",
     "action_list_allowed_apps",
     "action_list_files_readonly",

@@ -2,6 +2,7 @@
 
 Validates that RISK_HIGH and RISK_MEDIUM write actions have requires_approval=True.
 """
+
 import agent.action_registry as reg
 
 
@@ -9,9 +10,7 @@ def test_all_high_risk_write_actions_require_approval():
     """Verify that RISK_HIGH actions with read_only=False require approval."""
     actions = reg.list_actions()
     high_risk_write = [
-        a for a in actions
-        if reg.get_meta(a).risk_level == reg.RISK_HIGH
-        and not reg.get_meta(a).read_only
+        a for a in actions if reg.get_meta(a).risk_level == reg.RISK_HIGH and not reg.get_meta(a).read_only
     ]
 
     assert len(high_risk_write) > 0, "Expected at least one RISK_HIGH write action"
@@ -19,8 +18,7 @@ def test_all_high_risk_write_actions_require_approval():
     for action in high_risk_write:
         meta = reg.get_meta(action)
         assert meta.requires_approval is True, (
-            f"Action {action!r} (RISK_HIGH, write) must have requires_approval=True, "
-            f"got {meta.requires_approval}"
+            f"Action {action!r} (RISK_HIGH, write) must have requires_approval=True, got {meta.requires_approval}"
         )
 
 
@@ -28,9 +26,7 @@ def test_all_medium_risk_write_actions_require_approval():
     """Verify that RISK_MEDIUM actions with read_only=False require approval."""
     actions = reg.list_actions()
     medium_risk_write = [
-        a for a in actions
-        if reg.get_meta(a).risk_level == reg.RISK_MEDIUM
-        and not reg.get_meta(a).read_only
+        a for a in actions if reg.get_meta(a).risk_level == reg.RISK_MEDIUM and not reg.get_meta(a).read_only
     ]
 
     assert len(medium_risk_write) > 0, "Expected at least one RISK_MEDIUM write action"
@@ -38,26 +34,20 @@ def test_all_medium_risk_write_actions_require_approval():
     for action in medium_risk_write:
         meta = reg.get_meta(action)
         assert meta.requires_approval is True, (
-            f"Action {action!r} (RISK_MEDIUM, write) must have requires_approval=True, "
-            f"got {meta.requires_approval}"
+            f"Action {action!r} (RISK_MEDIUM, write) must have requires_approval=True, got {meta.requires_approval}"
         )
 
 
 def test_secret_actions_require_approval():
     """Verify that actions in CATEGORY_SECRET require approval."""
     actions = reg.list_actions()
-    secret_actions = [
-        a for a in actions
-        if reg.get_meta(a).category == reg.CATEGORY_SECRET
-    ]
+    secret_actions = [a for a in actions if reg.get_meta(a).category == reg.CATEGORY_SECRET]
 
     assert len(secret_actions) > 0, "Expected at least one SECRET action"
 
     for action in secret_actions:
         meta = reg.get_meta(action)
-        assert meta.requires_approval is True, (
-            f"Action {action!r} (SECRET) must have requires_approval=True"
-        )
+        assert meta.requires_approval is True, f"Action {action!r} (SECRET) must have requires_approval=True"
 
 
 def test_specific_write_actions_require_approval():
@@ -78,7 +68,6 @@ def test_specific_write_actions_require_approval():
         "excel.pack.review_estimate_copy",
         "excel.pack.review_settlement_copy",
         "excel.pack.check_material_prices_copy",
-        "cad.add_text_save_as",
         "hancom.convert_hwp_to_hwpx_copy",
         "local_software.install",
     }
@@ -87,8 +76,7 @@ def test_specific_write_actions_require_approval():
         assert reg.is_known_action(action), f"Action {action!r} not found in registry"
         meta = reg.get_meta(action)
         assert meta.requires_approval is True, (
-            f"Action {action!r} must have requires_approval=True, "
-            f"got {meta.requires_approval}"
+            f"Action {action!r} must have requires_approval=True, got {meta.requires_approval}"
         )
 
 
@@ -103,9 +91,7 @@ def test_privacy_scan_actions_require_approval():
     for action in privacy_actions:
         assert reg.is_known_action(action), f"Action {action!r} not found in registry"
         meta = reg.get_meta(action)
-        assert meta.read_only is True, (
-            f"Action {action!r} should be read-only, got read_only={meta.read_only}"
-        )
+        assert meta.read_only is True, f"Action {action!r} should be read-only, got read_only={meta.read_only}"
         assert meta.requires_approval is True, (
             f"Action {action!r} (privacy scan, read-only) must have requires_approval=True"
         )
@@ -124,13 +110,9 @@ def test_read_only_browser_actions_no_approval_required():
     for action in browser_readonly_actions:
         if reg.is_known_action(action):
             meta = reg.get_meta(action)
-            assert meta.read_only is True, (
-                f"Action {action!r} should be read-only"
-            )
+            assert meta.read_only is True, f"Action {action!r} should be read-only"
             # Browser actions should not require approval (they are read-only observational)
-            assert meta.requires_approval is False, (
-                f"Action {action!r} (read-only browser) should not require approval"
-            )
+            assert meta.requires_approval is False, f"Action {action!r} (read-only browser) should not require approval"
 
 
 def test_read_only_safe_actions_no_approval_required():
@@ -149,12 +131,9 @@ def test_read_only_safe_actions_no_approval_required():
     for action in safe_readonly_actions:
         if reg.is_known_action(action):
             meta = reg.get_meta(action)
-            assert meta.read_only is True, (
-                f"Action {action!r} should be read-only"
-            )
+            assert meta.read_only is True, f"Action {action!r} should be read-only"
             assert meta.requires_approval is False, (
-                f"Action {action!r} (safe read-only) should not require approval, "
-                f"got {meta.requires_approval}"
+                f"Action {action!r} (safe read-only) should not require approval, got {meta.requires_approval}"
             )
 
 

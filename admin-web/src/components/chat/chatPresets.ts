@@ -56,17 +56,6 @@ export const CHAT_PRESETS: Record<string, ChatChip[]> = {
     { label: "메일 작성", prompt: "메일 초안을 작성해줘" },
     { label: "뉴스 수집", prompt: "오늘 주요 뉴스를 수집해줘" },
   ],
-  cad: [
-    { label: "도면 목록",   prompt: "현재 도면 파일 목록을 보여줘" },
-    { label: "물량 추출",   prompt: "도면에서 물량을 추출해줘" },
-    { label: "블록 분석",   prompt: "도면 블록 정보를 분석해줘" },
-    { label: "텍스트 검색", prompt: "도면에서 텍스트를 검색해줘" },
-  ],
-  "file-map": [
-    { label: "파일 스캔", prompt: "로컬 파일 지도를 스캔해줘" },
-    { label: "정리 계획", prompt: "파일 정리 계획을 세워줘" },
-    { label: "중복 파일", prompt: "중복 파일을 찾아줘" },
-  ],
   market: [
     { label: "시장 분석",   prompt: "키워드 시장 분석을 실행해줘" },
     { label: "경쟁사 조사", prompt: "경쟁사 상품을 조사해줘" },
