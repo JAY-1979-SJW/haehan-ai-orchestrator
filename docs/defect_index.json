@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
   "updated": "2026-09-23",
-  "next_no": 31,
+  "next_no": 33,
   "items": [
     {
       "no": 1,
@@ -412,6 +412,36 @@
       "stage": "E",
       "status": "open",
       "no": 30
+    },
+    {
+      "id": "py.stdlib_shadow_files",
+      "category": 2,
+      "title": "표준 라이브러리와 같은 이름의 파일 14개(calendar·http·selectors·logging·profile·types) — 그 폴더에서 스크립트로 실행하면 표준 모듈을 가려 깨짐",
+      "where": [
+        "scripts/youtube/http.py",
+        "scripts/google/calendar.py",
+        "scripts/naver/blog/selectors.py",
+        "scripts/google/cloud/logging.py"
+      ],
+      "evidence": "runcheck R0 에서 자기 폴더를 경로에 넣자 57건 실패로 재현",
+      "stage": "RUN",
+      "status": "open",
+      "no": 31
+    },
+    {
+      "id": "run.r0_import_failures",
+      "category": 1,
+      "title": "import 자체가 실패하는 모듈 4개 — 끊어진 shim, 없어진 함수, 다른 저장소 의존",
+      "where": [
+        "scripts/audit_dev_reg_approvals.py",
+        "scripts/ops/report_naver_mail_inbox_consolidated.py",
+        "scripts/ops/check_a4.py",
+        "scripts/ops/check_excel_live.py"
+      ],
+      "evidence": "runcheck R0: archive 대상 없음 / batch_runner._classify_priority 없음 / shared·excel_ai_agent 모듈(06 저장소) 필요",
+      "stage": "RUN",
+      "status": "open",
+      "no": 32
     }
   ]
 }
