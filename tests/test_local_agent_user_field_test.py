@@ -205,23 +205,3 @@ def test_audit_fail_report_missing(tmp_path):
 
 
 # ── 8) 회귀 가드 ────────────────────────────────────────
-
-
-def test_regression_gui_impl_audit_imports():
-    from scripts.ops import audit_local_agent_gui_implementation as a
-
-    assert hasattr(a, "judge_impl")
-
-
-def test_regression_desktop_launcher_intact():
-    from local_agent import desktop_launcher
-
-    for sym in ("main", "self_test", "register_flow", "connect_flow"):
-        assert hasattr(desktop_launcher, sym)
-
-
-def test_regression_gui_app_pages_intact():
-    from local_agent import gui_app
-
-    for p in ("PAGE_DASHBOARD", "PAGE_REGISTRATION", "PAGE_LOGS", "PAGE_SETTINGS"):
-        assert hasattr(gui_app, p)

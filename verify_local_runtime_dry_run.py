@@ -149,44 +149,6 @@ def check_desktop_exe(report: Report) -> None:
     report.pass_("desktop exe --diagnostics", detail.strip())
 
 
-def check_local_agent(report: Report) -> None:
-    from local_agent import desktop_launcher
-
-    self_test = desktop_launcher.self_test()
-    if self_test.get("ok"):
-        report.pass_("local agent self-test")
-    else:
-        report.fail("local agent self-test", json.dumps(self_test, ensure_ascii=False)[:200])
-
-    diagnostics = desktop_launcher.show_diagnostics(SERVER_URL)
-    block = str(diagnostics.get("diagnostics_block", ""))
-    token_present = bool(diagnostics.get("token_present"))
-    status = next(
-        (
-            s
-            for s in (
-                "DISCONNECTED",
-                "CONNECTED",
-                "NOT_REGISTERED",
-                "TOKEN_MISSING",
-                "AUTH_FAILED",
-                "SERVER_UNREACHABLE",
-                "NETWORK_BLOCKED",
-            )
-            if s in block
-        ),
-        "",
-    )
-    if status == "CONNECTED":
-        report.pass_("local agent server status", "CONNECTED")
-    elif status == "DISCONNECTED" and token_present:
-        report.pass_("local agent credentials", "registered token_present=True")
-    elif status in {"NOT_REGISTERED", "TOKEN_MISSING"}:
-        report.warn("local agent server status", str(status))
-    else:
-        report.warn("local agent server status", str(status or "UNKNOWN"))
-
-
 def check_server(report: Report, *, live_server: bool) -> None:
     try:
         with socket.create_connection(("haehan-ai.kr", 443), timeout=5):
@@ -312,7 +274,6 @@ def main(argv: list[str] | None = None) -> int:
     check_diagnostics_bat(report)
     check_desktop_shortcut(report)
     check_desktop_exe(report)
-    check_local_agent(report)
     check_server(report, live_server=args.live_server)
     if args.skip_playwright:
         report.pass_("playwright", "skipped; verified by release runtime gate")

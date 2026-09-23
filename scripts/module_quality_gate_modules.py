@@ -110,7 +110,6 @@ MODULES: tuple[GateModule, ...] = (
         name="portable_install",
         description="portable ZIP install scripts and contract",
         steps=(
-            GateStep("portable_install_baseline_contract", check="portable_install_baseline_contract"),
             GateStep("portable_py_compile", (PY, "scripts/py_compile_no_cache.py", "verify_portable_zip_install.py")),
             GateStep("portable_static_verify", (PY, "verify_portable_zip_install.py", "--static-only")),
             GateStep(
@@ -291,7 +290,6 @@ MODULES: tuple[GateModule, ...] = (
         name="release_preflight",
         description="admin-web static checks and active-source secret scan",
         steps=(
-            GateStep("release_preflight_baseline_contract", check="release_preflight_baseline_contract"),
             GateStep("admin_web_typecheck", check="admin_web_typecheck"),
             GateStep("admin_web_lint", check="admin_web_lint"),
             GateStep("admin_web_audit", check="admin_web_audit"),

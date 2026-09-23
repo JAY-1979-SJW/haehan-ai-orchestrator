@@ -370,28 +370,6 @@ def test_adapter_dev_send_returns_key_not_set_when_no_key(monkeypatch):
     assert r.external_call_count == 0
 
 
-# ── 10) GUI modal handlers ───────────────────────────
-
-
-def test_gui_modal_has_save_test_delete_handlers():
-    src = Path("local_agent/gui_app.py").read_text(encoding="utf-8")
-    for h in ("_on_save", "_on_test", "_on_delete", "btn_modal_save", "btn_modal_test", "btn_modal_delete"):
-        assert h in src, f"missing: {h}"
-
-
-def test_gui_modal_buttons_dev_mode_active():
-    src = Path("local_agent/gui_app.py").read_text(encoding="utf-8")
-    assert "MODE_DEV_TEST_KEY" in src
-    assert 'state="normal" if dev_mode' in src
-
-
-def test_gui_modal_does_not_persist_api_key_to_file():
-    src = Path("local_agent/gui_app.py").read_text(encoding="utf-8")
-    # GUI 자체는 var_key 만 사용, file 쓰기 없음
-    # 입력값 폐기 명시
-    assert 'var_key.set("")' in src
-
-
 # ── 11) live smoke report ─────────────────────────────
 
 

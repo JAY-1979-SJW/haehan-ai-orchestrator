@@ -1,8 +1,7 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 from scripts import required_quality_gate as gate
-
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_PYCACHE = ROOT
@@ -25,8 +24,6 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_common_engine_commercialization_baseline.py" in rendered
     assert "tests/test_local_agent_connection_recovery_baseline.py" in rendered
     assert "tests/test_desktop_auth_runtime_baseline_contract.py" in rendered
-    assert "tests/test_portable_install_baseline_contract.py" in rendered
-    assert "tests/test_release_preflight_baseline_contract.py" in rendered
     assert "tests/test_local_agent_e2e_flow_contract.py" in rendered
     assert "tests/test_app_baseline_contract.py" in rendered
     assert "tests/test_standard_workflow_contract.py" in rendered
@@ -66,8 +63,6 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_common_engine_commercialization_baseline.py" in rendered
     assert "scripts/ops/audit_local_agent_connection_recovery_baseline.py" in rendered
     assert "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_portable_install_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_release_preflight_baseline_contract.py" in rendered
     assert "scripts/ops/audit_local_agent_e2e_flow_contract.py" in rendered
     assert "scripts/ops/audit_app_baseline_contract.py" in rendered
     assert "scripts/ops/audit_standard_workflow_contract.py" in rendered

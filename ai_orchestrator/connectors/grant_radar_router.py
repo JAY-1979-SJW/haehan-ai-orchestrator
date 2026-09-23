@@ -33,8 +33,8 @@ COMPANY_FILE = ROOT / "configs" / "grant_radar_company.json"
 def _grant_cmd(task: str) -> list[str]:
     """grant_radar 서브태스크 실행 커맨드.
 
-    동결 exe(PyInstaller)는 `-m` 미지원 → run_server.py --grant-task 디스패치 사용.
-    개발 모드는 `python -m scripts.grant_radar.<module>`.
+    `python -m scripts.grant_radar.<module>` 로 실행 (uvicorn 소스 실행 전제,
+    패키징 배포 없음).
     """
     module = {"scan": "scan", "report": "report", "fill": "form_fill"}[task]
     if getattr(sys, "frozen", False):

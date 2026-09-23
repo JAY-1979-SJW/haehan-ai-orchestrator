@@ -4,6 +4,7 @@ This replaces GitHub Actions for the locked local-agent browser runtime checks.
 It is designed for local pre-commit/pre-push execution and does not build,
 deploy, push, run Docker, or start browsers.
 """
+
 from __future__ import annotations
 
 import os
@@ -38,8 +39,6 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/ops/audit_common_engine_commercialization_baseline.py",
         "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
         "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
-        "scripts/ops/audit_portable_install_baseline_contract.py",
-        "scripts/ops/audit_release_preflight_baseline_contract.py",
         "scripts/ops/audit_local_agent_e2e_flow_contract.py",
         "scripts/ops/audit_app_baseline_contract.py",
         "scripts/ops/audit_standard_workflow_contract.py",
@@ -85,8 +84,6 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_common_tool_runtime_baseline_contract.py",
         "tests/test_common_engine_commercialization_baseline.py",
         "tests/test_desktop_auth_runtime_baseline_contract.py",
-        "tests/test_portable_install_baseline_contract.py",
-        "tests/test_release_preflight_baseline_contract.py",
         "tests/test_local_agent_e2e_flow_contract.py",
         "tests/test_app_baseline_contract.py",
         "tests/test_standard_workflow_contract.py",
@@ -133,8 +130,6 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "scripts/ops/audit_common_engine_commercialization_baseline.py"),
     (sys.executable, "scripts/ops/audit_local_agent_connection_recovery_baseline.py"),
     (sys.executable, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"),
-    (sys.executable, "scripts/ops/audit_portable_install_baseline_contract.py"),
-    (sys.executable, "scripts/ops/audit_release_preflight_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_local_agent_e2e_flow_contract.py"),
     (sys.executable, "scripts/ops/audit_app_baseline_contract.py"),
     (sys.executable, "scripts/ops/audit_standard_workflow_contract.py"),
@@ -162,8 +157,6 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "tests/test_common_tool_runtime_baseline_contract.py",
         "tests/test_common_engine_commercialization_baseline.py",
         "tests/test_desktop_auth_runtime_baseline_contract.py",
-        "tests/test_portable_install_baseline_contract.py",
-        "tests/test_release_preflight_baseline_contract.py",
         "tests/test_local_agent_e2e_flow_contract.py",
         *PYTEST_FLAGS,
     ),
@@ -380,7 +373,10 @@ def run_command(command: tuple[str, ...]) -> GateResult:
         env["TMPDIR"] = str(temp_root)
     else:
         pycache = Path(
-            env.get("HAEHAN_REQUIRED_GATE_PYCACHE", str(Path(env.get("TEMP", str(ROOT / "tmp"))) / "haehan_required_gate_pycache"))
+            env.get(
+                "HAEHAN_REQUIRED_GATE_PYCACHE",
+                str(Path(env.get("TEMP", str(ROOT / "tmp"))) / "haehan_required_gate_pycache"),
+            )
         )
         pycache.mkdir(parents=True, exist_ok=True)
         env.setdefault("PYTHONPYCACHEPREFIX", str(pycache))

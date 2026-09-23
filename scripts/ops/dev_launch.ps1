@@ -3,11 +3,9 @@
 #
 # 반영 속도:
 #   Python (ai_orchestrator/**) → uvicorn --reload → 1~2초
-#   Next.js (admin-web/src/**)  → Turbopack HMR   → <1초 (webview 자동 갱신)
-#   Electron (main.js/lib/**)   → Electron 재시작 필요 (스크립트 재실행)
+#   Next.js (admin-web/src/**)  → Turbopack HMR   → <1초 (브라우저 자동 갱신)
 
 param(
-    [switch]$NoElectron,  # Next.js + FastAPI만 (Electron 제외)
     [switch]$Restart      # 기존 프로세스 종료 후 재시작
 )
 
@@ -28,11 +26,6 @@ if ($Restart) {
     # Next.js dev 종료
     Get-CimInstance Win32_Process |
         Where-Object { $_.CommandLine -like "*next*dev*" -or $_.CommandLine -like "*start-server*" } |
-        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -EA SilentlyContinue }
-
-    # Electron 앱 종료
-    Get-CimInstance Win32_Process |
-        Where-Object { $_.CommandLine -like "*dist-installer*Haehan AI*" -or $_.CommandLine -like "*electron*admin-web*" } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -EA SilentlyContinue }
 
     Start-Sleep -Seconds 2
@@ -100,33 +93,8 @@ if (-not $nextRunning) {
     Write-Host "   Next.js 이미 실행 중 (port 3000)" -ForegroundColor Green
 }
 
-# ── 4. Electron 앱 실행 ──────────────────────────────────────────────────
-if (-not $NoElectron) {
-    Write-Host "[4/4] Electron 앱 시작..." -ForegroundColor Yellow
-
-    $electronRunning = Get-Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.MainWindowTitle -like "*Haehan*" }
-
-    if ($electronRunning) {
-        Write-Host "   Electron 앱 이미 실행 중 (PID=$($electronRunning.Id))" -ForegroundColor Green
-        Write-Host "   ℹ️  main.js 변경 시 이 스크립트를 -Restart 옵션으로 재실행하세요" -ForegroundColor DarkGray
-    } else {
-        # dist-installer Electron (dev Next.js 자동 감지)
-        $electronExe = "$ROOT\dist-installer\win-unpacked\Haehan AI.exe"
-        if (Test-Path $electronExe) {
-            Start-Process $electronExe
-            Write-Host "   Electron 앱 시작 완료" -ForegroundColor Green
-        } else {
-            # 소스에서 직접 실행 (npx electron)
-            Write-Host "   dist-installer 없음 → npx electron으로 직접 실행" -ForegroundColor Yellow
-            Start-Process "cmd" "/c cd /d `"$ADMINWEB`" && npx electron . 2>&1" -WindowStyle Normal
-        }
-    }
-}
-
 Write-Host ""
 Write-Host "=== 개발 모드 실행 중 ===" -ForegroundColor Cyan
 Write-Host "  FastAPI  : http://127.0.0.1:8401  (Python 저장 → 1~2초 자동 반영)"
-Write-Host "  Next.js  : http://127.0.0.1:3000  (TSX 저장 → <1초 HMR 자동 반영)"
+Write-Host "  Next.js  : http://127.0.0.1:3000  (TSX 저장 → <1초 HMR 자동 반영, 브라우저에서 접속)"
 Write-Host "  재시작   : .\scripts\ops\dev_launch.ps1 -Restart"
-Write-Host "  서버만   : .\scripts\ops\dev_launch.ps1 -NoElectron"
