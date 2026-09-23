@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-_DB_PATH = Path(__file__).parent / "storage" / "users.db"
+_DB_PATH = Path(__file__).resolve().parents[1] / "storage" / "users.db"
 
 
 def _get_db_path() -> Path:
