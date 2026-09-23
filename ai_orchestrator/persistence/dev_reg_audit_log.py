@@ -21,6 +21,7 @@
   alert_type         HARD_FAIL | SOFT_WARN | NONE
   retry_candidate    bool
 """
+
 from __future__ import annotations
 
 import json
@@ -30,28 +31,30 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-_SAFE_FIELDS: frozenset[str] = frozenset({
-    "run_at",
-    "result",
-    "pending_count",
-    "expired_pending_count",
-    "expiry_soon_count",
-    "recent_executed",
-    "recent_rejected",
-    "recent_failed",
-    "warning_count",
-    "warning_codes",
-    "alert_sent",
-    "alert_type",
-    "retry_candidate",
-})
+_SAFE_FIELDS: frozenset[str] = frozenset(
+    {
+        "run_at",
+        "result",
+        "pending_count",
+        "expired_pending_count",
+        "expiry_soon_count",
+        "recent_executed",
+        "recent_rejected",
+        "recent_failed",
+        "warning_count",
+        "warning_codes",
+        "alert_sent",
+        "alert_type",
+        "retry_candidate",
+    }
+)
 
 
 def default_audit_log_path() -> Path:
     env = os.environ.get("DEV_REG_AUDIT_LOG_PATH", "").strip()
     if env:
         return Path(env)
-    return Path(__file__).resolve().parent.parent / "data" / "dev_reg_audit_runs.jsonl"
+    return Path(__file__).resolve().parents[2] / "data" / "dev_reg_audit_runs.jsonl"
 
 
 def append_run(record: dict, *, path: Path | None = None) -> None:

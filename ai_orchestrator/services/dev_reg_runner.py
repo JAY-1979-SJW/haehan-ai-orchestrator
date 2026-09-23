@@ -21,6 +21,7 @@
   - CAPTCHA / 2FA / OTP 자동 우회
   - 로그에 패스워드·쿠키·세션 토큰 기록
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,14 +40,14 @@ from ai_orchestrator.telegram_notifier import build_dev_reg_message
 
 logger = logging.getLogger(__name__)
 
-_SCREENSHOT_DIR = Path(__file__).parent / "storage" / "screenshots" / "dev_reg"
+_SCREENSHOT_DIR = Path(__file__).resolve().parents[1] / "storage" / "screenshots" / "dev_reg"
 _DEFAULT_TTL_MINUTES = 30
 
 
 @dataclass
 class DevRegResult:
     task_id: str
-    status: str    # "executed" / "rejected" / "expired" / "failed"
+    status: str  # "executed" / "rejected" / "expired" / "failed"
     result: str = ""
     error: str = ""
 
@@ -86,13 +87,23 @@ def run_dev_reg(
         fill_result = adapter.fill_form(page, params)
     except Exception as e:
         logger.error("폼 입력 예외 | task=%s | %s", task_id, e)
-        log_event("DEV_REG_FAILED", task_id, action_type=adapter.action_type,
-                  actor=requested_by, note=f"fill_form exception: {e}")
+        log_event(
+            "DEV_REG_FAILED",
+            task_id,
+            action_type=adapter.action_type,
+            actor=requested_by,
+            note=f"fill_form exception: {e}",
+        )
         return DevRegResult(task_id=task_id, status="failed", error=str(e))
 
     if not fill_result.success:
-        log_event("DEV_REG_FAILED", task_id, action_type=adapter.action_type,
-                  actor=requested_by, note=f"fill_form failed: {fill_result.error}")
+        log_event(
+            "DEV_REG_FAILED",
+            task_id,
+            action_type=adapter.action_type,
+            actor=requested_by,
+            note=f"fill_form failed: {fill_result.error}",
+        )
         return DevRegResult(task_id=task_id, status="failed", error=fill_result.error)
 
     # ── 2. 스크린샷 캡처 ────────────────────────────────────────────
@@ -129,13 +140,16 @@ def run_dev_reg(
     approval_event = _dra.register_approval_waiter(task_id)
 
     # ── 6. 감사 로그 ─────────────────────────────────────────────────
-    log_event("DEV_REG_TASK_CREATED", task_id,
-              risk_level=adapter.risk_level,
-              action_type=adapter.action_type,
-              target=fill_result.target_url,
-              actor=requested_by,
-              token_id=token_id,
-              note=f"provider={adapter.provider}")
+    log_event(
+        "DEV_REG_TASK_CREATED",
+        task_id,
+        risk_level=adapter.risk_level,
+        action_type=adapter.action_type,
+        target=fill_result.target_url,
+        actor=requested_by,
+        token_id=token_id,
+        note=f"provider={adapter.provider}",
+    )
 
     # ── 7. 텔레그램 발송 ─────────────────────────────────────────────
     msg = build_dev_reg_message(
@@ -157,12 +171,15 @@ def run_dev_reg(
     _dra.mark_telegram_sent(task_id, message_id=tg_msg_id)
 
     # ── 8. 텔레그램 발송 감사 ────────────────────────────────────────
-    log_event("DEV_REG_TELEGRAM_SENT", task_id,
-              risk_level=adapter.risk_level,
-              action_type=adapter.action_type,
-              actor="system",
-              token_id=token_id,
-              note=f"provider={adapter.provider} tg_ok={send_result.get('ok', False)}")
+    log_event(
+        "DEV_REG_TELEGRAM_SENT",
+        task_id,
+        risk_level=adapter.risk_level,
+        action_type=adapter.action_type,
+        actor="system",
+        token_id=token_id,
+        note=f"provider={adapter.provider} tg_ok={send_result.get('ok', False)}",
+    )
 
     # ── 9. 승인 이벤트 대기 (비폴링) ────────────────────────────────
     # 만료 2분 전을 deadline 으로 사용. webhook 이 signal_approval_event() 를 호출하면 즉시 반환.
@@ -188,22 +205,25 @@ def run_dev_reg(
         # ── 10a. 승인 → 제출 ────────────────────────────────────────
         try:
             submit_result = adapter.submit_form(page)
-            result_str = (submit_result.result_summary
-                          if submit_result.success
-                          else f"submit_failed:{submit_result.error}")
+            result_str = (
+                submit_result.result_summary if submit_result.success else f"submit_failed:{submit_result.error}"
+            )
         except Exception as e:
             result_str = f"submit_exception:{e}"
             logger.error("submit_form 예외 | task=%s | %s", task_id, e)
 
         _dra.mark_executed(task_id, result_str)
-        log_event("DEV_REG_EXECUTED", task_id,
-                  risk_level=adapter.risk_level,
-                  action_type=adapter.action_type,
-                  target=fill_result.target_url,
-                  decision=result_str,
-                  actor=requested_by,
-                  token_id=token_id,
-                  note=f"provider={adapter.provider}")
+        log_event(
+            "DEV_REG_EXECUTED",
+            task_id,
+            risk_level=adapter.risk_level,
+            action_type=adapter.action_type,
+            target=fill_result.target_url,
+            decision=result_str,
+            actor=requested_by,
+            token_id=token_id,
+            note=f"provider={adapter.provider}",
+        )
         return DevRegResult(task_id=task_id, status="executed", result=result_str)
 
     else:
@@ -215,19 +235,25 @@ def run_dev_reg(
 
         if final_status == "rejected":
             _dra.mark_rejected_internal(task_id)
-            log_event("DEV_REG_REJECTED", task_id,
-                      risk_level=adapter.risk_level,
-                      action_type=adapter.action_type,
-                      actor=requested_by,
-                      token_id=token_id,
-                      note=f"provider={adapter.provider}")
+            log_event(
+                "DEV_REG_REJECTED",
+                task_id,
+                risk_level=adapter.risk_level,
+                action_type=adapter.action_type,
+                actor=requested_by,
+                token_id=token_id,
+                note=f"provider={adapter.provider}",
+            )
             return DevRegResult(task_id=task_id, status="rejected")
         else:
             _dra.mark_expired_internal(task_id)
-            log_event("DEV_REG_EXPIRED", task_id,
-                      risk_level=adapter.risk_level,
-                      action_type=adapter.action_type,
-                      actor=requested_by,
-                      token_id=token_id,
-                      note=f"provider={adapter.provider} token_status={final_status}")
+            log_event(
+                "DEV_REG_EXPIRED",
+                task_id,
+                risk_level=adapter.risk_level,
+                action_type=adapter.action_type,
+                actor=requested_by,
+                token_id=token_id,
+                note=f"provider={adapter.provider} token_status={final_status}",
+            )
             return DevRegResult(task_id=task_id, status="expired")

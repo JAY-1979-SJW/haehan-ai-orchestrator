@@ -121,7 +121,7 @@ def fetch_recent_emails(max_results: int = 50, hours: int = 24) -> list[dict]:
 
 def collect_to_inbox(max_results: int = 50, hours: int = 24) -> dict:
     """Gmail 수집 → inbox 저장. 중복 skip. 요약 반환."""
-    from .inbox import create_inbox_item, exists_by_external_id
+    from ai_orchestrator.inbox import create_inbox_item, exists_by_external_id
 
     emails = fetch_recent_emails(max_results=max_results, hours=hours)
     saved = skipped = 0
