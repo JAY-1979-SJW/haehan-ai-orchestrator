@@ -69,14 +69,14 @@ def run_audit() -> dict[str, Any]:
 
     # ac-02: ops_router
     try:
-        importlib.import_module("ai_orchestrator.ops_router")
+        importlib.import_module("ai_orchestrator.routers.ops_router")
         results.append(item("ac-02", "PASS", "ops_router import 성공"))
     except Exception as e:
         results.append(item("ac-02", "FAIL", str(e)[:120]))
 
     # ac-03: OPS 7개 GET
     try:
-        ops_src = (ROOT / "ai_orchestrator/ops_router.py").read_text(encoding="utf-8")
+        ops_src = (ROOT / "ai_orchestrator/routers/ops_router.py").read_text(encoding="utf-8")
         get_count = ops_src.count("@router.get(") + ops_src.count("@ops_router.get(")
         results.append(
             item("ac-03", "PASS" if get_count >= 7 else "FAIL", f"GET endpoint 수={get_count}/7", {"count": get_count})
@@ -107,12 +107,12 @@ def run_audit() -> dict[str, Any]:
     )
 
     # ac-05: web_task_router
-    web_task = (ROOT / "ai_orchestrator/web_task_router.py").exists()
+    web_task = (ROOT / "ai_orchestrator/routers/web_task_router.py").exists()
     results.append(item("ac-05", "PASS" if web_task else "WARN", "web_task_router.py 존재" if web_task else "없음"))
 
     # ac-06: web_task path 유지
     if web_task:
-        wt_src = (ROOT / "ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        wt_src = (ROOT / "ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         has_path = "/web-task" in wt_src or "/tasks" in wt_src
         results.append(
             item("ac-06", "PASS" if has_path else "FAIL", "web-task/tasks path 존재" if has_path else "path 없음")

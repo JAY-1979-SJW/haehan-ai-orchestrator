@@ -108,7 +108,7 @@ def test_action_router_does_not_import_app():
     """action_router.py가 app 객체를 직접 import하지 않는다."""
     import pathlib
 
-    src = pathlib.Path("ai_orchestrator/action_router.py").read_text(encoding="utf-8")
+    src = pathlib.Path("ai_orchestrator/routers/action_router.py").read_text(encoding="utf-8")
     assert "import app" not in src
     assert "from ai_orchestrator.server import app" not in src
 

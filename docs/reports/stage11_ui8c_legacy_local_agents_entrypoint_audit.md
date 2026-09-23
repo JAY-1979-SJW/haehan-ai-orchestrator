@@ -12,12 +12,12 @@ legacy FastAPI admin(`/api/v1/admin/local-agents`)으로 들어가는 링크·�
 | 검색어 | 주요 파일 | 판정 | 비고 |
 |---|---|---|---|
 | `/api/v1/admin/local-agents` | `admin-web/README.md`, `docs/ops/admin_web_ops_baseline.md`, `ai_orchestrator/tests/test_admin_ui_capture_screenshot.py`, `docs/reports/stage11_ui8a_admin_web_local_agents_gap_report.md` | KEEP / UNKNOWN | 문서·테스트·보고서 |
-| `/orchestrator/admin-web/local-agents` | `ai_orchestrator/admin_ui_router.py`, `admin-web/README.md`, `docs/ops/admin_web_ops_baseline.md` | KEEP | deprecated banner 내 admin-web 링크 안내 |
-| `legacy 관리 화면` | `ai_orchestrator/admin_ui_router.py`, `ai_orchestrator/tests/test_admin_ui_capture_screenshot.py` | KEEP | deprecated 안내 문구 |
-| `fallback 용도` | `ai_orchestrator/admin_ui_router.py`, `docs/ops/admin_web_ops_baseline.md` | KEEP | fallback 안내 |
-| `신규 기능은 admin-web` | `ai_orchestrator/admin_ui_router.py`, `admin-web/README.md`, `docs/ops/admin_web_ops_baseline.md` | KEEP | 운영 정책 안내 |
-| `화면 캡처 사전 점검` | `ai_orchestrator/admin_ui_router.py`, `ai_orchestrator/tests/`, `docs/local_agent_capture_policy.md` | KEEP | legacy UI 버튼 레이블 (기능 유지) |
-| `실제 1회 화면 캡처 요청` | `ai_orchestrator/admin_ui_router.py`, `ai_orchestrator/tests/`, `docs/local_agent_capture_policy.md` | KEEP | legacy UI 버튼 레이블 (기능 유지) |
+| `/orchestrator/admin-web/local-agents` | `ai_orchestrator/routers/admin_ui_router.py`, `admin-web/README.md`, `docs/ops/admin_web_ops_baseline.md` | KEEP | deprecated banner 내 admin-web 링크 안내 |
+| `legacy 관리 화면` | `ai_orchestrator/routers/admin_ui_router.py`, `ai_orchestrator/tests/test_admin_ui_capture_screenshot.py` | KEEP | deprecated 안내 문구 |
+| `fallback 용도` | `ai_orchestrator/routers/admin_ui_router.py`, `docs/ops/admin_web_ops_baseline.md` | KEEP | fallback 안내 |
+| `신규 기능은 admin-web` | `ai_orchestrator/routers/admin_ui_router.py`, `admin-web/README.md`, `docs/ops/admin_web_ops_baseline.md` | KEEP | 운영 정책 안내 |
+| `화면 캡처 사전 점검` | `ai_orchestrator/routers/admin_ui_router.py`, `ai_orchestrator/tests/`, `docs/local_agent_capture_policy.md` | KEEP | legacy UI 버튼 레이블 (기능 유지) |
+| `실제 1회 화면 캡처 요청` | `ai_orchestrator/routers/admin_ui_router.py`, `ai_orchestrator/tests/`, `docs/local_agent_capture_policy.md` | KEEP | legacy UI 버튼 레이블 (기능 유지) |
 
 ---
 
@@ -25,10 +25,10 @@ legacy FastAPI admin(`/api/v1/admin/local-agents`)으로 들어가는 링크·�
 
 | 파일 | 위치 | 사유 |
 |---|---|---|
-| `ai_orchestrator/admin_ui_router.py` | line 146 | `"이 화면은 legacy 관리 화면입니다."` — deprecated 안내 banner |
-| `ai_orchestrator/admin_ui_router.py` | line 154–155 | `"fallback 용도"`, `"신규 기능은 admin-web"` 안내 문구 |
-| `ai_orchestrator/admin_ui_router.py` | line 148–150 | `/orchestrator/admin-web/local-agents` 링크 포함 — 운영자가 admin-web으로 이동 가능하게 안내 |
-| `ai_orchestrator/admin_ui_router.py` | line 488, 496 | `화면 캡처 사전 점검`, `실제 1회 화면 캡처 요청` 버튼 레이블 — fallback 기능 유지 |
+| `ai_orchestrator/routers/admin_ui_router.py` | line 146 | `"이 화면은 legacy 관리 화면입니다."` — deprecated 안내 banner |
+| `ai_orchestrator/routers/admin_ui_router.py` | line 154–155 | `"fallback 용도"`, `"신규 기능은 admin-web"` 안내 문구 |
+| `ai_orchestrator/routers/admin_ui_router.py` | line 148–150 | `/orchestrator/admin-web/local-agents` 링크 포함 — 운영자가 admin-web으로 이동 가능하게 안내 |
+| `ai_orchestrator/routers/admin_ui_router.py` | line 488, 496 | `화면 캡처 사전 점검`, `실제 1회 화면 캡처 요청` 버튼 레이블 — fallback 기능 유지 |
 | `ai_orchestrator/tests/test_admin_ui_capture_screenshot.py` | line 476–496 | legacy banner 문구 존재 여부 테스트 — deprecated 정책 보장 |
 | `admin-web/README.md` | line 646–673 | `## legacy FastAPI admin — deprecated fallback` 섹션 — 운영 정책 문서 |
 | `docs/ops/admin_web_ops_baseline.md` | line 324–325 | `"legacy route는 admin-web 장애 시 fallback 용도로 유지"` — 운영 정책 문서 |

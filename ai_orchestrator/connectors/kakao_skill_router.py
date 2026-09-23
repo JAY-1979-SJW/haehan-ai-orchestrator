@@ -22,7 +22,8 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from .. import telegram_sender
+from ai_orchestrator.clients import telegram_sender
+
 from ..inbox import create_inbox_item, exists_by_external_id
 from .ai_reply_caller import generate_reply
 

@@ -123,7 +123,7 @@ L6  Workflows          scripts/*/workflows.py
                        scripts/hiworks/mail_batch.py     (5파일)
 
 L7  Persistence/Audit  ai_orchestrator/audit_logger.py
-                       ai_orchestrator/user_db.py
+                       ai_orchestrator/persistence/user_db.py
                        scripts/cdp_db.py
                        scripts/op_log.py                 (940파일)
 

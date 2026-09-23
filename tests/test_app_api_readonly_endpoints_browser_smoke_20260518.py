@@ -130,7 +130,7 @@ def test_health_schema_ok(health_result):
 
 
 def test_health_post_tasks_dry_run_enabled(health_result):
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     result = get_health_summary()
     assert result["data"]["post_tasks_dry_run_enabled"] is True
@@ -161,21 +161,21 @@ def test_providers_schema_ok(providers_result):
 
 
 def test_providers_count_12():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     result = get_providers()
     assert result["meta"]["provider_count"] == 12
 
 
 def test_providers_cookie_storage_all_false():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     for p in get_providers()["data"]["providers"]:
         assert p["cookie_storage_allowed"] is False
 
 
 def test_providers_token_storage_all_false():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     for p in get_providers()["data"]["providers"]:
         assert p["token_storage_allowed"] is False
@@ -198,19 +198,19 @@ def test_storage_http_200(storage_result):
 
 
 def test_storage_named_volume_policy():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     assert "named_volume_status" in get_storage_status()["data"]
 
 
 def test_storage_app_logs_bind_mount_policy():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     assert "app_logs_bind_mount_status" in get_storage_status()["data"]
 
 
 def test_storage_approval_token_policy():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     assert "approval_token_policy" in get_storage_status()["data"]
 
@@ -225,19 +225,19 @@ def _check_no_forbidden(data: dict, label: str):
 
 
 def test_health_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_health_summary
+    from ai_orchestrator.routers.app_status_router import get_health_summary
 
     _check_no_forbidden(get_health_summary(), "health_summary")
 
 
 def test_providers_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_providers
+    from ai_orchestrator.routers.app_status_router import get_providers
 
     _check_no_forbidden(get_providers(), "providers")
 
 
 def test_storage_no_forbidden_fields():
-    from ai_orchestrator.app_status_router import get_storage_status
+    from ai_orchestrator.routers.app_status_router import get_storage_status
 
     _check_no_forbidden(get_storage_status(), "storage_status")
 
@@ -246,14 +246,14 @@ def test_storage_no_forbidden_fields():
 
 
 def test_no_post_route_in_status_router():
-    from ai_orchestrator.app_status_router import app_status_router
+    from ai_orchestrator.routers.app_status_router import app_status_router
 
     for r in app_status_router.routes:
         assert "POST" not in list(r.methods), f"POST route 발견: {r.path}"
 
 
 def test_no_approve_reject_execute_in_status_router():
-    from ai_orchestrator import app_status_router as m
+    from ai_orchestrator.routers import app_status_router as m
 
     src = Path(m.__file__).read_text(encoding="utf-8")
     for forbidden in ("approve_token", "reject_token", "execute("):

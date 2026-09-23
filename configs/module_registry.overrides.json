@@ -4,7 +4,7 @@
     "role": "browser_engine",
     "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
   },
-  "ai_orchestrator/app_actions.py": {
+  "ai_orchestrator/routers/app_actions.py": {
     "layer": "L8",
     "role": "api",
     "reason": "FastAPI app(server.py, L8)과 web_connector(L4)를 직접 호출하는 액션 디스패처 — 순수 L1 계약 아님"
@@ -104,7 +104,7 @@
     "role": "site_module",
     "reason": "네이버 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
   },
-  "ai_orchestrator/web_task_registry.py": {
+  "ai_orchestrator/services/web_task_registry.py": {
     "layer": "L6",
     "role": "workflow",
     "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류"

@@ -17,7 +17,7 @@ class ProxyVerdict:
     metrics: dict = field(default_factory=dict)
 
 
-SERVER_ROUTER = Path("ai_orchestrator/agent_ai_proxy_router.py")
+SERVER_ROUTER = Path("ai_orchestrator/routers/agent_ai_proxy_router.py")
 SERVER_CALLER = Path("ai_orchestrator/openai_proxy_caller.py")
 DESKTOP_CLIENT = Path("local_agent/server_proxy_chat_client.py")
 ADAPTER_PATH = Path("local_agent/ai_chat_adapter.py")
@@ -48,7 +48,7 @@ def judge_proxy(*, desktop_ui_unchanged: bool = True, server_deployed: bool = Fa
             False, "FAIL_SERVER_PROXY_ENDPOINT_MISSING", reasons=["router or caller missing"], metrics=metrics
         )
     for sym in ("agent_ai_proxy_router", "ChatRequest", "ChatResponse", "MAX_MESSAGE_LEN", "RATE_LIMIT_PER_MIN"):
-        if _resolve("ai_orchestrator.agent_ai_proxy_router", sym) is None:
+        if _resolve("ai_orchestrator.routers.agent_ai_proxy_router", sym) is None:
             return ProxyVerdict(
                 False, "FAIL_SERVER_PROXY_ENDPOINT_MISSING", reasons=[f"missing: {sym}"], metrics=metrics
             )

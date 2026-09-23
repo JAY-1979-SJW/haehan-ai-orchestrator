@@ -13,7 +13,7 @@ Priority 1 read-only endpoints:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter
@@ -63,7 +63,7 @@ def get_health_summary() -> dict[str, Any]:
             "post_tasks_dry_run_enabled": True,
             "phase1_closeout_status": "complete",
             "container_health_source": "static",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         },
         "meta": {**_META_READ_ONLY},
     }
@@ -137,7 +137,7 @@ def get_live_summary() -> dict[str, Any]:
                 "app_logs_bind_mount_status": "configured",
                 "audit_log_policy": "PERSISTENT_AUDIT_REQUIRED",
             },
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         },
         "meta": {**_META_READ_ONLY},
     }
@@ -162,7 +162,7 @@ def get_deployment_status() -> dict[str, Any]:
                 "docker compose up -d",
             ],
             "deploy_action_allowed": False,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         },
         "meta": {**_META_READ_ONLY},
     }

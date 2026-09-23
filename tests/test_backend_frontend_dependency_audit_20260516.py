@@ -379,7 +379,7 @@ class TestWebTasksRunKeyContract:
         """web_task_router.py에 dry_run 응답 key 모두 존재."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         for key in self.DRY_RUN_KEYS:
             assert f'"{key}"' in src, f"dry_run 응답 key '{key}'가 소스에서 제거됨"
 
@@ -387,7 +387,7 @@ class TestWebTasksRunKeyContract:
         """web_task_router.py에 real_run 응답 key 모두 존재."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         for key in self.REAL_RUN_KEYS:
             assert f'"{key}"' in src, f"real_run 응답 key '{key}'가 소스에서 제거됨"
 
@@ -395,7 +395,7 @@ class TestWebTasksRunKeyContract:
         """real_run 응답 status 값 'pending_approval' 고정."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         assert '"pending_approval"' in src
 
     def test_404_response_has_error_and_message(self, client, admin_auth):
@@ -412,7 +412,7 @@ class TestWebTasksRunKeyContract:
         """422 응답 detail에 error_code/missing_fields/invalid_fields 포함."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         for key in ('"error_code"', '"missing_fields"', '"invalid_fields"'):
             assert key in src, f"422 응답 key {key}가 소스에서 제거됨"
 
@@ -435,14 +435,14 @@ class TestRunFromTemplateKeyContract:
         """run-from-template 응답에 template_id가 추가된다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         assert 'result["template_id"] = template.template_id' in src
 
     def test_dry_run_keys_locked_in_source(self):
         """run-from-template dry_run 응답 key가 소스에 모두 존재."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         base_keys = {"dry_run", "provider", "action_type", "success", "summary"}
         for key in base_keys:
             assert f'"{key}"' in src, f"key '{key}'가 소스에서 제거됨"

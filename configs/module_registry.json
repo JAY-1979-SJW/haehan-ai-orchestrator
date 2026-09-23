@@ -2241,7 +2241,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/action_router.py": {
+  "ai_orchestrator/routers/action_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2249,7 +2249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/admin_ui_router.py": {
+  "ai_orchestrator/routers/admin_ui_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2257,7 +2257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/agent_ai_proxy_router.py": {
+  "ai_orchestrator/routers/agent_ai_proxy_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2281,7 +2281,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/app_actions.py": {
+  "ai_orchestrator/routers/app_actions.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2297,7 +2297,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/app_status_router.py": {
+  "ai_orchestrator/routers/app_status_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2353,7 +2353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/auth_router.py": {
+  "ai_orchestrator/routers/auth_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -2745,7 +2745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/config_router.py": {
+  "ai_orchestrator/routers/config_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -3489,7 +3489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/dev_reg_audit_log.py": {
+  "ai_orchestrator/persistence/dev_reg_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -3497,7 +3497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/dev_reg_runner.py": {
+  "ai_orchestrator/services/dev_reg_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -3681,7 +3681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gmail_reader.py": {
+  "ai_orchestrator/sites/gmail_reader.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -5065,7 +5065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/ops_router.py": {
+  "ai_orchestrator/routers/ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5089,7 +5089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/registration_code_store.py": {
+  "ai_orchestrator/persistence/registration_code_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -5513,7 +5513,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/telegram_sender.py": {
+  "ai_orchestrator/clients/telegram_sender.py": {
    "layer": "L3",
    "role": "connector",
    "domain": "common",
@@ -6257,7 +6257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/user_data_contribution_router.py": {
+  "ai_orchestrator/routers/user_data_contribution_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6265,7 +6265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/user_db.py": {
+  "ai_orchestrator/persistence/user_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "common",
@@ -6281,7 +6281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/web_task_registry.py": {
+  "ai_orchestrator/services/web_task_registry.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "common",
@@ -6289,7 +6289,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/web_task_router.py": {
+  "ai_orchestrator/routers/web_task_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -6321,7 +6321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/youtube_oauth_router.py": {
+  "ai_orchestrator/routers/youtube_oauth_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "youtube",
@@ -6329,7 +6329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/youtube_research_router.py": {
+  "ai_orchestrator/routers/youtube_research_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "youtube",

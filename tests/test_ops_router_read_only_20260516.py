@@ -12,11 +12,12 @@ STEP 8 — ops_router read-only API 경계 테스트
   9. ApiStatusBanner 파일 존재
   10. CAD/HWPX/Excel EXTERNAL_APP_HOLD 유지
 """
+
 import re
 from pathlib import Path
 
 REPO = Path(__file__).parent.parent
-OPS_ROUTER = REPO / "ai_orchestrator" / "ops_router.py"
+OPS_ROUTER = REPO / "ai_orchestrator" / "routers" / "ops_router.py"
 ROUTER_PY = REPO / "ai_orchestrator" / "router.py"
 OPS_CLIENT = REPO / "admin-web" / "src" / "app" / "ops" / "lib" / "opsApiClient.ts"
 API_BANNER = REPO / "admin-web" / "src" / "app" / "ops" / "components" / "ApiStatusBanner.tsx"
@@ -29,7 +30,7 @@ class TestOpsRouterExists:
 
     def test_ops_router_registered_in_router_py(self):
         src = ROUTER_PY.read_text(encoding="utf-8")
-        assert "from .ops_router import ops_router" in src
+        assert "from ai_orchestrator.routers.ops_router import ops_router" in src
         assert "router.include_router(ops_router)" in src
 
 
@@ -77,7 +78,8 @@ class TestOpsRouterNoSecretExposure:
         src = self._src()
         bad = re.findall(
             r'(?:password|client_secret|api_key)\s*[:=]\s*["\'][^"\']{8,}["\']',
-            src, re.I,
+            src,
+            re.I,
         )
         assert bad == [], f"credential 값 발견: {bad}"
 
@@ -86,12 +88,13 @@ class TestOpsRouterNoSecretExposure:
         # token_hash 를 응답 dict에 포함하지 않음 — "token_hash" 문자열이 주석/docstring에만 있으면 허용
         # 코드 라인에 "token_hash" 가 dict key로 포함되지 않음
         response_lines = [
-            l for l in src.splitlines()
-            if "token_hash" in l
-            and not l.strip().startswith("#")
-            and not l.strip().startswith('"""')
-            and not l.strip().startswith("*")
-            and not l.strip().startswith("-")
+            line
+            for line in src.splitlines()
+            if "token_hash" in line
+            and not line.strip().startswith("#")
+            and not line.strip().startswith('"""')
+            and not line.strip().startswith("*")
+            and not line.strip().startswith("-")
         ]
         assert response_lines == [], f"코드에서 token_hash 노출: {response_lines}"
 
@@ -105,20 +108,23 @@ class TestOpsRouterNoSecretExposure:
         assert "requests.get" not in src
         assert "httpx" not in src
         # 내부 fetch 는 없고 외부 HTTP 라이브러리 호출 없음
-        import_lines = [l for l in src.splitlines() if l.startswith("import ") or l.startswith("from ")]
-        external_http = [l for l in import_lines if "requests" in l or "httpx" in l or "urllib.request" in l]
+        import_lines = [line for line in src.splitlines() if line.startswith("import ") or line.startswith("from ")]
+        external_http = [
+            line for line in import_lines if "requests" in line or "httpx" in line or "urllib.request" in line
+        ]
         assert external_http == [], f"외부 HTTP import 발견: {external_http}"
 
     def test_no_db_write(self):
         src = self._src()
         for bad in ("INSERT INTO", "UPDATE SET", "DROP TABLE", "TRUNCATE", ".write(", ".delete("):
             code_lines = [
-                l for l in src.splitlines()
-                if bad in l
-                and not l.strip().startswith("#")
-                and '"""' not in l
-                and "'''" not in l
-                and "- " not in l.strip()[:3]  # 문서 목록 항목 제외
+                line
+                for line in src.splitlines()
+                if bad in line
+                and not line.strip().startswith("#")
+                and '"""' not in line
+                and "'''" not in line
+                and "- " not in line.strip()[:3]  # 문서 목록 항목 제외
             ]
             assert code_lines == [], f"DB write 패턴 발견 ({bad}): {code_lines}"
 
@@ -128,16 +134,16 @@ class TestOpsRouterImports:
         return OPS_ROUTER.read_text(encoding="utf-8")
 
     def test_imports_dev_reg_approval(self):
-        assert "from .dev_reg_approval import list_pending" in self._src()
+        assert "from ai_orchestrator.dev_reg_approval import list_pending" in self._src()
 
     def test_imports_audit_logger(self):
-        assert "from .audit_logger import read_recent_logs" in self._src()
+        assert "from ai_orchestrator.audit_logger import read_recent_logs" in self._src()
 
     def test_imports_web_task_registry(self):
-        assert "from .web_task_registry import list_entries" in self._src()
+        assert "from ai_orchestrator.services.web_task_registry import list_entries" in self._src()
 
     def test_imports_external_work_registry(self):
-        assert "from .external_work_registry import list_external_works" in self._src()
+        assert "from ai_orchestrator.external_work_registry import list_external_works" in self._src()
 
     def test_imports_local_agent_registry(self):
         assert "import local_agent_registry" in self._src() or "as _reg" in self._src()
@@ -145,19 +151,22 @@ class TestOpsRouterImports:
 
 class TestOpsRouterPythonImport:
     def test_ops_router_importable(self):
-        from ai_orchestrator.ops_router import ops_router  # noqa: F401
+        from ai_orchestrator.routers.ops_router import ops_router  # noqa: F401
 
     def test_ops_router_has_correct_prefix(self):
-        from ai_orchestrator.ops_router import ops_router
+        from ai_orchestrator.routers.ops_router import ops_router
+
         assert ops_router.prefix == "/ops"
 
     def test_ops_router_read_only_endpoints_count(self):
-        from ai_orchestrator.ops_router import ops_router
+        from ai_orchestrator.routers.ops_router import ops_router
+
         get_routes = [r for r in ops_router.routes if hasattr(r, "methods") and "GET" in r.methods]
         assert len(get_routes) >= 7, f"GET endpoint 수 부족: {len(get_routes)}"
 
     def test_ops_router_no_post_routes(self):
-        from ai_orchestrator.ops_router import ops_router
+        from ai_orchestrator.routers.ops_router import ops_router
+
         post_routes = [r for r in ops_router.routes if hasattr(r, "methods") and "POST" in r.methods]
         assert post_routes == [], f"POST endpoint 발견: {post_routes}"
 
@@ -181,7 +190,8 @@ class TestOpsApiClientFallback:
         src = self._src()
         bad = re.findall(
             r'(?:password|client_secret)\s*[:=]\s*["\'][^"\']{8,}["\']',
-            src, re.I,
+            src,
+            re.I,
         )
         assert bad == [], f"secret 값 발견: {bad}"
 
@@ -217,7 +227,8 @@ class TestApiStatusBannerExists:
         src = API_BANNER.read_text(encoding="utf-8")
         bad = re.findall(
             r'(?:password|client_secret)\s*[:=]\s*["\'][^"\']{8,}["\']',
-            src, re.I,
+            src,
+            re.I,
         )
         assert bad == []
 

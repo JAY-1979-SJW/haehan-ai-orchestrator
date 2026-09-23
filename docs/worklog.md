@@ -298,16 +298,16 @@
 - 16:42 **[지시]** 네이버 블로그 글쓰기 시켜봐
 - 16:40 **[지시]** 클로드 코드가 gpt한테 해봐 제대로 되는지
 - 16:39 **[지시]** 여기서 플레이로 접속해서 gpt한테 작업 지시 가능해?
-- 16:38 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py scripts/browser_agent/free_a...`
-- 16:37 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py scripts/browse...`
+- 16:38 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py scripts/browser_agent/free_a...`
+- 16:37 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py scripts/browse...`
 - 16:36 **[지시]** 지금 방식으로 제약을 할거면 채팅창 상단에 설명을 넣던가!!
 - 16:34 **[지시]** 사용자가 cdp에서 특정사이트 로그인하고 거기서 원하는 업무를 채팅창에 입력하면 해주게 해줘
 - 16:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 scripts/ops/codebase_layer_audit.py 2>&1 | grep -iE "FORBIDDEN_IMPORT...`
 - 16:32 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8401 -State L...`
-- 16:32 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py scripts/browse...`
+- 16:32 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py scripts/browse...`
 - 16:26 **[지시]** 채팅창에서 ai로 네이버 연결해하고 탐색하고 뭘할지 ai 가 물어보면 사용자가 지시를 해야 하는데  그걸 어떻게 할거야?
-- 16:25 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
-- 16:24 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "py_co...`
+- 16:25 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
+- 16:24 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "py_co...`
 - 16:21 **[지시]** gpt와 앱을 연결하는데 필요시만 연결하게 하자
 - 16:20 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== launcher의 실제 서버 실행 명령(주석 제외) ===" grep -nE "Start-Process|\\\$PY |\...`
 - 16:18 **[지시]** 전체 다 적용 되었어? 부모콘솔이 ?
@@ -324,7 +324,7 @@
 - 16:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== :3000 상태 + dev 로그 끝 ===" curl -s -o /dev/null -w "3000 GET: %{http_...`
 - 16:09 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8401 -State L...`
 - 16:09 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 컴파일 + ruff ===" python3 -m py_compile ai_orchestrator/app_actions.p...`
-- 16:07 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - <<'PY' from ai_orchestrator import app_actions as A man = A.build_m...`
+- 16:07 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - <<'PY' from ai_orchestrator.routers import app_actions as A man = A.build_m...`
 - 16:06 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== app 객체 정의 위치 (uvicorn ai_orchestrator.server:app) ===" ls ai_orches...`
 - 16:03 **[지시]** 네
 - 16:02 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - <<'PY' import re, glob, json, os from pathlib import Path  DESTRUCT...`
@@ -395,17 +395,17 @@
 - 14:33 **[지시]** 네
 - 14:32 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 레이어 감사 위반 ===" python3 scripts/ops/codebase_layer_audit.py 2>&1 | g...`
 - 14:30 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile scripts/web_connector.py ai_orchestrator/agent_ai_proxy...`
-- 14:29 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py scripts/start_haehan_ai.ps1 ...`
+- 14:29 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py scripts/start_haehan_ai.ps1 ...`
 - 14:24 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 사용 중인 python 경로 (deps 보유) ===" python3 -c "import sys,fastapi,uvico...`
 - 14:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" # 소스 uvicorn 백그라운드 기동 HAEHAN_DATA_DIR="$(pwd)/data" python3 -m uvicorn ai_orc...`
 - 14:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== frozen exe 종료 후 소스로 uvicorn 기동 ===" powershell -NoProfile -Command ...`
-- 14:17 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py && python3 -m ...`
+- 14:17 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && python3 -m ...`
 - 14:15 **[지시]** 현재 개발된 앱과 코드를 gpt와 연결해야 자유롭게 사용되지  규정이많어
 - 14:14 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" INT="dist-installer/win-unpacked/resources/server/haehan-server/_internal" ec...`
-- 14:13 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "py_co...`
+- 14:13 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "py_co...`
 - 14:12 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - <<'PY' import sys; sys.path.insert(0,".") from scripts.browser_agen...`
 - 14:11 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== ① 실제 응답 ===" cat data/connect_test.txt 2>/dev/null | head -5 echo "...`
-- 14:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "py_co...`
+- 14:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "py_co...`
 - 14:09 **[지시]** 제약을 모두 삭제해
 - 14:07 **[지시]** 모든 자연어를 받아들이게 해줘  제약 걸지마
 - 14:06 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== ① 라우팅: _TASK_HINT / _OP_CATALOG / _KNOWN_SITES / _resolve_url ===" ...`
@@ -515,21 +515,21 @@
 - 12:19 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 프론트엔드 — 큰 단일 파일(모듈화 후보, 300줄+) ===" find admin-web/src -name "*.tsx...`
 - 12:18 **[지시]** 전체 코드를 순서대로 점검을 하고 모듈화릏 자
 - 12:18 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" sleep 3; git log --oneline -1 2>/dev/null git status --short ai_orchestrator/...`
-- 12:18 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
-- 12:17 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "✅ py_c...`
+- 12:18 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
+- 12:17 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "✅ py_c...`
 - 12:15 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== grant-radar/scan 핸들러 함수 ===" F=$(grep -rln "grant-radar/scan\|grant...`
 - 12:14 **[지시]** 네 모두 분리해서 붙여
 - 11:45 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" ls -la --time-style=+%H:%M dist/haehan-server/haehan-server.exe 2>/dev/null p...`
 - 11:44 **[지시]** <task-notification> <task-id>bz0php6wv</task-id> <tool-use-id>toolu_01CyvkA3Tv9YxxtgHXLne4eT</tool-use-id> <output-file>C:\Users\skyjw\AppData\Local\Temp\claude\C--work-01--haehan-ai-orchestrator\8...
 - 11:41 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git log --oneline -1 2>/dev/null git status --short ai_orchestrator/agent_ai_...`
-- 11:41 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py scripts/browser_agent/agent....`
-- 11:41 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/agent_ai_proxy_router.py scripts/browser...`
+- 11:41 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py scripts/browser_agent/agent....`
+- 11:41 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py scripts/browser...`
 - 11:40 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" ls -la --time-style=+%H:%M dist/haehan-server/haehan-server.exe 2>/dev/null p...`
 - 11:39 **[지시]** <task-notification> <task-id>bw3v2kim5</task-id> <tool-use-id>toolu_01PnGx11nkgXb23fBeYi9VM1</tool-use-id> <output-file>C:\Users\skyjw\AppData\Local\Temp\claude\C--work-01--haehan-ai-orchestrator\8...
 - 11:37 **[지시]** 앱의 모든 작업을 창으로 api연동해
 - 11:36 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" # PyInstaller 프로세스가 사라지고 exe가 갱신될 때까지 대기 for i in $(seq 1 80); do   running=$...`
-- 11:36 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
-- 11:35 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "✅ py_c...`
+- 11:36 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
+- 11:35 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "✅ py_c...`
 - 11:33 **[지시]** 앱의 업무는 어떤 ai가? 이곳에서 총괄하면 되잖아
 - 11:31 **[지시]** AI 상담 · default ✕ AI 어시스턴트  질문하거나 명령을 입력하세요  이 페이지에서 무엇을 할 수 있어? 이 페이지에서는 다양한 질문에 대한 답변을 제공하고, 정보 검색, 글쓰기 도움, 학습 지원, 아이디어 브레인스토밍 등 여러 가지 작업을 도와드릴 수 있습니다. 궁금한 점이나 필요한 도움이 있다면 말씀해 주세요! 사이트 로그인 해서 업무 ...
 - 11:29 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -c " import json,urllib.request,urllib.error,os cfg=json.load(open(os...`
@@ -542,9 +542,9 @@
 - 11:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m PyInstaller haehan-server.spec --noconfirm --clean --distpath dist ...`
 - 11:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m ruff check --config configs/ruff.toml ai_orchestrator/agent_ai_prox...`
 - 11:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m ruff check --config configs/ruff.toml ai_orchestrator/agent_ai_prox...`
-- 11:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
+- 11:21 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add ai_orchestrator/routers/agent_ai_proxy_router.py git commit -m "$(cat <<'EOF'...`
 - 11:20 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" grep -nE "AUTH_ENABLED" ai_orchestrator/config.py | head echo "=== AUTH_ENABL...`
-- 11:20 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/agent_ai_proxy_router.py && echo "✅ py_c...`
+- 11:20 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile ai_orchestrator/routers/agent_ai_proxy_router.py && echo "✅ py_c...`
 - 11:19 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== _WEB_UI_USER / _WEB_UI_PASS + config import ===" grep -nE "_WEB_UI_...`
 - 11:19 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== /api/chat (Next 라우트)가 보내는 헤더 그대로 agent-ai/chat 호출 ===" python3 -c "...`
 - 11:18 **[지시]** AI 어시스턴트  질문하거나 명령을 입력하세요  동작되나? 서버 오류 (401)
@@ -1517,7 +1517,7 @@
 - 18:00 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 1. 현재 CDP 브라우저가 쓰는 프로필(영속 user-data-dir?) ===" cat data/cdp_force_p...`
 - 17:59 **[지시]** 앱에서 상시 로그인 될수 있나?
 - 17:58 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - << 'PY' import json, base64, urllib.request, urllib.error B="http:/...`
-- 17:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" grep -nE "_WEB_UI_USER|_WEB_UI_PASS" ai_orchestrator/agent_ai_proxy_router.py...`
+- 17:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" grep -nE "_WEB_UI_USER|_WEB_UI_PASS" ai_orchestrator/routers/agent_ai_proxy_router.py...`
 - 17:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== agent-ai _authenticate 로직 (80~150) ===" sed -n '80,150p' ai_orchest...`
 - 17:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 - << 'PY' import json, os, urllib.request, urllib.error tok=json.load...`
 - 17:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== config.py: OPENAI_API_KEY 로딩 경로(.env dotenv 위치) ===" grep -nE "OPEN...`
@@ -1883,7 +1883,7 @@
 - 12:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && find . -name "*.env*" -o -name ".env" 2>$null | head -10`
 - 12:54 **[실행]** `find "C:\work\01. haehan-ai-orchestrator" -type f -name "*.json" | head -20`
 - 12:54 **[지시]** 현재 앱에 다른 앱이 붙지 못하게 api 및 모든것을 독립적으로 분류해
-- 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add admin-web/src/app/ops/page.tsx ai_orchestrator/ops_router.py && gi...`
+- 12:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add admin-web/src/app/ops/page.tsx ai_orchestrator/routers/ops_router.py && gi...`
 - 12:52 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add \   admin-web/src/app/ops/page.tsx \   ai_orchestrator/ops_router....`
 - 12:51 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git diff --stat HEAD 2>&1 | grep -v "^warning"`
 - 12:51 **[지시]** 네 커밋해줘
@@ -1901,7 +1901,7 @@
 - 12:43 **[지시]** 데스크앱 ui도 확인한건가?
 - 12:43 **[실행]** `sleep 3 python << 'PYEOF' import requests, json, time, websocket, base64  CDP = 'http://127.0.0.1:9222' TAB_ID = '73D...`
 - 12:42 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python -m uvicorn ai_orchestrator.server:app --host 0.0.0.0 --port 8401 2>...`
-- 12:41 **[실행]** `grep -n "Depends(require_role" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\ops_router.py" 2>/dev/null`
+- 12:41 **[실행]** `grep -n "Depends(require_role" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator/routers/ops_router.py" 2>/dev/null`
 - 12:41 **[실행]** `grep -n "require_user_role\|get_current_user_jwt\|jwt\|JWT" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\conne...`
 - 12:41 **[실행]** `cat "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\policies\http_users.json" 2>/dev/null | python -c "import sys...`
 - 12:41 **[실행]** `grep -n "AUTH_ENABLED\|HTTP_USERS" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\config.py" 2>/dev/null | head -10`

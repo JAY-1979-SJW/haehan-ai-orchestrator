@@ -29,8 +29,8 @@ class TestInScopeWebTaskEngine:
     """웹 업무 실행 핵심 파일이 존재하고 임포트 가능한지 확인."""
 
     IN_SCOPE_MODULES = [
-        "ai_orchestrator.web_task_router",
-        "ai_orchestrator.web_task_registry",
+        "ai_orchestrator.routers.web_task_router",
+        "ai_orchestrator.services.web_task_registry",
         "ai_orchestrator.web_task_templates",
         "ai_orchestrator.web_task_approval_service",
         "ai_orchestrator.approval",
@@ -47,7 +47,7 @@ class TestInScopeWebTaskEngine:
 
     def test_web_task_router_file_exists(self):
         """web_task_router.py IN_SCOPE 파일 존재."""
-        assert (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").exists()
+        assert (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").exists()
 
     def test_web_task_approval_service_file_exists(self):
         """web_task_approval_service.py IN_SCOPE 파일 존재."""
@@ -101,7 +101,7 @@ class TestHwpxExternalAppHold:
 
     def test_hwpx_not_in_web_task_router(self):
         """web_task_router.py에 hwp/hwpx 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").read_text(encoding="utf-8")
         assert "hwp" not in src.lower(), "web_task_router.py에 hwp 참조가 존재함 — IN_SCOPE 오염 가능성"
 
     def test_hwpx_not_in_approval_service(self):
@@ -128,7 +128,7 @@ class TestExcelOfficeExternalAppHold:
         excel_dir = REPO_ROOT / "agent" / "excel"
         assert excel_dir.is_dir(), "agent/excel/ 없음"
         # ai_orchestrator/web_task_router 에는 excel 참조 없음
-        src = (REPO_ROOT / "ai_orchestrator" / "web_task_router.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "routers" / "web_task_router.py").read_text(encoding="utf-8")
         assert "excel" not in src.lower()
 
     def test_excel_not_in_approval_service(self):

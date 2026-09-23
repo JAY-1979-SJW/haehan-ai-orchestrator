@@ -60,7 +60,7 @@ admin-web을 운영 기준 관리자 UI로 확정한 이후, 전체 메뉴/라�
 | sidebar 메뉴 legacy 링크 | `PageShell.tsx` | `/local-agents`(admin-web)만 연결, legacy URL 없음 | OK |
 | 홈 메뉴 버튼 legacy 링크 | `src/app/page.tsx` | `/local-agents`(admin-web)만 연결, legacy URL 없음 | OK |
 | README legacy 섹션 | `admin-web/README.md:278` | 8D에서 `deprecated fallback` 명시로 정리 완료 | OK |
-| FastAPI HTML 화면 확장 흔적 | `ai_orchestrator/admin_ui_router.py` | 8D 이후 코드 추가 없음, deprecated banner 존재 | OK |
+| FastAPI HTML 화면 확장 흔적 | `ai_orchestrator/routers/admin_ui_router.py` | 8D 이후 코드 추가 없음, deprecated banner 존재 | OK |
 
 ---
 

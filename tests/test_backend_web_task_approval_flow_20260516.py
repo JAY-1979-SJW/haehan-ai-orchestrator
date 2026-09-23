@@ -44,7 +44,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ai_orchestrator import web_task_router
+from ai_orchestrator.routers import web_task_router
 from ai_orchestrator.web_task_approval_service import PendingApprovalResult
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
@@ -90,10 +90,10 @@ class TestDryRunFlowBoundary:
         entry = _make_entry()
 
         with (
-            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
-            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
-            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
-            patch("ai_orchestrator.web_task_router.log_event"),
+            patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.routers.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             result = web_task_router._execute_web_task(
                 provider="hiworks",
@@ -168,12 +168,12 @@ class TestRealRunApprovalBoundary:
         approval = _make_approval_result(token_expires)
 
         with (
-            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
-            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
-                "ai_orchestrator.web_task_router.create_web_task_pending_approval", return_value=approval
+                "ai_orchestrator.routers.web_task_router.create_web_task_pending_approval", return_value=approval
             ) as mock_svc,
-            patch("ai_orchestrator.web_task_router.log_event"),
+            patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             result = web_task_router._execute_web_task(
                 provider="naver",
@@ -229,8 +229,8 @@ class TestRealRunApprovalBoundary:
         entry = _make_entry()
 
         with (
-            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
-            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
                 "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
                 side_effect=lambda **kw: (
@@ -251,7 +251,7 @@ class TestRealRunApprovalBoundary:
                 return_value={"ok": True, "result": {"message_id": 1}},
             ),
             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
-            patch("ai_orchestrator.web_task_router.log_event"),
+            patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             web_task_router._execute_web_task(
                 provider="hiworks",
@@ -272,8 +272,8 @@ class TestRealRunApprovalBoundary:
         entry = _make_entry()
 
         with (
-            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
-            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
                 "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
                 return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
@@ -291,7 +291,7 @@ class TestRealRunApprovalBoundary:
                 side_effect=lambda **kw: (call_order.append("send"), {"ok": True, "result": {"message_id": 1}})[1],
             ),
             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
-            patch("ai_orchestrator.web_task_router.log_event"),
+            patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             web_task_router._execute_web_task(
                 provider="hiworks",
@@ -329,8 +329,8 @@ class TestTelegramFailureFallback:
         entry = _make_entry()
 
         with (
-            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
-            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
                 "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
                 return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
@@ -342,7 +342,7 @@ class TestTelegramFailureFallback:
             ),
             patch("ai_orchestrator.web_task_approval_service._ts.send_message", return_value=send_result),
             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
-            patch("ai_orchestrator.web_task_router.log_event"),
+            patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             return web_task_router._execute_web_task(
                 provider="hiworks",
@@ -380,7 +380,7 @@ class TestTelegramFailureFallback:
         """telegram_sender.py에 TOKEN 미설정 시 skip 가드가 존재한다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/telegram_sender.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/clients/telegram_sender.py").read_text(encoding="utf-8")
         assert "skipped" in src
         assert "TELEGRAM_BOT_TOKEN" in src
 
@@ -428,7 +428,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_real_run_via_client_with_mock_telegram(self, client, auth):
         """TestClient real_run — Telegram mock, pending_approval 응답 확인."""
-        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,
@@ -447,7 +447,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_real_run_no_envelope(self, client, auth):
         """TestClient real_run 응답에 ApiResponse 봉투 없음."""
-        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,
@@ -465,7 +465,7 @@ class TestWebTaskRunIntegrationBoundary:
     def test_real_run_secret_not_in_response(self, client, auth):
         """params의 민감 필드가 응답에 포함되지 않는다."""
         secret = "audit_secret_xzy9876"
-        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+        with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
             r = client.post(
                 "/api/v1/web-tasks/run",
                 headers=auth,
@@ -514,7 +514,7 @@ class TestApprovalFlowDesignVerdict:
         """web_task_router.py에 ApiResponse 봉투 import가 없다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         assert "api_success" not in src
         assert "ApiResponse" not in src
         assert "wrap_legacy_dict" not in src
@@ -523,7 +523,7 @@ class TestApprovalFlowDesignVerdict:
         """dry_run=True 응답 key 11개가 소스에 유지된다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         keys = [
             '"dry_run"',
             '"provider"',
@@ -544,7 +544,7 @@ class TestApprovalFlowDesignVerdict:
         """dry_run=False 응답 key 8개가 소스에 유지된다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
         keys = [
             '"status"',
             '"pending_approval"',

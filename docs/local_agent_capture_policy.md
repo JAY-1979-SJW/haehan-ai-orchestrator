@@ -212,7 +212,7 @@ C:/Users/
 
 ## 10. 관리자 UI 주의 문구 (고정)
 
-`ai_orchestrator/admin_ui_router.py`의 HTML 에는 다음 의미가 유지되어야
+`ai_orchestrator/routers/admin_ui_router.py`의 HTML 에는 다음 의미가 유지되어야
 한다(문구 단위 수정은 허용, 의미 변경은 불가).
 
 - 상단 안내: dry-run 버튼과 실제 요청 버튼의 구분 명시

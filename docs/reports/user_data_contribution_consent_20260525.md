@@ -66,7 +66,7 @@ How to think when writing it manually: Check consent first, but still reject uns
 
 ## 5. Verification
 
-- Syntax checks: `python -m py_compile ai_orchestrator/server/user_data_contribution_store.py ai_orchestrator/user_data_contribution_router.py ai_orchestrator/router.py`
+- Syntax checks: `python -m py_compile ai_orchestrator/server/user_data_contribution_store.py ai_orchestrator/routers/user_data_contribution_router.py ai_orchestrator/router.py`
 - Unit tests: `python -m pytest tests/test_user_data_contribution_consent.py -q` -> `10 passed`
 - Contract audits: `python scripts/ops/audit_app_structure_contract.py`; `python scripts/ops/audit_standard_workflow_contract.py`
 - Module gates: repo_guard passed through required quality gate.

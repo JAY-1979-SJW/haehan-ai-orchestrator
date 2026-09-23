@@ -2,14 +2,14 @@
 
 ## 1. 확인 대상
 
-- legacy route: `GET /api/v1/admin/local-agents` → `ai_orchestrator/admin_ui_router.py:695`
+- legacy route: `GET /api/v1/admin/local-agents` → `ai_orchestrator/routers/admin_ui_router.py:695`
 - admin-web route: `/local-agents` → `admin-web/src/app/local-agents/page.tsx`
 - 확인한 파일:
   - `admin-web/src/app/local-agents/LocalAgentsClient.tsx`
   - `admin-web/src/app/local-agents/page.tsx`
   - `admin-web/src/lib/api.ts`
   - `admin-web/src/types/local-agent.ts`
-  - `ai_orchestrator/admin_ui_router.py`
+  - `ai_orchestrator/routers/admin_ui_router.py`
   - `ai_orchestrator/local_agent_router.py`
 
 ---

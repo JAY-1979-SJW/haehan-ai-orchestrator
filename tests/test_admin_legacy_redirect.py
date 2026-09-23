@@ -15,8 +15,8 @@ def _client(monkeypatch, flag):
         monkeypatch.delenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", raising=False)
     else:
         monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", flag)
-    from ai_orchestrator.admin_ui_router import admin_ui_router
     from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 
     app = FastAPI()
     app.include_router(admin_ui_router, prefix="/api/v1")

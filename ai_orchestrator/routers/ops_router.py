@@ -25,13 +25,13 @@ from datetime import UTC
 
 from fastapi import APIRouter, Depends, Query
 
-from . import local_agent_registry as _reg
-from .audit_logger import read_recent_logs as _read_logs
-from .connectors.user_auth_router import get_jwt_user
-from .dev_reg_approval import list_pending as _list_pending
-from .dev_reg_approval import mark_expired_internal as _mark_expired
-from .external_work_registry import list_external_works as _list_external
-from .web_task_registry import list_entries as _list_web_tasks
+from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.audit_logger import read_recent_logs as _read_logs
+from ai_orchestrator.connectors.user_auth_router import get_jwt_user
+from ai_orchestrator.dev_reg_approval import list_pending as _list_pending
+from ai_orchestrator.dev_reg_approval import mark_expired_internal as _mark_expired
+from ai_orchestrator.external_work_registry import list_external_works as _list_external
+from ai_orchestrator.services.web_task_registry import list_entries as _list_web_tasks
 
 logger = logging.getLogger(__name__)
 

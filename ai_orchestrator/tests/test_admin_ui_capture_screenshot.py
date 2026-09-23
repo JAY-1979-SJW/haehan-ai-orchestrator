@@ -20,6 +20,7 @@
 실제 브라우저/외부 네트워크 호출은 없다. HTML 응답과 FastAPI TestClient 로만
 검증한다.
 """
+
 from __future__ import annotations
 
 import os
@@ -34,13 +35,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
-    monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "1")
-    import ai_orchestrator.auth as _auth; importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
-    import ai_orchestrator.admin_ui_router as _adm; importlib.reload(_adm)
 
-    import ai_orchestrator.audit_logger as _al
+    monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "1")
+    import ai_orchestrator.auth as _auth
+
+    importlib.reload(_auth)
+    import ai_orchestrator.local_agent_router as _lar
+
+    importlib.reload(_lar)
+    import ai_orchestrator.routers.admin_ui_router as _adm
+
+    importlib.reload(_adm)
+
     import ai_orchestrator.approval as _ap
+    import ai_orchestrator.audit_logger as _al
     import ai_orchestrator.local_agent_registry as _reg
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -70,9 +78,10 @@ def viewer_user():
 def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from ai_orchestrator.local_agent_router import local_agent_router
-    from ai_orchestrator.admin_ui_router import admin_ui_router
+
     from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -90,13 +99,19 @@ def _ui_html(user: dict) -> str:
 
 
 def _register(client) -> tuple[str, str]:
-    reg = client.post("/api/v1/local-agents/register", json={
-        "host": "admin-ui-test", "os_name": "Windows 11", "version": "0.1.0",
-    }).json()
+    reg = client.post(
+        "/api/v1/local-agents/register",
+        json={
+            "host": "admin-ui-test",
+            "os_name": "Windows 11",
+            "version": "0.1.0",
+        },
+    ).json()
     return reg["agent_id"], reg["device_token"]
 
 
 # ── 1. UI 에 "화면 캡처 사전 점검" 버튼이 표시된다 ─────────────────────
+
 
 def test_ui_contains_dry_run_button_label(admin_user):
     html = _ui_html(admin_user)
@@ -111,6 +126,7 @@ def test_ui_button_has_expected_class_marker(admin_user):
 
 # ── 2. 버튼이 capture-screenshot API 를 호출한다 ────────────────────────
 
+
 def test_ui_references_capture_screenshot_endpoint(admin_user):
     html = _ui_html(admin_user)
     assert "/api/v1/local-agents/" in html
@@ -119,6 +135,7 @@ def test_ui_references_capture_screenshot_endpoint(admin_user):
 
 # ── 3. UI 가 보내는 body 는 dry_run=true ────────────────────────────────
 
+
 def test_ui_body_sends_dry_run_true(admin_user):
     html = _ui_html(admin_user)
     # JS 객체 리터럴에서 dry_run: true 확인 — 정규식으로 공백 허용
@@ -126,6 +143,7 @@ def test_ui_body_sends_dry_run_true(admin_user):
 
 
 # ── 4. dry_run 경로 — true / false 가 정확히 1 종류씩 공존 ──────────────
+
 
 def test_ui_sends_dry_run_true_exactly_for_dry_run_body(admin_user):
     """DRY_RUN_BODY 는 dry_run: true 리터럴로 정확히 1회 선언된다."""
@@ -140,10 +158,7 @@ def test_ui_sends_dry_run_false_exactly_for_real_capture_body(admin_user):
     # 'dry_run: false' 리터럴 — 공백 허용, body 선언 기준
     # (세 번째 이상 등장하면 분리되지 않은 진입점이 생긴 것으로 FAIL)
     matches = re.findall(r"dry_run\s*:\s*false", html)
-    assert len(matches) == 1, (
-        f"UI 코드에 dry_run:false 경로는 정확히 1종류여야 합니다 (현재 "
-        f"{len(matches)}개)."
-    )
+    assert len(matches) == 1, f"UI 코드에 dry_run:false 경로는 정확히 1종류여야 합니다 (현재 {len(matches)}개)."
 
 
 def test_ui_has_no_unauthorized_capture_labels(admin_user):
@@ -159,12 +174,11 @@ def test_ui_has_no_unauthorized_capture_labels(admin_user):
         "실제 화면 캡처",
         "실 캡처",
     ):
-        assert forbidden_label not in html, (
-            f"허용되지 않은 캡처 라벨이 UI 에 존재: {forbidden_label}"
-        )
+        assert forbidden_label not in html, f"허용되지 않은 캡처 라벨이 UI 에 존재: {forbidden_label}"
 
 
 # ── 5/6. 실제 백엔드 호출 → task_id/status/dry_run + 텔레그램 안내 ─────
+
 
 def test_backend_dry_run_response_matches_ui_contract(admin_user):
     client = _make_test_client(admin_user)
@@ -207,9 +221,7 @@ _FORBIDDEN_UI_STRINGS = [
 def test_ui_does_not_display_forbidden_fields(admin_user):
     html = _ui_html(admin_user)
     for forbidden in _FORBIDDEN_UI_STRINGS:
-        assert forbidden not in html, (
-            f"UI 에 금지된 문자열이 존재: {forbidden}"
-        )
+        assert forbidden not in html, f"UI 에 금지된 문자열이 존재: {forbidden}"
 
 
 def test_backend_response_does_not_leak_forbidden_fields(admin_user):
@@ -223,9 +235,17 @@ def test_backend_response_does_not_leak_forbidden_fields(admin_user):
     data = r.json()
 
     for forbidden_key in (
-        "token_id", "device_token", "token_hash", "approval_token",
-        "screenshot_file", "screenshot_path", "path", "dir",
-        "password", "secret", "cookie",
+        "token_id",
+        "device_token",
+        "token_hash",
+        "approval_token",
+        "screenshot_file",
+        "screenshot_path",
+        "path",
+        "dir",
+        "password",
+        "secret",
+        "cookie",
     ):
         assert forbidden_key not in data, f"{forbidden_key} 가 응답에 포함됨"
         assert f'"{forbidden_key}"' not in raw
@@ -237,6 +257,7 @@ def test_backend_response_does_not_leak_forbidden_fields(admin_user):
 
 
 # ── 8/9. 403 / 404 메시지 처리 ─────────────────────────────────────────
+
 
 def test_ui_contains_forbidden_message(admin_user):
     html = _ui_html(admin_user)
@@ -277,6 +298,7 @@ def test_backend_returns_404_for_unknown_agent(admin_user):
 
 # ── 10. UI 는 단 하나의 capture-screenshot URL 만 호출한다 ───────────
 
+
 def test_ui_uses_single_capture_endpoint(admin_user):
     """엔드포인트 URL 리터럴은 한 번만 등장해야 한다.
 
@@ -291,6 +313,7 @@ def test_ui_uses_single_capture_endpoint(admin_user):
 # ══════════════════════════════════════════════════════════════════════
 # 2단계 — 실제 1회 캡처 버튼 + confirm 게이트 검증
 # ══════════════════════════════════════════════════════════════════════
+
 
 def _extract_fn_body(html: str, fn_name: str) -> str:
     """인라인 JS 에서 특정 function 블록 본문을 추출.
@@ -312,7 +335,7 @@ def _extract_fn_body(html: str, fn_name: str) -> str:
         elif ch == "}":
             depth -= 1
             if depth == 0:
-                return html[body_start:i + 1]
+                return html[body_start : i + 1]
         i += 1
     raise AssertionError(f"{fn_name} 함수의 닫힘 중괄호를 찾지 못했습니다.")
 
@@ -354,12 +377,11 @@ def test_dry_run_body_still_sends_true(admin_user):
 
 # ── 14/15/16. confirm 게이트: 호출 → 취소 시 fetch 없음 → 취소 메시지 ──
 
+
 def test_real_capture_calls_window_confirm(admin_user):
     html = _ui_html(admin_user)
     body = _extract_fn_body(html, "requestRealCapture")
-    assert "window.confirm(" in body, (
-        "실제 캡처 요청 경로에 window.confirm 게이트가 없습니다."
-    )
+    assert "window.confirm(" in body, "실제 캡처 요청 경로에 window.confirm 게이트가 없습니다."
     # confirm 문구도 반드시 포함
     assert "승인 후 로컬 PC에서 1회 화면 캡처가 실행됩니다." in html
     assert "서버에는 이미지가 업로드되지 않습니다." in html
@@ -374,9 +396,7 @@ def test_confirm_cancel_returns_before_fetch(admin_user):
     # 본 함수는 fetch 를 공통 postCapture 를 통해 호출한다
     call_pos = body.find("postCapture(")
     assert confirm_pos != -1 and call_pos != -1
-    assert confirm_pos < call_pos, (
-        "postCapture 호출이 window.confirm 이전에 나타나면 안 됩니다."
-    )
+    assert confirm_pos < call_pos, "postCapture 호출이 window.confirm 이전에 나타나면 안 됩니다."
 
     between = body[confirm_pos:call_pos]
     # confirm 과 postCapture 사이에 early-return 이 존재해야 한다
@@ -408,20 +428,18 @@ def test_real_capture_body_constant_has_expected_fields(admin_user):
         r"REAL_CAPTURE_BODY\s*=\s*\{\s*dry_run\s*:\s*false"
         r"\s*,\s*reason\s*:\s*\"ui_capture_once_request\"\s*\}"
     )
-    assert re.search(decl_re, html) is not None, (
-        "REAL_CAPTURE_BODY 선언이 기대 형태가 아닙니다."
-    )
+    assert re.search(decl_re, html) is not None, "REAL_CAPTURE_BODY 선언이 기대 형태가 아닙니다."
 
 
 # ── 18. 실제 캡처 성공 안내 문구에 필수 단어가 들어있다 ───────────────
+
 
 def test_real_capture_success_message_contains_required_phrases(admin_user):
     html = _ui_html(admin_user)
     # 성공 안내(성공 경로에서 setStatus 인자로 만들어지는 lines 배열)
     assert "실제 캡처 요청 생성 완료" in html
     assert "텔레그램에서 실제 1회 캡처 승인이 필요합니다." in html
-    assert ("승인 후 로컬 PC에서 1회 실행되며 서버에는 이미지가 "
-            "업로드되지 않습니다.") in html
+    assert ("승인 후 로컬 PC에서 1회 실행되며 서버에는 이미지가 업로드되지 않습니다.") in html
     # 반드시 포함돼야 하는 의미 단어 — 테스트 체크포인트
     assert "텔레그램" in html
     assert "1회" in html
@@ -429,6 +447,7 @@ def test_real_capture_success_message_contains_required_phrases(admin_user):
 
 
 # ── 19. 실제 캡처 성공 응답 계약 (백엔드 호출) ────────────────────────
+
 
 def test_backend_real_capture_returns_dry_run_false(admin_user):
     """UI 가 보낼 body 로 백엔드 호출 시 task_id/status/dry_run=false 가 온다."""
@@ -446,8 +465,14 @@ def test_backend_real_capture_returns_dry_run_false(admin_user):
     # 응답에도 금지 필드가 없어야 한다 (이미지 업로드/경로/토큰 등)
     raw = r.text
     for forbidden_key in (
-        "token_id", "device_token", "token_hash", "approval_token",
-        "screenshot_file", "screenshot_path", "path", "dir",
+        "token_id",
+        "device_token",
+        "token_hash",
+        "approval_token",
+        "screenshot_file",
+        "screenshot_path",
+        "path",
+        "dir",
     ):
         assert f'"{forbidden_key}"' not in raw
     assert ".png" not in raw
@@ -457,13 +482,21 @@ def test_backend_real_capture_returns_dry_run_false(admin_user):
 
 # ── 20. UI 화면에는 여전히 금지 문자열이 없다 ─────────────────────────
 
+
 def test_step2_no_forbidden_strings_in_ui(admin_user):
     """2단계에서도 이미지 업로드/경로/토큰 관련 문자열은 UI 에 절대 없다."""
     html = _ui_html(admin_user)
     forbidden = [
-        "approval_token", "device_token", "token_hash",
-        "LOCAL_AGENT_SCREENSHOT_DIR", "screenshot_file", "screenshot_path",
-        ".png", ".haehan_agent", "C:/Users", "/home/",
+        "approval_token",
+        "device_token",
+        "token_hash",
+        "LOCAL_AGENT_SCREENSHOT_DIR",
+        "screenshot_file",
+        "screenshot_path",
+        ".png",
+        ".haehan_agent",
+        "C:/Users",
+        "/home/",
     ]
     for s in forbidden:
         assert s not in html, f"UI 에 금지된 문자열이 존재: {s}"
@@ -472,6 +505,7 @@ def test_step2_no_forbidden_strings_in_ui(admin_user):
 # ══════════════════════════════════════════════════════════════════════
 # deprecated banner 검증 (Stage 11-UI-7B)
 # ══════════════════════════════════════════════════════════════════════
+
 
 def test_legacy_page_contains_deprecated_banner_text(admin_user):
     """legacy 관리 화면임을 알리는 banner 문구가 HTML에 포함된다."""
@@ -505,9 +539,7 @@ def test_legacy_banner_does_not_contain_capture_screenshot_string(admin_user):
     """
     html = _ui_html(admin_user)
     # 기존 테스트(test_ui_uses_single_capture_endpoint)와 일관성 유지
-    assert html.count("/capture-screenshot") == 1, (
-        "capture-screenshot URL은 공통 헬퍼에서 1회만 등장해야 합니다."
-    )
+    assert html.count("/capture-screenshot") == 1, "capture-screenshot URL은 공통 헬퍼에서 1회만 등장해야 합니다."
 
 
 def test_legacy_page_existing_functions_preserved(admin_user):

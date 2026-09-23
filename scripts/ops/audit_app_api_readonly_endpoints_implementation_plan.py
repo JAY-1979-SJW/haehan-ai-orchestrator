@@ -3,11 +3,12 @@
 Priority 1 read-only endpoint 3개의 구현 계획이 안전한지 검증한다.
 실제 구현 없음 — 시공계획서 단계.
 """
+
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -31,7 +32,7 @@ VERDICT_BLOCKED = "APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_PLAN_BLOCKED"
 # → 별도 thin router 파일 신설 권장
 
 ROUTER_LOCATION_PLAN = {
-    "selected_router_file": "ai_orchestrator/app_status_router.py",
+    "selected_router_file": "ai_orchestrator/routers/app_status_router.py",
     "selected_reason": (
         "router.py(311줄)가 이미 9개 sub-router를 include. "
         "app status(health/providers/storage) read-only route를 별도 thin router로 분리해 "
@@ -39,7 +40,7 @@ ROUTER_LOCATION_PLAN = {
     ),
     "alternative_router_files": [
         "ai_orchestrator/router.py (직접 추가 — 권장 안 함, 파일 비대화)",
-        "ai_orchestrator/admin_ui_router.py (기존 admin UI route 파일 — 역할 혼합 비권장)",
+        "ai_orchestrator/routers/admin_ui_router.py (기존 admin UI route 파일 — 역할 혼합 비권장)",
     ],
     "import_dependencies": [
         "fastapi.APIRouter",
@@ -60,7 +61,7 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
         "method": "GET",
         "priority": 1,
         "implementation_allowed_now": False,
-        "selected_router_file": "ai_orchestrator/app_status_router.py",
+        "selected_router_file": "ai_orchestrator/routers/app_status_router.py",
         "response_schema_frozen": True,
         "response_schema": {
             "ok": True,
@@ -82,12 +83,13 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
             },
         },
         "redaction_required": True,
-        "redacted_fields": [
-            "env_secret_values", "git_remote_token", "server_private_ip_if_sensitive"
-        ],
+        "redacted_fields": ["env_secret_values", "git_remote_token", "server_private_ip_if_sensitive"],
         "forbidden_response_fields": [
-            "restart_allowed=true", "docker_compose_allowed=true",
-            "raw_token", "cookie", "password",
+            "restart_allowed=true",
+            "docker_compose_allowed=true",
+            "raw_token",
+            "cookie",
+            "password",
         ],
         "read_only_guard_required": True,
         "mutation_allowed": False,
@@ -107,7 +109,7 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
         "method": "GET",
         "priority": 1,
         "implementation_allowed_now": False,
-        "selected_router_file": "ai_orchestrator/app_status_router.py",
+        "selected_router_file": "ai_orchestrator/routers/app_status_router.py",
         "response_schema_frozen": True,
         "response_schema": {
             "ok": True,
@@ -136,9 +138,7 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
         },
         "redaction_required": False,
         "redacted_fields": ["login_credential", "cookie_value", "token_value"],
-        "forbidden_response_fields": [
-            "login_password", "session_cookie", "access_token", "raw_token"
-        ],
+        "forbidden_response_fields": ["login_password", "session_cookie", "access_token", "raw_token"],
         "read_only_guard_required": True,
         "mutation_allowed": False,
         "side_effect_allowed": False,
@@ -159,7 +159,7 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
         "method": "GET",
         "priority": 1,
         "implementation_allowed_now": False,
-        "selected_router_file": "ai_orchestrator/app_status_router.py",
+        "selected_router_file": "ai_orchestrator/routers/app_status_router.py",
         "response_schema_frozen": True,
         "response_schema": {
             "ok": True,
@@ -187,12 +187,8 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
             },
         },
         "redaction_required": True,
-        "redacted_fields": [
-            "file_contents", "approval_token_raw", "log_raw_content"
-        ],
-        "forbidden_response_fields": [
-            "approval_token_raw", "file_content", "raw_token", "password"
-        ],
+        "redacted_fields": ["file_contents", "approval_token_raw", "log_raw_content"],
+        "forbidden_response_fields": ["approval_token_raw", "file_content", "raw_token", "password"],
         "read_only_guard_required": True,
         "mutation_allowed": False,
         "side_effect_allowed": False,
@@ -214,46 +210,43 @@ PRIORITY1_ENDPOINT_PLAN_MATRIX = [
 
 # ── response schema matrix (frozen) ─────────────────────────────────────────
 
-RESPONSE_SCHEMA_MATRIX = {
-    ep["endpoint"]: ep["response_schema"]
-    for ep in PRIORITY1_ENDPOINT_PLAN_MATRIX
-}
+RESPONSE_SCHEMA_MATRIX = {ep["endpoint"]: ep["response_schema"] for ep in PRIORITY1_ENDPOINT_PLAN_MATRIX}
 
 # ── redaction policy matrix ────────────────────────────────────────────────────
 
 REDACTION_POLICY_MATRIX = [
-    {"field": "raw_token",          "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "access_token",       "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "refresh_token",      "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "cookie",             "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "session_secret",     "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "password",           "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "raw_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "access_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "refresh_token", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "cookie", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "session_secret", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "password", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
     {"field": "approval_token_raw", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "private_key",        "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "secret_value",       "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
-    {"field": "env_secret_value",   "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "health"},
-    {"field": "git_remote_token",   "policy": "REDACTED_OR_OMITTED",   "applies_to": "health"},
-    {"field": "file_content",       "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "storage"},
-    {"field": "log_raw_content",    "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "storage"},
-    {"field": "login_credential",   "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "providers"},
+    {"field": "private_key", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "secret_value", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "all"},
+    {"field": "env_secret_value", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "health"},
+    {"field": "git_remote_token", "policy": "REDACTED_OR_OMITTED", "applies_to": "health"},
+    {"field": "file_content", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "storage"},
+    {"field": "log_raw_content", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "storage"},
+    {"field": "login_credential", "policy": "FORBIDDEN_IN_RESPONSE", "applies_to": "providers"},
 ]
 
 # ── read_only guard matrix ─────────────────────────────────────────────────────
 
 READ_ONLY_GUARD_MATRIX = {
-    "method":                  "GET",
-    "mutation_allowed":        False,
-    "side_effect_allowed":     False,
-    "db_write_allowed":        False,
+    "method": "GET",
+    "mutation_allowed": False,
+    "side_effect_allowed": False,
+    "db_write_allowed": False,
     "external_http_call_allowed": False,
-    "server_action_allowed":   False,
-    "docker_action_allowed":   False,
+    "server_action_allowed": False,
+    "docker_action_allowed": False,
     "secret_value_output_allowed": False,
     "common_response_meta": {
-        "read_only":      True,
+        "read_only": True,
         "mutation_allowed": False,
-        "generated_at":   "ISO8601",
-        "source":         "string",
+        "generated_at": "ISO8601",
+        "source": "string",
     },
 }
 
@@ -265,25 +258,30 @@ IMPLEMENTATION_ORDER_MATRIX = [
         "endpoint": "GET /api/v1/app/health/summary",
         "reason": "기존 GET /health 확장, 의존성 최소, mutation 위험 없음",
         "preconditions": ["app_status_router.py 신설", "read-only guard decorator 확인"],
-        "tests_required": ["test_health_summary_returns_ok", "test_health_no_secret_in_response",
-                           "test_health_dry_run_enabled_present"],
+        "tests_required": [
+            "test_health_summary_returns_ok",
+            "test_health_no_secret_in_response",
+            "test_health_dry_run_enabled_present",
+        ],
     },
     {
         "order": 2,
         "endpoint": "GET /api/v1/app/providers",
         "reason": "canonical_provider_registry import 기반, 12개 provider 확인 용이",
         "preconditions": ["app_status_router.py 존재", "canonical_provider_registry import 확인"],
-        "tests_required": ["test_providers_12_count", "test_providers_no_cookie",
-                           "test_providers_no_token"],
+        "tests_required": ["test_providers_12_count", "test_providers_no_cookie", "test_providers_no_token"],
     },
     {
         "order": 3,
         "endpoint": "GET /api/v1/app/storage/status",
         "reason": "storage path/policy는 config 기반, DB read 없음, 가장 단순한 정적 응답 가능",
         "preconditions": ["app_status_router.py 존재", "storage path config 확인"],
-        "tests_required": ["test_storage_named_volume_present", "test_storage_bind_mount_present",
-                           "test_storage_approval_token_policy_present",
-                           "test_storage_no_file_content"],
+        "tests_required": [
+            "test_storage_named_volume_present",
+            "test_storage_bind_mount_present",
+            "test_storage_approval_token_policy_present",
+            "test_storage_no_file_content",
+        ],
     },
 ]
 
@@ -309,6 +307,7 @@ NEXT_PHASE_READINESS = {
 
 
 # ── audit logic ────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CheckResult:
@@ -339,8 +338,7 @@ class AuditReport:
             "warned": warned,
             "failed": failed,
             "total": len(self.checks),
-            "checks": [{"name": c.name, "status": c.status, "message": c.message}
-                       for c in self.checks],
+            "checks": [{"name": c.name, "status": c.status, "message": c.message} for c in self.checks],
         }
 
 
@@ -362,8 +360,9 @@ def check_priority1_plan(report: AuditReport) -> None:
     if len(PRIORITY1_ENDPOINT_PLAN_MATRIX) == 3:
         report.add("priority1_plan_3_endpoints", "PASS", "Priority 1 endpoint 3개 계획")
     else:
-        report.add("priority1_plan_3_endpoints", "FAIL",
-                   f"Priority 1 {len(PRIORITY1_ENDPOINT_PLAN_MATRIX)}개 — 3개 필요")
+        report.add(
+            "priority1_plan_3_endpoints", "FAIL", f"Priority 1 {len(PRIORITY1_ENDPOINT_PLAN_MATRIX)}개 — 3개 필요"
+        )
 
     required = [
         "GET /api/v1/app/health/summary",
@@ -414,8 +413,7 @@ def check_priority1_plan(report: AuditReport) -> None:
 
 def check_router_location(report: AuditReport) -> None:
     if ROUTER_LOCATION_PLAN.get("selected_router_file"):
-        report.add("router_location_selected", "PASS",
-                   f"selected: {ROUTER_LOCATION_PLAN['selected_router_file']}")
+        report.add("router_location_selected", "PASS", f"selected: {ROUTER_LOCATION_PLAN['selected_router_file']}")
     else:
         report.add("router_location_selected", "FAIL", "router location 미선택")
 
@@ -426,8 +424,7 @@ def check_router_location(report: AuditReport) -> None:
 
 
 def check_health_schema(report: AuditReport) -> None:
-    health_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX
-                      if "health" in e["endpoint"]), None)
+    health_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX if "health" in e["endpoint"]), None)
     if not health_ep:
         report.add("health_schema", "FAIL", "health endpoint plan 없음")
         return
@@ -445,8 +442,7 @@ def check_health_schema(report: AuditReport) -> None:
 
 
 def check_providers_schema(report: AuditReport) -> None:
-    prov_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX
-                    if "providers" in e["endpoint"]), None)
+    prov_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX if "providers" in e["endpoint"]), None)
     if not prov_ep:
         report.add("providers_schema", "FAIL", "providers endpoint plan 없음")
         return
@@ -461,8 +457,7 @@ def check_providers_schema(report: AuditReport) -> None:
 
 
 def check_storage_schema(report: AuditReport) -> None:
-    stor_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX
-                    if "storage" in e["endpoint"]), None)
+    stor_ep = next((e for e in PRIORITY1_ENDPOINT_PLAN_MATRIX if "storage" in e["endpoint"]), None)
     if not stor_ep:
         report.add("storage_schema", "FAIL", "storage endpoint plan 없음")
         return
@@ -482,8 +477,7 @@ def check_storage_schema(report: AuditReport) -> None:
 
 
 def check_redaction_policy(report: AuditReport) -> None:
-    required = ["raw_token", "access_token", "cookie", "password",
-                "approval_token_raw", "secret_value"]
+    required = ["raw_token", "access_token", "cookie", "password", "approval_token_raw", "secret_value"]
     fields = [r["field"] for r in REDACTION_POLICY_MATRIX]
     for f in required:
         if f in fields:
@@ -493,8 +487,13 @@ def check_redaction_policy(report: AuditReport) -> None:
 
 
 def check_read_only_guard(report: AuditReport) -> None:
-    for flag in ["mutation_allowed", "side_effect_allowed", "server_action_allowed",
-                 "db_write_allowed", "secret_value_output_allowed"]:
+    for flag in [
+        "mutation_allowed",
+        "side_effect_allowed",
+        "server_action_allowed",
+        "db_write_allowed",
+        "secret_value_output_allowed",
+    ]:
         if READ_ONLY_GUARD_MATRIX.get(flag) is False:
             report.add(f"guard_{flag}_false", "PASS", f"guard: {flag}=false")
         else:
@@ -512,26 +511,24 @@ def check_implementation_order(report: AuditReport) -> None:
         (2, "GET /api/v1/app/providers"),
         (3, "GET /api/v1/app/storage/status"),
     ]:
-        entry = next((e for e in IMPLEMENTATION_ORDER_MATRIX
-                      if e["order"] == expected_order), None)
+        entry = next((e for e in IMPLEMENTATION_ORDER_MATRIX if e["order"] == expected_order), None)
         if entry and entry["endpoint"] == expected_endpoint:
-            report.add(f"order_{expected_order}_correct", "PASS",
-                       f"order {expected_order}: {entry['endpoint'].split('/')[-1]}")
+            report.add(
+                f"order_{expected_order}_correct", "PASS", f"order {expected_order}: {entry['endpoint'].split('/')[-1]}"
+            )
         else:
-            report.add(f"order_{expected_order}_correct", "FAIL",
-                       f"order {expected_order} 불일치")
+            report.add(f"order_{expected_order}_correct", "FAIL", f"order {expected_order} 불일치")
 
 
 def check_next_phase_readiness(report: AuditReport) -> None:
     if NEXT_PHASE_READINESS.get("next_phase"):
-        report.add("next_phase_defined", "PASS",
-                   f"next: {NEXT_PHASE_READINESS['next_phase']}")
+        report.add("next_phase_defined", "PASS", f"next: {NEXT_PHASE_READINESS['next_phase']}")
     else:
         report.add("next_phase_defined", "WARN", "next_phase 미정의")
 
 
 def run_audit() -> AuditReport:
-    report = AuditReport(generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    report = AuditReport(generated_at=datetime.now(UTC).isoformat(timespec="seconds"))
     check_global_flags(report)
     check_priority1_plan(report)
     check_router_location(report)

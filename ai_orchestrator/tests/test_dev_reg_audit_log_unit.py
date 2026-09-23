@@ -3,6 +3,7 @@
 안전 필드 whitelist, 민감값 차단, tmp_path 격리를 검증한다.
 외부 HTTP/DB/subprocess 없음.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -10,7 +11,7 @@ import json
 
 import pytest
 
-from ai_orchestrator import dev_reg_audit_log as al
+from ai_orchestrator.persistence import dev_reg_audit_log as al
 
 
 @pytest.fixture(autouse=True)
@@ -20,6 +21,7 @@ def _reload_module():
 
 
 # ── 기본 기록 ────────────────────────────────────────────────────
+
 
 def test_append_run_creates_file(tmp_path):
     p = tmp_path / "audit.jsonl"
@@ -49,6 +51,7 @@ def test_append_run_is_append_only(tmp_path):
 
 # ── 안전 필드 whitelist ─────────────────────────────────────────
 
+
 def test_safe_fields_whitelist_only(tmp_path):
     p = tmp_path / "audit.jsonl"
     record = {
@@ -70,13 +73,16 @@ def test_safe_fields_whitelist_only(tmp_path):
 
 def test_no_sensitive_raw_values_stored(tmp_path):
     p = tmp_path / "audit.jsonl"
-    al.append_run({
-        "result": "PASS",
-        "password": "supersecret",
-        "cookie": "session_abc",
-        "session": "tok_xyz",
-        "access_token": "eyJhbGci",
-    }, path=p)
+    al.append_run(
+        {
+            "result": "PASS",
+            "password": "supersecret",
+            "cookie": "session_abc",
+            "session": "tok_xyz",
+            "access_token": "eyJhbGci",
+        },
+        path=p,
+    )
     text = p.read_text(encoding="utf-8")
     for bad_val in ("supersecret", "session_abc", "tok_xyz", "eyJhbGci"):
         assert bad_val not in text, f"민감값 원문 저장: {bad_val}"
@@ -107,6 +113,7 @@ def test_all_allowed_fields_stored(tmp_path):
 
 # ── 경로 격리 (운영 경로 미사용) ─────────────────────────────────
 
+
 def test_custom_path_used(tmp_path, monkeypatch):
     custom = tmp_path / "custom_dir" / "run.jsonl"
     al.append_run({"result": "PASS"}, path=custom)
@@ -123,6 +130,7 @@ def test_default_path_not_touched_when_custom_given(tmp_path, monkeypatch):
 
 # ── OSError 내성 ─────────────────────────────────────────────────
 
+
 def test_oserror_does_not_raise(tmp_path):
     bad_path = tmp_path / "nonexistent_dir" / "sub" / "audit.jsonl"
     # 중간 디렉터리가 없어도 mkdir(parents=True)로 생성해야 정상
@@ -132,6 +140,7 @@ def test_oserror_does_not_raise(tmp_path):
 
 def test_readonly_dir_oserror_silenced(tmp_path):
     import stat
+
     ro_dir = tmp_path / "readonly"
     ro_dir.mkdir()
     ro_dir.chmod(stat.S_IRUSR | stat.S_IXUSR)
@@ -145,6 +154,7 @@ def test_readonly_dir_oserror_silenced(tmp_path):
 
 
 # ── load_recent_runs ─────────────────────────────────────────────
+
 
 def test_load_recent_runs_empty_path(tmp_path):
     p = tmp_path / "missing.jsonl"

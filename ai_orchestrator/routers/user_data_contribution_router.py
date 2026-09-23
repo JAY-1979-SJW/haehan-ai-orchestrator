@@ -6,15 +6,14 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from .auth import require_role
-from .server.user_data_contribution_store import (
+from ai_orchestrator.auth import require_role
+from ai_orchestrator.server.user_data_contribution_store import (
     export_development_material,
     get_consent,
     grant_consent,
     list_consents,
     revoke_consent,
 )
-
 
 user_data_contribution_router = APIRouter(
     prefix="/data-contribution",

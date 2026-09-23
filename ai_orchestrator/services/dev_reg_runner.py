@@ -25,17 +25,17 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Optional
 
-from .approval import get_token, issue_token_for_dev_reg
-from .audit_logger import log_event
-from . import dev_reg_approval as _dra
-from .telegram_notifier import build_dev_reg_message
-from . import telegram_sender as _ts
-from .sites.adapters.dev_reg_base import DevRegAdapterBase
+from ai_orchestrator import dev_reg_approval as _dra
+from ai_orchestrator.approval import get_token, issue_token_for_dev_reg
+from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.clients import telegram_sender as _ts
+from ai_orchestrator.sites.adapters.dev_reg_base import DevRegAdapterBase
+from ai_orchestrator.telegram_notifier import build_dev_reg_message
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class DevRegResult:
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def run_dev_reg(
@@ -61,7 +61,7 @@ def run_dev_reg(
     params: dict,
     *,
     requested_by: str = "system",
-    screenshot_dir: Optional[Path] = None,
+    screenshot_dir: Path | None = None,
     ttl_minutes: int = _DEFAULT_TTL_MINUTES,
     clock: Callable[[], datetime] = _utc_now,
 ) -> DevRegResult:
@@ -168,7 +168,7 @@ def run_dev_reg(
     # 만료 2분 전을 deadline 으로 사용. webhook 이 signal_approval_event() 를 호출하면 즉시 반환.
     now = clock()
     if now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=UTC)
     timeout_sec = max(0.0, (expires_dt - timedelta(minutes=2) - now).total_seconds())
     approval_event.wait(timeout=timeout_sec)
     _dra.unregister_approval_waiter(task_id)
@@ -180,7 +180,7 @@ def run_dev_reg(
     # timeout 으로 반환된 경우 token 이 아직 "issued" 면 expired 처리
     now = clock()
     if now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=UTC)
     if final_status == "issued" or (final_token and now >= expires_dt):
         final_status = "expired"
 

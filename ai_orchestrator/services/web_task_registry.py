@@ -11,9 +11,8 @@ provider / action_type 별 어댑터 등록 및 허용 작업 목록 조회.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Type
 
-from .sites.adapters.dev_reg_base import DevRegAdapterBase
+from ai_orchestrator.sites.adapters.dev_reg_base import DevRegAdapterBase
 
 
 @dataclass(frozen=True)
@@ -21,7 +20,7 @@ class WebTaskEntry:
     task_key: str           # "{provider}/{action_type}"
     provider: str
     action_type: str
-    adapter_class: Type[DevRegAdapterBase]
+    adapter_class: type[DevRegAdapterBase]
     risk_level: str         # "medium" / "high"
     requires_approval: bool
     read_only: bool
@@ -30,9 +29,9 @@ class WebTaskEntry:
 
 def _build_registry() -> dict[str, WebTaskEntry]:
     # 지연 임포트 — 순환 참조 방지
-    from .sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter
-    from .sites.adapters.naver_dev_reg import NaverDevRegAdapter
-    from .sites.adapters.google_dev_reg import GoogleDevRegAdapter
+    from ai_orchestrator.sites.adapters.google_dev_reg import GoogleDevRegAdapter
+    from ai_orchestrator.sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter
+    from ai_orchestrator.sites.adapters.naver_dev_reg import NaverDevRegAdapter
 
     entries = [
         WebTaskEntry(
@@ -72,7 +71,7 @@ def _build_registry() -> dict[str, WebTaskEntry]:
 _REGISTRY: dict[str, WebTaskEntry] = _build_registry()
 
 
-def get_entry(provider: str, action_type: str) -> Optional[WebTaskEntry]:
+def get_entry(provider: str, action_type: str) -> WebTaskEntry | None:
     """provider/action_type 으로 레지스트리 조회. 미등록 시 None."""
     return _REGISTRY.get(f"{provider}/{action_type}")
 

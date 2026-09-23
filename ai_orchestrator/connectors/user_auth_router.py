@@ -9,7 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
-from .. import config, user_db
+from ai_orchestrator import config
+from ai_orchestrator.persistence import user_db
+
 from ..auth import require_role  # 관리자(Basic Auth) — 승인 등 owner 작업
 
 user_auth_router = APIRouter(prefix="/users", tags=["users"])

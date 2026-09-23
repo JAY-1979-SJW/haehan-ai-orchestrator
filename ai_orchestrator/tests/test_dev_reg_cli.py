@@ -47,7 +47,7 @@ def _isolated(tmp_path, monkeypatch):
 
     importlib.reload(_d)
     _d.clear()
-    import ai_orchestrator.dev_reg_audit_log as _dl
+    import ai_orchestrator.persistence.dev_reg_audit_log as _dl
 
     importlib.reload(_dl)
 

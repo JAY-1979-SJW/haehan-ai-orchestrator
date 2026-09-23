@@ -34,7 +34,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.auth as _auth
 
     importlib.reload(_auth)
-    import ai_orchestrator.web_task_router as _wtr
+    import ai_orchestrator.routers.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
@@ -77,7 +77,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.auth import get_current_user
-    from ai_orchestrator.web_task_router import web_task_router
+    from ai_orchestrator.routers.web_task_router import web_task_router
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")
@@ -256,7 +256,7 @@ def test_unknown_template_id_audit_logged(admin_user):
 def test_run_from_template_real_run_creates_pending_approval(admin_user):
     import ai_orchestrator.dev_reg_approval as _dra
 
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run-from-template",
@@ -297,7 +297,7 @@ def test_template_used_audit_event_recorded(admin_user):
 
 def test_sensitive_override_not_in_response(admin_user):
     _SECRET = "leak_template_secret_xyz999"  # noqa: S105
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run-from-template",
@@ -318,7 +318,7 @@ def test_sensitive_override_not_in_response(admin_user):
 
 def test_sensitive_override_not_in_audit_log(admin_user):
     _SECRET = "audit_template_secret_pqr"  # noqa: S105
-    with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         client.post(
             "/api/v1/web-tasks/run-from-template",

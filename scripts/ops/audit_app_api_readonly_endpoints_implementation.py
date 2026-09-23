@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-ROUTER_FILE = ROOT / "ai_orchestrator" / "app_status_router.py"
+ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 MAIN_ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 

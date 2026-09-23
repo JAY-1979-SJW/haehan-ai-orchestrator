@@ -2,7 +2,7 @@
 
 import re
 
-from ai_orchestrator import app_actions
+from ai_orchestrator.routers import app_actions
 
 # 위험·민감 키워드: 이 키워드가 들어간 동작은 절대 SAFE(자동실행)면 안 된다.
 _DANGER = re.compile(

@@ -406,7 +406,7 @@ captureReason: string                  — 실제 캡처 요청 사유
 
 ### FastAPI 변경
 
-- `ai_orchestrator/auth_router.py` 신설
+- `ai_orchestrator/routers/auth_router.py` 신설
 - `GET /api/v1/auth/me` endpoint 추가
 - 반환 필드: `actor` (string), `role` (string)
 - 반환하지 않는 필드: password, password_hash, token, session, cookie, secret, hash

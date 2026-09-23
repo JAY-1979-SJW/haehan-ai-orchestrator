@@ -105,7 +105,7 @@ DOMAIN_CORE_MAP = {
     },
     "Integration": {
         "impl_files": [
-            "ai_orchestrator/ops_router.py",  # _STATIC_INTEGRATIONS
+            "ai_orchestrator/routers/ops_router.py",  # _STATIC_INTEGRATIONS
             "ai_orchestrator/connectors/",
         ],
         "status": "STATIC_LIST",
@@ -280,7 +280,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "ops_status_service": {
         "purpose": "Ops 상태 집계, health, endpoint inventory",
-        "current_location": "ai_orchestrator/ops_router.py (router 안에 embedded)",
+        "current_location": "ai_orchestrator/routers/ops_router.py (router 안에 embedded)",
         "extraction_priority": "MEDIUM",
         "must_not_call": ["db_write", "external_api"],
         "test_criteria": ["상태 집계 단위 테스트", "fallback 검증"],
@@ -843,10 +843,10 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/approval.py",
     "ai_orchestrator/dev_reg_approval.py",
     "ai_orchestrator/web_task_approval_service.py",
-    "ai_orchestrator/web_task_registry.py",
+    "ai_orchestrator/services/web_task_registry.py",
     "ai_orchestrator/web_task_templates.py",
     "ai_orchestrator/external_work_registry.py",
-    "ai_orchestrator/ops_router.py",
+    "ai_orchestrator/routers/ops_router.py",
     "ai_orchestrator/browser_tool/execution_location_policy.py",
     "ai_orchestrator/browser_tool/policy.py",
     "ai_orchestrator/server/server_egress_policy.py",
@@ -862,9 +862,9 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.approval",
     "ai_orchestrator.dev_reg_approval",
     "ai_orchestrator.web_task_approval_service",
-    "ai_orchestrator.web_task_registry",
+    "ai_orchestrator.services.web_task_registry",
     "ai_orchestrator.external_work_registry",
-    "ai_orchestrator.ops_router",
+    "ai_orchestrator.routers.ops_router",
 ]
 
 
@@ -990,7 +990,7 @@ NEXT_PHASE_ROADMAP = [
         "phase": 6,
         "name": "API Contract 안정화",
         "goal": "response_envelope 적용 후보 전환, OpenAPI 정합성 확인",
-        "files": ["ai_orchestrator/web_task_router.py (MODIFY)"],
+        "files": ["ai_orchestrator/routers/web_task_router.py (MODIFY)"],
         "forbidden": ["기존 response key 파괴"],
         "test_criteria": "API contract 테스트 + backward-compat 테스트",
         "done_when": "NEEDS_ENVELOPE_REVIEW 3개 전환 완료",

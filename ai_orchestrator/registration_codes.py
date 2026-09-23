@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 # Store 구조 import (REGCODE-2)
-from .registration_code_store import (
+from ai_orchestrator.persistence.registration_code_store import (
     DEFAULT_TTL_MINUTES,
     INVALID_CODE_MESSAGE,
     MAX_TTL_MINUTES,
