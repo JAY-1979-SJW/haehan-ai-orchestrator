@@ -16,11 +16,12 @@
 출력: 표 형태, 마지막 줄 RESULT: PASS|WARN|FAIL
 종료 코드: PASS=0, WARN=2, FAIL=3
 """
+
 from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 _THIS_DIR = Path(__file__).resolve().parent
@@ -28,8 +29,9 @@ _REPO_ROOT = _THIS_DIR.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator import dev_reg_approval, dev_reg_audit_log
-from ai_orchestrator.approval import revoke_token
+from ai_orchestrator import dev_reg_approval  # noqa: E402 — sys.path 설정 뒤 import
+from ai_orchestrator.approval import revoke_token  # noqa: E402 — sys.path 설정 뒤 import
+from ai_orchestrator.persistence import dev_reg_audit_log  # noqa: E402 — sys.path 설정 뒤 import
 
 # 출력에서 제거할 필드
 _BLOCKED_FIELDS = frozenset({"approval_token_hash", "screenshot_path", "token_id"})
@@ -43,8 +45,9 @@ EXIT_FAIL = 3
 
 # ── 공통 헬퍼 ────────────────────────────────────────────────────────────────
 
+
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _parse_iso(s: str) -> datetime | None:
@@ -53,7 +56,7 @@ def _parse_iso(s: str) -> datetime | None:
     try:
         dt = datetime.fromisoformat(s)
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return dt
     except ValueError:
         return None
@@ -106,6 +109,7 @@ def _safe_value(key: str, value: object) -> str:
 
 # ── pending ──────────────────────────────────────────────────────────────────
 
+
 def cmd_pending() -> int:
     records = dev_reg_approval.list_pending()
     now = _utc_now()
@@ -119,21 +123,20 @@ def cmd_pending() -> int:
 
     _hr()
     print(
-        f"{'TASK_ID':<20} {'PROVIDER':<10} {'ACTION':<22} "
-        f"{'RISK':<8} {'EXPIRES':<22} {'AGE':<12} {'REQUESTED_BY':<16}"
+        f"{'TASK_ID':<20} {'PROVIDER':<10} {'ACTION':<22} {'RISK':<8} {'EXPIRES':<22} {'AGE':<12} {'REQUESTED_BY':<16}"
     )
     _hr()
 
     warn = False
     for r in records:
-        task_id  = str(r.get("task_id", ""))
+        task_id = str(r.get("task_id", ""))
         provider = r.get("provider", "-")
-        action   = r.get("action_type", "-")
-        risk     = r.get("risk_level", "-")
-        exp_raw  = r.get("expires_at", "")
-        exp_fmt  = _fmt_dt(exp_raw)
-        age      = _age(r.get("created_at", ""))
-        req_by   = r.get("requested_by", "-")
+        action = r.get("action_type", "-")
+        risk = r.get("risk_level", "-")
+        exp_raw = r.get("expires_at", "")
+        exp_fmt = _fmt_dt(exp_raw)
+        age = _age(r.get("created_at", ""))
+        req_by = r.get("requested_by", "-")
 
         exp_dt = _parse_iso(exp_raw)
         suffix = " [EXPIRED]" if exp_dt and exp_dt < now else ""
@@ -159,6 +162,7 @@ def cmd_pending() -> int:
 
 # ── history ──────────────────────────────────────────────────────────────────
 
+
 def cmd_history(limit: int) -> int:
     records = dev_reg_approval.list_history(limit=limit)
 
@@ -170,20 +174,17 @@ def cmd_history(limit: int) -> int:
         return EXIT_WARN
 
     _hr()
-    print(
-        f"{'TASK_ID':<20} {'STATUS':<10} {'PROVIDER':<10} "
-        f"{'ACTION':<22} {'CREATED':<22} {'DECIDED':<22}"
-    )
+    print(f"{'TASK_ID':<20} {'STATUS':<10} {'PROVIDER':<10} {'ACTION':<22} {'CREATED':<22} {'DECIDED':<22}")
     _hr()
 
     fail_seen = False
     for r in records:
-        task_id  = str(r.get("task_id", ""))
-        status   = r.get("status", "-")
+        task_id = str(r.get("task_id", ""))
+        status = r.get("status", "-")
         provider = r.get("provider", "-")
-        action   = r.get("action_type", "-")
-        created  = _fmt_dt(r.get("created_at", ""))
-        decided  = _fmt_dt(r.get("decided_at", "") or r.get("executed_at", ""))
+        action = r.get("action_type", "-")
+        created = _fmt_dt(r.get("created_at", ""))
+        decided = _fmt_dt(r.get("decided_at", "") or r.get("executed_at", ""))
 
         if status == "failed":
             fail_seen = True
@@ -206,6 +207,7 @@ def cmd_history(limit: int) -> int:
 
 # ── detail ───────────────────────────────────────────────────────────────────
 
+
 def cmd_detail(task_id: str) -> int:
     rec = dev_reg_approval.get_detail(task_id)
 
@@ -219,10 +221,22 @@ def cmd_detail(task_id: str) -> int:
 
     _hr()
     field_order = [
-        "task_id", "status", "provider", "action_type", "risk_level",
-        "requested_by", "approved_by", "reject_reason",
-        "created_at", "expires_at", "decided_at", "executed_at",
-        "summary", "target_url", "result", "error",
+        "task_id",
+        "status",
+        "provider",
+        "action_type",
+        "risk_level",
+        "requested_by",
+        "approved_by",
+        "reject_reason",
+        "created_at",
+        "expires_at",
+        "decided_at",
+        "executed_at",
+        "summary",
+        "target_url",
+        "result",
+        "error",
         "telegram_message_id",
     ]
 
@@ -249,6 +263,7 @@ def cmd_detail(task_id: str) -> int:
 
 # ── expire ───────────────────────────────────────────────────────────────────
 
+
 def cmd_expire(task_id: str) -> int:
     print(f"\n[FORCE EXPIRE: {task_id}]")
     _hr()
@@ -271,7 +286,7 @@ def cmd_expire(task_id: str) -> int:
     if rec.token_id:
         try:
             revoke_token(rec.token_id)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"  WARN: 토큰 revoke 실패 (계속 진행): {e}")
 
     # 2. dev_reg 레코드 만료 처리
@@ -287,8 +302,8 @@ def cmd_expire(task_id: str) -> int:
 
     decided = updated.decided_at or _utc_now().isoformat()
     print(f"  task_id      : {task_id}")
-    print(f"  이전 상태     : pending")
-    print(f"  현재 상태     : expired (강제 만료)")
+    print("  이전 상태     : pending")
+    print("  현재 상태     : expired (강제 만료)")
     print(f"  처리 시각     : {_fmt_dt(decided)}")
     _hr()
     print()
@@ -298,6 +313,7 @@ def cmd_expire(task_id: str) -> int:
 
 # ── summary ──────────────────────────────────────────────────────────────────
 
+
 def cmd_summary() -> int:
     now = _utc_now()
     window_24h = now - timedelta(hours=24)
@@ -306,19 +322,11 @@ def cmd_summary() -> int:
     pending_records = [r for r in all_records if r.get("status") == "pending"]
 
     pending_count = len(pending_records)
-    expired_pending = sum(
-        1 for r in pending_records
-        if (dt := _parse_iso(r.get("expires_at", ""))) and dt < now
-    )
+    expired_pending = sum(1 for r in pending_records if (dt := _parse_iso(r.get("expires_at", ""))) and dt < now)
 
-    recent_window = [
-        r for r in all_records
-        if (dt := _parse_iso(r.get("created_at", ""))) and dt >= window_24h
-    ]
+    recent_window = [r for r in all_records if (dt := _parse_iso(r.get("created_at", ""))) and dt >= window_24h]
     recent_executed = sum(1 for r in recent_window if r.get("status") == "executed")
-    recent_failed   = sum(
-        1 for r in recent_window if r.get("status") in ("failed", "rejected")
-    )
+    recent_failed = sum(1 for r in recent_window if r.get("status") in ("failed", "rejected"))
 
     sorted_all = sorted(
         all_records,
@@ -327,9 +335,9 @@ def cmd_summary() -> int:
     )
     last_activity = _fmt_dt(sorted_all[0].get("created_at", "")) if sorted_all else "-"
 
-    recent_runs     = dev_reg_audit_log.load_recent_runs(n=1)
+    recent_runs = dev_reg_audit_log.load_recent_runs(n=1)
     last_audit_result = recent_runs[0].get("result", "-") if recent_runs else "-"
-    last_audit_time   = _fmt_dt(recent_runs[0].get("run_at", "")) if recent_runs else "-"
+    last_audit_time = _fmt_dt(recent_runs[0].get("run_at", "")) if recent_runs else "-"
 
     # 판정
     warnings: list[str] = []
@@ -376,6 +384,7 @@ def cmd_summary() -> int:
 
 # ── main ─────────────────────────────────────────────────────────────────────
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dev_reg_cli",
@@ -398,7 +407,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     hist_p = sub.add_parser("history", help="승인 히스토리 조회")
     hist_p.add_argument(
-        "--limit", type=int, default=20, metavar="N",
+        "--limit",
+        type=int,
+        default=20,
+        metavar="N",
         help="최대 표시 건수 (기본 20)",
     )
 
@@ -420,8 +432,8 @@ def main() -> None:
     dispatch = {
         "pending": lambda: cmd_pending(),
         "history": lambda: cmd_history(args.limit),
-        "detail":  lambda: cmd_detail(args.task_id),
-        "expire":  lambda: cmd_expire(args.task_id),
+        "detail": lambda: cmd_detail(args.task_id),
+        "expire": lambda: cmd_expire(args.task_id),
         "summary": lambda: cmd_summary(),
     }
 
