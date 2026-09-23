@@ -63,7 +63,12 @@ def main() -> int:
     edges = m["all_edges"]
     files = sorted(nodes)
 
-    layer = {f: classify_path(f) for f in files}
+    reg_p = ROOT / "configs" / "module_registry.json"
+    reg_doc = json.loads(reg_p.read_text(encoding="utf-8")) if reg_p.exists() else {}
+    registry = reg_doc.get("files", {})
+    allowed = reg_doc.get("allowed_deps")
+    legacy_layer = {f: classify_path(f) for f in files}  # 옛 경로 추측 판정 — 비교용
+    layer = {f: ((registry[f]["layer"], registry[f]["reason"]) if f in registry else legacy_layer[f]) for f in files}
     mod = {f: module_of(f) for f in files}
 
     # ── 1. 레이어 역전: 코드 파일 간 엣지에서 하위(번호 작음) → 상위(번호 큼) ──────────────
@@ -71,6 +76,8 @@ def main() -> int:
     inv_samples: dict[str, list[str]] = defaultdict(list)
     for s, ts in edges.items():
         if s not in layer or PurePosixPath(s).suffix not in (".py", ".ts", ".tsx", ".js"):
+            continue
+        if PurePosixPath(s).name == "__init__.py":  # 패키지 재수출은 방향 검사 제외
             continue
         ls = layer[s][0]
         if ls not in CODE_LAYERS:
@@ -81,11 +88,24 @@ def main() -> int:
             lt = layer[t][0]
             if PurePosixPath(t).suffix not in CODE_SUFFIX:
                 continue
-            if lt in CODE_LAYERS and _layer_num(ls) < _layer_num(lt):
+            if PurePosixPath(t).name == "__init__.py":  # 패키지 초기화는 구조적 연결 — 방향 검사 제외
+                continue
+            bad = (lt not in allowed.get(ls, [])) if allowed else (_layer_num(ls) < _layer_num(lt))
+            if lt in CODE_LAYERS and bad:
                 key = f"{ls}->{lt}"
                 inv_pairs[key] += 1
                 if len(inv_samples[key]) < 5:
                     inv_samples[key].append(f"{s} -> {t}")
+
+    legacy_inv = 0
+    for s_, ts_ in edges.items():
+        if PurePosixPath(s_).suffix not in CODE_SUFFIX or legacy_layer.get(s_, ("",))[0] not in CODE_LAYERS:
+            continue
+        for t_ in ts_:
+            if t_ in legacy_layer and PurePosixPath(t_).suffix in CODE_SUFFIX:
+                a_, b_ = legacy_layer[s_][0], legacy_layer[t_][0]
+                if b_ in CODE_LAYERS and _layer_num(a_) < _layer_num(b_):
+                    legacy_inv += 1
 
     # ── 2. 선언된 금지 import 쌍 위반 ───────────────────────────────────────────────
     forbidden_hits = []
@@ -205,6 +225,9 @@ def main() -> int:
     result = {
         "meta": {"map_generated_at": m["meta"]["generated_at"], "commit": m["meta"]["commit"]},
         "crosscheck": {
+            "layer_source": "configs/module_registry.json" if registry else "classify_path(legacy)",
+            "legacy_path_guess_inversions": legacy_inv,
+            "direction_model": "registry allowed_deps" if allowed else "numeric order",
             "layer_inversions": {
                 "total": sum(inv_pairs.values()),
                 "by_pair": dict(inv_pairs.most_common()),
