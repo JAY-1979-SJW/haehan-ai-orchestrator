@@ -22,56 +22,65 @@
 
 이 서비스는 3단계 Policy Layer 통합 공정의 준비 계층이다.
 """
+
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # execution location 상수 — execution_location_guard.py 값 호환
-_LOC_SERVER   = "SERVER_INTERNAL_ONLY"
-_LOC_AGENT    = "LOCAL_AGENT_REQUIRED"
-_LOC_USER     = "USER_DIRECT_REQUIRED"
-_LOC_BLOCKED  = "BLOCKED"
+_LOC_SERVER = "SERVER_INTERNAL_ONLY"
+_LOC_AGENT = "LOCAL_AGENT_REQUIRED"
+_LOC_USER = "USER_DIRECT_REQUIRED"
+_LOC_BLOCKED = "BLOCKED"
 
 # external work classification 상수 — external_work_registry 값 호환
-_CLS_SERVER_READONLY   = "SERVER_READONLY_ALLOWED"
-_CLS_OAUTH_REQUIRED    = "OFFICIAL_API_OR_OAUTH_REQUIRED"
-_CLS_LOCAL_AGENT       = "LOCAL_AGENT_REQUIRED"
-_CLS_USER_DIRECT       = "USER_DIRECT_REQUIRED"
-_CLS_WEB_TASK          = "WEB_TASK_REGISTRY"
-_CLS_QUARANTINE        = "QUARANTINE_OR_HOLD"
+_CLS_SERVER_READONLY = "SERVER_READONLY_ALLOWED"
+_CLS_OAUTH_REQUIRED = "OFFICIAL_API_OR_OAUTH_REQUIRED"
+_CLS_LOCAL_AGENT = "LOCAL_AGENT_REQUIRED"
+_CLS_USER_DIRECT = "USER_DIRECT_REQUIRED"
+_CLS_WEB_TASK = "WEB_TASK_REGISTRY"
+_CLS_QUARANTINE = "QUARANTINE_OR_HOLD"
 _CLS_EXTERNAL_APP_HOLD = "EXTERNAL_APP_HOLD"
-_CLS_FUTURE            = "FUTURE_INTEGRATION"
-_CLS_IN_SCOPE          = "IN_SCOPE"
+_CLS_FUTURE = "FUTURE_INTEGRATION"
+_CLS_IN_SCOPE = "IN_SCOPE"
 
 # server에서 직접 실행 가능한 분류
-_SERVER_EXECUTABLE_CLASSIFICATIONS = frozenset({
-    _CLS_SERVER_READONLY,
-    _CLS_WEB_TASK,
-    _CLS_IN_SCOPE,
-})
+_SERVER_EXECUTABLE_CLASSIFICATIONS = frozenset(
+    {
+        _CLS_SERVER_READONLY,
+        _CLS_WEB_TASK,
+        _CLS_IN_SCOPE,
+    }
+)
 
 # 절대 서버에서 실행 불가 분류
-_SERVER_BLOCKED_CLASSIFICATIONS = frozenset({
-    _CLS_LOCAL_AGENT,
-    _CLS_USER_DIRECT,
-    _CLS_QUARANTINE,
-    _CLS_EXTERNAL_APP_HOLD,
-    _CLS_FUTURE,
-})
+_SERVER_BLOCKED_CLASSIFICATIONS = frozenset(
+    {
+        _CLS_LOCAL_AGENT,
+        _CLS_USER_DIRECT,
+        _CLS_QUARANTINE,
+        _CLS_EXTERNAL_APP_HOLD,
+        _CLS_FUTURE,
+    }
+)
 
 # user direct required 분류
-_USER_DIRECT_CLASSIFICATIONS = frozenset({
-    _CLS_USER_DIRECT,
-})
+_USER_DIRECT_CLASSIFICATIONS = frozenset(
+    {
+        _CLS_USER_DIRECT,
+    }
+)
 
 # oauth setup required 분류
-_OAUTH_REQUIRED_CLASSIFICATIONS = frozenset({
-    _CLS_OAUTH_REQUIRED,
-})
+_OAUTH_REQUIRED_CLASSIFICATIONS = frozenset(
+    {
+        _CLS_OAUTH_REQUIRED,
+    }
+)
 
 # ---------------------------------------------------------------------------
 # 사이트별 액션 정책 — STEP 6 분류표
@@ -95,17 +104,17 @@ _SITE_ACTION_POLICY: dict[str, dict] = {
         "note": "Gmail/Calendar/Drive. 전송/삭제는 사용자 승인 후.",
     },
     "g2b": {
-        "cert_auth": True,   # 나라장터 인증서 로그인
+        "cert_auth": True,  # 나라장터 인증서 로그인
         "final_approval_required": True,  # 입찰 제출
         "note": "나라장터. 인증서 로그인 = 사용자 직접. 투찰/제출 = 사용자 승인.",
     },
     "bank": {
-        "cert_auth": True,   # 은행 인증서 로그인
+        "cert_auth": True,  # 은행 인증서 로그인
         "final_approval_required": True,  # 이체/송금
         "note": "인터넷뱅킹. 인증서 로그인 = 사용자 직접. 이체 = 사용자 승인.",
     },
     "tax": {
-        "cert_auth": True,   # 홈택스/지방세
+        "cert_auth": True,  # 홈택스/지방세
         "final_approval_required": True,
         "note": "세금 신고/납부. 인증서 로그인 = 사용자 직접. 신고/납부 = 사용자 승인.",
     },
@@ -140,6 +149,7 @@ _SITE_ACTION_POLICY: dict[str, dict] = {
 @dataclass
 class PolicyDecision:
     """실행 정책 판정 결과 — 읽기 전용."""
+
     execution_location: str
     server_executable: bool
     requires_local_agent: bool
@@ -152,12 +162,12 @@ class PolicyDecision:
     classification: str = ""
     risk_level: str = "low"
     # 신뢰 세션 / 최종 승인 게이트 필드 (v1.0)
-    safe_to_prepare: bool = True                  # AI가 폼 입력/화면 진입 가능
-    safe_to_click_final_button: bool = False       # AI가 최종 버튼 클릭 가능 여부
-    requires_final_approval: bool = False          # 최종 사용자 승인 게이트 필요
-    allowed_to_reuse_trusted_session: bool = False # 신뢰 세션 재사용 허용 여부
-    requires_user_present_auth: bool = False       # 사용자 직접 인증 필요
-    requires_reauth: bool = False                  # 세션 만료로 재인증 필요
+    safe_to_prepare: bool = True  # AI가 폼 입력/화면 진입 가능
+    safe_to_click_final_button: bool = False  # AI가 최종 버튼 클릭 가능 여부
+    requires_final_approval: bool = False  # 최종 사용자 승인 게이트 필요
+    allowed_to_reuse_trusted_session: bool = False  # 신뢰 세션 재사용 허용 여부
+    requires_user_present_auth: bool = False  # 사용자 직접 인증 필요
+    requires_reauth: bool = False  # 세션 만료로 재인증 필요
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -197,6 +207,7 @@ class ExecutionPolicyService:
             from ai_orchestrator.server.execution_location_guard import (
                 classify_execution_location_for_server,
             )
+
             return classify_execution_location_for_server(task)
         except Exception as exc:
             logger.debug("execution_location_guard 호출 실패: %s", exc)
@@ -227,6 +238,7 @@ class ExecutionPolicyService:
         """external_work_registry에서 분류값을 조회한다."""
         try:
             from ai_orchestrator.external_work_registry import get_external_work
+
             entry = get_external_work(provider, work_type)
             if entry:
                 return entry.classification
@@ -237,12 +249,12 @@ class ExecutionPolicyService:
     def _classification_to_decision(self, classification: str) -> PolicyDecision:
         """분류값을 PolicyDecision으로 변환한다."""
         is_server = classification in _SERVER_EXECUTABLE_CLASSIFICATIONS
-        is_agent  = classification == _CLS_LOCAL_AGENT
-        is_user   = classification in _USER_DIRECT_CLASSIFICATIONS
-        is_oauth  = classification in _OAUTH_REQUIRED_CLASSIFICATIONS
-        is_hold   = classification == _CLS_EXTERNAL_APP_HOLD
+        is_agent = classification == _CLS_LOCAL_AGENT
+        is_user = classification in _USER_DIRECT_CLASSIFICATIONS
+        is_oauth = classification in _OAUTH_REQUIRED_CLASSIFICATIONS
+        is_hold = classification == _CLS_EXTERNAL_APP_HOLD
         is_future = classification == _CLS_FUTURE
-        is_quar   = classification == _CLS_QUARANTINE
+        is_quar = classification == _CLS_QUARANTINE
         is_blocked = is_hold or is_future or is_quar
 
         if is_hold:
@@ -256,13 +268,13 @@ class ExecutionPolicyService:
             reason = f"QUARANTINE_OR_HOLD: {classification} — 보안 검토 필요"
         elif is_oauth:
             loc = _LOC_SERVER
-            reason = f"OFFICIAL_API_OR_OAUTH_REQUIRED: OAuth 설정 완료 후 실행 가능"
+            reason = "OFFICIAL_API_OR_OAUTH_REQUIRED: OAuth 설정 완료 후 실행 가능"
         elif is_agent:
             loc = _LOC_AGENT
-            reason = f"LOCAL_AGENT_REQUIRED: 로컬 에이전트 필요"
+            reason = "LOCAL_AGENT_REQUIRED: 로컬 에이전트 필요"
         elif is_user:
             loc = _LOC_USER
-            reason = f"USER_DIRECT_REQUIRED: 사용자 직접 조작 필요"
+            reason = "USER_DIRECT_REQUIRED: 사용자 직접 조작 필요"
         else:
             loc = _LOC_SERVER
             reason = f"서버 실행 가능: {classification}"
@@ -317,6 +329,7 @@ class ExecutionPolicyService:
         """action_risk_policy.classify_action wrapper."""
         try:
             from ai_orchestrator.local_agent.action_risk_policy import classify_action
+
             return classify_action(action)
         except Exception as exc:
             logger.debug("action_risk_policy 호출 실패: %s", exc)
@@ -326,6 +339,7 @@ class ExecutionPolicyService:
         """action_risk_policy.is_blocked wrapper."""
         try:
             from ai_orchestrator.local_agent.action_risk_policy import is_blocked
+
             return is_blocked(action)
         except Exception as exc:
             logger.debug("action_risk_policy is_blocked 호출 실패: %s", exc)
@@ -335,6 +349,7 @@ class ExecutionPolicyService:
         """action_risk_policy.is_user_direct_required wrapper."""
         try:
             from ai_orchestrator.local_agent.action_risk_policy import is_user_direct_required
+
             return is_user_direct_required(action)
         except Exception as exc:
             logger.debug("action_risk_policy is_user_direct_required 호출 실패: %s", exc)
@@ -346,8 +361,8 @@ class ExecutionPolicyService:
     def decide_full(
         self,
         task: dict[str, Any],
-        provider: Optional[str] = None,
-        work_type: Optional[str] = None,
+        provider: str | None = None,
+        work_type: str | None = None,
     ) -> PolicyDecision:
         """task dict + optional provider/work_type 기반 통합 판정.
 
@@ -372,8 +387,8 @@ class ExecutionPolicyService:
 
     def _location_to_decision(self, loc: str, reason: str) -> PolicyDecision:
         """execution_location 문자열을 PolicyDecision으로 변환한다."""
-        is_agent  = loc == _LOC_AGENT
-        is_user   = loc == _LOC_USER
+        is_agent = loc == _LOC_AGENT
+        is_user = loc == _LOC_USER
         is_blocked = loc == _LOC_BLOCKED
         is_server = loc == _LOC_SERVER
 
@@ -396,6 +411,7 @@ class ExecutionPolicyService:
         """classification이 EXTERNAL_APP_HOLD 정책에 의해 차단되는지 확인."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import EXTERNAL_APP_HOLD_SCOPES
+
             return classification in EXTERNAL_APP_HOLD_SCOPES
         except Exception:
             return classification in (_CLS_EXTERNAL_APP_HOLD, _CLS_FUTURE)
@@ -404,6 +420,7 @@ class ExecutionPolicyService:
         """classification이 OAUTH_API_REQUIRED이고 설정 미완료 시 실행 차단 여부."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import OAUTH_REQUIRED_SCOPES
+
             return classification in OAUTH_REQUIRED_SCOPES
         except Exception:
             return classification == _CLS_OAUTH_REQUIRED
@@ -412,6 +429,7 @@ class ExecutionPolicyService:
         """USER_DIRECT_REQUIRED 분류는 자동 실행이 차단된다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import USER_DIRECT_SCOPES
+
             return classification in USER_DIRECT_SCOPES
         except Exception:
             return classification == _CLS_USER_DIRECT
@@ -420,6 +438,7 @@ class ExecutionPolicyService:
         """LOCAL_AGENT_REQUIRED 분류는 서버 직접 실행이 차단된다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import LOCAL_AGENT_SCOPES
+
             return classification in LOCAL_AGENT_SCOPES
         except Exception:
             return classification == _CLS_LOCAL_AGENT
@@ -432,6 +451,7 @@ class ExecutionPolicyService:
         """safety policy registry 기반 서버 실행 안전 여부."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import get_safe_to_execute_on_server
+
             return get_safe_to_execute_on_server(classification)
         except Exception:
             return self.is_server_executable(classification)
@@ -443,6 +463,7 @@ class ExecutionPolicyService:
         """action이 최종 승인 게이트가 필요한 행위인지 판정한다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import FINAL_ACTION_SCOPES
+
             return action in FINAL_ACTION_SCOPES
         except Exception:
             return False
@@ -451,6 +472,7 @@ class ExecutionPolicyService:
         """action이 시크릿 저장 금지 대상인지 판정한다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import SECRET_STORAGE_SCOPES
+
             return action in SECRET_STORAGE_SCOPES
         except Exception:
             return False
@@ -459,6 +481,7 @@ class ExecutionPolicyService:
         """action이 도메인/DNS 변경 승인 필수 대상인지 판정한다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import DOMAIN_CHANGE_SCOPES
+
             return action in DOMAIN_CHANGE_SCOPES
         except Exception:
             return False
@@ -467,6 +490,7 @@ class ExecutionPolicyService:
         """action이 신뢰 세션 재사용 허용 대상인지 판정한다."""
         try:
             from ai_orchestrator.safety_policy.safety_policy_registry import TRUSTED_SESSION_SCOPES
+
             return action in TRUSTED_SESSION_SCOPES
         except Exception:
             return False
@@ -592,10 +616,15 @@ class ExecutionPolicyService:
         """
         try:
             from ai_orchestrator.gabia.gabia_browser_task import (
-                is_ai_executable, is_final_button_blocked,
-                USER_REQUIRED_STATES, STATE_REAUTH_REQUIRED, STATE_BLOCKED,
-                STATE_LOGIN_REQUIRED, STATE_USER_PRESENT_AUTH_IN_PROGRESS,
+                STATE_BLOCKED,
+                STATE_LOGIN_REQUIRED,
+                STATE_REAUTH_REQUIRED,
+                STATE_USER_PRESENT_AUTH_IN_PROGRESS,
+                USER_REQUIRED_STATES,
+                is_ai_executable,
+                is_final_button_blocked,
             )
+
             ai_exec = is_ai_executable(state)
             final_blocked = is_final_button_blocked(state)
             user_required = state in USER_REQUIRED_STATES
@@ -635,6 +664,7 @@ class ExecutionPolicyService:
             from ai_orchestrator.browser_tool.domain_profile_registry import (
                 is_action_blocked_for_domain,
             )
+
             return is_action_blocked_for_domain("gabia.com", action)
         except Exception:
             return action in ("dns_final_save", "dns_apply_button_click")
@@ -645,6 +675,7 @@ class ExecutionPolicyService:
             from ai_orchestrator.browser_tool.domain_profile_registry import (
                 is_user_direct_action_for_domain,
             )
+
             return is_user_direct_action_for_domain("gabia.com", action)
         except Exception:
             return action in ("dns_save", "dns_apply")
@@ -656,11 +687,11 @@ class ExecutionPolicyService:
         safe_to_click_final_button: 최종 버튼은 항상 False — 사용자 승인 필요
         """
         site_info = _SITE_ACTION_POLICY.get(site, {})
-        requires_cert     = site_info.get("cert_auth", False)
+        requires_cert = site_info.get("cert_auth", False)
         requires_approval = site_info.get("final_approval_required", True)
 
-        is_final    = self.is_final_action(action)
-        is_dns      = self.is_domain_change_approval_required(action)
+        is_final = self.is_final_action(action)
+        is_dns = self.is_domain_change_approval_required(action)
         is_reusable = self.is_trusted_session_reusable(action)
 
         return PolicyDecision(
@@ -739,7 +770,7 @@ class ExecutionPolicyService:
 
 
 # 싱글턴 인스턴스 (경량 — 상태 없음)
-_service_instance: Optional[ExecutionPolicyService] = None
+_service_instance: ExecutionPolicyService | None = None
 
 
 def get_execution_policy_service() -> ExecutionPolicyService:
@@ -753,58 +784,60 @@ def get_execution_policy_service() -> ExecutionPolicyService:
 # ---------------------------------------------------------------------------
 # AuditEvent 타입 상수 — TRUSTED_SESSION_AND_USER_APPROVAL v1.0
 # ---------------------------------------------------------------------------
-AUDIT_USER_PRESENT_AUTH_REQUIRED   = "USER_PRESENT_AUTH_REQUIRED"
-AUDIT_TRUSTED_SESSION_REUSED       = "TRUSTED_SESSION_REUSED"
-AUDIT_TRUSTED_SESSION_EXPIRED      = "TRUSTED_SESSION_EXPIRED_REAUTH_NEEDED"
-AUDIT_FINAL_APPROVAL_REQUIRED      = "FINAL_APPROVAL_REQUIRED"
-AUDIT_FINAL_APPROVAL_GRANTED       = "FINAL_APPROVAL_GRANTED"
-AUDIT_FINAL_ACTION_BLOCKED         = "FINAL_ACTION_BLOCKED_NO_APPROVAL"
-AUDIT_SECRET_STORAGE_BLOCKED       = "SECRET_STORAGE_ATTEMPT_BLOCKED"
-AUDIT_CERT_PASSWORD_BLOCKED        = "CERT_PASSWORD_STORE_BLOCKED"
-AUDIT_SERVER_LOGIN_BLOCKED         = "SERVER_SECURITY_LOGIN_BLOCKED"
-AUDIT_DOMAIN_CHANGE_GATE           = "DOMAIN_DNS_CHANGE_APPROVAL_GATE"
+AUDIT_USER_PRESENT_AUTH_REQUIRED = "USER_PRESENT_AUTH_REQUIRED"
+AUDIT_TRUSTED_SESSION_REUSED = "TRUSTED_SESSION_REUSED"
+AUDIT_TRUSTED_SESSION_EXPIRED = "TRUSTED_SESSION_EXPIRED_REAUTH_NEEDED"
+AUDIT_FINAL_APPROVAL_REQUIRED = "FINAL_APPROVAL_REQUIRED"
+AUDIT_FINAL_APPROVAL_GRANTED = "FINAL_APPROVAL_GRANTED"
+AUDIT_FINAL_ACTION_BLOCKED = "FINAL_ACTION_BLOCKED_NO_APPROVAL"
+AUDIT_SECRET_STORAGE_BLOCKED = "SECRET_STORAGE_ATTEMPT_BLOCKED"  # noqa: S105
+AUDIT_CERT_PASSWORD_BLOCKED = "CERT_PASSWORD_STORE_BLOCKED"  # noqa: S105
+AUDIT_SERVER_LOGIN_BLOCKED = "SERVER_SECURITY_LOGIN_BLOCKED"
+AUDIT_DOMAIN_CHANGE_GATE = "DOMAIN_DNS_CHANGE_APPROVAL_GATE"
 
 # Gabia 브라우저 자동화 전용 AuditEvent 타입
-AUDIT_GABIA_BROWSER_OPEN_REQUESTED        = "GABIA_BROWSER_OPEN_REQUESTED"
-AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED   = "GABIA_LOGIN_USER_PRESENT_REQUIRED"
-AUDIT_GABIA_TRUSTED_SESSION_REUSED        = "GABIA_TRUSTED_SESSION_REUSED"
-AUDIT_GABIA_DNS_PAGE_NAV_READY            = "GABIA_DNS_PAGE_NAVIGATION_READY"
-AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED   = "GABIA_SECURITY_AUTOMATION_BLOCKED"
+AUDIT_GABIA_BROWSER_OPEN_REQUESTED = "GABIA_BROWSER_OPEN_REQUESTED"
+AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED = "GABIA_LOGIN_USER_PRESENT_REQUIRED"
+AUDIT_GABIA_TRUSTED_SESSION_REUSED = "GABIA_TRUSTED_SESSION_REUSED"
+AUDIT_GABIA_DNS_PAGE_NAV_READY = "GABIA_DNS_PAGE_NAVIGATION_READY"
+AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED = "GABIA_SECURITY_AUTOMATION_BLOCKED"
 
 # Gabia DNS 업무 전용 AuditEvent 타입
-AUDIT_GABIA_DNS_WORKFLOW_PREPARED     = "GABIA_DNS_WORKFLOW_PREPARED"
-AUDIT_GABIA_DNS_RECORD_DRAFTED        = "GABIA_DNS_RECORD_DRAFTED"
-AUDIT_GABIA_DNS_CHANGE_PREVIEW        = "GABIA_DNS_CHANGE_PREVIEW_CREATED"
-AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ    = "GABIA_DNS_FINAL_APPROVAL_REQUIRED"
+AUDIT_GABIA_DNS_WORKFLOW_PREPARED = "GABIA_DNS_WORKFLOW_PREPARED"
+AUDIT_GABIA_DNS_RECORD_DRAFTED = "GABIA_DNS_RECORD_DRAFTED"
+AUDIT_GABIA_DNS_CHANGE_PREVIEW = "GABIA_DNS_CHANGE_PREVIEW_CREATED"
+AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ = "GABIA_DNS_FINAL_APPROVAL_REQUIRED"
 AUDIT_GABIA_DNS_USER_APPROVAL_GRANTED = "GABIA_DNS_USER_APPROVAL_GRANTED"
-AUDIT_GABIA_DNS_USER_APPROVAL_DENIED  = "GABIA_DNS_USER_APPROVAL_DENIED"
-AUDIT_GABIA_DNS_SESSION_REUSED        = "GABIA_DNS_SESSION_REUSED"
-AUDIT_GABIA_DNS_REAUTH_REQUIRED       = "GABIA_DNS_REAUTH_REQUIRED"
+AUDIT_GABIA_DNS_USER_APPROVAL_DENIED = "GABIA_DNS_USER_APPROVAL_DENIED"
+AUDIT_GABIA_DNS_SESSION_REUSED = "GABIA_DNS_SESSION_REUSED"
+AUDIT_GABIA_DNS_REAUTH_REQUIRED = "GABIA_DNS_REAUTH_REQUIRED"
 
-AUDIT_EVENT_TYPES: frozenset[str] = frozenset({
-    AUDIT_USER_PRESENT_AUTH_REQUIRED,
-    AUDIT_TRUSTED_SESSION_REUSED,
-    AUDIT_TRUSTED_SESSION_EXPIRED,
-    AUDIT_FINAL_APPROVAL_REQUIRED,
-    AUDIT_FINAL_APPROVAL_GRANTED,
-    AUDIT_FINAL_ACTION_BLOCKED,
-    AUDIT_SECRET_STORAGE_BLOCKED,
-    AUDIT_CERT_PASSWORD_BLOCKED,
-    AUDIT_SERVER_LOGIN_BLOCKED,
-    AUDIT_DOMAIN_CHANGE_GATE,
-    # Gabia DNS 전용
-    AUDIT_GABIA_DNS_WORKFLOW_PREPARED,
-    AUDIT_GABIA_DNS_RECORD_DRAFTED,
-    AUDIT_GABIA_DNS_CHANGE_PREVIEW,
-    AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ,
-    AUDIT_GABIA_DNS_USER_APPROVAL_GRANTED,
-    AUDIT_GABIA_DNS_USER_APPROVAL_DENIED,
-    AUDIT_GABIA_DNS_SESSION_REUSED,
-    AUDIT_GABIA_DNS_REAUTH_REQUIRED,
-    # Gabia 브라우저 자동화 전용
-    AUDIT_GABIA_BROWSER_OPEN_REQUESTED,
-    AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED,
-    AUDIT_GABIA_TRUSTED_SESSION_REUSED,
-    AUDIT_GABIA_DNS_PAGE_NAV_READY,
-    AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED,
-})
+AUDIT_EVENT_TYPES: frozenset[str] = frozenset(
+    {
+        AUDIT_USER_PRESENT_AUTH_REQUIRED,
+        AUDIT_TRUSTED_SESSION_REUSED,
+        AUDIT_TRUSTED_SESSION_EXPIRED,
+        AUDIT_FINAL_APPROVAL_REQUIRED,
+        AUDIT_FINAL_APPROVAL_GRANTED,
+        AUDIT_FINAL_ACTION_BLOCKED,
+        AUDIT_SECRET_STORAGE_BLOCKED,
+        AUDIT_CERT_PASSWORD_BLOCKED,
+        AUDIT_SERVER_LOGIN_BLOCKED,
+        AUDIT_DOMAIN_CHANGE_GATE,
+        # Gabia DNS 전용
+        AUDIT_GABIA_DNS_WORKFLOW_PREPARED,
+        AUDIT_GABIA_DNS_RECORD_DRAFTED,
+        AUDIT_GABIA_DNS_CHANGE_PREVIEW,
+        AUDIT_GABIA_DNS_FINAL_APPROVAL_REQ,
+        AUDIT_GABIA_DNS_USER_APPROVAL_GRANTED,
+        AUDIT_GABIA_DNS_USER_APPROVAL_DENIED,
+        AUDIT_GABIA_DNS_SESSION_REUSED,
+        AUDIT_GABIA_DNS_REAUTH_REQUIRED,
+        # Gabia 브라우저 자동화 전용
+        AUDIT_GABIA_BROWSER_OPEN_REQUESTED,
+        AUDIT_GABIA_LOGIN_USER_PRESENT_REQUIRED,
+        AUDIT_GABIA_TRUSTED_SESSION_REUSED,
+        AUDIT_GABIA_DNS_PAGE_NAV_READY,
+        AUDIT_GABIA_SECURITY_AUTOMATION_BLOCKED,
+    }
+)

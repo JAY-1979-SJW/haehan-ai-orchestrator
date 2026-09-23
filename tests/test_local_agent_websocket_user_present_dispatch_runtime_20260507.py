@@ -15,21 +15,15 @@ routing dry-run 결과 DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED 시
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
-
-import pytest
 
 # ── 경로 설정 ────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 # ── fixture 로드 ─────────────────────────────────────────────────────────────
-FIXTURE_PATH = (
-    ROOT / "tests" / "fixtures"
-    / "local_agent_websocket_user_present_dispatch_runtime_20260507.json"
-)
+FIXTURE_PATH = ROOT / "tests" / "fixtures" / "local_agent_websocket_user_present_dispatch_runtime_20260507.json"
 
 
 def _load_fixture():
@@ -46,22 +40,21 @@ def _case(case_id: str) -> dict:
 
 
 # ── 모듈 임포트 ──────────────────────────────────────────────────────────────
-from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (
+from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (  # noqa: E402
+    DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
     build_user_present_dispatch_context,
     build_user_present_dispatch_response,
     build_user_present_task_from_dryrun,
     should_dispatch_user_present_task,
     validate_user_present_dispatch_request,
-    DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
 )
-
 
 # ════════════════════════════════════════════════════════════════════════════
 # 1. should_dispatch_user_present_task
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestShouldDispatch:
 
+class TestShouldDispatch:
     def test_user_present_required_true(self):
         c = _case("should_dispatch_when_user_present_required")
         result = should_dispatch_user_present_task(c["input"]["dryrun_result"])
@@ -98,8 +91,8 @@ class TestShouldDispatch:
 # 2. build_user_present_dispatch_context
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestBuildDispatchContext:
 
+class TestBuildDispatchContext:
     def test_eligible_when_user_present_required(self):
         c = _case("dispatch_context_eligible")
         ctx = build_user_present_dispatch_context(c["input"])
@@ -113,18 +106,22 @@ class TestBuildDispatchContext:
         assert ctx["safe_to_execute"] is False
 
     def test_safe_to_execute_always_false(self):
-        ctx = build_user_present_dispatch_context({
-            "workflow_run_id": "wr_x",
-            "dryrun_result": {"dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED},
-        })
+        ctx = build_user_present_dispatch_context(
+            {
+                "workflow_run_id": "wr_x",
+                "dryrun_result": {"dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED},
+            }
+        )
         assert ctx["safe_to_execute"] is False
 
     def test_context_has_required_keys(self):
-        ctx = build_user_present_dispatch_context({
-            "workflow_run_id": "wr_x",
-            "tenant_id": "t1",
-            "dryrun_result": {},
-        })
+        ctx = build_user_present_dispatch_context(
+            {
+                "workflow_run_id": "wr_x",
+                "tenant_id": "t1",
+                "dryrun_result": {},
+            }
+        )
         required = ["workflow_run_id", "tenant_id", "dispatch_eligible", "safe_to_execute", "dryrun_result"]
         for key in required:
             assert key in ctx, f"컨텍스트에 키 없음: {key}"
@@ -134,8 +131,8 @@ class TestBuildDispatchContext:
 # 3. build_user_present_task_from_dryrun
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestBuildTaskFromDryrun:
 
+class TestBuildTaskFromDryrun:
     def test_message_type_is_user_present_task(self):
         c = _case("build_task_from_dryrun_valid")
         msg = build_user_present_task_from_dryrun(c["input"])
@@ -160,14 +157,16 @@ class TestBuildTaskFromDryrun:
 
     def test_no_forbidden_fields(self):
         forbidden = ["password", "otp", "cookie", "session", "token", "target_url"]
-        msg = build_user_present_task_from_dryrun({
-            "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-            "workflow_run_id": "wr_x",
-            "next_step_instruction": {
-                "password": "secret",
-                "target_url": "https://example.com/login",
-            },
-        })
+        msg = build_user_present_task_from_dryrun(
+            {
+                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+                "workflow_run_id": "wr_x",
+                "next_step_instruction": {
+                    "password": "secret",
+                    "target_url": "https://example.com/login",
+                },
+            }
+        )
         for field in forbidden:
             assert field not in msg, f"금지 필드 포함됨: {field}"
 
@@ -176,8 +175,8 @@ class TestBuildTaskFromDryrun:
 # 4. validate_user_present_dispatch_request
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestValidateDispatchRequest:
 
+class TestValidateDispatchRequest:
     def test_missing_workflow_run_id(self):
         c = _case("validate_missing_workflow_run_id")
         errors = validate_user_present_dispatch_request(c["input"])
@@ -201,28 +200,32 @@ class TestValidateDispatchRequest:
         assert any("safe_to_execute" in e for e in errors)
 
     def test_valid_request_no_errors(self):
-        errors = validate_user_present_dispatch_request({
-            "workflow_run_id": "wr_valid",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-            "selected_agent_id": "agent_001",
-            "dryrun_result": {
-                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-            },
-        })
+        errors = validate_user_present_dispatch_request(
+            {
+                "workflow_run_id": "wr_valid",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "selected_agent_id": "agent_001",
+                "dryrun_result": {
+                    "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+                },
+            }
+        )
         assert errors == []
 
     def test_missing_tenant_id(self):
-        errors = validate_user_present_dispatch_request({
-            "workflow_run_id": "wr_x",
-            "user_id": "u1",
-            "site_id": "s1",
-            "selected_agent_id": "agent_001",
-            "dryrun_result": {
-                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-            },
-        })
+        errors = validate_user_present_dispatch_request(
+            {
+                "workflow_run_id": "wr_x",
+                "user_id": "u1",
+                "site_id": "s1",
+                "selected_agent_id": "agent_001",
+                "dryrun_result": {
+                    "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+                },
+            }
+        )
         assert any("tenant_id" in e for e in errors)
 
 
@@ -230,8 +233,8 @@ class TestValidateDispatchRequest:
 # 5. build_user_present_dispatch_response
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestBuildDispatchResponse:
 
+class TestBuildDispatchResponse:
     def test_valid_response_ok(self):
         c = _case("build_dispatch_response_valid")
         result = build_user_present_dispatch_response(c["input"])
@@ -264,21 +267,23 @@ class TestBuildDispatchResponse:
         assert result["dispatch_decision"] == DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED
 
     def test_task_message_no_raw_url(self):
-        result = build_user_present_dispatch_response({
-            "workflow_run_id": "wr_url_001",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-            "selected_agent_id": "agent_001",
-            "dryrun_result": {
-                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-                "next_step_instruction": {
-                    "target_url": "https://kbstar.com/login",
-                    "target_url_redacted": "https://kbstar.com/***",
-                    "target_url_hash": "abc123",
+        result = build_user_present_dispatch_response(
+            {
+                "workflow_run_id": "wr_url_001",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "selected_agent_id": "agent_001",
+                "dryrun_result": {
+                    "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+                    "next_step_instruction": {
+                        "target_url": "https://kbstar.com/login",
+                        "target_url_redacted": "https://kbstar.com/***",
+                        "target_url_hash": "abc123",
+                    },
                 },
-            },
-        })
+            }
+        )
         assert result["ok"] is True
         task_msg = result.get("task_message", {})
         assert "target_url" not in task_msg
@@ -288,10 +293,11 @@ class TestBuildDispatchResponse:
 # 6. in-memory 큐 (router)
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestInMemoryQueue:
 
+class TestInMemoryQueue:
     def test_enqueue_and_drain(self):
-        from ai_orchestrator.local_agent_router import _enqueue_up_task, _drain_up_tasks
+        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+
         _drain_up_tasks("agent_q_test")  # 초기화
         task = {"message_type": "USER_PRESENT_TASK", "workflow_run_id": "wr_q_001", "safe_to_execute": False}
         _enqueue_up_task("agent_q_test", task)
@@ -302,11 +308,13 @@ class TestInMemoryQueue:
 
     def test_drain_empty_queue(self):
         from ai_orchestrator.local_agent_router import _drain_up_tasks
+
         drained = _drain_up_tasks("agent_empty_test")
         assert drained == []
 
     def test_drain_clears_queue(self):
-        from ai_orchestrator.local_agent_router import _enqueue_up_task, _drain_up_tasks
+        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+
         _drain_up_tasks("agent_clear_test")
         _enqueue_up_task("agent_clear_test", {"message_type": "USER_PRESENT_TASK", "safe_to_execute": False})
         _drain_up_tasks("agent_clear_test")
@@ -314,7 +322,8 @@ class TestInMemoryQueue:
         assert drained_again == []
 
     def test_multiple_agents_isolated(self):
-        from ai_orchestrator.local_agent_router import _enqueue_up_task, _drain_up_tasks
+        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+
         _drain_up_tasks("agent_a")
         _drain_up_tasks("agent_b")
         _enqueue_up_task("agent_a", {"message_type": "USER_PRESENT_TASK", "wfid": "a1", "safe_to_execute": False})
@@ -325,7 +334,8 @@ class TestInMemoryQueue:
         assert len(drained_b) == 1 and drained_b[0]["wfid"] == "b1"
 
     def test_enqueued_task_safe_to_execute_false(self):
-        from ai_orchestrator.local_agent_router import _enqueue_up_task, _drain_up_tasks
+        from ai_orchestrator.local_agent_router import _drain_up_tasks, _enqueue_up_task
+
         _drain_up_tasks("agent_sec_test")
         task = {"message_type": "USER_PRESENT_TASK", "safe_to_execute": False}
         _enqueue_up_task("agent_sec_test", task)
@@ -337,55 +347,67 @@ class TestInMemoryQueue:
 # 7. 보안 원칙 검증
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestSecurityPolicy:
 
+class TestSecurityPolicy:
     def test_dispatcher_has_no_browser_launch_code(self):
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
         import inspect
+
+        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+
         src = inspect.getsource(mod)
         forbidden = ["playwright", "chromium", "firefox", "websockets.connect", "click(", "fill(", "type("]
         for pattern in forbidden:
             assert pattern not in src, f"금지 패턴 포함: {pattern}"
 
     def test_dispatcher_safe_to_execute_always_false(self):
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
         import inspect
+
+        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+
         src = inspect.getsource(mod)
         assert "safe_to_execute" in src
 
     def test_no_raw_url_in_dispatch_constants(self):
-        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
         import inspect
+
+        import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as mod
+
         src = inspect.getsource(mod)
         assert "target_url" not in src or "target_url_redacted" in src or "target_url_hash" in src
 
     def test_dispatch_response_never_contains_raw_url(self):
-        result = build_user_present_dispatch_response({
-            "workflow_run_id": "wr_sec_url",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-            "selected_agent_id": "agent_001",
-            "dryrun_result": {
-                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-                "next_step_instruction": {"target_url": "https://secret.example.com/login"},
-            },
-        })
+        result = build_user_present_dispatch_response(
+            {
+                "workflow_run_id": "wr_sec_url",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "selected_agent_id": "agent_001",
+                "dryrun_result": {
+                    "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+                    "next_step_instruction": {"target_url": "https://secret.example.com/login"},
+                },
+            }
+        )
         # task_message에 raw target_url이 없어야 함
         task_msg = result.get("task_message", {})
         assert "target_url" not in task_msg
 
     def test_dispatch_context_safe_to_execute_cannot_be_true(self):
-        ctx = build_user_present_dispatch_context({
-            "safe_to_execute": True,  # 무시되어야 함
-            "dryrun_result": {},
-        })
+        ctx = build_user_present_dispatch_context(
+            {
+                "safe_to_execute": True,  # 무시되어야 함
+                "dryrun_result": {},
+            }
+        )
         assert ctx["safe_to_execute"] is False
 
     def test_should_dispatch_returns_bool(self):
-        result = should_dispatch_user_present_task({
-            "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
-        })
+        result = should_dispatch_user_present_task(
+            {
+                "dispatch_decision": DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+            }
+        )
         assert isinstance(result, bool)
 
 
@@ -393,8 +415,8 @@ class TestSecurityPolicy:
 # 8. fixture 무결성
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestFixtureIntegrity:
 
+class TestFixtureIntegrity:
     def test_fixture_exists(self):
         assert FIXTURE_PATH.exists(), f"fixture 파일 없음: {FIXTURE_PATH}"
 
@@ -415,9 +437,7 @@ class TestFixtureIntegrity:
         for c in data["cases"]:
             exp = c.get("expected", {})
             if "safe_to_execute" in exp:
-                assert exp["safe_to_execute"] is False, (
-                    f"케이스 {c['id']}: safe_to_execute는 항상 False여야 함"
-                )
+                assert exp["safe_to_execute"] is False, f"케이스 {c['id']}: safe_to_execute는 항상 False여야 함"
 
     def test_no_raw_url_in_expected(self):
         data = _load_fixture()

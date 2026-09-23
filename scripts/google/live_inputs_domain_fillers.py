@@ -3,10 +3,12 @@
 gmail/cloud/search_console/youtube/ai_studio/play_console 등 서비스별 입력 핸들러.
 config·fill·cdp(공유 leaf) 의존. dispatch(루트)가 호출. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import json
-import os
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from .live_inputs_config import (
@@ -26,6 +28,7 @@ from .live_inputs_fill import (
     _generic_selectors,
     _safe_to_generic_fill,
 )
+
 
 def _fill_gmail_send(page: Any, action: dict, values: dict, result: dict) -> None:
     page.goto(action["target_url"], timeout=_page_timeout(30000), wait_until="domcontentloaded")
@@ -152,7 +155,7 @@ def _fill_cloud_iam_change(page: Any, action: dict, values: dict, result: dict) 
     _page_wait(page, 5000)
     if not _click_first_selector(
         page,
-        ['button[instrumentationid="iam-add-member"]', 'iam-add-member-action button'],
+        ['button[instrumentationid="iam-add-member"]', "iam-add-member-action button"],
         "grant_access_panel",
         result,
     ):
@@ -282,7 +285,9 @@ def _fill_youtube_studio_upload(page: Any, action: dict, values: dict, result: d
     except Exception as exc:
         result["skipped_fields"].append("video_path")
         result["warnings"].append(f"file input failed: {exc}")
-    _fill_first(page, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result)
+    _fill_first(
+        page, ['input[aria-label*="Title"]', 'textarea[aria-label*="Title"]'], values.get("title", ""), "title", result
+    )
     _fill_first(page, ['textarea[aria-label*="Description"]'], values.get("description", ""), "description", result)
     result["warnings"].append("YouTube final Next/Publish buttons were not clicked.")
 
@@ -299,7 +304,7 @@ def _fill_youtube_studio_upload_v2(page: Any, action: dict, values: dict, result
     _click_first_selector(
         page,
         [
-            'ytcp-button#create-icon',
+            "ytcp-button#create-icon",
             'button[aria-label*="Create"]',
             'tp-yt-paper-icon-button[aria-label*="Create"]',
             'button[aria-label*="만들기"]',
@@ -360,9 +365,7 @@ def _fill_youtube_studio_metadata(page: Any, action: dict, values: dict, result:
         result["skipped_fields"].append("title")
     if values.get("description"):
         result["skipped_fields"].append("description")
-    result["warnings"].append(
-        "YouTube metadata target lookup only; edit/save/publish controls were not clicked."
-    )
+    result["warnings"].append("YouTube metadata target lookup only; edit/save/publish controls were not clicked.")
 
 
 def _fill_ai_studio_api_key(page: Any, action: dict, values: dict, result: dict) -> None:
@@ -612,9 +615,7 @@ def _click_first_selector(page: Any, selectors: list[str], field: str, result: d
                 locator = frame.locator(selector).first
                 if locator.count() > 0:
                     locator.click(timeout=_locator_timeout(5000))
-                    result.setdefault("clicked_nonfinal_controls", []).append(
-                        {"field": field, "selector": selector}
-                    )
+                    result.setdefault("clicked_nonfinal_controls", []).append({"field": field, "selector": selector})
                     return True
             except Exception:
                 continue
@@ -624,7 +625,7 @@ def _click_first_selector(page: Any, selectors: list[str], field: str, result: d
 def _save_result(result: dict) -> tuple[dict, Path]:
     LIVE_INPUT_DIR.mkdir(parents=True, exist_ok=True)
     LATEST_LIVE_INPUT.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")  # noqa: UP017
     target = LIVE_INPUT_DIR / f"google_live_input_{result['action_key']}_{timestamp}.json"
     text = json.dumps(result, ensure_ascii=False, indent=2)
     target.write_text(text, encoding="utf-8")
@@ -635,7 +636,7 @@ def _save_result(result: dict) -> tuple[dict, Path]:
 def _save_manifest_result(summary: dict) -> tuple[dict, Path]:
     LIVE_INPUT_MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
     LATEST_LIVE_INPUT_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")  # noqa: UP017
     target = LIVE_INPUT_MANIFEST_DIR / f"google_live_input_manifest_{timestamp}.json"
     text = json.dumps(summary, ensure_ascii=False, indent=2)
     target.write_text(text, encoding="utf-8")

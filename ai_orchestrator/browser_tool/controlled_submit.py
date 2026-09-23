@@ -6,11 +6,12 @@ Validates controlled internal submit requests and generates audit-safe results.
 This module validates policy validator PASS → preview → user confirmation → controlled internal submit.
 No side effects, stateless, pure functions.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 from urllib.parse import urlparse
 
 
@@ -101,7 +102,7 @@ def is_controlled_internal_origin(
 
     try:
         parsed = urlparse(url)
-        netloc = parsed.netloc.lower()
+        netloc = parsed.netloc.lower()  # noqa: F841
         hostname = parsed.hostname or ""
         hostname_lower = hostname.lower()
 
@@ -171,7 +172,7 @@ def get_blocking_reason(
         url = preview_bundle.details.url
     elif hasattr(preview_bundle, "audit") and hasattr(preview_bundle.audit, "site_id"):
         # For smoke tests, use internal.mock as default controlled URL
-        url = f"https://internal.mock/form"
+        url = "https://internal.mock/form"
 
     if not url:
         return True, "url missing"
@@ -196,9 +197,7 @@ def get_blocking_reason(
                 if isinstance(item, dict):
                     for item_key, item_value in item.items():
                         if isinstance(item_value, str):
-                            has_keyword, keyword = (
-                                _contains_blocked_domain_keyword(item_value)
-                            )
+                            has_keyword, keyword = _contains_blocked_domain_keyword(item_value)
                             if has_keyword:
                                 return (
                                     True,
@@ -247,7 +246,7 @@ def build_controlled_submit_result(
         ControlledSubmitResult with lifecycle and audit record
     """
     audit = preview_bundle.audit if hasattr(preview_bundle, "audit") else None
-    details = preview_bundle.details if hasattr(preview_bundle, "details") else None
+    details = preview_bundle.details if hasattr(preview_bundle, "details") else None  # noqa: F841
 
     preview_hash = audit.preview_hash if audit else ""
     validation_id = audit.validation_id if audit else ""
@@ -262,7 +261,7 @@ def build_controlled_submit_result(
     )
 
     # Build lifecycle
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     lifecycle = {
         "preview_timestamp": audit.preview_timestamp if audit else "",
         "confirmation_check": now,

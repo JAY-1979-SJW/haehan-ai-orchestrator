@@ -17,21 +17,21 @@
 
 사이트별 설정은 SITE_LOGIN_CONFIG 에 추가.
 """
+
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from ai_orchestrator.local_agent.browser.actions import (
-    navigate, click, type_text, wait_for_selector, screenshot, wait_ms,
-    GateApprovalRequired,
+    click,
+    type_text,
+    wait_ms,
 )
+from ai_orchestrator.local_agent.browser.approval_server import request_approval
 from ai_orchestrator.local_agent.browser.audit_log import log_action
 from ai_orchestrator.local_agent.browser.intent_token import IntentToken
-from ai_orchestrator.local_agent.browser.approval_server import request_approval
-
 
 # ── 로그인 상태 코드 ─────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ LOGIN_UNKNOWN = "unknown"
 # ── 간편인증 방식 ────────────────────────────────────────────────────────────
 
 EASY_AUTH_KAKAO = "kakao"
-EASY_AUTH_PASS = "pass"
+EASY_AUTH_PASS = "pass"  # noqa: S105
 EASY_AUTH_NAVER = "naver"
 EASY_AUTH_SAMSUNG = "samsung"
 EASY_AUTH_TOSS = "toss"
@@ -96,9 +96,10 @@ SITE_LOGIN_CONFIG: dict[str, dict] = {
 
 # ── 결과 ────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class LoginResult:
-    status: str           # LOGIN_OK / LOGIN_REQUIRED / LOGIN_TWO_FACTOR / LOGIN_CERT
+    status: str  # LOGIN_OK / LOGIN_REQUIRED / LOGIN_TWO_FACTOR / LOGIN_CERT
     site: str = ""
     method_used: str = ""
     message: str = ""
@@ -110,6 +111,7 @@ class LoginResult:
 
 
 # ── 상태 감지 ────────────────────────────────────────────────────────────────
+
 
 def detect_login_state(page, site_host: str = "") -> str:
     """현재 페이지의 로그인 상태를 감지."""
@@ -156,6 +158,7 @@ def is_cert_required(page, site_host: str = "") -> bool:
 
 # ── 간편인증 ────────────────────────────────────────────────────────────────
 
+
 def try_easy_auth(
     page,
     method: str = EASY_AUTH_KAKAO,
@@ -189,17 +192,22 @@ def try_easy_auth(
         )
 
     print(f"[로그인] {method_label} 선택 중...")
-    r = click(page, selector, label=f"{method_label} 버튼",
-              intent=intent, audit_path=audit_path, force=True)
+    r = click(page, selector, label=f"{method_label} 버튼", intent=intent, audit_path=audit_path, force=True)
     if not r.ok:
         return LoginResult(
-            status=LOGIN_REQUIRED, site=host, method_used=method,
+            status=LOGIN_REQUIRED,
+            site=host,
+            method_used=method,
             message=f"버튼 클릭 실패: {r.error}",
         )
 
-    log_action("easy_auth_initiated", url=page.url,
-               extra={"method": method, "site": host},
-               risk_level="AUTO", audit_path=audit_path)
+    log_action(
+        "easy_auth_initiated",
+        url=page.url,
+        extra={"method": method, "site": host},
+        risk_level="AUTO",
+        audit_path=audit_path,
+    )
 
     print(f"[로그인] 모바일 {method_label} 인증을 완료해주세요. (최대 {wait_seconds}초 대기)")
 
@@ -209,22 +217,29 @@ def try_easy_auth(
         time.sleep(2)
         state = detect_login_state(page, host)
         if state == LOGIN_OK:
-            log_action("login_success", url=page.url,
-                       extra={"method": method, "site": host},
-                       risk_level="AUTO", audit_path=audit_path)
+            log_action(
+                "login_success",
+                url=page.url,
+                extra={"method": method, "site": host},
+                risk_level="AUTO",
+                audit_path=audit_path,
+            )
             print(f"[로그인] ✓ {method_label} 인증 완료")
             return LoginResult(status=LOGIN_OK, site=host, method_used=method)
         if state == LOGIN_TWO_FACTOR:
-            print(f"[로그인] 추가 인증 단계 감지")
+            print("[로그인] 추가 인증 단계 감지")
             return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used=method)
 
     return LoginResult(
-        status=LOGIN_REQUIRED, site=host, method_used=method,
+        status=LOGIN_REQUIRED,
+        site=host,
+        method_used=method,
         message=f"{wait_seconds}초 초과 — 인증 완료 감지 실패",
     )
 
 
 # ── 공인인증서 로그인 ────────────────────────────────────────────────────────
+
 
 def handle_cert_login(
     page,
@@ -244,20 +259,18 @@ def handle_cert_login(
     cert_sel = cfg.get("cert_btn")
 
     if cert_sel:
-        print(f"[로그인] 공동인증서 로그인 버튼 클릭...")
-        r = click(page, cert_sel, label="공동인증서 로그인",
-                  intent=intent, audit_path=audit_path, force=True)
+        print("[로그인] 공동인증서 로그인 버튼 클릭...")
+        r = click(page, cert_sel, label="공동인증서 로그인", intent=intent, audit_path=audit_path, force=True)
         if not r.ok:
-            print(f"[로그인] 버튼 클릭 실패, 수동으로 '공동인증서' 클릭 후 진행하세요.")
+            print("[로그인] 버튼 클릭 실패, 수동으로 '공동인증서' 클릭 후 진행하세요.")
 
-    log_action("cert_login_initiated", url=page.url,
-               extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
+    log_action("cert_login_initiated", url=page.url, extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
 
-    print(f"\n[로그인] 공동인증서 로그인")
-    print(f"  브라우저 팝업에서:")
-    print(f"  1. 인증서를 선택하세요")
-    print(f"  2. PIN 번호를 입력하세요")
-    print(f"  ※ AI는 PIN을 입력하지 않습니다 (보안 원칙)")
+    print("\n[로그인] 공동인증서 로그인")
+    print("  브라우저 팝업에서:")
+    print("  1. 인증서를 선택하세요")
+    print("  2. PIN 번호를 입력하세요")
+    print("  ※ AI는 PIN을 입력하지 않습니다 (보안 원칙)")
     print(f"  로그인 완료 후 최대 {wait_seconds}초 대기합니다.")
 
     deadline = time.time() + wait_seconds
@@ -265,22 +278,25 @@ def handle_cert_login(
         time.sleep(2)
         state = detect_login_state(page, host)
         if state == LOGIN_OK:
-            log_action("cert_login_success", url=page.url,
-                       extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
-            print(f"[로그인] ✓ 공동인증서 로그인 완료")
+            log_action(
+                "cert_login_success", url=page.url, extra={"site": host}, risk_level="AUTO", audit_path=audit_path
+            )
+            print("[로그인] ✓ 공동인증서 로그인 완료")
             return LoginResult(status=LOGIN_OK, site=host, method_used="cert")
         if state == LOGIN_TWO_FACTOR:
             return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used="cert")
 
-    print(f"[로그인] 타임아웃: 브라우저에서 직접 로그인 후 엔터를 눌러주세요.")
+    print("[로그인] 타임아웃: 브라우저에서 직접 로그인 후 엔터를 눌러주세요.")
     input("→ 로그인 완료 후 엔터: ")
     return LoginResult(
         status=detect_login_state(page, host),
-        site=host, method_used="cert_manual",
+        site=host,
+        method_used="cert_manual",
     )
 
 
 # ── OTP / 2단계 인증 ─────────────────────────────────────────────────────────
+
 
 def handle_two_factor(
     page,
@@ -297,12 +313,11 @@ def handle_two_factor(
     """
     host = site_host or _extract_host(page)
 
-    log_action("two_factor_started", url=page.url,
-               extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
+    log_action("two_factor_started", url=page.url, extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
 
-    print(f"\n[로그인] 2단계 인증 필요")
-    print(f"  OTP 앱, SMS, 또는 이메일의 인증 코드를 브라우저에 직접 입력하세요.")
-    print(f"  ※ AI는 OTP 코드를 입력하지 않습니다 (보안 원칙)")
+    print("\n[로그인] 2단계 인증 필요")
+    print("  OTP 앱, SMS, 또는 이메일의 인증 코드를 브라우저에 직접 입력하세요.")
+    print("  ※ AI는 OTP 코드를 입력하지 않습니다 (보안 원칙)")
     print(f"  입력 완료 후 자동으로 감지합니다. (최대 {wait_seconds}초)")
 
     deadline = time.time() + wait_seconds
@@ -310,23 +325,26 @@ def handle_two_factor(
         time.sleep(2)
         state = detect_login_state(page, host)
         if state == LOGIN_OK:
-            log_action("two_factor_success", url=page.url,
-                       extra={"site": host}, risk_level="AUTO", audit_path=audit_path)
-            print(f"[로그인] ✓ 2단계 인증 완료")
+            log_action(
+                "two_factor_success", url=page.url, extra={"site": host}, risk_level="AUTO", audit_path=audit_path
+            )
+            print("[로그인] ✓ 2단계 인증 완료")
             return LoginResult(status=LOGIN_OK, site=host, method_used="two_factor")
         if state not in (LOGIN_TWO_FACTOR, LOGIN_UNKNOWN):
             break
 
     # 타임아웃 → 수동 확인
-    print(f"[로그인] 타임아웃: 브라우저에서 인증 완료 후 엔터를 눌러주세요.")
+    print("[로그인] 타임아웃: 브라우저에서 인증 완료 후 엔터를 눌러주세요.")
     input("→ 인증 완료 후 엔터: ")
     return LoginResult(
         status=detect_login_state(page, host),
-        site=host, method_used="two_factor_manual",
+        site=host,
+        method_used="two_factor_manual",
     )
 
 
 # ── ID/PW 로그인 (사용자 직접) ───────────────────────────────────────────────
+
 
 def handle_idpw_login(
     page,
@@ -347,15 +365,19 @@ def handle_idpw_login(
     """
     host = site_host or _extract_host(page)
 
-    log_action("idpw_login_started", url=page.url,
-               extra={"site": host, "has_credentials": bool(username)},
-               risk_level="AUTO", audit_path=audit_path)
+    log_action(
+        "idpw_login_started",
+        url=page.url,
+        extra={"site": host, "has_credentials": bool(username)},
+        risk_level="AUTO",
+        audit_path=audit_path,
+    )
 
     if username and password:
         # 승인 후 AI 자동 입력 — 브라우저 팝업 승인
         approved = request_approval(
             action="login",
-            label=f"아이디/비밀번호 자동 입력",
+            label="아이디/비밀번호 자동 입력",
             category="CREDENTIAL",
             detail={"아이디": username, "비밀번호": "*" * min(len(password), 8), "사이트": host},
         )
@@ -363,28 +385,37 @@ def handle_idpw_login(
             print("[로그인] 사용자 거부 → 수동 입력 모드로 전환")
         else:
             try:
-                type_text(page, id_selector, username, label="아이디",
-                          intent=intent, audit_path=audit_path, force=True)
+                type_text(page, id_selector, username, label="아이디", intent=intent, audit_path=audit_path, force=True)
                 wait_ms(300)
-                type_text(page, pw_selector, password, label="password",
-                          intent=intent, audit_path=audit_path, force=True)
+                type_text(
+                    page, pw_selector, password, label="password", intent=intent, audit_path=audit_path, force=True
+                )
                 wait_ms(300)
                 # 로그인 버튼 클릭
-                for btn_sel in ("button[type='submit']", "input[type='submit']",
-                                "button:has-text('로그인')", ".btn-login", "#loginBtn"):
+                for btn_sel in (
+                    "button[type='submit']",
+                    "input[type='submit']",
+                    "button:has-text('로그인')",
+                    ".btn-login",
+                    "#loginBtn",
+                ):
                     try:
                         page.click(btn_sel, timeout=2000)
                         break
-                    except Exception:
+                    except Exception:  # noqa: S112
                         continue
                 wait_ms(2000)
                 page.wait_for_load_state("networkidle", timeout=15000)
                 state = detect_login_state(page, host)
                 if state == LOGIN_OK:
-                    log_action("idpw_login_success", url=page.url,
-                               extra={"site": host, "method": "ai_input"},
-                               risk_level="APPROVE", audit_path=audit_path)
-                    print(f"[로그인] ✓ 자동 로그인 완료")
+                    log_action(
+                        "idpw_login_success",
+                        url=page.url,
+                        extra={"site": host, "method": "ai_input"},
+                        risk_level="APPROVE",
+                        audit_path=audit_path,
+                    )
+                    print("[로그인] ✓ 자동 로그인 완료")
                     return LoginResult(status=LOGIN_OK, site=host, method_used="idpw_auto")
                 if state == LOGIN_TWO_FACTOR:
                     return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used="idpw_auto")
@@ -396,20 +427,24 @@ def handle_idpw_login(
     # 수동 입력 모드 (자격증명 없거나 실패 시)
     try:
         page.focus(id_selector)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
-    print(f"\n[로그인] 아이디/비밀번호를 브라우저에서 직접 입력 후 로그인하세요.")
+    print("\n[로그인] 아이디/비밀번호를 브라우저에서 직접 입력 후 로그인하세요.")
 
     deadline = time.time() + wait_seconds
     while time.time() < deadline:
         time.sleep(2)
         state = detect_login_state(page, host)
         if state == LOGIN_OK:
-            log_action("idpw_login_success", url=page.url,
-                       extra={"site": host, "method": "manual"},
-                       risk_level="AUTO", audit_path=audit_path)
-            print(f"[로그인] ✓ 로그인 완료")
+            log_action(
+                "idpw_login_success",
+                url=page.url,
+                extra={"site": host, "method": "manual"},
+                risk_level="AUTO",
+                audit_path=audit_path,
+            )
+            print("[로그인] ✓ 로그인 완료")
             return LoginResult(status=LOGIN_OK, site=host, method_used="idpw")
         if state == LOGIN_TWO_FACTOR:
             return LoginResult(status=LOGIN_TWO_FACTOR, site=host, method_used="idpw")
@@ -425,7 +460,8 @@ def handle_idpw_login(
     )
     return LoginResult(
         status=detect_login_state(page, host),
-        site=host, method_used="idpw_manual",
+        site=host,
+        method_used="idpw_manual",
     )
 
 
@@ -454,27 +490,39 @@ def input_credential(
         },
     )
     if not approved:
-        log_action("credential_input_rejected", url=page.url,
-                   extra={"field_label": field_label},
-                   risk_level="APPROVE", audit_path=audit_path)
+        log_action(
+            "credential_input_rejected",
+            url=page.url,
+            extra={"field_label": field_label},
+            risk_level="APPROVE",
+            audit_path=audit_path,
+        )
         return False
 
     try:
-        type_text(page, selector, value, label=field_label,
-                  intent=intent, audit_path=audit_path, force=True)
-        log_action("credential_input_ok", url=page.url,
-                   extra={"field_label": field_label, "length": len(value)},
-                   risk_level="APPROVE", audit_path=audit_path)
+        type_text(page, selector, value, label=field_label, intent=intent, audit_path=audit_path, force=True)
+        log_action(
+            "credential_input_ok",
+            url=page.url,
+            extra={"field_label": field_label, "length": len(value)},
+            risk_level="APPROVE",
+            audit_path=audit_path,
+        )
         return True
     except Exception as e:
-        log_action("credential_input_error", url=page.url,
-                   extra={"field_label": field_label, "error": str(e)[:100]},
-                   risk_level="APPROVE", audit_path=audit_path)
+        log_action(
+            "credential_input_error",
+            url=page.url,
+            extra={"field_label": field_label, "error": str(e)[:100]},
+            risk_level="APPROVE",
+            audit_path=audit_path,
+        )
         print(f"[자격증명] 입력 실패: {e}")
         return False
 
 
 # ── 통합 로그인 오케스트레이터 ───────────────────────────────────────────────
+
 
 def ensure_logged_in(
     page,
@@ -506,69 +554,69 @@ def ensure_logged_in(
 
     # 2. 공인인증서 화면
     if state == LOGIN_CERT:
-        result = handle_cert_login(page, site_host=host,
-                                   intent=intent, audit_path=audit_path)
+        result = handle_cert_login(page, site_host=host, intent=intent, audit_path=audit_path)
         if result.ok:
             return result
 
     # 3. 2FA 화면
     if state == LOGIN_TWO_FACTOR:
-        result = handle_two_factor(page, site_host=host,
-                                   intent=intent, audit_path=audit_path)
+        result = handle_two_factor(page, site_host=host, intent=intent, audit_path=audit_path)
         if result.ok:
             return result
 
     # 4. 간편인증 시도
     cfg = _get_site_cfg(host)
     if preferred_method in cfg.get("easy_auth", {}):
-        result = try_easy_auth(page, preferred_method, site_host=host,
-                               intent=intent, audit_path=audit_path)
+        result = try_easy_auth(page, preferred_method, site_host=host, intent=intent, audit_path=audit_path)
         if result.ok:
             return result
         if result.status == LOGIN_TWO_FACTOR:
-            result2 = handle_two_factor(page, site_host=host,
-                                        intent=intent, audit_path=audit_path)
+            result2 = handle_two_factor(page, site_host=host, intent=intent, audit_path=audit_path)
             if result2.ok:
                 return result2
 
     # 5. 공인인증서 fallback
     if fallback_to_cert and cfg.get("cert_btn"):
-        print(f"\n[로그인] 간편인증 실패 → 공동인증서로 전환")
-        result = handle_cert_login(page, site_host=host,
-                                   intent=intent, audit_path=audit_path)
+        print("\n[로그인] 간편인증 실패 → 공동인증서로 전환")
+        result = handle_cert_login(page, site_host=host, intent=intent, audit_path=audit_path)
         if result.ok:
             return result
 
     # 6. ID/PW fallback
     if fallback_to_idpw:
-        print(f"\n[로그인] 다른 방법 실패 → 아이디/비밀번호 로그인")
-        result = handle_idpw_login(page, site_host=host,
-                                   intent=intent, audit_path=audit_path)
+        print("\n[로그인] 다른 방법 실패 → 아이디/비밀번호 로그인")
+        result = handle_idpw_login(page, site_host=host, intent=intent, audit_path=audit_path)
         if result.ok:
             return result
 
     return LoginResult(
-        status=LOGIN_REQUIRED, site=host,
+        status=LOGIN_REQUIRED,
+        site=host,
         message="모든 로그인 방법 실패",
     )
 
 
 # ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
 
+
 def _extract_host(page) -> str:
     try:
         from urllib.parse import urlparse
+
         return urlparse(page.url).netloc
     except Exception:
         return ""
 
 
 def _get_site_cfg(host: str) -> dict:
-    return SITE_LOGIN_CONFIG.get(host, {
-        "name": host,
-        "login_indicators": ["로그인"],
-        "logged_in_indicators": ["로그아웃"],
-        "easy_auth": {},
-        "cert_btn": None,
-        "two_factor_indicators": ["OTP", "인증코드"],
-    })
+    return SITE_LOGIN_CONFIG.get(
+        host,
+        {
+            "name": host,
+            "login_indicators": ["로그인"],
+            "logged_in_indicators": ["로그아웃"],
+            "easy_auth": {},
+            "cert_btn": None,
+            "two_factor_indicators": ["OTP", "인증코드"],
+        },
+    )

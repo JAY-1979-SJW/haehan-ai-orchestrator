@@ -3,18 +3,15 @@
 album/polls/calendar/neighbors. CafeMixin 이 다중상속. 메서드 간 호출은
 인스턴스(self)/MRO 로 해결. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Optional
-
-from .cafe_mixin_common import _js
 
 
 class CafeMediaMixin:
-    def cafe_album(self, cafe_url: str, menu_id: str = "", page: int = 1,
-                   per_page: int = 30) -> dict:
+    def cafe_album(self, cafe_url: str, menu_id: str = "", page: int = 1, per_page: int = 30) -> dict:
         """카페 앨범(사진 게시판) 목록 조회 — GraphQL BFF 직접 호출.
 
         반환:
@@ -28,8 +25,7 @@ class CafeMediaMixin:
 
         resp = self._fetch_graphql_bff(
             self._GQL_PHOTO_ARTICLES,
-            {"cafeId": club_id, "menuId": menu_id or None,
-             "page": page, "perPage": per_page},
+            {"cafeId": club_id, "menuId": menu_id or None, "page": page, "perPage": per_page},
             "CafePhotoArticles",
         )
 
@@ -38,16 +34,18 @@ class CafeMediaMixin:
         items = []
         for it in raw_items:
             thumb = it.get("thumbnail") or {}
-            items.append({
-                "article_id": str(it.get("articleId", "")),
-                "title": it.get("subject", ""),
-                "author": it.get("writerNickname", ""),
-                "written_at": it.get("writeDate", ""),
-                "views": it.get("readCount", 0),
-                "comments": it.get("commentCount", 0),
-                "likes": it.get("likeCount", 0),
-                "thumb_url": thumb.get("url", ""),
-            })
+            items.append(
+                {
+                    "article_id": str(it.get("articleId", "")),
+                    "title": it.get("subject", ""),
+                    "author": it.get("writerNickname", ""),
+                    "written_at": it.get("writeDate", ""),
+                    "views": it.get("readCount", 0),
+                    "comments": it.get("commentCount", 0),
+                    "likes": it.get("likeCount", 0),
+                    "thumb_url": thumb.get("url", ""),
+                }
+            )
 
         # GraphQL 실패 시 f-e 프레임 폴백
         if not items:
@@ -55,16 +53,14 @@ class CafeMediaMixin:
 
         return {"total_count": data.get("totalCount", len(items)), "items": items}
 
-    def _cafe_album_fallback(self, cafe_url: str, menu_id: str,
-                             max_posts: int = 30) -> list[dict]:
+    def _cafe_album_fallback(self, cafe_url: str, menu_id: str, max_posts: int = 30) -> list[dict]:
         """GraphQL 실패 시 f-e 프레임 폴백."""
         club_id = self._get_club_id(cafe_url)
         if not club_id:
             return []
 
         if menu_id:
-            url = (f"https://cafe.naver.com/f-e/cafes/{club_id}"
-                   f"/menus/{menu_id}?viewType=I")
+            url = f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/{menu_id}?viewType=I"
         else:
             url = f"https://cafe.naver.com/f-e/cafes/{club_id}?viewType=I"
 
@@ -92,8 +88,7 @@ class CafeMediaMixin:
     }
     """
 
-    def cafe_polls(self, cafe_url: str, page: int = 1,
-                   per_page: int = 20) -> dict:
+    def cafe_polls(self, cafe_url: str, page: int = 1, per_page: int = 20) -> dict:
         """카페 투표 목록 조회 — GraphQL BFF 직접 호출.
 
         반환:
@@ -115,21 +110,21 @@ class CafeMediaMixin:
         raw_items = data.get("items") or []
         items = []
         for it in raw_items:
-            items.append({
-                "poll_id": str(it.get("pollId", "")),
-                "title": it.get("title", ""),
-                "author": it.get("writerNickname", ""),
-                "write_date": it.get("writeDate", ""),
-                "end_date": it.get("endDate", ""),
-                "status": it.get("status", ""),
-                "participants": it.get("participantCount", 0),
-                "options": [
-                    {"id": str(o.get("optionId", "")),
-                     "text": o.get("text", ""),
-                     "votes": o.get("voteCount", 0)}
-                    for o in (it.get("options") or [])
-                ],
-            })
+            items.append(
+                {
+                    "poll_id": str(it.get("pollId", "")),
+                    "title": it.get("title", ""),
+                    "author": it.get("writerNickname", ""),
+                    "write_date": it.get("writeDate", ""),
+                    "end_date": it.get("endDate", ""),
+                    "status": it.get("status", ""),
+                    "participants": it.get("participantCount", 0),
+                    "options": [
+                        {"id": str(o.get("optionId", "")), "text": o.get("text", ""), "votes": o.get("voteCount", 0)}
+                        for o in (it.get("options") or [])
+                    ],
+                }
+            )
 
         # GraphQL 실패 시 f-e 페이지 텍스트 폴백
         if not items:
@@ -150,24 +145,26 @@ class CafeMediaMixin:
         polls: list[dict] = []
         try:
             body_txt = self._page.inner_text("body")
-            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
             for i, line in enumerate(lines):
                 if re.search(r"\d{4}\.\d{2}\.\d{2}", line):
                     title = lines[i - 1] if i > 0 else ""
                     if title and len(title) > 4:
-                        polls.append({
-                            "poll_id": "",
-                            "title": title,
-                            "author": "",
-                            "write_date": line,
-                            "end_date": "",
-                            "status": "",
-                            "participants": 0,
-                            "options": [],
-                        })
+                        polls.append(
+                            {
+                                "poll_id": "",
+                                "title": title,
+                                "author": "",
+                                "write_date": line,
+                                "end_date": "",
+                                "status": "",
+                                "participants": 0,
+                                "options": [],
+                            }
+                        )
                     if len(polls) >= max_polls:
                         break
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return polls
 
@@ -214,15 +211,17 @@ class CafeMediaMixin:
         raw = (resp.get("data") or {}).get("cafeCalendarEvents") or []
         events = []
         for ev in raw:
-            events.append({
-                "event_id": str(ev.get("eventId", "")),
-                "title": ev.get("title", ""),
-                "start_date": ev.get("startDate", ""),
-                "end_date": ev.get("endDate", ""),
-                "author": ev.get("writerNickname", ""),
-                "description": ev.get("description", ""),
-                "is_all_day": ev.get("isAllDay", False),
-            })
+            events.append(
+                {
+                    "event_id": str(ev.get("eventId", "")),
+                    "title": ev.get("title", ""),
+                    "start_date": ev.get("startDate", ""),
+                    "end_date": ev.get("endDate", ""),
+                    "author": ev.get("writerNickname", ""),
+                    "description": ev.get("description", ""),
+                    "is_all_day": ev.get("isAllDay", False),
+                }
+            )
 
         # GraphQL 실패 시 f-e 폴백
         if not events:
@@ -243,22 +242,24 @@ class CafeMediaMixin:
         events: list[dict] = []
         try:
             body_txt = self._page.inner_text("body")
-            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
             for i, line in enumerate(lines):
                 date_m = re.search(r"(\d{4}[-./]\d{2}[-./]\d{2})", line)
                 if date_m and i > 0:
                     title = lines[i - 1]
                     if title and not re.search(r"^\d", title):
-                        events.append({
-                            "event_id": "",
-                            "title": title,
-                            "start_date": date_m.group(1),
-                            "end_date": "",
-                            "author": "",
-                            "description": "",
-                            "is_all_day": False,
-                        })
-        except Exception:
+                        events.append(
+                            {
+                                "event_id": "",
+                                "title": title,
+                                "start_date": date_m.group(1),
+                                "end_date": "",
+                                "author": "",
+                                "description": "",
+                                "is_all_day": False,
+                            }
+                        )
+        except Exception:  # noqa: S110
             pass
         return events
 
@@ -280,8 +281,7 @@ class CafeMediaMixin:
     }
     """
 
-    def cafe_neighbors(self, cafe_url: str, page: int = 1,
-                       per_page: int = 50) -> dict:
+    def cafe_neighbors(self, cafe_url: str, page: int = 1, per_page: int = 50) -> dict:
         """카페 이웃(구독) 멤버 목록 조회 — GraphQL BFF 직접 호출.
 
         반환:
@@ -303,23 +303,33 @@ class CafeMediaMixin:
         raw_items = data.get("items") or []
         items = []
         for it in raw_items:
-            items.append({
-                "member_id": str(it.get("memberId", "")),
-                "nickname": it.get("nickname", ""),
-                "grade": it.get("grade", ""),
-                "join_date": it.get("joinDate", ""),
-                "article_count": it.get("articleCount", 0),
-                "visit_count": it.get("visitCount", 0),
-            })
+            items.append(
+                {
+                    "member_id": str(it.get("memberId", "")),
+                    "nickname": it.get("nickname", ""),
+                    "grade": it.get("grade", ""),
+                    "join_date": it.get("joinDate", ""),
+                    "article_count": it.get("articleCount", 0),
+                    "visit_count": it.get("visitCount", 0),
+                }
+            )
 
         # GraphQL 실패 시 f-e 멤버 목록 폴백
         if not items:
             fallback = self.cafe_members(cafe_url, max_members=per_page)
-            return {"total_count": len(fallback), "items": [
-                {"member_id": "", "nickname": m.get("nickname", ""),
-                 "grade": m.get("grade", ""), "join_date": "",
-                 "article_count": 0, "visit_count": 0}
-                for m in fallback
-            ]}
+            return {
+                "total_count": len(fallback),
+                "items": [
+                    {
+                        "member_id": "",
+                        "nickname": m.get("nickname", ""),
+                        "grade": m.get("grade", ""),
+                        "join_date": "",
+                        "article_count": 0,
+                        "visit_count": 0,
+                    }
+                    for m in fallback
+                ],
+            }
 
         return {"total_count": data.get("totalCount", len(items)), "items": items}

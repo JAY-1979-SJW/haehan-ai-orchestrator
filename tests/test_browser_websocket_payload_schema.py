@@ -10,20 +10,18 @@ Verifies:
 """
 
 import pytest
+
+from ai_orchestrator import local_agent_registry as _reg
 from local_agent.browser_websocket_schema import (
+    ALLOWED_ACTION_TYPES,
+    RESULT_DATA_ALLOWED_KEYS,
+    RESULT_DATA_FORBIDDEN_KEYS,
+    VALID_TASK_STATUS,
     BrowserWebSocketTaskPayloadSchema,
     BrowserWebSocketTaskResultSchema,
     validate_payload_schema,
     validate_result_schema,
-    safe_result_dict,
-    ALLOWED_ACTION_TYPES,
-    BLOCKED_ACTION_TYPES,
-    VALID_TASK_STATUS,
-    RESULT_DATA_ALLOWED_KEYS,
-    RESULT_DATA_FORBIDDEN_KEYS,
-    METADATA_FORBIDDEN_KEYS,
 )
-from ai_orchestrator import local_agent_registry as _reg
 
 
 class TestPayloadValidation:
@@ -69,7 +67,7 @@ class TestPayloadValidation:
             "selector": "#btn",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is True
 
     def test_execute_submit_payload_rejected(self):
@@ -94,7 +92,7 @@ class TestPayloadValidation:
             "selector": "#btn",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is False
 
     def test_missing_task_id_rejected(self):
@@ -105,7 +103,7 @@ class TestPayloadValidation:
             "selector": "#btn",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is False
 
     def test_wrong_task_type_value_rejected(self):
@@ -117,7 +115,7 @@ class TestPayloadValidation:
             "selector": "#btn",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is False
 
     def test_missing_action_type_rejected(self):
@@ -128,7 +126,7 @@ class TestPayloadValidation:
             "selector": "#btn",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is False
 
     def test_missing_selector_rejected(self):
@@ -139,7 +137,7 @@ class TestPayloadValidation:
             "action_type": "browser.execute_click",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is False
 
     def test_execute_type_without_value_rejected(self):
@@ -169,7 +167,7 @@ class TestApprovalTokenHandling:
             "approval_token": "secret-token-value",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is True
 
     def test_final_approval_token_allowed_in_input_payload(self):
@@ -182,18 +180,20 @@ class TestApprovalTokenHandling:
             "final_approval_token": "final-token-value",
         }
 
-        is_valid, error = validate_payload_schema(data)
+        is_valid, _error = validate_payload_schema(data)
         assert is_valid is True
 
     def test_approval_token_not_in_safe_dict(self):
         """approval_token removed from safe_dict"""
-        schema = BrowserWebSocketTaskPayloadSchema.from_dict({
-            "task_id": "task-013",
-            "task_type": "browser_action",
-            "action_type": "browser.execute_click",
-            "selector": "#btn",
-            "approval_token": "secret-token",
-        })
+        schema = BrowserWebSocketTaskPayloadSchema.from_dict(
+            {
+                "task_id": "task-013",
+                "task_type": "browser_action",
+                "action_type": "browser.execute_click",
+                "selector": "#btn",
+                "approval_token": "secret-token",
+            }
+        )
 
         safe = schema.safe_dict()
         assert "approval_token" not in safe
@@ -201,13 +201,15 @@ class TestApprovalTokenHandling:
 
     def test_final_approval_token_not_in_safe_dict(self):
         """final_approval_token removed from safe_dict"""
-        schema = BrowserWebSocketTaskPayloadSchema.from_dict({
-            "task_id": "task-014",
-            "task_type": "browser_action",
-            "action_type": "browser.execute_click",
-            "selector": "#btn",
-            "final_approval_token": "final-token",
-        })
+        schema = BrowserWebSocketTaskPayloadSchema.from_dict(
+            {
+                "task_id": "task-014",
+                "task_type": "browser_action",
+                "action_type": "browser.execute_click",
+                "selector": "#btn",
+                "final_approval_token": "final-token",
+            }
+        )
 
         safe = schema.safe_dict()
         assert "final_approval_token" not in safe
@@ -229,7 +231,7 @@ class TestMetadataConstraints:
                 "metadata": {forbidden_key: "value"},
             }
 
-            is_valid, error = validate_payload_schema(data)
+            is_valid, _error = validate_payload_schema(data)
             assert is_valid is False, f"Forbidden key '{forbidden_key}' should be rejected but wasn't"
 
 
@@ -259,7 +261,7 @@ class TestResultSchema:
             status="executed",
         )
 
-        is_safe, error = validate_result_schema(result)
+        is_safe, _error = validate_result_schema(result)
         assert is_safe is False
 
     def test_result_text_preview_must_be_redacted(self):
@@ -406,10 +408,21 @@ class TestWhitelistConsistency:
         """Registry whitelist includes all browser-specific result fields"""
         # Note: task_id is NOT in registry whitelist (result contains reference via task_id field in other contexts)
         browser_fields = {
-            "status", "selector", "executed", "element_found",
-            "risk_level", "final_approval_required", "result",
-            "target_url_domain", "text_length", "text_preview",
-            "error_message", "screenshot_ref", "action", "error_code", "screenshot_taken",
+            "status",
+            "selector",
+            "executed",
+            "element_found",
+            "risk_level",
+            "final_approval_required",
+            "result",
+            "target_url_domain",
+            "text_length",
+            "text_preview",
+            "error_message",
+            "screenshot_ref",
+            "action",
+            "error_code",
+            "screenshot_taken",
         }
 
         registry_allowed = _reg._RESULT_DATA_ALLOWED_KEYS

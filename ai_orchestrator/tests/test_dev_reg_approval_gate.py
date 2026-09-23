@@ -10,18 +10,17 @@
   7. audit log 기록 (DEV_REG_* 이벤트)
   8. secret/cookie/password 로그 미노출
 """
+
 from __future__ import annotations
 
 import importlib
-import json
 import os
 import sys
 import threading
 import time as _time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -37,22 +36,37 @@ def _isolated_storage(tmp_path, monkeypatch):
     """각 테스트마다 독립된 storage 경로 사용."""
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
 
-    import ai_orchestrator.config as _cfg; importlib.reload(_cfg)
-    import ai_orchestrator.approval as _ap; importlib.reload(_ap); _ap.clear_rate_store()
-    import ai_orchestrator.audit_logger as _al; importlib.reload(_al)
-    import ai_orchestrator.dev_reg_approval as _dra; importlib.reload(_dra); _dra.clear()
+    import ai_orchestrator.config as _cfg
+
+    importlib.reload(_cfg)
+    import ai_orchestrator.approval as _ap
+
+    importlib.reload(_ap)
+    _ap.clear_rate_store()
+    import ai_orchestrator.audit_logger as _al
+
+    importlib.reload(_al)
+    import ai_orchestrator.dev_reg_approval as _dra
+
+    importlib.reload(_dra)
+    _dra.clear()
 
     yield
 
     _ap.clear_rate_store()
-    importlib.reload(_cfg); importlib.reload(_ap); importlib.reload(_al); importlib.reload(_dra)
+    importlib.reload(_cfg)
+    importlib.reload(_ap)
+    importlib.reload(_al)
+    importlib.reload(_dra)
     _dra.clear()
 
 
 def _make_adapter(provider="hiworks", action_type="developer_apply", risk_level="high"):
     """Mock 어댑터 생성."""
     from ai_orchestrator.sites.adapters.dev_reg_base import (
-        DevRegAdapterBase, FormFillResult, SubmitResult,
+        DevRegAdapterBase,
+        FormFillResult,
+        SubmitResult,
     )
 
     class _MockAdapter(DevRegAdapterBase):
@@ -94,8 +108,9 @@ def _make_adapter(provider="hiworks", action_type="developer_apply", risk_level=
     return a
 
 
-def _run_with_outcome(adapter, *, approve: bool, expired: bool = False, rejected: bool = False,
-                      tmp_path: Path, ttl_minutes: int = 30):
+def _run_with_outcome(
+    adapter, *, approve: bool, expired: bool = False, rejected: bool = False, tmp_path: Path, ttl_minutes: int = 30
+):
     """run_dev_reg 실행 헬퍼 — 이벤트 기반 승인/거절 결과 주입.
 
     만료 케이스: clock 을 미래 시각으로 고정 → timeout_sec=0 → event.wait() 즉시 반환.
@@ -106,9 +121,11 @@ def _run_with_outcome(adapter, *, approve: bool, expired: bool = False, rejected
     page = MagicMock()
 
     if expired:
-        future = datetime.now(timezone.utc) + timedelta(minutes=ttl_minutes + 5)
+        future = datetime.now(UTC) + timedelta(minutes=ttl_minutes + 5)
         result = run_dev_reg(
-            adapter, page, {"app_name": "TestApp"},
+            adapter,
+            page,
+            {"app_name": "TestApp"},
             requested_by="test_user",
             screenshot_dir=tmp_path / "screenshots",
             ttl_minutes=ttl_minutes,
@@ -121,7 +138,9 @@ def _run_with_outcome(adapter, *, approve: bool, expired: bool = False, rejected
 
     def _run():
         result_holder[0] = run_dev_reg(
-            adapter, page, {"app_name": "TestApp"},
+            adapter,
+            page,
+            {"app_name": "TestApp"},
             requested_by="test_user",
             screenshot_dir=tmp_path / "screenshots",
             ttl_minutes=ttl_minutes,
@@ -130,8 +149,8 @@ def _run_with_outcome(adapter, *, approve: bool, expired: bool = False, rejected
     runner_thread = threading.Thread(target=_run, daemon=True)
     runner_thread.start()
 
-    import ai_orchestrator.dev_reg_approval as _dra
     import ai_orchestrator.approval as _ap
+    import ai_orchestrator.dev_reg_approval as _dra
 
     # pending 레코드 등록 대기 (최대 2초, 20ms 간격)
     for _ in range(100):
@@ -180,17 +199,24 @@ def test_only_allowed_telegram_user_can_approve():
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
 
     # 올바른 사용자: admin 역할
     result = handle_telegram_decision(
-        token_id=token.token_id, action="approve",
-        actor="admin", role="admin",
+        token_id=token.token_id,
+        action="approve",
+        actor="admin",
+        role="admin",
     )
     assert result["success"] is True, f"정상 승인 실패: {result}"
     assert result["status"] == "approved"
@@ -204,16 +230,23 @@ def test_forbidden_role_cannot_approve():
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="naver", action_type="app_register",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="naver",
+        action_type="app_register",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
 
     result = handle_telegram_decision(
-        token_id=token.token_id, action="approve",
-        actor="viewer-01", role="viewer",
+        token_id=token.token_id,
+        action="approve",
+        actor="viewer-01",
+        role="viewer",
     )
     assert result["success"] is False
     assert result["status"] == "forbidden"
@@ -221,26 +254,33 @@ def test_forbidden_role_cannot_approve():
 
 def test_unregistered_telegram_user_blocked():
     """telegram_users.json 에 없는 사용자 ID 는 handle_telegram_update 에서 차단."""
-    from ai_orchestrator.telegram_webhook import handle_telegram_update
-    from ai_orchestrator.telegram_notifier import build_dev_reg_callback_data
     from ai_orchestrator.approval import issue_token_for_dev_reg
     from ai_orchestrator.dev_reg_approval import create_pending
+    from ai_orchestrator.telegram_notifier import build_dev_reg_callback_data
+    from ai_orchestrator.telegram_webhook import handle_telegram_update
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
     cb_data = build_dev_reg_callback_data("approve", token.token_id)
-    update = {"callback_query": {
-        "id": "cq1",
-        "data": cb_data,
-        "from": {"id": 777777777, "username": "unknown"},  # 미등록
-    }}
+    update = {
+        "callback_query": {
+            "id": "cq1",
+            "data": cb_data,
+            "from": {"id": 777777777, "username": "unknown"},  # 미등록
+        }
+    }
     result = handle_telegram_update(update)
     assert result["success"] is False
     assert result["status"] == "user_not_found"
@@ -259,20 +299,27 @@ def test_expired_token_rejected(monkeypatch):
     # TTL 1분으로 발행
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=1)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
 
     # approval 모듈의 _now 를 만료 후 시각으로 고정
-    future = datetime.now(timezone.utc) + timedelta(minutes=5)
+    future = datetime.now(UTC) + timedelta(minutes=5)
     monkeypatch.setattr(_ap, "_now", lambda: future)
 
     result = handle_telegram_decision(
-        token_id=token.token_id, action="approve",
-        actor="admin", role="admin",
+        token_id=token.token_id,
+        action="approve",
+        actor="admin",
+        role="admin",
     )
     assert result["success"] is False, f"만료 토큰 승인이 성공으로 처리됨: {result}"
     assert result["status"] == "expired"
@@ -289,21 +336,24 @@ def test_reused_token_rejected():
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
 
     # 첫 번째 승인 — 성공
-    r1 = handle_telegram_decision(token_id=token.token_id, action="approve",
-                                   actor="admin", role="admin")
+    r1 = handle_telegram_decision(token_id=token.token_id, action="approve", actor="admin", role="admin")
     assert r1["status"] == "approved"
 
     # 두 번째 승인 — already_used
-    r2 = handle_telegram_decision(token_id=token.token_id, action="approve",
-                                   actor="admin", role="admin")
+    r2 = handle_telegram_decision(token_id=token.token_id, action="approve", actor="admin", role="admin")
     assert r2["success"] is False
     assert r2["status"] == "already_used"
 
@@ -340,14 +390,16 @@ def test_approval_triggers_submit_form(tmp_path):
 def test_audit_log_events_recorded(tmp_path):
     """DEV_REG_TASK_CREATED, DEV_REG_TELEGRAM_SENT 이벤트가 감사 로그에 기록된다."""
     # telegram_sender.send_photo 를 mock (실제 HTTP 호출 방지)
-    with patch("ai_orchestrator.telegram_sender.send_photo",
-               return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
         from ai_orchestrator.dev_reg_runner import run_dev_reg
+
         page = MagicMock()
-        future = datetime.now(timezone.utc) + timedelta(minutes=35)
+        future = datetime.now(UTC) + timedelta(minutes=35)
         run_dev_reg(
-            adapter, page, {"app_name": "TestApp"},
+            adapter,
+            page,
+            {"app_name": "TestApp"},
             requested_by="test",
             screenshot_dir=tmp_path / "ss",
             ttl_minutes=1,
@@ -355,6 +407,7 @@ def test_audit_log_events_recorded(tmp_path):
         )
 
     import ai_orchestrator.audit_logger as _al
+
     logs = _al.read_recent_logs(limit=50)
     event_types = {e["event_type"] for e in logs}
     assert "DEV_REG_TASK_CREATED" in event_types, f"DEV_REG_TASK_CREATED 누락: {event_types}"
@@ -363,21 +416,25 @@ def test_audit_log_events_recorded(tmp_path):
 
 def test_approval_audit_event_recorded():
     """handle_telegram_decision 승인 시 DEV_REG_APPROVED 이벤트 기록."""
+    import ai_orchestrator.audit_logger as _al
     from ai_orchestrator.approval import issue_token_for_dev_reg
     from ai_orchestrator.dev_reg_approval import create_pending, handle_telegram_decision
-    import ai_orchestrator.audit_logger as _al
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
-    handle_telegram_decision(token_id=token.token_id, action="approve",
-                              actor="admin", role="admin")
+    handle_telegram_decision(token_id=token.token_id, action="approve", actor="admin", role="admin")
 
     logs = _al.read_recent_logs(limit=50)
     event_types = {e["event_type"] for e in logs}
@@ -386,21 +443,25 @@ def test_approval_audit_event_recorded():
 
 def test_rejection_audit_event_recorded():
     """거절 시 DEV_REG_REJECTED 이벤트 기록."""
+    import ai_orchestrator.audit_logger as _al
     from ai_orchestrator.approval import issue_token_for_dev_reg
     from ai_orchestrator.dev_reg_approval import create_pending, handle_telegram_decision
-    import ai_orchestrator.audit_logger as _al
 
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="naver", action_type="app_register",
-        risk_level="high", summary="test", target_url="http://example.com",
-        screenshot_path="/tmp/ss.png", requested_by="system",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="naver",
+        action_type="app_register",
+        risk_level="high",
+        summary="test",
+        target_url="http://example.com",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
+        requested_by="system",
         expires_at=token.expires_at,
     )
-    handle_telegram_decision(token_id=token.token_id, action="reject",
-                              actor="admin", role="admin", reason="테스트")
+    handle_telegram_decision(token_id=token.token_id, action="reject", actor="admin", role="admin", reason="테스트")
 
     logs = _al.read_recent_logs(limit=50)
     event_types = {e["event_type"] for e in logs}
@@ -415,17 +476,18 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
     _SENSITIVE = ["my_secret_password", "session_cookie_abc123", "Bearer eyJhbGci"]
 
     # params 에 민감 값 포함 — adapter 의 summary 에는 포함되지 않아야 함
-    with patch("ai_orchestrator.telegram_sender.send_photo",
-               return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
         from ai_orchestrator.dev_reg_runner import run_dev_reg
+
         page = MagicMock()
-        future = datetime.now(timezone.utc) + timedelta(minutes=35)
+        future = datetime.now(UTC) + timedelta(minutes=35)
         run_dev_reg(
-            adapter, page,
+            adapter,
+            page,
             {
                 "app_name": "TestApp",
-                "password": _SENSITIVE[0],    # 민감값 — 어댑터가 summary 에 포함하지 말아야 함
+                "password": _SENSITIVE[0],  # 민감값 — 어댑터가 summary 에 포함하지 말아야 함
                 "cookie": _SENSITIVE[1],
                 "session_token": _SENSITIVE[2],
             },
@@ -436,6 +498,7 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
         )
 
     import ai_orchestrator.audit_logger as _al
+
     log_path = _al._LOG_PATH
     if not log_path.exists():
         return  # 로그 없으면 노출 없음
@@ -452,17 +515,20 @@ def test_dev_reg_approval_record_no_raw_secrets():
     _SENSITIVE = ["plaintext_password_xyz", "raw_cookie_value", "session_abc"]
 
     from ai_orchestrator.approval import issue_token_for_dev_reg
+
     task_id = f"dr-{uuid.uuid4().hex[:12]}"
     token = issue_token_for_dev_reg(task_id, "system", "high", ttl_minutes=30)
     # summary 에 실수로 민감 값을 넣은 경우를 시뮬레이션하지 않음.
     # 단지 레코드 자체에 민감 필드가 없음을 확인.
     _dra.create_pending(
-        task_id=task_id, token_id=token.token_id,
-        provider="hiworks", action_type="developer_apply",
+        task_id=task_id,
+        token_id=token.token_id,
+        provider="hiworks",
+        action_type="developer_apply",
         risk_level="high",
         summary="[하이웍스 신청]\n  app_name: TestApp",
         target_url="https://developers.hiworks.com/apply",
-        screenshot_path="/tmp/ss.png",
+        screenshot_path="/tmp/ss.png",  # noqa: S108
         requested_by="system",
         expires_at=token.expires_at,
     )
@@ -477,13 +543,15 @@ def test_dev_reg_approval_record_no_raw_secrets():
 
     # token_id 원문은 저장됨 (식별자로서 허용), approval_token_hash 는 SHA256 이어야 함
     import json as _json
+
     for line in raw.strip().splitlines():
         ev = _json.loads(line)
         hash_val = ev.get("approval_token_hash", "")
         # SHA256 hex digest: 64자, hex 문자만
         if hash_val:
-            assert len(hash_val) == 64 and all(c in "0123456789abcdef" for c in hash_val), \
+            assert len(hash_val) == 64 and all(c in "0123456789abcdef" for c in hash_val), (
                 f"approval_token_hash 가 SHA256 형식이 아님: {hash_val!r}"
+            )
 
 
 # ── 추가: dev_reg callback_data 형식 검증 ────────────────────────────
@@ -511,8 +579,8 @@ def test_parse_dev_reg_rejects_invalid():
     from ai_orchestrator.telegram_notifier import parse_dev_reg_callback_data
 
     assert parse_dev_reg_callback_data("") is None
-    assert parse_dev_reg_callback_data("approve|task|token") is None   # 기존 형식 → None
-    assert parse_dev_reg_callback_data("dr_x|token_id") is None         # 알 수 없는 prefix
+    assert parse_dev_reg_callback_data("approve|task|token") is None  # 기존 형식 → None
+    assert parse_dev_reg_callback_data("dr_x|token_id") is None  # 알 수 없는 prefix
 
 
 # ── 추가: 회귀 — 기존 webhook 형식이 영향받지 않음 ────────────────────
@@ -520,22 +588,30 @@ def test_parse_dev_reg_rejects_invalid():
 
 def test_existing_webhook_unaffected():
     """기존 handle_telegram_webhook 는 dr_* 추가 후에도 정상 동작."""
-    from ai_orchestrator.models import TaskRequest, RiskAssessment
     from ai_orchestrator.approval import issue_token
+    from ai_orchestrator.models import RiskAssessment, TaskRequest
     from ai_orchestrator.telegram_webhook import handle_telegram_webhook
 
     tid = f"TG-{uuid.uuid4().hex[:8]}"
-    req = TaskRequest(task_id=tid, source="manual", action_type="edit_config",
-                      target="/etc/cfg", description="회귀 테스트", requested_by="test")
+    req = TaskRequest(
+        task_id=tid,
+        source="manual",
+        action_type="edit_config",
+        target="/etc/cfg",
+        description="회귀 테스트",
+        requested_by="test",
+    )
     risk = RiskAssessment(risk_level="medium", reasons=["test"], requires_approval=True)
     token = issue_token(req, risk)
 
-    result = handle_telegram_webhook({
-        "telegram_user_id": "111111111",
-        "action": "approve",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",
+            "action": "approve",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is True
     assert result["status"] == "approved"
 

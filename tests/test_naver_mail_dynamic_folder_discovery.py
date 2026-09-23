@@ -1,18 +1,20 @@
 """NAVER-MAIL-DYNAMIC-FOLDER-DISCOVERY-01 — 필수 14 테스트."""
+
 from __future__ import annotations
 
 import json
 from dataclasses import asdict
 
-import pytest
-
 from scripts.naver.mail import (
     folder_discovery as fd,
+)
+from scripts.naver.mail import (
     folder_policy as fp,
+)
+from scripts.naver.mail import (
     folder_profile as fpr,
 )
 from scripts.ops import audit_naver_mail_dynamic_folder_discovery as audit
-
 from tests.test_naver_mail_smart_folder_coverage import (
     MultiFolderActions,
     _mk_row,
@@ -22,63 +24,138 @@ from tests.test_naver_mail_smart_folder_coverage import (
 def _full_lnb():
     """실제 라이브에서 본 폴더 구조와 유사한 fake LNB raw."""
     return [
-        {"name": "전체메일", "kind": "all",
-         "cls": "mailbox_label svg_all",
-         "title": "전체메일", "href_attr": "#",
-         "unread_text": "", "unread_count": -1,
-         "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "받은메일함", "kind": "inbox",
-         "cls": "mailbox_label svg_inbox", "title": "받은메일함",
-         "href_attr": "#",
-         "unread_text": "안 읽은 메일 2 개", "unread_count": 2,
-         "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "보낸메일함", "kind": "sent",
-         "cls": "mailbox_label svg_sent_mail", "title": "",
-         "href_attr": "#", "unread_text": "", "unread_count": -1,
-         "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "임시보관함", "kind": "draft",
-         "cls": "mailbox_label svg_temporary", "title": "",
-         "href_attr": "#", "unread_text": "", "unread_count": -1,
-         "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "프로모션", "kind": "smart",
-         "cls": "mailbox_label svg_depth", "title": "",
-         "href_attr": "#", "unread_text": "안 읽은 메일 1 개",
-         "unread_count": 1, "parent_group": "smart_group",
-         "depth": 1, "selector_evidence": {}},
-        {"name": "SNS", "kind": "smart",
-         "cls": "mailbox_label svg_depth", "title": "",
-         "href_attr": "#", "unread_text": "안 읽은 메일 1 개",
-         "unread_count": 1, "parent_group": "smart_group",
-         "depth": 1, "selector_evidence": {}},
-        {"name": "도면", "kind": "user",
-         "cls": "mailbox_label svg_folder", "title": "도면",
-         "href_attr": "#", "unread_text": "", "unread_count": -1,
-         "parent_group": "lnb_top", "depth": 1,
-         "selector_evidence": {}},
-        {"name": "사랑하는 부인♥~", "kind": "smart",
-         "cls": "mailbox_label svg_depth", "title": "",
-         "href_attr": "#", "unread_text": "", "unread_count": -1,
-         "parent_group": "smart_group", "depth": 1,
-         "selector_evidence": {}},
-        {"name": "스팸메일함", "kind": "spam",
-         "cls": "mailbox_label svg_spam", "title": "스팸메일함",
-         "href_attr": "#", "unread_text": "안 읽은 메일 270 개",
-         "unread_count": 270, "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "휴지통", "kind": "trash",
-         "cls": "mailbox_label svg_trash", "title": "휴지통",
-         "href_attr": "#", "unread_text": "안 읽은 메일 7 개",
-         "unread_count": 7, "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
-        {"name": "신규한정폴더", "kind": "unknown",
-         "cls": "mailbox_label mystery_class", "title": "",
-         "href_attr": "#", "unread_text": "", "unread_count": -1,
-         "parent_group": "lnb_top", "depth": 0,
-         "selector_evidence": {}},
+        {
+            "name": "전체메일",
+            "kind": "all",
+            "cls": "mailbox_label svg_all",
+            "title": "전체메일",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "받은메일함",
+            "kind": "inbox",
+            "cls": "mailbox_label svg_inbox",
+            "title": "받은메일함",
+            "href_attr": "#",
+            "unread_text": "안 읽은 메일 2 개",
+            "unread_count": 2,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "보낸메일함",
+            "kind": "sent",
+            "cls": "mailbox_label svg_sent_mail",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "임시보관함",
+            "kind": "draft",
+            "cls": "mailbox_label svg_temporary",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "프로모션",
+            "kind": "smart",
+            "cls": "mailbox_label svg_depth",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "안 읽은 메일 1 개",
+            "unread_count": 1,
+            "parent_group": "smart_group",
+            "depth": 1,
+            "selector_evidence": {},
+        },
+        {
+            "name": "SNS",
+            "kind": "smart",
+            "cls": "mailbox_label svg_depth",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "안 읽은 메일 1 개",
+            "unread_count": 1,
+            "parent_group": "smart_group",
+            "depth": 1,
+            "selector_evidence": {},
+        },
+        {
+            "name": "도면",
+            "kind": "user",
+            "cls": "mailbox_label svg_folder",
+            "title": "도면",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "lnb_top",
+            "depth": 1,
+            "selector_evidence": {},
+        },
+        {
+            "name": "사랑하는 부인♥~",
+            "kind": "smart",
+            "cls": "mailbox_label svg_depth",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "smart_group",
+            "depth": 1,
+            "selector_evidence": {},
+        },
+        {
+            "name": "스팸메일함",
+            "kind": "spam",
+            "cls": "mailbox_label svg_spam",
+            "title": "스팸메일함",
+            "href_attr": "#",
+            "unread_text": "안 읽은 메일 270 개",
+            "unread_count": 270,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "휴지통",
+            "kind": "trash",
+            "cls": "mailbox_label svg_trash",
+            "title": "휴지통",
+            "href_attr": "#",
+            "unread_text": "안 읽은 메일 7 개",
+            "unread_count": 7,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
+        {
+            "name": "신규한정폴더",
+            "kind": "unknown",
+            "cls": "mailbox_label mystery_class",
+            "title": "",
+            "href_attr": "#",
+            "unread_text": "",
+            "unread_count": -1,
+            "parent_group": "lnb_top",
+            "depth": 0,
+            "selector_evidence": {},
+        },
     ]
 
 
@@ -250,8 +327,7 @@ def test_folder_profile_snapshot_schema():
     fa = _mk_actions()
     folders = fd.discover_folders(fa, learn_ids=False)
     fd.filter_collectable(folders)
-    snap = fpr.build_snapshot(folders, account_raw="user@example.com",
-                              lnb_total_unread=281)
+    snap = fpr.build_snapshot(folders, account_raw="user@example.com", lnb_total_unread=281)
     d = asdict(snap)
     missing = fpr.validate_schema(d)
     assert missing == []
@@ -267,11 +343,9 @@ def test_no_pii_or_secret_leak_in_snapshot():
     fa = _mk_actions()
     folders = fd.discover_folders(fa, learn_ids=False)
     fd.filter_collectable(folders)
-    snap = fpr.build_snapshot(folders, account_raw="skyjw@naver.com",
-                              lnb_total_unread=100)
+    snap = fpr.build_snapshot(folders, account_raw="skyjw@naver.com", lnb_total_unread=100)
     j = json.dumps(asdict(snap), ensure_ascii=False)
-    forbidden = ["skyjw@naver.com", "password", "token", "session=",
-                 "cookie", "NID_SES", "NID_AUT"]
+    forbidden = ["skyjw@naver.com", "password", "token", "session=", "cookie", "NID_SES", "NID_AUT"]
     for f in forbidden:
         assert f not in j, f"PII/secret leak detected: {f}"
 
@@ -289,8 +363,7 @@ def test_no_destructive_calls_during_discovery():
         id_map={"받은메일함": "0", "프로모션": "10", "SNS": "9"},
     )
     fd.discover_folders(fa, learn_ids=True)
-    bad = ("send", "delete", "trash_action", "spam_action", "download",
-           "submit", "popup/read", "captureScreenshot")
+    bad = ("send", "delete", "trash_action", "spam_action", "download", "submit", "popup/read", "captureScreenshot")
     for entry in fa.call_log + fa.click_log + fa.nav_log:
         for b in bad:
             assert b not in entry, f"forbidden: {entry}"
@@ -302,11 +375,13 @@ def test_no_destructive_calls_during_discovery():
 def test_regression_smart_folder_coverage_still_works():
     """4개 폴더 244건 시나리오에서 기존 collect_all 호출이 그대로 동작."""
     from scripts.naver.mail import smart_folder_collector as sfc
+
     fa = MultiFolderActions(
-        lnb_raw=_full_lnb()[:6] + [_full_lnb()[3]],  # subset
+        lnb_raw=_full_lnb()[:6] + [_full_lnb()[3]],  # subset  # noqa: RUF005
         folder_responses_by_url={
-            "https://mail.naver.com/v2/folders/0": {"1": [_mk_row("100", is_unread=True),
-                                                          _mk_row("101", is_unread=True)]},
+            "https://mail.naver.com/v2/folders/0": {
+                "1": [_mk_row("100", is_unread=True), _mk_row("101", is_unread=True)]
+            },
             "https://mail.naver.com/v2/folders/10": {"1": [_mk_row("200", is_unread=True)]},
             "https://mail.naver.com/v2/folders/9": {"1": [_mk_row("300", is_unread=True)]},
         },

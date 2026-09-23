@@ -8,11 +8,13 @@ mock 기반 unit smoke 전용.
 실제 외부 실행 / 운영 token 발행 / execute_task 연결 /
 DB write / 서버 반영 / 컨테이너 재시작 전면 금지.
 """
+
 import ast
 import importlib.util
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent
 
@@ -75,6 +77,7 @@ def approval_content():
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
 
+
 def test_01_audit_script_importable(audit_mod):
     assert audit_mod is not None
 
@@ -84,6 +87,7 @@ def test_02_run_audit_function_exists(audit_mod):
 
 
 # ── 3~8. 운영 안전 플래그 ────────────────────────────────────────────────────
+
 
 def test_03_real_execute_not_allowed(audit_mod):
     assert audit_mod.REAL_EXECUTE_ALLOWED is False
@@ -111,6 +115,7 @@ def test_08_smoke_mock_only_true(audit_mod):
 
 # ── 9~11. smoke 승인 기록 ────────────────────────────────────────────────────
 
+
 def test_09_smoke_approved(audit_mod):
     assert audit_mod.SMOKE_APPROVAL["approved"] is True
 
@@ -124,6 +129,7 @@ def test_11_smoke_scope_medium_only(audit_mod):
 
 
 # ── 12~20. smoke 결과 — 정적 검증 (router.py / executor.py) ──────────────────
+
 
 def test_12_dry_run_flag_active(router_content):
     assert "POST_TASKS_DRY_RUN_ENABLED = True" in router_content
@@ -170,8 +176,9 @@ def test_17_whitelist_medium_actions_excluded(executor_content):
             if "]" in line:
                 break
     for action in ["write_file", "edit_config", "create_patch", "generate"]:
-        assert f'"{action}"' not in allowed_section and f"'{action}'" not in allowed_section, \
+        assert f'"{action}"' not in allowed_section and f"'{action}'" not in allowed_section, (
             f"medium action '{action}'이 whitelist에 포함됨"
+        )
 
 
 def test_18_high_critical_blocked_in_execute_task(executor_content):
@@ -189,9 +196,11 @@ def test_20_approval_tokens_write_mitigated(write_paths):
 
 # ── 21~30. mock 기반 smoke — MS-1~MS-8 ──────────────────────────────────────
 
+
 @pytest.fixture(scope="module")
 def router_mod():
     import sys
+
     mock_names = [
         "ai_orchestrator.planner",
         "ai_orchestrator.executor",
@@ -238,6 +247,7 @@ def router_mod():
     for mod_name, mock in mocks.items():
         sys.modules[mod_name] = mock
     import importlib.util as ilu
+
     spec = ilu.spec_from_file_location(
         "ai_orchestrator.router",
         REPO_ROOT / "ai_orchestrator/router.py",
@@ -257,8 +267,13 @@ def router_mod():
 def _make_body(action_type="write_file", task_id="t-smoke"):
     body = MagicMock()
     body.model_dump.return_value = {
-        "task_id": task_id, "source": "smoke", "action_type": action_type,
-        "target": "/tmp/x", "description": "smoke test", "payload": {}, "requested_by": None,
+        "task_id": task_id,
+        "source": "smoke",
+        "action_type": action_type,
+        "target": "/tmp/x",
+        "description": "smoke test",
+        "payload": {},
+        "requested_by": None,
     }
     return body
 
@@ -269,13 +284,14 @@ def test_21_ms1_medium_issue_token_not_called(router_mod):
     mock_ep = MagicMock(requires_approval=True, allowed=True, steps=[], blocked_reasons=[])
     mock_req = MagicMock(task_id="t1", action_type="write_file", target="/tmp", requested_by="a1")
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
-        result = router_mod.submit_task(_make_body("write_file", "t1"), {"actor": "a1", "role": "operator"})
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute") as mock_execute,
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
+        result = router_mod.submit_task(_make_body("write_file", "t1"), {"actor": "a1", "role": "operator"})  # noqa: F841
 
     mock_issue.assert_not_called()
     mock_execute.assert_not_called()
@@ -287,12 +303,13 @@ def test_22_ms2_medium_dry_run_status_and_field(router_mod):
     mock_ep = MagicMock(requires_approval=True, allowed=True, steps=[], blocked_reasons=[])
     mock_req = MagicMock(task_id="t2", action_type="write_file", target="/tmp", requested_by="a1")
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token"), \
-         patch.object(router_mod, "execute"), \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token"),
+        patch.object(router_mod, "execute"),
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         result = router_mod.submit_task(_make_body("write_file", "t2"), {"actor": "a1", "role": "operator"})
 
     assert "DRY_RUN" in result["status"]
@@ -305,18 +322,18 @@ def test_23_ms3_approve_execute_task_not_called(router_mod):
     mock_token = MagicMock(risk_level="medium", public_id="appr_x")
     mock_user = {"actor": "admin1", "role": "admin"}
 
-    with patch.object(router_mod, "approve_token", return_value=(mock_token, "approved")) as mock_approve, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "_STATUS_AUDIT", {"approved": "APPROVAL_GRANTED"}), \
-         patch.object(router_mod, "_STATUS_HTTP", {"approved": 200}):
-
+    with (
+        patch.object(router_mod, "approve_token", return_value=(mock_token, "approved")) as mock_approve,
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "_STATUS_AUDIT", {"approved": "APPROVAL_GRANTED"}),
+        patch.object(router_mod, "_STATUS_HTTP", {"approved": 200}),
+    ):
         result = router_mod.approve_task("task1", "token1", MagicMock(), mock_user)
 
     mock_approve.assert_called_once()
     assert result["status"] == "approved"
     # execute_task 속성 없음 확인
-    assert not hasattr(router_mod, "execute_task") or \
-           "execute_task" not in router_mod.__dict__
+    assert not hasattr(router_mod, "execute_task") or "execute_task" not in router_mod.__dict__
 
 
 def test_24_ms4_low_execute_called(router_mod):
@@ -325,12 +342,13 @@ def test_24_ms4_low_execute_called(router_mod):
     mock_ep = MagicMock(requires_approval=False, allowed=True, steps=[], blocked_reasons=[])
     mock_req = MagicMock(task_id="t4", action_type="get_server_status", target="server", requested_by="a1")
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute", return_value="DRY_RUN_ONLY") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute", return_value="DRY_RUN_ONLY") as mock_execute,
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         result = router_mod.submit_task(_make_body("get_server_status", "t4"), {"actor": "a1", "role": "operator"})
 
     mock_issue.assert_not_called()
@@ -361,12 +379,13 @@ def test_26_ms6_blocked_path_no_dry_run(router_mod):
     mock_ep = MagicMock(requires_approval=True, allowed=False, steps=[], blocked_reasons=["차단"])
     mock_req = MagicMock(task_id="t6", action_type="shell", target="/", requested_by="a1")
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token") as mock_issue, \
-         patch.object(router_mod, "execute", return_value="BLOCKED: 차단") as mock_execute, \
-         patch.object(router_mod, "log_event"), \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token") as mock_issue,
+        patch.object(router_mod, "execute", return_value="BLOCKED: 차단") as mock_execute,  # noqa: F841
+        patch.object(router_mod, "log_event"),
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         result = router_mod.submit_task(_make_body("shell", "t6"), {"actor": "a1", "role": "operator"})
 
     mock_issue.assert_not_called()
@@ -379,15 +398,16 @@ def test_27_ms7_high_critical_blocked_in_executor(executor_content):
     lines = executor_content.splitlines()
     for i, line in enumerate(lines):
         if 'if risk_level in ("high", "critical")' in line:
-            next_lines = "\n".join(lines[i:i+5])
+            next_lines = "\n".join(lines[i : i + 5])
             assert "BLOCKED" in next_lines
             break
 
 
 def test_28_ms8_token_expiry_exists(approval_content):
     """MS-8: approval.py에 토큰 만료 검사 존재"""
-    assert "_now() > expires" in approval_content or \
-           ("expires_at" in approval_content and "expired" in approval_content)
+    assert "_now() > expires" in approval_content or (
+        "expires_at" in approval_content and "expired" in approval_content
+    )
 
 
 def test_29_dry_run_log_event_called_for_medium(router_mod):
@@ -396,12 +416,13 @@ def test_29_dry_run_log_event_called_for_medium(router_mod):
     mock_ep = MagicMock(requires_approval=True, allowed=True, steps=[], blocked_reasons=[])
     mock_req = MagicMock(task_id="t9", action_type="write_file", target="/tmp", requested_by="a1")
 
-    with patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)), \
-         patch.object(router_mod, "issue_token"), \
-         patch.object(router_mod, "execute"), \
-         patch.object(router_mod, "log_event") as mock_log, \
-         patch.object(router_mod, "TaskRequest", return_value=mock_req):
-
+    with (
+        patch.object(router_mod, "plan", return_value=(mock_risk, mock_ep)),
+        patch.object(router_mod, "issue_token"),
+        patch.object(router_mod, "execute"),
+        patch.object(router_mod, "log_event") as mock_log,
+        patch.object(router_mod, "TaskRequest", return_value=mock_req),
+    ):
         router_mod.submit_task(_make_body("write_file", "t9"), {"actor": "a1", "role": "operator"})
 
     log_calls = [str(c) for c in mock_log.call_args_list]
@@ -419,6 +440,7 @@ def test_30_phase_1r_guards_still_active(router_content):
 
 
 # ── 31~35. 종합 판정 기준 ─────────────────────────────────────────────────────
+
 
 def test_31_all_smoke_cases_pass(smoke_results):
     for smoke_id, result in smoke_results.items():
@@ -443,6 +465,7 @@ def test_35_verdict_dangerous_write_mitigated(verdict_criteria):
 
 # ── 36~38. 다음 Phase ────────────────────────────────────────────────────────
 
+
 def test_36_next_phase_server_sync(next_phase):
     assert "SERVER_SYNC" in next_phase["phase"] or "SERVER" in next_phase["phase"]
 
@@ -458,10 +481,11 @@ def test_38_next_phase_requires_approval(next_phase):
 
 # ── 39. no HTTP import ───────────────────────────────────────────────────────
 
+
 def test_39_no_http_import_in_audit_script():
-    content = (
-        REPO_ROOT / "scripts/ops/audit_post_tasks_medium_isolation_smoke.py"
-    ).read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "scripts/ops/audit_post_tasks_medium_isolation_smoke.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
     try:
         tree = ast.parse(content)
     except SyntaxError:
@@ -480,6 +504,7 @@ def test_39_no_http_import_in_audit_script():
 
 
 # ── 40~43. audit verdict ─────────────────────────────────────────────────────
+
 
 def test_40_audit_verdict_pass(audit_result):
     assert audit_result["verdict"] in (

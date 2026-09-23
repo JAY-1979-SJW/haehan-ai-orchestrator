@@ -1,10 +1,9 @@
 """Local Agent 운영 진단 endpoint 테스트."""
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from ai_orchestrator import local_agent_registry as _reg
 from ai_orchestrator import local_agent_diagnostics
+from ai_orchestrator import local_agent_registry as _reg
 
 
 class TestDiagnosticsHelper:
@@ -63,24 +62,49 @@ class TestDiagnosticsHelper:
 
         tasks = [
             _reg.LocalAgentTask(
-                task_id="t1", agent_id="a1", action="ping", params={},
-                risk_level="low", status="completed", requested_by="admin",
-                created_at=now, updated_at=now,
+                task_id="t1",
+                agent_id="a1",
+                action="ping",
+                params={},
+                risk_level="low",
+                status="completed",
+                requested_by="admin",
+                created_at=now,
+                updated_at=now,
             ),
             _reg.LocalAgentTask(
-                task_id="t2", agent_id="a1", action="ping", params={},
-                risk_level="low", status="running", requested_by="admin",
-                created_at=now, updated_at=now,
+                task_id="t2",
+                agent_id="a1",
+                action="ping",
+                params={},
+                risk_level="low",
+                status="running",
+                requested_by="admin",
+                created_at=now,
+                updated_at=now,
             ),
             _reg.LocalAgentTask(
-                task_id="t3", agent_id="a1", action="capture_screenshot", params={},
-                risk_level="high", status="waiting_approval", requested_by="admin",
-                created_at=now, updated_at=now,
+                task_id="t3",
+                agent_id="a1",
+                action="capture_screenshot",
+                params={},
+                risk_level="high",
+                status="waiting_approval",
+                requested_by="admin",
+                created_at=now,
+                updated_at=now,
             ),
             _reg.LocalAgentTask(
-                task_id="t4", agent_id="a1", action="ping", params={},
-                risk_level="low", status="failed", requested_by="admin",
-                created_at=now, updated_at=now, failure_reason="unknown_error",
+                task_id="t4",
+                agent_id="a1",
+                action="ping",
+                params={},
+                risk_level="low",
+                status="failed",
+                requested_by="admin",
+                created_at=now,
+                updated_at=now,
+                failure_reason="unknown_error",
             ),
         ]
         for t in tasks:
@@ -100,21 +124,39 @@ class TestDiagnosticsHelper:
         now = _reg._now_iso()
 
         task_with_obs = _reg.LocalAgentTask(
-            task_id="t1", agent_id="a1", action="ping", params={},
-            risk_level="low", status="completed", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t1",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="completed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
             observe_summary={"status_category": "success"},
         )
         task_with_audit = _reg.LocalAgentTask(
-            task_id="t2", agent_id="a1", action="ping", params={},
-            risk_level="low", status="completed", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t2",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="completed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
             audit_summary={"event_count": 5},
         )
         task_with_result = _reg.LocalAgentTask(
-            task_id="t3", agent_id="a1", action="ping", params={},
-            risk_level="low", status="completed", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t3",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="completed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
             result_summary="success",
         )
 
@@ -133,9 +175,16 @@ class TestDiagnosticsHelper:
         """failed task > 0 이면 status warn."""
         now = _reg._now_iso()
         task = _reg.LocalAgentTask(
-            task_id="t1", agent_id="a1", action="ping", params={},
-            risk_level="low", status="failed", requested_by="admin",
-            created_at=now, updated_at=now, failure_reason="unknown_error",
+            task_id="t1",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="failed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
+            failure_reason="unknown_error",
         )
         _reg._tasks["t1"] = task
 
@@ -149,9 +198,15 @@ class TestDiagnosticsHelper:
         """waiting_approval task > 0 이면 status warn."""
         now = _reg._now_iso()
         task = _reg.LocalAgentTask(
-            task_id="t1", agent_id="a1", action="capture_screenshot", params={},
-            risk_level="high", status="waiting_approval", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t1",
+            agent_id="a1",
+            action="capture_screenshot",
+            params={},
+            risk_level="high",
+            status="waiting_approval",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
         )
         _reg._tasks["t1"] = task
 
@@ -165,9 +220,15 @@ class TestDiagnosticsHelper:
         """latest task created_at, updated_at, status."""
         now = _reg._now_iso()
         task = _reg.LocalAgentTask(
-            task_id="t1", agent_id="a1", action="ping", params={},
-            risk_level="low", status="completed", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t1",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="completed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
             observe_summary={"status": "ok"},
             audit_summary={"events": 3},
         )
@@ -201,9 +262,15 @@ class TestDiagnosticsHelper:
         """response에 raw audit JSONL/events 미포함."""
         now = _reg._now_iso()
         task = _reg.LocalAgentTask(
-            task_id="t1", agent_id="a1", action="ping", params={},
-            risk_level="low", status="completed", requested_by="admin",
-            created_at=now, updated_at=now,
+            task_id="t1",
+            agent_id="a1",
+            action="ping",
+            params={},
+            risk_level="low",
+            status="completed",
+            requested_by="admin",
+            created_at=now,
+            updated_at=now,
             audit_summary={"event_count": 5, "events": [{"type": "click"}]},
         )
         _reg._tasks["t1"] = task
@@ -250,7 +317,7 @@ class TestDiagnosticsHelper:
             result = local_agent_diagnostics.build_local_agent_diagnostics()
 
         gen_time = result["diagnostics_generated_at"]
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()  # noqa: F841
 
         # ISO format 체크
         assert "T" in gen_time
@@ -276,8 +343,15 @@ class TestDiagnosticsHelper:
             result = local_agent_diagnostics.build_local_agent_diagnostics()
 
         required_statuses = [
-            "total", "queued", "pending", "running", "waiting_approval",
-            "completed", "failed", "rejected", "cancelled",
+            "total",
+            "queued",
+            "pending",
+            "running",
+            "waiting_approval",
+            "completed",
+            "failed",
+            "rejected",
+            "cancelled",
         ]
         for status in required_statuses:
             assert status in result["tasks"]

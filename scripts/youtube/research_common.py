@@ -1,22 +1,27 @@
 """Shared constants, path definitions, and utility helpers for research module."""
+
 from __future__ import annotations
 
 import json
 import re
 import urllib.parse
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from security_utils import safe_preview
 from scripts.youtube.http import (
     api_key as _resolve_api_key,
-    oauth_token as _resolve_oauth_token,
+)
+from scripts.youtube.http import (
     get_json as _http_get_json,
+)
+from scripts.youtube.http import (
     get_text as _http_get_text,
 )
-
+from scripts.youtube.http import (
+    oauth_token as _resolve_oauth_token,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "youtube_research_reports"
@@ -75,7 +80,7 @@ STOPWORDS = {
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def _stamp() -> str:
@@ -140,7 +145,11 @@ def parse_youtube_video_id(value: str) -> str:
     query_id = urllib.parse.parse_qs(parsed.query).get("v", [""])[0]
     if YOUTUBE_VIDEO_ID_RE.fullmatch(query_id):
         return query_id
-    if len(path_parts) >= 2 and path_parts[0] in {"shorts", "embed", "live"} and YOUTUBE_VIDEO_ID_RE.fullmatch(path_parts[1]):
+    if (
+        len(path_parts) >= 2
+        and path_parts[0] in {"shorts", "embed", "live"}
+        and YOUTUBE_VIDEO_ID_RE.fullmatch(path_parts[1])
+    ):
         return path_parts[1]
     return ""
 
@@ -165,7 +174,7 @@ def _int(value: Any) -> int:
 
 
 def _bounded(value: float, *, low: int = 0, high: int = 100) -> int:
-    return max(low, min(high, int(round(value))))
+    return max(low, min(high, int(round(value))))  # noqa: RUF046
 
 
 def _int_value(value: Any) -> int:
@@ -184,6 +193,7 @@ def _top_keywords(text: str, *, limit: int = 12) -> list[dict[str, Any]]:
 
 def _sentences(text: str) -> list[str]:
     import re as _re
+
     chunks = _re.split(r"(?<=[.!?。！？])\s+|\n+", text)
     return [chunk.strip() for chunk in chunks if len(chunk.strip()) >= 20]
 

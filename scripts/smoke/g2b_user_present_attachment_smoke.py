@@ -10,15 +10,14 @@ G2B_LOCAL_BROWSER_USER_PRESENT_ATTACHMENT_DOWNLOAD_1
 - 로그인/인증서/OTP/쿠키/session 추출 모두 금지
 - 다운로드 파일은 tmp/ 디렉터리에만 저장 (git commit 금지)
 """
+
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import sys
-import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
@@ -29,9 +28,13 @@ _DL_DIR = os.path.join(_TMP, "g2b_user_present_downloads_20260508")
 os.makedirs(_DL_DIR, exist_ok=True)
 
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 
@@ -70,7 +73,7 @@ def _file_signature(path: str) -> str:
 def smoke_one(candidate: dict, headed: bool = True) -> dict:
     """단일 후보 user-present 다운로드 시도."""
     task_id = str(uuid.uuid4())
-    started = datetime.now(timezone.utc)
+    started = datetime.now(UTC)
 
     result = {
         "task_id": task_id,
@@ -162,10 +165,10 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
                     title = page.title()
                     body_sample = page.inner_text("body")[:300] if page.query_selector("body") else ""
                 except Exception:
-                    cur_url, title, body_sample = "", "", ""
+                    cur_url, title, body_sample = "", "", ""  # noqa: F841
 
                 # 차단 사유 분류
-                low = (title + body_sample).lower()
+                low = (title + body_sample).lower()  # noqa: F841
                 if any(k in body_sample for k in ("로그인", "인증", "공동인증", "OTP")):
                     result["verdict"] = "USER_DIRECT_REQUIRED"
                     result["block_reason"] = "AUTH_OR_LOGIN_REQUIRED"
@@ -187,7 +190,7 @@ def smoke_one(candidate: dict, headed: bool = True) -> dict:
         finally:
             browser.close()
 
-    finished = datetime.now(timezone.utc)
+    finished = datetime.now(UTC)
     result["finished_at"] = finished.isoformat()
     result["duration_ms"] = int((finished - started).total_seconds() * 1000)
     return result
@@ -210,7 +213,7 @@ def main():
     print("=" * 70)
     print("G2B_LOCAL_BROWSER_USER_PRESENT_ATTACHMENT_DOWNLOAD_1 — 3건 smoke")
     print("=" * 70)
-    print(f"실행 환경: 로컬 PC (headed Playwright)")
+    print("실행 환경: 로컬 PC (headed Playwright)")
     print(f"다운로드 디렉터리: {os.path.relpath(_DL_DIR, _REPO_ROOT)}")
     print()
 
@@ -235,7 +238,7 @@ def main():
 
     summary = {
         "task_id": str(uuid.uuid4()),
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
         "total": len(results),
         "verdict_counts": {},
         "results": results,
@@ -245,8 +248,11 @@ def main():
         summary["verdict_counts"][v] = summary["verdict_counts"].get(v, 0) + 1
 
     out_path = os.path.join(
-        _REPO_ROOT, "data", "reports", "local_agent",
-        f"g2b_user_present_attachment_smoke_top3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        _REPO_ROOT,
+        "data",
+        "reports",
+        "local_agent",
+        f"g2b_user_present_attachment_smoke_top3_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
     )
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:

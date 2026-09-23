@@ -3,27 +3,27 @@
 
 task 실행 전 action 등급 + 권한 유효성 통합 검증.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 from ai_orchestrator.local_agent.action_risk_policy import (
-    classify_action,
     GRADE_AUTO_ALLOWED,
-    GRADE_USER_DELEGATED,
-    GRADE_USER_DIRECT,
     GRADE_BLOCKED,
+    GRADE_USER_DIRECT,
+    classify_action,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import use_permission
 from ai_orchestrator.local_agent.delegated_permission_policy import (
     CHECK_ALLOWED,
-    CHECK_PERMISSION_REQUIRED,
     CHECK_BLOCKED,
+    CHECK_PERMISSION_REQUIRED,
 )
+from ai_orchestrator.local_agent.delegated_permission_store import use_permission
 
 # ── 게이트 결과 상수 ───────────────────────────────────────────────────────────
 
-GATE_PASS = "GATE_PASS"
+GATE_PASS = "GATE_PASS"  # noqa: S105
 GATE_NEED_PERMISSION = "GATE_NEED_PERMISSION"
 GATE_USER_DIRECT = "GATE_USER_DIRECT_REQUIRED"
 GATE_BLOCKED = "GATE_BLOCKED"

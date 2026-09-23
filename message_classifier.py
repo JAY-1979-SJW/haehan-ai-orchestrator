@@ -4,17 +4,16 @@ email_classifier의 분류 로직을 최대한 재사용.
 source_type별 보수적 보정 적용.
 AI 미사용 — 규칙 기반.
 """
-from __future__ import annotations
 
-import re
-from typing import Optional
+from __future__ import annotations
 
 from email_classifier import (
     _CATEGORY_RULES,
     _HIGH_PRIORITY_KEYWORDS,
     _LOW_PRIORITY_KEYWORDS,
     _match_keywords,
-    _normalize,
+)
+from email_classifier import (
     classify as _classify_email,
 )
 
@@ -23,11 +22,31 @@ from email_classifier import (
 # email_classifier의 _CATEGORY_RULES 앞에 prepend해서 우선 매칭
 
 _KAKAO_PREFIX_RULES: list[tuple[str, list[str], str]] = [
-    ("support", [
-        "문의", "질문", "도움", "help", "support", "cs", "고객센터",
-        "불편", "불만", "민원", "접수", "처리", "안내 요청",
-        "어떻게", "언제", "얼마", "왜", "확인 부탁", "답변",
-    ], "support_ticket"),
+    (
+        "support",
+        [
+            "문의",
+            "질문",
+            "도움",
+            "help",
+            "support",
+            "cs",
+            "고객센터",
+            "불편",
+            "불만",
+            "민원",
+            "접수",
+            "처리",
+            "안내 요청",
+            "어떻게",
+            "언제",
+            "얼마",
+            "왜",
+            "확인 부탁",
+            "답변",
+        ],
+        "support_ticket",
+    ),
 ]
 
 # 카카오 채널 메시지는 짧고 단어가 적어 확신 임계값을 높임
@@ -42,13 +61,13 @@ def _classify_kakao(item: dict, source_type: str) -> dict:
     """
     title: str = item.get("title", "") or ""
     body: str = item.get("body_raw", "") or ""
-    sender: str = item.get("sender", "") or ""
+    sender: str = item.get("sender", "") or ""  # noqa: F841
 
     search_text = f"{title} {body[:300]}"  # 카카오 메시지는 짧으므로 300자
 
     # ── 카테고리 판정: 카카오 전용 규칙 우선 ─────────────────────────────────
     matched_category = "general"
-    matched_task_type: Optional[str] = None
+    matched_task_type: str | None = None
     matched_keywords: list[str] = []
 
     combined_rules = _KAKAO_PREFIX_RULES + list(_CATEGORY_RULES)
@@ -75,10 +94,7 @@ def _classify_kakao(item: dict, source_type: str) -> dict:
 
     # ── needs_review 판정 (카카오는 더 보수적) ────────────────────────────────
     # 메시지가 짧아 분류 확신이 낮으므로 키워드 2개 미만이면 검토 필요
-    needs_review = (
-        matched_category == "general"
-        or len(matched_keywords) < _KAKAO_MIN_KEYWORDS_FOR_CONFIDENT
-    )
+    needs_review = matched_category == "general" or len(matched_keywords) < _KAKAO_MIN_KEYWORDS_FOR_CONFIDENT
 
     # general이면 task 후보 불필요
     if matched_category == "general":

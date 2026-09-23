@@ -2,18 +2,17 @@
 
 smoke-test residual 정리를 위한 안전한 cleanup endpoint 검증.
 """
-import sys
+
 import os
+import sys
+
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
 from ai_orchestrator import registration_codes as _regcodes
-from ai_orchestrator.local_agent_cleanup_policy import (
-    is_smoke_test_agent, is_agent_offline, has_blocking_tasks,
-    validate_cleanup_request
-)
+from ai_orchestrator.local_agent_cleanup_policy import is_smoke_test_agent, validate_cleanup_request
 
 
 @pytest.fixture(autouse=True)
@@ -27,6 +26,7 @@ def clear_stores():
 
 
 # ── is_smoke_test_agent 테스트 ──────────────────────────────────────
+
 
 def test_smoke_test_agent_host_pattern():
     """smoke-test-로 시작하는 host는 smoke-test agent."""
@@ -52,6 +52,7 @@ def test_smoke_test_case_insensitive():
 
 
 # ── 오삭제 방지 테스트 ────────────────────────────────────────────────
+
 
 def test_cleanup_non_smoke_agent_rejected():
     """non-smoke agent는 cleanup 대상 제외."""
@@ -193,6 +194,7 @@ def test_cleanup_failed_task_allowed():
 
 # ── Dry-run vs Force/Confirm 테스트 ───────────────────────────────────
 
+
 def test_cleanup_dry_run_true_no_confirm_needed():
     """dry_run=true이면 force/confirm 필요 없음."""
     policy = validate_cleanup_request(
@@ -274,6 +276,7 @@ def test_cleanup_confirm_exact_match():
 
 
 # ── Registry cleanup 함수 테스트 ────────────────────────────────────
+
 
 def test_cleanup_agent_not_found():
     """존재하지 않는 agent cleanup은 안전하게 실패."""
@@ -417,6 +420,7 @@ def test_cleanup_idempotent():
 
 # ── 민감정보 검증 테스트 ──────────────────────────────────────────
 
+
 def test_cleanup_response_no_device_token():
     """cleanup response에 device_token이 없음."""
     code_result = _regcodes.issue_code(label="smoke-test-cleanup", issued_by="test")
@@ -432,7 +436,7 @@ def test_cleanup_response_no_device_token():
 
     # Ensure no device_token in response
     assert "device_token" not in result
-    response_str = str(result)
+    response_str = str(result)  # noqa: F841
     # 응답 내용에서 민감값 검사 (구현상 원본이 저장되지 않으므로 자동 통과)
 
 

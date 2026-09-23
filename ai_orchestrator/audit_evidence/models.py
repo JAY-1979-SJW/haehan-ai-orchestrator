@@ -8,29 +8,29 @@
 - 외부 API 호출 금지
 - secret/token/password/session/cookie 필드 정의 금지
 """
+
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from ai_orchestrator.safety_policy.secret_redaction import (
     strip_sensitive_fields,
-    assert_no_sensitive_fields,
 )
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _new_id(prefix: str = "") -> str:
     return f"{prefix}{uuid.uuid4().hex[:12]}"
 
 
-class AuditEventStatus(str, Enum):
+class AuditEventStatus(str, Enum):  # noqa: UP042
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -40,7 +40,7 @@ class AuditEventStatus(str, Enum):
     FAILED = "failed"
 
 
-class ExecutionLocation(str, Enum):
+class ExecutionLocation(str, Enum):  # noqa: UP042
     SERVER = "server"
     LOCAL_AGENT = "local_agent"
     USER_DIRECT = "user_direct"
@@ -48,14 +48,14 @@ class ExecutionLocation(str, Enum):
     UNKNOWN = "unknown"
 
 
-class HandoffMode(str, Enum):
+class HandoffMode(str, Enum):  # noqa: UP042
     FILE_DROP = "file_drop"
     IPC = "ipc"
     API_BRIDGE = "api_bridge"
     USER_MANUAL = "user_manual"
 
 
-class EvidenceLevel(str, Enum):
+class EvidenceLevel(str, Enum):  # noqa: UP042
     NONE = "none"
     BASIC = "basic"
     STANDARD = "standard"
@@ -73,7 +73,7 @@ class StandardAuditEvent:
     status: str
     timestamp: str
     summary: str
-    safety_verdict: Optional[str]
+    safety_verdict: str | None
     artifact_refs: tuple[str, ...]
     metadata: dict[str, Any]
     redaction_applied: bool
@@ -86,11 +86,11 @@ class StandardAuditEvent:
         actor: str,
         status: str,
         summary: str,
-        safety_verdict: Optional[str] = None,
+        safety_verdict: str | None = None,
         artifact_refs: tuple[str, ...] = (),
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         redaction_applied: bool = True,
-    ) -> "StandardAuditEvent":
+    ) -> StandardAuditEvent:
         return cls(
             event_id=_new_id("ae_"),
             event_type=event_type,
@@ -131,12 +131,12 @@ class ExecutionAttempt:
     execution_location: str
     risk_level: str
     started_at: str
-    finished_at: Optional[str]
+    finished_at: str | None
     status: str
     policy_decision: str
     safe_to_execute_on_server: bool
-    error_code: Optional[str]
-    error_message: Optional[str]
+    error_code: str | None
+    error_message: str | None
     artifact_refs: tuple[str, ...]
 
     @classmethod
@@ -148,11 +148,11 @@ class ExecutionAttempt:
         status: str,
         policy_decision: str,
         safe_to_execute_on_server: bool,
-        finished_at: Optional[str] = None,
-        error_code: Optional[str] = None,
-        error_message: Optional[str] = None,
+        finished_at: str | None = None,
+        error_code: str | None = None,
+        error_message: str | None = None,
         artifact_refs: tuple[str, ...] = (),
-    ) -> "ExecutionAttempt":
+    ) -> ExecutionAttempt:
         return cls(
             attempt_id=_new_id("ea_"),
             task_id=task_id,
@@ -214,7 +214,7 @@ class SafetyVerdict:
         requires_user_direct: bool = False,
         requires_oauth_setup: bool = False,
         blocked: bool = False,
-    ) -> "SafetyVerdict":
+    ) -> SafetyVerdict:
         return cls(
             verdict_id=_new_id("sv_"),
             task_id=task_id,
@@ -257,7 +257,7 @@ class ExternalAppHandoff:
     handoff_mode: str
     status: str
     requested_at: str
-    completed_at: Optional[str]
+    completed_at: str | None
     input_artifact_refs: tuple[str, ...]
     output_artifact_refs: tuple[str, ...]
     approval_required: bool
@@ -278,9 +278,9 @@ class ExternalAppHandoff:
         safety_policy_ids: tuple[str, ...] = (),
         input_artifact_refs: tuple[str, ...] = (),
         output_artifact_refs: tuple[str, ...] = (),
-        completed_at: Optional[str] = None,
+        completed_at: str | None = None,
         auto_execute_allowed: bool = False,
-    ) -> "ExternalAppHandoff":
+    ) -> ExternalAppHandoff:
         return cls(
             handoff_id=_new_id("hf_"),
             task_id=task_id,
@@ -342,7 +342,7 @@ class ArtifactEvidenceRef:
         source_task_id: str,
         evidence_level: str = EvidenceLevel.STANDARD,
         redaction_applied: bool = True,
-    ) -> "ArtifactEvidenceRef":
+    ) -> ArtifactEvidenceRef:
         return cls(
             artifact_id=_new_id("ar_"),
             artifact_type=artifact_type,

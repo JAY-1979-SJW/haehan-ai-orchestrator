@@ -1,23 +1,40 @@
 """
 네이버 블로그 workflow 테스트
 """
+
 import pytest
-from ai_orchestrator.local_agent.naver_blog_workflow import (
-    generate_blog_draft, publish_blog_post, schedule_blog_publish,
-    edit_blog_post, delete_blog_post, read_blog_post, get_blog_workflow_grade,
-    STEP_GENERATE_TITLE, STEP_GENERATE_BODY, STEP_GENERATE_TAGS,
-    STEP_PREVIEW, STEP_SAVE_DRAFT, STEP_PUBLISH, STEP_SCHEDULE_PUBLISH,
-    STEP_EDIT, STEP_DELETE,
-)
+
 from ai_orchestrator.local_agent.content_workflow_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED,
-    is_workflow_auto_allowed, requires_permission,
-)
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
+    GRADE_AUTO_ALLOWED,
+    GRADE_USER_DELEGATED,
+    requires_permission,
 )
 from ai_orchestrator.local_agent.delegated_action_executor import (
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION,
+    EXEC_ALLOWED,
+    EXEC_NEED_PERMISSION,
+)
+from ai_orchestrator.local_agent.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
+)
+from ai_orchestrator.local_agent.naver_blog_workflow import (
+    STEP_DELETE,
+    STEP_EDIT,
+    STEP_GENERATE_BODY,
+    STEP_GENERATE_TAGS,
+    STEP_GENERATE_TITLE,
+    STEP_PREVIEW,
+    STEP_PUBLISH,
+    STEP_SAVE_DRAFT,
+    STEP_SCHEDULE_PUBLISH,
+    delete_blog_post,
+    edit_blog_post,
+    generate_blog_draft,
+    get_blog_workflow_grade,
+    publish_blog_post,
+    read_blog_post,
+    schedule_blog_publish,
 )
 from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
 
@@ -151,7 +168,9 @@ class TestBlogPublishPermission:
 
     def test_expired_permission_blocked(self):
         perm = grant_permission("blog_publish", "blog.naver.com", duration_seconds=0)
-        import time; time.sleep(0.01)
+        import time
+
+        time.sleep(0.01)
         result = publish_blog_post("게시 시도.", permission_id=perm["permission_id"])
         assert result["status"] == EXEC_NEED_PERMISSION
 

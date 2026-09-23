@@ -11,18 +11,18 @@ DB(attachment_parse_result)의 file_url을 dedupe → headless Playwright로
 - 로그인/인증서/OTP 자동입력 금지
 - 보안프로그램 우회 금지
 """
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import os
-import re
 import sys
 import time
 import unicodedata
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -128,6 +128,7 @@ def _safe_url_tail(url: str, length: int = 60) -> str:
 
 # ── DB 조회 ────────────────────────────────────────────────────────────────
 
+
 def _fetch_candidates_via_ssh() -> list[dict[str, Any]]:
     """
     server의 g2b-api 컨테이너 안에서 DB SELECT (read-only).
@@ -135,6 +136,7 @@ def _fetch_candidates_via_ssh() -> list[dict[str, Any]]:
     """
     import base64
     import subprocess
+
     py_code = """
 import os, json, psycopg2
 conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -159,13 +161,9 @@ for r in cur.fetchall():
 print(json.dumps(rows, ensure_ascii=False))
 """
     b64 = base64.b64encode(py_code.encode("utf-8")).decode("ascii")
-    remote_cmd = (
-        f"docker exec g2b-api sh -c "
-        f"'echo {b64} | base64 -d | python3 -'"
-    )
+    remote_cmd = f"docker exec g2b-api sh -c 'echo {b64} | base64 -d | python3 -'"
     cmd = ["ssh", "haehan-app", remote_cmd]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60,
-                          encoding="utf-8")
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(f"DB SSH 조회 실패: {proc.stderr[:200]}")
     # stdout에는 JSON 한 줄
@@ -180,8 +178,7 @@ print(json.dumps(rows, ensure_ascii=False))
 
 def _fetch_candidates_from_cache() -> list[dict[str, Any]]:
     """이미 저장된 candidates JSON에서 fallback 로드."""
-    cache = os.path.join(_REPO_ROOT, "tmp",
-                          "g2b_user_present_attachment_candidates_20260508.json")
+    cache = os.path.join(_REPO_ROOT, "tmp", "g2b_user_present_attachment_candidates_20260508.json")
     if not os.path.exists(cache):
         return []
     with open(cache, encoding="utf-8") as f:
@@ -191,15 +188,17 @@ def _fetch_candidates_from_cache() -> list[dict[str, Any]]:
     out = []
     for it in items:
         ft = (it.get("file_type") or "").lower()
-        out.append({
-            "bid_ntce_no": it.get("bid_ntce_no"),
-            "bid_ntce_ord": it.get("bid_ntce_ord"),
-            "file_name": it.get("file_name"),
-            "file_ext": ft,
-            "file_url": it.get("file_url"),
-            "download_yn": False,
-            "collected_at": it.get("collected_at"),
-        })
+        out.append(
+            {
+                "bid_ntce_no": it.get("bid_ntce_no"),
+                "bid_ntce_ord": it.get("bid_ntce_ord"),
+                "file_name": it.get("file_name"),
+                "file_ext": ft,
+                "file_url": it.get("file_url"),
+                "download_yn": False,
+                "collected_at": it.get("collected_at"),
+            }
+        )
     return out
 
 
@@ -214,8 +213,8 @@ def _fetch_candidates() -> list[dict[str, Any]]:
 
 # ── 다운로드 ────────────────────────────────────────────────────────────────
 
-def _download_one(playwright, candidate: dict[str, Any], out_dir: str,
-                  index: int, headless: bool) -> dict[str, Any]:
+
+def _download_one(playwright, candidate: dict[str, Any], out_dir: str, index: int, headless: bool) -> dict[str, Any]:
     """단일 URL 다운로드 시도."""
     started = time.time()
     bid_no = candidate.get("bid_ntce_no") or ""
@@ -324,6 +323,7 @@ def _download_one(playwright, candidate: dict[str, Any], out_dir: str,
 
 # ── 메인 batch ─────────────────────────────────────────────────────────────
 
+
 def run_batch(args) -> dict[str, Any]:
     if not _is_local_pc():
         return {"verdict": "BLOCKED_NOT_LOCAL", "message": "서버/도커 환경에서 실행 차단"}
@@ -363,7 +363,7 @@ def run_batch(args) -> dict[str, Any]:
         print()
         print("[DRY-RUN] 실제 다운로드 없음 — 후보 리스트만 반환")
         return {
-            "executed_at": datetime.now(timezone.utc).isoformat(),
+            "executed_at": datetime.now(UTC).isoformat(),
             "total_candidates": len(candidates_all),
             "deduped": len(deduped),
             "to_run": len(target),
@@ -383,14 +383,15 @@ def run_batch(args) -> dict[str, Any]:
 
     with sync_playwright() as pw:
         for i, c in enumerate(target, 1):
-            print(f"[{i}/{len(target)}] {c['file_ext'].upper()} | "
-                  f"{c['bid_ntce_no']}/{c['bid_ntce_ord']} | "
-                  f"{(c.get('file_name') or '')[:50]}")
+            print(
+                f"[{i}/{len(target)}] {c['file_ext'].upper()} | "
+                f"{c['bid_ntce_no']}/{c['bid_ntce_ord']} | "
+                f"{(c.get('file_name') or '')[:50]}"
+            )
             r = _download_one(pw, c, out_dir, index=i, headless=args.headless)
             results.append(r)
             verdict = r["verdict"]
-            print(f"  → {verdict} ({r['elapsed_sec']}s) "
-                  f"{'size=' + str(r['file_size']) if r['file_size'] else ''}")
+            print(f"  → {verdict} ({r['elapsed_sec']}s) {'size=' + str(r['file_size']) if r['file_size'] else ''}")
 
             if verdict == V_ERROR:
                 consecutive_errors += 1
@@ -412,7 +413,7 @@ def run_batch(args) -> dict[str, Any]:
 
     summary = {
         "task_id": str(uuid.uuid4()),
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
         "total_candidates": len(candidates_all),
         "deduped_count": len(deduped),
         "executed_count": len(target),
@@ -446,7 +447,9 @@ def _write_md_report(summary: dict, path: str, total_cands: int, deduped: int) -
     success = g(V_HWPX_READY, 0) + g(V_HWP_CONVERT, 0) + g(V_PDF, 0) + g(V_ZIP, 0)
 
     success_rows = [r for r in summary["results"] if r["verdict"] in (V_HWPX_READY, V_HWP_CONVERT, V_PDF, V_ZIP)]
-    fail_rows = [r for r in summary["results"] if r["verdict"] not in (V_HWPX_READY, V_HWP_CONVERT, V_PDF, V_ZIP, V_DUP)]
+    fail_rows = [
+        r for r in summary["results"] if r["verdict"] not in (V_HWPX_READY, V_HWP_CONVERT, V_PDF, V_ZIP, V_DUP)
+    ]
 
     md = []
     md.append("# G2B Local Playwright Direct URL Batch Download Report")
@@ -490,9 +493,11 @@ def _write_md_report(summary: dict, path: str, total_cands: int, deduped: int) -
     md.append("|---|---|---|---|---|---|---|---|")
     for r in success_rows[:50]:
         fn = (r.get("file_name") or "")[:40]
-        md.append(f"| {r['index']} | {r['bid_ntce_no']} | {r['bid_ntce_ord']} | "
-                  f"{fn} | {r['file_ext']} | {r['file_size']:,} | "
-                  f"{r['signature']} | {r['verdict']} |")
+        md.append(
+            f"| {r['index']} | {r['bid_ntce_no']} | {r['bid_ntce_ord']} | "
+            f"{fn} | {r['file_ext']} | {r['file_size']:,} | "
+            f"{r['signature']} | {r['verdict']} |"
+        )
     if len(success_rows) > 50:
         md.append(f"| ... | (총 {len(success_rows)}건 중 처음 50건만 표시) | | | | | | |")
     md.append("")
@@ -501,9 +506,11 @@ def _write_md_report(summary: dict, path: str, total_cands: int, deduped: int) -
     md.append("| index | 공고번호 | url tail | 사유 | verdict |")
     md.append("|---|---|---|---|---|")
     for r in fail_rows[:50]:
-        md.append(f"| {r['index']} | {r['bid_ntce_no']} | "
-                  f"{(r.get('file_url_tail') or '')[:40]} | "
-                  f"{(r.get('error_message') or '')[:50]} | {r['verdict']} |")
+        md.append(
+            f"| {r['index']} | {r['bid_ntce_no']} | "
+            f"{(r.get('file_url_tail') or '')[:40]} | "
+            f"{(r.get('error_message') or '')[:50]} | {r['verdict']} |"
+        )
     if len(fail_rows) > 50:
         md.append(f"| ... | (총 {len(fail_rows)}건 중 처음 50건만 표시) | | | |")
     md.append("")
@@ -550,7 +557,7 @@ def main():
     p.add_argument("--dry-run", type=lambda v: str(v).lower() == "true", default=False)
     args = p.parse_args()
 
-    summary = run_batch(args)
+    summary = run_batch(args)  # noqa: F841
     print()
     print("=" * 70)
     print("완료")

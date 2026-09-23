@@ -27,12 +27,13 @@
 
   총점 100점 기준 → S/A/B/C 등급 분류
 """
+
 from __future__ import annotations
 
 import json
 import sys
+from datetime import date
 from pathlib import Path
-from datetime import datetime, date
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -63,7 +64,7 @@ def score_project(p: dict) -> dict:
             else:
                 score += 10
                 detail.append(f"잔여{remaining_months}개월(+10)")
-        except:
+        except:  # noqa: E722
             pass
 
     # B. 설치 긴급도
@@ -85,7 +86,7 @@ def score_project(p: dict) -> dict:
             else:
                 score += 5
                 detail.append(f"설치{days_to_install}일후(+5)")
-        except:
+        except:  # noqa: E722
             pass
 
     # C. 등록 신선도
@@ -103,14 +104,14 @@ def score_project(p: dict) -> dict:
             elif days_since <= 90:
                 score += 5
                 detail.append(f"등록{days_since}일전(+5)")
-        except:
+        except:  # noqa: E722
             pass
 
     # D. 지역 접근성
     jisa = p.get("관할지사", "").strip()
     if jisa in METRO:
         score += 10
-        detail.append(f"수도권(+10)")
+        detail.append("수도권(+10)")
 
     # 등급 분류
     if score >= 80:
@@ -133,7 +134,7 @@ def score_project(p: dict) -> dict:
 
 
 def make_mail(p: dict) -> str:
-    company = p.get("업체명", "")
+    company = p.get("업체명", "")  # noqa: F841
     manager = p.get("담당자", "담당자")
     project = p.get("공사명", "")
     addr = p.get("현장주소", "")
@@ -204,10 +205,10 @@ def main():
         print("데이터 없음. eum_extract_new_sites.py 먼저 실행 필요.")
         sys.exit(1)
 
-    projects = json.loads(f.read_text(encoding='utf-8'))["projects"]
-    print(f"\n{'='*80}")
+    projects = json.loads(f.read_text(encoding="utf-8"))["projects"]
+    print(f"\n{'=' * 80}")
     print(f"  신규 현장 우선순위 선정 | 기준일: {TODAY}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     # 점수 계산 + 중복 제거 (이메일+공사명 기준)
     scored_all = [score_project(p) for p in projects]
@@ -239,9 +240,9 @@ def main():
 
     # S/A등급 상세
     top = by_grade["S"] + by_grade["A"]
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"[S/A등급 우선 발송 대상] {len(top)}개")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     for i, p in enumerate(top[:30], 1):
         print(f"\n  [{i:2}] {p['_grade']}등급 {p['_score']}점 | {p['공사명'][:45]}")
@@ -250,36 +251,59 @@ def main():
         print(f"       이메일: {p['이메일']}")
 
     if len(top) > 30:
-        print(f"\n  ... 외 {len(top)-30}개")
+        print(f"\n  ... 외 {len(top) - 30}개")
 
     # 결과 저장
     out_json = ROOT / "data" / f"eum_priority_sites_{TODAY.strftime('%Y%m%d')}.json"
-    out_json.write_text(json.dumps({
-        "기준일": TODAY.isoformat(),
-        "법적근거": {
-            "의무대상": "공공 1억원 이상 / 민간 50억원 이상 (건설근로자법 2024.01 기준)",
-            "자율대상": "3억원 미만 소규모 (모바일앱 대체 가능)"
-        },
-        "점수기준": {
-            "A_잔여기간": "12개월↑=40 / 6~12개월=25 / 6개월↓=10",
-            "B_설치긴급도": "경과=30 / 30일이내=20 / 90일이내=10 / 그외=5",
-            "C_등록신선도": "30일이내=20 / 60일이내=10 / 90일이내=5",
-            "D_수도권": "경기/서울/인천/의정부/서울남부=10"
-        },
-        "등급분포": {g: len(lst) for g, lst in by_grade.items()},
-        "S등급": [{"NO": p["NO"], "공사명": p["공사명"], "업체명": p["업체명"],
-                   "이메일": p["이메일"], "점수": p["_score"], "근거": p["_detail"]}
-                  for p in by_grade["S"]],
-        "A등급": [{"NO": p["NO"], "공사명": p["공사명"], "업체명": p["업체명"],
-                   "이메일": p["이메일"], "점수": p["_score"], "근거": p["_detail"]}
-                  for p in by_grade["A"]],
-        "전체_점수순": scored
-    }, ensure_ascii=False, indent=2), encoding='utf-8')
+    out_json.write_text(
+        json.dumps(
+            {
+                "기준일": TODAY.isoformat(),
+                "법적근거": {
+                    "의무대상": "공공 1억원 이상 / 민간 50억원 이상 (건설근로자법 2024.01 기준)",
+                    "자율대상": "3억원 미만 소규모 (모바일앱 대체 가능)",
+                },
+                "점수기준": {
+                    "A_잔여기간": "12개월↑=40 / 6~12개월=25 / 6개월↓=10",
+                    "B_설치긴급도": "경과=30 / 30일이내=20 / 90일이내=10 / 그외=5",
+                    "C_등록신선도": "30일이내=20 / 60일이내=10 / 90일이내=5",
+                    "D_수도권": "경기/서울/인천/의정부/서울남부=10",
+                },
+                "등급분포": {g: len(lst) for g, lst in by_grade.items()},
+                "S등급": [
+                    {
+                        "NO": p["NO"],
+                        "공사명": p["공사명"],
+                        "업체명": p["업체명"],
+                        "이메일": p["이메일"],
+                        "점수": p["_score"],
+                        "근거": p["_detail"],
+                    }
+                    for p in by_grade["S"]
+                ],
+                "A등급": [
+                    {
+                        "NO": p["NO"],
+                        "공사명": p["공사명"],
+                        "업체명": p["업체명"],
+                        "이메일": p["이메일"],
+                        "점수": p["_score"],
+                        "근거": p["_detail"],
+                    }
+                    for p in by_grade["A"]
+                ],
+                "전체_점수순": scored,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     # 메일 초안 저장 (S/A등급만)
     out_mail = ROOT / "data" / f"promo_mails_priority_{TODAY.strftime('%Y%m%d')}.txt"
     with open(out_mail, "w", encoding="utf-8") as mf:
-        mf.write(f"# 단말기 임대 홍보 메일 - S/A등급 우선 발송\n")
+        mf.write("# 단말기 임대 홍보 메일 - S/A등급 우선 발송\n")
         mf.write(f"# 생성일: {TODAY} | 대상: {len(top)}개 현장\n\n")
         mf.write("=" * 80 + "\n")
         mf.write("[우선순위 기준 요약]\n")
@@ -288,17 +312,17 @@ def main():
         mf.write("=" * 80 + "\n\n")
 
         for i, p in enumerate(top, 1):
-            mf.write(f"{'─'*60}\n")
+            mf.write(f"{'─' * 60}\n")
             mf.write(f"[{i}/{len(top)}] {p['_grade']}등급 {p['_score']}점 | {p['공사명']}\n")
             mf.write(f"우선순위 근거: {p['_detail']}\n\n")
             mf.write(make_mail(p))
             mf.write("\n")
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"✓ 우선순위 JSON: {out_json.name}")
     print(f"✓ 메일 초안 TXT: {out_mail.name}")
     print(f"  → S/A등급 {len(top)}개 메일 작성 완료")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
 
 if __name__ == "__main__":

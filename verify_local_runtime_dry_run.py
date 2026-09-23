@@ -9,10 +9,8 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
 
 from local_agent.network_bypass import urlopen_for_server
-
 
 ROOT = Path(__file__).resolve().parent
 SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -54,7 +52,7 @@ class Report:
 
 
 def _run(args: list[str], *, timeout: int = 30) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return subprocess.run(  # noqa: UP022
         args,
         cwd=ROOT,
         text=True,
@@ -147,7 +145,7 @@ def check_desktop_exe(report: Report) -> None:
         return
     server = data.get("server", {}) if isinstance(data, dict) else {}
     heartbeat = data.get("heartbeat", {}) if isinstance(data, dict) else {}
-    detail = f"server={server.get('url_redacted','')} heartbeat={heartbeat.get('state','')}"
+    detail = f"server={server.get('url_redacted', '')} heartbeat={heartbeat.get('state', '')}"
     report.pass_("desktop exe --diagnostics", detail.strip())
 
 
@@ -163,10 +161,22 @@ def check_local_agent(report: Report) -> None:
     diagnostics = desktop_launcher.show_diagnostics(SERVER_URL)
     block = str(diagnostics.get("diagnostics_block", ""))
     token_present = bool(diagnostics.get("token_present"))
-    status = next((s for s in ("DISCONNECTED", "CONNECTED", "NOT_REGISTERED",
-                               "TOKEN_MISSING", "AUTH_FAILED",
-                               "SERVER_UNREACHABLE", "NETWORK_BLOCKED")
-                   if s in block), "")
+    status = next(
+        (
+            s
+            for s in (
+                "DISCONNECTED",
+                "CONNECTED",
+                "NOT_REGISTERED",
+                "TOKEN_MISSING",
+                "AUTH_FAILED",
+                "SERVER_UNREACHABLE",
+                "NETWORK_BLOCKED",
+            )
+            if s in block
+        ),
+        "",
+    )
     if status == "CONNECTED":
         report.pass_("local agent server status", "CONNECTED")
     elif status == "DISCONNECTED" and token_present:
@@ -188,7 +198,7 @@ def check_server(report: Report, *, live_server: bool) -> None:
         report.pass_("server http health", "skipped in static mode; pass --live-server to check")
         return
     try:
-        req = urllib.request.Request(SERVER_HEALTH_URL, method="GET")
+        req = urllib.request.Request(SERVER_HEALTH_URL, method="GET")  # noqa: S310
         with urlopen_for_server(SERVER_URL, req, timeout=10) as resp:
             if resp.status == 200:
                 report.pass_("server http health", "status=200")
@@ -211,7 +221,7 @@ def check_playwright(report: Report) -> None:
     if state == "PLAYWRIGHT_READY":
         report.pass_("playwright", f"version={version} browser_available=True")
     else:
-        report.warn("playwright", f"{state}: {status.get('message_ko','')}")
+        report.warn("playwright", f"{state}: {status.get('message_ko', '')}")
 
 
 def check_asyncio_subprocess(report: Report) -> None:
@@ -265,22 +275,27 @@ def check_ai_proxy(report: Report) -> None:
 
 
 def check_agent_ws_auth(report: Report) -> None:
-    proc = _run([
-        sys.executable,
-        "verify_agent_ws_auth.py",
-        "--server",
-        SERVER_URL,
-        "--timeout",
-        "15",
-    ], timeout=45)
+    proc = _run(
+        [
+            sys.executable,
+            "verify_agent_ws_auth.py",
+            "--server",
+            SERVER_URL,
+            "--timeout",
+            "15",
+        ],
+        timeout=45,
+    )
     output = proc.stdout + "\n" + proc.stderr
     if "RESULT=PASS_AGENT_WS_AUTH" in output:
-        status = next((line for line in proc.stdout.splitlines()
-                       if line.startswith("ws_auth_status=")), "ws_auth_status=AUTH_OK")
+        status = next(
+            (line for line in proc.stdout.splitlines() if line.startswith("ws_auth_status=")), "ws_auth_status=AUTH_OK"
+        )
         report.pass_("agent websocket auth", status.split("=", 1)[1])
     else:
-        status = next((line for line in output.splitlines()
-                       if line.startswith("ws_auth_status=")), "ws_auth_status=UNKNOWN")
+        status = next(
+            (line for line in output.splitlines() if line.startswith("ws_auth_status=")), "ws_auth_status=UNKNOWN"
+        )
         report.warn("agent websocket auth", status.split("=", 1)[1])
 
 

@@ -1,14 +1,12 @@
 """NAVER-MAIL-ACTION-ITEM-DASHBOARD-01 — 필수 12+ 테스트."""
+
 from __future__ import annotations
 
 import json
 
-import pytest
-
 from scripts.naver.mail import action_item_dashboard as aid
 from scripts.naver.mail import business_report as br
 from scripts.ops import audit_naver_mail_action_item_dashboard as audit
-
 
 # ── 입력 헬퍼 ───────────────────────────────────────────────────────
 
@@ -31,18 +29,30 @@ def _action(cat, pri, title, sender="x.com", date="05-18", action_id=""):
 
 def _three_high_inputs():
     return [
-        _action(br.CAT_ATTENTION, "HIGH",
-                "[스마트스토어센터] 스마트스토어 판매자 계정이 휴면 상태로 전환될 예정입니다.",
-                sender="navercorp.com", date="05-03",
-                action_id="act_smart_dormant"),
-        _action(br.CAT_ATTENTION, "HIGH",
-                "[쿠팡] 고객센터 문의 답변지연으로 인한 전체 상품 노출 정지 안내",
-                sender="coupang.com", date="05-18",
-                action_id="act_coupang_stop"),
-        _action(br.CAT_SPAM_OR_PHISHING_SUSPECTED, "HIGH",
-                "Re: Shipping Documents",
-                sender="global-gu.com", date="04-17",
-                action_id="act_fedex_phish"),
+        _action(
+            br.CAT_ATTENTION,
+            "HIGH",
+            "[스마트스토어센터] 스마트스토어 판매자 계정이 휴면 상태로 전환될 예정입니다.",
+            sender="navercorp.com",
+            date="05-03",
+            action_id="act_smart_dormant",
+        ),
+        _action(
+            br.CAT_ATTENTION,
+            "HIGH",
+            "[쿠팡] 고객센터 문의 답변지연으로 인한 전체 상품 노출 정지 안내",
+            sender="coupang.com",
+            date="05-18",
+            action_id="act_coupang_stop",
+        ),
+        _action(
+            br.CAT_SPAM_OR_PHISHING_SUSPECTED,
+            "HIGH",
+            "Re: Shipping Documents",
+            sender="global-gu.com",
+            date="04-17",
+            action_id="act_fedex_phish",
+        ),
     ]
 
 
@@ -55,11 +65,22 @@ def test_dashboard_schema_complete():
     assert len(dash.items) == 3
     for it in dash.items:
         d = it.to_dict()
-        for k in ("actionId", "sourceCategory", "priority", "status",
-                  "title_redacted", "sender_domain", "received_date",
-                  "reason", "recommended_action", "evidence_markers",
-                  "riskType", "dueDateCandidate", "pii_masked",
-                  "raw_body_saved"):
+        for k in (
+            "actionId",
+            "sourceCategory",
+            "priority",
+            "status",
+            "title_redacted",
+            "sender_domain",
+            "received_date",
+            "reason",
+            "recommended_action",
+            "evidence_markers",
+            "riskType",
+            "dueDateCandidate",
+            "pii_masked",
+            "raw_body_saved",
+        ):
             assert k in d, f"missing: {k}"
 
 
@@ -68,11 +89,21 @@ def test_dashboard_summary_schema():
     dash = aid.build_dashboard(actions)
     s = aid.build_summary(dash)
     d = s.to_dict()
-    for k in ("total_items", "high_count", "medium_count", "low_count",
-              "unknown_review_count", "risk_type_counts", "category_counts",
-              "due_date_candidate_count", "pii_masked_all",
-              "raw_body_saved_any", "generated_at", "input_report_hash",
-              "high_required_present"):
+    for k in (
+        "total_items",
+        "high_count",
+        "medium_count",
+        "low_count",
+        "unknown_review_count",
+        "risk_type_counts",
+        "category_counts",
+        "due_date_candidate_count",
+        "pii_masked_all",
+        "raw_body_saved_any",
+        "generated_at",
+        "input_report_hash",
+        "high_required_present",
+    ):
         assert k in d
 
 
@@ -89,8 +120,7 @@ def test_high_three_required_present():
 
 def test_audit_fail_high_missing():
     # 스마트스토어 빠짐
-    actions = [a for a in _three_high_inputs()
-               if "스마트스토어" not in a["title_redacted"]]
+    actions = [a for a in _three_high_inputs() if "스마트스토어" not in a["title_redacted"]]
     dash = aid.build_dashboard(actions)
     s = aid.build_summary(dash)
     v = audit.judge_dashboard(dash, s)
@@ -103,10 +133,8 @@ def test_audit_fail_high_missing():
 def test_priority_sort_high_first():
     actions = [
         _action(br.CAT_BILLING, "LOW", "결제 내역", action_id="L"),
-        _action(br.CAT_ATTENTION, "HIGH", "쿠팡 노출 정지 안내",
-                sender="coupang.com", action_id="H"),
-        _action(br.CAT_REVIEW, "MEDIUM", "haehan-ai.kr 색인 오류",
-                action_id="M"),
+        _action(br.CAT_ATTENTION, "HIGH", "쿠팡 노출 정지 안내", sender="coupang.com", action_id="H"),
+        _action(br.CAT_REVIEW, "MEDIUM", "haehan-ai.kr 색인 오류", action_id="M"),
     ]
     dash = aid.build_dashboard(actions)
     priorities = [i.priority for i in dash.items]
@@ -154,16 +182,17 @@ def test_risk_type_phishing():
 
 
 def test_risk_type_seo_for_gsc_indexing():
-    actions = [_action(br.CAT_REVIEW, "MEDIUM",
-                       "haehan-ai.kr 사이트의 페이지에 대한 색인이 생성되지 않습니다",
-                       sender="google.com")]
+    actions = [
+        _action(
+            br.CAT_REVIEW, "MEDIUM", "haehan-ai.kr 사이트의 페이지에 대한 색인이 생성되지 않습니다", sender="google.com"
+        )
+    ]
     dash = aid.build_dashboard(actions)
     assert dash.items[0].riskType == aid.RISK_SEO
 
 
 def test_risk_type_delivery_failure():
-    actions = [_action(br.CAT_DELIVERY_FAILURE, "MEDIUM",
-                       "Undelivered Mail Returned to Sender")]
+    actions = [_action(br.CAT_DELIVERY_FAILURE, "MEDIUM", "Undelivered Mail Returned to Sender")]
     dash = aid.build_dashboard(actions)
     assert dash.items[0].riskType == aid.RISK_DELIVERY_FAILURE
 
@@ -173,8 +202,7 @@ def test_risk_type_billing_policy_security_service():
         (br.CAT_BILLING, "결제 내역", aid.RISK_BILLING_REVIEW),
         (br.CAT_POLICY_NOTICE, "약관 개정 안내", aid.RISK_POLICY_REVIEW),
         (br.CAT_SECURITY_NOTICE, "보안 알림", aid.RISK_SECURITY_REVIEW),
-        (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, "휴면 정책 변경 사전 안내",
-         aid.RISK_SERVICE_NOTICE),
+        (br.CAT_ACCOUNT_OR_SERVICE_NOTICE, "휴면 정책 변경 사전 안내", aid.RISK_SERVICE_NOTICE),
     ]
     for cat, title, expected in cases:
         a = [_action(cat, "MEDIUM", title)]
@@ -186,8 +214,10 @@ def test_risk_type_billing_policy_security_service():
 
 
 def test_unknown_review_lane_preserved():
-    actions = [_action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목 1"),
-               _action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목 2")]
+    actions = [
+        _action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목 1"),
+        _action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목 2"),
+    ]
     dash = aid.build_dashboard(actions)
     s = aid.build_summary(dash)
     assert s.unknown_review_count == 2
@@ -197,7 +227,7 @@ def test_unknown_review_lane_preserved():
 
 
 def test_audit_warn_unknown_review_items_present():
-    actions = _three_high_inputs() + [
+    actions = _three_high_inputs() + [  # noqa: RUF005
         _action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목"),
     ]
     dash = aid.build_dashboard(actions)
@@ -213,7 +243,8 @@ def test_audit_warn_unknown_review_items_present():
 
 def test_due_date_full_yyyy_mm_dd():
     iso, conf = aid.infer_due_date(
-        "2026.06.02 시행", received_date="05-03",
+        "2026.06.02 시행",
+        received_date="05-03",
     )
     assert iso == "2026-06-02"
     assert conf == "HIGH"
@@ -221,30 +252,28 @@ def test_due_date_full_yyyy_mm_dd():
 
 def test_due_date_yy_year_format():
     iso, conf = aid.infer_due_date(
-        "[안내] 26년 6월 9일 시행", received_date="05-09",
+        "[안내] 26년 6월 9일 시행",
+        received_date="05-09",
     )
     assert iso == "2026-06-09"
     assert conf == "HIGH"
 
 
 def test_due_date_month_day_only_medium():
-    iso, conf = aid.infer_due_date("스마트스토어 휴면 6월 2일",
-                                    received_date="05-03")
+    iso, conf = aid.infer_due_date("스마트스토어 휴면 6월 2일", received_date="05-03")
     assert iso.endswith("-06-02")
     assert conf == "MEDIUM"
 
 
 def test_due_date_no_match():
-    iso, conf = aid.infer_due_date("아무 날짜도 없는 제목",
-                                    received_date="05-01")
+    iso, conf = aid.infer_due_date("아무 날짜도 없는 제목", received_date="05-01")
     assert iso == ""
     assert conf == "NONE"
 
 
 def test_due_date_summary_count():
     actions = [
-        _action(br.CAT_POLICY_NOTICE, "MEDIUM",
-                "[안내] 26년 6월 9일 시행 약관"),
+        _action(br.CAT_POLICY_NOTICE, "MEDIUM", "[안내] 26년 6월 9일 시행 약관"),
         _action(br.CAT_BILLING, "LOW", "날짜 없는 결제"),
     ]
     dash = aid.build_dashboard(actions)
@@ -296,8 +325,7 @@ def test_render_with_masked_input_yields_zero_leak():
     js = json.dumps(dash.to_dict(), ensure_ascii=False)
     leaks_md = aid.find_leaks(md)
     leaks_js = aid.find_leaks(js)
-    total = (sum(len(v) for v in leaks_md.values())
-             + sum(len(v) for v in leaks_js.values()))
+    total = sum(len(v) for v in leaks_md.values()) + sum(len(v) for v in leaks_js.values())
     assert total == 0
 
 
@@ -308,8 +336,7 @@ def test_audit_fail_external_ai_call_in_network_log():
     actions = _three_high_inputs()
     dash = aid.build_dashboard(actions)
     s = aid.build_summary(dash)
-    v = audit.judge_dashboard(dash, s,
-                              network_log=["POST https://api.anthropic.com/v1"])
+    v = audit.judge_dashboard(dash, s, network_log=["POST https://api.anthropic.com/v1"])
     assert v.code == "FAIL_EXTERNAL_AI_CALL_USED"
 
 
@@ -331,17 +358,20 @@ def test_audit_pass_when_clean_with_high3_only():
 
 def test_regression_business_report_imports():
     from scripts.naver.mail import business_report as br
+
     assert hasattr(br, "build_report")
     assert hasattr(br, "ActionItem")
 
 
 def test_regression_batch_runner_imports():
     from scripts.naver.mail import batch_runner as bt
+
     assert hasattr(bt, "run_batch")
 
 
 def test_regression_body_pipeline_v2_imports():
     from scripts.naver.mail import body_pipeline_v2 as bp
+
     assert hasattr(bp, "run")
 
 
@@ -349,14 +379,22 @@ def test_regression_body_pipeline_v2_imports():
 
 
 def test_markdown_has_required_sections():
-    actions = _three_high_inputs() + [
+    actions = _three_high_inputs() + [  # noqa: RUF005
         _action(br.CAT_UNKNOWN_REVIEW_REQUIRED, "LOW", "임의 제목"),
     ]
     dash = aid.build_dashboard(actions)
     s = aid.build_summary(dash)
     md = aid.render_markdown(dash, s)
-    for sec in ("개요", "안전 정책 준수", "HIGH 즉시 조치",
-                "MEDIUM 검토 필요", "LOW", "UNKNOWN",
-                "리스크 유형별", "카테고리별", "due date 후보",
-                "원문/PII 저장 여부"):
+    for sec in (
+        "개요",
+        "안전 정책 준수",
+        "HIGH 즉시 조치",
+        "MEDIUM 검토 필요",
+        "LOW",
+        "UNKNOWN",
+        "리스크 유형별",
+        "카테고리별",
+        "due date 후보",
+        "원문/PII 저장 여부",
+    ):
         assert sec in md, f"missing section: {sec}"

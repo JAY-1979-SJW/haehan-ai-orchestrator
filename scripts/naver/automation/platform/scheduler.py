@@ -14,19 +14,18 @@ DB: data/cdp.db.scheduled_tasks
                "scripts.naver.automation.inventory_monitor:InventoryMonitor.check_low_stock")
   sch.start()  # 백그라운드 루프
 """
+
 from __future__ import annotations
 
 import importlib
 import json
 import sqlite3
 import threading
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Callable, Any
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
@@ -63,8 +62,10 @@ def _parse_cron_minute(cron: str, now: datetime) -> bool:
     if len(parts) != 5:
         return False
     minute, hour, day, month, weekday = parts
+
     def match(field, val):
-        if field == "*": return True
+        if field == "*":
+            return True
         if "," in field:
             return str(val) in field.split(",")
         if "/" in field:
@@ -75,9 +76,14 @@ def _parse_cron_minute(cron: str, now: datetime) -> bool:
             a, b = field.split("-")
             return int(a) <= val <= int(b)
         return str(val) == field
-    return (match(minute, now.minute) and match(hour, now.hour)
-            and match(day, now.day) and match(month, now.month)
-            and match(weekday, now.isoweekday() % 7))
+
+    return (
+        match(minute, now.minute)
+        and match(hour, now.hour)
+        and match(day, now.day)
+        and match(month, now.month)
+        and match(weekday, now.isoweekday() % 7)
+    )
 
 
 class Scheduler:
@@ -88,8 +94,7 @@ class Scheduler:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
-    def add_task(self, name: str, schedule: str, target: str,
-                  args: dict | None = None) -> dict:
+    def add_task(self, name: str, schedule: str, target: str, args: dict | None = None) -> dict:
         """작업 등록.
 
         Args:
@@ -107,10 +112,14 @@ class Scheduler:
             kind = "interval"
             unit_str = schedule[6:].strip()
             num = int("".join(c for c in unit_str if c.isdigit()) or 60)
-            if unit_str.endswith("m"): interval_s = num * 60
-            elif unit_str.endswith("h"): interval_s = num * 3600
-            elif unit_str.endswith("s"): interval_s = num
-            else: interval_s = num * 60
+            if unit_str.endswith("m"):
+                interval_s = num * 60
+            elif unit_str.endswith("h"):
+                interval_s = num * 3600
+            elif unit_str.endswith("s"):
+                interval_s = num
+            else:
+                interval_s = num * 60
             cron_expr = None
         elif "T" in schedule:  # ISO
             kind = "once"
@@ -127,12 +136,21 @@ class Scheduler:
                 """INSERT OR REPLACE INTO scheduled_tasks
                    (name, kind, cron_expr, interval_s, run_at, module, callable, args_json, enabled)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)""",
-                (name, kind, cron_expr, interval_s, run_at, module, callable_name,
-                 json.dumps(args or {}, ensure_ascii=False)),
+                (
+                    name,
+                    kind,
+                    cron_expr,
+                    interval_s,
+                    run_at,
+                    module,
+                    callable_name,
+                    json.dumps(args or {}, ensure_ascii=False),
+                ),
             )
             conn.commit()
-            log_critical("OTHER", f"스케줄 작업 등록: {name}",
-                         name=name, kind=kind, target=target, mode="scheduler_add")
+            log_critical(
+                "OTHER", f"스케줄 작업 등록: {name}", name=name, kind=kind, target=target, mode="scheduler_add"
+            )
             return {"ok": True, "name": name, "kind": kind}
         finally:
             conn.close()
@@ -216,16 +234,18 @@ class Scheduler:
                     """UPDATE scheduled_tasks
                        SET last_run = ?, last_result = ?, run_count = run_count + 1
                        WHERE id = ?""",
-                    (now.isoformat(timespec="seconds"),
-                     json.dumps(result, ensure_ascii=False)[:1000],
-                     task["id"])
+                    (now.isoformat(timespec="seconds"), json.dumps(result, ensure_ascii=False)[:1000], task["id"]),
                 )
                 conn.commit()
                 conn.close()
                 executed.append({"task": task["name"], "result": result})
-                log_critical("OTHER", f"스케줄 실행: {task['name']}",
-                             name=task["name"], ok=result.get("ok"),
-                             mode="scheduler_run")
+                log_critical(
+                    "OTHER",
+                    f"스케줄 실행: {task['name']}",
+                    name=task["name"],
+                    ok=result.get("ok"),
+                    mode="scheduler_run",
+                )
         return executed
 
     def start(self, interval_s: int = 60) -> None:
@@ -233,6 +253,7 @@ class Scheduler:
         if self._thread and self._thread.is_alive():
             return
         self._stop.clear()
+
         def loop():
             while not self._stop.is_set():
                 try:
@@ -240,6 +261,7 @@ class Scheduler:
                 except Exception as e:
                     _log.error("[scheduler] tick 오류: %s", e)
                 self._stop.wait(interval_s)
+
         self._thread = threading.Thread(target=loop, daemon=True)
         self._thread.start()
         _log.info("[scheduler] 시작 (interval %ds)", interval_s)

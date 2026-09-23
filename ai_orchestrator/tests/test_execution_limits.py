@@ -5,13 +5,15 @@ import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator import config as cfg
-from ai_orchestrator.models import TaskRequest, ExecutionPlan
-from ai_orchestrator.executor import execute
-from ai_orchestrator.execution_limits import (
-    current_limits, BLOCK_RATE_ACTION, BLOCK_RATE_USER, BLOCK_TIMEOUT,
-)
 from ai_orchestrator.config import EXECUTION_HISTORY_PATH
+from ai_orchestrator.execution_limits import (
+    BLOCK_RATE_ACTION,
+    BLOCK_RATE_USER,
+    BLOCK_TIMEOUT,
+    current_limits,
+)
+from ai_orchestrator.executor import execute
+from ai_orchestrator.models import ExecutionPlan, TaskRequest
 
 
 def _cleanup_history():
@@ -21,14 +23,17 @@ def _cleanup_history():
 
 def _req(task_id: str, action: str = "read_file", user: str = "test") -> TaskRequest:
     return TaskRequest(
-        task_id=task_id, source="manual", action_type=action,
-        target="/tmp/x.log", description="limit test", requested_by=user,
+        task_id=task_id,
+        source="manual",
+        action_type=action,
+        target="/tmp/x.log",  # noqa: S108
+        description="limit test",
+        requested_by=user,
     )
 
 
 def _plan(task_id: str) -> ExecutionPlan:
-    return ExecutionPlan(task_id=task_id, allowed=True, requires_approval=False,
-                         steps=[], blocked_reasons=[])
+    return ExecutionPlan(task_id=task_id, allowed=True, requires_approval=False, steps=[], blocked_reasons=[])
 
 
 # ── 0. 정상 허용: DRY_RUN_ONLY ────────────────────────────────────
@@ -77,8 +82,7 @@ def test_timeout():
         time.sleep(5)
         return "DRY_RUN_ONLY"
 
-    result = execute(_plan(r.task_id), req=r, risk_level="low",
-                     worker=slow_worker, timeout_sec=1)
+    result = execute(_plan(r.task_id), req=r, risk_level="low", worker=slow_worker, timeout_sec=1)
     assert result == f"BLOCKED:{BLOCK_TIMEOUT}", result
 
 
@@ -89,10 +93,10 @@ def test_blocked_entries_not_counted():
     r_to = _req("CNT-TO", action="shared_act", user="shared-user")
 
     def slow(req):
-        time.sleep(2); return "DRY_RUN_ONLY"
+        time.sleep(2)
+        return "DRY_RUN_ONLY"
 
-    execute(_plan(r_to.task_id), req=r_to, risk_level="low",
-            worker=slow, timeout_sec=1)
+    execute(_plan(r_to.task_id), req=r_to, risk_level="low", worker=slow, timeout_sec=1)
     # 이어서 정상 호출 max 회 — 모두 허용되어야 함
     max_n = current_limits()["user_max"]
     for i in range(max_n):
@@ -113,8 +117,7 @@ def test_legacy_signature_regression():
 # ── 6. plan.allowed=False → BLOCKED, 히스토리 미기록 ──────────────
 def test_disallowed_plan_unchanged():
     _cleanup_history()
-    ep = ExecutionPlan(task_id="NO-1", allowed=False, requires_approval=False,
-                       steps=[], blocked_reasons=["policy"])
+    ep = ExecutionPlan(task_id="NO-1", allowed=False, requires_approval=False, steps=[], blocked_reasons=["policy"])
     result = execute(ep, req=_req("NO-1"), risk_level="low")
     assert result.startswith("BLOCKED:")
     assert "policy" in result

@@ -9,6 +9,7 @@ G2B 공개 공고 콘텐츠 유효성 판정 모듈 테스트
 - final_url 도메인 이탈 시 CONTENT_INVALID
 - wildcard 서브도메인 content valid 불가
 """
+
 from __future__ import annotations
 
 import json
@@ -17,11 +18,9 @@ from pathlib import Path
 import pytest
 
 from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
-    CONTENT_BLOCKED_BY_POLICY,
     CONTENT_INVALID,
     CONTENT_UNKNOWN,
     CONTENT_VALID_PASS,
-    LIVE_REACHABLE,
     REACHABLE_BUT_NOT_CONTENT_VALID,
     classify_g2b_public_notice_content,
     enrich_live_result_with_content_verdict,
@@ -30,16 +29,12 @@ from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
     validate_g2b_public_notice_content_result,
 )
 
-_FIXTURE_PATH = (
-    Path(__file__).resolve().parent / "fixtures"
-    / "g2b_public_notice_workflow_fixture_20260507.json"
-)
-_REPORT_DIR = (
-    Path(__file__).resolve().parent.parent / "data" / "reports" / "g2b"
-)
+_FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
+_REPORT_DIR = Path(__file__).resolve().parent.parent / "data" / "reports" / "g2b"
 
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────────────
+
 
 def _make_result(
     title: str = "",
@@ -79,15 +74,15 @@ _VALID_NOTICE_BODY = (
 
 # ── TC-01: title="시스템 접근 안내" → CONTENT_VALID_PASS 불가 ──────────────────
 
+
 def test_system_access_notice_title_not_content_valid_pass():
-    r = classify_g2b_public_notice_content(
-        _make_result(title="시스템 접근 안내", body=_SYSTEM_ACCESS_NOTICE_BODY)
-    )
+    r = classify_g2b_public_notice_content(_make_result(title="시스템 접근 안내", body=_SYSTEM_ACCESS_NOTICE_BODY))
     assert r["content_verdict"] != CONTENT_VALID_PASS
     assert r["content_valid"] is False
 
 
 # ── TC-02: body="요청하신 페이지를 찾을수 없습니다" → CONTENT_VALID_PASS 불가 ──
+
 
 def test_page_not_found_body_not_content_valid_pass():
     r = classify_g2b_public_notice_content(
@@ -99,15 +94,15 @@ def test_page_not_found_body_not_content_valid_pass():
 
 # ── TC-03: "나라장터" 단어만으로 CONTENT_VALID_PASS 불가 ─────────────────────
 
+
 def test_narajangteo_only_not_content_valid_pass():
-    r = classify_g2b_public_notice_content(
-        _make_result(title="나라장터", body="나라장터에 오신 것을 환영합니다")
-    )
+    r = classify_g2b_public_notice_content(_make_result(title="나라장터", body="나라장터에 오신 것을 환영합니다"))
     assert r["content_verdict"] != CONTENT_VALID_PASS
     assert r["content_valid"] is False
 
 
 # ── TC-04: positive signal 2개 이상 → CONTENT_VALID_PASS 후보 ────────────────
+
 
 def test_two_positive_signals_content_valid_pass():
     r = classify_g2b_public_notice_content(
@@ -121,6 +116,7 @@ def test_two_positive_signals_content_valid_pass():
 
 
 # ── TC-05: positive signal 있어도 negative signal 있으면 invalid ──────────────
+
 
 def test_positive_signal_with_login_negative_invalid():
     r = classify_g2b_public_notice_content(
@@ -157,6 +153,7 @@ def test_positive_signal_with_payment_negative_invalid():
 
 # ── TC-06: final_url이 허용 도메인 밖 → CONTENT_INVALID ─────────────────────
 
+
 def test_final_url_outside_allowed_domain_content_invalid():
     r = classify_g2b_public_notice_content(
         _make_result(
@@ -170,6 +167,7 @@ def test_final_url_outside_allowed_domain_content_invalid():
 
 
 # ── TC-07: wildcard 서브도메인 content valid 불가 ─────────────────────────────
+
 
 def test_wildcard_subdomain_not_content_valid():
     r = classify_g2b_public_notice_content(
@@ -185,24 +183,18 @@ def test_wildcard_subdomain_not_content_valid():
 
 # ── TC-08: login 경로 href → blocked_candidate_urls ──────────────────────────
 
+
 def test_login_href_classified_as_blocked():
-    r = classify_g2b_public_notice_content(
-        _make_result(
-            links=["https://www.g2b.go.kr/co/menu/EgovUserReqstLogin.do"]
-        )
-    )
+    r = classify_g2b_public_notice_content(_make_result(links=["https://www.g2b.go.kr/co/menu/EgovUserReqstLogin.do"]))
     assert "https://www.g2b.go.kr/co/menu/EgovUserReqstLogin.do" in r["blocked_candidate_urls"]
     assert "https://www.g2b.go.kr/co/menu/EgovUserReqstLogin.do" not in r["safe_candidate_urls"]
 
 
 # ── TC-09: download 링크 → blocked_candidate_urls ───────────────────────────
 
+
 def test_download_href_classified_as_blocked():
-    r = classify_g2b_public_notice_content(
-        _make_result(
-            links=["https://www.g2b.go.kr/pt/file/download.do?id=123"]
-        )
-    )
+    r = classify_g2b_public_notice_content(_make_result(links=["https://www.g2b.go.kr/pt/file/download.do?id=123"]))
     blocked = r["blocked_candidate_urls"]
     assert any("download" in u for u in blocked)
     assert not any("download" in u for u in r["safe_candidate_urls"])
@@ -210,16 +202,16 @@ def test_download_href_classified_as_blocked():
 
 # ── TC-10: shop.g2b.go.kr → needs_verification_candidate_urls ────────────────
 
+
 def test_shop_subdomain_needs_verification():
-    r = classify_g2b_public_notice_content(
-        _make_result(links=["https://shop.g2b.go.kr/"])
-    )
+    r = classify_g2b_public_notice_content(_make_result(links=["https://shop.g2b.go.kr/"]))
     assert "https://shop.g2b.go.kr/" in r["needs_verification_candidate_urls"]
     assert "https://shop.g2b.go.kr/" not in r["safe_candidate_urls"]
     assert "https://shop.g2b.go.kr/" not in r["blocked_candidate_urls"]
 
 
 # ── TC-11: safe_candidate_urls는 gate 통과 후보만 ──────────────────────────────
+
 
 def test_safe_candidate_urls_only_allowed_domain():
     r = classify_g2b_public_notice_content(
@@ -237,19 +229,19 @@ def test_safe_candidate_urls_only_allowed_domain():
 
 # ── TC-12: discovery script import 시 side effect 없음 ──────────────────────
 
+
 def test_discovery_script_import_no_side_effect():
     import importlib.util
-    spec = importlib.util.find_spec(
+
+    spec = importlib.util.find_spec(  # noqa: F841
         "scripts.g2b.discover_valid_public_notice_urls"
     )
     # 파일 경로로 직접 로드
     import importlib.machinery
+
     loader = importlib.machinery.SourceFileLoader(
         "discover_valid_public_notice_urls",
-        str(
-            Path(__file__).resolve().parent.parent
-            / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"
-        ),
+        str(Path(__file__).resolve().parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
     )
     mod_spec = importlib.util.spec_from_loader("discover_valid_public_notice_urls", loader)
     mod = importlib.util.module_from_spec(mod_spec)
@@ -260,15 +252,14 @@ def test_discovery_script_import_no_side_effect():
 
 # ── TC-13: max-depth는 1 고정 ─────────────────────────────────────────────────
 
+
 def test_discovery_max_depth_is_one():
     import importlib.machinery
     import importlib.util
+
     loader = importlib.machinery.SourceFileLoader(
         "discover_valid_public_notice_urls",
-        str(
-            Path(__file__).resolve().parent.parent
-            / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"
-        ),
+        str(Path(__file__).resolve().parent.parent / "scripts" / "g2b" / "discover_valid_public_notice_urls.py"),
     )
     mod_spec = importlib.util.spec_from_loader("discover_valid_public_notice_urls", loader)
     mod = importlib.util.module_from_spec(mod_spec)
@@ -279,9 +270,12 @@ def test_discovery_max_depth_is_one():
 
 # ── TC-14: no-click/no-download 옵션 기본값 ──────────────────────────────────
 
+
 def test_content_validator_has_no_click_no_download_code():
     import inspect
+
     import ai_orchestrator.browser_tool.g2b_public_notice_content_validator as m
+
     src = inspect.getsource(m)
     # click/type/fill/submit/download를 실행하는 코드가 없어야 함
     assert "page.click(" not in src
@@ -292,6 +286,7 @@ def test_content_validator_has_no_click_no_download_code():
 
 # ── TC-15: content_verdict와 live_verdict가 분리되는지 확인 ──────────────────
 
+
 def test_content_verdict_and_live_verdict_are_separate():
     r = _make_result(title="시스템 접근 안내", body=_SYSTEM_ACCESS_NOTICE_BODY)
     enriched = enrich_live_result_with_content_verdict(r)
@@ -301,6 +296,7 @@ def test_content_verdict_and_live_verdict_are_separate():
 
 
 # ── TC-16: LIVE_PASS + CONTENT_INVALID 조합이 WARN으로 남는지 ────────────────
+
 
 def test_live_pass_content_invalid_combination():
     r = _make_result(
@@ -317,6 +313,7 @@ def test_live_pass_content_invalid_combination():
 
 # ── TC-17: CONTENT_VALID_PASS 후보가 분류 결과에 포함되는지 ──────────────────
 
+
 def test_content_valid_pass_candidate_in_result():
     r = classify_g2b_public_notice_content(
         _make_result(
@@ -331,27 +328,35 @@ def test_content_valid_pass_candidate_in_result():
 
 # ── TC-18: 쿠키/session/token/password/otp 필드 저장 금지 ────────────────────
 
+
 def test_no_secret_fields_in_classified_result():
-    r = classify_g2b_public_notice_content(
-        _make_result(title="공고명", body="공고번호: 2026-001\n수요기관: 서울시")
-    )
-    forbidden = {"cookie", "cookies", "session", "token", "password", "otp",
-                 "auth_token", "access_token", "refresh_token"}
+    r = classify_g2b_public_notice_content(_make_result(title="공고명", body="공고번호: 2026-001\n수요기관: 서울시"))
+    forbidden = {
+        "cookie",
+        "cookies",
+        "session",
+        "token",
+        "password",
+        "otp",
+        "auth_token",
+        "access_token",
+        "refresh_token",
+    }
     for field in forbidden:
         assert field not in r, f"금지 필드 {field!r} 발견"
 
 
 # ── TC-19: body_text_sample 길이 제한 ────────────────────────────────────────
 
+
 def test_body_text_sample_length_limit():
     long_body = "x" * 5000
-    r = classify_g2b_public_notice_content(
-        _make_result(body=long_body)
-    )
+    r = classify_g2b_public_notice_content(_make_result(body=long_body))
     assert len(r["body_text_sample"]) <= 1000
 
 
 # ── TC-20: 기존 actual-live 결과 JSON을 validator가 읽고 분류 가능 ─────────────
+
 
 def test_validator_can_classify_actual_live_json():
     report_files = sorted(_REPORT_DIR.glob("g2b_public_notice_actual_live_*.json"))
@@ -381,6 +386,7 @@ def test_validator_can_classify_actual_live_json():
 
 # ── TC-21: validate_g2b_public_notice_content_result는 classify의 별칭 ────────
 
+
 def test_validate_is_alias_of_classify():
     r = _make_result(title="공고명", body="공고번호: 001\n수요기관: 서울시\n게시일시: 2026")
     r1 = classify_g2b_public_notice_content(r)
@@ -390,6 +396,7 @@ def test_validate_is_alias_of_classify():
 
 
 # ── TC-22: extract_g2b_public_notice_url_candidates 반환 구조 확인 ────────────
+
 
 def test_extract_url_candidates_returns_correct_structure():
     r = _make_result(
@@ -410,45 +417,62 @@ def test_extract_url_candidates_returns_correct_structure():
 
 # ── TC-23: is_g2b_public_notice_content_valid 단순 함수 확인 ─────────────────
 
+
 def test_is_g2b_content_valid_with_valid_content():
-    assert is_g2b_public_notice_content_valid(
-        title="공고명: 도로 공사",
-        body_text="공고번호: 2026-001\n수요기관: 경기도",
-        final_url="https://www.g2b.go.kr/page",
-    ) is True
+    assert (
+        is_g2b_public_notice_content_valid(
+            title="공고명: 도로 공사",
+            body_text="공고번호: 2026-001\n수요기관: 경기도",
+            final_url="https://www.g2b.go.kr/page",
+        )
+        is True
+    )
 
 
 def test_is_g2b_content_valid_with_system_access_notice():
-    assert is_g2b_public_notice_content_valid(
-        title="시스템 접근 안내",
-        body_text=_SYSTEM_ACCESS_NOTICE_BODY,
-        final_url="https://www.g2b.go.kr/page",
-    ) is False
+    assert (
+        is_g2b_public_notice_content_valid(
+            title="시스템 접근 안내",
+            body_text=_SYSTEM_ACCESS_NOTICE_BODY,
+            final_url="https://www.g2b.go.kr/page",
+        )
+        is False
+    )
 
 
 def test_is_g2b_content_valid_with_external_domain():
-    assert is_g2b_public_notice_content_valid(
-        title="공고명: 도로 공사",
-        body_text="공고번호: 001\n수요기관: 서울시",
-        final_url="https://external.example.com/page",
-    ) is False
+    assert (
+        is_g2b_public_notice_content_valid(
+            title="공고명: 도로 공사",
+            body_text="공고번호: 001\n수요기관: 서울시",
+            final_url="https://external.example.com/page",
+        )
+        is False
+    )
 
 
 # ── TC-24: enrich_live_result_with_content_verdict 보강 필드 확인 ─────────────
+
 
 def test_enrich_live_result_has_all_required_fields():
     r = _make_result(title="시스템 접근 안내", body=_SYSTEM_ACCESS_NOTICE_BODY)
     enriched = enrich_live_result_with_content_verdict(r)
     required = [
-        "content_verdict", "content_valid", "content_invalid_reason",
-        "positive_signals", "negative_signals",
-        "candidate_url_count", "safe_candidate_url_count", "blocked_candidate_url_count",
+        "content_verdict",
+        "content_valid",
+        "content_invalid_reason",
+        "positive_signals",
+        "negative_signals",
+        "candidate_url_count",
+        "safe_candidate_url_count",
+        "blocked_candidate_url_count",
     ]
     for f in required:
         assert f in enriched, f"보강 필드 {f!r} 없음"
 
 
 # ── TC-25: 기존 LIVE_PASS 판정을 content validator가 깨뜨리지 않음 ─────────────
+
 
 def test_content_validator_does_not_break_live_pass():
     r = _make_result(title="시스템 접근 안내", body=_SYSTEM_ACCESS_NOTICE_BODY)

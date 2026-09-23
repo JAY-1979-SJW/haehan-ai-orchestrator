@@ -1,8 +1,8 @@
 """task_state: 상태 머신 (pending → approved → executed, pending → rejected)."""
+
 from __future__ import annotations
 
 import importlib
-import os
 
 import pytest
 
@@ -14,6 +14,7 @@ def _isolated_state(tmp_path, monkeypatch):
     # 독립적인 storage 경로에서 테스트
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
     from ai_orchestrator import config as _cfg
+
     importlib.reload(_cfg)
     importlib.reload(ts)
     ts.clear()
@@ -23,10 +24,14 @@ def _isolated_state(tmp_path, monkeypatch):
 
 def _pend(task_id="T1"):
     return ts.set_pending(
-        task_id=task_id, risk_level="medium", token_id="tok-1",
-        requested_by="operator_u", actor_role="operator",
-        action_type="edit_config", target="/tmp/x",
-        task_snapshot={"action_type": "edit_config", "target": "/tmp/x"},
+        task_id=task_id,
+        risk_level="medium",
+        token_id="tok-1",  # noqa: S106
+        requested_by="operator_u",
+        actor_role="operator",
+        action_type="edit_config",
+        target="/tmp/x",  # noqa: S108
+        task_snapshot={"action_type": "edit_config", "target": "/tmp/x"},  # noqa: S108
     )
 
 
@@ -92,7 +97,7 @@ def test_not_found():
 def test_token_id_is_identifier_not_raw_secret(tmp_path):
     """token_id는 식별자(ID)만 저장되고, task_snapshot에 원문 시크릿 미포함."""
     r = _pend()
-    assert r.token_id == "tok-1"
+    assert r.token_id == "tok-1"  # noqa: S105
     for bad in ("password", "secret", "raw_token", "access_token"):
         assert bad not in r.task_snapshot, f"task_snapshot에 민감 필드: {bad}"
 
@@ -107,6 +112,7 @@ def test_jsonl_persists_events(tmp_path):
     lines = [ln for ln in state_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
     assert len(lines) >= 1
     import json
+
     for ln in lines:
         json.loads(ln)
 

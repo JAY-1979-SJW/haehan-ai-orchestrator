@@ -4,12 +4,12 @@ GET  /api/v1/kakao/setup/status   — 현재 게이트 상태 파일 조회
 POST /api/v1/kakao/setup/run      — 게이트 실행 + SSE 실시간 스트리밍
 POST /api/v1/kakao/setup/gate/:n  — 특정 게이트 단독 실행
 """
+
 from __future__ import annotations
 
 import json
 import sys
-import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -26,10 +26,11 @@ STATE_PATH = ROOT / "data" / "kakao_setup_state.json"
 
 # ── 상태 모델 ─────────────────────────────────────────────────────────────────
 
+
 class GateState(BaseModel):
     gate: str
     label: str
-    status: str        # pending | running | pass | fail | skip
+    status: str  # pending | running | pass | fail | skip
     message: str = ""
     fix: str = ""
     data: dict = {}
@@ -60,11 +61,9 @@ def _load_state() -> SetupState:
     if STATE_PATH.exists():
         try:
             return SetupState(**json.loads(STATE_PATH.read_text(encoding="utf-8")))
-        except Exception:
+        except Exception:  # noqa: S110
             pass
-    return SetupState(
-        gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()]
-    )
+    return SetupState(gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()])
 
 
 def _save_state(state: SetupState) -> None:
@@ -73,17 +72,23 @@ def _save_state(state: SetupState) -> None:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── SSE 스트리밍 실행 ─────────────────────────────────────────────────────────
 
+
 def _run_gates_stream():
     """게이트를 순서대로 실행하며 SSE 이벤트를 yield한다."""
     from scripts.kakao.setup_haehan_app import (
-        gate1_cdp, gate2_login, gate3_console_access,
-        gate4_app_register, gate5_platform, gate6_login_activate,
-        gate7_redirect_uri, gate8_api_key,
+        gate1_cdp,
+        gate2_login,
+        gate3_console_access,
+        gate4_app_register,
+        gate5_platform,
+        gate6_login_activate,
+        gate7_redirect_uri,
+        gate8_api_key,
     )
 
     state = SetupState(
@@ -94,8 +99,7 @@ def _run_gates_stream():
     _save_state(state)
 
     def event(gate: str, status: str, message: str, fix: str = "", **data) -> str:
-        payload = {"gate": gate, "status": status, "message": message,
-                   "fix": fix, "data": data, "updated_at": _now()}
+        payload = {"gate": gate, "status": status, "message": message, "fix": fix, "data": data, "updated_at": _now()}
         # 상태 파일 업데이트
         for g in state.gates:
             if g.gate == gate:
@@ -121,27 +125,35 @@ def _run_gates_stream():
         ws_url = g1.data["ws_url"]
         yield event("GATE-1", "pass", g1.message, ws_url=ws_url)
     else:
-        yield event("GATE-1", "fail", g1.message,
-                    fix="CDP 브라우저가 꺼져 있습니다. 잠시 후 자동 재시도합니다.")
+        yield event("GATE-1", "fail", g1.message, fix="CDP 브라우저가 꺼져 있습니다. 잠시 후 자동 재시도합니다.")
         # CDP 자동 시작 시도
         yield info("CDP 자동 시작 시도 중...")
         try:
             import subprocess
-            subprocess.Popen([sys.executable, str(ROOT / "scripts" / "cdp_force_start.py"), "start"],
-                           cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            import time; time.sleep(5)
+
+            subprocess.Popen(
+                [sys.executable, str(ROOT / "scripts" / "cdp_force_start.py"), "start"],
+                cwd=str(ROOT),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            import time
+
+            time.sleep(5)
             g1b = gate1_cdp()
             if g1b.ok():
                 ws_url = g1b.data["ws_url"]
                 yield event("GATE-1", "pass", f"CDP 자동 시작 성공 — {g1b.message}")
             else:
                 yield event("GATE-1", "fail", "CDP 자동 시작 실패", fix="서버에서 Chrome을 시작할 수 없습니다")
-                state.running = False; _save_state(state)
+                state.running = False
+                _save_state(state)
                 yield f"event: done\ndata: {json.dumps({'success': False})}\n\n"
                 return
         except Exception as e:
             yield event("GATE-1", "fail", f"CDP 시작 오류: {e}")
-            state.running = False; _save_state(state)
+            state.running = False
+            _save_state(state)
             yield f"event: done\ndata: {json.dumps({'success': False})}\n\n"
             return
 
@@ -151,9 +163,9 @@ def _run_gates_stream():
     if g2.ok():
         yield event("GATE-2", "pass", g2.message)
     else:
-        yield event("GATE-2", "fail", g2.message,
-                    fix="브라우저에서 카카오 계정으로 로그인하세요 (SMS/앱 인증 필요)")
-        state.running = False; _save_state(state)
+        yield event("GATE-2", "fail", g2.message, fix="브라우저에서 카카오 계정으로 로그인하세요 (SMS/앱 인증 필요)")
+        state.running = False
+        _save_state(state)
         yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-2'})}\n\n"
         return
 
@@ -164,7 +176,8 @@ def _run_gates_stream():
         yield event("GATE-3", "pass", g3.message)
     else:
         yield event("GATE-3", "fail", g3.message, fix=g3.message)
-        state.running = False; _save_state(state)
+        state.running = False
+        _save_state(state)
         yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-3'})}\n\n"
         return
 
@@ -177,7 +190,8 @@ def _run_gates_stream():
         yield event("GATE-4", "pass", g4.message, app_id=app_id)
     else:
         yield event("GATE-4", "fail", g4.message, fix=g4.message)
-        state.running = False; _save_state(state)
+        state.running = False
+        _save_state(state)
         yield f"event: done\ndata: {json.dumps({'success': False, 'stopped_at': 'GATE-4'})}\n\n"
         return
 
@@ -208,6 +222,7 @@ def _run_gates_stream():
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
 
+
 @kakao_setup_router.get("/status", response_model=SetupState)
 def get_status():
     return _load_state()
@@ -225,14 +240,13 @@ def run_setup():
     def stream():
         yield from _run_gates_stream()
 
-    return StreamingResponse(stream(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
+    return StreamingResponse(
+        stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
+    )
 
 
 @kakao_setup_router.post("/reset")
 def reset_state():
-    state = SetupState(
-        gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()]
-    )
+    state = SetupState(gates=[GateState(gate=k, label=v, status="pending") for k, v in GATE_LABELS.items()])
     _save_state(state)
     return {"ok": True}

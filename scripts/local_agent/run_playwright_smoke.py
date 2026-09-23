@@ -5,21 +5,22 @@ Playwright 로컬 smoke 테스트 실행 스크립트
 외부 인증 사이트에 접속하지 않는다.
 사용: python scripts/local_agent/run_playwright_smoke.py
 """
+
 from __future__ import annotations
 
-import sys
 import os
 import pathlib
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.playwright_bootstrap import (
-    check_playwright_status,
+from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
+    check_playwright_status,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task, STATUS_COMPLETED
+from ai_orchestrator.local_agent.task_protocol import build_task  # noqa: E402
 
 _FIXTURE_PATH = pathlib.Path(_REPO_ROOT) / "tests" / "fixtures" / "local_agent_safe_smoke_page.html"
 

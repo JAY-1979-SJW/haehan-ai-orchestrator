@@ -16,20 +16,22 @@
 
 DB/서버/브라우저/외부 API 실행 없음.
 """
+
 from __future__ import annotations
 
 import pytest
 
-
 # ===========================================================================
 # 1. Task 모델
 # ===========================================================================
+
 
 class TestTaskModel:
     """Task 도메인 모델 테스트."""
 
     def _make_task(self, **kwargs):
         from ai_orchestrator.domain.models import Task
+
         defaults = dict(
             task_id="task-001",
             title="Naver 블로그 포스팅",
@@ -54,12 +56,11 @@ class TestTaskModel:
     def test_task_to_safe_dict_no_secret(self):
         """to_safe_dict 에 secret 필드가 없다."""
         from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS
+
         t = self._make_task()
         d = t.to_safe_dict()
         for key in d:
-            assert key.lower() not in DOMAIN_FORBIDDEN_FIELDS, (
-                f"Task.to_safe_dict에 금지 필드 발견: {key}"
-            )
+            assert key.lower() not in DOMAIN_FORBIDDEN_FIELDS, f"Task.to_safe_dict에 금지 필드 발견: {key}"
 
     def test_task_is_frozen(self):
         """Task는 불변 모델 (frozen=True) 이다."""
@@ -75,6 +76,7 @@ class TestTaskModel:
     def test_make_task_factory(self):
         """make_task 팩토리로 task_id를 자동 생성한다."""
         from ai_orchestrator.domain.models import make_task
+
         t = make_task(
             title="검색 작업",
             provider="naver",
@@ -90,9 +92,17 @@ class TestTaskModel:
         """to_safe_dict에 핵심 필드가 모두 포함된다."""
         t = self._make_task()
         d = t.to_safe_dict()
-        for key in ("task_id", "title", "provider", "action_type",
-                    "execution_location", "risk_level", "approval_required",
-                    "status", "requested_at"):
+        for key in (
+            "task_id",
+            "title",
+            "provider",
+            "action_type",
+            "execution_location",
+            "risk_level",
+            "approval_required",
+            "status",
+            "requested_at",
+        ):
             assert key in d, f"Task.to_safe_dict에 필드 누락: {key}"
 
 
@@ -100,12 +110,14 @@ class TestTaskModel:
 # 2. WorkTrade 모델
 # ===========================================================================
 
+
 class TestWorkTradeModel:
     """WorkTrade 도메인 모델 테스트."""
 
     def test_in_scope_work_trade(self):
         """IN_SCOPE WorkTrade를 표현할 수 있다."""
         from ai_orchestrator.domain.models import WorkTrade, WorkTradeScope
+
         wt = WorkTrade(
             work_trade_id="wt-search-001",
             name="Naver 검색 조회",
@@ -120,6 +132,7 @@ class TestWorkTradeModel:
     def test_external_app_hold_work_trade(self):
         """EXTERNAL_APP_HOLD WorkTrade를 표현할 수 있다."""
         from ai_orchestrator.domain.models import WorkTrade, WorkTradeScope
+
         wt = WorkTrade(
             work_trade_id="wt-cad-001",
             name="CAD 도면 작성",
@@ -134,6 +147,7 @@ class TestWorkTradeModel:
     def test_future_integration_work_trade(self):
         """FUTURE_INTEGRATION WorkTrade를 표현할 수 있다."""
         from ai_orchestrator.domain.models import WorkTrade, WorkTradeScope
+
         wt = WorkTrade(
             work_trade_id="wt-tax-001",
             name="세금계산서 조회",
@@ -145,7 +159,8 @@ class TestWorkTradeModel:
 
     def test_work_trade_to_safe_dict(self):
         """WorkTrade.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import WorkTrade, WorkTradeScope, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, WorkTrade, WorkTradeScope
+
         wt = WorkTrade(
             work_trade_id="wt-test",
             name="테스트",
@@ -162,12 +177,14 @@ class TestWorkTradeModel:
 # 3. ExternalWork 모델
 # ===========================================================================
 
+
 class TestExternalWorkModel:
     """ExternalWork 도메인 모델 테스트."""
 
     def test_naver_search_external_work(self):
         """Naver 검색 ExternalWork를 표현할 수 있다."""
         from ai_orchestrator.domain.models import ExternalWork, WorkTradeScope
+
         ew = ExternalWork(
             external_work_id="ew-naver-search",
             provider="naver",
@@ -185,6 +202,7 @@ class TestExternalWorkModel:
     def test_naver_local_agent_external_work(self):
         """Naver 로컬 에이전트 작업을 표현할 수 있다."""
         from ai_orchestrator.domain.models import ExternalWork, WorkTradeScope
+
         ew = ExternalWork(
             external_work_id="ew-naver-blog-post",
             provider="naver",
@@ -197,11 +215,12 @@ class TestExternalWorkModel:
             status="active",
         )
         assert ew.requires_local_agent()
-        assert not ew.is_executable() is False  # LOCAL_AGENT는 실행 가능
+        assert ew.is_executable() is not False  # LOCAL_AGENT는 실행 가능
 
     def test_oauth_required_external_work(self):
         """OAuth 필요 작업은 setup_required 상태다."""
         from ai_orchestrator.domain.models import ExternalWork, WorkTradeScope
+
         ew = ExternalWork(
             external_work_id="ew-google-calendar",
             provider="google",
@@ -218,6 +237,7 @@ class TestExternalWorkModel:
     def test_external_app_hold_not_executable(self):
         """EXTERNAL_APP_HOLD 항목은 실행 불가다."""
         from ai_orchestrator.domain.models import ExternalWork, WorkTradeScope
+
         ew = ExternalWork(
             external_work_id="ew-cad",
             provider="cad",
@@ -233,7 +253,8 @@ class TestExternalWorkModel:
 
     def test_external_work_no_secret_in_safe_dict(self):
         """ExternalWork.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import ExternalWork, WorkTradeScope, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, ExternalWork, WorkTradeScope
+
         ew = ExternalWork(
             external_work_id="ew-test",
             provider="test",
@@ -254,12 +275,14 @@ class TestExternalWorkModel:
 # 4. Integration 모델
 # ===========================================================================
 
+
 class TestIntegrationModel:
     """Integration 도메인 모델 테스트."""
 
     def test_connected_integration(self):
         """연결된 Integration을 표현할 수 있다."""
         from ai_orchestrator.domain.models import Integration, IntegrationStatus
+
         intg = Integration(
             integration_id="int-telegram",
             name="Telegram 알림",
@@ -275,6 +298,7 @@ class TestIntegrationModel:
     def test_oauth_setup_required_integration(self):
         """OAuth 설정 필요 Integration을 표현할 수 있다."""
         from ai_orchestrator.domain.models import Integration, IntegrationStatus
+
         intg = Integration(
             integration_id="int-google-oauth",
             name="Google OAuth",
@@ -289,7 +313,8 @@ class TestIntegrationModel:
 
     def test_integration_no_secret_in_safe_dict(self):
         """Integration.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import Integration, IntegrationStatus, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, Integration, IntegrationStatus
+
         intg = Integration(
             integration_id="int-test",
             name="test",
@@ -308,12 +333,14 @@ class TestIntegrationModel:
 # 5. Artifact 모델
 # ===========================================================================
 
+
 class TestArtifactModel:
     """Artifact 도메인 모델 테스트."""
 
     def test_artifact_has_storage_ref_not_content(self):
         """Artifact는 storage_ref(경로 참조)를 갖고 파일 내용은 없다."""
         from ai_orchestrator.domain.models import Artifact, ArtifactType, EvidenceLevel
+
         a = Artifact(
             artifact_id="art-001",
             artifact_type=ArtifactType.SCREENSHOT_REF,
@@ -333,7 +360,8 @@ class TestArtifactModel:
 
     def test_artifact_no_secret_fields(self):
         """Artifact.to_safe_dict에 금지 필드 없음."""
-        from ai_orchestrator.domain.models import Artifact, ArtifactType, EvidenceLevel, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, Artifact, ArtifactType, EvidenceLevel
+
         a = Artifact(
             artifact_id="art-002",
             artifact_type=ArtifactType.JSON_SUMMARY,
@@ -351,12 +379,14 @@ class TestArtifactModel:
 # 6. SafetyPolicy 모델
 # ===========================================================================
 
+
 class TestSafetyPolicyModel:
     """SafetyPolicy 도메인 모델 테스트."""
 
     def test_block_policy(self):
         """BLOCK 결정 SafetyPolicy를 표현할 수 있다."""
-        from ai_orchestrator.domain.models import SafetyPolicy, SafetyDecision
+        from ai_orchestrator.domain.models import SafetyDecision, SafetyPolicy
+
         p = SafetyPolicy(
             policy_id="pol-block-auto-submit",
             name="자동 제출 금지",
@@ -370,7 +400,8 @@ class TestSafetyPolicyModel:
 
     def test_hold_policy(self):
         """HOLD 결정 SafetyPolicy는 실행을 차단한다."""
-        from ai_orchestrator.domain.models import SafetyPolicy, SafetyDecision
+        from ai_orchestrator.domain.models import SafetyDecision, SafetyPolicy
+
         p = SafetyPolicy(
             policy_id="pol-external-app-hold",
             name="외부 앱 보류",
@@ -384,7 +415,8 @@ class TestSafetyPolicyModel:
 
     def test_user_direct_policy(self):
         """USER_DIRECT 결정 SafetyPolicy를 표현할 수 있다."""
-        from ai_orchestrator.domain.models import SafetyPolicy, SafetyDecision
+        from ai_orchestrator.domain.models import SafetyDecision, SafetyPolicy
+
         p = SafetyPolicy(
             policy_id="pol-user-direct",
             name="사용자 직접 조작 필요",
@@ -400,7 +432,8 @@ class TestSafetyPolicyModel:
 
     def test_safety_policy_no_secret_fields(self):
         """SafetyPolicy.to_safe_dict에 금지 필드 없음."""
-        from ai_orchestrator.domain.models import SafetyPolicy, SafetyDecision, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, SafetyDecision, SafetyPolicy
+
         p = SafetyPolicy(
             policy_id="pol-test",
             name="테스트",
@@ -419,12 +452,15 @@ class TestSafetyPolicyModel:
 # 7. ExternalAppBridge 모델
 # ===========================================================================
 
+
 class TestExternalAppBridgeModel:
     """ExternalAppBridge 도메인 모델 테스트."""
 
-    def _make_bridge(self, app_type: str, handoff_mode: str,
-                      exec_loc: str = "LOCAL_AGENT_REQUIRED") -> "ExternalAppBridge":
+    def _make_bridge(
+        self, app_type: str, handoff_mode: str, exec_loc: str = "LOCAL_AGENT_REQUIRED"
+    ) -> ExternalAppBridge:  # noqa: F821
         from ai_orchestrator.domain.models import ExternalAppBridge
+
         return ExternalAppBridge(
             bridge_id=f"{app_type.lower()}-bridge",
             app_type=app_type,
@@ -438,6 +474,7 @@ class TestExternalAppBridgeModel:
     def test_cad_bridge(self):
         """CAD 브릿지를 표현할 수 있다."""
         from ai_orchestrator.domain.models import HandoffMode
+
         b = self._make_bridge("CAD", HandoffMode.FILE_HANDOFF)
         assert b.app_type == "CAD"
         assert b.handoff_mode == HandoffMode.FILE_HANDOFF
@@ -446,6 +483,7 @@ class TestExternalAppBridgeModel:
     def test_hwpx_bridge(self):
         """HWPX 브릿지를 표현할 수 있다."""
         from ai_orchestrator.domain.models import HandoffMode
+
         b = self._make_bridge("HWPX", HandoffMode.FILE_HANDOFF)
         assert b.app_type == "HWPX"
         assert not b.is_implemented()
@@ -453,6 +491,7 @@ class TestExternalAppBridgeModel:
     def test_excel_office_bridge(self):
         """Excel/Office 브릿지를 표현할 수 있다."""
         from ai_orchestrator.domain.models import HandoffMode
+
         b = self._make_bridge("OFFICE", HandoffMode.FILE_HANDOFF)
         assert b.app_type == "OFFICE"
         assert not b.is_implemented()
@@ -460,6 +499,7 @@ class TestExternalAppBridgeModel:
     def test_tax_bridge_user_direct(self):
         """Tax 브릿지는 USER_DIRECT_REQUIRED 위치다."""
         from ai_orchestrator.domain.models import HandoffMode
+
         b = self._make_bridge("TAX", HandoffMode.USER_HANDOFF, "USER_DIRECT_REQUIRED")
         assert b.execution_location == "USER_DIRECT_REQUIRED"
         assert b.approval_required is True
@@ -467,22 +507,23 @@ class TestExternalAppBridgeModel:
     def test_bid_bridge_user_direct(self):
         """Bid 브릿지는 USER_DIRECT_REQUIRED 위치다."""
         from ai_orchestrator.domain.models import HandoffMode
+
         b = self._make_bridge("BID", HandoffMode.USER_HANDOFF, "USER_DIRECT_REQUIRED")
         assert b.execution_location == "USER_DIRECT_REQUIRED"
 
     def test_all_bridges_approval_required(self):
         """모든 브릿지는 approval_required=True다."""
         from ai_orchestrator.domain.model_adapters import get_all_bridges
+
         bridges = get_all_bridges()
         assert len(bridges) == 6
         for b in bridges:
-            assert b.approval_required is True, (
-                f"{b.bridge_id}.approval_required=False"
-            )
+            assert b.approval_required is True, f"{b.bridge_id}.approval_required=False"
 
     def test_bridge_no_secret_in_safe_dict(self):
         """ExternalAppBridge.to_safe_dict에 금지 필드 없음."""
-        from ai_orchestrator.domain.models import HandoffMode, DOMAIN_FORBIDDEN_FIELDS
+        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, HandoffMode
+
         b = self._make_bridge("CAD", HandoffMode.FILE_HANDOFF)
         d = b.to_safe_dict()
         for key in d:
@@ -491,27 +532,36 @@ class TestExternalAppBridgeModel:
     def test_all_bridges_are_future_integration(self):
         """adapter가 반환하는 모든 브릿지는 FUTURE_INTEGRATION 상태다."""
         from ai_orchestrator.domain.model_adapters import get_all_bridges
+
         for b in get_all_bridges():
-            assert b.status == "FUTURE_INTEGRATION", (
-                f"{b.bridge_id}.status={b.status}"
-            )
+            assert b.status == "FUTURE_INTEGRATION", f"{b.bridge_id}.status={b.status}"
 
 
 # ===========================================================================
 # 8. AuditEvent 모델 — 표준 필드 11개
 # ===========================================================================
 
+
 class TestAuditEventModel:
     """AuditEvent 도메인 모델 테스트."""
 
     REQUIRED_FIELDS = (
-        "event_id", "event_type", "task_id", "provider",
-        "action_type", "risk_level", "execution_location",
-        "actor", "timestamp", "verdict", "summary",
+        "event_id",
+        "event_type",
+        "task_id",
+        "provider",
+        "action_type",
+        "risk_level",
+        "execution_location",
+        "actor",
+        "timestamp",
+        "verdict",
+        "summary",
     )
 
     def _make_event(self, **kwargs):
         from ai_orchestrator.domain.models import AuditEvent, _now_iso
+
         defaults = dict(
             event_id="evt-001",
             event_type="TASK_RECEIVED",
@@ -538,16 +588,16 @@ class TestAuditEventModel:
     def test_audit_event_no_secret_fields(self):
         """AuditEvent.to_safe_dict에 금지 필드 없음."""
         from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS
+
         e = self._make_event()
         d = e.to_safe_dict()
         for key in d:
-            assert key.lower() not in DOMAIN_FORBIDDEN_FIELDS, (
-                f"AuditEvent.to_safe_dict에 금지 필드 발견: {key}"
-            )
+            assert key.lower() not in DOMAIN_FORBIDDEN_FIELDS, f"AuditEvent.to_safe_dict에 금지 필드 발견: {key}"
 
     def test_make_audit_event_factory(self):
         """make_audit_event 팩토리로 event_id/timestamp를 자동 생성한다."""
         from ai_orchestrator.domain.models import make_audit_event
+
         e = make_audit_event(
             event_type="APPROVAL_ISSUED",
             task_id="task-002",
@@ -572,18 +622,21 @@ class TestAuditEventModel:
 # 9. assert_no_forbidden_fields 유틸리티
 # ===========================================================================
 
+
 class TestAssertNoForbiddenFields:
     """금지 필드 검증 유틸리티 테스트."""
 
     def test_clean_dict_passes(self):
         """금지 필드 없는 dict는 위반 없음."""
         from ai_orchestrator.domain.models import assert_no_forbidden_fields
+
         d = {"task_id": "t1", "provider": "naver", "status": "ok"}
         assert assert_no_forbidden_fields(d) == []
 
     def test_password_field_detected(self):
         """password 필드가 포함된 dict는 위반으로 감지된다."""
         from ai_orchestrator.domain.models import assert_no_forbidden_fields
+
         d = {"task_id": "t1", "password": "secret123"}
         violations = assert_no_forbidden_fields(d)
         assert "password" in violations
@@ -591,6 +644,7 @@ class TestAssertNoForbiddenFields:
     def test_token_field_detected(self):
         """token 필드가 포함된 dict는 위반으로 감지된다."""
         from ai_orchestrator.domain.models import assert_no_forbidden_fields
+
         d = {"task_id": "t1", "token": "abc123"}
         violations = assert_no_forbidden_fields(d)
         assert "token" in violations
@@ -598,6 +652,7 @@ class TestAssertNoForbiddenFields:
     def test_multiple_forbidden_fields_detected(self):
         """복수의 금지 필드가 모두 감지된다."""
         from ai_orchestrator.domain.models import assert_no_forbidden_fields
+
         d = {"password": "x", "cookie": "y", "otp": "z", "name": "ok"}
         violations = assert_no_forbidden_fields(d)
         assert "password" in violations
@@ -610,37 +665,44 @@ class TestAssertNoForbiddenFields:
 # 10. model_adapters 동작 검증
 # ===========================================================================
 
+
 class TestModelAdapters:
     """model_adapters 동작 테스트."""
 
     def test_list_external_works_as_models(self):
         """external_work_registry → ExternalWork 변환이 동작한다."""
         from ai_orchestrator.domain.model_adapters import list_external_works_as_models
+
         works = list_external_works_as_models()
         assert isinstance(works, list)
         # 하나라도 변환되면 기준 통과
         if works:
             from ai_orchestrator.domain.models import ExternalWork
+
             assert isinstance(works[0], ExternalWork)
 
     def test_list_integrations_as_models(self):
         """ops_router._STATIC_INTEGRATIONS → Integration 변환이 동작한다."""
         from ai_orchestrator.domain.model_adapters import list_integrations_as_models
+
         intgs = list_integrations_as_models()
         assert isinstance(intgs, list)
         assert len(intgs) > 0
         from ai_orchestrator.domain.models import Integration
+
         assert isinstance(intgs[0], Integration)
 
     def test_get_all_bridges_returns_6(self):
         """get_all_bridges가 6개 브릿지를 반환한다."""
         from ai_orchestrator.domain.model_adapters import get_all_bridges
+
         bridges = get_all_bridges()
         assert len(bridges) == 6
 
     def test_get_bridge_by_id(self):
         """특정 bridge_id로 브릿지를 가져올 수 있다."""
         from ai_orchestrator.domain.model_adapters import get_bridge
+
         b = get_bridge("cad-bridge")
         assert b is not None
         assert b.app_type == "CAD"
@@ -651,6 +713,7 @@ class TestModelAdapters:
         """list_safety_policies가 정책 목록을 반환한다."""
         from ai_orchestrator.domain.model_adapters import list_safety_policies
         from ai_orchestrator.domain.models import SafetyPolicy
+
         policies = list_safety_policies()
         assert len(policies) >= 4
         assert all(isinstance(p, SafetyPolicy) for p in policies)
@@ -659,6 +722,7 @@ class TestModelAdapters:
         """adapter 반환 Integration.to_safe_dict에 secret 없음."""
         from ai_orchestrator.domain.model_adapters import list_integrations_as_models
         from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS
+
         for intg in list_integrations_as_models():
             d = intg.to_safe_dict()
             for key in d:
@@ -671,12 +735,14 @@ class TestModelAdapters:
 # 11. CAD/HWPX/Excel = EXTERNAL_APP_HOLD 표현 검증
 # ===========================================================================
 
+
 class TestExternalAppHoldClassification:
     """CAD/HWPX/Excel EXTERNAL_APP_HOLD 분류 테스트."""
 
     def test_cad_bridge_not_implemented(self):
         """CAD 브릿지는 미구현(FUTURE_INTEGRATION) 상태다."""
         from ai_orchestrator.domain.model_adapters import get_bridge
+
         b = get_bridge("cad-bridge")
         assert b is not None
         assert not b.is_implemented()
@@ -684,6 +750,7 @@ class TestExternalAppHoldClassification:
     def test_hwpx_bridge_not_implemented(self):
         """HWPX 브릿지는 미구현 상태다."""
         from ai_orchestrator.domain.model_adapters import get_bridge
+
         b = get_bridge("hwpx-bridge")
         assert b is not None
         assert not b.is_implemented()
@@ -691,6 +758,7 @@ class TestExternalAppHoldClassification:
     def test_office_bridge_not_implemented(self):
         """Office/Excel 브릿지는 미구현 상태다."""
         from ai_orchestrator.domain.model_adapters import get_bridge
+
         b = get_bridge("office-bridge")
         assert b is not None
         assert not b.is_implemented()
@@ -698,6 +766,7 @@ class TestExternalAppHoldClassification:
     def test_external_app_hold_work_trade_classification(self):
         """WorkTrade 모델로 CAD/HWPX/Excel HOLD를 표현할 수 있다."""
         from ai_orchestrator.domain.models import WorkTrade, WorkTradeScope
+
         for app in ["CAD", "HWPX", "Excel"]:
             wt = WorkTrade(
                 work_trade_id=f"wt-{app.lower()}",
@@ -712,6 +781,7 @@ class TestExternalAppHoldClassification:
     def test_bid_and_tax_user_direct_required(self):
         """입찰/세무는 USER_DIRECT_REQUIRED 위치다."""
         from ai_orchestrator.domain.model_adapters import get_bridge
+
         bid = get_bridge("bid-bridge")
         tax = get_bridge("tax-bridge")
         assert bid.execution_location == "USER_DIRECT_REQUIRED"
@@ -722,12 +792,14 @@ class TestExternalAppHoldClassification:
 # 12. 기존 API contract / 테스트 충돌 없음 검증
 # ===========================================================================
 
+
 class TestNoContractBreak:
     """기존 API 계약 영향 없음 테스트."""
 
     def test_existing_domain_enums_still_importable(self):
         """기존 domain/enums.py가 변경 없이 import된다."""
-        from ai_orchestrator.domain.enums import RiskLevel, TaskStatus, ApprovalStatus, Verdict
+        from ai_orchestrator.domain.enums import RiskLevel, TaskStatus, Verdict
+
         assert RiskLevel.LOW == "low"
         assert TaskStatus.PENDING == "pending"
         assert Verdict.PASS == "PASS"
@@ -735,26 +807,39 @@ class TestNoContractBreak:
     def test_existing_response_envelope_still_importable(self):
         """기존 domain/response_envelope.py가 변경 없이 동작한다."""
         from ai_orchestrator.domain.response_envelope import api_success
+
         r = api_success(data={"x": 1})
         assert r.success is True
 
     def test_existing_response_adapter_still_importable(self):
         """기존 domain/response_adapter.py가 변경 없이 동작한다."""
         from ai_orchestrator.domain.response_adapter import wrap_legacy_dict
+
         r = wrap_legacy_dict({"y": 2})
         assert r.data == {"y": 2}
 
     def test_new_domain_init_exports_all(self):
         """domain/__init__.py가 모든 모델을 export한다."""
         import ai_orchestrator.domain as d
-        for name in ("Task", "WorkTrade", "ExternalWork", "Integration",
-                      "Artifact", "SafetyPolicy", "ExternalAppBridge", "AuditEvent"):
+
+        for name in (
+            "Task",
+            "WorkTrade",
+            "ExternalWork",
+            "Integration",
+            "Artifact",
+            "SafetyPolicy",
+            "ExternalAppBridge",
+            "AuditEvent",
+        ):
             assert hasattr(d, name), f"domain.__init__ 누락: {name}"
 
     def test_runtime_endpoint_count_unchanged(self):
         """runtime endpoint 수가 60개로 변경되지 않았다."""
-        from ai_orchestrator.server import app
         from fastapi.routing import APIRoute, APIWebSocketRoute
+
+        from ai_orchestrator.server import app
+
         routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
         assert len(routes) == 63, f"endpoint 수 변경 감지: {len(routes)}"
@@ -762,7 +847,9 @@ class TestNoContractBreak:
     def test_health_endpoint_unchanged(self):
         """health endpoint 응답 구조가 변경되지 않았다."""
         from fastapi.testclient import TestClient
+
         from ai_orchestrator.server import app
+
         client = TestClient(app, raise_server_exceptions=False)
         r = client.get("/api/v1/health")
         assert r.status_code == 200

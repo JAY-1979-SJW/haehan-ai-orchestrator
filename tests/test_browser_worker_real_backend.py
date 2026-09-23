@@ -1,9 +1,10 @@
 """Tests for Browser Worker Real Playwright Backend."""
+
 import os
-import pytest
-from unittest.mock import patch, MagicMock
-from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
+from unittest.mock import MagicMock, patch
+
 from browser_worker.backends.real_playwright_backend import RealPlaywrightBackend
+from browser_worker.schemas import WorkerBrowserRequest
 
 
 class TestRealPlaywrightBackendFeatureGate:
@@ -137,7 +138,7 @@ class TestRealPlaywrightBackendCleanup:
 
                 mock_playwright.return_value.__enter__.return_value.chromium.launch.return_value = mock_browser
 
-                response = backend.handle_browser_action(request)
+                response = backend.handle_browser_action(request)  # noqa: F841
 
                 # Verify cleanup was called
                 mock_page.close.assert_called_once()
@@ -194,6 +195,7 @@ class TestDryRunVsActualExecution:
         )
 
         from browser_worker.service import handle_browser_request
+
         response = handle_browser_request(request)
 
         # Should succeed with mock response
@@ -211,6 +213,7 @@ class TestDryRunVsActualExecution:
         )
 
         from browser_worker.service import handle_browser_request
+
         response = handle_browser_request(request)
 
         # Should succeed with mock response (dry_run ignores URL restrictions)

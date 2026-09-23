@@ -1,14 +1,14 @@
 """SiteAdapter + runner 통합 검증 — fake page 로 세션/재인증/재개 시나리오 시뮬레이션."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Optional
 
 import pytest
 
 from ai_orchestrator.sites import job_state, runner, session_manager
 from ai_orchestrator.sites.adapters.example_portal_adapter import ExamplePortalAdapter
-from ai_orchestrator.sites.site_adapter import LoginCheckResult, SiteAdapter
+from ai_orchestrator.sites.site_adapter import LoginCheckResult
 
 
 # ── Fake Playwright Page ─────────────────────────────────────────
@@ -18,6 +18,7 @@ class FakePage:
 
     .url 과 .query_selector 만 제공. 실제 네트워크/브라우저 없음.
     """
+
     url: str = ""
     visible_selectors: set = field(default_factory=set)
     history: list = field(default_factory=list)
@@ -43,6 +44,7 @@ def _isolated_roots(tmp_path, monkeypatch):
 def _fake_sleeper():
     def _sleep(_secs: float) -> None:
         return None
+
     return _sleep
 
 
@@ -53,6 +55,7 @@ def _counting_clock(max_ticks: int = 5):
     def clock() -> float:
         n["v"] += 1
         return float(n["v"])
+
     return clock
 
 
@@ -99,6 +102,7 @@ def test_session_expired_transitions_job_to_paused():
         orig_goto(target)
         if target == adapter.HOME_URL:
             page.url = "https://example.test/login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     # auto_reauth=False 로 PAUSED 이행만 확인 (대기 없이 즉시 반환)
@@ -106,9 +110,12 @@ def test_session_expired_transitions_job_to_paused():
         pytest.fail("work 호출되면 안 된다 (세션 없음)")
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="job-expired", site_id="example_portal",
-        work=work, auto_reauth=False,
+        adapter,
+        page,
+        job_id="job-expired",
+        site_id="example_portal",
+        work=work,
+        auto_reauth=False,
     )
     assert msg == runner.MSG_SESSION_EXPIRED
     rec = job_state.get("job-expired")
@@ -139,6 +146,7 @@ def test_reauth_success_resumes_job():
             state["logged_in"] = True
             page.visible_selectors.add("#user-menu")
             page.url = "https://example.test/"
+
     page.goto = goto  # type: ignore[method-assign]
 
     # 첫 실행 → 세션 없음 → 재인증 대기 → 성공 → work 실행 → DONE
@@ -147,8 +155,10 @@ def test_reauth_success_resumes_job():
         return "collected=3"
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="job-r", site_id="example_portal",
+        adapter,
+        page,
+        job_id="job-r",
+        site_id="example_portal",
         work=work,
         auto_reauth=True,
         reauth_timeout_sec=10,
@@ -177,13 +187,17 @@ def test_mid_job_expiry_then_resume():
         run_count["v"] += 1
         if run_count["v"] == 1:
             raise runner.SessionExpiredMidJob(
-                reason="kicked_out_midway", current_step="fetch_page_5", cursor="page=5",
+                reason="kicked_out_midway",
+                current_step="fetch_page_5",
+                cursor="page=5",
             )
         return "resumed=ok"
 
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="job-mid", site_id="example_portal",
+        adapter,
+        page,
+        job_id="job-mid",
+        site_id="example_portal",
         work=work,
         auto_reauth=True,
         reauth_timeout_sec=10,
@@ -199,8 +213,12 @@ def test_mid_job_expiry_then_resume():
     # 사용자 재인증 완료 가정 — 세션은 계속 ACTIVE 유지 (#user-menu 유지).
     # resume_job 호출 → DONE 으로 마무리
     msg2 = runner.resume_job(
-        adapter, page, job_id="job-mid", work=work,
-        sleeper=_fake_sleeper(), clock=_counting_clock(),
+        adapter,
+        page,
+        job_id="job-mid",
+        work=work,
+        sleeper=_fake_sleeper(),
+        clock=_counting_clock(),
     )
     assert msg2 == "JOB_DONE"
     rec2 = job_state.get("job-mid")
@@ -209,10 +227,11 @@ def test_mid_job_expiry_then_resume():
 
 # ── 5) 민감정보가 로그/상태에 남지 않는다 ──────────────────────────
 def test_no_sensitive_material_in_job_state():
-    adapter = ExamplePortalAdapter()
-    page = FakePage(url="https://example.test/", visible_selectors={"#user-menu"})
+    adapter = ExamplePortalAdapter()  # noqa: F841
+    page = FakePage(url="https://example.test/", visible_selectors={"#user-menu"})  # noqa: F841
     job_state.start(
-        job_id="job-s", site_id="example_portal",
+        job_id="job-s",
+        site_id="example_portal",
         params={"cursor": "0", "report_type": "monthly"},
     )
     # params 에 민감 키가 들어있지 않은지 확인 (설계상 요구)
@@ -235,6 +254,7 @@ def test_reauth_timeout_preserves_paused_state():
         orig_goto(target)
         # 어떤 페이지로 가도 계속 로그인 안 된 상태
         page.url = "https://example.test/login"
+
     page.goto = goto  # type: ignore[method-assign]
 
     def work(_p):
@@ -243,11 +263,13 @@ def test_reauth_timeout_preserves_paused_state():
     # 대기 1회만 허용하도록 clock/sleeper 조합
     clock = _counting_clock()
     msg = runner.run_with_session(
-        adapter, page,
-        job_id="job-timeout", site_id="example_portal",
+        adapter,
+        page,
+        job_id="job-timeout",
+        site_id="example_portal",
         work=work,
         auto_reauth=True,
-        reauth_timeout_sec=1,           # 1초 타임아웃
+        reauth_timeout_sec=1,  # 1초 타임아웃
         sleeper=_fake_sleeper(),
         clock=clock,
     )

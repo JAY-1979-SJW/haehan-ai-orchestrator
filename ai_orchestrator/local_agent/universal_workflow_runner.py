@@ -4,32 +4,43 @@ Universal Workflow Runner
 site profile → capability → workflow template → permission gate → safe result.
 모든 사이트 자동화를 공통 runner로 처리한다.
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.site_profile_registry import (
-    get_site_profile, is_action_blocked_for_site, is_action_direct_required,
-)
-from ai_orchestrator.local_agent.workflow_template_engine import get_template
-from ai_orchestrator.local_agent.site_capability_matrix import (
-    get_required_permission, reject_if_blocked,
-)
-from ai_orchestrator.local_agent.delegated_permission_gate import (
-    evaluate_gate, GATE_PASS, GATE_BLOCKED, GATE_USER_DIRECT, GATE_NEED_PERMISSION,
+from ai_orchestrator.local_agent.action_risk_policy import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
 )
 from ai_orchestrator.local_agent.approval_audit_log import (
-    log_execution_started, log_execution_completed, log_execution_blocked,
+    log_execution_blocked,
+    log_execution_completed,
+    log_execution_started,
+)
+from ai_orchestrator.local_agent.delegated_permission_gate import (
+    GATE_PASS,
+    evaluate_gate,
+)
+from ai_orchestrator.local_agent.site_profile_registry import (
+    get_site_profile,
+    is_action_blocked_for_site,
+    is_action_direct_required,
 )
 from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result, sanitize_universal_result, merge_step_results,
-    STATUS_COMPLETED, STATUS_PERMISSION_REQUIRED, STATUS_USER_DIRECT_REQUIRED,
-    STATUS_BLOCKED, STATUS_FAILED, STATUS_WARN_PERMISSION,
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_PERMISSION_REQUIRED,
+    STATUS_USER_DIRECT_REQUIRED,
+    STATUS_WARN_PERMISSION,
+    build_universal_result,
 )
-from ai_orchestrator.local_agent.action_risk_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
-)
+from ai_orchestrator.local_agent.workflow_template_engine import get_template
 
 
 def run_workflow(
@@ -53,7 +64,9 @@ def run_workflow(
     profile = get_site_profile(site_id)
     if not profile:
         return build_universal_result(
-            task_id=_task_id, site_id=site_id, workflow_id=workflow_id,
+            task_id=_task_id,
+            site_id=site_id,
+            workflow_id=workflow_id,
             status=STATUS_FAILED,
             message_ko=f"미등록 site: {site_id!r}",
         )
@@ -61,7 +74,9 @@ def run_workflow(
     template = get_template(workflow_id)
     if not template:
         return build_universal_result(
-            task_id=_task_id, site_id=site_id, workflow_id=workflow_id,
+            task_id=_task_id,
+            site_id=site_id,
+            workflow_id=workflow_id,
             status=STATUS_FAILED,
             message_ko=f"미등록 workflow: {workflow_id!r}",
         )
@@ -74,7 +89,7 @@ def run_workflow(
 
     for step in template["steps"]:
         action = step["action"]
-        step_id = step["step_id"]
+        step_id = step["step_id"]  # noqa: F841
         domain = profile["domains"][0] if profile.get("domains") else site_id
 
         # BLOCKED 체크
@@ -116,8 +131,9 @@ def run_workflow(
                     e = log_execution_started(permission_id or "", action, domain, _task_id)
                     audit_ids.append(e["log_id"])
                     if runner_fn:
-                        runner_fn({"task_id": _task_id, "action": action,
-                                   "domain": domain, "permission_id": permission_id})
+                        runner_fn(
+                            {"task_id": _task_id, "action": action, "domain": domain, "permission_id": permission_id}
+                        )
                     e2 = log_execution_completed(permission_id or "", action, domain, _task_id, ok=True)
                     audit_ids.append(e2["log_id"])
                     executed.append(action)
@@ -168,9 +184,13 @@ def run_single_action(
     _domain = domain or (profile["domains"][0] if profile and profile.get("domains") else site_id)
 
     from ai_orchestrator.local_agent.delegated_action_executor import (
+        EXEC_ALLOWED,
+        EXEC_BLOCKED,
+        EXEC_NEED_PERMISSION,
+        EXEC_USER_DIRECT,
         execute_delegated_action,
-        EXEC_ALLOWED, EXEC_BLOCKED, EXEC_NEED_PERMISSION, EXEC_USER_DIRECT,
     )
+
     result = execute_delegated_action(
         action=action,
         domain=_domain,

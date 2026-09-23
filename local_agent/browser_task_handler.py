@@ -14,11 +14,11 @@ Flow:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Any, Dict
 import logging
+from dataclasses import asdict, dataclass
+from typing import Any
 
-from .browser_action_contract import ServerApprovalAction, ExecutionResult
+from .browser_action_contract import ServerApprovalAction
 from .browser_approval_verifier import BrowserApprovalVerifier
 from .server_action_adapter import ServerActionAdapter
 
@@ -39,14 +39,15 @@ class BrowserTaskPayload:
         approval_token: Approval token
         final_approval_token: Final approval for critical actions
     """
+
     task_id: str
     task_type: str = "browser_action"
     action_type: str = ""
     selector: str = ""
-    value: Optional[str] = None
-    approval_id: Optional[str] = None
-    approval_token: Optional[str] = None
-    final_approval_token: Optional[str] = None
+    value: str | None = None
+    approval_id: str | None = None
+    approval_token: str | None = None
+    final_approval_token: str | None = None
 
     def to_server_action(self) -> ServerApprovalAction:
         """Convert task payload to ServerApprovalAction.
@@ -85,6 +86,7 @@ class BrowserTaskResult:
         error_code: Error code if failed
         error_message: Human-readable error message
     """
+
     task_id: str
     status: str = "received"  # received, blocked, executed, failed
     action: str = ""
@@ -97,10 +99,10 @@ class BrowserTaskResult:
     target_url_domain: str = ""
     text_length: int = 0
     text_preview: str = "[REDACTED]"
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    error_code: str | None = None
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to safe dict for JSON serialization."""
         data = asdict(self)
         # Ensure no secrets leak
@@ -119,7 +121,7 @@ class BrowserTaskHandler:
     def __init__(
         self,
         server_action_adapter: ServerActionAdapter,
-        approval_verifier: Optional[BrowserApprovalVerifier] = None,
+        approval_verifier: BrowserApprovalVerifier | None = None,
     ):
         """Initialize task handler.
 

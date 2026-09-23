@@ -1,13 +1,16 @@
 """user_browser_audit_log 단위 테스트."""
+
 from __future__ import annotations
 
 import json
-import pytest
 from pathlib import Path
 
 from ai_orchestrator.local_agent.browser.audit_log import (
-    log_action, read_log, summarize_log, mask_sensitive_data,
     get_audit_path,
+    log_action,
+    mask_sensitive_data,
+    read_log,
+    summarize_log,
 )
 
 
@@ -18,11 +21,13 @@ def test_mask_password_key():
 
 
 def test_mask_api_key_variants():
-    masked = mask_sensitive_data({
-        "api_key": "abc",
-        "apiKey": "def",
-        "ACCESS_TOKEN": "xyz",
-    })
+    masked = mask_sensitive_data(
+        {
+            "api_key": "abc",
+            "apiKey": "def",
+            "ACCESS_TOKEN": "xyz",
+        }
+    )
     assert masked["api_key"] == "[REDACTED]"
     assert masked["apiKey"] == "[REDACTED]"
     assert masked["ACCESS_TOKEN"] == "[REDACTED]"
@@ -46,24 +51,28 @@ def test_mask_card_in_value():
 
 
 def test_mask_nested_dict():
-    masked = mask_sensitive_data({
-        "outer": {"password": "x", "name": "alice"},
-    })
+    masked = mask_sensitive_data(
+        {
+            "outer": {"password": "x", "name": "alice"},
+        }
+    )
     assert masked["outer"]["password"] == "[REDACTED]"
     assert masked["outer"]["name"] == "alice"
 
 
 def test_mask_list_of_dicts():
-    masked = mask_sensitive_data({
-        "items": [{"token": "a"}, {"token": "b"}],
-    })
+    masked = mask_sensitive_data(
+        {
+            "items": [{"token": "a"}, {"token": "b"}],
+        }
+    )
     assert masked["items"][0]["token"] == "[REDACTED]"
     assert masked["items"][1]["token"] == "[REDACTED]"
 
 
 def test_log_action_creates_jsonl(tmp_path):
     path = tmp_path / "log.jsonl"
-    entry = log_action("navigate", url="https://example.com", audit_path=path)
+    entry = log_action("navigate", url="https://example.com", audit_path=path)  # noqa: F841
     assert path.exists()
     lines = path.read_text(encoding="utf-8").strip().split("\n")
     assert len(lines) == 1
@@ -85,8 +94,7 @@ def test_log_action_appends(tmp_path):
 
 def test_log_action_masks_params(tmp_path):
     path = tmp_path / "log.jsonl"
-    log_action("type", params={"username": "alice", "password": "s3cret"},
-               audit_path=path)
+    log_action("type", params={"username": "alice", "password": "s3cret"}, audit_path=path)
     entries = read_log(audit_path=path)
     assert entries[0]["params"]["password"] == "[REDACTED]"
     assert entries[0]["params"]["username"] == "alice"
@@ -102,8 +110,7 @@ def test_log_action_truncates_long_url(tmp_path):
 
 def test_log_action_with_risk_level_and_approval(tmp_path):
     path = tmp_path / "log.jsonl"
-    log_action("submit", url="u", risk_level="APPROVE",
-               approval_id="ap_123", audit_path=path)
+    log_action("submit", url="u", risk_level="APPROVE", approval_id="ap_123", audit_path=path)
     entries = read_log(audit_path=path)
     assert entries[0]["risk_level"] == "APPROVE"
     assert entries[0]["approval_id"] == "ap_123"
@@ -114,8 +121,7 @@ def test_summarize_log(tmp_path):
     log_action("navigate", url="u1", audit_path=path)
     log_action("navigate", url="u2", audit_path=path)
     log_action("click", url="u3", risk_level="NOTIFY", audit_path=path)
-    log_action("submit", url="u4", risk_level="APPROVE", result="approved",
-               audit_path=path)
+    log_action("submit", url="u4", risk_level="APPROVE", result="approved", audit_path=path)
     summary = summarize_log(audit_path=path)
     assert summary["total"] == 4
     assert summary["by_action"]["navigate"] == 2
@@ -139,8 +145,7 @@ def test_get_audit_path_format():
 
 def test_log_action_with_error(tmp_path):
     path = tmp_path / "log.jsonl"
-    log_action("click", url="u", result="error",
-               error="element not found", audit_path=path)
+    log_action("click", url="u", result="error", error="element not found", audit_path=path)
     entries = read_log(audit_path=path)
     assert entries[0]["result"] == "error"
     assert entries[0]["error"] == "element not found"

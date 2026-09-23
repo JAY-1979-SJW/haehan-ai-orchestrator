@@ -6,11 +6,11 @@
   - 본문 키워드 밀도 분석
   - 검색 노출 가능성 점수
 """
+
 from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Any
 
 from playwright.sync_api import Page
 
@@ -51,8 +51,7 @@ class BlogSEO:
             issues.append(f"특수문자 과다 ({special}개)")
             score -= 10
 
-        return {"ok": True, "title": title, "length": length,
-                "score": max(0, score), "issues": issues}
+        return {"ok": True, "title": title, "length": length, "score": max(0, score), "issues": issues}
 
     def analyze_body(self, body: str, target_keywords: list[str] | None = None) -> dict:
         """본문 키워드 밀도 + 가독성."""
@@ -101,12 +100,10 @@ class BlogSEO:
         counter = Counter(words)
         # 일반 단어 제외
         stopwords = {"이번", "그리고", "하지만", "그래서", "또한", "그러나", "이것"}
-        candidates = [w for w, c in counter.most_common(50)
-                      if w not in stopwords and len(w) >= 2]
+        candidates = [w for w, c in counter.most_common(50) if w not in stopwords and len(w) >= 2]
         return candidates[:max_tags]
 
-    def optimize_post(self, title: str, body: str,
-                      target_keywords: list[str] | None = None) -> dict:
+    def optimize_post(self, title: str, body: str, target_keywords: list[str] | None = None) -> dict:
         """제목+본문+태그 종합 SEO."""
         t_analysis = self.analyze_title(title)
         b_analysis = self.analyze_body(body, target_keywords)
@@ -124,6 +121,7 @@ class BlogSEO:
     def autocomplete(self, prefix: str, max_items: int = 10) -> list[str]:
         """네이버 검색창 자동완성 키워드 추출."""
         import time
+
         url = f"https://search.naver.com/search.naver?query={prefix}"
         try:
             self.page.goto(url, timeout=12000, wait_until="domcontentloaded")
@@ -135,7 +133,8 @@ class BlogSEO:
                 time.sleep(0.8)
             except Exception:
                 pass
-            items = self.page.evaluate("""
+            items = self.page.evaluate(
+                """
             (limit) => {
                 const out = [];
                 document.querySelectorAll('.atcmp_text, [class*="autocomplete"] li, [class*="suggest"] li').forEach((el, i) => {
@@ -145,7 +144,9 @@ class BlogSEO:
                 });
                 return out;
             }
-            """, max_items)
+            """,
+                max_items,
+            )
             return items
         except Exception as e:
             _log.debug("[seo] autocomplete 실패: %s", e)
@@ -156,6 +157,7 @@ class BlogSEO:
     def related_keywords(self, query: str) -> list[str]:
         """네이버 검색 결과의 연관검색어 추출."""
         import time
+
         url = f"https://search.naver.com/search.naver?query={query}"
         try:
             self.page.goto(url, timeout=12000, wait_until="domcontentloaded")
@@ -181,18 +183,19 @@ class BlogSEO:
     def best_publish_time(self) -> dict:
         """블로그 글 발행 최적 시간 추천 (한국 평균 트래픽 기준)."""
         from datetime import datetime
+
         now = datetime.now()
         weekday = now.weekday()  # 0=월, 6=일
 
         # 한국 블로그 평균 트래픽 패턴 (휴리스틱)
         weekday_hours = {
-            0: [9, 12, 18, 22],     # 월 — 출근/점심/퇴근/잠자기 전
-            1: [9, 12, 18, 22],     # 화
-            2: [9, 12, 18, 22],     # 수
-            3: [9, 12, 18, 22],     # 목
-            4: [9, 12, 17, 21],     # 금 — 퇴근 빠름
-            5: [10, 14, 19, 22],    # 토 — 늦은 아침
-            6: [10, 14, 19, 22],    # 일
+            0: [9, 12, 18, 22],  # 월 — 출근/점심/퇴근/잠자기 전
+            1: [9, 12, 18, 22],  # 화
+            2: [9, 12, 18, 22],  # 수
+            3: [9, 12, 18, 22],  # 목
+            4: [9, 12, 17, 21],  # 금 — 퇴근 빠름
+            5: [10, 14, 19, 22],  # 토 — 늦은 아침
+            6: [10, 14, 19, 22],  # 일
         }
         recommended = weekday_hours.get(weekday, [9, 18, 22])
 
@@ -214,12 +217,13 @@ class BlogSEO:
         """이미지 ALT 텍스트 자동 생성. SEO + 접근성용."""
         try:
             from scripts.naver.automation.ai_responder import AIResponder
+
             ai = AIResponder()
             system = "이미지 ALT 텍스트 작성 전문가. SEO와 접근성 모두 고려. 50자 이내."
             user = f"""아래 이미지에 대한 ALT 텍스트를 작성해 주세요.
 
 이미지 컨텍스트: {image_context}
-관련 상품/주제: {product_name or '미제공'}
+관련 상품/주제: {product_name or "미제공"}
 
 요구사항:
 - 50자 이내
@@ -235,10 +239,12 @@ class BlogSEO:
     def check_keyword_stuffing(self, text: str, threshold_pct: float = 5.0) -> dict:
         """키워드 과다 사용(stuffing) 감지. 5% 이상 페널티 위험."""
         import re
+
         words = re.findall(r"[가-힣]{2,}|[A-Za-z]{3,}", text)
         if not words:
             return {"ok": True, "stuffed": [], "total_words": 0}
         from collections import Counter
+
         counter = Counter(words)
         total = len(words)
         stuffed = []
@@ -256,8 +262,7 @@ class BlogSEO:
 
     # ── 종합 SEO 최적화 워크플로우 ────────────────────────────────────
 
-    def full_optimize(self, title: str, body: str,
-                      target_keywords: list[str] | None = None) -> dict:
+    def full_optimize(self, title: str, body: str, target_keywords: list[str] | None = None) -> dict:
         """제목/본문/태그/자동완성/연관검색/시간/키워드밀도 종합 분석."""
         result = self.optimize_post(title, body, target_keywords)
 
@@ -276,11 +281,11 @@ class BlogSEO:
         stuffing_penalty = len(result["keyword_stuffing"]["stuffed_keywords"]) * 5
         result["final_score"] = max(0, base_score - stuffing_penalty)
 
-        log_critical = None
+        log_critical = None  # noqa: F841
         try:
             from scripts.critical_logger import log_critical as _lc
-            _lc("OTHER", f"SEO 종합 분석: '{title[:30]}'",
-                score=result["final_score"], mode="seo_full")
+
+            _lc("OTHER", f"SEO 종합 분석: '{title[:30]}'", score=result["final_score"], mode="seo_full")
         except Exception:
             pass
 

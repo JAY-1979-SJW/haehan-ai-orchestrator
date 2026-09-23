@@ -23,42 +23,55 @@
 - 자동 submit / sign / pay / bid 실행
 - 민감값 수집·저장·전송
 """
+
 from __future__ import annotations
 
 from typing import Any
 from urllib.parse import urlparse
 
+from ai_orchestrator.local_agent.auth_wait_controller import (
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_OTP,
+    enter_auth_wait,
+)
 from ai_orchestrator.local_agent.task_protocol import (
+    STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
     STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
-    STATUS_BLOCKED,
     build_result,
-)
-from ai_orchestrator.local_agent.auth_wait_controller import (
-    enter_auth_wait,
-    AUTH_SIGNAL_LOGIN,
-    AUTH_SIGNAL_CERT,
-    AUTH_SIGNAL_OTP,
-)
-from ai_orchestrator.local_agent.user_attention_notifier import (
-    build_auth_attention_notice,
-    request_browser_foreground,
 )
 
 # ── 로그인/인증 감지 패턴 (text 기반, value 수집 없음) ─────────────────────────
 
 _LOGIN_SIGNALS: tuple[str, ...] = (
-    "로그인", "login", "sign in", "인증서", "certificate",
-    "공인인증", "공동인증", "npki", "otp", "보안카드",
-    "보안프로그램", "security program", "iniwebkeyboard",
+    "로그인",
+    "login",
+    "sign in",
+    "인증서",
+    "certificate",
+    "공인인증",
+    "공동인증",
+    "npki",
+    "otp",
+    "보안카드",
+    "보안프로그램",
+    "security program",
+    "iniwebkeyboard",
 )
 _OTP_SIGNALS: tuple[str, ...] = (
-    "otp", "일회용 비밀번호", "보안카드", "보안코드",
+    "otp",
+    "일회용 비밀번호",
+    "보안카드",
+    "보안코드",
 )
 _CERT_SIGNALS: tuple[str, ...] = (
-    "인증서", "certificate", "공인인증", "공동인증", "npki",
+    "인증서",
+    "certificate",
+    "공인인증",
+    "공동인증",
+    "npki",
 )
 
 
@@ -83,7 +96,7 @@ def run_task(task: dict[str, Any]) -> dict[str, Any]:
     """
     task_id = task.get("task_id", "")
     action = (task.get("action") or "").lower()
-    target_url = task.get("target_url", "")
+    target_url = task.get("target_url", "")  # noqa: F841
 
     try:
         from playwright.sync_api import sync_playwright  # type: ignore
@@ -193,9 +206,7 @@ def _run_read_page(pw: Any, task: dict[str, Any]) -> dict[str, Any]:
 
         if signal:
             auth_sig = (
-                AUTH_SIGNAL_OTP if signal == "otp"
-                else AUTH_SIGNAL_CERT if signal == "cert"
-                else AUTH_SIGNAL_LOGIN
+                AUTH_SIGNAL_OTP if signal == "otp" else AUTH_SIGNAL_CERT if signal == "cert" else AUTH_SIGNAL_LOGIN
             )
             return enter_auth_wait(
                 task_id=task_id,
@@ -317,9 +328,7 @@ def _run_extract_text(pw: Any, task: dict[str, Any]) -> dict[str, Any]:
 
         if signal:
             auth_sig = (
-                AUTH_SIGNAL_OTP if signal == "otp"
-                else AUTH_SIGNAL_CERT if signal == "cert"
-                else AUTH_SIGNAL_LOGIN
+                AUTH_SIGNAL_OTP if signal == "otp" else AUTH_SIGNAL_CERT if signal == "cert" else AUTH_SIGNAL_LOGIN
             )
             return enter_auth_wait(
                 task_id=task_id,

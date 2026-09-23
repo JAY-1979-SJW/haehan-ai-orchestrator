@@ -12,15 +12,14 @@
   python -m ai_orchestrator.local_agent.browser.auto_structure_builder calendar
   python -m ai_orchestrator.local_agent.browser.auto_structure_builder mybox
 """
+
 from __future__ import annotations
 
 import json
-import re
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 # ── 상수 ─────────────────────────────────────────────────────────────────────
 
@@ -28,8 +27,8 @@ SERVICES = {
     "mail": {
         "url": "https://mail.naver.com/v2/folders/0/all",
         "domain": "mail.naver.com",
-        "item_hint": "mail",        # DOM 탐지 힌트
-        "detail_hint": "read",      # 상세 URL 패턴
+        "item_hint": "mail",  # DOM 탐지 힌트
+        "detail_hint": "read",  # 상세 URL 패턴
         "api_keyword": "mail",
         "mixin_class": "MailMixin",
         "mixin_file": "mail_mixin.py",
@@ -65,6 +64,7 @@ CACHE_DIR = Path(__file__).parent / ".structure_cache"
 
 # ── 데이터 구조 ───────────────────────────────────────────────────────────────
 
+
 @dataclass
 class NetworkRequest:
     method: str
@@ -93,6 +93,7 @@ class PageStructure:
 
 # ── 네트워크 캡처 ─────────────────────────────────────────────────────────────
 
+
 class NetworkCapture:
     """Playwright 네트워크 요청/응답 캡처."""
 
@@ -110,35 +111,42 @@ class NetworkCapture:
         method = request.method
         resource_type = request.resource_type
 
-        self.requests.append({
-            "url": url,
-            "method": method,
-            "type": resource_type,
-        })
+        self.requests.append(
+            {
+                "url": url,
+                "method": method,
+                "type": resource_type,
+            }
+        )
 
         # API 요청만 별도 수집
         if resource_type in ("fetch", "xhr") or "/api/" in url or "/v2/" in url or "/v1/" in url:
-            self.api_calls.append({
-                "url": url,
-                "method": method,
-                "path": self._extract_path(url),
-            })
+            self.api_calls.append(
+                {
+                    "url": url,
+                    "method": method,
+                    "path": self._extract_path(url),
+                }
+            )
 
     def _on_response(self, response):
         # JSON 응답만 추적 (API 확인용)
         if "application/json" in (response.headers.get("content-type", "") or ""):
             url = response.url
             if url not in [r["url"] for r in self.api_calls]:
-                self.api_calls.append({
-                    "url": url,
-                    "method": response.request.method,
-                    "path": self._extract_path(url),
-                    "status": response.status,
-                })
+                self.api_calls.append(
+                    {
+                        "url": url,
+                        "method": response.request.method,
+                        "path": self._extract_path(url),
+                        "status": response.status,
+                    }
+                )
 
     def _extract_path(self, url: str) -> str:
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
             return parsed.path
         except Exception:
@@ -158,23 +166,23 @@ class NetworkCapture:
 # ── DOM 분석 ─────────────────────────────────────────────────────────────────
 
 COMMON_FIELD_SELECTORS = {
-    "from":    ['.from', '.sender', '.button_sender', '[class*="from"]'],
-    "to":      ['.to', '.recipient', '[class*="to"]'],
-    "subject": ['h1', '.subject', '.mail_title', '[class*="subject"]', '[class*="title"]'],
-    "date":    ['.date', 'time', '.mail_time', '[class*="date"]', '[class*="time"]'],
-    "body":    ['[class*="content"]', '.body', '.mail_body', 'article', '[class*="message"]'],
-    "name":    ['.name', '.title', '[class*="name"]', '[class*="title"]'],
-    "size":    ['.size', '[class*="size"]', '[data-size]'],
-    "type":    ['.type', '.ext', '[class*="type"]'],
-    "start":   ['[class*="start"]', '[data-start]', '.begin'],
-    "end":     ['[class*="end"]', '[data-end]', '.finish'],
-    "location":['[class*="location"]', '.place', '[data-location]'],
+    "from": [".from", ".sender", ".button_sender", '[class*="from"]'],
+    "to": [".to", ".recipient", '[class*="to"]'],
+    "subject": ["h1", ".subject", ".mail_title", '[class*="subject"]', '[class*="title"]'],
+    "date": [".date", "time", ".mail_time", '[class*="date"]', '[class*="time"]'],
+    "body": ['[class*="content"]', ".body", ".mail_body", "article", '[class*="message"]'],
+    "name": [".name", ".title", '[class*="name"]', '[class*="title"]'],
+    "size": [".size", '[class*="size"]', "[data-size]"],
+    "type": [".type", ".ext", '[class*="type"]'],
+    "start": ['[class*="start"]', "[data-start]", ".begin"],
+    "end": ['[class*="end"]', "[data-end]", ".finish"],
+    "location": ['[class*="location"]', ".place", "[data-location]"],
 }
 
 LIST_ITEM_PATTERNS = {
-    "mail":     ['li.mail_item', '[class*="mail_item"]', 'li[class*="mail"]', 'tr.mail_list'],
-    "calendar": ['[class*="event"]', '[class*="schedule"]', '.calendar_item', '[data-event]'],
-    "mybox":    ['[class*="file"]', '[class*="item"]', 'tr[class*="file"]', 'li[class*="item"]'],
+    "mail": ["li.mail_item", '[class*="mail_item"]', 'li[class*="mail"]', "tr.mail_list"],
+    "calendar": ['[class*="event"]', '[class*="schedule"]', ".calendar_item", "[data-event]"],
+    "mybox": ['[class*="file"]', '[class*="item"]', 'tr[class*="file"]', 'li[class*="item"]'],
 }
 
 
@@ -185,21 +193,24 @@ def detect_list_structure(page, service: str) -> list[dict]:
 
     for sel in patterns:
         try:
-            result = page.evaluate(f"""(sel) => {{
+            result = page.evaluate(
+                """(sel) => {
                 const els = document.querySelectorAll(sel);
                 if (els.length === 0) return null;
                 const sample = els[0];
-                return {{
+                return {
                     selector: sel,
                     count: els.length,
                     classes: sample.className,
                     attrs: Object.fromEntries(Object.entries(sample.dataset)),
                     sample_text: sample.innerText.substring(0, 100),
-                }};
-            }}""", sel)
+                };
+            }""",
+                sel,
+            )
             if result:
                 found.append(result)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     return found
@@ -213,18 +224,21 @@ def detect_fields_on_page(page) -> dict[str, list]:
         found = []
         for sel in selectors:
             try:
-                result = page.evaluate(f"""(sel) => {{
+                result = page.evaluate(
+                    """(sel) => {
                     const els = document.querySelectorAll(sel);
                     if (els.length === 0) return null;
-                    return {{
+                    return {
                         selector: sel,
                         count: els.length,
                         sample: els[0]?.innerText?.trim().substring(0, 80) || '',
-                    }};
-                }}""", sel)
+                    };
+                }""",
+                    sel,
+                )
                 if result:
                     found.append(result)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         if found:
@@ -243,20 +257,24 @@ def click_first_item(page, service: str, list_items: list[dict]) -> bool:
 
     try:
         # JavaScript로 클릭 (인터셉트 우회)
-        clicked = page.evaluate(f"""(sel) => {{
+        clicked = page.evaluate(
+            """(sel) => {
             const el = document.querySelector(sel);
             if (!el) return false;
             // 클릭 가능한 링크/버튼 찾기
             const link = el.querySelector('a[href], button') || el;
             link.click();
             return true;
-        }}""", sel)
+        }""",
+            sel,
+        )
         return clicked
     except Exception:
         return False
 
 
 # ── JS 코드 생성 ──────────────────────────────────────────────────────────────
+
 
 def generate_extract_js(service: str, mode: str, structure: PageStructure) -> str:
     """탐지된 구조로 extract_*.js 생성."""
@@ -266,7 +284,7 @@ def generate_extract_js(service: str, mode: str, structure: PageStructure) -> st
 
     if mode == "list":
         # 목록 페이지 JS — fields["list"] 사용
-        item_selector = list_items[0]["selector"] if list_items else '[class*="item"]'
+        item_selector = list_items[0]["selector"] if list_items else '[class*="item"]'  # noqa: F841
         js_fields = []
 
         for fname, found in fields.get("list", {}).items():
@@ -275,12 +293,15 @@ def generate_extract_js(service: str, mode: str, structure: PageStructure) -> st
             js_fields.append(f"""
       // {fname}
       let {fname} = '';
-      for (const sel of {json.dumps([f['selector'] for f in found[:3]])}) {{
+      for (const sel of {json.dumps([f["selector"] for f in found[:3]])}) {{
         const el = item.querySelector(sel);
         if (el?.innerText?.trim()) {{ {fname} = el.innerText.trim(); break; }}
       }}""")
 
-        fields_str = "\n".join(js_fields) if js_fields else """
+        fields_str = (
+            "\n".join(js_fields)
+            if js_fields
+            else """
       // ID (class 또는 href에서)
       let id = item.className.match(/(?:mail|event|file)-(\\d+)/)?.[1] || '';
       const link = item.querySelector('a[href]');
@@ -291,11 +312,12 @@ def generate_extract_js(service: str, mode: str, structure: PageStructure) -> st
       let subject = item.querySelector('[class*="title"] .text, h1')?.innerText?.trim() || '';
       let date = item.querySelector('[class*="date"]')?.innerText?.trim() || '';
       let unread = item.classList.contains('unread');"""
+        )
 
         return f"""// 네이버 {service} 목록 추출 — auto_structure_builder 자동 생성
 (function () {{
   const items = [];
-  const itemSelectors = {json.dumps([s['selector'] for s in list_items[:3]])};
+  const itemSelectors = {json.dumps([s["selector"] for s in list_items[:3]])};
 
   let elements = [];
   for (const sel of itemSelectors) {{
@@ -337,12 +359,16 @@ def generate_extract_js(service: str, mode: str, structure: PageStructure) -> st
       if (el?.innerText?.trim()) {{ result.{fname} = el.innerText.trim(); break; }}
     }}""")
 
-        detail_str = "\n".join(detail_fields) if detail_fields else """
+        detail_str = (
+            "\n".join(detail_fields)
+            if detail_fields
+            else """
     result.subject = document.querySelector('h1, [class*="subject"]')?.innerText?.trim() || '';
     result.from = document.querySelector('.button_sender, [class*="from"]')?.innerText?.trim() || '';
     result.body = document.querySelector('[class*="content"], article')?.innerText?.trim() || '';
     result.date = document.querySelector('[class*="date"], time')?.innerText?.trim() || '';
     result.to = document.querySelector('[class*="to"]')?.innerText?.trim() || '';"""
+        )
 
         return f"""// 네이버 {service} 상세 추출 — auto_structure_builder 자동 생성
 (function () {{
@@ -366,11 +392,12 @@ def generate_extract_js(service: str, mode: str, structure: PageStructure) -> st
 
 # ── Python 메서드 생성 ────────────────────────────────────────────────────────
 
+
 def generate_mixin_methods(service: str, structure: PageStructure, config: dict) -> str:
     """탐지된 구조로 mixin 메서드 자동 생성."""
 
     cls = config["mixin_class"]
-    url = config["url"]
+    url = config["url"]  # noqa: F841
     captured_apis = [c["path"] for c in structure.captured_apis[:5]]
 
     if service == "mail":
@@ -570,6 +597,7 @@ class {cls}:
 
 # ── 메인 실행 ─────────────────────────────────────────────────────────────────
 
+
 def run(service_name: str):
     """서비스 구조 자동 파악 및 코드 생성."""
     if service_name not in SERVICES:
@@ -580,9 +608,9 @@ def run(service_name: str):
     config = SERVICES[service_name]
     CACHE_DIR.mkdir(exist_ok=True)
 
-    print(f"\n{'='*65}")
+    print(f"\n{'=' * 65}")
     print(f"  {service_name.upper()} 사이트 구조 자동 탐지 및 코드 생성")
-    print(f"{'='*65}\n")
+    print(f"{'=' * 65}\n")
 
     from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
@@ -604,7 +632,7 @@ def run(service_name: str):
         list_items = detect_list_structure(agent._page, service_name)
         structure.list_selectors = list_items
         for item in list_items[:3]:
-            print(f"  ✓ {item['selector']} → {item['count']}개 (샘플: {item.get('sample_text','')[:40]})")
+            print(f"  ✓ {item['selector']} → {item['count']}개 (샘플: {item.get('sample_text', '')[:40]})")
         if not list_items:
             print("  ✗ 목록 항목을 찾을 수 없음\n")
 
@@ -651,29 +679,27 @@ def run(service_name: str):
             "list_selectors": structure.list_selectors,
             "api_endpoints": structure.api_endpoints[:20],
             "captured_apis": structure.captured_apis[:20],
-            "fields": {
-                k: v for k, v in structure.fields.items()
-            },
+            "fields": {k: v for k, v in structure.fields.items()},
         }
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"\n  💾 구조 캐시: {cache_file}")
 
     # 7. extract_*.js 자동 생성
-    print(f"\n6️⃣  JS 파일 자동 생성...")
+    print("\n6️⃣  JS 파일 자동 생성...")
     JS_DIR.mkdir(exist_ok=True)
 
     if service_name == "mail":
         js_files = [
-            (f"extract_mail_inbox.js", "list"),
-            (f"extract_mail_detail.js", "detail"),
+            ("extract_mail_inbox.js", "list"),
+            ("extract_mail_detail.js", "detail"),
         ]
     elif service_name == "calendar":
         js_files = [
-            (f"extract_calendar_events.js", "list"),
+            ("extract_calendar_events.js", "list"),
         ]
     else:
         js_files = [
-            (f"extract_mybox_list.js", "list"),
+            ("extract_mybox_list.js", "list"),
         ]
 
     for js_name, mode in js_files:
@@ -683,22 +709,22 @@ def run(service_name: str):
         print(f"  ✓ 생성: {js_path.name}")
 
     # 8. mixin 메서드 자동 생성
-    print(f"\n7️⃣  Mixin 메서드 자동 생성...")
+    print("\n7️⃣  Mixin 메서드 자동 생성...")
     mixin_code = generate_mixin_methods(service_name, structure, config)
     mixin_path = MIXINS_DIR / config["mixin_file"]
     mixin_path.write_text(mixin_code, encoding="utf-8")
     print(f"  ✓ 생성: {mixin_path.name}")
 
     # 9. 완료 요약
-    print(f"\n{'='*65}")
+    print(f"\n{'=' * 65}")
     print(f"  [{service_name.upper()}] 자동 생성 완료 요약")
-    print(f"{'='*65}")
+    print(f"{'=' * 65}")
     print(f"  ✓ 구조 캐시: {cache_file.name}")
     print(f"  ✓ JS 파일: {[f[0] for f in js_files]}")
     print(f"  ✓ Mixin: {config['mixin_file']}")
     print(f"  ✓ 캡처된 API: {len(api_paths)}개")
     print(f"  ✓ 목록 셀렉터: {len(list_items)}개")
-    print(f"{'='*65}\n")
+    print(f"{'=' * 65}\n")
 
 
 def main():

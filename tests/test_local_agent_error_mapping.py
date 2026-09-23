@@ -2,35 +2,36 @@
 
 에러 타입별 HTTP 상태 코드 매핑과 에러 응답 생성 함수의 정합성을 검증한다.
 """
-import sys
+
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from ai_orchestrator.local_agent_error_mapping import (
-    ErrorType,
     ERROR_STATUS_CODES,
+    ErrorType,
     make_error_response,
 )
 
-
 # ── ErrorType 열거형 검증 ──────────────────────────────────────────────────
+
 
 def test_error_type_enum_exists():
     """ErrorType 열거형이 정의되어 있는지 검증."""
-    assert hasattr(ErrorType, 'INVALID_ALLOWED_ACTIONS')
-    assert hasattr(ErrorType, 'INVALID_TTL')
-    assert hasattr(ErrorType, 'INVALID_REQUEST')
-    assert hasattr(ErrorType, 'NOT_FOUND')
-    assert hasattr(ErrorType, 'INVALID_REGISTRATION_CODE')
-    assert hasattr(ErrorType, 'AGENT_NOT_FOUND')
-    assert hasattr(ErrorType, 'UNKNOWN_ACTION')
-    assert hasattr(ErrorType, 'MISSING_URL')
-    assert hasattr(ErrorType, 'URL_SCHEME_NOT_ALLOWED')
+    assert hasattr(ErrorType, "INVALID_ALLOWED_ACTIONS")
+    assert hasattr(ErrorType, "INVALID_TTL")
+    assert hasattr(ErrorType, "INVALID_REQUEST")
+    assert hasattr(ErrorType, "NOT_FOUND")
+    assert hasattr(ErrorType, "INVALID_REGISTRATION_CODE")
+    assert hasattr(ErrorType, "AGENT_NOT_FOUND")
+    assert hasattr(ErrorType, "UNKNOWN_ACTION")
+    assert hasattr(ErrorType, "MISSING_URL")
+    assert hasattr(ErrorType, "URL_SCHEME_NOT_ALLOWED")
 
 
 # ── ERROR_STATUS_CODES 매핑 ──────────────────────────────────────────────────
+
 
 def test_error_status_codes_mapping_exists():
     """에러 타입별 HTTP 상태 코드 매핑이 존재하는지 검증."""
@@ -60,11 +61,11 @@ def test_error_status_codes_covers_main_types():
 
 # ── make_error_response() 함수 ─────────────────────────────────────────────
 
+
 def test_make_error_response_invalid_allowed_actions():
     """INVALID_ALLOWED_ACTIONS 에러 응답 생성."""
     status_code, detail = make_error_response(
-        ErrorType.INVALID_ALLOWED_ACTIONS,
-        message="unsupported actions: ['delete_file']"
+        ErrorType.INVALID_ALLOWED_ACTIONS, message="unsupported actions: ['delete_file']"
     )
     assert status_code == 400
     assert "code" in detail or "error" in detail
@@ -74,10 +75,7 @@ def test_make_error_response_invalid_allowed_actions():
 
 def test_make_error_response_invalid_ttl():
     """INVALID_TTL 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.INVALID_TTL,
-        message="TTL must be between 1 and 10080"
-    )
+    status_code, detail = make_error_response(ErrorType.INVALID_TTL, message="TTL must be between 1 and 10080")
     assert status_code == 400
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -86,10 +84,7 @@ def test_make_error_response_invalid_ttl():
 
 def test_make_error_response_invalid_request():
     """INVALID_REQUEST 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.INVALID_REQUEST,
-        message="Missing required field"
-    )
+    status_code, detail = make_error_response(ErrorType.INVALID_REQUEST, message="Missing required field")
     assert status_code == 400
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -97,10 +92,7 @@ def test_make_error_response_invalid_request():
 
 def test_make_error_response_not_found():
     """NOT_FOUND 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.NOT_FOUND,
-        message="registration_code not found"
-    )
+    status_code, detail = make_error_response(ErrorType.NOT_FOUND, message="registration_code not found")
     assert status_code == 404
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -108,10 +100,7 @@ def test_make_error_response_not_found():
 
 def test_make_error_response_agent_not_found():
     """AGENT_NOT_FOUND 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.AGENT_NOT_FOUND,
-        message="미등록 에이전트: agent-123"
-    )
+    status_code, detail = make_error_response(ErrorType.AGENT_NOT_FOUND, message="미등록 에이전트: agent-123")
     assert status_code == 404
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -120,10 +109,7 @@ def test_make_error_response_agent_not_found():
 
 def test_make_error_response_unknown_action():
     """UNKNOWN_ACTION 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.UNKNOWN_ACTION,
-        message="Unknown action: invalid_action"
-    )
+    status_code, detail = make_error_response(ErrorType.UNKNOWN_ACTION, message="Unknown action: invalid_action")
     assert status_code == 400
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -131,10 +117,7 @@ def test_make_error_response_unknown_action():
 
 def test_make_error_response_missing_url():
     """MISSING_URL 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.MISSING_URL,
-        message="url은 필수입니다"
-    )
+    status_code, detail = make_error_response(ErrorType.MISSING_URL, message="url은 필수입니다")
     assert status_code == 400
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -142,10 +125,7 @@ def test_make_error_response_missing_url():
 
 def test_make_error_response_url_scheme_not_allowed():
     """URL_SCHEME_NOT_ALLOWED 에러 응답 생성."""
-    status_code, detail = make_error_response(
-        ErrorType.URL_SCHEME_NOT_ALLOWED,
-        message="Scheme not allowed: file"
-    )
+    status_code, detail = make_error_response(ErrorType.URL_SCHEME_NOT_ALLOWED, message="Scheme not allowed: file")
     assert status_code == 400
     assert "code" in detail or "error" in detail
     assert "message" in detail
@@ -162,9 +142,7 @@ def test_make_error_response_default_message():
 def test_make_error_response_with_error_code():
     """에러 코드 명시적 지정."""
     status_code, detail = make_error_response(
-        ErrorType.INVALID_REQUEST,
-        error_code="CUSTOM_ERROR_CODE",
-        message="Custom error"
+        ErrorType.INVALID_REQUEST, error_code="CUSTOM_ERROR_CODE", message="Custom error"
     )
     assert status_code == 400
     # error_code가 지정된 경우 그것을 사용해야 함
@@ -174,11 +152,11 @@ def test_make_error_response_with_error_code():
 
 # ── 토큰 미포함 검증 ────────────────────────────────────────────────────────
 
+
 def test_make_error_response_no_token_in_message():
     """에러 응답에 토큰 원문이 포함되지 않는지 검증."""
-    status_code, detail = make_error_response(
-        ErrorType.INVALID_REGISTRATION_CODE,
-        message="Code is invalid or expired"
+    _status_code, detail = make_error_response(
+        ErrorType.INVALID_REGISTRATION_CODE, message="Code is invalid or expired"
     )
     detail_str = str(detail)
     # 실제 토큰이나 민감 데이터가 없어야 함
@@ -188,18 +166,21 @@ def test_make_error_response_no_token_in_message():
 
 # ── 모듈 import 검증 ────────────────────────────────────────────────────────
 
+
 def test_error_mapping_module_importable():
     """에러 매핑 모듈이 정상적으로 임포트 가능한지 검증."""
     import ai_orchestrator.local_agent_error_mapping as error_mapping_module
-    assert hasattr(error_mapping_module, 'ErrorType')
-    assert hasattr(error_mapping_module, 'ERROR_STATUS_CODES')
-    assert hasattr(error_mapping_module, 'make_error_response')
+
+    assert hasattr(error_mapping_module, "ErrorType")
+    assert hasattr(error_mapping_module, "ERROR_STATUS_CODES")
+    assert hasattr(error_mapping_module, "make_error_response")
 
 
 def test_no_circular_import_with_router():
     """에러 매핑 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
         from ai_orchestrator.local_agent_router import local_agent_router
+
         assert local_agent_router is not None
     except ImportError:
         pass
@@ -207,12 +188,10 @@ def test_no_circular_import_with_router():
 
 # ── 추가 에러 타입 검증 ────────────────────────────────────────────────────
 
+
 def test_invalid_registration_code_mapping():
     """INVALID_REGISTRATION_CODE 매핑 확인."""
-    status_code, detail = make_error_response(
-        ErrorType.INVALID_REGISTRATION_CODE,
-        message="INVALID_CODE_MESSAGE"
-    )
+    status_code, detail = make_error_response(ErrorType.INVALID_REGISTRATION_CODE, message="INVALID_CODE_MESSAGE")
     assert status_code == 400
     assert "code" in detail or "error" in detail
 
@@ -220,8 +199,7 @@ def test_invalid_registration_code_mapping():
 def test_all_error_types_have_status_codes():
     """모든 ErrorType이 상태 코드 매핑을 가지고 있는지 검증."""
     for error_type in ErrorType:
-        assert error_type.value in ERROR_STATUS_CODES, \
-            f"No status code mapping for {error_type.name}"
+        assert error_type.value in ERROR_STATUS_CODES, f"No status code mapping for {error_type.name}"
 
 
 def test_error_response_structure_consistency():
@@ -238,5 +216,5 @@ def test_error_response_structure_consistency():
         assert isinstance(status_code, int)
         assert isinstance(detail, dict)
         # detail에는 code/error와 message가 있어야 함
-        assert ("code" in detail or "error" in detail)
+        assert "code" in detail or "error" in detail
         assert "message" in detail

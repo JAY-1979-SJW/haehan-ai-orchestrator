@@ -3,30 +3,30 @@
 실제 agent 실행, WebSocket 연결, task 실행 없이
 서버사이드/mock으로 실사용 흐름을 검증한다.
 """
-import sys
+
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from ai_orchestrator import local_agent_registry as _reg
-from ai_orchestrator.local_agent_status_policy import (
-    can_cancel_task,
-    is_terminal_status,
-    VALID_TASK_TRANSITIONS,
-    ACTIVE_TASK_STATUSES,
-)
 from ai_orchestrator.local_agent_audit_event_policy import (
     APPROVE_AUDIT_EVENT,
     REJECT_AUDIT_EVENT,
 )
 from ai_orchestrator.local_agent_error_mapping import (
-    ErrorType,
     ERROR_STATUS_CODES,
+    ErrorType,
+)
+from ai_orchestrator.local_agent_status_policy import (
+    ACTIVE_TASK_STATUSES,
+    VALID_TASK_TRANSITIONS,
+    can_cancel_task,
+    is_terminal_status,
 )
 
-
 # ── 상태 정책 검증 ──────────────────────────────────────────────────────
+
 
 def test_task_status_transition_valid_paths():
     """task 상태 전이 경로가 정의되어 있음."""
@@ -84,6 +84,7 @@ def test_active_status_does_not_include_waiting_approval():
 
 # ── 감사 이벤트 정책 검증 ───────────────────────────────────────────────
 
+
 def test_approve_audit_event_names_snapshot():
     """승인 감사 이벤트 이름 snapshot."""
     assert APPROVE_AUDIT_EVENT["approved"] == "LOCAL_AGENT_TASK_APPROVED"
@@ -100,24 +101,25 @@ def test_reject_audit_event_names_snapshot():
 
 def test_audit_event_names_are_descriptive():
     """감사 이벤트 이름이 사람이 읽을 수 있음."""
-    for status, event_name in APPROVE_AUDIT_EVENT.items():
+    for _status, event_name in APPROVE_AUDIT_EVENT.items():
         assert isinstance(event_name, str)
         assert len(event_name) > 0
         assert event_name.isupper()
         assert "_" in event_name or event_name.isalpha()
 
-    for status, event_name in REJECT_AUDIT_EVENT.items():
+    for _status, event_name in REJECT_AUDIT_EVENT.items():
         assert isinstance(event_name, str)
         assert len(event_name) > 0
 
 
 # ── 에러 매핑 검증 ──────────────────────────────────────────────────────
 
+
 def test_error_type_enum_values():
     """ErrorType enum이 정의되어 있음."""
-    assert hasattr(ErrorType, 'INVALID_REQUEST')
-    assert hasattr(ErrorType, 'NOT_FOUND')
-    assert hasattr(ErrorType, 'INVALID_ALLOWED_ACTIONS')
+    assert hasattr(ErrorType, "INVALID_REQUEST")
+    assert hasattr(ErrorType, "NOT_FOUND")
+    assert hasattr(ErrorType, "INVALID_ALLOWED_ACTIONS")
 
 
 def test_error_status_codes_are_standard():
@@ -142,6 +144,7 @@ def test_error_mapping_no_duplicate_codes():
 
 # ── 실사용 흐름 모의 검증 ────────────────────────────────────────────────
 
+
 def test_no_agent_list_response_has_agents_key():
     """no-agent 목록 응답에 agents 키 있음."""
     _reg._agents.clear()
@@ -157,9 +160,15 @@ def test_task_status_values_are_known():
     from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
 
     expected_statuses = {
-        "queued", "delivered", "running",
-        "waiting_approval", "completed", "failed",
-        "rejected", "cancel_requested", "cancelled"
+        "queued",
+        "delivered",
+        "running",
+        "waiting_approval",
+        "completed",
+        "failed",
+        "rejected",
+        "cancel_requested",
+        "cancelled",
     }
 
     assert expected_statuses == KNOWN_TASK_STATUSES
@@ -206,6 +215,7 @@ def test_diagnostics_helpers_functions_exist():
 
 # ── 보안 정책 검증 ──────────────────────────────────────────────────────
 
+
 def test_response_builders_return_dict():
     """응답 빌더가 dict를 반환함."""
     from ai_orchestrator.local_agent_response_builders import (
@@ -214,11 +224,11 @@ def test_response_builders_return_dict():
 
     resp = make_register_agent_response(
         agent_id="test-agent",
-        device_token="test-token",
+        device_token="test-token",  # noqa: S106
         host="localhost",
         os_name="test",
         version="1.0",
-        registered_at="2026-05-04T10:00:00Z"
+        registered_at="2026-05-04T10:00:00Z",
     )
 
     assert isinstance(resp, dict)
@@ -231,10 +241,7 @@ def test_error_response_builder_no_token_in_detail():
     """에러 응답에 실제 토큰 값 없음."""
     from ai_orchestrator.local_agent_error_mapping import make_error_response
 
-    status_code, detail = make_error_response(
-        ErrorType.INVALID_REQUEST,
-        message="Invalid request"
-    )
+    _status_code, detail = make_error_response(ErrorType.INVALID_REQUEST, message="Invalid request")
 
     detail_str = str(detail)
 
@@ -277,15 +284,16 @@ def test_status_code_consistency():
 
 # ── 통합 흐름 구조 검증 ────────────────────────────────────────────────
 
+
 def test_task_lifecycle_states_are_valid():
     """task 생명주기의 상태들이 모두 KNOWN_TASK_STATUSES에 있음."""
     from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
 
     lifecycle = [
-        "queued",           # 초기
-        "delivered",        # agent에 전달됨
-        "running",          # 실행 중
-        "completed",        # 완료
+        "queued",  # 초기
+        "delivered",  # agent에 전달됨
+        "running",  # 실행 중
+        "completed",  # 완료
     ]
 
     for state in lifecycle:
@@ -298,9 +306,9 @@ def test_high_risk_task_approval_flow_states():
 
     flow = [
         "waiting_approval",  # 초기: 승인 대기
-        "queued",            # 승인 후: 큐에 들어감
-        "delivered",         # agent에 전달됨
-        "completed",         # 완료
+        "queued",  # 승인 후: 큐에 들어감
+        "delivered",  # agent에 전달됨
+        "completed",  # 완료
     ]
 
     for state in flow:

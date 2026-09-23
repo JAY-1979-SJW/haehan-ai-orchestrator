@@ -29,10 +29,8 @@ from ai_orchestrator.browser_tool.g2b_domain_policy import (
     PATH_BLOCKED_LOGIN,
     PATH_BLOCKED_PAYMENT,
     PATH_DOWNLOAD_MANUAL_ONLY,
-    PATH_READONLY_ALLOWED,
     classify_g2b_url,
     normalize_g2b_domain,
-    validate_g2b_domain_policy_result,
 )
 
 # ── verdict 값 ────────────────────────────────────────────────────────────────
@@ -48,19 +46,44 @@ ALLOWED_OPERATIONS: list[str] = ["read", "navigate", "open_url"]
 # ── 금지 operation ────────────────────────────────────────────────────────────
 
 FORBIDDEN_OPERATIONS: list[str] = [
-    "submit", "type", "fill", "click", "click_submit",
-    "download", "upload", "post", "write", "delete",
-    "update", "login", "cert", "payment", "contract_submit",
-    "bid_submit", "auto_login",
+    "submit",
+    "type",
+    "fill",
+    "click",
+    "click_submit",
+    "download",
+    "upload",
+    "post",
+    "write",
+    "delete",
+    "update",
+    "login",
+    "cert",
+    "payment",
+    "contract_submit",
+    "bid_submit",
+    "auto_login",
 ]
 
 # ── workflow_steps 금지 step ──────────────────────────────────────────────────
 
-_FORBIDDEN_WORKFLOW_STEPS: frozenset[str] = frozenset({
-    "click", "type", "fill", "submit", "download",
-    "login", "cert", "payment", "contract_submit", "bid_submit",
-    "auto_login", "upload", "write_form",
-})
+_FORBIDDEN_WORKFLOW_STEPS: frozenset[str] = frozenset(
+    {
+        "click",
+        "type",
+        "fill",
+        "submit",
+        "download",
+        "login",
+        "cert",
+        "payment",
+        "contract_submit",
+        "bid_submit",
+        "auto_login",
+        "upload",
+        "write_form",
+    }
+)
 
 # ── 공개 read-only workflow 계획 ──────────────────────────────────────────────
 
@@ -95,7 +118,7 @@ def _build_canonical_url(original_url: str, normalized_domain: str) -> str:
         parsed = urlparse(original_url)
         if parsed.netloc and parsed.netloc.lower() != normalized_domain:
             return original_url.replace(parsed.netloc, normalized_domain, 1)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return original_url
 
@@ -183,7 +206,7 @@ def classify_g2b_public_notice_workflow_request(
         raw_domain = parsed.netloc if parsed else ""
     except Exception:
         raw_domain = ""
-    domain_info = normalize_g2b_domain(raw_domain)
+    domain_info = normalize_g2b_domain(raw_domain)  # noqa: F841
 
     normalized_domain = domain_result.get("normalized_domain", "")
     base_result["normalized_domain"] = normalized_domain
@@ -214,8 +237,11 @@ def classify_g2b_public_notice_workflow_request(
     # 경로 차단
     path_decision = domain_result.get("path_decision", "")
     _blocked_paths = {
-        PATH_BLOCKED_LOGIN, PATH_BLOCKED_CERT, PATH_BLOCKED_BID_SUBMIT,
-        PATH_BLOCKED_CONTRACT, PATH_BLOCKED_PAYMENT,
+        PATH_BLOCKED_LOGIN,
+        PATH_BLOCKED_CERT,
+        PATH_BLOCKED_BID_SUBMIT,
+        PATH_BLOCKED_CONTRACT,
+        PATH_BLOCKED_PAYMENT,
     }
     if path_decision in _blocked_paths:
         base_result["blocked_reason"] = domain_result.get("blocked_reason", f"PATH_BLOCKED: {path_decision}")
@@ -262,11 +288,20 @@ def validate_g2b_public_notice_workflow_result(result: dict[str, Any]) -> list[s
     errors: list[str] = []
 
     required_fields = [
-        "input_url", "normalized_domain", "canonical_url",
-        "operation", "domain_classification", "compliance_decision",
-        "readonly_allowed", "download_auto_allowed", "blocked_reason",
-        "workflow_steps", "allowed_operations", "forbidden_operations",
-        "requires_url_verification", "verdict",
+        "input_url",
+        "normalized_domain",
+        "canonical_url",
+        "operation",
+        "domain_classification",
+        "compliance_decision",
+        "readonly_allowed",
+        "download_auto_allowed",
+        "blocked_reason",
+        "workflow_steps",
+        "allowed_operations",
+        "forbidden_operations",
+        "requires_url_verification",
+        "verdict",
         "safe_to_execute",
     ]
     for field in required_fields:
@@ -298,12 +333,12 @@ def validate_g2b_public_notice_workflow_result(result: dict[str, Any]) -> list[s
 
 
 __all__ = [
-    "build_g2b_public_notice_workflow",
-    "classify_g2b_public_notice_workflow_request",
-    "validate_g2b_public_notice_workflow_result",
     "ALLOWED_OPERATIONS",
     "FORBIDDEN_OPERATIONS",
     "VERDICT_ALLOWED",
     "VERDICT_BLOCKED",
     "VERDICT_NEEDS_VERIFICATION",
+    "build_g2b_public_notice_workflow",
+    "classify_g2b_public_notice_workflow_request",
+    "validate_g2b_public_notice_workflow_result",
 ]

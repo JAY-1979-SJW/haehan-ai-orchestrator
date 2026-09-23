@@ -6,12 +6,12 @@
 - 역할 매트릭스: owner/admin/operator/viewer 에 대해 approve/reject/tasks 동작 검증
 - 스푸핑 차단: body.role=admin 을 보내도 current_user.role 이 낮으면 승인 불가
 """
+
 import importlib
 import json
 import os
 import sys
 import uuid
-from pathlib import Path
 
 import pytest
 
@@ -23,12 +23,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def app_client(tmp_path_factory):
     users_path = tmp_path_factory.mktemp("policies") / "http_users.json"
     users_path.write_text(
-        json.dumps([
-            {"username": "owner_u",    "password_hash": "pw-owner",    "role": "owner",    "enabled": True},
-            {"username": "admin_u",    "password_hash": "pw-admin",    "role": "admin",    "enabled": True},
-            {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
-            {"username": "viewer_u",   "password_hash": "pw-viewer",   "role": "viewer",   "enabled": True},
-        ], ensure_ascii=False),
+        json.dumps(
+            [
+                {"username": "owner_u", "password_hash": "pw-owner", "role": "owner", "enabled": True},
+                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+                {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
+                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+            ],
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
 
@@ -37,18 +40,24 @@ def app_client(tmp_path_factory):
 
     # 설정 캐시 무효화 → 관련 모듈 리로드
     from ai_orchestrator import config as _config
+
     importlib.reload(_config)
     from ai_orchestrator import auth as _auth
+
     importlib.reload(_auth)
     from ai_orchestrator import approval as _approval
+
     importlib.reload(_approval)
     _approval.clear_rate_store()  # module 간 rate counter 누적 차단
     from ai_orchestrator import router as _router
+
     importlib.reload(_router)
     from ai_orchestrator import server as _server
+
     importlib.reload(_server)
 
     from fastapi.testclient import TestClient
+
     client = TestClient(_server.app, raise_server_exceptions=True)
     yield client
 
@@ -91,46 +100,80 @@ def _submit_medium_task(client, auth):
 
 # ── 1. POST /tasks — 역할 게이트 ─────────────────────────────────────
 def test_tasks_owner_allowed(app_client):
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": _uniq("OWN"), "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "owner ok", "requested_by": "spoof"},
-        auth=_auth("owner_u"))
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": _uniq("OWN"),
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "owner ok",
+            "requested_by": "spoof",
+        },
+        auth=_auth("owner_u"),
+    )
     assert r.status_code == 200
 
 
 def test_tasks_admin_allowed(app_client):
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": _uniq("ADM"), "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "admin ok", "requested_by": "spoof"},
-        auth=_auth("admin_u"))
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": _uniq("ADM"),
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "admin ok",
+            "requested_by": "spoof",
+        },
+        auth=_auth("admin_u"),
+    )
     assert r.status_code == 200
 
 
 def test_tasks_operator_allowed(app_client):
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": _uniq("OP"), "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "operator ok", "requested_by": "spoof"},
-        auth=_auth("operator_u"))
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": _uniq("OP"),
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "operator ok",
+            "requested_by": "spoof",
+        },
+        auth=_auth("operator_u"),
+    )
     assert r.status_code == 200
 
 
 def test_tasks_viewer_forbidden(app_client):
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": _uniq("VW"), "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "viewer denied", "requested_by": "spoof"},
-        auth=_auth("viewer_u"))
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": _uniq("VW"),
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "viewer denied",
+            "requested_by": "spoof",
+        },
+        auth=_auth("viewer_u"),
+    )
     assert r.status_code == 403
 
 
 def test_tasks_unauthenticated_401(app_client):
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": _uniq("NOA"), "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "no auth"})
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": _uniq("NOA"),
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "no auth",
+        },
+    )
     assert r.status_code == 401
 
 
@@ -140,19 +183,26 @@ def test_tasks_requested_by_is_current_user(app_client):
     from ai_orchestrator.audit_logger import read_recent_logs
 
     task_id = _uniq("SPF")
-    r = app_client.post("/api/v1/tasks",
-        json={"task_id": task_id, "source": "manual",
-              "action_type": "read_file", "target": "/tmp/x",
-              "description": "spoof test", "requested_by": "ATTACKER"},
-        auth=_auth("operator_u"))
+    r = app_client.post(
+        "/api/v1/tasks",
+        json={
+            "task_id": task_id,
+            "source": "manual",
+            "action_type": "read_file",
+            "target": "/tmp/x",  # noqa: S108
+            "description": "spoof test",
+            "requested_by": "ATTACKER",
+        },
+        auth=_auth("operator_u"),
+    )
     assert r.status_code == 200
 
     logs = read_recent_logs(limit=100)
-    task_events = [e for e in logs if e["task_id"] == task_id
-                   and e["event_type"] == "TASK_RECEIVED"]
+    task_events = [e for e in logs if e["task_id"] == task_id and e["event_type"] == "TASK_RECEIVED"]
     assert task_events, "TASK_RECEIVED 이벤트가 기록되어야 함"
-    assert task_events[-1]["actor"] == "operator_u", \
+    assert task_events[-1]["actor"] == "operator_u", (
         f"actor 는 current_user.actor 이어야 함. got={task_events[-1]['actor']}"
+    )
     assert task_events[-1]["actor"] != "ATTACKER"
 
 
@@ -249,8 +299,7 @@ def test_approve_audit_actor_is_current_user(app_client):
     assert r.status_code == 200
 
     logs = read_recent_logs(limit=200)
-    granted = [e for e in logs
-               if e["task_id"] == task_id and e["event_type"] == "APPROVAL_GRANTED"]
+    granted = [e for e in logs if e["task_id"] == task_id and e["event_type"] == "APPROVAL_GRANTED"]
     assert granted, "APPROVAL_GRANTED 이벤트가 기록되어야 함"
     assert granted[-1]["actor"] == "admin_u"
     assert granted[-1]["role"] == "admin"

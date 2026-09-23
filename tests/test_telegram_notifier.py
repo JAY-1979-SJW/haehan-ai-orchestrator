@@ -1,6 +1,5 @@
-import sys
 import os
-import pytest
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -9,11 +8,13 @@ os.environ.pop("TELEGRAM_BOT_TOKEN", None)
 os.environ.pop("TELEGRAM_CHAT_ID", None)
 
 import importlib
+
 import telegram_notifier
+
 importlib.reload(telegram_notifier)
 
-from telegram_notifier import send_approval_request, send_status_message
-from models import TaskRequest, RiskAssessment, ExecutionPlan
+from models import ExecutionPlan, RiskAssessment, TaskRequest  # noqa: E402
+from telegram_notifier import send_approval_request, send_status_message  # noqa: E402
 
 
 def _make_fixtures():

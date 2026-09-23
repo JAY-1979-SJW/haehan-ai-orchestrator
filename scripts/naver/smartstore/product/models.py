@@ -3,21 +3,23 @@
 dataclass 기반 ProductData / GeneralProductData.
 __post_init__에서 자동 검증 (가격>0, 재고>=0, 이미지 파일 존재 등).
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 class ValidationError(ValueError):
     """상품 데이터 검증 실패."""
+
     pass
 
 
 @dataclass
 class GeneralProductData:
     """일반 상품 등록용 표준 데이터 모델."""
+
     name: str
     price: int
     stock: int
@@ -28,7 +30,7 @@ class GeneralProductData:
     manufacturer: str | None = None
     model_name: str | None = None
     description: str | None = None
-    vat_type: str | None = None        # "과세상품" / "면세상품" / "영세상품"
+    vat_type: str | None = None  # "과세상품" / "면세상품" / "영세상품"
     product_status: str | None = None  # "신상품" / "중고상품"
     minor_purchase: bool = True
     kc_exemption: str | None = None
@@ -57,13 +59,13 @@ class GeneralProductData:
         if self.kc_exemption and self.kc_exemption not in ("구매대행", "안전기준 준수", "KC 안전관리대상 아님"):
             errors.append(f"kc_exemption: 잘못된 값 ({self.kc_exemption})")
         if errors:
-            raise ValidationError("\n  ".join(["상품 데이터 검증 실패:"] + errors))
+            raise ValidationError("\n  ".join(["상품 데이터 검증 실패:"] + errors))  # noqa: RUF005
 
     def to_dict(self) -> dict:
         return {k: v for k, v in asdict(self).items() if v is not None and v != [] and v != ""}
 
     @classmethod
-    def from_dict(cls, data: dict) -> "GeneralProductData":
+    def from_dict(cls, data: dict) -> GeneralProductData:
         # 알려진 필드만 추출 (extra 무시)
         known = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in data.items() if k in known})
@@ -72,6 +74,7 @@ class GeneralProductData:
 @dataclass
 class GroupProductData:
     """그룹상품 등록용 표준 데이터 모델 (가격/재고 없음)."""
+
     name: str
     category: str | None = None
     model_name: str | None = None
@@ -98,18 +101,18 @@ class GroupProductData:
         if len(self.name) > 100:
             errors.append("name: 100자 초과")
         if self.main_image and not Path(self.main_image).exists():
-            errors.append(f"main_image: 파일 없음")
+            errors.append("main_image: 파일 없음")
         for img in self.additional_images:
             if not Path(img).exists():
                 errors.append(f"additional_images: 파일 없음 ({img})")
         if errors:
-            raise ValidationError("\n  ".join(["그룹상품 데이터 검증 실패:"] + errors))
+            raise ValidationError("\n  ".join(["그룹상품 데이터 검증 실패:"] + errors))  # noqa: RUF005
 
     def to_dict(self) -> dict:
         return {k: v for k, v in asdict(self).items() if v is not None and v != [] and v != ""}
 
     @classmethod
-    def from_dict(cls, data: dict) -> "GroupProductData":
+    def from_dict(cls, data: dict) -> GroupProductData:
         known = {f.name for f in cls.__dataclass_fields__.values()}
         return cls(**{k: v for k, v in data.items() if k in known})
 
@@ -117,6 +120,7 @@ class GroupProductData:
 @dataclass
 class RegisterResult:
     """등록 결과 표준 모델."""
+
     ok: bool
     product_name: str
     type: str  # "general" / "group"

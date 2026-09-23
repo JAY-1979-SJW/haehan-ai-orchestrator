@@ -3,16 +3,15 @@
 This script is static-only by default. It does not call the server, start a
 browser, run Docker, build installers, stage files, or print secrets.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import subprocess
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DOC_PATH = ROOT / "docs/design/authenticated_local_agent_dispatch_dry_run_20260523.md"
@@ -23,7 +22,7 @@ OUT_OF_SCOPE = {
     "scripts/ops/naver_login_and_mail.py",
     "scripts/ops/verify_remote_browser.py",
 }
-FORBIDDEN_SCRIPT_TOKENS = tuple(
+FORBIDDEN_SCRIPT_TOKENS = tuple(  # noqa: RUF005
     " ".join(parts)
     for parts in (
         ("docker", "compose", "up"),
@@ -136,7 +135,10 @@ def audit() -> AuditResult:
     else:
         add(findings, "FAIL", "register_endpoint_auth", "admin/owner guard not found")
 
-    if '@local_agent_router.post("/registration-codes")' in router and '@local_agent_router.post("/register-with-code")' in router:
+    if (
+        '@local_agent_router.post("/registration-codes")' in router
+        and '@local_agent_router.post("/register-with-code")' in router
+    ):
         add(findings, "PASS", "registration_code_flow", "issue and exchange endpoints present")
     else:
         add(findings, "FAIL", "registration_code_flow", "registration-code endpoints incomplete")

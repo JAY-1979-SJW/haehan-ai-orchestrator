@@ -11,16 +11,15 @@
   Resolution(kind, item, action_args)
   - kind: select_radio | check_checkbox | fill_text | choose_select | skip
 """
+
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
-from scripts.logger import get_logger
 from scripts.form.state_scanner import UnsetItem
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -49,6 +48,7 @@ _HEURISTIC_FIELD_KEYWORDS: dict[str, list[str]] = {
 
 class RequiresHumanDecision(RuntimeError):
     """결정 못함 — 사용자 입력 필요."""
+
     def __init__(self, host: str, items: list[UnsetItem], hint: str = ""):
         self.host = host
         self.items = items
@@ -56,32 +56,37 @@ class RequiresHumanDecision(RuntimeError):
         msg = f"휴먼 결정 필요 ({host}): {len(items)} 미결\n"
         for it in items:
             if it.kind == "radio_group":
-                opts = " | ".join(f"{o.get('label','?')}({o.get('id','')})" for o in it.options)
+                opts = " | ".join(f"{o.get('label', '?')}({o.get('id', '')})" for o in it.options)
                 msg += f"  [라디오 {it.name}] {opts}\n"
             elif it.kind == "select":
                 opts = " | ".join(o.get("label", "?") for o in it.options[:8])
                 msg += f"  [select {it.name}] {opts}\n"
             else:
                 msg += f"  [{it.kind} {it.name or it.label or it.placeholder}]\n"
-        if hint: msg += f"\n  힌트: {hint}"
+        if hint:
+            msg += f"\n  힌트: {hint}"
         super().__init__(msg)
 
 
 @dataclass
 class Resolution:
-    kind: str           # select_radio | check_checkbox | fill_text | choose_select | skip
+    kind: str  # select_radio | check_checkbox | fill_text | choose_select | skip
     item: UnsetItem
     selector: str = ""
     value: str = ""
     note: str = ""
 
     def to_dict(self) -> dict:
-        return {"kind": self.kind, "selector": self.selector,
-                "value": ("***" if "password" in self.item.kind else self.value),
-                "note": self.note}
+        return {
+            "kind": self.kind,
+            "selector": self.selector,
+            "value": ("***" if "password" in self.item.kind else self.value),
+            "note": self.note,
+        }
 
 
 # ── 캐시 / 프로필 로드 ─────────────────────────────────────────────
+
 
 def _load_path_cache(host: str) -> dict:
     fp = LOGIN_PATHS_DIR / f"{host}.json"
@@ -96,6 +101,7 @@ def _load_path_cache(host: str) -> dict:
 def _profile_get(field: str, site: str) -> str:
     try:
         from scripts.form.profile import get_value
+
         return get_value(field, site=site)
     except Exception:
         return ""
@@ -104,12 +110,14 @@ def _profile_get(field: str, site: str) -> str:
 def _cred_get(site: str) -> dict:
     try:
         from scripts.credentials import get_cred
+
         return get_cred(site)
     except Exception:
         return {}
 
 
 # ── 항목별 결정 ─────────────────────────────────────────────────
+
 
 def _currently_checked(item: UnsetItem) -> dict | None:
     for o in item.options:
@@ -120,49 +128,51 @@ def _currently_checked(item: UnsetItem) -> dict | None:
 
 def _resolve_radio(item: UnsetItem, host: str, site_key: str, cache: dict) -> Resolution | None:
     current = _currently_checked(item)
+
     def _maybe_skip(preferred_label: str) -> Resolution | None:
-        if current and (current.get("label") == preferred_label
-                         or current.get("id") == preferred_label):
-            return Resolution(kind="skip", item=item,
-                               note=f"already_checked:{preferred_label}")
+        if current and (current.get("label") == preferred_label or current.get("id") == preferred_label):
+            return Resolution(kind="skip", item=item, note=f"already_checked:{preferred_label}")
         return None
+
     # 1) 캐시
     cached = (cache.get("radio_choices") or {}).get(item.name)
     if cached:
         skip = _maybe_skip(cached)
-        if skip: return skip
+        if skip:
+            return skip
         for opt in item.options:
             if opt.get("label") == cached or opt.get("id") == cached:
-                sel = f"#{opt.get('id')}" if opt.get("id") else \
-                      f"input[name='{item.name}'][value='{opt.get('value')}']"
-                return Resolution(kind="select_radio", item=item,
-                                   selector=sel, value=opt.get("label", ""),
-                                   note=f"cache:{cached}")
+                sel = f"#{opt.get('id')}" if opt.get("id") else f"input[name='{item.name}'][value='{opt.get('value')}']"
+                return Resolution(
+                    kind="select_radio", item=item, selector=sel, value=opt.get("label", ""), note=f"cache:{cached}"
+                )
     # 2) 프로필 override
     prof_val = _profile_get(f"radio_{item.name}", site_key)
     if prof_val:
         skip = _maybe_skip(prof_val)
-        if skip: return skip
+        if skip:
+            return skip
         for opt in item.options:
             if opt.get("label") == prof_val:
-                sel = f"#{opt.get('id')}" if opt.get("id") else \
-                      f"input[name='{item.name}'][value='{opt.get('value')}']"
-                return Resolution(kind="select_radio", item=item,
-                                   selector=sel, value=prof_val,
-                                   note=f"profile:{prof_val}")
+                sel = f"#{opt.get('id')}" if opt.get("id") else f"input[name='{item.name}'][value='{opt.get('value')}']"
+                return Resolution(
+                    kind="select_radio", item=item, selector=sel, value=prof_val, note=f"profile:{prof_val}"
+                )
     # 3) 휴리스틱 — 유통업체 우선
     for opt in item.options:
         lab = (opt.get("label") or "").lower()
         for kw in _PREFERRED_KEYWORDS["ko_distributor"]:
             if kw.lower() in lab:
                 if current and current.get("id") == opt.get("id"):
-                    return Resolution(kind="skip", item=item,
-                                       note=f"already:distributor:{opt.get('label')}")
-                sel = f"#{opt.get('id')}" if opt.get("id") else \
-                      f"input[name='{item.name}'][value='{opt.get('value')}']"
-                return Resolution(kind="select_radio", item=item,
-                                   selector=sel, value=opt.get("label", ""),
-                                   note=f"heuristic:distributor")
+                    return Resolution(kind="skip", item=item, note=f"already:distributor:{opt.get('label')}")
+                sel = f"#{opt.get('id')}" if opt.get("id") else f"input[name='{item.name}'][value='{opt.get('value')}']"
+                return Resolution(
+                    kind="select_radio",
+                    item=item,
+                    selector=sel,
+                    value=opt.get("label", ""),
+                    note="heuristic:distributor",
+                )
     return None
 
 
@@ -173,11 +183,9 @@ def _resolve_checkbox(item: UnsetItem, host: str, site_key: str) -> Resolution |
         return Resolution(kind="skip", item=item, note="marketing_no_consent")
     # 필수 동의 — 체크
     if any(kw in lab for kw in _PREFERRED_KEYWORDS["agree_required"]):
-        return Resolution(kind="check_checkbox", item=item,
-                           selector=item.selector, note="agree_required")
+        return Resolution(kind="check_checkbox", item=item, selector=item.selector, note="agree_required")
     if item.required:
-        return Resolution(kind="check_checkbox", item=item,
-                           selector=item.selector, note="required_flag")
+        return Resolution(kind="check_checkbox", item=item, selector=item.selector, note="required_flag")
     return None
 
 
@@ -186,44 +194,42 @@ def _resolve_text(item: UnsetItem, host: str, site_key: str) -> Resolution | Non
     # 비밀번호
     if item.kind == "password":
         if cred.get("pw"):
-            return Resolution(kind="fill_text", item=item,
-                               selector=item.selector, value=cred["pw"],
-                               note="cred.pw")
+            return Resolution(kind="fill_text", item=item, selector=item.selector, value=cred["pw"], note="cred.pw")
         return None
     # 매칭 키워드 → 적절한 값
-    text_sources = " ".join([item.label or "", item.placeholder or "",
-                              item.name or "", item.raw.get("id", "")]).lower()
+    text_sources = " ".join([item.label or "", item.placeholder or "", item.name or "", item.raw.get("id", "")]).lower()
     for role, kws in _HEURISTIC_FIELD_KEYWORDS.items():
         if any(kw in text_sources for kw in kws):
             if role == "id" and cred.get("id"):
-                return Resolution(kind="fill_text", item=item,
-                                   selector=item.selector, value=cred["id"],
-                                   note="cred.id")
+                return Resolution(kind="fill_text", item=item, selector=item.selector, value=cred["id"], note="cred.id")
             val = _profile_get(role, site_key) or _profile_get("default_" + role, site_key)
             if val:
-                return Resolution(kind="fill_text", item=item,
-                                   selector=item.selector, value=val,
-                                   note=f"profile.{role}")
+                return Resolution(
+                    kind="fill_text", item=item, selector=item.selector, value=val, note=f"profile.{role}"
+                )
     return None
 
 
 def _resolve_select(item: UnsetItem, host: str, site_key: str, cache: dict) -> Resolution | None:
     cached = (cache.get("select_choices") or {}).get(item.name)
     if cached:
-        return Resolution(kind="choose_select", item=item,
-                           selector=item.selector, value=cached,
-                           note=f"cache:{cached}")
+        return Resolution(kind="choose_select", item=item, selector=item.selector, value=cached, note=f"cache:{cached}")
     # 휴리스틱 — 라벨에 유통업체
     for opt in item.options:
         for kw in _PREFERRED_KEYWORDS["ko_distributor"]:
             if kw in (opt.get("label") or "").lower():
-                return Resolution(kind="choose_select", item=item,
-                                   selector=item.selector, value=opt.get("value", ""),
-                                   note=f"heuristic:{opt.get('label')}")
+                return Resolution(
+                    kind="choose_select",
+                    item=item,
+                    selector=item.selector,
+                    value=opt.get("value", ""),
+                    note=f"heuristic:{opt.get('label')}",
+                )
     return None
 
 
 # ── 공개 API ───────────────────────────────────────────────────
+
 
 def resolve_state(
     items: list[UnsetItem],
@@ -269,6 +275,5 @@ def assert_all_resolved(
     """결정 못한 항목 있으면 RequiresHumanDecision 발생."""
     resolved, unresolved = resolve_state(items, host=host, site_key=site_key)
     if unresolved:
-        raise RequiresHumanDecision(host, unresolved,
-                                     hint=f"profile.set_override({site_key}, ...) 로 결정 저장")
+        raise RequiresHumanDecision(host, unresolved, hint=f"profile.set_override({site_key}, ...) 로 결정 저장")
     return resolved

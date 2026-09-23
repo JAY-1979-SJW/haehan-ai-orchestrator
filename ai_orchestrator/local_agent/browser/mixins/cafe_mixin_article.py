@@ -3,13 +3,12 @@
 read_article/extract_attachments/liked·scrapped/_fetch_graphql_bff.
 CafeMixin 이 다중상속. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
-import json
 import re
 import time
-import requests
-from typing import Optional
+from pathlib import Path
 
 from .cafe_mixin_common import _js
 
@@ -70,7 +69,7 @@ class CafeArticleMixin:
                     posts.append(p)
                 if posts:
                     break
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         return posts[:max_posts]
@@ -102,8 +101,7 @@ class CafeArticleMixin:
         if _target_aid:
             for _ in range(10):
                 _cafe_main = next(
-                    (f for f in self._page.frames
-                     if f.name == "cafe_main" and _target_aid in (f.url or "")),
+                    (f for f in self._page.frames if f.name == "cafe_main" and _target_aid in (f.url or "")),
                     None,
                 )
                 if _cafe_main:
@@ -112,6 +110,7 @@ class CafeArticleMixin:
 
         # 아티클 관련 프레임 우선 탐색 (URL 경로 기준, 쿼리 파라미터 오탐 방지)
         frames = self._page.frames
+
         def _is_article_frame(f) -> bool:
             url = f.url or ""
             if "about:blank" in url:
@@ -131,16 +130,25 @@ class CafeArticleMixin:
 
         title = ""
         body = ""
-        af: Optional[object] = None  # 본문이 있는 아티클 프레임
+        af: object | None = None  # 본문이 있는 아티클 프레임
 
         body_selectors = [
-            ".se-main-container", ".article_viewer", "#tbody",
-            ".article-viewer", ".se-component-content",
-            ".content_area", ".articleDetailView",
+            ".se-main-container",
+            ".article_viewer",
+            "#tbody",
+            ".article-viewer",
+            ".se-component-content",
+            ".content_area",
+            ".articleDetailView",
         ]
         title_selectors = [
-            "h3.title_text", ".title_area h3", ".article_header h3",
-            ".title_subject", ".article-title", "h3.title", ".tit-txt",
+            "h3.title_text",
+            ".title_area h3",
+            ".article_header h3",
+            ".title_subject",
+            ".article-title",
+            "h3.title",
+            ".tit-txt",
         ]
 
         def _safe(frame, sel: str, timeout: int = 1000) -> str:
@@ -169,12 +177,12 @@ class CafeArticleMixin:
                     fb = ""
                     try:
                         fb = frame.inner_text("body")
-                    except Exception:
+                    except Exception:  # noqa: S110
                         pass
                     if fb and len(fb.strip()) > 50:
                         body = fb.strip()
                         af = frame
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         if not title:
@@ -203,9 +211,7 @@ class CafeArticleMixin:
         like_count = re.sub(r"[^\d,]", "", like_raw)
 
         # 태그
-        tags_raw = (_safe(meta_frame, ".tag_list")
-                    or _safe(meta_frame, ".TagList")
-                    or _safe(meta_frame, ".tag_area"))
+        tags_raw = _safe(meta_frame, ".tag_list") or _safe(meta_frame, ".TagList") or _safe(meta_frame, ".tag_area")
         tags = [t.strip().lstrip("#") for t in tags_raw.split("\n") if t.strip().startswith("#")]
 
         # ── 댓글 파싱 ────────────────────────────────────────────────────────
@@ -214,24 +220,26 @@ class CafeArticleMixin:
             comment_els = meta_frame.locator(".CommentItem, .comment_item").all()
             for el in comment_els:
                 raw = el.inner_text(timeout=1000).strip()
-                lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                lines = [l.strip() for l in raw.splitlines() if l.strip()]  # noqa: E741
                 # 첫 줄 = 닉네임, 마지막 날짜 줄, 나머지 = 본문
                 comment_author = lines[0] if lines else ""
                 cdate_m = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", raw)
                 comment_date = cdate_m.group(1).strip() if cdate_m else ""
                 # 닉네임·날짜·'답글쓰기' 제외한 본문
                 body_lines = [
-                    l for l in lines[1:]
-                    if l not in {comment_author, comment_date, "답글쓰기"}
-                    and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
+                    l
+                    for l in lines[1:]  # noqa: E741
+                    if l not in {comment_author, comment_date, "답글쓰기"} and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
                 ]
                 comment_body = " ".join(body_lines).strip()
-                comments.append({
-                    "author": comment_author,
-                    "body": comment_body[:500],
-                    "written_at": comment_date,
-                })
-        except Exception:
+                comments.append(
+                    {
+                        "author": comment_author,
+                        "body": comment_body[:500],
+                        "written_at": comment_date,
+                    }
+                )
+        except Exception:  # noqa: S110
             pass
 
         return {
@@ -246,7 +254,9 @@ class CafeArticleMixin:
             "tags": tags,
             "body": body[:5000],
             "comments": comments,
-            "attachments": self._extract_attachments_from_frames(search_frames=article_frames if article_frames else frames),
+            "attachments": self._extract_attachments_from_frames(
+                search_frames=article_frames if article_frames else frames
+            ),
         }
 
     def _extract_attachments_from_frames(self, search_frames: list) -> list[dict]:
@@ -261,7 +271,10 @@ class CafeArticleMixin:
             "cafeattach.naver.net",
             "cafefiles.cafe.naver.com",
         )
-        _CAFE_FILE_URL_KEYWORDS = ("FileDownload", "cafe.naver.com/CafeFileDownload",)
+        _CAFE_FILE_URL_KEYWORDS = (
+            "FileDownload",
+            "cafe.naver.com/CafeFileDownload",
+        )
 
         attach_selectors = [
             ".AttachFileList a",
@@ -283,6 +296,7 @@ class CafeArticleMixin:
                 return True
             try:
                 from urllib.parse import urlparse
+
                 host = urlparse(href).hostname or ""
                 return any(host == h for h in _CAFE_FILE_HOSTS)
             except Exception:
@@ -293,7 +307,7 @@ class CafeArticleMixin:
                 for sel in attach_selectors:
                     try:
                         els = frame.locator(sel).all()
-                    except Exception:
+                    except Exception:  # noqa: S112
                         continue
                     for el in els:
                         try:
@@ -312,17 +326,19 @@ class CafeArticleMixin:
                                 size_m = re.search(r"(\d+(?:\.\d+)?\s*(?:KB|MB|GB|Bytes?))", parent_text, re.IGNORECASE)
                                 if size_m:
                                     size = size_m.group(1)
-                            except Exception:
+                            except Exception:  # noqa: S110
                                 pass
-                            attachments.append({
-                                "name": name or Path(href.split("?")[0]).name,
-                                "url": href,
-                                "size": size,
-                                "ext": ext,
-                            })
-                        except Exception:
+                            attachments.append(
+                                {
+                                    "name": name or Path(href.split("?")[0]).name,
+                                    "url": href,
+                                    "size": size,
+                                    "ext": ext,
+                                }
+                            )
+                        except Exception:  # noqa: S112
                             continue
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         # JS 방식 폴백: evaluate로 모든 a 태그 스캔
@@ -357,13 +373,14 @@ class CafeArticleMixin:
                     """)
                     if js_result:
                         break
-                except Exception:
+                except Exception:  # noqa: S112
                     continue
             for r in js_result:
                 if r.get("url") and r["url"] not in seen_urls:
                     seen_urls.add(r["url"])
-                    attachments.append({"name": r.get("name", ""), "url": r["url"],
-                                        "size": "", "ext": r.get("ext", "")})
+                    attachments.append(
+                        {"name": r.get("name", ""), "url": r["url"], "size": "", "ext": r.get("ext", "")}
+                    )
 
         return attachments
 
@@ -401,14 +418,13 @@ class CafeArticleMixin:
         ca-fe SPA가 Apollo 쿼리를 실행하지 않는 문제를 우회하는 방식.
         반환: GraphQL 응답 dict (data / errors), 실패 시 {"data": None, "errors": [...]}
         """
-        import requests, json as _json
+        import requests
 
         try:
             cookies_raw = self._ctx.cookies()
             jar = requests.cookies.RequestsCookieJar()
             for c in cookies_raw:
-                jar.set(c["name"], c["value"],
-                        domain=c.get("domain", ""), path=c.get("path", "/"))
+                jar.set(c["name"], c["value"], domain=c.get("domain", ""), path=c.get("path", "/"))
 
             payload: dict = {"query": query, "variables": variables}
             if operation_name:
@@ -426,7 +442,10 @@ class CafeArticleMixin:
             }
             resp = requests.post(
                 "https://bff.cafe.naver.com/graphql",
-                json=payload, cookies=jar, headers=headers, timeout=15,
+                json=payload,
+                cookies=jar,
+                headers=headers,
+                timeout=15,
             )
             resp.raise_for_status()
             return resp.json()

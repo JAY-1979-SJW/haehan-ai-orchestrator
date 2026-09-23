@@ -1,27 +1,31 @@
 """Universal AI Site Agent — 전체 orchestration."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from ai_orchestrator.local_agent.universal_page_observer import observe_page_from_dict
-from ai_orchestrator.local_agent.user_intent_parser import parse_intent
-from ai_orchestrator.local_agent.site_type_classifier import classify_site
 from ai_orchestrator.local_agent.generic_selector_discovery import discover_selectors
-from ai_orchestrator.local_agent.universal_task_planner import create_plan, get_auto_only_plan
-from ai_orchestrator.local_agent.unknown_site_fallback_policy import evaluate_unknown_site
-from ai_orchestrator.local_agent.universal_action_verifier import verify_action_result
 from ai_orchestrator.local_agent.learned_site_profile_store import (
-    save_learned_profile, get_learned_profile, has_learned_profile,
-)
-from ai_orchestrator.local_agent.universal_safe_result import (
-    build_universal_result,
-    STATUS_COMPLETED, STATUS_PERMISSION_REQUIRED, STATUS_BLOCKED,
-    STATUS_FAILED, STATUS_WARN_PERMISSION, STATUS_WARN_AUTH,
+    has_learned_profile,
+    save_learned_profile,
 )
 from ai_orchestrator.local_agent.site_capability_matrix import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    GRADE_AUTO_ALLOWED,
 )
+from ai_orchestrator.local_agent.site_type_classifier import classify_site
+from ai_orchestrator.local_agent.universal_page_observer import observe_page_from_dict
+from ai_orchestrator.local_agent.universal_safe_result import (
+    STATUS_BLOCKED,
+    STATUS_COMPLETED,
+    STATUS_FAILED,
+    STATUS_WARN_AUTH,
+    STATUS_WARN_PERMISSION,
+    build_universal_result,
+)
+from ai_orchestrator.local_agent.universal_task_planner import create_plan, get_auto_only_plan
+from ai_orchestrator.local_agent.user_intent_parser import parse_intent
 
 # 안전 경계 — 항상 False
 _AGENT_SAFE_FIELDS = {
@@ -121,33 +125,45 @@ def run_agent(
     # STEP 6: BLOCKED action 확인
     if plan.get("blocked"):
         return _build_agent_result(
-            task_id=task_id, site_id=matched_profile,
+            task_id=task_id,
+            site_id=matched_profile,
             status=STATUS_BLOCKED,
-            actions_executed=[], pending_permission=[],
-            user_direct_required=[], blocked=plan["blocked"],
-            safe_outputs={}, audit_log_ids=audit_log_ids,
+            actions_executed=[],
+            pending_permission=[],
+            user_direct_required=[],
+            blocked=plan["blocked"],
+            safe_outputs={},
+            audit_log_ids=audit_log_ids,
             message_ko=f"BLOCKED action 포함: {plan['blocked']}",
         )
 
     # STEP 7: USER_DIRECT_REQUIRED 확인
     if plan.get("user_direct_required"):
         return _build_agent_result(
-            task_id=task_id, site_id=matched_profile,
+            task_id=task_id,
+            site_id=matched_profile,
             status=STATUS_WARN_AUTH,
-            actions_executed=[], pending_permission=[],
-            user_direct_required=plan["user_direct_required"], blocked=[],
-            safe_outputs={}, audit_log_ids=audit_log_ids,
+            actions_executed=[],
+            pending_permission=[],
+            user_direct_required=plan["user_direct_required"],
+            blocked=[],
+            safe_outputs={},
+            audit_log_ids=audit_log_ids,
             message_ko=f"사용자 직접 조작 필요: {plan['user_direct_required']}",
         )
 
     # STEP 8: PERMISSION_REQUIRED 확인
     if plan.get("pending_permission"):
         return _build_agent_result(
-            task_id=task_id, site_id=matched_profile,
+            task_id=task_id,
+            site_id=matched_profile,
             status=STATUS_WARN_PERMISSION,
-            actions_executed=[], pending_permission=plan["pending_permission"],
-            user_direct_required=[], blocked=[],
-            safe_outputs={}, audit_log_ids=audit_log_ids,
+            actions_executed=[],
+            pending_permission=plan["pending_permission"],
+            user_direct_required=[],
+            blocked=[],
+            safe_outputs={},
+            audit_log_ids=audit_log_ids,
             message_ko=f"권한 필요: {plan['pending_permission']}",
         )
 
@@ -176,17 +192,21 @@ def run_agent(
     if not dry_run and runner_fn:
         for step in auto_steps:
             try:
-                step_result = runner_fn(step["action"], domain=host)
+                step_result = runner_fn(step["action"], domain=host)  # noqa: F841
                 actions_executed.append(step["action"])
                 log_id = str(uuid.uuid4())[:8]
                 audit_log_ids.append(log_id)
             except Exception as e:
                 return _build_agent_result(
-                    task_id=task_id, site_id=matched_profile,
+                    task_id=task_id,
+                    site_id=matched_profile,
                     status=STATUS_FAILED,
-                    actions_executed=actions_executed, pending_permission=[],
-                    user_direct_required=[], blocked=[],
-                    safe_outputs=step_outputs, audit_log_ids=audit_log_ids,
+                    actions_executed=actions_executed,
+                    pending_permission=[],
+                    user_direct_required=[],
+                    blocked=[],
+                    safe_outputs=step_outputs,
+                    audit_log_ids=audit_log_ids,
                     message_ko=f"실행 오류: {e}",
                 )
     else:
@@ -198,15 +218,19 @@ def run_agent(
     if save_learned and auto_steps:
         try:
             _update_learned_profile(host, site_type, plan, selectors)
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # 학습 저장 실패는 무시
 
     return _build_agent_result(
-        task_id=task_id, site_id=matched_profile,
+        task_id=task_id,
+        site_id=matched_profile,
         status=STATUS_COMPLETED,
-        actions_executed=actions_executed, pending_permission=[],
-        user_direct_required=[], blocked=[],
-        safe_outputs=step_outputs, audit_log_ids=audit_log_ids,
+        actions_executed=actions_executed,
+        pending_permission=[],
+        user_direct_required=[],
+        blocked=[],
+        safe_outputs=step_outputs,
+        audit_log_ids=audit_log_ids,
         message_ko="완료",
     )
 
@@ -219,9 +243,15 @@ def _update_learned_profile(
 ) -> None:
     """성공한 구조를 learned profile에 저장."""
     safe_selectors = {
-        k: v for k, v in selectors.items()
-        if k not in ("password_selector_discovered", "otp_selector_discovered",
-                     "cert_password_selector_discovered", "npki_selector_discovered")
+        k: v
+        for k, v in selectors.items()
+        if k
+        not in (
+            "password_selector_discovered",
+            "otp_selector_discovered",
+            "cert_password_selector_discovered",
+            "npki_selector_discovered",
+        )
         and isinstance(v, list)
     }
     if not has_learned_profile(host):
@@ -230,14 +260,16 @@ def _update_learned_profile(
             site_type=site_type,
             workflow_template_id=None,
             safe_selector_candidates=safe_selectors,
-            capability_hints=[s["action"] for s in plan.get("steps", [])
-                              if s.get("risk") == GRADE_AUTO_ALLOWED],
+            capability_hints=[s["action"] for s in plan.get("steps", []) if s.get("risk") == GRADE_AUTO_ALLOWED],
             action_risk_mapping={s["action"]: s["risk"] for s in plan.get("steps", [])},
         )
     else:
         from ai_orchestrator.local_agent.learned_site_profile_store import update_learned_profile
-        update_learned_profile(host, {
-            "site_type": site_type,
-            "last_successful_actions": [s["action"] for s in plan.get("steps", [])
-                                        if s.get("executable")],
-        })
+
+        update_learned_profile(
+            host,
+            {
+                "site_type": site_type,
+                "last_successful_actions": [s["action"] for s in plan.get("steps", []) if s.get("executable")],
+            },
+        )

@@ -20,28 +20,30 @@ CLI:
         - 로그인 함수 needs_manual → B방식 fallback (감지기, 90초)
         - 검증 실패 → 에러 분류 후 RuntimeError
 """
+
 from __future__ import annotations
 
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context
-from scripts.site_registry import get_site, list_sites
-from scripts.site_watch import StepWatcher, StepFailure
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
+from scripts.site_registry import get_site, list_sites  # noqa: E402
+from scripts.site_watch import StepFailure, StepWatcher  # noqa: E402
 
 log = get_logger(__name__)
 
 
 def _dry_run() -> bool:
     import os
+
     return os.environ.get("SITE_DRY_RUN", "").strip() in ("1", "true", "TRUE", "yes")
+
 
 B_MODE_FALLBACK_TIMEOUT_S = 90
 PRE_LOGIN_CHECK_RETRIES = 5
@@ -67,6 +69,7 @@ _TERMINAL_REGISTERED_LOGIN_REASONS = {
 
 class LoginError(RuntimeError):
     """로그인 실패 — 원인 분류 포함."""
+
     def __init__(self, site: str, kind: str, message: str):
         self.site = site
         self.kind = kind  # cred_missing | bad_credentials | needs_manual | form_not_found | unknown
@@ -77,6 +80,7 @@ class LoginError(RuntimeError):
 def _has_credentials(site: str) -> bool:
     try:
         from scripts.credentials import get_cred
+
         c = get_cred(site)
         return bool(c.get("id") and c.get("pw"))
     except Exception:
@@ -86,6 +90,7 @@ def _has_credentials(site: str) -> bool:
 def _b_mode_wait(page, site: str, timeout_s: int) -> bool:
     """B방식 감지기 fallback — 사용자 수동 로그인 대기."""
     from scripts.login_detector import monitor_for_login
+
     log.info("[site-access] %s — B방식 fallback 시작 (%d초)", site, timeout_s)
     print(f"  [{site}] 추가 인증 필요 — 브라우저에서 수동 로그인 진행 후 자동 감지 (최대 {timeout_s}초)")
     result = monitor_for_login(page, check_interval=1, timeout_s=timeout_s)
@@ -308,8 +313,10 @@ def open_site(
         # Git Bash가 잘못 확장한 절대경로 정정 (예: C:/Program Files/Git/web/log/X → /web/log/X)
         if path.lower().startswith(("c:/", "c:\\")):
             idx = path.lower().find("/web/")
-            if idx == -1: idx = path.lower().find("/log/")
-            if idx > 0: path = path[idx:]
+            if idx == -1:
+                idx = path.lower().find("/log/")
+            if idx > 0:
+                path = path[idx:]
         if path.startswith("http"):
             target = path
         else:
@@ -318,19 +325,18 @@ def open_site(
     else:
         target = spec.base_url
     host = urlparse(spec.base_url).hostname or spec.base_url.split("/")[2]
-    log.info("[site-access] open %s → %s (dry_run=%s force_login=%s)",
-             site, target, _dry_run(), force_login)
+    log.info("[site-access] open %s → %s (dry_run=%s force_login=%s)", site, target, _dry_run(), force_login)
 
     # 드라이런: 브라우저 미터치, 흐름만 시뮬레이션
     if _dry_run():
-        return _dry_run_open(site, target, spec, ensure_login=ensure_login,
-                             force_login=force_login)
+        return _dry_run_open(site, target, spec, ensure_login=ensure_login, force_login=force_login)
 
     w = StepWatcher(site)
 
     # 01. CDP 페이지 획득
     with w.step("cdp_get_page") as s:
         from scripts.web_connector import get_page
+
         page = get_page()
         if page is None:
             s.fail("CDP 페이지 획득 실패 (데몬 미실행?)", kind="cdp_unavailable")
@@ -467,6 +473,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
         if not registered_ok:
             try:
                 from scripts.form.orchestrator import universal_login
+
                 u = universal_login(page, site)
                 result = {
                     "ok": u["ok"],
@@ -495,6 +502,7 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
             s.attach(page)
             print(f"  [{site}] 추가 인증 — 브라우저에서 수동 진행 (최대 {B_MODE_FALLBACK_TIMEOUT_S}초)")
             from scripts.login_detector import monitor_for_login
+
             detected = monitor_for_login(page, check_interval=1, timeout_s=B_MODE_FALLBACK_TIMEOUT_S)
             if not detected.get("detected"):
                 s.fail(f"B방식 감지 타임아웃 ({B_MODE_FALLBACK_TIMEOUT_S}초)", kind="needs_manual")
@@ -512,35 +520,34 @@ def _ensure_logged_in_watched(page, site: str, spec, w: StepWatcher, *, force_lo
 
 def _dry_run_open(site: str, target: str, spec, *, ensure_login: bool, force_login: bool = False) -> dict:
     """드라이런 — 브라우저 호출 없이 흐름 검증."""
-    print(f"  [DRY] cdp_get_page       → 가상 page")
+    print("  [DRY] cdp_get_page       → 가상 page")
     print(f"  [DRY] goto               → {target}")
-    print(f"  [DRY] page_loaded        → ok")
+    print("  [DRY] page_loaded        → ok")
     if not ensure_login:
-        print(f"  [DRY] skip login (ensure_login=False)")
+        print("  [DRY] skip login (ensure_login=False)")
         return {"dry_run": True, "site": site, "url": target, "logged_in": False}
     if force_login:
-        print(f"  [DRY] force_session_reset → site cookies/storage clear")
-    print(f"  [DRY] pre_login_check    → 미로그인 가정")
+        print("  [DRY] force_session_reset → site cookies/storage clear")
+    print("  [DRY] pre_login_check    → 미로그인 가정")
     strategy = _login_strategy(spec)
     # 자격증명 존재 검증 (실제로 한다 — 드라이런이라도 cred 없으면 실제 실행도 실패하므로)
     if strategy == LOGIN_STRATEGY_MANUAL_ONLY:
-        print(f"  [DRY] credential_check   → skipped (manual_only)")
+        print("  [DRY] credential_check   → skipped (manual_only)")
     else:
         has_cred = _has_credentials(site)
         print(f"  [DRY] credential_check   → {'있음' if has_cred else '✘없음'}")
         if not has_cred:
-            raise LoginError(site, "cred_missing",
-                             f"자격증명 없음. 입력: python scripts/credentials.py set {site}")
+            raise LoginError(site, "cred_missing", f"자격증명 없음. 입력: python scripts/credentials.py set {site}")
     print(f"  [DRY] login_strategy     → {strategy}")
     if strategy == LOGIN_STRATEGY_MANUAL_ONLY:
-        print(f"  [DRY] manual_fallback    → login monitor")
+        print("  [DRY] manual_fallback    → login monitor")
     elif strategy == LOGIN_STRATEGY_REGISTERED_THEN_UNIVERSAL:
-        print(f"  [DRY] auto_login_a       → site login, then universal fallback if needed")
+        print("  [DRY] auto_login_a       → site login, then universal fallback if needed")
     else:
-        print(f"  [DRY] auto_login_a       → site login only (universal fallback blocked)")
-    print(f"  [DRY] manual_fallback    → only if site login returns needs_manual")
-    print(f"  [DRY] post_login_verify  → ok 가정")
-    print(f"  [DRY] bot_radar          → clean 가정")
+        print("  [DRY] auto_login_a       → site login only (universal fallback blocked)")
+    print("  [DRY] manual_fallback    → only if site login returns needs_manual")
+    print("  [DRY] post_login_verify  → ok 가정")
+    print("  [DRY] bot_radar          → clean 가정")
     return {"dry_run": True, "site": site, "url": target, "logged_in": True}
 
 
@@ -558,6 +565,7 @@ def explore_after_login(
     """
     if _dry_run():
         from scripts.site_registry import get_site as _gs
+
         spec = _gs(site)
         target = (spec.base_url if spec else "https://example.com") + (path or "")
         open_site(site, path)  # 드라이런 흐름만
@@ -565,14 +573,13 @@ def explore_after_login(
         print(f"  [DRY] visited 0~{max_pages} pages — (사이트맵 미생성)")
         return {
             "open": {"url": target, "site": site, "dry_run": True},
-            "explore": {"host": "(dry)", "visited": 0, "elapsed_s": 0.0,
-                        "aborted_reason": "", "saved_to": ""},
+            "explore": {"host": "(dry)", "visited": 0, "elapsed_s": 0.0, "aborted_reason": "", "saved_to": ""},
         }
 
     page = open_site(site, path)
     from scripts.explorer.auto_explorer import explore_site
-    log.info("[site-access] %s 로그인 완료 — 자동 탐색 시작 (depth=%d max=%d)",
-             site, depth, max_pages)
+
+    log.info("[site-access] %s 로그인 완료 — 자동 탐색 시작 (depth=%d max=%d)", site, depth, max_pages)
     explore = explore_site(page, depth=depth, max_pages=max_pages)
     return {
         "open": {"url": page.url, "site": site},
@@ -588,7 +595,7 @@ def explore_after_login(
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print(f"사용법: python -m scripts.site_access <site> [path]")
+        print("사용법: python -m scripts.site_access <site> [path]")
         print(f"  지원 사이트: {list_sites()}")
         return
     site = sys.argv[1]

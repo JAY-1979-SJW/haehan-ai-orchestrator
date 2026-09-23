@@ -18,66 +18,75 @@ ASSISTANT_GABIA_BROWSER_USER_PRESENT_AUTOMATION_PLAN_01
     최종 저장 버튼 자동 클릭 금지
     서버 직접 로그인 자동화 금지
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # 상태 머신 상태 상수
 # ---------------------------------------------------------------------------
 
-STATE_OPEN_GABIA_HOME              = "OPEN_GABIA_HOME"
-STATE_LOGIN_REQUIRED               = "LOGIN_REQUIRED"
+STATE_OPEN_GABIA_HOME = "OPEN_GABIA_HOME"
+STATE_LOGIN_REQUIRED = "LOGIN_REQUIRED"
 STATE_USER_PRESENT_AUTH_IN_PROGRESS = "USER_PRESENT_AUTH_IN_PROGRESS"
-STATE_TRUSTED_SESSION_REUSED       = "TRUSTED_SESSION_REUSED"
-STATE_DNS_MANAGEMENT_PAGE_READY    = "DNS_MANAGEMENT_PAGE_READY"
-STATE_DNS_RECORD_DRAFTED           = "DNS_RECORD_DRAFTED"
-STATE_CHANGE_PREVIEW_CREATED       = "CHANGE_PREVIEW_CREATED"
-STATE_FINAL_APPROVAL_REQUIRED      = "FINAL_APPROVAL_REQUIRED"
-STATE_USER_APPROVED_FINAL_SAVE     = "USER_APPROVED_FINAL_SAVE"
-STATE_REAUTH_REQUIRED              = "REAUTH_REQUIRED"
-STATE_BLOCKED                      = "BLOCKED"
+STATE_TRUSTED_SESSION_REUSED = "TRUSTED_SESSION_REUSED"
+STATE_DNS_MANAGEMENT_PAGE_READY = "DNS_MANAGEMENT_PAGE_READY"
+STATE_DNS_RECORD_DRAFTED = "DNS_RECORD_DRAFTED"
+STATE_CHANGE_PREVIEW_CREATED = "CHANGE_PREVIEW_CREATED"
+STATE_FINAL_APPROVAL_REQUIRED = "FINAL_APPROVAL_REQUIRED"
+STATE_USER_APPROVED_FINAL_SAVE = "USER_APPROVED_FINAL_SAVE"
+STATE_REAUTH_REQUIRED = "REAUTH_REQUIRED"
+STATE_BLOCKED = "BLOCKED"
 
 # 상태 전이 정의 — 허용된 전이만 명시
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
-    STATE_OPEN_GABIA_HOME:               frozenset({STATE_LOGIN_REQUIRED, STATE_TRUSTED_SESSION_REUSED}),
-    STATE_LOGIN_REQUIRED:                frozenset({STATE_USER_PRESENT_AUTH_IN_PROGRESS, STATE_BLOCKED}),
-    STATE_USER_PRESENT_AUTH_IN_PROGRESS: frozenset({STATE_DNS_MANAGEMENT_PAGE_READY, STATE_BLOCKED, STATE_LOGIN_REQUIRED}),
-    STATE_TRUSTED_SESSION_REUSED:        frozenset({STATE_DNS_MANAGEMENT_PAGE_READY, STATE_REAUTH_REQUIRED}),
-    STATE_DNS_MANAGEMENT_PAGE_READY:     frozenset({STATE_DNS_RECORD_DRAFTED, STATE_REAUTH_REQUIRED}),
-    STATE_DNS_RECORD_DRAFTED:            frozenset({STATE_CHANGE_PREVIEW_CREATED}),
-    STATE_CHANGE_PREVIEW_CREATED:        frozenset({STATE_FINAL_APPROVAL_REQUIRED}),
-    STATE_FINAL_APPROVAL_REQUIRED:       frozenset({STATE_USER_APPROVED_FINAL_SAVE}),
-    STATE_USER_APPROVED_FINAL_SAVE:      frozenset(),   # 다음 공정에서 실제 저장
-    STATE_REAUTH_REQUIRED:               frozenset({STATE_USER_PRESENT_AUTH_IN_PROGRESS}),
-    STATE_BLOCKED:                       frozenset(),
+    STATE_OPEN_GABIA_HOME: frozenset({STATE_LOGIN_REQUIRED, STATE_TRUSTED_SESSION_REUSED}),
+    STATE_LOGIN_REQUIRED: frozenset({STATE_USER_PRESENT_AUTH_IN_PROGRESS, STATE_BLOCKED}),
+    STATE_USER_PRESENT_AUTH_IN_PROGRESS: frozenset(
+        {STATE_DNS_MANAGEMENT_PAGE_READY, STATE_BLOCKED, STATE_LOGIN_REQUIRED}
+    ),
+    STATE_TRUSTED_SESSION_REUSED: frozenset({STATE_DNS_MANAGEMENT_PAGE_READY, STATE_REAUTH_REQUIRED}),
+    STATE_DNS_MANAGEMENT_PAGE_READY: frozenset({STATE_DNS_RECORD_DRAFTED, STATE_REAUTH_REQUIRED}),
+    STATE_DNS_RECORD_DRAFTED: frozenset({STATE_CHANGE_PREVIEW_CREATED}),
+    STATE_CHANGE_PREVIEW_CREATED: frozenset({STATE_FINAL_APPROVAL_REQUIRED}),
+    STATE_FINAL_APPROVAL_REQUIRED: frozenset({STATE_USER_APPROVED_FINAL_SAVE}),
+    STATE_USER_APPROVED_FINAL_SAVE: frozenset(),  # 다음 공정에서 실제 저장
+    STATE_REAUTH_REQUIRED: frozenset({STATE_USER_PRESENT_AUTH_IN_PROGRESS}),
+    STATE_BLOCKED: frozenset(),
 }
 
 # AI 자동 실행 가능한 상태 (safe_to_prepare=True 해당 상태)
-AI_EXECUTABLE_STATES: frozenset[str] = frozenset({
-    STATE_OPEN_GABIA_HOME,
-    STATE_TRUSTED_SESSION_REUSED,
-    STATE_DNS_MANAGEMENT_PAGE_READY,
-    STATE_DNS_RECORD_DRAFTED,
-    STATE_CHANGE_PREVIEW_CREATED,
-})
+AI_EXECUTABLE_STATES: frozenset[str] = frozenset(
+    {
+        STATE_OPEN_GABIA_HOME,
+        STATE_TRUSTED_SESSION_REUSED,
+        STATE_DNS_MANAGEMENT_PAGE_READY,
+        STATE_DNS_RECORD_DRAFTED,
+        STATE_CHANGE_PREVIEW_CREATED,
+    }
+)
 
 # 사용자 직접 개입 필요 상태
-USER_REQUIRED_STATES: frozenset[str] = frozenset({
-    STATE_LOGIN_REQUIRED,
-    STATE_USER_PRESENT_AUTH_IN_PROGRESS,
-    STATE_FINAL_APPROVAL_REQUIRED,
-    STATE_REAUTH_REQUIRED,
-    STATE_USER_APPROVED_FINAL_SAVE,
-})
+USER_REQUIRED_STATES: frozenset[str] = frozenset(
+    {
+        STATE_LOGIN_REQUIRED,
+        STATE_USER_PRESENT_AUTH_IN_PROGRESS,
+        STATE_FINAL_APPROVAL_REQUIRED,
+        STATE_REAUTH_REQUIRED,
+        STATE_USER_APPROVED_FINAL_SAVE,
+    }
+)
 
 # AI가 절대 자동 실행 불가한 상태 (final button)
-FINAL_BUTTON_BLOCKED_STATES: frozenset[str] = frozenset({
-    STATE_FINAL_APPROVAL_REQUIRED,
-    STATE_USER_APPROVED_FINAL_SAVE,
-    STATE_BLOCKED,
-})
+FINAL_BUTTON_BLOCKED_STATES: frozenset[str] = frozenset(
+    {
+        STATE_FINAL_APPROVAL_REQUIRED,
+        STATE_USER_APPROVED_FINAL_SAVE,
+        STATE_BLOCKED,
+    }
+)
 
 
 def is_transition_allowed(from_state: str, to_state: str) -> bool:
@@ -99,6 +108,7 @@ def is_final_button_blocked(state: str) -> bool:
 # GabiaBrowserTask — 브라우저 작업 계약
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GabiaBrowserTask:
     """가비아 DNS 브라우저 작업 계약 모델.
@@ -109,16 +119,17 @@ class GabiaBrowserTask:
 
     금지 필드: password, otp, cert_password, token, cookie, session
     """
+
     task_id: str
-    provider: str                           # gabia
-    purpose: str                            # dns_record_prepare
-    target_domain: str                      # haehan-ai.kr
-    subdomain: str                          # autowork
-    desired_fqdn: str                       # autowork.haehan-ai.kr
-    record_type: str                        # A 또는 CNAME
-    value_source: str                       # SERVER_PUBLIC_IP or TARGET_HOST
+    provider: str  # gabia
+    purpose: str  # dns_record_prepare
+    target_domain: str  # haehan-ai.kr
+    subdomain: str  # autowork
+    desired_fqdn: str  # autowork.haehan-ai.kr
+    record_type: str  # A 또는 CNAME
+    value_source: str  # SERVER_PUBLIC_IP or TARGET_HOST
     execution_location: str = "LOCAL_AGENT_REQUIRED"
-    auth_mode: str = "USER_PRESENT_AUTH"    # USER_PRESENT_AUTH or TRUSTED_SESSION_REUSE
+    auth_mode: str = "USER_PRESENT_AUTH"  # USER_PRESENT_AUTH or TRUSTED_SESSION_REUSE
     safe_to_prepare: bool = True
     safe_to_click_final_button: bool = False
     requires_final_approval: bool = True
@@ -155,9 +166,11 @@ class GabiaBrowserTask:
 # 상태 전이 결과 모델
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class StateTransitionResult:
     """상태 전이 결과."""
+
     from_state: str
     to_state: str
     allowed: bool
@@ -211,6 +224,7 @@ def evaluate_transition(from_state: str, to_state: str) -> StateTransitionResult
 # 표준 autowork 작업 생성 헬퍼
 # ---------------------------------------------------------------------------
 
+
 def make_autowork_dns_task(
     value_source: str = "SERVER_PUBLIC_IP_PENDING",
     auth_mode: str = "USER_PRESENT_AUTH",
@@ -243,23 +257,59 @@ def make_autowork_dns_task(
 # Gabia 네비게이션 계획 상수
 # ---------------------------------------------------------------------------
 
-GABIA_HOME_URL        = "https://www.gabia.com"
-GABIA_LOGIN_URL       = "https://www.gabia.com/login"
-GABIA_DNS_MGMT_PATH   = "/mypage/service/domain/dns"  # 로그인 후 진입 경로
+GABIA_HOME_URL = "https://www.gabia.com"
+GABIA_LOGIN_URL = "https://www.gabia.com/login"
+GABIA_DNS_MGMT_PATH = "/mypage/service/domain/dns"  # 로그인 후 진입 경로
 
 GABIA_NAV_PLAN: tuple[dict[str, Any], ...] = (
-    {"step": 1, "state": STATE_OPEN_GABIA_HOME,           "actor": "AI",   "action": "가비아 홈 접속", "safe_to_auto": True},
-    {"step": 2, "state": STATE_LOGIN_REQUIRED,            "actor": "AI",   "action": "로그인 상태 감지", "safe_to_auto": True},
-    {"step": 3, "state": STATE_USER_PRESENT_AUTH_IN_PROGRESS, "actor": "USER", "action": "대표님 직접 로그인", "safe_to_auto": False},
-    {"step": 4, "state": STATE_DNS_MANAGEMENT_PAGE_READY, "actor": "AI",   "action": "DNS 관리 화면 이동", "safe_to_auto": True},
-    {"step": 5, "state": STATE_DNS_RECORD_DRAFTED,        "actor": "AI",   "action": "레코드 값 입력 준비", "safe_to_auto": True},
-    {"step": 6, "state": STATE_CHANGE_PREVIEW_CREATED,    "actor": "AI",   "action": "변경 전/후 비교표 생성", "safe_to_auto": True},
-    {"step": 7, "state": STATE_FINAL_APPROVAL_REQUIRED,   "actor": "USER", "action": "최종 저장 버튼 앞에서 정지 — 승인 대기", "safe_to_auto": False},
-    {"step": 8, "state": STATE_USER_APPROVED_FINAL_SAVE,  "actor": "USER", "action": "대표님 승인 후 저장 (다음 공정)", "safe_to_auto": False},
+    {"step": 1, "state": STATE_OPEN_GABIA_HOME, "actor": "AI", "action": "가비아 홈 접속", "safe_to_auto": True},
+    {"step": 2, "state": STATE_LOGIN_REQUIRED, "actor": "AI", "action": "로그인 상태 감지", "safe_to_auto": True},
+    {
+        "step": 3,
+        "state": STATE_USER_PRESENT_AUTH_IN_PROGRESS,
+        "actor": "USER",
+        "action": "대표님 직접 로그인",
+        "safe_to_auto": False,
+    },
+    {
+        "step": 4,
+        "state": STATE_DNS_MANAGEMENT_PAGE_READY,
+        "actor": "AI",
+        "action": "DNS 관리 화면 이동",
+        "safe_to_auto": True,
+    },
+    {
+        "step": 5,
+        "state": STATE_DNS_RECORD_DRAFTED,
+        "actor": "AI",
+        "action": "레코드 값 입력 준비",
+        "safe_to_auto": True,
+    },
+    {
+        "step": 6,
+        "state": STATE_CHANGE_PREVIEW_CREATED,
+        "actor": "AI",
+        "action": "변경 전/후 비교표 생성",
+        "safe_to_auto": True,
+    },
+    {
+        "step": 7,
+        "state": STATE_FINAL_APPROVAL_REQUIRED,
+        "actor": "USER",
+        "action": "최종 저장 버튼 앞에서 정지 — 승인 대기",
+        "safe_to_auto": False,
+    },
+    {
+        "step": 8,
+        "state": STATE_USER_APPROVED_FINAL_SAVE,
+        "actor": "USER",
+        "action": "대표님 승인 후 저장 (다음 공정)",
+        "safe_to_auto": False,
+    },
 )
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     "GabiaBrowserTask",
     "StateTransitionResult",
     "make_autowork_dns_task",

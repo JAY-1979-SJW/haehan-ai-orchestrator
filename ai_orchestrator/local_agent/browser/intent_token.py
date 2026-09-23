@@ -24,18 +24,19 @@
     if validate_intent(intent)["ok"]:
         intent = increment_action(intent)
 """
+
 from __future__ import annotations
 
 import json
 import secrets
-from dataclasses import dataclass, asdict, field, replace
-from datetime import datetime, timedelta, timezone
+from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
 # Scope 정의
-SCOPE_READ_ONLY = "read_only"        # navigate/read/screenshot만
-SCOPE_INTERACTION = "interaction"    # +click/type/scroll/download (commit 액션은 별도 승인)
+SCOPE_READ_ONLY = "read_only"  # navigate/read/screenshot만
+SCOPE_INTERACTION = "interaction"  # +click/type/scroll/download (commit 액션은 별도 승인)
 
 _VALID_SCOPES = (SCOPE_READ_ONLY, SCOPE_INTERACTION)
 
@@ -45,7 +46,7 @@ INTENT_EXPIRED = "expired"
 INTENT_EXCEEDED = "actions_exceeded"
 INTENT_INVALID = "invalid"
 
-DEFAULT_TTL_SECONDS = 3600        # 1시간
+DEFAULT_TTL_SECONDS = 3600  # 1시간
 DEFAULT_MAX_ACTIONS = 50
 
 _INTENT_DIR = Path(__file__).resolve().parents[2] / "data" / "intents"
@@ -58,8 +59,8 @@ class IntentToken:
     allowed_origins: tuple[str, ...]
     scope: str
     max_actions: int
-    created_at: str          # ISO8601 UTC
-    expires_at: str          # ISO8601 UTC
+    created_at: str  # ISO8601 UTC
+    expires_at: str  # ISO8601 UTC
     actions_used: int = 0
     notes: str = ""
 
@@ -68,7 +69,7 @@ class IntentToken:
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _iso(dt: datetime) -> str:
@@ -152,13 +153,16 @@ def validate_intent(intent: IntentToken, *, now: datetime | None = None) -> dict
     except (ValueError, TypeError):
         return {"ok": False, "code": INTENT_INVALID, "reason": "expires_at 파싱 실패"}
     if now >= expires:
-        return {"ok": False, "code": INTENT_EXPIRED,
-                "reason": f"만료됨 (expired_at={intent.expires_at})"}
+        return {"ok": False, "code": INTENT_EXPIRED, "reason": f"만료됨 (expired_at={intent.expires_at})"}
     if intent.actions_used >= intent.max_actions:
-        return {"ok": False, "code": INTENT_EXCEEDED,
-                "reason": f"max_actions 초과 ({intent.actions_used}/{intent.max_actions})"}
+        return {
+            "ok": False,
+            "code": INTENT_EXCEEDED,
+            "reason": f"max_actions 초과 ({intent.actions_used}/{intent.max_actions})",
+        }
     return {
-        "ok": True, "code": INTENT_OK,
+        "ok": True,
+        "code": INTENT_OK,
         "remaining_actions": intent.max_actions - intent.actions_used,
         "remaining_seconds": int((expires - now).total_seconds()),
     }
@@ -184,7 +188,7 @@ def add_origin(intent: IntentToken, new_origin: str) -> IntentToken:
         return intent
     if norm in intent.allowed_origins:
         return intent
-    return replace(intent, allowed_origins=intent.allowed_origins + (norm,))
+    return replace(intent, allowed_origins=intent.allowed_origins + (norm,))  # noqa: RUF005
 
 
 def save_intent(intent: IntentToken, *, intent_dir: Path | None = None) -> Path:

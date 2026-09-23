@@ -3,12 +3,12 @@
 Validates that approval token secrets are never exposed in router audit logs.
 Only public_id or redacted markers are recorded.
 """
-import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
+from unittest.mock import patch
 
 from ai_orchestrator import approval
-from ai_orchestrator.models import TaskRequest, RiskAssessment
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
 def _make_test_request(task_id: str) -> TaskRequest:
@@ -48,7 +48,7 @@ def test_approve_path_no_token_id_in_audit(monkeypatch):
         mock_log.reset_mock()  # Reset after token creation
 
         # Simulate approve_token call (like router would do)
-        approved_token, status = approval.approve_token(
+        _approved_token, _status = approval.approve_token(
             token.token_id,
             token.task_id,
             "approver_user",
@@ -76,7 +76,7 @@ def test_reject_path_no_token_id_in_audit():
     token = approval.issue_token(req, risk)
 
     # Simulate reject
-    rejected_token, status = approval.reject_token(
+    _rejected_token, _status = approval.reject_token(
         token.token_id,
         token.task_id,
         "reviewer_user",
@@ -95,10 +95,10 @@ def test_invalid_token_no_original_exposed():
     risk = _make_test_risk()
 
     token = approval.issue_token(req, risk)
-    invalid_token_id = "definitely-not-a-valid-uuid"
+    invalid_token_id = "definitely-not-a-valid-uuid"  # noqa: S105
 
     # Try with invalid token
-    result, status = approval.approve_token(
+    _result, status = approval.approve_token(
         invalid_token_id,
         token.task_id,
         "approver_user",
@@ -119,7 +119,7 @@ def test_already_used_token_no_secret_exposed():
     token = approval.issue_token(req, risk)
 
     # First approval
-    result1, status1 = approval.approve_token(
+    _result1, status1 = approval.approve_token(
         token.token_id,
         token.task_id,
         "approver_user",
@@ -128,7 +128,7 @@ def test_already_used_token_no_secret_exposed():
     assert status1 == "approved"
 
     # Second approval attempt (should fail)
-    result2, status2 = approval.approve_token(
+    _result2, status2 = approval.approve_token(
         token.token_id,
         token.task_id,
         "another_user",
@@ -150,10 +150,10 @@ def test_expired_token_no_secret_exposed():
 
     with patch("ai_orchestrator.approval._now") as mock_now:
         # Simulate time passing
-        mock_now.return_value = datetime.now(timezone.utc)
+        mock_now.return_value = datetime.now(UTC)
 
         # Try to approve expired token
-        result, status = approval.approve_token(
+        _result, status = approval.approve_token(
             token.token_id,
             token.task_id,
             "approver_user",
@@ -175,7 +175,7 @@ def test_rate_limited_no_token_exposed():
 
     # Max out rate limit
     for i in range(6):  # RATE_LIMIT_MAX = 5
-        result, status = approval.approve_token(
+        _result, status = approval.approve_token(
             token.token_id if i == 0 else f"invalid-{i}",
             token.task_id if i == 0 else f"task-{i}",
             "approver_user",
@@ -196,7 +196,7 @@ def test_forbidden_role_no_token_exposed():
     token = approval.issue_token(req, risk)
 
     # Try to approve with non-admin role
-    result, status = approval.approve_token(
+    _result, status = approval.approve_token(
         token.token_id,
         token.task_id,
         "viewer_user",
@@ -250,8 +250,8 @@ def test_router_should_use_public_id_not_token_id():
     #   Add approval_public_id parameter to log_event if needed
 
     # For now, just verify the components exist
-    assert hasattr(token, 'token_id'), "Token must have token_id (for internal use)"
-    assert hasattr(token, 'public_id'), "Token must have public_id (for audit use)"
+    assert hasattr(token, "token_id"), "Token must have token_id (for internal use)"
+    assert hasattr(token, "public_id"), "Token must have public_id (for audit use)"
     assert token.token_id != token.public_id, "Must be distinct"
     assert isinstance(token.public_id, str), "public_id must be string"
     assert len(token.public_id) > 5, "public_id must have useful length"

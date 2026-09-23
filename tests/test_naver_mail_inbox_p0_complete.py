@@ -2,20 +2,23 @@
 
 필수 항목 (10) 전부 커버.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 import pytest
 
 from scripts.naver.mail import (
     inbox_collector as ic,
+)
+from scripts.naver.mail import (
     read_state_guard as rsg,
+)
+from scripts.naver.mail import (
     time_parser as tp,
 )
-from scripts.naver.mail.inbox_collector import LIST_EXPR, PAGES_EXPR
 
 KST = timezone(timedelta(hours=9))
 
@@ -34,9 +37,14 @@ class FakeActions:
     또한 모든 호출을 call_log 에 기록 → 금지 동작 탐지.
     """
 
-    def __init__(self, *, title="받은메일함(3) : 네이버 메일",
-                 url="https://mail.naver.com/v2/folders/0/all",
-                 page_buttons=None, page_responses=None):
+    def __init__(
+        self,
+        *,
+        title="받은메일함(3) : 네이버 메일",
+        url="https://mail.naver.com/v2/folders/0/all",
+        page_buttons=None,
+        page_responses=None,
+    ):
         self.title = title
         self.url = url
         self.page_buttons = page_buttons or ["1", "2"]  # 가용 페이지
@@ -49,8 +57,10 @@ class FakeActions:
     def _list_payload(self) -> dict:
         rows = self.page_responses.get(self.current_page, [])
         return {
-            "href": self.url, "title": self.title,
-            "count": len(rows), "items": rows,
+            "href": self.url,
+            "title": self.title,
+            "count": len(rows),
+            "items": rows,
         }
 
     def _build_url(self) -> str:
@@ -66,16 +76,25 @@ class FakeActions:
         if "next_present" in expr and "next_disabled" in expr:
             idx = self.page_buttons.index(self.current_page) if self.current_page in self.page_buttons else 0
             is_last = idx + 1 >= len(self.page_buttons)
-            return {"next_present": not is_last, "next_disabled": is_last,
-                    "selected_page": self.current_page,
-                    "visible_page_buttons": list(self.page_buttons)}
+            return {
+                "next_present": not is_last,
+                "next_disabled": is_last,
+                "selected_page": self.current_page,
+                "visible_page_buttons": list(self.page_buttons),
+            }
         # LNB breakdown
-        if "smart_folder_breakdown" in expr or "total_aggregate" in expr and "inbox_unread" in expr:
-            return getattr(self, "_lnb_breakdown", {
-                "inbox_unread": 3, "total_aggregate": 3,
-                "smart_folder_breakdown": {}, "toolbar_current_unread": 3,
-                "source": "inbox_only",
-            })
+        if "smart_folder_breakdown" in expr or ("total_aggregate" in expr and "inbox_unread" in expr):
+            return getattr(
+                self,
+                "_lnb_breakdown",
+                {
+                    "inbox_unread": 3,
+                    "total_aggregate": 3,
+                    "smart_folder_breakdown": {},
+                    "toolbar_current_unread": 3,
+                    "source": "inbox_only",
+                },
+            )
         if "JSON.stringify" in expr and "li.mail_item" in expr and "rows" in expr:
             p = self._list_payload()
             p["href"] = self._build_url()
@@ -104,13 +123,18 @@ class FakeActions:
                 pass
             return False
         if "FILTER_EVIDENCE" in expr or "selected_marker" in expr or "mail_toolbar_summary" in expr:
-            return {"has_selected_marker": False, "selected_text": "",
-                    "summary_text": "", "url": self.url, "title": self.title,
-                    "li_count": len(self._list_payload()["items"])}
+            return {
+                "has_selected_marker": False,
+                "selected_text": "",
+                "summary_text": "",
+                "url": self.url,
+                "title": self.title,
+                "li_count": len(self._list_payload()["items"]),
+            }
         if "UNREAD_DIRECT_LINK" in expr or "unread_mail_link" in expr:
             self.click_log.append("unread_filter_direct")
             return "direct_link"
-        if "UNREAD_DROPDOWN_OPEN" in expr or "button_filter" in expr and "btn.click" in expr:
+        if "UNREAD_DROPDOWN_OPEN" in expr or ("button_filter" in expr and "btn.click" in expr):
             self.click_log.append("unread_dropdown_open")
             return True
         if "UNREAD_DROPDOWN_CLICK" in expr or "button_context_item" in expr:
@@ -127,6 +151,7 @@ class FakeActions:
         self.call_log.append(f"nav:{url[:60]}")
         # URL ?page=N 으로 current_page 동기화
         import re as _re
+
         m = _re.search(r"[?&]page=(\d+)", url)
         if m:
             pg = m.group(1)
@@ -137,12 +162,24 @@ class FakeActions:
         return True
 
 
-def _mk_row(sn, subject="제목", sender_name="A", sender_full='"A"<a@x.com>',
-            time_txt="오전 10:00", is_unread=True, size="1KB", href=""):
+def _mk_row(
+    sn,
+    subject="제목",
+    sender_name="A",
+    sender_full='"A"<a@x.com>',
+    time_txt="오전 10:00",
+    is_unread=True,
+    size="1KB",
+    href="",
+):
     return {
-        "sn": sn, "is_unread": is_unread,
-        "sender_name": sender_name, "sender_full": sender_full,
-        "subject": subject, "time_txt": time_txt, "size_txt": size,
+        "sn": sn,
+        "is_unread": is_unread,
+        "sender_name": sender_name,
+        "sender_full": sender_full,
+        "subject": subject,
+        "time_txt": time_txt,
+        "size_txt": size,
         "href": href or f"/v2/popup/read/0/{sn}",
     }
 
@@ -201,8 +238,7 @@ def test_duplicate_sn_dedup():
 def test_unread_only_mode_clicks_filter_before_collect():
     fa = FakeActions(
         page_buttons=["1"],
-        page_responses={"1": [_mk_row("100", is_unread=True),
-                              _mk_row("101", is_unread=False)]},
+        page_responses={"1": [_mk_row("100", is_unread=True), _mk_row("101", is_unread=False)]},
     )
     r = ic.collect_inbox(fa, mode=rsg.MODE_UNREAD_ONLY)
     # 직접 링크 우선 호출 — click_log 에 unread_filter_direct 가 있어야 함
@@ -347,9 +383,9 @@ def test_time_parse_empty():
 def test_pii_mask_sender_email_localpart():
     fa = FakeActions(
         page_buttons=["1"],
-        page_responses={"1": [_mk_row("100",
-            sender_full='"Google"<no-reply@accounts.google.com>',
-            sender_name="Google")]},
+        page_responses={
+            "1": [_mk_row("100", sender_full='"Google"<no-reply@accounts.google.com>', sender_name="Google")]
+        },
     )
     r = ic.collect_inbox(fa, mode=rsg.MODE_LIST_ONLY)
     item = r.items[0]
@@ -379,9 +415,19 @@ def test_forbidden_actions_blocked_at_guard():
 def test_state_changing_mail_actions_require_approval_gate():
     from scripts.gate import GateBlocked
 
-    for act in ("send", "delete", "move", "spam", "star", "label",
-                "download_attachment", "open_attachment", "screenshot_body",
-                "trash", "archive"):
+    for act in (
+        "send",
+        "delete",
+        "move",
+        "spam",
+        "star",
+        "label",
+        "download_attachment",
+        "open_attachment",
+        "screenshot_body",
+        "trash",
+        "archive",
+    ):
         if act in ("download_attachment", "open_attachment", "screenshot_body"):
             continue
         with pytest.raises(GateBlocked):
@@ -403,8 +449,18 @@ def test_collect_does_not_invoke_destructive_calls():
     )
     ic.collect_inbox(fa, mode=rsg.MODE_LIST_ONLY)
     # call_log 안에 금지 패턴이 한 번도 없어야 함
-    bad_patterns = ("send", "delete", "remove", "spam", "trash", "download",
-                    "submit", "star", "label", "captureScreenshot")
+    bad_patterns = (
+        "send",
+        "delete",
+        "remove",
+        "spam",
+        "trash",
+        "download",
+        "submit",
+        "star",
+        "label",
+        "captureScreenshot",
+    )
     for entry in fa.call_log + fa.click_log + fa.nav_log:
         for bad in bad_patterns:
             assert bad not in entry, f"forbidden 호출 감지: {entry}"
@@ -425,9 +481,18 @@ def test_result_item_schema_complete():
     missing = ic.validate_item_schema(item_d)
     assert missing == [], f"필수 필드 누락: {missing}"
     # 명세 필드 모두 존재
-    for k in ("folder_id", "folder_name", "sn", "subject_masked",
-              "sender_masked", "display_time", "parsed_at_iso",
-              "read_state", "has_attachment", "collect_mode"):
+    for k in (
+        "folder_id",
+        "folder_name",
+        "sn",
+        "subject_masked",
+        "sender_masked",
+        "display_time",
+        "parsed_at_iso",
+        "read_state",
+        "has_attachment",
+        "collect_mode",
+    ):
         assert k in item_d
 
 
@@ -452,6 +517,7 @@ def test_result_meta_records_all_required_counters():
 def test_audit_module_judges_pass_on_normal_result():
     """audit 함수가 정상 결과를 PASS 판정하는지."""
     from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
+
     fa = FakeActions(
         title="받은메일함(2) : 네이버 메일",
         page_buttons=["1"],
@@ -506,7 +572,7 @@ def test_unread_filter_evidence_records_pre_post():
         page_buttons=["1"],
         page_responses={"1": [_mk_row("100")]},
     )
-    ok, ev = ic.apply_unread_filter(fa)
+    _ok, ev = ic.apply_unread_filter(fa)
     assert "pre" in ev and "post" in ev
     assert "url" in ev["pre"]
     assert "li_count" in ev["pre"]
@@ -515,6 +581,7 @@ def test_unread_filter_evidence_records_pre_post():
 def test_filter_no_op_detection_when_same_result_as_list_only():
     """LIST_ONLY 와 UNREAD_ONLY 결과가 동일하면 audit 가 WARN_UNREAD_FILTER_NO_OP 판정."""
     from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+
     rows = [_mk_row("100"), _mk_row("101", is_unread=False)]
     fa1 = FakeActions(page_buttons=["1"], page_responses={"1": rows})
     r_list = ic.collect_inbox(fa1, mode=rsg.MODE_LIST_ONLY)
@@ -528,13 +595,12 @@ def test_filter_effective_when_unread_only_has_only_unread():
     """UNREAD_ONLY 의 모든 item.read_state == UNREAD 이고 LIST_ONLY 와 다르며
     UI unread count 가 수집과 일치하면 PASS."""
     from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+
     list_rows = [_mk_row("100", is_unread=True), _mk_row("101", is_unread=False)]
     unread_rows = [_mk_row("100", is_unread=True)]
-    fa1 = FakeActions(title="받은메일함(1) : 네이버 메일",
-                      page_buttons=["1"], page_responses={"1": list_rows})
+    fa1 = FakeActions(title="받은메일함(1) : 네이버 메일", page_buttons=["1"], page_responses={"1": list_rows})
     r_list = ic.collect_inbox(fa1, mode=rsg.MODE_LIST_ONLY)
-    fa2 = FakeActions(title="받은메일함(1) : 네이버 메일",
-                      page_buttons=["1"], page_responses={"1": unread_rows})
+    fa2 = FakeActions(title="받은메일함(1) : 네이버 메일", page_buttons=["1"], page_responses={"1": unread_rows})
     r_unread = ic.collect_inbox(fa2, mode=rsg.MODE_UNREAD_ONLY)
     v = audit.judge_filter_effectiveness(r_list, r_unread)
     assert v.code == "PASS_NAVER_MAIL_UNREAD_FILTER_DOM_FIX", v.reasons
@@ -542,6 +608,7 @@ def test_filter_effective_when_unread_only_has_only_unread():
 
 def test_mismatch_reason_enum():
     from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+
     assert "UI_COUNT_SCOPE_DIFFERENT" in audit.MISMATCH_REASONS
     assert "FILTER_DOM_NOT_APPLIED" in audit.MISMATCH_REASONS
     assert "DYNAMIC_PAGE_MISSED" in audit.MISMATCH_REASONS
@@ -555,9 +622,7 @@ def test_collect_does_not_invoke_destructive_under_unread_mode():
         page_responses={"1": [_mk_row("100")], "2": [_mk_row("101")]},
     )
     ic.collect_inbox(fa, mode=rsg.MODE_UNREAD_ONLY)
-    bad = ("send", "delete", "trash", "spam", "download",
-           "submit", "star", "label", "captureScreenshot",
-           "popup/read")
+    bad = ("send", "delete", "trash", "spam", "download", "submit", "star", "label", "captureScreenshot", "popup/read")
     for entry in fa.call_log + fa.click_log + fa.nav_log:
         for b in bad:
             assert b not in entry, f"forbidden 호출: {entry}"
@@ -568,6 +633,7 @@ def test_collect_does_not_invoke_destructive_under_unread_mode():
 
 def test_audit_module_judges_warn_on_limit_reached():
     from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
+
     fa = FakeActions(
         page_buttons=[str(i) for i in range(1, 11)],
         page_responses={str(i): [_mk_row(f"{i}00")] for i in range(1, 11)},

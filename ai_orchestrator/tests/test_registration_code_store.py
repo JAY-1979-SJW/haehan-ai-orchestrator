@@ -14,25 +14,23 @@
  11. DB backend는 config로만 활성화
  12. 기존 registration_codes wrapper 호환성
 """
+
 from __future__ import annotations
 
-import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from ai_orchestrator.registration_code_store import (
-    RegistrationCode,
-    IssueResult,
-    InvalidTTLError,
+    MAX_TTL_MINUTES,
     CodeExchangeError,
     InMemoryRegistrationCodeStore,
-    DEFAULT_TTL_MINUTES,
-    MAX_TTL_MINUTES,
+    InvalidTTLError,
+    IssueResult,
+    RegistrationCode,
 )
 
 
@@ -323,8 +321,8 @@ class TestBackendSelection:
     def test_default_backend_is_memory(self, monkeypatch):
         """기본값은 memory."""
         from ai_orchestrator.registration_code_store import (
-            get_registration_code_store,
             InMemoryRegistrationCodeStore,
+            get_registration_code_store,
         )
 
         monkeypatch.delenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", raising=False)
@@ -339,8 +337,8 @@ class TestBackendSelection:
     def test_memory_backend_explicit(self, monkeypatch):
         """env=memory → InMemoryRegistrationCodeStore."""
         from ai_orchestrator.registration_code_store import (
-            get_registration_code_store,
             InMemoryRegistrationCodeStore,
+            get_registration_code_store,
         )
 
         monkeypatch.setenv("LOCAL_AGENT_REGISTRATION_CODE_STORE", "memory")
@@ -376,7 +374,7 @@ class TestRegistrationCodesWrapper:
         yield
         try:
             registration_codes.clear()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     def test_wrapper_issue_code(self, reset_store):

@@ -21,30 +21,24 @@
 - wildcard domain 허용 없음
 - 서버 브라우저로 나라장터/홈택스/은행/카드/보험 접속 금지
 """
+
 from __future__ import annotations
 
 from typing import Any
 from urllib.parse import urlparse
 
+from ai_orchestrator.browser_tool.domain_profile_registry import (
+    get_domain_profile,
+)
 from ai_orchestrator.browser_tool.execution_location_policy import (
     BLOCKED,
     LOCAL_BROWSER_DEFAULT,
     LOCAL_REQUIRED,
-    SERVER_ALLOWED,
-    SERVER_FIRST,
     SERVER_ONLY,
-    SERVER_TO_LOCAL_FALLBACK,
     USER_DIRECT_ONLY,
     classify_execution_location,
 )
-from ai_orchestrator.browser_tool.domain_profile_registry import (
-    get_domain_profile,
-)
-from ai_orchestrator.browser_tool.security_signal_detector import (
-    detect_from_result,
-)
 from ai_orchestrator.browser_tool.fallback_decision_engine import (
-    BLOCK,
     COMPLETE_ON_SERVER,
     HANDOFF_TO_LOCAL_AGENT,
     REQUIRE_USER_DIRECT_ACTION,
@@ -53,8 +47,11 @@ from ai_orchestrator.browser_tool.fallback_decision_engine import (
 )
 from ai_orchestrator.browser_tool.local_agent_handoff import (
     build_local_agent_handoff,
-    validate_handoff_payload,
     handoff_to_task_protocol,
+    validate_handoff_payload,
+)
+from ai_orchestrator.browser_tool.security_signal_detector import (
+    detect_from_result,
 )
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     EXEC_BLOCKED,
@@ -70,8 +67,8 @@ from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     validate_safe_result,
 )
 from ai_orchestrator.browser_tool.unified_browser_task_schema import (
-    validate_task_input,
     build_safe_task,
+    validate_task_input,
 )
 
 
@@ -96,9 +93,11 @@ def route_browser_task(
     # runtime_context guard — server에서 외부 URL action은 즉시 차단
     if runtime_context == "server":
         from ai_orchestrator.server.execution_location_guard import (
-            classify_execution_location_for_server, LOCAL_AGENT_REQUIRED,
             BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
+            LOCAL_AGENT_REQUIRED,
+            classify_execution_location_for_server,
         )
+
         cls = classify_execution_location_for_server(task)
         if cls["execution_location"] == LOCAL_AGENT_REQUIRED:
             r = build_safe_result(
@@ -312,10 +311,12 @@ def classify_task_only(task: dict[str, Any]) -> dict[str, Any]:
     """
     domain = _extract_domain(task)
     profile = get_domain_profile(domain)
-    location_result = classify_execution_location({
-        **build_safe_task(task),
-        "site_category": profile.get("category", ""),
-    })
+    location_result = classify_execution_location(
+        {
+            **build_safe_task(task),
+            "site_category": profile.get("category", ""),
+        }
+    )
     return {
         "task_id": task.get("task_id", ""),
         "execution_location": location_result["execution_location"],
@@ -335,6 +336,6 @@ def _extract_domain(task: dict[str, Any]) -> str:
     if url:
         try:
             return urlparse(url).netloc.lower()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     return ""

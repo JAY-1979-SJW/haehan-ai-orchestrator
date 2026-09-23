@@ -5,14 +5,14 @@
 서버: mailapp.hiworks.co.kr:110
 읽기 전용: DELE 명령 미사용, 메일 상태 변경 없음
 """
+
 import email
 import email.header
 import os
 import poplib
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parseaddr, parsedate_to_datetime
-from typing import Optional
 
 from logger import get_logger
 
@@ -90,10 +90,10 @@ def _parse_received_at(msg: email.message.Message) -> str:
     if date_str:
         try:
             dt = parsedate_to_datetime(date_str)
-            return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
-        except Exception:
+            return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S")
+        except Exception:  # noqa: S110
             pass
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def _build_external_id(msg: email.message.Message, uidl: str) -> str:
@@ -136,7 +136,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
                 parts = line.decode("ascii", errors="replace").split(" ", 1)
                 if len(parts) == 2:
                     uidl_map[int(parts[0])] = parts[1].strip()
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # UIDL 미지원 시 fallback
 
         # 최신 limit건 (번호 역순)
@@ -153,14 +153,16 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
                 external_id = _build_external_id(msg, uidl)
                 _, sender_addr = parseaddr(msg.get("From", ""))
 
-                results.append({
-                    "external_id": external_id,
-                    "sender": sender_addr or msg.get("From", ""),
-                    "title": _decode_header_value(msg.get("Subject", "(제목 없음)")),
-                    "body_raw": _extract_body(msg),
-                    "received_at": _parse_received_at(msg),
-                    "source_account": account,
-                })
+                results.append(
+                    {
+                        "external_id": external_id,
+                        "sender": sender_addr or msg.get("From", ""),
+                        "title": _decode_header_value(msg.get("Subject", "(제목 없음)")),
+                        "body_raw": _extract_body(msg),
+                        "received_at": _parse_received_at(msg),
+                        "source_account": account,
+                    }
+                )
             except Exception as e:
                 log.warning("메일 파싱 오류 idx=%d: %s", idx, e)
                 continue
@@ -177,7 +179,7 @@ def fetch_recent_mails(limit: int = 20) -> list[dict]:
         if pop is not None:
             try:
                 pop.quit()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
     return results

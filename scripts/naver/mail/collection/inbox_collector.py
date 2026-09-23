@@ -12,19 +12,16 @@
 
 기존 scripts/naver/mail_read/list_collector.py 의 LIST_EXPR / PAGES_EXPR 을 재사용 (코드 보존).
 """
+
 from __future__ import annotations
 
-import json
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Any, Callable, Protocol
-
-from scripts.naver.mail_read import list_collector as base_lc
-from scripts.naver.mail_read.list_collector import LIST_EXPR, PAGES_EXPR
+from dataclasses import asdict, dataclass, field
+from typing import Any, Protocol
 
 from scripts.naver.mail.processing import read_state_guard as rsg
 from scripts.naver.mail.utilities import time_parser as tp
-
+from scripts.naver.mail_read.list_collector import LIST_EXPR
 
 # ── 모드/제한 ────────────────────────────────────────────────────────
 
@@ -34,6 +31,7 @@ DEFAULT_MAX_ITEMS = 5000
 
 # ── Actions 추상화 (테스트에서 fake) ─────────────────────────────────
 
+
 class Actions(Protocol):
     def evaluate(self, expr: str) -> Any: ...
     def click(self, selector_or_expr: str) -> Any: ...
@@ -42,6 +40,7 @@ class Actions(Protocol):
 
 
 # ── 결과 모델 ────────────────────────────────────────────────────────
+
 
 @dataclass
 class CollectedItem:
@@ -66,11 +65,11 @@ class CollectionResult:
     folder_name: str
     mode: str
     items: list[CollectedItem] = field(default_factory=list)
-    total_seen: int = 0          # 페이지에서 본 row 합 (중복 포함)
+    total_seen: int = 0  # 페이지에서 본 row 합 (중복 포함)
     dup_count: int = 0
     last_page_reached: bool = False
     warn_limit_reached: bool = False
-    unread_count_ui: int = -1    # 폴더 라벨에서 파싱한 안읽은 수
+    unread_count_ui: int = -1  # 폴더 라벨에서 파싱한 안읽은 수
     collected_unread: int = 0
     duplicate_sns: list[str] = field(default_factory=list)
     pages_visited: list[str] = field(default_factory=list)
@@ -79,7 +78,7 @@ class CollectionResult:
     filter_evidence: dict = field(default_factory=dict)
     mismatch_reason: str = ""
     # PAGINATION_DEPTH_01 추가:
-    pagination_strategy_used: str = ""   # "url_page" | "page_button" | "next_arrow" | "mixed"
+    pagination_strategy_used: str = ""  # "url_page" | "page_button" | "next_arrow" | "mixed"
     page_records: list[dict] = field(default_factory=list)
     # 각 page_record: {idx, url, item_count, unread_count, sn_hash, next_state}
     last_page_evidence: list[str] = field(default_factory=list)
@@ -91,7 +90,7 @@ class CollectionResult:
 
 # ── PII 마스킹 (mail_read.body_reader.redact 재사용) ─────────────────
 
-from scripts.naver.mail_read.body_reader import redact as _redact
+from scripts.naver.mail_read.body_reader import redact as _redact  # noqa: E402
 
 
 def _mask_subject(s: str) -> str:
@@ -105,14 +104,14 @@ def _mask_sender(s: str) -> str:
 
 # ── 폴더명 / 안읽은 카운트 파싱 ─────────────────────────────────────
 
-import re
+import re  # noqa: E402
 
 _TITLE_UNREAD_RE = re.compile(r"\(\s*(\d+)\s*\)")
 
 
 def parse_folder_meta(payload: dict) -> tuple[str, int]:
     title = (payload or {}).get("title", "") or ""
-    href = (payload or {}).get("href", "") or ""
+    href = (payload or {}).get("href", "") or ""  # noqa: F841
     # folder name 은 title 의 "받은메일함(N) : 네이버 메일" 패턴
     name = title.split(":")[0].strip() if ":" in title else title
     name = re.sub(r"\s*\(\s*\d+\s*\)\s*$", "", name).strip()
@@ -184,8 +183,7 @@ JSON.stringify((function(){
 """
 
 
-def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0
-                        ) -> tuple[bool, dict]:
+def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0) -> tuple[bool, dict]:
     """안읽은 필터 적용 — 직접 링크 우선, 실패 시 드롭다운 2-step.
 
     Returns:
@@ -215,13 +213,9 @@ def apply_unread_filter(actions: Actions, *, timeout_s: float = 6.0
         "pre": pre,
         "post": post,
         "li_count_changed": (
-            isinstance(pre, dict) and isinstance(post, dict)
-            and pre.get("li_count") != post.get("li_count")
+            isinstance(pre, dict) and isinstance(post, dict) and pre.get("li_count") != post.get("li_count")
         ),
-        "url_changed": (
-            isinstance(pre, dict) and isinstance(post, dict)
-            and pre.get("url") != post.get("url")
-        ),
+        "url_changed": (isinstance(pre, dict) and isinstance(post, dict) and pre.get("url") != post.get("url")),
     }
     return (bool(method), evidence)
 
@@ -310,15 +304,15 @@ def _bump_page_url(current_url: str, page_n: int) -> str:
     """URL의 page 쿼리를 N으로 설정. ?page=N 직접 이동용."""
     if not current_url or not current_url.startswith("http"):
         return ""
-    from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+    from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
     p = urlparse(current_url)
     qs = dict(parse_qsl(p.query, keep_blank_values=True))
     qs["page"] = str(page_n)
     return urlunparse(p._replace(query=urlencode(qs)))
 
 
-def _advance_page(actions: "Actions", target_idx: int,
-                  current_url: str) -> tuple[bool, str]:
+def _advance_page(actions: Actions, target_idx: int, current_url: str) -> tuple[bool, str]:
     """전략 우선순위: url_page → page_button → next_arrow.
 
     Returns (advanced, strategy_label).
@@ -351,6 +345,7 @@ def _advance_page(actions: "Actions", target_idx: int,
 
 
 # ── 페이지네이션 수집 ───────────────────────────────────────────────
+
 
 def _click_page_expr(pg: str) -> str:
     return (
@@ -403,7 +398,7 @@ def collect_inbox(
             sn = (raw.get("sn") or "").strip()
             if not sn:
                 # sn 없는 row 는 fallback key
-                fkey = f"NOSN|{raw.get('subject','')[:60]}|{raw.get('sender_name','')[:40]}"
+                fkey = f"NOSN|{raw.get('subject', '')[:60]}|{raw.get('sender_name', '')[:40]}"
                 if fkey in seen_sns:
                     result.dup_count += 1
                     continue
@@ -421,9 +416,7 @@ def collect_inbox(
                 folder_name=folder_name,
                 sn=sn,
                 subject_masked=_mask_subject(raw.get("subject", "") or ""),
-                sender_masked=_mask_sender(
-                    (raw.get("sender_full") or raw.get("sender_name") or "")
-                ),
+                sender_masked=_mask_sender(raw.get("sender_full") or raw.get("sender_name") or ""),
                 display_time=(raw.get("time_txt") or "").strip(),
                 parsed_at_iso=pt.iso,
                 parse_warning=pt.warning,
@@ -443,6 +436,7 @@ def collect_inbox(
 
     def _sn_hash(payload: dict) -> str:
         import hashlib
+
         sns = sorted((it.get("sn") or "") for it in (payload or {}).get("items", []))
         return hashlib.sha1("|".join(sns).encode()).hexdigest()[:12]
 
@@ -451,14 +445,16 @@ def collect_inbox(
 
     def _record_page(idx: int, payload: dict) -> None:
         items = (payload or {}).get("items", [])
-        result.page_records.append({
-            "idx": idx,
-            "url": (payload or {}).get("href", ""),
-            "item_count": len(items),
-            "unread_count": sum(1 for r in items if r.get("is_unread")),
-            "sn_hash": _sn_hash(payload),
-            "next_state": _next_state(),
-        })
+        result.page_records.append(
+            {
+                "idx": idx,
+                "url": (payload or {}).get("href", ""),
+                "item_count": len(items),
+                "unread_count": sum(1 for r in items if r.get("is_unread")),
+                "sn_hash": _sn_hash(payload),
+                "next_state": _next_state(),
+            }
+        )
 
     _absorb(first, "1")
     result.pages_visited.append("1")
@@ -517,9 +513,7 @@ def collect_inbox(
             if len(set(result.last_page_evidence)) >= 2:
                 result.last_page_reached = True
             else:
-                result.notes.append(
-                    f"insufficient_last_page_evidence:{result.last_page_evidence}"
-                )
+                result.notes.append(f"insufficient_last_page_evidence:{result.last_page_evidence}")
                 # 추가 증거 부족 — WARN
             break
 
@@ -543,9 +537,7 @@ def collect_inbox(
             consecutive_no_new += 1
             if consecutive_no_new >= 2:
                 # 근거 부족이라도 무한 루프 방지 — last_page_reached False 로 두고 종료
-                result.notes.append(
-                    f"loop_safety_break_evidence={list(set(result.last_page_evidence))}"
-                )
+                result.notes.append(f"loop_safety_break_evidence={list(set(result.last_page_evidence))}")
                 break
             continue
 
@@ -586,17 +578,24 @@ def collect_inbox(
             result.notes.append("자연_종료_근거2개+")
         else:
             result.last_page_reached = False
-            result.notes.append(
-                f"WARN_DYNAMIC_PAGE_MISSED_evidence={result.last_page_evidence}"
-            )
+            result.notes.append(f"WARN_DYNAMIC_PAGE_MISSED_evidence={result.last_page_evidence}")
     return result
 
 
 # ── JSON schema 검증 ────────────────────────────────────────────────
 
-REQUIRED_FIELDS = ("folder_id", "folder_name", "sn", "subject_masked",
-                   "sender_masked", "display_time", "parsed_at_iso",
-                   "read_state", "has_attachment", "collect_mode")
+REQUIRED_FIELDS = (
+    "folder_id",
+    "folder_name",
+    "sn",
+    "subject_masked",
+    "sender_masked",
+    "display_time",
+    "parsed_at_iso",
+    "read_state",
+    "has_attachment",
+    "collect_mode",
+)
 
 
 def validate_item_schema(d: dict) -> list[str]:

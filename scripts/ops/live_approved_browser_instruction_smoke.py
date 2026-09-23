@@ -10,13 +10,12 @@ Flow:
 This script intentionally never prints passwords, registration codes, device
 tokens, or Authorization header values.
 """
+
 from __future__ import annotations
 
 import argparse
 import base64
-import hashlib
 import json
-import os
 import secrets
 import subprocess
 import sys
@@ -25,11 +24,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from local_agent.network_bypass import direct_child_env, urlopen_for_server
+from local_agent.network_bypass import direct_child_env, urlopen_for_server  # noqa: E402
 
 DEFAULT_SERVER = "https://haehan-ai.kr/orchestrator"
 REMOTE_HOST = "haehan-app"
@@ -99,7 +97,7 @@ def mask_agent_id(agent_id: str) -> str:
 
 
 def basic_header(username: str, password: str) -> str:
-    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    token = base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
     return f"Basic {token}"
 
 

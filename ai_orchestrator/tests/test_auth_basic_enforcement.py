@@ -11,6 +11,7 @@
 synthetic users 파일만 작성한다. 실제 비밀번호는 평문으로 테스트 코드에
 나타나지만 hashing 검증용 식별자(예: "pw_owner_demo") 일 뿐 운영 의미가 없다.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -19,12 +20,11 @@ import os
 import secrets as _secrets
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
+
 
 def _salted_hash(password: str) -> str:
     salt = _secrets.token_bytes(16)
@@ -35,14 +35,15 @@ def _salted_hash(password: str) -> str:
 def _users_payload() -> list[dict]:
     """운영 의미 없는 synthetic 사용자 목록. 비밀번호는 식별자 문자열."""
     return [
-        {"username": "owner_u",  "password_hash": _salted_hash("pw_owner_demo"),
-         "role": "owner",  "enabled": True},
-        {"username": "admin_u",  "password_hash": _salted_hash("pw_admin_demo"),
-         "role": "admin",  "enabled": True},
-        {"username": "viewer_u", "password_hash": _salted_hash("pw_viewer_demo"),
-         "role": "viewer", "enabled": True},
-        {"username": "disabled_u", "password_hash": _salted_hash("pw_disabled_demo"),
-         "role": "owner", "enabled": False},
+        {"username": "owner_u", "password_hash": _salted_hash("pw_owner_demo"), "role": "owner", "enabled": True},
+        {"username": "admin_u", "password_hash": _salted_hash("pw_admin_demo"), "role": "admin", "enabled": True},
+        {"username": "viewer_u", "password_hash": _salted_hash("pw_viewer_demo"), "role": "viewer", "enabled": True},
+        {
+            "username": "disabled_u",
+            "password_hash": _salted_hash("pw_disabled_demo"),
+            "role": "owner",
+            "enabled": False,
+        },
     ]
 
 
@@ -57,21 +58,26 @@ def _write_users(tmp_path, payload=None) -> str:
 
 def _enable_auth(monkeypatch, users_path: str | None):
     import ai_orchestrator.config as _config
+
     monkeypatch.setattr(_config, "AUTH_ENABLED", True)
     if users_path is not None:
         from pathlib import Path
+
         monkeypatch.setattr(_config, "HTTP_USERS_PATH", Path(users_path))
 
 
 def _disable_auth(monkeypatch):
     import ai_orchestrator.config as _config
+
     monkeypatch.setattr(_config, "AUTH_ENABLED", False)
 
 
 def _make_local_agent_client():
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
     from ai_orchestrator.local_agent_router import local_agent_router
+
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
 
@@ -84,9 +90,11 @@ def _make_local_agent_client():
 
 # ── 1. AUTH_ENABLED=False returns dummy owner ────────────────────────────
 
+
 def test_auth_disabled_returns_dummy_owner(monkeypatch):
     _disable_auth(monkeypatch)
     from ai_orchestrator.auth import get_current_user
+
     user = get_current_user(credentials=None)
     assert user["actor"] == "system"
     assert user["role"] == "owner"
@@ -95,6 +103,7 @@ def test_auth_disabled_returns_dummy_owner(monkeypatch):
 
 
 # ── 2. AUTH_ENABLED=True + missing Authorization → 401 ───────────────────
+
 
 def test_auth_enabled_missing_credentials_returns_401(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -105,6 +114,7 @@ def test_auth_enabled_missing_credentials_returns_401(monkeypatch, tmp_path):
 
 
 # ── 3. wrong scheme → 401 ────────────────────────────────────────────────
+
 
 def test_auth_enabled_wrong_scheme_returns_401(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -119,6 +129,7 @@ def test_auth_enabled_wrong_scheme_returns_401(monkeypatch, tmp_path):
 
 # ── 4. unknown user → 401 ────────────────────────────────────────────────
 
+
 def test_auth_enabled_unknown_user_returns_401(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -130,6 +141,7 @@ def test_auth_enabled_unknown_user_returns_401(monkeypatch, tmp_path):
 
 
 # ── 5. wrong password → 401 ──────────────────────────────────────────────
+
 
 def test_auth_enabled_wrong_password_returns_401(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -143,8 +155,10 @@ def test_auth_enabled_wrong_password_returns_401(monkeypatch, tmp_path):
 
 # ── 6. owner endpoint allowed ────────────────────────────────────────────
 
+
 def test_auth_enabled_owner_can_register_agent(monkeypatch, tmp_path):
     import ai_orchestrator.local_agent_registry as reg
+
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -159,8 +173,10 @@ def test_auth_enabled_owner_can_register_agent(monkeypatch, tmp_path):
 
 # ── 7. admin endpoint allowed ────────────────────────────────────────────
 
+
 def test_auth_enabled_admin_can_register_agent(monkeypatch, tmp_path):
     import ai_orchestrator.local_agent_registry as reg
+
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -174,8 +190,10 @@ def test_auth_enabled_admin_can_register_agent(monkeypatch, tmp_path):
 
 # ── 8. viewer can read list ──────────────────────────────────────────────
 
+
 def test_auth_enabled_viewer_can_list_agents(monkeypatch, tmp_path):
     import ai_orchestrator.local_agent_registry as reg
+
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -188,6 +206,7 @@ def test_auth_enabled_viewer_can_list_agents(monkeypatch, tmp_path):
 
 
 # ── 9. viewer cannot register / create task / approve ────────────────────
+
 
 def test_auth_enabled_viewer_cannot_register(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -203,6 +222,7 @@ def test_auth_enabled_viewer_cannot_register(monkeypatch, tmp_path):
 def test_auth_enabled_viewer_cannot_approve(monkeypatch, tmp_path):
     """viewer 가 capture_screenshot 승인 endpoint 시도 시 403."""
     import ai_orchestrator.local_agent_registry as reg
+
     reg.clear()
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -230,6 +250,7 @@ def test_auth_enabled_viewer_cannot_approve(monkeypatch, tmp_path):
 
 # ── 10. users file missing → fail-closed ─────────────────────────────────
 
+
 def test_auth_enabled_missing_users_file_fails_closed(monkeypatch, tmp_path):
     nonexistent = str(tmp_path / "absent" / "http_users.json")
     _enable_auth(monkeypatch, nonexistent)
@@ -239,6 +260,7 @@ def test_auth_enabled_missing_users_file_fails_closed(monkeypatch, tmp_path):
 
 
 # ── 11. malformed users file → fail-closed ───────────────────────────────
+
 
 def test_auth_enabled_malformed_users_file_fails_closed(monkeypatch, tmp_path):
     bad = tmp_path / "http_users.json"
@@ -251,9 +273,11 @@ def test_auth_enabled_malformed_users_file_fails_closed(monkeypatch, tmp_path):
 
 # ── 12. salted SHA-256 verification ──────────────────────────────────────
 
+
 def test_salted_sha256_verification_round_trip(tmp_path):
     """평문 → _salted_hash → _verify_password 라운드트립."""
     from ai_orchestrator.auth import _verify_password
+
     h = _salted_hash("hello")
     assert _verify_password("hello", h) is True
     assert _verify_password("HELLO", h) is False
@@ -265,11 +289,13 @@ def test_salted_sha256_verification_round_trip(tmp_path):
 
 # ── 13. password / Authorization not in logs ─────────────────────────────
 
+
 def test_auth_failure_does_not_log_password(monkeypatch, tmp_path, caplog):
     import logging
+
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
-    secret_pw = "super-secret-pw-d3adbeef"
+    secret_pw = "super-secret-pw-d3adbeef"  # noqa: S105
     with caplog.at_level(logging.DEBUG, logger="ai_orchestrator.auth"):
         client.get("/api/v1/local-agents", auth=("owner_u", secret_pw))
     text = "\n".join(r.getMessage() for r in caplog.records)
@@ -280,6 +306,7 @@ def test_auth_failure_does_not_log_password(monkeypatch, tmp_path, caplog):
 
 # ── 14. health remains accessible without auth ───────────────────────────
 
+
 def test_health_unauthenticated_under_auth_enabled(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
@@ -289,6 +316,7 @@ def test_health_unauthenticated_under_auth_enabled(monkeypatch, tmp_path):
 
 
 # ── 15. disabled user → 401 ──────────────────────────────────────────────
+
 
 def test_disabled_user_cannot_authenticate(monkeypatch, tmp_path):
     _enable_auth(monkeypatch, _write_users(tmp_path))
@@ -302,9 +330,11 @@ def test_disabled_user_cannot_authenticate(monkeypatch, tmp_path):
 
 # ── 16. AUTH_ENABLED=False 호환: 인증 없이 모든 endpoint owner 동작 ─────
 
+
 def test_auth_disabled_endpoint_passes_with_no_credentials(monkeypatch):
     """AUTH_ENABLED=False 상태에서 인증 헤더 없어도 owner 권한으로 통과."""
     import ai_orchestrator.local_agent_registry as reg
+
     reg.clear()
     _disable_auth(monkeypatch)
     client = _make_local_agent_client()

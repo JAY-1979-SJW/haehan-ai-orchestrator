@@ -7,11 +7,10 @@ This module provides a Playwright-based browser controller with emphasis on:
 - Safe inspection (URL/title/DOM structure only)
 """
 
-import asyncio
-from pathlib import Path
-from typing import Optional, Any, Dict, List
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 from scripts.browser_sandbox_gate import assert_browser_launch_allowed
 
@@ -21,10 +20,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InspectResult:
     """Result of page inspection (url/title/inputs/clickables)."""
+
     url: str
     title: str
-    inputs: List[Dict[str, Any]]
-    clickables: List[Dict[str, Any]]
+    inputs: list[dict[str, Any]]
+    clickables: list[dict[str, Any]]
     login_required: bool = False
     otp_detected: bool = False
 
@@ -32,6 +32,7 @@ class InspectResult:
 @dataclass
 class PlanClickResult:
     """Result of dry-run click planning."""
+
     action: str = "browser_plan_click"
     selector: str = ""
     element_found: bool = False
@@ -46,6 +47,7 @@ class PlanClickResult:
 @dataclass
 class PlanTypeResult:
     """Result of dry-run type planning."""
+
     action: str = "browser_plan_type"
     selector: str = ""
     element_found: bool = False
@@ -61,6 +63,7 @@ class PlanTypeResult:
 @dataclass
 class PlanSubmitResult:
     """Result of submit planning (critical action)."""
+
     action: str = "browser_submit"
     selector: str = ""
     risk_level: str = "critical"
@@ -71,6 +74,7 @@ class PlanSubmitResult:
 @dataclass
 class ExecuteClickResult:
     """Result of click execution (approval-gated)."""
+
     action: str = "browser_execute_click"
     selector: str = ""
     element_found: bool = False
@@ -80,12 +84,13 @@ class ExecuteClickResult:
     result: str = "success"  # success, element_not_found, approval_denied, risky_element
     target_url_domain: str = ""
     screenshot_taken: bool = False
-    screenshot_ref: Optional[str] = None
+    screenshot_ref: str | None = None
 
 
 @dataclass
 class ExecuteTypeResult:
     """Result of type execution (approval-gated)."""
+
     action: str = "browser_execute_type"
     selector: str = ""
     element_found: bool = False
@@ -96,28 +101,31 @@ class ExecuteTypeResult:
     result: str = "success"  # success, element_not_found, approval_denied, sensitive_field
     target_url_domain: str = ""
     screenshot_taken: bool = False
-    screenshot_ref: Optional[str] = None
+    screenshot_ref: str | None = None
 
 
 class BrowserControllerError(Exception):
     """Base exception for browser controller."""
+
     pass
 
 
 class BrowserApprovalError(BrowserControllerError):
     """Approval-related error."""
+
     pass
 
 
 class BrowserSensitiveFieldError(BrowserControllerError):
     """Sensitive field access error."""
+
     pass
 
 
 class BrowserController:
     """Browser controller using Playwright with isolated profiles."""
 
-    def __init__(self, agent_id: str, profile_base_dir: Optional[Path] = None):
+    def __init__(self, agent_id: str, profile_base_dir: Path | None = None):
         """Initialize browser controller.
 
         Args:
@@ -157,16 +165,14 @@ class BrowserController:
             self.browser = await chromium.launch_persistent_context(
                 str(self.profile_dir),
                 headless=headless,
-                args=["--disable-password-manager"]  # Prevent auto-fill
+                args=["--disable-password-manager"],  # Prevent auto-fill
             )
 
             self.page = await self.browser.new_page()
             logger.info(f"Browser launched for agent {self.agent_id}")
 
         except ImportError:
-            raise BrowserControllerError(
-                "Playwright not installed. Install with: pip install playwright"
-            )
+            raise BrowserControllerError("Playwright not installed. Install with: pip install playwright")
         except Exception as e:
             raise BrowserControllerError(f"Failed to launch browser: {e}")
 
@@ -235,18 +241,18 @@ class BrowserController:
                 inputs=inputs,
                 clickables=clickables,
                 login_required=login_required,
-                otp_detected=otp_detected
+                otp_detected=otp_detected,
             )
         except Exception as e:
             raise BrowserControllerError(f"Inspection failed: {e}")
 
-    async def list_inputs(self) -> List[Dict[str, Any]]:
+    async def list_inputs(self) -> list[dict[str, Any]]:
         """List input fields (safe)."""
         if not self.page:
             raise BrowserControllerError("Browser not launched")
         return await self._list_input_fields()
 
-    async def list_clickables(self) -> List[Dict[str, Any]]:
+    async def list_clickables(self) -> list[dict[str, Any]]:
         """List clickable elements."""
         if not self.page:
             raise BrowserControllerError("Browser not launched")
@@ -268,11 +274,7 @@ class BrowserController:
             element = await self.page.query_selector(selector)
 
             if not element:
-                return PlanClickResult(
-                    selector=selector,
-                    element_found=False,
-                    would_click=False
-                )
+                return PlanClickResult(selector=selector, element_found=False, would_click=False)
 
             # Get element info without clicking
             tag = await element.evaluate("el => el.tagName.toLowerCase()")
@@ -280,11 +282,7 @@ class BrowserController:
             text = (text or "").strip()[:100]  # Truncate for safety
 
             return PlanClickResult(
-                selector=selector,
-                element_found=True,
-                element_text=text,
-                element_tag=tag,
-                would_click=True
+                selector=selector, element_found=True, element_text=text, element_tag=tag, would_click=True
             )
         except Exception as e:
             logger.error(f"Plan click failed: {e}")
@@ -307,11 +305,7 @@ class BrowserController:
             element = await self.page.query_selector(selector)
 
             if not element:
-                return PlanTypeResult(
-                    selector=selector,
-                    element_found=False,
-                    would_type=False
-                )
+                return PlanTypeResult(selector=selector, element_found=False, would_type=False)
 
             # Get input field info without typing
             field_type = await element.get_attribute("type") or "text"
@@ -322,7 +316,7 @@ class BrowserController:
                 field_type=field_type,
                 text_length=len(text),
                 text_preview="[REDACTED]",
-                would_type=True
+                would_type=True,
             )
         except Exception as e:
             logger.error(f"Plan type failed: {e}")
@@ -340,17 +334,10 @@ class BrowserController:
         if not self.page:
             raise BrowserControllerError("Browser not launched")
 
-        return PlanSubmitResult(
-            selector=selector,
-            risk_level="critical",
-            final_approval_required=True
-        )
+        return PlanSubmitResult(selector=selector, risk_level="critical", final_approval_required=True)
 
     async def execute_click(
-        self,
-        selector: str,
-        approval_token: Optional[str] = None,
-        final_approval_token: Optional[str] = None
+        self, selector: str, approval_token: str | None = None, final_approval_token: str | None = None
     ) -> ExecuteClickResult:
         """Execute click with approval validation and risk detection.
 
@@ -376,7 +363,7 @@ class BrowserController:
                     element_found=False,
                     executed=False,
                     result="element_not_found",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             if approval_token is None:
@@ -385,7 +372,7 @@ class BrowserController:
                     element_found=True,
                     executed=False,
                     result="approval_denied",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             text = await element.text_content()
@@ -401,7 +388,7 @@ class BrowserController:
                     risk_level=risk_level,
                     final_approval_required=True,
                     result="risky_element",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             await element.click()
@@ -413,24 +400,15 @@ class BrowserController:
                 executed=True,
                 risk_level=risk_level,
                 result="success",
-                target_url_domain=domain
+                target_url_domain=domain,
             )
         except Exception as e:
             logger.error(f"Execute click failed: {e}")
             return ExecuteClickResult(
-                selector=selector,
-                element_found=False,
-                executed=False,
-                result="error",
-                target_url_domain=domain
+                selector=selector, element_found=False, executed=False, result="error", target_url_domain=domain
             )
 
-    async def execute_type(
-        self,
-        selector: str,
-        text: str,
-        approval_token: Optional[str] = None
-    ) -> ExecuteTypeResult:
+    async def execute_type(self, selector: str, text: str, approval_token: str | None = None) -> ExecuteTypeResult:
         """Execute text input with approval validation and sensitive field protection.
 
         Args:
@@ -455,7 +433,7 @@ class BrowserController:
                     element_found=False,
                     executed=False,
                     result="element_not_found",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             if approval_token is None:
@@ -464,7 +442,7 @@ class BrowserController:
                     element_found=True,
                     executed=False,
                     result="approval_denied",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             field_type = await element.get_attribute("type") or "text"
@@ -472,9 +450,7 @@ class BrowserController:
             field_placeholder = await element.get_attribute("placeholder") or ""
             field_aria_label = await element.get_attribute("aria-label") or ""
 
-            is_sensitive = self._is_sensitive_field(
-                field_type, field_name, field_placeholder, field_aria_label
-            )
+            is_sensitive = self._is_sensitive_field(field_type, field_name, field_placeholder, field_aria_label)
 
             if is_sensitive:
                 return ExecuteTypeResult(
@@ -485,7 +461,7 @@ class BrowserController:
                     text_length=len(text),
                     text_preview="[REDACTED]",
                     result="sensitive_field",
-                    target_url_domain=domain
+                    target_url_domain=domain,
                 )
 
             await element.fill("")
@@ -500,21 +476,17 @@ class BrowserController:
                 text_length=len(text),
                 text_preview="[REDACTED]",
                 result="success",
-                target_url_domain=domain
+                target_url_domain=domain,
             )
         except Exception as e:
             logger.error(f"Execute type failed: {e}")
             return ExecuteTypeResult(
-                selector=selector,
-                element_found=False,
-                executed=False,
-                result="error",
-                target_url_domain=domain
+                selector=selector, element_found=False, executed=False, result="error", target_url_domain=domain
             )
 
     # Private methods
 
-    async def _list_input_fields(self) -> List[Dict[str, Any]]:
+    async def _list_input_fields(self) -> list[dict[str, Any]]:
         """List input fields with safe attributes only (no values)."""
         if not self.page:
             return []
@@ -546,7 +518,7 @@ class BrowserController:
             logger.error(f"Failed to list inputs: {e}")
             return []
 
-    async def _list_clickable_elements(self) -> List[Dict[str, Any]]:
+    async def _list_clickable_elements(self) -> list[dict[str, Any]]:
         """List clickable elements (buttons, links, etc)."""
         if not self.page:
             return []
@@ -584,7 +556,7 @@ class BrowserController:
             logger.error(f"Failed to list clickables: {e}")
             return []
 
-    def _detect_login_required(self, url: str, title: str, inputs: List[Dict[str, Any]]) -> bool:
+    def _detect_login_required(self, url: str, title: str, inputs: list[dict[str, Any]]) -> bool:
         """Detect if login is required based on heuristics."""
         # Check URL and title for login keywords
         login_keywords = ["login", "signin", "sign-in", "로그인", "auth"]
@@ -599,7 +571,7 @@ class BrowserController:
 
         return False
 
-    def _detect_otp(self, inputs: List[Dict[str, Any]]) -> bool:
+    def _detect_otp(self, inputs: list[dict[str, Any]]) -> bool:
         """Detect if OTP/2FA field is present."""
         otp_keywords = ["otp", "2fa", "인증번호", "보안코드", "verification", "code"]
 
@@ -637,11 +609,7 @@ class BrowserController:
         return "low", False
 
     def _is_sensitive_field(
-        self,
-        field_type: str,
-        field_name: str,
-        field_placeholder: str,
-        field_aria_label: str
+        self, field_type: str, field_name: str, field_placeholder: str, field_aria_label: str
     ) -> bool:
         """Check if field is sensitive (password/OTP/2FA).
 
@@ -658,8 +626,17 @@ class BrowserController:
             return True
 
         sensitive_keywords = [
-            "password", "passwd", "pw", "otp", "2fa", "인증번호", "보안코드",
-            "비밀번호", "verification", "code", "secret"
+            "password",
+            "passwd",
+            "pw",
+            "otp",
+            "2fa",
+            "인증번호",
+            "보안코드",
+            "비밀번호",
+            "verification",
+            "code",
+            "secret",
         ]
 
         text = f"{field_name} {field_placeholder} {field_aria_label}".lower()
@@ -673,6 +650,7 @@ class BrowserController:
         """Extract domain from URL."""
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
             return parsed.netloc or ""
         except Exception:
@@ -681,7 +659,8 @@ class BrowserController:
 
 # Convenience functions for common operations
 
-async def create_and_inspect(agent_id: str, url: str) -> Optional[InspectResult]:
+
+async def create_and_inspect(agent_id: str, url: str) -> InspectResult | None:
     """Create controller, launch, navigate, and inspect.
 
     Args:

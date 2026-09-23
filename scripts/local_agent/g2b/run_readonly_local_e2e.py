@@ -24,33 +24,32 @@ g2b 전용 브라우저 조작 로직 없음.
 사용:
   python scripts/local_agent/run_g2b_readonly_local_e2e.py
 """
+
 from __future__ import annotations
 
+import datetime
 import json
 import os
-import sys
 import pathlib
-import datetime
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.playwright_bootstrap import (
-    check_playwright_status,
+from ai_orchestrator.local_agent.download_upload_manifest import build_manifest  # noqa: E402
+from ai_orchestrator.local_agent.local_session_boundary import enforce_session_boundary  # noqa: E402
+from ai_orchestrator.local_agent.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
+    check_playwright_status,
 )
-from ai_orchestrator.local_agent.task_protocol import (
-    build_task,
-    STATUS_COMPLETED,
-    STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
+from ai_orchestrator.local_agent.result_sanitizer import sanitize_result  # noqa: E402
+from ai_orchestrator.local_agent.task_protocol import (  # noqa: E402
     STATUS_FAILED,
+    STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
+    build_task,
 )
-from ai_orchestrator.local_agent.result_sanitizer import sanitize_result
-from ai_orchestrator.local_agent.local_session_boundary import enforce_session_boundary
-from ai_orchestrator.local_agent.download_policy import check_files
-from ai_orchestrator.local_agent.download_upload_manifest import build_manifest
 
 # ── 설정 ──────────────────────────────────────────────────────────────────────
 
@@ -82,7 +81,7 @@ def _safe_result(result: dict) -> dict:
 
 def _check_dangerous_state(result: dict) -> str | None:
     """위험 상태 감지. 감지되면 이유 반환, 없으면 None."""
-    status = result.get("status", "")
+    status = result.get("status", "")  # noqa: F841
     # 위험 작업이 자동 실행된 흔적 검사
     if result.get("auto_submit_triggered"):
         return "FAIL: auto_submit_triggered"
@@ -109,7 +108,7 @@ def _run_e2e() -> dict:
     from ai_orchestrator.local_agent.playwright_runner import run_task
 
     report: dict = {
-        "run_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
         "task_id": TASK_ID,
         "target_url": G2B_HOME_URL,
         "target_host": G2B_HOST,
@@ -167,7 +166,7 @@ def _run_e2e() -> dict:
         return report
 
     # ── STEP B: extract_text ─────────────────────────────────────────────────
-    print(f"[B] extract_text")
+    print("[B] extract_text")
     task_b = _build_g2b_task("extract_text")
     raw_b = run_task(task_b)
     safe_b = _safe_result(raw_b)
@@ -186,7 +185,7 @@ def _run_e2e() -> dict:
         return report
 
     # ── STEP C: extract_table ────────────────────────────────────────────────
-    print(f"[C] extract_table")
+    print("[C] extract_table")
     task_c = _build_g2b_task("extract_table")
     raw_c = run_task(task_c)
     safe_c = _safe_result(raw_c)
@@ -205,7 +204,7 @@ def _run_e2e() -> dict:
         return report
 
     # ── STEP D: detect_login_status ─────────────────────────────────────────
-    print(f"[D] detect_login_status")
+    print("[D] detect_login_status")
     task_d = _build_g2b_task("detect_login_status")
     raw_d = run_task(task_d)
     safe_d = _safe_result(raw_d)
@@ -218,13 +217,13 @@ def _run_e2e() -> dict:
     print(f"    → status={step_d['status']} auth_signal={step_d['auth_signal']}")
 
     # ── STEP E: download manifest dry-run ────────────────────────────────────
-    print(f"[E] download manifest dry-run (실제 다운로드 없음)")
+    print("[E] download manifest dry-run (실제 다운로드 없음)")
     # 실제 첨부 링크 추출 없이 정책 검증만 수행
     sample_candidates = [
         {"filename": "입찰공고문.pdf", "size_bytes": 51200},
         {"filename": "첨부서류.hwpx", "size_bytes": 20480},
-        {"filename": "cert.pfx", "size_bytes": 4096},       # 차단 대상
-        {"filename": "setup.exe", "size_bytes": 1024000},   # 차단 대상
+        {"filename": "cert.pfx", "size_bytes": 4096},  # 차단 대상
+        {"filename": "setup.exe", "size_bytes": 1024000},  # 차단 대상
     ]
     manifest = build_manifest(
         task_id=TASK_ID,
@@ -240,7 +239,9 @@ def _run_e2e() -> dict:
         "sensitive_data_detected": manifest["sensitive_data_detected"],
     }
     steps.append(step_e)
-    print(f"    → allowed={step_e['allowed_count']} blocked={step_e['blocked_count']} cert_detected={step_e['certificate_file_detected']}")
+    print(
+        f"    → allowed={step_e['allowed_count']} blocked={step_e['blocked_count']} cert_detected={step_e['certificate_file_detected']}"
+    )
 
     report["manifest"] = manifest
     report["safe_result"] = safe
@@ -250,9 +251,15 @@ def _run_e2e() -> dict:
 
 def _write_manifest(report: dict, task_id: str, downloaded_files: list) -> None:
     if not downloaded_files:
-        report["manifest"] = {"task_id": task_id, "files": [], "sensitive_data_detected": False,
-                              "certificate_file_detected": False, "total_files": 0,
-                              "allowed_count": 0, "blocked_count": 0}
+        report["manifest"] = {
+            "task_id": task_id,
+            "files": [],
+            "sensitive_data_detected": False,
+            "certificate_file_detected": False,
+            "total_files": 0,
+            "allowed_count": 0,
+            "blocked_count": 0,
+        }
 
 
 def _save_report(report: dict) -> pathlib.Path:
@@ -274,7 +281,7 @@ def main() -> None:
     if pw_status.get("status") != PLAYWRIGHT_READY:
         print(f"[WARN] Playwright 미설치: {pw_status}")
         report = {
-            "run_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+            "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
             "task_id": TASK_ID,
             "target_url": G2B_HOME_URL,
             "target_host": G2B_HOST,
@@ -293,7 +300,7 @@ def main() -> None:
             report = _run_e2e()
         except Exception as exc:
             report = {
-                "run_at": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+                "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),
                 "task_id": TASK_ID,
                 "target_url": G2B_HOME_URL,
                 "target_host": G2B_HOST,

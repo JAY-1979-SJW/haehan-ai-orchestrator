@@ -11,17 +11,22 @@ PII 마스킹된 비즈니스 보고서 생성.
     consolidated_business_report.md
     consolidated_data.json
 """
+
 from __future__ import annotations
 
 import json
-import re
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
-from scripts.naver.mail import pii_mask, business_report as br
+from scripts.naver.mail import business_report as br
+from scripts.naver.mail import pii_mask
 from scripts.naver.mail.batch_runner import (
-    MailResult, BatchReport, _classify_priority, _render_business_report,
-    UNREAD_CHANGED_RESTORED, BODY_READ_OK, SKIPPED_ALREADY_DONE,
+    BODY_READ_OK,
+    UNREAD_CHANGED_RESTORED,
+    BatchReport,
+    MailResult,
+    _classify_priority,
+    _render_business_report,
 )
 from scripts.ops import audit_naver_mail_business_report as audit_br
 
@@ -83,7 +88,7 @@ def main():
     rep.run_id = "consolidated"
     rep.target_total = len(sn_status)
     pii_total = 0
-    pii_types_total: Counter[str] = Counter()
+    pii_types_total: Counter[str] = Counter()  # noqa: F841
     for sn, st in sn_status.items():
         meta = sn_meta.get(sn, {})
         subj = meta.get("subject", "")
@@ -125,33 +130,40 @@ def main():
     md_path.write_text(_render_business_report(rep), encoding="utf-8")
     json_path = out / "consolidated_data.json"
     json_path.write_text(
-        json.dumps({
-            "run_id": rep.run_id,
-            "total_results": len(rep.results),
-            "by_status": dict(Counter(r.status for r in rep.results)),
-            "by_folder": dict(Counter(r.folder_name for r in rep.results)),
-            "by_priority": dict(Counter(_classify_priority(r.subject_masked,
-                                                           r.sender_masked)
-                                        for r in rep.results)),
-            "pii_total": rep.pii_detected_total,
-            "results_sample": [r.to_dict() for r in rep.results[:30]],
-        }, ensure_ascii=False, indent=2),
+        json.dumps(
+            {
+                "run_id": rep.run_id,
+                "total_results": len(rep.results),
+                "by_status": dict(Counter(r.status for r in rep.results)),
+                "by_folder": dict(Counter(r.folder_name for r in rep.results)),
+                "by_priority": dict(
+                    Counter(_classify_priority(r.subject_masked, r.sender_masked) for r in rep.results)
+                ),
+                "pii_total": rep.pii_detected_total,
+                "results_sample": [r.to_dict() for r in rep.results[:30]],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     # 6) 신규 정식 모듈로 보고서 재생성 (business_report)
     mail_items = []
     seen_sns: set[str] = set()
     for mr in rep.results:
-        mail_items.append(br.MailItem(
-            sn=mr.sn, folder_name=mr.folder_name,
-            subject_masked=mr.subject_masked,
-            sender_masked=mr.sender_masked,
-            date_text=mr.date_text,
-            body_redacted_short=mr.body_redacted_short,
-            has_attach=mr.has_attach,
-            pii_detected_count=mr.pii_detected_count,
-            link_domains={},
-        ))
+        mail_items.append(
+            br.MailItem(
+                sn=mr.sn,
+                folder_name=mr.folder_name,
+                subject_masked=mr.subject_masked,
+                sender_masked=mr.sender_masked,
+                date_text=mr.date_text,
+                body_redacted_short=mr.body_redacted_short,
+                has_attach=mr.has_attach,
+                pii_detected_count=mr.pii_detected_count,
+                link_domains={},
+            )
+        )
         seen_sns.add(mr.sn)
     # 추가: 5/20 list 에 있지만 batch checkpoint 에 없는 메일 (이미 사용자가 읽은 메일)
     # — 이 메일들도 보고서 분류 대상에 포함해야 ATTENTION/REVIEW 가 누락되지 않음
@@ -160,19 +172,22 @@ def main():
             continue
         subj = meta.get("subject", "")
         sender = meta.get("sender_full") or meta.get("sender_name", "")
-        mail_items.append(br.MailItem(
-            sn=sn,
-            folder_name=meta.get("folder_name", "받은메일함") + "(읽음)",
-            subject_masked=pii_mask.mask(subj).masked_text[:300],
-            sender_masked=pii_mask.mask(sender).masked_text[:200],
-            date_text=meta.get("time_txt", ""),
-            body_redacted_short="",
-            has_attach=False,
-            pii_detected_count=0,
-            link_domains={},
-        ))
+        mail_items.append(
+            br.MailItem(
+                sn=sn,
+                folder_name=meta.get("folder_name", "받은메일함") + "(읽음)",
+                subject_masked=pii_mask.mask(subj).masked_text[:300],
+                sender_masked=pii_mask.mask(sender).masked_text[:200],
+                date_text=meta.get("time_txt", ""),
+                body_redacted_short="",
+                has_attach=False,
+                pii_detected_count=0,
+                link_domains={},
+            )
+        )
     biz_rep = br.build_report(
-        mail_items, run_id="closeout_consolidated",
+        mail_items,
+        run_id="closeout_consolidated",
         unread_restore_summary={
             "state_changed": rep.unread_state_changed,
             "restore_attempted": rep.unread_restore_attempted,
@@ -196,21 +211,30 @@ def main():
 
     # action_items 따로 + category_summary 따로
     ai = out / "action_items.json"
-    ai.write_text(json.dumps([a.to_dict() for a in biz_rep.action_items],
-                              ensure_ascii=False, indent=2),
-                  encoding="utf-8")
+    ai.write_text(
+        json.dumps([a.to_dict() for a in biz_rep.action_items], ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     cs = out / "category_summary.json"
-    cs.write_text(json.dumps(
-        {cg.category: cg.count for cg in biz_rep.categories},
-        ensure_ascii=False, indent=2), encoding="utf-8")
+    cs.write_text(
+        json.dumps({cg.category: cg.count for cg in biz_rep.categories}, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     # audit
     v = audit_br.judge_report(biz_rep, md_text=md, json_text=js)
     audit_path = out / "audit_business_report.json"
-    audit_path.write_text(json.dumps({
-        "verdict": v.code, "passed": v.passed,
-        "reasons": v.reasons, "metrics": v.metrics,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    audit_path.write_text(
+        json.dumps(
+            {
+                "verdict": v.code,
+                "passed": v.passed,
+                "reasons": v.reasons,
+                "metrics": v.metrics,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     print(f"[done] (v1) {md_path}")
     print(f"       (v1) {json_path}")
@@ -221,8 +245,7 @@ def main():
     print(f"       audit: {audit_path}  → {v.code}  passed={v.passed}")
     # 콘솔 sneak peek
     print("\n=== 카테고리 분포 ===")
-    cnts = Counter(_classify_priority(r.subject_masked, r.sender_masked)
-                   for r in rep.results)
+    cnts = Counter(_classify_priority(r.subject_masked, r.sender_masked) for r in rep.results)
     for p, n in cnts.most_common():
         print(f"  {p:>18}: {n}건")
 

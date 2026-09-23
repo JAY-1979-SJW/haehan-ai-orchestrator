@@ -11,6 +11,7 @@
 payload 를 만드는지, 민감정보가 차단되는지, 특정 도메인 키워드가 엔진
 본체에 하드코딩되어 있지 않은지 검증한다.
 """
+
 from __future__ import annotations
 
 import os
@@ -18,11 +19,9 @@ import re
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.gpt_planner import (  # noqa: E402
+from ai_orchestrator.gpt_planner import (
     DEFAULT_AVAILABLE_ACTIONS,
     DEFAULT_TENANT_POLICY,
     build_deterministic_fallback_plan,
@@ -31,7 +30,6 @@ from ai_orchestrator.gpt_planner import (  # noqa: E402
     default_tenant_policy,
     sanitize_planner_payload,
 )
-
 
 # ─── 샘플 fixture ─────────────────────────────────────────────────────────
 
@@ -48,58 +46,62 @@ def _site_map_payload_rich() -> dict:
             "login_required_hint": False,
             "has_modal_candidates": False,
             "counts": {
-                "links": 3, "buttons": 3, "forms": 0,
-                "tables": 1, "inputs": 0,
+                "links": 3,
+                "buttons": 3,
+                "forms": 0,
+                "tables": 1,
+                "inputs": 0,
             },
         },
         "sanitized_observation": {
             "links": [
                 {"text": "목록", "href": "/list", "risk_hint": "safe_read"},
                 {"text": "상세", "href": "/detail/1", "risk_hint": "safe_read"},
-                {"text": "삭제",
-                 "href": "/admin/delete?id=1",
-                 "risk_hint": "danger_write"},
+                {"text": "삭제", "href": "/admin/delete?id=1", "risk_hint": "danger_write"},
             ],
             "buttons": [
-                {"text": "검색", "type": "button",
-                 "risk_level": "safe_read", "reason": "keyword:검색"},
-                {"text": "저장", "type": "submit",
-                 "risk_level": "danger_write", "reason": "keyword:저장"},
-                {"text": "제출", "type": "submit",
-                 "risk_level": "danger_write", "reason": "type:submit"},
+                {"text": "검색", "type": "button", "risk_level": "safe_read", "reason": "keyword:검색"},
+                {"text": "저장", "type": "submit", "risk_level": "danger_write", "reason": "keyword:저장"},
+                {"text": "제출", "type": "submit", "risk_level": "danger_write", "reason": "type:submit"},
             ],
             "forms": [],
-            "tables": [{"headers": ["번호", "상태"], "row_count": 5,
-                        "column_count": 2}],
+            "tables": [{"headers": ["번호", "상태"], "row_count": 5, "column_count": 2}],
             "inputs": [],
         },
         "heuristic_candidates": {
             "page_role_candidates": [
-                {"role": "list_page", "score": 0.7,
-                 "reasons": ["tables:1"]},
-                {"role": "table_page", "score": 0.65,
-                 "reasons": ["tables:1"]},
+                {"role": "list_page", "score": 0.7, "reasons": ["tables:1"]},
+                {"role": "table_page", "score": 0.65, "reasons": ["tables:1"]},
             ],
             "domain_profile_matches": [],
             "task_candidates": [],
             "danger_elements": [
-                {"kind": "button", "text": "저장", "risk": "high",
-                 "reason": "universal_danger_term"},
-                {"kind": "button", "text": "제출", "risk": "high",
-                 "reason": "universal_danger_term"},
-                {"kind": "link", "text": "삭제", "risk": "high",
-                 "reason": "classified_danger_write"},
+                {"kind": "button", "text": "저장", "risk": "high", "reason": "universal_danger_term"},
+                {"kind": "button", "text": "제출", "risk": "high", "reason": "universal_danger_term"},
+                {"kind": "link", "text": "삭제", "risk": "high", "reason": "classified_danger_write"},
             ],
             "safe_navigation_candidates": [
-                {"kind": "link", "text": "목록", "risk": "low",
-                 "score": 3,
-                 "reasons": ["universal_safe_term", "safe_read_link"]},
-                {"kind": "link", "text": "상세", "risk": "low",
-                 "score": 3,
-                 "reasons": ["universal_safe_term", "safe_read_link"]},
-                {"kind": "button", "text": "검색", "risk": "low",
-                 "score": 3,
-                 "reasons": ["universal_safe_term", "safe_read_button"]},
+                {
+                    "kind": "link",
+                    "text": "목록",
+                    "risk": "low",
+                    "score": 3,
+                    "reasons": ["universal_safe_term", "safe_read_link"],
+                },
+                {
+                    "kind": "link",
+                    "text": "상세",
+                    "risk": "low",
+                    "score": 3,
+                    "reasons": ["universal_safe_term", "safe_read_link"],
+                },
+                {
+                    "kind": "button",
+                    "text": "검색",
+                    "risk": "low",
+                    "score": 3,
+                    "reasons": ["universal_safe_term", "safe_read_button"],
+                },
             ],
         },
         "warnings": [],
@@ -131,10 +133,7 @@ def test_fallback_plan_without_site_map():
     plan = payload["deterministic_fallback_plan"]
     assert plan["mode"] == "plan_only"
     # 사이트 정보가 없으므로 사용자 질문이 반드시 포함되어야 한다.
-    assert any(
-        "사이트" in q or "URL" in q or "관찰" in q
-        for q in plan["questions_for_user"]
-    )
+    assert any("사이트" in q or "URL" in q or "관찰" in q for q in plan["questions_for_user"])
     # 최소 하나의 step 또는 0 step 이어야 하며 모두 plan_only.
     for step in plan["steps"]:
         assert step["auto_execute"] is False
@@ -150,18 +149,14 @@ def test_safe_navigation_becomes_plan_only_steps():
         site_map_payload=_site_map_payload_rich(),
     )
     plan = payload["deterministic_fallback_plan"]
-    step_texts = {
-        (step.get("target") or {}).get("text", "") for step in plan["steps"]
-    }
+    step_texts = {(step.get("target") or {}).get("text", "") for step in plan["steps"]}
     # "목록" / "상세" 같은 safe navigation 후보가 step 으로 들어가야 한다.
     assert "목록" in step_texts or "상세" in step_texts
     # 모든 step 은 plan_only.
     for step in plan["steps"]:
         assert step["auto_execute"] is False
         assert step["requires_approval"] is True
-        assert step["action"] in {
-            a["name"] for a in DEFAULT_AVAILABLE_ACTIONS
-        }
+        assert step["action"] in {a["name"] for a in DEFAULT_AVAILABLE_ACTIONS}
 
 
 # ─── 3. danger_elements 는 blocked_or_deferred 로 분리 ───────────────────
@@ -174,21 +169,14 @@ def test_danger_elements_are_isolated_in_blocked():
         available_actions=list(DEFAULT_AVAILABLE_ACTIONS),
         tenant_policy=dict(DEFAULT_TENANT_POLICY),
     )
-    step_targets = [
-        (step.get("target") or {}).get("text", "") for step in plan["steps"]
-    ]
+    step_targets = [(step.get("target") or {}).get("text", "") for step in plan["steps"]]
     for danger in ("저장", "제출", "삭제"):
-        assert danger not in step_targets, (
-            f"danger text {danger} leaked into steps"
-        )
+        assert danger not in step_targets, f"danger text {danger} leaked into steps"
     blocked_actions = " ".join(
-        str(b.get("action", "") or "") + " " + str(b.get("reason", "") or "")
-        for b in plan["blocked_or_deferred"]
+        str(b.get("action", "") or "") + " " + str(b.get("reason", "") or "") for b in plan["blocked_or_deferred"]
     )
     for danger in ("저장", "제출", "삭제"):
-        assert danger in blocked_actions, (
-            f"danger term {danger} missing from blocked_or_deferred"
-        )
+        assert danger in blocked_actions, f"danger term {danger} missing from blocked_or_deferred"
 
 
 # ─── 4. 모든 steps.auto_execute=false ────────────────────────────────────
@@ -228,8 +216,7 @@ def test_blocked_actions_always_reflected():
         tenant_policy=dict(DEFAULT_TENANT_POLICY),
     )
     blocked_names = {b.get("action") for b in plan["blocked_or_deferred"]}
-    for must in ("submit_form", "delete", "payment",
-                 "credential_submit", "password_fill"):
+    for must in ("submit_form", "delete", "payment", "credential_submit", "password_fill"):
         assert must in blocked_names, f"missing blocked action: {must}"
 
 
@@ -243,10 +230,7 @@ def test_login_required_hint_triggers_user_question():
         available_actions=list(DEFAULT_AVAILABLE_ACTIONS),
         tenant_policy=dict(DEFAULT_TENANT_POLICY),
     )
-    assert any(
-        ("로그인" in q or "login" in q.lower())
-        for q in plan["questions_for_user"]
-    )
+    assert any(("로그인" in q or "login" in q.lower()) for q in plan["questions_for_user"])
 
 
 # ─── 8. modal 후보 있으면 사용자 확인 질문 생성 ──────────────────────────
@@ -259,10 +243,7 @@ def test_modal_hint_triggers_user_question():
         available_actions=list(DEFAULT_AVAILABLE_ACTIONS),
         tenant_policy=dict(DEFAULT_TENANT_POLICY),
     )
-    assert any(
-        ("모달" in q or "modal" in q.lower() or "닫기" in q)
-        for q in plan["questions_for_user"]
-    )
+    assert any(("모달" in q or "modal" in q.lower() or "닫기" in q) for q in plan["questions_for_user"])
 
 
 # ─── 9. user_request 가 빈 문자열이면 안전 질문 생성 ─────────────────────
@@ -275,10 +256,7 @@ def test_empty_user_request_adds_clarifying_question():
     )
     plan = payload["deterministic_fallback_plan"]
     assert "user_request_missing" in payload["warnings"]
-    assert any(
-        ("알려주세요" in q or "구체" in q)
-        for q in plan["questions_for_user"]
-    )
+    assert any(("알려주세요" in q or "구체" in q) for q in plan["questions_for_user"])
 
 
 # ─── 10. available_actions 기본값 포함 ──────────────────────────────────
@@ -353,17 +331,29 @@ def test_expected_json_schema_fields_present():
     )
     schema = payload["expected_json_schema"]
     for key in (
-        "goal", "confidence", "mode", "needs_user_confirmation",
-        "questions_for_user", "steps", "blocked_or_deferred",
-        "safety_notes", "do_not_execute",
+        "goal",
+        "confidence",
+        "mode",
+        "needs_user_confirmation",
+        "questions_for_user",
+        "steps",
+        "blocked_or_deferred",
+        "safety_notes",
+        "do_not_execute",
     ):
         assert key in schema
     assert schema["mode"] == "plan_only"
     # steps 내 필수 필드.
     sample_step = schema["steps"][0]
     for key in (
-        "step_id", "action", "description", "target",
-        "risk", "requires_approval", "auto_execute", "reason",
+        "step_id",
+        "action",
+        "description",
+        "target",
+        "risk",
+        "requires_approval",
+        "auto_execute",
+        "reason",
     ):
         assert key in sample_step
     assert sample_step["auto_execute"] is False
@@ -393,7 +383,10 @@ def test_sensitive_values_are_redacted():
     cleaned = sanitize_planner_payload(dirty)
     # drop 대상 키는 존재하지 않아야 한다.
     for dropped in (
-        "raw_html", "screenshot_path", "absolute_path", "cookie",
+        "raw_html",
+        "screenshot_path",
+        "absolute_path",
+        "cookie",
         "authorization",
     ):
         assert dropped not in cleaned
@@ -488,9 +481,20 @@ def test_no_action_execution_in_source():
 def test_no_domain_specific_keywords_in_source():
     src = _planner_source()
     forbidden_keywords = (
-        "기성", "청구", "정산", "계약", "현장",
-        "배민", "카페", "유튜브", "YouTube", "youtube",
-        "API 신청", "OAuth", "리뷰", "댓글",
+        "기성",
+        "청구",
+        "정산",
+        "계약",
+        "현장",
+        "배민",
+        "카페",
+        "유튜브",
+        "YouTube",
+        "youtube",
+        "API 신청",
+        "OAuth",
+        "리뷰",
+        "댓글",
     )
     for kw in forbidden_keywords:
         assert kw not in src, f"domain keyword hardcoded: {kw!r}"
@@ -504,11 +508,15 @@ def test_max_steps_limit_is_enforced():
     site_map = _site_map_payload_rich()
     extra = []
     for i in range(30):
-        extra.append({
-            "kind": "link", "text": f"항목{i}", "risk": "low",
-            "score": 3,
-            "reasons": ["universal_safe_term", "safe_read_link"],
-        })
+        extra.append(
+            {
+                "kind": "link",
+                "text": f"항목{i}",
+                "risk": "low",
+                "score": 3,
+                "reasons": ["universal_safe_term", "safe_read_link"],
+            }
+        )
     site_map["heuristic_candidates"]["safe_navigation_candidates"] = extra
 
     payload = build_planner_prompt_payload(
@@ -529,9 +537,7 @@ def test_fallback_plan_confidence_is_bounded():
         site_map_payload=_site_map_payload_rich(),
     )
     confidence = payload["deterministic_fallback_plan"]["confidence"]
-    assert 0.0 <= confidence <= 0.5, (
-        f"fallback plan confidence too high: {confidence}"
-    )
+    assert 0.0 <= confidence <= 0.5, f"fallback plan confidence too high: {confidence}"
 
     empty_payload = build_planner_prompt_payload(
         user_request="",
@@ -553,8 +559,11 @@ def test_do_not_execute_list_present():
     assert isinstance(plan["do_not_execute"], list)
     # universal 안전 정책 토큰이 포함되어 있어야 한다.
     for must in (
-        "submit_form", "delete", "payment",
-        "credential_submit", "password_fill",
+        "submit_form",
+        "delete",
+        "payment",
+        "credential_submit",
+        "password_fill",
     ):
         assert must in plan["do_not_execute"]
     # expected_json_schema 에도 do_not_execute 필드가 존재.
@@ -591,7 +600,7 @@ def test_default_available_actions_getter_does_not_mutate_source():
     actions[0]["name"] = "MUTATED"
     # 원본 상수 (tuple 자체) 와 내부 dict 내용 모두 그대로여야 한다.
     assert len(DEFAULT_AVAILABLE_ACTIONS) == len(snapshot)
-    for original, saved in zip(DEFAULT_AVAILABLE_ACTIONS, snapshot):
+    for original, saved in zip(DEFAULT_AVAILABLE_ACTIONS, snapshot, strict=False):
         assert original == saved
 
 
@@ -643,6 +652,4 @@ def test_danger_keyword_in_user_request_does_not_escape_into_steps():
     for step in payload["deterministic_fallback_plan"]["steps"]:
         text = (step.get("target") or {}).get("text") or ""
         for kw in ("저장", "제출", "삭제"):
-            assert kw not in text, (
-                f"danger keyword {kw} leaked into step target text"
-            )
+            assert kw not in text, f"danger keyword {kw} leaked into step target text"

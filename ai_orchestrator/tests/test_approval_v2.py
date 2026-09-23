@@ -1,20 +1,27 @@
 import os
 import sys
 import uuid
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.models import TaskRequest, RiskAssessment
 from ai_orchestrator.approval import (
-    issue_token, approve_token, validate_token,
-    RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SEC, _rate_store, _rate_lock,
+    RATE_LIMIT_MAX,
+    approve_token,
+    issue_token,
+    validate_token,
 )
-from ai_orchestrator.audit_logger import read_recent_logs, _LOG_PATH
+from ai_orchestrator.audit_logger import read_recent_logs
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
 def _req(task_id: str, action="edit_config") -> TaskRequest:
     return TaskRequest(
-        task_id=task_id, source="manual", action_type=action,
-        target="/var/www/haehan/cfg.yaml", description="테스트", requested_by="test",
+        task_id=task_id,
+        source="manual",
+        action_type=action,
+        target="/var/www/haehan/cfg.yaml",
+        description="테스트",
+        requested_by="test",
     )
 
 
@@ -101,16 +108,16 @@ def test_rate_limit():
     actor = f"rate-actor-{uuid.uuid4().hex}"
     # rate store 클린 (고유 actor라 기본적으로 비어 있음)
     results = []
-    for i in range(RATE_LIMIT_MAX + 1):
+    for _i in range(RATE_LIMIT_MAX + 1):
         tid = f"RATE-{uuid.uuid4().hex[:8]}"
         token = issue_token(_req(tid), _risk())
         _, status = approve_token(token.token_id, tid, actor, "admin")
         results.append(status)
 
-    assert results[:RATE_LIMIT_MAX] == ["approved"] * RATE_LIMIT_MAX, \
+    assert results[:RATE_LIMIT_MAX] == ["approved"] * RATE_LIMIT_MAX, (
         f"처음 {RATE_LIMIT_MAX}회는 모두 approved여야 함: {results}"
-    assert results[RATE_LIMIT_MAX] == "rate_limited", \
-        f"마지막은 rate_limited여야 함: {results[RATE_LIMIT_MAX]}"
+    )
+    assert results[RATE_LIMIT_MAX] == "rate_limited", f"마지막은 rate_limited여야 함: {results[RATE_LIMIT_MAX]}"
 
 
 # ── 10. audit 로그 이벤트명 구분 검증 ────────────────────────────

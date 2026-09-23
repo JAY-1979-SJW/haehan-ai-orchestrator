@@ -15,22 +15,20 @@
 from __future__ import annotations
 
 import pathlib
-import pytest
-from unittest.mock import MagicMock, patch
 
-from browser_worker.policy import (
-    evaluate_server_browser_url_policy,
-    DECISION_SERVER_BROWSER_ALLOWED_READONLY,
-    DECISION_REQUIRE_LOCAL_AGENT,
-    DECISION_REQUIRE_API_CONNECTOR,
-    DECISION_REQUIRE_USER_PRESENT,
-    DECISION_BLOCK,
-)
 from browser_worker.backends.real_playwright_backend import RealPlaywrightBackend
+from browser_worker.policy import (
+    DECISION_BLOCK,
+    DECISION_REQUIRE_API_CONNECTOR,
+    DECISION_REQUIRE_LOCAL_AGENT,
+    DECISION_REQUIRE_USER_PRESENT,
+    DECISION_SERVER_BROWSER_ALLOWED_READONLY,
+    evaluate_server_browser_url_policy,
+)
 from browser_worker.schemas import WorkerBrowserRequest
 
-
 # ── evaluate_server_browser_url_policy 단위 테스트 ────────────────────────────
+
 
 class TestEvaluateServerBrowserUrlPolicy:
     """synthetic URL만 사용. 실제 은행/카드/홈택스 접속 금지."""
@@ -153,18 +151,19 @@ class TestEvaluateServerBrowserUrlPolicy:
 
 # ── RealPlaywrightBackend._validate_url 통합 테스트 ─────────────────────────
 
+
 class TestRealPlaywrightBackendValidateUrl:
     def _backend(self):
         return RealPlaywrightBackend()
 
     def test_about_blank_validate_allowed(self):
         backend = self._backend()
-        allowed, code = backend._validate_url("about:blank", {})
+        allowed, _code = backend._validate_url("about:blank", {})
         assert allowed is True
 
     def test_example_com_validate_allowed(self):
         backend = self._backend()
-        allowed, code = backend._validate_url("https://example.com/", {})
+        allowed, _code = backend._validate_url("https://example.com/", {})
         assert allowed is True
 
     def test_google_accounts_validate_blocked(self):
@@ -175,21 +174,22 @@ class TestRealPlaywrightBackendValidateUrl:
 
     def test_hometax_validate_blocked(self):
         backend = self._backend()
-        allowed, code = backend._validate_url("https://www.hometax.go.kr/", {})
+        allowed, _code = backend._validate_url("https://www.hometax.go.kr/", {})
         assert allowed is False
 
     def test_otp_metadata_validate_blocked(self):
         backend = self._backend()
-        allowed, code = backend._validate_url("about:blank", {"requires_otp": True})
+        allowed, _code = backend._validate_url("about:blank", {"requires_otp": True})
         assert allowed is False
 
     def test_production_mode_validate_blocked(self):
         backend = self._backend()
-        allowed, code = backend._validate_url("about:blank", {"production_mode": True})
+        allowed, _code = backend._validate_url("about:blank", {"production_mode": True})
         assert allowed is False
 
 
 # ── page.goto 차단 검증 ───────────────────────────────────────────────────────
+
 
 class TestPageGotoNotCalledForBlockedUrls:
     """차단된 URL에서 page.goto가 호출되지 않음을 검증. synthetic URL 사용."""
@@ -205,6 +205,7 @@ class TestPageGotoNotCalledForBlockedUrls:
     def test_blocked_url_returns_error_without_goto(self):
         """차단 URL → error 반환, 브라우저 미시작."""
         import os
+
         os.environ["BROWSER_EXECUTION_ENABLED"] = "true"
         try:
             backend = RealPlaywrightBackend()
@@ -218,6 +219,7 @@ class TestPageGotoNotCalledForBlockedUrls:
     def test_hometax_blocked_without_goto(self):
         """홈택스 URL → error 반환, 브라우저 미시작."""
         import os
+
         os.environ["BROWSER_EXECUTION_ENABLED"] = "true"
         try:
             backend = RealPlaywrightBackend()
@@ -231,6 +233,7 @@ class TestPageGotoNotCalledForBlockedUrls:
     def test_otp_metadata_blocked_without_goto(self):
         """OTP 메타데이터 → error 반환, 브라우저 미시작."""
         import os
+
         os.environ["BROWSER_EXECUTION_ENABLED"] = "true"
         try:
             backend = RealPlaywrightBackend()
@@ -244,6 +247,7 @@ class TestPageGotoNotCalledForBlockedUrls:
     def test_blocked_response_has_no_raw_sensitive_data(self):
         """차단 result에 원본 password/token/cookie/session 없음."""
         import os
+
         os.environ["BROWSER_EXECUTION_ENABLED"] = "true"
         try:
             backend = RealPlaywrightBackend()
@@ -258,6 +262,7 @@ class TestPageGotoNotCalledForBlockedUrls:
 
 
 # ── 소스코드 정책 검사 ────────────────────────────────────────────────────────
+
 
 class TestSourceCodePolicy:
     POLICY_FILE = pathlib.Path(__file__).parent.parent / "browser_worker" / "policy.py"
@@ -304,16 +309,26 @@ class TestSourceCodePolicy:
 
 # ── 기존 정책과의 호환성 ──────────────────────────────────────────────────────
 
+
 class TestCompatibilityWithBoundaryPolicy:
     def test_decision_constants_match_boundary_policy(self):
         """browser_worker/policy.py와 server_browser_boundary_policy.py decision 문자열 일치."""
         from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
-            DECISION_SERVER_BROWSER_ALLOWED_READONLY as BP_ALLOWED,
-            DECISION_REQUIRE_LOCAL_AGENT as BP_LOCAL,
-            DECISION_REQUIRE_API_CONNECTOR as BP_API,
-            DECISION_REQUIRE_USER_PRESENT as BP_UP,
             DECISION_BLOCK as BP_BLOCK,
         )
+        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+            DECISION_REQUIRE_API_CONNECTOR as BP_API,
+        )
+        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+            DECISION_REQUIRE_LOCAL_AGENT as BP_LOCAL,
+        )
+        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+            DECISION_REQUIRE_USER_PRESENT as BP_UP,
+        )
+        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+            DECISION_SERVER_BROWSER_ALLOWED_READONLY as BP_ALLOWED,
+        )
+
         assert DECISION_SERVER_BROWSER_ALLOWED_READONLY == BP_ALLOWED
         assert DECISION_REQUIRE_LOCAL_AGENT == BP_LOCAL
         assert DECISION_REQUIRE_API_CONNECTOR == BP_API
@@ -323,6 +338,7 @@ class TestCompatibilityWithBoundaryPolicy:
     def test_no_circular_import(self):
         """browser_worker.policy에서 ai_orchestrator import 없음."""
         import browser_worker.policy as bwp
+
         src = pathlib.Path(bwp.__file__).read_text(encoding="utf-8")
         assert "from ai_orchestrator" not in src
         assert "import ai_orchestrator" not in src
@@ -332,10 +348,13 @@ class TestCompatibilityWithBoundaryPolicy:
         from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
             classify_restricted_site_for_server_browser,
         )
+
         bw_result = evaluate_server_browser_url_policy("https://accounts.google.com/")
-        bp_result = classify_restricted_site_for_server_browser({
-            "target_domain": "accounts.google.com",
-        })
+        bp_result = classify_restricted_site_for_server_browser(
+            {
+                "target_domain": "accounts.google.com",
+            }
+        )
         assert bw_result["allowed"] is False
         assert bp_result["server_browser_allowed"] is False
 
@@ -344,5 +363,6 @@ class TestCompatibilityWithBoundaryPolicy:
         from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
             classify_restricted_site_for_server_browser,
         )
+
         bp_result = classify_restricted_site_for_server_browser({"site_category": "bank"})
         assert bp_result["server_browser_allowed"] is False

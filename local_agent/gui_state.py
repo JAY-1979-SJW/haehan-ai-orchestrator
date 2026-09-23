@@ -2,10 +2,11 @@
 
 GUI 와 트레이가 공유하는 단일 진실 소스.
 """
+
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from . import connection_diagnostics as cd
@@ -26,9 +27,15 @@ STATE_RECONNECTING = "RECONNECTING"
 STATE_SERVER_UNREACHABLE = cd.STATE_SERVER_UNREACHABLE
 
 ALL_STATES = (
-    STATE_NOT_REGISTERED, STATE_CONNECTING, STATE_AUTHENTICATING,
-    STATE_CONNECTED, STATE_HEARTBEAT_OK, STATE_DISCONNECTED,
-    STATE_AUTH_FAILED, STATE_RECONNECTING, STATE_SERVER_UNREACHABLE,
+    STATE_NOT_REGISTERED,
+    STATE_CONNECTING,
+    STATE_AUTHENTICATING,
+    STATE_CONNECTED,
+    STATE_HEARTBEAT_OK,
+    STATE_DISCONNECTED,
+    STATE_AUTH_FAILED,
+    STATE_RECONNECTING,
+    STATE_SERVER_UNREACHABLE,
 )
 
 
@@ -38,13 +45,14 @@ ALL_STATES = (
 @dataclass
 class GuiModel:
     """GUI 가 표시할 모든 정보. device_token 원문 보유 금지."""
+
     server_url: str = "https://haehan-ai.kr/orchestrator"
-    agent_id: str = ""                   # 풀 ID (저장만, 표시는 마스킹)
+    agent_id: str = ""  # 풀 ID (저장만, 표시는 마스킹)
     state: str = STATE_NOT_REGISTERED
     last_heartbeat_iso: str = ""
     last_error_code: str = ""
     last_error_message_user: str = ""
-    last_user_event: str = ""            # 등록 성공/실패 등 1회성 안내
+    last_user_event: str = ""  # 등록 성공/실패 등 1회성 안내
     reconnect_count: int = 0
 
     @property
@@ -121,6 +129,7 @@ class GuiController:
             # snapshot copy (얕은) — caller 가 쓰기 안 함
             m = self._model
             import dataclasses
+
             return dataclasses.replace(m)
 
     def set_server_url(self, url: str) -> None:
@@ -133,16 +142,13 @@ class GuiController:
             self._model.agent_id = agent_id
         self._notify()
 
-    def fire(self, event: str, *, error_code: str = "",
-             user_event: str = "") -> None:
+    def fire(self, event: str, *, error_code: str = "", user_event: str = "") -> None:
         """이벤트 발화 — 상태 머신에 따라 state 갱신."""
         with self._lock:
             new = transition(self._model.state, event)
             self._model.state = new
             if event == "heartbeat_ack":
-                self._model.last_heartbeat_iso = (
-                    datetime.now(KST).replace(microsecond=0).isoformat()
-                )
+                self._model.last_heartbeat_iso = datetime.now(KST).replace(microsecond=0).isoformat()
                 self._model.last_error_code = ""
                 self._model.last_error_message_user = ""
             if error_code:
@@ -170,7 +176,7 @@ class GuiController:
         for fn in self._listeners:
             try:
                 fn(snap)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
     def render_user_block(self) -> str:

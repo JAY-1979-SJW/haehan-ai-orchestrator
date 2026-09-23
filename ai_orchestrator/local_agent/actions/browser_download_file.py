@@ -4,16 +4,15 @@
 - 사후 evidence 저장 (saved_path, file_size, signature)
 - 쿠키/session/storage_state 추출 안 함
 """
+
 from __future__ import annotations
 
-import hashlib
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import urlparse
 
-from ai_orchestrator.local_agent.action_registry import register_handler
 from ai_orchestrator.local_agent.action_evidence_collector import collect_evidence
+from ai_orchestrator.local_agent.action_registry import register_handler
 
 ACTION_NAME = "browser.download_file"
 
@@ -52,7 +51,7 @@ def execute(
         return {"ok": False, "verdict": "ERROR", "error": "source_url 필요"}
     os.makedirs(out_dir, exist_ok=True)
 
-    started = datetime.now(timezone.utc)
+    started = datetime.now(UTC)  # noqa: F841
 
     try:
         from playwright.sync_api import sync_playwright
@@ -69,9 +68,8 @@ def execute(
             try:
                 with page.expect_download(timeout=timeout_seconds * 1000) as dl_info:
                     try:
-                        page.goto(source_url, timeout=timeout_seconds * 1000,
-                                  wait_until="domcontentloaded")
-                    except Exception:
+                        page.goto(source_url, timeout=timeout_seconds * 1000, wait_until="domcontentloaded")
+                    except Exception:  # noqa: S110
                         pass
                 download = dl_info.value
                 fname = expected_filename or download.suggested_filename or "downloaded"
@@ -82,7 +80,7 @@ def execute(
                 raw["saved_path"] = save_path
                 raw["file_size"] = os.path.getsize(save_path) if os.path.exists(save_path) else 0
                 raw["signature"] = _file_signature(save_path)
-                raw["downloaded_at"] = datetime.now(timezone.utc).isoformat()
+                raw["downloaded_at"] = datetime.now(UTC).isoformat()
                 raw["ok"] = True
                 raw["verdict"] = "DOWNLOAD_SUCCESS"
             except Exception as e:

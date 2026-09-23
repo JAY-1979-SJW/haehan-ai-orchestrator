@@ -4,26 +4,34 @@
 - live 호출은 transport 주입으로 시뮬레이션.
 - dry_run/unconfigured 경로에서 DB write 없음을 확인.
 """
+
 from __future__ import annotations
 
 import sqlite3
 
-import pytest
-
 from ai_orchestrator.connectors import (
     naver_openapi_config as cfg_mod,
+)
+from ai_orchestrator.connectors import (
     naver_search_client,
-    naver_search_db as db_mod,
     naver_search_jobs,
+)
+from ai_orchestrator.connectors import (
+    naver_search_db as db_mod,
+)
+from ai_orchestrator.connectors import (
     naver_search_state as state_mod,
 )
 
 
 def _clear_env(monkeypatch):
     for k in (
-        cfg_mod.ENV_BASE_URL, cfg_mod.ENV_CLIENT_ID,
-        cfg_mod.ENV_CLIENT_SECRET, cfg_mod.ENV_DRY_RUN,
-        "NAVER_SEARCH_DB_ENABLED", "NAVER_SEARCH_DB_PATH",
+        cfg_mod.ENV_BASE_URL,
+        cfg_mod.ENV_CLIENT_ID,
+        cfg_mod.ENV_CLIENT_SECRET,
+        cfg_mod.ENV_DRY_RUN,
+        "NAVER_SEARCH_DB_ENABLED",
+        "NAVER_SEARCH_DB_PATH",
         "NAVER_SEARCH_STATE_PATH",
     ):
         monkeypatch.delenv(k, raising=False)
@@ -37,8 +45,8 @@ def _live_env(monkeypatch):
 
 def _blog_transport(items):
     def transport(method, url, headers, params):
-        return 200, {"total": len(items), "start": 1, "display": len(items),
-                     "items": items}
+        return 200, {"total": len(items), "start": 1, "display": len(items), "items": items}
+
     return transport
 
 
@@ -57,8 +65,11 @@ def test_dry_run_no_db_no_state(tmp_path, monkeypatch):
 
     client = naver_search_client.NaverSearchClient(transport=transport)
     out = naver_search_jobs.run_naver_blog_search_job(
-        "python", client=client,
-        store_path=store, db_path=db_path, state_path=state_path,
+        "python",
+        client=client,
+        store_path=store,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out.status == "dry_run"
     assert out.db_status == "skipped_dry_run"
@@ -99,18 +110,25 @@ def test_live_db_disabled_keeps_json_only(tmp_path, monkeypatch):
     # flag off
     monkeypatch.setenv("NAVER_SEARCH_DB_ENABLED", "false")
 
-    items = [{
-        "title": "t", "link": "https://blog.example.invalid/a",
-        "description": "d", "bloggername": "b", "bloggerlink": "bl",
-        "postdate": "99991231",
-    }]
+    items = [
+        {
+            "title": "t",
+            "link": "https://blog.example.invalid/a",
+            "description": "d",
+            "bloggername": "b",
+            "bloggerlink": "bl",
+            "postdate": "99991231",
+        }
+    ]
     client = naver_search_client.NaverSearchClient(transport=_blog_transport(items))
     store = tmp_path / "blog.json"
     db_path = tmp_path / "naver_search.db"
 
     out = naver_search_jobs.run_naver_blog_search_job(
-        "python", client=client,
-        store_path=store, db_path=db_path,
+        "python",
+        client=client,
+        store_path=store,
+        db_path=db_path,
         state_path=tmp_path / "state.json",
     )
     assert out.status == "ok"
@@ -130,20 +148,32 @@ def test_blog_duplicate_link_is_ignored(tmp_path, monkeypatch):
     state_path = tmp_path / "state.json"
 
     items_first = [
-        {"title": "A", "link": "https://b.example.invalid/1",
-         "description": "", "bloggername": "n", "bloggerlink": "bl",
-         "postdate": "99991231"},
-        {"title": "B", "link": "https://b.example.invalid/2",
-         "description": "", "bloggername": "n", "bloggerlink": "bl",
-         "postdate": "99991231"},
+        {
+            "title": "A",
+            "link": "https://b.example.invalid/1",
+            "description": "",
+            "bloggername": "n",
+            "bloggerlink": "bl",
+            "postdate": "99991231",
+        },
+        {
+            "title": "B",
+            "link": "https://b.example.invalid/2",
+            "description": "",
+            "bloggername": "n",
+            "bloggerlink": "bl",
+            "postdate": "99991231",
+        },
     ]
     client = naver_search_client.NaverSearchClient(
         transport=_blog_transport(items_first),
     )
     out1 = naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client,
+        "파이썬",
+        client=client,
         store_path=tmp_path / "blog1.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out1.status == "ok"
     assert out1.db_status == "ok"
@@ -152,18 +182,25 @@ def test_blog_duplicate_link_is_ignored(tmp_path, monkeypatch):
     assert out1.state_updated is True
 
     # 두 번째 실행 — 같은 link 2개 + 새 link 1개
-    items_second = items_first + [
-        {"title": "C", "link": "https://b.example.invalid/3",
-         "description": "", "bloggername": "n", "bloggerlink": "bl",
-         "postdate": "99991231"},
+    items_second = items_first + [  # noqa: RUF005
+        {
+            "title": "C",
+            "link": "https://b.example.invalid/3",
+            "description": "",
+            "bloggername": "n",
+            "bloggerlink": "bl",
+            "postdate": "99991231",
+        },
     ]
     client2 = naver_search_client.NaverSearchClient(
         transport=_blog_transport(items_second),
     )
     out2 = naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client2,
+        "파이썬",
+        client=client2,
         store_path=tmp_path / "blog2.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out2.status == "ok"
     assert out2.inserted_count == 1
@@ -172,9 +209,7 @@ def test_blog_duplicate_link_is_ignored(tmp_path, monkeypatch):
     # 총 row 수 3
     conn = sqlite3.connect(str(db_path))
     try:
-        n = conn.execute(
-            f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}"
-        ).fetchone()[0]
+        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]
         assert n == 3
     finally:
         conn.close()
@@ -193,26 +228,51 @@ def test_shopping_duplicate_product_id_and_missing_skipped(tmp_path, monkeypatch
     def shop_items(rows):
         def t(method, url, headers, params):
             return 200, {"items": rows}
+
         return t
 
     rows1 = [
-        {"title": "키1", "link": "u1", "image": "i1",
-         "lprice": "10000", "hprice": "", "mallName": "m",
-         "productId": "PID-1", "productType": "1",
-         "brand": "", "maker": "",
-         "category1": "", "category2": "", "category3": "", "category4": ""},
+        {
+            "title": "키1",
+            "link": "u1",
+            "image": "i1",
+            "lprice": "10000",
+            "hprice": "",
+            "mallName": "m",
+            "productId": "PID-1",
+            "productType": "1",
+            "brand": "",
+            "maker": "",
+            "category1": "",
+            "category2": "",
+            "category3": "",
+            "category4": "",
+        },
         # product_id 공란 → skipped
-        {"title": "키2", "link": "u2", "image": "i2",
-         "lprice": "20000", "hprice": "", "mallName": "m",
-         "productId": "", "productType": "1",
-         "brand": "", "maker": "",
-         "category1": "", "category2": "", "category3": "", "category4": ""},
+        {
+            "title": "키2",
+            "link": "u2",
+            "image": "i2",
+            "lprice": "20000",
+            "hprice": "",
+            "mallName": "m",
+            "productId": "",
+            "productType": "1",
+            "brand": "",
+            "maker": "",
+            "category1": "",
+            "category2": "",
+            "category3": "",
+            "category4": "",
+        },
     ]
     client = naver_search_client.NaverSearchClient(transport=shop_items(rows1))
     out1 = naver_search_jobs.run_naver_shopping_search_job(
-        "키보드", client=client,
+        "키보드",
+        client=client,
         store_path=tmp_path / "s1.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out1.status == "ok"
     assert out1.inserted_count == 1
@@ -222,9 +282,11 @@ def test_shopping_duplicate_product_id_and_missing_skipped(tmp_path, monkeypatch
     # 같은 PID-1 재실행 → duplicate=1
     client2 = naver_search_client.NaverSearchClient(transport=shop_items(rows1))
     out2 = naver_search_jobs.run_naver_shopping_search_job(
-        "키보드", client=client2,
+        "키보드",
+        client=client2,
         store_path=tmp_path / "s2.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert out2.inserted_count == 0
     assert out2.duplicate_count == 1
@@ -232,9 +294,7 @@ def test_shopping_duplicate_product_id_and_missing_skipped(tmp_path, monkeypatch
 
     conn = sqlite3.connect(str(db_path))
     try:
-        n = conn.execute(
-            f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}"
-        ).fetchone()[0]
+        n = conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]
         assert n == 1
     finally:
         conn.close()
@@ -250,22 +310,36 @@ def test_state_file_tracks_last_collected(tmp_path, monkeypatch):
     db_path = tmp_path / "naver_search.db"
     state_path = tmp_path / "state.json"
 
-    items = [{"title": "t", "link": "https://b.example.invalid/x",
-              "description": "", "bloggername": "n", "bloggerlink": "",
-              "postdate": "99991231"}]
+    items = [
+        {
+            "title": "t",
+            "link": "https://b.example.invalid/x",
+            "description": "",
+            "bloggername": "n",
+            "bloggerlink": "",
+            "postdate": "99991231",
+        }
+    ]
     client = naver_search_client.NaverSearchClient(transport=_blog_transport(items))
     naver_search_jobs.run_naver_blog_search_job(
-        "파이썬", client=client,
+        "파이썬",
+        client=client,
         store_path=tmp_path / "blog.json",
-        db_path=db_path, state_path=state_path,
+        db_path=db_path,
+        state_path=state_path,
     )
     assert state_path.exists()
     last = state_mod.get_last_collected_at("naver_blog", "파이썬", path=state_path)
     assert isinstance(last, str) and last
     # 다른 쿼리는 None
-    assert state_mod.get_last_collected_at(
-        "naver_blog", "다른쿼리", path=state_path,
-    ) is None
+    assert (
+        state_mod.get_last_collected_at(
+            "naver_blog",
+            "다른쿼리",
+            path=state_path,
+        )
+        is None
+    )
 
 
 # ────────────────────────────────────────────────────────────────
@@ -273,10 +347,12 @@ def test_state_file_tracks_last_collected(tmp_path, monkeypatch):
 # ────────────────────────────────────────────────────────────────
 def test_json_record_schema_preserved(tmp_path, monkeypatch):
     import json
+
     _clear_env(monkeypatch)  # dry_run 기본
     store = tmp_path / "data" / "blog.json"
     out = naver_search_jobs.run_naver_blog_search_job(
-        "x", store_path=store,
+        "x",
+        store_path=store,
         db_path=tmp_path / "naver_search.db",
         state_path=tmp_path / "state.json",
     )

@@ -1,4 +1,5 @@
 """Shared constants, dataclasses, and utility helpers for module_quality_gate."""
+
 from __future__ import annotations
 
 import os
@@ -6,9 +7,9 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable
 from uuid import uuid4
 
 try:
@@ -20,7 +21,9 @@ sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_GATE_PYCACHE = Path(
-    os.environ.get("HAEHAN_MODULE_GATE_PYCACHE", str(usable_temp_base("module_gate_pycache", "HAEHAN_MODULE_GATE_PYCACHE")))
+    os.environ.get(
+        "HAEHAN_MODULE_GATE_PYCACHE", str(usable_temp_base("module_gate_pycache", "HAEHAN_MODULE_GATE_PYCACHE"))
+    )
 )
 os.environ.setdefault("PYTHONPYCACHEPREFIX", str(MODULE_GATE_PYCACHE))
 sys.pycache_prefix = str(MODULE_GATE_PYCACHE)
@@ -74,7 +77,9 @@ def redact(text: str) -> str:
         (re.compile(r"(?i)(Bearer\s+)[A-Za-z0-9._~+/=-]+"), r"\1<redacted>"),
         (re.compile(r"sk-[A-Za-z0-9_-]{12,}"), "sk-<redacted>"),
         (
-            re.compile(r"(?i)((?:api[_-]?key|access[_-]?token|refresh[_-]?token|device[_-]?token|secret|password)\s*[:=]\s*)[^\s'\"`;,]+"),
+            re.compile(
+                r"(?i)((?:api[_-]?key|access[_-]?token|refresh[_-]?token|device[_-]?token|secret|password)\s*[:=]\s*)[^\s'\"`;,]+"
+            ),
             r"\1<redacted>",
         ),
     )
@@ -112,7 +117,7 @@ def find_staged_out_of_scope(staged_paths: Iterable[str]) -> list[str]:
 
 
 def git_staged_paths() -> list[str]:
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: UP022
         ["git", "diff", "--cached", "--name-only"],
         cwd=ROOT,
         text=True,

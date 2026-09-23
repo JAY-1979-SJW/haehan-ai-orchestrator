@@ -10,11 +10,10 @@ This module implements approval token validation with:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
 import hashlib
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +41,7 @@ class BrowserApprovalRecord:
         expires_at: Optional expiration time (None = no expiration in PoC)
         created_at: Creation timestamp
     """
+
     approval_id: str
     action_type: str
     selector: str
@@ -49,7 +49,7 @@ class BrowserApprovalRecord:
     status: str = "approved"  # approved, used, revoked, expired
     risk_level: str = "low"
     final_approval_required: bool = False
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def is_valid(self) -> bool:
@@ -71,10 +71,11 @@ class ApprovalVerificationResult:
         error_message: Human-readable error message
         record: Approval record if found
     """
+
     valid: bool
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
-    record: Optional[BrowserApprovalRecord] = None
+    error_code: str | None = None
+    error_message: str | None = None
+    record: BrowserApprovalRecord | None = None
 
 
 class BrowserApprovalStore:
@@ -86,7 +87,7 @@ class BrowserApprovalStore:
 
     def __init__(self):
         """Initialize approval store."""
-        self._records: Dict[str, BrowserApprovalRecord] = {}
+        self._records: dict[str, BrowserApprovalRecord] = {}
 
     def create_approval(
         self,
@@ -96,7 +97,7 @@ class BrowserApprovalStore:
         approval_token: str,
         risk_level: str = "low",
         final_approval_required: bool = False,
-        expires_in_seconds: Optional[int] = None,
+        expires_in_seconds: int | None = None,
     ) -> BrowserApprovalRecord:
         """Create approval record (token_hash stored, not raw token).
 
@@ -114,9 +115,7 @@ class BrowserApprovalStore:
         """
         # Reject duplicate approval_id — never overwrite existing record
         if approval_id in self._records:
-            raise DuplicateApprovalError(
-                f"approval_id already exists: {approval_id}"
-            )
+            raise DuplicateApprovalError(f"approval_id already exists: {approval_id}")
 
         # Compute hash and discard raw token
         token_hash = _hash_token(approval_token)
@@ -140,7 +139,7 @@ class BrowserApprovalStore:
         logger.info(f"Approval created: {approval_id}")
         return record
 
-    def get(self, approval_id: str) -> Optional[BrowserApprovalRecord]:
+    def get(self, approval_id: str) -> BrowserApprovalRecord | None:
         """Retrieve approval record by ID."""
         return self._records.get(approval_id)
 
@@ -198,8 +197,8 @@ class BrowserApprovalVerifier:
 
     def verify(
         self,
-        approval_id: Optional[str],
-        approval_token: Optional[str],
+        approval_id: str | None,
+        approval_token: str | None,
         action_type: str,
         selector: str,
     ) -> ApprovalVerificationResult:

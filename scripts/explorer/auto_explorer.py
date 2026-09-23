@@ -20,6 +20,7 @@
     from scripts.explorer.auto_explorer import explore_site
     r = explore_site(page, depth=2, max_pages=20)
 """
+
 from __future__ import annotations
 
 import json
@@ -27,11 +28,11 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
-from scripts.logger import get_logger
+from scripts.form.bot_radar import scan as bot_scan
 from scripts.form.discovery import discover_form
-from scripts.form.bot_radar import scan as bot_scan, BotDetected
+from scripts.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -108,7 +109,11 @@ def explore_site(
     same_host_only: bool = True,
     bot_check_each_page: bool = True,
     skip_url_patterns: tuple[str, ...] = (
-        "logout", "signout", "delete", "remove", "submit",
+        "logout",
+        "signout",
+        "delete",
+        "remove",
+        "submit",
     ),
 ) -> dict:
     """현재 페이지부터 BFS 탐색.
@@ -137,8 +142,7 @@ def explore_site(
     bot_reports: list[dict] = []
     aborted_reason = ""
 
-    log.info("[explorer] 시작 host=%s start=%s depth=%d max=%d",
-             host, start_url, depth, max_pages)
+    log.info("[explorer] 시작 host=%s start=%s depth=%d max=%d", host, start_url, depth, max_pages)
 
     while queue and len(pages_data) < max_pages:
         url, d = queue.pop(0)
@@ -177,8 +181,7 @@ def explore_site(
         if bot_check_each_page:
             try:
                 br = bot_scan(page)
-                bot_reports.append({"url": url, "level": br["level"],
-                                    "vendors": br["vendors"]})
+                bot_reports.append({"url": url, "level": br["level"], "vendors": br["vendors"]})
                 if br["flagged"]:
                     aborted_reason = f"bot_flagged: {br['level']}"
                     log.warning("[explorer] 봇 감지 — 중단: %s", aborted_reason)
@@ -202,7 +205,8 @@ def explore_site(
                 pass
 
         rec = {
-            "url": url, "depth": d,
+            "url": url,
+            "depth": d,
             "title": s.get("title", "")[:120],
             "tables": s.get("tables", [])[:10],
             "forms_count": s.get("forms", 0),
@@ -223,13 +227,21 @@ def explore_site(
                 queue.append((nurl, d + 1))
         # 중복 제거
         seen = set()
-        rec["links_out"] = [l for l in out_links
-                            if not (l["href"] in seen or seen.add(l["href"]))][:50]
+        rec["links_out"] = [
+            l
+            for l in out_links  # noqa: E741
+            if not (l["href"] in seen or seen.add(l["href"]))
+        ][:50]
 
         pages_data.append(rec)
-        log.info("[explorer] [%d/%d] d=%d %s — 링크 %d개",
-                 len(pages_data), max_pages, d,
-                 (s.get("title", "") or url)[:60], len(rec["links_out"]))
+        log.info(
+            "[explorer] [%d/%d] d=%d %s — 링크 %d개",
+            len(pages_data),
+            max_pages,
+            d,
+            (s.get("title", "") or url)[:60],
+            len(rec["links_out"]),
+        )
 
     elapsed = round(time.time() - started_at, 2)
     result = {
@@ -249,8 +261,7 @@ def explore_site(
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_host = re.sub(r"[^a-zA-Z0-9.-]", "_", host)
         fp = SITEMAP_DIR / f"{safe_host}_auto_{ts}.json"
-        fp.write_text(json.dumps(result, ensure_ascii=False, indent=2),
-                      encoding="utf-8")
+        fp.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         result["saved_to"] = str(fp)
         log.info("[explorer] 저장: %s", fp)
 

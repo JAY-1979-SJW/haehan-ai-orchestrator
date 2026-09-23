@@ -13,6 +13,7 @@ LOCAL_AGENT_PUBLIC_EXTERNAL_READONLY_LIVE_SMOKE_1
 서버에서 절대 실행하면 안 된다.
 이 스크립트는 사용자 PC에서 직접 실행되어야 한다.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,9 +22,8 @@ import platform
 import socket
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import urlparse
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
@@ -37,35 +37,71 @@ _ALLOWLIST = (
 )
 
 # read-only allow action
-_ALLOWED_READONLY_ACTIONS = frozenset((
-    "open_url", "read_page", "extract_text", "extract_metadata",
-))
+_ALLOWED_READONLY_ACTIONS = frozenset(
+    (
+        "open_url",
+        "read_page",
+        "extract_text",
+        "extract_metadata",
+    )
+)
 
 # 차단 액션
-_BLOCKED_LIVE_ACTIONS = frozenset((
-    "login", "type_password", "submit_form",
-    "cookie_export", "session_export", "storage_state_export", "token_export",
-    "payment", "transfer", "bid_submit", "electronic_signature",
-    "cert_password_input", "otp_input",
-    "download_file_execute", "click_submit",
-))
+_BLOCKED_LIVE_ACTIONS = frozenset(
+    (
+        "login",
+        "type_password",
+        "submit_form",
+        "cookie_export",
+        "session_export",
+        "storage_state_export",
+        "token_export",
+        "payment",
+        "transfer",
+        "bid_submit",
+        "electronic_signature",
+        "cert_password_input",
+        "otp_input",
+        "download_file_execute",
+        "click_submit",
+    )
+)
 
 # 결과 허용 필드
-_ALLOWED_RESULT_FIELDS = frozenset((
-    "url", "final_url", "reachable", "title",
-    "text_excerpt", "links_count", "table_count",
-    "download_candidate_count", "blocked_sensitive_actions",
-    "server_browser_used", "cookie_exported", "session_exported",
-    "storage_state_exported", "password_collected", "otp_collected",
-    "certificate_password_collected", "redaction_applied", "verdict",
-    "error_category", "duration_ms",
-))
+_ALLOWED_RESULT_FIELDS = frozenset(
+    (
+        "url",
+        "final_url",
+        "reachable",
+        "title",
+        "text_excerpt",
+        "links_count",
+        "table_count",
+        "download_candidate_count",
+        "blocked_sensitive_actions",
+        "server_browser_used",
+        "cookie_exported",
+        "session_exported",
+        "storage_state_exported",
+        "password_collected",
+        "otp_collected",
+        "certificate_password_collected",
+        "redaction_applied",
+        "verdict",
+        "error_category",
+        "duration_ms",
+    )
+)
 
 # 7개 safe field 항상 False
 _SAFE_FIELDS = (
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 )
 
 
@@ -112,49 +148,67 @@ def _sanitize_result(raw: dict[str, Any]) -> dict[str, Any]:
 def _classify_blocked_action_payloads() -> list[dict[str, Any]]:
     """민감 동작 차단 검증 (실제 실행 없이 정책 분류만)."""
     from ai_orchestrator.local_agent.action_risk_policy import (
-        classify_action, GRADE_BLOCKED, GRADE_USER_DIRECT,
+        GRADE_BLOCKED,
+        GRADE_USER_DIRECT,
+        classify_action,
     )
+
     sensitive_actions = [
-        "login_password_input", "otp_input", "cert_password_input",
-        "cookie_export", "session_export", "storage_state_export", "token_export",
-        "confirm_payment", "auto_payment", "transfer_money",
-        "auto_bid_submit", "bid_final_submit",
-        "auto_sign", "e_sign",
+        "login_password_input",
+        "otp_input",
+        "cert_password_input",
+        "cookie_export",
+        "session_export",
+        "storage_state_export",
+        "token_export",
+        "confirm_payment",
+        "auto_payment",
+        "transfer_money",
+        "auto_bid_submit",
+        "bid_final_submit",
+        "auto_sign",
+        "e_sign",
     ]
     out = []
     for action in sensitive_actions:
         grade = classify_action(action)
         is_blocked_or_user_direct = grade in (GRADE_BLOCKED, GRADE_USER_DIRECT)
-        out.append({
-            "action": action,
-            "grade": grade,
-            "blocked_or_user_direct": is_blocked_or_user_direct,
-        })
+        out.append(
+            {
+                "action": action,
+                "grade": grade,
+                "blocked_or_user_direct": is_blocked_or_user_direct,
+            }
+        )
     return out
 
 
 def smoke_one(url: str) -> dict[str, Any]:
     """단일 URL read-only smoke."""
-    task_id = str(uuid.uuid4())
-    started = datetime.now(timezone.utc)
+    task_id = str(uuid.uuid4())  # noqa: F841
+    started = datetime.now(UTC)
 
     if not _is_allowlisted(url):
-        return _sanitize_result({
-            "url": url,
-            "reachable": False,
-            "verdict": "BLOCKED_NOT_ALLOWLISTED",
-            "error_category": "ALLOWLIST_VIOLATION",
-        })
+        return _sanitize_result(
+            {
+                "url": url,
+                "reachable": False,
+                "verdict": "BLOCKED_NOT_ALLOWLISTED",
+                "error_category": "ALLOWLIST_VIOLATION",
+            }
+        )
 
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        return _sanitize_result({
-            "url": url,
-            "reachable": False,
-            "verdict": "PLAYWRIGHT_NOT_AVAILABLE",
-            "error_category": "PLAYWRIGHT_MISSING",
-        })
+        return _sanitize_result(
+            {
+                "url": url,
+                "reachable": False,
+                "verdict": "PLAYWRIGHT_NOT_AVAILABLE",
+                "error_category": "PLAYWRIGHT_MISSING",
+            }
+        )
 
     raw: dict[str, Any] = {
         "url": url,
@@ -192,7 +246,9 @@ def smoke_one(url: str) -> dict[str, Any]:
                     candidates = 0
                     for a in page.query_selector_all("a[href]"):
                         href = (a.get_attribute("href") or "").lower()
-                        if any(href.endswith(ext) for ext in (".pdf", ".xlsx", ".zip", ".exe", ".msi", ".doc", ".docx")):
+                        if any(
+                            href.endswith(ext) for ext in (".pdf", ".xlsx", ".zip", ".exe", ".msi", ".doc", ".docx")
+                        ):
                             candidates += 1
                     raw["download_candidate_count"] = candidates
                 except Exception:
@@ -214,7 +270,7 @@ def smoke_one(url: str) -> dict[str, Any]:
         raw["verdict"] = "PLAYWRIGHT_LAUNCH_ERROR"
         raw["error_category"] = type(e).__name__
 
-    finished = datetime.now(timezone.utc)
+    finished = datetime.now(UTC)
     raw["duration_ms"] = int((finished - started).total_seconds() * 1000)
     return _sanitize_result(raw)
 
@@ -232,7 +288,7 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
     print("LOCAL_AGENT_PUBLIC_EXTERNAL_READONLY_LIVE_SMOKE_1")
     print("=" * 60)
     print(f"실행 호스트: {socket.gethostname()} / {platform.system()} {platform.release()}")
-    print(f"시작 시각: {datetime.now(timezone.utc).isoformat()}")
+    print(f"시작 시각: {datetime.now(UTC).isoformat()}")
     print()
 
     results: list[dict[str, Any]] = []
@@ -244,7 +300,9 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
         title = r.get("title", "")[:60]
         ext = (r.get("text_excerpt", "") or "")[:80].replace("\n", " ")
         print(f"  verdict={verdict} | title={title} | excerpt={ext}")
-        print(f"  links={r.get('links_count')} | tables={r.get('table_count')} | downloads={r.get('download_candidate_count')}")
+        print(
+            f"  links={r.get('links_count')} | tables={r.get('table_count')} | downloads={r.get('download_candidate_count')}"
+        )
         print(f"  server_browser_used={r.get('server_browser_used')} | cookie_exported={r.get('cookie_exported')}")
         print()
 
@@ -258,7 +316,7 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
 
     summary = {
         "task_id": str(uuid.uuid4()),
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
         "executed_on_local": True,
         "host": socket.gethostname(),
         "allowlist": list(_ALLOWLIST),
@@ -273,7 +331,7 @@ def run_full_smoke(write_report: bool = True) -> dict[str, Any]:
         os.makedirs(report_dir, exist_ok=True)
         report_path = os.path.join(
             report_dir,
-            f"local_agent_public_external_readonly_live_smoke_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            f"local_agent_public_external_readonly_live_smoke_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
         )
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)

@@ -6,20 +6,19 @@
 - 기존 inbox 구조 호환 검증
 - 앱 부팅 가능 여부
 """
+
 import json
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from email_classifier import classify
 import candidate_store
 import inbox_store
-
+from email_classifier import classify
 
 # ── 공통 inbox item 팩토리 ────────────────────────────────────────────────────
+
 
 def _item(title: str, body: str = "", sender: str = "test@example.com") -> dict:
     return {
@@ -37,6 +36,7 @@ def _item(title: str, body: str = "", sender: str = "test@example.com") -> dict:
 
 
 # ── 1. 카테고리 분류 케이스 ────────────────────────────────────────────────────
+
 
 def test_classify_bidding():
     result = classify(_item("입찰공고 안내 - 나라장터 2026-04-22"))
@@ -84,6 +84,7 @@ def test_classify_general_no_keywords():
 
 # ── 2. 확신 낮음 → needs_review=True ─────────────────────────────────────────
 
+
 def test_low_confidence_needs_review():
     """키워드 1개 이하면 needs_review=True."""
     result = classify(_item("입찰"))  # 키워드 1개 정확히 매칭
@@ -97,6 +98,7 @@ def test_newsletter_sender_needs_review():
 
 
 # ── 3. 우선순위 판정 ──────────────────────────────────────────────────────────
+
 
 def test_priority_high_urgent():
     result = classify(_item("긴급 - 서버 장애 발생"))
@@ -114,6 +116,7 @@ def test_priority_medium_sales():
 
 
 # ── 4. task 후보 생성 검증 ────────────────────────────────────────────────────
+
 
 def test_candidate_save_and_list(tmp_path):
     cand_path = str(tmp_path / "candidates.jsonl")
@@ -190,6 +193,7 @@ def test_candidate_filter_by_category(tmp_path):
 
 # ── 5. 기존 inbox 구조 호환 검증 ─────────────────────────────────────────────
 
+
 def test_inbox_and_candidate_compatible(tmp_path):
     """inbox.save_mail → classify → candidate_store.save_candidate 흐름 검증."""
     inbox_path = str(tmp_path / "inbox.jsonl")
@@ -228,6 +232,7 @@ def test_inbox_and_candidate_compatible(tmp_path):
 
 # ── 6. JSONL 파일 포맷 검증 ──────────────────────────────────────────────────
 
+
 def test_candidate_jsonl_format(tmp_path):
     cand_path = str(tmp_path / "candidates.jsonl")
     item = _item("세금계산서 발행 요청")
@@ -243,23 +248,33 @@ def test_candidate_jsonl_format(tmp_path):
         path=cand_path,
     )
     with open(cand_path, encoding="utf-8") as f:
-        lines = [l.strip() for l in f if l.strip()]
+        lines = [l.strip() for l in f if l.strip()]  # noqa: E741
     assert len(lines) == 1
     parsed = json.loads(lines[0])
-    required = {"item_id", "category", "priority", "needs_review",
-                "candidate_task_type", "classified_at", "linked_task_id"}
+    required = {
+        "item_id",
+        "category",
+        "priority",
+        "needs_review",
+        "candidate_task_type",
+        "classified_at",
+        "linked_task_id",
+    }
     assert required.issubset(parsed.keys())
     assert parsed["linked_task_id"] is None
 
 
 # ── 7. 앱 부팅 + 새 엔드포인트 등록 확인 ─────────────────────────────────────
 
+
 def test_app_boot_with_classify_routes():
     import os as _os
+
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
     from dashboard import create_app
+
     app = create_app()
     assert "inbox" in app.blueprints
 
