@@ -157,7 +157,8 @@
       ],
       "evidence": "git check-ignore 확인, 로컬에만 파일 존재",
       "stage": "S1",
-      "status": "open"
+      "status": "fixed",
+      "fixed_in": "e9042657"
     },
     {
       "no": 12,
