@@ -59,16 +59,12 @@ def run_eum(task: str | None, sub: str | None, args: list[str]) -> None:
     match task or "help":
         case "extract":
             _cmd_extract(sub, args)
-        case "dashboard":
-            _cmd_dashboard()
         case "mail" | "promo-mail" | "sales-mail":
             _cmd_mail(sub, args)
         case "new-sites":
             _cmd_new_sites()
         case "install-targets" | "verify-install-targets":
             _cmd_install_targets(sub, args)
-        case "task-run":
-            _cmd_task_run()
         # 신규 추가 (2026-05-12)
         case "login":
             _cmd_login()
@@ -119,17 +115,6 @@ def _cmd_extract(sub: str | None, args: list[str]) -> None:
     print("EUM 단말기설치현황 추출")
     print("=" * 60)
     from scripts.eum_extract_all_devices import main
-
-    main()
-
-
-def _cmd_dashboard() -> None:
-    """추출 데이터 기반 업무 대시보드 생성 (브라우저 불필요)."""
-    gate_check("eum_extract_all_devices")
-    print("=" * 60)
-    print("EUM 업무 대시보드")
-    print("=" * 60)
-    from scripts.eum_business_dashboard import main
 
     main()
 
@@ -210,18 +195,6 @@ def _cmd_install_targets(sub: str | None, args: list[str]) -> None:
     no_download = sub == "no-download" or "--no-download" in args
     result = verify_install_targets(page, download=not no_download)
     print_summary(result)
-
-
-def _cmd_task_run() -> None:
-    """EUM 전체 파이프라인 자동 실행."""
-    gate_check("eum_extract_all_devices")
-    _get_page()  # 자동 로그인 보장
-    print("=" * 60)
-    print("EUM 전체 작업 자동 실행")
-    print("=" * 60)
-    from scripts.eum_task_runner import main
-
-    main()
 
 
 def _cmd_login() -> None:

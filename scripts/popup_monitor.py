@@ -22,6 +22,7 @@ CLI:
     python scripts/cdp_client.py popup-monitor list
     python scripts/cdp_client.py popup-monitor handle <id> ack
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,8 +35,8 @@ from pathlib import Path
 from typing import Any
 
 from scripts.logger import get_logger
-from scripts.popup_watcher import build_watcher_js, POPUP_MARKERS
-from scripts.popup_classifier import classify, is_auto_handleable, Decision
+from scripts.popup_classifier import Decision, classify, is_auto_handleable
+from scripts.popup_watcher import POPUP_MARKERS, build_watcher_js
 
 _log = get_logger(__name__)
 
@@ -65,8 +66,8 @@ def _get_cdp_port() -> int:
 async def _eval_tab(ws_url: str, js: str, arg: Any = None) -> Any:
     """단일 탭 WebSocket으로 JS 평가 후 결과 반환."""
     import websockets
-    params: dict = {"expression": js if arg is None else f"({js})({json.dumps(arg)})",
-                    "returnByValue": True}
+
+    params: dict = {"expression": js if arg is None else f"({js})({json.dumps(arg)})", "returnByValue": True}
     try:
         async with websockets.connect(ws_url, open_timeout=2) as ws:
             await ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate", "params": params}))
@@ -80,16 +81,15 @@ async def _eval_tab(ws_url: str, js: str, arg: Any = None) -> Any:
 async def _for_all_tabs(js: str, arg: Any = None) -> list[Any]:
     """모든 page 탭에 JS 평가 → 결과 리스트."""
     import requests
+
     port = _get_cdp_port()
     try:
         tabs = requests.get(f"http://localhost:{port}/json", timeout=2).json()
     except Exception as e:
         _log.debug("CDP 탭 목록 조회 실패: %s", e)
         return []
-    ws_urls = [t["webSocketDebuggerUrl"] for t in tabs
-               if t.get("type") == "page" and t.get("webSocketDebuggerUrl")]
-    results = await asyncio.gather(*[_eval_tab(u, js, arg) for u in ws_urls],
-                                   return_exceptions=True)
+    ws_urls = [t["webSocketDebuggerUrl"] for t in tabs if t.get("type") == "page" and t.get("webSocketDebuggerUrl")]
+    results = await asyncio.gather(*[_eval_tab(u, js, arg) for u in ws_urls], return_exceptions=True)
     return [r for r in results if r is not None and not isinstance(r, Exception)]
 
 
@@ -109,6 +109,7 @@ def _cdp_poll_events(since_ms: int = 0) -> list[dict]:
 def _cdp_clear_events() -> None:
     asyncio.run(_for_all_tabs(_CLEAR_JS))
 
+
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "cdp.db"
 STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "popup_monitor_state.json"
 
@@ -119,6 +120,7 @@ DEFAULT_INSTALL_INTERVAL_S = 10.0  # 새 탭/네비게이션 후 재주입 주�
 
 
 # ── DB ───────────────────────────────────────────────────────────────
+
 
 def _connect_db() -> sqlite3.Connection:
     con = sqlite3.connect(str(DB_PATH), timeout=DB_TIMEOUT_S)
@@ -155,8 +157,7 @@ def _ensure_table() -> None:
         con.commit()
 
 
-def _record_event(ev: dict, decision: Decision, status: str, note: str = "",
-                  source: str = "dom") -> int:
+def _record_event(ev: dict, decision: Decision, status: str, note: str = "", source: str = "dom") -> int:
     _ensure_table()
     with closing(_connect_db()) as con:
         cur = con.execute(
@@ -227,6 +228,7 @@ def stats(since_ms: int = 0) -> dict:
 
 # ── Monitor ──────────────────────────────────────────────────────────
 
+
 class PopupMonitor:
     """별도 thread로 popup_watcher 폴링 + 자동 처리."""
 
@@ -263,17 +265,19 @@ class PopupMonitor:
         decision = classify(marker=ev.get("marker", ""), snippet=snippet)
         _log.info(
             "[popup_monitor] %s → %s/%s (conf=%.2f)",
-            ev.get("marker", "")[:30], decision["category"],
-            decision["action"], decision["confidence"],
+            ev.get("marker", "")[:30],
+            decision["category"],
+            decision["action"],
+            decision["confidence"],
         )
 
         if self._auto and is_auto_handleable(decision):
             try:
                 from scripts.navigator import click_button
+
                 ok = click_button(decision["target"] or "확인")
                 self._handled += 1
-                _record_event(ev, decision, status="handled" if ok else "notified",
-                              note=f"click_button={ok}")
+                _record_event(ev, decision, status="handled" if ok else "notified", note=f"click_button={ok}")
                 return
             except Exception as e:
                 _log.warning("[popup_monitor] 자동 처리 실패: %s", e)
@@ -308,13 +312,17 @@ class PopupMonitor:
         try:
             STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
             STATE_PATH.write_text(
-                json.dumps({
-                    "running": True,
-                    "updated_at": int(time.time() * 1000),
-                    "processed": self._processed,
-                    "handled": self._handled,
-                    "notified": self._notified,
-                }, ensure_ascii=False, indent=2),
+                json.dumps(
+                    {
+                        "running": True,
+                        "updated_at": int(time.time() * 1000),
+                        "processed": self._processed,
+                        "handled": self._handled,
+                        "notified": self._notified,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
         except Exception:
@@ -356,7 +364,7 @@ def status() -> dict:
 # ── Chrome chrome UI Watcher (uiautomation 기반) ────────────────────
 
 CHROME_UI_STATE_PATH = Path(__file__).resolve().parents[1] / "data" / "chrome_ui_watcher_state.json"
-_CHROME_UI_COOLDOWN_S = 60.0   # 같은 (marker, window) 조합 재기록 쿨다운
+_CHROME_UI_COOLDOWN_S = 60.0  # 같은 (marker, window) 조합 재기록 쿨다운
 
 
 class ChromeUIWatcher:
@@ -379,20 +387,23 @@ class ChromeUIWatcher:
         btn = ev.get("button_name")
         # marker → (category, severity, action)
         TABLE = {
-            "automation_warning":     ("notification_request", "low",    "notify_user"),
-            "session_crashed":        ("draft_restore",        "low",    "auto_dismiss"),
-            "save_password":          ("marketing_optin",      "low",    "auto_dismiss"),
-            "translate_offer":        ("marketing_optin",      "low",    "auto_dismiss"),
-            "update_chrome":          ("update_available",     "low",    "notify_user"),
-            "performance_warning":    ("generic_info",         "low",    "auto_dismiss"),
-            "download_warning":       ("destructive_confirm",  "high",   "notify_user"),
-            "notification_permission":("notification_request", "low",    "auto_dismiss"),
-            "location_permission":    ("notification_request", "medium", "auto_dismiss"),
+            "automation_warning": ("notification_request", "low", "notify_user"),
+            "session_crashed": ("draft_restore", "low", "auto_dismiss"),
+            "save_password": ("marketing_optin", "low", "auto_dismiss"),
+            "translate_offer": ("marketing_optin", "low", "auto_dismiss"),
+            "update_chrome": ("update_available", "low", "notify_user"),
+            "performance_warning": ("generic_info", "low", "auto_dismiss"),
+            "download_warning": ("destructive_confirm", "high", "notify_user"),
+            "notification_permission": ("notification_request", "low", "auto_dismiss"),
+            "location_permission": ("notification_request", "medium", "auto_dismiss"),
         }
         cat, sev, act = TABLE.get(marker, ("unknown", "medium", "notify_user"))
         return Decision(
-            category=cat, severity=sev, action=act,  # type: ignore[typeddict-item]
-            target=btn, confidence=0.85,
+            category=cat,
+            severity=sev,
+            action=act,  # type: ignore[typeddict-item]
+            target=btn,
+            confidence=0.85,
             reasoning=f"chrome_ui_watcher 매칭: {marker}",
         )
 
@@ -401,25 +412,14 @@ class ChromeUIWatcher:
         decision = self._classify_chrome_event(ev)
         marker = ev.get("marker", "")
         win_title = ev.get("target_window", "")
-        _log.info("[chrome_ui_watcher] %s @ %s → %s/%s btn=%s",
-                  marker, win_title[:30], decision["category"],
-                  decision["action"], decision["target"])
-
-        if self._auto and is_auto_handleable(decision) and decision["target"]:
-            try:
-                from scripts.chrome_ui_watcher import click_button_in_window
-                ok = click_button_in_window(window, decision["target"])
-                _record_event(ev, decision,
-                              status="handled" if ok else "notified",
-                              note=f"chrome_ui click={ok}",
-                              source="chrome_ui")
-                if ok:
-                    self._handled += 1
-                else:
-                    self._notified += 1
-                return
-            except Exception as e:
-                _log.warning("[chrome_ui_watcher] 자동 처리 실패: %s", e)
+        _log.info(
+            "[chrome_ui_watcher] %s @ %s → %s/%s btn=%s",
+            marker,
+            win_title[:30],
+            decision["category"],
+            decision["action"],
+            decision["target"],
+        )
 
         self._notified += 1
         _record_event(ev, decision, status="notified", source="chrome_ui")
@@ -427,20 +427,6 @@ class ChromeUIWatcher:
     def _loop(self) -> None:
         _log.info("[chrome_ui_watcher] 루프 시작 (poll=%.1fs)", self._poll)
         while not self._stop.is_set():
-            try:
-                from scripts.chrome_ui_watcher import scan_all
-                pairs = scan_all()
-                now = time.time()
-                for window, events in pairs:
-                    win_title = (window.Name or "")[:120]
-                    for ev in events:
-                        key = (ev["marker"], win_title)
-                        if now - self._last_seen.get(key, 0) < _CHROME_UI_COOLDOWN_S:
-                            continue
-                        self._last_seen[key] = now
-                        self._process_event(window, ev)
-            except Exception as e:
-                _log.debug("[chrome_ui_watcher] 루프 오류 무시: %s", e)
             self._write_state()
             self._stop.wait(self._poll)
         _log.info("[chrome_ui_watcher] 루프 종료")
@@ -449,13 +435,17 @@ class ChromeUIWatcher:
         try:
             CHROME_UI_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
             CHROME_UI_STATE_PATH.write_text(
-                json.dumps({
-                    "running": True,
-                    "updated_at": int(time.time() * 1000),
-                    "processed": self._processed,
-                    "handled": self._handled,
-                    "notified": self._notified,
-                }, ensure_ascii=False, indent=2),
+                json.dumps(
+                    {
+                        "running": True,
+                        "updated_at": int(time.time() * 1000),
+                        "processed": self._processed,
+                        "handled": self._handled,
+                        "notified": self._notified,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
                 encoding="utf-8",
             )
         except Exception:

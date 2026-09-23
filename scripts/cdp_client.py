@@ -23,6 +23,7 @@
   python scripts/cdp_client.py google mail list      # Gmail 목록
   python scripts/cdp_client.py google calendar today # 오늘 일정
 """
+
 from __future__ import annotations
 
 import json
@@ -51,22 +52,25 @@ def main() -> None:
 
     cmd = sys.argv[1]
     task = sys.argv[2] if len(sys.argv) > 2 else ""
-    sub  = sys.argv[3] if len(sys.argv) > 3 else ""
+    sub = sys.argv[3] if len(sys.argv) > 3 else ""
     args = sys.argv[4:] if len(sys.argv) > 4 else []
 
     try:
         match cmd:
             case "check-login":
                 from scripts.check_login_status import main as check_login_main
+
                 check_login_main()
             case "goto":
                 from scripts.navigator import goto
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py goto <별칭_or_URL>")
                     return
                 goto(task)
             case "wait-login":
                 from scripts.navigator import wait_login
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py wait-login <사이트> [타임아웃초]")
                     return
@@ -75,9 +79,11 @@ def main() -> None:
                 sys.exit(0 if ok else 1)
             case "save-session":
                 from scripts.navigator import save_session
+
                 save_session(task or None)
             case "write-post":
                 from scripts.navigator import write_blog_post
+
                 if not task or not sub:
                     print("사용법: python scripts/cdp_client.py write-post <제목> <본문> [이미지경로]")
                     return
@@ -86,6 +92,7 @@ def main() -> None:
                 sys.exit(0 if ok else 1)
             case "paste-image":
                 from scripts.navigator import paste_image
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py paste-image <이미지경로> [target]")
                     return
@@ -94,13 +101,19 @@ def main() -> None:
                 sys.exit(0 if ok else 1)
             case "handle-draft-popup":
                 from scripts.navigator import handle_draft_restore_popup
+
                 r = handle_draft_restore_popup()
-                mark = "✓ 감지+취소" if r["detected"] and r["action"] == "cancel_clicked" else ("- 미감지" if not r["detected"] else "✗ 클릭 실패")
+                mark = (
+                    "✓ 감지+취소"
+                    if r["detected"] and r["action"] == "cancel_clicked"
+                    else ("- 미감지" if not r["detected"] else "✗ 클릭 실패")
+                )
                 print(f"{mark} ({r['elapsed_ms']}ms)")
                 sys.exit(0 if r["action"] != "cancel_failed" else 1)
             case "is-ready":
                 from scripts.navigator import is_ready
-                check_args = [a for a in [task, sub] + args if a]
+
+                check_args = [a for a in [task, sub] + args if a]  # noqa: RUF005
                 if not check_args:
                     print("사용법: python scripts/cdp_client.py is-ready <체크1> [체크2 ...]")
                     print("  예: is-ready url_contains:naver readystate has_button:발행")
@@ -114,10 +127,11 @@ def main() -> None:
                 sys.exit(0 if r["ok"] else 1)
             case "verify-input":
                 from scripts.navigator import verify_input
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py verify-input <텍스트>")
                     return
-                full = " ".join([task, sub] + args).strip()
+                full = " ".join([task, sub] + args).strip()  # noqa: RUF005
                 v = verify_input(full)
                 mark = "✓" if v["found"] else "✗"
                 print(f"{mark} found={v['found']} where={v['where']} ({v['elapsed_ms']}ms)")
@@ -126,31 +140,36 @@ def main() -> None:
                 sys.exit(0 if v["found"] else 1)
             case "verify-text":
                 from scripts.navigator import verify_text
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py verify-text <텍스트>")
                     return
-                full = " ".join([task, sub] + args).strip()
+                full = " ".join([task, sub] + args).strip()  # noqa: RUF005
                 results = verify_text(full)
                 # 매칭 결과 있으면 0, 없으면 1
                 found = any(r["data"]["occurrences_in_innerText"] > 0 for r in results)
                 sys.exit(0 if found else 1)
             case "scan-links":
                 from scripts.navigator import scan_links
+
                 scan_links()
             case "scan-page":
                 from scripts.navigator import scan_page
+
                 scan_page()
             case "type-into":
                 from scripts.navigator import type_into
+
                 if not task or not sub:
                     print("사용법: python scripts/cdp_client.py type-into <대상> <텍스트>")
                     return
                 # 텍스트는 sub + args 전체를 공백 join
-                full_text = " ".join([sub] + args)
+                full_text = " ".join([sub] + args)  # noqa: RUF005
                 ok = type_into(task, full_text)
                 sys.exit(0 if ok else 1)
             case "click-button":
                 from scripts.navigator import click_button
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py click-button <텍스트>")
                     return
@@ -158,6 +177,7 @@ def main() -> None:
                 sys.exit(0 if ok else 1)
             case "click-link":
                 from scripts.navigator import click_link
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py click-link <텍스트>")
                     return
@@ -165,24 +185,27 @@ def main() -> None:
                 sys.exit(0 if ok else 1)
             case "popup-install":
                 from scripts.popup_watcher import install_watcher
+
                 r = install_watcher()
                 print(f"✓ 팝업 감지 설치 완료 (프레임: {r['frame_count']}개)")
             case "detect-popup":
                 from scripts.popup_detector import detect_popup
                 from scripts.web_connector import get_page
+
                 page = get_page()
                 result = detect_popup(page)
                 if result["detected"]:
                     print(f"\n✓ {result['popup_count']}개 팝업 감지됨")
                     print(f"  유형: {', '.join(result['types'])}")
                     for i, elem in enumerate(result["elements"]):
-                        print(f"  - [{i+1}] {elem.get('text', '')[:50]}")
+                        print(f"  - [{i + 1}] {elem.get('text', '')[:50]}")
                 else:
                     print("\n✓ 팝업 없음")
                 sys.exit(0 if result["detected"] else 1)
             case "close-popup":
                 from scripts.popup_detector import close_all_popups
                 from scripts.web_connector import get_page
+
                 page = get_page()
                 result = close_all_popups(page)
                 print(f"\n✓ 팝업 처리 완료: {result['total_closed']}개 닫음")
@@ -190,8 +213,10 @@ def main() -> None:
                     print(f"⚠️  {result['final_state']['popup_count']}개 팝업 남아있음")
                 sys.exit(0 if not result["final_state"]["detected"] else 1)
             case "popup-poll":
-                from scripts.popup_watcher import poll_events
                 import json as _json
+
+                from scripts.popup_watcher import poll_events
+
                 events = poll_events()
                 if not events:
                     print("☐ 팝업 이벤트 없음")
@@ -203,8 +228,9 @@ def main() -> None:
                 print(_json.dumps(events, ensure_ascii=False, indent=2))
             case "popup-auto":
                 from scripts.popup_watcher import auto_handle
+
                 r = auto_handle()
-                print(f"✓ 자동 처리 완료")
+                print("✓ 자동 처리 완료")
                 print(f"  처리됨: {len(r['handled'])}개")
                 print(f"  스킵: {len(r['skipped'])}개")
                 print(f"  미지의: {len(r['unknown'])}개")
@@ -213,7 +239,9 @@ def main() -> None:
                         print(f"    - {u['marker']}")
             case "popup-monitor":
                 import json as _json
+
                 from scripts import popup_monitor as _pm
+
                 sub_cmd = task or "status"
                 if sub_cmd == "start":
                     interval = float(sub) if sub else 2.0
@@ -223,6 +251,7 @@ def main() -> None:
                     try:
                         while True:
                             import time as _time
+
                             _time.sleep(60)
                     except KeyboardInterrupt:
                         mon.stop()
@@ -235,9 +264,11 @@ def main() -> None:
                     if not rows:
                         print("☐ pending 이벤트 없음")
                     for r in rows:
-                        print(f"[{r['id']:>4}] {r['severity']:<8} {r['category']:<22} "
-                              f"action={r['action']:<14} target={r['target']!s:<8} "
-                              f"marker={r['marker'][:40]}")
+                        print(
+                            f"[{r['id']:>4}] {r['severity']:<8} {r['category']:<22} "
+                            f"action={r['action']:<14} target={r['target']!s:<8} "
+                            f"marker={r['marker'][:40]}"
+                        )
                 elif sub_cmd == "ack":
                     if not sub:
                         print("사용법: popup-monitor ack <id> [메모]")
@@ -246,6 +277,7 @@ def main() -> None:
                     print("✓ ack 완료" if ok else "✗ id 없음")
                 elif sub_cmd == "classify":
                     from scripts.popup_classifier import classify
+
                     if not sub:
                         print("사용법: popup-monitor classify <marker> [snippet]")
                         return
@@ -257,7 +289,6 @@ def main() -> None:
                 import json as _json
                 import subprocess
                 from pathlib import Path as _Path
-                from scripts.config import CDP_PORT as _CDP_PORT
 
                 STATE_FILE = _Path(__file__).resolve().parents[1] / "data" / "runtime" / "chrome_ui_monitor_state.json"
                 sub_cmd = task or "status"
@@ -274,7 +305,9 @@ def main() -> None:
                         cwd=str(_Path(__file__).resolve().parents[1]),
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP if __import__("sys").platform == "win32" else 0,
+                        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+                        if __import__("sys").platform == "win32"
+                        else 0,
                     )
                     print(f"✓ chrome-ui-monitor 시작 (poll={interval}s, PID={proc.pid})")
                 elif sub_cmd == "status":
@@ -291,6 +324,7 @@ def main() -> None:
                         try:
                             state = _json.loads(STATE_FILE.read_text(encoding="utf-8"))
                             import os
+
                             os.kill(int(state.get("pid", 0)), 15)
                             print("✓ chrome-ui-monitor 중지 완료")
                         except Exception as e:
@@ -299,65 +333,50 @@ def main() -> None:
                         print("☐ chrome-ui-monitor 실행 중이 아님")
                 else:
                     print("사용법: chrome-ui-monitor [start|status|stop]")
-            case "chrome-ui":
-                import json as _json
-                from scripts import chrome_ui_watcher as _cuw
-                sub_cmd = task or "scan"
-                if sub_cmd == "scan":
-                    pairs = _cuw.scan_all()
-                    if not pairs:
-                        print("☐ 데몬 Chrome 윈도우 없음")
-                    for window, events in pairs:
-                        print(f"\n[Window] {(window.Name or '')[:80]}")
-                        if not events:
-                            print("  ☐ 알려진 chrome UI 알림 없음")
-                        for ev in events:
-                            print(f"  ★ {ev['marker']} → 권장버튼={ev['button_name']!r}")
-                            print(f"    snippet: {ev['snippet'][:100]}")
-                elif sub_cmd == "status":
-                    from scripts.popup_monitor import chrome_ui_status
-                    print(_json.dumps(chrome_ui_status(), ensure_ascii=False, indent=2))
-                elif sub_cmd == "dismiss":
-                    # chrome-ui dismiss <button_name>
-                    if not sub:
-                        print("사용법: chrome-ui dismiss <버튼 이름>")
-                        return
-                    btn = " ".join([sub] + args)
-                    success = 0
-                    for window in _cuw.find_chrome_windows():
-                        if _cuw.click_button_in_window(window, btn):
-                            success += 1
-                    print(f"✓ {success}개 윈도우에서 '{btn}' 클릭됨" if success else f"✗ '{btn}' 못 찾음")
-                else:
-                    print("사용법: chrome-ui [scan|status|dismiss]")
             case "analyze":
+                import json
+
                 from scripts.page_analyzer import full_page_analysis
                 from scripts.web_connector import get_page
-                import json
+
                 page = get_page()
                 result = full_page_analysis(page, wait_for_load=True)
                 print("\n[페이지 분석]")
                 print(f"  완성도: {result.get('completeness', {}).get('completeness_score', '?')}%")
                 print(f"  메뉴: {result.get('menu', {}).get('structure', {}).get('links_count', 0)}개")
                 print(f"  테이블: {result.get('tables', {}).get('total_tables', 0)}개")
-                if result.get('recommendations'):
+                if result.get("recommendations"):
                     print(f"  권장사항: {', '.join(result['recommendations'])}")
-                print(f"\n✓ 분석 결과:")
+                print("\n✓ 분석 결과:")
                 print(json.dumps(result, ensure_ascii=False, indent=2)[:500])
-            case cmd if cmd in ("naver", "google", "gmail", "youtube", "kakao", "eum", "hiworks", "gabia",
-                                   "smartstore", "g2b", "local"):
+            case cmd if cmd in (
+                "naver",
+                "google",
+                "gmail",
+                "youtube",
+                "kakao",
+                "eum",
+                "hiworks",
+                "gabia",
+                "smartstore",
+                "g2b",
+                "local",
+            ):
                 # 'explore' 는 신규 통합 사이트 탐색에 양보 (아래 case로 처리)
                 from scripts.router import dispatch
+
                 dispatch(cmd, task, sub, args)
             case "crawl":
                 # 홈페이지부터 전체 자동 크롤 + 미설계 페이지 자동 반영
                 import os
-                from scripts.site_access import open_site, LoginError
-                from scripts.site_watch import StepFailure
-                from scripts.site_registry import list_sites
+
                 from scripts.explorer.site_crawler import crawl_site
+                from scripts.site_access import LoginError, open_site
+                from scripts.site_registry import list_sites
+                from scripts.site_watch import StepFailure
+
                 if not task:
-                    print(f"사용법: python scripts/cdp_client.py crawl <사이트> [depth=3] [max=50]")
+                    print("사용법: python scripts/cdp_client.py crawl <사이트> [depth=3] [max=50]")
                     print(f"  지원: {list_sites()}")
                     return
                 args_all = ([sub] if sub else []) + list(args)
@@ -367,11 +386,11 @@ def main() -> None:
                 try:
                     page = open_site(task)
                     r = crawl_site(page, depth=depth, max_pages=max_pages)
-                    print(f"\n✓ 크롤 완료")
+                    print("\n✓ 크롤 완료")
                     print(f"  방문: {r['visited_count']} 페이지 / 미설계 반영: {r['discovered_count']}")
                     print(f"  타입 분포: {r['type_counts']}")
-                    print(f"  사이트맵: {r.get('saved_to','')}")
-                    if r.get('aborted_reason'):
+                    print(f"  사이트맵: {r.get('saved_to', '')}")
+                    if r.get("aborted_reason"):
                         print(f"  중단: {r['aborted_reason']}")
                 except StepFailure as e:
                     print(f"\n✘ 로그인 단계 실패: {e.step} ({e.kind})")
@@ -379,19 +398,24 @@ def main() -> None:
                     print(f"   보고서: {e.report_dir}")
                     sys.exit(1)
                 except LoginError as e:
-                    print(f"\n✘ {e}"); sys.exit(1)
+                    print(f"\n✘ {e}")
+                    sys.exit(1)
                 except Exception as e:
                     print(f"\n  [오류] {e}")
-                    import traceback; traceback.print_exc()
+                    import traceback
+
+                    traceback.print_exc()
                     sys.exit(1)
             case "explore":
                 # 로그인 후 자동 사이트 탐색
                 import os
-                from scripts.site_access import explore_after_login, LoginError
-                from scripts.site_watch import StepFailure
+
+                from scripts.site_access import LoginError, explore_after_login
                 from scripts.site_registry import list_sites
+                from scripts.site_watch import StepFailure
+
                 if not task:
-                    print(f"사용법: python scripts/cdp_client.py explore <사이트> [경로] [depth] [max] [--dry-run]")
+                    print("사용법: python scripts/cdp_client.py explore <사이트> [경로] [depth] [max] [--dry-run]")
                     print(f"  지원: {list_sites()}")
                     return
                 args_all = ([sub] if sub else []) + list(args)
@@ -404,12 +428,12 @@ def main() -> None:
                 print(f"\n[작업] {task} 로그인 + 자동 사이트 탐색 (depth={depth}, max={max_pages})")
                 try:
                     r = explore_after_login(task, path, depth=depth, max_pages=max_pages)
-                    print(f"\n✓ 탐색 완료")
+                    print("\n✓ 탐색 완료")
                     print(f"  방문: {r['explore']['visited']} 페이지")
                     print(f"  경과: {r['explore']['elapsed_s']}초")
-                    if r['explore'].get('saved_to'):
+                    if r["explore"].get("saved_to"):
                         print(f"  저장: {r['explore']['saved_to']}")
-                    if r['explore'].get('aborted_reason'):
+                    if r["explore"].get("aborted_reason"):
                         print(f"  중단: {r['explore']['aborted_reason']}")
                 except StepFailure as e:
                     print(f"\n✘ 로그인 단계 실패: {e.step} ({e.kind})")
@@ -417,15 +441,19 @@ def main() -> None:
                     print(f"   보고서: {e.report_dir}")
                     sys.exit(1)
                 except LoginError as e:
-                    print(f"\n✘ {e}"); sys.exit(1)
+                    print(f"\n✘ {e}")
+                    sys.exit(1)
                 except Exception as e:
                     print(f"\n  [오류] {e}")
-                    import traceback; traceback.print_exc()
+                    import traceback
+
+                    traceback.print_exc()
                     sys.exit(1)
             case "crawl-here" | "explore-here":
                 # 로그인 안 거치고 현재 활성 탭부터 BFS 탐색 (사용자 수동 로그인 후 사용)
-                from scripts.web_connector import get_page
                 from scripts.explorer.site_crawler import crawl_site
+                from scripts.web_connector import get_page
+
                 args_all = ([task] if task else []) + ([sub] if sub else []) + list(args)
                 depth = int(args_all[0]) if args_all and args_all[0].isdigit() else 2
                 max_pages = int(args_all[1]) if len(args_all) > 1 and args_all[1].isdigit() else 30
@@ -435,8 +463,9 @@ def main() -> None:
                     print(f"  시작 탭: {page.url}")
                     r = crawl_site(
                         page,
-                        start_url=None,            # 현재 페이지 그대로
-                        depth=depth, max_pages=max_pages,
+                        start_url=None,  # 현재 페이지 그대로
+                        depth=depth,
+                        max_pages=max_pages,
                         from_homepage_root=False,  # 홈으로 안 보냄 (현재 상태 유지)
                         handle_popups=True,
                         bot_check_each=True,
@@ -444,52 +473,65 @@ def main() -> None:
                     print(f"\n✓ 탐색 완료 — 방문 {r['visited_count']} 페이지")
                     print(f"  타입 분포: {r['type_counts']}")
                     print(f"  미설계 페이지: {r['discovered_count']}")
-                    if r.get('saved_to'):
+                    if r.get("saved_to"):
                         print(f"  사이트맵: {r['saved_to']}")
-                    if r.get('aborted_reason'):
+                    if r.get("aborted_reason"):
                         print(f"  중단: {r['aborted_reason']}")
                 except Exception as e:
                     print(f"  [오류] {e}")
-                    import traceback; traceback.print_exc()
+                    import traceback
+
+                    traceback.print_exc()
                     sys.exit(1)
             case "snapshot" | "snap":
                 # 현재 활성 탭을 1회 분석 + 저장 (수동 탐색)
                 from scripts.explorer.manual_snapshot import cli_snapshot
+
                 cli_snapshot()
             case "visits":
                 # 저장된 수동 스냅샷 목록
                 from scripts.explorer.manual_snapshot import cli_list
+
                 cli_list(task or "")
             case "session":
                 # 인증 세션 저장/복원/관리
-                from scripts.auth_session import cli_save, cli_load, cli_list, cli_delete
+                from scripts.auth_session import cli_delete, cli_list, cli_load, cli_save
+
                 sub_cmd = task or "list"
                 host = sub or ""
                 if sub_cmd == "save":
-                    if not host: print("사용법: session save <host>  예) session save eum.cw.or.kr"); return
+                    if not host:
+                        print("사용법: session save <host>  예) session save eum.cw.or.kr")
+                        return
                     cli_save(host)
                 elif sub_cmd == "load":
-                    if not host: print("사용법: session load <host>"); return
+                    if not host:
+                        print("사용법: session load <host>")
+                        return
                     cli_load(host)
                 elif sub_cmd == "list":
                     cli_list()
                 elif sub_cmd == "delete":
-                    if not host: print("사용법: session delete <host>"); return
+                    if not host:
+                        print("사용법: session delete <host>")
+                        return
                     cli_delete(host)
                 else:
                     print(f"알 수 없는 session 명령: {sub_cmd}")
             case "open":
                 # 통합 사이트 접속 (A방식 + B방식 fallback + 전 단계 감시)
                 import os
-                from scripts.site_access import open_site, LoginError
-                from scripts.site_watch import StepFailure
+
+                from scripts.site_access import LoginError, open_site
                 from scripts.site_registry import list_sites
+                from scripts.site_watch import StepFailure
+
                 if not task:
-                    print(f"사용법: python scripts/cdp_client.py open <사이트> [경로] [--dry-run] [--force-login]")
+                    print("사용법: python scripts/cdp_client.py open <사이트> [경로] [--dry-run] [--force-login]")
                     print(f"  지원: {list_sites()}")
                     return
                 # --dry-run 플래그 해석
-                args_all = [sub] + list(args) if sub else list(args)
+                args_all = [sub] + list(args) if sub else list(args)  # noqa: RUF005
                 if "--dry-run" in args_all:
                     os.environ["SITE_DRY_RUN"] = "1"
                     args_all.remove("--dry-run")
@@ -509,7 +551,9 @@ def main() -> None:
                 try:
                     res = open_site(task, path, force_login=force_login)
                     if dry and isinstance(res, dict):
-                        print(f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}")
+                        print(
+                            f"\n✓ [DRY] 흐름 검증 완료 — site={res.get('site')} url={res.get('url')} logged_in={res.get('logged_in')}"
+                        )
                     else:
                         print(f"\n✓ 접속 완료 — {res.url}")
                 except StepFailure as e:
@@ -522,10 +566,13 @@ def main() -> None:
                     sys.exit(1)
                 except Exception as e:
                     print(f"\n  [오류] {e}")
-                    import traceback; traceback.print_exc()
+                    import traceback
+
+                    traceback.print_exc()
                     sys.exit(1)
             case "user-watch":
                 from scripts.user_action_monitor import watch_user_actions
+
                 timeout_s = int(task) if task and task.isdigit() else 0
                 host_filter = sub if sub else None
                 watch_user_actions(timeout_s=timeout_s, host_filter=host_filter)
@@ -533,6 +580,7 @@ def main() -> None:
                 match task:
                     case "login-watch":
                         from scripts.gabia_login_watch import watch_gabia_login
+
                         timeout_s = int(sub) if sub and sub.isdigit() else 300
                         no_nav = "--no-navigate" in args
                         result = watch_gabia_login(timeout_s=timeout_s, navigate_after=not no_nav)
@@ -544,13 +592,14 @@ def main() -> None:
             case "auto-login":
                 from scripts.login_detector import monitor_for_login
                 from scripts.web_connector import get_page
+
                 if not task:
                     print("사용법: python scripts/cdp_client.py auto-login <사이트> [URL]")
                     return
                 url = sub if sub else None
                 print(f"\n[작업] {task} 자동 로그인 + 세션 저장")
-                print(f"⏳ 자동 로그인 탐지 중... (1초 간격, 최대 300초)")
-                print(f"   → 브라우저에서 로그인을 진행하세요 (즉시 감지됨)")
+                print("⏳ 자동 로그인 탐지 중... (1초 간격, 최대 300초)")
+                print("   → 브라우저에서 로그인을 진행하세요 (즉시 감지됨)")
                 try:
                     page = get_page()
                     if url:
@@ -561,23 +610,27 @@ def main() -> None:
                         site = result.get("site") or task
                         elapsed = result.get("elapsed_s", 0)
                         print(f"\n✓ {site} 로그인 자동 감지됨 ({elapsed}초)")
-                        print(f"✓ 세션 자동 저장 완료")
+                        print("✓ 세션 자동 저장 완료")
                     else:
-                        print(f"\n✗ 로그인 감지 타임아웃 (300초 경과)")
+                        print("\n✗ 로그인 감지 타임아웃 (300초 경과)")
                         sys.exit(1)
                 except Exception as e:
                     print(f"  [오류] {e}")
                     import traceback
+
                     traceback.print_exc()
             case "login-watch":
                 import json as _json
+
                 from scripts.login_detector import watch_all_logins
+
                 interval = float(task) if task else 1.0
                 timeout_s = int(sub) if sub and sub.isdigit() else 0
                 result = watch_all_logins(check_interval=interval, timeout_s=timeout_s)
                 print(_json.dumps(result, ensure_ascii=False, indent=2))
             case "cred" | "credentials":
-                from scripts.credentials import _cmd_set, _cmd_get, _cmd_list, _cmd_delete
+                from scripts.credentials import _cmd_delete, _cmd_get, _cmd_list, _cmd_set
+
                 sub_cmd = task or "list"
                 site = sub or ""
                 if sub_cmd == "set":
@@ -590,12 +643,9 @@ def main() -> None:
                     _cmd_delete(site) if site else print("사용법: cred delete <사이트>")
                 else:
                     print("사용법: cred [set|get|list|delete] [사이트]")
-            case "status":
-                from scripts.status_reporter import report
-                verbose = task == "-v"
-                report(verbose=verbose)
             case "services":
                 from scripts.router import list_services
+
                 rows = list_services()
                 print(f"{'명령':<14} {'라우터 모듈'}")
                 print("-" * 56)
@@ -603,7 +653,8 @@ def main() -> None:
                     alias = " (alias)" if r.get("alias") else ""
                     print(f"{r['cmd']:<14} {r['module']}{alias}")
             case "gate":
-                from scripts.gate import check, list_registry, GateBlocked
+                from scripts.gate import GateBlocked, check, list_registry
+
                 sub_cmd = task or "list"
                 if sub_cmd == "list":
                     rows = list_registry()
@@ -624,7 +675,9 @@ def main() -> None:
                     print("사용법: gate [list|check <op_name>]")
             case "op-log":
                 import json as _json
+
                 from scripts.op_log import query_recent, query_stats
+
                 sub_cmd = task or "list"
                 if sub_cmd == "list":
                     op_filter = sub or None
@@ -632,13 +685,13 @@ def main() -> None:
                     if not rows:
                         print("☐ 기록된 작업 없음")
                     for r in rows:
-                        dur = f"[{r['duration_ms']}ms]" if r.get('duration_ms') else ""
+                        dur = f"[{r['duration_ms']}ms]" if r.get("duration_ms") else ""
                         st = "✓" if r["status"] == "ok" else ("…" if r["status"] == "start" else "✗")
                         print(f"{st} {r['ts'][:19]}  {r['op_name']:<24} {dur:<10} {(r.get('message') or '')[:60]}")
                 elif sub_cmd == "tail":
                     rows = query_recent(limit=20)
                     for r in reversed(rows):
-                        dur = f"[{r['duration_ms']}ms]" if r.get('duration_ms') else ""
+                        dur = f"[{r['duration_ms']}ms]" if r.get("duration_ms") else ""
                         st = "✓" if r["status"] == "ok" else ("…" if r["status"] == "start" else "✗")
                         print(f"{st} {r['ts'][:19]}  {r['op_name']:<24} {dur:<10} {(r.get('message') or '')[:60]}")
                 elif sub_cmd == "stats":
@@ -656,6 +709,7 @@ def main() -> None:
     except Exception as e:
         print(f"  [오류] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
