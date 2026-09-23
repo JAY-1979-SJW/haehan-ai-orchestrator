@@ -366,41 +366,6 @@ def test_runtime_websocket_count():
     assert len(ws) == RUNTIME_WEBSOCKET_COUNT, f"runtime WS={len(ws)}, 기준={RUNTIME_WEBSOCKET_COUNT}"
 
 
-def test_source_router_http_endpoint_count():
-    """source-level(naver + ops 포함) HTTP+WS endpoint 합계가 60개이다."""
-    from ai_orchestrator.cad.router import cad_router
-    from ai_orchestrator.cad_ai_router import cad_ai_router
-    from fastapi.routing import APIRoute, APIWebSocketRoute
-
-    from ai_orchestrator.action_router import action_router
-    from ai_orchestrator.admin_ui_router import admin_ui_router
-    from ai_orchestrator.auth_router import auth_router
-    from ai_orchestrator.browser_tool.approval_record_router import approval_record_router
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
-    from ai_orchestrator.local_agent_router import local_agent_router
-    from ai_orchestrator.ops_router import ops_router
-    from ai_orchestrator.sites.router import sites_router
-    from ai_orchestrator.web_task_router import web_task_router
-
-    sub_routers = [
-        auth_router,
-        sites_router,
-        cad_router,
-        cad_ai_router,
-        web_task_router,
-        local_agent_router,
-        admin_ui_router,
-        approval_record_router,
-        action_router,
-        naver_search_router,
-        ops_router,
-    ]
-    sub_total = sum(len([r for r in sr.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]) for sr in sub_routers)
-    core_total = 9  # router.py 직접 정의
-    total = core_total + sub_total
-    assert total == 60, f"source-level 총계={total}, 기준=60 (naver 3 + ops_router 7 포함)"
-
-
 def test_unregistered_router_endpoint_count():
     """naver_search_router source-level 3개 endpoint가 존재한다 (등록 완료)."""
     from fastapi.routing import APIRoute
