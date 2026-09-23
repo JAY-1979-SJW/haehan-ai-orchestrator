@@ -10,6 +10,7 @@ policy:
 
 상용화 기본은 server proxy mode — 본 client 는 DEVELOPER_TEST_KEY 모드에서만 사용.
 """
+
 from __future__ import annotations
 
 import http.client
@@ -20,7 +21,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 
 from . import openai_key_store as ks
 
@@ -34,7 +35,7 @@ DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_MAX_TOKENS = 400
 DEFAULT_TIMEOUT_SEC = 30
-DEFAULT_RETRY = 0   # 본 공정은 retry 0 (비용 통제)
+DEFAULT_RETRY = 0  # 본 공정은 retry 0 (비용 통제)
 MAX_INPUT_CHARS = 8000
 
 
@@ -91,6 +92,7 @@ class OpenAiChatResponse:
 
 # ── 호출 전 redact 통과 (요청 텍스트의 위험 패턴 marker) ─────
 
+
 def _looks_clean(text: str) -> bool:
     """outbound text 가 secret 형태를 포함하는지 안전 검증.
     예방 차원 — sk-..., Bearer, device_token= 등이 있으면 caller 가 cleanup 권장.
@@ -98,9 +100,7 @@ def _looks_clean(text: str) -> bool:
     if not text:
         return True
     low = text.lower()
-    bad = ("device_token=", "registration_code=",
-            "authorization: bearer", "x-api-key:",
-            "openai_api_key=")
+    bad = ("device_token=", "registration_code=", "authorization: bearer", "x-api-key:", "openai_api_key=")
     return not any(b in low for b in bad)
 
 
@@ -110,9 +110,9 @@ def _looks_clean(text: str) -> bool:
 class OpenAiDirectTestClient:
     """OpenAI Chat Completions 직접 호출 (Dev Test 모드 전용)."""
 
-    def __init__(self, *, model: str = DEFAULT_MODEL,
-                  api_url: str = DEFAULT_API_URL,
-                  account: str = ks.ACCOUNT_DEFAULT):
+    def __init__(
+        self, *, model: str = DEFAULT_MODEL, api_url: str = DEFAULT_API_URL, account: str = ks.ACCOUNT_DEFAULT
+    ):
         self.model = model
         self.api_url = api_url
         self.account = account
@@ -138,13 +138,15 @@ class OpenAiDirectTestClient:
 
     def health_check(self, *, timeout: int = 10) -> OpenAiChatResponse:
         """짧은 ping. 응답 길이 > 0 이면 OK."""
-        return self.chat(OpenAiChatRequest(
-            text="ping - 한 단어로만 응답해 주세요.",
-            max_tokens=20, timeout=timeout,
-        ))
+        return self.chat(
+            OpenAiChatRequest(
+                text="ping - 한 단어로만 응답해 주세요.",
+                max_tokens=20,
+                timeout=timeout,
+            )
+        )
 
-    def chat(self, req: OpenAiChatRequest,
-              *, _opener=None) -> OpenAiChatResponse:
+    def chat(self, req: OpenAiChatRequest, *, _opener=None) -> OpenAiChatResponse:
         """단발성 chat completion. timeout / retry 0."""
         if not req.text or not req.text.strip():
             return self._err(ERR_RESPONSE_EMPTY, "입력이 비어 있습니다.")
@@ -159,22 +161,27 @@ class OpenAiDirectTestClient:
         if not api_key:
             return self._err(ERR_API_KEY_NOT_SET)
 
-        body = json.dumps({
-            "model": req.model or self.model,
-            "messages": [
-                {"role": "user", "content": req.text},
-            ],
-            "max_tokens": int(req.max_tokens),
-            "temperature": 0.2,
-        }).encode("utf-8")
+        body = json.dumps(
+            {
+                "model": req.model or self.model,
+                "messages": [
+                    {"role": "user", "content": req.text},
+                ],
+                "max_tokens": int(req.max_tokens),
+                "temperature": 0.2,
+            }
+        ).encode("utf-8")
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": f"Bearer {api_key}",
         }
         # API key 변수는 헤더 dict 안에만. 호출 후 즉시 폐기.
-        request = urllib.request.Request(
-            self.api_url, data=body, headers=headers, method="POST",
+        request = urllib.request.Request(  # noqa: S310
+            self.api_url,
+            data=body,
+            headers=headers,
+            method="POST",
         )
         # 변수 폐기 시점은 호출 직후
         ctx = ssl.create_default_context()
@@ -191,19 +198,16 @@ class OpenAiDirectTestClient:
             return self._classify_http_error(e, duration)
         except urllib.error.URLError as e:
             api_key = ""
-            return self._err(ERR_NETWORK_ERROR,
-                              extra=str(e.reason)[:80])
+            return self._err(ERR_NETWORK_ERROR, extra=str(e.reason)[:80])
         except TimeoutError:
             api_key = ""
             return self._err(ERR_REQUEST_TIMEOUT)
         except http.client.HTTPException as e:
             api_key = ""
-            return self._err(ERR_PROVIDER_ERROR,
-                              extra=type(e).__name__)
+            return self._err(ERR_PROVIDER_ERROR, extra=type(e).__name__)
         except Exception as e:
             api_key = ""
-            return self._err(ERR_NETWORK_ERROR,
-                              extra=type(e).__name__)
+            return self._err(ERR_NETWORK_ERROR, extra=type(e).__name__)
         finally:
             api_key = ""
 
@@ -212,25 +216,20 @@ class OpenAiDirectTestClient:
         try:
             data = json.loads(raw.decode("utf-8"))
         except Exception:
-            return self._err(ERR_PROVIDER_ERROR,
-                              extra="json_parse",
-                              duration=duration)
+            return self._err(ERR_PROVIDER_ERROR, extra="json_parse", duration=duration)
         return self._parse_success(data, status=status, duration=duration)
 
     # ── 내부 helpers ────────────────────────────────────────
 
-    def _parse_success(self, data: dict, *, status: int,
-                        duration: int) -> OpenAiChatResponse:
+    def _parse_success(self, data: dict, *, status: int, duration: int) -> OpenAiChatResponse:
         try:
             choices = data.get("choices") or []
             if not choices:
-                return self._err(ERR_RESPONSE_EMPTY,
-                                  duration=duration)
+                return self._err(ERR_RESPONSE_EMPTY, duration=duration)
             msg = choices[0].get("message") or {}
             text = (msg.get("content") or "").strip()
             if not text:
-                return self._err(ERR_RESPONSE_EMPTY,
-                                  duration=duration)
+                return self._err(ERR_RESPONSE_EMPTY, duration=duration)
             finish = choices[0].get("finish_reason", "")
             usage = data.get("usage") or {}
             summary = {
@@ -241,19 +240,20 @@ class OpenAiDirectTestClient:
             }
             # redact 1차 (echo back 보호)
             from . import ai_chat_client as _aic
+
             text_red = _aic.redact_input(text)
             return OpenAiChatResponse(
-                ok=True, text_redacted=text_red,
-                finish_reason=finish, external_call_count=1,
-                duration_ms=duration, usage_summary=summary,
+                ok=True,
+                text_redacted=text_red,
+                finish_reason=finish,
+                external_call_count=1,
+                duration_ms=duration,
+                usage_summary=summary,
             )
         except Exception:
-            return self._err(ERR_PROVIDER_ERROR,
-                              extra="parse",
-                              duration=duration)
+            return self._err(ERR_PROVIDER_ERROR, extra="parse", duration=duration)
 
-    def _classify_http_error(self, e: urllib.error.HTTPError,
-                              duration: int) -> OpenAiChatResponse:
+    def _classify_http_error(self, e: urllib.error.HTTPError, duration: int) -> OpenAiChatResponse:
         code = e.code
         # body 본문은 디스크 저장 0 — 분류용으로 짧게 읽고 즉시 폐기
         try:
@@ -283,11 +283,12 @@ class OpenAiDirectTestClient:
         # body_excerpt 는 보고서/예외에 절대 노출 안 함
         return self._err(ec, duration=duration)
 
-    def _err(self, code: str, message_kr: str | None = None,
-              *, extra: str = "", duration: int = 0
-              ) -> OpenAiChatResponse:
+    def _err(
+        self, code: str, message_kr: str | None = None, *, extra: str = "", duration: int = 0
+    ) -> OpenAiChatResponse:
         return OpenAiChatResponse(
-            ok=False, error_code=code,
+            ok=False,
+            error_code=code,
             user_message_kr=message_kr or _USER_MSG.get(code, "오류 발생"),
             external_call_count=0,
             duration_ms=duration,
@@ -297,13 +298,13 @@ class OpenAiDirectTestClient:
 # ── live smoke helper ───────────────────────────────────────
 
 
-def live_smoke(*, account: str = ks.ACCOUNT_DEFAULT,
-                model: str = DEFAULT_MODEL) -> dict:
+def live_smoke(*, account: str = ks.ACCOUNT_DEFAULT, model: str = DEFAULT_MODEL) -> dict:
     """짧은 OpenAI 호출 1회. report 용 dict 반환 (redacted)."""
     client = OpenAiDirectTestClient(model=model, account=account)
     if not client.is_configured():
         return {
-            "ok": False, "error_code": ERR_API_KEY_NOT_SET,
+            "ok": False,
+            "error_code": ERR_API_KEY_NOT_SET,
             "external_call_count": 0,
             "note": "no key in Credential Manager (haehan-openai-dev)",
         }
@@ -329,12 +330,21 @@ def live_smoke(*, account: str = ks.ACCOUNT_DEFAULT,
 
 
 __all__ = (
-    "OpenAiDirectTestClient", "OpenAiChatRequest", "OpenAiChatResponse",
+    "DEFAULT_MAX_TOKENS",
+    "DEFAULT_MODEL",
+    "DEFAULT_TIMEOUT_SEC",
+    "ERR_API_KEY_INVALID",
+    "ERR_API_KEY_NOT_SET",
+    "ERR_API_QUOTA_EXCEEDED",
+    "ERR_KEY_STORE_ERROR",
+    "ERR_MODEL_NOT_AVAILABLE",
+    "ERR_NETWORK_ERROR",
+    "ERR_PROVIDER_ERROR",
+    "ERR_RATE_LIMITED",
+    "ERR_REQUEST_TIMEOUT",
+    "ERR_RESPONSE_EMPTY",
+    "OpenAiChatRequest",
+    "OpenAiChatResponse",
+    "OpenAiDirectTestClient",
     "live_smoke",
-    "DEFAULT_MODEL", "DEFAULT_MAX_TOKENS", "DEFAULT_TIMEOUT_SEC",
-    "ERR_API_KEY_NOT_SET", "ERR_API_KEY_INVALID",
-    "ERR_API_QUOTA_EXCEEDED", "ERR_RATE_LIMITED",
-    "ERR_NETWORK_ERROR", "ERR_MODEL_NOT_AVAILABLE",
-    "ERR_REQUEST_TIMEOUT", "ERR_PROVIDER_ERROR",
-    "ERR_RESPONSE_EMPTY", "ERR_KEY_STORE_ERROR",
 )

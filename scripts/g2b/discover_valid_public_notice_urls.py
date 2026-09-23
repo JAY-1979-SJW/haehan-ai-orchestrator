@@ -22,6 +22,7 @@ CONTENT_VALID_PASS 후보 기록.
 - 서버 환경 실행 금지
 - 과도한 반복 접속 금지 (요청 사이 대기)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,7 +30,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -38,28 +39,25 @@ _repo_root = Path(__file__).resolve().parent.parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
+from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (  # noqa: E402
+    CONTENT_INVALID,
     CONTENT_VALID_PASS,
     REACHABLE_BUT_NOT_CONTENT_VALID,
-    CONTENT_INVALID,
-    classify_g2b_public_notice_content,
     enrich_live_result_with_content_verdict,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (  # noqa: E402
+    evaluate_g2b_public_notice_dryrun,
+)
+from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (  # noqa: E402
     GATE_READONLY_EXECUTION_CANDIDATE,
     evaluate_g2b_public_notice_execution_gate,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (
-    evaluate_g2b_public_notice_dryrun,
-)
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (
-    run_g2b_public_notice_readonly_live,
+from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
     _check_playwright_available,
+    run_g2b_public_notice_readonly_live,
 )
 
-_FIXTURE_DEFAULT = (
-    _repo_root / "tests" / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
-)
+_FIXTURE_DEFAULT = _repo_root / "tests" / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
 _REPORT_JSON_DIR = _repo_root / "data" / "reports" / "g2b"
 _REPORT_MD_DIR = _repo_root / "docs" / "reports"
 _FIXTURE_OUT_DIR = _repo_root / "tests" / "fixtures"
@@ -68,13 +66,31 @@ _ALLOWED_DOMAINS: frozenset[str] = frozenset({"g2b.go.kr", "www.g2b.go.kr"})
 _NEEDS_VERIFICATION_DOMAINS: frozenset[str] = frozenset({"shop.g2b.go.kr", "api.g2b.go.kr"})
 
 _BLOCKED_HREF_PATTERNS: tuple[str, ...] = (
-    "/login", "/cert", "/bid_submit", "/contract", "/payment",
-    "/download", "/upload", "egovuserreqstlogin", "usercert",
-    "ptb05001p", "ctb01001", "checkout", "ptb04001p",
+    "/login",
+    "/cert",
+    "/bid_submit",
+    "/contract",
+    "/payment",
+    "/download",
+    "/upload",
+    "egovuserreqstlogin",
+    "usercert",
+    "ptb05001p",
+    "ctb01001",
+    "checkout",
+    "ptb04001p",
 )
 _DOWNLOAD_HREF_PATTERNS: tuple[str, ...] = (
-    "/file/download", "fileDown", "attachDown", ".hwp", ".hwpx",
-    ".pdf", ".zip", ".xls", ".xlsx", ".doc",
+    "/file/download",
+    "fileDown",
+    "attachDown",
+    ".hwp",
+    ".hwpx",
+    ".pdf",
+    ".zip",
+    ".xls",
+    ".xlsx",
+    ".doc",
 )
 
 _BODY_TEXT_MAX = 1000
@@ -173,6 +189,7 @@ def _collect_anchors_via_playwright(url: str) -> list[str]:
     """Playwright로 페이지를 열어 앵커 href만 수집한다. click/submit 없음."""
     try:
         from playwright.sync_api import sync_playwright
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
@@ -234,9 +251,7 @@ def _build_markdown_report(report: dict[str, Any], run_ts: str) -> str:
         "",
     ]
     for item in report.get("fixture_results", []):
-        lines.append(
-            f"### {item.get('id', '')} — {item.get('url', '')}"
-        )
+        lines.append(f"### {item.get('id', '')} — {item.get('url', '')}")
         lines.append(f"- live_verdict: {item.get('live_verdict', '')}")
         lines.append(f"- content_verdict: {item.get('content_verdict', '')}")
         lines.append(f"- invalid_reason: {item.get('content_invalid_reason', '')}")
@@ -277,7 +292,7 @@ def main() -> None:
         print("[FAIL] chromium 없음", file=sys.stderr)
         sys.exit(1)
 
-    run_ts = datetime.now(timezone.utc).isoformat()
+    run_ts = datetime.now(UTC).isoformat()
     ts_label = datetime.now().strftime("%Y%m%d_%H%M%S")
     date_label = datetime.now().strftime("%Y%m%d")
 
@@ -349,28 +364,30 @@ def main() -> None:
         else:
             content_unknown_count += 1
 
-        fixture_results.append({
-            "id": case["id"],
-            "url": url,
-            "operation": case["operation"],
-            "live_verdict": live_result.get("verdict", ""),
-            "content_verdict": cv,
-            "content_invalid_reason": enriched.get("content_invalid_reason", ""),
-            "positive_signals": enriched.get("positive_signals", []),
-            "negative_signals": enriched.get("negative_signals", []),
-            "title": live_result.get("title", ""),
-            "body_text_length": live_result.get("body_text_length", 0),
-            "mock_used": live_result.get("mock_used", False),
-            "local_agent_used": live_result.get("local_agent_used", False),
-            "server_browser_used": live_result.get("server_browser_used", False),
-            "safe_candidate_count": len(safe_c),
-            "blocked_candidate_count": len(blocked_c),
-            "needs_verification_candidate_count": len(needs_v_c),
-        })
+        fixture_results.append(
+            {
+                "id": case["id"],
+                "url": url,
+                "operation": case["operation"],
+                "live_verdict": live_result.get("verdict", ""),
+                "content_verdict": cv,
+                "content_invalid_reason": enriched.get("content_invalid_reason", ""),
+                "positive_signals": enriched.get("positive_signals", []),
+                "negative_signals": enriched.get("negative_signals", []),
+                "title": live_result.get("title", ""),
+                "body_text_length": live_result.get("body_text_length", 0),
+                "mock_used": live_result.get("mock_used", False),
+                "local_agent_used": live_result.get("local_agent_used", False),
+                "server_browser_used": live_result.get("server_browser_used", False),
+                "safe_candidate_count": len(safe_c),
+                "blocked_candidate_count": len(blocked_c),
+                "needs_verification_candidate_count": len(needs_v_c),
+            }
+        )
 
     # ── 2. safe 후보 URL discovery (depth=1, 최대 N개) ────────────────────────
     unique_safe = list(dict.fromkeys(all_safe_candidates))
-    safe_to_check = [u for u in unique_safe if u not in seen_urls][:args.max_candidates]
+    safe_to_check = [u for u in unique_safe if u not in seen_urls][: args.max_candidates]
     print(f"[INFO] safe 후보 {len(unique_safe)}개 중 {len(safe_to_check)}개 discovery 실행")
 
     content_valid_pass_candidates: list[dict[str, Any]] = []
@@ -379,7 +396,7 @@ def main() -> None:
         print(f"[INFO] candidate live read: {url}")
         gate_result = evaluate_g2b_public_notice_execution_gate({"input_url": url, "operation": "read"})
         if gate_result.get("gate_verdict") != GATE_READONLY_EXECUTION_CANDIDATE:
-            print(f"  → gate blocked, skip")
+            print("  → gate blocked, skip")
             continue
 
         live_result = _run_live_read_with_anchors(
@@ -402,12 +419,14 @@ def main() -> None:
         print(f"  → content_verdict={cv}")
 
         if cv == CONTENT_VALID_PASS:
-            content_valid_pass_candidates.append({
-                "url": url,
-                "title": live_result.get("title", ""),
-                "content_verdict": cv,
-                "positive_signals": enriched.get("positive_signals", []),
-            })
+            content_valid_pass_candidates.append(
+                {
+                    "url": url,
+                    "title": live_result.get("title", ""),
+                    "content_verdict": cv,
+                    "positive_signals": enriched.get("positive_signals", []),
+                }
+            )
 
     # ── 3. fail-on-mock 검사 ─────────────────────────────────────────────────
     if args.fail_on_mock and mock_used:

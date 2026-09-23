@@ -17,31 +17,28 @@ from __future__ import annotations
 
 import json
 import pathlib
+
 import pytest
 
 # ── state store import ───────────────────────────────────────────────────────
-
 from local_agent.user_present_state_store import (
+    _USER_FORBIDDEN_KEYS,
+    STATE_BLOCKED,
+    STATE_CANCELLED,
+    STATE_TASK_RECEIVED,
+    STATE_USER_CONFIRMED,
+    STATE_WAITING_FOR_USER,
     UserPresentStateStore,
     validate_user_present_task,
-    STATE_TASK_RECEIVED,
-    STATE_OPENING_BROWSER,
-    STATE_READONLY_CHECKING,
-    STATE_WAITING_FOR_USER,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
-    STATE_BLOCKED,
-    STATE_FAILED,
-    _USER_FORBIDDEN_KEYS,
-    _CONFIRMABLE_STATES,
-    _CANCELLABLE_STATES,
 )
 
 # ── FastAPI test client ───────────────────────────────────────────────────────
 
 try:
     from fastapi.testclient import TestClient
-    from local_agent.user_present_ui_server import create_app, DEFAULT_HOST, DEFAULT_PORT, run_server
+
+    from local_agent.user_present_ui_server import DEFAULT_HOST, DEFAULT_PORT, create_app, run_server
+
     _UI_AVAILABLE = True
 except ImportError:
     _UI_AVAILABLE = False
@@ -79,6 +76,7 @@ def _make_task(store: UserPresentStateStore, wfid: str = "wf_test_001", **kwargs
 
 
 # ── STORE TESTS ───────────────────────────────────────────────────────────────
+
 
 class TestStoreCreate:
     def test_create_sets_task_received_state(self, store):
@@ -119,7 +117,14 @@ class TestStoreCreate:
 
     def test_create_has_required_fields(self, store):
         task = _make_task(store)
-        for field in ["workflow_run_id", "state", "safe_to_execute", "safe_to_dispatch", "audit_required", "created_at"]:
+        for field in [
+            "workflow_run_id",
+            "state",
+            "safe_to_execute",
+            "safe_to_dispatch",
+            "audit_required",
+            "created_at",
+        ]:
             assert field in task
 
     def test_create_preserves_workflow_run_id(self, store):
@@ -232,25 +237,32 @@ class TestValidateTask:
 
     def test_safe_to_execute_true_reports_error(self):
         task = {
-            "workflow_run_id": "x", "state": "TASK_RECEIVED",
-            "safe_to_execute": True, "safe_to_dispatch": False,
-            "audit_required": True, "created_at": "2026-05-07T00:00:00Z"
+            "workflow_run_id": "x",
+            "state": "TASK_RECEIVED",
+            "safe_to_execute": True,
+            "safe_to_dispatch": False,
+            "audit_required": True,
+            "created_at": "2026-05-07T00:00:00Z",
         }
         errors = validate_user_present_task(task)
         assert any("safe_to_execute" in e for e in errors)
 
     def test_forbidden_key_in_task_reports_error(self):
         task = {
-            "workflow_run_id": "x", "state": "TASK_RECEIVED",
-            "safe_to_execute": False, "safe_to_dispatch": False,
-            "audit_required": True, "created_at": "2026-05-07T00:00:00Z",
-            "password": "secret"
+            "workflow_run_id": "x",
+            "state": "TASK_RECEIVED",
+            "safe_to_execute": False,
+            "safe_to_dispatch": False,
+            "audit_required": True,
+            "created_at": "2026-05-07T00:00:00Z",
+            "password": "secret",
         }
         errors = validate_user_present_task(task)
         assert any("password" in e for e in errors)
 
 
 # ── UI SERVER TESTS ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.skipif(not _UI_AVAILABLE, reason="fastapi not available")
 class TestServerConstants:
@@ -261,7 +273,7 @@ class TestServerConstants:
         assert DEFAULT_PORT == 18080
 
     def test_run_server_rejects_0000(self):
-        with pytest.raises(ValueError, match="0.0.0.0"):
+        with pytest.raises(ValueError, match="0.0.0.0"):  # noqa: RUF043
             run_server(host="0.0.0.0", port=18080, store=UserPresentStateStore())
 
 
@@ -293,13 +305,15 @@ class TestTasksEndpoint:
         assert r.json()["safe_to_execute"] is False
 
     def test_list_tasks_with_task_no_sensitive(self, client, store):
-        store.create_user_present_task({
-            "workflow_run_id": "wf_ui_01",
-            "task_title": "은행 인증",
-            "site_category": "bank",
-            "password": "leaked",
-            "otp": "111111",
-        })
+        store.create_user_present_task(
+            {
+                "workflow_run_id": "wf_ui_01",
+                "task_title": "은행 인증",
+                "site_category": "bank",
+                "password": "leaked",
+                "otp": "111111",
+            }
+        )
         r = client.get("/tasks")
         tasks = r.json()["tasks"]
         assert len(tasks) == 1
@@ -390,6 +404,7 @@ class TestIndexHtml:
 
 
 # ── 소스코드 정책 검사 ────────────────────────────────────────────────────────
+
 
 class TestSourceCodePolicy:
     """소스 코드 내 금지 패턴 부재 검증."""

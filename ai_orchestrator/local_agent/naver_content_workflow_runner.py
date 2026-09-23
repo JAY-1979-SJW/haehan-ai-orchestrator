@@ -5,34 +5,30 @@
 공통 LOCAL_PLAYWRIGHT task protocol만 사용.
 서버 외부 브라우저 없음.
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
-from ai_orchestrator.local_agent.naver_cafe_workflow import (
-    search_cafe, read_cafe_post, generate_blog_material_from_post,
-    write_cafe_post, write_cafe_comment,
+from ai_orchestrator.local_agent.delegated_action_executor import (
+    EXEC_ALLOWED,
 )
 from ai_orchestrator.local_agent.naver_blog_workflow import (
-    generate_blog_draft, publish_blog_post, schedule_blog_publish,
-    edit_blog_post, delete_blog_post,
+    generate_blog_draft,
+    publish_blog_post,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import sanitize_naver_result
-from ai_orchestrator.local_agent.delegated_action_executor import (
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION, EXEC_BLOCKED, EXEC_USER_DIRECT,
-)
-from ai_orchestrator.local_agent.auth_wait_controller import (
-    enter_auth_wait, AUTH_SIGNAL_LOGIN,
-)
-from ai_orchestrator.local_agent.task_protocol import (
-    STATUS_WAITING_USER_AUTH, STATUS_COMPLETED, STATUS_FAILED,
+from ai_orchestrator.local_agent.naver_cafe_workflow import (
+    generate_blog_material_from_post,
+    read_cafe_post,
+    search_cafe,
 )
 
 # ── workflow 최종 상태 ─────────────────────────────────────────────────────────
 
-WORKFLOW_PASS = "WORKFLOW_PASS"
+WORKFLOW_PASS = "WORKFLOW_PASS"  # noqa: S105
 WORKFLOW_WARN_AUTH = "WORKFLOW_WARN_AUTH_REQUIRED"
 WORKFLOW_WARN_PERMISSION = "WORKFLOW_WARN_PERMISSION_REQUIRED"
 WORKFLOW_FAIL = "WORKFLOW_FAIL"
@@ -55,7 +51,7 @@ def run_cafe_to_blog_workflow(
     dry_run=True: 실제 발행 없이 초안/권한 확인만 수행.
     runner_fn: 실제 Playwright 실행 함수.
     """
-    run_at = datetime.now(tz=timezone.utc).isoformat()
+    run_at = datetime.now(tz=UTC).isoformat()
     report: dict[str, Any] = {
         "run_at": run_at,
         "run_id": str(uuid.uuid4()),
@@ -77,21 +73,25 @@ def run_cafe_to_blog_workflow(
         steps.append({"step": "cafe_search", "ok": search_result.get("ok"), "query": cafe_search_query})
 
     post_result = read_cafe_post(cafe_url, runner_fn)
-    steps.append({
-        "step": "cafe_read_post",
-        "ok": post_result.get("ok"),
-        "title": post_result.get("title", ""),
-        "summary": post_result.get("summary", ""),
-        "keywords": post_result.get("keywords", []),
-    })
+    steps.append(
+        {
+            "step": "cafe_read_post",
+            "ok": post_result.get("ok"),
+            "title": post_result.get("title", ""),
+            "summary": post_result.get("summary", ""),
+            "keywords": post_result.get("keywords", []),
+        }
+    )
 
     # STEP B: 소재 추출 (AUTO_ALLOWED)
     material = generate_blog_material_from_post(post_result)
-    steps.append({
-        "step": "cafe_extract_material",
-        "ok": material.get("ok"),
-        "candidates_count": len(material.get("blog_material_candidates", [])),
-    })
+    steps.append(
+        {
+            "step": "cafe_extract_material",
+            "ok": material.get("ok"),
+            "candidates_count": len(material.get("blog_material_candidates", [])),
+        }
+    )
 
     # STEP C: 블로그 초안 (AUTO_ALLOWED)
     topic = blog_topic or post_result.get("title", "네이버 카페 탐색 결과")
@@ -101,12 +101,14 @@ def run_cafe_to_blog_workflow(
         keywords=material.get("keywords", []),
     )
     report["blog_draft"] = draft
-    steps.append({
-        "step": "blog_generate_draft",
-        "ok": draft.get("ok"),
-        "title_count": len(draft.get("title_candidates", [])),
-        "tag_count": len(draft.get("tag_candidates", [])),
-    })
+    steps.append(
+        {
+            "step": "blog_generate_draft",
+            "ok": draft.get("ok"),
+            "title_count": len(draft.get("title_candidates", [])),
+            "tag_count": len(draft.get("tag_candidates", [])),
+        }
+    )
 
     # STEP D: 발행 (USER_DELEGATED_PERMISSION_REQUIRED)
     if dry_run:
@@ -130,11 +132,13 @@ def run_cafe_to_blog_workflow(
             runner_fn=runner_fn,
         )
         report["publish_result"] = pub_result
-        steps.append({
-            "step": "blog_publish",
-            "status": pub_result.get("status"),
-            "ok": pub_result.get("ok"),
-        })
+        steps.append(
+            {
+                "step": "blog_publish",
+                "status": pub_result.get("status"),
+                "ok": pub_result.get("ok"),
+            }
+        )
         if pub_result.get("status") != EXEC_ALLOWED:
             report["permission_required"].append("blog_publish")
     else:

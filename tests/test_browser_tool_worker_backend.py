@@ -1,11 +1,11 @@
 """Tests for Browser Tool Worker Backend."""
-import pytest
-from ai_orchestrator.browser_tool.schemas import BrowserTask
+
 from ai_orchestrator.browser_tool.backends.worker_backend import (
     BrowserWorkerBackend,
     BrowserWorkerClient,
 )
-from browser_worker.schemas import WorkerBrowserResponse, WorkerBrowserRequest
+from ai_orchestrator.browser_tool.schemas import BrowserTask
+from browser_worker.schemas import WorkerBrowserRequest, WorkerBrowserResponse
 
 
 class MockTransport:
@@ -65,7 +65,7 @@ class TestBrowserWorkerClient:
 
     def test_http_client_timeout_response(self):
         """Test HTTP client timeout handling."""
-        mock_response = WorkerBrowserResponse.actual_execution_disabled(
+        mock_response = WorkerBrowserResponse.actual_execution_disabled(  # noqa: F841
             action="browser.inspect",
             task_id="task-001",
         )
@@ -189,8 +189,8 @@ class TestBrowserWorkerBackend:
 
     def test_convert_to_browser_result(self):
         """Test converting worker response to browser result."""
-        from browser_worker.schemas import WorkerBrowserResponse
         from ai_orchestrator.browser_tool.schemas import BrowserTask
+        from browser_worker.schemas import WorkerBrowserResponse
 
         worker_response = WorkerBrowserResponse.dry_run_success(
             action="browser.inspect",

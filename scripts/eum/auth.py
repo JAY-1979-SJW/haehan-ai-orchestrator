@@ -13,6 +13,7 @@
     else:
         print("로그인 실패:", result["reason"])
 """
+
 from __future__ import annotations
 
 import sys
@@ -21,9 +22,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
-from scripts.op_log import op_context
-from scripts.human_input import safe_human_input, find_selector as _hi_find_selector
+from scripts.human_input import safe_human_input  # noqa: E402
+from scripts.logger import get_logger  # noqa: E402
+from scripts.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -61,9 +62,7 @@ def _select_member_category(page, category: str = _MEMBER_CATEGORY) -> bool:
         except Exception:
             pass
         # 라벨/링크 폴백
-        for sel in [f'label:has-text("{category}")',
-                    f'a:has-text("{category}")',
-                    f'[onclick*="{category}"]']:
+        for sel in [f'label:has-text("{category}")', f'a:has-text("{category}")', f'[onclick*="{category}"]']:
             try:
                 loc = page.locator(sel).first
                 if loc.is_visible(timeout=1000):
@@ -119,8 +118,11 @@ def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBT
             loc = page.locator(_TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK).first
             loc.wait_for(state="attached", timeout=2000)
             loc.check(timeout=3000, force=True)
-            log.info("[eum-auth] 단말기 업체 세부 유형 선택: %s (fallback %s)",
-                     subtype, _TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK)
+            log.info(
+                "[eum-auth] 단말기 업체 세부 유형 선택: %s (fallback %s)",
+                subtype,
+                _TERMINAL_COMPANY_SUBTYPE_SELECTOR_FALLBACK,
+            )
             return True
         except Exception:
             pass
@@ -130,6 +132,7 @@ def _select_terminal_company_subtype(page, subtype: str = _TERMINAL_COMPANY_SUBT
     except Exception as e:
         log.warning("[eum-auth] 단말기 업체 세부 유형 선택 예외: %s", e)
         return False
+
 
 # 로그인 성공 판단 URL 패턴
 _SUCCESS_URL_PATTERNS = ["/main", "/mypage", "/web/man", "/dashboard"]
@@ -150,7 +153,10 @@ _ID_SELECTORS = [
     "input[type='text'][placeholder*='ID']",
     "input[type='search'][placeholder*='아이디']",
     "input[type='search'][placeholder*='ID']",
-    "#id", "#userId", "#loginId", "#username",
+    "#id",
+    "#userId",
+    "#loginId",
+    "#username",
 ]
 
 _PW_SELECTORS = [
@@ -160,7 +166,9 @@ _PW_SELECTORS = [
     "input[name='pw']",
     "input[name='passwd']",
     "input[type='password']",
-    "#password", "#pw", "#passwd",
+    "#password",
+    "#pw",
+    "#passwd",
 ]
 
 # 로그인 버튼 selector 후보
@@ -253,7 +261,7 @@ def is_logged_in(page) -> bool:
             if el and el.is_visible():
                 # "로그아웃"도 "로그인"을 포함하므로 텍스트 한 번 더 확인
                 txt = (el.inner_text() or "").strip()
-                if txt == "로그인" or "로그인" in txt and "로그아웃" not in txt:
+                if txt == "로그인" or ("로그인" in txt and "로그아웃" not in txt):
                     log.debug("is_logged_in: '로그인' 버튼 visible — 미로그인 url=%s", current_url)
                     return False
         except Exception:
@@ -312,7 +320,8 @@ def _prepare_login_page(page, url: str) -> bool:
             try:
                 page.wait_for_selector(
                     "input[type='password']:visible",
-                    state="visible", timeout=3000,
+                    state="visible",
+                    timeout=3000,
                 )
             except Exception:
                 pass
@@ -334,6 +343,7 @@ def login(page) -> dict:
         dict{ok: bool, reason: str, user: str}
     """
     from scripts.credentials import get_cred
+
     cred = get_cred("eum")
     eum_id = cred.get("id", "").strip()
     eum_pw = cred.get("pw", "").strip()
@@ -371,7 +381,8 @@ def login(page) -> dict:
                     try:
                         page.wait_for_selector(
                             "input[type='password']:visible",
-                            state="visible", timeout=3000,
+                            state="visible",
+                            timeout=3000,
                         )
                     except Exception:
                         pass
@@ -412,12 +423,12 @@ def login(page) -> dict:
         # 휴먼 타이핑 (봇 감지 회피)
         r_id = safe_human_input(page, id_sel, eum_id, label="ID", delay_ms=80)
         if not r_id.get("ok"):
-            msg = f"ID 입력 실패: {r_id.get('reason','')}"
+            msg = f"ID 입력 실패: {r_id.get('reason', '')}"
             ctx.set_result(msg=msg, ok=False)
             return {"ok": False, "reason": msg, "user": ""}
         r_pw = safe_human_input(page, pw_sel, eum_pw, label="PW", delay_ms=80)
         if not r_pw.get("ok"):
-            msg = f"PW 입력 실패: {r_pw.get('reason','')}"
+            msg = f"PW 입력 실패: {r_pw.get('reason', '')}"
             ctx.set_result(msg=msg, ok=False)
             return {"ok": False, "reason": msg, "user": ""}
 
@@ -464,6 +475,7 @@ def login(page) -> dict:
             # 세션 자동 저장 (다음 실행 시 복원)
             try:
                 from scripts.auth_session import save_session as _save
+
                 _save("eum.cw.or.kr", page)
                 log.info("[eum-auth] 세션 저장 완료")
             except Exception as _e:
@@ -476,10 +488,15 @@ def login(page) -> dict:
             "#alertMsg0",
             ".pop_modal_alert .pop_msg",
             ".pop_modal_alert",
-            ".error-msg", ".alert", ".warning",
-            "[class*='error']", "[class*='fail']",
-            "p:has-text('아이디')", "p:has-text('비밀번호')",
-            "span:has-text('오류')", "div:has-text('실패')",
+            ".error-msg",
+            ".alert",
+            ".warning",
+            "[class*='error']",
+            "[class*='fail']",
+            "p:has-text('아이디')",
+            "p:has-text('비밀번호')",
+            "span:has-text('오류')",
+            "div:has-text('실패')",
         ]
         for sel in fail_selectors:
             try:
@@ -510,6 +527,7 @@ def ensure_logged_in(page) -> None:
     # 저장된 세션 복원 시도
     try:
         from scripts.auth_session import restore_session as _restore
+
         r = _restore("eum.cw.or.kr", page)
         if r.get("ok"):
             log.info("[eum-auth] 저장 세션 복원 완료 (saved_at=%s)", r.get("saved_at"))
@@ -532,10 +550,9 @@ def ensure_logged_in(page) -> None:
     if result["ok"]:
         print(f"✔ ({result['user']})")
     else:
-        print(f"✘ 실패")
+        print("✘ 실패")
         raise RuntimeError(
-            f"EUM 자동 로그인 실패: {result['reason']}\n"
-            "  자격증명 확인: python scripts/cdp_client.py cred set eum"
+            f"EUM 자동 로그인 실패: {result['reason']}\n  자격증명 확인: python scripts/cdp_client.py cred set eum"
         )
 
 

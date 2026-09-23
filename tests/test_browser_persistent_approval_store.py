@@ -13,21 +13,16 @@ Verifies:
 10. Thread-safe locking
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 from local_agent.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
-    BrowserApprovalRecord,
     _hash_token,
 )
 from local_agent.browser_approval_verifier import BrowserApprovalVerifier
-from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskHandler
-from local_agent.browser_controller import BrowserController
+from local_agent.browser_task_handler import BrowserTaskPayload
 
 
 class TestTokenHashing:
@@ -83,7 +78,7 @@ class TestTokenHashing:
             )
 
             # Read JSONL file and verify no raw token
-            with open(store_path, "r") as f:
+            with open(store_path) as f:
                 content = f.read()
                 assert raw_token not in content
                 assert "password-like-secret-value" not in content
@@ -106,7 +101,7 @@ class TestJSONLFormat:
             )
 
             # Read JSONL and verify JSON validity
-            with open(store_path, "r") as f:
+            with open(store_path) as f:
                 for line in f:
                     if line.strip():
                         event = json.loads(line)
@@ -133,8 +128,8 @@ class TestJSONLFormat:
             )
 
             # Count JSONL lines
-            with open(store_path, "r") as f:
-                lines = [l for l in f if l.strip()]
+            with open(store_path) as f:
+                lines = [l for l in f if l.strip()]  # noqa: E741
                 assert len(lines) == 2
 
     def test_event_contains_approval_metadata(self):
@@ -152,7 +147,7 @@ class TestJSONLFormat:
                 final_approval_required=True,
             )
 
-            with open(store_path, "r") as f:
+            with open(store_path) as f:
                 event = json.loads(f.readline())
                 assert event["approval_id"] == "appr-1"
                 assert event["action_type"] == "browser.execute_click"
@@ -226,9 +221,9 @@ class TestOneTimeUse:
             store.mark_used("appr-1")
 
             # Verify JSONL has APPROVAL_USED event
-            with open(store_path, "r") as f:
-                lines = [l for l in f if l.strip()]
-                events = [json.loads(l) for l in lines]
+            with open(store_path) as f:
+                lines = [l for l in f if l.strip()]  # noqa: E741
+                events = [json.loads(l) for l in lines]  # noqa: E741
                 used_event = [e for e in events if e.get("event_type") == "APPROVAL_USED"]
                 assert len(used_event) > 0
 
@@ -292,6 +287,7 @@ class TestApprovalExpiration:
 
             # Wait for expiration
             import time
+
             time.sleep(1.1)
 
             # Reload and verify expired
@@ -318,8 +314,8 @@ class TestRevocation:
             store.revoke("appr-1")
 
             # Verify JSONL has APPROVAL_REVOKED event
-            with open(store_path, "r") as f:
-                events = [json.loads(l) for l in f if l.strip()]
+            with open(store_path) as f:
+                events = [json.loads(l) for l in f if l.strip()]  # noqa: E741
                 revoked_event = [e for e in events if e.get("event_type") == "APPROVAL_REVOKED"]
                 assert len(revoked_event) > 0
 
@@ -530,7 +526,7 @@ class TestNoSecretsInFile:
                 approval_token=secret_token,
             )
 
-            with open(store_path, "r") as f:
+            with open(store_path) as f:
                 content = f.read()
                 assert secret_token not in content
 
@@ -540,7 +536,7 @@ class TestNoSecretsInFile:
             store_path = Path(tmpdir) / "approvals.jsonl"
             store = PersistentBrowserApprovalStore(store_path)
 
-            forbidden_keywords = ["password", "cookie", "session", "secret", "key", "token"]
+            forbidden_keywords = ["password", "cookie", "session", "secret", "key", "token"]  # noqa: F841
             store.create_approval(
                 approval_id="appr-1",
                 action_type="browser.execute_click",
@@ -548,7 +544,7 @@ class TestNoSecretsInFile:
                 approval_token="some-secret",
             )
 
-            with open(store_path, "r") as f:
+            with open(store_path) as f:
                 lines = f.readlines()
                 for line in lines:
                     if not line.strip():
@@ -579,9 +575,7 @@ class TestThreadSafety:
                     approval_token=f"token-{idx}",
                 )
 
-            threads = [
-                threading.Thread(target=create_approval, args=(i,)) for i in range(5)
-            ]
+            threads = [threading.Thread(target=create_approval, args=(i,)) for i in range(5)]
 
             for t in threads:
                 t.start()

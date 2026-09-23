@@ -4,26 +4,33 @@ Universal AI Site Agent — real use smoke test
 mock page_data 기반 7개 scenario와 선택적 실제 외부 사이트 read-only 검증.
 실제 외부 접속은 --live 플래그로 명시할 때만 실행.
 """
+
 from __future__ import annotations
 
-import sys
-import os
 import argparse
+import os
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.real_site_smoke_runner import (
-    run_all_smoke_scenarios, run_smoke_scenario, is_safe_readonly_target, _SMOKE_SCENARIOS,
+from ai_orchestrator.local_agent.learned_site_profile_store import clear_all  # noqa: E402
+from ai_orchestrator.local_agent.natural_language_task_api import (  # noqa: E402
+    build_task_summary,
+    check_result_safety,
+    execute_natural_language_task,
 )
-from ai_orchestrator.local_agent.natural_language_task_api import (
-    execute_natural_language_task, build_task_summary, check_result_safety,
+from ai_orchestrator.local_agent.real_site_smoke_runner import (  # noqa: E402
+    is_safe_readonly_target,
+    run_all_smoke_scenarios,
 )
-from ai_orchestrator.local_agent.universal_agent_session import (
-    create_session, run_task_in_session, get_session_history, close_session,
+from ai_orchestrator.local_agent.universal_agent_session import (  # noqa: E402
+    close_session,
+    create_session,
+    get_session_history,
+    run_task_in_session,
 )
-from ai_orchestrator.local_agent.learned_site_profile_store import clear_all
 
 
 def _dummy_runner(action: str, domain: str = "", **kwargs):
@@ -31,9 +38,13 @@ def _dummy_runner(action: str, domain: str = "", **kwargs):
 
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 
@@ -44,6 +55,7 @@ def assert_safe(result: dict, label: str = "") -> None:
 
 
 # ── 1. Mock 기반 smoke ─────────────────────────────────────────────────────────
+
 
 def test_mock_smoke_all():
     print("\n=== Mock Smoke (7 scenarios) ===")
@@ -58,6 +70,7 @@ def test_mock_smoke_all():
 
 
 # ── 2. Natural Language Task API ──────────────────────────────────────────────
+
 
 def test_natural_language_api():
     print("\n=== Natural Language Task API ===")
@@ -76,12 +89,13 @@ def test_natural_language_api():
             dry_run=True,
         )
         assert_safe(result, label=f"NL API: {instruction[:20]}")
-        summary = build_task_summary(result)
+        summary = build_task_summary(result)  # noqa: F841
         print(f"  [{result['status']}] {instruction[:30]}...")
     print("  NL Task API PASS")
 
 
 # ── 3. Agent Session ──────────────────────────────────────────────────────────
+
 
 def test_agent_session():
     print("\n=== Agent Session ===")
@@ -99,14 +113,12 @@ def test_agent_session():
     }
 
     # task 1: 공지 읽기 (AUTO_ALLOWED)
-    r1 = run_task_in_session(sid, "공지사항 찾아줘", page_data=page_data,
-                              runner_fn=_dummy_runner, dry_run=True)
+    r1 = run_task_in_session(sid, "공지사항 찾아줘", page_data=page_data, runner_fn=_dummy_runner, dry_run=True)
     assert_safe(r1, "session_task1")
     print(f"  task1: {r1['status']}")
 
     # task 2: 내용 요약 (AUTO_ALLOWED)
-    r2 = run_task_in_session(sid, "이 내용 요약해줘", page_data=page_data,
-                              runner_fn=_dummy_runner, dry_run=True)
+    r2 = run_task_in_session(sid, "이 내용 요약해줘", page_data=page_data, runner_fn=_dummy_runner, dry_run=True)
     assert_safe(r2, "session_task2")
     print(f"  task2: {r2['status']}")
 
@@ -121,11 +133,14 @@ def test_agent_session():
 
 # ── 4. Learned Profile 재사용 검증 ────────────────────────────────────────────
 
+
 def test_learned_profile():
     print("\n=== Learned Profile 저장/재사용 ===")
     from ai_orchestrator.local_agent.learned_site_profile_store import (
-        has_learned_profile, get_learned_profile,
+        get_learned_profile,
+        has_learned_profile,
     )
+
     clear_all()
 
     page_data = {
@@ -151,12 +166,13 @@ def test_learned_profile():
     assert p["password_stored"] is False
     assert p["cookie_stored"] is False
     assert p["session_stored"] is False
-    print(f"  host=smoketest.example.com 저장 완료")
-    print(f"  민감정보 저장 없음: PASS")
+    print("  host=smoketest.example.com 저장 완료")
+    print("  민감정보 저장 없음: PASS")
     print("  Learned Profile PASS")
 
 
 # ── 5. 실제 외부 사이트 (--live 시) ──────────────────────────────────────────
+
 
 def test_live_readonly_smoke(target_url: str):
     print(f"\n=== Live Read-only Smoke: {target_url} ===")
@@ -191,11 +207,11 @@ def test_live_readonly_smoke(target_url: str):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(description="Universal AI Site Agent Real Use Smoke")
     parser.add_argument("--live", action="store_true", help="실제 외부 사이트 접속")
-    parser.add_argument("--url", default="https://quotes.toscrape.com/",
-                        help="실제 접속 대상 URL (--live 시 사용)")
+    parser.add_argument("--url", default="https://quotes.toscrape.com/", help="실제 접속 대상 URL (--live 시 사용)")
     args = parser.parse_args()
 
     print("\n====================================================")

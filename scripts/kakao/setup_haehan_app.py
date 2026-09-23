@@ -16,6 +16,7 @@ Playwright 기반. 기존 browser_session() + ensure_login() 패턴 사용.
   GATE-8  Redirect URI 등록
   GATE-9  동의항목 확인
 """
+
 from __future__ import annotations
 
 import json
@@ -28,9 +29,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.web_connector import browser_session
-from scripts.page_helper import page_goto, page_wait_visible, page_wait_click, page_wait_type
-from scripts.logger import get_logger
+from scripts.logger import get_logger  # noqa: E402
+from scripts.page_helper import page_goto  # noqa: E402
+from scripts.web_connector import browser_session  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -76,22 +77,44 @@ APP_CONFIG = {
 
 # ── 게이트 결과 ───────────────────────────────────────────────────────────────
 
-class GS(str, Enum):
-    PASS = "PASS"; FAIL = "FAIL"; SKIP = "SKIP"
+
+class GS(str, Enum):  # noqa: UP042
+    PASS = "PASS"
+    FAIL = "FAIL"
+    SKIP = "SKIP"
+
 
 @dataclass
 class GR:
-    gate: str; status: GS; message: str; data: dict = field(default_factory=dict)
-    def ok(self) -> bool: return self.status == GS.PASS
+    gate: str
+    status: GS
+    message: str
+    data: dict = field(default_factory=dict)
 
-def _pass(g, msg, **d): print(f"  ✓ [{g}] {msg}"); return GR(g, GS.PASS, msg, d)
-def _fail(g, msg, fix=""): print(f"  ✗ [{g}] {msg}"); fix and print(f"    → {fix}"); return GR(g, GS.FAIL, msg)
-def _skip(g, msg): print(f"  - [{g}] {msg}"); return GR(g, GS.SKIP, msg)
+    def ok(self) -> bool:
+        return self.status == GS.PASS
+
+
+def _pass(g, msg, **d):
+    print(f"  ✓ [{g}] {msg}")
+    return GR(g, GS.PASS, msg, d)
+
+
+def _fail(g, msg, fix=""):
+    print(f"  ✗ [{g}] {msg}")
+    fix and print(f"    → {fix}")
+    return GR(g, GS.FAIL, msg)
+
+
+def _skip(g, msg):
+    print(f"  - [{g}] {msg}")
+    return GR(g, GS.SKIP, msg)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 게이트 구현
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def gate1_connect():
     """GATE-1: browser_session 연결 확인."""
@@ -100,18 +123,21 @@ def gate1_connect():
             url = page.url
             return _pass("GATE-1", f"Playwright 연결됨 — {url[:50]}")
     except Exception as e:
-        return _fail("GATE-1", f"Playwright 연결 실패: {e}",
-                     "CDP 브라우저 실행 확인: python scripts/cdp_force_start.py start")
+        return _fail(
+            "GATE-1", f"Playwright 연결 실패: {e}", "CDP 브라우저 실행 확인: python scripts/cdp_force_start.py start"
+        )
 
 
 def gate2_login():
     """GATE-2: 카카오 로그인 세션. 저장 세션 복원 시도 → 없으면 대기."""
     from scripts.web_connector import get_page
+
     page = get_page()
     if True:
         # 저장 세션 복원 시도
         try:
             from scripts.auth_session import restore_session
+
             if restore_session("developers.kakao.com", page):
                 print("  ! [GATE-2] 저장 세션 복원 시도")
         except Exception:
@@ -123,15 +149,11 @@ def gate2_login():
         # 로그인 확인 — 앱 목록 또는 사용자명 텍스트로 판단
         try:
             body = page.inner_text("body")
-            logged_in = (
-                "로그아웃" in body or
-                "전체 앱" in body or
-                "앱 생성" in body or
-                "Owner" in body
-            )
+            logged_in = "로그아웃" in body or "전체 앱" in body or "앱 생성" in body or "Owner" in body
             if logged_in:
                 try:
                     from scripts.auth_session import save_session
+
                     save_session("developers.kakao.com", page)
                 except Exception:
                     pass
@@ -140,17 +162,19 @@ def gate2_login():
             pass
 
         # 미로그인 — 대기
-        print(f"  ! [GATE-2] 미로그인 — 브라우저에서 카카오 로그인하세요 (SMS/앱 인증)")
+        print("  ! [GATE-2] 미로그인 — 브라우저에서 카카오 로그인하세요 (SMS/앱 인증)")
         from scripts.login_detector import monitor_for_login
+
         result = monitor_for_login(page, check_interval=2, timeout_s=300)
         if result.get("detected"):
             try:
                 from scripts.auth_session import save_session
+
                 save_session("developers.kakao.com", page)
                 print("  ✓ [GATE-2] 세션 저장됨")
             except Exception:
                 pass
-            return _pass("GATE-2", f"로그인 감지 ({result.get('elapsed_s',0):.0f}초)")
+            return _pass("GATE-2", f"로그인 감지 ({result.get('elapsed_s', 0):.0f}초)")
         return _fail("GATE-2", "로그인 타임아웃", "브라우저에서 카카오 로그인 후 재실행")
 
 
@@ -161,16 +185,13 @@ def gate3_console(page) -> GR:
 
     # 로그인 리다이렉트 확인
     if "login" in page.url or "accounts.kakao" in page.url:
-        return _fail("GATE-3", "로그인 리다이렉트됨 — 세션 만료",
-                     "GATE-2 재실행 필요")
+        return _fail("GATE-3", "로그인 리다이렉트됨 — 세션 만료", "GATE-2 재실행 필요")
 
     try:
-        page.wait_for_selector("[class*=app_item], [class*=AppItem], a[href*='/console/app/']",
-                                timeout=10000)
+        page.wait_for_selector("[class*=app_item], [class*=AppItem], a[href*='/console/app/']", timeout=10000)
         return _pass("GATE-3", "개발자 콘솔 접근 성공")
     except Exception:
-        return _fail("GATE-3", "앱 목록 로딩 실패",
-                     "콘솔에서 앱 목록이 보이는지 확인")
+        return _fail("GATE-3", "앱 목록 로딩 실패", "콘솔에서 앱 목록이 보이는지 확인")
 
 
 def gate4_app_list(page) -> GR:
@@ -211,6 +232,7 @@ def gate5_get_key(page, app_id: str) -> GR:
     body = page.inner_text("body")
     # REST API 키는 32자 hex 패턴
     import re
+
     # "REST API 키" 라벨 이후 첫 번째 32자 hex
     match = re.search(r"REST API 키[\s\S]{0,200}?([0-9a-f]{32})", body, re.IGNORECASE)
     if not match:
@@ -224,10 +246,8 @@ def gate5_get_key(page, app_id: str) -> GR:
     key_entries = re.findall(r"([^\n]{1,30})\n더보기\n([0-9a-f]{32})", body)
 
     if rest:
-        return _pass("GATE-5", f"REST API 키 확인됨 ({len(rest)}자)",
-                     rest_key=rest, all_keys=key_entries)
-    return _fail("GATE-5", "REST API 키 미확인",
-                 f"콘솔 > 앱 설정 > 플랫폼 키 확인")
+        return _pass("GATE-5", f"REST API 키 확인됨 ({len(rest)}자)", rest_key=rest, all_keys=key_entries)
+    return _fail("GATE-5", "REST API 키 미확인", "콘솔 > 앱 설정 > 플랫폼 키 확인")
 
 
 def gate6_platform(page, app_id: str, domains: list) -> GR:
@@ -260,10 +280,11 @@ def gate6_platform(page, app_id: str, domains: list) -> GR:
         return _pass("GATE-6", f"플랫폼 도메인 확인됨: {found}")
 
     # 미등록 도메인 안내 (자동 등록은 JS SDK 도메인을 통해 가능하나 복잡)
-    return _fail("GATE-6",
-                 f"미등록 도메인: {missing}",
-                 f"콘솔 > 앱 설정 > 플랫폼 키 > JavaScript 키 > JS SDK 도메인에 추가:\n" +
-                 "\n".join(f"    {d}" for d in missing))
+    return _fail(
+        "GATE-6",
+        f"미등록 도메인: {missing}",
+        "콘솔 > 앱 설정 > 플랫폼 키 > JavaScript 키 > JS SDK 도메인에 추가:\n" + "\n".join(f"    {d}" for d in missing),
+    )
 
 
 def gate7_login_activate(page, app_id: str) -> GR:
@@ -277,16 +298,14 @@ def gate7_login_activate(page, app_id: str) -> GR:
 
     try:
         toggle = page.wait_for_selector(
-            "[role='switch'], input[type='checkbox'][class*='toggle'], "
-            "button[class*='toggle'], [class*='Switch']",
-            timeout=5000
+            "[role='switch'], input[type='checkbox'][class*='toggle'], button[class*='toggle'], [class*='Switch']",
+            timeout=5000,
         )
         toggle.click()
         page.wait_for_load_state("networkidle", timeout=5000)
         return _pass("GATE-7", "카카오 로그인 활성화 완료")
     except Exception as e:
-        return _fail("GATE-7", f"토글 실패: {e}",
-                     "콘솔 > 제품 설정 > 카카오 로그인에서 직접 ON")
+        return _fail("GATE-7", f"토글 실패: {e}", "콘솔 > 제품 설정 > 카카오 로그인에서 직접 ON")
 
 
 def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
@@ -306,8 +325,9 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
         page.wait_for_load_state("networkidle", timeout=5000)
         time.sleep(1)
     except Exception as e:
-        return _fail("GATE-8", f"리다이렉트 URI 편집 폼 열기 실패: {e}",
-                     "플랫폼 키 미설정 — REST API 키 먼저 생성 필요")
+        return _fail(
+            "GATE-8", f"리다이렉트 URI 편집 폼 열기 실패: {e}", "플랫폼 키 미설정 — REST API 키 먼저 생성 필요"
+        )
 
     # 현재 등록된 URI 확인 (input_value 기준)
     count = page.locator(inp_sel).count()
@@ -316,7 +336,9 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
         val = page.locator(inp_sel).nth(i).input_value()
         current_values.append(val.strip())
 
-    print(f"  ! [GATE-8] 현재 등록 URI {len([v for v in current_values if v])}개: {[v[:40] for v in current_values if v]}")
+    print(
+        f"  ! [GATE-8] 현재 등록 URI {len([v for v in current_values if v])}개: {[v[:40] for v in current_values if v]}"
+    )
 
     missing = [u for u in uris if u not in current_values]
     if not missing:
@@ -359,10 +381,10 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
                     time.sleep(0.3)
                     registered += 1
                     filled = True
-                    print(f"    ✓ 입력됨")
+                    print("    ✓ 입력됨")
                     break
             if not filled:
-                print(f"    ! 빈 입력창 없음")
+                print("    ! 빈 입력창 없음")
         except Exception as e:
             print(f"    ✗ 입력 실패: {e}")
 
@@ -372,7 +394,7 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
             page.click("button[type='submit']:has-text('저장'), button:has-text('저장')")
             page.wait_for_load_state("networkidle", timeout=5000)
             time.sleep(1)
-            print(f"  ✓ 저장 완료")
+            print("  ✓ 저장 완료")
         except Exception as e:
             print(f"  ! 저장 버튼 오류: {e}")
 
@@ -388,11 +410,12 @@ def gate8_redirect_uri(page, app_id: str, uris: list) -> GR:
 
     if not still_missing:
         return _pass("GATE-8", f"Redirect URI {len(uris)}개 모두 등록 완료")
-    return _fail("GATE-8",
-                 f"등록됨: {len(done)}개 / 미등록: {len(still_missing)}개\n"
-                 f"    현재 슬롯: {[v[:40] for v in after_values if v]}",
-                 "콘솔 > 앱 설정 > 플랫폼 키 > 로그인 리다이렉트 URI 직접 추가:\n" +
-                 "\n".join(f"    {u}" for u in still_missing))
+    return _fail(
+        "GATE-8",
+        f"등록됨: {len(done)}개 / 미등록: {len(still_missing)}개\n    현재 슬롯: {[v[:40] for v in after_values if v]}",
+        "콘솔 > 앱 설정 > 플랫폼 키 > 로그인 리다이렉트 URI 직접 추가:\n"
+        + "\n".join(f"    {u}" for u in still_missing),
+    )
 
 
 def gate9_scope(page, app_id: str) -> GR:
@@ -413,6 +436,7 @@ def gate9_scope(page, app_id: str) -> GR:
 # ══════════════════════════════════════════════════════════════════════════════
 # 메인
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def main():
     print("=" * 60)
@@ -441,6 +465,7 @@ def main():
         # 세션 복원
         try:
             from scripts.auth_session import restore_session
+
             restore_session("developers.kakao.com", page)
         except Exception:
             pass
@@ -467,47 +492,43 @@ def main():
 
         for app_id in target_ids:
             cfg = APP_CONFIG[app_id]
-            print(f"\n{'─'*60}")
+            print(f"\n{'─' * 60}")
             print(f"앱 설정: {cfg['name']} (ID: {app_id})")
-            print(f"{'─'*60}")
+            print(f"{'─' * 60}")
 
             # GATE-5: REST API 키
-            print(f"\n[GATE-5] REST API 키")
+            print("\n[GATE-5] REST API 키")
             g5 = gate5_get_key(page, app_id)
             all_results.append(g5)
             if g5.ok():
                 final_keys[app_id] = g5.data.get("rest_key", "")
 
             # GATE-6: 플랫폼
-            print(f"\n[GATE-6] 플랫폼")
+            print("\n[GATE-6] 플랫폼")
             g6 = gate6_platform(page, app_id, cfg["domains"])
             all_results.append(g6)
 
             # GATE-7: 로그인 활성화
-            print(f"\n[GATE-7] 카카오 로그인 활성화")
+            print("\n[GATE-7] 카카오 로그인 활성화")
             g7 = gate7_login_activate(page, app_id)
             all_results.append(g7)
 
             # GATE-8: Redirect URI
-            print(f"\n[GATE-8] Redirect URI")
+            print("\n[GATE-8] Redirect URI")
             g8 = gate8_redirect_uri(page, app_id, cfg["redirect_uris"])
             all_results.append(g8)
 
             # GATE-9: 동의항목
-            print(f"\n[GATE-9] 동의항목")
+            print("\n[GATE-9] 동의항목")
             g9 = gate9_scope(page, app_id)
             all_results.append(g9)
 
     # 결과 저장
     out = {
-        "apps": {aid: {"name": APP_CONFIG[aid]["name"], "rest_key": k}
-                 for aid, k in final_keys.items()},
-        "gates": [{"gate": r.gate, "status": r.status.value, "message": r.message}
-                  for r in all_results],
+        "apps": {aid: {"name": APP_CONFIG[aid]["name"], "rest_key": k} for aid, k in final_keys.items()},
+        "gates": [{"gate": r.gate, "status": r.status.value, "message": r.message} for r in all_results],
     }
-    Path("data/kakao_setup_result.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    Path("data/kakao_setup_result.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
     _summary(all_results)
 
@@ -515,10 +536,10 @@ def main():
     if final_keys:
         print("\n.env 추가 내용:")
         for aid, key in final_keys.items():
-            name = APP_CONFIG[aid]["name"]
+            name = APP_CONFIG[aid]["name"]  # noqa: F841
             env_key = "KAKAO_REST_API_KEY" if aid == "1395337" else f"KAKAO_{aid}_REST_API_KEY"
             print(f"  {env_key}={key or '콘솔에서 복사'}")
-        print(f"  KAKAO_REDIRECT_URI=https://autowork.haehan-ai.kr/api/auth/kakao/callback")
+        print("  KAKAO_REDIRECT_URI=https://autowork.haehan-ai.kr/api/auth/kakao/callback")
 
 
 def _summary(results: list[GR]):
@@ -530,7 +551,7 @@ def _summary(results: list[GR]):
         print(f"  {icon} {r.gate}: {r.status.value} — {r.message[:60]}")
     passed = sum(1 for r in results if r.ok())
     print(f"\n  총 {len(results)}개 중 {passed}개 PASS")
-    print(f"  결과: data/kakao_setup_result.json")
+    print("  결과: data/kakao_setup_result.json")
 
 
 if __name__ == "__main__":

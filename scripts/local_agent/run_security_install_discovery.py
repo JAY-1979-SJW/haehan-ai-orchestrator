@@ -5,25 +5,24 @@ auth 감지 우회가 아니라, 설치 안내 페이지용 특화된 탐색 로
 - 실제 로그인/인증 폼 유무를 확인 (input[type=password] 기반)
 - 설치 설명 텍스트의 "인증서" 단어는 auth 요구로 오인하지 않음
 """
+
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.security_program_detector import detect_security_signals
-from ai_orchestrator.local_agent.security_installer_candidate_finder import find_installer_candidates
-from ai_orchestrator.local_agent.security_installer_policy import evaluate_installer, check_silent_flags
-from ai_orchestrator.local_agent.security_program_install_result_sanitizer import (
-    build_safe_report, check_result_has_no_sensitive_data,
+from ai_orchestrator.local_agent.security_installer_candidate_finder import find_installer_candidates  # noqa: E402
+from ai_orchestrator.local_agent.security_program_detector import detect_security_signals  # noqa: E402
+from ai_orchestrator.local_agent.security_program_install_result_sanitizer import (  # noqa: E402
+    check_result_has_no_sensitive_data,
 )
 
 # 공식 후보 목록 (검색 결과 기반)
@@ -49,17 +48,21 @@ _OFFICIAL_CANDIDATES = [
 ]
 
 _SAFE_FIELDS = [
-    "cookie_exported", "session_exported", "password_collected",
-    "otp_collected", "certificate_password_collected",
-    "storage_state_exported", "server_browser_used",
+    "cookie_exported",
+    "session_exported",
+    "password_collected",
+    "otp_collected",
+    "certificate_password_collected",
+    "storage_state_exported",
+    "server_browser_used",
 ]
 
 # 실제 인증 요구 판단 — input[type=password] 유무 기반
 _REAL_AUTH_INDICATORS = [
     'input[type="password"]',
-    'input[type=password]',
-    '#loginForm',
-    '.login-form',
+    "input[type=password]",
+    "#loginForm",
+    ".login-form",
 ]
 
 
@@ -86,7 +89,10 @@ def _is_official_link(href: str, source_host: str) -> bool:
     """href가 공식 도메인 내 링크인지 확인."""
     if href.startswith("http"):
         host = _extract_host(href)
-        root = lambda h: ".".join(h.split(".")[-2:]) if h else ""
+
+        def root(h):
+            return ".".join(h.split(".")[-2:]) if h else ""
+
         return root(host) == root(source_host)
     return True  # 상대 경로는 허용
 
@@ -133,7 +139,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
             # 실제 인증 폼 확인 (DOM 기반, 텍스트 키워드 아님)
             has_auth_form = _has_actual_auth_form(page)
             if has_auth_form:
-                print(f"  → 실제 로그인 폼 감지 — 다른 후보로 전환")
+                print("  → 실제 로그인 폼 감지 — 다른 후보로 전환")
                 return {
                     "site_name": site_name,
                     "status": "LOGIN_FORM_DETECTED",
@@ -161,6 +167,7 @@ def run_discovery(candidate: dict, take_screenshot: bool = False) -> dict:
                             if ext in src.lower():
                                 # URL 추출 (따옴표 사이)
                                 import re
+
                                 urls = re.findall(r"['\"]([^'\"]*" + re.escape(ext) + r"[^'\"]*)['\"]", src, re.I)
                                 for u in urls:
                                     if _is_official_link(u, source_host):
@@ -282,9 +289,10 @@ def _sha256_file(path: str) -> str:
 def _verify_signature(path: str) -> str:
     """PowerShell로 코드 서명 확인."""
     import subprocess
+
     cmd = (
-        f'powershell -NoProfile -ExecutionPolicy Bypass -Command '
-        f'"Get-AuthenticodeSignature -FilePath \'{path}\' | '
+        f"powershell -NoProfile -ExecutionPolicy Bypass -Command "
+        f"\"Get-AuthenticodeSignature -FilePath '{path}' | "
         f'Select-Object -ExpandProperty Status"'
     )
     try:
@@ -296,9 +304,9 @@ def _verify_signature(path: str) -> str:
 
 def run_full_discovery(take_screenshot: bool = False) -> dict:
     """전체 후보 탐색 → 최적 선택 → 보고."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("보안프로그램 설치 자동 탐색")
-    print("="*60)
+    print("=" * 60)
 
     results = []
     for candidate in _OFFICIAL_CANDIDATES:
@@ -320,12 +328,9 @@ def run_full_discovery(take_screenshot: bool = False) -> dict:
 
     report = {
         "task_id": str(uuid.uuid4()),
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
         "candidates_tried": len(results),
-        "results_summary": [
-            {"site": r.get("site_name"), "status": r.get("status")}
-            for r in results
-        ],
+        "results_summary": [{"site": r.get("site_name"), "status": r.get("status")} for r in results],
         "selected": {
             "site_name": selected.get("site_name") if selected else None,
             "status": selected.get("status") if selected else "NO_CANDIDATE",
@@ -345,15 +350,15 @@ def run_full_discovery(take_screenshot: bool = False) -> dict:
 def main():
     report = run_full_discovery(take_screenshot=True)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("탐색 결과")
-    print("="*60)
+    print("=" * 60)
     print(f"시도: {report['candidates_tried']}개 후보")
     print(f"선택: {report['selected']['site_name']} / {report['selected']['status']}")
     if report["selected"]["signals"]:
         print(f"감지 신호: {report['selected']['signals']}")
     if report["selected"]["installer_allowed"]:
-        print(f"설치 후보:")
+        print("설치 후보:")
         for c in report["selected"]["installer_allowed"][:3]:
             print(f"  - {c.get('filename')} ({c.get('url', '')[:80]})")
 

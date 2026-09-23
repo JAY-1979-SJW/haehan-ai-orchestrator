@@ -20,14 +20,14 @@ Security invariants:
 - Bridge does NOT call BrowserController directly — handler dispatch only
 - Schema validation MUST run BEFORE handler dispatch
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import asdict
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
-from .browser_approval_verifier import BrowserApprovalVerifier
 from .browser_audit_contract import (
     BrowserAuditEvent,
     BrowserAuditEventType,
@@ -40,10 +40,10 @@ from .browser_task_handler import (
     BrowserTaskResult,
 )
 from .browser_websocket_schema import (
-    BrowserWebSocketTaskPayloadSchema,
-    BrowserWebSocketTaskResultSchema,
     RESULT_DATA_FORBIDDEN_KEYS,
     VALID_TASK_STATUS,
+    BrowserWebSocketTaskPayloadSchema,
+    BrowserWebSocketTaskResultSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 # Mock callback collector
 # ---------------------------------------------------------------------------
 
+
 class MockResultCallbackCollector:
     """Collects safe result dicts emitted by the bridge.
 
@@ -61,12 +62,12 @@ class MockResultCallbackCollector:
     """
 
     def __init__(self) -> None:
-        self.messages: List[Dict[str, Any]] = []
+        self.messages: list[dict[str, Any]] = []
 
-    def append(self, message: Dict[str, Any]) -> None:
+    def append(self, message: dict[str, Any]) -> None:
         self.messages.append(message)
 
-    def last_message(self) -> Optional[Dict[str, Any]]:
+    def last_message(self) -> dict[str, Any] | None:
         return self.messages[-1] if self.messages else None
 
     def clear(self) -> None:
@@ -92,6 +93,7 @@ class MockResultCallbackCollector:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _payload_to_task(schema: BrowserWebSocketTaskPayloadSchema) -> BrowserTaskPayload:
     """Convert validated WebSocket payload schema to BrowserTaskPayload."""
@@ -135,7 +137,7 @@ def _safe_failure_dict(
     status: str,
     error_code: str,
     error_message: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build a safe failure callback dict via the result schema (no secrets)."""
     schema = BrowserWebSocketTaskResultSchema.from_task_result(
         task_id=task_id or "unknown",
@@ -156,6 +158,7 @@ def _safe_failure_dict(
 # Bridge
 # ---------------------------------------------------------------------------
 
+
 class BrowserLocalWebSocketBridge:
     """Local mock WebSocket → BrowserTaskHandler bridge.
 
@@ -171,9 +174,9 @@ class BrowserLocalWebSocketBridge:
     def __init__(
         self,
         task_handler: BrowserTaskHandler,
-        callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-        audit_writer: Optional[Any] = None,
-        audit_context: Optional[Dict[str, Any]] = None,
+        callback: Callable[[dict[str, Any]], None] | None = None,
+        audit_writer: Any | None = None,
+        audit_context: dict[str, Any] | None = None,
     ) -> None:
         self._handler = task_handler
         self._callback = callback or (lambda _msg: None)
@@ -183,7 +186,7 @@ class BrowserLocalWebSocketBridge:
     # ------------------------------------------------------------------
     # Audit emission
 
-    def _audit_actor(self) -> Dict[str, Any]:
+    def _audit_actor(self) -> dict[str, Any]:
         ctx = self._audit_context
         return {
             "actor_user_id": ctx.get("actor_user_id"),
@@ -259,7 +262,7 @@ class BrowserLocalWebSocketBridge:
     # ------------------------------------------------------------------
     # Inbound message entrypoint
 
-    async def handle_inbound_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_inbound_message(self, message: dict[str, Any]) -> dict[str, Any]:
         """Process one inbound mock message. Returns the safe callback dict."""
         # Step 1: schema validation — handler is NOT invoked on failure
         try:
@@ -277,12 +280,14 @@ class BrowserLocalWebSocketBridge:
                 error_code="schema_invalid",
                 error_message=str(exc),
             )
-            self._emit_audit_event(self._build_audit_event_from_validation_failure(
-                task_id=task_id_str,
-                action_type=action_str,
-                selector=selector_str,
-                error_message=str(exc),
-            ))
+            self._emit_audit_event(
+                self._build_audit_event_from_validation_failure(
+                    task_id=task_id_str,
+                    action_type=action_str,
+                    selector=selector_str,
+                    error_message=str(exc),
+                )
+            )
             self._emit(failure)
             return failure
 
@@ -296,12 +301,14 @@ class BrowserLocalWebSocketBridge:
                 error_code="schema_invalid",
                 error_message=err or "validation failed",
             )
-            self._emit_audit_event(self._build_audit_event_from_validation_failure(
-                task_id=schema.task_id or "unknown",
-                action_type=schema.action_type,
-                selector=schema.selector,
-                error_message=err or "validation failed",
-            ))
+            self._emit_audit_event(
+                self._build_audit_event_from_validation_failure(
+                    task_id=schema.task_id or "unknown",
+                    action_type=schema.action_type,
+                    selector=schema.selector,
+                    error_message=err or "validation failed",
+                )
+            )
             self._emit(failure)
             return failure
 
@@ -321,12 +328,14 @@ class BrowserLocalWebSocketBridge:
                 error_code="handler_exception",
                 error_message=type(exc).__name__,  # class name only — no stack
             )
-            self._emit_audit_event(self._build_audit_event_from_handler_exception(
-                task_id=schema.task_id,
-                action_type=schema.action_type,
-                selector=schema.selector,
-                exc=exc,
-            ))
+            self._emit_audit_event(
+                self._build_audit_event_from_handler_exception(
+                    task_id=schema.task_id,
+                    action_type=schema.action_type,
+                    selector=schema.selector,
+                    exc=exc,
+                )
+            )
             self._emit(failure)
             return failure
 
@@ -345,16 +354,18 @@ class BrowserLocalWebSocketBridge:
                 error_message="result schema validation failed",
             )
             actor = self._audit_actor()
-            self._emit_audit_event(build_browser_task_audit_event(
-                event_type=BrowserAuditEventType.TASK_FAILED,
-                task_id=task_result.task_id or "unknown",
-                action_type=task_result.action or "",
-                selector=task_result.selector or "",
-                error_code="unsafe_result",
-                error_message="result schema validation failed",
-                request_id=task_result.task_id or None,
-                **actor,
-            ))
+            self._emit_audit_event(
+                build_browser_task_audit_event(
+                    event_type=BrowserAuditEventType.TASK_FAILED,
+                    task_id=task_result.task_id or "unknown",
+                    action_type=task_result.action or "",
+                    selector=task_result.selector or "",
+                    error_code="unsafe_result",
+                    error_message="result schema validation failed",
+                    request_id=task_result.task_id or None,
+                    **actor,
+                )
+            )
             self._emit(failure)
             return failure
 
@@ -366,13 +377,13 @@ class BrowserLocalWebSocketBridge:
     # ------------------------------------------------------------------
     # Synchronous helper (for tests)
 
-    def handle_inbound_message_sync(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_inbound_message_sync(self, message: dict[str, Any]) -> dict[str, Any]:
         return asyncio.run(self.handle_inbound_message(message))
 
     # ------------------------------------------------------------------
     # Internal
 
-    def _emit(self, message: Dict[str, Any]) -> None:
+    def _emit(self, message: dict[str, Any]) -> None:
         """Emit safe message via callback. Strips any forbidden keys defensively."""
         # Defense in depth — never trust upstream to be clean
         forbidden = {fk.lower() for fk in RESULT_DATA_FORBIDDEN_KEYS}

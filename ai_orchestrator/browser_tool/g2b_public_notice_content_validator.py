@@ -16,13 +16,12 @@ URL 도달 성공(LIVE_PASS)과 실제 공고 콘텐츠 유효성(CONTENT_VALID_
 
 from __future__ import annotations
 
-import re
 from typing import Any
 from urllib.parse import urlparse
 
 # ── content_verdict 값 ──────────────────────────────────────────────────────
 
-CONTENT_VALID_PASS = "CONTENT_VALID_PASS"
+CONTENT_VALID_PASS = "CONTENT_VALID_PASS"  # noqa: S105
 LIVE_REACHABLE = "LIVE_REACHABLE"
 REACHABLE_BUT_NOT_CONTENT_VALID = "REACHABLE_BUT_NOT_CONTENT_VALID"
 CONTENT_INVALID = "CONTENT_INVALID"
@@ -31,10 +30,12 @@ CONTENT_BLOCKED_BY_POLICY = "CONTENT_BLOCKED_BY_POLICY"
 
 # ── 허용 도메인 ──────────────────────────────────────────────────────────────
 
-_ALLOWED_CONTENT_DOMAINS: frozenset[str] = frozenset({
-    "g2b.go.kr",
-    "www.g2b.go.kr",
-})
+_ALLOWED_CONTENT_DOMAINS: frozenset[str] = frozenset(
+    {
+        "g2b.go.kr",
+        "www.g2b.go.kr",
+    }
+)
 
 # ── positive signal (공고 콘텐츠 지표) ──────────────────────────────────────
 
@@ -80,8 +81,15 @@ _NEGATIVE_SIGNALS: tuple[str, ...] = (
 # ── 차단 경로 패턴 (후보 URL 분류용) ────────────────────────────────────────
 
 _BLOCKED_HREF_PATTERNS: tuple[str, ...] = (
-    "/login", "/cert", "/bid_submit", "/contract", "/payment",
-    "/download", "/upload", "egovuserreqstlogin", "usercert",
+    "/login",
+    "/cert",
+    "/bid_submit",
+    "/contract",
+    "/payment",
+    "/download",
+    "/upload",
+    "egovuserreqstlogin",
+    "usercert",
     "ptb05001p",
     "ctb01001",
     "checkout",
@@ -89,14 +97,25 @@ _BLOCKED_HREF_PATTERNS: tuple[str, ...] = (
 )
 
 _DOWNLOAD_HREF_PATTERNS: tuple[str, ...] = (
-    "/file/download", "fileDown", "attachDown", "bdgtFileDown",
-    ".hwp", ".hwpx", ".pdf", ".zip", ".xls", ".xlsx", ".doc",
+    "/file/download",
+    "fileDown",
+    "attachDown",
+    "bdgtFileDown",
+    ".hwp",
+    ".hwpx",
+    ".pdf",
+    ".zip",
+    ".xls",
+    ".xlsx",
+    ".doc",
 )
 
-_NEEDS_VERIFICATION_DOMAINS: frozenset[str] = frozenset({
-    "shop.g2b.go.kr",
-    "api.g2b.go.kr",
-})
+_NEEDS_VERIFICATION_DOMAINS: frozenset[str] = frozenset(
+    {
+        "shop.g2b.go.kr",
+        "api.g2b.go.kr",
+    }
+)
 
 _BODY_TEXT_SAMPLE_MAX_LEN = 1000
 

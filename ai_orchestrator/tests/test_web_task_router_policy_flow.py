@@ -4,8 +4,11 @@ dry_run / params validation / safe param filtering / approval flow
 각 경로에서 mock 기반으로 정책 강제를 검증한다.
 실제 브라우저/외부 사이트 접근은 발생하지 않고, adapter/approval/telegram은 mock으로 확인한다.
 """
+
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
 from ai_orchestrator import web_task_router
 
 
@@ -29,13 +32,15 @@ class TestWebTaskRouterDryRunPath:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
-            result = web_task_router._execute_web_task(
+            result = web_task_router._execute_web_task(  # noqa: F841
                 provider="test_provider",
                 action_type="test_action",
                 params={"key": "value"},
@@ -67,10 +72,12 @@ class TestWebTaskRouterDryRunPath:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -102,10 +109,12 @@ class TestWebTaskRouterDryRunPath:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -137,11 +146,13 @@ class TestWebTaskRouterDryRunPath:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_approval_service._ts.send_message") as mock_send, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_approval_service._ts.send_message") as mock_send,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -174,9 +185,11 @@ class TestWebTaskRouterDryRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -201,6 +214,7 @@ class TestWebTaskRouterRealRunPath:
 
     def _mock_approval_result(self, expires_at="2026-04-28T10:00:00Z"):
         from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+
         return PendingApprovalResult(
             task_id="wt-placeholder",
             expires_at=expires_at,
@@ -229,10 +243,12 @@ class TestWebTaskRouterRealRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
             mock_svc.return_value = self._mock_approval_result()
@@ -265,10 +281,12 @@ class TestWebTaskRouterRealRunPath:
         mock_entry.risk_level = "medium"
         mock_entry.requires_approval = True
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
             mock_svc.return_value = self._mock_approval_result()
@@ -307,11 +325,12 @@ class TestWebTaskRouterRealRunPath:
 
         approval_result = self._mock_approval_result("2026-04-28T10:00:00Z")
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval",
-                   return_value=approval_result), \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval", return_value=approval_result),
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -338,14 +357,16 @@ class TestWebTaskRouterParamsValidation:
         mock_entry = MagicMock()
         mock_entry.adapter_class.return_value = MagicMock()
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = ["validation_error"]
 
-            with pytest.raises(Exception):  # HTTPException 또는 유사
+            with pytest.raises(Exception):  # HTTPException 또는 유사  # noqa: B017
                 web_task_router._execute_web_task(
                     provider="test",
                     action_type="test",
@@ -363,13 +384,15 @@ class TestWebTaskRouterParamsValidation:
         mock_adapter = MagicMock()
         mock_entry.adapter_class.return_value = mock_adapter
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = ["error1", "error2"]
 
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):  # noqa: B017
                 web_task_router._execute_web_task(
                     provider="test",
                     action_type="test",
@@ -402,9 +425,11 @@ class TestWebTaskRouterSafeParamFiltering:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.log_event") as mock_log:
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.log_event") as mock_log,
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 
@@ -451,9 +476,11 @@ class TestWebTaskRouterSafeParamFiltering:
         mock_entry.risk_level = "low"
         mock_entry.requires_approval = False
 
-        with patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry, \
-             patch("ai_orchestrator.web_task_router.validate_params") as mock_validate, \
-             patch("ai_orchestrator.web_task_router.log_event"):
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry") as mock_get_entry,
+            patch("ai_orchestrator.web_task_router.validate_params") as mock_validate,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             mock_get_entry.return_value = mock_entry
             mock_validate.return_value = []
 

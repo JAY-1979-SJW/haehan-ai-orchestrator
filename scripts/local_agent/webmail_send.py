@@ -21,6 +21,7 @@
 
 이메일 발송은 항상 APPROVE (외부 발송 카테고리) → 사용자 최종 확인 필수.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,17 +32,21 @@ from typing import Literal
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.cdp import (
-    open_cdp_session, is_cdp_available, CDPConnectionError,
+from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402
+    click,
+    navigate,
+    type_text,
+    upload_file,
+    wait_ms,
 )
-from ai_orchestrator.local_agent.browser.intent_token import create_intent, SCOPE_INTERACTION
-from ai_orchestrator.local_agent.browser.actions import (
-    navigate, click, type_text, upload_file, wait_for_selector,
-    screenshot, wait_ms, GateApprovalRequired,
+from ai_orchestrator.local_agent.browser.approval_server import request_approval  # noqa: E402
+from ai_orchestrator.local_agent.browser.audit_log import get_audit_path  # noqa: E402
+from ai_orchestrator.local_agent.browser.cdp import (  # noqa: E402
+    CDPConnectionError,
+    is_cdp_available,
+    open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
-from ai_orchestrator.local_agent.browser.approval_server import request_approval
-
+from ai_orchestrator.local_agent.browser.intent_token import SCOPE_INTERACTION, create_intent  # noqa: E402
 
 MailService = Literal["gmail", "naver", "kakao"]
 
@@ -49,38 +54,37 @@ _SERVICE_CONFIG = {
     "gmail": {
         "url": "https://mail.google.com/mail/u/0/#inbox",
         "origins": ("mail.google.com", "accounts.google.com"),
-        "compose_btn": "[gh='cm']",              # 편지쓰기
-        "to_field":    "input[name='to']",
+        "compose_btn": "[gh='cm']",  # 편지쓰기
+        "to_field": "input[name='to']",
         "subject_field": "input[name='subjectbox']",
-        "body_field":  "div[aria-label='메시지 텍스트']",
-        "attach_btn":  "div[command='Files']",   # 첨부파일
-        "send_btn":    "div[data-tooltip*='보내기']",
+        "body_field": "div[aria-label='메시지 텍스트']",
+        "attach_btn": "div[command='Files']",  # 첨부파일
+        "send_btn": "div[data-tooltip*='보내기']",
     },
     "naver": {
         "url": "https://mail.naver.com/",
         "origins": ("mail.naver.com", "nid.naver.com"),
         "compose_btn": "a.btn_write, button.btn_write",
-        "to_field":    "input#receiverInput",
+        "to_field": "input#receiverInput",
         "subject_field": "input#subject",
-        "body_field":  "div.content_area",
-        "attach_btn":  "button.btn_attach",
-        "send_btn":    "button.btn_send",
+        "body_field": "div.content_area",
+        "attach_btn": "button.btn_attach",
+        "send_btn": "button.btn_send",
     },
     "kakao": {
         "url": "https://mail.kakao.com/",
         "origins": ("mail.kakao.com", "accounts.kakao.com"),
         "compose_btn": "button.btn-compose, a.compose",
-        "to_field":    "input[placeholder*='받는사람']",
+        "to_field": "input[placeholder*='받는사람']",
         "subject_field": "input[placeholder*='제목']",
-        "body_field":  "div.note-editable",
-        "attach_btn":  "button.btn-attach",
-        "send_btn":    "button.btn-send",
+        "body_field": "div.note-editable",
+        "attach_btn": "button.btn-attach",
+        "send_btn": "button.btn-send",
     },
 }
 
 
-def _ask_approval(to: str, subject: str, service: str,
-                   attachments: list[Path]) -> bool:
+def _ask_approval(to: str, subject: str, service: str, attachments: list[Path]) -> bool:
     return request_approval(
         action="send_email",
         label=f"이메일 발송: {subject}",
@@ -111,7 +115,7 @@ def send_email(
     check = is_cdp_available(port=port)
     if not check["available"]:
         print(f"[메일] Chrome CDP 연결 필요 (포트 {port})")
-        print(f"       python scripts/local_agent/start_chrome_with_cdp.py")
+        print("       python scripts/local_agent/start_chrome_with_cdp.py")
         return {"ok": False, "error": "CDP 미연결"}
 
     # 이메일 발송은 항상 APPROVE → Intent에 명시적 포함
@@ -136,29 +140,27 @@ def send_email(
             page = session.new_tab(cfg["url"])
 
             # 메일 메인 이동
-            navigate(page, cfg["url"], intent=intent, audit_path=audit_path,
-                     force=True)
+            navigate(page, cfg["url"], intent=intent, audit_path=audit_path, force=True)
             page.wait_for_load_state("networkidle", timeout=15000)
 
             # 편지쓰기 버튼
-            r = click(page, cfg["compose_btn"], label="편지쓰기",
-                      intent=intent, audit_path=audit_path, force=True)
+            r = click(page, cfg["compose_btn"], label="편지쓰기", intent=intent, audit_path=audit_path, force=True)
             if not r.ok:
                 return {"ok": False, "error": f"편지쓰기 버튼 실패: {r.error}"}
 
             wait_ms(1500)
 
             # 수신자
-            r = type_text(page, cfg["to_field"], to, label="받는사람",
-                          intent=intent, audit_path=audit_path, force=True)
+            r = type_text(page, cfg["to_field"], to, label="받는사람", intent=intent, audit_path=audit_path, force=True)
             if not r.ok:
                 return {"ok": False, "error": f"수신자 입력 실패: {r.error}"}
             page.keyboard.press("Enter")
             wait_ms(500)
 
             # 제목
-            type_text(page, cfg["subject_field"], subject, label="제목",
-                      intent=intent, audit_path=audit_path, force=True)
+            type_text(
+                page, cfg["subject_field"], subject, label="제목", intent=intent, audit_path=audit_path, force=True
+            )
             wait_ms(300)
 
             # 본문
@@ -172,9 +174,15 @@ def send_email(
                     if not att.exists():
                         print(f"[메일] 첨부파일 없음: {att}")
                         continue
-                    r_up = upload_file(page, "input[type='file']", att,
-                                       label=att.name, intent=intent,
-                                       audit_path=audit_path, force=True)
+                    r_up = upload_file(
+                        page,
+                        "input[type='file']",
+                        att,
+                        label=att.name,
+                        intent=intent,
+                        audit_path=audit_path,
+                        force=True,
+                    )
                     if r_up.ok:
                         print(f"[메일] 첨부 완료: {att.name}")
                     else:
@@ -182,12 +190,11 @@ def send_email(
                     wait_ms(1000)
 
             # 전송
-            r_send = click(page, cfg["send_btn"], label="이메일 발송",
-                           intent=intent, audit_path=audit_path, force=True)
+            r_send = click(page, cfg["send_btn"], label="이메일 발송", intent=intent, audit_path=audit_path, force=True)
             wait_ms(2000)
 
             if r_send.ok:
-                print(f"[메일] ✓ 발송 완료")
+                print("[메일] ✓ 발송 완료")
                 return {"ok": True, "to": to, "subject": subject, "service": service}
             else:
                 return {"ok": False, "error": f"발송 버튼 실패: {r_send.error}"}
@@ -204,8 +211,7 @@ def main() -> None:
     parser.add_argument("--subject", required=True, help="제목")
     parser.add_argument("--body", default="", help="본문")
     parser.add_argument("--attach", nargs="*", type=Path, help="첨부파일 경로")
-    parser.add_argument("--service", choices=["gmail", "naver", "kakao"],
-                        default="gmail", help="메일 서비스")
+    parser.add_argument("--service", choices=["gmail", "naver", "kakao"], default="gmail", help="메일 서비스")
     parser.add_argument("--port", type=int, default=9222)
     args = parser.parse_args()
 
@@ -219,7 +225,7 @@ def main() -> None:
     )
 
     if result["ok"]:
-        print(f"\n결과: ✓ 발송 완료")
+        print("\n결과: ✓ 발송 완료")
     else:
         print(f"\n결과: 실패 — {result.get('error')}")
         sys.exit(1)

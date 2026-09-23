@@ -2,21 +2,18 @@
 
 Validates that approval token lifecycle events are recorded in audit log.
 """
-import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone, timedelta
+
+from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 from ai_orchestrator import approval
-from ai_orchestrator.models import TaskRequest, RiskAssessment
-from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
 def test_issue_token_logs_audit_event(tmp_path, monkeypatch):
     """Verify that issue_token calls log_event with APPROVAL_ISSUED event."""
     # Mock audit log path
-    mock_log_path = tmp_path / "audit.log"
+    mock_log_path = tmp_path / "audit.log"  # noqa: F841
 
     with patch("ai_orchestrator.approval.log_event") as mock_log:
         req = TaskRequest(
@@ -33,7 +30,7 @@ def test_issue_token_logs_audit_event(tmp_path, monkeypatch):
             reasons=["High-risk action"],
         )
 
-        token = approval.issue_token(req, risk)
+        token = approval.issue_token(req, risk)  # noqa: F841
 
         # Verify log_event was called
         mock_log.assert_called_once()
@@ -71,7 +68,7 @@ def test_approve_token_logs_audit_event(monkeypatch):
         mock_log.reset_mock()
 
         # Now approve
-        approved_token, status = approval.approve_token(
+        _approved_token, _status = approval.approve_token(
             token.token_id,
             token.task_id,
             "approver_user",
@@ -80,8 +77,7 @@ def test_approve_token_logs_audit_event(monkeypatch):
 
         # Verify log_event was called for approval
         # It should be called once for successful approval
-        calls = [c for c in mock_log.call_args_list
-                if c[1].get("event_type") == "APPROVAL_GRANTED"]
+        calls = [c for c in mock_log.call_args_list if c[1].get("event_type") == "APPROVAL_GRANTED"]
         assert len(calls) >= 1, "APPROVAL_GRANTED event should be logged"
 
         call = calls[0]
@@ -111,7 +107,7 @@ def test_reject_token_logs_audit_event(monkeypatch):
         mock_log.reset_mock()
 
         # Reject
-        rejected_token, status = approval.reject_token(
+        _rejected_token, _status = approval.reject_token(
             token.token_id,
             token.task_id,
             "reviewer_user",
@@ -120,8 +116,7 @@ def test_reject_token_logs_audit_event(monkeypatch):
         )
 
         # Verify log_event was called for rejection
-        calls = [c for c in mock_log.call_args_list
-                if c[1].get("event_type") == "APPROVAL_REJECTED"]
+        calls = [c for c in mock_log.call_args_list if c[1].get("event_type") == "APPROVAL_REJECTED"]
         assert len(calls) >= 1, "APPROVAL_REJECTED event should be logged"
 
         call = calls[0]
@@ -152,10 +147,10 @@ def test_token_expiry_logs_audit_event(monkeypatch):
 
         # Simulate time passing
         with patch("ai_orchestrator.approval._now") as mock_now:
-            mock_now.return_value = datetime.now(timezone.utc) + timedelta(minutes=1)
+            mock_now.return_value = datetime.now(UTC) + timedelta(minutes=1)
 
             # Try to approve - should detect expiry
-            approved_token, status = approval.approve_token(
+            _approved_token, status = approval.approve_token(
                 token.token_id,
                 token.task_id,
                 "approver_user",
@@ -165,8 +160,7 @@ def test_token_expiry_logs_audit_event(monkeypatch):
             assert status == "expired"
 
             # Verify expiry was logged
-            expired_calls = [c for c in mock_log.call_args_list
-                           if c[1].get("event_type") == "APPROVAL_EXPIRED"]
+            expired_calls = [c for c in mock_log.call_args_list if c[1].get("event_type") == "APPROVAL_EXPIRED"]
             assert len(expired_calls) >= 1, "APPROVAL_EXPIRED event should be logged"
 
 
@@ -194,14 +188,10 @@ def test_audit_log_no_token_id_original(monkeypatch):
             call_kwargs = call[1]
             # token_id parameter should be empty or not contain actual token
             token_id_value = call_kwargs.get("token_id", "")
-            assert token_id_value != token.token_id, (
-                f"Token ID should not be recorded in audit log"
-            )
+            assert token_id_value != token.token_id, "Token ID should not be recorded in audit log"
             # Note should not contain token_id original
             note = call_kwargs.get("note", "")
-            assert token.token_id not in note, (
-                f"Token ID should not appear in audit note"
-            )
+            assert token.token_id not in note, "Token ID should not appear in audit note"
 
 
 def test_audit_log_includes_public_id(monkeypatch):
@@ -230,18 +220,13 @@ def test_audit_log_includes_public_id(monkeypatch):
 
         assert call_kwargs.get("event_type") == "APPROVAL_ISSUED"
         note = call_kwargs.get("note", "")
-        assert token.public_id in note, (
-            f"Public ID {token.public_id} should be in audit log note"
-        )
+        assert token.public_id in note, f"Public ID {token.public_id} should be in audit log note"
 
 
 def test_audit_log_no_sensitive_fields(monkeypatch):
     """Verify that sensitive fields are not recorded in audit log."""
     # Sensitive field patterns to avoid
-    sensitive_patterns = [
-        "password", "secret", "token", "cookie", "session",
-        "api_key", "auth", "credential"
-    ]
+    sensitive_patterns = ["password", "secret", "token", "cookie", "session", "api_key", "auth", "credential"]
 
     req = TaskRequest(
         task_id="test-task-007",
@@ -258,7 +243,7 @@ def test_audit_log_no_sensitive_fields(monkeypatch):
     )
 
     with patch("ai_orchestrator.approval.log_event") as mock_log:
-        token = approval.issue_token(req, risk)
+        token = approval.issue_token(req, risk)  # noqa: F841
 
         # Check all log_event calls
         for call in mock_log.call_args_list:
@@ -270,6 +255,10 @@ def test_audit_log_no_sensitive_fields(monkeypatch):
                         # Check that sensitive values don't appear
                         # (field names like "token_id" are OK, but not values)
                         if field_name not in ("event_type", "note"):
-                            assert pattern not in field_lower or field_value in ("", "approved", "rejected", "issued", "expired"), (
-                                f"Sensitive pattern '{pattern}' found in {field_name}={field_value}"
-                            )
+                            assert pattern not in field_lower or field_value in (
+                                "",
+                                "approved",
+                                "rejected",
+                                "issued",
+                                "expired",
+                            ), f"Sensitive pattern '{pattern}' found in {field_name}={field_value}"

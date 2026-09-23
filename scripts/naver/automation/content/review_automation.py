@@ -5,16 +5,15 @@
   - 별점/키워드 기반 템플릿 자동 매칭
   - 자동 답변 작성 (★ confirm=True 시에만 발송)
 """
+
 from __future__ import annotations
 
 import re
-import time
-from typing import Any
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -44,8 +43,10 @@ class ReviewAutoResponder:
         m = re.search(r"\d", rating)
         if m:
             r = int(m.group())
-            if r >= 4: return "positive"
-            if r <= 2: return "negative"
+            if r >= 4:
+                return "positive"
+            if r <= 2:
+                return "negative"
             return "neutral"
 
         # 키워드
@@ -62,6 +63,7 @@ class ReviewAutoResponder:
     def respond_smartstore_reviews(self, limit: int = 20, confirm: bool = False) -> dict:
         """스마트스토어 리뷰 자동 답변."""
         from scripts.naver.smartstore import NaverSmartStore
+
         store = NaverSmartStore(self.page)
         r = store.list_reviews(limit=limit)
         if not r.get("ok"):
@@ -69,15 +71,17 @@ class ReviewAutoResponder:
 
         headers = r.get("headers", [])
         rows = r.get("rows", [])
-        replied = 0
+        replied = 0  # noqa: F841
         plans = []
         for row in rows:
             # row 데이터에서 리뷰 정보 추출 (헤더 기반)
             review = {h: (row[i] if i < len(row) else "") for i, h in enumerate(headers)}
-            category = self.classify_review({
-                "rating": review.get("별점", review.get("평점", "")),
-                "content": review.get("리뷰내용", review.get("내용", "")),
-            })
+            category = self.classify_review(
+                {
+                    "rating": review.get("별점", review.get("평점", "")),
+                    "content": review.get("리뷰내용", review.get("내용", "")),
+                }
+            )
             template = self.templates.get(category, "")
             author = review.get("작성자", review.get("회원", "고객"))
             response = template.format(author=author)
@@ -87,8 +91,7 @@ class ReviewAutoResponder:
                 # 실제 답변 작성 (UI 구체화 필요)
                 pass
 
-        log_critical("OTHER", f"리뷰 자동 답변 {len(plans)}건 plan",
-                     dry_run=not confirm, mode="review_auto_respond")
+        log_critical("OTHER", f"리뷰 자동 답변 {len(plans)}건 plan", dry_run=not confirm, mode="review_auto_respond")
         return {"ok": True, "dry_run": not confirm, "plans": plans, "total": len(rows)}
 
     # ── 자동 답변 (스마트플레이스) ────────────────────────────────────
@@ -96,6 +99,7 @@ class ReviewAutoResponder:
     def respond_place_reviews(self, limit: int = 20, confirm: bool = False) -> dict:
         """스마트플레이스 리뷰 자동 답변."""
         from scripts.naver.place import NaverPlace
+
         place = NaverPlace(self.page)
         reviews = place.reviews(limit=limit)
         plans = []

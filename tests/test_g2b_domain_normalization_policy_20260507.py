@@ -18,6 +18,7 @@ G2B 도메인 정규화 정책 테스트
 - 브라우저/Playwright 실행 없음
 - DB write 없음
 """
+
 import inspect
 import json
 import os
@@ -27,28 +28,27 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import warnings
+
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.g2b_domain_policy import (
+from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402
+from ai_orchestrator.browser_tool.g2b_domain_policy import (  # noqa: E402
     DOMAIN_G2B_PUBLIC_READONLY,
     DOMAIN_NEEDS_URL_VERIFICATION,
-    DOMAIN_NOT_G2B,
     DOMAIN_READONLY_CANDIDATE,
     PATH_BLOCKED_BID_SUBMIT,
     PATH_BLOCKED_CERT,
     PATH_BLOCKED_CONTRACT,
     PATH_BLOCKED_LOGIN,
     PATH_BLOCKED_PAYMENT,
-    PATH_DOWNLOAD_MANUAL_ONLY,
     PATH_READONLY_ALLOWED,
     classify_g2b_url,
     is_g2b_readonly_allowed,
     normalize_g2b_domain,
     validate_g2b_domain_policy_result,
 )
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
-from ai_orchestrator.browser_tool.allowlist_preflight import evaluate_allowlist_preflight
+from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
 FIXTURE_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -63,7 +63,6 @@ def _load_fixture():
 
 
 class TestFixtureStructure(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
 
@@ -75,12 +74,10 @@ class TestFixtureStructure(unittest.TestCase):
     # 2. 모든 케이스에 safe_to_execute=False 기대값
     def test_02_all_expected_safe_to_execute_false(self):
         for case in self.fixture["cases"]:
-            self.assertFalse(case["expected"].get("safe_to_execute"),
-                             f"{case['id']}: safe_to_execute should be False")
+            self.assertFalse(case["expected"].get("safe_to_execute"), f"{case['id']}: safe_to_execute should be False")
 
 
 class TestG2BDomainNormalization(unittest.TestCase):
-
     # 2. g2b.go.kr 공개 read-only 후보
     def test_02_apex_domain_g2b_public_readonly(self):
         result = normalize_g2b_domain("g2b.go.kr")
@@ -116,14 +113,13 @@ class TestG2BDomainNormalization(unittest.TestCase):
     def test_22_no_wildcard_g2b_subdomains_allowed(self):
         for sub in ["secure.g2b.go.kr", "admin.g2b.go.kr", "test.g2b.go.kr", "internal.g2b.go.kr"]:
             result = normalize_g2b_domain(sub)
-            self.assertFalse(result["is_g2b_public_readonly"],
-                             f"{sub} should not be public readonly (no wildcard)")
-            self.assertNotEqual(result["domain_decision"], DOMAIN_G2B_PUBLIC_READONLY,
-                                f"{sub} should not be G2B_PUBLIC_READONLY")
+            self.assertFalse(result["is_g2b_public_readonly"], f"{sub} should not be public readonly (no wildcard)")
+            self.assertNotEqual(
+                result["domain_decision"], DOMAIN_G2B_PUBLIC_READONLY, f"{sub} should not be G2B_PUBLIC_READONLY"
+            )
 
 
 class TestG2BUrlClassification(unittest.TestCase):
-
     # 7. login path BLOCK
     def test_07_login_path_blocked(self):
         result = classify_g2b_url(
@@ -242,7 +238,6 @@ class TestG2BUrlClassification(unittest.TestCase):
 
 
 class TestG2BIsReadonlyAllowed(unittest.TestCase):
-
     def test_is_g2b_readonly_allowed_apex(self):
         self.assertTrue(is_g2b_readonly_allowed("https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do"))
 
@@ -254,7 +249,6 @@ class TestG2BIsReadonlyAllowed(unittest.TestCase):
 
 
 class TestG2BCompatibility(unittest.TestCase):
-
     # 18. allowlist_preflight와 호환 — www.g2b.go.kr이 ALLOW_DRY_RUN 반환
     def test_18_allowlist_preflight_www_allowed(self):
         payload = {
@@ -264,8 +258,11 @@ class TestG2BCompatibility(unittest.TestCase):
             "tenant_id": "haehan",
         }
         result = evaluate_allowlist_preflight(payload)
-        self.assertNotEqual(result["allowlist_decision"], "BLOCK",
-                            f"www.g2b.go.kr should not be BLOCK in allowlist, got {result['allowlist_decision']}")
+        self.assertNotEqual(
+            result["allowlist_decision"],
+            "BLOCK",
+            f"www.g2b.go.kr should not be BLOCK in allowlist, got {result['allowlist_decision']}",
+        )
 
     # 19. routing_policy와 호환 — g2b.go.kr와 www 모두 동일 분류
     def test_19_site_compliance_www_allow(self):
@@ -276,12 +273,16 @@ class TestG2BCompatibility(unittest.TestCase):
                 "site_category": "g2b_public_readonly",
             }
             result = evaluate_site_compliance(payload)
-            self.assertEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                             f"{domain} should be ALLOW_BROWSER_READONLY, got {result['compliance_decision']}")
+            self.assertEqual(
+                result["compliance_decision"],
+                "ALLOW_BROWSER_READONLY",
+                f"{domain} should be ALLOW_BROWSER_READONLY, got {result['compliance_decision']}",
+            )
 
     # 20. server_boundary_policy와 호환 — g2b_public_readonly server_allowed=True
     def test_20_server_boundary_g2b_public_readonly(self):
         from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed
+
         for domain in ["g2b.go.kr", "www.g2b.go.kr"]:
             payload = {
                 "site_category": "g2b_public_readonly",
@@ -289,12 +290,12 @@ class TestG2BCompatibility(unittest.TestCase):
                 "operation_type": "read",
             }
             result = evaluate_server_browser_allowed(payload)
-            self.assertTrue(result["server_browser_allowed"],
-                            f"{domain}: server_browser_allowed should be True")
+            self.assertTrue(result["server_browser_allowed"], f"{domain}: server_browser_allowed should be True")
 
     # 21. G2B matrix와 호환 — 기존 6개 READ_ONLY_ALLOWED 케이스 유지
     def test_21_g2b_matrix_readonly_still_allowed(self):
         from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+
         for domain in ["g2b.go.kr", "www.g2b.go.kr"]:
             for op in ["read", "navigate"]:
                 payload = {
@@ -303,24 +304,33 @@ class TestG2BCompatibility(unittest.TestCase):
                     "operation_type": op,
                 }
                 result = evaluate_site_compliance(payload)
-                self.assertEqual(result["compliance_decision"], "ALLOW_BROWSER_READONLY",
-                                 f"{domain}+{op}: expected ALLOW_BROWSER_READONLY")
+                self.assertEqual(
+                    result["compliance_decision"],
+                    "ALLOW_BROWSER_READONLY",
+                    f"{domain}+{op}: expected ALLOW_BROWSER_READONLY",
+                )
 
 
 class TestG2BCodeSafety(unittest.TestCase):
-
     # 23. 쿠키/session/token 추출 코드 없음
     def test_23_no_cookie_session_token_extraction(self):
         import ai_orchestrator.browser_tool.g2b_domain_policy as m
+
         src = inspect.getsource(m)
-        forbidden = ["page.cookies", "page.context.cookies", "localStorage.getItem",
-                     "sessionStorage.getItem", "document.cookie"]
+        forbidden = [
+            "page.cookies",
+            "page.context.cookies",
+            "localStorage.getItem",
+            "sessionStorage.getItem",
+            "document.cookie",
+        ]
         for kw in forbidden:
             self.assertNotIn(kw, src, f"g2b_domain_policy should not contain: {kw}")
 
     # 24. 자동 click/type/fill/submit 코드 없음
     def test_24_no_automation_calls(self):
         import ai_orchestrator.browser_tool.g2b_domain_policy as m
+
         src = inspect.getsource(m)
         for call in ["page.click(", "page.type(", "page.fill(", "page.goto(", ".submit("]:
             self.assertNotIn(call, src, f"g2b_domain_policy should not contain: {call}")
@@ -328,13 +338,13 @@ class TestG2BCodeSafety(unittest.TestCase):
     # 25. DB write 없음
     def test_25_no_db_write(self):
         import ai_orchestrator.browser_tool.g2b_domain_policy as m
+
         src = inspect.getsource(m)
         for mod in ["sqlite3", "psycopg2", "sqlalchemy", "pymongo"]:
             self.assertNotIn(f"import {mod}", src, f"{mod} found in g2b_domain_policy")
 
 
 class TestG2BValidate(unittest.TestCase):
-
     def test_validate_valid_result(self):
         record = {
             "domain_decision": "G2B_PUBLIC_READONLY",

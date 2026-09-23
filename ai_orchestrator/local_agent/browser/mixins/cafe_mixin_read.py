@@ -3,11 +3,11 @@
 cafe_info/boards/posts/popular/search/new_posts + _get_club_id/_board_url.
 CafeMixin 다중상속의 기본 읽기 능력. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Optional
 
 from .cafe_mixin_common import _js
 
@@ -96,10 +96,10 @@ class CafeReadMixin:
         links = self.extract_links()
         boards = []
         seen: set[str] = set()
-        for l in links:
+        for l in links:  # noqa: E741
             href = l["href"]
             name = l["text"]
-            is_board = ("ArticleList" in href or "search.boardtype" in href)
+            is_board = "ArticleList" in href or "search.boardtype" in href
             if not is_board or href in seen or not name or len(name) < 2:
                 continue
             seen.add(href)
@@ -109,13 +109,15 @@ class CafeReadMixin:
             # clubid 추출
             cid_m = re.search(r"clubid=(\d+)", href)
             club_id = cid_m.group(1) if cid_m else ""
-            boards.append({
-                "name": name,
-                "href": href,
-                "menu_id": menu_id,
-                "club_id": club_id,
-                "count": "",
-            })
+            boards.append(
+                {
+                    "name": name,
+                    "href": href,
+                    "menu_id": menu_id,
+                    "club_id": club_id,
+                    "count": "",
+                }
+            )
         return boards
 
     def _get_club_id(self, cafe_url: str) -> str:
@@ -128,7 +130,7 @@ class CafeReadMixin:
         if m:
             return m.group(1)
         # 사이드바 링크에서 추출
-        for l in self.extract_links(filter_href="ArticleList"):
+        for l in self.extract_links(filter_href="ArticleList"):  # noqa: E741
             cm = re.search(r"clubid=(\d+)", l["href"])
             if cm:
                 return cm.group(1)
@@ -143,7 +145,7 @@ class CafeReadMixin:
                 url += f"{sep}search.page={page}"
             return url
         # 사이드바에서 게시판명 링크 찾기
-        for l in self.extract_links(filter_href="ArticleList"):
+        for l in self.extract_links(filter_href="ArticleList"):  # noqa: E741
             if board in l["text"]:
                 url = l["href"]
                 sep = "&" if "?" in url else "?"
@@ -152,16 +154,12 @@ class CafeReadMixin:
                 return url
         # 전체글보기 기본
         club_id = self._get_club_id(cafe_url)
-        base = (f"https://cafe.naver.com/ArticleList.nhn"
-                f"?search.clubid={club_id}&search.boardtype=L")
+        base = f"https://cafe.naver.com/ArticleList.nhn?search.clubid={club_id}&search.boardtype=L"
         if page > 1:
             base += f"&search.page={page}"
         return base
 
-    def cafe_posts(self, cafe_url: str,
-                   board: str = "전체글보기",
-                   page: int = 1,
-                   max_posts: int = 30) -> list[dict]:
+    def cafe_posts(self, cafe_url: str, board: str = "전체글보기", page: int = 1, max_posts: int = 30) -> list[dict]:
         """카페 게시판 게시글 목록 (메타 포함, 페이지 지정 가능).
 
         Args:
@@ -198,14 +196,12 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         return all_posts[:max_posts]
 
-    def cafe_posts_all_pages(self, cafe_url: str,
-                             board: str = "전체글보기",
-                             max_pages: int = 5) -> list[dict]:
+    def cafe_posts_all_pages(self, cafe_url: str, board: str = "전체글보기", max_pages: int = 5) -> list[dict]:
         """여러 페이지에 걸쳐 게시글 목록 수집.
 
         Args:
@@ -243,7 +239,7 @@ class CafeReadMixin:
                         if href and href not in seen:
                             seen.add(href)
                             all_posts.append(p)
-                except Exception:
+                except Exception:  # noqa: S112
                     continue
 
             if not all_posts and page_num == 1:
@@ -266,7 +262,7 @@ class CafeReadMixin:
             # cafe slug → clubid 추출 (사이드바 링크에서)
             self.go(cafe_url)
             time.sleep(2)
-            for l in self.extract_links(filter_href="ArticleList"):
+            for l in self.extract_links(filter_href="ArticleList"):  # noqa: E741
                 cm = re.search(r"clubid=(\d+)", l["href"])
                 if cm:
                     club_id = cm.group(1)
@@ -289,13 +285,12 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         return all_posts[:max_posts]
 
-    def cafe_search(self, cafe_url: str, query: str,
-                    page: int = 1, max_posts: int = 30) -> list[dict]:
+    def cafe_search(self, cafe_url: str, query: str, page: int = 1, max_posts: int = 30) -> list[dict]:
         """카페 내 키워드 검색.
 
         Args:
@@ -311,7 +306,7 @@ class CafeReadMixin:
         if not m:
             self.go(cafe_url)
             time.sleep(2)
-            for l in self.extract_links(filter_href="ArticleList"):
+            for l in self.extract_links(filter_href="ArticleList"):  # noqa: E741
                 cm = re.search(r"clubid=(\d+)", l["href"])
                 if cm:
                     club_id = cm.group(1)
@@ -321,8 +316,7 @@ class CafeReadMixin:
 
         q = urllib.parse.quote(query)
         search_url = (
-            f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/0"
-            f"?viewType=L&ta=ARTICLE_COMMENT&page={page}&q={q}"
+            f"https://cafe.naver.com/f-e/cafes/{club_id}/menus/0?viewType=L&ta=ARTICLE_COMMENT&page={page}&q={q}"
         )
         self.go(search_url)
         time.sleep(3)
@@ -337,7 +331,7 @@ class CafeReadMixin:
                     if href and href not in seen:
                         seen.add(href)
                         all_posts.append(p)
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         # 폴백: 일반 extract_posts.js
@@ -349,9 +343,17 @@ class CafeReadMixin:
                         href = p.get("href", "")
                         if href and href not in seen:
                             seen.add(href)
-                            all_posts.append({"title": p.get("title", ""), "href": href,
-                                              "author": "", "date": "", "views": "", "comments": ""})
-                except Exception:
+                            all_posts.append(
+                                {
+                                    "title": p.get("title", ""),
+                                    "href": href,
+                                    "author": "",
+                                    "date": "",
+                                    "views": "",
+                                    "comments": "",
+                                }
+                            )
+                except Exception:  # noqa: S112
                     continue
 
         return all_posts[:max_posts]

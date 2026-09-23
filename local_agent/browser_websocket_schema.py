@@ -14,93 +14,105 @@ Design principles:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Dict, Any, Set, Literal
 import logging
+from dataclasses import asdict, dataclass
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
 
 # Allowed action types (others blocked)
-ALLOWED_ACTION_TYPES = frozenset({
-    "browser.inspect",
-    "browser.plan_click",
-    "browser.plan_type",
-    "browser.plan_submit",
-    "browser.execute_click",
-    "browser.execute_type",
-})
+ALLOWED_ACTION_TYPES = frozenset(
+    {
+        "browser.inspect",
+        "browser.plan_click",
+        "browser.plan_type",
+        "browser.plan_submit",
+        "browser.execute_click",
+        "browser.execute_type",
+    }
+)
 
 # Blocked action types
-BLOCKED_ACTION_TYPES = frozenset({
-    "browser.execute_submit",
-})
+BLOCKED_ACTION_TYPES = frozenset(
+    {
+        "browser.execute_submit",
+    }
+)
 
 # Valid task status values
-VALID_TASK_STATUS = frozenset({
-    "received",
-    "validation_failed",
-    "approval_denied",
-    "approval_invalid",
-    "blocked",
-    "executed",
-    "failed",
-})
+VALID_TASK_STATUS = frozenset(
+    {
+        "received",
+        "validation_failed",
+        "approval_denied",
+        "approval_invalid",
+        "blocked",
+        "executed",
+        "failed",
+    }
+)
 
 # Result data allowed fields (explicit whitelist, must match registry).
 # NOTE: task_id is a top-level message field, NOT a result_data inner field.
 # safe_dict() includes task_id at top-level alongside result_data contents.
-RESULT_DATA_ALLOWED_KEYS = frozenset({
-    "status",
-    "action",
-    "selector",
-    "executed",
-    "element_found",
-    "risk_level",
-    "final_approval_required",
-    "result",
-    "error_code",
-    "error_message",
-    "target_url_domain",
-    "text_length",
-    "text_preview",
-    "screenshot_ref",
-    "screenshot_taken",
-})
+RESULT_DATA_ALLOWED_KEYS = frozenset(
+    {
+        "status",
+        "action",
+        "selector",
+        "executed",
+        "element_found",
+        "risk_level",
+        "final_approval_required",
+        "result",
+        "error_code",
+        "error_message",
+        "target_url_domain",
+        "text_length",
+        "text_preview",
+        "screenshot_ref",
+        "screenshot_taken",
+    }
+)
 
 # Forbidden result data keys (explicit blocklist for safety)
-RESULT_DATA_FORBIDDEN_KEYS = frozenset({
-    "approval_token",
-    "final_approval_token",
-    "token_hash",
-    "typed_text",
-    "password",
-    "otp",
-    "cookie",
-    "session",
-    "authorization",
-    "localStorage",
-    "sessionStorage",
-    "base64",
-    "raw_screenshot",
-    "full_dom",
-})
+RESULT_DATA_FORBIDDEN_KEYS = frozenset(
+    {
+        "approval_token",
+        "final_approval_token",
+        "token_hash",
+        "typed_text",
+        "password",
+        "otp",
+        "cookie",
+        "session",
+        "authorization",
+        "localStorage",
+        "sessionStorage",
+        "base64",
+        "raw_screenshot",
+        "full_dom",
+    }
+)
 
 # Forbidden metadata keys
-METADATA_FORBIDDEN_KEYS = frozenset({
-    "cookie",
-    "cookies",
-    "session",
-    "authorization",
-    "auth",
-    "headers",
-    "localStorage",
-    "sessionStorage",
-    "password",
-    "otp",
-    "typed_text",
-    "full_dom",
-})
+METADATA_FORBIDDEN_KEYS = frozenset(
+    {
+        "cookie",
+        "cookies",
+        "session",
+        "authorization",
+        "auth",
+        "headers",
+        "localStorage",
+        "sessionStorage",
+        "password",
+        "otp",
+        "typed_text",
+        "full_dom",
+    }
+)
 
 
 @dataclass
@@ -139,16 +151,16 @@ class BrowserWebSocketTaskPayloadSchema:
     task_type: Literal["browser_action"] = "browser_action"
     action_type: str = ""
     selector: str = ""
-    value: Optional[str] = None
-    approval_id: Optional[str] = None
-    approval_token: Optional[str] = None
-    final_approval_token: Optional[str] = None
-    requested_by: Optional[str] = None
-    created_at: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    value: str | None = None
+    approval_id: str | None = None
+    approval_token: str | None = None
+    final_approval_token: str | None = None
+    requested_by: str | None = None
+    created_at: str | None = None
+    metadata: dict[str, Any] | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> BrowserWebSocketTaskPayloadSchema:
+    def from_dict(cls, data: dict[str, Any]) -> BrowserWebSocketTaskPayloadSchema:
         """Create schema from dictionary.
 
         Args:
@@ -217,7 +229,7 @@ class BrowserWebSocketTaskPayloadSchema:
             metadata=metadata,
         )
 
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> tuple[bool, str | None]:
         """Validate payload.
 
         Returns:
@@ -226,7 +238,7 @@ class BrowserWebSocketTaskPayloadSchema:
         if not self.task_id:
             return False, "task_id is required"
         if self.task_type != "browser_action":
-            return False, f"task_type must be 'browser_action'"
+            return False, "task_type must be 'browser_action'"
         if not self.action_type:
             return False, "action_type is required"
         if not self.selector:
@@ -240,7 +252,7 @@ class BrowserWebSocketTaskPayloadSchema:
 
         return True, None
 
-    def safe_dict(self) -> Dict[str, Any]:
+    def safe_dict(self) -> dict[str, Any]:
         """Convert to safe dict (removes tokens for storage).
 
         Returns:
@@ -318,12 +330,12 @@ class BrowserWebSocketTaskResultSchema:
     risk_level: str = "low"
     final_approval_required: bool = False
     result: str = "success"
-    error_code: Optional[str] = None
-    error_message: Optional[str] = None
+    error_code: str | None = None
+    error_message: str | None = None
     target_url_domain: str = ""
     text_length: int = 0
     text_preview: str = "[REDACTED]"
-    screenshot_ref: Optional[str] = None
+    screenshot_ref: str | None = None
     screenshot_taken: bool = False
 
     @classmethod
@@ -338,12 +350,12 @@ class BrowserWebSocketTaskResultSchema:
         risk_level: str = "low",
         final_approval_required: bool = False,
         result: str = "success",
-        error_code: Optional[str] = None,
-        error_message: Optional[str] = None,
+        error_code: str | None = None,
+        error_message: str | None = None,
         target_url_domain: str = "",
         text_length: int = 0,
         text_preview: str = "[REDACTED]",
-        screenshot_ref: Optional[str] = None,
+        screenshot_ref: str | None = None,
         screenshot_taken: bool = False,
     ) -> BrowserWebSocketTaskResultSchema:
         """Create result schema from task handler result.
@@ -393,7 +405,7 @@ class BrowserWebSocketTaskResultSchema:
             screenshot_taken=screenshot_taken,
         )
 
-    def validate_safe_result(self) -> tuple[bool, Optional[str]]:
+    def validate_safe_result(self) -> tuple[bool, str | None]:
         """Validate that result contains no secrets.
 
         Returns:
@@ -416,7 +428,7 @@ class BrowserWebSocketTaskResultSchema:
 
         return True, None
 
-    def safe_dict(self) -> Dict[str, Any]:
+    def safe_dict(self) -> dict[str, Any]:
         """Convert to safe dict for storage/transmission.
 
         Returns:
@@ -432,16 +444,13 @@ class BrowserWebSocketTaskResultSchema:
         data["text_preview"] = "[REDACTED]"
 
         # Allowed result_data fields + task_id (top-level routing field, not in result_data)
-        out: Dict[str, Any] = {
-            k: v for k, v in data.items()
-            if k in RESULT_DATA_ALLOWED_KEYS and v is not None
-        }
+        out: dict[str, Any] = {k: v for k, v in data.items() if k in RESULT_DATA_ALLOWED_KEYS and v is not None}
         if self.task_id:
             out["task_id"] = self.task_id
         return out
 
 
-def validate_payload_schema(data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+def validate_payload_schema(data: dict[str, Any]) -> tuple[bool, str | None]:
     """Validate input payload against schema.
 
     Args:
@@ -457,7 +466,7 @@ def validate_payload_schema(data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
         return False, str(e)
 
 
-def validate_result_schema(result: BrowserWebSocketTaskResultSchema) -> tuple[bool, Optional[str]]:
+def validate_result_schema(result: BrowserWebSocketTaskResultSchema) -> tuple[bool, str | None]:
     """Validate result schema for safety.
 
     Args:
@@ -469,7 +478,7 @@ def validate_result_schema(result: BrowserWebSocketTaskResultSchema) -> tuple[bo
     return result.validate_safe_result()
 
 
-def safe_result_dict(result: BrowserWebSocketTaskResultSchema) -> Dict[str, Any]:
+def safe_result_dict(result: BrowserWebSocketTaskResultSchema) -> dict[str, Any]:
     """Convert result to safe dictionary for storage.
 
     Args:

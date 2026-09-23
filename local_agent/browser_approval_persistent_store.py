@@ -12,14 +12,13 @@ Design principles:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
-import hashlib
 import threading
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict
-from dataclasses import dataclass, field, asdict
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BrowserApprovalRecord:
     """Approval record (same as in-memory version)."""
+
     approval_id: str
     action_type: str
     selector: str
@@ -34,7 +34,7 @@ class BrowserApprovalRecord:
     status: str = "approved"  # approved, used, revoked, expired
     risk_level: str = "low"
     final_approval_required: bool = False
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
     def is_valid(self) -> bool:
@@ -63,14 +63,14 @@ class PersistentBrowserApprovalStore:
     Replays events on load to restore state.
     """
 
-    def __init__(self, store_path: Optional[Path] = None):
+    def __init__(self, store_path: Path | None = None):
         """Initialize persistent store.
 
         Args:
             store_path: Path to JSONL log file. If None, uses temp/in-memory mode.
         """
         self.store_path = store_path
-        self._records: Dict[str, BrowserApprovalRecord] = {}
+        self._records: dict[str, BrowserApprovalRecord] = {}
         self._lock = threading.Lock()
 
         if self.store_path:
@@ -82,7 +82,7 @@ class PersistentBrowserApprovalStore:
             return
 
         try:
-            with open(self.store_path, "r", encoding="utf-8") as f:
+            with open(self.store_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -163,7 +163,7 @@ class PersistentBrowserApprovalStore:
         approval_token: str,
         risk_level: str = "low",
         final_approval_required: bool = False,
-        expires_in_seconds: Optional[int] = None,
+        expires_in_seconds: int | None = None,
     ) -> BrowserApprovalRecord:
         """Create approval record (token_hash stored, not raw token).
 
@@ -194,16 +194,14 @@ class PersistentBrowserApprovalStore:
 
         with self._lock:
             if approval_id in self._records:
-                raise DuplicateApprovalError(
-                    f"approval_id already exists: {approval_id}"
-                )
+                raise DuplicateApprovalError(f"approval_id already exists: {approval_id}")
             self._records[approval_id] = record
             self._append_event("APPROVAL_CREATED", approval_id, record)
 
         logger.info(f"Approval created: {approval_id}")
         return record
 
-    def get(self, approval_id: str) -> Optional[BrowserApprovalRecord]:
+    def get(self, approval_id: str) -> BrowserApprovalRecord | None:
         """Retrieve approval record by ID."""
         with self._lock:
             return self._records.get(approval_id)

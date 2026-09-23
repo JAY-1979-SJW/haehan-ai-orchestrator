@@ -15,9 +15,11 @@ Tests:
 Execution:
   pytest tests/test_browser_approval_policy.py -v
 """
-from unittest.mock import AsyncMock, MagicMock, patch
-import pytest
+
 import asyncio
+from unittest.mock import AsyncMock
+
+import pytest
 
 from local_agent.browser_controller import (
     BrowserController,
@@ -54,16 +56,14 @@ class TestApprovalPolicy:
 
     def test_execute_click_without_approval_rejected(self, controller):
         """execute_click without approval_token should be rejected."""
+
         async def _test():
             # Setup mock element
             mock_element = AsyncMock()
             mock_element.text_content = AsyncMock(return_value="Click me")
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_click(
-                "#test-btn",
-                approval_token=None
-            )
+            result = await controller.execute_click("#test-btn", approval_token=None)
 
             assert result.element_found is True
             assert result.executed is False
@@ -73,17 +73,14 @@ class TestApprovalPolicy:
 
     def test_execute_type_without_approval_rejected(self, controller):
         """execute_type without approval_token should be rejected."""
+
         async def _test():
             # Setup mock element
             mock_element = AsyncMock()
             mock_element.get_attribute = AsyncMock(return_value="text")
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_type(
-                "#test-input",
-                "test text",
-                approval_token=None
-            )
+            result = await controller.execute_type("#test-input", "test text", approval_token=None)
 
             assert result.element_found is True
             assert result.executed is False
@@ -93,6 +90,7 @@ class TestApprovalPolicy:
 
     def test_execute_click_with_approval_on_normal_button(self, controller):
         """execute_click with approval should execute on normal button."""
+
         async def _test():
             # Setup mock element
             mock_element = AsyncMock()
@@ -100,10 +98,7 @@ class TestApprovalPolicy:
             mock_element.evaluate = AsyncMock(return_value="button")
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_click(
-                "#test-btn",
-                approval_token="test-token"
-            )
+            result = await controller.execute_click("#test-btn", approval_token="test-token")
 
             assert result.element_found is True
             assert result.executed is True
@@ -114,22 +109,21 @@ class TestApprovalPolicy:
 
     def test_execute_type_with_approval_on_normal_input(self, controller):
         """execute_type with approval should execute on normal input."""
+
         async def _test():
             # Setup mock element
             mock_element = AsyncMock()
-            mock_element.get_attribute = AsyncMock(side_effect=lambda attr: {
-                "type": "text",
-                "name": "search",
-                "placeholder": "Search",
-                "aria-label": None
-            }.get(attr, ""))
+            mock_element.get_attribute = AsyncMock(
+                side_effect=lambda attr: {
+                    "type": "text",
+                    "name": "search",
+                    "placeholder": "Search",
+                    "aria-label": None,
+                }.get(attr, "")
+            )
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_type(
-                "#search-input",
-                "test query",
-                approval_token="test-token"
-            )
+            result = await controller.execute_type("#search-input", "test query", approval_token="test-token")
 
             assert result.element_found is True
             assert result.executed is True
@@ -142,6 +136,7 @@ class TestApprovalPolicy:
 
     def test_execute_click_submit_requires_final_approval(self, controller):
         """execute_click on submit button requires final_approval_token."""
+
         async def _test():
             # Setup mock element for submit button
             mock_element = AsyncMock()
@@ -149,9 +144,7 @@ class TestApprovalPolicy:
             controller.page.query_selector.return_value = mock_element
 
             result = await controller.execute_click(
-                "#submit-btn",
-                approval_token="test-token",
-                final_approval_token=None
+                "#submit-btn", approval_token="test-token", final_approval_token=None
             )
 
             assert result.element_found is True
@@ -163,6 +156,7 @@ class TestApprovalPolicy:
 
     def test_execute_click_delete_requires_final_approval(self, controller):
         """execute_click on delete button requires final_approval_token."""
+
         async def _test():
             # Setup mock element for delete button
             mock_element = AsyncMock()
@@ -170,9 +164,7 @@ class TestApprovalPolicy:
             controller.page.query_selector.return_value = mock_element
 
             result = await controller.execute_click(
-                "#delete-btn",
-                approval_token="test-token",
-                final_approval_token=None
+                "#delete-btn", approval_token="test-token", final_approval_token=None
             )
 
             assert result.element_found is True
@@ -184,22 +176,21 @@ class TestApprovalPolicy:
 
     def test_execute_type_password_field_rejected(self, controller):
         """execute_type on password field should be rejected."""
+
         async def _test():
             # Setup mock password input
             mock_element = AsyncMock()
-            mock_element.get_attribute = AsyncMock(side_effect=lambda attr: {
-                "type": "password",
-                "name": "password",
-                "placeholder": "Password",
-                "aria-label": None
-            }.get(attr, ""))
+            mock_element.get_attribute = AsyncMock(
+                side_effect=lambda attr: {
+                    "type": "password",
+                    "name": "password",
+                    "placeholder": "Password",
+                    "aria-label": None,
+                }.get(attr, "")
+            )
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_type(
-                "#password-input",
-                "secret123",
-                approval_token="test-token"
-            )
+            result = await controller.execute_type("#password-input", "secret123", approval_token="test-token")
 
             assert result.element_found is True
             assert result.executed is False
@@ -210,22 +201,21 @@ class TestApprovalPolicy:
 
     def test_execute_type_otp_field_rejected(self, controller):
         """execute_type on OTP field should be rejected."""
+
         async def _test():
             # Setup mock OTP input
             mock_element = AsyncMock()
-            mock_element.get_attribute = AsyncMock(side_effect=lambda attr: {
-                "type": "text",
-                "name": "otp_code",
-                "placeholder": "OTP Code",
-                "aria-label": None
-            }.get(attr, ""))
+            mock_element.get_attribute = AsyncMock(
+                side_effect=lambda attr: {
+                    "type": "text",
+                    "name": "otp_code",
+                    "placeholder": "OTP Code",
+                    "aria-label": None,
+                }.get(attr, "")
+            )
             controller.page.query_selector.return_value = mock_element
 
-            result = await controller.execute_type(
-                "#otp-input",
-                "123456",
-                approval_token="test-token"
-            )
+            result = await controller.execute_type("#otp-input", "123456", approval_token="test-token")
 
             assert result.element_found is True
             assert result.executed is False
@@ -243,7 +233,7 @@ class TestApprovalPolicy:
             text_length=16,
             text_preview="[REDACTED]",
             result="success",
-            target_url_domain="localhost"
+            target_url_domain="localhost",
         )
 
         result_str = str(result.__dict__)
@@ -253,11 +243,7 @@ class TestApprovalPolicy:
     def test_result_no_approval_token(self, controller):
         """Result should not contain approval_token."""
         result = ExecuteClickResult(
-            selector="#btn",
-            element_found=True,
-            executed=True,
-            result="success",
-            target_url_domain="localhost"
+            selector="#btn", element_found=True, executed=True, result="success", target_url_domain="localhost"
         )
 
         result_str = str(result)
@@ -286,12 +272,12 @@ class TestRiskAssessment:
 
     def test_assess_click_risk_payment_is_risky(self, controller):
         """payment button should be detected as risky."""
-        risk_level, is_risky = controller._assess_click_risk("Proceed to Payment", "#checkout")
+        _risk_level, is_risky = controller._assess_click_risk("Proceed to Payment", "#checkout")
         assert is_risky is True
 
     def test_assess_click_risk_comment_is_risky(self, controller):
         """comment button should be detected as risky."""
-        risk_level, is_risky = controller._assess_click_risk("Post Comment", "#comment-btn")
+        _risk_level, is_risky = controller._assess_click_risk("Post Comment", "#comment-btn")
         assert is_risky is True
 
     def test_assess_click_risk_normal_is_safe(self, controller):
@@ -302,12 +288,12 @@ class TestRiskAssessment:
 
     def test_assess_click_risk_korean_submit_is_risky(self, controller):
         """Korean submit keyword should be detected as risky."""
-        risk_level, is_risky = controller._assess_click_risk("제출하기", "#submit-btn")
+        _risk_level, is_risky = controller._assess_click_risk("제출하기", "#submit-btn")
         assert is_risky is True
 
     def test_assess_click_risk_korean_delete_is_risky(self, controller):
         """Korean delete keyword should be detected as risky."""
-        risk_level, is_risky = controller._assess_click_risk("삭제", "#delete-btn")
+        _risk_level, is_risky = controller._assess_click_risk("삭제", "#delete-btn")
         assert is_risky is True
 
 

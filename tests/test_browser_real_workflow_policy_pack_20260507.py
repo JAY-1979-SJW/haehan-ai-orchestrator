@@ -10,9 +10,9 @@ This module verifies the fixture design:
 """
 
 import json
-import pytest
-import os
 from pathlib import Path
+
+import pytest
 
 
 class TestBrowserRealWorkflowPolicyPackFixture:
@@ -95,9 +95,15 @@ class TestBrowserRealWorkflowPolicyPackFixture:
         e2e_cases = fixture_data.get("e2e_cases", [])
 
         required_case_keys = ["case_id", "description", "workflow_id", "input", "expected"]
-        required_expected_keys = ["policy_verdict", "gate_decision", "event_stage",
-                                  "safe_to_execute", "safe_to_dispatch", "production_mode",
-                                  "should_write_audit"]
+        required_expected_keys = [
+            "policy_verdict",
+            "gate_decision",
+            "event_stage",
+            "safe_to_execute",
+            "safe_to_dispatch",
+            "production_mode",
+            "should_write_audit",
+        ]
 
         for i, case in enumerate(e2e_cases):
             # Check case-level structure
@@ -123,37 +129,42 @@ class TestBrowserRealWorkflowPolicyPackFixture:
         for case in e2e_cases:
             # workflow_decision might be in input or expected
             input_obj = case.get("input", {})
-            expected_obj = case.get("expected", {})
+            expected_obj = case.get("expected", {})  # noqa: F841
 
             # Some cases have workflow_decision in input
             if "workflow_decision" in input_obj:
-                assert input_obj["workflow_decision"] in valid_decisions, \
+                assert input_obj["workflow_decision"] in valid_decisions, (
                     f"Case {case['case_id']}: invalid workflow_decision {input_obj['workflow_decision']}"
+                )
 
     def test_production_flag_all_false(self, fixture_data):
         """All production_allowed flags must be false across fixture."""
         workflows = fixture_data.get("workflows", [])
         for workflow in workflows:
-            assert workflow["production_allowed"] is False, \
+            assert workflow["production_allowed"] is False, (
                 f"Workflow {workflow['workflow_id']}: production_allowed must be false"
+            )
 
         site_policies = fixture_data.get("site_policies", [])
         for policy in site_policies:
-            assert policy["production_allowed"] is False, \
+            assert policy["production_allowed"] is False, (
                 f"Policy {policy['site_policy_id']}: production_allowed must be false"
+            )
 
     def test_safe_to_execute_all_false(self, fixture_data):
         """All safe_to_execute flags must be false in this design phase."""
         workflows = fixture_data.get("workflows", [])
         for workflow in workflows:
-            assert workflow["safe_to_execute"] is False, \
+            assert workflow["safe_to_execute"] is False, (
                 f"Workflow {workflow['workflow_id']}: safe_to_execute must be false"
+            )
 
         e2e_cases = fixture_data.get("e2e_cases", [])
         for case in e2e_cases:
             expected = case.get("expected", {})
-            assert expected["safe_to_execute"] is False, \
+            assert expected["safe_to_execute"] is False, (
                 f"Case {case['case_id']}: safe_to_execute must be false in this phase"
+            )
 
     def test_submit_cases_deny_by_default(self, fixture_data):
         """Any case with submit operation must have DENY_BY_DEFAULT gate_decision."""
@@ -168,8 +179,9 @@ class TestBrowserRealWorkflowPolicyPackFixture:
 
             if has_submit:
                 expected = case.get("expected", {})
-                assert expected["gate_decision"] == "DENY_BY_DEFAULT", \
+                assert expected["gate_decision"] == "DENY_BY_DEFAULT", (
                     f"Case {case['case_id']}: submit operation requires DENY_BY_DEFAULT, got {expected['gate_decision']}"
+                )
 
     def test_type_cases_block(self, fixture_data):
         """Any case with type operation must have BLOCK decision."""
@@ -184,12 +196,13 @@ class TestBrowserRealWorkflowPolicyPackFixture:
 
             if has_type:
                 expected = case.get("expected", {})
-                assert expected["gate_decision"] == "BLOCK", \
+                assert expected["gate_decision"] == "BLOCK", (
                     f"Case {case['case_id']}: type operation requires BLOCK, got {expected['gate_decision']}"
+                )
 
     def test_no_sensitive_data_in_fixture(self, fixture_data):
         """Fixture must not contain raw passwords, tokens, OTPs, cookies, secrets."""
-        fixture_str = json.dumps(fixture_data)
+        fixture_str = json.dumps(fixture_data)  # noqa: F841
 
         # List of dangerous patterns
         dangerous_patterns = [
@@ -218,8 +231,9 @@ class TestBrowserRealWorkflowPolicyPackFixture:
             for domain in allowed:
                 if domain != "*":
                     # Must be PLACEHOLDER or a hash/redacted value
-                    assert domain.startswith("PLACEHOLDER_") or domain.startswith("hash_") or domain == "internal", \
+                    assert domain.startswith("PLACEHOLDER_") or domain.startswith("hash_") or domain == "internal", (
                         f"Policy {policy['site_policy_id']}: domain '{domain}' should be PLACEHOLDER or redacted"
+                    )
 
     def test_audit_required_consistency(self, fixture_data):
         """If audit_required=true, should_write_audit must be true."""
@@ -233,8 +247,9 @@ class TestBrowserRealWorkflowPolicyPackFixture:
 
             if workflow and workflow.get("audit_required"):
                 expected = case.get("expected", {})
-                assert expected["should_write_audit"] is True, \
+                assert expected["should_write_audit"] is True, (
                     f"Case {case['case_id']}: audit_required=true but should_write_audit is not true"
+                )
 
     def test_approval_required_gates_dispatch(self, fixture_data):
         """If approval_required=true, safe_to_dispatch cannot be true (at this phase)."""
@@ -246,7 +261,7 @@ class TestBrowserRealWorkflowPolicyPackFixture:
             workflow = workflows.get(workflow_id)
 
             if workflow and workflow.get("approval_required"):
-                expected = case.get("expected", {})
+                expected = case.get("expected", {})  # noqa: F841
                 # If approval is required and not provided, dispatch should be gated
                 # This is a logic check dependent on whether approval is present in the case
 

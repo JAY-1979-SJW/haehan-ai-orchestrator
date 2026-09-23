@@ -12,32 +12,32 @@
   9. _has_element / _is_login_redirect 유틸리티
  10. 기존 승인 게이트 회귀 유지
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator.sites.adapters.dev_reg_base import (
+from ai_orchestrator.sites.adapters.dev_reg_base import (  # noqa: E402
     ErrorCode,
     FormFillResult,
     SubmitResult,
-    _build_safe_summary,
     _has_element,
     _is_login_redirect,
     validate_params,
 )
-from ai_orchestrator.sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter
-from ai_orchestrator.sites.adapters.naver_dev_reg import NaverDevRegAdapter
-from ai_orchestrator.sites.adapters.google_dev_reg import GoogleDevRegAdapter
-
+from ai_orchestrator.sites.adapters.google_dev_reg import GoogleDevRegAdapter  # noqa: E402
+from ai_orchestrator.sites.adapters.hiworks_dev_reg import HiworksDevRegAdapter  # noqa: E402
+from ai_orchestrator.sites.adapters.naver_dev_reg import NaverDevRegAdapter  # noqa: E402
 
 # ── 공통 헬퍼 ────────────────────────────────────────────────────────────────
+
 
 def _params(**overrides) -> dict:
     base = {
@@ -71,8 +71,8 @@ def _no_button_page(inner_text: str = "") -> MagicMock:
 def _login_redirect_page(provider: str) -> MagicMock:
     urls = {
         "hiworks": "https://account.hiworks.com/login",
-        "naver":   "https://nid.naver.com/nidlogin.login",
-        "google":  "https://accounts.google.com/signin/v2/identifier",
+        "naver": "https://nid.naver.com/nidlogin.login",
+        "google": "https://accounts.google.com/signin/v2/identifier",
     }
     page = _mock_page(url=urls.get(provider, "https://example.com/login"))
     return page
@@ -80,19 +80,30 @@ def _login_redirect_page(provider: str) -> MagicMock:
 
 # ── 1. dry_run PASS ───────────────────────────────────────────────────────────
 
+
 class TestDryRunPass:
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_dry_run_success(self, AdapterCls):
         result = AdapterCls().fill_form(None, _params(dry_run=True))
         assert result.success is True
         assert "[DRY RUN]" in result.summary
         assert result.error_code == ""
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_dry_run_no_page_calls(self, AdapterCls):
         page = MagicMock()
         AdapterCls().fill_form(page, _params(dry_run=True))
@@ -106,9 +117,7 @@ class TestDryRunPass:
         assert "redirect_uri" in result.field_names
 
     def test_naver_dry_run_scopes(self):
-        result = NaverDevRegAdapter().fill_form(
-            None, _params(dry_run=True, requested_scopes=["blog", "cafe"])
-        )
+        result = NaverDevRegAdapter().fill_form(None, _params(dry_run=True, requested_scopes=["blog", "cafe"]))
         assert "scope:blog" in result.field_names
         assert "scope:cafe" in result.field_names
 
@@ -119,18 +128,29 @@ class TestDryRunPass:
 
 # ── 2. FORM_FIELD_MISSING ─────────────────────────────────────────────────────
 
+
 class TestFormFieldMissing:
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_missing_app_name_sets_error_code(self, AdapterCls):
         result = AdapterCls().fill_form(None, {"dry_run": True})
         assert result.success is False
         assert result.error_code == ErrorCode.FORM_FIELD_MISSING
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_missing_app_name_error_message(self, AdapterCls):
         result = AdapterCls().fill_form(None, {})
         assert "app_name" in result.error
@@ -143,20 +163,29 @@ class TestFormFieldMissing:
 
 # ── 3. 승인 전 submit 차단 ────────────────────────────────────────────────────
 
+
 class TestNoAutoSubmit:
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_fill_form_dry_run_no_submit_click(self, AdapterCls):
         page = MagicMock()
         AdapterCls().fill_form(page, _params(dry_run=True))
         page.click.assert_not_called()
 
-    @pytest.mark.parametrize("AdapterCls,success_text", [
-        (HiworksDevRegAdapter, "완료"),
-        (NaverDevRegAdapter,   "등록 완료"),
-        (GoogleDevRegAdapter,  "saved"),
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls,success_text",
+        [
+            (HiworksDevRegAdapter, "완료"),
+            (NaverDevRegAdapter, "등록 완료"),
+            (GoogleDevRegAdapter, "saved"),
+        ],
+    )
     def test_fill_form_real_mode_no_submit_click(self, AdapterCls, success_text):
         """실 모드에서도 fill_form 은 submit 클릭 없음 (goto/fill 은 허용)."""
         page = _mock_page(success_text)
@@ -170,6 +199,7 @@ class TestNoAutoSubmit:
 
 
 # ── 4. SUBMIT_BUTTON_NOT_FOUND ────────────────────────────────────────────────
+
 
 class TestSubmitButtonNotFound:
     def test_hiworks_no_button(self):
@@ -210,10 +240,15 @@ class TestSubmitButtonNotFound:
 
 # ── 5. PAGE_LOAD_FAILED ───────────────────────────────────────────────────────
 
+
 class TestPageLoadFailed:
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+        ],
+    )
     def test_goto_exception_sets_error_code(self, AdapterCls):
         page = MagicMock()
         page.goto.side_effect = Exception("timeout")
@@ -238,6 +273,7 @@ class TestPageLoadFailed:
 
 
 # ── 6. LOGIN_REQUIRED ────────────────────────────────────────────────────────
+
 
 class TestLoginRequired:
     def test_hiworks_login_redirect(self):
@@ -267,17 +303,23 @@ class TestLoginRequired:
 
 # ── 7. 민감정보 미노출 ────────────────────────────────────────────────────────
 
+
 class TestSensitiveDataNotExposed:
     _SENSITIVE_PARAMS = _params(
         dry_run=True,
-        password="super_secret_pw",
-        client_secret="client_secret_xyz",
+        password="super_secret_pw",  # noqa: S106
+        client_secret="client_secret_xyz",  # noqa: S106
         cookie="session_cookie_abc",
     )
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_sensitive_not_in_summary(self, AdapterCls):
         result = AdapterCls().fill_form(None, self._SENSITIVE_PARAMS)
         assert result.success is True
@@ -285,9 +327,14 @@ class TestSensitiveDataNotExposed:
         assert "client_secret_xyz" not in result.summary
         assert "session_cookie_abc" not in result.summary
 
-    @pytest.mark.parametrize("AdapterCls", [
-        HiworksDevRegAdapter, NaverDevRegAdapter, GoogleDevRegAdapter,
-    ])
+    @pytest.mark.parametrize(
+        "AdapterCls",
+        [
+            HiworksDevRegAdapter,
+            NaverDevRegAdapter,
+            GoogleDevRegAdapter,
+        ],
+    )
     def test_sensitive_not_in_field_names(self, AdapterCls):
         result = AdapterCls().fill_form(None, self._SENSITIVE_PARAMS)
         for name in result.field_names:
@@ -296,9 +343,7 @@ class TestSensitiveDataNotExposed:
             assert "cookie" not in name
 
     def test_email_masked_in_summary(self):
-        result = HiworksDevRegAdapter().fill_form(
-            None, _params(dry_run=True, contact_email="developer@example.com")
-        )
+        result = HiworksDevRegAdapter().fill_form(None, _params(dry_run=True, contact_email="developer@example.com"))
         assert "developer@example.com" not in result.summary
         assert "dev***" in result.summary
 
@@ -311,6 +356,7 @@ class TestSensitiveDataNotExposed:
 
 
 # ── 8. ErrorCode 상수 정의 확인 ──────────────────────────────────────────────
+
 
 class TestErrorCodeDefinitions:
     def test_all_codes_defined(self):
@@ -339,6 +385,7 @@ class TestErrorCodeDefinitions:
 
 
 # ── 9. 유틸리티 함수 ─────────────────────────────────────────────────────────
+
 
 class TestUtilities:
     def test_has_element_true(self):
@@ -374,12 +421,13 @@ class TestUtilities:
 
 # ── 10. 기존 승인 게이트 회귀 유지 ───────────────────────────────────────────
 
+
 class TestApprovalGateRegression:
     def test_provider_attributes_unchanged(self):
         for AdapterCls, prov, act in [
             (HiworksDevRegAdapter, "hiworks", "developer_apply"),
-            (NaverDevRegAdapter,   "naver",   "app_register"),
-            (GoogleDevRegAdapter,  "google",  "oauth_submit"),
+            (NaverDevRegAdapter, "naver", "app_register"),
+            (GoogleDevRegAdapter, "google", "oauth_submit"),
         ]:
             a = AdapterCls()
             assert a.provider == prov
@@ -393,8 +441,7 @@ class TestApprovalGateRegression:
             page.goto.assert_called_with("about:blank")
 
     def test_form_fill_result_structure(self):
-        r = FormFillResult(success=True, summary="요약",
-                           field_names=["app_name"], target_url="https://x.com")
+        r = FormFillResult(success=True, summary="요약", field_names=["app_name"], target_url="https://x.com")
         assert r.success is True
         assert r.summary == "요약"
         assert r.field_names == ["app_name"]

@@ -4,43 +4,40 @@ LOCAL_AGENT_WS_STATUS_AUTO_SEND_1 테스트
 USER_PRESENT_STATUS 자동 전송 로직 검증.
 실제 WebSocket 연결 없음. 브라우저 실행 없음. 외부 사이트 접속 없음.
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
-import os
 import sys
 import unittest
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 FIXTURE_PATH = REPO / "tests" / "fixtures" / "local_agent_ws_status_auto_send_20260507.json"
 
-from local_agent.user_present_state_store import (
-    UserPresentStateStore,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
+from local_agent.user_present_state_store import (  # noqa: E402
     STATE_BLOCKED,
+    STATE_CANCELLED,
     STATE_FAILED,
+    STATE_USER_CONFIRMED,
     STATE_WAITING_FOR_USER,
+    UserPresentStateStore,
 )
-from local_agent.user_present_status_sender import (
-    collect_pending_user_present_status_events,
-    mark_user_present_status_sent,
-    send_user_present_status_event,
-    run_user_present_status_send_once,
-    reset_sent_statuses_for_testing,
-    _SEND_TARGET_STATES,
+from local_agent.user_present_status_sender import (  # noqa: E402
     _FORBIDDEN_EVENT_FIELDS,
     _sent_statuses,
+    collect_pending_user_present_status_events,
+    mark_user_present_status_sent,
+    reset_sent_statuses_for_testing,
+    run_user_present_status_send_once,
+    send_user_present_status_event,
 )
 
-
 # ── 헬퍼 ──────────────────────────────────────────────────────────────────────
+
 
 def _make_task(workflow_run_id: str, state: str) -> dict:
     return {
@@ -72,6 +69,7 @@ def _make_store(*tasks: dict) -> UserPresentStateStore:
 
 class MockWS:
     """비동기 WS mock — send/recv 추적."""
+
     def __init__(self):
         self.sent: list[str] = []
         self._recv_queue: list[str] = []
@@ -82,13 +80,14 @@ class MockWS:
     async def recv(self) -> str:
         if self._recv_queue:
             return self._recv_queue.pop(0)
-        raise asyncio.TimeoutError()
+        raise TimeoutError()
 
     def push_recv(self, data: dict) -> None:
         self._recv_queue.append(json.dumps(data))
 
 
 # ── STEP 6: fixture 무결성 ─────────────────────────────────────────────────────
+
 
 class TestFixtureIntegrity(unittest.TestCase):
     def setUp(self):
@@ -100,13 +99,20 @@ class TestFixtureIntegrity(unittest.TestCase):
 
     def test_2_all_cases_have_required_sections(self):
         required_ids = {
-            "confirmed_status_pending_send", "cancelled_status_pending_send",
-            "blocked_status_pending_send", "failed_status_pending_send",
-            "waiting_for_user_not_repeated", "confirmed_sent_once",
-            "cancelled_sent_once", "send_failure_keeps_pending",
-            "safe_to_execute_true_rejected", "token_cookie_session_rejected",
-            "password_otp_certificate_password_rejected", "server_ack_marks_sent",
-            "duplicate_status_not_resent", "heartbeat_still_works",
+            "confirmed_status_pending_send",
+            "cancelled_status_pending_send",
+            "blocked_status_pending_send",
+            "failed_status_pending_send",
+            "waiting_for_user_not_repeated",
+            "confirmed_sent_once",
+            "cancelled_sent_once",
+            "send_failure_keeps_pending",
+            "safe_to_execute_true_rejected",
+            "token_cookie_session_rejected",
+            "password_otp_certificate_password_rejected",
+            "server_ack_marks_sent",
+            "duplicate_status_not_resent",
+            "heartbeat_still_works",
             "existing_task_receive_still_works",
         }
         actual_ids = {c["id"] for c in self.fixture["cases"]}
@@ -118,6 +124,7 @@ class TestFixtureIntegrity(unittest.TestCase):
 
 
 # ── STEP 3-4: collect_pending_user_present_status_events ─────────────────────
+
 
 class TestCollectPending(unittest.TestCase):
     def setUp(self):
@@ -161,6 +168,7 @@ class TestCollectPending(unittest.TestCase):
 
 # ── mark_user_present_status_sent ─────────────────────────────────────────────
 
+
 class TestSentMarker(unittest.TestCase):
     def setUp(self):
         reset_sent_statuses_for_testing()
@@ -191,6 +199,7 @@ class TestSentMarker(unittest.TestCase):
 
 
 # ── send_user_present_status_event 검증 ──────────────────────────────────────
+
 
 class TestSendValidation(unittest.TestCase):
     def setUp(self):
@@ -267,9 +276,11 @@ class TestSendValidation(unittest.TestCase):
 
     def test_10_send_failure_keeps_pending(self):
         """WS send 실패 시 sent marker 미기록."""
+
         class FailWS:
             async def send(self, data):
                 raise ConnectionError("WS dead")
+
         ws = FailWS()
         event = self._make_event(workflow_run_id="wf-fail-send")
         result = self._run(send_user_present_status_event(ws, event))
@@ -278,6 +289,7 @@ class TestSendValidation(unittest.TestCase):
 
 
 # ── run_user_present_status_send_once ─────────────────────────────────────────
+
 
 class TestRunSendOnce(unittest.TestCase):
     def setUp(self):
@@ -315,16 +327,19 @@ class TestRunSendOnce(unittest.TestCase):
 
 # ── 안전 정책 ──────────────────────────────────────────────────────────────────
 
+
 class TestSecurityPolicy(unittest.TestCase):
     def test_14_heartbeat_path_coexists(self):
         """_STATUS_SENDER_AVAILABLE import 경로 확인."""
         from local_agent import websocket_client
+
         self.assertTrue(hasattr(websocket_client, "_STATUS_SENDER_AVAILABLE"))
         self.assertTrue(websocket_client._STATUS_SENDER_AVAILABLE)
 
     def test_15_existing_task_receive_path_unchanged(self):
         """process_user_present_task 기존 경로 여전히 작동."""
         from local_agent.websocket_client import process_user_present_task
+
         msg = {
             "message_type": "USER_PRESENT_TASK",
             "workflow_run_id": "wf-coexist-test",
@@ -349,6 +364,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_17_general_task_path_unchanged(self):
         """process_task 기존 경로 여전히 작동 (forbidden action)."""
         from local_agent.websocket_client import process_task
+
         task = {"task_id": "t-001", "action": "delete_file", "params": {}}
         result = process_task(task)
         self.assertEqual(result["error_code"], "ACTION_FORBIDDEN")
@@ -356,6 +372,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_18_no_real_websocket_connection(self):
         """실제 WS 연결 없음 — websockets.connect 호출 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         self.assertNotIn("websockets.connect", src)
         self.assertNotIn("websockets.serve", src)
@@ -363,6 +380,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_19_no_browser_execution(self):
         """브라우저 실행 코드 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         forbidden = ["playwright", "execute_click", "execute_type", "browser_worker"]
         for kw in forbidden:
@@ -371,6 +389,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_20_no_click_type_fill_submit(self):
         """click/type/fill/submit 호출 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in [".click(", ".type(", ".fill(", ".submit("]:
             self.assertNotIn(kw, src, f"금지 호출 발견: {kw}")
@@ -378,6 +397,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_21_no_task_executor_browser_worker(self):
         """task_executor/browser_worker 호출 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in ["task_executor", "browser_worker"]:
             self.assertNotIn(kw, src)
@@ -385,6 +405,7 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_22_no_db_write(self):
         """DB write 없음 — sqlite/sqlalchemy 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in ["sqlite3", "sqlalchemy", ".execute(", ".commit("]:
             self.assertNotIn(kw, src)
@@ -392,14 +413,18 @@ class TestSecurityPolicy(unittest.TestCase):
     def test_23_no_credential_output(self):
         """registration_code/device_token 출력(print/log) 없음."""
         import local_agent.user_present_status_sender as sender
+
         src = Path(sender.__file__).read_text(encoding="utf-8")
         # print/logger 출력 라인에 registration_code 포함 금지
         self.assertNotIn("registration_code", src)
         # device_token은 FORBIDDEN_EVENT_FIELDS 차단 목록으로만 허용 — logger.info 출력 금지
         import re
-        log_lines = [ln for ln in src.splitlines()
-                     if re.search(r'(print|logger\.(info|warning|error|debug))', ln)
-                     and "device_token" in ln]
+
+        log_lines = [
+            ln
+            for ln in src.splitlines()
+            if re.search(r"(print|logger\.(info|warning|error|debug))", ln) and "device_token" in ln
+        ]
         self.assertEqual(log_lines, [], f"device_token 로그 출력 발견: {log_lines}")
 
     def test_all_sent_events_have_safe_to_execute_false(self):

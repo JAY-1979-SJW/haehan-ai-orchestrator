@@ -10,25 +10,39 @@ DB schema 변경 없음. JSONL 파일 기반 1차 저장.
 - cookie / session / storage_state
 - 인증서 파일 경로
 """
+
 from __future__ import annotations
 
 import json
 import threading
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 # ── 저장 금지 필드 ────────────────────────────────────────────────────────────
 
-_FORBIDDEN_STORE_FIELDS: frozenset[str] = frozenset({
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "cookies", "session", "storage_state",
-    "private_key", "npki", "auth_header", "Authorization",
-    "token", "access_token", "refresh_token",
-    "certificate_file_path",
-    "raw_params", "params",
-})
+_FORBIDDEN_STORE_FIELDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "cookies",
+        "session",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "Authorization",
+        "token",
+        "access_token",
+        "refresh_token",
+        "certificate_file_path",
+        "raw_params",
+        "params",
+    }
+)
 
 # ── status 상수 ───────────────────────────────────────────────────────────────
 
@@ -50,7 +64,7 @@ _AUDIT_FILE_NAME = "action_approval_audit.jsonl"
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _audit_path() -> Path:
@@ -67,7 +81,7 @@ def _append_jsonl(record: dict[str, Any]) -> None:
     try:
         with _audit_path().open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-    except Exception:
+    except Exception:  # noqa: S110
         pass  # 파일 기록 실패 시 in-memory만 유지
 
 

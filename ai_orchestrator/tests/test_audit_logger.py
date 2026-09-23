@@ -1,8 +1,9 @@
-import sys, os, json
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from ai_orchestrator import audit_logger
-from pathlib import Path
 
 
 def _clear_log():
@@ -14,13 +15,13 @@ def _clear_log():
 def test_log_event_appends():
     _clear_log()
     audit_logger.log_event(
-        event_type="TASK_RECEIVED", task_id="T-LOG-001",
-        action_type="read_file", target="/tmp/x.txt", actor="test"
+        event_type="TASK_RECEIVED",
+        task_id="T-LOG-001",
+        action_type="read_file",
+        target="/tmp/x.txt",  # noqa: S108
+        actor="test",
     )
-    audit_logger.log_event(
-        event_type="RISK_ASSESSED", task_id="T-LOG-001",
-        risk_level="low", actor="system"
-    )
+    audit_logger.log_event(event_type="RISK_ASSESSED", task_id="T-LOG-001", risk_level="low", actor="system")
     logs = audit_logger.read_recent_logs(limit=20)
     assert len(logs) == 2
     assert logs[0]["event_type"] == "TASK_RECEIVED"

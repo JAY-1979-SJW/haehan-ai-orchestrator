@@ -25,26 +25,30 @@
 4. 신청하기 → 사용자 승인 (APPROVE)
 5. PDF 다운로드 (NOTIFY)
 """
+
 from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT))
 
-from ai_orchestrator.local_agent.browser.cdp import (
-    open_cdp_session, is_cdp_available, CDPConnectionError,
+from ai_orchestrator.local_agent.browser.actions import (  # noqa: E402
+    GateApprovalRequired,
+    click,
+    navigate,
+    screenshot,
 )
-from ai_orchestrator.local_agent.browser.intent_token import create_intent
-from ai_orchestrator.local_agent.browser.actions import (
-    navigate, click, select_option, wait_for_selector,
-    screenshot, GateApprovalRequired,
+from ai_orchestrator.local_agent.browser.audit_log import get_audit_path  # noqa: E402
+from ai_orchestrator.local_agent.browser.cdp import (  # noqa: E402
+    CDPConnectionError,
+    is_cdp_available,
+    open_cdp_session,
 )
-from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
-
+from ai_orchestrator.local_agent.browser.intent_token import create_intent  # noqa: E402
 
 GOV24_URL = "https://www.gov.kr"
 GOV24_CERT_SEARCH = "https://www.gov.kr/mw/AA020InfoCappView.do?HighCtgCD=A01001&CappBizCD=13100000015&tp_seq=01"
@@ -57,7 +61,7 @@ CERT_TYPES = {
 
 
 def _ask_user_approval(prompt: str) -> bool:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(prompt)
     ans = input("→ 승인 (y/n): ").strip().lower()
     return ans in ("y", "yes", "네", "예")
@@ -69,7 +73,9 @@ def run_gov24_certificate(
     port: int = 9222,
 ) -> dict:
     audit_path = get_audit_path()
-    output_path = output_path or Path(f"data/reports/certificates/주민등록{cert_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+    output_path = output_path or Path(
+        f"data/reports/certificates/주민등록{cert_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # CDP 연결 확인
@@ -96,21 +102,21 @@ def run_gov24_certificate(
             r = navigate(page, GOV24_URL, intent=intent, audit_path=audit_path)
             if not r.ok:
                 return {"ok": False, "error": f"정부24 접속 실패: {r.error}"}
-            print(f"[정부24] 메인 접속 완료")
+            print("[정부24] 메인 접속 완료")
 
             # 2. 등본 발급 페이지 이동
             try:
-                r = navigate(page, GOV24_CERT_SEARCH, intent=intent, audit_path=audit_path,
-                             wait_until="networkidle")
+                r = navigate(page, GOV24_CERT_SEARCH, intent=intent, audit_path=audit_path, wait_until="networkidle")
             except GateApprovalRequired as e:
                 if not _ask_user_approval(e.approval_prompt()):
                     return {"ok": False, "error": "사용자 거부"}
-                r = navigate(page, GOV24_CERT_SEARCH, intent=intent, audit_path=audit_path,
-                             wait_until="networkidle", force=True)
+                r = navigate(
+                    page, GOV24_CERT_SEARCH, intent=intent, audit_path=audit_path, wait_until="networkidle", force=True
+                )
 
             if not r.ok:
                 return {"ok": False, "error": f"발급 페이지 이동 실패: {r.error}"}
-            print(f"[정부24] 발급 페이지 이동 완료")
+            print("[정부24] 발급 페이지 이동 완료")
 
             # 3. 로그인 확인
             page.wait_for_load_state("networkidle", timeout=10000)
@@ -122,14 +128,25 @@ def run_gov24_certificate(
 
             # 4. 신청하기 버튼 클릭 (APPROVE)
             try:
-                r = click(page, "a[title='신청하기'], button:has-text('신청하기'), .btn-apply",
-                          label="신청하기", intent=intent, audit_path=audit_path)
+                r = click(
+                    page,
+                    "a[title='신청하기'], button:has-text('신청하기'), .btn-apply",
+                    label="신청하기",
+                    intent=intent,
+                    audit_path=audit_path,
+                )
             except GateApprovalRequired as e:
                 print(f"\n[정부24] {cert_type} 발급 신청 승인이 필요합니다.")
                 if not _ask_user_approval(e.approval_prompt()):
                     return {"ok": False, "error": "사용자 거부"}
-                r = click(page, "a[title='신청하기'], button:has-text('신청하기'), .btn-apply",
-                          label="신청하기", intent=intent, audit_path=audit_path, force=True)
+                r = click(
+                    page,
+                    "a[title='신청하기'], button:has-text('신청하기'), .btn-apply",
+                    label="신청하기",
+                    intent=intent,
+                    audit_path=audit_path,
+                    force=True,
+                )
 
             if not r.ok:
                 print(f"[정부24] 신청 버튼 클릭 실패: {r.error}")
@@ -141,8 +158,7 @@ def run_gov24_certificate(
             print("[정부24] 신청 처리 중...")
 
             # 6. 스크린샷 저장
-            r_ss = screenshot(page, output_path, intent=intent,
-                              audit_path=audit_path, full_page=True, force=True)
+            r_ss = screenshot(page, output_path, intent=intent, audit_path=audit_path, full_page=True, force=True)
             if r_ss.ok:
                 print(f"[정부24] 스크린샷 저장: {output_path}")
 
@@ -165,12 +181,9 @@ def run_gov24_certificate(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="정부24 주민등록등본/초본 발급")
-    parser.add_argument("--type", choices=["등본", "초본"], default="등본",
-                        help="발급 서류 종류")
-    parser.add_argument("--output", type=Path, default=None,
-                        help="저장 경로 (기본: data/reports/certificates/)")
-    parser.add_argument("--port", type=int, default=9222,
-                        help="Chrome CDP 포트")
+    parser.add_argument("--type", choices=["등본", "초본"], default="등본", help="발급 서류 종류")
+    parser.add_argument("--output", type=Path, default=None, help="저장 경로 (기본: data/reports/certificates/)")
+    parser.add_argument("--port", type=int, default=9222, help="Chrome CDP 포트")
     args = parser.parse_args()
 
     result = run_gov24_certificate(
@@ -180,7 +193,7 @@ def main() -> None:
     )
 
     if result["ok"]:
-        print(f"\n결과: 성공")
+        print("\n결과: 성공")
         if result.get("screenshot"):
             print(f"저장 위치: {result['screenshot']}")
     else:

@@ -1,6 +1,8 @@
 """네이버 카페 탐색 — CDP 연결된 Chrome에서 가입 카페 목록 조회."""
+
+import time
+
 from playwright.sync_api import sync_playwright
-import json, time
 
 GQL_QUERY = """
 query {
@@ -29,14 +31,15 @@ query HomeJoinedCafeList {
 }
 """
 
+
 def explore():
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp('http://localhost:9222')
+        browser = p.chromium.connect_over_cdp("http://localhost:9222")
         ctx = browser.contexts[0]
         page = ctx.pages[0]
 
         # 카페 홈 이동
-        page.goto('https://cafe.naver.com/ca-fe/cafes/joined', timeout=20000)
+        page.goto("https://cafe.naver.com/ca-fe/cafes/joined", timeout=20000)
         time.sleep(4)
 
         # 페이지 내 fetch로 GraphQL 호출 (쿠키 자동 포함)
@@ -54,11 +57,13 @@ def explore():
 """
         try:
             result = page.evaluate(js)
-            cafes = result.get('data', {}).get('joinedCafeList', {}).get('cafes', [])
-            total = result.get('data', {}).get('joinedCafeList', {}).get('totalCount', 0)
+            cafes = result.get("data", {}).get("joinedCafeList", {}).get("cafes", [])
+            total = result.get("data", {}).get("joinedCafeList", {}).get("totalCount", 0)
             print(f"\n가입 카페 총 {total}개:\n")
             for i, c in enumerate(cafes, 1):
-                print(f"  {i:2}. {c.get('cafeName','?'):30} | 회원 {c.get('memberCount','?'):>8}명 | https://cafe.naver.com/{c.get('cafeUrl','')}")
+                print(
+                    f"  {i:2}. {c.get('cafeName', '?'):30} | 회원 {c.get('memberCount', '?'):>8}명 | https://cafe.naver.com/{c.get('cafeUrl', '')}"
+                )
             return cafes
         except Exception as e:
             print("GraphQL 오류:", e)
@@ -83,10 +88,11 @@ def explore():
 }
 """)
         print(f"링크 {len(links)}개 발견:")
-        for l in links[:30]:
+        for l in links[:30]:  # noqa: E741
             print(f"  - {l['name'][:40]:40} | {l['href']}")
 
         browser.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     explore()

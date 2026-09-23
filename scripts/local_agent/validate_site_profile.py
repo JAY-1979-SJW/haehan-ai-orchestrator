@@ -3,38 +3,64 @@
 
 등록된 site profile이 보안 정책을 준수하는지 검사한다.
 """
+
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.site_profile_registry import (
-    get_site_profile, _REGISTRY, _COMMON_BLOCKED,
-)
-from ai_orchestrator.local_agent.site_capability_matrix import (
-    _CAPABILITY_GRADE, GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED,
-    GRADE_USER_DIRECT, GRADE_BLOCKED,
+from ai_orchestrator.local_agent.site_profile_registry import (  # noqa: E402
+    _COMMON_BLOCKED,
+    _REGISTRY,
 )
 
 _FORBIDDEN_NOTES_KEYWORDS = [
-    "password", "otp", "cookie", "session", "token", "cert_password",
-    "npki", "captcha", "storage_state", "auto_sign", "auto_bid", "auto_payment",
+    "password",
+    "otp",
+    "cookie",
+    "session",
+    "token",
+    "cert_password",
+    "npki",
+    "captcha",
+    "storage_state",
+    "auto_sign",
+    "auto_bid",
+    "auto_payment",
 ]
 
-_FORBIDDEN_DELEGATED_ACTIONS = frozenset([
-    "password_save", "otp_save", "cert_password_save",
-    "cookie_export", "session_export", "token_export", "storage_state_export",
-    "cert_file_access", "npki_access", "captcha_bypass", "account_bypass",
-    "stealth_evasion", "auto_payment", "auto_transfer", "auto_bid_submit", "auto_esign",
-])
+_FORBIDDEN_DELEGATED_ACTIONS = frozenset(
+    [
+        "password_save",
+        "otp_save",
+        "cert_password_save",
+        "cookie_export",
+        "session_export",
+        "token_export",
+        "storage_state_export",
+        "cert_file_access",
+        "npki_access",
+        "captcha_bypass",
+        "account_bypass",
+        "stealth_evasion",
+        "auto_payment",
+        "auto_transfer",
+        "auto_bid_submit",
+        "auto_esign",
+    ]
+)
 
-_REQUIRED_SAFE_CAPABILITY = frozenset([
-    "READONLY_EXPLORE", "SEARCH", "EXTRACT_TEXT",
-])
+_REQUIRED_SAFE_CAPABILITY = frozenset(
+    [
+        "READONLY_EXPLORE",
+        "SEARCH",
+        "EXTRACT_TEXT",
+    ]
+)
 
 
 def validate_profile(profile: dict) -> dict:
@@ -42,9 +68,18 @@ def validate_profile(profile: dict) -> dict:
     warnings = []
 
     # 필수 필드
-    for field in ("site_id", "display_name", "domains", "category", "login_policy",
-                  "supported_capabilities", "delegated_actions", "blocked_actions",
-                  "direct_required_actions", "requires_audit_log"):
+    for field in (
+        "site_id",
+        "display_name",
+        "domains",
+        "category",
+        "login_policy",
+        "supported_capabilities",
+        "delegated_actions",
+        "blocked_actions",
+        "direct_required_actions",
+        "requires_audit_log",
+    ):
         if field not in profile:
             errors.append(f"필수 필드 누락: {field}")
 
@@ -101,7 +136,7 @@ def print_validation_report(results: list[dict]) -> None:
     passed = sum(1 for r in results if r["ok"])
     failed = total - passed
 
-    print(f"\n=== Site Profile 유효성 검사 ===")
+    print("\n=== Site Profile 유효성 검사 ===")
     print(f"총 {total}개 | 통과 {passed}개 | 실패 {failed}개\n")
 
     for r in results:

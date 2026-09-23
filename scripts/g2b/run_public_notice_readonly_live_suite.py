@@ -18,12 +18,12 @@ fixture의 허용 케이스 전체를 순차 live 실행하고
 - 차단 케이스 브라우저 실행 금지
 - 서버 환경 실행 금지
 """
+
 from __future__ import annotations
 
 import json
-import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # repo root를 sys.path에 추가
@@ -31,16 +31,14 @@ _repo_root = Path(__file__).resolve().parent.parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-import argparse
+import argparse  # noqa: E402
 
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (
-    run_g2b_public_notice_fixture_live_suite,
+from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
     _check_playwright_available,
+    run_g2b_public_notice_fixture_live_suite,
 )
 
-_FIXTURE_DEFAULT = (
-    _repo_root / "tests" / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
-)
+_FIXTURE_DEFAULT = _repo_root / "tests" / "fixtures" / "g2b_public_notice_workflow_fixture_20260507.json"
 
 _REPORT_JSON_DIR = _repo_root / "data" / "reports" / "g2b"
 _REPORT_MD_DIR = _repo_root / "docs" / "reports"
@@ -55,8 +53,8 @@ def _build_markdown_report(suite_result: dict, run_ts: str) -> str:
         "",
         "## 요약",
         "",
-        f"| 항목 | 수 |",
-        f"|------|-----|",
+        "| 항목 | 수 |",
+        "|------|-----|",
         f"| 총 케이스 | {suite_result.get('total_cases', 0)} |",
         f"| 허용 케이스 | {suite_result.get('allowed_cases', 0)} |",
         f"| live 실행 완료 | {suite_result.get('live_executed', 0)} |",
@@ -119,8 +117,9 @@ def main() -> None:
 
     # playwright/chromium 상태 확인
     pw_check = _check_playwright_available()
-    print(f"[G2B Live Suite] playwright: {pw_check['playwright_available']}, "
-          f"chromium: {pw_check['chromium_available']}")
+    print(
+        f"[G2B Live Suite] playwright: {pw_check['playwright_available']}, chromium: {pw_check['chromium_available']}"
+    )
     if actual_live and not pw_check["playwright_available"]:
         print("[G2B Live Suite] FAIL: actual-live 모드인데 playwright 미설치")
         sys.exit(1)
@@ -128,7 +127,7 @@ def main() -> None:
         print("[G2B Live Suite] FAIL: actual-live 모드인데 chromium 미설치")
         sys.exit(1)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     ts_file = now.strftime("%Y%m%d_%H%M%S")
     ts_date = now.strftime("%Y%m%d")
     run_ts = now.isoformat()

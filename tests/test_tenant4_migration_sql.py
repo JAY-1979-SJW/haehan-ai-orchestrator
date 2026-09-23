@@ -9,23 +9,24 @@ This test suite validates the SQL migration proposal:
 - Backward compatibility maintained
 """
 
-import pytest
 from dataclasses import dataclass
-from typing import List, Optional
 
+import pytest
 
 # ============================================================================
 # Test Fixtures and Helpers
 # ============================================================================
 
+
 @dataclass
 class TableSpec:
     """Specification of expected table."""
+
     name: str
     columns: dict[str, str]  # name -> sql_type
-    indexes: List[str]  # index names
-    foreign_keys: List[dict]  # {from_table, from_col, to_table, to_col}
-    required_columns: List[str]  # NOT NULL columns
+    indexes: list[str]  # index names
+    foreign_keys: list[dict]  # {from_table, from_col, to_table, to_col}
+    required_columns: list[str]  # NOT NULL columns
 
 
 class TestTableExistence:
@@ -66,7 +67,7 @@ class TestColumnDefinitions:
 
     def test_app_users_has_required_columns(self):
         """app_users has: user_id, email, display_name, status"""
-        required = ['user_id', 'email', 'display_name', 'status', 'created_at', 'updated_at']
+        required = ["user_id", "email", "display_name", "status", "created_at", "updated_at"]  # noqa: F841
         # SELECT column_name FROM information_schema.columns WHERE table_name='app_users'
         assert True  # Placeholder
 
@@ -78,19 +79,19 @@ class TestColumnDefinitions:
 
     def test_organizations_has_required_columns(self):
         """organizations has: organization_id, name, status"""
-        required = ['organization_id', 'name', 'status', 'created_at', 'updated_at']
+        required = ["organization_id", "name", "status", "created_at", "updated_at"]  # noqa: F841
         assert True  # Placeholder
 
     def test_organization_memberships_has_required_columns(self):
         """organization_memberships has: membership_id, user_id, organization_id, role, status"""
-        required = ['membership_id', 'user_id', 'organization_id', 'role', 'status', 'created_at', 'updated_at']
+        required = ["membership_id", "user_id", "organization_id", "role", "status", "created_at", "updated_at"]  # noqa: F841
         assert True  # Placeholder
 
     def test_organization_memberships_role_check_constraint(self):
         """organization_memberships.role has CHECK constraint"""
         # SELECT constraint_name FROM information_schema.check_constraints
         # WHERE constraint_name LIKE '%memberships%role%'
-        valid_roles = ['owner', 'admin', 'manager', 'operator', 'viewer', 'auditor', 'local_agent']
+        valid_roles = ["owner", "admin", "manager", "operator", "viewer", "auditor", "local_agent"]
         assert len(valid_roles) == 7  # Document expected roles
 
     def test_local_agents_has_organization_id(self):
@@ -130,12 +131,12 @@ class TestColumnDefinitions:
 
     def test_browser_tasks_status_check_constraint(self):
         """browser_tasks.status has valid CHECK constraint"""
-        valid_statuses = ['pending', 'approved', 'rejected', 'running', 'completed', 'failed', 'cancelled', 'timeout']
+        valid_statuses = ["pending", "approved", "rejected", "running", "completed", "failed", "cancelled", "timeout"]
         assert len(valid_statuses) == 8
 
     def test_browser_tasks_risk_level_check_constraint(self):
         """browser_tasks.risk_level CHECK allows NULL and 4 levels"""
-        valid_levels = [None, 'low', 'medium', 'high', 'critical']
+        valid_levels = [None, "low", "medium", "high", "critical"]
         assert len(valid_levels) == 5
 
     def test_browser_approvals_has_organization_id(self):
@@ -160,7 +161,7 @@ class TestColumnDefinitions:
 
     def test_browser_approvals_status_check_constraint(self):
         """browser_approvals.status has valid CHECK constraint"""
-        valid_statuses = ['pending', 'approved', 'rejected', 'expired', 'revoked']
+        valid_statuses = ["pending", "approved", "rejected", "expired", "revoked"]
         assert len(valid_statuses) == 5
 
     def test_browser_results_has_organization_id(self):
@@ -178,7 +179,7 @@ class TestColumnDefinitions:
 
     def test_browser_results_status_check_constraint(self):
         """browser_results.status has valid CHECK constraint"""
-        valid_statuses = ['completed', 'failed', 'timeout', 'cancelled']
+        valid_statuses = ["completed", "failed", "timeout", "cancelled"]
         assert len(valid_statuses) == 4
 
 
@@ -443,52 +444,52 @@ class TestCheckConstraints:
 
     def test_app_users_status_check(self):
         """app_users.status CHECK constraint on valid values"""
-        valid = ['active', 'inactive', 'suspended', 'deleted']
+        valid = ["active", "inactive", "suspended", "deleted"]
         assert len(valid) == 4
 
     def test_organizations_status_check(self):
         """organizations.status CHECK constraint on valid values"""
-        valid = ['active', 'inactive', 'suspended', 'deleted']
+        valid = ["active", "inactive", "suspended", "deleted"]
         assert len(valid) == 4
 
     def test_memberships_status_check(self):
         """organization_memberships.status CHECK constraint on valid values"""
-        valid = ['active', 'inactive', 'suspended', 'removed']
+        valid = ["active", "inactive", "suspended", "removed"]
         assert len(valid) == 4
 
     def test_memberships_role_check(self):
         """organization_memberships.role CHECK constraint on 7 valid roles"""
-        valid = ['owner', 'admin', 'manager', 'operator', 'viewer', 'auditor', 'local_agent']
+        valid = ["owner", "admin", "manager", "operator", "viewer", "auditor", "local_agent"]
         assert len(valid) == 7
 
     def test_local_agents_status_check(self):
         """local_agents.status CHECK constraint on valid values"""
-        valid = ['registered', 'ready', 'busy', 'offline', 'error', 'disabled']
+        valid = ["registered", "ready", "busy", "offline", "error", "disabled"]
         assert len(valid) == 6
 
     def test_browser_tasks_status_check(self):
         """browser_tasks.status CHECK constraint on valid values"""
-        valid = ['pending', 'approved', 'rejected', 'running', 'completed', 'failed', 'cancelled', 'timeout']
+        valid = ["pending", "approved", "rejected", "running", "completed", "failed", "cancelled", "timeout"]
         assert len(valid) == 8
 
     def test_browser_tasks_risk_level_check(self):
         """browser_tasks.risk_level CHECK constraint allows NULL and 4 levels"""
-        valid = ['low', 'medium', 'high', 'critical']
+        valid = ["low", "medium", "high", "critical"]
         assert len(valid) == 4
 
     def test_browser_approvals_status_check(self):
         """browser_approvals.status CHECK constraint on valid values"""
-        valid = ['pending', 'approved', 'rejected', 'expired', 'revoked']
+        valid = ["pending", "approved", "rejected", "expired", "revoked"]
         assert len(valid) == 5
 
     def test_browser_approvals_risk_level_check(self):
         """browser_approvals.risk_level CHECK constraint allows NULL and 4 levels"""
-        valid = ['low', 'medium', 'high', 'critical']
+        valid = ["low", "medium", "high", "critical"]
         assert len(valid) == 4
 
     def test_browser_results_status_check(self):
         """browser_results.status CHECK constraint on valid values"""
-        valid = ['completed', 'failed', 'timeout', 'cancelled']
+        valid = ["completed", "failed", "timeout", "cancelled"]
         assert len(valid) == 4
 
 
@@ -548,13 +549,13 @@ class TestMigrationCompleteness:
     def test_all_seven_tables_created(self):
         """All 7 required tables created: app_users, organizations, memberships, agents, tasks, approvals, results"""
         tables = [
-            'app_users',
-            'organizations',
-            'organization_memberships',
-            'local_agents',
-            'browser_tasks',
-            'browser_approvals',
-            'browser_results',
+            "app_users",
+            "organizations",
+            "organization_memberships",
+            "local_agents",
+            "browser_tasks",
+            "browser_approvals",
+            "browser_results",
         ]
         assert len(tables) == 7
 

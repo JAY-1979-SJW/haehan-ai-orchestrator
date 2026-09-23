@@ -17,6 +17,7 @@ G2B 공개 공고 Read-Only 워크플로우 테스트
 - DB write 없음
 - click/type/fill/submit 실행 없음
 """
+
 import inspect
 import json
 import os
@@ -26,17 +27,16 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import warnings
+
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (
-    ALLOWED_OPERATIONS,
+from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (  # noqa: E402
     FORBIDDEN_OPERATIONS,
     VERDICT_ALLOWED,
     VERDICT_BLOCKED,
     VERDICT_NEEDS_VERIFICATION,
     build_g2b_public_notice_workflow,
-    classify_g2b_public_notice_workflow_request,
     validate_g2b_public_notice_workflow_result,
 )
 
@@ -47,9 +47,19 @@ FIXTURE_PATH = os.path.join(
 )
 
 _FORBIDDEN_STEP_NAMES = {
-    "click", "type", "fill", "submit", "download",
-    "login", "cert", "payment", "contract_submit", "bid_submit",
-    "auto_login", "upload", "write_form",
+    "click",
+    "type",
+    "fill",
+    "submit",
+    "download",
+    "login",
+    "cert",
+    "payment",
+    "contract_submit",
+    "bid_submit",
+    "auto_login",
+    "upload",
+    "write_form",
 }
 
 
@@ -59,7 +69,6 @@ def _load_fixture():
 
 
 class TestFixtureStructure(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
 
@@ -69,12 +78,10 @@ class TestFixtureStructure(unittest.TestCase):
 
     def test_all_expected_safe_to_execute_false(self):
         for case in self.fixture["cases"]:
-            self.assertFalse(case["expected"].get("safe_to_execute"),
-                             f"{case['id']}: safe_to_execute should be False")
+            self.assertFalse(case["expected"].get("safe_to_execute"), f"{case['id']}: safe_to_execute should be False")
 
 
 class TestG2BWorkflowAllowed(unittest.TestCase):
-
     # A. g2b.go.kr 공개 URL + read → PASS
     def test_A_apex_read_allowed(self):
         result = build_g2b_public_notice_workflow(
@@ -132,7 +139,6 @@ class TestG2BWorkflowAllowed(unittest.TestCase):
 
 
 class TestG2BWorkflowBlocked(unittest.TestCase):
-
     # D. login 경로 → BLOCK
     def test_D_login_path_blocked(self):
         result = build_g2b_public_notice_workflow(
@@ -219,7 +225,6 @@ class TestG2BWorkflowBlocked(unittest.TestCase):
 
 
 class TestG2BWorkflowVerification(unittest.TestCase):
-
     # I. shop.g2b.go.kr → NEEDS_VERIFICATION
     def test_I_shop_needs_verification(self):
         result = build_g2b_public_notice_workflow(
@@ -241,7 +246,6 @@ class TestG2BWorkflowVerification(unittest.TestCase):
 
 
 class TestG2BWorkflowFileList(unittest.TestCase):
-
     # P. 파일 목록 read → 허용, download step 없음
     def test_P_file_list_read_allowed_no_download_step(self):
         result = build_g2b_public_notice_workflow(
@@ -253,8 +257,7 @@ class TestG2BWorkflowFileList(unittest.TestCase):
         # workflow_steps에 download step 없음
         for step in result.get("workflow_steps", []):
             step_name = step.get("step", "").lower()
-            self.assertNotIn("download", step_name,
-                             f"download step should not appear: {step}")
+            self.assertNotIn("download", step_name, f"download step should not appear: {step}")
 
     # Q. workflow_steps 안에 금지 step이 하나도 없는지 검사
     def test_Q_no_forbidden_steps_in_workflow(self):
@@ -265,12 +268,12 @@ class TestG2BWorkflowFileList(unittest.TestCase):
             )
             for step in result.get("workflow_steps", []):
                 step_name = (step.get("step") or "").lower()
-                self.assertNotIn(step_name, _FORBIDDEN_STEP_NAMES,
-                                 f"operation={op}: forbidden step in workflow_steps: {step_name}")
+                self.assertNotIn(
+                    step_name, _FORBIDDEN_STEP_NAMES, f"operation={op}: forbidden step in workflow_steps: {step_name}"
+                )
 
 
 class TestG2BWorkflowValidation(unittest.TestCase):
-
     # R. validate 함수가 필수 필드 누락을 잡는지 검사
     def test_R_validate_missing_required_field(self):
         incomplete = {
@@ -317,7 +320,6 @@ class TestG2BWorkflowValidation(unittest.TestCase):
 
 
 class TestG2BWorkflowInvariants(unittest.TestCase):
-
     # 모든 케이스 safe_to_execute=False
     def test_all_results_safe_to_execute_false(self):
         cases = [
@@ -331,8 +333,7 @@ class TestG2BWorkflowInvariants(unittest.TestCase):
         ]
         for url, op in cases:
             result = build_g2b_public_notice_workflow(url, operation=op)
-            self.assertFalse(result["safe_to_execute"],
-                             f"{url}+{op}: safe_to_execute must be False")
+            self.assertFalse(result["safe_to_execute"], f"{url}+{op}: safe_to_execute must be False")
 
     # 모든 케이스 download_auto_allowed=False
     def test_all_results_download_auto_allowed_false(self):
@@ -343,8 +344,7 @@ class TestG2BWorkflowInvariants(unittest.TestCase):
         ]
         for url, op in cases:
             result = build_g2b_public_notice_workflow(url, operation=op)
-            self.assertFalse(result.get("download_auto_allowed"),
-                             f"{url}+{op}: download_auto_allowed must be False")
+            self.assertFalse(result.get("download_auto_allowed"), f"{url}+{op}: download_auto_allowed must be False")
 
     # allowed_operations에 금지 동작 없음
     def test_allowed_operations_no_forbidden(self):
@@ -354,14 +354,13 @@ class TestG2BWorkflowInvariants(unittest.TestCase):
         )
         forbidden_set = set(FORBIDDEN_OPERATIONS)
         for op in result.get("allowed_operations", []):
-            self.assertNotIn(op, forbidden_set,
-                             f"allowed_operations should not contain forbidden op: {op}")
+            self.assertNotIn(op, forbidden_set, f"allowed_operations should not contain forbidden op: {op}")
 
 
 class TestG2BWorkflowCodeSafety(unittest.TestCase):
-
     def _get_src(self):
         import ai_orchestrator.browser_tool.g2b_public_notice_workflow as m
+
         return inspect.getsource(m)
 
     def test_no_cookie_session_token_extraction(self):
@@ -382,14 +381,15 @@ class TestG2BWorkflowCodeSafety(unittest.TestCase):
     def test_no_task_executor_browser_worker_connection(self):
         src = self._get_src()
         # import 라인만 검사 (BLOCK 검증용 문자열 제외)
-        import_lines = [ln for ln in src.splitlines() if ln.strip().startswith("import ") or ln.strip().startswith("from ")]
+        import_lines = [
+            ln for ln in src.splitlines() if ln.strip().startswith("import ") or ln.strip().startswith("from ")
+        ]
         code = "\n".join(import_lines)
         self.assertNotIn("task_executor", code)
         self.assertNotIn("browser_worker", code)
 
 
 class TestG2BWorkflowFixtureCompatibility(unittest.TestCase):
-
     def setUp(self):
         self.fixture = _load_fixture()
 

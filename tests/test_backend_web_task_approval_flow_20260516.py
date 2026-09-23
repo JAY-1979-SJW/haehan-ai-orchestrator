@@ -36,17 +36,19 @@ POST /api/v1/web-tasks/run 승인흐름 설계 감사 + boundary test 보강.
 
 모든 테스트는 실제 Telegram/외부 API 호출 없이 동작.
 """
+
 from __future__ import annotations
 
 import re
+from unittest.mock import MagicMock, patch
+
 import pytest
-from dataclasses import dataclass
-from unittest.mock import MagicMock, patch, call
+
 from ai_orchestrator import web_task_router
 from ai_orchestrator.web_task_approval_service import PendingApprovalResult
 
-
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
+
 
 def _make_entry(risk_level="medium", requires_approval=True):
     entry = MagicMock()
@@ -80,21 +82,26 @@ def _make_approval_result(expires_at="2026-06-01T09:00:00+00:00"):
 
 # ── A. dry_run=True 공정도 검증 ──────────────────────────────────────────────
 
+
 class TestDryRunFlowBoundary:
     """dry_run=True 경로에서 부작용이 발생하지 않음을 고정한다."""
 
     def _run_dry(self):
         entry = _make_entry()
 
-        with patch("ai_orchestrator.web_task_router.get_entry", return_value=entry), \
-             patch("ai_orchestrator.web_task_router.validate_params", return_value=[]), \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
-
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch("ai_orchestrator.web_task_router.create_web_task_pending_approval") as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             result = web_task_router._execute_web_task(
-                provider="hiworks", action_type="developer_apply",
-                params={"app_name": "Audit"}, dry_run=True,
-                actor="admin_u", role="admin",
+                provider="hiworks",
+                action_type="developer_apply",
+                params={"app_name": "Audit"},
+                dry_run=True,
+                actor="admin_u",
+                role="admin",
             )
             return result, mock_svc
 
@@ -122,13 +129,19 @@ class TestDryRunFlowBoundary:
         """dry_run=True 응답 key 11개 완전성 확인."""
         result, _ = self._run_dry()
         required = {
-            "dry_run", "provider", "action_type", "risk_level",
-            "requires_approval", "success", "summary",
-            "field_names", "target_url", "error", "error_code",
+            "dry_run",
+            "provider",
+            "action_type",
+            "risk_level",
+            "requires_approval",
+            "success",
+            "summary",
+            "field_names",
+            "target_url",
+            "error",
+            "error_code",
         }
-        assert required.issubset(result.keys()), (
-            f"누락 key: {required - result.keys()}"
-        )
+        assert required.issubset(result.keys()), f"누락 key: {required - result.keys()}"
 
     def test_dry_run_response_no_pending_approval_key(self):
         """dry_run=True 응답에 status='pending_approval' 없음."""
@@ -146,6 +159,7 @@ class TestDryRunFlowBoundary:
 
 # ── B. dry_run=False pending_approval 경로 검증 ──────────────────────────────
 
+
 class TestRealRunApprovalBoundary:
     """dry_run=False 경로의 부작용 순서와 응답 계약을 고정한다."""
 
@@ -153,16 +167,21 @@ class TestRealRunApprovalBoundary:
         entry = _make_entry()
         approval = _make_approval_result(token_expires)
 
-        with patch("ai_orchestrator.web_task_router.get_entry", return_value=entry), \
-             patch("ai_orchestrator.web_task_router.validate_params", return_value=[]), \
-             patch("ai_orchestrator.web_task_router.create_web_task_pending_approval",
-                   return_value=approval) as mock_svc, \
-             patch("ai_orchestrator.web_task_router.log_event"):
-
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch(
+                "ai_orchestrator.web_task_router.create_web_task_pending_approval", return_value=approval
+            ) as mock_svc,
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             result = web_task_router._execute_web_task(
-                provider="naver", action_type="app_register",
-                params={"app_name": "NaverApp"}, dry_run=False,
-                actor="admin_u", role="admin",
+                provider="naver",
+                action_type="app_register",
+                params={"app_name": "NaverApp"},
+                dry_run=False,
+                actor="admin_u",
+                role="admin",
             )
             return result, mock_svc
 
@@ -180,20 +199,22 @@ class TestRealRunApprovalBoundary:
         """dry_run=False 응답 key 8개 완전성 확인."""
         result, _ = self._run_real()
         required = {
-            "dry_run", "status", "task_id", "provider", "action_type",
-            "risk_level", "requires_approval", "expires_at",
+            "dry_run",
+            "status",
+            "task_id",
+            "provider",
+            "action_type",
+            "risk_level",
+            "requires_approval",
+            "expires_at",
         }
-        assert required.issubset(result.keys()), (
-            f"누락 key: {required - result.keys()}"
-        )
+        assert required.issubset(result.keys()), f"누락 key: {required - result.keys()}"
 
     def test_real_run_task_id_format(self):
         """task_id가 'wt-' prefix + 12자리 hex 형식이다."""
         result, _ = self._run_real()
         task_id = result["task_id"]
-        assert re.match(r"^wt-[0-9a-f]{12}$", task_id), (
-            f"task_id 형식 불일치: {task_id}"
-        )
+        assert re.match(r"^wt-[0-9a-f]{12}$", task_id), f"task_id 형식 불일치: {task_id}"
 
     def test_real_run_expires_at_is_iso_string(self):
         """expires_at이 ISO 8601 형식 문자열이다."""
@@ -207,26 +228,38 @@ class TestRealRunApprovalBoundary:
         call_order = []
         entry = _make_entry()
 
-        with patch("ai_orchestrator.web_task_router.get_entry", return_value=entry), \
-             patch("ai_orchestrator.web_task_router.validate_params", return_value=[]), \
-             patch("ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
-                   side_effect=lambda **kw: (
-                       call_order.append("issue"),
-                       MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00")
-                   )[1]) as issue_m, \
-             patch("ai_orchestrator.web_task_approval_service._dra.create_pending",
-                   side_effect=lambda **kw: call_order.append("create")), \
-             patch("ai_orchestrator.web_task_approval_service.build_dev_reg_message",
-                   return_value={"text": "x", "reply_markup": {}}), \
-             patch("ai_orchestrator.web_task_approval_service._ts.send_message",
-                   return_value={"ok": True, "result": {"message_id": 1}}), \
-             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"), \
-             patch("ai_orchestrator.web_task_router.log_event"):
-
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch(
+                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                side_effect=lambda **kw: (
+                    call_order.append("issue"),
+                    MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
+                )[1],
+            ) as _issue_m,
+            patch(
+                "ai_orchestrator.web_task_approval_service._dra.create_pending",
+                side_effect=lambda **kw: call_order.append("create"),
+            ),
+            patch(
+                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                return_value={"text": "x", "reply_markup": {}},
+            ),
+            patch(
+                "ai_orchestrator.web_task_approval_service._ts.send_message",
+                return_value={"ok": True, "result": {"message_id": 1}},
+            ),
+            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             web_task_router._execute_web_task(
-                provider="hiworks", action_type="developer_apply",
-                params={"app_name": "OrderTest"}, dry_run=False,
-                actor="u", role="admin",
+                provider="hiworks",
+                action_type="developer_apply",
+                params={"app_name": "OrderTest"},
+                dry_run=False,
+                actor="u",
+                role="admin",
             )
 
         assert call_order.index("issue") < call_order.index("create"), (
@@ -238,26 +271,35 @@ class TestRealRunApprovalBoundary:
         call_order = []
         entry = _make_entry()
 
-        with patch("ai_orchestrator.web_task_router.get_entry", return_value=entry), \
-             patch("ai_orchestrator.web_task_router.validate_params", return_value=[]), \
-             patch("ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
-                   return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00")), \
-             patch("ai_orchestrator.web_task_approval_service._dra.create_pending",
-                   side_effect=lambda **kw: call_order.append("create")), \
-             patch("ai_orchestrator.web_task_approval_service.build_dev_reg_message",
-                   return_value={"text": "x", "reply_markup": {}}), \
-             patch("ai_orchestrator.web_task_approval_service._ts.send_message",
-                   side_effect=lambda **kw: (
-                       call_order.append("send"),
-                       {"ok": True, "result": {"message_id": 1}}
-                   )[1]), \
-             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"), \
-             patch("ai_orchestrator.web_task_router.log_event"):
-
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch(
+                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
+            ),
+            patch(
+                "ai_orchestrator.web_task_approval_service._dra.create_pending",
+                side_effect=lambda **kw: call_order.append("create"),
+            ),
+            patch(
+                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                return_value={"text": "x", "reply_markup": {}},
+            ),
+            patch(
+                "ai_orchestrator.web_task_approval_service._ts.send_message",
+                side_effect=lambda **kw: (call_order.append("send"), {"ok": True, "result": {"message_id": 1}})[1],
+            ),
+            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             web_task_router._execute_web_task(
-                provider="hiworks", action_type="developer_apply",
-                params={"app_name": "OrderTest2"}, dry_run=False,
-                actor="u", role="admin",
+                provider="hiworks",
+                action_type="developer_apply",
+                params={"app_name": "OrderTest2"},
+                dry_run=False,
+                actor="u",
+                role="admin",
             )
 
         assert call_order.index("create") < call_order.index("send"), (
@@ -279,28 +321,36 @@ class TestRealRunApprovalBoundary:
 
 # ── C. Telegram 실패 fallback 방화구획 ────────────────────────────────────────
 
+
 class TestTelegramFailureFallback:
     """Telegram 발송 실패가 응답 계약을 깨지 않음을 고정한다."""
 
     def _run_with_telegram(self, send_result):
         entry = _make_entry()
 
-        with patch("ai_orchestrator.web_task_router.get_entry", return_value=entry), \
-             patch("ai_orchestrator.web_task_router.validate_params", return_value=[]), \
-             patch("ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
-                   return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00")), \
-             patch("ai_orchestrator.web_task_approval_service._dra.create_pending"), \
-             patch("ai_orchestrator.web_task_approval_service.build_dev_reg_message",
-                   return_value={"text": "msg", "reply_markup": {}}), \
-             patch("ai_orchestrator.web_task_approval_service._ts.send_message",
-                   return_value=send_result), \
-             patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"), \
-             patch("ai_orchestrator.web_task_router.log_event"):
-
+        with (
+            patch("ai_orchestrator.web_task_router.get_entry", return_value=entry),
+            patch("ai_orchestrator.web_task_router.validate_params", return_value=[]),
+            patch(
+                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
+            ),
+            patch("ai_orchestrator.web_task_approval_service._dra.create_pending"),
+            patch(
+                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                return_value={"text": "msg", "reply_markup": {}},
+            ),
+            patch("ai_orchestrator.web_task_approval_service._ts.send_message", return_value=send_result),
+            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.web_task_router.log_event"),
+        ):
             return web_task_router._execute_web_task(
-                provider="hiworks", action_type="developer_apply",
-                params={"app_name": "TgFailTest"}, dry_run=False,
-                actor="u", role="admin",
+                provider="hiworks",
+                action_type="developer_apply",
+                params={"app_name": "TgFailTest"},
+                dry_run=False,
+                actor="u",
+                role="admin",
             )
 
     def test_telegram_skip_still_returns_pending_approval(self):
@@ -329,6 +379,7 @@ class TestTelegramFailureFallback:
     def test_telegram_skip_guard_in_source(self):
         """telegram_sender.py에 TOKEN 미설정 시 skip 가드가 존재한다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/telegram_sender.py").read_text(encoding="utf-8")
         assert "skipped" in src
         assert "TELEGRAM_BOT_TOKEN" in src
@@ -336,15 +387,19 @@ class TestTelegramFailureFallback:
 
 # ── D. 통합 흐름: TestClient 기반 ────────────────────────────────────────────
 
+
 class TestWebTaskRunIntegrationBoundary:
     """TestClient를 통한 통합 경계 고정."""
 
     @pytest.fixture(scope="class")
     def client(self):
         import ai_orchestrator.config as config
+
         config.AUTH_ENABLED = False
         from fastapi.testclient import TestClient
+
         from ai_orchestrator.server import app
+
         return TestClient(app, raise_server_exceptions=False)
 
     @pytest.fixture(scope="class")
@@ -354,28 +409,36 @@ class TestWebTaskRunIntegrationBoundary:
     def test_dry_run_via_client_no_pending_record(self, client, auth):
         """TestClient dry_run=True — dev_reg_approval pending 레코드 없음."""
         import ai_orchestrator.dev_reg_approval as _dra
+
         before = len(_dra.list_pending())
 
-        r = client.post("/api/v1/web-tasks/run",
-                        headers=auth,
-                        json={"provider": "hiworks",
-                              "action_type": "developer_apply",
-                              "params": {"app_name": "DryNoRecord"},
-                              "dry_run": True})
+        r = client.post(  # noqa: F841
+            "/api/v1/web-tasks/run",
+            headers=auth,
+            json={
+                "provider": "hiworks",
+                "action_type": "developer_apply",
+                "params": {"app_name": "DryNoRecord"},
+                "dry_run": True,
+            },
+        )
         # dry_run은 등록된 provider일 때만 200, 없으면 404 — 두 경우 모두 pending 없음
         after = len(_dra.list_pending())
         assert after == before
 
     def test_real_run_via_client_with_mock_telegram(self, client, auth):
         """TestClient real_run — Telegram mock, pending_approval 응답 확인."""
-        with patch("ai_orchestrator.telegram_sender.send_message",
-                   return_value={"ok": False, "skipped": True}):
-            r = client.post("/api/v1/web-tasks/run",
-                            headers=auth,
-                            json={"provider": "hiworks",
-                                  "action_type": "developer_apply",
-                                  "params": {"app_name": "RealRunAudit"},
-                                  "dry_run": False})
+        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+            r = client.post(
+                "/api/v1/web-tasks/run",
+                headers=auth,
+                json={
+                    "provider": "hiworks",
+                    "action_type": "developer_apply",
+                    "params": {"app_name": "RealRunAudit"},
+                    "dry_run": False,
+                },
+            )
         assert r.status_code == 200
         data = r.json()
         assert data["status"] == "pending_approval"
@@ -384,14 +447,17 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_real_run_no_envelope(self, client, auth):
         """TestClient real_run 응답에 ApiResponse 봉투 없음."""
-        with patch("ai_orchestrator.telegram_sender.send_message",
-                   return_value={"ok": False, "skipped": True}):
-            r = client.post("/api/v1/web-tasks/run",
-                            headers=auth,
-                            json={"provider": "hiworks",
-                                  "action_type": "developer_apply",
-                                  "params": {"app_name": "NoEnvelope"},
-                                  "dry_run": False})
+        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+            r = client.post(
+                "/api/v1/web-tasks/run",
+                headers=auth,
+                json={
+                    "provider": "hiworks",
+                    "action_type": "developer_apply",
+                    "params": {"app_name": "NoEnvelope"},
+                    "dry_run": False,
+                },
+            )
         body = r.json()
         assert "success" not in body or body.get("status") == "pending_approval"
         assert "data" not in body
@@ -399,19 +465,22 @@ class TestWebTaskRunIntegrationBoundary:
     def test_real_run_secret_not_in_response(self, client, auth):
         """params의 민감 필드가 응답에 포함되지 않는다."""
         secret = "audit_secret_xzy9876"
-        with patch("ai_orchestrator.telegram_sender.send_message",
-                   return_value={"ok": False, "skipped": True}):
-            r = client.post("/api/v1/web-tasks/run",
-                            headers=auth,
-                            json={"provider": "hiworks",
-                                  "action_type": "developer_apply",
-                                  "params": {"app_name": "SecTest",
-                                             "password": secret},
-                                  "dry_run": False})
+        with patch("ai_orchestrator.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+            r = client.post(
+                "/api/v1/web-tasks/run",
+                headers=auth,
+                json={
+                    "provider": "hiworks",
+                    "action_type": "developer_apply",
+                    "params": {"app_name": "SecTest", "password": secret},
+                    "dry_run": False,
+                },
+            )
         assert secret not in r.text
 
 
 # ── E. 설계 판정 고정 ─────────────────────────────────────────────────────────
+
 
 class TestApprovalFlowDesignVerdict:
     """설계 판정: NEEDS_APPROVAL_SERVICE_EXTRACTION (완료) + KEEP_CURRENT_CONTRACT."""
@@ -430,6 +499,7 @@ class TestApprovalFlowDesignVerdict:
     def test_handler_has_mixed_responsibilities(self):
         """service 소스에 token/pending/send/mark 4가지 책임이 위임되어 있다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_approval_service.py").read_text(encoding="utf-8")
         responsibilities = [
             "issue_token_for_dev_reg",
@@ -443,6 +513,7 @@ class TestApprovalFlowDesignVerdict:
     def test_no_envelope_conversion_attempted(self):
         """web_task_router.py에 ApiResponse 봉투 import가 없다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
         assert "api_success" not in src
         assert "ApiResponse" not in src
@@ -451,18 +522,38 @@ class TestApprovalFlowDesignVerdict:
     def test_response_keys_unchanged_dry_run(self):
         """dry_run=True 응답 key 11개가 소스에 유지된다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
-        keys = ['"dry_run"', '"provider"', '"action_type"', '"risk_level"',
-                '"requires_approval"', '"success"', '"summary"', '"field_names"',
-                '"target_url"', '"error"', '"error_code"']
+        keys = [
+            '"dry_run"',
+            '"provider"',
+            '"action_type"',
+            '"risk_level"',
+            '"requires_approval"',
+            '"success"',
+            '"summary"',
+            '"field_names"',
+            '"target_url"',
+            '"error"',
+            '"error_code"',
+        ]
         for k in keys:
             assert k in src, f"dry_run 응답 key {k}가 소스에서 제거됨"
 
     def test_response_keys_unchanged_real_run(self):
         """dry_run=False 응답 key 8개가 소스에 유지된다."""
         import pathlib
+
         src = pathlib.Path("ai_orchestrator/web_task_router.py").read_text(encoding="utf-8")
-        keys = ['"status"', '"pending_approval"', '"task_id"', '"expires_at"',
-                '"dry_run"', '"provider"', '"action_type"', '"requires_approval"']
+        keys = [
+            '"status"',
+            '"pending_approval"',
+            '"task_id"',
+            '"expires_at"',
+            '"dry_run"',
+            '"provider"',
+            '"action_type"',
+            '"requires_approval"',
+        ]
         for k in keys:
             assert k in src, f"real_run 응답 key {k}가 소스에서 제거됨"

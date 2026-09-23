@@ -6,13 +6,13 @@ FastAPI 라우터와 운영 점검 스크립트에서 공통으로 사용한다.
 - DB 파일이 존재하지 않으면 모든 함수가 안전한 fallback 값을 반환한다
   (임의 파일 생성 금지).
 """
+
 from __future__ import annotations
 
 import logging
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
 
 from . import naver_search_db as db_mod
 
@@ -31,11 +31,11 @@ SHOP_SORT_ALLOWED = {
 
 
 # ── 공통 헬퍼 ──────────────────────────────────────────────────
-def _resolve_db_path(db_path: Optional[Path]) -> Path:
+def _resolve_db_path(db_path: Path | None) -> Path:
     return db_path or db_mod.default_db_path()
 
 
-def _readonly_connect(path: Path) -> Optional[sqlite3.Connection]:
+def _readonly_connect(path: Path) -> sqlite3.Connection | None:
     """파일이 있을 때만 연결. 없으면 None.
 
     sqlite 의 URI 모드(`file:...?mode=ro`)로 열어 쓰기 시도 자체를 차단한다.
@@ -47,12 +47,12 @@ def _readonly_connect(path: Path) -> Optional[sqlite3.Connection]:
         conn = sqlite3.connect(uri, uri=True)
         conn.row_factory = sqlite3.Row
         return conn
-    except sqlite3.Error as e:  # noqa: BLE001
+    except sqlite3.Error as e:
         logger.warning("[NAVER-QUERIES-CONNECT-FAIL] err=%s", type(e).__name__)
         return None
 
 
-def _clamp(v: Optional[int], lo: int, hi: int, default: int) -> int:
+def _clamp(v: int | None, lo: int, hi: int, default: int) -> int:
     try:
         i = int(v) if v is not None else default
     except (TypeError, ValueError):
@@ -62,8 +62,13 @@ def _clamp(v: Optional[int], lo: int, hi: int, default: int) -> int:
 
 # ── blog 조회 ──────────────────────────────────────────────────
 _BLOG_SELECT_COLS = (
-    "query", "title", "link", "blogger_name",
-    "post_date", "collected_at", "source",
+    "query",
+    "title",
+    "link",
+    "blogger_name",
+    "post_date",
+    "collected_at",
+    "source",
 )
 
 
@@ -85,10 +90,10 @@ class QueryPage:
 
 def search_blog_posts(
     *,
-    db_path: Optional[Path] = None,
-    query: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
+    db_path: Path | None = None,
+    query: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> QueryPage:
@@ -128,7 +133,7 @@ def search_blog_posts(
             f"ORDER BY CASE WHEN post_date IS NULL OR post_date = '' THEN 1 ELSE 0 END, "
             f"post_date DESC, collected_at DESC "
             f"LIMIT ? OFFSET ?",
-            tuple(params) + (lim, off),
+            tuple(params) + (lim, off),  # noqa: RUF005
         ).fetchall()
         items = [dict(r) for r in rows]
         return QueryPage(total=total, items=items, limit=lim, offset=off)
@@ -138,19 +143,28 @@ def search_blog_posts(
 
 # ── shopping 조회 ──────────────────────────────────────────────
 _SHOP_SELECT_COLS = (
-    "query", "title", "link", "lprice", "hprice", "mall_name",
-    "brand", "maker", "product_id", "collected_at", "source",
+    "query",
+    "title",
+    "link",
+    "lprice",
+    "hprice",
+    "mall_name",
+    "brand",
+    "maker",
+    "product_id",
+    "collected_at",
+    "source",
 )
 
 
 def search_shopping_items(
     *,
-    db_path: Optional[Path] = None,
-    query: Optional[str] = None,
-    min_price: Optional[int] = None,
-    max_price: Optional[int] = None,
-    brand: Optional[str] = None,
-    mall_name: Optional[str] = None,
+    db_path: Path | None = None,
+    query: str | None = None,
+    min_price: int | None = None,
+    max_price: int | None = None,
+    brand: str | None = None,
+    mall_name: str | None = None,
     sort: str = SHOP_SORT_COLLECTED_DESC,
     limit: int = 50,
     offset: int = 0,
@@ -188,19 +202,16 @@ def search_shopping_items(
         total = int(total_row[0]) if total_row else 0
 
         if sort_key == SHOP_SORT_LPRICE_ASC:
-            order = ("CASE WHEN lprice IS NULL THEN 1 ELSE 0 END, "
-                     "lprice ASC, collected_at DESC")
+            order = "CASE WHEN lprice IS NULL THEN 1 ELSE 0 END, lprice ASC, collected_at DESC"
         elif sort_key == SHOP_SORT_LPRICE_DESC:
-            order = ("CASE WHEN lprice IS NULL THEN 1 ELSE 0 END, "
-                     "lprice DESC, collected_at DESC")
+            order = "CASE WHEN lprice IS NULL THEN 1 ELSE 0 END, lprice DESC, collected_at DESC"
         else:
             order = "collected_at DESC"
 
         cols_csv = ", ".join(_SHOP_SELECT_COLS)
         rows = conn.execute(
-            f"SELECT {cols_csv} FROM {db_mod.TABLE_SHOP}{where_sql} "
-            f"ORDER BY {order} LIMIT ? OFFSET ?",
-            tuple(params) + (lim, off),
+            f"SELECT {cols_csv} FROM {db_mod.TABLE_SHOP}{where_sql} ORDER BY {order} LIMIT ? OFFSET ?",
+            tuple(params) + (lim, off),  # noqa: RUF005
         ).fetchall()
         items = [dict(r) for r in rows]
         return QueryPage(total=total, items=items, limit=lim, offset=off)
@@ -211,22 +222,22 @@ def search_shopping_items(
 # ── status 조회 ─────────────────────────────────────────────────
 @dataclass
 class SearchStatus:
-    status: str                        # "PASS" | "WARN"
+    status: str  # "PASS" | "WARN"
     db_enabled: bool
     db_exists: bool
     db_path_basename: str
     state_path_basename: str
     state_exists: bool
-    row_counts: Optional[dict]         # {"naver_blog_posts": int, "naver_shopping_items": int}
-    latest_collected_at: dict          # {"blog": str|None, "shopping": str|None}
-    last_blog_queries: list            # [{"query": str, "last_collected_at": str}]
+    row_counts: dict | None  # {"naver_blog_posts": int, "naver_shopping_items": int}
+    latest_collected_at: dict  # {"blog": str|None, "shopping": str|None}
+    last_blog_queries: list  # [{"query": str, "last_collected_at": str}]
     last_shop_queries: list
-    warnings: list                     # 사람이 읽을 짧은 코드 목록
+    warnings: list  # 사람이 읽을 짧은 코드 목록
     # 5단계: 스케줄 실행 기록 (최근 N건, 최신순)
-    recent_runs: list = None           # type: ignore[assignment]
-    last_success_at: Optional[str] = None
-    last_warn_at: Optional[str] = None
-    last_fail_at: Optional[str] = None
+    recent_runs: list = None  # type: ignore[assignment]
+    last_success_at: str | None = None
+    last_warn_at: str | None = None
+    last_fail_at: str | None = None
 
     def __post_init__(self) -> None:
         if self.recent_runs is None:
@@ -259,23 +270,20 @@ def _top_queries(conn: sqlite3.Connection, table: str, n: int = 5) -> list:
         f"GROUP BY query ORDER BY last_collected_at DESC LIMIT ?",
         (int(n),),
     ).fetchall()
-    return [{"query": r["query"], "last_collected_at": r["last_collected_at"]}
-            for r in rows]
+    return [{"query": r["query"], "last_collected_at": r["last_collected_at"]} for r in rows]
 
 
-def _max_collected_at(conn: sqlite3.Connection, table: str) -> Optional[str]:
-    row = conn.execute(
-        f"SELECT MAX(collected_at) FROM {table}"
-    ).fetchone()
+def _max_collected_at(conn: sqlite3.Connection, table: str) -> str | None:
+    row = conn.execute(f"SELECT MAX(collected_at) FROM {table}").fetchone()
     v = row[0] if row else None
     return v if isinstance(v, str) and v else None
 
 
 def _extract_timestamps(runs: list) -> tuple:
     """recent_runs 에서 last_success_at / last_warn_at / last_fail_at 추출."""
-    last_success: Optional[str] = None
-    last_warn: Optional[str] = None
-    last_fail: Optional[str] = None
+    last_success: str | None = None
+    last_warn: str | None = None
+    last_fail: str | None = None
     for r in runs:
         s = r.get("status", "")
         ts = r.get("finished_at") or r.get("started_at")
@@ -292,9 +300,9 @@ def _extract_timestamps(runs: list) -> tuple:
 
 def get_search_status(
     *,
-    db_path: Optional[Path] = None,
-    state_path: Optional[Path] = None,
-    run_log_path: Optional[Path] = None,
+    db_path: Path | None = None,
+    state_path: Path | None = None,
+    run_log_path: Path | None = None,
     top_n: int = 5,
     recent_runs_n: int = 10,
 ) -> SearchStatus:
@@ -308,7 +316,7 @@ def get_search_status(
     state_exists = state_p.is_file()
 
     warnings: list = []
-    row_counts: Optional[dict] = None
+    row_counts: dict | None = None
     latest = {"blog": None, "shopping": None}
     last_blog_q: list = []
     last_shop_q: list = []
@@ -327,12 +335,8 @@ def get_search_status(
         else:
             try:
                 row_counts = {
-                    db_mod.TABLE_BLOG: int(conn.execute(
-                        f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}"
-                    ).fetchone()[0]),
-                    db_mod.TABLE_SHOP: int(conn.execute(
-                        f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}"
-                    ).fetchone()[0]),
+                    db_mod.TABLE_BLOG: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_BLOG}").fetchone()[0]),
+                    db_mod.TABLE_SHOP: int(conn.execute(f"SELECT COUNT(*) FROM {db_mod.TABLE_SHOP}").fetchone()[0]),
                 }
                 latest["blog"] = _max_collected_at(conn, db_mod.TABLE_BLOG)
                 latest["shopping"] = _max_collected_at(conn, db_mod.TABLE_SHOP)
@@ -345,9 +349,10 @@ def get_search_status(
 
     # 5단계: 실행 기록 로드 (실패해도 기존 status 판정에 영향 없음)
     from .naver_search_run_log import load_recent_runs
+
     try:
         recent_runs = load_recent_runs(recent_runs_n, path=run_log_path)
-    except Exception:  # noqa: BLE001
+    except Exception:
         recent_runs = []
     last_success_at, last_warn_at, last_fail_at = _extract_timestamps(recent_runs)
 
@@ -373,13 +378,13 @@ def get_search_status(
 
 
 __all__ = [
-    "QueryPage",
-    "SearchStatus",
+    "SHOP_SORT_ALLOWED",
     "SHOP_SORT_COLLECTED_DESC",
     "SHOP_SORT_LPRICE_ASC",
     "SHOP_SORT_LPRICE_DESC",
-    "SHOP_SORT_ALLOWED",
+    "QueryPage",
+    "SearchStatus",
+    "get_search_status",
     "search_blog_posts",
     "search_shopping_items",
-    "get_search_status",
 ]

@@ -1,9 +1,10 @@
 import os
 import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-import pytest
 from fastapi.testclient import TestClient
+
 from ai_orchestrator.server import app
 
 client = TestClient(app, raise_server_exceptions=True)
@@ -12,7 +13,7 @@ _LOW_RISK_TASK = {
     "task_id": "SMOKE-001",
     "source": "manual",
     "action_type": "read_file",
-    "target": "/tmp/smoke.log",
+    "target": "/tmp/smoke.log",  # noqa: S108
     "description": "라우터 스모크 테스트",
     "requested_by": "test",
 }

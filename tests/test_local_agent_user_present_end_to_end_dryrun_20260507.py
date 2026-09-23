@@ -16,10 +16,8 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
@@ -42,36 +40,32 @@ def _case(case_id: str) -> dict:
 
 
 # ── 모듈 임포트 ──────────────────────────────────────────────────────────────
-from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (
-    build_user_present_dispatch_response,
-    build_user_present_task_from_dryrun,
-    should_dispatch_user_present_task,
-    validate_user_present_dispatch_request,
+from ai_orchestrator.browser_tool.local_agent_user_present_dispatcher import (  # noqa: E402
     DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+    build_user_present_dispatch_response,
+    validate_user_present_dispatch_request,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
-    handle_user_present_status_event,
-    get_user_present_status,
+from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (  # noqa: E402
     clear_status_registry,
+    get_user_present_status,
+    handle_user_present_status_event,
 )
-from local_agent.user_present_state_store import (
-    UserPresentStateStore,
-    STATE_WAITING_FOR_USER,
-    STATE_USER_CONFIRMED,
+from local_agent.user_present_state_store import (  # noqa: E402
     STATE_CANCELLED,
+    STATE_USER_CONFIRMED,
+    STATE_WAITING_FOR_USER,
+    UserPresentStateStore,
 )
-from local_agent.user_present_ws_adapter import (
-    create_local_user_present_task_from_ws,
-    mark_local_user_confirmed_and_build_event,
-    mark_local_user_cancelled_and_build_event,
-    build_confirmed_status_event,
-    build_cancelled_status_event,
+from local_agent.user_present_ws_adapter import (  # noqa: E402
     build_waiting_status_event,
+    create_local_user_present_task_from_ws,
+    mark_local_user_cancelled_and_build_event,
+    mark_local_user_confirmed_and_build_event,
 )
 
 
 def _now_iso() -> str:
-    return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.now(tz=UTC).isoformat()
 
 
 def _make_ws_task_message(
@@ -106,8 +100,8 @@ def _make_ws_task_message(
 # 1. 서버 dryrun result → USER_PRESENT_TASK dispatch response
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestDispatchResponseFromDryrun:
 
+class TestDispatchResponseFromDryrun:
     def test_bank_e2e_dispatch_ok(self):
         c = _case("bank_certificate_user_present_e2e")
         result = build_user_present_dispatch_response(c["input"])
@@ -173,8 +167,8 @@ class TestDispatchResponseFromDryrun:
 # 2. USER_PRESENT_TASK → 로컬 state WAITING_FOR_USER
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestLocalStateWaitingForUser:
 
+class TestLocalStateWaitingForUser:
     def _fresh_store(self) -> UserPresentStateStore:
         return UserPresentStateStore()
 
@@ -242,8 +236,8 @@ class TestLocalStateWaitingForUser:
 # 3. 로컬 UI confirm/cancel → 상태 전이
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestLocalUIConfirmCancel:
 
+class TestLocalUIConfirmCancel:
     def _setup_waiting_task(self, store: UserPresentStateStore, wfid: str) -> None:
         msg = _make_ws_task_message(wfid)
         result = create_local_user_present_task_from_ws(msg, store)
@@ -322,8 +316,8 @@ class TestLocalUIConfirmCancel:
 # 4. USER_PRESENT_STATUS → 서버 handler 수락
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestServerStatusHandler:
 
+class TestServerStatusHandler:
     def setup_method(self):
         clear_status_registry()
 
@@ -418,8 +412,8 @@ class TestServerStatusHandler:
 # 5. 전 구간 E2E dry-run (dispatch → local state → status handler)
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestFullE2EFlow:
 
+class TestFullE2EFlow:
     def setup_method(self):
         clear_status_registry()
 
@@ -477,21 +471,15 @@ class TestFullE2EFlow:
         return dispatch_result, task, status_event, server_result
 
     def test_bank_full_confirm_flow(self):
-        d, t, e, s = self._run_full_confirm_flow(
-            "wr_e2e_full_bank_001", "bank", "synthetic.bank.test.invalid"
-        )
+        _d, _t, _e, s = self._run_full_confirm_flow("wr_e2e_full_bank_001", "bank", "synthetic.bank.test.invalid")
         assert s["ok"] is True
 
     def test_hometax_full_confirm_flow(self):
-        d, t, e, s = self._run_full_confirm_flow(
-            "wr_e2e_full_htx_001", "hometax", "synthetic.hometax.test.invalid"
-        )
+        _d, _t, _e, s = self._run_full_confirm_flow("wr_e2e_full_htx_001", "hometax", "synthetic.hometax.test.invalid")
         assert s["ok"] is True
 
     def test_gov24_full_confirm_flow(self):
-        d, t, e, s = self._run_full_confirm_flow(
-            "wr_e2e_full_gov24_001", "gov24", "synthetic.gov24.test.invalid"
-        )
+        _d, _t, _e, s = self._run_full_confirm_flow("wr_e2e_full_gov24_001", "gov24", "synthetic.gov24.test.invalid")
         assert s["ok"] is True
 
     def test_cancel_flow(self):
@@ -543,9 +531,10 @@ class TestFullE2EFlow:
             assert obj.get("safe_to_execute") is not True, f"{obj_name}에서 safe_to_execute=True 발생"
 
     def test_full_flow_no_browser_action(self):
+        import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_dispatcher as disp_mod
         import local_agent.user_present_ws_adapter as adapter_mod
-        import inspect
 
         for mod, name in [(disp_mod, "dispatcher"), (adapter_mod, "adapter")]:
             src = inspect.getsource(mod)
@@ -557,10 +546,11 @@ class TestFullE2EFlow:
 # 6. 로컬 UI 테스트 클라이언트 (FastAPI TestClient)
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestLocalUIServer:
 
+class TestLocalUIServer:
     def _make_app_with_task(self, wfid: str):
         from fastapi.testclient import TestClient
+
         from local_agent.user_present_ui_server import create_app
 
         store = UserPresentStateStore()
@@ -571,6 +561,7 @@ class TestLocalUIServer:
 
     def test_ui_health_ok(self):
         from fastapi.testclient import TestClient
+
         from local_agent.user_present_ui_server import create_app
 
         store = UserPresentStateStore()
@@ -645,8 +636,8 @@ class TestLocalUIServer:
 # 7. fixture 무결성
 # ════════════════════════════════════════════════════════════════════════════
 
-class TestFixtureIntegrity:
 
+class TestFixtureIntegrity:
     def test_fixture_exists(self):
         assert FIXTURE_PATH.exists()
 
@@ -659,9 +650,7 @@ class TestFixtureIntegrity:
         for c in data["cases"]:
             policy = c.get("expected_security_policy", {})
             if "safe_to_execute" in policy:
-                assert policy["safe_to_execute"] is False, (
-                    f"케이스 {c['id']}: security_policy safe_to_execute != False"
-                )
+                assert policy["safe_to_execute"] is False, f"케이스 {c['id']}: security_policy safe_to_execute != False"
 
     def test_no_real_domain_in_fixture(self):
         data = _load_fixture()
@@ -675,9 +664,9 @@ class TestFixtureIntegrity:
         content = json.dumps(data)
         for field in ["password", "otp", "certificate_password", "api_key"]:
             # 필드명은 있을 수 있지만 실제 값이 없어야 함
-            assert "must_be_removed" not in content.replace(
-                '"must_be_removed"', '""'
-            ) or True  # 테스트 픽스처 값은 무해한 더미
+            assert (
+                "must_be_removed" not in content.replace('"must_be_removed"', '""') or True
+            )  # 테스트 픽스처 값은 무해한 더미
 
     def test_all_cases_have_required_keys(self):
         data = _load_fixture()

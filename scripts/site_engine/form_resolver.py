@@ -4,14 +4,15 @@ label/name/id/placeholder 기반 의미 분류만 수행한다.
 실제 입력 실행 금지. 값 저장 금지.
 기존 scripts/form/discovery.py를 대체하지 않는다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
-class FormFieldKind(str, Enum):
+class FormFieldKind(str, Enum):  # noqa: UP042
     ID = "ID"
     EMAIL = "EMAIL"
     PHONE = "PHONE"
@@ -30,31 +31,34 @@ class FormFieldKind(str, Enum):
     OTHER = "OTHER"
 
 
-class FormFieldSensitivity(str, Enum):
+class FormFieldSensitivity(str, Enum):  # noqa: UP042
     SAFE = "SAFE"
     RESTRICTED = "RESTRICTED"  # 사용자 직접 입력만
-    FORBIDDEN = "FORBIDDEN"    # 값 추출/저장 불가
+    FORBIDDEN = "FORBIDDEN"  # 값 추출/저장 불가
 
 
-_SENSITIVE_KINDS = frozenset({
-    FormFieldKind.PASSWORD,
-    FormFieldKind.PASSWORD_CONFIRM,
-    FormFieldKind.OTP,
-})
+_SENSITIVE_KINDS = frozenset(
+    {
+        FormFieldKind.PASSWORD,
+        FormFieldKind.PASSWORD_CONFIRM,
+        FormFieldKind.OTP,
+    }
+)
 
-_FORBIDDEN_KINDS = frozenset({
-    FormFieldKind.PASSWORD,
-    FormFieldKind.PASSWORD_CONFIRM,
-    FormFieldKind.OTP,
-})
+_FORBIDDEN_KINDS = frozenset(
+    {
+        FormFieldKind.PASSWORD,
+        FormFieldKind.PASSWORD_CONFIRM,
+        FormFieldKind.OTP,
+    }
+)
 
 _KIND_KEYWORDS: dict[FormFieldKind, list[str]] = {
     FormFieldKind.ID: ["userid", "user_id", "loginid", "login_id", "username", "아이디"],
     FormFieldKind.EMAIL: ["email", "mail", "이메일"],
     FormFieldKind.PHONE: ["phone", "mobile", "tel", "hp", "휴대폰", "전화"],
     FormFieldKind.PASSWORD: ["password", "passwd", "pw", "pwd", "비밀번호"],
-    FormFieldKind.PASSWORD_CONFIRM: ["password_confirm", "pw_confirm", "password2",
-                                      "비밀번호확인", "confirm_password"],
+    FormFieldKind.PASSWORD_CONFIRM: ["password_confirm", "pw_confirm", "password2", "비밀번호확인", "confirm_password"],
     FormFieldKind.OTP: ["otp", "인증번호", "sms_code", "email_code", "auth_code"],
     FormFieldKind.NAME: ["name", "fullname", "성명", "이름"],
     FormFieldKind.BIRTH: ["birth", "dob", "생년월일"],
@@ -103,13 +107,18 @@ def classify_field_sensitivity(kind: FormFieldKind) -> FormFieldSensitivity:
 
 
 def _detect_kind(raw: dict[str, Any]) -> tuple[FormFieldKind, float]:
-    combined = " ".join(filter(None, [
-        raw.get("name", ""),
-        raw.get("id", ""),
-        raw.get("placeholder", ""),
-        raw.get("label", ""),
-        raw.get("type", ""),
-    ])).lower()
+    combined = " ".join(
+        filter(
+            None,
+            [
+                raw.get("name", ""),
+                raw.get("id", ""),
+                raw.get("placeholder", ""),
+                raw.get("label", ""),
+                raw.get("type", ""),
+            ],
+        )
+    ).lower()
 
     # type=password 직접 매칭 (가장 신뢰도 높음)
     if raw.get("type") == "password":
@@ -146,20 +155,21 @@ def resolve_form_fields(resolution_input: FormResolutionInput) -> FormResolution
     for raw in resolution_input.fields_raw:
         kind, score = _detect_kind(raw)
         sensitivity = classify_field_sensitivity(kind)
-        candidates.append(FormFieldCandidate(
-            selector=raw.get("selector", ""),
-            kind=kind,
-            sensitivity=sensitivity,
-            label=raw.get("label", ""),
-            name=raw.get("name", ""),
-            field_id=raw.get("id", ""),
-            placeholder=raw.get("placeholder", ""),
-            score=score,
-        ))
+        candidates.append(
+            FormFieldCandidate(
+                selector=raw.get("selector", ""),
+                kind=kind,
+                sensitivity=sensitivity,
+                label=raw.get("label", ""),
+                name=raw.get("name", ""),
+                field_id=raw.get("id", ""),
+                placeholder=raw.get("placeholder", ""),
+                score=score,
+            )
+        )
 
     sensitive_count = sum(
-        1 for c in candidates
-        if c.sensitivity in (FormFieldSensitivity.FORBIDDEN, FormFieldSensitivity.RESTRICTED)
+        1 for c in candidates if c.sensitivity in (FormFieldSensitivity.FORBIDDEN, FormFieldSensitivity.RESTRICTED)
     )
     return FormResolutionResult(
         candidates=candidates,

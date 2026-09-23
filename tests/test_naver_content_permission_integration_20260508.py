@@ -3,26 +3,40 @@
 
 권한 모델 연동 / 보안 정책 / 회귀 검증
 """
+
 import pytest
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
+
+from ai_orchestrator.local_agent.approval_audit_log import (
+    EVENT_EXECUTION_COMPLETED,
+    EVENT_EXECUTION_STARTED,
+    clear_log,
+    get_log,
+    get_log_for_permission,
+    has_sensitive_data,
+)
+from ai_orchestrator.local_agent.content_workflow_policy import (
+    GRADE_USER_DIRECT,
+    get_workflow_grade,
+    is_workflow_auto_allowed,
+    requires_permission,
 )
 from ai_orchestrator.local_agent.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_BLOCKED,
+    EXEC_NEED_PERMISSION,
+    EXEC_USER_DIRECT,
     execute_delegated_action,
-    EXEC_ALLOWED, EXEC_NEED_PERMISSION, EXEC_BLOCKED, EXEC_USER_DIRECT,
-)
-from ai_orchestrator.local_agent.approval_audit_log import (
-    get_log, get_log_for_permission, clear_log,
-    has_sensitive_data, EVENT_EXECUTION_STARTED, EVENT_EXECUTION_COMPLETED,
-)
-from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
-from ai_orchestrator.local_agent.content_workflow_policy import (
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_BLOCKED, GRADE_USER_DIRECT,
-    get_workflow_grade, requires_permission, is_workflow_auto_allowed,
-    NAVER_DOMAINS, NAVER_CAFE_DOMAINS, NAVER_BLOG_DOMAINS,
 )
 from ai_orchestrator.local_agent.delegated_permission_policy import (
-    CHECK_EXPIRED, CHECK_REVOKED, CHECK_EXHAUSTED, CHECK_SCOPE_EXCEEDED,
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+)
+from ai_orchestrator.local_agent.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 
 
@@ -81,83 +95,66 @@ class TestNaverWorkflowGrades:
 
 class TestPermissionConstraintsNaver:
     def test_blog_publish_no_permission_blocked(self):
-        result = execute_delegated_action("blog_publish", "blog.naver.com", None,
-                                          content="발행 시도.")
+        result = execute_delegated_action("blog_publish", "blog.naver.com", None, content="발행 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
 
     def test_cafe_post_no_permission_blocked(self):
-        result = execute_delegated_action("cafe_post_write", "cafe.naver.com", None,
-                                          content="게시 시도.")
+        result = execute_delegated_action("cafe_post_write", "cafe.naver.com", None, content="게시 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
 
     def test_cafe_comment_no_permission_blocked(self):
-        result = execute_delegated_action("cafe_comment_write", "cafe.naver.com", None,
-                                          content="댓글 시도.")
+        result = execute_delegated_action("cafe_comment_write", "cafe.naver.com", None, content="댓글 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
 
     def test_blog_publish_with_permission(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
         result = execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="블로그 게시글."
+            "blog_publish", "blog.naver.com", perm["permission_id"], content="블로그 게시글."
         )
         assert result["status"] == EXEC_ALLOWED
 
     def test_cafe_post_with_permission(self):
         perm = grant_permission("cafe_post_write", "cafe.naver.com")
         result = execute_delegated_action(
-            "cafe_post_write", "cafe.naver.com", perm["permission_id"],
-            content="카페 게시글."
+            "cafe_post_write", "cafe.naver.com", perm["permission_id"], content="카페 게시글."
         )
         assert result["status"] == EXEC_ALLOWED
 
     def test_cafe_comment_with_permission(self):
         perm = grant_permission("cafe_comment_write", "cafe.naver.com")
         result = execute_delegated_action(
-            "cafe_comment_write", "cafe.naver.com", perm["permission_id"],
-            content="카페 댓글."
+            "cafe_comment_write", "cafe.naver.com", perm["permission_id"], content="카페 댓글."
         )
         assert result["status"] == EXEC_ALLOWED
 
     def test_expired_permission(self):
         perm = grant_permission("blog_publish", "blog.naver.com", duration_seconds=0)
-        import time; time.sleep(0.01)
-        result = execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="발행 시도."
-        )
+        import time
+
+        time.sleep(0.01)
+        result = execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="발행 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
         assert result["gate"]["check_result"] == CHECK_EXPIRED
 
     def test_revoked_permission(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
         revoke(perm["permission_id"])
-        result = execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="발행 시도."
-        )
+        result = execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="발행 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
         assert result["gate"]["check_result"] == CHECK_REVOKED
 
     def test_scope_exceeded(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
-        result = execute_delegated_action(
-            "blog_publish", "other.com", perm["permission_id"],
-            content="발행 시도."
-        )
+        result = execute_delegated_action("blog_publish", "other.com", perm["permission_id"], content="발행 시도.")
         assert result["status"] == EXEC_NEED_PERMISSION
         assert result["gate"]["check_result"] == CHECK_SCOPE_EXCEEDED
 
     def test_max_executions_exceeded(self):
         perm = grant_permission("cafe_comment_write", "cafe.naver.com", max_executions=2)
         for _ in range(2):
-            execute_delegated_action(
-                "cafe_comment_write", "cafe.naver.com", perm["permission_id"],
-                content="댓글."
-            )
+            execute_delegated_action("cafe_comment_write", "cafe.naver.com", perm["permission_id"], content="댓글.")
         result = execute_delegated_action(
-            "cafe_comment_write", "cafe.naver.com", perm["permission_id"],
-            content="3번째 댓글."
+            "cafe_comment_write", "cafe.naver.com", perm["permission_id"], content="3번째 댓글."
         )
         assert result["status"] == EXEC_NEED_PERMISSION
         assert result["gate"]["check_result"] == CHECK_EXHAUSTED
@@ -166,10 +163,7 @@ class TestPermissionConstraintsNaver:
 class TestAuditLogNaver:
     def test_blog_publish_creates_audit_log(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
-        execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="감사 로그 테스트."
-        )
+        execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="감사 로그 테스트.")
         logs = get_log_for_permission(perm["permission_id"])
         events = {e["event"] for e in logs}
         assert EVENT_EXECUTION_STARTED in events
@@ -177,10 +171,7 @@ class TestAuditLogNaver:
 
     def test_audit_log_no_sensitive_data(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
-        execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="테스트."
-        )
+        execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="테스트.")
         for entry in get_log():
             assert has_sensitive_data(entry) is False
 
@@ -188,10 +179,7 @@ class TestAuditLogNaver:
 class TestSafeResultNaver:
     def test_publish_result_no_password(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
-        result = execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="테스트."
-        )
+        result = execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="테스트.")
         r = result["result"]
         assert "password" not in r
         assert "otp" not in r
@@ -201,10 +189,7 @@ class TestSafeResultNaver:
 
     def test_publish_result_safe_fields_false(self):
         perm = grant_permission("blog_publish", "blog.naver.com")
-        result = execute_delegated_action(
-            "blog_publish", "blog.naver.com", perm["permission_id"],
-            content="테스트."
-        )
+        result = execute_delegated_action("blog_publish", "blog.naver.com", perm["permission_id"], content="테스트.")
         r = result["result"]
         assert r["sensitive_data_collected"] is False
         assert r["cookie_exported"] is False
@@ -271,25 +256,30 @@ class TestExistingSystemRegression:
     def test_existing_security_guard(self):
         from ai_orchestrator.local_agent.security_guard import validate_task_before_run
         from ai_orchestrator.local_agent.task_protocol import build_task
+
         task = build_task("read_page", "https://www.g2b.go.kr/", domain="www.g2b.go.kr")
         guard = validate_task_before_run(task)
         assert guard["allowed"] is True
 
     def test_existing_auth_wait_controller(self):
         from ai_orchestrator.local_agent.auth_wait_controller import (
-            enter_auth_wait, AUTH_SIGNAL_LOGIN,
+            AUTH_SIGNAL_LOGIN,
+            enter_auth_wait,
         )
         from ai_orchestrator.local_agent.task_protocol import STATUS_WAITING_USER_AUTH
+
         result = enter_auth_wait("regression-naver", AUTH_SIGNAL_LOGIN, "nid.naver.com")
         assert result["status"] == STATUS_WAITING_USER_AUTH
         assert result["sensitive_data_collected"] is False
 
     def test_naver_domain_profile_registered(self):
         from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile
+
         profile = get_domain_profile("cafe.naver.com")
         assert profile["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
     def test_download_policy_still_works(self):
         from ai_orchestrator.local_agent.download_policy import check_file
+
         assert check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])["upload_allowed"] is True
         assert check_file("cert.pfx", task_downloaded_files=["cert.pfx"])["upload_allowed"] is False

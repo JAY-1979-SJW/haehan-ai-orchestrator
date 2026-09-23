@@ -17,9 +17,10 @@
 - 승인 토큰은 1회용·만료·scope-bound (action_name + params_hash)
 - 결과 evidence 정책에서 금지 필드 명시
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ai_orchestrator.local_agent.action_registry import (
@@ -30,7 +31,6 @@ from ai_orchestrator.local_agent.action_summary_builder import (
     build_action_summary,
 )
 from ai_orchestrator.local_agent.user_approval_gate import (
-    STATUS_APPROVED,
     STATUS_PENDING,
     compute_params_hash,
     create_approval_request,
@@ -55,38 +55,76 @@ VERDICT_BLOCKED_SENSITIVE = "BLOCKED_SENSITIVE_PARAMS"
 # ── approval status 상수 ──────────────────────────────────────────────────────
 
 APPROVAL_NOT_REQUIRED = "NOT_REQUIRED"
-APPROVAL_PENDING = STATUS_PENDING            # PENDING_USER_REVIEW
+APPROVAL_PENDING = STATUS_PENDING  # PENDING_USER_REVIEW
 APPROVAL_CONSUMED = "APPROVED_AND_CONSUMED"
 APPROVAL_INVALID = "INVALID"
 
 # ── handoff payload 금지 필드 ─────────────────────────────────────────────────
 
-FORBIDDEN_HANDOFF_FIELDS: frozenset[str] = frozenset({
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "cookies", "session", "storage_state",
-    "private_key", "npki", "auth_header", "Authorization",
-    "token", "access_token", "refresh_token",
-    "certificate_file_path",
-})
+FORBIDDEN_HANDOFF_FIELDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "cookies",
+        "session",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "Authorization",
+        "token",
+        "access_token",
+        "refresh_token",
+        "certificate_file_path",
+    }
+)
 
 # 결과 evidence에서 절대 허용하지 않는 필드 (task_protocol과 동기)
-FORBIDDEN_RESULT_FIELDS: frozenset[str] = frozenset({
-    "cookie", "cookies", "session", "token", "password", "otp",
-    "certificate_password", "cert_password", "auth_token",
-    "access_token", "refresh_token", "npki_data", "private_key",
-    "localStorage", "sessionStorage", "storage_state",
-})
+FORBIDDEN_RESULT_FIELDS: frozenset[str] = frozenset(
+    {
+        "cookie",
+        "cookies",
+        "session",
+        "token",
+        "password",
+        "otp",
+        "certificate_password",
+        "cert_password",
+        "auth_token",
+        "access_token",
+        "refresh_token",
+        "npki_data",
+        "private_key",
+        "localStorage",
+        "sessionStorage",
+        "storage_state",
+    }
+)
 
 # 민감 파라미터 키 (사용자 입력에 포함되면 sanitize 대상)
-_SENSITIVE_PARAM_KEY_HINTS: frozenset[str] = frozenset({
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "session", "token", "storage_state", "private_key",
-    "npki", "auth_header", "authorization",
-})
+_SENSITIVE_PARAM_KEY_HINTS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "session",
+        "token",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "authorization",
+    }
+)
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _has_sensitive_keys(params: dict[str, Any]) -> list[str]:
@@ -146,7 +184,7 @@ def build_handoff_payload(
     LOCAL_AGENT_REQUIRED handoff payload — sanitize된 safe field만 포함.
     민감 데이터, cookie/session/storage_state 등은 절대 포함하지 않는다.
     """
-    created = datetime.now(timezone.utc)
+    created = datetime.now(UTC)
     expires = created + timedelta(seconds=max(60, min(duration_seconds, 1800)))
 
     payload = {
@@ -182,8 +220,12 @@ def validate_handoff_payload(payload: dict[str, Any]) -> list[str]:
 
     # 명시 플래그
     flag_checks = (
-        "sensitive_data_included", "cookie_included", "session_included",
-        "password_included", "otp_included", "cert_info_included",
+        "sensitive_data_included",
+        "cookie_included",
+        "session_included",
+        "password_included",
+        "otp_included",
+        "cert_info_included",
         "storage_state_included",
     )
     for f in flag_checks:
@@ -245,7 +287,9 @@ def prepare_action_task(
 
     if spec is None:
         return _verdict_envelope(
-            action_name, None, VERDICT_UNKNOWN_ACTION,
+            action_name,
+            None,
+            VERDICT_UNKNOWN_ACTION,
             blocked_reason=f"등록되지 않은 action_name: {action_name!r}",
         )
 
@@ -253,7 +297,9 @@ def prepare_action_task(
     sensitive_keys = _has_sensitive_keys(params)
     if sensitive_keys:
         return _verdict_envelope(
-            action_name, spec, VERDICT_BLOCKED_SENSITIVE,
+            action_name,
+            spec,
+            VERDICT_BLOCKED_SENSITIVE,
             blocked_reason=f"민감 파라미터 입력 차단: {sensitive_keys}",
             warnings=[f"sanitize 대상 키: {sensitive_keys}"],
         )
@@ -271,24 +317,30 @@ def prepare_action_task(
     if not spec.requires_user_approval:
         if not spec.implemented:
             return _verdict_envelope(
-                action_name, spec, VERDICT_NOT_IMPLEMENTED,
+                action_name,
+                spec,
+                VERDICT_NOT_IMPLEMENTED,
                 approval_status=APPROVAL_NOT_REQUIRED,
                 params_hash=params_hash,
                 summary=summary_safe,
                 handoff_required=False,
                 blocked_reason="ActionSpec.implemented=False — 실행 핸들러 미연결",
-                warnings=warnings + ["향후 구현 예정 액션"],
+                warnings=warnings + ["향후 구현 예정 액션"],  # noqa: RUF005
             )
         handoff = build_handoff_payload(
-            action_name=action_name, spec=spec,
-            params_safe=params_safe, params_hash=params_hash,
+            action_name=action_name,
+            spec=spec,
+            params_safe=params_safe,
+            params_hash=params_hash,
             summary_safe=summary_safe,
             approval_status=APPROVAL_NOT_REQUIRED,
             approval_token_required=False,
             duration_seconds=duration_seconds,
         )
         return _verdict_envelope(
-            action_name, spec, VERDICT_HANDOFF_READY,
+            action_name,
+            spec,
+            VERDICT_HANDOFF_READY,
             approval_status=APPROVAL_NOT_REQUIRED,
             params_hash=params_hash,
             summary=summary_safe,
@@ -312,25 +364,29 @@ def prepare_action_task(
             duration_seconds=duration_seconds,
         )
         return _verdict_envelope(
-            action_name, spec, VERDICT_APPROVAL_REQUIRED,
+            action_name,
+            spec,
+            VERDICT_APPROVAL_REQUIRED,
             approval_status=APPROVAL_PENDING,
             approval_request_id=req["request_id"],
             params_hash=params_hash,
             summary=summary_safe,
             handoff_required=False,
-            warnings=warnings + (
-                ["향후 구현 예정 액션 — 승인되어도 핸들러 미연결로 실행 불가"]
-                if not spec.implemented else []
-            ),
+            warnings=warnings
+            + (["향후 구현 예정 액션 — 승인되어도 핸들러 미연결로 실행 불가"] if not spec.implemented else []),
         )
 
     # 승인 토큰 제공됨 → verify_and_consume
     verify = verify_and_consume_token(
-        token=approval_token, action_name=action_name, params=params,
+        token=approval_token,
+        action_name=action_name,
+        params=params,
     )
     if not verify.get("ok"):
         return _verdict_envelope(
-            action_name, spec, VERDICT_APPROVAL_INVALID,
+            action_name,
+            spec,
+            VERDICT_APPROVAL_INVALID,
             approval_status=APPROVAL_INVALID,
             params_hash=params_hash,
             summary=summary_safe,
@@ -342,26 +398,32 @@ def prepare_action_task(
     # 토큰 유효 → 미구현이면 차단
     if not spec.implemented:
         return _verdict_envelope(
-            action_name, spec, VERDICT_NOT_IMPLEMENTED,
+            action_name,
+            spec,
+            VERDICT_NOT_IMPLEMENTED,
             approval_status=APPROVAL_CONSUMED,
             approval_request_id=verify.get("request_id"),
             params_hash=params_hash,
             summary=summary_safe,
             handoff_required=False,
             blocked_reason="ActionSpec.implemented=False — 승인은 소비됐으나 핸들러 미연결로 실행 차단",
-            warnings=warnings + ["향후 구현 예정 액션"],
+            warnings=warnings + ["향후 구현 예정 액션"],  # noqa: RUF005
         )
 
     handoff = build_handoff_payload(
-        action_name=action_name, spec=spec,
-        params_safe=params_safe, params_hash=params_hash,
+        action_name=action_name,
+        spec=spec,
+        params_safe=params_safe,
+        params_hash=params_hash,
         summary_safe=summary_safe,
         approval_status=APPROVAL_CONSUMED,
         approval_token_required=True,
         duration_seconds=duration_seconds,
     )
     return _verdict_envelope(
-        action_name, spec, VERDICT_HANDOFF_READY,
+        action_name,
+        spec,
+        VERDICT_HANDOFF_READY,
         approval_status=APPROVAL_CONSUMED,
         approval_request_id=verify.get("request_id"),
         params_hash=params_hash,

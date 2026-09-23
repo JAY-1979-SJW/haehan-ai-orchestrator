@@ -1,13 +1,19 @@
 """Browser Value Registry Policy 테스트."""
+
 from __future__ import annotations
 
 import pytest
 
 from ai_orchestrator.local_agent.browser_value_registry import (
-    ValuePolicy, register_value, get_value, resolve_value_for_field,
-    validate_raw_input, list_values, clear_all, is_forbidden_value,
-    VTYPE_SAMPLE_TEXT, VTYPE_SAMPLE_NUMBER,
-    REDACT_NONE, RISK_LOW,
+    VTYPE_SAMPLE_NUMBER,
+    VTYPE_SAMPLE_TEXT,
+    ValuePolicy,
+    clear_all,
+    is_forbidden_value,
+    list_values,
+    register_value,
+    resolve_value_for_field,
+    validate_raw_input,
 )
 
 
@@ -104,31 +110,35 @@ def test_rrn_pattern_in_raw_blocked():
 
 
 def test_account_pattern_blocked():
-    forbidden, reason = is_forbidden_value("계좌 110-456-789012", "")
+    forbidden, _reason = is_forbidden_value("계좌 110-456-789012", "")
     assert forbidden is True
 
 
 def test_resolve_value_for_field_ok():
-    register_value(ValuePolicy(
-        value_key="sample_keyword",
-        label="x",
-        value_type=VTYPE_SAMPLE_TEXT,
-        sample_safe_value="공고",
-        allowed_fields=("search_field",),
-    ))
+    register_value(
+        ValuePolicy(
+            value_key="sample_keyword",
+            label="x",
+            value_type=VTYPE_SAMPLE_TEXT,
+            sample_safe_value="공고",
+            allowed_fields=("search_field",),
+        )
+    )
     res = resolve_value_for_field("sample_keyword", "search_field")
     assert res["ok"] is True
     assert res["sample_safe_value"] == "공고"
 
 
 def test_resolve_value_for_disallowed_field():
-    register_value(ValuePolicy(
-        value_key="sample_keyword",
-        label="x",
-        value_type=VTYPE_SAMPLE_TEXT,
-        sample_safe_value="공고",
-        allowed_fields=("search_field",),
-    ))
+    register_value(
+        ValuePolicy(
+            value_key="sample_keyword",
+            label="x",
+            value_type=VTYPE_SAMPLE_TEXT,
+            sample_safe_value="공고",
+            allowed_fields=("search_field",),
+        )
+    )
     res = resolve_value_for_field("sample_keyword", "other_field")
     assert res["ok"] is False
     assert res["verdict"] == "FIELD_NOT_ALLOWED"

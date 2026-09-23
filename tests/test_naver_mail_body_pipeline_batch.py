@@ -1,33 +1,29 @@
 """NAVER-MAIL-BODY-PIPELINE-BATCH-01 — 필수 12+ 테스트."""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
-import pytest
 
 from scripts.naver.mail import batch_runner as br
 from scripts.naver.mail import unread_audit as ua
 from scripts.ops import audit_naver_mail_body_pipeline_batch as audit
-
 
 # ── 헬퍼 ────────────────────────────────────────────────────────────
 
 
 class _FakeActions:
     """Live 와 무관 — 테스트 전용."""
+
     pass
 
 
 def _mk_targets(n=3):
-    return [br.BatchTarget(sn=str(100 + i), folder_id="0",
-                           folder_name="받은메일함") for i in range(n)]
+    return [br.BatchTarget(sn=str(100 + i), folder_id="0", folder_name="받은메일함") for i in range(n)]
 
 
 def _fake_process_ok(actions, target):
     """모든 메일을 정상 처리 + restore OK."""
-    res = br.MailResult(sn=target.sn, folder_id=target.folder_id,
-                        folder_name=target.folder_name)
+    res = br.MailResult(sn=target.sn, folder_id=target.folder_id, folder_name=target.folder_name)
     res.body_open_ok = True
     res.masked_text_hash = f"hash_{target.sn}"
     res.pii_detected_count = 1
@@ -52,8 +48,7 @@ def _fake_process_restore_fail(actions, target):
 
 
 def _fake_process_body_fail(actions, target):
-    res = br.MailResult(sn=target.sn, folder_id=target.folder_id,
-                        folder_name=target.folder_name)
+    res = br.MailResult(sn=target.sn, folder_id=target.folder_id, folder_name=target.folder_name)
     res.status = br.BODY_READ_FAILED
     res.error = "navigate_timeout"
     res.elapsed_ms = 1000
@@ -76,8 +71,10 @@ def test_dedupe_targets_removes_duplicates():
 
 
 def test_dedupe_skips_empty_sn():
-    targets = [br.BatchTarget(sn="", folder_id="0", folder_name="A"),
-               br.BatchTarget(sn="100", folder_id="0", folder_name="A")]
+    targets = [
+        br.BatchTarget(sn="", folder_id="0", folder_name="A"),
+        br.BatchTarget(sn="100", folder_id="0", folder_name="A"),
+    ]
     out, _ = br.dedupe_targets(targets)
     assert len(out) == 1
 
@@ -87,9 +84,9 @@ def test_dedupe_skips_empty_sn():
 
 def test_checkpoint_save_and_load(tmp_path):
     p = tmp_path / "ck.json"
-    br.save_checkpoint(p, "run123", {"100": {"status": br.UNREAD_CHANGED_RESTORED,
-                                              "masked_text_hash": "h",
-                                              "pii_detected_count": 2}})
+    br.save_checkpoint(
+        p, "run123", {"100": {"status": br.UNREAD_CHANGED_RESTORED, "masked_text_hash": "h", "pii_detected_count": 2}}
+    )
     loaded = br.load_checkpoint(p)
     assert loaded["run_id"] == "run123"
     assert "100" in loaded["sn_to_status"]
@@ -114,15 +111,18 @@ def test_checkpoint_broken_returns_broken_marker(tmp_path):
 
 def test_resume_skips_already_done(tmp_path):
     ck = tmp_path / "ck.json"
-    br.save_checkpoint(ck, "prev", {
-        "100": {"status": br.UNREAD_CHANGED_RESTORED, "masked_text_hash": "h"},
-        "101": {"status": br.UNREAD_CHANGED_RESTORED, "masked_text_hash": "h"},
-    })
+    br.save_checkpoint(
+        ck,
+        "prev",
+        {
+            "100": {"status": br.UNREAD_CHANGED_RESTORED, "masked_text_hash": "h"},
+            "101": {"status": br.UNREAD_CHANGED_RESTORED, "masked_text_hash": "h"},
+        },
+    )
     targets = _mk_targets(3)  # 100, 101, 102
-    rep = br.run_batch(_FakeActions(), targets,
-                       checkpoint_path=ck,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(
+        _FakeActions(), targets, checkpoint_path=ck, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok
+    )
     assert rep.skipped_already_done == 2
     assert rep.attempted == 1  # 102 만 실행
     assert rep.success == 1
@@ -133,9 +133,7 @@ def test_resume_skips_already_done(tmp_path):
 
 def test_restore_failure_halts_batch_and_audit_fails():
     targets = _mk_targets(3)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_restore_fail)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_restore_fail)
     assert rep.halted_early is True
     assert rep.unread_restore_failed >= 1
     v = audit.judge_batch(rep)
@@ -144,10 +142,9 @@ def test_restore_failure_halts_batch_and_audit_fails():
 
 def test_continue_on_warn_keeps_going_after_restore_fail():
     targets = _mk_targets(3)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       continue_on_warn=True,
-                       process_fn=_fake_process_restore_fail)
+    rep = br.run_batch(
+        _FakeActions(), targets, delay_s=0.0, jitter_s=0.0, continue_on_warn=True, process_fn=_fake_process_restore_fail
+    )
     assert rep.halted_early is False
     assert rep.attempted == 3
 
@@ -157,12 +154,10 @@ def test_continue_on_warn_keeps_going_after_restore_fail():
 
 def test_no_raw_body_in_report():
     targets = _mk_targets(2)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     j = json.dumps(rep.to_dict(), ensure_ascii=False)
-    assert "\"raw_body\"" not in j
-    assert "\"body_raw\"" not in j
+    assert '"raw_body"' not in j
+    assert '"body_raw"' not in j
 
 
 # ── 6) PII masking summary ──────────────────────────────────────────
@@ -170,9 +165,7 @@ def test_no_raw_body_in_report():
 
 def test_pii_masking_summary_aggregates():
     targets = _mk_targets(3)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     assert rep.pii_detected_total == 3
     assert rep.pii_types_summary.get("EMAIL") == 3
 
@@ -182,9 +175,7 @@ def test_pii_masking_summary_aggregates():
 
 def test_attachment_download_count_zero_by_default():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     assert rep.attachment_download_count == 0
 
 
@@ -193,16 +184,13 @@ def test_attachment_download_count_zero_by_default():
 
 def test_external_ai_call_count_zero():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     assert rep.external_ai_call_count == 0
 
 
 def test_audit_fail_on_external_ai_call_in_network_log():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     v = audit.judge_batch(rep, network_log=["GET https://api.anthropic.com/v1/messages"])
     assert v.code == "FAIL_EXTERNAL_AI_CALL_USED"
 
@@ -212,9 +200,7 @@ def test_audit_fail_on_external_ai_call_in_network_log():
 
 def test_failure_records_schema(tmp_path):
     targets = _mk_targets(2)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_body_fail)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_body_fail)
     paths = br.write_outputs(rep, tmp_path)
     failures = json.loads(paths["failures"].read_text(encoding="utf-8"))
     assert len(failures) == 2
@@ -228,9 +214,7 @@ def test_failure_records_schema(tmp_path):
 
 def test_audit_warn_partial_when_limit_smaller_than_total():
     targets = _mk_targets(10)
-    rep = br.run_batch(_FakeActions(), targets, limit=3,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, limit=3, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     # target_total == 3 (limit applied), attempted == 3 → PASS
     v = audit.judge_batch(rep)
     assert v.code == "PASS_NAVER_MAIL_BODY_PIPELINE_BATCH"
@@ -238,26 +222,21 @@ def test_audit_warn_partial_when_limit_smaller_than_total():
 
 def test_audit_warn_body_read_failures():
     targets = _mk_targets(2)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_body_fail)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_body_fail)
     v = audit.judge_batch(rep)
     assert v.code == "WARN_BODY_READ_FAILURES"
 
 
 def test_audit_pass_clean_run():
     targets = _mk_targets(3)
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     v = audit.judge_batch(rep)
     assert v.code == "PASS_NAVER_MAIL_BODY_PIPELINE_BATCH", v.reasons
 
 
 def test_audit_fail_raw_leak_when_record_has_raw_body():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     # 강제 leak — to_dict 에 raw_body 가 보이도록 monkey patch
     rep.raw_body_leak_count = 1
     v = audit.judge_batch(rep)
@@ -266,8 +245,7 @@ def test_audit_fail_raw_leak_when_record_has_raw_body():
 
 def test_audit_fail_attachment_downloaded():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     rep.attachment_download_count = 1
     v = audit.judge_batch(rep)
     assert v.code == "FAIL_ATTACHMENT_DOWNLOADED"
@@ -275,8 +253,7 @@ def test_audit_fail_attachment_downloaded():
 
 def test_audit_fail_checkpoint_broken():
     targets = _mk_targets(1)
-    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0,
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(_FakeActions(), targets, delay_s=0.0, jitter_s=0.0, process_fn=_fake_process_ok)
     v = audit.judge_batch(rep, checkpoint_dict={"run_id": "broken"})
     assert v.code == "FAIL_CHECKPOINT_BROKEN"
 
@@ -286,18 +263,21 @@ def test_audit_fail_checkpoint_broken():
 
 def test_regression_body_pipeline_v2_imports():
     from scripts.naver.mail import body_pipeline_v2 as bp
+
     assert hasattr(bp, "run")
 
 
 def test_regression_dynamic_folder_discovery_imports():
     from scripts.naver.mail import folder_discovery as fd
     from scripts.naver.mail import folder_profile as fpr
+
     assert hasattr(fd, "discover_folders")
     assert hasattr(fpr, "build_snapshot")
 
 
 def test_regression_smart_folder_coverage_imports():
     from scripts.naver.mail import smart_folder_collector as sfc
+
     assert hasattr(sfc, "collect_all")
 
 
@@ -307,10 +287,14 @@ def test_regression_smart_folder_coverage_imports():
 def test_throttle_sleep_called_between_mails():
     targets = _mk_targets(3)
     sleep_calls = []
-    rep = br.run_batch(_FakeActions(), targets,
-                       delay_s=1.0, jitter_s=0.5,
-                       sleep_fn=lambda d: sleep_calls.append(d),
-                       process_fn=_fake_process_ok)
+    rep = br.run_batch(  # noqa: F841
+        _FakeActions(),
+        targets,
+        delay_s=1.0,
+        jitter_s=0.5,
+        sleep_fn=lambda d: sleep_calls.append(d),
+        process_fn=_fake_process_ok,
+    )
     # 마지막 메일 뒤엔 sleep 안 함 → 2번 호출
     assert len(sleep_calls) == 2
     for d in sleep_calls:

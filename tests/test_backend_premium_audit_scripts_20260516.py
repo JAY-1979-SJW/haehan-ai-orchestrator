@@ -8,14 +8,12 @@ ASSISTANT_BACKEND_PREMIUM_AUDIT_SCRIPT_SUITE_01 STEP 13 검증.
 - 실제 앱 실행 금지
 - skip/xfail 금지
 """
+
 from __future__ import annotations
 
 import importlib.util
 import json
-import sys
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_OPS = ROOT / "scripts/ops"
@@ -60,6 +58,7 @@ def _load(name: str):
 # 1. 스크립트 파일 존재
 # ---------------------------------------------------------------------------
 
+
 class TestAuditScriptsExist:
     def test_all_audit_script_files_exist(self):
         missing = []
@@ -73,6 +72,7 @@ class TestAuditScriptsExist:
 # ---------------------------------------------------------------------------
 # 2. import 가능
 # ---------------------------------------------------------------------------
+
 
 class TestAuditScriptsImportable:
     def test_all_scripts_importable(self):
@@ -88,6 +88,7 @@ class TestAuditScriptsImportable:
 # ---------------------------------------------------------------------------
 # 3. CHECKLIST 보유
 # ---------------------------------------------------------------------------
+
 
 class TestAuditScriptsHaveChecklist:
     def test_all_scripts_have_checklist(self):
@@ -115,6 +116,7 @@ class TestAuditScriptsHaveChecklist:
 # 4. run_audit 함수 보유
 # ---------------------------------------------------------------------------
 
+
 class TestAuditScriptsHaveRunAudit:
     def test_all_scripts_have_run_audit(self):
         for name in AUDIT_SCRIPT_NAMES:
@@ -133,6 +135,7 @@ class TestAuditScriptsHaveRunAudit:
 # ---------------------------------------------------------------------------
 # 5. 출력 포맷 검증
 # ---------------------------------------------------------------------------
+
 
 class TestAuditOutputFormat:
     def _required_keys(self):
@@ -183,6 +186,7 @@ class TestAuditOutputFormat:
 # 6. 통합 runner
 # ---------------------------------------------------------------------------
 
+
 class TestIntegratedRunner:
     def test_runner_executes_all_audits_in_order(self):
         mod = _load(RUNNER_NAME)
@@ -194,8 +198,12 @@ class TestIntegratedRunner:
         mod = _load(RUNNER_NAME)
         result = mod.run_integrated_audit()
         assert result["verdict"] in {
-            "PASS", "PASS_WITH_KNOWN_WARN", "PASS_WITH_EXTERNAL_APP_HOLD",
-            "WARN", "FAIL", "STOP",
+            "PASS",
+            "PASS_WITH_KNOWN_WARN",
+            "PASS_WITH_EXTERNAL_APP_HOLD",
+            "WARN",
+            "FAIL",
+            "STOP",
         }
 
     def test_runner_produces_total_summary(self):
@@ -219,6 +227,7 @@ class TestIntegratedRunner:
     def test_runner_no_file_creation(self, tmp_path):
         mod = _load(RUNNER_NAME)
         import os
+
         before = set(os.listdir(str(ROOT / "scripts/ops")))
         mod.run_integrated_audit()
         after = set(os.listdir(str(ROOT / "scripts/ops")))
@@ -230,6 +239,7 @@ class TestIntegratedRunner:
 # ---------------------------------------------------------------------------
 # 7. 안전 경계
 # ---------------------------------------------------------------------------
+
 
 class TestSafetBoundary:
     def test_no_external_network_call_in_scripts(self):
@@ -254,9 +264,13 @@ class TestSafetBoundary:
             if p.exists():
                 src = p.read_text(encoding="utf-8")
                 for pat in bad_patterns:
-                    if pat in src and "subprocess" not in src.splitlines()[
-                        next(i for i, l in enumerate(src.splitlines()) if pat in l)
-                    ]:
+                    if (
+                        pat in src
+                        and "subprocess"
+                        not in src.splitlines()[
+                            next(i for i, l in enumerate(src.splitlines()) if pat in l)  # noqa: E741
+                        ]
+                    ):
                         violations.append(f"{name}: {pat}")
         assert violations == [], f"DB write 패턴 감지: {violations}"
 
@@ -267,7 +281,6 @@ class TestSafetBoundary:
 
     def test_no_secret_in_audit_output(self):
         """감사 출력에 secret/token/password/session/cookie 값 미포함."""
-        from ai_orchestrator.safety_policy.secret_redaction import FORBIDDEN_SECRET_FIELDS
         mod = _load("audit_backend_premium_domain_core")
         result = mod.run_audit()
         dumped = json.dumps(result)
@@ -279,9 +292,12 @@ class TestSafetBoundary:
     def test_no_ui_file_modified(self):
         """감사 스크립트 실행이 UI 파일을 수정하지 않음."""
         import subprocess
+
         proc = subprocess.run(
             ["git", "diff", "--name-only"],
-            cwd=str(ROOT), capture_output=True, text=True,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
         )
         changed = proc.stdout.splitlines()
         ui_changed = [f for f in changed if f.startswith("admin-web/") or f.startswith("desktop/ui/")]
@@ -291,6 +307,7 @@ class TestSafetBoundary:
 # ---------------------------------------------------------------------------
 # 8. CAD EXTERNAL_APP_HOLD 분리 확인
 # ---------------------------------------------------------------------------
+
 
 class TestCADExternalAppHoldClassification:
     def test_known_hold_failures_listed(self):
@@ -321,6 +338,7 @@ class TestCADExternalAppHoldClassification:
 # ---------------------------------------------------------------------------
 # 9. quality gate 충돌 없음
 # ---------------------------------------------------------------------------
+
 
 class TestQualityGateCompatibility:
     def test_audit_scripts_pass_quality_gate_pattern(self):

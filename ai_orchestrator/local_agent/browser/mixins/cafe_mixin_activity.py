@@ -3,11 +3,11 @@
 cafe_attendance/greetings/levelup_status/photo_posts. CafeMixin 다중상속.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Optional
 
 from .cafe_mixin_common import _js
 
@@ -35,8 +35,7 @@ class CafeActivityMixin:
                 if m:
                     menu_id = m.group(1)
 
-        url = (f"https://cafe.naver.com/AttendanceView.nhn"
-               f"?search.clubid={club_id}&search.menuid={menu_id}")
+        url = f"https://cafe.naver.com/AttendanceView.nhn?search.clubid={club_id}&search.menuid={menu_id}"
         self.go(url)
         time.sleep(3)
 
@@ -64,33 +63,40 @@ class CafeActivityMixin:
             if rows:
                 for row in rows:
                     raw = row.inner_text(timeout=500).strip()
-                    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                    lines = [l.strip() for l in raw.splitlines() if l.strip()]  # noqa: E741
                     if not lines:
                         continue
                     author = lines[0]
                     date_m2 = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", raw)
                     written_at = date_m2.group(1).strip() if date_m2 else ""
-                    msg_lines = [l for l in lines[1:] if l != written_at
-                                 and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)]
-                    records.append({
-                        "author": author,
-                        "written_at": written_at,
-                        "message": " ".join(msg_lines).strip()[:200],
-                    })
+                    msg_lines = [
+                        l
+                        for l in lines[1:]  # noqa: E741
+                        if l != written_at and not re.match(r"\d{4}\.\d{2}\.\d{2}", l)
+                    ]
+                    records.append(
+                        {
+                            "author": author,
+                            "written_at": written_at,
+                            "message": " ".join(msg_lines).strip()[:200],
+                        }
+                    )
             else:
                 # 텍스트 파싱 폴백
-                lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+                lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
                 i = 0
                 while i < len(lines):
                     date_m2 = re.search(r"(\d{4}\.\d{2}\.\d{2}\.?\s*\d{2}:\d{2})", lines[i])
                     if date_m2 and i > 0:
-                        records.append({
-                            "author": lines[i - 1],
-                            "written_at": date_m2.group(1).strip(),
-                            "message": lines[i + 1] if i + 1 < len(lines) else "",
-                        })
+                        records.append(
+                            {
+                                "author": lines[i - 1],
+                                "written_at": date_m2.group(1).strip(),
+                                "message": lines[i + 1] if i + 1 < len(lines) else "",
+                            }
+                        )
                     i += 1
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         return {"date": date_txt, "today_count": today_count, "records": records}
@@ -121,8 +127,7 @@ class CafeActivityMixin:
         if not menu_id:
             return []
 
-        url = (f"https://cafe.naver.com/MemoList.nhn"
-               f"?search.clubid={club_id}&search.menuid={menu_id}&viewType=pc")
+        url = f"https://cafe.naver.com/MemoList.nhn?search.clubid={club_id}&search.menuid={menu_id}&viewType=pc"
         self.go(url)
         time.sleep(3)
 
@@ -135,7 +140,7 @@ class CafeActivityMixin:
         posts: list[dict] = []
         try:
             body_txt = cafe_main.inner_text("body")
-            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+            lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
             i = 0
             while i < len(lines) and len(posts) < max_posts:
                 if lines[i] == "작성자 정보":
@@ -165,16 +170,18 @@ class CafeActivityMixin:
                             if cm:
                                 comment_count = int(cm.group(1))
                     if author and written_at:
-                        posts.append({
-                            "author": author,
-                            "written_at": written_at,
-                            "preview": preview[:150],
-                            "comment_count": comment_count,
-                        })
+                        posts.append(
+                            {
+                                "author": author,
+                                "written_at": written_at,
+                                "preview": preview[:150],
+                                "comment_count": comment_count,
+                            }
+                        )
                     i = j
                 else:
                     i += 1
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         return posts[:max_posts]
@@ -211,7 +218,8 @@ class CafeActivityMixin:
         stats: dict = {}
         stat_m = re.search(
             r"게시글수\s*(\d+)개.*?댓글수\s*(\d+)개.*?좋아요수\s*(\d+)개.*?출석수\s*(\d+).*?가입일\s*([\d.]+)",
-            body_txt, re.DOTALL,
+            body_txt,
+            re.DOTALL,
         )
         if stat_m:
             stats = {
@@ -227,20 +235,23 @@ class CafeActivityMixin:
 
         # 신청 목록 파싱 (테이블 헤더: 신청자 신청등급 현재등급 방문수 게시글수 댓글수 ...)
         applications: list[dict] = []
-        lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+        lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
         header_idx = next(
-            (i for i, l in enumerate(lines) if "신청자" in l and "신청등급" in l), None
+            (i for i, l in enumerate(lines) if "신청자" in l and "신청등급" in l),  # noqa: E741
+            None,
         )
         if header_idx is not None and not no_apply:
-            for line in lines[header_idx + 1:]:
+            for line in lines[header_idx + 1 :]:
                 parts = line.split("\t") if "\t" in line else line.split()
                 if len(parts) >= 3:
-                    applications.append({
-                        "applicant": parts[0],
-                        "target_grade": parts[1] if len(parts) > 1 else "",
-                        "current_grade": parts[2] if len(parts) > 2 else "",
-                        "applied_at": parts[-1] if len(parts) > 3 else "",
-                    })
+                    applications.append(
+                        {
+                            "applicant": parts[0],
+                            "target_grade": parts[1] if len(parts) > 1 else "",
+                            "current_grade": parts[2] if len(parts) > 2 else "",
+                            "applied_at": parts[-1] if len(parts) > 3 else "",
+                        }
+                    )
                     if len(applications) >= 20:
                         break
 
@@ -319,7 +330,7 @@ class CafeActivityMixin:
 
                 if posts:
                     break
-            except Exception:
+            except Exception:  # noqa: S112
                 continue
 
         return posts[:max_posts]

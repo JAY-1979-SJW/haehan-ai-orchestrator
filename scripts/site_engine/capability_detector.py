@@ -3,55 +3,112 @@
 실제 브라우저 실행 없이 텍스트/버튼/메타데이터 스냅샷만으로 판단한다.
 기존 scripts/explorer/page_classifier.py를 대체하지 않는다.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from scripts.site_engine.types import GateDecision, SiteCapability
 
+_SUBMIT_BUTTON_KEYWORDS = frozenset(
+    {
+        "submit",
+        "save",
+        "저장",
+        "확인",
+        "등록",
+        "신청",
+        "완료",
+        "apply",
+        "confirm",
+        "상신",
+        "결재",
+        "투찰",
+    }
+)
 
-_SUBMIT_BUTTON_KEYWORDS = frozenset({
-    "submit", "save", "저장", "확인", "등록", "신청", "완료",
-    "apply", "confirm", "상신", "결재", "투찰",
-})
+_PUBLISH_BUTTON_KEYWORDS = frozenset(
+    {
+        "publish",
+        "post",
+        "게시",
+        "발행",
+        "공개",
+        "등록",
+    }
+)
 
-_PUBLISH_BUTTON_KEYWORDS = frozenset({
-    "publish", "post", "게시", "발행", "공개", "등록",
-})
+_SEND_BUTTON_KEYWORDS = frozenset(
+    {
+        "send",
+        "mail",
+        "전송",
+        "보내기",
+        "발송",
+        "메일",
+    }
+)
 
-_SEND_BUTTON_KEYWORDS = frozenset({
-    "send", "mail", "전송", "보내기", "발송", "메일",
-})
+_DELETE_BUTTON_KEYWORDS = frozenset(
+    {
+        "delete",
+        "remove",
+        "삭제",
+        "제거",
+        "취소",
+        "cancel",
+    }
+)
 
-_DELETE_BUTTON_KEYWORDS = frozenset({
-    "delete", "remove", "삭제", "제거", "취소", "cancel",
-})
+_SIGN_BUTTON_KEYWORDS = frozenset(
+    {
+        "sign",
+        "서명",
+        "전자서명",
+        "공동인증",
+        "인증서",
+    }
+)
 
-_SIGN_BUTTON_KEYWORDS = frozenset({
-    "sign", "서명", "전자서명", "공동인증", "인증서",
-})
+_UPLOAD_BUTTON_KEYWORDS = frozenset(
+    {
+        "upload",
+        "attach",
+        "첨부",
+        "업로드",
+        "파일",
+    }
+)
 
-_UPLOAD_BUTTON_KEYWORDS = frozenset({
-    "upload", "attach", "첨부", "업로드", "파일",
-})
+_DOWNLOAD_BUTTON_KEYWORDS = frozenset(
+    {
+        "download",
+        "다운로드",
+        "내려받기",
+        "저장",
+    }
+)
 
-_DOWNLOAD_BUTTON_KEYWORDS = frozenset({
-    "download", "다운로드", "내려받기", "저장",
-})
+_LOGIN_REQUIRED_KEYWORDS = frozenset(
+    {
+        "login",
+        "로그인",
+        "sign in",
+        "sign_in",
+        "로그인 후",
+    }
+)
 
-_LOGIN_REQUIRED_KEYWORDS = frozenset({
-    "login", "로그인", "sign in", "sign_in", "로그인 후",
-})
-
-_APPROVAL_CAPABILITIES = frozenset({
-    SiteCapability.SUBMIT,
-    SiteCapability.PUBLISH,
-    SiteCapability.SEND,
-    SiteCapability.DELETE,
-    SiteCapability.SIGN,
-    SiteCapability.UPLOAD,
-})
+_APPROVAL_CAPABILITIES = frozenset(
+    {
+        SiteCapability.SUBMIT,
+        SiteCapability.PUBLISH,
+        SiteCapability.SEND,
+        SiteCapability.DELETE,
+        SiteCapability.SIGN,
+        SiteCapability.UPLOAD,
+    }
+)
 
 
 @dataclass
@@ -117,17 +174,19 @@ def detect_capabilities_from_snapshot(
 ) -> CapabilityDetectionResult:
     caps: list[PageCapability] = []
     labels = detection_input.button_labels
-    all_text = [detection_input.page_text_snippet, detection_input.page_title]
+    all_text = [detection_input.page_text_snippet, detection_input.page_title]  # noqa: F841
 
     # READ — 항상 감지 (페이지가 있으면 읽기 가능)
-    caps.append(PageCapability(
-        capability=SiteCapability.READ,
-        detected=True,
-        confidence=1.0,
-        evidence=["page_exists"],
-        requires_approval=False,
-        required_gate=GateDecision.READ_ONLY_ALLOWED,
-    ))
+    caps.append(
+        PageCapability(
+            capability=SiteCapability.READ,
+            detected=True,
+            confidence=1.0,
+            evidence=["page_exists"],
+            requires_approval=False,
+            required_gate=GateDecision.READ_ONLY_ALLOWED,
+        )
+    )
 
     # SEARCH
     if detection_input.has_search_input:
@@ -177,16 +236,13 @@ def detect_capabilities_from_snapshot(
 
     # LOGIN_REQUIRED 감지
     login_ev = _match_keywords(
-        labels + [detection_input.page_text_snippet],
+        labels + [detection_input.page_text_snippet],  # noqa: RUF005
         _LOGIN_REQUIRED_KEYWORDS,
     )
     login_required = bool(login_ev)
 
     # USER_DIRECT_REQUIRED: sign 또는 login_required
-    user_direct = login_required or any(
-        c.required_gate == GateDecision.USER_DIRECT_REQUIRED
-        for c in caps
-    )
+    user_direct = login_required or any(c.required_gate == GateDecision.USER_DIRECT_REQUIRED for c in caps)
 
     detected_set = frozenset(c.capability for c in caps if c.detected)
 

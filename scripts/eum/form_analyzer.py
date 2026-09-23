@@ -1,4 +1,5 @@
 """WEBMAN381M00(신규등록) + WEBMAN382M00(철거) 폼 구조 분석."""
+
 from __future__ import annotations
 
 import json
@@ -12,13 +13,12 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except ImportError:
     pass
 
-from scripts.logger import get_logger
-from scripts.eum.auth import ensure_logged_in
-from scripts.web_connector import get_page
+from scripts.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -112,7 +112,7 @@ def analyze_page(url: str) -> dict[str, Any]:
 
     try:
         # CDP 클라이언트 사용 (기존 세션 재사용)
-        from scripts.cdp_client import goto_url, eval_js
+        from scripts.cdp_client import eval_js, goto_url
 
         goto_url(url)
         time.sleep(1)
@@ -157,10 +157,7 @@ def main() -> None:
     # 결과 저장
     output_file = ROOT / "data" / "form_analysis.json"
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    output_file.write_text(
-        json.dumps(results, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    output_file.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("\n" + "=" * 70)
     print(f"📋 분석 결과: {output_file}")

@@ -12,12 +12,13 @@ service / account:
 
 이번 공정에서는 저장/조회/삭제/검증/fingerprint 만. 실제 OpenAI API 호출 0.
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import stat
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger("haehan_openai_key_store")
@@ -25,14 +26,22 @@ logger = logging.getLogger("haehan_openai_key_store")
 SERVICE_NAME = "haehan-openai-dev"
 ACCOUNT_DEFAULT = "dev-api-key"
 
-MIN_KEY_LENGTH = 20            # 너무 짧은 값 거부 (placeholder/오타)
+MIN_KEY_LENGTH = 20  # 너무 짧은 값 거부 (placeholder/오타)
 MAX_KEY_LENGTH = 2048
 
 # obvious placeholder 거부 (소문자 비교)
 _PLACEHOLDER_VALUES = {
-    "sk-...", "your_api_key", "your-api-key", "yourapikey",
-    "test", "dummy", "placeholder", "xxxxx", "...",
-    "sk-test", "sk-dummy",
+    "sk-...",
+    "your_api_key",
+    "your-api-key",
+    "yourapikey",
+    "test",
+    "dummy",
+    "placeholder",
+    "xxxxx",
+    "...",
+    "sk-test",
+    "sk-dummy",
 }
 
 
@@ -42,10 +51,10 @@ _PLACEHOLDER_VALUES = {
 @dataclass
 class KeyStoreResult:
     ok: bool
-    backend: str = ""             # "keyring" | "plaintext" | ""
-    fingerprint: str = ""         # sk-****abcd (저장 성공 시)
-    error_code: str = ""          # INVALID_FORMAT / PLACEHOLDER /
-                                   # KEYRING_UNAVAILABLE / SAVE_FAILED
+    backend: str = ""  # "keyring" | "plaintext" | ""
+    fingerprint: str = ""  # sk-****abcd (저장 성공 시)
+    error_code: str = ""  # INVALID_FORMAT / PLACEHOLDER /
+    # KEYRING_UNAVAILABLE / SAVE_FAILED
 
 
 class KeyStoreError(RuntimeError):
@@ -58,6 +67,7 @@ class KeyStoreError(RuntimeError):
 def _try_keyring():
     try:
         import keyring  # type: ignore
+
         return keyring
     except Exception:
         return None
@@ -84,18 +94,15 @@ def keyring_available() -> bool:
 # ── 평문 fallback (opt-in 전용) ───────────────────────────────
 
 
-def _plaintext_path(*, base_dir: Path | None = None,
-                     account: str = ACCOUNT_DEFAULT) -> Path:
+def _plaintext_path(*, base_dir: Path | None = None, account: str = ACCOUNT_DEFAULT) -> Path:
     base = base_dir or Path(
-        os.getenv("HAEHAN_OPENAI_KEY_DIR",
-                   str(Path.home() / ".haehan_agent" / "openai")),
+        os.getenv("HAEHAN_OPENAI_KEY_DIR", str(Path.home() / ".haehan_agent" / "openai")),
     )
     safe = account.replace("/", "_").replace(":", "_")
     return base / f"{safe}.key"
 
 
-def _save_plaintext(api_key: str, *, account: str,
-                     base_dir: Path | None = None) -> None:
+def _save_plaintext(api_key: str, *, account: str, base_dir: Path | None = None) -> None:
     p = _plaintext_path(base_dir=base_dir, account=account)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".tmp")
@@ -103,13 +110,12 @@ def _save_plaintext(api_key: str, *, account: str,
     try:
         if not os.name == "nt":
             os.chmod(tmp, stat.S_IRUSR | stat.S_IWUSR)  # 0600
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     tmp.replace(p)
 
 
-def _load_plaintext(*, account: str,
-                     base_dir: Path | None = None) -> str | None:
+def _load_plaintext(*, account: str, base_dir: Path | None = None) -> str | None:
     p = _plaintext_path(base_dir=base_dir, account=account)
     if not p.exists():
         return None
@@ -119,12 +125,11 @@ def _load_plaintext(*, account: str,
         return None
 
 
-def _delete_plaintext(*, account: str,
-                       base_dir: Path | None = None) -> None:
+def _delete_plaintext(*, account: str, base_dir: Path | None = None) -> None:
     p = _plaintext_path(base_dir=base_dir, account=account)
     try:
         p.unlink(missing_ok=True)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 
@@ -165,16 +170,14 @@ def redact_key(api_key: str) -> str:
     return f"{prefix}****{raw[-4:]}"
 
 
-def get_key_fingerprint(*, account: str = ACCOUNT_DEFAULT,
-                         allow_plaintext_fallback: bool = False,
-                         base_dir: Path | None = None) -> str:
+def get_key_fingerprint(
+    *, account: str = ACCOUNT_DEFAULT, allow_plaintext_fallback: bool = False, base_dir: Path | None = None
+) -> str:
     """저장된 key 의 fingerprint 만 반환. 원문 노출 0.
 
     없으면 빈문자열.
     """
-    key = load_dev_key(account=account,
-                        allow_plaintext_fallback=allow_plaintext_fallback,
-                        base_dir=base_dir)
+    key = load_dev_key(account=account, allow_plaintext_fallback=allow_plaintext_fallback, base_dir=base_dir)
     if not key:
         return ""
     fp = redact_key(key)
@@ -186,10 +189,13 @@ def get_key_fingerprint(*, account: str = ACCOUNT_DEFAULT,
 # ── core API ─────────────────────────────────────────────────
 
 
-def save_dev_key(api_key: str, *,
-                  account: str = ACCOUNT_DEFAULT,
-                  allow_plaintext_fallback: bool = False,
-                  base_dir: Path | None = None) -> KeyStoreResult:
+def save_dev_key(
+    api_key: str,
+    *,
+    account: str = ACCOUNT_DEFAULT,
+    allow_plaintext_fallback: bool = False,
+    base_dir: Path | None = None,
+) -> KeyStoreResult:
     """key 저장. Credential Manager 우선, fallback 은 opt-in."""
     ok, err = validate_key_format(api_key)
     if not ok:
@@ -200,13 +206,11 @@ def save_dev_key(api_key: str, *,
     if kr is not None and keyring_available():
         try:
             kr.set_password(SERVICE_NAME, account, api_key)
-            return KeyStoreResult(ok=True, backend="keyring",
-                                    fingerprint=fp)
+            return KeyStoreResult(ok=True, backend="keyring", fingerprint=fp)
         except Exception:
             # keyring 실패 — fallback 검토
             if not allow_plaintext_fallback:
-                return KeyStoreResult(ok=False,
-                                        error_code="KEYRING_UNAVAILABLE")
+                return KeyStoreResult(ok=False, error_code="KEYRING_UNAVAILABLE")
     elif not allow_plaintext_fallback:
         return KeyStoreResult(ok=False, error_code="KEYRING_UNAVAILABLE")
 
@@ -216,18 +220,15 @@ def save_dev_key(api_key: str, *,
     try:
         _save_plaintext(api_key, account=account, base_dir=base_dir)
         # 권한 경고 로그 (값 미포함)
-        logger.warning(
-            "openai-key: keyring 사용 불가 — 평문 fallback 사용 중 (운영 비권장)"
-        )
-        return KeyStoreResult(ok=True, backend="plaintext",
-                                fingerprint=fp)
+        logger.warning("openai-key: keyring 사용 불가 — 평문 fallback 사용 중 (운영 비권장)")
+        return KeyStoreResult(ok=True, backend="plaintext", fingerprint=fp)
     except Exception:
         return KeyStoreResult(ok=False, error_code="SAVE_FAILED")
 
 
-def load_dev_key(*, account: str = ACCOUNT_DEFAULT,
-                  allow_plaintext_fallback: bool = False,
-                  base_dir: Path | None = None) -> str | None:
+def load_dev_key(
+    *, account: str = ACCOUNT_DEFAULT, allow_plaintext_fallback: bool = False, base_dir: Path | None = None
+) -> str | None:
     """저장된 key 반환. 호출자는 사용 후 즉시 변수 폐기 책임."""
     kr = _try_keyring()
     if kr is not None and keyring_available():
@@ -235,16 +236,16 @@ def load_dev_key(*, account: str = ACCOUNT_DEFAULT,
             v = kr.get_password(SERVICE_NAME, account)
             if v:
                 return v
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     if allow_plaintext_fallback:
         return _load_plaintext(account=account, base_dir=base_dir)
     return None
 
 
-def delete_dev_key(*, account: str = ACCOUNT_DEFAULT,
-                    allow_plaintext_fallback: bool = False,
-                    base_dir: Path | None = None) -> bool:
+def delete_dev_key(
+    *, account: str = ACCOUNT_DEFAULT, allow_plaintext_fallback: bool = False, base_dir: Path | None = None
+) -> bool:
     """key 삭제 — 둘 다 시도 (keyring + plaintext)."""
     deleted = False
     kr = _try_keyring()
@@ -252,7 +253,7 @@ def delete_dev_key(*, account: str = ACCOUNT_DEFAULT,
         try:
             kr.delete_password(SERVICE_NAME, account)
             deleted = True
-        except Exception:
+        except Exception:  # noqa: S110
             pass
     if allow_plaintext_fallback:
         _delete_plaintext(account=account, base_dir=base_dir)
@@ -260,12 +261,10 @@ def delete_dev_key(*, account: str = ACCOUNT_DEFAULT,
     return deleted
 
 
-def has_dev_key(*, account: str = ACCOUNT_DEFAULT,
-                 allow_plaintext_fallback: bool = False,
-                 base_dir: Path | None = None) -> bool:
-    return bool(load_dev_key(account=account,
-                               allow_plaintext_fallback=allow_plaintext_fallback,
-                               base_dir=base_dir))
+def has_dev_key(
+    *, account: str = ACCOUNT_DEFAULT, allow_plaintext_fallback: bool = False, base_dir: Path | None = None
+) -> bool:
+    return bool(load_dev_key(account=account, allow_plaintext_fallback=allow_plaintext_fallback, base_dir=base_dir))
 
 
 def describe_backend() -> tuple[bool, str]:
@@ -276,10 +275,19 @@ def describe_backend() -> tuple[bool, str]:
 # ── 공개 API 표면 ───────────────────────────────────────────
 
 __all__ = (
-    "SERVICE_NAME", "ACCOUNT_DEFAULT", "MIN_KEY_LENGTH",
-    "KeyStoreResult", "KeyStoreError",
-    "save_dev_key", "load_dev_key", "delete_dev_key",
-    "has_dev_key", "get_key_fingerprint",
-    "validate_key_format", "redact_key",
-    "keyring_available", "keyring_backend_name", "describe_backend",
+    "ACCOUNT_DEFAULT",
+    "MIN_KEY_LENGTH",
+    "SERVICE_NAME",
+    "KeyStoreError",
+    "KeyStoreResult",
+    "delete_dev_key",
+    "describe_backend",
+    "get_key_fingerprint",
+    "has_dev_key",
+    "keyring_available",
+    "keyring_backend_name",
+    "load_dev_key",
+    "redact_key",
+    "save_dev_key",
+    "validate_key_format",
 )

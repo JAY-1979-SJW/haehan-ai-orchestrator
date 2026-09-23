@@ -4,24 +4,27 @@
 코드 수정 없이 site profile을 생성하고 레지스트리에 등록한다.
 password/OTP/cookie 관련 자동화는 생성하지 않는다.
 """
+
 from __future__ import annotations
 
-import sys
 import os
+import sys
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ai_orchestrator.local_agent.site_profile_registry import (
-    register_site_profile, get_site_profile,
-    LOGIN_USER_DIRECT, LOGIN_WAITING_AUTH,
-    CAT_CONTENT_PLATFORM, CAT_GOVERNMENT, CAT_FINANCIAL,
-    CAT_FORUM, CAT_ECOMMERCE, CAT_GENERIC,
-    _COMMON_BLOCKED, _COMMON_DIRECT,
+from ai_orchestrator.local_agent.selector_pack_registry import (  # noqa: E402
+    generate_skeleton_pack,
+    register_selector_pack,
 )
-from ai_orchestrator.local_agent.selector_pack_registry import (
-    register_selector_pack, generate_skeleton_pack,
+from ai_orchestrator.local_agent.site_profile_registry import (  # noqa: E402
+    _COMMON_BLOCKED,
+    _COMMON_DIRECT,
+    CAT_FORUM,
+    LOGIN_WAITING_AUTH,
+    get_site_profile,
+    register_site_profile,
 )
 
 
@@ -49,8 +52,11 @@ def create_site_profile(
         "category": category,
         "default_execution": "LOCAL_BROWSER_DEFAULT",
         "login_policy": login_policy,
-        "supported_capabilities": supported_capabilities or [
-            "READONLY_EXPLORE", "SEARCH", "EXTRACT_TEXT",
+        "supported_capabilities": supported_capabilities
+        or [
+            "READONLY_EXPLORE",
+            "SEARCH",
+            "EXTRACT_TEXT",
         ],
         "delegated_actions": delegated_actions or [],
         "direct_required_actions": list(_COMMON_DIRECT),
@@ -79,8 +85,13 @@ if __name__ == "__main__":
         domains=["forum.example.com"],
         category=CAT_FORUM,
         login_policy=LOGIN_WAITING_AUTH,
-        supported_capabilities=["READONLY_EXPLORE", "SEARCH", "EXTRACT_TEXT",
-                                  "PUBLISH_WITH_PERMISSION", "COMMENT_WITH_PERMISSION"],
+        supported_capabilities=[
+            "READONLY_EXPLORE",
+            "SEARCH",
+            "EXTRACT_TEXT",
+            "PUBLISH_WITH_PERMISSION",
+            "COMMENT_WITH_PERMISSION",
+        ],
         delegated_actions=["forum_post_write", "forum_comment_write"],
         notes="예시 포럼 사이트.",
     )
@@ -89,12 +100,11 @@ if __name__ == "__main__":
     print(f"  위임 action: {result['delegated_actions']}")
 
 
-
-
 def main():
     """CLI 진입점 — 샘플 사이트 프로파일 생성."""
     import sys
+
     site = sys.argv[1] if len(sys.argv) > 1 else ""
-    print(f"[create-profile] 사이트 URL: {site or "(미지정)"}")
+    print(f"[create-profile] 사이트 URL: {site or '(미지정)'}")
     print("  사이트 프로파일 생성은 인터랙티브 입력이 필요합니다.")
     print("  scripts/local_agent/create_site_profile.py 직접 편집 후 실행하세요.")

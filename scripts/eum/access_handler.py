@@ -15,20 +15,19 @@
     else:
         print("접근 불가능")
 """
+
 from __future__ import annotations
 
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
-import sys
-
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger
-from scripts.op_log import log_op
-from scripts.popup_classifier import Decision
+from scripts.logger import get_logger  # noqa: E402
+from scripts.popup_classifier import Decision  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -92,7 +91,7 @@ def handle_access_block(
     else:
         log.error("[EUM] 최대 재시도 횟수 초과")
         result["last_error"] = "max_retries_exceeded"
-        log.critical(f"[EUM] 접근 불가능 상태 지속")
+        log.critical("[EUM] 접근 불가능 상태 지속")
         return result
 
     # 3단계: 복구 시도
@@ -135,8 +134,13 @@ def handle_access_block(
             )
 
     # 로그 기록
-    log.op("eum_access_recovery", ok=result["recovered"],
-           category=category, retries=retry_count, error=result["last_error"])
+    log.op(
+        "eum_access_recovery",
+        ok=result["recovered"],
+        category=category,
+        retries=retry_count,
+        error=result["last_error"],
+    )
 
     return result
 

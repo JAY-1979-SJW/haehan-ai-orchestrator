@@ -23,6 +23,7 @@
     if approved:
         ...실행...
 """
+
 from __future__ import annotations
 
 import json
@@ -32,26 +33,24 @@ import time
 import uuid
 import webbrowser
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
-from flask import Flask, request, jsonify, Response
-
+from flask import Flask, Response, jsonify, request
 
 # ── 설정 ────────────────────────────────────────────────────────────────────
 
 _PORT = 7722
 _HOST = "127.0.0.1"
-_TIMEOUT_SECONDS = 120   # 승인 대기 최대 시간
+_TIMEOUT_SECONDS = 120  # 승인 대기 최대 시간
 
 
 def _local_ui_fallback_enabled() -> bool:
-    return os.getenv("HAEHAN_LOCAL_APPROVAL_UI_FALLBACK", "").strip().lower() in {
-        "1", "true", "yes", "on"
-    }
+    return os.getenv("HAEHAN_LOCAL_APPROVAL_UI_FALLBACK", "").strip().lower() in {"1", "true", "yes", "on"}
+
 
 # ── 상태 ────────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class ApprovalRequest:
@@ -61,7 +60,7 @@ class ApprovalRequest:
     category: str
     detail: dict
     created_at: str
-    result: str = "pending"   # pending / approved / rejected / timeout
+    result: str = "pending"  # pending / approved / rejected / timeout
     event: threading.Event = field(default_factory=threading.Event, repr=False)
 
 
@@ -165,6 +164,7 @@ _HTML = """<!DOCTYPE html>
 @app.route("/", methods=["GET"])
 def index():
     from flask import render_template_string
+
     with _lock:
         pending = [
             {
@@ -188,14 +188,16 @@ def decide(request_id: str):
         req = _pending.get(request_id)
     if req:
         req.result = result
-        _history.append({
-            "request_id": request_id,
-            "action": req.action,
-            "label": req.label,
-            "category": req.category,
-            "result": result,
-            "created_at": req.created_at,
-        })
+        _history.append(
+            {
+                "request_id": request_id,
+                "action": req.action,
+                "label": req.label,
+                "category": req.category,
+                "result": result,
+                "created_at": req.created_at,
+            }
+        )
         req.event.set()
     return '<meta http-equiv="refresh" content="0;url=/">'
 
@@ -203,10 +205,12 @@ def decide(request_id: str):
 @app.route("/api/status", methods=["GET"])
 def api_status():
     with _lock:
-        return jsonify({
-            "pending": len([r for r in _pending.values() if r.result == "pending"]),
-            "history": len(_history),
-        })
+        return jsonify(
+            {
+                "pending": len([r for r in _pending.values() if r.result == "pending"]),
+                "history": len(_history),
+            }
+        )
 
 
 @app.route("/api/audit/stream", methods=["GET"])
@@ -215,9 +219,12 @@ def audit_stream():
 
     curl http://localhost:7722/api/audit/stream
     """
+
     def _generate():
         import time as _time
+
         from ai_orchestrator.local_agent.browser.audit_log import get_audit_path
+
         path = get_audit_path()
         last_size = path.stat().st_size if path.exists() else 0
         yield f"data: {json.dumps({'event': 'connected', 'path': str(path)}, ensure_ascii=False)}\n\n"
@@ -250,7 +257,9 @@ def audit_stream():
 def audit_recent():
     """최근 감사 로그 N건 반환."""
     from flask import request as freq
+
     from ai_orchestrator.local_agent.browser.audit_log import read_log
+
     n = int(freq.args.get("n", 50))
     entries = read_log()
     return jsonify({"entries": entries[-n:], "total": len(entries)})
@@ -260,13 +269,16 @@ def audit_recent():
 def audit_summary():
     """감사 로그 요약 통계."""
     from ai_orchestrator.local_agent.browser.audit_log import summarize_log
+
     return jsonify(summarize_log())
 
 
 # ── 서버 시작 ────────────────────────────────────────────────────────────────
 
+
 def _run_server():
     import logging
+
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
     app.run(host=_HOST, port=_PORT, debug=False, use_reloader=False)
@@ -285,15 +297,17 @@ def ensure_server_running() -> bool:
         time.sleep(0.2)
         try:
             import urllib.request
+
             urllib.request.urlopen(f"http://{_HOST}:{_PORT}/api/status", timeout=1)
             _server_started = True
             return True
-        except Exception:
+        except Exception:  # noqa: S112
             continue
     return False
 
 
 # ── 공개 API ─────────────────────────────────────────────────────────────────
+
 
 def request_approval(
     action: str,
@@ -340,7 +354,7 @@ def request_approval(
         label=label,
         category=category,
         detail=detail or {},
-        created_at=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+        created_at=datetime.now(UTC).strftime("%H:%M:%S"),
     )
     with _lock:
         _pending[req_id] = req
@@ -374,6 +388,7 @@ def approval_url() -> str:
 # ── 비동기 승인 큐 (3번 보완) ─────────────────────────────────────────────────
 # request_approval()은 결과를 blocking 대기하지만,
 # request_approval_async()는 즉시 반환 → AUTO 액션 계속 진행 가능.
+
 
 class AsyncApprovalHandle:
     """비동기 승인 핸들. poll() 또는 wait()로 결과 확인."""
@@ -446,7 +461,7 @@ def request_approval_async(
             label=label,
             category=category,
             detail=detail or {},
-            created_at=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+            created_at=datetime.now(UTC).strftime("%H:%M:%S"),
             result="approved" if approved else "rejected",
         )
         req.event.set()
@@ -461,7 +476,7 @@ def request_approval_async(
         label=label,
         category=category,
         detail=detail or {},
-        created_at=datetime.now(timezone.utc).strftime("%H:%M:%S"),
+        created_at=datetime.now(UTC).strftime("%H:%M:%S"),
     )
     with _lock:
         _pending[req_id] = req
@@ -473,6 +488,6 @@ def request_approval_async(
     print(f"\n[비동기 승인 요청] {action.upper()}: {label}")
     print(f"  카테고리: {category}")
     print(f"  브라우저에서 승인해주세요 → {url}")
-    print(f"  (작업 계속 진행 중... handle.wait()로 결과 확인)")
+    print("  (작업 계속 진행 중... handle.wait()로 결과 확인)")
 
     return AsyncApprovalHandle(req)

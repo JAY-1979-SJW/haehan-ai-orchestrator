@@ -6,11 +6,11 @@ Validates submit requests against policy fixture allowlist.
 This module contains ONLY policy judgment logic.
 No side effects, stateless, pure functions.
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
 from urllib.parse import urlparse
 
 
@@ -142,7 +142,7 @@ def path_matches_allowlist(actual_path: str, allowed_paths: list[str]) -> bool:
     return False
 
 
-def detect_prompt_injection(prompt_text: str, field_values: dict = None) -> list[str]:
+def detect_prompt_injection(prompt_text: str, field_values: dict = None) -> list[str]:  # noqa: RUF013
     """Detect prompt injection patterns.
 
     Returns list of matched patterns. Empty if none detected.
@@ -180,7 +180,7 @@ def contains_denied_field(fields: list[dict], denied_field_names: list[str]) -> 
     denied_lower = {name.lower() for name in denied_field_names}
     found = []
 
-    for field in fields:
+    for _field in fields:
         field_name = field.get("name", "").lower()
         if field_name in denied_lower:
             found.append(field_name)
@@ -260,9 +260,7 @@ def validate_intent(intent: str, allowed_intents: list[str]) -> bool:
     return intent in allowed_intents
 
 
-def validate_submit_policy(
-    request: SubmitValidationRequest, allowlist: dict
-) -> SubmitPolicyResult:
+def validate_submit_policy(request: SubmitValidationRequest, allowlist: dict) -> SubmitPolicyResult:
     """Validate submit request against policy fixture.
 
     Main validator function. Checks all conditions sequentially.
@@ -287,9 +285,7 @@ def validate_submit_policy(
     result.matched_case_id = request.site_id
     result.matched_policy_entry = policy_entry or {}
     result.preview_required = policy_entry.get("requires_preview", False) if policy_entry else False
-    result.user_confirm_required = (
-        policy_entry.get("requires_user_confirm", False) if policy_entry else False
-    )
+    result.user_confirm_required = policy_entry.get("requires_user_confirm", False) if policy_entry else False
 
     # STEP 2: Check origin match
     allowed_origins = policy_entry.get("allowed_origins", []) if policy_entry else []
@@ -298,9 +294,7 @@ def validate_submit_policy(
 
     if not origin_match:
         actual_origin = extract_origin(request.url)
-        result.reasons.append(
-            f"origin 불일치: {actual_origin} not in {allowed_origins}"
-        )
+        result.reasons.append(f"origin 불일치: {actual_origin} not in {allowed_origins}")
         return result
 
     # STEP 3: Check path match (if specified)
@@ -328,9 +322,7 @@ def validate_submit_policy(
     button_match = validate_submit_button_id(request.submit_button_id, allowed_button_ids)
 
     if not button_match:
-        result.reasons.append(
-            f"submit_button_id 불일치: '{request.submit_button_id}' not in {allowed_button_ids}"
-        )
+        result.reasons.append(f"submit_button_id 불일치: '{request.submit_button_id}' not in {allowed_button_ids}")
         return result
 
     # STEP 6: Check intent match

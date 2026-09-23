@@ -9,6 +9,7 @@ V1 결과 기반:
 - mybox: api.mybox.naver.com/service/file/get?resourceKey=root 정상 작동
 - 그 외 file/list API는 직접 호출/캡처되지 않음 → 폴더 진입 시뮬레이션 필요
 """
+
 from __future__ import annotations
 
 import json
@@ -16,11 +17,9 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-
 
 HOOK_JS = """
 window.__cap = [];
@@ -92,7 +91,7 @@ def explore_mail_search_v2(page, report: dict):
     # 2) search_area div 클릭
     print("  search_area 클릭 시도")
     clicked = False
-    for sel in ['div.search_area', '[class*="search_area"]', '[class="search_area"]']:
+    for sel in ["div.search_area", '[class*="search_area"]', '[class="search_area"]']:
         try:
             el = page.query_selector(sel)
             if el and el.is_visible():
@@ -124,7 +123,7 @@ def explore_mail_search_v2(page, report: dict):
         report["mail_search_v2"]["search_area_inner"] = inner_elements
         if inner_elements:
             print(f"    search_area HTML: {inner_elements.get('outerHTML', '')[:300]!r}")
-            for c in (inner_elements.get('children') or [])[:10]:
+            for c in (inner_elements.get("children") or [])[:10]:
                 print(f"      - {c['tag']} cls={c['cls'][:40]!r} text={c['text']!r}")
 
     # 3) 클릭 후 input 다시 탐색
@@ -199,7 +198,7 @@ def explore_mail_search_v2(page, report: dict):
     }""")
     report["mail_search_v2"]["direct_api_attempts"] = direct_apis
     for r in direct_apis:
-        print(f"    [{r.get('status','ERR')}] {r.get('url','')}: hasBody={r.get('hasBody',False)}")
+        print(f"    [{r.get('status', 'ERR')}] {r.get('url', '')}: hasBody={r.get('hasBody', False)}")
 
 
 def explore_mybox_v2(page, report: dict):
@@ -263,9 +262,9 @@ def explore_mybox_v2(page, report: dict):
         report["mybox_v2"]["list_api_attempts"] = list_attempts
         for r in list_attempts:
             tag = "✓" if r.get("hasList") else ("?" if r.get("hasResult") else "✗")
-            print(f"    {tag} [{r.get('status','ERR')}] {r.get('url','')[:60]}")
+            print(f"    {tag} [{r.get('status', 'ERR')}] {r.get('url', '')[:60]}")
             if r.get("hasResult"):
-                print(f"      preview: {r.get('preview','')[:200]!r}")
+                print(f"      preview: {r.get('preview', '')[:200]!r}")
 
     # 3) DOM 안에서 폴더/파일 항목 발견 시도 (페이지 상호작용 가능 요소)
     print("  파일 그리드 요소 탐색")
@@ -318,9 +317,11 @@ def explore_mybox_v2(page, report: dict):
     # 5) URL navigation 시도 (특정 폴더 ID로)
     _reset_cap(page)
     print("  /main/web/my 외 URL 진입 시도")
-    for url in ["https://mybox.naver.com/main/web/my/folder/root",
-                "https://mybox.naver.com/main/web/photo",
-                "https://mybox.naver.com/main/web/document"]:
+    for url in [
+        "https://mybox.naver.com/main/web/my/folder/root",
+        "https://mybox.naver.com/main/web/photo",
+        "https://mybox.naver.com/main/web/document",
+    ]:
         try:
             page.goto(url)
             time.sleep(4)
@@ -349,14 +350,18 @@ def main():
             explore_mail_search_v2(a._page, report)
         except Exception as e:
             print(f"  메일검색 V2 탐지 오류: {e}")
-            import traceback; traceback.print_exc()
+            import traceback
+
+            traceback.print_exc()
             report["mail_search_v2"]["error"] = str(e)
 
         try:
             explore_mybox_v2(a._page, report)
         except Exception as e:
             print(f"  MyBox V2 탐지 오류: {e}")
-            import traceback; traceback.print_exc()
+            import traceback
+
+            traceback.print_exc()
             report["mybox_v2"]["error"] = str(e)
 
     out_file.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -10,7 +10,6 @@ safe_to_execute는 항상 False.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from typing import Any
@@ -18,20 +17,20 @@ from typing import Any
 try:
     from fastapi import FastAPI, HTTPException, Path
     from fastapi.responses import HTMLResponse, JSONResponse
+
     _FASTAPI_AVAILABLE = True
 except ImportError:
     _FASTAPI_AVAILABLE = False
 
 from .user_present_state_store import (
+    _CONFIRMABLE_STATES,
+    STATE_BLOCKED,
+    STATE_CANCELLED,
+    STATE_FAILED,
+    STATE_USER_CONFIRMED,
+    STATE_WAITING_FOR_USER,
     UserPresentStateStore,
     default_store,
-    validate_user_present_task,
-    STATE_WAITING_FOR_USER,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
-    STATE_BLOCKED,
-    STATE_FAILED,
-    _CONFIRMABLE_STATES,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,11 +43,15 @@ DEFAULT_PORT = 18080
 
 def _html_ui_fallback_enabled() -> bool:
     return os.getenv("HAEHAN_USER_PRESENT_UI_FALLBACK", "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
 
 
 # ── HTML 생성 헬퍼 ───────────────────────────────────────────────────────────
+
 
 def _auth_method_label(detected: list[str]) -> str:
     labels = {
@@ -89,16 +92,16 @@ def _render_task_html(task: dict[str, Any]) -> str:
         f'<form method="post" action="/tasks/{wfid}/confirm" style="display:inline;">'
         f'<button type="submit" style="background:#F97316;color:#fff;border:none;'
         f'padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;">인증 완료</button></form>'
-        if can_confirm else
-        '<button disabled style="background:#E5E7EB;color:#9CA3AF;border:none;'
+        if can_confirm
+        else '<button disabled style="background:#E5E7EB;color:#9CA3AF;border:none;'
         'padding:8px 20px;border-radius:6px;font-size:14px;">인증 완료</button>'
     )
     cancel_btn = (
         f'<form method="post" action="/tasks/{wfid}/cancel" style="display:inline;">'
         f'<button type="submit" style="background:#6B7280;color:#fff;border:none;'
         f'padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;margin-left:8px;">중단</button></form>'
-        if can_cancel else
-        '<button disabled style="background:#E5E7EB;color:#9CA3AF;border:none;'
+        if can_cancel
+        else '<button disabled style="background:#E5E7EB;color:#9CA3AF;border:none;'
         'padding:8px 20px;border-radius:6px;font-size:14px;margin-left:8px;">중단</button>'
     )
 
@@ -112,7 +115,7 @@ def _render_task_html(task: dict[str, Any]) -> str:
     <div><strong>사이트:</strong> {site_name}</div>
     <div><strong>인증 방식:</strong> {auth_label}</div>
     <div><strong>작업 ID:</strong> <code style="font-size:11px;color:#6B7280;">{wfid}</code></div>
-    <div><strong>생성 시각:</strong> {task.get('created_at', '—')}</div>
+    <div><strong>생성 시각:</strong> {task.get("created_at", "—")}</div>
   </div>
   <div style="margin-top:14px;padding:12px;background:#FFF7ED;border-radius:6px;font-size:13px;color:#92400E;">
     ⚠️ 이 단계는 사용자가 직접 인증을 완료해야 합니다.<br>
@@ -166,6 +169,7 @@ h1 {{ font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #0F172A; }}
 
 # ── FastAPI 앱 팩토리 ─────────────────────────────────────────────────────────
 
+
 def create_app(
     store: UserPresentStateStore | None = None,
     *,
@@ -186,7 +190,7 @@ def create_app(
         title="로컬 Agent 사용자 직접 인증 UI",
         description="127.0.0.1 전용 로컬 웹 UI. 민감정보 미표시.",
         version="1.0.0",
-        docs_url=None,   # 외부 docs 노출 금지
+        docs_url=None,  # 외부 docs 노출 금지
         redoc_url=None,
     )
 
@@ -205,12 +209,14 @@ def create_app(
         sanitized = [_store.sanitize_user_present_task_for_user(t) for t in tasks]
         if html_ui_enabled:
             return HTMLResponse(_render_page_html(sanitized))
-        return JSONResponse({
-            "tasks": sanitized,
-            "count": len(sanitized),
-            "safe_to_execute": False,
-            "html_ui_enabled": False,
-        })
+        return JSONResponse(
+            {
+                "tasks": sanitized,
+                "count": len(sanitized),
+                "safe_to_execute": False,
+                "html_ui_enabled": False,
+            }
+        )
 
     @app.get("/tasks")
     async def list_tasks() -> dict[str, Any]:
@@ -244,6 +250,7 @@ def create_app(
         sanitized = _store.sanitize_user_present_task_for_user(updated)
         if html_ui_enabled:
             from fastapi.responses import RedirectResponse
+
             return RedirectResponse(url="/", status_code=303)
         return JSONResponse({**sanitized, "safe_to_execute": False})
 
@@ -263,6 +270,7 @@ def create_app(
         sanitized = _store.sanitize_user_present_task_for_user(updated)
         if html_ui_enabled:
             from fastapi.responses import RedirectResponse
+
             return RedirectResponse(url="/", status_code=303)
         return JSONResponse({**sanitized, "safe_to_execute": False})
 
@@ -270,6 +278,7 @@ def create_app(
 
 
 # ── 서버 실행 진입점 ──────────────────────────────────────────────────────────
+
 
 def run_server(
     host: str = DEFAULT_HOST,
@@ -280,7 +289,7 @@ def run_server(
     로컬 UI 서버를 실행한다.
     host는 기본값 127.0.0.1. 0.0.0.0은 명시적으로 전달하지 않는 한 사용 불가.
     """
-    if host == "0.0.0.0":
+    if host == "0.0.0.0":  # noqa: S104
         raise ValueError("0.0.0.0 bind는 보안 정책상 금지됩니다. 127.0.0.1을 사용하세요.")
 
     try:

@@ -11,7 +11,7 @@
 9. API /api/v1/inbox/classify 동작
 10. candidate linked_task_id=None 유지
 """
-import json
+
 import os
 import sys
 
@@ -23,8 +23,8 @@ import candidate_store
 import inbox_store
 from message_classifier import classify_message
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def tmp_inbox(tmp_path):
@@ -41,6 +41,7 @@ def flask_app():
     os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
     from dashboard import create_app
+
     app = create_app()
     app.config["TESTING"] = True
     return app
@@ -67,6 +68,7 @@ def _kw_item(source_type: str, title: str, body: str, sender: str = "user@kakao"
 
 # ── 1. kakaowork 메시지 분류 성공 ─────────────────────────────────────────────
 
+
 def test_kakaowork_sales_classified():
     item = _kw_item("kakaowork", "견적서 요청", "납품 단가와 공급 조건 보내드립니다. 계약서 검토 요청드립니다.")
     result = classify_message(item)
@@ -92,6 +94,7 @@ def test_kakaowork_support_classified():
 
 # ── 2. kakaotalk_channel 메시지 분류 성공 ─────────────────────────────────────
 
+
 def test_kakaotalk_channel_support_classified():
     item = _kw_item("kakaotalk_channel", "문의드립니다", "고객센터 문의입니다. 답변 부탁드립니다.")
     result = classify_message(item)
@@ -100,7 +103,9 @@ def test_kakaotalk_channel_support_classified():
 
 
 def test_kakaotalk_channel_meeting_classified():
-    item = _kw_item("kakaotalk_channel", "회의 일정", "다음 주 미팅 agenda 공유드립니다. 회의록 작성 예정이며 워크숍 참석 바랍니다.")
+    item = _kw_item(
+        "kakaotalk_channel", "회의 일정", "다음 주 미팅 agenda 공유드립니다. 회의록 작성 예정이며 워크숍 참석 바랍니다."
+    )
     result = classify_message(item)
     assert result["category"] == "meeting"
 
@@ -112,6 +117,7 @@ def test_kakaotalk_channel_sales_classified():
 
 
 # ── 3. 확신 낮음 → needs_review=True ─────────────────────────────────────────
+
 
 def test_low_confidence_needs_review_kakaowork():
     """키워드 1개 미만 → general + needs_review=True."""
@@ -140,6 +146,7 @@ def test_multiple_keywords_confident_kakaowork():
 
 
 # ── 4. candidate 생성 검증 ────────────────────────────────────────────────────
+
 
 def test_classify_saves_candidate(tmp_cand):
     item = _kw_item("kakaowork", "견적 요청", "견적 문의드립니다. 단가 확인 부탁드립니다.")
@@ -185,6 +192,7 @@ def test_candidate_linked_task_id_null(tmp_cand):
 
 # ── 5. source_type별 분리 조회 ────────────────────────────────────────────────
 
+
 def test_source_type_inbox_filter(tmp_inbox):
     """kakaowork / kakaotalk_channel / email 각각 독립 필터."""
     inbox_store.save_message(
@@ -228,8 +236,10 @@ def test_source_type_inbox_filter(tmp_inbox):
 
 # ── 6. 자동 실행 미발생 확인 ──────────────────────────────────────────────────
 
+
 def test_no_auto_execution_on_classify():
     import task_store as ts
+
     ts.clear()
 
     item = _kw_item("kakaowork", "견적 요청", "견적 문의드립니다.")
@@ -257,19 +267,21 @@ def test_no_auto_task_creation_on_classify(tmp_cand):
 
     # email_tasks.jsonl 기본 경로에 task가 생성되면 안됨
     import os
+
     task_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "storage", "email_tasks.jsonl"
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "storage", "email_tasks.jsonl"
     )
     if os.path.exists(task_path):
-        tasks = email_task_store.list_email_tasks()
+        tasks = email_task_store.list_email_tasks()  # noqa: F841
         # 테스트 중 생성된 task가 없어야 함 (기존 데이터 무시)
     # task_store는 비어있어야 함
     import task_store as ts
+
     assert ts.get(item["external_id"]) is None
 
 
 # ── 7. 앱 부팅 가능 여부 ──────────────────────────────────────────────────────
+
 
 def test_app_boot_with_classify_route(flask_app):
     rules = {r.rule for r in flask_app.url_map.iter_rules()}
@@ -280,6 +292,7 @@ def test_app_boot_with_classify_route(flask_app):
 
 
 # ── 8. 기존 email 분류 정책 무변경 ───────────────────────────────────────────
+
 
 def test_email_classify_unchanged():
     """email source_type은 기존 email_classifier.classify()와 동일 결과."""
@@ -314,6 +327,7 @@ def test_no_conflict_with_approval_manager():
 
 # ── 9. API /api/v1/inbox/classify 동작 ───────────────────────────────────────
 
+
 def test_api_classify_kakaowork(client):
     """카카오워크 메시지 1건 수집 후 classify API 호출."""
     client.post(
@@ -321,7 +335,11 @@ def test_api_classify_kakaowork(client):
         json={
             "type": "message",
             "user_id": "kw-api-user",
-            "message": {"id": "api-msg-001", "text": "견적 문의드립니다. 단가 확인 부탁드립니다.", "created_at": 1713751200000},
+            "message": {
+                "id": "api-msg-001",
+                "text": "견적 문의드립니다. 단가 확인 부탁드립니다.",
+                "created_at": 1713751200000,
+            },
             "channel": {"id": "ch-001"},
         },
     )
@@ -365,6 +383,7 @@ def test_api_classify_kakaotalk_channel(client):
 
 
 # ── 10. candidate source 구분 ────────────────────────────────────────────────
+
 
 def test_kakao_classification_reason_has_source(tmp_cand):
     """classification_reason에 source_type이 포함됨."""

@@ -1,19 +1,34 @@
 """
 사용자 위임 권한 정책 테스트
 """
+
 import pytest
+
 from ai_orchestrator.local_agent.action_risk_policy import (
+    GRADE_AUTO_ALLOWED,
+    GRADE_BLOCKED,
+    GRADE_USER_DELEGATED,
+    GRADE_USER_DIRECT,
     classify_action,
-    is_delegatable, is_blocked, is_auto_allowed, is_user_direct_required,
-    GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, GRADE_USER_DIRECT, GRADE_BLOCKED,
+    is_auto_allowed,
+    is_blocked,
+    is_delegatable,
+    is_user_direct_required,
 )
 from ai_orchestrator.local_agent.delegated_permission_policy import (
-    build_permission, check_permission, revoke_permission, increment_execution,
-    CHECK_ALLOWED, CHECK_PERMISSION_REQUIRED, CHECK_EXPIRED,
-    CHECK_REVOKED, CHECK_EXHAUSTED, CHECK_SCOPE_EXCEEDED, CHECK_BLOCKED,
-    PERM_ACTIVE, PERM_REVOKED, PERM_EXHAUSTED,
+    CHECK_ALLOWED,
+    CHECK_BLOCKED,
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_PERMISSION_REQUIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+    PERM_ACTIVE,
+    build_permission,
+    check_permission,
+    increment_execution,
+    revoke_permission,
 )
-import time
 
 
 class TestActionRiskGrade:
@@ -192,7 +207,9 @@ class TestCheckPermission:
     def test_expired_permission_blocked(self):
         perm = build_permission("blog_publish", "blog.naver.com", duration_seconds=0)
         # duration_seconds=0 → 즉시 만료
-        import time; time.sleep(0.01)
+        import time
+
+        time.sleep(0.01)
         result = check_permission(perm, "blog_publish", "blog.naver.com")
         assert result["result"] == CHECK_EXPIRED
 

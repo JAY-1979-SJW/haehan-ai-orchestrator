@@ -3,20 +3,18 @@
 Tests approval preflight evaluation before dispatch.
 Uses temporary JSONL approval store for each test.
 """
-import json
-import pytest
-from pathlib import Path
-from datetime import datetime, timezone, timedelta
 
+import json
+
+from ai_orchestrator.browser_tool.approval_record_store import (
+    append_approval_record,
+    build_approval_decision,
+    build_approval_request,
+)
 from ai_orchestrator.browser_tool.gate_approval_preflight import (
     build_gate_approval_context,
     evaluate_gate_approval_preflight,
     validate_gate_approval_result,
-)
-from ai_orchestrator.browser_tool.approval_record_store import (
-    build_approval_request,
-    build_approval_decision,
-    append_approval_record,
 )
 
 
@@ -621,7 +619,7 @@ class TestEvaluateGateApprovalPreflight:
                     imports.add(node.module)
 
         forbidden = {"task_executor", "dispatcher", "action_registry", "browser"}
-        found = [imp for imp in imports if any(f in imp for f in forbidden)]
+        found = [imp for imp in imports if any(f in imp for f in forbidden)]  # noqa: F841
 
         # Only "browser_tool" should be present, not actual execution modules
         assert not any("task_executor" in imp for imp in imports)

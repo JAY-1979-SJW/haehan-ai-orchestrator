@@ -14,11 +14,11 @@
     name = ProductNameSection(page)
     name.set("프리미엄 코튼 반팔 티셔츠")
 """
+
 from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from playwright.sync_api import Page
 
@@ -29,6 +29,7 @@ _log = get_logger(__name__)
 
 
 # ── 공통 베이스 ───────────────────────────────────────────────────────────────
+
 
 class FormSection:
     """폼 섹션 공통 기반."""
@@ -182,6 +183,7 @@ class FormSection:
 # 섹션 1. 카테고리
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class CategorySection(FormSection):
     """카테고리 선택.
 
@@ -190,12 +192,14 @@ class CategorySection(FormSection):
         cat.set("패션의류")               # 검색어로 첫 번째 결과 선택
         cat.set("패션의류", result_idx=2)  # n번째 결과 선택
     """
+
     section_name = "category"
 
     def set(self, keyword: str, result_idx: int = 0) -> dict:
         # 0. 캐시에서 ID 조회 → 직접 주입 (검색 생략)
         try:
             from scripts.naver.smartstore.product.category_cache import find_id, set_by_id
+
             cat_id = find_id(keyword)
             if cat_id:
                 ok = set_by_id(self.page, cat_id)
@@ -296,8 +300,10 @@ class CategorySection(FormSection):
 # 섹션 3. 예약구매
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class PreOrderSection(FormSection):
     """예약구매 설정."""
+
     section_name = "pre_order"
 
     def disable(self) -> dict:
@@ -318,8 +324,10 @@ class PreOrderSection(FormSection):
 # 섹션 4. 상품명
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ProductNameSection(FormSection):
     """상품명 입력 (최대 100자)."""
+
     section_name = "product_name"
 
     def set(self, name: str) -> dict:
@@ -342,8 +350,10 @@ class ProductNameSection(FormSection):
 # 섹션 5. 판매가
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class PriceSection(FormSection):
     """판매가 / 정가 설정."""
+
     section_name = "price"
 
     def set_sale_price(self, price: int) -> dict:
@@ -367,8 +377,10 @@ class PriceSection(FormSection):
 # 섹션 6. 즉시할인
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class DiscountSection(FormSection):
     """즉시할인 설정."""
+
     section_name = "discount"
 
     def enable(self) -> dict:
@@ -382,13 +394,15 @@ class DiscountSection(FormSection):
 # 섹션 7. 부가세
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class TaxSection(FormSection):
     """부가세 설정."""
+
     section_name = "tax"
 
     TAX_MAP = {
         "과세": SEL.TAX_TAXABLE,
-        "TAX":  SEL.TAX_TAXABLE,
+        "TAX": SEL.TAX_TAXABLE,
         "면세": SEL.TAX_EXEMPT,
         "FREE": SEL.TAX_EXEMPT,
         "영세": SEL.TAX_ZERO,
@@ -406,8 +420,10 @@ class TaxSection(FormSection):
 # 섹션 8. 재고수량
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class StockSection(FormSection):
     """재고수량 / 최소·최대 구매수량."""
+
     section_name = "stock"
 
     def set_stock(self, qty: int) -> dict:
@@ -421,8 +437,7 @@ class StockSection(FormSection):
     def set_max_purchase(self, qty: int) -> dict:
         return self._fill(SEL.MAX_PURCHASE, str(qty), "최대구매수량")
 
-    def set(self, stock: int, min_purchase: int = 1,
-            max_purchase: int | None = None) -> dict:
+    def set(self, stock: int, min_purchase: int = 1, max_purchase: int | None = None) -> dict:
         r = self.set_stock(stock)
         if not r["ok"]:
             return r
@@ -436,6 +451,7 @@ class StockSection(FormSection):
 # 섹션 9. 옵션
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class OptionSection(FormSection):
     """판매옵션 설정 (단독형 기준).
 
@@ -444,6 +460,7 @@ class OptionSection(FormSection):
         opt.disable()                         # 옵션 없음
         opt.add_single({"색상": ["블랙", "화이트"]})
     """
+
     section_name = "option"
 
     def disable(self) -> dict:
@@ -474,7 +491,7 @@ class OptionSection(FormSection):
                 continue
 
             for val in values:
-                r_val = self._fill([SEL.OPTION_VALUE_INPUT], val, "옵션값")
+                r_val = self._fill([SEL.OPTION_VALUE_INPUT], val, "옵션값")  # noqa: F841
                 # Enter로 값 추가
                 try:
                     self.page.locator(SEL.OPTION_VALUE_INPUT).first.press("Enter")
@@ -493,6 +510,7 @@ class OptionSection(FormSection):
 # 섹션 10. 대표이미지 / 섹션 11. 추가이미지
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ImageSection(FormSection):
     """이미지 업로드 (대표이미지 / 추가이미지).
 
@@ -501,11 +519,11 @@ class ImageSection(FormSection):
         img.upload_main("C:/images/product_main.jpg")
         img.upload_additional(["C:/images/extra1.jpg", "C:/images/extra2.jpg"])
     """
+
     section_name = "image"
 
     def upload_main(self, image_path: str) -> dict:
-        return self._upload_file(image_path, label="대표이미지",
-                                  context_hint="representative")
+        return self._upload_file(image_path, label="대표이미지", context_hint="representative")
 
     def upload_additional(self, image_paths: list[str]) -> dict:
         results = []
@@ -516,8 +534,7 @@ class ImageSection(FormSection):
         ok_count = sum(1 for r in results if r.get("ok"))
         return {"ok": ok_count > 0, "uploaded": ok_count, "results": results}
 
-    def _upload_file(self, image_path: str, label: str = "이미지",
-                     context_hint: str = "") -> dict:
+    def _upload_file(self, image_path: str, label: str = "이미지", context_hint: str = "") -> dict:
         p = Path(image_path)
         if not p.exists():
             return {"ok": False, "error": f"파일 없음: {image_path}"}
@@ -544,8 +561,10 @@ class ImageSection(FormSection):
 # 섹션 12. 동영상
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class VideoSection(FormSection):
     """동영상 타이틀 / URL 입력."""
+
     section_name = "video"
 
     def set(self, title: str = "", url: str = "") -> dict:
@@ -560,6 +579,7 @@ class VideoSection(FormSection):
 # ══════════════════════════════════════════════════════════════════════════════
 # 섹션 13. 상세설명
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 class DescriptionSection(FormSection):
     """상세설명 — SmartEditorSession 연결 진입점.
@@ -578,6 +598,7 @@ class DescriptionSection(FormSection):
         ed.write_text("상품 특징...")
         ed.submit()
     """
+
     section_name = "description"
 
     @property
@@ -585,6 +606,7 @@ class DescriptionSection(FormSection):
         """SmartEditorSession 인스턴스 (lazy)."""
         if not hasattr(self, "_editor"):
             from scripts.naver.smartstore.product.description_editor import SmartEditorSession
+
             self._editor = SmartEditorSession(self.page)
         return self._editor
 
@@ -630,8 +652,7 @@ class DescriptionSection(FormSection):
         """네이버 자체 AI로 상품설명 자동 생성 + 적용 (Beta)."""
         return self.editor.ai.generate_and_apply(keywords)
 
-    def write_claude(self, product: dict,
-                     image_paths: list[str] | None = None) -> dict:
+    def write_claude(self, product: dict, image_paths: list[str] | None = None) -> dict:
         """Claude API로 HTML 상세설명 자동 생성 + SmartEditor 입력.
 
         Args:
@@ -643,6 +664,7 @@ class DescriptionSection(FormSection):
             {"ok": bool, "html": str, "inserted": bool}
         """
         from scripts.naver.smartstore.product.ai_description_writer import AIDescriptionWriter
+
         writer = AIDescriptionWriter(page=self.page)
         return writer.write(product, image_paths=image_paths)
 
@@ -651,8 +673,10 @@ class DescriptionSection(FormSection):
 # 섹션 14. 상품 주요정보
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ProductInfoSection(FormSection):
     """원산지, 브랜드, 제조사, 상품 상태."""
+
     section_name = "product_info"
 
     def set_brand(self, brand: str) -> dict:
@@ -681,9 +705,14 @@ class ProductInfoSection(FormSection):
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
-    def set(self, brand: str = "", manufacturer: str = "",
-            origin: str = "", product_type: str = "신상품",
-            self_made: bool = False) -> dict:
+    def set(
+        self,
+        brand: str = "",
+        manufacturer: str = "",
+        origin: str = "",
+        product_type: str = "신상품",
+        self_made: bool = False,
+    ) -> dict:
         if brand:
             self.set_brand(brand)
         if manufacturer:
@@ -703,8 +732,10 @@ class ProductInfoSection(FormSection):
 # 섹션 15. 사이즈
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class SizeSection(FormSection):
     """사이즈 설정."""
+
     section_name = "size"
 
     def disable(self) -> dict:
@@ -718,6 +749,7 @@ class SizeSection(FormSection):
 # 섹션 17. 검색설정 (키워드 태그)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class SearchTagSection(FormSection):
     """검색 태그 / 키워드 설정.
 
@@ -725,6 +757,7 @@ class SearchTagSection(FormSection):
         tag = SearchTagSection(page)
         tag.set(["LED 조명", "무드등", "침실 조명"])
     """
+
     section_name = "search_tag"
 
     def set(self, keywords: list[str]) -> dict:
@@ -746,8 +779,10 @@ class SearchTagSection(FormSection):
 # 섹션 18. 노출채널
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class ChannelSection(FormSection):
     """노출채널 설정 (스마트스토어 / 네이버쇼핑)."""
+
     section_name = "channel"
 
     def set_display_on(self) -> dict:
@@ -779,8 +814,10 @@ class ChannelSection(FormSection):
 # 저장 / 임시저장
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 class SaveSection(FormSection):
     """저장 / 임시저장 / 미리보기."""
+
     section_name = "save"
 
     def temp_save(self) -> dict:

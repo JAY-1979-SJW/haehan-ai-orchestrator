@@ -3,13 +3,11 @@
 cafe_member_profile/cafe_members/cafe_stats. CafeMixin 다중상속.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 import re
 import time
-from typing import Optional
-
-from .cafe_mixin_common import _js
 
 
 class CafeMemberMixin:
@@ -37,10 +35,16 @@ class CafeMemberMixin:
         try:
             body_txt = self._page.inner_text("body")
         except Exception:
-            return {"nickname": "", "masked_id": "", "visit_count": 0,
-                    "article_count": 0, "subscriber_count": 0, "recent_articles": []}
+            return {
+                "nickname": "",
+                "masked_id": "",
+                "visit_count": 0,
+                "article_count": 0,
+                "subscriber_count": 0,
+                "recent_articles": [],
+            }
 
-        lines = [l.strip() for l in body_txt.splitlines() if l.strip()]
+        lines = [l.strip() for l in body_txt.splitlines() if l.strip()]  # noqa: E741
 
         # DOM 구조:
         # 닉네임 / masked_id / 방문 N / 작성글 N / 구독멤버 N
@@ -74,7 +78,8 @@ class CafeMemberMixin:
         # 최근 게시글 파싱 (제목 / 작성일 / 조회)
         recent_articles: list[dict] = []
         header_idx = next(
-            (i for i, l in enumerate(lines) if "제목" in l and "작성일" in l and "조회" in l), None
+            (i for i, l in enumerate(lines) if "제목" in l and "작성일" in l and "조회" in l),  # noqa: E741
+            None,
         )
         if header_idx is not None:
             i = header_idx + 1
@@ -85,11 +90,13 @@ class CafeMemberMixin:
                 written_at = lines[i + 1] if i + 1 < len(lines) else ""
                 views = lines[i + 2] if i + 2 < len(lines) else ""
                 if re.search(r"\d{4}\.\d{2}\.\d{2}", written_at):
-                    recent_articles.append({
-                        "title": title,
-                        "written_at": written_at,
-                        "views": views,
-                    })
+                    recent_articles.append(
+                        {
+                            "title": title,
+                            "written_at": written_at,
+                            "views": views,
+                        }
+                    )
                     i += 3
                 else:
                     i += 1
@@ -144,25 +151,27 @@ class CafeMemberMixin:
             })()
             """)
             members = result[:max_members]
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # 텍스트 폴백
         if not members:
             try:
-                body_txt = self._page.inner_text("body")
+                body_txt = self._page.inner_text("body")  # noqa: F841
                 links = self.extract_links(filter_href="members/")
                 for lk in links:
                     nick = lk.get("text", "").strip()
                     if nick and not any(kw in nick for kw in ("카페홈", "전체글보기", "인기글")):
-                        members.append({
-                            "nickname": nick,
-                            "grade": "",
-                            "member_url": lk.get("href", ""),
-                        })
+                        members.append(
+                            {
+                                "nickname": nick,
+                                "grade": "",
+                                "member_url": lk.get("href", ""),
+                            }
+                        )
                         if len(members) >= max_members:
                             break
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         return members

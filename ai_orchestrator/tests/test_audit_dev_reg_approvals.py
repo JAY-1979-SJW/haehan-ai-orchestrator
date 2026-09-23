@@ -8,14 +8,13 @@
   5. RESULT 라인 출력 확인
   6. 민감정보 미노출 (approval_token_hash, screenshot_path 전체 경로, password 등)
 """
+
 from __future__ import annotations
 
-import importlib
 import json
-import os
 import sys
 import unittest.mock as mock
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -23,13 +22,13 @@ import pytest
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
-import scripts.audit_dev_reg_approvals as _mod
-
+import scripts.audit_dev_reg_approvals as _mod  # noqa: E402
 
 # ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 
+
 def _utc(delta_seconds: float = 0) -> str:
-    return (datetime.now(timezone.utc) + timedelta(seconds=delta_seconds)).isoformat()
+    return (datetime.now(UTC) + timedelta(seconds=delta_seconds)).isoformat()
 
 
 def _make_record(
@@ -74,13 +73,12 @@ def _write_jsonl(path: Path, records: list[dict]) -> None:
 
 # ── 테스트 1: 정상 저장소 → PASS ─────────────────────────────────────────────
 
+
 def test_pass_normal_store(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
     records = [
-        _make_record("dr-001", status="executed",
-                     executed_at=_utc(-3600), decided_at=_utc(-3600)),
-        _make_record("dr-002", status="pending", expires_at=_utc(7200),
-                     created_at=_utc(-120)),
+        _make_record("dr-001", status="executed", executed_at=_utc(-3600), decided_at=_utc(-3600)),
+        _make_record("dr-002", status="pending", expires_at=_utc(7200), created_at=_utc(-120)),
     ]
     _write_jsonl(store, records)
 
@@ -94,12 +92,12 @@ def test_pass_normal_store(tmp_path, capsys):
 
 # ── 테스트 2: 만료 지난 pending → WARN ───────────────────────────────────────
 
+
 def test_warn_expired_pending(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
     records = [
         # expires_at 가 2시간 전 → 만료 지남
-        _make_record("dr-expired-01", status="pending",
-                     expires_at=_utc(-7200), created_at=_utc(-7200)),
+        _make_record("dr-expired-01", status="pending", expires_at=_utc(-7200), created_at=_utc(-7200)),
     ]
     _write_jsonl(store, records)
 
@@ -112,6 +110,7 @@ def test_warn_expired_pending(tmp_path, capsys):
 
 
 # ── 테스트 3: 빈 저장소(파일 없음) → WARN ────────────────────────────────────
+
 
 def test_warn_empty_store(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
@@ -126,6 +125,7 @@ def test_warn_empty_store(tmp_path, capsys):
 
 
 # ── 테스트 4: 읽기 실패(PermissionError) → FAIL / exit code 3 ────────────────
+
 
 def test_fail_read_error(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
@@ -142,14 +142,14 @@ def test_fail_read_error(tmp_path, capsys):
 
 # ── 테스트 5: RESULT 라인 출력 — 항상 마지막 줄 ─────────────────────────────
 
+
 @pytest.mark.parametrize("scenario", ["pass", "warn", "fail"])
 def test_result_line_is_last(tmp_path, capsys, scenario):
     store = tmp_path / "dev_reg_approvals.jsonl"
 
     if scenario == "pass":
         records = [
-            _make_record("dr-p1", status="executed",
-                         executed_at=_utc(-100), decided_at=_utc(-100)),
+            _make_record("dr-p1", status="executed", executed_at=_utc(-100), decided_at=_utc(-100)),
         ]
         _write_jsonl(store, records)
         exit_code = _mod.audit(store_path=store)
@@ -163,23 +163,21 @@ def test_result_line_is_last(tmp_path, capsys, scenario):
 
     captured = capsys.readouterr().out
     last_line = captured.strip().splitlines()[-1]
-    assert last_line.startswith("RESULT:"), (
-        f"마지막 줄이 RESULT: 로 시작하지 않음: {last_line!r}"
-    )
+    assert last_line.startswith("RESULT:"), f"마지막 줄이 RESULT: 로 시작하지 않음: {last_line!r}"
     assert exit_code in (0, 2, 3)
 
 
 # ── 테스트 6: 민감정보 미노출 ───────────────────────────────────────────────
 
+
 def test_sensitive_fields_not_exposed(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
-    token_hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+    token_hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"  # noqa: S105
     screenshot_full = "/home/ubuntu/data/screenshots/shot_20240101.png"
 
     records = [
         {
-            **_make_record("dr-sec-01", status="executed",
-                           executed_at=_utc(-60), decided_at=_utc(-60)),
+            **_make_record("dr-sec-01", status="executed", executed_at=_utc(-60), decided_at=_utc(-60)),
             "approval_token_hash": token_hash,
             "screenshot_path": screenshot_full,
             "summary": "업체명=테스트코리아",
@@ -202,7 +200,7 @@ def test_sensitive_fields_not_exposed(tmp_path, capsys):
 def test_sensitive_keywords_in_summary_detected_not_exposed(tmp_path, capsys):
     """summary 에 민감 키워드 포함 시 경고는 하되 값 자체는 출력 안 함."""
     store = tmp_path / "dev_reg_approvals.jsonl"
-    raw_password = "super_secret_password_xyz"
+    raw_password = "super_secret_password_xyz"  # noqa: S105
 
     records = [
         {
@@ -223,6 +221,7 @@ def test_sensitive_keywords_in_summary_detected_not_exposed(tmp_path, capsys):
 
 # ── 추가: pending 과다 WARN ───────────────────────────────────────────────────
 
+
 def test_warn_pending_overload(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
     records = [
@@ -240,12 +239,12 @@ def test_warn_pending_overload(tmp_path, capsys):
 
 # ── 추가: 오래된 pending WARN ─────────────────────────────────────────────────
 
+
 def test_warn_old_pending(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
     # 48시간 전에 생성된 pending (만료는 안 됨 — expires_at 는 미래)
     records = [
-        _make_record("dr-old-01", status="pending",
-                     expires_at=_utc(7200), created_at=_utc(-48 * 3600)),
+        _make_record("dr-old-01", status="pending", expires_at=_utc(7200), created_at=_utc(-48 * 3600)),
     ]
     _write_jsonl(store, records)
 

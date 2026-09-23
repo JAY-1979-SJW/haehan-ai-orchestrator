@@ -3,11 +3,13 @@
 Validates registration code issue/consume/security without running actual agents.
 No WebSocket, no task execution, no Windows PC agent involved.
 """
-import pytest
-from datetime import datetime, timedelta, timezone
 
-from ai_orchestrator import registration_codes as regcodes
+from datetime import UTC, timedelta
+
+import pytest
+
 from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator import registration_codes as regcodes
 
 
 @pytest.fixture(autouse=True)
@@ -50,7 +52,7 @@ def test_register_agent_with_code():
         label="Test Agent",
         issued_by="admin",
     )
-    code = code_result.registration_code
+    code = code_result.registration_code  # noqa: F841
 
     # Exchange code for agent registration
     agent_result = reg.register_agent(
@@ -69,7 +71,7 @@ def test_register_agent_with_code():
     # Device token is NOT stored plaintext
     agent = reg.get_agent(agent_result.agent.agent_id)
     assert agent is not None
-    assert not hasattr(agent, 'device_token'), "Agent must not store device_token"
+    assert not hasattr(agent, "device_token"), "Agent must not store device_token"
     assert agent.token_hash, "Agent must store token_hash"
 
 
@@ -89,7 +91,7 @@ def test_code_consume_validates_hash():
     # Try to consume again - should fail with generic message
     try:
         regcodes.consume_code(code)
-        assert False, "Should raise CodeExchangeError"
+        assert False, "Should raise CodeExchangeError"  # noqa: B011
     except regcodes.CodeExchangeError as e:
         assert str(e) == regcodes.INVALID_CODE_MESSAGE
         assert e.reason == "used"
@@ -114,7 +116,8 @@ def test_code_consumption_is_idempotent_failure():
 
 def test_expired_code_fails(monkeypatch):
     """Expired codes are rejected."""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     from ai_orchestrator import registration_code_store as store_module
 
     # Issue code that expires in 1 minute
@@ -126,13 +129,13 @@ def test_expired_code_fails(monkeypatch):
     code = code_result.registration_code
 
     # Mock time to be 2 minutes in the future
-    future = datetime.now(timezone.utc) + timedelta(minutes=2)
+    future = datetime.now(UTC) + timedelta(minutes=2)
     monkeypatch.setattr(store_module, "_now", lambda: future)
 
     # Try to consume - should be expired
     try:
         regcodes.consume_code(code)
-        assert False, "Should raise CodeExchangeError"
+        assert False, "Should raise CodeExchangeError"  # noqa: B011
     except regcodes.CodeExchangeError as e:
         assert str(e) == regcodes.INVALID_CODE_MESSAGE
         assert e.reason == "expired"
@@ -234,7 +237,7 @@ def test_device_token_authenticate():
 def test_response_shape_compatibility():
     """Registration response shape matches API contract."""
     code_result = regcodes.issue_code(label="Test", issued_by="admin")
-    code = code_result.registration_code
+    code = code_result.registration_code  # noqa: F841
 
     # Simulate register-with-code response building
     agent_result = reg.register_agent(
@@ -266,7 +269,7 @@ def test_response_shape_compatibility():
 def test_no_agent_execution():
     """Registration flow never executes actual agent code."""
     code_result = regcodes.issue_code(label="Test", issued_by="admin")
-    code = code_result.registration_code
+    code = code_result.registration_code  # noqa: F841
 
     # Register agent - should only create record, no execution
     agent_result = reg.register_agent(
@@ -288,7 +291,7 @@ def test_code_case_insensitive():
     """Registration code is case-insensitive."""
     result = regcodes.issue_code(label="Test", issued_by="admin")
     code = result.registration_code
-    code_id = result.code.code_id
+    code_id = result.code.code_id  # noqa: F841
 
     # Issue code once, consume with different cases
     # Clear store and re-issue to test case handling
@@ -317,7 +320,7 @@ def test_multiple_agents_independent():
 
     # Register 3 agents
     agents = []
-    for i, code in enumerate(codes):
+    for i, _code in enumerate(codes):
         result = reg.register_agent(
             host=f"host-{i}.local",
             os_name="Windows",

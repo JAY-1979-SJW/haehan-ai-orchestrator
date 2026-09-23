@@ -1,16 +1,17 @@
 """심층 사이트 맵 탐지 — 항목 클릭 후 모든 필드 자동 감지."""
+
 from __future__ import annotations
 
 import json
 import time
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
 class MailDetailInfo:
     """메일 상세 정보."""
+
     fields: dict = field(default_factory=dict)  # {field_name: selector_list}
     selectors: dict = field(default_factory=dict)  # {selector: count}
     sample_data: dict = field(default_factory=dict)
@@ -19,6 +20,7 @@ class MailDetailInfo:
 @dataclass
 class CalendarEventInfo:
     """캘린더 이벤트 정보."""
+
     fields: dict = field(default_factory=dict)
     selectors: dict = field(default_factory=dict)
     sample_data: dict = field(default_factory=dict)
@@ -27,6 +29,7 @@ class CalendarEventInfo:
 @dataclass
 class MyBoxFileInfo:
     """MyBox 파일 정보."""
+
     fields: dict = field(default_factory=dict)
     selectors: dict = field(default_factory=dict)
     sample_data: dict = field(default_factory=dict)
@@ -100,7 +103,7 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
 
                     if len(elements) > 0:
                         found_selectors[sel] = len(elements)
-                except:
+                except:  # noqa: E722, S110
                     pass
 
             if found_selectors:
@@ -122,7 +125,7 @@ def detect_mail_detail_fields(page) -> MailDetailInfo:
             }"""
             )
             info.sample_data = sample
-        except:
+        except:  # noqa: E722, S110
             pass
 
         return info
@@ -139,15 +142,15 @@ def detect_mail_inbox_structure(page) -> dict:
     try:
         # 메일 항목 셀렉터 자동 탐지
         selectors_to_try = [
-            'li[data-mailsn]',
-            'tr[data-mail-id]',
-            '.mail_list_item',
+            "li[data-mailsn]",
+            "tr[data-mail-id]",
+            ".mail_list_item",
             '[class*="mail_item"]',
-            '.list_item',
+            ".list_item",
             'li[class*="mail"]',
             'tr[class*="mail"]',
             '[role="listitem"]',
-            'div[data-id]',
+            "div[data-id]",
         ]
 
         found_mails = {}
@@ -156,17 +159,18 @@ def detect_mail_inbox_structure(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_mails[sel] = len(elements)
-            except:
+            except:  # noqa: E722, S110
                 pass
 
         if found_mails:
             print(f"  ✓ 메일 항목 셀렉터: {found_mails}")
             return {"mail_items": found_mails}
         else:
-            print(f"  ✗ 메일 항목을 찾을 수 없음")
+            print("  ✗ 메일 항목을 찾을 수 없음")
             # 대안: page 텍스트에서 메일 개수 확인
             text = page.content()
             import re
+
             mail_count = len(re.findall(r'href=["\'].*?/read/\d+', text))
             print(f"  📄 HTML에서 /read/ 링크 발견: {mail_count}개")
             return {"mail_links": mail_count}
@@ -183,9 +187,9 @@ def deep_detect_mail_service(page) -> dict:
     2. 첫 메일 클릭
     3. 상세 페이지 → 모든 필드 탐지
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  네이버 메일 심층 탐지")
-    print("="*60)
+    print("=" * 60)
 
     result = {
         "service": "mail",
@@ -241,9 +245,9 @@ def deep_detect_mail_service(page) -> dict:
 
 def deep_detect_calendar_service(page) -> dict:
     """네이버 캘린더 심층 탐지."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  네이버 캘린더 심층 탐지")
-    print("="*60)
+    print("=" * 60)
 
     result = {
         "service": "calendar",
@@ -259,8 +263,8 @@ def deep_detect_calendar_service(page) -> dict:
             '[class*="event"]',
             '[class*="schedule"]',
             '[role="button"][class*="event"]',
-            '.calendar_item',
-            'div[data-event]',
+            ".calendar_item",
+            "div[data-event]",
         ]
 
         found_events = {}
@@ -269,7 +273,7 @@ def deep_detect_calendar_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_events[sel] = len(elements)
-            except:
+            except:  # noqa: E722, S110
                 pass
 
         if found_events:
@@ -286,9 +290,9 @@ def deep_detect_calendar_service(page) -> dict:
 
 def deep_detect_mybox_service(page) -> dict:
     """네이버 MyBox 심층 탐지."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  네이버 MyBox 심층 탐지")
-    print("="*60)
+    print("=" * 60)
 
     result = {
         "service": "mybox",
@@ -304,8 +308,8 @@ def deep_detect_mybox_service(page) -> dict:
             '[class*="item"]',
             'tr[class*="file"]',
             'li[class*="file"]',
-            '[data-file]',
-            '.list_item',
+            "[data-file]",
+            ".list_item",
         ]
 
         found_files = {}
@@ -314,7 +318,7 @@ def deep_detect_mybox_service(page) -> dict:
                 elements = page.query_selector_all(sel)
                 if len(elements) > 0:
                     found_files[sel] = len(elements)
-            except:
+            except:  # noqa: E722, S110
                 pass
 
         if found_files:
@@ -333,9 +337,9 @@ def main():
     """심층 탐지 실행."""
     from ai_orchestrator.local_agent.browser.agent import BrowserAgent
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  항목별 심층 사이트 맵 탐지")
-    print("="*70)
+    print("=" * 70)
 
     results = {}
 
@@ -367,9 +371,9 @@ def main():
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"\n💾 저장: {cache_file}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  심층 탐지 완료")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     return results
 

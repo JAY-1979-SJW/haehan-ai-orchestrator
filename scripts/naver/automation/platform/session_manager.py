@@ -5,17 +5,18 @@
   - 만료 감지 시 자동 재로그인
   - 동시 세션 충돌 방지
 """
+
 from __future__ import annotations
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
 from scripts.critical_logger import log_critical
+from scripts.logger import get_logger
 from scripts.login_detector import detect_login_state
-from scripts.session_tracker import is_logged_in, mark_state
+from scripts.session_tracker import mark_state
 
 _log = get_logger(__name__)
 
@@ -46,14 +47,19 @@ class SessionManager:
 
         # 로그인 페이지 또는 만료 — 재로그인 시도
         _log.warning("[session] 세션 만료 또는 비로그인 감지 → 자동 재로그인")
-        log_critical("AUTH_FAIL", f"세션 만료 감지: {self.domain}",
-                     domain=self.domain, score=state.get("score"), mode="session_expired")
+        log_critical(
+            "AUTH_FAIL",
+            f"세션 만료 감지: {self.domain}",
+            domain=self.domain,
+            score=state.get("score"),
+            mode="session_expired",
+        )
 
         from scripts.naver.auth import login_naver
+
         r = login_naver(self.page)
         if r.get("ok"):
-            log_critical("AUTH_SUCCESS", f"자동 재로그인 성공: {self.domain}",
-                         user=r.get("user"), mode="auto_relogin")
+            log_critical("AUTH_SUCCESS", f"자동 재로그인 성공: {self.domain}", user=r.get("user"), mode="auto_relogin")
             return {"ok": True, "user": r.get("user"), "recovered": True}
         return {"ok": False, "error": r.get("reason"), "recovered": False}
 
@@ -71,7 +77,7 @@ class SessionManager:
         try:
             result = func(*args, **kwargs)
             # 사후 체크 (작업 중 만료됐는지)
-            post = self.check_and_recover(force=True)
+            post = self.check_and_recover(force=True)  # noqa: F841
             return result
         except Exception as e:
             # 만료로 인한 에러일 수 있음

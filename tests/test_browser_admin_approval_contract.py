@@ -11,10 +11,7 @@ Verifies:
 8. Integration with BROWSER-4G schema
 """
 
-import pytest
 from local_agent.browser_websocket_schema import (
-    BrowserWebSocketTaskPayloadSchema,
-    BrowserWebSocketTaskResultSchema,
     ALLOWED_ACTION_TYPES,
     BLOCKED_ACTION_TYPES,
     RESULT_DATA_ALLOWED_KEYS,
@@ -51,8 +48,13 @@ class TestApprovalUIDataStructures:
 
         # Verify these are NOT in safe display fields
         safe_ui_fields = {
-            "approval_id", "task_id", "status", "action_type",
-            "selector", "risk_level", "final_approval_required",
+            "approval_id",
+            "task_id",
+            "status",
+            "action_type",
+            "selector",
+            "risk_level",
+            "final_approval_required",
         }
 
         overlap = forbidden_fields & safe_ui_fields
@@ -62,8 +64,13 @@ class TestApprovalUIDataStructures:
         """Admin UI never contains final_approval_token"""
         forbidden = "final_approval_token"
         safe_ui_fields = {
-            "approval_id", "task_id", "status", "action_type",
-            "selector", "risk_level", "final_approval_required",
+            "approval_id",
+            "task_id",
+            "status",
+            "action_type",
+            "selector",
+            "risk_level",
+            "final_approval_required",
         }
 
         assert forbidden not in safe_ui_fields
@@ -72,8 +79,13 @@ class TestApprovalUIDataStructures:
         """Admin UI never contains token_hash"""
         forbidden = "token_hash"
         safe_ui_fields = {
-            "approval_id", "task_id", "status", "action_type",
-            "selector", "risk_level", "final_approval_required",
+            "approval_id",
+            "task_id",
+            "status",
+            "action_type",
+            "selector",
+            "risk_level",
+            "final_approval_required",
         }
 
         assert forbidden not in safe_ui_fields
@@ -249,9 +261,14 @@ class TestResultDisplay:
     def test_executed_result_displays_safe_summary(self):
         """Executed result shows safe summary only"""
         safe_fields = {
-            "status", "action", "selector",  # "action" in schema, not "action_type"
-            "executed", "element_found", "result",
-            "text_length", "text_preview",
+            "status",
+            "action",
+            "selector",  # "action" in schema, not "action_type"
+            "executed",
+            "element_found",
+            "result",
+            "text_length",
+            "text_preview",
         }
 
         # All these should be in whitelist
@@ -279,41 +296,41 @@ class TestStatusVocabulary:
 
     def test_status_received_enables_approve_reject(self):
         """'received' status enables Approve and Reject buttons"""
-        status = "received"
+        status = "received"  # noqa: F841
         # can_approve = true, can_reject = true
 
     def test_status_approved_disables_buttons(self):
         """'approved' status disables Approve and Reject buttons"""
-        status = "approved"
+        status = "approved"  # noqa: F841
         # can_approve = false, can_reject = false
 
     def test_status_executed_shows_result_only(self):
         """'executed' status shows result, no action buttons"""
-        status = "executed"
+        status = "executed"  # noqa: F841
         # can_approve = false, can_reject = false
         # Show result_data
 
     def test_status_failed_shows_error(self):
         """'failed' status shows error, no action buttons"""
-        status = "failed"
+        status = "failed"  # noqa: F841
         # can_approve = false, can_reject = false
         # Show error_code, error_message
 
     def test_status_rejected_shows_reason(self):
         """'rejected' status shows rejection reason"""
-        status = "rejected"
+        status = "rejected"  # noqa: F841
         # Show rejection reason
         # can_approve = false, can_reject = false
 
     def test_status_expired_disables_all_buttons(self):
         """'expired' status disables all action buttons"""
-        status = "expired"
+        status = "expired"  # noqa: F841
         # can_approve = false, can_reject = false
         # Show expiration timestamp
 
     def test_status_blocked_prevents_execution(self):
         """'blocked' status prevents any execution"""
-        status = "blocked"
+        status = "blocked"  # noqa: F841
         # can_execute = false
         # Show "Blocked" reason
 
@@ -347,7 +364,7 @@ class TestApprovalDecisionPayload:
         # Bad pattern: {approval_token: "...", decision: "approve"}
 
         # UI should send approval_id, never approval_token
-        assert "approval_id" is not None
+        assert "approval_id" != None
 
 
 class TestSchemaIntegration:
@@ -370,10 +387,20 @@ class TestSchemaIntegration:
     def test_result_whitelist_matches_schema(self):
         """Admin result display fields match schema whitelist"""
         admin_ui_fields = {
-            "status", "action", "selector", "executed", "element_found",
-            "risk_level", "final_approval_required", "result",
-            "error_code", "error_message", "target_url_domain",
-            "text_length", "text_preview", "screenshot_ref",
+            "status",
+            "action",
+            "selector",
+            "executed",
+            "element_found",
+            "risk_level",
+            "final_approval_required",
+            "result",
+            "error_code",
+            "error_message",
+            "target_url_domain",
+            "text_length",
+            "text_preview",
+            "screenshot_ref",
         }
 
         for field in admin_ui_fields:
@@ -382,8 +409,14 @@ class TestSchemaIntegration:
     def test_forbidden_fields_match_schema(self):
         """Admin forbidden fields match schema forbidden keys"""
         admin_forbidden = {
-            "approval_token", "final_approval_token", "token_hash",
-            "typed_text", "password", "otp", "cookie", "session",
+            "approval_token",
+            "final_approval_token",
+            "token_hash",
+            "typed_text",
+            "password",
+            "otp",
+            "cookie",
+            "session",
         }
 
         for field in admin_forbidden:
@@ -425,8 +458,12 @@ class TestMockData:
 
         # No forbidden fields
         forbidden = {
-            "approval_token", "final_approval_token", "token_hash",
-            "typed_text", "password", "otp",
+            "approval_token",
+            "final_approval_token",
+            "token_hash",
+            "typed_text",
+            "password",
+            "otp",
         }
 
         overlap = set(mock.keys()) & forbidden

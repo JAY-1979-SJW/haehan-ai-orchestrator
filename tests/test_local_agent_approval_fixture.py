@@ -17,23 +17,23 @@
   - 실제 HTTP 서버, local-agent 프로세스, 브라우저, 네트워크 요청 없음
   - in-memory fixture + monkeypatch + tmp_path 사용
 """
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import pytest
 
 # ── import 대상 모듈 ────────────────────────────────────────────────────────
 import ai_orchestrator.approval as _appr
-import ai_orchestrator.task_state as _ts
 import ai_orchestrator.policy as _policy
-
+import ai_orchestrator.task_state as _ts
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def isolated_approval_store(tmp_path, monkeypatch):
@@ -61,11 +61,11 @@ def isolated_task_state(monkeypatch):
 
 
 def _future_iso(minutes: int = 30) -> str:
-    return (datetime.now(timezone.utc) + timedelta(minutes=minutes)).isoformat()
+    return (datetime.now(UTC) + timedelta(minutes=minutes)).isoformat()
 
 
 def _past_iso(minutes: int = 30) -> str:
-    return (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
+    return (datetime.now(UTC) - timedelta(minutes=minutes)).isoformat()
 
 
 def _seed_token(
@@ -78,7 +78,7 @@ def _seed_token(
     entry = {
         "token_id": token_id,
         "task_id": task_id,
-        "issued_at": datetime.now(timezone.utc).isoformat(),
+        "issued_at": datetime.now(UTC).isoformat(),
         "expires_at": expires_at or _future_iso(30),
         "issued_by": "test-requester",
         "approved_by": None,
@@ -92,6 +92,7 @@ def _seed_token(
 
 
 # ── 1. waiting_approval → approve ──────────────────────────────────────────
+
 
 class TestApproveSuccess:
     def test_approve_returns_approved_status(self):
@@ -118,9 +119,13 @@ class TestApproveSuccess:
     def test_task_state_pending_to_approved(self):
         task_id = "la-task-003"
         _ts.set_pending(
-            task_id, risk_level="high", token_id="tok",
-            requested_by="requester", actor_role="admin",
-            action_type="capture_screenshot", target="screen",
+            task_id,
+            risk_level="high",
+            token_id="tok",
+            requested_by="requester",
+            actor_role="admin",
+            action_type="capture_screenshot",
+            target="screen",
             task_snapshot={},
         )
         rec, outcome = _ts.mark_approved(task_id, "admin-user", "admin")
@@ -129,6 +134,7 @@ class TestApproveSuccess:
 
 
 # ── 2. waiting_approval → reject ───────────────────────────────────────────
+
 
 class TestRejectSuccess:
     def test_reject_returns_rejected_status(self):
@@ -154,9 +160,13 @@ class TestRejectSuccess:
     def test_task_state_pending_to_rejected(self):
         task_id = "la-task-012"
         _ts.set_pending(
-            task_id, risk_level="high", token_id="tok",
-            requested_by="requester", actor_role="admin",
-            action_type="capture_screenshot", target="screen",
+            task_id,
+            risk_level="high",
+            token_id="tok",
+            requested_by="requester",
+            actor_role="admin",
+            action_type="capture_screenshot",
+            target="screen",
             task_snapshot={},
         )
         rec, outcome = _ts.mark_rejected(task_id, "admin-user", "admin", reason="deny")
@@ -165,6 +175,7 @@ class TestRejectSuccess:
 
 
 # ── 3. 잘못된 token_id → not_found ─────────────────────────────────────────
+
 
 class TestInvalidToken:
     def test_approve_nonexistent_token(self):
@@ -188,6 +199,7 @@ class TestInvalidToken:
 
 
 # ── 4. token 재사용 차단 ───────────────────────────────────────────────────
+
 
 class TestTokenReuse:
     def test_approve_already_approved_token(self):
@@ -228,6 +240,7 @@ class TestTokenReuse:
 
 # ── 5. 권한 부족(viewer) 차단 ──────────────────────────────────────────────
 
+
 class TestForbiddenRole:
     def test_viewer_cannot_approve(self):
         tid = str(uuid.uuid4())
@@ -265,12 +278,16 @@ class TestForbiddenRole:
 
 # ── 6. critical 정책 기본 차단 ─────────────────────────────────────────────
 
+
 class TestCriticalPolicy:
     """critical 정책 차단 검증 (policy.evaluate_request 직접 호출)."""
 
     def test_critical_risk_is_blocked(self):
-        from ai_orchestrator.models import TaskRequest, RiskAssessment
-        import yaml, pathlib
+        import pathlib
+
+        import yaml
+
+        from ai_orchestrator.models import RiskAssessment, TaskRequest
 
         policy_path = pathlib.Path("ai_orchestrator/policies/default_policy.yaml")
         policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
@@ -290,8 +307,11 @@ class TestCriticalPolicy:
         assert any("critical" in r for r in result.blocked_reasons)
 
     def test_high_risk_not_blocked_but_requires_approval(self):
-        from ai_orchestrator.models import TaskRequest, RiskAssessment
-        import yaml, pathlib
+        import pathlib
+
+        import yaml
+
+        from ai_orchestrator.models import RiskAssessment, TaskRequest
 
         policy_path = pathlib.Path("ai_orchestrator/policies/default_policy.yaml")
         policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
@@ -312,6 +332,7 @@ class TestCriticalPolicy:
 
 # ── 7. audit 이벤트 기록 검증 ──────────────────────────────────────────────
 
+
 class TestAuditEvents:
     def test_approve_writes_event_to_jsonl(self, isolated_approval_store: Path):
         tid = str(uuid.uuid4())
@@ -320,9 +341,10 @@ class TestAuditEvents:
 
         _appr.approve_token(tid, task_id, "admin", "admin")
 
-        lines = [l for l in isolated_approval_store.read_text(encoding="utf-8").splitlines() if l.strip()]
+        lines = [l for l in isolated_approval_store.read_text(encoding="utf-8").splitlines() if l.strip()]  # noqa: E741
         import json
-        events = [json.loads(l) for l in lines]
+
+        events = [json.loads(l) for l in lines]  # noqa: E741
         event_types = [e.get("event_type") for e in events]
         assert "token_approved" in event_types
 
@@ -334,8 +356,9 @@ class TestAuditEvents:
         _appr.reject_token(tid, task_id, "admin", "admin", reason="test-reject")
 
         import json
-        lines = [l for l in isolated_approval_store.read_text(encoding="utf-8").splitlines() if l.strip()]
-        events = [json.loads(l) for l in lines]
+
+        lines = [l for l in isolated_approval_store.read_text(encoding="utf-8").splitlines() if l.strip()]  # noqa: E741
+        events = [json.loads(l) for l in lines]  # noqa: E741
         event_types = [e.get("event_type") for e in events]
         assert "token_rejected" in event_types
 
@@ -353,21 +376,27 @@ class TestAuditEvents:
 
         task_id = "la-task-audit-010"
         _ts.set_pending(
-            task_id, risk_level="high", token_id="tok",
-            requested_by="req", actor_role="admin",
-            action_type="capture_screenshot", target="screen",
+            task_id,
+            risk_level="high",
+            token_id="tok",
+            requested_by="req",
+            actor_role="admin",
+            action_type="capture_screenshot",
+            target="screen",
             task_snapshot={},
         )
         _ts.mark_approved(task_id, "admin", "admin")
 
         import json
+
         state_file = tmp_path / "task_states.jsonl"
-        events = [json.loads(l) for l in state_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+        events = [json.loads(l) for l in state_file.read_text(encoding="utf-8").splitlines() if l.strip()]  # noqa: E741
         event_types = [e.get("event_type") for e in events]
         assert "TASK_APPROVED" in event_types
 
 
 # ── 8. 실제 action 미실행 검증 ────────────────────────────────────────────
+
 
 class TestNoActualExecution:
     def test_approve_token_does_not_call_subprocess(self):
@@ -401,9 +430,13 @@ class TestNoActualExecution:
     def test_mark_approved_does_not_call_subprocess(self):
         task_id = "la-task-noexec-003"
         _ts.set_pending(
-            task_id, risk_level="high", token_id="tok",
-            requested_by="req", actor_role="admin",
-            action_type="capture_screenshot", target="screen",
+            task_id,
+            risk_level="high",
+            token_id="tok",
+            requested_by="req",
+            actor_role="admin",
+            action_type="capture_screenshot",
+            target="screen",
             task_snapshot={},
         )
 

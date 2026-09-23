@@ -5,12 +5,11 @@ Validates target_domain, target_url, target_path against allowlist policies
 before dispatch without executing.
 Test-only implementation (read-only, no execution, no DB write).
 """
+
 from __future__ import annotations
 
 import hashlib
 import logging
-from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -53,7 +52,7 @@ DEFAULT_OPERATION_POLICIES = {
 # Common allowlist domains (placeholder)
 COMMON_ALLOWED_DOMAINS = {
     "example.com",
-    "g2b.go.kr",      # G2B 나라장터 apex domain
+    "g2b.go.kr",  # G2B 나라장터 apex domain
     "www.g2b.go.kr",  # G2B 나라장터 www prefix (apex와 동일 공개 서비스)
 }
 
@@ -92,10 +91,17 @@ def normalize_url_for_policy(url: str) -> dict:
 
         # Check for sensitive query parameters
         sensitive_params = {
-            "password", "passwd", "pwd",
-            "token", "access_token", "refresh_token",
-            "secret", "api_key",
-            "otp", "session", "cookie",
+            "password",
+            "passwd",
+            "pwd",
+            "token",
+            "access_token",
+            "refresh_token",
+            "secret",
+            "api_key",
+            "otp",
+            "session",
+            "cookie",
             "authorization",
         }
         has_sensitive = any(param in query.lower() for param in sensitive_params)
@@ -242,7 +248,7 @@ def evaluate_allowlist_preflight(payload: dict) -> dict:
 
     # Allowlist required: check domain and path
     target_domain = result["target_domain"]
-    target_path = result["target_path"]
+    target_path = result["target_path"]  # noqa: F841
 
     # Check domain presence
     if not target_domain:

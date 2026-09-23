@@ -9,10 +9,9 @@ Actions:
 3. Create __init__.py re-exports in each subdir
 4. Replace original files with re-export stubs
 """
+
 from __future__ import annotations
 
-import re
-import shutil
 import textwrap
 from pathlib import Path
 
@@ -60,16 +59,16 @@ def adjust_parents(src_text: str, filename: str) -> str:
     # Replace parents[3] → parents[4], parents[4] → parents[5]
     # Do from high to low to avoid double-increment
     for n in (5, 4, 3):
-        src_text = src_text.replace(f"parents[{n}]", f"__PARENTS_{n+1}__")
+        src_text = src_text.replace(f"parents[{n}]", f"__PARENTS_{n + 1}__")
     for n in (5, 4, 3):
-        src_text = src_text.replace(f"__PARENTS_{n+1}__", f"parents[{n+1}]")
+        src_text = src_text.replace(f"__PARENTS_{n + 1}__", f"parents[{n + 1}]")
     return src_text
 
 
 def make_stub(module_name: str, subdir: str) -> str:
     """Create a re-export stub for original file location."""
-    rel_import = f"from .{subdir}.{module_name} import *"
-    try_import = f"from .{subdir}.{module_name} import *  # noqa: F401,F403"
+    rel_import = f"from .{subdir}.{module_name} import *"  # noqa: F841
+    try_import = f"from .{subdir}.{module_name} import *  # noqa: F401,F403"  # noqa: F841
     return textwrap.dedent(f"""\
         \"\"\"Re-export stub — real implementation moved to {subdir}/{module_name}.py.
 
@@ -88,8 +87,11 @@ def make_stub(module_name: str, subdir: str) -> str:
 
 def build_subdir_init(subdir: str, files: list[str]) -> str:
     """Build __init__.py for a subdirectory that re-exports all modules."""
-    lines = [f'"""scripts.naver.cafe.{subdir} — auto-generated re-export __init__."""',
-             "from __future__ import annotations", ""]
+    lines = [
+        f'"""scripts.naver.cafe.{subdir} — auto-generated re-export __init__."""',
+        "from __future__ import annotations",
+        "",
+    ]
     for f in sorted(files):
         module = f.removesuffix(".py")
         lines.append(f"from .{module} import *  # noqa: F401,F403")
@@ -137,7 +139,9 @@ def run() -> None:
 
     print("\n[done] Modularization complete.")
     print("Verify with:")
-    print('  python -c "from scripts.naver.cafe.collection.cafe_explorer import *; from scripts.naver.cafe.analysis.analyzer import *; from scripts.naver.cafe.cafe_explorer import *; print(\'OK\')"')
+    print(
+        "  python -c \"from scripts.naver.cafe.collection.cafe_explorer import *; from scripts.naver.cafe.analysis.analyzer import *; from scripts.naver.cafe.cafe_explorer import *; print('OK')\""
+    )
 
 
 if __name__ == "__main__":

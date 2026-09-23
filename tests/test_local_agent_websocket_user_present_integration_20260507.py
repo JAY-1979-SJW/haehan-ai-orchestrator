@@ -9,34 +9,29 @@ password/otp/certificate_password/token/cookie/session 전송 없음.
 
 import json
 import os
+
 import pytest
 
 from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
     MSG_USER_PRESENT_TASK,
-    MSG_USER_PRESENT_STATUS,
-    STATUS_WAITING_FOR_USER,
-    STATUS_USER_CONFIRMED,
     STATUS_CANCELLED,
-    STATUS_BLOCKED,
-    build_user_present_ws_task_message,
+    STATUS_USER_CONFIRMED,
+    STATUS_WAITING_FOR_USER,
     build_user_present_ws_status_event,
+    build_user_present_ws_task_message,
     sanitize_user_present_ws_payload,
-    validate_user_present_ws_task_message,
     validate_user_present_ws_status_event,
-)
-from local_agent.user_present_ws_adapter import (
-    receive_user_present_task_message,
-    create_local_user_present_task_from_ws,
-    build_ws_status_event_from_local_task,
-    mark_local_user_confirmed_and_build_event,
-    mark_local_user_cancelled_and_build_event,
+    validate_user_present_ws_task_message,
 )
 from local_agent.user_present_state_store import (
-    UserPresentStateStore,
-    STATE_WAITING_FOR_USER,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
     STATE_BLOCKED,
+    STATE_WAITING_FOR_USER,
+    UserPresentStateStore,
+)
+from local_agent.user_present_ws_adapter import (
+    create_local_user_present_task_from_ws,
+    mark_local_user_cancelled_and_build_event,
+    mark_local_user_confirmed_and_build_event,
 )
 from tests.helpers.local_agent_user_present_test_transport import (
     InMemoryTestTransport,
@@ -70,20 +65,27 @@ def transport():
 
 # ── 1. fixture 로드 / 구조 검증 ───────────────────────────────────────────────
 
+
 class TestFixtureStructure:
     def test_fixture_json_loadable(self, fixture_cases):
         assert len(fixture_cases) >= 16
 
     def test_all_cases_have_required_sections(self, fixture_cases):
-        required_sections = ["id", "input", "expected_task_message",
-                             "expected_local_task", "expected_status_event",
-                             "expected_security_policy"]
+        required_sections = [
+            "id",
+            "input",
+            "expected_task_message",
+            "expected_local_task",
+            "expected_status_event",
+            "expected_security_policy",
+        ]
         for case in fixture_cases:
             for section in required_sections:
                 assert section in case, f"케이스 '{case.get('id')}' 에 누락된 섹션: {section}"
 
 
 # ── 2. USER_PRESENT_TASK message 생성 ─────────────────────────────────────────
+
 
 class TestUserPresentTaskMessage:
     def test_task_message_created_for_bank(self, fixture_cases):
@@ -114,6 +116,7 @@ class TestUserPresentTaskMessage:
 
 
 # ── 3. message validation ─────────────────────────────────────────────────────
+
 
 class TestTaskMessageValidation:
     def test_valid_message_passes(self):
@@ -146,6 +149,7 @@ class TestTaskMessageValidation:
 
 
 # ── 4. 민감정보 전송 차단 ─────────────────────────────────────────────────────
+
 
 class TestSensitiveFieldBlocking:
     def test_password_blocked_in_sanitize(self, fixture_cases):
@@ -214,6 +218,7 @@ class TestSensitiveFieldBlocking:
 
 # ── 5. local state_store 연동 ─────────────────────────────────────────────────
 
+
 class TestLocalStateStore:
     def test_waiting_for_user_task_created(self, fresh_store):
         msg = make_bank_task_payload(workflow_run_id="wr_ws_test_001")
@@ -245,12 +250,14 @@ class TestLocalStateStore:
 
     def test_blocked_task_confirm_fails(self, fresh_store):
         # BLOCKED 상태로 직접 task 생성 (WAITING → BLOCKED 전이 없이)
-        task = fresh_store.create_user_present_task({
-            "workflow_run_id": "wr_ws_blocked_001",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-        })
+        task = fresh_store.create_user_present_task(  # noqa: F841
+            {
+                "workflow_run_id": "wr_ws_blocked_001",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+            }
+        )
         fresh_store._update_state("wr_ws_blocked_001", STATE_BLOCKED)
         result = mark_local_user_confirmed_and_build_event("wr_ws_blocked_001", store=fresh_store)
         assert result["ok"] is False
@@ -283,20 +290,33 @@ class TestLocalStateStore:
 
 # ── 6. safe_to_execute 불변 속성 ──────────────────────────────────────────────
 
+
 class TestSafeToExecuteInvariant:
     def test_task_message_safe_to_execute_always_false(self):
-        msg = build_user_present_ws_task_message({
-            "workflow_run_id": "wr1", "tenant_id": "t1", "user_id": "u1",
-            "site_id": "s1", "site_category": "bank", "target_domain": "kbstar.com",
-            "safe_to_execute": True,  # 입력에 True가 들어와도
-        })
+        msg = build_user_present_ws_task_message(
+            {
+                "workflow_run_id": "wr1",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "site_category": "bank",
+                "target_domain": "kbstar.com",
+                "safe_to_execute": True,  # 입력에 True가 들어와도
+            }
+        )
         assert msg["safe_to_execute"] is False  # 항상 False
 
     def test_status_event_safe_to_execute_always_false(self):
-        event = build_user_present_ws_status_event({
-            "workflow_run_id": "wr1", "tenant_id": "t1", "user_id": "u1",
-            "site_id": "s1", "status": STATUS_USER_CONFIRMED, "safe_to_execute": True,
-        })
+        event = build_user_present_ws_status_event(
+            {
+                "workflow_run_id": "wr1",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "status": STATUS_USER_CONFIRMED,
+                "safe_to_execute": True,
+            }
+        )
         assert event["safe_to_execute"] is False
 
     def test_safe_to_execute_false_from_fixture(self, fixture_cases):
@@ -318,6 +338,7 @@ class TestSafeToExecuteInvariant:
 
 # ── 7. in-memory test transport ───────────────────────────────────────────────
 
+
 class TestInMemoryTransport:
     def test_no_real_websocket_connection(self, transport):
         assert transport.sent_count == 0
@@ -338,7 +359,9 @@ class TestInMemoryTransport:
 
     def test_transport_has_no_ws_url(self):
         import inspect
+
         from tests.helpers import local_agent_user_present_test_transport as mod
+
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
         assert "asyncio_websocket" not in src
@@ -352,30 +375,36 @@ class TestInMemoryTransport:
 
 # ── 8. 호환성 검증 ────────────────────────────────────────────────────────────
 
+
 class TestCompatibility:
     def test_compatible_with_dispatch_dryrun(self):
         from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
-            evaluate_browser_engine_routing_dispatch_dryrun,
             DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
+            evaluate_browser_engine_routing_dispatch_dryrun,
         )
-        result = evaluate_browser_engine_routing_dispatch_dryrun({
-            "site_category": "bank",
-            "target_domain": "kbstar.com",
-            "operation_type": "read",
-            "requires_certificate": True,
-            "production_mode": False,
-        })
+
+        result = evaluate_browser_engine_routing_dispatch_dryrun(
+            {
+                "site_category": "bank",
+                "target_domain": "kbstar.com",
+                "operation_type": "read",
+                "requires_certificate": True,
+                "production_mode": False,
+            }
+        )
         assert result["dispatch_decision"] == DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED
         # 해당 케이스에서 user-present task message 생성 가능
-        msg = build_user_present_ws_task_message({
-            "workflow_run_id": "wr_compat_001",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-            "site_category": "bank",
-            "target_domain": "kbstar.com",
-            "target_url": "https://kbstar.com/",
-        })
+        msg = build_user_present_ws_task_message(
+            {
+                "workflow_run_id": "wr_compat_001",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "site_category": "bank",
+                "target_domain": "kbstar.com",
+                "target_url": "https://kbstar.com/",
+            }
+        )
         assert msg["message_type"] == MSG_USER_PRESENT_TASK
         assert msg["safe_to_execute"] is False
 
@@ -389,29 +418,35 @@ class TestCompatibility:
 
     def test_ws_schema_no_conflict_with_browser_websocket_schema(self):
         from local_agent.browser_websocket_schema import VALID_TASK_STATUS
+
         # browser_websocket_schema의 task status와 user_present status는 별개 enum
         assert "USER_CONFIRMED" not in VALID_TASK_STATUS
         assert "WAITING_FOR_USER" not in VALID_TASK_STATUS
 
     def test_validate_status_event_passes(self):
-        event = build_user_present_ws_status_event({
-            "workflow_run_id": "wr1",
-            "tenant_id": "t1",
-            "user_id": "u1",
-            "site_id": "s1",
-            "status": STATUS_WAITING_FOR_USER,
-            "status_reason": "",
-        })
+        event = build_user_present_ws_status_event(
+            {
+                "workflow_run_id": "wr1",
+                "tenant_id": "t1",
+                "user_id": "u1",
+                "site_id": "s1",
+                "status": STATUS_WAITING_FOR_USER,
+                "status_reason": "",
+            }
+        )
         errors = validate_user_present_ws_status_event(event)
         assert errors == []
 
 
 # ── 9. 보안 원칙 준수 ─────────────────────────────────────────────────────────
 
+
 class TestSecurityPrinciples:
     def test_no_real_websocket_in_contract_source(self):
         import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
         assert "ws://" not in src
@@ -419,21 +454,27 @@ class TestSecurityPrinciples:
 
     def test_no_real_websocket_in_adapter_source(self):
         import inspect
+
         import local_agent.user_present_ws_adapter as mod
+
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
         assert "ws://" not in src
 
     def test_no_db_write_in_contract_source(self):
         import inspect
+
         import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+
         src = inspect.getsource(mod)
         assert "INSERT INTO" not in src
         assert "session.commit()" not in src
 
     def test_no_browser_action_in_adapter_source(self):
         import inspect
+
         import local_agent.user_present_ws_adapter as mod
+
         src = inspect.getsource(mod)
         forbidden = ["page.click(", "page.fill(", "page.goto(", "page.type("]
         for token in forbidden:
@@ -441,7 +482,9 @@ class TestSecurityPrinciples:
 
     def test_no_task_executor_in_adapter_source(self):
         import inspect
+
         import local_agent.user_present_ws_adapter as mod
+
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src
 
