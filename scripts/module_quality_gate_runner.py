@@ -1,70 +1,124 @@
 """CHECKS registry, run_step, print_module_list, and main CLI for module_quality_gate."""
+
 from __future__ import annotations
 
 import argparse
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 try:
-    from scripts.module_quality_gate_common import (
-        ROOT, PY, redact, command_text, command_is_forbidden, workspace_temp_root, GateStep,
-    )
-    from scripts.module_quality_gate_modules import MODULES, module_names, selected_modules, iter_selected_steps
-    from scripts.module_quality_gate_checks_repo import (
-        check_out_of_scope_not_staged, check_forbidden_command_matrix, check_desktop_security_boundary,
-        check_local_agent_browser_runtime_rules, check_required_local_gate_wiring,
-        check_module_boundary_contract, check_root_legacy_script_contract,
-    )
     from scripts.module_quality_gate_checks_audit import (
-        check_site_registry_baseline, check_site_sso_subdomain_runtime_baseline,
-        check_site_work_function_baseline, check_google_automation_baseline_contract,
-        check_google_workspace_module_baseline_contract, check_google_gmail_function_contract,
-        check_google_workspace_router_compatibility, check_google_cloud_module_baseline_contract,
-        check_google_cloud_router_compatibility, check_google_cloud_action_policy_baseline_contract,
-        check_google_cloud_readonly_local_browser_dryrun, check_google_domain_module_boundaries,
-        check_common_tool_runtime_contract, check_common_tool_runtime_baseline_contract,
-        check_common_engine_commercialization_baseline, check_local_agent_connection_recovery_baseline,
-        check_desktop_auth_runtime_baseline_contract, check_portable_install_baseline_contract,
-        check_release_preflight_baseline_contract, check_app_baseline_contract,
-        check_standard_workflow_contract, check_module_baseline_contract, check_backend_runtime_contract,
-        check_backend_core_baseline_contract, check_local_agent_e2e_baseline_contract,
-        check_approval_flow_baseline_contract, check_playwright_ai_baseline_contract,
+        check_app_baseline_contract,
+        check_approval_flow_baseline_contract,
+        check_backend_core_baseline_contract,
+        check_backend_runtime_contract,
+        check_common_engine_commercialization_baseline,
+        check_common_tool_runtime_baseline_contract,
+        check_common_tool_runtime_contract,
+        check_desktop_auth_runtime_baseline_contract,
+        check_google_automation_baseline_contract,
+        check_google_cloud_action_policy_baseline_contract,
+        check_google_cloud_module_baseline_contract,
+        check_google_cloud_readonly_local_browser_dryrun,
+        check_google_cloud_router_compatibility,
+        check_google_domain_module_boundaries,
+        check_google_gmail_function_contract,
+        check_google_workspace_module_baseline_contract,
+        check_google_workspace_router_compatibility,
+        check_local_agent_connection_recovery_baseline,
+        check_local_agent_e2e_baseline_contract,
+        check_module_baseline_contract,
+        check_playwright_ai_baseline_contract,
+        check_portable_install_baseline_contract,
+        check_release_preflight_baseline_contract,
+        check_site_registry_baseline,
+        check_site_sso_subdomain_runtime_baseline,
+        check_site_work_function_baseline,
+        check_standard_workflow_contract,
+    )
+    from scripts.module_quality_gate_checks_repo import (
+        check_forbidden_command_matrix,
+        check_local_agent_browser_runtime_rules,
+        check_module_boundary_contract,
+        check_out_of_scope_not_staged,
+        check_required_local_gate_wiring,
+        check_root_legacy_script_contract,
     )
     from scripts.module_quality_gate_checks_web import (
-        check_admin_web_typecheck, check_admin_web_lint, check_admin_web_audit,
-        check_active_source_secret_scan, check_ui_residue_contract,
+        check_active_source_secret_scan,
+        check_admin_web_audit,
+        check_admin_web_lint,
+        check_admin_web_typecheck,
     )
+    from scripts.module_quality_gate_common import (
+        ROOT,
+        GateStep,
+        command_is_forbidden,
+        command_text,
+        redact,
+        workspace_temp_root,
+    )
+    from scripts.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
 except ModuleNotFoundError:
-    from module_quality_gate_common import (  # type: ignore[no-redef]
-        ROOT, PY, redact, command_text, command_is_forbidden, workspace_temp_root, GateStep,
-    )
-    from module_quality_gate_modules import MODULES, module_names, selected_modules, iter_selected_steps  # type: ignore[no-redef]
-    from module_quality_gate_checks_repo import (  # type: ignore[no-redef]
-        check_out_of_scope_not_staged, check_forbidden_command_matrix, check_desktop_security_boundary,
-        check_local_agent_browser_runtime_rules, check_required_local_gate_wiring,
-        check_module_boundary_contract, check_root_legacy_script_contract,
-    )
     from module_quality_gate_checks_audit import (  # type: ignore[no-redef]
-        check_site_registry_baseline, check_site_sso_subdomain_runtime_baseline,
-        check_site_work_function_baseline, check_google_automation_baseline_contract,
-        check_google_workspace_module_baseline_contract, check_google_gmail_function_contract,
-        check_google_workspace_router_compatibility, check_google_cloud_module_baseline_contract,
-        check_google_cloud_router_compatibility, check_google_cloud_action_policy_baseline_contract,
-        check_google_cloud_readonly_local_browser_dryrun, check_google_domain_module_boundaries,
-        check_common_tool_runtime_contract, check_common_tool_runtime_baseline_contract,
-        check_common_engine_commercialization_baseline, check_local_agent_connection_recovery_baseline,
-        check_desktop_auth_runtime_baseline_contract, check_portable_install_baseline_contract,
-        check_release_preflight_baseline_contract, check_app_baseline_contract,
-        check_standard_workflow_contract, check_module_baseline_contract, check_backend_runtime_contract,
-        check_backend_core_baseline_contract, check_local_agent_e2e_baseline_contract,
-        check_approval_flow_baseline_contract, check_playwright_ai_baseline_contract,
+        check_app_baseline_contract,
+        check_approval_flow_baseline_contract,
+        check_backend_core_baseline_contract,
+        check_backend_runtime_contract,
+        check_common_engine_commercialization_baseline,
+        check_common_tool_runtime_baseline_contract,
+        check_common_tool_runtime_contract,
+        check_desktop_auth_runtime_baseline_contract,
+        check_google_automation_baseline_contract,
+        check_google_cloud_action_policy_baseline_contract,
+        check_google_cloud_module_baseline_contract,
+        check_google_cloud_readonly_local_browser_dryrun,
+        check_google_cloud_router_compatibility,
+        check_google_domain_module_boundaries,
+        check_google_gmail_function_contract,
+        check_google_workspace_module_baseline_contract,
+        check_google_workspace_router_compatibility,
+        check_local_agent_connection_recovery_baseline,
+        check_local_agent_e2e_baseline_contract,
+        check_module_baseline_contract,
+        check_playwright_ai_baseline_contract,
+        check_portable_install_baseline_contract,
+        check_release_preflight_baseline_contract,
+        check_site_registry_baseline,
+        check_site_sso_subdomain_runtime_baseline,
+        check_site_work_function_baseline,
+        check_standard_workflow_contract,
+    )
+    from module_quality_gate_checks_repo import (  # type: ignore[no-redef]
+        check_forbidden_command_matrix,
+        check_local_agent_browser_runtime_rules,
+        check_module_boundary_contract,
+        check_out_of_scope_not_staged,
+        check_required_local_gate_wiring,
+        check_root_legacy_script_contract,
     )
     from module_quality_gate_checks_web import (  # type: ignore[no-redef]
-        check_admin_web_typecheck, check_admin_web_lint, check_admin_web_audit,
-        check_active_source_secret_scan, check_ui_residue_contract,
+        check_active_source_secret_scan,
+        check_admin_web_audit,
+        check_admin_web_lint,
+        check_admin_web_typecheck,
+    )
+    from module_quality_gate_common import (  # type: ignore[no-redef]
+        ROOT,
+        GateStep,
+        command_is_forbidden,
+        command_text,
+        redact,
+        workspace_temp_root,
+    )
+    from module_quality_gate_modules import (  # type: ignore[no-redef]
+        MODULES,
+        iter_selected_steps,
+        module_names,
+        selected_modules,
     )
 
 sys.dont_write_bytecode = True
@@ -73,7 +127,6 @@ sys.dont_write_bytecode = True
 CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "out_of_scope_not_staged": check_out_of_scope_not_staged,
     "forbidden_command_matrix": check_forbidden_command_matrix,
-    "desktop_security_boundary": check_desktop_security_boundary,
     "desktop_auth_runtime_baseline_contract": check_desktop_auth_runtime_baseline_contract,
     "portable_install_baseline_contract": check_portable_install_baseline_contract,
     "release_preflight_baseline_contract": check_release_preflight_baseline_contract,
@@ -109,7 +162,6 @@ CHECKS: dict[str, Callable[[], tuple[bool, str]]] = {
     "admin_web_lint": check_admin_web_lint,
     "admin_web_audit": check_admin_web_audit,
     "active_source_secret_scan": check_active_source_secret_scan,
-    "ui_residue_contract": check_ui_residue_contract,
 }
 
 
@@ -186,7 +238,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print("Module quality gate")
-    print(f"modules={','.join(module.name for module in modules)} include_live={args.include_live} dry_run={args.dry_run}")
+    print(
+        f"modules={','.join(module.name for module in modules)} include_live={args.include_live} dry_run={args.dry_run}"
+    )
     passed = 0
     failed = 0
     for module, step in steps:
@@ -196,5 +250,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             failed += 1
 
-    print(f"\nRESULT={'PASS_MODULE_QUALITY_GATE' if failed == 0 else 'FAIL_MODULE_QUALITY_GATE'} passed={passed} failed={failed}")
+    print(
+        f"\nRESULT={'PASS_MODULE_QUALITY_GATE' if failed == 0 else 'FAIL_MODULE_QUALITY_GATE'} passed={passed} failed={failed}"
+    )
     return 0 if failed == 0 else 1

@@ -15,11 +15,11 @@
 
 DB/서버/브라우저/외부 API 실행 없음.
 """
+
 from __future__ import annotations
 
-import pathlib
 import importlib
-
+import pathlib
 
 REPO = pathlib.Path(__file__).parent.parent
 AI_ORC = REPO / "ai_orchestrator"
@@ -34,7 +34,7 @@ DOMAIN_CORE_MAP = {
     "Task": {
         "impl_files": [
             "ai_orchestrator/task_state.py",
-            "ai_orchestrator/domain/models.py",    # STEP 1: Task baseline model 추가
+            "ai_orchestrator/domain/models.py",  # STEP 1: Task baseline model 추가
         ],
         "domain_file": "ai_orchestrator/domain/models.py",
         "status": "BASELINE_MODEL_READY_WITH_LEGACY_ADAPTER",
@@ -44,14 +44,13 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/server/task_queue_schema.py",
         ],
-        "status": "PARTIAL",           # in-memory schema만 존재
-        "needs": ["priority_queue", "execution_location_partition",
-                  "dequeue_by_location", "persistent_recovery"],
+        "status": "PARTIAL",  # in-memory schema만 존재
+        "needs": ["priority_queue", "execution_location_partition", "dequeue_by_location", "persistent_recovery"],
     },
     "WorkTrade": {
         "impl_files": [
             "ai_orchestrator/external_work_registry.py",
-            "ai_orchestrator/domain/models.py",    # STEP 1: WorkTrade baseline model 추가
+            "ai_orchestrator/domain/models.py",  # STEP 1: WorkTrade baseline model 추가
         ],
         "status": "BASELINE_MODEL_READY",
         "needs": ["service_layer_extract"],
@@ -62,7 +61,7 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/dev_reg_approval.py",
             "ai_orchestrator/web_task_approval_service.py",
         ],
-        "status": "FUNCTIONAL",        # 동작하지만 서비스 계층 미분리
+        "status": "FUNCTIONAL",  # 동작하지만 서비스 계층 미분리
         "needs": ["approval_service_extract", "approval_history_model"],
     },
     "AuditEvent": {
@@ -70,8 +69,8 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
             "ai_orchestrator/local_agent/approval_audit_log.py",
-            "ai_orchestrator/audit_evidence/models.py",   # STEP 3: 표준 스키마 기준선
-            "ai_orchestrator/audit_evidence/adapters.py", # STEP 4: read-only adapter
+            "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
+            "ai_orchestrator/audit_evidence/adapters.py",  # STEP 4: read-only adapter
         ],
         "status": "STANDARD_SCHEMA_BASELINE_READY",
         "needs": ["full_migration_from_legacy", "evidence_link_v2"],
@@ -81,7 +80,6 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/server/execution_location_guard.py",
             "ai_orchestrator/domain/enums.py",
             "ai_orchestrator/browser_tool/execution_location_policy.py",
-            "desktop/task_receiver.py",
         ],
         "status": "FUNCTIONAL",
         "needs": ["unified_enum_source", "bridge_location_enum"],
@@ -89,7 +87,7 @@ DOMAIN_CORE_MAP = {
     "ExternalWork": {
         "impl_files": [
             "ai_orchestrator/external_work_registry.py",
-            "ai_orchestrator/domain/models.py",          # STEP 1: ExternalWork baseline model 추가
+            "ai_orchestrator/domain/models.py",  # STEP 1: ExternalWork baseline model 추가
             "ai_orchestrator/domain/model_adapters.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ExecutionAttempt + ExternalAppHandoff
         ],
@@ -107,18 +105,17 @@ DOMAIN_CORE_MAP = {
     },
     "Integration": {
         "impl_files": [
-            "ai_orchestrator/ops_router.py",         # _STATIC_INTEGRATIONS
+            "ai_orchestrator/ops_router.py",  # _STATIC_INTEGRATIONS
             "ai_orchestrator/connectors/",
         ],
         "status": "STATIC_LIST",
-        "needs": ["Integration_entity", "integration_registry_service",
-                  "health_check_method", "last_seen_at"],
+        "needs": ["Integration_entity", "integration_registry_service", "health_check_method", "last_seen_at"],
     },
     "Artifact": {
         "impl_files": [
             "ai_orchestrator/server/action_evidence_store.py",
             "ai_orchestrator/local_agent/action_evidence_collector.py",
-            "ai_orchestrator/domain/models.py",          # STEP 1: Artifact baseline model 추가
+            "ai_orchestrator/domain/models.py",  # STEP 1: Artifact baseline model 추가
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ArtifactEvidenceRef 기준선
         ],
         "status": "ARTIFACT_EVIDENCE_REF_BASELINE_READY",
@@ -133,14 +130,14 @@ DOMAIN_CORE_MAP = {
             "ai_orchestrator/domain/models.py",
             "ai_orchestrator/domain/model_adapters.py",
             "ai_orchestrator/safety_policy/safety_policy_registry.py",  # STEP 2: 통합 registry 기준선
-            "ai_orchestrator/audit_evidence/models.py",                 # STEP 3: SafetyVerdict 기준선
+            "ai_orchestrator/audit_evidence/models.py",  # STEP 3: SafetyVerdict 기준선
         ],
         "status": "SAFETY_VERDICT_BASELINE_READY",
         "needs": ["full_policy_migration", "policy_coverage_test"],
     },
     "ExternalAppBridge": {
         "impl_files": [
-            "ai_orchestrator/domain/models.py",          # STEP 1: ExternalAppBridge baseline model 추가
+            "ai_orchestrator/domain/models.py",  # STEP 1: ExternalAppBridge baseline model 추가
             "ai_orchestrator/domain/model_adapters.py",  # STEP 1: get_all_bridges / get_bridge 추가
         ],
         "status": "BASELINE_MODEL_READY_CONTRACT_ONLY",  # 계약 기준선 완료, 실제 구현 없음
@@ -149,17 +146,19 @@ DOMAIN_CORE_MAP = {
     "UserDirectAction": {
         "impl_files": [
             "ai_orchestrator/browser_tool/browser_engine_routing_policy.py",
-            "desktop/task_receiver.py",
         ],
         "status": "PARTIAL",
-        "needs": ["UserDirectAction_entity", "instruction_record",
-                  "user_confirmation_required"],
+        "needs": ["UserDirectAction_entity", "instruction_record", "user_confirmation_required"],
     },
 }
 
 DOMAIN_STATUS_ALLOWED = {
-    "FUNCTIONAL", "PARTIAL", "REGISTRY_ONLY",
-    "STATIC_LIST", "SCATTERED", "NOT_IMPLEMENTED",
+    "FUNCTIONAL",
+    "PARTIAL",
+    "REGISTRY_ONLY",
+    "STATIC_LIST",
+    "SCATTERED",
+    "NOT_IMPLEMENTED",
     # STEP 1 Domain Core 기준선 완료 후 상태
     "BASELINE_MODEL_READY",
     "BASELINE_MODEL_READY_WITH_LEGACY_ADAPTER",
@@ -183,10 +182,20 @@ class TestDomainCoreClassification:
     def test_domain_map_covers_all_required_domains(self):
         """최고급 설계 기준 14개 도메인이 모두 분류되어 있다."""
         required = {
-            "Task", "TaskQueue", "WorkTrade", "Approval", "AuditEvent",
-            "ExecutionLocation", "ExternalWork", "LocalAgent", "Integration",
-            "Artifact", "SafetyPolicy", "ExternalAppBridge",
-            "UserDirectAction", "PendingApproval",
+            "Task",
+            "TaskQueue",
+            "WorkTrade",
+            "Approval",
+            "AuditEvent",
+            "ExecutionLocation",
+            "ExternalWork",
+            "LocalAgent",
+            "Integration",
+            "Artifact",
+            "SafetyPolicy",
+            "ExternalAppBridge",
+            "UserDirectAction",
+            "PendingApproval",
         }
         # PendingApproval은 Approval 안에 포함되므로 13+1
         covered = set(DOMAIN_CORE_MAP.keys()) | {"PendingApproval"}
@@ -196,16 +205,12 @@ class TestDomainCoreClassification:
     def test_domain_status_values_valid(self):
         """모든 도메인의 status가 허용 값 내에 있다."""
         for domain, info in DOMAIN_CORE_MAP.items():
-            assert info["status"] in DOMAIN_STATUS_ALLOWED, (
-                f"{domain}.status={info['status']} 허용 범위 초과"
-            )
+            assert info["status"] in DOMAIN_STATUS_ALLOWED, f"{domain}.status={info['status']} 허용 범위 초과"
 
     def test_external_app_bridge_contract_only_baseline(self):
         """ExternalAppBridge는 계약 기준선만 완료, 실제 구현 없음을 고정한다."""
         status = DOMAIN_CORE_MAP["ExternalAppBridge"]["status"]
-        assert status == "BASELINE_MODEL_READY_CONTRACT_ONLY", (
-            f"ExternalAppBridge status={status}"
-        )
+        assert status == "BASELINE_MODEL_READY_CONTRACT_ONLY", f"ExternalAppBridge status={status}"
         # 도메인 모델 파일이 추가됨
         impl_files = DOMAIN_CORE_MAP["ExternalAppBridge"]["impl_files"]
         assert any("domain/models.py" in f for f in impl_files)
@@ -328,8 +333,7 @@ class TestServiceLayerDesign:
 
     def test_high_priority_services_list(self):
         """HIGH 우선순위 서비스 4개 고정."""
-        high = [k for k, v in SERVICE_LAYER_DESIGN.items()
-                if v["extraction_priority"] == "HIGH"]
+        high = [k for k, v in SERVICE_LAYER_DESIGN.items() if v["extraction_priority"] == "HIGH"]
         assert len(high) == 4, f"HIGH 서비스={high}, 기준=4"
         assert "task_queue_service" in high
         assert "execution_policy_service" in high
@@ -355,8 +359,7 @@ EXTERNAL_APP_BRIDGE_REGISTRY = {
         "handoff_mode": "FILE_HANDOFF",
         "status": "FUTURE_INTEGRATION",
         "current_backend_impl": "EXTERNAL_APP_HOLD",
-        "safety_policy": ["no_auto_submit", "user_review_required",
-                          "file_path_only_no_content"],
+        "safety_policy": ["no_auto_submit", "user_review_required", "file_path_only_no_content"],
     },
     "HWPX_EXTERNAL_APP_BRIDGE": {
         "app_type": "HWPX",
@@ -386,8 +389,7 @@ EXTERNAL_APP_BRIDGE_REGISTRY = {
         "handoff_mode": "USER_HANDOFF",
         "status": "FUTURE_INTEGRATION",
         "current_backend_impl": "EXTERNAL_APP_HOLD",
-        "safety_policy": ["no_auto_submit", "user_direct_only",
-                          "no_credential_store"],
+        "safety_policy": ["no_auto_submit", "user_direct_only", "no_credential_store"],
     },
     "BID_EXTERNAL_APP_BRIDGE": {
         "app_type": "BID",
@@ -397,8 +399,7 @@ EXTERNAL_APP_BRIDGE_REGISTRY = {
         "handoff_mode": "USER_HANDOFF",
         "status": "FUTURE_INTEGRATION",
         "current_backend_impl": "EXTERNAL_APP_HOLD",
-        "safety_policy": ["no_auto_submit", "user_direct_only",
-                          "no_credential_store", "no_bid_auto_execute"],
+        "safety_policy": ["no_auto_submit", "user_direct_only", "no_credential_store", "no_bid_auto_execute"],
     },
     "DOCUMENT_AUTO_BRIDGE": {
         "app_type": "DOCUMENT_AUTOMATION",
@@ -413,19 +414,29 @@ EXTERNAL_APP_BRIDGE_REGISTRY = {
 }
 
 REQUIRED_BRIDGE_FIELDS = {
-    "app_type", "capability", "execution_location",
-    "required_approval", "handoff_mode", "status",
-    "current_backend_impl", "safety_policy",
+    "app_type",
+    "capability",
+    "execution_location",
+    "required_approval",
+    "handoff_mode",
+    "status",
+    "current_backend_impl",
+    "safety_policy",
 }
 
 VALID_EXECUTION_LOCATIONS_BRIDGE = {
-    "LOCAL_AGENT_REQUIRED", "USER_DIRECT_REQUIRED",
-    "SERVER_INTERNAL_ONLY", "BLOCKED",
+    "LOCAL_AGENT_REQUIRED",
+    "USER_DIRECT_REQUIRED",
+    "SERVER_INTERNAL_ONLY",
+    "BLOCKED",
 }
 
 VALID_HANDOFF_MODES = {
-    "FILE_HANDOFF", "USER_HANDOFF", "TEMPLATE_HANDOFF",
-    "API_HANDOFF", "QUEUE_HANDOFF",
+    "FILE_HANDOFF",
+    "USER_HANDOFF",
+    "TEMPLATE_HANDOFF",
+    "API_HANDOFF",
+    "QUEUE_HANDOFF",
 }
 
 
@@ -477,9 +488,7 @@ class TestExternalAppBridgeDesign:
     def test_all_handoff_modes_valid(self):
         """모든 브릿지의 handoff_mode가 허용 값 내에 있다."""
         for bridge_id, info in EXTERNAL_APP_BRIDGE_REGISTRY.items():
-            assert info["handoff_mode"] in VALID_HANDOFF_MODES, (
-                f"{bridge_id}.handoff_mode={info['handoff_mode']}"
-            )
+            assert info["handoff_mode"] in VALID_HANDOFF_MODES, f"{bridge_id}.handoff_mode={info['handoff_mode']}"
 
     def test_bridge_required_approval_all_true(self):
         """모든 외부 앱 브릿지는 required_approval=True다."""
@@ -513,32 +522,32 @@ API_CATEGORY_CLASSIFICATION = {
     ],
     # WEB_TASK_API — 웹 작업 실행/관리
     "WEB_TASK_API": [
-        ("GET",  "/api/v1/web-tasks/registry"),
+        ("GET", "/api/v1/web-tasks/registry"),
         ("POST", "/api/v1/web-tasks/run"),
-        ("GET",  "/api/v1/web-tasks/templates"),
+        ("GET", "/api/v1/web-tasks/templates"),
         ("POST", "/api/v1/web-tasks/run-from-template"),
     ],
     # LOCAL_AGENT_API — 로컬 에이전트 등록/관리
     "LOCAL_AGENT_API": [
         ("POST", "/api/v1/local-agents/register"),
         ("POST", "/api/v1/local-agents/registration-codes"),
-        ("GET",  "/api/v1/local-agents/registration-codes"),
+        ("GET", "/api/v1/local-agents/registration-codes"),
         ("POST", "/api/v1/local-agents/registration-codes/{code_id}/revoke"),
         ("POST", "/api/v1/local-agents/register-with-code"),
-        ("GET",  "/api/v1/local-agents"),
-        ("GET",  "/api/v1/local-agents/diagnostics"),
+        ("GET", "/api/v1/local-agents"),
+        ("GET", "/api/v1/local-agents/diagnostics"),
         ("POST", "/api/v1/local-agents/{agent_id}/tasks/{task_id}/cancel"),
-        ("GET",  "/api/v1/local-agents/user-present-status/{workflow_run_id}"),
-        ("GET",  "/api/v1/local-agents/{agent_id}/user-present-statuses"),
+        ("GET", "/api/v1/local-agents/user-present-status/{workflow_run_id}"),
+        ("GET", "/api/v1/local-agents/{agent_id}/user-present-statuses"),
         ("POST", "/api/v1/local-agents/{agent_id}/user-present-dispatch"),
-        ("GET",  "/api/v1/local-agents/{agent_id}/tasks"),
+        ("GET", "/api/v1/local-agents/{agent_id}/tasks"),
     ],
     # APPROVAL_API — 승인/거절 흐름
     "APPROVAL_API": [
         ("POST", "/api/v1/approve"),
         ("POST", "/api/v1/reject"),
-        ("GET",  "/api/v1/approval-records"),
-        ("GET",  "/api/v1/approval-records/{task_id}"),
+        ("GET", "/api/v1/approval-records"),
+        ("GET", "/api/v1/approval-records/{task_id}"),
     ],
     # AUDIT_API — 감사 로그
     "AUDIT_API": [
@@ -555,7 +564,7 @@ API_CATEGORY_CLASSIFICATION = {
     # LEGACY_API — 호환성 유지 (즉시 변경 불가)
     "LEGACY_API": [
         ("POST", "/api/v1/site-tasks/dry-run"),
-        ("GET",  "/api/v1/cad-ai/actions"),
+        ("GET", "/api/v1/cad-ai/actions"),
         ("POST", "/api/v1/cad-ai/chat"),
         ("POST", "/api/v1/inbox/email/fetch"),
         ("POST", "/api/v1/webhooks/telegram"),
@@ -606,9 +615,7 @@ class TestApiCategoryClassification:
         for cat, eps in API_CATEGORY_CLASSIFICATION.items():
             for ep in eps:
                 all_eps.append(ep)
-        assert len(all_eps) == len(set(all_eps)), (
-            f"카테고리 간 중복 endpoint 발견"
-        )
+        assert len(all_eps) == len(set(all_eps)), "카테고리 간 중복 endpoint 발견"
 
 
 # ===========================================================================
@@ -709,9 +716,7 @@ class TestPolicyLayerMap:
         """IMPLEMENTED 상태 정책은 모두 테스트 커버되어 있다."""
         for name, p in POLICY_LAYER_MAP.items():
             if p["status"] == "IMPLEMENTED":
-                assert p["test_covered"] is True, (
-                    f"{name}: IMPLEMENTED인데 test_covered=False"
-                )
+                assert p["test_covered"] is True, f"{name}: IMPLEMENTED인데 test_covered=False"
 
 
 # ===========================================================================
@@ -720,26 +725,35 @@ class TestPolicyLayerMap:
 
 AUDIT_EVENT_STANDARD_SCHEMA = {
     "required_fields": [
-        "event_id",        # UUID
-        "event_type",      # TASK_RECEIVED / APPROVAL_ISSUED / etc.
+        "event_id",  # UUID
+        "event_type",  # TASK_RECEIVED / APPROVAL_ISSUED / etc.
         "task_id",
         "provider",
         "action_type",
         "risk_level",
         "execution_location",
-        "actor",           # server / local_agent / user
+        "actor",  # server / local_agent / user
         "timestamp",
-        "verdict",         # PASS / WARN / FAIL / HOLD
+        "verdict",  # PASS / WARN / FAIL / HOLD
         "summary",
     ],
     "forbidden_fields": [
-        "password", "otp", "cert_password", "private_key",
-        "cookie", "session", "token", "approval_token",
-        "raw_screenshot", "base64", "localstorage",
-        "sessionstorage", "authorization",
+        "password",
+        "otp",
+        "cert_password",
+        "private_key",
+        "cookie",
+        "session",
+        "token",
+        "approval_token",
+        "raw_screenshot",
+        "base64",
+        "localstorage",
+        "sessionstorage",
+        "authorization",
     ],
     "optional_fields": [
-        "artifact_ref",    # safe path reference only
+        "artifact_ref",  # safe path reference only
         "evidence_id",
         "safety_verdict",
         "external_app_handoff_id",
@@ -750,12 +764,22 @@ AUDIT_EVENT_STANDARD_SCHEMA = {
 
 EVIDENCE_HANDOFF_RECORD_FIELDS = {
     "required": [
-        "handoff_id", "bridge_id", "task_id", "handoff_mode",
-        "input_summary", "status", "created_at",
+        "handoff_id",
+        "bridge_id",
+        "task_id",
+        "handoff_mode",
+        "input_summary",
+        "status",
+        "created_at",
     ],
     "forbidden": [
-        "password", "credential", "private_key", "cert",
-        "otp", "token", "cookie",
+        "password",
+        "credential",
+        "private_key",
+        "cert",
+        "otp",
+        "token",
+        "cookie",
     ],
 }
 
@@ -792,11 +816,13 @@ class TestAuditEvidenceDesign:
     def test_current_audit_logger_importable(self):
         """현재 audit_logger 모듈이 import 가능하다."""
         import ai_orchestrator.audit_logger as m
+
         assert hasattr(m, "log_event") or hasattr(m, "audit_log") or hasattr(m, "EVENT_TYPES")
 
     def test_current_action_evidence_store_importable(self):
         """현재 action_evidence_store가 import 가능하다."""
         import ai_orchestrator.server.action_evidence_store as m
+
         assert m is not None
 
 
@@ -824,8 +850,6 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/browser_tool/execution_location_policy.py",
     "ai_orchestrator/browser_tool/policy.py",
     "ai_orchestrator/server/server_egress_policy.py",
-    "desktop/task_receiver.py",
-    "desktop/status_provider.py",
 ]
 
 CORE_MODULES_MUST_IMPORT = [
@@ -868,11 +892,12 @@ class TestCoreFileIntegrity:
     def test_execution_location_guard_has_location_constants(self):
         """execution_location_guard에 위치 상수 4개가 정의되어 있다."""
         from ai_orchestrator.server.execution_location_guard import (
-            SERVER_INTERNAL_ONLY,
-            LOCAL_AGENT_REQUIRED,
-            USER_DIRECT_REQUIRED,
             BLOCKED,
+            LOCAL_AGENT_REQUIRED,
+            SERVER_INTERNAL_ONLY,
+            USER_DIRECT_REQUIRED,
         )
+
         assert SERVER_INTERNAL_ONLY == "SERVER_INTERNAL_ONLY"
         assert LOCAL_AGENT_REQUIRED == "LOCAL_AGENT_REQUIRED"
         assert USER_DIRECT_REQUIRED == "USER_DIRECT_REQUIRED"
@@ -881,6 +906,7 @@ class TestCoreFileIntegrity:
     def test_domain_enums_stable(self):
         """domain/enums.py 핵심 Enum이 안정되어 있다."""
         from ai_orchestrator.domain.enums import RiskLevel, TaskStatus, Verdict
+
         assert RiskLevel.LOW == "low"
         assert RiskLevel.CRITICAL == "critical"
         assert TaskStatus.PENDING == "pending"
@@ -890,9 +916,14 @@ class TestCoreFileIntegrity:
     def test_external_work_registry_importable_with_classification(self):
         """external_work_registry가 분류 상수와 함께 import된다."""
         import ai_orchestrator.external_work_registry as m
-        assert hasattr(m, "WORK_REGISTRY") or hasattr(m, "EXTERNAL_WORK_REGISTRY") or \
-               hasattr(m, "WorkClassification") or hasattr(m, "ExternalWork") or \
-               hasattr(m, "list_external_works")
+
+        assert (
+            hasattr(m, "WORK_REGISTRY")
+            or hasattr(m, "EXTERNAL_WORK_REGISTRY")
+            or hasattr(m, "WorkClassification")
+            or hasattr(m, "ExternalWork")
+            or hasattr(m, "list_external_works")
+        )
 
 
 # ===========================================================================
@@ -1021,8 +1052,7 @@ class TestNextPhaseRoadmap:
 
     def test_all_phases_have_required_keys(self):
         """모든 공정에 필수 키가 있다."""
-        required_keys = {"phase", "name", "goal", "files", "forbidden",
-                         "test_criteria", "done_when"}
+        required_keys = {"phase", "name", "goal", "files", "forbidden", "test_criteria", "done_when"}
         for p in NEXT_PHASE_ROADMAP:
             missing = required_keys - set(p.keys())
             assert not missing, f"phase {p['phase']} 키 누락: {missing}"

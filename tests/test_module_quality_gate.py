@@ -51,11 +51,7 @@ def test_release_preflight_includes_baseline_contract_gate():
 
 
 def test_command_matrix_blocks_build_deploy_and_push_commands():
-    offenders = [
-        step.name
-        for step in gate.all_steps()
-        if step.command and gate.command_is_forbidden(step.command)
-    ]
+    offenders = [step.name for step in gate.all_steps() if step.command and gate.command_is_forbidden(step.command)]
 
     assert offenders == []
 
@@ -63,7 +59,6 @@ def test_command_matrix_blocks_build_deploy_and_push_commands():
 def test_repo_guard_includes_desktop_security_boundary():
     repo_guard = next(module for module in gate.MODULES if module.name == "repo_guard")
 
-    assert any(step.check == "desktop_security_boundary" for step in repo_guard.steps)
     assert any(step.check == "local_agent_browser_runtime_rules" for step in repo_guard.steps)
     assert any(step.check == "common_tool_runtime_baseline_contract" for step in repo_guard.steps)
     assert any(step.check == "common_engine_commercialization_baseline" for step in repo_guard.steps)
@@ -83,7 +78,6 @@ def test_release_preflight_includes_admin_web_and_secret_scan():
     checks = {step.check for step in release.steps}
 
     assert {
-        "ui_residue_contract",
         "admin_web_typecheck",
         "admin_web_lint",
         "admin_web_audit",
@@ -107,10 +101,7 @@ def test_local_agent_e2e_module_includes_contract_gate():
 
     assert any(step.check == "local_agent_e2e_baseline_contract" for step in module.steps)
     assert any(step.name == "local_agent_e2e_py_compile" for step in module.steps)
-    assert any(
-        any("audit_local_agent_e2e_flow_contract.py" in part for part in step.command)
-        for step in module.steps
-    )
+    assert any(any("audit_local_agent_e2e_flow_contract.py" in part for part in step.command) for step in module.steps)
     assert any(step.name == "local_agent_e2e_pytest" for step in module.steps)
 
 
@@ -128,39 +119,6 @@ def test_playwright_ai_includes_baseline_contract_gate():
     assert any(step.check == "playwright_ai_baseline_contract" for step in module.steps)
 
 
-def test_desktop_security_boundary_passes_current_runtime_sources():
-    ok, message = gate.check_desktop_security_boundary()
-
-    assert ok, message
-
-
-def test_cad_boundary_imports_are_isolated_to_boundary_modules():
-    allowed = {
-        "desktop/cad_api_approval.py",
-        "desktop/cad_bridge_allowlist.py",
-    }
-    offenders = []
-    for path in (gate.ROOT / "desktop").glob("*.py"):
-        rel = gate.normalize_path(str(path.relative_to(gate.ROOT)))
-        if rel in allowed:
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if "from local_agent.cad" in text or "import local_agent.cad" in text:
-            offenders.append(rel)
-
-    assert offenders == []
-
-
-def test_tray_and_launcher_use_runtime_boundary_for_local_agent_imports():
-    offenders = []
-    for rel in ("desktop/tray_runtime.py", "desktop/main_launcher.py", "desktop/local_server.py"):
-        text = (gate.ROOT / rel).read_text(encoding="utf-8", errors="replace")
-        if gate.imports_local_agent(text):
-            offenders.append(rel)
-
-    assert offenders == []
-
-
 def test_python_compile_steps_use_no_cache_wrapper():
     compile_steps = [step for step in gate.all_steps() if step.name.endswith("_py_compile")]
 
@@ -169,11 +127,7 @@ def test_python_compile_steps_use_no_cache_wrapper():
 
 
 def test_redact_masks_auth_and_secret_values():
-    text = (
-        "Authorization: Bearer admin-token\n"
-        "OPENAI_API_KEY=sk-testsecretvalue12345\n"
-        "device_token=plain-device-token"
-    )
+    text = "Authorization: Bearer admin-token\nOPENAI_API_KEY=sk-testsecretvalue12345\ndevice_token=plain-device-token"
 
     redacted = gate.redact(text)
 
@@ -185,12 +139,6 @@ def test_redact_masks_auth_and_secret_values():
 
 def test_active_source_secret_scan_passes_current_sources():
     ok, message = gate.check_active_source_secret_scan()
-
-    assert ok, message
-
-
-def test_ui_residue_contract_passes_current_sources():
-    ok, message = gate.check_ui_residue_contract()
 
     assert ok, message
 

@@ -5,8 +5,8 @@ from scripts.ops.codebase_layer_audit import (
     ClassifiedFile,
     audit,
     build_residual_audit,
-    check_security_patterns,
     check_consistency,
+    check_security_patterns,
     classify_path,
     diff_snapshot,
     find_cycles,
@@ -29,7 +29,6 @@ def test_classify_core_layers():
     assert classify_path("admin-web/src/app/page.tsx")[0] == "L9"
     assert classify_path("agent/excel/workflows.py")[0] == "L10"
     assert classify_path("docs/layer_classification.md")[0] == "L12"
-    assert classify_path("backend/compat/legacy_5050/adapters/common.py")[0] == "L8"
 
 
 def test_audit_detects_root_python_script():
@@ -45,13 +44,16 @@ def test_audit_detects_fat_hiworks_router():
         ClassifiedFile("scripts/hiworks/router.py", "L5", "site module", 13000, 1.0),
     ]
     issues = audit(rows, root=Path("."))
-    assert AuditIssue(
-        "warn",
-        "FAT_SITE_ROUTER",
-        "scripts/hiworks/router.py",
-        "Hiworks router contains too much logic; split into schemas/gates/explorer/mail/workflows.",
-        "L5",
-    ) in issues
+    assert (
+        AuditIssue(
+            "warn",
+            "FAT_SITE_ROUTER",
+            "scripts/hiworks/router.py",
+            "Hiworks router contains too much logic; split into schemas/gates/explorer/mail/workflows.",
+            "L5",
+        )
+        in issues
+    )
 
 
 def test_diff_snapshot_detects_added_modified_deleted():
@@ -112,8 +114,7 @@ def test_residual_audit_tracks_root_script_group():
 def test_security_patterns_ignore_auth_header_construction(tmp_path):
     source = tmp_path / "client.py"
     source.write_text(
-        'headers = {"Authorization": f"Bearer {api_key}"}\n'
-        'safe = f"{username}:{password}"\n',
+        'headers = {"Authorization": f"Bearer {api_key}"}\nsafe = f"{username}:{password}"\n',
         encoding="utf-8",
     )
     rows = [ClassifiedFile("client.py", "L3", "test", 1, 1.0)]
@@ -126,8 +127,7 @@ def test_security_patterns_ignore_auth_header_construction(tmp_path):
 def test_security_patterns_detect_secret_logging(tmp_path):
     source = tmp_path / "client.py"
     source.write_text(
-        "logger.info('key %s', api_key)\n"
-        "print(f\"password: {result.get('password')}\")\n",
+        "logger.info('key %s', api_key)\nprint(f\"password: {result.get('password')}\")\n",
         encoding="utf-8",
     )
     rows = [ClassifiedFile("client.py", "L3", "test", 1, 1.0)]
@@ -175,8 +175,10 @@ def test_check_consistency_validates_summary_counts():
 
 
 def test_strip_jsonc_line_and_block_comments():
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
     import json
+
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+
     src = """// header comment
 {
     /* block comment
@@ -190,8 +192,10 @@ def test_strip_jsonc_line_and_block_comments():
 
 
 def test_strip_jsonc_preserves_comment_like_strings():
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
     import json
+
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+
     src = '{"url": "http://example.com/path", "alias": "@/*", "blk": "/* not a comment */"}'
     data = json.loads(_strip_jsonc(src))
     assert data["url"] == "http://example.com/path"
@@ -200,8 +204,10 @@ def test_strip_jsonc_preserves_comment_like_strings():
 
 
 def test_strip_jsonc_allows_trailing_commas():
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
     import json
+
+    from scripts.ops.codebase_layer_audit import _strip_jsonc
+
     src = '{"arr": [1, 2, 3,], "obj": {"k": "v",},}'
     data = json.loads(_strip_jsonc(src))
     assert data == {"arr": [1, 2, 3], "obj": {"k": "v"}}
@@ -209,10 +215,13 @@ def test_strip_jsonc_allows_trailing_commas():
 
 # ── 순환 탐지 정확화 (모듈 분리 기준서) ──────────────────────────────────────
 
+
 def test_import_time_nodes_excludes_function_local():
     """함수 본문 안 import 는 import-time 엣지로 세지 않는다(순환 false-positive 방지)."""
     import ast
+
     from scripts.ops.codebase_layer_audit import _import_time_nodes
+
     src = (
         "import a\n"
         "from b import x\n"
@@ -235,8 +244,9 @@ def test_import_time_nodes_excludes_function_local():
 def test_package_containment_excluded_from_cycles():
     """부모-자식(패키지 containment) 관계는 cross-component 순환에서 제외."""
     from scripts.ops.codebase_layer_audit import _is_package_containment
+
     assert _is_package_containment("a.b", "a.b.c") is True
     assert _is_package_containment("a.b.c", "a.b") is True
     assert _is_package_containment("a.b", "a.b") is True
-    assert _is_package_containment("a.b", "a.c") is False   # 형제는 실제 순환으로 탐지
+    assert _is_package_containment("a.b", "a.c") is False  # 형제는 실제 순환으로 탐지
     assert _is_package_containment("a.b", "x.y") is False

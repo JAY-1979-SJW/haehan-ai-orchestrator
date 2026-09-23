@@ -33,9 +33,6 @@ ignore = [
 [lint.per-file-ignores]
 "tests/**" = ["S", "B"]
 "scripts/**" = ["S", "B"]
-# local_server.py 는 FastAPI app 선언 후 라우터 등록 패턴상 mid-file import 가
-# 불가피하며, asyncio.create_task fire-and-forget 패턴을 의도적으로 사용한다.
-"desktop/local_server.py" = ["E402", "RUF006"]
 
 [format]
 quote-style = "double"

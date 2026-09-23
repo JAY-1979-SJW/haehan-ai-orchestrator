@@ -5,7 +5,6 @@ import re
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PORTABLE_FILES = [
     "install.bat",
@@ -23,19 +22,6 @@ def _readme() -> str:
     matches = sorted(ROOT.glob("README_*.txt"))
     assert matches, "README_*.txt is required for portable ZIP instructions"
     return matches[0].read_text(encoding="utf-8", errors="replace")
-
-
-def test_task_receiver_has_no_hardcoded_admin_bearer() -> None:
-    src = (ROOT / "desktop" / "task_receiver.py").read_text(encoding="utf-8", errors="replace")
-    forbidden = [
-        "Bearer admin-token",
-        "Authorization\": \"Bearer admin-token",
-        "Authorization': 'Bearer admin-token",
-    ]
-    for token in forbidden:
-        assert token not in src
-    assert "HAEHAN_DESKTOP_OPS_BASIC_USER" in src
-    assert "HAEHAN_DESKTOP_OPS_BASIC_PASSWORD" in src
 
 
 def test_portable_files_exist() -> None:

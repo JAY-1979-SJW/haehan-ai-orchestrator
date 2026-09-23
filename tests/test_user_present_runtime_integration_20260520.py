@@ -5,16 +5,14 @@
   D3 site_compliance_gate stub (정책 3종 압축)
   D4 _handle_result 멱등화
   D5 task_blocked WS 통지
-  UI 미연결 가드 (desktop/local_server)
 
 운영 DB / 외부 사이트 / CDP 접근 없이 in-memory 만 사용한다.
 """
+
 from __future__ import annotations
 
 import asyncio
 from typing import Any
-
-import pytest
 
 from local_agent.user_present_state_store import (
     STATE_APPROVAL_REQUIRED,
@@ -25,8 +23,8 @@ from local_agent.user_present_state_store import (
     validate_user_present_task,
 )
 
-
 # ── Mock WebSocket ──────────────────────────────────────────────────────────
+
 
 class _FakeWS:
     def __init__(self) -> None:
@@ -41,19 +39,26 @@ class _FakeWS:
 
 
 def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro) if not asyncio.iscoroutine(coro) else asyncio.new_event_loop().run_until_complete(coro)
+    return (
+        asyncio.get_event_loop().run_until_complete(coro)
+        if not asyncio.iscoroutine(coro)
+        else asyncio.new_event_loop().run_until_complete(coro)
+    )
 
 
 # ── 1. USER_PRESENT_TASK 수신 → WAITING_FOR_USER 등록 ───────────────────────
 
+
 def test_user_present_task_received_then_waiting_for_user():
     store = UserPresentStateStore()
-    task = store.create_user_present_task({
-        "workflow_run_id": "wf_001",
-        "target_domain": "example.com",
-        "password": "should_be_stripped",
-        "device_token": "should_be_stripped",
-    })
+    task = store.create_user_present_task(
+        {
+            "workflow_run_id": "wf_001",
+            "target_domain": "example.com",
+            "password": "should_be_stripped",
+            "device_token": "should_be_stripped",
+        }
+    )
     assert task["workflow_run_id"] == "wf_001"
     assert task["safe_to_execute"] is False
     assert "password" not in task
@@ -64,37 +69,8 @@ def test_user_present_task_received_then_waiting_for_user():
     assert waiting["safe_to_execute"] is False
 
 
-# ── 2. UI 미연결 시 실행 차단 (desktop/local_server) ───────────────────────
-
-def test_ui_disconnected_holds_user_present_task(monkeypatch):
-    from desktop import local_server as ls
-
-    monkeypatch.setattr(ls, "_ui_clients", [])
-    sent_to_server: list[dict] = []
-
-    async def fake_send_to_server(msg: dict) -> None:
-        sent_to_server.append(msg)
-
-    broadcasts: list[dict] = []
-
-    async def fake_broadcast(msg: dict) -> None:
-        broadcasts.append(msg)
-
-    monkeypatch.setattr(ls, "_send_to_server", fake_send_to_server)
-    monkeypatch.setattr(ls, "_broadcast", fake_broadcast)
-
-    asyncio.new_event_loop().run_until_complete(ls._on_server_message({
-        "type": "user_present_task",
-        "task": {"workflow_run_id": "wf_held_001"},
-    }))
-
-    assert sent_to_server and sent_to_server[0]["action"] == "user_present_ack"
-    assert sent_to_server[0]["status"] == "WAITING_FOR_USER"
-    assert sent_to_server[0]["ui_connected"] is False
-    assert broadcasts == []
-
-
 # ── 3. 사용자 확인 → USER_CONFIRMED ──────────────────────────────────────────
+
 
 def test_user_confirmed_transition():
     store = UserPresentStateStore()
@@ -107,6 +83,7 @@ def test_user_confirmed_transition():
 
 # ── 4. 사용자 거절 → CANCELLED ───────────────────────────────────────────────
 
+
 def test_user_cancelled_transition():
     store = UserPresentStateStore()
     store.create_user_present_task({"workflow_run_id": "wf_cancel"})
@@ -118,6 +95,7 @@ def test_user_cancelled_transition():
 
 # ── 5. BLOCKED 정책 게이트 차단 (site_compliance_gate stub) ─────────────────
 
+
 def test_site_compliance_gate_blocks_automation_blocked_site():
     from local_agent.site_compliance_gate import (
         POLICY_AUTOMATION_BLOCKED,
@@ -125,27 +103,34 @@ def test_site_compliance_gate_blocks_automation_blocked_site():
         is_blocked,
     )
 
-    result = evaluate_gate({
-        "target_domain": "accounts.google.com",
-        "operation_type": "click",
-        "user_present": True,
-    })
+    result = evaluate_gate(
+        {
+            "target_domain": "accounts.google.com",
+            "operation_type": "click",
+            "user_present": True,
+        }
+    )
     assert result["allowed"] is False
     assert result["policy"] == POLICY_AUTOMATION_BLOCKED
-    assert is_blocked({
-        "target_domain": "accounts.google.com",
-        "operation_type": "click",
-    }) is True
+    assert (
+        is_blocked(
+            {
+                "target_domain": "accounts.google.com",
+                "operation_type": "click",
+            }
+        )
+        is True
+    )
 
 
 def test_site_compliance_gate_allows_user_present_local_only_when_user_present():
+    # 알려지지 않은 사이트는 기본적으로 BLOCK 이므로, USER_PRESENT_LOCAL_ONLY
+    # 분기는 policy module 의 patch 로 시뮬레이션한다.
+    import local_agent.site_compliance_gate as gate
     from local_agent.site_compliance_gate import (
         POLICY_USER_PRESENT_LOCAL_ONLY,
         evaluate_gate,
     )
-    # 알려지지 않은 사이트는 기본적으로 BLOCK 이므로, USER_PRESENT_LOCAL_ONLY
-    # 분기는 policy module 의 patch 로 시뮬레이션한다.
-    import local_agent.site_compliance_gate as gate
 
     def _fake_eval(_payload):
         return {
@@ -169,17 +154,20 @@ def test_site_compliance_gate_allows_user_present_local_only_when_user_present()
 
 # ── 6. task_blocked 알림 전송 (D5) ───────────────────────────────────────────
 
+
 def test_send_task_blocked_emits_status_message():
     from ai_orchestrator.local_agent_router import _send_task_blocked
 
     ws = _FakeWS()
-    asyncio.new_event_loop().run_until_complete(_send_task_blocked(
-        ws,
-        task_id="t_001",
-        workflow_run_id="wf_block",
-        reason="AUTOMATION_BLOCKED",
-        message_ko="자동화 차단",
-    ))
+    asyncio.new_event_loop().run_until_complete(
+        _send_task_blocked(
+            ws,
+            task_id="t_001",
+            workflow_run_id="wf_block",
+            reason="AUTOMATION_BLOCKED",
+            message_ko="자동화 차단",
+        )
+    )
     assert len(ws.sent) == 1
     msg = ws.sent[0]
     assert msg["type"] == "task_blocked"
@@ -192,6 +180,7 @@ def test_send_task_blocked_emits_status_message():
 
 
 # ── 7. result 중복 수신 시 ack 만 반환 (D4 멱등화) ──────────────────────────
+
 
 def test_handle_result_idempotent_when_already_final():
     from ai_orchestrator import local_agent_router as r
@@ -206,9 +195,13 @@ def test_handle_result_idempotent_when_already_final():
     original_get_task = r._reg.get_task
     try:
         r._reg.get_task = lambda agent_id, task_id: _FakeTask() if task_id == "t_done" else None
-        asyncio.new_event_loop().run_until_complete(r._handle_result(
-            ws, "agent_a", {"task_id": "t_done", "success": True, "summary": "duplicate"},
-        ))
+        asyncio.new_event_loop().run_until_complete(
+            r._handle_result(
+                ws,
+                "agent_a",
+                {"task_id": "t_done", "success": True, "summary": "duplicate"},
+            )
+        )
     finally:
         r._reg.get_task = original_get_task
 
@@ -221,6 +214,7 @@ def test_handle_result_idempotent_when_already_final():
 
 
 # ── 추가: APPROVAL_REQUIRED placeholder 상태 검증기 통과 ────────────────────
+
 
 def test_approval_required_state_passes_validator():
     task = {
@@ -237,17 +231,20 @@ def test_approval_required_state_passes_validator():
 
 # ── 추가: secret 필드가 task_blocked 메시지에 노출되지 않는다 ───────────────
 
+
 def test_task_blocked_strips_long_fields():
     from ai_orchestrator.local_agent_router import _send_task_blocked
 
     ws = _FakeWS()
-    asyncio.new_event_loop().run_until_complete(_send_task_blocked(
-        ws,
-        task_id="x" * 500,
-        workflow_run_id="y" * 500,
-        reason="z" * 500,
-        message_ko="m" * 500,
-    ))
+    asyncio.new_event_loop().run_until_complete(
+        _send_task_blocked(
+            ws,
+            task_id="x" * 500,
+            workflow_run_id="y" * 500,
+            reason="z" * 500,
+            message_ko="m" * 500,
+        )
+    )
     msg = ws.sent[0]
     assert len(msg["task_id"]) <= 80
     assert len(msg["workflow_run_id"]) <= 120

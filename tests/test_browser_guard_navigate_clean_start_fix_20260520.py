@@ -4,15 +4,15 @@ L1: Chrome 자식 프로세스(--type=...) 카운트 제외
 L2: navigate raw URL(about:/http:/...) 지원
 L3: browser_start 후 stale 탭 정리 계획
 """
+
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 import pytest
 
-from local_agent import browser_instance_guard as guard
 from local_agent import browser_action_executor as bx
+from local_agent import browser_instance_guard as guard
 
 
 @pytest.fixture()
@@ -43,6 +43,7 @@ def _child_cmd(profile: Path, child_type: str, port: int = 9222) -> str:
 
 # ── L1: Chrome 자식 프로세스 제외 ─────────────────────────────────────
 
+
 def test_l1_child_processes_excluded_from_count(paths):
     """parent 1개 + child 11개 → automation count = 1."""
     procs = [
@@ -60,7 +61,7 @@ def test_l1_child_processes_excluded_from_count(paths):
         (111, _child_cmd(paths.profile_dir, "renderer")),
     ]
     guard.set_process_enumerator(lambda: procs)
-    full, partial, pids = guard.count_automation_browsers(paths)
+    full, _partial, pids = guard.count_automation_browsers(paths)
     assert full == 1
     assert pids == [100]
 
@@ -95,6 +96,7 @@ def test_l1_helper_is_chrome_child_process():
 
 
 # ── L2: navigate raw URL 지원 ─────────────────────────────────────────
+
 
 def test_l2_is_raw_url_detects_supported_schemes():
     for url in (
@@ -148,89 +150,13 @@ def test_l2_navigate_with_alias_still_uses_navigator(monkeypatch):
 
 # ── L3: stale tab cleanup 계획 ────────────────────────────────────────
 
-def test_l3_plan_empty_returns_open_new():
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    p = plan_stale_tab_cleanup([])
-    assert p["open_new_keep_url"] is True
-    assert p["close_ids"] == []
-    assert p["navigate_keep_to"] == "about:blank"
-
-
-def test_l3_plan_single_about_blank_noop():
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    p = plan_stale_tab_cleanup([
-        {"type": "page", "id": "T-1", "url": "about:blank"},
-    ])
-    assert p["close_ids"] == []
-    assert p["navigate_keep_to"] == ""
-    assert p["open_new_keep_url"] is False
-
-
-def test_l3_plan_single_other_url_navigates():
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    p = plan_stale_tab_cleanup([
-        {"type": "page", "id": "T-1", "url": "https://nid.naver.com/nidlogin.login"},
-    ])
-    assert p["close_ids"] == []
-    assert p["navigate_keep_to"] == "about:blank"
-    assert p["keep_id"] == "T-1"
-
-
-def test_l3_plan_all_previous_tabs_are_stale():
-    """8개 이전 자동화 작업 탭이 모두 stale 로 분류되어,
-    cleanup 후 깨끗한 about:blank 1개 만 남도록 계획해야 한다.
-
-    구현 제약: 마지막 탭을 close 하면 Chrome 프로세스가 함께 종료될 수 있으므로
-    마지막 1개는 keep + about:blank 로 navigate 한다.
-    이때 keep 의 콘텐츠는 보존되지 않으며 모두 about:blank 로 초기화된다.
-    """
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    targets = [
-        {"type": "page", "id": "T-1", "url": "https://cafe.naver.com/.../write"},
-        {"type": "page", "id": "T-2", "url": "about:blank"},
-        {"type": "page", "id": "T-3", "url": "https://mail.google.com/.../inbox"},
-        {"type": "page", "id": "T-4", "url": "https://www.naver.com/"},
-        {"type": "page", "id": "T-5", "url": "https://cafe.naver.com/0moo.cafe"},
-        {"type": "page", "id": "T-6", "url": "https://section.blog.naver.com/..."},
-        {"type": "page", "id": "T-7", "url": "https://n.news.naver.com/..."},
-        {"type": "page", "id": "T-8", "url": "https://eum.cw.or.kr/..."},
-    ]
-    p = plan_stale_tab_cleanup(targets)
-    # 총 8 탭 모두 stale — 7개는 close, 1개는 about:blank 로 reset
-    assert len(p["close_ids"]) == 7
-    assert p["keep_id"] == "T-1"
-    assert p["navigate_keep_to"] == "about:blank"
-    # 총 stale 처리 수 = close + navigate-reset = 8 (이전 탭 모두)
-    stale_handled = len(p["close_ids"]) + (1 if p["navigate_keep_to"] else 0)
-    assert stale_handled == 8
-
-
-def test_l3_plan_naver_or_cafe_keep_resets_to_about_blank():
-    """keep 으로 선택된 탭이 about:blank 가 아니라면 반드시 about:blank 로 navigate."""
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    for url in (
-        "https://cafe.naver.com/0moo.cafe",
-        "https://mail.google.com/mail/u/0/#inbox",
-        "https://n.news.naver.com/article/...",
-    ):
-        p = plan_stale_tab_cleanup([{"type": "page", "id": "T-K", "url": url}])
-        assert p["navigate_keep_to"] == "about:blank"
-        assert p["keep_id"] == "T-K"
-        assert p["close_ids"] == []
-
 
 def test_l3_quit_closes_all_targets_first(monkeypatch):
     """browser_quit 가 CDP /json/close 로 모든 page target 을 닫고 그 다음
     Chrome 프로세스를 종료해야 한다 (세션 복원 방지)."""
     from local_agent import browser_instance_guard as g
 
-    monkeypatch.setattr(g, "close_all_cdp_targets",
-                        lambda port: ["T-1", "T-2", "T-3"])
+    monkeypatch.setattr(g, "close_all_cdp_targets", lambda port: ["T-1", "T-2", "T-3"])
     g.set_process_enumerator(lambda: [])  # 프로세스 없는 상태
     result = g.quit_automation_browsers(
         g.resolve_paths(),
@@ -258,23 +184,4 @@ def test_l3_quit_close_targets_first_can_be_disabled(monkeypatch):
     assert called == []
 
 
-def test_l3_plan_ignores_non_page_targets():
-    from desktop.local_server import plan_stale_tab_cleanup
-
-    p = plan_stale_tab_cleanup([
-        {"type": "iframe", "id": "I-1", "url": "x"},
-        {"type": "page", "id": "T-1", "url": "about:blank"},
-    ])
-    assert p["keep_id"] == "T-1"
-    assert p["close_ids"] == []
-
-
 # ── L3 wiring: browser_start 응답에 stale_tabs_* 키 포함 확인 ─────────
-
-def test_l3_browser_start_payload_includes_stale_tabs_keys():
-    import inspect
-    from desktop import local_server as ls
-
-    src = inspect.getsource(ls._handle_browser_start)
-    assert "stale_tabs_closed" in src
-    assert "stale_tabs_detected" in src

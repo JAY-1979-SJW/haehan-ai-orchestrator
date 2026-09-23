@@ -73,7 +73,6 @@ IMPORT_SCAN_PREFIXES = {
     "browser_api",
     "browser_worker",
     "services",
-    "mcp_server",
     "adapters",
 }
 
@@ -212,25 +211,19 @@ def classify_path(path: str) -> tuple[str, str]:
         return "L4", "root generic automation script"
     if parts[0] in {"tests"} or "/tests/" in p or "/__tests__/" in p:
         return "L11", "test path"
-    if p.startswith("agent/tests/") or p.startswith("ai_orchestrator/tests/") or p.startswith("mcp_server/tests/"):
+    if p.startswith("agent/tests/") or p.startswith("ai_orchestrator/tests/"):
         return "L11", "test path"
-    if p.startswith(("admin-web/", "ui/", "desktop/")):
+    if p.startswith(("admin-web/", "ui/")):
         return "L9", "admin or desktop UI path"
     if p.startswith(("migrations/",)) or "audit" in name or "cdp_db" in name or "op_log" in name:
         return "L7", "persistence or audit path"
-    if p.startswith("backend/compat/"):
-        return "L8", "backend compatibility adapter path"
     if p.startswith(("browser_api/", "ai_orchestrator/server/")):
         return "L8", "server API path"
     if p.startswith("ai_orchestrator/") and ("router" in name or name in {"app.py"}):
         return "L8", "platform API router/app"
-    if p.startswith(
-        ("agent/excel/", "agent/hancom/", "agent/local_inventory/", "agent/local_software_manager/", "local_agent/cad/")
-    ):
+    if p.startswith(("local_agent/cad/",)):
         return "L10", "local PC app automation path"
-    if p.startswith(
-        ("agent/connectors/", "ai_orchestrator/connectors/", "browser_worker/", "mcp_server/", "adapters/")
-    ):
+    if p.startswith(("ai_orchestrator/connectors/", "browser_worker/", "adapters/")):
         return "L3", "connector/adapter path"
     if p.startswith(("scripts/explorer/", "scripts/form/")) or name.startswith(
         ("cdp_", "navigator", "popup_", "page_")

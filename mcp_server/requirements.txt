@@ -1,5 +1,0 @@
-# cad-mcp 전용 의존성
-# 오케스트레이터(requirements.txt)와는 별도 — Dockerfile.mcp 에서 설치
-mcp>=1.0.0
-httpx>=0.27.0
-python-dotenv>=1.0.0

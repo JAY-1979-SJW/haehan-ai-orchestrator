@@ -37,12 +37,11 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "desktop/",
         "local_agent/desktop_launcher.py",
         "verify_local_runtime_dry_run.py",
         "verify_agent_ws_auth.py"
       ],
-      "required_gate": "desktop_security_boundary"
+      "required_gate": "desktop_auth_runtime"
     },
     {
       "name": "admin_web",
@@ -51,8 +50,7 @@
       "paths": [
         "admin-web/package.json",
         "admin-web/package-lock.json",
-        "admin-web/src/",
-        "tests/test_ui_residue_audit.py"
+        "admin-web/src/"
       ],
       "required_gate": "release_preflight"
     },

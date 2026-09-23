@@ -7,8 +7,7 @@
     "local_agent/",
     "browser_api/",
     "browser_worker/",
-    "services/",
-    "mcp_server/"
+    "services/"
   ],
   "runtime_prefixes": [
     "data/",
@@ -25,8 +24,7 @@
   "test_prefixes": [
     "tests/",
     "ai_orchestrator/tests/",
-    "agent/tests/",
-    "mcp_server/tests/"
+    "agent/tests/"
   ],
   "schema_prefixes": [
     "migrations/",

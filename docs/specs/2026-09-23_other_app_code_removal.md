@@ -30,7 +30,9 @@
 
 운영 서버에는 기존 `haehan-ai-orchestrator-file-map-executor` 컨테이너가 남는다. 다음 배포 시 compose 에서 빠졌으므로 수동 정리(`docker rm -f`) 또는 `--remove-orphans` 필요 — 운영 서버 작업이라 별도 승인.
 
-## 보류(사용자 결정 대기)
+## 2차 삭제 (사용자 지시 "타앱과 연결된거는 다 지워")
 
-- `mcp_server/`: 전체가 cad-backend 프록시 MCP 서버(03 에 동일 서버 존재).
-- `desktop/`: 이전 세대 데스크톱 앱(웹뷰·트레이·자체 SPA, API 를 CAD 원격으로 프록시). AI 콘솔 서버는 import 하지 않음.
+- `mcp_server/`(cad-backend 프록시 MCP), `desktop/`(구세대 데스크톱 앱·자체 SPA), `backend/compat/legacy_5050`(이행 호환 계층), `agent/` 중 `__init__`·`action_registry`·`models` 외 전부(PC앱 런타임·local_software_manager), `HaehanAI-Desktop.spec`·`HaehanAI-Agent.spec`.
+- 이들 전용 테스트·감사/스모크 스크립트 105개 삭제, 혼합 파일 22개는 해당 부분만 제거. 모듈 게이트에서 `desktop_security_boundary`·`ui_residue_contract` 검사 제거(검사 대상 전부 삭제됨).
+- 검증: pytest 수집 오류 7→7(신규 0), 수집 12,411→10,163(삭제된 전용 테스트분), LIVE import 실패 36→36(신규 0), 서버 라우트 291 동일.
+- 남김: 5050 레거시 특성화 테스트(backend/compat 미의존, 통과), desktop 이름의 인증·버전 분리 게이트(삭제 패키지 미의존).
