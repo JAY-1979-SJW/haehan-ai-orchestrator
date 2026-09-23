@@ -58,6 +58,32 @@ def changed_files(base: str, head: str | None) -> list[str]:
 LOCATION_DEP = ("__file__", "from .", "import .")  # 파일 위치에 따라 뜻이 바뀌는 코드
 
 
+def renames(base: str, head: str | None) -> dict[str, str]:
+    """이동(R)된 파일 {새 경로: 옛 경로} — 이동만으로 '새 문제'가 생긴 것처럼 보이는 것을 막는 데 쓴다."""
+    diff = ["git", "diff", "-M", "--name-status", base] + ([head] if head else [])
+    out = {}
+    for ln in run(diff, ROOT).stdout.splitlines():
+        parts = ln.split("\t")
+        if parts[0].startswith("R") and len(parts) == 3:
+            out[parts[2]] = parts[1]
+    return out
+
+
+def _mod_dir(path: str) -> str:
+    return "/".join(path.split("/")[:-1][:3])
+
+
+def normalize_renamed(after: dict, moved: dict[str, str]) -> dict:
+    """변경 후 층간 위반의 경로를 옛 경로로 되돌린 사본 — 이동만으로 '새 위반'처럼 보이는 것을 막는다."""
+    if not moved:
+        return after
+    viol = set()
+    for v in after["violations"]:
+        s, t = v.split(" -> ")
+        viol.add(f"{moved.get(s, s)} -> {moved.get(t, t)}")
+    return {**after, "violations": sorted(viol)}
+
+
 def moved_location_deps(base: str, head: str | None) -> list[str]:
     """폴더 깊이가 바뀐 이동 파일에서, 위치 의존 줄(__file__ 경로·상대 import)이 손대지 않은 채 남은 곳.
 
@@ -237,7 +263,23 @@ def main() -> int:
         if ":" in ln and not ln.startswith(("Found", "All checks", "No fixes", "["))
     ]
 
+    moved = renames(a.base, a.head)
+    after_n = normalize_renamed(after, moved)
+    # 순환은 모듈(폴더) 단위라 이동을 받은 폴더가 끼면 이름만 바뀐 것과 진짜 새 순환을 가를 수 없다
+    # → 그런 순환은 '순환 수가 늘었을 때만' FAIL, 이동과 무관한 폴더끼리의 새 순환은 항상 FAIL
+    receiving = {_mod_dir(n) for n in moved}
+
     def new(key: str) -> list[str]:
+        if key == "violations":
+            return sorted(set(after_n[key]) - set(before[key]))
+        if key == "cycles":
+            raw = sorted(set(after[key]) - set(before[key]))
+            extra = [c for c in raw if not receiving & set(c.split(" <-> "))]
+            if len(after[key]) > len(before[key]):
+                extra += [
+                    f"순환 수 증가 {len(before[key])} → {len(after[key])} (이동 폴더 관련: {len(raw) - len(extra)})"
+                ]
+            return extra
         return sorted(set(after[key]) - set(before[key]))
 
     new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
