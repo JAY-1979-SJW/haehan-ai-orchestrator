@@ -209,22 +209,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "admin-web/src/app/api/chat/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/api/gabia/chat/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "gabia",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
   "admin-web/src/app/api/google/chat/route.ts": {
    "layer": "L9",
    "role": "ui_bff",
@@ -237,22 +221,6 @@
    "layer": "L9",
    "role": "ui_bff",
    "domain": "common",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/api/naver/blog/chat/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "naver_blog",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/api/naver/cafe/chat/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "naver_cafe",
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
@@ -313,26 +281,10 @@
    "confidence": "high",
    "source": "rule"
   },
-  "admin-web/src/app/api/smartstore/chat/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "smartstore",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
   "admin-web/src/app/api/smartstore/images/upload/route.ts": {
    "layer": "L9",
    "role": "ui_bff",
    "domain": "smartstore",
-   "reason": "admin-web",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "admin-web/src/app/api/task/[id]/route.ts": {
-   "layer": "L9",
-   "role": "ui_bff",
-   "domain": "common",
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
@@ -2697,22 +2649,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/ai_reply_caller.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/browser_agent_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "browser",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/connectors/cdp_screen_router.py": {
    "layer": "L8",
    "role": "api",
@@ -2751,14 +2687,6 @@
    "domain": "gabia",
    "reason": "도메인(gabia) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/connectors/gabia/chat.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "gabia",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/connectors/gabia_router.py": {
@@ -3647,14 +3575,6 @@
    "domain": "common",
    "reason": "정책·게이트 이름",
    "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/gpt_planner.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
    "source": "rule"
   },
   "ai_orchestrator/inbox.py": {
@@ -5017,14 +4937,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/openai_proxy_caller.py": {
-   "layer": "L3",
-   "role": "connector",
-   "domain": "common",
-   "reason": "HTTP 클라이언트",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/persistence/__init__.py": {
    "layer": "L7",
    "role": "persistence",
@@ -5098,14 +5010,6 @@
    "source": "rule"
   },
   "ai_orchestrator/routers/admin_ui_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/agent_ai_proxy_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5905,14 +5809,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_gpt_planner.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/tests/test_hiworks_integration.py": {
    "layer": "L11",
    "role": "test",
@@ -6114,14 +6010,6 @@
    "source": "rule"
   },
   "ai_orchestrator/tests/test_open_url_execute.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_openai_client.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6833,30 +6721,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/ai_chat_adapter.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "local_agent/ai_chat_client.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "local_agent/ai_chat_models.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
   "local_agent/audit.py": {
    "layer": "L10",
    "role": "local_agent",
@@ -7121,22 +6985,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/openai_chat_client.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "local_agent/openai_key_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "local_agent",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
   "local_agent/redaction.py": {
    "layer": "L10",
    "role": "local_agent",
@@ -7154,14 +7002,6 @@
    "source": "rule"
   },
   "local_agent/server_action_adapter.py": {
-   "layer": "L10",
-   "role": "local_agent",
-   "domain": "local_agent",
-   "reason": "로컬 에이전트 패키지",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "local_agent/server_proxy_chat_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7585,30 +7425,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_agent/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/browser_agent/agent.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser_agent/free_agent.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/browser_cdp_selection_gate.py": {
    "layer": "L2",
    "role": "policy",
@@ -7634,14 +7450,6 @@
    "source": "rule"
   },
   "scripts/browser_task_session.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/cdp_cli.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -12313,14 +12121,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product/gpt_description_writer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/naver/smartstore/product/modal_guard.py": {
    "layer": "L2",
    "role": "policy",
@@ -12658,14 +12458,6 @@
    "source": "rule"
   },
   "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_agent_ai_chat_api_client.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13017,14 +12809,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_deploy_openai_proxy_to_prod.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -13201,14 +12985,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_local_agent_desktop_ui_openai_key_ux_spec.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/audit_local_agent_e2e_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -13373,30 +13149,6 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_openai_dev_key_store.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_openai_direct_test_call.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_openai_server_proxy_client.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
@@ -15193,14 +14945,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_ai_chat_api_client.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_ai_agent_app_structure_design_baseline.py": {
    "layer": "L11",
    "role": "test",
@@ -15306,14 +15050,6 @@
    "source": "rule"
   },
   "tests/test_app_external_sites_readonly_polish_20260518.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_app_features_gpt.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16385,14 +16121,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_chat_gpt_conversion.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_chrome_ui_monitor_runtime_path.py": {
    "layer": "L11",
    "role": "test",
@@ -16514,14 +16242,6 @@
    "source": "rule"
   },
   "tests/test_delegated_permission_store_20260508.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_deploy_openai_proxy_to_prod.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16738,14 +16458,6 @@
    "source": "rule"
   },
   "tests/test_file_adapter.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_free_agent_web_search.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17386,14 +17098,6 @@
    "source": "rule"
   },
   "tests/test_local_agent_connection_repair.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "local_agent",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_local_agent_desktop_ui_openai_key_ux_spec.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -18218,30 +17922,6 @@
    "source": "rule"
   },
   "tests/test_observe_summary_fixture.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_openai_dev_key_store.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_openai_direct_test_call.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_openai_server_proxy_client.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
