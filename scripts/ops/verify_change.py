@@ -6,6 +6,7 @@
   1 pytest 수집 오류   2 LIVE 모듈 import 실패   3 서버 라우트 수
   4 영향 테스트 실패(코드맵 역방향으로 바뀐 파일에 닿는 테스트만)   5 층간 위반 수   6 모듈 순환 수
   7 바뀐 파이썬 파일 ruff 0   8 폴더 깊이가 바뀐 이동 파일의 위치의존 줄(__file__·상대 import) 미조정 0
+  9 지도↔골격 대조: 분류 정본에만 있는 파일·정본 누락 코드 파일·금지 import·선언 모듈의 없는 경로
 기준값은 기준 커밋을 임시 폴더(git worktree)에 꺼내 같은 명령으로 잰다.
 저장소별 설정은 configs/verify_change.json(없으면 기본값) — 다른 저장소에서도 그대로 쓰기 위함.
 
@@ -39,6 +40,7 @@ if CONFIG.exists():
     CFG.update(json.loads(CONFIG.read_text(encoding="utf-8")))
 TEST_TIMEOUT = int(CFG["test_timeout"])  # 테스트 파일 하나당 상한(멈추는 테스트 차단)
 CHUNK = int(CFG.get("test_chunk", 25))  # 한 pytest 프로세스에 묶는 테스트 파일 수
+CODE_EXT = tuple(CFG.get("code_ext", [".py"]))  # 분류 정본에 있어야 하는 코드 파일 확장자
 
 
 def run(cmd: list[str], cwd: Path, timeout: int = 900) -> subprocess.CompletedProcess:
@@ -124,6 +126,9 @@ def measure(tree: Path, tests: list[str]) -> dict:
     col = run([PY, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"], tree)
     r["collect_errors"] = sorted(ln.split()[1] for ln in col.stdout.splitlines() if ln.startswith("ERROR "))
     run([PY, "scripts/ops/code_map/build.py"], tree)
+    reg_p = tree / "configs/module_registry.json"
+    # 커밋된 정본(골격) — classify.py 가 다시 쓰기 전 상태로 대조해야 '정본 갱신 누락'이 보인다
+    committed = json.loads(reg_p.read_text(encoding="utf-8"))["files"] if reg_p.exists() else None
     if (tree / "scripts/ops/code_map/classify.py").exists():
         run([PY, "scripts/ops/code_map/classify.py"], tree)
     run([PY, "scripts/ops/code_map/runcheck.py", "--levels", "R0"], tree, timeout=1800)
@@ -137,7 +142,6 @@ def measure(tree: Path, tests: list[str]) -> dict:
     else:
         r["routes"] = "-"
     # 층간 위반 — configs/module_registry.json 의 allowed_deps 기준
-    reg_p = tree / "configs/module_registry.json"
     viol = set()
     if reg_p.exists():
         reg = json.loads(reg_p.read_text(encoding="utf-8"))
@@ -150,13 +154,23 @@ def measure(tree: Path, tests: list[str]) -> dict:
                         if lt in allowed and lt not in allowed[files[s]["layer"]]:
                             viol.add(f"{s} -> {t}")
     r["violations"] = sorted(viol)
-    # 모듈 순환
+    # 지도 ↔ 골격 대조 — 분류 정본(골격)이 실제 파일(지도)과 어긋난 곳
+    skel = []
+    if committed is not None:
+        code = {p for p in m.get("all_nodes", {}) if p.endswith(CODE_EXT)}
+        skel += [f"정본에만 있음(파일 없음): {p}" for p in committed if not (tree / p).exists()]
+        skel += [f"정본 누락(분류 안 됨): {p}" for p in sorted(code - set(committed))]
+    # 모듈 순환·금지 import·선언 모듈 경로
     if (tree / "scripts/ops/code_map/modules.py").exists():
         run([PY, "scripts/ops/code_map/modules.py"], tree)
-        mj = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))
-        r["cycles"] = [" <-> ".join(c) for c in mj["crosscheck"]["module_cycles"]]
+        cc = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))["crosscheck"]
+        r["cycles"] = [" <-> ".join(c) for c in cc["module_cycles"]]
+        skel += [f"금지 import: {h['src']} -> {h['dst']}" for h in cc.get("forbidden_import_hits", [])]
+        for d in cc.get("declared_modules", []):
+            skel += [f"선언 모듈 {d['name']} 경로 없음: {x}" for x in d.get("missing_paths", [])]
     else:
         r["cycles"] = []
+    r["skeleton"] = sorted(set(skel))
     # 영향 테스트 — CHUNK 파일씩 묶어 한 프로세스로(속도), 묶음이 시간 상한을 넘으면 그 묶음만 파일별로 재실행(멈춤 차단)
     present = [t for t in tests if (tree / t).exists()]
     fails, timeouts = [], []
@@ -272,6 +286,14 @@ def main() -> int:
     def new(key: str) -> list[str]:
         if key == "violations":
             return sorted(set(after_n[key]) - set(before[key]))
+        if key == "skeleton":  # 이동 파일은 옛 경로로 바꿔 비교
+
+            def old(x: str) -> str:
+                for n, o in moved.items():
+                    x = x.replace(n, o)
+                return x
+
+            return sorted({old(x) for x in after.get(key, [])} - set(before.get(key, [])))
         if key == "cycles":
             raw = sorted(set(after[key]) - set(before[key]))
             extra = [c for c in raw if not receiving & set(c.split(" <-> "))]
@@ -296,6 +318,7 @@ def main() -> int:
         ),
         ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
         ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),
+        ("지도↔골격 대조", len(before.get("skeleton", [])), len(after.get("skeleton", [])), new("skeleton")),
         ("바뀐 파일 ruff", "-", len(ruff_errors), ruff_errors),
         ("이동 파일 위치의존 미조정", "-", len(loc_deps), loc_deps),
     ]
