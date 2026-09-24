@@ -1,4 +1,5 @@
 """Shared guard for browser launches in sandboxed agent runtimes."""
+
 from __future__ import annotations
 
 import json
@@ -12,6 +13,7 @@ SANDBOX_ENV_MARKERS = (
     "CODEX_SANDBOX_NETWORK_DISABLED",
     "CODEX_THREAD_ID",
     "CODEX_MANAGED_BY_NPM",
+    "HAEHAN_NO_BROWSER_LAUNCH",  # 검증·CI 실행 중(verify_change 등) — 테스트가 실제 브라우저를 띄우지 않게
 )
 
 SANDBOX_BROWSER_LAUNCH_BLOCKED = "sandbox_browser_launch_blocked"
