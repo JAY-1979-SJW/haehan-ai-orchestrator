@@ -993,3 +993,7 @@ git checkout pre-openai-removal -- <경로>
 - `e9042657` fix(repo): import 되는 scripts/session_tracker.py 가 .gitignore session* 에 막혀 누락 (#11)
 - `b7323bb7` docs(defect_index): 골격 점검·코드맵 S1 결함 목차 26건
 - `43715ee2` chore(cleanup): 코드맵 S1 미도달 파일 22개 + scripts/smartstore shim 3개 삭제 [allow-delete]
+
+### 2026-09-24 범위 확장 — Anthropic 유료 API 호출 경로 (사용자 승인)
+- `ai_orchestrator/connectors/ai_reply_caller.py` — 복원: `git checkout pre-openai-removal -- ai_orchestrator/connectors/ai_reply_caller.py`
+- (파일 유지·호출부만 제거) `scripts/naver/smartstore/product/ai_description_writer.py`, `scripts/naver/automation/integration/ai_responder.py`, `ai_orchestrator/connectors/kakao_skill_router.py` — 원본: `git show pre-openai-removal:<경로>`

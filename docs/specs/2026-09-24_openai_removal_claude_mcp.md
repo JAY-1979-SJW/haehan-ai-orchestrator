@@ -34,3 +34,11 @@
 
 ## 롤백
 `git revert` 또는 태그 `pre-openai-removal` 에서 파일 복원.
+
+## 범위 확장 (2026-09-24 사용자 승인 "네") — Anthropic 유료 API 경로도 삭제, 앱 런타임 유료 AI 0
+| 대상 | 처리 |
+|---|---|
+| ai_orchestrator/connectors/ai_reply_caller.py (카카오 스킬 webhook 이 키만 있으면 자동 호출) | 삭제 — kakao_skill_router 는 규칙 분류 + 카테고리별 고정 안내 문구만 |
+| scripts/naver/smartstore/product/ai_description_writer.py (description_mode="claude") | API 호출 제거 — generate() 가 app_ai_disabled + 표준 프롬프트 반환, finalize() 로 Claude Code 작성 본문 마감 |
+| scripts/naver/automation/integration/ai_responder.py (provider="anthropic" opt-in) | 제공자 분기 제거 — 항상 app_ai_disabled |
+검증: tests/test_app_llm_boundary.py 전체 통과(기존 master 에서 실패하던 test_no_anthropic_calls_outside_boundary 포함), tests/test_kakao_webhooks.py 28 통과(master 동일).

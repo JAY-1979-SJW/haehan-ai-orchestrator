@@ -1,10 +1,10 @@
 """스마트스토어 상품 상세설명 AI 자동 작성 모듈 (L3 Connector).
 
-⚠ [LLM 경계] LIVE(Claude 기반, tests/test_app_llm_boundary.py 허용목록에 등록됨).
-register_form.py의 `write_claude()` → 이 모듈의 `AIDescriptionWriter`를 실제로 호출하며,
-`form_runner.py`가 `description_mode == "claude"`일 때 이 경로를 탄다(데드코드 아님).
-2026-09-24 GPT(OpenAI) 삭제 이후에도 이 Claude 경로는 남아있다 — mcp_server.py의
-generate_description 도구(섹션 빌더 전용)와는 별개 경로이므로 혼동하지 말 것.
+⚠ [LLM 경계] 2026-09-24 앱 런타임 유료 AI 호출 제거(사용자 승인). 이 모듈은 더 이상 AI API 를 부르지 않는다.
+register_form.py 의 `write_claude()`(form_runner `description_mode == "claude"`)로 들어오면
+`generate()`가 app_ai_disabled + 표준 프롬프트를 돌려준다 → 문구는 Claude Code(MCP)가 작성하고
+`finalize()` / mcp_server 의 render_description·save_template 로 마감한다.
+입력 표준·섹션 구조·CSS 디자인 시스템(아래)은 그대로 유지 — Claude Code 작성 시 기준.
 
 ────────────────────────────────────────────────────────────────────
 표준 구현방식 v2 — 신뢰 4대 기둥 기반
@@ -49,14 +49,10 @@ generate_description 도구(섹션 빌더 전용)와는 별개 경로이므로 �
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import time
-import urllib.request
 from pathlib import Path
 
-from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
 _log = get_logger(__name__)
@@ -411,11 +407,8 @@ CSS는 외부 로드됩니다. <div class="pd">로 시작하는 순수 HTML만 �
 # 4. AI 생성 엔진
 # ══════════════════════════════════════════════════════════════════════════════
 
-DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-QUALITY_MODEL = "claude-sonnet-4-6"
-API_ENDPOINT = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_VER = "2023-06-01"
-MAX_TOKENS = 4000
+# 앱 런타임 유료 AI 호출 제거(2026-09-24) — 모델 없음. 문구는 Claude Code(MCP)가 작성.
+DEFAULT_MODEL = "none"
 
 
 class AIDescriptionWriter:
@@ -424,7 +417,6 @@ class AIDescriptionWriter:
     def __init__(self, page=None, model: str = DEFAULT_MODEL):
         self.page = page
         self.model = model
-        self._api_key: str | None = None
 
     # ── 공개 인터페이스 ──────────────────────────────────────────────────────
 
@@ -436,31 +428,23 @@ class AIDescriptionWriter:
         if hard:
             return {"ok": False, "errors": hard}
 
-        api_key = self._get_api_key()
-        if not api_key:
-            return {
-                "ok": False,
-                "error": "ANTHROPIC_API_KEY 미설정",
-                "hint": ".env 파일에 ANTHROPIC_API_KEY=sk-ant-... 추가 필요",
-            }
+        # 앱 런타임 유료 AI 호출 제거(2026-09-24, 사용자 승인). 앱 안에서 문구를 생성하지 않는다.
+        # 표준 프롬프트는 돌려주어 Claude Code(MCP)가 문구를 쓰고 finalize()/render_description 으로 마감한다.
+        _log.info("[ai-desc] 앱 AI 비활성 — 프롬프트만 반환 / 경고: %s", warns)
+        return {
+            "ok": False,
+            "error": "app_ai_disabled",
+            "hint": "앱 런타임 AI 없음 — 상세설명 문구는 Claude Code(MCP)가 작성해 render_description/save_template 로 저장",
+            "prompt": {
+                "system": SYSTEM_PROMPT + "\n\n" + FEW_SHOT_EXAMPLE,
+                "user": self._build_user_prompt(product),
+            },
+            "warnings": warns,
+        }
 
-        system = SYSTEM_PROMPT + "\n\n" + FEW_SHOT_EXAMPLE
-        user = self._build_user_prompt(product)
-        r = self._call_claude(api_key, system, user)
-        if not r["ok"]:
-            return r
-
-        html = self._finalize_html(r["text"])
-        log_critical(
-            "OTHER",
-            "AI 상세설명 생성 v2",
-            product=product.get("name", "")[:30],
-            model=self.model,
-            chars=len(html),
-            mode="ai_description_v2",
-        )
-        _log.info("[ai-desc] 생성 완료: %d자 / 경고: %s", len(html), warns)
-        return {"ok": True, "html": html, "model": self.model, "warnings": warns}
+    def finalize(self, text: str) -> str:
+        """외부(Claude Code)에서 작성한 본문을 표준 HTML(CSS 포함)로 마감."""
+        return self._finalize_html(text)
 
     def write(self, product: dict, image_paths: list[str] | None = None) -> dict:
         """생성 + SmartEditor 자동 입력."""
@@ -559,35 +543,6 @@ class AIDescriptionWriter:
             delivery_str=p.get("delivery", DEFAULT_DELIVERY),
         )
 
-    # ── Claude API ───────────────────────────────────────────────────────────
-
-    def _call_claude(self, api_key: str, system: str, user: str) -> dict:
-        payload = {
-            "model": self.model,
-            "max_tokens": MAX_TOKENS,
-            "system": system,
-            "messages": [{"role": "user", "content": user}],
-        }
-        headers = {
-            "x-api-key": api_key,
-            "anthropic-version": ANTHROPIC_VER,
-            "content-type": "application/json",
-        }
-        try:
-            req = urllib.request.Request(
-                API_ENDPOINT,
-                data=json.dumps(payload).encode("utf-8"),
-                headers=headers,
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read())
-            text = data["content"][0]["text"].strip()
-            return {"ok": True, "text": text, "model": self.model}
-        except Exception as e:
-            _log.error("[ai-desc] Claude API 오류: %s", e)
-            return {"ok": False, "error": str(e)[:300]}
-
     # ── HTML 후처리 ──────────────────────────────────────────────────────────
 
     def _finalize_html(self, raw: str) -> str:
@@ -603,20 +558,6 @@ class AIDescriptionWriter:
         text = re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.DOTALL)
         text = re.sub(r"<[^>]+>", " ", text)
         return re.sub(r"\s{2,}", "\n", text).strip()
-
-    def _get_api_key(self) -> str | None:
-        if self._api_key:
-            return self._api_key
-        key = os.environ.get("ANTHROPIC_API_KEY", "")
-        if not key:
-            env_file = ROOT / ".env"
-            if env_file.exists():
-                for line in env_file.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("ANTHROPIC_API_KEY="):
-                        key = line.split("=", 1)[1].strip().strip('"').strip("'")
-                        break
-        self._api_key = key or None
-        return self._api_key
 
 
 # ══════════════════════════════════════════════════════════════════════════════

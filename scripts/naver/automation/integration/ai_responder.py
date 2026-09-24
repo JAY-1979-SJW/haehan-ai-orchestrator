@@ -1,22 +1,16 @@
-"""AI 기반 자동 응답 — GPT(OpenAI) 경로 삭제(2026-09-24). Anthropic 직접호출은 opt-in 경계로만 유지.
+"""AI 기반 자동 응답 — 앱 런타임 유료 AI 호출 없음(2026-09-24: GPT·Anthropic 경로 모두 제거, 사용자 승인).
 
-기능:
+기능(인터페이스 유지):
   - 리뷰 컨텍스트 기반 맞춤 답변 생성
   - 고객 문의 자동 답변
   - 상품 설명 자동 생성
   - 블로그 글 초안 자동 작성
 
-기본 provider("none")는 유료 AI를 호출하지 않고 고정 안내를 반환한다. Claude Code가 이
-클래스를 거치지 않고 직접 문구를 작성하는 것이 표준 경로다. provider="anthropic"을
-명시했을 때만(터미널/특수 용도, tests/test_app_llm_boundary.py 경계 허용목록) 직접 호출한다.
-요구(anthropic opt-in 시): ANTHROPIC_API_KEY 환경변수
+모든 호출은 app_ai_disabled 를 돌려준다(호출자는 고정 안내·템플릿으로 폴백).
+문구가 필요하면 Claude Code 가 MCP 로 직접 작성하는 것이 표준 경로다.
 """
 
 from __future__ import annotations
-
-import json
-import os
-import urllib.request
 
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
@@ -25,56 +19,20 @@ _log = get_logger(__name__)
 
 
 class AIResponder:
-    """LLM 기반 자동 응답 생성기 (기본: 유료 AI 미사용)."""
+    """자동 응답 생성기 — 앱 안에서는 AI 를 부르지 않는다."""
 
     def __init__(self, provider: str = "none", model: str | None = None):
-        # 앱 런타임 기본값 = AI 없음. anthropic 은 명시 지정 시에만(터미널/특수 용도, opt-in).
-        self.provider = provider
-        if provider == "anthropic":
-            self.api_key = os.environ.get("ANTHROPIC_API_KEY")
-            self.model = model or "claude-haiku-4-5-20251001"
-            self.endpoint = "https://api.anthropic.com/v1/messages"
-        else:
-            self.api_key = None
-            self.model = model or "none"
-            self.endpoint = ""
+        self.provider = "none"  # 유료 AI 제공자 없음(인자는 호환용으로만 받음)
+        self.model = model or "none"
+        self.api_key = None
+        self.endpoint = ""
 
     def _call(self, system: str, user: str, max_tokens: int = 500) -> dict:
-        if self.provider != "anthropic":
-            return {
-                "ok": False,
-                "error": "app_ai_disabled",
-                "hint": "앱 런타임 AI 없음 — Claude Code가 직접 문구를 작성하세요.",
-            }
-        if not self.api_key:
-            return {"ok": False, "error": "no_api_key", "hint": "환경변수 ANTHROPIC_API_KEY 설정 필요"}
-
-        payload = {
-            "model": self.model,
-            "max_tokens": max_tokens,
-            "system": system,
-            "messages": [{"role": "user", "content": user}],
+        return {
+            "ok": False,
+            "error": "app_ai_disabled",
+            "hint": "앱 런타임 AI 없음 — Claude Code가 직접 문구를 작성하세요.",
         }
-        headers = {
-            "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        }
-
-        try:
-            req = urllib.request.Request(
-                self.endpoint,
-                data=json.dumps(payload).encode("utf-8"),
-                headers=headers,
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read())
-
-            text = data["content"][0]["text"]
-            return {"ok": True, "text": text.strip(), "model": self.model}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:200]}
 
     # ── 리뷰 답변 ──────────────────────────────────────────────────────
 
