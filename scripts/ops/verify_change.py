@@ -298,6 +298,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="master", help="비교 기준 커밋/브랜치")
     ap.add_argument("--head", help="비교 대상 커밋/브랜치(생략 = 현재 작업트리). 지정하면 미커밋 WIP 가 섞이지 않음")
+    ap.add_argument(
+        "--expect-routes",
+        help="의도된 라우트 수(기준서에 적힌 값). 지정하면 '변경 후 = 이 값'일 때 통과, 기준과 같아야 한다는 규칙 대신",
+    )
     ap.add_argument("--json", help="결과 JSON 저장 경로")
     a = ap.parse_args()
     with contextlib.suppress(AttributeError, ValueError):
@@ -376,7 +380,11 @@ def main() -> int:
         return sorted(set(after[key]) - set(before[key]))
 
     new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
-    route_diff = [] if before["routes"] == after["routes"] else ["라우트 수 변경"]
+    if a.expect_routes:  # 기준서가 약속한 라우트 수로 판정(의도된 추가·삭제)
+        ok_routes = str(after["routes"]) == str(a.expect_routes)
+        route_diff = [] if ok_routes else [f"라우트 수 {after['routes']} ≠ 기준서 약속 {a.expect_routes}"]
+    else:
+        route_diff = [] if before["routes"] == after["routes"] else ["라우트 수 변경"]
     checks = [
         ("pytest 수집 오류", len(before["collect_errors"]), len(after["collect_errors"]), new("collect_errors")),
         ("LIVE import 실패", len(before["import_fail"]), len(after["import_fail"]), new("import_fail")),
