@@ -189,12 +189,32 @@ def iter_files(root: Path = ROOT) -> Iterable[Path]:
             yield path
 
 
+# S1 라벨 정정 (2026-09-24): 이름 부분문자열 추측이 실제 역할과 어긋난 파일. 근거는 docs/specs/2026-09-24_repair_s1_dryrun.md
+LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
+    "ai_orchestrator/config.py": ("L1", "shared env/config helper (used by 22 files across layers)"),
+    "ai_orchestrator/audit_logger.py": ("L3", "low-level audit log writer, IO wrapper"),
+    "scripts/op_log.py": ("L3", "low-level operation log writer, IO wrapper"),
+    "scripts/realtime_audit.py": ("L3", "low-level realtime audit log helper"),
+    "scripts/cdp_db.py": ("L3", "low-level CDP sqlite IO wrapper"),
+    "ai_orchestrator/local_agent/browser/audit_log.py": ("L3", "low-level audit log writer"),
+    "ai_orchestrator/local_agent/browser/cdp_audit.py": ("L3", "low-level CDP audit log helper"),
+    "logging_utils.py": ("L3", "shared logging facade, IO wrapper"),
+    "ai_orchestrator/local_agent/task_protocol.py": ("L1", "task protocol DTO/contract"),
+    "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),
+    "ai_orchestrator/local_agent/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
+    "local_agent/desktop_config.py": ("L1", "desktop config helper"),
+    "local_agent/network_bypass.py": ("L3", "low-level network IO helper"),
+}
+
+
 def classify_path(path: str) -> tuple[str, str]:
     p = path.replace("\\", "/")
     name = Path(p).name
     suffix = Path(p).suffix.lower()
     parts = p.split("/")
 
+    if p in LAYER_OVERRIDES:
+        return LAYER_OVERRIDES[p]
     if name in {".gitignore", ".gitattributes", ".dockerignore"}:
         return "L1", "repository configuration or policy"
     if p.startswith(("docs/", "scripts/archive/")) or name.startswith(("BOOTSTRAP", "HANDOVER")):
