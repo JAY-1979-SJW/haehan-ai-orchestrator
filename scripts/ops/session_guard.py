@@ -1,0 +1,120 @@
+"""세션 기록 크기 기반 새 세션 강제 훅. docs/specs/2026-09-24_session_handoff_guard.md
+
+이벤트별 동작:
+  UserPromptSubmit — 기록 크기(transcript_path)가 경고선/차단선 넘으면 안내·차단.
+  SessionStart      — HANDOFF.md 요약을 맥락에 주입 + report-mode 정리.
+  Stop / PreCompact — 조용히 handoff write (never block).
+
+fail-open: 예상 못한 오류는 항상 exit 0 (차단 경로 제외).
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import session_handoff as sh
+
+
+def _mb(path_str: str) -> float:
+    try:
+        p = Path(path_str)
+        if not p.exists():
+            return 0.0
+        return p.stat().st_size / (1024 * 1024)
+    except Exception:
+        return 0.0
+
+
+def _handle_user_prompt_submit(payload: dict) -> int:
+    cfg = sh.load_config()
+    prompt = str(payload.get("prompt", "") or "")
+    bypass = cfg.get("bypass_prefix", "!계속")
+    if prompt.startswith(bypass):
+        sh.log_event("bypass", prompt_head=prompt[:40])
+        return 0
+
+    transcript_path = payload.get("transcript_path", "") or ""
+    size_mb = _mb(transcript_path)
+    warn_mb = float(cfg.get("warn_mb", 8))
+    block_mb = float(cfg.get("block_mb", 12))
+
+    flag_path = sh._p(cfg.get("phase_done_flag", "data/impact/PHASE_DONE"))
+    phase_done = flag_path.exists()
+
+    if size_mb >= block_mb or phase_done:
+        ok = sh.write()
+        handoff_path = sh._p(cfg.get("handoff_path", "data/impact/HANDOFF.md"))
+        if ok:
+            msg = (
+                f"세션 한도 도달({size_mb:.1f}MB) — 작업기록 저장 완료: {handoff_path}. "
+                f"새 세션을 열고 '인계 이어서'라고 입력하세요. (비상시 입력 앞에 {cfg.get('bypass_prefix', '!계속')})"
+            )
+            print(msg, file=sys.stderr)
+            return 2
+        else:
+            print(
+                f"[세션 경고] 인계 파일 저장 실패 — 차단하지 않고 계속 진행합니다. "
+                f"현재 작업을 마무리하고 다시 저장을 시도하세요. (기록 {size_mb:.1f}MB)"
+            )
+            return 0
+
+    if size_mb >= warn_mb:
+        print(
+            f"[세션 경고] 기록 {size_mb:.1f}MB — 현재 작업을 마무리하고 작업기록을 저장한 뒤 새 세션 전환을 안내할 것."
+        )
+        return 0
+
+    return 0
+
+
+def _handle_session_start() -> int:
+    try:
+        cfg = sh.load_config()
+        handoff_path = sh._p(cfg.get("handoff_path", "data/impact/HANDOFF.md"))
+        if handoff_path.exists():
+            age_days = (time.time() - handoff_path.stat().st_mtime) / 86400
+            if age_days <= 7:
+                sh.start(apply_cleanup=False)
+    except Exception:
+        pass
+    return 0
+
+
+def _handle_quiet_write() -> int:
+    try:
+        sh.write()
+    except Exception:
+        pass
+    return 0
+
+
+def main() -> int:
+    try:
+        raw = sys.stdin.read()
+        payload = json.loads(raw) if raw.strip() else {}
+    except Exception:
+        payload = {}
+
+    event = payload.get("hook_event_name", "")
+
+    try:
+        if event == "UserPromptSubmit":
+            return _handle_user_prompt_submit(payload)
+        if event == "SessionStart":
+            return _handle_session_start()
+        if event in ("Stop", "PreCompact"):
+            return _handle_quiet_write()
+        return 0
+    except SystemExit:
+        raise
+    except Exception:
+        # fail-open — 훅이 세션을 절대 죽이면 안 된다 (차단 경로 제외 이미 위에서 처리됨)
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
