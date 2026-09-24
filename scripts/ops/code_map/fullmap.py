@@ -55,6 +55,8 @@ CODE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"}
 MAX_BYTES = 2_000_000
 TS_EXTS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
 TS_IMPORT_RE = re.compile(r"""(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)['"]([^'"\n]+)['"]""", re.M)
+JS_COMMENT_EXT = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
+JS_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.S)
 PATHLIKE_RE = re.compile(
     r"[A-Za-z0-9_.@()\[\]\-]+(?:[/\\]+[A-Za-z0-9_.@()\[\]\-]+)+/?"
     r"|[A-Za-z0-9_\-][A-Za-z0-9_.\-]*\.[A-Za-z][A-Za-z0-9]{0,5}"
@@ -189,6 +191,12 @@ def extend(graph: dict, files: list[str], manual_roots: dict[str, list[str]]) ->
             # scan.scan_py() 가 AST 로 뽑은, 실제 코드에 쓰인 문자열 상수만 대상으로 한다.
             pf = scan.scan_py(rel)
             path_text = "\n".join(pf.strings)
+        elif rel.endswith(JS_COMMENT_EXT):
+            # TS/JS 주석 속 파일명도 실제 참조가 아니다 — 블록 주석(/* */)과 줄 전체 주석(//)만 걷어낸다.
+            # 줄 끝 주석은 문자열 속 '//'(URL 등)과 구분하기 어려워 남긴다(보수적).
+            path_text = "\n".join(
+                ln for ln in JS_BLOCK_COMMENT_RE.sub("", text).splitlines() if not ln.lstrip().startswith("//")
+            )
         else:
             path_text = text
         for cand in set(PATHLIKE_RE.findall(path_text)):
