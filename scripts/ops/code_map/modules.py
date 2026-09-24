@@ -61,6 +61,8 @@ def main() -> int:
     bounds = json.loads((ROOT / "configs" / "module_boundaries.json").read_text(encoding="utf-8"))
     nodes = m["all_nodes"]
     edges = m["all_edges"]
+    # 층간 방향은 실제 import 로만 판정(문자열 경로 언급은 의존이 아님) — 옛 지도면 전체 엣지로 대체
+    import_edges = m.get("import_edges", edges)
     files = sorted(nodes)
 
     reg_p = ROOT / "configs" / "module_registry.json"
@@ -74,7 +76,7 @@ def main() -> int:
     # ── 1. 레이어 역전: 코드 파일 간 엣지에서 하위(번호 작음) → 상위(번호 큼) ──────────────
     inv_pairs: Counter = Counter()
     inv_samples: dict[str, list[str]] = defaultdict(list)
-    for s, ts in edges.items():
+    for s, ts in import_edges.items():
         if s not in layer or PurePosixPath(s).suffix not in (".py", ".ts", ".tsx", ".js"):
             continue
         if PurePosixPath(s).name == "__init__.py":  # 패키지 재수출은 방향 검사 제외

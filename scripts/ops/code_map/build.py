@@ -64,6 +64,7 @@ def build() -> dict:
         "all_nodes": full["nodes"],
         "all_dirs": full["dirs"],
         "all_edges": full["edges"],
+        "import_edges": full["import_edges"],  # 실제 import 만 — 층간 방향 판정용
         "all_roots": full["roots"],
         "files": classes,
         "edges": graph["edges"],

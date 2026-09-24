@@ -160,6 +160,9 @@ def extend(graph: dict, files: list[str], manual_roots: dict[str, list[str]]) ->
     res = NodeResolver(files, dirs)
     edges: dict[str, set[str]] = defaultdict(set)
     kinds = Counter()
+    import_edges: dict[str, set[str]] = defaultdict(set)  # 실제 import 만(py + ts) — 층간 방향 판정용
+    for s, ts in graph.get("import_edges", {}).items():
+        import_edges[s].update(ts)
     for s, ts in graph["edges"].items():
         edges[s].update(ts)
         kinds["py_import"] += len(ts)
@@ -185,6 +188,7 @@ def extend(graph: dict, files: list[str], manual_roots: dict[str, list[str]]) ->
             for spec in TS_IMPORT_RE.findall(text):
                 tg = [t for t in res.resolve_ts(rel, spec) if t != rel]
                 edges[rel].update(tg)
+                import_edges[rel].update(tg)
                 kinds["ts_import"] += len(tg)
         if rel.endswith(".py"):
             # 주석·docstring·bare 문자열 statement 는 실제 코드 참조가 아니다(거짓 path_ref 방지).
@@ -301,6 +305,7 @@ def extend(graph: dict, files: list[str], manual_roots: dict[str, list[str]]) ->
         "nodes": nodes,
         "dirs": dir_nodes,
         "edges": {k: sorted(v) for k, v in edges.items() if v},
+        "import_edges": {k: sorted(v) for k, v in import_edges.items() if v},
         "edge_kinds": dict(kinds),
         "roots": {k: sorted(v) for k, v in roots.items()},
     }

@@ -214,7 +214,7 @@ def measure(tree: Path, tests: list[str]) -> dict:
     if reg_p.exists():
         reg = json.loads(reg_p.read_text(encoding="utf-8"))
         files, allowed = reg["files"], reg.get("allowed_deps", {})
-        for s, ts in m["all_edges"].items():
+        for s, ts in m.get("import_edges", m["all_edges"]).items():  # 실제 import 만(문자열 언급 제외)
             if s in files and not s.endswith("__init__.py") and files[s]["layer"] in allowed:
                 for t in ts:
                     if t in files and not t.endswith("__init__.py"):
