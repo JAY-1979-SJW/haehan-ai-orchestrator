@@ -200,7 +200,7 @@ def main() -> int:
         json.dumps(
             {
                 "files": len(reg),
-                "layers": dict(sorted(lc.items(), key=lambda x: int(x[0][1:]))),
+                "layers": dict(sorted(lc.items(), key=lambda x: int(x[0][1:]) if x[0][1:].isdigit() else 999)),
                 "confidence": dict(cc),
             },
             ensure_ascii=False,

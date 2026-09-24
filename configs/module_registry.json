@@ -6258,12 +6258,12 @@
    "source": "rule"
   },
   "app.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L8",
+   "role": "api",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "시나리오 실행기 — policy_engine/risk_assessor/approval_manager 오케스트레이션 후 dashboard.py(Flask, L8)를 부팅하는 최상위 실행 진입점. 브라우저 엔진(L4) 아님. L8/런처로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "approval_manager.py": {
    "layer": "L2",
@@ -6274,212 +6274,212 @@
    "source": "rule"
   },
   "apps/ig-comment-dm-bot/connectors/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/connectors/ig_api.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/app_paths.py": {
-   "layer": "L1",
-   "role": "shared",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "공용 기반 이름(app_paths)",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/keyword_matcher.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/poller.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/processed_store.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/settings_store.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/core/token_store.py": {
-   "layer": "L7",
-   "role": "persistence",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/demo_screencast.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/main.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/ui/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/ig-comment-dm-bot/ui/main_window.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/ai_responder.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "도메인(marketing) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/blog_images.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/cdp_helper.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "도메인(marketing) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/instagram_graph_api.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "instagram",
-   "reason": "도메인(instagram) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/naver_blog_cdp.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/naver_login_check.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/naver_selectors.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/connectors/naver_writer.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver",
-   "reason": "도메인(naver) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/core/ai_writer.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/core/license_check.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/generate_license.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "apps/marketing-standalone/setup_gui.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "marketing",
-   "reason": "도메인(marketing) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/marketing-standalone/site_modules/blog_router.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "APP",
+   "role": "standalone_app",
    "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
+   "reason": "독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "apps/youtube-analyzer-standalone/cli.py": {
    "layer": "L4",
@@ -7418,12 +7418,12 @@
    "source": "rule"
   },
   "scripts/auth_session.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "쿠키/localStorage/sessionStorage 저장·복원 범용 엔진(data/sessions/<host>.json) — 특정 사이트 로직 없이 어떤 사이트에도 쓰는 범용 브라우저 세션 기능. L2 정책 아님, L4 범용 엔진.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/browser_cdp_selection_gate.py": {
    "layer": "L2",
@@ -7666,12 +7666,12 @@
    "source": "rule"
   },
   "scripts/credentials.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "자격증명 암호화 저장/로드(Fernet, data/credentials.json) 순수 유틸 — 브라우저·CDP 조작 없음. security_utils.py와 같은 성격의 공용 헬퍼. L4 기본값 오분류를 L1로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/critical_logger.py": {
    "layer": "L7",
@@ -7738,12 +7738,12 @@
    "source": "rule"
   },
   "scripts/eum/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "eum",
-   "reason": "정책·게이트 이름",
+   "reason": "eum.cw.or.kr 전용 ID/PW 자동로그인 구현(WEBLOG400M00 URL·human_input·web_connector 호출) — 정책 판단이 아니라 사이트별 자동화, 이름만 auth라 L2로 오분류. L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/eum/capabilities.py": {
    "layer": "L5",
@@ -8194,12 +8194,12 @@
    "source": "rule"
   },
   "scripts/g2b/profile.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L2",
+   "role": "policy",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "G2B 사이트 프로필 — action 분류 상수(READ_ONLY_ACTIONS 등) 골격 정책 선언만 포함, 실제 접속/로그인/투찰 구현 없음(docstring 명시). L2 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/g2b/router.py": {
    "layer": "L5",
@@ -8234,12 +8234,12 @@
    "source": "rule"
   },
   "scripts/gabia/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "gabia",
-   "reason": "정책·게이트 이름",
+   "reason": "가비아 사이트 전용 로그인 자동화(login_detector 호출) — L2 아님, 사이트 모듈. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/gabia/domain_assist.py": {
    "layer": "L5",
@@ -8258,12 +8258,12 @@
    "source": "rule"
   },
   "scripts/gabia/profile.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "layer": "L2",
+   "role": "policy",
    "domain": "gabia",
-   "reason": "도메인(gabia) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "가비아 SiteProfile 선언(SiteActionPolicy·GateDecision·SiteCapability) — 위험도·승인 정책 선언만 포함하고 실제 자동화 코드 없음. L2(정책) 정의에 부합. L5 저신뢰 기본값 오분류를 L2로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/gabia/router.py": {
    "layer": "L5",
@@ -8442,12 +8442,12 @@
    "source": "rule"
   },
   "scripts/google/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "정책·게이트 이름",
+   "reason": "구글 사이트 전용 로그인 자동화(login_detector·local_agent 호출) — 사이트 모듈. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/base.py": {
    "layer": "L5",
@@ -8850,12 +8850,12 @@
    "source": "rule"
   },
   "scripts/google/oauth_console_fill.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "정책·게이트 이름",
+   "reason": "Google Cloud Console(console.cloud.google.com) OAuth 클라이언트 생성 화면을 실제로 채우는 사이트 자동화(web_connector·managed_console 호출, FINAL_BUTTON_LABELS 등 DOM 라벨 다룸) — 정책 판단이 아니라 사이트 모듈. 이름만 gate 계열이라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/precision_report.py": {
    "layer": "L5",
@@ -8986,52 +8986,52 @@
    "source": "rule"
   },
   "scripts/google/workflows.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workflows_actions.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google/workflows.py aggregator의 leaf 모듈(actions 구현) — google 도메인 내부 상세, workflows.py와 함께 L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workflows_catalog.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google/workflows.py aggregator의 leaf 모듈(catalog 구현) — google 도메인 내부 상세, workflows.py와 함께 L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workflows_common.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google/workflows.py aggregator의 leaf 모듈(공유 모델·상수) — google 도메인 내부 상세, workflows.py와 함께 L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workflows_execute.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google/workflows.py aggregator의 leaf 모듈(execute 구현) — google 도메인 내부 상세, workflows.py와 함께 L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workflows_report.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "google",
-   "reason": "업무 흐름 이름",
+   "reason": "google/workflows.py aggregator의 leaf 모듈(report 구현) — google 도메인 내부 상세, workflows.py와 함께 L5로 정정.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/google/workspace/__init__.py": {
    "layer": "L5",
@@ -9266,20 +9266,20 @@
    "source": "rule"
   },
   "scripts/hanafax/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "hanafax",
-   "reason": "정책·게이트 이름",
+   "reason": "하나팩스 사이트 전용 로그인 자동화(credentials 호출) — 사이트 모듈. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/hanafax/batch.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "hanafax",
-   "reason": "업무 흐름 이름",
+   "reason": "하나팩스 큐 파일(JSONL) 기반 순차 발송 — hanafax 도메인 전용 상세 구현이며 router.py(L5)와 같은 폴더의 도메인 detail. 이름만 batch라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/hanafax/bulk_send.py": {
    "layer": "L5",
@@ -9346,12 +9346,12 @@
    "source": "rule"
   },
   "scripts/hiworks/mail_batch.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "hiworks",
-   "reason": "업무 흐름 이름",
+   "reason": "하이웍스 1건씩 순차 발송 배치 계획/실행 — hiworks 도메인 전용 상세 구현. 이름만 batch라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/hiworks/profile.py": {
    "layer": "L5",
@@ -9410,12 +9410,12 @@
    "source": "rule"
   },
   "scripts/hiworks/workflows.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "hiworks",
-   "reason": "업무 흐름 이름",
+   "reason": "하이웍스 영업메일 준비(mail.fill_compose·schemas 호출) — hiworks 도메인 전용 상세 구현, 다른 도메인이 재사용하지 않음. 이름만 workflows라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/human_input.py": {
    "layer": "L4",
@@ -9538,12 +9538,12 @@
    "source": "rule"
   },
   "scripts/kakao/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "kakao",
-   "reason": "정책·게이트 이름",
+   "reason": "카카오 사이트 전용 로그인 자동화(login_detector 호출) — 사이트 모듈. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/kakao/base.py": {
    "layer": "L5",
@@ -9986,12 +9986,12 @@
    "source": "rule"
   },
   "scripts/module_quality_gate_common.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/module_quality_gate_modules.py": {
    "layer": "L2",
@@ -10018,20 +10018,20 @@
    "source": "rule"
   },
   "scripts/naver/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver",
-   "reason": "정책·게이트 이름",
+   "reason": "네이버 ID/PW 자동 로그인 모듈(사람처럼 타이핑·캡차 감지·login_detector 호출) — 정책 게이트가 아니라 사이트별 자동화 구현. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/auth_window_gate.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver",
-   "reason": "정책·게이트 이름",
+   "reason": "파일 docstring이 명시적으로 'L4 Browser Engine 계층'이라고 선언 — 범용 scripts.common.auth_window_gate 엔진에 NAVER_PROFILE만 주입하는 하위호환 래퍼. 이름만 gate라 L2로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/automation/__init__.py": {
    "layer": "L5",
@@ -10126,7 +10126,7 @@
    "role": "site_module",
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
-   "confidence": "high",
+   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/automation/integration/mail_automation.py": {
@@ -10922,12 +10922,12 @@
    "source": "rule"
   },
   "scripts/naver/cafe/background/list_background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_cafe",
-   "reason": "업무 흐름 이름",
+   "reason": "naver/cafe 도메인 background 수집 러너 실제 구현 — naver_cafe 도메인 전용 상세, re-export stub(list_background_runner.py)과 함께 L5로 정정. 이름만 runner라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/cafe/background/main_page.py": {
    "layer": "L5",
@@ -11122,12 +11122,12 @@
    "source": "rule"
   },
   "scripts/naver/cafe/list_background_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_cafe",
-   "reason": "업무 흐름 이름",
+   "reason": "naver/cafe 도메인 background 수집 러너로 재export하는 하위호환 stub — naver_cafe 도메인 전용 상세 구현. 이름만 runner라 L6로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/cafe/list_collector.py": {
    "layer": "L5",
@@ -11754,12 +11754,12 @@
    "source": "rule"
   },
   "scripts/naver/searchad/auth.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L5",
+   "role": "site_module",
    "domain": "naver_search",
-   "reason": "정책·게이트 이름",
+   "reason": "네이버 검색광고 사이트 전용 로그인 자동화(credentials 호출) — 사이트 모듈. 이름만 auth라 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/naver/searchad/keyword_tool.py": {
    "layer": "L5",
@@ -12062,7 +12062,7 @@
    "role": "site_module",
    "domain": "smartstore",
    "reason": "도메인(smartstore) 자동화",
-   "confidence": "high",
+   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/smartstore/product/bulk.py": {
@@ -13401,6 +13401,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/ops/code_map/registry_sync.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/ops/code_map/runcheck.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -13410,6 +13418,14 @@
    "source": "rule"
   },
   "scripts/ops/code_map/scan.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/code_map/skeleton_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13658,6 +13674,14 @@
    "source": "rule"
   },
   "scripts/ops/make_promo_video.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/merge_stage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -14122,28 +14146,28 @@
    "source": "rule"
   },
   "scripts/quality_gate.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/realtime_audit.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L7",
+   "role": "persistence",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "실시간 감사 이벤트를 data/logs/realtime_audit.jsonl 에 기록/조회하는 감사 로그 저장소 — L7(저장·감사) 정의에 정확히 부합. L4 기본값 오분류를 L7로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/required_quality_gate.py": {
-   "layer": "L2",
-   "role": "policy",
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/router.py": {
    "layer": "L4",
@@ -14162,12 +14186,12 @@
    "source": "rule"
   },
   "scripts/runtime_temp.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "런타임 임시 디렉터리 경로 선택 순수 함수(후보 경로 목록 반환) — 브라우저·외부 IO 없음. L4 기본값 오분류를 L1로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/schemas.py": {
    "layer": "L1",
@@ -14730,12 +14754,12 @@
    "source": "rule"
   },
   "security_utils.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "services/__init__.py": {
    "layer": "L4",
@@ -17569,6 +17593,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_merge_stage.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_message_classifier.py": {
    "layer": "L11",
    "role": "test",
@@ -18457,6 +18489,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_skeleton_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_smartstore_actions.py": {
    "layer": "L11",
    "role": "test",
@@ -18935,46 +18975,6 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/code_map/registry_sync.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/code_map/skeleton_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/merge_stage.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_merge_stage.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_skeleton_gate.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
    "source": "rule"
   }
  }
