@@ -1,7 +1,7 @@
 """
 로그 기반 운영 분석 모듈 (5단계)
-audit.jsonl + execution_history.jsonl 읽어 집계 및 AI 운영 요약 생성.
-OpenAI 없으면 deterministic mock 요약 반환.
+audit.jsonl + execution_history.jsonl 읽어 집계 및 운영 요약 생성.
+앱 런타임 유료 AI 호출 없음(2026-09-24 OpenAI 삭제) — 항상 deterministic mock 요약 반환.
 """
 
 import json
