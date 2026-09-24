@@ -285,7 +285,8 @@ python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
 FORBIDDEN_IMPORT > 0 → STOP  
 SECURITY_PATTERN > 0 → STOP  
 CIRCULAR_IMPORT > 0 → STOP  
-quality gate errors > 0 → STOP
+quality gate errors > 0 → STOP  
+지도↔골격 대조(`scripts/ops/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
 
 ## 병렬 실행 규칙
 
