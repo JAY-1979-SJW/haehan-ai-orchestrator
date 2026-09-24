@@ -51,7 +51,8 @@ def _handle_user_prompt_submit(payload: dict) -> int:
         if ok:
             msg = (
                 f"세션 한도 도달({size_mb:.1f}MB) — 작업기록 저장 완료: {handoff_path}. "
-                f"새 세션을 열고 '인계 이어서'라고 입력하세요. (비상시 입력 앞에 {cfg.get('bypass_prefix', '!계속')})"
+                f"진행 중인 서브에이전트가 없으면 이 창에서 /clear 입력 후 '인계 이어서'라고 입력하세요. "
+                f"(비상시 입력 앞에 {cfg.get('bypass_prefix', '!계속')})"
             )
             print(msg, file=sys.stderr)
             return 2
@@ -64,14 +65,19 @@ def _handle_user_prompt_submit(payload: dict) -> int:
 
     if size_mb >= warn_mb:
         print(
-            f"[세션 경고] 기록 {size_mb:.1f}MB — 현재 작업을 마무리하고 작업기록을 저장한 뒤 새 세션 전환을 안내할 것."
+            f"[세션 경고] 기록 {size_mb:.1f}MB — 진행 중 서브에이전트를 마무리(새 투입 금지)하고 "
+            f"작업기록 저장 후 사용자에게 /clear 안내."
         )
         return 0
 
     return 0
 
 
-def _handle_session_start() -> int:
+def _handle_session_start(payload: dict) -> int:
+    # source: "startup"(새 창) / "resume"(--resume) / "clear"(/clear 직후) — 모두 인계 요약 주입 대상.
+    source = str(payload.get("source", "") or "")
+    if source and source not in ("startup", "resume", "clear"):
+        return 0
     try:
         cfg = sh.load_config()
         handoff_path = sh._p(cfg.get("handoff_path", "data/impact/HANDOFF.md"))
@@ -105,7 +111,7 @@ def main() -> int:
         if event == "UserPromptSubmit":
             return _handle_user_prompt_submit(payload)
         if event == "SessionStart":
-            return _handle_session_start()
+            return _handle_session_start(payload)
         if event in ("Stop", "PreCompact"):
             return _handle_quiet_write()
         return 0

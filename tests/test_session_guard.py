@@ -114,11 +114,32 @@ def test_session_start_prints_summary_and_removes_flag(tmp_path, monkeypatch, ca
     flag = tmp_path / "data" / "impact" / "PHASE_DONE"
     flag.write_text("done", encoding="utf-8")
     monkeypatch.setattr(sh, "cleanup", lambda apply=False: {"deleted": [], "reported": [], "errors": []})
-    rc = sg._handle_session_start()
+    rc = sg._handle_session_start({"hook_event_name": "SessionStart", "source": "startup"})
     assert rc == 0
     out = capsys.readouterr().out
     assert "다음 할 일" in out
     assert not flag.exists()
+
+
+def test_session_start_handles_clear_source(tmp_path, monkeypatch, capsys):
+    handoff = tmp_path / "data" / "impact" / "HANDOFF.md"
+    handoff.parent.mkdir(parents=True, exist_ok=True)
+    handoff.write_text("# 인계\n\n## 다음 할 일\n- 테스트", encoding="utf-8")
+    monkeypatch.setattr(sh, "cleanup", lambda apply=False: {"deleted": [], "reported": [], "errors": []})
+    rc = sg._handle_session_start({"hook_event_name": "SessionStart", "source": "clear"})
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "다음 할 일" in out
+
+
+def test_session_start_unknown_source_noop(tmp_path, monkeypatch, capsys):
+    handoff = tmp_path / "data" / "impact" / "HANDOFF.md"
+    handoff.parent.mkdir(parents=True, exist_ok=True)
+    handoff.write_text("# 인계\n\n## 다음 할 일\n- 테스트", encoding="utf-8")
+    rc = sg._handle_session_start({"hook_event_name": "SessionStart", "source": "compact"})
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert out.strip() == ""
 
 
 def test_stop_and_precompact_never_nonzero(tmp_path, monkeypatch):
@@ -177,6 +198,37 @@ def test_cleanup_never_touches_protected_paths(tmp_path, monkeypatch):
     os.utime(old_dir, (old_time, old_time))
     sh.cleanup(apply=True)
     assert old_dir.exists()
+
+
+def test_is_protected_matches_glob_db_file(tmp_path, monkeypatch):
+    protected = ["data/*.db", "data/cdp_profile*", ".env*"]
+    p = tmp_path / "data" / "app.db"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("x", encoding="utf-8")
+    assert sh._is_protected(p, protected) is True
+
+
+def test_is_protected_matches_cdp_profile_subpath(tmp_path):
+    protected = ["data/*.db", "data/cdp_profile*", ".env*"]
+    p = tmp_path / "data" / "cdp_profile" / "ai_chrome" / "Cookies"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("x", encoding="utf-8")
+    assert sh._is_protected(p, protected) is True
+
+
+def test_is_protected_matches_env_variant(tmp_path):
+    protected = ["data/*.db", "data/cdp_profile*", ".env*"]
+    p = tmp_path / ".env.local"
+    p.write_text("x", encoding="utf-8")
+    assert sh._is_protected(p, protected) is True
+
+
+def test_is_protected_rejects_unrelated_path(tmp_path):
+    protected = ["data/*.db", "data/cdp_profile*", ".env*"]
+    p = tmp_path / "data" / "reports" / "summary.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("x", encoding="utf-8")
+    assert sh._is_protected(p, protected) is False
 
 
 def test_verify_fails_without_handoff(tmp_path):

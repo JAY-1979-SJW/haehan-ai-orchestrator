@@ -13,8 +13,8 @@
     "verify_base_prefix": "verify_base_",
     "spec_superseded_status": "superseded",
     "protected_paths": [
-      ".env",
-      "data/cdp_profile",
+      ".env*",
+      "data/cdp_profile*",
       "data/*.db",
       "data/impact/HANDOFF.md"
     ]

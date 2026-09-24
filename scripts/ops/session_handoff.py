@@ -11,6 +11,7 @@ AI 가 작성하지 않는다 — git/파일시스템에서 결정론적으로 �
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 import shutil
@@ -326,13 +327,23 @@ def _scratchpad_root() -> Path:
 
 
 def _is_protected(rel_or_abs: Path, protected: list[str]) -> bool:
+    """fnmatch 스타일 글롭 매칭. 절대/상대 경로 둘 다, 그리고 하위 경로(디렉터리 보호)도 매칭."""
     s = str(rel_or_abs).replace("\\", "/")
+    try:
+        rel = str(Path(s).resolve().relative_to(ROOT)).replace("\\", "/")
+    except Exception:
+        rel = s
+    name = Path(s).name
+    candidates = {s, rel, name}
     for pat in protected:
         pat = pat.replace("\\", "/")
-        if pat.endswith("*") and s.startswith(pat[:-1]):
-            return True
-        if pat in s:
-            return True
+        base = pat[:-1] if pat.endswith("*") else pat
+        for cand in candidates:
+            if fnmatch.fnmatch(cand, pat) or fnmatch.fnmatch(cand, base + "*"):
+                return True
+            # 디렉터리/접두 보호: 패턴이 경로의 시작 세그먼트와 일치하면 하위 경로도 보호
+            if base and (cand == base or cand.startswith(base.rstrip("/") + "/") or cand.startswith(base)):
+                return True
     return False
 
 
