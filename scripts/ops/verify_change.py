@@ -33,7 +33,38 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PY = sys.executable
-ENV = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONIOENCODING": "utf-8", "AUTH_ENABLED": "false"}
+ENV = {
+    **os.environ,
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONIOENCODING": "utf-8",
+    "AUTH_ENABLED": "false",
+    # 측정 중 테스트가 실제 브라우저(CDP)를 띄우지 않게 — browser_sandbox_gate 의 차단 표시.
+    # 옛 기준 커밋에는 새 표시가 없으므로 기존 표시(CODEX_SANDBOX_NETWORK_DISABLED)도 함께 켠다.
+    "HAEHAN_NO_BROWSER_LAUNCH": "1",
+    "CODEX_SANDBOX_NETWORK_DISABLED": "1",
+}
+
+
+def kill_leftovers(path_marker: str) -> list[int]:
+    """측정 폴더에서 떠서 남은 프로세스(분리 실행된 데몬 등) 종료 — 명령줄에 폴더 경로가 든 것만."""
+    if os.name != "nt":
+        return []
+    # 자기 자신과 조상(이 검증을 띄운 셸 등)은 제외 — 조상의 명령줄에 표시 문자열이 들어 있어도 죽이지 않는다
+    ps = (
+        "$all = Get-CimInstance Win32_Process; $keep = @{}; $cur = [int]$env:VC_SELF;"
+        " while ($cur -and -not $keep.ContainsKey($cur)) { $keep[$cur] = 1;"
+        " $cur = ($all | Where-Object ProcessId -eq $cur | Select-Object -First 1).ParentProcessId }"
+        " $all | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($env:VC_MARK)"
+        " -and -not $keep.ContainsKey([int]$_.ProcessId) -and $_.ProcessId -ne $PID }"
+        " | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"
+    )
+    env = {**os.environ, "VC_MARK": path_marker, "VC_SELF": str(os.getpid())}
+    out = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, env=env, timeout=60
+    ).stdout
+    return [int(x) for x in out.split() if x.isdigit()]
+
+
 CONFIG = ROOT / "configs" / "verify_change.json"
 CFG = {"route_check": None, "ruff_config": None, "test_timeout": 120}
 if CONFIG.exists():
@@ -305,6 +336,9 @@ def main() -> int:
             else None
         )
     finally:
+        killed = kill_leftovers(tmp.name)  # 측정 폴더 경로가 명령줄에 든 잔여 프로세스
+        if killed:
+            print(f"[verify] 측정 중 남은 프로세스 {len(killed)}개 종료: {killed}")
         for dest in trees:
             run(["git", "worktree", "remove", "--force", str(dest)], ROOT)
         shutil.rmtree(tmp, ignore_errors=True)
