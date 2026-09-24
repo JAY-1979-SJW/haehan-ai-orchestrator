@@ -5,7 +5,7 @@ action_gate.classify_action()과 동일한 정책을 서버 레벨에서 검사�
 
 사용법
 ======
-    from ai_orchestrator.browser_gate_middleware import BrowserGateMiddleware
+    from ai_orchestrator.gates.browser_gate_middleware import BrowserGateMiddleware
     app.add_middleware(BrowserGateMiddleware)
 
 동작 방식
@@ -17,11 +17,12 @@ action_gate.classify_action()과 동일한 정책을 서버 레벨에서 검사�
 - NOTIFY  → 200 통과 + X-Gate-Verdict: NOTIFY 헤더
 - AUTO    → 200 통과 (헤더 없음)
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -56,8 +57,11 @@ class BrowserGateMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         from ai_orchestrator.local_agent.browser.action_gate import (
-            classify_action, GATE_APPROVE, GATE_NOTIFY,
+            GATE_APPROVE,
+            GATE_NOTIFY,
+            classify_action,
         )
+
         result = classify_action(
             action_type=action_type,
             label=label,
@@ -68,7 +72,9 @@ class BrowserGateMiddleware(BaseHTTPMiddleware):
         if result.verdict == GATE_APPROVE:
             logger.warning(
                 "브라우저 게이트 APPROVE 차단 | action=%s label=%s category=%s",
-                action_type, label, result.category,
+                action_type,
+                label,
+                result.category,
             )
             return JSONResponse(
                 status_code=403,
@@ -79,8 +85,7 @@ class BrowserGateMiddleware(BaseHTTPMiddleware):
                     "matched_keyword": result.matched_keyword,
                     "approval_url": _APPROVAL_UI,
                     "message": (
-                        f"이 액션은 사용자 승인이 필요합니다. "
-                        f"{_APPROVAL_UI} 에서 승인 후 force=true로 재요청하세요."
+                        f"이 액션은 사용자 승인이 필요합니다. {_APPROVAL_UI} 에서 승인 후 force=true로 재요청하세요."
                     ),
                 },
             )

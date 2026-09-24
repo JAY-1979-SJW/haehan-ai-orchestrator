@@ -20,6 +20,7 @@ POST /run / /run-from-template 동작:
   - params 원문 audit log / API 응답 노출 금지 (safe 필드만 허용)
   - default_params 원문은 템플릿 조회 API 응답에 포함하지 않음 (default_param_keys 만)
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,10 +30,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator.audit_logger import log_event
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.services.web_task_approval_service import create_web_task_pending_approval
 from ai_orchestrator.services.web_task_registry import get_entry, list_entries
 from ai_orchestrator.sites.adapters.dev_reg_base import ErrorCode, validate_params
-from ai_orchestrator.web_task_approval_service import create_web_task_pending_approval
 from ai_orchestrator.web_task_templates import get_template, list_templates, merge_params
 
 logger = logging.getLogger(__name__)
@@ -40,10 +41,17 @@ logger = logging.getLogger(__name__)
 web_task_router = APIRouter(prefix="/web-tasks", tags=["web-tasks"])
 
 # audit log / 응답에 포함 가능한 params 필드 화이트리스트
-_SAFE_PARAM_KEYS: frozenset[str] = frozenset({
-    "app_name", "company_name", "service_url", "redirect_uri",
-    "contact_email", "purpose", "requested_scopes",
-})
+_SAFE_PARAM_KEYS: frozenset[str] = frozenset(
+    {
+        "app_name",
+        "company_name",
+        "service_url",
+        "redirect_uri",
+        "contact_email",
+        "purpose",
+        "requested_scopes",
+    }
+)
 
 
 class WebTaskRunRequest(BaseModel):
@@ -61,6 +69,7 @@ class WebTaskRunFromTemplateRequest(BaseModel):
 
 # ── 검증 헬퍼 ────────────────────────────────────────────────────────────
 
+
 def _classify_validation(params: dict) -> tuple[list[str], list[str], list[str]]:
     """validate_params() 결과를 missing/invalid 로 분류.
 
@@ -75,12 +84,21 @@ def _classify_validation(params: dict) -> tuple[list[str], list[str], list[str]]
 
 
 def _raise_validation_error(
-    *, action_type: str, provider: str, actor: str, role: str,
-    errors: list[str], missing: list[str], invalid: list[str],
+    *,
+    action_type: str,
+    provider: str,
+    actor: str,
+    role: str,
+    errors: list[str],
+    missing: list[str],
+    invalid: list[str],
 ) -> None:
     log_event(
-        "WEB_TASK_VALIDATION_FAILED", "web-task",
-        action_type=action_type, actor=actor, role=role,
+        "WEB_TASK_VALIDATION_FAILED",
+        "web-task",
+        action_type=action_type,
+        actor=actor,
+        role=role,
         note=f"provider={provider} missing={','.join(missing) or '-'}",
     )
     raise HTTPException(
@@ -96,6 +114,7 @@ def _raise_validation_error(
 
 
 # ── 공통 실행 로직 ──────────────────────────────────────────────────────
+
 
 def _execute_web_task(
     *,
@@ -119,23 +138,29 @@ def _execute_web_task(
     entry = get_entry(provider, action_type)
     if entry is None:
         log_event(
-            "WEB_TASK_REJECTED_UNKNOWN_TASK", "web-task",
-            action_type=action_type, actor=actor, role=role,
+            "WEB_TASK_REJECTED_UNKNOWN_TASK",
+            "web-task",
+            action_type=action_type,
+            actor=actor,
+            role=role,
             note=f"provider={provider}",
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "UNKNOWN_TASK",
-                    "message": f"미등록 작업: {provider}/{action_type}"},
+            detail={"error": "UNKNOWN_TASK", "message": f"미등록 작업: {provider}/{action_type}"},
         )
 
     # ── 2. params 공통 검증 ───────────────────────────────────────────
     errors, missing, invalid = _classify_validation(params)
     if errors:
         _raise_validation_error(
-            action_type=action_type, provider=provider,
-            actor=actor, role=role,
-            errors=errors, missing=missing, invalid=invalid,
+            action_type=action_type,
+            provider=provider,
+            actor=actor,
+            role=role,
+            errors=errors,
+            missing=missing,
+            invalid=invalid,
         )
 
     # ── 3a. dry_run 분기 ──────────────────────────────────────────────
@@ -144,10 +169,12 @@ def _execute_web_task(
         fill_result = adapter.fill_form(None, {**params, "dry_run": True})
 
         log_event(
-            "WEB_TASK_DRY_RUN_COMPLETED", "web-task",
+            "WEB_TASK_DRY_RUN_COMPLETED",
+            "web-task",
             risk_level=entry.risk_level,
             action_type=action_type,
-            actor=actor, role=role,
+            actor=actor,
+            role=role,
             note=f"provider={provider} success={fill_result.success}",
         )
 
@@ -171,15 +198,16 @@ def _execute_web_task(
     # dry_run 으로 summary 생성 (page=None, DOM 조작 없음)
     adapter = entry.adapter_class()
     fill_result = adapter.fill_form(None, {**params, "dry_run": True})
-    summary = (fill_result.summary if fill_result.success
-               else f"[summary 생성 실패] {fill_result.error}")
+    summary = fill_result.summary if fill_result.success else f"[summary 생성 실패] {fill_result.error}"
 
     log_event(
-        "WEB_TASK_RUN_REQUESTED", task_id,
+        "WEB_TASK_RUN_REQUESTED",
+        task_id,
         risk_level=entry.risk_level,
         action_type=action_type,
         target=fill_result.target_url,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         note=f"provider={provider}",
     )
 
@@ -197,11 +225,13 @@ def _execute_web_task(
     )
 
     log_event(
-        "WEB_TASK_PENDING_APPROVAL_CREATED", task_id,
+        "WEB_TASK_PENDING_APPROVAL_CREATED",
+        task_id,
         risk_level=entry.risk_level,
         action_type=action_type,
         target=fill_result.target_url,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         note=f"provider={provider}",
     )
 
@@ -218,6 +248,7 @@ def _execute_web_task(
 
 
 # ── 라우트 ───────────────────────────────────────────────────────────────
+
 
 @web_task_router.get("/registry")
 def get_web_task_registry(
@@ -271,24 +302,26 @@ def run_web_task_from_template(
     template = get_template(template_id)
     if template is None:
         log_event(
-            "WEB_TASK_TEMPLATE_NOT_FOUND", "web-task",
-            actor=actor, role=role,
+            "WEB_TASK_TEMPLATE_NOT_FOUND",
+            "web-task",
+            actor=actor,
+            role=role,
             note=f"template_id={template_id or '-'}",
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "TEMPLATE_NOT_FOUND",
-                    "message": f"미등록 템플릿: {template_id or '-'}"},
+            detail={"error": "TEMPLATE_NOT_FOUND", "message": f"미등록 템플릿: {template_id or '-'}"},
         )
 
     merged = merge_params(template, body.override_params or {})
 
     log_event(
-        "WEB_TASK_TEMPLATE_USED", "web-task",
+        "WEB_TASK_TEMPLATE_USED",
+        "web-task",
         action_type=template.action_type,
-        actor=actor, role=role,
-        note=(f"template_id={template.template_id} "
-              f"provider={template.provider} dry_run={body.dry_run}"),
+        actor=actor,
+        role=role,
+        note=(f"template_id={template.template_id} provider={template.provider} dry_run={body.dry_run}"),
     )
 
     result = _execute_web_task(

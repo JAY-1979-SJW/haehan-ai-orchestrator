@@ -1,12 +1,11 @@
 import json
 import logging
 from pathlib import Path
-from typing import Optional
 
-from .approval import approve_token, reject_token
 from .audit_logger import log_event
+from .gates.approval import approve_token, reject_token
 from .inbox import create_inbox_item
-from .telegram_notifier import parse_callback_data, parse_dev_reg_callback_data, build_result_text
+from .telegram_notifier import build_result_text, parse_callback_data, parse_dev_reg_callback_data
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ def load_user_map() -> list[dict]:
         return []
 
 
-def get_mapped_user(telegram_user_id: str) -> Optional[dict]:
+def get_mapped_user(telegram_user_id: str) -> dict | None:
     for user in load_user_map():
         if str(user.get("telegram_user_id", "")) == str(telegram_user_id):
             if user.get("enabled", False):
@@ -63,8 +62,7 @@ def handle_telegram_webhook(payload: dict) -> dict:
     missing = required - set(payload.keys())
     if missing:
         logger.warning("텔레그램 webhook: 누락 필드 %s", missing)
-        return {"success": False, "status": "invalid_payload",
-                "message": f"누락 필드: {sorted(missing)}"}
+        return {"success": False, "status": "invalid_payload", "message": f"누락 필드: {sorted(missing)}"}
 
     tg_user_id = str(payload["telegram_user_id"])
     action = str(payload["action"]).lower().strip()
@@ -75,15 +73,13 @@ def handle_telegram_webhook(payload: dict) -> dict:
     # action 검증
     if action not in _VALID_ACTIONS:
         logger.warning("텔레그램 webhook: 알 수 없는 action=%s", action)
-        return {"success": False, "status": "invalid_action",
-                "message": f"알 수 없는 action: {action}"}
+        return {"success": False, "status": "invalid_action", "message": f"알 수 없는 action: {action}"}
 
     # 사용자 매핑 검증
     user = get_mapped_user(tg_user_id)
     if not user:
         logger.warning("텔레그램 webhook: 미등록/비활성 사용자 | tg_user_id=%s", tg_user_id)
-        return {"success": False, "status": "user_not_found",
-                "message": "등록되지 않은 텔레그램 사용자"}
+        return {"success": False, "status": "user_not_found", "message": "등록되지 않은 텔레그램 사용자"}
 
     actor = user["actor"]
     role = user["role"]
@@ -95,8 +91,7 @@ def handle_telegram_webhook(payload: dict) -> dict:
         external_id=token_id,
         sender=actor,
         title=f"텔레그램 {action}",
-        body_raw=json.dumps({k: v for k, v in payload.items()
-                             if k != "telegram_user_id"}, ensure_ascii=False),
+        body_raw=json.dumps({k: v for k, v in payload.items() if k != "telegram_user_id"}, ensure_ascii=False),
         body_summary=f"action={action} task_id={task_id}",
         linked_task_id=task_id,
         metadata={"role": role, "action": action},
@@ -105,18 +100,31 @@ def handle_telegram_webhook(payload: dict) -> dict:
     if action == "approve":
         token, status = approve_token(token_id, task_id, actor, role)
         audit_event = _APPROVE_AUDIT.get(status, "APPROVAL_DENIED")
-        log_event(audit_event, task_id, token_id=token_id,
-                  actor=actor, role=role, decision=status,
-                  risk_level=token.risk_level, note="source=telegram")
+        log_event(
+            audit_event,
+            task_id,
+            token_id=token_id,
+            actor=actor,
+            role=role,
+            decision=status,
+            risk_level=token.risk_level,
+            note="source=telegram",
+        )
         return {"success": status == "approved", "status": status, "actor": actor, "role": role}
 
     else:  # reject
         token, status = reject_token(token_id, task_id, actor, role, reason=reason)
         audit_event = _REJECT_AUDIT.get(status, "APPROVAL_REJECTED")
-        log_event(audit_event, task_id, token_id=token_id,
-                  actor=actor, role=role, decision=status,
-                  risk_level=token.risk_level,
-                  note=f"source=telegram | reason={reason}" if reason else "source=telegram")
+        log_event(
+            audit_event,
+            task_id,
+            token_id=token_id,
+            actor=actor,
+            role=role,
+            decision=status,
+            risk_level=token.risk_level,
+            note=f"source=telegram | reason={reason}" if reason else "source=telegram",
+        )
         return {"success": status == "rejected", "status": status, "actor": actor, "role": role}
 
 
@@ -129,15 +137,13 @@ def handle_telegram_update(update: dict) -> dict:
     """
     cq = update.get("callback_query")
     if not isinstance(cq, dict):
-        return {"success": False, "status": "invalid_payload",
-                "message": "callback_query 없음"}
+        return {"success": False, "status": "invalid_payload", "message": "callback_query 없음"}
 
     frm = cq.get("from") or {}
     tg_user_id = frm.get("id")
     tg_username = frm.get("username")
     if tg_user_id is None:
-        return {"success": False, "status": "invalid_payload",
-                "message": "callback_query.from.id 없음"}
+        return {"success": False, "status": "invalid_payload", "message": "callback_query.from.id 없음"}
 
     data = cq.get("data")
     cq_id = cq.get("id", "")
@@ -155,8 +161,10 @@ def handle_telegram_update(update: dict) -> dict:
         }
         result = handle_telegram_webhook(flat)
         result["message"] = build_result_text(
-            parsed["action"], result.get("status", ""),
-            actor=result.get("actor", ""), reason=reason,
+            parsed["action"],
+            result.get("status", ""),
+            actor=result.get("actor", ""),
+            reason=reason,
         )
         if tg_username:
             result["telegram_username"] = tg_username
@@ -174,8 +182,7 @@ def handle_telegram_update(update: dict) -> dict:
             username=tg_username or "",
         )
 
-    return {"success": False, "status": "invalid_payload",
-            "message": f"잘못된 callback_data: {data!r}"}
+    return {"success": False, "status": "invalid_payload", "message": f"잘못된 callback_data: {data!r}"}
 
 
 def _handle_dev_reg_callback(
@@ -189,16 +196,23 @@ def _handle_dev_reg_callback(
     user = get_mapped_user(tg_user_id)
     if not user:
         logger.warning("개발자 등록 webhook: 미등록/비활성 사용자 | tg_user_id=%s", tg_user_id)
-        return {"success": False, "status": "user_not_found",
-                "message": "등록되지 않은 텔레그램 사용자",
-                "callback_query_id": cq_id}
+        return {
+            "success": False,
+            "status": "user_not_found",
+            "message": "등록되지 않은 텔레그램 사용자",
+            "callback_query_id": cq_id,
+        }
 
     actor = user["actor"]
     role = user["role"]
 
-    from .dev_reg_approval import handle_telegram_decision
+    from .gates.dev_reg_approval import handle_telegram_decision
+
     result = handle_telegram_decision(
-        token_id=token_id, action=action, actor=actor, role=role,
+        token_id=token_id,
+        action=action,
+        actor=actor,
+        role=role,
     )
     result["callback_query_id"] = cq_id
     if username:

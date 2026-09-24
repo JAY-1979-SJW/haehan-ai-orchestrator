@@ -3,12 +3,13 @@
 현재 인증된 사용자의 actor와 role만 반환한다.
 비밀번호·hash·token·session·cookie는 절대 반환하지 않는다.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.auth import get_current_user
+from ai_orchestrator.gates.auth import get_current_user
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 

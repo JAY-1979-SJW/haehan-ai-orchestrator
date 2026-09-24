@@ -32,9 +32,9 @@ class TestInScopeWebTaskEngine:
         "ai_orchestrator.routers.web_task_router",
         "ai_orchestrator.services.web_task_registry",
         "ai_orchestrator.web_task_templates",
-        "ai_orchestrator.web_task_approval_service",
-        "ai_orchestrator.approval",
-        "ai_orchestrator.dev_reg_approval",
+        "ai_orchestrator.services.web_task_approval_service",
+        "ai_orchestrator.gates.approval",
+        "ai_orchestrator.gates.dev_reg_approval",
         "ai_orchestrator.task_state",
         "ai_orchestrator.audit_logger",
     ]
@@ -51,7 +51,7 @@ class TestInScopeWebTaskEngine:
 
     def test_web_task_approval_service_file_exists(self):
         """web_task_approval_service.py IN_SCOPE 파일 존재."""
-        assert (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").exists()
+        assert (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").exists()
 
     def test_server_execution_location_guard_exists(self):
         """server/execution_location_guard.py IN_SCOPE 파일 존재."""
@@ -106,7 +106,7 @@ class TestHwpxExternalAppHold:
 
     def test_hwpx_not_in_approval_service(self):
         """web_task_approval_service.py에 hwp/hwpx 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").read_text(encoding="utf-8")
         assert "hwp" not in src.lower()
 
 
@@ -133,7 +133,7 @@ class TestExcelOfficeExternalAppHold:
 
     def test_excel_not_in_approval_service(self):
         """web_task_approval_service.py에 excel 참조가 없다."""
-        src = (REPO_ROOT / "ai_orchestrator" / "web_task_approval_service.py").read_text(encoding="utf-8")
+        src = (REPO_ROOT / "ai_orchestrator" / "services" / "web_task_approval_service.py").read_text(encoding="utf-8")
         assert "excel" not in src.lower()
 
 
@@ -159,7 +159,7 @@ class TestBackendCloseoutBoundary:
 
     def test_web_task_closeout_passes_without_cad(self):
         """web_task_approval_service 는 CAD 없이 임포트 가능하다."""
-        import ai_orchestrator.web_task_approval_service as svc
+        import ai_orchestrator.services.web_task_approval_service as svc
 
         assert hasattr(svc, "create_web_task_pending_approval")
 
@@ -167,7 +167,7 @@ class TestBackendCloseoutBoundary:
         """web_task_approval_service의 응답 계약 키 존재."""
         import dataclasses
 
-        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+        from ai_orchestrator.services.web_task_approval_service import PendingApprovalResult
 
         fields = {f.name for f in dataclasses.fields(PendingApprovalResult)}
         required = {

@@ -2305,7 +2305,15 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/approval.py": {
+  "ai_orchestrator/gates/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -2345,7 +2353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/auth.py": {
+  "ai_orchestrator/gates/auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -2361,7 +2369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_gate_middleware.py": {
+  "ai_orchestrator/gates/browser_gate_middleware.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -3481,7 +3489,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/dev_reg_approval.py": {
+  "ai_orchestrator/gates/dev_reg_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5081,7 +5089,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/policy.py": {
+  "ai_orchestrator/gates/policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -5105,7 +5113,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/risk_classifier.py": {
+  "ai_orchestrator/gates/risk_classifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -6273,7 +6281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/web_task_approval_service.py": {
+  "ai_orchestrator/services/web_task_approval_service.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",

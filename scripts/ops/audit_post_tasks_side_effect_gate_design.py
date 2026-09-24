@@ -6,22 +6,23 @@ ASSISTANT_BACKEND_POST_TASKS_SIDE_EFFECT_GATE_DESIGN_01
 실제 POST /tasks 실행 / execute 호출 / approval_token 발행 / DB write /
 router.py 수정 / 서버 반영 전면 금지.
 """
+
 import ast
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
-AUDIT_ID   = "POST_TASKS_SIDE_EFFECT_GATE_DESIGN"
+AUDIT_ID = "POST_TASKS_SIDE_EFFECT_GATE_DESIGN"
 AUDIT_DATE = "2026-05-18"
 
 # ── 운영 안전 플래그 ─────────────────────────────────────────────────────────
-ROUTE_EXECUTION_ALLOWED     = False   # 실제 POST /tasks 호출 금지
-EXECUTE_CALL_ALLOWED        = False   # execute() 실제 호출 금지
+ROUTE_EXECUTION_ALLOWED = False  # 실제 POST /tasks 호출 금지
+EXECUTE_CALL_ALLOWED = False  # execute() 실제 호출 금지
 APPROVAL_TOKEN_ISSUE_ALLOWED = False  # issue_token() 실제 발행 금지
-DB_WRITE_ALLOWED            = False   # 파일·DB write 금지
-ROUTER_MODIFICATION_ALLOWED = False   # router.py 수정 금지
-SERVER_DEPLOY_ALLOWED       = False   # 서버 반영 금지
-DESIGN_ONLY                 = True    # 설계 전용
+DB_WRITE_ALLOWED = False  # 파일·DB write 금지
+ROUTER_MODIFICATION_ALLOWED = False  # router.py 수정 금지
+SERVER_DEPLOY_ALLOWED = False  # 서버 반영 금지
+DESIGN_ONLY = True  # 설계 전용
 
 # ── 1. POST /tasks 코드 경로 분석 결과 ──────────────────────────────────────
 CALL_CHAIN = [
@@ -52,14 +53,14 @@ CALL_CHAIN = [
     {
         "step": 4,
         "call": "issue_token(req, risk) — ep.requires_approval and ep.allowed 조건 시",
-        "file": "ai_orchestrator/approval.py",
+        "file": "ai_orchestrator/gates/approval.py",
         "line_approx": 149,
         "side_effects": [
             "approval_tokens.jsonl 신규 항목 append (파일 write)",
             "인메모리 _store dict 변경",
             "log_event(APPROVAL_ISSUED) → audit_logs.jsonl write",
         ],
-        "blocking": True,   # 파일 write 발생
+        "blocking": True,  # 파일 write 발생
         "condition": "ep.requires_approval is True and ep.allowed is True",
     },
     {
@@ -74,7 +75,7 @@ CALL_CHAIN = [
             "requires_approval: 'PENDING_APPROVAL' 반환 (write 없음)",
             "blocked: 'BLOCKED:...' 반환 (write 없음)",
         ],
-        "blocking": True,   # low 경로에서 파일 write + 외부 실행 가능
+        "blocking": True,  # low 경로에서 파일 write + 외부 실행 가능
     },
     {
         "step": 6,
@@ -197,11 +198,11 @@ APPROVAL_GATE_DESIGN = {
         "대표 명시 승인",
     ],
     "blockers": [
-        "WRITE_POSSIBLE",           # execute_task → 실제 외부 실행 가능
-        "execute_side_effect",      # execute() 외부 시스템 호출
-        "approval_token_side_effect", # issue_token → 파일 write + 승인 상태 생성
-        "db_write_impact",          # execution_history.jsonl / audit_logs.jsonl
-        "approval_gate_not_designed", # medium approve 이후 execute_task 경로 미검증
+        "WRITE_POSSIBLE",  # execute_task → 실제 외부 실행 가능
+        "execute_side_effect",  # execute() 외부 시스템 호출
+        "approval_token_side_effect",  # issue_token → 파일 write + 승인 상태 생성
+        "db_write_impact",  # execution_history.jsonl / audit_logs.jsonl
+        "approval_gate_not_designed",  # medium approve 이후 execute_task 경로 미검증
     ],
     "disable_allowed_now": False,
     "note": "현재 Phase 1-R guard가 TASK_APPROVE 경로를 no-op으로 유지 중. 이 공정에서 변경 금지.",
@@ -211,10 +212,7 @@ APPROVAL_GATE_DESIGN = {
 DRY_RUN_POLICY = {
     "policy_id": "POST_TASKS_DRY_RUN_POLICY_V1",
     "status": "DESIGN_ONLY",
-    "principle": (
-        "POST /tasks를 실제 실행으로 전환하기 전에 "
-        "dry-run 모드를 별도 flag로 명시적으로 활성화해야 한다."
-    ),
+    "principle": ("POST /tasks를 실제 실행으로 전환하기 전에 dry-run 모드를 별도 flag로 명시적으로 활성화해야 한다."),
     "dry_run_flag_location": "router.py 또는 별도 policy 모듈",
     "dry_run_flag_name": "POST_TASKS_DRY_RUN_ENABLED",
     "dry_run_default": True,
@@ -258,12 +256,9 @@ NEXT_PHASE_CONDITIONS = {
 
 
 def _check_router_stability() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    content = (REPO_ROOT / "ai_orchestrator/router.py").read_text(encoding="utf-8", errors="ignore")
     return {
-        "post_tasks_handler_exists": "@router.post(\"/tasks\")" in content
-                                     or "@router.post('/tasks')" in content,
+        "post_tasks_handler_exists": '@router.post("/tasks")' in content or "@router.post('/tasks')" in content,
         "task_approve_guard_active": (
             '_legacy_5050_should_use_route_wiring("TASK_APPROVE")' in content
             or "_legacy_5050_should_use_route_wiring('TASK_APPROVE')" in content
@@ -275,8 +270,10 @@ def _check_router_stability() -> dict:
         "task_approve_flag_false": "LEGACY_5050_TASK_APPROVE_ROUTE_WIRING_ENABLED = False" in content,
         "task_reject_flag_false": "LEGACY_5050_TASK_REJECT_ROUTE_WIRING_ENABLED = False" in content,
         "no_post_tasks_dry_run_flag": "POST_TASKS_DRY_RUN_ENABLED" not in content,
-        "touch_phase": "PHASE_1R" if "LEGACY_5050_ROUTER_TOUCH_PHASE = \"PHASE_1R\"" in content
-                       or "LEGACY_5050_ROUTER_TOUCH_PHASE = 'PHASE_1R'" in content else "UNKNOWN",
+        "touch_phase": "PHASE_1R"
+        if 'LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"' in content
+        or "LEGACY_5050_ROUTER_TOUCH_PHASE = 'PHASE_1R'" in content
+        else "UNKNOWN",
     }
 
 
@@ -284,7 +281,7 @@ def _check_key_files() -> tuple[list, list]:
     required = [
         "ai_orchestrator/router.py",
         "ai_orchestrator/executor.py",
-        "ai_orchestrator/approval.py",
+        "ai_orchestrator/gates/approval.py",
         "ai_orchestrator/planner.py",
         "ai_orchestrator/execution_limits.py",
         "backend/compat/legacy_5050",
@@ -322,7 +319,7 @@ def run_audit() -> dict:
     warnings = []
 
     # 1. 핵심 파일 존재
-    present, missing = _check_key_files()
+    present, missing = _check_key_files()  # noqa: RUF059 — present 는 표시용, 실제 사용은 missing
     for f in missing:
         errors.append(f"필수 파일 없음: {f}")
 
@@ -424,6 +421,7 @@ def run_audit() -> dict:
 
 if __name__ == "__main__":
     import json
+
     result = run_audit()
     print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     print(f"\n=== POST /tasks Side-Effect Gate Design: {result['verdict']} ===")

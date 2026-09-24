@@ -29,15 +29,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
 
-    import ai_orchestrator.auth as _auth
+    import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
     import ai_orchestrator.local_agent_router as _lar
 
     importlib.reload(_lar)
 
-    import ai_orchestrator.approval as _ap
     import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -68,7 +68,7 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
 
     app = FastAPI()
@@ -393,7 +393,7 @@ def test_double_approve_is_idempotent(admin_user):
 
 
 def test_expired_token_rejects_task(admin_user, monkeypatch):
-    import ai_orchestrator.approval as _ap
+    import ai_orchestrator.gates.approval as _ap
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)

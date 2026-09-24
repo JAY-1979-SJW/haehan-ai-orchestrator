@@ -1,17 +1,25 @@
 # 운영 진입점 아님 — CLI 전용 (컨테이너 실행: ai_orchestrator.server:app)
-import sys
 import io
 import logging
+import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-from ai_orchestrator.logging_setup import setup_logging
-from ai_orchestrator.models import TaskRequest
-from ai_orchestrator.planner import plan
-from ai_orchestrator.executor import execute
-from ai_orchestrator.openai_client import generate_task_summary, generate_approval_reason, is_mock_mode
-from ai_orchestrator.approval import issue_token, approve_token, validate_token
-from ai_orchestrator.audit_logger import log_event, read_recent_logs
+from ai_orchestrator.audit_logger import log_event, read_recent_logs  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.executor import execute  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.gates.approval import (  # noqa: E402 — sys.stdout 재설정 뒤 import
+    approve_token,
+    issue_token,
+    validate_token,
+)
+from ai_orchestrator.logging_setup import setup_logging  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.models import TaskRequest  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.openai_client import (  # noqa: E402 — sys.stdout 재설정 뒤 import
+    generate_approval_reason,
+    generate_task_summary,
+    is_mock_mode,
+)
+from ai_orchestrator.planner import plan  # noqa: E402 — sys.stdout 재설정 뒤 import
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -20,11 +28,11 @@ logger = logging.getLogger(__name__)
 def _header(title: str):
     print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print('=' * 60)
+    print("=" * 60)
 
 
 def _sep():
-    print('-' * 60)
+    print("-" * 60)
 
 
 def run_scenario_a():
@@ -40,15 +48,36 @@ def run_scenario_a():
     log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type, target=req.target, actor=req.requested_by)
 
     risk, ep = plan(req)
-    log_event("RISK_ASSESSED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, requires_approval=ep.requires_approval, actor="system")
-    log_event("PLAN_CREATED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, requires_approval=ep.requires_approval, actor="system")
+    log_event(
+        "RISK_ASSESSED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+        actor="system",
+    )
+    log_event(
+        "PLAN_CREATED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+        actor="system",
+    )
 
     ai_summary = generate_task_summary(req, risk)
     result = execute(ep)
-    log_event("DRY_RUN_RETURNED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, decision=result, actor="executor")
+    log_event(
+        "DRY_RUN_RETURNED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        decision=result,
+        actor="executor",
+    )
 
     print(f"  task_id              : {req.task_id}")
     print(f"  risk_level           : {risk.risk_level.upper()}")
@@ -73,12 +102,25 @@ def run_scenario_b():
     log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type, target=req.target, actor=req.requested_by)
 
     risk, ep = plan(req)
-    log_event("RISK_ASSESSED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, requires_approval=ep.requires_approval)
+    log_event(
+        "RISK_ASSESSED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+    )
 
     token = issue_token(req, risk, ttl_minutes=30)
-    log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision="issued", actor=req.requested_by, note=f"token_id={token.token_id}")
+    log_event(
+        "APPROVAL_ISSUED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        decision="issued",
+        actor=req.requested_by,
+        note=f"token_id={token.token_id}",
+    )
 
     approval_reason = generate_approval_reason(req, ep)
 
@@ -94,13 +136,28 @@ def run_scenario_b():
     print(f"  [승인 전] status     : {pre_result}")
 
     approved, _status = approve_token(token.token_id, req.task_id, approved_by="대표님", role="admin")
-    log_event("APPROVAL_GRANTED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision=_status, actor="대표님", role="admin", token_id=token.token_id)
+    log_event(
+        "APPROVAL_GRANTED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        decision=_status,
+        actor="대표님",
+        role="admin",
+        token_id=token.token_id,
+    )
 
     valid = validate_token(token.token_id, req.task_id)
     final_status = "APPROVED_DRY_RUN" if valid else pre_result
-    log_event("DRY_RUN_RETURNED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, decision=final_status, actor="executor")
+    log_event(
+        "DRY_RUN_RETURNED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        decision=final_status,
+        actor="executor",
+    )
 
     print(f"  approval_token_status: {approved.status}")
     print(f"  token_valid          : {valid}")
@@ -122,21 +179,49 @@ def run_scenario_c():
     log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type, target=req.target, actor=req.requested_by)
 
     risk, ep = plan(req)
-    log_event("RISK_ASSESSED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, requires_approval=ep.requires_approval)
+    log_event(
+        "RISK_ASSESSED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+    )
 
     token = issue_token(req, risk, ttl_minutes=30)
-    log_event("APPROVAL_ISSUED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision="issued", actor=req.requested_by, note=f"token_id={token.token_id}")
+    log_event(
+        "APPROVAL_ISSUED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        decision="issued",
+        actor=req.requested_by,
+        note=f"token_id={token.token_id}",
+    )
 
     approved, _status = approve_token(token.token_id, req.task_id, approved_by="대표님", role="admin")
-    log_event("APPROVAL_GRANTED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              decision=_status, actor="대표님", role="admin", token_id=token.token_id)
+    log_event(
+        "APPROVAL_GRANTED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        decision=_status,
+        actor="대표님",
+        role="admin",
+        token_id=token.token_id,
+    )
 
     valid = validate_token(token.token_id, req.task_id)
     final_status = "APPROVED_DRY_RUN" if valid else "PENDING_APPROVAL"
-    log_event("DRY_RUN_RETURNED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, decision=final_status, actor="executor")
+    log_event(
+        "DRY_RUN_RETURNED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        decision=final_status,
+        actor="executor",
+    )
 
     print(f"  task_id              : {req.task_id}")
     print(f"  risk_level           : {risk.risk_level.upper()}")
@@ -161,13 +246,26 @@ def run_scenario_d():
     log_event("TASK_RECEIVED", req.task_id, action_type=req.action_type, target=req.target, actor=req.requested_by)
 
     risk, ep = plan(req)
-    log_event("RISK_ASSESSED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=ep.allowed, requires_approval=ep.requires_approval)
+    log_event(
+        "RISK_ASSESSED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=ep.allowed,
+        requires_approval=ep.requires_approval,
+    )
 
     result = execute(ep)
-    log_event("EXECUTION_BLOCKED", req.task_id, risk_level=risk.risk_level, action_type=req.action_type,
-              allowed=False, decision="BLOCKED", actor="policy",
-              note="; ".join(ep.blocked_reasons))
+    log_event(
+        "EXECUTION_BLOCKED",
+        req.task_id,
+        risk_level=risk.risk_level,
+        action_type=req.action_type,
+        allowed=False,
+        decision="BLOCKED",
+        actor="policy",
+        note="; ".join(ep.blocked_reasons),
+    )
 
     print(f"  task_id              : {req.task_id}")
     print(f"  risk_level           : {risk.risk_level.upper()}")
@@ -192,7 +290,9 @@ def main():
 
     print("\n[최근 감사 로그 (최대 5건)]")
     for entry in read_recent_logs(limit=5):
-        print(f"  {entry['timestamp'][:19]} | {entry['event_type']:<22} | {entry['task_id']} | {entry.get('decision', '')}")
+        print(
+            f"  {entry['timestamp'][:19]} | {entry['event_type']:<22} | {entry['task_id']} | {entry.get('decision', '')}"
+        )
 
     logger.info("CLI 실행 완료")
 

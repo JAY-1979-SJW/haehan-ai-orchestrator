@@ -8,22 +8,27 @@ TENANT-3: Minimal organization scope context support.
 - build_tenant_context() helper 추가 (contract 기반)
 - Backward compatible: 기존 actor/role 형식 유지
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 import secrets
-from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from . import config
+from ai_orchestrator import config
 
 logger = logging.getLogger(__name__)
 
-_DUMMY_USER = {"actor": "system", "role": "owner", "organization_ids": ["default-org"], "active_organization_id": "default-org"}
+_DUMMY_USER = {
+    "actor": "system",
+    "role": "owner",
+    "organization_ids": ["default-org"],
+    "active_organization_id": "default-org",
+}
 
 _security = HTTPBasic(auto_error=False)
 
@@ -35,7 +40,7 @@ def _load_users() -> dict[str, dict]:
         logger.warning("HTTP 사용자 파일 없음: %s", path)
         return {}
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             raw = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         logger.error("HTTP 사용자 파일 로드 실패: %s", e)
@@ -76,7 +81,7 @@ def _verify_password(candidate: str, stored_hash: str) -> bool:
 
 
 def get_current_user(
-    credentials: Optional[HTTPBasicCredentials] = Depends(_security),
+    credentials: HTTPBasicCredentials | None = Depends(_security),
 ) -> dict:
     """현재 요청자 신원을 {actor, role} 로 반환.
 
@@ -130,6 +135,7 @@ def require_role(*roles: str):
 # ============================================================================
 # TENANT-3: Minimal Organization Scope Context
 # ============================================================================
+
 
 def build_tenant_context(user: dict) -> dict:
     """Build tenant context from auth user dict.
@@ -192,9 +198,7 @@ def require_active_organization(user: dict) -> str:
 
     org_ids = user.get("organization_ids", [])
     if active_org not in org_ids:
-        raise ValueError(
-            f"active_organization_id {active_org} not in organization_ids {org_ids}"
-        )
+        raise ValueError(f"active_organization_id {active_org} not in organization_ids {org_ids}")
 
     return active_org
 

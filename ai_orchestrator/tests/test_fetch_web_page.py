@@ -18,6 +18,7 @@
 - 야간/cooldown/rate 정책이 fetch_web_page 에도 우선 적용됨
 - 감사 로그(execution_history.jsonl) 에 final_url / http_status / blocked_reason 포함
 """
+
 from __future__ import annotations
 
 import importlib
@@ -26,7 +27,7 @@ import os
 import sys
 import types
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -54,7 +55,7 @@ class _FakeLocator:
     def __init__(self, text: str):
         self._text = text
 
-    def inner_text(self, timeout=None):  # noqa: ARG002
+    def inner_text(self, timeout=None):
         return self._text
 
 
@@ -142,6 +143,7 @@ def _install_fake_playwright(monkeypatch, *, page: _FakePage):
 # ══ 단위 테스트: validate_url ════════════════════════════════════════
 def test_validate_url_allows_allowlisted_hosts():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "https://law.go.kr/",
         "https://www.law.go.kr/abc?q=1",
@@ -159,12 +161,13 @@ def test_validate_url_allows_allowlisted_hosts():
 
 def test_validate_url_blocks_non_allowlist_hosts():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "http://example.com/",
         "https://example.com/",
         "https://google.com/",
         "https://naver.com/",
-        "https://sub.law.go.kr/",   # 임의 서브도메인은 보수적으로 거부
+        "https://sub.law.go.kr/",  # 임의 서브도메인은 보수적으로 거부
         "https://law.go.kr.evil.com/",  # suffix-trick 거부
     ]:
         ok, reason = pc.validate_url(u)
@@ -174,6 +177,7 @@ def test_validate_url_blocks_non_allowlist_hosts():
 
 def test_validate_url_blocks_localhost_variants():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "http://localhost/",
         "http://localhost:8080/",
@@ -185,6 +189,7 @@ def test_validate_url_blocks_localhost_variants():
 
 def test_validate_url_blocks_loopback_and_unspecified():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "http://127.0.0.1/",
         "http://127.1.2.3/",
@@ -197,6 +202,7 @@ def test_validate_url_blocks_loopback_and_unspecified():
 
 def test_validate_url_blocks_internal_ipv4_ranges():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "http://10.0.0.1/",
         "http://10.255.255.255/",
@@ -212,6 +218,7 @@ def test_validate_url_blocks_internal_ipv4_ranges():
 
 def test_validate_url_blocks_non_http_schemes():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in [
         "file:///etc/passwd",
         "ftp://ftp.example.com/",
@@ -225,6 +232,7 @@ def test_validate_url_blocks_non_http_schemes():
 
 def test_validate_url_blocks_empty_or_malformed():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     for u in ["", "   ", "http://", "not-a-url", "://missing-scheme"]:
         ok, _ = pc.validate_url(u)
         assert not ok, repr(u)
@@ -232,6 +240,7 @@ def test_validate_url_blocks_empty_or_malformed():
 
 def test_validate_url_blocks_mdns_local():
     from ai_orchestrator.connectors import playwright_connector as pc
+
     ok, _ = pc.validate_url("http://printer.local/")
     assert not ok
 
@@ -240,6 +249,7 @@ def test_validate_url_blocks_mdns_local():
 def test_fetch_web_page_success_payload_shape(monkeypatch):
     """성공 payload 가 final_url/http_status/fetched_at/timed_out 을 포함."""
     from ai_orchestrator.connectors import playwright_connector as pc
+
     page = _FakePage(
         resolved_url="https://www.law.go.kr/resolved/path",
         title_val="법제처",
@@ -264,6 +274,7 @@ def test_fetch_web_page_success_payload_shape(monkeypatch):
 
 def test_fetch_web_page_snippet_truncated_to_1000(monkeypatch):
     from ai_orchestrator.connectors import playwright_connector as pc
+
     page = _FakePage(body_val="x" * 5000)
     _install_fake_playwright(monkeypatch, page=page)
     out = pc.fetch_web_page("https://www.law.go.kr/")
@@ -274,6 +285,7 @@ def test_fetch_web_page_snippet_truncated_to_1000(monkeypatch):
 def test_fetch_web_page_timeout_sets_timed_out_true(monkeypatch):
     """page.goto 타임아웃 → error payload 에 timed_out=True."""
     from ai_orchestrator.connectors import playwright_connector as pc
+
     page = _FakePage(goto_raises=True)
     _install_fake_playwright(monkeypatch, page=page)
 
@@ -287,6 +299,7 @@ def test_fetch_web_page_timeout_sets_timed_out_true(monkeypatch):
 def test_fetch_web_page_blocks_invalid_target_without_playwright(monkeypatch):
     """validate_url 실패 시 playwright 로딩 이전에 안전하게 차단."""
     from ai_orchestrator.connectors import playwright_connector as pc
+
     monkeypatch.setitem(sys.modules, "playwright.sync_api", None)
     out = pc.fetch_web_page("http://localhost/")
     assert out["status"] == "error"
@@ -298,6 +311,7 @@ def test_fetch_web_page_blocks_invalid_target_without_playwright(monkeypatch):
 def test_fetch_web_page_blocks_non_allowlist_host_in_payload(monkeypatch):
     """외부 도메인은 host_not_allowed 로 error payload 반환."""
     from ai_orchestrator.connectors import playwright_connector as pc
+
     monkeypatch.setitem(sys.modules, "playwright.sync_api", None)
     out = pc.fetch_web_page("https://example.com/")
     assert out["status"] == "error"
@@ -330,27 +344,38 @@ def test_fetch_web_page_connector_exception_returns_safe_error(monkeypatch):
 def _isolated_logdir(tmp_path, monkeypatch):
     """executor 직접 호출용 — auth 는 건드리지 않고 LOG_DIR 만 격리."""
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
-    from ai_orchestrator import config as _cfg; importlib.reload(_cfg)
-    from ai_orchestrator import execution_limits as _el; importlib.reload(_el)
-    from ai_orchestrator.connectors import playwright_connector as _pc; importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex; importlib.reload(_ex)
+    from ai_orchestrator import config as _cfg
+
+    importlib.reload(_cfg)
+    from ai_orchestrator import execution_limits as _el
+
+    importlib.reload(_el)
+    from ai_orchestrator.connectors import playwright_connector as _pc
+
+    importlib.reload(_pc)
+    from ai_orchestrator import executor as _ex
+
+    importlib.reload(_ex)
     yield _cfg, _el, _pc, _ex
 
 
 def test_audit_note_includes_final_url_and_http_status(_isolated_logdir, monkeypatch):
     _cfg, _el, _pc, _ex = _isolated_logdir
     from ai_orchestrator.models import TaskRequest
+
     # 야간 정책 의존성을 제거 — 주간(KST 12:30) 으로 고정
     monkeypatch.setattr(
-        _el, "_now",
-        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc),
+        _el,
+        "_now",
+        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=UTC),
     )
     fake = {
         "status": "success",
         "data": {
             "url": "https://www.law.go.kr/req",
             "final_url": "https://www.law.go.kr/final",
-            "title": "T", "snippet": "S",
+            "title": "T",
+            "snippet": "S",
             "http_status": 200,
             "fetched_at": "2026-04-22T00:00:00+00:00",
             "timed_out": False,
@@ -359,10 +384,12 @@ def test_audit_note_includes_final_url_and_http_status(_isolated_logdir, monkeyp
     monkeypatch.setattr(_pc, "fetch_web_page", lambda *a, **kw: fake)
 
     req = TaskRequest(
-        task_id="NOTE-OK-1", source="manual",
+        task_id="NOTE-OK-1",
+        source="manual",
         action_type="fetch_web_page",
         target="https://www.law.go.kr/req",
-        description="audit note ok", requested_by="admin_u",
+        description="audit note ok",
+        requested_by="admin_u",
     )
     out = _ex.execute_task(req, risk_level="medium")
     assert not out.startswith("BLOCKED"), out
@@ -381,15 +408,19 @@ def test_audit_note_includes_final_url_and_http_status(_isolated_logdir, monkeyp
 def test_audit_note_includes_blocked_reason_for_non_allowlist(_isolated_logdir, monkeypatch):
     _cfg, _el, _pc, _ex = _isolated_logdir
     from ai_orchestrator.models import TaskRequest
+
     monkeypatch.setattr(
-        _el, "_now",
-        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc),
+        _el,
+        "_now",
+        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=UTC),
     )
     req = TaskRequest(
-        task_id="NOTE-BL-1", source="manual",
+        task_id="NOTE-BL-1",
+        source="manual",
         action_type="fetch_web_page",
         target="https://example.com/",
-        description="audit note block", requested_by="admin_u",
+        description="audit note block",
+        requested_by="admin_u",
     )
     out = _ex.execute_task(req, risk_level="medium")
     assert out.startswith("BLOCKED:"), out
@@ -411,50 +442,89 @@ def test_audit_note_includes_blocked_reason_for_non_allowlist(_isolated_logdir, 
 def app_client(tmp_path_factory):
     users_path = tmp_path_factory.mktemp("policies") / "http_users.json"
     users_path.write_text(
-        json.dumps([
-            {"username": "owner_u",    "password_hash": "pw-owner",    "role": "owner",    "enabled": True},
-            {"username": "admin_u",    "password_hash": "pw-admin",    "role": "admin",    "enabled": True},
-            {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
-            {"username": "viewer_u",   "password_hash": "pw-viewer",   "role": "viewer",   "enabled": True},
-        ], ensure_ascii=False), encoding="utf-8")
+        json.dumps(
+            [
+                {"username": "owner_u", "password_hash": "pw-owner", "role": "owner", "enabled": True},
+                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+                {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
+                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
     logdir = tmp_path_factory.mktemp("storage")
     os.environ["AUTH_ENABLED"] = "true"
     os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(logdir)
 
-    from ai_orchestrator import config as _config; importlib.reload(_config)
-    from ai_orchestrator import auth as _auth; importlib.reload(_auth)
-    from ai_orchestrator import execution_limits as _el; importlib.reload(_el)
-    from ai_orchestrator.connectors import playwright_connector as _pc; importlib.reload(_pc)
-    from ai_orchestrator import executor as _ex; importlib.reload(_ex)
-    from ai_orchestrator import approval as _ap; importlib.reload(_ap); _ap.clear_rate_store()
-    from ai_orchestrator import task_state as _ts; importlib.reload(_ts); _ts.clear()
-    from ai_orchestrator.sites import router as _sr; importlib.reload(_sr)
-    from ai_orchestrator import router as _rt; importlib.reload(_rt)
-    from ai_orchestrator import server as _srv; importlib.reload(_srv)
+    from ai_orchestrator import config as _config
+
+    importlib.reload(_config)
+    from ai_orchestrator.gates import auth as _auth
+
+    importlib.reload(_auth)
+    from ai_orchestrator import execution_limits as _el
+
+    importlib.reload(_el)
+    from ai_orchestrator.connectors import playwright_connector as _pc
+
+    importlib.reload(_pc)
+    from ai_orchestrator import executor as _ex
+
+    importlib.reload(_ex)
+    from ai_orchestrator.gates import approval as _ap
+
+    importlib.reload(_ap)
+    _ap.clear_rate_store()
+    from ai_orchestrator import task_state as _ts
+
+    importlib.reload(_ts)
+    _ts.clear()
+    from ai_orchestrator.sites import router as _sr
+
+    importlib.reload(_sr)
+    from ai_orchestrator import router as _rt
+
+    importlib.reload(_rt)
+    from ai_orchestrator import server as _srv
+
+    importlib.reload(_srv)
 
     from fastapi.testclient import TestClient
+
     yield TestClient(_srv.app, raise_server_exceptions=True)
 
     os.environ["AUTH_ENABLED"] = "false"
     os.environ.pop("HTTP_USERS_PATH", None)
     os.environ.pop("LOG_DIR", None)
     _ap.clear_rate_store()
-    importlib.reload(_config); importlib.reload(_auth)
-    importlib.reload(_el); importlib.reload(_pc); importlib.reload(_ex)
-    importlib.reload(_ap); importlib.reload(_ts)
-    importlib.reload(_sr); importlib.reload(_rt); importlib.reload(_srv)
+    importlib.reload(_config)
+    importlib.reload(_auth)
+    importlib.reload(_el)
+    importlib.reload(_pc)
+    importlib.reload(_ex)
+    importlib.reload(_ap)
+    importlib.reload(_ts)
+    importlib.reload(_sr)
+    importlib.reload(_rt)
+    importlib.reload(_srv)
 
 
-def _auth(u): return (u, f"pw-{u.split('_')[0]}")
-def _uniq(p): return f"{p}-{uuid.uuid4().hex[:8]}"
+def _auth(u):
+    return (u, f"pw-{u.split('_')[0]}")
+
+
+def _uniq(p):
+    return f"{p}-{uuid.uuid4().hex[:8]}"
 
 
 @pytest.fixture(autouse=True)
 def _reset_rate(app_client):
     """approve/reject 인메모리 rate limit 은 테스트 간 초기화."""
-    from ai_orchestrator import approval as _ap
+    from ai_orchestrator.gates import approval as _ap
+
     _ap.clear_rate_store()
     yield
     _ap.clear_rate_store()
@@ -468,24 +538,31 @@ def _force_daytime(app_client, monkeypatch):
     `_now` 를 patch 하는 경우 그 scope 의 patch 가 우선 적용된다.
     """
     from ai_orchestrator import execution_limits as _el
+
     monkeypatch.setattr(
-        _el, "_now",
-        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc),  # KST 12:30
+        _el,
+        "_now",
+        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=UTC),  # KST 12:30
     )
     yield
 
 
 def _submit_fetch(client, url, auth, task_id=None):
     task_id = task_id or _uniq("F")
-    body = {"task_id": task_id, "source": "manual",
-            "action_type": "fetch_web_page", "target": url,
-            "description": "fetch web page test"}
+    body = {
+        "task_id": task_id,
+        "source": "manual",
+        "action_type": "fetch_web_page",
+        "target": url,
+        "description": "fetch web page test",
+    }
     r = client.post("/api/v1/tasks", json=body, auth=auth)
     return task_id, r
 
 
 def test_fetch_web_page_in_whitelist(app_client):
     from ai_orchestrator import executor as ex
+
     assert "fetch_web_page" in ex.ALLOWED_ACTIONS
 
 
@@ -510,9 +587,9 @@ def test_fetch_web_page_admin_approve_success(app_client):
         assert r.status_code == 200, r.text
         token_id = r.json().get("approval_token_id")
         assert token_id
-        r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                             params={"token_id": token_id}, json={},
-                             auth=_auth("admin_u"))
+        r2 = app_client.post(
+            f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+        )
     assert r2.status_code == 200, r2.text
     body = r2.json()
     assert body["status"] == "approved"
@@ -533,9 +610,9 @@ def test_fetch_web_page_viewer_approve_forbidden(app_client):
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
     token_id = r.json().get("approval_token_id")
     assert token_id
-    r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                         params={"token_id": token_id}, json={},
-                         auth=_auth("viewer_u"))
+    r2 = app_client.post(
+        f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("viewer_u")
+    )
     assert r2.status_code == 403
 
 
@@ -543,21 +620,22 @@ def test_fetch_web_page_operator_approve_forbidden(app_client):
     task_id, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"))
     token_id = r.json().get("approval_token_id")
     assert token_id
-    r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                         params={"token_id": token_id}, json={},
-                         auth=_auth("operator_u"))
+    r2 = app_client.post(
+        f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("operator_u")
+    )
     assert r2.status_code == 403
 
 
 def _approve_expect_block(app_client, url, expected_marker):
     from ai_orchestrator.connectors import playwright_connector as pc
+
     with patch.object(pc, "fetch_web_page", wraps=pc.fetch_web_page):
         task_id, r = _submit_fetch(app_client, url, _auth("admin_u"))
         token_id = r.json().get("approval_token_id")
         assert token_id, r.json()
-        r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                             params={"token_id": token_id}, json={},
-                             auth=_auth("admin_u"))
+        r2 = app_client.post(
+            f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+        )
     assert r2.status_code == 200, r2.text
     body = r2.json()
     assert body["status"] == "approved"
@@ -572,11 +650,13 @@ def test_fetch_web_page_blocks_non_allowlist_host_target(app_client):
 
 def test_fetch_web_page_blocks_localhost_target(app_client):
     from ai_orchestrator.connectors import playwright_connector as pc
+
     _approve_expect_block(app_client, "http://localhost:8080/", pc.BLOCKED_INVALID_TARGET)
 
 
 def test_fetch_web_page_blocks_internal_ip_target(app_client):
     from ai_orchestrator.connectors import playwright_connector as pc
+
     _approve_expect_block(app_client, "http://10.0.0.5/", pc.BLOCKED_INVALID_TARGET)
 
 
@@ -587,11 +667,13 @@ def test_fetch_web_page_blocks_file_scheme_target(app_client):
     executor → validate_url 단계까지 도달해 차단되는지 확인.
     """
     from ai_orchestrator.connectors import playwright_connector as pc
+
     _approve_expect_block(app_client, "file:///tmp/data.txt", pc.BLOCKED_INVALID_TARGET)
 
 
 def test_fetch_web_page_blocks_malformed_url_target(app_client):
     from ai_orchestrator.connectors import playwright_connector as pc
+
     _approve_expect_block(app_client, "not-a-url", pc.BLOCKED_INVALID_TARGET)
 
 
@@ -604,12 +686,13 @@ def test_fetch_web_page_night_block_has_priority(app_client):
     token_id = r.json().get("approval_token_id")
     assert token_id
 
-    with patch.object(pc, "fetch_web_page") as spy, \
-         patch.object(el, "_now",
-                      return_value=datetime(2026, 4, 22, 16, 30, tzinfo=timezone.utc)):
-        r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                             params={"token_id": token_id}, json={},
-                             auth=_auth("admin_u"))
+    with (
+        patch.object(pc, "fetch_web_page") as spy,
+        patch.object(el, "_now", return_value=datetime(2026, 4, 22, 16, 30, tzinfo=UTC)),
+    ):
+        r2 = app_client.post(
+            f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+        )
         # 야간 차단 → connector 는 호출되지 않아야 한다
         assert spy.call_count == 0
     body = r2.json()
@@ -622,19 +705,17 @@ def test_fetch_web_page_task_cooldown_has_priority(app_client):
     from ai_orchestrator import execution_limits as el
     from ai_orchestrator.connectors import playwright_connector as pc
 
-    fixed_now = datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc)  # KST 12:30
+    fixed_now = datetime(2026, 4, 22, 3, 30, tzinfo=UTC)  # KST 12:30
     task_id = _uniq("CD")
     with patch.object(el, "_now", return_value=fixed_now):
-        el.record_execution(task_id, "fetch_web_page", "admin_u",
-                            status="OK", risk_level="medium")
-        _, r = _submit_fetch(app_client, ALLOWED_URL,
-                             _auth("admin_u"), task_id=task_id)
+        el.record_execution(task_id, "fetch_web_page", "admin_u", status="OK", risk_level="medium")
+        _, r = _submit_fetch(app_client, ALLOWED_URL, _auth("admin_u"), task_id=task_id)
         token_id = r.json().get("approval_token_id")
         assert token_id, r.json()
         with patch.object(pc, "fetch_web_page") as spy:
-            r2 = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                                 params={"token_id": token_id}, json={},
-                                 auth=_auth("admin_u"))
+            r2 = app_client.post(
+                f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+            )
             assert spy.call_count == 0
     body = r2.json()
     assert body["executed"] is False
@@ -646,24 +727,26 @@ def test_fetch_web_page_user_rate_limit_has_priority(app_client):
     from ai_orchestrator import execution_limits as el
     from ai_orchestrator.connectors import playwright_connector as pc
 
-    fixed_now = datetime(2026, 4, 22, 3, 31, tzinfo=timezone.utc)  # 주간
+    fixed_now = datetime(2026, 4, 22, 3, 31, tzinfo=UTC)  # 주간
     rate_user = "rate_admin_u"
     with patch.object(el, "_now", return_value=fixed_now):
         for i in range(5):
-            el.record_execution(f"FILL-R-{i}", "fetch_web_page", rate_user,
-                                status="OK", risk_level="medium")
+            el.record_execution(f"FILL-R-{i}", "fetch_web_page", rate_user, status="OK", risk_level="medium")
         r = el.check_user_5min_window(rate_user, max_count=5)
         assert r[0] is False and r[1] == el.BLOCK_USER_5MIN
 
-    from ai_orchestrator.models import TaskRequest
     from ai_orchestrator import executor as ex
-    with patch.object(el, "_now", return_value=fixed_now), \
-         patch.object(pc, "fetch_web_page") as spy:
-        req = TaskRequest(task_id=_uniq("UR"), source="manual",
-                          action_type="fetch_web_page",
-                          target=ALLOWED_URL,
-                          description="rate limit test",
-                          requested_by=rate_user)
+    from ai_orchestrator.models import TaskRequest
+
+    with patch.object(el, "_now", return_value=fixed_now), patch.object(pc, "fetch_web_page") as spy:
+        req = TaskRequest(
+            task_id=_uniq("UR"),
+            source="manual",
+            action_type="fetch_web_page",
+            target=ALLOWED_URL,
+            description="rate limit test",
+            requested_by=rate_user,
+        )
         result = ex.execute_task(req, risk_level="medium")
         assert spy.call_count == 0
     assert result.startswith("BLOCKED:"), result

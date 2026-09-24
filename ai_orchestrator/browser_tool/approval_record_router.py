@@ -13,8 +13,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ai_orchestrator import config
-from ai_orchestrator.auth import require_role
 from ai_orchestrator.config import APPROVAL_RECORD_STORE_PATH
+from ai_orchestrator.gates.auth import require_role
 
 from .approval_record_store import (
     append_approval_record,

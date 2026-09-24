@@ -7,7 +7,7 @@ Only public_id or redacted markers are recorded.
 from datetime import UTC, datetime
 from unittest.mock import patch
 
-from ai_orchestrator import approval
+from ai_orchestrator.gates import approval
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
@@ -148,7 +148,7 @@ def test_expired_token_no_secret_exposed():
     # Create token with 0 TTL (expires immediately)
     token = approval.issue_token(req, risk, ttl_minutes=0)
 
-    with patch("ai_orchestrator.approval._now") as mock_now:
+    with patch("ai_orchestrator.gates.approval._now") as mock_now:
         # Simulate time passing
         mock_now.return_value = datetime.now(UTC)
 

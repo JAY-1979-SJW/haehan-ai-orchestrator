@@ -27,7 +27,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from ai_orchestrator.audit_logger import log_event
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
 
 public_media_router = APIRouter(prefix="/public-media", tags=["public-media"])
 

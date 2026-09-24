@@ -1,8 +1,10 @@
-import yaml
 from pathlib import Path
-from .models import TaskRequest, RiskAssessment, ExecutionPlan
 
-DEFAULT_POLICY_PATH = Path(__file__).parent / "policies" / "default_policy.yaml"
+import yaml
+
+from ai_orchestrator.models import ExecutionPlan, RiskAssessment, TaskRequest
+
+DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[1] / "policies" / "default_policy.yaml"
 
 
 def load_policy(path: Path = DEFAULT_POLICY_PATH) -> dict:
@@ -43,7 +45,10 @@ def evaluate_request(req: TaskRequest, risk: RiskAssessment, policy: dict) -> Ex
         # URL 기반 read-only action 은 filesystem allowed_paths 검사에서 제외.
         # 대신 executor 단계의 whitelist + playwright_connector.validate_url 로 차단한다.
         _path_exempt_actions = (
-            "run_shell", "restart_service", "deploy_app", "push_git",
+            "run_shell",
+            "restart_service",
+            "deploy_app",
+            "push_git",
             "fetch_web_page",
         )
         if not in_allowed and req.action_type not in _path_exempt_actions:

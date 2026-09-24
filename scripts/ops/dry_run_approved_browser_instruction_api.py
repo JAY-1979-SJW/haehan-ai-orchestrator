@@ -4,6 +4,7 @@ This script runs the FastAPI router in memory through TestClient. It does not
 start a server, launch a browser, call the network, deploy, build, stage files,
 or print secrets.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -17,7 +18,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -79,7 +79,7 @@ def staged_paths(status_lines: list[str]) -> set[str]:
 
 
 def make_client(user: dict) -> TestClient:
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
 
     app = FastAPI()
@@ -109,8 +109,8 @@ def dry_run() -> DryRunResult:
         add(findings, "PASS", "out_of_scope_staged", "none")
 
     from ai_orchestrator import audit_logger as _al
-    from ai_orchestrator import approval as _ap
     from ai_orchestrator import local_agent_registry as _reg
+    from ai_orchestrator.gates import approval as _ap
 
     DRY_RUN_TMP_ROOT.mkdir(parents=True, exist_ok=True)
     run_id = uuid.uuid4().hex

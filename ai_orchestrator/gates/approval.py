@@ -1,15 +1,15 @@
-import uuid
 import json
 import logging
 import threading
+import uuid
 from collections import defaultdict
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
-from typing import Literal, Optional
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
-from .models import TaskRequest, RiskAssessment
-from .config import APPROVAL_STORE_PATH as _STORE_PATH
-from .audit_logger import log_event
+from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.config import APPROVAL_STORE_PATH as _STORE_PATH
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ _ROLE_ALIASES = {"approver": "admin"}
 
 def _normalize_role(role: str) -> str:
     return _ROLE_ALIASES.get(role, role)
+
 
 # ── Rate limit (인메모리, 재시작 시 초기화) ─────────────────────────
 _rate_store: dict[str, list[float]] = defaultdict(list)
@@ -41,10 +42,10 @@ class ApprovalToken:
     issued_at: str
     expires_at: str
     issued_by: str
-    approved_by: Optional[str]
+    approved_by: str | None
     risk_level: str
     status: Literal["issued", "approved", "expired", "revoked", "rejected"]
-    used_at: Optional[str] = None
+    used_at: str | None = None
     result: str = ""
     # Stage 13H-2E: public_id — UI/audit/result_data 표시용 식별자.
     # token_id 는 승인 검증용 secret-like 값이므로 외부 노출 경로에는
@@ -57,13 +58,21 @@ def _new_public_id() -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # JSONL 이벤트 필드 중 토큰 엔트리로 복원할 키 목록
 _TOKEN_FIELDS = (
-    "token_id", "task_id", "issued_at", "expires_at", "issued_by",
-    "approved_by", "risk_level", "status", "used_at", "result",
+    "token_id",
+    "task_id",
+    "issued_at",
+    "expires_at",
+    "issued_by",
+    "approved_by",
+    "risk_level",
+    "status",
+    "used_at",
+    "result",
     "public_id",
 )
 
@@ -82,7 +91,7 @@ def _load_store() -> None:
     if not _STORE_PATH.exists():
         return
     try:
-        with open(_STORE_PATH, "r", encoding="utf-8") as f:
+        with open(_STORE_PATH, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -205,8 +214,9 @@ def approve_token(
 
     # 2. task_id 일치
     if token_obj.task_id != task_id:
-        logger.warning("승인 시도: task_id 불일치 | token_id=%.8s | expected=%s | got=%s",
-                       token_id, token_obj.task_id, task_id)
+        logger.warning(
+            "승인 시도: task_id 불일치 | token_id=%.8s | expected=%s | got=%s", token_id, token_obj.task_id, task_id
+        )
         return token_obj, "task_mismatch"
 
     # 3. 이미 사용된 토큰
@@ -241,8 +251,7 @@ def approve_token(
 
     # 5. role 권한 검사
     if _normalize_role(role) not in _APPROVER_ROLES:
-        logger.warning("승인 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s",
-                       token_id, approved_by, role)
+        logger.warning("승인 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s", token_id, approved_by, role)
         return token_obj, "forbidden"
 
     # 6. rate limit
@@ -277,8 +286,7 @@ def approve_token(
     token_obj.used_at = now.isoformat()
     token_obj.result = "approved"
 
-    logger.info("승인 완료 | token_id=%.8s | task=%s | actor=%s | role=%s",
-                token_id, task_id, approved_by, role)
+    logger.info("승인 완료 | token_id=%.8s | task=%s | actor=%s | role=%s", token_id, task_id, approved_by, role)
     return token_obj, "approved"
 
 
@@ -335,8 +343,7 @@ def reject_token(
         return token_obj, "expired"
 
     if _normalize_role(role) not in _APPROVER_ROLES:
-        logger.warning("거절 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s",
-                       token_id, rejected_by, role)
+        logger.warning("거절 시도: 권한 부족 | token_id=%.8s | actor=%s | role=%s", token_id, rejected_by, role)
         return token_obj, "forbidden"
 
     allowed, rate_reason = _check_rate_limit(rejected_by)
@@ -369,16 +376,28 @@ def reject_token(
     token_obj.used_at = now.isoformat()
     token_obj.result = entry["result"]
 
-    logger.info("거절 완료 | token_id=%.8s | task=%s | actor=%s | role=%s | reason=%s",
-                token_id, task_id, rejected_by, role, reason or "-")
+    logger.info(
+        "거절 완료 | token_id=%.8s | task=%s | actor=%s | role=%s | reason=%s",
+        token_id,
+        task_id,
+        rejected_by,
+        role,
+        reason or "-",
+    )
     return token_obj, "rejected"
 
 
 def _stub_token(token_id: str, task_id: str, approved_by: str) -> ApprovalToken:
     return ApprovalToken(
-        token_id=token_id, task_id=task_id, issued_at="", expires_at="",
-        issued_by="", approved_by=approved_by, risk_level="",
-        status="revoked", result="not_found",
+        token_id=token_id,
+        task_id=task_id,
+        issued_at="",
+        expires_at="",
+        issued_by="",
+        approved_by=approved_by,
+        risk_level="",
+        status="revoked",
+        result="not_found",
     )
 
 
@@ -408,7 +427,7 @@ def revoke_token(token_id: str) -> None:
         _append_event("token_revoked", entry)
 
 
-def get_token(token_id: str) -> Optional[ApprovalToken]:
+def get_token(token_id: str) -> ApprovalToken | None:
     _load_store()
     entry = _store.get(token_id)
     return ApprovalToken(**entry) if entry else None

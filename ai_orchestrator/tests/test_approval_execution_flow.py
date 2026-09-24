@@ -8,6 +8,7 @@
 - 야간 시간대 강제 시 승인 후 실행이 BLOCKED:night_blocked
 - /api/v1/telegram/webhook alias 가 /webhooks/telegram 과 동일 동작
 """
+
 from __future__ import annotations
 
 import importlib
@@ -15,7 +16,7 @@ import json
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -27,42 +28,78 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def app_client(tmp_path_factory):
     users_path = tmp_path_factory.mktemp("policies") / "http_users.json"
     users_path.write_text(
-        json.dumps([
-            {"username": "owner_u",    "password_hash": "pw-owner",    "role": "owner",    "enabled": True},
-            {"username": "admin_u",    "password_hash": "pw-admin",    "role": "admin",    "enabled": True},
-            {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
-            {"username": "viewer_u",   "password_hash": "pw-viewer",   "role": "viewer",   "enabled": True},
-        ], ensure_ascii=False), encoding="utf-8")
+        json.dumps(
+            [
+                {"username": "owner_u", "password_hash": "pw-owner", "role": "owner", "enabled": True},
+                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+                {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
+                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
 
     logdir = tmp_path_factory.mktemp("storage")
     os.environ["AUTH_ENABLED"] = "true"
     os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(logdir)
 
-    from ai_orchestrator import config as _config; importlib.reload(_config)
-    from ai_orchestrator import auth as _auth; importlib.reload(_auth)
-    from ai_orchestrator import execution_limits as _el; importlib.reload(_el)
-    from ai_orchestrator import executor as _ex; importlib.reload(_ex)
-    from ai_orchestrator import approval as _ap; importlib.reload(_ap); _ap.clear_rate_store()
-    from ai_orchestrator import task_state as _ts; importlib.reload(_ts); _ts.clear()
-    from ai_orchestrator.sites import router as _sr; importlib.reload(_sr)
-    from ai_orchestrator import router as _rt; importlib.reload(_rt)
-    from ai_orchestrator import server as _srv; importlib.reload(_srv)
+    from ai_orchestrator import config as _config
+
+    importlib.reload(_config)
+    from ai_orchestrator.gates import auth as _auth
+
+    importlib.reload(_auth)
+    from ai_orchestrator import execution_limits as _el
+
+    importlib.reload(_el)
+    from ai_orchestrator import executor as _ex
+
+    importlib.reload(_ex)
+    from ai_orchestrator.gates import approval as _ap
+
+    importlib.reload(_ap)
+    _ap.clear_rate_store()
+    from ai_orchestrator import task_state as _ts
+
+    importlib.reload(_ts)
+    _ts.clear()
+    from ai_orchestrator.sites import router as _sr
+
+    importlib.reload(_sr)
+    from ai_orchestrator import router as _rt
+
+    importlib.reload(_rt)
+    from ai_orchestrator import server as _srv
+
+    importlib.reload(_srv)
 
     from fastapi.testclient import TestClient
+
     yield TestClient(_srv.app, raise_server_exceptions=True)
 
     os.environ["AUTH_ENABLED"] = "false"
     os.environ.pop("HTTP_USERS_PATH", None)
     os.environ.pop("LOG_DIR", None)
     _ap.clear_rate_store()
-    importlib.reload(_config); importlib.reload(_auth)
-    importlib.reload(_el); importlib.reload(_ex); importlib.reload(_ap); importlib.reload(_ts)
-    importlib.reload(_sr); importlib.reload(_rt); importlib.reload(_srv)
+    importlib.reload(_config)
+    importlib.reload(_auth)
+    importlib.reload(_el)
+    importlib.reload(_ex)
+    importlib.reload(_ap)
+    importlib.reload(_ts)
+    importlib.reload(_sr)
+    importlib.reload(_rt)
+    importlib.reload(_srv)
 
 
-def _auth(u): return (u, f"pw-{u.split('_')[0]}")
-def _uniq(p): return f"{p}-{uuid.uuid4().hex[:8]}"
+def _auth(u):
+    return (u, f"pw-{u.split('_')[0]}")
+
+
+def _uniq(p):
+    return f"{p}-{uuid.uuid4().hex[:8]}"
 
 
 @pytest.fixture(autouse=True)
@@ -72,18 +109,24 @@ def _force_daytime(app_client, monkeypatch):
     야간 차단 자체를 검증하는 테스트는 자체 patch 를 적용해 덮어쓴다.
     """
     from ai_orchestrator import execution_limits as _el
+
     monkeypatch.setattr(
-        _el, "_now",
-        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc),
+        _el,
+        "_now",
+        lambda: datetime(2026, 4, 22, 3, 30, tzinfo=UTC),
     )
     yield
 
 
 def _submit_medium(client, auth):
     task_id = _uniq("M")
-    body = {"task_id": task_id, "source": "manual",
-            "action_type": "edit_config", "target": "/var/www/haehan/cfg.yaml",
-            "description": "medium approval flow test"}
+    body = {
+        "task_id": task_id,
+        "source": "manual",
+        "action_type": "edit_config",
+        "target": "/var/www/haehan/cfg.yaml",
+        "description": "medium approval flow test",
+    }
     r = client.post("/api/v1/tasks", json=body, auth=auth)
     assert r.status_code == 200, r.text
     return task_id, r.json().get("approval_token_id"), r.json()
@@ -98,35 +141,39 @@ def test_medium_submit_stays_pending_without_approval(app_client):
     assert data["requires_approval"] is True
 
     from ai_orchestrator import task_state as ts
+
     assert ts.get_state(task_id) == "pending"
 
 
 def test_viewer_approve_forbidden(app_client):
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
-    r = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                        params={"token_id": token_id}, json={},
-                        auth=_auth("viewer_u"))
+    if not token_id:
+        pytest.skip()
+    r = app_client.post(
+        f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("viewer_u")
+    )
     assert r.status_code == 403
 
 
 def test_operator_approve_forbidden(app_client):
     """기존 RBAC: approve 는 admin/owner 만."""
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
-    r = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                        params={"token_id": token_id}, json={},
-                        auth=_auth("operator_u"))
+    if not token_id:
+        pytest.skip()
+    r = app_client.post(
+        f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("operator_u")
+    )
     assert r.status_code == 403
 
 
 def test_admin_approve_triggers_execution(app_client):
     """admin 승인 토큰은 approved 로 전이되나, edit_config 는 whitelist 밖이라 실행은 BLOCKED."""
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
-    r = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                        params={"token_id": token_id}, json={},
-                        auth=_auth("admin_u"))
+    if not token_id:
+        pytest.skip()
+    r = app_client.post(
+        f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+    )
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["status"] == "approved"
@@ -137,15 +184,17 @@ def test_admin_approve_triggers_execution(app_client):
     assert body["task_state"] == "approved"
 
     from ai_orchestrator import task_state as ts
+
     assert ts.get_state(task_id) == "approved"
 
 
 def test_reject_moves_to_rejected(app_client):
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
-    r = app_client.post(f"/api/v1/tasks/{task_id}/reject",
-                        params={"token_id": token_id}, json={"reason": "no"},
-                        auth=_auth("admin_u"))
+    if not token_id:
+        pytest.skip()
+    r = app_client.post(
+        f"/api/v1/tasks/{task_id}/reject", params={"token_id": token_id}, json={"reason": "no"}, auth=_auth("admin_u")
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "rejected"
@@ -155,15 +204,16 @@ def test_reject_moves_to_rejected(app_client):
 def test_night_block_prevents_execution(app_client):
     """야간 정책 강제 → 승인은 되지만 execute_task 단계에서 BLOCKED:night_blocked."""
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
+    if not token_id:
+        pytest.skip()
 
     from ai_orchestrator import execution_limits as el
-    with patch.object(el, "_now",
-                      return_value=datetime(2026, 4, 22, 16, 30, tzinfo=timezone.utc)):
+
+    with patch.object(el, "_now", return_value=datetime(2026, 4, 22, 16, 30, tzinfo=UTC)):
         # UTC 16:30 = KST 01:30 (야간)
-        r = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                            params={"token_id": token_id}, json={},
-                            auth=_auth("admin_u"))
+        r = app_client.post(
+            f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+        )
     assert r.status_code == 200
     body = r.json()
     # 승인은 되었고 task_state 는 approved (executed 까지는 못 감)
@@ -172,6 +222,7 @@ def test_night_block_prevents_execution(app_client):
     assert "night_blocked" in body["execution"]
     # state 는 approved 로 남아야 함
     from ai_orchestrator import task_state as ts
+
     assert ts.get_state(task_id) == "approved"
 
 
@@ -187,18 +238,18 @@ def test_telegram_webhook_alias_endpoint(app_client):
 def test_user_rate_limit_5min(app_client):
     """동일 사용자 승인 실행이 5회 넘어가면 6번째는 BLOCKED:rate_limited_user_5min."""
     from ai_orchestrator import execution_limits as el
+
     # 과거 5회 실행 기록을 직접 채움 (user 5min 카운트 트리거)
     for i in range(5):
-        el.record_execution(f"FILL-{i}", "edit_config", "admin_u",
-                            status="OK", risk_level="medium")
+        el.record_execution(f"FILL-{i}", "edit_config", "admin_u", status="OK", risk_level="medium")
     task_id, token_id, _ = _submit_medium(app_client, _auth("admin_u"))
-    if not token_id: pytest.skip()
+    if not token_id:
+        pytest.skip()
     # 주간 시간대 강제
-    with patch.object(el, "_now",
-                      return_value=datetime(2026, 4, 22, 3, 30, tzinfo=timezone.utc)):
-        r = app_client.post(f"/api/v1/tasks/{task_id}/approve",
-                            params={"token_id": token_id}, json={},
-                            auth=_auth("admin_u"))
+    with patch.object(el, "_now", return_value=datetime(2026, 4, 22, 3, 30, tzinfo=UTC)):
+        r = app_client.post(
+            f"/api/v1/tasks/{task_id}/approve", params={"token_id": token_id}, json={}, auth=_auth("admin_u")
+        )
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "approved"

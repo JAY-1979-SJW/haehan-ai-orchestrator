@@ -1,8 +1,13 @@
 """CDP 팝업 관리 엔드포인트."""
+
 from __future__ import annotations
+
 import sys
+
 from fastapi import APIRouter, Depends
-from ...auth import require_role
+
+from ai_orchestrator.gates.auth import require_role
+
 from ...audit_logger import log_event
 from ._helpers import ROOT
 
@@ -22,8 +27,10 @@ def _active_page(ctx):
 @router.post("/popup/unblock")
 def api_popup_unblock(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
     from playwright.sync_api import sync_playwright
+
+    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
     try:
         with sync_playwright() as pw:
             ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
@@ -38,31 +45,34 @@ def api_popup_unblock(user: dict = Depends(require_role("admin", "owner"))) -> d
 def api_popup_status(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.navigation.cdp_popup_manager import get_manager
+
     return {"ok": True, **get_manager().status()}
 
 
 @router.post("/popup/scan")
 def api_popup_scan(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
     from playwright.sync_api import sync_playwright
+
+    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
     try:
         with sync_playwright() as pw:
-            ctx  = pw.chromium.connect_over_cdp(_CDP).contexts[0]
+            ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
             page = _active_page(ctx)
-            mgr     = CdpPopupManager()
-            modals  = mgr.scan_page(page)
+            mgr = CdpPopupManager()
+            modals = mgr.scan_page(page)
             banners = mgr.scan_banners(page)
     except Exception as e:
         return {"ok": False, "error": str(e)}
-    return {"ok": True, "url": page.url, **modals,
-            "banners_found": banners["found"], "banners": banners["banners"]}
+    return {"ok": True, "url": page.url, **modals, "banners_found": banners["found"], "banners": banners["banners"]}
 
 
 @router.get("/popup/poller")
 def api_popup_poller_status(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.navigation.cdp_popup_manager import poller_status
+
     return {"ok": True, **poller_status()}
 
 
@@ -70,6 +80,7 @@ def api_popup_poller_status(user: dict = Depends(require_role("admin", "owner"))
 def api_popup_poller_start(interval: int = 5, user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.navigation.cdp_popup_manager import start_poller
+
     p = start_poller(interval=interval)
     return {"ok": True, "running": p.running, "interval": interval}
 
@@ -78,6 +89,7 @@ def api_popup_poller_start(interval: int = 5, user: dict = Depends(require_role(
 def api_popup_poller_stop(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
     from scripts.naver.smartstore.navigation.cdp_popup_manager import stop_poller
+
     stop_poller()
     return {"ok": True, "running": False}
 
@@ -85,17 +97,25 @@ def api_popup_poller_stop(user: dict = Depends(require_role("admin", "owner"))) 
 @router.post("/popup/handle")
 def api_popup_handle(user: dict = Depends(require_role("admin", "owner"))) -> dict:
     sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
     from playwright.sync_api import sync_playwright
+
+    from scripts.naver.smartstore.navigation.cdp_popup_manager import CdpPopupManager
+
     try:
         with sync_playwright() as pw:
-            ctx  = pw.chromium.connect_over_cdp(_CDP).contexts[0]
+            ctx = pw.chromium.connect_over_cdp(_CDP).contexts[0]
             page = _active_page(ctx)
-            mgr  = CdpPopupManager()
+            mgr = CdpPopupManager()
             mgr.unblock(ctx, origin=_SS_ORIGIN)
             result = mgr.handle_page(page, auto_confirm=True)
     except Exception as e:
         return {"ok": False, "error": str(e)}
-    log_event("SMARTSTORE_POPUP_HANDLE", task_id="-", actor=user["actor"], role=user["role"],
-              decision="ok", note=f"closed={result.get('closed')} clean={result.get('page_clean')}")
+    log_event(
+        "SMARTSTORE_POPUP_HANDLE",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok",
+        note=f"closed={result.get('closed')} clean={result.get('page_clean')}",
+    )
     return {"ok": True, "url": page.url, **result}

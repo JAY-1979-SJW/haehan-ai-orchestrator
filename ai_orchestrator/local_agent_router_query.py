@@ -3,13 +3,14 @@
 local_agent_router.py(컴포지션 루트)가 include_router 로 관리한다.
 sibling leaf 를 직접 import 하지 않는다. [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from .auth import require_role
-from . import local_agent_registry as _reg
 from . import local_agent_diagnostics
+from . import local_agent_registry as _reg
+from .gates.auth import require_role
 
 query_router = APIRouter()
 

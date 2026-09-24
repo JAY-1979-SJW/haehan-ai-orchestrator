@@ -14,6 +14,7 @@
  11. 승인 전 WebSocket queued 에 포함되지 않음
  12. (기존 82개 별도 suite 에서 회귀 확인)
 """
+
 from __future__ import annotations
 
 import os
@@ -27,11 +28,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
-    import ai_orchestrator.auth as _auth; importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
+
+    import ai_orchestrator.gates.auth as _auth
+
+    importlib.reload(_auth)
+    import ai_orchestrator.local_agent_router as _lar
+
+    importlib.reload(_lar)
 
     import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.approval as _ap
+    import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -61,8 +67,9 @@ def viewer_user():
 def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
-    from ai_orchestrator.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -71,23 +78,35 @@ def _make_test_client(user_override: dict):
 
 
 def _register(client) -> tuple[str, str]:
-    reg = client.post("/api/v1/local-agents/register", json={
-        "host": "req-api-test", "os_name": "Windows 11", "version": "0.1.0",
-    }).json()
+    reg = client.post(
+        "/api/v1/local-agents/register",
+        json={
+            "host": "req-api-test",
+            "os_name": "Windows 11",
+            "version": "0.1.0",
+        },
+    ).json()
     return reg["agent_id"], reg["device_token"]
 
 
 def _audit_events():
     import ai_orchestrator.audit_logger as _al
+
     return [e["event_type"] for e in _al.read_recent_logs(limit=200)]
 
 
 _RESPONSE_FIELDS = {
-    "task_id", "agent_id", "action", "status", "dry_run", "approval_required",
+    "task_id",
+    "agent_id",
+    "action",
+    "status",
+    "dry_run",
+    "approval_required",
 }
 
 
 # ── 1/2/3/4. 기본 dry_run=true 처리 ────────────────────────────────────
+
 
 def test_default_request_with_explicit_body_uses_dry_run_true(admin_user):
     client = _make_test_client(admin_user)
@@ -138,6 +157,7 @@ def test_request_reason_only_uses_dry_run_true(admin_user):
 
 # ── 5. dry_run=false 명시 ──────────────────────────────────────────────
 
+
 def test_explicit_dry_run_false_stored_in_task_params(admin_user):
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -151,9 +171,7 @@ def test_explicit_dry_run_false_stored_in_task_params(admin_user):
     assert data["status"] == "waiting_approval"
 
     # task.params.options.dry_run == False 로 저장됐는지 GET 으로 재확인
-    fetched = client.get(
-        f"/api/v1/local-agents/{agent_id}/tasks/{data['task_id']}"
-    ).json()
+    fetched = client.get(f"/api/v1/local-agents/{agent_id}/tasks/{data['task_id']}").json()
     assert fetched["params"]["options"]["dry_run"] is False
 
 
@@ -165,17 +183,23 @@ def test_dry_run_true_stored_in_task_params(admin_user):
         json={"dry_run": True},
     )
     data = r.json()
-    fetched = client.get(
-        f"/api/v1/local-agents/{agent_id}/tasks/{data['task_id']}"
-    ).json()
+    fetched = client.get(f"/api/v1/local-agents/{agent_id}/tasks/{data['task_id']}").json()
     assert fetched["params"]["options"]["dry_run"] is True
 
 
 # ── 6. 모든 요청이 waiting_approval 로 시작 ────────────────────────────
 
-@pytest.mark.parametrize("body", [
-    None, {}, {"reason": "x"}, {"dry_run": True}, {"dry_run": False},
-])
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        None,
+        {},
+        {"reason": "x"},
+        {"dry_run": True},
+        {"dry_run": False},
+    ],
+)
 def test_all_requests_start_in_waiting_approval(admin_user, body):
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -189,6 +213,7 @@ def test_all_requests_start_in_waiting_approval(admin_user, body):
 
 
 # ── 7/8. 응답 안전성: 민감값 / 파일명 / 경로 미노출 ─────────────────────
+
 
 def test_response_shape_is_minimal(admin_user):
     client = _make_test_client(admin_user)
@@ -213,9 +238,17 @@ def test_response_has_no_approval_token_or_secrets(admin_user):
     data = r.json()
     # 금지 필드가 응답에 없다
     for forbidden_key in (
-        "token_id", "device_token", "token_hash", "approval_token",
-        "screenshot_file", "screenshot_path", "path", "dir",
-        "password", "secret", "cookie",
+        "token_id",
+        "device_token",
+        "token_hash",
+        "approval_token",
+        "screenshot_file",
+        "screenshot_path",
+        "path",
+        "dir",
+        "password",
+        "secret",
+        "cookie",
     ):
         assert forbidden_key not in data, f"{forbidden_key} must not appear"
         # 값 자체가 문자열로도 노출되면 안 됨 — raw 본문에서 필드명 자체 금지
@@ -240,6 +273,7 @@ def test_response_has_no_full_path_or_image_filename(admin_user):
 
 
 # ── 9/10. 감사 로그 이벤트 ─────────────────────────────────────────────
+
 
 def test_audit_emits_request_created_event(admin_user):
     client = _make_test_client(admin_user)
@@ -267,6 +301,7 @@ def test_audit_still_emits_approval_requested(admin_user):
 
 def test_audit_log_does_not_leak_path_or_filename(admin_user):
     import ai_orchestrator.audit_logger as _al
+
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
     client.post(
@@ -283,8 +318,10 @@ def test_audit_log_does_not_leak_path_or_filename(admin_user):
 
 # ── 11. 승인 전 WebSocket queued 미포함 ────────────────────────────────
 
+
 def test_unapproved_request_not_in_ws_pending_list(admin_user):
     import ai_orchestrator.local_agent_registry as _reg
+
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
     r = client.post(
@@ -299,14 +336,14 @@ def test_unapproved_request_not_in_ws_pending_list(admin_user):
 
     # WS 로 접속해도 push 되지 않는다 (heartbeat_ack 만 수신)
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         ws.send_json({"type": "heartbeat"})
         assert ws.receive_json()["type"] == "heartbeat_ack"
 
 
 # ── 권한 검사 ──────────────────────────────────────────────────────────
+
 
 def test_viewer_cannot_create_request(admin_user, viewer_user):
     # 먼저 admin 으로 agent 등록
@@ -333,6 +370,7 @@ def test_unknown_agent_returns_404(admin_user):
 
 # ── dry_run=false + 승인까지 연결되는 end-to-end 회귀 ──────────────────
 
+
 def test_explicit_real_request_then_approve_then_dispatch(admin_user):
     """dry_run=false 로 생성 → 기존 승인/WS push 흐름 유지 확인."""
     client = _make_test_client(admin_user)
@@ -344,9 +382,7 @@ def test_explicit_real_request_then_approve_then_dispatch(admin_user):
     task_id = create["task_id"]
 
     # token_id 는 응답에 없으니 GET 으로 조회해 승인 수행
-    fetched = client.get(
-        f"/api/v1/local-agents/{agent_id}/tasks/{task_id}"
-    ).json()
+    fetched = client.get(f"/api/v1/local-agents/{agent_id}/tasks/{task_id}").json()
     token_id = fetched["token_id"]
     assert token_id
 
@@ -358,8 +394,7 @@ def test_explicit_real_request_then_approve_then_dispatch(admin_user):
     assert r.json()["status"] == "queued"
 
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         msg = ws.receive_json()
         assert msg["type"] == "task"

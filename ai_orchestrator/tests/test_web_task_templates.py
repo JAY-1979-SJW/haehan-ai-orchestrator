@@ -31,16 +31,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
 
-    import ai_orchestrator.auth as _auth
+    import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
     import ai_orchestrator.routers.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
-    import ai_orchestrator.approval as _ap
     import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.approval as _ap
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_dra, "_STORE_PATH", tmp_path / "dev_reg_approvals.jsonl")
@@ -76,7 +76,7 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.routers.web_task_router import web_task_router
 
     test_app = FastAPI()
@@ -155,7 +155,7 @@ def test_run_from_template_dry_run_success(admin_user):
 
 
 def test_run_from_template_dry_run_no_approval_created(admin_user):
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     client = _make_test_client(admin_user)
     resp = client.post(
@@ -254,7 +254,7 @@ def test_unknown_template_id_audit_logged(admin_user):
 
 
 def test_run_from_template_real_run_creates_pending_approval(admin_user):
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)

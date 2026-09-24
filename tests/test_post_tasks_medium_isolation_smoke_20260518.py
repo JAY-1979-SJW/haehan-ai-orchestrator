@@ -72,7 +72,7 @@ def executor_content():
 
 @pytest.fixture(scope="module")
 def approval_content():
-    return (REPO_ROOT / "ai_orchestrator/approval.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "ai_orchestrator/gates/approval.py").read_text(encoding="utf-8", errors="ignore")
 
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
@@ -204,9 +204,9 @@ def router_mod():
     mock_names = [
         "ai_orchestrator.planner",
         "ai_orchestrator.executor",
-        "ai_orchestrator.approval",
+        "ai_orchestrator.gates.approval",
         "ai_orchestrator.audit_logger",
-        "ai_orchestrator.auth",
+        "ai_orchestrator.gates.auth",
         "ai_orchestrator.telegram_webhook",
         "ai_orchestrator.inbox",
         "ai_orchestrator.sites.gmail_reader",
@@ -226,9 +226,9 @@ def router_mod():
     mocks = {
         "ai_orchestrator.planner": MagicMock(),
         "ai_orchestrator.executor": MagicMock(),
-        "ai_orchestrator.approval": MagicMock(),
+        "ai_orchestrator.gates.approval": MagicMock(),
         "ai_orchestrator.audit_logger": MagicMock(),
-        "ai_orchestrator.auth": MagicMock(),
+        "ai_orchestrator.gates.auth": MagicMock(),
         "ai_orchestrator.telegram_webhook": MagicMock(),
         "ai_orchestrator.inbox": MagicMock(),
         "ai_orchestrator.sites.gmail_reader": MagicMock(),

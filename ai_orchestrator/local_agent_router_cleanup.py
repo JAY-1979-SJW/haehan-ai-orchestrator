@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from . import local_agent_registry as _reg
 from .audit_logger import log_event
-from .auth import require_role
+from .gates.auth import require_role
 
 cleanup_router = APIRouter()
 

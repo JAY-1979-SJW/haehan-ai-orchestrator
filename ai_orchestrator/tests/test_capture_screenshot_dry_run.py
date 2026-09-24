@@ -13,6 +13,7 @@
 
 모든 테스트는 실제 브라우저/외부 앱/네트워크 호출 없이 실행된다.
 """
+
 from __future__ import annotations
 
 import os
@@ -27,11 +28,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
-    import ai_orchestrator.auth as _auth; importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
+
+    import ai_orchestrator.gates.auth as _auth
+
+    importlib.reload(_auth)
+    import ai_orchestrator.local_agent_router as _lar
+
+    importlib.reload(_lar)
 
     import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.approval as _ap
+    import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -56,8 +62,9 @@ def admin_user():
 def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
-    from ai_orchestrator.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -66,29 +73,39 @@ def _make_test_client(user_override: dict):
 
 
 def _register(client) -> tuple[str, str]:
-    reg = client.post("/api/v1/local-agents/register", json={
-        "host": "dry-run-test", "os_name": "Windows 11", "version": "0.1.0",
-    }).json()
+    reg = client.post(
+        "/api/v1/local-agents/register",
+        json={
+            "host": "dry-run-test",
+            "os_name": "Windows 11",
+            "version": "0.1.0",
+        },
+    ).json()
     return reg["agent_id"], reg["device_token"]
 
 
 # ── 1/2/3. dry-run 단위 동작 검증 (action 레벨) ────────────────────────
+
 
 def test_dry_run_does_not_create_any_png_file(tmp_path, monkeypatch):
     import local_agent.actions as _actions
     import local_agent.config as _cfg
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
+
     # 실제 grab 이 호출되면 명시적 FAIL
     def _must_not_grab():
         raise AssertionError("dry-run 모드에서 _grab_screen 호출 금지")
+
     monkeypatch.setattr(_actions, "_grab_screen", _must_not_grab)
 
-    result = _actions.action_capture_screenshot({
-        "_task_id": "lat-dry1",
-        "_approved": True,
-        "options": {"dry_run": True},
-    })
+    result = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-dry1",
+            "_approved": True,
+            "options": {"dry_run": True},
+        }
+    )
     assert result.success
     # 디렉터리는 존재해도 되지만 png 파일은 생성되지 않아야 한다
     pngs = list(tmp_path.rglob("*.png"))
@@ -100,14 +117,15 @@ def test_dry_run_summary_has_no_full_path_or_basename(tmp_path, monkeypatch):
     import local_agent.config as _cfg
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
-    monkeypatch.setattr(_actions, "_grab_screen",
-                        lambda: (_ for _ in ()).throw(AssertionError("no-grab")))
+    monkeypatch.setattr(_actions, "_grab_screen", lambda: (_ for _ in ()).throw(AssertionError("no-grab")))
 
-    result = _actions.action_capture_screenshot({
-        "_task_id": "lat-dry2",
-        "_approved": True,
-        "options": {"dry_run": True},
-    })
+    result = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-dry2",
+            "_approved": True,
+            "options": {"dry_run": True},
+        }
+    )
     assert result.success
     # 전체 경로 금지
     assert str(tmp_path) not in result.summary
@@ -124,11 +142,13 @@ def test_dry_run_summary_contains_upload_false(tmp_path, monkeypatch):
     import local_agent.config as _cfg
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
-    result = _actions.action_capture_screenshot({
-        "_task_id": "lat-dry3",
-        "_approved": True,
-        "options": {"dry_run": True},
-    })
+    result = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-dry3",
+            "_approved": True,
+            "options": {"dry_run": True},
+        }
+    )
     assert result.success
     assert "dry_run:true" in result.summary
     assert "upload:false" in result.summary
@@ -140,6 +160,7 @@ def test_dry_run_summary_contains_upload_false(tmp_path, monkeypatch):
 
 # ── 4. backend none 상태에서도 dry-run 성공 ────────────────────────────
 
+
 def test_dry_run_reports_backend_none_gracefully(tmp_path, monkeypatch):
     import local_agent.actions as _actions
     import local_agent.config as _cfg
@@ -147,11 +168,13 @@ def test_dry_run_reports_backend_none_gracefully(tmp_path, monkeypatch):
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     monkeypatch.setattr(_actions, "_detect_backend", lambda: "none")
 
-    result = _actions.action_capture_screenshot({
-        "_task_id": "lat-dry4",
-        "_approved": True,
-        "options": {"dry_run": True},
-    })
+    result = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-dry4",
+            "_approved": True,
+            "options": {"dry_run": True},
+        }
+    )
     assert result.success
     assert "backend_available:none" in result.summary
     assert result.data["backend_available"] == "none"
@@ -160,15 +183,16 @@ def test_dry_run_reports_backend_none_gracefully(tmp_path, monkeypatch):
 
 # ── 5. approved 없음 → 실제 capture 거절 ───────────────────────────────
 
+
 def test_real_capture_without_approved_flag_is_rejected(tmp_path, monkeypatch):
     import local_agent.actions as _actions
     import local_agent.config as _cfg
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     # _grab_screen 은 호출되지 말아야 한다
-    monkeypatch.setattr(_actions, "_grab_screen",
-                        lambda: (_ for _ in ()).throw(
-                            AssertionError("approved 없이 grab 호출 금지")))
+    monkeypatch.setattr(
+        _actions, "_grab_screen", lambda: (_ for _ in ()).throw(AssertionError("approved 없이 grab 호출 금지"))
+    )
 
     # dry_run 없음 + _approved 없음 → 즉시 거절
     r = _actions.action_capture_screenshot({"_task_id": "lat-no-approve"})
@@ -177,23 +201,27 @@ def test_real_capture_without_approved_flag_is_rejected(tmp_path, monkeypatch):
     assert list(tmp_path.rglob("*.png")) == []
 
     # False 로 명시해도 동일
-    r2 = _actions.action_capture_screenshot({
-        "_task_id": "lat-no-approve", "_approved": False,
-    })
+    r2 = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-no-approve",
+            "_approved": False,
+        }
+    )
     assert not r2.success
     assert r2.error_code == "SCREENSHOT_NOT_APPROVED"
 
 
 # ── 6. _task_id 없음 → 실제 capture 거절 ───────────────────────────────
 
+
 def test_real_capture_without_task_id_is_rejected(tmp_path, monkeypatch):
     import local_agent.actions as _actions
     import local_agent.config as _cfg
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
-    monkeypatch.setattr(_actions, "_grab_screen",
-                        lambda: (_ for _ in ()).throw(
-                            AssertionError("task_id 없이 grab 호출 금지")))
+    monkeypatch.setattr(
+        _actions, "_grab_screen", lambda: (_ for _ in ()).throw(AssertionError("task_id 없이 grab 호출 금지"))
+    )
 
     r = _actions.action_capture_screenshot({"_approved": True})
     assert not r.success
@@ -210,6 +238,7 @@ def test_real_capture_without_task_id_is_rejected(tmp_path, monkeypatch):
 
 # ── 7. 실제 실행 결과는 basename 만 (회귀 확인) ────────────────────────
 
+
 def test_real_capture_result_basename_only(tmp_path, monkeypatch):
     import local_agent.actions as _actions
     import local_agent.config as _cfg
@@ -222,13 +251,14 @@ def test_real_capture_result_basename_only(tmp_path, monkeypatch):
         def save(self, path, format="PNG"):
             Path(path).write_bytes(b"\x89PNG\r\n\x1a\n\x00fake")
 
-    monkeypatch.setattr(_actions, "_grab_screen",
-                        lambda: (_FakeImg(), 1280, 720))
+    monkeypatch.setattr(_actions, "_grab_screen", lambda: (_FakeImg(), 1280, 720))
 
-    result = _actions.action_capture_screenshot({
-        "_task_id": "lat-real",
-        "_approved": True,
-    })
+    result = _actions.action_capture_screenshot(
+        {
+            "_task_id": "lat-real",
+            "_approved": True,
+        }
+    )
     assert result.success
     assert "basename=" in result.summary
     assert str(tmp_path) not in result.summary
@@ -240,6 +270,7 @@ def test_real_capture_result_basename_only(tmp_path, monkeypatch):
 
 # ── 8. 감사 로그 이벤트 ────────────────────────────────────────────────
 
+
 def _enqueue_capture(client, agent_id: str, dry_run: bool = False) -> dict:
     params = {"options": {"dry_run": True}} if dry_run else {}
     return client.post(
@@ -250,6 +281,7 @@ def _enqueue_capture(client, agent_id: str, dry_run: bool = False) -> dict:
 
 def _audit_events():
     import ai_orchestrator.audit_logger as _al
+
     return [e["event_type"] for e in _al.read_recent_logs(limit=200)]
 
 
@@ -304,17 +336,19 @@ def test_audit_emits_dry_run_completed_event(admin_user):
         json={"token_id": token_id},
     )
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         msg = ws.receive_json()
         assert msg["type"] == "task"
         # 에이전트가 dry-run summary 로 완료 보고
-        ws.send_json({
-            "type": "result", "task_id": task_id, "success": True,
-            "summary": ("dry_run:true screenshot_dir_ready:true "
-                        "backend_available:none upload:false"),
-        })
+        ws.send_json(
+            {
+                "type": "result",
+                "task_id": task_id,
+                "success": True,
+                "summary": ("dry_run:true screenshot_dir_ready:true backend_available:none upload:false"),
+            }
+        )
         assert ws.receive_json()["type"] == "result_ack"
 
     events = _audit_events()
@@ -334,15 +368,17 @@ def test_audit_emits_completed_event_for_real_capture(admin_user):
         json={"token_id": token_id},
     )
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
-        ws.send_json({
-            "type": "result", "task_id": task_id, "success": True,
-            "summary": ("screenshot_saved basename=screenshot_x_y.png "
-                        "size=10x10"),
-        })
+        ws.send_json(
+            {
+                "type": "result",
+                "task_id": task_id,
+                "success": True,
+                "summary": ("screenshot_saved basename=screenshot_x_y.png size=10x10"),
+            }
+        )
         assert ws.receive_json()["type"] == "result_ack"
 
     events = _audit_events()
@@ -361,16 +397,19 @@ def test_audit_emits_failed_event(admin_user):
         json={"token_id": token_id},
     )
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": token})
         assert ws.receive_json()["type"] == "auth_ok"
         assert ws.receive_json()["type"] == "task"
-        ws.send_json({
-            "type": "result", "task_id": task_id, "success": False,
-            "error_code": "SCREENSHOT_CAPTURE_FAILED",
-            "error": "environment has no display",
-            "summary": "capture_screenshot 실패",
-        })
+        ws.send_json(
+            {
+                "type": "result",
+                "task_id": task_id,
+                "success": False,
+                "error_code": "SCREENSHOT_CAPTURE_FAILED",
+                "error": "environment has no display",
+                "summary": "capture_screenshot 실패",
+            }
+        )
         assert ws.receive_json()["type"] == "result_ack"
 
     events = _audit_events()

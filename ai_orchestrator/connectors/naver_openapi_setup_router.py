@@ -20,8 +20,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from ai_orchestrator.gates.auth import require_role
+
 from ..audit_logger import log_event
-from ..auth import require_role
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:

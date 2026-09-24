@@ -28,8 +28,8 @@ from unittest.mock import patch
 import pytest
 
 # ── import 대상 모듈 ────────────────────────────────────────────────────────
-import ai_orchestrator.approval as _appr
-import ai_orchestrator.policy as _policy
+import ai_orchestrator.gates.approval as _appr
+import ai_orchestrator.gates.policy as _policy
 import ai_orchestrator.task_state as _ts
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────

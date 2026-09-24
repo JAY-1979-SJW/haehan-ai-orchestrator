@@ -19,7 +19,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
 from scripts.realtime_audit import emit_event
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])

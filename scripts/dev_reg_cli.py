@@ -29,8 +29,8 @@ _REPO_ROOT = _THIS_DIR.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_orchestrator import dev_reg_approval  # noqa: E402 — sys.path 설정 뒤 import
-from ai_orchestrator.approval import revoke_token  # noqa: E402 — sys.path 설정 뒤 import
+from ai_orchestrator.gates import dev_reg_approval  # noqa: E402 — sys.path 설정 뒤 import
+from ai_orchestrator.gates.approval import revoke_token  # noqa: E402 — sys.path 설정 뒤 import
 from ai_orchestrator.persistence import dev_reg_audit_log  # noqa: E402 — sys.path 설정 뒤 import
 
 # 출력에서 제거할 필드

@@ -4,18 +4,24 @@ import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.models import TaskRequest, RiskAssessment
-from ai_orchestrator.approval import issue_token
-from ai_orchestrator.telegram_webhook import handle_telegram_update
+from ai_orchestrator.gates.approval import issue_token
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 from ai_orchestrator.telegram_notifier import (
-    build_callback_data, parse_callback_data, build_approval_message,
+    build_approval_message,
+    build_callback_data,
+    parse_callback_data,
 )
+from ai_orchestrator.telegram_webhook import handle_telegram_update
 
 
 def _req(task_id: str) -> TaskRequest:
     return TaskRequest(
-        task_id=task_id, source="manual", action_type="edit_config",
-        target="/var/www/haehan/cfg.yaml", description="CB 테스트", requested_by="test",
+        task_id=task_id,
+        source="manual",
+        action_type="edit_config",
+        target="/var/www/haehan/cfg.yaml",
+        description="CB 테스트",
+        requested_by="test",
     )
 
 
@@ -27,8 +33,7 @@ def _tid() -> str:
     return f"CB-{uuid.uuid4().hex[:6]}"
 
 
-def _update(tg_user_id: str, callback_data: str,
-            username: str = "admin", query_id: str = "cbq-1") -> dict:
+def _update(tg_user_id: str, callback_data: str, username: str = "admin", query_id: str = "cbq-1") -> dict:
     return {
         "update_id": 1,
         "callback_query": {
@@ -44,8 +49,7 @@ def _update(tg_user_id: str, callback_data: str,
 def test_callback_data_roundtrip():
     data = build_callback_data("approve", "CB-abc123", "11111111-1111-1111-1111-111111111111")
     parsed = parse_callback_data(data)
-    assert parsed == {"action": "approve", "task_id": "CB-abc123",
-                      "token_id": "11111111-1111-1111-1111-111111111111"}
+    assert parsed == {"action": "approve", "task_id": "CB-abc123", "token_id": "11111111-1111-1111-1111-111111111111"}
 
 
 # ── 1. approve callback → approved ────────────────────────────────
@@ -64,8 +68,7 @@ def test_callback_approve_success():
 def test_callback_reject_success():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    update = _update("222222222", build_callback_data("reject", tid, token.token_id),
-                     username="approver-01")
+    update = _update("222222222", build_callback_data("reject", tid, token.token_id), username="approver-01")
     update["callback_query"]["reason"] = "정책 위반"
     r = handle_telegram_update(update)
     assert r["success"] is True and r["status"] == "rejected", r
