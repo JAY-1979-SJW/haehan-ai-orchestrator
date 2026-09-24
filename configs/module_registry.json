@@ -8170,12 +8170,12 @@
    "source": "rule"
   },
   "scripts/g2b/discover_valid_public_notice_urls.py": {
-   "layer": "L6",
+   "layer": "L5",
    "role": "site_module",
    "domain": "g2b",
-   "reason": "S2a 선언층 정정",
+   "reason": "도메인(g2b) 자동화",
    "confidence": "high",
-   "source": "override"
+   "source": "rule"
   },
   "scripts/g2b/download_g2b_direct_attachment_urls.py": {
    "layer": "L7",
@@ -10194,12 +10194,12 @@
    "source": "rule"
   },
   "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L6",
+   "layer": "L7",
    "role": "persistence",
    "domain": "naver",
-   "reason": "S2a 선언층 정정",
+   "reason": "DB·저장 신호",
    "confidence": "high",
-   "source": "override"
+   "source": "rule"
   },
   "scripts/naver/automation/platform/image_processor.py": {
    "layer": "L5",
@@ -12066,12 +12066,12 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/product/bulk.py": {
-   "layer": "L6",
+   "layer": "L7",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "S2a 선언층 정정",
+   "reason": "DB·저장 신호",
    "confidence": "high",
-   "source": "override"
+   "source": "rule"
   },
   "scripts/naver/smartstore/product/category_cache.py": {
    "layer": "L7",
@@ -14338,12 +14338,12 @@
    "source": "rule"
   },
   "scripts/site_registry.py": {
-   "layer": "L5",
+   "layer": "L1",
    "role": "contract",
    "domain": "common",
-   "reason": "S2a 선언층 정정",
+   "reason": "정의 위주(모델·스키마·dataclass)",
    "confidence": "high",
-   "source": "override"
+   "source": "rule"
   },
   "scripts/site_session_safety.py": {
    "layer": "L2",

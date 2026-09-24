@@ -634,11 +634,6 @@
   "role": "browser_engine",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
- "scripts/g2b/discover_valid_public_notice_urls.py": {
-  "layer": "L6",
-  "role": "site_module",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
- },
  "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
   "layer": "L6",
   "role": "site_module",
@@ -659,24 +654,9 @@
   "role": "policy",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
- "scripts/naver/automation/platform/error_recovery.py": {
-  "layer": "L6",
-  "role": "persistence",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
- },
  "scripts/naver/blog/management/post_cache.py": {
   "layer": "L6",
   "role": "persistence",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
- },
- "scripts/naver/smartstore/product/bulk.py": {
-  "layer": "L6",
-  "role": "persistence",
-  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
- },
- "scripts/site_registry.py": {
-  "layer": "L5",
-  "role": "contract",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  },
  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
