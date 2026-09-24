@@ -4074,12 +4074,12 @@
    "source": "rule"
   },
   "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "naver_cafe",
-   "reason": "도메인(naver_cafe) 자동화",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_common.py": {
    "layer": "L4",
@@ -8170,12 +8170,12 @@
    "source": "rule"
   },
   "scripts/g2b/discover_valid_public_notice_urls.py": {
-   "layer": "L5",
+   "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/g2b/download_g2b_direct_attachment_urls.py": {
    "layer": "L7",
@@ -9674,12 +9674,12 @@
    "source": "rule"
   },
   "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
-   "layer": "L5",
+   "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
-   "reason": "도메인(g2b) 자동화",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/local_agent/gov/__init__.py": {
    "layer": "L4",
@@ -9738,12 +9738,12 @@
    "source": "rule"
   },
   "scripts/local_agent/router.py": {
-   "layer": "L4",
+   "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/local_agent/run_naver_cafe_to_blog_workflow.py": {
    "layer": "L6",
@@ -9754,12 +9754,12 @@
    "source": "rule"
   },
   "scripts/local_agent/run_playwright_smoke.py": {
-   "layer": "L4",
+   "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/local_agent/run_security_install_discovery.py": {
    "layer": "L4",
@@ -9770,12 +9770,12 @@
    "source": "rule"
   },
   "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
-   "layer": "L4",
+   "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/local_agent/start_chrome_with_cdp.py": {
    "layer": "L4",
@@ -9954,12 +9954,12 @@
    "source": "rule"
   },
   "scripts/module_quality_gate.py": {
-   "layer": "L2",
+   "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/module_quality_gate_checks_audit.py": {
    "layer": "L2",
@@ -10194,12 +10194,12 @@
    "source": "rule"
   },
   "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L7",
+   "layer": "L6",
    "role": "persistence",
    "domain": "naver",
-   "reason": "DB·저장 신호",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/naver/automation/platform/image_processor.py": {
    "layer": "L5",
@@ -10618,12 +10618,12 @@
    "source": "rule"
   },
   "scripts/naver/blog/management/post_cache.py": {
-   "layer": "L7",
+   "layer": "L6",
    "role": "persistence",
    "domain": "naver_blog",
-   "reason": "DB·저장 신호",
+   "reason": "S2a 선언층 정정",
    "confidence": "low",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/naver/blog/management/schedule.py": {
    "layer": "L7",
@@ -12066,12 +12066,12 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/product/bulk.py": {
-   "layer": "L7",
+   "layer": "L6",
    "role": "persistence",
    "domain": "smartstore",
-   "reason": "DB·저장 신호",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/naver/smartstore/product/category_cache.py": {
    "layer": "L7",
@@ -14114,12 +14114,12 @@
    "source": "rule"
   },
   "scripts/popup_monitor.py": {
-   "layer": "L7",
+   "layer": "L4",
    "role": "persistence",
    "domain": "browser",
-   "reason": "DB·저장 신호",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/popup_watcher.py": {
    "layer": "L4",
@@ -14178,12 +14178,12 @@
    "source": "rule"
   },
   "scripts/run_page_builder.py": {
-   "layer": "L4",
+   "layer": "L6",
    "role": "generic",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
+   "reason": "S2a 선언층 정정",
    "confidence": "low",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/runtime_temp.py": {
    "layer": "L1",
@@ -14338,12 +14338,12 @@
    "source": "rule"
   },
   "scripts/site_registry.py": {
-   "layer": "L1",
+   "layer": "L5",
    "role": "contract",
    "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/site_session_safety.py": {
    "layer": "L2",
@@ -14450,12 +14450,12 @@
    "source": "rule"
   },
   "scripts/temp_oauth_revoke.py": {
-   "layer": "L2",
+   "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "정책·게이트 이름",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/user_action_monitor.py": {
    "layer": "L4",
@@ -14714,12 +14714,12 @@
    "source": "rule"
   },
   "scripts/yt_upload/step1_navigate.py": {
-   "layer": "L2",
+   "layer": "L6",
    "role": "policy",
    "domain": "youtube",
-   "reason": "정책·게이트 이름",
+   "reason": "S2a 선언층 정정",
    "confidence": "high",
-   "source": "rule"
+   "source": "override"
   },
   "scripts/yt_upload/step2_open_dialog.py": {
    "layer": "L5",

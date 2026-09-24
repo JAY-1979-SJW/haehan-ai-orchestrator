@@ -613,5 +613,80 @@
   "role": "contract",
   "reason": "로그·감사 이벤트의 민감정보 마스킹 정규식/헬퍼(REDACTED, SENSITIVE_KEYS) 순수 함수 — IO 없음. L4 기본값 오분류를 L1로 정정.",
   "source": "manual"
+ },
+ "scripts/run_page_builder.py": {
+  "layer": "L6",
+  "role": "generic",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/local_agent/router.py": {
+  "layer": "L6",
+  "role": "browser_engine",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/local_agent/run_playwright_smoke.py": {
+  "layer": "L6",
+  "role": "browser_engine",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
+  "layer": "L6",
+  "role": "browser_engine",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/g2b/discover_valid_public_notice_urls.py": {
+  "layer": "L6",
+  "role": "site_module",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
+  "layer": "L6",
+  "role": "site_module",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/module_quality_gate.py": {
+  "layer": "L6",
+  "role": "policy",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/temp_oauth_revoke.py": {
+  "layer": "L6",
+  "role": "policy",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/yt_upload/step1_navigate.py": {
+  "layer": "L6",
+  "role": "policy",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/naver/automation/platform/error_recovery.py": {
+  "layer": "L6",
+  "role": "persistence",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/naver/blog/management/post_cache.py": {
+  "layer": "L6",
+  "role": "persistence",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/naver/smartstore/product/bulk.py": {
+  "layer": "L6",
+  "role": "persistence",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/site_registry.py": {
+  "layer": "L5",
+  "role": "contract",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/popup_monitor.py": {
+  "layer": "L4",
+  "role": "persistence",
+  "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
  }
 }
