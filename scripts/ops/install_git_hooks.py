@@ -184,6 +184,31 @@ sys.exit(result.returncode)
 """
 
 
+POST_COMMIT = """\
+#!/usr/bin/env python3
+import subprocess, sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
+
+# 모든 커밋을 data/ops/worklog.jsonl 에 1줄 기록 (session_handoff_guard).
+# 커밋 자체를 절대 실패시키지 않는다(never fail the commit).
+try:
+    sys.path.insert(0, str(ROOT / "scripts" / "ops"))
+    import session_handoff as sh
+
+    h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    subj = subprocess.run(["git", "log", "-1", "--pretty=%s"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    files_out = subprocess.run(["git", "show", "--stat", "--format=", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout
+    files_changed = len([ln for ln in files_out.splitlines() if "|" in ln])
+    sh.log_event("commit", hash=h, subject=subj, branch=branch, files_changed=files_changed)
+except Exception:
+    pass
+sys.exit(0)
+"""
+
+
 def install(name: str, content: str) -> None:
     path = HOOKS_DIR / name
     path.write_text(content, encoding="utf-8")
@@ -201,7 +226,8 @@ def main() -> None:
     wrapped = pre.exists() and CHECKLIST_MARKER in pre.read_text(encoding="utf-8", errors="replace")
     install("pre-commit.orig" if wrapped else "pre-commit", PRE_COMMIT)
     install("pre-push", PRE_PUSH)
-    print("[install_git_hooks] 완료. pre-commit(ruff) + pre-push(AI 검수) 활성화됨.")
+    install("post-commit", POST_COMMIT)
+    print("[install_git_hooks] 완료. pre-commit(ruff) + pre-push(AI 검수) + post-commit(작업기록) 활성화됨.")
 
 
 if __name__ == "__main__":

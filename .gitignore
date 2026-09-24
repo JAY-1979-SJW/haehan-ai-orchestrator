@@ -126,6 +126,10 @@ session*
 !session_probe.py
 !session_tracker.py
 !session_probe_fix.md
+!session_guard.py
+!session_handoff.py
+!session_guard.json
+!test_session_guard.py
 storage_state*
 
 # Runtime execution artifacts (Stage 3~5)

@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]  # .githooks/ 는 repo root 바로 아래
+
+# 모든 커밋을 data/ops/worklog.jsonl 에 1줄 기록 (session_handoff_guard).
+# 커밋 자체를 절대 실패시키지 않는다(never fail the commit).
+try:
+    sys.path.insert(0, str(ROOT / "scripts" / "ops"))
+    import session_handoff as sh
+
+    h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    subj = subprocess.run(["git", "log", "-1", "--pretty=%s"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout.strip()
+    files_out = subprocess.run(["git", "show", "--stat", "--format=", "HEAD"], cwd=str(ROOT), capture_output=True, text=True).stdout
+    files_changed = len([ln for ln in files_out.splitlines() if "|" in ln])
+    sh.log_event("commit", hash=h, subject=subj, branch=branch, files_changed=files_changed)
+except Exception:  # noqa: S110 - 커밋 자체를 절대 실패시키지 않는다
+    pass
+sys.exit(0)

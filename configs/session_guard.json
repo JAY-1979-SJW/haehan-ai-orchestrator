@@ -1,0 +1,22 @@
+{
+  "_doc": "세션 기록 크기 기반 인계·차단 임계값. docs/specs/2026-09-24_session_handoff_guard.md",
+  "warn_mb": 8,
+  "block_mb": 12,
+  "bypass_prefix": "!계속",
+  "handoff_path": "data/impact/HANDOFF.md",
+  "worklog_path": "data/ops/worklog.jsonl",
+  "phase_done_flag": "data/impact/PHASE_DONE",
+  "cleanup": {
+    "previous_handoff_keep_latest_only": true,
+    "scratchpad_report_only_days": 2,
+    "verified_tag_prefix": "verified/",
+    "verify_base_prefix": "verify_base_",
+    "spec_superseded_status": "superseded",
+    "protected_paths": [
+      ".env",
+      "data/cdp_profile",
+      "data/*.db",
+      "data/impact/HANDOFF.md"
+    ]
+  }
+}
