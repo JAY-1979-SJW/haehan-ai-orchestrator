@@ -1,9 +1,10 @@
 """스마트스토어 상품 상세설명 AI 자동 작성 모듈 (L3 Connector).
 
-⚠ [LLM 경계] LEGACY(Claude 기반, tests/test_app_llm_boundary.py 허용목록에 등록된
-데드모듈). 2026-09-24 GPT 삭제 이후 앱 표준은 유료 AI 미사용(builder/템플릿) —
-generate_description 도구는 page_builder 섹션 빌더만 사용한다. 본 모듈은 활성 호출
-경로에서 사용되지 않는다(데드, 보존만). 신규 코드에서 import 금지.
+⚠ [LLM 경계] LIVE(Claude 기반, tests/test_app_llm_boundary.py 허용목록에 등록됨).
+register_form.py의 `write_claude()` → 이 모듈의 `AIDescriptionWriter`를 실제로 호출하며,
+`form_runner.py`가 `description_mode == "claude"`일 때 이 경로를 탄다(데드코드 아님).
+2026-09-24 GPT(OpenAI) 삭제 이후에도 이 Claude 경로는 남아있다 — mcp_server.py의
+generate_description 도구(섹션 빌더 전용)와는 별개 경로이므로 혼동하지 말 것.
 
 ────────────────────────────────────────────────────────────────────
 표준 구현방식 v2 — 신뢰 4대 기둥 기반

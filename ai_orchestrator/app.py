@@ -277,7 +277,9 @@ def run_scenario_d():
 
 
 def main():
-    mode = "[MOCK 모드]" if is_mock_mode() else "[실제 OpenAI 연결]"
+    # is_mock_mode()는 2026-09-24 OpenAI 삭제 이후 항상 True — "실제 연결" 분기는 도달 불가하므로 제거.
+    assert is_mock_mode(), "OpenAI 호출 경로는 삭제됨 — MOCK 모드만 존재해야 합니다"
+    mode = "[MOCK 모드]"
     logger.info("CLI 실행 시작 | mode=%s", mode)
     print(f"\n{'=' * 60}")
     print(f"  승인형 AI 오케스트레이터 2단계 드라이런  {mode}")

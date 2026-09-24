@@ -898,9 +898,9 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 git checkout pre-openai-removal -- <경로>
 ```
 
-## 삭제 파일 (24개)
+## 삭제 파일 (33개, `git show --stat 86b1c867`/`58dc0903` 실측 재확인 — 58dc0903은 편집만, 삭제 0개)
 
-<details><summary>채팅 API·자율 에이전트 — 6개</summary>
+<details><summary>채팅 API·자율 에이전트 — 7개</summary>
 
 - `ai_orchestrator/routers/agent_ai_proxy_router.py` — /agent-ai/chat·health·task 라우터
 - `ai_orchestrator/openai_proxy_caller.py` — call_openai_chat/call_openai_agent
@@ -908,10 +908,11 @@ git checkout pre-openai-removal -- <경로>
 - `ai_orchestrator/connectors/browser_agent_router.py` — /browser-agent/run
 - `scripts/browser_agent/agent.py` — GPT 단계결정 CDP 에이전트(_decide)
 - `scripts/browser_agent/free_agent.py` — GPT 자율 도구호출 에이전트
+- `scripts/browser_agent/__init__.py`
 
 </details>
 
-<details><summary>도메인 GPT 채팅 루프·전용 작성기 — 5개</summary>
+<details><summary>도메인 GPT 채팅 루프·전용 작성기 — 3개</summary>
 
 - `ai_orchestrator/connectors/gabia/chat.py` — /gabia/chat (전체 GPT 전용, 나머지 gabia 엔드포인트는 gabia_router.py에 그대로 있음)
 - `scripts/naver/smartstore/product/gpt_description_writer.py` — GptDescriptionWriter(GPT-4o 상세설명·비전)
@@ -933,7 +934,7 @@ git checkout pre-openai-removal -- <경로>
 
 </details>
 
-<details><summary>테스트·감사 스크립트(삭제 코드 전용) — 13개</summary>
+<details><summary>테스트·감사 스크립트(삭제 코드 전용) — 17개</summary>
 
 - `tests/test_openai_server_proxy_client.py`
 - `tests/test_openai_direct_test_call.py`

@@ -9,7 +9,6 @@ import urllib.request
 
 from local_agent.network_bypass import urlopen_for_server, websocket_connect_kwargs
 
-
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
 
@@ -49,8 +48,7 @@ class Report:
 
 
 def _load_credentials(server_url: str) -> tuple[str, str]:
-    from local_agent import desktop_config
-    from local_agent import token_store
+    from local_agent import desktop_config, token_store
 
     cfg = desktop_config.load_config()
     effective_server = (server_url or cfg.server_url or DEFAULT_SERVER_URL).rstrip("/")
@@ -68,7 +66,7 @@ def check_server_health(report: Report, server_url: str) -> None:
         return
 
     try:
-        req = urllib.request.Request(server_url.rstrip("/") + "/api/v1/health", method="GET")
+        req = urllib.request.Request(server_url.rstrip("/") + "/api/v1/health", method="GET")  # noqa: S310
         with urlopen_for_server(server_url, req, timeout=10) as resp:
             if resp.status == 200:
                 report.pass_("server health", "status=200")
@@ -82,46 +80,6 @@ def check_server_health(report: Report, server_url: str) -> None:
         report.fail("server health", type(exc).__name__)
 
 
-def check_agent_ai_health(report: Report, server_url: str, agent_id: str, token: str) -> None:
-    if not agent_id or not token:
-        report.fail("agent credentials", "missing agent_id or token")
-        return
-    req = urllib.request.Request(
-        server_url.rstrip("/") + "/api/v1/agent-ai/health",
-        method="GET",
-        headers={
-            "X-Agent-Id": agent_id,
-            "Authorization": "Bearer " + token,
-        },
-    )
-    try:
-        with urlopen_for_server(server_url, req, timeout=10) as resp:
-            raw = resp.read().decode("utf-8")
-            if resp.status != 200:
-                report.fail("agent-ai health", f"status={resp.status}")
-                return
-    except urllib.error.HTTPError as exc:
-        report.fail("agent-ai health", f"status={exc.code}")
-        return
-    except urllib.error.URLError as exc:
-        report.fail("agent-ai health", type(exc.reason).__name__)
-        return
-    except OSError as exc:
-        report.fail("agent-ai health", type(exc).__name__)
-        return
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        report.fail("agent-ai health", "invalid json")
-        return
-    if data.get("ok") is True:
-        configured = bool(data.get("openai_key_configured"))
-        report.pass_("agent-ai authenticated health", f"openai_key_configured={configured}")
-    else:
-        report.fail("agent-ai authenticated health", "ok=false")
-
-
 def _websocket_close_code(exc: object) -> int | None:
     for attr in ("rcvd", "rcvd_close"):
         close = getattr(exc, attr, None)
@@ -132,8 +90,7 @@ def _websocket_close_code(exc: object) -> int | None:
     return code if isinstance(code, int) else None
 
 
-async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str,
-                             timeout: float) -> None:
+async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str, timeout: float) -> None:
     from local_agent import __version__
     from local_agent.connection_diagnostics import normalize_ws_url
 
@@ -152,12 +109,16 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
             open_timeout=timeout,
             **websocket_connect_kwargs(server_url),
         ) as ws:
-            await ws.send(json.dumps({
-                "type": "auth",
-                "agent_id": agent_id,
-                "device_token": token,
-                "version": __version__,
-            }))
+            await ws.send(
+                json.dumps(
+                    {
+                        "type": "auth",
+                        "agent_id": agent_id,
+                        "device_token": token,
+                        "version": __version__,
+                    }
+                )
+            )
             raw = await asyncio.wait_for(ws.recv(), timeout=timeout)
             first = json.loads(raw)
             if first.get("type") != "auth_ok":
@@ -180,7 +141,7 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
                 if mtype == "task":
                     report.warn("websocket queued task observed", "not executed by smoke probe")
             report.fail("websocket heartbeat", "timeout")
-    except asyncio.TimeoutError:
+    except TimeoutError:
         report.fail("websocket", "timeout")
     except getattr(websockets.exceptions, "ConnectionClosed", Exception) as exc:
         code = _websocket_close_code(exc)
@@ -207,10 +168,8 @@ def main(argv: list[str] | None = None) -> int:
     agent_id, token = _load_credentials(server_url)
     report.pass_("agent config", f"agent_id={_mask_agent_id(agent_id)} token_present={bool(token)}")
     check_server_health(report, server_url)
-    check_agent_ai_health(report, server_url, agent_id, token)
     asyncio.run(check_ws_heartbeat(report, server_url, agent_id, token, args.timeout))
-    if any(level == "FAIL" and "AUTH_FAILED_4401" in detail
-           for level, _, detail in report.rows):
+    if any(level == "FAIL" and "AUTH_FAILED_4401" in detail for level, _, detail in report.rows):
         from local_agent import connection_diagnostics as cd
 
         plan = cd.build_recovery_plan(
