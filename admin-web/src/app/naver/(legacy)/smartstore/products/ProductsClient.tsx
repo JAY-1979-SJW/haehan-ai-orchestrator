@@ -8,8 +8,6 @@ import {
   openSellerCenter,
   getDescriptionSections,
   renderDescription,
-  aiGenerateDescription,
-  gptGenerateDescription,
   autoRegisterProduct,
   editProduct,
   type ProductEditResult,
@@ -160,56 +158,22 @@ export default function ProductsClient() {
   const [gptImages, setGptImages] = useState<string>("");
   const [gptAnalysis, setGptAnalysis] = useState<Record<string, unknown> | null>(null);
 
-  async function handleGptGenerate() {
-    setGptLoading(true);
+  // 2026-09-24: 앱 런타임 AI 생성(GPT/Claude API 직접호출) 제거 — 더 이상 백엔드
+  // ai-generate/gpt-generate 엔드포인트를 호출하지 않고 즉시 안내만 표시한다.
+  // 실제 상세설명 문구는 Claude Code(MCP)가 작성해 renderDescription/saveTemplate로 저장한다.
+  const AI_REMOVED_NOTICE = "앱 내 AI 채팅은 제거되었습니다 — AI 작업은 Claude Code(MCP: haehan-orchestrator)로 합니다.";
+
+  function handleGptGenerate() {
     setDescError(null);
-    setDescNotice(null);
-    setDescHtml(null);
     setGptAnalysis(null);
-    try {
-      const data = JSON.parse(descData);
-      const images = gptImages.split("\n").map(s => s.trim()).filter(Boolean);
-      const base = (useTemplateBase && templateBase) ? templateBase : undefined;
-      // 전역 AI 모델(설정 페이지) 에 따라 GPT/Claude 자동 라우팅 — 사용자는 모델 안 고름
-      const model = (typeof window !== "undefined" ? localStorage.getItem("haehan_ai_model") : null) || "fast";
-      const res = model === "claude"
-        ? await aiGenerateDescription(data, "quality")
-        : await gptGenerateDescription(data, images, model === "quality" ? "quality" : undefined, base);
-      if (res.ok && res.html) {
-        setDescHtml(res.html);
-        if ("notice" in res && res.notice) setDescNotice(res.notice as string);
-        if ("image_analysis" in res && res.image_analysis) setGptAnalysis(res.image_analysis as Record<string, unknown>);
-      } else {
-        const msgs = res.errors ?? (res.error ? [res.error] : ["AI 생성 실패"]);
-        setDescError(msgs.join("\n"));
-      }
-    } catch (e) {
-      setDescError(String(e));
-    } finally {
-      setGptLoading(false);
-    }
+    setDescHtml(null);
+    setDescNotice(AI_REMOVED_NOTICE);
   }
 
-  async function handleAiGenerate() {
-    setAiLoading(true);
+  function handleAiGenerate() {
     setDescError(null);
-    setDescNotice(null);
     setDescHtml(null);
-    try {
-      const data = JSON.parse(descData);
-      const res = await aiGenerateDescription(data, aiModel === "quality" ? "quality" : undefined);
-      if (res.ok && res.html) {
-        setDescHtml(res.html);
-        if ("notice" in res && res.notice) setDescNotice(res.notice as string);
-      } else {
-        const msgs = res.errors ?? (res.error ? [res.error] : ["AI 생성 실패"]);
-        setDescError(msgs.join("\n"));
-      }
-    } catch (e) {
-      setDescError(String(e));
-    } finally {
-      setAiLoading(false);
-    }
+    setDescNotice(AI_REMOVED_NOTICE);
   }
 
   // 자동 등록 상태
