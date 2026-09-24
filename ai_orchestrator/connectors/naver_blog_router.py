@@ -38,27 +38,34 @@ _VID_EXT = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
 _MAX_UPLOAD_BYTES = 200 * 1024 * 1024  # 200MB (동영상 고려)
 
 
+_TOPIC_KEYWORD_MAP: dict[str, str] = {
+    "조명": "interior lighting",
+    "led": "led light",
+    "무드등": "mood lamp",
+    "인테리어": "interior design",
+    "가구": "furniture",
+    "주방": "kitchen",
+    "거실": "living room",
+    "침실": "bedroom",
+    "office": "office interior",
+    "사무실": "office interior",
+    "카페": "cafe interior",
+    "매장": "retail store",
+    "공장": "factory",
+    "건축": "architecture",
+    "정원": "garden",
+}
+
+
 def _unsplash_english_query(topic: str) -> str:
-    """한국어 주제 → Unsplash 검색용 영어 키워드(3단어 이내) 변환."""
-    try:
-        from ai_orchestrator.openai_proxy_caller import call_openai_chat
+    """한국어 주제 → Unsplash 검색용 영어 키워드(3단어 이내) 변환.
 
-        prompt = (
-            "다음 한국어 블로그 주제를 Unsplash 이미지 검색에 적합한 영어 키워드로 변환하세요.\n"
-            "영어 단어 3개 이내, 명사 위주로만 출력하세요 (설명·문장 금지).\n"
-            f"주제: {topic}"
-        )
-        res = call_openai_chat(message=prompt)
-        if res.ok and res.text.strip():
-            import re as _re
-
-            first_line = res.text.strip().splitlines()[0]
-            cleaned = _re.sub(r"[^A-Za-z ]", " ", first_line).strip()
-            words = cleaned.split()[:3]
-            if words:
-                return " ".join(words)
-    except Exception:  # noqa: S110
-        pass
+    2026-09-24: 유료 AI(GPT) 호출 제거 — 고정 키워드 사전 매칭만 사용한다.
+    """
+    low = (topic or "").lower()
+    for kw, en in _TOPIC_KEYWORD_MAP.items():
+        if kw in low:
+            return en
     return "interior design"
 
 
