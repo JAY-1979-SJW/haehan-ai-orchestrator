@@ -184,9 +184,14 @@ def extend(graph: dict, files: list[str], manual_roots: dict[str, list[str]]) ->
                 tg = [t for t in res.resolve_ts(rel, spec) if t != rel]
                 edges[rel].update(tg)
                 kinds["ts_import"] += len(tg)
-        if rel.endswith(".py"):  # 파이썬 주석 줄은 제외
-            text = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
-        for cand in set(PATHLIKE_RE.findall(text)):
+        if rel.endswith(".py"):
+            # 주석·docstring·bare 문자열 statement 는 실제 코드 참조가 아니다(거짓 path_ref 방지).
+            # scan.scan_py() 가 AST 로 뽑은, 실제 코드에 쓰인 문자열 상수만 대상으로 한다.
+            pf = scan.scan_py(rel)
+            path_text = "\n".join(pf.strings)
+        else:
+            path_text = text
+        for cand in set(PATHLIKE_RE.findall(path_text)):
             tg = [t for t in res.resolve(rel, cand) if t != rel]
             new = set(tg) - edges[rel]
             edges[rel].update(new)

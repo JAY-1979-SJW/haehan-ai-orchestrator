@@ -124,6 +124,20 @@ def _div_chain_parts(node: ast.AST) -> list[str] | None:
     return []
 
 
+def _bare_string_stmt_ids(tree: ast.AST) -> set[int]:
+    """모듈/클래스/함수 docstring 은 첫 statement 가 Expr(Constant str) 인 경우다.
+    이는 "bare 문자열 표현식 statement"의 특수 케이스이므로, 위치 무관하게
+    Expr(Constant str) 형태의 statement 를 모두 걸러내면 docstring 도 함께 제외된다.
+    이 id 집합에 속한 Constant 노드는 실제 코드에서 값으로 쓰인 것이 아니라
+    (할당·호출 인자·반환값 등이 아니라) 그 자체가 문장이므로 path_ref 후보에서 뺀다.
+    """
+    excluded: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            excluded.add(id(node.value))
+    return excluded
+
+
 def scan_py(rel: str) -> PyFile:
     pf = PyFile(rel=rel)
     try:
@@ -135,6 +149,7 @@ def scan_py(rel: str) -> PyFile:
         return pf
     # __main__ 가드 없이 모듈 최상단에서 바로 실행하는 스크립트도 CLI 진입점
     pf.has_main = Path(rel).name in SPECIAL_AUTOLOAD or any(_is_script_stmt(s) for s in tree.body)
+    excluded_str_ids = _bare_string_stmt_ids(tree)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -164,7 +179,8 @@ def scan_py(rel: str) -> PyFile:
             if parts and len(parts) > 1:
                 pf.strings.append("/".join(parts))
         elif isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) < 2000:
-            pf.strings.append(node.value)
+            if id(node) not in excluded_str_ids:  # docstring·bare 문자열 statement 는 실제 코드 참조가 아니다
+                pf.strings.append(node.value)
     return pf
 
 
