@@ -1,4 +1,5 @@
 """User data contribution consent and safe development material export API."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -6,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.server.user_data_contribution_store import (
     export_development_material,
     get_consent,

@@ -1,18 +1,23 @@
 import os
 import sys
 import uuid
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.models import TaskRequest, RiskAssessment
-from ai_orchestrator.approval import issue_token
-from ai_orchestrator.telegram_webhook import handle_telegram_webhook
 from ai_orchestrator.audit_logger import read_recent_logs
+from ai_orchestrator.gates.approval import issue_token
+from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.telegram_webhook import handle_telegram_webhook
 
 
 def _req(task_id: str) -> TaskRequest:
     return TaskRequest(
-        task_id=task_id, source="manual", action_type="edit_config",
-        target="/var/www/haehan/cfg.yaml", description="TG 테스트", requested_by="test",
+        task_id=task_id,
+        source="manual",
+        action_type="edit_config",
+        target="/var/www/haehan/cfg.yaml",
+        description="TG 테스트",
+        requested_by="test",
     )
 
 
@@ -28,12 +33,14 @@ def _tid() -> str:
 def test_telegram_approve_success():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "111111111",  # admin
-        "action": "approve",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",  # admin
+            "action": "approve",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is True, f"expected success: {result}"
     assert result["status"] == "approved"
     assert result["role"] == "admin"
@@ -43,13 +50,15 @@ def test_telegram_approve_success():
 def test_telegram_reject_success():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "222222222",  # approver
-        "action": "reject",
-        "task_id": tid,
-        "token_id": token.token_id,
-        "reason": "테스트 거절",
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "222222222",  # approver
+            "action": "reject",
+            "task_id": tid,
+            "token_id": token.token_id,
+            "reason": "테스트 거절",
+        }
+    )
     assert result["success"] is True, f"expected success: {result}"
     assert result["status"] == "rejected"
     assert result["role"] == "approver"
@@ -59,12 +68,14 @@ def test_telegram_reject_success():
 def test_telegram_unmapped_user():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "000000000",
-        "action": "approve",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "000000000",
+            "action": "approve",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "user_not_found"
 
@@ -73,12 +84,14 @@ def test_telegram_unmapped_user():
 def test_telegram_viewer_forbidden():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "333333333",  # viewer
-        "action": "approve",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "333333333",  # viewer
+            "action": "approve",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "forbidden"
 
@@ -87,12 +100,14 @@ def test_telegram_viewer_forbidden():
 def test_telegram_task_mismatch():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "111111111",
-        "action": "approve",
-        "task_id": "WRONG-TASK-ID",
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",
+            "action": "approve",
+            "task_id": "WRONG-TASK-ID",
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "task_mismatch"
 
@@ -101,23 +116,27 @@ def test_telegram_task_mismatch():
 def test_telegram_invalid_action():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "111111111",
-        "action": "delete",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",
+            "action": "delete",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "invalid_action"
 
 
 # ── 7. 누락 필드 ────────────────────────────────────────────────────
 def test_telegram_missing_fields():
-    result = handle_telegram_webhook({
-        "telegram_user_id": "111111111",
-        "action": "approve",
-        # task_id, token_id 누락
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",
+            "action": "approve",
+            # task_id, token_id 누락
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "invalid_payload"
 
@@ -126,12 +145,14 @@ def test_telegram_missing_fields():
 def test_telegram_disabled_user():
     tid = _tid()
     token = issue_token(_req(tid), _risk())
-    result = handle_telegram_webhook({
-        "telegram_user_id": "999999999",  # enabled=false
-        "action": "approve",
-        "task_id": tid,
-        "token_id": token.token_id,
-    })
+    result = handle_telegram_webhook(
+        {
+            "telegram_user_id": "999999999",  # enabled=false
+            "action": "approve",
+            "task_id": tid,
+            "token_id": token.token_id,
+        }
+    )
     assert result["success"] is False
     assert result["status"] == "user_not_found"
 
@@ -143,14 +164,23 @@ def test_audit_event_names():
     token_a = issue_token(_req(tid_a), _risk())
     token_r = issue_token(_req(tid_r), _risk())
 
-    handle_telegram_webhook({
-        "telegram_user_id": "111111111", "action": "approve",
-        "task_id": tid_a, "token_id": token_a.token_id,
-    })
-    handle_telegram_webhook({
-        "telegram_user_id": "222222222", "action": "reject",
-        "task_id": tid_r, "token_id": token_r.token_id, "reason": "감사 로그 테스트",
-    })
+    handle_telegram_webhook(
+        {
+            "telegram_user_id": "111111111",
+            "action": "approve",
+            "task_id": tid_a,
+            "token_id": token_a.token_id,
+        }
+    )
+    handle_telegram_webhook(
+        {
+            "telegram_user_id": "222222222",
+            "action": "reject",
+            "task_id": tid_r,
+            "token_id": token_r.token_id,
+            "reason": "감사 로그 테스트",
+        }
+    )
 
     logs = read_recent_logs(limit=100)
     event_names = {e["event_type"] for e in logs}

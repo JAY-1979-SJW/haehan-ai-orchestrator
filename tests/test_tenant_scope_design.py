@@ -8,9 +8,9 @@
 - 기존 코드의 safe_dict 등 검증
 """
 
-import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestOrganizationModelGap:
@@ -20,9 +20,9 @@ class TestOrganizationModelGap:
         """조직 모델이 현재 없음을 확인"""
         try:
             from ai_orchestrator.models import Organization
+
             # 만약 이 import가 성공하면, model이 추가된 것
-            assert hasattr(Organization, 'organization_id'), \
-                "Organization model must have organization_id field"
+            assert hasattr(Organization, "organization_id"), "Organization model must have organization_id field"
         except ImportError:
             # 예상되는 상태: gap이 문서화되어야 함
             pass
@@ -35,13 +35,11 @@ class TestMembershipModelGap:
         """멤버십 모델이 현재 없음을 확인"""
         try:
             from ai_orchestrator.models import Membership
+
             # 만약 이 import가 성공하면, model이 추가된 것
-            assert hasattr(Membership, 'organization_id'), \
-                "Membership must have organization_id"
-            assert hasattr(Membership, 'user_id'), \
-                "Membership must have user_id"
-            assert hasattr(Membership, 'role'), \
-                "Membership must have role"
+            assert hasattr(Membership, "organization_id"), "Membership must have organization_id"
+            assert hasattr(Membership, "user_id"), "Membership must have user_id"
+            assert hasattr(Membership, "role"), "Membership must have role"
         except ImportError:
             # Gap documented: Membership 모델 미구현
             pass
@@ -54,14 +52,14 @@ class TestAuthOrganizationIdGap:
         """현재 auth는 {actor, role}만 반환 (organization_ids 없음)"""
         # Skip if import fails (env issue)
         try:
-            from ai_orchestrator.auth import _DUMMY_USER
+            from ai_orchestrator.gates.auth import _DUMMY_USER
+
             # 현재 구조 확인
             assert "actor" in _DUMMY_USER
             assert "role" in _DUMMY_USER
 
             # Gap: organization_ids 필드 없음
-            assert "organization_ids" not in _DUMMY_USER, \
-                "Gap G4: Auth should return organization_ids list"
+            assert "organization_ids" not in _DUMMY_USER, "Gap G4: Auth should return organization_ids list"
         except (ImportError, Exception) as e:
             # Skip due to env setup issues
             pytest.skip(f"Import failed: {e}")
@@ -74,10 +72,9 @@ class TestBrowserTaskModelGap:
         """BrowserTask 모델 부재 확인"""
         try:
             from local_agent.browser_task import BrowserTask
-            assert hasattr(BrowserTask, 'organization_id'), \
-                "BrowserTask must have organization_id field"
-            assert hasattr(BrowserTask, 'task_id'), \
-                "BrowserTask must have task_id field"
+
+            assert hasattr(BrowserTask, "organization_id"), "BrowserTask must have organization_id field"
+            assert hasattr(BrowserTask, "task_id"), "BrowserTask must have task_id field"
         except ImportError:
             # Gap documented: BrowserTask 모델 미구현
             pass
@@ -91,8 +88,7 @@ class TestBrowserApprovalModelGap:
         from approval_manager import _store
 
         # _store는 dict (메모리 기반)
-        assert isinstance(_store, dict), \
-            "Current implementation uses in-memory dict"
+        assert isinstance(_store, dict), "Current implementation uses in-memory dict"
 
         # Gap: persistent store 필요
         # approval_id, task_id, organization_id 필드 미정의
@@ -101,24 +97,18 @@ class TestBrowserApprovalModelGap:
     def test_approval_lacks_organization_id_field(self):
         """approval_manager token record에 organization_id 없음"""
         from approval_manager import issue_token
-        from models import TaskRequest, RiskAssessment
+        from models import RiskAssessment, TaskRequest
 
-        task = TaskRequest(
-            task_id="test-task-1",
-            source="pc",
-            action_type="click",
-            target="button",
-            description="test"
-        )
+        task = TaskRequest(task_id="test-task-1", source="pc", action_type="click", target="button", description="test")
         risk = RiskAssessment(risk_level="low")
 
         token_id = issue_token(task, risk)
         if token_id:
             from approval_manager import _store
+
             record = _store.get(token_id, {})
             # Gap: organization_id 필드 없음
-            assert "organization_id" not in record, \
-                "Gap G6: Approval record lacks organization_id"
+            assert "organization_id" not in record, "Gap G6: Approval record lacks organization_id"
 
 
 class TestBrowserAuditContractGap:
@@ -128,9 +118,9 @@ class TestBrowserAuditContractGap:
         """BrowserAuditEvent factory 부재"""
         try:
             from local_agent.browser_audit_contract import BrowserAuditEvent
+
             # 만약 import 성공하면
-            assert hasattr(BrowserAuditEvent, 'organization_id'), \
-                "BrowserAuditEvent must have organization_id"
+            assert hasattr(BrowserAuditEvent, "organization_id"), "BrowserAuditEvent must have organization_id"
         except ImportError:
             # Gap documented: browser_audit_contract 미구현
             pass
@@ -151,8 +141,7 @@ class TestWebSocketHandshakeScopeRule:
 
         msg_dict = msg.to_dict()
         # G9 구현 완료: organization_id가 필드에 포함됨
-        assert "organization_id" in msg_dict, \
-            "G9 구현: AgentHelloMessage에 organization_id 필드가 있어야 합니다"
+        assert "organization_id" in msg_dict, "G9 구현: AgentHelloMessage에 organization_id 필드가 있어야 합니다"
 
     def test_agent_hello_message_lacks_registration_user_id(self):
         """AgentHelloMessage에 registration_user_id가 구현되어 있음 (Gap G9 해소)"""
@@ -166,8 +155,9 @@ class TestWebSocketHandshakeScopeRule:
 
         msg_dict = msg.to_dict()
         # G9 구현 완료: registration_user_id가 필드에 포함됨
-        assert "registration_user_id" in msg_dict, \
+        assert "registration_user_id" in msg_dict, (
             "G9 구현: AgentHelloMessage에 registration_user_id 필드가 있어야 합니다"
+        )
 
     def test_server_policy_message_lacks_organization_id(self):
         """ServerPolicyMessage에 organization_id가 구현되어 있음 (Gap G9 해소)"""
@@ -177,8 +167,7 @@ class TestWebSocketHandshakeScopeRule:
         msg_dict = msg.to_dict()
 
         # G9 구현 완료: organization_id가 필드에 포함됨
-        assert "organization_id" in msg_dict, \
-            "G9 구현: ServerPolicyMessage에 organization_id 필드가 있어야 합니다"
+        assert "organization_id" in msg_dict, "G9 구현: ServerPolicyMessage에 organization_id 필드가 있어야 합니다"
 
 
 class TestWebSocketSafeDict:
@@ -188,11 +177,7 @@ class TestWebSocketSafeDict:
         """safe_dict가 approval_token 제거"""
         from local_agent.browser_websocket_handshake import safe_dict
 
-        data = {
-            "agent_id": "agent-1",
-            "approval_token": "secret-token-xyz",
-            "safe_field": "value"
-        }
+        data = {"agent_id": "agent-1", "approval_token": "secret-token-xyz", "safe_field": "value"}
 
         result = safe_dict(data)
         assert "approval_token" not in result
@@ -202,11 +187,7 @@ class TestWebSocketSafeDict:
         """safe_dict가 final_approval_token 제거"""
         from local_agent.browser_websocket_handshake import safe_dict
 
-        data = {
-            "agent_id": "agent-1",
-            "final_approval_token": "final-secret",
-            "other": "ok"
-        }
+        data = {"agent_id": "agent-1", "final_approval_token": "final-secret", "other": "ok"}
 
         result = safe_dict(data)
         assert "final_approval_token" not in result
@@ -216,10 +197,7 @@ class TestWebSocketSafeDict:
         """safe_dict가 token_hash 제거"""
         from local_agent.browser_websocket_handshake import safe_dict
 
-        data = {
-            "token_hash": "sha256:...",
-            "safe": "value"
-        }
+        data = {"token_hash": "sha256:...", "safe": "value"}
 
         result = safe_dict(data)
         assert "token_hash" not in result
@@ -228,11 +206,7 @@ class TestWebSocketSafeDict:
         """safe_dict가 password 제거"""
         from local_agent.browser_websocket_handshake import safe_dict
 
-        data = {
-            "password": "secret123",
-            "otp": "123456",
-            "safe": "value"
-        }
+        data = {"password": "secret123", "otp": "123456", "safe": "value"}
 
         result = safe_dict(data)
         assert "password" not in result
@@ -246,7 +220,7 @@ class TestWebSocketSafeDict:
         data = {
             "hostname": "my-computer.local",
             "host_name_hash": "abc123def",  # 이건 괜찮음
-            "safe": "ok"
+            "safe": "ok",
         }
 
         result = safe_dict(data)
@@ -272,10 +246,7 @@ class TestWebSocketSafeDict:
         """safe_dict가 raw IP address 제거"""
         from local_agent.browser_websocket_handshake import safe_dict
 
-        data = {
-            "ip_address": "192.168.1.100",
-            "safe": "ok"
-        }
+        data = {"ip_address": "192.168.1.100", "safe": "ok"}
 
         result = safe_dict(data)
         assert "ip_address" not in result
@@ -308,7 +279,8 @@ class TestLocalAgentModelGap:
         # agent.py는 모듈이고 LocalAgent 클래스가 정의되어 있지 않음
         # gap: LocalAgent 모델 클래스 전무
         try:
-            from local_agent.agent import LocalAgent
+            from local_agent.agent import LocalAgent  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+
             pytest.fail("LocalAgent class should not exist yet")
         except ImportError:
             # Expected: gap documented
@@ -337,8 +309,7 @@ class TestBrowserAuditEventTypes:
 
             missing = browser_event_types - EVENT_TYPES
             # Gap: browser event types 부족
-            assert len(missing) > 0, \
-                "Gap: Missing browser audit event types: " + ", ".join(missing)
+            assert len(missing) > 0, "Gap: Missing browser audit event types: " + ", ".join(missing)
         except (ImportError, Exception) as e:
             # Skip due to env setup issues
             pytest.skip(f"Import failed: {e}")
@@ -349,13 +320,10 @@ class TestAdminWebBrowserApprovalTypes:
 
     def test_browser_approval_types_do_not_exist(self):
         """admin-web/src/types/browser-approval.ts 구현됨 (Gap G12 해소)"""
-        types_file = Path(
-            "admin-web/src/types/browser-approval.ts"
-        )
+        types_file = Path("admin-web/src/types/browser-approval.ts")
 
         # G12 구현 완료: 파일이 생성되어 있음
-        assert types_file.exists(), \
-            "G12 구현: admin-web/src/types/browser-approval.ts 파일이 있어야 합니다"
+        assert types_file.exists(), "G12 구현: admin-web/src/types/browser-approval.ts 파일이 있어야 합니다"
 
 
 class TestAuditLogMigration:
@@ -370,11 +338,7 @@ class TestAuditLogMigration:
 
         if migrations_dir.exists():
             migration_files = list(migrations_dir.glob("*.sql"))
-            found_app_audit_log = any(
-                "app_audit_log" in f.read_text()
-                for f in migration_files
-                if f.exists()
-            )
+            found_app_audit_log = any("app_audit_log" in f.read_text() for f in migration_files if f.exists())
 
             if found_app_audit_log:
                 # Migration이 있으면 organization_id 확인
@@ -388,59 +352,46 @@ class TestTenantScopeDesignReport:
 
     def test_tenant_scope_design_report_exists(self):
         """설계 보고서가 존재하는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
-        assert report_file.exists(), \
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
+        assert report_file.exists(), (
             "Tenant scope design report must exist at docs/reports/tenant_1_scope_design_report.md"
+        )
 
     def test_tenant_scope_report_mentions_browser_task(self):
         """보고서에 BrowserTask가 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "BrowserTask" in content
         assert "organization_id" in content
 
     def test_tenant_scope_report_mentions_browser_approval(self):
         """보고서에 BrowserApproval이 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "BrowserApproval" in content
         assert "approval_id" in content
 
     def test_tenant_scope_report_mentions_local_agent(self):
         """보고서에 LocalAgent가 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "LocalAgent" in content
 
     def test_tenant_scope_report_mentions_audit_log(self):
         """보고서에 감사 로그가 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "BrowserAuditEvent" in content or "audit" in content.lower()
 
     def test_tenant_scope_report_mentions_permission_matrix(self):
         """보고서에 권한 매트릭스가 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "Permission Matrix" in content or "permission" in content.lower()
 
     def test_tenant_scope_report_mentions_p1_gaps(self):
         """보고서에 P1 gap이 명시되어 있는지 확인"""
-        report_file = Path(
-            "docs/reports/tenant_1_scope_design_report.md"
-        )
+        report_file = Path("docs/reports/tenant_1_scope_design_report.md")
         content = report_file.read_text()
         assert "P1 Gap" in content or "P1:" in content
 
@@ -452,11 +403,10 @@ class TestGapDocumentation:
         """G1: User model에 user_id 필수"""
         # 현재 auth.py의 _DUMMY_USER는 actor만 가짐
         try:
-            from ai_orchestrator.auth import _DUMMY_USER
+            from ai_orchestrator.gates.auth import _DUMMY_USER
 
             # Gap: user_id 없음
-            assert "user_id" not in _DUMMY_USER, \
-                "Gap G1 documented: User model needs user_id field"
+            assert "user_id" not in _DUMMY_USER, "Gap G1 documented: User model needs user_id field"
         except (ImportError, Exception) as e:
             # Skip due to env setup
             pytest.skip(f"Import failed: {e}")
@@ -464,7 +414,8 @@ class TestGapDocumentation:
     def test_gap_g2_organization_model_required(self):
         """G2: Organization model 필수"""
         try:
-            from ai_orchestrator.models import Organization
+            from ai_orchestrator.models import Organization  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+
             pytest.skip("G2 already implemented")
         except ImportError:
             # Expected: gap documented
@@ -488,8 +439,7 @@ class TestApprovalTokenStorage:
 
         # Gap: token 자체는 저장하지 않지만, persistent store 필요 시
         # token_hash를 사용해야 함
-        assert isinstance(_store, dict), \
-            "Current in-memory store doesn't expose token plaintext (good)"
+        assert isinstance(_store, dict), "Current in-memory store doesn't expose token plaintext (good)"
 
 
 if __name__ == "__main__":

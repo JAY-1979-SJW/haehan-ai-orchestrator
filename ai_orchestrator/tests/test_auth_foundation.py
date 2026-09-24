@@ -4,6 +4,7 @@ AUTH_ENABLED 상태와 http_users.json 경로를 테스트마다 명시적으로
 로컬 개발자 PC의 시크릿/환경 설정(.env, gitignored 시크릿)과 무관하게
 결정적으로 실행된다.
 """
+
 import json
 import os
 import sys
@@ -13,7 +14,8 @@ from fastapi import HTTPException
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator import auth, config
+from ai_orchestrator import config
+from ai_orchestrator.gates import auth
 
 
 @pytest.fixture

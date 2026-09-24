@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.approval import approve_token, issue_token, validate_token
+from ai_orchestrator.gates.approval import approve_token, issue_token, validate_token
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 

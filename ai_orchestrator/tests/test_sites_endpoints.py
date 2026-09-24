@@ -9,6 +9,7 @@
 - 지원하지 않는 action → 400
 - 감사 로그에 비밀번호/Authorization/쿠키 원문이 섞이지 않는다.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -26,12 +27,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def client(tmp_path_factory):
     users_path = tmp_path_factory.mktemp("policies") / "http_users.json"
     users_path.write_text(
-        json.dumps([
-            {"username": "owner_u",    "password_hash": "pw-owner",    "role": "owner",    "enabled": True},
-            {"username": "admin_u",    "password_hash": "pw-admin",    "role": "admin",    "enabled": True},
-            {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
-            {"username": "viewer_u",   "password_hash": "pw-viewer",   "role": "viewer",   "enabled": True},
-        ], ensure_ascii=False),
+        json.dumps(
+            [
+                {"username": "owner_u", "password_hash": "pw-owner", "role": "owner", "enabled": True},
+                {"username": "admin_u", "password_hash": "pw-admin", "role": "admin", "enabled": True},
+                {"username": "operator_u", "password_hash": "pw-operator", "role": "operator", "enabled": True},
+                {"username": "viewer_u", "password_hash": "pw-viewer", "role": "viewer", "enabled": True},
+            ],
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
 
@@ -39,18 +43,24 @@ def client(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
 
     from ai_orchestrator import config as _config
+
     importlib.reload(_config)
-    from ai_orchestrator import auth as _auth
+    from ai_orchestrator.gates import auth as _auth
+
     importlib.reload(_auth)
     # 주의: sites.router 는 auth.require_role 을 import 하므로 auth 리로드 후에 리로드.
     from ai_orchestrator.sites import router as _sites_router
+
     importlib.reload(_sites_router)
     from ai_orchestrator import router as _router
+
     importlib.reload(_router)
     from ai_orchestrator import server as _server
+
     importlib.reload(_server)
 
     from fastapi.testclient import TestClient
+
     c = TestClient(_server.app, raise_server_exceptions=True)
     yield c
 
@@ -184,7 +194,7 @@ def test_audit_log_does_not_leak_secrets(client):
     forbidden_substrings = [
         "should_not_leak_42",  # 민감 value 자체
         "authorization:",
-        "basic pw-",            # 기본 인증 헤더 원문 금지
+        "basic pw-",  # 기본 인증 헤더 원문 금지
         "set-cookie",
     ]
     for s in forbidden_substrings:

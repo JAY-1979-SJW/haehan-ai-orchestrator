@@ -4,23 +4,24 @@
 (cancel/approve/reject 등 작업 처리 라우트는 후속 슬라이스에서 합류)
 sibling leaf 는 직접 import 하지 않는다. [docs/module_separation_standard.md]
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .auth import require_role
-from .audit_logger import log_event
-from .approval import approve_token, reject_token, issue_token_for_dev_reg
+from . import local_agent_audit_builders as _audit
+from . import local_agent_audit_event_policy as _policy
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
-from . import local_agent_audit_event_policy as _policy
-from . import local_agent_audit_builders as _audit
-from .local_agent_router_validation import _capture_approval_note  # 공유 leaf
+from .audit_logger import log_event
+from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
+from .gates.auth import require_role
 from .local_agent_router_schemas import (
-    AgentTaskApprovalRequest, CancelTaskRequest, AgentTaskRequest,
+    AgentTaskApprovalRequest,
+    AgentTaskRequest,
+    CancelTaskRequest,
 )
+from .local_agent_router_validation import _capture_approval_note  # 공유 leaf
 
 _CANCEL_REASON_MAX_LEN = 200
 
@@ -30,15 +31,14 @@ task_router = APIRouter()
 @task_router.get("/{agent_id}/tasks")
 def list_local_agent_tasks(
     agent_id: str,
-    status: Optional[str] = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     user: dict = Depends(require_role("admin", "owner", "viewer")),
 ):
     if status is not None and status not in _reg.KNOWN_TASK_STATUSES:
         raise HTTPException(
             status_code=400,
-            detail={"error": "UNKNOWN_STATUS",
-                    "message": f"알 수 없는 status: {status}"},
+            detail={"error": "UNKNOWN_STATUS", "message": f"알 수 없는 status: {status}"},
         )
     tasks = _reg.list_tasks_for_agent(agent_id, status=status, limit=limit)
     return {
@@ -58,8 +58,7 @@ def get_local_agent_task(
     if task is None:
         raise HTTPException(
             status_code=404,
-            detail={"error": "TASK_NOT_FOUND",
-                    "message": f"미등록 작업: {agent_id}/{task_id}"},
+            detail={"error": "TASK_NOT_FOUND", "message": f"미등록 작업: {agent_id}/{task_id}"},
         )
     return task.to_safe()
 
@@ -85,28 +84,29 @@ def cancel_local_agent_task(
     if len(reason) > _CANCEL_REASON_MAX_LEN:
         raise HTTPException(
             status_code=400,
-            detail={"error": "REASON_TOO_LONG",
-                    "message": f"reason 은 최대 {_CANCEL_REASON_MAX_LEN}자입니다"},
+            detail={"error": "REASON_TOO_LONG", "message": f"reason 은 최대 {_CANCEL_REASON_MAX_LEN}자입니다"},
         )
 
     # 취소 전 현재 상태 보존 (audit용)
     existing = _reg.get_task(agent_id, task_id)
     if existing is None:
         log_event(
-            "LOCAL_AGENT_TASK_CANCEL_REQUESTED", task_id,
-            actor=actor, role=role,
+            "LOCAL_AGENT_TASK_CANCEL_REQUESTED",
+            task_id,
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} reason=TASK_NOT_FOUND",
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "TASK_NOT_FOUND",
-                    "message": f"미등록 작업: {agent_id}/{task_id}"},
+            detail={"error": "TASK_NOT_FOUND", "message": f"미등록 작업: {agent_id}/{task_id}"},
         )
     previous_status = existing.status
 
     try:
         task, cancel_action = _reg.cancel_task(
-            agent_id, task_id,
+            agent_id,
+            task_id,
             actor=actor,
             reason=reason,
         )
@@ -121,16 +121,14 @@ def cancel_local_agent_task(
             detail={"error": "TASK_NOT_FOUND", "message": str(e)},
         )
 
-    audit_event = (
-        "LOCAL_AGENT_TASK_CANCELLED"
-        if cancel_action == "cancelled"
-        else "LOCAL_AGENT_TASK_CANCEL_REQUESTED"
-    )
+    audit_event = "LOCAL_AGENT_TASK_CANCELLED" if cancel_action == "cancelled" else "LOCAL_AGENT_TASK_CANCEL_REQUESTED"
     log_event(
-        audit_event, task_id,
+        audit_event,
+        task_id,
         risk_level=task.risk_level,
         action_type=task.action,
-        actor=actor, role=role,
+        actor=actor,
+        role=role,
         note=(
             f"agent_id={agent_id}"
             f" previous_status={previous_status}"
@@ -167,30 +165,29 @@ def approve_local_agent_task(
     if task is None:
         raise HTTPException(
             status_code=404,
-            detail={"error": "TASK_NOT_FOUND",
-                    "message": f"미등록 작업: {agent_id}/{task_id}"},
+            detail={"error": "TASK_NOT_FOUND", "message": f"미등록 작업: {agent_id}/{task_id}"},
         )
 
     if not token_id:
         raise HTTPException(
             status_code=400,
-            detail={"error": "MISSING_TOKEN_ID",
-                    "message": "token_id 가 필요합니다"},
+            detail={"error": "MISSING_TOKEN_ID", "message": "token_id 가 필요합니다"},
         )
 
     if task.risk_level != "high":
         # 승인 자체가 의미 없는 작업 — 혼동 방지로 400
         raise HTTPException(
             status_code=400,
-            detail={"error": "NOT_APPROVABLE",
-                    "message": "high risk 가 아닌 작업은 승인 대상이 아닙니다"},
+            detail={"error": "NOT_APPROVABLE", "message": "high risk 가 아닌 작업은 승인 대상이 아닙니다"},
         )
 
     # 재실행 방지: 이미 결정된 작업은 새 승인을 받지 않는다.
     if task.status != "waiting_approval":
         log_event(
-            "LOCAL_AGENT_TASK_APPROVAL_REPLAYED", task_id,
-            actor=actor, role=role,
+            "LOCAL_AGENT_TASK_APPROVAL_REPLAYED",
+            task_id,
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} current_status={task.status}",
         )
         return task.to_safe()
@@ -198,8 +195,11 @@ def approve_local_agent_task(
     token, status = approve_token(token_id, task_id, actor, role)
     log_event(
         _policy.APPROVE_AUDIT_EVENT.get(status, "APPROVAL_DENIED"),
-        task_id, actor=actor, role=role,
-        decision=status, risk_level=token.risk_level,
+        task_id,
+        actor=actor,
+        role=role,
+        decision=status,
+        risk_level=token.risk_level,
         action_type=task.action,
         note=_audit.build_approval_note(agent_id, token.public_id),
     )
@@ -208,16 +208,18 @@ def approve_local_agent_task(
         updated = _reg.mark_approved(task_id, actor)
         if updated is None:
             # mark_approved 가 task 를 못 찾은 비정상 케이스
-            raise HTTPException(status_code=404,
-                                detail={"error": "TASK_NOT_FOUND"})
+            raise HTTPException(status_code=404, detail={"error": "TASK_NOT_FOUND"})
         if _guards.is_capture_screenshot_task(updated):
             log_event(
-                "CAPTURE_SCREENSHOT_APPROVED", task_id,
+                "CAPTURE_SCREENSHOT_APPROVED",
+                task_id,
                 risk_level=updated.risk_level,
                 action_type=updated.action,
-                actor=actor, role=role,
+                actor=actor,
+                role=role,
                 note=_audit.build_screenshot_approval_note(
-                    agent_id, _guards.task_is_dry_run(updated),
+                    agent_id,
+                    _guards.task_is_dry_run(updated),
                     approval_public_id=token.public_id,
                 ),
             )
@@ -228,17 +230,20 @@ def approve_local_agent_task(
         _reg.mark_expired(task_id)
         if _guards.is_capture_screenshot_task(task):
             log_event(
-                "CAPTURE_SCREENSHOT_REJECTED", task_id,
+                "CAPTURE_SCREENSHOT_REJECTED",
+                task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
-                actor=actor, role=role,
+                actor=actor,
+                role=role,
                 decision="expired",
-                note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
+                note=f"agent_id={agent_id} approval_public_id={token.public_id}"
+                if token.public_id
+                else f"agent_id={agent_id}",
             )
 
     http_code = _policy.APPROVE_STATUS_HTTP.get(status, 400)
-    raise HTTPException(status_code=http_code,
-                        detail={"error": status.upper(), "status": status})
+    raise HTTPException(status_code=http_code, detail={"error": status.upper(), "status": status})
 
 
 @task_router.post("/{agent_id}/tasks/{task_id}/reject")
@@ -258,26 +263,25 @@ def reject_local_agent_task(
     if task is None:
         raise HTTPException(
             status_code=404,
-            detail={"error": "TASK_NOT_FOUND",
-                    "message": f"미등록 작업: {agent_id}/{task_id}"},
+            detail={"error": "TASK_NOT_FOUND", "message": f"미등록 작업: {agent_id}/{task_id}"},
         )
     if not token_id:
         raise HTTPException(
             status_code=400,
-            detail={"error": "MISSING_TOKEN_ID",
-                    "message": "token_id 가 필요합니다"},
+            detail={"error": "MISSING_TOKEN_ID", "message": "token_id 가 필요합니다"},
         )
     if task.risk_level != "high":
         raise HTTPException(
             status_code=400,
-            detail={"error": "NOT_APPROVABLE",
-                    "message": "high risk 가 아닌 작업은 거절 대상이 아닙니다"},
+            detail={"error": "NOT_APPROVABLE", "message": "high risk 가 아닌 작업은 거절 대상이 아닙니다"},
         )
 
     if task.status != "waiting_approval":
         log_event(
-            "LOCAL_AGENT_TASK_APPROVAL_REPLAYED", task_id,
-            actor=actor, role=role,
+            "LOCAL_AGENT_TASK_APPROVAL_REPLAYED",
+            task_id,
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} current_status={task.status}",
         )
         return task.to_safe()
@@ -285,24 +289,32 @@ def reject_local_agent_task(
     token, status = reject_token(token_id, task_id, actor, role, reason=reason)
     log_event(
         _policy.REJECT_AUDIT_EVENT.get(status, "APPROVAL_REJECTED"),
-        task_id, actor=actor, role=role,
-        decision=status, risk_level=token.risk_level,
+        task_id,
+        actor=actor,
+        role=role,
+        decision=status,
+        risk_level=token.risk_level,
         action_type=task.action,
-        note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else "") + (f" approval_public_id={token.public_id}" if token.public_id else ""),
+        note=f"agent_id={agent_id}"
+        + (f" reason={reason}" if reason else "")
+        + (f" approval_public_id={token.public_id}" if token.public_id else ""),
     )
     if status == "rejected":
         updated = _reg.mark_rejected(task_id, actor, reason=reason)
         if updated is None:
-            raise HTTPException(status_code=404,
-                                detail={"error": "TASK_NOT_FOUND"})
+            raise HTTPException(status_code=404, detail={"error": "TASK_NOT_FOUND"})
         if _guards.is_capture_screenshot_task(updated):
             log_event(
-                "CAPTURE_SCREENSHOT_REJECTED", task_id,
+                "CAPTURE_SCREENSHOT_REJECTED",
+                task_id,
                 risk_level=updated.risk_level,
                 action_type=updated.action,
-                actor=actor, role=role,
+                actor=actor,
+                role=role,
                 decision="rejected",
-                note=f"agent_id={agent_id}" + (f" reason={reason}" if reason else "") + (f" approval_public_id={token.public_id}" if token.public_id else ""),
+                note=f"agent_id={agent_id}"
+                + (f" reason={reason}" if reason else "")
+                + (f" approval_public_id={token.public_id}" if token.public_id else ""),
             )
         return updated.to_safe()
 
@@ -310,17 +322,20 @@ def reject_local_agent_task(
         _reg.mark_expired(task_id)
         if _guards.is_capture_screenshot_task(task):
             log_event(
-                "CAPTURE_SCREENSHOT_REJECTED", task_id,
+                "CAPTURE_SCREENSHOT_REJECTED",
+                task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
-                actor=actor, role=role,
+                actor=actor,
+                role=role,
                 decision="expired",
-                note=f"agent_id={agent_id} approval_public_id={token.public_id}" if token.public_id else f"agent_id={agent_id}",
+                note=f"agent_id={agent_id} approval_public_id={token.public_id}"
+                if token.public_id
+                else f"agent_id={agent_id}",
             )
 
     http_code = _policy.REJECT_STATUS_HTTP.get(status, 400)
-    raise HTTPException(status_code=http_code,
-                        detail={"error": status.upper(), "status": status})
+    raise HTTPException(status_code=http_code, detail={"error": status.upper(), "status": status})
 
 
 @task_router.post("/{agent_id}/tasks")
@@ -340,14 +355,16 @@ def submit_local_agent_task(
 
     if _reg.get_agent(agent_id) is None:
         log_event(
-            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
-            action_type=body.action, actor=actor, role=role,
+            "LOCAL_AGENT_TASK_REJECTED",
+            "local-agent",
+            action_type=body.action,
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
         )
         raise HTTPException(
             status_code=404,
-            detail={"error": "AGENT_NOT_FOUND",
-                    "message": f"미등록 에이전트: {agent_id}"},
+            detail={"error": "AGENT_NOT_FOUND", "message": f"미등록 에이전트: {agent_id}"},
         )
 
     try:
@@ -359,8 +376,11 @@ def submit_local_agent_task(
         )
     except _reg.UnknownActionError as e:
         log_event(
-            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
-            action_type=str(body.action), actor=actor, role=role,
+            "LOCAL_AGENT_TASK_REJECTED",
+            "local-agent",
+            action_type=str(body.action),
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} reason=UNKNOWN_ACTION",
         )
         raise HTTPException(
@@ -378,35 +398,44 @@ def submit_local_agent_task(
         )
         _reg.attach_token(task.task_id, token.token_id, token.public_id)
         log_event(
-            "LOCAL_AGENT_TASK_WAITING_APPROVAL", task.task_id,
+            "LOCAL_AGENT_TASK_WAITING_APPROVAL",
+            task.task_id,
             risk_level=task.risk_level,
             action_type=task.action,
-            actor=actor, role=role,
+            actor=actor,
+            role=role,
             token_id=token.token_id,
             note=f"agent_id={agent_id}",
         )
         if _guards.is_capture_screenshot_task(task):
             log_event(
-                "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED", task.task_id,
+                "CAPTURE_SCREENSHOT_APPROVAL_REQUESTED",
+                task.task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
-                actor=actor, role=role,
+                actor=actor,
+                role=role,
                 token_id=token.token_id,
                 note=_capture_approval_note(
-                    task, agent_id, _guards.task_is_dry_run(task),
+                    task,
+                    agent_id,
+                    _guards.task_is_dry_run(task),
                 ),
             )
     else:
         log_event(
-            "LOCAL_AGENT_TASK_QUEUED", task.task_id,
+            "LOCAL_AGENT_TASK_QUEUED",
+            task.task_id,
             risk_level=task.risk_level,
             action_type=task.action,
-            actor=actor, role=role,
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} status={task.status}",
         )
         if task.status == "completed":
             log_event(
-                "LOCAL_AGENT_TASK_COMPLETED", task.task_id,
+                "LOCAL_AGENT_TASK_COMPLETED",
+                task.task_id,
                 risk_level=task.risk_level,
                 action_type=task.action,
                 actor="system",

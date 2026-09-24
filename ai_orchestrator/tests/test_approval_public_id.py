@@ -12,6 +12,7 @@ UI/result_data/audit 표시용 외부 식별자다. 본 테스트는:
   - capture_screenshot result_data.approval_id 는 public_id 와 같고 token_id
     와 다름
 """
+
 from __future__ import annotations
 
 import os
@@ -22,15 +23,20 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-import ai_orchestrator.approval as _ap
+import ai_orchestrator.gates.approval as _ap
 import ai_orchestrator.local_agent_registry as reg
 
 
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
-    import ai_orchestrator.auth as _auth; importlib.reload(_auth)
-    import ai_orchestrator.local_agent_router as _lar; importlib.reload(_lar)
+
+    import ai_orchestrator.gates.auth as _auth
+
+    importlib.reload(_auth)
+    import ai_orchestrator.local_agent_router as _lar
+
+    importlib.reload(_lar)
     import ai_orchestrator.audit_logger as _al
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -48,8 +54,9 @@ def _isolated_storage(tmp_path, monkeypatch):
 def _make_test_client(user):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
-    from ai_orchestrator.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -62,8 +69,7 @@ def _admin():
 
 
 def _register(client):
-    r = client.post("/api/v1/local-agents/register",
-                    json={"host": "h", "os_name": "Windows", "version": "0.1"})
+    r = client.post("/api/v1/local-agents/register", json={"host": "h", "os_name": "Windows", "version": "0.1"})
     body = r.json()
     return body["agent_id"], body["device_token"]
 
@@ -71,6 +77,7 @@ def _register(client):
 # ─────────────────────────────────────────────────────────────────────────
 # 1. ApprovalToken 자체에 public_id 가 부여되고 token_id 와 다름
 # ─────────────────────────────────────────────────────────────────────────
+
 
 def test_approval_token_has_distinct_public_id():
     tok = _ap.issue_token_for_dev_reg("lat-x", "admin", "high")
@@ -84,14 +91,15 @@ def test_approval_token_has_distinct_public_id():
 # 2. attach_token 으로 task 에 token_id + approval_public_id 모두 저장
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_attach_token_stores_both_ids():
     reg.clear()
-    t = reg.enqueue_task(agent_id="la-x", action="capture_screenshot",
-                         params={"options": {"dry_run": True}},
-                         requested_by="admin")
+    t = reg.enqueue_task(
+        agent_id="la-x", action="capture_screenshot", params={"options": {"dry_run": True}}, requested_by="admin"
+    )
     reg.attach_token(t.task_id, "tok-internal-1", "appr_public_1")
     fetched = reg.find_task_by_id(t.task_id)
-    assert fetched.token_id == "tok-internal-1"
+    assert fetched.token_id == "tok-internal-1"  # noqa: S105 — 테스트용 식별자, 실제 비밀값 아님
     assert fetched.approval_public_id == "appr_public_1"
 
 
@@ -99,11 +107,12 @@ def test_attach_token_stores_both_ids():
 # 3. to_safe() 에 approval_id (public) 포함
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_to_safe_exposes_approval_public_id():
     reg.clear()
-    t = reg.enqueue_task(agent_id="la-x", action="capture_screenshot",
-                         params={"options": {"dry_run": True}},
-                         requested_by="admin")
+    t = reg.enqueue_task(
+        agent_id="la-x", action="capture_screenshot", params={"options": {"dry_run": True}}, requested_by="admin"
+    )
     reg.attach_token(t.task_id, "tok-internal-2", "appr_public_2")
     safe = reg.find_task_by_id(t.task_id).to_safe()
     assert safe["approval_id"] == "appr_public_2"
@@ -114,11 +123,12 @@ def test_to_safe_exposes_approval_public_id():
 # 4. to_dispatch() 에 token_id 미노출 + approval_id 노출
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_to_dispatch_uses_public_id_not_token_id():
     reg.clear()
-    t = reg.enqueue_task(agent_id="la-x", action="capture_screenshot",
-                         params={"options": {"dry_run": True}},
-                         requested_by="admin")
+    t = reg.enqueue_task(
+        agent_id="la-x", action="capture_screenshot", params={"options": {"dry_run": True}}, requested_by="admin"
+    )
     reg.attach_token(t.task_id, "tok-secret-3", "appr_public_3")
     reg.mark_approved(t.task_id, "admin")
     payload = reg.find_task_by_id(t.task_id).to_dispatch()
@@ -130,9 +140,9 @@ def test_to_dispatch_uses_public_id_not_token_id():
 def test_to_dispatch_legacy_falls_back_to_token_id_when_public_missing():
     """1릴리즈 backward compat: public_id 없는 legacy task 도 dispatch 가능."""
     reg.clear()
-    t = reg.enqueue_task(agent_id="la-x", action="capture_screenshot",
-                         params={"options": {"dry_run": True}},
-                         requested_by="admin")
+    t = reg.enqueue_task(
+        agent_id="la-x", action="capture_screenshot", params={"options": {"dry_run": True}}, requested_by="admin"
+    )
     # public_id 누락 — legacy attach
     reg.attach_token(t.task_id, "tok-only-4")
     reg.mark_approved(t.task_id, "admin")
@@ -146,32 +156,35 @@ def test_to_dispatch_legacy_falls_back_to_token_id_when_public_missing():
 # 5. websocket_client process_task: approval_id → _approval_id 주입
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_process_task_injects_public_approval_id():
-    import local_agent.websocket_client as _wsc
     import local_agent.actions as _actions
+    import local_agent.websocket_client as _wsc
 
     captured = {}
 
     def fake_execute(action, params):
         captured["params"] = params
         return _actions.ActionResult(
-            True, "ok",
-            {"action": "capture_screenshot", "file_basename": "x.png",
-             "image_width": 1, "image_height": 1},
+            True,
+            "ok",
+            {"action": "capture_screenshot", "file_basename": "x.png", "image_width": 1, "image_height": 1},
         )
 
     orig = _wsc.execute_action
     _wsc.execute_action = fake_execute
     try:
-        _wsc.process_task({
-            "task_id": "lat-pid",
-            "agent_id": "la-pid",
-            "action": "capture_screenshot",
-            "risk_level": "high",
-            "params": {},
-            "approved": True,
-            "approval_id": "appr_public_xyz",
-        })
+        _wsc.process_task(
+            {
+                "task_id": "lat-pid",
+                "agent_id": "la-pid",
+                "action": "capture_screenshot",
+                "risk_level": "high",
+                "params": {},
+                "approved": True,
+                "approval_id": "appr_public_xyz",
+            }
+        )
     finally:
         _wsc.execute_action = orig
 
@@ -182,6 +195,7 @@ def test_process_task_injects_public_approval_id():
 # ─────────────────────────────────────────────────────────────────────────
 # 6. approve endpoint: token_id 만 성공, public_id 시도는 거부
 # ─────────────────────────────────────────────────────────────────────────
+
 
 def test_approve_with_token_id_succeeds_public_id_rejected():
     reg.clear()
@@ -217,6 +231,7 @@ def test_approve_with_token_id_succeeds_public_id_rejected():
 # 7. capture_screenshot result_data.approval_id == public_id, != token_id
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch):
     reg.clear()
     import local_agent.actions as _actions
@@ -230,6 +245,7 @@ def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch
 
         def save(self, path, format="PNG"):
             from pathlib import Path as _P
+
             _P(path).write_bytes(b"\x89PNG_data")
 
     monkeypatch.setattr(_actions, "_grab_screen", lambda: (_FakeImg(), 10, 10))
@@ -252,8 +268,7 @@ def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch
     )
 
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({"type": "auth", "agent_id": agent_id,
-                      "device_token": device_token})
+        ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": device_token})
         assert ws.receive_json()["type"] == "auth_ok"
         msg = ws.receive_json()
         assert msg["type"] == "task"
@@ -283,6 +298,7 @@ def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch
 # 8. open_url_execute: result_data.approval_id == public_id
 # ─────────────────────────────────────────────────────────────────────────
 
+
 def test_open_url_execute_result_data_uses_public_id(tmp_path):
     reg.clear()
     from local_agent.websocket_client import process_task
@@ -306,8 +322,7 @@ def test_open_url_execute_result_data_uses_public_id(tmp_path):
 
     with mock.patch("local_agent.actions.webbrowser.open"):
         with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-            ws.send_json({"type": "auth", "agent_id": agent_id,
-                          "device_token": device_token})
+            ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": device_token})
             assert ws.receive_json()["type"] == "auth_ok"
             msg = ws.receive_json()
             assert "token_id" not in msg["task"]

@@ -15,9 +15,7 @@ from ai_orchestrator.routers.user_data_contribution_router import user_data_cont
 from ai_orchestrator.routers.web_task_router import web_task_router
 from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
 
-from .approval import approve_token, issue_token, reject_token
 from .audit_logger import log_event, read_recent_logs
-from .auth import require_role
 from .browser_tool.approval_record_router import approval_record_router
 from .connectors.browser_agent_router import browser_agent_router
 from .connectors.cdp_screen_router import cdp_screen_router
@@ -46,6 +44,8 @@ from .connectors.smartstore_router import smartstore_router
 from .connectors.user_auth_router import get_jwt_user, user_auth_router
 from .connectors.youtube_router import youtube_router
 from .executor import execute
+from .gates.approval import approve_token, issue_token, reject_token
+from .gates.auth import require_role
 from .inbox import get_inbox_item as _get_inbox_item
 from .inbox import read_recent_inbox
 from .local_agent_router import local_agent_router

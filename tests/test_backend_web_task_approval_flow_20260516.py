@@ -27,7 +27,7 @@ POST /api/v1/web-tasks/run 승인흐름 설계 감사 + boundary test 보강.
 
 방화구획:
   - TELEGRAM_BOT_TOKEN / TELEGRAM_APPROVER_CHAT_ID 미설정 시 자동 skip
-  - patch("ai_orchestrator.web_task_approval_service._ts.send_message") 로 테스트 격리
+  - patch("ai_orchestrator.services.web_task_approval_service._ts.send_message") 로 테스트 격리
   - approval_token_hash, screenshot_path는 API 응답에서 _SAFE_EXCLUDE로 제거
 
 설계 판정: NEEDS_APPROVAL_SERVICE_EXTRACTION (완료 — web_task_approval_service.py 분리됨)
@@ -45,7 +45,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ai_orchestrator.routers import web_task_router
-from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+from ai_orchestrator.services.web_task_approval_service import PendingApprovalResult
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
 
@@ -232,25 +232,25 @@ class TestRealRunApprovalBoundary:
             patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
             patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
-                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                "ai_orchestrator.services.web_task_approval_service.issue_token_for_dev_reg",
                 side_effect=lambda **kw: (
                     call_order.append("issue"),
                     MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
                 )[1],
             ) as _issue_m,
             patch(
-                "ai_orchestrator.web_task_approval_service._dra.create_pending",
+                "ai_orchestrator.services.web_task_approval_service._dra.create_pending",
                 side_effect=lambda **kw: call_order.append("create"),
             ),
             patch(
-                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                "ai_orchestrator.services.web_task_approval_service.build_dev_reg_message",
                 return_value={"text": "x", "reply_markup": {}},
             ),
             patch(
-                "ai_orchestrator.web_task_approval_service._ts.send_message",
+                "ai_orchestrator.services.web_task_approval_service._ts.send_message",
                 return_value={"ok": True, "result": {"message_id": 1}},
             ),
-            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.services.web_task_approval_service._dra.mark_telegram_sent"),
             patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             web_task_router._execute_web_task(
@@ -275,22 +275,22 @@ class TestRealRunApprovalBoundary:
             patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
             patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
-                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                "ai_orchestrator.services.web_task_approval_service.issue_token_for_dev_reg",
                 return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
             ),
             patch(
-                "ai_orchestrator.web_task_approval_service._dra.create_pending",
+                "ai_orchestrator.services.web_task_approval_service._dra.create_pending",
                 side_effect=lambda **kw: call_order.append("create"),
             ),
             patch(
-                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                "ai_orchestrator.services.web_task_approval_service.build_dev_reg_message",
                 return_value={"text": "x", "reply_markup": {}},
             ),
             patch(
-                "ai_orchestrator.web_task_approval_service._ts.send_message",
+                "ai_orchestrator.services.web_task_approval_service._ts.send_message",
                 side_effect=lambda **kw: (call_order.append("send"), {"ok": True, "result": {"message_id": 1}})[1],
             ),
-            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.services.web_task_approval_service._dra.mark_telegram_sent"),
             patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             web_task_router._execute_web_task(
@@ -332,16 +332,16 @@ class TestTelegramFailureFallback:
             patch("ai_orchestrator.routers.web_task_router.get_entry", return_value=entry),
             patch("ai_orchestrator.routers.web_task_router.validate_params", return_value=[]),
             patch(
-                "ai_orchestrator.web_task_approval_service.issue_token_for_dev_reg",
+                "ai_orchestrator.services.web_task_approval_service.issue_token_for_dev_reg",
                 return_value=MagicMock(token_id="tok-x", expires_at="2026-06-01T09:00:00+00:00"),
             ),
-            patch("ai_orchestrator.web_task_approval_service._dra.create_pending"),
+            patch("ai_orchestrator.services.web_task_approval_service._dra.create_pending"),
             patch(
-                "ai_orchestrator.web_task_approval_service.build_dev_reg_message",
+                "ai_orchestrator.services.web_task_approval_service.build_dev_reg_message",
                 return_value={"text": "msg", "reply_markup": {}},
             ),
-            patch("ai_orchestrator.web_task_approval_service._ts.send_message", return_value=send_result),
-            patch("ai_orchestrator.web_task_approval_service._dra.mark_telegram_sent"),
+            patch("ai_orchestrator.services.web_task_approval_service._ts.send_message", return_value=send_result),
+            patch("ai_orchestrator.services.web_task_approval_service._dra.mark_telegram_sent"),
             patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             return web_task_router._execute_web_task(
@@ -408,7 +408,7 @@ class TestWebTaskRunIntegrationBoundary:
 
     def test_dry_run_via_client_no_pending_record(self, client, auth):
         """TestClient dry_run=True — dev_reg_approval pending 레코드 없음."""
-        import ai_orchestrator.dev_reg_approval as _dra
+        import ai_orchestrator.gates.dev_reg_approval as _dra
 
         before = len(_dra.list_pending())
 
@@ -500,7 +500,7 @@ class TestApprovalFlowDesignVerdict:
         """service 소스에 token/pending/send/mark 4가지 책임이 위임되어 있다."""
         import pathlib
 
-        src = pathlib.Path("ai_orchestrator/web_task_approval_service.py").read_text(encoding="utf-8")
+        src = pathlib.Path("ai_orchestrator/services/web_task_approval_service.py").read_text(encoding="utf-8")
         responsibilities = [
             "issue_token_for_dev_reg",
             "_dra.create_pending",

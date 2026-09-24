@@ -57,9 +57,9 @@ DOMAIN_CORE_MAP = {
     },
     "Approval": {
         "impl_files": [
-            "ai_orchestrator/approval.py",
-            "ai_orchestrator/dev_reg_approval.py",
-            "ai_orchestrator/web_task_approval_service.py",
+            "ai_orchestrator/gates/approval.py",
+            "ai_orchestrator/gates/dev_reg_approval.py",
+            "ai_orchestrator/services/web_task_approval_service.py",
         ],
         "status": "FUNCTIONAL",  # 동작하지만 서비스 계층 미분리
         "needs": ["approval_service_extract", "approval_history_model"],
@@ -245,7 +245,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "approval_service": {
         "purpose": "승인 토큰 발행, pending 생성, Telegram 발송 조율",
-        "current_location": "ai_orchestrator/web_task_approval_service.py (EXTRACTED)",
+        "current_location": "ai_orchestrator/services/web_task_approval_service.py (EXTRACTED)",
         "extraction_priority": "DONE",
         "must_not_call": ["router", "fastapi_http"],
         "test_criteria": ["token 발행 단위 테스트", "pending 생성 검증"],
@@ -328,7 +328,7 @@ class TestServiceLayerDesign:
     def test_approval_service_already_extracted(self):
         """approval_service는 web_task_approval_service.py로 이미 추출됨."""
         assert SERVICE_LAYER_DESIGN["approval_service"]["extraction_priority"] == "DONE"
-        src = pathlib.Path("ai_orchestrator/web_task_approval_service.py")
+        src = pathlib.Path("ai_orchestrator/services/web_task_approval_service.py")
         assert src.exists()
 
     def test_high_priority_services_list(self):
@@ -840,9 +840,9 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/action_evidence_store.py",
     "ai_orchestrator/task_state.py",
     "ai_orchestrator/audit_logger.py",
-    "ai_orchestrator/approval.py",
-    "ai_orchestrator/dev_reg_approval.py",
-    "ai_orchestrator/web_task_approval_service.py",
+    "ai_orchestrator/gates/approval.py",
+    "ai_orchestrator/gates/dev_reg_approval.py",
+    "ai_orchestrator/services/web_task_approval_service.py",
     "ai_orchestrator/services/web_task_registry.py",
     "ai_orchestrator/web_task_templates.py",
     "ai_orchestrator/external_work_registry.py",
@@ -859,9 +859,9 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.server.execution_location_guard",
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.task_state",
-    "ai_orchestrator.approval",
-    "ai_orchestrator.dev_reg_approval",
-    "ai_orchestrator.web_task_approval_service",
+    "ai_orchestrator.gates.approval",
+    "ai_orchestrator.gates.dev_reg_approval",
+    "ai_orchestrator.services.web_task_approval_service",
     "ai_orchestrator.services.web_task_registry",
     "ai_orchestrator.external_work_registry",
     "ai_orchestrator.routers.ops_router",

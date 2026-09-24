@@ -1,4 +1,5 @@
 """YouTube 업로드 라우트 — 플랜 생성 → 사용자 승인 → 실행."""
+
 from __future__ import annotations
 
 import os
@@ -10,8 +11,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
 from scripts.youtube import uploader as _uploader
+
 from ._helpers import audit
 
 router = APIRouter()
@@ -24,7 +26,7 @@ _TOKEN_FILE = os.getenv(
 
 class ExecuteRequest(BaseModel):
     plan_path: str
-    confirm: str          # 반드시 "YOUTUBE_APPROVED_UPLOAD"
+    confirm: str  # 반드시 "YOUTUBE_APPROVED_UPLOAD"
     dry_run: bool = False
 
 
@@ -36,7 +38,7 @@ async def prepare_upload(
     privacy: str = Form("private"),
     tags: str = Form(""),
     category_id: str = Form("22"),
-    publish_at: str = Form(""),   # ISO 8601 예: 2026-06-01T09:00:00+09:00 (예약 게시)
+    publish_at: str = Form(""),  # ISO 8601 예: 2026-06-01T09:00:00+09:00 (예약 게시)
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict[str, Any]:
     """영상 파일을 받아 업로드 플랜을 생성합니다. 실제 업로드는 실행하지 않습니다."""

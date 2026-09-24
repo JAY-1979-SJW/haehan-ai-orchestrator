@@ -16,7 +16,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from ..auth import require_role
+from ai_orchestrator.gates.auth import require_role
 
 router = APIRouter(prefix="/server", tags=["server"])
 

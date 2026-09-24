@@ -17,8 +17,9 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from ai_orchestrator.gates.auth import require_role
+
 from ..audit_logger import log_event
-from ..auth import require_role
 from ..connectors.user_auth_router import get_jwt_user
 from ..external_work_registry import list_site_catalog
 from . import registry

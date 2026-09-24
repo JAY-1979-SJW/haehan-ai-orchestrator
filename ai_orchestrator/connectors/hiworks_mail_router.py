@@ -13,8 +13,9 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from ai_orchestrator.gates.auth import require_role
+
 from ..audit_logger import log_event
-from ..auth import require_role
 
 logger = logging.getLogger(__name__)
 

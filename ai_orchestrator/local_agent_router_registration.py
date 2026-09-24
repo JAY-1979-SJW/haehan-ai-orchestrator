@@ -4,14 +4,15 @@ leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 
 sibling leaf 는 직접 import 하지 않고 공유 계약(schemas)만 사용.
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from .auth import require_role
-from .audit_logger import log_event
 from . import local_agent_registry as _reg
 from . import registration_codes as _regcodes
+from .audit_logger import log_event
+from .gates.auth import require_role
 from .local_agent_router_schemas import (
     AgentRegisterRequest,
     IssueRegistrationCodeRequest,
@@ -33,16 +34,19 @@ def register_local_agent(
     actor = user["actor"]
     role = user["role"]
     result = _reg.register_agent(
-        host=body.host, os_name=body.os_name, version=body.version,
+        host=body.host,
+        os_name=body.os_name,
+        version=body.version,
         requested_by=actor,
     )
 
     # 감사 로그: token 원문 / 해시 모두 기록 금지. token_hash prefix 만 식별자로.
     log_event(
-        "LOCAL_AGENT_REGISTERED", result.agent.agent_id,
-        actor=actor, role=role,
-        note=f"host={result.agent.host} os={result.agent.os_name} "
-             f"ver={result.agent.version}",
+        "LOCAL_AGENT_REGISTERED",
+        result.agent.agent_id,
+        actor=actor,
+        role=role,
+        note=f"host={result.agent.host} os={result.agent.os_name} ver={result.agent.version}",
     )
 
     return {
@@ -59,9 +63,7 @@ def register_local_agent(
 
 # allowed_actions 검증: ACTION_RISK 키 중 high-risk 직접 실행계열은 제외.
 # (open_url_execute 는 별도 승인 흐름 — 등록코드 scope 에 직접 부여 금지)
-_REGCODE_ALLOWED_ACTIONS: frozenset[str] = frozenset(
-    set(_reg.ACTION_RISK.keys()) - {"open_url_execute"}
-)
+_REGCODE_ALLOWED_ACTIONS: frozenset[str] = frozenset(set(_reg.ACTION_RISK.keys()) - {"open_url_execute"})
 
 
 @registration_router.post("/registration-codes")
@@ -78,13 +80,15 @@ def issue_registration_code(
     role = user["role"]
 
     # allowed_actions 검증 — 미등록 액션은 400.
-    invalid = [a for a in (body.allowed_actions or [])
-               if str(a).strip().lower() not in _REGCODE_ALLOWED_ACTIONS]
+    invalid = [a for a in (body.allowed_actions or []) if str(a).strip().lower() not in _REGCODE_ALLOWED_ACTIONS]
     if invalid:
-        raise HTTPException(status_code=400, detail={
-            "code": "INVALID_ALLOWED_ACTIONS",
-            "message": f"unsupported actions: {invalid}",
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_ALLOWED_ACTIONS",
+                "message": f"unsupported actions: {invalid}",
+            },
+        )
 
     try:
         result = _regcodes.issue_code(
@@ -97,20 +101,30 @@ def issue_registration_code(
             smoke_test=body.smoke_test,
         )
     except _regcodes.InvalidTTLError as e:
-        raise HTTPException(status_code=400, detail={
-            "code": "INVALID_TTL", "message": str(e),
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_TTL",
+                "message": str(e),
+            },
+        )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail={
-            "code": "INVALID_REQUEST", "message": str(e),
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_REQUEST",
+                "message": str(e),
+            },
+        )
 
     # 감사 로그 — code 원문/hash/salt 절대 기록 금지. code_id 만.
     log_event(
-        "REGISTRATION_CODE_ISSUED", result.code.code_id,
-        actor=actor, role=role,
+        "REGISTRATION_CODE_ISSUED",
+        result.code.code_id,
+        actor=actor,
+        role=role,
         note=f"label={result.code.label} expires_at={result.code.expires_at} "
-             f"actions={','.join(result.code.allowed_actions) or '-'}",
+        f"actions={','.join(result.code.allowed_actions) or '-'}",
     )
 
     return {
@@ -141,12 +155,18 @@ def revoke_registration_code(
     role = user["role"]
     rec = _regcodes.revoke_code(code_id, actor=actor)
     if rec is None:
-        raise HTTPException(status_code=404, detail={
-            "code": "NOT_FOUND", "message": "registration_code not found",
-        })
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "NOT_FOUND",
+                "message": "registration_code not found",
+            },
+        )
     log_event(
-        "REGISTRATION_CODE_REVOKED", code_id,
-        actor=actor, role=role,
+        "REGISTRATION_CODE_REVOKED",
+        code_id,
+        actor=actor,
+        role=role,
         note=f"label={rec.label}",
     )
     return rec.to_safe()
@@ -164,33 +184,43 @@ def register_with_code(body: RegisterWithCodeRequest):
     except _regcodes.CodeExchangeError as e:
         # audit 에는 reason 만, code 원문은 절대 기록 금지.
         log_event(
-            "REGISTRATION_CODE_EXCHANGE_FAILED", "-",
-            actor="agent", role="-",
+            "REGISTRATION_CODE_EXCHANGE_FAILED",
+            "-",
+            actor="agent",
+            role="-",
             decision=e.reason,
             note="register-with-code rejected",
         )
-        raise HTTPException(status_code=400, detail={
-            "code": "INVALID_REGISTRATION_CODE",
-            "message": _regcodes.INVALID_CODE_MESSAGE,
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_REGISTRATION_CODE",
+                "message": _regcodes.INVALID_CODE_MESSAGE,
+            },
+        )
 
     result = _reg.register_agent(
-        host=body.host, os_name=body.os_name, version=body.version,
+        host=body.host,
+        os_name=body.os_name,
+        version=body.version,
         requested_by=f"registration_code:{rec.code_id}",
         smoke_test=rec.smoke_test,
     )
     _regcodes.attach_used_agent(rec.code_id, result.agent.agent_id)
 
     log_event(
-        "REGISTRATION_CODE_USED", rec.code_id,
-        actor="agent", role="-",
+        "REGISTRATION_CODE_USED",
+        rec.code_id,
+        actor="agent",
+        role="-",
         note=f"agent_id={result.agent.agent_id} label={rec.label}",
     )
     log_event(
-        "LOCAL_AGENT_REGISTERED", result.agent.agent_id,
-        actor=f"registration_code:{rec.code_id}", role="-",
-        note=f"host={result.agent.host} os={result.agent.os_name} "
-             f"ver={result.agent.version}",
+        "LOCAL_AGENT_REGISTERED",
+        result.agent.agent_id,
+        actor=f"registration_code:{rec.code_id}",
+        role="-",
+        note=f"host={result.agent.host} os={result.agent.os_name} ver={result.agent.version}",
     )
 
     return {

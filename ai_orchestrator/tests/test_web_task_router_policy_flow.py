@@ -150,7 +150,7 @@ class TestWebTaskRouterDryRunPath:
             patch("ai_orchestrator.routers.web_task_router.get_entry") as mock_get_entry,
             patch("ai_orchestrator.routers.web_task_router.validate_params") as mock_validate,
             patch("ai_orchestrator.routers.web_task_router.create_web_task_pending_approval") as mock_svc,
-            patch("ai_orchestrator.web_task_approval_service._ts.send_message") as mock_send,
+            patch("ai_orchestrator.services.web_task_approval_service._ts.send_message") as mock_send,
             patch("ai_orchestrator.routers.web_task_router.log_event"),
         ):
             mock_get_entry.return_value = mock_entry
@@ -213,7 +213,7 @@ class TestWebTaskRouterRealRunPath:
     """B. dry_run=False pending approval 경로"""
 
     def _mock_approval_result(self, expires_at="2026-04-28T10:00:00Z"):
-        from ai_orchestrator.web_task_approval_service import PendingApprovalResult
+        from ai_orchestrator.services.web_task_approval_service import PendingApprovalResult
 
         return PendingApprovalResult(
             task_id="wt-placeholder",

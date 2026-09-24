@@ -1,5 +1,6 @@
 import logging
-from .models import TaskRequest, RiskAssessment
+
+from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 

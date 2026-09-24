@@ -42,16 +42,16 @@ def _isolated_storage(tmp_path, monkeypatch):
     """
     import importlib
 
-    import ai_orchestrator.auth as _auth
+    import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
     import ai_orchestrator.routers.web_task_router as _wtr
 
     importlib.reload(_wtr)
 
-    import ai_orchestrator.approval as _ap
     import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.approval as _ap
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_dra, "_STORE_PATH", tmp_path / "dev_reg_approvals.jsonl")
@@ -92,7 +92,7 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.routers.web_task_router import web_task_router
 
     test_app = FastAPI()
@@ -181,7 +181,7 @@ def test_unknown_task_audit_logged(admin_user):
 
 def test_dry_run_no_approval_created(admin_user):
     """dry_run=true 이면 dev_reg_approval 레코드가 생성되지 않는다."""
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     client = _make_test_client(admin_user)
     resp = client.post(
@@ -243,7 +243,7 @@ def test_dry_run_returns_summary(admin_user):
 
 def test_real_run_creates_pending_approval(admin_user):
     """dry_run=false 이면 pending approval 레코드가 생성된다."""
-    import ai_orchestrator.dev_reg_approval as _dra
+    import ai_orchestrator.gates.dev_reg_approval as _dra
 
     with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
@@ -464,7 +464,7 @@ def test_validation_failure_audit_logged(admin_user):
 
 def test_dev_reg_approval_imports_unchanged():
     """기존 dev_reg_approval 핵심 함수가 정상 임포트된다."""
-    from ai_orchestrator.dev_reg_approval import (
+    from ai_orchestrator.gates.dev_reg_approval import (
         create_pending,
         handle_telegram_decision,
         list_pending,

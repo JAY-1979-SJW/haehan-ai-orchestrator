@@ -4,13 +4,13 @@ import uuid
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_orchestrator.approval import (
+from ai_orchestrator.audit_logger import read_recent_logs
+from ai_orchestrator.gates.approval import (
     RATE_LIMIT_MAX,
     approve_token,
     issue_token,
     validate_token,
 )
-from ai_orchestrator.audit_logger import read_recent_logs
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 

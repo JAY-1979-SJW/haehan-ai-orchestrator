@@ -8,8 +8,9 @@ import time as _t
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from ai_orchestrator.gates.auth import require_role
+
 from ...audit_logger import log_event
-from ...auth import require_role
 from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, save_ss
 
 router = APIRouter()

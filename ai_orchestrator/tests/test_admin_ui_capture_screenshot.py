@@ -37,7 +37,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import importlib
 
     monkeypatch.setenv("HAEHAN_ADMIN_LEGACY_UI_FALLBACK", "1")
-    import ai_orchestrator.auth as _auth
+    import ai_orchestrator.gates.auth as _auth
 
     importlib.reload(_auth)
     import ai_orchestrator.local_agent_router as _lar
@@ -47,8 +47,8 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_adm)
 
-    import ai_orchestrator.approval as _ap
     import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.gates.approval as _ap
     import ai_orchestrator.local_agent_registry as _reg
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
@@ -79,7 +79,7 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
     from ai_orchestrator.routers.admin_ui_router import admin_ui_router
 

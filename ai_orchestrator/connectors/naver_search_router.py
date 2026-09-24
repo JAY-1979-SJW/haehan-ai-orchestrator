@@ -12,8 +12,9 @@ import time
 
 from fastapi import APIRouter, Depends
 
+from ai_orchestrator.gates.auth import require_role
+
 from ..audit_logger import log_event
-from ..auth import require_role
 from . import naver_search_queries as q
 from .naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
 

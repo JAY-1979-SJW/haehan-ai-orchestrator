@@ -111,7 +111,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="haehan-ai-orchestrator", version="1.0.0", lifespan=lifespan)
 app.include_router(router)
 
-from .browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
+from .gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 
 app.add_middleware(BrowserGateMiddleware)
 

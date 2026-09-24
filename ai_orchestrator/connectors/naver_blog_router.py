@@ -16,8 +16,8 @@ from pydantic import BaseModel
 
 from ai_orchestrator.app_llm import APP_LLM_MODEL
 from ai_orchestrator.audit_logger import log_event
-from ai_orchestrator.auth import require_role
 from ai_orchestrator.connectors.tool_registry import register, to_openai_tools
+from ai_orchestrator.gates.auth import require_role
 from scripts.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)

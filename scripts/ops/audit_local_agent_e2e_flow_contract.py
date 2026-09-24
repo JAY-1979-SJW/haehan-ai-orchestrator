@@ -5,6 +5,7 @@ approved user request -> server queue -> authenticated local-agent WebSocket
 -> delivered/running/completed result. It does not start a real server, open a
 browser, call external sites, run Docker, build installers, or print secrets.
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,7 +14,6 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -50,7 +50,7 @@ def _contains_forbidden_key(value: Any) -> list[str]:
 
 
 def _make_client() -> TestClient:
-    from ai_orchestrator.auth import get_current_user
+    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.local_agent_router import local_agent_router
 
     app = FastAPI()
@@ -64,9 +64,9 @@ def _make_client() -> TestClient:
 
 def _reset_runtime_state() -> None:
     import ai_orchestrator.audit_logger as audit_logger
-    import ai_orchestrator.approval as approval
-    import ai_orchestrator.local_agent_router as local_agent_router
+    import ai_orchestrator.gates.approval as approval
     import ai_orchestrator.local_agent_registry as registry
+    import ai_orchestrator.local_agent_router as local_agent_router
 
     tmp_root = ROOT / "tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
@@ -111,11 +111,13 @@ def audit() -> tuple[bool, list[str]]:
         return False, ["readonly task was not queued"]
 
     with client.websocket_connect("/api/v1/local-agents/ws") as ws:
-        ws.send_json({
-            "type": "auth",
-            "agent_id": agent_id,
-            "device_token": device_token,
-        })
+        ws.send_json(
+            {
+                "type": "auth",
+                "agent_id": agent_id,
+                "device_token": device_token,
+            }
+        )
         auth = ws.receive_json()
         if auth.get("type") != "auth_ok":
             return False, ["websocket auth did not return auth_ok"]
@@ -137,16 +139,18 @@ def audit() -> tuple[bool, list[str]]:
         if running_ack.get("type") != "running_ack" or running_ack.get("status") != "running":
             return False, ["running ack failed"]
 
-        ws.send_json({
-            "type": "result",
-            "task_id": task_id,
-            "success": True,
-            "summary": "readonly page observed",
-            "data": {
-                "current_url_host": "example.com",
-                "title_hint": "Example Domain",
-            },
-        })
+        ws.send_json(
+            {
+                "type": "result",
+                "task_id": task_id,
+                "success": True,
+                "summary": "readonly page observed",
+                "data": {
+                    "current_url_host": "example.com",
+                    "title_hint": "Example Domain",
+                },
+            }
+        )
         result_ack = ws.receive_json()
         if result_ack.get("type") != "result_ack" or result_ack.get("status") != "completed":
             return False, ["result ack failed"]

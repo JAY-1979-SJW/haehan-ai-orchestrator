@@ -16,6 +16,7 @@ Action Approval/Handoff API 라우터
   - 민감 필드 응답 금지
   - 서버에서 외부 브라우저 실행 금지
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from ai_orchestrator.auth import require_role
+from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.server.action_task_api import (
     api_prepare_action,
     api_receive_evidence,
@@ -36,12 +37,23 @@ action_router = APIRouter(prefix="/actions", tags=["actions"])
 
 # ── 금지 응답 필드 (안전 확인용) ─────────────────────────────────────────────
 
-_FORBIDDEN_RESPONSE_FIELDS: frozenset[str] = frozenset({
-    "password", "otp", "cert_password", "certificate_password",
-    "cookie", "cookies", "session", "storage_state",
-    "private_key", "npki", "auth_header",
-    "access_token", "refresh_token",
-})
+_FORBIDDEN_RESPONSE_FIELDS: frozenset[str] = frozenset(
+    {
+        "password",
+        "otp",
+        "cert_password",
+        "certificate_password",
+        "cookie",
+        "cookies",
+        "session",
+        "storage_state",
+        "private_key",
+        "npki",
+        "auth_header",
+        "access_token",
+        "refresh_token",
+    }
+)
 
 
 def _strip_forbidden(data: dict[str, Any]) -> dict[str, Any]:
@@ -50,6 +62,7 @@ def _strip_forbidden(data: dict[str, Any]) -> dict[str, Any]:
 
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
+
 
 class PrepareRequest(BaseModel):
     action_name: str
@@ -74,6 +87,7 @@ class EvidenceRequest(BaseModel):
 
 
 # ── endpoints ─────────────────────────────────────────────────────────────────
+
 
 @action_router.post("/prepare")
 def prepare_action(

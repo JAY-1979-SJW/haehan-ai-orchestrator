@@ -6,7 +6,7 @@ Validates that approval token lifecycle events are recorded in audit log.
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-from ai_orchestrator import approval
+from ai_orchestrator.gates import approval
 from ai_orchestrator.models import RiskAssessment, TaskRequest
 
 
@@ -15,7 +15,7 @@ def test_issue_token_logs_audit_event(tmp_path, monkeypatch):
     # Mock audit log path
     mock_log_path = tmp_path / "audit.log"  # noqa: F841
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         req = TaskRequest(
             task_id="test-task-001",
             source="server",
@@ -63,7 +63,7 @@ def test_approve_token_logs_audit_event(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         token = approval.issue_token(req, risk)
         mock_log.reset_mock()
 
@@ -102,7 +102,7 @@ def test_reject_token_logs_audit_event(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         token = approval.issue_token(req, risk)
         mock_log.reset_mock()
 
@@ -141,12 +141,12 @@ def test_token_expiry_logs_audit_event(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         # Issue token with very short TTL
         token = approval.issue_token(req, risk, ttl_minutes=0)
 
         # Simulate time passing
-        with patch("ai_orchestrator.approval._now") as mock_now:
+        with patch("ai_orchestrator.gates.approval._now") as mock_now:
             mock_now.return_value = datetime.now(UTC) + timedelta(minutes=1)
 
             # Try to approve - should detect expiry
@@ -180,7 +180,7 @@ def test_audit_log_no_token_id_original(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         token = approval.issue_token(req, risk)
 
         # Check all log_event calls
@@ -210,7 +210,7 @@ def test_audit_log_includes_public_id(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         token = approval.issue_token(req, risk)
 
         # First call should be for APPROVAL_ISSUED with public_id in note
@@ -242,7 +242,7 @@ def test_audit_log_no_sensitive_fields(monkeypatch):
         reasons=["High-risk action"],
     )
 
-    with patch("ai_orchestrator.approval.log_event") as mock_log:
+    with patch("ai_orchestrator.gates.approval.log_event") as mock_log:
         token = approval.issue_token(req, risk)  # noqa: F841
 
         # Check all log_event calls

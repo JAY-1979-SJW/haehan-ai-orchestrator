@@ -23,9 +23,10 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Literal
 
+from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.config import LOG_DIR
+
 from .approval import approve_token, reject_token
-from .audit_logger import log_event
-from .config import LOG_DIR
 
 logger = logging.getLogger(__name__)
 

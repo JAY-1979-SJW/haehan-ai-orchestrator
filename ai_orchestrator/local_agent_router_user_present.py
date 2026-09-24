@@ -4,22 +4,25 @@ leaf 서브라우터. 컴포지션 루트(local_agent_router)가 include_router 
 USER_PRESENT 상태 store/dispatcher 는 선택 의존(없으면 503).
 [docs/module_separation_standard.md]
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-
 from pydantic import BaseModel
 
-from .auth import require_role
-from .audit_logger import log_event
 from . import local_agent_registry as _reg
+from .audit_logger import log_event
+from .gates.auth import require_role
 from .local_agent_router_up_queue import _enqueue_up_task  # 공유 leaf
 
 try:
     from .browser_tool.local_agent_user_present_status_store import (
         get_user_present_status as _get_up_status,
+    )
+    from .browser_tool.local_agent_user_present_status_store import (
         list_user_present_statuses as _list_up_statuses,
     )
+
     _UP_STATUS_STORE_AVAILABLE = True
 except ImportError:
     _UP_STATUS_STORE_AVAILABLE = False
@@ -28,6 +31,7 @@ try:
     from .browser_tool.local_agent_user_present_dispatcher import (
         build_user_present_dispatch_response,
     )
+
     _UP_DISPATCHER_AVAILABLE = True
 except ImportError:
     _UP_DISPATCHER_AVAILABLE = False
@@ -37,6 +41,7 @@ user_present_router = APIRouter()
 
 class UserPresentDispatchRequest(BaseModel):
     """USER_PRESENT_TASK dispatch 요청 body."""
+
     workflow_run_id: str
     workflow_id: str = ""
     tenant_id: str
@@ -96,8 +101,11 @@ def dispatch_user_present_task(
 
     if _reg.get_agent(agent_id) is None:
         log_event(
-            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
-            action_type="user_present_dispatch", actor=actor, role=role,
+            "LOCAL_AGENT_TASK_REJECTED",
+            "local-agent",
+            action_type="user_present_dispatch",
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} reason=AGENT_NOT_FOUND",
         )
         raise HTTPException(
@@ -129,8 +137,11 @@ def dispatch_user_present_task(
     result = build_user_present_dispatch_response(payload)
     if not result.get("ok"):
         log_event(
-            "LOCAL_AGENT_TASK_REJECTED", "local-agent",
-            action_type="user_present_dispatch", actor=actor, role=role,
+            "LOCAL_AGENT_TASK_REJECTED",
+            "local-agent",
+            action_type="user_present_dispatch",
+            actor=actor,
+            role=role,
             note=f"agent_id={agent_id} errors={result.get('errors', [])}",
         )
         raise HTTPException(
@@ -143,8 +154,10 @@ def dispatch_user_present_task(
     _enqueue_up_task(agent_id, task_message)
 
     log_event(
-        "LOCAL_AGENT_USER_PRESENT_TASK_DISPATCHED", body.workflow_run_id,
-        actor=actor, role=role,
+        "LOCAL_AGENT_USER_PRESENT_TASK_DISPATCHED",
+        body.workflow_run_id,
+        actor=actor,
+        role=role,
         note=f"agent_id={agent_id} site_id={body.site_id}",
     )
 
