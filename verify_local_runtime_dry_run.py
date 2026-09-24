@@ -208,34 +208,6 @@ def check_asyncio_subprocess(report: Report) -> None:
     report.warn("python asyncio subprocess", _first_line(proc.stderr or proc.stdout) or f"exit_code={proc.returncode}")
 
 
-def check_ai_proxy(report: Report) -> None:
-    from local_agent import ai_chat_adapter as adapter
-    from local_agent import gui_chat_state as chat_state
-    from local_agent import server_proxy_chat_client as client
-
-    c = client.ServerProxyChatClient(server_url=SERVER_URL, agent_id="")
-    health = c.health_check()
-    if health.ok:
-        report.pass_("ai proxy health")
-    elif health.error_code == client.ERR_AGENT_ID_MISSING:
-        report.pass_("ai proxy safe unauthenticated health", "AGENT_ID_MISSING")
-    else:
-        report.warn("ai proxy health", str(health.error_code))
-
-    a = adapter.make_default_adapter(
-        mode=chat_state.MODE_SERVER_PROXY,
-        server_url=SERVER_URL,
-        agent_id="",
-    )
-    response = a.send_message(text_raw="dry-run")
-    if response.ok:
-        report.pass_("ai adapter server proxy")
-    elif response.error_code == client.ERR_DEVICE_TOKEN_MISSING:
-        report.pass_("ai adapter safe no-token path", "DEVICE_TOKEN_MISSING external_call_count=0")
-    else:
-        report.warn("ai adapter server proxy", str(response.error_code))
-
-
 def check_agent_ws_auth(report: Report) -> None:
     proc = _run(
         [
@@ -280,7 +252,6 @@ def main(argv: list[str] | None = None) -> int:
     else:
         check_asyncio_subprocess(report)
         check_playwright(report)
-    check_ai_proxy(report)
     check_agent_ws_auth(report)
     report.print()
     return 1 if report.result().startswith("FAIL") else 0

@@ -1,4 +1,4 @@
-"""AI 기반 자동 응답 — Claude/OpenAI API 통합.
+"""AI 기반 자동 응답 — GPT(OpenAI) 경로 삭제(2026-09-24). Anthropic 직접호출은 opt-in 경계로만 유지.
 
 기능:
   - 리뷰 컨텍스트 기반 맞춤 답변 생성
@@ -6,7 +6,10 @@
   - 상품 설명 자동 생성
   - 블로그 글 초안 자동 작성
 
-요구: ANTHROPIC_API_KEY 또는 OPENAI_API_KEY 환경변수
+기본 provider("none")는 유료 AI를 호출하지 않고 고정 안내를 반환한다. Claude Code가 이
+클래스를 거치지 않고 직접 문구를 작성하는 것이 표준 경로다. provider="anthropic"을
+명시했을 때만(터미널/특수 용도, tests/test_app_llm_boundary.py 경계 허용목록) 직접 호출한다.
+요구(anthropic opt-in 시): ANTHROPIC_API_KEY 환경변수
 """
 
 from __future__ import annotations
@@ -15,8 +18,6 @@ import json
 import os
 import urllib.request
 
-from ai_orchestrator.app_llm import APP_LLM_MODEL
-from ai_orchestrator.openai_guard import assert_openai_allowed
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -24,50 +25,41 @@ _log = get_logger(__name__)
 
 
 class AIResponder:
-    """LLM 기반 자동 응답 생성기."""
+    """LLM 기반 자동 응답 생성기 (기본: 유료 AI 미사용)."""
 
-    def __init__(self, provider: str = "openai", model: str | None = None):
-        # 앱 표준=GPT(openai). anthropic 은 명시 지정 시에만(터미널/특수 용도).
+    def __init__(self, provider: str = "none", model: str | None = None):
+        # 앱 런타임 기본값 = AI 없음. anthropic 은 명시 지정 시에만(터미널/특수 용도, opt-in).
         self.provider = provider
         if provider == "anthropic":
             self.api_key = os.environ.get("ANTHROPIC_API_KEY")
             self.model = model or "claude-haiku-4-5-20251001"
             self.endpoint = "https://api.anthropic.com/v1/messages"
         else:
-            self.api_key = os.environ.get("OPENAI_API_KEY")
-            self.model = model or APP_LLM_MODEL
-            self.endpoint = "https://api.openai.com/v1/chat/completions"
+            self.api_key = None
+            self.model = model or "none"
+            self.endpoint = ""
 
     def _call(self, system: str, user: str, max_tokens: int = 500) -> dict:
-        assert_openai_allowed("ai_responder.py:_call")
+        if self.provider != "anthropic":
+            return {
+                "ok": False,
+                "error": "app_ai_disabled",
+                "hint": "앱 런타임 AI 없음 — Claude Code가 직접 문구를 작성하세요.",
+            }
         if not self.api_key:
-            return {"ok": False, "error": "no_api_key", "hint": f"환경변수 {self.provider.upper()}_API_KEY 설정 필요"}
+            return {"ok": False, "error": "no_api_key", "hint": "환경변수 ANTHROPIC_API_KEY 설정 필요"}
 
-        if self.provider == "anthropic":
-            payload = {
-                "model": self.model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [{"role": "user", "content": user}],
-            }
-            headers = {
-                "x-api-key": self.api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            }
-        else:
-            payload = {
-                "model": self.model,
-                "max_tokens": max_tokens,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-            }
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            }
+        payload = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+        }
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
 
         try:
             req = urllib.request.Request(
@@ -79,10 +71,7 @@ class AIResponder:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read())
 
-            if self.provider == "anthropic":
-                text = data["content"][0]["text"]
-            else:
-                text = data["choices"][0]["message"]["content"]
+            text = data["content"][0]["text"]
             return {"ok": True, "text": text.strip(), "model": self.model}
         except Exception as e:
             return {"ok": False, "error": str(e)[:200]}

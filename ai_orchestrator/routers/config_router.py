@@ -28,7 +28,6 @@ config_router = APIRouter(prefix="/config", tags=["config"])
 
 # 데스크톱 앱에 배포할 환경변수 키 목록 (값이 있는 것만 포함)
 _DESKTOP_ENV_KEYS: list[str] = [
-    "OPENAI_API_KEY",
     "NAVER_OPENAPI_CLIENT_ID",
     "NAVER_OPENAPI_CLIENT_SECRET",
     "YOUTUBE_DATA_API_KEY",

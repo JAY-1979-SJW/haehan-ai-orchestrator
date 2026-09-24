@@ -150,25 +150,11 @@ def summarize_pending_approvals() -> dict:
 
 
 def generate_ai_ops_summary(summary_dict: dict) -> str:
-    """운영 요약 생성. OpenAI 없으면 deterministic mock 반환."""
-    try:
-        import openai
+    """운영 요약 생성 — 유료 AI 미사용(2026-09-24 OpenAI 삭제), 항상 deterministic mock 반환.
 
-        client = openai.OpenAI()
-        prompt = (
-            "다음은 AI 오케스트레이터의 최근 운영 현황입니다:\n"
-            + json.dumps(summary_dict, ensure_ascii=False, indent=2)
-            + "\n\n운영자를 위한 짧은 요약(3~5문장)을 한국어로 작성하세요. "
-            "이상 패턴, 주요 차단 원인, 권장 조치를 포함하세요."
-        )
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=300,
-        )
-        return resp.choices[0].message.content.strip()
-    except Exception:
-        return _mock_summary(summary_dict)
+    맞춤 운영 요약이 필요하면 Claude Code가 summary_dict를 직접 읽고 작성한다.
+    """
+    return _mock_summary(summary_dict)
 
 
 def _mock_summary(s: dict) -> str:

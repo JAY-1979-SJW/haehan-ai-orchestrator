@@ -1,12 +1,14 @@
-"""APP_LLM_BOUNDARY — 앱 런타임은 GPT 전용, Claude(Anthropic 직접호출)는 경계에만.
+"""APP_LLM_BOUNDARY — 앱 런타임은 유료 AI API 0(2026-09-24 OpenAI 삭제), AI는 Claude Code가 MCP로.
 
 원칙(아키텍처 경계):
-  • 앱 런타임(ai_orchestrator·scripts/naver·community·browser_agent)의 모든
-    AI 기능 = GPT(OpenAI). 모델명은 ai_orchestrator.app_llm 단일 출처에서 가져온다.
-  • Claude(Anthropic) 직접 호출은 '경계 허용목록'에서만 — 터미널 Claude Code 연동
-    (MCP 서버·git훅 리뷰·OpenAI부재 CLI폴백), provider 명시 opt-in, 레거시 데드모듈.
+  • 앱 런타임(ai_orchestrator·scripts/naver·community)은 더 이상 유료 AI API를
+    호출하지 않는다(``ai_orchestrator.app_llm.APP_LLM_PROVIDER == "none"``).
+  • 판단·글쓰기·에이전트 작업은 Claude Code 가 MCP(``ai_orchestrator/mcp_server.py``)로
+    앱에 붙어서 수행한다 — 이 경로는 앱 런타임 프로세스 밖이므로 경계 대상이 아니다.
+  • Claude(Anthropic) 직접 호출은 '경계 허용목록'에서만 — provider 명시 opt-in, 레거시 데드모듈.
 
-이 테스트는 경계 밖 Anthropic 직접호출을 영구 차단한다(회귀 방지).
+이 테스트는 경계 밖 Anthropic 직접호출을 영구 차단하고(회귀 방지), 앱 런타임에
+유료 AI 공급자 상수가 남아있지 않은지 검증한다.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 # 앱 런타임 스캔 대상 (ops/dev 도구·빌드·테스트는 제외)
-SCAN_DIRS = ["ai_orchestrator", "scripts/naver", "scripts/community", "scripts/browser_agent"]
+SCAN_DIRS = ["ai_orchestrator", "scripts/naver", "scripts/community"]
 
 # Anthropic '실호출' 신호 — 도메인 허용목록 상수("api.anthropic.com")와 구분되는 패턴만.
 CALL_PATTERNS = [
@@ -65,17 +67,17 @@ def test_no_anthropic_calls_outside_boundary():
 def test_app_llm_is_single_source():
     from ai_orchestrator import app_llm
 
-    assert app_llm.APP_LLM_PROVIDER == "openai"
-    assert app_llm.APP_LLM_MODEL.startswith("gpt")
-    assert app_llm.APP_LLM_QUALITY_MODEL.startswith("gpt")
+    assert app_llm.APP_LLM_PROVIDER == "none"
 
 
-def test_app_features_reference_single_source():
-    from ai_orchestrator import app_llm
-    from ai_orchestrator.connectors.gabia.chat import GPT_MODEL as GABIA
-    from ai_orchestrator.connectors.smartstore.chat import GPT_MODEL as SS
-    from ai_orchestrator.openai_proxy_caller import DEFAULT_MODEL as PROXY
-
-    assert SS == app_llm.APP_LLM_MODEL
-    assert GABIA == app_llm.APP_LLM_MODEL
-    assert PROXY == app_llm.APP_LLM_QUALITY_MODEL
+def test_no_openai_model_constants_in_app_runtime():
+    """gpt-4/gpt-3 모델 리터럴이 앱 런타임에 남아있지 않은지(허용목록 제외) 검증."""
+    pat = re.compile(r"gpt-[43]")
+    offenders = []
+    for p, rel in _iter_app_py():
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            if pat.search(line):
+                offenders.append(f"{rel}:{i}: {line.strip()[:90]}")
+    assert not offenders, "앱 런타임에 GPT 모델 리터럴이 남아있음:\n" + "\n".join(offenders)

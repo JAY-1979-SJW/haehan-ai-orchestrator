@@ -295,12 +295,13 @@ SAMPLES = [
 
 
 def generate_all() -> None:
-    from scripts.naver.smartstore.product.ai_description_writer import QUALITY_MODEL, AIDescriptionWriter
-    from scripts.naver.smartstore.product.gpt_description_writer import GptDescriptionWriter
+    """2026-09-24: gpt_description_writer(GPT) 삭제됨 — 섹션 빌더만 사용.
+
+    맞춤 문구가 필요하면 Claude Code가 이 스크립트의 SAMPLES 데이터를 직접 읽고
+    작성한 뒤 save_template(MCP)로 저장한다.
+    """
     from scripts.naver.smartstore.product.page_builder import ProductPageBuilder
 
-    claude_writer = AIDescriptionWriter(model=QUALITY_MODEL)  # Sonnet — 고품질
-    gpt_writer = GptDescriptionWriter()  # GPT-4o
     total = len(SAMPLES)
 
     for i, sample in enumerate(SAMPLES, 1):
@@ -312,34 +313,14 @@ def generate_all() -> None:
         html = None
         source = "builder"
 
-        # 1차: Claude (ANTHROPIC_API_KEY)
-        result = claude_writer.generate(data)
-        if result.get("ok") and result.get("html"):
-            html = result["html"]
-            source = "claude"
-            print(f"  → Claude 생성 완료 ({len(html):,}자)")
-
-        # 2차: GPT (OPENAI_API_KEY)
-        if not html:
-            print(f"  → Claude 실패 ({result.get('error', '')}), GPT 시도...")
-            result = gpt_writer.generate(data)
-            if result.get("ok") and result.get("html"):
-                html = result["html"]
-                source = "gpt"
-                print(f"  → GPT 생성 완료 ({len(html):,}자)")
-
-        # 3차: 섹션 빌더 fallback
-        if not html:
-            print(f"  → GPT 실패 ({result.get('error', '')}), 섹션 빌더로 fallback...")
-            try:
-                builder = ProductPageBuilder()
-                builder.select(sections)
-                html = builder.render(data)
-                source = "builder"
-                print(f"  → 빌더 생성 완료 ({len(html):,}자)")
-            except Exception as e:
-                print(f"  ✗ 빌더도 실패: {e}")
-                continue
+        try:
+            builder = ProductPageBuilder()
+            builder.select(sections)
+            html = builder.render(data)
+            print(f"  → 빌더 생성 완료 ({len(html):,}자)")
+        except Exception as e:
+            print(f"  ✗ 빌더 실패: {e}")
+            continue
 
         meta["source"] = source
         safe = re.sub(r"[^\w가-힣]", "_", meta["name"])[:40]

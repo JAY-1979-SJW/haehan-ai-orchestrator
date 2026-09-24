@@ -15,12 +15,10 @@
 
 from __future__ import annotations
 
-import os
 import re
 import time
 from pathlib import Path
 
-from ai_orchestrator.app_llm import APP_LLM_MODEL
 from scripts.critical_logger import log_critical
 from scripts.logger import get_logger
 
@@ -30,20 +28,6 @@ ROOT = Path(__file__).resolve().parents[4]
 _CDP = "http://127.0.0.1:9222"
 _REVIEW_URL = "https://sell.smartstore.naver.com/#/reviews/list"
 _REPLY_API_URL = "https://sell.smartstore.naver.com/#/reviews/list"
-
-_GPT_MODEL = APP_LLM_MODEL  # 앱 표준=GPT (app_llm 단일 출처)
-
-_SYSTEM_PROMPT = """당신은 네이버 스마트스토어 셀러입니다.
-고객 리뷰에 대해 진심 어린 감사 인사와 함께 짧고 친근한 답변을 작성합니다.
-
-규칙:
-- 2~4문장, 100자 이내
-- 고객 이름 언급 금지
-- 별점 4~5: 긍정적, 감사 표현
-- 별점 1~3: 사과 + 개선 의지 + 문의 유도
-- 이모지 1~2개 자연스럽게 사용
-- 판매자 서명 없이 답변 본문만 출력
-"""
 
 
 class ReviewAutoResponder:
@@ -64,14 +48,14 @@ class ReviewAutoResponder:
         return {"ok": True, "pending": reviews, "count": len(reviews)}
 
     def generate_replies(self, reviews: list[dict]) -> list[dict]:
-        """각 리뷰에 대해 GPT 답변 초안 생성."""
-        api_key = self._get_api_key()
-        if not api_key:
-            return [{"error": "OPENAI_API_KEY 미설정", **r} for r in reviews]
+        """각 리뷰에 대해 답변 초안 생성(고정 템플릿 — 유료 AI 미사용).
 
+        맞춤 답변이 필요하면 Claude Code가 review 내용을 읽고 reply_draft를 직접 채워
+        넣은 뒤 reply_pending(confirmed=True)으로 저장한다.
+        """
         result = []
         for r in reviews:
-            reply = self._generate_one(api_key, r)
+            reply = self._generate_one(r)
             result.append({**r, "reply_draft": reply})
         return result
 
@@ -223,39 +207,12 @@ class ReviewAutoResponder:
             _log.error("[review-reply] 답변 저장 실패: %s", e)
             return {"ok": False, "error": str(e)[:200]}
 
-    # ── Claude API ───────────────────────────────────────────────────────────
+    # ── 답변 초안(고정 템플릿) ───────────────────────────────────────────────────
 
-    def _generate_one(self, api_key: str, review: dict) -> str:
+    def _generate_one(self, review: dict) -> str:
+        """유료 AI 없이 별점 기반 고정 템플릿 답변을 생성한다."""
         score_text = str(review.get("score", ""))
         score_num = int(re.search(r"\d", score_text).group()) if re.search(r"\d", score_text) else 5
-        user_msg = f"별점: {score_num}점\n리뷰 내용: {review.get('content', '')}"
-        try:
-            from openai import OpenAI
-
-            client = OpenAI(api_key=api_key)
-            resp = client.chat.completions.create(
-                model=_GPT_MODEL,
-                max_tokens=200,
-                messages=[
-                    {"role": "system", "content": _SYSTEM_PROMPT},
-                    {"role": "user", "content": user_msg},
-                ],
-            )
-            return (resp.choices[0].message.content or "").strip()
-        except Exception as e:
-            _log.error("[review-reply] GPT 호출 실패: %s", e)
-            return "소중한 리뷰 감사합니다. 더 좋은 서비스로 보답하겠습니다 😊"
-
-    def _get_api_key(self) -> str | None:
-        if self._api_key:
-            return self._api_key
-        key = os.environ.get("OPENAI_API_KEY", "")
-        if not key:
-            env_file = ROOT / ".env"
-            if env_file.exists():
-                for line in env_file.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("OPENAI_API_KEY="):
-                        key = line.split("=", 1)[1].strip().strip('"').strip("'")
-                        break
-        self._api_key = key or None
-        return self._api_key
+        if score_num >= 4:
+            return "소중한 리뷰 감사합니다! 더 좋은 상품과 서비스로 보답하겠습니다 😊"
+        return "소중한 의견 감사합니다. 불편을 드려 죄송하며, 문의 주시면 바로 확인해 개선하겠습니다 🙏"

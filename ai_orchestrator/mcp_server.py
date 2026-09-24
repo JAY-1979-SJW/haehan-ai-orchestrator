@@ -199,7 +199,8 @@ async def list_tools() -> list[types.Tool]:
         types.Tool(
             name="generate_description",
             description=(
-                "상품 데이터(JSON)를 받아 GPT로 고품질 상세설명 HTML을 생성합니다. 생성 모델은 GPT(앱 표준)입니다."
+                "상품 데이터(JSON)로 상세설명 HTML 섹션 뼈대를 빌더로 생성합니다(유료 AI 미사용). "
+                "실제 문구는 Claude(이 MCP를 호출하는 나)가 직접 작성한 뒤 save_template/render_description 으로 저장·렌더링하세요."
             ),
             inputSchema={
                 "type": "object",
@@ -207,12 +208,6 @@ async def list_tools() -> list[types.Tool]:
                     "product": {
                         "type": "object",
                         "description": "상품 데이터 (name, price, stock, category 필수)",
-                    },
-                    "model": {
-                        "type": "string",
-                        "enum": ["gpt", "builder"],
-                        "description": "생성 모델 선택 (기본: gpt)",
-                        "default": "gpt",
                     },
                     "sections": {
                         "type": "array",
@@ -548,7 +543,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
     import asyncio
 
     if name == "generate_description":
-        result = await _generate_description(arguments)
+        result = _render_description(arguments)
     else:
         # Playwright sync API는 실행 중인 asyncio 루프 안에서 호출하면 에러가 나므로
         # 별도 스레드(자체 이벤트루프 없음)에서 실행한다.
@@ -558,28 +553,6 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
 
 
 # ── 구현 ──────────────────────────────────────────────────────────────────────
-
-
-async def _generate_description(args: dict) -> dict:
-    product = args.get("product", {})
-    model = args.get("model", "gpt")  # 앱 표준=GPT (구 기본값 claude)
-    sections = args.get("sections")
-
-    # GPT (앱 표준 — 구 Claude 경로 제거; claude/auto 요청도 GPT로 처리)
-    if model in ("gpt", "auto", "claude"):
-        try:
-            from scripts.naver.smartstore.product.gpt_description_writer import GptDescriptionWriter
-
-            w = GptDescriptionWriter()
-            r = w.generate(product)
-            if r.get("ok") and r.get("html"):
-                return {"ok": True, "html": r["html"], "source": "gpt", "chars": len(r["html"])}
-            return {"ok": False, "error": r.get("error") or str(r.get("errors", "GPT 실패"))}
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
-
-    # 섹션 빌더 fallback
-    return _render_description({"product": product, "sections": sections})
 
 
 def _render_description(args: dict) -> dict:

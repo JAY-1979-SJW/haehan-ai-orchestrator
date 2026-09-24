@@ -43,8 +43,6 @@ GMAIL_CREDENTIALS_PATH = Path(_gcred) if _gcred else LOG_DIR / "gmail_credential
 _gtok = os.environ.get("GMAIL_TOKEN_PATH", "").strip()
 GMAIL_TOKEN_PATH = Path(_gtok) if _gtok else LOG_DIR / "gmail_token.json"
 
-# OPENAI_API_KEY — 없으면 MOCK 모드 (openai_client.py에서 처리, 즉시 크래시 안 함)
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # ── HTTP 인증 (구조 토대만, 실제 강제는 추후 단계) ─────────────────
 # Fail closed by default. Tests may monkeypatch this to False, but production
