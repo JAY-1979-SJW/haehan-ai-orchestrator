@@ -97,7 +97,32 @@ API_REGISTRY: dict[str, dict[str, str]] = {
     "smartstore.description.ai_generate": {
         "method": "POST",
         "path": "/api/v1/smartstore/description/ai-generate",
-        "desc": "AI로 상세설명 생성",
+        "desc": "(폐지된 스텁) 앱 런타임 AI 생성 없음 — Claude(MCP)가 문구를 작성해 render_description/save_template 사용",
+    },
+    "smartstore.reviews.pending": {
+        "method": "GET",
+        "path": "/api/v1/smartstore/reviews/pending",
+        "desc": "미답변 리뷰 조회 + 답변 초안 생성(유료 AI 미사용)",
+    },
+    "smartstore.reviews.reply": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/reviews/reply",
+        "desc": "⚠️ 미답변 리뷰 자동 답변 저장(쓰기) — confirm=true 필요, dry_run 기본 true",
+    },
+    "smartstore.orders.pending": {
+        "method": "GET",
+        "path": "/api/v1/smartstore/orders/pending",
+        "desc": "발송대기 주문 조회",
+    },
+    "smartstore.orders.ship": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/orders/{order_id}/ship",
+        "desc": "⚠️ 주문 발송처리(쓰기) — confirm=true 필요, dry_run 기본 true",
+    },
+    "smartstore.products.delete": {
+        "method": "POST",
+        "path": "/api/v1/smartstore/products/delete",
+        "desc": "⚠️ 상품 삭제(쓰기, 비가역) — confirm=true 필요, dry_run 기본 true",
     },
     "smartstore.popup.status": {
         "method": "GET",
@@ -107,7 +132,11 @@ API_REGISTRY: dict[str, dict[str, str]] = {
     # 네이버 블로그
     "blog.drafts": {"method": "GET", "path": "/api/v1/naver/blog/drafts", "desc": "블로그 임시저장 글 목록"},
     "blog.compose": {"method": "POST", "path": "/api/v1/naver/blog/compose", "desc": "블로그 글 작성(초안 생성)"},
-    "blog.ai_generate": {"method": "POST", "path": "/api/v1/naver/blog/ai-generate", "desc": "AI로 블로그 글 생성"},
+    "blog.ai_generate": {
+        "method": "POST",
+        "path": "/api/v1/naver/blog/ai-generate",
+        "desc": "(폐지된 스텁) 앱 런타임 AI 생성 없음 — Claude(MCP)가 본문을 작성해 blog.compose 사용",
+    },
     "blog.write_to_naver": {
         "method": "POST",
         "path": "/api/v1/naver/blog/write-to-naver",
@@ -229,7 +258,7 @@ async def list_tools() -> list[types.Tool]:
                     "sections": {"type": "array", "items": {"type": "string"}},
                     "data": {"type": "object", "description": "상품 샘플 데이터"},
                     "html": {"type": "string", "description": "렌더링된 HTML"},
-                    "source": {"type": "string", "description": "생성 방식 (claude/gpt/builder)"},
+                    "source": {"type": "string", "description": "생성 방식 (claude/builder)"},
                 },
                 "required": ["name", "html"],
             },

@@ -6,6 +6,7 @@ import sys
 import time as _t
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 
@@ -47,3 +48,73 @@ def api_reviews_collect(limit: int = 30, user: dict = Depends(require_role("admi
         note="",
     )
     return result
+
+
+# ── 미답변 리뷰 조회·답변 (구 chat.py _run_tool 대체, 비-AI 답변 초안 생성) ──────────
+
+
+@router.get("/reviews/pending")
+def api_reviews_pending(limit: int = 20, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """미답변 리뷰 목록 조회 + 답변 초안 생성(review_reply.py 재사용, 유료 AI 미사용)."""
+    sys.path.insert(0, str(ROOT))
+    from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
+
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
+            result = ReviewAutoResponder(page).get_pending(limit=limit)
+            if result.get("ok") and result.get("pending"):
+                result["pending"] = ReviewAutoResponder(None).generate_replies(result["pending"])
+    except Exception as e:
+        result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
+    log_event(
+        "SMARTSTORE_REVIEWS_PENDING",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok" if result.get("ok") else "error",
+        note="",
+    )
+    return result
+
+
+class ReplyReviewsRequest(BaseModel):
+    limit: int = 10
+    dry_run: bool = True
+    confirm: bool = False
+
+
+@router.post("/reviews/reply")
+def api_reviews_reply(body: ReplyReviewsRequest, user: dict = Depends(require_role("admin", "owner"))) -> dict:
+    """미답변 리뷰에 자동 답변 저장 (쓰기). confirm=true 없이는 거부, dry_run 기본 True."""
+    if not body.confirm:
+        return {"ok": False, "error": "confirm=true 없이는 실행할 수 없습니다."}
+    if body.dry_run:
+        return {
+            "ok": True,
+            "dry_run": True,
+            "note": "dry_run=True — 실제 저장 없이 계획만 반환합니다.",
+            "limit": body.limit,
+        }
+    sys.path.insert(0, str(ROOT))
+    from scripts.naver.smartstore.product.review_reply import ReviewAutoResponder
+
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            page = pw.chromium.connect_over_cdp(_CDP).contexts[0].pages[0]
+            result = ReviewAutoResponder(page).reply_pending(limit=body.limit, confirmed=True)
+    except Exception as e:
+        result = {"ok": False, "error": str(e), "hint": "CDP 브라우저가 실행 중인지 확인하세요"}
+    log_event(
+        "SMARTSTORE_REVIEWS_REPLY",
+        task_id="-",
+        actor=user["actor"],
+        role=user["role"],
+        decision="ok" if result.get("ok") else "error",
+        note=f"limit={body.limit}",
+    )
+    return {**result, "dry_run": False}
