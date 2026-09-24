@@ -19520,6 +19520,22 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
+  },
+  "ai_orchestrator/clients/__init__.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "clients 패키지(허브 분리 1단계 신설)",
+   "confidence": "high",
+   "source": "manual"
+  },
+  "ai_orchestrator/persistence/__init__.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "persistence 패키지(허브 분리 1단계 신설)",
+   "confidence": "high",
+   "source": "manual"
   }
  }
 }
