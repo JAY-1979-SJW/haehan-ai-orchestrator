@@ -22,21 +22,25 @@
   - WS 인증 실패는 로그에 agent_id / 원인 코드만, token 원문은 기록/반영 금지
 """
 
+# ruff: noqa: F401 — 파사드: 분리된 모듈의 이름을 그대로 재노출(테스트·호출처가 이 모듈 속성으로 접근). ruff --fix 가 지우지 않게.
 from __future__ import annotations
 
 import logging
 
-from fastapi import (
-    APIRouter,
-    Depends,
-)
+from fastapi import APIRouter, Depends
 
+from . import local_agent_audit_builders as _audit
+from . import local_agent_audit_event_policy as _policy
+from . import local_agent_diagnostics
 from . import local_agent_registry as _reg
-from .audit_logger import log_event  # noqa: F401 — mock.patch("ai_orchestrator.local_agent_router.log_event") 대상
+from . import local_agent_router_guards as _guards
+from . import registration_codes as _regcodes
+from .audit_logger import log_event
+from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
 from .gates.auth import require_role
 
 try:
-    from .browser_tool.local_agent_user_present_status_handler import (  # noqa: F401
+    from .browser_tool.local_agent_user_present_status_handler import (
         handle_user_present_status_event as _handle_up_status_event,
     )
 
@@ -45,10 +49,10 @@ except ImportError:
     _UP_STATUS_HANDLER_AVAILABLE = False
 
 try:
-    from .browser_tool.local_agent_user_present_status_store import (  # noqa: F401
+    from .browser_tool.local_agent_user_present_status_store import (
         get_user_present_status as _get_up_status,
     )
-    from .browser_tool.local_agent_user_present_status_store import (  # noqa: F401
+    from .browser_tool.local_agent_user_present_status_store import (
         list_user_present_statuses as _list_up_statuses,
     )
 
@@ -57,7 +61,7 @@ except ImportError:
     _UP_STATUS_STORE_AVAILABLE = False
 
 try:
-    from .browser_tool.local_agent_user_present_dispatcher import (  # noqa: F401
+    from .browser_tool.local_agent_user_present_dispatcher import (
         build_user_present_dispatch_response,
         should_dispatch_user_present_task,
     )
@@ -67,7 +71,7 @@ except ImportError:
     _UP_DISPATCHER_AVAILABLE = False
 
 # USER_PRESENT_TASK 전송 대기 큐는 local_agent_router_up_queue(공유 leaf)로 분리. 파사드 재노출.
-from .local_agent_router_up_queue import _drain_up_tasks, _enqueue_up_task  # noqa: F401
+from .local_agent_router_up_queue import _drain_up_tasks, _enqueue_up_task
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +83,22 @@ local_agent_router = APIRouter(prefix="/local-agents", tags=["local-agents"])
 # 등록 라우트군은 local_agent_router_registration 으로 분리.
 # 컴포지션 루트가 include_router 로 관리(경로 동일).
 from .local_agent_router_registration import registration_router as _registration_router  # noqa: E402
+from .local_agent_router_schemas import (  # noqa: E402
+    AgentRegisterRequest,
+    AgentTaskApprovalRequest,
+    AgentTaskRequest,
+    BrowserReadonlyInstructionRequest,
+    CancelTaskRequest,
+    CaptureScreenshotRequest,
+    IssueRegistrationCodeRequest,
+    RegisterWithCodeRequest,
+)
 
 # 검증/감사노트 헬퍼는 local_agent_router_validation(공유 leaf)로 분리. 파사드 재노출.
+from .local_agent_router_validation import (  # noqa: E402
+    _capture_approval_note,
+    _validate_readonly_browser_instruction,
+)
 
 local_agent_router.include_router(_registration_router)
 

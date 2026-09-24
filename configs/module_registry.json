@@ -2306,12 +2306,12 @@
    "source": "rule"
   },
   "ai_orchestrator/gates/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L2",
+   "role": "policy",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "gates 패키지(정책·승인·인증 게이트)",
+   "confidence": "high",
+   "source": "manual"
   },
   "ai_orchestrator/gates/approval.py": {
    "layer": "L2",
