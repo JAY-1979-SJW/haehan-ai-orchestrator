@@ -18,8 +18,6 @@ REQUIRED_ROUTES = {
     ("POST", "/api/v1/tasks"),
     ("POST", "/api/v1/local-agents/{agent_id}/tasks"),
     ("POST", "/api/v1/local-agents/{agent_id}/browser-readonly-instructions"),
-    ("GET", "/api/v1/agent-ai/health"),
-    ("POST", "/api/v1/agent-ai/chat"),
     ("GET", "/api/v1/browser-approvals/requests"),
     ("POST", "/api/v1/browser-approvals/requests"),
     ("GET", "/api/v1/ops/summary"),
