@@ -94,6 +94,7 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
     """
     diff = ["git", "diff", "-M", "--name-status", base] + ([head] if head else [])
     out = []
+    moved = renames(base, head)
     for ln in run(diff, ROOT).stdout.splitlines():
         parts = ln.split("\t")
         if not parts[0].startswith("R") or len(parts) != 3 or not parts[2].endswith(".py"):
@@ -107,9 +108,45 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
             s = line.strip()
             if s.startswith("#") or not any(k in s for k in LOCATION_DEP):
                 continue
-            if line in old_lines:
+            if line in old_lines and not _same_relative_target(s, old, new, base, head, moved):
                 out.append(f"{new}:{i}: {s[:100]}")
     return out
+
+
+def _resolve_rel(stmt: str, file: str) -> list[str]:
+    """'from .x import y' / 'from . import x' → 가리킬 수 있는 파일 경로 후보(모듈·패키지)."""
+    parts = stmt.split()
+    if len(parts) < 4 or parts[0] != "from" or not parts[1].startswith("."):
+        return []
+    spec = parts[1]
+    dots = len(spec) - len(spec.lstrip("."))
+    base_dir = file.split("/")[:-1]
+    if dots > 1:
+        base_dir = base_dir[: len(base_dir) - (dots - 1)]
+    mod = spec.lstrip(".")
+    names = [mod] if mod else [n.strip(" ,()") for n in stmt.split(" import ", 1)[1].split(",")]
+    out = []
+    for n in names:
+        n = n.split(" as ")[0].strip()
+        if n:
+            stem = "/".join(base_dir + n.split("."))
+            out += [stem + ".py", stem + "/__init__.py"]
+    return out
+
+
+def _same_relative_target(stmt: str, old: str, new: str, base: str, head: str | None, moved: dict[str, str]) -> bool:
+    """상대 import 가 이동 전후에 '같은 파일'을 가리키면(함께 이동한 형제 등) 미조정이 아니다."""
+    if "__file__" in stmt or not stmt.startswith("from ."):
+        return False
+
+    def exists(ref: str | None, path: str) -> bool:
+        if ref is None:
+            return (ROOT / path).exists()
+        return run(["git", "cat-file", "-e", f"{ref}:{path}"], ROOT).returncode == 0
+
+    olds = [t for t in _resolve_rel(stmt, old) if exists(base, t)]
+    news = [t for t in _resolve_rel(stmt, new) if exists(head, t)]
+    return bool(olds) and len(olds) == len(news) and all(moved.get(n, n) == o for n, o in zip(news, olds, strict=False))
 
 
 def _checkout(ref: str, dest: Path) -> bool:
