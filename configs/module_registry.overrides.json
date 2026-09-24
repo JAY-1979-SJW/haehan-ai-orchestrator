@@ -1,257 +1,275 @@
 {
-  "ai_orchestrator/local_agent/browser/bootstrap.py": {
-    "layer": "L4",
-    "role": "browser_engine",
-    "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
-  },
-  "ai_orchestrator/routers/app_actions.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "FastAPI app(server.py, L8)과 web_connector(L4)를 직접 호출하는 액션 디스패처 — 순수 L1 계약 아님"
-  },
-  "ai_orchestrator/connectors/google_router.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류"
-  },
-  "ai_orchestrator/connectors/smartstore_router.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "하위 호환 re-export — smartstore/router.py(L8) APIRouter 재노출, L5 오분류"
-  },
-  "ai_orchestrator/connectors/youtube_router.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "하위 호환 re-export — youtube/router.py(L8) APIRouter 재노출, L5 오분류"
-  },
-  "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "docstring이 '순수 함수(DB/네트워크 의존 없음)' 라 명시 — L5 site_module 오분류"
-  },
-  "ai_orchestrator/connectors/naver_search_run_log.py": {
-    "layer": "L7",
-    "role": "persistence",
-    "reason": "JSONL append-only 실행 기록 파일 — 저장/로그 성격, L5 site_module 오분류"
-  },
-  "ai_orchestrator/connectors/naver_search_state.py": {
-    "layer": "L7",
-    "role": "persistence",
-    "reason": "data/naver_search_state.json 상태 저장 파일 — 저장 성격, L5 site_module 오분류"
-  },
-  "ai_orchestrator/local_agent/action_risk_policy.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "GRADE_* 순수 상수 정의만, 외부 의존 없음 — action_schemas(L1)가 참조하는 공유 계약, L2 오분류"
-  },
-  "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
-    "layer": "L4",
-    "role": "browser_engine",
-    "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
-  },
-  "ai_orchestrator/local_agent/browser/secure_login.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "approval_server.py(L8)를 직접 호출하는 승인 연동 로그인 흐름 — 순수 L1 계약 아님"
-  },
-  "ai_orchestrator/server/universal_agent_models.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "execution_location_guard/server_egress_policy(L2)와 강결합된 모델 — 순수 L1 계약 아님"
-  },
-  "ai_orchestrator/sites/adapters/naver_cafe_collection.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "sites/runner.py(L6)를 직접 호출해 수집을 실행 — 수동적 L4 어댑터 아님, 수집 워크플로 성격"
-  },
-  "ai_orchestrator/local_agent/site_profile_registry.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"
-  },
-  "ai_orchestrator/local_agent/universal_agent_session.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"
-  },
-  "ai_orchestrator/safety_policy/secret_redaction.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "순수 상수(FORBIDDEN_SECRET_FIELDS)+redaction 헬퍼, 외부 의존 0 — L4 browser_engine 오분류"
-  },
-  "ai_orchestrator/telegram_notifier.py": {
-    "layer": "L1",
-    "role": "contract",
-    "reason": "텔레그램 메시지 포맷/파싱만 담당, 전송(HTTP) 없음 — L4 오분류, 실제 전송은 telegram_sender(L3)"
-  },
-  "ai_orchestrator/server/task_queue_schema.py": {
-    "layer": "L1",
-    "role": "contract",
-    "reason": "in-memory contract adapter — task_id/payload 스키마 정의, DB/IO 없음 — L4 오분류"
-  },
-  "ai_orchestrator/sites/adapters/google_dev_reg.py": {
-    "layer": "L5",
-    "role": "site_module",
-    "reason": "Google Console 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
-  },
-  "ai_orchestrator/sites/adapters/hiworks_dev_reg.py": {
-    "layer": "L5",
-    "role": "site_module",
-    "reason": "하이웍스 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
-  },
-  "ai_orchestrator/sites/adapters/naver_dev_reg.py": {
-    "layer": "L5",
-    "role": "site_module",
-    "reason": "네이버 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
-  },
-  "ai_orchestrator/services/web_task_registry.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류"
-  },
-  "ai_orchestrator/sites/connector.py": {
-    "layer": "L1",
-    "role": "contract",
-    "reason": "SiteConnector ABC — 공통 인터페이스/예외 정의만, 실행 코드 없음 — L4 오분류"
-  },
-  "ai_orchestrator/local_agent/action_registry.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "등록 액션 스펙+실행 핸들러 매핑(승인 게이트가 참조하는 정책 레지스트리) — L4 generic 오분류"
-  },
-  "ai_orchestrator/local_agent/action_evidence_collector.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "실행 후 민감정보 redaction 증거 수집 — 승인/감사 정책 성격, L4 generic 오분류"
-  },
-  "ai_orchestrator/app_llm.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "파일 docstring이 스스로 'L1 공유 계약 — 순수 상수' 선언, L4 generic 오분류"
-  },
-  "ai_orchestrator/local_agent_models.py": {
-    "layer": "L1",
-    "role": "contract",
-    "reason": "LocalAgent/LocalAgentTask 데이터클래스 + 직렬화 메서드 — 순수 모델, L4 오분류"
-  },
-  "agent/action_registry.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류"
-  },
-  "ai_orchestrator/browser_tool/domain_profile_registry.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "파일 docstring이 'profile은 실행 정책이지 로그인 자동화 코드가 아님'이라 명시 — L4 오분류"
-  },
-  "ai_orchestrator/browser_tool/browser_engine_capability_classifier.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "정책 기반 엔진 라우팅 분류만 수행, click/type/fill/submit 코드 없음(docstring 명시) — L4 오분류"
-  },
-  "ai_orchestrator/external_sites/provider_models.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "provider 관련 데이터 모델 정의 파일명 — L4 오분류, approval_gate_registry/auth_policy_registry(L2)가 참조하는 순수 모델"
-  },
-  "ai_orchestrator/external_sites/provider_registry.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "provider 등록/조회 레지스트리 — auth_policy_registry(L2)와 동급 정책 레지스트리, L4 오분류"
-  },
-  "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류"
-  },
-  "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급"
-  },
-  "ai_orchestrator/local_agent/task_protocol.py": {
-    "layer": "L1",
-    "role": "contract",
-    "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"
-  },
-  "ai_orchestrator/local_agent/result_sanitizer.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "결과 sanitize(보안 redaction) — security_guard(L2)와 동급 보안 정책, L6 script_cli(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/local_session_boundary.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/safe_write_result_sanitizer.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/natural_language_task_api.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
-  },
-  "ai_orchestrator/local_agent/universal_action_verifier.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "universal_safe_result(L6)를 사용한 액션 검증 — 업무 흐름 검증기, L4 generic(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/security_program_auto_resume.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/security_program_install_completion_detector.py": {
-    "layer": "L6",
-    "role": "workflow",
-    "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/site_capability_matrix.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "사이트별 지원 능력 매트릭스(정적 레지스트리) — unknown_site_fallback_policy(L2)와 동급 정책, L6 script_cli(low) 오분류"
-  },
-  "ai_orchestrator/local_agent/delegated_permission_store.py": {
-    "layer": "L2",
-    "role": "policy",
-    "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"
-  },
-  "ai_orchestrator/mcp_server.py": {
-    "layer": "L8",
-    "role": "api",
-    "reason": "MCP 도구 서버 진입점 — 여러 사이트 모듈/워크플로(L5,L6)를 호출하는 API 계층, L4 오분류"
-  },
-  "ai_orchestrator/local_agent_router_schemas.py": {
-    "layer": "L4",
-    "role": "generic",
-    "reason": "registration_codes.py(L4)를 실제 top-level import — 순수 L1 pydantic 계약 아님. local_agent_router.py 언급은 docstring 텍스트뿐(실제 import 아님, false-positive 텍스트스캔 edge 였음 — 문구 수정으로 제거)"
-  },
-  "ai_orchestrator/domain/integrations_static.py": {
-    "layer": "L1",
-    "role": "shared",
-    "reason": "연동 정적 목록 순수 데이터(dict 리스트), 외부 의존 0 — ops_router.py/model_adapters.py가 공유하는 L1 계약"
-  },
-  "ai_orchestrator/local_agent/browser/cdp_audit.py": {
-    "layer": "L7",
-    "role": "persistence",
-    "reason": "CDP 액션 감사 로그 기록 — persistence/audit 성격, cdp_session_manager(L7)와 동급, L4 오분류"
-  },
-  "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
-    "layer": "L4",
-    "role": "browser_engine",
-    "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
-  },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
-    "layer": "L4",
-    "role": "browser_engine",
-    "reason": "BlogReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
-  },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
-    "layer": "L4",
-    "role": "browser_engine",
-    "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
-  }
+ "ai_orchestrator/clients/__init__.py": {
+  "layer": "L3",
+  "role": "connector",
+  "reason": "clients 패키지(허브 분리 1단계 신설)",
+  "source": "manual"
+ },
+ "ai_orchestrator/gates/__init__.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "gates 패키지(정책·승인·인증 게이트)",
+  "source": "manual"
+ },
+ "ai_orchestrator/persistence/__init__.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "persistence 패키지(허브 분리 1단계 신설)",
+  "source": "manual"
+ },
+ "ai_orchestrator/local_agent/browser/bootstrap.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "BrowserAgent/cdp_launcher/cdp_session_manager를 직접 조립하는 부트스트래퍼 — L1 shared 오분류"
+ },
+ "ai_orchestrator/routers/app_actions.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "FastAPI app(server.py, L8)과 web_connector(L4)를 직접 호출하는 액션 디스패처 — 순수 L1 계약 아님"
+ },
+ "ai_orchestrator/connectors/google_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "docstring이 '하위 호환 re-export' 라 명시 — google/router.py(L8) APIRouter 를 그대로 재노출하는 라우터 자신, L5 오분류"
+ },
+ "ai_orchestrator/connectors/smartstore_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "하위 호환 re-export — smartstore/router.py(L8) APIRouter 재노출, L5 오분류"
+ },
+ "ai_orchestrator/connectors/youtube_router.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "하위 호환 re-export — youtube/router.py(L8) APIRouter 재노출, L5 오분류"
+ },
+ "ai_orchestrator/connectors/instagram_dm_rule_engine.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "docstring이 '순수 함수(DB/네트워크 의존 없음)' 라 명시 — L5 site_module 오분류"
+ },
+ "ai_orchestrator/connectors/naver_search_run_log.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "JSONL append-only 실행 기록 파일 — 저장/로그 성격, L5 site_module 오분류"
+ },
+ "ai_orchestrator/connectors/naver_search_state.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "data/naver_search_state.json 상태 저장 파일 — 저장 성격, L5 site_module 오분류"
+ },
+ "ai_orchestrator/local_agent/action_risk_policy.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "GRADE_* 순수 상수 정의만, 외부 의존 없음 — action_schemas(L1)가 참조하는 공유 계약, L2 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "BrowserAgent(L4)를 구동해 사이트맵을 탐지하는 실행기 — L1 contract 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/secure_login.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "approval_server.py(L8)를 직접 호출하는 승인 연동 로그인 흐름 — 순수 L1 계약 아님"
+ },
+ "ai_orchestrator/server/universal_agent_models.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "execution_location_guard/server_egress_policy(L2)와 강결합된 모델 — 순수 L1 계약 아님"
+ },
+ "ai_orchestrator/sites/adapters/naver_cafe_collection.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "sites/runner.py(L6)를 직접 호출해 수집을 실행 — 수동적 L4 어댑터 아님, 수집 워크플로 성격"
+ },
+ "ai_orchestrator/local_agent/site_profile_registry.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"
+ },
+ "ai_orchestrator/local_agent/universal_agent_session.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"
+ },
+ "ai_orchestrator/safety_policy/secret_redaction.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "순수 상수(FORBIDDEN_SECRET_FIELDS)+redaction 헬퍼, 외부 의존 0 — L4 browser_engine 오분류"
+ },
+ "ai_orchestrator/telegram_notifier.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "텔레그램 메시지 포맷/파싱만 담당, 전송(HTTP) 없음 — L4 오분류, 실제 전송은 telegram_sender(L3)"
+ },
+ "ai_orchestrator/server/task_queue_schema.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "in-memory contract adapter — task_id/payload 스키마 정의, DB/IO 없음 — L4 오분류"
+ },
+ "ai_orchestrator/sites/adapters/google_dev_reg.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "Google Console 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
+ },
+ "ai_orchestrator/sites/adapters/hiworks_dev_reg.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "하이웍스 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
+ },
+ "ai_orchestrator/sites/adapters/naver_dev_reg.py": {
+  "layer": "L5",
+  "role": "site_module",
+  "reason": "네이버 개발자 등록 폼 자동입력 — 사이트별 자동화, L4 generic 오분류"
+ },
+ "ai_orchestrator/services/web_task_registry.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류"
+ },
+ "ai_orchestrator/sites/connector.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "SiteConnector ABC — 공통 인터페이스/예외 정의만, 실행 코드 없음 — L4 오분류"
+ },
+ "ai_orchestrator/local_agent/action_registry.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "등록 액션 스펙+실행 핸들러 매핑(승인 게이트가 참조하는 정책 레지스트리) — L4 generic 오분류"
+ },
+ "ai_orchestrator/local_agent/action_evidence_collector.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "실행 후 민감정보 redaction 증거 수집 — 승인/감사 정책 성격, L4 generic 오분류"
+ },
+ "ai_orchestrator/app_llm.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "파일 docstring이 스스로 'L1 공유 계약 — 순수 상수' 선언, L4 generic 오분류"
+ },
+ "ai_orchestrator/local_agent_models.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "LocalAgent/LocalAgentTask 데이터클래스 + 직렬화 메서드 — 순수 모델, L4 오분류"
+ },
+ "agent/action_registry.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "액션 카테고리/리스크 메타데이터 레지스트리 — 여러 계층이 참조하는 정책성 상수 레지스트리, L10 오분류"
+ },
+ "ai_orchestrator/browser_tool/domain_profile_registry.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "파일 docstring이 'profile은 실행 정책이지 로그인 자동화 코드가 아님'이라 명시 — L4 오분류"
+ },
+ "ai_orchestrator/browser_tool/browser_engine_capability_classifier.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "정책 기반 엔진 라우팅 분류만 수행, click/type/fill/submit 코드 없음(docstring 명시) — L4 오분류"
+ },
+ "ai_orchestrator/external_sites/provider_models.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "provider 관련 데이터 모델 정의 파일명 — L4 오분류, approval_gate_registry/auth_policy_registry(L2)가 참조하는 순수 모델"
+ },
+ "ai_orchestrator/external_sites/provider_registry.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "provider 등록/조회 레지스트리 — auth_policy_registry(L2)와 동급 정책 레지스트리, L4 오분류"
+ },
+ "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류"
+ },
+ "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급"
+ },
+ "ai_orchestrator/local_agent/task_protocol.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"
+ },
+ "ai_orchestrator/local_agent/result_sanitizer.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "결과 sanitize(보안 redaction) — security_guard(L2)와 동급 보안 정책, L6 script_cli(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/local_session_boundary.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/safe_write_result_sanitizer.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/natural_language_task_api.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
+ },
+ "ai_orchestrator/local_agent/universal_action_verifier.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "universal_safe_result(L6)를 사용한 액션 검증 — 업무 흐름 검증기, L4 generic(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/security_program_auto_resume.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/security_program_install_completion_detector.py": {
+  "layer": "L6",
+  "role": "workflow",
+  "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/site_capability_matrix.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "사이트별 지원 능력 매트릭스(정적 레지스트리) — unknown_site_fallback_policy(L2)와 동급 정책, L6 script_cli(low) 오분류"
+ },
+ "ai_orchestrator/local_agent/delegated_permission_store.py": {
+  "layer": "L2",
+  "role": "policy",
+  "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"
+ },
+ "ai_orchestrator/mcp_server.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "MCP 도구 서버 진입점 — 여러 사이트 모듈/워크플로(L5,L6)를 호출하는 API 계층, L4 오분류"
+ },
+ "ai_orchestrator/local_agent_router_schemas.py": {
+  "layer": "L4",
+  "role": "generic",
+  "reason": "registration_codes.py(L4)를 실제 top-level import — 순수 L1 pydantic 계약 아님. local_agent_router.py 언급은 docstring 텍스트뿐(실제 import 아님, false-positive 텍스트스캔 edge 였음 — 문구 수정으로 제거)"
+ },
+ "ai_orchestrator/domain/integrations_static.py": {
+  "layer": "L1",
+  "role": "shared",
+  "reason": "연동 정적 목록 순수 데이터(dict 리스트), 외부 의존 0 — ops_router.py/model_adapters.py가 공유하는 L1 계약"
+ },
+ "ai_orchestrator/local_agent/browser/cdp_audit.py": {
+  "layer": "L7",
+  "role": "persistence",
+  "reason": "CDP 액션 감사 로그 기록 — persistence/audit 성격, cdp_session_manager(L7)와 동급, L4 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "BlogReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
+ },
+ "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
+  "layer": "L4",
+  "role": "browser_engine",
+  "reason": "CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합하는 aggregator — agent.py(L4)가 직접 사용, L1 contract 오분류"
+ }
 }

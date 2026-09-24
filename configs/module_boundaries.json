@@ -37,7 +37,6 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "local_agent/desktop_launcher.py",
         "verify_local_runtime_dry_run.py",
         "verify_agent_ws_auth.py"
       ],
@@ -59,13 +58,7 @@
       "owner": "release",
       "layer": "L10",
       "paths": [
-        "install.bat",
-        "start.bat",
-        "diagnostics.bat",
-        "uninstall.bat",
-        "README_실행방법.txt",
-        "verify_portable_zip_install.py",
-        "tests/test_portable_zip_install_contract.py"
+        "README_실행방법.txt"
       ],
       "required_gate": "portable_install"
     },

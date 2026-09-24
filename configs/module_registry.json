@@ -2241,30 +2241,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/routers/action_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/admin_ui_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/agent_ai_proxy_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/alert_classifier.py": {
    "layer": "L1",
    "role": "contract",
@@ -2281,14 +2257,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/routers/app_actions.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI app(server.py, L8)과 web_connector(L4)를 직접 호출하는 액션 디스패처 — 순수 L1 계약 아님",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "ai_orchestrator/app_llm.py": {
    "layer": "L1",
    "role": "shared",
@@ -2296,30 +2264,6 @@
    "reason": "파일 docstring이 스스로 'L1 공유 계약 — 순수 상수' 선언, L4 generic 오분류",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "ai_orchestrator/routers/app_status_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/gates/__init__.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "gates 패키지(정책·승인·인증 게이트)",
-   "confidence": "high",
-   "source": "manual"
-  },
-  "ai_orchestrator/gates/approval.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
   },
   "ai_orchestrator/audit_evidence/__init__.py": {
    "layer": "L4",
@@ -2350,30 +2294,6 @@
    "role": "ops_tool",
    "domain": "common",
    "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/gates/auth.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/auth_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/gates/browser_gate_middleware.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -2745,19 +2665,27 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/clients/__init__.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "clients 패키지(허브 분리 1단계 신설)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/clients/telegram_sender.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
    "reason": "공용 기반 이름(config)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/config_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
   },
@@ -3489,30 +3417,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/gates/dev_reg_approval.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/persistence/dev_reg_audit_log.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/services/dev_reg_runner.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "common",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/domain/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -3689,11 +3593,59 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/gmail_reader.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_mail",
-   "reason": "도메인(naver_mail) 자동화",
+  "ai_orchestrator/gates/__init__.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "gates 패키지(정책·승인·인증 게이트)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/gates/approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/auth.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/browser_gate_middleware.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/dev_reg_approval.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/policy.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/gates/risk_classifier.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -5073,11 +5025,35 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/ops_router.py": {
-   "layer": "L8",
-   "role": "api",
+  "ai_orchestrator/persistence/__init__.py": {
+   "layer": "L7",
+   "role": "persistence",
    "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "reason": "persistence 패키지(허브 분리 1단계 신설)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/persistence/dev_reg_audit_log.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/registration_code_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/persistence/user_db.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
    "confidence": "high",
    "source": "rule"
   },
@@ -5089,36 +5065,12 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/gates/policy.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/persistence/registration_code_store.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/registration_codes.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/gates/risk_classifier.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
    "source": "rule"
   },
   "ai_orchestrator/router.py": {
@@ -5137,7 +5089,71 @@
    "confidence": "low",
    "source": "rule"
   },
+  "ai_orchestrator/routers/action_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/admin_ui_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/agent_ai_proxy_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/app_actions.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI app(server.py, L8)과 web_connector(L4)를 직접 호출하는 액션 디스패처 — 순수 L1 계약 아님",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "ai_orchestrator/routers/app_status_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/auth_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/config_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/routers/deploy_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/ops_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5149,6 +5165,38 @@
    "layer": "L8",
    "role": "api",
    "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/user_data_contribution_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/web_task_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/youtube_oauth_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "youtube",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/routers/youtube_research_router.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "youtube",
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
@@ -5305,6 +5353,14 @@
    "confidence": "low",
    "source": "rule"
   },
+  "ai_orchestrator/services/dev_reg_runner.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/services/execution_policy_service.py": {
    "layer": "L2",
    "role": "policy",
@@ -5320,6 +5376,22 @@
    "reason": "정의 위주(모델·스키마·dataclass)",
    "confidence": "high",
    "source": "rule"
+  },
+  "ai_orchestrator/services/web_task_approval_service.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/services/web_task_registry.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "ai_orchestrator/sites/__init__.py": {
    "layer": "L4",
@@ -5433,6 +5505,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "ai_orchestrator/sites/gmail_reader.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_mail",
+   "reason": "도메인(naver_mail) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
   "ai_orchestrator/sites/health.py": {
    "layer": "L4",
    "role": "generic",
@@ -5520,14 +5600,6 @@
    "reason": "텔레그램 메시지 포맷/파싱만 담당, 전송(HTTP) 없음 — L4 오분류, 실제 전송은 telegram_sender(L3)",
    "confidence": "high",
    "source": "confirmed"
-  },
-  "ai_orchestrator/clients/telegram_sender.py": {
-   "layer": "L3",
-   "role": "connector",
-   "domain": "common",
-   "reason": "HTTP 클라이언트",
-   "confidence": "high",
-   "source": "rule"
   },
   "ai_orchestrator/telegram_webhook.py": {
    "layer": "L4",
@@ -6265,46 +6337,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/user_data_contribution_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/persistence/user_db.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "common",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/services/web_task_approval_service.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/services/web_task_registry.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "common",
-   "reason": "사이트명→dev_reg 어댑터(L5) 선택/디스패치 — 업무 흐름 오케스트레이터, L1 contract 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "ai_orchestrator/routers/web_task_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "common",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/web_task_templates.py": {
    "layer": "L1",
    "role": "contract",
@@ -6326,22 +6358,6 @@
    "role": "workflow",
    "domain": "naver",
    "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/youtube_oauth_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "youtube",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/routers/youtube_research_router.py": {
-   "layer": "L8",
-   "role": "api",
-   "domain": "youtube",
-   "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
    "source": "rule"
   },
@@ -6473,28 +6489,12 @@
    "confidence": "low",
    "source": "rule"
   },
-  "apps/marketing-standalone/_bootstrap.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "marketing",
-   "reason": "공용 기반 이름(_bootstrap)",
-   "confidence": "high",
-   "source": "rule"
-  },
   "apps/marketing-standalone/connectors/ai_responder.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "marketing",
    "reason": "도메인(marketing) 자동화",
    "confidence": "high",
-   "source": "rule"
-  },
-  "apps/marketing-standalone/connectors/blog_accounts.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
    "source": "rule"
   },
   "apps/marketing-standalone/connectors/blog_images.py": {
@@ -6561,23 +6561,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "apps/marketing-standalone/core/content_rules.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "marketing",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "apps/marketing-standalone/core/license_check.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "marketing",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/marketing-standalone/core/topic_dedup.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "marketing",
@@ -6617,71 +6601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "apps/youtube-analyzer-standalone/connectors/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "apps/youtube-analyzer-standalone/connectors/keyframe_extractor.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/connectors/transcriber.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/connectors/youtube_data_api.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/connectors/yt_dlp_downloader.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/core/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/core/report_builder.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/core/url_parser.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "youtube",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "apps/youtube-analyzer-standalone/core/viral_score.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "youtube",
@@ -6815,54 +6735,6 @@
    "domain": "common",
    "reason": "FastAPI/Flask 라우터·앱 정의",
    "confidence": "high",
-   "source": "rule"
-  },
-  "data/blog_drafts/extend_posts.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "data/blog_drafts/extend_posts_2.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "data/blog_drafts/fix_titles_and_weak.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "data/blog_drafts/gen_remaining_posts.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "naver_blog",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "data/video_recordings/thumbnail/make_thumbnail.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "data/video_recordings/thumbnail/make_thumbnail_v3.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
    "source": "rule"
   },
   "email_classifier.py": {
@@ -7529,30 +7401,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/_tmp_full_html.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/_tmp_html_consts2.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/_tmp_master.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -7766,22 +7614,6 @@
    "role": "policy",
    "domain": "browser",
    "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser_rpc_client.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser_rpc_server.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
    "confidence": "high",
    "source": "rule"
   },
@@ -9649,51 +9481,11 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/hanafax/export_kras_fax_pdf.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "hanafax",
-   "reason": "도메인(hanafax) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/hanafax/kras_campaign_template.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "hanafax",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/hanafax/kst_date.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "hanafax",
-   "reason": "도메인(hanafax) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/hanafax/router.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hanafax",
    "reason": "도메인(hanafax) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/hanafax/send_kras_campaign.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "hanafax",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/hanafax/send_kras_final_campaign.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "hanafax",
-   "reason": "업무 흐름 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -12385,14 +12177,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/live_probe.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "smartstore",
-   "reason": "도메인(smartstore) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/smartstore/navigation/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -14009,14 +13793,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_force_cdp.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "browser",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/guard_instagram_publish.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -14029,14 +13805,6 @@
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/guard_youtube_upload.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "youtube",
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
@@ -14929,22 +14697,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/video/_cdp_tab.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "video",
-   "reason": "도메인(video) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/video/_upload_kakao_ep01.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "kakao",
-   "reason": "도메인(kakao) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/video/ai_g2b_youtube_ep01.py": {
    "layer": "L5",
    "role": "site_module",
@@ -15001,22 +14753,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/video/kakao_skill_bot_ep01.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "kakao",
-   "reason": "도메인(kakao) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/video/kakao_skill_bot_ep01_visuals.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "kakao",
-   "reason": "도메인(kakao) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/video/kotara_ctc_shorts.py": {
    "layer": "L5",
    "role": "site_module",
@@ -15034,14 +14770,6 @@
    "source": "rule"
   },
   "scripts/video/record_promo.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "video",
-   "reason": "도메인(video) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/video/scripted_recorder.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "video",
@@ -19529,21 +19257,45 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/clients/__init__.py": {
-   "layer": "L3",
-   "role": "connector",
+  "scripts/ops/code_map/registry_sync.py": {
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "clients 패키지(허브 분리 1단계 신설)",
+   "reason": "운영·감사 도구",
    "confidence": "high",
-   "source": "manual"
+   "source": "rule"
   },
-  "ai_orchestrator/persistence/__init__.py": {
-   "layer": "L7",
-   "role": "persistence",
+  "scripts/ops/code_map/skeleton_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
    "domain": "common",
-   "reason": "persistence 패키지(허브 분리 1단계 신설)",
+   "reason": "운영·감사 도구",
    "confidence": "high",
-   "source": "manual"
+   "source": "rule"
+  },
+  "scripts/ops/merge_stage.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_merge_stage.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_skeleton_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
