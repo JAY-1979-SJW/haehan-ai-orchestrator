@@ -885,6 +885,98 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 
 </details>
 
+---
+
+# 2026-09-24 추가 — OpenAI(GPT) 호출 코드 완전 삭제
+
+기준서: `docs/specs/2026-09-24_openai_removal_claude_mcp.md`. 정리 직전 태그: `pre-openai-removal`.
+사유: 앱 런타임 유료 AI API 호출 0, AI(판단·글쓰기·에이전트)는 Claude Code가 MCP(`ai_orchestrator/mcp_server.py`)로 앱에 붙어 수행.
+
+## 복원 방법
+
+```bash
+git checkout pre-openai-removal -- <경로>
+```
+
+## 삭제 파일 (24개)
+
+<details><summary>채팅 API·자율 에이전트 — 6개</summary>
+
+- `ai_orchestrator/routers/agent_ai_proxy_router.py` — /agent-ai/chat·health·task 라우터
+- `ai_orchestrator/openai_proxy_caller.py` — call_openai_chat/call_openai_agent
+- `ai_orchestrator/gpt_planner.py`
+- `ai_orchestrator/connectors/browser_agent_router.py` — /browser-agent/run
+- `scripts/browser_agent/agent.py` — GPT 단계결정 CDP 에이전트(_decide)
+- `scripts/browser_agent/free_agent.py` — GPT 자율 도구호출 에이전트
+
+</details>
+
+<details><summary>도메인 GPT 채팅 루프·전용 작성기 — 5개</summary>
+
+- `ai_orchestrator/connectors/gabia/chat.py` — /gabia/chat (전체 GPT 전용, 나머지 gabia 엔드포인트는 gabia_router.py에 그대로 있음)
+- `scripts/naver/smartstore/product/gpt_description_writer.py` — GptDescriptionWriter(GPT-4o 상세설명·비전)
+- `scripts/cdp_cli.py` — 독립 OpenAI 자연어 CDP REPL(미사용 경로)
+
+(naver_blog_router.py·naver_cafe_router.py·smartstore/chat.py의 GPT 채팅 섹션은 파일 자체는
+유지하되 해당 함수·엔드포인트만 삭제 — 아래 "편집" 참고)
+
+</details>
+
+<details><summary>local_agent 데스크톱 OpenAI 채팅·키 저장 — 6개</summary>
+
+- `local_agent/ai_chat_adapter.py`
+- `local_agent/ai_chat_client.py`
+- `local_agent/ai_chat_models.py`
+- `local_agent/openai_chat_client.py`
+- `local_agent/openai_key_store.py`
+- `local_agent/server_proxy_chat_client.py`
+
+</details>
+
+<details><summary>테스트·감사 스크립트(삭제 코드 전용) — 13개</summary>
+
+- `tests/test_openai_server_proxy_client.py`
+- `tests/test_openai_direct_test_call.py`
+- `tests/test_openai_dev_key_store.py`
+- `tests/test_local_agent_desktop_ui_openai_key_ux_spec.py`
+- `tests/test_deploy_openai_proxy_to_prod.py`
+- `tests/test_agent_ai_chat_api_client.py`
+- `tests/test_chat_gpt_conversion.py`
+- `tests/test_app_features_gpt.py`
+- `tests/test_free_agent_web_search.py`
+- `ai_orchestrator/tests/test_openai_client.py`
+- `ai_orchestrator/tests/test_gpt_planner.py`
+- `scripts/ops/audit_openai_server_proxy_client.py`
+- `scripts/ops/audit_openai_direct_test_call.py`
+- `scripts/ops/audit_openai_dev_key_store.py`
+- `scripts/ops/audit_local_agent_desktop_ui_openai_key_ux_spec.py`
+- `scripts/ops/audit_deploy_openai_proxy_to_prod.py`
+- `scripts/ops/audit_agent_ai_chat_api_client.py`
+
+</details>
+
+## 주요 편집(삭제하지 않고 GPT 분기만 제거)
+
+- `ai_orchestrator/router.py` — agent_ai_proxy_router·browser_agent_router import·include 제거
+- `ai_orchestrator/connectors/naver_blog_router.py` — /chat(SSE GPT 루프)·/ai-generate GPT 본문 삭제(스텁 응답으로 대체)
+- `ai_orchestrator/connectors/naver_cafe_router.py` — /chat(SSE GPT 루프)·_run_cafe_tool·_cafe_tool_defs 삭제, /ai-analyze·/cafe-to-haehan-blog(비AI)는 보존
+- `ai_orchestrator/connectors/smartstore/chat.py` — 전체 재작성, /images/upload만 유지
+- `ai_orchestrator/connectors/smartstore/description.py` — /description/ai-generate·/gpt-generate GPT 호출 제거(스텁 응답)
+- `ai_orchestrator/connectors/gabia_router.py` — gabia/chat.py include 제거
+- `ai_orchestrator/mcp_server.py` — generate_description 도구에서 model=gpt 제거, builder 전용화
+- `ai_orchestrator/openai_client.py` — OpenAI 호출 분기 제거, 항상 MOCK 폴백 반환
+- `ai_orchestrator/app_llm.py` — APP_LLM_PROVIDER="none", APP_LLM_MODEL/QUALITY_MODEL 상수 제거
+- `ai_orchestrator/config.py` — OPENAI_API_KEY 설정 제거
+- `ai_orchestrator/routers/config_router.py` — 데스크톱 배포 env 목록에서 OPENAI_API_KEY 제거
+- `scripts/naver/smartstore/product/review_reply.py` — GPT 답변생성 제거, 별점 기반 고정 템플릿
+- `scripts/naver/automation/integration/ai_responder.py` — OpenAI 분기 제거, 기본 provider="none"(anthropic은 opt-in 유지)
+- `scripts/ops/generate_desc_templates_lighting.py` — Claude/GPT writer 제거, 섹션 빌더만 사용
+- `log_analyzer.py` — generate_ai_ops_summary의 OpenAI 호출 제거, 항상 mock 요약
+- `verify_local_runtime_dry_run.py` — check_ai_proxy(삭제된 local_agent 모듈 참조) 제거
+- `tests/test_app_llm_boundary.py` — GPT 모델 단정 제거, provider="none" 검증으로 교체
+- `tests/test_tool_registry.py` — cafe/blog/smartstore/agent 도메인 등록 검증 제거(해당 register 호출이 삭제된 채팅 루프에 있었음), 포맷 변환 유틸 테스트만 유지
+- `tests/test_naver_cdp_thread_safety.py` — 삭제된 gabia/chat.py 항목 제거
+
 ## 관련 커밋
 
 - `d4a4421d` chore(cleanup): 최근 60일 사용 흔적 없는 직접 실행 스크립트 19개 삭제 [allow-delete]

@@ -1,7 +1,8 @@
 """스마트스토어 상품 상세설명 AI 자동 작성 모듈 (L3 Connector).
 
-⚠ [LLM 경계] LEGACY(Claude 기반). 앱 표준은 gpt_description_writer(GPT) 이며
-활성 도구(generate_description)·등록 폼은 GPT 를 사용한다. 본 모듈은 활성 호출
+⚠ [LLM 경계] LEGACY(Claude 기반, tests/test_app_llm_boundary.py 허용목록에 등록된
+데드모듈). 2026-09-24 GPT 삭제 이후 앱 표준은 유료 AI 미사용(builder/템플릿) —
+generate_description 도구는 page_builder 섹션 빌더만 사용한다. 본 모듈은 활성 호출
 경로에서 사용되지 않는다(데드, 보존만). 신규 코드에서 import 금지.
 
 ────────────────────────────────────────────────────────────────────

@@ -1,20 +1,11 @@
-"""tool_registry — AI 도구 단일 출처 레지스트리 검증.
+"""tool_registry — AI 도구 포맷 변환 유틸 검증.
 
-도메인별로 중복돼 있던 _to_gpt_tools_* 변환기를 일원화한 모듈.
+2026-09-24: 도메인별 GPT 채팅 루프(cafe/blog/smartstore/agent)가 삭제되면서
+그 도구들을 등록하던 register()/register_openai() 호출도 함께 삭제되었다.
+이 테스트는 tool_registry 자체(포맷 변환 로직)만 검증한다 — 유료 AI 호출 없음.
 """
 
 from __future__ import annotations
-
-import importlib
-
-
-def _load_domains():
-    importlib.import_module("ai_orchestrator.connectors.naver_cafe_router")
-    importlib.import_module("ai_orchestrator.connectors.naver_blog_router")
-    importlib.import_module("ai_orchestrator.connectors.smartstore.chat")
-    from ai_orchestrator.connectors import tool_registry as TR
-
-    return TR
 
 
 def test_to_openai_tools_format_and_write_gate():
@@ -36,31 +27,10 @@ def test_to_openai_tools_format_and_write_gate():
     assert spec["function"]["parameters"]["required"] == ["a"]
 
 
-def test_domains_registered():
-    TR = _load_domains()
-    assert {"cafe", "blog", "smartstore"} <= set(TR.domains())
-    inv = TR.all_tools()
-    assert len(inv["cafe"]) >= 1
-    assert len(inv["smartstore"]) >= 5  # 스마트스토어는 도구가 많다
-
-
 def test_openai_tools_for_unknown_domain_is_empty():
     from ai_orchestrator.connectors.tool_registry import openai_tools_for
 
     assert openai_tools_for("nonexistent-domain") == []
-
-
-def test_free_agent_tools_absorbed():
-    # free_agent(OpenAI 직접포맷) 도구도 중앙 레지스트리에 흡수(register_openai).
-    importlib.import_module("scripts.browser_agent.free_agent")
-    from ai_orchestrator.connectors import tool_registry as TR
-
-    assert "agent" in TR.domains()
-    names = [t["name"] for t in TR.all_tools()["agent"]]
-    assert "web_search" in names and "read_page" in names
-    # OpenAI 재변환도 동일 포맷
-    oa = TR.openai_tools_for("agent")
-    assert oa and oa[0]["type"] == "function"
 
 
 def test_register_openai_normalizes_format():

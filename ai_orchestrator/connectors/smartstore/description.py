@@ -80,26 +80,11 @@ class AIDescriptionRequest(BaseModel):
 def api_description_ai_generate(
     body: AIDescriptionRequest, user: dict = Depends(require_role("admin", "owner"))
 ) -> dict:
-    sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.product.gpt_description_writer import (
-        DEFAULT_MODEL,
-        QUALITY_MODEL,
-        GptDescriptionWriter,
-    )
-
-    # 앱 표준=GPT. (구 Claude 우선 + ANTHROPIC 폴백 경로 제거)
-    use_model = QUALITY_MODEL if body.model == "quality" else DEFAULT_MODEL
-    result = GptDescriptionWriter(model=use_model).generate(body.data)
-    if result.get("ok"):
-        log_event(
-            "SMARTSTORE_AI_DESCRIPTION",
-            task_id="-",
-            actor=user["actor"],
-            role=user["role"],
-            decision="ok",
-            note=f"model=gpt:{use_model} name={body.data.get('name', '')[:20]}",
-        )
-    return result
+    """앱 런타임 AI 생성 없음 — Claude Code(MCP)가 문구를 작성해 /description/render 로 렌더링하세요."""
+    return {
+        "ok": False,
+        "error": "앱 런타임 AI 생성 없음 — Claude Code(MCP)가 문구를 작성해 /description/render 또는 templates/save 로 저장하세요.",
+    }
 
 
 class GptDescriptionRequest(BaseModel):
@@ -113,25 +98,11 @@ class GptDescriptionRequest(BaseModel):
 def api_description_gpt_generate(
     body: GptDescriptionRequest, user: dict = Depends(require_role("admin", "owner"))
 ) -> dict:
-    sys.path.insert(0, str(ROOT))
-    from scripts.naver.smartstore.product.gpt_description_writer import (
-        DEFAULT_MODEL,
-        QUALITY_MODEL,
-        GptDescriptionWriter,
-    )
-
-    use_model = QUALITY_MODEL if (body.model == "quality" or body.images) else DEFAULT_MODEL
-    result = GptDescriptionWriter(model=use_model).generate(body.data, images=body.images or None, base=body.base)
-    if result.get("ok"):
-        log_event(
-            "SMARTSTORE_GPT_DESCRIPTION",
-            task_id="-",
-            actor=user["actor"],
-            role=user["role"],
-            decision="ok",
-            note=f"model={use_model} images={len(body.images)} name={body.data.get('name', '')[:20]}",
-        )
-    return result
+    """삭제됨(GPT 전용 경로) — Claude Code(MCP)가 문구를 작성해 /description/render 로 렌더링하세요."""
+    return {
+        "ok": False,
+        "error": "앱 런타임 AI 생성 없음 — Claude Code(MCP)가 문구를 작성해 /description/render 또는 templates/save 로 저장하세요.",
+    }
 
 
 # ── 템플릿 ────────────────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@
 
 금지: 비밀번호/OTP/세션/쿠키 반환 금지, 결제 자동화 금지
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -17,15 +18,13 @@ from pathlib import Path
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from .gabia.chat import router as gabia_chat_router
-
 gabia_router = APIRouter(prefix="/gabia", tags=["gabia"])
-gabia_router.include_router(gabia_chat_router)
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 # ── 응답 모델 ─────────────────────────────────────────────────────────────────
+
 
 class GabiaOperation(BaseModel):
     name: str
@@ -67,18 +66,50 @@ class NavStep(BaseModel):
 
 # ── 엔드포인트 ────────────────────────────────────────────────────────────────
 
+
 @gabia_router.get("/status", response_model=GabiaStatusResponse)
 def get_gabia_status():
     """가비아 업무 현황 및 게이트 정책 요약."""
     operations = [
-        GabiaOperation(name="공개 페이지 조회", gate="READ_ONLY_ALLOWED", note="로그인 없이 가능", user_action_required=False),
-        GabiaOperation(name="계정 정보 조회", gate="LOCAL_AGENT_REQUIRED", note="로컬 에이전트 + 로그인 세션 필요", user_action_required=True),
-        GabiaOperation(name="로그인 / OTP", gate="USER_DIRECT_REQUIRED", note="OTP/2FA 필수 — 사용자가 직접 수행", user_action_required=True),
-        GabiaOperation(name="DNS 레코드 변경", gate="APPROVAL_REQUIRED", note="AI 입력 준비 → 사용자 최종 저장", user_action_required=True),
-        GabiaOperation(name="DNS 레코드 삭제", gate="APPROVAL_REQUIRED", note="비가역 작업 — 사용자 승인 필수", user_action_required=True),
-        GabiaOperation(name="도메인 연장/이전", gate="APPROVAL_REQUIRED", note="비가역 — 사용자 승인 필수", user_action_required=True),
-        GabiaOperation(name="호스팅/메일 설정", gate="APPROVAL_REQUIRED", note="사용자 승인 후 실행", user_action_required=True),
-        GabiaOperation(name="결제/청구", gate="BLOCKED", note="사용자가 직접 my.gabia.com 처리", user_action_required=True),
+        GabiaOperation(
+            name="공개 페이지 조회", gate="READ_ONLY_ALLOWED", note="로그인 없이 가능", user_action_required=False
+        ),
+        GabiaOperation(
+            name="계정 정보 조회",
+            gate="LOCAL_AGENT_REQUIRED",
+            note="로컬 에이전트 + 로그인 세션 필요",
+            user_action_required=True,
+        ),
+        GabiaOperation(
+            name="로그인 / OTP",
+            gate="USER_DIRECT_REQUIRED",
+            note="OTP/2FA 필수 — 사용자가 직접 수행",
+            user_action_required=True,
+        ),
+        GabiaOperation(
+            name="DNS 레코드 변경",
+            gate="APPROVAL_REQUIRED",
+            note="AI 입력 준비 → 사용자 최종 저장",
+            user_action_required=True,
+        ),
+        GabiaOperation(
+            name="DNS 레코드 삭제",
+            gate="APPROVAL_REQUIRED",
+            note="비가역 작업 — 사용자 승인 필수",
+            user_action_required=True,
+        ),
+        GabiaOperation(
+            name="도메인 연장/이전",
+            gate="APPROVAL_REQUIRED",
+            note="비가역 — 사용자 승인 필수",
+            user_action_required=True,
+        ),
+        GabiaOperation(
+            name="호스팅/메일 설정", gate="APPROVAL_REQUIRED", note="사용자 승인 후 실행", user_action_required=True
+        ),
+        GabiaOperation(
+            name="결제/청구", gate="BLOCKED", note="사용자가 직접 my.gabia.com 처리", user_action_required=True
+        ),
     ]
     return GabiaStatusResponse(
         provider="gabia",
@@ -93,6 +124,7 @@ def get_gabia_status():
 def list_dns_tasks():
     """가비아 DNS 업무 레지스트리 목록."""
     from ai_orchestrator.gabia.gabia_dns_work_registry import list_gabia_external_works
+
     works = list_gabia_external_works()
     return [
         DnsTaskItem(
@@ -137,6 +169,7 @@ def start_login_watch():
 def get_nav_plan():
     """가비아 DNS 업무 브라우저 네비게이션 계획."""
     from ai_orchestrator.gabia.gabia_browser_task import GABIA_NAV_PLAN
+
     return [
         NavStep(
             step=s["step"],
