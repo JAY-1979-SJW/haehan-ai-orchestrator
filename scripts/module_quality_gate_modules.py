@@ -276,10 +276,6 @@ MODULES: tuple[GateModule, ...] = (
                 live=True,
             ),
             GateStep(
-                "openai_proxy_contract",
-                (PY, "-m", "pytest", "tests/test_openai_server_proxy_client.py", "-q"),
-            ),
-            GateStep(
                 "playwright_smoke_live",
                 (PY, "-m", "pytest", "tests/test_local_playwright_smoke_20260508.py", "-q"),
                 live=True,

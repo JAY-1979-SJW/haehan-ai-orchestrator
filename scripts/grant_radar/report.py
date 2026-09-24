@@ -70,17 +70,9 @@ def _parse_manager(raw: str) -> str | None:
 
 
 def _summarize(item: dict) -> str:
-    """LLM 한 줄 요약 (미설정 시 MOCK 폴백). 토큰 절약 위해 적합 항목에만 호출."""
-    try:
-        sys.path.insert(0, str(ROOT))
-        from ai_orchestrator.openai_client import _call
-
-        fallback = item["title"][:80]
-        system = "당신은 정부 지원사업 분석가입니다. 공고를 한 줄로 핵심만 요약합니다."
-        user = f"공고: {item['title']}\n원문: {item['raw'][:300]}\n한국어로 한 줄 요약."
-        return _call(system, user, fallback)
-    except Exception:
-        return item["title"][:80]
+    """제목 기반 요약. 앱 런타임 유료 AI 호출 제거(2026-09) — AI 요약이 필요하면
+    Claude Code(MCP)가 이 데이터를 읽어 별도로 작성한다."""
+    return item["title"][:80]
 
 
 def build_report() -> dict:
