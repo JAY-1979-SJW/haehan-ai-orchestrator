@@ -873,42 +873,9 @@ export async function renderDescription(
   return postJson("/api/v1/smartstore/description/render", { sections, data });
 }
 
-export async function aiGenerateDescription(
-  data: Record<string, unknown>,
-  model?: "quality",
-): Promise<{
-  ok: boolean;
-  html?: string;
-  warnings?: string[];
-  error?: string;
-  errors?: string[];
-  fellback_to_gpt?: boolean;
-  notice?: string;
-}> {
-  return postJson("/api/v1/smartstore/description/ai-generate", { data, model: model ?? null });
-}
-
-export async function gptGenerateDescription(
-  data: Record<string, unknown>,
-  images: string[],
-  model?: "quality",
-  base?: string,
-): Promise<{
-  ok: boolean;
-  html?: string;
-  model?: string;
-  image_analysis?: Record<string, unknown>;
-  warnings?: string[];
-  error?: string;
-  errors?: string[];
-}> {
-  return postJson("/api/v1/smartstore/description/gpt-generate", {
-    data,
-    images,
-    model: model ?? null,
-    base: base ?? null,  // 표준 템플릿 베이스 → 템플릿 기반 수정 모드
-  });
-}
+// 2026-09-24: 앱 런타임 AI 생성 제거 — aiGenerateDescription/gptGenerateDescription
+// 호출자는 ProductsClient.tsx에서 정적 안내 문구로 대체됨(백엔드 ai-generate/gpt-generate
+// 라우트는 이제 항상 { ok:false } 스텁만 반환하므로 프론트에서 더 이상 호출하지 않는다).
 
 export interface AutoRegisterResult {
   ok: boolean;
