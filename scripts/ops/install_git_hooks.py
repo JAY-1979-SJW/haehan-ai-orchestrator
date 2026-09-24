@@ -147,6 +147,15 @@ if _js_staged:
         print("=" * 60)
         sys.exit(1)
 
+# ── 지도↔골격 대조 게이트 (skeleton_gate) ────────────────────────────────
+# 정본(module_registry.json)이 스테이지된 A/D/R 코드 파일·추적 파일과 어긋나면 차단.
+# 우회: SKELETON_GATE_SKIP_REASON="사유" 환경변수 (감사 로그 기록됨).
+_sg = ROOT / "scripts" / "ops" / "code_map" / "skeleton_gate.py"
+if _sg.exists():
+    _sg_result = subprocess.run([sys.executable, str(_sg)], cwd=str(ROOT))
+    if _sg_result.returncode != 0:
+        sys.exit(_sg_result.returncode)
+
 # 기존 quality gate (pre-commit 내장)
 from pathlib import Path as _P
 import importlib.util, os
