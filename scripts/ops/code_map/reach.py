@@ -133,6 +133,8 @@ def build_graph(files: list[str], manual: dict) -> dict:
     py_files = [f for f in files if f.endswith(".py")]
     res = Resolver(py_files)
     edges: dict[str, set[str]] = {p: set() for p in py_files}
+    # 실제 import(정적 import + 문자열 리터럴 동적 import)만 — 층간 방향 판정용(문자열 경로 언급 제외)
+    import_edges: dict[str, set[str]] = {p: set() for p in py_files}
     stats = {
         "import_internal": 0,
         "import_external": 0,
@@ -159,9 +161,11 @@ def build_graph(files: list[str], manual: dict) -> dict:
             if status == "failed" and len(failed_samples) < 60:
                 failed_samples.append(f"{rel}: {'.' * level}{module}")
             edges[rel].update(t for t in targets if t != rel)
+            import_edges[rel].update(t for t in targets if t != rel)
         for dotted in pf.dynamic_literal:
             stats["dynamic_literal"] += 1
             edges[rel].update(res.resolve_dotted(rel, dotted))
+            import_edges[rel].update(t for t in res.resolve_dotted(rel, dotted) if t != rel)
         if pf.dynamic_unresolved:
             stats["dynamic_unresolved"] += pf.dynamic_unresolved
             dynamic_files[rel] = pf.dynamic_unresolved
@@ -215,6 +219,7 @@ def build_graph(files: list[str], manual: dict) -> dict:
     return {
         "py_files": py_files,
         "edges": {k: sorted(v) for k, v in edges.items()},
+        "import_edges": {k: sorted(v) for k, v in import_edges.items() if v},
         "launcher_roots": {k: sorted(v) for k, v in launcher_roots.items()},
         "has_main": sorted(has_main),
         "parse_errors": parse_errors,
