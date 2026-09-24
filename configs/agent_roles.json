@@ -1,0 +1,10 @@
+{
+  "_doc": "역할별 모델·도구호출 상한·입력·출력 정본. agent_brief.py 가 이 표로 지시문을 만든다. 서브에이전트 이어쓰기 금지(수정은 새 에이전트+브리프).",
+  "roles": {
+    "implement": {"model": "sonnet", "max_tool_calls": 40, "input": "brief", "output": "changed_files+verify_result (10줄 이내)"},
+    "review": {"model": "sonnet", "max_tool_calls": 25, "input": "brief", "output": "findings_table (문제만)"},
+    "compare": {"model": "haiku", "max_tool_calls": 15, "input": "brief", "output": "diff_table"},
+    "design": {"model": "main", "max_tool_calls": null, "input": "user", "output": "spec+user_report"}
+  },
+  "handoff_on_limit": "data/impact/<spec-id>.handoff.md"
+}
