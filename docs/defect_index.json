@@ -1,7 +1,7 @@
 {
   "_doc": "결함 목차 — 번호는 한 번 주면 바꾸지 않는다, 해결돼도 재사용하지 않는다(결번), 신규는 뒤에 붙인다. 기계 참조는 id 로. category: 1 정확성(틀린 값·실행 실패) / 2 구조 건전성(재발·유지비) / 3 측정 능력의 구멍. status: open | fixed | measure(재측정 필요). 근거는 2026-09-23 실측(골격 점검 A~G, 코드맵 S1 data/code_map/map.json).",
-  "updated": "2026-09-23",
-  "next_no": 33,
+  "updated": "2026-09-24",
+  "next_no": 35,
   "items": [
     {
       "no": 1,
@@ -442,6 +442,32 @@
       "stage": "RUN",
       "status": "open",
       "no": 32
+    },
+    {
+      "id": "hook.ruff_fix_deletes_reexports",
+      "category": 2,
+      "title": "커밋 훅의 ruff --fix 가 재노출 import(파사드·mock.patch 대상)를 '미사용'으로 지워 조용히 깨뜨림",
+      "where": [
+        ".githooks/pre-commit.orig",
+        "ai_orchestrator/local_agent_router.py"
+      ],
+      "evidence": "허브 분리 2단계: local_agent_router 의 요청모델·검증헬퍼 등 20여 이름 삭제 → tests/test_local_agent_router_split import 실패(리뷰가 검출, d6ad7b27 복원). 파사드는 '# ruff: noqa: F401' 로 표시해 방어. 근본 대책(훅에서 F401 자동수정 제외 또는 재노출 목록 선언) 미결",
+      "stage": "GATE",
+      "status": "open",
+      "no": 33
+    },
+    {
+      "id": "verify.cross_check_registry",
+      "category": 3,
+      "title": "분류 정본(골격)과 실제 파일(지도) 불일치를 잡는 장치가 없었음",
+      "where": [
+        "scripts/ops/verify_change.py",
+        "configs/module_registry.json"
+      ],
+      "evidence": "verify_change 9번 항목 추가(e7e728ea) — 첫 실행에서 허브 분리 1단계 신설 패키지 __init__ 2개 정본 누락 검출·등록",
+      "stage": "GATE",
+      "status": "fixed",
+      "no": 34
     }
   ]
 }
