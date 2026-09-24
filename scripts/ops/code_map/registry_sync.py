@@ -28,17 +28,24 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = ROOT / "configs" / "module_registry.json"
 OVERRIDES = ROOT / "configs" / "module_registry.overrides.json"
-CODE_SUFFIX = (".py", ".ts", ".tsx", ".js", ".mjs")
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.classify import _domain, classify_one  # noqa: E402
+from scripts.ops.code_map.classify import CODE_SUFFIX, _domain, classify_one  # noqa: E402
 
 
 def tracked_code_files(root: Path = ROOT) -> set[str]:
     """git 인덱스(스테이지 반영) 기준 추적 코드 파일 집합."""
-    r = subprocess.run(["git", "ls-files"], cwd=str(root), capture_output=True, text=True, check=True)
+    r = subprocess.run(
+        ["git", "-c", "core.quotepath=false", "ls-files"],
+        cwd=str(root),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
+    )
     return {f for f in r.stdout.splitlines() if PurePosixPath(f).suffix in CODE_SUFFIX}
 
 
@@ -62,19 +69,36 @@ def save_overrides(doc: dict, root: Path = ROOT) -> None:
 
 
 def detect_renames(root: Path = ROOT) -> dict[str, str]:
-    """스테이지된 이동(old -> new) + HEAD..index 이동(직접 mv 후 add 한 경우도 포함)."""
+    """스테이지된 이동(old -> new) 감지. 단일 git 호출(예전엔 두 번 호출하던 중복 구현이었음)."""
     renames: dict[str, str] = {}
-    for args in (
-        ["git", "diff", "--cached", "-M", "--name-status"],
-        ["git", "diff", "HEAD", "--cached", "-M", "--name-status"],
-    ):
-        with contextlib.suppress(subprocess.CalledProcessError):
-            r = subprocess.run(args, cwd=str(root), capture_output=True, text=True, check=True)
-            for line in r.stdout.splitlines():
-                parts = line.split("\t")
-                if len(parts) == 3 and parts[0].startswith("R"):
-                    renames[parts[1]] = parts[2]
+    with contextlib.suppress(subprocess.CalledProcessError):
+        r = subprocess.run(
+            ["git", "-c", "core.quotepath=false", "diff", "--cached", "-M", "--name-status"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        )
+        for line in r.stdout.splitlines():
+            parts = line.split("\t")
+            if len(parts) == 3 and parts[0].startswith("R"):
+                renames[parts[1]] = parts[2]
     return renames
+
+
+def _move_key_preserve_order(d: dict, old: str, new: str) -> None:
+    """d[old] 를 d[new] 로 옮기되, 원래 키 위치(순서)를 보존한다(끝에 추가하지 않음)."""
+    if old not in d or new in d:
+        return
+    value = d[old]
+    keys = list(d.keys())
+    idx = keys.index(old)
+    items = list(d.items())
+    items[idx] = (new, value)
+    d.clear()
+    d.update(items)
 
 
 def diff_registry(reg_files: set[str], tracked: set[str]) -> tuple[set[str], set[str]]:
@@ -128,14 +152,16 @@ def fix(root: Path = ROOT) -> int:
     files: dict = doc.setdefault("files", {})
     overrides = load_overrides(root)
 
-    # 1) 이동: 값 유지한 채 키만 옮김. overrides 도 같이 옮김.
+    # 1) 이동: 값 유지한 채 키만 옮김(원래 위치 보존). overrides 도 같이 옮김.
     moved = 0
+    overrides_changed = False
     for old, new in detect_renames(root).items():
         if old in files and new not in files:
-            files[new] = files.pop(old)
+            _move_key_preserve_order(files, old, new)
             moved += 1
         if old in overrides and new not in overrides:
-            overrides[new] = overrides.pop(old)
+            _move_key_preserve_order(overrides, old, new)
+            overrides_changed = True
 
     tracked = tracked_code_files(root)
     reg_files = set(files.keys())
@@ -147,14 +173,17 @@ def fix(root: Path = ROOT) -> int:
         files[p] = _classify_new(p, overrides, root)
         added += 1
 
-    # 3) 제거: 추적되지 않는(미커밋/임시) 항목
+    # 3) 제거: 추적되지 않는(미커밋/임시) 항목. overrides 에 남은 참조도 같이 제거.
     removed = 0
     for p in sorted(ghost):
         del files[p]
         removed += 1
+        if p in overrides:
+            del overrides[p]
+            overrides_changed = True
 
     save_registry(doc, root)
-    if overrides:
+    if overrides or overrides_changed:
         save_overrides(overrides, root)
     print(json.dumps({"added": added, "removed": removed, "moved": moved}, ensure_ascii=False))
     return 0
