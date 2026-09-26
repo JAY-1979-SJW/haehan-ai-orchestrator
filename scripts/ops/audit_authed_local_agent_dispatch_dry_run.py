@@ -125,7 +125,7 @@ def audit() -> AuditResult:
     else:
         add(findings, "FAIL", "config_auth_default", "default true not found")
 
-    router = read_text("ai_orchestrator/local_agent_router.py")
+    router = read_text("ai_orchestrator/local_agent_router_registration.py")
     protected_register = has(
         r"def\s+register_local_agent\([\s\S]{0,300}require_role\(\s*[\"']admin[\"']\s*,\s*[\"']owner[\"']\s*\)",
         router,
@@ -136,8 +136,8 @@ def audit() -> AuditResult:
         add(findings, "FAIL", "register_endpoint_auth", "admin/owner guard not found")
 
     if (
-        '@local_agent_router.post("/registration-codes")' in router
-        and '@local_agent_router.post("/register-with-code")' in router
+        '@registration_router.post("/registration-codes")' in router
+        and '@registration_router.post("/register-with-code")' in router
     ):
         add(findings, "PASS", "registration_code_flow", "issue and exchange endpoints present")
     else:
