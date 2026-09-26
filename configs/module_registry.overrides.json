@@ -20,14 +20,14 @@
   "reason": "파일 docstring이 'profile은 실행 정책이지 로그인 자동화 코드가 아님'이라 명시 — L4 오분류"
  },
  "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
-  "layer": "L6",
+  "layer": "L5",
   "role": "workflow",
-  "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류"
+  "reason": "S2b 선언층 정정: g2b 사이트 모듈 묶음"
  },
  "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
-  "layer": "L6",
+  "layer": "L5",
   "role": "workflow",
-  "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급"
+  "reason": "S2b 선언층 정정: g2b 사이트 모듈 묶음"
  },
  "ai_orchestrator/clients/__init__.py": {
   "layer": "L3",
@@ -668,5 +668,105 @@
   "layer": "L4",
   "role": "persistence",
   "reason": "S2a 선언층 정정: 실제 import 방향과 일치(repair_s2a_dryrun)"
+ },
+ "scripts/naver/blog/selectors.py": {
+  "layer": "L1",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: pure 상수(out 0)"
+ },
+ "scripts/naver/blog/gonobi/classifier.py": {
+  "layer": "L1",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: 순수 키워드 규칙(out 0)"
+ },
+ "scripts/gabia_login_watch.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: 로그인 감시(out<=L4), D3"
+ },
+ "local_agent/browser_approval_verifier.py": {
+  "layer": "L1",
+  "role": "policy",
+  "reason": "S2b 선언층 정정: 순수 검증(out 0)"
+ },
+ "scripts/naver/automation/platform/error_recovery.py": {
+  "layer": "L5",
+  "role": "persistence",
+  "reason": "S2b 선언층 정정: 사이트 모듈 호출(L6은 in L5 위반)"
+ },
+ "scripts/naver/blog/management/schedule.py": {
+  "layer": "L5",
+  "role": "persistence",
+  "reason": "S2b 선언층 정정: 사이트 모듈 호출"
+ },
+ "scripts/naver/smartstore/product/bulk.py": {
+  "layer": "L5",
+  "role": "persistence",
+  "reason": "S2b 선언층 정정: 사이트 모듈 호출"
+ },
+ "scripts/youtube/research_search.py": {
+  "layer": "L5",
+  "role": "persistence",
+  "reason": "S2b 선언층 정정: 사이트 모듈 호출"
+ },
+ "ai_orchestrator/connectors/naver_blog_router.py": {
+  "layer": "L6",
+  "role": "api",
+  "reason": "S2b 선언층 정정: 라우트 데코 0개"
+ },
+ "ai_orchestrator/local_agent/browser/approval_server.py": {
+  "layer": "L4",
+  "role": "api",
+  "reason": "S2b 선언층 정정: 라우트 없음, out<=L2"
+ },
+ "scripts/site_engine/action_planner.py": {
+  "layer": "L2",
+  "role": "contract",
+  "reason": "S2b 선언층 정정: 정책 판정"
+ },
+ "scripts/site_engine/validators.py": {
+  "layer": "L2",
+  "role": "contract",
+  "reason": "S2b 선언층 정정: 정책 판정"
+ },
+ "ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py": {
+  "layer": "L5",
+  "role": "workflow",
+  "reason": "S2b 선언층 정정: g2b 사이트 모듈 묶음"
+ },
+ "ai_orchestrator/browser_tool/g2b_public_notice_workflow.py": {
+  "layer": "L5",
+  "role": "workflow",
+  "reason": "S2b 선언층 정정: g2b 사이트 모듈 묶음"
+ },
+ "scripts/site_registry.py": {
+  "layer": "L5",
+  "role": "contract",
+  "reason": "S2b 선언층 정정: 사이트 레지스트리"
+ },
+ "scripts/site_access.py": {
+  "layer": "L5",
+  "role": "browser_engine",
+  "reason": "S2b 선언층 정정: D1a"
+ },
+ "scripts/explorer/site_crawler.py": {
+  "layer": "L5",
+  "role": "browser_engine",
+  "reason": "S2b 선언층 정정: D1a"
+ },
+ "scripts/form/orchestrator.py": {
+  "layer": "L4",
+  "role": "workflow",
+  "reason": "S2b 선언층 정정: out<=L4"
+ },
+ "scripts/naver/smartstore/navigation/cdp_popup_manager.py": {
+  "layer": "L4",
+  "role": "site_module",
+  "reason": "S2b 선언층 정정: out<=L4"
+ },
+ "scripts/cdp_client.py": {
+  "layer": "L5",
+  "role": "browser_engine",
+  "reason": "S2b 선언층 정정: CLI 디스패처(21 lazy import), site_registry L5 화 동반"
  }
 }

@@ -2402,7 +2402,7 @@
    "source": "rule"
   },
   "ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py": {
-   "layer": "L6",
+   "layer": "L5",
    "role": "workflow",
    "domain": "g2b",
    "reason": "g2b_public_notice_workflow(L6)를 dry-run으로 감싸는 워크플로 어댑터 — L4 generic(low) 오분류",
@@ -2410,7 +2410,7 @@
    "source": "confirmed"
   },
   "ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py": {
-   "layer": "L6",
+   "layer": "L5",
    "role": "workflow",
    "domain": "g2b",
    "reason": "워크플로 실행 여부를 게이트하고 직접 트리거하는 오케스트레이터 — 단순 L2 policy 아님, dryrun_adapter/workflow(L6)와 동급",
@@ -2418,7 +2418,7 @@
    "source": "confirmed"
   },
   "ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py": {
-   "layer": "L6",
+   "layer": "L5",
    "role": "workflow",
    "domain": "g2b",
    "reason": "업무 흐름 이름",
@@ -2426,7 +2426,7 @@
    "source": "rule"
   },
   "ai_orchestrator/browser_tool/g2b_public_notice_workflow.py": {
-   "layer": "L6",
+   "layer": "L5",
    "role": "workflow",
    "domain": "g2b",
    "reason": "업무 흐름 이름",
@@ -2946,7 +2946,7 @@
    "source": "rule"
   },
   "ai_orchestrator/connectors/naver_blog_router.py": {
-   "layer": "L8",
+   "layer": "L6",
    "role": "api",
    "domain": "naver_blog",
    "reason": "FastAPI/Flask 라우터·앱 정의",
@@ -3906,7 +3906,7 @@
    "source": "rule"
   },
   "ai_orchestrator/local_agent/browser/approval_server.py": {
-   "layer": "L8",
+   "layer": "L4",
    "role": "api",
    "domain": "local_agent",
    "reason": "FastAPI/Flask 라우터·앱 정의",
@@ -6770,7 +6770,7 @@
    "source": "rule"
   },
   "local_agent/browser_approval_verifier.py": {
-   "layer": "L2",
+   "layer": "L1",
    "role": "policy",
    "domain": "local_agent",
    "reason": "정책·게이트 이름",
@@ -7458,7 +7458,7 @@
    "source": "rule"
   },
   "scripts/cdp_client.py": {
-   "layer": "L4",
+   "layer": "L5",
    "role": "browser_engine",
    "domain": "browser",
    "reason": "범용 브라우저·CDP",
@@ -8074,7 +8074,7 @@
    "source": "rule"
   },
   "scripts/explorer/site_crawler.py": {
-   "layer": "L4",
+   "layer": "L5",
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
@@ -8146,7 +8146,7 @@
    "source": "rule"
   },
   "scripts/form/orchestrator.py": {
-   "layer": "L6",
+   "layer": "L4",
    "role": "workflow",
    "domain": "common",
    "reason": "업무 흐름 이름",
@@ -8282,7 +8282,7 @@
    "source": "rule"
   },
   "scripts/gabia_login_watch.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "gabia",
    "reason": "도메인(gabia) 자동화",
@@ -10194,7 +10194,7 @@
    "source": "rule"
   },
   "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L7",
+   "layer": "L5",
    "role": "persistence",
    "domain": "naver",
    "reason": "DB·저장 신호",
@@ -10562,7 +10562,7 @@
    "source": "rule"
   },
   "scripts/naver/blog/gonobi/classifier.py": {
-   "layer": "L5",
+   "layer": "L1",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
@@ -10626,7 +10626,7 @@
    "source": "override"
   },
   "scripts/naver/blog/management/schedule.py": {
-   "layer": "L7",
+   "layer": "L5",
    "role": "persistence",
    "domain": "naver_blog",
    "reason": "DB·저장 신호",
@@ -10730,7 +10730,7 @@
    "source": "rule"
   },
   "scripts/naver/blog/selectors.py": {
-   "layer": "L5",
+   "layer": "L1",
    "role": "site_module",
    "domain": "naver_blog",
    "reason": "도메인(naver_blog) 자동화",
@@ -11994,7 +11994,7 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/navigation/cdp_popup_manager.py": {
-   "layer": "L5",
+   "layer": "L4",
    "role": "site_module",
    "domain": "smartstore",
    "reason": "도메인(smartstore) 자동화",
@@ -12066,7 +12066,7 @@
    "source": "rule"
   },
   "scripts/naver/smartstore/product/bulk.py": {
-   "layer": "L7",
+   "layer": "L5",
    "role": "persistence",
    "domain": "smartstore",
    "reason": "DB·저장 신호",
@@ -14218,7 +14218,7 @@
    "source": "rule"
   },
   "scripts/site_access.py": {
-   "layer": "L4",
+   "layer": "L5",
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
@@ -14242,7 +14242,7 @@
    "source": "rule"
   },
   "scripts/site_engine/action_planner.py": {
-   "layer": "L1",
+   "layer": "L2",
    "role": "contract",
    "domain": "common",
    "reason": "정의 위주(모델·스키마·dataclass)",
@@ -14322,7 +14322,7 @@
    "source": "rule"
   },
   "scripts/site_engine/validators.py": {
-   "layer": "L1",
+   "layer": "L2",
    "role": "contract",
    "domain": "common",
    "reason": "정의 위주(모델·스키마·dataclass)",
@@ -14338,7 +14338,7 @@
    "source": "rule"
   },
   "scripts/site_registry.py": {
-   "layer": "L1",
+   "layer": "L5",
    "role": "contract",
    "domain": "common",
    "reason": "정의 위주(모델·스키마·dataclass)",
@@ -14674,7 +14674,7 @@
    "source": "rule"
   },
   "scripts/youtube/research_search.py": {
-   "layer": "L7",
+   "layer": "L5",
    "role": "persistence",
    "domain": "youtube",
    "reason": "DB·저장 신호",
