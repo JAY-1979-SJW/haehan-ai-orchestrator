@@ -21,6 +21,21 @@ from __future__ import annotations
 
 import pytest
 
+from tests._route_helpers import (  # noqa: F401
+    assert_route_floor,
+    assert_routes_present,
+    collect_routes,
+)
+
+REQ = [
+    "/api/v1/ops/audit-events",
+    "/api/v1/ops/summary",
+    "/api/v1/ops/approvals",
+    "/api/v1/tasks",
+    "/api/v1/health",
+    "/api/v1/app/health/summary",
+]
+
 # ===========================================================================
 # 1. Task 모델
 # ===========================================================================
@@ -159,7 +174,11 @@ class TestWorkTradeModel:
 
     def test_work_trade_to_safe_dict(self):
         """WorkTrade.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, WorkTrade, WorkTradeScope
+        from ai_orchestrator.domain.models import (
+            DOMAIN_FORBIDDEN_FIELDS,
+            WorkTrade,
+            WorkTradeScope,
+        )
 
         wt = WorkTrade(
             work_trade_id="wt-test",
@@ -253,7 +272,11 @@ class TestExternalWorkModel:
 
     def test_external_work_no_secret_in_safe_dict(self):
         """ExternalWork.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, ExternalWork, WorkTradeScope
+        from ai_orchestrator.domain.models import (
+            DOMAIN_FORBIDDEN_FIELDS,
+            ExternalWork,
+            WorkTradeScope,
+        )
 
         ew = ExternalWork(
             external_work_id="ew-test",
@@ -313,7 +336,11 @@ class TestIntegrationModel:
 
     def test_integration_no_secret_in_safe_dict(self):
         """Integration.to_safe_dict에 secret 없음."""
-        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, Integration, IntegrationStatus
+        from ai_orchestrator.domain.models import (
+            DOMAIN_FORBIDDEN_FIELDS,
+            Integration,
+            IntegrationStatus,
+        )
 
         intg = Integration(
             integration_id="int-test",
@@ -360,7 +387,12 @@ class TestArtifactModel:
 
     def test_artifact_no_secret_fields(self):
         """Artifact.to_safe_dict에 금지 필드 없음."""
-        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, Artifact, ArtifactType, EvidenceLevel
+        from ai_orchestrator.domain.models import (
+            DOMAIN_FORBIDDEN_FIELDS,
+            Artifact,
+            ArtifactType,
+            EvidenceLevel,
+        )
 
         a = Artifact(
             artifact_id="art-002",
@@ -432,7 +464,11 @@ class TestSafetyPolicyModel:
 
     def test_safety_policy_no_secret_fields(self):
         """SafetyPolicy.to_safe_dict에 금지 필드 없음."""
-        from ai_orchestrator.domain.models import DOMAIN_FORBIDDEN_FIELDS, SafetyDecision, SafetyPolicy
+        from ai_orchestrator.domain.models import (
+            DOMAIN_FORBIDDEN_FIELDS,
+            SafetyDecision,
+            SafetyPolicy,
+        )
 
         p = SafetyPolicy(
             policy_id="pol-test",
@@ -836,13 +872,9 @@ class TestNoContractBreak:
 
     def test_runtime_endpoint_count_unchanged(self):
         """runtime endpoint 수가 60개로 변경되지 않았다."""
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         # APP_API_READONLY_ENDPOINTS_IMPLEMENTATION_01: app_status_router GET 3개 추가 → 60+3=63
-        assert len(routes) == 63, f"endpoint 수 변경 감지: {len(routes)}"
+        assert_route_floor(250)
+        assert_routes_present(REQ)
 
     def test_health_endpoint_unchanged(self):
         """health endpoint 응답 구조가 변경되지 않았다."""

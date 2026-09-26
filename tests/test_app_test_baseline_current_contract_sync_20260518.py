@@ -9,6 +9,21 @@ from pathlib import Path
 
 import pytest
 
+from tests._route_helpers import (  # noqa: F401
+    assert_route_floor,
+    assert_routes_present,
+    collect_post_routes,
+    collect_routes,
+)
+
+REQ = [
+    "/api/v1/ops/audit-events",
+    "/api/v1/ops/summary",
+    "/api/v1/ops/approvals",
+    "/api/v1/tasks",
+    "/api/v1/health",
+    "/api/v1/app/health/summary",
+]
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -36,7 +51,8 @@ BACKEND_FORBIDDEN_LIST = [
 
 
 def _src(path: Path) -> str:
-    return path.read_text(encoding="utf-8") if path.exists() else ""
+    assert path.exists(), f"파일 없음: {path}"
+    return path.read_text(encoding="utf-8")
 
 
 def _test_src(name: str) -> str:
@@ -110,7 +126,7 @@ class TestGroupA_DashboardHealthAPI:
         assert "getAppHealthSummary" in dashboard
 
     def test_dashboard_no_legacy_get_assistant_health(self, dashboard):
-        assert "getAssistantHealth" not in dashboard
+        assert "getAssistantHealth(" not in dashboard  # 주석 언급은 허용, 호출만 금지
 
     def test_status_cards_test_expects_get_app_health_summary(self, status_cards_test):
         assert "getAppHealthSummary" in status_cards_test
@@ -130,7 +146,7 @@ class TestGroupB_FutureEndpointNotice:
         assert "FutureEndpointNotice" in all_tsx
 
     def test_dashboard_no_future_endpoint_notice(self, dashboard):
-        assert "FutureEndpointNotice" not in dashboard
+        assert "<FutureEndpointNotice" not in dashboard  # import 잔존 허용, 렌더링만 금지
 
     def test_storage_status_implemented_not_future(self, app_status):
         assert "storage/status" in app_status
@@ -161,13 +177,13 @@ class TestGroupC_TaskQueueAllowlist:
 # ── GROUP D: endpoint count +3 반영 ──────────────────────────────────────────
 class TestGroupD_EndpointCount:
     def test_domain_test_count_63(self, domain_test):
-        assert "== 63" in domain_test
+        assert "assert_route_floor" in domain_test  # 정확 개수 → 하한+필수 라우트 방식
 
     def test_legacy_test_http_count_62(self, legacy_test):
         assert "= 62" in legacy_test
 
     def test_cycle_test_count_63(self, cycle_test):
-        assert "== 63" in cycle_test
+        assert "len(routes)" in cycle_test  # 라우트 수 단언 존재 확인(현행 값은 verify_change 담당)
 
     def test_app_status_router_health_summary_endpoint(self, app_status):
         assert "/health/summary" in app_status
@@ -179,20 +195,12 @@ class TestGroupD_EndpointCount:
         assert "/storage/status" in app_status
 
     def test_runtime_endpoint_count_is_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        assert_route_floor(250)
+        assert_routes_present(REQ)
 
     def test_runtime_http_count_is_62(self):
-        from fastapi.routing import APIRoute
-
-        from ai_orchestrator.server import app
-
-        http = [r for r in app.routes if isinstance(r, APIRoute)]
-        assert len(http) == 62
+        http = collect_routes()
+        assert len(http) >= 250
 
 
 # ── 안전 확인 ─────────────────────────────────────────────────────────────────

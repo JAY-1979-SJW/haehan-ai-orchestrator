@@ -1,6 +1,8 @@
 """Tests: APP_NAV_ACTIVE_STATE_POLISH_01 (2026-05-18)"""
+
 import sys
 from pathlib import Path
+
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,46 +11,92 @@ sys.path.insert(0, str(ROOT))
 LAYOUT = ROOT / "admin-web" / "src" / "app" / "assistant" / "layout.tsx"
 NAVBAR = ROOT / "admin-web" / "src" / "components" / "assistant" / "AssistantNavBar.tsx"
 
+
 def _src(p: Path) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
-@pytest.fixture(scope="module")
-def layout(): return _src(LAYOUT)
 
 @pytest.fixture(scope="module")
-def navbar(): return _src(NAVBAR)
+def layout():
+    return _src(LAYOUT)
+
+
+@pytest.fixture(scope="module")
+def navbar():
+    return _src(NAVBAR)
+
 
 class TestFilesExist:
-    def test_layout_exists(self): assert LAYOUT.exists()
-    def test_navbar_exists(self): assert NAVBAR.exists()
+    def test_layout_exists(self):
+        assert LAYOUT.exists()
+
+    def test_navbar_exists(self):
+        assert NAVBAR.exists()
+
 
 class TestLayoutServerComponent:
-    def test_layout_no_use_client(self, layout): assert '"use client"' not in layout
-    def test_layout_metadata_preserved(self, layout): assert "metadata" in layout
-    def test_layout_imports_navbar(self, layout): assert "AssistantNavBar" in layout
+    def test_layout_no_use_client(self, layout):
+        assert '"use client"' not in layout
+
+    def test_layout_metadata_preserved(self, layout):
+        assert "metadata" in layout
+
+    def test_layout_imports_navbar(self, layout):
+        assert "AssistantNavBar" in layout
+
 
 class TestNavBarClientComponent:
-    def test_navbar_use_client(self, navbar): assert '"use client"' in navbar
-    def test_navbar_uses_pathname(self, navbar): assert "usePathname" in navbar
-    def test_navbar_active_style(self, navbar): assert "isActive" in navbar or "active" in navbar
+    def test_navbar_use_client(self, navbar):
+        assert '"use client"' in navbar
+
+    def test_navbar_uses_pathname(self, navbar):
+        assert "usePathname" in navbar
+
+    def test_navbar_active_style(self, navbar):
+        assert "isActive" in navbar or "active" in navbar
+
 
 class TestNavItems:
-    def test_dashboard_tab(self, navbar): assert "대시보드" in navbar
-    def test_task_queue_tab(self, navbar): assert "작업 큐" in navbar
-    def test_approval_tab(self, navbar): assert "승인 게이트" in navbar
-    def test_external_sites_tab(self, navbar): assert "외부 사이트" in navbar
-    def test_logs_tab(self, navbar): assert "로그·감사" in navbar or "로그" in navbar
-    def test_storage_tab(self, navbar): assert "스토리지" in navbar
-    def test_deployment_tab(self, navbar): assert "배포 상태" in navbar
-    def test_all_7_hrefs(self, navbar): assert navbar.count('href: "/assistant') >= 7
+    def test_dashboard_tab(self, navbar):
+        assert "대시보드" in navbar
+
+    def test_task_queue_tab(self, navbar):
+        assert "작업 큐" in navbar
+
+    def test_approval_tab(self, navbar):
+        assert "승인 게이트" in navbar
+
+    def test_external_sites_tab(self, navbar):
+        assert "외부 사이트" in navbar
+
+    def test_logs_tab(self, navbar):
+        assert "로그·감사" in navbar or "로그" in navbar
+
+    def test_storage_tab(self, navbar):
+        assert "스토리지" in navbar
+
+    def test_deployment_tab(self, navbar):
+        assert "배포 상태" in navbar
+
+    def test_all_7_hrefs(self, navbar):
+        assert navbar.count('href: "/assistant') >= 7
+
 
 class TestActiveMatching:
-    def test_exact_matching_supported(self, navbar): assert "exact" in navbar
-    def test_prefix_matching_supported(self, navbar): assert "startsWith" in navbar
+    def test_exact_matching_supported(self, navbar):
+        assert "exact" in navbar
+
+    def test_prefix_matching_supported(self, navbar):
+        assert "startsWith" in navbar
+
 
 class TestLayoutBadges:
-    def test_dry_run_badge(self, layout): assert "DRY_RUN" in layout
-    def test_no_execute_badge(self, layout): assert "실행 버튼 없음" in layout
+    def test_dry_run_badge(self, layout):
+        assert "DRY_RUN" in layout
+
+    def test_no_execute_badge(self, layout):
+        assert "실행 버튼 없음" in layout
+
 
 class TestBaselineRegression:
     def test_dashboard_still_uses_get_app_health_summary(self):

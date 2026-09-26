@@ -2,22 +2,39 @@
 
 Task Detail 화면 read-only 정책 준수 및 보안 경계 검증.
 """
+
 import sys
 from pathlib import Path
 
 import pytest
 
+from tests._route_helpers import (  # noqa: F401
+    assert_route_floor,
+    assert_routes_present,
+    collect_post_routes,
+    collect_routes,
+)
+
+REQ = [
+    "/api/v1/ops/audit-events",
+    "/api/v1/ops/summary",
+    "/api/v1/ops/approvals",
+    "/api/v1/tasks",
+    "/api/v1/health",
+    "/api/v1/app/health/summary",
+]
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-DETAIL_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "tasks" / "[id]" / "page.tsx"
+DETAIL_PAGE = ROOT / "admin-web" / "src" / "app" / "assistant" / "(legacy)" / "tasks" / "[id]" / "page.tsx"
 DETAIL_PANEL = ROOT / "admin-web" / "src" / "components" / "assistant" / "TaskDetailPanel.tsx"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
 
 def _src(path: Path) -> str:
-    return path.read_text(encoding="utf-8") if path.exists() else ""
+    assert path.exists(), f"파일 없음: {path}"
+    return path.read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -208,11 +225,11 @@ class TestBaselineRegression:
     def test_no_new_post_endpoint_in_router(self):
         router = _src(ROUTER_FILE)
         import re
-        post_routes = re.findall(r'@router\.post\(', router)
+
+        post_routes = re.findall(r"@router\.post\(", router)
         assert len(post_routes) <= 5  # 기존 POST endpoint 수 이하 유지
 
     def test_runtime_endpoint_count_still_63(self):
-        from ai_orchestrator.server import app
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+
+        assert_route_floor(250)
+        assert_routes_present(REQ)

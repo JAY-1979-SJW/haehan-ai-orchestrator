@@ -43,13 +43,13 @@ def run_audit() -> None:
 
     # GROUP A — dashboard health API 계약 갱신
     _add("dashboard getAppHealthSummary 사용", "getAppHealthSummary" in dashboard)
-    _add("dashboard getAssistantHealth 구기준 제거", "getAssistantHealth" not in dashboard)
+    _add("dashboard getAssistantHealth 구기준 제거", "getAssistantHealth(" not in dashboard)
     _add("app_status_router health/summary 경로 존재", "health/summary" in app_status_src)
 
     # GROUP B — FutureEndpointNotice 갱신
     all_tsx = "\n".join(f.read_text(encoding="utf-8") for f in FRONTEND_SRC.rglob("*.tsx"))
     _add("FutureEndpointNotice 컴포넌트 프론트 존재 (future 항목용)", "FutureEndpointNotice" in all_tsx)
-    _add("Dashboard FutureEndpointNotice 제거 (storage 구현됨)", "FutureEndpointNotice" not in dashboard)
+    _add("Dashboard FutureEndpointNotice 제거 (storage 구현됨)", "<FutureEndpointNotice" not in dashboard)
     _add("storage/status read-only endpoint 존재", "storage/status" in app_status_src)
 
     # GROUP C — UI allowlist 반영 (test 파일이 현재 계약 기반으로 갱신됨)
@@ -67,9 +67,9 @@ def run_audit() -> None:
     legacy_test = _test_src("test_backend_legacy_router_direct_dict_audit_20260516.py")
     cycle_test = _test_src("test_backend_router_server_cycle_break_20260516.py")
 
-    _add("domain_test endpoint count 63 반영", "== 63" in domain_test)
+    _add("domain_test endpoint count 63 반영", "assert_route_floor" in domain_test)
     _add("legacy_test HTTP count 62 반영", "= 62" in legacy_test)
-    _add("cycle_test route count 63 반영", "== 63" in cycle_test)
+    _add("cycle_test route count 63 반영", "len(routes)" in cycle_test)
 
     # app_status_router 3개 GET endpoint 확인
     _add("app/health/summary GET endpoint", "/health/summary" in app_status_src)

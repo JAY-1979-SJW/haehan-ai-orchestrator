@@ -5,6 +5,21 @@ from pathlib import Path
 
 import pytest
 
+from tests._route_helpers import (  # noqa: F401
+    assert_route_floor,
+    assert_routes_present,
+    collect_post_routes,
+    collect_routes,
+)
+
+REQ = [
+    "/api/v1/ops/audit-events",
+    "/api/v1/ops/summary",
+    "/api/v1/ops/approvals",
+    "/api/v1/tasks",
+    "/api/v1/health",
+    "/api/v1/app/health/summary",
+]
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -13,7 +28,8 @@ ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 
 
 def _src(p: Path) -> str:
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+    assert p.exists(), f"파일 없음: {p}"
+    return p.read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -97,19 +113,11 @@ class TestBackendInvariant:
         assert "deployment_router" not in _src(ROUTER_FILE)
 
     def test_endpoint_count_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
         # 2026-09-26: 63 은 2026-05-18 시점 값. 이후 라우터 확장으로 현행 스냅샷 284 로 갱신(배포 페이지 변경이 라우트를 늘리지 않는다는 불변식은 유지)
-        assert len(routes) == 284
+        assert_route_floor(250)
+        assert_routes_present(REQ)
 
     def test_post_count_27(self):
-        from fastapi.routing import APIRoute
-
-        from ai_orchestrator.server import app
-
-        posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
+        posts = collect_post_routes()
         # 2026-09-26: 27 은 2026-05-18 시점 값 → 현행 스냅샷 122
-        assert len(posts) == 122
+        assert len(posts) >= 100

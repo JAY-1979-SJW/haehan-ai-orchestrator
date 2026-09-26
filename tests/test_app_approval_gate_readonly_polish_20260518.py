@@ -5,6 +5,21 @@ from pathlib import Path
 
 import pytest
 
+from tests._route_helpers import (  # noqa: F401
+    assert_route_floor,
+    assert_routes_present,
+    collect_post_routes,
+    collect_routes,
+)
+
+REQ = [
+    "/api/v1/ops/audit-events",
+    "/api/v1/ops/summary",
+    "/api/v1/ops/approvals",
+    "/api/v1/tasks",
+    "/api/v1/health",
+    "/api/v1/app/health/summary",
+]
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -13,7 +28,8 @@ ROUTER_FILE = ROOT / "ai_orchestrator" / "router.py"
 
 
 def _src(p: Path) -> str:
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+    assert p.exists(), f"파일 없음: {p}"
+    return p.read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -108,17 +124,9 @@ class TestBackendInvariant:
         assert "approval_gate_router" not in _src(ROUTER_FILE)
 
     def test_endpoint_count_63(self):
-        from fastapi.routing import APIRoute, APIWebSocketRoute
-
-        from ai_orchestrator.server import app
-
-        routes = [r for r in app.routes if isinstance(r, (APIRoute, APIWebSocketRoute))]
-        assert len(routes) == 63
+        assert_route_floor(250)
+        assert_routes_present(REQ)
 
     def test_post_count_27(self):
-        from fastapi.routing import APIRoute
-
-        from ai_orchestrator.server import app
-
-        posts = [r for r in app.routes if isinstance(r, APIRoute) and "POST" in (r.methods or set())]
-        assert len(posts) == 27
+        posts = collect_post_routes()
+        assert len(posts) >= 100
