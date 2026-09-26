@@ -2,8 +2,9 @@
 
 fax_common_v3.xlsx 단일 파일을 배치JSON의 팩스번호 목록에 대량 발송.
 
-배치 파일: C:/work/05. g2b/exports/개별팩스/batches/batch_01.json ~ batch_05.json
-팩스 파일: C:/work/05. g2b/exports/개별팩스/fax_common_v3.xlsx
+배치 파일: $HAEHAN_G2B_FAX_DIR/batches/batch_01.json ~ batch_05.json
+팩스 파일: $HAEHAN_G2B_FAX_DIR/fax_common_v3.xlsx
+(HAEHAN_G2B_FAX_DIR 미설정 시 기본값 C:/work/05. g2b/exports/개별팩스)
 
 실행:
     python scripts/hanafax/bulk_send.py [--batch 1] [--dry-run]
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -24,7 +26,7 @@ log = logging.getLogger("hanafax.bulk_send")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 ROOT = Path(__file__).resolve().parents[2]
-G2B_BASE = Path("C:/work/05. g2b/exports/개별팩스")
+G2B_BASE = Path(os.environ.get("HAEHAN_G2B_FAX_DIR", "C:/work/05. g2b/exports/개별팩스"))
 FAX_FILE = G2B_BASE / "fax_common_v3.xlsx"
 BATCH_DIR = G2B_BASE / "batches"
 RESULT_DIR = ROOT / "data" / "hanafax_bulk_results"
