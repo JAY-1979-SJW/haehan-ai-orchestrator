@@ -6,11 +6,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from scripts.site_engine.action_planner import ActionPlan, ActionPlanStatus
 from scripts.site_engine.types import GateDecision
-from scripts.site_engine.workflow_runner import WorkflowRunPlan
+
+
+class WorkflowRunPlan(Protocol):
+    """검증기가 쓰는 속성만 규정(구현=workflow_runner.WorkflowRunPlan, 역방향 import 회피)."""
+
+    definition: Any
+
 
 _SENSITIVE_PATTERNS = frozenset(
     {
