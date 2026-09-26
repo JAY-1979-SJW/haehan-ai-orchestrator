@@ -315,6 +315,42 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
   끼어드는 문제가 있었고(code-reviewer 서브에이전트 실측 지적, 2026-09-26), 세션별 목록 방식으로
   수정해 해결됨. 기록이 없거나 비어 있으면 즉시 통과. 기록 파일은 7일 지나면 자동 정리된다.
 
+### 코딩 컨벤션 (2026-09-26 실측 확인)
+
+**언어/프레임워크 버전**
+- Python: `3.14.3` (로컬 `python --version` 실측, `pythoncore-3.14` 사용 중)
+- FastAPI: `requirements.txt` 기준 `fastapi>=0.111.0` (pydantic은 별도 고정 없이 FastAPI 종속으로 따라감 — 직접 버전 지정 필요 시 `requirements.txt`에 명시)
+- admin-web (`admin-web/package.json`): Next.js `14.2.35`, React `^18`, TypeScript `^5`
+
+**네이밍**
+- Python 파일·함수: `snake_case` (예: `action_router.py`, `code_map/query.py`)
+- 클래스: `PascalCase`
+- 사이트/도메인 라우터 파일: `*_router.py` (예: `ai_orchestrator/routers/action_router.py`, `browser_api/router.py`)
+- 테스트 파일: `tests/test_*.py` (프로젝트 루트 `tests/` 및 `ai_orchestrator/tests/` 양쪽 존재)
+
+**폴더 구조 (L1~L12 레이어 대응)**
+- L2 Policy/Gate → `ai_orchestrator/gates` 등 게이트/정책 모듈
+- L3 Connectors → `ai_orchestrator/connectors`, `scripts/<도메인>` (naver, google, eum 등)
+- L5 Site Modules → `ai_orchestrator/sites`, 사이트별 `*_router.py`
+- L6 Business Workflows → `ai_orchestrator/services`
+- L7 Persistence → `ai_orchestrator/persistence`
+- L8 Server API → `ai_orchestrator/routers`, `browser_api/router.py`
+- L9 Admin UI → `admin-web/`
+- L10 Local PC App → `apps/*-standalone` (예: `apps/marketing-standalone`, `apps/youtube-analyzer-standalone`)
+- L11 Tests → `tests/`, `ai_orchestrator/tests/`
+- 운영 스크립트/게이트: `scripts/ops`
+- 레이어 배치의 **정본은 `configs/module_registry.json`** — 이 문서의 "신규 코드 위치 규칙", `docs/architecture/APP_TREEMAP.md`와 배치되면 레지스트리 값을 우선한다.
+
+### 테스트·빌드·린트 명령 (2026-09-26 실행 확인)
+
+- **린트 (파일 단위)**: `python -m ruff check --config configs/ruff.toml <파일경로>` — 새 편집으로 생긴 오류만 확인 (레거시 오류 다수 존재, 위 gotcha 참조)
+- **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python scripts/ops/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
+- **전체 변경 검증**: `python scripts/ops/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
+- **게이트 3종**: 위 "게이트 실행 의무" 섹션 참조 (`codebase_layer_audit.py`, `test_codebase_layer_audit.py`, `quality_gate.py --staged --enforce --allow-existing-code-change`)
+- **프론트 타입체크**: `cd admin-web && npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) — 확인 완료(통과)
+- **프론트 빌드**: `cd admin-web && npm run build` (`next build`) — 시간이 걸리므로 필요할 때만
+- **서버 기동**: 위 "로컬 개발 스택 포트 구성" 섹션 참조 (FastAPI 8401, Next.js 3000)
+
 ## 병렬 실행 규칙
 
 병렬 가능: read-only 감사, 문서 조사, 독립 정적 분석  
