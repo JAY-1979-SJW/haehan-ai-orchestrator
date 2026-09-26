@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.naver.blog import assets
+from scripts.naver.blog.seo import assets
 
 
 def test_blog_asset_plan_is_rights_aware():
@@ -169,7 +169,9 @@ def test_pixel_analysis_adjusts_representative_score(monkeypatch, tmp_path):
             "ok": True,
             "code": "ok",
             "downloaded_count": 1,
-            "items": [{"post_index": 1, "image_index": 1, "src": "https://x/square.png", "path": str(local), "bytes": 10}],
+            "items": [
+                {"post_index": 1, "image_index": 1, "src": "https://x/square.png", "path": str(local), "bytes": 10}
+            ],
             "errors": [],
         },
     )
