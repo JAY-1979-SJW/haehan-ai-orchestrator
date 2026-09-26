@@ -288,6 +288,33 @@ CIRCULAR_IMPORT > 0 → STOP
 quality gate errors > 0 → STOP  
 지도↔골격 대조(`scripts/ops/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
 
+## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
+
+### 재사용 우선
+새 함수/유틸을 만들기 전 `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`,
+Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
+검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
+
+### 완료 보고 기준
+작업이 끝났다고 보고하기 전에 반드시 테스트를 실행하거나 빌드/타입체크를 통과시켜 증거를
+확인할 것. 실행해보지 않은 코드를 '완료'로 보고하지 말 것.
+
+### 워크플로
+복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
+순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
+(ruff+영향 테스트, 바뀐 파일 기준)로 한다 — 전체 pytest는 21분+ 걸리고 멈추는 결함이 있어
+매번 돌리지 않는다.
+
+### 반복 실수(gotcha)
+- 전체 `pytest` 실행 금지 — `tests/test_local_agent_installer_package.py`에서 멈춤. 영향 테스트만.
+- ruff는 레거시 오류가 많은 파일이 다수 존재 — 새 훅은 "이번 편집으로 새로 생긴 오류"만 차단.
+- Windows에서 훅은 셸 스크립트가 아니라 python 스크립트로 작성(기존 관례, PowerShell/cmd 차이 회피).
+- `scripts/ops/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
+  `post_edit_fast_gate.py`가 PostToolUse마다 기록)만 검사한다 — 최초 구현은
+  `git status --porcelain` 전체를 대상으로 해서 다른 세션의 미커밋 변경분까지 차단 사유에
+  끼어드는 문제가 있었고(code-reviewer 서브에이전트 실측 지적, 2026-09-26), 세션별 목록 방식으로
+  수정해 해결됨. 기록이 없거나 비어 있으면 즉시 통과. 기록 파일은 7일 지나면 자동 정리된다.
+
 ## 병렬 실행 규칙
 
 병렬 가능: read-only 감사, 문서 조사, 독립 정적 분석  
