@@ -54,6 +54,7 @@ def _load_company() -> dict:
     try:
         return json.loads(COMPANY_FILE.read_text(encoding="utf-8"))
     except Exception:
+        logger.warning("회사 프로필 로드 실패: %s", COMPANY_FILE, exc_info=True)
         return {}
 
 
@@ -63,6 +64,7 @@ def _load_report_items() -> list[dict]:
     try:
         return json.loads(REPORT_FILE.read_text(encoding="utf-8")).get("items", [])
     except Exception:
+        logger.warning("보고서 항목 로드 실패: %s", REPORT_FILE, exc_info=True)
         return []
 
 
@@ -75,7 +77,7 @@ def get_report():
         data = json.loads(REPORT_FILE.read_text(encoding="utf-8"))
         return data
     except Exception as e:
-        logger.error("보고서 로드 실패: %s", e)
+        logger.exception("보고서 로드 실패: %s", e)
         return {"ok": False, "reason": "read_error", "items": []}
 
 
@@ -112,7 +114,7 @@ def trigger_scan():
     except subprocess.TimeoutExpired:
         return {"ok": False, "reason": "timeout"}
     except Exception as e:
-        logger.error("스캔 실행 오류: %s", e)
+        logger.exception("스캔 실행 오류: %s", e)
         return {"ok": False, "reason": "exec_error"}
     finally:
         _scan_running = False
@@ -152,7 +154,7 @@ def make_draft(body: DraftRequest):
 
         draft = generate_application_draft(grant, company)
     except Exception as e:
-        logger.error("초안 생성 오류: %s", e)
+        logger.exception("초안 생성 오류: %s", e)
         return {"ok": False, "reason": "draft_error"}
 
     # 저장
@@ -222,7 +224,7 @@ def fill_form(body: FillRequest):
     except subprocess.TimeoutExpired:
         return {"ok": False, "reason": "timeout"}
     except Exception as e:
-        logger.error("폼 입력 오류: %s", e)
+        logger.exception("폼 입력 오류: %s", e)
         return {"ok": False, "reason": "exec_error"}
 
     if result.get("ok"):

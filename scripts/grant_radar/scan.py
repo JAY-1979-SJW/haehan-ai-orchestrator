@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from datetime import datetime
@@ -112,7 +113,10 @@ _ROWS_JS = """
 """
 
 
-def _extract(page, portal: dict) -> list[dict]:
+logger = logging.getLogger(__name__)
+
+
+def _extract(page, portal: dict, errors: list | None = None) -> list[dict]:
     try:
         if portal["mode"] == "anchor":
             rows = page.evaluate(_ANCHOR_JS, portal["detail_pattern"])
@@ -120,7 +124,10 @@ def _extract(page, portal: dict) -> list[dict]:
             rows = page.evaluate(_ROWS_JS)
         return rows[:PER_PORTAL_CAP]
     except Exception as e:
+        logger.warning("%s 추출 오류: %s", portal["key"], e, exc_info=True)
         print(f"[scan] {portal['key']} 추출 오류: {e}")
+        if errors is not None:
+            errors.append(f"{portal['key']} 추출 오류: {e}")
         return []
 
 
@@ -139,7 +146,7 @@ def scan_all() -> dict:
             try:
                 page.goto(portal["url"], wait_until="networkidle", timeout=40000)
                 page.wait_for_timeout(1800)
-                rows = _extract(page, portal)
+                rows = _extract(page, portal, errors)
                 for r in rows:
                     r["portal"] = portal["key"]
                     r["portal_name"] = portal["name"]
@@ -148,6 +155,7 @@ def scan_all() -> dict:
             except Exception as e:
                 msg = f"{portal['key']} 스캔 실패: {e}"
                 errors.append(msg)
+                logger.warning(msg, exc_info=True)
                 print(f"[scan] {msg}")
         browser.close()
 

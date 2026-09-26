@@ -15,6 +15,7 @@ L5 Site Module / L4 Browser Engine. 외부 발행/제출 없음.
 from __future__ import annotations
 
 import json
+import logging
 import sys
 
 CDP = "http://127.0.0.1:9222"
@@ -97,6 +98,7 @@ def main() -> int:
     try:
         req = json.loads(sys.stdin.read() or "{}")
     except Exception:
+        logging.getLogger(__name__).warning("요청 JSON 파싱 실패", exc_info=True)
         req = {}
     print(json.dumps(run(req), ensure_ascii=False))
     return 0
