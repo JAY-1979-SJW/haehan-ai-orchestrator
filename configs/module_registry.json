@@ -14449,14 +14449,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/temp_oauth_revoke.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "S2a 선언층 정정",
-   "confidence": "high",
-   "source": "override"
-  },
   "scripts/user_action_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",

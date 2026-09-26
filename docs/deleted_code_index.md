@@ -997,3 +997,7 @@ git checkout pre-openai-removal -- <경로>
 ### 2026-09-24 범위 확장 — Anthropic 유료 API 호출 경로 (사용자 승인)
 - `ai_orchestrator/connectors/ai_reply_caller.py` — 복원: `git checkout pre-openai-removal -- ai_orchestrator/connectors/ai_reply_caller.py`
 - (파일 유지·호출부만 제거) `scripts/naver/smartstore/product/ai_description_writer.py`, `scripts/naver/automation/integration/ai_responder.py`, `ai_orchestrator/connectors/kakao_skill_router.py` — 원본: `git show pre-openai-removal:<경로>`
+
+### 2026-09-26 S2-B/C D4 (사용자 승인, 백업 태그 backup/pre-s2bc-20260926)
+- `scripts/temp_oauth_revoke.py` — 복원: `git checkout backup/pre-s2bc-20260926 -- scripts/temp_oauth_revoke.py`
+- (미삭제) `scripts/_tmp_full_html.py`, `_tmp_html_consts2.py`, `_tmp_master.py` — git 미추적 파일이라 백업 불가, 메인 워킹트리 소관이므로 그대로 둠
